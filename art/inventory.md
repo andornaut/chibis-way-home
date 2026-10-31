@@ -310,6 +310,13 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | outskirts-wall     | decorative backdrop                | 48x144  | Bottom-left, y 600, repeat x                     |
 | tiles-homecity     | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
 
+## Pebble pigeon
+
+| Key               | Type                                | Size  | Tags                                        |
+| ----------------- | ----------------------------------- | ----- | ------------------------------------------- |
+| pigeon-antagonist | Pebble character; hit box 2,2,44,46 | 48x48 | idle, prepare, fly, drop, rest, frustration |
+| pigeon-poop       | White projectile; hit box 0,0,12,12 | 12x12 | idle                                        |
+
 ## Industrial materials
 
 | Key                   | Type                               | Size    | Contract                                         |

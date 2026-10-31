@@ -337,6 +337,30 @@
       ]
     },
     {
+      "key": "pigeon-antagonist",
+      "png": "sprites/pigeon-antagonist.png",
+      "json": "sprites/pigeon-antagonist.json",
+      "once": [],
+      "hitbox": {
+        "x": 2,
+        "y": 2,
+        "width": 44,
+        "height": 46
+      }
+    },
+    {
+      "key": "pigeon-poop",
+      "png": "sprites/pigeon-poop.png",
+      "json": "sprites/pigeon-poop.json",
+      "once": [],
+      "hitbox": {
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 12
+      }
+    },
+    {
       "key": "portrait-bird",
       "png": "sprites/portrait-bird.png",
       "json": "sprites/portrait-bird.json",
