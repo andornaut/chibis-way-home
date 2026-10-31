@@ -245,13 +245,21 @@ export type BehaviourCondition =
   | { readonly kind: "boundary" }
   | { readonly kind: "elapsed"; readonly seconds: number }
   | { readonly kind: "nearby"; readonly range: number }
-  | { readonly kind: "same-ground"; readonly tolerance: number };
+  | { readonly kind: "same-ground"; readonly tolerance: number }
+  | { readonly kind: "reachable" | "lost-target"; readonly tolerance: number };
 
 export type BehaviourMotion =
   | { readonly kind: "wait" }
   | {
-      readonly direction: -1 | 1 | "facing";
+      readonly direction: -1 | 1 | "facing" | "target";
       readonly kind: "move";
+      readonly speed: number;
+    }
+  | {
+      readonly direction: -1 | 1 | "facing" | "target";
+      readonly hopHeight: number;
+      readonly hopSeconds: number;
+      readonly kind: "hop";
       readonly speed: number;
     };
 
