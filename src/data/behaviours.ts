@@ -582,7 +582,7 @@ function pigeonFlight(next: string, failure: string, to: Point): BehaviourNode {
 
 function pigeonSwoop(failure: string, x: number): BehaviourNode {
   return {
-    animation: "fly",
+    animation: "swoop",
     motion: {
       bounds: { height: 19, width: 8, x, y: -8 },
       kind: "fly",
