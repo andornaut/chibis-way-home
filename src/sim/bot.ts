@@ -5,8 +5,17 @@ import { contactBox } from "../rules/behaviour";
 import { transientBox } from "../rules/transients";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 import { hasDynamicBehaviour } from "./behaviourBounds";
+import { type NavigationConfig, type NavigationState, plannedInput } from "./navigation";
+export type { NavigationConfig, NavigationCounters } from "./navigation";
+export {
+  NAVIGATION_DEFAULTS,
+  navigationCounters,
+  resetNavigation,
+  validateNavigation,
+} from "./navigation";
 
 export interface BotSkill {
+  readonly navigation?: Partial<NavigationConfig>;
   readonly adaptiveJump?: boolean;
   readonly maxWaitTicks?: number;
   readonly minJumpHoldTicks?: number;
@@ -16,7 +25,7 @@ export interface BotSkill {
   readonly lookAheadPx: number;
   readonly reactionTicks: number;
 }
-export type JumpPolicy = "continuous" | "never" | "reactive";
+export type JumpPolicy = "continuous" | "never" | "planned" | "reactive";
 export interface BotPolicy {
   readonly jump: JumpPolicy;
   readonly move: -1 | 0 | 1;
@@ -89,6 +98,7 @@ export function prepareSensors(layout: ZoneLayout): SensorIndex {
 }
 
 export interface Bot {
+  navigation?: NavigationState;
   readonly random: Random;
   holding: number;
   targetY: number | undefined;
@@ -239,6 +249,9 @@ export function botInput(
   zone: ZoneState,
   bot: Bot,
 ): ZoneInput {
+  if (policy.jump === "planned" && policy.move !== 0) {
+    return plannedInput(tuning, layout, skill.navigation, policy.move, zone, bot);
+  }
   if (bot.holding > 0) {
     if (
       skill.adaptiveJump &&
