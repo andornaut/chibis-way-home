@@ -131,7 +131,7 @@ export class SettingsScene extends Scene {
 
   // A key the opener passes on while the card shows.
   key(event: KeyboardEvent): void {
-    if (!modalInput(this).accepts(event)) {
+    if (!this.sys.isActive() || !modalInput(this).accepts(event)) {
       return;
     }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
@@ -168,7 +168,7 @@ export class SettingsScene extends Scene {
   // Back, Escape, P and a tap outside it close the install steps card while it shows, and the
   // settings card otherwise.
   back(): void {
-    if (!modalInput(this).accepts()) {
+    if (!this.sys.isActive() || !modalInput(this).accepts()) {
       return;
     }
     if (this.steps !== undefined) {

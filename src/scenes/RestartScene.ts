@@ -98,7 +98,7 @@ export class RestartScene extends Scene {
 
   // A key the opener passes on while the card shows.
   key(event: KeyboardEvent): void {
-    if (!modalInput(this).accepts(event)) {
+    if (!this.sys.isActive() || !modalInput(this).accepts(event)) {
       return;
     }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
@@ -116,7 +116,7 @@ export class RestartScene extends Scene {
 
   // Back, Escape, P and a tap outside the card cancel.
   back(): void {
-    if (!modalInput(this).accepts()) {
+    if (!this.sys.isActive() || !modalInput(this).accepts()) {
       return;
     }
     this.scene.stop();
