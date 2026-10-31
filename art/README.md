@@ -427,7 +427,7 @@ The character catalogue drawn by `art/tools/cast.py` is retained for room use an
 
 The sprite and portrait integrate with the dog encounter and its frozen introduction. The runtime selects the movement-state animation without drawing a red contact outline. The pug remains a separate retained asset, with no current world placement.
 
-`dog-antagonist` is a separate floppy-eared, ochre-and-brown dog, drawn facing right in a 60x40 frame and mirrored for left. It does not repurpose `dog-pug` as an enemy. The brighter coat separates the animal from the muted blue environment; the long floppy ears and round cream muzzle identify it independently of colour.
+`dog-antagonist` represents Archie, modelled on the Australian Shepherd in `dog-walker-game`: brown and white patches, a white blaze, muzzle, ruff and paws, high folded rose ears, a compact white-tipped bobtail and a red bandana. The right-facing 60x40 sprite has the visible sky-blue eye; the 64x64 portrait also shows the amber iris. The pug remains a separate asset. Frustration compresses before takeoff, lifts the sprite 3px and then 5px within its unchanged canvas, and returns to a planted stomp; its runtime position and contact box do not move with the drawn hop.
 
 The contact box is fixed across all poses: x 2, y 2, width 56, height 38, in frame pixels. The contact box is collision data, not a visible red rectangle or silhouette outline. The sprite has no baked red danger line. All drawn body parts remain inside the contact envelope, which does not shrink when the dog crouches or rests. Contact is always lethal; a crouch or rest is a movement cue, never a safe state.
 
@@ -441,7 +441,7 @@ The contact box is fixed across all poses: x 2, y 2, width 56, height 38, in fra
 
 These animation tags are available as loops. The runtime selects a tag for each active gameplay state. Gameplay data owns the duration and transition of patrol, crouch, committed rush and rest; art cycle durations do not set encounter timing. The five-column by four-row placement (60x48) bottom-anchors the 60x40 frame, putting the contact box ten pixels below the placement's top and ending at its bottom.
 
-`portrait-dog` is 64x64, authored facing right, with the matching floppy ears and coat, an ink outline and a transparent ground, cut off at the bottom. Its `neutral` tag is one frame at 1000ms. It uses the existing dialogue portrait frame; no proper name or specific breed is encoded in the art.
+`portrait-dog` is Archie's 64x64 right-facing portrait, with the matching brown-and-white coat, folded ears, white blaze, red bandana and sky/amber eyes. It retains its ink outline and transparent ground, cut off at the bottom. Its `neutral` tag remains one frame at 1000ms, using the existing dialogue portrait frame.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
