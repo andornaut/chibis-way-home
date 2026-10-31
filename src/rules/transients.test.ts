@@ -78,7 +78,7 @@ describe("bounded transient hazards", () => {
     expect(first.entities).toHaveLength(1);
     expect(first.lethal).toBe(false);
     expect(first.entities[0]).toMatchObject({ age: 0.25, armingAnimation: "warning", id: 0 });
-    expect(run([], bird, [], first.entities, 0.3).lethal).toBe(true);
+    expect(run([], bird, [], first.entities, 0.25).lethal).toBe(true);
     expect(run([], bird, [], first.entities, 4).entities).toEqual([]);
   });
 

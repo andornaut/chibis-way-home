@@ -567,3 +567,67 @@ describe("random motion", () => {
     expect(JSON.stringify(pathOf(attempt, seed)) === JSON.stringify(pathOf(0))).toBe(same);
   });
 });
+
+describe("entry-created world state", () => {
+  it("defers intro actions, emits once, freezes and resets transient hazards and gusts", () => {
+    const emitter = object({
+      behaviour: {
+        axis: "x",
+        distance: 0,
+        initial: "emit",
+        states: {
+          emit: {
+            animation: "idle",
+            motion: { kind: "wait" },
+            onEnter: [
+              {
+                armSeconds: 1,
+                armingAnimation: "warning",
+                character: "block",
+                gravity: 0,
+                kind: "spawn",
+                lifeSeconds: 3,
+                maxAlive: 1,
+                offset: { x: 60, y: 0 },
+                velocity: { x: 0, y: 0 },
+              },
+              { height: 24, kind: "force-pulse", range: 30, seconds: 1, velocity: { x: 60, y: 0 } },
+            ],
+            transitions: [],
+          },
+        },
+      },
+      collision: "hazard",
+      origin: { x: 500, y: 280 },
+      scene: "intro",
+      spawnTemplates: { block: object({ collision: "hazard", origin: { x: 0, y: 0 } }) },
+    });
+    const layout = zone(area([emitter]));
+    const initial = startZone(BIRD, layout, SEED);
+    const inactive = stepZone(BIRD, layout, STEP, STILL, initial);
+    expect(inactive.transients).toEqual([]);
+    expect(inactive.pulses).toEqual([]);
+    const active = stepZone(BIRD, layout, STEP, STILL, activateBehaviour(0, inactive));
+    expect(active.transients).toHaveLength(1);
+    expect(active.pulses).toHaveLength(1);
+    const next = stepZone(BIRD, layout, STEP, STILL, active);
+    expect(next.transients[0]?.id).toBe(active.transients[0]?.id);
+    expect(next.nextTransientId).toBe(1);
+    const held = { ...next, door: 0 };
+    expect(stepZone(BIRD, layout, STEP, STILL, held)).toBe(held);
+    const dead = stepZone(BIRD, layout, STEP, STILL, {
+      ...next,
+      bird: { ...next.bird, x: 500, y: 280 },
+    });
+    expect(dead.death?.reason).toBe("hazard");
+    expect(stepZone(BIRD, layout, STEP, STILL, dead)).toBe(dead);
+    const reset = retryZone(BIRD, layout, dead);
+    expect(reset.transients).toEqual([]);
+    expect(reset.pulses).toEqual([]);
+    expect(reset.nextTransientId).toBe(0);
+    expect(reset.behaviours[0]?.active).toBe(false);
+    const reentered = enterArea(BIRD, layout, layout.start, next);
+    expect(reentered.transients).toEqual([]);
+    expect(reentered.pulses).toEqual([]);
+  });
+});

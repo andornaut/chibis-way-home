@@ -97,6 +97,7 @@ import {
   stepDeathPresentation,
 } from "../view/death";
 import { doorPhase } from "../view/doorOpen";
+import { forceVisualPosition } from "../view/forceVisual";
 import { moveHintView } from "../view/moveHint";
 import { type ArtKind, artKind, artOffset, artScrollFactor } from "../view/objectArt";
 import { type PlayHold, stepAction } from "../view/playHold";
@@ -234,6 +235,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   private dialogueArea = "";
   private readonly heardDialogues = new Map<string, Set<number>>();
   private objectArt: ObjectArt[] = [];
+  private readonly pulseArt = new Map<number, GameObjects.Sprite>();
+  private readonly transientArt = new Map<number, ObjectArt>();
   private terrainMap: Tilemaps.Tilemap | undefined;
   // When each held button's press began.
   private readonly presses = new Map<TouchControl, number>();
@@ -252,6 +255,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     this.trial = askedRecipe(search, Object.keys(RECIPES));
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objectArt = [];
+    this.transientArt.clear();
+    this.pulseArt.clear();
     this.heldKeys.clear();
     this.heldTouches.clear();
     this.presses.clear();
@@ -538,8 +543,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     this.clearControls();
     this.input.enabled = false;
     this.drawObjects();
-    for (const art of this.objectArt) {
+    for (const art of [...this.objectArt, ...this.transientArt.values()]) {
       art.sprite?.anims.pause();
+    }
+    for (const art of this.pulseArt.values()) {
+      art.anims.pause();
     }
     this.bird.anims.stop();
     this.showTouchControls(touchSettings());
@@ -849,6 +857,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     for (const { item } of this.objectArt) {
       item.destroy();
     }
+    for (const art of this.transientArt.values()) {
+      art.item.destroy();
+    }
+    this.transientArt.clear();
+    for (const art of this.pulseArt.values()) {
+      art.destroy();
+    }
+    this.pulseArt.clear();
     this.objectArt = area.objects.map((object, index) => {
       const key = object.tileset === null ? undefined : (object.tileset ?? area.tileset);
       const source = loadedTileset(
@@ -983,6 +999,66 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       }
       art.item.setPosition(x, y);
     });
+    this.drawTransients();
+    this.drawPulses();
+  }
+
+  private drawPulses(): void {
+    const alive = new Set(this.zone.pulses.map((pulse) => pulse.id));
+    for (const [id, sprite] of this.pulseArt) {
+      if (!alive.has(id)) {
+        sprite.destroy();
+        this.pulseArt.delete(id);
+      }
+    }
+    for (const pulse of this.zone.pulses) {
+      const visual = pulse.visual;
+      if (!visual) {
+        continue;
+      }
+      let sprite = this.pulseArt.get(pulse.id);
+      if (!sprite) {
+        sprite = this.add.sprite(0, 0, visual.art).setOrigin(0).setDepth(DEPTHS.sprite);
+        this.pulseArt.set(pulse.id, sprite);
+      }
+      const actor = this.textures.getFrame(visual.actor.art);
+      const at = forceVisualPosition(
+        { height: actor.realHeight, width: actor.realWidth },
+        visual.actor,
+        { height: sprite.frame.realHeight, width: sprite.frame.realWidth },
+        visual.offset,
+        pulse.facing,
+        visual.at,
+      );
+      sprite.setFlipX(pulse.facing === -1).setPosition(Math.round(at.x), Math.round(at.y));
+      show(sprite, visual.animation);
+    }
+  }
+
+  private drawTransients(): void {
+    const alive = new Set(this.zone.transients.map((entity) => entity.id));
+    for (const [id, art] of this.transientArt) {
+      if (!alive.has(id)) {
+        art.item.destroy();
+        this.transientArt.delete(id);
+      }
+    }
+    for (const entity of this.zone.transients) {
+      let art = this.transientArt.get(entity.id);
+      if (!art) {
+        art = this.drawObject(undefined, undefined, entity.object, entity.id);
+        this.transientArt.set(entity.id, art);
+      }
+      art.item.setPosition(
+        Math.round(entity.at.x + art.offset.x),
+        Math.round(entity.at.y + art.offset.y),
+      );
+      const tag =
+        entity.age < entity.armSeconds ? entity.armingAnimation : entity.object.animations.idle;
+      if (art.sprite && tag !== undefined) {
+        show(art.sprite, tag);
+      }
+    }
   }
 
   // Plays the tag for a character's state, or while it idles, its quirks when they come due, each

@@ -103,7 +103,7 @@ export function stepTransients(
       occupied.until = start + dt * landing;
     }
     const armedAfter = Math.max(0, entity.armSeconds - entity.age);
-    if (armedAfter < dt) {
+    if (armedAfter <= dt) {
       const fraction = armedAfter / dt;
       const armedBox = {
         ...box,

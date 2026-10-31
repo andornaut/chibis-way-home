@@ -29,8 +29,10 @@ import {
   stepBird,
 } from "./bird";
 import { deathSupport } from "./death";
+import { type ForcePulse, forcePulseVelocity } from "./force";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { overlaps } from "./rect";
+import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import { validateWalkEntries } from "./zoneLinks";
 
 const PLATFORM_INDICES = new WeakMap<readonly ObjectLayout[], readonly number[]>();
@@ -73,7 +75,22 @@ export interface ZoneInput extends BirdInput {
 // opens and its room shows, until leaveRoom. cleared: she reached the area's last column, and
 // turnedBack: she went back into its first column; either holds it still for good, cleared
 // completing the zone and turnedBack leaving it as it was.
+export interface ZonePulse extends ForcePulse {
+  readonly id: number;
+  readonly visual?: {
+    readonly art: string;
+    readonly animation: string;
+    readonly offset: Point;
+    readonly at: Point;
+    readonly actor: ObjectLayout;
+  };
+}
+
 export interface ZoneState {
+  readonly nextPulseId: number;
+  readonly pulses: readonly ZonePulse[];
+  readonly transients: readonly Transient[];
+  readonly nextTransientId: number;
   readonly area: string;
   readonly attempt: number;
   readonly behaviours: readonly (BehaviourState | undefined)[];
@@ -139,11 +156,15 @@ export function enterArea(
     cleared: false,
     death: undefined,
     door: undefined,
+    nextPulseId: 0,
+    nextTransientId: 0,
     objects: area.objects.map((object, index) =>
       object.behaviour ? object.origin : pathAt(object, tracks[index] as Track, 0),
     ),
+    pulses: [],
     seconds: 0,
     tracks,
+    transients: [],
     turnedBack: false,
     // Use must go down after she arrives, so a press held from before does not act.
     useHeld: true,
@@ -379,7 +400,49 @@ export function stepZone(
           ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
           : after,
     );
-  bird = stepBird(tuning, solids, rects("ledge"), seconds, input, bird);
+  const pulses: ZonePulse[] = [...zone.pulses];
+  let nextPulseId = zone.nextPulseId;
+  const spawns: SpawnEvent[] = [];
+  objects.forEach(({ behaviour, object }, emitter) => {
+    for (const event of behaviour?.actions ?? []) {
+      const action = event.action;
+      if (action.kind === "force-pulse") {
+        pulses.push({
+          id: nextPulseId++,
+          ...(action.visual && { visual: { ...action.visual, actor: object, at: event.at } }),
+          facing: event.facing,
+          height: action.height,
+          range: action.range,
+          remaining: action.seconds,
+          source: contactBox(object, event.at, event.facing),
+          start: event.time,
+          velocity: action.velocity,
+        });
+      } else {
+        const template = object.spawnTemplates?.[action.character];
+        if (!template) {
+          throw new Error(`No spawn template ${action.character}`);
+        }
+        spawns.push({ ...event, emitter, template });
+      }
+    }
+  });
+  const push = forcePulseVelocity(solids, seconds, pulses, birdBox(tuning, bird));
+  bird = stepBird(tuning, solids, rects("ledge"), seconds, { ...input, push }, bird);
+  const remainingPulses = pulses.flatMap((pulse) => {
+    const remaining = pulse.remaining - Math.max(0, seconds - pulse.start);
+    return remaining > 0 ? [{ ...pulse, remaining, start: 0 }] : [];
+  });
+  const transientStep = stepTransients(
+    { height: area.height, width: area.width, x: 0, y: 0 },
+    [...solids, ...rects("ledge")],
+    seconds,
+    birdBox(tuning, zone.bird),
+    birdBox(tuning, bird),
+    spawns,
+    zone.transients,
+    zone.nextTransientId,
+  );
   if (riding && !bird.grounded) {
     bird = { ...bird, carryVx: dx / seconds };
   }
@@ -403,7 +466,13 @@ export function stepZone(
         }),
     );
   const steps = zone.steps + 1;
-  if (crushed || swept || bird.y > area.height || hazards.some((hazard) => overlaps(box, hazard))) {
+  if (
+    transientStep.lethal ||
+    crushed ||
+    swept ||
+    bird.y > area.height ||
+    hazards.some((hazard) => overlaps(box, hazard))
+  ) {
     const frozen: ZoneState = {
       ...zone,
       behaviours:
@@ -411,9 +480,13 @@ export function stepZone(
           ? objects.map(({ behaviour }) => behaviour?.state)
           : zone.behaviours,
       bird,
+      nextPulseId,
+      nextTransientId: transientStep.nextId,
       objects: objects.map(({ after }) => ({ x: after.x, y: after.y })),
+      pulses: remainingPulses,
       seconds: time,
       steps,
+      transients: transientStep.entities,
       useHeld: input.useHeld,
     };
     return {
@@ -460,9 +533,13 @@ export function stepZone(
     bird,
     cleared: box.x + box.width > area.exitX,
     door,
+    nextPulseId,
+    nextTransientId: transientStep.nextId,
     objects: objects.map(({ after }) => ({ x: after.x, y: after.y })),
+    pulses: remainingPulses,
     seconds: time,
     steps,
+    transients: transientStep.entities,
     turnedBack: box.x < area.backX,
     useHeld: input.useHeld,
   };
