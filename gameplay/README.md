@@ -19,7 +19,7 @@ Gameplay owns the rulebook and the values and content in the data value files (e
 
 - **Decisions:** the user's. Gameplay asks with a prompt, recommendation first and the trade-off in a line; routine work needs no asking.
 - **Design sessions:** start with "design session" and a topic. Claude keeps floated ideas apart from agreed ones, asks the question that unblocks a decision, and on "wrap up" proposes doc changes, writing them once confirmed.
-- **Difficulty:** use configurable per-zone difficulty targets and variation bands from `src/data/`, with a demanding first zone and a difficulty increase in every following zone. Vary required climbing chunks, moving obstacles, ground hazards and enemy yards; a seed need not include every challenge type. Every built and future stage, including the first tutorial and final stage, randomizes its middle on entry while keeping its opening and ending fixed. Retries retain the assembled layout.
+- **Difficulty:** use configurable per-zone difficulty targets and variation bands from `src/data/`, with a demanding first zone and a difficulty increase in every following zone. Vary required climbing chunks, moving obstacles, ground hazards and enemy yards; a seed need not include every challenge type. Every built and future stage, including the first tutorial and final stage, has a fixed opening and ending around randomized middle chunks. Vary meaningful challenge combinations and order within the zone band and valid chunk connections. Run and attempt lifecycle rules are in the rulebook.
 - **Jump tuning:** use one uninterrupted ballistic ascent, with a minimum hop for short presses and the full jump on a hold. Place overhead short-jump challenges to match the measured hop. Keep the reaches in the rulebook aligned with the simulator, including coyote time in the running gap reach
 - **Phone playtesting:** judge jump feel, touch input and readability on a landscape phone. The user performs device playtesting.
 - **Tune to the targets:** a result inside its band needs no tuning. The user declares when the goal is met.
@@ -32,9 +32,9 @@ The six-destination V1 map has all twelve V1 stages built: Blue cityscape's Parc
 
 ## Targets
 
-Each target is a band, not a point, assessed per stage and player skill. PLACEHOLDER: every band, agreed with the user. The kinds of target:
+Targets are assessed per stage and player skill. Bands other than the successful-clear time target remain to be agreed with the user. The kinds of target:
 
-- **Stage length:** cumulative active time to clear a stage, by skill, including retries and excluding pause, dialogue, menus, the death flow, inter-stage cutscenes and map travel. A retry starts at the stage checkpoint and touch jumps are imprecise, so a stage is short enough that a restart doesn't sting
+- **Stage length:** target about five minutes of active play in a successful attempt. This is a tuning target, not a hard time limit or a direct conversion to tile length. Track cumulative active time including retries as a separate metric, using the rulebook's active-time exclusions
 - **Reaches:** Chibi makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder

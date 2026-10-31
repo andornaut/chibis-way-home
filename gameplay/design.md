@@ -48,7 +48,17 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 
 ## Rules
 
-A stage is the individual playable layout, currently represented by `ZonePlan` in code. A zone is the themed map destination containing two stages. The V1 map has six themed destinations with two catalogued stages each. All twelve stages across the six V1 zones are built; building the route does not declare a V1 release. The map and selection rules below are the approved scope for the current implementation change.
+| Term               | Meaning                                                         |
+| ------------------ | --------------------------------------------------------------- |
+| Zone               | A themed map destination containing two stages                  |
+| Stage              | The playable level, currently represented by `ZonePlan` in code |
+| Section            | One continuous area within a stage, such as an apartment floor  |
+| Chunk              | A hand-designed unit used to assemble the randomized layout     |
+| Opening and ending | The fixed caps around a stage's randomized middle               |
+| Run                | One generated stage layout and its seed                         |
+| Attempt            | One try to complete the stage within a run                      |
+
+The V1 map has six themed destinations with two catalogued stages each. All twelve stages are built; building the route does not declare a V1 release.
 
 ### Screen and controls
 
@@ -108,9 +118,16 @@ A stage is the individual playable layout, currently represented by `ZonePlan` i
 - **Kinds:** indoor, outdoor, or a hybrid with both
 - **Length:** the ten continuous V1 stages have recipe ranges of 720 to 960 columns, fixed start and finish caps included. Entrance and lobby has an aggregate range of 528 to 600 columns across its two sections; Climb to the apartment has 1272 to 1440 across seven sections. These aggregate ranges include the fixed caps. The debug park keeps its own recipe
 - **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. A multi-area apartment stage applies this structure across its linked sections, with fixed first and last caps and seeded runs of shared templates in intermediate areas. The rules for chunks are under Chunks
-- **Reroll:** an assembled stage's layout changes each time he enters it from the map or the inter-stage cutscene. Restarts within the stage keep it
 - **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; Chibi, the tiles and the reaches stay the same everywhere
 - **Shape:** each playable stage area is at most 2 screens (60 tiles, 720 px) tall and as wide as it needs, and scrolls sideways and up. Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
+
+### Runs and attempts
+
+- **Continue:** continuing from the stage beginning after reopening the app starts a new run. An exact-position resume keeps the same run if that form of resume is supported
+- **Entry:** entering a stage from the map, replaying it or continuing through an inter-stage cutscene starts a new run
+- **Pause:** pausing and resuming keeps the same run and position
+- **Restart:** a full restart starts a new run
+- **Retry:** death ends the attempt; Try again starts another attempt of the same run, preserving its seed and generated layout
 
 ### Death and retry
 
@@ -127,7 +144,7 @@ This is the approved implementation scope for the current change, including the 
 
 - **Assembly:** a stage's recipe names its theme, start and finish chunks, a length range (start and finish included), a configurable difficulty band, and the events and doors to place. The seed varies the middle chunks within that band, without requiring difficulty to rise; the start and finish chunks are exempt. It never picks the same chunk twice in a row, and it fills the slots
 - **Difficulty:** 1 to 5. 1: walking and taps. 2: full jumps and still hazards. 3: gaps near the reach, single moving platforms and single low-ceiling tap spots. 4: timed platforms or moving hazards on the required path. 5: compounded tap-only, timed or platform-to-platform challenges
-- **Challenge variety:** the city and street middle pools include required climbing routes, moving ledges, red ground strips and enemy yards. A climbing chunk requires ascent on its route rather than offering an optional upper detour. The seed varies the mix; a stage is not guaranteed to contain every challenge type
+- **Challenge variety:** the city and street middle pools include required climbing routes, moving ledges, red ground strips and enemy yards. A climbing chunk requires ascent on its route rather than offering an optional upper detour. Generation varies challenge combinations and order within the zone's difficulty band, preserving valid connections; a stage is not guaranteed to contain every challenge type
 - **Fairness:** every chunk is walked on its own from entry to exit, with its slots empty and filled, and a sample of seeds per recipe is walked end to end
 - **Seams:** a chunk's entry and exit are the ground rows at its left and right edges: 50, 40 or 30. The seam surface is terrain and runs at least 4 tiles in from the edge, with no gap there, and nothing (no solid, ledge, hazard or moving platform) in the 6 rows above it
 - **Shape:** one or two screens wide (60 to 120 tiles) and at most 60 rows (720 px) tall
