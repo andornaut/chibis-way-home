@@ -243,6 +243,7 @@ export interface Reaction {
 
 export type BehaviourCondition =
   | { readonly kind: "boundary" }
+  | { readonly kind: "arrived"; readonly tolerance: number }
   | { readonly kind: "elapsed"; readonly seconds: number }
   | { readonly kind: "nearby"; readonly range: number }
   | { readonly kind: "same-ground"; readonly tolerance: number }
@@ -250,6 +251,7 @@ export type BehaviourCondition =
 
 export type BehaviourMotion =
   | { readonly kind: "wait" }
+  | { readonly kind: "fly"; readonly to: Point; readonly speed: number }
   | {
       readonly direction: -1 | 1 | "facing" | "target";
       readonly kind: "move";
@@ -269,7 +271,27 @@ export interface BehaviourTransition {
   readonly when: readonly BehaviourCondition[];
 }
 
+// Entry actions use tiles in authored data and pixels in a resolved layout.
+export type BehaviourAction =
+  | {
+      readonly kind: "spawn";
+      readonly character: string;
+      readonly offset: Point;
+      readonly velocity: Point;
+      readonly gravity: number;
+      readonly lifeSeconds: number;
+      readonly maxAlive: number;
+    }
+  | {
+      readonly kind: "force-pulse";
+      readonly range: number;
+      readonly height: number;
+      readonly impulse: Point;
+      readonly seconds: number;
+    };
+
 export interface BehaviourNode {
+  readonly onEnter?: readonly BehaviourAction[];
   readonly animation: string | null;
   readonly enter?: "face-target";
   readonly motion: BehaviourMotion;
@@ -638,6 +660,7 @@ export interface Reaches {
 // the view and dialogue need. hitbox: where a hazard touches her, from its top-left corner, when
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
+  readonly spawnTemplates?: Readonly<Record<string, ObjectLayout>>;
   readonly behaviour?: BehaviourPlan;
   // The visual tileset, otherwise the area's tileset; null explicitly selects sprite/image art.
   readonly tileset?: string | null;
