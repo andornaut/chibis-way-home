@@ -321,10 +321,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Pebble pigeon
 
-| Key               | Type                                | Size  | Tags                                        |
-| ----------------- | ----------------------------------- | ----- | ------------------------------------------- |
-| pigeon-antagonist | Pebble character; hit box 2,2,44,46 | 48x48 | idle, prepare, fly, drop, rest, frustration |
-| pigeon-poop       | White projectile; hit box 0,0,12,12 | 12x12 | idle                                        |
+| Key               | Type                                | Size  | Tags                                               |
+| ----------------- | ----------------------------------- | ----- | -------------------------------------------------- |
+| pigeon-antagonist | Pebble character; hit box 2,2,44,46 | 48x48 | idle, prepare, fly, drop, rest, frustration, swoop |
+| pigeon-poop       | White projectile; hit box 0,0,12,12 | 12x12 | idle                                               |
 
 ## Industrial materials
 

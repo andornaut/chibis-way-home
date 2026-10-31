@@ -8,7 +8,7 @@ pigeon-antagonist: 48x48, facing right; bottom-centre anchor 24,48. Fixed hitbox
 pose and its mirror. Perched feet end on row 46, with their outline on 47. Grey and lilac feathers, a
 cream breast, short beak and rounded head distinguish this pigeon from Chibi. No clothes or red outline.
 Tags in frame order: idle 2x400ms; prepare 2x160ms; fly 4x100ms; drop 2x100ms; rest 2x400ms;
-frustration 4x120ms. Every tag loops, once []. Prepare raises the head; fly flaps; drop tucks the feet
+frustration 4x120ms; swoop 4x100ms. Every tag loops, once []. Prepare raises the head; fly flaps; drop tucks the feet
 and lifts the tail; frustration shakes the head and flaps one wing. Generic gameplay owns movement,
 perching, spotting, projectile release and state durations. The art does not add a physical perch.
 
@@ -49,7 +49,28 @@ def wing(g, pose, lift):
         g.rect(13, 35 - lift, 9, 2, "navy")
 
 
+def swoop(phase):
+    """Head below the breast and wings swept upward distinguish a contact dive from level flight."""
+    g = Grid(48, 48)
+    g.tri((5, 15), (18, 16), (20, 28), "slate")
+    g.blob(24, 27, 12, 10, "grey", sh="slate", li="lgrey")
+    g.ell(30, 31, 7, 8, "cream")
+    for x, y, rx, ry in ((13, 13 + phase % 2 * 4, 6, 9), (23, 16 + phase % 2 * 4, 5, 9)):
+        g.blob(x, y, rx, ry, "grey", sh="slate", li="lgrey")
+        g.rect(x - 2, y - 5, 2, 8, "slate")
+    g.rect(22, 36, 5, 2, "pink")
+    g.ell(32, 30, 7, 7, "zone-purple-shade")
+    hx, hy = 34, 33 + (0, 1, 0, -1)[phase]
+    g.blob(hx, hy, 8, 7, "grey", sh="slate", li="lgrey")
+    g.tri((39, hy + 3), (43, hy + 8), (36, hy + 6), "brown")
+    g.rect(36, hy - 1, 3, 3, "ink")
+    g.rect(36, hy - 1, 2, 2, "cream")
+    return g.outlined(lambda c: K["navy"])
+
+
 def draw(state="idle", phase=0):
+    if state == "swoop":
+        return swoop(phase)
     g = Grid(48, 48)
     air = state in ("fly", "drop")
     lift = (3, 4, 3, 4)[phase % 4] if air else phase % 2 if state in ("idle", "rest") else 0
@@ -99,6 +120,7 @@ def sprites():
         ("drop", [draw("drop", i) for i in range(2)], 100),
         ("rest", [draw("rest", i) for i in range(2)], 400),
         ("frustration", [draw("frustration", i) for i in range(4)], 120),
+        ("swoop", [draw("swoop", i) for i in range(4)], 100),
     ]
     yield POOP, [("idle", [poop()], 400)]
 
@@ -136,7 +158,7 @@ def context(state="idle", phase=0):
 
 def preview(out):
     tags = list(sprites())[0][1]
-    sheet = Image.new("RGBA", (720, 360), pixel.rgb("zone-purple") + (255,))
+    sheet = Image.new("RGBA", (720, max(360, len(tags) * 56 + 16)), pixel.rgb("zone-purple") + (255,))
     for row, (_, frames, _) in enumerate(tags):
         for col, px in enumerate(frames):
             sheet.alpha_composite(image(px), (24 + col * 72, 8 + row * 56))

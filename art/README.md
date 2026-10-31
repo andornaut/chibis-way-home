@@ -787,8 +787,9 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 | idle        | Two frames, 400ms each  | Perched breathing          |
 | prepare     | Two frames, 160ms each  | Notices Chibi              |
 | rest        | Two frames, 400ms each  | Perched recovery           |
+| swoop       | Four frames, 100ms each | Head-down contact dive     |
 
-All tags loop. Gameplay owns flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
+All tags loop. The swoop tag appends to the existing frame order. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
 
 ## Industrial material pack
 
