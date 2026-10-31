@@ -13,12 +13,14 @@ import type {
 } from "../data/types";
 import {
   type BehaviourState,
+  type BehaviourStep,
   contactBox,
   startBehaviour,
   stepBehaviour,
   sweptContact,
 } from "./behaviour";
 import type { BehaviourWorld } from "./behaviourReach";
+import { collisionCandidates } from "./collisionIndex";
 import {
   birdBox,
   birdFrameRect,
@@ -35,28 +37,115 @@ import { overlaps } from "./rect";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import { validateWalkEntries } from "./zoneLinks";
 
-const PLATFORM_INDICES = new WeakMap<readonly ObjectLayout[], readonly number[]>();
+interface ObjectFrame {
+  readonly after: Rect;
+  readonly before: Rect;
+  readonly behaviour: BehaviourStep | undefined;
+  readonly object: ObjectLayout;
+}
+interface AreaObjects {
+  readonly behaviours: readonly number[];
+  readonly emptyBehaviours: readonly (BehaviourState | undefined)[];
+  readonly fixed: readonly (ObjectFrame | undefined)[];
+  readonly fixedHazards: readonly (Rect | undefined)[];
+  readonly fixedLedges: readonly Rect[] | undefined;
+  readonly fixedSolids: readonly Rect[] | undefined;
+  readonly geometry: BehaviourWorld | undefined;
+  readonly hazards: readonly number[];
+  readonly ledges: readonly number[];
+  readonly platforms: readonly number[];
+  readonly solids: readonly number[];
+}
+const AREA_OBJECTS = new WeakMap<AreaLayout, AreaObjects>();
+const FIXED_TRACKS = new WeakSet<Track>();
+
+function areaObjects(area: AreaLayout): AreaObjects {
+  const cached = AREA_OBJECTS.get(area);
+  if (cached) {
+    return cached;
+  }
+  const fixed = area.objects.map((object): ObjectFrame | undefined => {
+    const motion = object.motion;
+    if (
+      object.behaviour ||
+      object.reaction.kind !== "none" ||
+      (motion.algorithm !== "static" && motion.distance !== 0 && motion.speed !== 0)
+    ) {
+      return undefined;
+    }
+    const rect = rectAt(object, object.origin);
+    return { after: rect, before: rect, behaviour: undefined, object };
+  });
+  const indices = (collision: string) =>
+    area.objects.flatMap((object, index) => (object.collision === collision ? [index] : []));
+  const solids = indices("solid");
+  const ledges = indices("ledge");
+  const platforms = area.objects.flatMap((object, index) =>
+    object.collision === "solid" || object.collision === "ledge" ? [index] : [],
+  );
+  const fixedRects = (entries: readonly number[]) =>
+    entries.every((index) => fixed[index])
+      ? entries.map((index) => fixed[index]!.after)
+      : undefined;
+  const solidRects = fixedRects(solids);
+  const geometry = platforms.every((index) => fixed[index])
+    ? {
+        ...(platforms.length > 0 && {
+          platforms: platforms.map((index) => ({
+            collision: area.objects[index]!.collision as "solid" | "ledge",
+            owner: area.objects[index]!,
+            rect: fixed[index]!.before,
+          })),
+        }),
+        solids: area.solids,
+      }
+    : undefined;
+  const result: AreaObjects = {
+    behaviours: area.objects.flatMap((object, index) => (object.behaviour ? [index] : [])),
+    emptyBehaviours: area.objects.map(() => undefined),
+    fixed,
+    fixedHazards: fixed.map((frame) =>
+      frame && frame.object.collision === "hazard"
+        ? frame.object.hitbox
+          ? {
+              ...frame.object.hitbox,
+              x: frame.after.x + frame.object.hitbox.x,
+              y: frame.after.y + frame.object.hitbox.y,
+            }
+          : frame.after
+        : undefined,
+    ),
+    fixedLedges: fixedRects(ledges),
+    fixedSolids:
+      solidRects && (solidRects.length > 0 ? [...area.solids, ...solidRects] : area.solids),
+    geometry,
+    hazards: indices("hazard"),
+    ledges,
+    platforms,
+    solids,
+  };
+  AREA_OBJECTS.set(area, result);
+  return result;
+}
+
 function behaviourGeometry(area: AreaLayout, zone: ZoneState): BehaviourWorld {
-  let indices = PLATFORM_INDICES.get(area.objects);
-  if (!indices) {
-    indices = area.objects.flatMap((object, index) =>
-      object.collision === "solid" || object.collision === "ledge" ? [index] : [],
-    );
-    PLATFORM_INDICES.set(area.objects, indices);
+  const cached = areaObjects(area);
+  if (
+    cached.geometry &&
+    cached.platforms.every((index) => {
+      const at = zone.objects[index] ?? area.objects[index]!.origin;
+      const origin = area.objects[index]!.origin;
+      return at.x === origin.x && at.y === origin.y;
+    })
+  ) {
+    return cached.geometry;
   }
-  if (indices.length === 0) {
-    return { solids: area.solids };
-  }
-  const platforms = indices.map((index) => {
-    const object = area.objects[index] as ObjectLayout;
+  const platforms = cached.platforms.map((index) => {
+    const object = area.objects[index]!;
     return {
       collision: object.collision as "solid" | "ledge",
       owner: object,
-      rect: {
-        ...(zone.objects[index] ?? object.origin),
-        height: object.height,
-        width: object.width,
-      },
+      rect: rectAt(object, zone.objects[index] ?? object.origin),
     };
   });
   return { platforms, solids: area.solids };
@@ -146,6 +235,12 @@ export function enterArea(
       randomStream(zone.seed + zone.attempt, `${link.area}:${index}`),
     ),
   );
+  tracks.forEach((track, index) => {
+    const motion = area.objects[index]!.motion;
+    if (motion.algorithm === "static" || motion.distance === 0 || motion.speed === 0) {
+      FIXED_TRACKS.add(track);
+    }
+  });
   return {
     ...zone,
     area: link.area,
@@ -300,7 +395,9 @@ function ride(
   bird: BirdState,
 ): BirdState {
   const clear = (x: number, y: number) =>
-    !solids.some((solid) => overlaps({ ...birdBox(tuning, bird), x, y }, solid));
+    !collisionCandidates(solids, { ...birdBox(tuning, bird), x, y }).some((solid) =>
+      overlaps({ ...birdBox(tuning, bird), x, y }, solid),
+    );
   const x = clear(bird.x + dx, bird.y) ? bird.x + dx : bird.x;
   const y = clear(x, bird.y + dy) ? bird.y + dy : bird.y;
   return { ...bird, x, y };
@@ -344,8 +441,18 @@ export function stepZone(
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
   const geometry = behaviourGeometry(area, zone);
-  const objects = area.objects.map((object, index) => {
+  const kinds = areaObjects(area);
+  const objects = area.objects.map((object, index): ObjectFrame => {
     const before = zone.objects[index] ?? object.origin;
+    const fixed = kinds.fixed[index];
+    if (
+      fixed &&
+      FIXED_TRACKS.has(zone.tracks[index]!) &&
+      before.x === object.origin.x &&
+      before.y === object.origin.y
+    ) {
+      return fixed;
+    }
     const behaviour = object.behaviour
       ? stepBehaviour(
           tuning,
@@ -361,9 +468,18 @@ export function stepZone(
     const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
     return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
   });
-  const platforms = objects.filter(
-    ({ object }) => object.collision === "solid" || object.collision === "ledge",
+  const positions = objects.map((frame, index): Point =>
+    frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
   );
+  let behaviours = zone.behaviours;
+  if (behaviours.length > 0) {
+    const next = kinds.emptyBehaviours.slice();
+    for (const index of kinds.behaviours) {
+      next[index] = objects[index]!.behaviour?.state;
+    }
+    behaviours = next;
+  }
+  const platforms = kinds.platforms.map((index) => objects[index]!);
   const riding = platforms.find(({ before }) => standsOn(tuning, zone.bird, before));
   let bird = zone.bird;
   let dx = 0;
@@ -378,11 +494,13 @@ export function stepZone(
       bird = { ...bird, y: after.y - tuning.height };
     }
   }
-  const rects = (collision: string) =>
-    objects.filter(({ object }) => object.collision === collision).map(({ after }) => after);
   // A solid platform running into her side pushes her ahead of it. Pushed into a solid, she is
   // crushed, which restarts the zone as a hazard does.
-  const solids = [...area.solids, ...rects("solid")];
+  const fixedSolids =
+    kinds.fixedSolids && kinds.solids.every((index) => objects[index] === kinds.fixed[index]);
+  const solids = fixedSolids
+    ? kinds.fixedSolids!
+    : [...area.solids, ...kinds.solids.map((index) => objects[index]!.after)];
   let crushed = false;
   for (const { after, before, object } of platforms) {
     const pushed = object.collision === "solid" ? pushedAside(tuning, before, after, bird) : bird;
@@ -391,15 +509,22 @@ export function stepZone(
       crushed ||= solids.some((solid) => overlaps(birdBox(tuning, bird), solid));
     }
   }
-  const hazards = objects
-    .filter(({ object }) => object.collision === "hazard")
-    .map(({ after, behaviour, object }) =>
-      behaviour
+  const hazards = kinds.hazards.map((index) => {
+    const { after, behaviour, object } = objects[index]!;
+    return (
+      (objects[index] === kinds.fixed[index] ? kinds.fixedHazards[index] : undefined) ??
+      (behaviour
         ? contactBox(object, after, behaviour.state.facing, behaviour.state.axis)
         : object.hitbox
           ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
-          : after,
+          : after)
     );
+  });
+  const fixedLedges =
+    kinds.fixedLedges && kinds.ledges.every((index) => objects[index] === kinds.fixed[index]);
+  const ledges = fixedLedges
+    ? kinds.fixedLedges!
+    : kinds.ledges.map((index) => objects[index]!.after);
   const pulses: ZonePulse[] = [...zone.pulses];
   let nextPulseId = zone.nextPulseId;
   const spawns: SpawnEvent[] = [];
@@ -428,7 +553,7 @@ export function stepZone(
     }
   });
   const push = forcePulseVelocity(solids, seconds, pulses, birdBox(tuning, bird));
-  bird = stepBird(tuning, solids, rects("ledge"), seconds, { ...input, push }, bird);
+  bird = stepBird(tuning, solids, ledges, seconds, { ...input, push }, bird);
   const remainingPulses = pulses.flatMap((pulse) => {
     const remaining = pulse.remaining - Math.max(0, seconds - pulse.start);
     return remaining > 0 ? [{ ...pulse, remaining, start: 0 }] : [];
@@ -436,7 +561,7 @@ export function stepZone(
   const transientStep = stepTransients(
     { height: area.height, width: area.width, x: 0, y: 0 },
     solids,
-    rects("ledge"),
+    ledges,
     seconds,
     birdBox(tuning, zone.bird),
     birdBox(tuning, bird),
@@ -457,15 +582,14 @@ export function stepZone(
   const swept =
     zone.behaviours.length > 0 &&
     seconds > 0 &&
-    objects.some(
-      ({ behaviour, object }) =>
-        object.collision === "hazard" &&
-        behaviour?.segments.some((segment) => {
-          const before = contactBox(object, segment.from, segment.facing, segment.axis);
-          const after = contactBox(object, segment.to, segment.facing, segment.axis);
-          return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
-        }),
-    );
+    kinds.hazards.some((index) => {
+      const { behaviour, object } = objects[index]!;
+      return behaviour?.segments.some((segment) => {
+        const before = contactBox(object, segment.from, segment.facing, segment.axis);
+        const after = contactBox(object, segment.to, segment.facing, segment.axis);
+        return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
+      });
+    });
   const steps = zone.steps + 1;
   if (
     transientStep.lethal ||
@@ -476,14 +600,11 @@ export function stepZone(
   ) {
     const frozen: ZoneState = {
       ...zone,
-      behaviours:
-        zone.behaviours.length > 0
-          ? objects.map(({ behaviour }) => behaviour?.state)
-          : zone.behaviours,
+      behaviours,
       bird,
       nextPulseId,
       nextTransientId: transientStep.nextId,
-      objects: objects.map(({ after }) => ({ x: after.x, y: after.y })),
+      objects: positions,
       pulses: remainingPulses,
       seconds: time,
       steps,
@@ -517,26 +638,17 @@ export function stepZone(
   }
   const usePressed = input.useHeld && !zone.useHeld;
   const door = usePressed
-    ? doorAt(
-        tuning,
-        layout.birdFrame,
-        area.objects,
-        objects.map(({ after }) => after),
-        bird,
-      )
+    ? doorAt(tuning, layout.birdFrame, area.objects, positions, bird)
     : undefined;
   return {
     ...zone,
-    behaviours:
-      zone.behaviours.length > 0
-        ? objects.map(({ behaviour }) => behaviour?.state)
-        : zone.behaviours,
+    behaviours,
     bird,
     cleared: box.x + box.width > area.exitX,
     door,
     nextPulseId,
     nextTransientId: transientStep.nextId,
-    objects: objects.map(({ after }) => ({ x: after.x, y: after.y })),
+    objects: positions,
     pulses: remainingPulses,
     seconds: time,
     steps,

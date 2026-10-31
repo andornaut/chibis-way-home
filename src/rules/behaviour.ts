@@ -15,6 +15,7 @@ import {
   targetReachable,
 } from "./behaviourReach";
 import { birdBox, type BirdState, EDGE } from "./bird";
+import { collisionCandidates } from "./collisionIndex";
 import { hopLift } from "./motion";
 import { overlaps } from "./rect";
 
@@ -422,7 +423,13 @@ function reachable(
       to = Math.max(to, at[axis] + solid[axis] + solid[length] - box[axis]);
     }
   };
-  for (const solid of world.solids) {
+  const delta = to - at[axis];
+  const sweep = {
+    ...box,
+    [axis]: Math.min(box[axis], box[axis] + delta),
+    [length]: box[length] + Math.abs(delta),
+  };
+  for (const solid of collisionCandidates(world.solids, sweep)) {
     consider(solid);
   }
   for (const platform of world.platforms ?? []) {
@@ -446,7 +453,13 @@ function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: n
       to = Math.max(to, solid.y + solid.height);
     }
   };
-  for (const solid of world.solids) {
+  const sweep = {
+    height: object.height + Math.abs(desired - at.y) + 2 * EDGE,
+    width: object.width,
+    x: at.x,
+    y: Math.min(at.y, desired) - EDGE,
+  };
+  for (const solid of collisionCandidates(world.solids, sweep)) {
     consider(solid, false);
   }
   for (const platform of world.platforms ?? []) {
@@ -469,8 +482,15 @@ function flightAxis(
   const across = axis === "x" ? "y" : "x";
   const depth = axis === "x" ? "height" : "width";
   const length = axis === "x" ? "width" : "height";
+  const sweep = {
+    ...at,
+    height: object.height,
+    width: object.width,
+    [axis]: Math.min(at[axis], desired) - EDGE,
+    [length]: object[length] + Math.abs(desired - at[axis]) + 2 * EDGE,
+  };
   const solids = [
-    ...world.solids,
+    ...collisionCandidates(world.solids, sweep),
     ...(world.platforms ?? [])
       .filter((platform) => platform.owner !== object && platform.collision === "solid")
       .map((platform) => platform.rect),

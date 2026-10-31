@@ -1,5 +1,6 @@
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import { birdBox, type BirdState, EDGE } from "./bird";
+import { collisionCandidates } from "./collisionIndex";
 import { overlaps } from "./rect";
 
 export interface BehaviourPlatform {
@@ -67,6 +68,7 @@ function staticCorridor(
   world: BehaviourWorld,
   floor: number,
   tolerance: number,
+  distance: number,
   box: Rect,
 ): Corridor {
   let objects = CACHE.get(world.solids);
@@ -79,17 +81,27 @@ function staticCorridor(
     entries = new Map();
     objects.set(object, entries);
   }
-  const key = `${floor}:${tolerance}:${box.x}:${box.y}:${box.width}:${box.height}`;
+  const key = `${floor}:${tolerance}:${distance}:${box.x}:${box.y}:${box.width}:${box.height}`;
   const cached = entries.get(key);
   if (cached) {
     return cached;
   }
+  const low = Math.min(object.origin.x, object.origin.x + distance);
+  const high = Math.max(object.origin.x, object.origin.x + distance);
+  const top = Math.min(box.y, floor - tolerance - EDGE);
+  const bottom = Math.max(box.y + box.height, floor + tolerance + EDGE);
+  const solids = collisionCandidates(world.solids, {
+    height: bottom - top,
+    width: high - low + box.width + 2 * EDGE,
+    x: low + box.x - EDGE,
+    y: top,
+  });
   const floors = union(
-    world.solids
+    solids
       .filter((rect) => Math.abs(rect.y - floor) <= tolerance + EDGE)
       .map((rect): Span => [rect.x, rect.x + rect.width]),
   );
-  const cuts = world.solids
+  const cuts = solids
     .filter((rect) => blocksAtFloor(rect, box))
     .map((rect): Span => [rect.x - box.x - box.width, rect.x + rect.width - box.x]);
   const result = { allowed: allowedOrigins(floors, cuts, box), cuts, floors };
@@ -120,7 +132,12 @@ function supportY(
       top = Math.min(top, rect.y);
     }
   };
-  for (const rect of world.solids) {
+  for (const rect of collisionCandidates(world.solids, {
+    height: Infinity,
+    width: body.width,
+    x: body.x,
+    y: feet - tolerance - EDGE,
+  })) {
     consider(rect);
   }
   for (const platform of world.platforms ?? []) {
@@ -178,7 +195,7 @@ export function targetReachable(
       y: Math.min(box.y, box.y + nearest - at.y),
     };
     return (
-      !world.solids.some((solid) => overlaps(sweep, solid)) &&
+      !collisionCandidates(world.solids, sweep).some((solid) => overlaps(sweep, solid)) &&
       !(world.platforms ?? []).some(
         (platform) =>
           platform.owner !== object &&
@@ -197,7 +214,7 @@ export function targetReachable(
     return false;
   }
   const baselineBox = { ...box, x: box.x - at.x, y: box.y - at.y + groundY };
-  const cached = staticCorridor(object, world, floor, tolerance, baselineBox);
+  const cached = staticCorridor(object, world, floor, tolerance, plan.distance, baselineBox);
   const floors: Span[] = [];
   const cuts: Span[] = [];
   for (const platform of world.platforms ?? []) {

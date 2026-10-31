@@ -631,3 +631,12 @@ describe("entry-created world state", () => {
     expect(reentered.pulses).toEqual([]);
   });
 });
+
+it("retains supplied track positions when a static layout object uses a different track", () => {
+  const block = object({ origin: { x: 300, y: 250 } });
+  const layout = zone(area([block]));
+  const initial = startZone(BIRD, layout, SEED);
+  const state = { ...initial, tracks: [{ at: () => ({ x: 50, y: 0 }) }] };
+  const stepped = stepZone(BIRD, layout, STEP, STILL, state);
+  expect(stepped.objects[0]).toEqual({ x: 350, y: 250 });
+});
