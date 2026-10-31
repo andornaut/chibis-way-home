@@ -12,8 +12,8 @@ export interface Stats {
 
 export const STATS_VERSION = 4;
 const KEYS = {
-  backup: "bird-versus-ferret.stats-backup",
-  save: "bird-versus-ferret.stats",
+  backup: "chibis-way-home.stats-backup",
+  save: "chibis-way-home.stats",
 } as const;
 // A dirty clock is checkpointed at most once per second between lifecycle flushes.
 const CHECKPOINT_MS = 1000;

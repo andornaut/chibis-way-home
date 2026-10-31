@@ -141,7 +141,7 @@ afterEach(() => {
 it("preserves stats on progress restart, then resets the stage on every clear", async () => {
   const values = new Map<string, string>([
     [
-      "bird-versus-ferret.stats",
+      "chibis-way-home.stats",
       JSON.stringify({
         stages: { park: { activeSeconds: 2 }, street: { activeSeconds: 3 } },
         version: STATS_VERSION - 1,
@@ -154,7 +154,7 @@ it("preserves stats on progress restart, then resets the stage on every clear", 
   });
   const save = await import("./index");
   await save.loadProgress();
-  expect(values.has("bird-versus-ferret.stats-backup")).toBe(true);
+  expect(values.has("chibis-way-home.stats-backup")).toBe(true);
   expect(save.activeStageTime("street")).toBe(0);
   save.recordActiveStageStep("park", 0.1, INITIAL, ACTIVE);
   expect(save.activeStageTime("park")).toBe(0);
@@ -162,7 +162,7 @@ it("preserves stats on progress restart, then resets the stage on every clear", 
   save.clearProgress();
   await save.flushStats();
   expect(save.activeStageTime("street")).toBe(0.1);
-  expect(values.has("bird-versus-ferret.stats")).toBe(true);
+  expect(values.has("chibis-way-home.stats")).toBe(true);
   save.saveCompleted("street");
   await save.flushStats();
   expect(save.activeStageTime("street")).toBe(0);

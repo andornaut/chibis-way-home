@@ -14,7 +14,7 @@ import { stageStatsStore } from "./stats";
 
 export { type Progress } from "./progress";
 
-const KEYS = { backup: "bird-versus-ferret.save-backup", save: "bird-versus-ferret.save" } as const;
+const KEYS = { backup: "chibis-way-home.save-backup", save: "chibis-way-home.save" } as const;
 
 const store = saveStore(
   localSaveStorage(),

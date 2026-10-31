@@ -1,8 +1,8 @@
-# Bird versus Ferret
+# Chibi's way home
 
 [![Test](https://github.com/andornaut/duck-platformer/actions/workflows/test.yml/badge.svg)](https://github.com/andornaut/duck-platformer/actions/workflows/test.yml)
 
-Help Chibi get home after Firt, his former best friend, mails him far away. A pixel-art platformer for landscape phone browsers and desktop. Built with [Phaser](https://phaser.io/) and TypeScript, and served as static files from [Cloudflare Workers](https://developers.cloudflare.com/workers/static-assets/).
+Help Chibi get home after Furt, his former best friend, mails him far away. A pixel-art platformer for landscape phone browsers and desktop. Built with [Phaser](https://phaser.io/) and TypeScript, and served as static files from [Cloudflare Workers](https://developers.cloudflare.com/workers/static-assets/).
 
 ## Docs
 

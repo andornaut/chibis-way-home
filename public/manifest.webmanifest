@@ -1,8 +1,8 @@
 {
   "id": "/play/",
-  "name": "Bird versus Ferret",
-  "short_name": "Bird versus Ferret",
-  "description": "Help Chibi get home after Firt, his former best friend, mails him far away.",
+  "name": "Chibi's way home",
+  "short_name": "Chibi's way home",
+  "description": "Help Chibi get home after Furt, his former best friend, mails him far away.",
   "start_url": "/play/",
   "scope": "/",
   "display": "fullscreen",
