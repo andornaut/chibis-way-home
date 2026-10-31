@@ -24,7 +24,7 @@ export const BOUNDARY_START: Omit<ChunkPlan, "theme"> = {
   solids: [{ col: 0, cols: 60, look: "ground", row: 50, rows: 10 }],
 };
 
-// The antagonist climbs beside the stack. The approach ledge lets the duck wait for its drop.
+// The antagonist climbs beside the stack. The approach ledge lets the bird wait for its drop.
 export const VERTICAL_FINISH: Omit<ChunkPlan, "theme"> = {
   backdrops: [{ character: "facade-one-storey", col: 4, cols: 12, role: "near-wall", row: 34 }],
   cols: 60,

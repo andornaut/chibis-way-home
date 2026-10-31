@@ -1,7 +1,7 @@
-import type { DuckTuning } from "./types";
+import type { BirdTuning } from "./types";
 
 // PLACEHOLDER: starting values for gameplay to tune.
-export const DUCK: DuckTuning = {
+export const BIRD: BirdTuning = {
   airAccel: 2880,
   coyoteTime: 0.1,
   flutterFallSpeed: 275,

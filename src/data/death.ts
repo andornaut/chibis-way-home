@@ -1,9 +1,9 @@
-import { DUCK } from "./duck";
+import { BIRD } from "./bird";
 import type { DeathTuning } from "./types";
 
 export const DEATH: DeathTuning = {
   bounceSpeed: 96,
-  fallGravity: DUCK.gravity,
+  fallGravity: BIRD.gravity,
   impactSeconds: 0.08,
   maxFallSpeed: 400,
   recoilSeconds: 0.1,

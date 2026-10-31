@@ -26,17 +26,17 @@ export const TEXT: GameText = {
   dialogue: {
     continue: "Continue",
     skip: "Skip",
-    speakers: { dog: "Dog", duck: "Duck" },
+    speakers: { bird: "Chibi", dog: "Dog" },
   },
   homePage: {
-    description: "Help a duck get home after his former best friend, a ferret, mails him far away.",
+    description: "Help Chibi get home after Firt, his former best friend, mails him far away.",
     keyboard: "Keyboard: arrow keys to walk and jump; E to use; P to pause.",
     play: "Play",
     subline: "Jump through city streets, avoid red-edged hazards and get past the dog.",
     touch: "Touch: drag left or right to walk; press {jump} or {use}.",
   },
   lines: {
-    "depot-dog-intro-1": "The ferret asked me to stop you.",
+    "depot-dog-intro-1": "Firt asked me to stop you.",
     "depot-dog-intro-2": "I am going home.",
     "depot-dog-intro-3": "Then you will have to get past me.",
   },
