@@ -20,7 +20,6 @@ import {
   sweptContact,
 } from "./behaviour";
 import type { BehaviourWorld } from "./behaviourReach";
-import { collisionCandidates } from "./collisionIndex";
 import {
   birdBox,
   birdFrameRect,
@@ -30,6 +29,7 @@ import {
   startBird,
   stepBird,
 } from "./bird";
+import { collisionCandidates } from "./collisionIndex";
 import { deathSupport } from "./death";
 import { type ForcePulse, forcePulseVelocity } from "./force";
 import { axisOf, motionTrack, type Track } from "./motion";

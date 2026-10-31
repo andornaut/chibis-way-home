@@ -482,10 +482,9 @@ function flightAxis(
   const across = axis === "x" ? "y" : "x";
   const depth = axis === "x" ? "height" : "width";
   const length = axis === "x" ? "width" : "height";
+  const body = { ...at, height: object.height, width: object.width };
   const sweep = {
-    ...at,
-    height: object.height,
-    width: object.width,
+    ...body,
     [axis]: Math.min(at[axis], desired) - EDGE,
     [length]: object[length] + Math.abs(desired - at[axis]) + 2 * EDGE,
   };
