@@ -165,6 +165,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: FERRET_BEHAVIOUR,
     cols: 4,
     rows: 4,
+    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
   },
   "ferret-parcel": {
     archetype: "hazard",
@@ -240,6 +241,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: GOOSE_BEHAVIOUR,
     cols: 4,
     rows: 4,
+    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
   },
   "goose-trap": {
     animations: { idle: "armed" },
@@ -403,6 +405,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: PIGEON_BEHAVIOUR,
     cols: 4,
     rows: 4,
+    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
   },
   "pigeon-poop": {
     archetype: "hazard",
@@ -462,6 +465,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: RACCOON_BEHAVIOUR,
     cols: 4,
     rows: 4,
+    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
   },
   "red-edge-bottom": {
     archetype: "hazard",

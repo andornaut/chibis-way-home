@@ -2,10 +2,24 @@ import type { DialoguePlan, DialogueSpeaker, ZoneDialoguePlan } from "./types";
 
 // Linear conversations, with paragraph text in TEXT.lines.
 export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
+  "archie-foreshadow": {
+    lines: [
+      { line: "archie-foreshadow-1", speaker: "dog" },
+      { line: "archie-foreshadow-2", speaker: "bird" },
+      { line: "archie-foreshadow-3", speaker: "dog" },
+    ],
+  },
   "archie-outro": {
     lines: [
       { line: "archie-outro-1", speaker: "dog" },
       { line: "archie-outro-2", speaker: "bird" },
+    ],
+  },
+  "bini-foreshadow": {
+    lines: [
+      { line: "bini-foreshadow-1", speaker: "bear" },
+      { line: "bini-foreshadow-2", speaker: "bird" },
+      { line: "bini-foreshadow-3", speaker: "bear" },
     ],
   },
   "bini-intro": {
@@ -28,6 +42,13 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
       { line: "depot-dog-intro-3", speaker: "dog" },
     ],
   },
+  "furt-foreshadow": {
+    lines: [
+      { line: "furt-foreshadow-1", speaker: "ferret" },
+      { line: "furt-foreshadow-2", speaker: "bird" },
+      { line: "furt-foreshadow-3", speaker: "ferret" },
+    ],
+  },
   "furt-intro": {
     lines: [
       { line: "furt-intro-1", speaker: "ferret" },
@@ -39,6 +60,13 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
     lines: [
       { line: "furt-outro-1", speaker: "ferret" },
       { line: "furt-outro-2", speaker: "bird" },
+    ],
+  },
+  "kiwi-foreshadow": {
+    lines: [
+      { line: "kiwi-foreshadow-1", speaker: "raccoon" },
+      { line: "kiwi-foreshadow-2", speaker: "bird" },
+      { line: "kiwi-foreshadow-3", speaker: "raccoon" },
     ],
   },
   "kiwi-intro": {
@@ -54,6 +82,13 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
       { line: "kiwi-outro-2", speaker: "bird" },
     ],
   },
+  "pebble-foreshadow": {
+    lines: [
+      { line: "pebble-foreshadow-1", speaker: "pigeon" },
+      { line: "pebble-foreshadow-2", speaker: "bird" },
+      { line: "pebble-foreshadow-3", speaker: "pigeon" },
+    ],
+  },
   "pebble-intro": {
     lines: [
       { line: "pebble-intro-1", speaker: "pigeon" },
@@ -65,6 +100,13 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
     lines: [
       { line: "pebble-outro-1", speaker: "pigeon" },
       { line: "pebble-outro-2", speaker: "bird" },
+    ],
+  },
+  "trixi-foreshadow": {
+    lines: [
+      { line: "trixi-foreshadow-1", speaker: "goose" },
+      { line: "trixi-foreshadow-2", speaker: "bird" },
+      { line: "trixi-foreshadow-3", speaker: "goose" },
     ],
   },
   "trixi-intro": {
@@ -94,10 +136,14 @@ export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
 };
 
 export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
-  apartment: { intro: "furt-intro", outro: "furt-outro" },
-  "blue-cityscape": { intro: "depot-dog-intro", outro: "archie-outro" },
-  countryside: { intro: "trixi-intro", outro: "trixi-outro" },
-  "home-city": { intro: "kiwi-intro", outro: "kiwi-outro" },
-  industrial: { intro: "pebble-intro", outro: "pebble-outro" },
-  woodland: { intro: "bini-intro", outro: "bini-outro" },
+  apartment: { foreshadow: "furt-foreshadow", intro: "furt-intro", outro: "furt-outro" },
+  "blue-cityscape": {
+    foreshadow: "archie-foreshadow",
+    intro: "depot-dog-intro",
+    outro: "archie-outro",
+  },
+  countryside: { foreshadow: "trixi-foreshadow", intro: "trixi-intro", outro: "trixi-outro" },
+  "home-city": { foreshadow: "kiwi-foreshadow", intro: "kiwi-intro", outro: "kiwi-outro" },
+  industrial: { foreshadow: "pebble-foreshadow", intro: "pebble-intro", outro: "pebble-outro" },
+  woodland: { foreshadow: "bini-foreshadow", intro: "bini-intro", outro: "bini-outro" },
 };
