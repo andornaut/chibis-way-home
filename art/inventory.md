@@ -214,10 +214,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Dog antagonist
 
-| Key            | Type                           | Size  | Tags                           |
-| -------------- | ------------------------------ | ----- | ------------------------------ |
-| dog-antagonist | character; hit box 2,2,56,38   | 60x40 | idle, walk, crouch, rush, rest |
-| portrait-dog   | dialogue portrait, transparent | 64x64 | neutral                        |
+| Key            | Type                           | Size  | Tags                                        |
+| -------------- | ------------------------------ | ----- | ------------------------------------------- |
+| dog-antagonist | character; hit box 2,2,56,38   | 60x40 | idle, walk, crouch, rush, rest, frustration |
+| portrait-dog   | dialogue portrait, transparent | 64x64 | neutral                                     |
 
 ## Apartment building blocks
 
@@ -249,9 +249,9 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Ferret obstacle skin
 
-| Key               | Type                         | Size  | Tags                           |
-| ----------------- | ---------------------------- | ----- | ------------------------------ |
-| ferret-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, walk, crouch, rush, rest |
+| Key               | Type                         | Size  | Tags                                        |
+| ----------------- | ---------------------------- | ----- | ------------------------------------------- |
+| ferret-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, walk, crouch, rush, rest, frustration |
 
 ## Countryside materials
 
@@ -268,15 +268,15 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Goose antagonist
 
-| Key              | Type                         | Size  | Tags                         |
-| ---------------- | ---------------------------- | ----- | ---------------------------- |
-| goose-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, walk, warn, rush, rest |
+| Key              | Type                         | Size  | Tags                                      |
+| ---------------- | ---------------------------- | ----- | ----------------------------------------- |
+| goose-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, walk, warn, rush, rest, frustration |
 
 ## Owl antagonist
 
-| Key            | Type                         | Size  | Tags                              |
-| -------------- | ---------------------------- | ----- | --------------------------------- |
-| owl-antagonist | character; hit box 2,2,44,46 | 48x48 | drop, idle, prepare, rest, return |
+| Key            | Type                         | Size  | Tags                                           |
+| -------------- | ---------------------------- | ----- | ---------------------------------------------- |
+| owl-antagonist | character; hit box 2,2,44,46 | 48x48 | drop, idle, prepare, rest, return, frustration |
 
 ## Woodland materials
 
@@ -293,9 +293,9 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Rabbit antagonist
 
-| Key               | Type                         | Size  | Tags            |
-| ----------------- | ---------------------------- | ----- | --------------- |
-| rabbit-antagonist | character; hit box 2,2,44,46 | 48x48 | hop, idle, rest |
+| Key               | Type                         | Size  | Tags                         |
+| ----------------- | ---------------------------- | ----- | ---------------------------- |
+| rabbit-antagonist | character; hit box 2,2,44,46 | 48x48 | hop, idle, rest, frustration |
 
 ## Home city materials
 
@@ -325,6 +325,6 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Raccoon antagonist
 
-| Key                | Type                         | Size  | Tags                             |
-| ------------------ | ---------------------------- | ----- | -------------------------------- |
-| raccoon-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, climb, prepare, drop, rest |
+| Key                | Type                         | Size  | Tags                                          |
+| ------------------ | ---------------------------- | ----- | --------------------------------------------- |
+| raccoon-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, climb, prepare, drop, rest, frustration |

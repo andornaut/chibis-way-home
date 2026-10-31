@@ -328,6 +328,12 @@ The celebration and restart screens remain placeholders using the standard card 
 
 The duck's 48x42 `death` tag is appended after `land`, leaving all earlier frames and tags unchanged. Relative frame 0 is the small recoil with visible feet, frame 1 a pronounced falling tilt with visible tucked soles, frame 2 a brief stronger impact squash and frame 3 a full, round seated rest. The last two poses hide the feet completely. The seated body is 34x21 with a nearly full-height head, a short flat belly centre and rounded contact ends resting at the frame bottom; it springs slightly up from the 38x16 impact pose rather than holding a flattened body. `death` plays once and holds its last frame. Its authored durations are 100, 120, 80 and 400ms; these are art playback defaults, not gameplay state durations. Runtime holds frame 1 until support is reached, then plays frames 2 and 3 once. The retry card opens when frame 3 is reached, with that seated pose held underneath it. Keep the body-centre and frame-bottom anchor fixed across the poses; world movement belongs to the runtime. Existing `jump` and `land` do not supply the seated terminal pose.
 
+### Enemy frustration
+
+All six stage enemy sprites append the looping `frustration` tag: `dog-antagonist`, `ferret-antagonist`, `goose-antagonist`, `owl-antagonist`, `rabbit-antagonist` and `raccoon-antagonist`. The cycle has four 120ms frames, lasting 480ms before repeating. Its head, paw, wing or ear gesture clearly differs from standing rest and preparation, while retaining the animal's cute silhouette. No world movement, text, effect outline or new story is baked into the reaction.
+
+The new frames follow every existing tag without changing their global frame indices, pixels or timings. Frame sizes, bottom-centre anchors, fixed contact boxes and mirrored bounds remain unchanged. `once` remains empty, so the runtime may keep playing the loop while the route is blocked. Gameplay owns the state duration, target loss and recovery transition; its state name may differ from the animation tag. Contact remains lethal throughout the reaction. Existing dialogue portraits and the original story ferret are unchanged.
+
 ### Cycles
 
 | Cycle           | Frames | Timing       | Motion                                                                                     |
@@ -436,6 +442,8 @@ The contact box is fixed across all poses: x 2, y 2, width 56, height 38, in fra
 These animation tags are available as loops. The runtime selects a tag for each active gameplay state. Gameplay data owns the duration and transition of patrol, crouch, committed rush and rest; art cycle durations do not set encounter timing. The five-column by four-row placement (60x48) bottom-anchors the 60x40 frame, putting the contact box ten pixels below the placement's top and ending at its bottom.
 
 `portrait-dog` is 64x64, authored facing right, with the matching floppy ears and coat, an ink outline and a transparent ground, cut off at the bottom. Its `neutral` tag is one frame at 1000ms. It uses the existing dialogue portrait frame; no proper name or specific breed is encoded in the art.
+
+This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Environment aesthetic
 
@@ -617,6 +625,8 @@ The frame is 48x48, bottom-centre anchor 24,48, with constant contact box x 2, y
 
 All tags loop, with `once: []`. These are art playback defaults, not gameplay state durations. There is no boss-specific visual system or new ending artwork.
 
+This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
+
 ## Countryside material pack
 
 Farmland and River crossing use the countryside destination's muted straw primary, `zone-yellow`. `art/tools/countryside.py` supplies appearance bindings for the same terrain roles and structures used by the other zones. It adds no collision rules or obstacle behaviours.
@@ -656,6 +666,8 @@ The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is 
 
 All tags loop; state transitions belong to the runtime. These art timings do not define the charge's distance or duration.
 
+This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
+
 ## Owl antagonist
 
 `art/tools/owl.py` draws `owl-antagonist`. A compact round head and broad wings distinguish the owl. Its preparation pose signals a descending swoop before it returns and rests. There is no red outline or dialogue portrait.
@@ -671,6 +683,8 @@ The frame is 48x48 with bottom-centre anchor 24,48. Its fixed contact box is x 2
 | return  | Four frames, 120ms each | Wingbeat on the return    |
 
 Every tag loops. These frame timings are art cycle defaults, not the runtime motion or warning durations.
+
+This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Woodland material pack
 
@@ -708,6 +722,8 @@ The frame is 48x48 with bottom-centre anchor 24,48. Its fixed contact box is x 2
 | rest | Two frames, 400ms each  | Predictable recovery pause |
 
 Every tag loops. These frame timings are art cycle defaults, not the runtime motion or warning durations.
+
+This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Home city material pack
 
@@ -768,6 +784,8 @@ The repeated atmosphere layers have a default bottom of y 600. Use sky factors 0
 | rest    | Two frames, 400ms each  | Settled pause after landing           |
 
 All tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. No portrait or new conversation is supplied by this asset.
+
+This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Kept for a later indoor zone: the boutique lobby
 
