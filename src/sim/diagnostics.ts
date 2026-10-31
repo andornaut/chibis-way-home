@@ -1,11 +1,20 @@
 import { createHash } from "node:crypto";
 
-import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
+import { SCREEN } from "../data/screen";
+import type {
+  BehaviourMotion,
+  BirdTuning,
+  Motion,
+  Rect,
+  ZoneDeath,
+  ZoneLayout,
+} from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
 import { overlaps } from "../rules/rect";
 import { STEP_SECONDS } from "../rules/step";
 import type { ZoneInput, ZoneState } from "../rules/zone";
+import type { NavigationDiagnostic } from "./bot";
 import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate";
 
 export const VALIDATION_LIMITS = {
@@ -21,7 +30,30 @@ export interface TraceOptions {
   readonly sampleEveryTicks?: number;
   readonly stallTicks: number;
 }
+interface NearbyTerrain {
+  readonly distance: number;
+  readonly index: number;
+  readonly rect: Rect;
+}
+interface NearbyObject extends NearbyTerrain {
+  readonly active: boolean | undefined;
+  readonly areaSeconds: number;
+  readonly behaviourMotion: BehaviourMotion | undefined;
+  readonly character: string;
+  readonly collision: string;
+  readonly facing: -1 | 1 | undefined;
+  readonly motion: Motion;
+  readonly phase: number;
+  readonly stateKey: string | undefined;
+  readonly stateSeconds: number | undefined;
+}
+
 export interface TraceEvent {
+  readonly nearby: {
+    readonly terrain: readonly NearbyTerrain[];
+    readonly objects: readonly NearbyObject[];
+  };
+  readonly planner?: NavigationDiagnostic;
   readonly area: string;
   readonly attempt: number;
   readonly attemptTick: number;
@@ -55,8 +87,9 @@ export function traceEvent(
   tick: number,
   attemptTick: number,
   input: ZoneInput,
+  chunkIds: Readonly<Record<string, readonly string[]>> | undefined,
+  planner: NavigationDiagnostic | undefined,
   zone: ZoneState,
-  chunkIds?: Readonly<Record<string, readonly string[]>>,
 ): TraceEvent {
   const area = layout.areas[zone.area];
   if (!area) {
@@ -64,6 +97,26 @@ export function traceEvent(
   }
   const box = birdBox(tuning, zone.bird);
   let closest: TraceEvent["object"];
+  const terrain: NearbyTerrain[] = [];
+  const objects: NearbyObject[] = [];
+  const distanceTo = (rect: Rect) =>
+    Math.hypot(
+      Math.max(0, rect.x - box.x - box.width, box.x - rect.x - rect.width),
+      Math.max(0, rect.y - box.y - box.height, box.y - rect.y - rect.height),
+    );
+  const retain = <Value extends NearbyTerrain>(values: Value[], value: Value) => {
+    if (value.distance > SCREEN.width / 2) {
+      return;
+    }
+    values.push(value);
+    values.sort((a, b) => a.distance - b.distance || a.index - b.index);
+    if (values.length > 4) {
+      values.pop();
+    }
+  };
+  area.solids.forEach((rect, index) =>
+    retain(terrain, { distance: distanceTo(rect), index, rect: { ...rect } }),
+  );
   for (let index = 0; index < area.objects.length; index++) {
     const object = area.objects[index];
     if (!object || object.collision === "none") {
@@ -75,10 +128,26 @@ export function traceEvent(
       object.collision === "hazard"
         ? contactBox(object, at, behaviour?.facing ?? 1, behaviour?.axis)
         : { ...at, height: object.height, width: object.width };
-    const distance = Math.hypot(
-      Math.max(0, rect.x - box.x - box.width, box.x - rect.x - rect.width),
-      Math.max(0, rect.y - box.y - box.height, box.y - rect.y - rect.height),
-    );
+    const distance = distanceTo(rect);
+    if (object.collision !== "use") {
+      retain(objects, {
+        active: behaviour?.active,
+        areaSeconds: zone.seconds,
+        behaviourMotion: behaviour
+          ? object.behaviour?.states[behaviour.stateKey]?.motion
+          : undefined,
+        character: object.character,
+        collision: object.collision,
+        distance,
+        facing: behaviour?.facing,
+        index,
+        motion: { ...object.motion },
+        phase: object.phase,
+        rect: { ...rect },
+        stateKey: behaviour?.stateKey,
+        stateSeconds: behaviour?.elapsed,
+      });
+    }
     const touching = overlaps(box, rect);
     if (
       closest === undefined ||
@@ -109,6 +178,21 @@ export function traceEvent(
     deathReason: zone.death?.reason,
     input,
     kind,
+    nearby: { objects, terrain },
+    ...(planner
+      ? {
+          planner: {
+            ...planner,
+            candidates: planner.candidates.slice(0, 8).map((candidate) => ({
+              ...candidate,
+              predictedEndpoint: { ...candidate.predictedEndpoint },
+            })),
+            origin: { ...planner.origin },
+            previousPlan: planner.previousPlan ? { ...planner.previousPlan } : null,
+            waypoint: planner.waypoint ? { ...planner.waypoint } : null,
+          },
+        }
+      : {}),
     object: closest,
     tick,
     x: zone.bird.x,

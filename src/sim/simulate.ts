@@ -18,6 +18,7 @@ import {
   type BotSkill,
   type NavigationCounters,
   navigationCounters,
+  navigationSnapshot,
   newBot,
   prepareSensors,
   rememberNavigationFailure,
@@ -504,8 +505,9 @@ function executeStage(
               steps,
               attemptTick,
               input,
-              zone,
               stage.source?.chunkIds,
+              navigationSnapshot(bot),
+              zone,
             ),
           );
         } else {
@@ -522,8 +524,9 @@ function executeStage(
                   steps,
                   attemptTick,
                   input,
-                  zone,
                   stage.source?.chunkIds,
+                  navigationSnapshot(bot),
+                  zone,
                 ),
               );
             }
@@ -560,8 +563,9 @@ function executeStage(
           steps,
           attemptTick,
           input,
-          zone,
           stage.source?.chunkIds,
+          navigationSnapshot(bot),
+          zone,
         ),
       );
       const memory = playback ? undefined : rememberNavigationFailure(zone, bot);
@@ -642,8 +646,9 @@ function executeStage(
       steps,
       attemptTick,
       lastInput,
-      zone,
       stage.source?.chunkIds,
+      navigationSnapshot(bot),
+      zone,
     ),
     ...(status === "cleared" ? { successfulAttemptSeconds: attemptTick * STEP_SECONDS } : {}),
     activeSeconds: steps * STEP_SECONDS,

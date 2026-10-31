@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { STATIC_MOTION } from "../data/archetypes";
 import { BIRD } from "../data/bird";
-import type { AreaLayout, ZoneLayout } from "../data/types";
+import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_SECONDS } from "../rules/step";
 import * as zoneRules from "../rules/zone";
@@ -9,7 +10,7 @@ import { startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
 import * as botRules from "./bot";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_VALIDATION } from "./bot";
-import { VALIDATION_LIMITS } from "./diagnostics";
+import { traceEvent, VALIDATION_LIMITS } from "./diagnostics";
 import { simulateBatch } from "./report";
 import {
   prepareStage,
@@ -689,5 +690,142 @@ describe("explicit validation profile and actual failure memory", () => {
       remember.mockRestore();
       restore.mockRestore();
     }
+  });
+});
+
+describe("bounded actionable stall snapshots", () => {
+  function planner() {
+    return {
+      actualProgress: 0,
+      area: "main",
+      cacheMatched: true,
+      cacheRemaining: 12,
+      candidates: Array.from({ length: 12 }, (_, index) => ({
+        elapsed: 62,
+        forwardProgress: 0,
+        inputLabel: `candidate-${index}`,
+        physicsSteps: 62,
+        predictedEndpoint: { grounded: false, x: 90, y: 84 },
+        rejection: "airborne" as const,
+        score: null,
+        verticalProgress: 0,
+      })),
+      chosenAction: "walk",
+      didReplan: true,
+      intent: "wait" as const,
+      origin: { x: 60, y: 84 },
+      predictedProgress: 0,
+      previousPlan: { actualProgress: 0, predictedProgress: 12 },
+      reason: "search" as const,
+      recovering: false,
+      stalledTicks: 12,
+      status: "ready" as const,
+      tick: 12,
+      waypoint: { width: 12, x: 90, y: 108 },
+    };
+  }
+  it("retains terminal planning evidence after the sampled trace cap is exhausted", () => {
+    const snapshot = vi.spyOn(botRules, "navigationSnapshot").mockImplementation(() => planner());
+    try {
+      const stage = prepareStage(fixture([...ground, { height: 120, width: 12, x: 90, y: 0 }]));
+      const run = simulateStage(BIRD, stage, {
+        ...config,
+        maxSteps: 40,
+        stopAfterStallTicks: 20,
+        trace: { maxEvents: 1, stallTicks: 2 },
+      });
+      expect(run.status).toBe("policy-stall");
+      expect(run.trace).toHaveLength(1);
+      expect(run.traceDropped).toBeGreaterThan(0);
+      expect(run.terminal.planner?.chosenAction).toBe("walk");
+      expect(run.terminal.planner?.candidates).toHaveLength(8);
+      expect(run.terminal.planner?.candidates[0]).toMatchObject({
+        elapsed: 62,
+        predictedEndpoint: { grounded: false },
+        rejection: "airborne",
+      });
+      expect(run.terminal.planner?.waypoint).toMatchObject({ x: 90, y: 108 });
+    } finally {
+      snapshot.mockRestore();
+    }
+  });
+  it("captures at most four nearby terrain and actual moving-object rectangles", () => {
+    const object: ObjectLayout = {
+      animations: {
+        idle: undefined,
+        move: undefined,
+        open: undefined,
+        react: undefined,
+        talk: undefined,
+      },
+      art: "fixture",
+      character: "fixture",
+      collision: "ledge",
+      height: 12,
+      hitbox: undefined,
+      interaction: { kind: "none", range: 0 },
+      lines: [],
+      motion: { ...STATIC_MOTION, algorithm: "linear", direction: "down", distance: 12, speed: 24 },
+      origin: { x: 120, y: 40 },
+      phase: 0,
+      quips: [],
+      quirks: [],
+      reaction: { kind: "none", range: 0, speed: 0 },
+      room: undefined,
+      scene: undefined,
+      width: 12,
+    };
+    const base = fixture([
+      ...ground,
+      ...Array.from({ length: 6 }, (_, index) => ({
+        height: 12,
+        width: 12,
+        x: 120 + index * 24,
+        y: 200,
+      })),
+    ]);
+    const layout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          objects: Array.from({ length: 6 }, (_, index) => ({
+            ...object,
+            origin: { x: 120 + index * 24, y: 40 },
+          })),
+        },
+      },
+    };
+    const zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, config.seed),
+    );
+    const source = planner();
+    const event = traceEvent(
+      BIRD,
+      layout,
+      "terminal",
+      1,
+      1,
+      { jumpHeld: false, move: 0, useHeld: false },
+      undefined,
+      source,
+      zone,
+    );
+    expect(event.nearby.terrain).toHaveLength(4);
+    expect(event.nearby.objects).toHaveLength(4);
+    for (const nearby of event.nearby.objects) {
+      expect(nearby.rect.y).toBe(zone.objects[nearby.index]?.y);
+      expect(nearby.motion).toEqual(object.motion);
+      expect(nearby.phase).toBe(object.phase);
+      expect(nearby.areaSeconds).toBe(zone.seconds);
+    }
+    source.candidates[0]!.predictedEndpoint.x = 999;
+    source.waypoint.x = 999;
+    expect(event.planner?.candidates[0]?.predictedEndpoint.x).toBe(90);
+    expect(event.planner?.waypoint?.x).toBe(90);
   });
 });
