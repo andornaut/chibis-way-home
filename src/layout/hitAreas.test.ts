@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SCREEN } from "../data/screen";
 import { HIT_RULE, hitAround, hitMargin, pressArea, pressedArea } from "./hitAreas";
 import { PAUSE_BUTTON } from "./pauseCard";
 import { startScreenLayout } from "./startScreen";
@@ -19,13 +20,17 @@ describe("hitMargin", () => {
 
 describe("hitAround", () => {
   // Each button's press area, by the rule, from its drawn size.
-  const { start } = startScreenLayout(true, false);
+  const { start } = startScreenLayout(SCREEN.width / 2, true, false);
   it.each<[string, { height: number; width: number }, { height: number; width: number }]>([
     ["the pause button, a 35 px frame", PAUSE_BUTTON.art, { height: 52.5, width: 52.5 }],
     ["a 16 px icon, at the least size", square(16), { height: 48, width: 48 }],
     ["a standard action button", { height: 48, width: 192 }, { height: 72, width: 216 }],
     ["Start", start.button, { height: 72, width: 216 }],
-    ["a nav icon button", startScreenLayout(true, false).settings.art, { height: 54, width: 54 }],
+    [
+      "a nav icon button",
+      startScreenLayout(SCREEN.width / 2, true, false).settings.art,
+      { height: 54, width: 54 },
+    ],
   ])("grows %s", (_, art, size) => {
     const hit = hitAround({ ...art, x: 0, y: 0 });
     expect({ height: hit.height, width: hit.width }).toEqual(size);

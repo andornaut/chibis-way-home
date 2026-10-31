@@ -2,6 +2,7 @@ import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
+import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { centredLabel } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./pauseCard";
@@ -48,7 +49,7 @@ describe("centredLabel", () => {
     ["Start", TEXT.start.start],
     ["Continue", TEXT.start.continue],
   ])("fits the start screen's unmarked %s label with standard padding", (_, text) => {
-    const { button: start } = startScreenLayout(true, false).start;
+    const { button: start } = startScreenLayout(SCREEN.width / 2, true, false).start;
     const ink = inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, text);
     const { labelX } = centredLabel(start, ink);
     const margins = [labelX - start.x, start.x + start.width - (labelX + ink)];
@@ -56,7 +57,7 @@ describe("centredLabel", () => {
   });
 
   it("fits the start screen's Restart label on its button", () => {
-    const restart = startScreenLayout(true, true).restart?.button;
+    const restart = startScreenLayout(SCREEN.width / 2, true, true).restart?.button;
     const ink = inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, TEXT.start.restart);
     const labelX = restart && centredLabel(restart, ink).labelX;
     const margins = restart &&
@@ -66,7 +67,7 @@ describe("centredLabel", () => {
 
   it("centres Start's label without a play mark on the primary face", () => {
     const ink = inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, TEXT.start.start);
-    const button = startScreenLayout(true, false).start.button;
+    const button = startScreenLayout(SCREEN.width / 2, true, false).start.button;
     const { labelX, markX } = centredLabel(button, ink);
     expect(markX).toBeUndefined();
     expect(labelX + ink / 2).toBe(button.x + button.width / 2);

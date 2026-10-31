@@ -83,7 +83,11 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     this.card = undefined;
     this.focus = undefined;
     this.focusRing = undefined;
-    this.layout = startScreenLayout(exitShown(), savedProgress().at !== "beginning");
+    this.layout = startScreenLayout(
+      this.textures.getFrame(LOGO).realWidth,
+      exitShown(),
+      savedProgress().at !== "beginning",
+    );
     this.draw();
     void this.showStreet();
     this.showPressed(undefined);

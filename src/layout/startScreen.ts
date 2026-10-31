@@ -1,3 +1,4 @@
+import { SCREEN } from "../data/screen";
 import type { Point, Rect } from "../data/types";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { hitAround } from "./hitAreas";
@@ -56,13 +57,17 @@ function iconButton(slot: number): IconButtonLayout {
 
 // The start screen with Settings then Exit at the nav's right end, or Settings alone there where
 // Exit is hidden; Start alone, or with saved progress, Restart then Continue.
-export function startScreenLayout(exitShown: boolean, saved: boolean): StartScreenLayout {
+export function startScreenLayout(
+  logoWidth: number,
+  exitShown: boolean,
+  saved: boolean,
+): StartScreenLayout {
   const { height, width, x, y } = START;
   const middle = x + width / 2;
   const left = middle - width - ROW_GAP / 2;
   return {
     ...(exitShown ? { exit: iconButton(0) } : {}),
-    logo: { x: 180, y: 60 },
+    logo: { x: (SCREEN.width - logoWidth) / 2, y: 60 },
     nav: { height: 48, width: 720, x: 0, y: 0 },
     ...(saved ? { restart: labelledButton({ height, width, x: left, y }, START.labelDy) } : {}),
     settings: iconButton(exitShown ? 1 : 0),
