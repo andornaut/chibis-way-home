@@ -17,7 +17,7 @@ export interface Point {
 
 export type DeathReason = "crush" | "fall" | "hazard";
 
-// A frozen contact snapshot. Position is the duck body's top-left; support is the nearest
+// A frozen contact snapshot. Position is the bird body's top-left; support is the nearest
 // frozen solid or ledge below the body, or undefined over a void.
 export interface ZoneDeath {
   readonly position: Point;
@@ -50,8 +50,8 @@ export interface Size {
   readonly width: number;
 }
 
-// The duck's movement, in base pixels and seconds.
-export interface DuckTuning {
+// The bird's movement, in base pixels and seconds.
+export interface BirdTuning {
   // Speed gained per second while a direction is held, on the ground and in the air.
   readonly airAccel: number;
   readonly groundAccel: number;
@@ -624,7 +624,7 @@ export interface FilledSlot extends ChunkSlot {
   readonly fill?: string;
 }
 
-// How far the duck can jump, in tiles, from the top of the ground she leaves to the top of the
+// How far the bird can jump, in tiles, from the top of the ground she leaves to the top of the
 // ledge she lands on. hop: the height of a short hop; jump: the height of a full jump; gap: the
 // width of a gap, at the same height, that a running full jump crosses.
 export interface Reaches {
@@ -691,7 +691,7 @@ export interface ZoneLayout {
   readonly areaOrder?: readonly string[];
   readonly areas: Readonly<Record<string, AreaLayout>>;
   // Her drawn frame's size, from art: Use reaches a door her drawn frame covers any of.
-  readonly duckFrame: Size;
+  readonly birdFrame: Size;
   readonly start: AreaLink;
 }
 
