@@ -286,6 +286,7 @@ export type BehaviourAction =
     }
   | {
       readonly kind: "force-pulse";
+      readonly visual?: {readonly art: string;readonly animation: string;readonly offset: Point};
       readonly range: number;
       readonly height: number;
       readonly velocity: Point;
