@@ -1,5 +1,5 @@
 import {
-  ANIMAL_DETECTION_RANGE,
+  ANIMAL_INTERACTION_RANGE,
   BEAR_BEHAVIOUR,
   BOAT_BEHAVIOUR,
   CITY_GROUND_HAZARD_BEHAVIOUR,
@@ -57,7 +57,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: BEAR_BEHAVIOUR,
     cols: 4,
     rows: 4,
-    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
+    tuning: { interaction: { kind: "talk", range: ANIMAL_INTERACTION_RANGE } },
   },
   // A canopy: one-way, 6 above the sidewalk.
   canopy: {
@@ -122,7 +122,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 5,
     rows: 4,
     tuning: {
-      interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE },
+      interaction: { kind: "talk", range: ANIMAL_INTERACTION_RANGE },
     },
   },
   // A harmless pug that trots up to her.
@@ -165,7 +165,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: FERRET_BEHAVIOUR,
     cols: 4,
     rows: 4,
-    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
+    tuning: { interaction: { kind: "talk", range: ANIMAL_INTERACTION_RANGE } },
   },
   "ferret-parcel": {
     archetype: "hazard",
@@ -241,7 +241,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: GOOSE_BEHAVIOUR,
     cols: 4,
     rows: 4,
-    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
+    tuning: { interaction: { kind: "talk", range: ANIMAL_INTERACTION_RANGE } },
   },
   "goose-trap": {
     animations: { idle: "armed" },
@@ -405,7 +405,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: PIGEON_BEHAVIOUR,
     cols: 4,
     rows: 4,
-    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
+    tuning: { interaction: { kind: "talk", range: ANIMAL_INTERACTION_RANGE } },
   },
   "pigeon-poop": {
     archetype: "hazard",
@@ -465,7 +465,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     behaviour: RACCOON_BEHAVIOUR,
     cols: 4,
     rows: 4,
-    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
+    tuning: { interaction: { kind: "talk", range: ANIMAL_INTERACTION_RANGE } },
   },
   "red-edge-bottom": {
     archetype: "hazard",
