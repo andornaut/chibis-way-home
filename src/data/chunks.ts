@@ -1,5 +1,12 @@
 import { GROWL_FINISH, PATROL_FINISH_GEOMETRY } from "./chunkTemplates";
-import type { ChunkPlan, ChunkRules, ElementBinding, ThemePlan } from "./types";
+import type {
+  ChunkPlan,
+  ChunkRules,
+  ElementBinding,
+  Instance,
+  TerrainRect,
+  ThemePlan,
+} from "./types";
 import { STREET_CHUNKS } from "./zone1";
 import { INDUSTRIAL_CHUNKS } from "./zone2";
 import { COUNTRYSIDE_CHUNKS } from "./zone3";
@@ -542,6 +549,21 @@ const COMPACT_HAZARD_ASCENT: ChunkPlan = {
 };
 const COMPACT_CLIMB_OFFSET = COMPACT_HAZARD_ASCENT.exit.row - SEAM_ROWS[0];
 
+// The raised route leaves 45px above the bird for a 40px tap beneath the red band.
+const TAP_CEILING_OBJECTS: readonly Instance[] = [
+  { character: "red-edge-bottom", col: 20, cols: 24, role: "edge-bottom", row: 40 },
+  { character: "red-edge-left", col: 19, role: "edge-left", row: 38, rows: 2 },
+  { character: "red-edge-right", col: 44, role: "edge-right", row: 38, rows: 2 },
+  { character: "red-edge-top", col: 20, cols: 24, role: "edge-top", row: 37 },
+  { character: "red-edge-support", col: 20, cols: 24, role: "support", row: 38, rows: 2 },
+];
+const TAP_CEILING_TERRAIN: readonly TerrainRect[] = [
+  { col: 0, cols: 12, look: "ground", row: 50, rows: 10 },
+  { col: 12, cols: 16, look: "raised", row: 47, rows: 13 },
+  { col: 28, cols: 6, look: "raised", row: 46, rows: 14 },
+  { col: 34, cols: 16, look: "raised", row: 47, rows: 13 },
+];
+
 const GROWL_ROW_OFFSET = 10;
 const GROWL_COL_OFFSET = 18;
 
@@ -759,6 +781,26 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     theme: MECHANICAL_THEMES,
   },
+  "city-boundary-return-gap": {
+    cols: 96,
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 30 },
+    exit: { row: 50 },
+    objects: [
+      { character: "red-edge-top", col: 30, cols: 16, role: "edge-top", row: 44 },
+      { character: "red-edge-support", col: 30, cols: 16, role: "support", row: 45, rows: 15 },
+    ],
+    solids: [
+      { col: 0, cols: 18, look: "raised", row: 30, rows: 30 },
+      { col: 18, cols: 12, look: "raised", row: 35, rows: 25 },
+      { col: 46, cols: 12, look: "raised", row: 35, rows: 25 },
+      { col: 58, cols: 12, look: "raised", row: 40, rows: 20 },
+      { col: 70, cols: 12, look: "raised", row: 45, rows: 15 },
+      { col: 82, cols: 14, look: "ground", row: 50, rows: 10 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
   "city-boundary-return-high": {
     cols: 72,
     difficulty: 2,
@@ -948,6 +990,44 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     theme: MECHANICAL_THEMES,
   },
+  "compound-low-ceiling-hazard": {
+    cols: 96,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 50 },
+    exit: { row: 50 },
+    objects: [
+      ...TAP_CEILING_OBJECTS,
+      { character: "platform-ledge", col: 48, cols: 6, role: "ledge", row: 42 },
+      { character: "city-ground-hazard", col: 54, role: "moving-hazard", row: 46 },
+      { character: "platform-ledge", col: 72, cols: 6, role: "ledge", row: 42 },
+    ],
+    solids: [
+      ...TAP_CEILING_TERRAIN,
+      { col: 50, cols: 34, look: "raised", row: 47, rows: 13 },
+      { col: 84, cols: 12, look: "ground", row: 50, rows: 10 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
+  "compound-low-ceiling-shuttle": {
+    cols: 120,
+    difficulty: 5,
+    encounters: 0,
+    entry: { row: 50 },
+    exit: { row: 50 },
+    objects: [
+      ...TAP_CEILING_OBJECTS,
+      { character: "city-shuttle", col: 60, role: "shuttle", row: 50 },
+      { character: "red-edge-top", col: 58, cols: 40, role: "edge-top", row: 56 },
+      { character: "red-edge-support", col: 58, cols: 40, role: "support", row: 57, rows: 3 },
+    ],
+    solids: [
+      ...TAP_CEILING_TERRAIN,
+      { col: 50, cols: 8, look: "ground", row: 50, rows: 10 },
+      { col: 98, cols: 22, look: "ground", row: 50, rows: 10 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
   // The animal's ground lane precedes a lift, with a refuge before the red bed.
   "compound-patrol-lift": {
     cols: 120,
@@ -1013,6 +1093,29 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: 48, cols: 12, look: "raised", row: 40, rows: 20 },
       { col: 60, cols: 12, look: "raised", row: 45, rows: 15 },
       { col: 72, cols: 48, look: "ground", row: 50, rows: 10 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
+  "compound-return-shuttle": {
+    cols: 108,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 30 },
+    exit: { row: 50 },
+    objects: [
+      { character: "city-shuttle", col: 46, role: "shuttle", row: 45 },
+      { character: "red-edge-top", col: 84, cols: 6, role: "edge-top", row: 44 },
+      { character: "red-edge-support", col: 84, cols: 6, role: "support", row: 45, rows: 15 },
+      { character: "red-edge-top", col: 44, cols: 40, role: "edge-top", row: 53 },
+      { character: "red-edge-support", col: 44, cols: 40, role: "support", row: 54, rows: 6 },
+    ],
+    solids: [
+      { col: 0, cols: 12, look: "raised", row: 30, rows: 30 },
+      { col: 12, cols: 12, look: "raised", row: 35, rows: 25 },
+      { col: 24, cols: 12, look: "raised", row: 40, rows: 20 },
+      { col: 36, cols: 8, look: "raised", row: 45, rows: 15 },
+      { col: 90, cols: 6, look: "raised", row: 45, rows: 15 },
+      { col: 96, cols: 12, look: "ground", row: 50, rows: 10 },
     ],
     theme: MECHANICAL_THEMES,
   },
