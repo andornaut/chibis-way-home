@@ -794,13 +794,13 @@ export interface MapDecoration {
   readonly at: Point;
 }
 
-// A themed map destination groups the two ordered stage-node ids shown by the V1 route.
+// A themed map destination groups a nonempty ordered sequence of stage-node ids.
 // Its marker centre is on the map grid; icon is an art key with normal and visited tags.
 export interface MapDestination {
   readonly at: TilePoint;
   readonly icon: string;
   readonly id: string;
-  readonly stages: readonly [string, string];
+  readonly stages: readonly [string, ...string[]];
 }
 
 // The map of zones: every path starts at start and ends at finish. decorations: the pen marks on
