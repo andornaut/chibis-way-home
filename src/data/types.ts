@@ -395,6 +395,7 @@ export interface DialogueChoice {
 
 // A conversation played one paragraph at a time, optionally ending with a required choice.
 export interface ZoneDialoguePlan {
+  readonly foreshadow: string;
   readonly intro: string;
   readonly outro: string;
 }
