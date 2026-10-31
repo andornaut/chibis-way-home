@@ -1,19 +1,8 @@
-import type { OfflinePage } from "@andornaut/game-kit/pwa/offlinePlay";
 import { describe, expect, it, vi } from "vitest";
 
 import { LOADING_CSS, loadingHtml } from "./html";
 import { afterLoadingPaint, installProgress, loadingProgress } from "./progress";
-import { watchInstalling, withInstallProgress } from "./serviceWorker";
-
-class Worker extends EventTarget {
-  state = "installing";
-  postMessage(): void {}
-}
-class Registration extends EventTarget {
-  installing: Worker | null = new Worker();
-  waiting = null;
-  async update(): Promise<void> {}
-}
+import { offlineActivity } from "./serviceWorker";
 
 describe("loading lifecycle", () => {
   it("does not run synchronous preparation until the pending frame can paint, and cancels shutdown work", () => {
@@ -34,40 +23,21 @@ describe("loading lifecycle", () => {
     frames.shift()!(48);
     expect(work).toHaveBeenCalledOnce();
   });
-  it("observes existing registration requests without registering early or inventing install percentages", async () => {
-    const registration = new Registration();
-    const register = vi.fn(async () => registration);
-    const source = Object.assign(new EventTarget(), { controller: null, register });
-    const page = { container: source } as unknown as OfflinePage;
-    const wrapped = withInstallProgress(page);
-    expect(register).not.toHaveBeenCalled();
+  it("maps actual offline activity to pending without changing foreground loading", () => {
     const seen: unknown[] = [];
+    const foreground: unknown[] = [];
     const off = installProgress.subscribe((state) => seen.push(state));
-    expect(await wrapped.container.register("/sw.js", { scope: "/" })).toBe(registration);
-    expect(register).toHaveBeenCalledExactlyOnceWith("/sw.js", { scope: "/" });
-    expect(seen.at(-1)).toEqual({ active: true, value: undefined });
-    const operation = loadingProgress.begin();
-    operation.progress(0.4);
-    registration.installing!.state = "installed";
-    registration.installing!.dispatchEvent(new Event("statechange"));
-    expect(seen.at(-1)).toEqual({ active: false, value: undefined });
-    operation.finish();
+    const offForeground = loadingProgress.subscribe((state) => foreground.push(state));
+    const current = loadingProgress.begin();
+    current.progress(0.4);
+    for (const activity of ["idle", "registering", "installing", "idle"] as const) {
+      offlineActivity(activity);
+      expect(seen.at(-1)).toEqual({ active: activity !== "idle", value: undefined });
+      expect(foreground.at(-1)).toEqual({ active: true, value: 0.4 });
+    }
+    current.finish();
     off();
-  });
-  it("ends a failed install and follows the next actual update", () => {
-    const registration = new Registration();
-    const seen: unknown[] = [];
-    const off = installProgress.subscribe((state) => seen.push(state));
-    watchInstalling(registration);
-    registration.installing!.state = "redundant";
-    registration.installing!.dispatchEvent(new Event("statechange"));
-    expect(seen.at(-1)).toEqual({ active: false, value: undefined });
-    registration.installing = new Worker();
-    registration.dispatchEvent(new Event("updatefound"));
-    expect(seen.at(-1)).toEqual({ active: true, value: undefined });
-    registration.installing.state = "activated";
-    registration.installing.dispatchEvent(new Event("statechange"));
-    off();
+    offForeground();
   });
   it("renders a pending accessible strip in the initial HTML without a percentage", () => {
     const html = loadingHtml('<head></head><div id="game">%GAME_LOADING%</div>');
