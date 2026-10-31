@@ -280,13 +280,15 @@ export type BehaviourAction =
       readonly velocity: Point;
       readonly gravity: number;
       readonly lifeSeconds: number;
+      readonly armSeconds: number;
+      readonly armingAnimation?: string;
       readonly maxAlive: number;
     }
   | {
       readonly kind: "force-pulse";
       readonly range: number;
       readonly height: number;
-      readonly impulse: Point;
+      readonly velocity: Point;
       readonly seconds: number;
     };
 
