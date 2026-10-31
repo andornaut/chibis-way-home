@@ -33,7 +33,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 ## Core loop
 
 1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains two stages; V1 follows a linear route.
-2. **Between stages:** completing a zone's first stage shows a cutscene image and Continue, which enters its second stage directly. Completing the second stage returns to the map and animates Chibi walking to the next zone. V1 continues along its linear route; Next adds branching routes.
+2. **Between stages:** completing a zone's first stage shows a cutscene image and Continue, which enters its second stage directly. Completing the second stage shows the zone's outgoing exchange, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
 3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Furt is undecided.
 
 ## Voice
@@ -96,7 +96,7 @@ The V1 map has six themed destinations with two catalogued stages each. All twel
 
 - **Availability:** all six V1 zones appear in route order. Each has two catalogued stages. All twelve V1 stages are built: Parcel depot and streets (`street`), City boundary (`city-boundary`), Warehouse district (`warehouse-district`), Freight terminal (`freight-terminal`), Farmland (`farmland`), River crossing (`river-crossing`), Forest paths (`forest-paths`), Ravine (`ravine`), City outskirts (`city-outskirts`), Familiar neighbourhood (`familiar-neighbourhood`), Entrance and lobby (`entrance-and-lobby`) and Climb to the apartment (`climb-to-apartment`). Unbuilt zones and stages are visibly unavailable and cannot be entered. The park is a debug prototype outside the V1 map
 - **Backtracking:** unlocked built stages remain available for replay. Replaying an earlier stage never removes later unlocks
-- **Between stages:** clearing a zone's first stage shows a placeholder cutscene image with Continue, which enters stage two directly without showing the map. Clearing its second stage returns to the map and automatically animates Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
+- **Between stages:** clearing a zone's first stage shows a placeholder cutscene image with Continue, which enters stage two directly without showing the map. Clearing its second stage shows the outgoing zone exchange before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
 - **Celebration:** only clearing Apartment building's second stage, Climb to the apartment, shows Furt's outgoing exchange followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
 - **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from any stage entrance returns to the map. The entrance exit stays reachable and has no blocking wall; an apartment stage returns through its first section's left edge
@@ -115,7 +115,7 @@ The V1 map has six themed destinations with two catalogued stages each. All twel
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
 - **Edge hazards:** a common red strip, 2 to 3 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow
 - **Encounters:** every zone has exactly two distinct encounter sections in its first stage and three in its second stage, counted across the whole stage rather than per floor. Ordinary platforming separates the encounters, with flexible spacing. Generated runs vary encounter order and layout while preserving the quota; death retries retain the same run and encounter count. The quota is independent of the successful-clear time target
-- **Exit:** reaching the end of a stage's final area clears the stage. A first stage shows the inter-stage cutscene; a second stage returns to the map for travel to the next zone, except for the final-stage celebration. An internal floor transition does not clear the stage
+- **Exit:** reaching the end of a stage's final area clears the stage. A first stage shows the inter-stage cutscene; a second stage shows its outgoing zone exchange before map travel to the next zone, except for the final outgoing exchange followed by celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged, and cumulative active time is retained. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
 - **Length:** the ten continuous V1 stages have recipe ranges of 720 to 960 columns, fixed start and finish caps included. Entrance and lobby has an aggregate range of 528 to 600 columns across its two sections; Climb to the apartment has 1272 to 1440 across seven sections. These aggregate ranges include the fixed caps. The debug park keeps its own recipe
@@ -196,7 +196,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 ### City boundary
 
-- **Encounter:** the finish uses the same Archie behaviour and timing as the first stage, with refuge ledges on either side of its patrol. Archie is active without a dialogue scene; there is no new introduction
+- **Encounter:** the finish uses the same Archie behaviour and timing as the first stage, with refuge ledges on either side of its patrol. his first-sighting introduction follows the shared once-per-zone rule across both stages
 - **Layout:** the second Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the existing street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, enemy yards, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
 - **Replay:** entering from the map draws a fresh assembly seed; retries keep that layout. Completing Parcel depot and streets unlocks this stage, and the existing stage-choice modal keeps both available for replay
 - **Rooms:** one door in the fixed start leads to the existing prototype test room
@@ -243,7 +243,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Contact:** Bini is always lethal on contact, including while resting, without a red contact outline. His charge and maul are contact threats, not a combat encounter
 - **Cycle:** idle with the phone, use the sonic growl special attack, then charge and maul for direct contact using shared behaviour primitives. Timing and movement values live in data
 - **Growl:** the sonic growl creates a brief gust that pushes Chibi only while he overlaps its finite volume. The push stops when he is above or outside it, or behind solid cover; it is not a single impulse that leaves momentum. It does not kill directly, but can push him into a hazard or off a ledge. High ground is the primary way to avoid it; solid cover also blocks it
-- **Introduction:** Bini sits with a phone playing Archie's Dog Walks. His annoyed introduction precedes his aggressive behaviour
+- **Introduction:** Bini sits with a phone playing Archie's Dog Walks. His annoyed first-sighting introduction follows the once-per-zone rule and precedes his aggressive behaviour
 
 ### Home city
 
@@ -263,7 +263,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Areas:** Entrance and lobby has two short linked sections. Climb to the apartment has seven short floor sections, in order: restaurant, exterior, pool, exterior, spa, exterior, residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
 - **Encounters:** Furt is a normal lethal-contact antagonist who periodically charges for direct contact and throws parcels as his distinct special attack. He uses shared behaviour primitives and has no red contact outline; this is not a boss encounter and adds no combat
-- **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows the celebration every time, including replays. The cause of the fight and the outcome of the friendship remain undecided
+- **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows Furt's outgoing exchange, then the celebration, every time including replays. The cause of the fight and the outcome of the friendship remain undecided
 - **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. These short linked sections do not use the other zones' total stage-length range
 - **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Climb to the apartment. The final map path ends at the apartment. Stage IDs, save format and replay unlocks are unchanged
 - **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room, quest or dialogue. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
@@ -271,7 +271,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 ### First Archie encounter
 
-- **Activation:** proximity starts the introduction once per attempt, freezing play. Completing or skipping it activates Archie and resumes play
+- **Activation:** the first-sighting introduction follows the once-per-zone rule and freezes play. Completing or skipping it activates Archie and resumes play
 - **Appearance:** Archie uses his design from Archie's Dog Walks
 - **Approach:** the loading yard follows the basic hop and full-jump lessons and precedes the streets. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
 - **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
@@ -291,7 +291,9 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 - **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's 64 px portrait and name tab inside the panel. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. There is no back, timer or scrolling chat history
-- **Restarts:** after a stage restart, the stage's dialogue plays again. The first Archie introduction is once per attempt
+- **Introductions:** the first sighting of a zone's antagonist starts an introduction once per zone per playthrough, always with Skip. Its seen state is shared across both stages and survives death, retries and stage replay; a new game resets it
+- **Outgoing exchanges:** completing a zone's second stage shows its outgoing exchange on a black or placeholder interstitial, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to the map walk; Furt's final exchange proceeds to the existing celebration instead
+- **Restarts:** other stage dialogue plays again after a stage restart; the zone introduction keeps its seen state
 - **Skip:** Skip skips all remaining dialogue. If the conversation ends in a choice, Skip opens its modal without choosing an answer or bypassing the choice
 
 ### Quips
