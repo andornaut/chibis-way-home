@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import manifestJson from "../../public/art/manifest.json";
 import { ASSEMBLED_AREA, assembleZone, themesOf } from "../rules/assemble";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { bindElement } from "../rules/elementBinding";
+import { resolveNames } from "../rules/tiles";
 import { ALL_CHUNKS, ALL_RECIPES, ALL_THEMES, FIXTURE_LIBRARY } from "../testing/chunks";
+import type { ArtManifest } from "../view/aseprite";
 import { lookTiles, type Tileset } from "../view/tiles";
 import { ARCHETYPES } from "./archetypes";
 import { CHARACTERS } from "./characters";
@@ -12,6 +15,11 @@ import type { ChunkPlan, ZonePlan } from "./types";
 import { RECIPES, ZONES } from "./zones";
 
 const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
+const ENCOUNTER_ART = new Set(
+  (manifestJson as ArtManifest).sprites
+    .filter(({ contact }) => contact === "silhouette")
+    .map(({ key }) => key),
+);
 const TILESETS = import.meta.glob<Tileset>("../../public/art/tilesets/*.json", {
   eager: true,
   import: "default",
@@ -178,7 +186,21 @@ describe.each(ALL_RECIPES)("recipe %s", (key, library, recipe) => {
     }
   });
 
-  it("fits its length and difficulty band and keeps each chunk's maxPerZone", () => {
+  it("fits its length, difficulty band and encounter quota and keeps each chunk's maxPerZone", () => {
+    if (recipe.encounters !== undefined) {
+      const catalogue = { archetypes: ARCHETYPES, characters: library.characters };
+      const encounters = Object.values(plan().areas).flatMap(({ objects }) =>
+        objects.filter((instance) => {
+          const { archetype, character } = resolveNames(catalogue, instance);
+          return (
+            archetype.collision === "hazard" &&
+            ENCOUNTER_ART.has(character.art) &&
+            (instance.behaviour ?? character.behaviour) !== undefined
+          );
+        }),
+      );
+      expect(encounters).toHaveLength(recipe.encounters);
+    }
     if ("sections" in recipe) {
       expect(plan().areaOrder).toEqual(recipe.sections.map(({ id }) => id));
       const counts = new Map<string, number>();
