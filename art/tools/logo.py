@@ -5,7 +5,7 @@ Usage, from the repository root:
   python3 -I art/tools/logo.py preview OUT.png  each logo on pale steel and navy at 1x and 3x
 
 All images have transparent backgrounds and binary alpha. Canvas sizes and stable keys:
-- logo: 558x193, full cream bird standing on a simple platform above flat Chibi's / Way Home lettering.
+- logo: 558x239, full cream bird standing on a simple platform above flat Chibi's / Way Home lettering.
 - logo-nav: 226x30, compact full bird beside Chibi's Way Home on one line.
 - logo-icon: 53x41, full bird standing on a short powder-blue platform, with no lettering.
 
@@ -62,9 +62,9 @@ GLYPHS = {
 }
 
 BIG = dict(b=11, fill="zone-blue", light="lgrey")
-SMALL = dict(b=3, fill="zone-blue", light="lgrey")
+SMALL = dict(b=9, fill="zone-blue", light="lgrey")
 NAV = dict(b=2, fill="zone-blue", light="zone-blue")
-CANVASES = {"logo": (558, 193), "logo-nav": (226, 30), "logo-icon": (53, 41)}
+CANVASES = {"logo": (558, 239), "logo-nav": (226, 30), "logo-icon": (53, 41)}
 
 
 def image(px):
@@ -160,8 +160,8 @@ def logo():
     from PIL import ImageDraw
 
     draw = ImageDraw.Draw(im)
-    draw.rectangle((35, 76, 522, 192), fill=pixel.rgb("ink") + (255,))
-    draw.rectangle((36, 77, 521, 191), fill=pixel.rgb("dslate") + (255,))
+    draw.rectangle((35, 76, 522, 238), fill=pixel.rgb("ink") + (255,))
+    draw.rectangle((36, 77, 521, 237), fill=pixel.rgb("dslate") + (255,))
     platform(im, (im.width - 210) // 2, 74, 210)
     for text, spec, y in ((WORDMARK[0], BIG, 82), (" ".join(WORDMARK[1:]), SMALL, 168)):
         line = word(text, **spec)

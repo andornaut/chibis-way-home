@@ -36,7 +36,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 
 | Key                        | Type                                              | Size    | Path                                               |
 | -------------------------- | ------------------------------------------------- | ------- | -------------------------------------------------- |
-| logo                       | title-screen logo                                 | 558x193 | `public/art/logo.png`                              |
+| logo                       | title-screen logo                                 | 558x239 | `public/art/logo.png`                              |
 | logo-icon                  | nav-column logo: bird on a platform, no lettering | 53x41   | `public/art/logo-icon.png`                         |
 | logo-nav                   | nav-bar logo, one line                            | 226x30  | `public/art/logo-nav.png`                          |
 | stage-cutscene-placeholder | neutral stage-transition illustration             | 720x360 | `public/art/images/stage-cutscene-placeholder.png` |

@@ -189,8 +189,9 @@ Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing r
 
 ## Logo
 
-The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Chibi's Way Home wordmark. `art/tools/logo.py` draws three transparent PNGs with declared canvases: `logo` (558x193) for the title screen, `logo-nav` (226x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
+The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Chibi's Way Home wordmark. `art/tools/logo.py` draws three transparent PNGs with declared canvases: `logo` (558x239) for the title screen, `logo-nav` (226x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
 
+- The stacked title keeps `Chibi's` at 11px per glyph cell and enlarges `Way Home` to 9px, giving the lines comparable widths without distorting the font. The taller sign preserves clear spacing between lines.
 - The dominant lettering and platform colour is `zone-blue`. The flat dark-steel sign, quiet light edge and ink outline separate the wordmark on pale steel and dark navy. There is no extrusion, bright cyan highlight or drop shadow.
 - The bird retains the protagonist's cream body, tan wing, orange bill and ink dot eye, redrawn from the canonical sprite shapes with a one-pixel outline.
 - The title is supplied by `WORDMARK`; the 5x7 alphabet in `GLYPHS` provides its letters. All three image keys, paths and canvas sizes stay fixed so navigation and title-screen placements remain compatible.
