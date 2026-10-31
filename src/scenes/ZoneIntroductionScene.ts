@@ -2,7 +2,7 @@ import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type GameObjects, Scene } from "phaser";
 
 import { CHARACTERS } from "../data/characters";
-import { SCREEN, TILE } from "../data/screen";
+import { TILE } from "../data/screen";
 import type { Point, ZoneEntryIntroduction } from "../data/types";
 import type { DialogueData, DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
@@ -23,7 +23,7 @@ export interface IntroductionOpener {
 export class ZoneIntroductionScene extends Scene implements DialogueOpener {
   private introduction!: ZoneIntroductionData;
   private actor: GameObjects.Sprite | undefined;
-  private phase: "dialogue" | "escape" | "finished" = "finished";
+  private phase: "approach" | "dialogue" | "escape" | "finished" = "finished";
 
   constructor() {
     super("zoneIntroduction");
@@ -32,7 +32,7 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
   init(data: ZoneIntroductionData): void {
     this.introduction = data;
     this.actor = undefined;
-    this.phase = "dialogue";
+    this.phase = "approach";
   }
 
   create(): void {
@@ -42,8 +42,7 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
     if (
       !character ||
       entry.escapeTilesPerSecond <= 0 ||
-      !Number.isFinite(entry.escapeTilesPerSecond) ||
-      !Number.isFinite(entry.offsetTiles)
+      !Number.isFinite(entry.escapeTilesPerSecond)
     ) {
       throw new Error(`Invalid entry introduction profile ${entry.character}`);
     }
@@ -54,10 +53,11 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
     }
     modalInput(this).open();
     this.actor = this.add
-      .sprite(feet.x + entry.offsetTiles * TILE, feet.y, character.art)
+      .sprite(this.cameras.main.width, feet.y, character.art)
       .setOrigin(0.5, 1)
       .setFlipX(true)
-      .play(animationKey(character.art, entry.idleAnimation));
+      .play(animationKey(character.art, entry.runAnimation));
+    this.actor.x += this.actor.displayWidth / 2;
     this.events.once("shutdown", () => {
       if (this.phase === "dialogue") {
         this.scene.stop("dialogue");
@@ -66,6 +66,13 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
       this.actor?.destroy();
       this.actor = undefined;
     });
+  }
+
+  private openDialogue(): void {
+    this.phase = "dialogue";
+    const { entry } = this.introduction;
+    const character = CHARACTERS[entry.character]!;
+    this.actor!.play(animationKey(character.art, entry.idleAnimation));
     this.scene.launch("dialogue", {
       linear: true,
       opener: this.scene.key,
@@ -85,11 +92,20 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
   }
 
   override update(_time: number, delta: number): void {
-    if (this.phase !== "escape" || !this.actor) {
+    if ((this.phase !== "approach" && this.phase !== "escape") || !this.actor) {
       return;
     }
-    this.actor.x += (this.introduction.entry.escapeTilesPerSecond * TILE * delta) / 1000;
-    if (this.actor.x - this.actor.displayWidth / 2 <= SCREEN.width) {
+    const distance = (this.introduction.entry.escapeTilesPerSecond * TILE * delta) / 1000;
+    const width = this.cameras.main.width;
+    if (this.phase === "approach") {
+      this.actor.x = Math.max(width / 2, this.actor.x - distance);
+      if (this.actor.x === width / 2) {
+        this.openDialogue();
+      }
+      return;
+    }
+    this.actor.x += distance;
+    if (this.actor.x - this.actor.displayWidth / 2 <= width) {
       return;
     }
     this.phase = "finished";

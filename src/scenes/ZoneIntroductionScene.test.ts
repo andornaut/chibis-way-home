@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { SCREEN } from "../data/screen";
+import { TILE } from "../data/screen";
 import type { ZoneEntryIntroduction } from "../data/types";
 
 const calls = vi.hoisted(() => ({ closed: vi.fn(), heard: vi.fn() }));
@@ -21,6 +21,7 @@ vi.mock("phaser", () => ({
       }),
     };
     readonly anims = { exists: () => true };
+    readonly cameras = { main: { width: 900 } };
     readonly events = new EventEmitter();
     readonly game = {};
     readonly scene = {
@@ -39,7 +40,6 @@ const entry: ZoneEntryIntroduction = {
   character: "actor",
   escapeTilesPerSecond: 12,
   idleAnimation: "idle",
-  offsetTiles: 6,
   runAnimation: "walk",
 };
 
@@ -54,44 +54,63 @@ function introduction() {
 }
 
 describe("stage entry introduction", () => {
-  it("waits for manual dialogue, then runs offscreen and resumes once after cleaning up", () => {
+  it("approaches the viewport centre before manual dialogue, then departs at the same maximum speed", () => {
     const { actor, scene } = introduction();
+    const width = scene.cameras.main.width;
+    const initialX = actor.x;
+    expect(initialX - actor.displayWidth / 2).toBeGreaterThanOrEqual(width);
+    expect(scene.scene.launch).not.toHaveBeenCalled();
+    scene.dialogueClosed();
+    scene.update(1000, 1000);
+    expect(actor.x).toBe(initialX - entry.escapeTilesPerSecond * TILE);
+    expect(scene.scene.launch).not.toHaveBeenCalled();
+    expect(calls.heard).not.toHaveBeenCalled();
+    scene.update(11000, 10000);
+    expect(actor.x).toBe(width / 2);
     expect(scene.scene.launch).toHaveBeenCalledExactlyOnceWith("dialogue", {
       linear: true,
       opener: "zoneIntroduction",
       scene: "conversation",
     });
-    const initialX = actor.x;
-    scene.update(10000, 10000);
-    expect(actor.x).toBe(initialX);
-    expect(calls.heard).not.toHaveBeenCalled();
+    scene.update(21000, 10000);
+    expect(actor.x).toBe(width / 2);
     expect(calls.closed).not.toHaveBeenCalled();
     scene.dialogueClosed();
     scene.dialogueClosed();
     expect(calls.heard).toHaveBeenCalledOnce();
     expect(actor.setFlipX).toHaveBeenLastCalledWith(false);
-    scene.update(11000, 1000);
-    expect(actor.x).toBeGreaterThan(initialX);
+    scene.update(22000, 1000);
+    expect(actor.x).toBe(width / 2 + entry.escapeTilesPerSecond * TILE);
     expect(calls.closed).not.toHaveBeenCalled();
-    scene.update(21000, 10000);
-    expect(actor.x - actor.displayWidth / 2).toBeGreaterThan(SCREEN.width);
+    scene.update(32000, 10000);
+    expect(actor.x - actor.displayWidth / 2).toBeGreaterThan(width);
     expect(actor.destroy).toHaveBeenCalledOnce();
     expect(calls.closed).toHaveBeenCalledOnce();
-    scene.update(22000, 1000);
+    scene.update(33000, 1000);
     expect(calls.closed).toHaveBeenCalledOnce();
   });
 
-  it("stops an interrupted child conversation and releases the cinematic input scope", () => {
-    const { actor, scene } = introduction();
-    const world = { events: new EventEmitter(), game: scene.game } as unknown as typeof scene;
-    expect(modalInput(world).accepts()).toBe(false);
-    scene.events.emit("shutdown");
-    expect(scene.scene.stop).toHaveBeenCalledWith("dialogue");
-    expect(actor.destroy).toHaveBeenCalledOnce();
-    expect(modalInput(world).accepts()).toBe(true);
-    scene.dialogueClosed();
-    scene.update(20000, 20000);
-    expect(calls.closed).not.toHaveBeenCalled();
-    expect(calls.heard).not.toHaveBeenCalled();
-  });
+  it.each(["approach", "dialogue"])(
+    "cleans interrupted %s and releases its cinematic input scope",
+    (phase) => {
+      const { actor, scene } = introduction();
+      if (phase === "dialogue") {
+        scene.update(10000, 10000);
+      }
+      const world = { events: new EventEmitter(), game: scene.game } as unknown as typeof scene;
+      expect(modalInput(world).accepts()).toBe(false);
+      scene.events.emit("shutdown");
+      if (phase === "dialogue") {
+        expect(scene.scene.stop).toHaveBeenCalledWith("dialogue");
+      } else {
+        expect(scene.scene.stop).not.toHaveBeenCalled();
+      }
+      expect(actor.destroy).toHaveBeenCalledOnce();
+      expect(modalInput(world).accepts()).toBe(true);
+      scene.dialogueClosed();
+      scene.update(20000, 20000);
+      expect(calls.closed).not.toHaveBeenCalled();
+      expect(calls.heard).not.toHaveBeenCalled();
+    },
+  );
 });

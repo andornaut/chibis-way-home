@@ -408,7 +408,6 @@ export interface ZoneEntryIntroduction {
   readonly character: string;
   readonly escapeTilesPerSecond: number;
   readonly idleAnimation: string;
-  readonly offsetTiles: number;
   readonly runAnimation: string;
 }
 

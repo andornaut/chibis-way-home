@@ -13,7 +13,6 @@ const entry = {
   character: "test-actor",
   escapeTilesPerSecond: 12,
   idleAnimation: "idle",
-  offsetTiles: 6,
   runAnimation: "walk",
 };
 const pairs = {
