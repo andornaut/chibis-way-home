@@ -166,6 +166,14 @@ export const TEXT: GameText = {
     settings: "Settings",
     start: "Start",
   },
+  stats: {
+    attempts: "Attempts: {count}",
+    best: "Best: {time}",
+    lastAttempt: "Last attempt: {time}",
+    notCleared: "Not cleared",
+    partial: "Zone ({completed}/{total} stages)",
+    runTotal: "Run total: {time}",
+  },
   update: {
     accept: "Update now",
     title: "Update available",
