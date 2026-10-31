@@ -198,11 +198,11 @@ export class StageSelectScene extends Scene {
   }
   private targetAt(pointer: Input.Pointer): Target | undefined {
     const areas: PressArea<string>[] = [
-      ...this.stages.map((key, index) => ({
-        art: this.layout.buttons[index]!.button,
-        hit: this.layout.buttons[index]!.hit,
-        key,
-      })),
+      ...this.stages.flatMap((key, index) =>
+        this.available.includes(key)
+          ? [{ art: this.layout.buttons[index]!.button, hit: this.layout.buttons[index]!.hit, key }]
+          : [],
+      ),
       { art: this.layout.close.art, hit: this.layout.close.hit, key: "close" },
     ];
     const key = pressedArea(areas, playPoint(this, pointer));

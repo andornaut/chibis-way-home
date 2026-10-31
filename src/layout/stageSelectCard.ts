@@ -7,7 +7,7 @@ import { CARD_CONTENT, type CardFonts, cardTextSize, contentCardLayout } from ".
 import { hitAround, hitMargin } from "./hitAreas";
 
 export const STAGE_NUMBER_SCALE = 1.5;
-const PREVIEW_WIDTH = 240;
+const PREVIEW_WIDTH = 168;
 const PREVIEW_HEIGHT = PREVIEW_WIDTH / 2;
 const INSET = CARD_CONTENT.padding + CARD_CONTENT.rowGap;
 const NUMBER_HEIGHT = (CARD_CONTENT.lineHeight * STAGE_NUMBER_SCALE) / CARD_TEXT_SCALE;
@@ -21,8 +21,8 @@ const STAGE_FACE = {
 };
 
 export function stageSelectCard(fonts: CardFonts, title: string, labels: readonly string[]) {
-  if (labels.length !== 2) {
-    throw new Error("A stage picker requires two catalogue stages");
+  if (labels.length === 0) {
+    throw new Error("A stage picker requires at least one catalogue stage");
   }
   const layout = contentCardLayout(
     { ...SCREEN, x: 0, y: 0 },
@@ -31,7 +31,7 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
         height: STAGE_FACE.height,
         hitOutset: hitMargin({ ...STAGE_FACE, x: 0, y: 0 }) + CARD_CONTENT.rowGap,
         key: "stages",
-        width: labels.length * STAGE_FACE.width + CARD_CONTENT.padding,
+        width: labels.length * STAGE_FACE.width + (labels.length - 1) * CARD_CONTENT.padding,
       },
     ],
     { close: true, titleWidth: cardTextSize(fonts.title, title).width },

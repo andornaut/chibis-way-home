@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { stageSelectKey } from "./stageSelectInput";
 
-const STAGES = ["one", "two"];
-const LATEST = STAGES[1]!;
+const STAGES = ["one", "two", "three"];
+const LATEST = STAGES.at(-1)!;
 
 describe("stage-picker input", () => {
   it.each(["Enter", " "])("does not auto-select through the opening %s key", (key) => {
@@ -20,17 +20,17 @@ describe("stage-picker input", () => {
     expect(first.focus).toBe(LATEST);
     expect(first.stage).toBeUndefined();
     const earlier = stageSelectKey(LATEST, STAGES, first.focus, { ...tab, key: "ArrowLeft" });
-    expect(earlier.focus).toBe(STAGES[0]);
+    expect(earlier.focus).toBe(STAGES.at(-2));
     expect(stageSelectKey(LATEST, STAGES, earlier.focus, { ...tab, key: "Enter" }).stage).toBe(
-      STAGES[0],
+      STAGES.at(-2),
     );
   });
   it("skips locked cards for navigation and activation", () => {
-    const unlocked = STAGES.slice(0, 1);
+    const unlocked = STAGES.slice(0, 2);
     const event = { key: "Enter", repeat: false, shiftKey: false };
-    expect(stageSelectKey(unlocked[0]!, unlocked, STAGES[1], event).stage).toBeUndefined();
+    expect(stageSelectKey(unlocked.at(-1)!, unlocked, STAGES[2], event).stage).toBeUndefined();
     expect(
-      stageSelectKey(unlocked[0]!, unlocked, unlocked[0], { ...event, key: "Tab" }).focus,
+      stageSelectKey(unlocked.at(-1)!, unlocked, unlocked.at(-1), { ...event, key: "Tab" }).focus,
     ).toBe("close");
   });
   it("Escape and focused close return to the map without choosing a stage", () => {

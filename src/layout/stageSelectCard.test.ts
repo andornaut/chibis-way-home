@@ -13,11 +13,13 @@ import { stageSelectCard } from "./stageSelectCard";
 const STAGE_SELECT_CARD = stageSelectCard(
   CARD_FONTS,
   TEXT.map.zones[ZONE_MAP.destinations[0]!.id]!,
-  ZONE_MAP.destinations[0]!.stages.map((id) => TEXT.map.stages[id]!),
+  ZONE_MAP.destinations
+    .flatMap(({ stages }) => stages.map((id) => TEXT.map.stages[id]!))
+    .slice(0, 3),
 );
 
 describe("stage picker layout", () => {
-  it.each(ZONE_MAP.destinations)("fits both $id stage labels without shrinking", (destination) => {
+  it.each(ZONE_MAP.destinations)("fits every $id stage label without shrinking", (destination) => {
     const labels = destination.stages.map((id) => TEXT.map.stages[id]!);
     const layout = stageSelectCard(CARD_FONTS, TEXT.map.zones[destination.id]!, labels);
     for (const card of layout.buttons) {
@@ -29,12 +31,21 @@ describe("stage picker layout", () => {
       expect(card.text.split("\n").length).toBeLessThanOrEqual(2);
     }
   });
-  it("keeps two image cards side by side with fixed geometry inside the view", () => {
+  it("keeps three image cards side by side within the safe view", () => {
     const { buttons, card, close } = STAGE_SELECT_CARD;
-    expect(buttons).toHaveLength(2);
-    expect(buttons[0]!.button.y).toBe(buttons[1]!.button.y);
-    expect(buttons[0]!.button.x + buttons[0]!.button.width).toBeLessThan(buttons[1]!.button.x);
+    expect(buttons).toHaveLength(3);
+    for (const [index, stage] of buttons.entries()) {
+      expect(stage.button.y).toBe(buttons[0]!.button.y);
+      const previous = buttons[index - 1];
+      if (previous) {
+        expect(previous.button.x + previous.button.width).toBeLessThan(stage.button.x);
+      }
+    }
     expect(card.width).toBeGreaterThanOrEqual(SCREEN.width / 2);
+    expect(card.x).toBeGreaterThanOrEqual(8);
+    expect(card.x + card.width).toBeLessThanOrEqual(SCREEN.width - 8);
+    expect(close.hit.width).toBeGreaterThanOrEqual(48);
+    expect(close.hit.height).toBeGreaterThanOrEqual(48);
     expect(card.y).toBeGreaterThanOrEqual(0);
     expect(card.y + card.height).toBeLessThanOrEqual(SCREEN.height);
     expect(card.x + card.width - close.art.x - close.art.width).toBe(CARD_CONTENT.closeInset);
@@ -47,6 +58,13 @@ describe("stage picker layout", () => {
         stage.button.y + stage.button.height,
       );
     }
+  });
+  it("lays out any nonempty catalogue count that fits without changing face geometry", () => {
+    const labels = STAGE_SELECT_CARD.buttons.map(({ text }) => text.replaceAll("\n", " "));
+    const pair = stageSelectCard(CARD_FONTS, "", labels.slice(0, 2));
+    expect(pair.buttons.map(({ button }) => button.width)).toEqual(
+      STAGE_SELECT_CARD.buttons.slice(0, 2).map(({ button }) => button.width),
+    );
   });
   it("keeps each stage card and close action independently pressable", () => {
     const areas: PressArea<string>[] = [
