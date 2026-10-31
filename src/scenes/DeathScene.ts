@@ -141,7 +141,7 @@ export class DeathScene extends Scene {
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
     this.restoreCamera = frameDeathBackdrop(this, this.layout.card, this.summary.bird);
-    showModalBackdrop(this, true);
+    showModalBackdrop(this);
   }
   private render(): void {
     for (const name of DEATH_ACTIONS) {

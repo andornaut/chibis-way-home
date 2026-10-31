@@ -3,13 +3,15 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
+import paletteData from "../../public/art/palette.json";
+
 const capture = vi.hoisted(() => ({ mount: vi.fn() }));
 vi.mock("@andornaut/game-kit/view/phaser/modalBackdrop", () => ({
   mountModalBackdrop: capture.mount,
 }));
 vi.mock("phaser", () => ({ Scenes: { Events: { ADDED_TO_SCENE: "addedtoscene" } } }));
 vi.mock("./cardParts", () => ({
-  palette: () => ({ colours: {}, dim2: {} }),
+  palette: () => paletteData,
   paletteColour: () => 0x181425,
 }));
 vi.mock("./playCamera", () => ({
@@ -58,10 +60,14 @@ function fixture() {
 }
 
 describe("Duck modal backdrop adapter", () => {
-  it("hides cards until capture is ready and separates backdrop art", async () => {
+  it("dims an unshaded frozen capture once, hiding cards until ready and separating backdrop art", async () => {
     const { background, card, resolve, scene } = fixture();
     const modal = showModalBackdrop(scene);
     expect(card.visible).toBe(false);
+    const context = capture.mount.mock.calls.at(-1)?.[0] as { remap(colour: number): number };
+    expect(context.remap(Number.parseInt(paletteData.colours.white.slice(1), 16))).toBe(
+      Number.parseInt(paletteData.colours.slate.slice(1), 16),
+    );
     expect(modalInput(scene).accepts()).toBe(false);
     expect(scene.cameras.cameras[0]).toBe(background);
     const image = { setDisplaySize: vi.fn() };

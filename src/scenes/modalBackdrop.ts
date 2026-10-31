@@ -1,7 +1,7 @@
 import { mountModalBackdrop } from "@andornaut/game-kit/view/phaser/modalBackdrop";
 import { type GameObjects, type Scene, Scenes } from "phaser";
 
-import { dimColour } from "../view/dim";
+import { modalColour } from "../view/modalDim";
 import { palette, paletteColour } from "./cardParts";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera } from "./playCamera";
@@ -39,7 +39,7 @@ export function showModalBackdrop(
     {
       depth: -100,
       fallbackColour: paletteColour(scene, "ink"),
-      remap: alreadyDimmed ? (colour) => colour : dimColour(palette(scene)),
+      remap: alreadyDimmed ? (colour) => colour : modalColour(palette(scene)),
       scene,
     },
     canvasRect(scene),

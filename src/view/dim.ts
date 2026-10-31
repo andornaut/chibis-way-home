@@ -1,8 +1,9 @@
 import { rampDown } from "@andornaut/game-kit/rgba";
 
-// Art's palette (public/art/palette.json): each colour by name, and dim2, each colour two steps
-// down its ramp, the pause card's dim.
+// Art's palette (public/art/palette.json): named colours, single ramp steps and the title
+// screen's separate two-step ambient treatment.
 export interface Palette {
+  readonly darker: Readonly<Record<string, string>>;
   readonly colours: Readonly<Record<string, string>>;
   readonly dim2: Readonly<Record<string, string>>;
 }
