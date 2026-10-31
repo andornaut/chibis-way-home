@@ -1,3 +1,4 @@
+import { SCREEN, TILE } from "./screen";
 import type { StageRecipe, ZonePlan } from "./types";
 
 // PLACEHOLDER: parkour test zones, until gameplay designs the real zones.
@@ -285,7 +286,12 @@ const DIFFICULTY_PROFILES = {
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
 const STAGE_ENCOUNTERS = { first: 0, later: 2 } as const;
-const STAGE_LENGTH = { max: 576, min: 432 } as const;
+const SCREEN_COLUMNS = SCREEN.width / TILE;
+const STAGE_LENGTH = { max: 24 * SCREEN_COLUMNS, min: 20 * SCREEN_COLUMNS } as const;
+
+function sectionLength(count: number) {
+  return { max: STAGE_LENGTH.max / count, min: STAGE_LENGTH.min / count };
+}
 
 const APARTMENT_CHALLENGE_CHUNKS = [
   "city-boundary-climb-yard",
@@ -297,8 +303,11 @@ const APARTMENT_CHALLENGE_CHUNKS = [
   "compound-compact-climb",
   "compound-double-lift",
   "compound-lift-shuttle",
+  "compound-low-ceiling-hazard",
+  "compound-low-ceiling-shuttle",
   "compound-patrol-lift",
   "compound-return-high",
+  "compound-return-shuttle",
   "compound-return-terrace",
 ] as const;
 const APARTMENT_CAPS = {
@@ -369,28 +378,28 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "fire-escape-2",
-        length: { max: 180, min: 156 },
+        length: sectionLength(4),
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "spa",
-        length: { max: 96, min: 72 },
+        length: sectionLength(4),
         theme: "apartment-spa",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-3",
-        length: { max: 120, min: 72 },
+        length: sectionLength(4),
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "residential",
-        length: { max: 180, min: 168 },
+        length: sectionLength(4),
         theme: "apartment-residential",
       },
     ],
@@ -427,14 +436,14 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "entrance",
-        length: { max: 180, min: 144 },
+        length: sectionLength(2),
         theme: "apartment-entrance",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "lobby",
-        length: { max: 180, min: 168 },
+        length: sectionLength(2),
         theme: "apartment-lobby",
       },
     ],
@@ -538,21 +547,21 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "restaurant",
-        length: { max: 240, min: 216 },
+        length: sectionLength(3),
         theme: "apartment-restaurant",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-1",
-        length: { max: 120, min: 72 },
+        length: sectionLength(3),
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "pool",
-        length: { max: 192, min: 168 },
+        length: sectionLength(3),
         theme: "apartment-pool",
       },
     ],
