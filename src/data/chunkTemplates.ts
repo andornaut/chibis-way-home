@@ -42,3 +42,42 @@ export const VERTICAL_FINISH: Omit<ChunkPlan, "theme"> = {
     { col: 48, cols: 12, look: "ground", row: 50, rows: 10 },
   ],
 };
+
+// Perched flyers leave a stepped route past a solid post.
+export const PERCH_FINISH: Omit<ChunkPlan, "theme"> = {
+  cols: 60,
+  difficulty: 4,
+  entry: { row: 50 },
+  exit: { row: 50 },
+  objects: [
+    { character: "platform-ledge", col: 18, cols: 6, role: "ledge", row: 45 },
+    { character: "pigeon-antagonist", col: 30, role: "antagonist", row: 36 },
+    { character: "platform-ledge", col: 40, cols: 6, role: "ledge", row: 45 },
+  ],
+  solids: [
+    { col: 0, cols: 30, look: "ground", row: 50, rows: 10 },
+    { col: 30, cols: 4, look: "raised", row: 40, rows: 20 },
+    { col: 34, cols: 26, look: "ground", row: 50, rows: 10 },
+  ],
+};
+
+// Raised cover and a high ledge protect the route above the ground-level push lane.
+export const GROWL_FINISH: Omit<ChunkPlan, "theme"> = {
+  cols: 60,
+  difficulty: 4,
+  entry: { row: 50 },
+  exit: { row: 50 },
+  objects: [
+    { character: "bear-antagonist", col: 38, role: "antagonist", row: 46 },
+    { character: "platform-ledge", col: 28, cols: 6, role: "ledge", row: 44 },
+    { character: "red-edge-top", col: 42, cols: 2, role: "edge-top", row: 49 },
+    { character: "red-edge-support", col: 42, cols: 2, role: "support", row: 50, rows: 10 },
+  ],
+  solids: [
+    { col: 0, cols: 12, look: "ground", row: 50, rows: 10 },
+    { col: 12, cols: 6, look: "raised", row: 44, rows: 16 },
+    { col: 18, cols: 24, look: "ground", row: 50, rows: 10 },
+    { col: 44, cols: 6, look: "raised", row: 44, rows: 16 },
+    { col: 50, cols: 10, look: "ground", row: 50, rows: 10 },
+  ],
+};

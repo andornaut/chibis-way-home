@@ -1,4 +1,4 @@
-import { PATROL_FINISH_GEOMETRY } from "./chunkTemplates";
+import { GROWL_FINISH, PATROL_FINISH_GEOMETRY } from "./chunkTemplates";
 import type { ChunkPlan, ChunkRules, ElementBinding, ThemePlan } from "./types";
 import { STREET_CHUNKS } from "./zone1";
 import { INDUSTRIAL_CHUNKS } from "./zone2";
@@ -42,8 +42,6 @@ const MECHANICAL_THEMES = [
 const PATROL_THEMES = [
   ...APARTMENT_THEMES,
   "city-boundary",
-  "city-outskirts",
-  "familiar-neighbourhood",
   "farmland",
   "river-crossing",
   "street",
@@ -97,7 +95,7 @@ const CITY_THEME: ThemePlan = {
 
 const INDUSTRIAL_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
-  antagonist: { character: "raccoon-antagonist", scene: null },
+  antagonist: { character: "pigeon-antagonist", scene: null },
   "boundary-wall": {
     character: "facade-one-storey",
     skin: { art: "warehouse-wall", tileset: null },
@@ -144,7 +142,8 @@ const COUNTRYSIDE_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 
 const WOODLAND_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
-  antagonist: { character: "owl-antagonist", scene: null },
+  antagonist: { character: "bear-antagonist", scene: null },
+  "antagonist-intro": { character: "bear-antagonist" },
   "boundary-wall": { character: "facade-one-storey", skin: { art: "forest-shrub", tileset: null } },
   door: { character: "street-door", skin: { art: "door", tileset: "tiles-street" } },
   "far-background": { character: "street-city-far", skin: { art: "woodland-far", tileset: null } },
@@ -156,7 +155,7 @@ const WOODLAND_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 
 const HOME_CITY_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
-  antagonist: { character: "rabbit-antagonist", scene: null },
+  antagonist: { character: "raccoon-antagonist", scene: null },
   "boundary-wall": {
     character: "facade-one-storey",
     skin: { art: "outskirts-wall", tileset: null },
@@ -459,10 +458,33 @@ const COMPACT_HAZARD_ASCENT: ChunkPlan = {
 };
 const COMPACT_CLIMB_OFFSET = COMPACT_HAZARD_ASCENT.exit.row - SEAM_ROWS[0];
 
+const GROWL_ROW_OFFSET = 10;
+const GROWL_COL_OFFSET = 18;
+
 // The chunks zones are assembled from, by id. Rows are the chunk's own: seams at 50 (the lawn), 40
 // and 30 (the terraces). Every required rise is at most 6 and every required gap at most 16, and
 // moving-platform crossings exceed the running jump's reach of 19.
 export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  "bounded-flyer-post": {
+    cols: 96,
+    difficulty: 4,
+    entry: { row: 40 },
+    exit: { row: 30 },
+    objects: [
+      { character: "platform-ledge", col: 34, cols: 6, role: "ledge", row: 35 },
+      { character: "pigeon-antagonist", col: 46, role: "antagonist", row: 26 },
+      { character: "platform-ledge", col: 64, cols: 6, role: "ledge", row: 35 },
+    ],
+    solids: [
+      { col: 0, cols: 46, look: "ground", row: 40, rows: 20 },
+      { col: 46, cols: 4, look: "raised", row: 30, rows: 30 },
+      { col: 50, cols: 28, look: "ground", row: 40, rows: 20 },
+      { col: 78, cols: 6, look: "raised", row: 35, rows: 25 },
+      { col: 84, cols: 12, look: "raised", row: 30, rows: 30 },
+    ],
+    theme: ["freight-terminal", "warehouse-district"],
+    weight: 2,
+  },
   "city-boundary-climb-yard": {
     backdrops: [
       { character: "facade-one-storey", col: 4, cols: 12, role: "near-wall", row: 34 },
@@ -744,7 +766,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: 0, cols: 34, look: "raised", row: 40, rows: 20 },
       { col: 34, cols: 50, look: "raised", row: 30, rows: 30 },
     ],
-    theme: ["forest-paths", "freight-terminal", "ravine", "warehouse-district"],
+    theme: ["city-outskirts", "familiar-neighbourhood"],
     weight: 2,
   },
   // A gap, two full climbs and a moving red strip share one approach.
@@ -842,6 +864,27 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     theme: PATROL_THEMES,
   },
+  "compound-perch-yard": {
+    cols: 120,
+    difficulty: 5,
+    entry: { row: 40 },
+    exit: { row: 30 },
+    objects: [
+      { character: "platform-ledge", col: 34, cols: 6, role: "ledge", row: 35 },
+      { character: "pigeon-antagonist", col: 46, role: "antagonist", row: 26 },
+      { character: "platform-ledge", col: 68, cols: 6, role: "ledge", row: 35 },
+      { character: "city-ground-hazard", col: 78, role: "moving-hazard", row: 39 },
+      { character: "platform-ledge", col: 96, cols: 6, role: "ledge", row: 35 },
+    ],
+    solids: [
+      { col: 0, cols: 46, look: "ground", row: 40, rows: 20 },
+      { col: 46, cols: 4, look: "raised", row: 30, rows: 30 },
+      { col: 50, cols: 58, look: "ground", row: 40, rows: 20 },
+      { col: 108, cols: 6, look: "raised", row: 35, rows: 25 },
+      { col: 114, cols: 6, look: "raised", row: 30, rows: 30 },
+    ],
+    theme: ["freight-terminal", "warehouse-district"],
+  },
   // Offset landings descend over red beds before a moving hazard on the lower floor.
   "compound-return-high": {
     cols: 120,
@@ -903,7 +946,59 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: 0, cols: 34, look: "raised", row: 40, rows: 20 },
       { col: 34, cols: 74, look: "raised", row: 30, rows: 30 },
     ],
-    theme: ["forest-paths", "freight-terminal", "ravine", "warehouse-district"],
+    theme: ["city-outskirts", "familiar-neighbourhood"],
+  },
+  "growl-clearing": {
+    ...GROWL_FINISH,
+    cols: 96,
+    entry: { row: 40 },
+    exit: { row: 40 },
+    objects: GROWL_FINISH.objects.map((object) => ({
+      ...object,
+      col: object.col + GROWL_COL_OFFSET,
+      row: object.row - GROWL_ROW_OFFSET,
+    })),
+    solids: [
+      { col: 0, cols: GROWL_COL_OFFSET, look: "ground", row: 40, rows: 20 },
+      ...GROWL_FINISH.solids.map((solid) => ({
+        ...solid,
+        col: solid.col + GROWL_COL_OFFSET,
+        row: solid.row - GROWL_ROW_OFFSET,
+        rows: solid.rows + GROWL_ROW_OFFSET,
+      })),
+      {
+        col: GROWL_FINISH.cols + GROWL_COL_OFFSET,
+        cols: GROWL_COL_OFFSET,
+        look: "ground",
+        row: 40,
+        rows: 20,
+      },
+    ],
+    theme: ["forest-paths", "ravine"],
+    weight: 2,
+  },
+  "growl-lift-clearing": {
+    ...GROWL_FINISH,
+    cols: 120,
+    difficulty: 5,
+    entry: { row: 40 },
+    exit: { row: 30 },
+    objects: [
+      ...GROWL_FINISH.objects.map((object) => ({ ...object, row: object.row - GROWL_ROW_OFFSET })),
+      { character: "city-lift", col: 72, role: "lift", row: 40 },
+      { character: "red-edge-top", col: 64, cols: 20, role: "edge-top", row: 46 },
+      { character: "red-edge-support", col: 64, cols: 20, role: "support", row: 47, rows: 13 },
+    ],
+    solids: [
+      ...GROWL_FINISH.solids.map((solid) => ({
+        ...solid,
+        row: solid.row - GROWL_ROW_OFFSET,
+        rows: solid.rows + GROWL_ROW_OFFSET,
+      })),
+      { col: GROWL_FINISH.cols, cols: 4, look: "ground", row: 40, rows: 20 },
+      { col: 84, cols: 36, look: "raised", row: 30, rows: 30 },
+    ],
+    theme: ["forest-paths", "ravine"],
   },
   // Difficulty 2, up from the lawn (50) to the high terrace (30): a bench (up 2), a terrace (up 4),
   // a bench on it (up 2), the bandstand's roof (up 4, 6 above its base), a step (up 4) and the
