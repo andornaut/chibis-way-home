@@ -3,8 +3,16 @@ import { writeFileSync } from "node:fs";
 
 import { BIRD } from "../data/bird";
 import { ZONE_MAP } from "../data/map";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY, type JumpPolicy, NAVIGATION_DEFAULTS } from "./bot";
+import {
+  DIAGNOSTIC_SKILL,
+  FORWARD_POLICY,
+  type JumpPolicy,
+  NAVIGATION_DEFAULTS,
+  NAVIGATION_VALIDATION,
+  type NavigationConfig,
+} from "./bot";
 import { stageLoader } from "./catalogue";
+import { VALIDATION_LIMITS } from "./diagnostics";
 import { simulateBatch } from "./report";
 import { type SimulationConfig, type SimulationSeeds, validateSimulation } from "./simulate";
 
@@ -16,6 +24,7 @@ const HELP = `npm run simulate -- [--stage ID] [--seed N] [--runs N] [--max-step
   [--adaptive-jump true|false] [--min-hold-ticks N] [--wait-for-movers true|false]
   [--max-wait-ticks N] [--build-id ID] [--data-id ID]
   [--max-wall-ms N] [--batch-wall-ms N] [--stall-limit N]
+  [--profile quick|validation]
   [--witness-segments N] [--require-full-pass true|false]
   [--plan-horizon N] [--plan-candidates N] [--plan-replan N] [--plan-steps N]
   [--error-rate 0..1] [--jump reactive|continuous|never|planned] [--move -1|0|1] [--out FILE]
@@ -33,6 +42,8 @@ function main(args: readonly string[]): void {
     console.log(HELP);
     return;
   }
+  let profile: "quick" | "validation" = "quick";
+  const explicit = new Set<string>();
   let stage = ZONE_MAP.start;
   let seed = 1;
   let runs = 1;
@@ -43,7 +54,7 @@ function main(args: readonly string[]): void {
   let maxWallTimeMs: number | undefined;
   let batchWallTimeMs: number | undefined;
   let stopAfterStallTicks: number | undefined;
-  const navigation = { ...NAVIGATION_DEFAULTS };
+  const navigation: { -readonly [Key in keyof NavigationConfig]?: NavigationConfig[Key] } = {};
   let navigationSpecified = false;
   let out: string | undefined;
   const seeds: Partial<{ -readonly [Key in keyof SimulationSeeds]: SimulationSeeds[Key] }> = {};
@@ -62,7 +73,7 @@ function main(args: readonly string[]): void {
   for (let at = 0; at < args.length; at += 2) {
     const flag = args[at];
     const value = args[at + 1];
-    if (value === undefined || value.trim() === "") {
+    if (flag === undefined || value === undefined || value.trim() === "") {
       throw new Error(`${flag} needs a value`);
     }
     const boolean = () => {
@@ -71,7 +82,14 @@ function main(args: readonly string[]): void {
       }
       return value === "true";
     };
+    explicit.add(flag);
     switch (flag) {
+      case "--profile":
+        if (value !== "quick" && value !== "validation") {
+          throw new Error("Unknown simulation profile");
+        }
+        profile = value;
+        break;
       case "--witness-segments":
         witnessSegments = Number(value);
         break;
@@ -196,6 +214,36 @@ function main(args: readonly string[]): void {
         throw new Error(`Unknown option ${flag}`);
     }
   }
+  if (profile === "validation") {
+    if (!explicit.has("--max-steps")) {
+      maxSteps = VALIDATION_LIMITS.maxSteps;
+    }
+    if (!explicit.has("--max-retries")) {
+      maxRetries = VALIDATION_LIMITS.maxRetries;
+    }
+    if (!explicit.has("--max-wall-ms")) {
+      maxWallTimeMs = VALIDATION_LIMITS.maxWallTimeMs;
+    }
+    if (!explicit.has("--batch-wall-ms")) {
+      batchWallTimeMs = VALIDATION_LIMITS.batchWallTimeMs;
+    }
+    if (!explicit.has("--stall-limit")) {
+      stopAfterStallTicks = VALIDATION_LIMITS.stopAfterStallTicks;
+    }
+    if (!explicit.has("--jump")) {
+      policy.jump = "planned";
+    }
+    if (!explicit.has("--witness-segments")) {
+      witnessSegments = maxSteps;
+    }
+    if (!explicit.has("--require-full-pass")) {
+      requireFullPass = true;
+    }
+  }
+  const resolvedNavigation = {
+    ...(profile === "validation" ? NAVIGATION_VALIDATION : NAVIGATION_DEFAULTS),
+    ...navigation,
+  };
   if (!Number.isSafeInteger(runs) || runs < 1 || runs > 10000 || seed + runs - 1 > 0xffffffff) {
     throw new Error("Invalid runs or seed range");
   }
@@ -234,7 +282,10 @@ function main(args: readonly string[]): void {
     policy,
     seed,
     seeds,
-    skill: navigationSpecified || policy.jump === "planned" ? { ...skill, navigation } : skill,
+    skill:
+      navigationSpecified || policy.jump === "planned" || profile === "validation"
+        ? { ...skill, navigation: resolvedNavigation }
+        : skill,
     ...(area !== undefined && entry !== undefined
       ? { start: { area, entry } }
       : area !== undefined && startX !== undefined && startY !== undefined
@@ -269,6 +320,7 @@ function main(args: readonly string[]): void {
   const report = {
     config: {
       ...config,
+      profile,
       ...(batchWallTimeMs === undefined ? {} : { batchWallTimeMs }),
       runs,
       stage,

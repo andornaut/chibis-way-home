@@ -8,7 +8,8 @@ import * as zoneRules from "../rules/zone";
 import { startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
 import * as botRules from "./bot";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "./bot";
+import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_VALIDATION } from "./bot";
+import { VALIDATION_LIMITS } from "./diagnostics";
 import { simulateBatch } from "./report";
 import {
   prepareStage,
@@ -16,6 +17,7 @@ import {
   simulateStage,
   type SimulationConfig,
   simulationGoalReached,
+  validateSimulation,
 } from "./simulate";
 
 function fixture(solids: AreaLayout["solids"], exitX = 1000): ZoneLayout {
@@ -604,6 +606,88 @@ describe("whole-stage input witnesses", () => {
       expect(mismatch.executedSteps).toBeGreaterThan(0);
     } finally {
       stepping.mockRestore();
+    }
+  });
+});
+
+describe("explicit validation profile and actual failure memory", () => {
+  const validation: SimulationConfig = {
+    ...config,
+    maxRetries: VALIDATION_LIMITS.maxRetries,
+    maxSteps: VALIDATION_LIMITS.maxSteps,
+    maxWallTimeMs: VALIDATION_LIMITS.maxWallTimeMs,
+    skill: { ...DIAGNOSTIC_SKILL, navigation: NAVIGATION_VALIDATION },
+    stopAfterStallTicks: VALIDATION_LIMITS.stopAfterStallTicks,
+  };
+  it("admits only the explicit validation profile within its execution and planning limits", () => {
+    expect(() => validateSimulation(validation)).not.toThrow();
+    expect(() =>
+      validateSimulation({ ...validation, maxSteps: VALIDATION_LIMITS.maxSteps + 1 }),
+    ).toThrow("execution limits");
+    expect(() =>
+      validateSimulation({
+        ...validation,
+        skill: { ...validation.skill, navigation: { ...NAVIGATION_VALIDATION, profile: "quick" } },
+      }),
+    ).toThrow("navigation maxPhysicsSteps");
+    expect(() =>
+      simulateBatch(BIRD, () => prepareStage(fixture(ground)), validation, [1], {
+        maxWallTimeMs: VALIDATION_LIMITS.batchWallTimeMs + 1,
+      }),
+    ).toThrow("batch wall limit");
+  });
+  it("transfers only actual death memory across reseeded retries and never consults it during replay", () => {
+    const realStep = zoneRules.stepZone;
+    let inject = true;
+    const step = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
+      if (inject) {
+        inject = false;
+        const state = args[4];
+        return {
+          ...state,
+          death: {
+            position: { x: state.bird.x, y: state.bird.y },
+            reason: "fall",
+            support: undefined,
+            velocity: { x: 0, y: 0 },
+          },
+        };
+      }
+      return realStep(...args);
+    });
+    const remember = vi.spyOn(botRules, "rememberNavigationFailure");
+    const restore = vi.spyOn(botRules, "restoreNavigationMemory");
+    try {
+      const stage = prepareStage(fixture(ground, 200));
+      const options: SimulationConfig = {
+        ...config,
+        maxRetries: 1,
+        maxSteps: 300,
+        provenance: { build: "fixture-memory" },
+        witness: { maxSegments: 300 },
+      };
+      const run = simulateStage(BIRD, stage, options);
+      expect(run.fullPass).toBe(true);
+      expect(remember).toHaveBeenCalledTimes(1);
+      expect(restore).toHaveBeenCalledTimes(1);
+      expect(restore.mock.calls[0]?.[0].deaths).toHaveLength(1);
+      inject = true;
+      const replay = replayCompletionWitness(
+        BIRD,
+        stage,
+        options,
+        { maxSteps: 300, maxWallTimeMs: 1000 },
+        run.witness!,
+      );
+      expect(replay.status).toBe("verified");
+      expect(remember).toHaveBeenCalledTimes(1);
+      expect(restore).toHaveBeenCalledTimes(1);
+      simulateStage(BIRD, stage, options);
+      expect(restore).toHaveBeenCalledTimes(1);
+    } finally {
+      step.mockRestore();
+      remember.mockRestore();
+      restore.mockRestore();
     }
   });
 });

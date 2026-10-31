@@ -4,8 +4,17 @@ import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
 import { overlaps } from "../rules/rect";
+import { STEP_SECONDS } from "../rules/step";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate";
+
+export const VALIDATION_LIMITS = {
+  batchWallTimeMs: 600000,
+  maxRetries: 3,
+  maxSteps: Math.floor(750 / STEP_SECONDS),
+  maxWallTimeMs: 30000,
+  stopAfterStallTicks: 1200,
+} as const;
 
 export interface TraceOptions {
   readonly maxEvents: number;

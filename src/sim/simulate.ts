@@ -20,7 +20,9 @@ import {
   navigationCounters,
   newBot,
   prepareSensors,
+  rememberNavigationFailure,
   resetNavigation,
+  restoreNavigationMemory,
   type SensorIndex,
   validateNavigation,
 } from "./bot";
@@ -29,6 +31,7 @@ import {
   type TraceEvent,
   traceEvent,
   type TraceOptions,
+  VALIDATION_LIMITS,
   witnessContextHash,
   type WitnessSegment,
 } from "./diagnostics";
@@ -145,6 +148,17 @@ export function simulationSeeds(config: Pick<SimulationConfig, "seed" | "seeds">
 }
 
 export function validateSimulation(config: SimulationConfig): void {
+  if (
+    config.skill.navigation?.profile === "validation" &&
+    (config.maxSteps > VALIDATION_LIMITS.maxSteps ||
+      config.maxRetries > VALIDATION_LIMITS.maxRetries ||
+      config.maxWallTimeMs === undefined ||
+      config.maxWallTimeMs > VALIDATION_LIMITS.maxWallTimeMs ||
+      config.stopAfterStallTicks === undefined ||
+      config.stopAfterStallTicks > VALIDATION_LIMITS.stopAfterStallTicks)
+  ) {
+    throw new Error("Validation profile exceeds its execution limits");
+  }
   if (
     config.witness &&
     (!Number.isSafeInteger(config.witness.maxSegments) ||
@@ -550,6 +564,7 @@ function executeStage(
           stage.source?.chunkIds,
         ),
       );
+      const memory = playback ? undefined : rememberNavigationFailure(zone, bot);
       deathsByReason[zone.death.reason]++;
       if (retries >= config.maxRetries) {
         status = "retry-budget";
@@ -567,6 +582,9 @@ function executeStage(
         priorPlanning[key] += counters[key];
       }
       bot = newBot((seeds.bot + retries) >>> 0);
+      if (memory) {
+        restoreNavigationMemory(memory, bot);
+      }
       terminalLastAdvance = 0;
       terminalFurthest = config.policy.move * zone.bird.x;
       attemptTick = 0;

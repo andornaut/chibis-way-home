@@ -1,4 +1,5 @@
 import type { BirdTuning } from "../data/types";
+import { VALIDATION_LIMITS } from "./diagnostics";
 import {
   type PreparedStage,
   type RunResult,
@@ -42,6 +43,12 @@ export function simulateBatch(
 ): BatchResult {
   if (seeds.length === 0) {
     throw new Error("A batch needs explicit seeds");
+  }
+  if (
+    config.skill.navigation?.profile === "validation" &&
+    (limits.maxWallTimeMs === undefined || limits.maxWallTimeMs > VALIDATION_LIMITS.batchWallTimeMs)
+  ) {
+    throw new Error("Validation profile requires a bounded batch wall limit");
   }
   const started = performance.now();
   if (
