@@ -1,4 +1,4 @@
-"""Firt the ferret: the villain's sprite and its dialogue portrait.
+"""Furt the ferret: the villain's sprite and its dialogue portrait.
 
 Usage, from the repository root:
   python3 -I art/tools/ferret.py build            write art/ferret/<key>.aseprite and public/art/sprites/<key>.png + .json

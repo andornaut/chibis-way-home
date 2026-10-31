@@ -1,6 +1,6 @@
 # Art
 
-The art plan and pipeline for Bird versus Ferret. Art owns `art/` and the served art directory, `public/art/`.
+The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served art directory, `public/art/`.
 
 ## Direction
 
@@ -167,7 +167,7 @@ Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing r
 
 ## Logo
 
-The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Bird versus Ferret wordmark. `art/tools/logo.py` draws three transparent PNGs with declared canvases: `logo` (360x193) for the title screen, `logo-nav` (250x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
+The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Chibi's Way Home wordmark. `art/tools/logo.py` draws three transparent PNGs with declared canvases: `logo` (558x193) for the title screen, `logo-nav` (226x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
 
 - The dominant lettering and platform colour is `zone-blue`. The flat dark-steel sign, quiet light edge and ink outline separate the wordmark on pale steel and dark navy. There is no extrusion, bright cyan highlight or drop shadow.
 - The bird retains the protagonist's cream body, tan wing, orange bill and ink dot eye, redrawn from the canonical sprite shapes with a one-pixel outline.
@@ -181,9 +181,9 @@ The logo uses a full canonical cream bird standing on a simple platform above a 
 
 Map travel reuses the existing `bird` sprite's looping `walk` tag, four 130ms frames on the 48x42 canvas, with bottom-centre anchor 24,42. Direction uses horizontal mirroring, and a stopped bird can return to `idle`. No separate map character artwork is required.
 
-## Firt
+## Furt
 
-Firt is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.py` draws it; its docstring gives every frame's pose and timing.
+Furt is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.py` draws it; its docstring gives every frame's pose and timing.
 
 - Shape: modelled on a natural ferret rather than a chibi. A long, slinky body stood upright with a small forward arch (a Bezier spine from the low hip to the high neck, stamped as overlapping discs), a small wedge head held level, short dark legs, and a tapering tail touching the ground behind as a third contact point.
 - Fur: a champagne (skin1) coat with a skin2 shade crescent along the belly and a cream rim on the back; brown legs and tail with dark-brown far legs; a white face band, a skin2 mask round the eye and a pink nose.
@@ -251,7 +251,7 @@ The game boots into the start screen; Start goes to the map. A nav bar runs acro
 
 - Nav bar `ui-nav-bar`, 0,0,720,48.
 - Icon buttons `ui-icon-button`, 36x36 at y 6, each with a 20x20 icon 8 in and 6 down (8 down while pressed). With Exit: Settings at x 632 and Exit at x 676, so Exit is at the far right. Without Exit (Firefox for Android's installed app hides it): Settings alone at x 676.
-- Logo (`logo`, 360x193) at 180,60, with Start (`ui-button-primary`, 192x48, dslate with a white label) at 264,268, 15 below it. With saved progress, Restart uses the secondary `ui-button` (grey with an ink label) at 164,268 on the left, and Continue the primary style at 364,268 on the right: both 192x48, with an 8px gap, centred under the logo. Continue remains the default action for keyboard activation. Nav and icon controls keep their separate styles.
+- Logo (`logo`, 558x193) at 81,60, with Start (`ui-button-primary`, 192x48, dslate with a white label) at 264,268, 15 below it. With saved progress, Restart uses the secondary `ui-button` (grey with an ink label) at 164,268 on the left, and Continue the primary style at 364,268 on the right: both 192x48, with an 8px gap, centred under the logo. Continue remains the default action for keyboard activation. Nav and icon controls keep their separate styles.
 - Icons share their shapes with dog-walker-game's: the cog (8 square teeth round a ring with a round hole), the exit (a doorway in 2px strokes, open on the right, with a solid arrow leaving it) and the home (a solid house with a 1:1 pitched roof, a chimney on the right slope and a door gap). Each comes as a 20x20 nav icon and a 16x16 row icon.
 - Button labels are centred: origin x = the button's centre x minus floor(ink width / 2), where the ink width is the label's visible width. Start-screen labels begin 13px below the button top and sink 2px while pressed, using the shared text-button press and focus handling. Start and Continue on this screen omit the ink play mark, which does not read on dslate; a light variant remains unimplemented. The map uses the same standard primary and secondary button styles.
 
