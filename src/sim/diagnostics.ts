@@ -1,8 +1,11 @@
+import { createHash } from "node:crypto";
+
 import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
 import { overlaps } from "../rules/rect";
 import type { ZoneInput, ZoneState } from "../rules/zone";
+import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate";
 
 export interface TraceOptions {
   readonly maxEvents: number;
@@ -17,7 +20,7 @@ export interface TraceEvent {
   readonly chunkId: string | undefined;
   readonly deathReason: ZoneDeath["reason"] | undefined;
   readonly input: ZoneInput;
-  readonly kind: "death" | "sample" | "stall";
+  readonly kind: "death" | "sample" | "stall" | "terminal";
   // An overlapping or nearest object is a diagnostic candidate, not proof of causation.
   readonly object:
     | {
@@ -102,4 +105,26 @@ export function traceEvent(
     x: zone.bird.x,
     y: zone.bird.y,
   };
+}
+
+export interface WitnessSegment {
+  readonly attempt: number;
+  readonly input: ZoneInput;
+  readonly ticks: number;
+}
+export interface CompletionWitness {
+  readonly capturedTicks: number;
+  readonly config: SimulationConfig;
+  readonly contextHash: string;
+  readonly finalArea: string;
+  readonly provenance: SimulationProvenance;
+  readonly retries: number;
+  readonly seeds: SimulationSeeds;
+  readonly segments: readonly WitnessSegment[];
+  readonly steps: number;
+  readonly truncated: boolean;
+}
+
+export function witnessContextHash(tuning: BirdTuning, layout: ZoneLayout): string {
+  return createHash("sha256").update(JSON.stringify({ layout, tuning })).digest("hex");
 }

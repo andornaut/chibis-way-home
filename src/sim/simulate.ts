@@ -8,6 +8,7 @@ import {
   retryZone,
   startZone,
   stepZone,
+  type ZoneInput,
   type ZoneState,
 } from "../rules/zone";
 import { proximityDialogue } from "../view/zoneDialogue";
@@ -23,7 +24,14 @@ import {
   type SensorIndex,
   validateNavigation,
 } from "./bot";
-import { type TraceEvent, traceEvent, type TraceOptions } from "./diagnostics";
+import {
+  type CompletionWitness,
+  type TraceEvent,
+  traceEvent,
+  type TraceOptions,
+  witnessContextHash,
+  type WitnessSegment,
+} from "./diagnostics";
 import { layoutAtStart, type SimulationStart, validateStart } from "./start";
 
 export interface SimulationSeeds {
@@ -34,6 +42,7 @@ export interface SimulationSeeds {
 export interface SimulationProvenance {
   readonly build?: string;
   readonly data?: string;
+  readonly stage?: string;
 }
 
 export interface SimulationConfig {
@@ -42,6 +51,7 @@ export interface SimulationConfig {
   readonly seeds?: Partial<SimulationSeeds>;
   readonly start?: SimulationStart;
   readonly trace?: TraceOptions;
+  readonly witness?: { readonly maxSegments: number };
   readonly maxWallTimeMs?: number;
   readonly stopAfterStallTicks?: number;
   readonly maxRetries: number;
@@ -60,6 +70,10 @@ export type RunStatus =
   | "wall-budget"
   | "prediction-budget";
 export interface RunResult {
+  readonly fullPass: boolean;
+  readonly witness?: CompletionWitness;
+  readonly terminal: TraceEvent;
+  readonly failures: readonly TraceEvent[];
   readonly lastAttemptSeconds: number;
   readonly planning: NavigationCounters;
   readonly finalPolicy: {
@@ -69,6 +83,13 @@ export interface RunResult {
   };
   readonly coverage: {
     readonly areasVisited: readonly string[];
+    readonly path: readonly {
+      readonly area: string;
+      readonly attempt: number;
+      readonly chunk: number | undefined;
+      readonly chunkId: string | undefined;
+      readonly tick: number;
+    }[];
     readonly areaTransitions: number;
     readonly chunksVisited: Readonly<Record<string, readonly { index: number; id?: string }[]>>;
   };
@@ -124,6 +145,14 @@ export function simulationSeeds(config: Pick<SimulationConfig, "seed" | "seeds">
 }
 
 export function validateSimulation(config: SimulationConfig): void {
+  if (
+    config.witness &&
+    (!Number.isSafeInteger(config.witness.maxSegments) ||
+      config.witness.maxSegments < 1 ||
+      config.witness.maxSegments > config.maxSteps)
+  ) {
+    throw new Error("Invalid witness segment budget");
+  }
   if (config.policy.jump === "planned" || config.skill.navigation !== undefined) {
     validateNavigation(config.skill.navigation);
   }
@@ -236,6 +265,16 @@ export function simulateStage(
   stage: PreparedStage,
   config: SimulationConfig,
 ): RunResult {
+  return executeStage(tuning, stage, config);
+}
+
+function executeStage(
+  tuning: BirdTuning,
+  stage: PreparedStage,
+  config: SimulationConfig,
+  playback?: readonly WitnessSegment[],
+  onStep?: (steps: number) => void,
+): RunResult {
   validateSimulation(config);
   const navigation =
     config.policy.jump === "planned" ? validateNavigation(config.skill.navigation) : undefined;
@@ -289,6 +328,26 @@ export function simulateStage(
   const chunksVisited = new Map<string, Set<number>>();
   let areaTransitions = 0;
   let lastMove = 0;
+  let lastInput: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
+  const failures: TraceEvent[] = [];
+  const path: RunResult["coverage"]["path"][number][] = [];
+  const segments: { attempt: number; input: ZoneInput; ticks: number }[] = [];
+  let capturedTicks = 0;
+  let truncated = false;
+  let playbackIndex = 0;
+  let playbackTicks = 0;
+  const readPlayback = (): ZoneInput => {
+    const segment = playback?.[playbackIndex];
+    if (!segment || segment.attempt !== zone.attempt) {
+      throw new Error("Witness input/attempt mismatch");
+    }
+    playbackTicks++;
+    if (playbackTicks === segment.ticks) {
+      playbackIndex++;
+      playbackTicks = 0;
+    }
+    return segment.input;
+  };
   let terminalLastAdvance = 0;
   let terminalFurthest = config.policy.move * zone.bird.x;
   const visit = () => {
@@ -302,6 +361,16 @@ export function simulateStage(
       indices.add(index);
     }
     chunksVisited.set(zone.area, indices);
+    const last = path.at(-1);
+    if (!last || last.area !== zone.area || last.attempt !== zone.attempt || last.chunk !== index) {
+      path.push({
+        area: zone.area,
+        attempt: zone.attempt,
+        chunk: index < 0 ? undefined : index,
+        chunkId: stage.source?.chunkIds?.[zone.area]?.[index],
+        tick: steps,
+      });
+    }
   };
   visit();
   while (steps < config.maxSteps) {
@@ -349,14 +418,42 @@ export function simulateStage(
               maxPhysicsSteps: Math.max(0, navigation.maxPhysicsSteps - priorPlanning.physicsSteps),
             },
           };
-    const input =
-      introduction === undefined
+    const input = playback
+      ? readPlayback()
+      : introduction === undefined
         ? botInput(tuning, sensors, layout, skill, config.policy, zone, bot)
         : { jumpHeld: false, move: 0 as const, useHeld: false };
+    if (
+      playback &&
+      introduction !== undefined &&
+      (input.move !== 0 || input.jumpHeld || input.useHeld)
+    ) {
+      throw new Error("Witness introduction input mismatch");
+    }
+    if (config.witness && !playback && !truncated) {
+      const previous = segments.at(-1);
+      if (
+        previous &&
+        previous.attempt === zone.attempt &&
+        previous.input.move === input.move &&
+        previous.input.jumpHeld === input.jumpHeld &&
+        previous.input.useHeld === input.useHeld
+      ) {
+        previous.ticks++;
+        capturedTicks++;
+      } else if (segments.length < config.witness.maxSegments) {
+        segments.push({ attempt: zone.attempt, input: { ...input }, ticks: 1 });
+        capturedTicks++;
+      } else {
+        truncated = true;
+      }
+    }
+    lastInput = input;
     lastMove = input.move;
     const before = zone;
     zone = stepZone(tuning, layout, STEP_SECONDS, input, zone);
     steps++;
+    onStep?.(steps);
     attemptTick++;
     visit();
     if (zone.area !== before.area) {
@@ -440,6 +537,18 @@ export function simulateStage(
       break;
     }
     if (zone.death !== undefined) {
+      failures.push(
+        traceEvent(
+          tuning,
+          layout,
+          "death",
+          steps,
+          attemptTick,
+          input,
+          zone,
+          stage.source?.chunkIds,
+        ),
+      );
       deathsByReason[zone.death.reason]++;
       if (retries >= config.maxRetries) {
         status = "retry-budget";
@@ -463,7 +572,7 @@ export function simulateStage(
       lastAdvance = 0;
       furthest = config.policy.move * zone.bird.x;
     }
-    if (bot.navigation?.status === "budget-exhausted") {
+    if (!playback && bot.navigation?.status === "budget-exhausted") {
       status = "prediction-budget";
       break;
     }
@@ -476,7 +585,47 @@ export function simulateStage(
     }
   }
   const counters = navigationCounters(bot);
+  const provenance = { ...stage.source?.provenance, ...config.provenance };
+  const witness: CompletionWitness | undefined =
+    config.witness && !playback
+      ? {
+          capturedTicks,
+          config,
+          contextHash: witnessContextHash(tuning, stage.layout),
+          finalArea: zone.area,
+          provenance,
+          retries,
+          seeds,
+          segments,
+          steps,
+          truncated,
+        }
+      : undefined;
+  const finalArea = stage.layout.areaOrder?.at(-1) ?? stage.layout.start.area;
+  const fullPass =
+    status === "cleared" &&
+    zone.area === finalArea &&
+    config.goal === undefined &&
+    config.start === undefined &&
+    witness !== undefined &&
+    !witness.truncated &&
+    witness.capturedTicks === steps &&
+    typeof provenance.build === "string" &&
+    provenance.build.length > 0;
   return {
+    ...(witness ? { witness } : {}),
+    failures,
+    fullPass,
+    terminal: traceEvent(
+      tuning,
+      layout,
+      "terminal",
+      steps,
+      attemptTick,
+      lastInput,
+      zone,
+      stage.source?.chunkIds,
+    ),
     ...(status === "cleared" ? { successfulAttemptSeconds: attemptTick * STEP_SECONDS } : {}),
     activeSeconds: steps * STEP_SECONDS,
     config,
@@ -494,6 +643,7 @@ export function simulateStage(
           })),
         ]),
       ),
+      path,
     },
     deaths: deathsByReason.crush + deathsByReason.fall + deathsByReason.hazard,
     deathsByReason,
@@ -512,7 +662,7 @@ export function simulateStage(
       physicsSteps: priorPlanning.physicsSteps + counters.physicsSteps,
     },
     progress,
-    provenance: { ...stage.source?.provenance, ...config.provenance },
+    provenance,
     retries,
     runtimeMs: performance.now() - started,
     seed: config.seed,
@@ -524,4 +674,118 @@ export function simulateStage(
     traceDropped,
     tuning,
   };
+}
+
+export interface WitnessReplayResult {
+  readonly status: "verified" | "mismatch";
+  readonly reason?: string;
+  readonly executedSteps: number;
+  readonly runtimeMs: number;
+}
+
+export function replayCompletionWitness(
+  tuning: BirdTuning,
+  stage: PreparedStage,
+  config: SimulationConfig,
+  limits: { readonly maxSteps: number; readonly maxWallTimeMs: number },
+  witness: CompletionWitness,
+): WitnessReplayResult {
+  const started = performance.now();
+  let executedSteps = 0;
+  const mismatch = (reason: string): WitnessReplayResult => ({
+    executedSteps,
+    reason,
+    runtimeMs: performance.now() - started,
+    status: "mismatch",
+  });
+  if (
+    !Number.isSafeInteger(limits.maxSteps) ||
+    limits.maxSteps < 1 ||
+    !Number.isFinite(limits.maxWallTimeMs) ||
+    limits.maxWallTimeMs <= 0
+  ) {
+    return mismatch("Invalid replay budget");
+  }
+  if (!config.provenance?.build) {
+    return mismatch("Witness source identifier required");
+  }
+  if (
+    config.start ||
+    config.goal ||
+    witness.truncated ||
+    witness.capturedTicks !== witness.steps ||
+    witness.steps < 1 ||
+    !Number.isSafeInteger(witness.steps)
+  ) {
+    return mismatch("Witness is not a complete whole-stage recording");
+  }
+  if (
+    JSON.stringify(config) !== JSON.stringify(witness.config) ||
+    JSON.stringify(simulationSeeds(config)) !== JSON.stringify(witness.seeds)
+  ) {
+    return mismatch("Witness configuration or seeds mismatch");
+  }
+  if (
+    witness.contextHash !== witnessContextHash(tuning, stage.layout) ||
+    JSON.stringify({ ...stage.source?.provenance, ...config.provenance }) !==
+      JSON.stringify(witness.provenance)
+  ) {
+    return mismatch("Witness stage or provenance mismatch");
+  }
+  let ticks = 0;
+  for (const segment of witness.segments) {
+    if (
+      !Number.isSafeInteger(segment.ticks) ||
+      segment.ticks < 1 ||
+      !Number.isSafeInteger(segment.attempt) ||
+      segment.attempt < 0 ||
+      ![-1, 0, 1].includes(segment.input.move) ||
+      typeof segment.input.jumpHeld !== "boolean" ||
+      typeof segment.input.useHeld !== "boolean"
+    ) {
+      return mismatch("Invalid witness input segment");
+    }
+    ticks += segment.ticks;
+    if (!Number.isSafeInteger(ticks) || ticks > witness.steps) {
+      return mismatch("Witness tick budget mismatch");
+    }
+  }
+  if (ticks !== witness.steps || witness.segments.length > (config.witness?.maxSegments ?? 0)) {
+    return mismatch("Witness tick or segment count mismatch");
+  }
+  try {
+    const result = executeStage(
+      tuning,
+      stage,
+      {
+        ...config,
+        maxSteps: Math.min(limits.maxSteps, witness.steps),
+        maxWallTimeMs: limits.maxWallTimeMs,
+        witness: {
+          maxSegments: Math.min(
+            config.witness?.maxSegments ?? witness.steps,
+            witness.steps,
+            limits.maxSteps,
+          ),
+        },
+      },
+      witness.segments,
+      (steps) => {
+        executedSteps = steps;
+      },
+    );
+    executedSteps = result.steps;
+    if (
+      result.status !== "cleared" ||
+      result.terminal.area !== witness.finalArea ||
+      result.terminal.area !== (stage.layout.areaOrder?.at(-1) ?? stage.layout.start.area) ||
+      result.steps !== witness.steps ||
+      result.retries !== witness.retries
+    ) {
+      return mismatch("Replay did not reproduce full completion within budget");
+    }
+    return { executedSteps, runtimeMs: performance.now() - started, status: "verified" };
+  } catch (error) {
+    return mismatch(error instanceof Error ? error.message : String(error));
+  }
 }

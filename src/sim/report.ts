@@ -8,6 +8,11 @@ import {
 } from "./simulate";
 
 export interface BatchResult {
+  readonly validation: {
+    readonly fullPass: boolean;
+    readonly passed: number;
+    readonly requested: number;
+  };
   readonly aggregate: {
     readonly activeSeconds: number;
     readonly budgetExhausted: number;
@@ -104,5 +109,10 @@ export function simulateBatch(
     },
     omittedSeeds,
     runs,
+    validation: {
+      fullPass: runs.length === seeds.length && runs.every((run) => run.fullPass),
+      passed: runs.filter((run) => run.fullPass).length,
+      requested: seeds.length,
+    },
   };
 }

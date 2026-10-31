@@ -12,6 +12,7 @@ import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "./bot";
 import { simulateBatch } from "./report";
 import {
   prepareStage,
+  replayCompletionWitness,
   simulateStage,
   type SimulationConfig,
   simulationGoalReached,
@@ -406,7 +407,7 @@ it("records actual linked-area and chunk coverage independently of trace samplin
   };
   const run = simulateStage(BIRD, stage, { ...config, maxSteps: 300 });
   expect(run.status).toBe("cleared");
-  expect(run.coverage).toEqual({
+  expect(run.coverage).toMatchObject({
     areaTransitions: 1,
     areasVisited: ["main", "upper"],
     chunksVisited: {
@@ -426,4 +427,149 @@ it("reports zero prediction allowance before exhausting real ticks on a frozen p
   expect(run.planning.physicsSteps).toBe(0);
   expect(run.steps).toBeLessThan(config.maxSteps);
   expect(run.successfulAttemptSeconds).toBeUndefined();
+});
+
+describe("whole-stage input witnesses", () => {
+  const options: SimulationConfig = {
+    ...config,
+    maxSteps: 300,
+    provenance: { build: "synthetic-source", data: "synthetic-data", stage: "fixture" },
+    witness: { maxSegments: 300 },
+  };
+  it("replays recorded actual inputs to an explicit whole-stage clear", () => {
+    const stage = prepareStage(fixture(ground, 200));
+    const run = simulateStage(BIRD, stage, options);
+    expect(run.fullPass).toBe(true);
+    expect(run.witness?.truncated).toBe(false);
+    const replay = replayCompletionWitness(
+      BIRD,
+      stage,
+      options,
+      { maxSteps: 300, maxWallTimeMs: 1000 },
+      run.witness!,
+    );
+    expect(replay.status).toBe("verified");
+    expect(replay.executedSteps).toBe(run.steps);
+    expect(run.coverage.path.length).toBeGreaterThan(0);
+    expect(run.terminal.kind).toBe("terminal");
+  });
+  it("rejects wrong prepared context, source/config and tampered input counts", () => {
+    const stage = prepareStage(fixture(ground, 200));
+    const run = simulateStage(BIRD, stage, options);
+    const witness = run.witness!;
+    const limits = { maxSteps: 300, maxWallTimeMs: 1000 };
+    for (const [prepared, expected, recording] of [
+      [prepareStage(fixture(ground, 240)), options, witness],
+      [stage, { ...options, seed: 8 }, witness],
+      [
+        stage,
+        { ...options, provenance: { ...options.provenance, build: "different-source" } },
+        witness,
+      ],
+      [
+        stage,
+        options,
+        {
+          ...witness,
+          segments: witness.segments.map((segment, index) => ({
+            ...segment,
+            ticks: segment.ticks + (index === 0 ? 1 : 0),
+          })),
+        },
+      ],
+    ] as const) {
+      const replay = replayCompletionWitness(BIRD, prepared, expected, limits, recording);
+      expect(replay.status).toBe("mismatch");
+      expect(replay.executedSteps).toBe(0);
+    }
+  });
+  it("does not accept scoped goals, cold starts, death or truncated recordings as full passes", () => {
+    const stage = prepareStage(fixture(ground, 200));
+    const goal = simulateStage(BIRD, stage, { ...options, goal: { area: "main", x: 150 } });
+    expect(goal.status).toBe("goal-reached");
+    expect(goal.fullPass).toBe(false);
+    expect(
+      simulateStage(BIRD, stage, { ...options, start: { area: "main", x: 100, y: 84 } }).fullPass,
+    ).toBe(false);
+    const dead = simulateStage(BIRD, prepareStage(fixture([])), options);
+    expect(dead.fullPass).toBe(false);
+    expect(dead.failures).toHaveLength(1);
+    expect(dead.terminal.deathReason).toBe("fall");
+    const truncated = simulateStage(BIRD, stage, {
+      ...options,
+      policy: { jump: "continuous", move: 1 },
+      skill: { ...DIAGNOSTIC_SKILL, errorRate: 0.5 },
+      witness: { maxSegments: 1 },
+    });
+    expect(truncated.witness?.truncated).toBe(true);
+    expect(truncated.fullPass).toBe(false);
+  });
+  it("requires every requested run to have a whole-stage witness", () => {
+    const stage = prepareStage(fixture(ground, 200));
+    const report = simulateBatch(BIRD, () => stage, options, [1, 2]);
+    expect(report.validation).toEqual({ fullPass: true, passed: 2, requested: 2 });
+    const partial = simulateBatch(
+      BIRD,
+      () => stage,
+      { ...options, maxSteps: 1, witness: { maxSegments: 1 } },
+      [1, 2],
+    );
+    expect(partial.validation).toEqual({ fullPass: false, passed: 0, requested: 2 });
+  });
+  it("preserves retry boundaries and counts verifier work after an altered replay", () => {
+    const realStep = zoneRules.stepZone;
+    let inject = true;
+    const stepping = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
+      if (inject) {
+        inject = false;
+        const state = args[4];
+        return {
+          ...state,
+          death: {
+            position: { x: state.bird.x, y: state.bird.y },
+            reason: "fall",
+            support: undefined,
+            velocity: { x: 0, y: 0 },
+          },
+        };
+      }
+      return realStep(...args);
+    });
+    try {
+      const stage = prepareStage(fixture(ground, 200));
+      const retryOptions = { ...options, maxRetries: 1 };
+      const run = simulateStage(BIRD, stage, retryOptions);
+      expect(run.fullPass).toBe(true);
+      expect(run.witness?.segments.map((s) => s.attempt)).toEqual([0, 1]);
+      inject = true;
+      const replay = replayCompletionWitness(
+        BIRD,
+        stage,
+        retryOptions,
+        { maxSteps: 300, maxWallTimeMs: 1000 },
+        run.witness!,
+      );
+      expect(replay.status).toBe("verified");
+      expect(replay.executedSteps).toBe(run.steps);
+      inject = true;
+      const altered = {
+        ...run.witness!,
+        segments: run.witness!.segments.map((s) => ({
+          ...s,
+          input: { ...s.input, move: 0 as const },
+        })),
+      };
+      const mismatch = replayCompletionWitness(
+        BIRD,
+        stage,
+        retryOptions,
+        { maxSteps: 300, maxWallTimeMs: 1000 },
+        altered,
+      );
+      expect(mismatch.status).toBe("mismatch");
+      expect(mismatch.executedSteps).toBeGreaterThan(0);
+    } finally {
+      stepping.mockRestore();
+    }
+  });
 });

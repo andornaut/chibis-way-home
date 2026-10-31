@@ -16,6 +16,7 @@ const HELP = `npm run simulate -- [--stage ID] [--seed N] [--runs N] [--max-step
   [--adaptive-jump true|false] [--min-hold-ticks N] [--wait-for-movers true|false]
   [--max-wait-ticks N] [--build-id ID] [--data-id ID]
   [--max-wall-ms N] [--batch-wall-ms N] [--stall-limit N]
+  [--witness-segments N] [--require-full-pass true|false]
   [--plan-horizon N] [--plan-candidates N] [--plan-replan N] [--plan-steps N]
   [--error-rate 0..1] [--jump reactive|continuous|never|planned] [--move -1|0|1] [--out FILE]
 
@@ -37,6 +38,8 @@ function main(args: readonly string[]): void {
   let runs = 1;
   let maxSteps = 3600;
   let maxRetries = 0;
+  let witnessSegments: number | undefined;
+  let requireFullPass = false;
   let maxWallTimeMs: number | undefined;
   let batchWallTimeMs: number | undefined;
   let stopAfterStallTicks: number | undefined;
@@ -69,6 +72,12 @@ function main(args: readonly string[]): void {
       return value === "true";
     };
     switch (flag) {
+      case "--witness-segments":
+        witnessSegments = Number(value);
+        break;
+      case "--require-full-pass":
+        requireFullPass = boolean();
+        break;
       case "--max-wall-ms":
         maxWallTimeMs = Number(value);
         break;
@@ -210,7 +219,14 @@ function main(args: readonly string[]): void {
       /* A caller can supply the exact build when Git metadata is unavailable. */
     }
   }
+  if (requireFullPass && witnessSegments === undefined) {
+    throw new Error("Full-pass validation requires an explicit witness segment budget");
+  }
+  if (requireFullPass && !build) {
+    throw new Error("Full-pass validation requires a source build identifier");
+  }
   const config: SimulationConfig = {
+    ...(witnessSegments === undefined ? {} : { witness: { maxSegments: witnessSegments } }),
     ...(maxWallTimeMs === undefined ? {} : { maxWallTimeMs }),
     ...(stopAfterStallTicks === undefined ? {} : { stopAfterStallTicks }),
     maxRetries,
@@ -235,6 +251,7 @@ function main(args: readonly string[]): void {
         }
       : {}),
     provenance: {
+      stage,
       ...(build !== undefined ? { build } : {}),
       ...(data !== undefined ? { data } : {}),
     },
@@ -261,6 +278,9 @@ function main(args: readonly string[]): void {
   };
   const json = `${JSON.stringify(report, null, 2)}\n`;
   console.log(json.trimEnd());
+  if (requireFullPass && !result.validation.fullPass) {
+    process.exitCode = 1;
+  }
   if (out !== undefined) {
     writeFileSync(out, json);
   }
