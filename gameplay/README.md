@@ -19,7 +19,7 @@ Gameplay owns the rulebook and the values and content in the data value files (e
 
 - **Decisions:** the user's. Gameplay asks with a prompt, recommendation first and the trade-off in a line; routine work needs no asking.
 - **Design sessions:** start with "design session" and a topic. Claude keeps floated ideas apart from agreed ones, asks the question that unblocks a decision, and on "wrap up" proposes doc changes, writing them once confirmed.
-- **Difficulty:** use configurable per-zone difficulty targets and variation bands from `src/data/`, with a demanding first zone and a difficulty increase in every following zone. Vary required climbing chunks, moving obstacles, ground hazards and dog yards; a seed need not include every challenge type. Every built and future stage, including the first tutorial and final stage, randomizes its middle on entry while keeping its opening and ending fixed. Retries retain the assembled layout.
+- **Difficulty:** use configurable per-zone difficulty targets and variation bands from `src/data/`, with a demanding first zone and a difficulty increase in every following zone. Vary required climbing chunks, moving obstacles, ground hazards and enemy yards; a seed need not include every challenge type. Every built and future stage, including the first tutorial and final stage, randomizes its middle on entry while keeping its opening and ending fixed. Retries retain the assembled layout.
 - **Jump tuning:** use one uninterrupted ballistic ascent, with a minimum hop for short presses and the full jump on a hold. Place overhead short-jump challenges to match the measured hop. Keep the reaches in the rulebook aligned with the simulator, including coyote time in the running gap reach
 - **Phone playtesting:** judge jump feel, touch input and readability on a landscape phone. The user performs device playtesting.
 - **Tune to the targets:** a result inside its band needs no tuning. The user declares when the goal is met.
@@ -42,7 +42,7 @@ Each target is a band, not a point, assessed per stage and player skill. PLACEHO
 
 ## Remaining for the first build
 
-**Current implementation scope:** longer stages, broader middle-chunk variety, a demanding first-zone base and rising difficulty through every zone. All six enemy animals use data-driven detection from at least half a screen away, persistent pursuit, tuned movement speeds and ranges, and visible frustration when unable to reach Chibi. Generation and movement use shared layouts, primitives and behaviour graphs. Jump rules, combat restrictions, stage checkpoints and story remain as specified in the rulebook.
+**Current implementation scope:** the cast identities in the rulebook: Chibi the bird, Furt the ferret, Archie the dog, Pebble the pigeon, Trixi the goose, Bini the bear and Kiwi the female raccoon. Existing runtime patterns are documented separately from approved replacement mechanics for Pebble, Trixi and Bini; those targets do not claim the new mechanics are already built. Stage progression, jump rules and story are unchanged.
 
 Open questions:
 
@@ -51,7 +51,7 @@ Open questions:
 - **Confirm, one-way ledges:** assumed, he jumps up through an awning or other one-way ledge from below and lands on top of it
 - **Confirm, restarts reset choices:** assumed, a zone restart also resets the choices made in that zone
 - **Ending:** the outcome of their friendship when Chibi returns to the shared apartment
-- **Friends:** the identities of the friends Furt enlists beyond the dog, raccoon, goose, owl and rabbit, and their encounters
+- **Friends:** the identities of the friends Furt enlists beyond Archie, Pebble, Trixi, Bini and Kiwi, and their encounters
 - **Map:** Next's branching routes
 - **Rooms:** the currency and what items do; what quests and rewards give and how they are tracked; what a threat leads to; whether a room can be revisited, and whether its dialogue changes
 - **Use:** what it acts on besides doors (assumed: talking to animals, and objects at route forks)

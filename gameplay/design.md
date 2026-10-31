@@ -12,9 +12,23 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 
 - **Characters:** Chibi is the male bird the player controls: a small, round, cream bird with tiny wings and feet, an orange bill and a dot eye. His full design is in the [art plan](../art/README.md). Animals talk; there are no humans.
 - **Furt:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
-- **Story:** Chibi and Furt share an apartment in a big city. After a big fight, Furt packages the sleeping Chibi and mails him far away. Chibi knows Furt is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
+- **Story:** Chibi and Furt share an apartment in a big city. After a big fight, while Chibi sleeps, Furt packages him and mails him far away. Chibi knows Furt is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
 - **World:** the modern day, mixing fantasy and reality
 - **Zones:** a zone is one themed map destination containing two playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and twelve stages. The V1 route and current stage availability are listed below
+
+## Cast
+
+| Name   | Identity           | Role                            |
+| ------ | ------------------ | ------------------------------- |
+| Archie | Dog                | Blue cityscape antagonist       |
+| Bini   | Bear               | Woodland antagonist             |
+| Chibi  | Bird               | Player character                |
+| Furt   | Ferret             | Apartment building antagonist   |
+| Kiwi   | Female raccoon     | Home city antagonist            |
+| Pebble | Pigeon             | Industrial outskirts antagonist |
+| Trixi  | Goose with glasses | Countryside antagonist          |
+
+The named cast uses the current runtime patterns described below. The replacement mechanics listed under Implementation targets are approved work, not claims of completed runtime behaviour.
 
 ## Core loop
 
@@ -113,7 +127,7 @@ This is the approved implementation scope for the current change, including the 
 
 - **Assembly:** a stage's recipe names its theme, start and finish chunks, a length range (start and finish included), a configurable difficulty band, and the events and doors to place. The seed varies the middle chunks within that band, without requiring difficulty to rise; the start and finish chunks are exempt. It never picks the same chunk twice in a row, and it fills the slots
 - **Difficulty:** 1 to 5. 1: walking and taps. 2: full jumps and still hazards. 3: gaps near the reach, single moving platforms and single low-ceiling tap spots. 4: timed platforms or moving hazards on the required path. 5: compounded tap-only, timed or platform-to-platform challenges
-- **Challenge variety:** the city and street middle pools include required climbing routes, moving ledges, red ground strips and dog yards. A climbing chunk requires ascent on its route rather than offering an optional upper detour. The seed varies the mix; a stage is not guaranteed to contain every challenge type
+- **Challenge variety:** the city and street middle pools include required climbing routes, moving ledges, red ground strips and enemy yards. A climbing chunk requires ascent on its route rather than offering an optional upper detour. The seed varies the mix; a stage is not guaranteed to contain every challenge type
 - **Fairness:** every chunk is walked on its own from entry to exit, with its slots empty and filled, and a sample of seeds per recipe is walked end to end
 - **Seams:** a chunk's entry and exit are the ground rows at its left and right edges: 50, 40 or 30. The seam surface is terrain and runs at least 4 tiles in from the edge, with no gap there, and nothing (no solid, ledge, hazard or moving platform) in the 6 rows above it
 - **Shape:** one or two screens wide (60 to 120 tiles) and at most 60 rows (720 px) tall
@@ -125,7 +139,7 @@ This is the approved implementation scope for the current change, including the 
 
 Everything in a stage except its terrain is placed in data through archetypes, characters and instances.
 
-- **Animals:** every animal in the main stage foreground, apart from Chibi, is an enemy and lethal on contact. Animals have no red contact outlines. The dog, raccoon, goose, owl, rabbit and ferret antagonists are the only world-stage animals currently placed; there are no friendly background animals in the current stages
+- **Animals:** every animal in the main stage foreground, apart from Chibi, is an enemy and lethal on contact. Animals have no red contact outlines. Archie, Pebble, Trixi, Bini, Kiwi and Furt are the only world-stage animals currently placed; there are no friendly background animals in the current stages
 - **Archetypes:** a behaviour: collision (none, solid, one-way ledge, hazard or Use), movement, reaction, interaction (such as talking on Use or a quip on approach) and default tuning
 - **Behaviour patterns:** reusable patterns in the data choose behaviour primitives, their sequence or states, transition conditions, timing, animations and tuning. Animals and moving inanimate objects use the same composition approach. Code implements the primitives, condition evaluation and shared executor; character-specific cycles are composed in data rather than hardcoded in code
 - **Characters:** who something is: one archetype plus tuning overrides, its art and animations, hit box, size, its dialogue and quip lines, and quirks. No character inherits from another. Props (platforms, hazards, doors and backdrops) are characters with art but no voice
@@ -153,91 +167,97 @@ The route spans six themed zones of two stages, in this order. Stage length is d
 ### First stage
 
 - **Ending:** the fixed finish retains the final short-jump ceiling, red-edged gap and canopy
-- **Layout:** the tutorial combines the parcel depot and streets of the blue cityscape with a fixed opening and ending around seeded hand-designed street chunks. The middle uses matching city scenery and the zone's difficulty band, with varied climbing, moving-platform and dog-yard chunks
-- **Opening:** the fixed start retains the opened parcel on safe ground, depot jump lessons and first dog introduction
+- **Layout:** the tutorial combines the parcel depot and streets of the blue cityscape with a fixed opening and ending around seeded hand-designed street chunks. The middle uses matching city scenery and the zone's difficulty band, with varied climbing, moving-platform and enemy-yard chunks
+- **Opening:** the fixed start retains the opened parcel on safe ground, depot jump lessons and first Archie introduction
 - **Rooms:** the street door leads to the prototype test room
 - **Route:** the main path continues right toward the city boundary; middle chunks can include upper street ledges. City boundary is the zone's second stage and unlocks when this tutorial is completed
 
-The park is a prototype for randomized stages, not V1's second stage. The identities of Furt's friends beyond the dog, raccoon, goose, owl and rabbit and the later encounters along the route are undecided.
+The park is a prototype for randomized stages, not V1's second stage. The identities of Furt's friends beyond Archie, Pebble, Trixi, Bini and Kiwi and the later encounters along the route are undecided.
 
 ### City boundary
 
-- **Encounter:** the finish uses the same dog behaviour and timing as the first stage, with refuge ledges on either side of its patrol. The dog is active without a dialogue scene; there is no new introduction
-- **Layout:** the second Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the existing street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, dog yards, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
+- **Encounter:** the finish uses the same Archie behaviour and timing as the first stage, with refuge ledges on either side of its patrol. Archie is active without a dialogue scene; there is no new introduction
+- **Layout:** the second Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the existing street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, enemy yards, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
 - **Replay:** entering from the map draws a fresh assembly seed; retries keep that layout. Completing Parcel depot and streets unlocks this stage, and the existing stage-choice modal keeps both available for replay
 - **Rooms:** one door in the fixed start leads to the existing prototype test room
 
 ### Industrial outskirts
 
 - **Appearance:** purple industrial scenery uses floor, crate and container art, shared moving platforms and red-edged inanimate hazards
-- **Encounters:** both stages use the raccoon antagonist through the shared data-driven behaviour system. The dog and raccoon use the shared enemy detection, pursuit and frustration rules
+- **Encounters:** both stages feature Pebble through the shared data-driven behaviour system. Archie and Pebble use the shared enemy detection, pursuit and frustration rules
 - **Layout:** Warehouse district and Freight terminal each have fixed openings and endings with randomized middle chunks, 720 to 960 columns long, inside the zone's difficulty band. Required climbing sections, moving ledges and red-edged hazards use the shared layouts and primitives
 - **Progression:** clearing City boundary opens Warehouse district; clearing Warehouse district opens Freight terminal. Both remain replayable through the existing stage-choice flow. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room. These stages add no new room, plot or dialogue
 
-### Raccoon encounter
+### Pebble current runtime pattern
 
-- **Contact:** the raccoon is always lethal on contact, including while preparing and resting, without a red contact outline
+- **Contact:** Pebble is always lethal on contact, including while preparing and resting, without a red contact outline
 - **Cycle:** climb, prepare, drop, rest, then climb again. The shared behaviour graph and data define its vertical extent, movement speeds and state timings
 
 ### Countryside
 
 - **Appearance:** muted yellow countryside scenery distinguishes Farmland's soil and hay from River crossing's banks and timber. Water is decorative scenery, not an implicit contact hazard; only explicit red surfaces are hazards, and falling follows the normal death rules
-- **Encounters:** both stages use the goose antagonist through shared behaviour primitives. The goose, dog and raccoon use the shared enemy detection, pursuit and frustration rules
+- **Encounters:** both stages feature Trixi through shared behaviour primitives. Trixi, Archie and Pebble use the shared enemy detection, pursuit and frustration rules
 - **Layout:** Farmland and River crossing each use fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, ledge lifts, shuttles and red hazards use the common object and layout system with countryside art and configuration
 - **Progression:** clearing Freight terminal opens Farmland; clearing Farmland opens River crossing. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room; these stages add no new rooms, plot, dialogue or bosses
 
-### Goose encounter
+### Trixi current runtime pattern
 
-- **Contact:** the goose is always lethal on contact, including while signalling and resting, without a red contact outline
+- **Contact:** Trixi is always lethal on contact, including while signalling and resting, without a red contact outline
 - **Cycle:** signal, make a committed short charge, then rest before repeating. Its shared data-driven behaviour graph defines the timing and movement tuning
 
 ### Woodland
 
 - **Appearance:** woodland uses its canonical green theme through shared terrain, structure, prop and background skins
-- **Encounters:** both stages use the owl antagonist through the existing vertical behaviour graph. The owl and earlier enemies use the shared detection, pursuit and frustration rules
+- **Encounters:** both stages feature Bini through the existing vertical behaviour graph. Bini and earlier enemies use the shared detection, pursuit and frustration rules
 - **Layout:** Forest paths and Ravine each use fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
 - **Progression:** clearing River crossing opens Forest paths; clearing Forest paths opens Ravine. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, dialogue, bosses or combat. Water does not add hidden hazards
 
-### Owl encounter
+### Bini current runtime pattern
 
-- **Contact:** the owl is always lethal on contact, including during preparation, rest and return, without a red contact outline
-- **Cycle:** the owl prepares visibly, swoops down, rests and returns upward using the shared vertical behaviour graph. Numerical movement and timing values stay in data
+- **Contact:** Bini is always lethal on contact, including during preparation, rest and return, without a red contact outline
+- **Cycle:** Bini prepares visibly, swoops down, rests and returns upward using the shared vertical behaviour graph. Numerical movement and timing values stay in data
 
 ### Home city
 
 - **Appearance:** City outskirts and Familiar neighbourhood use the canonical peach theme through shared terrain, structure, prop and background skins
-- **Encounters:** both stages use the rabbit antagonist through the existing hop primitive. The rabbit and earlier enemies use the shared detection, pursuit and frustration rules
+- **Encounters:** both stages feature Kiwi through the existing hop primitive. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
 - **Layout:** each stage uses fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
 - **Progression:** clearing Ravine opens City outskirts; clearing City outskirts opens Familiar neighbourhood. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, dialogue, bosses or combat. Water does not add hidden hazards
 
-### Rabbit encounter
+### Kiwi current runtime pattern
 
-- **Contact:** the rabbit is always lethal on contact, including during its pauses, without a red contact outline
+- **Contact:** Kiwi is always lethal on contact, including during her pauses, without a red contact outline
 - **Cycle:** repeated hops are separated by predictable pauses and use the shared pursuit rules. The shared hop primitive and behaviour data define the movement and timing
 
 ### Apartment building
 
 - **Areas:** Entrance and lobby has two short linked sections. Climb to the apartment has seven short floor sections, in order: restaurant, exterior, pool, exterior, spa, exterior, residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
-- **Encounters:** Furt is a normal lethal-contact antagonist using the familiar dog behaviour pattern. He has no red contact outline; this is not a boss encounter and adds no combat
+- **Encounters:** Furt is a normal lethal-contact antagonist using the shared patrol, crouch, rush and rest pattern. He has no red contact outline; this is not a boss encounter and adds no combat
 - **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows the celebration every time, including replays. The cause of the fight and the outcome of the friendship remain undecided
 - **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. These short linked sections do not use the other zones' total stage-length range
 - **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Climb to the apartment. The final map path ends at the apartment. Stage IDs, save format and replay unlocks are unchanged
 - **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room, quest or dialogue. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
 - **Stairs:** walking into marked main-route stairs changes floor automatically, without Use. Stairs are reversible; Chibi can return through earlier sections and leave for the map at the first section's left edge
 
-### First dog encounter
+### First Archie current runtime pattern
 
-- **Activation:** proximity starts the introduction once per attempt, freezing play. Completing or skipping it activates the dog and resumes play
+- **Activation:** proximity starts the introduction once per attempt, freezing play. Completing or skipping it activates Archie and resumes play
 - **Approach:** the loading yard follows the basic hop and full-jump lessons and precedes the streets. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
-- **Contact:** the dog is always lethal on contact, including during crouch and rest. It has no red contact outline
+- **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
-- **Dialogue:** the first introduction has three lines: the dog says Furt asked him to stop Chibi; Chibi says he is going home; the dog tells him to get past. The player-facing wording lives in the text data files, with Skip available
-- **Timing:** the dog uses the same timing across both stages of the first zone; their layouts vary. The first encounter is in the first stage
+- **Dialogue:** the first introduction has three lines: Archie says Furt asked him to stop Chibi; Chibi says he is going home; Archie tells him to get past. The player-facing wording lives in the text data files, with Skip available
+- **Timing:** Archie uses the same timing across both stages of the first zone; their layouts vary. The first encounter is in the first stage
+
+### Implementation targets
+
+- **Bini:** idle with a phone, use a long growl that pushes Chibi, then charge and maul. High ground and solid cover let Chibi avoid the growl
+- **Pebble:** perch on posts, spot Chibi, fly and drop white-block poop projectiles. Each projectile falls straight down, is lethal on contact and disappears on landing, with no residue or homing
+- **Trixi:** wear glasses and set traps. Trap details remain undecided
 
 ### Rooms
 
@@ -250,7 +270,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 - **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's 64 px portrait and name tab inside the panel. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. There is no back, timer or scrolling chat history
-- **Restarts:** after a stage restart, the stage's dialogue plays again. The first dog introduction is once per attempt
+- **Restarts:** after a stage restart, the stage's dialogue plays again. The first Archie introduction is once per attempt
 - **Skip:** Skip skips all remaining dialogue. If the conversation ends in a choice, Skip opens its modal without choosing an answer or bypassing the choice
 
 ### Quips
@@ -260,7 +280,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 ### Furt
 
-- **Appearances:** Furt enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond the dog, raccoon, goose, owl and rabbit are undecided
+- **Appearances:** Furt enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided
 - **Boss encounters:** deferred to Next, outside V1
 - **Calling card:** every trap Furt sets carries a badge of his stovepipe hat and bow tie
 - **Ending:** Chibi returns home; the outcome of their friendship is undecided. There is no combat
