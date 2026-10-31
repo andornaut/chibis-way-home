@@ -26,6 +26,7 @@ import {
   type TextButton,
   TITLE_FONT,
 } from "./cardParts";
+import { frameDeathBackdrop } from "./deathCamera";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
@@ -56,6 +57,7 @@ export class DeathScene extends Scene {
       }
     | undefined;
   private finished = false;
+  private restoreCamera = () => {};
 
   constructor() {
     super("death");
@@ -80,15 +82,19 @@ export class DeathScene extends Scene {
       },
       this.summary.runStats,
     );
-    this.layout = deathCard(cardFonts(this), { ...SCREEN, x: 0, y: 0 }, this.summary.bird, {
-      ...words,
-      home: TEXT.pause.home,
-      retry: TEXT.death.retry,
-      stats: RUN_STAT_KEYS.map((key) => ({
-        label: fillNames(TEXT.stats[key], { count: "", time: "" }).trimEnd(),
-        value: values[key],
-      })),
-    });
+    this.layout = deathCard(
+      cardFonts(this),
+      { ...SCREEN, x: 0, y: 0 },
+      {
+        ...words,
+        home: TEXT.pause.home,
+        retry: TEXT.death.retry,
+        stats: RUN_STAT_KEYS.map((key) => ({
+          label: fillNames(TEXT.stats[key], { count: "", time: "" }).trimEnd(),
+          value: values[key],
+        })),
+      },
+    );
     addSlice(this, "ui-settings-card", this.layout.card);
     for (const name of ["title", "stage", "progress"] as const) {
       addCardTextIn(
@@ -134,6 +140,7 @@ export class DeathScene extends Scene {
     });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
+    this.restoreCamera = frameDeathBackdrop(this, this.layout.card, this.summary.bird);
     showModalBackdrop(this, true);
   }
   private render(): void {
@@ -158,6 +165,7 @@ export class DeathScene extends Scene {
       return;
     }
     this.finished = true;
+    this.restoreCamera();
     this.scene.stop();
     const opener = this.scene.get("zone") as unknown as DeathOpener;
     if (action === "retry") {

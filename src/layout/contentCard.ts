@@ -82,7 +82,6 @@ export function contentCardLayout(
   bounds: Rect,
   groups: readonly CardGroup[],
   header?: CardHeader,
-  preferred?: Point,
 ): ContentCardLayout {
   if (
     groups.some(
@@ -135,20 +134,8 @@ export function contentCardLayout(
   const card: Rect = {
     height,
     width,
-    x: Math.max(
-      bounds.x,
-      Math.min(
-        bounds.x + bounds.width - width,
-        preferred?.x ?? bounds.x + (bounds.width - width) / 2,
-      ),
-    ),
-    y: Math.max(
-      bounds.y,
-      Math.min(
-        bounds.y + bounds.height - height,
-        preferred?.y ?? bounds.y + (bounds.height - height) / 2,
-      ),
-    ),
+    x: bounds.x + (bounds.width - width) / 2,
+    y: bounds.y + (bounds.height - height) / 2,
   };
   const inner = insetRect(CARD_CONTENT.padding, card);
   const innerX = inner.x;

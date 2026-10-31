@@ -24,18 +24,14 @@ describe("measured content cards", () => {
     const labels = [TEXT.pause.home, TEXT.death.retry];
     const actions = cardActionsSize(BODY, "row", labels);
     const rows = cardTextRowsSize(BODY, ["City", "Stage 1", "Progress: 25%", "Time: 1:05"]);
-    const result = contentCardLayout(
-      VIEW,
-      [
-        { key: "rows", ...rows },
-        { height: 0, key: "absent", width: 0 },
-        { key: "actions", ...actions },
-      ],
-      undefined,
-      { x: 226, y: 16 },
-    );
+    const result = contentCardLayout(VIEW, [
+      { key: "rows", ...rows },
+      { height: 0, key: "absent", width: 0 },
+      { key: "actions", ...actions },
+    ]);
     expect(result.card.height).toBe(164);
-    expect(result.card.y).toBe(16);
+    expect(result.card.y + result.card.height / 2).toBe(SCREEN.height / 2);
+    expect(result.card.x + result.card.width / 2).toBe(SCREEN.width / 2);
     const rect = result.groups.actions;
     if (!rect) {
       throw new Error("Missing measured actions");
@@ -68,11 +64,13 @@ describe("measured content cards", () => {
   it.each([SCREEN.width, 400, 280])(
     "uses the full viewport minimum within an available width of %s",
     (availableWidth) => {
-      const result = contentCardLayout({ ...VIEW, width: availableWidth }, [
+      const result = contentCardLayout({ ...VIEW, width: availableWidth, x: 10, y: 20 }, [
         { height: 16, key: "text", width: 80 },
       ]);
       expect(result.card.width).toBe(Math.min(availableWidth, SCREEN.width / 2));
       expect(result.groups.text?.width).toBe(80);
+      expect(result.card.x + result.card.width / 2).toBe(10 + availableWidth / 2);
+      expect(result.card.y + result.card.height / 2).toBe(20 + SCREEN.height / 2);
     },
   );
 

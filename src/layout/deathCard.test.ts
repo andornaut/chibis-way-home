@@ -6,9 +6,11 @@ import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
+import { BIRD_FRAME } from "../view/bird";
 import { deathLabels, deathSummary } from "../view/death";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
+import { CARD_CONTENT } from "./contentCard";
 import { deathCard } from "./deathCard";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
@@ -28,38 +30,11 @@ const words = {
 };
 
 describe("death card", () => {
-  it.each([
-    { height: 40, width: 40, x: 340, y: 310 },
-    { height: 40, width: 40, x: 340, y: 80 },
-    { height: 40, width: 40, x: 340, y: 150 },
-    { height: 40, width: 40, x: 0, y: 0 },
-    { height: 40, width: 40, x: 680, y: 150 },
-  ])("keeps the seated bird visible at ground and elevated positions: %j", (bird) => {
-    const { card, title } = deathCard(fonts, view, bird, words);
-    expect(title.x + title.width / 2).toBe(card.x + card.width / 2);
-    expect(card.x).toBeGreaterThanOrEqual(0);
-    expect(card.y).toBeGreaterThanOrEqual(0);
-    expect(card.x + card.width).toBeLessThanOrEqual(SCREEN.width);
-    expect(card.y + card.height).toBeLessThanOrEqual(SCREEN.height);
-    expect(
-      card.x + card.width <= bird.x - 8 ||
-        card.x >= bird.x + bird.width + 8 ||
-        card.y + card.height <= bird.y - 8 ||
-        card.y >= bird.y + bird.height + 8,
-    ).toBe(true);
-  });
-  it("caps only the body-clear safe region when no full-width placement fits", () => {
-    const body = { height: 40, width: 40, x: 340, y: 150 };
-    const result = deathCard(fonts, view, body, words);
-    expect(result.card.width).toBe(body.x - 8 - view.x);
-    expect(result.card.height).toBeLessThanOrEqual(SCREEN.height);
-    expect(result.card.width).toBeLessThan(SCREEN.width / 2);
-    expect(result.home.button.width).toBe(114);
-    expect(result.retry.button.width).toBe(114);
-  });
-  it("uses the compact top-centred City layout when the bird is below it", () => {
-    const result = deathCard(fonts, view, { height: 40, width: 40, x: 340, y: 310 }, words);
-    expect(result.card.y).toBe(16);
+  it("centres the measured card and preserves full-size grouped statistics", () => {
+    const result = deathCard(fonts, view, words);
+    expect(result.card.x + result.card.width / 2).toBe(SCREEN.width / 2);
+    expect(result.card.y + result.card.height / 2).toBe(SCREEN.height / 2);
+    expect(result.card.width).toBeGreaterThanOrEqual(SCREEN.width / 2);
     expect(result.stage.y).toBeGreaterThan(result.title.y);
     expect(result.progress.y).toBeGreaterThan(result.stage.y);
     expect(result.stats[0]!.rect.y - result.progress.y - result.progress.height).toBe(8);
@@ -85,12 +60,12 @@ describe("death card", () => {
         ...deathLabels(ZONE_MAP, TEXT.map, "1", stageId),
         percent: 0.5,
       });
-      const layout = deathCard(
-        fonts,
-        view,
-        { height: 40, width: 40, x: 340, y: 310 },
-        { ...labels, ...summary, stats: words.stats },
-      );
+      const layout = deathCard(fonts, view, { ...labels, ...summary, stats: words.stats });
+      expect(layout.card.x + layout.card.width / 2).toBe(SCREEN.width / 2);
+      expect(layout.card.y + layout.card.height / 2).toBe(SCREEN.height / 2);
+      expect(
+        layout.card.y + layout.card.height + CARD_CONTENT.gap + BIRD_FRAME.height,
+      ).toBeLessThanOrEqual(SCREEN.height);
       for (const name of ["title", "stage", "progress"] as const) {
         expect(
           Math.max(
