@@ -106,7 +106,7 @@ describe("structural playability assessment", () => {
     });
     expect(stage.encounters).toBe(2);
     expect(stage.mechanicsPer100Cols["force-gust"]).toBe(2.5);
-    expect(stage.longestEncounterFreeChunkRunCols).toBe(20);
+    expect(stage.longestEncounterFreeChunkRunPerAreaCols).toBe(20);
     expect(stage.geometry[0]!.terrainProjectionGaps).toEqual([{ col: 10, cols: 5 }]);
     expect(formatPlayabilityMarkdown(report)).toContain("not a playthrough");
     expect(assessPlayability(context(), [7])).toEqual(report);

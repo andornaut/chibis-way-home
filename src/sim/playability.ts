@@ -35,7 +35,7 @@ export interface StageAssessment {
   readonly chunks: readonly Selection[];
   readonly difficultyDistribution: Counts;
   readonly middleDifficultyDistribution: Counts;
-  readonly longestEncounterFreeChunkRunCols: number;
+  readonly longestEncounterFreeChunkRunPerAreaCols: number;
   readonly geometry: readonly {
     readonly area: string;
     readonly solidTopRows: readonly number[];
@@ -92,7 +92,7 @@ const LIMITATIONS = [
   "Authored grades are ordinal labels, not measured player difficulty; fixed caps are included.",
   "Mechanics count placed objects once per capability, not attacks, frames or required route usage.",
   "Chunk signatures describe mechanics present, not a proven order of player actions.",
-  "Encounter totals come from selected chunk metadata.",
+  "Encounter totals come from selected chunk metadata; encounter-free chunk runs reset at each area boundary.",
   "Terrain projection gaps and solid-top spans are geometry proxies, not required jumps.",
   "Lengths sum area widths, not travelled distance; no successful-clear time is measured or estimated.",
 ] as const;
@@ -302,7 +302,7 @@ export function assessPlayability(
         });
         const lengthCols = areas.reduce((n, area) => n + area.cols, 0);
         const signatures = chunks.map((chunk) => chunk.mechanics.join(","));
-        let longestEncounterFreeChunkRunCols = 0,
+        let longestEncounterFreeChunkRunPerAreaCols = 0,
           emptyRun = 0,
           previousArea = "";
         for (const chunk of chunks) {
@@ -312,7 +312,10 @@ export function assessPlayability(
           if (chunk.encounters === 0) {
             emptyRun += chunk.cols;
           }
-          longestEncounterFreeChunkRunCols = Math.max(longestEncounterFreeChunkRunCols, emptyRun);
+          longestEncounterFreeChunkRunPerAreaCols = Math.max(
+            longestEncounterFreeChunkRunPerAreaCols,
+            emptyRun,
+          );
           previousArea = chunk.area;
         }
         stages.push({
@@ -324,7 +327,7 @@ export function assessPlayability(
           geometry,
           id,
           lengthCols,
-          longestEncounterFreeChunkRunCols,
+          longestEncounterFreeChunkRunPerAreaCols,
           mechanics: sorted(mechanics),
           mechanicsPer100Cols: density(lengthCols, mechanics),
           middleDifficultyDistribution: sorted(middleDifficultyDistribution),
@@ -398,7 +401,7 @@ export function assessPlayability(
     seeds: [...seeds],
     stages,
     units: {
-      density: "placed capabilities per 100 summed area columns, pooled across seeds",
+      density: "mechanic occurrences per 100 summed area columns, pooled across seeds",
       difficulty: "authored ordinal grade; counts include fixed caps",
       length: "tiles (summed area widths)",
     },
