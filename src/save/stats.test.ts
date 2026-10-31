@@ -57,15 +57,92 @@ describe("persistent active stage clocks", () => {
   });
 
   it.each([
-    { stages: { street: { activeSeconds: -1 } } },
-    { stages: { street: { activeSeconds: "1" } } },
-    { stages: { unbuilt: { activeSeconds: 1 } } },
-    { stages: [] },
+    {
+      stages: {
+        street: { run: { attemptSeconds: -1, attempts: 1, completed: false, runSeconds: 1 } },
+      },
+      zones: {},
+    },
+    {
+      stages: {
+        street: { run: { attemptSeconds: 2, attempts: 0, completed: false, runSeconds: 1 } },
+      },
+      zones: {},
+    },
+    { stages: { unbuilt: {} }, zones: {} },
+    { stages: [], zones: {} },
   ])("refuses invalid stats %j", (value) => {
     expect(loadSave(FORMAT, JSON.stringify({ ...value, version: STATS_VERSION })).status).toBe(
       "corrupt",
     );
     expect(encodeSave(FORMAT, value as never).ok).toBe(false);
+  });
+
+  it("keeps retries in one run and isolates each actual zone visit", async () => {
+    const storage = memoryStorage();
+    const destinations = [{ id: "first", stages: ["street", "park"] as const }];
+    const clock = stageStatsStore(storage, STAGES, destinations);
+    await clock.load();
+    clock.beginVisit("first");
+    clock.beginRun("street");
+    clock.addActiveTime("street", 3);
+    clock.retryStage("street");
+    clock.addActiveTime("street", 2);
+    expect(clock.summary("street")).toMatchObject({
+      attemptSeconds: 2,
+      attempts: 2,
+      runSeconds: 5,
+    });
+    expect(clock.completeStage("street").bestSeconds).toBe(2);
+    clock.clearStage("street");
+    clock.beginRun("park");
+    clock.addActiveTime("park", 4);
+    clock.completeStage("park");
+    expect(clock.visitSummary("first")).toMatchObject({
+      attemptSeconds: 6,
+      attempts: 3,
+      completed: 2,
+      partial: false,
+      runSeconds: 9,
+      total: 2,
+    });
+    await clock.flush();
+    const reopened = stageStatsStore(storage, STAGES, destinations);
+    await reopened.load();
+    expect(reopened.visitSummary("first")).toEqual(clock.visitSummary("first"));
+    reopened.beginVisit("first");
+    reopened.beginRun("street");
+    reopened.addActiveTime("street", 1);
+    reopened.completeStage("street");
+    expect(reopened.visitSummary("first")).toMatchObject({
+      attemptSeconds: 1,
+      attempts: 1,
+      completed: 1,
+      partial: true,
+      runSeconds: 1,
+      total: 2,
+    });
+    expect(reopened.summary("street").bestSeconds).toBe(1);
+    expect(reopened.visitSummary("first").bestSeconds).toBe(6);
+    reopened.beginVisit("first");
+    reopened.beginRun("street");
+    reopened.addActiveTime("street", 10);
+    reopened.completeStage("street");
+    reopened.beginRun("park");
+    reopened.addActiveTime("park", 6);
+    reopened.completeStage("park");
+    expect(reopened.summary("street").bestSeconds).toBe(1);
+    expect(reopened.visitSummary("first")).toMatchObject({
+      bestSeconds: 6,
+      partial: false,
+      runSeconds: 16,
+    });
+    expect(reopened.summary("unknown")).toMatchObject({
+      attempts: 0,
+      bestSeconds: undefined,
+      runSeconds: 0,
+    });
+    await reopened.flush();
   });
 
   it("keeps memory clocks when storage is unavailable", async () => {
@@ -170,5 +247,5 @@ it("preserves stats on progress restart, then resets the stage on every clear", 
 
 it("resets version-two level clocks without migrating them", () => {
   const raw = JSON.stringify({ levels: { street: { activeSeconds: 65 } }, version: 2 });
-  expect(loadSave(FORMAT, raw)).toMatchObject({ save: { stages: {} }, status: "corrupt" });
+  expect(loadSave(FORMAT, raw)).toMatchObject({ save: FORMAT.fresh(), status: "corrupt" });
 });
