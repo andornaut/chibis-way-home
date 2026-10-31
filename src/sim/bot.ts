@@ -2,7 +2,9 @@ import { type Random, randomStream } from "@andornaut/game-kit/random";
 
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
+import { transientBox } from "../rules/transients";
 import type { ZoneInput, ZoneState } from "../rules/zone";
+import { hasDynamicBehaviour } from "./behaviourBounds";
 
 export interface BotSkill {
   readonly adaptiveJump?: boolean;
@@ -68,7 +70,7 @@ export function prepareSensors(layout: ZoneLayout): SensorIndex {
           area.objects.flatMap((object, index) =>
             (
               object.behaviour
-                ? Object.values(object.behaviour.states).some((node) => node.motion.kind !== "wait")
+                ? hasDynamicBehaviour(object.behaviour)
                 : object.motion.algorithm !== "static" || object.reaction.kind !== "none"
             )
               ? [index]
@@ -198,6 +200,17 @@ function obstacleAhead(
         obstacle = true;
         height = Math.max(height, bird.y + tuning.height - rect.y);
       }
+    }
+  }
+  for (const entity of zone.transients) {
+    if (entity.age < entity.armSeconds) {
+      continue;
+    }
+    const rect = transientBox(entity);
+    if (intersects(probe, rect)) {
+      danger = true;
+      obstacle = true;
+      height = Math.max(height, bird.y + tuning.height - rect.y);
     }
   }
   // A linked edge enters its next section automatically. Missing terrain entirely beyond

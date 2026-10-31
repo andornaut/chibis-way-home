@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import type { Transient } from "../rules/transients";
 import { startZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
+import { emissionBounds } from "./behaviourBounds";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot";
 
 const ground = { height: 20, width: 1100, x: 0, y: 120 };
@@ -84,6 +86,85 @@ describe("local bot decisions", () => {
       expect(prepareSensors(fixture([ground], [object])).movers.main?.has(0)).toBe(moving);
     },
   );
+  it("reads transient arming, movement, removal and attempt resets through the same sensor index", () => {
+    const layout = fixture([ground]);
+    const sensors = prepareSensors(layout);
+    const initial = startZone(BIRD, layout, 1);
+    const entity: Transient = {
+      age: 0,
+      armSeconds: 1,
+      at: { x: 100, y: 108 },
+      emitter: 0,
+      gravity: 0,
+      id: 0,
+      lifeSeconds: 5,
+      object: { ...platform, collision: "hazard", height: 12, width: 12 },
+      velocity: { x: 0, y: 0 },
+    };
+    const armed = { ...entity, age: 1 };
+    for (const { attempt, jump, transients } of [
+      { attempt: 0, jump: false, transients: [entity] },
+      { attempt: 0, jump: true, transients: [armed] },
+      { attempt: 0, jump: false, transients: [{ ...armed, at: { x: 1000, y: 108 } }] },
+      { attempt: 0, jump: false, transients: [] },
+      { attempt: 1, jump: false, transients: [entity] },
+    ]) {
+      const zone = { ...initial, attempt, bird: { ...initial.bird, grounded: true }, transients };
+      expect(
+        botInput(BIRD, sensors, layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, newBot(1)).jumpHeld,
+      ).toBe(jump);
+    }
+  });
+  it("bounds emitted hazards and gusts beyond the actor track for local phase selection", () => {
+    const action = {
+      armSeconds: 0,
+      character: "falling-block",
+      gravity: 10,
+      kind: "spawn" as const,
+      lifeSeconds: 3,
+      maxAlive: 1,
+      offset: { x: 20, y: -10 },
+      velocity: { x: 10, y: -10 },
+    };
+    const object: ObjectLayout = {
+      ...platform,
+      behaviour: {
+        axis: "x",
+        distance: 0,
+        initial: "active",
+        states: {
+          active: { animation: null, motion: { kind: "wait" }, onEnter: [action], transitions: [] },
+        },
+      },
+      height: 12,
+      spawnTemplates: { "falling-block": { ...platform, height: 12, width: 12 } },
+      width: 36,
+    };
+    const track = { height: 12, width: 36, x: 100, y: 100 };
+    expect(emissionBounds(object, track)).toEqual({ height: 32, width: 62, x: 100, y: 85 });
+    const active = object.behaviour!.states.active!;
+    const gust: ObjectLayout = {
+      ...object,
+      behaviour: {
+        ...object.behaviour!,
+        states: {
+          active: {
+            ...active,
+            onEnter: [
+              {
+                height: 20,
+                kind: "force-pulse",
+                range: 80,
+                seconds: 0.4,
+                velocity: { x: 40, y: 0 },
+              },
+            ],
+          },
+        },
+      },
+    };
+    expect(emissionBounds(gust, track)).toEqual({ height: 32, width: 196, x: 20, y: 80 });
+  });
   it("walks through a linked exit instead of treating the next floor as a gap", () => {
     const original = fixture([{ ...ground, width: 200 }]);
     const main = original.areas.main;

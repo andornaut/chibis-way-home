@@ -19,6 +19,12 @@ import {
   type ZoneInput,
   type ZoneState,
 } from "../rules/zone";
+import {
+  behaviourCycleSeconds,
+  emissionBounds,
+  hasDynamicBehaviour,
+  sweptBehaviourRect,
+} from "./behaviourBounds";
 import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases";
 
 const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
@@ -97,7 +103,7 @@ const MARGIN = 24;
 
 const isStill = (object: ObjectLayout) =>
   object.behaviour
-    ? !Object.values(object.behaviour.states).some((node) => node.motion.kind !== "wait")
+    ? !hasDynamicBehaviour(object.behaviour)
     : object.motion.algorithm === "static" && object.reaction.kind === "none";
 const movementSpeed = (object: ObjectLayout): number =>
   object.behaviour
@@ -120,22 +126,7 @@ const objectRect = (object: ObjectLayout, at: Point): Rect => ({
 function sweptRect(object: ObjectLayout): Rect {
   const pattern = object.behaviour;
   if (pattern) {
-    const rect = objectRect(object, object.origin);
-    const hop = Math.max(
-      0,
-      ...Object.values(pattern.states).map((node) =>
-        node.motion.kind === "hop" ? node.motion.hopHeight : 0,
-      ),
-    );
-    const dx = pattern.axis === "x" ? pattern.distance : 0;
-    const dy = pattern.axis === "y" ? pattern.distance : 0;
-    return {
-      ...rect,
-      height: rect.height + Math.abs(dy) + hop,
-      width: rect.width + Math.abs(dx),
-      x: rect.x + Math.min(0, dx),
-      y: rect.y + Math.min(0, dy) - hop,
-    };
+    return sweptBehaviourRect(pattern, objectRect(object, object.origin));
   }
   const { direction, distance } = object.motion;
   const reach = object.reaction.kind === "none" ? distance : distance + object.reaction.range;
@@ -614,21 +605,7 @@ function cycleSteps(object: ObjectLayout): number {
   const { distance, pause, speed } = object.motion;
   const patrol = speed > 0 ? 2 * (distance / speed + pause) : 0;
   const pattern = object.behaviour;
-  const seconds = pattern
-    ? Object.values(pattern.states).reduce((sum, node) => {
-        const travel =
-          node.motion.kind !== "wait" && node.motion.speed > 0
-            ? Math.abs(pattern.distance) / node.motion.speed
-            : 0;
-        const hop = node.motion.kind === "hop" ? node.motion.hopSeconds : 0;
-        const waits = node.transitions.flatMap(({ when }) =>
-          when
-            .filter((condition) => condition.kind === "elapsed")
-            .map((condition) => condition.seconds),
-        );
-        return sum + Math.max(travel, hop) + Math.max(0, ...waits);
-      }, 0)
-    : patrol;
+  const seconds = pattern ? behaviourCycleSeconds(pattern) : patrol;
   return Math.ceil(Math.min(seconds, MAX_CYCLE) / STEP_SECONDS);
 }
 
@@ -655,7 +632,7 @@ function movingThings(area: AreaLayout): MovingThings {
       if (isStill(object) || object.collision === "none") {
         return [];
       }
-      const rect = sweptRect(object);
+      const rect = emissionBounds(object, sweptRect(object));
       return [{ cycleSteps: cycleSteps(object), index, left: rect.x, right: rect.x + rect.width }];
     }),
   };
