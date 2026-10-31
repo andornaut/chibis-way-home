@@ -274,15 +274,31 @@ export const TEST_ZONES: readonly ZonePlan[] = [
 // The zones the map leads to, by key.
 export const ZONES: Readonly<Record<string, ZonePlan>> = {};
 
-// The shared difficulty band for every randomized real zone, centred on 3 with variation of 1.
-export const ZONE_DIFFICULTY = { max: 4, min: 2 } as const;
+// Zone profiles raise the minimum grade and favour compound challenges along the route.
+export const ZONE_DIFFICULTY = { max: 4, min: 3 } as const;
+const DIFFICULTY_PROFILES = {
+  apartment: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 8 } },
+  blue: { difficulty: ZONE_DIFFICULTY, difficultyWeights: { 3: 1, 4: 1 } },
+  countryside: { difficulty: { max: 5, min: 3 }, difficultyWeights: { 3: 1, 4: 1, 5: 2 } },
+  home: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 5 } },
+  industrial: { difficulty: { max: 5, min: 3 }, difficultyWeights: { 3: 1, 4: 1, 5: 1 } },
+  woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
+} as const;
+const STAGE_LENGTH = { max: 960, min: 720 } as const;
 
-const APARTMENT_ASCENT_CHUNKS = [
+const APARTMENT_CHALLENGE_CHUNKS = [
   "city-boundary-climb-yard",
-  "city-boundary-edge-yard",
-  "city-boundary-jumps",
-  "city-boundary-low-ceiling",
-  "city-boundary-steps",
+  "city-boundary-dog-high",
+  "city-boundary-dog-terrace",
+  "city-boundary-ground-hazard",
+  "compound-ascent",
+  "compound-compact-ascent",
+  "compound-compact-climb",
+  "compound-double-lift",
+  "compound-lift-shuttle",
+  "compound-patrol-lift",
+  "compound-return-high",
+  "compound-return-terrace",
 ] as const;
 const APARTMENT_CAPS = {
   finish: "apartment-finish",
@@ -291,31 +307,30 @@ const APARTMENT_CAPS = {
 } as const;
 const APARTMENT_ROOM_DOORS = [{ count: 1, room: "test" }] as const;
 const APARTMENT_SECTION_DEFAULTS = {
-  difficulty: ZONE_DIFFICULTY,
+  ...DIFFICULTY_PROFILES.apartment,
   doors: [],
   events: [],
   spawnCol: 2,
 } as const;
-const APARTMENT_UPPER_CHUNKS = ["city-boundary-lift", "city-boundary-upper-climb"] as const;
 
 // Generated stages use one continuous area or ordered floor sections.
 export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "city-boundary": {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.blue,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "city-boundary-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "city-boundary-start",
     theme: "city-boundary",
   },
   "city-outskirts": {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.home,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "city-outskirts-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "city-outskirts-start",
     theme: "city-outskirts",
@@ -325,49 +340,52 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     sections: [
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_ASCENT_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "restaurant",
+        length: { max: 312, min: 264 },
         theme: "apartment-restaurant",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_UPPER_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-1",
+        length: { max: 168, min: 144 },
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: [
-          "city-boundary-dog-terrace",
-          "city-boundary-ground-hazard",
-          "city-boundary-shuttle",
-        ],
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "pool",
+        length: { max: 192, min: 168 },
         theme: "apartment-pool",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_UPPER_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-2",
+        length: { max: 168, min: 144 },
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: ["city-boundary-jumps", "city-boundary-low-ceiling", "city-boundary-steps"],
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "spa",
+        length: { max: 144, min: 144 },
         theme: "apartment-spa",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_UPPER_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-3",
+        length: { max: 168, min: 144 },
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_UPPER_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "residential",
+        length: { max: 288, min: 264 },
         theme: "apartment-residential",
       },
     ],
@@ -377,63 +395,65 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     sections: [
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_ASCENT_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "entrance",
+        length: { max: 312, min: 264 },
         theme: "apartment-entrance",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_UPPER_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "lobby",
+        length: { max: 288, min: 264 },
         theme: "apartment-lobby",
       },
     ],
   },
   "familiar-neighbourhood": {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.home,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "familiar-neighbourhood-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "familiar-neighbourhood-start",
     theme: "familiar-neighbourhood",
   },
   farmland: {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.countryside,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "farmland-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "farmland-start",
     theme: "farmland",
   },
   "forest-paths": {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.woodland,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "forest-paths-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "forest-paths-start",
     theme: "forest-paths",
   },
   "freight-terminal": {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.industrial,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "freight-terminal-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "freight-terminal-start",
     theme: "freight-terminal",
   },
-  // The park: 6 to 10 screens within the shared difficulty band, with one door to the test room.
+  // The debug park retains its prototype length and difficulty band.
   // No events exist yet.
   park: {
-    difficulty: ZONE_DIFFICULTY,
+    difficulty: { max: 4, min: 2 },
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "park-finish",
@@ -443,41 +463,41 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     theme: "park",
   },
   ravine: {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.woodland,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "ravine-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "ravine-start",
     theme: "ravine",
   },
   "river-crossing": {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.countryside,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "river-crossing-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "river-crossing-start",
     theme: "river-crossing",
   },
   street: {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.blue,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "street-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 4,
     start: "street-start",
     theme: "street",
   },
   "warehouse-district": {
-    difficulty: ZONE_DIFFICULTY,
+    ...DIFFICULTY_PROFILES.industrial,
     doors: [{ count: 1, room: "test" }],
     events: [],
     finish: "warehouse-district-finish",
-    length: { max: 480, min: 360 },
+    length: STAGE_LENGTH,
     spawnCol: 2,
     start: "warehouse-district-start",
     theme: "warehouse-district",
