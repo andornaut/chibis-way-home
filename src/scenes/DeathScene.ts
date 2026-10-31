@@ -1,3 +1,4 @@
+import { fillNames } from "@andornaut/game-kit/lines";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { SCREEN } from "../data/screen";
@@ -7,7 +8,7 @@ import type { Rect } from "../data/types";
 import { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "../input/deathInput";
 import { deathCard } from "../layout/deathCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { runStatLines } from "../layout/runStats";
+import { RUN_STAT_KEYS } from "../layout/runStats";
 import { formatRunStats } from "../save/runSummary";
 import type { RunStatsSummary } from "../save/stats";
 import { type DeathSummary, deathSummary } from "../view/death";
@@ -69,11 +70,24 @@ export class DeathScene extends Scene {
   create(): void {
     fitPlayCamera(this);
     const words = deathSummary(TEXT.death, this.summary);
+    const values = formatRunStats(
+      {
+        ...TEXT.stats,
+        attempts: "{count}",
+        best: "{time}",
+        lastAttempt: "{time}",
+        runTotal: "{time}",
+      },
+      this.summary.runStats,
+    );
     this.layout = deathCard(cardFonts(this), { ...SCREEN, x: 0, y: 0 }, this.summary.bird, {
       ...words,
       home: TEXT.pause.home,
       retry: TEXT.death.retry,
-      stats: runStatLines(formatRunStats(TEXT.stats, this.summary.runStats)),
+      stats: RUN_STAT_KEYS.map((key) => ({
+        label: fillNames(TEXT.stats[key], { count: "", time: "" }).trimEnd(),
+        value: values[key],
+      })),
     });
     addSlice(this, "ui-settings-card", this.layout.card);
     for (const name of ["title", "stage", "progress"] as const) {
@@ -90,7 +104,20 @@ export class DeathScene extends Scene {
       );
     }
     for (const row of this.layout.stats) {
-      addCardTextIn(this, BODY_FONT, row.rect, row.text, paletteColour(this, "ink"));
+      addCardTextIn(
+        this,
+        BODY_FONT,
+        row.label.rect,
+        row.label.text,
+        paletteColour(this, "ink"),
+      ).setLeftAlign();
+      addCardTextIn(
+        this,
+        BODY_FONT,
+        row.value.rect,
+        row.value.text,
+        paletteColour(this, "ink"),
+      ).setRightAlign();
     }
     this.buttons = {
       home: addTextButton(this, this.layout.home, TEXT.pause.home),
