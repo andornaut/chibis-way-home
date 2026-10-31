@@ -10,7 +10,8 @@ in every state, including crouch and rest. The game does not draw a red contact 
 outline; the hitbox remains collision metadata.
 Tags: idle 2x400ms; walk 4x120ms; crouch 1x400ms; rush 2x80ms; rest 2x400ms. All loop; the gameplay
 state machine owns how long each state lasts. Crouch lowers the head and body; rush stretches the paws;
-Frustration appends 4x120ms: a short headshake and lifted forepaw, with planted hind feet.
+Frustration loops 4x120ms: compressed takeoff, two little airborne poses and a planted landing stomp.
+The whole body rises 3px then 5px inside the fixed frame, with a headshake and lifted forepaw.
 Rest closes the eye. Idle breath lifts the torso 1px while the feet stay planted.
 
 portrait-dog is 64x64, right-facing towards text, transparent behind, chest cut off at the bottom, with
@@ -98,6 +99,17 @@ def dog_image(state, phase=0):
         shifted = Image.new("RGBA", im.size)
         shifted.alpha_composite(im.crop((2, 3, 58, 40)), (2, 2))
         im = shifted
+    if state == "frustration":
+        # These small visual hops leave the runtime anchor and collision box fixed.
+        hopped = Image.new("RGBA", im.size)
+        if phase in (0, 3):
+            height = 36 if phase == 0 else 35
+            compressed = im.resize((60, height), Image.Resampling.NEAREST)
+            hopped.alpha_composite(compressed, (0, 40 - height))
+        else:
+            rise = 3 if phase == 1 else 5
+            hopped.alpha_composite(im, (0, -rise))
+        im = hopped
     return im
 
 
