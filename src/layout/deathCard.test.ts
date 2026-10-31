@@ -18,7 +18,7 @@ const words = {
   ...labels,
   progress: "Progress: 25%",
   stage: "Stage 1",
-  time: "Time: 1:05",
+  stats: ["Last attempt: 1:05", "Run total: 2:10", "Best: Not cleared", "Attempts: 2"],
   title: "City",
 };
 
@@ -46,18 +46,21 @@ describe("death card", () => {
     const body = { height: 40, width: 40, x: 340, y: 150 };
     const result = deathCard(fonts, view, body, words);
     expect(result.card.width).toBe(body.x - 8 - view.x);
-    expect(result.card.height).toBe(164);
+    expect(result.card.height).toBe(224);
     expect(result.card.width).toBeLessThan(SCREEN.width / 2);
     expect(result.home.button.width).toBe(114);
     expect(result.retry.button.width).toBe(114);
   });
   it("uses the compact top-centred City layout when the bird is below it", () => {
     const result = deathCard(fonts, view, { height: 40, width: 40, x: 340, y: 310 }, words);
-    expect(result.card).toMatchObject({ height: 164, y: 16 });
-    expect([result.title.y, result.stage.y, result.progress.y, result.time.y]).toEqual([
-      32, 52, 72, 92,
-    ]);
-    expect(result.home.button).toEqual({ height: 48, width: 114, x: 242, y: 116 });
+    expect(result.card).toMatchObject({ height: 224, y: 16 });
+    expect([
+      result.title.y,
+      result.stage.y,
+      result.progress.y,
+      ...result.stats.map(({ rect }) => rect.y),
+    ]).toEqual([32, 52, 72, 92, 112, 132, 152]);
+    expect(result.home.button).toEqual({ height: 48, width: 114, x: 242, y: 176 });
     expect(result.retry.button.x).toBe(364);
   });
   it.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
@@ -72,11 +75,22 @@ describe("death card", () => {
         fonts,
         view,
         { height: 40, width: 40, x: 340, y: 310 },
-        { ...labels, ...summary },
+        { ...labels, ...summary, stats: words.stats },
       );
-      for (const name of ["title", "stage", "progress", "time"] as const) {
+      for (const name of ["title", "stage", "progress"] as const) {
         expect(
-          inkWidth(name === "title" ? fonts.title : fonts.body, CARD_TEXT_SCALE, summary[name]),
+          Math.max(
+            ...(name === "title"
+              ? layout.titleText
+              : name === "stage"
+                ? layout.stageText
+                : summary[name]
+            )
+              .split("\n")
+              .map((line) =>
+                inkWidth(name === "title" ? fonts.title : fonts.body, CARD_TEXT_SCALE, line),
+              ),
+          ),
         ).toBeLessThanOrEqual(layout[name].width);
       }
       for (const name of ["home", "retry"] as const) {

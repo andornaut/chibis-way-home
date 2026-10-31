@@ -7,6 +7,9 @@ import type { Rect } from "../data/types";
 import { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "../input/deathInput";
 import { deathCard } from "../layout/deathCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
+import { runStatLines } from "../layout/runStats";
+import { formatRunStats } from "../save/runSummary";
+import type { RunStatsSummary } from "../save/stats";
 import { type DeathSummary, deathSummary } from "../view/death";
 import {
   addCardTextIn,
@@ -26,6 +29,7 @@ import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DeathData extends DeathSummary {
+  readonly runStats: RunStatsSummary;
   readonly bird: Rect;
 }
 export interface DeathOpener {
@@ -67,16 +71,24 @@ export class DeathScene extends Scene {
       ...words,
       home: TEXT.pause.home,
       retry: TEXT.death.retry,
+      stats: runStatLines(formatRunStats(TEXT.stats, this.summary.runStats)),
     });
     addSlice(this, "ui-settings-card", this.layout.card);
-    for (const name of ["title", "stage", "progress", "time"] as const) {
+    for (const name of ["title", "stage", "progress"] as const) {
       addCardTextIn(
         this,
         name === "title" ? TITLE_FONT : BODY_FONT,
         this.layout[name],
-        words[name],
+        name === "title"
+          ? this.layout.titleText
+          : name === "stage"
+            ? this.layout.stageText
+            : words[name],
         paletteColour(this, "ink"),
       );
+    }
+    for (const row of this.layout.stats) {
+      addCardTextIn(this, BODY_FONT, row.rect, row.text, paletteColour(this, "ink"));
     }
     this.buttons = {
       home: addTextButton(this, this.layout.home, TEXT.pause.home),

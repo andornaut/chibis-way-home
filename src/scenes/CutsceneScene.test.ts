@@ -6,7 +6,7 @@ import { CUTSCENE_CONTINUE } from "../layout/cutscene";
 
 vi.mock("phaser", () => ({
   Scene: class {
-    readonly add = { image: () => ({ setOrigin: vi.fn() }) };
+    readonly add = { rectangle: () => ({ setOrigin: vi.fn() }) };
     readonly events = new EventEmitter();
     readonly input = Object.assign(new EventEmitter(), {
       keyboard: new EventEmitter(),
@@ -15,6 +15,7 @@ vi.mock("phaser", () => ({
     readonly scene = { start: vi.fn() };
   },
 }));
+vi.mock("./runStatsParts", () => ({ addStageSummary: vi.fn() }));
 vi.mock("./cardParts", () => ({
   PRIMARY_BUTTON: {},
   addTextButton: vi.fn(),
@@ -31,7 +32,11 @@ import { CutsceneScene } from "./CutsceneScene";
 
 function cutscene() {
   const scene = new CutsceneScene();
-  scene.init({ stage: "next-stage" });
+  scene.init({
+    clearedStage: "cleared-stage",
+    runStats: { attemptSeconds: 65, attempts: 2, bestSeconds: 65, runSeconds: 120 },
+    stage: "next-stage",
+  });
   scene.create();
   return scene;
 }
@@ -50,7 +55,10 @@ describe("required inter-stage cutscene", () => {
     expect(scene.scene.start).not.toHaveBeenCalled();
     key(scene, "Enter");
     key(scene, " ");
-    expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone", { node: "next-stage" });
+    expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone", {
+      continueVisit: true,
+      node: "next-stage",
+    });
   });
 
   it("requires a fresh undragged tap on Continue rather than an inherited release or outside tap", () => {
@@ -66,6 +74,9 @@ describe("required inter-stage cutscene", () => {
     expect(scene.scene.start).not.toHaveBeenCalled();
     scene.input.emit("pointerdown", pointer);
     scene.input.emit("pointerup", pointer);
-    expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone", { node: "next-stage" });
+    expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone", {
+      continueVisit: true,
+      node: "next-stage",
+    });
   });
 });

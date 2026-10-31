@@ -9,6 +9,7 @@ import {
   cardTextSize,
   contentCardLayout,
 } from "./contentCard";
+import { wrappedCardText } from "./runStats";
 
 export const DEATH_PROGRESS_HEIGHT = 2;
 
@@ -17,7 +18,7 @@ export interface DeathCardWords {
   readonly progress: string;
   readonly retry: string;
   readonly stage: string;
-  readonly time: string;
+  readonly stats: readonly string[];
   readonly title: string;
 }
 
@@ -62,25 +63,31 @@ export function deathCardPosition(bounds: Rect, size: Size, bird: Rect): Rect {
 }
 
 export function deathCard(fonts: CardFonts, bounds: Rect, bird: Rect, words: DeathCardWords) {
-  const names = ["title", "stage", "progress", "time"] as const;
-  const rows = names.map((name) =>
-    cardTextSize(name === "title" ? fonts.title : fonts.body, words[name]),
-  );
   const labels = [words.home, words.retry];
-  const groups = [
-    {
-      height:
-        rows.reduce((sum, row) => sum + row.height, 0) + (rows.length - 1) * CARD_CONTENT.rowGap,
-      key: "rows",
-      width: Math.max(...rows.map(({ width }) => width)),
-    },
-    { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
-  ];
   const fit = (available: Rect) => {
+    const texts = [words.title, words.stage, words.progress, ...words.stats].map((text, index) =>
+      wrappedCardText(
+        index === 0 ? fonts.title : fonts.body,
+        available.width - 2 * CARD_CONTENT.padding,
+        text,
+      ),
+    );
+    const rows = texts.map((text, index) =>
+      cardTextSize(index === 0 ? fonts.title : fonts.body, text),
+    );
+    const groups = [
+      {
+        height:
+          rows.reduce((sum, row) => sum + row.height, 0) + (rows.length - 1) * CARD_CONTENT.rowGap,
+        key: "rows",
+        width: Math.max(...rows.map((row) => row.width)),
+      },
+      { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
+    ];
     try {
       const measured = contentCardLayout(available, groups);
       const position = deathCardPosition(available, measured.card, bird);
-      return contentCardLayout(available, groups, undefined, position);
+      return { ...contentCardLayout(available, groups, undefined, position), rows, texts };
     } catch (error) {
       if (
         error instanceof Error &&
@@ -122,7 +129,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, bird: Rect, words: Dea
     throw new Error("Missing death card content");
   }
   let y = rowGroup.y;
-  const positions = rows.map(({ height }) => {
+  const positions = layout.rows.map(({ height }) => {
     const row = { height, width: rowGroup.width, x: rowGroup.x, y };
     y += height + CARD_CONTENT.rowGap;
     return row;
@@ -137,7 +144,11 @@ export function deathCard(fonts: CardFonts, bounds: Rect, bird: Rect, words: Dea
     progress: positions[2],
     retry,
     stage: positions[1],
-    time: positions[3],
+    stageText: layout.texts[1] as string,
+    stats: positions
+      .slice(3)
+      .map((rect, index) => ({ rect, text: layout.texts[index + 3] as string })),
     title: positions[0],
+    titleText: layout.texts[0] as string,
   };
 }

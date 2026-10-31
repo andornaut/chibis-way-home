@@ -6,7 +6,7 @@ import { RECIPES, ZONES } from "../data/zones";
 import { activeStepSeconds } from "../rules/death";
 import type { ZoneState } from "../rules/zone";
 import { BEGINNING, mapProgress, type Progress, progressFormat } from "./progress";
-import { stageStatsStore } from "./stats";
+import { type RunStatsSummary, stageStatsStore, type ZoneStatsSummary } from "./stats";
 
 export { type Progress } from "./progress";
 
@@ -19,7 +19,7 @@ const store = saveStore(
 );
 let progress: Progress = BEGINNING;
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
-const stats = stageStatsStore(localSaveStorage(), STAGES);
+const stats = stageStatsStore(localSaveStorage(), STAGES, ZONE_MAP.destinations);
 let statsLifecycleInstalled = false;
 
 function installStatsLifecycle(): void {
@@ -42,6 +42,29 @@ export async function loadProgress(): Promise<void> {
   const [loaded] = await Promise.all([store.load(), stats.load()]);
   progress = loaded.save;
   installStatsLifecycle();
+}
+
+export function beginZoneVisit(zone: string): void {
+  stats.beginVisit(zone);
+}
+export function beginStageRun(stage: string): void {
+  if (STAGES.has(stage)) {
+    stats.beginRun(stage);
+  }
+}
+export function retryStageRun(stage: string): void {
+  if (STAGES.has(stage)) {
+    stats.retryStage(stage);
+  }
+}
+export function completeStageRun(stage: string): RunStatsSummary {
+  return stats.completeStage(stage);
+}
+export function stageRunStats(stage: string): RunStatsSummary {
+  return stats.summary(stage);
+}
+export function zoneVisitStats(zone: string): ZoneStatsSummary {
+  return stats.visitSummary(zone);
 }
 
 export function activeStageTime(stage: string): number {
@@ -101,7 +124,6 @@ export function saveStand(stand: string): void {
 
 // He has completed the zone at node: it opens the map past it, and he stands on it.
 export function saveCompleted(node: string): void {
-  clearStageTime(node);
   const { completed } = savedMap();
   write({
     at: "map",

@@ -88,12 +88,18 @@ import {
 import { zonePlanFor } from "../rules/zonePlans";
 import {
   activeStageTime,
+  beginStageRun,
+  beginZoneVisit,
+  completeStageRun,
   flushStats,
   recordActiveStageStep,
+  retryStageRun,
   saveCompleted,
   savedMap,
   saveZoneIntro,
   seenZoneIntros,
+  stageRunStats,
+  zoneVisitStats,
 } from "../save";
 import { type TouchSetting, touchSettings, touchSettingShown } from "../settings/touchControls";
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
@@ -120,6 +126,7 @@ import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchCont
 import { proximityDialogue } from "../view/zoneDialogue";
 import { ZONE_THEMES_KEY, zoneTheme, type ZoneThemes } from "../view/zoneTheme";
 import { paletteColour } from "./cardParts";
+import type { CutsceneData } from "./CutsceneScene";
 import type { DeathData, DeathOpener } from "./DeathScene";
 import {
   type DialogueData,
@@ -129,6 +136,7 @@ import {
 } from "./DialogueScene";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
+import type { ZoneDepartureData } from "./ZoneDepartureScene";
 
 // The zone a map node plays, assembled for seed where it is a recipe.
 function zoneAt(seed: number, node: string): ZonePlan {
@@ -206,6 +214,7 @@ function show(sprite: GameObjects.Sprite, tag: string): void {
 export interface ZoneData {
   readonly backdrop?: boolean;
   readonly node?: string;
+  readonly continueVisit?: boolean;
 }
 
 // One zone, played with the keyboard or the touch controls.
@@ -252,6 +261,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   private inRoom = false;
   private dialogueObject: number | undefined;
   private story: ZoneStory | undefined;
+  private continueVisit = false;
   private departure: ZoneDepartureTarget | undefined;
   private readonly localSeenIntros = new Set<string>();
   private foreshadowStarted = false;
@@ -286,6 +296,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     );
     this.backdrop = data.backdrop === true;
     this.mapNode = data.node;
+    this.continueVisit = data.continueVisit === true;
     this.trial = askedRecipe(search, Object.keys(RECIPES));
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objectArt = [];
@@ -709,6 +720,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
           x: this.bird.x - this.cameras.main.scrollX,
           y: this.bird.y - this.cameras.main.scrollY,
         },
+        runStats: { ...stageRunStats(stage) },
         ...deathLabels(ZONE_MAP, TEXT.map, String(this.zoneIndex + 1), stage),
         percent: this.progressFraction(),
       } satisfies DeathData);
@@ -737,6 +749,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     if (this.zone.death === undefined) {
       return;
     }
+    retryStageRun(this.stageKey());
     this.zone = retryZone(BIRD, this.layout, this.zone);
     this.dying = undefined;
     this.deathView = undefined;
@@ -939,18 +952,32 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
       }
       const completedBefore = new Set(savedMap().completed);
       const flow = zoneExitFlow(ZONE_MAP, story, completedBefore, this.mapNode, turnedBack);
+      const runStats = {
+        ...(turnedBack ? stageRunStats(this.mapNode) : completeStageRun(this.mapNode)),
+      };
+      const zoneStats = { ...zoneVisitStats(story.zone) };
       if (!turnedBack) {
         saveCompleted(this.mapNode);
       }
       this.clearControls();
       if (flow.kind === "next-stage") {
-        this.scene.start("cutscene", { stage: flow.stage });
+        this.scene.start("cutscene", {
+          clearedStage: this.mapNode,
+          runStats,
+          stage: flow.stage,
+        } satisfies CutsceneData);
       } else {
         this.departure = flow.target;
         this.input.enabled = false;
         coverZone("dialogue", true);
         this.showTouchControls(touchSettings());
-        this.scene.launch("zoneDeparture", { scene: flow.scene } satisfies DialogueData);
+        this.scene.launch("zoneDeparture", {
+          cleared: !turnedBack,
+          runStats,
+          scene: flow.scene,
+          stage: this.mapNode,
+          zoneStats,
+        } satisfies ZoneDepartureData);
         this.scene.pause();
       }
       return;
@@ -1005,6 +1032,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
       this.preview || this.backdrop
         ? undefined
         : zoneStoryForStage(ZONE_MAP, ZONE_DIALOGUES, this.stageKey());
+    if (!this.preview && !this.backdrop) {
+      if (this.story && !this.continueVisit) {
+        beginZoneVisit(this.story.zone);
+      }
+      beginStageRun(this.stageKey());
+    }
     this.drawArea();
   }
 

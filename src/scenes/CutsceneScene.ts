@@ -1,11 +1,14 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
 import { type GameObjects, type Input, Scene } from "phaser";
 
+import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point } from "../data/types";
+import { CARD_CONTENT } from "../layout/contentCard";
 import { CUTSCENE_CONTINUE } from "../layout/cutscene";
 import { focusKeyAction } from "../pause/focusInput";
+import type { RunStatsSummary } from "../save/stats";
 import {
   addTextButton,
   captureTab,
@@ -15,14 +18,18 @@ import {
   type TextButton,
 } from "./cardParts";
 import { fitPlayCamera, playPoint } from "./playCamera";
+import { addStageSummary } from "./runStatsParts";
 
 export interface CutsceneData {
   readonly stage: string;
+  readonly clearedStage: string;
+  readonly runStats: RunStatsSummary;
 }
 
 // A required inter-stage screen. Only a fresh Continue activation starts the next stage.
 export class CutsceneScene extends Scene {
   private stage!: string;
+  private summary!: CutsceneData;
   private button!: TextButton;
   private focused = false;
   private finished = false;
@@ -32,8 +39,9 @@ export class CutsceneScene extends Scene {
   constructor() {
     super("cutscene");
   }
-  init({ stage }: CutsceneData): void {
-    this.stage = stage;
+  init(data: CutsceneData): void {
+    this.stage = data.stage;
+    this.summary = data;
     this.focused = false;
     this.finished = false;
     this.ring = undefined;
@@ -41,7 +49,17 @@ export class CutsceneScene extends Scene {
   }
   create(): void {
     fitPlayCamera(this);
-    this.add.image(0, 0, "stage-cutscene-placeholder").setOrigin(0);
+    this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, 0x000000).setOrigin(0);
+    addStageSummary(
+      this,
+      {
+        height: CUTSCENE_CONTINUE.hit.y - CARD_CONTENT.gap - CARD_CONTENT.padding,
+        width: SCREEN.width - 2 * CARD_CONTENT.padding,
+        x: CARD_CONTENT.padding,
+        y: CARD_CONTENT.padding,
+      },
+      { runStats: this.summary.runStats, stage: this.summary.clearedStage },
+    );
     this.button = addTextButton(this, CUTSCENE_CONTINUE, TEXT.map.continue, {
       style: PRIMARY_BUTTON,
     });
@@ -110,6 +128,6 @@ export class CutsceneScene extends Scene {
     }
     this.finished = true;
     this.press = undefined;
-    this.scene.start("zone", { node: this.stage });
+    this.scene.start("zone", { continueVisit: true, node: this.stage });
   }
 }
