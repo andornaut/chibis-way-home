@@ -784,17 +784,18 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 
 `art/tools/pigeon_antagonist.py` draws Pebble as `pigeon-antagonist`, a cute grey and lilac pigeon with a cream chest. The 48x48 frame has bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, including mirrored poses. Existing generic posts provide perches; no special post artwork or collision is introduced.
 
-| Tag         | Art cycle               | Pose                       |
-| ----------- | ----------------------- | -------------------------- |
-| drop        | Two frames, 100ms each  | Airborne release gesture   |
-| fly         | Four frames, 100ms each | Wingbeat during flight     |
-| frustration | Shared four-frame loop  | Blocked-route wing gesture |
-| idle        | Two frames, 400ms each  | Perched breathing          |
-| prepare     | Two frames, 160ms each  | Notices Chibi              |
-| rest        | Two frames, 400ms each  | Perched recovery           |
-| swoop       | Four frames, 100ms each | Head-down contact dive     |
+| Tag         | Art cycle               | Pose                         |
+| ----------- | ----------------------- | ---------------------------- |
+| drop        | Two frames, 100ms each  | Airborne release gesture     |
+| fly         | Four frames, 100ms each | Wingbeat during flight       |
+| frustration | Shared four-frame loop  | Blocked-route wing gesture   |
+| idle        | Two frames, 400ms each  | Perched breathing            |
+| prepare     | Two frames, 160ms each  | Notices Chibi                |
+| prepare-air | Two frames, 160ms each  | Airborne attack anticipation |
+| rest        | Two frames, 400ms each  | Perched recovery             |
+| swoop       | Four frames, 100ms each | Head-down contact dive       |
 
-All tags loop. The swoop tag appends to the existing frame order. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
+All tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; runtime owns the 600ms anticipation duration. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
 
 ## Industrial material pack
 

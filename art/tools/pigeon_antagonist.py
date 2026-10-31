@@ -8,7 +8,9 @@ pigeon-antagonist: 48x48, facing right; bottom-centre anchor 24,48. Fixed hitbox
 pose and its mirror. Perched feet end on row 46, with their outline on 47. Grey and lilac feathers, a
 cream breast, short beak and rounded head distinguish this pigeon from Chibi. No clothes or red outline.
 Tags in frame order: idle 2x400ms; prepare 2x160ms; fly 4x100ms; drop 2x100ms; rest 2x400ms;
-frustration 4x120ms; swoop 4x100ms. Every tag loops, once []. Prepare raises the head; fly flaps; drop tucks the feet
+frustration 4x120ms; swoop 4x100ms; prepare-air 2x160ms. Every tag loops, once []. Prepare raises the head;
+prepare-air tucks the feet, draws the wings back and aims the head before an airborne attack. Fly flaps;
+drop tucks the feet
 and lifts the tail; frustration shakes the head and flaps one wing. Generic gameplay owns movement,
 perching, spotting, projectile release and state durations. The art does not add a physical perch.
 
@@ -68,7 +70,30 @@ def swoop(phase):
     return g.outlined(lambda c: K["navy"])
 
 
+def prepare_air(phase):
+    """Held airborne anticipation: tucked feet, swept-back wings and a forward/downward head aim."""
+    g = Grid(48, 48)
+    g.tri((5, 25), (19, 25), (18, 37), "slate")
+    g.blob(25, 29, 12, 10, "grey", sh="slate", li="lgrey")
+    g.ell(31, 30, 7, 9, "cream")
+    g.rect(23, 38, 4, 2, "pink")
+    g.rect(29, 38, 4, 2, "pink")
+    # Both wings draw behind the breast rather than continuing the regular wingbeat.
+    g.blob(14, 19 - phase, 8, 7, "grey", sh="slate", li="lgrey")
+    g.tri((6, 12 - phase), (20, 18), (17, 28), "slate")
+    g.rect(9, 16 - phase, 7, 2, "lgrey")
+    g.ell(30, 25, 7, 7, "zone-purple-shade")
+    hx, hy = 33, 21 + phase
+    g.blob(hx, hy, 8, 7, "grey", sh="slate", li="lgrey")
+    g.tri((39, hy + 1), (43, hy + 6), (37, hy + 5), "brown")
+    g.rect(35, hy - 2, 4, 3, "ink")
+    g.rect(35, hy - 2, 2, 2, "cream")
+    return g.outlined(lambda c: K["navy"])
+
+
 def draw(state="idle", phase=0):
+    if state == "prepare-air":
+        return prepare_air(phase)
     if state == "swoop":
         return swoop(phase)
     g = Grid(48, 48)
@@ -121,6 +146,7 @@ def sprites():
         ("rest", [draw("rest", i) for i in range(2)], 400),
         ("frustration", [draw("frustration", i) for i in range(4)], 120),
         ("swoop", [draw("swoop", i) for i in range(4)], 100),
+        ("prepare-air", [draw("prepare-air", i) for i in range(2)], 160),
     ]
     yield POOP, [("idle", [poop()], 400)]
 
@@ -165,7 +191,7 @@ def preview(out):
     sheet.alpha_composite(image(poop()), (368, 24))
     sheet.save(out)
     stem, _ = os.path.splitext(out)
-    scene = context("drop", 0)
+    scene = context("prepare-air", 0)
     scene.save(stem + "-context.png")
     scene.resize((864, 432), Image.Resampling.NEAREST).save(stem + "-phone.png")
     ImageOps.grayscale(scene).save(stem + "-grey.png")
