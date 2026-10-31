@@ -544,6 +544,7 @@ export interface ThemePlan {
 // seed places in the chunks' slots, count of each.
 export interface ZoneRecipe {
   readonly difficulty: { readonly max: Difficulty; readonly min: Difficulty };
+  readonly difficultyWeights?: Readonly<Partial<Record<Difficulty, number>>>;
   readonly doors: readonly { readonly count: number; readonly room: string }[];
   readonly events: readonly { readonly count: number; readonly id: string }[];
   readonly finish: string;
@@ -553,10 +554,10 @@ export interface ZoneRecipe {
   readonly theme: string;
 }
 
-// Every section chooses one chunk from its pool. Only the entire stage's outer ends add caps.
+// Section lengths include their applicable global caps and one or more generated pool chunks.
 export interface ZoneSectionRecipe extends Pick<
   ZoneRecipe,
-  "difficulty" | "doors" | "events" | "length" | "spawnCol" | "theme"
+  "difficulty" | "difficultyWeights" | "doors" | "events" | "length" | "spawnCol" | "theme"
 > {
   readonly chunks: readonly string[];
   readonly id: string;
