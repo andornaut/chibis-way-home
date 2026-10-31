@@ -556,7 +556,7 @@ export interface ZoneRecipe {
 // Every section chooses one chunk from its pool. Only the entire stage's outer ends add caps.
 export interface ZoneSectionRecipe extends Pick<
   ZoneRecipe,
-  "difficulty" | "doors" | "events" | "spawnCol" | "theme"
+  "difficulty" | "doors" | "events" | "length" | "spawnCol" | "theme"
 > {
   readonly chunks: readonly string[];
   readonly id: string;
