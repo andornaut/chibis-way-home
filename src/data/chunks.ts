@@ -440,9 +440,28 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
 };
 
+const COMPACT_HAZARD_ASCENT: ChunkPlan = {
+  cols: 72,
+  difficulty: 4,
+  entry: { row: 50 },
+  exit: { row: 40 },
+  objects: [
+    { character: "platform-ledge", col: 8, cols: 6, role: "ledge", row: 45 },
+    { character: "city-ground-hazard", col: 18, role: "moving-hazard", row: 49 },
+    { character: "platform-ledge", col: 36, cols: 6, role: "ledge", row: 45 },
+  ],
+  solids: [
+    { col: 0, cols: 42, look: "ground", row: 50, rows: 10 },
+    { col: 42, cols: 6, look: "raised", row: 45, rows: 15 },
+    { col: 48, cols: 24, look: "raised", row: 40, rows: 20 },
+  ],
+  theme: MECHANICAL_THEMES,
+};
+const COMPACT_CLIMB_OFFSET = COMPACT_HAZARD_ASCENT.exit.row - SEAM_ROWS[0];
+
 // The chunks zones are assembled from, by id. Rows are the chunk's own: seams at 50 (the lawn), 40
 // and 30 (the terraces). Every required rise is at most 6 and every required gap at most 16, and
-// the boat and shuttle crossings are 40 across, beyond the running jump's reach of 19.
+// moving-platform crossings exceed the running jump's reach of 19.
 export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "city-boundary-climb-yard": {
     backdrops: [
@@ -454,7 +473,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
-      { character: "platform-ledge", col: 36, cols: 6, role: "ledge", row: 36 },
+      { character: "platform-ledge", col: 34, cols: 6, role: "ledge", row: 36 },
       { character: "dog-antagonist", col: 59, role: "antagonist", row: 36 },
       { character: "platform-ledge", col: 70, cols: 6, role: "ledge", row: 36 },
     ],
@@ -473,7 +492,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     entry: { row: 30 },
     exit: { row: 30 },
     objects: [
-      { character: "platform-ledge", col: 12, cols: 6, role: "ledge", row: 26 },
+      { character: "platform-ledge", col: 10, cols: 6, role: "ledge", row: 26 },
       { character: "dog-antagonist", col: 35, role: "antagonist", row: 26 },
       { character: "platform-ledge", col: 46, cols: 6, role: "ledge", row: 26 },
     ],
@@ -488,7 +507,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     entry: { row: 40 },
     exit: { row: 40 },
     objects: [
-      { character: "platform-ledge", col: 12, cols: 6, role: "ledge", row: 36 },
+      { character: "platform-ledge", col: 10, cols: 6, role: "ledge", row: 36 },
       { character: "dog-antagonist", col: 35, role: "antagonist", row: 36 },
       { character: "platform-ledge", col: 46, cols: 6, role: "ledge", row: 36 },
     ],
@@ -727,6 +746,164 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     theme: ["forest-paths", "freight-terminal", "ravine", "warehouse-district"],
     weight: 2,
+  },
+  // A gap, two full climbs and a moving red strip share one approach.
+  "compound-ascent": {
+    cols: 96,
+    difficulty: 4,
+    entry: { row: 50 },
+    exit: { row: 40 },
+    objects: [
+      { character: "red-edge-top", col: 18, cols: 12, role: "edge-top", row: 54 },
+      { character: "red-edge-support", col: 18, cols: 12, role: "support", row: 55, rows: 5 },
+      { character: "platform-ledge", col: 58, cols: 6, role: "ledge", row: 35 },
+      { character: "city-ground-hazard", col: 68, role: "moving-hazard", row: 39 },
+      { character: "platform-ledge", col: 86, cols: 6, role: "ledge", row: 35 },
+    ],
+    solids: [
+      { col: 0, cols: 18, look: "ground", row: 50, rows: 10 },
+      { col: 30, cols: 12, look: "ground", row: 50, rows: 10 },
+      { col: 42, cols: 6, look: "raised", row: 45, rows: 15 },
+      { col: 48, cols: 48, look: "raised", row: 40, rows: 20 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
+  "compound-compact-ascent": COMPACT_HAZARD_ASCENT,
+  "compound-compact-climb": {
+    ...COMPACT_HAZARD_ASCENT,
+    entry: COMPACT_HAZARD_ASCENT.exit,
+    exit: { row: SEAM_ROWS[0] },
+    objects: COMPACT_HAZARD_ASCENT.objects.map((object) => ({
+      ...object,
+      row: object.row - COMPACT_CLIMB_OFFSET,
+    })),
+    solids: COMPACT_HAZARD_ASCENT.solids.map((solid) => ({
+      ...solid,
+      row: solid.row - COMPACT_CLIMB_OFFSET,
+      rows: solid.rows + COMPACT_CLIMB_OFFSET,
+    })),
+  },
+  // Two independent lifts cross gaps longer or taller than an unaided jump.
+  "compound-double-lift": {
+    cols: 108,
+    difficulty: 5,
+    entry: { row: 40 },
+    exit: { row: 30 },
+    objects: [
+      { character: "city-lift", col: 22, role: "lift", row: 40 },
+      { character: "city-lift", col: 60, role: "lift", row: 30 },
+      { character: "red-edge-top", col: 18, cols: 58, role: "edge-top", row: 48 },
+      { character: "red-edge-support", col: 18, cols: 58, role: "support", row: 49, rows: 11 },
+    ],
+    solids: [
+      { col: 0, cols: 18, look: "ground", row: 40, rows: 20 },
+      { col: 34, cols: 16, look: "raised", row: 30, rows: 30 },
+      { col: 76, cols: 32, look: "raised", row: 30, rows: 30 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
+  // A lift feeds a raised shuttle crossing, followed by a six-tile landing climb.
+  "compound-lift-shuttle": {
+    cols: 120,
+    difficulty: 5,
+    entry: { row: 50 },
+    exit: { row: 30 },
+    objects: [
+      { character: "city-lift", col: 22, role: "lift", row: 50 },
+      { character: "city-shuttle", col: 54, role: "shuttle", row: 36 },
+      { character: "red-edge-top", col: 18, cols: 76, role: "edge-top", row: 56 },
+      { character: "red-edge-support", col: 18, cols: 76, role: "support", row: 57, rows: 3 },
+    ],
+    solids: [
+      { col: 0, cols: 18, look: "ground", row: 50, rows: 10 },
+      { col: 34, cols: 12, look: "raised", row: 40, rows: 20 },
+      { col: 46, cols: 4, look: "raised", row: 36, rows: 24 },
+      { col: 94, cols: 26, look: "raised", row: 30, rows: 30 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
+  // The animal's ground lane precedes a lift, with a refuge before the red bed.
+  "compound-patrol-lift": {
+    cols: 120,
+    difficulty: 5,
+    entry: { row: 50 },
+    exit: { row: 40 },
+    objects: [
+      { character: "platform-ledge", col: 14, cols: 6, role: "ledge", row: 46 },
+      { character: "dog-antagonist", col: 43, role: "antagonist", row: 46 },
+      { character: "platform-ledge", col: 54, cols: 6, role: "ledge", row: 46 },
+      { character: "city-lift", col: 72, role: "lift", row: 50 },
+      { character: "red-edge-top", col: 64, cols: 20, role: "edge-top", row: 56 },
+      { character: "red-edge-support", col: 64, cols: 20, role: "support", row: 57, rows: 3 },
+    ],
+    solids: [
+      { col: 0, cols: 64, look: "ground", row: 50, rows: 10 },
+      { col: 84, cols: 36, look: "raised", row: 40, rows: 20 },
+    ],
+    theme: PATROL_THEMES,
+  },
+  // Offset landings descend over red beds before a moving hazard on the lower floor.
+  "compound-return-high": {
+    cols: 120,
+    difficulty: 5,
+    entry: { row: 30 },
+    exit: { row: 50 },
+    objects: [
+      { character: "red-edge-top", col: 18, cols: 12, role: "edge-top", row: 44 },
+      { character: "red-edge-support", col: 18, cols: 12, role: "support", row: 45, rows: 15 },
+      { character: "red-edge-top", col: 36, cols: 12, role: "edge-top", row: 49 },
+      { character: "red-edge-support", col: 36, cols: 12, role: "support", row: 50, rows: 10 },
+      { character: "platform-ledge", col: 76, cols: 6, role: "ledge", row: 45 },
+      { character: "city-ground-hazard", col: 86, role: "moving-hazard", row: 49 },
+      { character: "platform-ledge", col: 104, cols: 6, role: "ledge", row: 45 },
+    ],
+    solids: [
+      { col: 0, cols: 18, look: "raised", row: 30, rows: 30 },
+      { col: 30, cols: 6, look: "raised", row: 35, rows: 25 },
+      { col: 48, cols: 12, look: "raised", row: 40, rows: 20 },
+      { col: 60, cols: 12, look: "raised", row: 45, rows: 15 },
+      { col: 72, cols: 48, look: "ground", row: 50, rows: 10 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
+  "compound-return-terrace": {
+    cols: 96,
+    difficulty: 4,
+    entry: { row: 40 },
+    exit: { row: 50 },
+    objects: [
+      { character: "platform-ledge", col: 12, cols: 6, role: "ledge", row: 35 },
+      { character: "city-ground-hazard", col: 22, role: "moving-hazard", row: 39 },
+      { character: "platform-ledge", col: 40, cols: 6, role: "ledge", row: 35 },
+      { character: "red-edge-top", col: 76, cols: 6, role: "edge-top", row: 49 },
+      { character: "red-edge-support", col: 76, cols: 6, role: "support", row: 50, rows: 10 },
+    ],
+    solids: [
+      { col: 0, cols: 54, look: "raised", row: 40, rows: 20 },
+      { col: 54, cols: 12, look: "raised", row: 45, rows: 15 },
+      { col: 66, cols: 10, look: "ground", row: 50, rows: 10 },
+      { col: 82, cols: 14, look: "ground", row: 50, rows: 10 },
+    ],
+    theme: MECHANICAL_THEMES,
+  },
+  // A climbing animal guards the upper landing before a separate moving ground hazard.
+  "compound-vertical-yard": {
+    cols: 108,
+    difficulty: 5,
+    entry: { row: 40 },
+    exit: { row: 30 },
+    objects: [
+      { character: "platform-ledge", col: 24, cols: 6, role: "ledge", row: 35 },
+      { character: "raccoon-antagonist", col: 30, role: "antagonist", row: 36 },
+      { character: "platform-ledge", col: 52, cols: 6, role: "ledge", row: 25 },
+      { character: "city-ground-hazard", col: 62, role: "moving-hazard", row: 29 },
+      { character: "platform-ledge", col: 80, cols: 6, role: "ledge", row: 25 },
+    ],
+    solids: [
+      { col: 0, cols: 34, look: "raised", row: 40, rows: 20 },
+      { col: 34, cols: 74, look: "raised", row: 30, rows: 30 },
+    ],
+    theme: ["forest-paths", "freight-terminal", "ravine", "warehouse-district"],
   },
   // Difficulty 2, up from the lawn (50) to the high terrace (30): a bench (up 2), a terrace (up 4),
   // a bench on it (up 2), the bandstand's roof (up 4, 6 above its base), a step (up 4) and the

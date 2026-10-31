@@ -46,7 +46,7 @@ export const STREET_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [
-      { character: "platform-ledge", col: 68, cols: 6, role: "ledge", row: 46 },
+      { character: "platform-ledge", col: 66, cols: 6, role: "ledge", row: 46 },
       {
         character: "dog-antagonist",
         col: 91,
