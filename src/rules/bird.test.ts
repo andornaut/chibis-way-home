@@ -82,13 +82,64 @@ describe("stepBird", () => {
     expect(Math.abs((heights.at(-1) ?? 0) - full)).toBeLessThan(within);
   });
 
-  it("keeps a single constant acceleration throughout a held ascent", () => {
+  it("slows a held ascent continuously without an upward reboost or apex pause", () => {
     const states = press(BIRD, 1);
-    const acceleration = (2 * full) / jumpRiseTime ** 2;
     const rising = states.filter((state) => state.vy < 0);
     for (let i = 1; i < rising.length; i++) {
-      expect((rising[i]?.vy ?? 0) - (rising[i - 1]?.vy ?? 0)).toBeCloseTo(acceleration * STEP);
+      expect(rising[i]!.vy).toBeGreaterThan(rising[i - 1]!.vy);
     }
+    const apex = states.findIndex((state, index) => index > 1 && state.vy >= 0);
+    expect(Math.abs(apex * STEP - jumpRiseTime)).toBeLessThanOrEqual(STEP);
+    expect(states.slice(1, apex + 2).every((state, index) => state.y !== states[index]!.y)).toBe(
+      true,
+    );
+  });
+
+  const probeStep = STEP / 1000;
+  const accelerationTolerance = gravity * Math.sqrt(probeStep / STEP);
+  const checkApex = (remaining: number, held: boolean, state: BirdState) => {
+    const input = { jumpHeld: held, move: 0 as const };
+    const before = stepBird(BIRD, [GROUND], [], remaining - probeStep, input, state);
+    const apex = stepBird(BIRD, [GROUND], [], probeStep, input, before);
+    const after = stepBird(BIRD, [GROUND], [], probeStep, input, apex);
+    expect(before.vy).toBeLessThan(0);
+    expect(after.vy).toBeGreaterThan(0);
+    expect(Math.abs((apex.vy - before.vy) / probeStep - gravity)).toBeLessThan(
+      accelerationTolerance,
+    );
+    expect((after.vy - apex.vy) / probeStep).toBeCloseTo(gravity);
+    expect(apex.y).toBeLessThan(before.y);
+    expect(after.y).toBeGreaterThan(apex.y);
+  };
+
+  it.each([
+    STEP,
+    jumpTapWindow,
+    jumpTapWindow + jumpReleaseBlendTime / 2,
+    jumpTapWindow + jumpReleaseBlendTime,
+  ])("keeps release and apex velocity/acceleration continuous after %fs", (heldFor) => {
+    const states = press(BIRD, heldFor);
+    const index = states.findIndex(
+      (state, i) => i > 0 && !state.jumpHeld && states[i - 1]!.jumpHeld,
+    );
+    const before = states[index - 1]!;
+    const released = stepBird(BIRD, [GROUND], [], probeStep, { jumpHeld: false, move: 0 }, before);
+    const held = stepBird(BIRD, [GROUND], [], probeStep, { jumpHeld: true, move: 0 }, before);
+    expect(Math.abs(released.vy - held.vy)).toBeLessThan(accelerationTolerance * probeStep);
+    expect(
+      Math.abs((released.vy - before.vy) / probeStep - (held.vy - before.vy) / probeStep),
+    ).toBeLessThan(accelerationTolerance);
+    const curve = released.jumpRelease;
+    expect(curve).toBeDefined();
+    checkApex(curve!.seconds - curve!.elapsed, false, released);
+    const rising = states.filter((state) => state.vy < 0);
+    expect(rising.every((state, i) => i === 0 || state.vy > rising[i - 1]!.vy)).toBe(true);
+  });
+
+  it("joins normal gravity continuously at the full held apex", () => {
+    const states = press(BIRD, 1);
+    const before = states[Math.floor(jumpRiseTime / STEP)]!;
+    checkApex(jumpRiseTime - before.jumpHeldFor, true, before);
   });
 
   it("preserves full-jump height without pausing or reversing during ascent", () => {
@@ -190,6 +241,16 @@ describe("stepBird", () => {
 });
 
 describe("external push", () => {
+  it.each([false, true])("adds vertical push during a released=%s ascent", (released) => {
+    const before = run(6, () => ({ jumpHeld: true, move: 0 })).at(-1)!;
+    const input = { jumpHeld: !released, move: 0 as const };
+    const baseline = stepBird(BIRD, [], [], STEP, input, before);
+    const pushed = stepBird(BIRD, [], [], STEP, { ...input, push: { x: 0, y: 120 } }, before);
+    expect(pushed.y).toBeCloseTo(baseline.y + 120 * STEP);
+    expect(pushed.vy).toBe(baseline.vy);
+    expect(pushed.jumpRelease).toEqual(baseline.jumpRelease);
+  });
+
   it.each([false, true])(
     "pushes with grounded=%s without adding locomotion or carry momentum",
     (grounded) => {

@@ -1,5 +1,6 @@
 import type { BirdTuning, Point, Rect, Size } from "../data/types";
 import { overlaps } from "./rect";
+import { STEP_SECONDS } from "./step";
 
 // Pixels of rounding error allowed when she stands exactly on an edge.
 export const EDGE = 1e-6;
@@ -11,6 +12,13 @@ export interface BirdInput {
   readonly move: -1 | 0 | 1;
   // External velocity for this step, separate from locomotion and platform momentum.
   readonly push?: Point;
+}
+
+export interface JumpReleaseCurve {
+  readonly coefficients: readonly [number, number, number, number, number];
+  readonly elapsed: number;
+  readonly height: number;
+  readonly seconds: number;
 }
 
 export interface BirdState {
@@ -29,6 +37,7 @@ export interface BirdState {
   readonly jumpFromY: number;
   // A released ascent cannot regain speed from another press.
   readonly jumpRise: "free" | "held" | "hop";
+  readonly jumpRelease?: JumpReleaseCurve | undefined;
   readonly vx: number;
   readonly vy: number;
   // Her collision box's top-left corner.
@@ -46,6 +55,7 @@ export function startBird(tuning: BirdTuning, start: Point): BirdState {
     jumpFromY: 0,
     jumpHeld: false,
     jumpHeldFor: 0,
+    jumpRelease: undefined,
     jumpRise: "free",
     vx: 0,
     vy: 0,
@@ -74,10 +84,113 @@ function approach(speed: number, target: number, step: number): number {
   return speed < target ? Math.min(target, speed + step) : Math.max(target, speed - step);
 }
 
-// Compensate for applying gravity before movement so the minimum hop reaches its target.
-function hopSpeed(gravity: number, seconds: number, remaining: number): number {
-  const halfStep = (gravity * seconds) / 2;
-  return halfStep + Math.sqrt(2 * gravity * remaining + halfStep ** 2);
+interface AscentCurve {
+  readonly height: number;
+  readonly initialSpeed: number;
+  readonly shape: number;
+}
+interface CurvePoint {
+  readonly acceleration: number;
+  readonly rise: number;
+  readonly velocity: number;
+}
+const ASCENT_CURVES = new WeakMap<BirdTuning, AscentCurve>();
+
+function ascentCurve(tuning: BirdTuning): AscentCurve {
+  const cached = ASCENT_CURVES.get(tuning);
+  if (cached) {
+    return cached;
+  }
+  const full = tuning.jumpSpeed ** 2 / (2 * tuning.gravity);
+  const gravity = (2 * full) / tuning.jumpRiseTime ** 2;
+  const frames = Math.max(0, Math.ceil(tuning.jumpRiseTime / STEP_SECONDS) - 1);
+  // Retain the existing fixed-step full-height target while integrating the new curve exactly.
+  const height =
+    ((frames * 2 * full) / tuning.jumpRiseTime) * STEP_SECONDS -
+    (gravity * STEP_SECONDS ** 2 * frames * (frames + 1)) / 2;
+  const shape = 7 * ((6 * height) / tuning.jumpRiseTime ** 2 - tuning.gravity);
+  const curve = {
+    height,
+    initialSpeed: tuning.jumpRiseTime * (tuning.gravity / 5 + shape / 30),
+    shape,
+  };
+  ASCENT_CURVES.set(tuning, curve);
+  return curve;
+}
+
+// Integrate a smooth deceleration that is nonnegative throughout the configured ascent and
+// joins normal gravity at the apex. The initial speed reserves room for a smooth low-hop stop.
+function ascentPoint(tuning: BirdTuning, curve: AscentCurve, elapsed: number): CurvePoint {
+  const time = Math.min(elapsed, tuning.jumpRiseTime);
+  const s = time / tuning.jumpRiseTime;
+  const s2 = s * s;
+  const s4 = s2 * s2;
+  const s5 = s4 * s;
+  const s6 = s5 * s;
+  const s7 = s6 * s;
+  if (elapsed >= tuning.jumpRiseTime) {
+    const fall = elapsed - tuning.jumpRiseTime;
+    return {
+      acceleration: tuning.gravity,
+      rise: curve.height - (tuning.gravity * fall * fall) / 2,
+      velocity: tuning.gravity * fall,
+    };
+  }
+  return {
+    acceleration: s4 * (tuning.gravity + curve.shape * (1 - s)),
+    rise:
+      curve.initialSpeed * time -
+      tuning.jumpRiseTime ** 2 *
+        (((tuning.gravity + curve.shape) * s6) / 30 - (curve.shape * s7) / 42),
+    velocity:
+      -curve.initialSpeed +
+      tuning.jumpRiseTime * (((tuning.gravity + curve.shape) * s5) / 5 - (curve.shape * s6) / 6),
+  };
+}
+
+function releaseCurve(
+  gravity: number,
+  speed: number,
+  acceleration: number,
+  height: number,
+): JumpReleaseCurve | undefined {
+  if (!(height > 0) || !(speed > 0)) {
+    return undefined;
+  }
+  const seconds = (2 * height) / speed;
+  const squared = seconds * seconds;
+  return {
+    coefficients: [
+      speed * seconds,
+      (-acceleration * squared) / 2,
+      10 * height - 6 * speed * seconds + ((3 * acceleration - gravity) * squared) / 2,
+      -15 * height + 8 * speed * seconds + (gravity - (3 * acceleration) / 2) * squared,
+      6 * height - 3 * speed * seconds + ((acceleration - gravity) * squared) / 2,
+    ],
+    elapsed: 0,
+    height,
+    seconds,
+  };
+}
+
+// A quintic stop matches the incoming position, velocity and acceleration, then meets the
+// authored apex with zero velocity and normal gravity. No release velocity is discarded.
+function releasePoint(gravity: number, curve: JumpReleaseCurve, elapsed: number): CurvePoint {
+  if (elapsed >= curve.seconds) {
+    const fall = elapsed - curve.seconds;
+    return {
+      acceleration: gravity,
+      rise: curve.height - (gravity * fall * fall) / 2,
+      velocity: gravity * fall,
+    };
+  }
+  const s = elapsed / curve.seconds;
+  const [a, b, c, d, e] = curve.coefficients;
+  return {
+    acceleration: -(2 * b + s * (6 * c + s * (12 * d + s * 20 * e))) / curve.seconds ** 2,
+    rise: s * (a + s * (b + s * (c + s * (d + s * e)))),
+    velocity: -(a + s * (2 * b + s * (3 * c + s * (4 * d + s * 5 * e)))) / curve.seconds,
+  };
 }
 
 // A forced move cannot pass through a thin solid between its starting and ending boxes.
@@ -125,21 +238,20 @@ export function stepBird(
   let coyoteLeft = Math.max(0, bird.coyoteLeft - seconds);
   let jumpRise = bird.jumpRise;
   let jumpFromY = bird.jumpFromY;
-  const fullHeight = tuning.jumpSpeed ** 2 / (2 * tuning.gravity);
-  const ascentGravity = (2 * fullHeight) / tuning.jumpRiseTime ** 2;
+  const curve = ascentCurve(tuning);
+  let jumpRelease = bird.jumpRelease;
   // Seconds Jump was held before this step, since it started her jump.
   let heldBefore = bird.jumpHeldFor;
   if ((jumpPressed || bufferLeft > 0) && (bird.grounded || bird.coyoteLeft > 0)) {
-    vy = -(2 * fullHeight) / tuning.jumpRiseTime;
+    vy = -curve.initialSpeed;
     jumpFromY = bird.y;
     bufferLeft = 0;
     coyoteLeft = 0;
     heldBefore = 0;
-    // A buffered press already released remains a low hop.
     jumpRise = input.jumpHeld ? "held" : "hop";
-    if (!input.jumpHeld) {
-      vy = -hopSpeed(ascentGravity, seconds, tuning.jumpHopHeight);
-    }
+    jumpRelease = input.jumpHeld
+      ? undefined
+      : releaseCurve(tuning.gravity, -vy, 0, tuning.jumpHopHeight);
   }
   const jumpHeldFor = input.jumpHeld ? heldBefore + seconds : 0;
   const released = bird.jumpHeld && !input.jumpHeld;
@@ -149,13 +261,33 @@ export function stepBird(
       Math.min(1, (heldBefore - tuning.jumpTapWindow) / tuning.jumpReleaseBlendTime),
     );
     const retained = progress * progress * (3 - 2 * progress);
-    const remaining = Math.max(0, tuning.jumpHopHeight - (jumpFromY - bird.y));
-    // Cut upward speed only on release. Holding never changes the ballistic ascent.
-    vy = -Math.min(-vy, Math.max(-vy * retained, hopSpeed(ascentGravity, seconds, remaining)));
+    const target = tuning.jumpHopHeight + retained * (curve.height - tuning.jumpHopHeight);
+    const remaining = Math.max(0, target - (jumpFromY - bird.y));
+    jumpRelease = releaseCurve(
+      tuning.gravity,
+      -vy,
+      ascentPoint(tuning, curve, heldBefore).acceleration,
+      remaining,
+    );
     jumpRise = "hop";
   }
-  const gravity = vy < 0 && jumpRise !== "free" ? ascentGravity : tuning.gravity;
-  vy = Math.min(vy + gravity * seconds, tuning.flutterFallSpeed);
+  let rise: number | undefined;
+  if (jumpRelease) {
+    const before = releasePoint(tuning.gravity, jumpRelease, jumpRelease.elapsed);
+    const elapsed = jumpRelease.elapsed + seconds;
+    const after = releasePoint(tuning.gravity, jumpRelease, elapsed);
+    rise = after.rise - before.rise;
+    vy = after.velocity;
+    jumpRelease = elapsed >= jumpRelease.seconds ? undefined : { ...jumpRelease, elapsed };
+  } else if (vy < 0 && jumpRise === "held") {
+    const before = ascentPoint(tuning, curve, heldBefore);
+    const after = ascentPoint(tuning, curve, heldBefore + seconds);
+    rise = after.rise - before.rise;
+    vy = after.velocity;
+  } else {
+    vy += tuning.gravity * seconds;
+  }
+  vy = Math.min(vy, tuning.flutterFallSpeed);
   if (vy >= 0) {
     jumpRise = "free";
   }
@@ -180,8 +312,8 @@ export function stepBird(
   // grounded is found afresh each step: standing on a solid, gravity carries her a fraction of a
   // pixel into it, and the check below lands her again.
   const verticalPush = input.push?.y ?? 0;
-  const falling = vy + verticalPush;
-  const intendedY = bird.y + falling * seconds;
+  const falling = (rise === undefined ? vy : -rise / seconds) + verticalPush;
+  const intendedY = bird.y + (rise === undefined ? vy * seconds : -rise) + verticalPush * seconds;
   let y = input.push?.y
     ? pushedPosition(solids, "y", { ...birdBox(tuning, bird), x }, intendedY)
     : intendedY;
@@ -192,11 +324,13 @@ export function stepBird(
   if (y !== intendedY) {
     vy = 0;
     jumpRise = "free";
+    jumpRelease = undefined;
+    rise = undefined;
   }
   for (const solid of solids) {
     const box = { height: tuning.height, width: tuning.width, x, y };
     if (overlaps(box, solid)) {
-      if ((verticalPush === 0 ? vy : falling) > 0) {
+      if ((verticalPush === 0 && rise === undefined ? vy : falling) > 0) {
         y = solid.y - tuning.height;
         grounded = true;
       } else {
@@ -204,13 +338,15 @@ export function stepBird(
       }
       vy = 0;
       jumpRise = "free";
+      jumpRelease = undefined;
+      rise = undefined;
     }
   }
   const bottom = bird.y + tuning.height;
   for (const ledge of ledges) {
     const box = { height: tuning.height, width: tuning.width, x, y };
     if (
-      (verticalPush === 0 ? vy : falling) > 0 &&
+      (verticalPush === 0 && rise === undefined ? vy : falling) > 0 &&
       bottom <= ledge.y + EDGE &&
       overlaps(box, ledge)
     ) {
@@ -218,6 +354,8 @@ export function stepBird(
       grounded = true;
       vy = 0;
       jumpRise = "free";
+      jumpRelease = undefined;
+      rise = undefined;
     }
   }
   if (grounded) {
@@ -234,6 +372,7 @@ export function stepBird(
     jumpFromY,
     jumpHeld: input.jumpHeld,
     jumpHeldFor,
+    jumpRelease,
     jumpRise,
     vx,
     vy,
