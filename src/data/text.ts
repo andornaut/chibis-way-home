@@ -26,13 +26,21 @@ export const TEXT: GameText = {
   dialogue: {
     continue: "Continue",
     skip: "Skip",
-    speakers: { bird: "Chibi", dog: "Dog" },
+    speakers: {
+      bear: "Bini",
+      bird: "Chibi",
+      dog: "Archie",
+      ferret: "Furt",
+      goose: "Trixi",
+      pigeon: "Pebble",
+      raccoon: "Kiwi",
+    },
   },
   homePage: {
     description: "Help Chibi get home after Furt, his former best friend, mails him far away.",
     keyboard: "Keyboard: arrow keys to walk and jump; E to use; P to pause.",
     play: "Play",
-    subline: "Jump through city streets, avoid red-edged hazards and get past the dog.",
+    subline: "Jump through city streets, avoid red-edged hazards and get past Archie.",
     touch: "Touch: drag left or right to walk; press {jump} or {use}.",
   },
   lines: {
