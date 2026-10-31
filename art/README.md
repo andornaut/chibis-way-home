@@ -330,7 +330,7 @@ The bird's 48x42 `death` tag is appended after `land`, leaving all earlier frame
 
 ### Enemy frustration
 
-All six stage enemy sprites append the looping `frustration` tag: `dog-antagonist`, `ferret-antagonist`, `goose-antagonist`, `owl-antagonist`, `rabbit-antagonist` and `raccoon-antagonist`. The cycle has four 120ms frames, lasting 480ms before repeating. Its head, paw, wing or ear gesture clearly differs from standing rest and preparation, while retaining the animal's cute silhouette. No world movement, text, effect outline or new story is baked into the reaction.
+The shared stage-enemy reaction uses the looping `frustration` tag. The cycle has four 120ms frames, lasting 480ms before repeating. Its head, paw, wing or ear gesture clearly differs from standing rest and preparation, while retaining the animal's cute silhouette. No world movement, text, effect outline or new story is baked into the reaction.
 
 The new frames follow every existing tag without changing their global frame indices, pixels or timings. Frame sizes, bottom-centre anchors, fixed contact boxes and mirrored bounds remain unchanged. `once` remains empty, so the runtime may keep playing the loop while the route is blocked. Gameplay owns the state duration, target loss and recovery transition; its state name may differ from the animation tag. Contact remains lethal throughout the reaction. Existing dialogue portraits and the original story ferret are unchanged.
 
@@ -407,7 +407,7 @@ A hazard restarts the floor on contact. `art/tools/hazards.py` draws the hazard 
 
 Every non-player animal in the main stage or foreground is an enemy. Read an enemy from its silhouette, movement and stronger colour against the muted environment, without a red contact rectangle or red silhouette outline. Natural coloured sprite outlines remain part of the house style. The shared red bands still identify dangerous terrain surfaces.
 
-Friendly animals appear only as muted background flavour, never in the foreground, or inside rooms reached through doors for shops, quests and conversations. Background animals stay below play in contrast, saturation and detail; their placement never suggests a usable platform or foreground interaction. There are no friendly animal background replacements in the current scenery. Stage enemies include `dog-antagonist`, `goose-antagonist` and `raccoon-antagonist`; room casts are retained.
+Friendly animals appear only as muted background flavour, never in the foreground, or inside rooms reached through doors for shops, quests and conversations. Background animals stay below play in contrast, saturation and detail; their placement never suggests a usable platform or foreground interaction. There are no friendly animal background replacements in the current scenery. Stage enemies use their dedicated antagonist artwork; room casts are retained.
 
 ## Street cast
 
@@ -668,7 +668,30 @@ All tags loop; state transitions belong to the runtime. These art timings do not
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
+## Bini bear
+
+`art/tools/bear.py` draws `bear-antagonist`: Bini, a cute brown bear with round ears, a cream muzzle and a seated phone-playing idle. The tiny phone screen uses a road, cream dog and red-bandana motif for Archie's Dog Walks, without miniature text or external runtime dependencies. His annoyed preparation, growl and forward paw gestures remain cute, without teeth, gore or a red contact outline.
+
+The frame is 48x48 with bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, containing every pose and its mirror. Contact remains lethal. The phone and seated pose do not create another collision profile.
+
+| Tag         | Art cycle                | Pose                           |
+| ----------- | ------------------------ | ------------------------------ |
+| frustration | Shared four-frame loop   | Blocked-route reaction         |
+| growl       | Four frames, 120ms each  | Mouth opens for the sonic push |
+| idle        | Two frames, 400ms each   | Seated, playing on the phone   |
+| maul        | Three frames, 100ms each | Forward paw gesture            |
+| prepare     | Two frames, 160ms each   | Annoyed look up from the phone |
+| rest        | Two frames, 400ms each   | Settled recovery               |
+| rush        | Four frames, 80ms each   | Committed charge               |
+| walk        | Four frames, 120ms each  | Grounded steps                 |
+
+All actor tags loop. `portrait-bear` is 64x64, authored facing right, with `neutral` and `annoyed` tags of one 1000ms frame each. Dialogue text belongs to gameplay data.
+
+`bear-growl-wave` is a noncolliding 48x32 directional effect. Its `pulse` tag has four 100ms frames, plays once and requires runtime removal when finished. Place its left-centre anchor 0,16 at the bear's mouth, frame-local 36,22; the unmirrored image origin is therefore actor origin plus 36,6. Mirror this attachment for left-facing use. The effect does not define reach or force. Gameplay supplies the height-limited push volume and solid cover checks, with high ground as the primary avoidance route. Keep the drawn pulse within that configured band.
+
 ## Owl antagonist
+
+This artwork is retained; Bini supplies the approved replacement woodland encounter.
 
 `art/tools/owl.py` draws `owl-antagonist`. A compact round head and broad wings distinguish the owl. Its preparation pose signals a descending swoop before it returns and rests. There is no red outline or dialogue portrait.
 

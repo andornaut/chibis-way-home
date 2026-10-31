@@ -13,6 +13,26 @@
   ],
   "sprites": [
     {
+      "key": "bear-antagonist",
+      "png": "sprites/bear-antagonist.png",
+      "json": "sprites/bear-antagonist.json",
+      "once": [],
+      "hitbox": {
+        "x": 2,
+        "y": 2,
+        "width": 44,
+        "height": 46
+      }
+    },
+    {
+      "key": "bear-growl-wave",
+      "png": "sprites/bear-growl-wave.png",
+      "json": "sprites/bear-growl-wave.json",
+      "once": [
+        "pulse"
+      ]
+    },
+    {
       "key": "bird",
       "png": "sprites/bird.png",
       "json": "sprites/bird.json",
@@ -359,6 +379,12 @@
         "width": 12,
         "height": 12
       }
+    },
+    {
+      "key": "portrait-bear",
+      "png": "sprites/portrait-bear.png",
+      "json": "sprites/portrait-bear.json",
+      "once": []
     },
     {
       "key": "portrait-bird",
