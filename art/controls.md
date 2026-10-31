@@ -78,6 +78,8 @@ Every ordinary modal sizes its nine-slice frame to its actual content, with 16px
 
 The retry card uses the content-fitted pale steel frame and ordinary secondary and primary action styles. It has no close control. It remains modal until the player chooses an action; outside taps do not dismiss it or activate anything underneath.
 
+Try ordinary placement using the full safe available width first. Only when that placement cannot avoid the visible seated bird body, reserve that body plus an 8px clearance and use the actual body-clear side region as `availableWidth`. The fraction minimum still comes from the full logical viewport; the narrower available region can cap it. For a centred 40x40 visible body in a 720x360 view, either side offers 332px after clearance, so the fallback caps the card at 332px rather than the normal 360px minimum. Keep the 16px content padding, fonts, expanded press targets, camera and bird body unchanged.
+
 | Action        | Role      | Size                   | Label           |
 | ------------- | --------- | ---------------------- | --------------- |
 | Back to title | Secondary | Equal group width x 48 | Ink on grey     |
