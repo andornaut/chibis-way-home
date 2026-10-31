@@ -1,4 +1,5 @@
 import {
+  ANIMAL_DETECTION_RANGE,
   BOAT_BEHAVIOUR,
   CITY_GROUND_HAZARD_BEHAVIOUR,
   CITY_LIFT_BEHAVIOUR,
@@ -6,7 +7,7 @@ import {
   DOG_BEHAVIOUR,
   GOOSE_BEHAVIOUR,
   OWL_BEHAVIOUR,
-  RABBIT_MOTION,
+  RABBIT_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
 } from "./behaviours";
 import type { Character } from "./types";
@@ -110,7 +111,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 5,
     rows: 4,
     tuning: {
-      interaction: { kind: "talk", range: 26 },
+      interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE },
     },
   },
   // A harmless pug that trots up to her.
@@ -412,12 +413,11 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     rows: 2,
   },
   "rabbit-antagonist": {
-    animations: { idle: "rest", move: "hop" },
     archetype: "hazard",
     art: "rabbit-antagonist",
+    behaviour: RABBIT_BEHAVIOUR,
     cols: 4,
     rows: 4,
-    tuning: { motion: RABBIT_MOTION },
   },
   "raccoon-antagonist": {
     archetype: "hazard",

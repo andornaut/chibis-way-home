@@ -1,14 +1,28 @@
-import type { BehaviourCondition, BehaviourNode, BehaviourPlan, Motion } from "./types";
+import { SCREEN, TILE } from "./screen";
+import type { BehaviourNode, BehaviourPlan } from "./types";
 
 const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
 const DOG_PATROL_PAUSE = 0.2;
-const DOG_PATROL_SPEED = 3;
+const DOG_PATROL_SPEED = 3.75;
+const FRUSTRATION_SECONDS = 0.8;
+const RABBIT_DISTANCE = -12;
+const RABBIT_PAUSE = 0.6;
+const RABBIT_SPEED = 10;
+const RABBIT_HOP_SECONDS = Math.abs(RABBIT_DISTANCE) / RABBIT_SPEED;
 
-const DOG_ALERT = [
-  { kind: "nearby", range: 14 },
-  { kind: "same-ground", tolerance: 1 },
-] as const;
+export const ANIMAL_DETECTION_RANGE = SCREEN.width / (2 * TILE);
+
+const DETECTION = [{ kind: "nearby", range: ANIMAL_DETECTION_RANGE }] as const;
+const LOST_TARGET = [{ kind: "lost-target", tolerance: 1 }] as const;
+
+function frustrationNode(to: string): BehaviourNode {
+  return {
+    animation: "frustration",
+    motion: { kind: "wait" },
+    transitions: [{ to, when: [{ kind: "elapsed", seconds: FRUSTRATION_SECONDS }] }],
+  };
+}
 
 function shuttleStates(
   speed: number,
@@ -40,7 +54,7 @@ function shuttleStates(
 }
 
 interface PatrolChargeTuning {
-  readonly alert: readonly BehaviourCondition[];
+  readonly attackRange: number;
   readonly patrolPause: number;
   readonly patrolSpeed: number;
   readonly preparation: "crouch" | "warn";
@@ -57,14 +71,19 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       enter: "face-target",
       motion: { kind: "wait" },
       transitions: [
+        {
+          to: "frustration",
+          when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }, ...LOST_TARGET],
+        },
         { to: "rush", when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }] },
       ],
     },
+    frustration: frustrationNode("pursuit"),
     "patrol-left": {
       animation: "walk",
       motion: { direction: -1, kind: "move", speed: tuning.patrolSpeed },
       transitions: [
-        { to: tuning.preparation, when: tuning.alert },
+        { to: tuning.preparation, when: DETECTION },
         { to: "wait-left", when: [{ kind: "boundary" }] },
       ],
     },
@@ -72,21 +91,28 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "walk",
       motion: { direction: 1, kind: "move", speed: tuning.patrolSpeed },
       transitions: [
-        { to: tuning.preparation, when: tuning.alert },
+        { to: tuning.preparation, when: DETECTION },
         { to: "wait-right", when: [{ kind: "boundary" }] },
+      ],
+    },
+    pursuit: {
+      animation: "walk",
+      motion: { direction: "target", kind: "move", speed: tuning.patrolSpeed },
+      transitions: [
+        { to: "frustration", when: LOST_TARGET },
+        { to: tuning.preparation, when: [{ kind: "nearby", range: tuning.attackRange }] },
       ],
     },
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [
-        { to: "patrol-left", when: [{ kind: "elapsed", seconds: tuning.restSeconds }] },
-      ],
+      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: tuning.restSeconds }] }],
     },
     rush: {
       animation: "rush",
       motion: { direction: "facing", kind: "move", speed: tuning.rushSpeed },
       transitions: [
+        { to: "frustration", when: LOST_TARGET },
         { to: "rest", when: [{ kind: "boundary" }] },
         { to: "rest", when: [{ kind: "elapsed", seconds: tuning.rushSeconds }] },
       ],
@@ -95,7 +121,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "idle",
       motion: { kind: "wait" },
       transitions: [
-        { to: tuning.preparation, when: tuning.alert },
+        { to: tuning.preparation, when: DETECTION },
         { to: "patrol-right", when: [{ kind: "elapsed", seconds: tuning.patrolPause }] },
       ],
     },
@@ -103,7 +129,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "idle",
       motion: { kind: "wait" },
       transitions: [
-        { to: tuning.preparation, when: tuning.alert },
+        { to: tuning.preparation, when: DETECTION },
         { to: "patrol-left", when: [{ kind: "elapsed", seconds: tuning.patrolPause }] },
       ],
     },
@@ -130,10 +156,15 @@ function verticalDropStates(tuning: VerticalDropTuning): BehaviourPlan["states"]
       motion: { direction: 1, kind: "move", speed: tuning.dropSpeed },
       transitions: [{ to: "rest", when: [{ kind: "boundary" }] }],
     },
+    frustration: frustrationNode("prepare"),
     prepare: {
       animation: "prepare",
       motion: { kind: "wait" },
       transitions: [
+        {
+          to: "frustration",
+          when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }, ...LOST_TARGET],
+        },
         { to: "drop", when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }] },
       ],
     },
@@ -143,6 +174,11 @@ function verticalDropStates(tuning: VerticalDropTuning): BehaviourPlan["states"]
       transitions: [
         { to: tuning.returnState, when: [{ kind: "elapsed", seconds: tuning.restSeconds }] },
       ],
+    },
+    watch: {
+      animation: "idle",
+      motion: { kind: "wait" },
+      transitions: [{ to: tuning.returnState, when: DETECTION }],
     },
   };
 }
@@ -175,75 +211,101 @@ export const CITY_SHUTTLE_BEHAVIOUR: BehaviourPlan = {
   states: shuttleStates(CROSSING_SPEED, CROSSING_PAUSE, null),
 };
 
-export const RABBIT_MOTION: Motion = {
-  algorithm: "hop",
-  direction: "left",
-  distance: 8,
-  hopHeight: 3,
-  pause: 0.6,
-  speed: 8,
-  variance: 0,
-};
-
 export const DOG_BEHAVIOUR: BehaviourPlan = {
   axis: "x",
-  distance: -12,
+  distance: -18,
   inactiveAnimation: "idle",
   initial: "patrol-left",
   states: patrolChargeStates({
-    alert: DOG_ALERT,
+    attackRange: 14,
     patrolPause: DOG_PATROL_PAUSE,
     patrolSpeed: DOG_PATROL_SPEED,
     preparation: "crouch",
     preparationSeconds: 0.45,
     restSeconds: 0.65,
     rushSeconds: 0.6,
-    rushSpeed: 20,
+    rushSpeed: 25,
   }),
 };
 
 export const GOOSE_BEHAVIOUR: BehaviourPlan = {
   axis: "x",
-  distance: -8,
+  distance: -12,
   inactiveAnimation: "idle",
   initial: "patrol-left",
   states: patrolChargeStates({
-    alert: [
-      { kind: "nearby", range: 10 },
-      { kind: "same-ground", tolerance: 1 },
-    ],
+    attackRange: 10,
     patrolPause: 0.35,
-    patrolSpeed: 2,
+    patrolSpeed: 2.5,
     preparation: "warn",
     preparationSeconds: 0.65,
     restSeconds: 1,
     rushSeconds: 0.45,
-    rushSpeed: 14,
+    rushSpeed: 17.5,
   }),
 };
 
 export const OWL_BEHAVIOUR: BehaviourPlan = {
   axis: "y",
-  distance: -10,
-  initial: "return",
+  distance: -15,
+  initial: "watch",
   states: verticalDropStates({
-    dropSpeed: 12,
+    dropSpeed: 15,
     preparationSeconds: 0.65,
     restSeconds: 0.6,
-    returnSpeed: 4,
+    returnSpeed: 5,
     returnState: "return",
   }),
 };
 
+export const RABBIT_BEHAVIOUR: BehaviourPlan = {
+  axis: "x",
+  distance: RABBIT_DISTANCE,
+  initial: "watch",
+  states: {
+    frustration: frustrationNode("prepare"),
+    hop: {
+      animation: "hop",
+      motion: {
+        direction: "facing",
+        hopHeight: 3,
+        hopSeconds: RABBIT_HOP_SECONDS,
+        kind: "hop",
+        speed: RABBIT_SPEED,
+      },
+      transitions: [
+        {
+          to: "prepare",
+          when: [{ kind: "elapsed", seconds: RABBIT_HOP_SECONDS }],
+        },
+      ],
+    },
+    prepare: {
+      animation: "rest",
+      enter: "face-target",
+      motion: { kind: "wait" },
+      transitions: [
+        { to: "frustration", when: [{ kind: "elapsed", seconds: RABBIT_PAUSE }, ...LOST_TARGET] },
+        { to: "hop", when: [{ kind: "elapsed", seconds: RABBIT_PAUSE }] },
+      ],
+    },
+    watch: {
+      animation: "rest",
+      motion: { kind: "wait" },
+      transitions: [{ to: "prepare", when: DETECTION }],
+    },
+  },
+};
+
 export const RACCOON_BEHAVIOUR: BehaviourPlan = {
   axis: "y",
-  distance: -10,
-  initial: "climb",
+  distance: -15,
+  initial: "watch",
   states: verticalDropStates({
-    dropSpeed: 12,
+    dropSpeed: 15,
     preparationSeconds: 0.6,
     restSeconds: 0.8,
-    returnSpeed: 3,
+    returnSpeed: 3.75,
     returnState: "climb",
   }),
 };
