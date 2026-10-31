@@ -96,14 +96,14 @@ const MARGIN = 24;
 
 const isStill = (object: ObjectLayout) =>
   object.behaviour
-    ? !Object.values(object.behaviour.states).some((node) => node.motion.kind === "move")
+    ? !Object.values(object.behaviour.states).some((node) => node.motion.kind !== "wait")
     : object.motion.algorithm === "static" && object.reaction.kind === "none";
 const movementSpeed = (object: ObjectLayout): number =>
   object.behaviour
     ? Math.max(
         0,
         ...Object.values(object.behaviour.states).map((node) =>
-          node.motion.kind === "move" ? node.motion.speed : 0,
+          node.motion.kind !== "wait" ? node.motion.speed : 0,
         ),
       )
     : object.motion.speed;
@@ -120,17 +120,21 @@ function sweptRect(object: ObjectLayout): Rect {
   const pattern = object.behaviour;
   if (pattern) {
     const rect = objectRect(object, object.origin);
-    return pattern.axis === "x"
-      ? {
-          ...rect,
-          width: rect.width + Math.abs(pattern.distance),
-          x: rect.x + Math.min(0, pattern.distance),
-        }
-      : {
-          ...rect,
-          height: rect.height + Math.abs(pattern.distance),
-          y: rect.y + Math.min(0, pattern.distance),
-        };
+    const hop = Math.max(
+      0,
+      ...Object.values(pattern.states).map((node) =>
+        node.motion.kind === "hop" ? node.motion.hopHeight : 0,
+      ),
+    );
+    const dx = pattern.axis === "x" ? pattern.distance : 0;
+    const dy = pattern.axis === "y" ? pattern.distance : 0;
+    return {
+      ...rect,
+      height: rect.height + Math.abs(dy) + hop,
+      width: rect.width + Math.abs(dx),
+      x: rect.x + Math.min(0, dx),
+      y: rect.y + Math.min(0, dy) - hop,
+    };
   }
   const { direction, distance } = object.motion;
   const reach = object.reaction.kind === "none" ? distance : distance + object.reaction.range;
@@ -612,13 +616,16 @@ function cycleSteps(object: ObjectLayout): number {
   const seconds = pattern
     ? Object.values(pattern.states).reduce((sum, node) => {
         const travel =
-          node.motion.kind === "move" ? Math.abs(pattern.distance) / node.motion.speed : 0;
+          node.motion.kind !== "wait" && node.motion.speed > 0
+            ? Math.abs(pattern.distance) / node.motion.speed
+            : 0;
+        const hop = node.motion.kind === "hop" ? node.motion.hopSeconds : 0;
         const waits = node.transitions.flatMap(({ when }) =>
           when
             .filter((condition) => condition.kind === "elapsed")
             .map((condition) => condition.seconds),
         );
-        return sum + travel + Math.max(0, ...waits);
+        return sum + Math.max(travel, hop) + Math.max(0, ...waits);
       }, 0)
     : patrol;
   return Math.ceil(Math.min(seconds, MAX_CYCLE) / STEP_SECONDS);

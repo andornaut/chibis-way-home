@@ -68,7 +68,7 @@ export function prepareSensors(layout: ZoneLayout): SensorIndex {
           area.objects.flatMap((object, index) =>
             (
               object.behaviour
-                ? Object.values(object.behaviour.states).some((node) => node.motion.kind === "move")
+                ? Object.values(object.behaviour.states).some((node) => node.motion.kind !== "wait")
                 : object.motion.algorithm !== "static" || object.reaction.kind !== "none"
             )
               ? [index]

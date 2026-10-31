@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DUCK } from "../data/duck";
-import type { ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { startZone } from "../rules/zone";
 import { DUCK_FRAME } from "../view/duck";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot";
@@ -62,6 +62,28 @@ const platform: ObjectLayout = {
 };
 
 describe("local bot decisions", () => {
+  it.each([
+    { motion: { kind: "wait" }, moving: false },
+    {
+      motion: { direction: 1, hopHeight: 20, hopSeconds: 0.4, kind: "hop", speed: 0 },
+      moving: true,
+    },
+  ] satisfies readonly { motion: BehaviourMotion; moving: boolean }[])(
+    "classifies a $motion.kind graph for live obstacle sensing",
+    ({ motion, moving }) => {
+      const object: ObjectLayout = {
+        ...platform,
+        behaviour: {
+          axis: "x",
+          distance: 0,
+          initial: "active",
+          states: { active: { animation: null, motion, transitions: [] } },
+        },
+        motion: { ...platform.motion, algorithm: "static", distance: 0, speed: 0 },
+      };
+      expect(prepareSensors(fixture([ground], [object])).movers.main?.has(0)).toBe(moving);
+    },
+  );
   it("walks through a linked exit instead of treating the next floor as a gap", () => {
     const original = fixture([{ ...ground, width: 200 }]);
     const main = original.areas.main;
