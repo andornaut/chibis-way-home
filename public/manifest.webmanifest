@@ -1,7 +1,7 @@
 {
   "id": "/play/",
-  "name": "Chibi's way home",
-  "short_name": "Chibi's way home",
+  "name": "Chibi's Way Home",
+  "short_name": "Chibi's Way Home",
   "description": "Help Chibi get home after Furt, his former best friend, mails him far away.",
   "start_url": "/play/",
   "scope": "/",

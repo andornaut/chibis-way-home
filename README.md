@@ -1,4 +1,4 @@
-# Chibi's way home
+# Chibi's Way Home
 
 [![Test](https://github.com/andornaut/duck-platformer/actions/workflows/test.yml/badge.svg)](https://github.com/andornaut/duck-platformer/actions/workflows/test.yml)
 

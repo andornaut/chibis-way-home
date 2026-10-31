@@ -39,7 +39,7 @@
   a.href = "/";
   const img = document.createElement("img");
   img.src = logo.src;
-  img.alt = "Chibi's way home";
+  img.alt = "Chibi's Way Home";
   img.width = logo.width;
   img.height = logo.height;
   a.append(img);
