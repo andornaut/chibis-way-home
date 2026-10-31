@@ -5,12 +5,20 @@ import { contactBox } from "../rules/behaviour";
 import { transientBox } from "../rules/transients";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 import { hasDynamicBehaviour } from "./behaviourBounds";
-import { type NavigationConfig, type NavigationState, plannedInput } from "./navigation";
-export type { NavigationConfig, NavigationCounters } from "./navigation";
+import {
+  type NavigationConfig,
+  type NavigationMemory,
+  type NavigationState,
+  plannedInput,
+} from "./navigation";
+export type { NavigationConfig, NavigationCounters, NavigationMemory } from "./navigation";
 export {
   NAVIGATION_DEFAULTS,
+  NAVIGATION_VALIDATION,
   navigationCounters,
+  rememberNavigationFailure,
   resetNavigation,
+  restoreNavigationMemory,
   validateNavigation,
 } from "./navigation";
 
@@ -99,6 +107,7 @@ export function prepareSensors(layout: ZoneLayout): SensorIndex {
 
 export interface Bot {
   navigation?: NavigationState;
+  navigationMemory?: NavigationMemory;
   readonly random: Random;
   holding: number;
   targetY: number | undefined;
