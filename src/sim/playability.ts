@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import type { Archetype, Character, Instance, StageRecipe, ZonePlan } from "../data/types";
 import type { ChunkLibrary } from "../rules/assemble";
 export interface PlayabilityContext {
@@ -33,7 +35,9 @@ export interface StageAssessment {
   }[];
   readonly authoredTargets: StageRecipe | null;
   readonly chunks: readonly Selection[];
+  readonly demandFingerprint: string;
   readonly difficultyDistribution: Counts;
+  readonly geometryFingerprint: string;
   readonly middleDifficultyDistribution: Counts;
   readonly longestEncounterFreeChunkRunPerAreaCols: number;
   readonly geometry: readonly {
@@ -94,6 +98,8 @@ const LIMITATIONS = [
   "Chunk signatures describe mechanics present, not a proven order of player actions.",
   "Encounter totals come from selected chunk metadata; encounter-free chunk runs reset at each area boundary.",
   "Terrain projection gaps and solid-top spans are geometry proxies, not required jumps.",
+  "Signatures include terrain/object bounds and reachable graph logic/numeric tuning.",
+  "Signatures exclude artwork collision pixels, animation tags, text and skins.",
   "Lengths sum area widths, not travelled distance; no successful-clear time is measured or estimated.",
 ] as const;
 function increment(counts: Record<string, number>, key: string, amount = 1): void {
@@ -107,6 +113,89 @@ function density(cols: number, counts: Counts): Counts {
     Object.fromEntries(Object.entries(counts).map(([key, n]) => [key, (100 * n) / cols])),
   );
 }
+// Signatures include numeric physical data and reachable graph logic, excluding drawing/text.
+function fingerprint(value: unknown): string {
+  const canonical = (item: unknown): unknown => {
+    if (Array.isArray(item)) {
+      return item.map(canonical);
+    }
+    if (item !== null && typeof item === "object") {
+      return Object.fromEntries(
+        Object.entries(item)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([key, entry]) => [key, canonical(entry)]),
+      );
+    }
+    return item;
+  };
+  return `sha256:${createHash("sha256")
+    .update(JSON.stringify(canonical(value)))
+    .digest("hex")}`;
+}
+function physicalObject(context: PlayabilityContext, object: Instance) {
+  const character = context.library.characters[object.character]!;
+  const archetype = context.archetypes[character.archetype]!;
+  return {
+    collision: archetype.collision,
+    cols: object.cols ?? character.cols,
+    rows: object.rows ?? character.rows,
+  };
+}
+function demand(context: PlayabilityContext, object: Instance): unknown {
+  const character = context.library.characters[object.character]!;
+  const archetype = context.archetypes[character.archetype]!;
+  const graph = object.behaviour ?? character.behaviour;
+  const states: Record<string, unknown> = {};
+  if (graph) {
+    const pending = [graph.initial];
+    while (pending.length) {
+      const key = pending.pop()!;
+      if (Object.hasOwn(states, key)) {
+        continue;
+      }
+      const node = graph.states[key]!;
+      states[key] = {
+        enter: node.enter ?? null,
+        motion: node.motion,
+        onEnter: (node.onEnter ?? []).map((action) => {
+          if (action.kind === "force-pulse") {
+            return Object.fromEntries(Object.entries(action).filter(([key]) => key !== "visual"));
+          }
+          const template = action.character;
+          const spawn = Object.fromEntries(
+            Object.entries(action).filter(
+              ([key]) => key !== "armingAnimation" && key !== "character",
+            ),
+          );
+          return {
+            ...spawn,
+            template: {
+              ...physicalObject(context, { character: template, col: 0, row: 0 }),
+              tuning: context.library.characters[template]?.tuning ?? null,
+            },
+          };
+        }),
+        track: node.track ?? null,
+        transitions: node.transitions,
+      };
+      pending.push(...node.transitions.map(({ to }) => to));
+    }
+  }
+  return {
+    behaviour: graph
+      ? { axis: graph.axis, distance: graph.distance, initial: graph.initial, states }
+      : null,
+    collision: archetype.collision,
+    motion: { ...archetype.motion, ...character.tuning?.motion, ...object.overrides?.motion },
+    phase: object.phase ?? 0,
+    reaction: {
+      ...archetype.reaction,
+      ...character.tuning?.reaction,
+      ...object.overrides?.reaction,
+    },
+  };
+}
+
 // Uses resolved placed objects, including theme/instance behaviour overrides, never pool names.
 function objectMechanics(context: PlayabilityContext, object: Instance): readonly string[] {
   const character: Character | undefined = context.library.characters[object.character];
@@ -217,6 +306,8 @@ export function assessPlayability(
           throw new Error(`Incomplete area order for ${id}`);
         }
         const mechanics: Record<string, number> = {};
+        const physicalAreas: unknown[] = [];
+        const demands: unknown[] = [];
         const difficultyDistribution: Record<string, number> = {};
         const middleDifficultyDistribution: Record<string, number> = {};
         const recipe = context.recipes[id];
@@ -260,6 +351,28 @@ export function assessPlayability(
             object,
             tags: objectMechanics(context, object),
           }));
+          const physical = objects.filter(
+            ({ object }) => physicalObject(context, object).collision !== "none",
+          );
+          physicalAreas.push({
+            cols: area.cols,
+            objects: physical
+              .map(({ object }) => ({
+                ...physicalObject(context, object),
+                col: object.col,
+                row: object.row,
+              }))
+              .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+            rows: area.rows,
+            solids: area.solids
+              .map(({ col, cols, row, rows }) => ({ col, cols, row, rows }))
+              .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+          });
+          demands.push(
+            physical
+              .map(({ object }) => demand(context, object))
+              .sort((a, b) => fingerprint(a).localeCompare(fingerprint(b))),
+          );
           for (const { tags } of objects) {
             for (const tag of tags) {
               increment(mechanics, tag);
@@ -322,9 +435,11 @@ export function assessPlayability(
           areas,
           authoredTargets: context.recipes[id] ?? null,
           chunks,
+          demandFingerprint: fingerprint(demands),
           difficultyDistribution: sorted(difficultyDistribution),
           encounters: chunks.reduce((n, chunk) => n + chunk.encounters, 0),
           geometry,
+          geometryFingerprint: fingerprint(physicalAreas),
           id,
           lengthCols,
           longestEncounterFreeChunkRunPerAreaCols,
@@ -425,7 +540,9 @@ export function comparePlayability(before: PlayabilityReport, after: Playability
       JSON.stringify(before.stages.map(({ authoredTargets }) => authoredTargets)) !==
       JSON.stringify(after.stages.map(({ authoredTargets }) => authoredTargets)),
     stages: after.stages.map((stage, index) => ({
+      demandChanged: stage.demandFingerprint !== before.stages[index]!.demandFingerprint,
       encountersDelta: stage.encounters - before.stages[index]!.encounters,
+      geometryChanged: stage.geometryFingerprint !== before.stages[index]!.geometryFingerprint,
       id: stage.id,
       lengthColsDelta: stage.lengthCols - before.stages[index]!.lengthCols,
       mechanicsPer100ColsDelta: Object.fromEntries(

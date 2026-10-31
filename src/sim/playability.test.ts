@@ -118,6 +118,46 @@ describe("structural playability assessment", () => {
       [7],
     );
     expect(comparePlayability(before, after).stages[0]!.lengthColsDelta).toBe(0);
+    const input = context();
+    const fasterGraph: BehaviourPlan = {
+      ...graph,
+      states: {
+        ...graph.states,
+        charge: {
+          ...graph.states.charge!,
+          motion: { direction: "facing", kind: "move", speed: 6 },
+        },
+      },
+    };
+    const changed = assessPlayability(
+      {
+        ...input,
+        library: {
+          ...input.library,
+          characters: { enemy: { ...input.library.characters.enemy!, behaviour: fasterGraph } },
+        },
+        load: () => ({
+          ...plan,
+          areas: {
+            ...plan.areas,
+            first: {
+              ...plan.areas.first!,
+              solids: [
+                { col: 0, cols: 8, row: 50, rows: 10 },
+                { col: 15, cols: 25, row: 40, rows: 20 },
+              ],
+            },
+          },
+        }),
+      },
+      [7],
+    );
+    const delta = comparePlayability(before, changed).stages[0]!;
+    expect(delta.geometryChanged).toBe(true);
+    expect(delta.demandChanged).toBe(true);
+    expect(delta.sequenceChanged).toBe(false);
+    expect(changed.stages[0]!.mechanics).toEqual(before.stages[0]!.mechanics);
+
     expect(() => comparePlayability(before, assessPlayability(context(), [8]))).toThrow(
       "Incompatible",
     );
