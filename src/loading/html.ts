@@ -27,7 +27,7 @@ export const LOADING_CSS = `
   background: ${colour(style.fills[0]!)};
 }
 `;
-const CSS_FILE = `assets/loading-${createHash("sha256").update(LOADING_CSS).digest("hex").slice(0, 12)}.css`;
+const CSS_FILE = `assets/loading-${createHash("sha256").update(LOADING_CSS).digest("hex").slice(0, 8)}.css`;
 
 // Initial HTML uses the same geometry as the DOM and Phaser adapters, with no script or style inline.
 export function loadingHtml(html: string): string {
