@@ -286,7 +286,16 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
     "apartment-plaster",
     "apartment-spa-screen",
   ),
-  "city-boundary": CITY_THEME,
+  "city-boundary": {
+    ...CITY_THEME,
+    bindings: {
+      ...CITY_THEME.bindings,
+      "mid-background": {
+        character: "street-city-mid",
+        skin: { art: "street-boundary-mid", tileset: null },
+      },
+    },
+  },
   "city-outskirts": {
     backdrops: COMMON_BACKDROPS,
     bindings: HOME_CITY_BINDINGS,

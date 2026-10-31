@@ -53,6 +53,7 @@ export const TEXT: GameText = {
   },
   map: {
     continue: "Continue",
+    stageNumber: "Stage {number}",
     stages: {
       "city-boundary": "City boundary",
       "city-outskirts": "City outskirts",
