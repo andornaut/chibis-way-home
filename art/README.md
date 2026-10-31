@@ -25,22 +25,23 @@ The design starts with horizontal camera factors of 0 for sky, 0.15 for the far 
 
 ### Stage scenery identity
 
-Stage cards use captures of actual stage scenery. Keep each pair inside its zone palette while selecting different existing middle-distance silhouettes and near materials. Interior scenes remain enclosed rooms; outdoor silhouettes are reserved for exterior sections. The bindings below describe appearance, not platform geometry or thumbnail-only illustrations.
+Stage cards use captures of actual stage scenery. Keep each zone’s three stages inside its zone palette while selecting different existing middle-distance silhouettes and near materials. Interior scenes remain enclosed rooms; outdoor silhouettes are reserved for exterior sections. The bindings below describe appearance, not platform geometry or thumbnail-only illustrations.
 
-| Zone                 | Stage                  | Scenery building blocks                                                                      |
-| -------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
-| Blue cityscape       | Depot and streets      | Depot opening, `street-city-mid`, complete street facades                                    |
-| Blue cityscape       | City boundary          | `street-boundary-mid`, sparse street facades, open skyline                                   |
-| Industrial outskirts | Warehouse district     | `warehouse-mid`, warehouse walls and closed loading bays                                     |
-| Industrial outskirts | Freight terminal       | `freight-mid`, service gantries and container materials                                      |
-| Countryside          | Farmland               | `farmland-mid`, complete barn, timber fence and hay materials                                |
-| Countryside          | River crossing         | `river-mid`, reeds, bank and timber materials                                                |
-| Woodland             | Forest paths           | `forest-mid`, tonal trees, shrubs and root materials                                         |
-| Woodland             | Ravine                 | `ravine-mid`, rock silhouettes and stone materials                                           |
-| Home city            | City outskirts         | `outskirts-mid`, low masonry boundary walls                                                  |
-| Home city            | Familiar neighbourhood | `neighbourhood-mid`, complete windowed facades and garden crowns                             |
-| Apartment            | Entrance and lobby     | Exterior entrance, then enclosed lobby wall, sofa and desk                                   |
-| Apartment            | Climb to the apartment | Enclosed restaurant, pool, spa and residential rooms, alternating with exterior fire escapes |
+| Zone                 | Stage                  | Scenery building blocks                                              |
+| -------------------- | ---------------------- | -------------------------------------------------------------------- |
+| Blue cityscape       | Depot and streets      | Depot opening, `street-city-mid`, complete street facades            |
+| Blue cityscape       | City boundary          | `street-boundary-mid`, sparse street facades, open skyline           |
+| Industrial outskirts | Warehouse district     | `warehouse-mid`, warehouse walls and closed loading bays             |
+| Industrial outskirts | Freight terminal       | `freight-mid`, service gantries and container materials              |
+| Countryside          | Farmland               | `farmland-mid`, complete barn, timber fence and hay materials        |
+| Countryside          | River crossing         | `river-mid`, reeds, bank and timber materials                        |
+| Woodland             | Forest paths           | `forest-mid`, tonal trees, shrubs and root materials                 |
+| Woodland             | Ravine                 | `ravine-mid`, rock silhouettes and stone materials                   |
+| Home city            | City outskirts         | `outskirts-mid`, low masonry boundary walls                          |
+| Home city            | Familiar neighbourhood | `neighbourhood-mid`, complete windowed facades and garden crowns     |
+| Apartment            | Entrance and lobby     | Exterior entrance, then enclosed lobby wall, sofa and desk           |
+| Apartment            | Shared floors          | Enclosed restaurant and pool, alternating with exterior fire escapes |
+| Apartment            | Climb to the apartment | Exterior fire escape, then spa and residential rooms                 |
 
 `street-boundary-mid` is a 720x600 repeating backdrop, bottom-left anchored at y600, with suggested parallax 0.4,0.15. It replaces only the `mid-background` art binding in the City boundary theme; all other existing assets and bindings retain their contracts.
 
@@ -243,10 +244,9 @@ Approved target for paired runtime integration. The rulebook owns failure behavi
 - Progress is a restrained 2px line at the top of the game view. Its filled length shows percentage through the stage, using the current destination's canonical primary from `zone-themes` over a `dslate` track. Keep it separate from UI buttons, with no glow or pulse.
 - On failure, show a small recoil, a pronounced falling tilt to support, a brief impact squash and a small rebound into a round grounded sit. Its belly has a short flat centre and rounded contact ends. Feet remain visible during recoil and fall, and are hidden during impact and seated rest. Keep the camera at the failure view; the sprite has no baked world movement. Show the retry card as soon as the seated pose is reached, holding that pose beneath it without an extra timed pause or automatic retry.
 - Dim the frozen environment two palette ramp steps. Keep the bird and the small hazard contact area readable at their world positions, without an added ring or flash. The compact card stays above the ground-level contact area rather than covering it. If ordinary full-safe placement cannot avoid the visible seated body, apply the [body-clear width fallback](controls.md#retry-actions), reserving the body plus 8px before fitting within an available side region.
-- Reuse the content-fitted `ui-settings-card`, top-centred at y16, with no close X or title bar. Its four text rows stay in this order: zone name; `Stage <number>: <stage name>`; `Progress: X%`; `Time: 0:00`. Stage numbers are 1 or 2 within the selected zone, not global route numbers. Keep the standard fonts and sizes; never shrink text to fit.
-- Use the [shared modal content-fitting rule](controls.md#modal-content-fitting): 16px padding on all four sides, four 16px text line boxes with 4px gaps, then an 8px gap before the 48px action row. Each equal-width action fits the widest action label's visible ink plus 32px. Apply the shared minimum of 50% of the full logical viewport width and safe-view cap to the larger of the widest stat line and the complete action row, plus 32px; card height is 164px for four single-line rows.
-- Measured example: Blue cityscape / `Stage 2: City boundary`, `Progress: 50%`, `Time: 0:42`. The widest stat ink is 152px; Back to title is 82px wide and Try again is 60px at 2x. Equal 114px actions with their 8px gap make a 236px action row. Its natural padded width is 268px, so half the 720px logical viewport determines the fitted 360x164 card, top-left 180,16. The action row remains centred without stretching its buttons. Glyph ink is centred in its line boxes without changing font size. Longer actual strings grow the fitted width or wrap permitted paragraphs.
-- The time is cumulative play time on this stage across attempts since its last clear (or first entry). It is not the current attempt's duration and resets on clear. Progress is percentage at the current position through the stage.
+- Reuse the content-fitted `ui-settings-card`, with no close X or title bar. Rows contain the zone name, `Stage <number>: <stage name>`, Progress, then Last attempt, Run total, Best and Attempts. Stage numbers are 1 through 3 within the selected zone. Keep standard fonts and sizes; wrap measured headings rather than shrinking text.
+- Apply the [shared modal content-fitting rule](controls.md#modal-content-fitting): 16px padding, 16px line boxes with 4px row gaps, an 8px gap before the 48px action row, and a minimum of half the full logical viewport capped by actual safe available width. Seven single-line rows give a 224px card height. Body-clear fallback may cap width at 332px for a centred 40x40 seated bird; additional wrapped lines increase measured height.
+- Last attempt measures the current attempt. Run total accumulates active play across attempts in this generated run. Best is the fastest successful attempt and excludes failures. Attempts includes the current attempt. Death/retry preserves the run; a freshly generated run resets its counts. Live foreshadow dialogue counts as active play, while paused dialogue, interstitials and menus do not.
 - Place the secondary Back to title action on the left and primary Try again on the right, using the standard faces, equal sizes, label font and focus treatment in [the form control guide](controls.md#retry-actions). Neither an outside tap nor an elapsed timer retries the stage.
 
 ### Quip
@@ -330,14 +330,19 @@ The map presents the six V1 zone destinations on a cool pastel overview. `art/to
 
 ### Stage picker
 
-Selecting a zone with only one unlocked stage enters that stage directly. With more than one unlocked stage, the picker reuses the standard modal card and controls, with no new asset shapes.
+Map Continue always opens the selected zone's three stage cards, even when only Stage 1 is unlocked. Selection immediately starts an available stage; there is no extra confirmation action.
 
-- Frame: content-fitted `ui-settings-card`, centred in the view, with the zone heading and 24x24 close X included in its measured header. Apply the shared 16px body padding and 6px top-right close-face inset; reserve the whole 48px close press target in the header.
-- Rows: two standard 48px stage actions stacked with the shared gap and equal content-fitted widths. The latest reached available stage uses `ui-button-primary` and white text; the other uses `ui-button` and ink text. Labels use `font-body` at 2x, centred with the standard button-label inset.
-- Return: close, back and outside taps close the picker and return to the map. No extra Back button repeats the close action. The normal modal input isolation and keyboard focus apply.
-- Unbuilt stages stay unavailable. A preview showing two unlocked choices illustrates the future state, not the current content's availability.
+- Frame: content-fitted `ui-settings-card`, centred, with 16px padding, a minimum width of half the full logical viewport and the 6px top-right close-face inset with its full 48px press target. The three-card example is 688x248 in the 720x360 view.
+- Cards: three 208x162 faces with 16px gaps. Each displays an actual 168x84 stage capture, a small top-right Stage number in `font-body` at 1.5x, and its main name at the unchanged 2x scale, wrapping to at most two lines. Keep image and label positions fixed across the cards. The deliberate secondary number size does not change ordinary form labels.
+- States: available cards use the primary dark-steel face and white main label. Unavailable stages remain visible with pale-steel flat faces, dark-steel labels and greyed scene images. They cannot activate. Retain the standard focus treatment and complete press targets.
+- Return: close, back and outside taps return to the map. Normal modal input isolation and keyboard focus apply.
+- Images: `stage-preview-zone-N-stage-M`, N 1 through 6 and M 1 through 3, are opaque 168x84 PNGs registered as manifest images. Capture the actual seeded stage at 720x360, then resize once with nearest-neighbour sampling. Preserve its full 2:1 view and actual default starting area; do not replace scenery with a concept illustration. Capture mode freezes the scene at time zero with explicit layout/motion seeds and camera coordinates, hides overlays and does not step physics or write progress.
 
-The celebration and restart screens remain placeholders using the standard card and buttons.
+### Stage and zone summaries
+
+Stage-clear interstitials reuse the completed stage's actual preview image with its four stat rows and an obvious primary Continue action. There is no close X, invented story illustration or automatic dismissal. The image is 168x84; the measured summary places it beside the stage heading and full-size body rows. Keep 16px spacing between image and text groups and 8px below each heading.
+
+Zone clear adds a separate whole-zone stat group alongside the stage group and image. The zone group covers only the actual visit. A replay starting at a later stage shows the partial N/3 coverage label and never mixes in historic stages. Zone Best requires all three stages successfully completed during that same visit and uses their successful-attempt sum. Wrap headings and measured rows within their available columns; do not shrink fonts. The rulebook and runtime data own the labels, values and timing.
 
 ## Animation
 

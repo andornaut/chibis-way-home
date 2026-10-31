@@ -74,6 +74,8 @@ Every ordinary modal sizes its nine-slice frame to its actual content, with 16px
 - Placement: ordinary cards centre within the game view. The retry card is top-centred at y16 to leave the seated bird and contact area visible below it. Its content uses the same 16px padding.
 - Special-purpose framing: conversation panels retain their portrait-frame borders and paired-speaker layout because those borders frame 64px character artwork. In-game touch controls and the compact Install face retain their documented control exceptions. These do not introduce another ordinary modal padding rule.
 
+Stage selectors use three image-backed cards with fixed image and label positions, full-size 2x main names and a deliberate 1.5x secondary Stage number. Unavailable cards retain greyed scene previews and labels in the disabled palette. See [stage picker geometry](README.md#stage-picker).
+
 ### Retry actions
 
 The retry card uses the content-fitted pale steel frame and ordinary secondary and primary action styles. It has no close control. It remains modal until the player chooses an action; outside taps do not dismiss it or activate anything underneath.
@@ -85,7 +87,7 @@ Try ordinary placement using the full safe available width first. Only when that
 | Back to title | Secondary | Equal group width x 48 | Ink on grey     |
 | Try again     | Primary   | Equal group width x 48 | White on dslate |
 
-The left-to-right order carries meaning: leaving is secondary, retrying is primary. Derive the shared width from the widest actual label, with an 8px gap between actions. Labels use `font-body` at 2x, centred by visible ink, with the standard pressed displacement and focus ring. Apply the shared expanded press targets and nearest-centre overlap rule. The game supplies every label and value; art does not bake text into the textures. See [the retry layout](README.md#stage-progress-and-retry) for the four stat rows, measured example and frozen scene.
+The left-to-right order carries meaning: leaving is secondary, retrying is primary. Derive the shared width from the widest actual label, with an 8px gap between actions. Labels use `font-body` at 2x, centred by visible ink, with the standard pressed displacement and focus ring. Apply the shared expanded press targets and nearest-centre overlap rule. The game supplies every label and value; art does not bake text into the textures. See [the retry layout](README.md#stage-progress-and-retry) for the seven text rows, four run metrics and frozen scene.
 
 ### Update notice action
 

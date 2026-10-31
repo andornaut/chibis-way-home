@@ -351,3 +351,16 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | Key                 | Type                                  | Size    | Contract                                    |
 | ------------------- | ------------------------------------- | ------- | ------------------------------------------- |
 | street-boundary-mid | repeating backdrop, low service roofs | 720x600 | Bottom-left y600, repeat x, middle distance |
+
+## Stage scenery previews
+
+Opaque actual stage captures, 168x84, registered as manifest images. Keys follow `stage-preview-zone-N-stage-M`; columns below identify stages 1, 2 and 3 in key order.
+
+| Zone | Stage 1            | Stage 2       | Stage 3                |
+| ---- | ------------------ | ------------- | ---------------------- |
+| 1    | street             | city-streets  | city-boundary          |
+| 2    | warehouse-district | loading-yards | freight-terminal       |
+| 3    | farmland           | country-lanes | river-crossing         |
+| 4    | forest-paths       | deep-woods    | ravine                 |
+| 5    | city-outskirts     | back-streets  | familiar-neighbourhood |
+| 6    | entrance-and-lobby | shared-floors | climb-to-apartment     |
