@@ -1,5 +1,11 @@
+import { readFileSync } from "node:fs";
+
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { describe, expect, it } from "vitest";
 
+import { CHARACTERS } from "../data/characters";
+import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues";
+import { ZONE_MAP } from "../data/map";
 import { DESTINATION_FIXTURE as map } from "../testing/mapDestinations";
 import { introductionForRun, zoneExitFlow, zoneStoryForStage } from "./zoneFlow";
 
@@ -16,6 +22,30 @@ const pairs = {
 };
 
 describe("zone story routing", () => {
+  it("resolves every real introduction to an existing actor, manual conversation and animation tags", () => {
+    for (const destination of ZONE_MAP.destinations) {
+      const story = introductionForRun(
+        ZONE_MAP,
+        destination.stages[0]!,
+        new Set(),
+        zoneStoryForStage(ZONE_MAP, ZONE_DIALOGUES, destination.stages[0]!),
+      )!;
+      const profile = story.entry!;
+      const actor = CHARACTERS[profile.character]!;
+      const sheet = JSON.parse(
+        readFileSync(
+          new URL(`../../public/art/sprites/${actor.art}.json`, import.meta.url),
+          "utf8",
+        ),
+      ) as AsepriteSheet;
+      const tags = sheetTags(sheet);
+      expect(tags.has(profile.idleAnimation), destination.id).toBe(true);
+      expect(tags.has(profile.runAnimation), destination.id).toBe(true);
+      expect(profile.escapeTilesPerSecond, destination.id).toBeGreaterThan(0);
+      expect(DIALOGUES[story.intro]?.lines.length, destination.id).toBeGreaterThan(0);
+      expect(DIALOGUES[story.intro]?.choice, destination.id).toBeUndefined();
+    }
+  });
   it("shares the physical introduction identity across destination stages, separate from foreshadow", () => {
     const first = zoneStoryForStage(map, pairs, "one");
     const second = zoneStoryForStage(map, pairs, "two");
