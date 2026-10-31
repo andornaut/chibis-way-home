@@ -56,6 +56,7 @@ import { fitPlayCamera, playPoint } from "./playCamera";
 export interface DialogueData {
   readonly scene: string;
   readonly linear?: boolean;
+  readonly opener?: string;
 }
 
 export interface DialogueOpener {
@@ -76,6 +77,7 @@ const CONTROLS: readonly DialogueControl[] = ["continue", "skip"];
 // time, consuming input until the conversation and its optional required terminal choice finish.
 export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private paragraphs: readonly DialogueParagraph[] = [];
+  private opener = "zone";
   private paragraph = 0;
   private paragraphArt: GameObjects.GameObject[] = [];
   private choice: DialogueChoice | undefined;
@@ -96,7 +98,8 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     super(key);
   }
 
-  init({ linear = false, scene }: DialogueData): void {
+  init({ linear = false, opener = "zone", scene }: DialogueData): void {
+    this.opener = opener;
     const plan = DIALOGUES[scene];
     if (!plan) {
       throw new Error(`No dialogue ${scene}`);
@@ -243,7 +246,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (this.live) {
       (this.scene.get("zone") as unknown as ForeshadowOpener).foreshadowClosed();
     } else {
-      (this.scene.get("zone") as unknown as DialogueOpener).dialogueClosed(selection);
+      (this.scene.get(this.opener) as unknown as DialogueOpener).dialogueClosed(selection);
     }
   }
 

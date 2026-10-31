@@ -29,7 +29,7 @@ import { StageSelectScene } from "./scenes/StageSelectScene";
 import { StartScene } from "./scenes/StartScene";
 import { installUpdateModalBridge, UpdateScene } from "./scenes/UpdateScene";
 import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene";
-import { ZoneForeshadowScene } from "./scenes/ZoneForeshadowScene";
+import { ZoneIntroductionScene } from "./scenes/ZoneIntroductionScene";
 import { ZoneScene } from "./scenes/ZoneScene";
 
 // The page's ink background (public/site.css), which the canvas's bars match.
@@ -69,7 +69,7 @@ function startGame(): void {
       RestartScene,
       DialogueScene,
       ZoneDepartureScene,
-      ZoneForeshadowScene,
+      ZoneIntroductionScene,
       DialogueChoiceScene,
       DeathScene,
       StageSelectScene,

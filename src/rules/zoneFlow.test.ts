@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { DESTINATION_FIXTURE as map } from "../testing/mapDestinations";
-import { foreshadowForRun, zoneExitFlow, zoneStoryForStage } from "./zoneFlow";
+import { introductionForRun, zoneExitFlow, zoneStoryForStage } from "./zoneFlow";
 
+const entry = {
+  character: "test-actor",
+  escapeTilesPerSecond: 12,
+  idleAnimation: "idle",
+  offsetTiles: 6,
+  runAnimation: "walk",
+};
 const pairs = {
-  first: { foreshadow: "first-foreshadow", intro: "first-intro", outro: "first-outro" },
-  second: { foreshadow: "second-foreshadow", intro: "second-intro", outro: "second-outro" },
+  first: { entry, foreshadow: "first-foreshadow", intro: "first-intro", outro: "first-outro" },
+  second: { entry, foreshadow: "second-foreshadow", intro: "second-intro", outro: "second-outro" },
 };
 
 describe("zone story routing", () => {
@@ -16,12 +23,17 @@ describe("zone story routing", () => {
     expect(first?.intro).not.toBe(first?.foreshadow);
     expect(zoneStoryForStage(map, pairs, "debug")).toBeUndefined();
   });
-  it("repeats live foreshadow on a fresh opening-stage run but not its retry", () => {
+  it("opens the physical introduction only on an unseen opening stage", () => {
     const story = zoneStoryForStage(map, pairs, "one");
-    expect(foreshadowForRun(map, "one", false, story)).toBe(pairs.first.foreshadow);
-    expect(foreshadowForRun(map, "one", true, story)).toBeUndefined();
-    expect(foreshadowForRun(map, "one", false, story)).toBe(pairs.first.foreshadow);
-    expect(foreshadowForRun(map, "two", false, story)).toBeUndefined();
+    expect(introductionForRun(map, "one", new Set(), story)).toBe(story);
+    expect(introductionForRun(map, "one", new Set(["first"]), story)).toBeUndefined();
+    expect(introductionForRun(map, "two", new Set(), story)).toBeUndefined();
+    expect(introductionForRun(map, "one", new Set(), undefined)).toBeUndefined();
+    const missing = { ...story! };
+    delete missing.entry;
+    expect(() => introductionForRun(map, "one", new Set(), missing)).toThrow(
+      "Missing entry introduction profile first",
+    );
   });
   it.each([
     { back: false, expected: { kind: "next-stage", stage: "two" }, stage: "one" },

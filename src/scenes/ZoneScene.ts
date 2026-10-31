@@ -81,7 +81,7 @@ import {
   startZoneIndex,
 } from "../rules/zoneChain";
 import {
-  foreshadowForRun,
+  introductionForRun,
   type ZoneDepartureTarget,
   zoneExitFlow,
   type ZoneStory,
@@ -128,16 +128,12 @@ import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchCont
 import { proximityDialogue } from "../view/zoneDialogue";
 import type { CutsceneData } from "./CutsceneScene";
 import type { DeathData, DeathOpener } from "./DeathScene";
-import {
-  type DialogueData,
-  type DialogueOpener,
-  type DialogueScene,
-  type ForeshadowOpener,
-} from "./DialogueScene";
+import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
 import type { ZoneDepartureData } from "./ZoneDepartureScene";
+import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene";
 
 // The zone a map node plays, assembled for seed where it is a recipe.
 function zoneAt(seed: number, node: string): ZonePlan {
@@ -219,7 +215,7 @@ export interface ZoneData {
 }
 
 // One zone, played with the keyboard or the touch controls.
-export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, ForeshadowOpener {
+export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, IntroductionOpener {
   private clock: StepClock = startStepClock;
   private readonly controls = new Map<TouchControl, GameObjects.Sprite>();
   // The move hint's ring and knob.
@@ -266,8 +262,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   private continueVisit = false;
   private departure: ZoneDepartureTarget | undefined;
   private readonly localSeenIntros = new Set<string>();
-  private foreshadowStarted = false;
-  private foreshadowActive = false;
+  private introductionActive = false;
   private dialogueAttempt = -1;
   private dialogueArea = "";
   private readonly heardDialogues = new Map<string, Set<number>>();
@@ -314,8 +309,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     this.dialogueObject = undefined;
     this.departure = undefined;
     this.localSeenIntros.clear();
-    this.foreshadowStarted = false;
-    this.foreshadowActive = false;
+    this.introductionActive = false;
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
     this.heardDialogues.clear();
@@ -348,6 +342,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
         this.clearControls();
         this.input.enabled = true;
         coverZone("loading", false);
+        this.openIntroduction();
       };
       this.game.events.once("postrender", ready);
       this.events.once("shutdown", () => this.game.events.off("postrender", ready));
@@ -375,7 +370,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     this.cameras.main.ignore(this.progress);
     this.progress.cameraFilter &= ~controlsCamera.id;
     this.events.once("shutdown", () => {
-      this.stopForeshadow();
+      this.scene.stop("zoneIntroduction");
+      this.introductionActive = false;
       if (this.dialogueOpen()) {
         this.scene.stop("dialogueChoice");
         this.scene.stop("dialogue");
@@ -459,18 +455,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     this.watchTouches();
     this.events.on("pause", () => {
       void flushStats();
-      if (this.foreshadowActive) {
-        this.scene.setVisible(false, "zoneForeshadow");
-        this.scene.pause("zoneForeshadow");
-      }
     });
     // Paused under the pause card or a room: keys and time while it was open count for nothing.
     // Back from a room, she stands at its door with nothing held, and the door shows closed.
     this.events.on("resume", () => {
-      if (this.foreshadowActive) {
-        this.scene.setVisible(true, "zoneForeshadow");
-        this.scene.resume("zoneForeshadow");
-      }
       this.clock = startStepClock;
       this.heldKeys.clear();
       if (this.inRoom) {
@@ -481,31 +469,58 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
         this.heldTouches.clear();
       }
     });
-    this.openForeshadow();
   }
 
-  private openForeshadow(): void {
-    if (this.preview || this.backdrop) {
+  private openIntroduction(): void {
+    if (this.preview || this.backdrop || this.introductionActive) {
       return;
     }
-    const scene = foreshadowForRun(ZONE_MAP, this.stageKey(), this.foreshadowStarted, this.story);
-    if (!scene) {
+    const intro = introductionForRun(
+      ZONE_MAP,
+      this.stageKey(),
+      new Set([...this.localSeenIntros, ...seenZoneIntros()]),
+      this.story,
+    );
+    if (!intro?.entry) {
       return;
     }
-    this.foreshadowStarted = true;
-    this.foreshadowActive = true;
-    this.scene.launch("zoneForeshadow", { scene } satisfies DialogueData);
+    this.introductionActive = true;
+    this.clearControls();
+    this.input.enabled = false;
+    this.showTouchControls(touchSettings());
+    coverZone("dialogue", true);
+    const camera = this.cameras.main;
+    this.scene.launch("zoneIntroduction", {
+      entry: intro.entry,
+      feet: {
+        x: this.zone.bird.x + BIRD.width / 2 - camera.scrollX,
+        y: this.zone.bird.y + BIRD.height - camera.scrollY,
+      },
+      scene: intro.intro,
+    } satisfies ZoneIntroductionData);
+    this.scene.pause();
   }
 
-  private stopForeshadow(): void {
-    if (this.foreshadowActive) {
-      this.scene.stop("zoneForeshadow");
+  introductionHeard(): void {
+    if (!this.introductionActive || !this.story) {
+      return;
     }
-    this.foreshadowActive = false;
+    this.localSeenIntros.add(this.story.zone);
+    if (this.mapNode !== undefined) {
+      saveZoneIntro(this.story.zone);
+    }
   }
 
-  foreshadowClosed(): void {
-    this.foreshadowActive = false;
+  introductionClosed(): void {
+    if (!this.introductionActive) {
+      return;
+    }
+    this.introductionActive = false;
+    this.clearControls();
+    this.input.enabled = true;
+    this.showTouchControls(touchSettings());
+    coverZone("dialogue", false);
+    this.scene.resume();
   }
 
   // The start screen's backdrop: zone 1's street as she starts it, without her or the touch
@@ -698,7 +713,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   }
 
   private beginDeath(): void {
-    this.stopForeshadow();
     const death = this.zone.death;
     if (death === undefined || this.dying !== undefined) {
       return;
@@ -818,7 +832,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
 
   // The pause scene and page input stay inert during the conversation, including its launch.
   dialogueOpen(): boolean {
-    return this.dialogueObject !== undefined || this.departure !== undefined;
+    return (
+      this.introductionActive || this.dialogueObject !== undefined || this.departure !== undefined
+    );
   }
 
   private clearControls(): void {
@@ -869,7 +885,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     if (index === undefined || scene === undefined) {
       return false;
     }
-    this.stopForeshadow();
     this.dialogueObject = index;
     this.clearControls();
     this.input.enabled = false;
@@ -978,7 +993,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   // Save a cleared stage before routing to its continuation. Turning back preserves progress;
   // debug and trial runs keep their existing replay route.
   private leave(): void {
-    this.stopForeshadow();
     const { turnedBack } = this.zone;
     if (this.mapNode !== undefined) {
       const story = this.story;
@@ -1029,7 +1043,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     camera.fadeIn(FADE_MS, 0, 0, 0);
     camera.once("camerafadeincomplete", () => {
       this.hold = undefined;
-      this.openForeshadow();
+      this.openIntroduction();
     });
   }
 
@@ -1048,8 +1062,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   }
 
   private loadPlan(plan: ZonePlan): void {
-    this.stopForeshadow();
-    this.foreshadowStarted = false;
     this.heardDialogues.clear();
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
@@ -1435,12 +1447,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
         return false;
       }
       const point = shifted(topShift(this.scale.gameSize), onGame(event), -1);
-      if (
-        this.foreshadowActive &&
-        (this.scene.get("zoneForeshadow") as DialogueScene).blocksPoint(point)
-      ) {
-        return false;
-      }
       return !(
         event.target === this.game.canvas && containsPoint(PAUSE_BUTTON.hit, point.x, point.y)
       );

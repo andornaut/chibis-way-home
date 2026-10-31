@@ -40,15 +40,21 @@ export function zoneExitFlow(
     : { kind: "departure", scene: story.outro, target: next };
 }
 
-export function foreshadowForRun(
+export function introductionForRun(
   map: ZoneMap,
   stage: string,
-  shown: boolean,
+  seen: ReadonlySet<string>,
   story: ZoneStory | undefined,
-): string | undefined {
-  if (shown || !story) {
+): ZoneStory | undefined {
+  if (!story || seen.has(story.zone)) {
     return undefined;
   }
   const destination = map.destinations.find((destination) => destination.id === story.zone);
-  return destination?.stages[0] === stage ? story.foreshadow : undefined;
+  if (destination?.stages[0] !== stage) {
+    return undefined;
+  }
+  if (!story.entry) {
+    throw new Error(`Missing entry introduction profile ${story.zone}`);
+  }
+  return story;
 }
