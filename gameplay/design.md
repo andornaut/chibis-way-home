@@ -207,7 +207,7 @@ The route spans six themed zones of three stages in this order. Each stage targe
 - **Rooms:** the street door leads to the prototype test room
 - **Route:** the main path continues right toward the city boundary; middle chunks can include upper street ledges. Streets is the second stage and unlocks when this tutorial is completed; City boundary is third
 
-The park is a randomized-stage prototype outside the V1 route. The identities of Furt's friends beyond Archie, Pebble, Trixi, Bini and Kiwi and the later encounters along the route are undecided.
+The park is a randomized-stage prototype outside the V1 route. The identities of Furt's friends beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided.
 
 ### City boundary
 
@@ -304,7 +304,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 ### Dialogue
 
-- **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's 64 px portrait and name tab inside the panel. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
+- **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's name tab and, when available, a 64 px portrait inside the panel. Pebble, Trixi and Kiwi currently have no portrait; missing portraits use neutral presentation. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. There is no back, timer or scrolling chat history
 - **Foreshadowing:** each fresh stage-one entry plays a live top-panel exchange between the antagonist and Chibi, with Skip. No physical antagonist is visible. Death retries do not replay it. This entry dialogue uses separate state from the first physical introduction
 - **Introductions:** the first physical sighting at the beginning of stage two starts an introduction once per zone per playthrough, always with Skip. Its seen state is shared across all three stages and survives death, retries and stage replay; a new game resets it

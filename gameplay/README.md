@@ -53,6 +53,8 @@ Targets are assessed per stage and player skill. Bands other than the successful
 
 **Current implementation scope:** all six antagonists are always lethal on contact, periodically attempt a direct charge or body contact, and have distinct specials with data-driven frequencies. Archie adds a leaping pounce; Pebble pairs contact swoops with falling white-block poop; Trixi pairs ground rushes with visibly arming red-edged traps; Bini pairs charge and maul with the finite growl gust; Kiwi pairs ground charges with a vertical drop; Furt pairs charges with thrown parcels. Pebble's blocks disappear on landing, and Bini's push stops outside the gust or behind cover, with high ground the primary avoidance. These rules are paired with the matching runtime, values and art. Jump rules and the unresolved friendship outcome are unchanged.
 
+All eighteen V1 stages are built. Successful-clear durations remain unmeasured; duration tuning and landscape-phone checks of jump feel, touch input and readability remain.
+
 Open questions:
 
 - **Beginning:** the cause of Chibi and Furt's fight
@@ -64,4 +66,3 @@ Open questions:
 - **Map:** Next's branching routes
 - **Rooms:** the currency and what items do; what quests and rewards give and how they are tracked; what a threat leads to; whether a room can be revisited, and whether its dialogue changes
 - **Use:** what it acts on besides doors (assumed: talking to animals, and objects at route forks)
-- **Zones:** detailed layouts and encounters for the remaining planned stages
