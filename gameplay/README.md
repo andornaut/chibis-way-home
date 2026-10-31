@@ -17,6 +17,7 @@ Gameplay owns the rulebook and the values and content in the data value files (e
 
 ## Method
 
+- **Bounded diagnostics:** use the real fixed-step rules and asset loader, with pinned source, seeds and bot policy, explicit tick and retry limits, and a global wall-time budget. Report current and peak progress, completion, deaths, stalls, active time, runtime, omitted cases and observed areas in multi-section stages. Uncalibrated bot failures do not establish human difficulty or impossible layouts; successful-clear duration and device feel require calibrated or player evidence.
 - **Decisions:** the user's. Gameplay asks with a prompt, recommendation first and the trade-off in a line; routine work needs no asking.
 - **Design sessions:** start with "design session" and a topic. Claude keeps floated ideas apart from agreed ones, asks the question that unblocks a decision, and on "wrap up" proposes doc changes, writing them once confirmed.
 - **Difficulty:** use configurable per-zone difficulty targets and variation bands from `src/data/`, with a demanding first zone and a difficulty increase in every following zone. Vary required climbing chunks, moving obstacles, ground hazards and enemy yards; a seed need not include every challenge type. Every built and future stage, including the first tutorial and final stage, has a fixed opening and ending around randomized middle chunks. Vary meaningful challenge combinations and order within the zone band and valid chunk connections. Run and attempt lifecycle rules are in the rulebook.
