@@ -37,7 +37,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | Key                        | Type                                              | Size    | Path                                               |
 | -------------------------- | ------------------------------------------------- | ------- | -------------------------------------------------- |
 | logo                       | title-screen logo                                 | 360x193 | `public/art/logo.png`                              |
-| logo-icon                  | nav-column logo: duck on a platform, no lettering | 53x41   | `public/art/logo-icon.png`                         |
+| logo-icon                  | nav-column logo: bird on a platform, no lettering | 53x41   | `public/art/logo-icon.png`                         |
 | logo-nav                   | nav-bar logo, one line                            | 214x30  | `public/art/logo-nav.png`                          |
 | stage-cutscene-placeholder | neutral stage-transition illustration             | 720x360 | `public/art/images/stage-cutscene-placeholder.png` |
 
@@ -45,8 +45,8 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 
 | Key                       | Type                                                       | Size   | Tags                                          |
 | ------------------------- | ---------------------------------------------------------- | ------ | --------------------------------------------- |
+| bird                      | character                                                  | 48x42  | idle, walk, jump, flutter, land, death (once) |
 | dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                 |
-| duck                      | character                                                  | 48x42  | idle, walk, jump, flutter, land, death (once) |
 | ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                            |
 | ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                              |
 | frog-courier              | hazard, hit box 6,6,48,30                                  | 60x36  | ride, idle                                    |
@@ -61,7 +61,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | icon-settings-nav         | sprite                                                     | 20x20  | rest                                          |
 | icon-touch-controls       | sprite                                                     | 16x16  | rest                                          |
 | map-compass               | map pen mark, tan                                          | 25x33  | rest                                          |
-| map-duck                  | map marker, the duck at half size                          | 26x22  | idle                                          |
+| map-bird                  | map marker, the bird at half size                          | 26x22  | idle                                          |
 | map-fork                  | map fork marker                                            | 29x29  | normal, current, visited, unbuilt             |
 | map-hill                  | map pen mark, tan                                          | 20x11  | rest                                          |
 | map-icon-apartment        | map zone icon, apartment building                          | 14x14  | normal, visited                               |
@@ -86,7 +86,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | pedestrian-cat            | street cast                                                | 34x50  | walk, idle                                    |
 | pedestrian-raccoon        | street cast                                                | 36x50  | walk, idle                                    |
 | pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                        |
-| portrait-duck             | portrait                                                   | 64x64  | neutral, happy, worried                       |
+| portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                       |
 | portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                        |
 | ui-answer                 | sprite                                                     | 208x36 | normal, selected, pressed                     |
 | ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                               |
@@ -210,7 +210,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | ----------------- | ------------------------------------------- | ------- | ------------------------------------------ |
 | depot-loading-bay | static backdrop, roller bay and parcel icon | 120x120 | bottom-left, y 600, no repeat              |
 | depot-wall        | static ribbed blue-grey wall                | 48x180  | bottom-left, y 600, repeat x               |
-| parcel-open       | static opened cardboard parcel              | 72x36   | bottom-left, y 600, no repeat; behind duck |
+| parcel-open       | static opened cardboard parcel              | 72x36   | bottom-left, y 600, no repeat; behind bird |
 
 ## Dog antagonist
 

@@ -7,7 +7,7 @@ Usage: owl.py build | preview OUT.png, from repository root. Every pose uses hit
 mirrors. Idle2x400ms, prepare2x160ms, drop2x100ms, return4x120ms, rest2x400ms; all loop, once[].
 Prepare lowers the head; drop spreads wings for the swoop; return alternates wingbeats; rest settles.
 All states retain the ordinary lethal-contact runtime meaning. No red outline or state paint.
-Grey/cream face discs, quiet brown breast and dark rounded wings distinguish the owl from the duck.
+Grey/cream face discs, quiet brown breast and dark rounded wings distinguish the owl from the bird.
 Flight wings remain inside the same48px footprint. Sprite state motion does not alter the collision box.
 """
 

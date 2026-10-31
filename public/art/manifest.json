@@ -13,6 +13,16 @@
   ],
   "sprites": [
     {
+      "key": "bird",
+      "png": "sprites/bird.png",
+      "json": "sprites/bird.json",
+      "once": [
+        "jump",
+        "land",
+        "death"
+      ]
+    },
+    {
       "key": "dog-antagonist",
       "png": "sprites/dog-antagonist.png",
       "json": "sprites/dog-antagonist.json",
@@ -30,16 +40,6 @@
       "json": "sprites/dog-pug.json",
       "once": [
         "perk"
-      ]
-    },
-    {
-      "key": "duck",
-      "png": "sprites/duck.png",
-      "json": "sprites/duck.json",
-      "once": [
-        "jump",
-        "land",
-        "death"
       ]
     },
     {
@@ -159,15 +159,15 @@
       "once": []
     },
     {
-      "key": "map-compass",
-      "png": "sprites/map-compass.png",
-      "json": "sprites/map-compass.json",
+      "key": "map-bird",
+      "png": "sprites/map-bird.png",
+      "json": "sprites/map-bird.json",
       "once": []
     },
     {
-      "key": "map-duck",
-      "png": "sprites/map-duck.png",
-      "json": "sprites/map-duck.json",
+      "key": "map-compass",
+      "png": "sprites/map-compass.png",
+      "json": "sprites/map-compass.json",
       "once": []
     },
     {
@@ -337,15 +337,15 @@
       ]
     },
     {
-      "key": "portrait-dog",
-      "png": "sprites/portrait-dog.png",
-      "json": "sprites/portrait-dog.json",
+      "key": "portrait-bird",
+      "png": "sprites/portrait-bird.png",
+      "json": "sprites/portrait-bird.json",
       "once": []
     },
     {
-      "key": "portrait-duck",
-      "png": "sprites/portrait-duck.png",
-      "json": "sprites/portrait-duck.json",
+      "key": "portrait-dog",
+      "png": "sprites/portrait-dog.png",
+      "json": "sprites/portrait-dog.json",
       "once": []
     },
     {

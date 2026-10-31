@@ -142,8 +142,8 @@ def preview(out):
     for c in range(19, 23):
         side = "left" if c == 19 else "right" if c == 22 else "middle"
         put(f"one-way-ledge-{side}", c, 22)
-    duck = Image.open("public/art/sprites/duck.png").convert("RGBA").crop((0, 0, 48, 42))
-    im.alpha_composite(duck, (24, 600 - 42))
+    bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((0, 0, 48, 42))
+    im.alpha_composite(bird, (24, 600 - 42))
     im.convert("RGB").save(out)
     stem = os.path.splitext(out)[0]
     im.crop((0, 360, 720, 720)).convert("RGB").save(stem + "-lower.png")

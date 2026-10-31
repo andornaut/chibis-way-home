@@ -214,8 +214,8 @@ def context(kind):
                           "top-joint" if x % 2 else "top") if y == 0 else \
                     ("face-left" if x == 0 else "face-right" if x == width - 1 else "face")
                 im.alpha_composite(ts[f"{family}-{suffix}"], ((col + x) * T, (row + y) * T))
-    duck = Image.open("public/art/sprites/duck.png").convert("RGBA").crop((0, 0, 48, 42))
-    im.alpha_composite(duck, (72, 558))
+    bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((0, 0, 48, 42))
+    im.alpha_composite(bird, (72, 558))
     return im.crop((0, 360, 720, 720)).convert("RGB")
 
 

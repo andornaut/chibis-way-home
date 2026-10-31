@@ -1,6 +1,6 @@
 # Art
 
-The art plan and pipeline for Duck Platformer. Art owns `art/` and the served art directory, `public/art/`.
+The art plan and pipeline for Bird versus Ferret. Art owns `art/` and the served art directory, `public/art/`.
 
 ## Direction
 
@@ -12,7 +12,7 @@ The art plan and pipeline for Duck Platformer. Art owns `art/` and the served ar
 
 - Accents: reserve amber for doors and small points of interest. Other hues add restrained foliage, signs and character details. Red contact edges always mean danger in every theme.
 - Colour: each V1 destination uses its canonical muted primary from [Zone primary colours](#zone-primary-colours), carried through atmosphere, materials, map identity and progress. Keep distant colours close to the sky and spend saturation on a few useful accents. The park remains a separate prototype outside the V1 route.
-- Detail: distant scenery uses broad silhouettes without window grids. Near architecture uses sparse window groups and quiet surfaces. Avoid repeated stripes and single-pixel texture that compete with the duck.
+- Detail: distant scenery uses broad silhouettes without window grids. Near architecture uses sparse window groups and quiet surfaces. Avoid repeated stripes and single-pixel texture that compete with the bird.
 - Layouts: every stage, including the first and final stages, assembles seeded middle chunks between fixed start and finish sections. Reusable tiles, scenery and gameplay chunks assemble independently; a background image never encodes a required route. Stages are at most two screens tall (720px, 60 rows).
 - Obstacles: use ledges, cliffs, walls and ceilings. Short-clearance jumps and full-height jumps share the same visual vocabulary. Ladders are not part of the obstacle set. Difficulty and jump requirements belong to gameplay data, with variation around a common configurable difficulty.
 - Readability: safe walkable tops use a dark edge and a bright two-pixel lip. On darker scenery the lip holds at least 2:1 against its backdrop; against a pale sky the dark edge supplies the separation, so retain both parts of the edge. Dangerous faces instead use the shared red band, without spikes or a safe light lip. Text keeps 4.5:1 and meaningful UI marks 3:1 contrast.
@@ -78,7 +78,7 @@ Include asset keys, frame sizes, animation tags and timings, anchors, hit boxes,
 - A nine-slice texture carries its margins as an Aseprite slice named after its key and as `slice` in its manifest entry.
 - `art/tools/fonts.py` rasterizes the fonts in `art/fonts/` into BMFonts in `public/art/fonts/`, white for tinting: printable ASCII and the middle dot (·).
 - `art/tools/palette.py` writes `public/art/palette.json`, listed under `data` in the manifest: `colours` maps each palette name to `#rrggbb`, `darker` maps each colour one ramp step down, and `dim2` two steps down, the settings card's dim. Keys are sorted.
-- `art/tools/icons.py` draws the favicon and app icons, the duck on a sky-blue sunburst disc (whole from 32px up, her head and back at 16px on flat sky, where the rays do not hold), as plain PNGs, not sprites or manifest entries: `public/favicon.ico` (16 and 32), `public/art/favicon-16.png` and `public/art/favicon.png`, and in `public/icons/` the 180 apple-touch icon on a full-bleed sunburst square, the 192 and 512 icons on a sunburst disc with a transparent outside, and a 512 maskable icon with the subject inside the central 80%. The 16 and 32 are drawn natively; the larger icons are 64 and 90 drawings scaled by whole numbers.
+- `art/tools/icons.py` draws the favicon and app icons, the bird on a sky-blue sunburst disc (whole from 32px up, her head and back at 16px on flat sky, where the rays do not hold), as plain PNGs, not sprites or manifest entries: `public/favicon.ico` (16 and 32), `public/art/favicon-16.png` and `public/art/favicon.png`, and in `public/icons/` the 180 apple-touch icon on a full-bleed sunburst square, the 192 and 512 icons on a sunburst disc with a transparent outside, and a 512 maskable icon with the subject inside the central 80%. The 16 and 32 are drawn natively; the larger icons are 64 and 90 drawings scaled by whole numbers.
 - `art/inventory.md` lists every asset (key, type, size, tags).
 - `art/tools/floor<n>.py` draws one zone's tilesets and backdrop pieces as plain PNGs, not Aseprite sprites, so the game builds each zone from stage data instead of a fixed panorama (`floor1.py` draws Zone 1). A chunk theme has its own module, such as `art/tools/park.py`, with the same `build` and `preview OUT.png` commands; each tool merges its own keys into the manifest's `tilesets` and `backdrops` and keeps the others.
 - A tileset is `public/art/tilesets/<key>.png`, 12x12 tiles in rows of 8 with no spacing or margin, plus `<key>.json`: `{"tileSize": 12, "columns": 8, "tiles": {"<name>": <index>}, "pieces": {"<name>": [[<index>, ...], ...]}, "hitboxes": {"<name>": {"x", "y", "width", "height"}}}`. An index counts row by row. A piece is a multi-tile unit as rows of indices, top row first. `hitboxes` is optional and written only when a tile has one: a `hazard-*` tile's hit box in pixels within its 12x12 tile, the same shape as a sprite's `hitbox`. A tile without an entry hits its whole cell. `pixel.write_tileset` writes every tileset. A tile named `one-way-*` is a one-way ledge, which stops only a fall onto its top edge. A tile named `door-*` or `exit-*` is a doorway with no collision. A doorway leads only to a room: where the stage gives it one, the game puts a Use zone over its piece. A zone is cleared at its right edge, never through a doorway. A tile named `pit-*` is a pit with no collision, so she falls through it and out of the stage. A tile named `hazard-*` has no collision and is drawn for a hazard instance placed with a width: touching its hit box restarts her. Every other tile with art is solid. The manifest lists each under `tilesets` as `{"key", "png", "json"}`.
@@ -137,8 +137,8 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 
 | Sprite          | Frame                        |
 | --------------- | ---------------------------- |
-| Duck            | 48x42                        |
-| Duck portrait   | 64x64                        |
+| Bird            | 48x42                        |
+| Bird portrait   | 64x64                        |
 | Ferret          | 64x80                        |
 | Ferret portrait | 64x64                        |
 | Pigeon          | 22x22                        |
@@ -153,46 +153,46 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 - Words in effects and labels are set in a font, never baked into sprites.
 - A backdrop never shows its own place's name; the HUD names it.
 
-## The duck
+## Chibi
 
-The protagonist is a wide, round, cream-coloured duck, drawn facing right and mirrored for left. `art/tools/duck.py` draws her; its docstring gives every frame's pose, timing and squash and stretch table.
+Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing right and mirrored for left. `art/tools/bird.py` draws his; its docstring gives every frame's pose, timing and squash and stretch table.
 
-- Shape: a wide, round blob of a body with a small round head set into its top at the front, a square ink dot eye and a short, plain orange bill. Her back dips at the nape, so her round head sits up above the back line, and ends in a short tail tip at the rear. No bow.
+- Shape: a wide, round blob of a body with a small round head set into its top at the front, a square ink dot eye and a short, plain orange bill. His back dips at the nape, so his round head sits up above the back line, and ends in a short tail tip at the rear. No bow.
 - Colour: cream, with tan cel crescents and a white rim light. The wing is a flat tan patch, the feet tiny orange stubs. Dark-slate outline.
-- Every jump flutters (a slow, steerable fall), so the flutter is her signature: the wing raised up and back from the top of her back, the body 2px higher, and the feet tucked under her belly.
+- Every jump flutters (a slow, steerable fall), so the flutter is his signature: the wing raised up and back from the top of his back, the body 2px higher, and the feet tucked under his belly.
 - Frame 48x42, feet on rows 39 and 40 and the outline on row 41.
-- Collision body 24x36 (2x3 tiles), anchored bottom-centre: the frame's bottom edge sits on the body's bottom edge, and her body-centre x, 24 (the frame's centre line, between columns 23 and 24), sits on the body's centre, so mirroring her does not move it.
-- Overhang of the 24x36 body at rest: her back and tail 8px on the left, her head and bill 10px on the right, and 2px of the body's height above her head left empty. The raised wing reaches 5px above the body, and the jump crouch and land squash push her tail out to 12px on the left.
-- Portrait: 64x64, her head set into the top of her body, facing right, cut off by the bottom edge, with one ink outer line on a transparent ground. The dialogue box's 68x68 frame supplies the backing.
+- Collision body 24x36 (2x3 tiles), anchored bottom-centre: the frame's bottom edge sits on the body's bottom edge, and his body-centre x, 24 (the frame's centre line, between columns 23 and 24), sits on the body's centre, so mirroring him does not move it.
+- Overhang of the 24x36 body at rest: his back and tail 8px on the left, his head and bill 10px on the right, and 2px of the body's height above his head left empty. The raised wing reaches 5px above the body, and the jump crouch and land squash push his tail out to 12px on the left.
+- Portrait: 64x64, his head set into the top of his body, facing right, cut off by the bottom edge, with one ink outer line on a transparent ground. The dialogue box's 68x68 frame supplies the backing.
 
 ## Logo
 
-The logo uses a full canonical cream duck standing on a simple platform above a flat dark-steel sign carrying the powder-blue DUCK wordmark, with PLATFORMER below. `art/tools/logo.py` draws three transparent PNGs with fixed canvases: `logo` (360x193) for the title screen, `logo-nav` (214x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the duck; the icon shows the duck and platform without lettering.
+The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Bird versus Ferret wordmark. `art/tools/logo.py` draws three transparent PNGs with fixed canvases: `logo` (360x193) for the title screen, `logo-nav` (214x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
 
 - The dominant lettering and platform colour is `zone-blue`. The flat dark-steel sign, quiet light edge and ink outline separate the wordmark on pale steel and dark navy. There is no extrusion, bright cyan highlight or drop shadow.
-- The duck retains the protagonist's cream body, tan wing, orange bill and ink dot eye, redrawn from the canonical sprite shapes with a one-pixel outline.
+- The bird retains the protagonist's cream body, tan wing, orange bill and ink dot eye, redrawn from the canonical sprite shapes with a one-pixel outline.
 - The title is supplied by `WORDMARK`; the 5x7 alphabet in `GLYPHS` provides its letters. All three image keys, paths and canvas sizes stay fixed so navigation and title-screen placements remain compatible.
 
 ## Stage cutscene placeholder
 
 <!-- CLEANUP (added 2026-10-31): Replace the neutral illustration when authored stage cutscenes are approved. -->
 
-`art/tools/cutscene.py` draws `stage-cutscene-placeholder`, a plain opaque 720x360 image registered under `images`. Its neutral palette and canonical duck add no plot, location or dialogue. Keep the bottom 80px quiet for the runtime's standard Continue button; the image contains no words or controls. Gameplay owns the transition and its text.
+`art/tools/cutscene.py` draws `stage-cutscene-placeholder`, a plain opaque 720x360 image registered under `images`. Its neutral palette and canonical bird add no plot, location or dialogue. Keep the bottom 80px quiet for the runtime's standard Continue button; the image contains no words or controls. Gameplay owns the transition and its text.
 
-Map travel reuses the existing `duck` sprite's looping `walk` tag, four 130ms frames on the 48x42 canvas, with bottom-centre anchor 24,42. Direction uses horizontal mirroring, and a stopped duck can return to `idle`. No separate map character artwork is required.
+Map travel reuses the existing `bird` sprite's looping `walk` tag, four 130ms frames on the 48x42 canvas, with bottom-centre anchor 24,42. Direction uses horizontal mirroring, and a stopped bird can return to `idle`. No separate map character artwork is required.
 
-## The ferret
+## Firt
 
-The villain is a champagne ferret standing up on its hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the duck's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.py` draws it; its docstring gives every frame's pose and timing.
+Firt is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.py` draws it; its docstring gives every frame's pose and timing.
 
 - Shape: modelled on a natural ferret rather than a chibi. A long, slinky body stood upright with a small forward arch (a Bezier spine from the low hip to the high neck, stamped as overlapping discs), a small wedge head held level, short dark legs, and a tapering tail touching the ground behind as a third contact point.
 - Fur: a champagne (skin1) coat with a skin2 shade crescent along the belly and a cream rim on the back; brown legs and tail with dark-brown far legs; a white face band, a skin2 mask round the eye and a pink nose.
 - Eyes: round, 5px across with the corners cut, ink with a 2x2 white glint and a 1px cream glint, under a soft brown lid line that dips at the outer corner. Scheming, the lid drops to half.
-- Kept apart from the duck: the coat is 1.24:1 against her cream and the shade 2.12:1, its outline is dark brown where hers is dark slate, its legs, tail and mask sit well below anything on her, and it stands tall where she is round.
+- Kept apart from the bird: the coat is 1.24:1 against her cream and the shade 2.12:1, its outline is dark brown where hers is dark slate, its legs, tail and mask sit well below anything on her, and it stands tall where she is round.
 - Hat: a tall, narrow plum stovepipe with a dark-brown rim light and a red band. Nothing touches it. Red (the band and bow tie) is the one accent; the hat and bow tie take an ink outline.
 - Frame 64x80, facing left (mirrored for right), feet on rows 76 to 78 and the outline on row 79.
 - Anchor: the frame's bottom edge sits on the collision box's bottom edge, and its body-centre x, 32 (between columns 31 and 32), sits on the box centre, so mirroring it does not move it.
-- Portrait: 64x64, its head and neck facing right towards the text, as the duck's does, cut off by the bottom edge, with one ink outer line on a transparent ground. Neutral, smug (the lid at half) and annoyed (a brow dipped towards the snout).
+- Portrait: 64x64, its head and neck facing right towards the text, as the bird's does, cut off by the bottom edge, with one ink outer line on a transparent ground. Neutral, smug (the lid at half) and annoyed (a brow dipped towards the snout).
 
 ## UI
 
@@ -203,14 +203,14 @@ All positions are in base pixels (x, y, w, h) of the 720x360 layout as drawn. Th
 ### Dialogue box
 
 - The dialogue panel is at the top, 40,8,640,96. One paragraph of at most three lines shows at a time; advancing replaces that paragraph rather than adding a chat history. Play is frozen and touch controls hide while the conversation is open.
-- The duck's portrait is on the left. Other speakers' portraits are on the right; consecutive paragraphs from the same speaker keep that side. Reposition the 68x68 portrait frame and 64x64 portrait without mirroring either artwork.
+- The bird's portrait is on the left. Other speakers' portraits are on the right; consecutive paragraphs from the same speaker keep that side. Reposition the 68x68 portrait frame and 64x64 portrait without mirroring either artwork.
 - Name tabs sit inside the panel. Their fill is the speaker's colour: amber, green, pink or tan. Ink text holds at least 6.6:1 on each, and each holds at least 5:1 on the panel's navy.
 - Continue is the primary `ui-button-primary`, 488,112,192,48, with a white label. Skip is the secondary `ui-button`, 288,112,192,48, with an ink label. Both remain visible below the panel, separated by 8px; labels begin 13px below the top and sink 2px when pressed. Primary actions omit the dark play mark.
 - Continue advances the current conversation. Skip skips its remaining paragraphs but opens any required terminal choice without selecting an answer. A required choice uses a modal card with ordinary form buttons; while it shows, Continue and Skip underneath cannot activate. No live conversation currently configures a choice.
 
 | Speaker | Portrait frame | Portrait origin | Name origin | Paragraph origin and width |
 | ------- | -------------- | --------------- | ----------- | -------------------------- |
-| Duck    | 48,22,68,68    | 50,24           | 124,13      | 128,42, width 504          |
+| Bird    | 48,22,68,68    | 50,24           | 124,13      | 128,42, width 504          |
 | Other   | 604,22,68,68   | 606,24          | 84,13       | 88,42, width 504           |
 
 Both paragraph regions use `font-body` at 2x with a 20px line pitch. Labels, portraits and text move as layout elements; their textures keep their authored orientation and scale.
@@ -221,7 +221,7 @@ Approved target for paired runtime integration. The rulebook owns failure behavi
 
 - Progress is a restrained 2px line at the top of the game view. Its filled length shows percentage through the stage, using the current destination's canonical primary from `zone-themes` over a `dslate` track. Keep it separate from UI buttons, with no glow or pulse.
 - On failure, show a small recoil, a pronounced falling tilt to support, a brief impact squash and a small rebound into a round grounded sit. Its belly has a short flat centre and rounded contact ends. Feet remain visible during recoil and fall, and are hidden during impact and seated rest. Keep the camera at the failure view; the sprite has no baked world movement. Show the retry card as soon as the seated pose is reached, holding that pose beneath it without an extra timed pause or automatic retry.
-- Dim the frozen environment two palette ramp steps. Keep the duck and the small hazard contact area readable at their world positions, without an added ring or flash. The compact card stays above the ground-level contact area rather than covering it.
+- Dim the frozen environment two palette ramp steps. Keep the bird and the small hazard contact area readable at their world positions, without an added ring or flash. The compact card stays above the ground-level contact area rather than covering it.
 - Reuse the content-fitted `ui-settings-card`, top-centred at y16, with no close X or title bar. Its four text rows stay in this order: zone name; `Stage <number>: <stage name>`; `Progress: X%`; `Time: 0:00`. Stage numbers are 1 or 2 within the selected zone, not global route numbers. Keep the standard fonts and sizes; never shrink text to fit.
 - Use the [shared modal content-fitting rule](controls.md#modal-content-fitting): 16px padding on all four sides, four 16px text line boxes with 4px gaps, then an 8px gap before the 48px action row. Each equal-width action fits the widest action label's visible ink plus 32px. Apply the shared 320px minimum and safe-view cap to the larger of the widest stat line and the complete action row, plus 32px; card height is 164px for four single-line rows.
 - Measured example: Blue cityscape / `Stage 2: City boundary`, `Progress: 50%`, `Time: 0:42`. The widest stat ink is 152px; Back to title is 82px wide and Try again is 60px at 2x. Equal 114px actions with their 8px gap make a 236px action row. Its natural padded width is 268px, so the 320px minimum determines the fitted 320x164 card, top-left 200,16 in the 720px view. The action row remains centred without stretching its buttons. Glyph ink is centred in its line boxes without changing font size. Longer actual strings grow the fitted width or wrap permitted paragraphs.
@@ -302,7 +302,7 @@ The map presents the six V1 zone destinations on a cool pastel overview. `art/to
 - Route: one linear path follows the table's order, left to right across the top row, then right to left across the bottom row. There are no fork markers on the V1 route. Runtime paths use 4px solid dslate for open paths, 2px slate dashes (6 on, 4 off) for built paths still locked, and 2x2 slate dots every 6px for unbuilt paths. State is carried by the pattern as well as colour.
 - Zone marker: `map-zone`, 35x35 centred on the node. `normal` is a cream disc with a dslate ring; `current` adds a second dslate ring; `visited` is navy with a cream tick badge. `locked` replaces the zone icon with a dslate padlock. `unbuilt` uses a broken slate ring and a question mark. Tags retain their existing order and frame indices.
 - Zone icons: `map-icon-<suffix>`, 14x14, centred on normal, current and visited markers. Both tags use a muted primary backing with an ink landmark and a dslate outer edge. The visited marker's navy disc and tick carry completion. Locked and unbuilt markers show no icon. `map-icon-street` and `map-icon-zone` remain available for other maps and unspecified icons.
-- Duck: `map-duck`, 26x22, tag `idle`, two frames at 400ms. He stands above the current node's ring, top-left cx-13,cy-39. The current marker's double ring also carries selection when the duck is not visible.
+- Bird: `map-bird`, 26x22, tag `idle`, two frames at 400ms. He stands above the current node's ring, top-left cx-13,cy-39. The current marker's double ring also carries selection when the bird is not visible.
 - Labels: names in `font-title` at 2x, ink, centred below the markers. Names fit within 212px of visible ink, leaving at least 16px between adjacent 228px-spaced centres. With advance width A, origin is cx-floor((A-4)/2)-2,cy+12, so visible capitals occupy cy+20 through cy+29. An lgrey knock-out behind the name keeps paths and regional art clear of the letters. Optional availability text uses `font-body` at 2x, dslate, origin cy+32, with strings supplied by gameplay.
 - Footer: Back to title uses secondary `ui-button` at 164,300,192,48, with an ink label; Continue uses `ui-button-primary` at 364,300,192,48, with a white label. Neither uses a play mark. Continue is the default keyboard action; a tap on an open zone marker selects that destination.
 - Legacy assets: `map-fork`, `map-hill`, `map-wave` and `map-compass` remain available. The six-destination layout does not require fork or pen-mark decorations.
@@ -326,7 +326,7 @@ The celebration and restart screens remain placeholders using the standard card 
 
 ### Failure poses
 
-The duck's 48x42 `death` tag is appended after `land`, leaving all earlier frames and tags unchanged. Relative frame 0 is the small recoil with visible feet, frame 1 a pronounced falling tilt with visible tucked soles, frame 2 a brief stronger impact squash and frame 3 a full, round seated rest. The last two poses hide the feet completely. The seated body is 34x21 with a nearly full-height head, a short flat belly centre and rounded contact ends resting at the frame bottom; it springs slightly up from the 38x16 impact pose rather than holding a flattened body. `death` plays once and holds its last frame. Its authored durations are 100, 120, 80 and 400ms; these are art playback defaults, not gameplay state durations. Runtime holds frame 1 until support is reached, then plays frames 2 and 3 once. The retry card opens when frame 3 is reached, with that seated pose held underneath it. Keep the body-centre and frame-bottom anchor fixed across the poses; world movement belongs to the runtime. Existing `jump` and `land` do not supply the seated terminal pose.
+The bird's 48x42 `death` tag is appended after `land`, leaving all earlier frames and tags unchanged. Relative frame 0 is the small recoil with visible feet, frame 1 a pronounced falling tilt with visible tucked soles, frame 2 a brief stronger impact squash and frame 3 a full, round seated rest. The last two poses hide the feet completely. The seated body is 34x21 with a nearly full-height head, a short flat belly centre and rounded contact ends resting at the frame bottom; it springs slightly up from the 38x16 impact pose rather than holding a flattened body. `death` plays once and holds its last frame. Its authored durations are 100, 120, 80 and 400ms; these are art playback defaults, not gameplay state durations. Runtime holds frame 1 until support is reached, then plays frames 2 and 3 once. The retry card opens when frame 3 is reached, with that seated pose held underneath it. Keep the body-centre and frame-bottom anchor fixed across the poses; world movement belongs to the runtime. Existing `jump` and `land` do not supply the seated terminal pose.
 
 ### Enemy frustration
 
@@ -352,7 +352,7 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 
 | Character          | idle   | move                                         | react                        | talk                       | quirk    |
 | ------------------ | ------ | -------------------------------------------- | ---------------------------- | -------------------------- | -------- |
-| duck               | `idle` | `walk`; in the air `jump`, `flutter`, `land` | none, falls back to `land`   | none, falls back to `idle` | none     |
+| bird               | `idle` | `walk`; in the air `jump`, `flutter`, `land` | none, falls back to `land`   | none, falls back to `idle` | none     |
 | ferret             | `idle` | none, falls back to `idle`                   | none, falls back to `scheme` | `talk`                     | `scheme` |
 | frog-courier       | `idle` | `ride`                                       | none, falls back to `idle`   | none, falls back to `idle` | none     |
 | pigeon             | `idle` | `fly`                                        | `flee`, then `fly`           | none, falls back to `idle` | none     |
@@ -389,7 +389,7 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 
 A hazard restarts the floor on contact. `art/tools/hazards.py` draws the hazard sprites and `art/tools/floor1.py` the hazard tiles; their docstrings give every frame and tile.
 
-- Every hazard sprite has an ink outline, so it holds 3:1 on every street ground, and is drawn at outdoor scale beside the duck.
+- Every hazard sprite has an ink outline, so it holds 3:1 on every street ground, and is drawn at outdoor scale beside the bird.
 - Steel (the hatch and its leaves, the bike's wheels) uses the slate ramp (slate, dslate, navy), not grey: the leaves are slate because dslate does not separate from the dark facades in greyscale.
 - The ferret's calling card: every trap the ferret sets carries his badge, a 13x13 cream plate with his hat-and-bow mark (a plum stovepipe with a red band over a red bow tie). `badge()` in `hazards.py` draws it for every trap. A floor's own hazards (traffic, open hatches) never carry it.
 
@@ -401,7 +401,7 @@ A hazard restarts the floor on contact. `art/tools/hazards.py` draws the hazard 
 
 - Cellar hatch: on the sidewalk row `hatch-left`, one `pit-opening` per opening tile, `hatch-right`; `pit-opening` down every row below the opening; `pit-leaf-left-top` over `pit-leaf-left` above `hatch-left`, and the right leaf above `hatch-right`. It reads as a hole from several tiles away: two steel leaves standing up over a dark gap in the sidewalk line.
 - frog-courier rolls back and forth along the sidewalk and is mirrored for left. Its wheels roll without slipping at 51 px/s; the hit box leaves out his eye bump, the bag's top and 2px of each tyre.
-- ferret-trap-snap waits on `set` and plays `snap` once when the duck touches its hit box.
+- ferret-trap-snap waits on `set` and plays `snap` once when the bird touches its hit box.
 
 ## Animal placement
 
@@ -411,7 +411,7 @@ Friendly animals appear only as muted background flavour, never in the foregroun
 
 ## Street cast
 
-The character catalogue drawn by `art/tools/cast.py` is retained for room use and reference, without current world placements. Its docstring gives every frame. These assets have no portraits or hit boxes; they are not foreground friendly animals or pickups. Their existing brighter palettes must be muted before any future background flavour placement. Each faces right (mirrored for left) at outdoor scale beside the duck, with its feet on the frame's bottom rows and its body centre on the frame's centre line, so mirroring it does not move it. Outlines are coloured: two ramp steps darker, stepped further down until they hold 3:1 on the sidewalk.
+The character catalogue drawn by `art/tools/cast.py` is retained for room use and reference, without current world placements. Its docstring gives every frame. These assets have no portraits or hit boxes; they are not foreground friendly animals or pickups. Their existing brighter palettes must be muted before any future background flavour placement. Each faces right (mirrored for left) at outdoor scale beside the bird, with its feet on the frame's bottom rows and its body centre on the frame's centre line, so mirroring it does not move it. Outlines are coloured: two ramp steps darker, stepped further down until they hold 3:1 on the sidewalk.
 
 | Key                | Character                                                        | Frame | Tags and timing                                                                               |
 | ------------------ | ---------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
@@ -488,7 +488,7 @@ Red strips never carry the bright safe lip. Red is a consistent danger cue acros
 The first Blue cityscape stage has fixed start and finish sections with a seeded street middle. Its opening preserves the opened parcel, depot movement lessons and first dog introduction; the middle assembles reusable street chunks in randomized order. It is two screens tall: the sidewalk runs along the bottom and the buildings support climbs into the upper screen. `art/tools/depot.py` draws the depot modules and `art/tools/floor1.py` the street pieces. Their docstrings specify each reusable asset; gameplay data defines their arrangement.
 
 - Depot: blue-grey ribbed wall modules, roller loading bays and cream parcel icons, with warm cardboard reserved for the opened parcel. No labels are baked into the art. The three modules are static backdrops with no collision, animation or interaction; gameplay places solid surfaces separately. All stay on the play plane, with parallax factors 1,1.
-- Outdoor scale: the street is drawn as if zoomed out 4x while the duck and the 12px tiles keep their size. A storey is 180px and a door is about 45px, so the duck (42px) stands almost as tall as a street door.
+- Outdoor scale: the street is drawn as if zoomed out 4x while the bird and the 12px tiles keep their size. A storey is 180px and a door is about 45px, so the bird (42px) stands almost as tall as a street door.
 - The street is 720px (60 tiles) tall: the sidewalk's top is y 600 (row 50), with sidewalk and road filling rows 50 to 59 below it so the camera can hold her feet two thirds down the screen. The ground storey runs from y 420 to the sidewalk, and storeys stack every 180px above: a two-storey roof is at y 240 (row 20) and a three-storey roof at y 60 (row 5), the tallest that fits. A water tower (its tank top 6 tiles above its roof) fits on a two-storey roof, not a three-storey one. Every street piece's bottom y below is in that frame.
 - Street tiles (`tiles-street`): a pale concrete sidewalk (tops alternating with a 2px joint every 24px, ends, a slate face), a pale stone kerb where it meets a cross street, the road one tile lower, an ochre-and-cream one-way shop awning, a dark-brown one-way canopy with a white lip, a 2-tile planter with a hedge top, the cellar hatch and its pit, and the door as a 3x4 piece: a pair of lit amber glass doors, 36x48, the brightest thing at the door, for a room's door where the stage has one.
 - Climbing tiles, appended so every earlier index holds: one-way fire-escape landings (black iron), window sills, a rooftop cornice and a water tower's flat top, each with left, middle and right tiles at any width. Every ledge's top carries the same 2px white lip under a 1px dark edge, so it reads against any facade in greyscale.
@@ -545,9 +545,9 @@ Below the sidewalk's top, the sidewalk and road tiles fill rows 50 to 59.
 | ----------------- | ------- | -------- | ------ | --------------------------------------------------------------- |
 | depot-loading-bay | 120x120 | 600      | none   | Ten columns by ten rows, top at row 40 on a row-50 floor        |
 | depot-wall        | 48x180  | 600      | x      | Four columns by fifteen rows, top at row 35 on a row-50 floor   |
-| parcel-open       | 72x36   | 600      | none   | Six columns by three rows, top at row 47; drawn behind the duck |
+| parcel-open       | 72x36   | 600      | none   | Six columns by three rows, top at row 47; drawn behind the bird |
 
-The opened parcel is scenery, without the bright safe ledge lip or a red danger strip. It marks the starting location without blocking movement. The depot wall can repeat to any run width; loading bays and parcels are independently placed pieces. No panorama or scene-specific duck drawing is exported.
+The opened parcel is scenery, without the bright safe ledge lip or a red danger strip. It marks the starting location without blocking movement. The depot wall can repeat to any run width; loading bays and parcels are independently placed pieces. No panorama or scene-specific bird drawing is exported.
 
 The separate atmosphere layers `street-city-far` and `street-city-mid` are each 720x600, bottom-left anchored at y 600 and repeating in x. Place them with the flat `street-sky`, back to front in that order. The legacy `street-skyline` is a composite compatibility asset: do not place it alongside the two separate layers. Physical facades, doors and attached ledges remain on the play plane.
 
@@ -605,7 +605,7 @@ Short wall pieces belong to each section, rather than repeating one indoor wall 
 | apartment-stairwell          | 48x72 | none   |
 | apartment-stairwell-down     | 48x72 | none   |
 
-The marked stairwells and optional room door share a 48x72 canvas at the duck's scale. The stairwells' ascending or descending silhouettes and white directional arrows on dark signs identify the reversible main route. `apartment-stairwell` is the up marker; `apartment-stairwell-down` is the down marker. The optional room door uses warm framing and a handle without an up arrow. These images contain no input prompt or text; the runtime owns their interaction. The approved stair trigger activates when walked into. It is distinct from an optional room entrance.
+The marked stairwells and optional room door share a 48x72 canvas at the bird's scale. The stairwells' ascending or descending silhouettes and white directional arrows on dark signs identify the reversible main route. `apartment-stairwell` is the up marker; `apartment-stairwell-down` is the down marker. The optional room door uses warm framing and a handle without an up arrow. These images contain no input prompt or text; the runtime owns their interaction. The approved stair trigger activates when walked into. It is distinct from an optional room entrance.
 
 Props are decorative, with no collision, continuous white safe lip or hazard band. Place actual platforms independently using the common structures. Pool water does not imply lethal contact; only an explicitly marked red hazard does. Room scenery contains no foreground friendly animals, people or new story details. The existing ferret story sprite and portrait remain available; his obstacle skin does not decide the friendship's outcome.
 
@@ -652,7 +652,7 @@ Backdrops use bottom-left anchors with default bottom y 600. Use sky factors 0,0
 
 ## Goose antagonist
 
-`art/tools/goose.py` draws the countryside's `goose-antagonist`. A long neck, small head and pale body distinguish it from the duck; a warm beak and feet keep its silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline or dialogue portrait.
+`art/tools/goose.py` draws the countryside's `goose-antagonist`. A long neck, small head and pale body distinguish it from the bird; a warm beak and feet keep its silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline or dialogue portrait.
 
 The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is x 2, y 2, width 44, height 46, containing every pose and its mirrored version. The skin uses the shared enemy state graph; gameplay owns warning, charge and recovery durations. Contact remains lethal in every state.
 
@@ -792,7 +792,7 @@ This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 The lobby set is no longer in Zone 1. It is kept, unchanged, for a later indoor zone.
 
 - The lobby is a boutique at indoor scale: wood-panelled walls, a sofa, a reception desk, a tall bookcase, plants, pendant lamps and a tall window. A door is 180px (15 tiles) and the zone is 720px (60 tiles) tall, so the camera scrolls up through it; the floor line is y 672 (row 56).
-- Contrast: the walls are dark wood, and every walkable top (the floor and each one-way ledge) carries the same 2px cream lip under a 1px plum edge, so the standable edges are the brightest lines in the room in greyscale, and the cream duck stays the focal point.
+- Contrast: the walls are dark wood, and every walkable top (the floor and each one-way ledge) carries the same 2px cream lip under a 1px plum edge, so the standable edges are the brightest lines in the room in greyscale, and the cream bird stays the focal point.
 - Lobby tiles (`tiles-lobby`): a wood floor (tops with a 2px board end every 24px, ends, face), one-way balcony, shelf, cushion and desk ledges, a solid wood post 2 tiles wide, and the stairwell as a 7x15 doorway piece (84x180) with a white up-arrow on a green sign. The inside of the front door is a backdrop.
 - Lobby pieces line up with the reaches: the sofa's seat and back are 3 and 6 tiles up, the desk top 8, and the bookcase boards 8, 16, 24 and 32.
 

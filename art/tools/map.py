@@ -27,7 +27,7 @@ with at most 212px of visible ink, centred under their markers. Visible capitals
 lgrey knock-out behind.
 Back to title is ui-button at164,300,192,48; Continue is ui-button-primary at364,300,192,48.
 
-map-duck remains 26x22 with idle2x400ms, centred on the current node and standing on its top ring.
+map-bird remains 26x22 with idle2x400ms, centred on the current node and standing on its top ring.
 Legacy map-fork and pen marks remain available but the six-zone V1 route needs no fork markers.
 
 The stage picker reuses the content-fitted ui-settings-card, with a zone heading and standard 24x24
@@ -288,7 +288,7 @@ def fork(state):
     return g.px
 
 
-def duck(frame):
+def bird(frame):
     """26x22, facing right; frame 1 lifts everything but the feet 1px."""
     up = frame
     g = Grid(26, 22)
@@ -312,7 +312,7 @@ ONCE = {}
 def sprites():
     one = lambda frame, tag="rest": [(tag, [frame], 100)]  # noqa: E731
     yield "map-compass", one(compass())
-    yield "map-duck", [("idle", [duck(0), duck(1)], 400)]
+    yield "map-bird", [("idle", [bird(0), bird(1)], 400)]
     yield "map-fork", [(s, [fork(s)], 100) for s in ("normal", "current", "visited", "unbuilt")]
     yield "map-hill", one(hill())
     for key in sorted(ICONS):

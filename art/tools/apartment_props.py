@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Reusable decorative apartment furnishings at the canonical duck scale.
+"""Reusable decorative apartment furnishings at the canonical bird scale.
 
 Usage: apartment_props.py build | preview OUT.png, from the repository root. Pillow, plain PNG exports.
 Ten bottom-left backdrops default to world y720. Only pool-water repeats x; its horizontal edges match.
 All props are decorative with no collision, white walkable lip, hazard paint, characters or text.
 Physical platforms and doors remain separately placed objects. Pool water has no lethal behaviour.
 Zone-red rose ties the rooms together with quiet wood, sage and blue accents from the existing palette.
-The preview is a furniture contact sheet beside the 48x42 duck, not a proposed level layout.
+The preview is a furniture contact sheet beside the 48x42 bird, not a proposed level layout.
 """
 
 import json
@@ -131,14 +131,14 @@ def build():
 
 def preview(out):
     im = Image.new("RGB", (720, 480), pixel.rgb("zone-red"))
-    duck = Image.open("public/art/sprites/duck.png").convert("RGBA").crop((0, 0, 48, 42))
+    bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((0, 0, 48, 42))
     for i, key in enumerate(SIZES):
         x, y = i % 5 * 144, i // 5 * 240
         rect(im, "zone-red-shade", (x + 4, y + 32, x + 140, y + 204))
         rect(im, "dbrown", (x + 4, y + 204, x + 140, y + 207))
         prop = draw(key)
         im.paste(prop, (x + 8, y + 204 - prop.height), prop)
-        im.paste(duck, (x + 94, y + 162), duck)
+        im.paste(bird, (x + 94, y + 162), bird)
         ImageDraw.Draw(im).text((x + 5, y + 212), key.replace("-", "\n"), fill=pixel.rgb("ink"))
     im.save(out)
 

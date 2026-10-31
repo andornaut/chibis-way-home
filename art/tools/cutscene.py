@@ -7,9 +7,9 @@ Run from the repository root. Build writes public/art/images/stage-cutscene-plac
 CLEANUP (added 2026-10-31): retain this neutral illustration until authored stage cutscenes are approved.
 
 Registry key stage-cutscene-placeholder: image, width 720, height 360. Draw at viewport origin (0,0).
-Quiet lgrey/grey abstract blocks frame the canonical cream duck standing on a real safe floor edge. No plot,
+Quiet lgrey/grey abstract blocks frame the canonical cream bird standing on a real safe floor edge. No plot,
 place, event or additional character is depicted. The bottom 80px remains plain for a runtime Continue action.
-The duck's existing idle frame is copied without recolouring, resizing or redrawing. No tags or collision.
+The bird's existing idle frame is copied without recolouring, resizing or redrawing. No tags or collision.
 Preview overlays the existing primary button and font-body label; neither is included in the served image.
 """
 
@@ -51,8 +51,8 @@ def illustration():
     draw.rectangle((0, 248, 719, 248), fill=pixel.rgb("navy") + (255,))
     draw.rectangle((0, 249, 719, 250), fill=pixel.rgb("white") + (255,))
     draw.rectangle((0, 251, 719, 254), fill=pixel.rgb("grey") + (255,))
-    duck = sprite("duck", "idle")
-    im.alpha_composite(duck, (336, 248 - duck.height))
+    bird = sprite("bird", "idle")
+    im.alpha_composite(bird, (336, 248 - bird.height))
     return im
 
 

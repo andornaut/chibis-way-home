@@ -1,11 +1,11 @@
-"""The site's favicon and app icons: the duck on a sky-blue sunburst disc.
+"""The site's favicon and app icons: the bird on a sky-blue sunburst disc.
 
 Usage, from the repository root:
   python3 -I art/tools/icons.py build            write every icon below
   python3 -I art/tools/icons.py preview OUT.png  every icon at 1x on light and dark ground, the 16 and 32 at 8x
 
 Plain PNGs (and one ICO), not Aseprite sprites and not manifest entries. Every pixel is fully opaque or
-fully transparent. She is drawn from the sprite's shapes in art/tools/duck.py at each icon's own size, so each
+fully transparent. She is drawn from the sprite's shapes in art/tools/bird.py at each icon's own size, so each
 drawing is its own rasterization rather than a downscale: the round cream head set into the body, the nape dip,
 the softened back, the tail tip, a flat tan wing, a square ink dot eye and the short orange bill, with tan cel
 crescents, a white rim from 32px up and a dark-slate outline.
@@ -18,7 +18,7 @@ crescents, a white rim from 32px up and a dark-slate outline.
 | public/icons/apple-touch-icon.png  | 180x180 | 90, scaled 2x          | full-bleed sunburst square       |
 | public/icons/icon-192.png          | 192x192 | 64, scaled 3x          | disc, transparent outside        |
 | public/icons/icon-512.png          | 512x512 | 64, scaled 8x          | disc, transparent outside        |
-| public/icons/icon-maskable-512.png | 512x512 | 64 at 78%, scaled 8x   | full-bleed sunburst, duck in 80% |
+| public/icons/icon-maskable-512.png | 512x512 | 64 at 78%, scaled 8x   | full-bleed sunburst, bird in 80% |
 
 From 32px up she stands whole in the disc, her head 0.18 of the side. At 16px she is a close-up, her head and the
 top of her back cut off by the disc inside a 1px edge, so the 3x3 bill and the 2x2 eye still read.
@@ -33,7 +33,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import duck  # noqa: E402
+import bird  # noqa: E402
 import pixel  # noqa: E402
 from pixel import K, Grid  # noqa: E402
 
@@ -57,34 +57,34 @@ WHOLE_R = 0.18
 CLOSE = (0.54, 0.44, 0.30)  # the 16px close-up: head centre x, y and radius, as fractions of the side
 
 
-def duck_px(S, hr, place, feet=True):
-    """Her side view with her head radius hr px, drawn from duck.py's shapes: the round head set into the body,
+def bird_px(S, hr, place, feet=True):
+    """Her side view with her head radius hr px, drawn from bird.py's shapes: the round head set into the body,
     the 3px nape dip, the softened back, the tail tip, a folded wing, the short bill, the dot eye and (whole)
     the stub feet. place(bounds) returns the head centre for the figure's bounds (left, top, right, bottom,
     relative to the head centre)."""
-    s = hr / duck.HEAD_R
-    bw, bh = duck.BRX * s, duck.BRY * s
-    dx, dy = -duck.HEAD_X * bw, duck.HEAD_UP * bh  # body centre from the head centre
+    s = hr / bird.HEAD_R
+    bw, bh = bird.BRX * s, bird.BRY * s
+    dx, dy = -bird.HEAD_X * bw, bird.HEAD_UP * bh  # body centre from the head centre
     bounds = (dx - bw - 4 * s, -hr, hr + 5 * s, dy + bh + (2 * s if feet else 0))
     hx, hy = place(bounds)
     bx, by = hx + dx, hy + dy
     g = Grid(S, S)
     ks = max(1, round(3 * s))
-    light = duck.LIGHT if S >= 32 else None
+    light = bird.LIGHT if S >= 32 else None
     if feet:
         fw, fh = max(2, round(4 * s)), max(1, round(2 * s))
         for fx in (-5, 2):
             g.rect(int(bx + fx * s), int(by + bh), fw, fh, "orange")
-    duck.cel(g, duck.in_ell(bx - bw + s, by - s, 4.4 * s, 2.2 * s, -0.45), duck.BASE, duck.SHADE, None,
+    bird.cel(g, bird.in_ell(bx - bw + s, by - s, 4.4 * s, 2.2 * s, -0.45), bird.BASE, bird.SHADE, None,
              max(1, round(s)), 1)
-    duck.cel(g, duck.in_body(bx, by, bw, bh, hx - hr * 0.7, duck.NAPE_DROP * s, duck.BACK_FLAT * s), duck.BASE,
-             duck.SHADE, light, ks, 1)
-    duck.cel(g, duck.in_ell(hx, hy, hr, hr), duck.BASE, duck.SHADE, light, ks, 1)
-    duck.flat(g, duck.in_ell(bx - 2 * s, by + 2 * s, bw * 0.5, bh * 0.3, -0.3), duck.WING)
+    bird.cel(g, bird.in_body(bx, by, bw, bh, hx - hr * 0.7, bird.NAPE_DROP * s, bird.BACK_FLAT * s), bird.BASE,
+             bird.SHADE, light, ks, 1)
+    bird.cel(g, bird.in_ell(hx, hy, hr, hr), bird.BASE, bird.SHADE, light, ks, 1)
+    bird.flat(g, bird.in_ell(bx - 2 * s, by + 2 * s, bw * 0.5, bh * 0.3, -0.3), bird.WING)
     g.rect(int(hx + hr - 2 * s), int(hy), max(3, round(7 * s)), max(2, round(5 * s)), "orange")  # bill
     e = max(2, round(4 * s))
     g.rect(int(hx), int(hy - hr * 0.55), e, e, "ink")  # dot eye
-    return g.outlined(lambda c: K[duck.OUTLINE])
+    return g.outlined(lambda c: K[bird.OUTLINE])
 
 
 def icon(S, ground):
@@ -94,11 +94,11 @@ def icon(S, ground):
     c, R = S / 2, S / 2 * f
     if S <= 16:
         cx, cy, r = CLOSE
-        fig = duck_px(S, r * S, lambda b: (cx * S, cy * S), feet=False)
+        fig = bird_px(S, r * S, lambda b: (cx * S, cy * S), feet=False)
     else:
         def centred(b):  # the figure's bounds centred in the disc
             return c - (b[0] + b[2]) / 2, c - (b[1] + b[3]) / 2
-        fig = duck_px(S, WHOLE_R * f * S, centred)
+        fig = bird_px(S, WHOLE_R * f * S, centred)
     def ground_at(x, y):
         if S <= 16:
             return K[FLAT]

@@ -122,7 +122,7 @@ def build():
 
 def preview(out, scale=3):
     """Both fonts at 2x on the dialogue box navy, then scaled up for viewing."""
-    samples = ["DUCK  SKIP  SETTINGS  RESUME", "The quick brown duck flutters down.", "Touch controls: Shown, Hidden",
+    samples = ["BIRD  SKIP  SETTINGS  RESUME", "The quick brown bird flutters down.", "Touch controls: Shown, Hidden",
                "0123456789 !?.,:;'\"+-/%&()"]
     sheet = Image.new("RGB", (330, (12 * len(samples) + 8) * len(FONTS)), pixel.rgb("navy"))
     y = 4

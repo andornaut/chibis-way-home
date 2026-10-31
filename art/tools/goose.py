@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The countryside goose antagonist: a long-necked cream-and-grey bird, distinct from the round duck.
+"""The countryside goose antagonist: a long-necked cream-and-grey bird, distinct from the round bird.
 
 Usage, from the repository root:
   python3 -I art/tools/goose.py build
@@ -10,7 +10,7 @@ with their outline on47. All visible pixels remain inside the fixed hitbox (2,2,
 No red outline, portrait, clothing or story details are baked into this asset.
 
 A narrow upright neck, small round head, cream feather mass with pale grey shade, grey wing and warm orange
-bill/feet distinguish the goose from the duck. Warn raises a broad wing and the neck. Rush lowers the neck
+bill/feet distinguish the goose from the bird. Warn raises a broad wing and the neck. Rush lowers the neck
 forward into a short committed charge; rest is still lethal, never a safe state. No teeth or scary snarl.
 
 Tags in frame order: idle 2x400ms; walk 4x120ms; warn 2x160ms; rush 4x80ms; rest 2x400ms.
@@ -23,7 +23,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import duck  # noqa: E402
+import bird  # noqa: E402
 import pixel  # noqa: E402
 from pixel import Grid, K  # noqa: E402
 
@@ -40,7 +40,7 @@ def neck_shape(points):
         steps = max(abs(x1 - x0), abs(y1 - y0))
         for i in range(steps + 1):
             t = i / max(1, steps)
-            discs.append(duck.in_ell(x0 + t * (x1 - x0), y0 + t * (y1 - y0), 3.2, 3.2))
+            discs.append(bird.in_ell(x0 + t * (x1 - x0), y0 + t * (y1 - y0), 3.2, 3.2))
     return lambda x, y: any(f(x, y) for f in discs)
 
 
@@ -61,9 +61,9 @@ def draw(state="idle", phase=0):
     # The warning wing is a broad feather shape, not a flash or contact marker.
     if warning:
         angle = -0.65 if phase == 0 else -0.78
-        duck.cel(g, duck.in_ell(14, 20 - phase, 4, 12, angle), "lgrey", "grey", "white", 2, 1)
-    duck.cel(g, duck.in_ell(7, by - 2, 3.8, 2.5, -0.4), "cream", "lgrey", None, 1, 1)
-    duck.cel(g, duck.in_ell(21, by, 14.5, 9.5), "cream", "lgrey", "white", 3, 1)
+        bird.cel(g, bird.in_ell(14, 20 - phase, 4, 12, angle), "lgrey", "grey", "white", 2, 1)
+    bird.cel(g, bird.in_ell(7, by - 2, 3.8, 2.5, -0.4), "cream", "lgrey", None, 1, 1)
+    bird.cel(g, bird.in_ell(21, by, 14.5, 9.5), "cream", "lgrey", "white", 3, 1)
     if rushing:
         hx, hy = 37, 25 - lift
         points = [(28, by - 1), (31, 28 - lift), (34, 25 - lift), (hx, hy)]
@@ -77,16 +77,16 @@ def draw(state="idle", phase=0):
         hx += (-1, 1, -1, 1)[phase]
         hy += (1, 0, 1, 0)[phase]
         points[-1] = (hx, hy + 1)
-    duck.cel(g, neck_shape(points), "cream", "lgrey", "white", 2, 1)
-    duck.cel(g, duck.in_ell(hx, hy, 5.5, 5), "cream", "lgrey", "white", 2, 1)
+    bird.cel(g, neck_shape(points), "cream", "lgrey", "white", 2, 1)
+    bird.cel(g, bird.in_ell(hx, hy, 5.5, 5), "cream", "lgrey", "white", 2, 1)
     # A short bill and high dot eye retain a soft expression while keeping the neck unmistakable.
     g.rect(int(hx + 4), int(hy), 4, 3, "orange")
     g.rect(int(hx + 1), int(hy - 2), 3, 1 if resting else 3, "ink")
     if not warning:
-        duck.cel(g, duck.in_ell(20, by + 1, 8, 4.5, -0.2), "grey", "dslate", None, 2, 1)
+        bird.cel(g, bird.in_ell(20, by + 1, 8, 4.5, -0.2), "grey", "dslate", None, 2, 1)
     if state == "frustration":
         angle = -0.45 if phase % 2 else 0.4
-        duck.cel(g, duck.in_ell(19, 30 if phase % 2 else 35, 11, 4, angle),
+        bird.cel(g, bird.in_ell(19, 30 if phase % 2 else 35, 11, 4, angle),
                  "lgrey", "grey", "white", 2, 1)
     return g.outlined(lambda c: K["navy"] if c in (K["grey"], K["dslate"]) else K["dslate"])
 

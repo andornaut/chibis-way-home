@@ -9,11 +9,11 @@ Pillow is required; these static backdrops have no Aseprite sources, animation t
 - depot-loading-bay: 120x120, no repeat, bottom-left y 600. Raised roller shutter over a dark opening, with
   a cream parcel icon on a navy plaque. The opening is scenery, not a room door or a platform.
 - parcel-open: 72x36, no repeat, bottom-left y 600. Warm cardboard with open side flaps, a dark interior and
-  a brown front, behind the cream duck. Nonlethal scenery, with no light walkable lip.
+  a brown front, behind the cream bird. Nonlethal scenery, with no light walkable lip.
 
 All three share the gameplay plane's scroll factor (1, 1). Positions and terrain belong to game data.
 The illustrative preview uses a 720px depot wall, one bay at x 360, the parcel at x 24 and ground y 600.
-It shows the duck at centre x 60, then clear of the parcel at centre x 132. It makes no physics claim.
+It shows the bird at centre x 60, then clear of the parcel at centre x 132. It makes no physics claim.
 """
 
 import json
@@ -112,7 +112,7 @@ def sprite(key):
     return im.crop((x, y, x + w, y + h))
 
 
-def context(duck_centre=60):
+def context(bird_centre=60):
     import floor1
 
     im = Image.new("RGBA", (720, 720), pixel.rgb("lgrey") + (255,))
@@ -130,16 +130,16 @@ def context(duck_centre=60):
             key = ("sidewalk-top-joint" if col % 2 else "sidewalk-top") if row == 50 else "sidewalk-face"
             im.alpha_composite(tiles[key], (col * 12, row * 12))
     im.alpha_composite(parcel_im, (24, FLOOR_Y - parcel_im.height))
-    duck = sprite("duck")
-    im.alpha_composite(duck, (duck_centre - duck.width // 2, FLOOR_Y - duck.height))
+    bird = sprite("bird")
+    im.alpha_composite(bird, (bird_centre - bird.width // 2, FLOOR_Y - bird.height))
     return im.convert("RGB")
 
 
 def preview(out):
     sheet = Image.new("RGB", (1456, 752), pixel.rgb("ink"))
     draw = ImageDraw.Draw(sheet)
-    for i, (centre, label) in enumerate(((60, "Start: parcel x24, duck centre x60"),
-                                        (132, "Duck clear of the opened parcel"))):
+    for i, (centre, label) in enumerate(((60, "Start: parcel x24, bird centre x60"),
+                                        (132, "Bird clear of the opened parcel"))):
         x = 8 + i * 728
         draw.text((x, 6), label, fill=pixel.rgb("cream"))
         sheet.paste(context(centre), (x, 28))

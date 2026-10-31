@@ -1,21 +1,21 @@
-"""The duck: the protagonist's sprite and her dialogue portrait.
+"""Chibi the bird: the protagonist's sprite and his dialogue portrait.
 
 Usage, from the repository root:
-  python3 -I art/tools/duck.py build            write art/duck/<key>.aseprite and public/art/sprites/<key>.png + .json
-  python3 -I art/tools/duck.py preview OUT.png  contact sheet of every frame on slate, tan and cream
+  python3 -I art/tools/bird.py build            write art/bird/<key>.aseprite and public/art/sprites/<key>.png + .json
+  python3 -I art/tools/bird.py preview OUT.png  contact sheet of every frame on slate, tan and cream
 
-Design: a wide, round cream blob of a duck with a small round head set into the top of her body at the front,
-a square ink dot eye, a short plain orange bill, a flat tan wing patch and tiny orange stub feet. Her back dips
-at the nape, so her round head sits up above the back line, and ends in a short tail tip at the rear. Cel
+Design: a wide, round cream blob of a bird with a small round head set into the top of his body at the front,
+a square ink dot eye, a short plain orange bill, a flat tan wing patch and tiny orange stub feet. His back dips
+at the nape, so his round head sits up above the back line, and ends in a short tail tip at the rear. Cel
 shading: a tan crescent on the lower right and a white rim on the upper left. Dark-slate outline. Facing
-right (the game mirrors her). No bow.
+right (the game mirrors him). No bow.
 
-duck, 48x42. Collision body 24x36 (2x3 tiles of 12px), anchored bottom-centre: the frame's bottom edge sits on
-the body's bottom edge, and her body-centre x, 24 (the frame's centre line, between columns 23 and 24), sits on
-the body's centre, so mirroring her does not move it. Feet on rows 39 and 40, the outline on row 41. The 24x36
-body covers columns 12 to 35 and rows 6 to 41. At rest her back and tail overhang it 8px on the left and her
-head and bill 10px on the right, and she stops 2px below its top. The raised wing overhangs up to 5px above
-(flutter 0); the jump crouch and land squash push her tail out to 11 and 12px on the left.
+bird, 48x42. Collision body 24x36 (2x3 tiles of 12px), anchored bottom-centre: the frame's bottom edge sits on
+the body's bottom edge, and his body-centre x, 24 (the frame's centre line, between columns 23 and 24), sits on
+the body's centre, so mirroring his does not move it. Feet on rows 39 and 40, the outline on row 41. The 24x36
+body covers columns 12 to 35 and rows 6 to 41. At rest his back and tail overhang it 8px on the left and his
+head and bill 10px on the right, and he stops 2px below its top. The raised wing overhangs up to 5px above
+(flutter 0); the jump crouch and land squash push his tail out to 11 and 12px on the left.
 
 | Tag     | Frame | ms  | Pose                                                         | Lift | Body w x h | Shadow w |
 | ------- | ----- | --- | ------------------------------------------------------------ | ---- | ---------- | -------- |
@@ -40,7 +40,7 @@ head and bill 10px on the right, and she stops 2px below its top. The raised win
 
 Lift is how far the body's bottom edge sits above its rest row, in pixels. Body w x h is the body's
 superellipse; normal locomotion keeps its area within 2% of rest. Shadow w is for a ground shadow the game
-may draw under her: the land contact frame's is the largest. flutter and jump 1 are airborne, so their shadow
+may draw under him: the land contact frame's is the largest. flutter and jump 1 are airborne, so their shadow
 is the game's to place. jump, land and death play once and hold their last frame (the manifest's "once"); every
 other tag loops. After land, play idle. Death is appended after the existing tags; frame indices stay fixed.
 Death has no baked world movement: the runtime uses frame 0 for recoil, holds frame 1 during the physical fall,
@@ -53,7 +53,7 @@ The body-centre and frame-bottom anchor do not move.
 States: idle idle; move walk, and in the air jump, flutter and land; react none, falls back to land (its squash
 reads as a flinch); death death; talk none, falls back to idle (the portrait carries the speech); quirk none.
 
-portrait-duck, 64x64: her head and the top of her body, facing right towards the text, cut off by the frame's
+portrait-bird, 64x64: his head and the top of his body, facing right towards the text, cut off by the frame's
 bottom edge, on a transparent ground (the dialogue box's 68x68 frame supplies the backing), with one ink outer
 line. Tags: neutral (dot eye), happy (eye closed in an upward arc), worried (dot eye under a brow slanting down
 to the back, the bill a little lower). One frame each.
@@ -67,14 +67,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pixel  # noqa: E402
 from pixel import K, Grid  # noqa: E402
 
-SRC = "art/duck"
+SRC = "art/bird"
 W, H = 48, 42
 BOX_W, BOX_H = 24, 36  # collision body
 C = W / 2  # body centre x: the frame's centre line
 BRX, BRY, POWER = 16.4, 13.0, 2.15  # body superellipse at rest
 HEAD_R = 9.2  # head radius
-NAPE_DROP = 3  # how far the body's top dips at the nape, below the back of her head, in px
-BACK_FLAT = 2  # how far the middle of her back is pressed down, to soften its hump, in px
+NAPE_DROP = 3  # how far the body's top dips at the nape, below the back of his head, in px
+BACK_FLAT = 2  # how far the middle of his back is pressed down, to soften its hump, in px
 HEAD_X, HEAD_UP = 0.43, 0.62  # head centre: right of the body centre and above it, in body radii
 BODY_BOTTOM = H - 3  # the body's bottom edge at rest; the feet fill the two rows under it
 BASE, SHADE, LIGHT = "cream", "tan", "white"
@@ -104,9 +104,9 @@ def in_ell(cx, cy, rx, ry, ang=0.0):
 
 
 def in_body(cx, cy, rx, ry, nape_x, drop, flat):
-    """Her body: the superellipse with its top pressed down drop px at the nape (nape_x, where her back meets
-    the back of her head), easing to nothing over 0.55 of the body's radius either side, so the head sits up
-    above the back line; and pressed down flat px over the middle of her back, between the nape and the tail,
+    """His body: the superellipse with its top pressed down drop px at the nape (nape_x, where his back meets
+    the back of his head), easing to nothing over 0.55 of the body's radius either side, so the head sits up
+    above the back line; and pressed down flat px over the middle of his back, between the nape and the tail,
     so the back line is gentle rather than humped."""
     def ease(d, width):
         w = max(0.0, 1 - abs(d) / width)
@@ -173,7 +173,7 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
     elif feet != "hidden":
         foot(1)
     kind, val = wing
-    if kind == "raise":  # up and back from the top of her back, its root behind the head
+    if kind == "raise":  # up and back from the top of his back, its root behind the head
         a = math.radians(val)
         # foreshortened as it comes down: 19px pointing up, 14px level
         ln = 14 + 5 * min(1.0, max(0.0, (val - 186) / 50))
@@ -212,7 +212,7 @@ def falling_pose():
              for x in range(W)] for y in range(H)]
 
 
-def duck_tags():
+def bird_tags():
     idle = [draw(), draw(lift=1, feet=((-5, -1), (2, -1)))]  # feet stay planted while the body rises
     walk = [
         draw(feet=((-7, 0), (4, 2))),
@@ -248,10 +248,10 @@ def duck_tags():
 
 
 def portrait(expr):
-    """64x64: her head and the top of her body facing right, cut off by the bottom edge."""
+    """64x64: his head and the top of his body facing right, cut off by the bottom edge."""
     g = Grid(64, 64)
     hcx, hcy, hr = 30.0, 28.0, 19.0
-    cel(g, in_blob(24, 64, 34, 22, 2.6), BASE, SHADE, LIGHT, 4, 1)  # the top of her body, the head set into it
+    cel(g, in_blob(24, 64, 34, 22, 2.6), BASE, SHADE, LIGHT, 4, 1)  # the top of his body, the head set into it
     flat(g, in_ell(14, 56, 13, 5.5, -0.25), WING)
     cel(g, in_ell(hcx, hcy, hr, hr), BASE, SHADE, LIGHT, 4, 1)
     by = int(hcy + 1) + (2 if expr == "worried" else 0)
@@ -273,12 +273,12 @@ def portrait_tags():
 
 
 def sprites():
-    yield "duck", duck_tags()
-    yield "portrait-duck", portrait_tags()
+    yield "bird", bird_tags()
+    yield "portrait-bird", portrait_tags()
 
 
 # Tags that play once and hold their last frame; every other tag loops.
-ONCE = {"duck": ("jump", "land", "death")}
+ONCE = {"bird": ("jump", "land", "death")}
 
 
 if __name__ == "__main__":

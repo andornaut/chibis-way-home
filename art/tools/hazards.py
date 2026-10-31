@@ -6,7 +6,7 @@ Usage, from the repository root:
   python3 -I art/tools/hazards.py preview OUT.png  contact sheet of every frame on slate, tan and cream
 
 Every hazard takes an ink outline, so it holds 3:1 on every street ground, and is drawn at outdoor scale beside the
-duck. A hazard restarts the floor on contact. Hit boxes are (x, y, width, height) in frame pixels for the facing
+bird. A hazard restarts the floor on contact. Hit boxes are (x, y, width, height) in frame pixels for the facing
 drawn, in HITBOX, and reach the manifest as "hitbox"; each box here is centred in its frame, so mirroring the sprite
 does not move it.
 

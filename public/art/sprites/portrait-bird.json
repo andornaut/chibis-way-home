@@ -1,5 +1,5 @@
 { "frames": {
-   "portrait-duck 0.aseprite": {
+   "portrait-bird 0.aseprite": {
     "frame": { "x": 0, "y": 0, "w": 64, "h": 64 },
     "rotated": false,
     "trimmed": false,
@@ -7,7 +7,7 @@
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 1000
    },
-   "portrait-duck 1.aseprite": {
+   "portrait-bird 1.aseprite": {
     "frame": { "x": 64, "y": 0, "w": 64, "h": 64 },
     "rotated": false,
     "trimmed": false,
@@ -15,7 +15,7 @@
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 1000
    },
-   "portrait-duck 2.aseprite": {
+   "portrait-bird 2.aseprite": {
     "frame": { "x": 128, "y": 0, "w": 64, "h": 64 },
     "rotated": false,
     "trimmed": false,
@@ -27,7 +27,7 @@
  "meta": {
   "app": "http://www.aseprite.org/",
   "version": "1.2.30-x64",
-  "image": "portrait-duck.png",
+  "image": "portrait-bird.png",
   "format": "RGBA8888",
   "size": { "w": 192, "h": 64 },
   "scale": "1",

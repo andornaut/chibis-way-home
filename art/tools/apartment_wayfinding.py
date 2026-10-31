@@ -102,8 +102,8 @@ def preview(out):
     for key, x in (("apartment-stairwell", 180), ("apartment-stairwell-down", 336),
                    ("apartment-room-door", 492)):
         im.alpha_composite(images()[key], (x, 180))
-    duck = Image.open("public/art/sprites/duck.png").convert("RGBA").crop((0, 0, 48, 42))
-    im.alpha_composite(duck, (260, 210))
+    bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((0, 0, 48, 42))
+    im.alpha_composite(bird, (260, 210))
     im.save(out)
     stem, _ = os.path.splitext(out)
     ImageOps.grayscale(im).save(stem + "-grey.png")

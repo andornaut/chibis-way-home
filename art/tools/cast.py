@@ -1,4 +1,4 @@
-"""The retained character catalogue for rooms and reference, at outdoor scale beside the duck.
+"""The retained character catalogue for rooms and reference, at outdoor scale beside the bird.
 
 These assets have no current world placements. Friendly background flavour requires a muted palette; friendly
 animals never appear in the foreground.

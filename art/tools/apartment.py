@@ -181,11 +181,11 @@ def context():
             im.alpha_composite(ts[family + "-top"], (x, 216))
             im.alpha_composite(ts[family + "-face"], (x, 228))
         ImageDraw.Draw(im).text((i * 120 + 4, 76), labels[i], fill=pixel.rgb("ink"))
-    data = json.load(open("public/art/sprites/duck.json"))
+    data = json.load(open("public/art/sprites/bird.json"))
     f = next(iter(data["frames"].values()))["frame"]
-    duck = Image.open("public/art/sprites/duck.png").convert("RGBA")
-    duck = duck.crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
-    im.alpha_composite(duck, (12, 198))
+    bird = Image.open("public/art/sprites/bird.png").convert("RGBA")
+    bird = bird.crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
+    im.alpha_composite(bird, (12, 198))
     return im.convert("RGB")
 
 

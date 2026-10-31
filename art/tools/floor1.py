@@ -7,14 +7,14 @@ Usage:
   floor1.py build             write public/art/tilesets/<key>.png + .json and public/art/backdrops/<key>.png, and
                               list them in the manifest under "tilesets" and "backdrops"
   floor1.py preview OUT.png   an example street column and an example lobby, each 720x720 (two screens tall),
-                              beside both tilesets at 4x, composed from the pieces with the duck and
+                              beside both tilesets at 4x, composed from the pieces with the bird and
                               the touch buttons
 
 Run from the repository root.
 
 Scale
-- Outdoors the world is drawn as if zoomed out 4x while the duck and the 12px tiles keep their size: a storey is
-  180px and a door is about 45px, so the duck (42px) stands almost as tall as a street door. The street is 720px
+- Outdoors the world is drawn as if zoomed out 4x while the bird and the 12px tiles keep their size: a storey is
+  180px and a door is about 45px, so the bird (42px) stands almost as tall as a street door. The street is 720px
   (60 tiles) tall: the sidewalk's top is y 600 (row 50) with 10 rows of sidewalk and road below it, the ground
   storey runs from y 420 to it, and storeys stack every 180px above (a three-storey walk-up's roof is at y 60,
   row 5). Indoors (the lobby) is a separate scene at full scale, also 720px tall, its floor at y 672.
@@ -1098,8 +1098,8 @@ def street_example(chars=True, hud=True):
             side = "-left" if c == c0 else "-right" if c == c0 + w - 1 else ""
             im.alpha_composite(tiles[f"one-way-{kind}{side}"], (c * T, row * T))
     if chars:
-        duck = Image.open(f"{SPRITES}/duck.png").convert("RGBA").crop((0, 0, 48, 42))
-        im.alpha_composite(duck, (150 - 24, 28 * T - 42))
+        bird = Image.open(f"{SPRITES}/bird.png").convert("RGBA").crop((0, 0, 48, 42))
+        im.alpha_composite(bird, (150 - 24, 28 * T - 42))
     if hud:
         touch_buttons(im, (0, 360))
     return im.convert("RGB")
@@ -1152,8 +1152,8 @@ def lobby_example(chars=True, hud=True):
         for i in range(7):
             im.alpha_composite(tiles[f"exit-{j * 7 + i}"], ((ec + i) * T, (er + j) * T))
     if chars:
-        duck = Image.open(f"{SPRITES}/duck.png").convert("RGBA").crop((0, 0, 48, 42))
-        im.alpha_composite(duck, (150 - 24, LOBBY_FY - 42))
+        bird = Image.open(f"{SPRITES}/bird.png").convert("RGBA").crop((0, 0, 48, 42))
+        im.alpha_composite(bird, (150 - 24, LOBBY_FY - 42))
     if hud:
         touch_buttons(im, (0, 360))
     return im.convert("RGB")

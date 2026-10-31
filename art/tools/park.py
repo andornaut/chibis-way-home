@@ -5,7 +5,7 @@ game places from chunk data.
 Usage:
   park.py build             write public/art/tilesets/tiles-park.png + .json and public/art/backdrops/park-*.png,
                             and merge them into the manifest's "tilesets" and "backdrops"
-  park.py preview OUT.png   two example chunks joined at a seam (1440x720) with the duck,
+  park.py preview OUT.png   two example chunks joined at a seam (1440x720) with the bird,
                             above the tileset at 4x
 
 Run from the repository root.
@@ -598,8 +598,8 @@ def example(chars=True):
     gx, grow = GATE
     im.alpha_composite(pixel_image(gate(0)), (gx * T, grow * T - 60))
     if chars:
-        duck = Image.open(f"{SPRITES}/duck.png").convert("RGBA").crop((0, 0, 48, 42))
-        im.alpha_composite(duck, (14 * T - 24, 50 * T - 42))
+        bird = Image.open(f"{SPRITES}/bird.png").convert("RGBA").crop((0, 0, 48, 42))
+        im.alpha_composite(bird, (14 * T - 24, 50 * T - 42))
     return im.convert("RGB")
 
 

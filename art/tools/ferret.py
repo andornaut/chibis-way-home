@@ -1,4 +1,4 @@
-"""The ferret: the villain's sprite and its dialogue portrait.
+"""Firt the ferret: the villain's sprite and its dialogue portrait.
 
 Usage, from the repository root:
   python3 -I art/tools/ferret.py build            write art/ferret/<key>.aseprite and public/art/sprites/<key>.png + .json
@@ -15,10 +15,10 @@ and right), then the lit rim (offset up and left), then the coat between, which 
 belly and a lit rim on the back. The head is an ellipse with a forward wedge to a pink nose, one round ear behind,
 a pale band across the face and a skin2 mask round the eye.
 
-Colour, kept apart from the cream duck: a skin1 (champagne) coat with a skin2 shade crescent, a cream rim, a white
+Colour, kept apart from the cream bird: a skin1 (champagne) coat with a skin2 shade crescent, a cream rim, a white
 face band, brown legs and tail with dark-brown far legs, a skin2 mask, a pink nose, and a dark-brown outline
-(the duck's is dark slate). Against the duck's cream, the coat is 1.24:1 and the shade 2.12:1 (WCAG), and the
-outline and the legs, tail and mask sit well below anything on the duck. Accents: the plum stovepipe with a red
+(the bird's is dark slate). Against the bird's cream, the coat is 1.24:1 and the shade 2.12:1 (WCAG), and the
+outline and the legs, tail and mask sit well below anything on the bird. Accents: the plum stovepipe with a red
 band and a red bow tie under the jaw, outlined in ink.
 
 Eyes: round, 5px across with the corners cut, ink with a 2x2 white glint top-left and a 1px cream glint
@@ -43,7 +43,7 @@ Lift is how far the body sits above its rest row, in pixels. Every tag loops (ON
 States: idle idle; move none, falls back to idle (it stands where it is placed); react none, falls back to scheme
 (the pleased steeple when its plan works); talk talk; quirk scheme (an idle tic).
 
-portrait-ferret, 64x64: its head and neck facing right towards the text (as portrait-duck), cut off by the
+portrait-ferret, 64x64: its head and neck facing right towards the text (as portrait-bird), cut off by the
 frame's bottom edge, with one ink outer line on a transparent ground (the dialogue box's 68x68 frame supplies the
 backing). The same face, eyes and hat, larger. Tags, one frame each at 1000ms: neutral (round eye, small smile),
 smug (the lid at half, a wider smile), annoyed (a short brow dipped towards the snout, the lid at a third, the

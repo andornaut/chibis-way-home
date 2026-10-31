@@ -16,7 +16,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import duck  # noqa: E402
+import bird  # noqa: E402
 import ferret  # noqa: E402
 import pixel  # noqa: E402
 from pixel import Grid  # noqa: E402
@@ -47,9 +47,9 @@ def draw(state="idle", phase=0):
         t = i / 10
         x = hip[0] + (hx - 3 - hip[0]) * t - 3 * (1 - t) * t
         y = hip[1] + (hy + 4 - hip[1]) * t
-        duck.cel(g, duck.in_ell(x, y, 6 - 2 * t, 6 - t), "skin1", "skin2", "cream", 1, 1)
+        bird.cel(g, bird.in_ell(x, y, 6 - 2 * t, 6 - t), "skin1", "skin2", "cream", 1, 1)
     # Compact wedge, pale face band and soft lid preserve the recognisable expression.
-    duck.cel(g, duck.in_ell(hx, hy, 6, 5), "skin1", "skin2", "cream", 1, 1)
+    bird.cel(g, bird.in_ell(hx, hy, 6, 5), "skin1", "skin2", "cream", 1, 1)
     g.tri((hx, hy - 3), (hx + 10, hy + 2), (hx, hy + 4), "skin1")
     g.tri((hx, hy - 2), (hx + 9, hy + 2), (hx, hy + 2), "cream")
     g.ell(hx - 4, hy - 4, 2, 2, "skin2")

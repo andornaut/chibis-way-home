@@ -207,10 +207,10 @@ def context(skin):
         im.alpha_composite(shared_tile(name), (c * T, 44 * T))
     for c in range(31, 38):
         im.alpha_composite(shared_tile("hazard-right"), (38 * T, (42 + c - 31) * T))
-    data = json.load(open("public/art/sprites/duck.json"))
+    data = json.load(open("public/art/sprites/bird.json"))
     f = next(iter(data["frames"].values()))["frame"]
-    duck = Image.open("public/art/sprites/duck.png").convert("RGBA").crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
-    im.alpha_composite(duck, (72, 558))
+    bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
+    im.alpha_composite(bird, (72, 558))
     return im.convert("RGB").crop((0, 360, 720, 720))
 
 

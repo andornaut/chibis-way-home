@@ -15,7 +15,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import duck  # noqa: E402
+import bird  # noqa: E402
 import pixel  # noqa: E402
 from pixel import Grid, K  # noqa: E402
 
@@ -44,20 +44,20 @@ def draw(state="idle", phase=0):
         if state == "frustration":
             ex += (-2, 1, 2, -1)[phase]
             angle += (-0.35, 0.25, 0.35, -0.25)[phase]
-        duck.cel(g, duck.in_ell(ex, ey, 3, 6, angle), "grey", "dslate", "lgrey", 1, 1)
+        bird.cel(g, bird.in_ell(ex, ey, 3, 6, angle), "grey", "dslate", "lgrey", 1, 1)
         g.rect(ex - 1, ey - 3, 2, 6, "tan")
-    duck.cel(g, duck.in_ell(9, by - 1, 4, 4), "cream", "lgrey", "white", 1, 1)
-    duck.cel(g, duck.in_ell(22, by, 13, bh), "grey", "dslate", "lgrey", 2, 1)
+    bird.cel(g, bird.in_ell(9, by - 1, 4, 4), "cream", "lgrey", "white", 1, 1)
+    bird.cel(g, bird.in_ell(22, by, 13, bh), "grey", "dslate", "lgrey", 2, 1)
     # Broad haunch and short foreleg make a rabbit silhouette rather than a dog gait.
-    duck.cel(g, duck.in_ell(17, by + 3, 7, 6), "lgrey", "grey", None, 2, 1)
+    bird.cel(g, bird.in_ell(17, by + 3, 7, 6), "lgrey", "grey", None, 2, 1)
     if tuck:
-        duck.cel(g, duck.in_ell(27, 39, 6, 3), "cream", "lgrey", None, 1, 1)
+        bird.cel(g, bird.in_ell(27, 39, 6, 3), "cream", "lgrey", None, 1, 1)
     else:
         g.rect(14, 43, 10, 4, "cream")
         g.rect(30, 37 if not squash else 40, 4, 10 if not squash else 7, "lgrey")
         g.rect(29, 45, 9, 2, "cream")
-    duck.cel(g, duck.in_ell(hx, hy, 8, 7), "grey", "dslate", "lgrey", 2, 1)
-    duck.cel(g, duck.in_ell(36, hy + 3, 5, 3), "cream", "lgrey", None, 1, 1)
+    bird.cel(g, bird.in_ell(hx, hy, 8, 7), "grey", "dslate", "lgrey", 2, 1)
+    bird.cel(g, bird.in_ell(36, hy + 3, 5, 3), "cream", "lgrey", None, 1, 1)
     g.rect(38, hy + 1, 3, 2, "brown")
     g.rect(33, hy - 2, 3, 1 if resting else 3, "ink")
     if state == "frustration":
