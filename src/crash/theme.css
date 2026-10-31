@@ -1,0 +1,89 @@
+@font-face {
+  font-family: "Chibi crash body";
+  src: url("../../art/fonts/tiny5/Tiny5.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Chibi crash title";
+  src: url("../../art/fonts/silkscreen/Silkscreen-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
+.crash {
+  font-family: "Chibi crash body", monospace;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.crash-panel {
+  width: max-content;
+  min-width: min(50vw, 100%);
+  max-width: min(480px, 100%);
+  padding: 16px;
+  border: 2px solid var(--crash-ink);
+  background: var(--chibi-crash-card-face);
+  box-shadow: none;
+  color: var(--crash-ink);
+  overflow-wrap: anywhere;
+}
+
+/* A decorative, static crop remains available when the game canvas has failed. */
+.crash-panel::before {
+  display: block;
+  width: var(--chibi-crash-bird-width);
+  height: var(--chibi-crash-bird-height);
+  margin: 0 auto 8px;
+  background-image: url("/art/sprites/bird.png");
+  background-position: var(--chibi-crash-bird-position);
+  background-repeat: no-repeat;
+  background-size: var(--chibi-crash-bird-sheet-size);
+  image-rendering: pixelated;
+  content: "";
+}
+
+.crash-title {
+  margin: 0 0 8px;
+  font-family: "Chibi crash title", monospace;
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 24px;
+}
+
+.crash-body {
+  margin: 0 0 8px;
+}
+
+.crash-button {
+  min-height: 48px;
+  padding: 0 16px 4px;
+  border: 2px solid var(--crash-ink);
+  color: var(--crash-text);
+  font-weight: normal;
+}
+
+.crash-button:active {
+  padding: 2px 16px;
+  box-shadow: inset 0 -2px 0 var(--crash-button-lip);
+}
+
+.crash-button:focus-visible,
+.crash-details summary:focus-visible {
+  outline: 2px solid var(--chibi-crash-focus);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--crash-ink),
+    0 0 0 6px var(--crash-ink),
+    inset 0 -4px 0 var(--crash-button-lip);
+}
+
+.crash-details {
+  margin-top: 16px;
+}
+
+.crash-stack {
+  color: var(--crash-text);
+  font:
+    16px/20px "Chibi crash body",
+    monospace;
+}
