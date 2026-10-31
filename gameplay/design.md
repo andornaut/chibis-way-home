@@ -14,7 +14,7 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 - **Furt:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
 - **Story:** Chibi and Furt share an apartment in a big city. After a big fight, while Chibi sleeps, Furt packages him and mails him far away. Chibi knows Furt is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
 - **World:** the modern day, mixing fantasy and reality
-- **Zones:** a zone is one themed map destination containing two playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and twelve stages. The V1 route and current stage availability are listed below
+- **Zones:** a zone is one themed map destination containing three playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and eighteen stages. The V1 route and current stage availability are listed below
 
 ## Cast
 
@@ -32,8 +32,8 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 
 ## Core loop
 
-1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains two stages; V1 follows a linear route.
-2. **Between stages:** completing a zone's first stage shows a cutscene image and Continue, which enters its second stage directly. Completing the second stage shows the zone's outgoing exchange, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
+1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains three stages; V1 follows a linear route.
+2. **Between stages:** completing stage one or two shows a cutscene image and Continue, which enters the next stage directly. Completing stage three shows the zone's outgoing exchange, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
 3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Furt is undecided.
 
 ## Voice
@@ -50,7 +50,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 
 | Term               | Meaning                                                         |
 | ------------------ | --------------------------------------------------------------- |
-| Zone               | A themed map destination containing two stages                  |
+| Zone               | A themed map destination containing three stages                |
 | Stage              | The playable level, currently represented by `ZonePlan` in code |
 | Section            | One continuous area within a stage, such as an apartment floor  |
 | Encounter section  | A distinct enemy encounter segment within a stage               |
@@ -59,7 +59,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 | Run                | One generated stage layout and its seed                         |
 | Attempt            | One try to complete the stage within a run                      |
 
-The V1 map has six themed destinations with two catalogued stages each. All twelve stages are built; building the route does not declare a V1 release.
+The V1 map has six themed destinations with three catalogued stages each. The route contains eighteen stages; completing its implementation does not declare a V1 release.
 
 ### Screen and controls
 
@@ -94,31 +94,31 @@ The V1 map has six themed destinations with two catalogued stages each. All twel
 
 ### Map
 
-- **Availability:** all six V1 zones appear in route order. Each has two catalogued stages. All twelve V1 stages are built: Parcel depot and streets (`street`), City boundary (`city-boundary`), Warehouse district (`warehouse-district`), Freight terminal (`freight-terminal`), Farmland (`farmland`), River crossing (`river-crossing`), Forest paths (`forest-paths`), Ravine (`ravine`), City outskirts (`city-outskirts`), Familiar neighbourhood (`familiar-neighbourhood`), Entrance and lobby (`entrance-and-lobby`) and Climb to the apartment (`climb-to-apartment`). Unbuilt zones and stages are visibly unavailable and cannot be entered. The park is a debug prototype outside the V1 map
+- **Availability:** all six V1 zones appear in route order, with three stages each as listed under V1 route. Unbuilt zones and stages are visibly unavailable and cannot be entered. The park is a debug prototype outside the V1 map
 - **Backtracking:** unlocked built stages remain available for replay. Replaying an earlier stage never removes later unlocks
-- **Between stages:** clearing a zone's first stage shows a placeholder cutscene image with Continue, which enters stage two directly without showing the map. Clearing its second stage shows the outgoing zone exchange before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
+- **Between stages:** clearing stage one or two shows a placeholder cutscene image with Continue, which enters the next stage directly without showing the map. Clearing stage three shows the outgoing zone exchange before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
-- **Celebration:** only clearing Apartment building's second stage, Climb to the apartment, shows Furt's outgoing exchange followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
+- **Celebration:** only clearing Apartment building's third stage, Climb to the apartment, shows Furt's outgoing exchange followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
 - **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from any stage entrance returns to the map. The entrance exit stays reachable and has no blocking wall; an apartment stage returns through its first section's left edge
 - **Forks:** branching routes are deferred to Next. V1 is linear and has no laps
-- **Progression:** the first stage is unlocked from the start. Completing Parcel depot and streets unlocks City boundary; completing City boundary unlocks Warehouse district, which unlocks Freight terminal on completion. Completing Freight terminal unlocks Farmland; completing Farmland unlocks River crossing. Completing River crossing unlocks Forest paths; completing Forest paths unlocks Ravine. Completing Ravine unlocks City outskirts; completing City outskirts unlocks Familiar neighbourhood. Completing Familiar neighbourhood unlocks Entrance and lobby; completing Entrance and lobby unlocks Climb to the apartment, which ends at the apartment. Completing a zone's first stage unlocks its second stage when built; completing its second stage opens the next zone. Unbuilt content remains unavailable
-- **Selection:** Only manually pressing Continue on the map opens a stage-selection modal for the selected zone, including when only stage one is unlocked. Two side-by-side cards stay in fixed positions: stage one on the left, stage two on the right. Stage two remains visible, grey and disabled until unlocked; unbuilt stages are unavailable. The latest available stage is highlighted and is the default. Each card shows an actual scene screenshot depicting its stage art, with the main stage name at the standard font size and a smaller, lighter Stage 1 or Stage 2 label at the top right. Stage names never shrink to fit. Scenery differs slightly between a zone's two stages so the images help distinguish them, while preserving the zone's palette and visual style. Persisted unlocks survive replays
+- **Progression:** Parcel depot is unlocked from the start. Clearing a stage unlocks the next built stage in the route table. Clearing stage three opens the next zone. Completed stages remain available for replay, and unbuilt content remains unavailable
+- **Selection:** only manually pressing Continue on the map opens the selected zone's stage-selection modal. Three side-by-side cards stay in stage order, including locked stages, which remain grey and disabled. The latest available stage is highlighted and is the default. Each card shows an actual scene screenshot, the main stage name at the standard font size, and a smaller, lighter Stage 1, Stage 2 or Stage 3 label at the top right. Names never shrink to fit. Stage scenery differs slightly while preserving the zone's palette and visual style. Persisted unlocks survive replays
 - **Walk:** Chibi stands on a zone. Left and Right move through available zones, and Continue selects the zone he stands on
 
 ### Stages
 
 - **Camera:** on the ground he sits about two thirds down the screen. In an assembled stage, the ground line follows the chunk he is in, blending across half a screen at each seam. The camera rises only when he climbs above the middle, and never shows below the lowest ground. Decorative background layers use tunable parallax, with farther layers scrolling more slowly; ground props stay attached to the terrain
 - **Challenge:** platforming, hazards and choices. Routes use ledges and cliffs, not ladders, with both short-press jumps beneath low ceilings and full jumps. There is no combat
-- **Checkpoint:** the start of a stage is its only checkpoint. Falling or touching a hazard enters the death flow; Try again restarts the stage from its start, with unlimited retries and no permadeath. Progress is saved: the stages he has completed and where he stands on the map. Clearing a stage marks it completed and follows the first-stage cutscene, second-stage map travel or final-stage celebration flow; a stage left before its end is played again from its start
+- **Checkpoint:** the start of a stage is its only checkpoint. Falling or touching a hazard enters the death flow; Try again restarts the stage from its start, with unlimited retries and no permadeath. Progress is saved: the stages he has completed and where he stands on the map. Clearing a stage marks it completed and follows the stage-one or stage-two cutscene, stage-three map travel or final-stage celebration flow; a stage left before its end is played again from its start
 - **Crush:** a moving platform that pushes him sideways carries him to its leading edge. If it squeezes him into terrain or another solid, he is crushed and enters the death flow, as a hazard does. Layouts leave room beside every moving platform's path so he is never pinned on a required route
 - **Difficulty:** per-zone bands and chunk-selection weights in `src/data/` set a demanding first-zone base and increase difficulty in every following zone. Blue cityscape selects grades 3 to 4, Industrial outskirts and Countryside grades 3 to 5, and Woodland, Home city and Apartment building grades 4 to 5. Increasing weights for harder chunks distinguish successive zones even when their bands match. Seeded variation remains inside each band
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
 - **Edge hazards:** a common red strip, 2 to 3 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow
-- **Encounters:** every zone has exactly two distinct encounter sections in its first stage and three in its second stage, counted across the whole stage rather than per floor. Ordinary platforming separates the encounters, with flexible spacing. Generated runs vary encounter order and layout while preserving the quota; death retries retain the same run and encounter count. The quota is independent of the successful-clear time target
-- **Exit:** reaching the end of a stage's final area clears the stage. A first stage shows the inter-stage cutscene; a second stage shows its outgoing zone exchange before map travel to the next zone, except for the final outgoing exchange followed by celebration. An internal floor transition does not clear the stage
+- **Encounters:** stage one has no visible physical antagonist and zero encounter sections. Stage two begins with the first physical meeting and has one further encounter elsewhere, for two total. Stage three has two encounters. Counts apply across the whole stage, not per floor. Ordinary platforming separates encounters; generated runs vary layout while preserving these quotas, and death retries retain the same run
+- **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show an inter-stage cutscene; stage three shows its outgoing zone exchange before map travel, except for Furt's final exchange followed by celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged, and cumulative active time is retained. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
-- **Length:** the ten continuous V1 stages have recipe ranges of 720 to 960 columns, fixed start and finish caps included. Entrance and lobby has an aggregate range of 528 to 600 columns across its two sections; Climb to the apartment has 1272 to 1440 across seven sections. These aggregate ranges include the fixed caps. The debug park keeps its own recipe
+- **Length:** target three minutes for a successful clear of each stage. This target is unmeasured. Recipe data owns stage-length ranges, including fixed caps and linked sections; the debug park keeps its own recipe
 - **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. A multi-area apartment stage applies this structure across its linked sections, with fixed first and last caps and seeded runs of shared templates in intermediate areas. The rules for chunks are under Chunks
 - **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; Chibi, the tiles and the reaches stay the same everywhere
 - **Shape:** each playable stage area is at most 2 screens (60 tiles, 720 px) tall and as wide as it needs, and scrolls sideways and up. Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
@@ -173,41 +173,41 @@ Everything in a stage except its terrain is placed in data through archetypes, c
 
 ### V1 route
 
-The route spans six themed zones of two stages, in this order. Stage length is defined by the recipes; no total play-time estimate is prescribed. All twelve stages across the six V1 zones are built; this does not declare the first release complete. The six-zone map and manual stage-selection flow preserve unlocked stages for replay. Every stage, including the depot tutorial and final climb, has a fixed opening and ending with a randomized middle.
+The route spans six themed zones of three stages in this order. Each stage targets a three-minute successful clear; this target is unmeasured. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
 
-| Zone                 | First stage              | Second stage           |
-| -------------------- | ------------------------ | ---------------------- |
-| Blue cityscape       | Parcel depot and streets | City boundary          |
-| Industrial outskirts | Warehouse district       | Freight terminal       |
-| Countryside          | Farmland                 | River crossing         |
-| Woodland             | Forest paths             | Ravine                 |
-| Home city            | City outskirts           | Familiar neighbourhood |
-| Apartment building   | Entrance and lobby       | Climb to the apartment |
+| Zone                 | First stage                               | Second stage                    | Third stage                                       |
+| -------------------- | ----------------------------------------- | ------------------------------- | ------------------------------------------------- |
+| Blue cityscape       | Parcel depot (`street`)                   | Streets (`city-streets`)        | City boundary (`city-boundary`)                   |
+| Industrial outskirts | Warehouse district (`warehouse-district`) | Loading yards (`loading-yards`) | Freight terminal (`freight-terminal`)             |
+| Countryside          | Farmland (`farmland`)                     | Country lanes (`country-lanes`) | River crossing (`river-crossing`)                 |
+| Woodland             | Forest paths (`forest-paths`)             | Deep woods (`deep-woods`)       | Ravine (`ravine`)                                 |
+| Home city            | City outskirts (`city-outskirts`)         | Back streets (`back-streets`)   | Familiar neighbourhood (`familiar-neighbourhood`) |
+| Apartment building   | Entrance and lobby (`entrance-and-lobby`) | Shared floors (`shared-floors`) | Climb to the apartment (`climb-to-apartment`)     |
 
 ### First stage
 
 - **Ending:** the fixed finish retains the final short-jump ceiling, red-edged gap and canopy
-- **Layout:** the tutorial combines the parcel depot and streets of the blue cityscape with a fixed opening and ending around seeded hand-designed street chunks. The middle uses matching city scenery and the zone's difficulty band, with varied climbing, moving-platform and enemy-yard chunks
-- **Opening:** the fixed start retains the opened parcel on safe ground, depot jump lessons and first Archie introduction
+- **Layout:** the tutorial introduces the parcel depot of the blue cityscape with a fixed opening and ending around seeded hand-designed street chunks. The middle uses matching city scenery and the zone's difficulty band, with varied climbing and moving-platform chunks
+- **Opening:** the fixed start retains the opened parcel on safe ground, depot jump lessons and live Archie foreshadowing without a physical antagonist
 - **Rooms:** the street door leads to the prototype test room
-- **Route:** the main path continues right toward the city boundary; middle chunks can include upper street ledges. City boundary is the zone's second stage and unlocks when this tutorial is completed
+- **Route:** the main path continues right toward the city boundary; middle chunks can include upper street ledges. Streets is the second stage and unlocks when this tutorial is completed; City boundary is third
 
-The park is a prototype for randomized stages, not V1's second stage. The identities of Furt's friends beyond Archie, Pebble, Trixi, Bini and Kiwi and the later encounters along the route are undecided.
+The park is a randomized-stage prototype outside the V1 route. The identities of Furt's friends beyond Archie, Pebble, Trixi, Bini and Kiwi and the later encounters along the route are undecided.
 
 ### City boundary
 
-- **Encounter:** the finish uses the same Archie behaviour and timing as the first stage, with refuge ledges on either side of its patrol. his first-sighting introduction follows the shared once-per-zone rule across both stages
-- **Layout:** the second Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the existing street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, enemy yards, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
-- **Replay:** entering from the map draws a fresh assembly seed; retries keep that layout. Completing Parcel depot and streets unlocks this stage, and the existing stage-choice modal keeps both available for replay
+- **Encounter:** the finish uses the same Archie behaviour and timing as Streets, with refuge ledges on either side of its patrol. his first physical introduction occurs at the beginning of Streets and follows the shared once-per-zone rule
+- **Layout:** the third Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the existing street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, enemy yards, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
+- **Replay:** entering from the map draws a fresh assembly seed; retries keep that layout. Completing Streets unlocks this stage; unlocked stages remain available for replay
 - **Rooms:** one door in the fixed start leads to the existing prototype test room
 
 ### Industrial outskirts
 
 - **Appearance:** purple industrial scenery uses floor, crate and container art, shared moving platforms and red-edged inanimate hazards
-- **Encounters:** both stages feature Pebble through the shared data-driven behaviour system. Archie and Pebble use the shared enemy detection, pursuit and frustration rules
-- **Layout:** Warehouse district and Freight terminal each have fixed openings and endings with randomized middle chunks, 720 to 960 columns long, inside the zone's difficulty band. Required climbing sections, moving ledges and red-edged hazards use the shared layouts and primitives
-- **Progression:** clearing City boundary opens Warehouse district; clearing Warehouse district opens Freight terminal. Both remain replayable through the existing stage-choice flow. Catalogue IDs and save shape are unchanged
-- **Rooms:** doors use the existing prototype test room. These stages add no new room, plot or dialogue
+- **Encounters:** stage two and stage three feature Pebble through the shared data-driven behaviour system. Archie and Pebble use the shared enemy detection, pursuit and frustration rules
+- **Layout:** Warehouse district, Loading yards and Freight terminal each have fixed openings and endings with randomized middle chunks, inside the zone's difficulty band. Required climbing sections, moving ledges and red-edged hazards use the shared layouts and primitives
+- **Progression:** clearing City boundary opens Warehouse district; clearing Warehouse district opens Loading yards, then Freight terminal. Unlocked stages remain replayable
+- **Rooms:** doors use the existing prototype test room. These stages add no new room or plot
 
 ### Pebble encounter
 
@@ -218,10 +218,10 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 ### Countryside
 
 - **Appearance:** muted yellow countryside scenery distinguishes Farmland's soil and hay from River crossing's banks and timber. Water is decorative scenery, not an implicit contact hazard; only explicit red surfaces are hazards, and falling follows the normal death rules
-- **Encounters:** both stages feature Trixi through shared behaviour primitives. Trixi, Archie and Pebble use the shared enemy detection, pursuit and frustration rules
-- **Layout:** Farmland and River crossing each use fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, ledge lifts, shuttles and red hazards use the common object and layout system with countryside art and configuration
-- **Progression:** clearing Freight terminal opens Farmland; clearing Farmland opens River crossing. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
-- **Rooms:** doors use the existing prototype test room; these stages add no new rooms, plot, dialogue or bosses
+- **Encounters:** stage two and stage three feature Trixi through shared behaviour primitives. Trixi, Archie and Pebble use the shared enemy detection, pursuit and frustration rules
+- **Layout:** Farmland, Country lanes and River crossing each use fixed 60-column openings and endings around shared randomized middle layouts within the zone's difficulty band. Mandatory climbs, ledge lifts, shuttles and red hazards use the common object and layout system with countryside art and configuration
+- **Progression:** clearing Freight terminal opens Farmland; clearing Farmland opens Country lanes, then River crossing. Unlocked stages remain replayable
+- **Rooms:** doors use the existing prototype test room; these stages add no new rooms, plot or bosses
 
 ### Trixi encounter
 
@@ -233,10 +233,10 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 ### Woodland
 
 - **Appearance:** woodland uses its canonical green theme through shared terrain, structure, prop and background skins
-- **Encounters:** both stages feature Bini through shared growl, charge and contact behaviours. Bini and earlier enemies use the shared detection, pursuit and frustration rules
-- **Layout:** Forest paths and Ravine each use fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
-- **Progression:** clearing River crossing opens Forest paths; clearing Forest paths opens Ravine. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
-- **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, dialogue, bosses or combat. Water does not add hidden hazards
+- **Encounters:** stage two and stage three feature Bini through shared growl, charge and contact behaviours. Bini and earlier enemies use the shared detection, pursuit and frustration rules
+- **Layout:** Forest paths, Deep woods and Ravine each use fixed 60-column openings and endings around shared randomized middle layouts within the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
+- **Progression:** clearing River crossing opens Forest paths; clearing Forest paths opens Deep woods, then Ravine. Unlocked stages remain replayable
+- **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, bosses or combat. Water does not add hidden hazards
 
 ### Bini encounter
 
@@ -248,10 +248,10 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 ### Home city
 
 - **Appearance:** City outskirts and Familiar neighbourhood use the canonical peach theme through shared terrain, structure, prop and background skins
-- **Encounters:** both stages feature Kiwi through shared ground-charge and vertical climb-and-drop behaviours. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
-- **Layout:** each stage uses fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
-- **Progression:** clearing Ravine opens City outskirts; clearing City outskirts opens Familiar neighbourhood. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
-- **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, dialogue, bosses or combat. Water does not add hidden hazards
+- **Encounters:** stage two and stage three feature Kiwi through shared ground-charge and vertical climb-and-drop behaviours. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
+- **Layout:** each stage uses fixed 60-column openings and endings around shared randomized middle layouts within the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
+- **Progression:** clearing Ravine opens City outskirts; clearing City outskirts opens Back streets, then Familiar neighbourhood. Unlocked stages remain replayable
+- **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, bosses or combat. Water does not add hidden hazards
 
 ### Kiwi encounter
 
@@ -260,25 +260,25 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 ### Apartment building
 
-- **Areas:** Entrance and lobby has two short linked sections. Climb to the apartment has seven short floor sections, in order: restaurant, exterior, pool, exterior, spa, exterior, residential. Varied indoor and outdoor skins accompany stronger vertical traversal
+- **Areas:** Entrance and lobby has two linked sections: entrance and lobby. Shared floors has three: restaurant, first fire escape and pool. Climb to the apartment has four: second fire escape, spa, third fire escape and residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
 - **Encounters:** Furt is a normal lethal-contact antagonist who periodically charges for direct contact and throws parcels as his distinct special attack. He uses shared behaviour primitives and has no red contact outline; this is not a boss encounter and adds no combat
 - **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows Furt's outgoing exchange, then the celebration, every time including replays. The cause of the fight and the outcome of the friendship remain undecided
-- **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. These short linked sections do not use the other zones' total stage-length range
-- **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Climb to the apartment. The final map path ends at the apartment. Stage IDs, save format and replay unlocks are unchanged
-- **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room, quest or dialogue. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
+- **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. Recipe data defines each linked stage's aggregate length
+- **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Shared floors, then Climb to the apartment. The final map path ends at the apartment; unlocked stages remain replayable
+- **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room or quest. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
 - **Stairs:** walking into marked main-route stairs changes floor automatically, without Use. Stairs are reversible; Chibi can return through earlier sections and leave for the map at the first section's left edge
 
 ### First Archie encounter
 
 - **Activation:** the first-sighting introduction follows the once-per-zone rule and freezes play. Completing or skipping it activates Archie and resumes play
 - **Appearance:** Archie uses his design from Archie's Dog Walks
-- **Approach:** the loading yard follows the basic hop and full-jump lessons and precedes the streets. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
+- **Approach:** the first physical encounter begins Streets, after the depot tutorial. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
 - **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
 - **Dialogue:** the first introduction has three lines: Archie says Furt asked him to stop Chibi; Chibi says he is going home; Archie tells him to get past. The player-facing wording lives in the text data files, with Skip available
 - **Special:** Archie makes a leaping pounce as his distinct special attack, alongside periodic ground rushes for direct contact
-- **Timing:** Archie uses the same timing across both stages of the first zone; their layouts vary. The first encounter is in the first stage
+- **Timing:** Archie uses the same timing across physical encounters in the first zone; their layouts vary. The first physical encounter begins stage two
 
 ### Rooms
 
@@ -291,9 +291,10 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 - **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's 64 px portrait and name tab inside the panel. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. There is no back, timer or scrolling chat history
-- **Introductions:** the first sighting of a zone's antagonist starts an introduction once per zone per playthrough, always with Skip. Its seen state is shared across both stages and survives death, retries and stage replay; a new game resets it
-- **Outgoing exchanges:** completing a zone's second stage shows its outgoing exchange on a black or placeholder interstitial, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to the map walk; Furt's final exchange proceeds to the existing celebration instead
-- **Restarts:** other stage dialogue plays again after a stage restart; the zone introduction keeps its seen state
+- **Foreshadowing:** each fresh stage-one entry plays a live top-panel exchange between the antagonist and Chibi, with Skip. No physical antagonist is visible. Death retries do not replay it. This entry dialogue uses separate state from the first physical introduction
+- **Introductions:** the first physical sighting at the beginning of stage two starts an introduction once per zone per playthrough, always with Skip. Its seen state is shared across all three stages and survives death, retries and stage replay; a new game resets it
+- **Outgoing exchanges:** completing a zone's third stage shows its outgoing exchange on a black or placeholder interstitial, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to the map walk; Furt's final exchange proceeds to the existing celebration instead
+- **Restarts:** death retries do not replay stage-one foreshadowing or a seen physical introduction. Fresh stage-one entries replay foreshadowing; physical introductions keep their separate once-per-zone seen state
 - **Skip:** Skip skips all remaining dialogue. If the conversation ends in a choice, Skip opens its modal without choosing an answer or bypassing the choice
 
 ### Quips

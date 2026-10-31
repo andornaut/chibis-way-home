@@ -21,7 +21,11 @@ pause and Resume preserve the active position and run.
 
 Walking left from any stage entrance returns to the map. Apartment stages use
 the first section's left edge after backtracking through earlier sections.
-Completing stage one still enters stage two directly through its cutscene.
+Each zone has three stages, targeting an unmeasured three-minute successful clear
+each. Completing stage one or two enters the next stage directly through its
+cutscene. Stage one has live foreshadowing but no physical antagonist; stage two
+and three each have two physical encounters. Stage three shows the outgoing
+exchange before returning to the map, or the final celebration.
 
 ## Developing
 
