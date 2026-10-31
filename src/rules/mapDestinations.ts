@@ -33,10 +33,9 @@ export function destinationStages(
 
 export type DestinationSelection =
   | { readonly kind: "unavailable" }
-  | { readonly kind: "play"; readonly stage: string }
   | { readonly kind: "choose"; readonly latest: string; readonly stages: readonly string[] };
 
-// A picker is only useful when more than one stage is actually unlocked.
+// Every available destination opens its picker; locked catalogue stages remain visible.
 export function destinationSelection(
   plans: ReadonlySet<string>,
   map: ZoneMap,
@@ -45,11 +44,7 @@ export function destinationSelection(
 ): DestinationSelection {
   const stages = destinationStages(plans, map, open, destination);
   const latest = stages.at(-1);
-  return latest === undefined
-    ? { kind: "unavailable" }
-    : stages.length === 1
-      ? { kind: "play", stage: latest }
-      : { kind: "choose", latest, stages };
+  return latest === undefined ? { kind: "unavailable" } : { kind: "choose", latest, stages };
 }
 
 export function steppedDestination(

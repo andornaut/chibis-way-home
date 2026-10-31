@@ -7,28 +7,24 @@ import {
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { ZONE_MAP } from "../data/map";
+import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
 import { RECIPES, ZONES } from "../data/zones";
 import { stageSelectKey } from "../input/stageSelectInput";
-import { TEXT_BUTTON } from "../layout/buttonLabel";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { CARD_TEXT_SCALE } from "../layout/pauseCard";
-import { stageSelectCard } from "../layout/stageSelectCard";
+import { STAGE_NUMBER_SCALE, stageSelectCard } from "../layout/stageSelectCard";
 import { openMap } from "../rules/map";
 import { destinationOf, destinationSelection } from "../rules/mapDestinations";
 import { savedMap } from "../save";
 import {
+  addCardText,
   addCardTextIn,
   addSlice,
-  addTextButton,
   BODY_FONT,
   captureTab,
   cardFonts,
   paletteColour,
-  pressTextButton,
-  PRIMARY_BUTTON,
   ringFocus,
-  type TextButton,
   TITLE_FONT,
 } from "./cardParts";
 import { catchModalTaps } from "./modalTaps";
@@ -44,35 +40,47 @@ export interface StageSelectOpener {
 
 type Target = { readonly kind: "stage"; readonly id: string } | { readonly kind: "close" };
 const PLANS = new Set([...Object.keys(ZONES), ...Object.keys(RECIPES)]);
+type StageCardLayout = ReturnType<typeof stageSelectCard>["buttons"][number];
+interface StageCardView {
+  readonly content: readonly {
+    readonly object: GameObjects.Image | GameObjects.BitmapText;
+    readonly y: number;
+  }[];
+  readonly layout: StageCardLayout;
+  readonly normal: GameObjects.NineSlice;
+  readonly pressed: GameObjects.NineSlice;
+}
 
-// Only reached stages appear here. The latest reached stage is primary; selecting or cancelling
-// never changes completed stages. Outside taps, back and Escape return to the map.
+// Catalogue positions are fixed. Locked cards stay visible but cannot receive focus or activate.
 export class StageSelectScene extends Scene {
   private layout!: ReturnType<typeof stageSelectCard>;
   private stages: readonly string[] = [];
+  private available: readonly string[] = [];
   private latest = "";
   private destination = "";
   private focus: string | undefined;
   private ring: GameObjects.NineSlice | undefined;
   private pressed: Target | undefined;
   private closeX!: GameObjects.Sprite;
-  private buttons = new Map<string, TextButton>();
+  private buttons = new Map<string, StageCardView>();
   private finished = false;
   constructor() {
     super("stageSelect");
   }
   init({ destination }: StageSelectData): void {
     const progress = savedMap();
+    const catalogue = destinationOf(ZONE_MAP, destination);
     const selection = destinationSelection(
       PLANS,
       ZONE_MAP,
       openMap(ZONE_MAP, new Set(progress.completed)),
-      destinationOf(ZONE_MAP, destination),
+      catalogue,
     );
     if (selection.kind !== "choose") {
-      throw new Error(`Stage picker requires multiple unlocked stages: ${destination}`);
+      throw new Error(`Stage picker requires an unlocked stage: ${destination}`);
     }
-    this.stages = selection.stages;
+    this.stages = catalogue.stages;
+    this.available = selection.stages;
     this.latest = selection.latest;
     this.destination = destination;
     this.focus = undefined;
@@ -96,19 +104,53 @@ export class StageSelectScene extends Scene {
     addCardTextIn(this, TITLE_FONT, this.layout.title, title, paletteColour(this, "ink"));
     const font = phaserBitmapFont(this.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
     this.stages.forEach((id, index) => {
-      const layout = this.layout.buttons[index];
-      const label = TEXT.map.stages[id];
-      if (
-        !layout ||
-        label === undefined ||
-        inkWidth(font, CARD_TEXT_SCALE, label) > layout.button.width - 2 * TEXT_BUTTON.inset
-      ) {
-        throw new Error(`Stage label does not fit: ${id}`);
+      const layout = this.layout.buttons[index]!;
+      const available = this.available.includes(id);
+      const primary = id === this.latest;
+      const art = primary ? "ui-button-primary" : "ui-button";
+      const normal = addSlice(this, art, layout.button, "normal");
+      const pressed = addSlice(this, art, layout.button, "pressed").setVisible(false);
+      const previewKey = STAGE_PREVIEWS[id];
+      if (previewKey === undefined || !this.textures.exists(previewKey)) {
+        throw new Error(`No stage screenshot ${id}`);
       }
-      this.buttons.set(
-        id,
-        addTextButton(this, layout, label, id === this.latest ? { style: PRIMARY_BUTTON } : {}),
+      const image = this.add
+        .image(layout.preview.x, layout.preview.y, previewKey)
+        .setOrigin(0)
+        .setDisplaySize(layout.preview.width, layout.preview.height);
+      const name = addCardTextIn(
+        this,
+        BODY_FONT,
+        layout.name,
+        layout.text,
+        paletteColour(this, available ? (primary ? "white" : "ink") : "grey"),
       );
+      const numberText = TEXT.map.stageNumber.replace("{number}", String(index + 1));
+      const numberWidth = inkWidth(font, STAGE_NUMBER_SCALE, numberText);
+      if (numberWidth > layout.number.width) {
+        throw new Error(`Stage number does not fit: ${id}`);
+      }
+      const number = addCardText(
+        this,
+        BODY_FONT,
+        { x: layout.number.x + layout.number.width - numberWidth, y: layout.number.y },
+        numberText,
+        paletteColour(this, primary ? "white" : "grey"),
+      )
+        .setScale(STAGE_NUMBER_SCALE)
+        .setAlpha(0.7);
+      if (!available) {
+        normal.setTint(paletteColour(this, "lgrey"));
+        image.setTint(paletteColour(this, "grey")).setAlpha(0.45);
+        name.setAlpha(0.7);
+        number.setAlpha(0.5);
+      }
+      this.buttons.set(id, {
+        content: [image, name, number].map((object) => ({ object, y: object.y })),
+        layout,
+        normal,
+        pressed,
+      });
     });
     this.closeX = this.add
       .sprite(this.layout.close.at.x, this.layout.close.at.y, "ui-close")
@@ -119,7 +161,7 @@ export class StageSelectScene extends Scene {
       covered: () => [
         this.layout.card,
         this.layout.close.hit,
-        ...this.stages.map((_, index) => this.layout.buttons[index]!.hit),
+        ...this.layout.buttons.map(({ hit }) => hit),
       ],
     });
     this.watchInput();
@@ -136,7 +178,12 @@ export class StageSelectScene extends Scene {
   }
   private render(): void {
     for (const [id, button] of this.buttons) {
-      pressTextButton(button, this.pressed?.kind === "stage" && this.pressed.id === id);
+      const pressed = this.pressed?.kind === "stage" && this.pressed.id === id;
+      button.normal.setVisible(!pressed);
+      button.pressed.setVisible(pressed);
+      for (const { object, y } of button.content) {
+        object.setY(y + (pressed ? 1 : 0));
+      }
     }
     this.closeX.play(
       animationKey("ui-close", this.pressed?.kind === "close" ? "pressed" : "normal"),
@@ -159,7 +206,7 @@ export class StageSelectScene extends Scene {
       { art: this.layout.close.art, hit: this.layout.close.hit, key: "close" },
     ];
     const key = pressedArea(areas, playPoint(this, pointer));
-    return key === undefined
+    return key === undefined || (key !== "close" && !this.available.includes(key))
       ? undefined
       : key === "close"
         ? { kind: "close" }
@@ -170,7 +217,7 @@ export class StageSelectScene extends Scene {
       this.back();
       return;
     }
-    if (this.finished || !this.stages.includes(target.id)) {
+    if (this.finished || !this.available.includes(target.id)) {
       return;
     }
     this.finished = true;
@@ -180,7 +227,7 @@ export class StageSelectScene extends Scene {
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
       event.stopPropagation();
-      const next = stageSelectKey(this.latest, this.stages, this.focus, event);
+      const next = stageSelectKey(this.latest, this.available, this.focus, event);
       this.focus = next.focus;
       this.render();
       if (next.close) {

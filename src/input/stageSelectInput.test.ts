@@ -19,11 +19,19 @@ describe("stage-picker input", () => {
     const first = stageSelectKey(LATEST, STAGES, undefined, tab);
     expect(first.focus).toBe(LATEST);
     expect(first.stage).toBeUndefined();
-    const earlier = stageSelectKey(LATEST, STAGES, first.focus, tab);
+    const earlier = stageSelectKey(LATEST, STAGES, first.focus, { ...tab, key: "ArrowLeft" });
     expect(earlier.focus).toBe(STAGES[0]);
     expect(stageSelectKey(LATEST, STAGES, earlier.focus, { ...tab, key: "Enter" }).stage).toBe(
       STAGES[0],
     );
+  });
+  it("skips locked cards for navigation and activation", () => {
+    const unlocked = STAGES.slice(0, 1);
+    const event = { key: "Enter", repeat: false, shiftKey: false };
+    expect(stageSelectKey(unlocked[0]!, unlocked, STAGES[1], event).stage).toBeUndefined();
+    expect(
+      stageSelectKey(unlocked[0]!, unlocked, unlocked[0], { ...event, key: "Tab" }).focus,
+    ).toBe("close");
   });
   it("Escape and focused close return to the map without choosing a stage", () => {
     expect(

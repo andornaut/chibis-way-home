@@ -173,7 +173,7 @@ export class MapScene extends Scene implements StageSelectOpener {
         return;
       }
       if (control.kind === "node") {
-        this.selectDestination(control.id);
+        this.walkToDestination(control.id);
       } else {
         this.act(control.kind);
       }
@@ -399,10 +399,6 @@ export class MapScene extends Scene implements StageSelectOpener {
     }
     const selection = destinationSelection(PLANS, ZONE_MAP, this.open, destinationOf(ZONE_MAP, id));
     if (selection.kind === "unavailable") {
-      return;
-    }
-    if (selection.kind === "play") {
-      this.play(selection.stage);
       return;
     }
     this.stand = selection.latest;

@@ -19,7 +19,7 @@ export function stageSelectKey(
   if (action === "next" || action === "previous") {
     return {
       close: false,
-      focus: stepFocus([latest, ...stages.filter((id) => id !== latest), "close"], focus, action),
+      focus: focus === undefined ? latest : stepFocus([...stages, "close"], focus, action),
       stage: undefined,
     };
   }

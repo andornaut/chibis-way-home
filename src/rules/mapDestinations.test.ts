@@ -17,9 +17,9 @@ import {
 
 describe("destination selection", () => {
   it.each([
-    { completed: [], id: "first", kind: "play", latest: "one" },
+    { completed: [], id: "first", kind: "choose", latest: "one" },
     { completed: ["one"], id: "first", kind: "choose", latest: "two" },
-    { completed: ["one", "two"], id: "second", kind: "play", latest: "three" },
+    { completed: ["one", "two"], id: "second", kind: "choose", latest: "three" },
     { completed: ["one", "two", "three"], id: "second", kind: "choose", latest: "four" },
     { completed: [], id: "second", kind: "unavailable", latest: undefined },
   ])("$id with $completed produces $kind", ({ completed, id, kind, latest }) => {
@@ -31,9 +31,7 @@ describe("destination selection", () => {
       destination,
     );
     expect(result.kind).toBe(kind);
-    expect(
-      result.kind === "choose" ? result.latest : result.kind === "play" ? result.stage : undefined,
-    ).toBe(latest);
+    expect(result.kind === "choose" ? result.latest : undefined).toBe(latest);
   });
 
   it("never treats an unbuilt plan as playable just because its stage node and name exist", () => {
@@ -41,8 +39,9 @@ describe("destination selection", () => {
     const open = openMap(MAP, new Set(["one"]));
     expect(destinationStages(new Set(["one"]), MAP, open, first)).toEqual(["one"]);
     expect(destinationSelection(new Set(["one"]), MAP, open, first)).toEqual({
-      kind: "play",
-      stage: "one",
+      kind: "choose",
+      latest: "one",
+      stages: ["one"],
     });
   });
 
