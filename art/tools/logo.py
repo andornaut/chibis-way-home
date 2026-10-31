@@ -5,8 +5,8 @@ Usage, from the repository root:
   python3 -I art/tools/logo.py preview OUT.png  each logo on pale steel and navy at 1x and 3x
 
 All images have transparent backgrounds and binary alpha. Canvas sizes and stable keys:
-- logo: 360x193, full cream bird standing on a simple platform above flat BIRD / VERSUS FERRET lettering.
-- logo-nav: 250x30, compact full bird beside BIRD VERSUS FERRET on one line.
+- logo: 558x193, full cream bird standing on a simple platform above flat Chibi's / Way Home lettering.
+- logo-nav: 226x30, compact full bird beside Chibi's Way Home on one line.
 - logo-icon: 53x41, full bird standing on a short powder-blue platform, with no lettering.
 
 WORDMARK supplies the title. GLYPHS is the 5x7 alphabet. Lettering uses zone-blue over a flat dark-steel sign,
@@ -25,16 +25,18 @@ import bird as D  # noqa: E402
 import pixel  # noqa: E402
 from pixel import K, Grid  # noqa: E402
 
-WORDMARK = ("BIRD", "VERSUS FERRET")
+WORDMARK = ("Chibi's", "Way Home")
 OUT = {"logo": "public/art/logo.png", "logo-nav": "public/art/logo-nav.png", "logo-icon": "public/art/logo-icon.png"}
 
 GLYPHS = {
+    "'": ["..#..", "..#..", ".#...", ".....", ".....", ".....", "....."],
     "A": [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
     "B": ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
     "C": [".####", "#....", "#....", "#....", "#....", "#....", ".####"],
     "D": ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
     "E": ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
     "F": ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
+    "H": ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
     "I": ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "#####"],
     "K": ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
     "L": ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
@@ -46,12 +48,23 @@ GLYPHS = {
     "T": ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
     "U": ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
     "V": ["#...#", "#...#", "#...#", "#...#", "#...#", ".#.#.", "..#.."],
+    "W": ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "##.##", "#...#"],
+    "Y": ["#...#", "#...#", ".#.#.", "..#..", "..#..", "..#..", "..#.."],
+    'a': ['.....', '.....', '.###.', '....#', '.####', '#...#', '.####'],
+    'b': ['#....', '#....', '#.##.', '##..#', '#...#', '#...#', '####.'],
+    'e': ['.....', '.....', '.###.', '#...#', '#####', '#....', '.####'],
+    'h': ['#....', '#....', '#.##.', '##..#', '#...#', '#...#', '#...#'],
+    'i': ['..#..', '.....', '.##..', '..#..', '..#..', '..#..', '.###.'],
+    'm': ['.....', '.....', '##.#.', '#.#.#', '#.#.#', '#...#', '#...#'],
+    'o': ['.....', '.....', '.###.', '#...#', '#...#', '#...#', '.###.'],
+    's': ['.....', '.....', '.####', '#....', '.###.', '....#', '####.'],
+    'y': ['.....', '.....', '#...#', '#...#', '.####', '....#', '.###.'],
 }
 
 BIG = dict(b=11, fill="zone-blue", light="lgrey")
 SMALL = dict(b=3, fill="zone-blue", light="lgrey")
 NAV = dict(b=2, fill="zone-blue", light="zone-blue")
-CANVASES = {"logo": (360, 193), "logo-nav": (250, 30), "logo-icon": (53, 41)}
+CANVASES = {"logo": (558, 193), "logo-nav": (226, 30), "logo-icon": (53, 41)}
 
 
 def image(px):
@@ -147,9 +160,9 @@ def logo():
     from PIL import ImageDraw
 
     draw = ImageDraw.Draw(im)
-    draw.rectangle((35, 76, 324, 192), fill=pixel.rgb("ink") + (255,))
-    draw.rectangle((36, 77, 323, 191), fill=pixel.rgb("dslate") + (255,))
-    platform(im, 75, 74, 210)
+    draw.rectangle((35, 76, 522, 192), fill=pixel.rgb("ink") + (255,))
+    draw.rectangle((36, 77, 521, 191), fill=pixel.rgb("dslate") + (255,))
+    platform(im, (im.width - 210) // 2, 74, 210)
     for text, spec, y in ((WORDMARK[0], BIG, 82), (" ".join(WORDMARK[1:]), SMALL, 168)):
         line = word(text, **spec)
         im.alpha_composite(line, ((im.width - line.width) // 2, y))
