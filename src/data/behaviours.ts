@@ -348,7 +348,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = {
     },
 
     "set-trap": {
-      animation: "set-trap",
+      animation: "warn",
       motion: { kind: "wait" },
       transitions: [
         { to: "release-trap", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
