@@ -34,6 +34,7 @@ import type {
   Collision,
   ObjectLayout,
   Point,
+  SpriteSilhouettes,
   ZoneLayout,
   ZonePlan,
 } from "../data/types";
@@ -51,6 +52,7 @@ import { PAUSE_BUTTON } from "../layout/pauseCard";
 import { bottomShift, shifted, topShift } from "../layout/playView";
 import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
+import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
 import { nodeOf } from "../rules/map";
 import { stageCompletion } from "../rules/stageCompletion";
@@ -103,6 +105,7 @@ import { forceVisualPosition } from "../view/forceVisual";
 import { moveHintView } from "../view/moveHint";
 import { type ArtKind, artKind, artOffset, artScrollFactor } from "../view/objectArt";
 import { type PlayHold, stepAction } from "../view/playHold";
+import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { proximityDialogue } from "../view/zoneDialogue";
@@ -319,7 +322,16 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
 
     this.bird = this.add.sprite(0, 0, BIRD_SPRITE).setOrigin(0).setDepth(BIRD_DEPTH);
     this.manifest = this.cache.json.get(ART_MANIFEST_KEY) as ArtManifest;
-    this.hitboxes = artHitboxes((key) => this.textures.getFrame(key), this.manifest);
+    this.hitboxes = artHitboxes(
+      (key) => this.textures.getFrame(key),
+      this.manifest,
+      spriteContacts(
+        this.manifest,
+        (key) => this.cache.json.get(key) as AsepriteSheet,
+        (key) => this.textures.getFrame(key),
+        this.cache.json.get(CONTACT_SILHOUETTES) as SpriteSilhouettes | undefined,
+      ),
+    );
     const node = this.mapNode;
     const seed =
       this.preview?.assemblySeed ?? askedAssemblySeed(window.location.search) ?? newAssemblySeed();
@@ -1040,7 +1052,19 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
         if (art.sprite) {
           const pose = behaviourPose(object, behaviour);
           art.sprite.setFlipX(pose.flipX);
-          if (pose.animation !== undefined) {
+          if (object.contact) {
+            if (!behaviour.animationTag) {
+              throw new Error(`Missing rendered silhouette pose for ${object.art}`);
+            }
+            art.sprite.anims.stop();
+            art.sprite.setFrame(
+              contactFrameAt(
+                object.contact,
+                behaviour.animationTag,
+                behaviour.animationSeconds ?? 0,
+              ).frame,
+            );
+          } else if (pose.animation !== undefined) {
             show(art.sprite, pose.animation);
           }
         }
@@ -1051,7 +1075,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
         const mine = { x: at.x + object.width / 2, y: at.y + object.height / 2 };
         this.animate(art, object, characterState(object, moved, mine, hers));
       }
-      art.item.setPosition(x, y);
+      const position = object.contact
+        ? spriteFrameOrigin(object.contact.frame, object, at)
+        : { x, y };
+      art.item.setPosition(position.x, position.y);
     });
     this.drawTransients();
     this.drawPulses();

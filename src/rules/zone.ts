@@ -29,6 +29,7 @@ import {
   startBird,
   stepBird,
 } from "./bird";
+import { contactFrameAt, silhouetteContact } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import { deathSupport } from "./death";
 import { type ForcePulse, forcePulseVelocity } from "./force";
@@ -509,7 +510,7 @@ export function stepZone(
       crushed ||= solids.some((solid) => overlaps(birdBox(tuning, bird), solid));
     }
   }
-  const hazards = kinds.hazards.map((index) => {
+  const hazards = kinds.hazards.filter((index) => !objects[index]!.object.contact).map((index) => {
     const { after, behaviour, object } = objects[index]!;
     return (
       (objects[index] === kinds.fixed[index] ? kinds.fixedHazards[index] : undefined) ??
@@ -585,13 +586,51 @@ export function stepZone(
     kinds.hazards.some((index) => {
       const { behaviour, object } = objects[index]!;
       return behaviour?.segments.some((segment) => {
-        const before = contactBox(object, segment.from, segment.facing, segment.axis);
-        const after = contactBox(object, segment.to, segment.facing, segment.axis);
-        return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
-      });
+          if (object.contact) {
+            if (!segment.frame) {
+              throw new Error(`Missing silhouette sweep frame for ${object.art}`);
+            }
+            return silhouetteContact(
+              object,
+              segment.frame,
+              (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
+              segment.from,
+              segment.to,
+              birdAt(segment.start),
+              birdAt(segment.end),
+            );
+          }
+          const before = contactBox(object, segment.from, segment.facing, segment.axis);
+          const after = contactBox(object, segment.to, segment.facing, segment.axis);
+          return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
+        });
     });
+  const bodyContact = objects.some(({ after, behaviour, object }) => {
+    if (!object.contact || object.collision !== "hazard") {
+      return false;
+    }
+    const state = behaviour?.state;
+    if (!state?.animationTag) {
+      throw new Error(`Missing silhouette pose for ${object.art}`);
+    }
+    const frame = contactFrameAt(
+      object.contact,
+      state.animationTag,
+      state.animationSeconds ?? 0,
+    ).frame;
+    return silhouetteContact(
+      object,
+      frame,
+      (state.axis ?? object.behaviour?.axis) === "x" && state.facing === -1,
+      after,
+      after,
+      box,
+      box,
+    );
+  });
   const steps = zone.steps + 1;
   if (
+    bodyContact ||
     transientStep.lethal ||
     crushed ||
     swept ||

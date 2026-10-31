@@ -195,6 +195,24 @@ export function objectLayout(
       spawnTemplates[action.character] = { ...template, tileset: null };
     }
   }
+  const contact = hitboxes[skin?.art ?? character.art]?.contact;
+  if (art?.contact && !contact) {
+    throw new Error(`Missing visual skin silhouette for ${skin?.art ?? character.art}`);
+  }
+  if (contact && !behaviour) {
+    throw new Error(`Silhouette contact requires a behaviour for ${instance.character}`);
+  }
+  if (contact && behaviour) {
+    const tags = [
+      ...Object.values(behaviour.states).flatMap((node) =>
+        node.animation === null ? [] : [node.animation],
+      ),
+      behaviour.inactiveAnimation ?? character.animations?.idle,
+    ];
+    if (tags.some((tag) => tag !== undefined && !contact.tags[tag])) {
+      throw new Error(`Missing silhouette animation for ${instance.character}`);
+    }
+  }
   const idle = character.animations?.idle;
   return {
     animations: {
@@ -213,6 +231,7 @@ export function objectLayout(
     ...(Object.keys(spawnTemplates).length > 0 && { spawnTemplates }),
     ...(behaviour && { behaviour }),
     collision: archetype.collision,
+    ...(contact && { contact }),
     height,
     hitbox,
     interaction: { ...interaction, range: interaction.range * tile },

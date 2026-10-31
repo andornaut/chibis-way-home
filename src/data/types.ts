@@ -735,10 +735,15 @@ export interface SpriteSilhouettes {
 export interface SpriteContact {
   readonly frame: Size;
   readonly frames: Readonly<Record<string, readonly PixelRun[]>>;
-  readonly tags: Readonly<Record<string, {
-    readonly frames: readonly {readonly frame: string; readonly seconds: number}[];
-    readonly once: boolean;
-  }>>;
+  readonly tags: Readonly<
+    Record<
+      string,
+      {
+        readonly frames: readonly { readonly frame: string; readonly seconds: number }[];
+        readonly once: boolean;
+      }
+    >
+  >;
 }
 
 export interface ArtHitbox {

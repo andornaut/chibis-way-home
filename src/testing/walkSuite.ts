@@ -1,6 +1,4 @@
-// The zone walk's checks on one zone plan, for the walk tests: it clears at its right edge, it
-// reaches every
-// surface it does not mark out of reach and none it does, and no no-cross pair is crossed.
+import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 import { beforeAll, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
@@ -8,19 +6,40 @@ import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
-import type { TilePoint, ZoneLayout, ZonePlan } from "../data/types";
+import type { SpriteSilhouettes, TilePoint, ZoneLayout, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import { crosses, type Surface, surfaceAt, walkZone, type ZoneWalk } from "../sim/zoneWalk";
 import { artHitboxes, type ArtManifest, sheetFrameSize } from "../view/aseprite";
 import { BIRD_FRAME } from "../view/bird";
+import { spriteContacts } from "../view/spriteContacts";
 import type { Tileset } from "../view/tiles";
 
-const SHEETS = import.meta.glob<{
-  readonly frames: Readonly<Record<string, { readonly sourceSize: { w: number; h: number } }>>;
-}>("../../public/art/sprites/*.json", { eager: true, import: "default" });
+const SHEETS = import.meta.glob<
+  AsepriteSheet & {
+    readonly frames: Readonly<Record<string, { readonly sourceSize: { w: number; h: number } }>>;
+  }
+>("../../public/art/sprites/*.json", { eager: true, import: "default" });
+const frame = (key: string) =>
+  sheetFrameSize(SHEETS[`../../public/art/sprites/${key}.json`] ?? { frames: {} });
+const contactData = import.meta.glob<SpriteSilhouettes>(
+  "../../public/art/contact-silhouettes.json",
+  { eager: true, import: "default" },
+);
 export const HITBOXES = artHitboxes(
-  (key) => sheetFrameSize(SHEETS[`../../public/art/sprites/${key}.json`] ?? { frames: {} }),
+  frame,
   manifestJson as ArtManifest,
+  spriteContacts(
+    manifestJson as ArtManifest,
+    (key) => {
+      const sheet = SHEETS[`../../public/art/sprites/${key}.json`];
+      if (!sheet) {
+        throw new Error(`Missing contact sheet ${key}`);
+      }
+      return sheet;
+    },
+    frame,
+    contactData["../../public/art/contact-silhouettes.json"],
+  ),
 );
 export const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
 // Art's tilesets by key.

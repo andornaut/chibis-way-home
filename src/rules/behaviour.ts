@@ -15,11 +15,13 @@ import {
   targetReachable,
 } from "./behaviourReach";
 import { birdBox, type BirdState, EDGE } from "./bird";
+import { contactFrameAt } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import { hopLift } from "./motion";
-import { overlaps } from "./rect";
 
 export interface BehaviourState {
+  readonly animationTag?: string;
+  readonly animationSeconds?: number;
   readonly axis?: "x" | "y";
   readonly flightTarget?: Point;
   readonly pendingEntry?: boolean;
@@ -36,6 +38,7 @@ export interface BehaviourState {
 }
 
 export interface BehaviourSegment {
+  readonly frame?: string;
   readonly axis?: "x" | "y";
   readonly end: number;
   readonly facing: -1 | 1;
@@ -264,13 +267,14 @@ function enterState(
     stateKey: key,
   };
   delete (next as { flightTarget?: Point }).flightTarget;
+  const animation = syncAnimation(object, next);
   if (node.motion.kind === "fly" && node.motion.to === "target") {
     const contact = contactBox(object, at, facing, next.axis);
     const target = birdBox(tuning, bird);
     const x = target.x + target.width / 2 - contact.width / 2 - (contact.x - at.x);
     const y = target.y + target.height / 2 - contact.height / 2 - (contact.y - at.y);
     return {
-      ...next,
+      ...animation,
       flightTarget: {
         x: Math.max(
           object.origin.x + node.motion.bounds.x,
@@ -283,7 +287,29 @@ function enterState(
       },
     };
   }
-  return next;
+  return animation;
+}
+
+function syncAnimation(object: ObjectLayout, state: BehaviourState): BehaviourState {
+  if (!object.contact) {
+    return state;
+  }
+  const tag = state.active
+    ? (object.behaviour?.states[state.stateKey]?.animation ??
+      state.animationTag ??
+      object.animations.idle)
+    : (object.behaviour?.inactiveAnimation ?? object.animations.idle);
+  if (!tag || !object.contact.tags[tag]) {
+    throw new Error(`Missing silhouette animation for ${object.art}`);
+  }
+  if (state.animationTag === tag && state.animationSeconds !== undefined) {
+    return state;
+  }
+  return {
+    ...state,
+    animationSeconds: state.animationTag === tag ? (state.animationSeconds ?? 0) : 0,
+    animationTag: tag,
+  };
 }
 
 export function startBehaviour(
@@ -524,12 +550,28 @@ export function stepBehaviour(
     return { actions: [], at, segments: [], state };
   }
   if (!state.active) {
-    return {
-      actions: [],
-      at,
-      segments: [{ end: seconds, facing: state.facing, from: at, start: 0, to: at }],
-      state,
-    };
+    let next = syncAnimation(object, state);
+    const segments: BehaviourSegment[] = [];
+    let time = 0;
+    while (time < seconds) {
+      const frame = object.contact
+        ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
+        : undefined;
+      const slice = Math.min(seconds - time, frame?.remaining ?? Infinity);
+      segments.push({
+        end: time + slice,
+        facing: next.facing,
+        from: at,
+        start: time,
+        to: at,
+        ...(frame && { frame: frame.frame }),
+      });
+      if (object.contact) {
+        next = { ...next, animationSeconds: (next.animationSeconds ?? 0) + slice };
+      }
+      time += slice;
+    }
+    return { actions: [], at, segments, state: next };
   }
   const world = behaviourWorld(geometry);
   const actions: BehaviourEvent[] = [];
@@ -573,7 +615,10 @@ export function stepBehaviour(
     if (time >= seconds) {
       break;
     }
-    let slice = seconds - time;
+    const frame = object.contact
+      ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
+      : undefined;
+    let slice = Math.min(seconds - time, frame?.remaining ?? Infinity);
     for (const { when } of node.transitions) {
       if (
         when.every(
@@ -672,36 +717,25 @@ export function stepBehaviour(
       }
     }
     const end = time + slice;
-    segments.push({ axis: track.axis, end, facing: next.facing, from: current, start: time, to });
+    segments.push({
+      axis: track.axis,
+      end,
+      facing: next.facing,
+      from: current,
+      start: time,
+      to,
+      ...(frame && { frame: frame.frame }),
+    });
     current = to;
-    next = { ...next, elapsed: next.elapsed + slice };
+    next = {
+      ...next,
+      elapsed: next.elapsed + slice,
+      ...(object.contact && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
+    };
     time = end > time ? end : seconds;
     instant.clear();
   }
   return { actions, at: current, segments, state: next };
 }
 
-// A positive interval of relative swept overlap catches contact between fixed frames without
-// treating an edge graze or a diagonal bounding-box overlap as a collision.
-export function sweptContact(a: Rect, aEnd: Point, b: Rect, bEnd: Point): boolean {
-  if (overlaps(a, b)) {
-    return true;
-  }
-  let enter = 0;
-  let leave = 1;
-  for (const axis of ["x", "y"] as const) {
-    const size = axis === "x" ? "width" : "height";
-    const velocity = aEnd[axis] - a[axis] - (bEnd[axis] - b[axis]);
-    if (velocity === 0) {
-      if (a[axis] >= b[axis] + b[size] || b[axis] >= a[axis] + a[size]) {
-        return false;
-      }
-      continue;
-    }
-    const first = (b[axis] - a[axis] - a[size]) / velocity;
-    const last = (b[axis] + b[size] - a[axis]) / velocity;
-    enter = Math.max(enter, Math.min(first, last));
-    leave = Math.min(leave, Math.max(first, last));
-  }
-  return enter < leave;
-}
+export { sweptContact } from "./sweptContact";

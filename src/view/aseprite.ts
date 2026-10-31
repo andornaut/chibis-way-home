@@ -1,4 +1,4 @@
-import type { ArtHitbox, Rect, Size } from "../data/types";
+import type { ArtHitbox, Rect, Size, SpriteContact } from "../data/types";
 
 // Art's sprites, as public/art/manifest.json lists them and Aseprite exports them.
 
@@ -68,10 +68,21 @@ export function sheetFrameSize(sheet: {
 export function artHitboxes(
   frameOf: (key: string) => Size,
   manifest: ArtManifest,
+  contacts: Readonly<Record<string, SpriteContact>> = {},
 ): Readonly<Record<string, ArtHitbox>> {
   return Object.fromEntries(
-    manifest.sprites.flatMap(({ hitbox, key }) =>
-      hitbox ? [[key, { frame: frameOf(key), hitbox }] as const] : [],
-    ),
+    manifest.sprites.flatMap(({ contact, hitbox, key }) => {
+      if (contact === "silhouette" && !contacts[key]) {
+        throw new Error(`Missing silhouette contact for ${key}`);
+      }
+      return hitbox
+        ? [
+            [
+              key,
+              { frame: frameOf(key), hitbox, ...(contacts[key] && { contact: contacts[key] }) },
+            ] as const,
+          ]
+        : [];
+    }),
   );
 }
