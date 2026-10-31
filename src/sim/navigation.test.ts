@@ -1,13 +1,52 @@
 import { describe, expect, it } from "vitest";
 
+import { STATIC_MOTION } from "../data/archetypes";
 import { BIRD } from "../data/bird";
-import type { Rect, ZoneLayout } from "../data/types";
+import type { ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { STEP_SECONDS } from "../rules/step";
 import { startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
 import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors } from "./bot";
 import { plannedInput, validateNavigation } from "./navigation";
 
+function movingObject(
+  collision: ObjectLayout["collision"],
+  origin: { x: number; y: number },
+): ObjectLayout {
+  return {
+    animations: {
+      idle: undefined,
+      move: undefined,
+      open: undefined,
+      react: undefined,
+      talk: undefined,
+    },
+    art: "fixture",
+    character: "fixture",
+    collision,
+    height: 12,
+    hitbox: undefined,
+    interaction: { kind: "none", range: 0 },
+    lines: [],
+    motion: {
+      algorithm: "linear",
+      direction: "down",
+      distance: 144,
+      hopHeight: 0,
+      pause: 1,
+      speed: 120,
+      variance: 0,
+    },
+    origin,
+    phase: 0,
+    quips: [],
+    quirks: [],
+    reaction: { kind: "none", range: 0, speed: 0 },
+    room: undefined,
+    scene: undefined,
+    width: 72,
+  };
+}
 function fixture(solids: readonly Rect[]): ZoneLayout {
   return {
     areas: {
@@ -63,17 +102,68 @@ describe("bounded real-rule navigation", () => {
     expect(navigationCounters(result.bot).physicsSteps).toBeLessThanOrEqual(200000);
   });
   it("uses a short hop under a roof and crosses a gap without changing the real state during planning", () => {
-    const layout = fixture([
+    const base = fixture([
       { height: 60, width: 144, x: 0, y: 240 },
       { height: 96, width: 96, x: 144, y: 204 },
       { height: 12, width: 120, x: 120, y: 148 },
       { height: 60, width: 100, x: 300, y: 240 },
     ]);
+    const ceiling: ObjectLayout = {
+      ...movingObject("hazard", { x: 120, y: 160 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 120,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: { main: { ...base.areas.main!, objects: [ceiling] } },
+    };
     const initial = startZone(BIRD, layout, 1),
-      snapshot = structuredClone(initial);
+      snapshot = JSON.stringify(initial);
     plannedInput(BIRD, layout, undefined, 1, initial, newBot(1));
-    expect(initial).toEqual(snapshot);
+    expect(JSON.stringify(initial)).toBe(snapshot);
     const result = traverse(layout);
+    expect(result.zone.death).toBeUndefined();
+    expect(
+      result.zone.cleared,
+      JSON.stringify({ bird: result.zone.bird, navigation: result.bot.navigation }),
+    ).toBe(true);
+  });
+  it("waits for a late lift then boards and transfers to a higher landing", () => {
+    const base = fixture([
+      { height: 60, width: 120, x: 0, y: 240 },
+      { height: 204, width: 160, x: 240, y: 96 },
+    ]);
+    const lift = movingObject("ledge", { x: 132, y: 96 });
+    const layout: ZoneLayout = {
+      ...base,
+      areas: { main: { ...base.areas.main!, objects: [lift] } },
+    };
+    const result = traverse(layout, 900);
+    expect(result.zone.death).toBeUndefined();
+    expect(
+      result.zone.cleared,
+      JSON.stringify({ bird: result.zone.bird, navigation: result.bot.navigation }),
+    ).toBe(true);
+  });
+  it("uses real hazard timing to wait for a blocked corridor to open", () => {
+    const base = fixture([{ height: 60, width: 400, x: 0, y: 240 }]);
+    const hazard: ObjectLayout = {
+      ...movingObject("hazard", { x: 156, y: 120 }),
+      height: 120,
+      motion: {
+        ...movingObject("hazard", { x: 156, y: 120 }).motion,
+        direction: "up",
+        distance: 180,
+        pause: 1,
+      },
+      width: 24,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: { main: { ...base.areas.main!, objects: [hazard] } },
+    };
+    const result = traverse(layout, 450);
     expect(result.zone.death).toBeUndefined();
     expect(
       result.zone.cleared,

@@ -172,13 +172,13 @@ export function plannedInput(
     { back: 0, delay: 0, hold: 0, stationary: 0 },
     { back: 0, delay: 0, hold: 1, stationary: 0 },
     { back: 0, delay: 0, hold: full, stationary: 0 },
-    { back: 0, delay: 24, hold: 0, stationary: 0 },
+    { back: 0, delay: 0, hold: 0, stationary: Number.MAX_SAFE_INTEGER },
     { back: 0, delay: 24, hold: 1, stationary: 0 },
     { back: 0, delay: 24, hold: full, stationary: 0 },
     { back: 18, delay: 0, hold: full, stationary: 0 },
     { back: 0, delay: 0, hold: full, stationary: 12 },
   ];
-  let best: { candidate: Candidate; elapsed: number; score: number } | undefined;
+  let best: { candidate: Candidate; elapsed: number; score: number; ticks: number } | undefined;
   const choices = candidates.map((candidate) => ({ candidate, elapsed: 0 }));
   if (navigation.continuation) {
     choices.unshift(navigation.continuation);
@@ -191,6 +191,7 @@ export function plannedInput(
     let predicted = zone;
     let safe = true;
     let airborne = !zone.bird.grounded;
+    let predictedTicks = 0;
     for (let tick = 0; tick < limits.horizonTicks; tick++) {
       predicted = stepZone(
         tuning,
@@ -200,6 +201,7 @@ export function plannedInput(
         predicted,
       );
       navigation.counters.physicsSteps++;
+      predictedTicks++;
       if (predicted.death || predicted.turnedBack) {
         safe = false;
         break;
@@ -233,7 +235,7 @@ export function plannedInput(
       score += 100;
     }
     if (!best || score > best.score) {
-      best = { candidate, elapsed, score };
+      best = { candidate, elapsed, score, ticks: predictedTicks };
     }
   }
   if (!best) {
@@ -248,7 +250,7 @@ export function plannedInput(
   }
   navigation.status = "ready";
   navigation.continuation = { candidate: best.candidate, elapsed: best.elapsed + 1 };
-  navigation.queue = Array.from({ length: limits.replanTicks }, (_, tick) =>
+  navigation.queue = Array.from({ length: Math.min(limits.replanTicks, best.ticks) }, (_, tick) =>
     action(direction, best.candidate, tick + best.elapsed),
   );
   return navigation.queue.shift()!;
