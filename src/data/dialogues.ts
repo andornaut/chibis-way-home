@@ -1,4 +1,4 @@
-import type { DialoguePlan, DialogueSpeaker } from "./types";
+import type { DialoguePlan, DialogueSpeaker, ZoneDialoguePlan } from "./types";
 
 // Linear conversations, with paragraph text in TEXT.lines.
 export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
@@ -87,4 +87,17 @@ export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
   bear: { colour: "tan", portrait: "portrait-bear", side: "right" },
   bird: { colour: "amber", portrait: "portrait-bird", side: "left" },
   dog: { colour: "green", portrait: "portrait-dog", side: "right" },
+  ferret: { colour: "tan", portrait: "portrait-ferret", side: "right" },
+  goose: { colour: "tan", portrait: null, side: "right" },
+  pigeon: { colour: "tan", portrait: null, side: "right" },
+  raccoon: { colour: "tan", portrait: null, side: "right" },
+};
+
+export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
+  apartment: { intro: "furt-intro", outro: "furt-outro" },
+  "blue-cityscape": { intro: "depot-dog-intro", outro: "archie-outro" },
+  countryside: { intro: "trixi-intro", outro: "trixi-outro" },
+  "home-city": { intro: "kiwi-intro", outro: "kiwi-outro" },
+  industrial: { intro: "pebble-intro", outro: "pebble-outro" },
+  woodland: { intro: "bini-intro", outro: "bini-outro" },
 };
