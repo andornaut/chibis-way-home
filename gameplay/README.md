@@ -42,7 +42,7 @@ Each target is a band, not a point, assessed per stage and player skill. PLACEHO
 
 ## Remaining for the first build
 
-**Current implementation scope:** the cast identities in the rulebook: Chibi the bird, Furt the ferret, Archie the dog, Pebble the pigeon, Trixi the goose, Bini the bear and Kiwi the female raccoon. Existing runtime patterns are documented separately from approved replacement mechanics for Pebble, Trixi and Bini; those targets do not claim the new mechanics are already built. Stage progression, jump rules and story are unchanged.
+**Current implementation scope:** the named cast's behaviours, paired with their runtime, values and art. Pebble launches from posts and drops lethal white blocks straight down; they disappear on landing, including on ledges. Trixi wears oversized glasses and places red-edged floor traps with a visible arming delay. Bini's phone introduction leads into a sonic push, charge and contact maul; high ground and solid cover avoid the growl, which kills only indirectly through hazards or falls. Kiwi is a female raccoon using the shared vertical climb-and-drop graph. Archie uses his design from Archie's Dog Walks, and Furt retains his existing behaviour. Stage progression, jump rules and the unresolved friendship outcome are unchanged.
 
 Open questions:
 

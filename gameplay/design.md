@@ -18,17 +18,17 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 
 ## Cast
 
-| Name   | Identity           | Role                            |
-| ------ | ------------------ | ------------------------------- |
-| Archie | Dog                | Blue cityscape antagonist       |
-| Bini   | Bear               | Woodland antagonist             |
-| Chibi  | Bird               | Player character                |
-| Furt   | Ferret             | Apartment building antagonist   |
-| Kiwi   | Female raccoon     | Home city antagonist            |
-| Pebble | Pigeon             | Industrial outskirts antagonist |
-| Trixi  | Goose with glasses | Countryside antagonist          |
+| Name   | Identity                     | Role                            |
+| ------ | ---------------------------- | ------------------------------- |
+| Archie | Dog                          | Blue cityscape antagonist       |
+| Bini   | Bear                         | Woodland antagonist             |
+| Chibi  | Bird                         | Player character                |
+| Furt   | Ferret                       | Apartment building antagonist   |
+| Kiwi   | Female raccoon               | Home city antagonist            |
+| Pebble | Pigeon                       | Industrial outskirts antagonist |
+| Trixi  | Goose with oversized glasses | Countryside antagonist          |
 
-The named cast uses the current runtime patterns described below. The replacement mechanics listed under Implementation targets are approved work, not claims of completed runtime behaviour.
+The named cast uses shared data-driven behaviours. The encounter rules below are delivered with their matching runtime, values and artwork.
 
 ## Core loop
 
@@ -102,7 +102,7 @@ A stage is the individual playable layout, currently represented by `ZonePlan` i
 - **Crush:** a moving platform that pushes him sideways carries him to its leading edge. If it squeezes him into terrain or another solid, he is crushed and enters the death flow, as a hazard does. Layouts leave room beside every moving platform's path so he is never pinned on a required route
 - **Difficulty:** per-zone bands and chunk-selection weights in `src/data/` set a demanding first-zone base and increase difficulty in every following zone. Blue cityscape selects grades 3 to 4, Industrial outskirts and Countryside grades 3 to 5, and Woodland, Home city and Apartment building grades 4 to 5. Increasing weights for harder chunks distinguish successive zones even when their bands match. Seeded variation remains inside each band
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
-- **Edge hazards:** a common red strip, 2 to 3 px thick, can cover the top, bottom, left or right edge of terrain. Inanimate hazards use red contact edges; animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow
+- **Edge hazards:** a common red strip, 2 to 3 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow
 - **Exit:** reaching the end of a stage's final area clears the stage. A first stage shows the inter-stage cutscene; a second stage returns to the map for travel to the next zone, except for the final-stage celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged, and cumulative active time is retained. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
@@ -189,10 +189,11 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Progression:** clearing City boundary opens Warehouse district; clearing Warehouse district opens Freight terminal. Both remain replayable through the existing stage-choice flow. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room. These stages add no new room, plot or dialogue
 
-### Pebble current runtime pattern
+### Pebble encounter
 
-- **Contact:** Pebble is always lethal on contact, including while preparing and resting, without a red contact outline
-- **Cycle:** climb, prepare, drop, rest, then climb again. The shared behaviour graph and data define its vertical extent, movement speeds and state timings
+- **Contact:** Pebble is always lethal on contact, including while perched, without a red contact outline
+- **Cycle:** perch on posts, spot Chibi, launch into flight and drop white-block poop projectiles. Behaviour timing and flight tuning live in data
+- **Projectiles:** each white block falls straight down and is lethal on contact. It disappears on landing, including on a ledge, leaving no residue and never homing on Chibi
 
 ### Countryside
 
@@ -202,36 +203,39 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Progression:** clearing Freight terminal opens Farmland; clearing Farmland opens River crossing. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room; these stages add no new rooms, plot, dialogue or bosses
 
-### Trixi current runtime pattern
+### Trixi encounter
 
-- **Contact:** Trixi is always lethal on contact, including while signalling and resting, without a red contact outline
-- **Cycle:** signal, make a committed short charge, then rest before repeating. Its shared data-driven behaviour graph defines the timing and movement tuning
+- **Appearance:** Trixi wears oversized glasses
+- **Contact:** Trixi is always lethal on contact, including while placing traps, without a red contact outline
+- **Traps:** Trixi places red-edged floor traps. A visible arming delay precedes their lethal contact state; trap timing and placement values live in data
 
 ### Woodland
 
 - **Appearance:** woodland uses its canonical green theme through shared terrain, structure, prop and background skins
-- **Encounters:** both stages feature Bini through the existing vertical behaviour graph. Bini and earlier enemies use the shared detection, pursuit and frustration rules
+- **Encounters:** both stages feature Bini through shared growl, charge and contact behaviours. Bini and earlier enemies use the shared detection, pursuit and frustration rules
 - **Layout:** Forest paths and Ravine each use fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
 - **Progression:** clearing River crossing opens Forest paths; clearing Forest paths opens Ravine. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, dialogue, bosses or combat. Water does not add hidden hazards
 
-### Bini current runtime pattern
+### Bini encounter
 
-- **Contact:** Bini is always lethal on contact, including during preparation, rest and return, without a red contact outline
-- **Cycle:** Bini prepares visibly, swoops down, rests and returns upward using the shared vertical behaviour graph. Numerical movement and timing values stay in data
+- **Contact:** Bini is always lethal on contact, including while resting, without a red contact outline. His charge and maul are contact threats, not a combat encounter
+- **Cycle:** idle with the phone, growl, then charge and maul using shared behaviour primitives. Timing and movement values live in data
+- **Growl:** the long sonic growl pushes Chibi without killing directly. It can cause death indirectly by pushing him into a hazard or off a ledge. High ground is the primary way to avoid it; solid cover also blocks it
+- **Introduction:** Bini sits with a phone playing Archie's Dog Walks. His annoyed introduction precedes his aggressive behaviour
 
 ### Home city
 
 - **Appearance:** City outskirts and Familiar neighbourhood use the canonical peach theme through shared terrain, structure, prop and background skins
-- **Encounters:** both stages feature Kiwi through the existing hop primitive. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
+- **Encounters:** both stages feature Kiwi through the existing vertical climb-and-drop behaviour graph. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
 - **Layout:** each stage uses fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
 - **Progression:** clearing Ravine opens City outskirts; clearing City outskirts opens Familiar neighbourhood. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, dialogue, bosses or combat. Water does not add hidden hazards
 
-### Kiwi current runtime pattern
+### Kiwi encounter
 
-- **Contact:** Kiwi is always lethal on contact, including during her pauses, without a red contact outline
-- **Cycle:** repeated hops are separated by predictable pauses and use the shared pursuit rules. The shared hop primitive and behaviour data define the movement and timing
+- **Contact:** Kiwi is always lethal on contact, including while preparing and resting, without a red contact outline
+- **Cycle:** climb, prepare, drop and rest, then climb again. Her vertical movement and state timings live in the shared behaviour data
 
 ### Apartment building
 
@@ -244,20 +248,15 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room, quest or dialogue. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
 - **Stairs:** walking into marked main-route stairs changes floor automatically, without Use. Stairs are reversible; Chibi can return through earlier sections and leave for the map at the first section's left edge
 
-### First Archie current runtime pattern
+### First Archie encounter
 
 - **Activation:** proximity starts the introduction once per attempt, freezing play. Completing or skipping it activates Archie and resumes play
+- **Appearance:** Archie uses his design from Archie's Dog Walks
 - **Approach:** the loading yard follows the basic hop and full-jump lessons and precedes the streets. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
 - **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
 - **Dialogue:** the first introduction has three lines: Archie says Furt asked him to stop Chibi; Chibi says he is going home; Archie tells him to get past. The player-facing wording lives in the text data files, with Skip available
 - **Timing:** Archie uses the same timing across both stages of the first zone; their layouts vary. The first encounter is in the first stage
-
-### Implementation targets
-
-- **Bini:** idle with a phone, use a long growl that pushes Chibi, then charge and maul. High ground and solid cover let Chibi avoid the growl
-- **Pebble:** perch on posts, spot Chibi, fly and drop white-block poop projectiles. Each projectile falls straight down, is lethal on contact and disappears on landing, with no residue or homing
-- **Trixi:** wear glasses and set traps. Trap details remain undecided
 
 ### Rooms
 
