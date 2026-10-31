@@ -47,7 +47,7 @@
       .home-content {
         display: grid;
         grid-template-areas: "brand" "about" "actions" "keys";
-        grid-template-columns: minmax(0, 440px);
+        grid-template-columns: minmax(0, 558px);
         justify-content: center;
         justify-items: center;
         gap: 16px;
@@ -60,8 +60,8 @@
         grid-area: brand;
         position: relative;
         isolation: isolate;
-        width: min(360px, 100%);
-        aspect-ratio: 360 / 225;
+        width: min(558px, 100%);
+        aspect-ratio: 558 / 225;
       }
       .scenery,
       .scenery::before,
@@ -212,7 +212,7 @@
       @media (min-width: 700px) and (orientation: landscape) {
         .home-content {
           grid-template-areas: "brand about" "brand keys" "actions .";
-          grid-template-columns: minmax(0, 360px) minmax(0, 440px);
+          grid-template-columns: minmax(0, 558px) minmax(0, 440px);
           gap: 16px 32px;
           align-items: center;
           text-align: start;
@@ -244,7 +244,7 @@
         <div class="brand">
           <div class="scenery" aria-hidden="true"></div>
           <h1 class="hero">
-            <img class="logo" src="/art/logo.png" width="360" height="193" alt="Chibi's Way Home" />
+            <img class="logo" src="/art/logo.png" width="558" height="193" alt="Chibi's Way Home" />
           </h1>
         </div>
         <div class="about">

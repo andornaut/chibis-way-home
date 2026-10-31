@@ -31,7 +31,7 @@
   // Art's logos, at 1x: art/README.md, Logo.
   const logo = slim
     ? { height: 41, src: "/art/logo-icon.png", width: 53 }
-    : { height: 30, src: "/art/logo-nav.png", width: 250 };
+    : { height: 30, src: "/art/logo-nav.png", width: 226 };
   const li = document.createElement("li");
   li.className = "site-nav-logo";
   const a = document.createElement("a");
