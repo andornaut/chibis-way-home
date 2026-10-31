@@ -117,9 +117,8 @@ def wall(style):
         rect(im, "zone-green-shade", (0, 100, 48, 104))
         rect(im, SHADE, (22, 8, 24, 98))
     else:
-        rect(im, SHADE, (0, 98, 48, 102))
-        rect(im, SHADE, (10, 22, 38, 76))
-        rect(im, PRIMARY, (12, 24, 36, 74))
+        rect(im, SHADE, (0, 98, 48, 132))
+        rect(im, PRIMARY, (4, 106, 44, 124))
     return im
 
 
@@ -169,7 +168,9 @@ def context():
     labels = ("Lobby", "Restaurant", "Pool", "Spa", "Residential", "Exterior")
     for i, style in enumerate(("lobby", "restaurant", "pool", "spa", "residential")):
         for x in range(i * 120, i * 120 + 120, 48):
-            im.alpha_composite(wall(style).crop((0, 0, min(48, (i + 1) * 120 - x), 144)), (x, 96))
+            width = min(48, (i + 1) * 120 - x)
+            for y in (-48, 96):
+                im.alpha_composite(wall(style).crop((0, 0, width, 144)), (x, y))
     im.alpha_composite(facade(), (672, 60))
     ts = dict(tiles())
     for i, family in enumerate(FAMILIES):

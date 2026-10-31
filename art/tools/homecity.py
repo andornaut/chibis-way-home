@@ -98,13 +98,13 @@ def far():
 
 def house(im, x, top, width, height, windows=True):
     """One quiet middle-distance home; broad windows rather than repeated fine grids."""
-    rect(im, SHADE, (x, top + 16, x + width, top + height))
+    rect(im, PRIMARY, (x, top + 16, x + width, top + height))
     polygon(im, "zone-red-shade", ((x - 4, top + 18), (x + width // 2, top),
                                   (x + width + 4, top + 18)))
     rect(im, "zone-red-shade", (x + width - 18, top + 1, x + width - 12, top + 14))
     if windows:
         for offset in (12, width - 24):
-            rect(im, PRIMARY, (x + offset, top + 38, x + offset + 12, top + 58))
+            rect(im, SHADE, (x + offset, top + 38, x + offset + 12, top + 58))
 
 
 def outskirts_mid():
@@ -130,7 +130,7 @@ def neighbourhood_mid():
 
 
 def outskirts_wall():
-    im = image(48, 144, SHADE)
+    im = image(48, 144, PRIMARY)
     rect(im, PRIMARY, (0, 0, 48, 6))
     rect(im, "zone-red-shade", (0, 6, 48, 9))
     for y in range(24, 144, 24):
@@ -142,7 +142,7 @@ def outskirts_wall():
 
 
 def neighbourhood_wall():
-    im = image(48, 180, SHADE)
+    im = image(48, 180, PRIMARY)
     rect(im, PRIMARY, (0, 0, 48, 9))
     rect(im, "zone-red-shade", (0, 9, 48, 12))
     rect(im, "zone-red-shade", (10, 30, 38, 78))
