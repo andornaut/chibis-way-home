@@ -20,7 +20,8 @@ Scale
   row 5). Indoors (the lobby) is a separate scene at full scale, also 720px tall, its floor at y 672.
 
 Palette (the street; the lobby keeps its own)
-- A pale steel atmosphere: flat lgrey sky, grey window-free distant skyline and sparse slate middle-distance
+- A pale steel atmosphere: flat zone-blue sky, zone-blue-shade window-free distant skyline and sparse slate
+middle-distance
   buildings. The two city layers repeat at 720px and stay separate for parallax. Near facades and shopfronts use
   slate, dslate and grey, with quiet windows. Cream icons, ochre awnings and amber room doors provide warm accents.
 - street-city-far: 720x600, bottom y 600, repeat x; suggested horizontal scroll factor 0.15.
@@ -98,8 +99,9 @@ Backdrops
   tiles it horizontally across a run; "none" places it once. Street y values are in the two-screen frame (the
   sidewalk's top at y 600, row 50); the sidewalk and road tiles fill rows 50 to 59 below it. Draw order, back to front: sky, skyline, facades and
   their upper storeys and rooflines, facade pieces, storefronts, street furniture, then the play layer.
-- Sky and city (repeat x): street-sky 48x600 (y 600), flat lgrey. street-city-far and street-city-mid are each
-  720x600 (y 600), window-free grey and slate silhouettes. street-skyline 336x600 is their combined fallback.
+- Sky and city (repeat x): street-sky 48x600 (y 600), flat zone-blue. street-city-far and street-city-mid are each
+  720x600 (y 600), window-free zone-blue-shade and slate silhouettes. street-skyline 336x600 is their combined
+  fallback.
 - Facades (repeat x, one per building type; a run per building): facade-one-storey 48x192 (y 600, a parapet 192
   up), facade-walkup 48x312, facade-brownstone 48x312, facade-hotel 48x312 (y 600 each). Each shows the 180px
   ground storey with a band over the shopfronts and the next storey's windows above, up to y 288.
@@ -618,8 +620,8 @@ def icon(g, kind, x, y, c):
 
 
 def street_sky():
-    """48x600, repeat x: one flat lgrey atmosphere, fixed behind the scrolling city layers."""
-    return R(Grid(48, STREET_FY), (0, 0, 48, STREET_FY, "lgrey"))
+    """48x600, repeat x: one flat powder-blue atmosphere, fixed behind the scrolling city layers."""
+    return R(Grid(48, STREET_FY), (0, 0, 48, STREET_FY, "zone-blue"))
 
 
 def city_blocks(g, colour, blocks):
@@ -634,9 +636,9 @@ def city_blocks(g, colour, blocks):
 
 
 def street_city_far():
-    """720x600, bottom y 600, repeat x: grey distant city against lgrey sky. No windows or outlined edges.
+    """720x600, bottom y 600, repeat x: muted blue distant city against powder-blue sky. No windows or outlined edges.
     Suggested horizontal scroll factor 0.15; keep its vertical motion weak during climbs."""
-    return city_blocks(Grid(720, STREET_FY), "grey", (
+    return city_blocks(Grid(720, STREET_FY), "zone-blue-shade", (
         (12, 54, 218, False), (90, 72, 148, True), (184, 42, 276, False),
         (250, 66, 182, False), (342, 50, 110, False), (416, 60, 232, True),
         (500, 54, 164, False), (580, 72, 254, False), (676, 32, 202, False),
@@ -753,12 +755,12 @@ def subway_railing():
 
 
 def street_tree():
-    """64x136: a round forest-green crown on a trunk 8px wide: an ink edge each side, a 2px tan lit band on the
-    left and a brown body, so the trunk holds at least 4:1 (its lit band) against every facade and the sky."""
-    g = R(Grid(64, 136), (28, 56, 8, 80, "ink"), (29, 56, 2, 80, "tan"), (31, 56, 3, 80, "brown"),
-          (34, 56, 1, 80, "dbrown"))
-    g.ell(32, 32, 32, 32, "forest")
-    g.ell(16, 16, 14, 12, "dgreen")
+    """64x136: a soft sage crown and muted wood trunk, without a dark decorative contour.
+    Safe ledges and hazard markings are drawn independently of this nonphysical tree."""
+    g = R(Grid(64, 136), (28, 56, 8, 80, "zone-peach-shade"),
+          (29, 56, 2, 80, "zone-peach"))
+    g.ell(32, 32, 32, 32, "zone-green-shade")
+    g.ell(16, 16, 14, 12, "zone-green")
     return g
 
 

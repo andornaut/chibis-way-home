@@ -9,7 +9,8 @@ Only top tiles have dark edge and white lip. Shared ledges, hazards and movers r
 Backdrops bottom-left y600: woodland-sky48x600 repeatx factor0,0; woodland-far720x600 repeatx .15,.05;
 forest-mid/ravine-mid720x600 repeatx .4,.15; forest-tree96x216 none, forest-shrub48x48 repeatx,
 ravine-rock72x72 none at1,1. Near pieces align local floor. Decor has no collision, white safe lips or red
-hazard marking. Keep silhouettes clear of required routes. Distant ravine water is decorative only.
+hazard marking. Natural decor uses tonal fills without dark contour bands. Keep silhouettes clear of required
+routes. Distant ravine water is decorative only.
 No actors or natural hidden lethality. Context uses identical illustrative geometry, not validated stages.
 """
 
@@ -108,10 +109,9 @@ def ravine_mid():
 
 def tree():
     im = image(96, 216)
-    rect(im, "dslate", (36, 60, 60, 216))
-    rect(im, "brown", (39, 66, 57, 212))
-    rect(im, "zone-peach-shade", (39, 78, 44, 204))
-    polygon(im, "dslate", ((0, 74), (12, 28), (36, 4), (62, 4), (84, 30),
+    rect(im, "zone-peach-shade", (36, 60, 60, 216))
+    rect(im, "zone-peach", (39, 78, 44, 204))
+    polygon(im, SHADE, ((0, 74), (12, 28), (36, 4), (62, 4), (84, 30),
                            (95, 74), (84, 112), (60, 128), (28, 124), (8, 106)))
     polygon(im, "zone-green-shade", ((3, 74), (15, 30), (37, 8), (60, 8), (81, 32),
                                      (92, 74), (81, 108), (58, 124), (30, 120), (12, 104)))
@@ -122,7 +122,7 @@ def tree():
 
 def shrub():
     im = image(48, 48)
-    polygon(im, "dslate", ((0, 46), (2, 24), (12, 14), (24, 18), (34, 10),
+    polygon(im, SHADE, ((0, 46), (2, 24), (12, 14), (24, 18), (34, 10),
                            (44, 22), (47, 46)))
     polygon(im, "zone-green-shade", ((3, 44), (5, 26), (13, 18), (24, 22),
                                      (34, 14), (41, 24), (44, 44)))
@@ -132,7 +132,7 @@ def shrub():
 
 def rock():
     im = image(72, 72)
-    polygon(im, "dslate", ((0, 70), (4, 42), (20, 20), (44, 12), (62, 32), (71, 70)))
+    polygon(im, "slate", ((0, 70), (4, 42), (20, 20), (44, 12), (62, 32), (71, 70)))
     polygon(im, "slate", ((4, 67), (8, 44), (22, 24), (43, 16), (59, 34), (67, 67)))
     polygon(im, "grey", ((8, 44), (22, 24), (43, 16), (51, 26), (32, 44)))
     return im

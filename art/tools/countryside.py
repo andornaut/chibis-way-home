@@ -14,7 +14,8 @@ Backdrops bottom-left anchored at default y600: countryside-sky48x600 repeatx fa
 countryside-far720x600 repeatx factor.15,.05; farmland-mid and river-mid720x600 repeatx factor.4,.15;
 farmland-barn120x144 none, farmland-fence48x48 repeatx, river-reeds48x72 repeatx factor1,1.
 Near decor aligns with local floor, has no collision, white safe lip or red hazard marking. Keep near
-silhouettes clear of the route. No new actors, doors or mechanics. Preview geometry is illustrative only.
+silhouettes clear of the route. Tonal silhouettes have no dark contour bands. No new actors, doors or mechanics.
+Preview geometry is illustrative only.
 """
 
 import os
@@ -112,7 +113,7 @@ def river_mid():
 
 def barn():
     im = image(120, 144)
-    polygon(im, "dslate", ((0, 40), (60, 0), (119, 40), (119, 143), (0, 143)))
+    polygon(im, SHADE, ((0, 40), (60, 0), (119, 40), (119, 143), (0, 143)))
     polygon(im, SHADE, ((4, 42), (60, 6), (116, 42), (116, 140), (4, 140)))
     polygon(im, "brown", ((0, 40), (60, 0), (119, 40), (119, 48), (60, 12), (0, 48)))
     rect(im, PRIMARY, (6, 48, 114, 58))
@@ -139,7 +140,7 @@ def fence():
 def reeds():
     im = image(48, 72)
     for x, top in ((8, 22), (22, 8), (36, 30)):
-        rect(im, "forest", (x, top, x + 3, 72))
+        rect(im, "zone-green-shade", (x, top, x + 3, 72))
         polygon(im, "zone-green-shade", ((x, 64), (x - 7, top + 10), (x - 4, top + 8), (x + 3, 64)))
         polygon(im, "zone-green-shade", ((x, 68), (x + 8, top + 18), (x + 11, top + 20), (x + 3, 72)))
         rect(im, "brown", (x - 1, top - 6, x + 4, top + 5))

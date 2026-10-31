@@ -12,7 +12,7 @@ The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served a
 
 - Accents: reserve amber for doors and small points of interest. Other hues add restrained foliage, signs and character details. Red contact edges always mean danger in every theme.
 - Colour: each V1 destination uses its canonical muted primary from [Zone primary colours](#zone-primary-colours), carried through atmosphere, materials, map identity and progress. Keep distant colours close to the sky and spend saturation on a few useful accents. The park remains a separate prototype outside the V1 route.
-- Detail: distant scenery uses broad silhouettes without window grids. Near architecture uses sparse window groups and quiet surfaces. Avoid repeated stripes and single-pixel texture that compete with the bird.
+- Detail: decorative foliage, rocks and scenery silhouettes use adjacent material shades rather than heavy dark contour bands. Distant scenery uses broad silhouettes without window grids. Near architecture uses sparse window groups and quiet surfaces. Avoid repeated stripes and single-pixel texture that compete with the bird.
 - Layouts: every stage, including the first and final stages, assembles seeded middle chunks between fixed start and finish sections. Reusable tiles, scenery and gameplay chunks assemble independently; a background image never encodes a required route. Stages are at most two screens tall (720px, 60 rows).
 - Obstacles: use ledges, cliffs, walls and ceilings. Short-clearance jumps and full-height jumps share the same visual vocabulary. Ladders are not part of the obstacle set. Difficulty and jump requirements belong to gameplay data, with variation around a common configurable difficulty.
 - Readability: safe walkable tops use a dark edge and a bright two-pixel lip. On darker scenery the lip holds at least 2:1 against its backdrop; against a pale sky the dark edge supplies the separation, so retain both parts of the edge. Dangerous faces instead use the shared red band, without spikes or a safe light lip. Text keeps 4.5:1 and meaningful UI marks 3:1 contrast.
@@ -116,7 +116,7 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 
 ### Outlines
 
-- Outlines are coloured: two ramp steps darker than the fill they border.
+- Characters and essential interactive marks use coloured outlines: two ramp steps darker than their fill. Decorative scenery uses tonal silhouettes and sparse material seams, without a dark contour around the whole object.
 - Against the play ground, keep stepping down the ramp until the outline holds 3:1 contrast on every ground it can appear on.
 - A dark area takes a light rim on its top-left-facing edges, so it separates from dark ground.
 - Faces and portraits take one ink outer line.
