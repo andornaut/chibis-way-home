@@ -153,4 +153,4 @@ def sprites():
 
 if __name__ == "__main__":
     pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-green"], K["slate"], K["cream"]),
-               once=ONCE, hitboxes=HITBOX)
+               once=ONCE, hitboxes=HITBOX, contacts=(KEY,))

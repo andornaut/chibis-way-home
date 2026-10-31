@@ -88,4 +88,4 @@ def sprites():
 
 if __name__ == "__main__":
     pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(pixel.K["zone-red"], pixel.K["slate"]),
-               once=ONCE, hitboxes=HITBOX)
+               once=ONCE, hitboxes=HITBOX, contacts=(KEY,))

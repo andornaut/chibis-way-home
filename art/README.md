@@ -349,6 +349,14 @@ The celebration and restart screens remain placeholders using the standard card 
 
 The bird's 48x42 `death` tag is appended after `land`, leaving all earlier frames and tags unchanged. Relative frame 0 is the small recoil with visible feet, frame 1 a pronounced falling tilt with visible tucked soles, frame 2 a brief stronger impact squash and frame 3 a full, round seated rest. The last two poses hide the feet completely. The seated body is 34x21 with a nearly full-height head, a short flat belly centre and rounded contact ends resting at the frame bottom; it springs slightly up from the 38x16 impact pose rather than holding a flattened body. `death` plays once and holds its last frame. Its authored durations are 100, 120, 80 and 400ms; these are art playback defaults, not gameplay state durations. Runtime holds frame 1 until support is reached, then plays frames 2 and 3 once. The retry card opens when frame 3 is reached, with that seated pose held underneath it. Keep the body-centre and frame-bottom anchor fixed across the poses; world movement belongs to the runtime. Existing `jump` and `land` do not supply the seated terminal pose.
 
+### Enemy contact silhouettes
+
+The six antagonist body sprites declare `contact: "silhouette"` in the manifest. Their drawn opaque pixels, including coloured outlines, define body contact; transparent space does not. Portraits, projectiles, traps and separate effects such as `bear-growl-wave` are excluded. Existing hit boxes retain their physical reach role; body contact uses the full rendered frame as its broad phase.
+
+Run `python3 -I art/tools/contact_silhouettes.py build` after changing body exports or contact registration. Each opted-in actor build also refreshes this shared export. `public/art/contact-silhouettes.json`, registered as the `contact-silhouettes` data key, contains version 1 and a `sprites` object keyed by art key. Each sprite contains `width`, `height` and `frames`; each exact Aseprite frame name maps to sorted `[y, left, rightExclusive]` runs in untrimmed frame coordinates. Adjacent occupied pixels merge into one run; an empty frame has an empty array. Alpha greater than zero is occupied, and partial alpha fails export. No animation tags or timings are duplicated.
+
+The runtime caches these runs and applies the sprite's current frame, facing, anchor and scale. This export changes no artwork, layout, motion or animation metadata.
+
 ### Enemy frustration
 
 The shared stage-enemy reaction uses the looping `frustration` tag. The cycle has four 120ms frames, lasting 480ms before repeating. Its head, paw, wing or ear gesture clearly differs from standing rest and preparation, while retaining the animal's cute silhouette. No world movement, text, effect outline or new story is baked into the reaction.

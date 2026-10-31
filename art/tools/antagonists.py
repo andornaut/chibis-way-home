@@ -201,4 +201,4 @@ def sprites():
 
 
 if __name__ == "__main__":
-    pixel.main(sys.argv, sprites, SRC, __doc__, once=ONCE, hitboxes=HITBOX)
+    pixel.main(sys.argv, sprites, SRC, __doc__, once=ONCE, hitboxes=HITBOX, contacts=("dog-antagonist",))

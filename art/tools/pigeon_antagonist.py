@@ -205,4 +205,4 @@ if __name__ == "__main__":
         preview(sys.argv[2])
     else:
         pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-purple"], K["slate"], K["cream"]),
-                   once=ONCE, hitboxes=HITBOX)
+                   once=ONCE, hitboxes=HITBOX, contacts=(KEY,))

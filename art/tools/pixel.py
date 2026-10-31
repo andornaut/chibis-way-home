@@ -274,7 +274,7 @@ def _lua(tags, out, key, margins=None):
                       out=out)
 
 
-def build(sprites, src_dir, slices=None, once=None, hitboxes=None):
+def build(sprites, src_dir, slices=None, once=None, hitboxes=None, contacts=()):
     """Write src_dir/<key>.aseprite for every sprite, export it to public/art/sprites/<key>.png + .json
     with its tags, and list it in the manifest. sprites is a list of (key, tags), tags a list of
     (tag, frames, ms). slices maps a key to its nine-slice margins (left, top, right, bottom): the export
@@ -282,9 +282,12 @@ def build(sprites, src_dir, slices=None, once=None, hitboxes=None):
     key to the tags that play once and hold their last frame; every other tag loops. Every manifest entry
     carries "once", in frame order, [] when nothing plays once. hitboxes maps a key to its hit box
     (x, y, width, height) in frame pixels, for the facing the sprite is drawn in; the manifest entry carries
-    it as "hitbox", and only sprites that declare one have it. A box outside the frame fails the build."""
+    it as "hitbox", and only sprites that declare one have it. A box outside the frame fails the build.
+    contacts explicitly opts body sprite keys into silhouette contact and refreshes the shared export."""
     slices, once, hitboxes = slices or {}, once or {}, hitboxes or {}
     sprites = list(sprites)
+    unknown_contacts = set(contacts) - {key for key, _ in sprites}
+    assert not unknown_contacts, f"Unknown contact sprites: {sorted(unknown_contacts)}"
     for key, tags in sprites:
         unknown = set(once.get(key, ())) - {t for t, _, _ in tags}
         assert not unknown, f"{key}: once names tags it does not have: {sorted(unknown)}"
@@ -318,22 +321,27 @@ def build(sprites, src_dir, slices=None, once=None, hitboxes=None):
                         "once": built[key]}
         if key in slices:
             entries[key]["slice"] = dict(zip(("left", "top", "right", "bottom"), slices[key]))
+        if key in contacts:
+            entries[key]["contact"] = "silhouette"
         if key in hitboxes:
             entries[key]["hitbox"] = dict(zip(("x", "y", "width", "height"), hitboxes[key]))
     manifest["sprites"] = sorted(entries.values(), key=lambda s: s["key"])
     with open(MANIFEST, "w") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")
+    if contacts:
+        from contact_silhouettes import build as build_contacts
+        build_contacts()
     print("built", ", ".join(built))
 
 
 def main(argv, sprites, src_dir, doc, grounds=("5a6988", "e4a672", "ead4aa"), slices=None, once=None,
-         hitboxes=None):
+         hitboxes=None, contacts=()):
     """The command line every art script shares: `build`, or `preview OUT.png`. A script declares the tags that
     play once as a ONCE dict beside its sprites(), and any hit boxes as a HITBOX dict, and passes them here."""
     if len(argv) == 3 and argv[1] == "preview":
         preview(list(sprites()), argv[2], grounds)
     elif len(argv) == 2 and argv[1] == "build":
-        build(list(sprites()), src_dir, slices, once, hitboxes)
+        build(list(sprites()), src_dir, slices, once, hitboxes, contacts)
     else:
         sys.exit(doc)

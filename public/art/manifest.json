@@ -22,7 +22,8 @@
         "y": 2,
         "width": 44,
         "height": 46
-      }
+      },
+      "contact": "silhouette"
     },
     {
       "key": "bear-growl-wave",
@@ -52,7 +53,8 @@
         "y": 2,
         "width": 56,
         "height": 38
-      }
+      },
+      "contact": "silhouette"
     },
     {
       "key": "dog-pug",
@@ -78,7 +80,8 @@
         "y": 2,
         "width": 44,
         "height": 46
-      }
+      },
+      "contact": "silhouette"
     },
     {
       "key": "ferret-parcel",
@@ -128,7 +131,8 @@
         "y": 2,
         "width": 44,
         "height": 46
-      }
+      },
+      "contact": "silhouette"
     },
     {
       "key": "goose-trap",
@@ -390,7 +394,8 @@
         "y": 2,
         "width": 44,
         "height": 46
-      }
+      },
+      "contact": "silhouette"
     },
     {
       "key": "pigeon-poop",
@@ -450,7 +455,8 @@
         "y": 2,
         "width": 44,
         "height": 46
-      }
+      },
+      "contact": "silhouette"
     },
     {
       "key": "ui-answer",
@@ -646,6 +652,10 @@
     }
   ],
   "data": [
+    {
+      "key": "contact-silhouettes",
+      "json": "contact-silhouettes.json"
+    },
     {
       "key": "palette",
       "json": "palette.json"
