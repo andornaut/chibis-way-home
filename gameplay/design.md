@@ -221,7 +221,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 - **Contact:** Bini is always lethal on contact, including while resting, without a red contact outline. His charge and maul are contact threats, not a combat encounter
 - **Cycle:** idle with the phone, growl, then charge and maul using shared behaviour primitives. Timing and movement values live in data
-- **Growl:** the long sonic growl pushes Chibi without killing directly. It can cause death indirectly by pushing him into a hazard or off a ledge. High ground is the primary way to avoid it; solid cover also blocks it
+- **Growl:** the sonic growl creates a brief gust that pushes Chibi only while he overlaps its finite volume. The push stops when he is above or outside it, or behind solid cover; it is not a single impulse that leaves momentum. It does not kill directly, but can push him into a hazard or off a ledge. High ground is the primary way to avoid it; solid cover also blocks it
 - **Introduction:** Bini sits with a phone playing Archie's Dog Walks. His annoyed introduction precedes his aggressive behaviour
 
 ### Home city
