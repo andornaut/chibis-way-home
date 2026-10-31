@@ -1,6 +1,6 @@
 # Gameplay
 
-The design of the game, how it's tuned and tested, and what's left for the first build. Chibi's way home is a landscape platformer about Chibi, a lost bird, travelling zone to zone across a map to get home. Phone browser first, with keyboard on desktop.
+The design of the game, how it's tuned and tested, and what's left for the first build. Chibi's Way Home is a landscape platformer about Chibi, a lost bird, travelling zone to zone across a map to get home. Phone browser first, with keyboard on desktop.
 
 ## Docs
 
