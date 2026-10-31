@@ -19,6 +19,7 @@ import {
   type ZoneInput,
   type ZoneState,
 } from "../rules/zone";
+import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases";
 
 const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
 
@@ -88,7 +89,7 @@ const EDGE_TAKEOFFS = [4, 12, 36, 72, 120];
 const TAKEOFF_STEP = 12;
 const OWN_BUCKETS = [-3, -2, -1, 1, 2, 3];
 // Waits before a try, in steps, where something moves near it: through the longest cycle of the
-// area's moving things (at most MAX_CYCLE seconds), every half second.
+// relevant moving things (at most MAX_CYCLE seconds), every half second.
 const WAIT_STEP = Math.round(0.5 / STEP_SECONDS);
 const MAX_CYCLE = 16;
 // Slack on how far the walk looks for a move, in px.
@@ -631,12 +632,10 @@ function cycleSteps(object: ObjectLayout): number {
   return Math.ceil(Math.min(seconds, MAX_CYCLE) / STEP_SECONDS);
 }
 
-// The things in an area that move and that she can touch, and how many waits cover the longest
-// cycle among them.
+// Moving colliders retain their own cycle lengths; only supports contribute carry speed.
 interface MovingThings {
   readonly carry: number;
-  readonly count: number;
-  readonly moving: readonly Rect[];
+  readonly moving: readonly PhaseMover[];
 }
 
 const MOVING_THINGS = new WeakMap<AreaLayout, MovingThings>();
@@ -652,8 +651,13 @@ function movingThings(area: AreaLayout): MovingThings {
   );
   const result = {
     carry: Math.max(0, ...supports.map(movementSpeed)),
-    count: Math.floor(Math.max(0, ...moving.map(cycleSteps)) / WAIT_STEP) + 1,
-    moving: moving.map(sweptRect),
+    moving: area.objects.flatMap((object, index) => {
+      if (isStill(object) || object.collision === "none") {
+        return [];
+      }
+      const rect = sweptRect(object);
+      return [{ cycleSteps: cycleSteps(object), index, left: rect.x, right: rect.x + rect.width }];
+    }),
   };
   MOVING_THINGS.set(area, result);
   return result;
@@ -788,6 +792,42 @@ function targetsFrom(
   return { others, own: stretches };
 }
 
+// Takeoff coordinates describe trailing edges; convert them to body-left positions before
+// bounding the landing. A moving source contributes every position along its swept track.
+function phaseCorridor(
+  tuning: Pick<BirdTuning, "width">,
+  layout: ZoneLayout,
+  bounds: ReturnType<typeof moveBounds>,
+  from: Spot,
+  here: Surface,
+  target: Target,
+  tries: readonly Try[],
+) {
+  const positions = [
+    from.state.bird.x,
+    ...tries.flatMap(({ dir, pre, takeoff }) => {
+      const offset = dir < 0 ? -tuning.width : 0;
+      return [here.left + pre + offset, here.left + takeoff + offset];
+    }),
+  ];
+  const sourceSpan = sweptSpan(layout, from.surface);
+  const targetSpan = sweptSpan(layout, target.surface);
+  const landing = target.surface.mover === undefined ? target : targetSpan;
+  const takeoffs =
+    from.surface.mover === undefined
+      ? positions
+      : [
+          Math.min(...positions) + sourceSpan.left - here.left,
+          Math.max(...positions) + sourceSpan.right - here.right,
+        ];
+  return landingCorridor(
+    tuning.width,
+    bounds.across(targetSpan.bottom - sourceSpan.top),
+    takeoffs,
+    landing,
+  );
+}
+
 // Walks the zone from its start on the real rules. From each spot she comes to stand on, it
 // tries each stretch in range that she has not reached yet: a walk along her own surface, then
 // every jump at it, at every wait where something moves near. From a spot near the area's last
@@ -828,32 +868,23 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
   for (let from = queue.shift(); from; from = queue.shift()) {
     const area = areaOf(layout, from.surface.area);
     const here = placed(from.surface, from.state, layout);
-    const { carry, count, moving } = movingThings(area);
+    const { carry, moving } = movingThings(area);
     let bounds = areaBounds.get(area);
     if (!bounds) {
       bounds = moveBounds(tuning, carry);
       areaBounds.set(area, bounds);
     }
-    let waited: ZoneState[] | undefined;
     const trials = new Map<ZoneState, ReturnType<typeof trialsFrom>>();
-    const startsFor = (lo: number, hi: number, target?: Surface) => {
-      const near =
-        from.surface.mover !== undefined ||
-        target?.mover !== undefined ||
-        moving.some((rect) => rect.x < hi + BUCKET && rect.x + rect.width > lo - BUCKET);
-      if (!near) {
-        return [from.state];
+    const waited = phaseStarts((start: ZoneState) => {
+      const result = waitStates(tuning, layout, start, 2);
+      steps += result.steps;
+      if (result.entered) {
+        arrive(result.entered);
       }
-      if (!waited) {
-        const result = waitStates(tuning, layout, from.state, count);
-        steps += result.steps;
-        if (result.entered) {
-          arrive(result.entered);
-        }
-        waited = result.states;
-      }
-      return waited;
-    };
+      return result.states[1];
+    }, from.state);
+    const startsFor = (corridor: { left: number; right: number }, target?: Surface) =>
+      waited(phaseCount(WAIT_STEP, BUCKET, [from.surface.mover, target?.mover], moving, corridor));
     const { others, own } = targetsFrom(layout, surfaces, bounds, from, here);
     for (const target of [...own, ...others]) {
       const done = () =>
@@ -862,15 +893,8 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
         continue;
       }
       const tries = triesToward(tuning, from, here, target);
-      // Only the takeoffs reachable from this bucket participate in the run-up. Keep the
-      // existing margin for braking and landing, without including unrelated distant ground.
-      const positions = [
-        from.state.bird.x,
-        ...tries.flatMap(({ pre, takeoff }) => [here.left + pre, here.left + takeoff]),
-      ];
       const starts = startsFor(
-        Math.min(...positions, target.left),
-        Math.max(...positions, target.right) + tuning.width,
+        phaseCorridor(tuning, layout, bounds, from, here, target, tries),
         target.surface,
       );
       for (const start of starts) {
@@ -910,7 +934,19 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
     }
     const hi = here.left + (from.bucket + 2) * BUCKET;
     if (!cleared && here.right > area.exitX && hi > area.exitX) {
-      for (const start of startsFor(area.exitX, area.exitX)) {
+      const sourceSpan = sweptSpan(layout, from.surface);
+      for (const start of startsFor({
+        left: Math.min(
+          from.state.bird.x,
+          area.exitX,
+          from.surface.mover === undefined ? Infinity : sourceSpan.left,
+        ),
+        right: Math.max(
+          from.state.bird.x + tuning.width,
+          area.exitX + tuning.width,
+          from.surface.mover === undefined ? -Infinity : sourceSpan.right,
+        ),
+      })) {
         const off = walkOff(tuning, layout, start);
         steps += off.steps;
         if (off.entered) {
@@ -937,7 +973,8 @@ export function crosses(
   to: Surface,
 ): boolean {
   const area = areaOf(layout, from.area);
-  const { count } = movingThings(area);
+  const { carry, moving } = movingThings(area);
+  const bounds = moveBounds(tuning, carry);
   const entry = Object.keys(area.entries)[0] ?? "";
   const zone = enterArea(tuning, layout, { area: from.area, entry }, startZone(tuning, layout, 1));
   const target = { key: to.key, left: to.left, right: to.right, surface: to };
@@ -950,6 +987,13 @@ export function crosses(
     });
     const spot = { bucket, state, surface: from };
     const tries = triesToward(tuning, spot, from, target);
+    const count = phaseCount(
+      WAIT_STEP,
+      BUCKET,
+      [from.mover, to.mover],
+      moving,
+      phaseCorridor(tuning, layout, bounds, spot, from, target, tries),
+    );
     return waitStates(tuning, layout, state, count).states.some((start) => {
       const trial = trialsFrom(tuning, layout, surfaces, spot, start);
       return tries.some((attempt) => trial(attempt).landed?.surface.key === to.key);
