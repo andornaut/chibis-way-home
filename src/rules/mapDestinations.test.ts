@@ -46,7 +46,7 @@ describe("destination selection", () => {
   });
 
   it("preserves stage-two unlock and latest highlight while replaying stage one", () => {
-    const progress = { at: "map" as const, completed: ["one"], stand: "one" };
+    const progress = { at: "map" as const, completed: ["one"], seenZoneIntros: [], stand: "one" };
     const format = progressFormat(MAP, PLANS);
     const encoded = encodeSave(format, progress);
     expect(encoded.ok).toBe(true);

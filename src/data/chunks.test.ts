@@ -188,10 +188,9 @@ describe.each(ALL_RECIPES)("recipe %s", (key, library, recipe) => {
 
   it("fits its length, difficulty band and encounter quota and keeps each chunk's maxPerZone", () => {
     if (recipe.encounters !== undefined) {
-      const catalogue = { archetypes: ARCHETYPES, characters: library.characters };
       const encounters = Object.values(plan().areas).flatMap(({ objects }) =>
         objects.filter((instance) => {
-          const { archetype, character } = resolveNames(catalogue, instance);
+          const { archetype, character } = resolveNames(CATALOGUE, instance);
           return (
             archetype.collision === "hazard" &&
             ENCOUNTER_ART.has(character.art) &&

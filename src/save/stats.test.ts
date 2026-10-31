@@ -3,6 +3,7 @@ import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
+import { ZONE_MAP } from "../data/map";
 import { activeStepSeconds } from "../rules/death";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneState } from "../rules/zone";
@@ -86,6 +87,7 @@ describe("persistent active stage clocks", () => {
     clock.beginVisit("first");
     clock.beginRun("street");
     clock.addActiveTime("street", 3);
+    expect(clock.summary("street").bestSeconds).toBeUndefined();
     clock.retryStage("street");
     clock.addActiveTime("street", 2);
     expect(clock.summary("street")).toMatchObject({
@@ -215,7 +217,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("preserves stats on progress restart, then resets the stage on every clear", async () => {
+it("preserves run statistics across progress restart and completion", async () => {
   const values = new Map<string, string>([
     [
       "chibis-way-home.stats",
@@ -233,6 +235,8 @@ it("preserves stats on progress restart, then resets the stage on every clear", 
   await save.loadProgress();
   expect(values.has("chibis-way-home.stats-backup")).toBe(true);
   expect(save.activeStageTime("street")).toBe(0);
+  save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
+  save.beginStageRun("street");
   save.recordActiveStageStep("park", 0.1, INITIAL, ACTIVE);
   expect(save.activeStageTime("park")).toBe(0);
   save.recordActiveStageStep("street", 0.1, INITIAL, ACTIVE);
@@ -240,9 +244,16 @@ it("preserves stats on progress restart, then resets the stage on every clear", 
   await save.flushStats();
   expect(save.activeStageTime("street")).toBe(0.1);
   expect(values.has("chibis-way-home.stats")).toBe(true);
+  const completed = save.completeStageRun("street");
   save.saveCompleted("street");
   await save.flushStats();
-  expect(save.activeStageTime("street")).toBe(0);
+  expect(save.stageRunStats("street")).toEqual(completed);
+  expect(completed).toMatchObject({
+    attemptSeconds: 0.1,
+    attempts: 1,
+    bestSeconds: 0.1,
+    runSeconds: 0.1,
+  });
 });
 
 it("resets version-two level clocks without migrating them", () => {
