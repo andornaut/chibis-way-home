@@ -38,6 +38,9 @@ function thingOf(catalogue: Catalogue, instance: Instance) {
   const object = objectLayout(1, catalogue, {}, undefined, {}, physical);
   if (object.behaviour) {
     const { axis, distance, states } = object.behaviour;
+    const flights = Object.values(states).flatMap((node) =>
+      node.motion.kind === "fly" ? [node.motion.to] : [],
+    );
     const dx = axis === "x" ? distance : 0;
     const dy = axis === "y" ? distance : 0;
     const hopHeight = Math.max(
@@ -49,13 +52,14 @@ function thingOf(catalogue: Catalogue, instance: Instance) {
     return {
       collision: object.collision,
       moves:
+        flights.length > 0 ||
         hopHeight > 0 ||
         (distance !== 0 && Object.values(states).some((node) => node.motion.kind === "move")),
       span: {
-        bottom: object.origin.y + object.height + Math.max(0, dy),
-        left: object.origin.x + Math.min(0, dx),
-        right: object.origin.x + object.width + Math.max(0, dx),
-        top: object.origin.y + Math.min(0, dy) - hopHeight,
+        bottom: object.origin.y + object.height + Math.max(0, dy, ...flights.map((to) => to.y)),
+        left: object.origin.x + Math.min(0, dx, ...flights.map((to) => to.x)),
+        right: object.origin.x + object.width + Math.max(0, dx, ...flights.map((to) => to.x)),
+        top: object.origin.y + Math.min(0, dy, ...flights.map((to) => to.y)) - hopHeight,
       },
     };
   }

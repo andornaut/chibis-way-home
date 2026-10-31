@@ -409,3 +409,75 @@ describe("generic graph hops", () => {
     ).toThrow("Invalid behaviour");
   });
 });
+
+describe("entry actions and flight", () => {
+  const pulse = {
+    height: 3,
+    kind: "force-pulse",
+    range: 30,
+    seconds: 0.4,
+    velocity: { x: 5, y: 0 },
+  } as const;
+  const flight: BehaviourPlan = {
+    axis: "x",
+    distance: 0,
+    initial: "perch",
+    states: {
+      fly: {
+        animation: "fly",
+        motion: { kind: "fly", speed: 100, to: { x: 30, y: -40 } },
+        transitions: [{ to: "land", when: [{ kind: "arrived", tolerance: 0.001 }] }],
+      },
+      land: { animation: "land", motion: { kind: "wait" }, onEnter: [pulse], transitions: [] },
+      perch: {
+        animation: "idle",
+        motion: { kind: "wait" },
+        onEnter: [pulse],
+        transitions: [{ to: "fly", when: [{ kind: "elapsed", seconds: 0.2 }] }],
+      },
+    },
+  };
+
+  it("emits each entry once, defers inactive entries and preserves event times", () => {
+    const object = { ...resolve(CHARACTER, ACTOR, 1, flight), scene: "intro" };
+    const inactive = startBehaviour(BIRD, object, bird());
+    expect(stepBehaviour(BIRD, object, [], 1, bird(), object.origin, inactive).actions).toEqual([]);
+    const first = stepBehaviour(BIRD, object, [], 0.1, bird(), object.origin, {
+      ...inactive,
+      active: true,
+    });
+    expect(first.actions.map((event) => event.time)).toEqual([0]);
+    const second = stepBehaviour(BIRD, object, [], 0.6, bird(), first.at, first.state);
+    expect(second.at).toEqual({ x: object.origin.x + 30, y: object.origin.y - 40 });
+    expect(second.state.stateKey).toBe("land");
+    expect(second.actions.map((event) => event.time)).toEqual([expect.closeTo(0.6)]);
+    expect(stepBehaviour(BIRD, object, [], 0.1, bird(), second.at, second.state).actions).toEqual(
+      [],
+    );
+  });
+
+  it("converts waypoints and actions once and clips flight at solid cover", () => {
+    const plan = layoutBehaviour(12, flight);
+    expect(plan.states.fly?.motion).toEqual({ kind: "fly", speed: 1200, to: { x: 360, y: -480 } });
+    expect(plan.states.perch?.onEnter?.[0]).toMatchObject({
+      height: 36,
+      range: 360,
+      seconds: 0.4,
+      velocity: { x: 60, y: 0 },
+    });
+    const object = resolve(CHARACTER, ACTOR, 1, { ...flight, initial: "fly" });
+    const wall = { height: 400, width: 10, x: object.origin.x + object.width + 5, y: 0 };
+    const result = stepBehaviour(
+      BIRD,
+      object,
+      [wall],
+      0.5,
+      bird(),
+      object.origin,
+      startBehaviour(BIRD, object, bird()),
+    );
+    expect(result.at.x).toBe(object.origin.x + 5);
+    expect(result.at.y).toBeLessThan(object.origin.y);
+    expect(result.state.stateKey).toBe("fly");
+  });
+});

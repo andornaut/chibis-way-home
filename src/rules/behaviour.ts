@@ -1,4 +1,5 @@
 import type {
+  BehaviourAction,
   BehaviourCondition,
   BehaviourNode,
   BehaviourPlan,
@@ -18,6 +19,7 @@ import { hopLift } from "./motion";
 import { overlaps } from "./rect";
 
 export interface BehaviourState {
+  readonly pendingEntry?: boolean;
   readonly active: boolean;
   readonly elapsed: number;
   readonly facing: -1 | 1;
@@ -38,7 +40,15 @@ export interface BehaviourSegment {
   readonly to: Point;
 }
 
+export interface BehaviourEvent {
+  readonly action: BehaviourAction;
+  readonly at: Point;
+  readonly facing: -1 | 1;
+  readonly time: number;
+}
+
 export interface BehaviourStep {
+  readonly actions: readonly BehaviourEvent[];
   readonly at: Point;
   readonly segments: readonly BehaviourSegment[];
   readonly state: BehaviourState;
@@ -56,6 +66,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         (node.animation !== null &&
           (typeof node.animation !== "string" || node.animation.length === 0)) ||
         (node.motion.kind !== "wait" &&
+          node.motion.kind !== "fly" &&
           (!valid(node.motion.speed) ||
             ![-1, 1, "facing", "target"].includes(node.motion.direction))) ||
         (node.motion.kind === "move" && (node.motion.speed === 0 || plan.distance === 0)) ||
@@ -69,6 +80,64 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
       ) {
         throw new Error(`Invalid behaviour motion or animation in ${key}`);
       }
+      if (
+        node.motion.kind === "fly" &&
+        (!valid(node.motion.speed) ||
+          node.motion.speed === 0 ||
+          !Number.isFinite(node.motion.to.x) ||
+          !Number.isFinite(node.motion.to.y))
+      ) {
+        throw new Error(`Invalid flight in ${key}`);
+      }
+      const onEnter = node.onEnter?.map((action): BehaviourAction => {
+        const finitePoint = (point: Point) => Number.isFinite(point.x) && Number.isFinite(point.y);
+        if (action.kind === "spawn") {
+          if (
+            !action.character ||
+            !finitePoint(action.offset) ||
+            !finitePoint(action.velocity) ||
+            !valid(action.gravity) ||
+            !valid(action.armSeconds) ||
+            (action.armingAnimation !== undefined && action.armingAnimation.length === 0) ||
+            !valid(action.lifeSeconds) ||
+            action.lifeSeconds === 0 ||
+            !Number.isSafeInteger(action.maxAlive) ||
+            action.maxAlive < 1
+          ) {
+            throw new Error(`Invalid spawn action in ${key}`);
+          }
+          return {
+            ...action,
+            gravity: action.gravity * tile,
+            offset: { x: action.offset.x * tile, y: action.offset.y * tile },
+            velocity: { x: action.velocity.x * tile, y: action.velocity.y * tile },
+          };
+        }
+        if (
+          (action.visual &&
+            (!action.visual.art ||
+              !action.visual.animation ||
+              !finitePoint(action.visual.offset))) ||
+          !valid(action.range) ||
+          !valid(action.height) ||
+          !valid(action.seconds) ||
+          !finitePoint(action.velocity)
+        ) {
+          throw new Error(`Invalid force action in ${key}`);
+        }
+        return {
+          ...action,
+          ...(action.visual && {
+            visual: {
+              ...action.visual,
+              offset: { x: action.visual.offset.x * tile, y: action.visual.offset.y * tile },
+            },
+          }),
+          height: action.height * tile,
+          range: action.range * tile,
+          velocity: { x: action.velocity.x * tile, y: action.velocity.y * tile },
+        };
+      });
       const transitions = node.transitions.map((transition) => {
         if (!plan.states[transition.to] || transition.when.length === 0) {
           throw new Error(`Invalid behaviour transition in ${key}`);
@@ -98,12 +167,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         key,
         {
           ...node,
+          ...(onEnter && { onEnter }),
           motion:
             node.motion.kind === "wait"
               ? node.motion
               : {
                   ...node.motion,
                   speed: node.motion.speed * tile,
+                  ...(node.motion.kind === "fly"
+                    ? { to: { x: node.motion.to.x * tile, y: node.motion.to.y * tile } }
+                    : {}),
                   ...(node.motion.kind === "hop"
                     ? { hopHeight: node.motion.hopHeight * tile }
                     : {}),
@@ -134,19 +207,23 @@ function enterState(
 ): BehaviourState {
   const node = nodeOf(object, key);
   let facing =
-    node.motion.kind !== "wait" && typeof node.motion.direction === "number"
+    node.motion.kind !== "wait" &&
+    node.motion.kind !== "fly" &&
+    typeof node.motion.direction === "number"
       ? node.motion.direction
       : state.facing;
   if (
     node.enter === "face-target" ||
-    (node.motion.kind !== "wait" && node.motion.direction === "target")
+    (node.motion.kind !== "wait" &&
+      node.motion.kind !== "fly" &&
+      node.motion.direction === "target")
   ) {
     const axis = object.behaviour?.axis ?? "x";
     const mine = at[axis] + (axis === "x" ? object.width : object.height) / 2;
     const target = bird[axis] + (axis === "x" ? tuning.width : tuning.height) / 2;
     facing = target < mine ? -1 : 1;
   }
-  return { ...state, elapsed: 0, facing, stateKey: key };
+  return { ...state, elapsed: 0, facing, pendingEntry: true, stateKey: key };
 }
 
 export function startBehaviour(
@@ -180,7 +257,9 @@ export function contactBox(object: ObjectLayout, at: Point, facing: -1 | 1): Rec
 }
 
 function heading(node: BehaviourNode, state: BehaviourState): -1 | 1 {
-  return node.motion.kind !== "wait" && typeof node.motion.direction === "number"
+  return node.motion.kind !== "wait" &&
+    node.motion.kind !== "fly" &&
+    typeof node.motion.direction === "number"
     ? node.motion.direction
     : state.facing;
 }
@@ -207,6 +286,14 @@ function matches(
 ): boolean {
   if (condition.kind === "elapsed") {
     return state.elapsed >= condition.seconds;
+  }
+  if (condition.kind === "arrived") {
+    const motion = nodeOf(object, state.stateKey).motion;
+    return (
+      motion.kind === "fly" &&
+      Math.hypot(at.x - object.origin.x - motion.to.x, at.y - object.origin.y - motion.to.y) <=
+        condition.tolerance
+    );
   }
   if (condition.kind === "boundary") {
     const axis = object.behaviour?.axis ?? "x";
@@ -302,6 +389,38 @@ function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: n
   return to;
 }
 
+// Axis-separated swept clipping prevents flight from crossing solid cover.
+function flightAxis(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  at: Point,
+  axis: "x" | "y",
+  desired: number,
+): number {
+  let to = desired;
+  const across = axis === "x" ? "y" : "x";
+  const depth = axis === "x" ? "height" : "width";
+  const length = axis === "x" ? "width" : "height";
+  const solids = [
+    ...world.solids,
+    ...(world.platforms ?? [])
+      .filter((platform) => platform.owner !== object && platform.collision === "solid")
+      .map((platform) => platform.rect),
+  ];
+  for (const solid of solids) {
+    if (at[across] >= solid[across] + solid[depth] || at[across] + object[depth] <= solid[across]) {
+      continue;
+    }
+    if (desired > at[axis] && at[axis] + object[length] <= solid[axis] + EDGE) {
+      to = Math.min(to, solid[axis] - object[length]);
+    }
+    if (desired < at[axis] && at[axis] >= solid[axis] + solid[length] - EDGE) {
+      to = Math.max(to, solid[axis] + solid[length]);
+    }
+  }
+  return to;
+}
+
 // Generic state graphs choose the motion, animation and transition order. The executor knows
 // only bounded move/wait/hop primitives and conditions; it has no character-specific cycle.
 export function stepBehaviour(
@@ -315,16 +434,18 @@ export function stepBehaviour(
 ): BehaviourStep {
   const plan = object.behaviour;
   if (!plan || seconds <= 0) {
-    return { at, segments: [], state };
+    return { actions: [], at, segments: [], state };
   }
   if (!state.active) {
     return {
+      actions: [],
       at,
       segments: [{ end: seconds, facing: state.facing, from: at, start: 0, to: at }],
       state,
     };
   }
   const world = behaviourWorld(geometry);
+  const actions: BehaviourEvent[] = [];
   const segments: BehaviourSegment[] = [];
   const instant = new Set<string>();
   let current = at;
@@ -332,7 +453,17 @@ export function stepBehaviour(
   let time = 0;
   while (true) {
     const node = nodeOf(object, next.stateKey);
-    if (node.motion.kind !== "wait" && node.motion.direction === "target") {
+    if (next.pendingEntry) {
+      for (const action of node.onEnter ?? []) {
+        actions.push({ action, at: current, facing: next.facing, time });
+      }
+      next = { ...next, pendingEntry: false };
+    }
+    if (
+      node.motion.kind !== "wait" &&
+      node.motion.kind !== "fly" &&
+      node.motion.direction === "target"
+    ) {
       const mine = current[plan.axis] + (plan.axis === "x" ? object.width : object.height) / 2;
       const target = bird[plan.axis] + (plan.axis === "x" ? tuning.width : tuning.height) / 2;
       if (target !== mine) {
@@ -392,7 +523,35 @@ export function stepBehaviour(
       );
     }
     const to = { ...current };
-    if (node.motion.kind !== "wait" && node.motion.speed > 0) {
+    if (node.motion.kind === "fly") {
+      const target = {
+        x: object.origin.x + node.motion.to.x,
+        y: object.origin.y + node.motion.to.y,
+      };
+      const distance = Math.hypot(target.x - current.x, target.y - current.y);
+      if (distance > EDGE) {
+        slice = Math.min(slice, distance / node.motion.speed);
+        const fraction = Math.min(1, (node.motion.speed * slice) / distance);
+        to.x = flightAxis(
+          object,
+          world,
+          current,
+          "x",
+          current.x + (target.x - current.x) * fraction,
+        );
+        to.y = flightAxis(
+          object,
+          world,
+          { ...current, x: to.x },
+          "y",
+          current.y + (target.y - current.y) * fraction,
+        );
+        if (to.x !== current.x) {
+          next = { ...next, facing: to.x < current.x ? -1 : 1 };
+        }
+      }
+    }
+    if (node.motion.kind !== "wait" && node.motion.kind !== "fly" && node.motion.speed > 0) {
       const direction = heading(node, next);
       let desired = current[plan.axis] + direction * node.motion.speed * slice;
       if (node.motion.direction === "target") {
@@ -427,7 +586,7 @@ export function stepBehaviour(
     time = end > time ? end : seconds;
     instant.clear();
   }
-  return { at: current, segments, state: next };
+  return { actions, at: current, segments, state: next };
 }
 
 // A positive interval of relative swept overlap catches contact between fixed frames without

@@ -129,10 +129,7 @@ export function objectLayout(
         interaction.kind !== "none" ||
         motion.algorithm !== "static" ||
         reaction.kind !== "none" ||
-        (behaviour &&
-          Object.values(behaviour.states).some(
-            (node) => node.motion.kind === "move" || node.motion.kind === "hop",
-          )))
+        (behaviour && Object.values(behaviour.states).some((node) => node.motion.kind !== "wait")))
     ) {
       throw new Error(
         `Parallax on ${instance.character} requires static scenery without interaction`,
@@ -172,6 +169,32 @@ export function objectLayout(
       }
     }
   }
+  const spawnTemplates: Record<string, ObjectLayout> = {};
+  for (const node of Object.values(behaviour?.states ?? {})) {
+    for (const action of node.onEnter ?? []) {
+      if (action.kind !== "spawn" || spawnTemplates[action.character]) {
+        continue;
+      }
+      const spawned = catalogue.characters[action.character];
+      if (!spawned || spawned.behaviour) {
+        throw new Error(`Spawn ${action.character} must be an inert hazard`);
+      }
+      const template = objectLayout(tile, catalogue, hitboxes, undefined, skinTilesets, {
+        character: action.character,
+        col: 0,
+        row: 0,
+      });
+      if (
+        template.collision !== "hazard" ||
+        template.motion.algorithm !== "static" ||
+        template.reaction.kind !== "none" ||
+        template.interaction.kind !== "none"
+      ) {
+        throw new Error(`Spawn ${action.character} must be an inert hazard`);
+      }
+      spawnTemplates[action.character] = { ...template, tileset: null };
+    }
+  }
   const idle = character.animations?.idle;
   return {
     animations: {
@@ -187,6 +210,7 @@ export function objectLayout(
         ? { tileset: character.tileset }
         : {}),
     character: instance.character,
+    ...(Object.keys(spawnTemplates).length > 0 && { spawnTemplates }),
     ...(behaviour && { behaviour }),
     collision: archetype.collision,
     height,
