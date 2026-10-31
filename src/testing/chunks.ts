@@ -30,6 +30,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-down-50": {
     cols: 60,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 50 },
     objects: [],
@@ -39,6 +40,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-drop-50": {
     cols: 60,
     difficulty: 4,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 50 },
     objects: [],
@@ -48,6 +50,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-finish": {
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
@@ -57,6 +60,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-flat-40": {
     cols: 60,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 40 },
     maxPerZone: 1,
@@ -69,6 +73,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-flat-50": {
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
@@ -79,6 +84,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-gap-30": {
     cols: 60,
     difficulty: 5,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 30 },
     objects: [],
@@ -88,6 +94,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-gap-50": {
     cols: 60,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
@@ -98,6 +105,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-hazard-50": {
     cols: 60,
     difficulty: 4,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [hazard(20, 46, 4), hazard(38, 46, 4)],
@@ -107,6 +115,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-start": {
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
@@ -116,6 +125,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-up-30": {
     cols: 60,
     difficulty: 4,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [],
@@ -125,6 +135,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-up-40": {
     cols: 60,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [],
@@ -134,6 +145,7 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-wide-50": {
     cols: 60,
     difficulty: 5,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
