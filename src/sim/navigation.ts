@@ -37,6 +37,46 @@ interface FailedChoice {
 export interface NavigationMemory {
   readonly deaths: readonly FailedChoice[];
 }
+export interface NavigationCandidateSummary {
+  readonly elapsed: number;
+  readonly forwardProgress: number;
+  readonly inputLabel: string;
+  readonly physicsSteps: number;
+  readonly predictedEndpoint: {
+    readonly grounded: boolean;
+    readonly x: number;
+    readonly y: number;
+  };
+  readonly rejection: "death" | "wrong-area" | "airborne" | null;
+  readonly score: number | null;
+  readonly verticalProgress: number;
+}
+export interface NavigationDiagnostic {
+  readonly actualProgress: number;
+  readonly area: string;
+  readonly cacheMatched: boolean | null;
+  readonly cacheRemaining: number;
+  readonly candidates: readonly NavigationCandidateSummary[];
+  readonly chosenAction: string | null;
+  readonly didReplan: boolean;
+  readonly intent: NavigationState["intent"];
+  readonly origin: {
+    readonly x: number;
+    readonly y: number;
+  };
+  readonly predictedProgress: number;
+  readonly previousPlan: {
+    readonly actualProgress: number;
+    readonly predictedProgress: number;
+  } | null;
+  readonly recovering: boolean;
+  readonly reason:
+    "search" | "cache-reused" | "cache-diverged" | "context-reset" | "budget-exhausted";
+  readonly stalledTicks: number;
+  readonly status: NavigationState["status"];
+  readonly tick: number;
+  readonly waypoint: NavigationState["waypoint"] | null;
+}
 export interface NavigationState {
   area: string;
   attempt: number;
@@ -51,6 +91,7 @@ export interface NavigationState {
     | undefined;
   counters: NavigationCounters;
   decision: FailedChoice | undefined;
+  diagnostic?: NavigationDiagnostic;
   intent: "advance" | "board" | "jump" | "recover" | "ride" | "transfer" | "wait";
   continuation:
     | {
@@ -96,7 +137,6 @@ export function validateNavigation(config: Partial<NavigationConfig> = {}): Navi
   }
   return result;
 }
-
 export function navigationCounters(bot: Navigator): NavigationCounters {
   return (
     bot.navigation?.counters ?? {
@@ -174,6 +214,83 @@ function onMover(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): boole
       );
     })
   );
+}
+export function navigationSnapshot(bot: Navigator): NavigationDiagnostic | undefined {
+  const value = bot.navigation?.diagnostic;
+  return value
+    ? {
+        ...value,
+        candidates: value.candidates.slice(0, 8).map((candidate) => ({
+          ...candidate,
+          predictedEndpoint: { ...candidate.predictedEndpoint },
+        })),
+        origin: { ...value.origin },
+        previousPlan: value.previousPlan ? { ...value.previousPlan } : null,
+        waypoint: value.waypoint ? { ...value.waypoint } : null,
+      }
+    : undefined;
+}
+function snapshot(
+  context: {
+    readonly direction: -1 | 1;
+    readonly zone: ZoneState;
+    readonly reason: NavigationDiagnostic["reason"];
+    readonly didReplan: boolean;
+    readonly candidates?: readonly NavigationCandidateSummary[];
+    readonly predictedProgress?: number;
+    readonly chosenAction?: string | null;
+  },
+  navigation: NavigationState,
+): void {
+  const { candidates, chosenAction, didReplan, direction, predictedProgress, reason, zone } =
+    context;
+  const previous = navigation.diagnostic;
+  const origin = didReplan
+    ? { x: zone.bird.x, y: zone.bird.y }
+    : (previous?.origin ?? { x: zone.bird.x, y: zone.bird.y });
+  navigation.diagnostic = {
+    actualProgress: direction * (zone.bird.x - origin.x),
+    area: zone.area,
+    cacheMatched: reason === "cache-reused" ? true : reason === "cache-diverged" ? false : null,
+    cacheRemaining: navigation.queue.length,
+    candidates: candidates ?? previous?.candidates ?? [],
+    chosenAction: chosenAction === undefined ? (previous?.chosenAction ?? null) : chosenAction,
+    didReplan,
+    intent: navigation.intent,
+    origin,
+    predictedProgress: predictedProgress ?? previous?.predictedProgress ?? 0,
+    previousPlan:
+      didReplan && previous
+        ? {
+            actualProgress: direction * (zone.bird.x - previous.origin.x),
+            predictedProgress: previous.predictedProgress,
+          }
+        : (previous?.previousPlan ?? null),
+    reason,
+    recovering: navigation.intent === "recover",
+    stalledTicks: navigation.stalledTicks,
+    status: navigation.status,
+    tick: zone.steps,
+    waypoint: navigation.waypoint ?? null,
+  };
+}
+function inputLabel(candidate: Candidate): string {
+  if (candidate.back > 0) {
+    return "back-then-full";
+  }
+  if (candidate.delay > 0) {
+    return "wait-then-full";
+  }
+  if (candidate.stationary === Number.MAX_SAFE_INTEGER) {
+    return "wait";
+  }
+  if (candidate.stationary > 0) {
+    return "stationary-then-full";
+  }
+  if (candidate.brakeAfter !== undefined) {
+    return "brake-full";
+  }
+  return candidate.hold === 0 ? "walk" : candidate.hold === 1 ? "tap" : "full";
 }
 export function resetNavigation(bot: Navigator): void {
   if (bot.navigation) {
@@ -327,11 +444,13 @@ export function plannedInput(
     status: "ready",
     waypoint: undefined,
   });
+  let reason: NavigationDiagnostic["reason"] = "search";
   if (navigation.area !== zone.area || navigation.attempt !== zone.attempt) {
     resetNavigation(bot);
     navigation.area = zone.area;
     navigation.attempt = zone.attempt;
     navigation.stalledTicks = 0;
+    reason = "context-reset";
   }
   if (Math.abs(zone.bird.x - navigation.lastX) + Math.abs(zone.bird.y - navigation.lastY) < 0.25) {
     navigation.stalledTicks++;
@@ -355,9 +474,12 @@ export function plannedInput(
       if (navigation.continuation) {
         navigation.continuation.elapsed++;
       }
-      return navigation.queue.shift()!;
+      const input = navigation.queue.shift()!;
+      snapshot({ didReplan: false, direction, reason: "cache-reused", zone }, navigation);
+      return input;
     }
     resetNavigation(bot);
+    reason = "cache-diverged";
   }
   if (navigation.counters.physicsSteps >= limits.maxPhysicsSteps) {
     if (navigation.status !== "budget-exhausted") {
@@ -365,6 +487,7 @@ export function plannedInput(
     }
     navigation.status = "budget-exhausted";
     navigation.queue = [];
+    snapshot({ didReplan: false, direction, reason: "budget-exhausted", zone }, navigation);
     return IDLE;
   }
   navigation.counters.decisions++;
@@ -406,10 +529,12 @@ export function plannedInput(
         candidate: Candidate;
         elapsed: number;
         inputs: ZoneInput[];
+        predictedProgress: number;
         score: number;
         states: ZoneState[];
       }
     | undefined;
+  const summaries: NavigationCandidateSummary[] = [];
   const choices = candidates.map((candidate) => ({ candidate, elapsed: 0 }));
   if (navigation.continuation) {
     choices.unshift(navigation.continuation);
@@ -441,17 +566,40 @@ export function plannedInput(
       if (airborne && predicted.bird.grounded && landedAt === undefined) {
         landedAt = tick;
       }
-      if (landedAt !== undefined && tick - landedAt >= limits.replanTicks) {
+      if (
+        landedAt !== undefined &&
+        tick - landedAt >= limits.replanTicks &&
+        predicted.bird.grounded
+      ) {
         break;
       }
       airborne ||= !predicted.bird.grounded;
     }
     const forwardArea =
       layout.areas[zone.area]!.walkLinks?.[direction === 1 ? "right" : "left"]?.area;
-    if (predicted.area !== zone.area && predicted.area !== forwardArea) {
-      continue;
-    }
-    if (!safe || (!predicted.bird.grounded && !predicted.cleared && predicted.area === zone.area)) {
+    const rejection: NavigationCandidateSummary["rejection"] = !safe
+      ? "death"
+      : predicted.area !== zone.area && predicted.area !== forwardArea
+        ? "wrong-area"
+        : !predicted.bird.grounded && !predicted.cleared && predicted.area === zone.area
+          ? "airborne"
+          : null;
+    const summary: NavigationCandidateSummary = {
+      elapsed,
+      forwardProgress: direction * (predicted.bird.x - zone.bird.x),
+      inputLabel: inputLabel(candidate),
+      physicsSteps: inputs.length,
+      predictedEndpoint: {
+        grounded: predicted.bird.grounded,
+        x: predicted.bird.x,
+        y: predicted.bird.y,
+      },
+      rejection,
+      score: null,
+      verticalProgress: zone.bird.y - predicted.bird.y,
+    };
+    summaries.push(summary);
+    if (rejection !== null) {
       continue;
     }
     let score = direction * (predicted.bird.x - zone.bird.x);
@@ -478,8 +626,16 @@ export function plannedInput(
         score -= 120;
       }
     }
+    summaries[summaries.length - 1] = { ...summary, score };
     if (!best || score > best.score) {
-      best = { candidate, elapsed, inputs, score, states };
+      best = {
+        candidate,
+        elapsed,
+        inputs,
+        predictedProgress: summary.forwardProgress,
+        score,
+        states,
+      };
     }
   }
   if (!best) {
@@ -490,6 +646,18 @@ export function plannedInput(
     if (navigation.status === "budget-exhausted") {
       navigation.counters.budgetExhaustions++;
     }
+    snapshot(
+      {
+        candidates: summaries,
+        chosenAction: null,
+        didReplan: true,
+        direction,
+        predictedProgress: 0,
+        reason,
+        zone,
+      },
+      navigation,
+    );
     return IDLE;
   }
   navigation.status = "ready";
@@ -533,5 +701,18 @@ export function plannedInput(
   navigation.continuation = { candidate: best.candidate, elapsed: best.elapsed + 1 };
   navigation.cache = { config: cacheConfig, index: 1, layout, states: best.states, tuning };
   navigation.queue = best.inputs;
-  return navigation.queue.shift()!;
+  const input = navigation.queue.shift()!;
+  snapshot(
+    {
+      candidates: summaries,
+      chosenAction: inputLabel(best.candidate),
+      didReplan: true,
+      direction,
+      predictedProgress: best.predictedProgress,
+      reason,
+      zone,
+    },
+    navigation,
+  );
+  return input;
 }

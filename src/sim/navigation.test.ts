@@ -10,6 +10,7 @@ import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors 
 import {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
+  navigationSnapshot,
   plannedInput,
   rememberNavigationFailure,
   restoreNavigationMemory,
@@ -339,5 +340,66 @@ describe("bounded real-rule navigation", () => {
       }),
     ).toThrow("maxPhysicsSteps");
     expect(() => validateNavigation({ profile: "unknown" as "quick" })).toThrow("profile");
+  });
+  it("crosses a short-only one-tile bump when starting flush against its face", () => {
+    const base = fixture([
+      { height: 60, width: 336, x: 0, y: 240 },
+      { height: 72, width: 72, x: 336, y: 228 },
+      { height: 60, width: 152, x: 408, y: 240 },
+      { height: 24, width: 288, x: 240, y: 132 },
+    ]);
+    const ceiling = {
+      ...movingObject("hazard", { x: 240, y: 156 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 288,
+    };
+    const layout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 324, y: 240 } },
+          exitX: 540,
+          objects: [ceiling],
+          width: 560,
+        },
+      },
+    };
+    const result = traverse(layout, 360);
+    expect(result.zone.death).toBeUndefined();
+    expect(
+      result.zone.cleared,
+      JSON.stringify({
+        bird: result.zone.bird,
+        candidates: result.bot.navigation?.diagnostic?.candidates,
+        counters: navigationCounters(result.bot),
+        decision: result.bot.navigation?.decision,
+        waypoint: result.bot.navigation?.waypoint,
+      }),
+    ).toBe(true);
+  });
+  it("exposes bounded copied candidate and cache progress diagnostics without predicted states", () => {
+    const layout = fixture([{ height: 60, width: 400, x: 0, y: 240 }]),
+      bot = newBot(1);
+    let zone = startZone(BIRD, layout, 1);
+    const input = plannedInput(BIRD, layout, undefined, 1, zone, bot);
+    const first = navigationSnapshot(bot)!;
+    const saved = JSON.stringify(first);
+    expect(first.didReplan).toBe(true);
+    expect(first.candidates.length).toBeLessThanOrEqual(NAVIGATION_DEFAULTS.maxCandidates);
+    expect(first.chosenAction).toBeTruthy();
+    expect(first).not.toHaveProperty("states");
+    expect(first).not.toHaveProperty("tuning");
+    zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    plannedInput(BIRD, layout, undefined, 1, zone, bot);
+    const cached = navigationSnapshot(bot)!;
+    expect(cached.reason).toBe("cache-reused");
+    expect(cached.actualProgress).toBeGreaterThanOrEqual(0);
+    expect(JSON.stringify(first)).toBe(saved);
+    Object.assign(first.origin, { x: -999 });
+    Object.assign(first.candidates[0]!.predictedEndpoint, { x: -999 });
+    expect(navigationSnapshot(bot)!.origin.x).not.toBe(-999);
+    expect(navigationSnapshot(bot)!.candidates[0]!.predictedEndpoint.x).not.toBe(-999);
   });
 });

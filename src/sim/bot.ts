@@ -11,11 +11,17 @@ import {
   type NavigationState,
   plannedInput,
 } from "./navigation";
-export type { NavigationConfig, NavigationCounters, NavigationMemory } from "./navigation";
+export type {
+  NavigationConfig,
+  NavigationCounters,
+  NavigationDiagnostic,
+  NavigationMemory,
+} from "./navigation";
 export {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
   navigationCounters,
+  navigationSnapshot,
   rememberNavigationFailure,
   resetNavigation,
   restoreNavigationMemory,
