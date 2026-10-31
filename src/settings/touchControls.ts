@@ -6,12 +6,12 @@ export type TouchSetting = "actionButtons" | "moveControls";
 export const TOUCH_SETTINGS: readonly TouchSetting[] = ["moveControls", "actionButtons"];
 
 const STORAGE_KEYS: Readonly<Record<TouchSetting, string>> = {
-  actionButtons: "bird-versus-ferret.action-buttons",
-  moveControls: "bird-versus-ferret.move-controls",
+  actionButtons: "chibis-way-home.action-buttons",
+  moveControls: "chibis-way-home.move-controls",
 };
 // CLEANUP (added 2026-10-29): the single Touch controls setting the two replace, read for a
 // setting the player has not set since. Remove once every player's game has stored both.
-const OLD_STORAGE_KEY = "bird-versus-ferret.touch-controls";
+const OLD_STORAGE_KEY = "chibis-way-home.touch-controls";
 const HIDDEN = "hidden";
 const SHOWN = "shown";
 
