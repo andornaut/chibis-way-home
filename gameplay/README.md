@@ -1,6 +1,6 @@
 # Gameplay
 
-The design of the game, how it's tuned and tested, and what's left for the first build. Bird versus Ferret is a landscape platformer about Chibi, a lost bird, travelling zone to zone across a map to get home. Phone browser first, with keyboard on desktop.
+The design of the game, how it's tuned and tested, and what's left for the first build. Chibi's way home is a landscape platformer about Chibi, a lost bird, travelling zone to zone across a map to get home. Phone browser first, with keyboard on desktop.
 
 ## Docs
 
@@ -46,12 +46,12 @@ Each target is a band, not a point, assessed per stage and player skill. PLACEHO
 
 Open questions:
 
-- **Beginning:** the cause of Chibi and Firt's fight
+- **Beginning:** the cause of Chibi and Furt's fight
 - **Confirm, keyboard has no overlay:** assumed, the touch control overlay shows only with touch
 - **Confirm, one-way ledges:** assumed, he jumps up through an awning or other one-way ledge from below and lands on top of it
 - **Confirm, restarts reset choices:** assumed, a zone restart also resets the choices made in that zone
 - **Ending:** the outcome of their friendship when Chibi returns to the shared apartment
-- **Friends:** the identities of the friends Firt enlists beyond the dog, raccoon, goose, owl and rabbit, and their encounters
+- **Friends:** the identities of the friends Furt enlists beyond the dog, raccoon, goose, owl and rabbit, and their encounters
 - **Map:** Next's branching routes
 - **Rooms:** the currency and what items do; what quests and rewards give and how they are tracked; what a threat leads to; whether a room can be revisited, and whether its dialogue changes
 - **Use:** what it acts on besides doors (assumed: talking to animals, and objects at route forks)

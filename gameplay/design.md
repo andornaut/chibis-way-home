@@ -6,13 +6,13 @@ The rulebook: every rule the game is built to. What's left to build and tune is 
 
 ## Pitch
 
-A landscape platformer: Chibi travels back to the apartment he shared with his former best friend, Firt, a ferret, after Firt mails him far away. V1 follows one linear route; branching routes are planned for Next.
+A landscape platformer: Chibi travels back to the apartment he shared with his former best friend, Furt, a ferret, after Furt mails him far away. V1 follows one linear route; branching routes are planned for Next.
 
 ## Setting
 
 - **Characters:** Chibi is the male bird the player controls: a small, round, cream bird with tiny wings and feet, an orange bill and a dot eye. His full design is in the [art plan](../art/README.md). Animals talk; there are no humans.
-- **Firt:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
-- **Story:** Chibi and Firt share an apartment in a big city. After a big fight, Firt packages the sleeping Chibi and mails him far away. Chibi knows Firt is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
+- **Furt:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
+- **Story:** Chibi and Furt share an apartment in a big city. After a big fight, Furt packages the sleeping Chibi and mails him far away. Chibi knows Furt is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
 - **World:** the modern day, mixing fantasy and reality
 - **Zones:** a zone is one themed map destination containing two playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and twelve stages. The V1 route and current stage availability are listed below
 
@@ -20,7 +20,7 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 
 1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains two stages; V1 follows a linear route.
 2. **Between stages:** completing a zone's first stage shows a cutscene image and Continue, which enters its second stage directly. Completing the second stage returns to the map and animates Chibi walking to the next zone. V1 continues along its linear route; Next adds branching routes.
-3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Firt is undecided.
+3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Furt is undecided.
 
 ## Voice
 
@@ -158,7 +158,7 @@ The route spans six themed zones of two stages, in this order. Stage length is d
 - **Rooms:** the street door leads to the prototype test room
 - **Route:** the main path continues right toward the city boundary; middle chunks can include upper street ledges. City boundary is the zone's second stage and unlocks when this tutorial is completed
 
-The park is a prototype for randomized stages, not V1's second stage. The identities of Firt's friends beyond the dog, raccoon, goose, owl and rabbit and the later encounters along the route are undecided.
+The park is a prototype for randomized stages, not V1's second stage. The identities of Furt's friends beyond the dog, raccoon, goose, owl and rabbit and the later encounters along the route are undecided.
 
 ### City boundary
 
@@ -223,7 +223,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 - **Areas:** Entrance and lobby has two short linked sections. Climb to the apartment has seven short floor sections, in order: restaurant, exterior, pool, exterior, spa, exterior, residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
-- **Encounters:** Firt is a normal lethal-contact antagonist using the familiar dog behaviour pattern. He has no red contact outline; this is not a boss encounter and adds no combat
+- **Encounters:** Furt is a normal lethal-contact antagonist using the familiar dog behaviour pattern. He has no red contact outline; this is not a boss encounter and adds no combat
 - **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows the celebration every time, including replays. The cause of the fight and the outcome of the friendship remain undecided
 - **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. These short linked sections do not use the other zones' total stage-length range
 - **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Climb to the apartment. The final map path ends at the apartment. Stage IDs, save format and replay unlocks are unchanged
@@ -236,7 +236,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Approach:** the loading yard follows the basic hop and full-jump lessons and precedes the streets. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
 - **Contact:** the dog is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
-- **Dialogue:** the first introduction has three lines: the dog says Firt asked him to stop Chibi; Chibi says he is going home; the dog tells him to get past. The player-facing wording lives in the text data files, with Skip available
+- **Dialogue:** the first introduction has three lines: the dog says Furt asked him to stop Chibi; Chibi says he is going home; the dog tells him to get past. The player-facing wording lives in the text data files, with Skip available
 - **Timing:** the dog uses the same timing across both stages of the first zone; their layouts vary. The first encounter is in the first stage
 
 ### Rooms
@@ -258,11 +258,11 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - Short messages during play, for cutscenes, notices and quips. They never pause play
 - One line in a strip at the top centre, starting with the speaker's name
 
-### Firt
+### Furt
 
-- **Appearances:** Firt enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond the dog, raccoon, goose, owl and rabbit are undecided
+- **Appearances:** Furt enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond the dog, raccoon, goose, owl and rabbit are undecided
 - **Boss encounters:** deferred to Next, outside V1
-- **Calling card:** every trap Firt sets carries a badge of his stovepipe hat and bow tie
+- **Calling card:** every trap Furt sets carries a badge of his stovepipe hat and bow tie
 - **Ending:** Chibi returns home; the outcome of their friendship is undecided. There is no combat
 
 ### Choices
