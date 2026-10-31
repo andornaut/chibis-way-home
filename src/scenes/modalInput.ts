@@ -69,8 +69,8 @@ export function modalInput(scene: Scene): SceneInput {
   };
   inputs.set(scene, input);
   scene.events.once("shutdown", () => {
-    input.close();
     unsubscribers.forEach((stop) => stop());
+    input.close();
     inputs.delete(scene);
   });
   return input;

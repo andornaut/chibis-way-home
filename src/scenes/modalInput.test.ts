@@ -35,6 +35,26 @@ describe("modal input routes", () => {
     expect(clear).toHaveBeenCalledTimes(5);
   });
 
+  it("unsubscribes disposed card controls before closing its scope on scene shutdown", () => {
+    const game = {};
+    const world = scene(game);
+    const card = scene(game);
+    const clearWorld = vi.fn();
+    let disposed = false;
+    modalInput(world).subscribe(clearWorld);
+    modalInput(card).open();
+    modalInput(card).subscribe(() => {
+      if (disposed) {
+        throw new Error("Cannot redraw destroyed card sprites");
+      }
+    });
+    const beforeClose = clearWorld.mock.calls.length;
+    disposed = true;
+    expect(() => card.events.emit("shutdown")).not.toThrow();
+    expect(modalInput(world).accepts()).toBe(true);
+    expect(clearWorld).toHaveBeenCalledTimes(beforeClose + 1);
+  });
+
   it("does not release a held pointer into the world or a newly opened card", () => {
     const game = {};
     const world = scene(game);
