@@ -35,6 +35,7 @@ export interface ArtManifest {
   readonly sprites: readonly {
     // Where the sprite touches her as a hazard, in frame pixels, when it declares one.
     readonly hitbox?: Rect;
+    readonly contact?: "silhouette";
     readonly json: string;
     readonly key: string;
     // The tags that play once and hold their last frame. Every other tag loops.

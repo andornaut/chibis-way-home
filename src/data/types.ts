@@ -673,6 +673,7 @@ export interface Reaches {
 // the view and dialogue need. hitbox: where a hazard touches her, from its top-left corner, when
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
+  readonly contact?: SpriteContact;
   readonly spawnTemplates?: Readonly<Record<string, ObjectLayout>>;
   readonly behaviour?: BehaviourPlan;
   // The visual tileset, otherwise the area's tileset; null explicitly selects sprite/image art.
@@ -718,7 +719,30 @@ export interface AreaLayout {
 
 // A sprite's hit box in its frame, with the frame's size: the game draws the frame centred on
 // its object's rectangle along x and standing on its bottom edge.
+export type PixelRun = readonly [y: number, left: number, right: number];
+
+export interface SpriteSilhouette {
+  readonly width: number;
+  readonly height: number;
+  readonly frames: Readonly<Record<string, readonly PixelRun[]>>;
+}
+
+export interface SpriteSilhouettes {
+  readonly version: 1;
+  readonly sprites: Readonly<Record<string, SpriteSilhouette>>;
+}
+
+export interface SpriteContact {
+  readonly frame: Size;
+  readonly frames: Readonly<Record<string, readonly PixelRun[]>>;
+  readonly tags: Readonly<Record<string, {
+    readonly frames: readonly {readonly frame: string; readonly seconds: number}[];
+    readonly once: boolean;
+  }>>;
+}
+
 export interface ArtHitbox {
+  readonly contact?: SpriteContact;
   readonly frame: Size;
   readonly hitbox: Rect;
 }
