@@ -28,20 +28,20 @@ describe("death card", () => {
     { height: 40, width: 40, x: 340, y: 80 },
     { height: 40, width: 40, x: 0, y: 0 },
     { height: 40, width: 40, x: 680, y: 150 },
-  ])("keeps the seated duck visible at ground and elevated positions: %j", (duck) => {
-    const { card } = deathCard(fonts, view, duck, words);
+  ])("keeps the seated bird visible at ground and elevated positions: %j", (bird) => {
+    const { card } = deathCard(fonts, view, bird, words);
     expect(card.x).toBeGreaterThanOrEqual(0);
     expect(card.y).toBeGreaterThanOrEqual(0);
     expect(card.x + card.width).toBeLessThanOrEqual(SCREEN.width);
     expect(card.y + card.height).toBeLessThanOrEqual(SCREEN.height);
     expect(
-      card.x + card.width <= duck.x - 8 ||
-        card.x >= duck.x + duck.width + 8 ||
-        card.y + card.height <= duck.y - 8 ||
-        card.y >= duck.y + duck.height + 8,
+      card.x + card.width <= bird.x - 8 ||
+        card.x >= bird.x + bird.width + 8 ||
+        card.y + card.height <= bird.y - 8 ||
+        card.y >= bird.y + bird.height + 8,
     ).toBe(true);
   });
-  it("uses the compact top-centred City layout when the duck is below it", () => {
+  it("uses the compact top-centred City layout when the bird is below it", () => {
     const result = deathCard(fonts, view, { height: 40, width: 40, x: 340, y: 310 }, words);
     expect(result.card).toMatchObject({ height: 164, y: 16 });
     expect([result.title.y, result.stage.y, result.progress.y, result.time.y]).toEqual([

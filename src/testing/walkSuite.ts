@@ -5,14 +5,14 @@ import { beforeAll, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
 import { ARCHETYPES } from "../data/archetypes";
+import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
-import { DUCK } from "../data/duck";
 import { TILE } from "../data/screen";
 import type { TilePoint, ZoneLayout, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import { crosses, type Surface, surfaceAt, walkZone, type ZoneWalk } from "../sim/zoneWalk";
 import { artHitboxes, type ArtManifest, sheetFrameSize } from "../view/aseprite";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import type { Tileset } from "../view/tiles";
 
 const SHEETS = import.meta.glob<{
@@ -51,8 +51,8 @@ export function walkSuite(plan: ZonePlan): void {
   );
 
   beforeAll(() => {
-    layout = zoneLayout(TILE, DUCK_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
-    walk = walkZone(DUCK, layout);
+    layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+    walk = walkZone(BIRD, layout);
   }, WALK_MS);
 
   it("clears at its right edge, walked from the start", () => {
@@ -91,7 +91,7 @@ export function walkSuite(plan: ZonePlan): void {
             if (!start || !end) {
               return [`${pair}: not both surfaces`];
             }
-            return crosses(DUCK, layout, walk.surfaces, start, end) ? [pair] : [];
+            return crosses(BIRD, layout, walk.surfaces, start, end) ? [pair] : [];
           }),
         );
         expect(crossed).toEqual([]);

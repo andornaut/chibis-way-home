@@ -8,12 +8,12 @@ import { startZone, stepZone } from "../rules/zone";
 import { zonePlanFor } from "../rules/zonePlans";
 import { HITBOXES, TILESETS } from "../testing/walkSuite";
 import type { ArtManifest } from "../view/aseprite";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { artKind } from "../view/objectArt";
 import { lookTiles } from "../view/tiles";
 import { ARCHETYPES } from "./archetypes";
+import { BIRD } from "./bird";
 import { CHARACTERS } from "./characters";
-import { DUCK } from "./duck";
 import { ZONE_MAP } from "./map";
 import { ROOMS } from "./rooms";
 import { SCREEN, TILE } from "./screen";
@@ -176,10 +176,10 @@ describe("the real zones", () => {
 // Her collision box where a plan starts her: it must start clear of the first column, or she
 // would turn back (rules/zone's turnedBack) on arrival.
 const startsClear = (plan: ZonePlan) => {
-  const layout = zoneLayout(TILE, DUCK_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
-  const start = startZone(DUCK, layout, 1);
+  const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+  const start = startZone(BIRD, layout, 1);
   const area = layout.areas[start.area];
-  return area !== undefined && start.duck.x >= area.backX && !start.turnedBack;
+  return area !== undefined && start.bird.x >= area.backX && !start.turnedBack;
 };
 
 describe("every zone's start", () => {
@@ -198,11 +198,11 @@ describe("every zone's start", () => {
 // Whether, held left with no jump from the plan's start, on art's real tiles and sprites, she
 // turns back within seconds: nothing in a zone's first column may stop her reaching it.
 const turnsBackWithin = (seconds: number, plan: ZonePlan) => {
-  const layout = zoneLayout(TILE, DUCK_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
-  let zone = startZone(DUCK, layout, 1);
+  const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+  let zone = startZone(BIRD, layout, 1);
   for (let step = 0; step < Math.round(seconds / STEP_SECONDS) && !zone.turnedBack; step++) {
     zone = stepZone(
-      DUCK,
+      BIRD,
       layout,
       STEP_SECONDS,
       { jumpHeld: false, move: -1, useHeld: false },

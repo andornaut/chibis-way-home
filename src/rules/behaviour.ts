@@ -2,7 +2,7 @@ import type {
   BehaviourCondition,
   BehaviourNode,
   BehaviourPlan,
-  DuckTuning,
+  BirdTuning,
   ObjectLayout,
   Point,
   Rect,
@@ -13,7 +13,7 @@ import {
   behaviourWorld,
   targetReachable,
 } from "./behaviourReach";
-import { duckBox, type DuckState, EDGE } from "./duck";
+import { birdBox, type BirdState, EDGE } from "./bird";
 import { hopLift } from "./motion";
 import { overlaps } from "./rect";
 
@@ -125,9 +125,9 @@ function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
 }
 
 function enterState(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   object: ObjectLayout,
-  duck: DuckState,
+  bird: BirdState,
   at: Point,
   key: string,
   state: BehaviourState,
@@ -143,22 +143,22 @@ function enterState(
   ) {
     const axis = object.behaviour?.axis ?? "x";
     const mine = at[axis] + (axis === "x" ? object.width : object.height) / 2;
-    const target = duck[axis] + (axis === "x" ? tuning.width : tuning.height) / 2;
+    const target = bird[axis] + (axis === "x" ? tuning.width : tuning.height) / 2;
     facing = target < mine ? -1 : 1;
   }
   return { ...state, elapsed: 0, facing, stateKey: key };
 }
 
 export function startBehaviour(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   object: ObjectLayout,
-  duck: DuckState,
+  bird: BirdState,
 ): BehaviourState {
   const plan = object.behaviour;
   if (!plan) {
     throw new Error(`No behaviour for ${object.character}`);
   }
-  return enterState(tuning, object, duck, object.origin, plan.initial, {
+  return enterState(tuning, object, bird, object.origin, plan.initial, {
     active: object.scene === undefined,
     elapsed: 0,
     facing: plan.distance < 0 ? -1 : 1,
@@ -197,10 +197,10 @@ function endpoint(object: ObjectLayout, direction: -1 | 1): number {
 }
 
 function matches(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   object: ObjectLayout,
   world: BehaviourWorld,
-  duck: DuckState,
+  bird: BirdState,
   at: Point,
   state: BehaviourState,
   condition: BehaviourCondition,
@@ -221,18 +221,18 @@ function matches(
       contactBox(object, at, state.facing),
       state.hop?.groundY ?? at.y,
       condition.tolerance,
-      duck,
+      bird,
     );
     return condition.kind === "reachable" ? reachable : !reachable;
   }
   if (condition.kind === "same-ground") {
     return (
-      duck.grounded &&
-      Math.abs(duck.y + tuning.height - ((state.hop?.groundY ?? at.y) + object.height)) <=
+      bird.grounded &&
+      Math.abs(bird.y + tuning.height - ((state.hop?.groundY ?? at.y) + object.height)) <=
         condition.tolerance
     );
   }
-  const hers = duckBox(tuning, duck);
+  const hers = birdBox(tuning, bird);
   return (
     condition.kind === "nearby" &&
     Math.hypot(
@@ -305,11 +305,11 @@ function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: n
 // Generic state graphs choose the motion, animation and transition order. The executor knows
 // only bounded move/wait/hop primitives and conditions; it has no character-specific cycle.
 export function stepBehaviour(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   object: ObjectLayout,
   geometry: BehaviourGeometry,
   seconds: number,
-  duck: DuckState,
+  bird: BirdState,
   at: Point,
   state: BehaviourState,
 ): BehaviourStep {
@@ -334,20 +334,20 @@ export function stepBehaviour(
     const node = nodeOf(object, next.stateKey);
     if (node.motion.kind !== "wait" && node.motion.direction === "target") {
       const mine = current[plan.axis] + (plan.axis === "x" ? object.width : object.height) / 2;
-      const target = duck[plan.axis] + (plan.axis === "x" ? tuning.width : tuning.height) / 2;
+      const target = bird[plan.axis] + (plan.axis === "x" ? tuning.width : tuning.height) / 2;
       if (target !== mine) {
         next = { ...next, facing: target < mine ? -1 : 1 };
       }
     }
     const transition = node.transitions.find(({ when }) =>
-      when.every((condition) => matches(tuning, object, world, duck, current, next, condition)),
+      when.every((condition) => matches(tuning, object, world, bird, current, next, condition)),
     );
     if (transition) {
       if (instant.has(next.stateKey)) {
         throw new Error(`Instant behaviour transition cycle for ${object.character}`);
       }
       instant.add(next.stateKey);
-      next = enterState(tuning, object, duck, current, transition.to, next);
+      next = enterState(tuning, object, bird, current, transition.to, next);
       continue;
     }
     if (time >= seconds) {
@@ -359,7 +359,7 @@ export function stepBehaviour(
         when.every(
           (condition) =>
             condition.kind === "elapsed" ||
-            matches(tuning, object, world, duck, current, next, condition),
+            matches(tuning, object, world, bird, current, next, condition),
         )
       ) {
         const threshold = Math.max(
@@ -397,7 +397,7 @@ export function stepBehaviour(
       let desired = current[plan.axis] + direction * node.motion.speed * slice;
       if (node.motion.direction === "target") {
         const target =
-          duck[plan.axis] +
+          bird[plan.axis] +
           (plan.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
         desired = direction === 1 ? Math.min(desired, target) : Math.max(desired, target);
       }

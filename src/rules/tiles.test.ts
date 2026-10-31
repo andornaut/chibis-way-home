@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Archetype, Character, Instance, ZonePlan } from "../data/types";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { type Catalogue, isPlaced, objectLayout, tileRect, zoneLayout } from "./tiles";
 
 describe("tileRect", () => {
@@ -78,7 +78,7 @@ describe("zoneLayout", () => {
   const hitboxes = {
     lift: { frame: { height: 10, width: 40 }, hitbox: { height: 6, width: 30, x: 5, y: 2 } },
   };
-  const layout = zoneLayout(10, DUCK_FRAME, CATALOGUE, hitboxes, {}, new Set(), PLAN);
+  const layout = zoneLayout(10, BIRD_FRAME, CATALOGUE, hitboxes, {}, new Set(), PLAN);
   const yard = layout.areas.yard;
   const [lift, special, gate] = yard?.objects ?? [];
   it.each([
@@ -166,7 +166,7 @@ describe("zoneLayout", () => {
       ...PLAN,
       areas: { yard: { ...PLAN.areas.yard, objects: [instance] } },
     } as ZonePlan;
-    expect(() => zoneLayout(10, DUCK_FRAME, catalogue, {}, {}, new Set(), bad)).toThrow(message);
+    expect(() => zoneLayout(10, BIRD_FRAME, catalogue, {}, {}, new Set(), bad)).toThrow(message);
   });
   it("changes a sprite skin while preserving canonical collision, footprint and bottom-centred anchor", () => {
     const assets = {

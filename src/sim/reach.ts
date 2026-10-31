@@ -2,7 +2,7 @@ import { assertNever } from "@andornaut/game-kit/assertNever";
 
 import type {
   AreaLayout,
-  DuckTuning,
+  BirdTuning,
   Point,
   Reaches,
   Rect,
@@ -13,7 +13,7 @@ import type {
 import { STEP_SECONDS } from "../rules/step";
 import { tileRect, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 
 export type Reach = keyof Reaches;
 
@@ -56,7 +56,7 @@ function courseLayout(tile: number, cols: number, solids: TileRect[], start: Poi
   };
   const layout = zoneLayout(
     tile,
-    DUCK_FRAME,
+    BIRD_FRAME,
     { archetypes: {}, characters: {} },
     {},
     {},
@@ -72,7 +72,7 @@ function courseLayout(tile: number, cols: number, solids: TileRect[], start: Poi
 
 // A ledge tiles high, just right of where she stands still. She walks right, holding Jump for
 // jumpSteps from the first step she moves.
-function ledgeCourse(tuning: DuckTuning, tile: number, tiles: number, jumpSteps: number): Course {
+function ledgeCourse(tuning: BirdTuning, tile: number, tiles: number, jumpSteps: number): Course {
   const ledge = { col: RUN_UP, cols: FAR_SIDE, row: GROUND_ROW - tiles, rows: tiles };
   const target = tileRect(tile, ledge);
   return {
@@ -92,7 +92,7 @@ function ledgeCourse(tuning: DuckTuning, tile: number, tiles: number, jumpSteps:
 // standstill and presses Jump, holding it, press steps after the last step she stands on the
 // near edge (the step after which, without a jump, she would no longer stand on it): before it
 // for a negative press, in coyote time for a positive one.
-function gapCourse(tuning: DuckTuning, tile: number, tiles: number, press: number): Course {
+function gapCourse(tuning: BirdTuning, tile: number, tiles: number, press: number): Course {
   const near = ground(RUN_UP);
   const far = { ...ground(FAR_SIDE), col: RUN_UP + tiles };
   const layout = courseLayout(tile, RUN_UP + tiles + FAR_SIDE, [near, far], {
@@ -104,7 +104,7 @@ function gapCourse(tuning: DuckTuning, tile: number, tiles: number, press: numbe
   let last = startZone(tuning, layout, 1);
   while (
     last.death === undefined &&
-    (last.steps < SETTLE_STEPS || stepZone(tuning, layout, STEP_SECONDS, run, last).duck.grounded)
+    (last.steps < SETTLE_STEPS || stepZone(tuning, layout, STEP_SECONDS, run, last).bird.grounded)
   ) {
     last = stepZone(tuning, layout, STEP_SECONDS, runOn(last), last);
   }
@@ -119,7 +119,7 @@ function gapCourse(tuning: DuckTuning, tile: number, tiles: number, press: numbe
 // steps before it as coyote time lasts, through a step past the end of coyote time. The press
 // that makes the farthest gap may come at any of them. A ledge's height does not depend on when
 // she presses, standing on the ground, so it has one timing.
-export function pressTimings(tuning: DuckTuning, reach: Reach): number[] {
+export function pressTimings(tuning: BirdTuning, reach: Reach): number[] {
   if (reach !== "gap") {
     return [0];
   }
@@ -128,7 +128,7 @@ export function pressTimings(tuning: DuckTuning, reach: Reach): number[] {
 }
 
 function course(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   tile: number,
   reach: Reach,
   tiles: number,
@@ -151,7 +151,7 @@ function course(
 // pressTimings): she stands on top of the ledge or the far side before a restart or the time runs
 // out.
 function makesWith(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   tile: number,
   reach: Reach,
   tiles: number,
@@ -161,10 +161,10 @@ function makesWith(
   let zone = startZone(tuning, layout, 1);
   while (zone.steps < MAX_STEPS && zone.restarts === 0 && zone.death === undefined) {
     zone = stepZone(tuning, layout, STEP_SECONDS, input(zone), zone);
-    const { duck } = zone;
-    const onTop = Math.abs(duck.y + tuning.height - solid.y) < 1e-6;
-    const over = duck.x + tuning.width > solid.x && duck.x < solid.x + solid.width;
-    if (duck.grounded && onTop && over) {
+    const { bird } = zone;
+    const onTop = Math.abs(bird.y + tuning.height - solid.y) < 1e-6;
+    const over = bird.x + tuning.width > solid.x && bird.x < solid.x + solid.width;
+    if (bird.grounded && onTop && over) {
       return true;
     }
   }
@@ -172,12 +172,12 @@ function makesWith(
 }
 
 // Whether she makes a reach of tiles at any of its press timings.
-export function makes(tuning: DuckTuning, tile: number, reach: Reach, tiles: number): boolean {
+export function makes(tuning: BirdTuning, tile: number, reach: Reach, tiles: number): boolean {
   return pressTimings(tuning, reach).some((press) => makesWith(tuning, tile, reach, tiles, press));
 }
 
 // The largest reach of each kind she makes, at any press timing, in tiles, or 0.
-export function measureReaches(tuning: DuckTuning, tile: number): Reaches {
+export function measureReaches(tuning: BirdTuning, tile: number): Reaches {
   const largest = (reach: Reach) => {
     let best = 0;
     for (let tiles = 1; tiles <= MAX_TILES; tiles++) {

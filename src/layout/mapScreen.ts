@@ -7,7 +7,7 @@ import { labelledButton } from "./restartCard";
 
 // Art's paper map (art/README.md, Map), in base pixels. Offsets marked "from the centre" are from
 // a node's centre. The paper fills the screen; each marker's centre pixel sits on its node's
-// centre; a zone's icon sits centred over its marker; the duck stands on the current marker's
+// centre; a zone's icon sits centred over its marker; the bird stands on the current marker's
 // ring. Back to title and Continue share standard-height footer buttons, secondary left and
 // primary right. Labels use shared placement and press displacement without play marks; each
 // press area grows by hitAreas.ts's rule. A tap on a zone marker lands within nodeHit, the zone
@@ -30,11 +30,11 @@ const NODE_HIT = hitAround({
 });
 
 export const MAP_SCREEN = {
-  continue: actionButton(SCREEN.width / 2 + TEXT_BUTTON.gap / 2),
-  duck: {
+  bird: {
     fork: { x: -13, y: -36 } satisfies Point,
     zone: { x: -13, y: -39 } satisfies Point,
   },
+  continue: actionButton(SCREEN.width / 2 + TEXT_BUTTON.gap / 2),
   home: actionButton(SCREEN.width / 2 - ACTION_WIDTH - TEXT_BUTTON.gap / 2),
   icon: { x: -7, y: -7 } satisfies Point,
   marker: {

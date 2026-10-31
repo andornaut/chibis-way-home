@@ -60,7 +60,7 @@ describe("buildAtlas", () => {
 
   // Different source shapes and alpha patterns exercise the shared copy and extrusion path.
   it.each([
-    "duck",
+    "bird",
     "font-body",
     "parcel-open",
     "park-gate",
@@ -89,7 +89,7 @@ describe("buildAtlas", () => {
   });
 
   it.each(
-    ["duck", "park-gate", "ui-button-primary"].map((key) => {
+    ["bird", "park-gate", "ui-button-primary"].map((key) => {
       const source = ART.sprites.find((sprite) => sprite.key === key);
       if (!source) {
         throw new Error(`No sprite ${key}`);

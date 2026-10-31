@@ -61,7 +61,7 @@ export function startDeathPresentation(
   };
 }
 
-// Only the dying duck moves. Supports are queried from the frozen world, never advanced here.
+// Only the dying bird moves. Supports are queried from the frozen world, never advanced here.
 export function stepDeathPresentation(
   tuning: DeathTuning,
   view: DeathView,

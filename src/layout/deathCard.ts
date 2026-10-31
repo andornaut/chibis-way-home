@@ -25,9 +25,9 @@ function overlaps(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
-// Try the preferred top position first, then every separating edge around the visible duck.
-export function deathCardPosition(bounds: Rect, size: Size, duck: Rect): Rect {
-  const avoid = insetRect(-CARD_CONTENT.gap, duck);
+// Try the preferred top position first, then every separating edge around the visible bird.
+export function deathCardPosition(bounds: Rect, size: Size, bird: Rect): Rect {
+  const avoid = insetRect(-CARD_CONTENT.gap, bird);
   const top = bounds.y + CARD_CONTENT.padding;
   const centre = bounds.x + bounds.width / 2;
   const preferred = rectAboveIn(bounds, { bottom: top + size.height, x: centre }, size);
@@ -58,10 +58,10 @@ export function deathCardPosition(bounds: Rect, size: Size, duck: Rect): Rect {
       }
     }
   }
-  throw new Error("Death card cannot fit clear of the duck");
+  throw new Error("Death card cannot fit clear of the bird");
 }
 
-export function deathCard(fonts: CardFonts, bounds: Rect, duck: Rect, words: DeathCardWords) {
+export function deathCard(fonts: CardFonts, bounds: Rect, bird: Rect, words: DeathCardWords) {
   const names = ["title", "stage", "progress", "time"] as const;
   const rows = names.map((name) =>
     cardTextSize(name === "title" ? fonts.title : fonts.body, words[name]),
@@ -77,7 +77,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, duck: Rect, words: Dea
     { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
   ];
   const measured = contentCardLayout(bounds, groups);
-  const position = deathCardPosition(bounds, measured.card, duck);
+  const position = deathCardPosition(bounds, measured.card, bird);
   const layout = contentCardLayout(bounds, groups, undefined, position);
   const rowGroup = layout.groups.rows;
   const actionGroup = layout.groups.actions;

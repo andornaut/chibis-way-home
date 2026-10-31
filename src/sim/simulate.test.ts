@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { AreaLayout, ZoneLayout } from "../data/types";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_SECONDS } from "../rules/step";
 import { startZone, stepZone } from "../rules/zone";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "./bot";
 import { simulateBatch } from "./report";
 import {
@@ -31,7 +31,7 @@ function fixture(solids: AreaLayout["solids"], exitX = 1000): ZoneLayout {
         width: 1100,
       },
     },
-    duckFrame: DUCK_FRAME,
+    birdFrame: BIRD_FRAME,
     start: { area: "main", entry: "start" },
   };
 }
@@ -51,11 +51,11 @@ function deterministic(result: ReturnType<typeof simulateStage>) {
 describe("bounded stage simulation", () => {
   it("matches direct real-rule stepping and stops on completion", () => {
     const layout = fixture(ground, 200);
-    let actual = startZone(DUCK, layout, config.seed);
+    let actual = startZone(BIRD, layout, config.seed);
     let steps = 0;
     while (!actual.cleared && steps < config.maxSteps) {
       actual = stepZone(
-        DUCK,
+        BIRD,
         layout,
         STEP_SECONDS,
         { jumpHeld: false, move: 1, useHeld: false },
@@ -63,7 +63,7 @@ describe("bounded stage simulation", () => {
       );
       steps++;
     }
-    const run = simulateStage(DUCK, prepareStage(layout), config);
+    const run = simulateStage(BIRD, prepareStage(layout), config);
     expect(run.status).toBe("cleared");
     expect(run.steps).toBe(steps);
     expect(run.activeSeconds).toBe(steps * STEP_SECONDS);
@@ -71,7 +71,7 @@ describe("bounded stage simulation", () => {
     expect(run.deaths).toBe(0);
   });
   it("counts real failed attempts and retries without stepping a frozen death", () => {
-    const run = simulateStage(DUCK, prepareStage(fixture([])), {
+    const run = simulateStage(BIRD, prepareStage(fixture([])), {
       ...config,
       maxRetries: 2,
       maxSteps: 500,
@@ -90,15 +90,15 @@ describe("bounded stage simulation", () => {
       policy: { ...FORWARD_POLICY, jump: "continuous" as const },
       skill: { ...DIAGNOSTIC_SKILL, errorRate: 0.5 },
     };
-    const first = simulateStage(DUCK, stage, options);
-    expect(deterministic(first)).toEqual(deterministic(simulateStage(DUCK, stage, options)));
+    const first = simulateStage(BIRD, stage, options);
+    expect(deterministic(first)).toEqual(deterministic(simulateStage(BIRD, stage, options)));
     expect(first.status).toBe("step-budget");
     expect(first.steps).toBe(30);
     expect(first.retries).toBe(0);
   });
   it("aggregates explicit bounded runs without losing failures", () => {
     const stage = prepareStage(fixture(ground));
-    const report = simulateBatch(DUCK, () => stage, { ...config, maxSteps: 3 }, [1, 2]);
+    const report = simulateBatch(BIRD, () => stage, { ...config, maxSteps: 3 }, [1, 2]);
     expect(report.aggregate).toMatchObject({
       budgetExhausted: 2,
       cleared: 0,
@@ -113,7 +113,7 @@ describe("bounded stage simulation", () => {
     "rejects unbounded or invalid budgets: %j",
     (invalid) => {
       expect(() =>
-        simulateStage(DUCK, prepareStage(fixture(ground)), { ...config, ...invalid }),
+        simulateStage(BIRD, prepareStage(fixture(ground)), { ...config, ...invalid }),
       ).toThrow();
     },
   );
@@ -121,7 +121,7 @@ describe("bounded stage simulation", () => {
 
 describe("simulation sections and diagnostics", () => {
   it("caps per-attempt death events and reports dropped diagnostics", () => {
-    const run = simulateStage(DUCK, prepareStage(fixture([])), {
+    const run = simulateStage(BIRD, prepareStage(fixture([])), {
       ...config,
       maxRetries: 2,
       maxSteps: 500,
@@ -136,7 +136,7 @@ describe("simulation sections and diagnostics", () => {
   });
   it("diagnoses blocked movement without recording unbounded per-tick samples", () => {
     const stage = prepareStage(fixture([...ground, { height: 120, width: 12, x: 90, y: 0 }]));
-    const run = simulateStage(DUCK, stage, { ...config, trace: { maxEvents: 3, stallTicks: 10 } });
+    const run = simulateStage(BIRD, stage, { ...config, trace: { maxEvents: 3, stallTicks: 10 } });
     expect(run.trace).toHaveLength(3);
     expect(run.trace.every(({ kind, x, y }) => kind === "stall" && x === 66 && y === 84)).toBe(
       true,
@@ -146,26 +146,26 @@ describe("simulation sections and diagnostics", () => {
   it("starts from a validated section and rejects an embedded or out-of-bounds start", () => {
     const stage = prepareStage(fixture(ground));
     const start = { area: "main", x: 400, y: 84 };
-    const run = simulateStage(DUCK, stage, { ...config, maxSteps: 1, start });
+    const run = simulateStage(BIRD, stage, { ...config, maxSteps: 1, start });
     expect(run.start).toEqual(start);
-    const checkpoint = startZone(DUCK, stage.layout, config.seed);
-    const absolute = stageProgress(DUCK, stage.layout, {
+    const checkpoint = startZone(BIRD, stage.layout, config.seed);
+    const absolute = stageProgress(BIRD, stage.layout, {
       ...checkpoint,
-      duck: { ...checkpoint.duck, x: start.x, y: start.y },
+      bird: { ...checkpoint.bird, x: start.x, y: start.y },
     });
     expect(run.progress).toBeCloseTo(absolute, 2);
     for (const invalid of [
       { ...start, y: 110 },
       { ...start, x: -1 },
     ]) {
-      expect(() => simulateStage(DUCK, stage, { ...config, start: invalid })).toThrow();
+      expect(() => simulateStage(BIRD, stage, { ...config, start: invalid })).toThrow();
     }
   });
   it("resolves independent seeds and uses the layout seed only for preparation", () => {
     const requested: number[] = [];
     const stage = prepareStage(fixture(ground));
     const report = simulateBatch(
-      DUCK,
+      BIRD,
       (seed) => {
         requested.push(seed);
         return stage;
@@ -193,16 +193,16 @@ describe("bounded section goals and reproducibility", () => {
         upper: { ...main, walkLinks: { left: { area: "main", entry: "start" } } },
       },
     };
-    const initial = startZone(DUCK, layout, config.seed);
+    const initial = startZone(BIRD, layout, config.seed);
     const before = {
       ...initial,
-      duck: { ...initial.duck, grounded: true, vx: DUCK.walkSpeed, x: main.exitX - DUCK.width - 1 },
+      bird: { ...initial.bird, grounded: true, vx: BIRD.walkSpeed, x: main.exitX - BIRD.width - 1 },
     };
     const after = { ...initial, area: "upper" };
     const goal = { area: "main", x: main.exitX };
-    expect(simulationGoalReached(DUCK, layout, 1, goal, before, after)).toBe(true);
-    expect(simulationGoalReached(DUCK, layout, 1, goal, before, before)).toBe(false);
-    expect(simulationGoalReached(DUCK, layout, -1, goal, before, after)).toBe(false);
+    expect(simulationGoalReached(BIRD, layout, 1, goal, before, after)).toBe(true);
+    expect(simulationGoalReached(BIRD, layout, 1, goal, before, before)).toBe(false);
+    expect(simulationGoalReached(BIRD, layout, -1, goal, before, after)).toBe(false);
   });
   it("reports section success independently of stage completion and joins chunk IDs", () => {
     const layout = fixture(ground);
@@ -214,7 +214,7 @@ describe("bounded section goals and reproducibility", () => {
       ...prepareStage({ ...layout, areas: { main: { ...main, chunks: [{ width: 1100, x: 0 }] } } }),
       source: { chunkIds: { main: ["fixture-section"] }, layoutSeed: config.seed },
     };
-    const run = simulateStage(DUCK, stage, {
+    const run = simulateStage(BIRD, stage, {
       ...config,
       goal: { area: "main", x: 200 },
       trace: { maxEvents: 1, sampleEveryTicks: 1, stallTicks: 10 },
@@ -222,17 +222,17 @@ describe("bounded section goals and reproducibility", () => {
     expect(run.status).toBe("goal-reached");
     expect(run.progress).toBeLessThan(1);
     expect(run.trace[0]?.chunkId).toBe("fixture-section");
-    expect(() => simulateStage(DUCK, stage, { ...config, goal: { area: "main", x: 10 } })).toThrow(
+    expect(() => simulateStage(BIRD, stage, { ...config, goal: { area: "main", x: 10 } })).toThrow(
       "Invalid section goal",
     );
-    expect(() => simulateStage(DUCK, stage, { ...config, seeds: { layout: 99 } })).toThrow(
+    expect(() => simulateStage(BIRD, stage, { ...config, seeds: { layout: 99 } })).toThrow(
       "Prepared layout seed",
     );
   });
   it("repeats one bot seed and changes actual inputs with an independent bot seed", () => {
     const stage = prepareStage(fixture(ground));
     const play = (bot: number) =>
-      simulateStage(DUCK, stage, {
+      simulateStage(BIRD, stage, {
         ...config,
         maxSteps: 60,
         policy: { jump: "continuous", move: 1 },

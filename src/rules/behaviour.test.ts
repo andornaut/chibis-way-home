@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, Character, ObjectLayout, Rect } from "../data/types";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
 import { behaviourPose } from "../view/behaviour";
@@ -11,7 +11,7 @@ import {
   stepBehaviour,
   sweptContact,
 } from "./behaviour";
-import { startDuck } from "./duck";
+import { startBird } from "./bird";
 import { objectLayout } from "./tiles";
 
 const ACTOR: Archetype = {
@@ -36,7 +36,7 @@ const CHARACTER: Character = {
   rows: 20,
 };
 const AT = { x: 150, y: 280 };
-const duck = (x = 120, y = 300) => ({ ...startDuck(DUCK, { x, y }), grounded: true });
+const bird = (x = 120, y = 300) => ({ ...startBird(BIRD, { x, y }), grounded: true });
 const resolve = (character = CHARACTER, archetype = ACTOR, tile = 1, behaviour?: BehaviourPlan) =>
   objectLayout(
     tile,
@@ -47,7 +47,7 @@ const resolve = (character = CHARACTER, archetype = ACTOR, tile = 1, behaviour?:
     { ...(behaviour && { behaviour }), character: "actor", col: 100, row: 280 },
   );
 const OBJECT = resolve();
-const initial = (object = OBJECT) => startBehaviour(DUCK, object, duck());
+const initial = (object = OBJECT) => startBehaviour(BIRD, object, bird());
 
 describe("behaviour plans", () => {
   it.each([null, "walk"])("moves art with animation %j", (animation) => {
@@ -58,7 +58,7 @@ describe("behaviour plans", () => {
       ),
     };
     const object = resolve(CHARACTER, ACTOR, 1, plan);
-    const result = stepBehaviour(DUCK, object, [], 0.1, duck(), object.origin, initial(object));
+    const result = stepBehaviour(BIRD, object, [], 0.1, bird(), object.origin, initial(object));
     expect(result.at.y).toBeLessThan(object.origin.y);
     expect(behaviourPose(object, result.state).animation).toBe(animation ?? undefined);
   });
@@ -126,11 +126,11 @@ describe("data-defined pursuit", () => {
     { grounded: true, triggered: false, x: 300, y: 300 },
   ])("combines nearby and same-ground conditions: %j", ({ grounded, triggered, x, y }) => {
     const result = stepBehaviour(
-      DUCK,
+      BIRD,
       OBJECT,
       [],
       0.125,
-      { ...duck(x, y), grounded },
+      { ...bird(x, y), grounded },
       AT,
       initial(),
     );
@@ -143,14 +143,14 @@ describe("data-defined pursuit", () => {
     [0.5, "burst", 100],
     [0.75, "recover", 100],
   ])("after %s seconds is %s at x%s, preserving elapsed timing at the bound", (seconds, key, x) => {
-    const result = stepBehaviour(DUCK, OBJECT, [], seconds, duck(), AT, initial());
+    const result = stepBehaviour(BIRD, OBJECT, [], seconds, bird(), AT, initial());
     expect({ key: result.state.stateKey, x: result.at.x }).toEqual({ key, x });
     expect(result.state.facing).toBe(-1);
   });
 
   it("keeps an entry-captured heading when the target moves behind it", () => {
-    const first = stepBehaviour(DUCK, OBJECT, [], 0.125, duck(), AT, initial());
-    const burst = stepBehaviour(DUCK, OBJECT, [], 0.5, duck(240), first.at, first.state);
+    const first = stepBehaviour(BIRD, OBJECT, [], 0.125, bird(), AT, initial());
+    const burst = stepBehaviour(BIRD, OBJECT, [], 0.5, bird(240), first.at, first.state);
     expect({ facing: burst.state.facing, key: burst.state.stateKey, x: burst.at.x }).toEqual({
       facing: -1,
       key: "burst",
@@ -160,7 +160,7 @@ describe("data-defined pursuit", () => {
 
   it("stays still and uses its inactive animation until explicitly activated", () => {
     const object = { ...OBJECT, scene: "conversation" };
-    const result = stepBehaviour(DUCK, object, [], 2, duck(), AT, initial(object));
+    const result = stepBehaviour(BIRD, object, [], 2, bird(), AT, initial(object));
     expect(result.at).toEqual(AT);
     expect(result.state.active).toBe(false);
     expect(behaviourPose(object, result.state).animation).toBe(TEST_PURSUER.inactiveAnimation);
@@ -176,7 +176,7 @@ describe("data-defined pursuit", () => {
       ...OBJECT,
       behaviour: { ...TEST_PURSUER, initial: "again", states: { again: node } },
     };
-    expect(() => stepBehaviour(DUCK, object, [], 1, duck(), AT, initial(object))).toThrow(
+    expect(() => stepBehaviour(BIRD, object, [], 1, bird(), AT, initial(object))).toThrow(
       "Instant behaviour transition cycle",
     );
   });
@@ -191,11 +191,11 @@ describe("shared shuttle primitive", () => {
         { ...ACTOR, collision: "solid" },
       );
       const result = stepBehaviour(
-        DUCK,
+        BIRD,
         object,
         [],
         3.5,
-        duck(1000),
+        bird(1000),
         object.origin,
         initial(object),
       );
@@ -207,7 +207,7 @@ describe("shared shuttle primitive", () => {
 
   it("tests a boundary in the current travel direction, not the starting endpoint", () => {
     const object = resolve({ ...CHARACTER, behaviour: TEST_SHUTTLE });
-    const result = stepBehaviour(DUCK, object, [], 0.5, duck(1000), object.origin, initial(object));
+    const result = stepBehaviour(BIRD, object, [], 0.5, bird(1000), object.origin, initial(object));
     expect(result.at.y).toBe(object.origin.y - 15);
     expect(result.state.stateKey).toBe("outbound");
   });
@@ -263,31 +263,31 @@ describe("generic target pursuit and reachability", () => {
   });
   it("retargets persistent movement and retries after support becomes reachable", () => {
     const object = resolve(CHARACTER, ACTOR, 1, graph());
-    const first = stepBehaviour(DUCK, object, [floor], 0.1, duck(300), AT, initial(object));
+    const first = stepBehaviour(BIRD, object, [floor], 0.1, bird(300), AT, initial(object));
     expect(first.state.stateKey).toBe("follow");
     expect(first.at.x).toBeGreaterThan(AT.x);
-    const turned = stepBehaviour(DUCK, object, [floor], 0.1, duck(120), first.at, first.state);
+    const turned = stepBehaviour(BIRD, object, [floor], 0.1, bird(120), first.at, first.state);
     expect(turned.state.facing).toBe(-1);
     expect(turned.at.x).toBeLessThan(first.at.x);
     const barrier = { height: 60, width: 20, x: 200, y: 240 };
     const lost = stepBehaviour(
-      DUCK,
+      BIRD,
       object,
       [floor, barrier],
       0.1,
-      duck(300),
+      bird(300),
       turned.at,
       turned.state,
     );
     expect(behaviourPose(object, lost.state).animation).toBe("frustration");
-    const restored = stepBehaviour(DUCK, object, [floor], 0.1, duck(300), lost.at, lost.state);
+    const restored = stepBehaviour(BIRD, object, [floor], 0.1, bird(300), lost.at, lost.state);
     expect(restored.state.stateKey).toBe("follow");
   });
   it("projects an ordinary jump to the same floor but loses higher one-way refuges and gaps", () => {
     const object = resolve(CHARACTER, ACTOR, 1, graph());
-    const airborne = { ...duck(300, 240), grounded: false };
+    const airborne = { ...bird(300, 240), grounded: false };
     expect(
-      stepBehaviour(DUCK, object, [floor], 0.01, airborne, AT, initial(object)).state.stateKey,
+      stepBehaviour(BIRD, object, [floor], 0.01, airborne, AT, initial(object)).state.stateKey,
     ).toBe("follow");
     const refuge = {
       ...OBJECT,
@@ -307,31 +307,31 @@ describe("generic target pursuit and reachability", () => {
       solids: [floor],
     };
     expect(
-      stepBehaviour(DUCK, object, world, 0.01, duck(300, 250), AT, initial(object)).state.stateKey,
+      stepBehaviour(BIRD, object, world, 0.01, bird(300, 250), AT, initial(object)).state.stateKey,
     ).toBe("frustration");
     const gap = [
       { ...floor, width: 200 },
       { ...floor, width: 760, x: 240 },
     ];
     expect(
-      stepBehaviour(DUCK, object, gap, 0.01, duck(300), AT, initial(object)).state.stateKey,
+      stepBehaviour(BIRD, object, gap, 0.01, bird(300), AT, initial(object)).state.stateKey,
     ).toBe("frustration");
   });
   it.each([
-    { axis: "x" as const, distance: 100, target: duck(250) },
-    { axis: "y" as const, distance: -100, target: duck(120, 310) },
+    { axis: "x" as const, distance: 100, target: bird(250) },
+    { axis: "y" as const, distance: -100, target: bird(120, 310) },
   ])(
     "uses full possible contact envelope on $axis rather than target centre",
     ({ axis, distance, target }) => {
       const object = resolve(CHARACTER, ACTOR, 1, graph(axis, distance));
       const world = axis === "x" ? [floor] : [];
       expect(
-        stepBehaviour(DUCK, object, world, 0.01, target, object.origin, initial(object)).state
+        stepBehaviour(BIRD, object, world, 0.01, target, object.origin, initial(object)).state
           .stateKey,
       ).toBe("follow");
       if (axis === "y") {
         expect(
-          stepBehaviour(DUCK, object, world, 0.01, duck(300, 310), object.origin, initial(object))
+          stepBehaviour(BIRD, object, world, 0.01, bird(300, 310), object.origin, initial(object))
             .state.stateKey,
         ).toBe("frustration");
       }
@@ -356,20 +356,20 @@ describe("generic graph hops", () => {
   it("supports stationary hopping, clips ceilings and lands on actual one-way supports", () => {
     const object = resolve(CHARACTER, ACTOR, 1, plan);
     const rising = stepBehaviour(
-      DUCK,
+      BIRD,
       object,
       [floor],
       0.2,
-      duck(),
+      bird(),
       object.origin,
       initial(object),
     );
     expect(rising.at).toEqual({ x: object.origin.x, y: object.origin.y - 20 });
-    const landed = stepBehaviour(DUCK, object, [floor], 0.2, duck(), rising.at, rising.state);
+    const landed = stepBehaviour(BIRD, object, [floor], 0.2, bird(), rising.at, rising.state);
     expect(landed.at.y).toBe(object.origin.y);
     const ceiling = { height: 20, width: 1000, x: 0, y: 250 };
     expect(
-      stepBehaviour(DUCK, object, [floor, ceiling], 0.2, duck(), object.origin, initial(object)).at
+      stepBehaviour(BIRD, object, [floor, ceiling], 0.2, bird(), object.origin, initial(object)).at
         .y,
     ).toBe(270);
     const ledge = {
@@ -390,7 +390,7 @@ describe("generic graph hops", () => {
       solids: [floor],
     };
     expect(
-      stepBehaviour(DUCK, object, world, 0.4, duck(), object.origin, initial(object)).at.y,
+      stepBehaviour(BIRD, object, world, 0.4, bird(), object.origin, initial(object)).at.y,
     ).toBe(270);
   });
   it("scales hop geometry while retaining its time and rejects zero duration", () => {

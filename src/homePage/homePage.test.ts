@@ -27,10 +27,10 @@ function artImage(key: string) {
 it("renders one escaped description in the pitch and metadata", async () => {
   const text = {
     ...TEXT,
-    homePage: { ...TEXT.homePage, description: 'A "duck" & <ferret>' },
+    homePage: { ...TEXT.homePage, description: 'A "bird" & <ferret>' },
   };
   const rendered = homePageHtml(text, await readFile(HOME_PAGE, "utf8")).replaceAll(/\s+/gu, " ");
-  const description = "A &quot;duck&quot; &amp; &lt;ferret&gt;";
+  const description = "A &quot;bird&quot; &amp; &lt;ferret&gt;";
   expect(rendered).toContain(`name="description" content="${description}"`);
   expect(rendered).toContain(`<p class="pitch">${description}</p>`);
   expect(rendered).not.toMatch(/%HOME_[A-Z_]+%/u);

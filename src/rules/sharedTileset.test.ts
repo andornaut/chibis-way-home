@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { Archetype, Character, Rect, ZonePlan } from "../data/types";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import type { Tileset } from "../view/tiles";
 import { type Catalogue, zoneLayout } from "./tiles";
 import { startZone, stepZone } from "./zone";
@@ -65,7 +65,7 @@ const plan = (character: string): ZonePlan => ({
   start: { area: "main", entry: "start" },
 });
 const resolve = (catalogue: Catalogue, character: string) =>
-  zoneLayout(TILE, DUCK_FRAME, catalogue, {}, TILES, new Set(), plan(character));
+  zoneLayout(TILE, BIRD_FRAME, catalogue, {}, TILES, new Set(), plan(character));
 
 describe.each(EDGES)("shared $art", ({ art, box, cols, rows }) => {
   const layout = resolve(CATALOGUE, art);
@@ -85,24 +85,24 @@ describe.each(EDGES)("shared $art", ({ art, box, cols, rows }) => {
     if (!object) {
       throw new Error("Missing hazard");
     }
-    const start = startZone(DUCK, layout, 42);
+    const start = startZone(BIRD, layout, 42);
     const x = object.origin.x + hitbox.x;
     const y = object.origin.y + hitbox.y;
     const overlap = touches ? 1 : -1;
     // At the strip's far end, and above/left of it, or below/right for the opposite edge.
     const at =
       art === "hazard-top"
-        ? { x: x + hitbox.width - 1, y: y - DUCK.height + overlap }
+        ? { x: x + hitbox.width - 1, y: y - BIRD.height + overlap }
         : art === "hazard-bottom"
           ? { x: x + hitbox.width - 1, y: y + hitbox.height - overlap }
           : art === "hazard-left"
-            ? { x: x - DUCK.width + overlap, y: y + hitbox.height - 1 }
+            ? { x: x - BIRD.width + overlap, y: y + hitbox.height - 1 }
             : { x: x + hitbox.width - overlap, y: y + hitbox.height - 1 };
-    const state = { ...start, duck: { ...start.duck, ...at } };
-    const next = stepZone(DUCK, layout, 0, { jumpHeld: false, move: 0, useHeld: false }, state);
+    const state = { ...start, bird: { ...start.bird, ...at } };
+    const next = stepZone(BIRD, layout, 0, { jumpHeld: false, move: 0, useHeld: false }, state);
     expect(next.death !== undefined).toBe(touches);
     if (touches) {
-      expect(next.duck).toEqual(state.duck);
+      expect(next.bird).toEqual(state.bird);
     }
   });
 });
@@ -121,7 +121,7 @@ describe("a character tileset", () => {
   });
 
   it("refuses a named tileset that is not loaded", () => {
-    expect(() => zoneLayout(TILE, DUCK_FRAME, CATALOGUE, {}, {}, new Set(), plan(art))).toThrow(
+    expect(() => zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), plan(art))).toThrow(
       "No tileset shared",
     );
   });

@@ -1,5 +1,5 @@
-import type { DuckTuning, ZoneDeath, ZoneLayout } from "../data/types";
-import { duckBox } from "../rules/duck";
+import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
+import { birdBox } from "../rules/bird";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_SECONDS } from "../rules/step";
 import {
@@ -48,7 +48,7 @@ export type RunStatus = "cleared" | "goal-reached" | "retry-budget" | "step-budg
 export interface RunResult {
   readonly config: SimulationConfig;
   readonly provenance: SimulationProvenance;
-  readonly tuning: DuckTuning;
+  readonly tuning: BirdTuning;
   readonly seeds: SimulationSeeds;
   readonly start: { readonly area: string; readonly x: number; readonly y: number };
   readonly trace: readonly TraceEvent[];
@@ -154,9 +154,9 @@ export function validateSimulation(config: SimulationConfig): void {
   }
 }
 
-// A scoped goal at a linked edge is crossed before the duck is placed in the next area.
+// A scoped goal at a linked edge is crossed before the bird is placed in the next area.
 export function simulationGoalReached(
-  tuning: Pick<DuckTuning, "width">,
+  tuning: Pick<BirdTuning, "width">,
   layout: ZoneLayout,
   direction: BotPolicy["move"],
   goal: NonNullable<SimulationConfig["goal"]>,
@@ -167,7 +167,7 @@ export function simulationGoalReached(
     return false;
   }
   if (goal.area === after.area) {
-    return direction * (after.duck.x + (direction === 1 ? tuning.width : 0) - goal.x) >= 0;
+    return direction * (after.bird.x + (direction === 1 ? tuning.width : 0) - goal.x) >= 0;
   }
   if (goal.area !== before.area || before.area === after.area) {
     return false;
@@ -189,7 +189,7 @@ export function simulationGoalReached(
 // Runs the actual fixed-step rules. UI-only conversations are acknowledged at their real
 // proximity; presentation and retry-card waits consume no active time or physics steps.
 export function simulateStage(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   stage: PreparedStage,
   config: SimulationConfig,
 ): RunResult {
@@ -205,10 +205,10 @@ export function simulateStage(
   if (config.start) {
     validateStart(tuning, layout, zone);
   }
-  const start = { area: zone.area, x: zone.duck.x, y: zone.duck.y };
+  const start = { area: zone.area, x: zone.bird.x, y: zone.bird.y };
   if (config.goal) {
     const goalArea = areaOf(layout, config.goal.area);
-    const edge = zone.duck.x + (config.policy.move === 1 ? tuning.width : 0);
+    const edge = zone.bird.x + (config.policy.move === 1 ? tuning.width : 0);
     if (
       !Number.isFinite(config.goal.x) ||
       config.goal.x < goalArea.backX ||
@@ -224,7 +224,7 @@ export function simulateStage(
   let traceDropped = 0;
   let attemptTick = 0;
   let lastAdvance = 0;
-  let furthest = config.policy.move * zone.duck.x;
+  let furthest = config.policy.move * zone.bird.x;
   const heardByArea = new Map<string, Set<number>>();
   let previousArea = zone.area;
   let steps = 0;
@@ -244,7 +244,7 @@ export function simulateStage(
       bot.targetY = undefined;
       bot.waited = 0;
       bot.noticed = 0;
-      furthest = config.policy.move * zone.duck.x;
+      furthest = config.policy.move * zone.bird.x;
       lastAdvance = attemptTick;
     }
     let heard = heardByArea.get(zone.area);
@@ -254,7 +254,7 @@ export function simulateStage(
     }
     const area = areaOf(layout, zone.area);
     const introduction = stage.introductions[zone.area]
-      ? proximityDialogue(area.objects, zone.objects, heard, duckBox(tuning, zone.duck))
+      ? proximityDialogue(area.objects, zone.objects, heard, birdBox(tuning, zone.bird))
       : undefined;
     if (introduction !== undefined) {
       heard.add(introduction);
@@ -273,12 +273,12 @@ export function simulateStage(
     attemptTick++;
     if (zone.area !== before.area) {
       // A new local coordinate origin is advancement, not a stalled previous floor.
-      furthest = config.policy.move * zone.duck.x;
+      furthest = config.policy.move * zone.bird.x;
       lastAdvance = attemptTick;
     }
     if (config.trace) {
-      if (config.policy.move * zone.duck.x > furthest + 1e-6) {
-        furthest = config.policy.move * zone.duck.x;
+      if (config.policy.move * zone.bird.x > furthest + 1e-6) {
+        furthest = config.policy.move * zone.bird.x;
         lastAdvance = attemptTick;
       }
       const stalled = input.move !== 0 && attemptTick - lastAdvance >= config.trace.stallTicks;
@@ -358,7 +358,7 @@ export function simulateStage(
       bot = newBot((seeds.bot + retries) >>> 0);
       attemptTick = 0;
       lastAdvance = 0;
-      furthest = config.policy.move * zone.duck.x;
+      furthest = config.policy.move * zone.bird.x;
     }
   }
   return {

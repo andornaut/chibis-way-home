@@ -5,9 +5,9 @@ export function proximityDialogue(
   objects: readonly ObjectLayout[],
   positions: readonly Point[],
   heard: ReadonlySet<number>,
-  duck: Rect,
+  bird: Rect,
 ): number | undefined {
-  const centre = { x: duck.x + duck.width / 2, y: duck.y + duck.height / 2 };
+  const centre = { x: bird.x + bird.width / 2, y: bird.y + bird.height / 2 };
   const index = objects.findIndex((object, index) => {
     const at = positions[index];
     return (

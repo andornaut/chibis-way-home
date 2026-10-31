@@ -1,4 +1,4 @@
-import type { DuckTuning, ZoneLayout } from "../data/types";
+import type { BirdTuning, ZoneLayout } from "../data/types";
 import { attemptProgress } from "./death";
 import type { ZoneState } from "./zone";
 
@@ -13,9 +13,9 @@ const CACHE = new WeakMap<
 >();
 
 export function stageProgress(
-  tuning: Pick<DuckTuning, "width">,
+  tuning: Pick<BirdTuning, "width">,
   layout: ZoneLayout,
-  zone: Pick<ZoneState, "area" | "duck" | "cleared">,
+  zone: Pick<ZoneState, "area" | "bird" | "cleared">,
 ): number {
   if (zone.cleared) {
     return 1;
@@ -26,7 +26,7 @@ export function stageProgress(
     if (!area || !entry) {
       throw new Error("Missing stage progress origin");
     }
-    return attemptProgress(entry.x, area.exitX, zone.duck.x + tuning.width / 2);
+    return attemptProgress(entry.x, area.exitX, zone.bird.x + tuning.width / 2);
   }
   let cached = CACHE.get(layout);
   if (!cached) {
@@ -54,7 +54,7 @@ export function stageProgress(
   }
   return (
     (section.offset +
-      Math.max(0, Math.min(section.width, zone.duck.x + tuning.width / 2 - section.origin))) /
+      Math.max(0, Math.min(section.width, zone.bird.x + tuning.width / 2 - section.origin))) /
     cached.total
   );
 }

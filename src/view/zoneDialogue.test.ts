@@ -13,7 +13,7 @@ const OBJECT = {
 } as ObjectLayout;
 const ORDINARY = { ...OBJECT };
 delete ORDINARY.behaviour;
-const DUCK = { height: 36, width: 24, x: 0, y: 0 };
+const BIRD = { height: 36, width: 24, x: 0, y: 0 };
 // Both centres at y18; the first centre is exactly100px away along x.
 const NEAR = { x: 82, y: -6 };
 
@@ -38,6 +38,6 @@ describe("proximityDialogue", () => {
       undefined,
     ],
   ] as const)("selects the correct introduction: %s", (_, objects, positions, heard, expected) => {
-    expect(proximityDialogue(objects, positions, heard, DUCK)).toBe(expected);
+    expect(proximityDialogue(objects, positions, heard, BIRD)).toBe(expected);
   });
 });

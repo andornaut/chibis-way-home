@@ -26,7 +26,7 @@ import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DeathData extends DeathSummary {
-  readonly duck: Rect;
+  readonly bird: Rect;
 }
 export interface DeathOpener {
   leaveDeath(): void;
@@ -63,7 +63,7 @@ export class DeathScene extends Scene {
   create(): void {
     fitPlayCamera(this);
     const words = deathSummary(TEXT.death, this.summary);
-    this.layout = deathCard(cardFonts(this), { ...SCREEN, x: 0, y: 0 }, this.summary.duck, {
+    this.layout = deathCard(cardFonts(this), { ...SCREEN, x: 0, y: 0 }, this.summary.bird, {
       ...words,
       home: TEXT.pause.home,
       retry: TEXT.death.retry,

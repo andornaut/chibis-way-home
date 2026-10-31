@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { AreaLayout, Motion, ObjectLayout, Point, ZoneLayout } from "../data/types";
 import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
-import { DUCK_FRAME } from "../view/duck";
-import { duckBox, duckFrameRect, startDuck } from "./duck";
+import { BIRD_FRAME } from "../view/bird";
+import { birdBox, birdFrameRect, startBird } from "./bird";
 import { STEP_SECONDS } from "./step";
 import {
   activateBehaviour,
@@ -84,7 +84,7 @@ function area(objects: readonly ObjectLayout[], fields: Partial<AreaLayout> = {}
 
 const zone = (main: AreaLayout, others: Record<string, AreaLayout> = {}): ZoneLayout => ({
   areas: { main, ...others },
-  duckFrame: DUCK_FRAME,
+  birdFrame: BIRD_FRAME,
   start: { area: "main", entry: "start" },
 });
 
@@ -93,16 +93,16 @@ function run(
   seconds: number,
   input: ZoneInput | ((step: number) => ZoneInput),
 ): ZoneState[] {
-  let state = startZone(DUCK, layout, SEED);
+  let state = startZone(BIRD, layout, SEED);
   const states = [state];
   for (let step = 0; step < Math.round(seconds / STEP); step++) {
-    state = stepZone(DUCK, layout, STEP, typeof input === "function" ? input(step) : input, state);
+    state = stepZone(BIRD, layout, STEP, typeof input === "function" ? input(step) : input, state);
     states.push(state);
   }
   return states;
 }
 
-const bottomOf = (state: ZoneState | undefined) => (state?.duck.y ?? 0) + DUCK.height;
+const bottomOf = (state: ZoneState | undefined) => (state?.bird.y ?? 0) + BIRD.height;
 
 describe("behaviour encounters", () => {
   const patrol = object({
@@ -129,48 +129,48 @@ describe("behaviour encounters", () => {
   const layout = zone(area([patrol]));
 
   it("activates after its conversation and resets inactive on the next attempt", () => {
-    const initial = startZone(DUCK, layout, SEED);
+    const initial = startZone(BIRD, layout, SEED);
     expect(initial.behaviours[0]?.active).toBe(false);
     const active = activateBehaviour(0, initial);
     expect(active.behaviours[0]?.active).toBe(true);
-    const dead = stepZone(DUCK, layout, STEP, STILL, {
+    const dead = stepZone(BIRD, layout, STEP, STILL, {
       ...active,
-      duck: { ...active.duck, x: patrol.origin.x, y: patrol.origin.y },
+      bird: { ...active.bird, x: patrol.origin.x, y: patrol.origin.y },
     });
     expect(dead.death?.reason).toBe("hazard");
-    const reset = retryZone(DUCK, layout, dead);
+    const reset = retryZone(BIRD, layout, dead);
     expect(reset.attempt).toBe(initial.attempt + 1);
     expect(reset.behaviours[0]).toEqual(initial.behaviours[0]);
   });
 
   it.each(["brace", "watchLeft", "recover", "burst"])("is lethal during %s", (stateKey) => {
-    const initial = activateBehaviour(0, startZone(DUCK, layout, SEED));
+    const initial = activateBehaviour(0, startZone(BIRD, layout, SEED));
     const charge = initial.behaviours[0];
     if (!charge) {
       throw new Error("Missing fixture behaviour");
     }
-    const result = stepZone(DUCK, layout, STEP, STILL, {
+    const result = stepZone(BIRD, layout, STEP, STILL, {
       ...initial,
       behaviours: [{ ...charge, stateKey }],
-      duck: { ...initial.duck, x: patrol.origin.x, y: patrol.origin.y },
+      bird: { ...initial.bird, x: patrol.origin.x, y: patrol.origin.y },
     });
     expect(result.death?.reason).toBe("hazard");
   });
 
-  it("detects a rush that crosses the duck entirely between fixed frames", () => {
-    const initial = activateBehaviour(0, startZone(DUCK, layout, SEED));
+  it("detects a rush that crosses the bird entirely between fixed frames", () => {
+    const initial = activateBehaviour(0, startZone(BIRD, layout, SEED));
     const charge = initial.behaviours[0];
     if (!charge) {
       throw new Error("Missing fixture behaviour");
     }
-    const result = stepZone(DUCK, layout, STEP, STILL, {
+    const result = stepZone(BIRD, layout, STEP, STILL, {
       ...initial,
       behaviours: [{ ...charge, stateKey: "burst" }],
     });
     expect(result.death?.reason).toBe("hazard");
   });
 
-  it("carries the duck on an inanimate platform using the same state executor", () => {
+  it("carries the bird on an inanimate platform using the same state executor", () => {
     const lift = object({
       behaviour: TEST_SHUTTLE,
       collision: "solid",
@@ -178,11 +178,11 @@ describe("behaviour encounters", () => {
       width: 72,
     });
     const layout = zone(area([lift], { entries: { start: { x: 100, y: 260 } } }));
-    const initial = startZone(DUCK, layout, SEED);
-    expect(zoneSurfaces(DUCK, layout).some((surface) => surface.mover === 0)).toBe(true);
-    const next = stepZone(DUCK, layout, 0.1, STILL, initial);
+    const initial = startZone(BIRD, layout, SEED);
+    expect(zoneSurfaces(BIRD, layout).some((surface) => surface.mover === 0)).toBe(true);
+    const next = stepZone(BIRD, layout, 0.1, STILL, initial);
     expect(next.objects[0]?.y).toBe(257);
-    expect(next.duck.y + DUCK.height).toBe(257);
+    expect(next.bird.y + BIRD.height).toBe(257);
     expect(next.restarts).toBe(0);
     expect(next.behaviours[0]?.stateKey).toBe(TEST_SHUTTLE.initial);
   });
@@ -206,19 +206,19 @@ describe("restarts", () => {
     if (!dead) {
       throw new Error("Fixture did not reach death");
     }
-    expect(stepZone(DUCK, layout, STEP, RIGHT, dead)).toBe(dead);
+    expect(stepZone(BIRD, layout, STEP, RIGHT, dead)).toBe(dead);
     expect(dead.attempt).toBe(0);
     expect(dead.seconds).toBeGreaterThan(0);
-    expect(dead.death?.position).toEqual({ x: dead.duck.x, y: dead.duck.y });
-    const restart = retryZone(DUCK, layout, dead);
-    expect(restart.duck).toEqual(startDuck(DUCK, { x: 100, y: GROUND.y }));
+    expect(dead.death?.position).toEqual({ x: dead.bird.x, y: dead.bird.y });
+    const restart = retryZone(BIRD, layout, dead);
+    expect(restart.bird).toEqual(startBird(BIRD, { x: 100, y: GROUND.y }));
     expect([restart.attempt, restart.seconds, restart.restarts, restart.death]).toEqual([
       1,
       0,
       1,
       undefined,
     ]);
-    expect(retryZone(DUCK, layout, restart)).toBe(restart);
+    expect(retryZone(BIRD, layout, restart)).toBe(restart);
   });
 
   // A hazard drawn 48 wide whose art touches only its middle 8, from x 150 to 158.
@@ -269,7 +269,7 @@ describe("moving platforms", () => {
     const states = run(onPlatform(platform(direction)), 1.5, STILL);
     const last = states.at(-1);
     const at = last?.objects[0];
-    expect(last && at && standsOn(DUCK, last.duck, { ...at, height: 12, width: 96 })).toBe(true);
+    expect(last && at && standsOn(BIRD, last.bird, { ...at, height: 12, width: 96 })).toBe(true);
   });
 
   it("keeps its speed along x when she jumps off, until she lands", () => {
@@ -277,12 +277,12 @@ describe("moving platforms", () => {
       ...STILL,
       jumpHeld: step >= 60 && step < 64,
     }));
-    const airborne = states.filter((state) => !state.duck.grounded && state.steps > 60);
+    const airborne = states.filter((state) => !state.bird.grounded && state.steps > 60);
     expect(airborne.length).toBeGreaterThan(0);
     for (const state of airborne) {
-      expect(state.duck.carryVx).toBeCloseTo(30, 9);
+      expect(state.bird.carryVx).toBeCloseTo(30, 9);
     }
-    expect(states.at(-1)?.duck.carryVx).toBe(0);
+    expect(states.at(-1)?.bird.carryVx).toBe(0);
   });
 });
 
@@ -305,25 +305,25 @@ describe("pushes", () => {
       "standing still, hit from the left by a block moving right, ahead of it",
       block(20, "right"),
       STILL,
-      (state: ZoneState) => state.duck.x - rightEdge(state),
+      (state: ZoneState) => state.bird.x - rightEdge(state),
     ],
     [
       "standing still, hit from the right by a block moving left, ahead of it",
       block(140, "left"),
       STILL,
-      (state: ZoneState) => state.duck.x + DUCK.width - leftEdge(state),
+      (state: ZoneState) => state.bird.x + BIRD.width - leftEdge(state),
     ],
     [
       "running right into a still block, stopped at its side",
       block(140),
       RIGHT,
-      (state: ZoneState) => state.duck.x + DUCK.width - leftEdge(state),
+      (state: ZoneState) => state.bird.x + BIRD.width - leftEdge(state),
     ],
     [
       "running right into a block moving left toward her, at its side",
       block(200, "left"),
       RIGHT,
-      (state: ZoneState) => state.duck.x + DUCK.width - leftEdge(state),
+      (state: ZoneState) => state.bird.x + BIRD.width - leftEdge(state),
     ],
   ])("ends %s", (_, mover, input, gap) => {
     const states = run(zone(area([mover])), 1.5, input);
@@ -340,8 +340,8 @@ describe("pushes", () => {
 describe("clearing", () => {
   // Her box's right edge at x, standing on the ground.
   const at = (x: number) => {
-    const start = startZone(DUCK, zone(area([])), SEED);
-    return { ...start, duck: { ...start.duck, x: x - DUCK.width } };
+    const start = startZone(BIRD, zone(area([])), SEED);
+    return { ...start, bird: { ...start.bird, x: x - BIRD.width } };
   };
   const exitX = GROUND.width - 12;
   it.each([
@@ -349,14 +349,14 @@ describe("clearing", () => {
     ["her box ending at the last column's left edge", exitX, false],
   ])("standing still with %s: cleared %s", (_, right, cleared) => {
     const layout = zone(area([]));
-    expect(stepZone(DUCK, layout, STEP, STILL, at(right)).cleared).toBe(cleared);
+    expect(stepZone(BIRD, layout, STEP, STILL, at(right)).cleared).toBe(cleared);
   });
 
   it("clears at any height, in the air above the last column", () => {
     const layout = zone(area([]));
     const high = at(exitX + 1);
-    const state = { ...high, duck: { ...high.duck, grounded: false, y: 20 } };
-    expect(stepZone(DUCK, layout, STEP, STILL, state).cleared).toBe(true);
+    const state = { ...high, bird: { ...high.bird, grounded: false, y: 20 } };
+    expect(stepZone(BIRD, layout, STEP, STILL, state).cleared).toBe(true);
   });
 
   it("runs right to the edge, clears, and then holds still", () => {
@@ -370,15 +370,15 @@ describe("clearing", () => {
 describe("turning back", () => {
   // Her box's left edge at x, standing on the ground.
   const at = (x: number) => {
-    const start = startZone(DUCK, zone(area([])), SEED);
-    return { ...start, duck: { ...start.duck, x } };
+    const start = startZone(BIRD, zone(area([])), SEED);
+    return { ...start, bird: { ...start.bird, x } };
   };
   const backX = 12;
   it.each([
     ["her box reaching back past the first column's right edge", backX - 1, true],
     ["her box starting at the first column's right edge", backX, false],
   ])("standing still with %s: turned back %s", (_, left, turnedBack) => {
-    const next = stepZone(DUCK, zone(area([])), STEP, STILL, at(left));
+    const next = stepZone(BIRD, zone(area([])), STEP, STILL, at(left));
     expect({ cleared: next.cleared, turnedBack: next.turnedBack }).toEqual({
       cleared: false,
       turnedBack,
@@ -393,20 +393,20 @@ describe("turning back", () => {
   });
 
   it("starts each attempt afresh, not turned back", () => {
-    expect(startZone(DUCK, zone(area([])), SEED).turnedBack).toBe(false);
+    expect(startZone(BIRD, zone(area([])), SEED).turnedBack).toBe(false);
   });
 });
 
 describe("doorAt", () => {
   // She stands on the ground at x 100; her drawn frame is wider and taller than her box.
-  const duck = startDuck(DUCK, { x: 100, y: GROUND.y });
-  const frame = duckFrameRect(DUCK, DUCK_FRAME, duck);
-  const box = duckBox(DUCK, duck);
+  const bird = startBird(BIRD, { x: 100, y: GROUND.y });
+  const frame = birdFrameRect(BIRD, BIRD_FRAME, bird);
+  const box = birdBox(BIRD, bird);
   const door = (x: number, y: number, width = 24, height = 48) =>
     object({ collision: "use", height, origin: { x, y }, width });
   const at = (objects: readonly ObjectLayout[]) => objects.map(({ origin }) => origin);
   const opened = (objects: readonly ObjectLayout[]) =>
-    doorAt(DUCK, DUCK_FRAME, objects, at(objects), duck);
+    doorAt(BIRD, BIRD_FRAME, objects, at(objects), bird);
 
   it.each([
     ["overlapping 1 px past her frame's right edge", door(frame.x + frame.width - 1, frame.y), 0],
@@ -481,19 +481,19 @@ describe("doors", () => {
     const layout = zone(area([door]));
     const inside = run(layout, 0.5, press).at(-1) as ZoneState;
     const back = leaveRoom(inside);
-    expect([back.door, back.duck, back.objects, back.seconds]).toEqual([
+    expect([back.door, back.bird, back.objects, back.seconds]).toEqual([
       undefined,
-      inside.duck,
+      inside.bird,
       inside.objects,
       inside.seconds,
     ]);
-    const next = stepZone(DUCK, layout, STEP, { ...STILL, useHeld: true }, back);
+    const next = stepZone(BIRD, layout, STEP, { ...STILL, useHeld: true }, back);
     expect([next.door, next.seconds]).toEqual([undefined, inside.seconds + STEP]);
   });
 });
 
 describe("objectStep", () => {
-  const duck = startDuck(DUCK, { x: 100, y: GROUND.y });
+  const bird = startBird(BIRD, { x: 100, y: GROUND.y });
   // A 24 px block whose path is at x 150 on the ground, 50 px right of her centre.
   const at = { x: 138, y: GROUND.y - 24 };
   const critter = (kind: "approach" | "avoid" | "none", range: number) =>
@@ -525,7 +525,7 @@ describe("objectStep", () => {
       { x: at.x + 0.5, y: at.y },
     ],
   ])("%s", (_, critterLayout, path, next) => {
-    const moved = objectStep(DUCK, critterLayout, 1 / 120, path, duck, at);
+    const moved = objectStep(BIRD, critterLayout, 1 / 120, path, bird, at);
     expect(moved.x).toBeCloseTo(next.x, 9);
     expect(moved.y).toBeCloseTo(next.y, 9);
   });
@@ -546,7 +546,7 @@ describe("random motion", () => {
   });
   const layout = zone(area([cart]));
   const pathOf = (attempt: number, seed = SEED) => {
-    let state = enterArea(DUCK, layout, layout.start, {
+    let state = enterArea(BIRD, layout, layout.start, {
       attempt,
       restarts: attempt,
       seed,
@@ -554,7 +554,7 @@ describe("random motion", () => {
     });
     const xs: number[] = [];
     for (let step = 0; step < 600; step++) {
-      state = stepZone(DUCK, layout, STEP, STILL, state);
+      state = stepZone(BIRD, layout, STEP, STILL, state);
       xs.push(state.objects[0]?.x ?? 0);
     }
     return xs;

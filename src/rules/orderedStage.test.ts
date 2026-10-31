@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { AreaLayout, ZoneLayout } from "../data/types";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { stageProgress } from "./stageProgress";
 import { STEP_SECONDS } from "./step";
 import { enterArea, retryZone, startZone, stepZone } from "./zone";
@@ -34,7 +34,7 @@ const layout: ZoneLayout = {
       right: { area: "last", entry: "start" },
     }),
   },
-  duckFrame: DUCK_FRAME,
+  birdFrame: BIRD_FRAME,
   start: { area: "first", entry: "start" },
 };
 
@@ -48,7 +48,7 @@ describe("ordered stage core", () => {
     "crosses %s %s with only whole-stage end conditions",
     (id, side, target, cleared, turnedBack) => {
       const zone = enterArea(
-        DUCK,
+        BIRD,
         layout,
         { area: id, entry: "start" },
         { attempt: 2, restarts: 2, seed: 42, steps: 17 },
@@ -57,13 +57,13 @@ describe("ordered stage core", () => {
       if (!source) {
         throw new Error("Missing fixture area");
       }
-      const x = side === "left" ? source.backX - 1 : source.exitX - DUCK.width + 1;
+      const x = side === "left" ? source.backX - 1 : source.exitX - BIRD.width + 1;
       const next = stepZone(
-        DUCK,
+        BIRD,
         layout,
         STEP_SECONDS,
         { ...STILL, jumpHeld: true, useHeld: true },
-        { ...zone, duck: { ...zone.duck, x } },
+        { ...zone, bird: { ...zone.bird, x } },
       );
       expect(next).toMatchObject({
         area: target,
@@ -76,22 +76,22 @@ describe("ordered stage core", () => {
       });
       if (target !== id) {
         expect(next.seconds).toBe(0);
-        expect(next.duck.jumpHeld).toBe(true);
+        expect(next.bird.jumpHeld).toBe(true);
         expect(next.useHeld).toBe(true);
-        expect(stepZone(DUCK, layout, STEP_SECONDS, STILL, next).area).toBe(target);
+        expect(stepZone(BIRD, layout, STEP_SECONDS, STILL, next).area).toBe(target);
       }
     },
   );
   it("retries from the stage checkpoint after a later section death", () => {
     const zone = enterArea(
-      DUCK,
+      BIRD,
       layout,
       { area: "last", entry: "start" },
       { attempt: 0, restarts: 0, seed: 42, steps: 30 },
     );
-    const retry = retryZone(DUCK, layout, {
+    const retry = retryZone(BIRD, layout, {
       ...zone,
-      death: { position: zone.duck, reason: "fall", support: undefined, velocity: { x: 0, y: 0 } },
+      death: { position: zone.bird, reason: "fall", support: undefined, velocity: { x: 0, y: 0 } },
     });
     expect(retry).toMatchObject({
       area: "first",
@@ -101,29 +101,29 @@ describe("ordered stage core", () => {
       seed: 42,
       steps: 30,
     });
-    expect(retry.duck.x + DUCK.width / 2).toBe(36);
+    expect(retry.bird.x + BIRD.width / 2).toBe(36);
   });
   it("weights centre-based progress by traversable section width independently of simulation checkpoints", () => {
-    const zone = startZone(DUCK, layout, 42);
+    const zone = startZone(BIRD, layout, 42);
     const total = 288 - 36 + (588 - 36) + (438 - 36);
-    const middle = { ...zone, area: "middle", duck: { ...zone.duck, x: 36 - DUCK.width / 2 } };
-    expect(stageProgress(DUCK, layout, middle)).toBeCloseTo(252 / total);
+    const middle = { ...zone, area: "middle", bird: { ...zone.bird, x: 36 - BIRD.width / 2 } };
+    expect(stageProgress(BIRD, layout, middle)).toBeCloseTo(252 / total);
     expect(
-      stageProgress(DUCK, { ...layout, start: { area: "last", entry: "return" } }, middle),
+      stageProgress(BIRD, { ...layout, start: { area: "last", entry: "return" } }, middle),
     ).toBeCloseTo(252 / total);
     expect(
-      stageProgress(DUCK, layout, { ...middle, duck: { ...middle.duck, x: 588 - DUCK.width / 2 } }),
+      stageProgress(BIRD, layout, { ...middle, bird: { ...middle.bird, x: 588 - BIRD.width / 2 } }),
     ).toBeCloseTo((252 + 552) / total);
-    expect(stageProgress(DUCK, layout, { ...middle, cleared: true })).toBe(1);
+    expect(stageProgress(BIRD, layout, { ...middle, cleared: true })).toBe(1);
     const legacy: ZoneLayout = {
       areas: layout.areas,
-      duckFrame: layout.duckFrame,
+      birdFrame: layout.birdFrame,
       start: layout.start,
     };
     expect(
-      stageProgress(DUCK, legacy, {
+      stageProgress(BIRD, legacy, {
         ...zone,
-        duck: { ...zone.duck, x: (36 + 288) / 2 - DUCK.width / 2 },
+        bird: { ...zone.bird, x: (36 + 288) / 2 - BIRD.width / 2 },
       }),
     ).toBe(0.5);
   });
@@ -146,7 +146,7 @@ describe("ordered stage core", () => {
     ).toThrow("walk target");
     expect(() =>
       startZone(
-        DUCK,
+        BIRD,
         {
           ...layout,
           areas: {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { Archetype } from "../data/types";
 import { walkZone } from "../sim/zoneWalk";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { attemptProgress, deathSupport } from "./death";
 import { zoneLayout } from "./tiles";
 import { startZone } from "./zone";
@@ -24,7 +24,7 @@ const LEDGE: Archetype = {
 };
 const LAYOUT = zoneLayout(
   12,
-  DUCK_FRAME,
+  BIRD_FRAME,
   {
     archetypes: { ledge: LEDGE },
     characters: { ledge: { archetype: "ledge", art: "placeholder-ledge", cols: 4, rows: 1 } },
@@ -45,7 +45,7 @@ const LAYOUT = zoneLayout(
     start: { area: "course", entry: "start" },
   },
 );
-const FROZEN = { ...startZone(DUCK, LAYOUT, 1), objects: [{ x: 200, y: 160 }] };
+const FROZEN = { ...startZone(BIRD, LAYOUT, 1), objects: [{ x: 200, y: 160 }] };
 
 describe("death support", () => {
   it.each([
@@ -54,7 +54,7 @@ describe("death support", () => {
     { support: 240, x: 205, y: 200 },
     { support: undefined, x: 800, y: 100 },
   ])("uses the nearest frozen support under the actual body: %j", ({ support, x, y }) => {
-    expect(deathSupport(DUCK, LAYOUT, FROZEN, { x, y })?.y).toBe(support);
+    expect(deathSupport(BIRD, LAYOUT, FROZEN, { x, y })?.y).toBe(support);
   });
 });
 
@@ -94,7 +94,7 @@ it("rejects a simulated attempt that dies while settling instead of treating it 
       },
     },
   };
-  const walked = walkZone(DUCK, layout);
+  const walked = walkZone(BIRD, layout);
   expect(walked.cleared).toBe(false);
   expect(walked.reached.size).toBe(0);
 });

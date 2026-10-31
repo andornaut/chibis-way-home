@@ -19,10 +19,10 @@ import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
 import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
 import { ARCHETYPES } from "../data/archetypes";
+import { BIRD } from "../data/bird";
 import { CAMERA } from "../data/camera";
 import { CHARACTERS } from "../data/characters";
 import { DEATH } from "../data/death";
-import { DUCK } from "../data/duck";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN, TILE } from "../data/screen";
 import { TEXT } from "../data/text";
@@ -85,6 +85,7 @@ import {
 import { type TouchSetting, touchSettings, touchSettingShown } from "../settings/touchControls";
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
 import { behaviourPose } from "../view/behaviour";
+import { BIRD_FRAME, birdFrameAt, type BirdPose, startPose, stepPose } from "../view/bird";
 import { cameraScroll } from "../view/camera";
 import { characterState, nextQuirkAt } from "../view/character";
 import {
@@ -96,7 +97,6 @@ import {
   stepDeathPresentation,
 } from "../view/death";
 import { doorPhase } from "../view/doorOpen";
-import { DUCK_FRAME, duckFrameAt, type DuckPose, startPose, stepPose } from "../view/duck";
 import { moveHintView } from "../view/moveHint";
 import { type ArtKind, artKind, artOffset, artScrollFactor } from "../view/objectArt";
 import { type PlayHold, stepAction } from "../view/playHold";
@@ -144,7 +144,7 @@ const OBJECT_COLOURS: Readonly<Record<Collision, number>> = {
 // way this long, with play held still.
 const FADE_MS = 250;
 
-const DUCK_SPRITE = "duck";
+const BIRD_SPRITE = "bird";
 const MOVE_HINT_SPRITE = "ui-move-hint";
 const MOVE_KNOB_SPRITE = "ui-move-knob";
 const CONTROL_SPRITES: Readonly<Record<TouchControl, string>> = {
@@ -161,7 +161,7 @@ const DEPTHS: Readonly<Record<ArtKind | "terrain", number>> = {
   terrain: -2,
   tiles: -1,
 };
-const DUCK_DEPTH = 1;
+const BIRD_DEPTH = 1;
 const OVERLAY_DEPTH = 2;
 
 // Everything drawn for one object, placed at its top-left corner plus offset. A sprite faces the
@@ -194,8 +194,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   private readonly controls = new Map<TouchControl, GameObjects.Sprite>();
   // The move hint's ring and knob.
   private moveHint!: { readonly knob: GameObjects.Sprite; readonly ring: GameObjects.Sprite };
-  private duck!: GameObjects.Sprite;
-  private duckPose: DuckPose = startPose;
+  private bird!: GameObjects.Sprite;
+  private birdPose: BirdPose = startPose;
   private dying: DeathPresentation | undefined;
   private deathView: DeathView | undefined;
   private deathModal = false;
@@ -263,7 +263,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     this.dialogueArea = "";
     this.heardDialogues.clear();
     this.clock = startStepClock;
-    this.duckPose = startPose;
+    this.birdPose = startPose;
     this.dying = undefined;
     this.deathView = undefined;
     this.deathModal = false;
@@ -298,9 +298,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       }
     });
 
-    this.landMs = tagMs(this.sheet(DUCK_SPRITE), "land");
+    this.landMs = tagMs(this.sheet(BIRD_SPRITE), "land");
 
-    this.duck = this.add.sprite(0, 0, DUCK_SPRITE).setOrigin(0).setDepth(DUCK_DEPTH);
+    this.bird = this.add.sprite(0, 0, BIRD_SPRITE).setOrigin(0).setDepth(BIRD_DEPTH);
     this.manifest = this.cache.json.get(ART_MANIFEST_KEY) as ArtManifest;
     this.hitboxes = artHitboxes((key) => this.textures.getFrame(key), this.manifest);
     const node = this.mapNode;
@@ -368,9 +368,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   // buttons, drawn once and paused as soon as it is created, so it never steps, animates or takes
   // input, and isActive("zone") stays false for the pause scene and the frame rate cap.
   private holdStill(): void {
-    this.duck.setVisible(false);
+    this.bird.setVisible(false);
     this.drawObjects();
-    this.drawDuck();
+    this.drawBird();
     this.events.once("create", () => this.sys.pause());
   }
 
@@ -442,9 +442,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
         break;
       }
       const beforeZone = this.zone;
-      const before = this.zone.duck;
+      const before = this.zone.bird;
       this.zone = stepZone(
-        DUCK,
+        BIRD,
         this.layout,
         STEP_SECONDS,
         { jumpHeld: intent.jump, move: intent.move, useHeld: intent.use },
@@ -454,10 +454,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       if (this.zone.area !== beforeZone.area) {
         this.clearControls();
         touches = [];
-        this.duckPose = startPose;
+        this.birdPose = startPose;
         this.drawArea();
         this.drawObjects();
-        this.drawDuck();
+        this.drawBird();
         if (this.zone.death !== undefined) {
           this.beginDeath();
         }
@@ -467,7 +467,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
         this.beginDeath();
         break;
       }
-      this.duckPose = stepPose(this.landMs, STEP_MS, before, this.zone.duck, this.duckPose);
+      this.birdPose = stepPose(this.landMs, STEP_MS, before, this.zone.bird, this.birdPose);
       if (this.zone.door !== undefined) {
         this.openDoor(time, this.zone.door);
         break;
@@ -481,7 +481,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       this.drawArea();
     }
     this.drawObjects();
-    this.drawDuck();
+    this.drawBird();
     this.drawControls(time, touches);
     this.drawMoveHint(touches);
     this.drawProgress();
@@ -504,7 +504,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   }
 
   private progressFraction(): number {
-    return stageProgress(DUCK, this.layout, this.zone);
+    return stageProgress(BIRD, this.layout, this.zone);
   }
 
   private drawProgress(): void {
@@ -529,11 +529,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     }
     const camera = this.cameras.main;
     this.deathView = {
-      body: DUCK,
+      body: BIRD,
       bounds: { height: SCREEN.height, width: SCREEN.width, x: camera.scrollX, y: camera.scrollY },
-      frame: DUCK_FRAME,
+      frame: BIRD_FRAME,
     };
-    this.dying = startDeathPresentation(DEATH, this.deathView, this.zone.duck.facing, death);
+    this.dying = startDeathPresentation(DEATH, this.deathView, this.zone.bird.facing, death);
     this.deathModal = false;
     this.clearControls();
     this.input.enabled = false;
@@ -541,7 +541,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     for (const art of this.objectArt) {
       art.sprite?.anims.pause();
     }
-    this.duck.anims.stop();
+    this.bird.anims.stop();
     this.showTouchControls(touchSettings());
     coverZone("death", true);
     this.drawProgress();
@@ -559,7 +559,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       this.dying = stepDeathPresentation(
         DEATH,
         view,
-        (position) => deathSupport(DUCK, this.layout, this.zone, position),
+        (position) => deathSupport(BIRD, this.layout, this.zone, position),
         STEP_SECONDS,
         this.dying,
       );
@@ -570,11 +570,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       const stage = this.stageKey();
       this.scene.launch("death", {
         activeSeconds: activeStageTime(stage),
-        duck: {
-          height: this.duck.height,
-          width: this.duck.width,
-          x: this.duck.x - this.cameras.main.scrollX,
-          y: this.duck.y - this.cameras.main.scrollY,
+        bird: {
+          height: this.bird.height,
+          width: this.bird.width,
+          x: this.bird.x - this.cameras.main.scrollX,
+          y: this.bird.y - this.cameras.main.scrollY,
         },
         ...deathLabels(ZONE_MAP, TEXT.map, String(this.zoneIndex + 1), stage),
         percent: this.progressFraction(),
@@ -589,13 +589,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     if (pose === undefined) {
       return;
     }
-    const frame = this.sheet(DUCK_SPRITE).get("death")?.[deathFrameIndex(pose.phase)]?.frame;
+    const frame = this.sheet(BIRD_SPRITE).get("death")?.[deathFrameIndex(pose.phase)]?.frame;
     if (frame === undefined) {
-      throw new Error(`Missing duck death frame ${pose.phase}`);
+      throw new Error(`Missing bird death frame ${pose.phase}`);
     }
-    this.duck.setFrame(frame);
-    const at = duckFrameAt(DUCK, this.duck.frame, { ...this.zone.duck, ...pose.position });
-    this.duck.setPosition(at.x, at.y).setFlipX(pose.facing < 0);
+    this.bird.setFrame(frame);
+    const at = birdFrameAt(BIRD, this.bird.frame, { ...this.zone.bird, ...pose.position });
+    this.bird.setPosition(at.x, at.y).setFlipX(pose.facing < 0);
   }
 
   // The modal stops before returning here. Reuse the layout and cumulative clock, reset inputs
@@ -604,21 +604,21 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     if (this.zone.death === undefined) {
       return;
     }
-    this.zone = retryZone(DUCK, this.layout, this.zone);
+    this.zone = retryZone(BIRD, this.layout, this.zone);
     this.dying = undefined;
     this.deathView = undefined;
     this.deathModal = false;
     this.heardDialogues.clear();
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
-    this.duckPose = startPose;
+    this.birdPose = startPose;
     this.clearControls();
     this.input.enabled = true;
     coverZone("death", false);
     this.drawArea();
     this.drawObjects();
-    this.duck.play(animationKey(DUCK_SPRITE, startPose.tag));
-    this.drawDuck();
+    this.bird.play(animationKey(BIRD_SPRITE, startPose.tag));
+    this.drawBird();
     this.drawProgress();
     this.showTouchControls(touchSettings());
     startWakeLock();
@@ -668,10 +668,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     }
     const area = areaOf(this.layout, this.zone.area);
     const index = proximityDialogue(area.objects, this.zone.objects, heard, {
-      height: DUCK.height,
-      width: DUCK.width,
-      x: this.zone.duck.x,
-      y: this.zone.duck.y,
+      height: BIRD.height,
+      width: BIRD.width,
+      x: this.zone.bird.x,
+      y: this.zone.bird.y,
     });
     const scene = index === undefined ? undefined : area.objects[index]?.scene;
     if (index === undefined || scene === undefined) {
@@ -784,7 +784,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       this.loadZone(turnedBack ? this.zoneIndex : nextZoneIndex(this.zoneIndex, CHAIN_LENGTH));
     }
     this.drawObjects();
-    this.drawDuck();
+    this.drawBird();
     const camera = this.cameras.main;
     camera.fadeIn(FADE_MS, 0, 0, 0);
     camera.once("camerafadeincomplete", () => {
@@ -814,10 +814,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     const tilesets = Object.fromEntries(
       this.manifest.tilesets.map(({ key }) => [key, this.cache.json.get(key) as Tileset]),
     );
-    this.layout = zoneLayout(TILE, DUCK_FRAME, CATALOGUE, this.hitboxes, tilesets, new Set(), plan);
+    this.layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, this.hitboxes, tilesets, new Set(), plan);
     const asked = Number(new URLSearchParams(window.location.search).get("seed"));
     const seed = Number.isInteger(asked) && asked > 0 ? asked : Math.floor(Math.random() * 2 ** 31);
-    this.zone = startZone(DUCK, this.layout, seed);
+    this.zone = startZone(BIRD, this.layout, seed);
     this.drawArea();
   }
 
@@ -954,8 +954,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   // moved and plays the tag for its state, and an idle one now and then plays a quirk.
   private drawObjects(): void {
     const area = areaOf(this.layout, this.zone.area);
-    const { duck } = this.zone;
-    const hers = { x: duck.x + DUCK.width / 2, y: duck.y + DUCK.height / 2 };
+    const { bird } = this.zone;
+    const hers = { x: bird.x + BIRD.width / 2, y: bird.y + BIRD.height / 2 };
     this.zone.objects.forEach((at, index) => {
       const art = this.objectArt[index];
       const object = area.objects[index];
@@ -1019,13 +1019,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     return tags;
   }
 
-  private drawDuck(): void {
-    const { duck } = this.zone;
-    const { tag } = this.duckPose;
-    show(this.duck, tag);
-    const at = duckFrameAt(DUCK, this.duck.frame, duck);
-    this.duck.setPosition(at.x, at.y).setFlipX(duck.facing < 0);
-    const feet = { x: duck.x + DUCK.width / 2, y: duck.y + DUCK.height };
+  private drawBird(): void {
+    const { bird } = this.zone;
+    const { tag } = this.birdPose;
+    show(this.bird, tag);
+    const at = birdFrameAt(BIRD, this.bird.frame, bird);
+    this.bird.setPosition(at.x, at.y).setFlipX(bird.facing < 0);
+    const feet = { x: bird.x + BIRD.width / 2, y: bird.y + BIRD.height };
     const scroll = cameraScroll(CAMERA, SCREEN, areaOf(this.layout, this.zone.area), feet);
     this.cameras.main.setScroll(scroll.x, scroll.y);
   }

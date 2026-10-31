@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { startZone } from "../rules/zone";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot";
 
 const ground = { height: 20, width: 1100, x: 0, y: 120 };
@@ -23,7 +23,7 @@ function fixture(solids: readonly Rect[], objects: readonly ObjectLayout[] = [])
         width: 1100,
       },
     },
-    duckFrame: DUCK_FRAME,
+    birdFrame: BIRD_FRAME,
     start: { area: "main", entry: "start" },
   };
 }
@@ -98,11 +98,11 @@ describe("local bot decisions", () => {
         upper: { ...main, walkLinks: { left: { area: "main", entry: "start" } } },
       },
     };
-    const initial = startZone(DUCK, layout, 1);
-    const zone = { ...initial, duck: { ...initial.duck, grounded: true, x: 188 - DUCK.width - 1 } };
+    const initial = startZone(BIRD, layout, 1);
+    const zone = { ...initial, bird: { ...initial.bird, grounded: true, x: 188 - BIRD.width - 1 } };
     expect(
       botInput(
-        DUCK,
+        BIRD,
         prepareSensors(layout),
         layout,
         DIAGNOSTIC_SKILL,
@@ -115,11 +115,11 @@ describe("local bot decisions", () => {
   it("uses a shorter hold for a low obstacle than for a tall one", () => {
     const holds = [12, 60].map((height) => {
       const layout = fixture([ground, { height, width: 12, x: 100, y: 120 - height }]);
-      const initial = startZone(DUCK, layout, 1);
-      const zone = { ...initial, duck: { ...initial.duck, grounded: true } };
+      const initial = startZone(BIRD, layout, 1);
+      const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
       const bot = newBot(1);
       expect(
-        botInput(DUCK, prepareSensors(layout), layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot)
+        botInput(BIRD, prepareSensors(layout), layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot)
           .jumpHeld,
       ).toBe(true);
       return bot.holding;
@@ -129,16 +129,16 @@ describe("local bot decisions", () => {
   it("waits for live platform alignment, resumes when it arrives, and bounds waiting", () => {
     const layout = fixture([{ ...ground, width: 96 }], [platform]);
     const sensors = prepareSensors(layout);
-    const initial = startZone(DUCK, layout, 1);
-    const zone = { ...initial, duck: { ...initial.duck, grounded: true } };
+    const initial = startZone(BIRD, layout, 1);
+    const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
     const bot = newBot(1);
     const skill = { ...DIAGNOSTIC_SKILL, maxWaitTicks: 2 };
-    expect(botInput(DUCK, sensors, layout, skill, FORWARD_POLICY, zone, bot).move).toBe(0);
+    expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, bot).move).toBe(0);
     const aligned = { ...zone, objects: [{ x: 108, y: 120 }] };
-    expect(botInput(DUCK, sensors, layout, skill, FORWARD_POLICY, aligned, bot).move).toBe(1);
+    expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, aligned, bot).move).toBe(1);
     const waiting = newBot(1);
-    expect(botInput(DUCK, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(0);
-    expect(botInput(DUCK, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(0);
-    expect(botInput(DUCK, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(1);
+    expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(0);
+    expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(0);
+    expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(1);
   });
 });

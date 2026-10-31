@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import { ZONE_MAP } from "../data/map";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, type JumpPolicy } from "./bot";
 import { stageLoader } from "./catalogue";
@@ -209,7 +209,7 @@ function main(args: readonly string[]): void {
   const started = performance.now();
   const prepare = stageLoader(stage);
   const result = simulateBatch(
-    DUCK,
+    BIRD,
     prepare,
     config,
     Array.from({ length: runs }, (_, index) => seed + index),

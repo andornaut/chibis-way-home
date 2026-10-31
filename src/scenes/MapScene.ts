@@ -81,14 +81,14 @@ export class MapScene extends Scene implements StageSelectOpener {
   private pressed: Control | undefined;
   private stand = ZONE_MAP.start;
   private selectionOpen = false;
-  private mapDuck!: GameObjects.Sprite;
+  private mapBird!: GameObjects.Sprite;
   private travelRequested: string | undefined;
   private travelling = false;
   private journey:
     | {
         readonly bottomOffset: number;
         distance: number;
-        readonly duck: GameObjects.Sprite;
+        readonly bird: GameObjects.Sprite;
         readonly path: ReturnType<typeof curveWalk>;
         previousX: number;
         readonly stage: string;
@@ -196,10 +196,10 @@ export class MapScene extends Scene implements StageSelectOpener {
     );
     const point = journey.path.at(journey.distance);
     if (point.x !== journey.previousX) {
-      journey.duck.setFlipX(point.x < journey.previousX);
+      journey.bird.setFlipX(point.x < journey.previousX);
     }
     journey.previousX = point.x;
-    journey.duck.setPosition(Math.round(point.x), Math.round(point.y + journey.bottomOffset));
+    journey.bird.setPosition(Math.round(point.x), Math.round(point.y + journey.bottomOffset));
     if (journey.distance >= journey.path.length) {
       this.stand = journey.stage;
       saveStand(this.stand);
@@ -216,18 +216,18 @@ export class MapScene extends Scene implements StageSelectOpener {
     const toAt = this.centre(to);
     const index = ZONE_MAP.destinations.indexOf(from);
     const path = curveWalk(bentCurve(MAP_PATH.bend, fromAt, toAt, index));
-    const bottomOffset = MAP_SCREEN.duck.zone.y + this.mapDuck.displayHeight;
-    const duck = this.add
-      .sprite(fromAt.x, fromAt.y + bottomOffset, "duck")
+    const bottomOffset = MAP_SCREEN.bird.zone.y + this.mapBird.displayHeight;
+    const bird = this.add
+      .sprite(fromAt.x, fromAt.y + bottomOffset, "bird")
       .setOrigin(0.5, 1)
-      .play(animationKey("duck", "walk"));
-    duck.setScale(this.mapDuck.displayWidth / duck.width).setFlipX(toAt.x < fromAt.x);
-    this.mapDuck.setVisible(false);
+      .play(animationKey("bird", "walk"));
+    bird.setScale(this.mapBird.displayWidth / bird.width).setFlipX(toAt.x < fromAt.x);
+    this.mapBird.setVisible(false);
     this.travelling = true;
     this.input.enabled = false;
     this.focus = undefined;
     this.showPressed(undefined);
-    this.journey = { bottomOffset, distance: 0, duck, path, previousX: fromAt.x, stage };
+    this.journey = { bird, bottomOffset, distance: 0, path, previousX: fromAt.x, stage };
   }
 
   private centre(destination: MapDestination): Point {
@@ -263,7 +263,7 @@ export class MapScene extends Scene implements StageSelectOpener {
   // Every destination and regional miniature stays visible. Only open destinations accept
   // input; locked and unbuilt markers use the authored padlock and question-mark states.
   private drawNodes(): void {
-    const { duck, icon, marker, textScale } = MAP_SCREEN;
+    const { bird, icon, marker, textScale } = MAP_SCREEN;
     const font = phaserBitmapFont(this.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
     const knockouts = this.add.graphics().fillStyle(this.colour("lgrey"));
     const labels: { at: Point; name: string }[] = [];
@@ -309,10 +309,10 @@ export class MapScene extends Scene implements StageSelectOpener {
     }
     const current = destinationForStage(ZONE_MAP, this.stand);
     const centre = this.centre(current);
-    this.mapDuck = this.add
-      .sprite(centre.x + duck.zone.x, centre.y + duck.zone.y, "map-duck")
+    this.mapBird = this.add
+      .sprite(centre.x + bird.zone.x, centre.y + bird.zone.y, "map-bird")
       .setOrigin(0)
-      .play(animationKey("map-duck", "idle"));
+      .play(animationKey("map-bird", "idle"));
   }
 
   private addActions(): void {

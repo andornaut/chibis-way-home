@@ -3,8 +3,8 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 import { ARCHETYPES } from "../data/archetypes";
+import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
-import { DUCK } from "../data/duck";
 import { ZONE_MAP } from "../data/map";
 import { TILE } from "../data/screen";
 import { zoneLayout } from "../rules/tiles";
@@ -28,7 +28,7 @@ export function stageLoader(
     return sheetFrameSize(read<Parameters<typeof sheetFrameSize>[0]>(sprite.json));
   };
   const hitboxes = artHitboxes(frame, manifest);
-  const duckFrame = frame("duck");
+  const birdFrame = frame("bird");
   const tilesets = Object.fromEntries(
     manifest.tilesets.map(({ json, key }) => [key, read<Tileset>(json)]),
   );
@@ -44,7 +44,7 @@ export function stageLoader(
       return previous.stage;
     }
     const plan = zonePlanFor(seed, key);
-    const layout = zoneLayout(TILE, duckFrame, catalogue, hitboxes, tilesets, new Set(), plan);
+    const layout = zoneLayout(TILE, birdFrame, catalogue, hitboxes, tilesets, new Set(), plan);
     const stage = {
       ...prepareStage(layout),
       source: {
@@ -57,7 +57,7 @@ export function stageLoader(
         layoutSeed: seed,
         provenance: {
           data: `sha256:${createHash("sha256")
-            .update(JSON.stringify({ layout, plan, tuning: DUCK }))
+            .update(JSON.stringify({ layout, plan, tuning: BIRD }))
             .digest("hex")}`,
         },
       },

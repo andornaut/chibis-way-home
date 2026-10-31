@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
-import type { DuckState } from "../rules/duck";
+import { BIRD } from "../data/bird";
+import type { BirdState } from "../rules/bird";
 import { STEP_MS } from "../rules/step";
-import { duckFrameAt, type DuckPose, stepPose } from "./duck";
+import { birdFrameAt, type BirdPose, stepPose } from "./bird";
 
 const LAND_MS = 180;
 
-const STILL: DuckState = {
+const STILL: BirdState = {
   bufferLeft: 0,
   carryVx: 0,
   coyoteLeft: 0,
@@ -22,12 +22,12 @@ const STILL: DuckState = {
   x: 0,
   y: 0,
 };
-const WALKING: DuckState = { ...STILL, vx: 60 };
-const RISING: DuckState = { ...STILL, grounded: false, vy: -100 };
-const FALLING: DuckState = { ...STILL, grounded: false, vy: 50 };
-const AT_APEX: DuckState = { ...STILL, grounded: false };
+const WALKING: BirdState = { ...STILL, vx: 60 };
+const RISING: BirdState = { ...STILL, grounded: false, vy: -100 };
+const FALLING: BirdState = { ...STILL, grounded: false, vy: 50 };
+const AT_APEX: BirdState = { ...STILL, grounded: false };
 
-const pose = (tag: DuckPose["tag"], ms = 0): DuckPose => ({ ms, tag });
+const pose = (tag: BirdPose["tag"], ms = 0): BirdPose => ({ ms, tag });
 
 describe("stepPose", () => {
   it.each([
@@ -49,7 +49,7 @@ describe("stepPose", () => {
   });
 });
 
-describe("duckFrameAt", () => {
+describe("birdFrameAt", () => {
   const frame = { height: 48, width: 64 };
   it.each([
     [0, 0],
@@ -57,9 +57,9 @@ describe("duckFrameAt", () => {
     [10.6, 20.6],
     [-3.5, 7.25],
   ])("anchors the frame to the box at %d,%d", (x, y) => {
-    const at = duckFrameAt(DUCK, frame, { ...STILL, x, y });
+    const at = birdFrameAt(BIRD, frame, { ...STILL, x, y });
     expect([at.x, at.y].every(Number.isInteger)).toBe(true);
-    expect(at.x + frame.width / 2).toBe(Math.round(x + DUCK.width / 2));
-    expect(at.y + frame.height).toBe(Math.round(y + DUCK.height));
+    expect(at.x + frame.width / 2).toBe(Math.round(x + BIRD.width / 2));
+    expect(at.y + frame.height).toBe(Math.round(y + BIRD.height));
   });
 });

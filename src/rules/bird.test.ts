@@ -1,46 +1,46 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import type { Rect } from "../data/types";
-import { type DuckInput, type DuckState, startDuck, stepDuck } from "./duck";
+import { type BirdInput, type BirdState, startBird, stepBird } from "./bird";
 import { STEP_SECONDS } from "./step";
 
 const STEP = STEP_SECONDS;
 const GROUND: Rect = { height: 40, width: 2000, x: -1000, y: 300 };
-const IDLE: DuckInput = { jumpHeld: false, move: 0 };
+const IDLE: BirdInput = { jumpHeld: false, move: 0 };
 
 // Steps her from a standing start on GROUND, with input(step) each step; returns every state.
 function run(
   steps: number,
-  input: (step: number) => DuckInput,
+  input: (step: number) => BirdInput,
   solids = [GROUND],
-  tuning = DUCK,
-): DuckState[] {
-  let duck = stepDuck(tuning, solids, [], STEP, IDLE, startDuck(tuning, { x: 0, y: GROUND.y }));
-  const states = [duck];
+  tuning = BIRD,
+): BirdState[] {
+  let bird = stepBird(tuning, solids, [], STEP, IDLE, startBird(tuning, { x: 0, y: GROUND.y }));
+  const states = [bird];
   for (let step = 0; step < steps; step++) {
-    duck = stepDuck(tuning, solids, [], STEP, input(step), duck);
-    states.push(duck);
+    bird = stepBird(tuning, solids, [], STEP, input(step), bird);
+    states.push(bird);
   }
   return states;
 }
 
 // A short jump from the ground, and optionally a second press on pressStep.
-function hop(pressStep?: number): DuckState[] {
+function hop(pressStep?: number): BirdState[] {
   return run(600, (step) => ({ jumpHeld: step < 2 || step === pressStep, move: 0 }));
 }
 
 // Walking right off a narrow ledge, and optionally a jump press on jumpStep.
 const LEDGE: Rect = { height: 40, width: 40, x: -20, y: 300 };
-function walkOff(jumpStep?: number): DuckState[] {
+function walkOff(jumpStep?: number): BirdState[] {
   return run(120, (step) => ({ jumpHeld: step === jumpStep, move: 1 }), [LEDGE]);
 }
 
-const last = (states: DuckState[]) => states[states.length - 1] as DuckState;
-const lowestY = (states: DuckState[]) => Math.min(...states.map((state) => state.y));
-const startY = GROUND.y - DUCK.height;
+const last = (states: BirdState[]) => states[states.length - 1] as BirdState;
+const lowestY = (states: BirdState[]) => Math.min(...states.map((state) => state.y));
+const startY = GROUND.y - BIRD.height;
 
-describe("stepDuck", () => {
+describe("stepBird", () => {
   it("stands on the ground", () => {
     const states = run(120, () => IDLE);
     expect(states.every((state) => state.grounded && state.y === startY)).toBe(true);
@@ -48,24 +48,24 @@ describe("stepDuck", () => {
 
   it.each([1, -1] as const)("walks toward %i at walk speed", (move) => {
     const states = run(60, () => ({ jumpHeld: false, move }));
-    expect(last(states).vx).toBe(move * DUCK.walkSpeed);
+    expect(last(states).vx).toBe(move * BIRD.walkSpeed);
     expect(last(states).facing).toBe(move);
   });
 
   // Jump held for a press's seconds from a standing start: every state.
-  const press = (tuning: typeof DUCK, seconds: number) =>
+  const press = (tuning: typeof BIRD, seconds: number) =>
     run(240, (step) => ({ jumpHeld: step * STEP < seconds, move: 0 }), [GROUND], tuning);
   // How high she rises for a press.
-  const rise = (tuning: typeof DUCK, seconds: number) => startY - lowestY(press(tuning, seconds));
+  const rise = (tuning: typeof BIRD, seconds: number) => startY - lowestY(press(tuning, seconds));
   const { gravity, jumpHopHeight, jumpReleaseBlendTime, jumpRiseTime, jumpSpeed, jumpTapWindow } =
-    DUCK;
+    BIRD;
   const full = jumpSpeed ** 2 / (2 * gravity);
   const within = jumpSpeed * STEP;
 
   it.each([STEP, 0.06, jumpTapWindow])(
     "keeps a %fs tap at the low-hop height and starts moving immediately",
     (seconds) => {
-      const states = press(DUCK, seconds);
+      const states = press(BIRD, seconds);
       expect(states[1]?.vy).toBeLessThan(0);
       expect(states[1]?.y).toBeLessThan(startY);
       expect(Math.abs(startY - lowestY(states) - jumpHopHeight)).toBeLessThan(1);
@@ -74,7 +74,7 @@ describe("stepDuck", () => {
 
   it("adds height progressively through the release blend", () => {
     const heights = Array.from({ length: Math.ceil(jumpReleaseBlendTime / STEP) + 2 }, (_, step) =>
-      rise(DUCK, jumpTapWindow + step * STEP),
+      rise(BIRD, jumpTapWindow + step * STEP),
     );
     expect(heights.every((height, i) => i === 0 || height + 0.05 >= (heights[i - 1] ?? 0))).toBe(
       true,
@@ -83,7 +83,7 @@ describe("stepDuck", () => {
   });
 
   it("keeps a single constant acceleration throughout a held ascent", () => {
-    const states = press(DUCK, 1);
+    const states = press(BIRD, 1);
     const acceleration = (2 * full) / jumpRiseTime ** 2;
     const rising = states.filter((state) => state.vy < 0);
     for (let i = 1; i < rising.length; i++) {
@@ -92,7 +92,7 @@ describe("stepDuck", () => {
   });
 
   it("preserves full-jump height without pausing or reversing during ascent", () => {
-    const states = press(DUCK, 1);
+    const states = press(BIRD, 1);
     const transitionEnd = Math.ceil((jumpTapWindow + jumpReleaseBlendTime) / STEP);
     expect(states.slice(1, transitionEnd + 1).every((state) => state.vy < 0)).toBe(true);
     expect(Math.abs(startY - lowestY(states) - full)).toBeLessThan(within);
@@ -101,7 +101,7 @@ describe("stepDuck", () => {
   });
 
   it("uses normal gravity immediately after the low-hop apex", () => {
-    const states = press(DUCK, STEP);
+    const states = press(BIRD, STEP);
     const apex = states.findIndex((state, index) => index > 1 && state.vy >= 0);
     expect(apex * STEP).toBeLessThan(jumpRiseTime + 2 * STEP);
     expect((states[apex + 1]?.vy ?? 0) - (states[apex]?.vy ?? 0)).toBeCloseTo(gravity * STEP);
@@ -120,8 +120,8 @@ describe("stepDuck", () => {
     const press = land - 3;
     const states = run(600, (step) => ({ jumpHeld: step < 2 || step === press, move: 0 }));
     const after = states.slice(land);
-    const hopApex = DUCK.jumpHopHeight;
-    expect(Math.abs(startY - lowestY(after) - hopApex)).toBeLessThanOrEqual(DUCK.jumpSpeed * STEP);
+    const hopApex = BIRD.jumpHopHeight;
+    expect(Math.abs(startY - lowestY(after) - hopApex)).toBeLessThanOrEqual(BIRD.jumpSpeed * STEP);
   });
 
   it.each([
@@ -130,14 +130,14 @@ describe("stepDuck", () => {
   ])("falls at the flutter speed at most %s", (_name, states) => {
     const falling = states.filter((state) => state.vy > 0 && !state.grounded);
     expect(falling.length).toBeGreaterThan(0);
-    expect(Math.max(...falling.map((state) => state.vy))).toBe(DUCK.flutterFallSpeed);
+    expect(Math.max(...falling.map((state) => state.vy))).toBe(BIRD.flutterFallSpeed);
   });
 
   // A press on step s acts on the state after step s - 1; that state's coyote time has run
   // for (s - leave) steps since states[leave], the first one in the air.
   it.each([
-    ["within coyote time", Math.floor(DUCK.coyoteTime / STEP) - 1, true],
-    ["after coyote time", Math.ceil(DUCK.coyoteTime / STEP) + 1, false],
+    ["within coyote time", Math.floor(BIRD.coyoteTime / STEP) - 1, true],
+    ["after coyote time", Math.ceil(BIRD.coyoteTime / STEP) + 1, false],
   ])("jumps when pressed %s after leaving a ledge", (_name, after, jumps) => {
     const leave = walkOff().findIndex((state) => !state.grounded);
     const states = walkOff(leave - 1 + after);
@@ -147,8 +147,8 @@ describe("stepDuck", () => {
   // A press kept in the buffer starts a jump on the step after she lands, so the buffer must
   // outlast the steps to landing plus one.
   it.each([
-    ["within the buffer", Math.floor(DUCK.jumpBuffer / STEP) - 2, true],
-    ["before the buffer", Math.ceil(DUCK.jumpBuffer / STEP) + 1, false],
+    ["within the buffer", Math.floor(BIRD.jumpBuffer / STEP) - 2, true],
+    ["before the buffer", Math.ceil(BIRD.jumpBuffer / STEP) + 1, false],
   ])("jumps as she lands when pressed %s", (_name, before, jumps) => {
     const land = hop().findIndex((state, i) => i > 2 && state.grounded);
     const states = hop(land - 1 - before);
@@ -169,7 +169,7 @@ describe("stepDuck", () => {
     [
       1,
       { height: 100, width: 20, x: 40, y: 200 },
-      (x: number, wall: Rect) => x + DUCK.width <= wall.x,
+      (x: number, wall: Rect) => x + BIRD.width <= wall.x,
     ],
     [
       -1,

@@ -1,6 +1,6 @@
-import type { DuckTuning, ZoneDeath, ZoneLayout } from "../data/types";
+import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
-import { duckBox } from "../rules/duck";
+import { birdBox } from "../rules/bird";
 import { overlaps } from "../rules/rect";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 
@@ -25,7 +25,7 @@ export interface TraceEvent {
         readonly distance: number;
         readonly facing: -1 | 1 | undefined;
         readonly index: number;
-        readonly overlapsDuck: boolean;
+        readonly overlapsBird: boolean;
         readonly stateKey: string | undefined;
         readonly x: number;
         readonly y: number;
@@ -37,7 +37,7 @@ export interface TraceEvent {
 }
 
 export function traceEvent(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   kind: TraceEvent["kind"],
   tick: number,
@@ -50,7 +50,7 @@ export function traceEvent(
   if (!area) {
     throw new Error(`No area ${zone.area}`);
   }
-  const box = duckBox(tuning, zone.duck);
+  const box = birdBox(tuning, zone.bird);
   let closest: TraceEvent["object"];
   for (let index = 0; index < area.objects.length; index++) {
     const object = area.objects[index];
@@ -70,15 +70,15 @@ export function traceEvent(
     const touching = overlaps(box, rect);
     if (
       closest === undefined ||
-      (touching && !closest.overlapsDuck) ||
-      (touching === closest.overlapsDuck && distance < closest.distance)
+      (touching && !closest.overlapsBird) ||
+      (touching === closest.overlapsBird && distance < closest.distance)
     ) {
       closest = {
         character: object.character,
         distance,
         facing: behaviour?.facing,
         index,
-        overlapsDuck: touching,
+        overlapsBird: touching,
         stateKey: behaviour?.stateKey,
         x: at.x,
         y: at.y,
@@ -99,7 +99,7 @@ export function traceEvent(
     kind,
     object: closest,
     tick,
-    x: zone.duck.x,
-    y: zone.duck.y,
+    x: zone.bird.x,
+    y: zone.bird.y,
   };
 }

@@ -257,10 +257,10 @@ export function areaLayout(
 
 // A zone plan in base pixels, for the rules: each instance resolved against the catalogue, with
 // the hit boxes art declares by art key and in its tilesets by tile, and only the instances the
-// set flags place. duckFrame: her drawn frame's size, which Use reaches with.
+// set flags place. birdFrame: her drawn frame's size, which Use reaches with.
 export function zoneLayout(
   tile: number,
-  duckFrame: Size,
+  birdFrame: Size,
   catalogue: Catalogue,
   hitboxes: Readonly<Record<string, ArtHitbox>>,
   tilesets: Readonly<Record<string, Tileset>>,
@@ -275,7 +275,7 @@ export function zoneLayout(
         areaLayout(tile, catalogue, hitboxes, tilesets, flags, area),
       ]),
     ),
-    duckFrame,
+    birdFrame,
     start: plan.start,
   };
   validateZoneLinks(layout);

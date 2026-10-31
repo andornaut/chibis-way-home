@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD } from "../data/bird";
 import { DEATH } from "../data/death";
-import { DUCK } from "../data/duck";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import type { Rect, ZoneDeath } from "../data/types";
 import { STEP_SECONDS } from "../rules/step";
+import { BIRD_FRAME } from "./bird";
 import {
   deathLabels,
   deathSummary,
@@ -14,15 +15,14 @@ import {
   startDeathPresentation,
   stepDeathPresentation,
 } from "./death";
-import { DUCK_FRAME } from "./duck";
 
-const view: DeathView = { body: DUCK, bounds: { ...SCREEN, x: 0, y: 0 }, frame: DUCK_FRAME };
+const view: DeathView = { body: BIRD, bounds: { ...SCREEN, x: 0, y: 0 }, frame: BIRD_FRAME };
 const ground: Rect = { height: 120, width: SCREEN.width, x: 0, y: (SCREEN.height * 2) / 3 };
 const death: ZoneDeath = {
-  position: { x: 100, y: ground.y - DUCK.height },
+  position: { x: 100, y: ground.y - BIRD.height },
   reason: "hazard",
   support: ground,
-  velocity: { x: DUCK.walkSpeed, y: 0 },
+  velocity: { x: BIRD.walkSpeed, y: 0 },
 };
 
 describe("death presentation", () => {
@@ -44,7 +44,7 @@ describe("death presentation", () => {
       expect(phases).toEqual(new Set(["recoil", "fall", "impact", "bounce", "seated"]));
       expect(Math.sign(pose.position.x - x)).toBe(Math.sign(DEATH.recoilVelocity.x * facing));
       expect(bounceRose).toBe(true);
-      expect(pose.position.y + DUCK.height).toBe(ground.y);
+      expect(pose.position.y + BIRD.height).toBe(ground.y);
       expect(stepDeathPresentation(DEATH, view, () => ground, 100, pose)).toBe(pose);
     },
   );
@@ -57,12 +57,12 @@ describe("death presentation", () => {
       support: undefined,
     });
     expect(pose.phase).toBe("fall");
-    expect(pose.position.y + DUCK.height).toBeLessThan(SCREEN.height);
+    expect(pose.position.y + BIRD.height).toBeLessThan(SCREEN.height);
     for (let step = 0; step < 1200 && pose.phase !== "seated"; step++) {
       pose = stepDeathPresentation(DEATH, view, () => undefined, STEP_SECONDS, pose);
     }
     expect(pose.phase).toBe("seated");
-    expect(pose.position.y + DUCK.height).toBe(SCREEN.height);
+    expect(pose.position.y + BIRD.height).toBe(SCREEN.height);
   });
 
   it("queries frozen support at the recoil's new position", () => {

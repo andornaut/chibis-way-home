@@ -1,4 +1,4 @@
-import type { DuckTuning } from "../data/types";
+import type { BirdTuning } from "../data/types";
 import {
   type PreparedStage,
   type RunResult,
@@ -28,7 +28,7 @@ export interface BatchResult {
 
 // Preparation is supplied by the caller, allowing several policies to reuse a layout/index.
 export function simulateBatch(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   prepare: (seed: number) => PreparedStage,
   config: Omit<SimulationConfig, "seed">,
   seeds: readonly number[],

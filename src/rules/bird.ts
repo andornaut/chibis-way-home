@@ -1,17 +1,17 @@
-import type { DuckTuning, Point, Rect, Size } from "../data/types";
+import type { BirdTuning, Point, Rect, Size } from "../data/types";
 import { overlaps } from "./rect";
 
 // Pixels of rounding error allowed when she stands exactly on an edge.
 export const EDGE = 1e-6;
 
-// What the player asks of the duck this step. jumpHeld is the button's state; a jump starts on
+// What the player asks of the bird this step. jumpHeld is the button's state; a jump starts on
 // the step it goes down.
-export interface DuckInput {
+export interface BirdInput {
   readonly jumpHeld: boolean;
   readonly move: -1 | 0 | 1;
 }
 
-export interface DuckState {
+export interface BirdState {
   // Seconds a pressed jump still waits to start, should she land or still be in coyote time.
   readonly bufferLeft: number;
   // Speed along x carried from a moving platform she left, kept until she lands or meets a wall.
@@ -34,7 +34,7 @@ export interface DuckState {
   readonly y: number;
 }
 
-export function startDuck(tuning: DuckTuning, start: Point): DuckState {
+export function startBird(tuning: BirdTuning, start: Point): BirdState {
   return {
     bufferLeft: 0,
     carryVx: 0,
@@ -52,18 +52,18 @@ export function startDuck(tuning: DuckTuning, start: Point): DuckState {
   };
 }
 
-export function duckBox(tuning: DuckTuning, duck: DuckState): Rect {
-  return { height: tuning.height, width: tuning.width, x: duck.x, y: duck.y };
+export function birdBox(tuning: BirdTuning, bird: BirdState): Rect {
+  return { height: tuning.height, width: tuning.width, x: bird.x, y: bird.y };
 }
 
 // The whole-pixel rect her drawn frame, frame big, covers: its bottom edge on her collision
 // box's bottom edge and its horizontal centre on the box's, where the zone draws her sprite.
-export function duckFrameRect(tuning: DuckTuning, frame: Size, duck: DuckState): Rect {
+export function birdFrameRect(tuning: BirdTuning, frame: Size, bird: BirdState): Rect {
   return {
     height: frame.height,
     width: frame.width,
-    x: Math.round(duck.x + tuning.width / 2 - frame.width / 2),
-    y: Math.round(duck.y + tuning.height - frame.height),
+    x: Math.round(bird.x + tuning.width / 2 - frame.width / 2),
+    y: Math.round(bird.y + tuning.height - frame.height),
   };
 }
 
@@ -82,30 +82,30 @@ function hopSpeed(gravity: number, seconds: number, remaining: number): number {
 // stopped at the first solid in the way. Ledges stop her only from above: falling onto one from
 // at or above its top, never rising or walking through it. Every fall flutters: it never passes
 // the flutter speed.
-export function stepDuck(
-  tuning: DuckTuning,
+export function stepBird(
+  tuning: BirdTuning,
   solids: readonly Rect[],
   ledges: readonly Rect[],
   seconds: number,
-  input: DuckInput,
-  duck: DuckState,
-): DuckState {
-  const accel = duck.grounded ? tuning.groundAccel : tuning.airAccel;
-  let vx = approach(duck.vx, input.move * tuning.walkSpeed, accel * seconds);
-  let vy = duck.vy;
+  input: BirdInput,
+  bird: BirdState,
+): BirdState {
+  const accel = bird.grounded ? tuning.groundAccel : tuning.airAccel;
+  let vx = approach(bird.vx, input.move * tuning.walkSpeed, accel * seconds);
+  let vy = bird.vy;
 
-  const jumpPressed = input.jumpHeld && !duck.jumpHeld;
-  let bufferLeft = jumpPressed ? tuning.jumpBuffer : Math.max(0, duck.bufferLeft - seconds);
-  let coyoteLeft = Math.max(0, duck.coyoteLeft - seconds);
-  let jumpRise = duck.jumpRise;
-  let jumpFromY = duck.jumpFromY;
+  const jumpPressed = input.jumpHeld && !bird.jumpHeld;
+  let bufferLeft = jumpPressed ? tuning.jumpBuffer : Math.max(0, bird.bufferLeft - seconds);
+  let coyoteLeft = Math.max(0, bird.coyoteLeft - seconds);
+  let jumpRise = bird.jumpRise;
+  let jumpFromY = bird.jumpFromY;
   const fullHeight = tuning.jumpSpeed ** 2 / (2 * tuning.gravity);
   const ascentGravity = (2 * fullHeight) / tuning.jumpRiseTime ** 2;
   // Seconds Jump was held before this step, since it started her jump.
-  let heldBefore = duck.jumpHeldFor;
-  if ((jumpPressed || bufferLeft > 0) && (duck.grounded || duck.coyoteLeft > 0)) {
+  let heldBefore = bird.jumpHeldFor;
+  if ((jumpPressed || bufferLeft > 0) && (bird.grounded || bird.coyoteLeft > 0)) {
     vy = -(2 * fullHeight) / tuning.jumpRiseTime;
-    jumpFromY = duck.y;
+    jumpFromY = bird.y;
     bufferLeft = 0;
     coyoteLeft = 0;
     heldBefore = 0;
@@ -116,14 +116,14 @@ export function stepDuck(
     }
   }
   const jumpHeldFor = input.jumpHeld ? heldBefore + seconds : 0;
-  const released = duck.jumpHeld && !input.jumpHeld;
+  const released = bird.jumpHeld && !input.jumpHeld;
   if (released && vy < 0 && jumpRise === "held") {
     const progress = Math.max(
       0,
       Math.min(1, (heldBefore - tuning.jumpTapWindow) / tuning.jumpReleaseBlendTime),
     );
     const retained = progress * progress * (3 - 2 * progress);
-    const remaining = Math.max(0, tuning.jumpHopHeight - (jumpFromY - duck.y));
+    const remaining = Math.max(0, tuning.jumpHopHeight - (jumpFromY - bird.y));
     // Cut upward speed only on release. Holding never changes the ballistic ascent.
     vy = -Math.min(-vy, Math.max(-vy * retained, hopSpeed(ascentGravity, seconds, remaining)));
     jumpRise = "hop";
@@ -134,11 +134,11 @@ export function stepDuck(
     jumpRise = "free";
   }
 
-  let carryVx = duck.carryVx;
+  let carryVx = bird.carryVx;
   const moving = vx + carryVx;
-  let x = duck.x + moving * seconds;
+  let x = bird.x + moving * seconds;
   for (const solid of solids) {
-    const box = { height: tuning.height, width: tuning.width, x, y: duck.y };
+    const box = { height: tuning.height, width: tuning.width, x, y: bird.y };
     if (overlaps(box, solid)) {
       x = moving > 0 ? solid.x - tuning.width : solid.x + solid.width;
       vx = 0;
@@ -148,7 +148,7 @@ export function stepDuck(
 
   // grounded is found afresh each step: standing on a solid, gravity carries her a fraction of a
   // pixel into it, and the check below lands her again.
-  let y = duck.y + vy * seconds;
+  let y = bird.y + vy * seconds;
   let grounded = false;
   for (const solid of solids) {
     const box = { height: tuning.height, width: tuning.width, x, y };
@@ -163,7 +163,7 @@ export function stepDuck(
       jumpRise = "free";
     }
   }
-  const bottom = duck.y + tuning.height;
+  const bottom = bird.y + tuning.height;
   for (const ledge of ledges) {
     const box = { height: tuning.height, width: tuning.width, x, y };
     if (vy > 0 && bottom <= ledge.y + EDGE && overlaps(box, ledge)) {
@@ -182,7 +182,7 @@ export function stepDuck(
     bufferLeft,
     carryVx,
     coyoteLeft,
-    facing: input.move === 0 ? duck.facing : input.move,
+    facing: input.move === 0 ? bird.facing : input.move,
     grounded,
     jumpFromY,
     jumpHeld: input.jumpHeld,

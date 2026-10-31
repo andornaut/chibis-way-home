@@ -1,5 +1,5 @@
-import type { DuckTuning, ObjectLayout, Point, Rect } from "../data/types";
-import { duckBox, type DuckState, EDGE } from "./duck";
+import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
+import { birdBox, type BirdState, EDGE } from "./bird";
 import { overlaps } from "./rect";
 
 export interface BehaviourPlatform {
@@ -133,20 +133,20 @@ function supportY(
 
 // This is a direct support/clearance query, not a path search. Spatial tolerance is data-owned.
 export function targetReachable(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   object: ObjectLayout,
   world: BehaviourWorld,
   at: Point,
   box: Rect,
   groundY: number,
   tolerance: number,
-  duck: DuckState,
+  bird: BirdState,
 ): boolean {
   const plan = object.behaviour;
   if (!plan) {
     return false;
   }
-  const hers = duckBox(tuning, duck);
+  const hers = birdBox(tuning, bird);
   const low = Math.min(object.origin[plan.axis], object.origin[plan.axis] + plan.distance);
   const high = Math.max(object.origin[plan.axis], object.origin[plan.axis] + plan.distance);
   const offset = box[plan.axis] - at[plan.axis];
@@ -191,7 +191,7 @@ export function targetReachable(
   if (
     support === undefined ||
     Math.abs(support - floor) > tolerance + EDGE ||
-    (duck.grounded && Math.abs(support - hers.y - hers.height) > tolerance + EDGE)
+    (bird.grounded && Math.abs(support - hers.y - hers.height) > tolerance + EDGE)
   ) {
     return false;
   }

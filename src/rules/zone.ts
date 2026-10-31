@@ -3,7 +3,7 @@ import { randomStream } from "@andornaut/game-kit/random";
 import type {
   AreaLayout,
   AreaLink,
-  DuckTuning,
+  BirdTuning,
   ObjectLayout,
   Point,
   Rect,
@@ -19,16 +19,16 @@ import {
   sweptContact,
 } from "./behaviour";
 import type { BehaviourWorld } from "./behaviourReach";
-import { deathSupport } from "./death";
 import {
-  duckBox,
-  duckFrameRect,
-  type DuckInput,
-  type DuckState,
+  birdBox,
+  birdFrameRect,
+  type BirdInput,
+  type BirdState,
   EDGE,
-  startDuck,
-  stepDuck,
-} from "./duck";
+  startBird,
+  stepBird,
+} from "./bird";
+import { deathSupport } from "./death";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { overlaps } from "./rect";
 import { validateWalkEntries } from "./zoneLinks";
@@ -60,9 +60,9 @@ function behaviourGeometry(area: AreaLayout, zone: ZoneState): BehaviourWorld {
   return { platforms, solids: area.solids };
 }
 
-// What the player asks of the zone this step: the duck's input, and whether Use is held. Use
+// What the player asks of the zone this step: the bird's input, and whether Use is held. Use
 // acts on the step it goes down.
-export interface ZoneInput extends DuckInput {
+export interface ZoneInput extends BirdInput {
   readonly useHeld: boolean;
 }
 
@@ -77,10 +77,10 @@ export interface ZoneState {
   readonly area: string;
   readonly attempt: number;
   readonly behaviours: readonly (BehaviourState | undefined)[];
+  readonly bird: BirdState;
   readonly cleared: boolean;
   readonly death: ZoneDeath | undefined;
   readonly door: number | undefined;
-  readonly duck: DuckState;
   readonly objects: readonly Point[];
   readonly restarts: number;
   readonly seconds: number;
@@ -111,7 +111,7 @@ function pathAt(object: ObjectLayout, track: Track, seconds: number): Point {
 // She arrives at the entry `link` names, the area's objects at the start of their tracks. The
 // tracks' random draws come from the seed and the attempt, so each attempt rolls them afresh.
 export function enterArea(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   link: AreaLink,
   zone: Pick<ZoneState, "attempt" | "restarts" | "seed" | "steps">,
@@ -121,7 +121,7 @@ export function enterArea(
   if (!entry) {
     throw new Error(`No entry ${link.entry} in area ${link.area}`);
   }
-  const duck = startDuck(tuning, entry);
+  const bird = startBird(tuning, entry);
   const tracks = area.objects.map((object, index) =>
     motionTrack(
       object.motion,
@@ -133,12 +133,12 @@ export function enterArea(
     ...zone,
     area: link.area,
     behaviours: area.objects.some((object) => object.behaviour)
-      ? area.objects.map((object) => object.behaviour && startBehaviour(tuning, object, duck))
+      ? area.objects.map((object) => object.behaviour && startBehaviour(tuning, object, bird))
       : [],
+    bird,
     cleared: false,
     death: undefined,
     door: undefined,
-    duck,
     objects: area.objects.map((object, index) =>
       object.behaviour ? object.origin : pathAt(object, tracks[index] as Track, 0),
     ),
@@ -180,14 +180,14 @@ const centreOf = (rect: Rect): Point => ({
 // drawn over its whole rect (art's door sprites, tiles and placeholders fill it), so its rect is
 // its drawn rect.
 export function doorAt(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   frame: Size,
   objects: readonly ObjectLayout[],
   at: readonly Point[],
-  duck: DuckState,
+  bird: BirdState,
 ): number | undefined {
-  const drawn = duckFrameRect(tuning, frame, duck);
-  const hers = centreOf(duckBox(tuning, duck));
+  const drawn = birdFrameRect(tuning, frame, bird);
+  const hers = centreOf(birdBox(tuning, bird));
   let nearest: { distance: number; index: number } | undefined;
   objects.forEach((object, index) => {
     const placed = at[index];
@@ -212,14 +212,14 @@ export function roomOf(layout: ZoneLayout, zone: ZoneState): string | undefined 
   return zone.door === undefined ? undefined : areaOf(layout, zone.area).objects[zone.door]?.room;
 }
 
-export function startZone(tuning: DuckTuning, layout: ZoneLayout, seed: number): ZoneState {
+export function startZone(tuning: BirdTuning, layout: ZoneLayout, seed: number): ZoneState {
   validateWalkEntries(tuning, layout);
   return enterArea(tuning, layout, layout.start, { attempt: 0, restarts: 0, seed, steps: 0 });
 }
 
 // A failed attempt remains frozen until Retry is chosen. Reusing its layout keeps assembled
 // terrain while the new attempt reseeds object motion and resets conversations.
-export function retryZone(tuning: DuckTuning, layout: ZoneLayout, zone: ZoneState): ZoneState {
+export function retryZone(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): ZoneState {
   return zone.death === undefined
     ? zone
     : enterArea(tuning, layout, layout.start, {
@@ -231,11 +231,11 @@ export function retryZone(tuning: DuckTuning, layout: ZoneLayout, zone: ZoneStat
 }
 
 // Whether her feet are on top of rect.
-export function standsOn(tuning: DuckTuning, duck: DuckState, rect: Rect): boolean {
+export function standsOn(tuning: BirdTuning, bird: BirdState, rect: Rect): boolean {
   return (
-    Math.abs(duck.y + tuning.height - rect.y) < EDGE &&
-    duck.x < rect.x + rect.width &&
-    duck.x + tuning.width > rect.x
+    Math.abs(bird.y + tuning.height - rect.y) < EDGE &&
+    bird.x < rect.x + rect.width &&
+    bird.x + tuning.width > rect.x
   );
 }
 
@@ -243,11 +243,11 @@ export function standsOn(tuning: DuckTuning, duck: DuckState, rect: Rect): boole
 // range of her it moves along its motion's axis, away from her or toward her; out of range it
 // heads back to its track, at the reaction's speed either way.
 export function objectStep(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   object: ObjectLayout,
   seconds: number,
   path: Point,
-  duck: DuckState,
+  bird: BirdState,
   at: Point,
 ): Point {
   const { reaction } = object;
@@ -256,7 +256,7 @@ export function objectStep(
   }
   const reach = reaction.speed * seconds;
   const mine = centreOf(rectAt(object, at));
-  const hers = centreOf(duckBox(tuning, duck));
+  const hers = centreOf(birdBox(tuning, bird));
   if (Math.hypot(hers.x - mine.x, hers.y - mine.y) <= reaction.range) {
     const axis = axisOf(object.motion.direction);
     const toward = (hers.x - mine.x) * axis.x + (hers.y - mine.y) * axis.y >= 0 ? 1 : -1;
@@ -272,33 +272,33 @@ export function objectStep(
 // Moves her with the platform she rides, by (dx, dy), along each axis only as far as no solid
 // is in the way.
 function ride(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   solids: readonly Rect[],
   dx: number,
   dy: number,
-  duck: DuckState,
-): DuckState {
+  bird: BirdState,
+): BirdState {
   const clear = (x: number, y: number) =>
-    !solids.some((solid) => overlaps({ ...duckBox(tuning, duck), x, y }, solid));
-  const x = clear(duck.x + dx, duck.y) ? duck.x + dx : duck.x;
-  const y = clear(x, duck.y + dy) ? duck.y + dy : duck.y;
-  return { ...duck, x, y };
+    !solids.some((solid) => overlaps({ ...birdBox(tuning, bird), x, y }, solid));
+  const x = clear(bird.x + dx, bird.y) ? bird.x + dx : bird.x;
+  const y = clear(x, bird.y + dy) ? bird.y + dy : bird.y;
+  return { ...bird, x, y };
 }
 
 // A solid moving along x into her side pushes her out of its way, to the side she was on before
 // it moved: its leading edge, as it runs into her. One that has not moved along x leaves her to
-// the duck's own collision, which stops her by her own motion.
+// the bird's own collision, which stops her by her own motion.
 export function pushedAside(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   before: Rect,
   after: Rect,
-  duck: DuckState,
-): DuckState {
-  if (after.x === before.x || !overlaps(duckBox(tuning, duck), after)) {
-    return duck;
+  bird: BirdState,
+): BirdState {
+  if (after.x === before.x || !overlaps(birdBox(tuning, bird), after)) {
+    return bird;
   }
-  const left = duck.x + tuning.width / 2 < before.x + before.width / 2;
-  return { ...duck, x: left ? after.x - tuning.width : after.x + after.width };
+  const left = bird.x + tuning.width / 2 < before.x + before.width / 2;
+  return { ...bird, x: left ? after.x - tuning.width : after.x + after.width };
 }
 
 // One fixed step of the zone. Pure, so the game and a headless simulator run the same rules.
@@ -311,7 +311,7 @@ export function pushedAside(
 // Use with her drawn frame over a door sets `door` (doorAt), and the zone holds still until
 // leaveRoom.
 export function stepZone(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   seconds: number,
   input: ZoneInput,
@@ -331,30 +331,30 @@ export function stepZone(
           object,
           geometry,
           seconds,
-          zone.duck,
+          zone.bird,
           before,
-          zone.behaviours[index] ?? startBehaviour(tuning, object, zone.duck),
+          zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
         )
       : undefined;
     const path = pathAt(object, zone.tracks[index] as Track, time);
-    const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.duck, before);
+    const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
     return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
   });
   const platforms = objects.filter(
     ({ object }) => object.collision === "solid" || object.collision === "ledge",
   );
-  const riding = platforms.find(({ before }) => standsOn(tuning, zone.duck, before));
-  let duck = zone.duck;
+  const riding = platforms.find(({ before }) => standsOn(tuning, zone.bird, before));
+  let bird = zone.bird;
   let dx = 0;
   if (riding) {
     dx = riding.after.x - riding.before.x;
-    duck = ride(tuning, area.solids, dx, riding.after.y - riding.before.y, duck);
+    bird = ride(tuning, area.solids, dx, riding.after.y - riding.before.y, bird);
   }
   // A platform rising into her from below lifts her onto it, rather than meeting her as a wall.
   for (const { after, before } of platforms) {
-    const feet = duck.y + tuning.height;
-    if (feet <= before.y + EDGE && feet > after.y && overlaps(duckBox(tuning, duck), after)) {
-      duck = { ...duck, y: after.y - tuning.height };
+    const feet = bird.y + tuning.height;
+    if (feet <= before.y + EDGE && feet > after.y && overlaps(birdBox(tuning, bird), after)) {
+      bird = { ...bird, y: after.y - tuning.height };
     }
   }
   const rects = (collision: string) =>
@@ -364,10 +364,10 @@ export function stepZone(
   const solids = [...area.solids, ...rects("solid")];
   let crushed = false;
   for (const { after, before, object } of platforms) {
-    const pushed = object.collision === "solid" ? pushedAside(tuning, before, after, duck) : duck;
-    if (pushed !== duck) {
-      duck = pushed;
-      crushed ||= solids.some((solid) => overlaps(duckBox(tuning, duck), solid));
+    const pushed = object.collision === "solid" ? pushedAside(tuning, before, after, bird) : bird;
+    if (pushed !== bird) {
+      bird = pushed;
+      crushed ||= solids.some((solid) => overlaps(birdBox(tuning, bird), solid));
     }
   }
   const hazards = objects
@@ -379,13 +379,13 @@ export function stepZone(
           ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
           : after,
     );
-  duck = stepDuck(tuning, solids, rects("ledge"), seconds, input, duck);
-  if (riding && !duck.grounded) {
-    duck = { ...duck, carryVx: dx / seconds };
+  bird = stepBird(tuning, solids, rects("ledge"), seconds, input, bird);
+  if (riding && !bird.grounded) {
+    bird = { ...bird, carryVx: dx / seconds };
   }
-  const box = duckBox(tuning, duck);
-  const beforeBox = duckBox(tuning, zone.duck);
-  const duckAt = (time: number): Rect => ({
+  const box = birdBox(tuning, bird);
+  const beforeBox = birdBox(tuning, zone.bird);
+  const birdAt = (time: number): Rect => ({
     ...beforeBox,
     x: beforeBox.x + ((box.x - beforeBox.x) * time) / seconds,
     y: beforeBox.y + ((box.y - beforeBox.y) * time) / seconds,
@@ -399,18 +399,18 @@ export function stepZone(
         behaviour?.segments.some((segment) => {
           const before = contactBox(object, segment.from, segment.facing);
           const after = contactBox(object, segment.to, segment.facing);
-          return sweptContact(before, after, duckAt(segment.start), duckAt(segment.end));
+          return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
         }),
     );
   const steps = zone.steps + 1;
-  if (crushed || swept || duck.y > area.height || hazards.some((hazard) => overlaps(box, hazard))) {
+  if (crushed || swept || bird.y > area.height || hazards.some((hazard) => overlaps(box, hazard))) {
     const frozen: ZoneState = {
       ...zone,
       behaviours:
         zone.behaviours.length > 0
           ? objects.map(({ behaviour }) => behaviour?.state)
           : zone.behaviours,
-      duck,
+      bird,
       objects: objects.map(({ after }) => ({ x: after.x, y: after.y })),
       seconds: time,
       steps,
@@ -419,10 +419,10 @@ export function stepZone(
     return {
       ...frozen,
       death: {
-        position: { x: duck.x, y: duck.y },
-        reason: crushed ? "crush" : duck.y > area.height ? "fall" : "hazard",
-        support: deathSupport(tuning, layout, frozen, duck),
-        velocity: { x: duck.vx, y: duck.vy },
+        position: { x: bird.x, y: bird.y },
+        reason: crushed ? "crush" : bird.y > area.height ? "fall" : "hazard",
+        support: deathSupport(tuning, layout, frozen, bird),
+        velocity: { x: bird.vx, y: bird.vy },
       },
     };
   }
@@ -439,16 +439,16 @@ export function stepZone(
       seed: zone.seed,
       steps,
     });
-    return { ...arrival, duck: { ...arrival.duck, facing: duck.facing, jumpHeld: input.jumpHeld } };
+    return { ...arrival, bird: { ...arrival.bird, facing: bird.facing, jumpHeld: input.jumpHeld } };
   }
   const usePressed = input.useHeld && !zone.useHeld;
   const door = usePressed
     ? doorAt(
         tuning,
-        layout.duckFrame,
+        layout.birdFrame,
         area.objects,
         objects.map(({ after }) => after),
-        duck,
+        bird,
       )
     : undefined;
   return {
@@ -457,9 +457,9 @@ export function stepZone(
       zone.behaviours.length > 0
         ? objects.map(({ behaviour }) => behaviour?.state)
         : zone.behaviours,
+    bird,
     cleared: box.x + box.width > area.exitX,
     door,
-    duck,
     objects: objects.map(({ after }) => ({ x: after.x, y: after.y })),
     seconds: time,
     steps,

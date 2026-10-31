@@ -1,4 +1,4 @@
-import type { AreaLink, DuckTuning, ZoneLayout } from "../data/types";
+import type { AreaLink, BirdTuning, ZoneLayout } from "../data/types";
 
 const VALIDATED = new WeakSet<ZoneLayout>();
 
@@ -42,7 +42,7 @@ export function validateZoneLinks(layout: ZoneLayout): void {
 }
 
 export function validateWalkEntries(
-  tuning: Pick<DuckTuning, "width" | "height">,
+  tuning: Pick<BirdTuning, "width" | "height">,
   layout: ZoneLayout,
 ): void {
   validateZoneLinks(layout);

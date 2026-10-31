@@ -1,13 +1,13 @@
 import type {
   AreaLayout,
-  DuckTuning,
+  BirdTuning,
   ObjectLayout,
   Point,
   Rect,
   TilePoint,
   ZoneLayout,
 } from "../data/types";
-import { startDuck, stepDuck } from "../rules/duck";
+import { startBird, stepBird } from "../rules/bird";
 import { STEP_SECONDS } from "../rules/step";
 import {
   activateBehaviour,
@@ -25,7 +25,7 @@ const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
 // Conversations do not move the world. The walker activates their patrols explicitly so it
 // verifies the active encounter, including on any fresh attempt.
 function stepZone(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   seconds: number,
   input: ZoneInput,
@@ -170,7 +170,7 @@ function subtract(
   );
 }
 
-function areaSurfaces(tuning: DuckTuning, name: string, area: AreaLayout): Surface[] {
+function areaSurfaces(tuning: BirdTuning, name: string, area: AreaLayout): Surface[] {
   const still = area.objects.filter(isStill);
   const solids = [
     ...area.solids,
@@ -227,7 +227,7 @@ function areaSurfaces(tuning: DuckTuning, name: string, area: AreaLayout): Surfa
 }
 
 // Every surface she can stand on in the zone.
-export function zoneSurfaces(tuning: DuckTuning, layout: ZoneLayout): Surface[] {
+export function zoneSurfaces(tuning: BirdTuning, layout: ZoneLayout): Surface[] {
   return Object.entries(layout.areas).flatMap(([name, area]) => areaSurfaces(tuning, name, area));
 }
 
@@ -262,20 +262,20 @@ function placed(surface: Surface, zone: ZoneState, layout: ZoneLayout): Surface 
 
 // The surface she stands on, if any.
 function surfaceUnder(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   zone: ZoneState,
 ): Surface | undefined {
-  const { duck } = zone;
-  if (!duck.grounded) {
+  const { bird } = zone;
+  if (!bird.grounded) {
     return undefined;
   }
   return surfaces
     .filter((surface) => surface.area === zone.area)
     .find((surface) => {
       const now = placed(surface, zone, layout);
-      return standsOn(tuning, duck, {
+      return standsOn(tuning, bird, {
         height: 1,
         width: now.right - now.left,
         x: now.left,
@@ -285,9 +285,9 @@ function surfaceUnder(
 }
 
 // The spot she stands on, on surface: its bucket by where her centre is along it.
-function spotOf(surface: Surface, zone: ZoneState, layout: ZoneLayout, tuning: DuckTuning): Spot {
+function spotOf(surface: Surface, zone: ZoneState, layout: ZoneLayout, tuning: BirdTuning): Spot {
   const now = placed(surface, zone, layout);
-  const centre = zone.duck.x + tuning.width / 2;
+  const centre = zone.bird.x + tuning.width / 2;
   const bucket = Math.max(
     0,
     Math.floor((Math.min(Math.max(centre, now.left), now.right) - now.left) / BUCKET),
@@ -321,11 +321,11 @@ interface Try {
   readonly target: Target;
 }
 
-const trailing = (tuning: DuckTuning, dir: -1 | 1, x: number) => (dir > 0 ? x : x + tuning.width);
+const trailing = (tuning: BirdTuning, dir: -1 | 1, x: number) => (dir > 0 ? x : x + tuning.width);
 
 // Runs zone on one step at a time; step returns false once she restarts or turns back into the
 // area's first column, which would end the zone, so no try counts a spot past it.
-function runner(tuning: DuckTuning, layout: ZoneLayout, start: ZoneState) {
+function runner(tuning: BirdTuning, layout: ZoneLayout, start: ZoneState) {
   const run = {
     step: (input: ZoneInput) => {
       const before = run.zone.restarts;
@@ -346,7 +346,7 @@ function runner(tuning: DuckTuning, layout: ZoneLayout, start: ZoneState) {
 
 // The input that steers her centre into a stretch, wherever its surface is now.
 function steer(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   target: Target,
   zone: ZoneState,
@@ -354,14 +354,14 @@ function steer(
   const shift = placed(target.surface, zone, layout).left - target.surface.left;
   const lo = target.left + shift + tuning.width / 2;
   const hi = target.right + shift - tuning.width / 2;
-  const centre = zone.duck.x + tuning.width / 2;
+  const centre = zone.bird.x + tuning.width / 2;
   return centre < Math.min(lo, hi) ? 1 : centre > Math.max(lo, hi) ? -1 : 0;
 }
 
 // The run-up and coyote delay depend on the starting state and takeoff, independently of
 // the landing target and how Jump is held after takeoff.
 function prepare(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   from: Spot,
   start: ZoneState,
@@ -373,32 +373,32 @@ function prepare(
   const { dir } = attempt;
   // Into place, braking in time to stop there, then still.
   for (let i = 0; i < WALK_STEPS; i++) {
-    const { vx } = run.zone.duck;
-    const gap = base() + attempt.pre - trailing(tuning, dir, run.zone.duck.x);
+    const { vx } = run.zone.bird;
+    const gap = base() + attempt.pre - trailing(tuning, dir, run.zone.bird.x);
     if (Math.abs(gap) < 2 && Math.abs(vx) < 1) {
       break;
     }
     const stopping = (vx * vx) / (2 * tuning.groundAccel);
     const move = Math.abs(gap) <= stopping + 1 && vx * gap >= 0 ? 0 : gap > 0 ? 1 : -1;
-    if (!run.step({ ...STILL, move }) || !run.zone.duck.grounded) {
+    if (!run.step({ ...STILL, move }) || !run.zone.bird.grounded) {
       return missed();
     }
   }
   // The run up to the takeoff.
   let stuck = 0;
   for (let i = 0; i < WALK_STEPS && stuck < 3; i++) {
-    const { duck } = run.zone;
+    const { bird } = run.zone;
     const there =
       attempt.late === undefined
-        ? dir * (trailing(tuning, dir, duck.x) - base() - attempt.takeoff) >= 0
-        : !duck.grounded;
+        ? dir * (trailing(tuning, dir, bird.x) - base() - attempt.takeoff) >= 0
+        : !bird.grounded;
     if (there) {
       break;
     }
     if (!run.step({ ...STILL, move: dir })) {
       return missed();
     }
-    stuck = Math.abs(run.zone.duck.x - duck.x) < 1e-9 ? stuck + 1 : 0;
+    stuck = Math.abs(run.zone.bird.x - bird.x) < 1e-9 ? stuck + 1 : 0;
   }
   for (let i = 0; i < (attempt.late ?? 0); i++) {
     if (!run.step({ ...STILL, move: dir })) {
@@ -418,7 +418,7 @@ interface TrialResult {
 // uses the real zone rules with its own hold, rise and landing target. The cache lives for one
 // source spot and starting wait state, so moving hazards and platforms retain their timing.
 function trialsFrom(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   from: Spot,
@@ -448,7 +448,7 @@ function trialsFrom(
 
 // From a prepared takeoff, press Jump and steer until the first landing.
 function play(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   from: Spot,
@@ -461,14 +461,14 @@ function play(
     landed: undefined,
     steps: run.steps,
   });
-  let left = !run.zone.duck.grounded;
+  let left = !run.zone.bird.grounded;
   for (let i = 0; i < AIR_STEPS; i++) {
     const move = i < attempt.rise ? 0 : steer(tuning, layout, attempt.target, run.zone);
     if (!run.step({ jumpHeld: i < attempt.hold, move, useHeld: false })) {
       return missed();
     }
-    left ||= !run.zone.duck.grounded;
-    if (left && run.zone.duck.grounded) {
+    left ||= !run.zone.bird.grounded;
+    if (left && run.zone.bird.grounded) {
       const landed = comeToRest(tuning, layout, surfaces, run);
       return {
         entered: run.zone.area === start.area ? undefined : run.zone,
@@ -483,14 +483,14 @@ function play(
 // Brings her to a stop where she landed: the spot she stands still on, unless stopping takes her
 // off it or into a hazard.
 function comeToRest(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   run: ReturnType<typeof runner>,
 ): Spot | undefined {
   const under = surfaceUnder(tuning, layout, surfaces, run.zone);
-  for (let i = 0; i < AIR_STEPS && Math.abs(run.zone.duck.vx) >= 1; i++) {
-    if (!run.step(STILL) || !run.zone.duck.grounded) {
+  for (let i = 0; i < AIR_STEPS && Math.abs(run.zone.bird.vx) >= 1; i++) {
+    if (!run.step(STILL) || !run.zone.bird.grounded) {
       return undefined;
     }
   }
@@ -500,7 +500,7 @@ function comeToRest(
 
 // Walks along her surface into a stretch of it: where she stands there, if she gets there.
 function walkInto(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   start: ZoneState,
@@ -518,7 +518,7 @@ function walkInto(
         steps: run.steps,
       };
     }
-    if (!run.step({ ...STILL, move }) || !run.zone.duck.grounded) {
+    if (!run.step({ ...STILL, move }) || !run.zone.bird.grounded) {
       break;
     }
   }
@@ -531,7 +531,7 @@ function walkInto(
 
 // Walks right from start until she clears the zone at its area's last column: whether she does.
 function walkOff(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   start: ZoneState,
 ): { cleared: boolean; entered: ZoneState | undefined; steps: number } {
@@ -549,9 +549,9 @@ function walkOff(
 }
 
 // Steps her still until she stands somewhere, or gives up.
-function settle(tuning: DuckTuning, layout: ZoneLayout, zone: ZoneState): ZoneState {
+function settle(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): ZoneState {
   let settled = zone;
-  for (let i = 0; i < AIR_STEPS && !settled.duck.grounded && settled.death === undefined; i++) {
+  for (let i = 0; i < AIR_STEPS && !settled.bird.grounded && settled.death === undefined; i++) {
     settled = stepZone(tuning, layout, STEP_SECONDS, STILL, settled);
   }
   return settled;
@@ -560,7 +560,7 @@ function settle(tuning: DuckTuning, layout: ZoneLayout, zone: ZoneState): ZoneSt
 // The zone after she stands still for each wait in turn (WAIT_STEP apart, count of them), up to
 // the first that restarts her.
 function waitStates(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   start: ZoneState,
   count: number,
@@ -587,16 +587,16 @@ function waitStates(
 // full jump played on the rules: its height, and how long she is in the air coming back down to
 // where she took off; a lower landing adds the fall at the flutter speed, and the time to reach
 // it. MARGIN on each, for rounding.
-function moveBounds(tuning: DuckTuning, carry: number) {
+function moveBounds(tuning: BirdTuning, carry: number) {
   const ground = { height: 1, width: 1e6, x: -5e5, y: 0 };
-  let duck = startDuck(tuning, { x: 0, y: 0 });
+  let bird = startBird(tuning, { x: 0, y: 0 });
   let rise = 0;
   let air = 0;
   for (let step = 0; step < AIR_STEPS; step++) {
-    duck = stepDuck(tuning, [ground], [], STEP_SECONDS, { jumpHeld: true, move: 0 }, duck);
-    rise = Math.max(rise, -(duck.y + tuning.height));
+    bird = stepBird(tuning, [ground], [], STEP_SECONDS, { jumpHeld: true, move: 0 }, bird);
+    rise = Math.max(rise, -(bird.y + tuning.height));
     air = (step + 1) * STEP_SECONDS;
-    if (step > 0 && duck.grounded) {
+    if (step > 0 && bird.grounded) {
       break;
     }
   }
@@ -662,7 +662,7 @@ function movingThings(area: AreaLayout): MovingThings {
 // The tries from a spot toward a target: from each way she can run at it, pressing Jump at every
 // tile along her surface, just before the edge she runs off and in coyote time after it, each
 // held and tapped, and off an edge with no press at all where the target is lower.
-function triesToward(tuning: DuckTuning, from: Spot, here: Surface, target: Target): Try[] {
+function triesToward(tuning: BirdTuning, from: Spot, here: Surface, target: Target): Try[] {
   const { width } = tuning;
   const lo = here.left + from.bucket * BUCKET - BUCKET;
   const hi = here.left + (from.bucket + 2) * BUCKET;
@@ -757,7 +757,7 @@ function sweptSpan(
 }
 
 // The stretches a spot might reach in one move: the other surfaces in its area within the
-// duck's bounds, and its own surface's buckets nearby.
+// bird's bounds, and its own surface's buckets nearby.
 function targetsFrom(
   layout: ZoneLayout,
   surfaces: readonly Surface[],
@@ -794,7 +794,7 @@ function targetsFrom(
 // column on a surface that runs into it, she walks right to clear the zone. It never presses
 // Use, so doors and their rooms play no part, and a try that takes her back into the first
 // column, which would end the zone, fails. It stops when no try finds a new spot.
-export function walkZone(tuning: DuckTuning, layout: ZoneLayout): ZoneWalk {
+export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
   const surfaces = zoneSurfaces(tuning, layout);
   const seen = new Map<string, Spot>();
   const reached = new Set<string>();
@@ -865,7 +865,7 @@ export function walkZone(tuning: DuckTuning, layout: ZoneLayout): ZoneWalk {
       // Only the takeoffs reachable from this bucket participate in the run-up. Keep the
       // existing margin for braking and landing, without including unrelated distant ground.
       const positions = [
-        from.state.duck.x,
+        from.state.bird.x,
         ...tries.flatMap(({ pre, takeoff }) => [here.left + pre, here.left + takeoff]),
       ];
       const starts = startsFor(
@@ -930,7 +930,7 @@ export function walkZone(tuning: DuckTuning, layout: ZoneLayout): ZoneWalk {
 // Whether, standing on from, she can come to stand on to in one move: any try from any stretch
 // of from, at any wait, that first lands her on to.
 export function crosses(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   from: Surface,
@@ -946,7 +946,7 @@ export function crosses(
     const x = Math.min(from.left + bucket * BUCKET + BUCKET / 2, from.right - 1);
     const state = settle(tuning, layout, {
       ...zone,
-      duck: { ...zone.duck, vx: 0, vy: 0, x: x - tuning.width / 2, y: from.y - tuning.height },
+      bird: { ...zone.bird, vx: 0, vy: 0, x: x - tuning.width / 2, y: from.y - tuning.height },
     });
     const spot = { bucket, state, surface: from };
     const tries = triesToward(tuning, spot, from, target);

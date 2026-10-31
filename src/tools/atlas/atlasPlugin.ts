@@ -54,7 +54,7 @@ export function atlasPlugin(): Plugin & { api: AtlasPluginApi } {
         ? `export default ${JSON.stringify(manifest)};`
         : undefined;
     },
-    name: "duck-atlas",
+    name: "bird-atlas",
     resolveId(id) {
       return id === ATLAS_MODULE ? RESOLVED_ATLAS_MODULE : undefined;
     },

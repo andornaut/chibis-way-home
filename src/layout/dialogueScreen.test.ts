@@ -3,7 +3,7 @@ import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
-import portrait from "../../public/art/sprites/portrait-duck.json";
+import portrait from "../../public/art/sprites/portrait-bird.json";
 import { SCREEN } from "../data/screen";
 import { TEXT_BUTTON } from "./buttonLabel";
 import {

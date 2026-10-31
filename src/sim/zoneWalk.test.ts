@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
 import { TEST_ZONES, ZONES as FIXED_ZONES } from "../data/zones";
 import { zoneLayout } from "../rules/tiles";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { crosses, type Surface, walkZone, zoneSurfaces } from "./zoneWalk";
 
 // Recipe stages are walked in chunkWalk.test.ts, alongside every individual chunk.
@@ -65,8 +65,8 @@ describe("walkZone", () => {
     () => {
       const walk = (doors: number) => {
         const { cleared, reached } = walkZone(
-          DUCK,
-          zoneLayout(TILE, DUCK_FRAME, CATALOGUE, {}, {}, new Set(), street(doors)),
+          BIRD,
+          zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), street(doors)),
         );
         return { cleared, reached: [...reached].sort() };
       };
@@ -84,10 +84,10 @@ describe("crosses", () => {
     "makes %s at her reach in one move, and never one tile more",
     (_, gap, rise, gapOver, riseOver) => {
       const makes = (plan: ZonePlan) => {
-        const layout = zoneLayout(TILE, DUCK_FRAME, CATALOGUE, {}, {}, new Set(), plan);
-        const surfaces = zoneSurfaces(DUCK, layout);
+        const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), plan);
+        const surfaces = zoneSurfaces(BIRD, layout);
         const [start, end] = [...surfaces].sort((a, b) => a.left - b.left) as [Surface, Surface];
-        return crosses(DUCK, layout, surfaces, start, end);
+        return crosses(BIRD, layout, surfaces, start, end);
       };
       expect([makes(course(gap, rise)), makes(course(gapOver, riseOver))]).toEqual([true, false]);
     },

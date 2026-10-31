@@ -1,6 +1,6 @@
-import type { DuckTuning, ZoneLayout } from "../data/types";
+import type { BirdTuning, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
-import { duckBox } from "../rules/duck";
+import { birdBox } from "../rules/bird";
 import { overlaps } from "../rules/rect";
 import { areaOf, type ZoneState } from "../rules/zone";
 
@@ -10,7 +10,7 @@ export type SimulationStart =
 
 // A simulation-only entry uses the real area initializer, including initial actor headings.
 export function layoutAtStart(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   start: SimulationStart | undefined,
 ): ZoneLayout {
@@ -44,9 +44,9 @@ export function layoutAtStart(
   };
 }
 
-export function validateStart(tuning: DuckTuning, layout: ZoneLayout, zone: ZoneState): void {
+export function validateStart(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): void {
   const area = areaOf(layout, zone.area);
-  const box = duckBox(tuning, zone.duck);
+  const box = birdBox(tuning, zone.bird);
   if (
     box.x < area.backX ||
     box.x + box.width > area.exitX ||

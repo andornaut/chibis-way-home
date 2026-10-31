@@ -1,11 +1,11 @@
-import type { DuckTuning, Point, Rect, ZoneLayout } from "../data/types";
-import { EDGE } from "./duck";
+import type { BirdTuning, Point, Rect, ZoneLayout } from "../data/types";
+import { EDGE } from "./bird";
 import type { ZoneState } from "./zone";
 
 // The nearest top below a body at position in the frozen world. A void has no support; a
 // presentation may use its visible fallback without adding collision terrain.
 export function deathSupport(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   layout: ZoneLayout,
   zone: ZoneState,
   position: Point,

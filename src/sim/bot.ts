@@ -1,6 +1,6 @@
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 
-import type { DuckTuning, Rect, ZoneLayout } from "../data/types";
+import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 
@@ -109,27 +109,27 @@ function intersects(a: Rect, b: Rect): boolean {
 
 // Local probes only. Static terrain is indexed once; moving objects use the real current poses.
 function obstacleAhead(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   sensors: SensorIndex,
   layout: ZoneLayout,
   skill: BotSkill,
   direction: -1 | 1,
   zone: ZoneState,
 ): { danger: boolean; gap: boolean; height: number; obstacle: boolean; wait: boolean } {
-  const duck = zone.duck;
-  const front = direction === 1 ? duck.x + tuning.width : duck.x;
+  const bird = zone.bird;
+  const front = direction === 1 ? bird.x + tuning.width : bird.x;
   const target = front + direction * skill.lookAheadPx;
   const probe = {
     height: tuning.height - 1,
     width: skill.lookAheadPx,
     x: Math.min(front, target),
-    y: duck.y,
+    y: bird.y,
   };
   const foot = {
     height: 2,
     width: tuning.width,
     x: target - tuning.width / 2,
-    y: duck.y + tuning.height,
+    y: bird.y + tuning.height,
   };
   const nearFoot = {
     ...foot,
@@ -148,7 +148,7 @@ function obstacleAhead(
     for (const rect of cells?.get(cell) ?? []) {
       if (intersects(probe, rect)) {
         obstacle = true;
-        height = Math.max(height, duck.y + tuning.height - rect.y);
+        height = Math.max(height, bird.y + tuning.height - rect.y);
       }
       supported ||= intersects(foot, rect);
       nearSupported ||= intersects(nearFoot, rect);
@@ -174,15 +174,15 @@ function obstacleAhead(
     ) {
       obstacle = true;
       danger ||= object.collision === "hazard";
-      height = Math.max(height, duck.y + tuning.height - rect.y);
+      height = Math.max(height, bird.y + tuning.height - rect.y);
     }
     if (object.collision === "solid" || object.collision === "ledge") {
       supported ||= intersects(foot, rect);
       nearSupported ||= intersects(nearFoot, rect);
       const distance = direction === 1 ? rect.x - front : front - rect.x - rect.width;
       const reachableHeight =
-        rect.y >= duck.y + tuning.height - (tuning.jumpSpeed * tuning.jumpRiseTime) / 2 &&
-        rect.y <= duck.y + tuning.height + tuning.height;
+        rect.y >= bird.y + tuning.height - (tuning.jumpSpeed * tuning.jumpRiseTime) / 2 &&
+        rect.y <= bird.y + tuning.height + tuning.height;
       movingLanding ||=
         (sensors.movers[zone.area]?.has(index) ?? false) &&
         distance >= -tuning.width &&
@@ -190,13 +190,13 @@ function obstacleAhead(
         reachableHeight;
       if (
         object.collision === "ledge" &&
-        rect.y < duck.y + tuning.height &&
+        rect.y < bird.y + tuning.height &&
         reachableHeight &&
         distance >= 0 &&
         distance <= skill.lookAheadPx
       ) {
         obstacle = true;
-        height = Math.max(height, duck.y + tuning.height - rect.y);
+        height = Math.max(height, bird.y + tuning.height - rect.y);
       }
     }
   }
@@ -218,7 +218,7 @@ function obstacleAhead(
 }
 
 export function botInput(
-  tuning: DuckTuning,
+  tuning: BirdTuning,
   sensors: SensorIndex,
   layout: ZoneLayout,
   skill: BotSkill,
@@ -230,7 +230,7 @@ export function botInput(
     if (
       skill.adaptiveJump &&
       bot.targetY !== undefined &&
-      zone.duck.y + tuning.height <= bot.targetY
+      zone.bird.y + tuning.height <= bot.targetY
     ) {
       bot.holding = 0;
     } else {
@@ -245,7 +245,7 @@ export function botInput(
   if (
     plan?.wait &&
     skill.waitForMovers &&
-    zone.duck.grounded &&
+    zone.bird.grounded &&
     bot.waited < (skill.maxWaitTicks ?? 0)
   ) {
     bot.waited++;
@@ -260,8 +260,8 @@ export function botInput(
   const jump =
     policy.jump !== "never" &&
     obstacle &&
-    zone.duck.grounded &&
-    !zone.duck.jumpHeld &&
+    zone.bird.grounded &&
+    !zone.bird.jumpHeld &&
     bot.noticed > skill.reactionTicks;
   if (jump && bot.random() >= skill.errorRate) {
     let hold = skill.jumpHoldTicks;
@@ -278,7 +278,7 @@ export function botInput(
       hold = minimum + Math.ceil((hold - minimum) * share);
     }
     bot.holding = hold - 1;
-    bot.targetY = plan && !plan.gap ? zone.duck.y + tuning.height - plan.height : undefined;
+    bot.targetY = plan && !plan.gap ? zone.bird.y + tuning.height - plan.height : undefined;
     bot.noticed = 0;
     return { jumpHeld: true, move: policy.move, useHeld: false };
   }
