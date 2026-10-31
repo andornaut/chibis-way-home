@@ -1,5 +1,6 @@
 import { TILE } from "./screen";
 import type { MapDestination, ZoneMap } from "./types";
+import { RECIPES, ZONES } from "./zones";
 
 // V1's ordered destinations are the source of stage order and marker positions.
 const DESTINATIONS: readonly MapDestination[] = [
@@ -7,56 +8,48 @@ const DESTINATIONS: readonly MapDestination[] = [
     at: { col: 10, row: 7 },
     icon: "map-icon-blue-cityscape",
     id: "blue-cityscape",
-    stages: ["street", "city-boundary"],
+    stages: ["street", "city-streets", "city-boundary"],
   },
   {
     at: { col: 29, row: 7 },
     icon: "map-icon-industrial",
     id: "industrial",
-    stages: ["warehouse-district", "freight-terminal"],
+    stages: ["warehouse-district", "loading-yards", "freight-terminal"],
   },
   {
     at: { col: 48, row: 7 },
     icon: "map-icon-countryside",
     id: "countryside",
-    stages: ["farmland", "river-crossing"],
+    stages: ["farmland", "country-lanes", "river-crossing"],
   },
   {
     at: { col: 48, row: 18 },
     icon: "map-icon-woodland",
     id: "woodland",
-    stages: ["forest-paths", "ravine"],
+    stages: ["forest-paths", "deep-woods", "ravine"],
   },
   {
     at: { col: 29, row: 18 },
     icon: "map-icon-home-city",
     id: "home-city",
-    stages: ["city-outskirts", "familiar-neighbourhood"],
+    stages: ["city-outskirts", "back-streets", "familiar-neighbourhood"],
   },
   {
     at: { col: 10, row: 18 },
     icon: "map-icon-apartment",
     id: "apartment",
-    stages: ["entrance-and-lobby", "climb-to-apartment"],
+    stages: ["entrance-and-lobby", "shared-floors", "climb-to-apartment"],
   },
 ];
 
-// Only built stages have playable keys; unbuilt catalogue entries remain unavailable.
-const BUILT_STAGES: Readonly<Record<string, string>> = {
-  "city-boundary": "city-boundary",
-  "city-outskirts": "city-outskirts",
-  "climb-to-apartment": "climb-to-apartment",
-  "entrance-and-lobby": "entrance-and-lobby",
-  "familiar-neighbourhood": "familiar-neighbourhood",
-  farmland: "farmland",
-  "forest-paths": "forest-paths",
-  "freight-terminal": "freight-terminal",
-  ravine: "ravine",
-  "river-crossing": "river-crossing",
-  street: "street",
-  "warehouse-district": "warehouse-district",
-};
 const STAGES = DESTINATIONS.flatMap(({ stages }) => stages);
+// A catalogue node is playable only when its plan is implemented.
+const BUILT_STAGES: Readonly<Record<string, string>> = Object.fromEntries(
+  STAGES.filter((id) => Object.hasOwn(RECIPES, id) || Object.hasOwn(ZONES, id)).map((id) => [
+    id,
+    id,
+  ]),
+);
 const REGION_ORIGIN = { x: 60, y: 36 };
 
 export const MAP_TRAVEL = { speed: 180 } as const;

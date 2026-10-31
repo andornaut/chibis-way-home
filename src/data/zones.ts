@@ -284,8 +284,8 @@ const DIFFICULTY_PROFILES = {
   industrial: { difficulty: { max: 5, min: 3 }, difficultyWeights: { 3: 1, 4: 1, 5: 1 } },
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
-const STAGE_ENCOUNTERS = { first: 2, second: 3 } as const;
-const STAGE_LENGTH = { max: 960, min: 720 } as const;
+const STAGE_ENCOUNTERS = { first: 0, later: 2 } as const;
+const STAGE_LENGTH = { max: 576, min: 432 } as const;
 
 const APARTMENT_CHALLENGE_CHUNKS = [
   "city-boundary-climb-yard",
@@ -316,10 +316,21 @@ const APARTMENT_SECTION_DEFAULTS = {
 
 // Generated stages use one continuous area or ordered floor sections.
 export const RECIPES: Readonly<Record<string, StageRecipe>> = {
+  "back-streets": {
+    ...DIFFICULTY_PROFILES.home,
+    doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.later,
+    events: [],
+    finish: "back-streets-finish",
+    length: STAGE_LENGTH,
+    spawnCol: 2,
+    start: "back-streets-start",
+    theme: "back-streets",
+  },
   "city-boundary": {
     ...DIFFICULTY_PROFILES.blue,
     doors: [{ count: 1, room: "test" }],
-    encounters: STAGE_ENCOUNTERS.second,
+    encounters: STAGE_ENCOUNTERS.later,
     events: [],
     finish: "city-boundary-finish",
     length: STAGE_LENGTH,
@@ -338,79 +349,92 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "city-outskirts-start",
     theme: "city-outskirts",
   },
+  "city-streets": {
+    ...DIFFICULTY_PROFILES.blue,
+    doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.later,
+    events: [],
+    finish: "city-streets-finish",
+    length: STAGE_LENGTH,
+    spawnCol: 2,
+    start: "city-streets-start",
+    theme: "city-streets",
+  },
   "climb-to-apartment": {
     ...APARTMENT_CAPS,
-    encounters: STAGE_ENCOUNTERS.second,
+    encounters: STAGE_ENCOUNTERS.later,
     sections: [
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
-        id: "restaurant",
-        length: { max: 312, min: 264 },
-        theme: "apartment-restaurant",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        id: "fire-escape-1",
-        length: { max: 168, min: 144 },
-        theme: "apartment-exterior",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        id: "pool",
-        length: { max: 192, min: 168 },
-        theme: "apartment-pool",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-2",
-        length: { max: 168, min: 144 },
+        length: { max: 180, min: 156 },
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "spa",
-        length: { max: 144, min: 144 },
+        length: { max: 96, min: 72 },
         theme: "apartment-spa",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-3",
-        length: { max: 168, min: 144 },
+        length: { max: 120, min: 72 },
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "residential",
-        length: { max: 288, min: 264 },
+        length: { max: 180, min: 168 },
         theme: "apartment-residential",
       },
     ],
   },
+  "country-lanes": {
+    ...DIFFICULTY_PROFILES.countryside,
+    doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.later,
+    events: [],
+    finish: "country-lanes-finish",
+    length: STAGE_LENGTH,
+    spawnCol: 2,
+    start: "country-lanes-start",
+    theme: "country-lanes",
+  },
+  "deep-woods": {
+    ...DIFFICULTY_PROFILES.woodland,
+    doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.later,
+    events: [],
+    finish: "deep-woods-finish",
+    length: STAGE_LENGTH,
+    spawnCol: 2,
+    start: "deep-woods-start",
+    theme: "deep-woods",
+  },
   "entrance-and-lobby": {
     ...APARTMENT_CAPS,
     encounters: STAGE_ENCOUNTERS.first,
+    finish: "apartment-quiet-finish",
     sections: [
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "entrance",
-        length: { max: 312, min: 264 },
+        length: { max: 180, min: 144 },
         theme: "apartment-entrance",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "lobby",
-        length: { max: 288, min: 264 },
+        length: { max: 180, min: 168 },
         theme: "apartment-lobby",
       },
     ],
@@ -418,7 +442,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "familiar-neighbourhood": {
     ...DIFFICULTY_PROFILES.home,
     doors: [{ count: 1, room: "test" }],
-    encounters: STAGE_ENCOUNTERS.second,
+    encounters: STAGE_ENCOUNTERS.later,
     events: [],
     finish: "familiar-neighbourhood-finish",
     length: STAGE_LENGTH,
@@ -451,7 +475,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "freight-terminal": {
     ...DIFFICULTY_PROFILES.industrial,
     doors: [{ count: 1, room: "test" }],
-    encounters: STAGE_ENCOUNTERS.second,
+    encounters: STAGE_ENCOUNTERS.later,
     events: [],
     finish: "freight-terminal-finish",
     length: STAGE_LENGTH,
@@ -461,6 +485,17 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   // The debug park retains its prototype length and difficulty band.
   // No events exist yet.
+  "loading-yards": {
+    ...DIFFICULTY_PROFILES.industrial,
+    doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.later,
+    events: [],
+    finish: "loading-yards-finish",
+    length: STAGE_LENGTH,
+    spawnCol: 2,
+    start: "loading-yards-start",
+    theme: "loading-yards",
+  },
   park: {
     difficulty: { max: 4, min: 2 },
     doors: [{ count: 1, room: "test" }],
@@ -474,7 +509,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   ravine: {
     ...DIFFICULTY_PROFILES.woodland,
     doors: [{ count: 1, room: "test" }],
-    encounters: STAGE_ENCOUNTERS.second,
+    encounters: STAGE_ENCOUNTERS.later,
     events: [],
     finish: "ravine-finish",
     length: STAGE_LENGTH,
@@ -485,13 +520,43 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "river-crossing": {
     ...DIFFICULTY_PROFILES.countryside,
     doors: [{ count: 1, room: "test" }],
-    encounters: STAGE_ENCOUNTERS.second,
+    encounters: STAGE_ENCOUNTERS.later,
     events: [],
     finish: "river-crossing-finish",
     length: STAGE_LENGTH,
     spawnCol: 2,
     start: "river-crossing-start",
     theme: "river-crossing",
+  },
+  "shared-floors": {
+    ...APARTMENT_CAPS,
+    encounters: STAGE_ENCOUNTERS.later,
+    finish: "apartment-shared-finish",
+    sections: [
+      {
+        ...APARTMENT_SECTION_DEFAULTS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
+        doors: APARTMENT_ROOM_DOORS,
+        id: "restaurant",
+        length: { max: 240, min: 216 },
+        theme: "apartment-restaurant",
+      },
+      {
+        ...APARTMENT_SECTION_DEFAULTS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
+        id: "fire-escape-1",
+        length: { max: 120, min: 72 },
+        theme: "apartment-exterior",
+      },
+      {
+        ...APARTMENT_SECTION_DEFAULTS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS,
+        id: "pool",
+        length: { max: 192, min: 168 },
+        theme: "apartment-pool",
+      },
+    ],
+    start: "apartment-intro-start",
   },
   street: {
     ...DIFFICULTY_PROFILES.blue,
