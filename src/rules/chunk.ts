@@ -1,5 +1,10 @@
 import type { ChunkPlan, ChunkSeam, Instance, StageRecipe, TileRect } from "../data/types";
-import { type ChunkLibrary, orderedRecipeProblems, themesOf } from "./assemble";
+import {
+  type ChunkLibrary,
+  difficultyWeightProblems,
+  orderedRecipeProblems,
+  themesOf,
+} from "./assemble";
 import { bindElement } from "./elementBinding";
 import { type Catalogue, objectLayout } from "./tiles";
 
@@ -243,6 +248,18 @@ export function recipeProblems(library: ChunkLibrary, recipe: StageRecipe): stri
       problems.push(`chunk ${id} is not drawn in ${recipe.theme}`);
     }
   }
+  problems.push(
+    ...difficultyWeightProblems(
+      library,
+      recipe,
+      Object.keys(library.chunks).filter(
+        (id) =>
+          id !== recipe.start &&
+          id !== recipe.finish &&
+          themesOf(library.chunks[id]!).includes(recipe.theme),
+      ),
+    ),
+  );
   const { max, min } = recipe.length;
   const ends =
     (library.chunks[recipe.start]?.cols ?? 0) + (library.chunks[recipe.finish]?.cols ?? 0);

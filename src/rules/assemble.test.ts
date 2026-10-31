@@ -397,12 +397,17 @@ describe("ordered section assembly", () => {
     doors: [],
     events: [],
     id,
+    length: { max: 60, min: 60 },
     spawnCol: 2,
     theme: "t",
   });
   const ordered: OrderedZoneRecipe = {
     finish: "finish",
-    sections: [section("lobby"), section("landing"), section("home")],
+    sections: [
+      { ...section("lobby"), length: { max: 120, min: 120 } },
+      section("landing"),
+      { ...section("home"), length: { max: 120, min: 120 } },
+    ],
     start: "start",
     transitionRoles: { left: "down", right: "up" },
   };
@@ -422,6 +427,88 @@ describe("ordered section assembly", () => {
       { character: "stairUp", col: 56, row: 44 },
     ]);
     expect(plan.areas.landing?.entries.return).toEqual({ col: 58, row: 50 });
+  });
+  it("assembles multiple middles within whole-section bounds without repeating adjacent chunks", () => {
+    const longer = {
+      ...ordered,
+      sections: ordered.sections.map((section, index) => ({
+        ...section,
+        doors: index === 1 ? [{ count: 2, room: "test" }] : section.doors,
+        length: { max: section.length.max + 60, min: section.length.min + 60 },
+      })),
+    };
+    const slots = [
+      { area: { col: 10, cols: 4, row: 45, rows: 5 }, id: "door", kind: "door" as const },
+    ];
+    const withSlots = {
+      ...lib,
+      chunks: { ...lib.chunks, a: { ...lib.chunks.a!, slots }, b: { ...lib.chunks.b!, slots } },
+    };
+    const plan = assembleZone(withSlots, 42, "longer", longer);
+    const all = Object.values(plan.areas).flatMap((area) =>
+      (area.chunks ?? []).map(({ chunk }) => chunk),
+    );
+    expect(Object.values(plan.areas).map(({ cols }) => cols)).toEqual([180, 120, 180]);
+    expect(all.filter((id) => id === ordered.start)).toHaveLength(1);
+    expect(all.filter((id) => id === ordered.finish)).toHaveLength(1);
+    expect(all.every((id, index) => index === 0 || id !== all[index - 1])).toBe(true);
+    expect(plan.areas.landing?.entries.return?.col).toBe(118);
+    expect(plan.areas.landing?.slots?.filter(({ fill }) => fill === "test")).toHaveLength(2);
+  });
+  it("counts both global caps in a one-section stage and enforces global generated limits", () => {
+    const one = { ...ordered, sections: [{ ...section("one"), length: { max: 180, min: 180 } }] };
+    expect(assembleZone(lib, 42, "one", one).areas.one?.cols).toBe(180);
+    expect(() =>
+      assembleZone(lib, 42, "short", {
+        ...one,
+        sections: [{ ...one.sections[0]!, length: { max: 180, min: 120 } }],
+      }),
+    ).toThrow("must include its caps");
+    const limited = {
+      ...lib,
+      chunks: {
+        ...lib.chunks,
+        a: { ...lib.chunks.a!, maxPerZone: 1 },
+        b: { ...lib.chunks.b!, maxPerZone: 1 },
+      },
+    };
+    expect(() => assembleZone(limited, 42, "limited", ordered)).toThrow("No ordered assembly");
+  });
+  it("applies difficulty weights to generated pools and rejects invalid weights in either recipe shape", () => {
+    const weightedLib = {
+      ...lib,
+      chunks: { ...lib.chunks, b: { ...lib.chunks.b!, difficulty: 2 as const } },
+    };
+    const recipe = {
+      ...ordered,
+      sections: [
+        {
+          ...section("weighted"),
+          difficulty: { max: 2 as const, min: 1 as const },
+          difficultyWeights: { 1: 0 },
+          length: { max: 180, min: 180 },
+        },
+      ],
+    };
+    expect(
+      assembleZone(weightedLib, 42, "weighted", recipe).areas.weighted?.chunks?.map(
+        ({ chunk }) => chunk,
+      ),
+    ).toEqual(["start", "b", "finish"]);
+    const flat: ZoneRecipe = { ...recipe.sections[0]!, finish: "finish", start: "start" };
+    expect(middleIds(areaOf(assembleZone(weightedLib, 42, "flat", flat)))).toEqual(["b"]);
+    expect(
+      recipeProblems(weightedLib, { ...flat, difficultyWeights: { 1: 0, 2: 0 } }).join(" "),
+    ).toContain("exclude every eligible");
+    expect(
+      recipeProblems(weightedLib, { ...flat, difficultyWeights: { 1: -1 } }).join(" "),
+    ).toContain("finite nonnegative");
+    expect(() =>
+      assembleZone(weightedLib, 42, "invalid", {
+        ...recipe,
+        sections: [{ ...recipe.sections[0]!, difficultyWeights: { 2: Infinity } }],
+      }),
+    ).toThrow("finite nonnegative");
   });
   it("rejects invalid section ids, missing pools and impossible cap seams without searching live physics", () => {
     expect(() =>

@@ -54,11 +54,52 @@ const wanted = (entries: readonly { readonly count: number }[]) =>
 
 // The chunks in an order drawn from random, each placed ahead of another as likely as its
 // weight is to the other's (weighted sampling without replacement).
-function weightedOrder(random: Random, library: ChunkLibrary, ids: readonly string[]): string[] {
+function weightedOrder(
+  random: Random,
+  library: ChunkLibrary,
+  weights: ZoneRecipe["difficultyWeights"],
+  ids: readonly string[],
+): string[] {
   return ids
-    .map((id) => ({ id, key: random() ** (1 / (chunkOf(library, id).weight ?? 1)) }))
+    .map((id) => ({
+      id,
+      key:
+        random() **
+        (1 /
+          ((chunkOf(library, id).weight ?? 1) * (weights?.[chunkOf(library, id).difficulty] ?? 1))),
+    }))
     .sort((a, b) => b.key - a.key)
     .map(({ id }) => id);
+}
+
+export function difficultyWeightProblems(
+  library: ChunkLibrary,
+  recipe: Pick<ZoneRecipe, "difficulty" | "difficultyWeights">,
+  pool: readonly string[],
+): string[] {
+  const weights = recipe.difficultyWeights;
+  if (weights === undefined) {
+    return [];
+  }
+  if (
+    Object.entries(weights).some(
+      ([grade, weight]) =>
+        !Number.isInteger(Number(grade)) ||
+        Number(grade) < 1 ||
+        Number(grade) > 5 ||
+        !Number.isFinite(weight) ||
+        weight < 0,
+    )
+  ) {
+    return ["difficulty weights must be finite nonnegative values for grades 1 to 5"];
+  }
+  const eligible = pool.filter((id) => {
+    const grade = chunkOf(library, id).difficulty;
+    return grade >= recipe.difficulty.min && grade <= recipe.difficulty.max;
+  });
+  return eligible.some((id) => (weights[chunkOf(library, id).difficulty] ?? 1) > 0)
+    ? []
+    : ["difficulty weights exclude every eligible chunk"];
 }
 
 // Where the search stands: the chunks so far after the start, the columns they take with the
@@ -88,7 +129,11 @@ function searchRun(
     .filter((id) => themesOf(chunkOf(library, id)).includes(recipe.theme))
     .filter((id) => {
       const { difficulty } = chunkOf(library, id);
-      return difficulty >= recipe.difficulty.min && difficulty <= recipe.difficulty.max;
+      return (
+        difficulty >= recipe.difficulty.min &&
+        difficulty <= recipe.difficulty.max &&
+        (recipe.difficultyWeights?.[difficulty] ?? 1) > 0
+      );
     })
     .sort();
   const { max, min } = recipe.length;
@@ -147,7 +192,12 @@ function searchRun(
         run.width + chunk.cols + finish.cols <= max
       );
     });
-    const order: (string | undefined)[] = weightedOrder(random, library, next);
+    const order: (string | undefined)[] = weightedOrder(
+      random,
+      library,
+      recipe.difficultyWeights,
+      next,
+    );
     // undefined stands for the finish: tried first once the run is long enough.
     if (run.width + finish.cols >= target) {
       order.unshift(undefined);
@@ -337,7 +387,7 @@ function fillsOf(recipe: Pick<ZoneRecipe, "doors" | "events">): Record<SlotKind,
   };
 }
 
-// Ordered sections have one generated chunk each; only the outer stage ends add fixed caps.
+// Section length includes its global caps and at least one generated chunk.
 export function orderedRecipeProblems(library: ChunkLibrary, recipe: OrderedZoneRecipe): string[] {
   const problems: string[] = [];
   if (recipe.sections.length === 0) {
@@ -372,12 +422,43 @@ export function orderedRecipeProblems(library: ChunkLibrary, recipe: OrderedZone
       problems.push(`invalid cap ${id} for section ${section.id}`);
     }
   }
-  for (const section of recipe.sections) {
+  for (const [index, section] of recipe.sections.entries()) {
     if (!library.themes[section.theme]) {
       problems.push(`no theme ${section.theme}`);
     }
     if (section.chunks.length === 0 || new Set(section.chunks).size !== section.chunks.length) {
       problems.push(`invalid chunk pool for section ${section.id}`);
+    }
+    if (
+      !Number.isSafeInteger(section.length.min) ||
+      !Number.isSafeInteger(section.length.max) ||
+      section.length.min <= 0 ||
+      section.length.min > section.length.max
+    ) {
+      problems.push(`invalid length for section ${section.id}`);
+    }
+    problems.push(
+      ...difficultyWeightProblems(
+        library,
+        section,
+        section.chunks.filter((id) => library.chunks[id] !== undefined),
+      ),
+    );
+    const widths = section.chunks.flatMap((id) => {
+      const chunk = library.chunks[id];
+      return chunk &&
+        themesOf(chunk).includes(section.theme) &&
+        chunk.difficulty >= section.difficulty.min &&
+        chunk.difficulty <= section.difficulty.max &&
+        (section.difficultyWeights?.[chunk.difficulty] ?? 1) > 0
+        ? [chunk.cols]
+        : [];
+    });
+    const capWidth =
+      (index === 0 ? (library.chunks[recipe.start]?.cols ?? 0) : 0) +
+      (index === recipe.sections.length - 1 ? (library.chunks[recipe.finish]?.cols ?? 0) : 0);
+    if (widths.length > 0 && section.length.min < capWidth + Math.min(...widths)) {
+      problems.push(`length for section ${section.id} must include its caps and a generated chunk`);
     }
     if (!Number.isInteger(section.spawnCol) || section.spawnCol <= 1) {
       problems.push(`invalid spawn column for section ${section.id}`);
@@ -449,65 +530,130 @@ function assembleOrdered(
   if ([...counts].some(([id, count]) => count > (chunkOf(library, id).maxPerZone ?? Infinity))) {
     throw new Error("Stage caps exceed maxPerZone");
   }
-  const pools = recipe.sections.map((section, index) =>
-    shuffled(randomStream(seed, `section:${key}:${section.id}`), section.chunks).filter((id) => {
+  const pools = recipe.sections.map((section) =>
+    section.chunks.filter((id) => {
       const chunk = chunkOf(library, id);
-      const caps = [
-        ...(index === 0 ? [start] : []),
-        chunk,
-        ...(index === recipe.sections.length - 1 ? [finish] : []),
-      ];
       return (
         chunk.difficulty >= section.difficulty.min &&
         chunk.difficulty <= section.difficulty.max &&
-        caps.every((part, at) => at === 0 || caps[at - 1]?.exit.row === part.entry.row) &&
-        wanted(section.doors) <= caps.reduce((sum, part) => sum + slotCount(part, "door"), 0) &&
-        wanted(section.events) <= caps.reduce((sum, part) => sum + slotCount(part, "event"), 0)
+        (section.difficultyWeights?.[chunk.difficulty] ?? 1) > 0
       );
     }),
   );
-  const selected: string[] = [];
+  const selected: (readonly string[])[] = [];
   const failed = new Set<string>();
   const limited = [...new Set(recipe.sections.flatMap((section) => section.chunks))]
     .filter((id) => chunkOf(library, id).maxPerZone !== undefined)
     .sort();
-  const choose = (index: number): boolean => {
-    if (index === recipe.sections.length) {
+  const randoms = recipe.sections.map((section) =>
+    randomStream(seed, `section:${key}:${section.id}`),
+  );
+  const targets = recipe.sections.map((section) =>
+    randomInt(
+      randomStream(seed, `length:${key}:${section.id}`),
+      section.length.min,
+      section.length.max + 1,
+    ),
+  );
+  const choose = (index: number, previous: string | undefined): boolean => {
+    const section = recipe.sections[index];
+    if (!section) {
       return true;
     }
-    const state = `${index}:${limited.map((id) => counts.get(id) ?? 0).join(",")}`;
-    if (failed.has(state)) {
-      return false;
-    }
-    for (const id of pools[index] ?? []) {
-      const count = counts.get(id) ?? 0;
-      if (count >= (chunkOf(library, id).maxPerZone ?? Infinity)) {
-        continue;
+    const cap = index === 0 ? start : undefined;
+    const end = index === recipe.sections.length - 1 ? finish : undefined;
+    const needDoors = wanted(section.doors);
+    const needEvents = wanted(section.events);
+    const search = (
+      ids: readonly string[],
+      width: number,
+      doors: number,
+      events: number,
+    ): boolean => {
+      const prev = ids.at(-1) ?? (cap ? recipe.start : previous);
+      const seam =
+        ids.length > 0 || cap !== undefined ? chunkOf(library, prev ?? "").exit.row : undefined;
+      const state = [
+        index,
+        width,
+        prev ?? "",
+        Math.min(doors, needDoors),
+        Math.min(events, needEvents),
+        ...limited.map((id) => counts.get(id) ?? 0),
+      ].join(":");
+      if (failed.has(state)) {
+        return false;
       }
-      counts.set(id, count + 1);
-      selected.push(id);
-      if (choose(index + 1)) {
+      const total = width + (end?.cols ?? 0);
+      const finishSection = () => {
+        if (
+          ids.length === 0 ||
+          total < section.length.min ||
+          total > section.length.max ||
+          (end !== undefined && seam !== end.entry.row) ||
+          doors + (end ? slotCount(end, "door") : 0) < needDoors ||
+          events + (end ? slotCount(end, "event") : 0) < needEvents
+        ) {
+          return false;
+        }
+        selected[index] = ids;
+        return choose(index + 1, ids.at(-1));
+      };
+      if (total >= (targets[index] ?? section.length.min) && finishSection()) {
         return true;
       }
-      selected.pop();
-      counts.set(id, count);
-    }
-    failed.add(state);
-    return false;
+      const next = (pools[index] ?? []).filter((id) => {
+        const chunk = chunkOf(library, id);
+        return (
+          id !== prev &&
+          (seam === undefined || chunk.entry.row === seam) &&
+          (counts.get(id) ?? 0) < (chunk.maxPerZone ?? Infinity) &&
+          width + chunk.cols + (end?.cols ?? 0) <= section.length.max &&
+          (ids.length > 0 || cap !== undefined || section.spawnCol < chunk.cols)
+        );
+      });
+      for (const id of weightedOrder(randoms[index]!, library, section.difficultyWeights, next)) {
+        const chunk = chunkOf(library, id);
+        const count = counts.get(id) ?? 0;
+        counts.set(id, count + 1);
+        if (
+          search(
+            [...ids, id],
+            width + chunk.cols,
+            doors + slotCount(chunk, "door"),
+            events + slotCount(chunk, "event"),
+          )
+        ) {
+          return true;
+        }
+        counts.set(id, count);
+      }
+      if (total < (targets[index] ?? section.length.min) && finishSection()) {
+        return true;
+      }
+      failed.add(state);
+      return false;
+    };
+    return search(
+      [],
+      cap?.cols ?? 0,
+      cap ? slotCount(cap, "door") : 0,
+      cap ? slotCount(cap, "event") : 0,
+    );
   };
-  if (!choose(0)) {
-    throw new Error(`No ordered assembly of stage ${key} fits its section pools`);
+  if (!choose(0, undefined)) {
+    throw new Error(`No ordered assembly of stage ${key} fits its section pools and lengths`);
   }
   const order = recipe.sections.map(({ id }) => id);
   const areas = Object.fromEntries(
     recipe.sections.map((section, index) => {
       const middle = selected[index];
-      if (!middle) {
+      if (!middle || middle.length === 0) {
         throw new Error(`No selected chunk for ${section.id}`);
       }
       const ids = [
         ...(index === 0 ? [recipe.start] : []),
-        middle,
+        ...middle,
         ...(index === order.length - 1 ? [recipe.finish] : []),
       ];
       const single = zonePlanOf(
