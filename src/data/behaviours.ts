@@ -414,6 +414,7 @@ const RACCOON_GROUND_TRACK = { axis: "x", distance: -12 } as const;
 export const RACCOON_BEHAVIOUR: BehaviourPlan = {
   axis: "y",
   distance: -15,
+  inactiveAnimation: "idle",
   initial: "watch",
   states: {
     ...verticalDropStates({
@@ -599,6 +600,7 @@ function pigeonSwoop(failure: string, x: number): BehaviourNode {
 export const PIGEON_BEHAVIOUR: BehaviourPlan = {
   axis: "x",
   distance: 24,
+  inactiveAnimation: "idle",
   initial: "watch",
   states: {
     "ascend-left": pigeonFlight("fly-right", "frustration-left", { x: -12, y: -8 }),
