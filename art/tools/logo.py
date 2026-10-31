@@ -21,7 +21,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import duck as D  # noqa: E402
+import bird as D  # noqa: E402
 import pixel  # noqa: E402
 from pixel import K, Grid  # noqa: E402
 

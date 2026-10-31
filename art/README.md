@@ -167,7 +167,7 @@ Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing r
 
 ## Logo
 
-The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Bird versus Ferret wordmark. `art/tools/logo.py` draws three transparent PNGs with fixed canvases: `logo` (360x193) for the title screen, `logo-nav` (214x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
+The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Bird versus Ferret wordmark. `art/tools/logo.py` draws three transparent PNGs with declared canvases: `logo` (360x193) for the title screen, `logo-nav` (250x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
 
 - The dominant lettering and platform colour is `zone-blue`. The flat dark-steel sign, quiet light edge and ink outline separate the wordmark on pale steel and dark navy. There is no extrusion, bright cyan highlight or drop shadow.
 - The bird retains the protagonist's cream body, tan wing, orange bill and ink dot eye, redrawn from the canonical sprite shapes with a one-pixel outline.
