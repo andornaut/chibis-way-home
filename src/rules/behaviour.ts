@@ -19,6 +19,8 @@ import { hopLift } from "./motion";
 import { overlaps } from "./rect";
 
 export interface BehaviourState {
+  readonly axis?: "x" | "y";
+  readonly flightTarget?: Point;
   readonly pendingEntry?: boolean;
   readonly active: boolean;
   readonly elapsed: number;
@@ -33,6 +35,7 @@ export interface BehaviourState {
 }
 
 export interface BehaviourSegment {
+  readonly axis?: "x" | "y";
   readonly end: number;
   readonly facing: -1 | 1;
   readonly from: Point;
@@ -42,6 +45,7 @@ export interface BehaviourSegment {
 
 export interface BehaviourEvent {
   readonly action: BehaviourAction;
+  readonly axis?: "x" | "y";
   readonly at: Point;
   readonly facing: -1 | 1;
   readonly time: number;
@@ -62,6 +66,10 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   }
   const states = Object.fromEntries(
     Object.entries(plan.states).map(([key, node]) => {
+      const track = node.track ?? plan;
+      if (!["x", "y"].includes(track.axis) || !Number.isFinite(track.distance)) {
+        throw new Error(`Invalid behaviour track in ${key}`);
+      }
       if (
         (node.animation !== null &&
           (typeof node.animation !== "string" || node.animation.length === 0)) ||
@@ -69,14 +77,14 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           node.motion.kind !== "fly" &&
           (!valid(node.motion.speed) ||
             ![-1, 1, "facing", "target"].includes(node.motion.direction))) ||
-        (node.motion.kind === "move" && (node.motion.speed === 0 || plan.distance === 0)) ||
+        (node.motion.kind === "move" && (node.motion.speed === 0 || track.distance === 0)) ||
         (node.motion.kind === "hop" &&
-          (plan.axis !== "x" ||
+          (track.axis !== "x" ||
             !valid(node.motion.hopHeight) ||
             node.motion.hopHeight === 0 ||
             !valid(node.motion.hopSeconds) ||
             node.motion.hopSeconds === 0 ||
-            (node.motion.speed > 0 && plan.distance === 0)))
+            (node.motion.speed > 0 && track.distance === 0)))
       ) {
         throw new Error(`Invalid behaviour motion or animation in ${key}`);
       }
@@ -84,8 +92,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         node.motion.kind === "fly" &&
         (!valid(node.motion.speed) ||
           node.motion.speed === 0 ||
-          !Number.isFinite(node.motion.to.x) ||
-          !Number.isFinite(node.motion.to.y))
+          (node.motion.to === "target"
+            ? ![
+                node.motion.bounds.x,
+                node.motion.bounds.y,
+                node.motion.bounds.width,
+                node.motion.bounds.height,
+              ].every(Number.isFinite) ||
+              node.motion.bounds.width <= 0 ||
+              node.motion.bounds.height <= 0
+            : !Number.isFinite(node.motion.to.x) || !Number.isFinite(node.motion.to.y)))
       ) {
         throw new Error(`Invalid flight in ${key}`);
       }
@@ -168,6 +184,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         {
           ...node,
           ...(onEnter && { onEnter }),
+          ...(node.track && { track: { ...node.track, distance: node.track.distance * tile } }),
           motion:
             node.motion.kind === "wait"
               ? node.motion
@@ -175,7 +192,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                   ...node.motion,
                   speed: node.motion.speed * tile,
                   ...(node.motion.kind === "fly"
-                    ? { to: { x: node.motion.to.x * tile, y: node.motion.to.y * tile } }
+                    ? node.motion.to === "target"
+                      ? {
+                          bounds: {
+                            height: node.motion.bounds.height * tile,
+                            width: node.motion.bounds.width * tile,
+                            x: node.motion.bounds.x * tile,
+                            y: node.motion.bounds.y * tile,
+                          },
+                        }
+                      : { to: { x: node.motion.to.x * tile, y: node.motion.to.y * tile } }
                     : {}),
                   ...(node.motion.kind === "hop"
                     ? { hopHeight: node.motion.hopHeight * tile }
@@ -218,12 +244,45 @@ function enterState(
       node.motion.kind !== "fly" &&
       node.motion.direction === "target")
   ) {
-    const axis = object.behaviour?.axis ?? "x";
+    const axis = node.track?.axis ?? object.behaviour?.axis ?? "x";
     const mine = at[axis] + (axis === "x" ? object.width : object.height) / 2;
     const target = bird[axis] + (axis === "x" ? tuning.width : tuning.height) / 2;
     facing = target < mine ? -1 : 1;
   }
-  return { ...state, elapsed: 0, facing, pendingEntry: true, stateKey: key };
+  if (node.motion.kind === "fly" && node.motion.to === "target") {
+    const target = birdBox(tuning, bird);
+    const mine = contactBox(object, at, facing, node.track?.axis ?? object.behaviour?.axis);
+    facing = target.x + target.width / 2 < mine.x + mine.width / 2 ? -1 : 1;
+  }
+  const next: BehaviourState = {
+    ...state,
+    axis: node.track?.axis ?? object.behaviour?.axis ?? "x",
+    elapsed: 0,
+    facing,
+    pendingEntry: true,
+    stateKey: key,
+  };
+  delete (next as { flightTarget?: Point }).flightTarget;
+  if (node.motion.kind === "fly" && node.motion.to === "target") {
+    const contact = contactBox(object, at, facing, next.axis);
+    const target = birdBox(tuning, bird);
+    const x = target.x + target.width / 2 - contact.width / 2 - (contact.x - at.x);
+    const y = target.y + target.height / 2 - contact.height / 2 - (contact.y - at.y);
+    return {
+      ...next,
+      flightTarget: {
+        x: Math.max(
+          object.origin.x + node.motion.bounds.x,
+          Math.min(object.origin.x + node.motion.bounds.x + node.motion.bounds.width, x),
+        ),
+        y: Math.max(
+          object.origin.y + node.motion.bounds.y,
+          Math.min(object.origin.y + node.motion.bounds.y + node.motion.bounds.height, y),
+        ),
+      },
+    };
+  }
+  return next;
 }
 
 export function startBehaviour(
@@ -245,13 +304,16 @@ export function startBehaviour(
 
 // Collision uses the object's contact box. Vertical movers do not flip their
 // horizontal art merely because they reverse vertical travel.
-export function contactBox(object: ObjectLayout, at: Point, facing: -1 | 1): Rect {
+export function contactBox(
+  object: ObjectLayout,
+  at: Point,
+  facing: -1 | 1,
+  axis = object.behaviour?.axis,
+): Rect {
   const box = object.hitbox ?? { height: object.height, width: object.width, x: 0, y: 0 };
   return {
     ...box,
-    x:
-      at.x +
-      (facing === 1 || object.behaviour?.axis === "y" ? box.x : object.width - box.x - box.width),
+    x: at.x + (facing === 1 || axis === "y" ? box.x : object.width - box.x - box.width),
     y: at.y + box.y,
   };
 }
@@ -264,8 +326,8 @@ function heading(node: BehaviourNode, state: BehaviourState): -1 | 1 {
     : state.facing;
 }
 
-function endpoint(object: ObjectLayout, direction: -1 | 1): number {
-  const plan = object.behaviour;
+function endpoint(object: ObjectLayout, direction: -1 | 1, state: BehaviourState): number {
+  const plan = nodeOf(object, state.stateKey).track ?? object.behaviour;
   if (!plan) {
     throw new Error(`No behaviour for ${object.character}`);
   }
@@ -289,15 +351,20 @@ function matches(
   }
   if (condition.kind === "arrived") {
     const motion = nodeOf(object, state.stateKey).motion;
+    if (motion.kind !== "fly") {
+      return false;
+    }
+    const target =
+      motion.to === "target"
+        ? state.flightTarget
+        : { x: object.origin.x + motion.to.x, y: object.origin.y + motion.to.y };
     return (
-      motion.kind === "fly" &&
-      Math.hypot(at.x - object.origin.x - motion.to.x, at.y - object.origin.y - motion.to.y) <=
-        condition.tolerance
+      target !== undefined && Math.hypot(at.x - target.x, at.y - target.y) <= condition.tolerance
     );
   }
   if (condition.kind === "boundary") {
-    const axis = object.behaviour?.axis ?? "x";
-    return at[axis] === endpoint(object, heading(nodeOf(object, state.stateKey), state));
+    const axis = state.axis ?? object.behaviour?.axis ?? "x";
+    return at[axis] === endpoint(object, heading(nodeOf(object, state.stateKey), state), state);
   }
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
     const reachable = targetReachable(
@@ -305,9 +372,10 @@ function matches(
       object,
       world,
       at,
-      contactBox(object, at, state.facing),
+      contactBox(object, at, state.facing, state.axis),
       state.hop?.groundY ?? at.y,
       condition.tolerance,
+      nodeOf(object, state.stateKey).track ?? object.behaviour,
       bird,
     );
     return condition.kind === "reachable" ? reachable : !reachable;
@@ -337,10 +405,10 @@ function reachable(
   direction: -1 | 1,
   desired: number,
 ): number {
-  const axis = object.behaviour?.axis ?? "x";
-  const edge = endpoint(object, direction);
+  const axis = state.axis ?? object.behaviour?.axis ?? "x";
+  const edge = endpoint(object, direction, state);
   let to = direction === 1 ? Math.min(edge, desired) : Math.max(edge, desired);
-  const box = contactBox(object, at, state.facing);
+  const box = contactBox(object, at, state.facing, state.axis);
   const across = axis === "x" ? "y" : "x";
   const depth = axis === "x" ? "height" : "width";
   const length = axis === "x" ? "width" : "height";
@@ -453,9 +521,11 @@ export function stepBehaviour(
   let time = 0;
   while (true) {
     const node = nodeOf(object, next.stateKey);
+    const track = node.track ?? plan;
     if (next.pendingEntry) {
+      next = enterState(tuning, object, bird, current, next.stateKey, next);
       for (const action of node.onEnter ?? []) {
-        actions.push({ action, at: current, facing: next.facing, time });
+        actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
       }
       next = { ...next, pendingEntry: false };
     }
@@ -464,8 +534,8 @@ export function stepBehaviour(
       node.motion.kind !== "fly" &&
       node.motion.direction === "target"
     ) {
-      const mine = current[plan.axis] + (plan.axis === "x" ? object.width : object.height) / 2;
-      const target = bird[plan.axis] + (plan.axis === "x" ? tuning.width : tuning.height) / 2;
+      const mine = current[track.axis] + (track.axis === "x" ? object.width : object.height) / 2;
+      const target = bird[track.axis] + (track.axis === "x" ? tuning.width : tuning.height) / 2;
       if (target !== mine) {
         next = { ...next, facing: target < mine ? -1 : 1 };
       }
@@ -524,10 +594,13 @@ export function stepBehaviour(
     }
     const to = { ...current };
     if (node.motion.kind === "fly") {
-      const target = {
-        x: object.origin.x + node.motion.to.x,
-        y: object.origin.y + node.motion.to.y,
-      };
+      const target =
+        node.motion.to === "target"
+          ? next.flightTarget
+          : { x: object.origin.x + node.motion.to.x, y: object.origin.y + node.motion.to.y };
+      if (!target) {
+        throw new Error("Target flight must capture its destination on entry");
+      }
       const distance = Math.hypot(target.x - current.x, target.y - current.y);
       if (distance > EDGE) {
         slice = Math.min(slice, distance / node.motion.speed);
@@ -553,18 +626,18 @@ export function stepBehaviour(
     }
     if (node.motion.kind !== "wait" && node.motion.kind !== "fly" && node.motion.speed > 0) {
       const direction = heading(node, next);
-      let desired = current[plan.axis] + direction * node.motion.speed * slice;
+      let desired = current[track.axis] + direction * node.motion.speed * slice;
       if (node.motion.direction === "target") {
         const target =
-          bird[plan.axis] +
-          (plan.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
+          bird[track.axis] +
+          (track.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
         desired = direction === 1 ? Math.min(desired, target) : Math.max(desired, target);
       }
       const end = reachable(object, world, current, next, direction, desired);
-      const moving = Math.abs(end - current[plan.axis]) / node.motion.speed;
+      const moving = Math.abs(end - current[track.axis]) / node.motion.speed;
       if (moving > 0) {
         slice = Math.min(slice, moving);
-        to[plan.axis] = end;
+        to[track.axis] = end;
       }
     }
     if (hop) {
@@ -580,7 +653,7 @@ export function stepBehaviour(
       }
     }
     const end = time + slice;
-    segments.push({ end, facing: next.facing, from: current, start: time, to });
+    segments.push({ axis: track.axis, end, facing: next.facing, from: current, start: time, to });
     current = to;
     next = { ...next, elapsed: next.elapsed + slice };
     time = end > time ? end : seconds;

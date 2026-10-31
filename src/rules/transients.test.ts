@@ -44,6 +44,7 @@ const event: SpawnEvent = {
   action: spawn,
   at: { x: 100, y: 0 },
   emitter: 0,
+  emitterWidth: 48,
   facing: 1,
   template,
   time: 0,
@@ -55,7 +56,7 @@ const run = (
   events: readonly SpawnEvent[] = [event],
   existing: readonly Transient[] = [],
   seconds = 1,
-) => stepTransients(bounds, tops, seconds, target, target, events, existing, 0);
+) => stepTransients(bounds, [], tops, seconds, target, target, events, existing, 0);
 
 describe("bounded transient hazards", () => {
   it.each([
@@ -84,9 +85,63 @@ describe("bounded transient hazards", () => {
 
   it("expires out of bounds and preserves stable IDs without spawning on every step", () => {
     const first = run([], { ...bird, x: 200 }, [event], [], 0.1);
-    const second = stepTransients(bounds, [], 0.1, bird, bird, [], first.entities, first.nextId);
+    const second = stepTransients(
+      bounds,
+      [],
+      [],
+      0.1,
+      bird,
+      bird,
+      [],
+      first.entities,
+      first.nextId,
+    );
     expect(second.entities[0]?.id).toBe(first.entities[0]?.id);
     expect(second.nextId).toBe(1);
     expect(run([], { ...bird, x: 200 }, [{ ...event, at: { x: 301, y: 0 } }]).entities).toEqual([]);
   });
+});
+
+it.each([
+  { facing: 1 as const, vx: 100, x: 110 },
+  { facing: -1 as const, vx: -100, x: 128 },
+])("captures optional reflected spawn offset and arc velocity $facing", ({ facing, vx, x }) => {
+  const reflected = {
+    ...event,
+    action: {
+      ...spawn,
+      gravity: 100,
+      mirrorWithFacing: true,
+      offset: { x: 10, y: 20 },
+      velocity: { x: 100, y: -50 },
+    },
+    facing,
+  };
+  const result = stepTransients(
+    bounds,
+    [],
+    [],
+    0.1,
+    { ...bird, x: 250 },
+    { ...bird, x: 250 },
+    [{ ...reflected, time: 0.1 }],
+    [],
+    0,
+  );
+  expect(result.entities[0]?.at).toEqual({ x, y: 20 });
+  expect(result.entities[0]?.velocity.x).toBe(vx);
+});
+
+it.each([
+  { lethal: false, solid: { height: 100, width: 5, x: 150, y: 0 }, target: { ...bird, x: 170 } },
+  { lethal: true, solid: { height: 100, width: 5, x: 150, y: 0 }, target: { ...bird, x: 120 } },
+])("orders a thrown hazard against solid side cover: $lethal", ({ lethal, solid, target }) => {
+  const thrown = {
+    ...event,
+    action: { ...spawn, velocity: { x: 100, y: 0 } },
+    at: { x: 100, y: 60 },
+  };
+  const result = stepTransients(bounds, [solid], [], 1, target, target, [thrown], [], 0);
+  expect(result.lethal).toBe(lethal);
+  expect(result.entities).toEqual([]);
 });

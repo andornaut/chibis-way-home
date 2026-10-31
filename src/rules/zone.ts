@@ -395,7 +395,7 @@ export function stepZone(
     .filter(({ object }) => object.collision === "hazard")
     .map(({ after, behaviour, object }) =>
       behaviour
-        ? contactBox(object, after, behaviour.state.facing)
+        ? contactBox(object, after, behaviour.state.facing, behaviour.state.axis)
         : object.hitbox
           ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
           : after,
@@ -414,7 +414,7 @@ export function stepZone(
           height: action.height,
           range: action.range,
           remaining: action.seconds,
-          source: contactBox(object, event.at, event.facing),
+          source: contactBox(object, event.at, event.facing, event.axis),
           start: event.time,
           velocity: action.velocity,
         });
@@ -423,7 +423,7 @@ export function stepZone(
         if (!template) {
           throw new Error(`No spawn template ${action.character}`);
         }
-        spawns.push({ ...event, emitter, template });
+        spawns.push({ ...event, emitter, emitterWidth: object.width, template });
       }
     }
   });
@@ -435,7 +435,8 @@ export function stepZone(
   });
   const transientStep = stepTransients(
     { height: area.height, width: area.width, x: 0, y: 0 },
-    [...solids, ...rects("ledge")],
+    solids,
+    rects("ledge"),
     seconds,
     birdBox(tuning, zone.bird),
     birdBox(tuning, bird),
@@ -460,8 +461,8 @@ export function stepZone(
       ({ behaviour, object }) =>
         object.collision === "hazard" &&
         behaviour?.segments.some((segment) => {
-          const before = contactBox(object, segment.from, segment.facing);
-          const after = contactBox(object, segment.to, segment.facing);
+          const before = contactBox(object, segment.from, segment.facing, segment.axis);
+          const after = contactBox(object, segment.to, segment.facing, segment.axis);
           return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
         }),
     );

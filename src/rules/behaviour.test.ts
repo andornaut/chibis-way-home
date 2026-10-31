@@ -11,7 +11,7 @@ import {
   stepBehaviour,
   sweptContact,
 } from "./behaviour";
-import { startBird } from "./bird";
+import { birdBox, startBird } from "./bird";
 import { objectLayout } from "./tiles";
 
 const ACTOR: Archetype = {
@@ -479,5 +479,99 @@ describe("entry actions and flight", () => {
     expect(result.at.x).toBe(object.origin.x + 5);
     expect(result.at.y).toBeLessThan(object.origin.y);
     expect(result.state.stateKey).toBe("fly");
+  });
+});
+
+describe("composed contact attempts", () => {
+  it("uses each state's own axis and extent for movement, boundary and visual facing", () => {
+    const plan: BehaviourPlan = {
+      axis: "y",
+      distance: -40,
+      initial: "charge",
+      states: {
+        charge: {
+          animation: "rush",
+          motion: { direction: 1, kind: "move", speed: 80 },
+          track: { axis: "x", distance: 40 },
+          transitions: [{ to: "climb", when: [{ kind: "boundary" }] }],
+        },
+        climb: {
+          animation: "climb",
+          motion: { direction: -1, kind: "move", speed: 80 },
+          track: { axis: "y", distance: -40 },
+          transitions: [{ to: "drop", when: [{ kind: "boundary" }] }],
+        },
+        drop: {
+          animation: "drop",
+          motion: { direction: 1, kind: "move", speed: 80 },
+          transitions: [{ to: "rest", when: [{ kind: "boundary" }] }],
+        },
+        rest: { animation: "rest", motion: { kind: "wait" }, transitions: [] },
+      },
+    };
+    const actor = resolve(CHARACTER, ACTOR, 1, plan);
+    let result = stepBehaviour(
+      BIRD,
+      actor,
+      [],
+      0.5,
+      bird(),
+      actor.origin,
+      startBehaviour(BIRD, actor, bird()),
+    );
+    expect(result.at).toEqual({ x: actor.origin.x + 40, y: actor.origin.y });
+    expect(result.state).toMatchObject({ axis: "y", stateKey: "climb" });
+    result = stepBehaviour(BIRD, actor, [], 0.5, bird(), result.at, result.state);
+    expect(result.at).toEqual({ x: actor.origin.x + 40, y: actor.origin.y - 40 });
+    result = stepBehaviour(BIRD, actor, [], 0.5, bird(), result.at, result.state);
+    expect(result.at).toEqual({ x: actor.origin.x + 40, y: actor.origin.y });
+    expect(result.state.stateKey).toBe("rest");
+    const asymmetric = { ...actor, hitbox: { height: 20, width: 10, x: 2, y: 0 } };
+    expect(contactBox(asymmetric, actor.origin, -1, "x").x).toBe(actor.origin.x + 28);
+    expect(contactBox(asymmetric, actor.origin, -1, "y").x).toBe(actor.origin.x + 2);
+    expect(behaviourPose(actor, { ...result.state, axis: "x", facing: -1 }).flipX).toBe(true);
+    expect(layoutBehaviour(12, plan).states.charge?.track).toEqual({ axis: "x", distance: 480 });
+  });
+
+  it("locks a bounded contact-centred flight target without retargeting the next frame", () => {
+    const plan: BehaviourPlan = {
+      axis: "x",
+      distance: 0,
+      initial: "swoop",
+      states: {
+        rest: { animation: "rest", motion: { kind: "wait" }, transitions: [] },
+        swoop: {
+          animation: "fly",
+          motion: {
+            bounds: { height: 200, width: 300, x: -50, y: -200 },
+            kind: "fly",
+            speed: 400,
+            to: "target",
+          },
+          transitions: [{ to: "rest", when: [{ kind: "arrived", tolerance: 0.001 }] }],
+        },
+      },
+    };
+    const actor = resolve(CHARACTER, ACTOR, 1, plan);
+    const target = bird(200, 180);
+    const contact = birdBox(BIRD, target);
+    const initial = startBehaviour(BIRD, actor, target);
+    const first = stepBehaviour(BIRD, actor, [], 0.05, target, actor.origin, initial);
+    const captured = first.state.flightTarget;
+    expect(captured).toEqual({
+      x: contact.x + contact.width / 2 - actor.width / 2,
+      y: contact.y + contact.height / 2 - actor.height / 2,
+    });
+    const arrived = stepBehaviour(BIRD, actor, [], 1, bird(0, 300), first.at, first.state);
+    expect(arrived.at).toEqual(captured);
+    expect(arrived.state.stateKey).toBe("rest");
+    const far = startBehaviour(BIRD, actor, bird(10000, -10000));
+    expect(far.flightTarget).toEqual({ x: actor.origin.x + 250, y: actor.origin.y - 200 });
+    const scaled = layoutBehaviour(12, plan).states.swoop?.motion;
+    expect(scaled).toMatchObject({
+      bounds: { height: 2400, width: 3600, x: -600, y: -2400 },
+      speed: 4800,
+      to: "target",
+    });
   });
 });

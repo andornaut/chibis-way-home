@@ -252,7 +252,8 @@ export type BehaviourCondition =
 export type BehaviourMotion =
   | { readonly kind: "wait" }
   | { readonly kind: "fly"; readonly to: Point; readonly speed: number }
-  | {readonly kind:"fly";readonly to:"target";readonly bounds:Rect;readonly speed:number}
+  // Target flight captures contact-centred aim on entry; bounds limit relative top-left positions.
+  | { readonly kind: "fly"; readonly to: "target"; readonly bounds: Rect; readonly speed: number }
   | {
       readonly direction: -1 | 1 | "facing" | "target";
       readonly kind: "move";
@@ -300,7 +301,8 @@ export type BehaviourAction =
     };
 
 export interface BehaviourNode {
-  readonly track?: {readonly axis:"x"|"y";readonly distance:number};
+  // Override this state's axis and signed placed-origin extent.
+  readonly track?: { readonly axis: "x" | "y"; readonly distance: number };
   readonly onEnter?: readonly BehaviourAction[];
   readonly animation: string | null;
   readonly enter?: "face-target";

@@ -16,6 +16,7 @@ export interface Transient {
 
 export interface SpawnEvent extends BehaviourEvent {
   readonly emitter: number;
+  readonly emitterWidth: number;
   readonly template: ObjectLayout;
 }
 
@@ -53,7 +54,8 @@ export function contactTime(a: Rect, end: Point, b: Rect, bEnd: Point): number |
 
 export function stepTransients(
   bounds: Rect,
-  tops: readonly Rect[],
+  solids: readonly Rect[],
+  ledges: readonly Rect[],
   seconds: number,
   birdBefore: Rect,
   birdAfter: Rect,
@@ -87,8 +89,14 @@ export function stepTransients(
     const box = transientBox(entity);
     const end = transientBox(entity, after);
     let landing = Infinity;
+    for (const solid of solids) {
+      const contact = contactTime(box, end, solid, solid);
+      if (contact !== undefined) {
+        landing = Math.min(landing, contact);
+      }
+    }
     if (end.y > box.y) {
-      for (const top of tops) {
+      for (const top of [...solids, ...ledges]) {
         if (box.y + box.height > top.y || end.y + box.height < top.y) {
           continue;
         }
@@ -159,13 +167,23 @@ export function stepTransients(
     const entity: Transient = {
       age: 0,
       armSeconds: action.armSeconds,
-      at: { x: event.at.x + action.offset.x, y: event.at.y + action.offset.y },
+      at: {
+        x:
+          event.at.x +
+          (action.mirrorWithFacing && event.facing === -1
+            ? event.emitterWidth - action.offset.x - event.template.width
+            : action.offset.x),
+        y: event.at.y + action.offset.y,
+      },
       emitter: event.emitter,
       gravity: action.gravity,
       id: id++,
       lifeSeconds: action.lifeSeconds,
       object: event.template,
-      velocity: action.velocity,
+      velocity: {
+        ...action.velocity,
+        x: action.velocity.x * (action.mirrorWithFacing ? event.facing : 1),
+      },
       ...(action.armingAnimation && { armingAnimation: action.armingAnimation }),
     };
     if (event.time >= seconds) {

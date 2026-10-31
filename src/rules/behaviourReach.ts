@@ -140,9 +140,10 @@ export function targetReachable(
   box: Rect,
   groundY: number,
   tolerance: number,
+  track: { readonly axis: "x" | "y"; readonly distance: number } | undefined,
   bird: BirdState,
 ): boolean {
-  const plan = object.behaviour;
+  const plan = track;
   if (!plan) {
     return false;
   }

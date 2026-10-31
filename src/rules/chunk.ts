@@ -37,12 +37,34 @@ function thingOf(catalogue: Catalogue, instance: Instance) {
   delete physical.skin;
   const object = objectLayout(1, catalogue, {}, undefined, {}, physical);
   if (object.behaviour) {
-    const { axis, distance, states } = object.behaviour;
+    const { states } = object.behaviour;
+    const tracks = [
+      object.behaviour,
+      ...Object.values(states).flatMap((node) => (node.track ? [node.track] : [])),
+    ];
     const flights = Object.values(states).flatMap((node) =>
-      node.motion.kind === "fly" ? [node.motion.to] : [],
+      node.motion.kind !== "fly"
+        ? []
+        : node.motion.to === "target"
+          ? [
+              { x: node.motion.bounds.x, y: node.motion.bounds.y },
+              {
+                x: node.motion.bounds.x + node.motion.bounds.width,
+                y: node.motion.bounds.y + node.motion.bounds.height,
+              },
+            ]
+          : [node.motion.to],
     );
-    const dx = axis === "x" ? distance : 0;
-    const dy = axis === "y" ? distance : 0;
+    const xs = [
+      0,
+      ...tracks.filter((track) => track.axis === "x").map((track) => track.distance),
+      ...flights.map((to) => to.x),
+    ];
+    const ys = [
+      0,
+      ...tracks.filter((track) => track.axis === "y").map((track) => track.distance),
+      ...flights.map((to) => to.y),
+    ];
     const hopHeight = Math.max(
       0,
       ...Object.values(states).map((node) =>
@@ -54,12 +76,13 @@ function thingOf(catalogue: Catalogue, instance: Instance) {
       moves:
         flights.length > 0 ||
         hopHeight > 0 ||
-        (distance !== 0 && Object.values(states).some((node) => node.motion.kind === "move")),
+        (tracks.some((track) => track.distance !== 0) &&
+          Object.values(states).some((node) => node.motion.kind === "move")),
       span: {
-        bottom: object.origin.y + object.height + Math.max(0, dy, ...flights.map((to) => to.y)),
-        left: object.origin.x + Math.min(0, dx, ...flights.map((to) => to.x)),
-        right: object.origin.x + object.width + Math.max(0, dx, ...flights.map((to) => to.x)),
-        top: object.origin.y + Math.min(0, dy, ...flights.map((to) => to.y)) - hopHeight,
+        bottom: object.origin.y + object.height + Math.max(...ys),
+        left: object.origin.x + Math.min(...xs),
+        right: object.origin.x + object.width + Math.max(...xs),
+        top: object.origin.y + Math.min(...ys) - hopHeight,
       },
     };
   }
