@@ -184,7 +184,12 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
         flat(g, in_ell(C - 2, bcy + 2 + val, BRX * 0.5, BRY * 0.3, -0.3), WING)
     g.rect(int(hcx + HEAD_R - 2), int(hcy), 7, round(5 * head_squash), "orange")  # bill
     ey = int(hcy - head_ry * 0.55)
-    g.rect(int(hcx), ey if eye == "open" else ey + 2, 4, 4 if eye == "open" else 1, "ink")
+    if eye == "dead":
+        for i in range(5):
+            g.p(int(hcx) + i, ey + i, "ink")
+            g.p(int(hcx) + 4 - i, ey + i, "ink")
+    else:
+        g.rect(int(hcx), ey if eye == "open" else ey + 2, 4, 4 if eye == "open" else 1, "ink")
     return g.outlined(lambda c: K[OUTLINE])
 
 
@@ -236,7 +241,7 @@ def duck_tags():
             falling_pose(),
             draw(lift=-2, bw=19, bh=8, wing=("fold", 2), feet="hidden", eye="closed",
                  head_squash=0.82, seated=True),
-            draw(lift=-2, bw=17, bh=10.5, wing=("fold", 2), feet="hidden", eye="closed",
+            draw(lift=-2, bw=17, bh=10.5, wing=("fold", 2), feet="hidden", eye="dead",
                  head_squash=0.95, seated=True),
         ], [100, 120, 80, 400]),
     ]
