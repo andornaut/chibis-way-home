@@ -1,4 +1,18 @@
-import type { DialoguePlan, DialogueSpeaker, ZoneDialoguePlan } from "./types";
+import {
+  BEAR_BEHAVIOUR,
+  DOG_BEHAVIOUR,
+  FERRET_BEHAVIOUR,
+  GOOSE_BEHAVIOUR,
+  PIGEON_BEHAVIOUR,
+  RACCOON_BEHAVIOUR,
+} from "./behaviours";
+import type { BehaviourPlan, DialoguePlan, DialogueSpeaker, ZoneDialoguePlan } from "./types";
+
+function maximumMovementSpeed(plan: BehaviourPlan): number {
+  return Math.max(
+    ...Object.values(plan.states).map(({ motion }) => (motion.kind === "wait" ? 0 : motion.speed)),
+  );
+}
 
 // Default for transient barks; conversations advance only through player input.
 export const BARK_DURATION_SECONDS = 4;
@@ -142,7 +156,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
   apartment: {
     entry: {
       character: "ferret-antagonist",
-      escapeTilesPerSecond: 20,
+      escapeTilesPerSecond: maximumMovementSpeed(FERRET_BEHAVIOUR),
       idleAnimation: "idle",
       offsetTiles: 8,
       runAnimation: "walk",
@@ -154,7 +168,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
   "blue-cityscape": {
     entry: {
       character: "dog-antagonist",
-      escapeTilesPerSecond: 20,
+      escapeTilesPerSecond: maximumMovementSpeed(DOG_BEHAVIOUR),
       idleAnimation: "idle",
       offsetTiles: 8,
       runAnimation: "walk",
@@ -166,7 +180,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
   countryside: {
     entry: {
       character: "goose-antagonist",
-      escapeTilesPerSecond: 20,
+      escapeTilesPerSecond: maximumMovementSpeed(GOOSE_BEHAVIOUR),
       idleAnimation: "idle",
       offsetTiles: 8,
       runAnimation: "walk",
@@ -178,7 +192,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
   "home-city": {
     entry: {
       character: "raccoon-antagonist",
-      escapeTilesPerSecond: 20,
+      escapeTilesPerSecond: maximumMovementSpeed(RACCOON_BEHAVIOUR),
       idleAnimation: "idle",
       offsetTiles: 8,
       runAnimation: "walk",
@@ -190,7 +204,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
   industrial: {
     entry: {
       character: "pigeon-antagonist",
-      escapeTilesPerSecond: 20,
+      escapeTilesPerSecond: maximumMovementSpeed(PIGEON_BEHAVIOUR),
       idleAnimation: "idle",
       offsetTiles: 8,
       runAnimation: "fly",
@@ -202,7 +216,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
   woodland: {
     entry: {
       character: "bear-antagonist",
-      escapeTilesPerSecond: 20,
+      escapeTilesPerSecond: maximumMovementSpeed(BEAR_BEHAVIOUR),
       idleAnimation: "idle",
       offsetTiles: 8,
       runAnimation: "walk",
