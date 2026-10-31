@@ -404,7 +404,16 @@ export interface DialogueChoice {
 }
 
 // A conversation played one paragraph at a time, optionally ending with a required choice.
+export interface ZoneEntryIntroduction {
+  readonly character: string;
+  readonly escapeTilesPerSecond: number;
+  readonly idleAnimation: string;
+  readonly offsetTiles: number;
+  readonly runAnimation: string;
+}
+
 export interface ZoneDialoguePlan {
+  readonly entry?: ZoneEntryIntroduction;
   readonly foreshadow: string;
   readonly intro: string;
   readonly outro: string;
