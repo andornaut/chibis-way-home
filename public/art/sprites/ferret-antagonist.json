@@ -142,6 +142,38 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
     "sourceSize": { "w": 48, "h": 48 },
     "duration": 120
+   },
+   "ferret-antagonist 18.aseprite": {
+    "frame": { "x": 864, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 100
+   },
+   "ferret-antagonist 19.aseprite": {
+    "frame": { "x": 912, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 100
+   },
+   "ferret-antagonist 20.aseprite": {
+    "frame": { "x": 960, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 100
+   },
+   "ferret-antagonist 21.aseprite": {
+    "frame": { "x": 1008, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 100
    }
  },
  "meta": {
@@ -149,7 +181,7 @@
   "version": "1.2.30-x64",
   "image": "ferret-antagonist.png",
   "format": "RGBA8888",
-  "size": { "w": 864, "h": 48 },
+  "size": { "w": 1056, "h": 48 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward" },
@@ -157,7 +189,8 @@
    { "name": "crouch", "from": 6, "to": 7, "direction": "forward" },
    { "name": "rush", "from": 8, "to": 11, "direction": "forward" },
    { "name": "rest", "from": 12, "to": 13, "direction": "forward" },
-   { "name": "frustration", "from": 14, "to": 17, "direction": "forward" }
+   { "name": "frustration", "from": 14, "to": 17, "direction": "forward" },
+   { "name": "throw", "from": 18, "to": 21, "direction": "forward" }
   ]
  }
 }

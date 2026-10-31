@@ -81,6 +81,18 @@
       }
     },
     {
+      "key": "ferret-parcel",
+      "png": "sprites/ferret-parcel.png",
+      "json": "sprites/ferret-parcel.json",
+      "once": [],
+      "hitbox": {
+        "x": 4,
+        "y": 8,
+        "width": 16,
+        "height": 16
+      }
+    },
+    {
       "key": "ferret-trap-snap",
       "png": "sprites/ferret-trap-snap.png",
       "json": "sprites/ferret-trap-snap.json",

@@ -214,10 +214,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Dog antagonist
 
-| Key            | Type                           | Size  | Tags                                        |
-| -------------- | ------------------------------ | ----- | ------------------------------------------- |
-| dog-antagonist | character; hit box 2,2,56,38   | 60x40 | idle, walk, crouch, rush, rest, frustration |
-| portrait-dog   | dialogue portrait, transparent | 64x64 | neutral                                     |
+| Key            | Type                           | Size  | Tags                                               |
+| -------------- | ------------------------------ | ----- | -------------------------------------------------- |
+| dog-antagonist | character; hit box 2,2,56,38   | 60x40 | idle, walk, crouch, rush, rest, frustration, throw |
+| portrait-dog   | dialogue portrait, transparent | 64x64 | neutral                                            |
 
 ## Apartment building blocks
 
@@ -249,9 +249,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Ferret obstacle skin
 
-| Key               | Type                         | Size  | Tags                                        |
-| ----------------- | ---------------------------- | ----- | ------------------------------------------- |
-| ferret-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, walk, crouch, rush, rest, frustration |
+| Key               | Type                                 | Size  | Tags                                               |
+| ----------------- | ------------------------------------ | ----- | -------------------------------------------------- |
+| ferret-antagonist | character; hit box 2,2,44,46         | 48x48 | idle, walk, crouch, rush, rest, frustration, throw |
+| ferret-parcel     | active projectile; hit box 4,8,16,16 | 24x24 | idle                                               |
 
 ## Countryside materials
 

@@ -615,12 +615,15 @@ Props are decorative, with no collision, continuous white safe lip or hazard ban
 
 The frame is 48x48, bottom-centre anchor 24,48, with constant contact box x 2, y 2, width 44, height 46. All visible poses fit this box, including mirrored versions. Every state remains lethal; this is a regular obstacle using the existing generic behaviour graph. Gameplay owns movement, warning and recovery durations.
 
+The looping `throw` tag appends after existing frames. Its release paw is at local offset 39,26 in the right-facing frame. `art/tools/ferret_parcel.py` draws `ferret-parcel`: 24x24 canvas with a 16x16 parcel at x 4, y 8, bottom-centre anchor 12,24 and visible-shape hit box 4,8,16,16, one 400ms looping `idle` frame. An ink one-pixel edge surrounds a two-pixel red danger band and warm cardboard with cream tape. The runtime owns the thrown arc, spawn timing and lifetime; no travel or new collision behaviour is baked into the art.
+
 | Tag    | Art cycle               | Pose                       |
 | ------ | ----------------------- | -------------------------- |
 | crouch | Two frames, 140ms each  | Preparation for the charge |
 | idle   | Two frames, 400ms each  | Quiet standing             |
 | rest   | Two frames, 400ms each  | Recovery pause             |
 | rush   | Four frames, 80ms each  | Committed charge           |
+| throw  | Four frames, 100ms each | Parcel wind-up and release |
 | walk   | Four frames, 120ms each | Patrol steps               |
 
 All tags loop, with `once: []`. These are art playback defaults, not gameplay state durations. There is no boss-specific visual system or new ending artwork.

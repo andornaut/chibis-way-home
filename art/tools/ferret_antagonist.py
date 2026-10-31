@@ -8,6 +8,7 @@ Usage: ferret_antagonist.py build | preview OUT.png, from the repository root.
 Champagne and cream slender body, small wedge head, warm brown legs and tapering tail, plum stovepipe
 with red band and red bow. Cute and sly, no teeth, red contact outline, dialogue or new story details.
 Idle 2x400ms, walk 4x120ms, crouch 2x140ms, rush 4x80ms, rest 2x400ms. All loop.
+Throw4x100ms loops: wind-up, raised paw, release, recovery; local release offset39,26.
 Art cycles do not set gameplay state duration or bake world movement into the sprite anchor.
 All states are lethal. The original 64x80 story ferret and its portraits remain separate and unchanged.
 """
@@ -66,6 +67,10 @@ def draw(state="idle", phase=0):
         paw_y = hy + (7 if phase % 2 == 0 else 11)
         ferret.disc_line(g, (hx - 3, hy + 9), (hx + 5, paw_y), 1.8, "brown")
         g.ell(hx + 5, paw_y, 3, 2.5, "brown")
+    if state == "throw":
+        target = ((24, 29), (29, 22), (39, 26), (34, 31))[phase]
+        ferret.disc_line(g, (hx - 4, hy + 9), target, 1.8, "brown")
+        g.ell(*target, 2.5, 2, "brown")
     if state == "rest":
         g.rect(hx + 1, hy, 3, 1, "skin2")
     return ferret.outline(g)
@@ -77,7 +82,8 @@ def sprites():
                 ("crouch", [draw("crouch", i) for i in range(2)], 140),
                 ("rush", [draw("rush", i) for i in range(4)], 80),
                 ("rest", [draw("rest", i) for i in range(2)], 400),
-                ("frustration", [draw("frustration", i) for i in range(4)], 120)]
+                ("frustration", [draw("frustration", i) for i in range(4)], 120),
+                ("throw", [draw("throw", i) for i in range(4)], 100)]
 
 
 if __name__ == "__main__":
