@@ -370,7 +370,12 @@ export function assessPlayability(
           });
           demands.push(
             physical
-              .map(({ object }) => demand(context, object))
+              .map(({ object }) => ({
+                ...physicalObject(context, object),
+                col: object.col,
+                demand: demand(context, object),
+                row: object.row,
+              }))
               .sort((a, b) => fingerprint(a).localeCompare(fingerprint(b))),
           );
           for (const { tags } of objects) {
@@ -524,7 +529,8 @@ export function assessPlayability(
   };
 }
 export function comparePlayability(before: PlayabilityReport, after: PlayabilityReport) {
-  const keys = (report: PlayabilityReport) => report.stages.map(({ id, seed }) => `${id}:${seed}`);
+  const keys = (report: PlayabilityReport) =>
+    report.stages.map(({ id, seed, zone }) => `${zone}:${id}:${seed}`);
   if (
     before.schema !== after.schema ||
     JSON.stringify(keys(before)) !== JSON.stringify(keys(after)) ||

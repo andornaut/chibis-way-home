@@ -158,11 +158,44 @@ describe("structural playability assessment", () => {
     expect(delta.sequenceChanged).toBe(false);
     expect(changed.stages[0]!.mechanics).toEqual(before.stages[0]!.mechanics);
 
+    const paired = (swapped: boolean): PlayabilityContext => ({
+      ...input,
+      library: {
+        ...input.library,
+        characters: {
+          ...input.library.characters,
+          fast: { ...input.library.characters.enemy!, behaviour: fasterGraph },
+        },
+      },
+      load: () => ({
+        ...plan,
+        areas: {
+          ...plan.areas,
+          first: {
+            ...plan.areas.first!,
+            objects: [
+              { character: swapped ? "fast" : "enemy", col: 5, row: 46 },
+              { character: swapped ? "enemy" : "fast", col: 25, row: 46 },
+            ],
+          },
+        },
+      }),
+    });
+    const exchange = comparePlayability(
+      assessPlayability(paired(false), [7]),
+      assessPlayability(paired(true), [7]),
+    ).stages[0]!;
+    expect(exchange.geometryChanged).toBe(false);
+    expect(exchange.demandChanged).toBe(true);
+
     expect(() => comparePlayability(before, assessPlayability(context(), [8]))).toThrow(
       "Incompatible",
     );
     expect(() =>
       comparePlayability(before, { ...after, stages: [{ ...after.stages[0]!, id: "other" }] }),
+    ).toThrow("Incompatible");
+    expect(() =>
+      comparePlayability(before, { ...after, stages: [{ ...after.stages[0]!, zone: "other" }] }),
     ).toThrow("Incompatible");
   });
   it("rejects missing provenance, duplicate seeds and unresolved selected chunks", () => {
