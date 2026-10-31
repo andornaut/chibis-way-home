@@ -1,9 +1,14 @@
-import { PATROL_FINISH_GEOMETRY } from "./chunkTemplates";
+import {
+  encounterStart,
+  PATROL_ENCOUNTER,
+  PATROL_FINISH_GEOMETRY,
+  withoutEncounters,
+} from "./chunkTemplates";
 import type { ChunkPlan } from "./types";
 
 const UPPER_FLOOR_OFFSET = 20;
 
-export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+const APARTMENT_BOUNDARIES: Readonly<Record<string, ChunkPlan>> = {
   "apartment-finish": {
     cols: 60,
     difficulty: 4,
@@ -33,6 +38,22 @@ export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     objects: [],
     slots: [{ area: { col: 18, cols: 4, row: 44, rows: 6 }, id: "apartment-room", kind: "door" }],
     solids: [{ col: 0, cols: 60, look: "ground", row: 50, rows: 10 }],
-    theme: ["apartment-entrance", "apartment-restaurant"],
+    theme: ["apartment-entrance", "apartment-exterior"],
+  },
+};
+
+export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...APARTMENT_BOUNDARIES,
+  "apartment-intro-start": {
+    ...encounterStart(6, PATROL_ENCOUNTER),
+    theme: "apartment-restaurant",
+  },
+  "apartment-quiet-finish": {
+    ...withoutEncounters(APARTMENT_BOUNDARIES["apartment-finish"]!),
+    theme: "apartment-lobby",
+  },
+  "apartment-shared-finish": {
+    ...withoutEncounters(APARTMENT_BOUNDARIES["apartment-finish"]!),
+    theme: "apartment-pool",
   },
 };

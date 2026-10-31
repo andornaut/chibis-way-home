@@ -1,4 +1,4 @@
-import { PATROL_FINISH_GEOMETRY } from "./chunkTemplates";
+import { encounterStart, PATROL_FINISH_GEOMETRY, withoutEncounters } from "./chunkTemplates";
 import type { ChunkPlan } from "./types";
 
 const COUNTRYSIDE_START: Omit<ChunkPlan, "theme"> = {
@@ -26,7 +26,9 @@ const COUNTRYSIDE_FINISH: Omit<ChunkPlan, "theme"> = {
 };
 
 export const COUNTRYSIDE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
-  "farmland-finish": { ...COUNTRYSIDE_FINISH, theme: "farmland" },
+  "country-lanes-finish": { ...withoutEncounters(COUNTRYSIDE_FINISH), theme: "country-lanes" },
+  "country-lanes-start": { ...encounterStart(4, COUNTRYSIDE_FINISH), theme: "country-lanes" },
+  "farmland-finish": { ...withoutEncounters(COUNTRYSIDE_FINISH), theme: "farmland" },
   "farmland-start": { ...COUNTRYSIDE_START, theme: "farmland" },
   "river-crossing-finish": { ...COUNTRYSIDE_FINISH, theme: "river-crossing" },
   "river-crossing-start": { ...COUNTRYSIDE_START, theme: "river-crossing" },

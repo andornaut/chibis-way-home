@@ -1,4 +1,5 @@
 import { GROWL_FINISH, PATROL_FINISH_GEOMETRY } from "./chunkTemplates";
+import { ZONE_DIALOGUES } from "./dialogues";
 import type { ChunkPlan, ChunkRules, ElementBinding, ThemePlan } from "./types";
 import { STREET_CHUNKS } from "./zone1";
 import { INDUSTRIAL_CHUNKS } from "./zone2";
@@ -27,6 +28,11 @@ const APARTMENT_THEMES = [
 ];
 
 const MECHANICAL_THEMES = [
+  "back-streets",
+  "city-streets",
+  "country-lanes",
+  "deep-woods",
+  "loading-yards",
   ...APARTMENT_THEMES,
   "city-boundary",
   "city-outskirts",
@@ -40,6 +46,8 @@ const MECHANICAL_THEMES = [
   "warehouse-district",
 ];
 const PATROL_THEMES = [
+  "city-streets",
+  "country-lanes",
   ...APARTMENT_THEMES,
   "city-boundary",
   "farmland",
@@ -72,7 +80,11 @@ const CITY_THEME: ThemePlan = {
   ],
   bindings: {
     ...COMMON_BINDINGS,
-    antagonist: { character: "dog-antagonist" },
+    antagonist: { character: "dog-antagonist", scene: null },
+    "antagonist-intro": {
+      character: "dog-antagonist",
+      scene: ZONE_DIALOGUES["blue-cityscape"]!.intro,
+    },
     canopy: { character: "canopy" },
     "depot-wall": { character: "depot-wall" },
     door: { character: "street-door" },
@@ -96,6 +108,10 @@ const CITY_THEME: ThemePlan = {
 const INDUSTRIAL_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
   antagonist: { character: "pigeon-antagonist", scene: null },
+  "antagonist-intro": {
+    character: "pigeon-antagonist",
+    scene: ZONE_DIALOGUES.industrial!.intro,
+  },
   "boundary-wall": {
     character: "facade-one-storey",
     skin: { art: "warehouse-wall", tileset: null },
@@ -129,6 +145,10 @@ const COMMON_BACKDROPS: ThemePlan["backdrops"] = [
 const COUNTRYSIDE_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
   antagonist: { character: "goose-antagonist", scene: null },
+  "antagonist-intro": {
+    character: "goose-antagonist",
+    scene: ZONE_DIALOGUES.countryside!.intro,
+  },
   door: { character: "street-door", skin: { art: "door", tileset: "tiles-street" } },
   "far-background": {
     character: "street-city-far",
@@ -143,7 +163,7 @@ const COUNTRYSIDE_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 const WOODLAND_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
   antagonist: { character: "bear-antagonist", scene: null },
-  "antagonist-intro": { character: "bear-antagonist" },
+  "antagonist-intro": { character: "bear-antagonist", scene: ZONE_DIALOGUES.woodland!.intro },
   "boundary-wall": { character: "facade-one-storey", skin: { art: "forest-shrub", tileset: null } },
   door: { character: "street-door", skin: { art: "door", tileset: "tiles-street" } },
   "far-background": { character: "street-city-far", skin: { art: "woodland-far", tileset: null } },
@@ -156,6 +176,10 @@ const WOODLAND_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 const HOME_CITY_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
   antagonist: { character: "raccoon-antagonist", scene: null },
+  "antagonist-intro": {
+    character: "raccoon-antagonist",
+    scene: ZONE_DIALOGUES["home-city"]!.intro,
+  },
   "boundary-wall": {
     character: "facade-one-storey",
     skin: { art: "outskirts-wall", tileset: null },
@@ -204,6 +228,10 @@ function apartmentTheme(
     bindings: {
       ...COMMON_BINDINGS,
       antagonist: { character: "ferret-antagonist", scene: null },
+      "antagonist-intro": {
+        character: "ferret-antagonist",
+        scene: ZONE_DIALOGUES.apartment!.intro,
+      },
       door: {
         character: "apartment-room-door",
         skin: { art: "apartment-room-door", tileset: null },
@@ -286,6 +314,19 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
     "apartment-plaster",
     "apartment-spa-screen",
   ),
+  "back-streets": {
+    backdrops: COMMON_BACKDROPS,
+    bindings: {
+      ...HOME_CITY_BINDINGS,
+      "near-wall": {
+        character: "facade-one-storey",
+        skin: { art: "neighbourhood-wall", tileset: null },
+      },
+    },
+    door: "door",
+    looks: { ground: "outskirts-ground", raised: "brick-stack" },
+    tileset: "tiles-homecity",
+  },
   "city-boundary": {
     ...CITY_THEME,
     bindings: {
@@ -302,6 +343,27 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
     door: "door",
     looks: { ground: "outskirts-ground", raised: "brick-stack" },
     tileset: "tiles-homecity",
+  },
+  "city-streets": CITY_THEME,
+  "country-lanes": {
+    backdrops: COMMON_BACKDROPS,
+    bindings: {
+      ...COUNTRYSIDE_BINDINGS,
+      "loading-bay": {
+        character: "depot-loading-bay",
+        skin: { art: "farmland-fence", tileset: null },
+      },
+    },
+    door: "door",
+    looks: { ground: "country-ground", raised: "hay-stack" },
+    tileset: "tiles-countryside",
+  },
+  "deep-woods": {
+    backdrops: COMMON_BACKDROPS,
+    bindings: WOODLAND_BINDINGS,
+    door: "door",
+    looks: { ground: "forest-ground", raised: "root-stack" },
+    tileset: "tiles-woodland",
   },
   "familiar-neighbourhood": {
     backdrops: COMMON_BACKDROPS,
@@ -361,6 +423,19 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
     },
     door: "door",
     looks: { ground: "terminal-floor", raised: "container-stack" },
+    tileset: "tiles-industrial",
+  },
+  "loading-yards": {
+    backdrops: COMMON_BACKDROPS,
+    bindings: {
+      ...INDUSTRIAL_BINDINGS,
+      "loading-bay": {
+        character: "depot-loading-bay",
+        skin: { art: "freight-gantry", tileset: null },
+      },
+    },
+    door: "door",
+    looks: { ground: "industrial-floor", raised: "crate-stack" },
     tileset: "tiles-industrial",
   },
   // The park, outdoors in autumn. Chunks name two looks, ground (the lawn, its top at row 50)
@@ -493,7 +568,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: 78, cols: 6, look: "raised", row: 35, rows: 25 },
       { col: 84, cols: 12, look: "raised", row: 30, rows: 30 },
     ],
-    theme: ["freight-terminal", "warehouse-district"],
+    theme: ["freight-terminal", "loading-yards", "warehouse-district"],
     weight: 2,
   },
   "city-boundary-climb-yard": {
@@ -793,7 +868,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: 0, cols: 34, look: "raised", row: 40, rows: 20 },
       { col: 34, cols: 50, look: "raised", row: 30, rows: 30 },
     ],
-    theme: ["city-outskirts", "familiar-neighbourhood"],
+    theme: ["back-streets", "city-outskirts", "familiar-neighbourhood"],
     weight: 2,
   },
   // A gap, two full climbs and a moving red strip share one approach.
@@ -915,7 +990,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: 108, cols: 6, look: "raised", row: 35, rows: 25 },
       { col: 114, cols: 6, look: "raised", row: 30, rows: 30 },
     ],
-    theme: ["freight-terminal", "warehouse-district"],
+    theme: ["freight-terminal", "loading-yards", "warehouse-district"],
   },
   // Offset landings descend over red beds before a moving hazard on the lower floor.
   "compound-return-high": {
@@ -981,7 +1056,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: 0, cols: 34, look: "raised", row: 40, rows: 20 },
       { col: 34, cols: 74, look: "raised", row: 30, rows: 30 },
     ],
-    theme: ["city-outskirts", "familiar-neighbourhood"],
+    theme: ["back-streets", "city-outskirts", "familiar-neighbourhood"],
   },
   "growl-clearing": {
     ...GROWL_FINISH,
@@ -1009,7 +1084,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
         rows: 20,
       },
     ],
-    theme: ["forest-paths", "ravine"],
+    theme: ["deep-woods", "forest-paths", "ravine"],
     weight: 2,
   },
   "growl-lift-clearing": {
@@ -1033,7 +1108,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { col: GROWL_FINISH.cols, cols: 4, look: "ground", row: 40, rows: 20 },
       { col: 84, cols: 36, look: "raised", row: 30, rows: 30 },
     ],
-    theme: ["forest-paths", "ravine"],
+    theme: ["deep-woods", "forest-paths", "ravine"],
   },
   // Difficulty 2, up from the lawn (50) to the high terrace (30): a bench (up 2), a terrace (up 4),
   // a bench on it (up 2), the bandstand's roof (up 4, 6 above its base), a step (up 4) and the

@@ -1,4 +1,4 @@
-import { BOUNDARY_START, GROWL_FINISH } from "./chunkTemplates";
+import { BOUNDARY_START, encounterStart, GROWL_FINISH, withoutEncounters } from "./chunkTemplates";
 import type { ChunkPlan } from "./types";
 
 const FIRST_GROWL_START: Omit<ChunkPlan, "theme"> = {
@@ -20,8 +20,17 @@ const FIRST_GROWL_START: Omit<ChunkPlan, "theme"> = {
 };
 
 export const WOODLAND_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
-  "forest-paths-finish": { ...GROWL_FINISH, theme: "forest-paths" },
-  "forest-paths-start": { ...FIRST_GROWL_START, theme: "forest-paths" },
+  "deep-woods-finish": { ...withoutEncounters(GROWL_FINISH), theme: "deep-woods" },
+  "deep-woods-start": {
+    ...encounterStart(4, GROWL_FINISH),
+    backdrops: [
+      { character: "facade-one-storey", col: 4, cols: 8, role: "near-wall", row: 34 },
+      { character: "facade-one-storey", col: 48, cols: 8, role: "boundary-wall", row: 34 },
+    ],
+    theme: "deep-woods",
+  },
+  "forest-paths-finish": { ...withoutEncounters(GROWL_FINISH), theme: "forest-paths" },
+  "forest-paths-start": { ...withoutEncounters(FIRST_GROWL_START), theme: "forest-paths" },
   "ravine-finish": { ...GROWL_FINISH, theme: "ravine" },
   "ravine-start": { ...BOUNDARY_START, theme: "ravine" },
 };

@@ -86,3 +86,40 @@ export const GROWL_FINISH: Omit<ChunkPlan, "theme"> = {
     { col: 50, cols: 10, look: "ground", row: 50, rows: 10 },
   ],
 };
+
+export const PATROL_ENCOUNTER: Omit<ChunkPlan, "theme"> = {
+  ...PATROL_FINISH_GEOMETRY,
+  cols: 60,
+  difficulty: 4,
+  entry: { row: 50 },
+  exit: { row: 50 },
+};
+
+export function withoutEncounters(chunk: Omit<ChunkPlan, "theme">): Omit<ChunkPlan, "theme"> {
+  return {
+    ...chunk,
+    encounters: 0,
+    objects: chunk.objects.filter(
+      ({ role }) => role !== "antagonist" && role !== "antagonist-intro",
+    ),
+  };
+}
+
+export function encounterStart(
+  doorRows: number,
+  chunk: Omit<ChunkPlan, "theme">,
+): Omit<ChunkPlan, "theme"> {
+  return {
+    ...chunk,
+    objects: chunk.objects.map((object) =>
+      object.role === "antagonist" ? { ...object, role: "antagonist-intro" } : object,
+    ),
+    slots: [
+      {
+        area: { col: 6, cols: 4, row: chunk.entry.row - doorRows, rows: doorRows },
+        id: "encounter-room",
+        kind: "door",
+      },
+    ],
+  };
+}

@@ -1,7 +1,17 @@
+import { encounterStart, PATROL_ENCOUNTER, withoutEncounters } from "./chunkTemplates";
 import type { ChunkPlan } from "./types";
 
 // The street's fixed boundary sections surround a newly assembled middle on every entry.
 export const STREET_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  "city-streets-finish": { ...withoutEncounters(PATROL_ENCOUNTER), theme: "city-streets" },
+  "city-streets-start": {
+    ...encounterStart(4, PATROL_ENCOUNTER),
+    backdrops: [
+      { character: "facade-one-storey", col: 0, cols: 12, role: "near-wall", row: 34 },
+      { character: "storefront-noodle-bar", col: 4, role: "storefront", row: 40 },
+    ],
+    theme: "city-streets",
+  },
   "street-finish": {
     backdrops: [
       { character: "facade-one-storey", col: 0, cols: 40, role: "near-wall", row: 34 },
@@ -32,7 +42,7 @@ export const STREET_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     theme: "street",
   },
-  // The depot lessons, dog introduction and refuge positions are identical on every entry.
+  // The depot lessons and refuge positions are identical on every entry.
   "street-start": {
     backdrops: [
       { character: "depot-wall", col: 0, cols: 60, role: "depot-wall", row: 35 },
@@ -44,18 +54,11 @@ export const STREET_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 120,
     difficulty: 3,
-    encounters: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [
       { character: "platform-ledge", col: 66, cols: 6, role: "ledge", row: 46 },
-      {
-        character: "dog-antagonist",
-        col: 91,
-        role: "antagonist",
-        row: 46,
-        scene: "depot-dog-intro",
-      },
       { character: "platform-ledge", col: 102, cols: 6, role: "ledge", row: 46 },
       { character: "red-edge-top", col: 56, cols: 6, role: "edge-top", row: 54 },
       { character: "red-edge-support", col: 56, cols: 6, role: "support", row: 55, rows: 5 },
