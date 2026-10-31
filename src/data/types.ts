@@ -45,6 +45,15 @@ export interface DeathText {
   readonly title: string;
 }
 
+export interface StatsText {
+  readonly attempts: string;
+  readonly best: string;
+  readonly lastAttempt: string;
+  readonly notCleared: string;
+  readonly partial: string;
+  readonly runTotal: string;
+}
+
 export interface Size {
   readonly height: number;
   readonly width: number;
@@ -88,6 +97,7 @@ export interface CameraTuning {
 
 // The words the player reads.
 export interface GameText {
+  readonly stats: StatsText;
   readonly update: {
     readonly accept: string;
     readonly title: string;
