@@ -1,6 +1,6 @@
 // The player's progress, kept in localStorage as the kit's versioned save (save/saveStore): read
-// once as the game boots, after launchReady, and written each time the map shows, she walks on
-// it, or she completes a zone. A save that cannot be read is backed up and play starts from the
+// once as the game boots, after launchReady, and written each time the map shows, he walks on
+// it, or he completes a zone. A save that cannot be read is backed up and play starts from the
 // beginning; where storage is unavailable, progress lasts until the page closes.
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
 import { localSaveStorage } from "@andornaut/game-kit/save/storage";
@@ -14,7 +14,7 @@ import { stageStatsStore } from "./stats";
 
 export { type Progress } from "./progress";
 
-const KEYS = { backup: "duck-platformer.save-backup", save: "duck-platformer.save" } as const;
+const KEYS = { backup: "bird-versus-ferret.save-backup", save: "bird-versus-ferret.save" } as const;
 
 const store = saveStore(
   localSaveStorage(),
@@ -79,19 +79,19 @@ export function savedProgress(): Progress {
   return progress;
 }
 
-// Where she is on the map: the zones she has completed and the zone node she stands on, the
+// Where he is on the map: the zones he has completed and the zone node he stands on, the
 // map's start with nothing completed from the beginning.
 export function savedMap(): { readonly completed: readonly string[]; readonly stand: string } {
   return mapProgress(ZONE_MAP, progress);
 }
 
-// She stands on the zone node stand: the map opens there.
+// He stands on the zone node stand: the map opens there.
 export function saveStand(stand: string): void {
   void stats.flush();
   write({ at: "map", completed: savedMap().completed, stand });
 }
 
-// She has completed the zone at node: it opens the map past it, and she stands on it.
+// He has completed the zone at node: it opens the map past it, and he stands on it.
 export function saveCompleted(node: string): void {
   clearStageTime(node);
   const { completed } = savedMap();

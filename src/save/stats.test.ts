@@ -2,11 +2,11 @@ import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DUCK } from "../data/duck";
+import { BIRD } from "../data/bird";
 import { activeStepSeconds } from "../rules/death";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneState } from "../rules/zone";
-import { DUCK_FRAME } from "../view/duck";
+import { BIRD_FRAME } from "../view/bird";
 import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats";
 
 const STAGES = new Set(["park", "street"]);
@@ -85,7 +85,7 @@ describe("persistent active stage clocks", () => {
   });
 });
 
-const LAYOUT = zoneLayout(12, DUCK_FRAME, { archetypes: {}, characters: {} }, {}, {}, new Set(), {
+const LAYOUT = zoneLayout(12, BIRD_FRAME, { archetypes: {}, characters: {} }, {}, {}, new Set(), {
   areas: {
     course: {
       cols: 60,
@@ -98,8 +98,8 @@ const LAYOUT = zoneLayout(12, DUCK_FRAME, { archetypes: {}, characters: {} }, {}
   start: { area: "course", entry: "start" },
 });
 const INPUT = { jumpHeld: false, move: 0 as const, useHeld: false };
-const INITIAL = startZone(DUCK, LAYOUT, 1);
-const ACTIVE = stepZone(DUCK, LAYOUT, 0.1, INPUT, INITIAL);
+const INITIAL = startZone(BIRD, LAYOUT, 1);
+const ACTIVE = stepZone(BIRD, LAYOUT, 0.1, INPUT, INITIAL);
 
 describe("active-step time", () => {
   it.each<[string, ZoneState, ZoneState, number]>([
@@ -141,7 +141,7 @@ afterEach(() => {
 it("preserves stats on progress restart, then resets the stage on every clear", async () => {
   const values = new Map<string, string>([
     [
-      "duck-platformer.stats",
+      "bird-versus-ferret.stats",
       JSON.stringify({
         stages: { park: { activeSeconds: 2 }, street: { activeSeconds: 3 } },
         version: STATS_VERSION - 1,
@@ -154,7 +154,7 @@ it("preserves stats on progress restart, then resets the stage on every clear", 
   });
   const save = await import("./index");
   await save.loadProgress();
-  expect(values.has("duck-platformer.stats-backup")).toBe(true);
+  expect(values.has("bird-versus-ferret.stats-backup")).toBe(true);
   expect(save.activeStageTime("street")).toBe(0);
   save.recordActiveStageStep("park", 0.1, INITIAL, ACTIVE);
   expect(save.activeStageTime("park")).toBe(0);
@@ -162,7 +162,7 @@ it("preserves stats on progress restart, then resets the stage on every clear", 
   save.clearProgress();
   await save.flushStats();
   expect(save.activeStageTime("street")).toBe(0.1);
-  expect(values.has("duck-platformer.stats")).toBe(true);
+  expect(values.has("bird-versus-ferret.stats")).toBe(true);
   save.saveCompleted("street");
   await save.flushStats();
   expect(save.activeStageTime("street")).toBe(0);

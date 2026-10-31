@@ -10,8 +10,11 @@ export interface Stats {
   readonly stages: Readonly<Record<string, StageStats>>;
 }
 
-export const STATS_VERSION = 3;
-const KEYS = { backup: "duck-platformer.stats-backup", save: "duck-platformer.stats" } as const;
+export const STATS_VERSION = 4;
+const KEYS = {
+  backup: "bird-versus-ferret.stats-backup",
+  save: "bird-versus-ferret.stats",
+} as const;
 // A dirty clock is checkpointed at most once per second between lifecycle flushes.
 const CHECKPOINT_MS = 1000;
 const fresh = (): Stats => ({ stages: {} });

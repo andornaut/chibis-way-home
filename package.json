@@ -1,7 +1,7 @@
 {
-  "name": "duck-platformer",
+  "name": "bird-versus-ferret",
   "version": "0.0.1",
-  "description": "A pixel-art platformer about a duck climbing back up her high-rise.",
+  "description": "Help Chibi get home after Firt, his former best friend, mails him far away.",
   "license": "UNLICENSED",
   "private": true,
   "type": "module",

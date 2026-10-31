@@ -6,7 +6,7 @@ import type { CachePolicy } from "@andornaut/game-kit/pwa/cachePolicy";
 // shows on the next load: a page fetched from the network must not get the files of the deploy
 // the running worker precached.
 export const CACHE_POLICY: CachePolicy = {
-  cacheNamePrefix: "duck-",
+  cacheNamePrefix: "bird-versus-ferret-",
   hashedAssetPrefix: "/assets/",
   revalidatedUrls: ["/manifest.webmanifest", "/nav.css", "/nav.js", "/site.css"],
 };

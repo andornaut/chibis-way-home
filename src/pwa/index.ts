@@ -28,7 +28,7 @@ import { createUpdateOffer } from "./updateOffer";
 export { PHONE_EVENTS } from "./events";
 
 // The history state key of the extra entry that back pops instead of leaving the game.
-const BACK_GUARD_KEY = "duckBackGuard";
+const BACK_GUARD_KEY = "birdBackGuard";
 const SERVICE_WORKER_URL = "/sw.js";
 let acceptWaitingUpdate: () => void = () => undefined;
 export const updateOffer = createUpdateOffer(() => acceptWaitingUpdate());

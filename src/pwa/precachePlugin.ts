@@ -31,7 +31,7 @@ export function precachePlugin(
         this.emitFile({ fileName: url.slice(1), source, type: "asset" });
       }
     },
-    name: "duck-precache-art",
+    name: "bird-versus-ferret-precache-art",
   };
   return [
     emitArt,

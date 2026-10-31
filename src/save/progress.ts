@@ -4,7 +4,7 @@ import type { ZoneMap } from "../data/types";
 import { openMap } from "../rules/map";
 
 // The player's progress: the beginning (no progress saved, the start screen offers Start), or
-// the map, with the zone nodes she has completed and the zone node she stands on.
+// the map, with the zone nodes he has completed and the zone node he stands on.
 export type Progress =
   | { readonly at: "beginning" }
   | { readonly at: "map"; readonly completed: readonly string[]; readonly stand: string };
@@ -13,9 +13,9 @@ export const BEGINNING: Progress = { at: "beginning" };
 
 // The save format's version. Before the first release, a change to the format or a map node or
 // zone renamed bumps it, and older saves reset to the beginning.
-export const PROGRESS_VERSION = 4;
+export const PROGRESS_VERSION = 5;
 
-// Where she is on the map for progress: the beginning stands her on the map's start with
+// Where he is on the map for progress: the beginning stands him on the map's start with
 // nothing completed.
 export function mapProgress(
   map: ZoneMap,
@@ -28,7 +28,7 @@ const isNames = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((name) => typeof name === "string");
 
 // Why progress does not fit map and zones, or undefined when it does: each completed zone node,
-// and the node she stands on, is a zone node the completed zones open (openMap), whose zone is in
+// and the node he stands on, is a zone node the completed zones open (openMap), whose zone is in
 // zones, named once.
 export function progressProblem(
   map: ZoneMap,
@@ -48,7 +48,7 @@ export function progressProblem(
   if (closed !== undefined) {
     return `the completed zone ${closed} is not open on the map`;
   }
-  return open.includes(stand) ? undefined : `she stands on ${stand}, not an open zone`;
+  return open.includes(stand) ? undefined : `he stands on ${stand}, not an open zone`;
 }
 
 // The progress save's format on map and zones: a save that no longer fits them (a renamed node, a
@@ -70,13 +70,13 @@ export function progressFormat(
         return { ok: true, value: BEGINNING };
       }
       if (at !== "map") {
-        return { ok: false, reason: "the save does not say where she is" };
+        return { ok: false, reason: "the save does not say where he is" };
       }
       if (!isNames(completed)) {
         return { ok: false, reason: "the save's completed zones are not a list of map nodes" };
       }
       if (typeof stand !== "string") {
-        return { ok: false, reason: "the save does not say where she stands" };
+        return { ok: false, reason: "the save does not say where he stands" };
       }
       return checked({ at, completed, stand });
     },

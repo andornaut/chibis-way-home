@@ -36,8 +36,7 @@
 .site-nav .site-nav-logo + li::before {
   display: none;
 }
-/* Below 380px the logo's gap and the separators close up to 8px a side, so the logo and both
-   links fit on one row inside the 16px gutters. */
+/* Below 380px the logo gap and separators use 8px margins; navigation links may wrap. */
 @media (max-width: 379.98px) {
   .site-nav:not(.slim) .site-nav-logo {
     margin-right: 8px;
