@@ -145,6 +145,8 @@ The switch uses knob position and a glyph: right with a tick for on; left with a
 - Overlapping expanded press areas choose the nearest control centre. Keep drawn faces and labels visually separate even where their press areas meet.
 - Selection controls require visible labels; icon-only exceptions require an unambiguous action name. Exposing those names to assistive technology is a runtime requirement, not something a PNG supplies.
 
+Full-page stage-end summaries centre their combined content block while left-aligning every heading, metric label and value to its measured column axis. They reuse the exact selector preview through `STAGE_PREVIEWS[stage]`. This full-page rule does not change actual modal title centring or death/retry layout. See [summary geometry](README.md#stage-and-zone-summaries).
+
 ## Asset and code contract
 
 | Concern                   | Current contract                                                                       | Intended change or gap                                                                        |
