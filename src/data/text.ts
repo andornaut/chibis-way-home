@@ -44,6 +44,9 @@ export const TEXT: GameText = {
     touch: "Touch: drag left or right to walk; press {jump} or {use}.",
   },
   lines: {
+    "bini-intro-1": "You interrupted my game of Archie's Dog Walks!",
+    "bini-intro-2": "I am going home.",
+    "bini-intro-3": "Then get past me.",
     "depot-dog-intro-1": "Furt asked me to stop you.",
     "depot-dog-intro-2": "I am going home.",
     "depot-dog-intro-3": "Then you will have to get past me.",

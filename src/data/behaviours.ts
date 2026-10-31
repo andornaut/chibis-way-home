@@ -1,5 +1,5 @@
 import { SCREEN, TILE } from "./screen";
-import type { BehaviourNode, BehaviourPlan } from "./types";
+import type { BehaviourAction, BehaviourNode, BehaviourPlan } from "./types";
 
 const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
@@ -233,16 +233,41 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = {
   distance: -12,
   inactiveAnimation: "idle",
   initial: "patrol-left",
-  states: patrolChargeStates({
-    attackRange: 10,
-    patrolPause: 0.35,
-    patrolSpeed: 2.5,
-    preparation: "warn",
-    preparationSeconds: 0.65,
-    restSeconds: 1,
-    rushSeconds: 0.45,
-    rushSpeed: 17.5,
-  }),
+  states: {
+    ...patrolChargeStates({
+      attackRange: 10,
+      patrolPause: 0.35,
+      patrolSpeed: 2.5,
+      preparation: "warn",
+      preparationSeconds: 0.65,
+      restSeconds: 1,
+      rushSeconds: 0.45,
+      rushSpeed: 17.5,
+    }),
+    rest: {
+      animation: "rest",
+      motion: { kind: "wait" },
+      transitions: [{ to: "set-trap", when: [{ kind: "elapsed", seconds: 1 }] }],
+    },
+    "set-trap": {
+      animation: "set-trap",
+      motion: { kind: "wait" },
+      onEnter: [
+        {
+          armSeconds: 0.8,
+          armingAnimation: "warning",
+          character: "goose-trap",
+          gravity: 0,
+          kind: "spawn",
+          lifeSeconds: 5,
+          maxAlive: 3,
+          offset: { x: 1, y: 3 },
+          velocity: { x: 0, y: 0 },
+        },
+      ],
+      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.48 }] }],
+    },
+  },
 };
 
 export const OWL_BEHAVIOUR: BehaviourPlan = {
@@ -308,4 +333,146 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = {
     returnSpeed: 3.75,
     returnState: "climb",
   }),
+};
+
+export const BEAR_BEHAVIOUR: BehaviourPlan = {
+  axis: "x",
+  distance: -18,
+  inactiveAnimation: "idle",
+  initial: "watch",
+  states: {
+    frustration: frustrationNode("prepare-growl"),
+    growl: {
+      animation: "growl",
+      motion: { kind: "wait" },
+      onEnter: [
+        {
+          height: 3,
+          kind: "force-pulse",
+          range: 42,
+          seconds: 0.35,
+          velocity: { x: 20, y: 0 },
+          visual: { animation: "pulse", art: "bear-growl-wave", offset: { x: 3, y: 0.5 } },
+        },
+      ],
+      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+    },
+    maul: {
+      animation: "maul",
+      motion: { kind: "wait" },
+      transitions: [{ to: "rest", when: [{ kind: "elapsed", seconds: 0.45 }] }],
+    },
+    "prepare-charge": {
+      animation: "prepare",
+      enter: "face-target",
+      motion: { kind: "wait" },
+      transitions: [
+        { to: "frustration", when: [{ kind: "elapsed", seconds: 0.6 }, ...LOST_TARGET] },
+        { to: "rush", when: [{ kind: "elapsed", seconds: 0.6 }] },
+      ],
+    },
+    "prepare-growl": {
+      animation: "prepare",
+      enter: "face-target",
+      motion: { kind: "wait" },
+      transitions: [{ to: "growl", when: [{ kind: "elapsed", seconds: 0.9 }] }],
+    },
+    pursuit: {
+      animation: "walk",
+      motion: { direction: "target", kind: "move", speed: 4 },
+      transitions: [
+        { to: "frustration", when: LOST_TARGET },
+        { to: "prepare-charge", when: [{ kind: "nearby", range: 10 }] },
+      ],
+    },
+    rest: {
+      animation: "rest",
+      motion: { kind: "wait" },
+      transitions: [{ to: "prepare-growl", when: [{ kind: "elapsed", seconds: 1 }] }],
+    },
+    rush: {
+      animation: "rush",
+      motion: { direction: "facing", kind: "move", speed: 25 },
+      transitions: [
+        { to: "maul", when: [{ kind: "boundary" }] },
+        { to: "maul", when: [{ kind: "elapsed", seconds: 0.55 }] },
+      ],
+    },
+    watch: {
+      animation: "idle",
+      motion: { kind: "wait" },
+      transitions: [{ to: "prepare-growl", when: DETECTION }],
+    },
+  },
+};
+
+const PIGEON_POOP: BehaviourAction = {
+  armSeconds: 0,
+  character: "pigeon-poop",
+  gravity: 30,
+  kind: "spawn",
+  lifeSeconds: 3,
+  maxAlive: 3,
+  offset: { x: 1.5, y: 4 },
+  velocity: { x: 0, y: 0 },
+};
+
+export const PIGEON_BEHAVIOUR: BehaviourPlan = {
+  axis: "x",
+  distance: 24,
+  initial: "watch",
+  states: {
+    "drop-left": {
+      animation: "drop",
+      motion: { kind: "wait" },
+      onEnter: [PIGEON_POOP],
+      transitions: [{ to: "fly-right", when: [{ kind: "elapsed", seconds: 0.2 }] }],
+    },
+    "drop-right": {
+      animation: "drop",
+      motion: { kind: "wait" },
+      onEnter: [PIGEON_POOP],
+      transitions: [{ to: "return", when: [{ kind: "elapsed", seconds: 0.2 }] }],
+    },
+    "fly-left": {
+      animation: "fly",
+      motion: { kind: "fly", speed: 16, to: { x: -12, y: -8 } },
+      transitions: [
+        { to: "drop-left", when: [{ kind: "arrived", tolerance: 0.1 }] },
+        { to: "frustration", when: [{ kind: "elapsed", seconds: 3 }] },
+      ],
+    },
+    "fly-right": {
+      animation: "fly",
+      motion: { kind: "fly", speed: 16, to: { x: 12, y: -8 } },
+      transitions: [
+        { to: "drop-right", when: [{ kind: "arrived", tolerance: 0.1 }] },
+        { to: "frustration", when: [{ kind: "elapsed", seconds: 3 }] },
+      ],
+    },
+    frustration: frustrationNode("return"),
+    prepare: {
+      animation: "prepare",
+      motion: { kind: "wait" },
+      transitions: [{ to: "fly-left", when: [{ kind: "elapsed", seconds: 0.4 }] }],
+    },
+    rest: {
+      animation: "rest",
+      motion: { kind: "wait" },
+      transitions: [{ to: "prepare", when: [{ kind: "elapsed", seconds: 1 }] }],
+    },
+    return: {
+      animation: "fly",
+      motion: { kind: "fly", speed: 16, to: { x: 0, y: 0 } },
+      transitions: [
+        { to: "rest", when: [{ kind: "arrived", tolerance: 0.1 }] },
+        { to: "frustration", when: [{ kind: "elapsed", seconds: 3 }] },
+      ],
+    },
+    watch: {
+      animation: "idle",
+      motion: { kind: "wait" },
+      transitions: [{ to: "prepare", when: DETECTION }],
+    },
+  },
 };

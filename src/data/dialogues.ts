@@ -2,6 +2,13 @@ import type { DialoguePlan, DialogueSpeaker } from "./types";
 
 // Linear conversations, with paragraph text in TEXT.lines.
 export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
+  "bini-intro": {
+    lines: [
+      { line: "bini-intro-1", speaker: "bear" },
+      { line: "bini-intro-2", speaker: "bird" },
+      { line: "bini-intro-3", speaker: "bear" },
+    ],
+  },
   "depot-dog-intro": {
     lines: [
       { line: "depot-dog-intro-1", speaker: "dog" },
@@ -13,6 +20,7 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
 
 // Portraits and name-tab colours shared by every line from a speaker.
 export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
+  bear: { colour: "tan", portrait: "portrait-bear", side: "right" },
   bird: { colour: "amber", portrait: "portrait-bird", side: "left" },
   dog: { colour: "green", portrait: "portrait-dog", side: "right" },
 };

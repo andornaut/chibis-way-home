@@ -1,5 +1,6 @@
 import {
   ANIMAL_DETECTION_RANGE,
+  BEAR_BEHAVIOUR,
   BOAT_BEHAVIOUR,
   CITY_GROUND_HAZARD_BEHAVIOUR,
   CITY_LIFT_BEHAVIOUR,
@@ -7,6 +8,7 @@ import {
   DOG_BEHAVIOUR,
   GOOSE_BEHAVIOUR,
   OWL_BEHAVIOUR,
+  PIGEON_BEHAVIOUR,
   RABBIT_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
 } from "./behaviours";
@@ -47,6 +49,14 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     art: "one-way-awning",
     cols: 3,
     rows: 1,
+  },
+  "bear-antagonist": {
+    archetype: "hazard",
+    art: "bear-antagonist",
+    behaviour: BEAR_BEHAVIOUR,
+    cols: 4,
+    rows: 4,
+    tuning: { interaction: { kind: "talk", range: ANIMAL_DETECTION_RANGE } },
   },
   // A canopy: one-way, 6 above the sidewalk.
   canopy: {
@@ -224,6 +234,13 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 4,
     rows: 4,
   },
+  "goose-trap": {
+    animations: { idle: "armed" },
+    archetype: "hazard",
+    art: "goose-trap",
+    cols: 2,
+    rows: 1,
+  },
   // A cellar hatch's edges: the sidewalk's edge tile with an open steel leaf standing 2 above it.
   "hatch-left": {
     archetype: "solid",
@@ -372,6 +389,19 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     art: "pigeon",
     cols: 2,
     rows: 2,
+  },
+  "pigeon-antagonist": {
+    archetype: "hazard",
+    art: "pigeon-antagonist",
+    behaviour: PIGEON_BEHAVIOUR,
+    cols: 4,
+    rows: 4,
+  },
+  "pigeon-poop": {
+    archetype: "hazard",
+    art: "pigeon-poop",
+    cols: 1,
+    rows: 1,
   },
   // The dark floor of a pit, 4 below the sidewalk's top: a quick restart for a fall into an
   // opening.
