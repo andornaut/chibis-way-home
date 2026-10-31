@@ -542,6 +542,7 @@ export interface ChunkRules {
 // scenery, drawn in front of the theme's repeated backdrops. slots: where the seed may place
 // events and doors; it must play with every slot empty.
 export interface ChunkPlan {
+  readonly encounters: number;
   readonly backdrops?: readonly Instance[];
   readonly cols: number;
   readonly difficulty: Difficulty;
@@ -586,6 +587,7 @@ export interface ThemePlan {
 // are exempt. spawnCol: her centre column within the opening chunk. events and doors: what the
 // seed places in the chunks' slots, count of each.
 export interface ZoneRecipe {
+  readonly encounters?: number;
   readonly difficulty: { readonly max: Difficulty; readonly min: Difficulty };
   readonly difficultyWeights?: Readonly<Partial<Record<Difficulty, number>>>;
   readonly doors: readonly { readonly count: number; readonly room: string }[];
@@ -606,6 +608,8 @@ export interface ZoneSectionRecipe extends Pick<
   readonly id: string;
 }
 export interface OrderedZoneRecipe {
+  // One quota across all sections, including the global caps.
+  readonly encounters?: number;
   readonly finish: string;
   readonly sections: readonly ZoneSectionRecipe[];
   readonly start: string;
