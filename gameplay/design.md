@@ -33,7 +33,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 ## Core loop
 
 1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains three stages; V1 follows a linear route.
-2. **Between stages:** completing stage one or two shows a cutscene image and Continue, which enters the next stage directly. Completing stage three shows the zone's outgoing exchange, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
+2. **Between stages:** completing stage one or two shows an image-backed statistics interstitial and Continue, which enters the next stage directly. Completing stage three shows the zone's outgoing exchange and statistics, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
 3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Furt is undecided.
 
 ## Voice
@@ -96,9 +96,9 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 
 - **Availability:** all six V1 zones appear in route order, with three stages each as listed under V1 route. Unbuilt zones and stages are visibly unavailable and cannot be entered. The park is a debug prototype outside the V1 map
 - **Backtracking:** unlocked built stages remain available for replay. Replaying an earlier stage never removes later unlocks
-- **Between stages:** clearing stage one or two shows a placeholder cutscene image with Continue, which enters the next stage directly without showing the map. Clearing stage three shows the outgoing zone exchange before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
+- **Between stages:** clearing every stage shows an image-backed statistics interstitial with Continue at the bottom right. After stage one or two, Continue enters the next stage directly without showing the map. Stage three first shows the outgoing zone exchange, then current-stage and actual-zone-visit statistics, before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
-- **Celebration:** only clearing Apartment building's third stage, Climb to the apartment, shows Furt's outgoing exchange followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
+- **Celebration:** only clearing Apartment building's third stage, Climb to the apartment, shows Furt's outgoing exchange and the final statistics interstitial followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
 - **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from any stage entrance returns to the map. The entrance exit stays reachable and has no blocking wall; an apartment stage returns through its first section's left edge
 - **Forks:** branching routes are deferred to Next. V1 is linear and has no laps
 - **Progression:** Parcel depot is unlocked from the start. Clearing a stage unlocks the next built stage in the route table. Clearing stage three opens the next zone. Completed stages remain available for replay, and unbuilt content remains unavailable
@@ -115,8 +115,8 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
 - **Edge hazards:** a common red strip, 2 to 3 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow
 - **Encounters:** stage one has no visible physical antagonist and zero encounter sections. Stage two begins with the first physical meeting and has one further encounter elsewhere, for two total. Stage three has two encounters. Counts apply across the whole stage, not per floor. Ordinary platforming separates encounters; generated runs vary layout while preserving these quotas, and death retries retain the same run
-- **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show an inter-stage cutscene; stage three shows its outgoing zone exchange before map travel, except for Furt's final exchange followed by celebration. An internal floor transition does not clear the stage
-- **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged, and cumulative active time is retained. Every stage starts him clear of that edge and has no wall in front of it
+- **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show their image-backed statistics interstitials; stage three shows its outgoing zone exchange and statistics before map travel, except for Furt's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
+- **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged; a fresh stage entry starts a new run and its own statistics. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
 - **Length:** target three minutes for a successful clear of each stage. This target is unmeasured. Recipe data owns stage-length ranges, including fixed caps and linked sections; the debug park keeps its own recipe
 - **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. A multi-area apartment stage applies this structure across its linked sections, with fixed first and last caps and seeded runs of shared templates in intermediate areas. The rules for chunks are under Chunks
@@ -131,16 +131,31 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 - **Restart:** a full restart starts a new run
 - **Retry:** death ends the attempt; Try again restarts the same stage directly, without the map or stage chooser, as another attempt of the same run, preserving its seed and generated layout
 
+### Stage statistics and interstitials
+
+The same four fields appear after every stage clear, on the death/retry card and at zone end:
+
+| Field             | Meaning                                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------- |
+| Last attempt time | Active play time in the attempt that just ended                                                 |
+| Run total time    | Active play time across all attempts of this generated run, including failed attempts           |
+| Best time         | Historically fastest successful attempt for this stage, excluding time spent in failed attempts |
+| Attempt count     | All attempts in this run, including the initial attempt and the attempt that just finished      |
+
+- **New runs:** a fresh generated run starts with zero run-total time and attempt count one. Death Retry preserves the run and its accumulated time, and starts the next attempt. Fresh map entry or replay generates a new seed and starts fresh run statistics; historical best times remain
+- **Presentation:** after every stage, an interstitial uses an actual image of the cleared stage's art and shows its four statistics. Continue is at the bottom right. Outgoing dialogue uses image-backed presentation with Skip; it does not add new plot imagery
+- **Zone visits:** zone-end statistics show the same four fields for the actual current zone visit alongside the current-stage statistics. Zone last-attempt time sums the latest finished attempt time from each visited stage; zone run-total time sums all active attempt time in those current-visit stage runs; zone attempt count sums their attempt counts. A zone best requires successful clears of all three stages in the same visit and sums only those successful-attempt times. Compare it only with other complete visits. Partial visits show their completed-stage count as N/3, set no new zone best and never combine historical stage bests into a fictitious full-zone result
+
 ### Death and retry
 
 This is the approved implementation scope for the current change, including the death sequence, required card and persistent stage metrics.
 
-- **Active time:** count only time actually spent playing the current stage, excluding pause, dialogue, menus, the death sequence, the death card, floor-transition presentation, inter-stage cutscenes and map travel. Floor transitions preserve the same stage clock. Retries add to the same cumulative time. It persists through the map, title screen and app restarts until the stage is cleared; every clear resets it, including a replay clear
-- **Card:** after the animation, hold the final pose beneath a required modal with four rows in this order: the zone name; `Stage {number}: {stage name}`; `Progress: X%` for the current attempt; and `Time: 0:00` for cumulative active stage time. Back to title is the secondary button on the left; Try again is the primary button on the right. Keep the card compact and position it so Chibi remains visible. The card stays until a button is pressed; outside taps, back and Escape do not dismiss it
+- **Active time:** count only time spent playing the stage. Live top-panel foreshadowing counts while gameplay continues. Pause, paused dialogue, menus, the death sequence and card, floor-transition presentation, interstitials and map travel do not count. Floor transitions preserve the same run clock; its attempt and total times follow Stage statistics and interstitials
+- **Card:** after the animation, hold the final pose beneath a required modal showing the zone and stage, current-attempt progress percentage and the four stage statistics. Back to title is the secondary button on the left; Try again is the primary button on the right. Keep the card compact and position it so Chibi remains visible. The card stays until a button is pressed; outside taps, back and Escape do not dismiss it
 - **Progress:** a subtle, visible line 2 px high at the top uses the stage's theme. It tracks Chibi's current position during play and his death point on death, not the furthest point reached. In a multi-area stage it uses shared weighted current-position progress across the floor sections, including the death point; returning to an earlier section can lower it. Retrying starts the percentage at zero
 - **Retry:** Try again restarts the current stage directly from its checkpoint in the same run, without the map or stage chooser. In a multi-area stage this is the first floor, not the current floor. Back to title opens the title screen. There is no permadeath
 - **Sequence:** lethal contact starts a small recoil, then Chibi falls to support, squashes more deeply on landing and makes a small upward bounce into a deflated sitting pose with his feet hidden. The stage and camera freeze at the death context while Chibi plays a dedicated death animation, then holds its final pose for the card
-- **Storage:** active stage time uses a separate stats save. Restart clears progress only and does not wipe stats
+- **Storage:** historical best times use a separate stats save. Restart clears progress only; it starts fresh run statistics without wiping historical bests
 
 ### Chunks
 
@@ -263,7 +278,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Areas:** Entrance and lobby has two linked sections: entrance and lobby. Shared floors has three: restaurant, first fire escape and pool. Climb to the apartment has four: second fire escape, spa, third fire escape and residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
 - **Encounters:** Furt is a normal lethal-contact antagonist who periodically charges for direct contact and throws parcels as his distinct special attack. He uses shared behaviour primitives and has no red contact outline; this is not a boss encounter and adds no combat
-- **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows Furt's outgoing exchange, then the celebration, every time including replays. The cause of the fight and the outcome of the friendship remain undecided
+- **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows Furt's outgoing exchange, then the image-backed statistics interstitial and celebration, every time including replays. The cause of the fight and the outcome of the friendship remain undecided
 - **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. Recipe data defines each linked stage's aggregate length
 - **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Shared floors, then Climb to the apartment. The final map path ends at the apartment; unlocked stages remain replayable
 - **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room or quest. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
@@ -293,7 +308,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Forward:** Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. There is no back, timer or scrolling chat history
 - **Foreshadowing:** each fresh stage-one entry plays a live top-panel exchange between the antagonist and Chibi, with Skip. No physical antagonist is visible. Death retries do not replay it. This entry dialogue uses separate state from the first physical introduction
 - **Introductions:** the first physical sighting at the beginning of stage two starts an introduction once per zone per playthrough, always with Skip. Its seen state is shared across all three stages and survives death, retries and stage replay; a new game resets it
-- **Outgoing exchanges:** completing a zone's third stage shows its outgoing exchange on a black or placeholder interstitial, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to the map walk; Furt's final exchange proceeds to the existing celebration instead
+- **Outgoing exchanges:** completing a zone's third stage shows its outgoing exchange over an actual image of the cleared stage's art, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to stage and zone-visit statistics, then the map walk; Furt's final exchange and statistics proceed to the existing celebration instead
 - **Restarts:** death retries do not replay stage-one foreshadowing or a seen physical introduction. Fresh stage-one entries replay foreshadowing; physical introductions keep their separate once-per-zone seen state
 - **Skip:** Skip skips all remaining dialogue. If the conversation ends in a choice, Skip opens its modal without choosing an answer or bypassing the choice
 
