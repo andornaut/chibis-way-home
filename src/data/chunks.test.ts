@@ -180,18 +180,26 @@ describe.each(ALL_RECIPES)("recipe %s", (key, library, recipe) => {
   it("fits its length and difficulty band and keeps each chunk's maxPerZone", () => {
     if ("sections" in recipe) {
       expect(plan().areaOrder).toEqual(recipe.sections.map(({ id }) => id));
+      const counts = new Map<string, number>();
       recipe.sections.forEach((section, index) => {
-        const placed = plan().areas[section.id]?.chunks ?? [];
+        const area = plan().areas[section.id];
+        const placed = area?.chunks ?? [];
+        expect(area?.cols).toBeGreaterThanOrEqual(section.length.min);
+        expect(area?.cols).toBeLessThanOrEqual(section.length.max);
         const capStart = index === 0 ? 1 : 0;
         const capEnd = index === recipe.sections.length - 1 ? 1 : 0;
         const middle = placed.slice(capStart, placed.length - capEnd);
-        expect(middle).toHaveLength(1);
+        expect(middle.length).toBeGreaterThanOrEqual(1);
         for (const { chunk } of middle) {
+          counts.set(chunk, (counts.get(chunk) ?? 0) + 1);
           expect(section.chunks).toContain(chunk);
           expect(chunkAt(chunk).difficulty).toBeGreaterThanOrEqual(section.difficulty.min);
           expect(chunkAt(chunk).difficulty).toBeLessThanOrEqual(section.difficulty.max);
         }
       });
+      expect(
+        [...counts].filter(([id, count]) => count > (chunkAt(id).maxPerZone ?? count)),
+      ).toEqual([]);
       return;
     }
     const area = plan().areas[ASSEMBLED_AREA];
