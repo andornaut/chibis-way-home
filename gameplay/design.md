@@ -53,6 +53,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 | Zone               | A themed map destination containing two stages                  |
 | Stage              | The playable level, currently represented by `ZonePlan` in code |
 | Section            | One continuous area within a stage, such as an apartment floor  |
+| Encounter section  | A distinct enemy encounter segment within a stage               |
 | Chunk              | A hand-designed unit used to assemble the randomized layout     |
 | Opening and ending | The fixed caps around a stage's randomized middle               |
 | Run                | One generated stage layout and its seed                         |
@@ -113,6 +114,7 @@ The V1 map has six themed destinations with two catalogued stages each. All twel
 - **Difficulty:** per-zone bands and chunk-selection weights in `src/data/` set a demanding first-zone base and increase difficulty in every following zone. Blue cityscape selects grades 3 to 4, Industrial outskirts and Countryside grades 3 to 5, and Woodland, Home city and Apartment building grades 4 to 5. Increasing weights for harder chunks distinguish successive zones even when their bands match. Seeded variation remains inside each band
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
 - **Edge hazards:** a common red strip, 2 to 3 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow
+- **Encounters:** every zone has exactly two distinct encounter sections in its first stage and three in its second stage, counted across the whole stage rather than per floor. Ordinary platforming separates the encounters, with flexible spacing. Generated runs vary encounter order and layout while preserving the quota; death retries retain the same run and encounter count. The quota is independent of the successful-clear time target
 - **Exit:** reaching the end of a stage's final area clears the stage. A first stage shows the inter-stage cutscene; a second stage returns to the map for travel to the next zone, except for the final-stage celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged, and cumulative active time is retained. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both

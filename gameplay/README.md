@@ -34,6 +34,7 @@ The six-destination V1 map has all twelve V1 stages built: Blue cityscape's Parc
 
 Targets are assessed per stage and player skill. Bands other than the successful-clear time target remain to be agreed with the user. The kinds of target:
 
+- **Encounter distribution:** satisfy the rulebook's per-stage quotas with distinct encounter sections, ordinary platforming between them and varied order and layout. Encounter spacing is flexible; it is not a time-based encounter rate
 - **Stage length:** target about five minutes of active play in a successful attempt. This is a tuning target, not a hard time limit or a direct conversion to tile length. Track cumulative active time including retries as a separate metric, using the rulebook's active-time exclusions
 - **Reaches:** Chibi makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
