@@ -89,7 +89,7 @@ Try ordinary placement using the full safe available width first. Only when that
 | Back to title | Secondary | Equal group width x 48 | Ink on grey     |
 | Try again     | Primary   | Equal group width x 48 | White on dslate |
 
-The left-to-right order carries meaning: leaving is secondary, retrying is primary. Derive the shared width from the widest actual label, with an 8px gap between actions. Labels use `font-body` at 2x, centred by visible ink, with the standard pressed displacement and focus ring. Apply the shared expanded press targets and nearest-centre overlap rule. The game supplies every label and value; art does not bake text into the textures. See [the retry layout](README.md#stage-progress-and-retry) for the seven text rows, four run metrics and frozen scene.
+The left-to-right order carries meaning: leaving is secondary, retrying is primary. Derive the shared width from the widest actual label, with an 8px gap between actions. Labels use `font-body` at 2x, centred by visible ink, with the standard pressed displacement and focus ring. Apply the shared expanded press targets and nearest-centre overlap rule. The game supplies every label and value; art does not bake text into the textures. See [the retry layout](README.md#stage-progress-and-retry) for the centred identity/progress group, four metrics on shared left-label and right-value axes, and frozen scene. The identity and metrics groups have an 8px gap, with 4px between their own rows. The title keeps symmetric 50px clearance without adding a close control. With single-line rows, 16px padding and the 48px action row, the measured baseline height is 228px; wrapped content grows it.
 
 ### Update notice action
 
