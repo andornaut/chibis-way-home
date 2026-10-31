@@ -9,6 +9,8 @@ export const EDGE = 1e-6;
 export interface BirdInput {
   readonly jumpHeld: boolean;
   readonly move: -1 | 0 | 1;
+  // External velocity for this step, separate from locomotion and platform momentum.
+  readonly push?: Point;
 }
 
 export interface BirdState {
@@ -78,6 +80,30 @@ function hopSpeed(gravity: number, seconds: number, remaining: number): number {
   return halfStep + Math.sqrt(2 * gravity * remaining + halfStep ** 2);
 }
 
+// A forced move cannot pass through a thin solid between its starting and ending boxes.
+function pushedPosition(
+  solids: readonly Rect[],
+  axis: "x" | "y",
+  box: Rect,
+  desired: number,
+): number {
+  const across = axis === "x" ? "y" : "x";
+  const length = axis === "x" ? "width" : "height";
+  const depth = axis === "x" ? "height" : "width";
+  let end = desired;
+  for (const solid of solids) {
+    if (box[across] >= solid[across] + solid[depth] || solid[across] >= box[across] + box[depth]) {
+      continue;
+    }
+    if (desired > box[axis] && box[axis] + box[length] <= solid[axis] + EDGE) {
+      end = Math.min(end, solid[axis] - box[length]);
+    } else if (desired < box[axis] && box[axis] >= solid[axis] + solid[length] - EDGE) {
+      end = Math.max(end, solid[axis] + solid[length]);
+    }
+  }
+  return end;
+}
+
 // One fixed step of seconds: steer, jump, fall, then move along x and along y in turn, each
 // stopped at the first solid in the way. Ledges stop her only from above: falling onto one from
 // at or above its top, never rising or walking through it. Every fall flutters: it never passes
@@ -135,8 +161,13 @@ export function stepBird(
   }
 
   let carryVx = bird.carryVx;
-  const moving = vx + carryVx;
-  let x = bird.x + moving * seconds;
+  const moving = vx + carryVx + (input.push?.x ?? 0);
+  const intendedX = bird.x + moving * seconds;
+  let x = input.push?.x ? pushedPosition(solids, "x", birdBox(tuning, bird), intendedX) : intendedX;
+  if (x !== intendedX) {
+    vx = 0;
+    carryVx = 0;
+  }
   for (const solid of solids) {
     const box = { height: tuning.height, width: tuning.width, x, y: bird.y };
     if (overlaps(box, solid)) {
@@ -148,12 +179,24 @@ export function stepBird(
 
   // grounded is found afresh each step: standing on a solid, gravity carries her a fraction of a
   // pixel into it, and the check below lands her again.
-  let y = bird.y + vy * seconds;
-  let grounded = false;
+  const verticalPush = input.push?.y ?? 0;
+  const falling = vy + verticalPush;
+  const intendedY = bird.y + falling * seconds;
+  let y = input.push?.y
+    ? pushedPosition(solids, "y", { ...birdBox(tuning, bird), x }, intendedY)
+    : intendedY;
+  if (input.push?.y && falling > 0) {
+    y = pushedPosition(ledges, "y", { ...birdBox(tuning, bird), x }, y);
+  }
+  let grounded = y !== intendedY && falling > 0;
+  if (y !== intendedY) {
+    vy = 0;
+    jumpRise = "free";
+  }
   for (const solid of solids) {
     const box = { height: tuning.height, width: tuning.width, x, y };
     if (overlaps(box, solid)) {
-      if (vy > 0) {
+      if ((verticalPush === 0 ? vy : falling) > 0) {
         y = solid.y - tuning.height;
         grounded = true;
       } else {
@@ -166,7 +209,11 @@ export function stepBird(
   const bottom = bird.y + tuning.height;
   for (const ledge of ledges) {
     const box = { height: tuning.height, width: tuning.width, x, y };
-    if (vy > 0 && bottom <= ledge.y + EDGE && overlaps(box, ledge)) {
+    if (
+      (verticalPush === 0 ? vy : falling) > 0 &&
+      bottom <= ledge.y + EDGE &&
+      overlaps(box, ledge)
+    ) {
       y = ledge.y - tuning.height;
       grounded = true;
       vy = 0;

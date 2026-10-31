@@ -188,3 +188,40 @@ describe("stepBird", () => {
     expect(lowestY(states)).toBe(ceiling.y + ceiling.height);
   });
 });
+
+describe("external push", () => {
+  it.each([false, true])(
+    "pushes with grounded=%s without adding locomotion or carry momentum",
+    (grounded) => {
+      const bird = { ...startBird(BIRD, { x: 0, y: GROUND.y }), grounded };
+      const solids = grounded ? [GROUND] : [];
+      const baseline = stepBird(BIRD, solids, [], STEP, IDLE, bird);
+      const pushed = stepBird(BIRD, solids, [], STEP, { ...IDLE, push: { x: 120, y: 0 } }, bird);
+      expect(pushed.x).toBeCloseTo(baseline.x + 120 * STEP);
+      expect(pushed.vx).toBe(baseline.vx);
+      expect(pushed.carryVx).toBe(baseline.carryVx);
+      expect(stepBird(BIRD, solids, [], STEP, IDLE, pushed).x).toBe(pushed.x);
+    },
+  );
+
+  it.each([
+    { axis: "x" as const, direction: 1, solid: { height: 200, width: 1, x: 50, y: -100 } },
+    { axis: "x" as const, direction: -1, solid: { height: 200, width: 1, x: -50, y: -100 } },
+    { axis: "y" as const, direction: 1, solid: { height: 1, width: 200, x: -100, y: 50 } },
+    { axis: "y" as const, direction: -1, solid: { height: 1, width: 200, x: -100, y: -50 } },
+  ])(
+    "sweeps a strong push against a thin $axis solid in direction $direction",
+    ({ axis, direction, solid }) => {
+      const bird = startBird(BIRD, { x: BIRD.width / 2, y: BIRD.height });
+      const push = {
+        x: axis === "x" ? direction * 100000 : 0,
+        y: axis === "y" ? direction * 100000 : 0,
+      };
+      const stopped = stepBird(BIRD, [solid], [], STEP, { ...IDLE, push }, bird);
+      const size = axis === "x" ? "width" : "height";
+      expect(stopped[axis]).toBe(
+        direction > 0 ? solid[axis] - BIRD[size] : solid[axis] + solid[size],
+      );
+    },
+  );
+});
