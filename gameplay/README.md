@@ -42,7 +42,7 @@ Each target is a band, not a point, assessed per stage and player skill. PLACEHO
 
 ## Remaining for the first build
 
-**Current implementation scope:** the named cast's behaviours, paired with their runtime, values and art. Pebble launches from posts and drops lethal white blocks straight down; they disappear on landing, including on ledges. Trixi wears oversized glasses and places red-edged floor traps with a visible arming delay. Bini's phone introduction leads into a sonic push, charge and contact maul; high ground and solid cover avoid the growl, which kills only indirectly through hazards or falls. Kiwi is a female raccoon using the shared vertical climb-and-drop graph. Archie uses his design from Archie's Dog Walks, and Furt retains his existing behaviour. Stage progression, jump rules and the unresolved friendship outcome are unchanged.
+**Current implementation scope:** all six antagonists are always lethal on contact, periodically attempt a direct charge or body contact, and have distinct specials with data-driven frequencies. Archie adds a leaping pounce; Pebble pairs contact swoops with falling white-block poop; Trixi pairs ground rushes with visibly arming red-edged traps; Bini pairs charge and maul with the finite growl gust; Kiwi pairs ground charges with a vertical drop; Furt pairs charges with thrown parcels. Pebble's blocks disappear on landing, and Bini's push stops outside the gust or behind cover, with high ground the primary avoidance. These rules are paired with the matching runtime, values and art. Stage progression, jump rules and the unresolved friendship outcome are unchanged.
 
 Open questions:
 

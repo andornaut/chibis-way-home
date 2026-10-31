@@ -139,7 +139,7 @@ This is the approved implementation scope for the current change, including the 
 
 Everything in a stage except its terrain is placed in data through archetypes, characters and instances.
 
-- **Animals:** every animal in the main stage foreground, apart from Chibi, is an enemy and lethal on contact. Animals have no red contact outlines. Archie, Pebble, Trixi, Bini, Kiwi and Furt are the only world-stage animals currently placed; there are no friendly background animals in the current stages
+- **Animals:** every animal in the main stage foreground, apart from Chibi, is an enemy and always lethal on contact, including idle, preparation and rest. Every antagonist periodically attempts direct charge or body contact and has a distinct special attack; attack frequency varies in data. Animals have no red contact outlines. Archie, Pebble, Trixi, Bini, Kiwi and Furt are the only world-stage animals currently placed; there are no friendly background animals in the current stages
 - **Archetypes:** a behaviour: collision (none, solid, one-way ledge, hazard or Use), movement, reaction, interaction (such as talking on Use or a quip on approach) and default tuning
 - **Behaviour patterns:** reusable patterns in the data choose behaviour primitives, their sequence or states, transition conditions, timing, animations and tuning. Animals and moving inanimate objects use the same composition approach. Code implements the primitives, condition evaluation and shared executor; character-specific cycles are composed in data rather than hardcoded in code
 - **Characters:** who something is: one archetype plus tuning overrides, its art and animations, hit box, size, its dialogue and quip lines, and quirks. No character inherits from another. Props (platforms, hazards, doors and backdrops) are characters with art but no voice
@@ -192,7 +192,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 ### Pebble encounter
 
 - **Contact:** Pebble is always lethal on contact, including while perched, without a red contact outline
-- **Cycle:** perch on posts, spot Chibi, launch into flight and drop white-block poop projectiles. Behaviour timing and flight tuning live in data
+- **Cycle:** perch on posts, spot Chibi and launch into flight. Pebble periodically swoops at Chibi for body contact and separately drops white-block poop projectiles as his special attack. Behaviour timing and flight tuning live in data
 - **Projectiles:** each white block falls straight down and is lethal on contact. It disappears on landing, including on a ledge, leaving no residue and never homing on Chibi
 
 ### Countryside
@@ -207,7 +207,8 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 - **Appearance:** Trixi wears oversized glasses
 - **Contact:** Trixi is always lethal on contact, including while placing traps, without a red contact outline
-- **Traps:** Trixi places red-edged floor traps. A visible arming delay precedes their lethal contact state; trap timing and placement values live in data
+- **Rush:** Trixi periodically rushes along the ground to make contact with Chibi
+- **Traps:** Trixi's special attack places red-edged floor traps. A visible arming delay precedes their lethal contact state; trap timing and placement values live in data
 
 ### Woodland
 
@@ -220,14 +221,14 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 ### Bini encounter
 
 - **Contact:** Bini is always lethal on contact, including while resting, without a red contact outline. His charge and maul are contact threats, not a combat encounter
-- **Cycle:** idle with the phone, growl, then charge and maul using shared behaviour primitives. Timing and movement values live in data
+- **Cycle:** idle with the phone, use the sonic growl special attack, then charge and maul for direct contact using shared behaviour primitives. Timing and movement values live in data
 - **Growl:** the sonic growl creates a brief gust that pushes Chibi only while he overlaps its finite volume. The push stops when he is above or outside it, or behind solid cover; it is not a single impulse that leaves momentum. It does not kill directly, but can push him into a hazard or off a ledge. High ground is the primary way to avoid it; solid cover also blocks it
 - **Introduction:** Bini sits with a phone playing Archie's Dog Walks. His annoyed introduction precedes his aggressive behaviour
 
 ### Home city
 
 - **Appearance:** City outskirts and Familiar neighbourhood use the canonical peach theme through shared terrain, structure, prop and background skins
-- **Encounters:** both stages feature Kiwi through the existing vertical climb-and-drop behaviour graph. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
+- **Encounters:** both stages feature Kiwi through shared ground-charge and vertical climb-and-drop behaviours. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
 - **Layout:** each stage uses fixed 60-column openings and endings around shared randomized middle layouts, for a total of 720 to 960 columns in the zone's difficulty band. Mandatory climbs, moving ledges and red hazards use the common stage object and layout system
 - **Progression:** clearing Ravine opens City outskirts; clearing City outskirts opens Familiar neighbourhood. Both preserve replay unlocks. Catalogue IDs and save shape are unchanged
 - **Rooms:** doors use the existing prototype test room; there are no new rooms, plot, dialogue, bosses or combat. Water does not add hidden hazards
@@ -235,13 +236,13 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 ### Kiwi encounter
 
 - **Contact:** Kiwi is always lethal on contact, including while preparing and resting, without a red contact outline
-- **Cycle:** climb, prepare, drop and rest, then climb again. Her vertical movement and state timings live in the shared behaviour data
+- **Cycle:** Kiwi periodically charges along the ground for direct contact. Her distinct special attack climbs, prepares and drops vertically before resting. Ground movement, vertical movement and state timings live in shared behaviour data
 
 ### Apartment building
 
 - **Areas:** Entrance and lobby has two short linked sections. Climb to the apartment has seven short floor sections, in order: restaurant, exterior, pool, exterior, spa, exterior, residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
-- **Encounters:** Furt is a normal lethal-contact antagonist using the shared patrol, crouch, rush and rest pattern. He has no red contact outline; this is not a boss encounter and adds no combat
+- **Encounters:** Furt is a normal lethal-contact antagonist who periodically charges for direct contact and throws parcels as his distinct special attack. He uses shared behaviour primitives and has no red contact outline; this is not a boss encounter and adds no combat
 - **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows the celebration every time, including replays. The cause of the fight and the outcome of the friendship remain undecided
 - **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. These short linked sections do not use the other zones' total stage-length range
 - **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Climb to the apartment. The final map path ends at the apartment. Stage IDs, save format and replay unlocks are unchanged
@@ -256,6 +257,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
 - **Dialogue:** the first introduction has three lines: Archie says Furt asked him to stop Chibi; Chibi says he is going home; Archie tells him to get past. The player-facing wording lives in the text data files, with Skip available
+- **Special:** Archie makes a leaping pounce as his distinct special attack, alongside periodic ground rushes for direct contact
 - **Timing:** Archie uses the same timing across both stages of the first zone; their layouts vary. The first encounter is in the first stage
 
 ### Rooms
