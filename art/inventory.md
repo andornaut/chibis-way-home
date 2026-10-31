@@ -276,11 +276,11 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Bini bear
 
-| Key             | Type                              | Size  | Tags                                                      |
-| --------------- | --------------------------------- | ----- | --------------------------------------------------------- |
-| bear-antagonist | Bini character; hit box 2,2,44,46 | 48x48 | idle, prepare, growl, walk, rush, maul, rest, frustration |
-| bear-growl-wave | Noncolliding directional effect   | 48x32 | pulse (once)                                              |
-| portrait-bear   | Right-facing dialogue portrait    | 64x64 | neutral, annoyed                                          |
+| Key             | Type                              | Size  | Tags                                                                      |
+| --------------- | --------------------------------- | ----- | ------------------------------------------------------------------------- |
+| bear-antagonist | Bini character; hit box 2,2,44,46 | 48x48 | idle, prepare, growl, walk, rush, maul, rest, frustration, prepare-attack |
+| bear-growl-wave | Noncolliding directional effect   | 48x32 | pulse (once)                                                              |
+| portrait-bear   | Right-facing dialogue portrait    | 64x64 | neutral, annoyed                                                          |
 
 ## Owl antagonist
 

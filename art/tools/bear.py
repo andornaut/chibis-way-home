@@ -4,7 +4,7 @@
 Usage: bear.py build | preview OUT.png, from repository root. Binary-alpha Endesga/house-ramp pixels.
 Bear-antagonist48x48, bottom24,48, fixed hitbox2,2,44,46 all poses and mirrors. Mouth offset36,22.
 Idle2x400ms seated with9x13phone; prepare2x160 annoyed looking up; growl4x120; walk4x120; rush4x80;
-maul3x100 forward paw; rest2x400; frustration4x120. All loop, once[]. Feet remain inside fixed frame.
+maul3x100 forward paw; rest2x400; frustration4x120; prepare-attack2x160. All loop, once[]. Feet remain inside fixed frame.
 Phone shows a tiny green road, cream dog and red bandana motif for Archie's Dog Walks, with no tiny text.
 Portrait-bear64x64 faces right, neutral/annoyed each1x1000ms, both loop. No hitbox or dialogue encoded.
 Bear-growl-wave48x32, left-centre anchor0,16; pulse4x100ms once[pulse], no hitbox. Rightward grey/cream
@@ -37,7 +37,31 @@ def phone(g, x, y):
     g.rect(x + 3, y + 11, 3, 1, "grey")
 
 
+def prepare_attack(phase):
+    """Raised head, broad lifted chest and drawn-back paw; runtime owns the warning duration."""
+    g = Grid(48, 48)
+    for x in (16, 29):
+        g.ell(x, 44, 5, 3, "brown", sh="dbrown")
+    g.blob(23, 31, 14, 12, "brown", sh="dbrown", li="zone-peach-shade")
+    g.ell(27, 31, 9, 9, "zone-peach", sh="zone-peach-shade")
+    for x in (18, 34):
+        g.ell(x, 7, 3, 3, "brown", sh="dbrown", li="zone-peach")
+        g.ell(x, 7, 1.5, 1.5, "zone-peach-shade")
+    g.blob(27, 14, 12, 9, "brown", sh="dbrown", li="zone-peach-shade")
+    g.ell(34, 19, 7, 5, "cream", sh="zone-peach")
+    g.rect(37, 16, 3, 3, "ink")
+    g.rect(28, 11, 3, 3, "ink")
+    g.rect(27, 9, 4, 1, "dbrown")
+    # The connected forearm swings behind the shoulder, away from the forward attack direction.
+    for y in range(22, 31):
+        g.ell(14 - (30 - y) * 0.4, y, 3, 3, "brown")
+    g.ell(10, 20 - phase * 2, 5, 5, "brown", sh="dbrown", li="zone-peach-shade")
+    return g.outlined(lambda c: K["navy"])
+
+
 def draw(state="idle", phase=0):
+    if state == "prepare-attack":
+        return prepare_attack(phase)
     g = Grid(48, 48)
     seated = state == "idle"
     moving = state in ("walk", "rush")
@@ -107,7 +131,8 @@ def sprites():
     yield KEY, [(state, [draw(state, i) for i in range(count)], ms)
                 for state, count, ms in (("idle", 2, 400), ("prepare", 2, 160), ("growl", 4, 120),
                                          ("walk", 4, 120), ("rush", 4, 80), ("maul", 3, 100),
-                                         ("rest", 2, 400), ("frustration", 4, 120))]
+                                         ("rest", 2, 400), ("frustration", 4, 120),
+                                         ("prepare-attack", 2, 160))]
     yield PORTRAIT, [("neutral", [portrait()], 1000), ("annoyed", [portrait(True)], 1000)]
     yield WAVE, [("pulse", [wave(i) for i in range(4)], 100)]
 

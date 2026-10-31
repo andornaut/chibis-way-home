@@ -683,16 +683,17 @@ The appended `set-trap` tag contains four looping 120ms placement frames. Existi
 
 The frame is 48x48 with bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, containing every pose and its mirror. Contact remains lethal. The phone and seated pose do not create another collision profile.
 
-| Tag         | Art cycle                | Pose                           |
-| ----------- | ------------------------ | ------------------------------ |
-| frustration | Shared four-frame loop   | Blocked-route reaction         |
-| growl       | Four frames, 120ms each  | Mouth opens for the sonic push |
-| idle        | Two frames, 400ms each   | Seated, playing on the phone   |
-| maul        | Three frames, 100ms each | Forward paw gesture            |
-| prepare     | Two frames, 160ms each   | Annoyed look up from the phone |
-| rest        | Two frames, 400ms each   | Settled recovery               |
-| rush        | Four frames, 80ms each   | Committed charge               |
-| walk        | Four frames, 120ms each  | Grounded steps                 |
+| Tag            | Art cycle                | Pose                            |
+| -------------- | ------------------------ | ------------------------------- |
+| frustration    | Shared four-frame loop   | Blocked-route reaction          |
+| growl          | Four frames, 120ms each  | Mouth opens for the sonic push  |
+| idle           | Two frames, 400ms each   | Seated, playing on the phone    |
+| maul           | Three frames, 100ms each | Forward paw gesture             |
+| prepare        | Two frames, 160ms each   | Annoyed look up from the phone  |
+| prepare-attack | Two frames, 160ms each   | Drawn-back paw and lifted chest |
+| rest           | Two frames, 400ms each   | Settled recovery                |
+| rush           | Four frames, 80ms each   | Committed charge                |
+| walk           | Four frames, 120ms each  | Grounded steps                  |
 
 All actor tags loop. `portrait-bear` is 64x64, authored facing right, with `neutral` and `annoyed` tags of one 1000ms frame each. Dialogue text belongs to gameplay data.
 
