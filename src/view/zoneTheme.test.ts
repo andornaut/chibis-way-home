@@ -7,11 +7,17 @@ import { zoneTheme, type ZoneThemes } from "./zoneTheme";
 const THEMES = themeData as ZoneThemes;
 
 describe("zone progress themes", () => {
-  it.each(ZONE_MAP.destinations)("shares $id's primary between both stages", (destination) => {
-    const actual = destination.stages.map((stage) => zoneTheme(ZONE_MAP, THEMES, stage));
-    expect(actual).toEqual([THEMES[destination.id], THEMES[destination.id]]);
-    expect(actual[0]?.primary).toBeTruthy();
-  });
+  it.each(ZONE_MAP.destinations)(
+    "shares $id's primary across every catalogued stage",
+    (destination) => {
+      for (const stage of destination.stages) {
+        const actual = zoneTheme(ZONE_MAP, THEMES, stage);
+        const context = `${destination.id}/${stage}`;
+        expect(actual, context).toEqual(THEMES[destination.id]);
+        expect(actual.primary, context).toBeTruthy();
+      }
+    },
+  );
   it("uses the starting destination for non-catalogued debug stages", () => {
     expect(zoneTheme(ZONE_MAP, THEMES, "test:3")).toEqual(
       zoneTheme(ZONE_MAP, THEMES, ZONE_MAP.start),
