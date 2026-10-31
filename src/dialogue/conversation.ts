@@ -8,7 +8,7 @@ import { focusKeyAction, stepFocus } from "../pause/focusInput";
 export interface DialogueParagraph {
   readonly colour: DialogueSpeaker["colour"];
   readonly name: string;
-  readonly portrait: string;
+  readonly portrait: string | null;
   readonly side: DialogueSpeaker["side"];
   readonly text: string;
 }
@@ -69,6 +69,14 @@ export function dialogueKeyAction(
     return "previousFocus";
   }
   return focus === "skip" && ["Enter", " "].includes(key) ? "skip" : "advance";
+}
+
+// Movement, jump and use keys remain owned by the active world under live dialogue.
+export function liveDialogueKeyAction(
+  focus: DialogueControl | undefined,
+  event: Pick<KeyboardEvent, "key" | "repeat" | "shiftKey">,
+): DialogueAction | undefined {
+  return ["Tab", "Enter"].includes(event.key) ? dialogueKeyAction(focus, event) : undefined;
 }
 
 export interface DialoguePress {

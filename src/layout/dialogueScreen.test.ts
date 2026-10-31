@@ -7,10 +7,12 @@ import portrait from "../../public/art/sprites/portrait-bird.json";
 import { SCREEN } from "../data/screen";
 import { TEXT_BUTTON } from "./buttonLabel";
 import {
+  departureDialogueButtons,
   DIALOGUE_SCREEN,
   dialogueButtons,
   dialogueNameTab,
   dialogueSpeakerLayout,
+  liveDialogueContains,
 } from "./dialogueScreen";
 
 const font = parseBitmapFont(fontBody);
@@ -63,6 +65,36 @@ describe("dialogue layout", () => {
     expect(buttons.continue.button.y).toBeGreaterThan(box.y + box.height);
     expect(buttons.continue.button.y + buttons.continue.button.height).toBeLessThanOrEqual(
       SCREEN.height,
+    );
+  });
+  it("places departure Continue at the bottom right with visible Skip beside it", () => {
+    const buttons = departureDialogueButtons({ continue: width("Continue"), skip: width("Skip") });
+    expect(buttons.continue.button.x + buttons.continue.button.width).toBe(SCREEN.width - 16);
+    expect(buttons.continue.button.y + buttons.continue.button.height).toBe(SCREEN.height - 16);
+    expect(buttons.skip.button.x + buttons.skip.button.width + TEXT_BUTTON.gap).toBe(
+      buttons.continue.button.x,
+    );
+    expect(buttons.skip.button.height).toBe(TEXT_BUTTON.height);
+  });
+
+  it("captures only live dialogue panel and footer hits, leaving world touch controls active", () => {
+    const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
+    const areas = (["continue", "skip"] as const).map((key) => ({
+      art: buttons[key].button,
+      hit: buttons[key].hit,
+      key,
+    }));
+    expect(
+      liveDialogueContains(areas, { x: DIALOGUE_SCREEN.box.x + 1, y: DIALOGUE_SCREEN.box.y + 1 }),
+    ).toBe(true);
+    expect(
+      liveDialogueContains(areas, {
+        x: buttons.continue.button.x + 1,
+        y: buttons.continue.button.y + 1,
+      }),
+    ).toBe(true);
+    expect(liveDialogueContains(areas, { x: SCREEN.width - 20, y: SCREEN.height - 20 })).toBe(
+      false,
     );
   });
 });

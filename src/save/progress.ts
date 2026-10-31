@@ -7,13 +7,18 @@ import { openMap } from "../rules/map";
 // the map, with the zone nodes he has completed and the zone node he stands on.
 export type Progress =
   | { readonly at: "beginning" }
-  | { readonly at: "map"; readonly completed: readonly string[]; readonly stand: string };
+  | {
+      readonly at: "map";
+      readonly completed: readonly string[];
+      readonly seenZoneIntros: readonly string[];
+      readonly stand: string;
+    };
 
 export const BEGINNING: Progress = { at: "beginning" };
 
 // The save format's version. Before the first release, a change to the format or a map node or
 // zone renamed bumps it, and older saves reset to the beginning.
-export const PROGRESS_VERSION = 5;
+export const PROGRESS_VERSION = 6;
 
 // Where he is on the map for progress: the beginning stands him on the map's start with
 // nothing completed.
@@ -21,7 +26,9 @@ export function mapProgress(
   map: ZoneMap,
   progress: Progress,
 ): { readonly completed: readonly string[]; readonly stand: string } {
-  return progress.at === "beginning" ? { completed: [], stand: map.start } : progress;
+  return progress.at === "beginning"
+    ? { completed: [], stand: map.start }
+    : { completed: progress.completed, stand: progress.stand };
 }
 
 const isNames = (value: unknown): value is string[] =>
@@ -61,11 +68,18 @@ export function progressFormat(
     if (progress.at === "beginning") {
       return { ok: true, value: progress };
     }
+    const seen = progress.seenZoneIntros;
+    if (
+      new Set(seen).size !== seen.length ||
+      seen.some((id) => !map.destinations.some((destination) => destination.id === id))
+    ) {
+      return { ok: false, reason: "the save names invalid zone introductions" };
+    }
     const problem = progressProblem(map, zones, progress.completed, progress.stand);
     return problem === undefined ? { ok: true, value: progress } : { ok: false, reason: problem };
   };
   return {
-    decode: ({ at, completed, stand }: StoredObject): Checked<Progress> => {
+    decode: ({ at, completed, seenZoneIntros, stand }: StoredObject): Checked<Progress> => {
       if (at === "beginning") {
         return { ok: true, value: BEGINNING };
       }
@@ -78,7 +92,10 @@ export function progressFormat(
       if (typeof stand !== "string") {
         return { ok: false, reason: "the save does not say where he stands" };
       }
-      return checked({ at, completed, stand });
+      if (!isNames(seenZoneIntros)) {
+        return { ok: false, reason: "the save has no zone introduction list" };
+      }
+      return checked({ at, completed, seenZoneIntros, stand });
     },
     encode: (progress: Progress): Checked<StoredObject> => {
       const valid = checked(progress);

@@ -7,9 +7,10 @@ import {
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { DIALOGUES, SPEAKERS } from "../data/dialogues";
+import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
-import type { DialogueChoice } from "../data/types";
+import type { DialogueChoice, Point } from "../data/types";
 import {
   type DialogueAction,
   type DialogueControl,
@@ -20,13 +21,16 @@ import {
   type DialoguePress,
   dialogueProgress,
   dialogueTapAction,
+  liveDialogueKeyAction,
   moveDialoguePress,
 } from "../dialogue/conversation";
 import {
+  departureDialogueButtons,
   DIALOGUE_SCREEN,
   dialogueButtons,
   dialogueNameTab,
   dialogueSpeakerLayout,
+  liveDialogueContains,
 } from "../layout/dialogueScreen";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import type { LabelledButton } from "../layout/restartCard";
@@ -49,10 +53,15 @@ import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DialogueData {
   readonly scene: string;
+  readonly linear?: boolean;
 }
 
 export interface DialogueOpener {
   dialogueClosed(selection?: string): void;
+}
+
+export interface ForeshadowOpener {
+  foreshadowClosed(): void;
 }
 
 export interface DialogueChoiceOpener {
@@ -77,14 +86,21 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private buttons!: Readonly<Record<DialogueControl, TextButton>>;
   private footer!: GameObjects.Container;
 
-  constructor() {
-    super("dialogue");
+  constructor(
+    key = "dialogue",
+    private readonly departure = false,
+    private readonly live = false,
+  ) {
+    super(key);
   }
 
-  init({ scene }: DialogueData): void {
+  init({ linear = false, scene }: DialogueData): void {
     const plan = DIALOGUES[scene];
     if (!plan) {
       throw new Error(`No dialogue ${scene}`);
+    }
+    if ((this.live || this.departure || linear) && plan.choice) {
+      throw new Error("Zone exchanges must remain skippable linear conversations");
     }
     this.paragraphs = dialogueParagraphs(SPEAKERS, TEXT, plan);
     this.choice = plan.choice;
@@ -99,10 +115,24 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
 
   create(): void {
     fitPlayCamera(this);
+    if (this.departure) {
+      this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, 0x000000).setOrigin(0);
+    }
     this.add.image(DIALOGUE_SCREEN.box.x, DIALOGUE_SCREEN.box.y, "ui-dialogue-box").setOrigin(0);
     this.drawFooter();
     this.drawParagraph();
     this.watchInput();
+    if (this.live) {
+      this.events.on("pause", () => {
+        this.press = undefined;
+        this.renderFooter();
+      });
+      this.events.on("resume", () => {
+        this.press = undefined;
+        captureTab(this, true);
+        this.renderFooter();
+      });
+    }
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
   }
@@ -124,7 +154,10 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       throw new Error("Dialogue actions need labels");
     }
     const width = (label: string) => inkWidth(this.bodyFont(), DIALOGUE_SCREEN.text.scale, label);
-    this.layouts = dialogueButtons({ continue: width(words.continue), skip: width(words.skip) });
+    this.layouts = (this.departure ? departureDialogueButtons : dialogueButtons)({
+      continue: width(words.continue),
+      skip: width(words.skip),
+    });
     this.buttons = {
       continue: addTextButton(this, this.layouts.continue, words.continue, {
         style: PRIMARY_BUTTON,
@@ -153,7 +186,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private drawParagraph(): void {
     this.paragraphArt.forEach((object) => object.destroy());
     const paragraph = this.paragraphs[this.paragraph];
-    if (!paragraph || !this.textures.exists(paragraph.portrait)) {
+    if (!paragraph || (paragraph.portrait !== null && !this.textures.exists(paragraph.portrait))) {
       throw new Error(`Missing dialogue portrait ${paragraph?.portrait ?? ""}`);
     }
     const layout = dialogueSpeakerLayout(paragraph.side);
@@ -173,7 +206,11 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       this.add
         .image(layout.portraitFrame.x, layout.portraitFrame.y, "ui-portrait-frame")
         .setOrigin(0),
-      this.add.image(layout.portrait.x, layout.portrait.y, paragraph.portrait).setOrigin(0),
+      paragraph.portrait === null
+        ? this.add
+            .rectangle(layout.portrait.x, layout.portrait.y, 64, 64, paletteColour(this, "dslate"))
+            .setOrigin(0)
+        : this.add.image(layout.portrait.x, layout.portrait.y, paragraph.portrait).setOrigin(0),
       addSlice(this, "ui-name-tab", tab, frame),
       addCardText(this, TITLE_FONT, layout.name, paragraph.name, paletteColour(this, "ink")),
       ...dialogueLines(this.bodyFont(), text, text.width, paragraph.text).map((line, index) =>
@@ -194,7 +231,11 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     }
     this.finished = true;
     this.scene.stop();
-    (this.scene.get("zone") as unknown as DialogueOpener).dialogueClosed(selection);
+    if (this.live) {
+      (this.scene.get("zone") as unknown as ForeshadowOpener).foreshadowClosed();
+    } else {
+      (this.scene.get("zone") as unknown as DialogueOpener).dialogueClosed(selection);
+    }
   }
 
   private act(action: DialogueAction | undefined): void {
@@ -231,13 +272,30 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     }));
   }
 
+  blocksPoint(point: Point): boolean {
+    return liveDialogueContains(this.layouts ? this.pressAreas() : [], point);
+  }
+
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (this.live && !["Tab", "Enter"].includes(event.key)) {
+        return;
+      }
+      if (this.live) {
+        event.preventDefault();
+      }
       event.stopPropagation();
-      this.act(dialogueKeyAction(this.focus, event));
+      this.act((this.live ? liveDialogueKeyAction : dialogueKeyAction)(this.focus, event));
     });
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
+    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => {
+      if (!this.live || ["Tab", "Enter"].includes(event.key)) {
+        event.stopPropagation();
+      }
+    });
     this.input.on("pointerdown", (pointer: Input.Pointer) => {
+      if (this.live && !this.blocksPoint(playPoint(this, pointer))) {
+        return;
+      }
       this.input.stopPropagation();
       if (this.press !== undefined || this.finished || this.choosing) {
         return;
@@ -253,6 +311,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       this.renderFooter();
     });
     this.input.on("pointermove", (pointer: Input.Pointer) => {
+      if (this.live && this.press?.id !== pointer.id) {
+        return;
+      }
       this.input.stopPropagation();
       if (this.press?.id === pointer.id) {
         this.press = moveDialoguePress(TOUCH.tapMaxDistance, playPoint(this, pointer), this.press);
@@ -260,6 +321,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       }
     });
     const up = (pointer: Input.Pointer, outside: boolean) => {
+      if (this.live && this.press?.id !== pointer.id) {
+        return;
+      }
       this.input.stopPropagation();
       const action = outside
         ? undefined

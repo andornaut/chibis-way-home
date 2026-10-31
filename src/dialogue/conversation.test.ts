@@ -14,6 +14,7 @@ import {
   type DialoguePress,
   dialogueProgress,
   dialogueTapAction,
+  liveDialogueKeyAction,
   moveDialoguePress,
 } from "./conversation";
 
@@ -27,6 +28,12 @@ const text: Pick<GameText, "dialogue" | "lines"> = {
 const plan: DialoguePlan = { lines: [{ line: "greeting", speaker: "dog" }] };
 
 describe("dialogueParagraphs", () => {
+  it("preserves an explicit neutral portrait instead of borrowing another speaker asset", () => {
+    expect(
+      dialogueParagraphs({ dog: { ...speakers.dog!, portrait: null } }, text, plan)[0]?.portrait,
+    ).toBeNull();
+  });
+
   it("resolves paragraphs in their written order", () => {
     expect(dialogueParagraphs(speakers, text, { lines: [...plan.lines, ...plan.lines] })).toEqual(
       Array.from({ length: plan.lines.length * 2 }, () => ({
@@ -220,4 +227,21 @@ describe("terminal dialogue choices", () => {
       ).toEqual({ focus: to, selection });
     },
   );
+});
+
+it.each(["ArrowLeft", "ArrowRight", "ArrowUp", " ", "e"])(
+  "leaves world movement/jump/use key %j active under live dialogue",
+  (key) => {
+    expect(
+      liveDialogueKeyAction(undefined, { key, repeat: false, shiftKey: false }),
+    ).toBeUndefined();
+  },
+);
+
+it("keeps explicit live dialogue keyboard controls usable without taking movement keys", () => {
+  const event = { key: "Enter", repeat: false, shiftKey: false };
+  expect(liveDialogueKeyAction(undefined, event)).toBe("advance");
+  expect(liveDialogueKeyAction("skip", event)).toBe("skip");
+  expect(liveDialogueKeyAction(undefined, { ...event, key: "Tab" })).toBe("nextFocus");
+  expect(liveDialogueKeyAction(undefined, { ...event, repeat: true })).toBeUndefined();
 });

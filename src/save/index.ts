@@ -1,7 +1,3 @@
-// The player's progress, kept in localStorage as the kit's versioned save (save/saveStore): read
-// once as the game boots, after launchReady, and written each time the map shows, he walks on
-// it, or he completes a zone. A save that cannot be read is backed up and play starts from the
-// beginning; where storage is unavailable, progress lasts until the page closes.
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
 import { localSaveStorage } from "@andornaut/game-kit/save/storage";
 
@@ -85,10 +81,22 @@ export function savedMap(): { readonly completed: readonly string[]; readonly st
   return mapProgress(ZONE_MAP, progress);
 }
 
+export function seenZoneIntros(): readonly string[] {
+  return progress.at === "map" ? progress.seenZoneIntros : [];
+}
+
+export function saveZoneIntro(zone: string): void {
+  const seen = seenZoneIntros();
+  if (seen.includes(zone)) {
+    return;
+  }
+  write({ at: "map", ...savedMap(), seenZoneIntros: [...seen, zone] });
+}
+
 // He stands on the zone node stand: the map opens there.
 export function saveStand(stand: string): void {
   void stats.flush();
-  write({ at: "map", completed: savedMap().completed, stand });
+  write({ at: "map", completed: savedMap().completed, seenZoneIntros: seenZoneIntros(), stand });
 }
 
 // He has completed the zone at node: it opens the map past it, and he stands on it.
@@ -98,6 +106,7 @@ export function saveCompleted(node: string): void {
   write({
     at: "map",
     completed: completed.includes(node) ? completed : [...completed, node],
+    seenZoneIntros: seenZoneIntros(),
     stand: node,
   });
 }

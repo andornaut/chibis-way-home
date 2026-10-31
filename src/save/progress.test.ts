@@ -25,7 +25,9 @@ const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({
 // is gone, and the finish.
 const MAP: ZoneMap = {
   decorations: [],
-  destinations: [],
+  destinations: [
+    { at: { col: 0, row: 0 }, icon: "zone", id: "test-zone", stages: ["start", "built"] },
+  ],
   edges: [
     { built: true, from: "start", to: "fork" },
     { built: true, from: "fork", to: "built" },
@@ -48,16 +50,21 @@ const ZONE_KEYS = { built: {}, start: {}, unbuilt: {} };
 const FORMAT = progressFormat(MAP, ZONE_KEYS);
 
 const stored = (fields: object, version = PROGRESS_VERSION) =>
-  JSON.stringify({ ...fields, version });
+  JSON.stringify({ seenZoneIntros: [], ...fields, version });
 const at = (stand: string, completed: string[] = []): Progress => ({
   at: "map",
   completed,
+  seenZoneIntros: [],
   stand,
 });
 
 describe("progressFormat", () => {
   it.each<[string, Progress]>([
     ["the beginning", BEGINNING],
+    [
+      "a remembered zone introduction",
+      { ...at("start"), seenZoneIntros: ["test-zone"] } as Progress,
+    ],
     ["the first zone, nothing completed", at("start")],
     ["a zone past the fork, the first completed", at("built", ["start"])],
     ["back on the first zone, both completed", at("start", ["start", "built"])],
@@ -70,6 +77,23 @@ describe("progressFormat", () => {
   });
 
   it.each([
+    [
+      "missing introduction list",
+      stored({ at: "map", completed: [], seenZoneIntros: undefined, stand: "start" }),
+    ],
+    [
+      "unknown introduction",
+      stored({ at: "map", completed: [], seenZoneIntros: ["unknown"], stand: "start" }),
+    ],
+    [
+      "duplicate introduction",
+      stored({
+        at: "map",
+        completed: [],
+        seenZoneIntros: ["test-zone", "test-zone"],
+        stand: "start",
+      }),
+    ],
     ["not JSON", "{not json"],
     ["no version", JSON.stringify({ at: "map", completed: [], stand: "start" })],
     ["version 1", stored({ at: "map", route: ["start"] }, 1)],

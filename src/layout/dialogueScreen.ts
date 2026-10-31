@@ -1,6 +1,10 @@
+import { containsPoint } from "@andornaut/game-kit/rect";
+
+import { SCREEN } from "../data/screen";
 import type { DialogueSpeaker, Point, Rect } from "../data/types";
 import type { DialogueControl } from "../dialogue/conversation";
 import { TEXT_BUTTON } from "./buttonLabel";
+import { type PressArea, pressedArea } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./restartCard";
 
 const BUTTON_WIDTH = 192;
@@ -36,20 +40,43 @@ export function dialogueNameTab(side: DialogueSpeaker["side"], nameWidth: number
 export function dialogueButtons(
   labels: Readonly<Record<DialogueControl, number>>,
 ): Readonly<Record<DialogueControl, LabelledButton>> {
+  return placedDialogueButtons(DIALOGUE_SCREEN.box.x + DIALOGUE_SCREEN.box.width, 112, labels);
+}
+
+export function departureDialogueButtons(
+  labels: Readonly<Record<DialogueControl, number>>,
+): Readonly<Record<DialogueControl, LabelledButton>> {
+  return placedDialogueButtons(SCREEN.width - 16, SCREEN.height - 16 - TEXT_BUTTON.height, labels);
+}
+
+function placedDialogueButtons(
+  right: number,
+  y: number,
+  labels: Readonly<Record<DialogueControl, number>>,
+): Readonly<Record<DialogueControl, LabelledButton>> {
   const width = Math.max(
     BUTTON_WIDTH,
     labels.continue + 2 * TEXT_BUTTON.inset,
     labels.skip + 2 * TEXT_BUTTON.inset,
   );
-  const right = DIALOGUE_SCREEN.box.x + DIALOGUE_SCREEN.box.width;
   const groupWidth = 2 * width + TEXT_BUTTON.gap;
   if (groupWidth > DIALOGUE_SCREEN.box.width) {
     throw new Error("Dialogue action labels do not fit the footer");
   }
   const button = (x: number) =>
-    labelledButton({ height: TEXT_BUTTON.height, width, x, y: 112 }, TEXT_BUTTON.labelDy);
+    labelledButton({ height: TEXT_BUTTON.height, width, x, y }, TEXT_BUTTON.labelDy);
   return {
     continue: button(right - width),
     skip: button(right - groupWidth),
   };
+}
+
+export function liveDialogueContains(
+  controls: readonly PressArea<DialogueControl>[],
+  point: Point,
+): boolean {
+  return (
+    containsPoint(DIALOGUE_SCREEN.box, point.x, point.y) ||
+    pressedArea(controls, point) !== undefined
+  );
 }

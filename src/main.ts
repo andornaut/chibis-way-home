@@ -1,4 +1,3 @@
-// First, so the crash screen catches an error thrown while Phaser or the game's modules load.
 import "./crash/install";
 import "@andornaut/game-kit/view/frameTurnLandscapeGame.css";
 import "./main.css";
@@ -29,6 +28,8 @@ import { SettingsScene } from "./scenes/SettingsScene";
 import { StageSelectScene } from "./scenes/StageSelectScene";
 import { StartScene } from "./scenes/StartScene";
 import { installUpdateModalBridge, UpdateScene } from "./scenes/UpdateScene";
+import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene";
+import { ZoneForeshadowScene } from "./scenes/ZoneForeshadowScene";
 import { ZoneScene } from "./scenes/ZoneScene";
 
 // The page's ink background (public/site.css), which the canvas's bars match.
@@ -67,6 +68,8 @@ function startGame(): void {
       SettingsScene,
       RestartScene,
       DialogueScene,
+      ZoneDepartureScene,
+      ZoneForeshadowScene,
       DialogueChoiceScene,
       DeathScene,
       StageSelectScene,

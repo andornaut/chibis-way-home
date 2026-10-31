@@ -23,6 +23,7 @@ import { BIRD } from "../data/bird";
 import { CAMERA } from "../data/camera";
 import { CHARACTERS } from "../data/characters";
 import { DEATH } from "../data/death";
+import { ZONE_DIALOGUES } from "../data/dialogues";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN, TILE } from "../data/screen";
 import { TEXT } from "../data/text";
@@ -55,7 +56,6 @@ import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
 import { nodeOf } from "../rules/map";
-import { stageCompletion } from "../rules/stageCompletion";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_MS, STEP_SECONDS } from "../rules/step";
@@ -78,6 +78,13 @@ import {
   nextZoneIndex,
   startZoneIndex,
 } from "../rules/zoneChain";
+import {
+  foreshadowForRun,
+  type ZoneDepartureTarget,
+  zoneExitFlow,
+  type ZoneStory,
+  zoneStoryForStage,
+} from "../rules/zoneFlow";
 import { zonePlanFor } from "../rules/zonePlans";
 import {
   activeStageTime,
@@ -85,6 +92,8 @@ import {
   recordActiveStageStep,
   saveCompleted,
   savedMap,
+  saveZoneIntro,
+  seenZoneIntros,
 } from "../save";
 import { type TouchSetting, touchSettings, touchSettingShown } from "../settings/touchControls";
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
@@ -112,7 +121,12 @@ import { proximityDialogue } from "../view/zoneDialogue";
 import { ZONE_THEMES_KEY, zoneTheme, type ZoneThemes } from "../view/zoneTheme";
 import { paletteColour } from "./cardParts";
 import type { DeathData, DeathOpener } from "./DeathScene";
-import type { DialogueData, DialogueOpener } from "./DialogueScene";
+import {
+  type DialogueData,
+  type DialogueOpener,
+  type DialogueScene,
+  type ForeshadowOpener,
+} from "./DialogueScene";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
 
@@ -195,7 +209,7 @@ export interface ZoneData {
 }
 
 // One zone, played with the keyboard or the touch controls.
-export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
+export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, ForeshadowOpener {
   private clock: StepClock = startStepClock;
   private readonly controls = new Map<TouchControl, GameObjects.Sprite>();
   // The move hint's ring and knob.
@@ -237,6 +251,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   // Whether a room shows over the paused zone.
   private inRoom = false;
   private dialogueObject: number | undefined;
+  private story: ZoneStory | undefined;
+  private departure: ZoneDepartureTarget | undefined;
+  private readonly localSeenIntros = new Set<string>();
+  private foreshadowStarted = false;
+  private foreshadowActive = false;
   private dialogueAttempt = -1;
   private dialogueArea = "";
   private readonly heardDialogues = new Map<string, Set<number>>();
@@ -279,6 +298,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     this.opening = undefined;
     this.inRoom = false;
     this.dialogueObject = undefined;
+    this.departure = undefined;
+    this.localSeenIntros.clear();
+    this.foreshadowStarted = false;
+    this.foreshadowActive = false;
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
     this.heardDialogues.clear();
@@ -305,9 +328,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     this.cameras.main.ignore(this.progress);
     this.progress.cameraFilter &= ~controlsCamera.id;
     this.events.once("shutdown", () => {
+      this.stopForeshadow();
       if (this.dialogueOpen()) {
         this.scene.stop("dialogueChoice");
         this.scene.stop("dialogue");
+        this.scene.stop("zoneDeparture");
       }
       this.dialogueObject = undefined;
       coverZone("dialogue", false);
@@ -385,10 +410,20 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     );
     this.watchKeys();
     this.watchTouches();
-    this.events.on("pause", () => void flushStats());
+    this.events.on("pause", () => {
+      void flushStats();
+      if (this.foreshadowActive) {
+        this.scene.setVisible(false, "zoneForeshadow");
+        this.scene.pause("zoneForeshadow");
+      }
+    });
     // Paused under the pause card or a room: keys and time while it was open count for nothing.
     // Back from a room, she stands at its door with nothing held, and the door shows closed.
     this.events.on("resume", () => {
+      if (this.foreshadowActive) {
+        this.scene.setVisible(true, "zoneForeshadow");
+        this.scene.resume("zoneForeshadow");
+      }
       this.clock = startStepClock;
       this.heldKeys.clear();
       if (this.inRoom) {
@@ -399,6 +434,31 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
         this.heldTouches.clear();
       }
     });
+    this.openForeshadow();
+  }
+
+  private openForeshadow(): void {
+    if (this.preview || this.backdrop) {
+      return;
+    }
+    const scene = foreshadowForRun(ZONE_MAP, this.stageKey(), this.foreshadowStarted, this.story);
+    if (!scene) {
+      return;
+    }
+    this.foreshadowStarted = true;
+    this.foreshadowActive = true;
+    this.scene.launch("zoneForeshadow", { scene } satisfies DialogueData);
+  }
+
+  private stopForeshadow(): void {
+    if (this.foreshadowActive) {
+      this.scene.stop("zoneForeshadow");
+    }
+    this.foreshadowActive = false;
+  }
+
+  foreshadowClosed(): void {
+    this.foreshadowActive = false;
   }
 
   // The start screen's backdrop: zone 1's street as she starts it, without her or the touch
@@ -592,6 +652,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   }
 
   private beginDeath(): void {
+    this.stopForeshadow();
     const death = this.zone.death;
     if (death === undefined || this.dying !== undefined) {
       return;
@@ -709,7 +770,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
 
   // The pause scene and page input stay inert during the conversation, including its launch.
   dialogueOpen(): boolean {
-    return this.dialogueObject !== undefined;
+    return this.dialogueObject !== undefined || this.departure !== undefined;
   }
 
   private clearControls(): void {
@@ -733,6 +794,17 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       this.heardDialogues.set(this.zone.area, heard);
     }
     if (this.zone.area !== this.dialogueArea) {
+      const intro = this.story;
+      if (
+        intro &&
+        (this.localSeenIntros.has(intro.zone) || seenZoneIntros().includes(intro.zone))
+      ) {
+        areaOf(this.layout, this.zone.area).objects.forEach((object, index) => {
+          if (object.scene === intro.intro) {
+            heard.add(index);
+          }
+        });
+      }
       for (const index of heard) {
         this.zone = activateBehaviour(index, this.zone);
       }
@@ -749,21 +821,49 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     if (index === undefined || scene === undefined) {
       return false;
     }
+    this.stopForeshadow();
     this.dialogueObject = index;
     this.clearControls();
     this.input.enabled = false;
     this.showTouchControls(touchSettings());
     coverZone("dialogue", true);
-    this.scene.launch("dialogue", { scene } satisfies DialogueData);
+    this.scene.launch("dialogue", {
+      linear: scene === this.story?.intro,
+      scene,
+    } satisfies DialogueData);
     this.scene.pause();
     return true;
   }
 
-  // DialogueScene stops itself before returning control; the dog starts only after that.
+  // The dialogue stops before returning control; introduced actors activate afterward.
   dialogueClosed(): void {
+    if (this.departure) {
+      const target = this.departure;
+      this.departure = undefined;
+      coverZone("dialogue", false);
+      if (target.kind === "map") {
+        this.scene.start("map", { travelTo: target.travelTo });
+      } else {
+        this.scene.start("celebration");
+      }
+      return;
+    }
     const index = this.dialogueObject;
     if (index === undefined) {
       return;
+    }
+    const object = areaOf(this.layout, this.zone.area).objects[index];
+    if (this.story && object?.scene === this.story.intro) {
+      this.localSeenIntros.add(this.story.zone);
+      if (this.mapNode !== undefined) {
+        saveZoneIntro(this.story.zone);
+      }
+      areaOf(this.layout, this.zone.area).objects.forEach((actor, actorIndex) => {
+        if (actor.scene === this.story?.intro) {
+          this.heardDialogues.get(this.zone.area)?.add(actorIndex);
+          this.zone = activateBehaviour(actorIndex, this.zone);
+        }
+      });
     }
     this.heardDialogues.get(this.zone.area)?.add(index);
     this.zone = activateBehaviour(index, this.zone);
@@ -830,22 +930,28 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   // Save a cleared stage before routing to its continuation. Turning back preserves progress;
   // debug and trial runs keep their existing replay route.
   private leave(): void {
+    this.stopForeshadow();
     const { turnedBack } = this.zone;
     if (this.mapNode !== undefined) {
-      if (turnedBack) {
-        this.scene.start("map");
-        return;
+      const story = this.story;
+      if (!story) {
+        throw new Error(`Missing zone story for ${this.mapNode}`);
       }
       const completedBefore = new Set(savedMap().completed);
-      const completion = stageCompletion(ZONE_MAP, completedBefore, this.mapNode);
-      saveCompleted(this.mapNode);
+      const flow = zoneExitFlow(ZONE_MAP, story, completedBefore, this.mapNode, turnedBack);
+      if (!turnedBack) {
+        saveCompleted(this.mapNode);
+      }
       this.clearControls();
-      if (completion.kind === "next-stage") {
-        this.scene.start("cutscene", { stage: completion.stage });
-      } else if (completion.kind === "map") {
-        this.scene.start("map", { travelTo: completion.travelTo });
+      if (flow.kind === "next-stage") {
+        this.scene.start("cutscene", { stage: flow.stage });
       } else {
-        this.scene.start("celebration");
+        this.departure = flow.target;
+        this.input.enabled = false;
+        coverZone("dialogue", true);
+        this.showTouchControls(touchSettings());
+        this.scene.launch("zoneDeparture", { scene: flow.scene } satisfies DialogueData);
+        this.scene.pause();
       }
       return;
     }
@@ -861,6 +967,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     camera.fadeIn(FADE_MS, 0, 0, 0);
     camera.once("camerafadeincomplete", () => {
       this.hold = undefined;
+      this.openForeshadow();
     });
   }
 
@@ -879,6 +986,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   }
 
   private loadPlan(plan: ZonePlan): void {
+    this.stopForeshadow();
+    this.foreshadowStarted = false;
     this.heardDialogues.clear();
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
@@ -892,6 +1001,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       this.preview?.motionSeed ??
       (Number.isInteger(asked) && asked > 0 ? asked : Math.floor(Math.random() * 2 ** 31));
     this.zone = startZone(BIRD, this.layout, seed);
+    this.story =
+      this.preview || this.backdrop
+        ? undefined
+        : zoneStoryForStage(ZONE_MAP, ZONE_DIALOGUES, this.stageKey());
     this.drawArea();
   }
 
@@ -1243,6 +1356,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
         return false;
       }
       const point = shifted(topShift(this.scale.gameSize), onGame(event), -1);
+      if (
+        this.foreshadowActive &&
+        (this.scene.get("zoneForeshadow") as DialogueScene).blocksPoint(point)
+      ) {
+        return false;
+      }
       return !(
         event.target === this.game.canvas && containsPoint(PAUSE_BUTTON.hit, point.x, point.y)
       );
