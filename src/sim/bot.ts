@@ -168,7 +168,7 @@ function obstacleAhead(
     const at = zone.objects[index] ?? object.origin;
     const rect =
       object.collision === "hazard"
-        ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1)
+        ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1, zone.behaviours[index]?.axis)
         : { ...at, height: object.height, width: object.width };
     if (
       (object.collision === "hazard" || object.collision === "solid") &&

@@ -143,6 +143,14 @@ describe("local bot decisions", () => {
     const track = { height: 12, width: 36, x: 100, y: 100 };
     expect(emissionBounds(object, track)).toEqual({ height: 32, width: 62, x: 100, y: 85 });
     const active = object.behaviour!.states.active!;
+    const mirrored: ObjectLayout = {
+      ...object,
+      behaviour: {
+        ...object.behaviour!,
+        states: { active: { ...active, onEnter: [{ ...action, mirrorWithFacing: true }] } },
+      },
+    };
+    expect(emissionBounds(mirrored, track)).toEqual({ height: 32, width: 88, x: 74, y: 85 });
     const gust: ObjectLayout = {
       ...object,
       behaviour: {

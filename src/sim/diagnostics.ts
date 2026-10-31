@@ -61,7 +61,7 @@ export function traceEvent(
     const behaviour = zone.behaviours[index];
     const rect =
       object.collision === "hazard"
-        ? contactBox(object, at, behaviour?.facing ?? 1)
+        ? contactBox(object, at, behaviour?.facing ?? 1, behaviour?.axis)
         : { ...at, height: object.height, width: object.width };
     const distance = Math.hypot(
       Math.max(0, rect.x - box.x - box.width, box.x - rect.x - rect.width),

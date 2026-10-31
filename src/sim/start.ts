@@ -63,7 +63,7 @@ export function validateStart(tuning: BirdTuning, layout: ZoneLayout, zone: Zone
     const at = zone.objects[index] ?? object.origin;
     const rect =
       object.collision === "hazard"
-        ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1)
+        ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1, zone.behaviours[index]?.axis)
         : { ...at, height: object.height, width: object.width };
     return overlaps(box, rect);
   });

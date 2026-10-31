@@ -1,9 +1,22 @@
-import type { BehaviourPlan, ObjectLayout, Point, Rect } from "../data/types";
+import type { BehaviourMotion, BehaviourPlan, ObjectLayout, Point, Rect } from "../data/types";
 
 export function hasDynamicBehaviour(pattern: BehaviourPlan): boolean {
   return Object.values(pattern.states).some(
     (node) => node.motion.kind !== "wait" || (node.onEnter?.length ?? 0) > 0,
   );
+}
+
+function flightWaypoints(motion: Extract<BehaviourMotion, { kind: "fly" }>): readonly Point[] {
+  if (motion.to !== "target") {
+    return [motion.to];
+  }
+  const { height, width, x, y } = motion.bounds;
+  return [
+    { x, y },
+    { x: x + width, y },
+    { x, y: y + height },
+    { x: x + width, y: y + height },
+  ];
 }
 
 function waypoints(pattern: BehaviourPlan): readonly Point[] {
@@ -13,9 +26,17 @@ function waypoints(pattern: BehaviourPlan): readonly Point[] {
       x: pattern.axis === "x" ? pattern.distance : 0,
       y: pattern.axis === "y" ? pattern.distance : 0,
     },
-    ...Object.values(pattern.states).flatMap((node) =>
-      node.motion.kind === "fly" ? [node.motion.to] : [],
-    ),
+    ...Object.values(pattern.states).flatMap((node) => [
+      ...(node.track
+        ? [
+            {
+              x: node.track.axis === "x" ? node.track.distance : 0,
+              y: node.track.axis === "y" ? node.track.distance : 0,
+            },
+          ]
+        : []),
+      ...(node.motion.kind === "fly" ? flightWaypoints(node.motion) : []),
+    ]),
   ];
 }
 
@@ -49,10 +70,12 @@ export function behaviourCycleSeconds(pattern: BehaviourPlan): number {
     if (motion.kind === "fly" && motion.speed > 0) {
       travel =
         Math.max(
-          ...points.map((point) => Math.hypot(motion.to.x - point.x, motion.to.y - point.y)),
+          ...flightWaypoints(motion).flatMap((to) =>
+            points.map((point) => Math.hypot(to.x - point.x, to.y - point.y)),
+          ),
         ) / motion.speed;
     } else if (motion.kind !== "wait" && motion.speed > 0) {
-      travel = Math.abs(pattern.distance) / motion.speed;
+      travel = Math.abs(node.track?.distance ?? pattern.distance) / motion.speed;
     }
     const hop = motion.kind === "hop" ? motion.hopSeconds : 0;
     const waits = node.transitions.flatMap(({ when }) =>
@@ -82,7 +105,6 @@ export function emissionBounds(object: ObjectLayout, track: Rect): Rect {
           continue;
         }
         const seconds = action.lifeSeconds;
-        const dx = action.velocity.x * seconds;
         const times = [0, seconds];
         const apex = -action.velocity.y / action.gravity;
         if (apex > 0 && apex < seconds) {
@@ -91,11 +113,16 @@ export function emissionBounds(object: ObjectLayout, track: Rect): Rect {
         const heights = times.map(
           (time) => action.velocity.y * time + (action.gravity * time * time) / 2,
         );
-        left = Math.min(left, track.x + action.offset.x + Math.min(0, dx));
-        right = Math.max(
-          right,
-          track.x + track.width - object.width + action.offset.x + Math.max(0, dx) + template.width,
-        );
+        for (const facing of action.mirrorWithFacing ? [-1, 1] : [1]) {
+          const offset =
+            facing === 1 ? action.offset.x : object.width - action.offset.x - template.width;
+          const dx = action.velocity.x * facing * seconds;
+          left = Math.min(left, track.x + offset + Math.min(0, dx));
+          right = Math.max(
+            right,
+            track.x + track.width - object.width + offset + Math.max(0, dx) + template.width,
+          );
+        }
         top = Math.min(top, track.y + action.offset.y + Math.min(...heights));
         bottom = Math.max(
           bottom,

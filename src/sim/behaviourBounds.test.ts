@@ -35,6 +35,39 @@ describe("behaviour phase bounds", () => {
     expect(behaviourCycleSeconds(emitter)).toBeCloseTo(0.8);
   });
 
+  it("bounds mixed-axis tracks and locked-target flight without a fixed target point", () => {
+    const graph: BehaviourPlan = {
+      axis: "y",
+      distance: -60,
+      initial: "charge",
+      states: {
+        charge: {
+          animation: null,
+          motion: { direction: 1, kind: "move", speed: 30 },
+          track: { axis: "x", distance: 90 },
+          transitions: [],
+        },
+        swoop: {
+          animation: null,
+          motion: {
+            bounds: { height: 30, width: 40, x: -20, y: -10 },
+            kind: "fly",
+            speed: 20,
+            to: "target",
+          },
+          transitions: [],
+        },
+      },
+    };
+    expect(sweptBehaviourRect(graph, { height: 8, width: 12, x: 10, y: 20 })).toEqual({
+      height: 88,
+      width: 122,
+      x: -10,
+      y: -40,
+    });
+    expect(behaviourCycleSeconds(graph)).toBeCloseTo(3 + Math.hypot(110, 20) / 20);
+  });
+
   it.each([
     { bounds: { height: 8, width: 12, x: 10, y: 20 }, motions: [{ kind: "wait" }], seconds: 0 },
     {
