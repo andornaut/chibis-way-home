@@ -818,15 +818,19 @@ The repeated atmosphere layers have a default bottom of y 600. Use sky factors 0
 
 `art/tools/raccoon.py` draws `raccoon-antagonist`, a separate enemy asset for the industrial stages. It retains a cute grey coat, cream face and belly, dark mask, rounded ears and banded tail. The existing room raccoon is unchanged. The frame is 48x48 with a bottom-centre anchor at 24,48, within a four-column by four-row placement. Its fixed contact box is x 2, y 2, width 44, height 46 in every pose, including mirrored poses. Contact remains lethal during preparation and rest; neither the sprite nor the runtime adds a red outline.
 
-| Tag     | Art cycle               | Pose                                  |
-| ------- | ----------------------- | ------------------------------------- |
-| climb   | Four frames, 120ms each | Alternate grips and feet on the climb |
-| drop    | Two frames, 100ms each  | Splayed and tucked falling poses      |
-| idle    | Two frames, 400ms each  | Standing breathing fallback           |
-| prepare | One frame, 400ms        | Compressed body before the drop       |
-| rest    | Two frames, 400ms each  | Settled pause after landing           |
+| Tag     | Art cycle               | Pose                                       |
+| ------- | ----------------------- | ------------------------------------------ |
+| climb   | Four frames, 120ms each | Alternate grips and feet on the climb      |
+| drop    | Two frames, 100ms each  | Splayed and tucked falling poses           |
+| idle    | Two frames, 400ms each  | Standing breathing fallback                |
+| prepare | One frame, 400ms        | Compressed body before the drop            |
+| rest    | Two frames, 400ms each  | Settled pause after landing                |
+| rush    | Four frames, 80ms each  | Low forward head, longer grounded strides  |
+| walk    | Four frames, 120ms each | Alternate steps and opposite swinging paws |
 
 All tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. No portrait or new conversation is supplied by this asset.
+
+Kiwi, the female raccoon, reuses the existing identity without added gender accessories. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 

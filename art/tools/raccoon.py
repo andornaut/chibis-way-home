@@ -20,6 +20,8 @@ Tags, in frame order:
 - drop: 2x100ms, splayed limbs then tucked paws and feet during descent.
 - rest: 2x400ms, settled after landing; still lethal, never a safe state.
 - frustration: 4x120ms, head shaking and alternating raised paws, feet planted.
+- walk: 4x120ms, alternating grounded steps and opposite swinging paws.
+- rush: 4x80ms, lowered forward head and body, longer strides and forward reaching paws.
 
 All tags loop. The generic behaviour state machine owns state timing and physical movement; frame durations
 are art cycle defaults. Build writes art/antagonists/raccoon-antagonist.aseprite and its PNG/JSON export.
@@ -63,27 +65,39 @@ def draw(state="idle", phase=0):
     prepare = state == "prepare"
     dropping = state == "drop"
     lift = 1 if state in ("idle", "rest") and phase else phase % 2 if state == "climb" else 0
+    moving = state in ("walk", "rush")
+    rushing = state == "rush"
+    if moving:
+        lift = phase % 2
     if dropping:
         lift = 1 + phase
     head_lift = 1 if dropping else lift
     if prepare:
         head_lift = -3
+    if rushing:
+        head_lift -= 3
     tail(g, lift)
     # Far legs stand behind the round body; the near paw supplies the same ground anchor.
     feet = ((22, 46), (32, 46))
     if state == "climb":
         feet = (((22, 46), (32, 42)), ((22, 45), (32, 45)),
                 ((22, 42), (32, 46)), ((22, 45), (32, 45)))[phase]
+    elif moving:
+        stride = (-3, 0, 3, 0)[phase] if rushing else (-2, 0, 2, 0)[phase]
+        feet = ((22 + stride, 44 if phase == 0 else 46),
+                (32 - stride, 44 if phase == 2 else 46))
     elif dropping:
         feet = ((18, 44), (35, 43)) if phase == 0 else ((23, 43), (31, 43))
     for i, (x, y) in enumerate(feet):
         g.rect(x - 1, 38 - lift, 3, max(1, y - (38 - lift)), "slate" if i == 0 else "grey")
         g.rect(x - 2, y - 1, 4, 2, "ink")
     body_y, body_h = (38, 8) if prepare else (35 - lift, 10)
+    if rushing:
+        body_y, body_h = 37 - lift, 8
     g.blob(26, body_y, 10.5, body_h, "grey", sh="slate", li="lgrey")
     g.ell(27, body_y + 1, 5.5, body_h - 2, "cream")
     # Rounded ears and a large head keep the proportions distinct from the long-bodied dog.
-    shake = (-1, 1, -1, 1)[phase] if state == "frustration" else 0
+    shake = (-1, 1, -1, 1)[phase] if state == "frustration" else 1 if rushing else 0
     hy = 18 - head_lift
     for x in (19 + shake, 37 + shake):
         g.ell(x, 9 - head_lift, 4.5, 4.5, "grey", sh="slate")
@@ -103,6 +117,11 @@ def draw(state="idle", phase=0):
                      ((42, 25), (13, 11)), ((42, 21), (13, 17)))[phase]
     elif dropping:
         near, far = ((43, 22), (12, 25)) if phase == 0 else ((34, 36), (20, 35))
+    elif moving:
+        if rushing:
+            near, far = ((42, 34), (15, 40)) if phase % 2 == 0 else ((38, 40), (14, 32))
+        else:
+            near, far = ((38, 35), (16, 40)) if phase % 2 == 0 else ((33, 40), (15, 35))
     elif state == "frustration":
         near, far = ((42, 23), (13, 36)) if phase % 2 == 0 else ((40, 35), (12, 23))
     elif prepare:
@@ -122,6 +141,8 @@ def sprites():
         ("drop", [draw("drop", i) for i in range(2)], 100),
         ("rest", [draw("rest", i) for i in range(2)], 400),
         ("frustration", [draw("frustration", i) for i in range(4)], 120),
+        ("walk", [draw("walk", i) for i in range(4)], 120),
+        ("rush", [draw("rush", i) for i in range(4)], 80),
     ]
 
 

@@ -341,6 +341,6 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Raccoon antagonist
 
-| Key                | Type                         | Size  | Tags                                          |
-| ------------------ | ---------------------------- | ----- | --------------------------------------------- |
-| raccoon-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, climb, prepare, drop, rest, frustration |
+| Key                | Type                         | Size  | Tags                                                      |
+| ------------------ | ---------------------------- | ----- | --------------------------------------------------------- |
+| raccoon-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, climb, prepare, drop, rest, frustration, walk, rush |
