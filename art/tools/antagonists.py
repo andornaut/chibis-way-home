@@ -12,7 +12,12 @@ Tags: idle 2x400ms; walk 4x120ms; crouch 1x400ms; rush 2x80ms; rest 2x400ms. All
 state machine owns how long each state lasts. Crouch lowers the head and body; rush stretches the paws;
 Frustration loops 4x120ms: compressed takeoff, two little airborne poses and a planted landing stomp.
 The whole body rises 3px then 5px inside the fixed frame, with a headshake and lifted forepaw.
+Pounce appends four100ms frames: crouched takeoff, two extended airborne poses and compressed landing.
+The fixed sprite anchor never moves; gameplay controls the actual leap arc and phase progression.
 Rest closes the eye. Idle breath lifts the torso 1px while the feet stay planted.
+
+Pounce appends four100ms frames: crouched takeoff, two extended airborne poses and compressed landing.
+The fixed anchor stays in place; gameplay owns the actual arc and phase progression.
 
 portrait-dog is 64x64, right-facing towards text, transparent behind, chest cut off at the bottom, with
 one ink outer line. Tag neutral: 1x1000ms. It shares the brown and white coat, rose ears, red bandana
@@ -33,6 +38,17 @@ HITBOX = {"dog-antagonist": (2, 2, 56, 38)}
 
 
 def dog_image(state, phase=0):
+    if state == "pounce":
+        im = Image.new("RGBA", (60, 40))
+        if phase in (0, 3):
+            pose = dog_image("crouch")
+            height = 37 if phase == 0 else 35
+            im.alpha_composite(pose.resize((60, height), Image.Resampling.NEAREST), (0, 40 - height))
+        else:
+            # Extended rush limbs form the airborne silhouette inside the fixed frame.
+            pose = dog_image("rush", phase - 1)
+            im.alpha_composite(pose, (0, -5 if phase == 1 else -3))
+        return im
     im = Image.new("RGBA", (60, 40))
     d = ImageDraw.Draw(im)
     # Brown coat, white ruff, folded rose ears and bobtail preserve Archie's identity.
@@ -179,6 +195,7 @@ def sprites():
         ("rush", [pixels(dog_image("rush", i)) for i in range(2)], 80),
         ("rest", [pixels(dog_image("rest", i)) for i in range(2)], 400),
         ("frustration", [pixels(dog_image("frustration", i)) for i in range(4)], 120),
+        ("pounce", [pixels(dog_image("pounce", i)) for i in range(4)], 100),
     ]
     yield "portrait-dog", [("neutral", [pixels(portrait_image())], 1000)]
 

@@ -445,6 +445,8 @@ These animation tags are available as loops. The runtime selects a tag for each 
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
+The looping `pounce` tag appends four 100ms frames after frustration: crouched takeoff, two extended airborne poses and compressed landing. Existing frames, timings, canvas, anchor and contact box remain unchanged. Gameplay controls the actual arc and phase; the artwork supplies silhouettes inside the fixed frame. The leaping pounce supplements Archie's ground charge, and contact remains lethal throughout.
+
 ## Environment aesthetic
 
 Every environment theme (a zone's street, a chunk theme's park) follows these rules. The park theme (`art/tools/park.py`) is the reference; its values are given after each rule.
