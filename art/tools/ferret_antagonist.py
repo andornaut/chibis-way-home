@@ -63,7 +63,9 @@ def draw(state="idle", phase=0):
     paw_x = hx + 1 if low else hx - 4
     g.ell(paw_x, hy + 10, 2.5, 2, "brown")
     if state == "frustration":
-        g.ell(hx + 5, hy + (7 if phase % 2 == 0 else 11), 3, 2.5, "brown")
+        paw_y = hy + (7 if phase % 2 == 0 else 11)
+        ferret.disc_line(g, (hx - 3, hy + 9), (hx + 5, paw_y), 1.8, "brown")
+        g.ell(hx + 5, paw_y, 3, 2.5, "brown")
     if state == "rest":
         g.rect(hx + 1, hy, 3, 1, "skin2")
     return ferret.outline(g)
