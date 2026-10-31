@@ -8,6 +8,7 @@ const COUNTRYSIDE_START: Omit<ChunkPlan, "theme"> = {
   ],
   cols: 60,
   difficulty: 1,
+  encounters: 0,
   entry: { row: 50 },
   exit: { row: 50 },
   objects: [],

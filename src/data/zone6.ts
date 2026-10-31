@@ -7,6 +7,7 @@ export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "apartment-finish": {
     cols: 60,
     difficulty: 4,
+    encounters: PATROL_FINISH_GEOMETRY.encounters,
     entry: { row: 30 },
     exit: { row: 30 },
     objects: [
@@ -26,6 +27,7 @@ export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "apartment-start": {
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],

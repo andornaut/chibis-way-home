@@ -4,6 +4,7 @@ import type { ChunkPlan } from "./types";
 const FIRST_GROWL_START: Omit<ChunkPlan, "theme"> = {
   ...BOUNDARY_START,
   cols: BOUNDARY_START.cols + GROWL_FINISH.cols,
+  encounters: BOUNDARY_START.encounters + GROWL_FINISH.encounters,
   objects: [
     ...BOUNDARY_START.objects,
     ...GROWL_FINISH.objects.map((object) => ({

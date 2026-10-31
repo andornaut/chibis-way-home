@@ -284,6 +284,7 @@ const DIFFICULTY_PROFILES = {
   industrial: { difficulty: { max: 5, min: 3 }, difficultyWeights: { 3: 1, 4: 1, 5: 1 } },
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
+const STAGE_ENCOUNTERS = { first: 2, second: 3 } as const;
 const STAGE_LENGTH = { max: 960, min: 720 } as const;
 
 const APARTMENT_CHALLENGE_CHUNKS = [
@@ -318,6 +319,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "city-boundary": {
     ...DIFFICULTY_PROFILES.blue,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.second,
     events: [],
     finish: "city-boundary-finish",
     length: STAGE_LENGTH,
@@ -328,6 +330,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "city-outskirts": {
     ...DIFFICULTY_PROFILES.home,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.first,
     events: [],
     finish: "city-outskirts-finish",
     length: STAGE_LENGTH,
@@ -337,6 +340,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "climb-to-apartment": {
     ...APARTMENT_CAPS,
+    encounters: STAGE_ENCOUNTERS.second,
     sections: [
       {
         ...APARTMENT_SECTION_DEFAULTS,
@@ -392,6 +396,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "entrance-and-lobby": {
     ...APARTMENT_CAPS,
+    encounters: STAGE_ENCOUNTERS.first,
     sections: [
       {
         ...APARTMENT_SECTION_DEFAULTS,
@@ -413,6 +418,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "familiar-neighbourhood": {
     ...DIFFICULTY_PROFILES.home,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.second,
     events: [],
     finish: "familiar-neighbourhood-finish",
     length: STAGE_LENGTH,
@@ -423,6 +429,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   farmland: {
     ...DIFFICULTY_PROFILES.countryside,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.first,
     events: [],
     finish: "farmland-finish",
     length: STAGE_LENGTH,
@@ -433,6 +440,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "forest-paths": {
     ...DIFFICULTY_PROFILES.woodland,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.first,
     events: [],
     finish: "forest-paths-finish",
     length: STAGE_LENGTH,
@@ -443,6 +451,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "freight-terminal": {
     ...DIFFICULTY_PROFILES.industrial,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.second,
     events: [],
     finish: "freight-terminal-finish",
     length: STAGE_LENGTH,
@@ -465,6 +474,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   ravine: {
     ...DIFFICULTY_PROFILES.woodland,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.second,
     events: [],
     finish: "ravine-finish",
     length: STAGE_LENGTH,
@@ -475,6 +485,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "river-crossing": {
     ...DIFFICULTY_PROFILES.countryside,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.second,
     events: [],
     finish: "river-crossing-finish",
     length: STAGE_LENGTH,
@@ -485,6 +496,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   street: {
     ...DIFFICULTY_PROFILES.blue,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.first,
     events: [],
     finish: "street-finish",
     length: STAGE_LENGTH,
@@ -495,6 +507,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "warehouse-district": {
     ...DIFFICULTY_PROFILES.industrial,
     doors: [{ count: 1, room: "test" }],
+    encounters: STAGE_ENCOUNTERS.first,
     events: [],
     finish: "warehouse-district-finish",
     length: STAGE_LENGTH,

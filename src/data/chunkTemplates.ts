@@ -1,7 +1,8 @@
 import type { ChunkPlan } from "./types";
 
 // A shared horizontal encounter with a waiting ledge on each side.
-export const PATROL_FINISH_GEOMETRY: Pick<ChunkPlan, "objects" | "solids"> = {
+export const PATROL_FINISH_GEOMETRY: Pick<ChunkPlan, "encounters" | "objects" | "solids"> = {
+  encounters: 1,
   objects: [
     { character: "platform-ledge", col: 6, cols: 6, role: "ledge", row: 46 },
     { character: "dog-antagonist", col: 31, role: "antagonist", row: 46 },
@@ -17,6 +18,7 @@ export const BOUNDARY_START: Omit<ChunkPlan, "theme"> = {
   ],
   cols: 60,
   difficulty: 1,
+  encounters: 0,
   entry: { row: 50 },
   exit: { row: 50 },
   objects: [],
@@ -29,6 +31,7 @@ export const VERTICAL_FINISH: Omit<ChunkPlan, "theme"> = {
   backdrops: [{ character: "facade-one-storey", col: 4, cols: 12, role: "near-wall", row: 34 }],
   cols: 60,
   difficulty: 4,
+  encounters: 1,
   entry: { row: 50 },
   exit: { row: 50 },
   objects: [
@@ -47,6 +50,7 @@ export const VERTICAL_FINISH: Omit<ChunkPlan, "theme"> = {
 export const PERCH_FINISH: Omit<ChunkPlan, "theme"> = {
   cols: 60,
   difficulty: 4,
+  encounters: 1,
   entry: { row: 50 },
   exit: { row: 50 },
   objects: [
@@ -65,6 +69,7 @@ export const PERCH_FINISH: Omit<ChunkPlan, "theme"> = {
 export const GROWL_FINISH: Omit<ChunkPlan, "theme"> = {
   cols: 60,
   difficulty: 4,
+  encounters: 1,
   entry: { row: 50 },
   exit: { row: 50 },
   objects: [

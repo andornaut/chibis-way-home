@@ -11,6 +11,7 @@ export const STREET_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 84,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [
@@ -43,6 +44,7 @@ export const STREET_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 120,
     difficulty: 3,
+    encounters: 1,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [

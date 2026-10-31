@@ -451,6 +451,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
 const COMPACT_HAZARD_ASCENT: ChunkPlan = {
   cols: 72,
   difficulty: 4,
+  encounters: 0,
   entry: { row: 50 },
   exit: { row: 40 },
   objects: [
@@ -477,6 +478,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "bounded-flyer-post": {
     cols: 96,
     difficulty: 4,
+    encounters: 1,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [
@@ -501,6 +503,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 96,
     difficulty: 4,
+    encounters: 1,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
@@ -520,6 +523,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 8, cols: 16, role: "near-wall", row: 14 }],
     cols: 84,
     difficulty: 4,
+    encounters: 1,
     entry: { row: 30 },
     exit: { row: 30 },
     objects: [
@@ -535,6 +539,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 8, cols: 16, role: "near-wall", row: 24 }],
     cols: 84,
     difficulty: 4,
+    encounters: 1,
     entry: { row: 40 },
     exit: { row: 40 },
     objects: [
@@ -550,6 +555,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 8, cols: 12, role: "near-wall", row: 34 }],
     cols: 84,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
@@ -586,6 +592,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 4, cols: 12, role: "near-wall", row: 34 }],
     cols: 84,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
@@ -607,6 +614,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 8, cols: 12, role: "near-wall", row: 24 }],
     cols: 84,
     difficulty: 4,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 40 },
     objects: [
@@ -622,6 +630,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 12, cols: 12, role: "near-wall", row: 34 }],
     cols: 72,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [],
@@ -638,6 +647,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 48, cols: 16, role: "near-wall", row: 14 }],
     cols: 84,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [
@@ -656,6 +666,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "city-boundary-low-ceiling": {
     cols: 72,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
@@ -677,6 +688,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "city-boundary-return-high": {
     cols: 72,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 50 },
     objects: [],
@@ -692,6 +704,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "city-boundary-return-terrace": {
     cols: 60,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 50 },
     objects: [],
@@ -706,6 +719,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 64, cols: 16, role: "near-wall", row: 24 }],
     cols: 96,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 40 },
     objects: [
@@ -724,6 +738,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 8, cols: 16, role: "near-wall", row: 34 }],
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
@@ -735,6 +750,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 4, cols: 16, role: "near-wall", row: 34 }],
     cols: 72,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [],
@@ -751,6 +767,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 42, cols: 12, role: "near-wall", row: 14 }],
     cols: 72,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [{ character: "platform-ledge", col: 40, cols: 8, role: "ledge", row: 24 }],
@@ -765,6 +782,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "facade-one-storey", col: 4, cols: 12, role: "near-wall", row: 24 }],
     cols: 84,
     difficulty: 4,
+    encounters: 1,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [
@@ -782,6 +800,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-ascent": {
     cols: 96,
     difficulty: 4,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
@@ -818,6 +837,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-double-lift": {
     cols: 108,
     difficulty: 5,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [
@@ -837,6 +857,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-lift-shuttle": {
     cols: 120,
     difficulty: 5,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 30 },
     objects: [
@@ -857,6 +878,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-patrol-lift": {
     cols: 120,
     difficulty: 5,
+    encounters: 1,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
@@ -876,6 +898,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-perch-yard": {
     cols: 120,
     difficulty: 5,
+    encounters: 1,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [
@@ -898,6 +921,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-return-high": {
     cols: 120,
     difficulty: 5,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 50 },
     objects: [
@@ -921,6 +945,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-return-terrace": {
     cols: 96,
     difficulty: 4,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 50 },
     objects: [
@@ -942,6 +967,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-vertical-yard": {
     cols: 108,
     difficulty: 5,
+    encounters: 1,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [
@@ -1021,6 +1047,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 96,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 30 },
     objects: [
@@ -1046,6 +1073,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [{ character: "park-bench", col: 22, role: "bench", row: 48 }],
@@ -1060,6 +1088,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 90,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 30 },
     objects: [
@@ -1086,6 +1115,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 72,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [{ character: "park-bench", col: 44, role: "bench", row: 48 }],
@@ -1104,6 +1134,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "park-low-ceiling": {
     cols: 72,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [
@@ -1126,6 +1157,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "park-tree", col: 84, role: "tree", row: 27 }],
     cols: 100,
     difficulty: 3,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 40 },
     noCross: [{ from: { col: 10, row: 40 }, to: { col: 80, row: 40 } }],
@@ -1153,6 +1185,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "park-lamp", col: 24, role: "lamp", row: 29 }],
     cols: 80,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 50 },
     objects: [
@@ -1178,6 +1211,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [{ character: "park-bench", col: 40, role: "bench", row: 48 }],
@@ -1195,6 +1229,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "park-tree", col: 4, role: "tree", row: 17 }],
     cols: 70,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 40 },
     objects: [
@@ -1220,6 +1255,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 64,
     difficulty: 1,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 50 },
     objects: [{ character: "park-bench", col: 36, role: "bench", row: 48 }],
@@ -1240,6 +1276,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     cols: 80,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 50 },
     exit: { row: 40 },
     objects: [
@@ -1261,6 +1298,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     backdrops: [{ character: "park-tree", col: 46, role: "tree", row: 17 }],
     cols: 80,
     difficulty: 2,
+    encounters: 0,
     entry: { row: 40 },
     exit: { row: 30 },
     objects: [
