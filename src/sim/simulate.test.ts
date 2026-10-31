@@ -450,8 +450,42 @@ describe("whole-stage input witnesses", () => {
     );
     expect(replay.status).toBe("verified");
     expect(replay.executedSteps).toBe(run.steps);
-    expect(run.coverage.path.length).toBeGreaterThan(0);
+    expect(run.coverage.path).toHaveLength(1);
     expect(run.terminal.kind).toBe("terminal");
+  });
+  it("rejects a recording that exceeds its claimed original execution budget without stepping", () => {
+    const stage = prepareStage(fixture(ground, 200));
+    const run = simulateStage(BIRD, stage, options);
+    const reduced = { ...options, maxSteps: 1, witness: { maxSegments: 1 } };
+    expect(run.steps).toBeGreaterThan(reduced.maxSteps);
+    const replay = replayCompletionWitness(
+      BIRD,
+      stage,
+      reduced,
+      { maxSteps: 300, maxWallTimeMs: 1000 },
+      { ...run.witness!, config: reduced },
+    );
+    expect(replay.status).toBe("mismatch");
+    expect(replay.executedSteps).toBe(0);
+  });
+  it("replays a valid witness whose source identifier comes from the prepared stage", () => {
+    const stage = {
+      ...prepareStage(fixture(ground, 200)),
+      source: { provenance: { build: "prepared-source" } },
+    };
+    const supplied = { ...options, provenance: { data: "synthetic-data" } };
+    const run = simulateStage(BIRD, stage, supplied);
+    expect(run.fullPass).toBe(true);
+    expect(run.witness?.provenance.build).toBe("prepared-source");
+    const replay = replayCompletionWitness(
+      BIRD,
+      stage,
+      supplied,
+      { maxSteps: 300, maxWallTimeMs: 1000 },
+      run.witness!,
+    );
+    expect(replay.status).toBe("verified");
+    expect(replay.executedSteps).toBe(run.steps);
   });
   it("rejects wrong prepared context, source/config and tampered input counts", () => {
     const stage = prepareStage(fixture(ground, 200));

@@ -361,12 +361,13 @@ function executeStage(
       indices.add(index);
     }
     chunksVisited.set(zone.area, indices);
+    const chunk = index < 0 ? undefined : index;
     const last = path.at(-1);
-    if (!last || last.area !== zone.area || last.attempt !== zone.attempt || last.chunk !== index) {
+    if (!last || last.area !== zone.area || last.attempt !== zone.attempt || last.chunk !== chunk) {
       path.push({
         area: zone.area,
         attempt: zone.attempt,
-        chunk: index < 0 ? undefined : index,
+        chunk,
         chunkId: stage.source?.chunkIds?.[zone.area]?.[index],
         tick: steps,
       });
@@ -706,7 +707,8 @@ export function replayCompletionWitness(
   ) {
     return mismatch("Invalid replay budget");
   }
-  if (!config.provenance?.build) {
+  const provenance = { ...stage.source?.provenance, ...config.provenance };
+  if (!provenance.build) {
     return mismatch("Witness source identifier required");
   }
   if (
@@ -715,6 +717,7 @@ export function replayCompletionWitness(
     witness.truncated ||
     witness.capturedTicks !== witness.steps ||
     witness.steps < 1 ||
+    witness.steps > config.maxSteps ||
     !Number.isSafeInteger(witness.steps)
   ) {
     return mismatch("Witness is not a complete whole-stage recording");
@@ -727,8 +730,7 @@ export function replayCompletionWitness(
   }
   if (
     witness.contextHash !== witnessContextHash(tuning, stage.layout) ||
-    JSON.stringify({ ...stage.source?.provenance, ...config.provenance }) !==
-      JSON.stringify(witness.provenance)
+    JSON.stringify(provenance) !== JSON.stringify(witness.provenance)
   ) {
     return mismatch("Witness stage or provenance mismatch");
   }
