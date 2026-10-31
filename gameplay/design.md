@@ -125,7 +125,7 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 
 ### Runs and attempts
 
-- **Continue:** reopening the app with saved progress or choosing Continue on the title screen shows the map with Chibi on his saved zone, without opening a stage chooser or entering a stage
+- **Continue:** reopening the app shows the start screen, with Continue and Restart when progress is saved. Manually choosing Continue shows the map with Chibi on his saved zone, without opening a stage chooser or entering a stage
 - **Entry:** entering a stage from the map, replaying it or continuing through an inter-stage cutscene starts a new run
 - **Pause:** pausing and resuming keeps the same run and position
 - **Restart:** a full restart starts a new run
@@ -333,7 +333,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 ### Start screen
 
 - **Back:** back with no card open leaves the game, the same way as Exit, wherever Exit shows; elsewhere back is the browser's own
-- **Boot:** the game opens in landscape. With saved progress it opens on the map where he stands, without opening a stage chooser; with no save it opens on the start screen. It never opens straight into a zone
+- **Boot:** the game opens in landscape. It always opens on the start screen; saved progress offers Continue and Restart. It never opens automatically on the map or straight into a zone
 - **Exit:** at the top right, at the far end. In a browser tab it goes straight to the home page. In an installed app it closes the app, and it shows only in apps that can close themselves (Chrome's Android app, and Chrome or Edge desktop app windows); in every other installed app (iOS, Firefox for Android, Samsung Internet and Edge for Android) it is hidden, and Settings sits at the far right
 - **Restart:** on the start screen with a save, and on the celebration. It asks first on a card: a short question, Restart, which confirms, and Cancel; back and Esc cancel. Confirming clears only the saved progress and opens the map with him on the first zone and nothing completed. It never clears stats or achievements, which keep their own save
 - **Settings:** at the top right, beside Exit. It opens the settings card

@@ -9,13 +9,13 @@ import { Scene } from "phaser";
 import { TILE } from "../data/screen";
 import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
-import { loadProgress, savedProgress } from "../save";
+import { loadProgress } from "../save";
 import { ART_MANIFEST_FILE, ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../view/aseprite";
 import { addAtlasArt, ATLAS, queueAtlasFonts, queueAtlasPages } from "./atlasArt";
 
 // First scene to run. Loads everything art's manifest lists, makes an animation of every sprite
 // tag, looping unless the manifest lists it as played once, then, once launchReady resolves,
-// starts the test zone and the pause scene beside it.
+// opens the start screen and launches the pause scene beside it.
 export class BootScene extends Scene {
   constructor() {
     super("boot");
@@ -81,10 +81,8 @@ export class BootScene extends Scene {
       this.scene.start("zone");
       return;
     }
-    // The zone shows, and the save is read, once a version about to be replaced by a newer one
-    // has had its chance to reload first, so it never draws the old zone or reads the save with
-    // the old format. Saved progress opens the map where she stands; without any, the start
-    // screen comes first. ?zone=<n> plays the zones straight through.
+    // Read progress and open the start screen after a pending version replacement can reload.
+    // Diagnostic ?zone entry keeps its direct zone route.
     void launchReady()
       .then(loadProgress)
       .then(() => {
@@ -100,7 +98,7 @@ export class BootScene extends Scene {
         if (new URLSearchParams(window.location.search).has("zone")) {
           this.scene.start("zone");
         } else {
-          this.scene.start(savedProgress().at === "beginning" ? "start" : "map");
+          this.scene.start("start");
         }
       });
   }
