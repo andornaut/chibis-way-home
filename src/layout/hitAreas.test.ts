@@ -20,7 +20,7 @@ describe("hitMargin", () => {
 
 describe("hitAround", () => {
   // Each button's press area, by the rule, from its drawn size.
-  const { start } = startScreenLayout(SCREEN.width / 2, true, false);
+  const { start } = startScreenLayout(SCREEN, true, false);
   it.each<[string, { height: number; width: number }, { height: number; width: number }]>([
     ["the pause button, a 35 px frame", PAUSE_BUTTON.art, { height: 52.5, width: 52.5 }],
     ["a 16 px icon, at the least size", square(16), { height: 48, width: 48 }],
@@ -28,7 +28,7 @@ describe("hitAround", () => {
     ["Start", start.button, { height: 72, width: 216 }],
     [
       "a nav icon button",
-      startScreenLayout(SCREEN.width / 2, true, false).settings.art,
+      startScreenLayout(SCREEN, true, false).settings.art,
       { height: 54, width: 54 },
     ],
   ])("grows %s", (_, art, size) => {

@@ -1,5 +1,5 @@
 import { SCREEN } from "../data/screen";
-import type { Point, Rect } from "../data/types";
+import type { Point, Rect, Size } from "../data/types";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { hitAround } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./restartCard";
@@ -20,6 +20,9 @@ const BUTTON_SLOT = 44;
 const START = { ...TEXT_BUTTON, width: 192, x: 264, y: 268 } as const;
 // Continue and Restart's gap, side by side in Start's row.
 const ROW_GAP = TEXT_BUTTON.gap;
+const NAV_HEIGHT = 48;
+const LOGO_TOP_GAP = 12;
+const LOGO_ACTION_GAP = 15;
 
 export interface IconButtonLayout {
   readonly art: Rect;
@@ -32,7 +35,7 @@ export interface IconButtonLayout {
 export interface StartScreenLayout {
   // Present where the start screen offers to leave the game (exitShown in src/pwa).
   readonly exit?: IconButtonLayout;
-  readonly logo: Point;
+  readonly logo: Rect;
   readonly nav: Rect;
   // Present with saved progress, beside Continue.
   readonly restart?: LabelledButton;
@@ -56,19 +59,32 @@ function iconButton(slot: number): IconButtonLayout {
 }
 
 // The start screen with Settings then Exit at the nav's right end, or Settings alone there where
-// Exit is hidden; Start alone, or with saved progress, Restart then Continue.
+// Exit is hidden; Start alone, or with saved progress, Restart then Continue. The natural logo
+// frame fits above the unchanged actions at its original aspect ratio.
 export function startScreenLayout(
-  logoWidth: number,
+  logoSize: Size,
   exitShown: boolean,
   saved: boolean,
 ): StartScreenLayout {
   const { height, width, x, y } = START;
   const middle = x + width / 2;
   const left = middle - width - ROW_GAP / 2;
+  const logoY = NAV_HEIGHT + LOGO_TOP_GAP;
+  const scale = Math.min(
+    1,
+    (SCREEN.width - 2 * TEXT_BUTTON.inset) / logoSize.width,
+    (y - LOGO_ACTION_GAP - logoY) / logoSize.height,
+  );
+  const logoWidth = logoSize.width * scale;
   return {
     ...(exitShown ? { exit: iconButton(0) } : {}),
-    logo: { x: (SCREEN.width - logoWidth) / 2, y: 60 },
-    nav: { height: 48, width: 720, x: 0, y: 0 },
+    logo: {
+      height: logoSize.height * scale,
+      width: logoWidth,
+      x: (SCREEN.width - logoWidth) / 2,
+      y: logoY,
+    },
+    nav: { height: NAV_HEIGHT, width: SCREEN.width, x: 0, y: 0 },
     ...(saved ? { restart: labelledButton({ height, width, x: left, y }, START.labelDy) } : {}),
     settings: iconButton(exitShown ? 1 : 0),
     start: labelledButton({ height, width, x: saved ? middle + ROW_GAP / 2 : x, y }, START.labelDy),

@@ -83,8 +83,9 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     this.card = undefined;
     this.focus = undefined;
     this.focusRing = undefined;
+    const logoFrame = this.textures.getFrame(LOGO);
     this.layout = startScreenLayout(
-      this.textures.getFrame(LOGO).realWidth,
+      { height: logoFrame.realHeight, width: logoFrame.realWidth },
       exitShown(),
       savedProgress().at !== "beginning",
     );
@@ -130,7 +131,7 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     this.cameras.main.setBackgroundColor(this.colour("ink"));
     this.street = this.add.image(0, 0, "__DEFAULT").setOrigin(0).setVisible(false);
     addSlice(this, "ui-nav-bar", nav);
-    this.add.image(logo.x, logo.y, LOGO).setOrigin(0);
+    this.add.image(logo.x, logo.y, LOGO).setOrigin(0).setDisplaySize(logo.width, logo.height);
     this.buttons = new Map([
       ["settings", this.iconButton(settings, "icon-settings-nav")],
       ...(exit === undefined ? [] : [["exit", this.iconButton(exit, "ui-quit")] as const]),

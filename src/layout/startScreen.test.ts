@@ -26,7 +26,7 @@ describe.each([
   ["with Exit and a save", true, true],
   ["without Exit, with a save", false, true],
 ])("the start screen %s", (_, exitShown, saved) => {
-  const layout = startScreenLayout(SCREEN.width / 2, exitShown, saved);
+  const layout = startScreenLayout(SCREEN, exitShown, saved);
   const texts: [string, LabelledButton][] = [
     ["start", layout.start],
     ...(layout.restart === undefined
@@ -53,7 +53,7 @@ describe.each([
 
   it("ends the nav with Exit, or with Settings in Exit's place where there is no Exit", () => {
     const last = layout.exit ?? layout.settings;
-    const withExit = startScreenLayout(SCREEN.width / 2, true, saved).exit;
+    const withExit = startScreenLayout(SCREEN, true, saved).exit;
     expect({
       lastIsExit: last === layout.exit,
       settingsBeforeExit:
@@ -74,7 +74,7 @@ describe.each([
   );
 
   it("shows Restart left of Continue only with a save, the pair centred on Start", () => {
-    const alone = startScreenLayout(SCREEN.width / 2, exitShown, false).start.button;
+    const alone = startScreenLayout(SCREEN, exitShown, false).start.button;
     const { restart, start } = layout;
     const row = restart && {
       centre: (restart.button.x + right(start.button)) / 2,
@@ -92,13 +92,18 @@ describe.each([
   });
 });
 
-it.each([SCREEN.width / 2, 558])(
-  "centres the full %ipx logo without moving controls",
-  (logoWidth) => {
-    const baseline = startScreenLayout(SCREEN.width / 2, true, true);
-    const layout = startScreenLayout(logoWidth, true, true);
-    expect(layout.logo.x + logoWidth / 2).toBe(SCREEN.width / 2);
-    expect(layout.logo.y).toBe(60);
-    expect({ ...layout, logo: baseline.logo }).toEqual(baseline);
-  },
-);
+it.each([
+  { height: 193, width: 558 },
+  { height: 239, width: 558 },
+  { height: 100, width: SCREEN.width * 2 },
+])("fits the $width x $height logo above unchanged controls at its natural aspect", (size) => {
+  const baseline = startScreenLayout(SCREEN, true, true);
+  const layout = startScreenLayout(size, true, true);
+  const { logo, nav, start } = layout;
+  expect(logo.x + logo.width / 2).toBe(SCREEN.width / 2);
+  expect(logo.y).toBeGreaterThan(nav.y + nav.height);
+  expect(logo.width / logo.height).toBeCloseTo(size.width / size.height);
+  expect(logo.y + logo.height).toBeLessThan(start.hit.y);
+  expect(inside(SCREEN_RECT, logo)).toBe(true);
+  expect({ ...layout, logo: baseline.logo }).toEqual(baseline);
+});
