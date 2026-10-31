@@ -185,9 +185,11 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
     g.rect(int(hcx + HEAD_R - 2), int(hcy), 7, round(5 * head_squash), "orange")  # bill
     ey = int(hcy - head_ry * 0.55)
     if eye == "dead":
-        for i in range(5):
-            g.p(int(hcx) + i, ey + i, "ink")
-            g.p(int(hcx) + 4 - i, ey + i, "ink")
+        # Ink is already the darkest palette colour; wider diagonal tips strengthen the death mark.
+        for y, row in enumerate(("##.##", ".###.", "..#..", ".###.", "##.##")):
+            for x, mark in enumerate(row):
+                if mark == "#":
+                    g.p(int(hcx) + x, ey + y, "ink")
     else:
         g.rect(int(hcx), ey if eye == "open" else ey + 2, 4, 4 if eye == "open" else 1, "ink")
     return g.outlined(lambda c: K[OUTLINE])
