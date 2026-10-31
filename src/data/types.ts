@@ -276,6 +276,7 @@ export interface BehaviourTransition {
 export type BehaviourAction =
   | {
       readonly kind: "spawn";
+      readonly mirrorWithFacing?: boolean;
       readonly character: string;
       readonly offset: Point;
       readonly velocity: Point;
