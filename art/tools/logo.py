@@ -1,16 +1,17 @@
-"""The game's muted powder-blue wordmark and canonical cream duck, built from reusable pixel shapes.
+"""The game's muted powder-blue wordmark and canonical cream bird, built from reusable pixel shapes.
 
 Usage, from the repository root:
   python3 -I art/tools/logo.py build            write the three logos and update their manifest image entries
   python3 -I art/tools/logo.py preview OUT.png  each logo on pale steel and navy at 1x and 3x
 
-All images have transparent backgrounds and binary alpha. Canvases and keys stay fixed:
-- logo: 360x193, full cream duck standing on a simple platform above flat DUCK / PLATFORMER lettering.
-- logo-nav: 214x30, compact full duck beside DUCK PLATFORMER on one line.
-- logo-icon: 53x41, full duck standing on a short powder-blue platform, with no lettering.
+All images have transparent backgrounds and binary alpha. Canvas sizes and stable keys:
+- logo: 360x193, full cream bird standing on a simple platform above flat BIRD / VERSUS FERRET lettering.
+- logo-nav: 250x30, compact full bird beside BIRD VERSUS FERRET on one line.
+- logo-icon: 53x41, full bird standing on a short powder-blue platform, with no lettering.
 
-WORDMARK supplies the title. GLYPHS is the 5x7 alphabet. Lettering uses zone-blue over a flat dark-steel sign, with one quiet light
-edge and a dark outline, without extrusion, cyan highlights or drop shadows. Duck shapes come from duck.py;
+WORDMARK supplies the title. GLYPHS is the 5x7 alphabet. Lettering uses zone-blue over a flat dark-steel sign,
+with one quiet light
+edge and a dark outline, without extrusion, cyan highlights or drop shadows. Bird shapes come from the protagonist drawing module;
 the cream body, tan wing, orange bill and dot eye retain the protagonist's identity on both backgrounds.
 """
 
@@ -24,29 +25,33 @@ import duck as D  # noqa: E402
 import pixel  # noqa: E402
 from pixel import K, Grid  # noqa: E402
 
-WORDMARK = ("DUCK", "PLATFORMER")
+WORDMARK = ("BIRD", "VERSUS FERRET")
 OUT = {"logo": "public/art/logo.png", "logo-nav": "public/art/logo-nav.png", "logo-icon": "public/art/logo-icon.png"}
 
 GLYPHS = {
     "A": [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+    "B": ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
     "C": [".####", "#....", "#....", "#....", "#....", "#....", ".####"],
     "D": ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
     "E": ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
     "F": ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
+    "I": ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "#####"],
     "K": ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
     "L": ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
     "M": ["#...#", "##.##", "#.#.#", "#.#.#", "#...#", "#...#", "#...#"],
     "O": [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
     "P": ["####.", "#...#", "#...#", "####.", "#....", "#....", "#...."],
     "R": ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
+    "S": [".####", "#....", "#....", ".###.", "....#", "....#", "####."],
     "T": ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
     "U": ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+    "V": ["#...#", "#...#", "#...#", "#...#", "#...#", ".#.#.", "..#.."],
 }
 
 BIG = dict(b=11, fill="zone-blue", light="lgrey")
 SMALL = dict(b=3, fill="zone-blue", light="lgrey")
 NAV = dict(b=2, fill="zone-blue", light="zone-blue")
-CANVASES = {"logo": (360, 193), "logo-nav": (214, 30), "logo-icon": (53, 41)}
+CANVASES = {"logo": (360, 193), "logo-nav": (250, 30), "logo-icon": (53, 41)}
 
 
 def image(px):
@@ -98,8 +103,8 @@ def platform(im, x, y, width):
     d.rectangle((x + 1, y + 1, x + width - 2, y + 2), fill=pixel.rgb("zone-blue") + (255,))
 
 
-def duck_at(s, pose="rest"):
-    """The duck's side view redrawn at s times her size from duck.py's shapes: every shape scales, the outline and rim
+def bird_at(s, pose="rest"):
+    """The bird's side view redrawn at s times its size: every shape scales, the outline and rim
     stay 1px. pose is "rest" (standing, wing folded) or "downstroke" (in the air, the wing level behind her,
     feet tucked under her belly)."""
     W, H = round(D.W * s), round(D.H * s)
@@ -136,7 +141,7 @@ def duck_at(s, pose="rest"):
 
 def logo():
     im = canvas("logo")
-    d = duck_at(1.6)
+    d = bird_at(1.6)
     d = d.crop(d.getbbox())
     im.alpha_composite(d, ((im.width - d.width) // 2, 74 - d.height))
     from PIL import ImageDraw
@@ -153,21 +158,21 @@ def logo():
 
 def logo_nav():
     im = canvas("logo-nav")
-    d = duck_at(0.65)
+    d = bird_at(0.65)
     d = d.crop(d.getbbox())
     im.alpha_composite(d, (0, (im.height - d.height) // 2))
     line = word(" ".join(WORDMARK), **NAV)
     from PIL import ImageDraw
 
     draw = ImageDraw.Draw(im)
-    draw.rectangle((31, 6, 213, 23), fill=pixel.rgb("dslate") + (255,))
+    draw.rectangle((31, 6, im.width - 1, 23), fill=pixel.rgb("dslate") + (255,))
     im.alpha_composite(line, (32, (im.height - line.height) // 2))
     return im
 
 
 def logo_icon():
     im = canvas("logo-icon")
-    d = duck_at(0.85)
+    d = bird_at(0.85)
     d = d.crop(d.getbbox())
     im.alpha_composite(d, ((im.width - d.width) // 2, 37 - d.height))
     platform(im, 4, 37, 45)
