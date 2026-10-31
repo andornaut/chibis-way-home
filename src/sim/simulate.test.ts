@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { AreaLayout, ZoneLayout } from "../data/types";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_SECONDS } from "../rules/step";
+import * as zoneRules from "../rules/zone";
 import { startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "./bot";
@@ -69,6 +70,39 @@ describe("bounded stage simulation", () => {
     expect(run.activeSeconds).toBe(steps * STEP_SECONDS);
     expect(run.progress).toBe(1);
     expect(run.deaths).toBe(0);
+  });
+  it("reports successful attempt time excluding failed time retained in the run total", () => {
+    let ticks = 0;
+    const stepping = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
+      const state = args[4];
+      ticks++;
+      return {
+        ...state,
+        cleared: ticks === 5,
+        death:
+          ticks === 2
+            ? {
+                position: { x: state.bird.x, y: state.bird.y },
+                reason: "fall",
+                support: undefined,
+                velocity: { x: 0, y: 0 },
+              }
+            : undefined,
+      };
+    });
+    try {
+      const stage = prepareStage(fixture(ground));
+      const run = simulateStage(BIRD, stage, { ...config, maxRetries: 1, maxSteps: 10 });
+      expect(run.status).toBe("cleared");
+      expect(run.retries).toBe(1);
+      expect(run.activeSeconds).toBe(5 * STEP_SECONDS);
+      expect(run.successfulAttemptSeconds).toBe(3 * STEP_SECONDS);
+      const exhausted = simulateStage(BIRD, stage, { ...config, maxSteps: 1 });
+      expect(exhausted.status).toBe("step-budget");
+      expect(exhausted).not.toHaveProperty("successfulAttemptSeconds");
+    } finally {
+      stepping.mockRestore();
+    }
   });
   it("counts real failed attempts and retries without stepping a frozen death", () => {
     const run = simulateStage(BIRD, prepareStage(fixture([])), {

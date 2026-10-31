@@ -63,6 +63,7 @@ export interface RunResult {
   readonly runtimeMs: number;
   readonly seed: number;
   readonly status: RunStatus;
+  readonly successfulAttemptSeconds?: number;
   readonly steps: number;
 }
 export interface PreparedStage {
@@ -362,6 +363,7 @@ export function simulateStage(
     }
   }
   return {
+    ...(status === "cleared" ? { successfulAttemptSeconds: attemptTick * STEP_SECONDS } : {}),
     activeSeconds: steps * STEP_SECONDS,
     config,
     deaths: deathsByReason.crush + deathsByReason.fall + deathsByReason.hazard,
