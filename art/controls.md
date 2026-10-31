@@ -76,7 +76,7 @@ Every ordinary modal sizes its nine-slice frame to its actual content, with 16px
 
 Approved title target for paired runtime integration: centre every actual modal's title across the whole modal, including framed death/retry, long install instructions and stage selection. Reserve the full positioned close press target plus the normal gap symmetrically on both sides, rather than centring the title in the remaining asymmetric space. With a close face 6px from the top-right edge and its centred 48px target, the target extends 42px inward; adding the 8px gap gives 50px title clearance on each side. Without a close control, retain symmetric content padding. Wrap long titles at the existing font size and grow the measured header or modal; never shrink text. This rule does not change full-page headers, the close geometry or the half-viewport width floor.
 
-Stage selectors use three image-backed cards with fixed image and label positions, full-size 2x main names and a deliberate 1.5x secondary Stage number. Unavailable cards retain greyed scene previews and labels in the disabled palette. See [stage picker geometry](README.md#stage-picker).
+Stage selectors use three 208x154 image-backed cards within a centred 688x236 panel, with fixed image and label positions, full-size 2x main names and a deliberate 1.5x secondary Stage number. Unavailable cards retain greyed scene previews and labels in the disabled palette. Their title centres vertically within the measured header while retaining whole-panel horizontal centring. Keep exactly 8px between the full close target and stage-row press targets. See [stage picker geometry](README.md#stage-picker).
 
 ### Retry actions
 
