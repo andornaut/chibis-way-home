@@ -3,8 +3,16 @@ import { describe, expect, it } from "vitest";
 
 import maskJson from "../../public/art/contact-silhouettes.json";
 import manifestJson from "../../public/art/manifest.json";
+import { ARCHETYPES } from "../data/archetypes";
+import { BIRD } from "../data/bird";
+import { CHARACTERS } from "../data/characters";
+import { TILE } from "../data/screen";
 import type { SpriteSilhouettes } from "../data/types";
-import { type ArtManifest, sheetFrameSize } from "./aseprite";
+import { startBehaviour } from "../rules/behaviour";
+import { startBird } from "../rules/bird";
+import { contactFrameAt } from "../rules/bodyContact";
+import { objectLayout } from "../rules/tiles";
+import { artHitboxes, type ArtManifest, sheetFrameSize } from "./aseprite";
 import { spriteContacts } from "./spriteContacts";
 
 const manifest: ArtManifest = {
@@ -57,7 +65,7 @@ describe("paired silhouette loading", () => {
   });
 });
 
-it("validates every declared body against the actual paired frame export", () => {
+it("validates paired body exports and initializes their active and scene-bound profiles", () => {
   const sheets = import.meta.glob<
     AsepriteSheet & {
       readonly frames: Readonly<
@@ -80,6 +88,26 @@ it("validates every declared body against the actual paired frame export", () =>
   };
   const actual = manifestJson as ArtManifest;
   const contacts = spriteContacts(actual, sheet, (key) => sheetFrameSize(sheet(key)), maskJson);
+  const hitboxes = artHitboxes((key) => sheetFrameSize(sheet(key)), actual, contacts);
+  const bird = startBird(BIRD, { x: 0, y: 0 });
+  for (const [key, character] of Object.entries(CHARACTERS)) {
+    if (!contacts[character.art] || !character.behaviour) {
+      continue;
+    }
+    const object = objectLayout(
+      TILE,
+      { archetypes: ARCHETYPES, characters: CHARACTERS },
+      hitboxes,
+      undefined,
+      {},
+      { character: key, col: 0, row: 0, scene: "intro" },
+    );
+    for (const actor of [object, { ...object, scene: undefined }]) {
+      const state = startBehaviour(BIRD, actor, bird);
+      expect(state.active).toBe(actor.scene === undefined);
+      expect(contactFrameAt(actor.contact!, state.animationTag!, 0).frame).toBeDefined();
+    }
+  }
   expect(Object.keys(contacts).sort()).toEqual(
     actual.sprites
       .filter((sprite) => sprite.contact === "silhouette")
