@@ -18,6 +18,7 @@ import {
   stepBehaviour,
   sweptContact,
 } from "./behaviour";
+import type { BehaviourWorld } from "./behaviourReach";
 import { deathSupport } from "./death";
 import {
   duckBox,
@@ -31,6 +32,33 @@ import {
 import { axisOf, motionTrack, type Track } from "./motion";
 import { overlaps } from "./rect";
 import { validateWalkEntries } from "./zoneLinks";
+
+const PLATFORM_INDICES = new WeakMap<readonly ObjectLayout[], readonly number[]>();
+function behaviourGeometry(area: AreaLayout, zone: ZoneState): BehaviourWorld {
+  let indices = PLATFORM_INDICES.get(area.objects);
+  if (!indices) {
+    indices = area.objects.flatMap((object, index) =>
+      object.collision === "solid" || object.collision === "ledge" ? [index] : [],
+    );
+    PLATFORM_INDICES.set(area.objects, indices);
+  }
+  if (indices.length === 0) {
+    return { solids: area.solids };
+  }
+  const platforms = indices.map((index) => {
+    const object = area.objects[index] as ObjectLayout;
+    return {
+      collision: object.collision as "solid" | "ledge",
+      owner: object,
+      rect: {
+        ...(zone.objects[index] ?? object.origin),
+        height: object.height,
+        width: object.width,
+      },
+    };
+  });
+  return { platforms, solids: area.solids };
+}
 
 // What the player asks of the zone this step: the duck's input, and whether Use is held. Use
 // acts on the step it goes down.
@@ -294,13 +322,14 @@ export function stepZone(
   }
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
+  const geometry = behaviourGeometry(area, zone);
   const objects = area.objects.map((object, index) => {
     const before = zone.objects[index] ?? object.origin;
     const behaviour = object.behaviour
       ? stepBehaviour(
           tuning,
           object,
-          area.solids,
+          geometry,
           seconds,
           zone.duck,
           before,

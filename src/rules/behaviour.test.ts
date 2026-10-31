@@ -233,3 +233,179 @@ describe("swept contact", () => {
     expect(sweptContact(box, end, other, other)).toBe(touches);
   });
 });
+
+describe("generic target pursuit and reachability", () => {
+  const floor: Rect = { height: 40, width: 1000, x: 0, y: 300 };
+  const graph = (axis: "x" | "y" = "x", distance = 200): BehaviourPlan => ({
+    axis,
+    distance,
+    initial: "follow",
+    states: {
+      follow: {
+        animation: "walk",
+        motion: { direction: "target", kind: "move", speed: 20 },
+        transitions: [{ to: "frustration", when: [{ kind: "lost-target", tolerance: 0 }] }],
+      },
+      frustration: {
+        animation: "frustration",
+        motion: { kind: "wait" },
+        transitions: [
+          {
+            to: "follow",
+            when: [
+              { kind: "elapsed", seconds: 0.1 },
+              { kind: "reachable", tolerance: 0 },
+            ],
+          },
+        ],
+      },
+    },
+  });
+  it("retargets persistent movement and retries after support becomes reachable", () => {
+    const object = resolve(CHARACTER, ACTOR, 1, graph());
+    const first = stepBehaviour(DUCK, object, [floor], 0.1, duck(300), AT, initial(object));
+    expect(first.state.stateKey).toBe("follow");
+    expect(first.at.x).toBeGreaterThan(AT.x);
+    const turned = stepBehaviour(DUCK, object, [floor], 0.1, duck(120), first.at, first.state);
+    expect(turned.state.facing).toBe(-1);
+    expect(turned.at.x).toBeLessThan(first.at.x);
+    const barrier = { height: 60, width: 20, x: 200, y: 240 };
+    const lost = stepBehaviour(
+      DUCK,
+      object,
+      [floor, barrier],
+      0.1,
+      duck(300),
+      turned.at,
+      turned.state,
+    );
+    expect(behaviourPose(object, lost.state).animation).toBe("frustration");
+    const restored = stepBehaviour(DUCK, object, [floor], 0.1, duck(300), lost.at, lost.state);
+    expect(restored.state.stateKey).toBe("follow");
+  });
+  it("projects an ordinary jump to the same floor but loses higher one-way refuges and gaps", () => {
+    const object = resolve(CHARACTER, ACTOR, 1, graph());
+    const airborne = { ...duck(300, 240), grounded: false };
+    expect(
+      stepBehaviour(DUCK, object, [floor], 0.01, airborne, AT, initial(object)).state.stateKey,
+    ).toBe("follow");
+    const refuge = {
+      ...OBJECT,
+      collision: "ledge" as const,
+      height: 12,
+      origin: { x: 250, y: 250 },
+      width: 100,
+    };
+    const world = {
+      platforms: [
+        {
+          collision: "ledge" as const,
+          owner: refuge,
+          rect: { ...refuge.origin, height: refuge.height, width: refuge.width },
+        },
+      ],
+      solids: [floor],
+    };
+    expect(
+      stepBehaviour(DUCK, object, world, 0.01, duck(300, 250), AT, initial(object)).state.stateKey,
+    ).toBe("frustration");
+    const gap = [
+      { ...floor, width: 200 },
+      { ...floor, width: 760, x: 240 },
+    ];
+    expect(
+      stepBehaviour(DUCK, object, gap, 0.01, duck(300), AT, initial(object)).state.stateKey,
+    ).toBe("frustration");
+  });
+  it.each([
+    { axis: "x" as const, distance: 100, target: duck(250) },
+    { axis: "y" as const, distance: -100, target: duck(120, 310) },
+  ])(
+    "uses full possible contact envelope on $axis rather than target centre",
+    ({ axis, distance, target }) => {
+      const object = resolve(CHARACTER, ACTOR, 1, graph(axis, distance));
+      const world = axis === "x" ? [floor] : [];
+      expect(
+        stepBehaviour(DUCK, object, world, 0.01, target, object.origin, initial(object)).state
+          .stateKey,
+      ).toBe("follow");
+      if (axis === "y") {
+        expect(
+          stepBehaviour(DUCK, object, world, 0.01, duck(300, 310), object.origin, initial(object))
+            .state.stateKey,
+        ).toBe("frustration");
+      }
+    },
+  );
+});
+
+describe("generic graph hops", () => {
+  const floor: Rect = { height: 40, width: 1000, x: 0, y: 300 };
+  const plan: BehaviourPlan = {
+    axis: "x",
+    distance: 0,
+    initial: "bounce",
+    states: {
+      bounce: {
+        animation: "frustration",
+        motion: { direction: "facing", hopHeight: 20, hopSeconds: 0.4, kind: "hop", speed: 0 },
+        transitions: [],
+      },
+    },
+  };
+  it("supports stationary hopping, clips ceilings and lands on actual one-way supports", () => {
+    const object = resolve(CHARACTER, ACTOR, 1, plan);
+    const rising = stepBehaviour(
+      DUCK,
+      object,
+      [floor],
+      0.2,
+      duck(),
+      object.origin,
+      initial(object),
+    );
+    expect(rising.at).toEqual({ x: object.origin.x, y: object.origin.y - 20 });
+    const landed = stepBehaviour(DUCK, object, [floor], 0.2, duck(), rising.at, rising.state);
+    expect(landed.at.y).toBe(object.origin.y);
+    const ceiling = { height: 20, width: 1000, x: 0, y: 250 };
+    expect(
+      stepBehaviour(DUCK, object, [floor, ceiling], 0.2, duck(), object.origin, initial(object)).at
+        .y,
+    ).toBe(270);
+    const ledge = {
+      ...OBJECT,
+      collision: "ledge" as const,
+      height: 10,
+      origin: { x: 80, y: 290 },
+      width: 100,
+    };
+    const world = {
+      platforms: [
+        {
+          collision: "ledge" as const,
+          owner: ledge,
+          rect: { ...ledge.origin, height: ledge.height, width: ledge.width },
+        },
+      ],
+      solids: [floor],
+    };
+    expect(
+      stepBehaviour(DUCK, object, world, 0.4, duck(), object.origin, initial(object)).at.y,
+    ).toBe(270);
+  });
+  it("scales hop geometry while retaining its time and rejects zero duration", () => {
+    const converted = layoutBehaviour(2, plan).states.bounce?.motion;
+    expect(converted).toMatchObject({ hopHeight: 40, hopSeconds: 0.4, speed: 0 });
+    const node = plan.states.bounce;
+    if (!node || node.motion.kind !== "hop") {
+      throw new Error("Missing hop fixture");
+    }
+    const motion = node.motion;
+    expect(() =>
+      layoutBehaviour(1, {
+        ...plan,
+        states: { bounce: { ...node, motion: { ...motion, hopSeconds: 0 } } },
+      }),
+    ).toThrow("Invalid behaviour");
+  });
+});

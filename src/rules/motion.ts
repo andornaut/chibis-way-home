@@ -30,12 +30,18 @@ interface Leg {
   readonly travel: number;
 }
 
+// Shared kinematic lift for a complete hop, including its ground endpoints.
+export function hopLift(height: number, duration: number, elapsed: number): number {
+  const fraction = Math.max(0, Math.min(1, duration > 0 ? elapsed / duration : 0));
+  return height * 4 * fraction * (1 - fraction);
+}
+
 function pointOn(motion: Motion, leg: Leg, sinceStart: number): Point {
   const axis = axisOf(motion.direction);
   const f = progressAt(0, leg.travel, sinceStart);
   const eased = easeProgress(motion.algorithm === "ease" ? "sineInOut" : "linear", f);
   const along = leg.from + (leg.to - leg.from) * eased;
-  const lift = motion.algorithm === "hop" ? motion.hopHeight * 4 * f * (1 - f) : 0;
+  const lift = motion.algorithm === "hop" ? hopLift(motion.hopHeight, leg.travel, sinceStart) : 0;
   return { x: axis.x * along, y: axis.y * along - lift };
 }
 

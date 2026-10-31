@@ -7,13 +7,26 @@ import type {
   Point,
   Rect,
 } from "../data/types";
-import { duckBox, type DuckState } from "./duck";
+import {
+  type BehaviourGeometry,
+  type BehaviourWorld,
+  behaviourWorld,
+  targetReachable,
+} from "./behaviourReach";
+import { duckBox, type DuckState, EDGE } from "./duck";
+import { hopLift } from "./motion";
 import { overlaps } from "./rect";
 
 export interface BehaviourState {
   readonly active: boolean;
   readonly elapsed: number;
   readonly facing: -1 | 1;
+  readonly hop?: {
+    readonly elapsed: number;
+    readonly groundY: number;
+    readonly height: number;
+    readonly seconds: number;
+  };
   readonly stateKey: string;
 }
 
@@ -42,8 +55,17 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
       if (
         (node.animation !== null &&
           (typeof node.animation !== "string" || node.animation.length === 0)) ||
-        (node.motion.kind === "move" &&
-          (!valid(node.motion.speed) || node.motion.speed === 0 || plan.distance === 0))
+        (node.motion.kind !== "wait" &&
+          (!valid(node.motion.speed) ||
+            ![-1, 1, "facing", "target"].includes(node.motion.direction))) ||
+        (node.motion.kind === "move" && (node.motion.speed === 0 || plan.distance === 0)) ||
+        (node.motion.kind === "hop" &&
+          (plan.axis !== "x" ||
+            !valid(node.motion.hopHeight) ||
+            node.motion.hopHeight === 0 ||
+            !valid(node.motion.hopSeconds) ||
+            node.motion.hopSeconds === 0 ||
+            (node.motion.speed > 0 && plan.distance === 0)))
       ) {
         throw new Error(`Invalid behaviour motion or animation in ${key}`);
       }
@@ -66,7 +88,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           }
           return condition.kind === "nearby"
             ? { ...condition, range: condition.range * tile }
-            : condition.kind === "same-ground"
+            : condition.kind !== "elapsed"
               ? { ...condition, tolerance: condition.tolerance * tile }
               : condition;
         });
@@ -77,9 +99,15 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         {
           ...node,
           motion:
-            node.motion.kind === "move"
-              ? { ...node.motion, speed: node.motion.speed * tile }
-              : node.motion,
+            node.motion.kind === "wait"
+              ? node.motion
+              : {
+                  ...node.motion,
+                  speed: node.motion.speed * tile,
+                  ...(node.motion.kind === "hop"
+                    ? { hopHeight: node.motion.hopHeight * tile }
+                    : {}),
+                },
           transitions,
         },
       ];
@@ -106,10 +134,13 @@ function enterState(
 ): BehaviourState {
   const node = nodeOf(object, key);
   let facing =
-    node.motion.kind === "move" && node.motion.direction !== "facing"
+    node.motion.kind !== "wait" && typeof node.motion.direction === "number"
       ? node.motion.direction
       : state.facing;
-  if (node.enter === "face-target") {
+  if (
+    node.enter === "face-target" ||
+    (node.motion.kind !== "wait" && node.motion.direction === "target")
+  ) {
     const axis = object.behaviour?.axis ?? "x";
     const mine = at[axis] + (axis === "x" ? object.width : object.height) / 2;
     const target = duck[axis] + (axis === "x" ? tuning.width : tuning.height) / 2;
@@ -149,7 +180,7 @@ export function contactBox(object: ObjectLayout, at: Point, facing: -1 | 1): Rec
 }
 
 function heading(node: BehaviourNode, state: BehaviourState): -1 | 1 {
-  return node.motion.kind === "move" && node.motion.direction !== "facing"
+  return node.motion.kind !== "wait" && typeof node.motion.direction === "number"
     ? node.motion.direction
     : state.facing;
 }
@@ -168,6 +199,7 @@ function endpoint(object: ObjectLayout, direction: -1 | 1): number {
 function matches(
   tuning: DuckTuning,
   object: ObjectLayout,
+  world: BehaviourWorld,
   duck: DuckState,
   at: Point,
   state: BehaviourState,
@@ -180,14 +212,29 @@ function matches(
     const axis = object.behaviour?.axis ?? "x";
     return at[axis] === endpoint(object, heading(nodeOf(object, state.stateKey), state));
   }
+  if (condition.kind === "reachable" || condition.kind === "lost-target") {
+    const reachable = targetReachable(
+      tuning,
+      object,
+      world,
+      at,
+      contactBox(object, at, state.facing),
+      state.hop?.groundY ?? at.y,
+      condition.tolerance,
+      duck,
+    );
+    return condition.kind === "reachable" ? reachable : !reachable;
+  }
   if (condition.kind === "same-ground") {
     return (
       duck.grounded &&
-      Math.abs(duck.y + tuning.height - (at.y + object.height)) <= condition.tolerance
+      Math.abs(duck.y + tuning.height - ((state.hop?.groundY ?? at.y) + object.height)) <=
+        condition.tolerance
     );
   }
   const hers = duckBox(tuning, duck);
   return (
+    condition.kind === "nearby" &&
     Math.hypot(
       hers.x + hers.width / 2 - at.x - object.width / 2,
       hers.y + hers.height / 2 - at.y - object.height / 2,
@@ -197,7 +244,7 @@ function matches(
 
 function reachable(
   object: ObjectLayout,
-  solids: readonly Rect[],
+  world: BehaviourWorld,
   at: Point,
   state: BehaviourState,
   direction: -1 | 1,
@@ -210,25 +257,57 @@ function reachable(
   const across = axis === "x" ? "y" : "x";
   const depth = axis === "x" ? "height" : "width";
   const length = axis === "x" ? "width" : "height";
-  for (const solid of solids) {
+  const consider = (solid: Rect) => {
     if (box[across] >= solid[across] + solid[depth] || solid[across] >= box[across] + box[depth]) {
-      continue;
+      return;
     }
     if (direction === 1 && box[axis] + box[length] <= solid[axis]) {
       to = Math.min(to, at[axis] + solid[axis] - box[axis] - box[length]);
     } else if (direction === -1 && box[axis] >= solid[axis] + solid[length]) {
       to = Math.max(to, at[axis] + solid[axis] + solid[length] - box[axis]);
     }
+  };
+  for (const solid of world.solids) {
+    consider(solid);
+  }
+  for (const platform of world.platforms ?? []) {
+    if (platform.owner !== object && platform.collision === "solid") {
+      consider(platform.rect);
+    }
+  }
+  return to;
+}
+
+function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: number): number {
+  let to = desired;
+  const down = desired > at.y;
+  const consider = (solid: Rect, ledge: boolean) => {
+    if (at.x >= solid.x + solid.width || at.x + object.width <= solid.x) {
+      return;
+    }
+    if (down && at.y + object.height <= solid.y + EDGE) {
+      to = Math.min(to, solid.y - object.height);
+    } else if (!down && !ledge && at.y >= solid.y + solid.height - EDGE) {
+      to = Math.max(to, solid.y + solid.height);
+    }
+  };
+  for (const solid of world.solids) {
+    consider(solid, false);
+  }
+  for (const platform of world.platforms ?? []) {
+    if (platform.owner !== object) {
+      consider(platform.rect, platform.collision === "ledge");
+    }
   }
   return to;
 }
 
 // Generic state graphs choose the motion, animation and transition order. The executor knows
-// only bounded move/wait primitives and conditions; it has no character-specific cycle.
+// only bounded move/wait/hop primitives and conditions; it has no character-specific cycle.
 export function stepBehaviour(
   tuning: DuckTuning,
   object: ObjectLayout,
-  solids: readonly Rect[],
+  geometry: BehaviourGeometry,
   seconds: number,
   duck: DuckState,
   at: Point,
@@ -245,6 +324,7 @@ export function stepBehaviour(
       state,
     };
   }
+  const world = behaviourWorld(geometry);
   const segments: BehaviourSegment[] = [];
   const instant = new Set<string>();
   let current = at;
@@ -252,8 +332,15 @@ export function stepBehaviour(
   let time = 0;
   while (true) {
     const node = nodeOf(object, next.stateKey);
+    if (node.motion.kind !== "wait" && node.motion.direction === "target") {
+      const mine = current[plan.axis] + (plan.axis === "x" ? object.width : object.height) / 2;
+      const target = duck[plan.axis] + (plan.axis === "x" ? tuning.width : tuning.height) / 2;
+      if (target !== mine) {
+        next = { ...next, facing: target < mine ? -1 : 1 };
+      }
+    }
     const transition = node.transitions.find(({ when }) =>
-      when.every((condition) => matches(tuning, object, duck, current, next, condition)),
+      when.every((condition) => matches(tuning, object, world, duck, current, next, condition)),
     );
     if (transition) {
       if (instant.has(next.stateKey)) {
@@ -271,7 +358,8 @@ export function stepBehaviour(
       if (
         when.every(
           (condition) =>
-            condition.kind === "elapsed" || matches(tuning, object, duck, current, next, condition),
+            condition.kind === "elapsed" ||
+            matches(tuning, object, world, duck, current, next, condition),
         )
       ) {
         const threshold = Math.max(
@@ -285,15 +373,51 @@ export function stepBehaviour(
         }
       }
     }
+    if (node.motion.kind === "hop" && !next.hop) {
+      next = {
+        ...next,
+        hop: {
+          elapsed: 0,
+          groundY: current.y,
+          height: node.motion.hopHeight,
+          seconds: node.motion.hopSeconds,
+        },
+      };
+    }
+    const hop = next.hop;
+    if (hop) {
+      slice = Math.min(
+        slice,
+        (hop.elapsed < hop.seconds / 2 ? hop.seconds / 2 : hop.seconds) - hop.elapsed,
+      );
+    }
     const to = { ...current };
-    if (node.motion.kind === "move") {
+    if (node.motion.kind !== "wait" && node.motion.speed > 0) {
       const direction = heading(node, next);
-      const desired = current[plan.axis] + direction * node.motion.speed * slice;
-      const end = reachable(object, solids, current, next, direction, desired);
+      let desired = current[plan.axis] + direction * node.motion.speed * slice;
+      if (node.motion.direction === "target") {
+        const target =
+          duck[plan.axis] +
+          (plan.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
+        desired = direction === 1 ? Math.min(desired, target) : Math.max(desired, target);
+      }
+      const end = reachable(object, world, current, next, direction, desired);
       const moving = Math.abs(end - current[plan.axis]) / node.motion.speed;
       if (moving > 0) {
         slice = Math.min(slice, moving);
         to[plan.axis] = end;
+      }
+    }
+    if (hop) {
+      const elapsed = Math.min(hop.seconds, hop.elapsed + slice);
+      const desired = hop.groundY - hopLift(hop.height, hop.seconds, elapsed);
+      to.y = hopY(object, world, { ...current, x: to.x }, desired);
+      if (elapsed >= hop.seconds - EDGE || (desired > current.y && to.y < desired - EDGE)) {
+        const landed = { ...next };
+        delete landed.hop;
+        next = landed;
+      } else {
+        next = { ...next, hop: { ...hop, elapsed } };
       }
     }
     const end = time + slice;

@@ -40,14 +40,22 @@ function thingOf(catalogue: Catalogue, instance: Instance) {
     const { axis, distance, states } = object.behaviour;
     const dx = axis === "x" ? distance : 0;
     const dy = axis === "y" ? distance : 0;
+    const hopHeight = Math.max(
+      0,
+      ...Object.values(states).map((node) =>
+        node.motion.kind === "hop" ? node.motion.hopHeight : 0,
+      ),
+    );
     return {
       collision: object.collision,
-      moves: distance !== 0 && Object.values(states).some((node) => node.motion.kind === "move"),
+      moves:
+        hopHeight > 0 ||
+        (distance !== 0 && Object.values(states).some((node) => node.motion.kind === "move")),
       span: {
         bottom: object.origin.y + object.height + Math.max(0, dy),
         left: object.origin.x + Math.min(0, dx),
         right: object.origin.x + object.width + Math.max(0, dx),
-        top: object.origin.y + Math.min(0, dy),
+        top: object.origin.y + Math.min(0, dy) - hopHeight,
       },
     };
   }

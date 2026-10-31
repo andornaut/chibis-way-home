@@ -129,7 +129,10 @@ export function objectLayout(
         interaction.kind !== "none" ||
         motion.algorithm !== "static" ||
         reaction.kind !== "none" ||
-        (behaviour && Object.values(behaviour.states).some((node) => node.motion.kind === "move")))
+        (behaviour &&
+          Object.values(behaviour.states).some(
+            (node) => node.motion.kind === "move" || node.motion.kind === "hop",
+          )))
     ) {
       throw new Error(
         `Parallax on ${instance.character} requires static scenery without interaction`,
