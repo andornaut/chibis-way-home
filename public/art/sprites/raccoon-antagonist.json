@@ -86,6 +86,38 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
     "sourceSize": { "w": 48, "h": 48 },
     "duration": 400
+   },
+   "raccoon-antagonist 11.aseprite": {
+    "frame": { "x": 528, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 120
+   },
+   "raccoon-antagonist 12.aseprite": {
+    "frame": { "x": 576, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 120
+   },
+   "raccoon-antagonist 13.aseprite": {
+    "frame": { "x": 624, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 120
+   },
+   "raccoon-antagonist 14.aseprite": {
+    "frame": { "x": 672, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 120
    }
  },
  "meta": {
@@ -93,14 +125,15 @@
   "version": "1.2.30-x64",
   "image": "raccoon-antagonist.png",
   "format": "RGBA8888",
-  "size": { "w": 528, "h": 48 },
+  "size": { "w": 720, "h": 48 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward" },
    { "name": "climb", "from": 2, "to": 5, "direction": "forward" },
    { "name": "prepare", "from": 6, "to": 6, "direction": "forward" },
    { "name": "drop", "from": 7, "to": 8, "direction": "forward" },
-   { "name": "rest", "from": 9, "to": 10, "direction": "forward" }
+   { "name": "rest", "from": 9, "to": 10, "direction": "forward" },
+   { "name": "frustration", "from": 11, "to": 14, "direction": "forward" }
   ]
  }
 }

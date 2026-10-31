@@ -86,6 +86,38 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 60, "h": 40 },
     "sourceSize": { "w": 60, "h": 40 },
     "duration": 400
+   },
+   "dog-antagonist 11.aseprite": {
+    "frame": { "x": 660, "y": 0, "w": 60, "h": 40 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 60, "h": 40 },
+    "sourceSize": { "w": 60, "h": 40 },
+    "duration": 120
+   },
+   "dog-antagonist 12.aseprite": {
+    "frame": { "x": 720, "y": 0, "w": 60, "h": 40 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 60, "h": 40 },
+    "sourceSize": { "w": 60, "h": 40 },
+    "duration": 120
+   },
+   "dog-antagonist 13.aseprite": {
+    "frame": { "x": 780, "y": 0, "w": 60, "h": 40 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 60, "h": 40 },
+    "sourceSize": { "w": 60, "h": 40 },
+    "duration": 120
+   },
+   "dog-antagonist 14.aseprite": {
+    "frame": { "x": 840, "y": 0, "w": 60, "h": 40 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 60, "h": 40 },
+    "sourceSize": { "w": 60, "h": 40 },
+    "duration": 120
    }
  },
  "meta": {
@@ -93,14 +125,15 @@
   "version": "1.2.30-x64",
   "image": "dog-antagonist.png",
   "format": "RGBA8888",
-  "size": { "w": 660, "h": 40 },
+  "size": { "w": 900, "h": 40 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward" },
    { "name": "walk", "from": 2, "to": 5, "direction": "forward" },
    { "name": "crouch", "from": 6, "to": 6, "direction": "forward" },
    { "name": "rush", "from": 7, "to": 8, "direction": "forward" },
-   { "name": "rest", "from": 9, "to": 10, "direction": "forward" }
+   { "name": "rest", "from": 9, "to": 10, "direction": "forward" },
+   { "name": "frustration", "from": 11, "to": 14, "direction": "forward" }
   ]
  }
 }

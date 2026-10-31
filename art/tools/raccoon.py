@@ -19,6 +19,7 @@ Tags, in frame order:
 - prepare: 1x400ms, visibly compressed and tense before the drop, paws held against the torso.
 - drop: 2x100ms, splayed limbs then tucked paws and feet during descent.
 - rest: 2x400ms, settled after landing; still lethal, never a safe state.
+- frustration: 4x120ms, head shaking and alternating raised paws, feet planted.
 
 All tags loop. The generic behaviour state machine owns state timing and physical movement; frame durations
 are art cycle defaults. Build writes art/antagonists/raccoon-antagonist.aseprite and its PNG/JSON export.
@@ -82,25 +83,28 @@ def draw(state="idle", phase=0):
     g.blob(26, body_y, 10.5, body_h, "grey", sh="slate", li="lgrey")
     g.ell(27, body_y + 1, 5.5, body_h - 2, "cream")
     # Rounded ears and a large head keep the proportions distinct from the long-bodied dog.
+    shake = (-1, 1, -1, 1)[phase] if state == "frustration" else 0
     hy = 18 - head_lift
-    for x in (19, 37):
+    for x in (19 + shake, 37 + shake):
         g.ell(x, 9 - head_lift, 4.5, 4.5, "grey", sh="slate")
         g.ell(x, 9 - head_lift, 2.5, 2.5, "ink")
-    g.blob(28, hy, 13.5, 10.5, "grey", sh="slate", li="lgrey")
-    g.ell(28, hy + 3, 13, 5.5, "cream")
-    g.rect(26, hy - 9, 3, 7, "slate")
+    g.blob(28 + shake, hy, 13.5, 10.5, "grey", sh="slate", li="lgrey")
+    g.ell(28 + shake, hy + 3, 13, 5.5, "cream")
+    g.rect(26 + shake, hy - 9, 3, 7, "slate")
     # The masks are paired patches; each carries a two-pixel square glint.
-    for x in (21, 34):
+    for x in (21 + shake, 34 + shake):
         g.ell(x, hy + 1, 5, 3.7, "ink")
         g.rect(x - 1, hy - 1, 2, 2, "white")
-    g.blob(29, hy + 7, 6.5, 4.5, "cream")
-    g.rect(28, hy + 4, 3, 2, "ink")
-    g.rect(28, hy + 8, 3, 1, "slate")
+    g.blob(29 + shake, hy + 7, 6.5, 4.5, "cream")
+    g.rect(28 + shake, hy + 4, 3, 2, "ink")
+    g.rect(28 + shake, hy + 8, 3, 1, "slate")
     if state == "climb":
         near, far = (((42, 13), (13, 26)), ((42, 18), (13, 21)),
                      ((42, 25), (13, 11)), ((42, 21), (13, 17)))[phase]
     elif dropping:
         near, far = ((43, 22), (12, 25)) if phase == 0 else ((34, 36), (20, 35))
+    elif state == "frustration":
+        near, far = ((42, 23), (13, 36)) if phase % 2 == 0 else ((40, 35), (12, 23))
     elif prepare:
         near, far = (35, 38), (20, 38)
     else:
@@ -117,6 +121,7 @@ def sprites():
         ("prepare", [draw("prepare")], 400),
         ("drop", [draw("drop", i) for i in range(2)], 100),
         ("rest", [draw("rest", i) for i in range(2)], 400),
+        ("frustration", [draw("frustration", i) for i in range(4)], 120),
     ]
 
 

@@ -14,6 +14,7 @@ bill/feet distinguish the goose from the duck. Warn raises a broad wing and the 
 forward into a short committed charge; rest is still lethal, never a safe state. No teeth or scary snarl.
 
 Tags in frame order: idle 2x400ms; walk 4x120ms; warn 2x160ms; rush 4x80ms; rest 2x400ms.
+Frustration appends 4x120ms: a short headshake and low wing flaps, feet planted.
 All tags loop. These are art cycle defaults; gameplay owns state durations and all physical movement.
 The build writes art/antagonists/goose-antagonist.aseprite and its PNG/JSON exports.
 """
@@ -72,6 +73,10 @@ def draw(state="idle", phase=0):
     else:
         hx, hy = (32, 12 - lift) if resting else (33, 10 - lift)
         points = [(28, by - 2), (30, 23 - lift), (30, 16 - lift), (hx, hy + 1)]
+    if state == "frustration":
+        hx += (-1, 1, -1, 1)[phase]
+        hy += (1, 0, 1, 0)[phase]
+        points[-1] = (hx, hy + 1)
     duck.cel(g, neck_shape(points), "cream", "lgrey", "white", 2, 1)
     duck.cel(g, duck.in_ell(hx, hy, 5.5, 5), "cream", "lgrey", "white", 2, 1)
     # A short bill and high dot eye retain a soft expression while keeping the neck unmistakable.
@@ -79,6 +84,10 @@ def draw(state="idle", phase=0):
     g.rect(int(hx + 1), int(hy - 2), 3, 1 if resting else 3, "ink")
     if not warning:
         duck.cel(g, duck.in_ell(20, by + 1, 8, 4.5, -0.2), "grey", "dslate", None, 2, 1)
+    if state == "frustration":
+        angle = -0.45 if phase % 2 else 0.4
+        duck.cel(g, duck.in_ell(19, 30 if phase % 2 else 35, 11, 4, angle),
+                 "lgrey", "grey", "white", 2, 1)
     return g.outlined(lambda c: K["navy"] if c in (K["grey"], K["dslate"]) else K["dslate"])
 
 
@@ -89,6 +98,7 @@ def sprites():
         ("warn", [draw("warn", i) for i in range(2)], 160),
         ("rush", [draw("rush", i) for i in range(4)], 80),
         ("rest", [draw("rest", i) for i in range(2)], 400),
+        ("frustration", [draw("frustration", i) for i in range(4)], 120),
     ]
 
 

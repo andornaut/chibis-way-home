@@ -10,7 +10,8 @@ in every state, including crouch and rest. The game does not draw a red contact 
 outline; the hitbox remains collision metadata.
 Tags: idle 2x400ms; walk 4x120ms; crouch 1x400ms; rush 2x80ms; rest 2x400ms. All loop; the gameplay
 state machine owns how long each state lasts. Crouch lowers the head and body; rush stretches the paws;
-rest closes the eye. Idle breath lifts the torso 1px while the feet stay planted.
+Frustration appends 4x120ms: a short headshake and lifted forepaw, with planted hind feet.
+Rest closes the eye. Idle breath lifts the torso 1px while the feet stay planted.
 
 portrait-dog is 64x64, right-facing towards text, transparent behind, chest cut off at the bottom, with
 one ink outer line. Tag neutral: 1x1000ms. It uses the same ochre, rust and cream as the dog.
@@ -39,6 +40,9 @@ def dog_image(state, phase=0):
     rest = state == "rest"
     by = 23 if crouch else 19 if rush else 16
     hy = 15 if crouch else 17 if rush else 11
+    shake = (-2, 0, -2, 0)[phase] if state == "frustration" else 0
+    if state == "frustration":
+        hy += (0, 1, 0, 1)[phase]
     # Tail, far paws and back ear.
     d.line([(10, 28), (5, 22), (4, 22)], fill=C(shade), width=4)
     for x in (16, 34):
@@ -50,6 +54,8 @@ def dog_image(state, phase=0):
     d.ellipse((10, by + 1, 39, 32), fill=C(base))
     d.arc((11, by + 1, 38, 32), 190, 275, fill=C(light), width=2)
     # Soft cheeks and a projecting muzzle, no teeth or angry brows.
+    head = Image.new("RGBA", im.size) if state == "frustration" else im
+    d = ImageDraw.Draw(head)
     headbox = (31, hy, 55, hy + 24)
     d.ellipse(headbox, fill=C("plum"))
     d.ellipse((headbox[0] + 1, hy + 1, headbox[2] - 1, headbox[3] - 1), fill=C(base))
@@ -63,8 +69,13 @@ def dog_image(state, phase=0):
     else:
         d.rectangle((48, hy + 7, 50, hy + 9), fill=C("ink"))
         d.point((48, hy + 7), fill=C("white"))
+    if state == "frustration":
+        im.alpha_composite(head, (shake, 0))
+        d = ImageDraw.Draw(im)
     # Near paws clearly change readiness and stretch.
     feet = ((12, 34, 18, 39), (38, 34, 45, 39)) if not rush else ((6, 33, 16, 39), (43, 30, 54, 35))
+    if state == "frustration":
+        feet = ((12, 34, 18, 39), (39, 27 if phase % 2 else 30, 46, 33 if phase % 2 else 36))
     for box in feet:
         d.rounded_rectangle(box, radius=1, fill=C("plum"))
         d.rectangle((box[0] + 1, box[1], box[2] - 1, box[3] - 1), fill=C(base))
@@ -125,6 +136,7 @@ def sprites():
         ("crouch", [pixels(dog_image("crouch"))], 400),
         ("rush", [pixels(dog_image("rush", i)) for i in range(2)], 80),
         ("rest", [pixels(dog_image("rest", i)) for i in range(2)], 400),
+        ("frustration", [pixels(dog_image("frustration", i)) for i in range(4)], 120),
     ]
     yield "portrait-dog", [("neutral", [pixels(portrait_image())], 1000)]
 
