@@ -47,6 +47,11 @@ describe("behaviour phase bounds", () => {
           track: { axis: "x", distance: 90 },
           transitions: [],
         },
+        climb: {
+          animation: null,
+          motion: { direction: -1, kind: "move", speed: 30 },
+          transitions: [],
+        },
         swoop: {
           animation: null,
           motion: {
@@ -65,7 +70,7 @@ describe("behaviour phase bounds", () => {
       x: -10,
       y: -40,
     });
-    expect(behaviourCycleSeconds(graph)).toBeCloseTo(3 + Math.hypot(110, 20) / 20);
+    expect(behaviourCycleSeconds(graph)).toBeCloseTo(5 + Math.hypot(110, 20) / 20);
   });
 
   it.each([

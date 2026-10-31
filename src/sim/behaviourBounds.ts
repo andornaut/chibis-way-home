@@ -22,18 +22,12 @@ function flightWaypoints(motion: Extract<BehaviourMotion, { kind: "fly" }>): rea
 function waypoints(pattern: BehaviourPlan): readonly Point[] {
   return [
     { x: 0, y: 0 },
-    {
-      x: pattern.axis === "x" ? pattern.distance : 0,
-      y: pattern.axis === "y" ? pattern.distance : 0,
-    },
     ...Object.values(pattern.states).flatMap((node) => [
-      ...(node.track
-        ? [
-            {
-              x: node.track.axis === "x" ? node.track.distance : 0,
-              y: node.track.axis === "y" ? node.track.distance : 0,
-            },
-          ]
+      ...(node.motion.kind === "move" || node.motion.kind === "hop"
+        ? [node.track ?? pattern].map((track) => ({
+            x: track.axis === "x" ? track.distance : 0,
+            y: track.axis === "y" ? track.distance : 0,
+          }))
         : []),
       ...(node.motion.kind === "fly" ? flightWaypoints(node.motion) : []),
     ]),

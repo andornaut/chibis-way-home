@@ -38,10 +38,11 @@ function thingOf(catalogue: Catalogue, instance: Instance) {
   const object = objectLayout(1, catalogue, {}, undefined, {}, physical);
   if (object.behaviour) {
     const { states } = object.behaviour;
-    const tracks = [
-      object.behaviour,
-      ...Object.values(states).flatMap((node) => (node.track ? [node.track] : [])),
-    ];
+    const tracks = Object.values(states).flatMap((node) =>
+      node.motion.kind === "move" || node.motion.kind === "hop"
+        ? [node.track ?? object.behaviour!]
+        : [],
+    );
     const flights = Object.values(states).flatMap((node) =>
       node.motion.kind !== "fly"
         ? []
