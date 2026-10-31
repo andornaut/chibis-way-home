@@ -1,5 +1,4 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { snapshotRemapped } from "@andornaut/game-kit/view/phaser/snapshotRemap";
 import { type Cameras, Core, type GameObjects, type Input, Scale, Scene, Scenes } from "phaser";
 
 import { TEXT } from "../data/text";
@@ -12,7 +11,7 @@ import { type CardAction, cardBackAction, cardKeyAction, cardTurnAction } from "
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
 import { setTouchSettingShown, type TouchSetting, touchSettings } from "../settings/touchControls";
-import { dimColour, type Palette } from "../view/dim";
+import type { Palette } from "../view/dim";
 import {
   addCardText,
   addCardTextIn,
@@ -28,8 +27,10 @@ import {
   type TextButton,
   TITLE_FONT,
 } from "./cardParts";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
-import { canvasRect, fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
+import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
 import type { ZoneScene } from "./ZoneScene";
 
@@ -69,7 +70,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   private focus: CardControl | undefined;
   private focusRing: GameObjects.NineSlice | undefined;
   private closeX!: GameObjects.Sprite;
-  private dim!: GameObjects.Image;
+  private dims = new Map<string, ReturnType<typeof showModalBackdrop>>();
   private pauseButton!: GameObjects.Sprite;
   // The control a press landed on, which acts if the press lifts on it too.
   private cardCamera!: Cameras.Scene2D.Camera;
@@ -97,8 +98,8 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.events.once("shutdown", () =>
       this.scale.off(Scale.Events.RESIZE, this.placePauseButton, this),
     );
-    this.dim = this.add.image(0, 0, "__DEFAULT").setOrigin(0);
-    this.cardCamera.ignore([this.pauseButton, this.dim]);
+    this.dims = new Map();
+    this.cardCamera.ignore(this.pauseButton);
     const toCards = (object: GameObjects.GameObject) => canvasCamera.ignore(object);
     this.events.on(Scenes.Events.ADDED_TO_SCENE, toCards);
     this.events.once("shutdown", () => this.events.off(Scenes.Events.ADDED_TO_SCENE, toCards));
@@ -106,6 +107,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.card = this.drawCard();
     this.showCard(false);
     this.watchPresses();
+    modalInput(this).subscribe(() => this.setPressed(undefined));
     catchModalTaps(this, this.cardCamera, {
       close: () => this.close(),
       covered: () =>
@@ -118,13 +120,16 @@ export class PauseScene extends Scene implements SettingsOpener {
           : undefined,
     });
     this.watchKeys();
-    const onBack = () => {
+    const onBack = (event: Event) => {
       if (this.playCovered()) {
         return;
       }
       if (this.state === "settings") {
-        this.settings().back();
-      } else {
+        const card = this.settings();
+        if (modalInput(card).accepts(event)) {
+          card.back();
+        }
+      } else if (modalInput(this).accepts(event)) {
         this.act(cardBackAction(this.state === "open"));
       }
     };
@@ -141,7 +146,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   private act(action: CardAction | undefined): void {
-    if (this.playCovered()) {
+    if (this.playCovered() || !modalInput(this).accepts()) {
       return;
     }
     if (action === "open") {
@@ -151,30 +156,31 @@ export class PauseScene extends Scene implements SettingsOpener {
     }
   }
 
-  // Pauses the zone, reads it back once for each mix of the touch settings (DIM_MIXES) to dim
-  // each, and
-  // shows the card over the dim. Nothing of this scene shows while the zone is read back.
+  // Cache a shared-kit backdrop for each touch setting mix before showing the pause card.
   private async open(): Promise<void> {
     if (this.state !== "closed" || !this.scene.isActive(ZONE) || this.playCovered()) {
       return;
     }
     this.state = "opening";
+    modalInput(this).open();
+    this.setPressed(undefined);
     this.scene.pause(ZONE);
     stopWakeLock();
     coverZone("pauseCard", true);
-    const cameras = this.cameras.cameras.filter((camera) => camera.visible);
-    cameras.forEach((camera) => camera.setVisible(false));
+
     const zone = this.scene.get(ZONE) as ZoneScene;
     for (const mix of DIM_MIXES) {
       zone.showTouchControls(mix);
       // eslint-disable-next-line no-await-in-loop -- each mix needs its own rendered frame.
       await this.dimZone(dimTexture(mix));
+      if (!this.sys.isActive()) {
+        return;
+      }
     }
     zone.showTouchControls(touchSettings());
     this.renderDim();
     this.showCard(true);
     captureTab(this, true);
-    cameras.forEach((camera) => camera.setVisible(true));
     this.state = "open";
   }
 
@@ -183,6 +189,9 @@ export class PauseScene extends Scene implements SettingsOpener {
       return;
     }
     this.state = "closed";
+    modalInput(this).close();
+    this.dims.forEach((dim) => dim.destroy());
+    this.dims.clear();
     this.showCard(false);
     captureTab(this, false);
     this.scene.resume(ZONE);
@@ -193,6 +202,9 @@ export class PauseScene extends Scene implements SettingsOpener {
   // Ends the zone and shows the start screen, this scene staying beside it for the next zone.
   private returnHome(): void {
     this.state = "closed";
+    modalInput(this).close();
+    this.dims.forEach((dim) => dim.destroy());
+    this.dims.clear();
     this.showCard(false);
     captureTab(this, false);
     this.scene.stop(ZONE);
@@ -232,12 +244,12 @@ export class PauseScene extends Scene implements SettingsOpener {
   // The dim behind the cards, with the touch buttons as the setting shows them.
   private renderDim(): void {
     const key = dimTexture(touchSettings());
-    this.dim.setTexture(this.textures.exists(key) ? key : "__DEFAULT");
+    this.dims.forEach((dim, name) => dim.setVisible(name === key));
   }
 
   private showCard(open: boolean): void {
     this.card.setVisible(open);
-    this.dim.setVisible(open);
+    this.dims.forEach((dim, name) => dim.setVisible(open && name === dimTexture(touchSettings())));
     this.focus = undefined;
     this.drawFocus();
     this.showPauseButton();
@@ -276,10 +288,13 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.showPauseButton();
   }
 
-  // The canvas as rendered at the end of the next frame, redrawn two steps down each colour's
-  // ramp into the texture key. Where the renderer gives no image, the card shows undimmed.
+  // Capture the next rendered frame, with an opaque palette fallback when readback fails.
   private async dimZone(key: string): Promise<void> {
-    await snapshotRemapped(dimColour(this.palette()), this, canvasRect(this), key);
+    this.dims.forEach((dim) => dim.setVisible(false));
+    const dim = showModalBackdrop(this);
+    this.dims.set(key, dim);
+    await dim.ready;
+    dim.setVisible(false);
   }
 
   private drawCard(): GameObjects.Container {
@@ -357,10 +372,10 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   // A control acts when a press lands on it and lifts on it.
   private watchPresses(): void {
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.setPressed(this.controlAt(pointer));
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       const control = this.pressed;
       this.setPressed(undefined);
       if (control !== undefined && control === this.controlAt(pointer)) {
@@ -387,6 +402,9 @@ export class PauseScene extends Scene implements SettingsOpener {
       }
       if (this.state === "settings") {
         this.settings().key(event);
+        return;
+      }
+      if (!modalInput(this).accepts(event)) {
         return;
       }
       const action =

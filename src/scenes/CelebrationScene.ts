@@ -21,6 +21,7 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts";
+import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene";
 
@@ -72,10 +73,17 @@ export class CelebrationScene extends Scene implements RestartOpener {
     });
     this.render();
     this.watchPresses();
+    modalInput(this).subscribe(() => {
+      this.pressed = undefined;
+      this.render();
+    });
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
-    const onBack = () => {
+    const onBack = (event: Event) => {
       if (this.restartOpen) {
-        this.restartCard().back();
+        const card = this.restartCard();
+        if (modalInput(card).accepts(event)) {
+          card.back();
+        }
       }
     };
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
@@ -92,11 +100,11 @@ export class CelebrationScene extends Scene implements RestartOpener {
   }
 
   private watchPresses(): void {
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.pressed = this.restartOpen ? undefined : this.controlAt(pointer);
       this.render();
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       const control = this.pressed;
       this.pressed = undefined;
       this.render();
@@ -118,6 +126,9 @@ export class CelebrationScene extends Scene implements RestartOpener {
   private key(event: KeyboardEvent): void {
     if (this.restartOpen) {
       this.restartCard().key(event);
+      return;
+    }
+    if (!modalInput(this).accepts(event)) {
       return;
     }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);

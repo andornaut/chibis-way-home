@@ -29,6 +29,7 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts";
+import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
@@ -93,12 +94,16 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     void this.showStreet();
     this.showPressed(undefined);
     this.watchPresses();
+    modalInput(this).subscribe(() => this.showPressed(undefined));
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
-    const onBack = () => {
+    const onBack = (event: Event) => {
       const action = startBackAction(this.card !== undefined, this.layout.exit !== undefined);
       if (action === "closeCard") {
-        this.cardScene().back();
-      } else if (action === "exit") {
+        const card = this.cardScene();
+        if (modalInput(card).accepts(event)) {
+          card.back();
+        }
+      } else if (action === "exit" && modalInput(this).accepts(event)) {
         this.act("exit");
       }
     };
@@ -223,11 +228,11 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   }
 
   private watchPresses(): void {
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       // While a card shows, nothing on the start screen responds.
       this.showPressed(this.card === undefined ? this.controlAt(pointer) : undefined);
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       const control = this.pressed;
       this.showPressed(undefined);
       if (control !== undefined && control === this.controlAt(pointer)) {
@@ -241,6 +246,9 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   private key(event: KeyboardEvent): void {
     if (this.card !== undefined) {
       this.cardScene().key(event);
+      return;
+    }
+    if (!modalInput(this).accepts(event)) {
       return;
     }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);

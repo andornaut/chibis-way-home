@@ -27,6 +27,8 @@ import {
   paletteColour,
   TITLE_FONT,
 } from "./cardParts";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
@@ -109,6 +111,10 @@ export class SettingsScene extends Scene {
     this.focusRing = undefined;
     this.render();
     this.watchPresses();
+    modalInput(this).subscribe(() => {
+      this.pressed = undefined;
+      this.render();
+    });
     catchModalTaps(this, this.cameras.main, {
       close: () => this.back(),
       covered: () => this.covered(),
@@ -118,10 +124,16 @@ export class SettingsScene extends Scene {
       this.scene.restart({ opener: this.opener } satisfies SettingsData),
     );
     this.events.once("shutdown", stopWatching);
+    if (this.opener !== "pause") {
+      showModalBackdrop(this);
+    }
   }
 
   // A key the opener passes on while the card shows.
   key(event: KeyboardEvent): void {
+    if (!modalInput(this).accepts(event)) {
+      return;
+    }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
     if (action === "close") {
       this.back();
@@ -156,6 +168,9 @@ export class SettingsScene extends Scene {
   // Back, Escape, P and a tap outside it close the install steps card while it shows, and the
   // settings card otherwise.
   back(): void {
+    if (!modalInput(this).accepts()) {
+      return;
+    }
     if (this.steps !== undefined) {
       this.closeSteps();
     } else {
@@ -206,6 +221,7 @@ export class SettingsScene extends Scene {
   }
 
   private openSteps(browser: MenuInstallBrowser): void {
+    modalInput(this).invalidate();
     const words = TEXT.settings.installSteps;
     this.stepsLayout = stepsCard(cardFonts(this), words.title, [
       words[browser].first,
@@ -233,6 +249,7 @@ export class SettingsScene extends Scene {
   }
 
   private closeSteps(): void {
+    modalInput(this).invalidate();
     this.steps?.destroy();
     this.steps = undefined;
     this.card.setVisible(true);
@@ -363,11 +380,11 @@ export class SettingsScene extends Scene {
   // A control acts when a press lands on it and lifts on it; on the install steps card the
   // close X closes it.
   private watchPresses(): void {
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.pressed = this.targetAt(pointer);
       this.render();
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       const target = this.pressed;
       this.pressed = undefined;
       this.render();

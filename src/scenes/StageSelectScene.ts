@@ -27,6 +27,8 @@ import {
   ringFocus,
   TITLE_FONT,
 } from "./cardParts";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
@@ -165,10 +167,18 @@ export class StageSelectScene extends Scene {
       ],
     });
     this.watchInput();
+    modalInput(this).subscribe(() => {
+      this.pressed = undefined;
+      this.render();
+    });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
+    showModalBackdrop(this);
   }
   back(): void {
+    if (!modalInput(this).accepts()) {
+      return;
+    }
     if (this.finished) {
       return;
     }
@@ -226,6 +236,9 @@ export class StageSelectScene extends Scene {
   }
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       event.stopPropagation();
       const next = stageSelectKey(this.latest, this.available, this.focus, event);
       this.focus = next.focus;
@@ -237,12 +250,12 @@ export class StageSelectScene extends Scene {
       }
     });
     this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       this.pressed = this.targetAt(pointer);
       this.render();
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       const down = this.pressed;
       this.pressed = undefined;

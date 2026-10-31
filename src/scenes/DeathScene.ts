@@ -25,6 +25,8 @@ import {
   type TextButton,
   TITLE_FONT,
 } from "./cardParts";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
@@ -99,8 +101,13 @@ export class DeathScene extends Scene {
       covered: () => [this.layout.card, ...DEATH_ACTIONS.map((name) => this.layout[name].hit)],
     });
     this.watchInput();
+    modalInput(this).subscribe(() => {
+      this.press = undefined;
+      this.render();
+    });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
+    showModalBackdrop(this, true);
   }
   private render(): void {
     for (const name of DEATH_ACTIONS) {
@@ -134,6 +141,9 @@ export class DeathScene extends Scene {
   }
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       event.stopPropagation();
       const next = deathKeyAction(this.focus, event);
       this.focus = next.focus;
@@ -143,7 +153,7 @@ export class DeathScene extends Scene {
       }
     });
     this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press || this.finished) {
         return;
@@ -152,7 +162,7 @@ export class DeathScene extends Scene {
       this.press = { at, cancelled: false, id: pointer.id, target: pressedArea(this.areas(), at) };
       this.render();
     });
-    this.input.on("pointermove", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press?.id === pointer.id) {
         const at = playPoint(this, pointer);
@@ -181,7 +191,7 @@ export class DeathScene extends Scene {
         this.act(press.target);
       }
     };
-    this.input.on("pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    this.input.on("pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
+    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
   }
 }

@@ -134,6 +134,7 @@ import {
   type DialogueScene,
   type ForeshadowOpener,
 } from "./DialogueScene";
+import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
 import type { ZoneDepartureData } from "./ZoneDepartureScene";
@@ -1368,6 +1369,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   }
 
   private watchKeys(): void {
+    modalInput(this).subscribe(() => {
+      this.heldKeys.clear();
+      this.heldTouches.clear();
+      this.presses.clear();
+    });
     const keyboard = this.input.keyboard;
     if (!keyboard) {
       return;
@@ -1382,7 +1388,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
     // A key held from before the zone resumed, under the pause card or a room, counts only once
     // pressed again: its repeats never press it.
     keyboard.on("keydown", (event: KeyboardEvent) => {
-      if (!event.repeat && !this.playCovered() && this.scene.isActive()) {
+      if (
+        modalInput(this).accepts(event) &&
+        !event.repeat &&
+        !this.playCovered() &&
+        this.scene.isActive()
+      ) {
         this.heldKeys.add(event.code);
       }
     });
@@ -1415,6 +1426,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
       touchRoleAt(shifted(bottomShift(this.scale.gameSize), point, -1));
     const accepts = (event: PagePointerEvent) => {
       if (
+        !modalInput(this).accepts() ||
         event.pointerType !== "touch" ||
         onPageControl(event.target) ||
         !this.scene.isActive() ||

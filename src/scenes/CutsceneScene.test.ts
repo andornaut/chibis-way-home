@@ -8,6 +8,7 @@ vi.mock("phaser", () => ({
   Scene: class {
     readonly add = { rectangle: () => ({ setOrigin: vi.fn() }) };
     readonly events = new EventEmitter();
+    readonly game = {};
     readonly input = Object.assign(new EventEmitter(), {
       keyboard: new EventEmitter(),
       stopPropagation: vi.fn(),

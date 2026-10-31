@@ -50,6 +50,7 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts";
+import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import type { StageSelectData, StageSelectOpener, StageSelectScene } from "./StageSelectScene";
 import type { ZoneData } from "./ZoneScene";
@@ -141,11 +142,15 @@ export class MapScene extends Scene implements StageSelectOpener {
       .setTint(this.colour("ink"));
     this.addActions();
     this.showPressed(undefined);
+    modalInput(this).subscribe(() => this.showPressed(undefined));
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
     captureTab(this, true);
-    const onBack = () => {
+    const onBack = (event: Event) => {
       if (this.selectionOpen && !this.travelling) {
-        (this.scene.get("stageSelect") as StageSelectScene).back();
+        const card = this.scene.get("stageSelect") as StageSelectScene;
+        if (modalInput(card).accepts(event)) {
+          card.back();
+        }
       }
     };
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
@@ -157,12 +162,12 @@ export class MapScene extends Scene implements StageSelectOpener {
       }
       this.selectionOpen = false;
     });
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       if (!this.selectionOpen && !this.travelling) {
         this.showPressed(this.controlAt(pointer));
       }
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       if (this.selectionOpen || this.travelling) {
         return;
       }
@@ -355,6 +360,9 @@ export class MapScene extends Scene implements StageSelectOpener {
   }
 
   private key(event: KeyboardEvent): void {
+    if (!modalInput(this).accepts(event)) {
+      return;
+    }
     if (this.selectionOpen || this.travelling) {
       return;
     }

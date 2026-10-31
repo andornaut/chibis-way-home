@@ -17,6 +17,7 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts";
+import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import { addStageSummary } from "./runStatsParts";
 
@@ -66,6 +67,9 @@ export class CutsceneScene extends Scene {
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       event.stopPropagation();
       const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
       if (action === "next" || action === "previous") {
@@ -76,7 +80,7 @@ export class CutsceneScene extends Scene {
       }
     });
     this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press || this.finished) {
         return;
@@ -87,7 +91,7 @@ export class CutsceneScene extends Scene {
         this.render();
       }
     });
-    this.input.on("pointermove", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press?.id === pointer.id) {
         const at = playPoint(this, pointer);
@@ -115,8 +119,8 @@ export class CutsceneScene extends Scene {
         this.continue();
       }
     };
-    this.input.on("pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    this.input.on("pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
+    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
   }
   private render(): void {
     pressTextButton(this.button, this.press !== undefined && !this.press.cancelled);

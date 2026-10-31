@@ -17,6 +17,8 @@ import {
   type TextButton,
   TITLE_FONT,
 } from "./cardParts";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
@@ -79,11 +81,11 @@ export class RestartScene extends Scene {
       close: () => this.back(),
       covered: () => [this.layout.card, ...TARGETS.map((target) => this.layout[target].hit)],
     });
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.pressed = this.targetAt(pointer);
       this.render();
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       const target = this.pressed;
       this.pressed = undefined;
       this.render();
@@ -91,10 +93,14 @@ export class RestartScene extends Scene {
         this.act(target);
       }
     });
+    showModalBackdrop(this);
   }
 
   // A key the opener passes on while the card shows.
   key(event: KeyboardEvent): void {
+    if (!modalInput(this).accepts(event)) {
+      return;
+    }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
     if (action === "close") {
       this.back();
@@ -110,6 +116,9 @@ export class RestartScene extends Scene {
 
   // Back, Escape, P and a tap outside the card cancel.
   back(): void {
+    if (!modalInput(this).accepts()) {
+      return;
+    }
     this.scene.stop();
     this.openerScene().restartClosed();
   }

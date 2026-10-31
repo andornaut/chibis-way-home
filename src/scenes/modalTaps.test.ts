@@ -1,3 +1,5 @@
+import { EventEmitter } from "node:events";
+
 import type { Input, Scene } from "phaser";
 import { describe, expect, it } from "vitest";
 
@@ -27,9 +29,11 @@ function tap(open: boolean, closes: boolean, down: Point, up: Point = down) {
   };
   let closed = 0;
   const scene = {
+    events: new EventEmitter(),
+    game: {},
     input,
     scale: { gameSize: { height: 200, width: 400 } },
-  } as unknown as Pick<Scene, "input" | "scale">;
+  } as unknown as Scene;
   catchModalTaps(scene, VIEW, {
     ...(closes && {
       close: () => {
@@ -50,7 +54,7 @@ const onCanvas = (view: Point): Point => ({ x: view.x + VIEW.x, y: view.y + VIEW
 describe("catchModalTaps", () => {
   it.each([
     ["beside the card closes it and reaches nothing under", BESIDE, true, true],
-    ["on the card is the card's own", onCanvas(ON_CARD), false, false],
+    ["on the card is the card's own", onCanvas(ON_CARD), false, true],
     [
       "at the screen's top right, where the start screen's nav sits, closes it too",
       TOP_RIGHT,

@@ -27,6 +27,7 @@ import {
   ringFocus,
   TITLE_FONT,
 } from "./cardParts";
+import { modalInput, onScenePointer } from "./modalInput";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
 
 const ZONE = "zone";
@@ -90,6 +91,10 @@ export class RoomScene extends Scene {
     this.drawLeave();
     this.render();
     this.watchInput();
+    modalInput(this).subscribe(() => {
+      this.pressed = undefined;
+      this.render();
+    });
   }
 
   private drawRoom(): void {
@@ -167,20 +172,27 @@ export class RoomScene extends Scene {
   }
 
   private watchInput(): void {
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.pressed = this.controlAt(pointer);
       this.render();
     });
-    this.input.on("pointerup", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
       const down = this.pressed;
       this.pressed = undefined;
       this.render();
       this.act({ down, kind: "press", up: this.controlAt(pointer) });
     });
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       this.act({ key: event.key, kind: "key", repeat: event.repeat, shift: event.shiftKey });
     });
-    const onBack = () => this.act({ kind: "back" });
+    const onBack = (event: Event) => {
+      if (modalInput(this).accepts(event)) {
+        this.act({ kind: "back" });
+      }
+    };
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
     this.events.once("shutdown", () => {
       window.removeEventListener(PHONE_EVENTS.backPressed, onBack);

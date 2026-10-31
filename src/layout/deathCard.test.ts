@@ -30,7 +30,8 @@ describe("death card", () => {
     { height: 40, width: 40, x: 0, y: 0 },
     { height: 40, width: 40, x: 680, y: 150 },
   ])("keeps the seated bird visible at ground and elevated positions: %j", (bird) => {
-    const { card } = deathCard(fonts, view, bird, words);
+    const { card, title } = deathCard(fonts, view, bird, words);
+    expect(title.x + title.width / 2).toBe(card.x + card.width / 2);
     expect(card.x).toBeGreaterThanOrEqual(0);
     expect(card.y).toBeGreaterThanOrEqual(0);
     expect(card.x + card.width).toBeLessThanOrEqual(SCREEN.width);

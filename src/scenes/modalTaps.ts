@@ -1,42 +1,75 @@
-import { catchOutsideTaps } from "@andornaut/game-kit/input/phaser/catchOutsideTaps";
-import type { Scene } from "phaser";
+import type { Input, Scene } from "phaser";
 
 import { TOUCH } from "../data/touch";
 import type { Point, Rect } from "../data/types";
+import { modalInput, onScenePointer } from "./modalInput";
 
-// A modal card, for catchModalTaps: covered gives the card's rect and each of its controls'
-// press areas, in its camera's view, while it shows, or undefined while it shows none; close
-// closes it, or is left out for a card with no close, a required choice.
 export interface Modal {
   readonly close?: () => void;
   readonly covered: () => readonly Rect[] | undefined;
 }
 
-// While a modal card shows, only it responds: a tap anywhere else, the bars beside the game's
-// view included, closes a card that can close, as its close X or back would, and does nothing at
-// all on a card with no close (the kit's catchOutsideTaps, as dog-walker's panels close). A press
-// that lands outside is kept from the scenes under the card's, which stay inert: a modal scene
-// sits above every scene it covers (main.ts's scene order). camera is where the card's view sits
-// in the canvas. Every modal card takes its taps this way.
-export function catchModalTaps(
-  scene: Pick<Scene, "input" | "scale">,
-  camera: Point,
-  modal: Modal,
-): void {
-  catchOutsideTaps(
-    TOUCH.tapMaxDistance,
-    scene,
-    () => {
-      const card = modal.covered();
-      if (card === undefined) {
-        return undefined;
-      }
-      const { height, width } = scene.scale.gameSize;
-      return {
-        bounds: { height, width, x: 0, y: 0 },
-        covered: card.map((rect) => ({ ...rect, x: rect.x + camera.x, y: rect.y + camera.y })),
-      };
-    },
-    () => modal.close?.(),
-  );
+// All modal gestures stay in the top scene, including presses on the card and required cards.
+export function catchModalTaps(scene: Scene, camera: Point, modal: Modal): void {
+  let press: { at: Point; cancelled: boolean; id: number; outside: boolean } | undefined;
+  const input = modalInput(scene);
+  const refresh = () => {
+    if (modal.covered() !== undefined) {
+      input.open();
+    }
+  };
+  refresh();
+  scene.events.on("preupdate", refresh);
+  scene.events.once("shutdown", () => scene.events.off("preupdate", refresh));
+  input.subscribe(() => {
+    press = undefined;
+  });
+  onScenePointer(scene, "pointerdown", (pointer) => {
+    const covered = modal.covered();
+    if (!covered) {
+      return;
+    }
+    scene.input.stopPropagation();
+    const point = { x: pointer.x - camera.x, y: pointer.y - camera.y };
+    const inside = covered.some(
+      (rect) =>
+        point.x >= rect.x &&
+        point.x < rect.x + rect.width &&
+        point.y >= rect.y &&
+        point.y < rect.y + rect.height,
+    );
+    press = { at: point, cancelled: false, id: pointer.id, outside: !inside };
+  });
+  onScenePointer(scene, "pointermove", (pointer) => {
+    if (modal.covered() === undefined) {
+      return;
+    }
+    scene.input.stopPropagation();
+    if (press?.id === pointer.id) {
+      press.cancelled ||=
+        Math.hypot(pointer.x - camera.x - press.at.x, pointer.y - camera.y - press.at.y) >
+        TOUCH.tapMaxDistance;
+    }
+  });
+  const up = (pointer: Input.Pointer, outside: boolean) => {
+    if (modal.covered() === undefined) {
+      return;
+    }
+    scene.input.stopPropagation();
+    const previous = press;
+    press = undefined;
+    if (
+      !outside &&
+      !pointer.wasCanceled &&
+      previous?.id === pointer.id &&
+      previous.outside &&
+      !previous.cancelled &&
+      Math.hypot(pointer.x - camera.x - previous.at.x, pointer.y - camera.y - previous.at.y) <=
+        TOUCH.tapMaxDistance
+    ) {
+      modal.close?.();
+    }
+  };
+  onScenePointer(scene, "pointerup", (pointer) => up(pointer, false));
+  onScenePointer(scene, "pointerupoutside", (pointer) => up(pointer, true));
 }

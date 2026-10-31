@@ -1,6 +1,5 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { snapshotRemapped } from "@andornaut/game-kit/view/phaser/snapshotRemap";
-import { type Cameras, type Game, type GameObjects, type Input, Scene, Scenes } from "phaser";
+import { type Cameras, type Game, type GameObjects, type Input, Scene } from "phaser";
 
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
@@ -13,14 +12,12 @@ import {
 } from "../layout/contentCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa";
-import { dimColour } from "../view/dim";
 import {
   addCardTextIn,
   addSlice,
   addTextButton,
   captureTab,
   cardFonts,
-  palette,
   paletteColour,
   pressTextButton,
   PRIMARY_BUTTON,
@@ -28,8 +25,10 @@ import {
   type TextButton,
   TITLE_FONT,
 } from "./cardParts";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
-import { canvasRect, fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
+import { fitPlayCamera, playPoint } from "./playCamera";
 
 // Pausing the world does not change PWA eligibility: closing this offer cannot reopen it.
 export function installUpdateModalBridge(game: Game): void {
@@ -87,34 +86,8 @@ export class UpdateScene extends Scene {
     this.focus = undefined;
     this.ring = undefined;
     this.press = undefined;
-    const canvasCamera = this.cameras.main;
-    fitCanvasCamera(this, canvasCamera);
-    this.cardCamera = this.cameras.add();
+    this.cardCamera = this.cameras.main;
     fitPlayCamera(this, this.cardCamera);
-    const dim = this.add.image(0, 0, "__DEFAULT").setOrigin(0).setVisible(false);
-    this.cardCamera.ignore(dim);
-    const toCard = (object: GameObjects.GameObject) => canvasCamera.ignore(object);
-    this.events.on(Scenes.Events.ADDED_TO_SCENE, toCard);
-    this.events.once("shutdown", () => this.events.off(Scenes.Events.ADDED_TO_SCENE, toCard));
-    canvasCamera.setVisible(false);
-    this.cardCamera.setVisible(false);
-    const key = "update-modal-dim";
-    void snapshotRemapped(dimColour(palette(this)), this, canvasRect(this), key).then((drawn) => {
-      if (!this.sys.isActive()) {
-        return;
-      }
-      if (drawn) {
-        dim.setTexture(key).setVisible(true);
-      }
-      canvasCamera.setVisible(true);
-      this.cardCamera.setVisible(true);
-      this.readyToInteract = true;
-    });
-    this.events.once("shutdown", () => {
-      if (this.textures.exists(key)) {
-        this.textures.remove(key);
-      }
-    });
     const fonts = cardFonts(this);
     this.layout = contentCardLayout(
       { ...SCREEN, x: 0, y: 0 },
@@ -143,6 +116,9 @@ export class UpdateScene extends Scene {
     });
     captureTab(this, true);
     const back = (event: Event) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       event.stopImmediatePropagation();
       updateOffer.defer();
     };
@@ -152,6 +128,9 @@ export class UpdateScene extends Scene {
       window.removeEventListener(PHONE_EVENTS.backPressed, back, true);
     });
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       event.stopPropagation();
       if (event.key === "Escape") {
         updateOffer.defer();
@@ -169,7 +148,7 @@ export class UpdateScene extends Scene {
       }
     });
     this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.readyToInteract && !this.press) {
         const at = playPoint(this, pointer, this.cardCamera);
@@ -182,7 +161,7 @@ export class UpdateScene extends Scene {
         this.render();
       }
     });
-    this.input.on("pointermove", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press?.id === pointer.id) {
         const at = playPoint(this, pointer, this.cardCamera);
@@ -211,8 +190,12 @@ export class UpdateScene extends Scene {
         this.act(press.target);
       }
     };
-    this.input.on("pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    this.input.on("pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
+    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    const backdrop = showModalBackdrop(this);
+    void backdrop.ready.then(() => {
+      this.readyToInteract = this.sys.isActive();
+    });
   }
 
   private areas(): readonly PressArea<Action>[] {

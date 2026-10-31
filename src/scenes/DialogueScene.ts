@@ -49,6 +49,8 @@ import {
   TITLE_FONT,
 } from "./cardParts";
 import type { DialogueChoiceData } from "./DialogueChoiceScene";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DialogueData {
@@ -122,6 +124,10 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     this.drawFooter();
     this.drawParagraph();
     this.watchInput();
+    modalInput(this).subscribe(() => {
+      this.press = undefined;
+      this.renderFooter();
+    });
     if (this.live) {
       this.events.on("pause", () => {
         this.press = undefined;
@@ -135,6 +141,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     }
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
+    if (!this.live && !this.departure) {
+      showModalBackdrop(this);
+    }
   }
 
   // The required choice calls once after its own scene stops; the world remains frozen until here.
@@ -278,6 +287,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
 
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       if (this.live && !["Tab", "Enter"].includes(event.key)) {
         return;
       }
@@ -292,7 +304,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
         event.stopPropagation();
       }
     });
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       if (this.live && !this.blocksPoint(playPoint(this, pointer))) {
         return;
       }
@@ -310,7 +322,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       this.focus = this.press.control;
       this.renderFooter();
     });
-    this.input.on("pointermove", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
       if (this.live && this.press?.id !== pointer.id) {
         return;
       }
@@ -338,7 +350,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       }
       this.act(action);
     };
-    this.input.on("pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    this.input.on("pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
+    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
   }
 }

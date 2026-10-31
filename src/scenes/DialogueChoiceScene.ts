@@ -26,6 +26,8 @@ import {
   type TextButton,
 } from "./cardParts";
 import type { DialogueChoiceOpener } from "./DialogueScene";
+import { showModalBackdrop } from "./modalBackdrop";
+import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
@@ -84,8 +86,13 @@ export class DialogueChoiceScene extends Scene {
       covered: () => [this.layouts.card, ...this.layouts.buttons.map(({ layout }) => layout.hit)],
     });
     this.watchInput();
+    modalInput(this).subscribe(() => {
+      this.press = undefined;
+      this.render();
+    });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
+    showModalBackdrop(this);
   }
 
   private render(): void {
@@ -115,6 +122,9 @@ export class DialogueChoiceScene extends Scene {
 
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (!modalInput(this).accepts(event)) {
+        return;
+      }
       event.stopPropagation();
       const result = dialogueChoiceKey([...this.buttons.keys()], this.focus, event);
       this.focus = result.focus;
@@ -124,7 +134,7 @@ export class DialogueChoiceScene extends Scene {
       }
     });
     this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
-    this.input.on("pointerdown", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press !== undefined || this.finished) {
         return;
@@ -133,7 +143,7 @@ export class DialogueChoiceScene extends Scene {
       this.press = { at, cancelled: false, id: pointer.id, target: pressedArea(this.areas(), at) };
       this.render();
     });
-    this.input.on("pointermove", (pointer: Input.Pointer) => {
+    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press?.id === pointer.id) {
         const at = playPoint(this, pointer);
@@ -162,7 +172,7 @@ export class DialogueChoiceScene extends Scene {
         this.select(press.target);
       }
     };
-    this.input.on("pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    this.input.on("pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
+    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
   }
 }
