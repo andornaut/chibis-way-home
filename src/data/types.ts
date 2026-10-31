@@ -394,6 +394,11 @@ export interface DialogueChoice {
 }
 
 // A conversation played one paragraph at a time, optionally ending with a required choice.
+export interface ZoneDialoguePlan {
+  readonly intro: string;
+  readonly outro: string;
+}
+
 export interface DialoguePlan {
   readonly choice?: DialogueChoice;
   readonly lines: readonly DialogueLine[];
@@ -404,7 +409,7 @@ export interface DialoguePlan {
 export interface DialogueSpeaker {
   readonly side: "left" | "right";
   readonly colour: "amber" | "green" | "pink" | "tan";
-  readonly portrait: string;
+  readonly portrait: string | null;
 }
 
 export interface AreaLink {
