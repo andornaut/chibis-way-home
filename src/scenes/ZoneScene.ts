@@ -54,12 +54,14 @@ import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { deathSupport } from "../rules/death";
 import { nodeOf } from "../rules/map";
 import { stageCompletion } from "../rules/stageCompletion";
+import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_MS, STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import {
   activateBehaviour,
   areaOf,
+  enterArea,
   leaveRoom,
   retryZone,
   roomOf,
@@ -215,6 +217,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   private areaArt!: GameObjects.Graphics;
   // Drawn as the start screen's backdrop rather than played.
   private backdrop = false;
+  private preview: StagePreview | undefined;
   // The hit boxes art's sprites declare, by art key.
   private hitboxes: Readonly<Record<string, ArtHitbox>> = {};
   private manifest!: ArtManifest;
@@ -250,6 +253,15 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
   // ?zone=<n>. data.backdrop: the start screen's backdrop instead (holdStill).
   init(data: ZoneData): void {
     const { search } = window.location;
+    this.preview = askedStagePreview(
+      [
+        ...ZONE_MAP.nodes
+          .filter((node) => node.kind === "zone" && node.zone !== undefined)
+          .map((node) => node.id),
+        ...Object.keys(RECIPES),
+      ],
+      search,
+    );
     this.backdrop = data.backdrop === true;
     this.mapNode = data.node;
     this.trial = askedRecipe(search, Object.keys(RECIPES));
@@ -298,7 +310,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
       coverZone("dialogue", false);
       this.scene.stop("death");
       coverZone("death", false);
-      if (!this.backdrop) {
+      if (!this.backdrop && !this.preview) {
         void flushStats();
       }
     });
@@ -309,7 +321,15 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     this.manifest = this.cache.json.get(ART_MANIFEST_KEY) as ArtManifest;
     this.hitboxes = artHitboxes((key) => this.textures.getFrame(key), this.manifest);
     const node = this.mapNode;
-    const seed = askedAssemblySeed(window.location.search) ?? newAssemblySeed();
+    const seed =
+      this.preview?.assemblySeed ?? askedAssemblySeed(window.location.search) ?? newAssemblySeed();
+    if (this.preview) {
+      const key = this.preview.key;
+      const node = ZONE_MAP.nodes.find((node) => node.id === key && node.kind === "zone");
+      this.loadPlan(node ? zoneAt(seed, key) : zonePlanFor(seed, key));
+      this.freezePreview(this.preview);
+      return;
+    }
     if (this.backdrop) {
       this.loadPlan(zoneAt(seed, ZONE_MAP.start));
       this.holdStill();
@@ -376,6 +396,38 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     this.bird.setVisible(false);
     this.drawObjects();
     this.drawBird();
+    this.events.once("create", () => this.sys.pause());
+  }
+
+  private freezePreview(preview: StagePreview): void {
+    if (preview.area && preview.area !== this.zone.area) {
+      this.zone = enterArea(BIRD, this.layout, { area: preview.area, entry: "start" }, this.zone);
+      this.drawArea();
+    }
+    this.progress.setVisible(false);
+    this.input.enabled = false;
+    this.drawObjects();
+    this.drawBird();
+    for (const sprite of [
+      this.bird,
+      ...this.objectArt.flatMap((art) => (art.sprite ? [art.sprite] : [])),
+    ]) {
+      const frame = sprite.anims.isPlaying
+        ? sprite.anims.currentAnim?.frames[0]?.textureFrame
+        : undefined;
+      sprite.anims.stop();
+      if (frame !== undefined) {
+        sprite.setFrame(frame);
+      }
+    }
+    const scroll = stagePreviewScroll(SCREEN, areaOf(this.layout, this.zone.area), preview.scroll);
+    this.cameras.main.setScroll(scroll.x, scroll.y);
+    const ready = () => {
+      this.game.canvas.dataset.stagePreview = preview.key;
+      this.game.canvas.dataset.stagePreviewReady = "true";
+    };
+    this.game.events.once("postrender", ready);
+    this.events.once("shutdown", () => this.game.events.off("postrender", ready));
     this.events.once("create", () => this.sys.pause());
   }
 
@@ -824,7 +876,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener {
     );
     this.layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, this.hitboxes, tilesets, new Set(), plan);
     const asked = Number(new URLSearchParams(window.location.search).get("seed"));
-    const seed = Number.isInteger(asked) && asked > 0 ? asked : Math.floor(Math.random() * 2 ** 31);
+    const seed =
+      this.preview?.motionSeed ??
+      (Number.isInteger(asked) && asked > 0 ? asked : Math.floor(Math.random() * 2 ** 31));
     this.zone = startZone(BIRD, this.layout, seed);
     this.drawArea();
   }

@@ -74,6 +74,10 @@ export class BootScene extends Scene {
         });
       }
     }
+    if (new URLSearchParams(window.location.search).has("stagePreview")) {
+      this.scene.start("zone");
+      return;
+    }
     // The zone shows, and the save is read, once a version about to be replaced by a newer one
     // has had its chance to reload first, so it never draws the old zone or reads the save with
     // the old format. Saved progress opens the map where she stands; without any, the start
