@@ -23,6 +23,27 @@ Sky, distant skyline and middle-distance scenery are separate repeating images. 
 
 The design starts with horizontal camera factors of 0 for sky, 0.15 for the far skyline, 0.4 for middle scenery and 1 for play. Gameplay owns the runtime values; initial far and middle vertical factors are 0.05 and 0.15. Vertical movement should be weaker on distant layers to keep climbs legible. Windows between near buildings reveal the distant layers; do not fill every opening with foreground decoration. Repeating layers must cover camera travel without exposing an empty edge.
 
+### Stage scenery identity
+
+Stage cards use captures of actual stage scenery. Keep each pair inside its zone palette while selecting different existing middle-distance silhouettes and near materials. Interior scenes remain enclosed rooms; outdoor silhouettes are reserved for exterior sections. The bindings below describe appearance, not platform geometry or thumbnail-only illustrations.
+
+| Zone                 | Stage                  | Scenery building blocks                                                                      |
+| -------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| Blue cityscape       | Depot and streets      | Depot opening, `street-city-mid`, complete street facades                                    |
+| Blue cityscape       | City boundary          | `street-boundary-mid`, sparse street facades, open skyline                                   |
+| Industrial outskirts | Warehouse district     | `warehouse-mid`, warehouse walls and closed loading bays                                     |
+| Industrial outskirts | Freight terminal       | `freight-mid`, service gantries and container materials                                      |
+| Countryside          | Farmland               | `farmland-mid`, complete barn, timber fence and hay materials                                |
+| Countryside          | River crossing         | `river-mid`, reeds, bank and timber materials                                                |
+| Woodland             | Forest paths           | `forest-mid`, tonal trees, shrubs and root materials                                         |
+| Woodland             | Ravine                 | `ravine-mid`, rock silhouettes and stone materials                                           |
+| Home city            | City outskirts         | `outskirts-mid`, low masonry boundary walls                                                  |
+| Home city            | Familiar neighbourhood | `neighbourhood-mid`, complete windowed facades and garden crowns                             |
+| Apartment            | Entrance and lobby     | Exterior entrance, then enclosed lobby wall, sofa and desk                                   |
+| Apartment            | Climb to the apartment | Enclosed restaurant, pool, spa and residential rooms, alternating with exterior fire escapes |
+
+`street-boundary-mid` is a 720x600 repeating backdrop, bottom-left anchored at y600, with suggested parallax 0.4,0.15. It replaces only the `mid-background` art binding in the City boundary theme; all other existing assets and bindings retain their contracts.
+
 ### Reusable element skins
 
 Every stage element separates its behaviour, configuration and placement from its appearance. Reusable layout structures name logical roles; data bindings select their configuration and skin. This applies to terrain, static structures, ledges, hazards, enemies, doors, triggers, props and backdrop layers. Zones mix these elements and structures without introducing zone-specific behaviour types.

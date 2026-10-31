@@ -654,6 +654,14 @@ def street_city_mid():
     ))
 
 
+def street_boundary_mid():
+    """720x600, bottom y600, repeat x: low service roofs leave the far city visible for City boundary.
+    Suggested factors0.4,0.15. Decorative middle distance only, no windows or safe landing edges."""
+    return city_blocks(Grid(720, STREET_FY), "slate", (
+        (40, 144, 504, False), (292, 120, 528, False), (520, 156, 492, False),
+    ))
+
+
 def street_skyline():
     """336x600 legacy composite for callers without separate far and middle layers. Do not place with both
     street-city-far and street-city-mid: those two keys replace this combined backdrop."""
@@ -938,6 +946,7 @@ STREET_DEFS = {
     "street-skyline": (street_skyline, STREET_FY, "x"),
     "street-city-far": (street_city_far, STREET_FY, "x"),
     "street-city-mid": (street_city_mid, STREET_FY, "x"),
+    "street-boundary-mid": (street_boundary_mid, STREET_FY, "x"),
     **{f"facade-{k}": ((lambda k=k: facade(k)), STREET_FY, "x") for k in BUILDINGS},
     "fire-escape": (fire_escape, 473, "none"),
     "hotel-crest": (hotel_crest, 478, "none"),
@@ -966,7 +975,7 @@ NEAR_FOR = {"street-tree": dict(COOL_NEAR, tan="grey"), "canopy-poles": dict(COO
 for _key in STREET_DEFS:
     if _key.startswith(("facade-", "storefront-")):
         NEAR_FOR[_key] = dict(COOL_NEAR, navy="dslate")
-ATMOSPHERE_KEYS = ("street-sky", "street-skyline", "street-city-far", "street-city-mid")
+ATMOSPHERE_KEYS = ("street-sky", "street-skyline", "street-city-far", "street-city-mid", "street-boundary-mid")
 BACKDROP_DEFS = {k: (fn if k in ATMOSPHERE_KEYS else cool(fn, NEAR_FOR.get(k, COOL_NEAR)), y, rep)
                  for k, (fn, y, rep) in STREET_DEFS.items()}
 BACKDROP_DEFS.update({

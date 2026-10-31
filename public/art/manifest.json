@@ -1631,6 +1631,15 @@
       "repeat": "none"
     },
     {
+      "key": "street-boundary-mid",
+      "png": "backdrops/street-boundary-mid.png",
+      "width": 720,
+      "height": 600,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "x"
+    },
+    {
       "key": "street-city-far",
       "png": "backdrops/street-city-far.png",
       "width": 720,

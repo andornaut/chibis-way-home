@@ -345,3 +345,9 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | Key                | Type                         | Size  | Tags                                                      |
 | ------------------ | ---------------------------- | ----- | --------------------------------------------------------- |
 | raccoon-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, climb, prepare, drop, rest, frustration, walk, rush |
+
+## Stage scenery variants
+
+| Key                 | Type                                  | Size    | Contract                                    |
+| ------------------- | ------------------------------------- | ------- | ------------------------------------------- |
+| street-boundary-mid | repeating backdrop, low service roofs | 720x600 | Bottom-left y600, repeat x, middle distance |
