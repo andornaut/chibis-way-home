@@ -65,6 +65,17 @@ describe("measured content cards", () => {
     expect(wide.card.width).toBe(400 + 2 * CARD_CONTENT.padding);
   });
 
+  it.each([SCREEN.width, 400, 280])(
+    "uses the full viewport minimum within an available width of %s",
+    (availableWidth) => {
+      const result = contentCardLayout({ ...VIEW, width: availableWidth }, [
+        { height: 16, key: "text", width: 80 },
+      ]);
+      expect(result.card.width).toBe(Math.min(availableWidth, SCREEN.width / 2));
+      expect(result.groups.text?.width).toBe(80);
+    },
+  );
+
   it("rejects content that the available view cannot fit without clipping", () => {
     expect(() =>
       contentCardLayout({ ...VIEW, width: 100 }, [{ height: 16, key: "text", width: 100 }]),

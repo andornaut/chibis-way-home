@@ -2,6 +2,7 @@ import { modalWidth } from "@andornaut/game-kit/modalLayout";
 import { insetRect } from "@andornaut/game-kit/rect";
 import { type BitmapFont, inkWidth, laidGlyphs } from "@andornaut/game-kit/text/bitmapFont";
 
+import { SCREEN } from "../data/screen";
 import type { Point, Rect, Size } from "../data/types";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
@@ -118,7 +119,10 @@ export function contentCardLayout(
     : 0;
   const contentWidth = Math.max(headerWidth, 0, ...present.map(({ width }) => width));
   const count = present.length + (hasHeader ? 1 : 0);
-  const width = modalWidth(bounds.width, contentWidth);
+  const width = modalWidth(
+    { availableWidth: bounds.width, viewportWidth: SCREEN.width },
+    contentWidth,
+  );
   const innerWidth = width - 2 * CARD_CONTENT.padding;
   const height =
     headerHeight +

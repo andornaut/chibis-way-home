@@ -76,9 +76,46 @@ export function deathCard(fonts: CardFonts, bounds: Rect, bird: Rect, words: Dea
     },
     { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
   ];
-  const measured = contentCardLayout(bounds, groups);
-  const position = deathCardPosition(bounds, measured.card, bird);
-  const layout = contentCardLayout(bounds, groups, undefined, position);
+  const fit = (available: Rect) => {
+    try {
+      const measured = contentCardLayout(available, groups);
+      const position = deathCardPosition(available, measured.card, bird);
+      return contentCardLayout(available, groups, undefined, position);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        ["Card content exceeds the view", "Death card cannot fit clear of the bird"].includes(
+          error.message,
+        )
+      ) {
+        return undefined;
+      }
+      throw error;
+    }
+  };
+  // A centred body can leave no full-minimum-width placement. Its clearance then defines the
+  // safe available rectangle, so the shared maximum-width clamp still preserves visible content.
+  const avoid = insetRect(-CARD_CONTENT.gap, bird);
+  const left = Math.max(bounds.x, Math.min(bounds.x + bounds.width, avoid.x));
+  const right = Math.max(bounds.x, Math.min(bounds.x + bounds.width, avoid.x + avoid.width));
+  const top = Math.max(bounds.y, Math.min(bounds.y + bounds.height, avoid.y));
+  const bottom = Math.max(bounds.y, Math.min(bounds.y + bounds.height, avoid.y + avoid.height));
+  const clear = [
+    { ...bounds, width: left - bounds.x },
+    { ...bounds, width: bounds.x + bounds.width - right, x: right },
+    { ...bounds, height: top - bounds.y },
+    { ...bounds, height: bounds.y + bounds.height - bottom, y: bottom },
+  ];
+  const layout =
+    fit(bounds) ??
+    clear.reduce<ReturnType<typeof fit>>(
+      (found, available) =>
+        found ?? (available.width > 0 && available.height > 0 ? fit(available) : undefined),
+      undefined,
+    );
+  if (!layout) {
+    throw new Error("Death card cannot fit clear of the bird");
+  }
   const rowGroup = layout.groups.rows;
   const actionGroup = layout.groups.actions;
   if (!rowGroup || !actionGroup) {

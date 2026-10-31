@@ -26,6 +26,7 @@ describe("death card", () => {
   it.each([
     { height: 40, width: 40, x: 340, y: 310 },
     { height: 40, width: 40, x: 340, y: 80 },
+    { height: 40, width: 40, x: 340, y: 150 },
     { height: 40, width: 40, x: 0, y: 0 },
     { height: 40, width: 40, x: 680, y: 150 },
   ])("keeps the seated bird visible at ground and elevated positions: %j", (bird) => {
@@ -40,6 +41,15 @@ describe("death card", () => {
         card.y + card.height <= bird.y - 8 ||
         card.y >= bird.y + bird.height + 8,
     ).toBe(true);
+  });
+  it("caps only the body-clear safe region when no full-width placement fits", () => {
+    const body = { height: 40, width: 40, x: 340, y: 150 };
+    const result = deathCard(fonts, view, body, words);
+    expect(result.card.width).toBe(body.x - 8 - view.x);
+    expect(result.card.height).toBe(164);
+    expect(result.card.width).toBeLessThan(SCREEN.width / 2);
+    expect(result.home.button.width).toBe(114);
+    expect(result.retry.button.width).toBe(114);
   });
   it("uses the compact top-centred City layout when the bird is below it", () => {
     const result = deathCard(fonts, view, { height: 40, width: 40, x: 340, y: 310 }, words);
