@@ -313,7 +313,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 ### Quips
 
-- **Planned barks:** a single live message with no Continue, Skip or other controls, dismissed automatically while gameplay continues. No bark content is specified
+- **Planned barks:** a single live message with no Continue, Skip or other controls, dismissed automatically while gameplay continues. The default duration is four seconds, defined by `BARK_DURATION_SECONDS` in `src/data/dialogues.ts`. Paused conversations have no timer. No bark content is specified
 - Short messages during play, for cutscenes, notices and quips. They never pause play
 - One line in a strip at the top centre, starting with the speaker's name
 
