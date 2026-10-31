@@ -98,11 +98,11 @@ The V1 map has six themed destinations with two catalogued stages each. All twel
 - **Backtracking:** unlocked built stages remain available for replay. Replaying an earlier stage never removes later unlocks
 - **Between stages:** clearing a zone's first stage shows a placeholder cutscene image with Continue, which enters stage two directly without showing the map. Clearing its second stage returns to the map and automatically animates Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
-- **Celebration:** only clearing Apartment building's second stage, Climb to the apartment, shows the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
-- **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from either stage checkpoint returns to the map
+- **Celebration:** only clearing Apartment building's second stage, Climb to the apartment, shows Furt's outgoing exchange followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
+- **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from any stage entrance returns to the map. The entrance exit stays reachable and has no blocking wall; an apartment stage returns through its first section's left edge
 - **Forks:** branching routes are deferred to Next. V1 is linear and has no laps
 - **Progression:** the first stage is unlocked from the start. Completing Parcel depot and streets unlocks City boundary; completing City boundary unlocks Warehouse district, which unlocks Freight terminal on completion. Completing Freight terminal unlocks Farmland; completing Farmland unlocks River crossing. Completing River crossing unlocks Forest paths; completing Forest paths unlocks Ravine. Completing Ravine unlocks City outskirts; completing City outskirts unlocks Familiar neighbourhood. Completing Familiar neighbourhood unlocks Entrance and lobby; completing Entrance and lobby unlocks Climb to the apartment, which ends at the apartment. Completing a zone's first stage unlocks its second stage when built; completing its second stage opens the next zone. Unbuilt content remains unavailable
-- **Selection:** Continue on the map always opens a stage-selection modal for the selected zone, including when only stage one is unlocked. Two side-by-side cards stay in fixed positions: stage one on the left, stage two on the right. Stage two remains visible, grey and disabled until unlocked; unbuilt stages are unavailable. The latest available stage is highlighted and is the default. Each card shows an actual scene screenshot depicting its stage art, with the main stage name at the standard font size and a smaller, lighter Stage 1 or Stage 2 label at the top right. Stage names never shrink to fit. Scenery differs slightly between a zone's two stages so the images help distinguish them, while preserving the zone's palette and visual style. Persisted unlocks survive replays
+- **Selection:** Only manually pressing Continue on the map opens a stage-selection modal for the selected zone, including when only stage one is unlocked. Two side-by-side cards stay in fixed positions: stage one on the left, stage two on the right. Stage two remains visible, grey and disabled until unlocked; unbuilt stages are unavailable. The latest available stage is highlighted and is the default. Each card shows an actual scene screenshot depicting its stage art, with the main stage name at the standard font size and a smaller, lighter Stage 1 or Stage 2 label at the top right. Stage names never shrink to fit. Scenery differs slightly between a zone's two stages so the images help distinguish them, while preserving the zone's palette and visual style. Persisted unlocks survive replays
 - **Walk:** Chibi stands on a zone. Left and Right move through available zones, and Continue selects the zone he stands on
 
 ### Stages
@@ -125,11 +125,11 @@ The V1 map has six themed destinations with two catalogued stages each. All twel
 
 ### Runs and attempts
 
-- **Continue:** continuing from the stage beginning after reopening the app starts a new run. An exact-position resume keeps the same run if that form of resume is supported
+- **Continue:** reopening the app with saved progress or choosing Continue on the title screen shows the map with Chibi on his saved zone, without opening a stage chooser or entering a stage
 - **Entry:** entering a stage from the map, replaying it or continuing through an inter-stage cutscene starts a new run
 - **Pause:** pausing and resuming keeps the same run and position
 - **Restart:** a full restart starts a new run
-- **Retry:** death ends the attempt; Try again starts another attempt of the same run, preserving its seed and generated layout
+- **Retry:** death ends the attempt; Try again restarts the same stage directly, without the map or stage chooser, as another attempt of the same run, preserving its seed and generated layout
 
 ### Death and retry
 
@@ -138,7 +138,7 @@ This is the approved implementation scope for the current change, including the 
 - **Active time:** count only time actually spent playing the current stage, excluding pause, dialogue, menus, the death sequence, the death card, floor-transition presentation, inter-stage cutscenes and map travel. Floor transitions preserve the same stage clock. Retries add to the same cumulative time. It persists through the map, title screen and app restarts until the stage is cleared; every clear resets it, including a replay clear
 - **Card:** after the animation, hold the final pose beneath a required modal with four rows in this order: the zone name; `Stage {number}: {stage name}`; `Progress: X%` for the current attempt; and `Time: 0:00` for cumulative active stage time. Back to title is the secondary button on the left; Try again is the primary button on the right. Keep the card compact and position it so Chibi remains visible. The card stays until a button is pressed; outside taps, back and Escape do not dismiss it
 - **Progress:** a subtle, visible line 2 px high at the top uses the stage's theme. It tracks Chibi's current position during play and his death point on death, not the furthest point reached. In a multi-area stage it uses shared weighted current-position progress across the floor sections, including the death point; returning to an earlier section can lower it. Retrying starts the percentage at zero
-- **Retry:** Try again starts the current stage from its checkpoint. In a multi-area stage this is the first floor, not the current floor. Back to title opens the title screen. There is no permadeath
+- **Retry:** Try again restarts the current stage directly from its checkpoint in the same run, without the map or stage chooser. In a multi-area stage this is the first floor, not the current floor. Back to title opens the title screen. There is no permadeath
 - **Sequence:** lethal contact starts a small recoil, then Chibi falls to support, squashes more deeply on landing and makes a small upward bounce into a deflated sitting pose with his feet hidden. The stage and camera freeze at the death context while Chibi plays a dedicated death animation, then holds its final pose for the card
 - **Storage:** active stage time uses a separate stats save. Restart clears progress only and does not wipe stats
 
@@ -173,7 +173,7 @@ Everything in a stage except its terrain is placed in data through archetypes, c
 
 ### V1 route
 
-The route spans six themed zones of two stages, in this order. Stage length is defined by the recipes; no total play-time estimate is prescribed. All twelve stages across the six V1 zones are built; this does not declare the first release complete. The six-zone map and conditional stage-selection flow preserve unlocked stages for replay. Every stage, including the depot tutorial and final climb, has a fixed opening and ending with a randomized middle.
+The route spans six themed zones of two stages, in this order. Stage length is defined by the recipes; no total play-time estimate is prescribed. All twelve stages across the six V1 zones are built; this does not declare the first release complete. The six-zone map and manual stage-selection flow preserve unlocked stages for replay. Every stage, including the depot tutorial and final climb, has a fixed opening and ending with a randomized middle.
 
 | Zone                 | First stage              | Second stage           |
 | -------------------- | ------------------------ | ---------------------- |
@@ -315,11 +315,11 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 ### Start screen
 
 - **Back:** back with no card open leaves the game, the same way as Exit, wherever Exit shows; elsewhere back is the browser's own
-- **Boot:** the game opens in landscape. With saved progress it opens on the map where he stands; with no save it opens on the start screen. It never opens straight into a zone
+- **Boot:** the game opens in landscape. With saved progress it opens on the map where he stands, without opening a stage chooser; with no save it opens on the start screen. It never opens straight into a zone
 - **Exit:** at the top right, at the far end. In a browser tab it goes straight to the home page. In an installed app it closes the app, and it shows only in apps that can close themselves (Chrome's Android app, and Chrome or Edge desktop app windows); in every other installed app (iOS, Firefox for Android, Samsung Internet and Edge for Android) it is hidden, and Settings sits at the far right
 - **Restart:** on the start screen with a save, and on the celebration. It asks first on a card: a short question, Restart, which confirms, and Cancel; back and Esc cancel. Confirming clears only the saved progress and opens the map with him on the first zone and nothing completed. It never clears stats or achievements, which keep their own save
 - **Settings:** at the top right, beside Exit. It opens the settings card
-- **Start:** with no save it reads Start and opens the map with him on the first zone. With a save (reached through Back to title) Start gives way to Continue, which opens the map where he stands, and Restart beside it. There is one save
+- **Start:** with no save it reads Start and opens the map with him on the first zone. With a save (reached through Back to title) Start gives way to Continue, which opens the map where he stands without a stage chooser, and Restart beside it. There is one save
 
 - **Updates:** an offered update uses a compact modal with a concise title and one primary Update now button. Its close X defers the update and restores control to the underlying screen. There is no redundant body text or separate Later button
 

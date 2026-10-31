@@ -11,6 +11,18 @@ Each folder's README is its plan, with what's left for the first build:
 - [art/](art/README.md): art rules, assets and pipeline
 - [src/](src/README.md): stack and architecture
 
+## Playing
+
+Reopening the app with saved progress or choosing Continue on the title screen
+shows Chibi on the map without a stage chooser. Only pressing Continue on the
+map opens the selected zone's stage cards. Entering a stage from the map starts
+a fresh run. Death's Try again restarts the same stage directly in the same run;
+pause and Resume preserve the active position and run.
+
+Walking left from any stage entrance returns to the map. Apartment stages use
+the first section's left edge after backtracking through earlier sections.
+Completing stage one still enters stage two directly through its cutscene.
+
 ## Developing
 
 Requires Node 24 (`.nvmrc`).
