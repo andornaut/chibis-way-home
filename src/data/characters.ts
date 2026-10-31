@@ -6,6 +6,7 @@ import {
   CITY_LIFT_BEHAVIOUR,
   CITY_SHUTTLE_BEHAVIOUR,
   DOG_BEHAVIOUR,
+  FERRET_BEHAVIOUR,
   GOOSE_BEHAVIOUR,
   OWL_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
@@ -161,9 +162,15 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
   "ferret-antagonist": {
     archetype: "hazard",
     art: "ferret-antagonist",
-    behaviour: DOG_BEHAVIOUR,
+    behaviour: FERRET_BEHAVIOUR,
     cols: 4,
     rows: 4,
+  },
+  "ferret-parcel": {
+    archetype: "hazard",
+    art: "ferret-parcel",
+    cols: 2,
+    rows: 2,
   },
   // The ferret's first trap, set near zone 1's end.
   "ferret-trap-snap": {
