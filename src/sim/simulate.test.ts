@@ -7,6 +7,7 @@ import { STEP_SECONDS } from "../rules/step";
 import * as zoneRules from "../rules/zone";
 import { startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
+import * as botRules from "./bot";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "./bot";
 import { simulateBatch } from "./report";
 import {
@@ -277,4 +278,152 @@ describe("bounded section goals and reproducibility", () => {
     expect(play(10)).toEqual(play(10));
     expect(play(10)).not.toEqual(play(11));
   });
+});
+
+describe("terminal diagnostic budgets and coverage", () => {
+  it("stops a blocked policy independently of a full or absent trace", () => {
+    const stage = prepareStage(fixture([...ground, { height: 120, width: 12, x: 90, y: 0 }]));
+    for (const trace of [undefined, { maxEvents: 1, stallTicks: 2 }]) {
+      const run = simulateStage(BIRD, stage, {
+        ...config,
+        maxSteps: 100,
+        stopAfterStallTicks: 10,
+        ...(trace ? { trace } : {}),
+      });
+      expect(run.status).toBe("policy-stall");
+      expect(run.steps).toBeLessThan(100);
+      expect(run.coverage.areasVisited).toEqual(["main"]);
+      expect(run.lastAttemptSeconds).toBe(run.activeSeconds);
+    }
+  });
+  it("omits undispatched seeds after preparation spends the batch wall budget", () => {
+    const clock = vi.spyOn(performance, "now");
+    let now = 0;
+    clock.mockImplementation(() => now);
+    try {
+      const report = simulateBatch(
+        BIRD,
+        () => {
+          now += 20;
+          return prepareStage(fixture(ground));
+        },
+        config,
+        [1, 2],
+        { maxWallTimeMs: 10 },
+      );
+      expect(report.runs).toEqual([]);
+      expect(report.omittedSeeds).toEqual([1, 2]);
+      expect(report.aggregate.completionRate).toBe(0);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+  it("reports a wall limit separately from physics and policy failures", () => {
+    const clock = vi.spyOn(performance, "now");
+    let now = 0;
+    clock.mockImplementation(() => now++);
+    try {
+      const run = simulateStage(BIRD, prepareStage(fixture(ground)), {
+        ...config,
+        maxWallTimeMs: 3,
+      });
+      expect(run.status).toBe("wall-budget");
+      expect(run.steps).toBeLessThan(config.maxSteps);
+      expect(run.activeSeconds).toBe(run.steps * STEP_SECONDS);
+      expect(run).not.toHaveProperty("successfulAttemptSeconds");
+    } finally {
+      clock.mockRestore();
+    }
+  });
+});
+
+it("retains the run prediction budget across retry reseeding", () => {
+  const budgets: number[] = [];
+  let ticks = 0;
+  const input = vi.spyOn(botRules, "botInput").mockImplementation((_t, _s, _l, skill) => {
+    budgets.push(skill.navigation?.maxPhysicsSteps ?? -1);
+    return { jumpHeld: false, move: 1, useHeld: false };
+  });
+  const counters = vi
+    .spyOn(botRules, "navigationCounters")
+    .mockReturnValue({ budgetExhaustions: 0, candidateRollouts: 1, decisions: 1, physicsSteps: 3 });
+  const step = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
+    ticks++;
+    const state = args[4];
+    return {
+      ...state,
+      cleared: ticks === 2,
+      death:
+        ticks === 1
+          ? {
+              position: { x: state.bird.x, y: state.bird.y },
+              reason: "fall",
+              support: undefined,
+              velocity: { x: 0, y: 0 },
+            }
+          : undefined,
+    };
+  });
+  try {
+    const run = simulateStage(BIRD, prepareStage(fixture(ground)), {
+      ...config,
+      maxRetries: 1,
+      policy: { jump: "planned", move: 1 },
+      skill: { ...DIAGNOSTIC_SKILL, navigation: { maxPhysicsSteps: 6 } },
+    });
+    expect(budgets).toEqual([6, 3]);
+    expect(run.planning.physicsSteps).toBe(6);
+    expect(run.status).toBe("cleared");
+    expect(run.successfulAttemptSeconds).toBe(STEP_SECONDS);
+  } finally {
+    input.mockRestore();
+    counters.mockRestore();
+    step.mockRestore();
+  }
+});
+
+it("records actual linked-area and chunk coverage independently of trace sampling", () => {
+  const base = fixture(ground, 200);
+  const main = base.areas.main!;
+  const stage = {
+    ...prepareStage({
+      ...base,
+      areaOrder: ["main", "upper"],
+      areas: {
+        main: {
+          ...main,
+          chunks: [{ width: 1100, x: 0 }],
+          walkLinks: { right: { area: "upper", entry: "start" } },
+        },
+        upper: {
+          ...main,
+          chunks: [{ width: 1100, x: 0 }],
+          walkLinks: { left: { area: "main", entry: "start" } },
+        },
+      },
+    }),
+    source: { chunkIds: { main: ["lower-fixture"], upper: ["upper-fixture"] } },
+  };
+  const run = simulateStage(BIRD, stage, { ...config, maxSteps: 300 });
+  expect(run.status).toBe("cleared");
+  expect(run.coverage).toEqual({
+    areaTransitions: 1,
+    areasVisited: ["main", "upper"],
+    chunksVisited: {
+      main: [{ id: "lower-fixture", index: 0 }],
+      upper: [{ id: "upper-fixture", index: 0 }],
+    },
+  });
+});
+
+it("reports zero prediction allowance before exhausting real ticks on a frozen policy", () => {
+  const run = simulateStage(BIRD, prepareStage(fixture(ground)), {
+    ...config,
+    policy: { jump: "planned", move: 1 },
+    skill: { ...DIAGNOSTIC_SKILL, navigation: { maxPhysicsSteps: 0 } },
+  });
+  expect(run.status).toBe("prediction-budget");
+  expect(run.planning.physicsSteps).toBe(0);
+  expect(run.steps).toBeLessThan(config.maxSteps);
+  expect(run.successfulAttemptSeconds).toBeUndefined();
 });

@@ -3,7 +3,7 @@ import { writeFileSync } from "node:fs";
 
 import { BIRD } from "../data/bird";
 import { ZONE_MAP } from "../data/map";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY, type JumpPolicy } from "./bot";
+import { DIAGNOSTIC_SKILL, FORWARD_POLICY, type JumpPolicy, NAVIGATION_DEFAULTS } from "./bot";
 import { stageLoader } from "./catalogue";
 import { simulateBatch } from "./report";
 import { type SimulationConfig, type SimulationSeeds, validateSimulation } from "./simulate";
@@ -15,7 +15,9 @@ const HELP = `npm run simulate -- [--stage ID] [--seed N] [--runs N] [--max-step
   [--trace-cap N] [--trace-every N] [--stall-ticks N]
   [--adaptive-jump true|false] [--min-hold-ticks N] [--wait-for-movers true|false]
   [--max-wait-ticks N] [--build-id ID] [--data-id ID]
-  [--error-rate 0..1] [--jump reactive|continuous|never] [--move -1|0|1] [--out FILE]
+  [--max-wall-ms N] [--batch-wall-ms N] [--stall-limit N]
+  [--plan-horizon N] [--plan-candidates N] [--plan-replan N] [--plan-steps N]
+  [--error-rate 0..1] [--jump reactive|continuous|never|planned] [--move -1|0|1] [--out FILE]
 
 Defaults: first map stage, seed 1, one run, 3600 total ticks/run, zero retries.
 Bot defaults are mechanical diagnostic settings, not calibrated human skills.
@@ -35,6 +37,11 @@ function main(args: readonly string[]): void {
   let runs = 1;
   let maxSteps = 3600;
   let maxRetries = 0;
+  let maxWallTimeMs: number | undefined;
+  let batchWallTimeMs: number | undefined;
+  let stopAfterStallTicks: number | undefined;
+  const navigation = { ...NAVIGATION_DEFAULTS };
+  let navigationSpecified = false;
   let out: string | undefined;
   const seeds: Partial<{ -readonly [Key in keyof SimulationSeeds]: SimulationSeeds[Key] }> = {};
   let area: string | undefined;
@@ -62,6 +69,31 @@ function main(args: readonly string[]): void {
       return value === "true";
     };
     switch (flag) {
+      case "--max-wall-ms":
+        maxWallTimeMs = Number(value);
+        break;
+      case "--batch-wall-ms":
+        batchWallTimeMs = Number(value);
+        break;
+      case "--stall-limit":
+        stopAfterStallTicks = Number(value);
+        break;
+      case "--plan-horizon":
+        navigation.horizonTicks = Number(value);
+        navigationSpecified = true;
+        break;
+      case "--plan-candidates":
+        navigation.maxCandidates = Number(value);
+        navigationSpecified = true;
+        break;
+      case "--plan-replan":
+        navigation.replanTicks = Number(value);
+        navigationSpecified = true;
+        break;
+      case "--plan-steps":
+        navigation.maxPhysicsSteps = Number(value);
+        navigationSpecified = true;
+        break;
       case "--layout-seed":
         seeds.layout = Number(value);
         break;
@@ -179,12 +211,14 @@ function main(args: readonly string[]): void {
     }
   }
   const config: SimulationConfig = {
+    ...(maxWallTimeMs === undefined ? {} : { maxWallTimeMs }),
+    ...(stopAfterStallTicks === undefined ? {} : { stopAfterStallTicks }),
     maxRetries,
     maxSteps,
     policy,
     seed,
     seeds,
-    skill,
+    skill: navigationSpecified || policy.jump === "planned" ? { ...skill, navigation } : skill,
     ...(area !== undefined && entry !== undefined
       ? { start: { area, entry } }
       : area !== undefined && startX !== undefined && startY !== undefined
@@ -213,9 +247,15 @@ function main(args: readonly string[]): void {
     prepare,
     config,
     Array.from({ length: runs }, (_, index) => seed + index),
+    batchWallTimeMs === undefined ? {} : { maxWallTimeMs: batchWallTimeMs },
   );
   const report = {
-    config: { ...config, runs, stage },
+    config: {
+      ...config,
+      ...(batchWallTimeMs === undefined ? {} : { batchWallTimeMs }),
+      runs,
+      stage,
+    },
     ...result,
     totalRuntimeMs: performance.now() - started,
   };

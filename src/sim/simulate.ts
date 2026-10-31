@@ -15,9 +15,13 @@ import {
   botInput,
   type BotPolicy,
   type BotSkill,
+  type NavigationCounters,
+  navigationCounters,
   newBot,
   prepareSensors,
+  resetNavigation,
   type SensorIndex,
+  validateNavigation,
 } from "./bot";
 import { type TraceEvent, traceEvent, type TraceOptions } from "./diagnostics";
 import { layoutAtStart, type SimulationStart, validateStart } from "./start";
@@ -38,14 +42,36 @@ export interface SimulationConfig {
   readonly seeds?: Partial<SimulationSeeds>;
   readonly start?: SimulationStart;
   readonly trace?: TraceOptions;
+  readonly maxWallTimeMs?: number;
+  readonly stopAfterStallTicks?: number;
   readonly maxRetries: number;
   readonly maxSteps: number;
   readonly policy: BotPolicy;
   readonly seed: number;
   readonly skill: BotSkill;
 }
-export type RunStatus = "cleared" | "goal-reached" | "retry-budget" | "step-budget" | "turned-back";
+export type RunStatus =
+  | "cleared"
+  | "goal-reached"
+  | "retry-budget"
+  | "step-budget"
+  | "turned-back"
+  | "policy-stall"
+  | "wall-budget"
+  | "prediction-budget";
 export interface RunResult {
+  readonly lastAttemptSeconds: number;
+  readonly planning: NavigationCounters;
+  readonly finalPolicy: {
+    readonly move: number;
+    readonly waitingTicks: number;
+    readonly plannerStatus?: string;
+  };
+  readonly coverage: {
+    readonly areasVisited: readonly string[];
+    readonly areaTransitions: number;
+    readonly chunksVisited: Readonly<Record<string, readonly { index: number; id?: string }[]>>;
+  };
   readonly config: SimulationConfig;
   readonly provenance: SimulationProvenance;
   readonly tuning: BirdTuning;
@@ -98,6 +124,22 @@ export function simulationSeeds(config: Pick<SimulationConfig, "seed" | "seeds">
 }
 
 export function validateSimulation(config: SimulationConfig): void {
+  if (config.policy.jump === "planned" || config.skill.navigation !== undefined) {
+    validateNavigation(config.skill.navigation);
+  }
+  for (const [name, value] of [
+    ["maxWallTimeMs", config.maxWallTimeMs],
+    ["stopAfterStallTicks", config.stopAfterStallTicks],
+  ] as const) {
+    if (
+      value !== undefined &&
+      (!Number.isFinite(value) ||
+        value <= 0 ||
+        (name === "stopAfterStallTicks" && !Number.isSafeInteger(value)))
+    ) {
+      throw new Error(`Invalid ${name}`);
+    }
+  }
   for (const [name, value, min] of [
     ["maxSteps", config.maxSteps, 1],
     ["maxRetries", config.maxRetries, 0],
@@ -148,7 +190,7 @@ export function validateSimulation(config: SimulationConfig): void {
     throw new Error("Invalid bot skill or seed");
   }
   if (
-    !["continuous", "never", "reactive"].includes(config.policy.jump) ||
+    !["continuous", "never", "reactive", "planned"].includes(config.policy.jump) ||
     ![-1, 0, 1].includes(config.policy.move)
   ) {
     throw new Error("Invalid bot policy");
@@ -195,6 +237,8 @@ export function simulateStage(
   config: SimulationConfig,
 ): RunResult {
   validateSimulation(config);
+  const navigation =
+    config.policy.jump === "planned" ? validateNavigation(config.skill.navigation) : undefined;
   const started = performance.now();
   const { sensors } = stage;
   const layout = layoutAtStart(tuning, stage.layout, config.start);
@@ -231,16 +275,46 @@ export function simulateStage(
   let steps = 0;
   let retries = 0;
   let dialogues = 0;
-  let progress = 0;
-  let peakProgress = 0;
+  let progress = stageProgress(tuning, stage.layout, zone);
+  let peakProgress = progress;
   const deathsByReason = { crush: 0, fall: 0, hazard: 0 };
   let status: RunStatus = "step-budget";
+  const priorPlanning = {
+    budgetExhaustions: 0,
+    candidateRollouts: 0,
+    decisions: 0,
+    physicsSteps: 0,
+  };
+  const areasVisited = new Set<string>();
+  const chunksVisited = new Map<string, Set<number>>();
+  let areaTransitions = 0;
+  let lastMove = 0;
+  let terminalLastAdvance = 0;
+  let terminalFurthest = config.policy.move * zone.bird.x;
+  const visit = () => {
+    areasVisited.add(zone.area);
+    const indices = chunksVisited.get(zone.area) ?? new Set<number>();
+    const centre = zone.bird.x + tuning.width / 2;
+    const index = areaOf(layout, zone.area).chunks.findIndex(
+      (c) => centre >= c.x && centre < c.x + c.width,
+    );
+    if (index >= 0) {
+      indices.add(index);
+    }
+    chunksVisited.set(zone.area, indices);
+  };
+  visit();
   while (steps < config.maxSteps) {
+    if (config.maxWallTimeMs !== undefined && performance.now() - started >= config.maxWallTimeMs) {
+      status = "wall-budget";
+      break;
+    }
     if (zone.area !== previousArea) {
       for (const index of heardByArea.get(zone.area) ?? []) {
         zone = activateBehaviour(index, zone);
       }
       previousArea = zone.area;
+      resetNavigation(bot);
       bot.holding = 0;
       bot.targetY = undefined;
       bot.waited = 0;
@@ -261,17 +335,39 @@ export function simulateStage(
       heard.add(introduction);
       dialogues++;
       zone = activateBehaviour(introduction, zone);
+      resetNavigation(bot);
       bot.holding = 0;
     }
     // Closing a conversation clears held controls before the bot acts again.
+    const skill =
+      navigation === undefined
+        ? config.skill
+        : {
+            ...config.skill,
+            navigation: {
+              ...navigation,
+              maxPhysicsSteps: Math.max(0, navigation.maxPhysicsSteps - priorPlanning.physicsSteps),
+            },
+          };
     const input =
       introduction === undefined
-        ? botInput(tuning, sensors, layout, config.skill, config.policy, zone, bot)
+        ? botInput(tuning, sensors, layout, skill, config.policy, zone, bot)
         : { jumpHeld: false, move: 0 as const, useHeld: false };
+    lastMove = input.move;
     const before = zone;
     zone = stepZone(tuning, layout, STEP_SECONDS, input, zone);
     steps++;
     attemptTick++;
+    visit();
+    if (zone.area !== before.area) {
+      areaTransitions++;
+      terminalFurthest = config.policy.move * zone.bird.x;
+      terminalLastAdvance = attemptTick;
+    }
+    if (config.policy.move * zone.bird.x > terminalFurthest + 1e-6) {
+      terminalFurthest = config.policy.move * zone.bird.x;
+      terminalLastAdvance = attemptTick;
+    }
     if (zone.area !== before.area) {
       // A new local coordinate origin is advancement, not a stalled previous floor.
       furthest = config.policy.move * zone.bird.x;
@@ -356,20 +452,65 @@ export function simulateStage(
       zone = retryZone(tuning, layout, zone);
       retries++;
       heardByArea.clear();
+      const counters = navigationCounters(bot);
+      for (const key of Object.keys(priorPlanning) as (keyof NavigationCounters)[]) {
+        priorPlanning[key] += counters[key];
+      }
       bot = newBot((seeds.bot + retries) >>> 0);
+      terminalLastAdvance = 0;
+      terminalFurthest = config.policy.move * zone.bird.x;
       attemptTick = 0;
       lastAdvance = 0;
       furthest = config.policy.move * zone.bird.x;
     }
+    if (bot.navigation?.status === "budget-exhausted") {
+      status = "prediction-budget";
+      break;
+    }
+    if (
+      config.stopAfterStallTicks !== undefined &&
+      attemptTick - terminalLastAdvance >= config.stopAfterStallTicks
+    ) {
+      status = "policy-stall";
+      break;
+    }
   }
+  const counters = navigationCounters(bot);
   return {
     ...(status === "cleared" ? { successfulAttemptSeconds: attemptTick * STEP_SECONDS } : {}),
     activeSeconds: steps * STEP_SECONDS,
     config,
+    coverage: {
+      areaTransitions,
+      areasVisited: [...areasVisited],
+      chunksVisited: Object.fromEntries(
+        [...chunksVisited].map(([area, indices]) => [
+          area,
+          [...indices].map((index) => ({
+            index,
+            ...(stage.source?.chunkIds?.[area]?.[index] === undefined
+              ? {}
+              : { id: stage.source.chunkIds[area][index] }),
+          })),
+        ]),
+      ),
+    },
     deaths: deathsByReason.crush + deathsByReason.fall + deathsByReason.hazard,
     deathsByReason,
     dialogues,
+    finalPolicy: {
+      move: lastMove,
+      waitingTicks: bot.waited,
+      ...(bot.navigation === undefined ? {} : { plannerStatus: bot.navigation.status }),
+    },
+    lastAttemptSeconds: attemptTick * STEP_SECONDS,
     peakProgress,
+    planning: {
+      budgetExhaustions: priorPlanning.budgetExhaustions + counters.budgetExhaustions,
+      candidateRollouts: priorPlanning.candidateRollouts + counters.candidateRollouts,
+      decisions: priorPlanning.decisions + counters.decisions,
+      physicsSteps: priorPlanning.physicsSteps + counters.physicsSteps,
+    },
     progress,
     provenance: { ...stage.source?.provenance, ...config.provenance },
     retries,
