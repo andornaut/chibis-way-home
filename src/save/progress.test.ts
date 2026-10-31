@@ -6,13 +6,7 @@ import type { MapNode, ZoneMap } from "../data/types";
 import { RECIPES, ZONES } from "../data/zones";
 import { openMap } from "../rules/map";
 import { destinationForStage, destinationSelection } from "../rules/mapDestinations";
-import {
-  BEGINNING,
-  type Progress,
-  PROGRESS_VERSION,
-  progressFormat,
-  mapProgress,
-} from "./progress";
+import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./progress";
 
 const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({
   at: { col: 0, row: 0 },
@@ -153,8 +147,8 @@ describe("built cityscape progress", () => {
     ({ completed, stand, unlocked }) => {
       const progress = {
         at: "map" as const,
-        ...mapProgress(ZONE_MAP, BEGINNING),
         completed,
+        seenZoneIntros: [],
         stand,
       };
       const loaded = loadSave(format, JSON.stringify({ ...progress, version: PROGRESS_VERSION }));
