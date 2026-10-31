@@ -10,7 +10,7 @@ const FIRST_GROWL_START: Omit<ChunkPlan, "theme"> = {
     ...GROWL_FINISH.objects.map((object) => ({
       ...object,
       col: object.col + BOUNDARY_START.cols,
-      ...(object.role === "antagonist" ? { role: "antagonist-intro", scene: "bini-intro" } : {}),
+      ...(object.role === "antagonist" ? { role: "antagonist-intro" } : {}),
     })),
   ],
   solids: [

@@ -1,5 +1,4 @@
 import { GROWL_FINISH, PATROL_FINISH_GEOMETRY } from "./chunkTemplates";
-import { ZONE_DIALOGUES } from "./dialogues";
 import type { ChunkPlan, ChunkRules, ElementBinding, ThemePlan } from "./types";
 import { STREET_CHUNKS } from "./zone1";
 import { INDUSTRIAL_CHUNKS } from "./zone2";
@@ -83,7 +82,7 @@ const CITY_THEME: ThemePlan = {
     antagonist: { character: "dog-antagonist", scene: null },
     "antagonist-intro": {
       character: "dog-antagonist",
-      scene: ZONE_DIALOGUES["blue-cityscape"]!.intro,
+      scene: null,
     },
     canopy: { character: "canopy" },
     "depot-wall": { character: "depot-wall" },
@@ -110,7 +109,7 @@ const INDUSTRIAL_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   antagonist: { character: "pigeon-antagonist", scene: null },
   "antagonist-intro": {
     character: "pigeon-antagonist",
-    scene: ZONE_DIALOGUES.industrial!.intro,
+    scene: null,
   },
   "boundary-wall": {
     character: "facade-one-storey",
@@ -147,7 +146,7 @@ const COUNTRYSIDE_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   antagonist: { character: "goose-antagonist", scene: null },
   "antagonist-intro": {
     character: "goose-antagonist",
-    scene: ZONE_DIALOGUES.countryside!.intro,
+    scene: null,
   },
   door: { character: "street-door", skin: { art: "door", tileset: "tiles-street" } },
   "far-background": {
@@ -163,7 +162,7 @@ const COUNTRYSIDE_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 const WOODLAND_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
   antagonist: { character: "bear-antagonist", scene: null },
-  "antagonist-intro": { character: "bear-antagonist", scene: ZONE_DIALOGUES.woodland!.intro },
+  "antagonist-intro": { character: "bear-antagonist", scene: null },
   "boundary-wall": { character: "facade-one-storey", skin: { art: "forest-shrub", tileset: null } },
   door: { character: "street-door", skin: { art: "door", tileset: "tiles-street" } },
   "far-background": { character: "street-city-far", skin: { art: "woodland-far", tileset: null } },
@@ -178,7 +177,7 @@ const HOME_CITY_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   antagonist: { character: "raccoon-antagonist", scene: null },
   "antagonist-intro": {
     character: "raccoon-antagonist",
-    scene: ZONE_DIALOGUES["home-city"]!.intro,
+    scene: null,
   },
   "boundary-wall": {
     character: "facade-one-storey",
@@ -230,7 +229,7 @@ function apartmentTheme(
       antagonist: { character: "ferret-antagonist", scene: null },
       "antagonist-intro": {
         character: "ferret-antagonist",
-        scene: ZONE_DIALOGUES.apartment!.intro,
+        scene: null,
       },
       door: {
         character: "apartment-room-door",

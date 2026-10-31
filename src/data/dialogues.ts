@@ -136,14 +136,76 @@ export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
 };
 
 export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
-  apartment: { foreshadow: "furt-foreshadow", intro: "furt-intro", outro: "furt-outro" },
+  apartment: {
+    entry: {
+      character: "ferret-antagonist",
+      escapeTilesPerSecond: 20,
+      idleAnimation: "idle",
+      offsetTiles: 8,
+      runAnimation: "walk",
+    },
+    foreshadow: "furt-foreshadow",
+    intro: "furt-intro",
+    outro: "furt-outro",
+  },
   "blue-cityscape": {
+    entry: {
+      character: "dog-antagonist",
+      escapeTilesPerSecond: 20,
+      idleAnimation: "idle",
+      offsetTiles: 8,
+      runAnimation: "walk",
+    },
     foreshadow: "archie-foreshadow",
     intro: "depot-dog-intro",
     outro: "archie-outro",
   },
-  countryside: { foreshadow: "trixi-foreshadow", intro: "trixi-intro", outro: "trixi-outro" },
-  "home-city": { foreshadow: "kiwi-foreshadow", intro: "kiwi-intro", outro: "kiwi-outro" },
-  industrial: { foreshadow: "pebble-foreshadow", intro: "pebble-intro", outro: "pebble-outro" },
-  woodland: { foreshadow: "bini-foreshadow", intro: "bini-intro", outro: "bini-outro" },
+  countryside: {
+    entry: {
+      character: "goose-antagonist",
+      escapeTilesPerSecond: 20,
+      idleAnimation: "idle",
+      offsetTiles: 8,
+      runAnimation: "walk",
+    },
+    foreshadow: "trixi-foreshadow",
+    intro: "trixi-intro",
+    outro: "trixi-outro",
+  },
+  "home-city": {
+    entry: {
+      character: "raccoon-antagonist",
+      escapeTilesPerSecond: 20,
+      idleAnimation: "idle",
+      offsetTiles: 8,
+      runAnimation: "walk",
+    },
+    foreshadow: "kiwi-foreshadow",
+    intro: "kiwi-intro",
+    outro: "kiwi-outro",
+  },
+  industrial: {
+    entry: {
+      character: "pigeon-antagonist",
+      escapeTilesPerSecond: 20,
+      idleAnimation: "idle",
+      offsetTiles: 8,
+      runAnimation: "fly",
+    },
+    foreshadow: "pebble-foreshadow",
+    intro: "pebble-intro",
+    outro: "pebble-outro",
+  },
+  woodland: {
+    entry: {
+      character: "bear-antagonist",
+      escapeTilesPerSecond: 20,
+      idleAnimation: "idle",
+      offsetTiles: 8,
+      runAnimation: "walk",
+    },
+    foreshadow: "bini-foreshadow",
+    intro: "bini-intro",
+    outro: "bini-outro",
+  },
 };
