@@ -117,27 +117,30 @@ describe("built cityscape progress", () => {
     { completed: ["street"], stand: "street" },
     { completed: ["street"], stand: "city-boundary" },
     { completed: ["street", "city-boundary"], stand: "street" },
-  ])("keeps version-four progress at $stand with $completed completed", ({ completed, stand }) => {
-    const progress = { at: "map" as const, completed, stand };
-    const loaded = loadSave(format, JSON.stringify({ ...progress, version: 4 }));
-    expect(loaded).toEqual({ save: progress, status: "loaded" });
-    const encoded = encodeSave(format, loaded.save);
-    expect(encoded.ok).toBe(true);
-    if (!encoded.ok) {
-      throw new Error("Expected valid cityscape progress");
-    }
-    const reopened = loadSave(format, encoded.value);
-    expect(reopened).toEqual(loaded);
-    if (reopened.save.at !== "map") {
-      throw new Error("Expected saved map progress");
-    }
-    expect(
-      destinationSelection(
-        new Set(Object.keys(plans)),
-        ZONE_MAP,
-        openMap(ZONE_MAP, new Set(reopened.save.completed)),
-        destinationForStage(ZONE_MAP, reopened.save.stand),
-      ),
-    ).toEqual({ kind: "choose", latest: "city-boundary", stages: ["street", "city-boundary"] });
-  });
+  ])(
+    "keeps current-format progress at $stand with $completed completed",
+    ({ completed, stand }) => {
+      const progress = { at: "map" as const, completed, stand };
+      const loaded = loadSave(format, JSON.stringify({ ...progress, version: PROGRESS_VERSION }));
+      expect(loaded).toEqual({ save: progress, status: "loaded" });
+      const encoded = encodeSave(format, loaded.save);
+      expect(encoded.ok).toBe(true);
+      if (!encoded.ok) {
+        throw new Error("Expected valid cityscape progress");
+      }
+      const reopened = loadSave(format, encoded.value);
+      expect(reopened).toEqual(loaded);
+      if (reopened.save.at !== "map") {
+        throw new Error("Expected saved map progress");
+      }
+      expect(
+        destinationSelection(
+          new Set(Object.keys(plans)),
+          ZONE_MAP,
+          openMap(ZONE_MAP, new Set(reopened.save.completed)),
+          destinationForStage(ZONE_MAP, reopened.save.stand),
+        ),
+      ).toEqual({ kind: "choose", latest: "city-boundary", stages: ["street", "city-boundary"] });
+    },
+  );
 });
