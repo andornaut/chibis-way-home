@@ -102,6 +102,43 @@ export function difficultyWeightProblems(
     : ["difficulty weights exclude every eligible chunk"];
 }
 
+// Encounter constraints are opt-in. Counts come only from explicit chunk metadata.
+function encounterQuota(
+  library: ChunkLibrary,
+  quota: number | undefined,
+  ids: readonly string[],
+): number | undefined {
+  if (quota === undefined) {
+    return undefined;
+  }
+  if (!Number.isSafeInteger(quota) || quota < 0) {
+    throw new Error("Encounter quota must be a nonnegative safe integer");
+  }
+  for (const id of ids) {
+    const count = chunkOf(library, id).encounters;
+    if (!Number.isSafeInteger(count) || count < 0) {
+      throw new Error(`Invalid encounter count for chunk ${id}`);
+    }
+  }
+  return quota;
+}
+
+function encounterFits(
+  library: ChunkLibrary,
+  remaining: number | undefined,
+  previous: string | undefined,
+  id: string,
+): boolean {
+  if (remaining === undefined) {
+    return true;
+  }
+  const count = chunkOf(library, id).encounters;
+  return (
+    count <= remaining &&
+    (count === 0 || previous === undefined || chunkOf(library, previous).encounters === 0)
+  );
+}
+
 // Where the search stands: the chunks so far after the start, the columns they take with the
 // start's, and the event and door slots so far.
 interface Run {
@@ -109,6 +146,7 @@ interface Run {
   readonly doors: number;
   readonly events: number;
   readonly ids: readonly string[];
+  readonly remaining: number | undefined;
   readonly width: number;
 }
 
@@ -136,6 +174,11 @@ function searchRun(
       );
     })
     .sort();
+  const quota = encounterQuota(library, recipe.encounters, [recipe.start, recipe.finish, ...pool]);
+  const remaining = quota === undefined ? undefined : quota - start.encounters - finish.encounters;
+  if (remaining !== undefined && remaining < 0) {
+    return undefined;
+  }
   const { max, min } = recipe.length;
   const target = randomInt(random, min, max + 1);
   const needEvents = wanted(recipe.events);
@@ -147,6 +190,9 @@ function searchRun(
       run.ids.at(-1) ?? recipe.start,
       Math.min(run.events, needEvents),
       Math.min(run.doors, needDoors),
+      ...(run.remaining === undefined
+        ? []
+        : [run.remaining, chunkOf(library, run.ids.at(-1) ?? recipe.start).encounters > 0]),
       ...pool.flatMap((id) =>
         chunkOf(library, id).maxPerZone === undefined ? [] : [run.counts.get(id) ?? 0],
       ),
@@ -159,6 +205,8 @@ function searchRun(
       exitRow === finish.entry.row &&
       total >= min &&
       total <= max &&
+      (run.remaining === undefined ||
+        (run.remaining === 0 && encounterFits(library, finish.encounters, prev, recipe.finish))) &&
       run.events + slotCount(finish, "event") >= needEvents &&
       run.doors + slotCount(finish, "door") >= needDoors
     );
@@ -172,6 +220,7 @@ function searchRun(
       doors: run.doors + slotCount(chunk, "door"),
       events: run.events + slotCount(chunk, "event"),
       ids: [...run.ids, id],
+      remaining: run.remaining === undefined ? undefined : run.remaining - chunk.encounters,
       width,
     };
   };
@@ -187,6 +236,7 @@ function searchRun(
       const chunk = chunkOf(library, id);
       return (
         id !== prev &&
+        encounterFits(library, run.remaining, prev, id) &&
         chunk.entry.row === exitRow &&
         (run.counts.get(id) ?? 0) < (chunk.maxPerZone ?? Infinity) &&
         run.width + chunk.cols + finish.cols <= max
@@ -226,6 +276,7 @@ function searchRun(
     doors: slotCount(start, "door"),
     events: slotCount(start, "event"),
     ids: [],
+    remaining,
     width: start.cols,
   });
 }
@@ -540,6 +591,12 @@ function assembleOrdered(
       );
     }),
   );
+  const quota = encounterQuota(library, recipe.encounters, [
+    recipe.start,
+    recipe.finish,
+    ...pools.flat(),
+  ]);
+  const remaining = quota === undefined ? undefined : quota - start.encounters - finish.encounters;
   const selected: (readonly string[])[] = [];
   const failed = new Set<string>();
   const limited = [...new Set(recipe.sections.flatMap((section) => section.chunks))]
@@ -555,10 +612,14 @@ function assembleOrdered(
       section.length.max + 1,
     ),
   );
-  const choose = (index: number, previous: string | undefined): boolean => {
+  const choose = (
+    index: number,
+    previous: string | undefined,
+    remaining: number | undefined,
+  ): boolean => {
     const section = recipe.sections[index];
     if (!section) {
-      return true;
+      return remaining === undefined || remaining === 0;
     }
     const cap = index === 0 ? start : undefined;
     const end = index === recipe.sections.length - 1 ? finish : undefined;
@@ -569,6 +630,7 @@ function assembleOrdered(
       width: number,
       doors: number,
       events: number,
+      remaining: number | undefined,
     ): boolean => {
       const prev = ids.at(-1) ?? (cap ? recipe.start : previous);
       const seam =
@@ -579,6 +641,9 @@ function assembleOrdered(
         prev ?? "",
         Math.min(doors, needDoors),
         Math.min(events, needEvents),
+        ...(remaining === undefined
+          ? []
+          : [remaining, prev !== undefined && chunkOf(library, prev).encounters > 0]),
         ...limited.map((id) => counts.get(id) ?? 0),
       ].join(":");
       if (failed.has(state)) {
@@ -591,13 +656,16 @@ function assembleOrdered(
           total < section.length.min ||
           total > section.length.max ||
           (end !== undefined && seam !== end.entry.row) ||
+          (end !== undefined &&
+            remaining !== undefined &&
+            (remaining !== 0 || !encounterFits(library, finish.encounters, prev, recipe.finish))) ||
           doors + (end ? slotCount(end, "door") : 0) < needDoors ||
           events + (end ? slotCount(end, "event") : 0) < needEvents
         ) {
           return false;
         }
         selected[index] = ids;
-        return choose(index + 1, ids.at(-1));
+        return choose(index + 1, ids.at(-1), remaining);
       };
       if (total >= (targets[index] ?? section.length.min) && finishSection()) {
         return true;
@@ -606,6 +674,7 @@ function assembleOrdered(
         const chunk = chunkOf(library, id);
         return (
           id !== prev &&
+          encounterFits(library, remaining, prev, id) &&
           (seam === undefined || chunk.entry.row === seam) &&
           (counts.get(id) ?? 0) < (chunk.maxPerZone ?? Infinity) &&
           width + chunk.cols + (end?.cols ?? 0) <= section.length.max &&
@@ -622,6 +691,7 @@ function assembleOrdered(
             width + chunk.cols,
             doors + slotCount(chunk, "door"),
             events + slotCount(chunk, "event"),
+            remaining === undefined ? undefined : remaining - chunk.encounters,
           )
         ) {
           return true;
@@ -639,9 +709,10 @@ function assembleOrdered(
       cap?.cols ?? 0,
       cap ? slotCount(cap, "door") : 0,
       cap ? slotCount(cap, "event") : 0,
+      remaining,
     );
   };
-  if (!choose(0, undefined)) {
+  if ((remaining !== undefined && remaining < 0) || !choose(0, undefined, remaining)) {
     throw new Error(`No ordered assembly of stage ${key} fits its section pools and lengths`);
   }
   const order = recipe.sections.map(({ id }) => id);

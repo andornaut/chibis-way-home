@@ -12,6 +12,7 @@ function chunk(entry: 30 | 40 | 50, exit: 30 | 40 | 50, extra: Partial<ChunkPlan
   return {
     cols: 60,
     difficulty: 1,
+    encounters: 0,
     entry: { row: entry },
     exit: { row: exit },
     objects: [],
@@ -183,6 +184,64 @@ describe("assembleZone", () => {
     const zone = recipe(3);
     expect(assembleZone(lib, 7, "z", zone)).toEqual(assembleZone(lib, 7, "z", zone));
     expect(runs(lib, zone).size).toBeGreaterThan(1);
+  });
+
+  it("counts caps from metadata and leaves a zero-encounter chunk between encounters", () => {
+    const lib = library({
+      encounter: chunk(50, 50, { encounters: 1, weight: 1000 }),
+      finish: chunk(50, 50, { encounters: 1 }),
+      quiet: chunk(50, 50),
+      start: chunk(50, 50, { encounters: 1 }),
+    });
+    const zone = recipe(3, { encounters: 3 });
+    const plan = assembleZone(lib, 7, "metadata", zone);
+    expect(plan).toEqual(assembleZone(lib, 7, "metadata", zone));
+    expect(areaOf(plan).chunks?.map(({ chunk }) => chunk)).toEqual([
+      "start",
+      "quiet",
+      "encounter",
+      "quiet",
+      "finish",
+    ]);
+  });
+
+  it.each([
+    ["caps exhaust the quota", 2, 1, 1, 1, ["quiet"]],
+    ["zero quota excludes a positive middle", 0, 0, 0, 1, ["quiet"]],
+  ])("%s", (_, encounters, start, finish, middle, expected) => {
+    const lib = library({
+      encounter: chunk(50, 50, { encounters: middle, weight: 1000 }),
+      finish: chunk(50, 50, { encounters: finish }),
+      quiet: chunk(50, 50),
+      start: chunk(50, 50, { encounters: start }),
+    });
+    expect(middleIds(areaOf(assembleZone(lib, 1, "quota", recipe(1, { encounters }))))).toEqual(
+      expected,
+    );
+  });
+
+  it("preserves unconstrained recipes but rejects impossible quota or cap adjacency", () => {
+    const lib = library({
+      encounter: chunk(50, 50, { encounters: 1 }),
+      finish: chunk(50, 50, { encounters: 1 }),
+      start: chunk(50, 50, { encounters: 1 }),
+    });
+    expect(middleIds(areaOf(assembleZone(lib, 1, "debug", recipe(1))))).toEqual(["encounter"]);
+    for (const encounters of [1, 3]) {
+      expect(() => assembleZone(lib, 1, "quota", recipe(1, { encounters }))).toThrow(
+        /^No assembly/,
+      );
+    }
+  });
+
+  it("rejects invalid quotas and explicit metadata rather than inferring encounters", () => {
+    expect(() => assembleZone(library({}), 1, "invalid", recipe(0, { encounters: -1 }))).toThrow(
+      "Encounter quota",
+    );
+    const lib = library({ bad: chunk(50, 50, { encounters: NaN }) });
+    expect(() => assembleZone(lib, 1, "invalid", recipe(1, { encounters: 1 }))).toThrow(
+      "Invalid encounter count",
+    );
   });
 
   it("preserves theme and placed backdrop parallax across chunk assembly", () => {
@@ -510,6 +569,43 @@ describe("ordered section assembly", () => {
       }),
     ).toThrow("finite nonnegative");
   });
+  it("carries one quota and cap spacing across all ordered sections", () => {
+    const quotaLib = {
+      ...lib,
+      chunks: {
+        ...lib.chunks,
+        a: chunk(50, 50, { encounters: 1, maxPerZone: 1, weight: 1000 }),
+        finish: chunk(50, 50, { encounters: 1 }),
+        start: chunk(50, 50, { encounters: 1 }),
+      },
+    };
+    const recipe = { ...ordered, encounters: 3 };
+    const plan = assembleZone(quotaLib, 42, "whole-stage", recipe);
+    const ids = plan.areaOrder?.flatMap(
+      (id) => plan.areas[id]?.chunks?.map(({ chunk }) => chunk) ?? [],
+    );
+    expect(ids).toEqual(["start", "b", "a", "b", "finish"]);
+  });
+
+  it("requires a quiet chunk across section boundaries only for quota recipes", () => {
+    const encounters = {
+      ...lib,
+      chunks: {
+        ...lib.chunks,
+        a: chunk(50, 50, { encounters: 1 }),
+        b: chunk(50, 50, { encounters: 1 }),
+      },
+    };
+    const pair = { ...ordered, sections: [ordered.sections[0]!, ordered.sections[2]!] };
+    expect(assembleZone(encounters, 42, "unconstrained", pair).areaOrder).toEqual([
+      "lobby",
+      "home",
+    ]);
+    expect(() => assembleZone(encounters, 42, "adjacent", { ...pair, encounters: 2 })).toThrow(
+      "No ordered assembly",
+    );
+  });
+
   it("rejects invalid section ids, missing pools and impossible cap seams without searching live physics", () => {
     expect(() =>
       assembleZone(lib, 42, "stage", { ...ordered, sections: [section("same"), section("same")] }),
