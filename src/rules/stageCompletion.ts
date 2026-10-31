@@ -14,19 +14,18 @@ export function stageCompletion(
   completedBefore: ReadonlySet<string>,
   stage: string,
 ): StageCompletion {
-  if (isLastZone(map, stage)) {
-    return { kind: "celebration" };
-  }
   const destination = destinationForStage(map, stage);
   const index = destination.stages.indexOf(stage);
   const open = openMap(map, new Set([...completedBefore, stage]));
   const nextStage = destination.stages[index + 1];
-  if (
-    nextStage !== undefined &&
-    nodeOf(map, nextStage).zone !== undefined &&
-    open.zones.includes(nextStage)
-  ) {
+  if (nextStage !== undefined) {
+    if (nodeOf(map, nextStage).zone === undefined || !open.zones.includes(nextStage)) {
+      throw new Error(`Cannot advance to unavailable stage ${nextStage}`);
+    }
     return { kind: "next-stage", stage: nextStage };
+  }
+  if (isLastZone(map, stage)) {
+    return { kind: "celebration" };
   }
   const nextDestination = map.destinations[map.destinations.indexOf(destination) + 1];
   const travelTo = nextDestination?.stages[0];
