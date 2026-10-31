@@ -49,6 +49,9 @@ export function beginZoneVisit(zone: string): void {
 }
 export function beginStageRun(stage: string): void {
   if (STAGES.has(stage)) {
+    if (progress.at === "beginning") {
+      writeStand(stage);
+    }
     stats.beginRun(stage);
   }
 }
@@ -116,9 +119,15 @@ export function saveZoneIntro(zone: string): void {
   write({ at: "map", ...savedMap(), seenZoneIntros: [...seen, zone] });
 }
 
-// He stands on the zone node stand: the map opens there.
+// Map browsing updates an existing game; only actual stage entry starts a new one.
 export function saveStand(stand: string): void {
   void stats.flush();
+  if (progress.at !== "beginning") {
+    writeStand(stand);
+  }
+}
+
+function writeStand(stand: string): void {
   write({ at: "map", completed: savedMap().completed, seenZoneIntros: seenZoneIntros(), stand });
 }
 
