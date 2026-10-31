@@ -1,6 +1,6 @@
 # Gameplay
 
-The design of the game, how it's tuned and tested, and what's left for the first build. Duck Platformer is a landscape platformer about a lost duck travelling zone to zone across a map to get home. Phone browser first, with keyboard on desktop.
+The design of the game, how it's tuned and tested, and what's left for the first build. Bird versus Ferret is a landscape platformer about Chibi, a lost bird, travelling zone to zone across a map to get home. Phone browser first, with keyboard on desktop.
 
 ## Docs
 
@@ -28,30 +28,30 @@ Gameplay owns the rulebook and the values and content in the data value files (e
 
 The route has six themed map destinations (zones), each with two playable stages, on a linear route back to the shared apartment. Recipe lengths define stage length; total play time has no prescribed estimate. The ordered zones and agreed story are in [`design.md`](design.md). The first stage combines the depot and streets of the blue cityscape. Every stage has a fixed opening and ending with a randomized middle assembled from hand-designed chunks. The park remains a prototype, not the final second stage. Branching routes and boss encounters are deferred to Next.
 
-The six-destination V1 map has all twelve V1 stages built: Blue cityscape's Parcel depot and streets (`street`) and City boundary (`city-boundary`), followed by Industrial outskirts' Warehouse district (`warehouse-district`) and Freight terminal (`freight-terminal`), then Countryside's Farmland (`farmland`) and River crossing (`river-crossing`), followed by Woodland's Forest paths (`forest-paths`) and Ravine (`ravine`), then Home city's City outskirts (`city-outskirts`) and Familiar neighbourhood (`familiar-neighbourhood`), ending with Apartment building's Entrance and lobby (`entrance-and-lobby`) and Climb to the apartment (`climb-to-apartment`). Completing this route does not declare a V1 release. A zone with one unlocked playable stage enters directly; more than one opens a choice modal with the latest available stage as the highlighted default and the earlier stage secondary. Completing a zone's first stage shows a placeholder cutscene image and Continue, which enters its second stage directly without the map. Completing the second returns to the map and animates the duck walking to the next zone, where stage entry waits for the player's selection. The final-stage celebration is unchanged. Completing a first stage unlocks its second, and completing the second opens the next zone. Replays preserve unlocks. The park is a debug prototype outside the V1 map. Current code still calls an individual stage `ZonePlan`.
+The six-destination V1 map has all twelve V1 stages built: Blue cityscape's Parcel depot and streets (`street`) and City boundary (`city-boundary`), followed by Industrial outskirts' Warehouse district (`warehouse-district`) and Freight terminal (`freight-terminal`), then Countryside's Farmland (`farmland`) and River crossing (`river-crossing`), followed by Woodland's Forest paths (`forest-paths`) and Ravine (`ravine`), then Home city's City outskirts (`city-outskirts`) and Familiar neighbourhood (`familiar-neighbourhood`), ending with Apartment building's Entrance and lobby (`entrance-and-lobby`) and Climb to the apartment (`climb-to-apartment`). Completing this route does not declare a V1 release. A zone with one unlocked playable stage enters directly; more than one opens a choice modal with the latest available stage as the highlighted default and the earlier stage secondary. Completing a zone's first stage shows a placeholder cutscene image and Continue, which enters its second stage directly without the map. Completing the second returns to the map and animates Chibi walking to the next zone, where stage entry waits for the player's selection. The final-stage celebration is unchanged. Completing a first stage unlocks its second, and completing the second opens the next zone. Replays preserve unlocks. The park is a debug prototype outside the V1 map. Current code still calls an individual stage `ZonePlan`.
 
 ## Targets
 
 Each target is a band, not a point, assessed per stage and player skill. PLACEHOLDER: every band, agreed with the user. The kinds of target:
 
 - **Stage length:** cumulative active time to clear a stage, by skill, including retries and excluding pause, dialogue, menus, the death flow, inter-stage cutscenes and map travel. A retry starts at the stage checkpoint and touch jumps are imprecise, so a stage is short enough that a restart doesn't sting
-- **Reaches:** the duck makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
+- **Reaches:** Chibi makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
 - **Session length:** the time to finish the game, by skill
 
 ## Remaining for the first build
 
-**Current implementation scope:** longer stages, broader middle-chunk variety, a demanding first-zone base and rising difficulty through every zone. All six enemy animals use data-driven detection from at least half a screen away, persistent pursuit, tuned movement speeds and ranges, and visible frustration when unable to reach the duck. Generation and movement use shared layouts, primitives and behaviour graphs. Jump rules, combat restrictions, stage checkpoints and story remain as specified in the rulebook.
+**Current implementation scope:** longer stages, broader middle-chunk variety, a demanding first-zone base and rising difficulty through every zone. All six enemy animals use data-driven detection from at least half a screen away, persistent pursuit, tuned movement speeds and ranges, and visible frustration when unable to reach Chibi. Generation and movement use shared layouts, primitives and behaviour graphs. Jump rules, combat restrictions, stage checkpoints and story remain as specified in the rulebook.
 
 Open questions:
 
-- **Beginning:** the cause of the duck and ferret's fight
+- **Beginning:** the cause of Chibi and Firt's fight
 - **Confirm, keyboard has no overlay:** assumed, the touch control overlay shows only with touch
 - **Confirm, one-way ledges:** assumed, he jumps up through an awning or other one-way ledge from below and lands on top of it
 - **Confirm, restarts reset choices:** assumed, a zone restart also resets the choices made in that zone
-- **Ending:** the outcome of their friendship when the duck returns to the shared apartment
-- **Friends:** the identities of the friends the ferret enlists beyond the dog, raccoon, goose, owl and rabbit, and their encounters
+- **Ending:** the outcome of their friendship when Chibi returns to the shared apartment
+- **Friends:** the identities of the friends Firt enlists beyond the dog, raccoon, goose, owl and rabbit, and their encounters
 - **Map:** Next's branching routes
 - **Rooms:** the currency and what items do; what quests and rewards give and how they are tracked; what a threat leads to; whether a room can be revisited, and whether its dialogue changes
 - **Use:** what it acts on besides doors (assumed: talking to animals, and objects at route forks)

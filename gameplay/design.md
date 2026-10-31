@@ -6,21 +6,21 @@ The rulebook: every rule the game is built to. What's left to build and tune is 
 
 ## Pitch
 
-A landscape platformer: a duck travels back to the apartment he shared with his former best friend, a ferret, after the ferret mails him far away. V1 follows one linear route; branching routes are planned for Next.
+A landscape platformer: Chibi travels back to the apartment he shared with his former best friend, Firt, a ferret, after Firt mails him far away. V1 follows one linear route; branching routes are planned for Next.
 
 ## Setting
 
-- **Characters:** the male duck is the one the player controls: a small, round, cream duck with tiny wings and feet, an orange bill and a dot eye. His full design is in the [art plan](../art/README.md). Animals talk; there are no humans.
-- **Ferret:** the duck's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice the duck's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
-- **Story:** the duck and ferret share an apartment in a big city. After a big fight, the ferret packages the sleeping duck and mails him far away. The duck knows the ferret is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
+- **Characters:** Chibi is the male bird the player controls: a small, round, cream bird with tiny wings and feet, an orange bill and a dot eye. His full design is in the [art plan](../art/README.md). Animals talk; there are no humans.
+- **Firt:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
+- **Story:** Chibi and Firt share an apartment in a big city. After a big fight, Firt packages the sleeping Chibi and mails him far away. Chibi knows Firt is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
 - **World:** the modern day, mixing fantasy and reality
 - **Zones:** a zone is one themed map destination containing two playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and twelve stages. The V1 route and current stage availability are listed below
 
 ## Core loop
 
 1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains two stages; V1 follows a linear route.
-2. **Between stages:** completing a zone's first stage shows a cutscene image and Continue, which enters its second stage directly. Completing the second stage returns to the map and animates the duck walking to the next zone. V1 continues along its linear route; Next adds branching routes.
-3. **Home:** the duck returns to the shared apartment. The outcome of his friendship with the ferret is undecided.
+2. **Between stages:** completing a zone's first stage shows a cutscene image and Continue, which enters its second stage directly. Completing the second stage returns to the map and animates Chibi walking to the next zone. V1 continues along its linear route; Next adds branching routes.
+3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Firt is undecided.
 
 ## Voice
 
@@ -42,7 +42,7 @@ A stage is the individual playable layout, currently represented by `ZonePlan` i
 - **Keyboard:** ←/→ or A/D to move; Space, ↑ or W to jump; E to use; P or Esc to open or close the pause card
 - **Overlay:** the move hint and the touch buttons show by default. Settings hides each set on its own, and hidden controls still work
 - **Touch buttons** (right thumb): Use above, Jump below. Each is an open ring with its icon and no label, reads clearly as a button and stands out against any background, while hiding little of the play area. Every control stays inside the game's view across, with its drawn edge at least 8 px from the edge it is placed against: Pause 8 px in from the view's top and left, Jump 8 px in from the view's right and 20 px up from the screen's bottom, and Use 100 px above Jump with its ring 85 px in from the view's right. On a screen taller than 2:1, Jump, Use and the move hint sit in the spare space below the game. Each presses within 100 base px of its centre (a clear circle of 63 plus the move hint's radius of 37, so the hint never reaches into the clear circle), the two cut along the line midway between them so they never overlap; Jump's also reaches into the bottom-right corner of the screen. A button animates subtly when pressed
-- **Touch movement:** a touch anywhere except on a button or other interactive element sets the neutral point where it lands. Dragging left or right from it past a small dead zone moves the duck that way at full speed; back inside the dead zone, he stops. Releasing ends the movement
+- **Touch movement:** a touch anywhere except on a button or other interactive element sets the neutral point where it lands. Dragging left or right from it past a small dead zone moves Chibi that way at full speed; back inside the dead zone, he stops. Releasing ends the movement
 - **Move hint** (left thumb): a left and right marker that rests level with Jump, as far in from the view's left edge as Use is from its right edge. It is only a drawing and has no press area of its own. While a touch is moving him, it sits on the neutral point; on release it returns to rest.
 - **Use:** opens a room's door. PLACEHOLDER: what else it acts on
 
@@ -56,29 +56,29 @@ A stage is the individual playable layout, currently represented by `ZonePlan` i
 
 ### Grid
 
-- **Duck:** 2 tiles wide and 3 tall
-- **Reaches:** stages are built to the duck's reaches, measured in tiles from the top of the ground he leaves to the top of the ledge he lands on. A short press rises 3 tiles (clearing a 3-tile ledge with a little room); a full jump rises 6; a full running jump with flutter crosses a 19-tile gap at the same height, with the jump pressed at its best moment, coyote time included. A ledge at a reach is always makeable, and one tile beyond it never is
+- **Chibi:** 2 tiles wide and 3 tall
+- **Reaches:** stages are built to Chibi's reaches, measured in tiles from the top of the ground he leaves to the top of the ledge he lands on. A short press rises 3 tiles (clearing a 3-tile ledge with a little room); a full jump rises 6; a full running jump with flutter crosses a 19-tile gap at the same height, with the jump pressed at its best moment, coyote time included. A ledge at a reach is always makeable, and one tile beyond it never is
 - **Tiles:** stages are built on a grid of 12 px tiles, so the screen is 60 columns by 30 rows. Every solid, ledge and door sits on whole tiles and spans whole tiles. Hazards follow the grid, except for the 2 to 3 px thickness of edge hazards
 
-### The duck
+### Chibi
 
 - **Flutter:** every fall flutters, after a jump or off a ledge: his fall is slow enough to use, and the player steers him in the air
-- **Jump height:** every jump has one uninterrupted ballistic ascent, with no timed lift or upward reboost while Jump is held. Releases within the first 80 ms produce the minimum hop of 40 px, about 3 tiles; releasing later retains more upward speed, increasing the jump toward the full height of about 6.5 tiles. The duck flutters on the fall. A buffered jump whose button was already released is the low hop. Low ceilings are placed so a short jump clears the obstacle without touching the overhead red edge; a full hold hits that edge. Jump tuning lives in `src/data/duck.ts`
+- **Jump height:** every jump has one uninterrupted ballistic ascent, with no timed lift or upward reboost while Jump is held. Releases within the first 80 ms produce the minimum hop of 40 px, about 3 tiles; releasing later retains more upward speed, increasing the jump toward the full height of about 6.5 tiles. Chibi flutters on the fall. A buffered jump whose button was already released is the low hop. Low ceilings are placed so a short jump clears the obstacle without touching the overhead red edge; a full hold hits that edge. Jump tuning lives in `src/data/bird.ts`
 - **Jump timing:** a jump pressed just after he leaves a ledge still jumps (coyote time), and a jump pressed just before he lands jumps as he lands (jump buffering)
-- **Movement:** he walks left and right and jumps. He is quick and responsive: about 0.1 s to reach full speed or stop, on the ground and in the air. His speeds, jump, flutter and timing values are in `src/data/duck.ts`, tuned to the reaches under Grid
+- **Movement:** he walks left and right and jumps. He is quick and responsive: about 0.1 s to reach full speed or stop, on the ground and in the air. His speeds, jump, flutter and timing values are in `src/data/bird.ts`, tuned to the reaches under Grid
 
 ### Map
 
 - **Availability:** all six V1 zones appear in route order. Each has two catalogued stages. All twelve V1 stages are built: Parcel depot and streets (`street`), City boundary (`city-boundary`), Warehouse district (`warehouse-district`), Freight terminal (`freight-terminal`), Farmland (`farmland`), River crossing (`river-crossing`), Forest paths (`forest-paths`), Ravine (`ravine`), City outskirts (`city-outskirts`), Familiar neighbourhood (`familiar-neighbourhood`), Entrance and lobby (`entrance-and-lobby`) and Climb to the apartment (`climb-to-apartment`). Unbuilt zones and stages are visibly unavailable and cannot be entered. The park is a debug prototype outside the V1 map
 - **Backtracking:** unlocked built stages remain available for replay. Replaying an earlier stage never removes later unlocks
-- **Between stages:** clearing a zone's first stage shows a placeholder cutscene image with Continue, which enters stage two directly without showing the map. Clearing its second stage returns to the map and automatically animates the duck walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
+- **Between stages:** clearing a zone's first stage shows a placeholder cutscene image with Continue, which enters stage two directly without showing the map. Clearing its second stage returns to the map and automatically animates Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
 - **Celebration:** only clearing Apartment building's second stage, Climb to the apartment, shows the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
 - **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from either stage checkpoint returns to the map
 - **Forks:** branching routes are deferred to Next. V1 is linear and has no laps
 - **Progression:** the first stage is unlocked from the start. Completing Parcel depot and streets unlocks City boundary; completing City boundary unlocks Warehouse district, which unlocks Freight terminal on completion. Completing Freight terminal unlocks Farmland; completing Farmland unlocks River crossing. Completing River crossing unlocks Forest paths; completing Forest paths unlocks Ravine. Completing Ravine unlocks City outskirts; completing City outskirts unlocks Familiar neighbourhood. Completing Familiar neighbourhood unlocks Entrance and lobby; completing Entrance and lobby unlocks Climb to the apartment, which ends at the apartment. Completing a zone's first stage unlocks its second stage when built; completing its second stage opens the next zone. Unbuilt content remains unavailable
 - **Selection:** selecting a zone with one unlocked playable stage enters that stage directly. A zone with more than one unlocked playable stage opens a stage-choice modal. The latest available stage is highlighted and is the default; the earlier stage is secondary. Unbuilt or locked stages are visibly unavailable. Persisted unlocks survive replays
-- **Walk:** the duck stands on a zone. Left and Right move through available zones, and Continue selects the zone he stands on
+- **Walk:** Chibi stands on a zone. Left and Right move through available zones, and Continue selects the zone he stands on
 
 ### Stages
 
@@ -95,18 +95,18 @@ A stage is the individual playable layout, currently represented by `ZonePlan` i
 - **Length:** the ten continuous V1 stages have recipe ranges of 720 to 960 columns, fixed start and finish caps included. Entrance and lobby has an aggregate range of 528 to 600 columns across its two sections; Climb to the apartment has 1272 to 1440 across seven sections. These aggregate ranges include the fixed caps. The debug park keeps its own recipe
 - **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. A multi-area apartment stage applies this structure across its linked sections, with fixed first and last caps and seeded runs of shared templates in intermediate areas. The rules for chunks are under Chunks
 - **Reroll:** an assembled stage's layout changes each time he enters it from the map or the inter-stage cutscene. Restarts within the stage keep it
-- **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; the duck, the tiles and the reaches stay the same everywhere
-- **Shape:** each playable stage area is at most 2 screens (60 tiles, 720 px) tall and as wide as it needs, and scrolls sideways and up. Indoors, to a small duck the ceilings are high: a door is 15 tiles tall, half the screen
+- **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; Chibi, the tiles and the reaches stay the same everywhere
+- **Shape:** each playable stage area is at most 2 screens (60 tiles, 720 px) tall and as wide as it needs, and scrolls sideways and up. Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
 
 ### Death and retry
 
 This is the approved implementation scope for the current change, including the death sequence, required card and persistent stage metrics.
 
 - **Active time:** count only time actually spent playing the current stage, excluding pause, dialogue, menus, the death sequence, the death card, floor-transition presentation, inter-stage cutscenes and map travel. Floor transitions preserve the same stage clock. Retries add to the same cumulative time. It persists through the map, title screen and app restarts until the stage is cleared; every clear resets it, including a replay clear
-- **Card:** after the animation, hold the final pose beneath a required modal with four rows in this order: the zone name; `Stage {number}: {stage name}`; `Progress: X%` for the current attempt; and `Time: 0:00` for cumulative active stage time. Back to title is the secondary button on the left; Try again is the primary button on the right. Keep the card compact and position it so the duck remains visible. The card stays until a button is pressed; outside taps, back and Escape do not dismiss it
-- **Progress:** a subtle, visible line 2 px high at the top uses the stage's theme. It tracks the duck's current position during play and his death point on death, not the furthest point reached. In a multi-area stage it uses shared weighted current-position progress across the floor sections, including the death point; returning to an earlier section can lower it. Retrying starts the percentage at zero
+- **Card:** after the animation, hold the final pose beneath a required modal with four rows in this order: the zone name; `Stage {number}: {stage name}`; `Progress: X%` for the current attempt; and `Time: 0:00` for cumulative active stage time. Back to title is the secondary button on the left; Try again is the primary button on the right. Keep the card compact and position it so Chibi remains visible. The card stays until a button is pressed; outside taps, back and Escape do not dismiss it
+- **Progress:** a subtle, visible line 2 px high at the top uses the stage's theme. It tracks Chibi's current position during play and his death point on death, not the furthest point reached. In a multi-area stage it uses shared weighted current-position progress across the floor sections, including the death point; returning to an earlier section can lower it. Retrying starts the percentage at zero
 - **Retry:** Try again starts the current stage from its checkpoint. In a multi-area stage this is the first floor, not the current floor. Back to title opens the title screen. There is no permadeath
-- **Sequence:** lethal contact starts a small recoil, then the duck falls to support, squashes more deeply on landing and makes a small upward bounce into a deflated sitting pose with his feet hidden. The stage and camera freeze at the death context while the duck plays a dedicated death animation, then holds its final pose for the card
+- **Sequence:** lethal contact starts a small recoil, then Chibi falls to support, squashes more deeply on landing and makes a small upward bounce into a deflated sitting pose with his feet hidden. The stage and camera freeze at the death context while Chibi plays a dedicated death animation, then holds its final pose for the card
 - **Storage:** active stage time uses a separate stats save. Restart clears progress only and does not wipe stats
 
 ### Chunks
@@ -125,16 +125,16 @@ This is the approved implementation scope for the current change, including the 
 
 Everything in a stage except its terrain is placed in data through archetypes, characters and instances.
 
-- **Animals:** every animal in the main stage foreground, apart from the duck, is an enemy and lethal on contact. Animals have no red contact outlines. The dog, raccoon, goose, owl, rabbit and ferret antagonists are the only world-stage animals currently placed; there are no friendly background animals in the current stages
+- **Animals:** every animal in the main stage foreground, apart from Chibi, is an enemy and lethal on contact. Animals have no red contact outlines. The dog, raccoon, goose, owl, rabbit and ferret antagonists are the only world-stage animals currently placed; there are no friendly background animals in the current stages
 - **Archetypes:** a behaviour: collision (none, solid, one-way ledge, hazard or Use), movement, reaction, interaction (such as talking on Use or a quip on approach) and default tuning
 - **Behaviour patterns:** reusable patterns in the data choose behaviour primitives, their sequence or states, transition conditions, timing, animations and tuning. Animals and moving inanimate objects use the same composition approach. Code implements the primitives, condition evaluation and shared executor; character-specific cycles are composed in data rather than hardcoded in code
 - **Characters:** who something is: one archetype plus tuning overrides, its art and animations, hit box, size, its dialogue and quip lines, and quirks. No character inherits from another. Props (platforms, hazards, doors and backdrops) are characters with art but no voice
 - **Decoration:** friendly animals are allowed only as muted background flavour, never in the main stage foreground, or inside rooms reached through doors for shops and quests. Room animals remain in place
-- **Enemy awareness:** all six enemy animals detect the duck from at least half a screen away, independently of whether they can reach him. They pursue persistently only over reachable terrain inside their movement bounds, using shared data-driven movement and reach conditions. Ground pursuit follows reachable terrain; vertical attacks stay in their committed lanes. Movement speeds and travel ranges use the aggressive profiles tuned in data. Losing a reachable target or finding the duck unreachable triggers a looping visible frustration reaction
+- **Enemy awareness:** all six enemy animals detect Chibi from at least half a screen away, independently of whether they can reach him. They pursue persistently only over reachable terrain inside their movement bounds, using shared data-driven movement and reach conditions. Ground pursuit follows reachable terrain; vertical attacks stay in their committed lanes. Movement speeds and travel ranges use the aggressive profiles tuned in data. Losing a reachable target or finding Chibi unreachable triggers a looping visible frustration reaction
 - **Instances:** one placement in a stage: a character, a position, size and phase, last-word overrides, its own lines or dialogue scene, a door's room, and flags for carried choices
 - **Movement:** an algorithm (static, linear, ease, hop or wander), a direction, a distance, a speed, a pause at each end, and a random variance that rolls fresh on every attempt
 - **Overrides:** flow one way: an instance overrides its character, which overrides its archetype. Everything resolves and is checked when the game loads
-- **Reaction:** none, avoiding the duck, or approaching him, within a range
+- **Reaction:** none, avoiding Chibi, or approaching him, within a range
 - **Static art:** a behaviour state can use `animation: null` for static art, including a moving inanimate object. Motion and transitions still come from its reusable behaviour graph
 
 ### V1 route
@@ -158,7 +158,7 @@ The route spans six themed zones of two stages, in this order. Stage length is d
 - **Rooms:** the street door leads to the prototype test room
 - **Route:** the main path continues right toward the city boundary; middle chunks can include upper street ledges. City boundary is the zone's second stage and unlocks when this tutorial is completed
 
-The park is a prototype for randomized stages, not V1's second stage. The identities of the ferret's friends beyond the dog, raccoon, goose, owl and rabbit and the later encounters along the route are undecided.
+The park is a prototype for randomized stages, not V1's second stage. The identities of Firt's friends beyond the dog, raccoon, goose, owl and rabbit and the later encounters along the route are undecided.
 
 ### City boundary
 
@@ -223,12 +223,12 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 - **Areas:** Entrance and lobby has two short linked sections. Climb to the apartment has seven short floor sections, in order: restaurant, exterior, pool, exterior, spa, exterior, residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
-- **Encounters:** the ferret is a normal lethal-contact antagonist using the familiar dog behaviour pattern. He has no red contact outline; this is not a boss encounter and adds no combat
+- **Encounters:** Firt is a normal lethal-contact antagonist using the familiar dog behaviour pattern. He has no red contact outline; this is not a boss encounter and adds no combat
 - **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows the celebration every time, including replays. The cause of the fight and the outcome of the friendship remain undecided
 - **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. These short linked sections do not use the other zones' total stage-length range
 - **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Climb to the apartment. The final map path ends at the apartment. Stage IDs, save format and replay unlocks are unchanged
 - **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room, quest or dialogue. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
-- **Stairs:** walking into marked main-route stairs changes floor automatically, without Use. Stairs are reversible; the duck can return through earlier sections and leave for the map at the first section's left edge
+- **Stairs:** walking into marked main-route stairs changes floor automatically, without Use. Stairs are reversible; Chibi can return through earlier sections and leave for the map at the first section's left edge
 
 ### First dog encounter
 
@@ -236,7 +236,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - **Approach:** the loading yard follows the basic hop and full-jump lessons and precedes the streets. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
 - **Contact:** the dog is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
-- **Dialogue:** the first introduction has three lines: the dog says the ferret asked him to stop the duck; the duck says he is going home; the dog tells him to get past. The player-facing wording lives in the text data files, with Skip available
+- **Dialogue:** the first introduction has three lines: the dog says Firt asked him to stop Chibi; Chibi says he is going home; the dog tells him to get past. The player-facing wording lives in the text data files, with Skip available
 - **Timing:** the dog uses the same timing across both stages of the first zone; their layouts vary. The first encounter is in the first stage
 
 ### Rooms
@@ -248,7 +248,7 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 
 ### Dialogue
 
-- **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's 64 px portrait and name tab inside the panel. The duck's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
+- **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's 64 px portrait and name tab inside the panel. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. There is no back, timer or scrolling chat history
 - **Restarts:** after a stage restart, the stage's dialogue plays again. The first dog introduction is once per attempt
 - **Skip:** Skip skips all remaining dialogue. If the conversation ends in a choice, Skip opens its modal without choosing an answer or bypassing the choice
@@ -258,16 +258,16 @@ The park is a prototype for randomized stages, not V1's second stage. The identi
 - Short messages during play, for cutscenes, notices and quips. They never pause play
 - One line in a strip at the top centre, starting with the speaker's name
 
-### The ferret
+### Firt
 
-- **Appearances:** the ferret enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond the dog, raccoon, goose, owl and rabbit are undecided
+- **Appearances:** Firt enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond the dog, raccoon, goose, owl and rabbit are undecided
 - **Boss encounters:** deferred to Next, outside V1
-- **Calling card:** every trap it sets carries a badge of its stovepipe hat and bow tie
-- **Ending:** the duck returns home; the outcome of their friendship is undecided. There is no combat
+- **Calling card:** every trap Firt sets carries a badge of his stovepipe hat and bow tie
+- **Ending:** Chibi returns home; the outcome of their friendship is undecided. There is no combat
 
 ### Choices
 
-- **Effect:** a choice changes where the duck goes, what he does and what he sees
+- **Effect:** a choice changes where Chibi goes, what he does and what he sees
 - **Kinds:** dialogue choices always appear in a modal. Route forks in zones and on the map are planned for Next
 - **Reach:** choice effects on later zones or the ending are undecided. Branching routes are planned for Next
 
