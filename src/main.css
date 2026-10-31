@@ -46,6 +46,7 @@ body {
    included. The canvas sits at its top, and Phaser centres it across. The nav column takes the
    left inset when it shows. */
 #game {
+  position: relative;
   flex: 1;
   min-width: 0;
   min-height: 0;

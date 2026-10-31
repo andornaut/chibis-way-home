@@ -21,6 +21,7 @@ import { serviceWorkerUrl } from "@andornaut/game-kit/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/pwa/storagePersistence";
 import { createScreenWakeLock, type ScreenWakeLock } from "@andornaut/game-kit/pwa/wakeLock";
 
+import { withInstallProgress } from "../loading/serviceWorker";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events";
 import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen";
 import { createUpdateOffer } from "./updateOffer";
@@ -60,7 +61,7 @@ function setupOfflinePlay(): void {
       onUpdateShown: updateOffer.eligibility,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
     },
-    page,
+    withInstallProgress(page),
   );
   acceptWaitingUpdate = () => play.flow.accept();
   home = trackHomeScreen(play.setOnHome);

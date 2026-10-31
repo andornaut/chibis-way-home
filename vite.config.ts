@@ -29,6 +29,7 @@ const {
     gitHead,
     hashedIconsPlugin,
     homePagePlugin,
+    loadingPlugin,
     phaserBuildPlugin,
     precachePlugin,
     securityHeadersPlugin,
@@ -94,6 +95,7 @@ export default defineConfig({
   // securityHeadersPlugin writes /_headers, the response headers with each page's CSP.
   plugins: [
     homePagePlugin(),
+    loadingPlugin(),
     atlas,
     phaserBuildPlugin(PHASER_BUILD),
     hashedIconsPlugin({ icons: ICONS }),

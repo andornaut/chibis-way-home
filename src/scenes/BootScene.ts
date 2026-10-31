@@ -7,6 +7,7 @@ import {
 import { Scene } from "phaser";
 
 import { TILE } from "../data/screen";
+import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
 import { loadProgress, savedProgress } from "../save";
 import { ART_MANIFEST_FILE, ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../view/aseprite";
@@ -24,6 +25,8 @@ export class BootScene extends Scene {
   // game PNG listed outside standalone images is on the pages. The dev server has no atlas, so
   // each art file loads on its own there and every edit shows on reload.
   preload(): void {
+    this.load.on("progress", (fraction: number) => startupLoading.progress(fraction));
+    this.load.once("complete", () => startupLoading.progress(undefined));
     if (ATLAS !== null) {
       queueAtlasPages(this, ATLAS);
     }
@@ -85,6 +88,14 @@ export class BootScene extends Scene {
     void launchReady()
       .then(loadProgress)
       .then(() => {
+        const rendered = () => {
+          if (this.game.canvas.style.visibility === "hidden") {
+            this.game.events.once("postrender", rendered);
+          } else {
+            startupLoading.finish();
+          }
+        };
+        this.game.events.once("postrender", rendered);
         this.scene.launch("pause");
         if (new URLSearchParams(window.location.search).has("zone")) {
           this.scene.start("zone");

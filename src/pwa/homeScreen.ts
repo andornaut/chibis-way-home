@@ -1,7 +1,7 @@
 // Whether the game's home screen is in front, for the kit's update flow: the game page counts as
 // the home screen once the zone's first frame shows, except while something covers it: the pause
 // card, a conversation, death, or a room in the zone's place.
-export type HomeCover = "death" | "dialogue" | "pauseCard" | "room";
+export type HomeCover = "death" | "dialogue" | "loading" | "pauseCard" | "room";
 
 export interface HomeScreen {
   // Something starts or stops covering the zone.

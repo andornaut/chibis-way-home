@@ -2,6 +2,7 @@
 // through a single Vite module runner, which resolves @andornaut/game-kit as the app does.
 export { securityHeadersPlugin } from "../headers/securityHeadersPlugin";
 export { homePagePlugin } from "../homePage/html";
+export { loadingPlugin } from "../loading/html";
 export { ICONS } from "../pwa/icons";
 export { precachePlugin } from "../pwa/precachePlugin";
 export { atlasPlugin } from "./atlas/atlasPlugin";

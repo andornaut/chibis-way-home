@@ -13,6 +13,7 @@ import {
   type PagePointerEvent,
   type PagePress,
 } from "@andornaut/game-kit/input/pagePresses";
+import { drawProgressBar } from "@andornaut/game-kit/progress/phaser/drawProgressBar";
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { clampInto, containsPoint } from "@andornaut/game-kit/rect";
 import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
@@ -48,10 +49,11 @@ import {
   touchIntent,
   touchRoleAt,
 } from "../input/intent";
-import { DEATH_PROGRESS_HEIGHT } from "../layout/deathCard";
 import { PAUSE_BUTTON } from "../layout/pauseCard";
 import { bottomShift, shifted, topShift } from "../layout/playView";
 import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
+import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
+import { PROGRESS_RECT, stageProgressStyle } from "../loading/style";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
@@ -124,8 +126,6 @@ import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { proximityDialogue } from "../view/zoneDialogue";
-import { ZONE_THEMES_KEY, zoneTheme, type ZoneThemes } from "../view/zoneTheme";
-import { paletteColour } from "./cardParts";
 import type { CutsceneData } from "./CutsceneScene";
 import type { DeathData, DeathOpener } from "./DeathScene";
 import {
@@ -229,6 +229,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   private deathView: DeathView | undefined;
   private deathModal = false;
   private progress!: GameObjects.Graphics;
+  private loading = true;
   private zone!: ZoneState;
   private readonly heldKeys = new Set<string>();
   private readonly heldTouches = new Map<number, HeldTouch>();
@@ -294,6 +295,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
       ],
       search,
     );
+    this.loading = true;
     this.backdrop = data.backdrop === true;
     this.mapNode = data.node;
     this.continueVisit = data.continueVisit === true;
@@ -324,6 +326,39 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   }
 
   create(): void {
+    if (this.preview || this.backdrop) {
+      this.loading = false;
+      this.createReady();
+      return;
+    }
+    this.loading = true;
+    this.input.enabled = false;
+    coverZone("loading", true);
+    const operation = beginStageLoading(this.stageKey());
+    const cancel = afterLoadingPaint(() => {
+      this.createReady();
+      this.drawObjects();
+      this.drawBird();
+      this.drawProgress();
+      const ready = () => {
+        operation.finish();
+        this.loading = false;
+        this.clock = startStepClock;
+        this.clearControls();
+        this.input.enabled = true;
+        coverZone("loading", false);
+      };
+      this.game.events.once("postrender", ready);
+      this.events.once("shutdown", () => this.game.events.off("postrender", ready));
+    });
+    this.events.once("shutdown", () => {
+      cancel();
+      operation.finish();
+      coverZone("loading", false);
+    });
+  }
+
+  private createReady(): void {
     // The main camera shows the zone in the game's view; the controls camera covers the whole
     // canvas for the touch buttons, anchored to its bottom-right corner, and shows nothing else.
     fitPlayCamera(this);
@@ -558,6 +593,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   }
 
   override update(time: number): void {
+    if (this.loading) {
+      return;
+    }
     if (this.dying !== undefined) {
       this.updateDeath(time);
       return;
@@ -629,7 +667,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
 
   // Pause and page controls stay inert throughout dialogue, death presentation and its card.
   playCovered(): boolean {
-    return this.dialogueOpen() || this.zone?.death !== undefined;
+    return this.loading || this.dialogueOpen() || this.zone?.death !== undefined;
   }
 
   private stageKey(): string {
@@ -648,18 +686,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, For
   }
 
   private drawProgress(): void {
-    const theme = zoneTheme(
-      ZONE_MAP,
-      this.cache.json.get(ZONE_THEMES_KEY) as ZoneThemes,
-      this.stageKey(),
-    );
     const at = topShift(this.scale.gameSize);
-    this.progress
-      .clear()
-      .fillStyle(paletteColour(this, "dslate"))
-      .fillRect(at.x, at.y, SCREEN.width, DEATH_PROGRESS_HEIGHT)
-      .fillStyle(paletteColour(this, theme.primary))
-      .fillRect(at.x, at.y, SCREEN.width * this.progressFraction(), DEATH_PROGRESS_HEIGHT);
+    this.progress.clear();
+    drawProgressBar(
+      this.progress,
+      stageProgressStyle(this.stageKey()),
+      { ...PROGRESS_RECT, ...at },
+      this.progressFraction(),
+    );
   }
 
   private beginDeath(): void {
