@@ -111,6 +111,7 @@ export interface GameText {
   // Map destination and stage names, indexed separately by catalogue and stage-node id.
   readonly map: {
     readonly continue: string;
+    readonly stageNumber: string;
     readonly stages: Readonly<Record<string, string>>;
     readonly title: string;
     readonly zones: Readonly<Record<string, string>>;
