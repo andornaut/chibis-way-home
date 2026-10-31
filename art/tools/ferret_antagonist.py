@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Compact apartment ferret encounter skin retaining the established champagne ferret identity.
 
+Frustration: four120ms looping headshake and raised wing/paw poses, fixed feet, no world displacement.
+
 Usage: ferret_antagonist.py build | preview OUT.png, from the repository root.
 48x48 facing right, bottom centre (24,48), fixed hitbox (2,2,44,46), stable when mirrored.
 Champagne and cream slender body, small wedge head, warm brown legs and tapering tail, plum stovepipe
@@ -31,6 +33,8 @@ def draw(state="idle", phase=0):
     low = state in ("crouch", "rush")
     lift = phase % 2 if moving or state in ("idle", "rest") else 0
     hx, hy = (33, 27 - lift) if low else (29, 19 - lift)
+    if state == "frustration":
+        hx += (-2, 1, 2, -1)[phase]
     hip = (20, 36 - lift)
     # Tail and feet keep their ground reference as the slender spine bends forward.
     ferret.disc_line(g, (17, 38), (10, 44), 2, "brown")
@@ -58,6 +62,8 @@ def draw(state="idle", phase=0):
     ferret.bow_tie(g, hx - 2, hy + 6, 0.55)
     paw_x = hx + 1 if low else hx - 4
     g.ell(paw_x, hy + 10, 2.5, 2, "brown")
+    if state == "frustration":
+        g.ell(hx + 5, hy + (7 if phase % 2 == 0 else 11), 3, 2.5, "brown")
     if state == "rest":
         g.rect(hx + 1, hy, 3, 1, "skin2")
     return ferret.outline(g)
@@ -68,7 +74,8 @@ def sprites():
                 ("walk", [draw("walk", i) for i in range(4)], 120),
                 ("crouch", [draw("crouch", i) for i in range(2)], 140),
                 ("rush", [draw("rush", i) for i in range(4)], 80),
-                ("rest", [draw("rest", i) for i in range(2)], 400)]
+                ("rest", [draw("rest", i) for i in range(2)], 400),
+                ("frustration", [draw("frustration", i) for i in range(4)], 120)]
 
 
 if __name__ == "__main__":
