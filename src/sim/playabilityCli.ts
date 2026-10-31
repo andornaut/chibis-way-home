@@ -47,6 +47,7 @@ export function playabilityCli(args: readonly string[]): void {
       JSON.stringify({
         archetypes: ARCHETYPES,
         catalogue,
+        characters: CHARACTERS,
         library: CHUNK_LIBRARY,
         recipes: RECIPES,
         zones: ZONES,
