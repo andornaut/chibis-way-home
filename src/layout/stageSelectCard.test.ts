@@ -59,6 +59,23 @@ describe("stage picker layout", () => {
       );
     }
   });
+  it("balances previews and title vertically without reducing close-target clearance", () => {
+    const { buttons, card, close, title } = STAGE_SELECT_CARD;
+    expect(card).toEqual({ height: 236, width: 688, x: 16, y: 62 });
+    expect(card.x + card.width / 2).toBe(SCREEN.width / 2);
+    expect(card.y + card.height / 2).toBe(SCREEN.height / 2);
+    expect(title.y).toBe(91);
+    expect(title.x + title.width / 2).toBe(card.x + card.width / 2);
+    expect(close.art).toEqual({ height: 24, width: 24, x: 674, y: 68 });
+    expect(close.hit).toEqual({ height: 48, width: 48, x: 662, y: 56 });
+    for (const stage of buttons) {
+      expect(stage.button).toMatchObject({ height: 154, width: 208, y: 128 });
+      expect(stage.preview).toMatchObject({ height: 84, width: 168, y: 150 });
+      expect(stage.name).toMatchObject({ height: 32, y: 238 });
+      expect(stage.preview.y - stage.number.y - stage.number.height).toBe(CARD_CONTENT.rowGap);
+      expect(stage.hit.y - close.hit.y - close.hit.height).toBe(CARD_CONTENT.gap);
+    }
+  });
   it("lays out any nonempty catalogue count that fits without changing face geometry", () => {
     const labels = STAGE_SELECT_CARD.buttons.map(({ text }) => text.replaceAll("\n", " "));
     const pair = stageSelectCard(CARD_FONTS, "", labels.slice(0, 2));

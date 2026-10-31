@@ -11,8 +11,7 @@ const PREVIEW_WIDTH = 168;
 const PREVIEW_HEIGHT = PREVIEW_WIDTH / 2;
 const INSET = CARD_CONTENT.padding + CARD_CONTENT.rowGap;
 const NUMBER_HEIGHT = (CARD_CONTENT.lineHeight * STAGE_NUMBER_SCALE) / CARD_TEXT_SCALE;
-const PREVIEW_TOP =
-  CARD_CONTENT.closeInset + NUMBER_HEIGHT + CARD_CONTENT.padding - CARD_CONTENT.rowGap;
+const PREVIEW_TOP = CARD_CONTENT.closeInset + NUMBER_HEIGHT + CARD_CONTENT.rowGap;
 const NAME_TOP = PREVIEW_TOP + PREVIEW_HEIGHT + CARD_CONTENT.rowGap;
 const NAME_HEIGHT = 2 * CARD_CONTENT.lineHeight;
 const STAGE_FACE = {
@@ -29,7 +28,7 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
     [
       {
         height: STAGE_FACE.height,
-        hitOutset: hitMargin({ ...STAGE_FACE, x: 0, y: 0 }) + CARD_CONTENT.rowGap,
+        hitOutset: hitMargin({ ...STAGE_FACE, x: 0, y: 0 }),
         key: "stages",
         width: labels.length * STAGE_FACE.width + (labels.length - 1) * CARD_CONTENT.padding,
       },
@@ -37,6 +36,11 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
     { close: true, titleWidth: cardTextSize(fonts.title, title).width },
   );
   const group = layout.groups.stages!;
+  const titleRect = layout.title;
+  const centredTitle = titleRect && {
+    ...titleRect,
+    y: (titleRect.y + group.y - CARD_CONTENT.gap - titleRect.height) / 2,
+  };
   return {
     buttons: labels.map((label, index) => {
       const lines = wrapWords(
@@ -77,6 +81,6 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
     }),
     card: layout.card,
     close: layout.close!,
-    title: layout.title!,
+    title: centredTitle!,
   };
 }
