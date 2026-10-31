@@ -109,17 +109,44 @@ export function encounterStart(
   doorRows: number,
   chunk: Omit<ChunkPlan, "theme">,
 ): Omit<ChunkPlan, "theme"> {
+  const approachCols = 30;
   return {
     ...chunk,
-    objects: chunk.objects.map((object) =>
-      object.role === "antagonist" ? { ...object, role: "antagonist-intro" } : object,
-    ),
+    backdrops: (chunk.backdrops ?? []).map((backdrop) => ({
+      ...backdrop,
+      col: backdrop.col + approachCols,
+    })),
+    cols: chunk.cols + approachCols,
+    objects: [
+      {
+        character: "platform-ledge",
+        col: approachCols - 6,
+        cols: 6,
+        role: "ledge",
+        row: chunk.entry.row - 5,
+      },
+      ...chunk.objects.map((object) => ({
+        ...object,
+        col: object.col + approachCols,
+        ...(object.role === "antagonist" ? { role: "antagonist-intro" } : {}),
+      })),
+    ],
     slots: [
       {
         area: { col: 6, cols: 4, row: chunk.entry.row - doorRows, rows: doorRows },
         id: "encounter-room",
         kind: "door",
       },
+    ],
+    solids: [
+      {
+        col: 0,
+        cols: approachCols,
+        look: "ground",
+        row: chunk.entry.row,
+        rows: Math.max(...chunk.solids.map((solid) => solid.row + solid.rows)) - chunk.entry.row,
+      },
+      ...chunk.solids.map((solid) => ({ ...solid, col: solid.col + approachCols })),
     ],
   };
 }
