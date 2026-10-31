@@ -652,7 +652,7 @@ Backdrops use bottom-left anchors with default bottom y 600. Use sky factors 0,0
 
 ## Goose antagonist
 
-`art/tools/goose.py` draws the countryside's `goose-antagonist`. A long neck, small head and pale body distinguish it from the bird; a warm beak and feet keep its silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline or dialogue portrait.
+`art/tools/goose.py` draws Trixi as the countryside's `goose-antagonist`. A long neck, small head, pale body and oversized ink-rimmed glasses distinguish her from Chibi; a warm beak and feet keep her silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline or dialogue portrait.
 
 The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is x 2, y 2, width 44, height 46, containing every pose and its mirrored version. The skin uses the shared enemy state graph; gameplay owns warning, charge and recovery durations. Contact remains lethal in every state.
 
@@ -667,6 +667,10 @@ The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is 
 All tags loop; state transitions belong to the runtime. These art timings do not define the charge's distance or duration.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
+
+The appended `set-trap` tag contains four looping 120ms placement frames. Existing poses and all prior frame indices and timings remain unchanged apart from the glasses overlay.
+
+`goose-trap` is a 24x12 floor overlay, bottom-centre anchor 12,12, with contact box x 0, y 9, width 24, height 3. Its `warning` tag loops four 120ms frames: an amber two-pixel edge, moving two-pixel yellow tick and ink rim provide the visible arming interval. Its `armed` tag loops one 400ms frame with the shared red two-pixel contact edge and ink rim. The red pixels derive from the same `hazard-top` geometry as ordinary floor hazards, repeated twice. Rows 0 through 8 remain transparent, with no spikes, teeth or safe white lip. Gameplay owns the delay and collision activation: warning is nonlethal; only the armed state uses the declared contact box. Retry and lifetime cleanup belong to the runtime. Both actor and trap retain empty `once` lists.
 
 ## Bini bear
 

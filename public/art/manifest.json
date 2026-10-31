@@ -119,6 +119,18 @@
       }
     },
     {
+      "key": "goose-trap",
+      "png": "sprites/goose-trap.png",
+      "json": "sprites/goose-trap.json",
+      "once": [],
+      "hitbox": {
+        "x": 0,
+        "y": 9,
+        "width": 24,
+        "height": 3
+      }
+    },
+    {
       "key": "icon-browser-menu",
       "png": "sprites/icon-browser-menu.png",
       "json": "sprites/icon-browser-menu.json",
