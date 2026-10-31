@@ -74,6 +74,8 @@ Every ordinary modal sizes its nine-slice frame to its actual content, with 16px
 - Placement: ordinary cards centre within the game view. The retry card is top-centred at y16 to leave the seated bird and contact area visible below it. Its content uses the same 16px padding.
 - Special-purpose framing: conversation panels retain their portrait-frame borders and paired-speaker layout because those borders frame 64px character artwork. In-game touch controls and the compact Install face retain their documented control exceptions. These do not introduce another ordinary modal padding rule.
 
+Approved title target for paired runtime integration: centre every actual modal's title across the whole modal, including framed death/retry, long install instructions and stage selection. Reserve the full positioned close press target plus the normal gap symmetrically on both sides, rather than centring the title in the remaining asymmetric space. With a close face 6px from the top-right edge and its centred 48px target, the target extends 42px inward; adding the 8px gap gives 50px title clearance on each side. Without a close control, retain symmetric content padding. Wrap long titles at the existing font size and grow the measured header or modal; never shrink text. This rule does not change full-page headers, the close geometry or the half-viewport width floor.
+
 Stage selectors use three image-backed cards with fixed image and label positions, full-size 2x main names and a deliberate 1.5x secondary Stage number. Unavailable cards retain greyed scene previews and labels in the disabled palette. See [stage picker geometry](README.md#stage-picker).
 
 ### Retry actions

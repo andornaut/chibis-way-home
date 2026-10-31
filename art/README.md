@@ -243,7 +243,7 @@ Both paragraph regions use `font-body` at 2x with a 20px line pitch. Labels, por
 
 Approved target for paired runtime integration: all actual modals use the canonical shared-kit backdrop painter to dim the underlying scene and block its controls. Apply this without exceptions to update notices, settings, pause, install, restart, death/retry, stage selection, stage clear, zone clear and modal dialogue or choices. Keep the existing palette treatment and standard text contrast. Draw one dim backdrop for the visible modal layer; death/retry must not add another dim pass to an already dimmed world. Modal dismissal rules remain specific to each screen, and dismissing one never activates controls underneath.
 
-Live zone foreshadow dialogue remains nonmodal and interactive during active play. Page headers are ordinary page content. This backdrop contract does not change title alignment, button styles, fonts, body padding, the half-viewport width floor or close-control geometry.
+Live zone foreshadow dialogue remains nonmodal and interactive during active play. Page headers are ordinary page content. Approved title target for the same paired integration: centre every actual modal title across the whole modal, including framed death/retry, long install instructions and stage selection. Reserve the full positioned close target plus the normal gap equally on both sides. The current close geometry gives 50px clearance per side. Wrap titles at full font size and grow the measured header or modal when needed; never shrink text. Full-page headers, button styles, body padding, the half-viewport width floor and close-control geometry remain unchanged.
 
 ### Stage progress and retry
 
