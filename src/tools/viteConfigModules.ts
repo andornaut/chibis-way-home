@@ -7,7 +7,5 @@ export { ICONS } from "../pwa/icons";
 export { precachePlugin } from "../pwa/precachePlugin";
 export { atlasPlugin } from "./atlas/atlasPlugin";
 export { PHASER_BUILD } from "./phaserBuild";
-export { gitHead, shortCommit } from "@andornaut/game-kit/build/buildVersion";
-export { PHASER_ENTRY_ID } from "@andornaut/game-kit/build/phaserBuild";
 export { phaserBuildPlugin } from "@andornaut/game-kit/build/vite/phaserBuildPlugin";
 export { hashedIconsPlugin } from "@andornaut/game-kit/pwa/vite/hashedIconsPlugin";
