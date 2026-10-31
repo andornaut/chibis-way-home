@@ -510,17 +510,19 @@ export function stepZone(
       crushed ||= solids.some((solid) => overlaps(birdBox(tuning, bird), solid));
     }
   }
-  const hazards = kinds.hazards.filter((index) => !objects[index]!.object.contact).map((index) => {
-    const { after, behaviour, object } = objects[index]!;
-    return (
-      (objects[index] === kinds.fixed[index] ? kinds.fixedHazards[index] : undefined) ??
-      (behaviour
-        ? contactBox(object, after, behaviour.state.facing, behaviour.state.axis)
-        : object.hitbox
-          ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
-          : after)
-    );
-  });
+  const hazards = kinds.hazards
+    .filter((index) => !objects[index]!.object.contact)
+    .map((index) => {
+      const { after, behaviour, object } = objects[index]!;
+      return (
+        (objects[index] === kinds.fixed[index] ? kinds.fixedHazards[index] : undefined) ??
+        (behaviour
+          ? contactBox(object, after, behaviour.state.facing, behaviour.state.axis)
+          : object.hitbox
+            ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
+            : after)
+      );
+    });
   const fixedLedges =
     kinds.fixedLedges && kinds.ledges.every((index) => objects[index] === kinds.fixed[index]);
   const ledges = fixedLedges
@@ -586,27 +588,28 @@ export function stepZone(
     kinds.hazards.some((index) => {
       const { behaviour, object } = objects[index]!;
       return behaviour?.segments.some((segment) => {
-          if (object.contact) {
-            if (!segment.frame) {
-              throw new Error(`Missing silhouette sweep frame for ${object.art}`);
-            }
-            return silhouetteContact(
-              object,
-              segment.frame,
-              (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
-              segment.from,
-              segment.to,
-              birdAt(segment.start),
-              birdAt(segment.end),
-            );
+        if (object.contact) {
+          if (!segment.frame) {
+            throw new Error(`Missing silhouette sweep frame for ${object.art}`);
           }
-          const before = contactBox(object, segment.from, segment.facing, segment.axis);
-          const after = contactBox(object, segment.to, segment.facing, segment.axis);
-          return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
-        });
+          return silhouetteContact(
+            object,
+            segment.frame,
+            (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
+            segment.from,
+            segment.to,
+            birdAt(segment.start),
+            birdAt(segment.end),
+          );
+        }
+        const before = contactBox(object, segment.from, segment.facing, segment.axis);
+        const after = contactBox(object, segment.to, segment.facing, segment.axis);
+        return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
+      });
     });
-  const bodyContact = objects.some(({ after, behaviour, object }) => {
-    if (!object.contact || object.collision !== "hazard") {
+  const bodyContact = kinds.hazards.some((index) => {
+    const { after, behaviour, object } = objects[index]!;
+    if (!object.contact) {
       return false;
     }
     const state = behaviour?.state;
