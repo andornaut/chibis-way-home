@@ -20,6 +20,7 @@ import {
   type ZoneState,
 } from "../rules/zone";
 import {
+  type BehaviourBoundsContext,
   behaviourCycleSeconds,
   emissionBounds,
   hasDynamicBehaviour,
@@ -123,10 +124,18 @@ const objectRect = (object: ObjectLayout, at: Point): Rect => ({
 });
 
 // The area an object can be in over its track: its rectangle swept along its motion's axis.
-function sweptRect(object: ObjectLayout): Rect {
+function sweptRect(
+  target: Pick<BehaviourBoundsContext, "maximumRise" | "targetHeight">,
+  area: AreaLayout,
+  object: ObjectLayout,
+): Rect {
   const pattern = object.behaviour;
   if (pattern) {
-    return sweptBehaviourRect(pattern, objectRect(object, object.origin));
+    return sweptBehaviourRect(
+      { ...target, areaBounds: { height: area.height, width: area.width, x: 0, y: 0 } },
+      pattern,
+      objectRect(object, object.origin),
+    );
   }
   const { direction, distance } = object.motion;
   const reach = object.reaction.kind === "none" ? distance : distance + object.reaction.range;
@@ -597,7 +606,8 @@ function moveBounds(tuning: BirdTuning, carry: number) {
     (walkSpeed + carry) *
       (air + coyoteTime + Math.max(0, drop) / flutterFallSpeed + flutterFallSpeed / gravity) +
     MARGIN;
-  return { across, rise: rise + MARGIN };
+  const maximumRise = rise + MARGIN;
+  return { across, maximumRise, rise: maximumRise, targetHeight: tuning.height };
 }
 
 // The steps a moving thing takes to go round its track once, at most MAX_CYCLE.
@@ -615,12 +625,21 @@ interface MovingThings {
   readonly moving: readonly PhaseMover[];
 }
 
-const MOVING_THINGS = new WeakMap<AreaLayout, MovingThings>();
+const MOVING_THINGS = new WeakMap<
+  AreaLayout,
+  { readonly tuning: BirdTuning; readonly value: MovingThings }
+>();
+const TARGET_BOUNDS = new WeakMap<BirdTuning, ReturnType<typeof moveBounds>>();
 
-function movingThings(area: AreaLayout): MovingThings {
+function movingThings(tuning: BirdTuning, area: AreaLayout): MovingThings {
   const cached = MOVING_THINGS.get(area);
-  if (cached) {
-    return cached;
+  if (cached?.tuning === tuning) {
+    return cached.value;
+  }
+  let target = TARGET_BOUNDS.get(tuning);
+  if (!target) {
+    target = moveBounds(tuning, 0);
+    TARGET_BOUNDS.set(tuning, target);
   }
   const moving = area.objects.filter((object) => !isStill(object) && object.collision !== "none");
   const supports = moving.filter(
@@ -632,11 +651,11 @@ function movingThings(area: AreaLayout): MovingThings {
       if (isStill(object) || object.collision === "none") {
         return [];
       }
-      const rect = emissionBounds(object, sweptRect(object));
+      const rect = emissionBounds(object, sweptRect(target, area, object));
       return [{ cycleSteps: cycleSteps(object), index, left: rect.x, right: rect.x + rect.width }];
     }),
   };
-  MOVING_THINGS.set(area, result);
+  MOVING_THINGS.set(area, { tuning, value: result });
   return result;
 }
 
@@ -720,6 +739,7 @@ function triesToward(tuning: BirdTuning, from: Spot, here: Surface, target: Targ
 
 // Where a surface can be over its track: its x range and its highest and lowest top.
 function sweptSpan(
+  target: Pick<BehaviourBoundsContext, "maximumRise" | "targetHeight">,
   layout: ZoneLayout,
   surface: Surface,
 ): { bottom: number; left: number; right: number; top: number } {
@@ -728,7 +748,7 @@ function sweptSpan(
   if (!object) {
     return { bottom: surface.y, left: surface.left, right: surface.right, top: surface.y };
   }
-  const rect = sweptRect(object);
+  const rect = sweptRect(target, areaOf(layout, surface.area), object);
   return {
     bottom: rect.y + rect.height - object.height,
     left: rect.x,
@@ -747,13 +767,13 @@ function targetsFrom(
   here: Surface,
 ): { others: Target[]; own: Target[] } {
   // A moving surface can take her anywhere along its track before she goes.
-  const own = sweptSpan(layout, from.surface);
+  const own = sweptSpan(bounds, layout, from.surface);
   const lo = from.surface.mover === undefined ? here.left + (from.bucket - 1) * BUCKET : own.left;
   const hi = from.surface.mover === undefined ? here.left + (from.bucket + 2) * BUCKET : own.right;
   const others = surfaces
     .filter((surface) => surface.area === here.area && surface.key !== here.key)
     .filter((surface) => {
-      const span = sweptSpan(layout, surface);
+      const span = sweptSpan(bounds, layout, surface);
       const dx = Math.max(0, span.left - hi, lo - span.right);
       return own.top - span.bottom <= bounds.rise && dx <= bounds.across(span.bottom - own.top);
     })
@@ -787,8 +807,8 @@ function phaseCorridor(
       return [here.left + pre + offset, here.left + takeoff + offset];
     }),
   ];
-  const sourceSpan = sweptSpan(layout, from.surface);
-  const targetSpan = sweptSpan(layout, target.surface);
+  const sourceSpan = sweptSpan(bounds, layout, from.surface);
+  const targetSpan = sweptSpan(bounds, layout, target.surface);
   const landing = target.surface.mover === undefined ? target : targetSpan;
   const takeoffs =
     from.surface.mover === undefined
@@ -845,7 +865,7 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
   for (let from = queue.shift(); from; from = queue.shift()) {
     const area = areaOf(layout, from.surface.area);
     const here = placed(from.surface, from.state, layout);
-    const { carry, moving } = movingThings(area);
+    const { carry, moving } = movingThings(tuning, area);
     let bounds = areaBounds.get(area);
     if (!bounds) {
       bounds = moveBounds(tuning, carry);
@@ -911,7 +931,7 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
     }
     const hi = here.left + (from.bucket + 2) * BUCKET;
     if (!cleared && here.right > area.exitX && hi > area.exitX) {
-      const sourceSpan = sweptSpan(layout, from.surface);
+      const sourceSpan = sweptSpan(bounds, layout, from.surface);
       for (const start of startsFor({
         left: Math.min(
           from.state.bird.x,
@@ -950,7 +970,7 @@ export function crosses(
   to: Surface,
 ): boolean {
   const area = areaOf(layout, from.area);
-  const { carry, moving } = movingThings(area);
+  const { carry, moving } = movingThings(tuning, area);
   const bounds = moveBounds(tuning, carry);
   const entry = Object.keys(area.entries)[0] ?? "";
   const zone = enterArea(tuning, layout, { area: from.area, entry }, startZone(tuning, layout, 1));

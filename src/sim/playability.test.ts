@@ -111,6 +111,36 @@ describe("structural playability assessment", () => {
     expect(formatPlayabilityMarkdown(report)).toContain("not a playthrough");
     expect(assessPlayability(context(), [7])).toEqual(report);
   });
+  it.each(["ground", "fly"] as const)(
+    "classifies live %s pursuit independently of locked flight",
+    (mode) => {
+      const input = context();
+      const pursuit: BehaviourPlan = {
+        ...graph,
+        pursuit: {
+          distance: 100,
+          escaped: { line: "escaped", speaker: "actor" },
+          unreachableGraceSeconds: 1,
+        },
+        states: {
+          charge: { animation: null, motion: { kind: "pursue", mode, speed: 5 }, transitions: [] },
+        },
+      };
+      const report = assessPlayability(
+        {
+          ...input,
+          library: {
+            ...input.library,
+            characters: { enemy: { ...input.library.characters.enemy!, behaviour: pursuit } },
+          },
+        },
+        [7],
+      );
+      expect(report.stages[0]!.mechanics["target-pursuit"]).toBe(2);
+      expect(report.stages[0]!.mechanics[`pursuit:${mode}`]).toBe(2);
+      expect(report.stages[0]!.mechanics).not.toHaveProperty("target-locked-flight");
+    },
+  );
   it("compares different provenance while rejecting different seeds and catalogue order", () => {
     const before = assessPlayability(context(), [7]);
     const after = assessPlayability(

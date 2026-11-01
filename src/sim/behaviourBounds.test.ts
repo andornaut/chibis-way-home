@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { ARCHETYPES } from "../data/archetypes";
+import { BIRD } from "../data/bird";
 import type { BehaviourMotion, BehaviourPlan } from "../data/types";
+import { startBehaviour, stepBehaviour } from "../rules/behaviour";
+import { startBird } from "../rules/bird";
+import { objectLayout } from "../rules/tiles";
 import { behaviourCycleSeconds, hasDynamicBehaviour, sweptBehaviourRect } from "./behaviourBounds";
 
 function pattern(motions: readonly BehaviourMotion[]): BehaviourPlan {
@@ -35,6 +40,101 @@ describe("behaviour phase bounds", () => {
     expect(behaviourCycleSeconds(emitter)).toBeCloseTo(0.8);
   });
 
+  it("does not invent a finite period for persistent target-driven pursuit", () => {
+    const graph: BehaviourPlan = {
+      ...pattern([{ kind: "pursue", mode: "ground", speed: 30 }]),
+      pursuit: {
+        distance: 200,
+        escaped: { line: "escaped", speaker: "actor" },
+        unreachableGraceSeconds: 1,
+      },
+    };
+    expect(hasDynamicBehaviour(graph)).toBe(true);
+    expect(behaviourCycleSeconds(graph)).toBe(Infinity);
+  });
+
+  it.each(["ground", "fly"] as const)(
+    "bounds actual %s pursuit and its reanchored committed attack",
+    (mode) => {
+      const areaBounds = { height: 600, width: 1000, x: 0, y: 0 };
+      const graph: BehaviourPlan = {
+        axis: "x",
+        distance: 100,
+        initial: "chase",
+        pursuit: {
+          distance: 300,
+          escaped: { line: "escaped", speaker: "actor" },
+          unreachableGraceSeconds: 1,
+        },
+        states: {
+          attack: {
+            animation: null,
+            motion: { direction: 1, kind: "move", speed: 100 },
+            transitions: [],
+          },
+          chase: {
+            animation: null,
+            motion: { kind: "pursue", mode, speed: 100 },
+            transitions: [{ to: "attack", when: [{ kind: "nearby", range: BIRD.height }] }],
+          },
+        },
+      };
+      const object = objectLayout(
+        1,
+        {
+          archetypes: { actor: ARCHETYPES.hazard! },
+          characters: {
+            actor: { archetype: "actor", art: "fixture", behaviour: graph, cols: 20, rows: 20 },
+          },
+        },
+        {},
+        undefined,
+        {},
+        { character: "actor", col: 100, row: mode === "ground" ? 280 : 30 },
+      );
+      const target = startBird(BIRD, {
+        x: 400,
+        y: mode === "ground" ? 300 : areaBounds.height - 1 + BIRD.height,
+      });
+      const world = {
+        solids: mode === "ground" ? [{ height: 100, width: areaBounds.width, x: 0, y: 300 }] : [],
+        view: { ...areaBounds, height: areaBounds.height + BIRD.height },
+      };
+      const first = stepBehaviour(
+        BIRD,
+        object,
+        world,
+        20,
+        target,
+        object.origin,
+        startBehaviour(BIRD, object, target),
+      );
+      const attack = stepBehaviour(BIRD, object, world, 2, target, first.at, first.state);
+      expect(attack.at.x).toBeGreaterThan(object.origin.x + graph.pursuit!.distance);
+      if (mode === "fly") {
+        expect(attack.at.y + object.height).toBeGreaterThan(areaBounds.height);
+      }
+      const bounds = sweptBehaviourRect(
+        { areaBounds, maximumRise: 80, targetHeight: BIRD.height },
+        graph,
+        { ...object.origin, height: object.height, width: object.width },
+      );
+      for (const at of [first.at, attack.at]) {
+        expect(bounds.x).toBeLessThanOrEqual(at.x);
+        expect(bounds.x + bounds.width).toBeGreaterThanOrEqual(at.x + object.width);
+        expect(bounds.y).toBeLessThanOrEqual(at.y);
+        expect(bounds.y + bounds.height).toBeGreaterThanOrEqual(at.y + object.height);
+      }
+      expect(() =>
+        sweptBehaviourRect(undefined, graph, {
+          ...object.origin,
+          height: object.height,
+          width: object.width,
+        }),
+      ).toThrow("context");
+    },
+  );
+
   it("bounds mixed-axis tracks and locked-target flight without a fixed target point", () => {
     const graph: BehaviourPlan = {
       axis: "y",
@@ -64,7 +164,7 @@ describe("behaviour phase bounds", () => {
         },
       },
     };
-    expect(sweptBehaviourRect(graph, { height: 8, width: 12, x: 10, y: 20 })).toEqual({
+    expect(sweptBehaviourRect(undefined, graph, { height: 8, width: 12, x: 10, y: 20 })).toEqual({
       height: 88,
       width: 122,
       x: -10,
@@ -97,7 +197,9 @@ describe("behaviour phase bounds", () => {
     seconds: number;
   }[])("covers graph $motions and its travel time", ({ bounds, motions, seconds }) => {
     const graph = pattern(motions);
-    expect(sweptBehaviourRect(graph, { height: 8, width: 12, x: 10, y: 20 })).toEqual(bounds);
+    expect(sweptBehaviourRect(undefined, graph, { height: 8, width: 12, x: 10, y: 20 })).toEqual(
+      bounds,
+    );
     expect(behaviourCycleSeconds(graph)).toBeCloseTo(seconds);
   });
 });

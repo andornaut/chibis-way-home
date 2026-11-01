@@ -244,6 +244,9 @@ function objectMechanics(context: PlayabilityContext, object: Instance): readonl
         if (motion.direction === "facing") {
           tags.add("committed-charge");
         }
+      } else if (motion.kind === "pursue") {
+        tags.add("target-pursuit");
+        tags.add(`pursuit:${motion.mode}`);
       } else if (motion.kind === "fly") {
         tags.add(motion.to === "target" ? "target-locked-flight" : "waypoint-flight");
       } else if (motion.kind === "hop") {

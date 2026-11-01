@@ -34,8 +34,18 @@ function waypoints(pattern: BehaviourPlan): readonly Point[] {
   ];
 }
 
-// Flight segments stay inside their endpoint bounds. Graph hops can rise above any waypoint.
-export function sweptBehaviourRect(pattern: BehaviourPlan, origin: Rect): Rect {
+export interface BehaviourBoundsContext {
+  readonly areaBounds: Rect;
+  readonly targetHeight: number;
+  readonly maximumRise: number;
+}
+
+// Local attacks retain their extents around any pursuit anchor inside the encounter leash.
+export function sweptBehaviourRect(
+  context: BehaviourBoundsContext | undefined,
+  pattern: BehaviourPlan,
+  origin: Rect,
+): Rect {
   const points = waypoints(pattern);
   const left = Math.min(...points.map(({ x }) => x));
   const right = Math.max(...points.map(({ x }) => x));
@@ -47,6 +57,33 @@ export function sweptBehaviourRect(pattern: BehaviourPlan, origin: Rect): Rect {
       node.motion.kind === "hop" ? node.motion.hopHeight : 0,
     ),
   );
+  if (pattern.pursuit) {
+    if (!context) {
+      throw new Error("Pursuit bounds require area and target movement context");
+    }
+    const drift = Math.max(
+      0,
+      ...Object.values(pattern.states).map(({ motion, track }) =>
+        motion.kind === "hop" && (track?.axis ?? pattern.axis) === "x"
+          ? motion.speed * motion.hopSeconds
+          : 0,
+      ),
+    );
+    const anchorTop = Math.min(
+      origin.y,
+      context.areaBounds.y - context.maximumRise - context.targetHeight - origin.height,
+    );
+    const anchorBottom = Math.max(
+      origin.y,
+      context.areaBounds.y + context.areaBounds.height + context.targetHeight,
+    );
+    return {
+      height: origin.height + anchorBottom - anchorTop + bottom - top + hop,
+      width: origin.width + 2 * pattern.pursuit.distance + right - left + 2 * drift,
+      x: origin.x - pattern.pursuit.distance + left - drift,
+      y: anchorTop + top - hop,
+    };
+  }
   return {
     height: origin.height + bottom - top + hop,
     width: origin.width + right - left,
@@ -57,6 +94,13 @@ export function sweptBehaviourRect(pattern: BehaviourPlan, origin: Rect): Rect {
 
 // Taking the longest possible waypoint leg per node conservatively covers branching graphs.
 export function behaviourCycleSeconds(pattern: BehaviourPlan): number {
+  if (
+    Object.values(pattern.states).some(
+      (node) => node.motion.kind === "pursue" && node.motion.speed > 0,
+    )
+  ) {
+    return Infinity;
+  }
   const points = waypoints(pattern);
   return Object.values(pattern.states).reduce((sum, node) => {
     const motion = node.motion;
