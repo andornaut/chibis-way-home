@@ -163,7 +163,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           throw new Error(`Invalid behaviour transition in ${key}`);
         }
         const when = transition.when.map((condition): BehaviourCondition => {
-          if (condition.kind === "boundary") {
+          if (condition.kind === "boundary" || condition.kind === "visible") {
             return condition;
           }
           const amount =

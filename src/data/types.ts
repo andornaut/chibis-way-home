@@ -253,6 +253,7 @@ export interface Reaction {
 }
 
 export type BehaviourCondition =
+  | { readonly kind: "visible" }
   | { readonly kind: "boundary" }
   | { readonly kind: "arrived"; readonly tolerance: number }
   | { readonly kind: "elapsed"; readonly seconds: number }
@@ -324,6 +325,7 @@ export interface BehaviourNode {
 // A reusable bounded movement graph. Distance is signed from its placed origin, in tiles in
 // data and pixels in a layout. Spatial conditions and speeds use the same units.
 export interface BehaviourPlan {
+  readonly spotted?: DialogueLine;
   readonly axis: "x" | "y";
   readonly distance: number;
   readonly inactiveAnimation?: string;
