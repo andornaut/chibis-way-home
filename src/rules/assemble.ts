@@ -3,6 +3,7 @@ import { type Random, randomInt, randomStream, shuffled } from "@andornaut/game-
 import type {
   Character,
   ChunkPlan,
+  ChunkPool,
   ChunkRules,
   FilledSlot,
   Instance,
@@ -44,6 +45,68 @@ function chunkOf(library: ChunkLibrary, id: string): ChunkPlan {
     throw new Error(`No chunk ${id}`);
   }
   return chunk;
+}
+
+// Authored pools retain their order; implicit flat pools retain the legacy sorted theme order.
+export function recipeChunkPool(library: ChunkLibrary, recipe: ZoneRecipe): ChunkPool {
+  return (
+    recipe.chunks ??
+    Object.keys(library.chunks)
+      .filter(
+        (id) =>
+          id !== recipe.start &&
+          id !== recipe.finish &&
+          themesOf(chunkOf(library, id)).includes(recipe.theme),
+      )
+      .sort()
+  );
+}
+
+export function chunkPoolProblems(
+  library: ChunkLibrary,
+  context: Pick<ZoneRecipe, "finish" | "start" | "theme">,
+  pool: ChunkPool,
+): string[] {
+  const problems: string[] = [];
+  if (pool.length === 0 || new Set(pool).size !== pool.length) {
+    problems.push("invalid chunk pool");
+  }
+  for (const id of pool) {
+    const chunk = library.chunks[id];
+    if (
+      chunk &&
+      (!Number.isInteger(chunk.cols) ||
+        chunk.cols < library.rules.cols.min ||
+        chunk.cols > library.rules.cols.max)
+    ) {
+      problems.push(`invalid generated width for chunk ${id}`);
+    }
+    if (!chunk) {
+      problems.push(`no chunk ${id}`);
+    } else if (
+      id === context.start ||
+      id === context.finish ||
+      !themesOf(chunk).includes(context.theme)
+    ) {
+      problems.push(`invalid pool chunk ${id}`);
+    }
+  }
+  return problems;
+}
+
+function eligibleChunks(
+  library: ChunkLibrary,
+  recipe: Pick<ZoneRecipe, "difficulty" | "difficultyWeights">,
+  pool: ChunkPool,
+): ChunkPool {
+  return pool.filter((id) => {
+    const { difficulty } = chunkOf(library, id);
+    return (
+      difficulty >= recipe.difficulty.min &&
+      difficulty <= recipe.difficulty.max &&
+      (recipe.difficultyWeights?.[difficulty] ?? 1) > 0
+    );
+  });
 }
 
 const slotCount = (chunk: ChunkPlan, kind: SlotKind) =>
@@ -162,18 +225,7 @@ function searchRun(
 ): readonly string[] | undefined {
   const start = chunkOf(library, recipe.start);
   const finish = chunkOf(library, recipe.finish);
-  const pool = Object.keys(library.chunks)
-    .filter((id) => id !== recipe.start && id !== recipe.finish)
-    .filter((id) => themesOf(chunkOf(library, id)).includes(recipe.theme))
-    .filter((id) => {
-      const { difficulty } = chunkOf(library, id);
-      return (
-        difficulty >= recipe.difficulty.min &&
-        difficulty <= recipe.difficulty.max &&
-        (recipe.difficultyWeights?.[difficulty] ?? 1) > 0
-      );
-    })
-    .sort();
+  const pool = eligibleChunks(library, recipe, recipeChunkPool(library, recipe));
   const quota = encounterQuota(library, recipe.encounters, [recipe.start, recipe.finish, ...pool]);
   const remaining = quota === undefined ? undefined : quota - start.encounters - finish.encounters;
   if (remaining !== undefined && remaining < 0) {
@@ -477,9 +529,17 @@ export function orderedRecipeProblems(library: ChunkLibrary, recipe: OrderedZone
     if (!library.themes[section.theme]) {
       problems.push(`no theme ${section.theme}`);
     }
-    if (section.chunks.length === 0 || new Set(section.chunks).size !== section.chunks.length) {
-      problems.push(`invalid chunk pool for section ${section.id}`);
-    }
+    problems.push(
+      ...chunkPoolProblems(
+        library,
+        {
+          finish: recipe.finish,
+          start: recipe.start,
+          theme: section.theme,
+        },
+        section.chunks,
+      ),
+    );
     if (
       !Number.isSafeInteger(section.length.min) ||
       !Number.isSafeInteger(section.length.max) ||
@@ -523,26 +583,6 @@ export function orderedRecipeProblems(library: ChunkLibrary, recipe: OrderedZone
     ) {
       problems.push(`invalid difficulty for section ${section.id}`);
     }
-    for (const id of section.chunks) {
-      const chunk = library.chunks[id];
-      if (
-        chunk &&
-        (!Number.isInteger(chunk.cols) ||
-          chunk.cols < library.rules.cols.min ||
-          chunk.cols > library.rules.cols.max)
-      ) {
-        problems.push(`invalid generated width for chunk ${id}`);
-      }
-      if (!chunk) {
-        problems.push(`no chunk ${id}`);
-      } else if (
-        id === recipe.start ||
-        id === recipe.finish ||
-        !themesOf(chunk).includes(section.theme)
-      ) {
-        problems.push(`invalid chunk ${id} for section ${section.id}`);
-      }
-    }
     for (const { count } of [...section.doors, ...section.events]) {
       if (!Number.isInteger(count) || count < 0) {
         problems.push(`invalid fill count for section ${section.id}`);
@@ -581,16 +621,7 @@ function assembleOrdered(
   if ([...counts].some(([id, count]) => count > (chunkOf(library, id).maxPerZone ?? Infinity))) {
     throw new Error("Stage caps exceed maxPerZone");
   }
-  const pools = recipe.sections.map((section) =>
-    section.chunks.filter((id) => {
-      const chunk = chunkOf(library, id);
-      return (
-        chunk.difficulty >= section.difficulty.min &&
-        chunk.difficulty <= section.difficulty.max &&
-        (section.difficultyWeights?.[chunk.difficulty] ?? 1) > 0
-      );
-    }),
-  );
+  const pools = recipe.sections.map((section) => eligibleChunks(library, section, section.chunks));
   const quota = encounterQuota(library, recipe.encounters, [
     recipe.start,
     recipe.finish,
@@ -800,6 +831,12 @@ export function assembleZone(
 ): ZonePlan {
   if ("sections" in recipe) {
     return assembleOrdered(library, seed, key, recipe);
+  }
+  if (recipe.chunks !== undefined) {
+    const problems = chunkPoolProblems(library, recipe, recipe.chunks);
+    if (problems.length > 0) {
+      throw new Error(problems.join("; "));
+    }
   }
   const run = searchRun(library, randomStream(seed, `assemble:${key}`), recipe);
   if (!run) {

@@ -426,6 +426,73 @@ describe("assembleZone", () => {
   });
 });
 
+describe("flat recipe chunk pools", () => {
+  it.each([0, 1])(
+    "restricts the middle pool while preserving encounter quota %s and chunk limits",
+    (encounters) => {
+      const lib = library({
+        a: chunk(50, 50, { maxPerZone: 1 }),
+        b: chunk(50, 50),
+        enemy: chunk(50, 50, { encounters: 1 }),
+        excluded: chunk(50, 50, { weight: 100000 }),
+      });
+      const selected = recipe(3, { chunks: ["a", "b", "enemy"], encounters });
+      const plan = assembleZone(lib, 7, "pool", selected);
+      const ids = areaOf(plan).chunks!.map(({ chunk }) => chunk);
+      expect(plan).toEqual(assembleZone(lib, 7, "pool", selected));
+      expect(Object.keys(plan.areas)).toEqual([ASSEMBLED_AREA]);
+      expect(ids[0]).toBe(selected.start);
+      expect(ids.at(-1)).toBe(selected.finish);
+      expect(ids).not.toContain("excluded");
+      expect(ids.filter((id) => id === "a").length).toBeLessThanOrEqual(1);
+      expect(ids.reduce((sum, id) => sum + lib.chunks[id]!.encounters, 0)).toBe(encounters);
+      expect(ids.every((id, index) => index === 0 || id !== ids[index - 1])).toBe(true);
+      expect(areaOf(plan).cols).toBe(selected.length.min);
+    },
+  );
+  it("retains grade weights within the pool and never falls back to excluded chunks", () => {
+    const lib = library({
+      a: chunk(50, 50),
+      b: chunk(50, 50, { difficulty: 2 }),
+      excluded: chunk(50, 50, { difficulty: 2, encounters: 1, weight: 100000 }),
+    });
+    const selected = recipe(1, {
+      chunks: ["a", "b"],
+      difficulty: { max: 2, min: 1 },
+      difficultyWeights: { 1: 0 },
+    });
+    expect(middleIds(areaOf(assembleZone(lib, 1, "weighted-pool", selected)))).toEqual(["b"]);
+    expect(() => assembleZone(lib, 1, "missing-encounter", { ...selected, encounters: 1 })).toThrow(
+      "No assembly",
+    );
+  });
+  it.each([1, 7, 42])("keeps legacy implicit-pool results identical for seed %s", (seed) => {
+    const lib = library(Object.fromEntries(["z", "a", "m"].map((id) => [id, chunk(50, 50)])));
+    const implicit = recipe(3);
+    expect(assembleZone(lib, seed, "legacy", implicit)).toEqual(
+      assembleZone(lib, seed, "legacy", { ...implicit, chunks: ["a", "m", "z"] }),
+    );
+  });
+  it.each([
+    { chunks: [], error: "invalid chunk pool" },
+    { chunks: ["a", "a"], error: "invalid chunk pool" },
+    { chunks: ["missing"], error: "no chunk missing" },
+    { chunks: ["start"], error: "invalid pool chunk start" },
+    { chunks: ["finish"], error: "invalid pool chunk finish" },
+    { chunks: ["foreign"], error: "invalid pool chunk foreign" },
+    { chunks: ["too-wide"], error: "invalid generated width" },
+  ])("rejects invalid authored pool $chunks before selection", ({ chunks, error }) => {
+    const lib = library({
+      a: chunk(50, 50),
+      foreign: chunk(50, 50, { theme: "other" }),
+      "too-wide": chunk(50, 50, { cols: 121 }),
+    });
+    const selected = recipe(1, { chunks });
+    expect(recipeProblems(lib, selected).join("; ")).toContain(error);
+    expect(() => assembleZone(lib, 1, "invalid-pool", selected)).toThrow(error);
+  });
+});
+
 describe("ordered section assembly", () => {
   const base = library({ a: chunk(50, 50), b: chunk(50, 50) });
   const theme = base.themes.t;
