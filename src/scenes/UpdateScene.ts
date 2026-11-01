@@ -11,6 +11,7 @@ import {
   contentCardLayout,
 } from "../layout/contentCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
+import { stepFocus } from "../pause/focusInput";
 import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa";
 import {
   addCardTextIn,
@@ -62,13 +63,14 @@ export function installUpdateModalBridge(game: Game): void {
   game.events.once("destroy", unsubscribe);
 }
 
-type Action = "accept" | "close";
+type ButtonAction = "accept" | "cancel";
+type Action = ButtonAction | "close";
 
 export class UpdateScene extends Scene {
   private cardCamera!: Cameras.Scene2D.Camera;
   private layout!: ReturnType<typeof contentCardLayout>;
-  private action!: ReturnType<typeof cardActions>[number];
-  private button!: TextButton;
+  private actions!: Record<ButtonAction, ReturnType<typeof cardActions>[number]>;
+  private buttons!: Record<ButtonAction, TextButton>;
   private closeX!: GameObjects.Sprite;
   private focus: Action | undefined;
   private readyToInteract = false;
@@ -89,9 +91,10 @@ export class UpdateScene extends Scene {
     this.cardCamera = this.cameras.main;
     fitPlayCamera(this, this.cardCamera);
     const fonts = cardFonts(this);
+    const labels = [TEXT.update.cancel, TEXT.update.accept];
     this.layout = contentCardLayout(
       { ...SCREEN, x: 0, y: 0 },
-      [{ key: "actions", ...cardActionsSize(fonts.body, "row", [TEXT.update.accept]) }],
+      [{ key: "actions", ...cardActionsSize(fonts.body, "row", labels) }],
       { close: true, titleWidth: cardTextSize(fonts.title, TEXT.update.title).width },
     );
     const group = this.layout.groups.actions;
@@ -100,19 +103,22 @@ export class UpdateScene extends Scene {
     if (!group || !title || !close) {
       throw new Error("Missing upgrade card content");
     }
-    const action = cardActions(fonts.body, "row", group, [TEXT.update.accept])[0];
-    if (!action) {
+    const [cancel, accept] = cardActions(fonts.body, "row", group, labels);
+    if (!accept || !cancel) {
       throw new Error("Missing upgrade action");
     }
-    this.action = action;
+    this.actions = { accept, cancel };
     addSlice(this, "ui-settings-card", this.layout.card);
     addCardTextIn(this, TITLE_FONT, title, TEXT.update.title, paletteColour(this, "ink"));
     this.closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);
     this.closeX.play(animationKey("ui-close", "normal"));
-    this.button = addTextButton(this, action, TEXT.update.accept, { style: PRIMARY_BUTTON });
+    this.buttons = {
+      accept: addTextButton(this, accept, TEXT.update.accept, { style: PRIMARY_BUTTON }),
+      cancel: addTextButton(this, cancel, TEXT.update.cancel),
+    };
     catchModalTaps(this, this.cardCamera, {
       close: () => updateOffer.defer(),
-      covered: () => [this.layout.card, this.action.hit, close.hit],
+      covered: () => [this.layout.card, accept.hit, cancel.hit, close.hit],
     });
     captureTab(this, true);
     const back = (event: Event) => {
@@ -136,7 +142,15 @@ export class UpdateScene extends Scene {
         updateOffer.defer();
       } else if (event.key === "Tab" || event.key.startsWith("Arrow")) {
         event.preventDefault();
-        this.focus = this.focus === "accept" ? "close" : "accept";
+        this.focus = stepFocus<Action>(
+          ["cancel", "accept", "close"],
+          this.focus,
+          event.key === "ArrowLeft" ||
+            event.key === "ArrowUp" ||
+            (event.key === "Tab" && event.shiftKey)
+            ? "previous"
+            : "next",
+        );
         this.render();
       } else if (
         (event.key === "Enter" || event.key === " ") &&
@@ -201,7 +215,8 @@ export class UpdateScene extends Scene {
   private areas(): readonly PressArea<Action>[] {
     const close = this.layout.close;
     return [
-      { art: this.action.button, hit: this.action.hit, key: "accept" },
+      { art: this.actions.accept.button, hit: this.actions.accept.hit, key: "accept" },
+      { art: this.actions.cancel.button, hit: this.actions.cancel.hit, key: "cancel" },
       ...(close ? [{ art: close.art, hit: close.hit, key: "close" as const }] : []),
     ];
   }
@@ -222,12 +237,14 @@ export class UpdateScene extends Scene {
         this.press?.target === "close" && !this.press.cancelled ? "pressed" : "normal",
       ),
     );
-    pressTextButton(this.button, this.press?.target === "accept" && !this.press.cancelled);
+    for (const key of ["accept", "cancel"] as const) {
+      pressTextButton(this.buttons[key], this.press?.target === key && !this.press.cancelled);
+    }
     this.ring = ringFocus(
       this,
       this.ring,
-      this.focus === "accept"
-        ? this.action.button
+      this.focus === "accept" || this.focus === "cancel"
+        ? this.actions[this.focus].button
         : this.focus === "close"
           ? this.layout.close?.art
           : undefined,

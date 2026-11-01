@@ -14,7 +14,13 @@ import {
 } from "../layout/startScreen";
 import { startBackAction } from "../pause/cardInput";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
-import { exitShown, PHONE_EVENTS } from "../pwa";
+import {
+  beginStartUpdateVisit,
+  coverZone,
+  exitShown,
+  PHONE_EVENTS,
+  startScreenShown,
+} from "../pwa";
 import { openingDestination } from "../rules/opening";
 import { savedProgress } from "../save";
 import { setTouchSettingShown, type TouchSetting } from "../settings/touchControls";
@@ -79,6 +85,8 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   }
 
   create(): void {
+    beginStartUpdateVisit();
+    let currentCreate = true;
     fitPlayCamera(this);
     this.pressed = undefined;
     this.card = undefined;
@@ -91,7 +99,11 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
       savedProgress().at !== "beginning",
     );
     this.draw();
-    void this.showStreet();
+    void this.showStreet().then(() => {
+      if (currentCreate && this.sys.isActive()) {
+        startScreenShown(true);
+      }
+    });
     this.showPressed(undefined);
     this.watchPresses();
     modalInput(this).subscribe(() => this.showPressed(undefined));
@@ -110,6 +122,9 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
     captureTab(this, true);
     this.events.once("shutdown", () => {
+      currentCreate = false;
+      startScreenShown(false);
+      coverZone("startCard", false);
       window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
       captureTab(this, false);
     });
@@ -122,11 +137,13 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
 
   settingsClosed(): void {
     this.card = undefined;
+    coverZone("startCard", false);
     this.drawFocus();
   }
 
   restartClosed(): void {
     this.card = undefined;
+    coverZone("startCard", false);
     this.drawFocus();
   }
 
@@ -292,10 +309,12 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
       this.scene.start(openingDestination(savedProgress()));
     } else if (control === "settings") {
       this.card = "settings";
+      coverZone("startCard", true);
       this.drawFocus();
       this.scene.launch(SETTINGS, { opener: this.scene.key } satisfies SettingsData);
     } else if (control === "restart") {
       this.card = "restart";
+      coverZone("startCard", true);
       this.drawFocus();
       this.scene.launch(RESTART, { opener: this.scene.key } satisfies RestartData);
     } else {

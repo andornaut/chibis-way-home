@@ -2,32 +2,37 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createUpdateOffer } from "./updateOffer";
 
-describe("update offer", () => {
-  it.each(["defer", "accept"] as const)(
-    "%s closes once and waits for eligibility reentry",
+describe("native update offer bridge", () => {
+  it.each(["accept", "defer"] as const)(
+    "delegates %s once only while its controls are visible",
     (action) => {
       const accept = vi.fn();
-      const shown: boolean[] = [];
-      const offer = createUpdateOffer(accept);
-      offer.eligibility(true);
-      offer.subscribe((value) => shown.push(value));
+      const dismiss = vi.fn();
+      const shown = vi.fn();
+      const offer = createUpdateOffer(accept, dismiss);
+      offer.subscribe(shown);
+      offer[action]();
+      expect(accept).not.toHaveBeenCalled();
+      expect(dismiss).not.toHaveBeenCalled();
+      offer.setVisible(true);
       offer[action]();
       offer[action]();
-      offer.eligibility(true);
-      expect(shown).toEqual([true, false]);
+      expect(shown.mock.calls).toEqual([[false], [true], [false]]);
       expect(accept).toHaveBeenCalledTimes(action === "accept" ? 1 : 0);
-      offer.eligibility(false);
-      offer.eligibility(true);
-      expect(shown).toEqual([true, false, true]);
+      expect(dismiss).toHaveBeenCalledTimes(action === "defer" ? 1 : 0);
+      offer.setVisible(false);
+      expect(shown).toHaveBeenCalledTimes(3);
+      offer.setVisible(true);
+      expect(shown).toHaveBeenLastCalledWith(true);
     },
   );
-  it("never accepts an unavailable or dismissed offer", () => {
-    const accept = vi.fn();
-    const offer = createUpdateOffer(accept);
-    offer.accept();
-    offer.eligibility(true);
-    offer.defer();
-    offer.accept();
-    expect(accept).not.toHaveBeenCalled();
+
+  it("disconnects a destroyed native modal bridge without replacing shared visit state", () => {
+    const offer = createUpdateOffer(vi.fn(), vi.fn());
+    const shown = vi.fn();
+    const unsubscribe = offer.subscribe(shown);
+    unsubscribe();
+    offer.setVisible(true);
+    expect(shown.mock.calls).toEqual([[false]]);
   });
 });

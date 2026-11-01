@@ -2,12 +2,8 @@
 // wake lock and persistent storage. setupPhoneApp runs once from main.ts; the scenes listen for
 // PHONE_EVENTS on window and call the functions below.
 //
-// Offline play registers the service worker (serviceWorker.ts) and follows the kit's update
-// flow. The game page is the only screen, so it counts as the home screen: a newer version takes
-// over at once before the player has interacted, and after that an ordinary game modal offers
-// it. The flow checks on each load and when the page comes back into view (an installed app
-// resumed without relaunching). The game loads meanwhile:
-// only its first screen and any save wait for the check (launchReady).
+// Offline registration retains its prepared-zone timing. Waiting updates activate only through
+// the explicit Start-screen offer, never automatically before input or during gameplay.
 import { appCannotClose } from "@andornaut/game-kit/pwa/appWindow";
 import {
   backCloseWatcher,
@@ -16,7 +12,11 @@ import {
   isFirefoxAndroidApp,
 } from "@andornaut/game-kit/pwa/backNavigation";
 import { pageRunsAsApp } from "@andornaut/game-kit/pwa/installFlow";
-import { browserOfflinePage, startOfflinePlay } from "@andornaut/game-kit/pwa/offlinePlay";
+import {
+  browserOfflinePage,
+  type OfflinePlay,
+  startOfflinePlay,
+} from "@andornaut/game-kit/pwa/offlinePlay";
 import { serviceWorkerUrl } from "@andornaut/game-kit/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/pwa/storagePersistence";
 import { createScreenWakeLock, type ScreenWakeLock } from "@andornaut/game-kit/pwa/wakeLock";
@@ -31,12 +31,13 @@ export { PHONE_EVENTS } from "./events";
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "birdBackGuard";
 const SERVICE_WORKER_URL = "/sw.js";
-let acceptWaitingUpdate: () => void = () => undefined;
-export const updateOffer = createUpdateOffer(() => acceptWaitingUpdate());
+let offlinePlay: OfflinePlay | undefined;
+export const updateOffer = createUpdateOffer(
+  () => offlinePlay?.flow.accept(),
+  () => offlinePlay?.flow.dismissOffer(),
+);
 
-// How long a fresh load holds the first screen and the save for a newer version to be checked for
-// and installed, so it reloads into that version before the zone draws; the game loads
-// meanwhile.
+// A startup check may hold the first screen and saves for this long; activation remains manual.
 const BOOT_WAIT_MS = 4000;
 
 // An installed app whose window the game cannot close (the kit's appCannotClose) shows no Exit.
@@ -57,15 +58,16 @@ function setupOfflinePlay(): void {
   }
   const play = startOfflinePlay(
     {
+      activationPolicy: "manual",
       bootWaitMs: BOOT_WAIT_MS,
       onOfflineActivity: offlineActivity,
-      onUpdateShown: updateOffer.eligibility,
+      onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
     },
     page,
   );
-  acceptWaitingUpdate = () => play.flow.accept();
-  home = trackHomeScreen(play.setOnHome);
+  offlinePlay = play;
+  home = trackHomeScreen(play.setOfferVisible, () => play.setRegistrationReady(true));
   ready = play.bootable;
 }
 
@@ -115,13 +117,21 @@ export function launchReady(): Promise<void> {
   return ready;
 }
 
-// The zone's first frame has shown: the game page is now the home screen, where the update
-// modal may show and a first visit registers the service worker.
+// The existing prepared-zone signal controls first-install registration, not update offers.
 export function zoneShown(): void {
   home?.shown();
 }
 
-// Something covers the zone, so the update modal waits until it is gone.
+// A new Start scene begins a visit; resuming it or closing a covering card does not.
+export function beginStartUpdateVisit(): void {
+  offlinePlay?.flow.beginOfferVisit();
+}
+
+export function startScreenShown(shown: boolean): void {
+  home?.startShown(shown);
+}
+
+// A game or Start-owned card suppresses offers without changing their visit dismissal.
 export function coverZone(what: HomeCover, covering: boolean): void {
   home?.cover(what, covering);
 }

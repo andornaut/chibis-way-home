@@ -1,11 +1,8 @@
-// A dismissed offer stays dismissed until eligibility actually ends and starts again.
-export function createUpdateOffer(accept: () => void) {
-  let eligible = false;
-  let dismissed = false;
+// The shared flow owns waiting workers and visit dismissal; this bridge guards visible controls.
+export function createUpdateOffer(accept: () => void, dismiss: () => void) {
   let visible = false;
   let listener: ((visible: boolean) => void) | undefined;
-  const publish = () => {
-    const next = eligible && !dismissed;
+  const setVisible = (next: boolean) => {
     if (next !== visible) {
       visible = next;
       listener?.(visible);
@@ -14,22 +11,17 @@ export function createUpdateOffer(accept: () => void) {
   return {
     accept() {
       if (visible) {
-        dismissed = true;
-        publish();
+        setVisible(false);
         accept();
       }
     },
     defer() {
-      dismissed = true;
-      publish();
-    },
-    eligibility(value: boolean) {
-      eligible = value;
-      if (!value) {
-        dismissed = false;
+      if (visible) {
+        setVisible(false);
+        dismiss();
       }
-      publish();
     },
+    setVisible,
     subscribe(next: (visible: boolean) => void) {
       listener = next;
       next(visible);
