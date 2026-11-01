@@ -39,6 +39,7 @@ export interface NavigationMemory {
   readonly deaths: readonly FailedChoice[];
 }
 export interface NavigationCandidateSummary {
+  readonly followup?: { readonly inputLabel: string; readonly startTick: number };
   readonly continuationSteps?: number;
   readonly segmentCount?: number;
   readonly elapsed: number;
@@ -88,6 +89,7 @@ export interface NavigationState {
         config: string;
         index: number;
         layout: ZoneLayout;
+        sequenced?: boolean;
         states: readonly ZoneState[];
         tuning: BirdTuning;
       }
@@ -225,6 +227,7 @@ export function navigationSnapshot(bot: Navigator): NavigationDiagnostic | undef
         ...value,
         candidates: value.candidates.slice(0, 8).map((candidate) => ({
           ...candidate,
+          ...(candidate.followup && { followup: { ...candidate.followup } }),
           predictedEndpoint: { ...candidate.predictedEndpoint },
         })),
         origin: { ...value.origin },
@@ -550,6 +553,7 @@ export function plannedInput(
       }
       const input = navigation.queue.shift()!;
       if (
+        !cache.sequenced &&
         navigation.stalledTicks >= limits.replanTicks &&
         cache.index % limits.replanTicks === 0 &&
         (navigation.diagnostic?.predictedProgress ?? 0) <= 0
@@ -668,6 +672,7 @@ export function plannedInput(
         inputs: ZoneInput[];
         predictedProgress: number;
         score: number;
+        sequenced: boolean;
         states: ZoneState[];
       }
     | undefined;
@@ -718,14 +723,38 @@ export function plannedInput(
     let airborne = !zone.bird.grounded;
     let landedAt: number | undefined;
     let groundedContinuation = false;
+    let followup: Candidate | undefined;
+    let followupStart = 0;
+    let jumped = false;
+    let endTick = limits.horizonTicks * (limits.profile === "validation" ? 2 : 1);
     const inputs: ZoneInput[] = [];
     const states: ZoneState[] = [];
-    for (
-      let tick = 0;
-      tick < limits.horizonTicks * (limits.profile === "validation" ? 2 : 1);
-      tick++
-    ) {
-      if (tick === limits.horizonTicks) {
+    for (let tick = 0; tick < endTick; tick++) {
+      if (
+        !followup &&
+        limits.profile === "validation" &&
+        threatened &&
+        candidate.travel === undefined &&
+        predicted.bird.grounded &&
+        tick > 0 &&
+        tick <= limits.horizonTicks &&
+        ((jumped && landedAt !== undefined) || tick === limits.horizonTicks)
+      ) {
+        const next = waypoint(tuning, layout, direction, predicted);
+        followup = {
+          back: 0,
+          delay: 0,
+          hold: full,
+          stationary: 0,
+          stopAt: next?.width === undefined ? undefined : next.x + (next.width - tuning.width) / 2,
+        };
+        followupStart = tick;
+        endTick = Math.min(endTick, tick + limits.horizonTicks);
+        landedAt = undefined;
+        airborne = false;
+        jumped = false;
+      }
+      if (!followup && tick === limits.horizonTicks) {
         groundedContinuation =
           limits.profile === "validation" && threatened && predicted.bird.grounded;
         if (
@@ -741,15 +770,24 @@ export function plannedInput(
       const guard =
         threatened &&
         predicted.bird.grounded &&
-        tick >= limits.horizonTicks - limits.replanTicks * 2;
+        tick >= (followup ? endTick : limits.horizonTicks) - limits.replanTicks * 2;
       const input =
-        landedAt === undefined && !guard && !groundedContinuation
-          ? action(tuning, direction, candidate, tick + elapsed, predicted)
-          : IDLE;
+        followup && tick === followupStart
+          ? IDLE
+          : landedAt === undefined && !guard && !groundedContinuation
+            ? action(
+                tuning,
+                direction,
+                followup ?? candidate,
+                followup ? tick - followupStart - 1 : tick + elapsed,
+                predicted,
+              )
+            : IDLE;
       inputs.push(input);
       states.push(predicted);
       predicted = stepZone(tuning, layout, STEP_SECONDS, input, predicted);
       navigation.counters.physicsSteps++;
+      jumped ||= input.jumpHeld && predicted.bird.vy < 0;
       if (predicted.death || predicted.turnedBack) {
         safe = false;
         break;
@@ -780,7 +818,11 @@ export function plannedInput(
           ? "airborne"
           : null;
     const summary: NavigationCandidateSummary = {
-      continuationSteps: Math.max(0, inputs.length - limits.horizonTicks),
+      continuationSteps: Math.max(
+        0,
+        inputs.length - (followup ? followupStart : limits.horizonTicks),
+      ),
+      ...(followup && { followup: { inputLabel: inputLabel(followup), startTick: followupStart } }),
       elapsed,
       forwardProgress: direction * (predicted.bird.x - zone.bird.x),
       inputLabel: inputLabel(candidate),
@@ -792,7 +834,7 @@ export function plannedInput(
       },
       rejection,
       score: null,
-      segmentCount: inputs.length > limits.horizonTicks ? 2 : 1,
+      segmentCount: followup || inputs.length > limits.horizonTicks ? 2 : 1,
       verticalProgress: zone.bird.y - predicted.bird.y,
     };
     summaries.push(summary);
@@ -842,6 +884,7 @@ export function plannedInput(
         inputs,
         predictedProgress: summary.forwardProgress,
         score,
+        sequenced: followup !== undefined,
         states,
       };
       if (candidate.travel === undefined) {
@@ -914,8 +957,17 @@ export function plannedInput(
           : riding
             ? "transfer"
             : "advance";
-  navigation.continuation = { candidate: best.candidate, elapsed: best.elapsed + 1 };
-  navigation.cache = { config: cacheConfig, index: 1, layout, states: best.states, tuning };
+  navigation.continuation = best.sequenced
+    ? undefined
+    : { candidate: best.candidate, elapsed: best.elapsed + 1 };
+  navigation.cache = {
+    config: cacheConfig,
+    index: 1,
+    layout,
+    sequenced: best.sequenced,
+    states: best.states,
+    tuning,
+  };
   navigation.queue = best.inputs;
   const input = navigation.queue.shift()!;
   snapshot(
