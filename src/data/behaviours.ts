@@ -7,7 +7,7 @@ const DOG_PATROL_PAUSE = 0.14;
 const DOG_PATROL_SPEED = 4.6875;
 const FRUSTRATION_SECONDS = 0.55;
 
-export const ATTACK_ANTICIPATION_SECONDS = 0.35;
+export const ATTACK_ANTICIPATION_SECONDS = 0.12;
 const RABBIT_DISTANCE = -12;
 const RABBIT_PAUSE = 0.6;
 const RABBIT_SPEED = 10;
@@ -220,7 +220,7 @@ const GROUND_CHARGE: PatrolChargeTuning = {
   patrolSpeed: DOG_PATROL_SPEED,
   preparation: "crouch",
   preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
-  restSeconds: 0.45,
+  restSeconds: 0.25,
   rushSeconds: 0.48,
   rushSpeed: 31.25,
 };
@@ -240,7 +240,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = {
     "pounce-rest": {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.55 }] }],
+      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
     },
     "prepare-pounce": {
       animation: "crouch",
@@ -257,7 +257,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = {
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [{ to: "prepare-pounce", when: [{ kind: "elapsed", seconds: 0.45 }] }],
+      transitions: [{ to: "prepare-pounce", when: [{ kind: "elapsed", seconds: 0.25 }] }],
     },
   },
 };
@@ -280,7 +280,7 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = {
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [{ to: "prepare-throw", when: [{ kind: "elapsed", seconds: 0.45 }] }],
+      transitions: [{ to: "prepare-throw", when: [{ kind: "elapsed", seconds: 0.25 }] }],
     },
     throw: {
       animation: "throw",
@@ -303,7 +303,7 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = {
     "throw-rest": {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.55 }] }],
+      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
     },
   },
 };
@@ -320,7 +320,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = {
       patrolSpeed: 3.125,
       preparation: "warn",
       preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
-      restSeconds: 0.7,
+      restSeconds: 0.35,
       rushSeconds: 0.36,
       rushSpeed: 21.875,
     }),
@@ -345,7 +345,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = {
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [{ to: "set-trap", when: [{ kind: "elapsed", seconds: 0.7 }] }],
+      transitions: [{ to: "set-trap", when: [{ kind: "elapsed", seconds: 0.35 }] }],
     },
 
     "set-trap": {
@@ -421,7 +421,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = {
     ...verticalDropStates({
       dropSpeed: 18.75,
       preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
-      restSeconds: 0.55,
+      restSeconds: 0.3,
       returnSpeed: 4.6875,
       returnState: "climb",
     }),
@@ -429,7 +429,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = {
       animation: "rest",
       motion: { kind: "wait" },
       track: RACCOON_GROUND_TRACK,
-      transitions: [{ to: "return-ground", when: [{ kind: "elapsed", seconds: 0.55 }] }],
+      transitions: [{ to: "return-ground", when: [{ kind: "elapsed", seconds: 0.3 }] }],
     },
     "frustration-ground": { ...frustrationNode("prepare-charge"), track: RACCOON_GROUND_TRACK },
     "frustration-return": { ...frustrationNode("return-ground"), track: RACCOON_GROUND_TRACK },
@@ -450,7 +450,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = {
       animation: "rest",
       motion: { kind: "wait" },
       track: RACCOON_GROUND_TRACK,
-      transitions: [{ to: "prepare-charge", when: [{ kind: "elapsed", seconds: 0.55 }] }],
+      transitions: [{ to: "prepare-charge", when: [{ kind: "elapsed", seconds: 0.3 }] }],
     },
     "return-ground": {
       animation: "climb",
@@ -522,7 +522,9 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = {
       animation: "prepare-attack",
       enter: "face-target",
       motion: { kind: "wait" },
-      transitions: [{ to: "growl", when: [{ kind: "elapsed", seconds: 0.45 }] }],
+      transitions: [
+        { to: "growl", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+      ],
     },
     "prepare-maul": {
       animation: "prepare-attack",
@@ -542,7 +544,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = {
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [{ to: "prepare-growl", when: [{ kind: "elapsed", seconds: 0.7 }] }],
+      transitions: [{ to: "prepare-growl", when: [{ kind: "elapsed", seconds: 0.35 }] }],
     },
     rush: {
       animation: "rush",
@@ -663,7 +665,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = {
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
-      transitions: [{ to: "prepare", when: [{ kind: "elapsed", seconds: 0.7 }] }],
+      transitions: [{ to: "prepare", when: [{ kind: "elapsed", seconds: 0.35 }] }],
     },
     "return-high": pigeonFlight("land-perch", "frustration-return", { x: 0, y: -8 }),
     "swoop-left": pigeonSwoop("frustration-left", -12),
