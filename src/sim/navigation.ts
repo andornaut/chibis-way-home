@@ -985,7 +985,7 @@ export function plannedInput(
           ? "airborne"
           : limits.profile === "validation" &&
               !predicted.cleared &&
-              onMover(tuning, layout, predicted) &&
+              (needsStability || onMover(tuning, layout, predicted)) &&
               Math.abs(predicted.bird.vx) > 1e-6
             ? "unsettled-support"
             : null;
