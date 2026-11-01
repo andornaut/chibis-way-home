@@ -2,28 +2,28 @@
   "columns": 8,
   "hitboxes": {
     "hazard-bottom": {
-      "height": 3,
+      "height": 4,
       "width": 12,
       "x": 0,
       "y": 0
     },
     "hazard-left": {
       "height": 12,
-      "width": 3,
-      "x": 9,
+      "width": 4,
+      "x": 8,
       "y": 0
     },
     "hazard-right": {
       "height": 12,
-      "width": 3,
+      "width": 4,
       "x": 0,
       "y": 0
     },
     "hazard-top": {
-      "height": 3,
+      "height": 4,
       "width": 12,
       "x": 0,
-      "y": 9
+      "y": 8
     }
   },
   "pieces": {},

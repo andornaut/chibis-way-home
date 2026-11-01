@@ -7,10 +7,10 @@ Run from the repository root. Build writes tiles-platforming.png/.json and merge
 Solid terrain is assembled from top, bottom, left, right, corner and fill tiles. The top has a white lip;
 wall and ceiling edges have no white lip. One-way ledges are thin slabs, transparent underneath.
 
-Hazards are separate transparent overlay tiles: a solid 3px bright-red panel on the supporting surface
+Hazards are separate transparent overlay tiles: a solid 4px bright-red panel on the supporting surface
 or edge, never spikes. Every theme uses the same red. Place hazard-top in the cell ABOVE a solid: its band
-occupies rows 9..11. Place hazard-bottom BELOW a solid (rows 0..2), hazard-left LEFT of a solid (columns
-9..11), and hazard-right RIGHT of a solid (columns 0..2). Their hitboxes cover exactly the three visible
+occupies rows 8..11. Place hazard-bottom BELOW a solid (rows 0..3), hazard-left LEFT of a solid (columns
+8..11), and hazard-right RIGHT of a solid (columns 0..3). Their hitboxes cover exactly the four visible
 rows or columns, so a contact kills from any direction. Overlays have no terrain collision themselves.
 The supporting solid retains its full-cell collision. No hazard is drawn across a safe white lip.
 
@@ -29,10 +29,10 @@ from PIL import Image  # noqa: E402
 KEY = "tiles-platforming"
 T = 12
 HITBOXES = {
-    "hazard-bottom": {"x": 0, "y": 0, "width": 12, "height": 3},
-    "hazard-left": {"x": 9, "y": 0, "width": 3, "height": 12},
-    "hazard-right": {"x": 0, "y": 0, "width": 3, "height": 12},
-    "hazard-top": {"x": 0, "y": 9, "width": 12, "height": 3},
+    "hazard-bottom": {"x": 0, "y": 0, "width": 12, "height": 4},
+    "hazard-left": {"x": 8, "y": 0, "width": 4, "height": 12},
+    "hazard-right": {"x": 0, "y": 0, "width": 4, "height": 12},
+    "hazard-top": {"x": 0, "y": 8, "width": 12, "height": 4},
 }
 
 

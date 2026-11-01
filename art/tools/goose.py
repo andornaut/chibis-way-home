@@ -20,9 +20,9 @@ Set-trap appends 4x120ms: a groundward head and wing placement gesture; no trap 
 All tags loop. These are art cycle defaults; gameplay owns state durations and all physical movement.
 The build writes art/antagonists/goose-antagonist.aseprite and its PNG/JSON exports.
 
-goose-trap: 24x12, bottom-centre 12,12, fixed contact bounds 0,9,24,3. Warning loops 4x120ms with
+goose-trap: 24x12, bottom-centre 12,12, fixed contact bounds 0,8,24,4. Warning loops 4x120ms with
 an amber edge and moving 2px yellow tick over a 1px ink rim. Armed loops 1x400ms with the shared solid
-3px bright-red panel on rows9..11, transparent above. No spikes or teeth. Generic gameplay owns
+4px bright-red panel on rows8..11, transparent above. No spikes or teeth. Generic gameplay owns
 the visible arming delay and enables collision only when armed; metadata declares the fixed shape only.
 """
 
@@ -39,7 +39,7 @@ KEY = "goose-antagonist"
 SRC = "art/antagonists"
 TRAP = "goose-trap"
 ONCE = {KEY: [], TRAP: []}
-HITBOX = {KEY: (2, 2, 44, 46), TRAP: (0, 9, 24, 3)}
+HITBOX = {KEY: (2, 2, 44, 46), TRAP: (0, 8, 24, 4)}
 
 
 def neck_shape(points):
@@ -131,6 +131,7 @@ def trap(state="armed", phase=0):
                 g.p(x, y, "amber" if state == "warning" and c[:3] == pixel.rgb("red") else
                     "%02x%02x%02x" % c[:3])
     if state == "warning":
+        g.rect(0, 8, 24, 1, None)
         g.rect(0, 11, 24, 1, "ink")
         g.rect(2 + phase * 4, 9, 2, 2, "yellow")
     return g.px
