@@ -7,8 +7,8 @@ Run from the repository root. Build writes tiles-platforming.png/.json and merge
 Solid terrain is assembled from top, bottom, left, right, corner and fill tiles. The top has a white lip;
 wall and ceiling edges have no white lip. One-way ledges are thin slabs, transparent underneath.
 
-Hazards are separate transparent overlay tiles: a 2px red line with a 1px ink rim towards the supporting
-solid, never spikes. Every theme uses the same red. Place hazard-top in the cell ABOVE a solid: its band
+Hazards are separate transparent overlay tiles: a solid 3px bright-red panel on the supporting surface
+or edge, never spikes. Every theme uses the same red. Place hazard-top in the cell ABOVE a solid: its band
 occupies rows 9..11. Place hazard-bottom BELOW a solid (rows 0..2), hazard-left LEFT of a solid (columns
 9..11), and hazard-right RIGHT of a solid (columns 0..2). Their hitboxes cover exactly the three visible
 rows or columns, so a contact kills from any direction. Overlays have no terrain collision themselves.
@@ -70,10 +70,7 @@ def ledge(side):
 def hazard(side):
     im = Image.new("RGBA", (T, T))
     x, y, w, h = (HITBOXES[f"hazard-{side}"][k] for k in ("x", "y", "width", "height"))
-    rect(im, (x, y, x + w, y + h), "ink")
-    band = {"top": (0, 9, 12, 11), "bottom": (0, 1, 12, 3),
-            "left": (9, 0, 11, 12), "right": (1, 0, 3, 12)}[side]
-    rect(im, band, "red")
+    rect(im, (x, y, x + w, y + h), "red")
     return im
 
 
