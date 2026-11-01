@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """The climbing raccoon antagonist, separate from the retained pedestrian/room cast.
 
 Usage, from the repository root:
@@ -27,12 +26,12 @@ All tags loop. The generic behaviour state machine owns state timing and physica
 are art cycle defaults. Build writes art/antagonists/raccoon-antagonist.aseprite and its PNG/JSON export.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid, K  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid, K
 
 SRC = "art/antagonists"
 KEY = "raccoon-antagonist"
@@ -55,8 +54,7 @@ def arm(g, start, paw, far=False):
     steps = max(abs(x1 - x0), abs(y1 - y0))
     for i in range(steps + 1):
         t = i / max(1, steps)
-        g.ell(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 1.8, 1.8,
-              "slate" if far else "grey")
+        g.ell(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 1.8, 1.8, "slate" if far else "grey")
     g.rect(x1 - 1, y1 - 1, 3, 3, "ink")
 
 
@@ -80,12 +78,10 @@ def draw(state="idle", phase=0):
     # Far legs stand behind the round body; the near paw supplies the same ground anchor.
     feet = ((22, 46), (32, 46))
     if state == "climb":
-        feet = (((22, 46), (32, 42)), ((22, 45), (32, 45)),
-                ((22, 42), (32, 46)), ((22, 45), (32, 45)))[phase]
+        feet = (((22, 46), (32, 42)), ((22, 45), (32, 45)), ((22, 42), (32, 46)), ((22, 45), (32, 45)))[phase]
     elif moving:
         stride = (-3, 0, 3, 0)[phase] if rushing else (-2, 0, 2, 0)[phase]
-        feet = ((22 + stride, 44 if phase == 0 else 46),
-                (32 - stride, 44 if phase == 2 else 46))
+        feet = ((22 + stride, 44 if phase == 0 else 46), (32 - stride, 44 if phase == 2 else 46))
     elif dropping:
         feet = ((18, 44), (35, 43)) if phase == 0 else ((23, 43), (31, 43))
     for i, (x, y) in enumerate(feet):
@@ -113,8 +109,7 @@ def draw(state="idle", phase=0):
     g.rect(28 + shake, hy + 4, 3, 2, "ink")
     g.rect(28 + shake, hy + 8, 3, 1, "slate")
     if state == "climb":
-        near, far = (((42, 13), (13, 26)), ((42, 18), (13, 21)),
-                     ((42, 25), (13, 11)), ((42, 21), (13, 17)))[phase]
+        near, far = (((42, 13), (13, 26)), ((42, 18), (13, 21)), ((42, 25), (13, 11)), ((42, 21), (13, 17)))[phase]
     elif dropping:
         near, far = ((43, 22), (12, 25)) if phase == 0 else ((34, 36), (20, 35))
     elif moving:
@@ -134,18 +129,29 @@ def draw(state="idle", phase=0):
 
 
 def sprites():
-    yield KEY, [
-        ("idle", [draw("idle", i) for i in range(2)], 400),
-        ("climb", [draw("climb", i) for i in range(4)], 120),
-        ("prepare", [draw("prepare")], 400),
-        ("drop", [draw("drop", i) for i in range(2)], 100),
-        ("rest", [draw("rest", i) for i in range(2)], 400),
-        ("frustration", [draw("frustration", i) for i in range(4)], 120),
-        ("walk", [draw("walk", i) for i in range(4)], 120),
-        ("rush", [draw("rush", i) for i in range(4)], 80),
-    ]
+    yield (
+        KEY,
+        [
+            ("idle", [draw("idle", i) for i in range(2)], 400),
+            ("climb", [draw("climb", i) for i in range(4)], 120),
+            ("prepare", [draw("prepare")], 400),
+            ("drop", [draw("drop", i) for i in range(2)], 100),
+            ("rest", [draw("rest", i) for i in range(2)], 400),
+            ("frustration", [draw("frustration", i) for i in range(4)], 120),
+            ("walk", [draw("walk", i) for i in range(4)], 120),
+            ("rush", [draw("rush", i) for i in range(4)], 80),
+        ],
+    )
 
 
 if __name__ == "__main__":
-    pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-purple"], K["slate"], K["cream"]),
-               once=ONCE, hitboxes=HITBOX, contacts=(KEY,))
+    pixel.main(
+        sys.argv,
+        sprites,
+        SRC,
+        __doc__,
+        grounds=(K["zone-purple"], K["slate"], K["cream"]),
+        once=ONCE,
+        hitboxes=HITBOX,
+        contacts=(KEY,),
+    )

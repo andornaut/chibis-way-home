@@ -1,22 +1,22 @@
-#!/usr/bin/env python3
 """Bini bear encounter art: cute brown bear, no outfit, contact outline, new dialogue or mechanics.
 
 Usage: bear.py build | preview OUT.png, from repository root. Binary-alpha Endesga/house-ramp pixels.
 Bear-antagonist48x48, bottom24,48, fixed hitbox2,2,44,46 all poses and mirrors. Mouth offset36,22.
 Idle2x400ms seated with9x13phone; prepare2x160 annoyed looking up; growl4x120; walk4x120; rush4x80;
-maul3x100 forward paw; rest2x400; frustration4x120; prepare-attack2x160. All loop, once[]. Feet remain inside fixed frame.
+maul3x100 forward paw; rest2x400; frustration4x120; prepare-attack2x160. All loop, once[]. Feet remain inside fixed
+frame.
 Phone shows a tiny green road, cream dog and red bandana motif for Archie's Dog Walks, with no tiny text.
 Portrait-bear64x64 faces right, neutral/annoyed each1x1000ms, both loop. No hitbox or dialogue encoded.
 Bear-growl-wave48x32, left-centre anchor0,16; pulse4x100ms once[pulse], no hitbox. Rightward grey/cream
 arcs depict sound only. Runtime owns range, cover/high-ground avoidance, push, damage and despawn.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid, K  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid, K
 
 SRC = "art/antagonists"
 KEY = "bear-antagonist"
@@ -56,7 +56,7 @@ def prepare_attack(phase):
     for y in range(22, 31):
         g.ell(14 - (30 - y) * 0.4, y, 3, 3, "brown")
     g.ell(10, 20 - phase * 2, 5, 5, "brown", sh="dbrown", li="zone-peach-shade")
-    return g.outlined(lambda c: K["navy"])
+    return g.outlined(lambda _c: K["navy"])
 
 
 def draw(state="idle", phase=0):
@@ -98,7 +98,7 @@ def draw(state="idle", phase=0):
             t = i / 5
             g.ell(30 + (paw_x - 30) * t, 31 + (paw_y - 31) * t, 3, 3, "brown")
         g.ell(paw_x, paw_y, 3, 3, "brown", sh="dbrown")
-    return g.outlined(lambda c: K["navy"])
+    return g.outlined(lambda _c: K["navy"])
 
 
 def portrait(annoyed=False):
@@ -113,7 +113,7 @@ def portrait(annoyed=False):
     g.rect(37, 25, 4, 5, "ink")
     g.rect(37, 24 if annoyed else 22, 6, 2, "dbrown")
     phone(g, 45, 51)
-    return g.outlined(lambda c: K["navy"])
+    return g.outlined(lambda _c: K["navy"])
 
 
 def wave(phase):
@@ -124,19 +124,39 @@ def wave(phase):
                 d = ((x + 10) ** 2 + ((y - 16) * 1.7) ** 2) ** 0.5
                 if radius - 2 <= d <= radius:
                     g.p(x, y, "cream" if phase % 2 == 0 else "lgrey")
-    return g.outlined(lambda c: K["dslate"])
+    return g.outlined(lambda _c: K["dslate"])
 
 
 def sprites():
-    yield KEY, [(state, [draw(state, i) for i in range(count)], ms)
-                for state, count, ms in (("idle", 2, 400), ("prepare", 2, 160), ("growl", 4, 120),
-                                         ("walk", 4, 120), ("rush", 4, 80), ("maul", 3, 100),
-                                         ("rest", 2, 400), ("frustration", 4, 120),
-                                         ("prepare-attack", 2, 160))]
+    yield (
+        KEY,
+        [
+            (state, [draw(state, i) for i in range(count)], ms)
+            for state, count, ms in (
+                ("idle", 2, 400),
+                ("prepare", 2, 160),
+                ("growl", 4, 120),
+                ("walk", 4, 120),
+                ("rush", 4, 80),
+                ("maul", 3, 100),
+                ("rest", 2, 400),
+                ("frustration", 4, 120),
+                ("prepare-attack", 2, 160),
+            )
+        ],
+    )
     yield PORTRAIT, [("neutral", [portrait()], 1000), ("annoyed", [portrait(True)], 1000)]
     yield WAVE, [("pulse", [wave(i) for i in range(4)], 100)]
 
 
 if __name__ == "__main__":
-    pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-green"], K["slate"]),
-               once=ONCE, hitboxes=HITBOX, contacts=(KEY,))
+    pixel.main(
+        sys.argv,
+        sprites,
+        SRC,
+        __doc__,
+        grounds=(K["zone-green"], K["slate"]),
+        once=ONCE,
+        hitboxes=HITBOX,
+        contacts=(KEY,),
+    )

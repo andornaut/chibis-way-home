@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Furt's active thrown parcel:24x24 canvas, bottom-centre12,24, visible16x16 at hitbox4,8,16,16.
 
 Usage: ferret_parcel.py build | preview OUT.png, from repository root.
@@ -7,12 +6,12 @@ brown cardboard and cream tape. No spikes, text or new mechanics. Runtime owns a
 no travel is baked into the single frame. This active projectile differs from nonlethal opening parcels.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid, K  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid, K
 
 KEY = "ferret-parcel"
 SRC = "art/antagonists"
@@ -41,5 +40,4 @@ def sprites():
 
 
 if __name__ == "__main__":
-    pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-red"], K["slate"]),
-               once=ONCE, hitboxes=HITBOX)
+    pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-red"], K["slate"]), once=ONCE, hitboxes=HITBOX)

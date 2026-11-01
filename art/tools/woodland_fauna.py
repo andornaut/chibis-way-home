@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Naturalistic decorative woodland fauna. No actors, collision, dialogue, plot or interaction.
 
 Usage: woodland_fauna.py build | preview OUT.png, from repository root.
@@ -9,12 +8,12 @@ small streamlined body. Animation contains pose changes only; gameplay owns plac
 Neither sprite declares a hitbox or contact mask. Tech owns decorative background depth and parallax.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid, K  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid, K
 
 SRC = "art/scenery"
 ONCE = {"background-deer": [], "background-swallow": []}
@@ -56,8 +55,10 @@ def swallow(phase):
 
 
 def sprites():
-    yield "background-deer", [("idle", [deer(phase=i) for i in range(2)], 900),
-                              ("graze", [deer("graze", i) for i in range(4)], 300)]
+    yield (
+        "background-deer",
+        [("idle", [deer(phase=i) for i in range(2)], 900), ("graze", [deer("graze", i) for i in range(4)], 300)],
+    )
     yield "background-swallow", [("flight", [swallow(i) for i in range(4)], 120)]
 
 

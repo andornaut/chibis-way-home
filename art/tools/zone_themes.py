@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Canonical zone-primary assignments and muted ramps. No gameplay content is declared here.
 
 Each primary has one muted shade, then joins an existing house-palette ramp. Build writes the minimal
@@ -9,11 +8,12 @@ Usage: zone_themes.py build
 Run from the repository root.
 """
 
+import importlib
 import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Route order carries meaning. Materials and atmosphere determine each destination's single primary.
 THEMES = {
@@ -28,14 +28,19 @@ OUT = "public/art/zone-themes.json"
 
 
 def colours():
-    return {name: colour for theme in THEMES.values()
-            for name, colour in ((theme["primary"], theme["colour"]),
-                                 (theme["primary"] + "-shade", theme["shade"]))}
+    return {
+        name: colour
+        for theme in THEMES.values()
+        for name, colour in ((theme["primary"], theme["colour"]), (theme["primary"] + "-shade", theme["shade"]))
+    }
 
 
 def ramps(house):
-    return {colour: darker for theme in THEMES.values()
-            for colour, darker in ((theme["colour"], theme["shade"]), (theme["shade"], house[theme["end"]]))}
+    return {
+        colour: darker
+        for theme in THEMES.values()
+        for colour, darker in ((theme["colour"], theme["shade"]), (theme["shade"], house[theme["end"]]))
+    }
 
 
 def assignments():
@@ -43,10 +48,10 @@ def assignments():
 
 
 def build():
-    import pixel
+    pixel = importlib.import_module("pixel")
 
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w") as out:
+    Path(str(Path(OUT).parent)).mkdir(parents=True, exist_ok=True)
+    with Path(OUT).open("w") as out:
         json.dump(assignments(), out, indent=2, sort_keys=True)
         out.write("\n")
     pixel.update_manifest("data", [{"key": "zone-themes", "json": "zone-themes.json"}])

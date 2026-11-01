@@ -1,7 +1,8 @@
 """Furt the ferret: the villain's sprite and its dialogue portrait.
 
 Usage, from the repository root:
-  python3 -I art/tools/ferret.py build            write art/ferret/<key>.aseprite and public/art/sprites/<key>.png + .json
+  python3 -I art/tools/ferret.py build            write art/ferret/<key>.aseprite and public/art/sprites/<key>.png +
+  .json
   python3 -I art/tools/ferret.py preview OUT.png  contact sheet of every frame on slate, tan and cream
 
 Design: a champagne ferret standing up on its hind legs, modelled on a natural ferret rather than a chibi: a long,
@@ -51,18 +52,28 @@ mouth turned down).
 """
 
 import math
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid
 
 SRC = "art/ferret"
 W, H = 64, 80
 GROUND = 78  # the feet's bottom row; the outline is row 79
-COAT = dict(coat="skin1", shade="skin2", rim="cream", leg="brown", far="dbrown", band="white", mask="skin2",
-            ear="skin2", nose="pink", edge="dbrown")
+COAT = {
+    "coat": "skin1",
+    "shade": "skin2",
+    "rim": "cream",
+    "leg": "brown",
+    "far": "dbrown",
+    "band": "white",
+    "mask": "skin2",
+    "ear": "skin2",
+    "nose": "pink",
+    "edge": "dbrown",
+}
 HAT = ("plum", "dbrown", "red")  # crown, rim light, band
 BOW = ("red", "dred")
 ACCENTS = {pixel.hexc(c) for c in HAT + BOW}
@@ -100,8 +111,8 @@ def eye(g, x, y, state, big=False):
     lid = {"open": 0, "third": n // 3, "half": n // 2}[state]
     if lid:
         rect(g, x, y, n, lid, COAT["mask"])
-    rect(g, x, y + lid - 1, n, 1, "brown")                  # the lid line, soft
-    g.p(x + n, y + lid, "brown")                            # dipping at the outer corner
+    rect(g, x, y + lid - 1, n, 1, "brown")  # the lid line, soft
+    g.p(x + n, y + lid, "brown")  # dipping at the outer corner
 
 
 def hat(g, cx, bottom, k=1.0):
@@ -136,7 +147,7 @@ def face(g, ex, ey, rx, ry, snout, eye_state, mouth, big=False, brow=False):
     exx, eyy = round(ex + rx * 0.05), round(ey - ry * 0.45)
     g.ell(exx + n / 2, eyy + n / 2, n * 0.85, n * 0.62, c["mask"])
     eye(g, exx, eyy, eye_state, big)
-    if brow:                                                    # dipped towards the snout
+    if brow:  # dipped towards the snout
         for i in range(n + 1):
             rect(g, exx - 1 + i, eyy - 3 + i // 3, 1, 2, "dbrown")
     s = 2 if big else 1
@@ -168,8 +179,10 @@ def draw(lift=0, head_dy=0, paws="rest", eye_state="open", mouth="smile"):
     mx, my = (hx + nx) / 2 + ARCH, (hy + ny) / 2
 
     def spine(t):
-        return ((1 - t) ** 2 * hx + 2 * t * (1 - t) * mx + t * t * nx,
-                (1 - t) ** 2 * hy + 2 * t * (1 - t) * my + t * t * ny)
+        return (
+            (1 - t) ** 2 * hx + 2 * t * (1 - t) * mx + t * t * nx,
+            (1 - t) ** 2 * hy + 2 * t * (1 - t) * my + t * t * ny,
+        )
 
     rh, rc, rn = RADII
 
@@ -199,7 +212,7 @@ def draw(lift=0, head_dy=0, paws="rest", eye_state="open", mouth="smile"):
     # the head, level
     rx, ry, snout = HEAD
     ex, ey = nx + 3, ny - ry + 1 + head_dy
-    tip = face(g, ex, ey, rx, ry, snout, eye_state, mouth)
+    face(g, ex, ey, rx, ry, snout, eye_state, mouth)
     # the arms, short and dark, their paws a 3x2 cap in the rim colour
     sx, sy = spine(0.8)
     if paws in ("steeple", "tap"):
@@ -214,19 +227,23 @@ def draw(lift=0, head_dy=0, paws="rest", eye_state="open", mouth="smile"):
         rect(g, sx + 7, sy + 8, 3, 2, c["rim"])
     bow_tie(g, ex + 2, ey + ry + 2)
     hat(g, ex - 1, round(ey - ry + 2))
-    return [row[::-1] for row in outline(g)]                    # mirror to face left
+    return [row[::-1] for row in outline(g)]  # mirror to face left
 
 
 def ferret_tags():
     return [
         ("idle", [draw(), draw(lift=1)], 400),
-        ("scheme", [draw(paws="steeple", eye_state="half", mouth="grin"),
-                    draw(paws="tap", eye_state="half", mouth="grin")], 160),
+        (
+            "scheme",
+            [draw(paws="steeple", eye_state="half", mouth="grin"), draw(paws="tap", eye_state="half", mouth="grin")],
+            160,
+        ),
         ("talk", [draw(), draw(head_dy=-1, mouth="open")], 150),
     ]
 
 
 # ---------------------------------------------------------------------------------------------- portrait
+
 
 def portrait(expr):
     """64x64: the head and neck facing right, cut off by the bottom edge, one ink outer line."""
@@ -236,13 +253,13 @@ def portrait(expr):
     disc_line(g, (23, 72), (29, 42), 11, c["shade"])
     disc_line(g, (21, 71), (27, 41), 10, c["rim"])
     disc_line(g, (22, 71), (28, 41), 9.5, c["coat"])
-    eye_state = dict(neutral="open", smug="half", annoyed="third")[expr]
-    mouth = dict(neutral="smile", smug="grin", annoyed="pout")[expr]
+    eye_state = {"neutral": "open", "smug": "half", "annoyed": "third"}[expr]
+    mouth = {"neutral": "smile", "smug": "grin", "annoyed": "pout"}[expr]
     ex, ey = 26, 33
     face(g, ex, ey, 14, 11, 12, eye_state, mouth, big=True, brow=expr == "annoyed")
     bow_tie(g, 31, 52, k=1.4)
     hat(g, 24, ey - 9, k=1.4)
-    return g.outlined(lambda col: pixel.hexc("ink"))
+    return g.outlined(lambda _col: pixel.hexc("ink"))
 
 
 def portrait_tags():

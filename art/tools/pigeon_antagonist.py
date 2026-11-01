@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Pebble, the pigeon antagonist, and a separate falling white-block hazard. Neither adds story or text.
 
 Usage: pigeon_antagonist.py build | preview OUT.png
@@ -19,13 +18,13 @@ with a 1px ink border keeps this user-approved white hazard visible on pale sky.
 Preview includes a native contact sheet and an illustrative industrial-lavender scene/GIF, not a simulation.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid, K  # noqa: E402
-from PIL import Image, ImageDraw, ImageOps  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image, ImageDraw, ImageOps
+from pixel import Grid, K
 
 SRC = "art/antagonists"
 KEY = "pigeon-antagonist"
@@ -67,7 +66,7 @@ def swoop(phase):
     g.tri((39, hy + 3), (43, hy + 8), (36, hy + 6), "brown")
     g.rect(36, hy - 1, 3, 3, "ink")
     g.rect(36, hy - 1, 2, 2, "cream")
-    return g.outlined(lambda c: K["navy"])
+    return g.outlined(lambda _c: K["navy"])
 
 
 def prepare_air(phase):
@@ -88,7 +87,7 @@ def prepare_air(phase):
     g.tri((39, hy + 1), (43, hy + 6), (37, hy + 5), "brown")
     g.rect(35, hy - 2, 4, 3, "ink")
     g.rect(35, hy - 2, 2, 2, "cream")
-    return g.outlined(lambda c: K["navy"])
+    return g.outlined(lambda _c: K["navy"])
 
 
 def draw(state="idle", phase=0):
@@ -114,9 +113,15 @@ def draw(state="idle", phase=0):
     g.blob(25, 33 - lift, 13, 11, "grey", sh="slate", li="lgrey")
     g.ell(31, 33 - lift, 7, 10, "cream")
     g.ell(29, 25 - lift, 7, 7, "zone-purple-shade")
-    wing_pose = ("up", "half", "down", "half")[phase] if state == "fly" else \
-        ("up", "half")[phase] if state == "drop" else \
-        "half" if state == "frustration" and phase % 2 else "folded"
+    wing_pose = (
+        ("up", "half", "down", "half")[phase]
+        if state == "fly"
+        else ("up", "half")[phase]
+        if state == "drop"
+        else "half"
+        if state == "frustration" and phase % 2
+        else "folded"
+    )
     wing(g, wing_pose, lift)
     hx, hy = 30 + shake, 17 - lift - alert
     g.blob(hx, hy, 9, 8, "grey", sh="slate", li="lgrey")
@@ -127,7 +132,7 @@ def draw(state="idle", phase=0):
     else:
         g.rect(hx + 3, hy - 3, 4 if state == "prepare" else 3, 3, "ink")
         g.rect(hx + 3, hy - 3, 2, 2, "cream")
-    return g.outlined(lambda c: K["navy"])
+    return g.outlined(lambda _c: K["navy"])
 
 
 def poop():
@@ -138,16 +143,19 @@ def poop():
 
 
 def sprites():
-    yield KEY, [
-        ("idle", [draw("idle", i) for i in range(2)], 400),
-        ("prepare", [draw("prepare", i) for i in range(2)], 160),
-        ("fly", [draw("fly", i) for i in range(4)], 100),
-        ("drop", [draw("drop", i) for i in range(2)], 100),
-        ("rest", [draw("rest", i) for i in range(2)], 400),
-        ("frustration", [draw("frustration", i) for i in range(4)], 120),
-        ("swoop", [draw("swoop", i) for i in range(4)], 100),
-        ("prepare-air", [draw("prepare-air", i) for i in range(2)], 160),
-    ]
+    yield (
+        KEY,
+        [
+            ("idle", [draw("idle", i) for i in range(2)], 400),
+            ("prepare", [draw("prepare", i) for i in range(2)], 160),
+            ("fly", [draw("fly", i) for i in range(4)], 100),
+            ("drop", [draw("drop", i) for i in range(2)], 100),
+            ("rest", [draw("rest", i) for i in range(2)], 400),
+            ("frustration", [draw("frustration", i) for i in range(4)], 120),
+            ("swoop", [draw("swoop", i) for i in range(4)], 100),
+            ("prepare-air", [draw("prepare-air", i) for i in range(2)], 160),
+        ],
+    )
     yield POOP, [("idle", [poop()], 400)]
 
 
@@ -156,22 +164,22 @@ def image(px):
     for y, row in enumerate(px):
         for x, c in enumerate(row):
             if c:
-                im.putpixel((x, y), pixel.rgb(c) + (255,))
+                im.putpixel((x, y), (*pixel.rgb(c), 255))
     return im
 
 
 def context(state="idle", phase=0):
-    im = Image.new("RGBA", (720, 360), pixel.rgb("zone-purple") + (255,))
+    im = Image.new("RGBA", (720, 360), (*pixel.rgb("zone-purple"), 255))
     d = ImageDraw.Draw(im)
     for x, y, w in ((0, 110, 150), (170, 150, 130), (470, 95, 180), (650, 150, 70)):
-        d.rectangle((x, y, x + w, 260), fill=pixel.rgb("zone-purple-shade") + (255,))
-    d.rectangle((0, 260, 719, 359), fill=pixel.rgb("dslate") + (255,))
-    d.rectangle((0, 260, 719, 260), fill=pixel.rgb("navy") + (255,))
-    d.rectangle((0, 261, 719, 262), fill=pixel.rgb("white") + (255,))
+        d.rectangle((x, y, x + w, 260), fill=(*pixel.rgb("zone-purple-shade"), 255))
+    d.rectangle((0, 260, 719, 359), fill=(*pixel.rgb("dslate"), 255))
+    d.rectangle((0, 260, 719, 260), fill=(*pixel.rgb("navy"), 255))
+    d.rectangle((0, 261, 719, 262), fill=(*pixel.rgb("white"), 255))
     # Plain post illustrates placement only; the reusable physical structure belongs to gameplay.
-    d.rectangle((215, 220, 238, 259), fill=pixel.rgb("slate") + (255,))
-    d.rectangle((215, 220, 238, 220), fill=pixel.rgb("navy") + (255,))
-    d.rectangle((215, 221, 238, 222), fill=pixel.rgb("white") + (255,))
+    d.rectangle((215, 220, 238, 259), fill=(*pixel.rgb("slate"), 255))
+    d.rectangle((215, 220, 238, 220), fill=(*pixel.rgb("navy"), 255))
+    d.rectangle((215, 221, 238, 222), fill=(*pixel.rgb("white"), 255))
     px = 203 if state in ("idle", "prepare", "rest", "frustration") else 300
     py = 172 if px == 203 else 120
     im.alpha_composite(image(draw(state, phase)), (px, py))
@@ -183,14 +191,14 @@ def context(state="idle", phase=0):
 
 
 def preview(out):
-    tags = list(sprites())[0][1]
-    sheet = Image.new("RGBA", (720, max(360, len(tags) * 56 + 16)), pixel.rgb("zone-purple") + (255,))
+    tags = next(iter(sprites()))[1]
+    sheet = Image.new("RGBA", (720, max(360, len(tags) * 56 + 16)), (*pixel.rgb("zone-purple"), 255))
     for row, (_, frames, _) in enumerate(tags):
         for col, px in enumerate(frames):
             sheet.alpha_composite(image(px), (24 + col * 72, 8 + row * 56))
     sheet.alpha_composite(image(poop()), (368, 24))
     sheet.save(out)
-    stem, _ = os.path.splitext(out)
+    stem = str(Path(out).with_suffix(""))
     scene = context("prepare-air", 0)
     scene.save(stem + "-context.png")
     scene.resize((864, 432), Image.Resampling.NEAREST).save(stem + "-phone.png")
@@ -204,5 +212,13 @@ if __name__ == "__main__":
     if len(sys.argv) == 3 and sys.argv[1] == "preview":
         preview(sys.argv[2])
     else:
-        pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-purple"], K["slate"], K["cream"]),
-                   once=ONCE, hitboxes=HITBOX, contacts=(KEY,))
+        pixel.main(
+            sys.argv,
+            sprites,
+            SRC,
+            __doc__,
+            grounds=(K["zone-purple"], K["slate"], K["cream"]),
+            once=ONCE,
+            hitboxes=HITBOX,
+            contacts=(KEY,),
+        )

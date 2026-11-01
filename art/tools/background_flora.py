@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Small naturalistic decorative reeds,24x24, bottom-centre12,24. No collision or interaction.
 
 Usage: background_flora.py build | preview OUT.png, from repository root.
@@ -8,12 +7,12 @@ Gameplay owns placement/timing. Use the existing scenery animation and parallax 
 rooted flora independently of its supporting ground plane. Sprite bounds0,0,24,24, no hitbox/contact mask.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid, K  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid, K
 
 SRC = "art/scenery"
 KEY = "background-reeds"
@@ -28,8 +27,7 @@ def draw(phase):
             x = root + (tip + bend - root) * (24 - y) / (24 - top)
             g.rect(int(x), y, 2, 1, "zone-green-shade")
         g.rect(tip + bend, top, 2, 4, "zone-peach-shade")
-    for tip, join in (((2 + bend, 10), (11, 22)), ((21 + bend, 12), (15, 23)),
-                      ((4 + bend, 17), (13, 24))):
+    for tip, join in (((2 + bend, 10), (11, 22)), ((21 + bend, 12), (15, 23)), ((4 + bend, 17), (13, 24))):
         x, y = tip
         ex, ey = join
         g.tri((x, y), (ex - 1, ey), ((x + ex) / 2, (y + ey) / 2 - 2), "zone-green-shade")

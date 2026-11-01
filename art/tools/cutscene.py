@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Neutral reusable stage-transition illustration, 720x360, fully opaque, with no baked text or controls.
 
 Usage: cutscene.py build | preview OUT.png
@@ -14,13 +13,13 @@ Preview overlays the existing primary button and font-body label; neither is inc
 """
 
 import json
-import os
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from PIL import Image, ImageDraw, ImageOps  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image, ImageDraw, ImageOps
 
 KEY = "stage-cutscene-placeholder"
 OUT = f"public/art/images/{KEY}.png"
@@ -29,7 +28,7 @@ REGISTRY = {"key": KEY, "png": f"images/{KEY}.png", "width": 720, "height": 360}
 
 
 def sprite(key, tag):
-    with open(f"public/art/sprites/{key}.json") as f:
+    with Path(f"public/art/sprites/{key}.json").open() as f:
         data = json.load(f)
     frame_id = next(t["from"] for t in data["meta"]["frameTags"] if t["name"] == tag)
     frame = list(data["frames"].values())[frame_id]["frame"]
@@ -39,25 +38,25 @@ def sprite(key, tag):
 
 
 def illustration():
-    im = Image.new("RGBA", SIZE, pixel.rgb("lgrey") + (255,))
+    im = Image.new("RGBA", SIZE, (*pixel.rgb("lgrey"), 255))
     draw = ImageDraw.Draw(im)
     # Broad neutral blocks suggest depth without depicting a new destination or story prop.
     for box in ((0, 142, 112, 247), (58, 102, 156, 247), (560, 118, 656, 247), (624, 160, 719, 247)):
-        draw.rounded_rectangle(box, radius=10, fill=pixel.rgb("grey") + (255,))
+        draw.rounded_rectangle(box, radius=10, fill=(*pixel.rgb("grey"), 255))
     for box in ((0, 218, 184, 247), (536, 218, 719, 247)):
-        draw.rounded_rectangle(box, radius=6, fill=pixel.rgb("slate") + (255,))
+        draw.rounded_rectangle(box, radius=6, fill=(*pixel.rgb("slate"), 255))
     # Shared safe-edge grammar: one dark edge and two light pixels over the solid floor.
-    draw.rectangle((0, 248, 719, 359), fill=pixel.rgb("slate") + (255,))
-    draw.rectangle((0, 248, 719, 248), fill=pixel.rgb("navy") + (255,))
-    draw.rectangle((0, 249, 719, 250), fill=pixel.rgb("white") + (255,))
-    draw.rectangle((0, 251, 719, 254), fill=pixel.rgb("grey") + (255,))
+    draw.rectangle((0, 248, 719, 359), fill=(*pixel.rgb("slate"), 255))
+    draw.rectangle((0, 248, 719, 248), fill=(*pixel.rgb("navy"), 255))
+    draw.rectangle((0, 249, 719, 250), fill=(*pixel.rgb("white"), 255))
+    draw.rectangle((0, 251, 719, 254), fill=(*pixel.rgb("grey"), 255))
     bird = sprite("bird", "idle")
     im.alpha_composite(bird, (336, 248 - bird.height))
     return im
 
 
 def build():
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    Path(str(Path(OUT).parent)).mkdir(parents=True, exist_ok=True)
     illustration().save(OUT)
 
 
@@ -72,8 +71,10 @@ def button(im, box):
             piece = piece.resize((dx[col + 1] - dx[col], dy[row + 1] - dy[row]), Image.Resampling.NEAREST)
             im.alpha_composite(piece, (dx[col], dy[row]))
     # Preview-only existing action label, never exported in the backdrop.
-    chars = {int(c.attrib["id"]): {k: int(v) for k, v in c.attrib.items()}
-             for c in ET.parse("public/art/fonts/font-body.fnt").findall("chars/char")}
+    chars = {
+        int(c.attrib["id"]): {k: int(v) for k, v in c.attrib.items()}
+        for c in ET.parse("public/art/fonts/font-body.fnt").findall("chars/char")  # noqa: S314 - Fixed local BMFont export.
+    }
     atlas = Image.open("public/art/fonts/font-body.png").convert("RGBA")
     label = "Continue"
     width = sum(chars[ord(c)]["xadvance"] for c in label) * 2 - 2
@@ -90,7 +91,7 @@ def preview(out):
     im = illustration()
     button(im, (280, 296, 160, 48))
     im.save(out)
-    stem, _ = os.path.splitext(out)
+    stem = str(Path(out).with_suffix(""))
     ImageOps.grayscale(im).save(stem + "-grey.png")
     im.resize((864, 432), Image.Resampling.NEAREST).save(stem + "-phone.png")
 

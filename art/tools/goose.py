@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Trixi, the countryside goose antagonist with oversized glasses: a long-necked cream-and-grey bird, distinct from the
 round bird.
 
@@ -26,14 +25,16 @@ an amber edge and moving 2px yellow tick over a 1px ink rim. Armed loops 1x400ms
 the visible arming delay and enables collision only when armed; metadata declares the fixed shape only.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import bird  # noqa: E402
-import pixel  # noqa: E402
-import obstacles  # noqa: E402
-from pixel import Grid, K  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import itertools
+
+import bird
+import obstacles
+import pixel
+from pixel import Grid, K
 
 KEY = "goose-antagonist"
 SRC = "art/antagonists"
@@ -45,7 +46,7 @@ HITBOX = {KEY: (2, 2, 44, 46), TRAP: (0, 8, 24, 4)}
 def neck_shape(points):
     """A smooth, connected feathered neck from overlapping three-pixel-radius discs."""
     discs = []
-    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+    for (x0, y0), (x1, y1) in itertools.pairwise(points):
         steps = max(abs(x1 - x0), abs(y1 - y0))
         for i in range(steps + 1):
             t = i / max(1, steps)
@@ -99,11 +100,9 @@ def draw(state="idle", phase=0):
         bird.cel(g, bird.in_ell(20, by + 1, 8, 4.5, -0.2), "grey", "dslate", None, 2, 1)
     if state == "frustration":
         angle = -0.45 if phase % 2 else 0.4
-        bird.cel(g, bird.in_ell(19, 30 if phase % 2 else 35, 11, 4, angle),
-                 "lgrey", "grey", "white", 2, 1)
+        bird.cel(g, bird.in_ell(19, 30 if phase % 2 else 35, 11, 4, angle), "lgrey", "grey", "white", 2, 1)
     if state == "set-trap":
-        bird.cel(g, bird.in_ell(25, (35, 38, 41, 38)[phase], 8, 3, 0.3),
-                 "grey", "dslate", None, 2, 1)
+        bird.cel(g, bird.in_ell(25, (35, 38, 41, 38)[phase], 8, 3, 0.3), "grey", "dslate", None, 2, 1)
     px = g.outlined(lambda c: K["navy"] if c in (K["grey"], K["dslate"]) else K["dslate"])
     return glasses(px, hx, hy, resting)
 
@@ -129,8 +128,13 @@ def trap(state="armed", phase=0):
         for x in range(24):
             c = tile.getpixel((x % 12, y))
             if c[3]:
-                g.p(x, y, "amber" if state == "warning" and c[:3] == pixel.rgb("red") else
-                    "%02x%02x%02x" % c[:3])
+                g.p(
+                    x,
+                    y,
+                    "amber"
+                    if state == "warning" and c[:3] == pixel.rgb("red")
+                    else "{:02x}{:02x}{:02x}".format(*c[:3]),
+                )
     if state == "warning":
         g.rect(0, 8, 24, 1, None)
         g.rect(0, 11, 24, 1, "ink")
@@ -139,21 +143,35 @@ def trap(state="armed", phase=0):
 
 
 def sprites():
-    yield KEY, [
-        ("idle", [draw("idle", i) for i in range(2)], 400),
-        ("walk", [draw("walk", i) for i in range(4)], 120),
-        ("warn", [draw("warn", i) for i in range(2)], 160),
-        ("rush", [draw("rush", i) for i in range(4)], 80),
-        ("rest", [draw("rest", i) for i in range(2)], 400),
-        ("frustration", [draw("frustration", i) for i in range(4)], 120),
-        ("set-trap", [draw("set-trap", i) for i in range(4)], 120),
-    ]
-    yield TRAP, [
-        ("warning", [trap("warning", i) for i in range(4)], 120),
-        ("armed", [trap()], 400),
-    ]
+    yield (
+        KEY,
+        [
+            ("idle", [draw("idle", i) for i in range(2)], 400),
+            ("walk", [draw("walk", i) for i in range(4)], 120),
+            ("warn", [draw("warn", i) for i in range(2)], 160),
+            ("rush", [draw("rush", i) for i in range(4)], 80),
+            ("rest", [draw("rest", i) for i in range(2)], 400),
+            ("frustration", [draw("frustration", i) for i in range(4)], 120),
+            ("set-trap", [draw("set-trap", i) for i in range(4)], 120),
+        ],
+    )
+    yield (
+        TRAP,
+        [
+            ("warning", [trap("warning", i) for i in range(4)], 120),
+            ("armed", [trap()], 400),
+        ],
+    )
 
 
 if __name__ == "__main__":
-    pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-green"], K["slate"], K["cream"]),
-               once=ONCE, hitboxes=HITBOX, contacts=(KEY,))
+    pixel.main(
+        sys.argv,
+        sprites,
+        SRC,
+        __doc__,
+        grounds=(K["zone-green"], K["slate"], K["cream"]),
+        once=ONCE,
+        hitboxes=HITBOX,
+        contacts=(KEY,),
+    )

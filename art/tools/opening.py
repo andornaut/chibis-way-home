@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Export the approved storybook opening's painted sources and demonstrate its layered motion.
 
 Usage from the repository root: opening.py build | preview OUT.gif | board OUT.png
@@ -48,11 +47,19 @@ def source_cells(kind, size):
     if kind == "parcel":
         # The source's open flaps use more horizontal space than its closed carton.
         top_split, bottom_split = round(width * 0.54), round(width * 0.49)
-        return [(0, 0, top_split, middle), (top_split, 0, width, middle),
-                (0, middle, bottom_split, height), (bottom_split, middle, width, height)]
+        return [
+            (0, 0, top_split, middle),
+            (top_split, 0, width, middle),
+            (0, middle, bottom_split, height),
+            (bottom_split, middle, width, height),
+        ]
     split = width // 2
-    return [(0, 0, split, middle), (split, 0, width, middle),
-            (0, middle, split, height), (split, middle, width, height)]
+    return [
+        (0, 0, split, middle),
+        (split, 0, width, middle),
+        (0, middle, split, height),
+        (split, middle, width, height),
+    ]
 
 
 def pose_frames(spec, kind):
@@ -65,12 +72,11 @@ def pose_frames(spec, kind):
         if bounds is None:
             raise ValueError(f"Empty opening pose: {kind}")
         crops.append(pose.crop(bounds))
-    scale = min(spec["envelope"][0] / max(p.width for p in crops),
-                spec["envelope"][1] / max(p.height for p in crops))
+    scale = min(spec["envelope"][0] / max(p.width for p in crops), spec["envelope"][1] / max(p.height for p in crops))
     frames = []
-    for pose in crops:
-        size = (max(1, round(pose.width * scale)), max(1, round(pose.height * scale)))
-        pose = pose.resize(size, Image.Resampling.LANCZOS)
+    for source_pose in crops:
+        size = (max(1, round(source_pose.width * scale)), max(1, round(source_pose.height * scale)))
+        pose = source_pose.resize(size, Image.Resampling.LANCZOS)
         pose.putalpha(pose.getchannel("A").point(lambda alpha: 255 if alpha >= 128 else 0))
         frame = Image.new("RGBA", FRAME)
         frame.alpha_composite(pose, (ANCHOR[0] - pose.width // 2, ANCHOR[1] - pose.height))
@@ -83,16 +89,23 @@ def sprite_metadata(key, tags, frames):
         "frames": {
             f"{key}-{index}": {
                 "frame": {"x": index % 2 * 256, "y": index // 2 * 256, "w": 256, "h": 256},
-                "rotated": False, "trimmed": False,
+                "rotated": False,
+                "trimmed": False,
                 "spriteSourceSize": {"x": 0, "y": 0, "w": 256, "h": 256},
-                "sourceSize": {"w": 256, "h": 256}, "duration": 1000,
-            } for index in range(len(frames))
+                "sourceSize": {"w": 256, "h": 256},
+                "duration": 1000,
+            }
+            for index in range(len(frames))
         },
         "meta": {
-            "app": "opening-art", "image": f"{key}.png", "format": "RGBA8888",
-            "size": {"w": 512, "h": 512}, "scale": "1",
-            "frameTags": [{"name": name, "from": index, "to": index, "direction": "forward"}
-                          for index, name in enumerate(tags)],
+            "app": "opening-art",
+            "image": f"{key}.png",
+            "format": "RGBA8888",
+            "size": {"w": 512, "h": 512},
+            "scale": "1",
+            "frameTags": [
+                {"name": name, "from": index, "to": index, "direction": "forward"} for index, name in enumerate(tags)
+            ],
         },
     }
 
@@ -116,7 +129,9 @@ def build():
         "viewport": {"width": 720, "height": 360},
         "frame": {"width": 256, "height": 256, "columns": 2, "rows": 2},
         "anchor": {"x": 128, "y": 232},
-        "backgrounds": {}, "poses": {}, "parcelFrontEdges": [],
+        "backgrounds": {},
+        "poses": {},
+        "parcelFrontEdges": [],
         "layerOrder": ["background", "parcel", "actors", "parcel-front"],
     }
     for name in BACKGROUNDS:
@@ -132,7 +147,7 @@ def build():
         contract["poses"][key] = {name: index for index, name in enumerate(spec["tags"])}
         if kind == "parcel":
             front = []
-            for index, (pose, fraction) in enumerate(zip(frames, (0.48, 0.36, 0.0, 0.50))):
+            for _index, (pose, fraction) in enumerate(zip(frames, (0.48, 0.36, 0.0, 0.50), strict=False)):
                 bounds = pose.getbbox()
                 edge = bounds[1] + round((bounds[3] - bounds[1]) * fraction)
                 layer = pose.copy()
@@ -162,8 +177,7 @@ def actor(canvas, feet, key, index, scale=1, angle=0, opacity=1):
         pose.putalpha(pose.getchannel("A").point(lambda alpha: round(alpha * opacity)))
     if scale != 1:
         pose = pose.resize((round(256 * scale), round(256 * scale)), Image.Resampling.LANCZOS)
-    canvas.alpha_composite(pose, (round(feet[0] - ANCHOR[0] * scale),
-                                round(feet[1] - ANCHOR[1] * scale)))
+    canvas.alpha_composite(pose, (round(feet[0] - ANCHOR[0] * scale), round(feet[1] - ANCHOR[1] * scale)))
 
 
 def study_frame(beat, phase):
@@ -188,8 +202,13 @@ def study_frame(beat, phase):
             actor(image, (bird_x, bird_y), "opening-chibi", 2, breathe)
         actor(image, (358, 270), "opening-parcel-front", parcel_frame)
     elif beat == 3:
-        actor(image, (-110 + phase * 940, 236 + 4 * math.sin(phase * math.tau)), "opening-parcel", 2,
-              angle=2 * math.sin(phase * math.tau * 2))
+        actor(
+            image,
+            (-110 + phase * 940, 236 + 4 * math.sin(phase * math.tau)),
+            "opening-parcel",
+            2,
+            angle=2 * math.sin(phase * math.tau * 2),
+        )
     else:
         parcel_frame = 2 if phase < 0.12 else 1 if phase < 0.24 else 3
         actor(image, (360, 270), "opening-parcel", parcel_frame)
@@ -209,9 +228,13 @@ def preview(path):
 
 
 def board(path):
-    points = [(0, 0.4, "Friendship"), (1, 0.5, "Argument"),
-              (2, 0.5, "Sleeping Chibi is packed"), (3, 0.5, "Postal transit"),
-              (4, 0.5, "Waking far from home")]
+    points = [
+        (0, 0.4, "Friendship"),
+        (1, 0.5, "Argument"),
+        (2, 0.5, "Sleeping Chibi is packed"),
+        (3, 0.5, "Postal transit"),
+        (4, 0.5, "Waking far from home"),
+    ]
     page = Image.new("RGB", (1440, 1176), "#222034")
     draw = ImageDraw.Draw(page)
     for index, (beat, phase, label) in enumerate(points):

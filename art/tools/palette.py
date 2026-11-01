@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Write the house and zone palettes and their ramps as data for the game: public/art/palette.json.
 
 Shape (every key sorted, colours as lower-case "#rrggbb", the file ending with a newline):
@@ -22,11 +21,12 @@ Run from the repository root.
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image, ImageDraw
 
 OUT = "public/art/palette.json"
 
@@ -43,18 +43,18 @@ def data():
 
 
 def build():
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w") as f:
+    Path(str(Path(OUT).parent)).mkdir(parents=True, exist_ok=True)
+    with Path(OUT).open("w") as f:
         json.dump(data(), f, indent=2, sort_keys=True)
         f.write("\n")
     manifest = {}
-    if os.path.exists(pixel.MANIFEST):
-        with open(pixel.MANIFEST) as f:
+    if Path(pixel.MANIFEST).exists():
+        with Path(pixel.MANIFEST).open() as f:
             manifest = json.load(f)
     entries = {d["key"]: d for d in manifest.get("data", [])}
-    entries["palette"] = {"key": "palette", "json": os.path.basename(OUT)}
+    entries["palette"] = {"key": "palette", "json": Path(OUT).name}
     manifest["data"] = sorted(entries.values(), key=lambda d: d["key"])
-    with open(pixel.MANIFEST, "w") as f:
+    with Path(pixel.MANIFEST).open("w") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")
     print("built palette")
@@ -62,7 +62,6 @@ def build():
 
 def preview(out, cell=24, gap=4):
     """One row per colour: the colour, then one and two ramp steps down."""
-    from PIL import Image, ImageDraw
 
     names = sorted(pixel.K, key=lambda n: pixel.PALETTE.index(pixel.K[n]))
     img = Image.new("RGB", (3 * (cell + gap) + gap, len(names) * (cell + gap) + gap), pixel.rgb("slate"))

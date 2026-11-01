@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Rasterize the game's two pixel fonts into BMFonts (XML .fnt plus a PNG atlas).
 
 - font-body: Tiny5 at 8px, mixed case, for body text, dialogue and quips. Line height 10 (ascent 7, descent 2,
@@ -21,13 +20,13 @@ Run from the repository root.
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 from xml.sax.saxutils import quoteattr
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from PIL import Image, ImageDraw, ImageFont  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image, ImageDraw, ImageFont
 
 FONTS = {
     "font-body": ("Tiny5", "art/fonts/tiny5/Tiny5.ttf", 8),
@@ -80,25 +79,31 @@ def pack(gl):
 def build_font(key, face, path, size):
     gl, ascent, descent = glyphs(path, size)
     atlas, places = pack(gl)
-    os.makedirs(OUT, exist_ok=True)
+    Path(OUT).mkdir(parents=True, exist_ok=True)
     atlas.save(f"{OUT}/{key}.png")
     lines = [
         '<?xml version="1.0"?>',
         "<font>",
-        f'  <info face={quoteattr(face)} size="{size}" bold="0" italic="0" charset="" unicode="1" stretchH="100" '
-        'smooth="0" aa="0" padding="0,0,0,0" spacing="1,1"/>',
-        f'  <common lineHeight="{ascent + descent + 1}" base="{ascent}" scaleW="{atlas.width}" '
-        f'scaleH="{atlas.height}" pages="1" packed="0"/>',
+        (
+            f'  <info face={quoteattr(face)} size="{size}" bold="0" italic="0" charset="" unicode="1" stretchH="100" '
+            'smooth="0" aa="0" padding="0,0,0,0" spacing="1,1"/>'
+        ),
+        (
+            f'  <common lineHeight="{ascent + descent + 1}" base="{ascent}" scaleW="{atlas.width}" '
+            f'scaleH="{atlas.height}" pages="1" packed="0"/>'
+        ),
         f'  <pages><page id="0" file="{key}.png"/></pages>',
         f'  <chars count="{len(gl)}">',
     ]
     for ch, (im, ox, oy, adv) in gl.items():
         x, y = places[ch]
         w, h = (im.width, im.height) if im is not None else (0, 0)
-        lines.append(f'    <char id="{ord(ch)}" x="{x}" y="{y}" width="{w}" height="{h}" xoffset="{ox}" '
-                     f'yoffset="{oy}" xadvance="{adv}" page="0" chnl="15"/>')
+        lines.append(
+            f'    <char id="{ord(ch)}" x="{x}" y="{y}" width="{w}" height="{h}" xoffset="{ox}" '
+            f'yoffset="{oy}" xadvance="{adv}" page="0" chnl="15"/>'
+        )
     lines += ["  </chars>", "</font>", ""]
-    with open(f"{OUT}/{key}.fnt", "w") as f:
+    with Path(f"{OUT}/{key}.fnt").open("w") as f:
         f.write("\n".join(lines))
 
 
@@ -106,15 +111,15 @@ def build():
     for key, (face, path, size) in FONTS.items():
         build_font(key, face, path, size)
     manifest = {}
-    if os.path.exists(pixel.MANIFEST):
-        with open(pixel.MANIFEST) as f:
+    if Path(pixel.MANIFEST).exists():
+        with Path(pixel.MANIFEST).open() as f:
             manifest = json.load(f)
     entries = {f["key"]: f for f in manifest.get("fonts", [])}
     for key in FONTS:
         entries[key] = {"key": key, "png": f"fonts/{key}.png", "fnt": f"fonts/{key}.fnt"}
     manifest["fonts"] = sorted(entries.values(), key=lambda f: f["key"])
-    os.makedirs(os.path.dirname(pixel.MANIFEST), exist_ok=True)
-    with open(pixel.MANIFEST, "w") as f:
+    Path(str(Path(pixel.MANIFEST).parent)).mkdir(parents=True, exist_ok=True)
+    with Path(pixel.MANIFEST).open("w") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")
     print("built", ", ".join(FONTS))
@@ -122,11 +127,15 @@ def build():
 
 def preview(out, scale=3):
     """Both fonts at 2x on the dialogue box navy, then scaled up for viewing."""
-    samples = ["BIRD  SKIP  SETTINGS  RESUME", "The quick brown bird flutters down.", "Touch controls: Shown, Hidden",
-               "0123456789 !?.,:;'\"+-/%&()"]
+    samples = [
+        "BIRD  SKIP  SETTINGS  RESUME",
+        "The quick brown bird flutters down.",
+        "Touch controls: Shown, Hidden",
+        "0123456789 !?.,:;'\"+-/%&()",
+    ]
     sheet = Image.new("RGB", (330, (12 * len(samples) + 8) * len(FONTS)), pixel.rgb("navy"))
     y = 4
-    for key, (face, path, size) in FONTS.items():
+    for _face, path, size in FONTS.values():
         gl, _, _ = glyphs(path, size)
         for s in samples:
             x = 4

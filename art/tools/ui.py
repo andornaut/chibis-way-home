@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """UI art: the dialogue box, choices, quip strip, touch buttons, start screen and cards, at the 720x360 base resolution.
 
 Usage:
@@ -47,7 +46,8 @@ Touch controls (two round buttons for the right thumb, a pause button at the top
   3px above the centre, and a caret (21x11) on Jump, its top 5px above. No label. Tags rest (100ms); press, once
   (frame 0 the band and icon turn white and the ring swells 1px; frame 1 the same at rest size; 60ms each); held (as
   press frame 1, 100ms).
-- ui-pause, 35x35, centre pixel 17,17: top-left 7,7 for the centre 24,24, its disc 8px in from the top and left. A disc 33px
+- ui-pause, 35x35, centre pixel 17,17: top-left 7,7 for the centre 24,24, its disc 8px in from the top and left. A
+disc 33px
   across: an ink edge, a 2px cream ring (3px pressed) and a navy face (dslate pressed), with two pause bars (11x13,
   each 4 wide, 3 apart) centred on the centre; no label. Tags as for Use and Jump: rest; press, once (2 frames at
   60ms, frame 0 swells 1px); held.
@@ -130,12 +130,12 @@ Pause card, settings card and install steps card (each over the game dimmed two 
 """
 
 import math
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid, darker  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid, darker
 
 SRC = "art/ui"
 
@@ -178,6 +178,7 @@ def tri_right(g, x, y, h, c):
 
 
 # ---------------------------------------------------------------- dialogue
+
 
 def dialogue_box():
     g = Grid(640, 96)
@@ -299,6 +300,7 @@ def touch_button(key):
 
 # ---------------------------------------------------------------- settings
 
+
 def settings_card():
     """16x16 nine-slice: an ink border with cut corners round an lgrey face (pale steel), lit top-left: a white rim
     on the top and left, a grey rim on the bottom and right. No header."""
@@ -317,8 +319,12 @@ def resume(state):
     return g.px
 
 
-X = [(i, i) for i in range(12)] + [(i + 1, i) for i in range(11)] + [(11 - i, i) for i in range(12)] + \
-    [(10 - i, i) for i in range(11)]
+X = (
+    [(i, i) for i in range(12)]
+    + [(i + 1, i) for i in range(11)]
+    + [(11 - i, i) for i in range(12)]
+    + [(10 - i, i) for i in range(11)]
+)
 
 
 def plate(face, lip, hi, state):
@@ -380,24 +386,68 @@ ROW_ICON = "dslate"  # 16x16 icons sit on the card's lgrey face: 5.83:1
 DOT4 = (".##.", "####", "####", ".##.")
 ICONS = {
     # a cog: a ring round a hole, four 4x2 teeth on the axes and four 2x2 on the diagonals
-    "icon-settings": ["......####......", "......####......", "..##..####..##..", "..############..",
-                      "...##########...", "...####..####...", "######....######", "#####......#####",
-                      "#####......#####", "######....######", "...####..####...", "...##########...",
-                      "..############..", "..##..####..##..", "......####......", "......####......"],
+    "icon-settings": [
+        "......####......",
+        "......####......",
+        "..##..####..##..",
+        "..############..",
+        "...##########...",
+        "...####..####...",
+        "######....######",
+        "#####......#####",
+        "#####......#####",
+        "######....######",
+        "...####..####...",
+        "...##########...",
+        "..############..",
+        "..##..####..##..",
+        "......####......",
+        "......####......",
+    ],
     # a down arrow into a tray
-    "icon-install": [".......##.......", ".......##.......", ".......##.......", ".......##.......",
-                     "...##..##..##...", "....##.##.##....", ".....######.....", "......####......",
-                     ".......##.......", "................", "##............##", "##............##",
-                     "##............##", "##............##", "################", "################"],
+    "icon-install": [
+        ".......##.......",
+        ".......##.......",
+        ".......##.......",
+        ".......##.......",
+        "...##..##..##...",
+        "....##.##.##....",
+        ".....######.....",
+        "......####......",
+        ".......##.......",
+        "................",
+        "##............##",
+        "##............##",
+        "##............##",
+        "##............##",
+        "################",
+        "################",
+    ],
     # Safari's Share button: a box open at the top with an arrow rising out of it
-    "icon-ios-share": [".......##.......", "......####......", ".....##..##.....", "....##.##.##....",
-                       ".......##.......", ".......##.......", "..####.##.####..", "..##...##...##..",
-                       "..##...##...##..", "..##...##...##..", "..##........##..", "..##........##..",
-                       "..##........##..", "..##........##..", "..############..", "..############.."],
+    "icon-ios-share": [
+        ".......##.......",
+        "......####......",
+        ".....##..##.....",
+        "....##.##.##....",
+        ".......##.......",
+        ".......##.......",
+        "..####.##.####..",
+        "..##...##...##..",
+        "..##...##...##..",
+        "..##...##...##..",
+        "..##........##..",
+        "..##........##..",
+        "..##........##..",
+        "..##........##..",
+        "..############..",
+        "..############..",
+    ],
     # the browser menu button: three round dots stacked on the centre line
-    "icon-browser-menu": ["......" + r + "......" for r in DOT4] + ["................"] * 2
-                         + ["......" + r + "......" for r in DOT4] + ["................"] * 2
-                         + ["......" + r + "......" for r in DOT4],
+    "icon-browser-menu": ["......" + r + "......" for r in DOT4]
+    + ["................"] * 2
+    + ["......" + r + "......" for r in DOT4]
+    + ["................"] * 2
+    + ["......" + r + "......" for r in DOT4],
 }
 
 
@@ -497,15 +547,48 @@ def focus():
 # leaving it (ui-quit, and icon-exit at 16), and a solid house with a chimney on the right slope and a door gap
 # (dog-walker's home_icon()), cream with tan on its lower-right edges.
 
-EXIT_16 = [".#########......", ".#########......", ".##.....##..#...", ".##.....##..##..", ".##.........###.",
-           ".##...##########", ".##...##########", ".##.........###.", ".##.....##..##..", ".##.....##..#...",
-           ".#########......", ".#########......"]
+EXIT_16 = [
+    ".#########......",
+    ".#########......",
+    ".##.....##..#...",
+    ".##.....##..##..",
+    ".##.........###.",
+    ".##...##########",
+    ".##...##########",
+    ".##.........###.",
+    ".##.....##..##..",
+    ".##.....##..#...",
+    ".#########......",
+    ".#########......",
+]
 # a is fill, o the shade on the lower-right edges
-HOME_16 = [".....aa.ao..", "....aaaaao..", "...aaaaaao..", "..aaaaaaao..", ".aaaaaaaaao.", "aaaaaaaaaaao",
-           "..aaaaaaao..", "..aaa..aao..", "..aaa..aao..", "..ooo..ooo.."]
-HOME_20 = ["......aa.ao...", ".....aaaaao...", "....aaaaaao...", "...aaaaaaao...", "..aaaaaaaaao..",
-           ".aaaaaaaaaaao.", "aaaaaaaaaaaaao", "..aaaaaaaaao..", "..aaaaaaaaao..", "..aaaa..aaao..",
-           "..aaaa..aaao..", "..aaaa..aaao..", "..oooo..oooo.."]
+HOME_16 = [
+    ".....aa.ao..",
+    "....aaaaao..",
+    "...aaaaaao..",
+    "..aaaaaaao..",
+    ".aaaaaaaaao.",
+    "aaaaaaaaaaao",
+    "..aaaaaaao..",
+    "..aaa..aao..",
+    "..aaa..aao..",
+    "..ooo..ooo..",
+]
+HOME_20 = [
+    "......aa.ao...",
+    ".....aaaaao...",
+    "....aaaaaao...",
+    "...aaaaaaao...",
+    "..aaaaaaaaao..",
+    ".aaaaaaaaaaao.",
+    "aaaaaaaaaaaaao",
+    "..aaaaaaaaao..",
+    "..aaaaaaaaao..",
+    "..aaaa..aaao..",
+    "..aaaa..aaao..",
+    "..aaaa..aaao..",
+    "..oooo..oooo..",
+]
 
 
 def home(n):
@@ -643,8 +726,10 @@ def sprites():
     yield "ui-focus", one(focus())
     yield "ui-icon-button", [(s, [icon_button(s)], 100) for s in ("normal", "pressed")]
     yield "ui-forward-mark", [("idle", forward_mark(), [ms for _, ms in FORWARD_STEPS])]
-    yield "ui-move-hint", [("rest", [move_hint()], 100), ("held-left", [move_hint(-1)], 100),
-                           ("held-right", [move_hint(1)], 100)]
+    yield (
+        "ui-move-hint",
+        [("rest", [move_hint()], 100), ("held-left", [move_hint(-1)], 100), ("held-right", [move_hint(1)], 100)],
+    )
     yield "ui-move-knob", [("rest", [move_knob(False)], 100), ("held", [move_knob(True)], 100)]
     yield "ui-name-tab", [(c, [name_tab(c)], 100) for c in TAB_FILLS]
     yield "ui-nav-bar", one(nav_bar())

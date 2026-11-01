@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Export exact opaque sprite contact as sparse horizontal pixel runs from final PNG exports.
 
 Usage: python3 -I art/tools/contact_silhouettes.py build, from the repository root.
@@ -10,12 +9,12 @@ No pixels, frames, tags, timings, anchors or physical reach boxes are changed by
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from PIL import Image  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image
 
 OUT = "public/art/contact-silhouettes.json"
 
@@ -23,7 +22,8 @@ OUT = "public/art/contact-silhouettes.json"
 def occupied_runs(im):
     """Full-frame rows, top to bottom; intervals are half open and merged left to right."""
     alpha = im.getchannel("A")
-    assert set(alpha.getdata()) <= {0, 255}, "Contact art must have binary alpha"
+    if not (set(alpha.getdata()) <= {0, 255}):
+        raise AssertionError("Contact art must have binary alpha")
     runs = []
     for y in range(im.height):
         left = None
@@ -39,32 +39,45 @@ def occupied_runs(im):
 
 def sprite_masks(entry):
     """Read final exported frame rectangles, retaining exact Aseprite names and untrimmed coordinates."""
-    with open("public/art/" + entry["json"]) as source:
+    with Path("public/art/" + entry["json"]).open() as source:
         data = json.load(source)
     with Image.open("public/art/" + entry["png"]) as source:
         sheet = source.convert("RGBA")
     frames, size = {}, None
-    assert data["frames"], f"{entry['key']}: no exported frames"
+    if not (data["frames"]):
+        raise AssertionError(f"{entry['key']}: no exported frames")
     for name, frame in data["frames"].items():
         rect = frame["frame"]
         current = (rect["w"], rect["h"])
-        assert not frame["trimmed"] and not frame["rotated"], f"{name}: contact requires untrimmed frames"
-        assert frame["sourceSize"] == {"w": current[0], "h": current[1]}, f"{name}: source size mismatch"
-        assert frame["spriteSourceSize"] == {"x": 0, "y": 0, "w": current[0], "h": current[1]}
-        assert size is None or current == size, f"{name}: inconsistent frame size"
+        if not (not frame["trimmed"] and (not frame["rotated"])):
+            raise AssertionError(f"{name}: contact requires untrimmed frames")
+        if not (frame["sourceSize"] == {"w": current[0], "h": current[1]}):
+            raise AssertionError(f"{name}: source size mismatch")
+        if not (frame["spriteSourceSize"] == {"x": 0, "y": 0, "w": current[0], "h": current[1]}):
+            raise AssertionError
+        if not (size is None or current == size):
+            raise AssertionError(f"{name}: inconsistent frame size")
         size = current
         x, y = rect["x"], rect["y"]
-        assert x >= 0 and y >= 0 and x + size[0] <= sheet.width and y + size[1] <= sheet.height
+        if not (x >= 0):
+            raise AssertionError
+        if not (y >= 0):
+            raise AssertionError
+        if not (x + size[0] <= sheet.width):
+            raise AssertionError
+        if not (y + size[1] <= sheet.height):
+            raise AssertionError
         frames[name] = occupied_runs(sheet.crop((x, y, x + size[0], y + size[1])))
     return {"width": size[0], "height": size[1], "frames": frames}
 
 
 def build():
-    with open(pixel.MANIFEST) as source:
+    with Path(pixel.MANIFEST).open() as source:
         manifest = json.load(source)
-    sprites = {entry["key"]: sprite_masks(entry) for entry in manifest["sprites"]
-               if entry.get("contact") == "silhouette"}
-    with open(OUT, "w") as target:
+    sprites = {
+        entry["key"]: sprite_masks(entry) for entry in manifest["sprites"] if entry.get("contact") == "silhouette"
+    }
+    with Path(OUT).open("w") as target:
         json.dump({"version": 1, "sprites": sprites}, target, sort_keys=True, separators=(",", ":"))
         target.write("\n")
     pixel.update_manifest("data", [{"key": "contact-silhouettes", "json": "contact-silhouettes.json"}])

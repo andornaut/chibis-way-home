@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Reusable peach home-city environment skins, independent of layouts and gameplay geometry.
 
 Usage: homecity.py build | preview OUT.png. Run from the repository root. Pillow, plain PNG exports.
@@ -23,15 +22,14 @@ Physical ledges and room doors are placed separately by gameplay. The comparison
 illustrative geometry, not a validated stage or reachability claim. A theme changes appearance only.
 """
 
-import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-import nature  # noqa: E402
-import zone_themes  # noqa: E402
-from PIL import Image, ImageDraw  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import nature
+import pixel
+import zone_themes
+from PIL import Image, ImageDraw
 
 T = 12
 TILESET = "tiles-homecity"
@@ -43,15 +41,15 @@ SUFFIXES = ("top", "top-left", "top-right", "top-joint", "face", "face-left", "f
 
 
 def image(w, h, colour=None):
-    return Image.new("RGBA", (w, h), pixel.rgb(colour) + (255,) if colour else (0, 0, 0, 0))
+    return Image.new("RGBA", (w, h), (*pixel.rgb(colour), 255) if colour else (0, 0, 0, 0))
 
 
 def rect(im, colour, box):
-    im.paste(pixel.rgb(colour) + (255,), box)
+    im.paste((*pixel.rgb(colour), 255), box)
 
 
 def polygon(im, colour, points):
-    ImageDraw.Draw(im).polygon(points, fill=pixel.rgb(colour) + (255,))
+    ImageDraw.Draw(im).polygon(points, fill=(*pixel.rgb(colour), 255))
 
 
 def material(family, suffix):
@@ -80,8 +78,7 @@ def material(family, suffix):
 
 
 def tiles():
-    return [(f"{family}-{suffix}", material(family, suffix))
-            for family in FAMILIES for suffix in SUFFIXES]
+    return [(f"{family}-{suffix}", material(family, suffix)) for family in FAMILIES for suffix in SUFFIXES]
 
 
 def sky():
@@ -90,8 +87,7 @@ def sky():
 
 def far():
     im = image(720, 600)
-    for x, width, top in ((-20, 110, 420), (126, 102, 398), (262, 136, 438),
-                          (434, 96, 384), (572, 166, 416)):
+    for x, width, top in ((-20, 110, 420), (126, 102, 398), (262, 136, 438), (434, 96, 384), (572, 166, 416)):
         rect(im, SHADE, (x, top + 18, x + width, 600))
         polygon(im, SHADE, ((x - 4, top + 20), (x + width // 2, top), (x + width + 4, top + 20)))
         rect(im, SHADE, (x + width - 24, top + 4, x + width - 16, top + 20))
@@ -102,8 +98,7 @@ def house(im, x, top, width, height, windows=True):
     """Warm complete plaster planes, a quiet rose roof and sparse attached window recesses."""
     rect(im, PRIMARY, (x, top + 18, x + width, top + height))
     rect(im, "zone-yellow", (x, top + 18, x + 8, top + height))
-    polygon(im, "zone-red-shade", ((x - 4, top + 20), (x + width // 2, top),
-                                  (x + width + 4, top + 20)))
+    polygon(im, "zone-red-shade", ((x - 4, top + 20), (x + width // 2, top), (x + width + 4, top + 20)))
     rect(im, "zone-red-shade", (x + width - 20, top + 2, x + width - 12, top + 16))
     if windows:
         for offset in (16, width - 28):
@@ -112,21 +107,25 @@ def house(im, x, top, width, height, windows=True):
 
 def outskirts_mid():
     im = image(720, 600)
-    for x, top, width in ((-24, 426, 96), (126, 402, 108), (300, 430, 96),
-                          (462, 402, 108), (648, 426, 96)):
+    for x, top, width in ((-24, 426, 96), (126, 402, 108), (300, 430, 96), (462, 402, 108), (648, 426, 96)):
         house(im, x, top, width, 600 - top)
     return im
 
 
 def neighbourhood_mid():
     im = image(720, 600)
-    for x, top, width in ((-12, 408, 84), (108, 390, 96), (240, 414, 84),
-                          (360, 390, 96), (492, 408, 84), (624, 414, 108)):
+    for x, top, width in (
+        (-12, 408, 84),
+        (108, 390, 96),
+        (240, 414, 84),
+        (360, 390, 96),
+        (492, 408, 84),
+        (624, 414, 108),
+    ):
         house(im, x, top, width, 600 - top)
     # Natural branching garden trees remain entirely decorative behind play.
     for x, top, width in ((82, 510, 46), (336, 498, 54), (592, 514, 48)):
-        nature.broadleaf(im, x - width // 2, top, width, 64, 600, "zone-green-shade",
-                         SHADE, 4, seed=x % 11)
+        nature.broadleaf(im, x - width // 2, top, width, 64, 600, "zone-green-shade", SHADE, 4, seed=x % 11)
     return im
 
 
@@ -177,13 +176,22 @@ BACKDROPS = {
 
 
 def registry():
-    return [{"key": key, "png": f"backdrops/{key}.png", "width": fn().width, "height": fn().height,
-             "anchor": "bottom-left", "y": BOTTOM, "repeat": repeat}
-            for key, (fn, repeat, _) in BACKDROPS.items()]
+    return [
+        {
+            "key": key,
+            "png": f"backdrops/{key}.png",
+            "width": fn().width,
+            "height": fn().height,
+            "anchor": "bottom-left",
+            "y": BOTTOM,
+            "repeat": repeat,
+        }
+        for key, (fn, repeat, _) in BACKDROPS.items()
+    ]
 
 
 def build():
-    os.makedirs("public/art/backdrops", exist_ok=True)
+    Path("public/art/backdrops").mkdir(parents=True, exist_ok=True)
     ts = pixel.write_tileset(TILESET, tiles())
     for key, (fn, _, _) in BACKDROPS.items():
         fn().save(f"public/art/backdrops/{key}.png")
@@ -207,13 +215,19 @@ def context(kind):
         im.alpha_composite(awning(), (240, 492))
         ground, raised = "neighbourhood-ground", "stoop-stack"
     ts = dict(tiles())
-    for col, row, width, height, family in ((0, 50, 60, 10, ground), (20, 46, 6, 4, raised),
-                                            (32, 42, 7, 8, raised), (45, 38, 6, 12, raised)):
+    for col, row, width, height, family in (
+        (0, 50, 60, 10, ground),
+        (20, 46, 6, 4, raised),
+        (32, 42, 7, 8, raised),
+        (45, 38, 6, 12, raised),
+    ):
         for y in range(height):
             for x in range(width):
-                suffix = ("top-left" if x == 0 else "top-right" if x == width - 1 else
-                          "top-joint" if x % 2 else "top") if y == 0 else \
-                    ("face-left" if x == 0 else "face-right" if x == width - 1 else "face")
+                suffix = (
+                    ("top-left" if x == 0 else "top-right" if x == width - 1 else "top-joint" if x % 2 else "top")
+                    if y == 0
+                    else ("face-left" if x == 0 else "face-right" if x == width - 1 else "face")
+                )
                 im.alpha_composite(ts[f"{family}-{suffix}"], ((col + x) * T, (row + y) * T))
     bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((0, 0, 48, 42))
     im.alpha_composite(bird, (72, 558))

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Compact apartment ferret encounter skin retaining the established champagne ferret identity.
 
 Frustration: four120ms looping headshake and raised wing/paw poses, fixed feet, no world displacement.
@@ -13,14 +12,14 @@ Art cycles do not set gameplay state duration or bake world movement into the sp
 All states are lethal. The original 64x80 story ferret and its portraits remain separate and unchanged.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import bird  # noqa: E402
-import ferret  # noqa: E402
-import pixel  # noqa: E402
-from pixel import Grid  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bird
+import ferret
+import pixel
+from pixel import Grid
 
 KEY = "ferret-antagonist"
 SRC = "art/antagonists"
@@ -82,15 +81,28 @@ def draw(state="idle", phase=0):
 
 
 def sprites():
-    yield KEY, [("idle", [draw("idle", i) for i in range(2)], 400),
-                ("walk", [draw("walk", i) for i in range(4)], 120),
-                ("crouch", [draw("crouch", i) for i in range(2)], 140),
-                ("rush", [draw("rush", i) for i in range(4)], 80),
-                ("rest", [draw("rest", i) for i in range(2)], 400),
-                ("frustration", [draw("frustration", i) for i in range(4)], 120),
-                ("throw", [draw("throw", i) for i in range(4)], 100)]
+    yield (
+        KEY,
+        [
+            ("idle", [draw("idle", i) for i in range(2)], 400),
+            ("walk", [draw("walk", i) for i in range(4)], 120),
+            ("crouch", [draw("crouch", i) for i in range(2)], 140),
+            ("rush", [draw("rush", i) for i in range(4)], 80),
+            ("rest", [draw("rest", i) for i in range(2)], 400),
+            ("frustration", [draw("frustration", i) for i in range(4)], 120),
+            ("throw", [draw("throw", i) for i in range(4)], 100),
+        ],
+    )
 
 
 if __name__ == "__main__":
-    pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(pixel.K["zone-red"], pixel.K["slate"]),
-               once=ONCE, hitboxes=HITBOX, contacts=(KEY,))
+    pixel.main(
+        sys.argv,
+        sprites,
+        SRC,
+        __doc__,
+        grounds=(pixel.K["zone-red"], pixel.K["slate"]),
+        once=ONCE,
+        hitboxes=HITBOX,
+        contacts=(KEY,),
+    )

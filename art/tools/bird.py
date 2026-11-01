@@ -34,7 +34,7 @@ head and bill 10px on the right, and he stops 2px below its top. The raised wing
 | land    | 0     | 100 | contact: squash, feet planted wide                           | 0    | 39 x 22    | 40       |
 | land    | 1     | 80  | recover: half squash                                         | 0    | 36 x 24    | 36       |
 | death   | 0     | 100 | small recoil, closed eye, feet visible                       | 1    | 34 x 24    | 36       |
-| death   | 1     | 120 | pronounced fall tilt, closed eye, visible tucked soles           | 1    | 34 x 24    | 33       |
+ | death | 1 | 120 | pronounced fall tilt, closed eye, visible tucked soles | 1 | 34 x 24 | 33 |
 | death   | 2     | 80  | brief impact squash, rounded belly, feet hidden               | -2   | 38 x 16    | 39       |
 | death   | 3     | 400 | spring to round sitting rest, soft contact ends, feet hidden | -2   | 34 x 21    | 39       |
 
@@ -45,7 +45,8 @@ is the game's to place. jump, land and death play once and hold their last frame
 other tag loops. After land, play idle. Death is appended after the existing tags; frame indices stay fixed.
 Death has no baked world movement: the runtime uses frame 0 for recoil, holds frame 1 during the physical fall,
 then shows frame 2 on support and springs back to seated frame 3, held while the retry card is open.
-The camera stays fixed. Durations above are art playback defaults; gameplay owns state timing and falling behaviour. The death
+The camera stays fixed. Durations above are art playback defaults; gameplay owns state timing and falling behaviour.
+The death
 impact briefly compresses the body; the final pose is a full, round sit with a short flat belly centre
 and rounded contact ends, resting on the frame bottom. Feet show during recoil and fall, not on support.
 The body-centre and frame-bottom anchor do not move.
@@ -60,12 +61,13 @@ to the back, the bill a little lower). One frame each.
 """
 
 import math
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import K, Grid  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image
+from pixel import Grid, K
 
 SRC = "art/bird"
 W, H = 48, 42
@@ -100,6 +102,7 @@ def in_ell(cx, cy, rx, ry, ang=0.0):
         dx, dy = x + 0.5 - cx, y + 0.5 - cy
         u, v = dx * ca + dy * sa, -dx * sa + dy * ca
         return (u / rx) ** 2 + (v / ry) ** 2 <= 1
+
     return f
 
 
@@ -108,6 +111,7 @@ def in_body(cx, cy, rx, ry, nape_x, drop, flat):
     the back of his head), easing to nothing over 0.55 of the body's radius either side, so the head sits up
     above the back line; and pressed down flat px over the middle of his back, between the nape and the tail,
     so the back line is gentle rather than humped."""
+
     def ease(d, width):
         w = max(0.0, 1 - abs(d) / width)
         return w * w * (3 - 2 * w)
@@ -117,6 +121,7 @@ def in_body(cx, cy, rx, ry, nape_x, drop, flat):
         if y + 0.5 < cy:
             y = y - drop * ease(px - nape_x, rx * 0.55) - flat * ease(px - (cx - rx * 0.4), rx * 0.6)
         return (abs(px - cx) / rx) ** POWER + (abs(y + 0.5 - cy) / ry) ** POWER <= 1
+
     return f
 
 
@@ -138,7 +143,8 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
     ("raise", degrees), the raised wing's direction in screen degrees (180 straight back, above 180 up and
     back). feet: ((dx, up), (dx, up)) for the far foot (drawn behind the body) and the near foot, each its left
     column relative to the body centre, or "tucked" (soles just under the belly), or "hidden" (no feet drawn).
-    head_squash compresses the head vertically while retaining its bottom edge. Its default preserves the normal round head. seated rounds
+    head_squash compresses the head vertically while retaining its bottom edge. Its default preserves the normal
+    round head. seated rounds
     the lower belly into a short flat contact centre without visible feet.
     """
     g = Grid(W, H)
@@ -166,6 +172,7 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
                 return upper(x, y)
             dx = max(0, abs(x + 0.5 - C) - half_base)
             return (dx / (bw - half_base)) ** 2 + ((y + 0.5 - bcy) / bh) ** 2 <= 1
+
     cel(g, body, BASE, SHADE, LIGHT, 3, 1)
     if feet == "tucked":
         for dx in (-5, 2):
@@ -178,12 +185,18 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
         # foreshortened as it comes down: 19px pointing up, 14px level
         ln = 14 + 5 * min(1.0, max(0.0, (val - 186) / 50))
         sx, sy = C - 5, bcy - bh * 0.45
-        cel(g, in_ell(sx + math.cos(a) * ln * 0.5, sy + math.sin(a) * ln * 0.5,
-                      ln * 0.5, ln * 0.27, a), WING, "brown", None, 1, 1)
+        cel(
+            g,
+            in_ell(sx + math.cos(a) * ln * 0.5, sy + math.sin(a) * ln * 0.5, ln * 0.5, ln * 0.27, a),
+            WING,
+            "brown",
+            None,
+            1,
+            1,
+        )
     cel(g, in_ell(hcx, hcy, HEAD_R, head_ry), BASE, SHADE, LIGHT, 3, 1)
     if kind == "fold":  # on the body's side, its tip pointing back
-        cel(g, in_ell(C - 2, bcy + 2 + val, BRX * 0.5, BRY * 0.3, -0.3),
-            WING, "brown", None, 1, 1)
+        cel(g, in_ell(C - 2, bcy + 2 + val, BRX * 0.5, BRY * 0.3, -0.3), WING, "brown", None, 1, 1)
     g.rect(int(hcx + HEAD_R - 2), int(hcy), 7, round(5 * head_squash), "orange")  # bill
     g.rect(int(hcx + HEAD_R - 2), int(hcy) + round(5 * head_squash) - 1, 7, 1, "ochre")
     ey = int(hcy - head_ry * 0.55)
@@ -195,7 +208,7 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
                     g.p(int(hcx) + x, ey + y, "ink")
     else:
         g.rect(int(hcx), ey if eye == "open" else ey + 2, 4, 4 if eye == "open" else 1, "ink")
-    return g.outlined(lambda c: K[OUTLINE])
+    return g.outlined(lambda _c: K[OUTLINE])
 
 
 # Squash and stretch: (bw, bh) keep bw * bh within 2% of the rest pose's 16.4 * 13.0 = 213.2.
@@ -207,14 +220,15 @@ SQUASH_RECOVER = (17.8, 11.9)
 
 def falling_pose():
     """A pronounced clockwise tilt, with visible tucked soles and no baked world translation."""
-    from PIL import Image
 
     px = draw(lift=1, bw=17, bh=12, wing=("fold", 2), feet="tucked", eye="closed")
     im = Image.new("RGBA", (W, H))
-    im.putdata([pixel.rgb(c) + (255,) if c else (0, 0, 0, 0) for row in px for c in row])
+    im.putdata([(*pixel.rgb(c), 255) if c else (0, 0, 0, 0) for row in px for c in row])
     im = im.rotate(-20, Image.Resampling.NEAREST, expand=False, center=(C, 29))
-    return [["%02x%02x%02x" % im.getpixel((x, y))[:3] if im.getpixel((x, y))[3] else None
-             for x in range(W)] for y in range(H)]
+    return [
+        ["{:02x}{:02x}{:02x}".format(*im.getpixel((x, y))[:3]) if im.getpixel((x, y))[3] else None for x in range(W)]
+        for y in range(H)
+    ]
 
 
 def bird_tags():
@@ -241,14 +255,20 @@ def bird_tags():
         ("jump", jump, [80, 100]),
         ("flutter", flutter, 100),
         ("land", land, [100, 80]),
-        ("death", [
-            draw(lift=1, bw=17, bh=12, wing=("fold", 2), eye="closed"),
-            falling_pose(),
-            draw(lift=-2, bw=19, bh=8, wing=("fold", 2), feet="hidden", eye="closed",
-                 head_squash=0.82, seated=True),
-            draw(lift=-2, bw=17, bh=10.5, wing=("fold", 2), feet="hidden", eye="dead",
-                 head_squash=0.95, seated=True),
-        ], [100, 120, 80, 400]),
+        (
+            "death",
+            [
+                draw(lift=1, bw=17, bh=12, wing=("fold", 2), eye="closed"),
+                falling_pose(),
+                draw(
+                    lift=-2, bw=19, bh=8, wing=("fold", 2), feet="hidden", eye="closed", head_squash=0.82, seated=True
+                ),
+                draw(
+                    lift=-2, bw=17, bh=10.5, wing=("fold", 2), feet="hidden", eye="dead", head_squash=0.95, seated=True
+                ),
+            ],
+            [100, 120, 80, 400],
+        ),
     ]
 
 
@@ -271,7 +291,7 @@ def portrait(expr):
         if expr == "worried":  # brow slanting down to the back
             for i in range(8):
                 g.rect(ex - 2 + i, ey - 5 + (7 - i) // 3, 1, 2, "ink")
-    return g.outlined(lambda c: K["ink"])
+    return g.outlined(lambda _c: K["ink"])
 
 
 def portrait_tags():

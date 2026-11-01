@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Reusable platforming pieces, 12px tiles in eight columns, with the street's blue-grey materials.
 
 Usage: obstacles.py build | preview OUT.png
@@ -19,12 +18,12 @@ ledge and floor, wall and ceiling contact strips. It is an art composition, not 
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from PIL import Image  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image
 
 KEY = "tiles-platforming"
 T = 12
@@ -37,11 +36,11 @@ HITBOXES = {
 
 
 def rect(im, box, colour):
-    im.paste(pixel.rgb(colour) + (255,), box)
+    im.paste((*pixel.rgb(colour), 255), box)
 
 
 def solid(top=False, bottom=False, left=False, right=False):
-    im = Image.new("RGBA", (T, T), pixel.rgb("slate") + (255,))
+    im = Image.new("RGBA", (T, T), (*pixel.rgb("slate"), 255))
     if left:
         rect(im, (0, 0, 2, T), "dslate")
     if right:
@@ -76,11 +75,18 @@ def hazard(side):
 
 def tiles():
     items = []
-    for name, flags in (("platform-top", (1, 0, 0, 0)), ("platform-top-left", (1, 0, 1, 0)),
-                        ("platform-top-right", (1, 0, 0, 1)), ("platform-top-joint", (1, 0, 0, 0)), ("platform-face", (0, 0, 0, 0)),
-                        ("platform-face-left", (0, 0, 1, 0)), ("platform-face-right", (0, 0, 0, 1)),
-                        ("platform-bottom", (0, 1, 0, 0)), ("platform-bottom-left", (0, 1, 1, 0)),
-                        ("platform-bottom-right", (0, 1, 0, 1))):
+    for name, flags in (
+        ("platform-top", (1, 0, 0, 0)),
+        ("platform-top-left", (1, 0, 1, 0)),
+        ("platform-top-right", (1, 0, 0, 1)),
+        ("platform-top-joint", (1, 0, 0, 0)),
+        ("platform-face", (0, 0, 0, 0)),
+        ("platform-face-left", (0, 0, 1, 0)),
+        ("platform-face-right", (0, 0, 0, 1)),
+        ("platform-bottom", (0, 1, 0, 0)),
+        ("platform-bottom-left", (0, 1, 1, 0)),
+        ("platform-bottom-right", (0, 1, 0, 1)),
+    ):
         tile = solid(*flags)
         if name == "platform-top-joint":
             rect(tile, (10, 5, 12, 7), "dslate")
@@ -93,17 +99,17 @@ def tiles():
 def build():
     entry = pixel.write_tileset(KEY, tiles(), hitboxes=HITBOXES)
     path = "public/art/" + entry["json"]
-    with open(path) as f:
+    with Path(path).open() as f:
         data = json.load(f)
     data["tiles"]["one-way-ledge"] = data["tiles"]["one-way-ledge-middle"]
-    with open(path, "w") as f:
+    with Path(path).open("w") as f:
         json.dump(data, f, indent=2, sort_keys=True)
         f.write("\n")
     pixel.update_manifest("tilesets", [entry])
 
 
 def preview(out):
-    im = Image.new("RGBA", (720, 720), pixel.rgb("lgrey") + (255,))
+    im = Image.new("RGBA", (720, 720), (*pixel.rgb("lgrey"), 255))
     ts = dict(tiles())
 
     def put(name, c, r):
@@ -142,7 +148,7 @@ def preview(out):
     bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((0, 0, 48, 42))
     im.alpha_composite(bird, (24, 600 - 42))
     im.convert("RGB").save(out)
-    stem = os.path.splitext(out)[0]
+    stem = str(Path(out).with_suffix(""))
     im.crop((0, 360, 720, 720)).convert("RGB").save(stem + "-lower.png")
     im.crop((0, 0, 720, 360)).convert("RGB").save(stem + "-upper.png")
     im.convert("L").save(stem + "-grey.png")

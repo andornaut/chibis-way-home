@@ -48,19 +48,19 @@ a plum stovepipe with a red band over a red bow tie). Every trap the ferret sets
 """
 
 import math
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from pixel import Grid  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from pixel import Grid
 
 SRC = "art/hazards"
 INK = "ink"
 
 
 def ink_outline(g):
-    return g.outlined(lambda c: pixel.K["ink"])
+    return g.outlined(lambda _c: pixel.K["ink"])
 
 
 def stroke(g, x0, y0, x1, y1, c, w=1):
@@ -71,6 +71,7 @@ def stroke(g, x0, y0, x1, y1, c, w=1):
 
 
 # ---------------------------------------------------------------- the ferret's calling card
+
 
 def emblem(g, x, y):
     """The ferret's hat-and-bow mark, 7x11 at x, y: a plum stovepipe (dark-brown rim light, red band, brim) over a
@@ -97,6 +98,7 @@ def badge(g, x, y):
 
 
 # ---------------------------------------------------------------- frog courier
+
 
 def wheel(g, cx, cy, r, f):
     """An ink tyre round a dslate disc, with a 2px slate bar through the hub turned 45 degrees per frame."""
@@ -133,10 +135,17 @@ def frog_courier(f):
     g.rect(far[0], far[1], 3, 2, "dgreen")
     wheel(g, 10.5, 28.5, 6.5, f)
     wheel(g, 49.5, 28.5, 6.5, f)
-    for p0, p1 in (((10, 28), bb), (bb, (22, 16)), ((22, 17), (42, 17)), ((42, 18), bb), ((22, 17), (10, 28)),
-                   ((42, 15), (49, 28)), ((42, 15), (43, 10))):
+    for p0, p1 in (
+        ((10, 28), bb),
+        (bb, (22, 16)),
+        ((22, 17), (42, 17)),
+        ((42, 18), bb),
+        ((22, 17), (10, 28)),
+        ((42, 15), (49, 28)),
+        ((42, 15), (43, 10)),
+    ):
         stroke(g, *p0, *p1, "orange", 2)
-    g.rect(40, 9, 6, 2, INK)   # handlebar
+    g.rect(40, 9, 6, 2, INK)  # handlebar
     g.rect(19, 15, 6, 2, INK)  # saddle
     # the cube bag on his back
     g.rect(8, 1, 13, 13, "sky")
@@ -187,8 +196,10 @@ SNAP = [(100, 0), (50, 0), (0, 1), (0, 0)]  # (bar angle, badge jolt) per snap f
 def sprites():
     ride = [frog_courier(f) for f in range(4)]
     yield "frog-courier", [("ride", ride, 100), ("idle", [ride[0]], 400)]
-    yield "ferret-trap-snap", [("set", [snap_trap(137)], 400),
-                               ("snap", [snap_trap(a, jolt=j) for a, j in SNAP], [60, 60, 80, 80])]
+    yield (
+        "ferret-trap-snap",
+        [("set", [snap_trap(137)], 400), ("snap", [snap_trap(a, jolt=j) for a, j in SNAP], [60, 60, 80, 80])],
+    )
 
 
 ONCE = {"ferret-trap-snap": ["snap"]}

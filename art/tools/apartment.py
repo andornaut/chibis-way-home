@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Apartment environment core, reusable independently of layouts and collision.
 
 Usage: apartment.py build | preview OUT.png. Pillow plain PNGs, no animation. Run from repository root.
@@ -16,13 +15,15 @@ No actors, stairs, props, story, route layout or physics. Decor carries no white
 Preview assembles short illustrative sections on common geometry, not a validated playable stage.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-import zone_themes  # noqa: E402
-from PIL import Image, ImageDraw  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import json
+
+import pixel
+import zone_themes
+from PIL import Image, ImageDraw
 
 T = 12
 COLUMNS = 8
@@ -35,17 +36,23 @@ SUFFIXES = ("top", "top-left", "top-right", "top-joint", "face", "face-left", "f
 
 
 def image(width, height, colour=None):
-    return Image.new("RGBA", (width, height), pixel.rgb(colour) + (255,) if colour else (0, 0, 0, 0))
+    return Image.new("RGBA", (width, height), (*pixel.rgb(colour), 255) if colour else (0, 0, 0, 0))
 
 
 def rect(im, colour, box):
-    im.paste(pixel.rgb(colour) + (255,), box)
+    im.paste((*pixel.rgb(colour), 255), box)
 
 
 def material(family, suffix):
     name = family.removeprefix("apartment-")
-    fill = {"wood": "zone-peach-shade", "tile": "lgrey", "plaster": SHADE,
-            "stone": "grey", "brick": PRIMARY, "metal": "slate"}[name]
+    fill = {
+        "wood": "zone-peach-shade",
+        "tile": "lgrey",
+        "plaster": SHADE,
+        "stone": "grey",
+        "brick": PRIMARY,
+        "metal": "slate",
+    }[name]
     im = image(T, T, fill)
     if name in ("wood", "brick"):
         rect(im, "brown" if name == "wood" else SHADE, (0, 8, 12, 10))
@@ -70,8 +77,7 @@ def material(family, suffix):
 
 
 def tiles():
-    return [(f"{family}-{suffix}", material(family, suffix))
-            for family in FAMILIES for suffix in SUFFIXES]
+    return [(f"{family}-{suffix}", material(family, suffix)) for family in FAMILIES for suffix in SUFFIXES]
 
 
 def sky():
@@ -80,8 +86,7 @@ def sky():
 
 def far():
     im = image(720, 720)
-    for x, width, top in ((-12, 132, 104), (158, 100, 54), (298, 152, 132),
-                          (492, 112, 78), (642, 96, 112)):
+    for x, width, top in ((-12, 132, 104), (158, 100, 54), (298, 152, 132), (492, 112, 78), (642, 96, 112)):
         rect(im, "zone-peach-shade", (x, top, x + width, 720))
         rect(im, "zone-peach-shade", (x + 14, top - 14, x + width - 14, top))
         rect(im, "zone-peach-shade", (x + width - 28, top - 28, x + width - 18, top))
@@ -144,27 +149,37 @@ BACKDROPS = {
     "apartment-facade": (facade, "x"),
     "apartment-far": (far, "x"),
     "apartment-sky": (sky, "x"),
-    **{"apartment-wall-" + style: (lambda style=style: wall(style), "x")
-       for style in ("lobby", "restaurant", "pool", "spa", "residential")},
+    **{
+        "apartment-wall-" + style: (lambda style=style: wall(style), "x")
+        for style in ("lobby", "restaurant", "pool", "spa", "residential")
+    },
 }
 
 
 def build():
-    os.makedirs("public/art/backdrops", exist_ok=True)
+    Path("public/art/backdrops").mkdir(parents=True, exist_ok=True)
     pixel.update_manifest("tilesets", [pixel.write_tileset(TILESET, tiles())])
     entries = []
     for key, (draw, repeat) in BACKDROPS.items():
         im = draw()
         im.save(f"public/art/backdrops/{key}.png")
-        entries.append({"key": key, "png": f"backdrops/{key}.png", "width": im.width, "height": im.height,
-                        "anchor": "bottom-left", "y": BOTTOM, "repeat": repeat})
+        entries.append(
+            {
+                "key": key,
+                "png": f"backdrops/{key}.png",
+                "width": im.width,
+                "height": im.height,
+                "anchor": "bottom-left",
+                "y": BOTTOM,
+                "repeat": repeat,
+            }
+        )
     pixel.update_manifest("backdrops", entries)
     print("built", TILESET, "and", len(entries), "backdrops")
 
 
 def context():
     """Material contact sheet on common illustrative geometry; no route or stair behaviour claim."""
-    import json
 
     im = image(720, 360, PRIMARY)
     far_im = far().crop((0, 360, 720, 720))
@@ -187,7 +202,7 @@ def context():
             im.alpha_composite(ts[family + "-top"], (x, 216))
             im.alpha_composite(ts[family + "-face"], (x, 228))
         ImageDraw.Draw(im).text((i * 120 + 4, 76), labels[i], fill=pixel.rgb("ink"))
-    data = json.load(open("public/art/sprites/bird.json"))
+    data = json.loads(Path("public/art/sprites/bird.json").read_text())
     f = next(iter(data["frames"].values()))["frame"]
     bird = Image.open("public/art/sprites/bird.png").convert("RGBA")
     bird = bird.crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))

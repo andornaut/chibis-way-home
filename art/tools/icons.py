@@ -29,13 +29,14 @@ rays do not hold, so the disc is flat zone-blue.
 """
 
 import math
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import bird  # noqa: E402
-import pixel  # noqa: E402
-from pixel import K, Grid  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bird
+import pixel
+from PIL import Image
+from pixel import Grid, K
 
 RAYS = ("zone-blue", "zone-blue-shade")  # the sunburst's alternating rays
 RAY_COUNT = 12
@@ -57,7 +58,7 @@ WHOLE_R = 0.18
 CLOSE = (0.54, 0.44, 0.30)  # the 16px close-up: head centre x, y and radius, as fractions of the side
 
 
-def bird_px(S, hr, place, feet=True):
+def bird_px(side, hr, place, feet=True):
     """Her side view with her head radius hr px, drawn from bird.py's shapes: the round head set into the body,
     the 3px nape dip, the softened back, the tail tip, a folded wing, the short bill, the dot eye and (whole)
     the stub feet. place(bounds) returns the head centre for the figure's bounds (left, top, right, bottom,
@@ -68,84 +69,93 @@ def bird_px(S, hr, place, feet=True):
     bounds = (dx - bw - 4 * s, -hr, hr + 5 * s, dy + bh + (2 * s if feet else 0))
     hx, hy = place(bounds)
     bx, by = hx + dx, hy + dy
-    g = Grid(S, S)
+    g = Grid(side, side)
     ks = max(1, round(3 * s))
-    light = bird.LIGHT if S >= 32 else None
+    light = bird.LIGHT if side >= 32 else None
     if feet:
         fw, fh = max(2, round(4 * s)), max(1, round(2 * s))
         for fx in (-5, 2):
             g.rect(int(bx + fx * s), int(by + bh), fw, fh, "orange")
-    bird.cel(g, bird.in_ell(bx - bw + s, by - s, 4.4 * s, 2.2 * s, -0.45), bird.BASE, bird.SHADE, None,
-             max(1, round(s)), 1)
-    bird.cel(g, bird.in_body(bx, by, bw, bh, hx - hr * 0.7, bird.NAPE_DROP * s, bird.BACK_FLAT * s), bird.BASE,
-             bird.SHADE, light, ks, 1)
+    bird.cel(
+        g, bird.in_ell(bx - bw + s, by - s, 4.4 * s, 2.2 * s, -0.45), bird.BASE, bird.SHADE, None, max(1, round(s)), 1
+    )
+    bird.cel(
+        g,
+        bird.in_body(bx, by, bw, bh, hx - hr * 0.7, bird.NAPE_DROP * s, bird.BACK_FLAT * s),
+        bird.BASE,
+        bird.SHADE,
+        light,
+        ks,
+        1,
+    )
     bird.cel(g, bird.in_ell(hx, hy, hr, hr), bird.BASE, bird.SHADE, light, ks, 1)
     bird.flat(g, bird.in_ell(bx - 2 * s, by + 2 * s, bw * 0.5, bh * 0.3, -0.3), bird.WING)
     g.rect(int(hx + hr - 2 * s), int(hy), max(3, round(7 * s)), max(2, round(5 * s)), "orange")  # bill
     e = max(2, round(4 * s))
     g.rect(int(hx), int(hy - hr * 0.55), e, e, "ink")  # dot eye
-    return g.outlined(lambda c: K[bird.OUTLINE])
+    return g.outlined(lambda _c: K[bird.OUTLINE])
 
 
-def icon(S, ground):
+def icon(side, ground):
     """One drawing: ground is "disc" (transparent outside), "full" (sunburst square) or "mask" (sunburst square,
     her shrunk into the central 80%)."""
     f = MASK_SCALE if ground == "mask" else 1.0
-    c, R = S / 2, S / 2 * f
-    if S <= 16:
+    c, radius = side / 2, side / 2 * f
+    if side <= 16:
         cx, cy, r = CLOSE
-        fig = bird_px(S, r * S, lambda b: (cx * S, cy * S), feet=False)
+        fig = bird_px(side, r * side, lambda _b: (cx * side, cy * side), feet=False)
     else:
+
         def centred(b):  # the figure's bounds centred in the disc
             return c - (b[0] + b[2]) / 2, c - (b[1] + b[3]) / 2
-        fig = bird_px(S, WHOLE_R * f * S, centred)
+
+        fig = bird_px(side, WHOLE_R * f * side, centred)
+
     def ground_at(x, y):
-        if S <= 16:
+        if side <= 16:
             return K[FLAT]
         a = math.atan2(y + 0.5 - c * 0.95, x + 0.5 - c)
         return K[RAYS[int((a + math.pi) / (2 * math.pi) * RAY_COUNT) % 2]]
 
-    out = Grid(S, S)
-    for y in range(S):
-        for x in range(S):
+    out = Grid(side, side)
+    for y in range(side):
+        for x in range(side):
             d = ((x + 0.5 - c) ** 2 + (y + 0.5 - c) ** 2) ** 0.5
-            if d <= R - 1:
+            if d <= radius - 1:
                 out.px[y][x] = fig[y][x] or ground_at(x, y)
-            elif d <= R:  # a 1px edge of ground, so the 16px close-up's cut never meets the page
-                out.px[y][x] = ground_at(x, y) if S <= 16 else fig[y][x] or ground_at(x, y)
+            elif d <= radius:  # a 1px edge of ground, so the 16px close-up's cut never meets the page
+                out.px[y][x] = ground_at(x, y) if side <= 16 else fig[y][x] or ground_at(x, y)
             elif ground != "disc":
                 out.px[y][x] = ground_at(x, y)
     return out.px
 
 
 def image(px, z=1):
-    from PIL import Image
 
-    S = len(px)
-    im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    side = len(px)
+    im = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     for y, row in enumerate(px):
         for x, c in enumerate(row):
             if c:
-                im.putpixel((x, y), pixel.rgb(c) + (255,))
-    return im.resize((S * z, S * z), Image.NEAREST) if z != 1 else im
+                im.putpixel((x, y), (*pixel.rgb(c), 255))
+    return im.resize((side * z, side * z), Image.NEAREST) if z != 1 else im
 
 
 def images():
-    return {path: image(icon(S, ground), z) for path, (S, ground, z) in OUTPUTS.items()}
+    return {path: image(icon(side, ground), z) for path, (side, ground, z) in OUTPUTS.items()}
 
 
 def build():
     ims = images()
     for path, im in ims.items():
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        Path(str(Path(path).parent)).mkdir(parents=True, exist_ok=True)
         im.save(path)
     fav16, fav32 = ims["public/art/favicon-16.png"], ims["public/art/favicon.png"]
     fav32.save(ICO, format="ICO", sizes=[(16, 16), (32, 32)], append_images=[fav16])
-    print("built", ", ".join(list(ims) + [ICO]))
+    print("built", ", ".join([*list(ims), ICO]))
 
 
 def preview(out):
-    from PIL import Image
 
     ims = images()
     small = [ims["public/art/favicon-16.png"], ims["public/art/favicon.png"]]
@@ -154,19 +164,19 @@ def preview(out):
     rows = []
     for ground in ("dee1e6", "202124"):
         w = sum(im.width for im in ims.values()) + gap * (len(ims) + 1)
-        row = Image.new("RGBA", (w, 512 + 2 * gap), pixel.rgb(ground) + (255,))
+        row = Image.new("RGBA", (w, 512 + 2 * gap), (*pixel.rgb(ground), 255))
         x = gap
         for im in ims.values():
             row.alpha_composite(im, (x, gap))
             x += im.width + gap
         rows.append(row)
-    zrow = Image.new("RGBA", (sum(z.width for z in zoom) + gap * 3, 256 + 2 * gap), pixel.rgb("slate") + (255,))
+    zrow = Image.new("RGBA", (sum(z.width for z in zoom) + gap * 3, 256 + 2 * gap), (*pixel.rgb("slate"), 255))
     x = gap
     for z in zoom:
         zrow.alpha_composite(z, (x, gap))
         x += z.width + gap
     rows.append(zrow)
-    sheet = Image.new("RGBA", (max(r.width for r in rows), sum(r.height for r in rows)), pixel.rgb("ink") + (255,))
+    sheet = Image.new("RGBA", (max(r.width for r in rows), sum(r.height for r in rows)), (*pixel.rgb("ink"), 255))
     y = 0
     for r in rows:
         sheet.alpha_composite(r, (0, y))

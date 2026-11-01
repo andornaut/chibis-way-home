@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Home-city rabbit antagonist, facing right with upright ears and a small round tail.
 
 Frustration: four120ms looping headshake and raised wing/paw poses, fixed feet, no world displacement.
@@ -11,13 +10,13 @@ Hop poses compress, extend, tuck and land without baking world movement into the
 Every state remains lethal. No red contact outline, portrait, clothing, name or dialogue is included.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import bird  # noqa: E402
-import pixel  # noqa: E402
-from pixel import Grid, K  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bird
+import pixel
+from pixel import Grid, K
 
 KEY = "rabbit-antagonist"
 SRC = "art/antagonists"
@@ -40,7 +39,8 @@ def draw(state="idle", phase=0):
         lift = 0
         by, hx, hy = 35, 31 + (-2, 1, 2, -1)[phase], 22
     # Ears stay upright and recognisable even in the compressed preparation pose.
-    for ex, ey, angle in ((25, hy - 10, -0.12), (33, hy - 11, 0.12)):
+    for base_ex, ey, base_angle in ((25, hy - 10, -0.12), (33, hy - 11, 0.12)):
+        ex, angle = base_ex, base_angle
         if state == "frustration":
             ex += (-2, 1, 2, -1)[phase]
             angle += (-0.35, 0.25, 0.35, -0.25)[phase]
@@ -66,12 +66,18 @@ def draw(state="idle", phase=0):
 
 
 def sprites():
-    yield KEY, [("idle", [draw("idle", i) for i in range(2)], 400),
-                ("hop", [draw("hop", i) for i in range(4)], 100),
-                ("rest", [draw("rest", i) for i in range(2)], 400),
-                ("frustration", [draw("frustration", i) for i in range(4)], 120)]
+    yield (
+        KEY,
+        [
+            ("idle", [draw("idle", i) for i in range(2)], 400),
+            ("hop", [draw("hop", i) for i in range(4)], 100),
+            ("rest", [draw("rest", i) for i in range(2)], 400),
+            ("frustration", [draw("frustration", i) for i in range(4)], 120),
+        ],
+    )
 
 
 if __name__ == "__main__":
-    pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(K["zone-peach"], K["slate"], K["cream"]),
-               once=ONCE, hitboxes=HITBOX)
+    pixel.main(
+        sys.argv, sprites, SRC, __doc__, grounds=(K["zone-peach"], K["slate"], K["cream"]), once=ONCE, hitboxes=HITBOX
+    )

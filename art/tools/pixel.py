@@ -2,32 +2,92 @@
 coloured outlines, a contact-sheet preview, and the step that turns frames into an Aseprite source, a
 PNG + JSON export and a manifest entry. Run the art scripts from the repository root."""
 
+import importlib
 import json
-import os
+import shutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 import zone_themes
+from PIL import Image
 
 # Endesga 32, by role.
-K = dict(
-    rust="be4a2f", ochre="d77643", cream="ead4aa", tan="e4a672", brown="b86f50", dbrown="733e39", plum="3e2731",
-    dred="a22633", red="e43b44", orange="f77622", amber="feae34", yellow="fee761", green="63c74d", dgreen="3e8948",
-    forest="265c42", teal="193c3e", blue="124e89", sky="0099db", cyan="2ce8f5", white="ffffff", lgrey="c0cbdc",
-    grey="8b9bb4", slate="5a6988", dslate="3a4466", navy="262b44", ink="181425", hot="ff0044", purple="68386c",
-    mauve="b55088", pink="f6757a", skin1="e8b796", skin2="c28569",
-)
+K = {
+    "rust": "be4a2f",
+    "ochre": "d77643",
+    "cream": "ead4aa",
+    "tan": "e4a672",
+    "brown": "b86f50",
+    "dbrown": "733e39",
+    "plum": "3e2731",
+    "dred": "a22633",
+    "red": "e43b44",
+    "orange": "f77622",
+    "amber": "feae34",
+    "yellow": "fee761",
+    "green": "63c74d",
+    "dgreen": "3e8948",
+    "forest": "265c42",
+    "teal": "193c3e",
+    "blue": "124e89",
+    "sky": "0099db",
+    "cyan": "2ce8f5",
+    "white": "ffffff",
+    "lgrey": "c0cbdc",
+    "grey": "8b9bb4",
+    "slate": "5a6988",
+    "dslate": "3a4466",
+    "navy": "262b44",
+    "ink": "181425",
+    "hot": "ff0044",
+    "purple": "68386c",
+    "mauve": "b55088",
+    "pink": "f6757a",
+    "skin1": "e8b796",
+    "skin2": "c28569",
+}
 K.update(zone_themes.colours())
 PALETTE = list(K.values())
 # One ramp step darker for each colour. Shadows and dimming step down this, never blend with black.
-DARKER = dict(p.split(":") for p in (
-    "be4a2f:733e39 d77643:be4a2f ead4aa:e4a672 e4a672:b86f50 b86f50:733e39 733e39:3e2731 3e2731:181425 "
-    "a22633:3e2731 e43b44:a22633 f77622:be4a2f feae34:f77622 fee761:feae34 63c74d:3e8948 3e8948:265c42 "
-    "265c42:193c3e 193c3e:181425 124e89:262b44 0099db:124e89 2ce8f5:0099db ffffff:c0cbdc c0cbdc:8b9bb4 "
-    "8b9bb4:5a6988 5a6988:3a4466 3a4466:262b44 262b44:181425 181425:181425 ff0044:a22633 68386c:3e2731 "
-    "b55088:68386c f6757a:b55088 e8b796:c28569 c28569:b86f50"
-).split())
+DARKER = dict(
+    p.split(":")
+    for p in [
+        "be4a2f:733e39",
+        "d77643:be4a2f",
+        "ead4aa:e4a672",
+        "e4a672:b86f50",
+        "b86f50:733e39",
+        "733e39:3e2731",
+        "3e2731:181425",
+        "a22633:3e2731",
+        "e43b44:a22633",
+        "f77622:be4a2f",
+        "feae34:f77622",
+        "fee761:feae34",
+        "63c74d:3e8948",
+        "3e8948:265c42",
+        "265c42:193c3e",
+        "193c3e:181425",
+        "124e89:262b44",
+        "0099db:124e89",
+        "2ce8f5:0099db",
+        "ffffff:c0cbdc",
+        "c0cbdc:8b9bb4",
+        "8b9bb4:5a6988",
+        "5a6988:3a4466",
+        "3a4466:262b44",
+        "262b44:181425",
+        "181425:181425",
+        "ff0044:a22633",
+        "68386c:3e2731",
+        "b55088:68386c",
+        "f6757a:b55088",
+        "e8b796:c28569",
+        "c28569:b86f50",
+    ]
+)
 DARKER.update(zone_themes.ramps(K))
 
 MANIFEST = "public/art/manifest.json"
@@ -41,7 +101,7 @@ def hexc(c):
 
 def rgb(c):
     c = hexc(c)
-    return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(c[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def darker(c, steps=1):
@@ -54,6 +114,7 @@ def darker(c, steps=1):
 
 def contrast(a, b):
     """WCAG contrast ratio of two colours."""
+
     def lum(c):
         v = [x / 255 for x in rgb(c)]
         v = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in v]
@@ -111,7 +172,7 @@ class Grid:
         for y in range(self.h):
             for x in range(self.w):
                 dx, dy = abs(x + 0.5 - cx) / rx, abs(y + 0.5 - cy) / ry
-                if dx ** power + dy ** power <= 1:
+                if dx**power + dy**power <= 1:
                     d = 0.7 * ((x + 0.5 - cx) / rx + (y + 0.5 - cy) / ry)
                     self.p(x, y, sh if sh and d > 0.5 else li if li and d < -0.72 else c)
 
@@ -158,22 +219,26 @@ def write_tileset(key, items, pieces=None, hitboxes=None, size=12, columns=8):
                                                               hits its whole cell.
     items is a list of (name, RGBA image of size x size); pieces maps a piece name to rows of tile names. Returns
     the manifest entry."""
-    from PIL import Image
 
-    os.makedirs(TILESETS, exist_ok=True)
+    Path(TILESETS).mkdir(parents=True, exist_ok=True)
     rows = -(-len(items) // columns)
     im = Image.new("RGBA", (columns * size, rows * size), (0, 0, 0, 0))
     for i, (_, tile) in enumerate(items):
         im.alpha_composite(tile, ((i % columns) * size, (i // columns) * size))
     im.save(f"{TILESETS}/{key}.png")
     index = {name: i for i, (name, _) in enumerate(items)}
-    data = {"columns": columns, "pieces": {k: [[index[n] for n in row] for row in v] for k, v in (pieces or {}).items()},
-            "tileSize": size, "tiles": index}
+    data = {
+        "columns": columns,
+        "pieces": {k: [[index[n] for n in row] for row in v] for k, v in (pieces or {}).items()},
+        "tileSize": size,
+        "tiles": index,
+    }
     if hitboxes:
         unknown = set(hitboxes) - set(index)
-        assert not unknown, f"{key}: hit boxes for tiles it does not have: {sorted(unknown)}"
+        if unknown:
+            raise AssertionError(f"{key}: hit boxes for tiles it does not have: {sorted(unknown)}")
         data["hitboxes"] = hitboxes
-    with open(f"{TILESETS}/{key}.json", "w") as f:
+    with Path(f"{TILESETS}/{key}.json").open("w") as f:
         json.dump(data, f, indent=2, sort_keys=True)
         f.write("\n")
     return {"key": key, "png": f"tilesets/{key}.png", "json": f"tilesets/{key}.json"}
@@ -184,13 +249,13 @@ def update_manifest(section, entries):
     same key, keep every other entry, sort by key. Each tool owns its own keys, so several tools can share a
     section; a tool that stops drawing a piece removes its entry by hand."""
     manifest = {}
-    if os.path.exists(MANIFEST):
-        with open(MANIFEST) as f:
+    if Path(MANIFEST).exists():
+        with Path(MANIFEST).open() as f:
             manifest = json.load(f)
     merged = {e["key"]: e for e in manifest.get(section, [])}
     merged.update({e["key"]: e for e in entries})
     manifest[section] = sorted(merged.values(), key=lambda e: e["key"])
-    with open(MANIFEST, "w") as f:
+    with Path(MANIFEST).open("w") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")
 
@@ -202,24 +267,29 @@ def flipped(frame):
 
 def preview(sprites, out, grounds=("5a6988", "e4a672", "ead4aa"), scale=3, gap=4):
     """Contact sheet: one row per sprite and ground colour, every frame in tag order."""
-    from PIL import Image
 
     rows = []
     for _, tags in sprites:
         frames = [f for _, fs, _ in tags for f in fs]
-        for ground in grounds:
-            rows.append((frames, ground))
+        rows.extend((frames, ground) for ground in grounds)
     cell_w = max(len(f[0][0]) for f, _ in rows) + gap
     cell_h = [len(f[0]) + gap for f, _ in rows]
     width = max(len(f) for f, _ in rows) * cell_w * scale
     img = Image.new("RGB", (width, sum(cell_h) * scale), rgb("ink"))
     y0 = 0
-    for (frames, ground), ch in zip(rows, cell_h):
+    for (frames, ground), ch in zip(rows, cell_h, strict=False):
         for i, f in enumerate(frames):
             for y, row in enumerate(f):
                 for x, c in enumerate(row):
-                    img.paste(rgb(c or ground), ((i * cell_w + x) * scale, (y0 + y) * scale,
-                                                 (i * cell_w + x + 1) * scale, (y0 + y + 1) * scale))
+                    img.paste(
+                        rgb(c or ground),
+                        (
+                            (i * cell_w + x) * scale,
+                            (y0 + y) * scale,
+                            (i * cell_w + x + 1) * scale,
+                            (y0 + y + 1) * scale,
+                        ),
+                    )
         y0 += ch
     img.save(out)
 
@@ -251,27 +321,38 @@ def _lua(tags, out, key, margins=None):
     for tag, fs, ms in tags:
         tag_lines.append(f'do local t = spr:newTag({n + 1}, {n + len(fs)}); t.name = "{tag}" end')
         # ms is the tag's frame duration, or a list with one duration per frame
-        for f, d in zip(fs, ms if isinstance(ms, (list, tuple)) else [ms] * len(fs)):
+        for f, d in zip(fs, ms if isinstance(ms, (list, tuple)) else [ms] * len(fs), strict=False):
             pts = []
             for y, row in enumerate(f):
                 for x, c in enumerate(row):
                     if c:
                         r, g, b = rgb(c)
-                        pts.append("{%d,%d,%d,%d,%d}" % (x, y, r, g, b))
+                        pts.append(f"{{{x},{y},{r},{g},{b}}}")
             frames.append("{" + ",".join(pts) + "}")
             durations.append(str(d / 1000))
         n += len(fs)
     palette = "\n".join(
-        "pal:setColor(%d, Color{ r = %d, g = %d, b = %d })" % ((i,) + rgb(c)) for i, c in enumerate(PALETTE)
+        f"pal:setColor({i}, Color{{ r = {rgb(c)[0]}, g = {rgb(c)[1]}, b = {rgb(c)[2]} }})"
+        for i, c in enumerate(PALETTE)
     )
     slice_lines = ""
     if margins:
         left, top, right, bottom = margins
-        slice_lines = (f'do local s = spr:newSlice(Rectangle(0, 0, {w}, {h})); s.name = "{key}"; '
-                       f's.center = Rectangle({left}, {top}, {w - left - right}, {h - top - bottom}) end')
-    return LUA.format(w=w, h=h, ncolors=len(PALETTE), palette=palette, frames="{" + ",\n".join(frames) + "}",
-                      durations="{" + ",".join(durations) + "}", tags="\n".join(tag_lines), slice=slice_lines,
-                      out=out)
+        slice_lines = (
+            f'do local s = spr:newSlice(Rectangle(0, 0, {w}, {h})); s.name = "{key}"; '
+            f"s.center = Rectangle({left}, {top}, {w - left - right}, {h - top - bottom}) end"
+        )
+    return LUA.format(
+        w=w,
+        h=h,
+        ncolors=len(PALETTE),
+        palette=palette,
+        frames="{" + ",\n".join(frames) + "}",
+        durations="{" + ",".join(durations) + "}",
+        tags="\n".join(tag_lines),
+        slice=slice_lines,
+        out=out,
+    )
 
 
 def build(sprites, src_dir, slices=None, once=None, hitboxes=None, contacts=()):
@@ -287,56 +368,87 @@ def build(sprites, src_dir, slices=None, once=None, hitboxes=None, contacts=()):
     slices, once, hitboxes = slices or {}, once or {}, hitboxes or {}
     sprites = list(sprites)
     unknown_contacts = set(contacts) - {key for key, _ in sprites}
-    assert not unknown_contacts, f"Unknown contact sprites: {sorted(unknown_contacts)}"
+    if unknown_contacts:
+        raise AssertionError(f"Unknown contact sprites: {sorted(unknown_contacts)}")
     for key, tags in sprites:
         unknown = set(once.get(key, ())) - {t for t, _, _ in tags}
-        assert not unknown, f"{key}: once names tags it does not have: {sorted(unknown)}"
+        if unknown:
+            raise AssertionError(f"{key}: once names tags it does not have: {sorted(unknown)}")
         if key in hitboxes:
             x, y, w, h = hitboxes[key]
             fh, fw = len(tags[0][1][0]), len(tags[0][1][0][0])
-            assert w > 0 and h > 0 and x >= 0 and y >= 0 and x + w <= fw and y + h <= fh, \
-                f"{key}: hitbox {hitboxes[key]} is not inside its {fw}x{fh} frame"
+            if not (w > 0 and h > 0 and (x >= 0) and (y >= 0) and (x + w <= fw) and (y + h <= fh)):
+                raise AssertionError(f"{key}: hitbox {hitboxes[key]} is not inside its {fw}x{fh} frame")
     unknown = set(hitboxes) - {k for k, _ in sprites}
-    assert not unknown, f"hitboxes name sprites the script does not draw: {sorted(unknown)}"
-    os.makedirs(src_dir, exist_ok=True)
-    os.makedirs(SPRITES, exist_ok=True)
+    if unknown:
+        raise AssertionError(f"hitboxes name sprites the script does not draw: {sorted(unknown)}")
+    Path(src_dir).mkdir(parents=True, exist_ok=True)
+    Path(SPRITES).mkdir(parents=True, exist_ok=True)
     built = {}
+    executable = shutil.which("aseprite")
+    if executable is None:
+        raise FileNotFoundError("aseprite")
     for key, tags in sprites:
         src = f"{src_dir}/{key}.aseprite"
         with tempfile.NamedTemporaryFile("w", suffix=".lua", delete=False) as f:
             f.write(_lua(tags, src, key, slices.get(key)))
-        subprocess.run(["aseprite", "-b", "--script", f.name], check=True)
-        os.unlink(f.name)
-        subprocess.run(["aseprite", "-b", src, "--sheet", f"{SPRITES}/{key}.png", "--data", f"{SPRITES}/{key}.json",
-                        "--format", "json-hash", "--list-tags"] + (["--list-slices"] if key in slices else []),
-                       check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(  # noqa: S603 - Fixed executable; the Lua script is generated from local art.
+            [executable, "-b", "--script", f.name], check=True
+        )
+        Path(f.name).unlink()
+        subprocess.run(  # noqa: S603 - Fixed executable and export flags; local source/output paths.
+            [
+                executable,
+                "-b",
+                src,
+                "--sheet",
+                f"{SPRITES}/{key}.png",
+                "--data",
+                f"{SPRITES}/{key}.json",
+                "--format",
+                "json-hash",
+                "--list-tags",
+            ]
+            + (["--list-slices"] if key in slices else []),
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
         built[key] = [t for t, _, _ in tags if t in once.get(key, ())]
     manifest = {}
-    if os.path.exists(MANIFEST):
-        with open(MANIFEST) as f:
+    if Path(MANIFEST).exists():
+        with Path(MANIFEST).open() as f:
             manifest = json.load(f)
     entries = {s["key"]: s for s in manifest.get("sprites", [])}
-    for key in built:
-        entries[key] = {"key": key, "png": f"sprites/{key}.png", "json": f"sprites/{key}.json",
-                        "once": built[key]}
+    for key, once_tags in built.items():
+        entries[key] = {"key": key, "png": f"sprites/{key}.png", "json": f"sprites/{key}.json", "once": once_tags}
         if key in slices:
-            entries[key]["slice"] = dict(zip(("left", "top", "right", "bottom"), slices[key]))
+            entries[key]["slice"] = dict(zip(("left", "top", "right", "bottom"), slices[key], strict=False))
         if key in contacts:
             entries[key]["contact"] = "silhouette"
         if key in hitboxes:
-            entries[key]["hitbox"] = dict(zip(("x", "y", "width", "height"), hitboxes[key]))
+            entries[key]["hitbox"] = dict(zip(("x", "y", "width", "height"), hitboxes[key], strict=False))
     manifest["sprites"] = sorted(entries.values(), key=lambda s: s["key"])
-    with open(MANIFEST, "w") as f:
+    with Path(MANIFEST).open("w") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")
     if contacts:
-        from contact_silhouettes import build as build_contacts
+        build_contacts = importlib.import_module("contact_silhouettes").build
+
         build_contacts()
     print("built", ", ".join(built))
 
 
-def main(argv, sprites, src_dir, doc, grounds=("5a6988", "e4a672", "ead4aa"), slices=None, once=None,
-         hitboxes=None, contacts=()):
+def main(
+    argv,
+    sprites,
+    src_dir,
+    doc,
+    grounds=("5a6988", "e4a672", "ead4aa"),
+    slices=None,
+    once=None,
+    hitboxes=None,
+    contacts=(),
+):
     """The command line every art script shares: `build`, or `preview OUT.png`. A script declares the tags that
     play once as a ONCE dict beside its sprites(), and any hit boxes as a HITBOX dict, and passes them here."""
     if len(argv) == 3 and argv[1] == "preview":

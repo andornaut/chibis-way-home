@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Reusable countryside appearance skins, independent of layouts, collision and zone assignment.
 
 Usage: countryside.py build | preview OUT.png. Run from repository root. Pillow, plain PNG, no animation.
@@ -18,13 +17,15 @@ silhouettes clear of the route. Tonal silhouettes have no dark contour bands. No
 Preview geometry is illustrative only.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-import zone_themes  # noqa: E402
-from PIL import Image, ImageDraw  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import json
+
+import pixel
+import zone_themes
+from PIL import Image, ImageDraw
 
 T = 12
 COLUMNS = 8
@@ -37,20 +38,24 @@ SUFFIXES = ("top", "top-left", "top-right", "top-joint", "face", "face-left", "f
 
 
 def image(width, height, colour=None):
-    return Image.new("RGBA", (width, height), pixel.rgb(colour) + (255,) if colour else (0, 0, 0, 0))
+    return Image.new("RGBA", (width, height), (*pixel.rgb(colour), 255) if colour else (0, 0, 0, 0))
 
 
 def rect(im, colour, box):
-    im.paste(pixel.rgb(colour) + (255,), box)
+    im.paste((*pixel.rgb(colour), 255), box)
 
 
 def polygon(im, colour, points):
-    ImageDraw.Draw(im).polygon(points, fill=pixel.rgb(colour) + (255,))
+    ImageDraw.Draw(im).polygon(points, fill=(*pixel.rgb(colour), 255))
 
 
 def material(family, suffix):
-    fill = {"country-ground": SHADE, "hay-stack": SHADE,
-            "riverbank": "zone-green-shade", "timber-crossing": "zone-peach-shade"}[family]
+    fill = {
+        "country-ground": SHADE,
+        "hay-stack": SHADE,
+        "riverbank": "zone-green-shade",
+        "timber-crossing": "zone-peach-shade",
+    }[family]
     im = image(T, T, fill)
     if family == "hay-stack":
         rect(im, PRIMARY, (0, 0, 12, 2))
@@ -74,8 +79,7 @@ def material(family, suffix):
 
 
 def tiles():
-    return [(f"{family}-{suffix}", material(family, suffix))
-            for family in FAMILIES for suffix in SUFFIXES]
+    return [(f"{family}-{suffix}", material(family, suffix)) for family in FAMILIES for suffix in SUFFIXES]
 
 
 def sky():
@@ -84,17 +88,35 @@ def sky():
 
 def far():
     im = image(720, 600)
-    polygon(im, SHADE, ((0, 424), (88, 398), (192, 414), (286, 380), (396, 406),
-                       (500, 392), (614, 410), (719, 424), (719, 600), (0, 600)))
-    polygon(im, "zone-peach", ((0, 478), (142, 446), (292, 466), (454, 436),
-                              (610, 454), (719, 478), (719, 600), (0, 600)))
+    polygon(
+        im,
+        SHADE,
+        (
+            (0, 424),
+            (88, 398),
+            (192, 414),
+            (286, 380),
+            (396, 406),
+            (500, 392),
+            (614, 410),
+            (719, 424),
+            (719, 600),
+            (0, 600),
+        ),
+    )
+    polygon(
+        im, "zone-peach", ((0, 478), (142, 446), (292, 466), (454, 436), (610, 454), (719, 478), (719, 600), (0, 600))
+    )
     return im
 
 
 def farmland_mid():
     im = image(720, 600)
-    polygon(im, "zone-green-shade", ((0, 484), (152, 458), (306, 480), (460, 450),
-                                     (610, 470), (719, 484), (719, 600), (0, 600)))
+    polygon(
+        im,
+        "zone-green-shade",
+        ((0, 484), (152, 458), (306, 480), (460, 450), (610, 470), (719, 484), (719, 600), (0, 600)),
+    )
     polygon(im, SHADE, ((0, 526), (198, 494), (380, 516), (552, 490), (719, 526), (719, 600), (0, 600)))
     polygon(im, PRIMARY, ((20, 536), (180, 510), (294, 524), (114, 556)))
     polygon(im, "zone-peach-shade", ((420, 558), (568, 516), (686, 542), (540, 582)))
@@ -106,12 +128,9 @@ def farmland_mid():
 
 def river_mid():
     im = image(720, 600)
-    polygon(im, "zone-green-shade", ((0, 478), (144, 454), (300, 484), (504, 460),
-                                     (719, 478), (719, 600), (0, 600)))
-    polygon(im, "zone-peach-shade", ((0, 526), (188, 494), (386, 526), (570, 500),
-                                    (719, 526), (719, 600), (0, 600)))
-    polygon(im, "zone-blue-shade", ((0, 548), (188, 516), (386, 548), (570, 522),
-                                    (719, 548), (719, 600), (0, 600)))
+    polygon(im, "zone-green-shade", ((0, 478), (144, 454), (300, 484), (504, 460), (719, 478), (719, 600), (0, 600)))
+    polygon(im, "zone-peach-shade", ((0, 526), (188, 494), (386, 526), (570, 500), (719, 526), (719, 600), (0, 600)))
+    polygon(im, "zone-blue-shade", ((0, 548), (188, 516), (386, 548), (570, 522), (719, 548), (719, 600), (0, 600)))
     for x, y, w in ((30, 564, 120), (276, 548, 136), (526, 576, 150)):
         rect(im, "zone-blue", (x, y, x + w, y + 4))
     return im
@@ -165,22 +184,30 @@ BACKDROPS = {
 
 
 def build():
-    os.makedirs("public/art/backdrops", exist_ok=True)
+    Path("public/art/backdrops").mkdir(parents=True, exist_ok=True)
     entry = pixel.write_tileset(TILESET, tiles())
     pixel.update_manifest("tilesets", [entry])
     entries = []
     for key, (draw, repeat) in BACKDROPS.items():
         im = draw()
         im.save(f"public/art/backdrops/{key}.png")
-        entries.append({"key": key, "png": f"backdrops/{key}.png", "width": im.width, "height": im.height,
-                        "anchor": "bottom-left", "y": BOTTOM, "repeat": repeat})
+        entries.append(
+            {
+                "key": key,
+                "png": f"backdrops/{key}.png",
+                "width": im.width,
+                "height": im.height,
+                "anchor": "bottom-left",
+                "y": BOTTOM,
+                "repeat": repeat,
+            }
+        )
     pixel.update_manifest("backdrops", entries)
     print("built", TILESET, "and", len(entries), "backdrops")
 
 
 def context(skin):
     """Identical geometry with different skins; no simulation or stage-design assertion."""
-    import json
 
     im = image(720, 720, PRIMARY)
     for key in ("countryside-sky", "countryside-far", "farmland-mid" if skin == "farmland" else "river-mid"):
@@ -202,29 +229,36 @@ def context(skin):
         for y in range(height):
             for x in range(width):
                 if y == 0:
-                    suffix = "top-left" if x == 0 else "top-right" if x == width - 1 else \
-                        "top-joint" if x % 2 else "top"
+                    suffix = (
+                        "top-left" if x == 0 else "top-right" if x == width - 1 else "top-joint" if x % 2 else "top"
+                    )
                 else:
                     suffix = "face-left" if x == 0 else "face-right" if x == width - 1 else "face"
                 im.alpha_composite(ts[f"{family}-{suffix}"], ((col + x) * T, (row + y) * T))
+
     block(ground, 0, 50, 60, 10)
     for c, r, w, h in ((20, 46, 6, 4), (31, 42, 7, 8), (44, 38, 7, 12)):
         block(raised, c, r, w, h)
     # Shared standable ledges and contact strips are loaded, not copied into the material pack.
-    shared = json.load(open("public/art/tilesets/tiles-platforming.json"))
+    shared = json.loads(Path("public/art/tilesets/tiles-platforming.json").read_text())
     shared_png = Image.open("public/art/tilesets/tiles-platforming.png").convert("RGBA")
 
     def shared_tile(name):
         i = shared["tiles"][name]
         return shared_png.crop((i % 8 * T, i // 8 * T, i % 8 * T + T, i // 8 * T + T))
+
     for c in range(12, 18):
         name = "one-way-ledge-left" if c == 12 else "one-way-ledge-right" if c == 17 else "one-way-ledge-middle"
         im.alpha_composite(shared_tile(name), (c * T, 44 * T))
     for c in range(31, 38):
         im.alpha_composite(shared_tile("hazard-right"), (38 * T, (42 + c - 31) * T))
-    data = json.load(open("public/art/sprites/bird.json"))
+    data = json.loads(Path("public/art/sprites/bird.json").read_text())
     f = next(iter(data["frames"].values()))["frame"]
-    bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
+    bird = (
+        Image.open("public/art/sprites/bird.png")
+        .convert("RGBA")
+        .crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
+    )
     im.alpha_composite(bird, (72, 558))
     return im.convert("RGB").crop((0, 360, 720, 720))
 
@@ -232,8 +266,9 @@ def context(skin):
 def preview(out):
     sheet = image(1456, 392, "ink")
     draw = ImageDraw.Draw(sheet)
-    for i, (skin, label) in enumerate((("farmland", "Farmland / earth + bound hay"),
-                                       ("river", "River crossing / bank + timber"))):
+    for i, (skin, label) in enumerate(
+        (("farmland", "Farmland / earth + bound hay"), ("river", "River crossing / bank + timber"))
+    ):
         x = 8 + i * 728
         draw.text((x, 6), label, fill=pixel.rgb("cream"))
         sheet.alpha_composite(context(skin).convert("RGBA"), (x, 24))

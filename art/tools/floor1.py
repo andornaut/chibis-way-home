@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Zone 1 art: a New York street (downtown on a pale steel morning, two screens tall, climbed into its upper
 screen), and the boutique lobby kept for a later indoor zone, as 12px tilesets and modular backdrop pieces that the
 game places from level data. Nothing here is a fixed panorama.
@@ -97,7 +96,8 @@ Backdrops
      "repeat": "x" | "none"}
   The piece's bottom-left corner sits at world y (its bottom edge), at an x the level data chooses. "repeat": "x"
   tiles it horizontally across a run; "none" places it once. Street y values are in the two-screen frame (the
-  sidewalk's top at y 600, row 50); the sidewalk and road tiles fill rows 50 to 59 below it. Draw order, back to front: sky, skyline, facades and
+  sidewalk's top at y 600, row 50); the sidewalk and road tiles fill rows 50 to 59 below it. Draw order, back to
+  front: sky, skyline, facades and
   their upper storeys and rooflines, facade pieces, storefronts, street furniture, then the play layer.
 - Sky and city (repeat x): street-sky 48x600 (y 600), flat zone-blue. street-city-far and street-city-mid are each
   720x600 (y 600), window-free zone-blue-shade and slate silhouettes. street-skyline 336x600 is their combined
@@ -125,7 +125,8 @@ Backdrops
 - Street furniture (none, y 600): cab 96x40, hot-dog-cart 40x70, subway-railing 72x62, street-tree 64x136,
   walk-signal 12x82, doorman-podium 18x24, canopy-poles 60x60 (under the canopy's end tiles), cross-street
   120x26 (the far avenue between two kerbs; place no facade over a cross street so the skyline shows).
-- Lobby (kept for a later indoor zone; indoor scale, the floor line is y 672): lobby-wall 48x720 (y 720, x: wood panelling, cornice,
+- Lobby (kept for a later indoor zone; indoor scale, the floor line is y 672): lobby-wall 48x720 (y 720, x: wood
+panelling, cornice,
   wainscot), lobby-balustrade 48x36 (y at the balcony's floor line, x), lobby-bookcase 84x384 (y 672; boards 8,
   16, 24 and 32 tiles up, under one-way-shelf rows 7 wide), lobby-sofa 120x72 (y 672; cushions 3 and 6 tiles up,
   under one-way-cushion rows 8 wide from x+12), lobby-desk 120x96 (y 672; its top 8 tiles up, under one-way-desk
@@ -134,25 +135,26 @@ Backdrops
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import nature  # noqa: E402
-import pixel  # noqa: E402
-from pixel import Grid, darker, rgb  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import nature
+import pixel
+from PIL import Image
+from pixel import Grid, darker, rgb
 
 T = 12
 COLUMNS = 8
 W, H = 720, 360
-FY = 312                       # the sidewalk line inside a one-screen street piece (facades, storefronts)
-STREET_FY = 600                # the street's sidewalk top (row 50): the street is 720px (60 tiles) tall, ground below
+FY = 312  # the sidewalk line inside a one-screen street piece (facades, storefronts)
+STREET_FY = 600  # the street's sidewalk top (row 50): the street is 720px (60 tiles) tall, ground below
 TILESETS = "public/art/tilesets"
 BACKDROPS = "public/art/backdrops"
 SPRITES = "public/art/sprites"
 
 
-def R(g, *rects):
+def rects(g, *rects):
     """Fill rects (x, y, w, h, colour or None) on a Grid in order."""
     for x, y, w, h, c in rects:
         g.rect(x, y, w, h, c)
@@ -163,35 +165,36 @@ def ends(g, kind, edge, lit=None, shade=None, below=0):
     """Exposed ends of a solid tile: a 1px edge, a 2px lit band (left) or shade band (right) from row `below`;
     a surface end drops its corner pixel."""
     if "l" in kind:
-        R(g, (0, 0, 1, T, edge))
+        rects(g, (0, 0, 1, T, edge))
         if lit:
-            R(g, (1, below, 2, T - below, lit))
+            rects(g, (1, below, 2, T - below, lit))
         if "t" in kind:
             g.p(0, 0, None)
     if "r" in kind:
-        R(g, (T - 1, 0, 1, T, edge))
+        rects(g, (T - 1, 0, 1, T, edge))
         if shade:
-            R(g, (T - 3, below, 2, T - below, shade))
+            rects(g, (T - 3, below, 2, T - below, shade))
         if "t" in kind:
             g.p(T - 1, 0, None)
     return g
 
 
 def surface(g, edge, lip, body, under):
-    return R(g, (0, 0, T, T, body), (0, 0, T, 1, edge), (0, 1, T, 2, lip), (0, T - 2, T, 2, under))
+    return rects(g, (0, 0, T, T, body), (0, 0, T, 1, edge), (0, 1, T, 2, lip), (0, T - 2, T, 2, under))
 
 
 def shelf(kind, edge, lip, top, face, bracket, bracket_sh):
     """One-way ledge: a 7px slab in the top rows, a bracket under each end tile, transparent below."""
-    g = R(Grid(T, T), (0, 0, T, 1, edge), (0, 1, T, 2, lip), (0, 3, T, 2, top), (0, 5, T, 1, face),
-          (0, 6, T, 1, edge))
+    g = rects(
+        Grid(T, T), (0, 0, T, 1, edge), (0, 1, T, 2, lip), (0, 3, T, 2, top), (0, 5, T, 1, face), (0, 6, T, 1, edge)
+    )
     if kind == "l":
-        R(g, (0, 0, 1, 7, None), (1, 1, 1, 5, edge))
+        rects(g, (0, 0, 1, 7, None), (1, 1, 1, 5, edge))
     if kind == "r":
-        R(g, (T - 1, 0, 1, 7, None), (T - 2, 1, 1, 5, edge))
+        rects(g, (T - 1, 0, 1, 7, None), (T - 2, 1, 1, 5, edge))
     if kind in "lr":
         bx = 4 if kind == "l" else T - 6
-        R(g, (bx, 7, 2, 4, bracket), (bx, 11, 2, 1, bracket_sh))
+        rects(g, (bx, 7, 2, 4, bracket), (bx, 11, 2, 1, bracket_sh))
     return g
 
 
@@ -201,16 +204,36 @@ def shelf(kind, edge, lip, top, face, bracket, bracket_sh):
 # recoloured at export through these maps, so their shapes, sizes and indices never depend on the palette. Colours
 # a map does not name keep their own (the warm accents: cream sign icons, the amber door and cab, red, pink).
 COOL_NEAR = {  # buildings, shopfronts and street furniture: muted blue-grey and slate
-    "dbrown": "slate", "plum": "dslate", "brown": "grey", "rust": "slate", "ochre": "grey", "tan": "lgrey",
-    "ink": "navy", "forest": "dslate", "teal": "dslate", "purple": "dslate", "dgreen": "slate", "green": "grey",
-    "sky": "lgrey", "blue": "slate", "skin2": "grey", "skin1": "lgrey"}
+    "dbrown": "slate",
+    "plum": "dslate",
+    "brown": "grey",
+    "rust": "slate",
+    "ochre": "grey",
+    "tan": "lgrey",
+    "ink": "navy",
+    "forest": "dslate",
+    "teal": "dslate",
+    "purple": "dslate",
+    "dgreen": "slate",
+    "green": "grey",
+    "sky": "lgrey",
+    "blue": "slate",
+    "skin2": "grey",
+    "skin1": "lgrey",
+}
 COOL_TILES = {  # play tiles: white lips, a light concrete band over a soft slate fill
-    "skin1": "white", "skin2": "lgrey", "cream": "white", "tan": "lgrey", "brown": "slate", "dbrown": "navy",
-    "plum": "dslate"}
-COOL_AWNING = {"dgreen": "ochre", "forest": "dbrown"}                  # the awnings stay warm: ochre and cream
-COOL_CANOPY = {"tan": "white", "forest": "dbrown"}                     # the exit canopy: dark brown, a white lip
-COOL_DOOR = {"tan": "slate", "cream": "grey", "brown": "dslate"}      # the exit's frame, darker so its amber glass
-                                                                       # glows and the sidewalk's lip holds under it
+    "skin1": "white",
+    "skin2": "lgrey",
+    "cream": "white",
+    "tan": "lgrey",
+    "brown": "slate",
+    "dbrown": "navy",
+    "plum": "dslate",
+}
+COOL_AWNING = {"dgreen": "ochre", "forest": "dbrown"}  # the awnings stay warm: ochre and cream
+COOL_CANOPY = {"tan": "white", "forest": "dbrown"}  # the exit canopy: dark brown, a white lip
+COOL_DOOR = {"tan": "slate", "cream": "grey", "brown": "dslate"}  # the exit's frame, darker so its amber glass
+# glows and the sidewalk's lip holds under it
 
 
 def recolour(g, mapping):
@@ -228,11 +251,27 @@ def cool(fn, mapping):
 # ---------------------------------------------------------------- street tiles
 
 # Warm stone sidewalk, a cream stone kerb, a navy road; green-and-cream awnings; the hotel's forest-green canopy.
-S = dict(edge="dbrown", lip="skin1", body="skin2", under="brown", joint="brown", face="brown", face_lit="skin2",
-         face_sh="dbrown", kerb="cream", kerb_lip="white", kerb_sh="tan", road="navy", road_lip="dslate",
-         box="brown", box_lip="tan", box_sh="dbrown", box_edge="dbrown")
-AWNING = dict(edge="forest", lip="white", a="dgreen", b="cream")
-CANOPY = dict(edge="ink", lip="tan", a="forest", b="forest")
+S = {
+    "edge": "dbrown",
+    "lip": "skin1",
+    "body": "skin2",
+    "under": "brown",
+    "joint": "brown",
+    "face": "brown",
+    "face_lit": "skin2",
+    "face_sh": "dbrown",
+    "kerb": "cream",
+    "kerb_lip": "white",
+    "kerb_sh": "tan",
+    "road": "navy",
+    "road_lip": "dslate",
+    "box": "brown",
+    "box_lip": "tan",
+    "box_sh": "dbrown",
+    "box_edge": "dbrown",
+}
+AWNING = {"edge": "forest", "lip": "white", "a": "dgreen", "b": "cream"}
+CANOPY = {"edge": "ink", "lip": "tan", "a": "forest", "b": "forest"}
 
 
 def sidewalk(kind, joint=False):
@@ -240,15 +279,20 @@ def sidewalk(kind, joint=False):
     if "t" in kind:
         surface(g, S["edge"], S["lip"], S["body"], S["under"])
         if joint:
-            R(g, (T - 2, 3, 2, 7, S["joint"]))
+            rects(g, (T - 2, 3, 2, 7, S["joint"]))
         return ends(g, kind, S["edge"], S["lip"], S["under"], 1)
-    R(g, (0, 0, T, T, S["face"]))
+    rects(g, (0, 0, T, T, S["face"]))
     return ends(g, kind, S["edge"], S["face_lit"], S["face_sh"])
 
 
 def kerb(side):
-    g = R(Grid(T, T), (0, 0, T, T, S["kerb"]), (0, 0, T, 1, S["edge"]), (0, 1, T, 2, S["kerb_lip"]),
-          (0, T - 2, T, 2, S["kerb_sh"]))
+    g = rects(
+        Grid(T, T),
+        (0, 0, T, T, S["kerb"]),
+        (0, 0, T, 1, S["edge"]),
+        (0, 1, T, 2, S["kerb_lip"]),
+        (0, T - 2, T, 2, S["kerb_sh"]),
+    )
     ends(g, "t" + side, S["edge"], S["kerb_lip"], S["kerb_sh"], 1)
     if side == "l":
         g.p(1, 0, None), g.p(0, 1, None), g.p(1, 1, S["edge"])
@@ -258,26 +302,26 @@ def kerb(side):
 
 
 def road(top):
-    g = R(Grid(T, T), (0, 0, T, T, S["road"]))
+    g = rects(Grid(T, T), (0, 0, T, T, S["road"]))
     if top:
-        R(g, (0, 0, T, 1, "ink"), (0, 1, T, 2, S["road_lip"]))
+        rects(g, (0, 0, T, 1, "ink"), (0, 1, T, 2, S["road_lip"]))
     return g
 
 
 def awning(kind, p=AWNING):
     """A canvas awning seen front-on: a light lip, 4px stripes, a scalloped hem; art in the top 11 rows."""
-    g = R(Grid(T, T), (0, 0, T, 1, p["edge"]), (0, 1, T, 2, p["lip"]))
+    g = rects(Grid(T, T), (0, 0, T, 1, p["edge"]), (0, 1, T, 2, p["lip"]))
     for x in range(0, T, 4):
-        R(g, (x, 3, 4, 5, p["a"] if (x // 4) % 2 == 0 else p["b"]))
+        rects(g, (x, 3, 4, 5, p["a"] if (x // 4) % 2 == 0 else p["b"]))
     for x in (0, 6):
-        R(g, (x, 8, 6, 1, p["a"]), (x + 1, 9, 4, 1, p["a"]), (x + 2, 10, 2, 1, p["edge"]))
+        rects(g, (x, 8, 6, 1, p["a"]), (x + 1, 9, 4, 1, p["a"]), (x + 2, 10, 2, 1, p["edge"]))
         for px, py in ((x, 9), (x + 5, 9), (x + 1, 10), (x + 4, 10)):
             g.p(px, py, p["edge"])
     if kind == "l":
-        R(g, (0, 0, 1, 9, p["edge"]))
+        rects(g, (0, 0, 1, 9, p["edge"]))
         g.p(0, 0, None)
     if kind == "r":
-        R(g, (T - 1, 0, 1, 9, p["edge"]))
+        rects(g, (T - 1, 0, 1, 9, p["edge"]))
         g.p(T - 1, 0, None)
     return g
 
@@ -285,33 +329,47 @@ def awning(kind, p=AWNING):
 def planter(kind):
     g = Grid(T, T)
     if "t" in kind:
-        R(g, (0, 0, T, T, S["box"]), (0, 0, T, 1, "forest"), (0, 1, T, 2, "green"), (0, 3, T, 3, "dgreen"),
-          (0, 6, T, 1, S["box_edge"]), (0, 7, T, 2, S["box_lip"]))
+        rects(
+            g,
+            (0, 0, T, T, S["box"]),
+            (0, 0, T, 1, "forest"),
+            (0, 1, T, 2, "green"),
+            (0, 3, T, 3, "dgreen"),
+            (0, 6, T, 1, S["box_edge"]),
+            (0, 7, T, 2, S["box_lip"]),
+        )
         if "l" in kind:
-            R(g, (0, 0, 1, T, S["box_edge"]), (0, 0, 1, 6, "forest"))
+            rects(g, (0, 0, 1, T, S["box_edge"]), (0, 0, 1, 6, "forest"))
             g.p(0, 0, None), g.p(1, 0, None), g.p(1, 1, "forest")
         if "r" in kind:
-            R(g, (T - 1, 0, 1, T, S["box_edge"]), (T - 1, 0, 1, 6, "forest"), (T - 3, 9, 2, 3, S["box_sh"]))
+            rects(g, (T - 1, 0, 1, T, S["box_edge"]), (T - 1, 0, 1, 6, "forest"), (T - 3, 9, 2, 3, S["box_sh"]))
             g.p(T - 1, 0, None), g.p(T - 2, 0, None), g.p(T - 2, 1, "forest")
         return g
-    R(g, (0, 0, T, T, S["box"]), (0, T - 1, T, 1, S["box_edge"]))
+    rects(g, (0, 0, T, T, S["box"]), (0, T - 1, T, 1, S["box_edge"]))
     return ends(g, kind, S["box_edge"], S["box_lip"], S["box_sh"])
 
 
 def hotel_door():
     """The hotel's front door, 36x48: a pair of lit amber glass doors in a tan frame, the brightest thing at the
     door, so it reads as the way in."""
-    g = R(Grid(36, 48), (0, 0, 36, 48, "ink"), (1, 1, 34, 47, "tan"), (1, 1, 34, 2, "cream"), (1, 1, 2, 47, "cream"),
-          (32, 3, 2, 45, "brown"), (5, 6, 26, 42, "ink"))
+    g = rects(
+        Grid(36, 48),
+        (0, 0, 36, 48, "ink"),
+        (1, 1, 34, 47, "tan"),
+        (1, 1, 34, 2, "cream"),
+        (1, 1, 2, 47, "cream"),
+        (32, 3, 2, 45, "brown"),
+        (5, 6, 26, 42, "ink"),
+    )
     for x in (6, 19):
-        R(g, (x, 7, 11, 41, "amber"), (x, 30, 11, 18, "ochre"), (x + 1, 9, 2, 16, "yellow"))
-    R(g, (17, 6, 2, 42, "tan"), (14, 26, 2, 6, "brown"), (20, 26, 2, 6, "brown"))
+        rects(g, (x, 7, 11, 41, "amber"), (x, 30, 11, 18, "ochre"), (x + 1, 9, 2, 16, "yellow"))
+    rects(g, (17, 6, 2, 42, "tan"), (14, 26, 2, 6, "brown"), (20, 26, 2, 6, "brown"))
     return g
 
 
 # The cellar hatch: an open pit in the sidewalk with its two steel leaves standing up. Steel is the slate ramp
 # (slate, dslate, navy): slate leaves read against the dark facades in greyscale, where dslate would not.
-LEAF_H = 20                    # leaf height above the sidewalk, in px
+LEAF_H = 20  # leaf height above the sidewalk, in px
 
 
 def hatch_edge(side):
@@ -319,15 +377,15 @@ def hatch_edge(side):
     capped by a steel angle iron, its top lit, its flange running 5px down the shaft wall. Solid."""
     g = sidewalk("tr" if side == "l" else "tl")
     x = T - 4 if side == "l" else 0
-    R(g, (x, 0, 4, 3, "dslate"), (x, 0, 4, 1, "slate"))
+    rects(g, (x, 0, 4, 3, "dslate"), (x, 0, 4, 1, "slate"))
     fx = T - 2 if side == "l" else 0
-    R(g, (fx, 3, 2, 5, "dslate"), (T - 1 if side == "l" else 0, 3, 1, 5, "navy"))
+    rects(g, (fx, 3, 2, 5, "dslate"), (T - 1 if side == "l" else 0, 3, 1, 5, "navy"))
     return g
 
 
 def pit():
     """The opening: the dark drop, ink to the bottom of the level. No collision."""
-    return R(Grid(T, T), (0, 0, T, T, "ink"))
+    return rects(Grid(T, T), (0, 0, T, T, "ink"))
 
 
 def hatch_leaf():
@@ -336,12 +394,12 @@ def hatch_leaf():
     g = Grid(T, 2 * T)
     for y in range(2 * T - LEAF_H, 2 * T):
         lean = (2 * T - 1 - y) // 6
-        R(g, (5 - lean, y, 6, 1, "slate"))
+        rects(g, (5 - lean, y, 6, 1, "slate"))
     for y in range(2 * T - LEAF_H + 2, 2 * T - 1, 4):
         lean = (2 * T - 1 - y) // 6
-        R(g, (5 - lean + (1 if (y // 4) % 2 else 3), y, 2, 2, "dslate"))
-    R(g, (9, 2 * T - 3, 2, 3, "dslate"))
-    g.px = g.outlined(lambda c: pixel.K["ink"])
+        rects(g, (5 - lean + (1 if (y // 4) % 2 else 3), y, 2, 2, "dslate"))
+    rects(g, (9, 2 * T - 3, 2, 3, "dslate"))
+    g.px = g.outlined(lambda _c: pixel.K["ink"])
     return g
 
 
@@ -362,7 +420,7 @@ def cut(g, prefix):
         row = []
         for i in range(g.w // T):
             t = Grid(T, T)
-            t.px = [r[i * T:(i + 1) * T] for r in g.px[j * T:(j + 1) * T]]
+            t.px = [r[i * T : (i + 1) * T] for r in g.px[j * T : (j + 1) * T]]
             name = f"{prefix}-{j * (g.w // T) + i}"
             tiles.append((name, t))
             row.append(name)
@@ -373,17 +431,33 @@ def cut(g, prefix):
 def street_tiles():
     door, door_rows = cut(hotel_door(), "door")
     return [
-        ("sidewalk-top", sidewalk("t")), ("sidewalk-top-joint", sidewalk("t", True)),
-        ("sidewalk-top-left", sidewalk("tl")), ("sidewalk-top-right", sidewalk("tr")),
-        ("kerb-left", kerb("l")), ("kerb-right", kerb("r")),
-        ("sidewalk-face", sidewalk("")), ("sidewalk-face-left", sidewalk("l")),
-        ("sidewalk-face-right", sidewalk("r")), ("road-top", road(True)), ("road", road(False)),
-        ("one-way-awning-left", awning("l")), ("one-way-awning", awning("m")), ("one-way-awning-right", awning("r")),
-        ("one-way-canopy-left", awning("l", CANOPY)), ("one-way-canopy", awning("m", CANOPY)),
+        ("sidewalk-top", sidewalk("t")),
+        ("sidewalk-top-joint", sidewalk("t", True)),
+        ("sidewalk-top-left", sidewalk("tl")),
+        ("sidewalk-top-right", sidewalk("tr")),
+        ("kerb-left", kerb("l")),
+        ("kerb-right", kerb("r")),
+        ("sidewalk-face", sidewalk("")),
+        ("sidewalk-face-left", sidewalk("l")),
+        ("sidewalk-face-right", sidewalk("r")),
+        ("road-top", road(True)),
+        ("road", road(False)),
+        ("one-way-awning-left", awning("l")),
+        ("one-way-awning", awning("m")),
+        ("one-way-awning-right", awning("r")),
+        ("one-way-canopy-left", awning("l", CANOPY)),
+        ("one-way-canopy", awning("m", CANOPY)),
         ("one-way-canopy-right", awning("r", CANOPY)),
-        ("planter-top-left", planter("tl")), ("planter-top", planter("t")), ("planter-top-right", planter("tr")),
-        ("planter-left", planter("l")), ("planter", planter("")), ("planter-right", planter("r")),
-    ] + door + hatch_tiles() + climb_tiles(), {"door": door_rows}
+        ("planter-top-left", planter("tl")),
+        ("planter-top", planter("t")),
+        ("planter-top-right", planter("tr")),
+        ("planter-left", planter("l")),
+        ("planter", planter("")),
+        ("planter-right", planter("r")),
+        *door,
+        *hatch_tiles(),
+        *climb_tiles(),
+    ], {"door": door_rows}
 
 
 def street_tiles_cool():
@@ -399,6 +473,7 @@ def street_tiles_cool():
         if name.startswith("door-"):
             return COOL_DOOR
         return COOL_TILES
+
     return [(n, recolour(g, m(n))) for n, g in tiles], pieces
 
 
@@ -406,8 +481,15 @@ def hatch_tiles():
     """Appended after the door so every earlier index holds."""
     lt, lb = split_leaf("l")
     rt, rb = split_leaf("r")
-    return [("hatch-left", hatch_edge("l")), ("hatch-right", hatch_edge("r")), ("pit-opening", pit()),
-            ("pit-leaf-left-top", lt), ("pit-leaf-left", lb), ("pit-leaf-right-top", rt), ("pit-leaf-right", rb)]
+    return [
+        ("hatch-left", hatch_edge("l")),
+        ("hatch-right", hatch_edge("r")),
+        ("pit-opening", pit()),
+        ("pit-leaf-left-top", lt),
+        ("pit-leaf-left", lb),
+        ("pit-leaf-right-top", rt),
+        ("pit-leaf-right", rb),
+    ]
 
 
 def climb_tiles():
@@ -422,10 +504,10 @@ def climb_tiles():
 def ledge_ends(g, kind, edge, rows):
     """Round a one-way ledge's exposed end: a 1px edge down its side over rows, the top corner cut."""
     if kind == "l":
-        R(g, (0, 0, 1, rows, edge))
+        rects(g, (0, 0, 1, rows, edge))
         g.p(0, 0, None)
     if kind == "r":
-        R(g, (T - 1, 0, 1, rows, edge))
+        rects(g, (T - 1, 0, 1, rows, edge))
         g.p(T - 1, 0, None)
     return g
 
@@ -433,36 +515,49 @@ def ledge_ends(g, kind, edge, rows):
 def fire_escape_landing(kind):
     """A fire-escape landing: black iron with a sunlit cream lip, a 3px slatted deck and a navy underside; art in
     the top 7 rows."""
-    g = R(Grid(T, T), (0, 0, T, 1, "ink"), (0, 1, T, 2, "cream"), (0, 3, T, 3, "ink"), (0, 6, T, 1, "navy"))
+    g = rects(Grid(T, T), (0, 0, T, 1, "ink"), (0, 1, T, 2, "cream"), (0, 3, T, 3, "ink"), (0, 6, T, 1, "navy"))
     for x in (2, 6, 10):
-        R(g, (x, 4, 2, 1, "dslate"))                       # the deck's slats, 2px
+        rects(g, (x, 4, 2, 1, "dslate"))  # the deck's slats, 2px
     return ledge_ends(g, kind, "ink", 7)
 
 
 def sill(kind):
     """A stone window sill: a cream lip, tan stone, a brown face and a dark-brown underside; art in the top 7 rows.
     Lay 2 or 3 wide under a window."""
-    g = R(Grid(T, T), (0, 0, T, 1, "dbrown"), (0, 1, T, 2, "cream"), (0, 3, T, 2, "tan"), (0, 5, T, 1, "brown"),
-          (0, 6, T, 1, "dbrown"))
+    g = rects(
+        Grid(T, T),
+        (0, 0, T, 1, "dbrown"),
+        (0, 1, T, 2, "cream"),
+        (0, 3, T, 2, "tan"),
+        (0, 5, T, 1, "brown"),
+        (0, 6, T, 1, "dbrown"),
+    )
     return ledge_ends(g, kind, "dbrown", 7)
 
 
 def cornice(kind):
     """A rooftop cornice: a cream lip, tan stone, a brown band and 2px tan dentils every 6px under it, the full tile
     tall."""
-    g = R(Grid(T, T), (0, 0, T, 1, "dbrown"), (0, 1, T, 2, "cream"), (0, 3, T, 3, "tan"), (0, 6, T, 1, "brown"),
-          (0, 7, T, 4, "dbrown"), (0, 11, T, 1, "plum"))
-    for x in (2, 8):                                     # dentils, 2px wide every 6px
-        R(g, (x, 7, 2, 3, "tan"))
+    g = rects(
+        Grid(T, T),
+        (0, 0, T, 1, "dbrown"),
+        (0, 1, T, 2, "cream"),
+        (0, 3, T, 3, "tan"),
+        (0, 6, T, 1, "brown"),
+        (0, 7, T, 4, "dbrown"),
+        (0, 11, T, 1, "plum"),
+    )
+    for x in (2, 8):  # dentils, 2px wide every 6px
+        rects(g, (x, 7, 2, 3, "tan"))
     return ledge_ends(g, kind, "dbrown", T)
 
 
 def tank_top(kind):
     """The water tower's flat top rim: a cream lip over brown staves with a dark-brown hoop, the full tile tall, so
     it joins the tank in the water-tower backdrop below it."""
-    g = R(Grid(T, T), (0, 0, T, 1, "dbrown"), (0, 1, T, 2, "cream"), (0, 3, T, 9, "brown"), (0, 7, T, 2, "dbrown"))
+    g = rects(Grid(T, T), (0, 0, T, 1, "dbrown"), (0, 1, T, 2, "cream"), (0, 3, T, 9, "brown"), (0, 7, T, 2, "dbrown"))
     for x in (3, 9):
-        R(g, (x, 3, 1, 4, "dbrown"), (x, 9, 1, 3, "dbrown"))
+        rects(g, (x, 3, 1, 4, "dbrown"), (x, 9, 1, 3, "dbrown"))
     return ledge_ends(g, kind, "dbrown", T)
 
 
@@ -472,8 +567,8 @@ def tank_top(kind):
 # each one-way ledge, carries the same 2px cream lip under a 1px plum edge, so in greyscale the standable edges
 # are the brightest lines in the room. Indoor scale: a door is 180px (15 tiles).
 LE = "plum"
-LOBBY_H = 720                  # a level is 2 screens (60 tiles) tall
-LOBBY_FY = 672                 # the lobby floor line (tile row 56)
+LOBBY_H = 720  # a level is 2 screens (60 tiles) tall
+LOBBY_FY = 672  # the lobby floor line (tile row 56)
 
 
 def floor(kind, joint=False):
@@ -482,78 +577,99 @@ def floor(kind, joint=False):
     if "t" in kind:
         surface(g, LE, "cream", "brown", "dbrown")
         if joint:
-            R(g, (T - 2, 3, 2, 7, "dbrown"))
+            rects(g, (T - 2, 3, 2, 7, "dbrown"))
         return ends(g, kind, LE, "cream", "dbrown", 1)
-    R(g, (0, 0, T, T, "dbrown"))
+    rects(g, (0, 0, T, T, "dbrown"))
     return ends(g, kind, LE, "brown", "plum")
 
 
 # one-way ledge styles: lip, top, face, bracket (None: no brackets)
 LEDGES = {
-    "balcony": ("cream", "tan", "brown", None),        # the mezzanine floor's front edge
-    "shelf": ("cream", "tan", "brown", "dbrown"),      # bookcase and wall shelves
-    "cushion": ("cream", "mauve", "purple", None),     # the sofa's seat and back
-    "desk": ("cream", "tan", "dbrown", None),          # the reception desk's top
+    "balcony": ("cream", "tan", "brown", None),  # the mezzanine floor's front edge
+    "shelf": ("cream", "tan", "brown", "dbrown"),  # bookcase and wall shelves
+    "cushion": ("cream", "mauve", "purple", None),  # the sofa's seat and back
+    "desk": ("cream", "tan", "dbrown", None),  # the reception desk's top
 }
 
 
 def ledge(style, kind):
     lip, top, face, bracket = LEDGES[style]
-    g = R(Grid(T, T), (0, 0, T, 1, LE), (0, 1, T, 2, lip), (0, 3, T, 2, top), (0, 5, T, 1, face), (0, 6, T, 1, LE))
+    g = rects(Grid(T, T), (0, 0, T, 1, LE), (0, 1, T, 2, lip), (0, 3, T, 2, top), (0, 5, T, 1, face), (0, 6, T, 1, LE))
     if kind == "l":
-        R(g, (0, 0, 1, 7, None), (1, 1, 1, 5, LE))
+        rects(g, (0, 0, 1, 7, None), (1, 1, 1, 5, LE))
     if kind == "r":
-        R(g, (T - 1, 0, 1, 7, None), (T - 2, 1, 1, 5, LE))
+        rects(g, (T - 1, 0, 1, 7, None), (T - 2, 1, 1, 5, LE))
     if bracket and kind in "lr":
         bx = 4 if kind == "l" else T - 6
-        R(g, (bx, 7, 2, 4, bracket), (bx, 11, 2, 1, LE))
+        rects(g, (bx, 7, 2, 4, bracket), (bx, 11, 2, 1, LE))
     return g
 
 
 def post(kind):
     """A wood post, 2 tiles wide: brown with a tan lit band and a dark-brown shade; cream-capped cap and base."""
     left = kind.endswith("l")
-    g = R(Grid(T, T), (0, 0, T, T, "brown"))
+    g = rects(Grid(T, T), (0, 0, T, T, "brown"))
     if left:
-        R(g, (0, 0, 1, T, LE), (1, 0, 2, T, "tan"))
+        rects(g, (0, 0, 1, T, LE), (1, 0, 2, T, "tan"))
     else:
-        R(g, (T - 3, 0, 2, T, "dbrown"), (T - 1, 0, 1, T, LE))
+        rects(g, (T - 3, 0, 2, T, "dbrown"), (T - 1, 0, 1, T, LE))
     if kind.startswith("cap"):
-        R(g, (0, 0, T, 1, LE), (0, 1, T, 2, "cream"), (0, 3, T, 3, "tan"), (0, 6, T, 1, LE))
+        rects(g, (0, 0, T, 1, LE), (0, 1, T, 2, "cream"), (0, 3, T, 3, "tan"), (0, 6, T, 1, LE))
     if kind.startswith("base"):
-        R(g, (0, 4, T, 1, LE), (0, 5, T, 2, "cream"), (0, 7, T, 5, "tan"))
+        rects(g, (0, 4, T, 1, LE), (0, 5, T, 2, "cream"), (0, 7, T, 5, "tan"))
     if kind.startswith(("cap", "base")):
-        R(g, (0, 0, 1, T, LE) if left else (T - 1, 0, 1, T, LE))
+        rects(g, (0, 0, 1, T, LE) if left else (T - 1, 0, 1, T, LE))
     return g
 
 
 def stairwell():
     """The exit to the next floor, 84x180 (a door at indoor scale): a tan frame round an opening with stairs
     rising to the right, and a white up-arrow on a green sign over it."""
-    g = R(Grid(84, 180), (0, 0, 84, 180, LE), (2, 2, 80, 178, "tan"), (2, 2, 4, 178, "cream"),
-          (76, 6, 4, 174, "brown"), (22, 6, 40, 24, "forest"), (24, 8, 36, 20, "dgreen"),
-          (10, 36, 64, 144, "ink"), (12, 38, 60, 142, "navy"))
+    g = rects(
+        Grid(84, 180),
+        (0, 0, 84, 180, LE),
+        (2, 2, 80, 178, "tan"),
+        (2, 2, 4, 178, "cream"),
+        (76, 6, 4, 174, "brown"),
+        (22, 6, 40, 24, "forest"),
+        (24, 8, 36, 20, "dgreen"),
+        (10, 36, 64, 144, "ink"),
+        (12, 38, 60, 142, "navy"),
+    )
     for k in range(6):
-        R(g, (41 - k * 2, 11 + k * 2, 2 + k * 4, 2, "white"))
-    R(g, (39, 23, 6, 4, "white"))
+        rects(g, (41 - k * 2, 11 + k * 2, 2 + k * 4, 2, "white"))
+    rects(g, (39, 23, 6, 4, "white"))
     for i in range(6):
         sx, sy = 12 + i * 10, 166 - i * 22
-        R(g, (sx, sy, 72 - sx, 180 - sy, "dslate"), (sx, sy, 72 - sx, 4, "slate"))
-    R(g, (12, 38, 60, 8, "ink"))
+        rects(g, (sx, sy, 72 - sx, 180 - sy, "dslate"), (sx, sy, 72 - sx, 4, "slate"))
+    rects(g, (12, 38, 60, 8, "ink"))
     return g
 
 
 def lobby_tiles():
     tiles = [
-        ("floor-top", floor("t")), ("floor-top-joint", floor("t", True)),
-        ("floor-top-left", floor("tl")), ("floor-top-right", floor("tr")),
-        ("floor-face", floor("")), ("floor-face-left", floor("l")), ("floor-face-right", floor("r")),
+        ("floor-top", floor("t")),
+        ("floor-top-joint", floor("t", True)),
+        ("floor-top-left", floor("tl")),
+        ("floor-top-right", floor("tr")),
+        ("floor-face", floor("")),
+        ("floor-face-left", floor("l")),
+        ("floor-face-right", floor("r")),
     ]
     for style in LEDGES:
-        tiles += [(f"one-way-{style}-left", ledge(style, "l")), (f"one-way-{style}", ledge(style, "m")),
-                  (f"one-way-{style}-right", ledge(style, "r"))]
-    tiles += [("post-cap-left", post("cap-l")), ("post-cap-right", post("cap-r")), ("post-left", post("l")),
-              ("post-right", post("r")), ("post-base-left", post("base-l")), ("post-base-right", post("base-r"))]
+        tiles += [
+            (f"one-way-{style}-left", ledge(style, "l")),
+            (f"one-way-{style}", ledge(style, "m")),
+            (f"one-way-{style}-right", ledge(style, "r")),
+        ]
+    tiles += [
+        ("post-cap-left", post("cap-l")),
+        ("post-cap-right", post("cap-r")),
+        ("post-left", post("l")),
+        ("post-right", post("r")),
+        ("post-base-left", post("base-l")),
+        ("post-base-right", post("base-r")),
+    ]
     exit_tiles, exit_rows = cut(stairwell(), "exit")
     return tiles + exit_tiles, {"exit": exit_rows}
 
@@ -562,7 +678,6 @@ TILESET_DEFS = (("tiles-street", street_tiles_cool), ("tiles-lobby", lobby_tiles
 
 
 def tileset_image(tiles):
-    from PIL import Image
 
     rows = -(-len(tiles) // COLUMNS)
     im = Image.new("RGBA", (COLUMNS * T, rows * T), (0, 0, 0, 0))
@@ -575,22 +690,110 @@ def tileset_image(tiles):
 
 # Sign icons, 11x11, one colour on a navy board. Signs are icons, never text.
 ICONS = {
-    "cafe": ["..#..#.....", "...#..#....", "..#..#.....", "...........", "#########..", "#########.#",
-             "#########.#", "#########.#", ".#######.#.", "..#####....", "###########"],
-    "florist": ["...##.##...", "..########.", "..###..###.", "...##.##...", ".....#.....", ".##..#..##.",
-                "..##.#.##..", "....###....", ".....#.....", "..#######..", "...#####..."],
-    "gift-shop": ["..##...##..", "...##.##...", "....###....", "###########", "#....#....#", "###########",
-                  ".#...#...#.", ".#...#...#.", ".#...#...#.", ".#...#...#.", ".#########."],
-    "makeup-store": ["....###....", "...####....", "...#####...", "...#####...", "...#####...", "..#######..",
-                     "..#.....#..", "..#######..", "..#.....#..", "..#.....#..", "..#######.."],
-    "pet-shop": ["...........", "..##...##..", "..##...##..", "##.......##", "##.......##", "....###....",
-                 "...#####...", "..#######..", "..#######..", "...##.##...", "..........."],
-    "diner": ["#.#.#...##.", "#.#.#...###", "#.#.#...###", "#####...###", ".###....###", "..#.....##.",
-              "..#......#.", "..#......#.", "..#......#.", "..#......#.", "..#......#."],
-    "noodle-bar": [".........#.", "........#..", ".......#.#.", "......#.#..", ".....#.#...", "###########",
-                   "###########", ".#########.", "..#######..", "...#####...", "..#######.."],
-    "hotel": ["....#.#....", "...#####...", "..#.###.#..", ".#########.", "###########", "#.#.#.#.#.#",
-              "#.#.#.#.#.#", "#.#.#.#.#.#", "#.#.#.#.#.#", "###########", "###########"],
+    "cafe": [
+        "..#..#.....",
+        "...#..#....",
+        "..#..#.....",
+        "...........",
+        "#########..",
+        "#########.#",
+        "#########.#",
+        "#########.#",
+        ".#######.#.",
+        "..#####....",
+        "###########",
+    ],
+    "florist": [
+        "...##.##...",
+        "..########.",
+        "..###..###.",
+        "...##.##...",
+        ".....#.....",
+        ".##..#..##.",
+        "..##.#.##..",
+        "....###....",
+        ".....#.....",
+        "..#######..",
+        "...#####...",
+    ],
+    "gift-shop": [
+        "..##...##..",
+        "...##.##...",
+        "....###....",
+        "###########",
+        "#....#....#",
+        "###########",
+        ".#...#...#.",
+        ".#...#...#.",
+        ".#...#...#.",
+        ".#...#...#.",
+        ".#########.",
+    ],
+    "makeup-store": [
+        "....###....",
+        "...####....",
+        "...#####...",
+        "...#####...",
+        "...#####...",
+        "..#######..",
+        "..#.....#..",
+        "..#######..",
+        "..#.....#..",
+        "..#.....#..",
+        "..#######..",
+    ],
+    "pet-shop": [
+        "...........",
+        "..##...##..",
+        "..##...##..",
+        "##.......##",
+        "##.......##",
+        "....###....",
+        "...#####...",
+        "..#######..",
+        "..#######..",
+        "...##.##...",
+        "...........",
+    ],
+    "diner": [
+        "#.#.#...##.",
+        "#.#.#...###",
+        "#.#.#...###",
+        "#####...###",
+        ".###....###",
+        "..#.....##.",
+        "..#......#.",
+        "..#......#.",
+        "..#......#.",
+        "..#......#.",
+        "..#......#.",
+    ],
+    "noodle-bar": [
+        ".........#.",
+        "........#..",
+        ".......#.#.",
+        "......#.#..",
+        ".....#.#...",
+        "###########",
+        "###########",
+        ".#########.",
+        "..#######..",
+        "...#####...",
+        "..#######..",
+    ],
+    "hotel": [
+        "....#.#....",
+        "...#####...",
+        "..#.###.#..",
+        ".#########.",
+        "###########",
+        "#.#.#.#.#.#",
+        "#.#.#.#.#.#",
+        "#.#.#.#.#.#",
+        "#.#.#.#.#.#",
+        "###########",
+        "###########",
+    ],
 }
 
 # kind: width (whole tiles), frame colour. Frames are dim so the shops stay behind the play layer.
@@ -622,50 +825,87 @@ def icon(g, kind, x, y, c):
 
 def street_sky():
     """48x600, repeat x: one flat powder-blue atmosphere, fixed behind the scrolling city layers."""
-    return R(Grid(48, STREET_FY), (0, 0, 48, STREET_FY, "zone-blue"))
+    return rects(Grid(48, STREET_FY), (0, 0, 48, STREET_FY, "zone-blue"))
 
 
 def city_blocks(g, colour, blocks):
     """Window-free silhouettes, with occasional small water tanks, on a seamless 720px repeat."""
     for x, width, top, tank in blocks:
-        R(g, (x, top, width, STREET_FY - top, colour))
+        rects(g, (x, top, width, STREET_FY - top, colour))
         if tank:
-            R(g, (x + 12, top - 18, 18, 14, colour), (x + 14, top - 4, 2, 4, colour),
-              (x + 26, top - 4, 2, 4, colour))
+            rects(
+                g, (x + 12, top - 18, 18, 14, colour), (x + 14, top - 4, 2, 4, colour), (x + 26, top - 4, 2, 4, colour)
+            )
             g.tri((x + 10, top - 18), (x + 21, top - 26), (x + 32, top - 18), colour)
     return g
 
 
 def street_city_far():
     """720x600 repeating window-free city masses, softened by the canonical powder-blue haze."""
-    g = city_blocks(Grid(720, STREET_FY), "zone-blue-shade", (
-        (0, 112, 350, False), (138, 70, 292, True), (228, 104, 324, False),
-        (356, 82, 248, False), (462, 108, 338, False), (594, 126, 304, True),
-    ))
-    R(g, (18, 332, 60, 18, "zone-blue-shade"), (374, 228, 46, 20, "zone-blue-shade"),
-      (482, 322, 68, 16, "zone-blue-shade"))
+    g = city_blocks(
+        Grid(720, STREET_FY),
+        "zone-blue-shade",
+        (
+            (0, 112, 350, False),
+            (138, 70, 292, True),
+            (228, 104, 324, False),
+            (356, 82, 248, False),
+            (462, 108, 338, False),
+            (594, 126, 304, True),
+        ),
+    )
+    rects(
+        g,
+        (18, 332, 60, 18, "zone-blue-shade"),
+        (374, 228, 46, 20, "zone-blue-shade"),
+        (482, 322, 68, 16, "zone-blue-shade"),
+    )
     return g
 
 
 def street_city_mid():
     """720x600 repeating complete low-rise blocks, varied roof masses and broad quiet recesses."""
-    g = city_blocks(Grid(720, STREET_FY), "slate", (
-        (20, 138, 442, False), (208, 110, 406, False), (372, 144, 462, False), (572, 126, 424, False),
-    ))
-    R(g, (28, 434, 122, 8, "slate"), (224, 394, 78, 12, "slate"),
-      (390, 450, 108, 12, "slate"), (584, 412, 102, 12, "slate"),
-      (40, 480, 96, 12, "zone-blue-shade"), (230, 450, 66, 10, "zone-blue-shade"),
-      (398, 496, 92, 10, "zone-blue-shade"))
+    g = city_blocks(
+        Grid(720, STREET_FY),
+        "slate",
+        (
+            (20, 138, 442, False),
+            (208, 110, 406, False),
+            (372, 144, 462, False),
+            (572, 126, 424, False),
+        ),
+    )
+    rects(
+        g,
+        (28, 434, 122, 8, "slate"),
+        (224, 394, 78, 12, "slate"),
+        (390, 450, 108, 12, "slate"),
+        (584, 412, 102, 12, "slate"),
+        (40, 480, 96, 12, "zone-blue-shade"),
+        (230, 450, 66, 10, "zone-blue-shade"),
+        (398, 496, 92, 10, "zone-blue-shade"),
+    )
     return g
 
 
 def street_boundary_mid():
     """720x600 repeating low service roofs with broad gaps revealing the city beyond; no play lips."""
-    g = city_blocks(Grid(720, STREET_FY), "slate", (
-        (32, 160, 504, False), (292, 104, 532, False), (520, 168, 492, False),
-    ))
-    R(g, (48, 494, 128, 10, "slate"), (542, 480, 124, 12, "slate"),
-      (52, 536, 116, 10, "zone-blue-shade"), (544, 526, 120, 10, "zone-blue-shade"))
+    g = city_blocks(
+        Grid(720, STREET_FY),
+        "slate",
+        (
+            (32, 160, 504, False),
+            (292, 104, 532, False),
+            (520, 168, 492, False),
+        ),
+    )
+    rects(
+        g,
+        (48, 494, 128, 10, "slate"),
+        (542, 480, 124, 12, "slate"),
+        (52, 536, 116, 10, "zone-blue-shade"),
+        (544, 526, 120, 10, "zone-blue-shade"),
+    )
     return g
 
 
@@ -684,12 +924,13 @@ def facade(kind):
     The one-storey building stops at a parapet at y 120."""
     wall, line, trim = BUILDINGS[kind]
     if kind == "one-storey":
-        g = R(Grid(48, 192), (0, 0, 48, 192, wall), (0, 0, 48, 6, trim), (0, 6, 48, 4, line), (0, 86, 48, 4, line))
-        return g
-    g = R(Grid(48, FY), (0, 0, 48, FY, wall), (0, 124, 48, 8, line), (0, 122, 48, 2, trim), (0, 206, 48, 4, line))
-    R(g, (11, 50, 26, 58, line), (14, 53, 20, 52, "navy"), (23, 53, 2, 52, line), (9, 108, 30, 4, trim))
+        return rects(
+            Grid(48, 192), (0, 0, 48, 192, wall), (0, 0, 48, 6, trim), (0, 6, 48, 4, line), (0, 86, 48, 4, line)
+        )
+    g = rects(Grid(48, FY), (0, 0, 48, FY, wall), (0, 124, 48, 8, line), (0, 122, 48, 2, trim), (0, 206, 48, 4, line))
+    rects(g, (11, 50, 26, 58, line), (14, 53, 20, 52, "navy"), (23, 53, 2, 52, line), (9, 108, 30, 4, trim))
     if kind == "brownstone":
-        R(g, (9, 44, 30, 6, trim))                       # a stone lintel over each window
+        rects(g, (9, 44, 30, 6, trim))  # a stone lintel over each window
     return g
 
 
@@ -697,14 +938,14 @@ def fire_escape():
     """196x185, bottom at y 473: an ink platform and railing under the second-storey windows, a stair up out of
     the screen and a drop ladder hanging towards the sidewalk."""
     g = Grid(196, 185)
-    R(g, (0, 112, 196, 3, "ink"), (0, 92, 196, 2, "ink"))
+    rects(g, (0, 112, 196, 3, "ink"), (0, 92, 196, 2, "ink"))
     for px in range(0, 196, 18):
-        R(g, (px, 92, 2, 22, "ink"))
-    for k in range(46):                                  # the stair, a 2px diagonal
-        R(g, (20 + k, 92 - 2 * k, 2, 2, "ink"))
-    R(g, (136, 115, 2, 70, "ink"), (148, 115, 2, 70, "ink"))
+        rects(g, (px, 92, 2, 22, "ink"))
+    for k in range(46):  # the stair, a 2px diagonal
+        rects(g, (20 + k, 92 - 2 * k, 2, 2, "ink"))
+    rects(g, (136, 115, 2, 70, "ink"), (148, 115, 2, 70, "ink"))
     for ry in range(121, 185, 8):
-        R(g, (136, ry, 14, 2, "ink"))
+        rects(g, (136, ry, 14, 2, "ink"))
     return g
 
 
@@ -712,16 +953,17 @@ def hotel_crest():
     """98x44, bottom at y 478: two banners on short poles either side of a navy plaque with the hotel's crest."""
     g = Grid(98, 44)
     for x, c in ((4, "navy"), (82, "dgreen")):
-        R(g, (x - 4, 0, 20, 2, "ink"), (x, 2, 12, 34, c), (x + 2, 36, 8, 4, c), (x, 2, 12, 2, "cream"))
-    R(g, (32, 4, 32, 26, "ink"), (33, 5, 30, 24, "navy"), (24, 42, 48, 2, "tan"))
+        rects(g, (x - 4, 0, 20, 2, "ink"), (x, 2, 12, 34, c), (x + 2, 36, 8, 4, c), (x, 2, 12, 2, "cream"))
+    rects(g, (32, 4, 32, 26, "ink"), (33, 5, 30, 24, "navy"), (24, 42, 48, 2, "tan"))
     icon(g, "hotel", 43, 11, "cream")
     return g
 
 
 def hotel_window():
     """32x152, bottom at y 592: a tall ground-storey window."""
-    return R(Grid(32, 152), (0, 0, 32, 152, "navy"), (3, 3, 26, 146, "ink"), (3, 48, 26, 2, "navy"),
-             (6, 8, 4, 30, "dslate"))
+    return rects(
+        Grid(32, 152), (0, 0, 32, 152, "navy"), (3, 3, 26, 146, "ink"), (3, 48, 26, 2, "navy"), (6, 8, 4, 30, "dslate")
+    )
 
 
 def storefront(kind):
@@ -730,21 +972,38 @@ def storefront(kind):
     it below the sign."""
     w, frame = SHOPS[kind]
     edge = darker(frame)
-    g = R(Grid(w, 120), (0, 0, w, 120, frame), (4, 2, w - 8, 18, "ink"), (5, 3, w - 10, 16, "navy"),
-          (4, 26, w - 34, 86, edge), (6, 28, w - 38, 82, "dslate"), (6, 44, w - 38, 2, edge),
-          (10, 50, 2, 24, "slate"), (14, 50, 2, 12, "slate"),
-          (w - 28, 26, 24, 94, edge), (w - 26, 28, 20, 42, "dslate"), (w - 26, 74, 20, 46, edge),
-          (w - 23, 78, 14, 18, "dslate"))
+    g = rects(
+        Grid(w, 120),
+        (0, 0, w, 120, frame),
+        (4, 2, w - 8, 18, "ink"),
+        (5, 3, w - 10, 16, "navy"),
+        (4, 26, w - 34, 86, edge),
+        (6, 28, w - 38, 82, "dslate"),
+        (6, 44, w - 38, 2, edge),
+        (10, 50, 2, 24, "slate"),
+        (14, 50, 2, 12, "slate"),
+        (w - 28, 26, 24, 94, edge),
+        (w - 26, 28, 20, 42, "dslate"),
+        (w - 26, 74, 20, 46, edge),
+        (w - 23, 78, 14, 18, "dslate"),
+    )
     icon(g, kind, w // 2 - 5, 6, "cream")
     return g
 
 
 def cab():
     """96x40: a yellow cab side-on, for the far avenue down a cross street."""
-    g = R(Grid(96, 40), (16, 6, 52, 12, "amber"), (20, 8, 20, 8, "navy"), (44, 8, 20, 8, "navy"),
-          (36, 0, 12, 6, "cream"), (0, 18, 96, 14, "amber"), (0, 28, 96, 4, "orange"))
+    g = rects(
+        Grid(96, 40),
+        (16, 6, 52, 12, "amber"),
+        (20, 8, 20, 8, "navy"),
+        (44, 8, 20, 8, "navy"),
+        (36, 0, 12, 6, "cream"),
+        (0, 18, 96, 14, "amber"),
+        (0, 28, 96, 4, "orange"),
+    )
     for wx in (12, 70):
-        R(g, (wx, 30, 14, 10, "ink"), (wx + 4, 34, 6, 2, "dslate"))
+        rects(g, (wx, 30, 14, 10, "ink"), (wx + 4, 34, 6, 2, "dslate"))
     return g
 
 
@@ -752,8 +1011,15 @@ def hot_dog_cart():
     """40x70: a steel cart on two wheels under a blue-and-cream umbrella."""
     g = Grid(40, 70)
     g.ell(20, 12, 20, 12, "blue")
-    R(g, (0, 12, 40, 12, None), (8, 4, 6, 8, "cream"), (24, 4, 6, 8, "cream"), (18, 12, 2, 34, "ink"),
-      (0, 44, 40, 18, "slate"), (0, 44, 40, 3, "white"))
+    rects(
+        g,
+        (0, 12, 40, 12, None),
+        (8, 4, 6, 8, "cream"),
+        (24, 4, 6, 8, "cream"),
+        (18, 12, 2, 34, "ink"),
+        (0, 44, 40, 18, "slate"),
+        (0, 44, 40, 3, "white"),
+    )
     for wx in (4, 28):
         g.ell(wx + 4, 64, 4, 4, "ink")
     return g
@@ -761,47 +1027,54 @@ def hot_dog_cart():
 
 def subway_railing():
     """72x62: a green railing round the stairs down, with a green lamp on a post at each end."""
-    g = R(Grid(72, 62), (3, 40, 66, 2, "forest"), (3, 40, 2, 22, "forest"), (67, 40, 2, 22, "forest"))
+    g = rects(Grid(72, 62), (3, 40, 66, 2, "forest"), (3, 40, 2, 22, "forest"), (67, 40, 2, 22, "forest"))
     for bx in range(11, 66, 8):
-        R(g, (bx, 42, 2, 20, "forest"))
+        rects(g, (bx, 42, 2, 20, "forest"))
     for px in (3, 67):
-        R(g, (px, 8, 2, 32, "forest"), (px - 3, 0, 8, 8, "dgreen"))
+        rects(g, (px, 8, 2, 32, "forest"), (px - 3, 0, 8, 8, "dgreen"))
     return g
 
 
 def street_tree():
     """64x136: branching street tree with an irregular sage crown, without a dark contour."""
-    from PIL import Image
 
     im = Image.new("RGBA", (64, 136))
-    nature.broadleaf(im, 0, 0, 64, 84, 136, "zone-green-shade", "zone-peach-shade",
-                     7, seed=5)
+    nature.broadleaf(im, 0, 0, 64, 84, 136, "zone-green-shade", "zone-peach-shade", 7, seed=5)
     g = Grid(64, 136)
-    g.px = [[("%02x%02x%02x" % im.getpixel((x, y))[:3]) if im.getpixel((x, y))[3] else None
-             for x in range(64)] for y in range(136)]
+    g.px = [
+        [("{:02x}{:02x}{:02x}".format(*im.getpixel((x, y))[:3])) if im.getpixel((x, y))[3] else None for x in range(64)]
+        for y in range(136)
+    ]
     return g
 
 
 def walk_signal():
     """12x82: a pole with the signal box at the top showing the white walking figure."""
-    return R(Grid(12, 82), (4, 6, 2, 76, "ink"), (0, 0, 10, 12, "ink"), (4, 2, 2, 2, "white"), (3, 4, 4, 4, "white"),
-             (3, 8, 1, 3, "white"), (6, 8, 1, 3, "white"))
+    return rects(
+        Grid(12, 82),
+        (4, 6, 2, 76, "ink"),
+        (0, 0, 10, 12, "ink"),
+        (4, 2, 2, 2, "white"),
+        (3, 4, 4, 4, "white"),
+        (3, 8, 1, 3, "white"),
+        (6, 8, 1, 3, "white"),
+    )
 
 
 def doorman_podium():
-    return R(Grid(18, 24), (2, 2, 14, 22, "dbrown"), (0, 0, 18, 4, "tan"))
+    return rects(Grid(18, 24), (2, 2, 14, 22, "dbrown"), (0, 0, 18, 4, "tan"))
 
 
 def canopy_poles():
     """60x60: the two tan poles holding up the hotel canopy, set under its end tiles."""
-    return R(Grid(60, 60), (2, 0, 2, 60, "tan"), (56, 0, 2, 60, "tan"))
+    return rects(Grid(60, 60), (2, 0, 2, 60, "tan"), (56, 0, 2, 60, "tan"))
 
 
 def cross_street():
     """120x26: the far avenue seen down a cross street, navy with 2px lane dashes; the sky and skyline show above."""
-    g = R(Grid(120, 26), (0, 0, 120, 26, "navy"))
+    g = rects(Grid(120, 26), (0, 0, 120, 26, "navy"))
     for x in range(8, 120, 24):
-        R(g, (x, 12, 8, 2, "dslate"))
+        rects(g, (x, 12, 8, 2, "dslate"))
     return g
 
 
@@ -818,15 +1091,15 @@ def roofline(kind):
     """The top of a building, 48x48, repeat x: plain wall under a 4px trim band at the top, placed on the topmost
     facade piece; one-way-cornice tiles go along its top edge, where the roof is."""
     wall, line, trim = BUILDINGS[kind]
-    return R(Grid(48, 48), (0, 0, 48, 48, wall), (0, 0, 48, 4, trim), (0, 4, 48, 2, line))
+    return rects(Grid(48, 48), (0, 0, 48, 48, wall), (0, 0, 48, 4, trim), (0, 4, 48, 2, line))
 
 
 def fire_escape_railing():
     """48x24, repeat x: a fire-escape landing's ink railing, a top rail and 2px balusters every 12px, standing on
     the landing (its bottom at the landing tiles' top edge)."""
-    g = R(Grid(48, 24), (0, 0, 48, 2, "ink"), (0, 10, 48, 2, "ink"))
+    g = rects(Grid(48, 24), (0, 0, 48, 2, "ink"), (0, 10, 48, 2, "ink"))
     for x in (0, 12, 24, 36):
-        R(g, (x, 0, 2, 24, "ink"))
+        rects(g, (x, 0, 2, 24, "ink"))
     return g
 
 
@@ -840,9 +1113,9 @@ def fire_escape_ladder(rows=8):
     landing's top edge (y = lower row * 12) and its left edge on the landing's ladder column; its top then meets the
     upper landing's top edge, where the landing tile covers it."""
     h = 12 * rows
-    g = R(Grid(24, h), (4, 0, 2, h, "ink"), (18, 0, 2, h, "ink"))
+    g = rects(Grid(24, h), (4, 0, 2, h, "ink"), (18, 0, 2, h, "ink"))
     for y in range(4, h, 8):
-        R(g, (4, y, 16, 2, "ink"))
+        rects(g, (4, y, 16, 2, "ink"))
     return g
 
 
@@ -850,15 +1123,20 @@ def water_tower():
     """48x84 (4x7 tiles), bottom on a roof: a shallow cone roof (the top tile row), a wooden tank with two hoops
     and dark-brown legs. Lay one-way-tank tiles (4 wide) on its second tile row, the tank's flat top, 6 tiles above
     the roof."""
-    g = R(Grid(48, 84), (0, 12, 48, 48, "brown"), (0, 26, 48, 2, "dbrown"), (0, 44, 48, 2, "dbrown"),
-          (0, 58, 48, 2, "dbrown"))
+    g = rects(
+        Grid(48, 84),
+        (0, 12, 48, 48, "brown"),
+        (0, 26, 48, 2, "dbrown"),
+        (0, 44, 48, 2, "dbrown"),
+        (0, 58, 48, 2, "dbrown"),
+    )
     for x in (11, 23, 35):
-        R(g, (x, 12, 1, 46, "dbrown"))                   # staves
-    for k in range(4):                                   # the cone, stepping in 2px a row pair
-        R(g, (8 + 4 * k, 10 - 2 * k, 32 - 8 * k, 2, "plum"))
+        rects(g, (x, 12, 1, 46, "dbrown"))  # staves
+    for k in range(4):  # the cone, stepping in 2px a row pair
+        rects(g, (8 + 4 * k, 10 - 2 * k, 32 - 8 * k, 2, "plum"))
     for x in (4, 20, 26, 42):
-        R(g, (x, 60, 2, 24, "dbrown"))                   # legs
-    R(g, (4, 70, 40, 2, "dbrown"))                       # a brace
+        rects(g, (x, 60, 2, 24, "dbrown"))  # legs
+    rects(g, (4, 70, 40, 2, "dbrown"))  # a brace
     return g
 
 
@@ -866,10 +1144,10 @@ def lobby_wall():
     """48x720, repeat x, bottom at y 720: dark-brown wood panelling with 2px plum grooves every 24px, a plum and
     ink ceiling cornice, a plum wainscot from y 588 under a 2px brown rail. Below the floor line it is covered by
     the floor tiles."""
-    g = R(Grid(48, LOBBY_H), (0, 0, 48, LOBBY_H, "dbrown"), (0, 0, 48, 20, "plum"), (0, 20, 48, 4, "ink"))
+    g = rects(Grid(48, LOBBY_H), (0, 0, 48, LOBBY_H, "dbrown"), (0, 0, 48, 20, "plum"), (0, 20, 48, 4, "ink"))
     for x in (10, 34):
-        R(g, (x, 24, 2, 564, "plum"))
-    R(g, (0, 588, 48, 84, "plum"), (0, 586, 48, 2, "brown"))
+        rects(g, (x, 24, 2, 564, "plum"))
+    rects(g, (0, 588, 48, 84, "plum"), (0, 586, 48, 2, "brown"))
     return g
 
 
@@ -877,30 +1155,40 @@ def lobby_bookcase():
     """84x384 (7x32 tiles), bottom at y 672: a tall bookcase, a brown frame round a plum back, one step from the
     wall. Its boards sit 8, 16, 24 and 32 tiles above the floor, where one-way-shelf tiles go (7 wide); muted books
     stand on each board."""
-    g = R(Grid(84, 384), (0, 0, 84, 384, "brown"), (4, 4, 76, 380, "plum"))
+    g = rects(Grid(84, 384), (0, 0, 84, 384, "brown"), (4, 4, 76, 380, "plum"))
     for k in range(4):
-        R(g, (0, 384 - 96 * (k + 1), 84, 7, "brown"))  # the boards
-    for k, base in enumerate((384, 288, 192, 96)):    # books standing on the floor and each lower board
-        for i, bx in enumerate(range(8, 76, 6)):      # 4px spines, stepped heights, muted colours
+        rects(g, (0, 384 - 96 * (k + 1), 84, 7, "brown"))  # the boards
+    for k, base in enumerate((384, 288, 192, 96)):  # books standing on the floor and each lower board
+        for i, bx in enumerate(range(8, 76, 6)):  # 4px spines, stepped heights, muted colours
             hgt = (34, 40, 28, 44, 36, 30, 42, 26, 38, 32, 44)[i % 11]
             c = ("teal", "dbrown", "forest", "navy", "purple", "dbrown")[(i + k) % 6]
-            R(g, (bx, base - hgt, 4, hgt, c))
+            rects(g, (bx, base - hgt, 4, hgt, c))
     return g
 
 
 def lobby_sofa():
     """120x72 (10x6 tiles), bottom at y 672: a purple sofa. Its seat top is 3 tiles up (a hop) and its back 6;
     lay one-way-cushion tiles on both, 8 wide over the cushions (x 12 to 108), inside the 1-tile arms."""
-    g = R(Grid(120, 72), (12, 0, 96, 64, "purple"), (59, 6, 2, 30, "plum"), (12, 36, 96, 2, "plum"),
-          (12, 60, 96, 4, "plum"), (0, 24, 12, 40, "purple"), (108, 24, 12, 40, "purple"),
-          (0, 24, 12, 4, "mauve"), (108, 24, 12, 4, "mauve"), (10, 24, 2, 40, "plum"), (108, 24, 2, 40, "plum"),
-          (12, 64, 8, 8, "plum"), (100, 64, 8, 8, "plum"))
-    return g
+    return rects(
+        Grid(120, 72),
+        (12, 0, 96, 64, "purple"),
+        (59, 6, 2, 30, "plum"),
+        (12, 36, 96, 2, "plum"),
+        (12, 60, 96, 4, "plum"),
+        (0, 24, 12, 40, "purple"),
+        (108, 24, 12, 40, "purple"),
+        (0, 24, 12, 4, "mauve"),
+        (108, 24, 12, 4, "mauve"),
+        (10, 24, 2, 40, "plum"),
+        (108, 24, 2, 40, "plum"),
+        (12, 64, 8, 8, "plum"),
+        (100, 64, 8, 8, "plum"),
+    )
 
 
 def lobby_plant():
     """48x120, bottom at y672: branching indoor foliage with pointed leaves in a dark pot."""
-    g = R(Grid(48, 120), (8, 84, 32, 36, "plum"), (6, 80, 36, 6, "dbrown"))
+    g = rects(Grid(48, 120), (8, 84, 32, 36, "plum"), (6, 80, 36, 6, "dbrown"))
     g.line(24, 79, 22, 10, "zone-green-shade")
     g.line(25, 79, 23, 10, "zone-green-shade")
     for x, y, joint in ((4, 14, 36), (39, 2, 26), (2, 40, 57), (45, 30, 53), (8, 61, 74), (42, 55, 75)):
@@ -914,43 +1202,71 @@ def lobby_plant():
 def lobby_lamp():
     """48x192, bottom at y 220: a pendant lamp on a cord from the ceiling, a tan drum shade with its bulb lit
     (white core, cream ring). No glow is baked in: lights are data."""
-    return R(Grid(48, 192), (23, 0, 2, 166, "ink"), (4, 166, 40, 20, "tan"), (4, 166, 40, 2, "cream"),
-             (4, 184, 40, 2, "brown"), (18, 186, 12, 6, "cream"), (20, 186, 8, 4, "white"))
+    return rects(
+        Grid(48, 192),
+        (23, 0, 2, 166, "ink"),
+        (4, 166, 40, 20, "tan"),
+        (4, 166, 40, 2, "cream"),
+        (4, 184, 40, 2, "brown"),
+        (18, 186, 12, 6, "cream"),
+        (20, 186, 8, 4, "white"),
+    )
 
 
 def lobby_window():
     """96x240, bottom at y 552: a tall window onto the bright day, plum frame and bars."""
-    g = R(Grid(96, 240), (0, 0, 96, 240, "plum"), (4, 4, 88, 232, "blue"), (46, 4, 4, 232, "plum"),
-          (4, 118, 88, 4, "plum"), (10, 10, 6, 60, "sky"), (56, 10, 6, 40, "sky"))
-    return g
+    return rects(
+        Grid(96, 240),
+        (0, 0, 96, 240, "plum"),
+        (4, 4, 88, 232, "blue"),
+        (46, 4, 4, 232, "plum"),
+        (4, 118, 88, 4, "plum"),
+        (10, 10, 6, 60, "sky"),
+        (56, 10, 6, 40, "sky"),
+    )
 
 
 def lobby_desk():
     """120x96 (10x8 tiles), bottom at y 672: the reception desk, dark-brown with plum panels. Its top is 8 tiles
     up, a full jump; lay one-way-desk tiles (10 wide) on it."""
-    g = R(Grid(120, 96), (0, 0, 120, 96, "dbrown"), (0, 90, 120, 6, "plum"))
+    g = rects(Grid(120, 96), (0, 0, 120, 96, "dbrown"), (0, 90, 120, 6, "plum"))
     for x in (8, 46, 84):
-        R(g, (x, 12, 28, 70, "plum"))
+        rects(g, (x, 12, 28, 70, "plum"))
     return g
 
 
 def lobby_front_door():
     """156x180, bottom at y 672: the inside of the hotel's front door, where she arrives from the street. Not a
     way back (a level is never revisited): a tan frame, a transom, two glass doors onto the bright street."""
-    g = R(Grid(156, 180), (0, 0, 156, 180, LE), (2, 2, 152, 178, "brown"), (2, 2, 152, 4, "tan"),
-          (12, 12, 132, 168, "ink"), (14, 14, 128, 34, "blue"), (76, 14, 4, 34, "brown"), (12, 48, 132, 4, "brown"),
-          (76, 52, 4, 128, "brown"), (12, 166, 132, 14, "plum"))
+    g = rects(
+        Grid(156, 180),
+        (0, 0, 156, 180, LE),
+        (2, 2, 152, 178, "brown"),
+        (2, 2, 152, 4, "tan"),
+        (12, 12, 132, 168, "ink"),
+        (14, 14, 128, 34, "blue"),
+        (76, 14, 4, 34, "brown"),
+        (12, 48, 132, 4, "brown"),
+        (76, 52, 4, 128, "brown"),
+        (12, 166, 132, 14, "plum"),
+    )
     for x in (14, 80):
-        R(g, (x, 54, 62, 112, "blue"), (x + 6, 60, 8, 70, "sky"), (x + 18, 60, 4, 40, "sky"), (x, 54, 62, 3, "brown"),
-          (x + (52 if x == 14 else 4), 110, 6, 22, "dbrown"))
+        rects(
+            g,
+            (x, 54, 62, 112, "blue"),
+            (x + 6, 60, 8, 70, "sky"),
+            (x + 18, 60, 4, 40, "sky"),
+            (x, 54, 62, 3, "brown"),
+            (x + (52 if x == 14 else 4), 110, 6, 22, "dbrown"),
+        )
     return g
 
 
 def lobby_balustrade():
     """48x36, repeat x, bottom at the mezzanine's floor line: brown balusters every 12px under a brown rail."""
-    g = R(Grid(48, 36), (0, 0, 48, 4, "brown"))
+    g = rects(Grid(48, 36), (0, 0, 48, 4, "brown"))
     for x in (4, 16, 28, 40):
-        R(g, (x, 4, 4, 32, "brown"))
+        rects(g, (x, 4, 4, 32, "brown"))
     return g
 
 
@@ -990,38 +1306,42 @@ for _key in STREET_DEFS:
     if _key.startswith(("facade-", "storefront-")):
         NEAR_FOR[_key] = dict(COOL_NEAR, navy="dslate")
 ATMOSPHERE_KEYS = ("street-sky", "street-skyline", "street-city-far", "street-city-mid", "street-boundary-mid")
-BACKDROP_DEFS = {k: (fn if k in ATMOSPHERE_KEYS else cool(fn, NEAR_FOR.get(k, COOL_NEAR)), y, rep)
-                 for k, (fn, y, rep) in STREET_DEFS.items()}
-BACKDROP_DEFS.update({
-    "lobby-wall": (lobby_wall, LOBBY_H, "x"),
-    "lobby-balustrade": (lobby_balustrade, 288, "x"),
-    "lobby-bookcase": (lobby_bookcase, LOBBY_FY, "none"),
-    "lobby-sofa": (lobby_sofa, LOBBY_FY, "none"),
-    "lobby-desk": (lobby_desk, LOBBY_FY, "none"),
-    "lobby-plant": (lobby_plant, LOBBY_FY, "none"),
-    "lobby-lamp": (lobby_lamp, 220, "none"),
-    "lobby-window": (lobby_window, 552, "none"),
-    "lobby-front-door": (lobby_front_door, LOBBY_FY, "none"),
-})
+BACKDROP_DEFS = {
+    k: (fn if k in ATMOSPHERE_KEYS else cool(fn, NEAR_FOR.get(k, COOL_NEAR)), y, rep)
+    for k, (fn, y, rep) in STREET_DEFS.items()
+}
+BACKDROP_DEFS.update(
+    {
+        "lobby-wall": (lobby_wall, LOBBY_H, "x"),
+        "lobby-balustrade": (lobby_balustrade, 288, "x"),
+        "lobby-bookcase": (lobby_bookcase, LOBBY_FY, "none"),
+        "lobby-sofa": (lobby_sofa, LOBBY_FY, "none"),
+        "lobby-desk": (lobby_desk, LOBBY_FY, "none"),
+        "lobby-plant": (lobby_plant, LOBBY_FY, "none"),
+        "lobby-lamp": (lobby_lamp, 220, "none"),
+        "lobby-window": (lobby_window, 552, "none"),
+        "lobby-front-door": (lobby_front_door, LOBBY_FY, "none"),
+    }
+)
 
 
 # ---------------------------------------------------------------- export
 
+
 def frame_image(px):
-    from PIL import Image
 
     h, w = len(px), len(px[0])
     im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     for y, row in enumerate(px):
         for x, c in enumerate(row):
             if c:
-                im.putpixel((x, y), rgb(c) + (255,))
+                im.putpixel((x, y), (*rgb(c), 255))
     return im
 
 
 def build():
-    os.makedirs(TILESETS, exist_ok=True)
-    os.makedirs(BACKDROPS, exist_ok=True)
+    Path(TILESETS).mkdir(parents=True, exist_ok=True)
+    Path(BACKDROPS).mkdir(parents=True, exist_ok=True)
     tilesets, backdrops = [], []
     for key, fn in TILESET_DEFS:
         tiles, pieces = fn()
@@ -1029,8 +1349,17 @@ def build():
     for key, (fn, y, repeat) in BACKDROP_DEFS.items():
         g = fn()
         frame_image(g.px).save(f"{BACKDROPS}/{key}.png")
-        backdrops.append({"key": key, "png": f"backdrops/{key}.png", "width": g.w, "height": g.h,
-                          "anchor": "bottom-left", "y": y, "repeat": repeat})
+        backdrops.append(
+            {
+                "key": key,
+                "png": f"backdrops/{key}.png",
+                "width": g.w,
+                "height": g.h,
+                "anchor": "bottom-left",
+                "y": y,
+                "repeat": repeat,
+            }
+        )
     # merged by key, so the park theme's entries stay; a piece floor1.py stops drawing is removed by hand
     pixel.update_manifest("tilesets", tilesets)
     pixel.update_manifest("backdrops", backdrops)
@@ -1040,31 +1369,55 @@ def build():
 # ---------------------------------------------------------------- preview: example layouts
 
 # One example street for the preview only: a 720x720 column (60x60 tiles, two screens tall) with the sidewalk along
-# the bottom (its top at row 50, y 600, ground below) and a climb to the roof, built to the reaches (a hop rises 3 tiles, a full
+# the bottom (its top at row 50, y 600, ground below) and a climb to the roof, built to the reaches (a hop rises 3
+# tiles, a full
 # jump 8). Backdrop runs are (key, x0, x1, bottom y); pieces (key, x, bottom y); one-way rows (tile, row, first
 # col, width).
-STREET_EXAMPLE = dict(
-    runs=[("street-sky", 0, 720, STREET_FY), ("street-city-far", 0, 720, STREET_FY),
-          ("street-city-mid", 0, 720, STREET_FY),
-          ("facade-walkup", 0, 288, STREET_FY), ("facade-walkup-upper", 0, 288, 288),
-          ("roofline-walkup", 0, 288, 108),
-          ("facade-brownstone", 288, 528, STREET_FY), ("roofline-brownstone", 288, 528, 288),
-          ("facade-one-storey", 528, 720, STREET_FY),
-          ("fire-escape-railing", 72, 216, 432), ("fire-escape-railing", 72, 216, 336),
-          ("fire-escape-railing", 72, 216, 240), ("fire-escape-railing", 72, 216, 156)],
-    pieces=[("storefront-pet-shop", 12, STREET_FY), ("storefront-makeup-store", 156, STREET_FY),
-            ("storefront-gift-shop", 300, STREET_FY), ("storefront-diner", 408, STREET_FY),
-            ("storefront-cafe", 588, STREET_FY), ("fire-escape-ladder", 192, 432), ("fire-escape-ladder", 192, 336),
-            ("fire-escape-ladder", 192, 240), ("water-tower", 456, 240), ("street-tree", 456, STREET_FY)],
-    ledges=[("awning", 44, 24, 6), ("fire-escape", 36, 6, 12), ("fire-escape", 28, 6, 12),
-            ("fire-escape", 20, 6, 12), ("fire-escape", 13, 6, 12), ("cornice", 5, 0, 24), ("tank", 14, 38, 4),
-            ("sill", 33, 29, 3), ("sill", 33, 37, 3), ("cornice", 20, 24, 20)],
-    planter=(20, 3),
-)
+STREET_EXAMPLE = {
+    "runs": [
+        ("street-sky", 0, 720, STREET_FY),
+        ("street-city-far", 0, 720, STREET_FY),
+        ("street-city-mid", 0, 720, STREET_FY),
+        ("facade-walkup", 0, 288, STREET_FY),
+        ("facade-walkup-upper", 0, 288, 288),
+        ("roofline-walkup", 0, 288, 108),
+        ("facade-brownstone", 288, 528, STREET_FY),
+        ("roofline-brownstone", 288, 528, 288),
+        ("facade-one-storey", 528, 720, STREET_FY),
+        ("fire-escape-railing", 72, 216, 432),
+        ("fire-escape-railing", 72, 216, 336),
+        ("fire-escape-railing", 72, 216, 240),
+        ("fire-escape-railing", 72, 216, 156),
+    ],
+    "pieces": [
+        ("storefront-pet-shop", 12, STREET_FY),
+        ("storefront-makeup-store", 156, STREET_FY),
+        ("storefront-gift-shop", 300, STREET_FY),
+        ("storefront-diner", 408, STREET_FY),
+        ("storefront-cafe", 588, STREET_FY),
+        ("fire-escape-ladder", 192, 432),
+        ("fire-escape-ladder", 192, 336),
+        ("fire-escape-ladder", 192, 240),
+        ("water-tower", 456, 240),
+        ("street-tree", 456, STREET_FY),
+    ],
+    "ledges": [
+        ("awning", 44, 24, 6),
+        ("fire-escape", 36, 6, 12),
+        ("fire-escape", 28, 6, 12),
+        ("fire-escape", 20, 6, 12),
+        ("fire-escape", 13, 6, 12),
+        ("cornice", 5, 0, 24),
+        ("tank", 14, 38, 4),
+        ("sill", 33, 29, 3),
+        ("sill", 33, 37, 3),
+        ("cornice", 20, 24, 20),
+    ],
+    "planter": (20, 3),
+}
 
 
 def compose(im, defs, runs, pieces):
-    from PIL import Image
 
     images = {}
 
@@ -1090,10 +1443,9 @@ BUTTONS = (("ui-touch-use", (592, 210)), ("ui-touch-jump", (667, 307)))
 
 def touch_buttons(im, tops):
     """Draw the Use and Jump buttons' rest frame on each screen whose top is in tops, for checking the HUD zones."""
-    from PIL import Image
 
     for key, (cx, cy) in BUTTONS:
-        with open(f"{SPRITES}/{key}.json") as f:
+        with Path(f"{SPRITES}/{key}.json").open() as f:
             fr = next(iter(json.load(f)["frames"].values()))["frame"]
         b = Image.open(f"{SPRITES}/{key}.png").convert("RGBA").crop((0, 0, fr["w"], fr["h"]))
         for top in tops:
@@ -1101,24 +1453,23 @@ def touch_buttons(im, tops):
 
 
 def street_example(chars=True, hud=True):
-    from PIL import Image
 
-    E = STREET_EXAMPLE
+    entries = STREET_EXAMPLE
     tiles = {name: frame_image(g.px) for name, g in street_tiles_cool()[0]}
-    im = Image.new("RGBA", (720, 720), rgb("ink") + (255,))
-    compose(im, BACKDROP_DEFS, E["runs"], E["pieces"])
+    im = Image.new("RGBA", (720, 720), (*rgb("ink"), 255))
+    compose(im, BACKDROP_DEFS, entries["runs"], entries["pieces"])
     ground = STREET_FY // T
     for r in range(ground, 60):
         for c in range(60):
             name = ("sidewalk-top-joint" if c % 2 else "sidewalk-top") if r == ground else "sidewalk-face"
             im.alpha_composite(tiles[name], (c * T, r * T))
-    c0, w = E["planter"]
+    c0, w = entries["planter"]
     for r, part in ((ground - 2, "top"), (ground - 1, "")):
         for c in range(c0, c0 + w):
             side = "-left" if c == c0 else "-right" if c == c0 + w - 1 else ""
             name = f"planter-{part}{side}" if part else f"planter{side}"
             im.alpha_composite(tiles[name.replace("planter-top", "planter-top")], (c * T, r * T))
-    for kind, row, c0, w in E["ledges"]:
+    for kind, row, c0, w in entries["ledges"]:
         for c in range(c0, c0 + w):
             side = "-left" if c == c0 else "-right" if c == c0 + w - 1 else ""
             im.alpha_composite(tiles[f"one-way-{kind}{side}"], (c * T, row * T))
@@ -1132,47 +1483,65 @@ def street_example(chars=True, hud=True):
 
 # One example lobby for the preview only, 720x720 (60x60 tiles, two screens tall), built to the reaches: a hop
 # rises 3 tiles, a full jump 8, a flutter crosses a gap of 20. One-way rows: (style, row, first col, width).
-LOBBY_EXAMPLE = dict(
-    ledges=[("cushion", 53, 15, 8), ("cushion", 50, 15, 8), ("desk", 48, 26, 10), ("shelf", 48, 40, 7),
-            ("shelf", 40, 40, 7), ("shelf", 32, 40, 7), ("shelf", 24, 40, 7), ("balcony", 24, 0, 20)],
-    exit=(4, 9), post=58,
-    runs=[("lobby-wall", 0, 720), ("lobby-balustrade", 0, 240)],
-    pieces=[("lobby-front-door", 12), ("lobby-sofa", 168), ("lobby-desk", 312), ("lobby-bookcase", 480),
-            ("lobby-window", 576), ("lobby-plant", 640), ("lobby-lamp", 288), ("lobby-lamp", 384)],
-    ys={"lobby-balustrade": 288},
-)
+LOBBY_EXAMPLE = {
+    "ledges": [
+        ("cushion", 53, 15, 8),
+        ("cushion", 50, 15, 8),
+        ("desk", 48, 26, 10),
+        ("shelf", 48, 40, 7),
+        ("shelf", 40, 40, 7),
+        ("shelf", 32, 40, 7),
+        ("shelf", 24, 40, 7),
+        ("balcony", 24, 0, 20),
+    ],
+    "exit": (4, 9),
+    "post": 58,
+    "runs": [("lobby-wall", 0, 720), ("lobby-balustrade", 0, 240)],
+    "pieces": [
+        ("lobby-front-door", 12),
+        ("lobby-sofa", 168),
+        ("lobby-desk", 312),
+        ("lobby-bookcase", 480),
+        ("lobby-window", 576),
+        ("lobby-plant", 640),
+        ("lobby-lamp", 288),
+        ("lobby-lamp", 384),
+    ],
+    "ys": {"lobby-balustrade": 288},
+}
 
 
 def lobby_example(chars=True, hud=True):
-    from PIL import Image
 
-    E = LOBBY_EXAMPLE
+    entries = LOBBY_EXAMPLE
     tiles = {name: frame_image(g.px) for name, g in lobby_tiles()[0]}
     pieces = {k: frame_image(fn().px) for k, (fn, _, _) in BACKDROP_DEFS.items() if k.startswith("lobby-")}
-    ys = {k: E["ys"].get(k, y) for k, (_, y, _) in BACKDROP_DEFS.items()}
-    im = Image.new("RGBA", (720, LOBBY_H), rgb("ink") + (255,))
-    for key, x0, x1 in E["runs"]:
+    ys = {k: entries["ys"].get(k, y) for k, (_, y, _) in BACKDROP_DEFS.items()}
+    im = Image.new("RGBA", (720, LOBBY_H), (*rgb("ink"), 255))
+    for key, x0, x1 in entries["runs"]:
         p = pieces[key]
         for x in range(x0, x1, p.width):
             q = p.crop((0, 0, min(p.width, x1 - x), p.height))
             im.alpha_composite(q, (x, ys[key] - q.height))
-    for key, x in E["pieces"]:
+    for key, x in entries["pieces"]:
         p = pieces[key]
         im.alpha_composite(p, (x, ys[key] - p.height))
     ground = LOBBY_FY // T
     for r in range(ground, LOBBY_H // T):
         for c in range(60):
-            im.alpha_composite(tiles["floor-top-joint" if c % 2 else "floor-top"] if r == ground else
-                               tiles["floor-face"], (c * T, r * T))
-    for style, row, c0, w in E["ledges"]:
+            im.alpha_composite(
+                tiles["floor-top-joint" if c % 2 else "floor-top"] if r == ground else tiles["floor-face"],
+                (c * T, r * T),
+            )
+    for style, row, c0, w in entries["ledges"]:
         for c in range(c0, c0 + w):
             k = "-left" if c == c0 else "-right" if c == c0 + w - 1 else ""
             im.alpha_composite(tiles[f"one-way-{style}{k}"], (c * T, row * T))
-    pc = E["post"]
+    pc = entries["post"]
     for r in range(ground):
         for c, side in ((pc, "left"), (pc + 1, "right")):
             im.alpha_composite(tiles[f"post-{'base-' if r == ground - 1 else ''}{side}"], (c * T, r * T))
-    ec, er = E["exit"]
+    ec, er = entries["exit"]
     for j in range(15):
         for i in range(7):
             im.alpha_composite(tiles[f"exit-{j * 7 + i}"], ((ec + i) * T, (er + j) * T))
@@ -1185,21 +1554,21 @@ def lobby_example(chars=True, hud=True):
 
 
 def preview(out):
-    from PIL import Image
 
     strip = street_example()
     sheets = []
     for _, fn in TILESET_DEFS:
         tiles, _ = fn()
         ts = tileset_image(tiles)
-        bg = Image.new("RGBA", ts.size, rgb("dslate") + (255,))
+        bg = Image.new("RGBA", ts.size, (*rgb("dslate"), 255))
         bg.alpha_composite(ts)
         sheets.append(bg.convert("RGB").resize((ts.width * 4, ts.height * 4), Image.NEAREST))
     lobby = lobby_example()
     gap = 16
     x0 = strip.width + gap + lobby.width + gap
-    sheet = Image.new("RGB", (x0 + max(s.width for s in sheets), max(strip.height, sum(s.height + gap for s in sheets))),
-                      rgb("ink"))
+    sheet = Image.new(
+        "RGB", (x0 + max(s.width for s in sheets), max(strip.height, sum(s.height + gap for s in sheets))), rgb("ink")
+    )
     sheet.paste(strip, (0, 0))
     sheet.paste(lobby, (strip.width + gap, 0))
     y = 0

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Reusable industrial appearance pack, independent of layouts, collision and zone assignment.
 
 Usage: industrial.py build | preview OUT.png
@@ -32,13 +31,15 @@ The preview compares Warehouse and Freight terminal on identical illustrative ge
 with the native tileset exported separately. This is not a validated stage or reachability claim.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-import zone_themes  # noqa: E402
-from PIL import Image, ImageDraw  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import json
+
+import pixel
+import zone_themes
+from PIL import Image, ImageDraw
 
 T = 12
 COLUMNS = 8
@@ -51,24 +52,28 @@ SUFFIXES = ("top", "top-left", "top-right", "top-joint", "face", "face-left", "f
 
 
 def image(width, height, colour=None):
-    return Image.new("RGBA", (width, height), pixel.rgb(colour) + (255,) if colour else (0, 0, 0, 0))
+    return Image.new("RGBA", (width, height), (*pixel.rgb(colour), 255) if colour else (0, 0, 0, 0))
 
 
 def rect(im, colour, box):
-    im.paste(pixel.rgb(colour) + (255,), box)
+    im.paste((*pixel.rgb(colour), 255), box)
 
 
 def line(im, colour, width, points):
-    ImageDraw.Draw(im).line(points, fill=pixel.rgb(colour) + (255,), width=width)
+    ImageDraw.Draw(im).line(points, fill=(*pixel.rgb(colour), 255), width=width)
 
 
 def polygon(im, colour, points):
-    ImageDraw.Draw(im).polygon(points, fill=pixel.rgb(colour) + (255,))
+    ImageDraw.Draw(im).polygon(points, fill=(*pixel.rgb(colour), 255))
 
 
 def material(family, suffix):
-    fill = {"industrial-floor": SHADE, "crate-stack": "zone-peach-shade",
-            "terminal-floor": "slate", "container-stack": PRIMARY}[family]
+    fill = {
+        "industrial-floor": SHADE,
+        "crate-stack": "zone-peach-shade",
+        "terminal-floor": "slate",
+        "container-stack": PRIMARY,
+    }[family]
     im = image(T, T, fill)
     if family == "crate-stack":
         rect(im, "zone-red-shade", (0, 0, 2, 12))
@@ -80,8 +85,12 @@ def material(family, suffix):
     if suffix.endswith("right"):
         rect(im, "dslate", (10, 0, 12, T))
     if suffix.startswith("top"):
-        top = {"industrial-floor": PRIMARY, "crate-stack": "zone-peach",
-               "terminal-floor": "grey", "container-stack": SHADE}[family]
+        top = {
+            "industrial-floor": PRIMARY,
+            "crate-stack": "zone-peach",
+            "terminal-floor": "grey",
+            "container-stack": SHADE,
+        }[family]
         rect(im, "navy", (0, 0, T, 1))
         rect(im, "white", (0, 1, T, 3))
         rect(im, top, (0, 3, T, 5))
@@ -91,8 +100,7 @@ def material(family, suffix):
 
 
 def tiles():
-    return [(f"{family}-{suffix}", material(family, suffix))
-            for family in FAMILIES for suffix in SUFFIXES]
+    return [(f"{family}-{suffix}", material(family, suffix)) for family in FAMILIES for suffix in SUFFIXES]
 
 
 def sky():
@@ -109,7 +117,7 @@ def far():
         rect(im, SHADE, (x, top, x + 14, 430))
         rect(im, SHADE, (x - 2, top, x + 16, top + 6))
     for x, top in ((144, 398), (510, 410)):
-        ImageDraw.Draw(im).ellipse((x, top, x + 42, top + 22), fill=pixel.rgb(SHADE) + (255,))
+        ImageDraw.Draw(im).ellipse((x, top, x + 42, top + 22), fill=(*pixel.rgb(SHADE), 255))
         rect(im, SHADE, (x, top + 11, x + 43, 600))
     return im
 
@@ -201,22 +209,30 @@ BACKDROPS = {
 
 
 def build():
-    os.makedirs("public/art/backdrops", exist_ok=True)
+    Path("public/art/backdrops").mkdir(parents=True, exist_ok=True)
     entry = pixel.write_tileset(TILESET, tiles())
     pixel.update_manifest("tilesets", [entry])
     entries = []
     for key, (draw, repeat) in BACKDROPS.items():
         im = draw()
         im.save(f"public/art/backdrops/{key}.png")
-        entries.append({"key": key, "png": f"backdrops/{key}.png", "width": im.width, "height": im.height,
-                        "anchor": "bottom-left", "y": BOTTOM, "repeat": repeat})
+        entries.append(
+            {
+                "key": key,
+                "png": f"backdrops/{key}.png",
+                "width": im.width,
+                "height": im.height,
+                "anchor": "bottom-left",
+                "y": BOTTOM,
+                "repeat": repeat,
+            }
+        )
     pixel.update_manifest("backdrops", entries)
     print("built", TILESET, "and", len(entries), "backdrops")
 
 
 def context(skin):
     """Identical geometry with different skins; no simulation or stage-design assertion."""
-    import json
 
     im = image(720, 720, PRIMARY)
     for key in ("industrial-sky", "industrial-far", "warehouse-mid" if skin == "warehouse" else "freight-mid"):
@@ -238,29 +254,36 @@ def context(skin):
         for y in range(height):
             for x in range(width):
                 if y == 0:
-                    suffix = "top-left" if x == 0 else "top-right" if x == width - 1 else \
-                        "top-joint" if x % 2 else "top"
+                    suffix = (
+                        "top-left" if x == 0 else "top-right" if x == width - 1 else "top-joint" if x % 2 else "top"
+                    )
                 else:
                     suffix = "face-left" if x == 0 else "face-right" if x == width - 1 else "face"
                 im.alpha_composite(ts[f"{family}-{suffix}"], ((col + x) * T, (row + y) * T))
+
     block(ground, 0, 50, 60, 10)
     for c, r, w, h in ((20, 46, 6, 4), (31, 42, 7, 8), (44, 38, 7, 12)):
         block(raised, c, r, w, h)
     # Shared standable ledges and contact strips are loaded, not copied into the material pack.
-    shared = json.load(open("public/art/tilesets/tiles-platforming.json"))
+    shared = json.loads(Path("public/art/tilesets/tiles-platforming.json").read_text())
     shared_png = Image.open("public/art/tilesets/tiles-platforming.png").convert("RGBA")
 
     def shared_tile(name):
         i = shared["tiles"][name]
         return shared_png.crop((i % 8 * T, i // 8 * T, i % 8 * T + T, i // 8 * T + T))
+
     for c in range(12, 18):
         name = "one-way-ledge-left" if c == 12 else "one-way-ledge-right" if c == 17 else "one-way-ledge-middle"
         im.alpha_composite(shared_tile(name), (c * T, 44 * T))
     for c in range(31, 38):
         im.alpha_composite(shared_tile("hazard-right"), (38 * T, (42 + c - 31) * T))
-    data = json.load(open("public/art/sprites/bird.json"))
+    data = json.loads(Path("public/art/sprites/bird.json").read_text())
     f = next(iter(data["frames"].values()))["frame"]
-    bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
+    bird = (
+        Image.open("public/art/sprites/bird.png")
+        .convert("RGBA")
+        .crop((f["x"], f["y"], f["x"] + f["w"], f["y"] + f["h"]))
+    )
     im.alpha_composite(bird, (72, 558))
     return im.convert("RGB").crop((0, 360, 720, 720))
 
@@ -268,8 +291,12 @@ def context(skin):
 def preview(out):
     sheet = image(1456, 392, "ink")
     draw = ImageDraw.Draw(sheet)
-    for i, (skin, label) in enumerate((("warehouse", "Warehouse / concrete + muted wooden crates"),
-                                       ("freight", "Freight terminal / apron + corrugated containers"))):
+    for i, (skin, label) in enumerate(
+        (
+            ("warehouse", "Warehouse / concrete + muted wooden crates"),
+            ("freight", "Freight terminal / apron + corrugated containers"),
+        )
+    ):
         x = 8 + i * 728
         draw.text((x, 6), label, fill=pixel.rgb("cream"))
         sheet.alpha_composite(context(skin).convert("RGBA"), (x, 24))

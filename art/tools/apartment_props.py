@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Reusable decorative apartment furnishings at the canonical bird scale.
 
 Usage: apartment_props.py build | preview OUT.png, from the repository root. Pillow, plain PNG exports.
@@ -9,28 +8,33 @@ Zone-red rose ties the rooms together with quiet wood, sage and blue accents fro
 The preview is a furniture contact sheet beside the 48x42 bird, not a proposed level layout.
 """
 
-import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import pixel  # noqa: E402
-from PIL import Image, ImageDraw  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pixel
+from PIL import Image, ImageDraw
 
 SIZES = {
-    "restaurant-counter": (96, 48), "restaurant-booth": (72, 48), "pool-water": (96, 24),
-    "pool-bench": (72, 36), "spa-screen": (72, 96), "spa-bench": (72, 36),
-    "residential-shelf": (72, 96), "lobby-desk": (96, 48), "lobby-sofa": (96, 48),
+    "restaurant-counter": (96, 48),
+    "restaurant-booth": (72, 48),
+    "pool-water": (96, 24),
+    "pool-bench": (72, 36),
+    "spa-screen": (72, 96),
+    "spa-bench": (72, 36),
+    "residential-shelf": (72, 96),
+    "lobby-desk": (96, 48),
+    "lobby-sofa": (96, 48),
     "lobby-plant": (36, 60),
 }
 
 
 def rect(im, colour, box):
-    im.paste(pixel.rgb(colour) + (255,), box)
+    im.paste((*pixel.rgb(colour), 255), box)
 
 
 def ellipse(im, colour, box):
-    ImageDraw.Draw(im).ellipse(box, fill=pixel.rgb(colour) + (255,))
+    ImageDraw.Draw(im).ellipse(box, fill=(*pixel.rgb(colour), 255))
 
 
 def legs(im, xs, top, bottom):
@@ -99,8 +103,12 @@ def draw(kind):
         rect(im, "zone-peach-shade", (8, 4, 64, 92))
         for y in (26, 56, 86):
             rect(im, "brown", (8, y, 64, y + 4))
-        for x, y, height, colour in ((12, 7, 19, "zone-red"), (21, 12, 14, "zone-green"),
-                                      (31, 6, 20, "zone-blue-shade"), (43, 38, 18, "zone-red-shade")):
+        for x, y, height, colour in (
+            (12, 7, 19, "zone-red"),
+            (21, 12, 14, "zone-green"),
+            (31, 6, 20, "zone-blue-shade"),
+            (43, 38, 18, "zone-red-shade"),
+        ):
             rect(im, colour, (x, y, x + 7, y + height))
         ellipse(im, "zone-peach", (13, 39, 32, 55))
         rect(im, "zone-green-shade", (16, 70, 40, 86))
@@ -110,25 +118,33 @@ def draw(kind):
         for tip, side in (((5, 8), -1), ((29, 3), 1), ((3, 24), -1), ((32, 26), 1)):
             d.line(((18, 42), tip), fill=pixel.rgb("zone-green-shade"), width=2)
             x, y = tip
-            d.polygon(((x, y), (x + side * 3, y + 8), (18, y + 16), (x - side * 3, y + 4)),
-                      fill=pixel.rgb("zone-green-shade"))
-            d.polygon(((x, y + 2), (x - side * 2, y + 5), (17, y + 14)),
-                      fill=pixel.rgb("zone-green"))
+            d.polygon(
+                ((x, y), (x + side * 3, y + 8), (18, y + 16), (x - side * 3, y + 4)), fill=pixel.rgb("zone-green-shade")
+            )
+            d.polygon(((x, y + 2), (x - side * 2, y + 5), (17, y + 14)), fill=pixel.rgb("zone-green"))
         ImageDraw.Draw(im).polygon(((5, 40), (31, 40), (27, 59), (9, 59)), fill=pixel.rgb("dbrown"))
-        ImageDraw.Draw(im).polygon(((7, 42), (29, 42), (25, 57), (11, 57)),
-                                   fill=pixel.rgb("zone-red-shade"))
+        ImageDraw.Draw(im).polygon(((7, 42), (29, 42), (25, 57), (11, 57)), fill=pixel.rgb("zone-red-shade"))
         rect(im, "zone-red", (4, 39, 32, 44))
     return im
 
 
 def registry():
-    return [{"key": "apartment-" + key, "png": "backdrops/apartment-" + key + ".png",
-             "width": size[0], "height": size[1], "anchor": "bottom-left", "y": 720,
-             "repeat": "x" if key == "pool-water" else "none"} for key, size in SIZES.items()]
+    return [
+        {
+            "key": "apartment-" + key,
+            "png": "backdrops/apartment-" + key + ".png",
+            "width": size[0],
+            "height": size[1],
+            "anchor": "bottom-left",
+            "y": 720,
+            "repeat": "x" if key == "pool-water" else "none",
+        }
+        for key, size in SIZES.items()
+    ]
 
 
 def build():
-    os.makedirs("public/art/backdrops", exist_ok=True)
+    Path("public/art/backdrops").mkdir(parents=True, exist_ok=True)
     for key in SIZES:
         draw(key).save("public/art/backdrops/apartment-" + key + ".png")
 
