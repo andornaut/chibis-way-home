@@ -1,8 +1,9 @@
 // Node types for this config file only, so browser code type-checks without Node globals.
 /// <reference types="node" />
 
-import type * as ConfigModules from "./src/tools/viteConfigModules.ts";
 import { gameViteConfig } from "@andornaut/game-kit/build/vite/gameConfig";
+
+import type * as ConfigModules from "./src/tools/viteConfigModules.ts";
 
 export default gameViteConfig<typeof ConfigModules>({
   chunkSizeWarningLimit: 1100,
