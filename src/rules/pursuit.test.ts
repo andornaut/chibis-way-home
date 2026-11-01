@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  BEAR_BEHAVIOUR,
+  DOG_BEHAVIOUR,
+  FERRET_BEHAVIOUR,
+  GOOSE_BEHAVIOUR,
+  PIGEON_BEHAVIOUR,
+  RACCOON_BEHAVIOUR,
+} from "../data/behaviours";
 import { BIRD } from "../data/bird";
+import { TILE } from "../data/screen";
 import type {
   Archetype,
   BehaviourPlan,
@@ -55,11 +64,23 @@ function plan(mode: "ground" | "fly" = "ground"): BehaviourPlan {
   };
 }
 function actor(behaviour = plan()): ObjectLayout {
+  const projectiles = Object.fromEntries(
+    Object.values(behaviour.states).flatMap((node) =>
+      (node.onEnter ?? []).flatMap((action) =>
+        action.kind === "spawn"
+          ? [[action.character, { archetype: "actor", art: "projectile", cols: 1, rows: 1 }]]
+          : [],
+      ),
+    ),
+  );
   return objectLayout(
     1,
     {
       archetypes: { actor: archetype },
-      characters: { actor: { archetype: "actor", art: "actor", behaviour, cols: 20, rows: 20 } },
+      characters: {
+        ...projectiles,
+        actor: { archetype: "actor", art: "actor", behaviour, cols: 20, rows: 20 },
+      },
     },
     {},
     undefined,
@@ -460,4 +481,45 @@ describe("persistent pursuit", () => {
     expect(landed.at).toEqual({ x: 270, y: 280 });
     expect(landed.state.pursuit?.settled).toBe(true);
   });
+  it.each([
+    { boundary: "prepare-pounce", graph: DOG_BEHAVIOUR, raised: false },
+    { boundary: "prepare-growl", graph: BEAR_BEHAVIOUR, raised: false },
+    { boundary: "prepare-throw", graph: FERRET_BEHAVIOUR, raised: false },
+    { boundary: "prepare", graph: RACCOON_BEHAVIOUR, raised: true },
+    { boundary: "prepare-drop-right", graph: PIGEON_BEHAVIOUR, raised: true },
+    { boundary: "set-trap", graph: GOOSE_BEHAVIOUR, raised: false },
+  ])(
+    "completes the actual $graph.spotted.line winddown without a new attack",
+    ({ boundary, graph, raised }) => {
+      const resolved = layoutBehaviour(TILE, graph);
+      const object = actor(resolved);
+      const returnMotion = resolved.states["return-high"]?.motion;
+      const offset = !raised
+        ? 0
+        : resolved.axis === "y"
+          ? resolved.distance
+          : returnMotion?.kind === "fly" && returnMotion.to !== "target"
+            ? returnMotion.to.y
+            : 0;
+      if (raised) {
+        expect(offset).toBeLessThan(0);
+      }
+      const anchor = { x: 400, y: 280 };
+      const at = { x: anchor.x, y: anchor.y + offset };
+      const state: BehaviourState = {
+        ...startBehaviour(BIRD, object, bird(3000)),
+        anchor,
+        elapsed: 0,
+        pendingEntry: false,
+        pursuit: { phase: "escaped", settled: false, unreachableSeconds: 0 },
+        stateKey: boundary,
+      };
+      const result = advance(object, bird(3000), 4, at, state);
+      expect(result.actions).toEqual([]);
+      expect(result.state.pursuit).toMatchObject({ phase: "escaped", settled: true });
+      expect(result.state.anchor).toEqual(anchor);
+      expect(result.at.y + object.height).toBe(floor.y);
+      expect(object.origin).toEqual({ x: 100, y: 280 });
+    },
+  );
 });
