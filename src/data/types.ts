@@ -606,6 +606,8 @@ export interface ThemePlan {
   readonly tileset: string;
 }
 
+export type ChunkPool = readonly string[];
+
 // How a zone is assembled from chunks (RECIPES by key, in src/data/zones.ts): its theme, its
 // fixed start and finish chunks, and between them a seeded run of the theme's chunks. length:
 // the zone's whole width range in columns, start and finish chunks included. difficulty: the
@@ -613,6 +615,8 @@ export interface ThemePlan {
 // are exempt. spawnCol: her centre column within the opening chunk. events and doors: what the
 // seed places in the chunks' slots, count of each.
 export interface ZoneRecipe {
+  // Omit to use every compatible middle chunk of the theme.
+  readonly chunks?: ChunkPool;
   readonly encounters?: number;
   readonly difficulty: { readonly max: Difficulty; readonly min: Difficulty };
   readonly difficultyWeights?: Readonly<Partial<Record<Difficulty, number>>>;
@@ -630,7 +634,7 @@ export interface ZoneSectionRecipe extends Pick<
   ZoneRecipe,
   "difficulty" | "difficultyWeights" | "doors" | "events" | "length" | "spawnCol" | "theme"
 > {
-  readonly chunks: readonly string[];
+  readonly chunks: ChunkPool;
   readonly id: string;
 }
 export interface OrderedZoneRecipe {
