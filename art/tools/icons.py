@@ -1,4 +1,4 @@
-"""The site's favicon and app icons: the bird on a sky-blue sunburst disc.
+"""The site's favicon and app icons: the bird on a muted powder-blue sunburst disc.
 
 Usage, from the repository root:
   python3 -I art/tools/icons.py build            write every icon below
@@ -23,9 +23,9 @@ crescents, a white rim from 32px up and a dark-slate outline.
 From 32px up she stands whole in the disc, her head 0.18 of the side. At 16px she is a close-up, her head and the
 top of her back cut off by the disc inside a 1px edge, so the 3x3 bill and the 2x2 eye still read.
 
-The ground is a sunburst: twelve rays, alternating sky and blue, from a point just above the icon's centre
-(behind her), filling the disc and, on the full-bleed icons, the whole square. At 16px the rays do not hold, so
-the disc is flat sky.
+The ground is a sunburst: twelve rays, alternating zone-blue and zone-blue-shade, from a point just above
+the icon's centre (behind her), filling the disc and, on the full-bleed icons, the whole square. At16px the
+rays do not hold, so the disc is flat zone-blue.
 """
 
 import math
@@ -37,9 +37,9 @@ import bird  # noqa: E402
 import pixel  # noqa: E402
 from pixel import K, Grid  # noqa: E402
 
-RAYS = ("sky", "blue")  # the sunburst's alternating rays
+RAYS = ("zone-blue", "zone-blue-shade")  # the sunburst's alternating rays
 RAY_COUNT = 12
-FLAT = "sky"  # the 16px ground, where the rays do not hold
+FLAT = "zone-blue"  # the 16px ground, where the rays do not hold
 OUTPUTS = {
     "public/art/favicon-16.png": (16, "disc", 1),
     "public/art/favicon.png": (32, "disc", 1),
