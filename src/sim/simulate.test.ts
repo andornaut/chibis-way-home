@@ -300,6 +300,26 @@ describe("terminal diagnostic budgets and coverage", () => {
       expect(run.lastAttemptSeconds).toBe(run.activeSeconds);
     }
   });
+  it("stops repeated backtracking without treating motion as new route progress", () => {
+    let ticks = 0;
+    const inputs = vi.spyOn(botRules, "botInput").mockImplementation(() => {
+      const phase = Math.floor(ticks++ / 20) % 4;
+      return { jumpHeld: false, move: phase === 0 ? 1 : phase === 2 ? -1 : 0, useHeld: false };
+    });
+    try {
+      const run = simulateStage(BIRD, prepareStage(fixture(ground)), {
+        ...config,
+        maxSteps: 500,
+        stopAfterStallTicks: 100,
+      });
+      expect(run.status).toBe("policy-stall");
+      expect(run.steps).toBeLessThan(250);
+      expect(run.deaths).toBe(0);
+      expect(ticks).toBe(run.steps);
+    } finally {
+      inputs.mockRestore();
+    }
+  });
   it("omits undispatched seeds after preparation spends the batch wall budget", () => {
     const clock = vi.spyOn(performance, "now");
     let now = 0;

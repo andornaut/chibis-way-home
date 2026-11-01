@@ -367,6 +367,28 @@ function waypoint(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zon
   const foot = zone.bird.y + tuning.height,
     front = zone.bird.x + (direction === 1 ? tuning.width : 0);
   const distance = (rect: Rect) => (direction === 1 ? rect.x - front : front - rect.x - rect.width);
+  // An explicit upper exit is an objective even when its stairs do not block walking below.
+  const exit = layout.stageExit?.area === zone.area ? layout.stageExit.rect : undefined;
+  if (exit && Math.abs(exit.x - front) <= SCREEN.width && exit.y + exit.height < foot) {
+    const fullHeight = tuning.jumpSpeed ** 2 / (2 * tuning.gravity);
+    const ascending = surfaces
+      .filter((rect) => {
+        const centre = rect.x + (rect.width - tuning.width) / 2;
+        return (
+          rect.y < foot - 2 &&
+          foot - rect.y <= fullHeight &&
+          Math.abs(centre - zone.bird.x) <= SCREEN.width / 2 &&
+          Math.abs(centre - exit.x) < Math.abs(zone.bird.x - exit.x) + tuning.width
+        );
+      })
+      .sort((a, b) => Math.abs(distance(a)) - Math.abs(distance(b)))[0];
+    if (ascending) {
+      return { width: ascending.width, x: ascending.x, y: ascending.y };
+    }
+    if (foot - exit.y - exit.height <= fullHeight) {
+      return { width: exit.width, x: exit.x, y: exit.y + exit.height };
+    }
+  }
   const nearby = surfaces
     .filter((rect) => distance(rect) >= -SCREEN.width / 2 && distance(rect) <= SCREEN.width / 2)
     .sort((a, b) => Math.abs(distance(a)) - Math.abs(distance(b)))
@@ -1075,7 +1097,18 @@ export function plannedInput(
     }
     summaries[summaries.length - 1] = { ...summary, score };
     const previous = candidate.travel === undefined ? best : recovery;
-    if (!previous || score > previous.score) {
+    // A validated support target retains a foothold instead of rewarding a longer blind retreat.
+    const targetedRecovery = candidate.travel !== undefined && candidate.stopAt !== undefined;
+    const previousTargetedRecovery = previous?.candidate.stopAt !== undefined;
+    if (
+      !previous ||
+      (movingSupport &&
+      navigation.waypoint !== undefined &&
+      candidate.travel !== undefined &&
+      targetedRecovery !== previousTargetedRecovery
+        ? targetedRecovery
+        : score > previous.score)
+    ) {
       const selected = {
         candidate,
         elapsed,

@@ -103,6 +103,115 @@ function traverse(layout: ZoneLayout, maxTicks = 300) {
   }
   return { bot, landings, ticks, zone };
 }
+describe("targeted support recovery", () => {
+  it("retains the gained step while a moving landing is unavailable", () => {
+    const base = fixture([
+      { height: 120, width: 492, x: 0, y: 240 },
+      { height: 180, width: 120, x: 492, y: 180 },
+      { height: 360, width: 180, x: 852, y: 0 },
+    ]);
+    const lift: ObjectLayout = {
+      ...movingObject("ledge", { x: 696, y: 192 }),
+      motion: {
+        ...STATIC_MOTION,
+        algorithm: "linear",
+        direction: "up",
+        distance: 120,
+        pause: 0.6,
+        speed: 48,
+      },
+    };
+    const hazard: ObjectLayout = {
+      ...movingObject("hazard", { x: 612, y: 320 }),
+      height: 4,
+      motion: STATIC_MOTION,
+      width: 240,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          exitX: 1060,
+          height: 360,
+          objects: [
+            lift,
+            hazard,
+            {
+              ...movingObject("hazard", { x: 738, y: 9 }),
+              height: 4,
+              motion: {
+                ...STATIC_MOTION,
+                algorithm: "linear",
+                direction: "right",
+                distance: 12,
+                speed: 12,
+              },
+              width: 12,
+            },
+          ],
+          width: 1100,
+        },
+      },
+    };
+    const initial = startZone(BIRD, layout, 1);
+    let zone = {
+      ...initial,
+      bird: { ...initial.bird, grounded: true, vx: 0, vy: 0, x: 535.2, y: 144 },
+    };
+    const bot = newBot(1);
+    let lowestX = zone.bird.x;
+    for (let tick = 0; tick < 180 && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      if (tick === 0) {
+        expect(navigationSnapshot(bot)?.chosenAction, JSON.stringify(navigationSnapshot(bot))).toBe(
+          "retreat-to-support",
+        );
+      }
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+      lowestX = Math.min(lowestX, zone.bird.x);
+      if (tick > 24 && zone.bird.grounded) {
+        break;
+      }
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.bird.grounded).toBe(true);
+    expect(zone.bird.y + BIRD.height).toBe(180);
+    expect(lowestX).toBeGreaterThanOrEqual(492 - BIRD.width);
+  });
+});
+
+describe("explicit upper stage exits", () => {
+  it("climbs nonblocking overhead stairs and clears the real upper trigger", () => {
+    const base = fixture([
+      { height: 12, width: 720, x: 0, y: 360 },
+      { height: 12, width: 72, x: 96, y: 300 },
+      { height: 12, width: 72, x: 240, y: 240 },
+      { height: 12, width: 72, x: 384, y: 180 },
+      { height: 12, width: 144, x: 528, y: 120 },
+      { height: 12, width: 48, x: 672, y: 360 },
+    ]);
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 36, y: 360 } },
+          exitX: 760,
+          height: 720,
+          width: 800,
+        },
+      },
+      stageExit: { area: "main", rect: { height: 72, width: 48, x: 648, y: 48 } },
+    };
+    const result = traverse(layout, 600);
+    expect(result.zone.death).toBeUndefined();
+    expect(result.zone.cleared).toBe(true);
+    expect(result.zone.bird.y).toBeLessThan(120);
+    expect(result.zone.bird.x).toBeLessThan(layout.areas.main!.exitX);
+  });
+});
+
 describe("bounded real-rule navigation", () => {
   it("climbs successive five and six tile faces with deliberate full holds", () => {
     const result = traverse(
