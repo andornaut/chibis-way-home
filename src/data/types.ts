@@ -448,6 +448,30 @@ export interface StageBarkEvent {
 }
 export type StageBarkSchedule = Readonly<Record<string, readonly StageBarkEvent[]>>;
 
+// Opening motion uses normalized keyframes from the supplied storybook pose sheets.
+export interface OpeningKeyframe {
+  readonly angle: number;
+  readonly pose: string;
+  readonly position: Point;
+  readonly progress: number;
+  readonly scale: number;
+  readonly visible: boolean;
+}
+export interface OpeningLayer {
+  readonly anchor: Point;
+  readonly art: string;
+  readonly keyframes: readonly OpeningKeyframe[];
+}
+export interface OpeningShot {
+  readonly background: string;
+  readonly layers: readonly OpeningLayer[];
+  readonly seconds: number;
+}
+export interface OpeningBeat {
+  readonly shots: readonly OpeningShot[];
+  readonly text: string;
+}
+
 // A terminal required choice. Prompt and labels are TEXT.lines keys; ids are returned to the
 // opener without applying actions, flags or a default answer.
 export interface DialogueChoice {
