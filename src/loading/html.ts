@@ -18,6 +18,7 @@ export const LOADING_CSS = `
   height: ${PROGRESS_RECT.height}px; pointer-events: none; z-index: 1;
   transform: translateX(-50%) scale(var(--loading-scale,1)); transform-origin: top center;
 }
+#game[data-modal-open] canvas { position: relative; z-index: 2; }
 #game-loading > .initial-loading {
   position: absolute; width: ${PROGRESS_RECT.width}px; height: ${PROGRESS_RECT.height}px;
   background: ${colour(style.track)};

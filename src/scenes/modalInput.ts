@@ -29,6 +29,15 @@ export function modalInput(scene: Scene): SceneInput {
   if (!gate) {
     gate = createModalInputGate();
     gates.set(scene.game, gate);
+    const gameGate = gate;
+    const host = scene.game.canvas?.parentElement;
+    const unsubscribe = gameGate.subscribe(() =>
+      host?.toggleAttribute("data-modal-open", !gameGate.accepts()),
+    );
+    scene.game.events?.once("destroy", () => {
+      unsubscribe();
+      host?.removeAttribute("data-modal-open");
+    });
   }
   const gameGate = gate;
   let scope: ModalInputScope | undefined;

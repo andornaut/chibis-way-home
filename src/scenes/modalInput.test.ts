@@ -35,6 +35,29 @@ describe("modal input routes", () => {
     expect(clear).toHaveBeenCalledTimes(5);
   });
 
+  it("keeps DOM progress behind nested modal canvases until the final close and cleans up on game destruction", () => {
+    const host = { removeAttribute: vi.fn(), toggleAttribute: vi.fn() };
+    const events = new EventEmitter();
+    const game = { canvas: { parentElement: host }, events };
+    const pause = scene(game);
+    const settings = scene(game);
+    const pauseInput = modalInput(pause);
+    expect(host.toggleAttribute).toHaveBeenLastCalledWith("data-modal-open", false);
+    pauseInput.open();
+    expect(host.toggleAttribute).toHaveBeenLastCalledWith("data-modal-open", true);
+    modalInput(settings).open();
+    settings.events.emit("shutdown");
+    expect(host.toggleAttribute).toHaveBeenLastCalledWith("data-modal-open", true);
+    pauseInput.close();
+    expect(host.toggleAttribute).toHaveBeenLastCalledWith("data-modal-open", false);
+    pauseInput.open();
+    events.emit("destroy");
+    expect(host.removeAttribute).toHaveBeenCalledWith("data-modal-open");
+    host.toggleAttribute.mockClear();
+    pause.events.emit("shutdown");
+    expect(host.toggleAttribute).not.toHaveBeenCalled();
+  });
+
   it("unsubscribes disposed card controls before closing its scope on scene shutdown", () => {
     const game = {};
     const world = scene(game);
