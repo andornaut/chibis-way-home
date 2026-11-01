@@ -1,7 +1,7 @@
+import { containsPoint } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
 import { HAZARD_OUTLINE } from "../data/screen";
-import { contains } from "../rules/rect";
 import { hazardOutline } from "./hazardOutline";
 
 const BOX = { height: 38, width: 56, x: 72, y: 100 };
@@ -22,7 +22,7 @@ describe("hazardOutline", () => {
       for (let x = 0; x < BOX.width; x++) {
         const edge = Math.min(x, y, BOX.width - 1 - x, BOX.height - 1 - y);
         const band = parts.find(({ rect }) =>
-          contains(rect, { x: BOX.x + x + 0.5, y: BOX.y + y + 0.5 }),
+          containsPoint(rect, BOX.x + x + 0.5, BOX.y + y + 0.5),
         )?.band;
         expect(band).toBe(
           edge < HAZARD_OUTLINE.redWidth

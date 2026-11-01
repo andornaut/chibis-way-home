@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { rectsOverlap } from "@andornaut/game-kit/rect";
+
 import { SCREEN } from "../data/screen";
 import type {
   BehaviourMotion,
@@ -11,7 +13,6 @@ import type {
 } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
-import { overlaps } from "../rules/rect";
 import { STEP_SECONDS } from "../rules/step";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 import type { NavigationDiagnostic } from "./bot";
@@ -154,7 +155,7 @@ export function traceEvent(
         stateSeconds: behaviour?.elapsed,
       });
     }
-    const touching = overlaps(box, rect);
+    const touching = rectsOverlap(box, rect);
     if (
       closest === undefined ||
       (touching && !closest.overlapsBird) ||

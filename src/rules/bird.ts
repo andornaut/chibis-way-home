@@ -1,5 +1,6 @@
+import { rectsOverlap } from "@andornaut/game-kit/rect";
+
 import type { BirdTuning, Point, Rect, Size } from "../data/types";
-import { overlaps } from "./rect";
 import { STEP_SECONDS } from "./step";
 
 // Pixels of rounding error allowed when she stands exactly on an edge.
@@ -387,7 +388,7 @@ export function stepBird(
   }
   for (const solid of solids) {
     const box = { height: tuning.height, width: tuning.width, x, y: bird.y };
-    if (overlaps(box, solid)) {
+    if (rectsOverlap(box, solid)) {
       x = moving > 0 ? solid.x - tuning.width : solid.x + solid.width;
       vx = 0;
       carryVx = 0;
@@ -418,7 +419,7 @@ export function stepBird(
   }
   for (const solid of solids) {
     const box = { height: tuning.height, width: tuning.width, x, y };
-    if (overlaps(box, solid)) {
+    if (rectsOverlap(box, solid)) {
       if ((verticalPush === 0 && rise === undefined ? vy : falling) > 0) {
         y = solid.y - tuning.height;
         grounded = true;
@@ -437,7 +438,7 @@ export function stepBird(
     if (
       (verticalPush === 0 && rise === undefined ? vy : falling) > 0 &&
       bottom <= ledge.y + EDGE &&
-      overlaps(box, ledge)
+      rectsOverlap(box, ledge)
     ) {
       y = ledge.y - tuning.height;
       grounded = true;

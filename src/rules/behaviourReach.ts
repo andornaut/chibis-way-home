@@ -1,7 +1,8 @@
+import { rectsOverlap } from "@andornaut/game-kit/rect";
+
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { collisionCandidates } from "./collisionIndex";
-import { overlaps } from "./rect";
 
 export interface BehaviourPlatform {
   readonly collision: "ledge" | "solid";
@@ -214,12 +215,12 @@ export function targetReachable(
       y: Math.min(box.y, box.y + nearest - at.y),
     };
     return (
-      !collisionCandidates(world.solids, sweep).some((solid) => overlaps(sweep, solid)) &&
+      !collisionCandidates(world.solids, sweep).some((solid) => rectsOverlap(sweep, solid)) &&
       !(world.platforms ?? []).some(
         (platform) =>
           platform.owner !== object &&
           platform.collision === "solid" &&
-          overlaps(sweep, platform.rect),
+          rectsOverlap(sweep, platform.rect),
       )
     );
   }

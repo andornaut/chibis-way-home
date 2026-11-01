@@ -1,19 +1,12 @@
 // The shapes of the game data. The value files beside this one fill them.
 
+import type { Point as SharedPoint, Rect as SharedRect } from "@andornaut/game-kit/rect";
+
 import type { SEAM_ROWS } from "./chunks";
 
 // An axis-aligned rectangle in base pixels: x and y are its top-left corner, y grows downward.
-export interface Rect {
-  readonly height: number;
-  readonly width: number;
-  readonly x: number;
-  readonly y: number;
-}
-
-export interface Point {
-  readonly x: number;
-  readonly y: number;
-}
+export type Rect = Readonly<SharedRect>;
+export type Point = SharedPoint;
 
 export type DeathReason = "crush" | "fall" | "hazard";
 
@@ -64,10 +57,7 @@ export interface StatsText {
   readonly runTotal: string;
 }
 
-export interface Size {
-  readonly height: number;
-  readonly width: number;
-}
+export type Size = Pick<Rect, "height" | "width">;
 
 // A finite horizontal burst: speed in pixels/second, durations in active-play seconds.
 export interface BirdDashTuning {

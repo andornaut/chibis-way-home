@@ -1,3 +1,5 @@
+import { clampIndex } from "@andornaut/game-kit/arrays";
+
 import type { MapDestination, ZoneMap } from "../data/types";
 import { nodeOf, type OpenMap } from "./map";
 
@@ -57,7 +59,10 @@ export function steppedDestination(
   const destinations = map.destinations.filter(
     (item) => destinationStages(plans, map, open, item).length > 0,
   );
+  if (destinations.length === 0) {
+    return destinationForStage(map, stand).id;
+  }
   const current = destinations.findIndex((item) => item.stages.includes(stand));
-  const at = Math.max(0, Math.min(destinations.length - 1, current + by));
+  const at = clampIndex(destinations.length, current + by);
   return destinations[at]?.id ?? destinationForStage(map, stand).id;
 }

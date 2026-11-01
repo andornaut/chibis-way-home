@@ -1,8 +1,9 @@
+import { rectsOverlap } from "@andornaut/game-kit/rect";
+
 import type { ObjectLayout, Point, Rect } from "../data/types";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { EDGE } from "./bird";
 import { collisionCandidates } from "./collisionIndex";
-import { overlaps } from "./rect";
 
 function supports(object: ObjectLayout, world: BehaviourWorld): readonly Rect[] {
   return [
@@ -23,7 +24,7 @@ function obstacles(object: ObjectLayout, world: BehaviourWorld, body: Rect): rea
 export function supportedLanding(object: ObjectLayout, world: BehaviourWorld, at: Point): boolean {
   const body = { ...at, height: object.height, width: object.width };
   return (
-    !obstacles(object, world, body).some((rect) => overlaps(body, rect)) &&
+    !obstacles(object, world, body).some((rect) => rectsOverlap(body, rect)) &&
     supports(object, world).some(
       (rect) =>
         Math.abs(at.y + object.height - rect.y) <= EDGE &&

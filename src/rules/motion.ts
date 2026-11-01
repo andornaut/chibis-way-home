@@ -1,4 +1,5 @@
 import { easeProgress, progressAt } from "@andornaut/game-kit/motion";
+import { clamp01 } from "@andornaut/game-kit/numbers";
 import type { Random } from "@andornaut/game-kit/random";
 
 import type { Direction, Motion, Point } from "../data/types";
@@ -32,7 +33,7 @@ interface Leg {
 
 // Shared kinematic lift for a complete hop, including its ground endpoints.
 export function hopLift(height: number, duration: number, elapsed: number): number {
-  const fraction = Math.max(0, Math.min(1, duration > 0 ? elapsed / duration : 0));
+  const fraction = clamp01(duration > 0 ? elapsed / duration : 0);
   return height * 4 * fraction * (1 - fraction);
 }
 

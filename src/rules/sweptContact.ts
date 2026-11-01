@@ -1,10 +1,11 @@
+import { rectsOverlap } from "@andornaut/game-kit/rect";
+
 import type { Point, Rect } from "../data/types";
-import { overlaps } from "./rect";
 
 // A positive interval of relative swept overlap catches contact between fixed frames without
 // treating an edge graze or a diagonal bounding-box overlap as a collision.
 export function sweptContact(a: Rect, aEnd: Point, b: Rect, bEnd: Point): boolean {
-  if (overlaps(a, b)) {
+  if (rectsOverlap(a, b)) {
     return true;
   }
   let enter = 0;

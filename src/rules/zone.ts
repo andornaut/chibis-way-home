@@ -1,4 +1,5 @@
 import { randomStream } from "@andornaut/game-kit/random";
+import { rectsOverlap } from "@andornaut/game-kit/rect";
 
 import type {
   AreaLayout,
@@ -39,7 +40,6 @@ import { type ForcePulse, forcePulseVelocity } from "./force";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
-import { overlaps } from "./rect";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import { validateWalkEntries } from "./zoneLinks";
 
@@ -351,7 +351,7 @@ export function doorAt(
       return;
     }
     const rect = rectAt(object, placed);
-    if (!overlaps(drawn, rect)) {
+    if (!rectsOverlap(drawn, rect)) {
       return;
     }
     const mine = centreOf(rect);
@@ -436,7 +436,7 @@ function ride(
 ): BirdState {
   const clear = (x: number, y: number) =>
     !collisionCandidates(solids, { ...birdBox(tuning, bird), x, y }).some((solid) =>
-      overlaps({ ...birdBox(tuning, bird), x, y }, solid),
+      rectsOverlap({ ...birdBox(tuning, bird), x, y }, solid),
     );
   const x = clear(bird.x + dx, bird.y) ? bird.x + dx : bird.x;
   const y = clear(x, bird.y + dy) ? bird.y + dy : bird.y;
@@ -452,7 +452,7 @@ export function pushedAside(
   after: Rect,
   bird: BirdState,
 ): BirdState {
-  if (after.x === before.x || !overlaps(birdBox(tuning, bird), after)) {
+  if (after.x === before.x || !rectsOverlap(birdBox(tuning, bird), after)) {
     return bird;
   }
   const left = bird.x + tuning.width / 2 < before.x + before.width / 2;
@@ -606,7 +606,7 @@ export function stepZone(
   // A platform rising into her from below lifts her onto it, rather than meeting her as a wall.
   for (const { after, before } of platforms) {
     const feet = bird.y + tuning.height;
-    if (feet <= before.y + EDGE && feet > after.y && overlaps(birdBox(tuning, bird), after)) {
+    if (feet <= before.y + EDGE && feet > after.y && rectsOverlap(birdBox(tuning, bird), after)) {
       bird = { ...bird, y: after.y - tuning.height };
     }
   }
@@ -622,7 +622,7 @@ export function stepZone(
     const pushed = object.collision === "solid" ? pushedAside(tuning, before, after, bird) : bird;
     if (pushed !== bird) {
       bird = pushed;
-      crushed ||= solids.some((solid) => overlaps(birdBox(tuning, bird), solid));
+      crushed ||= solids.some((solid) => rectsOverlap(birdBox(tuning, bird), solid));
     }
   }
   const hazardIndices = kinds.hazards.filter((index) => !objects[index]!.object.contact);
@@ -773,7 +773,7 @@ export function stepZone(
       box,
     );
   });
-  const overlap = hazards.findIndex((hazard) => overlaps(box, hazard));
+  const overlap = hazards.findIndex((hazard) => rectsOverlap(box, hazard));
   const objectContact = (index: number): DeathContact => {
     const { contactCue } = objects[index]!.object;
     return { index, kind: "object", ...(contactCue && { contactCue }) };
@@ -827,7 +827,7 @@ export function stepZone(
   const atStageExit =
     layout.stageExit !== undefined &&
     layout.stageExit.area === zone.area &&
-    overlaps(box, layout.stageExit.rect);
+    rectsOverlap(box, layout.stageExit.rect);
   const link = atStageExit
     ? undefined
     : box.x < area.backX

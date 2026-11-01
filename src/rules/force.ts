@@ -1,5 +1,6 @@
+import { rectsOverlap } from "@andornaut/game-kit/rect";
+
 import type { Point, Rect } from "../data/types";
-import { overlaps } from "./rect";
 
 export interface ForcePulse {
   readonly facing: -1 | 1;
@@ -24,7 +25,7 @@ export function forcePulseVolume(pulse: ForcePulse): Rect {
 // the push; only complete cover removes it. Callers exclude ledges from this solid context.
 function exposed(solids: readonly Rect[], pulse: ForcePulse, target: Rect): boolean {
   const volume = forcePulseVolume(pulse);
-  if (!overlaps(volume, target)) {
+  if (!rectsOverlap(volume, target)) {
     return false;
   }
   const edge = pulse.facing > 0 ? pulse.source.x + pulse.source.width : pulse.source.x;

@@ -1,3 +1,4 @@
+import { clampIndex } from "@andornaut/game-kit/arrays";
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
 import type { MapEdge, MapNode, Point, Size, ZoneMap } from "../data/types";
@@ -56,8 +57,11 @@ export function zoneAtTap(
 // The open zone step places along the map's node order from stand (Left -1, Right 1), stopping
 // at the first and the last.
 export function steppedZone(open: OpenMap, stand: string, step: -1 | 1): string {
+  if (open.zones.length === 0) {
+    return stand;
+  }
   const at = open.zones.indexOf(stand);
-  const next = Math.min(open.zones.length - 1, Math.max(0, at + step));
+  const next = clampIndex(open.zones.length, at + step);
   return open.zones[next] ?? stand;
 }
 

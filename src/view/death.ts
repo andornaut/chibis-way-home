@@ -1,4 +1,5 @@
 import { fillNames } from "@andornaut/game-kit/lines";
+import { clamp01 } from "@andornaut/game-kit/numbers";
 
 import type {
   DeathText,
@@ -162,7 +163,7 @@ export function deathSummary(words: DeathText, summary: DeathSummary) {
   const time = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
   return {
     progress: fillNames(words.progress, {
-      percent: String(Math.round(Math.max(0, Math.min(1, summary.percent)) * 100)),
+      percent: String(Math.round(clamp01(summary.percent) * 100)),
     }),
     stage: fillNames(words.stage, { name: summary.stageLabel, number: summary.stageNumber }),
     time: fillNames(words.time, { time }),

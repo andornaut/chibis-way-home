@@ -1,7 +1,8 @@
+import { rectsOverlap } from "@andornaut/game-kit/rect";
+
 import type { BirdTuning, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
-import { overlaps } from "../rules/rect";
 import { areaOf, type ZoneState } from "../rules/zone";
 
 export type SimulationStart =
@@ -52,7 +53,7 @@ export function validateStart(tuning: BirdTuning, layout: ZoneLayout, zone: Zone
     box.x + box.width > area.exitX ||
     box.y < 0 ||
     box.y + box.height > area.height ||
-    area.solids.some((solid) => overlaps(box, solid))
+    area.solids.some((solid) => rectsOverlap(box, solid))
   ) {
     throw new Error("Simulation start is outside playable bounds or inside terrain");
   }
@@ -65,7 +66,7 @@ export function validateStart(tuning: BirdTuning, layout: ZoneLayout, zone: Zone
       object.collision === "hazard"
         ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1, zone.behaviours[index]?.axis)
         : { ...at, height: object.height, width: object.width };
-    return overlaps(box, rect);
+    return rectsOverlap(box, rect);
   });
   if (unsafe) {
     throw new Error("Simulation start overlaps a solid object or hazard");

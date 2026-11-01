@@ -1,3 +1,5 @@
+import { clamp01 } from "@andornaut/game-kit/numbers";
+
 import type { OpeningBeat, OpeningKeyframe, OpeningLayer } from "../data/types";
 import type { Progress } from "../save/progress";
 
@@ -8,7 +10,7 @@ export function openingDestination(
 }
 
 export function openingPose(progress: number, layer: OpeningLayer): OpeningKeyframe {
-  const at = Math.max(0, Math.min(1, progress));
+  const at = clamp01(progress);
   const before = [...layer.keyframes].reverse().find((frame) => frame.progress <= at)!;
   const after = layer.keyframes.find((frame) => frame.progress > at) ?? before;
   const fraction =

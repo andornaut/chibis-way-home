@@ -1,3 +1,5 @@
+import { clamp01 } from "@andornaut/game-kit/numbers";
+
 import type { BirdTuning, Point, Rect, ZoneLayout } from "../data/types";
 import { EDGE } from "./bird";
 import type { ZoneState } from "./zone";
@@ -38,7 +40,7 @@ export function attemptProgress(startX: number, endX: number, currentX: number):
   if (![startX, endX, currentX].every(Number.isFinite) || endX <= startX) {
     throw new Error("Invalid attempt progress bounds");
   }
-  return Math.max(0, Math.min(1, (currentX - startX) / (endX - startX)));
+  return clamp01((currentX - startX) / (endX - startX));
 }
 
 // Only an actual active physics step counts. Paused scenes, dialogue, presentation and modal

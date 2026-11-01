@@ -1,3 +1,5 @@
+import { containsPoint } from "@andornaut/game-kit/rect";
+
 import type { Point, Rect } from "../data/types";
 
 // Every button's press area reaches past its drawn button on every side by marginShare of the
@@ -69,13 +71,7 @@ function contains(shape: PressShape, point: Point): boolean {
         fromCentre < Math.hypot(point.x - awayFrom.x, point.y - awayFrom.y))
     );
   }
-  const rect = shape as Rect;
-  return (
-    point.x >= rect.x &&
-    point.x < rect.x + rect.width &&
-    point.y >= rect.y &&
-    point.y < rect.y + rect.height
-  );
+  return containsPoint(shape as Rect, point.x, point.y);
 }
 
 function distanceToCentre(art: Rect, point: Point): number {
