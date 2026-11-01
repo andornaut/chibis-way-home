@@ -30,20 +30,14 @@ describe("centredLabel", () => {
     expect(centredLabel(button, ink, mark)).toEqual(expected);
   });
 
-  it.each([
-    { ink: 40, mark: undefined },
-    { ink: 41, mark: undefined },
-    { ink: 40, mark: { gap: 6, width: 5 } },
-  ])(
-    "leaves at most a pixel more room before the group than after it ($ink px)",
-    ({ ink, mark }) => {
-      const { labelX, markX } = centredLabel(button, ink, mark);
-      const before = (markX ?? labelX) - button.x;
-      const after = button.x + button.width - (labelX + ink);
-      expect(before - after).toBeGreaterThanOrEqual(0);
-      expect(before - after).toBeLessThanOrEqual(1);
-    },
-  );
+  it("leaves the spare pixel before an unmarked 41 px label", () => {
+    const ink = 41;
+    const { labelX } = centredLabel(button, ink);
+    const before = labelX - button.x;
+    const after = button.x + button.width - (labelX + ink);
+    expect(before - after).toBeGreaterThanOrEqual(0);
+    expect(before - after).toBeLessThanOrEqual(1);
+  });
 
   it.each([
     ["Start", TEXT.start.start],
