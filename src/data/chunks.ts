@@ -81,16 +81,7 @@ const COMMON_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 };
 
 const CITY_THEME: ThemePlan = {
-  backdrops: [
-    { character: "street-sky", parallax: { x: 0, y: 0 }, role: "sky", row: 0 },
-    {
-      character: "street-city-far",
-      parallax: { x: 0.15, y: 0.05 },
-      role: "far-background",
-      row: 0,
-    },
-    { character: "street-city-mid", parallax: { x: 0.4, y: 0.15 }, role: "mid-background", row: 0 },
-  ],
+  backdrops: [{ character: "street-sky", parallax: { x: 1, y: 1 }, role: "sky", row: 0 }],
   bindings: {
     ...COMMON_BINDINGS,
     antagonist: { character: "dog-antagonist", scene: null },
@@ -150,11 +141,36 @@ const INDUSTRIAL_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   sky: { character: "street-sky", skin: { art: "industrial-sky", tileset: null } },
 };
 
-const COMMON_BACKDROPS: ThemePlan["backdrops"] = [
-  { character: "street-sky", parallax: { x: 0, y: 0 }, role: "sky", row: 0 },
-  { character: "street-city-far", parallax: { x: 0.15, y: 0.05 }, role: "far-background", row: 0 },
-  { character: "street-city-mid", parallax: { x: 0.4, y: 0.15 }, role: "mid-background", row: 0 },
-];
+const COMMON_BACKDROPS: ThemePlan["backdrops"] = CITY_THEME.backdrops;
+
+function localDepth(row: number): readonly Instance[] {
+  return [
+    {
+      character: "street-sky",
+      col: 0,
+      cols: CHUNK_COLS,
+      parallax: { x: 0, y: 0 },
+      role: "sky",
+      row,
+    },
+    {
+      character: "street-city-far",
+      col: 0,
+      cols: CHUNK_COLS,
+      parallax: { x: 0.15, y: 0.05 },
+      role: "far-background",
+      row,
+    },
+    {
+      character: "street-city-mid",
+      col: 0,
+      cols: CHUNK_COLS,
+      parallax: { x: 0.4, y: 0.15 },
+      role: "mid-background",
+      row,
+    },
+  ];
+}
 
 const COUNTRYSIDE_BINDINGS: Readonly<Record<string, ElementBinding>> = {
   ...COMMON_BINDINGS,
@@ -218,21 +234,7 @@ function apartmentTheme(
   return {
     backdrops:
       wall === null
-        ? [
-            { character: "street-sky", parallax: { x: 0, y: 0 }, role: "sky", row: 10 },
-            {
-              character: "street-city-far",
-              parallax: { x: 0.15, y: 0.05 },
-              role: "far-background",
-              row: 10,
-            },
-            {
-              character: "street-city-mid",
-              parallax: { x: 0.4, y: 0.15 },
-              role: "mid-background",
-              row: 10,
-            },
-          ]
+        ? [{ character: "street-sky", parallax: { x: 1, y: 1 }, role: "sky", row: 10 }]
         : [0, 12, 24, 36, 48].map((row) => ({
             character: "apartment-wall-panel",
             parallax: { x: 1, y: 1 },
@@ -774,7 +776,7 @@ const ENCOUNTER_YARDS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
   ]),
 );
 
-export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...ENCOUNTER_YARDS,
   "bounded-flyer-post": FLYER_ASCENT,
   "city-boundary-climb-yard": moduleChunk(
@@ -1174,4 +1176,67 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...INDUSTRIAL_CHUNKS,
   ...STREET_CHUNKS,
   ...WOODLAND_CHUNKS,
+};
+
+const DEPTH_CAPS = new Set([
+  "apartment-start",
+  "back-streets-start",
+  "city-boundary-start",
+  "city-outskirts-start",
+  "city-streets-start",
+  "country-lanes-start",
+  "deep-woods-start",
+  "familiar-neighbourhood-start",
+  "farmland-start",
+  "forest-paths-start",
+  "freight-terminal-start",
+  "loading-yards-start",
+  "ravine-start",
+  "river-crossing-start",
+  "street-finish",
+  "warehouse-district-start",
+]);
+
+export const EXTERIOR_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.fromEntries(
+  [
+    "city-boundary-dog-terrace",
+    "city-boundary-ground-hazard",
+    "compound-low-ceiling-hazard",
+    "compound-low-ceiling-shuttle",
+    "compound-return-high",
+    "compound-return-terrace",
+    "patrol-cover-early",
+    "patrol-cover-late",
+    "patrol-cover-middle",
+  ].map((id) => [id, `${id}-exterior`]),
+);
+
+export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...Object.fromEntries(
+    Object.entries(BASE_CHUNKS).map(([id, chunk]) => [
+      id,
+      DEPTH_CAPS.has(id)
+        ? {
+            ...chunk,
+            backdrops: [
+              ...localDepth(id === "apartment-start" ? 10 : 0),
+              ...(chunk.backdrops ?? []),
+            ],
+          }
+        : chunk,
+    ]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(EXTERIOR_DEPTH_ALIASES).map(([id, alias]) => {
+      const chunk = BASE_CHUNKS[id]!;
+      return [
+        alias,
+        {
+          ...chunk,
+          backdrops: [...localDepth(10), ...(chunk.backdrops ?? [])],
+          theme: "apartment-exterior",
+        },
+      ];
+    }),
+  ),
 };

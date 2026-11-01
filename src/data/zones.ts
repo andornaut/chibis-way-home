@@ -1,3 +1,4 @@
+import { EXTERIOR_DEPTH_ALIASES } from "./chunks";
 import { CHUNK_COLS } from "./chunkTemplates";
 import type { ChunkPool, StageRecipe, ZonePlan } from "./types";
 
@@ -642,7 +643,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
+        chunks: APARTMENT_CHALLENGE_CHUNKS.map((id) => EXTERIOR_DEPTH_ALIASES[id] ?? id),
         id: "fire-escape-1",
         length: sectionLength(3, 1),
         theme: "apartment-exterior",
