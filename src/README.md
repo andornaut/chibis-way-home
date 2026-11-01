@@ -80,6 +80,21 @@ Optional `trace` requires `maxEvents` and `stallTicks`; `sampleEveryTicks` addit
 
 Bot inputs expose reaction ticks, look-ahead pixels, jump-hold ticks, error probability, movement direction and jump policy. The reactive policy probes local support, walls and hazards using indexed terrain and current moving-object positions. Optional `jump: "planned"` selects bounded navigation configured by `skill.navigation`: `horizonTicks`, `maxCandidates`, `replanTicks` and `maxPhysicsSteps` (CLI `--plan-horizon`, `--plan-candidates`, `--plan-replan` and `--plan-steps`). Planning uses the real engine; its counters report decisions, candidate rollouts, prediction physics steps and budget exhaustion. The prediction-step budget applies to the whole run, including retries and area transitions; exhaustion reports `prediction-budget` unless the executed tick already cleared the stage or ended in death. A planner with no safe candidate or an exhausted budget has not proved the layout impossible. It does not plan a route, schedule enemy phases or search for takeoffs. The supplied diagnostic settings are not calibrated human skill presets; gameplay owns calibration. Failure by this bot is not evidence that a stage is impossible. Diagnostic defaults enable adaptive holds between `minJumpHoldTicks` and `jumpHoldTicks` for low obstacles, retain longer holds for gaps and hazards, and release after reaching a measured obstacle top. These are local geometric estimates, not skipped physics. `waitForMovers` stops movement for a nearby missing moving landing, resumes on live alignment, and caps waiting with `maxWaitTicks`; no predicted platform position replaces real stepping. Legacy caller skill objects can omit these optional controls.
 
+### Saved tuning reports
+
+`src/sim/tuningCli.ts` post-processes saved case artifacts and a saved structural playability report without running physics, navigation or replay. Run it in the project container:
+
+```bash
+npx tsx src/sim/tuningCli.ts --cases cases.json \
+  --structural structural.json --out-prefix reports/tuning
+```
+
+The cases manifest is a JSON array of `{ "stage": "stage-id", "path": "stage-artifact.json" }` entries. Artifact paths resolve relative to the manifest. Each artifact contains `run` plus its `sourceCommit`, optional `readinessCommit` and optional `replay` result. Duplicate stage cases are rejected. The output directory must exist; existing `.json`, `.csv` or `.md` outputs are refused without overwriting them.
+
+The JSON report contains stage input counts, recorded chunk-residence tick intervals, revisits, independent failure locations, source/configuration/seeds/replay metadata, zone totals and the existing structural comparisons. CSV and Markdown provide concise stage summaries. A first-attempt full pass requires a full pass with zero deaths and retries; replay status remains separate. Residence intervals use recorded centre-based chunk transition ticks, not sampled trace positions. Input counts distinguish direction, reverse direction, no direction, jump presses and held jump ticks. No-direction input does not establish physical waiting, and these artifacts do not measure distance or airtime.
+
+Structural joins require the same source revision, stage, layout seed, area, chunk index and chunk ID. Missing or mismatched joins stay unknown; structural and runtime hashes cover different domains and remain separate. Witness coverage is complete, incomplete or absent, with unknown input ticks reported explicitly. Mechanics present in visited chunks describe available structure, not observed use. These are bot observations and structural proxies, not human difficulty or fun scores; the successful-attempt duration target remains unmeasured by this tool.
+
 ## Remaining for the first build
 
 - Complete the generated data export to `shared/export/` for art tooling.
