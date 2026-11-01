@@ -212,6 +212,14 @@ The route spans six themed zones of three stages in this order. Each stage targe
 | Home city            | City outskirts (`city-outskirts`)         | Back streets (`back-streets`)   | Familiar neighbourhood (`familiar-neighbourhood`) |
 | Apartment building   | Entrance and lobby (`entrance-and-lobby`) | Shared floors (`shared-floors`) | Climb to the apartment (`climb-to-apartment`)     |
 
+### Approved Apartment replacement (implementation pending)
+
+Replace the Apartment building's three stages with six upward floor stages: Lobby, Restaurant, Pool, Spa, Residential floors and Penthouse. Target about 90 seconds of successful active play per floor, about nine minutes for the zone. These human pacing targets are unmeasured, not hard timers or a conversion from vertical distance to horizontal columns. The other five zones retain three stages targeting about two minutes each.
+
+Keep one checkpoint at each floor's beginning and the existing fresh-entry and same-run retry rules. The Lobby retains the once-per-zone scripted introduction. Place the zone's two normal hostile encounters in seeded middle chunks, one in Restaurant and one in Penthouse; the other floors have none. All fixed caps remain free of normal hostiles. There is no new boss fight.
+
+Stair or elevator exits activate automatically, then show stage statistics and Continue before the next floor. Doors remain entrances to optional special rooms. The stage chooser pages through full-size cards. Retain 60-column chunks and the current difficulty bands. Taller geometry is restricted to Apartment floors and must support upward progression from a safe lower start; its height and recipe lengths require the paired source and layout design.
+
 ### First stage
 
 - **Ending:** the fixed finish retains the final short-jump ceiling, red-edged gap and canopy

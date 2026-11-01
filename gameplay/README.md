@@ -28,6 +28,8 @@ Gameplay owns the rulebook and the values and content in the data value files (e
 
 ## V1 plan
 
+The [approved Apartment replacement](design.md#approved-apartment-replacement-implementation-pending) is pending implementation. Its floor pacing and transition plan supersede the current Apartment structure below when delivered.
+
 The linear route has six themed zones with three stages each, eighteen stages in total. The route table in [`design.md`](design.md) owns all stage names and IDs, from Parcel depot through Climb to the apartment. Every stage has fixed one-screen opening and ending chunks around a randomized middle of one-screen chunks. Vertical space and scrolling remain unchanged. The rulebook owns the filled stage-length range; recipe data derives all linked-section budgets from it. Second-stage openings provide protected noncombat approaches; their normal encounter occurs in the randomized middle. The shared pool includes upper-route returns usable by the first zone and low-ceiling challenges within later zones’ bands. The park is a debug prototype outside the V1 map; branching routes and boss encounters are deferred to Next. Completing the route does not declare a V1 release.
 
 - **Apartment sections:** Entrance and lobby has entrance and lobby; Shared floors has restaurant, first fire escape and pool; Climb to the apartment has second fire escape, spa, third fire escape and residential. Each stage has one checkpoint at its beginning.
