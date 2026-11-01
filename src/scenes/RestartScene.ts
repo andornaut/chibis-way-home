@@ -133,7 +133,7 @@ export class RestartScene extends Scene {
     } else {
       clearProgress();
       this.scene.stop(this.opener);
-      this.scene.start("map");
+      this.scene.start("opening");
     }
   }
 

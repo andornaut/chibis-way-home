@@ -450,18 +450,22 @@ export type StageBarkSchedule = Readonly<Record<string, readonly StageBarkEvent[
 
 // Opening motion uses normalized keyframes from the supplied storybook pose sheets.
 export interface OpeningKeyframe {
+  // Degrees clockwise; position is the logical viewport location of the layer anchor.
   readonly angle: number;
   readonly pose: string;
   readonly position: Point;
+  // Normalized shot progress. Pose and visibility step; transforms interpolate.
   readonly progress: number;
   readonly scale: number;
   readonly visible: boolean;
 }
 export interface OpeningLayer {
+  // Source-frame pixels, normalized by the selected frame dimensions at rendering.
   readonly anchor: Point;
   readonly art: string;
   readonly keyframes: readonly OpeningKeyframe[];
 }
+// Durations advance animation only; the beat always waits for a fresh Continue.
 export interface OpeningShot {
   readonly background: string;
   readonly layers: readonly OpeningLayer[];

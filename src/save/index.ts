@@ -126,6 +126,10 @@ export function savedMap(): { readonly completed: readonly string[]; readonly st
   return mapProgress(ZONE_MAP, progress);
 }
 
+export function saveOpeningSeen(): void {
+  write({ ...progress, openingSeen: true });
+}
+
 export function seenZoneIntros(): readonly string[] {
   return progress.at === "map" ? progress.seenZoneIntros : [];
 }
@@ -135,7 +139,12 @@ export function saveZoneIntro(zone: string): void {
   if (seen.includes(zone)) {
     return;
   }
-  write({ at: "map", ...savedMap(), seenZoneIntros: [...seen, zone] });
+  write({
+    at: "map",
+    ...savedMap(),
+    openingSeen: progress.openingSeen,
+    seenZoneIntros: [...seen, zone],
+  });
 }
 
 // Map browsing updates an existing game; only actual stage entry starts a new one.
@@ -150,7 +159,13 @@ export function saveStand(stand: string): void {
 }
 
 function writeStand(stand: string): void {
-  write({ at: "map", completed: savedMap().completed, seenZoneIntros: seenZoneIntros(), stand });
+  write({
+    at: "map",
+    completed: savedMap().completed,
+    openingSeen: progress.openingSeen,
+    seenZoneIntros: seenZoneIntros(),
+    stand,
+  });
 }
 
 // He has completed the zone at node: it opens the map past it, and he stands on it.
@@ -159,6 +174,7 @@ export function saveCompleted(node: string): void {
   write({
     at: "map",
     completed: completed.includes(node) ? completed : [...completed, node],
+    openingSeen: progress.openingSeen,
     seenZoneIntros: seenZoneIntros(),
     stand: node,
   });

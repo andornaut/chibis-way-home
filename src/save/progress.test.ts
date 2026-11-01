@@ -44,10 +44,11 @@ const ZONE_KEYS = { built: {}, start: {}, unbuilt: {} };
 const FORMAT = progressFormat(MAP, ZONE_KEYS);
 
 const stored = (fields: object, version = PROGRESS_VERSION) =>
-  JSON.stringify({ seenZoneIntros: [], ...fields, version });
+  JSON.stringify({ openingSeen: false, seenZoneIntros: [], ...fields, version });
 const at = (stand: string, completed: string[] = []): Progress => ({
   at: "map",
   completed,
+  openingSeen: false,
   seenZoneIntros: [],
   stand,
 });
@@ -55,6 +56,7 @@ const at = (stand: string, completed: string[] = []): Progress => ({
 describe("progressFormat", () => {
   it.each<[string, Progress]>([
     ["the beginning", BEGINNING],
+    ["acknowledged beginning", { ...BEGINNING, openingSeen: true }],
     [
       "a remembered zone introduction",
       { ...at("start"), seenZoneIntros: ["test-zone"] } as Progress,
@@ -71,6 +73,8 @@ describe("progressFormat", () => {
   });
 
   it.each([
+    ["missing opening acknowledgement", stored({ at: "beginning", openingSeen: undefined })],
+    ["invalid opening acknowledgement", stored({ at: "beginning", openingSeen: "yes" })],
     [
       "missing introduction list",
       stored({ at: "map", completed: [], seenZoneIntros: undefined, stand: "start" }),
@@ -148,6 +152,7 @@ describe("built cityscape progress", () => {
       const progress = {
         at: "map" as const,
         completed,
+        openingSeen: true,
         seenZoneIntros: [],
         stand,
       };

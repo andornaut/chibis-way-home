@@ -23,6 +23,7 @@ import { DeathScene } from "./scenes/DeathScene";
 import { DialogueChoiceScene } from "./scenes/DialogueChoiceScene";
 import { DialogueScene } from "./scenes/DialogueScene";
 import { MapScene } from "./scenes/MapScene";
+import { OpeningScene } from "./scenes/OpeningScene";
 import { PauseScene } from "./scenes/PauseScene";
 import { RestartScene } from "./scenes/RestartScene";
 import { RoomScene } from "./scenes/RoomScene";
@@ -62,6 +63,7 @@ function startGame(): void {
     scene: [
       BootScene,
       StartScene,
+      OpeningScene,
       MapScene,
       ZoneScene,
       ZoneBarkScene,
@@ -108,9 +110,9 @@ function startGame(): void {
   if (parent !== null) {
     followFrameTurn(game, parent, FRAME_TURN, game.scale.gameSize);
   }
-  // The pause card and BootScene draw at most about MENU_FPS frames a second; the zone, every
-  // display frame.
-  capFrameRate(MENU_FPS, () => game.scene.isActive("zone"), game);
+  // Menus draw at most about MENU_FPS frames a second; gameplay and the animated opening draw
+  // every display frame.
+  capFrameRate(MENU_FPS, () => game.scene.isActive("zone") || game.scene.isActive("opening"), game);
   CRASH_SCREEN.stopGameOnCrash(() => game.pause());
 }
 

@@ -15,6 +15,7 @@ import {
 import { startBackAction } from "../pause/cardInput";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { exitShown, PHONE_EVENTS } from "../pwa";
+import { openingDestination } from "../rules/opening";
 import { savedProgress } from "../save";
 import { setTouchSettingShown, type TouchSetting } from "../settings/touchControls";
 import { dimColour } from "../view/dim";
@@ -36,7 +37,6 @@ import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScen
 import type { ZoneData } from "./ZoneScene";
 
 const LOGO = "logo";
-const MAP = "map";
 const RESTART = "restart";
 const SETTINGS = "settings";
 const ZONE = "zone";
@@ -288,9 +288,8 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
 
   private act(control: Control): void {
     if (control === "start") {
-      // Start and Continue both open the map, where she stands (the first zone from the
-      // beginning).
-      this.scene.start(MAP);
+      // Unseen new games show the opening; Continue returns directly to the map.
+      this.scene.start(openingDestination(savedProgress()));
     } else if (control === "settings") {
       this.card = "settings";
       this.drawFocus();

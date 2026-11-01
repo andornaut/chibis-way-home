@@ -29,7 +29,7 @@ it("keeps confirmed Restart cleared across map browsing and reopen until real st
   save.saveStand(save.savedMap().stand);
   await save.flushStats();
   await save.loadProgress();
-  expect(save.savedProgress()).toEqual({ at: "beginning" });
+  expect(save.savedProgress()).toEqual({ at: "beginning", openingSeen: false });
   expect(save.stageRunStats(stage)).toEqual(stats);
   expect(save.savedMap().stand).toBe(stage);
   save.beginStageRun(stage);
@@ -47,5 +47,5 @@ it("does not begin saved progress for a non-catalogued diagnostic stage", async 
   save.beginStageRun("diagnostic-fixture");
   save.saveStand(ZONE_MAP.start);
   await save.loadProgress();
-  expect(save.savedProgress()).toEqual({ at: "beginning" });
+  expect(save.savedProgress()).toEqual({ at: "beginning", openingSeen: false });
 });
