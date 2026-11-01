@@ -1,4 +1,4 @@
-import { SCREEN, TILE } from "./screen";
+import { CHUNK_COLS } from "./chunkTemplates";
 import type { StageRecipe, ZonePlan } from "./types";
 
 // PLACEHOLDER: parkour test zones, until gameplay designs the real zones.
@@ -286,11 +286,15 @@ const DIFFICULTY_PROFILES = {
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
 const STAGE_ENCOUNTERS = { first: 0, later: 2 } as const;
-const SCREEN_COLUMNS = SCREEN.width / TILE;
-const STAGE_LENGTH = { max: 24 * SCREEN_COLUMNS, min: 20 * SCREEN_COLUMNS } as const;
+const STAGE_LENGTH = { max: 24 * CHUNK_COLS, min: 20 * CHUNK_COLS } as const;
 
-function sectionLength(count: number) {
-  return { max: STAGE_LENGTH.max / count, min: STAGE_LENGTH.min / count };
+function sectionLength(count: number, index: number) {
+  const minChunks = STAGE_LENGTH.min / CHUNK_COLS;
+  const maxChunks = STAGE_LENGTH.max / CHUNK_COLS;
+  return {
+    max: (Math.floor(maxChunks / count) + (index < maxChunks % count ? 1 : 0)) * CHUNK_COLS,
+    min: (Math.floor(minChunks / count) + (index < minChunks % count ? 1 : 0)) * CHUNK_COLS,
+  };
 }
 
 const APARTMENT_CHALLENGE_CHUNKS = [
@@ -378,28 +382,28 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "fire-escape-2",
-        length: sectionLength(4),
+        length: sectionLength(4, 0),
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "spa",
-        length: sectionLength(4),
+        length: sectionLength(4, 1),
         theme: "apartment-spa",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-3",
-        length: sectionLength(4),
+        length: sectionLength(4, 2),
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "residential",
-        length: sectionLength(4),
+        length: sectionLength(4, 3),
         theme: "apartment-residential",
       },
     ],
@@ -436,14 +440,14 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "entrance",
-        length: sectionLength(2),
+        length: sectionLength(2, 0),
         theme: "apartment-entrance",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "lobby",
-        length: sectionLength(2),
+        length: sectionLength(2, 1),
         theme: "apartment-lobby",
       },
     ],
@@ -547,21 +551,21 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         doors: APARTMENT_ROOM_DOORS,
         id: "restaurant",
-        length: sectionLength(3),
+        length: sectionLength(3, 0),
         theme: "apartment-restaurant",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "fire-escape-1",
-        length: sectionLength(3),
+        length: sectionLength(3, 1),
         theme: "apartment-exterior",
       },
       {
         ...APARTMENT_SECTION_DEFAULTS,
         chunks: APARTMENT_CHALLENGE_CHUNKS,
         id: "pool",
-        length: sectionLength(3),
+        length: sectionLength(3, 2),
         theme: "apartment-pool",
       },
     ],

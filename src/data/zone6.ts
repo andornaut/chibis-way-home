@@ -1,4 +1,5 @@
 import {
+  CHUNK_COLS,
   encounterStart,
   PATROL_ENCOUNTER,
   PATROL_FINISH_GEOMETRY,
@@ -10,7 +11,7 @@ const UPPER_FLOOR_OFFSET = 20;
 
 const APARTMENT_BOUNDARIES: Readonly<Record<string, ChunkPlan>> = {
   "apartment-finish": {
-    cols: 60,
+    cols: CHUNK_COLS,
     difficulty: 4,
     encounters: PATROL_FINISH_GEOMETRY.encounters,
     entry: { row: 30 },
@@ -30,14 +31,20 @@ const APARTMENT_BOUNDARIES: Readonly<Record<string, ChunkPlan>> = {
     theme: ["apartment-lobby", "apartment-residential"],
   },
   "apartment-start": {
-    cols: 60,
+    cols: CHUNK_COLS,
     difficulty: 1,
     encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
     slots: [{ area: { col: 18, cols: 4, row: 44, rows: 6 }, id: "apartment-room", kind: "door" }],
-    solids: [{ col: 0, cols: 60, look: "ground", row: 50, rows: 10 }],
+    solids: [
+      { col: 0, cols: 32, look: "ground", row: 50, rows: 10 },
+      { col: 32, cols: 3, look: "raised", row: 47, rows: 13 },
+      { col: 35, cols: 9, look: "ground", row: 50, rows: 10 },
+      { col: 44, cols: 3, look: "raised", row: 44, rows: 16 },
+      { col: 47, cols: CHUNK_COLS - 47, look: "ground", row: 50, rows: 10 },
+    ],
     theme: ["apartment-entrance", "apartment-exterior"],
   },
 };
