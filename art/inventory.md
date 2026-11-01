@@ -42,6 +42,10 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | logo-nav                   | nav-bar logo, one line                            | 226x30  | `public/art/logo-nav.png`                          |
 | stage-cutscene-placeholder | neutral stage-transition illustration             | 720x360 | `public/art/images/stage-cutscene-placeholder.png` |
 
+## Opening story
+
+The [opening asset table](opening/README.md#assets) lists the three storybook backgrounds and four pose sheets, including their dimensions and purposes. The [opening contract](opening/contract.json) defines pose indices, anchors and layer order. These assets are registered under the manifest's `images` and `sprites` entries.
+
 ## Sprites
 
 | Key                       | Type                                                       | Size   | Tags                                          |
