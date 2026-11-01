@@ -30,7 +30,6 @@ function restrictImports(patterns) {
 export default defineConfig(
   {
     // .claude/ holds agent worktrees: full copies of the repo that CI never checks out.
-    // vendor/game-kit/ is a copy of the kit, linted at its source.
     ignores: [".claude/", ".wrangler/", "dist/", "node_modules/", "vendor/"],
   },
   js.configs.recommended,
