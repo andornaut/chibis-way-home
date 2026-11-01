@@ -301,4 +301,63 @@ describe("persistent pursuit", () => {
       object.behaviour!.spotted,
     ]);
   });
+  it.each([
+    { attacks: 1, configured: true, phase: undefined, settled: false },
+    { attacks: 1, configured: true, phase: "engaged" as const, settled: false },
+    { attacks: 1, configured: false, phase: "escaped" as const, settled: false },
+    { attacks: 1, configured: true, phase: "escaped" as const, settled: true },
+    { attacks: 0, configured: true, phase: "escaped" as const, settled: false },
+  ])(
+    "uses authored terminal branches only during opted-in escape winddown: %j",
+    ({ attacks, configured, phase, settled }) => {
+      const base = plan();
+      const graph = {
+        ...base,
+        states: {
+          ...base.states,
+          boundary: {
+            animation: "idle",
+            motion: { kind: "wait" as const },
+            transitions: [
+              { to: "chase", when: [{ kind: "pursuit-ended" as const }] },
+              { to: "offense", when: [{ kind: "elapsed" as const, seconds: 0 }] },
+            ],
+          },
+          chase: base.states.chase!,
+          offense: {
+            animation: "attack",
+            motion: { kind: "wait" as const },
+            onEnter: [
+              {
+                height: 1,
+                kind: "force-pulse" as const,
+                range: 10,
+                seconds: 1,
+                velocity: { x: 1, y: 0 },
+              },
+            ],
+            transitions: [],
+          },
+        },
+      };
+      if (!configured) {
+        delete graph.pursuit;
+        // A non-pursuit graph cannot contain a pursuit movement primitive.
+        graph.states.chase = { ...graph.states.chase!, motion: { kind: "wait" } };
+      }
+      const object = actor(graph);
+      const state: BehaviourState = {
+        ...startBehaviour(BIRD, object, bird(400)),
+        pendingEntry: false,
+        stateKey: "boundary",
+        ...(phase && { pursuit: { phase, settled, unreachableSeconds: 0 } }),
+      };
+      const result = advance(object, bird(400), 0.1, object.origin, state, { solids: [floor] });
+      expect(result.actions).toHaveLength(attacks);
+      if (attacks === 0) {
+        expect(result.state.stateKey).toBe(graph.initial);
+        expect(result.state.pursuit).toMatchObject({ phase: "escaped", settled: true });
+      }
+    },
+  );
 });

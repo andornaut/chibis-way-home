@@ -427,7 +427,11 @@ function matches(
   condition: BehaviourCondition,
 ): boolean {
   if (condition.kind === "pursuit-ended") {
-    return object.behaviour?.pursuit !== undefined && state.pursuit?.phase === "escaped";
+    return (
+      object.behaviour?.pursuit !== undefined &&
+      state.pursuit?.phase === "escaped" &&
+      !state.pursuit.settled
+    );
   }
   if (condition.kind === "visible") {
     if (object.behaviour?.pursuit) {
