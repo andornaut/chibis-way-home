@@ -279,7 +279,7 @@ function snapshot(
 }
 function inputLabel(candidate: Candidate): string {
   if (candidate.travel !== undefined) {
-    return "retreat-to-support";
+    return candidate.stopAt === undefined ? "backward-full" : "retreat-to-support";
   }
   if (candidate.stopAt !== undefined) {
     return candidate.hold === 0 ? "approach" : "brake-full";
@@ -574,6 +574,14 @@ export function plannedInput(
   }
   navigation.counters.decisions++;
   navigation.waypoint = waypoint(tuning, layout, direction, zone);
+  const threatened = layout.areas[zone.area]!.objects.some(
+    (object, index) =>
+      object.collision === "hazard" &&
+      (object.behaviour ||
+        object.motion.algorithm !== "static" ||
+        object.reaction.kind !== "none") &&
+      Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
+  );
   const currentPhase = phase(layout, zone);
   const full = Math.ceil(tuning.jumpRiseTime / STEP_SECONDS) + 1;
   const approach = approachEdge(tuning, layout, direction, zone);
@@ -611,7 +619,10 @@ export function plannedInput(
           : navigation.waypoint.x + (navigation.waypoint.width - tuning.width) / 2,
     },
     { back: 0, delay: 24, hold: full, stationary: 0 },
-    retreat ?? { back: 18, delay: 0, hold: full, stationary: 0 },
+    retreat ??
+      (threatened
+        ? { back: 0, delay: 0, hold: full, stationary: 0, travel: direction === 1 ? -1 : 1 }
+        : { back: 18, delay: 0, hold: full, stationary: 0 }),
     approach === undefined
       ? { back: 0, delay: 0, hold: full, stationary: 12 }
       : { back: 0, delay: 0, hold: 0, stationary: 0, stopAt: approach },
@@ -626,6 +637,8 @@ export function plannedInput(
         states: ZoneState[];
       }
     | undefined;
+  let recovery: typeof best;
+  let safeForward = false;
   const summaries: NavigationCandidateSummary[] = [];
   if (approach !== undefined) {
     candidates.splice(4, 0, candidates.pop()!);
@@ -633,9 +646,35 @@ export function plannedInput(
   if (retreat) {
     candidates.splice(4, 0, candidates.splice(candidates.indexOf(retreat), 1)[0]!);
   }
+  if (threatened && !retreat) {
+    candidates.unshift(
+      candidates.splice(
+        candidates.findIndex((candidate) => candidate.travel !== undefined),
+        1,
+      )[0]!,
+    );
+  }
   const choices = candidates.map((candidate) => ({ candidate, elapsed: 0 }));
   if (navigation.continuation) {
-    choices.unshift(navigation.continuation);
+    const { candidate, elapsed } = navigation.continuation;
+    const exhaustedPrefix =
+      elapsed >= candidate.back + candidate.delay + Math.max(candidate.hold, candidate.stationary);
+    const same = exhaustedPrefix
+      ? choices.findIndex(
+          ({ candidate: fresh }) =>
+            fresh.hold === 0 &&
+            fresh.back === 0 &&
+            fresh.delay === 0 &&
+            fresh.stationary === candidate.stationary &&
+            fresh.stopAt === candidate.stopAt &&
+            fresh.travel === candidate.travel,
+        )
+      : -1;
+    if (same >= 0) {
+      choices[same] = navigation.continuation;
+    } else {
+      choices.splice(threatened ? 1 : 0, 0, navigation.continuation);
+    }
   }
   for (const { candidate, elapsed } of choices.slice(0, limits.maxCandidates)) {
     if (navigation.counters.physicsSteps + limits.horizonTicks > limits.maxPhysicsSteps) {
@@ -662,8 +701,12 @@ export function plannedInput(
       if (navigation.counters.physicsSteps >= limits.maxPhysicsSteps) {
         break;
       }
+      const guard =
+        threatened &&
+        predicted.bird.grounded &&
+        tick >= limits.horizonTicks - limits.replanTicks * 2;
       const input =
-        landedAt === undefined
+        landedAt === undefined && !guard
           ? action(tuning, direction, candidate, tick + elapsed, predicted)
           : IDLE;
       inputs.push(input);
@@ -681,6 +724,7 @@ export function plannedInput(
         landedAt = tick;
       }
       if (
+        !threatened &&
         landedAt !== undefined &&
         tick - landedAt >= limits.replanTicks &&
         predicted.bird.grounded
@@ -726,14 +770,15 @@ export function plannedInput(
     if (predicted.cleared || predicted.area !== zone.area) {
       score += 10000;
     }
-    // A backward support is a local goal only when no safe forward rollout advances.
-    if (candidate.travel !== undefined && candidate.stopAt !== undefined) {
-      if (summaries.some((entry) => entry.rejection === null && entry.forwardProgress > 0)) {
-        continue;
-      }
+    safeForward ||= candidate.travel === undefined && summary.forwardProgress > 0;
+    // Recovery is selected after every forward candidate has been evaluated.
+    if (candidate.travel !== undefined) {
       score +=
-        2 *
-        (Math.abs(candidate.stopAt - zone.bird.x) - Math.abs(candidate.stopAt - predicted.bird.x));
+        candidate.stopAt === undefined
+          ? 2 * Math.abs(summary.forwardProgress)
+          : 2 *
+            (Math.abs(candidate.stopAt - zone.bird.x) -
+              Math.abs(candidate.stopAt - predicted.bird.x));
     }
     score -= candidate.hold > 0 ? 1 : 0;
     if (candidate.back > 0 && navigation.stalledTicks >= 48) {
@@ -752,11 +797,9 @@ export function plannedInput(
       }
     }
     summaries[summaries.length - 1] = { ...summary, score };
-    if (best?.candidate.travel !== undefined && summary.forwardProgress > 0) {
-      best = undefined;
-    }
-    if (!best || score > best.score) {
-      best = {
+    const previous = candidate.travel === undefined ? best : recovery;
+    if (!previous || score > previous.score) {
+      const selected = {
         candidate,
         elapsed,
         inputs,
@@ -764,7 +807,15 @@ export function plannedInput(
         score,
         states,
       };
+      if (candidate.travel === undefined) {
+        best = selected;
+      } else {
+        recovery = selected;
+      }
     }
+  }
+  if (!safeForward && recovery && (!best || recovery.score > best.score)) {
+    best = recovery;
   }
   if (!best) {
     navigation.status =

@@ -279,8 +279,14 @@ describe("bounded real-rule navigation", () => {
     expect(navigationCounters(retry).physicsSteps).toBe(0);
     expect(newBot(1).navigationMemory).toBeUndefined();
   });
-  it("takes a refuge above a periodically charging ground hazard", () => {
-    const base = fixture([{ height: 60, width: 400, x: 0, y: 240 }]);
+  it.each([
+    { name: "open ground", requiredClimb: false },
+    { name: "a required elevated ledge", requiredClimb: true },
+  ])("clears a periodically charging hazard across $name", ({ requiredClimb }) => {
+    const base = fixture([
+      { height: 60, width: 400, x: 0, y: 240 },
+      ...(requiredClimb ? [{ height: 180, width: 48, x: 168, y: 120 }] : []),
+    ]);
     const refuge = { ...movingObject("ledge", { x: 96, y: 180 }), motion: STATIC_MOTION };
     const actor: ObjectLayout = {
       ...movingObject("hazard", { x: 240, y: 200 }),
@@ -319,7 +325,81 @@ describe("bounded real-rule navigation", () => {
     const result = traverse(layout, 600);
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared).toBe(true);
-    expect(result.landings).toContain(refuge.origin.y);
+    if (requiredClimb) {
+      expect(result.landings).toContain(refuge.origin.y);
+    }
+  });
+  it("anticipates a warning hazard at the forecast boundary and escapes before contact", () => {
+    const base = fixture([{ height: 120, width: 720, x: 0, y: 300 }]);
+    const refuge = { ...movingObject("ledge", { x: 96, y: 252 }), motion: STATIC_MOTION };
+    const actor: ObjectLayout = {
+      ...movingObject("hazard", { x: 350, y: 254 }),
+      behaviour: {
+        axis: "x",
+        distance: -180,
+        initial: "warn",
+        states: {
+          rest: {
+            animation: "rest",
+            motion: { kind: "wait" },
+            transitions: [{ to: "return", when: [{ kind: "elapsed", seconds: 0.5 }] }],
+          },
+          return: {
+            animation: "walk",
+            motion: { direction: 1, kind: "move", speed: 120 },
+            transitions: [{ to: "warn", when: [{ kind: "boundary" }] }],
+          },
+          rush: {
+            animation: "rush",
+            motion: { direction: -1, kind: "move", speed: 262.5 },
+            transitions: [{ to: "rest", when: [{ kind: "boundary" }] }],
+          },
+          warn: {
+            animation: "warn",
+            motion: { kind: "wait" },
+            transitions: [{ to: "rush", when: [{ kind: "elapsed", seconds: 2 }] }],
+          },
+        },
+      },
+      height: 46,
+      motion: STATIC_MOTION,
+      width: 44,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 132, y: 300 } },
+          exitX: 660,
+          height: 420,
+          objects: [refuge, actor],
+          width: 720,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let firstDecision: ReturnType<typeof navigationSnapshot>;
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    for (let tick = 0; tick < 900 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, undefined, 1, zone, bot);
+      if (tick === 0) {
+        firstDecision = navigationSnapshot(bot);
+      }
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    expect(
+      firstDecision!.candidates.some((candidate) => candidate.inputLabel === "backward-full"),
+    ).toBe(true);
+    expect(firstDecision!.chosenAction).not.toBe("backward-full");
   });
   it("requires explicit validation profile for larger work while preserving every other hard cap", () => {
     expect(validateNavigation()).toEqual(NAVIGATION_DEFAULTS);
