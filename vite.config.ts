@@ -2,7 +2,7 @@
 /// <reference types="node" />
 
 import type * as ConfigModules from "./src/tools/viteConfigModules.ts";
-import { gameViteConfig } from "./vendor/game-kit/src/build/vite/gameConfig";
+import { gameViteConfig } from "@andornaut/game-kit/build/vite/gameConfig";
 
 export default gameViteConfig<typeof ConfigModules>({
   chunkSizeWarningLimit: 1100,
