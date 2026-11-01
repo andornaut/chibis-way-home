@@ -93,8 +93,10 @@ Include asset keys, frame sizes, animation tags and timings, anchors, hit boxes,
 
 ## Pipeline
 
+Install Python 3.12 art dependencies with `python3.12 -m venv .venv-art` and `.venv-art/bin/python -m pip install -r requirements-art.txt`. Run entrypoints with `.venv-art/bin/python -I`, for example `.venv-art/bin/python -I art/tools/fonts.py preview OUT.png`, from the repository root. `requirements-art.txt` pins the published art-kit v0.0.1 GitHub release wheel by SHA256 and Pillow 13.0.0. Installed site packages supply art-kit in isolated mode; no registry, source-vendor or editable fallback is used. Asset and font licences remain unchanged.
+
 - All art is drawn by Python scripts, never by hand in an editor: `art/tools/<set>.py`, each with `build` and `preview OUT.png` commands.
-- A shared module holds the grid (rect, ellipse, line, cel shading, outline pass), the palette with ramp names, and the export.
+- [art-kit](https://github.com/andornaut/art-kit) provides drawing, outline, frame composition, Aseprite export and font mechanisms. Local `art/tools/pixel.py` and `fonts.py` adapters retain the game palette and ramps, glyph selection, paths, manifest and contact metadata.
 - A build writes the Aseprite sources (`art/<set>/<key>.aseprite`) and exports them as PNG plus JSON, with Aseprite tags for animations, to `public/art/sprites/<key>.png` and `.json`.
 - Change the script, never the `.aseprite`: a build overwrites it.
 - Each script's docstring is its spec: every asset's size, tags, frame timings and placement.

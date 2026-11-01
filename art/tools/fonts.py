@@ -22,11 +22,12 @@ Run from the repository root.
 import json
 import sys
 from pathlib import Path
-from xml.sax.saxutils import quoteattr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pixel
-from PIL import Image, ImageDraw, ImageFont
+from art_kit.fonts import FontInfo, bmfont_xml, rasterize
+from art_kit.fonts import pack as pack_glyphs
+from PIL import Image
 
 FONTS = {
     "font-body": ("Tiny5", "art/fonts/tiny5/Tiny5.ttf", 8),
@@ -38,42 +39,11 @@ ATLAS_W = 128
 
 
 def glyphs(path, size):
-    """Each character as (image or None, xoffset, yoffset, xadvance), plus the font's ascent and descent."""
-    font = ImageFont.truetype(path, size)
-    ascent, descent = font.getmetrics()
-    out = {}
-    for ch in CHARS:
-        canvas = Image.new("L", (size * 3, ascent + descent + 2), 0)
-        d = ImageDraw.Draw(canvas)
-        d.fontmode = "1"
-        d.text((0, 0), ch, font=font, fill=255)
-        box = canvas.getbbox()
-        adv = round(font.getlength(ch))
-        out[ch] = (canvas.crop(box), box[0], box[1], adv) if box else (None, 0, 0, adv)
-    return out, ascent, descent
+    return rasterize(path, size, CHARS)
 
 
 def pack(gl):
-    """A power-of-two-high atlas with 1px between glyphs."""
-    x = y = row_h = 0
-    places = {}
-    for ch, (im, *_rest) in gl.items():
-        if im is None:
-            places[ch] = (0, 0)
-            continue
-        if x + im.width + 1 > ATLAS_W:
-            x, y, row_h = 0, y + row_h + 1, 0
-        places[ch] = (x, y)
-        x += im.width + 1
-        row_h = max(row_h, im.height)
-    height = 1
-    while height < y + row_h + 1:
-        height *= 2
-    atlas = Image.new("RGBA", (ATLAS_W, height), (0, 0, 0, 0))
-    for ch, (im, *_rest) in gl.items():
-        if im is not None:
-            atlas.paste(Image.new("RGBA", im.size, (255, 255, 255, 255)), places[ch], im)
-    return atlas, places
+    return pack_glyphs(ATLAS_W, gl)
 
 
 def build_font(key, face, path, size):
@@ -81,30 +51,9 @@ def build_font(key, face, path, size):
     atlas, places = pack(gl)
     Path(OUT).mkdir(parents=True, exist_ok=True)
     atlas.save(f"{OUT}/{key}.png")
-    lines = [
-        '<?xml version="1.0"?>',
-        "<font>",
-        (
-            f'  <info face={quoteattr(face)} size="{size}" bold="0" italic="0" charset="" unicode="1" stretchH="100" '
-            'smooth="0" aa="0" padding="0,0,0,0" spacing="1,1"/>'
-        ),
-        (
-            f'  <common lineHeight="{ascent + descent + 1}" base="{ascent}" scaleW="{atlas.width}" '
-            f'scaleH="{atlas.height}" pages="1" packed="0"/>'
-        ),
-        f'  <pages><page id="0" file="{key}.png"/></pages>',
-        f'  <chars count="{len(gl)}">',
-    ]
-    for ch, (im, ox, oy, adv) in gl.items():
-        x, y = places[ch]
-        w, h = (im.width, im.height) if im is not None else (0, 0)
-        lines.append(
-            f'    <char id="{ord(ch)}" x="{x}" y="{y}" width="{w}" height="{h}" xoffset="{ox}" '
-            f'yoffset="{oy}" xadvance="{adv}" page="0" chnl="15"/>'
-        )
-    lines += ["  </chars>", "</font>", ""]
+    info = FontInfo(key, face, size, ascent + descent + 1, ascent)
     with Path(f"{OUT}/{key}.fnt").open("w") as f:
-        f.write("\n".join(lines))
+        f.write(bmfont_xml(info, atlas.size, places, gl))
 
 
 def build():

@@ -1,17 +1,20 @@
-"""Shared pixel-art tooling: the Endesga 32 palette and its ramps, a drawing grid with cel shading and
-coloured outlines, a contact-sheet preview, and the step that turns frames into an Aseprite source, a
-PNG + JSON export and a manifest entry. Run the art scripts from the repository root."""
+"""Game palettes and art export policy over art-kit mechanisms. Run art scripts from the repository root."""
 
 import importlib
 import json
 import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import zone_themes
-from PIL import Image
+from art_kit.aseprite import export as export_aseprite
+from art_kit.aseprite import lua as aseprite_lua
+from art_kit.colour import contrast as hex_contrast
+from art_kit.colour import rgb as hex_rgb
+from art_kit.frames import contact_sheet, tile_sheet
+from art_kit.frames import flipped as flip_frame
+from art_kit.grid import Grid as SharedGrid
 
 # Endesga 32, by role.
 K = {
@@ -100,8 +103,7 @@ def hexc(c):
 
 
 def rgb(c):
-    c = hexc(c)
-    return tuple(int(c[i : i + 2], 16) for i in (0, 2, 4))
+    return hex_rgb(hexc(c))
 
 
 def darker(c, steps=1):
@@ -113,95 +115,18 @@ def darker(c, steps=1):
 
 
 def contrast(a, b):
-    """WCAG contrast ratio of two colours."""
-
-    def lum(c):
-        v = [x / 255 for x in rgb(c)]
-        v = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in v]
-        return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]
-
-    la, lb = lum(a), lum(b)
-    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+    """WCAG contrast ratio of two local palette colours."""
+    return hex_contrast(hexc(a), hexc(b))
 
 
-class Grid:
-    """One frame. Draw fills, then outlined() adds a coloured outline."""
+class Grid(SharedGrid):
+    """Bind the game's palette and two-step outline without changing generator call sites."""
 
     def __init__(self, w=32, h=32):
-        self.w, self.h = w, h
-        self.px = [[None] * w for _ in range(h)]
-
-    def p(self, x, y, c):
-        x, y = int(x), int(y)
-        if 0 <= x < self.w and 0 <= y < self.h:
-            self.px[y][x] = hexc(c) if c else None
-
-    def rect(self, x, y, w, h, c):
-        for j in range(h):
-            for i in range(w):
-                self.p(x + i, y + j, c)
-
-    def line(self, x0, y0, x1, y1, c):
-        """A 1px line (Bresenham)."""
-        dx, dy = abs(x1 - x0), -abs(y1 - y0)
-        sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
-        err = dx + dy
-        while True:
-            self.p(x0, y0, c)
-            if (x0, y0) == (x1, y1):
-                return
-            e2 = 2 * err
-            if e2 >= dy:
-                err += dy
-                x0 += sx
-            if e2 <= dx:
-                err += dx
-                y0 += sy
-
-    def ell(self, cx, cy, rx, ry, c, sh=None, li=None):
-        """Filled ellipse, cel-shaded from a top-left light: sh on the lower-right rim, li on the upper-left."""
-        for y in range(self.h):
-            for x in range(self.w):
-                dx, dy = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
-                if dx * dx + dy * dy <= 1:
-                    d = 0.7 * (dx + dy)
-                    self.p(x, y, sh if sh and d > 0.5 else li if li and d < -0.72 else c)
-
-    def blob(self, cx, cy, rx, ry, c, sh=None, li=None, power=2.6):
-        """A squarer oval (superellipse): rounded, but fuller at the top and sides than ell."""
-        for y in range(self.h):
-            for x in range(self.w):
-                dx, dy = abs(x + 0.5 - cx) / rx, abs(y + 0.5 - cy) / ry
-                if dx**power + dy**power <= 1:
-                    d = 0.7 * ((x + 0.5 - cx) / rx + (y + 0.5 - cy) / ry)
-                    self.p(x, y, sh if sh and d > 0.5 else li if li and d < -0.72 else c)
-
-    def tri(self, a, b, c, col):
-        def side(px, py, x1, y1, x2, y2):
-            return (px - x2) * (y1 - y2) - (x1 - x2) * (py - y2)
-
-        for y in range(self.h):
-            for x in range(self.w):
-                px, py = x + 0.5, y + 0.5
-                d1, d2, d3 = side(px, py, *a, *b), side(px, py, *b, *c), side(px, py, *c, *a)
-                if not ((d1 < 0 or d2 < 0 or d3 < 0) and (d1 > 0 or d2 > 0 or d3 > 0)):
-                    self.p(x, y, col)
+        super().__init__(K, w, h, edge=lambda colour: darker(colour, 2))
 
     def outlined(self, edge=None):
-        """A copy with a coloured outline: each empty pixel touching the sprite takes edge(fill), by default
-        the fill two ramp steps darker."""
-        out = [row[:] for row in self.px]
-        for y in range(self.h):
-            for x in range(self.w):
-                if self.px[y][x]:
-                    continue
-                for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-                    xx, yy = x + dx, y + dy
-                    if 0 <= xx < self.w and 0 <= yy < self.h and self.px[yy][xx]:
-                        c = self.px[yy][xx]
-                        out[y][x] = edge(c) if edge else darker(c, 2)
-                        break
-        return out
+        return super().outlined(edge=edge)
 
 
 TILESETS = "public/art/tilesets"
@@ -221,10 +146,7 @@ def write_tileset(key, items, pieces=None, hitboxes=None, size=12, columns=8):
     the manifest entry."""
 
     Path(TILESETS).mkdir(parents=True, exist_ok=True)
-    rows = -(-len(items) // columns)
-    im = Image.new("RGBA", (columns * size, rows * size), (0, 0, 0, 0))
-    for i, (_, tile) in enumerate(items):
-        im.alpha_composite(tile, ((i % columns) * size, (i // columns) * size))
+    im = tile_sheet(size, columns, [tile for _, tile in items])
     im.save(f"{TILESETS}/{key}.png")
     index = {name: i for i, (name, _) in enumerate(items)}
     data = {
@@ -261,98 +183,17 @@ def update_manifest(section, entries):
 
 
 def flipped(frame):
-    """A frame mirrored left to right."""
-    return [row[::-1] for row in frame]
+    return flip_frame(frame)
 
 
 def preview(sprites, out, grounds=("5a6988", "e4a672", "ead4aa"), scale=3, gap=4):
     """Contact sheet: one row per sprite and ground colour, every frame in tag order."""
 
-    rows = []
-    for _, tags in sprites:
-        frames = [f for _, fs, _ in tags for f in fs]
-        rows.extend((frames, ground) for ground in grounds)
-    cell_w = max(len(f[0][0]) for f, _ in rows) + gap
-    cell_h = [len(f[0]) + gap for f, _ in rows]
-    width = max(len(f) for f, _ in rows) * cell_w * scale
-    img = Image.new("RGB", (width, sum(cell_h) * scale), rgb("ink"))
-    y0 = 0
-    for (frames, ground), ch in zip(rows, cell_h, strict=False):
-        for i, f in enumerate(frames):
-            for y, row in enumerate(f):
-                for x, c in enumerate(row):
-                    img.paste(
-                        rgb(c or ground),
-                        (
-                            (i * cell_w + x) * scale,
-                            (y0 + y) * scale,
-                            (i * cell_w + x + 1) * scale,
-                            (y0 + y + 1) * scale,
-                        ),
-                    )
-        y0 += ch
-    img.save(out)
-
-
-LUA = """
-local spr = Sprite({w}, {h}, ColorMode.RGB)
-local pal = Palette({ncolors})
-{palette}
-spr:setPalette(pal)
-local rgba = app.pixelColor.rgba
-local frames = {frames}
-local durations = {durations}
-for i, px in ipairs(frames) do
-  if i > 1 then spr:newFrame() end
-  local img = spr.layers[1]:cel(i).image
-  img:clear()
-  for _, p in ipairs(px) do img:drawPixel(p[1], p[2], rgba(p[3], p[4], p[5], 255)) end
-  spr.frames[i].duration = durations[i]
-end
-{tags}
-{slice}
-spr:saveAs("{out}")
-"""
+    contact_sheet(rgb, sprites, grounds, background=rgb("ink"), scale=scale, gap=gap).save(out)
 
 
 def _lua(tags, out, key, margins=None):
-    frames, durations, tag_lines, n = [], [], [], 0
-    h, w = len(tags[0][1][0]), len(tags[0][1][0][0])
-    for tag, fs, ms in tags:
-        tag_lines.append(f'do local t = spr:newTag({n + 1}, {n + len(fs)}); t.name = "{tag}" end')
-        # ms is the tag's frame duration, or a list with one duration per frame
-        for f, d in zip(fs, ms if isinstance(ms, (list, tuple)) else [ms] * len(fs), strict=False):
-            pts = []
-            for y, row in enumerate(f):
-                for x, c in enumerate(row):
-                    if c:
-                        r, g, b = rgb(c)
-                        pts.append(f"{{{x},{y},{r},{g},{b}}}")
-            frames.append("{" + ",".join(pts) + "}")
-            durations.append(str(d / 1000))
-        n += len(fs)
-    palette = "\n".join(
-        f"pal:setColor({i}, Color{{ r = {rgb(c)[0]}, g = {rgb(c)[1]}, b = {rgb(c)[2]} }})"
-        for i, c in enumerate(PALETTE)
-    )
-    slice_lines = ""
-    if margins:
-        left, top, right, bottom = margins
-        slice_lines = (
-            f'do local s = spr:newSlice(Rectangle(0, 0, {w}, {h})); s.name = "{key}"; '
-            f"s.center = Rectangle({left}, {top}, {w - left - right}, {h - top - bottom}) end"
-        )
-    return LUA.format(
-        w=w,
-        h=h,
-        ncolors=len(PALETTE),
-        palette=palette,
-        frames="{" + ",\n".join(frames) + "}",
-        durations="{" + ",".join(durations) + "}",
-        tags="\n".join(tag_lines),
-        slice=slice_lines,
-        out=out,
-    )
+    return aseprite_lua(PALETTE, tags, out, key=key, margins=margins)
 
 
 def build(sprites, src_dir, slices=None, once=None, hitboxes=None, contacts=()):
@@ -390,28 +231,15 @@ def build(sprites, src_dir, slices=None, once=None, hitboxes=None, contacts=()):
         raise FileNotFoundError("aseprite")
     for key, tags in sprites:
         src = f"{src_dir}/{key}.aseprite"
-        with tempfile.NamedTemporaryFile("w", suffix=".lua", delete=False) as f:
-            f.write(_lua(tags, src, key, slices.get(key)))
-        subprocess.run(  # noqa: S603 - Fixed executable; the Lua script is generated from local art.
-            [executable, "-b", "--script", f.name], check=True
-        )
-        Path(f.name).unlink()
-        subprocess.run(  # noqa: S603 - Fixed executable and export flags; local source/output paths.
-            [
-                executable,
-                "-b",
-                src,
-                "--sheet",
-                f"{SPRITES}/{key}.png",
-                "--data",
-                f"{SPRITES}/{key}.json",
-                "--format",
-                "json-hash",
-                "--list-tags",
-            ]
-            + (["--list-slices"] if key in slices else []),
-            check=True,
-            stdout=subprocess.DEVNULL,
+        export_aseprite(
+            executable,
+            PALETTE,
+            tags,
+            src,
+            f"{SPRITES}/{key}.png",
+            f"{SPRITES}/{key}.json",
+            key=key,
+            margins=slices.get(key),
         )
         built[key] = [t for t, _, _ in tags if t in once.get(key, ())]
     manifest = {}
