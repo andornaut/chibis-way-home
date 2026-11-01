@@ -32,9 +32,9 @@ export const BOUNDARY_START: Omit<ChunkPlan, "theme"> = {
   objects: [],
   slots: [{ area: { col: 18, cols: 4, row: 46, rows: 4 }, id: "loading-room", kind: "door" }],
   solids: [
-    { col: 0, cols: 36, look: "ground", row: 50, rows: 10 },
-    { col: 36, cols: 4, look: "raised", row: 47, rows: 13 },
-    { col: 40, cols: CHUNK_COLS - 40, look: "ground", row: 50, rows: 10 },
+    { col: 0, cols: 22, look: "ground", row: 50, rows: 10 },
+    { col: 22, cols: 4, look: "raised", row: 47, rows: 13 },
+    { col: 26, cols: CHUNK_COLS - 26, look: "ground", row: 50, rows: 10 },
   ],
 };
 
