@@ -44,16 +44,6 @@
       "opened": 3
     }
   },
-  "parcelFrontEdges": [
-    153,
-    151,
-    117,
-    159
-  ],
-  "layerOrder": [
-    "background",
-    "parcel",
-    "actors",
-    "parcel-front"
-  ]
+  "parcelFrontEdges": [153, 151, 117, 159],
+  "layerOrder": ["background", "parcel", "actors", "parcel-front"]
 }
