@@ -721,6 +721,65 @@ describe("bounded real-rule navigation", () => {
     expect(sawPrefix).toBe(true);
     expect(usedPrefixReplan).toBe(true);
   });
+  it("finishes a reverse flight onto lower ground before completing the forward route", () => {
+    const base = fixture([{ height: 180, width: 1200, x: 0, y: 420 }]);
+    const ledge = { ...movingObject("ledge", { x: 560, y: 240 }), motion: STATIC_MOTION };
+    const actor: ObjectLayout = {
+      ...movingObject("hazard", { x: 632, y: 0 }),
+      behaviour: {
+        axis: "x",
+        distance: 0,
+        initial: "wait",
+        states: { wait: { animation: "idle", motion: { kind: "wait" }, transitions: [] } },
+      },
+      height: 240,
+      motion: STATIC_MOTION,
+      width: 48,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 608, y: 240 } },
+          exitX: 1100,
+          height: 600,
+          objects: [ledge, actor],
+          width: 1200,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    let reverseLanding = false;
+    let first: ReturnType<typeof navigationSnapshot>;
+    for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      if (tick === 0) {
+        first = navigationSnapshot(bot);
+      }
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+      reverseLanding ||=
+        zone.bird.grounded && zone.bird.x < 560 && zone.bird.y + BIRD.height === 420;
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    expect(reverseLanding, JSON.stringify(first)).toBe(true);
+    const backward = first!.candidates.find(
+      (candidate) => candidate.inputLabel === "backward-full",
+    )!;
+    expect(backward.rejection).toBeNull();
+    expect(backward.forwardProgress).toBeLessThan(0);
+    expect(backward.predictedEndpoint.grounded).toBe(true);
+    expect(backward.physicsSteps).toBeGreaterThan(NAVIGATION_VALIDATION.horizonTicks);
+    expect(backward.physicsSteps).toBeLessThanOrEqual(NAVIGATION_VALIDATION.horizonTicks * 2);
+  });
   it("requires explicit validation profile for larger work while preserving every other hard cap", () => {
     expect(validateNavigation()).toEqual(NAVIGATION_DEFAULTS);
     expect(() =>

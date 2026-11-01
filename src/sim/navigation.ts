@@ -778,7 +778,8 @@ export function plannedInput(
           limits.profile === "validation" && threatened && predicted.bird.grounded;
         if (
           !groundedContinuation &&
-          (predicted.bird.grounded || direction * (predicted.bird.x - zone.bird.x) <= 0)
+          (predicted.bird.grounded ||
+            (candidate.travel ?? direction) * (predicted.bird.x - zone.bird.x) <= 0)
         ) {
           break;
         }
