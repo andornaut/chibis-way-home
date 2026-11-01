@@ -1,4 +1,4 @@
-import type { Point, Size } from "../data/types";
+import type { ObjectLayout, Point, Size } from "../data/types";
 import type { ArtManifest } from "./aseprite";
 import { drawsFrom, type Tileset } from "./tiles";
 
@@ -7,11 +7,30 @@ import { drawsFrom, type Tileset } from "./tiles";
 // art named placeholder-* or art the game does not have.
 export type ArtKind = "backdrop" | "placeholder" | "repeated-backdrop" | "sprite" | "tiles";
 
-// Only backdrop art may scroll at a different speed from its placement in the world.
+// Ordinary sprites stay at world speed; validated scenery sprites use sceneryParallax.
 export function artScrollFactor(kind: ArtKind, parallax?: Point): Point {
   const factors = parallax ?? { x: 1, y: 1 };
   if ((factors.x !== 1 || factors.y !== 1) && kind !== "backdrop" && kind !== "repeated-backdrop") {
     throw new Error(`Parallax requires backdrop art, not ${kind}`);
+  }
+  return factors;
+}
+
+// Static noninteractive sprites may animate in the background without becoming physical actors.
+export function sceneryParallax(object: ObjectLayout): Point | undefined {
+  const factors = object.parallax;
+  if (
+    !factors ||
+    (factors.x === 1 && factors.y === 1) ||
+    object.contact !== undefined ||
+    object.collision !== "none" ||
+    object.interaction.kind !== "none" ||
+    object.reaction.kind !== "none" ||
+    object.motion.algorithm !== "static" ||
+    (object.behaviour &&
+      Object.values(object.behaviour.states).some((state) => state.motion.kind !== "wait"))
+  ) {
+    return undefined;
   }
   return factors;
 }

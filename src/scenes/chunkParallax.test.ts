@@ -29,6 +29,7 @@ it("updates paused preview backdrops after camera changes and removes the render
     events: new EventEmitter(),
     preview: {},
     renderBackdrops: methods.renderBackdrops,
+    scenerySprites: [],
   };
   ZoneScene.prototype.create.call(scene as unknown as ZoneScene);
   scene.events.emit("prerender");

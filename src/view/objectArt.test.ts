@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import type { ObjectLayout } from "../data/types";
 import type { ArtManifest } from "./aseprite";
-import { type ArtKind, artKind, artScrollFactor } from "./objectArt";
+import { type ArtKind, artKind, artScrollFactor, sceneryParallax } from "./objectArt";
 import type { Tileset } from "./tiles";
 
 const MANIFEST = {
@@ -50,4 +51,45 @@ describe("artScrollFactor", () => {
       expect(() => artScrollFactor(kind, { x: 0, y: 1 })).toThrow("requires backdrop art");
     },
   );
+});
+
+describe("scenery sprite eligibility", () => {
+  const object = {
+    collision: "none",
+    interaction: { kind: "none" },
+    motion: { algorithm: "static" },
+    parallax: { x: 0.4, y: 0.15 },
+    reaction: { kind: "none" },
+  } as ObjectLayout;
+
+  it("accepts static animation and wait-only animation graphs behind the world", () => {
+    expect(sceneryParallax(object)).toEqual(object.parallax);
+    const behaviour: NonNullable<ObjectLayout["behaviour"]> = {
+      axis: "x",
+      distance: 0,
+      initial: "grazing",
+      states: { grazing: { animation: "graze", motion: { kind: "wait" }, transitions: [] } },
+    };
+    expect(sceneryParallax({ ...object, behaviour })).toEqual(object.parallax);
+  });
+
+  it.each([
+    { collision: "hazard" },
+    { interaction: { kind: "talk" } },
+    { motion: { algorithm: "linear" } },
+    { reaction: { kind: "approach" } },
+    { contact: {} },
+    { behaviour: { states: { moving: { motion: { kind: "move" } } } } },
+  ])("retains sprite parallax rejection for physical or interactive state %j", (change) => {
+    const invalid = { ...object, ...change } as ObjectLayout;
+    expect(sceneryParallax(invalid)).toBeUndefined();
+    expect(() => artScrollFactor("sprite", invalid.parallax)).toThrow("requires backdrop art");
+  });
+
+  it("keeps ordinary world sprites on their existing rendering path", () => {
+    const ordinary = { ...object };
+    delete ordinary.parallax;
+    expect(sceneryParallax(ordinary)).toBeUndefined();
+    expect(sceneryParallax({ ...object, parallax: { x: 1, y: 1 } })).toBeUndefined();
+  });
 });

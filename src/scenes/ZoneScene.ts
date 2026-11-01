@@ -125,8 +125,15 @@ import {
 import { doorPhase } from "../view/doorOpen";
 import { forceVisualPosition } from "../view/forceVisual";
 import { moveHintView } from "../view/moveHint";
-import { type ArtKind, artKind, artOffset, artScrollFactor } from "../view/objectArt";
+import {
+  type ArtKind,
+  artKind,
+  artOffset,
+  artScrollFactor,
+  sceneryParallax,
+} from "../view/objectArt";
 import { type PlayHold, stepAction } from "../view/playHold";
+import { scenerySpriteFrame } from "../view/scenerySprite";
 import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
@@ -201,6 +208,7 @@ const OVERLAY_DEPTH = 2;
 interface ObjectArt {
   readonly item: GameObjects.Components.Transform & GameObjects.GameObject;
   readonly offset: Point;
+  readonly scenery?: boolean;
   // When its next quirk plays, and the draws that time it.
   readonly quirk?: { at: number; readonly random: Random };
   readonly sprite: GameObjects.Sprite | undefined;
@@ -280,6 +288,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     readonly item: GameObjects.TileSprite;
     readonly parallax: Point;
   }[] = [];
+  private readonly scenerySprites: {
+    readonly coverage: { readonly width: number; readonly x: number };
+    readonly frame: Rect;
+    readonly item: GameObjects.Sprite;
+    readonly parallax: Point;
+  }[] = [];
   private readonly pulseArt = new Map<number, GameObjects.Sprite>();
   private readonly transientArt = new Map<number, ObjectArt>();
   private terrainMap: Tilemaps.Tilemap | undefined;
@@ -312,6 +326,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objectArt = [];
     this.chunkBackdrops.length = 0;
+    this.scenerySprites.length = 0;
     this.transientArt.clear();
     this.pulseArt.clear();
     this.heldKeys.clear();
@@ -341,6 +356,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.events.once("shutdown", () => {
       this.events.off(Scenes.Events.PRE_RENDER, renderBackdrops);
       this.chunkBackdrops.length = 0;
+      this.scenerySprites.length = 0;
     });
     if (this.preview || this.backdrop) {
       this.loading = false;
@@ -1158,6 +1174,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
     }
     this.chunkBackdrops.length = 0;
+    this.scenerySprites.length = 0;
     for (const { item } of this.objectArt) {
       item.destroy();
     }
@@ -1206,7 +1223,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     index: number,
   ): ObjectArt {
     const kind = artKind(this.manifest, tileset, object.art);
-    const parallax = artScrollFactor(kind, object.parallax);
+    const scenery = kind === "sprite" ? sceneryParallax(object) : undefined;
+    const parallax = scenery ?? artScrollFactor(kind, object.parallax);
     const rect = { height: object.height, width: object.width };
     switch (kind) {
       case "tiles": {
@@ -1248,10 +1266,32 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         return { item, offset, sprite: undefined };
       }
       case "sprite": {
-        const sprite = this.add.sprite(0, 0, object.art).setOrigin(0).setDepth(DEPTHS.sprite);
+        const sprite = this.add
+          .sprite(0, 0, object.art)
+          .setOrigin(0)
+          .setDepth(scenery ? DEPTHS.backdrop : DEPTHS.sprite);
         const tag = object.animations.idle ?? [...this.sheet(object.art).keys()][0];
         if (tag !== undefined) {
           show(sprite, tag);
+        }
+        const offset = artOffset(kind, rect, sprite.frame);
+        if (scenery) {
+          const area = areaOf(this.layout, this.zone.area);
+          const coverage = area.chunks.find(
+            ({ width, x }) => object.origin.x >= x && object.origin.x < x + width,
+          ) ?? { width: area.width, x: 0 };
+          sprite.setScrollFactor(1, 1);
+          this.scenerySprites.push({
+            coverage,
+            frame: {
+              height: sprite.height,
+              width: sprite.width,
+              x: object.origin.x + offset.x,
+              y: object.origin.y + offset.y,
+            },
+            item: sprite,
+            parallax: scenery,
+          });
         }
         const [quirk] = object.quirks;
         const random = randomStream(
@@ -1260,7 +1300,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         );
         return {
           item: sprite,
-          offset: artOffset(kind, rect, sprite.frame),
+          offset,
+          ...(scenery && { scenery: true }),
           ...(quirk && { quirk: { at: nextQuirkAt(random, quirk, 0), random } }),
           sprite,
         };
@@ -1283,6 +1324,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       const { position, textureX } = chunkParallax({ parallax, scroll }, bounds);
       item.setPosition(position.x, position.y).setTilePosition(textureX, 0);
     }
+    for (const { coverage, frame, item, parallax } of this.scenerySprites) {
+      const { crop, position, visible } = scenerySpriteFrame({ coverage, parallax, scroll }, frame);
+      item.setPosition(position.x, position.y).setVisible(visible);
+      if (visible) {
+        item.setCrop(crop.x, crop.y, crop.width, crop.height);
+      }
+    }
   }
 
   // Each object where the rules put it, in whole pixels. A character's sprite faces the way it
@@ -1299,7 +1347,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       const x = Math.round(at.x + art.offset.x);
       const y = Math.round(at.y + art.offset.y);
-      const moved = x !== art.item.x || y !== art.item.y;
+      const moved = !art.scenery && (x !== art.item.x || y !== art.item.y);
       const behaviour = this.zone.behaviours[index];
       if (behaviour) {
         if (art.sprite) {
@@ -1322,7 +1370,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           }
         }
       } else if (art.sprite && index !== this.opening?.index) {
-        if (x !== art.item.x) {
+        if (!art.scenery && x !== art.item.x) {
           art.sprite.setFlipX(x < art.item.x);
         }
         const mine = { x: at.x + object.width / 2, y: at.y + object.height / 2 };
