@@ -100,6 +100,13 @@ export interface BirdTuning {
 // How the camera follows her. groundSpot is the fraction of screen height from the top at
 // which her feet rest on the ground. seamEase is the fraction of screen width over which the
 // ground line blends between chunks, centred on the seam.
+export interface ControlRefusalTuning {
+  readonly flashMs: number;
+  readonly flashes: number;
+  readonly shake: number;
+  readonly shakeMs: number;
+}
+
 export interface ContactCueTuning {
   readonly borderWidth: number;
   readonly durationMs: number;
