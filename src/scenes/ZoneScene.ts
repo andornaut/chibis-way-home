@@ -37,6 +37,7 @@ import type {
   Collision,
   ObjectLayout,
   Point,
+  Rect,
   SpriteSilhouettes,
   ZoneLayout,
   ZonePlan,
@@ -112,6 +113,7 @@ import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprit
 import { behaviourPose } from "../view/behaviour";
 import { BIRD_FRAME, birdFrameAt, type BirdPose, startPose, stepPose } from "../view/bird";
 import { characterState, nextQuirkAt } from "../view/character";
+import { chunkBackdropSpan, chunkParallax } from "../view/chunkParallax";
 import {
   deathFrameIndex,
   deathLabels,
@@ -273,6 +275,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private dialogueArea = "";
   private readonly heardDialogues = new Map<string, Set<number>>();
   private objectArt: ObjectArt[] = [];
+  private readonly chunkBackdrops: {
+    readonly bounds: Rect;
+    readonly item: GameObjects.TileSprite;
+    readonly parallax: Point;
+  }[] = [];
   private readonly pulseArt = new Map<number, GameObjects.Sprite>();
   private readonly transientArt = new Map<number, ObjectArt>();
   private terrainMap: Tilemaps.Tilemap | undefined;
@@ -304,6 +311,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.trial = askedRecipe(search, Object.keys(RECIPES));
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objectArt = [];
+    this.chunkBackdrops.length = 0;
     this.transientArt.clear();
     this.pulseArt.clear();
     this.heldKeys.clear();
@@ -328,6 +336,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   create(): void {
+    const renderBackdrops = () => this.renderBackdrops();
+    this.events.on(Scenes.Events.PRE_RENDER, renderBackdrops);
+    this.events.once("shutdown", () => {
+      this.events.off(Scenes.Events.PRE_RENDER, renderBackdrops);
+      this.chunkBackdrops.length = 0;
+    });
     if (this.preview || this.backdrop) {
       this.loading = false;
       this.createReady();
@@ -1143,6 +1157,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         flat.fillRect(rect.x, rect.y, rect.width, rect.height);
       }
     }
+    this.chunkBackdrops.length = 0;
     for (const { item } of this.objectArt) {
       item.destroy();
     }
@@ -1216,16 +1231,21 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       case "repeated-backdrop": {
         const height = this.textures.getFrame(object.art).height;
+        const span = chunkBackdropSpan(areaOf(this.layout, this.zone.area), object);
+        const offset = artOffset(kind, rect, { height, width: rect.width });
         const item = this.add
           .tileSprite(0, 0, rect.width, height, object.art)
           .setOrigin(0)
-          .setScrollFactor(parallax.x, parallax.y)
+          .setScrollFactor(span ? 1 : parallax.x, span ? 1 : parallax.y)
           .setDepth(DEPTHS["repeated-backdrop"]);
-        return {
-          item,
-          offset: artOffset(kind, rect, { height, width: rect.width }),
-          sprite: undefined,
-        };
+        if (span) {
+          this.chunkBackdrops.push({
+            bounds: { height, width: span.width, x: span.x, y: object.origin.y + offset.y },
+            item,
+            parallax,
+          });
+        }
+        return { item, offset, sprite: undefined };
       }
       case "sprite": {
         const sprite = this.add.sprite(0, 0, object.art).setOrigin(0).setDepth(DEPTHS.sprite);
@@ -1252,6 +1272,16 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           .setDepth(DEPTHS.placeholder);
         return { item, offset: { x: 0, y: 0 }, sprite: undefined };
       }
+    }
+  }
+
+  // Camera changes also reach paused previews and death captures before their next render.
+  private renderBackdrops(): void {
+    const camera = this.cameras.main;
+    const scroll = { x: camera.scrollX, y: camera.scrollY };
+    for (const { bounds, item, parallax } of this.chunkBackdrops) {
+      const { position, textureX } = chunkParallax({ parallax, scroll }, bounds);
+      item.setPosition(position.x, position.y).setTilePosition(textureX, 0);
     }
   }
 
