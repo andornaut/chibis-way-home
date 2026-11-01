@@ -424,6 +424,101 @@ describe("bounded real-rule navigation", () => {
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared, JSON.stringify(navigationSnapshot(result.bot))).toBe(true);
   });
+  it("executes a validated finite wait through stationary rechecks before jumping and clearing", () => {
+    const base = fixture([
+      { height: 180, width: 144, x: 0, y: 240 },
+      { height: 180, width: 200, x: 336, y: 240 },
+    ]);
+    const hazard = {
+      ...movingObject("hazard", { x: 144, y: 357 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 192,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 143, y: 240 } },
+          exitX: 480,
+          height: 420,
+          objects: [hazard],
+          width: 536,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    const inputs = [];
+    for (let tick = 0; tick < 360 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      if (tick === 0) {
+        expect(navigationSnapshot(bot)!.chosenAction).toBe("wait-then-full");
+      }
+      inputs.push(input);
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(inputs.slice(0, 24).every((input) => input.move === 0 && !input.jumpHeld)).toBe(true);
+    expect(inputs[24]!.jumpHeld).toBe(true);
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+  });
+  it("holds a full jump against a flush wall and brakes by position on its narrow safe top", () => {
+    const base = fixture([
+      { height: 180, width: 144, x: 0, y: 240 },
+      { height: 228, width: 48, x: 144, y: 192 },
+    ]);
+    const hazard = {
+      ...movingObject("hazard", { x: 192, y: 300 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 368,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 132, y: 240 } },
+          exitX: 520,
+          height: 420,
+          objects: [hazard],
+          width: 560,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    let landed = false;
+    for (let tick = 0; tick < 180 && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, undefined, 1, zone, bot);
+      if (tick === 0) {
+        expect(navigationSnapshot(bot)!.chosenAction).toBe("brake-full");
+      }
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+      if (zone.bird.grounded && zone.bird.y + BIRD.height === 192) {
+        landed = true;
+        break;
+      }
+    }
+    expect(zone.death).toBeUndefined();
+    expect(landed, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    expect(zone.bird.x).toBeGreaterThanOrEqual(144);
+    expect(zone.bird.x + BIRD.width).toBeLessThanOrEqual(192);
+  });
   it("extends only validation airborne predictions through a bounded safe descent", () => {
     const base = fixture([
       { height: 420, width: 144, x: 0, y: 120 },

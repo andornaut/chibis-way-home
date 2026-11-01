@@ -278,7 +278,7 @@ function snapshot(
 }
 function inputLabel(candidate: Candidate): string {
   if (candidate.stopAt !== undefined) {
-    return "approach";
+    return candidate.hold === 0 ? "approach" : "brake-full";
   }
   if (candidate.back > 0) {
     return "back-then-full";
@@ -291,9 +291,6 @@ function inputLabel(candidate: Candidate): string {
   }
   if (candidate.stationary > 0) {
     return "stationary-then-full";
-  }
-  if (candidate.brakeAfter !== undefined) {
-    return candidate.hold === 0 ? "approach" : "brake-full";
   }
   return candidate.hold === 0 ? "walk" : candidate.hold === 1 ? "tap" : "full";
 }
@@ -398,8 +395,7 @@ function approachEdge(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1,
   return support ? support.x + (direction === 1 ? support.width : 0) - tuning.width / 2 : undefined;
 }
 interface Candidate {
-  readonly stopAt?: number;
-  readonly brakeAfter?: number;
+  readonly stopAt?: number | undefined;
   readonly back: number;
   readonly delay: number;
   readonly hold: number;
@@ -412,14 +408,6 @@ function action(
   tick: number,
   zone: ZoneState,
 ): ZoneInput {
-  if (candidate.stopAt !== undefined) {
-    const remaining = direction * (candidate.stopAt - zone.bird.x);
-    const braking =
-      (zone.bird.vx * zone.bird.vx) / (2 * tuning.groundAccel) +
-      Math.abs(zone.bird.vx) * STEP_SECONDS +
-      2;
-    return { ...IDLE, move: remaining > braking ? direction : 0 };
-  }
   if (tick < candidate.back) {
     return { ...IDLE, move: direction === 1 ? -1 : 1 };
   }
@@ -427,12 +415,20 @@ function action(
   if (active < 0) {
     return IDLE;
   }
+  if (candidate.stopAt !== undefined) {
+    const remaining = direction * (candidate.stopAt - zone.bird.x);
+    const accel = zone.bird.grounded ? tuning.groundAccel : tuning.airAccel;
+    const braking =
+      (zone.bird.vx * zone.bird.vx) / (2 * accel) + Math.abs(zone.bird.vx) * STEP_SECONDS + 2;
+    return {
+      jumpHeld: active < candidate.hold,
+      move: remaining > braking ? direction : 0,
+      useHeld: false,
+    };
+  }
   return {
     jumpHeld: active < candidate.hold,
-    move:
-      active < candidate.stationary || active >= (candidate.brakeAfter ?? Number.MAX_SAFE_INTEGER)
-        ? 0
-        : direction,
+    move: active < candidate.stationary ? 0 : direction,
     useHeld: false,
   };
 }
@@ -518,7 +514,11 @@ export function plannedInput(
         navigation.continuation.elapsed++;
       }
       const input = navigation.queue.shift()!;
-      if (navigation.stalledTicks >= limits.replanTicks && cache.index % limits.replanTicks === 0) {
+      if (
+        navigation.stalledTicks >= limits.replanTicks &&
+        cache.index % limits.replanTicks === 0 &&
+        (navigation.diagnostic?.predictedProgress ?? 0) <= 0
+      ) {
         navigation.queue = [];
         navigation.continuation = undefined;
       }
@@ -549,24 +549,13 @@ export function plannedInput(
     { back: 0, delay: 0, hold: 0, stationary: Number.MAX_SAFE_INTEGER },
     {
       back: 0,
-      brakeAfter:
-        navigation.waypoint?.width === undefined
-          ? Number.MAX_SAFE_INTEGER
-          : Math.max(
-              1,
-              Math.round(
-                Math.abs(
-                  navigation.waypoint.x +
-                    (navigation.waypoint.width - tuning.width) / 2 -
-                    zone.bird.x,
-                ) /
-                  tuning.walkSpeed /
-                  STEP_SECONDS,
-              ),
-            ),
       delay: 0,
       hold: full,
       stationary: 0,
+      stopAt:
+        navigation.waypoint?.width === undefined
+          ? undefined
+          : navigation.waypoint.x + (navigation.waypoint.width - tuning.width) / 2,
     },
     { back: 0, delay: 24, hold: full, stationary: 0 },
     { back: 18, delay: 0, hold: full, stationary: 0 },
