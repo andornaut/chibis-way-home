@@ -1995,6 +1995,24 @@
       "png": "images/stage-preview-zone-6-stage-3.png",
       "width": 168,
       "height": 84
+    },
+    {
+      "key": "stage-preview-zone-6-stage-4",
+      "png": "images/stage-preview-zone-6-stage-4.png",
+      "width": 168,
+      "height": 84
+    },
+    {
+      "key": "stage-preview-zone-6-stage-5",
+      "png": "images/stage-preview-zone-6-stage-5.png",
+      "width": 168,
+      "height": 84
+    },
+    {
+      "key": "stage-preview-zone-6-stage-6",
+      "png": "images/stage-preview-zone-6-stage-6.png",
+      "width": 168,
+      "height": 84
     }
   ]
 }
