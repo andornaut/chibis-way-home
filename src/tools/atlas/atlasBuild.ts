@@ -62,8 +62,13 @@ function spriteFrames({ frames }: AsepriteExport): AtlasFrame[] {
   }));
 }
 
+export interface AtlasBuildDependencies {
+  readonly encode: (image: RgbaImage) => Uint8Array | Promise<Uint8Array>;
+  readonly readArt: (path: string) => Promise<Uint8Array>;
+}
+
 export interface AtlasBuild {
-  readonly pages: readonly RgbaImage[];
+  readonly pages: readonly { readonly bytes: Uint8Array; readonly image: RgbaImage }[];
   // Each key's frames at their rects on its page.
   readonly textures: readonly AtlasTexture[];
 }
@@ -73,7 +78,7 @@ export interface AtlasBuild {
 // images are left off: the site's pages show them as plain files. A frame keeps its rect in its
 // PNG, moved to where the PNG sits on its page.
 export async function buildAtlas(
-  readArt: (path: string) => Promise<Uint8Array>,
+  { encode, readArt }: AtlasBuildDependencies,
   manifest: ArtManifest,
 ): Promise<AtlasBuild> {
   const readJson = async (path: string): Promise<unknown> =>
@@ -117,5 +122,8 @@ export async function buildAtlas(
       ? { frames, key, page }
       : { frames, key, page, tags: source.tags };
   });
-  return { pages, textures };
+  return {
+    pages: await Promise.all(pages.map(async (image) => ({ bytes: await encode(image), image }))),
+    textures,
+  };
 }

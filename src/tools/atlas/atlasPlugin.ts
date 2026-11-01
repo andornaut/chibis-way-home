@@ -35,17 +35,14 @@ export function atlasPlugin(): Plugin & { api: AtlasPluginApi } {
       const art = JSON.parse(
         new TextDecoder().decode(await readArt(ART_MANIFEST_FILE)),
       ) as ArtManifest;
-      const { pages, textures } = await buildAtlas(readArt, art);
+      const { pages, textures } = await buildAtlas({ encode: encodeLosslessWebp, readArt }, art);
       manifest = {
-        pages: await Promise.all(
-          pages.map(async (image, page) => {
-            const source = await encodeLosslessWebp(image);
-            const fileName = atlasPageFileName(page, "webp", source);
-            this.emitFile({ fileName, source, type: "asset" });
-            logger.info(`atlas: ${fileName} ${image.width}x${image.height}, ${source.length} B`);
-            return { height: image.height, url: `/${fileName}`, width: image.width };
-          }),
-        ),
+        pages: pages.map(({ bytes: source, image }, page) => {
+          const fileName = atlasPageFileName(page, "webp", source);
+          this.emitFile({ fileName, source, type: "asset" });
+          logger.info(`atlas: ${fileName} ${image.width}x${image.height}, ${source.length} B`);
+          return { height: image.height, url: `/${fileName}`, width: image.width };
+        }),
         textures,
       };
     },
