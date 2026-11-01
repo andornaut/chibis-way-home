@@ -360,4 +360,104 @@ describe("persistent pursuit", () => {
       }
     },
   );
+  it("does not complete an initial escaped flying state in unsupported air", () => {
+    const object = actor(plan("fly"));
+    const at = { x: 300, y: 100 };
+    const state: BehaviourState = {
+      ...startBehaviour(BIRD, object, bird(3000)),
+      pendingEntry: false,
+      pursuit: { phase: "escaped", settled: false, unreachableSeconds: 0 },
+    };
+    const moving = advance(object, bird(3000), 0.25, at, state);
+    expect(moving.at).toEqual({ x: 300, y: 125 });
+    expect(moving.state.pursuit?.settled).toBe(false);
+  });
+  it("physically lands an escaped flyer before completing near-stop settlement", () => {
+    const object = actor(plan("fly"));
+    const at = { x: 300, y: 100 };
+    const state: BehaviourState = {
+      ...startBehaviour(BIRD, object, bird(3000)),
+      pendingEntry: false,
+      pursuit: { phase: "escaped", settled: false, unreachableSeconds: 0 },
+      stateKey: "chase",
+    };
+    const moving = advance(object, bird(3000), 0.25, at, state);
+    expect(moving.at).toEqual({ x: 300, y: 125 });
+    expect(moving.state.pursuit?.settled).toBe(false);
+    const landed = advance(object, bird(3000), 2, moving.at, moving.state);
+    expect(landed.at).toEqual({ x: 300, y: 280 });
+    expect(landed.state.anchor).toEqual(landed.at);
+    expect(landed.state.pursuit?.settled).toBe(true);
+    expect(landed.at.y + object.height).toBe(floor.y);
+    expect(object.origin).toEqual({ x: 100, y: 280 });
+  });
+  it.each([
+    { label: "absent support", solids: [] },
+    { label: "blocked support", solids: [{ height: 40, width: 600, x: 0, y: 50 }] },
+  ])("keeps an unavailable landing incomplete: $label", ({ solids }) => {
+    const object = actor(plan("fly"));
+    const at = { x: 300, y: 100 };
+    const state: BehaviourState = {
+      ...startBehaviour(BIRD, object, bird(3000)),
+      pendingEntry: false,
+      pursuit: { phase: "escaped", settled: false, unreachableSeconds: 0 },
+      stateKey: "chase",
+    };
+    const result = advance(object, bird(3000), 1, at, state, { solids });
+    expect(result.at).toEqual(at);
+    expect(result.state.pursuit?.settled).toBe(false);
+    expect(result.actions).toEqual([]);
+    const available = advance(object, bird(3000), 2, result.at, result.state);
+    expect(available.state.pursuit?.settled).toBe(true);
+  });
+  it("revalidates a moving perch and excludes its own object identity", () => {
+    const object = actor(plan("fly"));
+    const at = { x: 300, y: 100 };
+    const state: BehaviourState = {
+      ...startBehaviour(BIRD, object, bird(3000)),
+      pendingEntry: false,
+      pursuit: { phase: "escaped", settled: false, unreachableSeconds: 0 },
+      stateKey: "chase",
+    };
+    const self = {
+      collision: "ledge" as const,
+      owner: object,
+      rect: { height: 20, width: 100, x: 300, y: 200 },
+    };
+    const own = advance(object, bird(3000), 1, at, state, { platforms: [self], solids: [] });
+    expect(own.at).toEqual(at);
+    expect(own.state.pursuit?.settled).toBe(false);
+    const perch = { ...self, owner: { ...object, character: "perch" } };
+    const first = advance(object, bird(3000), 0.25, at, state, { platforms: [perch], solids: [] });
+    expect(first.at.y).toBe(125);
+    const moved = { ...perch, rect: { ...perch.rect, x: 700 } };
+    const second = advance(object, bird(3000), 0.25, first.at, first.state, {
+      platforms: [moved],
+      solids: [],
+    });
+    expect(second.state.pursuit?.settled).toBe(false);
+    const landed = advance(object, bird(3000), 10, second.at, second.state, {
+      platforms: [moved],
+      solids: [],
+    });
+    expect(landed.at).toEqual({ x: 700, y: 180 });
+    expect(landed.state.pursuit?.settled).toBe(true);
+  });
+  it("selects real support clear of red contact rectangles", () => {
+    const object = actor(plan("fly"));
+    const at = { x: 300, y: 100 };
+    const state: BehaviourState = {
+      ...startBehaviour(BIRD, object, bird(3000)),
+      pendingEntry: false,
+      pursuit: { phase: "escaped", settled: false, unreachableSeconds: 0 },
+      stateKey: "chase",
+    };
+    const hazard = {
+      owner: { ...object, character: "red-strip" },
+      rect: { height: 3, width: 50, x: 290, y: 297 },
+    };
+    const landed = advance(object, bird(3000), 3, at, state, { ...world, hazards: [hazard] });
+    expect(landed.at).toEqual({ x: 270, y: 280 });
+    expect(landed.state.pursuit?.settled).toBe(true);
+  });
 });

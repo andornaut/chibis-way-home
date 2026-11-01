@@ -31,7 +31,7 @@ import {
   startBird,
   stepBird,
 } from "./bird";
-import { contactFrameAt, silhouetteContact } from "./bodyContact";
+import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import { deathSupport } from "./death";
 import { type ForcePulse, forcePulseVelocity } from "./force";
@@ -465,7 +465,20 @@ export function stepZone(
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
   const kinds = areaObjects(area);
-  const baseGeometry = behaviourGeometry(area, zone);
+  const baseGeometry = {
+    ...behaviourGeometry(area, zone),
+    hazards: kinds.hazards.map((index) => {
+      const object = area.objects[index]!;
+      const at = zone.objects[index] ?? object.origin;
+      const state = zone.behaviours[index];
+      return {
+        owner: object,
+        rect: object.contact
+          ? { ...spriteFrameOrigin(object.contact.frame, object, at), ...object.contact.frame }
+          : contactBox(object, at, state?.facing ?? 1, state?.axis),
+      };
+    }),
+  };
   const geometry = kinds.perception
     ? { ...baseGeometry, view: currentScreen(tuning, area, zone.bird) }
     : baseGeometry;

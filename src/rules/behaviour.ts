@@ -14,12 +14,14 @@ import {
   type BehaviourTrack,
   type BehaviourWorld,
   behaviourWorld,
+  flightAxis,
   groundPursuitEnd,
   targetReachable,
 } from "./behaviourReach";
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
+import { flyLandingRoute, supportedLanding } from "./flyLanding";
 import { hopLift } from "./motion";
 import { targetVisible } from "./perception";
 
@@ -576,44 +578,6 @@ function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: n
   return to;
 }
 
-// Axis-separated swept clipping prevents flight from crossing solid cover.
-function flightAxis(
-  object: ObjectLayout,
-  world: BehaviourWorld,
-  at: Point,
-  axis: "x" | "y",
-  desired: number,
-): number {
-  let to = desired;
-  const across = axis === "x" ? "y" : "x";
-  const depth = axis === "x" ? "height" : "width";
-  const length = axis === "x" ? "width" : "height";
-  const body = { ...at, height: object.height, width: object.width };
-  const sweep = {
-    ...body,
-    [axis]: Math.min(at[axis], desired) - EDGE,
-    [length]: object[length] + Math.abs(desired - at[axis]) + 2 * EDGE,
-  };
-  const solids = [
-    ...collisionCandidates(world.solids, sweep),
-    ...(world.platforms ?? [])
-      .filter((platform) => platform.owner !== object && platform.collision === "solid")
-      .map((platform) => platform.rect),
-  ];
-  for (const solid of solids) {
-    if (at[across] >= solid[across] + solid[depth] || at[across] + object[depth] <= solid[across]) {
-      continue;
-    }
-    if (desired > at[axis] && at[axis] + object[length] <= solid[axis] + EDGE) {
-      to = Math.min(to, solid[axis] - object[length]);
-    }
-    if (desired < at[axis] && at[axis] >= solid[axis] + solid[length] - EDGE) {
-      to = Math.max(to, solid[axis] + solid[length]);
-    }
-  }
-  return to;
-}
-
 function pursuitTrack(object: ObjectLayout): BehaviourTrack {
   const distance = object.behaviour!.pursuit!.distance;
   return {
@@ -756,14 +720,32 @@ export function stepBehaviour(
     state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped"
       ? plan.pursuit?.escaped
       : undefined;
+  const flyGateway = Object.entries(plan.states).find(
+    ([, node]) => node.motion.kind === "pursue" && node.motion.mode === "fly",
+  )?.[0];
   let time = 0;
   while (true) {
     let node = nodeOf(object, next.stateKey);
     if (
       next.pursuit?.phase === "escaped" &&
       !next.pursuit.settled &&
+      next.stateKey === plan.initial &&
+      node.motion.kind === "wait" &&
+      flyGateway &&
+      !next.hop &&
+      !supportedLanding(object, world, current)
+    ) {
+      next = enterState(tuning, object, bird, current, flyGateway, next);
+      node = nodeOf(object, next.stateKey);
+    }
+    if (
+      next.pursuit?.phase === "escaped" &&
+      !next.pursuit.settled &&
       (node.motion.kind === "pursue" || next.stateKey === plan.initial) &&
-      !next.hop
+      !next.hop &&
+      (node.motion.kind !== "pursue" ||
+        node.motion.mode !== "fly" ||
+        supportedLanding(object, world, current))
     ) {
       next = enterState(tuning, object, bird, current, plan.initial, {
         ...next,
@@ -772,6 +754,11 @@ export function stepBehaviour(
       });
       node = nodeOf(object, next.stateKey);
     }
+    const settling =
+      next.pursuit?.phase === "escaped" &&
+      !next.pursuit.settled &&
+      node.motion.kind === "pursue" &&
+      node.motion.mode === "fly";
     const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
     if (next.pendingEntry) {
       next = enterState(tuning, object, bird, current, next.stateKey, next);
@@ -792,9 +779,11 @@ export function stepBehaviour(
         next = { ...next, facing: target < mine ? -1 : 1 };
       }
     }
-    const transition = node.transitions.find(({ when }) =>
-      when.every((condition) => matches(tuning, object, world, bird, current, next, condition)),
-    );
+    const transition = settling
+      ? undefined
+      : node.transitions.find(({ when }) =>
+          when.every((condition) => matches(tuning, object, world, bird, current, next, condition)),
+        );
     if (transition) {
       if (instant.has(next.stateKey)) {
         throw new Error(`Instant behaviour transition cycle for ${object.character}`);
@@ -810,7 +799,7 @@ export function stepBehaviour(
       ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
       : undefined;
     let slice = Math.min(seconds - time, frame?.remaining ?? Infinity);
-    for (const { when } of node.transitions) {
+    for (const { when } of settling ? [] : node.transitions) {
       if (
         when.every(
           (condition) =>
@@ -848,6 +837,28 @@ export function stepBehaviour(
       );
     }
     const to = { ...current };
+    if (settling && node.motion.kind === "pursue") {
+      const target = flyLandingRoute(object, world, current)?.[0];
+      if (target) {
+        const distance = Math.hypot(target.x - current.x, target.y - current.y);
+        slice = Math.min(slice, distance / node.motion.speed);
+        const fraction = Math.min(1, (node.motion.speed * slice) / distance);
+        to.x = flightAxis(
+          object,
+          world,
+          current,
+          "x",
+          current.x + (target.x - current.x) * fraction,
+        );
+        to.y = flightAxis(
+          object,
+          world,
+          { ...current, x: to.x },
+          "y",
+          current.y + (target.y - current.y) * fraction,
+        );
+      }
+    }
     if (node.motion.kind === "pursue" && next.pursuit?.phase === "engaged") {
       const hers = birdBox(tuning, bird);
       const contact = contactBox(object, current, next.facing, next.axis);

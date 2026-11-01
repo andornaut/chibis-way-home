@@ -9,6 +9,7 @@ export interface BehaviourPlatform {
   readonly rect: Rect;
 }
 export interface BehaviourWorld {
+  readonly hazards?: readonly { readonly owner: ObjectLayout; readonly rect: Rect }[];
   readonly view?: Rect;
   readonly platforms?: readonly BehaviourPlatform[];
   readonly solids: readonly Rect[];
@@ -298,4 +299,42 @@ export function groundPursuitEnd(
     }
   }
   return at.x;
+}
+
+// Axis-separated swept clipping prevents flight from crossing solid cover.
+export function flightAxis(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  at: Point,
+  axis: "x" | "y",
+  desired: number,
+): number {
+  let to = desired;
+  const across = axis === "x" ? "y" : "x";
+  const depth = axis === "x" ? "height" : "width";
+  const length = axis === "x" ? "width" : "height";
+  const body = { ...at, height: object.height, width: object.width };
+  const sweep = {
+    ...body,
+    [axis]: Math.min(at[axis], desired) - EDGE,
+    [length]: object[length] + Math.abs(desired - at[axis]) + 2 * EDGE,
+  };
+  const solids = [
+    ...collisionCandidates(world.solids, sweep),
+    ...(world.platforms ?? [])
+      .filter((platform) => platform.owner !== object && platform.collision === "solid")
+      .map((platform) => platform.rect),
+  ];
+  for (const solid of solids) {
+    if (at[across] >= solid[across] + solid[depth] || at[across] + object[depth] <= solid[across]) {
+      continue;
+    }
+    if (desired > at[axis] && at[axis] + object[length] <= solid[axis] + EDGE) {
+      to = Math.min(to, solid[axis] - object[length]);
+    }
+    if (desired < at[axis] && at[axis] >= solid[axis] + solid[length] - EDGE) {
+      to = Math.max(to, solid[axis] + solid[length]);
+    }
+  }
+  return to;
 }
