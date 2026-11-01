@@ -16,6 +16,7 @@ import type {
   TerrainRect,
   ThemePlan,
 } from "./types";
+import { WOODLAND_SCENERY, woodlandDepth, woodlandSpecies } from "./woodlandScenery";
 import { STREET_CHUNKS } from "./zone1";
 import { INDUSTRIAL_CHUNKS } from "./zone2";
 import { COUNTRYSIDE_CHUNKS } from "./zone3";
@@ -378,7 +379,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "deep-woods": {
     backdrops: COMMON_BACKDROPS,
-    bindings: WOODLAND_BINDINGS,
+    bindings: { ...WOODLAND_BINDINGS, ...woodlandSpecies("woodland-far", "forest-mid-conifers") },
     door: "door",
     looks: { ground: "forest-ground", raised: "root-stack" },
     tileset: "tiles-woodland",
@@ -413,7 +414,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "forest-paths": {
     backdrops: COMMON_BACKDROPS,
-    bindings: WOODLAND_BINDINGS,
+    bindings: { ...WOODLAND_BINDINGS, ...woodlandSpecies("woodland-far", "forest-mid-birch") },
     door: "door",
     looks: { ground: "forest-ground", raised: "root-stack" },
     tileset: "tiles-woodland",
@@ -498,6 +499,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
     backdrops: COMMON_BACKDROPS,
     bindings: {
       ...WOODLAND_BINDINGS,
+      ...woodlandSpecies("woodland-far-conifers", "forest-mid-birch"),
       "boundary-wall": {
         character: "facade-one-storey",
         skin: { art: "ravine-rock", tileset: null },
@@ -1231,7 +1233,9 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
         ? {
             ...chunk,
             backdrops: [
-              ...localDepth(id === "apartment-start" ? 10 : 0),
+              ...(["deep-woods-start", "forest-paths-start", "ravine-start"].includes(id)
+                ? woodlandDepth(localDepth(0))
+                : localDepth(id === "apartment-start" ? 10 : 0)),
               ...(chunk.backdrops ?? []),
             ],
           }
@@ -1258,7 +1262,8 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
         alias,
         {
           ...chunk,
-          backdrops: [...localDepth(0), ...(chunk.backdrops ?? [])],
+          backdrops: [...woodlandDepth(localDepth(0)), ...(chunk.backdrops ?? [])],
+          scenery: WOODLAND_SCENERY[id] ?? [],
           theme: ["deep-woods", "forest-paths", "ravine"],
         },
       ];

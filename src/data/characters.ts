@@ -14,12 +14,14 @@ import {
   RACCOON_BEHAVIOUR,
 } from "./behaviours";
 import type { Character } from "./types";
+import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
 
 // Who or what each placed thing is, by name: its archetype, art, size and tuning. art is a piece
 // or tile name from art/README.md, a backdrop or sprite, or placeholder-<name> where art has none
 // yet. Tiled pieces (awnings, the canopy, planters and pit openings) take their width from each
 // placement.
 export const CHARACTERS: Readonly<Record<string, Character>> = {
+  ...WOODLAND_SCENERY_CHARACTERS,
   "apartment-room-door": {
     archetype: "door",
     art: "apartment-room-door",

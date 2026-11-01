@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
+import deerSheet from "../../public/art/sprites/background-deer.json";
+import reedSheet from "../../public/art/sprites/background-reeds.json";
+import swallowSheet from "../../public/art/sprites/background-swallow.json";
+import { assembleZone } from "../rules/assemble";
+import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { stageLoader } from "../sim/catalogue";
-import { artOffset } from "../view/objectArt";
+import { artOffset, sceneryParallax } from "../view/objectArt";
 import { CHUNKS, EXTERIOR_DEPTH_ALIASES, THEMES, WOODLAND_DEPTH_ALIASES } from "./chunks";
 import { ZONE_MAP } from "./map";
 import { TILE } from "./screen";
 import type { ChunkPlan, ObjectLayout, OrderedZoneRecipe } from "./types";
+import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
 import { RECIPES } from "./zones";
 
 const depth = (object: Pick<ObjectLayout, "parallax">) =>
@@ -20,7 +26,7 @@ it("shares each exterior variant's physical template without adding duplicate po
   for (const [id, alias] of Object.entries(EXTERIOR_DEPTH_ALIASES)) {
     const physical = (chunk: ChunkPlan) =>
       Object.fromEntries(
-        Object.entries(chunk).filter(([key]) => !["backdrops", "theme"].includes(key)),
+        Object.entries(chunk).filter(([key]) => !["backdrops", "scenery", "theme"].includes(key)),
       );
     expect(physical(CHUNKS[alias]!)).toEqual(physical(CHUNKS[id]!));
     for (const field of ["objects", "solids", "slots", "noCross"] as const) {
@@ -139,7 +145,7 @@ it("uses Woodland depth variants for horizontal challenges while preserving plai
   for (const [id, alias] of Object.entries(WOODLAND_DEPTH_ALIASES)) {
     const physical = (chunk: ChunkPlan) =>
       Object.fromEntries(
-        Object.entries(chunk).filter(([key]) => !["backdrops", "theme"].includes(key)),
+        Object.entries(chunk).filter(([key]) => !["backdrops", "scenery", "theme"].includes(key)),
       );
     expect(physical(CHUNKS[alias]!)).toEqual(physical(CHUNKS[id]!));
     expect(CHUNKS[alias]!.theme).toEqual(themes);
@@ -169,5 +175,77 @@ it("uses Woodland depth variants for horizontal challenges while preserving plai
   ]) {
     expect(pools[0]).toContain(id);
     expect((CHUNKS[id]!.backdrops ?? []).some(depth)).toBe(false);
+  }
+});
+
+it("appends grounded Woodland fauna without changing physical indices or seeded placements", () => {
+  const recipe = RECIPES["deep-woods"]!;
+  const beforeLibrary = {
+    ...CHUNK_LIBRARY,
+    chunks: Object.fromEntries(
+      Object.entries(CHUNKS).map(([id, chunk]) => [id, { ...chunk, scenery: [] }]),
+    ),
+  };
+  const before = assembleZone(beforeLibrary, 1, "deep-woods", recipe);
+  const after = assembleZone(CHUNK_LIBRARY, 1, "deep-woods", recipe);
+  for (const [id, area] of Object.entries(after.areas)) {
+    const original = before.areas[id]!;
+    expect(area.objects.slice(0, original.objects.length)).toEqual(original.objects);
+    expect(area.solids).toEqual(original.solids);
+    expect(area.chunks).toEqual(original.chunks);
+    expect(area.objects.length).toBeGreaterThan(original.objects.length);
+  }
+  const prepared = stageLoader("deep-woods")(1);
+  const scenery = Object.values(prepared.layout.areas).flatMap(({ objects }) =>
+    objects.filter((object) => object.art in WOODLAND_SCENERY_CHARACTERS),
+  );
+  expect(scenery.length).toBeGreaterThan(0);
+  for (const object of scenery) {
+    expect(sceneryParallax(object)).toEqual(object.parallax);
+    expect(object.collision).toBe("none");
+    expect(object.contact).toBeUndefined();
+    expect(object.interaction.kind).toBe("none");
+    if (object.art !== "background-swallow") {
+      expect(object.origin.y + object.height).toBe(600);
+      expect(object.parallax!.y).toBe(1);
+    }
+  }
+  for (const [id, chunk] of Object.entries(CHUNKS)) {
+    if ((chunk.scenery ?? []).length) {
+      expect(Object.values(WOODLAND_DEPTH_ALIASES)).toContain(id);
+      for (const instance of chunk.scenery!) {
+        if (instance.character === "background-swallow") {
+          continue;
+        }
+        const character = WOODLAND_SCENERY_CHARACTERS[instance.character]!;
+        expect(
+          chunk.solids.some(
+            (solid) =>
+              solid.row === instance.row + character.rows &&
+              solid.col <= instance.col &&
+              solid.col + solid.cols >= instance.col + character.cols,
+          ),
+        ).toBe(true);
+      }
+    }
+  }
+});
+
+it("uses looping art tags and only stationary animation nodes for decorative wildlife", () => {
+  const sheets = {
+    "background-deer": deerSheet,
+    "background-reeds": reedSheet,
+    "background-swallow": swallowSheet,
+  };
+  for (const [id, character] of Object.entries(WOODLAND_SCENERY_CHARACTERS)) {
+    const tags = sheets[id as keyof typeof sheets].meta.frameTags.map(({ name }) => name);
+    const animations = character.behaviour
+      ? Object.values(character.behaviour.states).map(({ animation, motion }) => {
+          expect(motion.kind).toBe("wait");
+          return animation;
+        })
+      : Object.values(character.animations!);
+    expect(animations.every((tag) => tags.includes(tag!))).toBe(true);
+    expect(manifest.sprites.find(({ key }) => key === character.art)!.once).toEqual([]);
   }
 });
