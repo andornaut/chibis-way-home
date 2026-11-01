@@ -2,7 +2,7 @@ import { BOUNDARY_START, encounterStart, PERCH_FINISH, withoutEncounters } from 
 import type { ChunkPlan } from "./types";
 
 export const INDUSTRIAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
-  "freight-terminal-finish": { ...PERCH_FINISH, theme: "freight-terminal" },
+  "freight-terminal-finish": { ...withoutEncounters(PERCH_FINISH), theme: "freight-terminal" },
   "freight-terminal-start": { ...BOUNDARY_START, theme: "freight-terminal" },
   "loading-yards-finish": { ...withoutEncounters(PERCH_FINISH), theme: "loading-yards" },
   "loading-yards-start": {

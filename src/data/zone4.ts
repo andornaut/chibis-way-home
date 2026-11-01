@@ -13,6 +13,6 @@ export const WOODLAND_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   },
   "forest-paths-finish": { ...withoutEncounters(GROWL_FINISH), theme: "forest-paths" },
   "forest-paths-start": { ...BOUNDARY_START, theme: "forest-paths" },
-  "ravine-finish": { ...GROWL_FINISH, theme: "ravine" },
+  "ravine-finish": { ...withoutEncounters(GROWL_FINISH), theme: "ravine" },
   "ravine-start": { ...BOUNDARY_START, theme: "ravine" },
 };

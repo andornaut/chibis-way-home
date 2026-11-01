@@ -41,6 +41,6 @@ export const COUNTRYSIDE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "country-lanes-start": { ...encounterStart(4, COUNTRYSIDE_FINISH), theme: "country-lanes" },
   "farmland-finish": { ...withoutEncounters(COUNTRYSIDE_FINISH), theme: "farmland" },
   "farmland-start": { ...COUNTRYSIDE_START, theme: "farmland" },
-  "river-crossing-finish": { ...COUNTRYSIDE_FINISH, theme: "river-crossing" },
+  "river-crossing-finish": { ...withoutEncounters(COUNTRYSIDE_FINISH), theme: "river-crossing" },
   "river-crossing-start": { ...COUNTRYSIDE_START, theme: "river-crossing" },
 };

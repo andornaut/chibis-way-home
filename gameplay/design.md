@@ -114,7 +114,7 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 - **Difficulty:** per-zone bands and chunk-selection weights in `src/data/` set a demanding first-zone base and increase difficulty in every following zone. Blue cityscape selects grades 3 to 4, Industrial outskirts and Countryside grades 3 to 5, and Woodland, Home city and Apartment building grades 4 to 5. Increasing weights for harder chunks distinguish successive zones even when their bands match. Seeded variation remains inside each band
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
 - **Edge hazards:** a common red strip, 2 to 3 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow
-- **Encounters:** stage one has zero combat encounter sections. Its staged antagonist introduction is a cinematic sequence, not a combat encounter; the antagonist leaves before normal play. Stage two has two normal enemy encounters in its randomized middle after a protected noncombat opening. The first physical encounter may follow that opening. Stage three has two combat encounters. Counts apply across the whole stage, not per floor. Every second-stage opening has a protected first half-screen, then a mandatory noncombat obstacle, with its door and left map exit accessible. No physical antagonist or lethal attack enters that opening. Ordinary platforming separates encounters; generated runs vary layout while preserving these quotas, and death retries retain the same run
+- **Encounters:** stage one has zero combat encounter sections. Its staged antagonist introduction is a cinematic sequence, not a combat encounter; the antagonist leaves before normal play. Stages two and three each have one normal enemy encounter in their randomized middles, for two hostile encounters per zone. Only the scripted first-stage introduction is fixed. No normal antagonist is placed in a fixed opening or ending cap. Counts apply across the whole stage, not per floor. Every second-stage opening has a protected first half-screen, then a mandatory noncombat obstacle, with its door and left map exit accessible. No physical antagonist or lethal attack enters that opening. Ordinary platforming separates encounters; generated runs vary layout while preserving these quotas, and death retries retain the same run
 - **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show their image-backed statistics interstitials; stage three shows its outgoing zone exchange and statistics before map travel, except for Furt's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged; a fresh stage entry starts a new run and its own statistics. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
@@ -228,6 +228,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 - **Contact:** Pebble is always lethal on contact, including while perched, without a red contact outline
 - **Cycle:** perch on posts, spot Chibi and launch into flight. Pebble periodically swoops at Chibi for body contact and separately drops white-block poop projectiles as his special attack. Behaviour timing and flight tuning live in data
+- **Layout:** seeded pigeon yards combine solid overhead hiding cover with exposed flight and projectile lanes
 - **Projectiles:** each white block falls straight down and is lethal on contact. It disappears on landing, including on a ledge, leaving no residue and never homing on Chibi
 
 ### Countryside
@@ -258,6 +259,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Contact:** Bini is always lethal on contact, including while resting, without a red contact outline. His charge and maul are contact threats, not a combat encounter
 - **Cycle:** idle with the phone, use the sonic growl special attack, then charge and maul for direct contact using shared behaviour primitives. Timing and movement values live in data
 - **Growl:** the sonic growl creates a brief gust that pushes Chibi only while he overlaps its finite volume. The push stops when he is above or outside it, or behind solid cover; it is not a single impulse that leaves momentum. It does not kill directly, but can push him into a hazard or off a ledge. High ground is the primary way to avoid it; solid cover also blocks it
+- **Layout:** seeded bear arenas provide accessible high ground before or at line-of-sight acquisition, alongside exposed low lanes where a connected growl can push Chibi into a visible red hazard or off a ledge
 - **Introduction:** Bini sits with a phone playing Archie's Dog Walks. His annoyed first-sighting introduction follows the once-per-zone rule and precedes his aggressive behaviour
 
 ### Home city
@@ -284,16 +286,16 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room or quest. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
 - **Stairs:** walking into marked main-route stairs changes floor automatically, without Use. Stairs are reversible; Chibi can return through earlier sections and leave for the map at the first section's left edge
 
-### First Archie encounter
+### Archie introductions and encounters
 
 - **Activation:** the staged introduction at the beginning of Parcel depot follows the once-per-zone rule. Completing or skipping the exchange starts Archie's departure; normal gameplay begins after he leaves
 - **Appearance:** Archie uses his design from Archie's Dog Walks
-- **Approach:** the first combat encounter begins Streets, after the depot tutorial. A refuge ledge before the ground patrol and another beyond it give safe observation and landing points. Neither requires a maximum-height jump. The first encounter has no other hazards
+- **Approach:** the first physical encounter is selected in Streets’ randomized middle after its protected opening. Shared yards provide observation and landing refuges around the hostile lane
 - **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
 - **Dialogue:** the first introduction has three lines: Archie says Furt asked him to stop Chibi; Chibi says he is going home; Archie tells him to get past. The player-facing wording lives in the text data files, with Skip available
 - **Special:** Archie makes a leaping pounce as his distinct special attack, alongside periodic ground rushes for direct contact
-- **Timing:** Archie uses the same timing across physical encounters in the first zone; their layouts vary. The first combat encounter begins stage two
+- **Timing:** Archie uses the same timing across physical encounters in the first zone; their layouts vary. The first physical encounter occurs in the randomized middle of stage two
 
 ### Rooms
 

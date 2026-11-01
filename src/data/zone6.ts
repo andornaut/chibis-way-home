@@ -1,29 +1,24 @@
-import {
-  CHUNK_COLS,
-  encounterStart,
-  PATROL_ENCOUNTER,
-  PATROL_FINISH_GEOMETRY,
-  withoutEncounters,
-} from "./chunkTemplates";
+import { CHUNK_COLS, encounterStart, PATROL_ENCOUNTER, withoutEncounters } from "./chunkTemplates";
 import type { ChunkPlan } from "./types";
 
 const UPPER_FLOOR_OFFSET = 20;
+const QUIET_PATROL = withoutEncounters(PATROL_ENCOUNTER);
 
 const APARTMENT_BOUNDARIES: Readonly<Record<string, ChunkPlan>> = {
   "apartment-finish": {
     cols: CHUNK_COLS,
     difficulty: 4,
-    encounters: PATROL_FINISH_GEOMETRY.encounters,
+    encounters: QUIET_PATROL.encounters,
     entry: { row: 30 },
     exit: { row: 30 },
     objects: [
-      ...PATROL_FINISH_GEOMETRY.objects.map((object) => ({
+      ...QUIET_PATROL.objects.map((object) => ({
         ...object,
         row: object.row - UPPER_FLOOR_OFFSET,
       })),
       { character: "apartment-stairwell", col: 54, role: "final-goal", row: 24 },
     ],
-    solids: PATROL_FINISH_GEOMETRY.solids.map((solid) => ({
+    solids: QUIET_PATROL.solids.map((solid) => ({
       ...solid,
       row: solid.row - UPPER_FLOOR_OFFSET,
       rows: solid.rows + UPPER_FLOOR_OFFSET,

@@ -285,7 +285,7 @@ const DIFFICULTY_PROFILES = {
   industrial: { difficulty: { max: 5, min: 3 }, difficultyWeights: { 3: 1, 4: 1, 5: 1 } },
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
-const STAGE_ENCOUNTERS = { first: 0, later: 2 } as const;
+const STAGE_ENCOUNTERS = { first: 0, later: 1 } as const;
 const STAGE_LENGTH = { max: 24 * CHUNK_COLS, min: 20 * CHUNK_COLS } as const;
 
 function sectionLength(count: number, index: number) {
