@@ -49,6 +49,12 @@ interface NearbyObject extends NearbyTerrain {
 }
 
 export interface TraceEvent {
+  readonly kinematics: {
+    readonly carryVx: number;
+    readonly grounded: boolean;
+    readonly vx: number;
+    readonly vy: number;
+  };
   readonly nearby: {
     readonly terrain: readonly NearbyTerrain[];
     readonly objects: readonly NearbyObject[];
@@ -178,6 +184,12 @@ export function traceEvent(
     deathReason: zone.death?.reason,
     input,
     kind,
+    kinematics: {
+      carryVx: zone.bird.carryVx,
+      grounded: zone.bird.grounded,
+      vx: zone.bird.vx,
+      vy: zone.bird.vy,
+    },
     nearby: { objects, terrain },
     ...(planner
       ? {

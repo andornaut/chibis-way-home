@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
@@ -41,6 +43,9 @@ export function playabilityCli(args: readonly string[]): void {
   if (format !== "json" && format !== "markdown") {
     throw new Error("--format must be json or markdown");
   }
+  if (options["--out"] && existsSync(options["--out"])) {
+    throw new Error(`Output already exists: ${options["--out"]}`);
+  }
   const catalogue = ZONE_MAP.destinations;
   const data = `sha256:${createHash("sha256")
     .update(
@@ -68,9 +73,11 @@ export function playabilityCli(args: readonly string[]): void {
   const output =
     format === "json" ? `${JSON.stringify(report, null, 2)}\n` : formatPlayabilityMarkdown(report);
   if (options["--out"]) {
-    writeFileSync(options["--out"], output);
+    writeFileSync(options["--out"], output, { flag: "wx" });
   } else {
     process.stdout.write(output);
   }
 }
-playabilityCli(process.argv.slice(2));
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  playabilityCli(process.argv.slice(2));
+}

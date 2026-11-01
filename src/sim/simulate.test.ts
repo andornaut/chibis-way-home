@@ -322,6 +322,69 @@ describe("terminal diagnostic budgets and coverage", () => {
       clock.mockRestore();
     }
   });
+  it("includes preparation in each stage wall budget without dispatching an expired case", () => {
+    let now = 0;
+    const clock = vi.spyOn(performance, "now").mockImplementation(() => now);
+    const step = vi.spyOn(zoneRules, "stepZone");
+    try {
+      const report = simulateBatch(
+        BIRD,
+        () => {
+          now += 6;
+          return prepareStage(fixture(ground));
+        },
+        { ...config, maxWallTimeMs: 5 },
+        [1, 2],
+        { maxWallTimeMs: 20 },
+      );
+      expect(report.runs).toEqual([]);
+      expect(report.omittedSeeds).toEqual([1, 2]);
+      expect(report.validation.fullPass).toBe(false);
+      expect(report.omissions).toEqual([
+        { reason: "stage-preparation-wall-budget", seed: 1 },
+        { reason: "stage-preparation-wall-budget", seed: 2 },
+      ]);
+      expect(step).not.toHaveBeenCalled();
+    } finally {
+      clock.mockRestore();
+      step.mockRestore();
+    }
+  });
+  it("does not certify a clear or replay whose final physics tick exceeds its wall budget", () => {
+    let now = 0;
+    const clock = vi.spyOn(performance, "now").mockImplementation(() => now);
+    const actualStep = zoneRules.stepZone;
+    const step = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
+      now += 6;
+      return actualStep(...args);
+    });
+    try {
+      const stage = prepareStage(fixture(ground, 61));
+      const options = {
+        ...config,
+        maxSteps: 1,
+        maxWallTimeMs: 5,
+        provenance: { build: "checked" },
+        witness: { maxSegments: 1 },
+      };
+      const run = simulateStage(BIRD, stage, options);
+      expect(run.status).toBe("cleared");
+      expect(run.steps).toBe(1);
+      expect(run.fullPass).toBe(false);
+      const replay = replayCompletionWitness(
+        BIRD,
+        stage,
+        options,
+        { maxSteps: 1, maxWallTimeMs: 5 },
+        run.witness!,
+      );
+      expect(replay.status).toBe("mismatch");
+      expect(replay.executedSteps).toBe(1);
+    } finally {
+      clock.mockRestore();
+      step.mockRestore();
+    }
+  });
   it("reports a wall limit separately from physics and policy failures", () => {
     const clock = vi.spyOn(performance, "now");
     let now = 0;
@@ -815,6 +878,12 @@ describe("bounded actionable stall snapshots", () => {
       source,
       zone,
     );
+    expect(event.kinematics).toEqual({
+      carryVx: zone.bird.carryVx,
+      grounded: zone.bird.grounded,
+      vx: zone.bird.vx,
+      vy: zone.bird.vy,
+    });
     expect(event.nearby.terrain).toHaveLength(4);
     expect(event.nearby.objects).toHaveLength(4);
     for (const nearby of event.nearby.objects) {

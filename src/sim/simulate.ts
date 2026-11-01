@@ -635,7 +635,7 @@ function executeStage(
     witness.capturedTicks === steps &&
     typeof provenance.build === "string" &&
     provenance.build.length > 0;
-  return {
+  const result: RunResult = {
     ...(witness ? { witness } : {}),
     failures,
     fullPass,
@@ -698,6 +698,9 @@ function executeStage(
     traceDropped,
     tuning,
   };
+  return config.maxWallTimeMs !== undefined && result.runtimeMs >= config.maxWallTimeMs
+    ? { ...result, fullPass: false }
+    : result;
 }
 
 export interface WitnessReplayResult {
@@ -802,6 +805,7 @@ export function replayCompletionWitness(
     executedSteps = result.steps;
     if (
       result.status !== "cleared" ||
+      result.runtimeMs >= limits.maxWallTimeMs ||
       result.terminal.area !== witness.finalArea ||
       result.terminal.area !== (stage.layout.areaOrder?.at(-1) ?? stage.layout.start.area) ||
       result.steps !== witness.steps ||

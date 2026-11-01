@@ -29,6 +29,10 @@ export interface BatchResult {
     readonly steps: number;
     readonly stepsPerSecond: number;
   };
+  readonly omissions: readonly {
+    readonly reason: "batch-wall-budget" | "stage-preparation-wall-budget";
+    readonly seed: number;
+  }[];
   readonly omittedSeeds: readonly number[];
   readonly runs: readonly RunResult[];
 }
@@ -59,31 +63,44 @@ export function simulateBatch(
   }
   const runs: RunResult[] = [];
   const omittedSeeds: number[] = [];
+  const omissions: {
+    reason: "batch-wall-budget" | "stage-preparation-wall-budget";
+    seed: number;
+  }[] = [];
+  const omit = (values: readonly number[], reason: (typeof omissions)[number]["reason"]) => {
+    omittedSeeds.push(...values);
+    omissions.push(...values.map((seed) => ({ reason, seed })));
+  };
   for (const [index, seed] of seeds.entries()) {
     if (limits.maxWallTimeMs !== undefined && performance.now() - started >= limits.maxWallTimeMs) {
-      omittedSeeds.push(...seeds.slice(index));
+      omit(seeds.slice(index), "batch-wall-budget");
       break;
     }
     const runConfig = { ...config, seed };
+    const stageStarted = performance.now();
     const stage = prepare(simulationSeeds(runConfig).layout);
     const remaining =
       limits.maxWallTimeMs === undefined
         ? undefined
         : limits.maxWallTimeMs - (performance.now() - started);
     if (remaining !== undefined && remaining <= 0) {
-      omittedSeeds.push(...seeds.slice(index));
+      omit(seeds.slice(index), "batch-wall-budget");
       break;
     }
+    const stageRemaining =
+      config.maxWallTimeMs === undefined
+        ? undefined
+        : config.maxWallTimeMs - (performance.now() - stageStarted);
+    if (stageRemaining !== undefined && stageRemaining <= 0) {
+      omit([seed], "stage-preparation-wall-budget");
+      continue;
+    }
+    const executionWall = Math.min(stageRemaining ?? Infinity, remaining ?? Infinity);
     runs.push(
       simulateStage(
         tuning,
         stage,
-        remaining === undefined
-          ? runConfig
-          : {
-              ...runConfig,
-              maxWallTimeMs: Math.min(runConfig.maxWallTimeMs ?? Infinity, remaining),
-            },
+        Number.isFinite(executionWall) ? { ...runConfig, maxWallTimeMs: executionWall } : runConfig,
       ),
     );
   }
@@ -114,6 +131,7 @@ export function simulateBatch(
       steps,
       stepsPerSecond: runtimeMs > 0 ? (steps * 1000) / runtimeMs : 0,
     },
+    omissions,
     omittedSeeds,
     runs,
     validation: {

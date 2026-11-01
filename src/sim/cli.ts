@@ -1,5 +1,7 @@
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { BIRD } from "../data/bird";
 import { ZONE_MAP } from "../data/map";
@@ -37,7 +39,7 @@ Omitting a goal runs the whole stage from the selected cold start. Tracing is of
 Output is JSON with per-run and aggregate metrics. Runtime includes no rendering.
 Only run bounded batches in the project container; coordinate larger batches with gameplay.`;
 
-function main(args: readonly string[]): void {
+export function simulationCli(args: readonly string[]): void {
   if (args.includes("--help") || args.includes("-h")) {
     console.log(HELP);
     return;
@@ -214,6 +216,9 @@ function main(args: readonly string[]): void {
         throw new Error(`Unknown option ${flag}`);
     }
   }
+  if (out !== undefined && existsSync(out)) {
+    throw new Error(`Output already exists: ${out}`);
+  }
   if (profile === "validation") {
     if (!explicit.has("--max-steps")) {
       maxSteps = VALIDATION_LIMITS.maxSteps;
@@ -334,13 +339,15 @@ function main(args: readonly string[]): void {
     process.exitCode = 1;
   }
   if (out !== undefined) {
-    writeFileSync(out, json);
+    writeFileSync(out, json, { flag: "wx" });
   }
 }
 
-try {
-  main(process.argv.slice(2));
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    simulationCli(process.argv.slice(2));
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
 }
