@@ -4,10 +4,11 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 
 ## Data
 
-| Key         | Type                             | Size                 | Tags |
-| ----------- | -------------------------------- | -------------------- | ---- |
-| palette     | JSON: colours, darker, dim2      | house and zone ramps |      |
-| zone-themes | JSON: destination primary tokens | six destinations     |      |
+| Key                 | Type                             | Size                        | Tags |
+| ------------------- | -------------------------------- | --------------------------- | ---- |
+| contact-silhouettes | JSON: per-frame opaque body runs | six antagonist body sprites |      |
+| palette             | JSON: colours, darker, dim2      | house and zone ramps        |      |
+| zone-themes         | JSON: destination primary tokens | six destinations            |      |
 
 ## Fonts
 
@@ -82,7 +83,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | map-wave                  | map pen mark, tan                                          | 22x4   | rest                                          |
 | map-zone                  | map zone marker                                            | 35x35  | normal, current, visited, locked, unbuilt     |
 | park-boat                 | park, moving platform: deck line on row 0, collision 72x12 | 72x18  | idle                                          |
-| park-gate                 | park, the zone's exit, a Use zone, no collision            | 36x60  | idle, open (once)                             |
+| park-gate                 | park room door, a Use zone, no collision                   | 36x60  | idle, open (once)                             |
 | pedestrian-cat            | street cast                                                | 34x50  | walk, idle                                    |
 | pedestrian-raccoon        | street cast                                                | 36x50  | walk, idle                                    |
 | pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                        |

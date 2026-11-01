@@ -431,7 +431,7 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 
 ## Hazards
 
-A hazard restarts the floor on contact. `art/tools/hazards.py` draws the hazard sprites and `art/tools/floor1.py` the hazard tiles; their docstrings give every frame and tile.
+Hazard contact causes death; Try again returns to the stage checkpoint. `art/tools/hazards.py` draws the hazard sprites and `art/tools/floor1.py` the hazard tiles; their docstrings give every frame and tile.
 
 - Every hazard sprite has an ink outline, so it holds 3:1 on every street ground, and is drawn at outdoor scale beside the bird.
 - Steel (the hatch and its leaves, the bike's wheels) uses the slate ramp (slate, dslate, navy), not grey: the leaves are slate because dslate does not separate from the dark facades in greyscale.
@@ -840,7 +840,7 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 | rest        | Two frames, 400ms each  | Perched recovery             |
 | swoop       | Four frames, 100ms each | Head-down contact dive       |
 
-All tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; runtime owns the 600ms anticipation duration. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
+All tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; runtime owns the 120ms anticipation duration. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
 
 ## Industrial material pack
 
@@ -955,4 +955,3 @@ Backdrops repeat in x at widths that divide 720, so chunk seams never show; prop
 ## Remaining for the first build
 
 - Any further encounter-specific animation or trap artwork requires an approved behaviour and asset contract.
-- Runtime placement and integration of the apartment appearance pack remain with the stage implementation.
