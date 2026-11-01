@@ -9,6 +9,7 @@ import {
   themesOf,
 } from "./assemble";
 import { bindElement } from "./elementBinding";
+import { orbitBounds, resolveOrbits } from "./orbit";
 import { type Catalogue, objectLayout } from "./tiles";
 
 // A rectangle in tiles, as columns [left, right) and rows [top, bottom).
@@ -34,11 +35,34 @@ const inside = (rows: number, cols: number, rect: TileRect) =>
 
 // A placed thing in tiles: its collision, whether it moves, and the span it can be in over its
 // track (its rectangle swept along its motion's axis, its reaction's range and its hops).
-function thingOf(catalogue: Catalogue, instance: Instance) {
+function physicalObjects(catalogue: Catalogue, instances: readonly Instance[]) {
+  const objects = instances.map((instance) => {
+    const physical = { ...instance };
+    delete physical.skin;
+    return objectLayout(1, catalogue, {}, undefined, {}, physical);
+  });
+  return resolveOrbits(1, instances, objects);
+}
+function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance: Instance) {
   // Chunk checks use canonical geometry; visual metadata is validated during area resolution.
   const physical = { ...instance };
   delete physical.skin;
   const object = objectLayout(1, catalogue, {}, undefined, {}, physical);
+  if (instance.orbit) {
+    const objects = physicalObjects(catalogue, instances);
+    const resolved = objects[instances.indexOf(instance)]!;
+    const bounds = orbitBounds(objects, resolved);
+    return {
+      collision: object.collision,
+      moves: true,
+      span: {
+        bottom: bounds.y + bounds.height,
+        left: bounds.x,
+        right: bounds.x + bounds.width,
+        top: bounds.y,
+      },
+    };
+  }
   if (object.behaviour) {
     const { states } = object.behaviour;
     const tracks = Object.values(states).flatMap((node) =>
@@ -134,7 +158,11 @@ function seamProblems(
     problems.push(`${side}: terrain within ${headroom} rows above the seam`);
   }
   for (const instance of chunk.objects) {
-    const { collision, moves, span } = thingOf(catalogue, instance);
+    const { collision, moves, span } = thingOf(
+      catalogue,
+      [...(chunk.backdrops ?? []), ...chunk.objects],
+      instance,
+    );
     const name = `${instance.character} at col ${instance.col} row ${instance.row}`;
     if (collision === "hazard" && meets(span, near)) {
       problems.push(`${side}: hazard ${name} at the seam`);
@@ -250,10 +278,32 @@ export function chunkProblems(
     }
     // The seam rule reads each placed thing's character.
     if (resolved) {
-      problems.push(
-        ...seamProblems(library, catalogue, variant, "entry", chunk.entry),
-        ...seamProblems(library, catalogue, variant, "exit", chunk.exit),
-      );
+      try {
+        const instances = [...(variant.backdrops ?? []), ...variant.objects];
+        const objects = instances.some((instance) => instance.orbit || instance.id !== undefined)
+          ? physicalObjects(catalogue, instances)
+          : [];
+        for (const object of objects) {
+          if (!object.orbit) {
+            continue;
+          }
+          const bounds = orbitBounds(objects, object);
+          if (
+            bounds.x < 0 ||
+            bounds.y < 0 ||
+            bounds.x + bounds.width > chunk.cols ||
+            bounds.y + bounds.height > rows
+          ) {
+            problems.push("Orbit sweep is outside the chunk");
+          }
+        }
+        problems.push(
+          ...seamProblems(library, catalogue, variant, "entry", chunk.entry),
+          ...seamProblems(library, catalogue, variant, "exit", chunk.exit),
+        );
+      } catch (error) {
+        problems.push(error instanceof Error ? error.message : String(error));
+      }
     }
   }
   const slots = chunk.slots ?? [];

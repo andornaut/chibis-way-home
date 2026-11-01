@@ -427,6 +427,26 @@ describe("assembleZone", () => {
 });
 
 describe("flat recipe chunk pools", () => {
+  it("keeps repeated chunk-local orbit references in their own placement", () => {
+    const objects = [
+      { character: "lift", col: 18, id: "lift", row: 40 },
+      {
+        character: "hazard",
+        col: 26.5,
+        id: "hazard",
+        orbit: { angularSpeed: 1, host: "lift", phase: 0, radius: 6 },
+        row: 40,
+      },
+    ];
+    const lib = library({ a: chunk(50, 50, { objects }), b: chunk(50, 50, { objects }) });
+    const area = areaOf(assembleZone(lib, 1, "repeat-orbits", recipe(3)));
+    const identified = area.objects.filter(({ id }) => id !== undefined);
+    expect(new Set(identified.map(({ id }) => id)).size).toBe(6);
+    for (const follower of identified.filter(({ orbit }) => orbit)) {
+      const host = identified.find(({ id }) => id === follower.orbit!.host)!;
+      expect(host.col - follower.col).toBe(-8.5);
+    }
+  });
   it.each([0, 1])(
     "restricts the middle pool while preserving encounter quota %s and chunk limits",
     (encounters) => {

@@ -20,6 +20,7 @@ import type {
 } from "../data/types";
 import { drawsFrom, tileHitbox, type Tileset } from "../view/tiles";
 import { layoutBehaviour } from "./behaviour";
+import { resolveOrbits, validateOrbitReferences } from "./orbit";
 import { validateZoneLinks } from "./zoneLinks";
 
 export function tileRect(tile: number, rect: TileRect): Rect {
@@ -127,6 +128,7 @@ export function objectLayout(
       (parallax.x !== 1 || parallax.y !== 1) &&
       (archetype.collision !== "none" ||
         interaction.kind !== "none" ||
+        instance.orbit !== undefined ||
         motion.algorithm !== "static" ||
         reaction.kind !== "none" ||
         (behaviour && Object.values(behaviour.states).some((node) => node.motion.kind !== "wait")))
@@ -186,6 +188,7 @@ export function objectLayout(
       });
       if (
         template.collision !== "hazard" ||
+        template.orbit !== undefined ||
         template.motion.algorithm !== "static" ||
         template.reaction.kind !== "none" ||
         template.interaction.kind !== "none"
@@ -273,6 +276,16 @@ export function areaLayout(
   area: AreaPlan,
 ): AreaLayout {
   const tileset = area.tileset === undefined ? undefined : tilesets[area.tileset];
+  validateOrbitReferences(area.objects);
+  const instances = area.objects.filter((instance) => isPlaced(flags, instance));
+  const objects = instances.map((instance) => {
+    const key = resolveNames(catalogue, instance).character.tileset;
+    const source = key === undefined ? tileset : tilesets[key];
+    if (key !== undefined && !source) {
+      throw new Error(`No tileset ${key} for ${instance.character}`);
+    }
+    return objectLayout(tile, catalogue, hitboxes, source, tilesets, instance);
+  });
   return {
     ...(area.walkLinks && { walkLinks: area.walkLinks }),
     backX: tile,
@@ -282,16 +295,7 @@ export function areaLayout(
     ),
     exitX: (area.cols - 1) * tile,
     height: area.rows * tile,
-    objects: area.objects
-      .filter((instance) => isPlaced(flags, instance))
-      .map((instance) => {
-        const key = resolveNames(catalogue, instance).character.tileset;
-        const source = key === undefined ? tileset : tilesets[key];
-        if (key !== undefined && !source) {
-          throw new Error(`No tileset ${key} for ${instance.character}`);
-        }
-        return objectLayout(tile, catalogue, hitboxes, source, tilesets, instance);
-      }),
+    objects: resolveOrbits(tile, instances, objects),
     solids: area.solids.map((rect) => tileRect(tile, rect)),
     terrain: area.solids,
     tileset: area.tileset,

@@ -36,12 +36,14 @@ import { collisionCandidates } from "./collisionIndex";
 import { deathSupport } from "./death";
 import { type ForcePulse, forcePulseVelocity } from "./force";
 import { axisOf, motionTrack, type Track } from "./motion";
+import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
 import { overlaps } from "./rect";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import { validateWalkEntries } from "./zoneLinks";
 
 interface ObjectFrame {
+  readonly orbitLegs?: readonly OrbitLeg[];
   readonly after: Rect;
   readonly before: Rect;
   readonly behaviour: BehaviourStep | undefined;
@@ -73,6 +75,7 @@ function areaObjects(area: AreaLayout): AreaObjects {
   const fixed = area.objects.map((object): ObjectFrame | undefined => {
     const motion = object.motion;
     if (
+      object.orbit ||
       object.behaviour ||
       object.reaction.kind !== "none" ||
       (motion.algorithm !== "static" && motion.distance !== 0 && motion.speed !== 0)
@@ -259,9 +262,23 @@ export function enterArea(
   );
   tracks.forEach((track, index) => {
     const motion = area.objects[index]!.motion;
-    if (motion.algorithm === "static" || motion.distance === 0 || motion.speed === 0) {
+    if (
+      !area.objects[index]!.orbit &&
+      (motion.algorithm === "static" || motion.distance === 0 || motion.speed === 0)
+    ) {
       FIXED_TRACKS.add(track);
     }
+  });
+  const positions = area.objects.map((object, index) =>
+    object.behaviour ? object.origin : pathAt(object, tracks[index]!, 0),
+  );
+  const objects = positions.map((at, index) => {
+    const object = area.objects[index]!;
+    if (!object.orbit) {
+      return at;
+    }
+    const host = area.objects[object.orbit.host]!;
+    return orbitPosition(0, rectAt(host, positions[object.orbit.host]!), object.orbit, object);
   });
   return {
     ...zone,
@@ -276,9 +293,7 @@ export function enterArea(
     door: undefined,
     nextPulseId: 0,
     nextTransientId: 0,
-    objects: area.objects.map((object, index) =>
-      object.behaviour ? object.origin : pathAt(object, tracks[index] as Track, 0),
-    ),
+    objects,
     pulses: [],
     seconds: 0,
     spotted: zone.spotted ?? {},
@@ -504,32 +519,65 @@ export function stepZone(
     }
   });
   const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
-  const objects = area.objects.map((object, index): ObjectFrame => {
-    const before = zone.objects[index] ?? object.origin;
-    const fixed = kinds.fixed[index];
-    if (
-      fixed &&
-      FIXED_TRACKS.has(zone.tracks[index]!) &&
-      before.x === object.origin.x &&
-      before.y === object.origin.y
-    ) {
-      return fixed;
+  const frames = new Map<number, ObjectFrame>();
+  const resolving = new Set<number>();
+  const resolveFrame = (index: number): ObjectFrame => {
+    const prior = frames.get(index);
+    if (prior) {
+      return prior;
     }
-    const behaviour = object.behaviour
-      ? stepBehaviour(
-          tuning,
-          object,
-          geometry,
-          seconds,
-          zone.bird,
-          before,
-          zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
-        )
-      : undefined;
-    const path = pathAt(object, zone.tracks[index] as Track, time);
-    const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
-    return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
-  });
+    const object = area.objects[index];
+    if (!object || resolving.has(index)) {
+      throw new Error("Invalid runtime orbit relationship");
+    }
+    resolving.add(index);
+    const frame: ObjectFrame = (() => {
+      if (object.orbit) {
+        const host = area.objects[object.orbit.host]!;
+        const resolved = resolveFrame(object.orbit.host);
+        const before = rectAt(object, zone.objects[index] ?? object.origin);
+        const after = rectAt(object, orbitPosition(time, resolved.after, object.orbit, object));
+        const orbitLegs = orbitHostLegs(
+          zone.seconds,
+          time,
+          host,
+          zone.tracks[object.orbit.host]!,
+          resolved.before,
+          resolved.after,
+        );
+        return { after, before, behaviour: undefined, object, orbitLegs };
+      }
+
+      const before = zone.objects[index] ?? object.origin;
+      const fixed = kinds.fixed[index];
+      if (
+        fixed &&
+        FIXED_TRACKS.has(zone.tracks[index]!) &&
+        before.x === object.origin.x &&
+        before.y === object.origin.y
+      ) {
+        return fixed;
+      }
+      const behaviour = object.behaviour
+        ? stepBehaviour(
+            tuning,
+            object,
+            geometry,
+            seconds,
+            zone.bird,
+            before,
+            zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
+          )
+        : undefined;
+      const path = pathAt(object, zone.tracks[index] as Track, time);
+      const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
+      return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
+    })();
+    resolving.delete(index);
+    frames.set(index, frame);
+    return frame;
+  };
+  const objects = area.objects.map((_, index) => resolveFrame(index));
   for (const frame of objects) {
     if (frame.behaviour?.escaped) {
       barks.push(frame.behaviour.escaped);
@@ -648,29 +696,41 @@ export function stepZone(
     y: beforeBox.y + ((box.y - beforeBox.y) * time) / seconds,
   });
   const swept =
-    zone.behaviours.length > 0 && seconds > 0
+    seconds > 0
       ? kinds.hazards.find((index) => {
-          const { behaviour, object } = objects[index]!;
-          return behaviour?.segments.some((segment) => {
-            if (object.contact) {
-              if (!segment.frame) {
-                throw new Error(`Missing silhouette sweep frame for ${object.art}`);
-              }
-              return silhouetteContact(
-                object,
-                segment.frame,
-                (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
-                segment.from,
-                segment.to,
-                birdAt(segment.start),
-                birdAt(segment.end),
-              );
-            }
-            const before = contactBox(object, segment.from, segment.facing, segment.axis);
-            const after = contactBox(object, segment.to, segment.facing, segment.axis);
-            return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
-          });
-        })
+      const { behaviour, object, orbitLegs } = objects[index]!;
+      if (object.orbit && orbitLegs) {
+        const host = area.objects[object.orbit.host]!;
+        return orbitLegs.some((leg) =>
+          orbitSweptContact(
+            object,
+            host,
+            leg,
+            birdAt(leg.start - zone.seconds),
+            birdAt(leg.end - zone.seconds),
+          ),
+        );
+      }
+      return behaviour?.segments.some((segment) => {
+        if (object.contact) {
+          if (!segment.frame) {
+            throw new Error(`Missing silhouette sweep frame for ${object.art}`);
+          }
+          return silhouetteContact(
+            object,
+            segment.frame,
+            (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
+            segment.from,
+            segment.to,
+            birdAt(segment.start),
+            birdAt(segment.end),
+          );
+        }
+        const before = contactBox(object, segment.from, segment.facing, segment.axis);
+        const after = contactBox(object, segment.to, segment.facing, segment.axis);
+        return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
+      });
+    })
       : undefined;
   const bodyContact = kinds.hazards.find((index) => {
     const { after, behaviour, object } = objects[index]!;

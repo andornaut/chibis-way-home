@@ -18,6 +18,7 @@ import type {
   ZoneRecipe,
 } from "../data/types";
 import { bindElement } from "./elementBinding";
+import { namespaceOrbitInstances } from "./orbit";
 
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
 // a zone's height in rows, and the characters by key, for the size of each theme's door.
@@ -373,6 +374,14 @@ export function zonePlanOf(
     list.push({ chunk: ids[index] ?? "", col: last ? last.col + last.cols : 0, cols: chunk.cols });
     return list;
   }, []);
+  const scoped = chunks.map((chunk, index) => {
+    const combined = namespaceOrbitInstances(`chunk${index}`, [
+      ...(chunk.backdrops ?? []),
+      ...chunk.objects,
+    ]);
+    const count = chunk.backdrops?.length ?? 0;
+    return { backdrops: combined.slice(0, count), objects: combined.slice(count) };
+  });
   const cols = placed.reduce((sum, chunk) => sum + chunk.cols, 0);
   const at = (index: number) => placed[index]?.col ?? 0;
   const look = (id: string, solid: TerrainRect): TerrainRect => {
@@ -450,13 +459,13 @@ export function zonePlanOf(
           ...theme.backdrops.map((backdrop) =>
             bindElement(theme.bindings, { ...backdrop, col: 0, cols }),
           ),
-          ...chunks.flatMap((chunk, index) =>
-            (chunk.backdrops ?? []).map((instance) =>
+          ...chunks.flatMap((_, index) =>
+            scoped[index]!.backdrops.map((instance) =>
               bindElement(theme.bindings, shiftInstance(at(index), instance)),
             ),
           ),
-          ...chunks.flatMap((chunk, index) =>
-            chunk.objects.map((instance) =>
+          ...chunks.flatMap((_, index) =>
+            scoped[index]!.objects.map((instance) =>
               bindElement(theme.bindings, shiftInstance(at(index), instance)),
             ),
           ),
