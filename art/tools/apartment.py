@@ -80,8 +80,8 @@ def sky():
 
 def far():
     im = image(720, 720)
-    for x, width, top in ((-12, 132, 446), (158, 100, 402), (298, 152, 470),
-                          (492, 112, 430), (642, 96, 452)):
+    for x, width, top in ((-12, 132, 104), (158, 100, 54), (298, 152, 132),
+                          (492, 112, 78), (642, 96, 112)):
         rect(im, "zone-peach-shade", (x, top, x + width, 720))
         rect(im, "zone-peach-shade", (x + 14, top - 14, x + width - 14, top))
         rect(im, "zone-peach-shade", (x + width - 28, top - 28, x + width - 18, top))
@@ -90,11 +90,13 @@ def far():
 
 def exterior_mid():
     im = image(720, 720)
-    for x, width, top in ((24, 162, 552), (248, 126, 514), (442, 146, 568), (636, 72, 532)):
+    for x, width, top in ((24, 162, 162), (248, 126, 108), (442, 146, 186), (636, 72, 138)):
         rect(im, SHADE, (x, top, x + width, 720))
         rect(im, "zone-peach-shade", (x, top, x + width, top + 8))
         rect(im, "zone-peach", (x + 8, top + 8, x + 14, 720))
-        rect(im, "zone-red", (x + 22, top + 38, x + width - 22, top + 50))
+        for y in range(top + 30, 690, 48):
+            for window_x in range(x + 22, x + width - 20, 28):
+                rect(im, PRIMARY, (window_x, y, window_x + 12, y + 18))
     return im
 
 
