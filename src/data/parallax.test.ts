@@ -11,18 +11,18 @@ import { artOffset, sceneryParallax } from "../view/objectArt";
 import { CHUNKS, EXTERIOR_DEPTH_ALIASES, THEMES, WOODLAND_DEPTH_ALIASES } from "./chunks";
 import { ZONE_MAP } from "./map";
 import { TILE } from "./screen";
-import type { ChunkPlan, ObjectLayout, OrderedZoneRecipe } from "./types";
+import type { ChunkPlan, ObjectLayout } from "./types";
 import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
+import { APARTMENT_WINDOW } from "./zone6";
 import { RECIPES } from "./zones";
 
 const depth = (object: Pick<ObjectLayout, "parallax">) =>
   object.parallax !== undefined && (object.parallax.x < 1 || object.parallax.y < 1);
-const shared = RECIPES["shared-floors"] as OrderedZoneRecipe;
-const exterior = shared.sections.find((section) => section.id === "fire-escape-1")!;
+const apartmentStages = ZONE_MAP.destinations.find(({ id }) => id === "apartment")!.stages;
 const canonical = (id: string) =>
   Object.entries(EXTERIOR_DEPTH_ALIASES).find(([, alias]) => alias === id)?.[0] ?? id;
 
-it("shares each exterior variant's physical template without adding duplicate pool families", () => {
+it("retains reusable exterior variants without adding duplicate pool families", () => {
   for (const [id, alias] of Object.entries(EXTERIOR_DEPTH_ALIASES)) {
     const physical = (chunk: ChunkPlan) =>
       Object.fromEntries(
@@ -34,11 +34,9 @@ it("shares each exterior variant's physical template without adding duplicate po
     }
     expect(CHUNKS[alias]!.theme).toBe("apartment-exterior");
   }
-  expect(exterior.chunks.map(canonical)).toEqual(shared.sections[0]!.chunks);
-  expect(new Set(exterior.chunks.map(canonical)).size).toBe(exterior.chunks.length);
   for (const recipe of Object.values(RECIPES)) {
     if ("sections" in recipe) {
-      for (const section of recipe.sections.filter((section) => section !== exterior)) {
+      for (const section of recipe.sections) {
         expect(section.chunks.some((id) => canonical(id) !== id)).toBe(false);
       }
     } else {
@@ -47,27 +45,39 @@ it("shares each exterior variant's physical template without adding duplicate po
   }
 });
 
-it("cannot fill the nonempty shared exterior section with only plain chunks", () => {
-  const plain = exterior.chunks.filter((id) => !(CHUNKS[id]!.backdrops ?? []).some(depth));
-  const minChunks = Math.ceil(exterior.length.min / CHUNKS[plain[0]!]!.cols);
-  const reachesLength = (path: readonly string[], encounters: number): boolean => {
-    if (path.length >= minChunks) {
-      return true;
+it("guarantees a framed depth window in every Apartment finish while keeping ordinary chunks opaque", () => {
+  for (const id of apartmentStages) {
+    const recipe = RECIPES[id]!;
+    if ("sections" in recipe) {
+      throw new Error("Apartment floors are individual continuous stages");
     }
-    const last = path.at(-1);
-    return plain.some((id) => {
-      const chunk = CHUNKS[id]!;
-      return (
-        id !== last &&
-        (last === undefined || CHUNKS[last]!.exit.row === chunk.entry.row) &&
-        encounters + chunk.encounters <= shared.encounters! &&
-        !(last !== undefined && CHUNKS[last]!.encounters > 0 && chunk.encounters > 0) &&
-        reachesLength([...path, id], encounters + chunk.encounters)
-      );
-    });
-  };
-  expect(minChunks).toBeGreaterThan(0);
-  expect(reachesLength([], 0)).toBe(false);
+    const finish = CHUNKS[recipe.finish]!;
+    const start = CHUNKS[recipe.start]!;
+    expect((finish.backdrops ?? []).filter(depth)).toHaveLength(3);
+    expect((start.backdrops ?? []).some(depth)).toBe(false);
+    expect(recipe.chunks!.every((chunk) => !(CHUNKS[chunk]!.backdrops ?? []).some(depth))).toBe(
+      true,
+    );
+    expect(THEMES[recipe.theme]!.backdrops).toEqual([]);
+    const walls = (finish.backdrops ?? []).filter((object) => object.role === "wall");
+    expect(walls.some((wall) => wall.col === 0 && wall.cols === APARTMENT_WINDOW.col)).toBe(true);
+    expect(walls.some((wall) => wall.col === APARTMENT_WINDOW.col + APARTMENT_WINDOW.cols)).toBe(
+      true,
+    );
+    expect(
+      walls.some(
+        (wall) =>
+          wall.col === APARTMENT_WINDOW.col && wall.row === 0 && wall.rows === APARTMENT_WINDOW.row,
+      ),
+    ).toBe(true);
+    expect(
+      walls.some(
+        (wall) =>
+          wall.col === APARTMENT_WINDOW.col &&
+          wall.row === APARTMENT_WINDOW.row + APARTMENT_WINDOW.rows,
+      ),
+    ).toBe(true);
+  }
 });
 
 describe.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
@@ -90,7 +100,8 @@ describe.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
           theme.startsWith("apartment-") &&
           !["apartment-entrance", "apartment-exterior"].includes(theme)
         ) {
-          expect(layers).toEqual([]);
+          expect(layers).toHaveLength(3);
+          expect(layers.every((layer) => layer.origin.x === area.chunks.at(-1)!.x)).toBe(true);
         }
         expect(THEMES[theme]!.backdrops.some(depth)).toBe(false);
         for (const chunk of area.chunks) {
@@ -133,7 +144,7 @@ describe.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
               Object.values(WOODLAND_DEPTH_ALIASES).includes(id),
           ),
         ).toBe(true);
-      } else if (id !== "shared-floors") {
+      } else {
         expect((CHUNKS[recipe.start]!.backdrops ?? []).some(depth)).toBe(true);
       }
     });
