@@ -229,7 +229,8 @@ export function stepBird(
   input: BirdInput,
   bird: BirdState,
 ): BirdState {
-  const accel = bird.grounded ? tuning.groundAccel : tuning.airAccel;
+  const accel =
+    input.move === 0 ? tuning.brakeAccel : bird.grounded ? tuning.groundAccel : tuning.airAccel;
   let vx = approach(bird.vx, input.move * tuning.walkSpeed, accel * seconds);
   let vy = bird.vy;
 
