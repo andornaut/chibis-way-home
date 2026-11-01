@@ -97,6 +97,16 @@ describe("scenery sprite eligibility", () => {
     expect(() => artScrollFactor("sprite", invalid.parallax)).toThrow("requires backdrop art");
   });
 
+  it("rejects a static orbiter whose position belongs to its host relationship", () => {
+    const orbit: NonNullable<ObjectLayout["orbit"]> = {
+      angularSpeed: 1,
+      host: 0,
+      phase: 0,
+      radius: 24,
+    };
+    expect(sceneryParallax({ ...object, orbit })).toBeUndefined();
+  });
+
   it("keeps ordinary world sprites on their existing rendering path", () => {
     const ordinary = { ...object };
     delete ordinary.parallax;

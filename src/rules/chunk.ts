@@ -262,6 +262,10 @@ export function chunkProblems(
       }
     }
     for (const instance of variant.scenery ?? []) {
+      if (instance.orbit !== undefined) {
+        problems.push(`scenery ${instance.character} cannot orbit another object`);
+        continue;
+      }
       try {
         // Canonical checks need no visual metadata; the renderer validates sprite art and contact.
         const physical = { ...instance };

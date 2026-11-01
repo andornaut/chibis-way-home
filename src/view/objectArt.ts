@@ -23,6 +23,7 @@ export function sceneryParallax(object: ObjectLayout): Point | undefined {
     !factors ||
     (factors.x === 1 && factors.y === 1) ||
     object.contact !== undefined ||
+    object.orbit !== undefined ||
     (object.quirks?.length ?? 0) > 0 ||
     object.collision !== "none" ||
     object.interaction.kind !== "none" ||

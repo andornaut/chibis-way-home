@@ -106,6 +106,7 @@ describe("append-only chunk scenery", () => {
     const invalid: Instance[] = [
       { ...placement, col: 60 },
       { ...placement, role: "missing" },
+      { ...placement, orbit: { angularSpeed: 1, host: "host", phase: 0, radius: 2 } },
       { character: "scenery", col: 12, row: 48 },
       { character: "hazard", col: 12, parallax: { x: 0.4, y: 1 }, row: 48 },
     ];
