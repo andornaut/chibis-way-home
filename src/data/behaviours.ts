@@ -16,7 +16,7 @@ const RABBIT_HOP_SECONDS = Math.abs(RABBIT_DISTANCE) / RABBIT_SPEED;
 export const ANIMAL_DETECTION_RANGE = SCREEN.width / TILE;
 export const ANIMAL_INTERACTION_RANGE = SCREEN.width / (2 * TILE);
 
-const DETECTION = [{ kind: "nearby", range: ANIMAL_DETECTION_RANGE }] as const;
+const DETECTION = [{ kind: "visible" }] as const;
 const LOST_TARGET = [{ kind: "lost-target", tolerance: 1 }] as const;
 
 function frustrationNode(to: string): BehaviourNode {
@@ -230,6 +230,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = {
   distance: -18,
   inactiveAnimation: "idle",
   initial: "patrol-left",
+  spotted: { line: "archie-spotted", speaker: "dog" },
   states: {
     ...patrolChargeStates(GROUND_CHARGE),
     pounce: {
@@ -267,6 +268,7 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = {
   distance: -18,
   inactiveAnimation: "idle",
   initial: "patrol-left",
+  spotted: { line: "furt-spotted", speaker: "ferret" },
   states: {
     ...patrolChargeStates(GROUND_CHARGE),
     "prepare-throw": {
@@ -313,6 +315,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = {
   distance: -12,
   inactiveAnimation: "idle",
   initial: "patrol-left",
+  spotted: { line: "trixi-spotted", speaker: "goose" },
   states: {
     ...patrolChargeStates({
       attackRange: ANIMAL_DETECTION_RANGE,
@@ -417,6 +420,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = {
   distance: -15,
   inactiveAnimation: "idle",
   initial: "watch",
+  spotted: { line: "kiwi-spotted", speaker: "raccoon" },
   states: {
     ...verticalDropStates({
       dropSpeed: 18.75,
@@ -484,6 +488,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = {
   distance: -18,
   inactiveAnimation: "idle",
   initial: "watch",
+  spotted: { line: "bini-spotted", speaker: "bear" },
   states: {
     frustration: frustrationNode("prepare-growl"),
     growl: {
@@ -605,6 +610,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = {
   distance: 24,
   inactiveAnimation: "idle",
   initial: "watch",
+  spotted: { line: "pebble-spotted", speaker: "pigeon" },
   states: {
     "ascend-left": pigeonFlight("fly-right", "frustration-left", { x: -12, y: -8 }),
     "ascend-right": pigeonFlight("return-high", "frustration-right", { x: 12, y: -8 }),
