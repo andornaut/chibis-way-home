@@ -29,6 +29,7 @@ import {
   type BirdState,
   EDGE,
   startBird,
+  startsDash,
   stepBird,
 } from "./bird";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
@@ -669,7 +670,14 @@ export function stepZone(
     }
   });
   const push = forcePulseVelocity(solids, seconds, pulses, birdBox(tuning, bird));
-  bird = stepBird(tuning, solids, ledges, seconds, { ...input, push }, bird);
+  const usePressed = input.useHeld && !zone.useHeld;
+  const door = usePressed
+    ? doorAt(tuning, layout.birdFrame, area.objects, positions, bird)
+    : undefined;
+  const playerInput = { ...input, dashPressed: usePressed && door === undefined, push };
+  const dashing =
+    (bird.dash?.remainingSeconds ?? 0) > EDGE || startsDash(tuning, playerInput, bird);
+  bird = stepBird(tuning, solids, ledges, seconds, playerInput, bird);
   const remainingPulses = pulses.flatMap((pulse) => {
     const remaining = pulse.remaining - Math.max(0, seconds - pulse.start);
     return remaining > 0 ? [{ ...pulse, remaining, start: 0 }] : [];
@@ -709,6 +717,15 @@ export function stepZone(
                 birdAt(leg.start - zone.seconds),
                 birdAt(leg.end - zone.seconds),
               ),
+            );
+          }
+          if (!behaviour && dashing) {
+            const { after, before } = objects[index]!;
+            return sweptContact(
+              contactBox(object, before, 1),
+              contactBox(object, after, 1),
+              beforeBox,
+              box,
             );
           }
           return behaviour?.segments.some((segment) => {
@@ -829,21 +846,16 @@ export function stepZone(
     return {
       ...arrival,
       barks,
-      bird: { ...arrival.bird, facing: bird.facing, jumpHeld: input.jumpHeld },
+      bird: { ...arrival.bird, dash: bird.dash, facing: bird.facing, jumpHeld: input.jumpHeld },
     };
   }
-  const usePressed = input.useHeld && !zone.useHeld;
-  const door =
-    usePressed && !atStageExit
-      ? doorAt(tuning, layout.birdFrame, area.objects, positions, bird)
-      : undefined;
   return {
     ...zone,
     barks,
     behaviours,
     bird,
     cleared: layout.stageExit ? atStageExit : box.x + box.width > area.exitX,
-    door,
+    door: atStageExit ? undefined : door,
     nextPulseId,
     nextTransientId: transientStep.nextId,
     objects: positions,

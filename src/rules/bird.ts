@@ -8,6 +8,7 @@ export const EDGE = 1e-6;
 // What the player asks of the bird this step. jumpHeld is the button's state; a jump starts on
 // the step it goes down.
 export interface BirdInput {
+  readonly dashPressed?: boolean;
   readonly jumpHeld: boolean;
   readonly move: -1 | 0 | 1;
   // External velocity for this step, separate from locomotion and platform momentum.
@@ -21,7 +22,16 @@ export interface JumpReleaseCurve {
   readonly seconds: number;
 }
 
+export interface BirdDashState {
+  readonly airUsed: boolean;
+  readonly cooldownRemainingSeconds: number;
+  readonly direction: -1 | 1;
+  readonly ordinaryVx: number;
+  readonly remainingSeconds: number;
+}
+
 export interface BirdState {
+  readonly dash?: BirdDashState | undefined;
   // Seconds a pressed jump still waits to start, should she land or still be in coyote time.
   readonly bufferLeft: number;
   // Speed along x carried from a moving platform she left, kept until she lands or meets a wall.
@@ -45,11 +55,31 @@ export interface BirdState {
   readonly y: number;
 }
 
+export function startsDash(tuning: BirdTuning, input: BirdInput, bird: BirdState): boolean {
+  const dash = bird.dash;
+  return (
+    tuning.dash !== undefined &&
+    input.dashPressed === true &&
+    (dash?.remainingSeconds ?? 0) <= EDGE &&
+    (dash?.cooldownRemainingSeconds ?? 0) <= EDGE &&
+    (bird.grounded || !dash?.airUsed)
+  );
+}
+
 export function startBird(tuning: BirdTuning, start: Point): BirdState {
   return {
     bufferLeft: 0,
     carryVx: 0,
     coyoteLeft: 0,
+    ...(tuning.dash && {
+      dash: {
+        airUsed: false,
+        cooldownRemainingSeconds: 0,
+        direction: 1 as const,
+        ordinaryVx: 0,
+        remainingSeconds: 0,
+      },
+    }),
     facing: 1,
     grounded: false,
     jumpFromY: 0,
@@ -229,9 +259,48 @@ export function stepBird(
   input: BirdInput,
   bird: BirdState,
 ): BirdState {
+  const burst = tuning.dash;
+  let dash = burst
+    ? (bird.dash ?? {
+        airUsed: false,
+        cooldownRemainingSeconds: 0,
+        direction: bird.facing,
+        ordinaryVx: bird.vx,
+        remainingSeconds: 0,
+      })
+    : undefined;
+  const activeBefore = (dash?.remainingSeconds ?? 0) > EDGE;
+  if (burst && dash && startsDash(tuning, input, bird)) {
+    dash = {
+      ...dash,
+      airUsed: dash.airUsed || !bird.grounded,
+      cooldownRemainingSeconds: burst.cooldownSeconds,
+      direction: input.move || bird.facing,
+      remainingSeconds: burst.durationSeconds,
+    };
+  }
   const accel =
     input.move === 0 ? tuning.brakeAccel : bird.grounded ? tuning.groundAccel : tuning.airAccel;
-  let vx = approach(bird.vx, input.move * tuning.walkSpeed, accel * seconds);
+  const ordinaryVx = approach(
+    activeBefore ? dash!.ordinaryVx : bird.vx,
+    input.move * tuning.walkSpeed,
+    accel * seconds,
+  );
+  const dashSeconds = burst && dash ? Math.min(seconds, Math.max(0, dash.remainingSeconds)) : 0;
+  const horizontalDistance =
+    burst && dash && dashSeconds > 0
+      ? dash.direction * burst.speed * dashSeconds + ordinaryVx * (seconds - dashSeconds)
+      : ordinaryVx * seconds;
+  if (dash) {
+    dash = {
+      ...dash,
+      cooldownRemainingSeconds: Math.max(0, dash.cooldownRemainingSeconds - seconds),
+      ordinaryVx,
+      remainingSeconds: Math.max(0, dash.remainingSeconds - seconds),
+    };
+  }
+  let vx =
+    burst && dash && dash.remainingSeconds > EDGE ? dash.direction * burst.speed : ordinaryVx;
   let vy = bird.vy;
 
   const jumpPressed = input.jumpHeld && !bird.jumpHeld;
@@ -294,9 +363,15 @@ export function stepBird(
   }
 
   let carryVx = bird.carryVx;
-  const moving = vx + carryVx + (input.push?.x ?? 0);
+  const moving =
+    (dashSeconds > 0 && seconds > 0 ? horizontalDistance / seconds : vx) +
+    carryVx +
+    (input.push?.x ?? 0);
   const intendedX = bird.x + moving * seconds;
-  let x = input.push?.x ? pushedPosition(solids, "x", birdBox(tuning, bird), intendedX) : intendedX;
+  let x =
+    input.push?.x || dashSeconds > 0
+      ? pushedPosition(solids, "x", birdBox(tuning, bird), intendedX)
+      : intendedX;
   if (x !== intendedX) {
     vx = 0;
     carryVx = 0;
@@ -308,6 +383,10 @@ export function stepBird(
       vx = 0;
       carryVx = 0;
     }
+  }
+
+  if (dash && x !== intendedX) {
+    dash = { ...dash, ordinaryVx: 0, remainingSeconds: 0 };
   }
 
   // grounded is found afresh each step: standing on a solid, gravity carries her a fraction of a
@@ -360,6 +439,9 @@ export function stepBird(
     }
   }
   if (grounded) {
+    if (dash) {
+      dash = { ...dash, airUsed: false };
+    }
     coyoteLeft = tuning.coyoteTime;
     carryVx = 0;
   }
@@ -368,7 +450,13 @@ export function stepBird(
     bufferLeft,
     carryVx,
     coyoteLeft,
-    facing: input.move === 0 ? bird.facing : input.move,
+    ...(dash && { dash }),
+    facing:
+      dash && dash.remainingSeconds > EDGE
+        ? dash.direction
+        : input.move === 0
+          ? bird.facing
+          : input.move,
     grounded,
     jumpFromY,
     jumpHeld: input.jumpHeld,
