@@ -53,18 +53,29 @@ describe("the logos", () => {
 });
 
 describe("the home page's controls", () => {
-  it("names the touch buttons by their labels", async () => {
-    expect(await pageText()).toContain(`press ${TEXT.buttons.jump} or ${TEXT.buttons.use}.`);
+  const instructions = async () => {
+    const match = /<ul class="keys">\s*<li>(.*?)<\/li>\s*<li>(.*?)<\/li>\s*<\/ul>/u.exec(
+      await pageText(),
+    );
+    expect(match, "rendered touch and keyboard instruction rows").not.toBeNull();
+    return { keyboard: match![2]!, touch: match![1]! };
+  };
+
+  it("names both actual touch controls in their instruction row", async () => {
+    const { touch } = await instructions();
+    for (const label of [TEXT.buttons.jump, TEXT.buttons.use]) {
+      expect(touch).toContain(label);
+    }
   });
 
   it.each([
-    ["arrow keys to walk and jump", () => keyIntent(new Set(["ArrowLeft"])).move === -1],
-    ["arrow keys to walk and jump", () => keyIntent(new Set(["ArrowRight"])).move === 1],
-    ["arrow keys to walk and jump", () => keyIntent(new Set(["ArrowUp"])).jump],
-    ["E to use", () => keyIntent(new Set(["KeyE"])).use],
-    ["P to pause", () => cardKeyAction(false, "p", false) === "open"],
-  ])("states %s, as the keys do", async (phrase, does) => {
-    expect({ does: does(), stated: (await pageText()).includes(phrase) }).toEqual({
+    ["Left", /\barrow(?: keys|s)\b/u, () => keyIntent(new Set(["ArrowLeft"])).move === -1],
+    ["Right", /\barrow(?: keys|s)\b/u, () => keyIntent(new Set(["ArrowRight"])).move === 1],
+    ["Up", /\barrow(?: keys|s)\b/u, () => keyIntent(new Set(["ArrowUp"])).jump],
+    ["E", /\bE\b/u, () => keyIntent(new Set(["KeyE"])).use],
+    ["P", /\bP\b/u, () => cardKeyAction(false, "p", false) === "open"],
+  ])("names the bound %s key in keyboard instructions", async (_key, token, does) => {
+    expect({ does: does(), stated: token.test((await instructions()).keyboard) }).toEqual({
       does: true,
       stated: true,
     });
