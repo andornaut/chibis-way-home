@@ -18,6 +18,12 @@ export function behaviourWorld(geometry: BehaviourGeometry): BehaviourWorld {
   return "solids" in geometry ? geometry : { solids: geometry };
 }
 
+export interface BehaviourTrack {
+  readonly axis: "x" | "y";
+  readonly distance: number;
+  readonly origin?: Point;
+}
+
 type Span = readonly [number, number];
 interface Corridor {
   readonly floors: readonly Span[];
@@ -69,7 +75,7 @@ function staticCorridor(
   world: BehaviourWorld,
   floor: number,
   tolerance: number,
-  distance: number,
+  track: BehaviourTrack,
   box: Rect,
 ): Corridor {
   let objects = CACHE.get(world.solids);
@@ -82,13 +88,23 @@ function staticCorridor(
     entries = new Map();
     objects.set(object, entries);
   }
-  const key = `${floor}:${tolerance}:${distance}:${box.x}:${box.y}:${box.width}:${box.height}`;
+  const key = [
+    floor,
+    tolerance,
+    track.origin?.x ?? object.origin.x,
+    track.distance,
+    box.x,
+    box.y,
+    box.width,
+    box.height,
+  ].join(":");
   const cached = entries.get(key);
   if (cached) {
     return cached;
   }
-  const low = Math.min(object.origin.x, object.origin.x + distance);
-  const high = Math.max(object.origin.x, object.origin.x + distance);
+  const origin = track.origin ?? object.origin;
+  const low = Math.min(origin.x, origin.x + track.distance);
+  const high = Math.max(origin.x, origin.x + track.distance);
   const top = Math.min(box.y, floor - tolerance - EDGE);
   const bottom = Math.max(box.y + box.height, floor + tolerance + EDGE);
   const solids = collisionCandidates(world.solids, {
@@ -158,7 +174,7 @@ export function targetReachable(
   box: Rect,
   groundY: number,
   tolerance: number,
-  track: { readonly axis: "x" | "y"; readonly distance: number } | undefined,
+  track: BehaviourTrack | undefined,
   bird: BirdState,
 ): boolean {
   const plan = track;
@@ -166,8 +182,9 @@ export function targetReachable(
     return false;
   }
   const hers = birdBox(tuning, bird);
-  const low = Math.min(object.origin[plan.axis], object.origin[plan.axis] + plan.distance);
-  const high = Math.max(object.origin[plan.axis], object.origin[plan.axis] + plan.distance);
+  const origin = plan.origin ?? object.origin;
+  const low = Math.min(origin[plan.axis], origin[plan.axis] + plan.distance);
+  const high = Math.max(origin[plan.axis], origin[plan.axis] + plan.distance);
   const offset = box[plan.axis] - at[plan.axis];
   const length = plan.axis === "x" ? box.width : box.height;
   if (
@@ -215,29 +232,7 @@ export function targetReachable(
     return false;
   }
   const baselineBox = { ...box, x: box.x - at.x, y: box.y - at.y + groundY };
-  const cached = staticCorridor(object, world, floor, tolerance, plan.distance, baselineBox);
-  const floors: Span[] = [];
-  const cuts: Span[] = [];
-  for (const platform of world.platforms ?? []) {
-    if (platform.owner === object) {
-      continue;
-    }
-    const rect = platform.rect;
-    if (Math.abs(rect.y - floor) <= tolerance + EDGE) {
-      floors.push([rect.x, rect.x + rect.width]);
-    }
-    if (platform.collision === "solid" && blocksAtFloor(rect, baselineBox)) {
-      cuts.push([rect.x - baselineBox.x - box.width, rect.x + rect.width - baselineBox.x]);
-    }
-  }
-  const spans =
-    floors.length === 0 && cuts.length === 0
-      ? cached.allowed
-      : allowedOrigins(
-          union([...cached.floors, ...floors]),
-          [...cached.cuts, ...cuts],
-          baselineBox,
-        );
+  const spans = groundSpans(object, world, floor, tolerance, plan, baselineBox);
   for (const [left, right] of spans) {
     const from = Math.max(low, left);
     const to = Math.min(high, right);
@@ -251,4 +246,56 @@ export function targetReachable(
     }
   }
   return false;
+}
+
+function groundSpans(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  floor: number,
+  tolerance: number,
+  track: BehaviourTrack,
+  baselineBox: Rect,
+): readonly Span[] {
+  const cached = staticCorridor(object, world, floor, tolerance, track, baselineBox);
+  const floors: Span[] = [];
+  const cuts: Span[] = [];
+  for (const platform of world.platforms ?? []) {
+    if (platform.owner === object) {
+      continue;
+    }
+    const rect = platform.rect;
+    if (Math.abs(rect.y - floor) <= tolerance + EDGE) {
+      floors.push([rect.x, rect.x + rect.width]);
+    }
+    if (platform.collision === "solid" && blocksAtFloor(rect, baselineBox)) {
+      cuts.push([rect.x - baselineBox.x - baselineBox.width, rect.x + rect.width - baselineBox.x]);
+    }
+  }
+  return floors.length === 0 && cuts.length === 0
+    ? cached.allowed
+    : allowedOrigins(union([...cached.floors, ...floors]), [...cached.cuts, ...cuts], baselineBox);
+}
+
+// Stop at the edge of connected support; pursuit never adds jumping or falling physics.
+export function groundPursuitEnd(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  track: BehaviourTrack,
+  at: Point,
+  box: Rect,
+  desired: number,
+): number {
+  const baseline = { ...box, x: box.x - at.x };
+  const spans = groundSpans(object, world, at.y + object.height, EDGE, track, baseline);
+  const origin = track.origin ?? object.origin;
+  const low = Math.min(origin.x, origin.x + track.distance);
+  const high = Math.max(origin.x, origin.x + track.distance);
+  for (const [left, right] of spans) {
+    const from = Math.max(low, left);
+    const to = Math.min(high, right);
+    if (at.x >= from - EDGE && at.x <= to + EDGE) {
+      return Math.max(from, Math.min(to, desired));
+    }
+  }
+  return at.x;
 }

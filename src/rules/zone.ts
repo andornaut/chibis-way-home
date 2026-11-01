@@ -517,6 +517,11 @@ export function stepZone(
     const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
     return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
   });
+  for (const frame of objects) {
+    if (frame.behaviour?.escaped) {
+      barks.push(frame.behaviour.escaped);
+    }
+  }
   const positions = objects.map((frame, index): Point =>
     frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
   );

@@ -4,14 +4,17 @@ import type {
   BehaviourNode,
   BehaviourPlan,
   BirdTuning,
+  DialogueLine,
   ObjectLayout,
   Point,
   Rect,
 } from "../data/types";
 import {
   type BehaviourGeometry,
+  type BehaviourTrack,
   type BehaviourWorld,
   behaviourWorld,
+  groundPursuitEnd,
   targetReachable,
 } from "./behaviourReach";
 import { birdBox, type BirdState, EDGE } from "./bird";
@@ -21,6 +24,12 @@ import { hopLift } from "./motion";
 import { targetVisible } from "./perception";
 
 export interface BehaviourState {
+  readonly anchor?: Point;
+  readonly pursuit?: {
+    readonly phase: "engaged" | "escaped";
+    readonly unreachableSeconds: number;
+    readonly settled: boolean;
+  };
   readonly animationTag?: string;
   readonly animationSeconds?: number;
   readonly axis?: "x" | "y";
@@ -57,6 +66,7 @@ export interface BehaviourEvent {
 }
 
 export interface BehaviourStep {
+  readonly escaped?: DialogueLine;
   readonly actions: readonly BehaviourEvent[];
   readonly at: Point;
   readonly segments: readonly BehaviourSegment[];
@@ -68,6 +78,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   const valid = (value: number) => Number.isFinite(value) && value >= 0;
   if (!Number.isFinite(plan.distance) || !plan.states[plan.initial]) {
     throw new Error("Invalid behaviour extent or initial state");
+  }
+  if (
+    plan.pursuit &&
+    (!valid(plan.pursuit.distance) ||
+      plan.pursuit.distance === 0 ||
+      !valid(plan.pursuit.unreachableGraceSeconds) ||
+      !plan.pursuit.escaped.line ||
+      !plan.pursuit.escaped.speaker)
+  ) {
+    throw new Error("Invalid pursuit configuration");
   }
   const states = Object.fromEntries(
     Object.entries(plan.states).map(([key, node]) => {
@@ -93,6 +113,15 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             (node.motion.speed > 0 && track.distance === 0)))
       ) {
         throw new Error(`Invalid behaviour motion or animation in ${key}`);
+      }
+      if (
+        node.motion.kind === "pursue" &&
+        (!plan.pursuit ||
+          !["ground", "fly"].includes(node.motion.mode) ||
+          !valid(node.motion.speed) ||
+          node.motion.speed === 0)
+      ) {
+        throw new Error(`Invalid pursuit motion in ${key}`);
       }
       if (
         node.motion.kind === "fly" &&
@@ -218,7 +247,12 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
       ];
     }),
   );
-  return { ...plan, distance: plan.distance * tile, states };
+  return {
+    ...plan,
+    ...(plan.pursuit && { pursuit: { ...plan.pursuit, distance: plan.pursuit.distance * tile } }),
+    distance: plan.distance * tile,
+    states,
+  };
 }
 
 function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
@@ -238,6 +272,9 @@ function enterState(
   state: BehaviourState,
 ): BehaviourState {
   const node = nodeOf(object, key);
+  const leavingPursuit =
+    nodeOf(object, state.stateKey).motion.kind === "pursue" && node.motion.kind !== "pursue";
+  const anchor = leavingPursuit && !state.hop ? at : state.anchor;
   let facing =
     node.motion.kind !== "wait" &&
     node.motion.kind !== "fly" &&
@@ -264,7 +301,8 @@ function enterState(
   }
   const next: BehaviourState = {
     ...state,
-    axis: node.track?.axis ?? object.behaviour?.axis ?? "x",
+    ...(anchor && { anchor }),
+    axis: node.motion.kind === "pursue" ? "x" : (node.track?.axis ?? object.behaviour?.axis ?? "x"),
     elapsed: 0,
     facing,
     pendingEntry: true,
@@ -281,12 +319,18 @@ function enterState(
       ...animation,
       flightTarget: {
         x: Math.max(
-          object.origin.x + node.motion.bounds.x,
-          Math.min(object.origin.x + node.motion.bounds.x + node.motion.bounds.width, x),
+          (anchor ?? object.origin).x + node.motion.bounds.x,
+          Math.min(
+            (anchor ?? object.origin).x + node.motion.bounds.x + node.motion.bounds.width,
+            x,
+          ),
         ),
         y: Math.max(
-          object.origin.y + node.motion.bounds.y,
-          Math.min(object.origin.y + node.motion.bounds.y + node.motion.bounds.height, y),
+          (anchor ?? object.origin).y + node.motion.bounds.y,
+          Math.min(
+            (anchor ?? object.origin).y + node.motion.bounds.y + node.motion.bounds.height,
+            y,
+          ),
         ),
       },
     };
@@ -363,7 +407,7 @@ function endpoint(object: ObjectLayout, direction: -1 | 1, state: BehaviourState
   if (!plan) {
     throw new Error(`No behaviour for ${object.character}`);
   }
-  const origin = object.origin[plan.axis];
+  const origin = (state.anchor ?? object.origin)[plan.axis];
   return direction === 1
     ? Math.max(origin, origin + plan.distance)
     : Math.min(origin, origin + plan.distance);
@@ -379,6 +423,9 @@ function matches(
   condition: BehaviourCondition,
 ): boolean {
   if (condition.kind === "visible") {
+    if (object.behaviour?.pursuit) {
+      return state.pursuit?.phase === "engaged";
+    }
     return targetVisible(
       world,
       object,
@@ -397,7 +444,10 @@ function matches(
     const target =
       motion.to === "target"
         ? state.flightTarget
-        : { x: object.origin.x + motion.to.x, y: object.origin.y + motion.to.y };
+        : {
+            x: (state.anchor ?? object.origin).x + motion.to.x,
+            y: (state.anchor ?? object.origin).y + motion.to.y,
+          };
     return (
       target !== undefined && Math.hypot(at.x - target.x, at.y - target.y) <= condition.tolerance
     );
@@ -407,17 +457,23 @@ function matches(
     return at[axis] === endpoint(object, heading(nodeOf(object, state.stateKey), state), state);
   }
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
-    const reachable = targetReachable(
-      tuning,
-      object,
-      world,
-      at,
-      contactBox(object, at, state.facing, state.axis),
-      state.hop?.groundY ?? at.y,
-      condition.tolerance,
-      nodeOf(object, state.stateKey).track ?? object.behaviour,
-      bird,
-    );
+    const reachable =
+      state.pursuit?.phase === "engaged"
+        ? pursuitReachable(tuning, object, world, at, state, bird)
+        : targetReachable(
+            tuning,
+            object,
+            world,
+            at,
+            contactBox(object, at, state.facing, state.axis),
+            state.hop?.groundY ?? at.y,
+            condition.tolerance,
+            {
+              ...(nodeOf(object, state.stateKey).track ?? object.behaviour!),
+              ...(state.anchor && { origin: state.anchor }),
+            },
+            bird,
+          );
     return condition.kind === "reachable" ? reachable : !reachable;
   }
   if (condition.kind === "same-ground") {
@@ -547,6 +603,99 @@ function flightAxis(
   return to;
 }
 
+function pursuitTrack(object: ObjectLayout): BehaviourTrack {
+  const distance = object.behaviour!.pursuit!.distance;
+  return {
+    axis: "x",
+    distance: distance * 2,
+    origin: { x: object.origin.x - distance, y: object.origin.y },
+  };
+}
+
+function pursuitReachable(
+  tuning: BirdTuning,
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  at: Point,
+  state: BehaviourState,
+  bird: BirdState,
+): boolean {
+  const flight = Object.values(object.behaviour!.states).some(
+    (node) => node.motion.kind === "pursue" && node.motion.mode === "fly",
+  );
+  if (flight) {
+    const hers = birdBox(tuning, bird);
+    const contact = contactBox(object, at, state.facing, state.axis);
+    const x = hers.x + hers.width / 2 - contact.width / 2 - (contact.x - at.x);
+    const y = hers.y + hers.height / 2 - contact.height / 2 - (contact.y - at.y);
+    const endX = flightAxis(object, world, at, "x", x);
+    const endY = flightAxis(object, world, { ...at, x: endX }, "y", y);
+    return Math.abs(endX - x) <= EDGE && Math.abs(endY - y) <= EDGE;
+  }
+  return targetReachable(
+    tuning,
+    object,
+    world,
+    at,
+    contactBox(object, at, state.facing, "x"),
+    state.hop?.groundY ?? state.anchor?.y ?? at.y,
+    EDGE,
+    pursuitTrack(object),
+    bird,
+  );
+}
+
+function updatePursuit(
+  tuning: BirdTuning,
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  seconds: number,
+  bird: BirdState,
+  at: Point,
+  state: BehaviourState,
+): BehaviourState {
+  const config = object.behaviour!.pursuit;
+  if (!config) {
+    return state;
+  }
+  const inside =
+    Math.abs(bird.x + tuning.width / 2 - object.origin.x - object.width / 2) <= config.distance;
+  const reachable = pursuitReachable(tuning, object, world, at, state, bird);
+  const prior = state.pursuit;
+  const canAcquire = !prior || (prior.phase === "escaped" && prior.settled && inside && reachable);
+  if (
+    canAcquire &&
+    targetVisible(
+      world,
+      object,
+      contactBox(object, at, state.facing, state.axis),
+      birdBox(tuning, bird),
+    )
+  ) {
+    const unreachableSeconds = reachable ? 0 : seconds;
+    return {
+      ...state,
+      pursuit: {
+        phase:
+          !inside || (!reachable && unreachableSeconds >= config.unreachableGraceSeconds)
+            ? "escaped"
+            : "engaged",
+        settled: false,
+        unreachableSeconds,
+      },
+    };
+  }
+  if (prior?.phase !== "engaged") {
+    return state;
+  }
+  const unreachableSeconds = reachable ? 0 : prior.unreachableSeconds + seconds;
+  const escaped = !inside || (!reachable && unreachableSeconds >= config.unreachableGraceSeconds);
+  return {
+    ...state,
+    pursuit: { phase: escaped ? "escaped" : "engaged", settled: false, unreachableSeconds },
+  };
+}
+
 // Generic state graphs choose the motion, animation and transition order. The executor knows
 // only bounded move/wait/hop primitives and conditions; it has no character-specific cycle.
 export function stepBehaviour(
@@ -591,11 +740,28 @@ export function stepBehaviour(
   const segments: BehaviourSegment[] = [];
   const instant = new Set<string>();
   let current = at;
-  let next = state;
+  let next = updatePursuit(tuning, object, world, seconds, bird, at, state);
+  const escaped =
+    state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped"
+      ? plan.pursuit?.escaped
+      : undefined;
   let time = 0;
   while (true) {
-    const node = nodeOf(object, next.stateKey);
-    const track = node.track ?? plan;
+    let node = nodeOf(object, next.stateKey);
+    if (
+      next.pursuit?.phase === "escaped" &&
+      !next.pursuit.settled &&
+      (node.motion.kind === "pursue" || next.stateKey === plan.initial) &&
+      !next.hop
+    ) {
+      next = enterState(tuning, object, bird, current, plan.initial, {
+        ...next,
+        anchor: current,
+        pursuit: { ...next.pursuit, settled: true },
+      });
+      node = nodeOf(object, next.stateKey);
+    }
+    const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
     if (next.pendingEntry) {
       next = enterState(tuning, object, bird, current, next.stateKey, next);
       for (const action of node.onEnter ?? []) {
@@ -671,11 +837,45 @@ export function stepBehaviour(
       );
     }
     const to = { ...current };
+    if (node.motion.kind === "pursue" && next.pursuit?.phase === "engaged") {
+      const hers = birdBox(tuning, bird);
+      const contact = contactBox(object, current, next.facing, next.axis);
+      const targetX = Math.max(
+        object.origin.x - plan.pursuit!.distance,
+        Math.min(
+          object.origin.x + plan.pursuit!.distance,
+          hers.x + hers.width / 2 - contact.width / 2 - (contact.x - current.x),
+        ),
+      );
+      const targetY = hers.y + hers.height / 2 - contact.height / 2 - (contact.y - current.y);
+      const travel = node.motion.speed * slice;
+      const dx = targetX - current.x;
+      next = { ...next, facing: dx === 0 ? next.facing : dx < 0 ? -1 : 1 };
+      if (node.motion.mode === "ground") {
+        const desired = current.x + Math.max(-travel, Math.min(travel, dx));
+        to.x = groundPursuitEnd(
+          object,
+          world,
+          pursuitTrack(object),
+          current,
+          contactBox(object, current, next.facing, "x"),
+          desired,
+        );
+      } else {
+        const dy = targetY - current.y;
+        const fraction = Math.min(1, travel / (Math.hypot(dx, dy) || 1));
+        to.x = flightAxis(object, world, current, "x", current.x + dx * fraction);
+        to.y = flightAxis(object, world, { ...current, x: to.x }, "y", current.y + dy * fraction);
+      }
+    }
     if (node.motion.kind === "fly") {
       const target =
         node.motion.to === "target"
           ? next.flightTarget
-          : { x: object.origin.x + node.motion.to.x, y: object.origin.y + node.motion.to.y };
+          : {
+              x: (next.anchor ?? object.origin).x + node.motion.to.x,
+              y: (next.anchor ?? object.origin).y + node.motion.to.y,
+            };
       if (!target) {
         throw new Error("Target flight must capture its destination on entry");
       }
@@ -754,7 +954,7 @@ export function stepBehaviour(
     time = end > time ? end : seconds;
     instant.clear();
   }
-  return { actions, at: current, segments, state: next };
+  return { actions, at: current, segments, state: next, ...(escaped && { escaped }) };
 }
 
 export { sweptContact } from "./sweptContact";
