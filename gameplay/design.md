@@ -118,7 +118,7 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 - **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show their image-backed statistics interstitials; stage three shows its outgoing zone exchange and statistics before map travel, except for Furt's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged; a fresh stage entry starts a new run and its own statistics. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
-- **Length:** target three minutes for a successful clear of each stage. This target is unmeasured. Every catalogued stage fills 1200 to 1440 columns, counting fixed caps and all linked sections. Recipe data owns the shared range and derives linked-section budgets from it; the debug park keeps its own recipe
+- **Length:** target two minutes for a successful clear of each stage. This target is unmeasured. Every catalogued stage fills 840 to 960 columns, counting fixed caps and all linked sections. Recipe data owns the shared range and derives linked-section budgets from it; the debug park keeps its own recipe
 - **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. A multi-area apartment stage applies this structure across its linked sections, with fixed first and last caps and seeded runs of shared templates in intermediate areas. The rules for chunks are under Chunks
 - **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; Chibi, the tiles and the reaches stay the same everywhere
 - **Shape:** each playable stage area is at most 2 screens (60 tiles, 720 px) tall and as wide as it needs, and scrolls sideways and up. Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
@@ -199,7 +199,7 @@ Everything in a stage except its terrain is placed in data through archetypes, c
 
 ### V1 route
 
-The route spans six themed zones of three stages in this order. Each stage targets a three-minute successful clear; this target is unmeasured. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
+The route spans six themed zones of three stages in this order. Each stage targets a two-minute successful clear; this target is unmeasured. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
 
 | Zone                 | First stage                               | Second stage                    | Third stage                                       |
 | -------------------- | ----------------------------------------- | ------------------------------- | ------------------------------------------------- |

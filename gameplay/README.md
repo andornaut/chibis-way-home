@@ -45,7 +45,7 @@ Run statistics count the initial attempt and reset for a fresh generated run. De
 Targets are assessed per stage and player skill. Bands other than the successful-clear time target remain to be agreed with the user. The kinds of target:
 
 - **Encounter distribution:** satisfy the rulebook's encounter quotas across each zone's three stages, with distinct encounter sections, ordinary platforming between them and varied layout. Encounter spacing is flexible; it is not a time-based encounter rate
-- **Stage length:** target about three minutes of active play in a successful attempt. This target is unmeasured. It is a tuning target, not a hard time limit or a direct conversion to tile length. Track this generated run's total active time including retries separately from the historically fastest successful-attempt time, using the rulebook's active-time exclusions
+- **Stage length:** target about two minutes of active play in a successful attempt. This target is unmeasured. It is a tuning target, not a hard time limit or a direct conversion to tile length. Track this generated run's total active time including retries separately from the historically fastest successful-attempt time, using the rulebook's active-time exclusions
 - **Reaches:** Chibi makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
