@@ -70,7 +70,7 @@ function inputs(run: SavedTuningCase["run"]) {
       result.directionalTicks += segment.ticks;
       if (segment.input.move === run.config.policy.move) {
         result.forwardTicks += segment.ticks;
-      } else {
+      } else if (run.config.policy.move !== 0) {
         result.reverseTicks += segment.ticks;
       }
     }
@@ -89,7 +89,8 @@ function inputs(run: SavedTuningCase["run"]) {
     witness !== undefined &&
     !witness.truncated &&
     witness.capturedTicks === result.capturedTicks &&
-    result.capturedTicks === run.steps;
+    result.capturedTicks === run.steps &&
+    witness.steps === run.steps;
   return {
     ...result,
     coverage: witness === undefined ? "absent" : complete ? "complete" : "incomplete",
@@ -106,6 +107,7 @@ export function assessTuning(context: TuningContext, savedCases: readonly SavedT
     }
     seen.add(saved.stage);
     const run = saved.run;
+    const inputStats = inputs(run);
     const inventory = context.structural.stages.filter(
       (stage) => stage.id === saved.stage && stage.seed === run.seeds.layout,
     );
@@ -200,10 +202,18 @@ export function assessTuning(context: TuningContext, savedCases: readonly SavedT
         }),
       ),
       deaths: run.deaths,
-      firstAttemptFullPass: run.fullPass && run.retries === 0 && run.deaths === 0,
+      firstAttemptFullPass:
+        run.fullPass &&
+        run.retries === 0 &&
+        run.deaths === 0 &&
+        inputStats.coverage === "complete" &&
+        run.witness?.retries === 0 &&
+        run.witness.segments.every((segment) => segment.attempt === 0) &&
+        run.coverage.path.every((entry) => entry.attempt === 0) &&
+        run.failures.length === 0,
       fullPass: run.fullPass,
       id: saved.stage,
-      inputs: inputs(run),
+      inputs: inputStats,
       mechanicsPresentInVisitedChunks,
       provenance: {
         readinessCommit: saved.readinessCommit ?? null,
@@ -273,42 +283,165 @@ export function assessTuning(context: TuningContext, savedCases: readonly SavedT
 }
 export type TuningReport = ReturnType<typeof assessTuning>;
 const csv = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+const fraction = (ticks: number, total: number) => (total === 0 ? null : ticks / total);
+const bottlenecks = (stage: TuningReport["stages"][number]) =>
+  stage.chunks.filter((chunk, index) => index < 5 || chunk.visits > 1);
 export function formatTuningCsv(report: TuningReport): string {
+  const columns = [
+    "recordType",
+    "stage",
+    "zone",
+    "status",
+    "firstAttemptFullPass",
+    "allAttemptActiveSeconds",
+    "successfulAttemptSeconds",
+    "inputCoverage",
+    "capturedInputTicks",
+    "noDirectionFraction",
+    "reverseFraction",
+    "jumpHeldFraction",
+    "area",
+    "chunkIndex",
+    "chunkId",
+    "residenceTicks",
+    "visits",
+    "mechanicsPresent",
+    "comparisonFirst",
+    "comparisonSecond",
+    "jaccardPresence",
+    "frequencyDifferencePer100Cols",
+  ];
+  const records: Record<string, unknown>[] = report.stages.flatMap((stage) => [
+    {
+      allAttemptActiveSeconds: stage.recordedActiveSeconds,
+      capturedInputTicks: stage.inputs.capturedTicks,
+      firstAttemptFullPass: stage.firstAttemptFullPass,
+      inputCoverage: stage.inputs.coverage,
+      jumpHeldFraction: fraction(stage.inputs.jumpHeldTicks, stage.inputs.capturedTicks),
+      mechanicsPresent: stage.mechanicsPresentInVisitedChunks.join(";"),
+      noDirectionFraction: fraction(stage.inputs.noDirectionTicks, stage.inputs.capturedTicks),
+      recordType: "stage",
+      reverseFraction: fraction(stage.inputs.reverseTicks, stage.inputs.capturedTicks),
+      stage: stage.id,
+      status: stage.status,
+      successfulAttemptSeconds: stage.successfulAttemptSeconds,
+      zone: stage.zone,
+    },
+    ...bottlenecks(stage).map((chunk) => ({
+      area: chunk.area,
+      chunkId: chunk.chunkId,
+      chunkIndex: chunk.chunkIndex,
+      recordType: "chunk-residence",
+      residenceTicks: chunk.recordedResidenceTicks,
+      stage: stage.id,
+      visits: chunk.visits,
+      zone: stage.zone,
+    })),
+  ]);
+  records.push(
+    ...report.structuralComparisons.map((comparison) => ({
+      comparisonFirst: comparison.first,
+      comparisonSecond: comparison.second,
+      frequencyDifferencePer100Cols: comparison.meanFrequencyDifferencePer100Cols,
+      jaccardPresence: comparison.jaccardPresence,
+      recordType: "structural-zone-comparison",
+    })),
+  );
   return `${[
-    "stage,zone,status,firstAttemptFullPass,recordedTicks,deaths,retries,inputCoverage",
-    ...report.stages.map((stage) =>
-      [
-        stage.id,
-        stage.zone,
-        stage.status,
-        stage.firstAttemptFullPass,
-        stage.recordedTicks,
-        stage.deaths,
-        stage.retries,
-        stage.inputs.coverage,
-      ]
-        .map(csv)
-        .join(","),
-    ),
+    columns.join(","),
+    ...records.map((record) => columns.map((column) => csv(record[column])).join(",")),
   ].join("\n")}\n`;
 }
+const mdRow = (values: readonly unknown[]) =>
+  `| ${values
+    .map((value) =>
+      String(value ?? "unknown")
+        .replaceAll("|", "\\|")
+        .replaceAll("\n", " "),
+    )
+    .join(" | ")} |`;
+const ratio = (ticks: number, total: number) => (total === 0 ? "unknown" : `${ticks}/${total}`);
 export function formatTuningMarkdown(report: TuningReport): string {
   return [
     "# Recorded tuning assessment",
     "",
-    "| Stage | Status | First-attempt full pass | Active seconds | Deaths | Input coverage |",
-    "| --- | --- | --- | ---: | ---: | --- |",
+    "Input ratios use captured ticks only. Incomplete coverage excludes unknown ticks.",
+    "Replay verification is independent of the first-attempt recording flag and remains in JSON.",
+    "",
+    mdRow([
+      "Stage",
+      "Status",
+      "First-attempt full pass",
+      "All-attempt active seconds",
+      "Successful-attempt seconds",
+      "Input coverage",
+      "No-direction input",
+      "Reverse input",
+      "Jump-held input",
+    ]),
+    mdRow(["---", "---", "---", "---:", "---:", "---", "---", "---", "---"]),
     ...report.stages.map((stage) =>
-      [
-        "",
-        stage.id.replaceAll("|", "\\|"),
+      mdRow([
+        stage.id,
         stage.status,
         stage.firstAttemptFullPass,
-        stage.recordedActiveSeconds.toFixed(2),
-        stage.deaths,
+        stage.recordedActiveSeconds,
+        stage.successfulAttemptSeconds,
         stage.inputs.coverage,
-        "",
-      ].join(" | "),
+        ratio(stage.inputs.noDirectionTicks, stage.inputs.capturedTicks),
+        ratio(stage.inputs.reverseTicks, stage.inputs.capturedTicks),
+        ratio(stage.inputs.jumpHeldTicks, stage.inputs.capturedTicks),
+      ]),
+    ),
+    "",
+    "## Slow and revisited recorded chunks",
+    "",
+    "Top five residence totals per stage and every revisited chunk. These totals include all attempts.",
+    "",
+    mdRow(["Stage", "Area", "Chunk index", "Chunk ID", "Residence ticks", "Visits"]),
+    mdRow(["---", "---", "---:", "---", "---:", "---:"]),
+    ...report.stages.flatMap((stage) =>
+      bottlenecks(stage).map((chunk) =>
+        mdRow([
+          stage.id,
+          chunk.area,
+          chunk.chunkIndex,
+          chunk.chunkId,
+          chunk.recordedResidenceTicks,
+          chunk.visits,
+        ]),
+      ),
+    ),
+    "",
+    "## Visited structural inventory",
+    "",
+    mdRow(["Stage", "Join", "Mechanics present (usage unknown)", "Unvisited chunks"]),
+    mdRow(["---", "---", "---", "---:"]),
+    ...report.stages.map((stage) =>
+      mdRow([
+        stage.id,
+        stage.structuralJoin.status,
+        stage.mechanicsPresentInVisitedChunks.join(", ") || "unknown or none",
+        stage.unvisitedStructuralChunks?.length ?? null,
+      ]),
+    ),
+    "",
+    "## Structural zone comparisons",
+    "",
+    mdRow([
+      "First zone",
+      "Second zone",
+      "Jaccard presence",
+      "Mean frequency difference per 100 columns",
+    ]),
+    mdRow(["---", "---", "---:", "---:"]),
+    ...report.structuralComparisons.map((comparison) =>
+      mdRow([
+        comparison.first,
+        comparison.second,
+        comparison.jaccardPresence,
+        comparison.meanFrequencyDifferencePer100Cols,
+      ]),
     ),
     "",
     ...report.limitations.map((line) => `- ${line}`),
