@@ -156,6 +156,7 @@ it("uses Woodland depth variants for horizontal challenges while preserving plai
     expect(
       recipe.chunks!.filter((id) => Object.values(WOODLAND_DEPTH_ALIASES).includes(id)),
     ).toHaveLength(Object.keys(WOODLAND_DEPTH_ALIASES).length);
+    expect(recipe.chunks).toContain(WOODLAND_DEPTH_ALIASES["vertical-red-gate"]);
     return recipe.chunks!;
   });
   expect(pools[1]).toEqual(pools[0]);

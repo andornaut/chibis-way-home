@@ -1219,6 +1219,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "growl-cover-early",
     "growl-cover-late",
     "growl-cover-middle",
+    "vertical-red-gate",
   ].map((id) => [id, `${id}-woodland-depth`]),
 );
 
