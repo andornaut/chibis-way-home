@@ -64,4 +64,3 @@ def spruce(im, x, top, width, height, bottom, leaf, wood, seed=0):
                       (centre + spread * 0.57, yy - height * 0.06)]
     polygon(im, leaf, left + [(centre - width * 0.20, top + height),
                               (centre + width * 0.17, top + height)] + right)
-
