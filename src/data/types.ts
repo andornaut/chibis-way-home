@@ -157,6 +157,11 @@ export interface GameText {
   readonly map: {
     readonly continue: string;
     readonly stageNumber: string;
+    readonly stagePages: {
+      readonly next: string;
+      readonly page: string;
+      readonly previous: string;
+    };
     readonly stages: Readonly<Record<string, string>>;
     readonly title: string;
     readonly zones: Readonly<Record<string, string>>;
