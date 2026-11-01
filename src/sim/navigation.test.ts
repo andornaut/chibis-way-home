@@ -658,6 +658,86 @@ describe("bounded real-rule navigation", () => {
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
   });
+  it.each([
+    {
+      floor: 564,
+      kind: "drop before climbing a distant refuge",
+      roof: 456,
+      roofHeight: 24,
+      start: 552,
+      strip: false,
+    },
+    {
+      floor: 360,
+      kind: "tap a floor strip after an intermediate landing",
+      roof: 264,
+      roofHeight: 3,
+      start: 360,
+      strip: true,
+    },
+  ])("resolves follow-up geometry to $kind", ({ floor, roof, roofHeight, start, strip }) => {
+    const base = fixture([
+      { height: 720 - start, width: 144, x: 0, y: start },
+      { height: 720 - floor, width: 576, x: 144, y: floor },
+    ]);
+    const panel = {
+      ...movingObject("solid", { x: 0, y: roof }),
+      height: roofHeight,
+      motion: STATIC_MOTION,
+      width: 336,
+    };
+    const edge = {
+      ...movingObject("hazard", { x: 0, y: roof + roofHeight }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 336,
+    };
+    const marker = strip
+      ? {
+          ...movingObject("hazard", { x: 192, y: floor - 3 }),
+          height: 3,
+          motion: STATIC_MOTION,
+          width: 48,
+        }
+      : { ...movingObject("ledge", { x: 336, y: floor - 72 }), motion: STATIC_MOTION, width: 72 };
+    const actor: ObjectLayout = {
+      ...movingObject("hazard", { x: 300, y: 0 }),
+      behaviour: {
+        axis: "x",
+        distance: 0,
+        initial: "wait",
+        states: { wait: { animation: "idle", motion: { kind: "wait" }, transitions: [] } },
+      },
+      motion: STATIC_MOTION,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 60, y: start } },
+          exitX: 660,
+          height: 720,
+          objects: [panel, edge, marker, actor],
+          width: 720,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+  });
   it("retains grounded walking when jumping under a roof is lethal", () => {
     const base = fixture([
       { height: 180, width: 144, x: 0, y: 240 },

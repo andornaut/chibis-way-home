@@ -500,16 +500,28 @@ function followupHold(
       )
       .map((rect) => zone.bird.y - rect.y - rect.height),
   );
-  if (rise > tuning.jumpHopHeight) {
-    return full;
-  }
   if (clearance < tuning.jumpHopHeight) {
     return 0;
   }
   if (clearance < (tuning.jumpSpeed * tuning.jumpRiseTime) / 2) {
-    return rise > 0 ? 1 : 0;
+    const front = zone.bird.x + (direction === 1 ? tuning.width : 0);
+    const foot = zone.bird.y + tuning.height;
+    const hopTravel = tuning.walkSpeed * 2 * Math.sqrt((2 * tuning.jumpHopHeight) / tuning.gravity);
+    const footHazard = area.objects.some((object, index) => {
+      if (
+        object.collision !== "hazard" ||
+        object.behaviour ||
+        object.motion.algorithm !== "static"
+      ) {
+        return false;
+      }
+      const box = contactBox(object, zone.objects[index] ?? object.origin, 1);
+      const ahead = direction === 1 ? box.x - front : front - box.x - box.width;
+      return box.y < foot && box.y + box.height >= foot - 1 && ahead >= 0 && ahead <= hopTravel;
+    });
+    return (rise > 0 && rise <= tuning.jumpHopHeight) || footHazard ? 1 : 0;
   }
-  return rise > 0 ? 1 : full;
+  return rise > tuning.jumpHopHeight || rise === 0 ? full : 1;
 }
 interface Candidate {
   readonly stopAt?: number | undefined;
