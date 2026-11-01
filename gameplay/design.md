@@ -6,13 +6,13 @@ The rulebook: every rule the game is built to. What's left to build and tune is 
 
 ## Pitch
 
-A landscape platformer: Chibi travels back to the apartment he shared with his former best friend, Furt, a ferret, after Furt mails him far away. V1 follows one linear route; branching routes are planned for Next.
+A landscape platformer: Chibi travels back to the apartment he shared with his former best friend, Fert, a ferret, after Fert mails him far away. V1 follows one linear route; branching routes are planned for Next.
 
 ## Setting
 
 - **Characters:** Chibi is the male bird the player controls: a small, round, cream bird with tiny wings and feet, an orange bill and a dot eye. His full design is in the [art plan](../art/README.md). Animals talk; there are no humans.
-- **Furt:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
-- **Story:** Chibi and Furt share an apartment in a big city. After a big fight, while Chibi sleeps, Furt packages him and mails him far away. Chibi knows Furt is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
+- **Fert:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
+- **Story:** Chibi and Fert share an apartment in a big city. After a big fight, while Chibi sleeps, Fert packages him and mails him far away. Chibi knows Fert is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
 - **World:** the modern day, mixing fantasy and reality
 - **Zones:** a zone is one themed map destination containing three playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and eighteen stages. The V1 route and current stage availability are listed below
 
@@ -23,7 +23,7 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 | Archie | Dog                          | Blue cityscape antagonist       |
 | Bini   | Bear                         | Woodland antagonist             |
 | Chibi  | Bird                         | Player character                |
-| Furt   | Ferret                       | Apartment building antagonist   |
+| Fert   | Ferret                       | Apartment building antagonist   |
 | Kiwi   | Female raccoon               | Home city antagonist            |
 | Pebble | Pigeon                       | Industrial outskirts antagonist |
 | Trixi  | Goose with oversized glasses | Countryside antagonist          |
@@ -34,7 +34,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 
 1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains three stages; V1 follows a linear route.
 2. **Between stages:** completing stage one or two shows an image-backed statistics interstitial and Continue, which enters the next stage directly. Completing stage three shows the zone's outgoing exchange and statistics, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
-3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Furt is undecided.
+3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Fert is undecided.
 
 ## Voice
 
@@ -43,7 +43,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 - **Labels:** one label for one action, everywhere
 - **Lengths:** text is Tiny5 drawn at 2×, about 6.5 base px a character on average; measure the width, don't count characters. A dialogue paragraph fits 3 lines of 504 px (about 72 characters a line). An answer fits 166 px (about 25 characters). A quip, with its speaker's name, fits 452 px (about 60 characters)
 - **Spelling:** Canadian (colour, favourite, neighbour). No em dashes and no emojis
-- **Style:** plain, short and consistent: no flourishes, no figures of speech, no redundancy
+- **Style:** concise exchanges with distinct voices and brief jokes. Chibi stays determined to reclaim his home. Archie is earnest about his territory, Pebble is smug about flying, Trixi invents convenient rules, Bini is a distracted gamer, Kiwi is dry and observant, and Fert is theatrical about his failed delivery. Do not resolve the initial fight or their friendship
 - **Terms:** the home page is the website's page at `/`; it is never shown inside an installed app. The start screen is the game's first screen, in a browser and in an installed app. Back to title always goes to the start screen, from any zone, the map or a card
 
 ## Rules
@@ -99,7 +99,7 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 - **Backtracking:** unlocked built stages remain available for replay. Replaying an earlier stage never removes later unlocks
 - **Between stages:** clearing every stage shows an image-backed statistics interstitial with Continue at the bottom right. After stage one or two, Continue enters the next stage directly without showing the map. Stage three first shows the outgoing zone exchange, then current-stage and actual-zone-visit statistics, before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
-- **Celebration:** only clearing Apartment building's third stage, Climb to the apartment, shows Furt's outgoing exchange and the final statistics interstitial followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
+- **Celebration:** only clearing Apartment building's third stage, Climb to the apartment, shows Fert's outgoing exchange and the final statistics interstitial followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
 - **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from any stage entrance returns to the map. The entrance exit stays reachable and has no blocking wall; an apartment stage returns through its first section's left edge
 - **Forks:** branching routes are deferred to Next. V1 is linear and has no laps
 - **Progression:** Parcel depot is unlocked from the start. Clearing a stage unlocks the next built stage in the route table. Clearing stage three opens the next zone. Completed stages remain available for replay, and unbuilt content remains unavailable
@@ -116,7 +116,7 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
 - **Edge hazards:** a common solid bright red strip, 4 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow. Actual red hazard contact shakes the world and Chibi through the main camera while the HUD stays fixed. Reduced motion replaces the shake with a static border cue. Animal contact, white blocks, falls and ordinary crushes do not trigger the red-contact cue
 - **Encounters:** stage one has zero combat encounter sections. Its staged antagonist introduction is a cinematic sequence, not a combat encounter; the antagonist leaves before normal play. Stages two and three each have one normal enemy encounter in their randomized middles, for two hostile encounters per zone. Only the scripted first-stage introduction is fixed. No normal antagonist is placed in a fixed opening or ending cap. Counts apply across the whole stage, not per floor. Every second-stage opening has a protected first half-screen, then a mandatory noncombat obstacle, with its door and left map exit accessible. No physical antagonist or lethal attack enters that opening. Ordinary platforming separates encounters; generated runs vary layout while preserving these quotas, and death retries retain the same run
-- **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show their image-backed statistics interstitials; stage three shows its outgoing zone exchange and statistics before map travel, except for Furt's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
+- **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show their image-backed statistics interstitials; stage three shows its outgoing zone exchange and statistics before map travel, except for Fert's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged; a fresh stage entry starts a new run and its own statistics. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
 - **Length:** target two minutes for a successful clear of each stage. This target is unmeasured. Every catalogued stage fills 840 to 960 columns, counting fixed caps and all linked sections. Recipe data owns the shared range and derives linked-section budgets from it; the debug park keeps its own recipe
@@ -185,7 +185,7 @@ This is the approved implementation scope for the current change, including the 
 
 Everything in a stage except its terrain is placed in data through archetypes, characters and instances.
 
-- **Animals:** during normal gameplay, every animal in the main stage foreground, apart from Chibi, is an enemy and always lethal on actual body contact, including idle, tells, attacks and rest. Antagonist contact closely follows the drawn body footprint of the current animated pose; transparent frame space around wings or tails and gaps between drawn parts cannot kill on a visual near miss. Frame boxes may bound the contact check but do not make transparent space lethal. Chibi's movement and platform physics and the explicit red-hazard and projectile collider contracts are unchanged. Every antagonist regularly attempts direct charge or body contact and has a distinct recurring special attack; attack cadence and brief recovery windows are configured in data. Animals have no red contact outlines. Archie, Pebble, Trixi, Bini, Kiwi and Furt are the only world-stage animals currently placed; there are no friendly background animals in the current stages
+- **Animals:** during normal gameplay, every animal in the main stage foreground, apart from Chibi, is an enemy and always lethal on actual body contact, including idle, tells, attacks and rest. Antagonist contact closely follows the drawn body footprint of the current animated pose; transparent frame space around wings or tails and gaps between drawn parts cannot kill on a visual near miss. Frame boxes may bound the contact check but do not make transparent space lethal. Chibi's movement and platform physics and the explicit red-hazard and projectile collider contracts are unchanged. Every antagonist regularly attempts direct charge or body contact and has a distinct recurring special attack; attack cadence and brief recovery windows are configured in data. Animals have no red contact outlines. Archie, Pebble, Trixi, Bini, Kiwi and Fert are the only world-stage animals currently placed; there are no friendly background animals in the current stages
 - **Archetypes:** a behaviour: collision (none, solid, one-way ledge, hazard or Use), movement, reaction, interaction (such as talking on Use or a quip on approach) and default tuning
 - **Attack tells:** every aggressive charge or special action has a visible 0.12-second pre-action tell; the action begins only after the tell. This includes swoops, drops, growls, pounces, throws and trap placement. A trap-placement tell is separate from the trap's warning and arming delay after placement. Body contact stays lethal during tells and recovery
 - **Behaviour patterns:** reusable patterns in the data choose behaviour primitives, their sequence or states, transition conditions, timing, animations and tuning. Animals and moving inanimate objects use the same composition approach. Code implements the primitives, condition evaluation and shared executor; character-specific cycles are composed in data rather than hardcoded in code
@@ -220,7 +220,7 @@ The route spans six themed zones of three stages in this order. Each stage targe
 - **Rooms:** the street door leads to the prototype test room
 - **Route:** the main path continues right toward the city boundary; middle chunks can include upper street ledges. Streets is the second stage and unlocks when this tutorial is completed; City boundary is third
 
-The park is a randomized-stage prototype outside the V1 route. The identities of Furt's friends beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided.
+The park is a randomized-stage prototype outside the V1 route. The identities of Fert's friends beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided.
 
 ### City boundary
 
@@ -292,8 +292,8 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 - **Areas:** Entrance and lobby has two linked sections: entrance and lobby. Shared floors has three: restaurant, first fire escape and pool. Climb to the apartment has four: second fire escape, spa, third fire escape and residential. Varied indoor and outdoor skins accompany stronger vertical traversal
 - **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
-- **Encounters:** Furt is a normal lethal-contact antagonist who periodically charges for direct contact and throws parcels as his distinct special attack. He uses shared behaviour primitives and has no red contact outline; this is not a boss encounter and adds no combat
-- **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows Furt's outgoing exchange, then the image-backed statistics interstitial and celebration, every time including replays. The cause of the fight and the outcome of the friendship remain undecided
+- **Encounters:** Fert is a normal lethal-contact antagonist who periodically charges for direct contact and throws parcels as his distinct special attack. He uses shared behaviour primitives and has no red contact outline; this is not a boss encounter and adds no combat
+- **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows Fert's outgoing exchange, then the image-backed statistics interstitial and celebration, every time including replays. The cause of the fight and the outcome of the friendship remain undecided
 - **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. Recipe data defines each linked stage's aggregate length
 - **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Shared floors, then Climb to the apartment. The final map path ends at the apartment; unlocked stages remain replayable
 - **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room or quest. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
@@ -306,7 +306,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Approach:** the first physical encounter is selected in Streets’ randomized middle after its protected opening. Shared yards provide observation and landing refuges around the hostile lane
 - **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
-- **Dialogue:** the first introduction has three lines: Archie says Furt asked him to stop Chibi; Chibi says he is going home; Archie tells him to get past. The player-facing wording lives in the text data files, with Skip available
+- **Dialogue:** the first introduction has three lines: Archie treats Chibi as a parcel Fert asked him to stop; Chibi insists on walking home; Archie resolves to stop him. The player-facing wording lives in the text data files, with Skip available
 - **Special:** Archie makes a leaping pounce as his distinct special attack, alongside periodic ground rushes for direct contact
 - **Timing:** Archie uses the same timing across physical encounters in the first zone; their layouts vary. The first physical encounter occurs in the randomized middle of stage two
 
@@ -322,7 +322,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's name tab and, when available, a 64 px portrait inside the panel. Pebble, Trixi and Kiwi currently have no portrait; missing portraits use neutral presentation. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** every multi-exchange conversation pauses gameplay. Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. Exchanges never advance on a timer; there is no back or scrolling chat history
 - **Introductions:** at the beginning of stage one, the antagonist enters from offscreen on the right and reaches about the midpoint of the current viewport before the paused manual exchange begins. The cinematic sprite is separate from world-stage objects and has no combat collision or attacks. The world and all underlying controls stay paused during its approach, the manually advanced Continue/Skip exchange and its departure. Completing or skipping the exchange marks the introduction seen. After the exchange, the antagonist turns right and runs offscreen, then is removed before normal gameplay resumes. Both approach and departure use its maximum charge or dash speed from shared behaviour data. This cinematic sequence is outside the combat encounter quota; it does not make enemy contact safe during normal play. The introduction plays once per zone per playthrough. Its seen state is shared across all three stages and survives death, retries and stage replay; a new game resets it
-- **Outgoing exchanges:** completing a zone's third stage shows its outgoing exchange over an actual image of the cleared stage's art, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to stage and zone-visit statistics, then the map walk; Furt's final exchange and statistics proceed to the existing celebration instead
+- **Outgoing exchanges:** completing a zone's third stage shows its outgoing exchange over an actual image of the cleared stage's art, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to stage and zone-visit statistics, then the map walk; Fert's final exchange and statistics proceed to the existing celebration instead
 - **Restarts:** death retries and stage replays do not repeat a seen introduction; a new game resets the once-per-zone seen state
 - **Skip:** Skip skips all remaining dialogue. If the conversation ends in a choice, Skip opens its modal without choosing an answer or bypassing the choice
 
@@ -330,11 +330,11 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 - **Barks:** each of the six antagonists has a single live spotting message with no Continue, Skip or other controls. Gameplay continues while it shows for four seconds, using `BARK_DURATION_SECONDS` in `src/data/dialogues.ts`. It appears once per area, object and attempt. Re-entering an area in the same attempt retains the seen state; retrying clears it. Pausing the world freezes its timer, and modal cards appear above it. Paused multi-exchange conversations remain manually advanced and untimed
 
-### Furt
+### Fert
 
-- **Appearances:** Furt enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided
+- **Appearances:** Fert enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided
 - **Boss encounters:** deferred to Next, outside V1
-- **Calling card:** every trap Furt sets carries a badge of his stovepipe hat and bow tie
+- **Calling card:** every trap Fert sets carries a badge of his stovepipe hat and bow tie
 - **Ending:** Chibi returns home; the outcome of their friendship is undecided. There is no combat
 
 ### Choices
