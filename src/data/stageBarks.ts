@@ -22,13 +22,6 @@ export const STAGE_BARKS: StageBarkSchedule = {
       line: { line: "fert-journey-city-streets", speaker: "ferret" },
     },
   ],
-  "climb-to-apartment": [
-    {
-      atProgress: 0.9,
-      id: "fert-journey-climb-to-apartment",
-      line: { line: "fert-journey-climb-to-apartment", speaker: "ferret" },
-    },
-  ],
   "country-lanes": [
     {
       atProgress: 0.5,
@@ -71,18 +64,25 @@ export const STAGE_BARKS: StageBarkSchedule = {
       line: { line: "fert-journey-ravine", speaker: "ferret" },
     },
   ],
+  "residential-floors": [
+    {
+      atProgress: 0.5,
+      id: "fert-journey-climb-to-apartment",
+      line: { line: "fert-journey-climb-to-apartment", speaker: "ferret" },
+    },
+  ],
+  restaurant: [
+    {
+      atProgress: 0.5,
+      id: "fert-journey-shared-floors",
+      line: { line: "fert-journey-shared-floors", speaker: "ferret" },
+    },
+  ],
   "river-crossing": [
     {
       atProgress: 0.5,
       id: "fert-journey-river-crossing",
       line: { line: "fert-journey-river-crossing", speaker: "ferret" },
-    },
-  ],
-  "shared-floors": [
-    {
-      atProgress: 0.1,
-      id: "fert-journey-shared-floors",
-      line: { line: "fert-journey-shared-floors", speaker: "ferret" },
     },
   ],
 };

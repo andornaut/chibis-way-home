@@ -14,7 +14,7 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 - **Fert:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art plan](../art/README.md)
 - **Story:** Chibi and Fert share an apartment in a big city. After a big fight, while Chibi sleeps, Fert packages him and mails him far away. Chibi knows Fert is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
 - **World:** the modern day, mixing fantasy and reality
-- **Zones:** a zone is one themed map destination containing three playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and eighteen stages. The V1 route and current stage availability are listed below
+- **Zones:** a zone is one themed map destination containing playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and twenty-one stages: three per outdoor zone and six Apartment floors. The V1 route and current stage availability are listed below
 
 ## Cast
 
@@ -32,8 +32,8 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 
 ## Core loop
 
-1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. Each zone contains three stages; V1 follows a linear route.
-2. **Between stages:** completing stage one or two shows an image-backed statistics interstitial and Continue, which enters the next stage directly. Completing stage three shows the zone's outgoing exchange and statistics, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
+1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. The first five zones contain three stages each; Apartment contains six floor stages. V1 follows a linear route.
+2. **Between stages:** completing a nonfinal stage shows an image-backed statistics interstitial and Continue, which enters the next stage directly. Completing a zone’s final stage shows the zone's outgoing exchange and statistics, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
 3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Fert is undecided.
 
 ## Voice
@@ -50,7 +50,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 
 | Term               | Meaning                                                         |
 | ------------------ | --------------------------------------------------------------- |
-| Zone               | A themed map destination containing three stages                |
+| Zone               | A themed map destination containing catalogued stages           |
 | Stage              | The playable level, currently represented by `ZonePlan` in code |
 | Section            | One continuous area within a stage, such as an apartment floor  |
 | Encounter section  | A distinct enemy encounter segment within a stage               |
@@ -59,7 +59,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 | Run                | One generated stage layout and its seed                         |
 | Attempt            | One try to complete the stage within a run                      |
 
-The V1 map has six themed destinations with three catalogued stages each. The route contains eighteen stages; completing its implementation does not declare a V1 release.
+The V1 map has six themed destinations and twenty-one catalogued stages: three in each of the first five zones and six in Apartment. Completing the route’s implementation does not declare a V1 release.
 
 ### Screen and controls
 
@@ -95,34 +95,34 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 
 ### Map
 
-- **Availability:** all six V1 zones appear in route order, with three stages each as listed under V1 route. Unbuilt zones and stages are visibly unavailable and cannot be entered. The park is a debug prototype outside the V1 map
+- **Availability:** all six V1 zones appear in route order, with their catalogued stages as listed under V1 route. Unbuilt zones and stages are visibly unavailable and cannot be entered. The park is a debug prototype outside the V1 map
 - **Backtracking:** unlocked built stages remain available for replay. Replaying an earlier stage never removes later unlocks
-- **Between stages:** clearing every stage shows an image-backed statistics interstitial with Continue at the bottom right. After stage one or two, Continue enters the next stage directly without showing the map. Stage three first shows the outgoing zone exchange, then current-stage and actual-zone-visit statistics, before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
+- **Between stages:** clearing every stage shows an image-backed statistics interstitial with Continue at the bottom right. After a nonfinal stage, Continue enters the next stage directly without showing the map. A zone’s final stage first shows the outgoing zone exchange, then current-stage and actual-zone-visit statistics, before returning to the map and automatically animating Chibi walking along the existing route to the next zone. After the walk, the map waits for the player's selection; it does not enter that zone automatically. Completed stages and opened paths are marked. The final stage follows the celebration rule instead
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
-- **Celebration:** only clearing Apartment building's third stage, Climb to the apartment, shows Fert's outgoing exchange and the final statistics interstitial followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
+- **Celebration:** only clearing Apartment building's sixth stage, Penthouse, shows Fert's outgoing exchange and the final statistics interstitial followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
 - **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from any stage entrance returns to the map. The entrance exit stays reachable and has no blocking wall; an apartment stage returns through its first section's left edge
 - **Forks:** branching routes are deferred to Next. V1 is linear and has no laps
-- **Progression:** Parcel depot is unlocked from the start. Clearing a stage unlocks the next built stage in the route table. Clearing stage three opens the next zone. Completed stages remain available for replay, and unbuilt content remains unavailable
+- **Progression:** Parcel depot is unlocked from the start. Clearing a stage unlocks the next built stage in the route table. Clearing a zone’s final stage opens the next zone. Completed stages remain available for replay, and unbuilt content remains unavailable
 - **Selection:** only manually pressing Continue on the map opens the selected zone's stage-selection modal. Three side-by-side cards stay in stage order, including locked stages, which remain grey and disabled. The latest available stage is highlighted and is the default. Each card shows an actual scene screenshot, the main stage name at the standard font size, and a smaller, lighter Stage 1, Stage 2 or Stage 3 label at the top right. Names never shrink to fit. Stage scenery differs slightly while preserving the zone's palette and visual style. Persisted unlocks survive replays
 - **Walk:** Chibi stands on a zone. Left and Right move through available zones, and Continue selects the zone he stands on
 
 ### Stages
 
-- **Camera:** on the ground he sits about two thirds down the screen. In an assembled stage, the ground line follows the chunk he is in, blending across half a screen at each seam. The camera rises only when he climbs above the middle, and never shows below the lowest ground. Every stage guarantees visible parallax in appropriate exterior chunks and retains plain chunks elsewhere. Farther decorative layers scroll more slowly, clipped to their selected chunk; Woodland tree layers cover horizontal challenges and terraces while vertical climbs remain plain; opaque interiors retain their coherent walls, and ground props stay attached to the terrain
+- **Camera:** on the ground he sits about two thirds down the screen. In an assembled stage, the ground line follows the chunk he is in, blending across half a screen at each seam. The camera rises only when he climbs above the middle, and never shows below the lowest ground. Appropriate exterior chunks use visible parallax while other chunks remain plain. Farther decorative layers scroll more slowly, clipped to their selected chunk; Woodland tree layers cover horizontal challenges and terraces while vertical climbs remain plain; opaque interiors retain their coherent walls, and ground props stay attached to the terrain
 - **Challenge:** platforming, hazards and choices. Routes use ledges and cliffs, not ladders, with both short-press jumps beneath low ceilings and full jumps. There is no combat
-- **Checkpoint:** the start of a stage is its only checkpoint. Falling or touching a hazard enters the death flow; Try again restarts the stage from its start, with unlimited retries and no permadeath. Progress is saved: the stages he has completed and where he stands on the map. Clearing a stage marks it completed and follows the stage-one or stage-two cutscene, stage-three map travel or final-stage celebration flow; a stage left before its end is played again from its start
+- **Checkpoint:** the start of a stage is its only checkpoint. Falling or touching a hazard enters the death flow; Try again restarts the stage from its start, with unlimited retries and no permadeath. Progress is saved: the stages he has completed and where he stands on the map. Clearing a stage marks it completed and follows the nonfinal-stage interstitial, zone-end map travel or final-stage celebration flow; a stage left before its end is played again from its start
 - **Crush:** a moving platform that pushes him sideways carries him to its leading edge. If it squeezes him into terrain or another solid, he is crushed and enters the death flow, as a hazard does. Layouts leave room beside every moving platform's path so he is never pinned on a required route
 - **Difficulty:** per-zone bands and chunk-selection weights in `src/data/` set a demanding first-zone base and increase difficulty in every following zone. Blue cityscape selects grades 3 to 4, Industrial outskirts and Countryside grades 3 to 5, and Woodland, Home city and Apartment building grades 4 to 5. Increasing weights for harder chunks distinguish successive zones even when their bands match. Seeded variation remains inside each band
 - **Doors:** optional room doors lead only into rooms; marked main-route stairs automatically link stage areas and are distinct from room doors. Use enters a door when any part of his drawn frame overlaps the door's drawn art; where he overlaps more than one, the door whose centre is nearest his wins
 - **Edge hazards:** a common solid bright red strip, 4 px thick, can cover the top, bottom, left or right edge of terrain. Terrain hazards and floor traps use red contact edges. Pebble's falling white blocks are lethal projectiles. Animals have no red contact outlines. There are no spikes. Touching any edge hazard enters the death flow. Actual red hazard contact shakes the world and Chibi through the main camera while the HUD stays fixed. Reduced motion replaces the shake with a static border cue. Animal contact, white blocks, falls and ordinary crushes do not trigger the red-contact cue
-- **Encounters:** stage one has zero combat encounter sections. Its staged antagonist introduction is a cinematic sequence, not a combat encounter; the antagonist leaves before normal play. Stages two and three each have one normal enemy encounter in their randomized middles, for two hostile encounters per zone. Only the scripted first-stage introduction is fixed. No normal antagonist is placed in a fixed opening or ending cap. Counts apply across the whole stage, not per floor. Every second-stage opening has a protected first half-screen, then a mandatory noncombat obstacle, with its door and left map exit accessible. No physical antagonist or lethal attack enters that opening. Ordinary platforming separates encounters; generated runs vary layout while preserving these quotas, and death retries retain the same run
-- **Exit:** reaching the end of a stage's final area clears the stage. Stage one and two show their image-backed statistics interstitials; stage three shows its outgoing zone exchange and statistics before map travel, except for Fert's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
+- **Encounters:** stage one has zero combat encounter sections. Its staged antagonist introduction is a cinematic sequence, not a combat encounter; the antagonist leaves before normal play. In the first five zones, stages two and three each have one normal enemy encounter in their randomized middles. Apartment has one in Restaurant and one in Penthouse; Lobby, Pool, Spa and Residential floors have none. Every zone has two normal hostile encounters. Only the scripted first-stage introduction is fixed. No normal antagonist is placed in a fixed opening or ending cap. Counts apply across the whole stage. Every second-stage opening has a protected first half-screen, then a mandatory noncombat obstacle, with its door and left map exit accessible. No physical antagonist or lethal attack enters that opening. Ordinary platforming separates encounters; generated runs vary layout while preserving these quotas, and death retries retain the same run
+- **Exit:** reaching a stage’s authored exit clears it; stages without one clear at the right end of their final area. Nonfinal stages show their image-backed statistics interstitials; a zone’s final stage shows its outgoing zone exchange and statistics before map travel, except for Fert's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. Completion progress is unchanged; a fresh stage entry starts a new run and its own statistics. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
-- **Length:** target two minutes for a successful clear of each stage. This target is unmeasured. Every catalogued stage fills 840 to 960 columns, counting fixed caps and all linked sections. Recipe data owns the shared range and derives linked-section budgets from it; the debug park keeps its own recipe
-- **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. A multi-area apartment stage applies this structure across its linked sections, with fixed first and last caps and seeded runs of shared templates in intermediate areas. The rules for chunks are under Chunks
+- **Length:** target two minutes for a successful clear in the first five zones and about 90 seconds per Apartment floor. These targets are unmeasured. Recipe data owns each stage’s filled length range, including its fixed caps; the debug park keeps its own recipe
+- **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. Each Apartment floor is one continuous stage area with its own fixed caps. The rules for chunks are under Chunks
 - **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; Chibi, the tiles and the reaches stay the same everywhere
-- **Shape:** each playable stage area is at most 2 screens (60 tiles, 720 px) tall and as wide as it needs, and scrolls sideways and up. Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
+- **Shape:** areas scroll sideways and up, with width defined by their recipes. The first five zones use at most 2 screens (60 tiles, 720 px) of height; Apartment floors use 90 rows (1080 px). Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
 
 ### Runs and attempts
 
@@ -156,7 +156,7 @@ The same four fields appear after every stage clear, on the death/retry card and
 
 - **New runs:** a fresh generated run starts with zero run-total time and attempt count one. Death Retry preserves the run and its accumulated time, and starts the next attempt. Fresh map entry or replay generates a new seed and starts fresh run statistics; historical best times remain
 - **Presentation:** after every stage, an interstitial uses an actual image of the cleared stage's art and shows its four statistics. Continue is at the bottom right. Outgoing dialogue uses image-backed presentation with Skip; it does not add new plot imagery
-- **Zone visits:** zone-end statistics show the same four fields for the actual current zone visit alongside the current-stage statistics. Zone last-attempt time sums the latest finished attempt time from each visited stage; zone run-total time sums all active attempt time in those current-visit stage runs; zone attempt count sums their attempt counts. A zone best requires successful clears of all three stages in the same visit and sums only those successful-attempt times. Compare it only with other complete visits. Partial visits show their completed-stage count as N/3, set no new zone best and never combine historical stage bests into a fictitious full-zone result
+- **Zone visits:** zone-end statistics show the same four fields for the actual current zone visit alongside the current-stage statistics. Zone last-attempt time sums the latest finished attempt time from each visited stage; zone run-total time sums all active attempt time in those current-visit stage runs; zone attempt count sums their attempt counts. A zone best requires successful clears of every catalogued stage in the same visit and sums only those successful-attempt times. Compare it only with other complete visits. Partial visits show their completed-stage count as N/total stages, set no new zone best and never combine historical stage bests into a fictitious full-zone result
 
 ### Death and retry
 
@@ -171,12 +171,12 @@ This is the approved implementation scope for the current change, including the 
 
 ### Chunks
 
-- **Assembly:** every chunk, including fixed opening and ending caps, is exactly one screen wide: 720 px or 60 columns. Areas retain their two-screen height and vertical scrolling. A stage's recipe names its theme, start and finish chunks, a length range (start and finish included), a configurable difficulty band, and the events and doors to place. The seed varies the middle chunks within that band, without requiring difficulty to rise; the start and finish chunks are exempt. It never picks the same chunk twice in a row, and it fills the slots
+- **Assembly:** every chunk, including fixed opening and ending caps, is exactly one screen wide: 720 px or 60 columns. Areas retain vertical scrolling; Apartment floor chunks use 90 rows and other chunks use at most 60. A stage's recipe names its theme, start and finish chunks, a length range (start and finish included), a configurable difficulty band, and the events and doors to place. The seed varies the middle chunks within that band, without requiring difficulty to rise; the start and finish chunks are exempt. It never picks the same chunk twice in a row, and it fills the slots
 - **Difficulty:** 1 to 5. 1: walking and taps. 2: full jumps and still hazards. 3: gaps near the reach, single moving platforms and single low-ceiling tap spots. 4: timed platforms or moving hazards on the required path. 5: compounded tap-only, timed or platform-to-platform challenges
 - **Challenge variety:** the shared middle pools include required climbing routes, moving ledges, red ground strips and enemy yards. Mandatory challenges include climbs, moving ledges, overhead and vertical red surfaces, and blocks comparable to Chibi’s size. The primary route never has more than one screen of unchallenged flat travel, including across chunk seams. Blue cityscape has grade-four returns from upper routes, and later zones retain grade-four and grade-five low-ceiling challenges within their bands. Generation varies challenge combinations and order within the zone's difficulty band, preserving valid connections; a stage is not guaranteed to contain every challenge type
 - **Fairness:** isolated chunk physics checks cover entry to exit with slots empty and filled; synthetic zone and no-cross checks protect movement constraints, and recipe assembly contracts protect generated layouts. Gameplay may use one bounded stage playtest after major changes to answer a concrete reachability question. Exhaustive whole-stage searches are not a routine gate
 - **Seams:** a chunk's entry and exit are the ground rows at its left and right edges: 50, 40 or 30. The seam surface is terrain and runs at least 4 tiles in from the edge, with no gap there, and nothing (no solid, ledge, hazard or moving platform) in the 6 rows above it
-- **Shape:** at most 60 rows (720 px) tall
+- **Shape:** at most 60 rows (720 px) tall outside Apartment; Apartment floor chunks use 90 rows (1080 px)
 - **Slots:** marked regions where the seed places an event or a door. A chunk must pass with every slot empty
 - **Shared layouts:** every zone uses the same layout templates and object/archetype library. Theme configuration supplies terrain, structures, props, enemies, doors, triggers, backgrounds, parallax and recipes; it does not add zone-specific mechanics
 - **Themes:** a theme sets the tileset, terrain looks and repeated backdrops for every chunk of that theme, so seams never show. A chunk can still place its own scenery. The park is an outdoor prototype theme
@@ -202,7 +202,7 @@ Everything in a stage except its terrain is placed in data through archetypes, c
 
 ### V1 route
 
-The route spans six themed zones of three stages in this order. Each stage targets a two-minute successful clear; this target is unmeasured. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
+The route spans six themed zones and twenty-one stages. The first five zones have three stages each, targeting two-minute successful clears. Apartment has six floor stages targeting about 90 seconds each, about nine minutes for the zone. These human pacing targets are unmeasured and are not hard timers. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
 
 | Zone                 | First stage                               | Second stage                    | Third stage                                       |
 | -------------------- | ----------------------------------------- | ------------------------------- | ------------------------------------------------- |
@@ -211,15 +211,17 @@ The route spans six themed zones of three stages in this order. Each stage targe
 | Countryside          | Farmland (`farmland`)                     | Country lanes (`country-lanes`) | River crossing (`river-crossing`)                 |
 | Woodland             | Forest paths (`forest-paths`)             | Deep woods (`deep-woods`)       | Ravine (`ravine`)                                 |
 | Home city            | City outskirts (`city-outskirts`)         | Back streets (`back-streets`)   | Familiar neighbourhood (`familiar-neighbourhood`) |
-| Apartment building   | Entrance and lobby (`entrance-and-lobby`) | Shared floors (`shared-floors`) | Climb to the apartment (`climb-to-apartment`)     |
 
-### Approved Apartment replacement (implementation pending)
+Apartment continues in this floor order:
 
-Replace the Apartment building's three stages with six upward floor stages: Lobby, Restaurant, Pool, Spa, Residential floors and Penthouse. Target about 90 seconds of successful active play per floor, about nine minutes for the zone. These human pacing targets are unmeasured, not hard timers or a conversion from vertical distance to horizontal columns. The other five zones retain three stages targeting about two minutes each.
-
-Keep one checkpoint at each floor's beginning and the existing fresh-entry and same-run retry rules. The Lobby retains the once-per-zone scripted introduction. Place the zone's two normal hostile encounters in seeded middle chunks, one in Restaurant and one in Penthouse; the other floors have none. All fixed caps remain free of normal hostiles. There is no new boss fight.
-
-Stair or elevator exits activate automatically, then show stage statistics and Continue before the next floor. Doors remain entrances to optional special rooms. The stage chooser pages through full-size cards. Retain 60-column chunks and the current difficulty bands. Taller geometry is restricted to Apartment floors and must support upward progression from a safe lower start; its height and recipe lengths require the paired source and layout design.
+| Floor | Stage              | ID                   |
+| ----- | ------------------ | -------------------- |
+| 1     | Lobby              | `lobby`              |
+| 2     | Restaurant         | `restaurant`         |
+| 3     | Pool               | `pool`               |
+| 4     | Spa                | `spa`                |
+| 5     | Residential floors | `residential-floors` |
+| 6     | Penthouse          | `penthouse`          |
 
 ### First stage
 
@@ -299,14 +301,12 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 ### Apartment building
 
-- **Areas:** Entrance and lobby has two linked sections: entrance and lobby. Shared floors has three: restaurant, first fire escape and pool. Climb to the apartment has four: second fire escape, spa, third fire escape and residential. Varied indoor and outdoor skins accompany stronger vertical traversal
-- **Checkpoint:** each stage has one checkpoint at its first section. Death anywhere restarts that whole stage on Try again. No floor transition creates a checkpoint
-- **Encounters:** Fert is a normal lethal-contact antagonist who periodically charges for direct contact and throws parcels as his distinct special attack. He uses shared behaviour primitives and has no red contact outline; this is not a boss encounter and adds no combat
-- **Goal:** reaching the apartment at the end of the final residential section clears the final stage and shows Fert's outgoing exchange, then the image-backed statistics interstitial and celebration, every time including replays. The cause of the fight and the outcome of the friendship remain undecided
-- **Layout:** fixed openings and endings surround randomized shared middle templates. Intermediate areas use seeded runs of shared templates; the first and last caps remain fixed. Recipe data defines each linked stage's aggregate length
-- **Progression:** clearing Familiar neighbourhood opens Entrance and lobby; clearing Entrance and lobby opens Shared floors, then Climb to the apartment. The final map path ends at the apartment; unlocked stages remain replayable
-- **Rooms:** optional doors still require Use and lead to the existing prototype test room. These stages add no new room or quest. Walls and pool water are decorative unless an explicit red hazard marks a contact surface
-- **Stairs:** walking into marked main-route stairs changes floor automatically, without Use. Stairs are reversible; Chibi can return through earlier sections and leave for the map at the first section's left edge
+- **Checkpoint:** each floor is a standalone stage with one checkpoint at its lower beginning. Death restarts that floor on Try again in the same generated run
+- **Encounters:** Lobby retains the once-per-zone cinematic introduction. Restaurant and Penthouse each contain one Fert encounter in a seeded middle chunk; Pool, Spa and Residential floors contain none. Fert periodically charges and throws parcels through shared behaviour primitives, remains lethal on contact and has no red contact outline. There is no boss fight or combat
+- **Goal:** reaching the upper stair or elevator exit activates the floor transition automatically. Nonfinal floors show stage statistics and Continue before the next floor. Penthouse shows Fert’s outgoing exchange, stage and zone statistics, then the existing celebration, including on replay. The cause of the fight and the outcome of the friendship remain undecided
+- **Layout:** fixed one-screen openings and endings surround randomized one-screen middle chunks within the existing difficulty band. Apartment alone uses taller 90-row stages, with a safe lower spawn and an upper exit reached through climbing. Recipe data owns each floor’s length; the successful active-play target is about 90 seconds per floor and remains unmeasured
+- **Progression:** Familiar neighbourhood opens Lobby, followed by Restaurant, Pool, Spa, Residential floors and Penthouse. Each clear unlocks the next built floor; unlocked floors remain replayable
+- **Rooms:** doors remain entrances to optional special rooms. Stairs and elevators are automatic floor exits, not room doors
 
 ### Archie introductions and encounters
 
@@ -330,8 +330,8 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 - **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's name tab and, when available, a 64 px portrait inside the panel. Pebble, Trixi and Kiwi currently have no portrait; missing portraits use neutral presentation. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** every multi-exchange conversation pauses gameplay. Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. Exchanges never advance on a timer; there is no back or scrolling chat history
-- **Introductions:** at the beginning of stage one, the antagonist enters from offscreen on the right and reaches about the midpoint of the current viewport before the paused manual exchange begins. The cinematic sprite is separate from world-stage objects and has no combat collision or attacks. The world and all underlying controls stay paused during its approach, the manually advanced Continue/Skip exchange and its departure. Completing or skipping the exchange marks the introduction seen. After the exchange, the antagonist turns right and runs offscreen, then is removed before normal gameplay resumes. Both approach and departure use its maximum charge or dash speed from shared behaviour data. This cinematic sequence is outside the combat encounter quota; it does not make enemy contact safe during normal play. The introduction plays once per zone per playthrough. Its seen state is shared across all three stages and survives death, retries and stage replay; a new game resets it
-- **Outgoing exchanges:** completing a zone's third stage shows its outgoing exchange over an actual image of the cleared stage's art, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to stage and zone-visit statistics, then the map walk; Fert's final exchange and statistics proceed to the existing celebration instead
+- **Introductions:** at the beginning of stage one, the antagonist enters from offscreen on the right and reaches about the midpoint of the current viewport before the paused manual exchange begins. The cinematic sprite is separate from world-stage objects and has no combat collision or attacks. The world and all underlying controls stay paused during its approach, the manually advanced Continue/Skip exchange and its departure. Completing or skipping the exchange marks the introduction seen. After the exchange, the antagonist turns right and runs offscreen, then is removed before normal gameplay resumes. Both approach and departure use its maximum charge or dash speed from shared behaviour data. This cinematic sequence is outside the combat encounter quota; it does not make enemy contact safe during normal play. The introduction plays once per zone per playthrough. Its seen state is shared across all stages in the zone and survives death, retries and stage replay; a new game resets it
+- **Outgoing exchanges:** completing a zone's final stage shows its outgoing exchange over an actual image of the cleared stage's art, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to stage and zone-visit statistics, then the map walk; Fert's final exchange and statistics proceed to the existing celebration instead
 - **Restarts:** death retries and stage replays do not repeat a seen introduction; a new game resets the once-per-zone seen state
 - **Skip:** Skip skips all remaining dialogue. If the conversation ends in a choice, Skip opens its modal without choosing an answer or bypassing the choice
 
