@@ -39,6 +39,8 @@ export interface NavigationMemory {
   readonly deaths: readonly FailedChoice[];
 }
 export interface NavigationCandidateSummary {
+  readonly executionSteps?: number;
+  readonly executionProgress?: number;
   readonly followup?: { readonly inputLabel: string; readonly startTick: number };
   readonly continuationSteps?: number;
   readonly segmentCount?: number;
@@ -470,6 +472,31 @@ function action(
     useHeld: false,
   };
 }
+function policyKey(
+  direction: -1 | 1,
+  horizon: number,
+  elapsed: number,
+  candidate: Candidate,
+): string {
+  return JSON.stringify([
+    candidate.travel !== undefined,
+    Array.from({ length: horizon }, (_, tick) => {
+      const at = tick + elapsed;
+      if (at < candidate.back) {
+        return [false, -direction];
+      }
+      const active = at - candidate.back - candidate.delay;
+      if (active < 0) {
+        return [false, 0];
+      }
+      const held = active < candidate.hold;
+      const travel = candidate.travel ?? direction;
+      return candidate.stopAt === undefined
+        ? [held, active < candidate.stationary ? 0 : travel]
+        : [held, "brake", travel, candidate.stopAt];
+    }),
+  ]);
+}
 function samePrediction(expected: ZoneState, actual: ZoneState, full: boolean): boolean {
   if (
     expected.area !== actual.area ||
@@ -669,6 +696,7 @@ export function plannedInput(
     | {
         candidate: Candidate;
         elapsed: number;
+        executionSteps: number;
         inputs: ZoneInput[];
         predictedProgress: number;
         score: number;
@@ -683,7 +711,7 @@ export function plannedInput(
     candidates.splice(4, 0, candidates.pop()!);
   }
   if (groundEscape) {
-    candidates[0] = groundEscape;
+    candidates.unshift(groundEscape);
   }
   if (retreat && !threatened) {
     candidates.splice(4, 0, candidates.splice(candidates.indexOf(retreat), 1)[0]!);
@@ -693,27 +721,18 @@ export function plannedInput(
   }
   const choices = candidates.map((candidate) => ({ candidate, elapsed: 0 }));
   if (navigation.continuation) {
-    const { candidate, elapsed } = navigation.continuation;
-    const exhaustedPrefix =
-      elapsed >= candidate.back + candidate.delay + Math.max(candidate.hold, candidate.stationary);
-    const same = exhaustedPrefix
-      ? choices.findIndex(
-          ({ candidate: fresh }) =>
-            fresh.hold === 0 &&
-            fresh.back === 0 &&
-            fresh.delay === 0 &&
-            fresh.stationary === candidate.stationary &&
-            fresh.stopAt === candidate.stopAt &&
-            fresh.travel === candidate.travel,
-        )
-      : -1;
-    if (same >= 0) {
-      choices[same] = navigation.continuation;
-    } else {
-      choices.splice(threatened ? 1 : 0, 0, navigation.continuation);
-    }
+    choices.splice(threatened ? 2 : 0, 0, navigation.continuation);
   }
-  for (const { candidate, elapsed } of choices.slice(0, limits.maxCandidates)) {
+  const seen = new Set<string>();
+  const distinct = choices.filter(({ candidate, elapsed }) => {
+    const key = policyKey(direction, limits.horizonTicks, elapsed, candidate);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+  for (const { candidate, elapsed } of distinct.slice(0, limits.maxCandidates)) {
     if (navigation.counters.physicsSteps + limits.horizonTicks > limits.maxPhysicsSteps) {
       break;
     }
@@ -817,6 +836,12 @@ export function plannedInput(
         : !predicted.bird.grounded && !predicted.cleared && predicted.area === zone.area
           ? "airborne"
           : null;
+    const executionSteps =
+      landedAt !== undefined && landedAt >= limits.horizonTicks && !followup
+        ? Math.min(inputs.length, landedAt + 2)
+        : inputs.length;
+    const executionEnd = states[executionSteps] ?? predicted;
+    const executionProgress = direction * (executionEnd.bird.x - zone.bird.x);
     const summary: NavigationCandidateSummary = {
       continuationSteps: Math.max(
         0,
@@ -824,6 +849,8 @@ export function plannedInput(
       ),
       ...(followup && { followup: { inputLabel: inputLabel(followup), startTick: followupStart } }),
       elapsed,
+      executionProgress,
+      executionSteps,
       forwardProgress: direction * (predicted.bird.x - zone.bird.x),
       inputLabel: inputLabel(candidate),
       physicsSteps: inputs.length,
@@ -881,8 +908,9 @@ export function plannedInput(
       const selected = {
         candidate,
         elapsed,
+        executionSteps,
         inputs,
-        predictedProgress: summary.forwardProgress,
+        predictedProgress: executionProgress,
         score,
         sequenced: followup !== undefined,
         states,
@@ -957,9 +985,10 @@ export function plannedInput(
           : riding
             ? "transfer"
             : "advance";
-  navigation.continuation = best.sequenced
-    ? undefined
-    : { candidate: best.candidate, elapsed: best.elapsed + 1 };
+  navigation.continuation =
+    best.sequenced || best.executionSteps < best.inputs.length
+      ? undefined
+      : { candidate: best.candidate, elapsed: best.elapsed + 1 };
   navigation.cache = {
     config: cacheConfig,
     index: 1,
@@ -968,7 +997,7 @@ export function plannedInput(
     states: best.states,
     tuning,
   };
-  navigation.queue = best.inputs;
+  navigation.queue = best.inputs.slice(0, best.executionSteps);
   const input = navigation.queue.shift()!;
   snapshot(
     {

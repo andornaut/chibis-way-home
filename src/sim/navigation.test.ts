@@ -560,7 +560,8 @@ describe("bounded real-rule navigation", () => {
         const selected = decision.candidates.find(
           (candidate) =>
             candidate.inputLabel === decision.chosenAction &&
-            candidate.forwardProgress === decision.predictedProgress,
+            (candidate.executionProgress ?? candidate.forwardProgress) ===
+              decision.predictedProgress,
         );
         followupAt =
           selected?.followup === undefined ? undefined : zone.steps + selected.followup.startTick;
@@ -573,6 +574,152 @@ describe("bounded real-rule navigation", () => {
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
     expect(usedGroundEscape).toBe(true);
     expect(usedFollowup).toBe(true);
+  });
+  it("retains grounded walking when jumping under a roof is lethal", () => {
+    const base = fixture([
+      { height: 180, width: 144, x: 0, y: 240 },
+      { height: 132, width: 576, x: 144, y: 288 },
+      { height: 24, width: 180, x: 0, y: 156 },
+    ]);
+    const roof = {
+      ...movingObject("hazard", { x: 0, y: 180 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 180,
+    };
+    const actor: ObjectLayout = {
+      ...movingObject("hazard", { x: 290, y: 242 }),
+      behaviour: {
+        axis: "x",
+        distance: 0,
+        initial: "wait",
+        states: { wait: { animation: "idle", motion: { kind: "wait" }, transitions: [] } },
+      },
+      height: 46,
+      motion: STATIC_MOTION,
+      width: 44,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: { ...base.areas.main!, exitX: 660, height: 420, objects: [roof, actor], width: 720 },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    let first: ReturnType<typeof navigationSnapshot>;
+    for (let tick = 0; tick < 900 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      if (tick === 0) {
+        first = navigationSnapshot(bot);
+      }
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    expect(first!.candidates.some((candidate) => candidate.inputLabel === "walk")).toBe(true);
+    expect(
+      first!.candidates.some((candidate) => candidate.inputLabel === "retreat-to-support"),
+    ).toBe(true);
+    expect(first!.candidates.some((candidate) => candidate.inputLabel === "backward-full")).toBe(
+      true,
+    );
+    expect(first!.candidates.length).toBeLessThanOrEqual(NAVIGATION_VALIDATION.maxCandidates);
+  });
+  it("replans after a late landing before an approaching charger intercepts the idle tail", () => {
+    const base = fixture([
+      { height: 180, width: 144, x: 0, y: 240 },
+      { height: 120, width: 384, x: 336, y: 300 },
+    ]);
+    const gap = {
+      ...movingObject("hazard", { x: 144, y: 357 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 192,
+    };
+    const actor: ObjectLayout = {
+      ...movingObject("hazard", { x: 440, y: 254 }),
+      behaviour: {
+        axis: "x",
+        distance: -104,
+        initial: "warn",
+        states: {
+          rest: { animation: "rest", motion: { kind: "wait" }, transitions: [] },
+          rush: {
+            animation: "rush",
+            motion: { direction: -1, kind: "move", speed: 300 },
+            transitions: [{ to: "rest", when: [{ kind: "boundary" }] }],
+          },
+          warn: {
+            animation: "warn",
+            motion: { kind: "wait" },
+            transitions: [{ to: "rush", when: [{ kind: "elapsed", seconds: 1.55 }] }],
+          },
+        },
+      },
+      height: 46,
+      motion: STATIC_MOTION,
+      width: 44,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 112, y: 240 } },
+          exitX: 660,
+          height: 420,
+          objects: [gap, actor],
+          width: 720,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    let sawPrefix = false;
+    let prefixAt: number | undefined;
+    let usedPrefixReplan = false;
+    for (let tick = 0; tick < 900 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      const decision = navigationSnapshot(bot)!;
+      usedPrefixReplan ||= prefixAt === zone.steps && decision.didReplan && zone.bird.grounded;
+      if (decision.didReplan) {
+        const selected = decision.candidates.find(
+          (candidate) =>
+            candidate.inputLabel === decision.chosenAction &&
+            (candidate.executionProgress ?? candidate.forwardProgress) ===
+              decision.predictedProgress,
+        );
+        if (
+          selected?.executionSteps !== undefined &&
+          selected.executionSteps < selected.physicsSteps
+        ) {
+          prefixAt = zone.steps + selected.executionSteps;
+        }
+      }
+      sawPrefix ||= decision.candidates.some(
+        (candidate) =>
+          (candidate.executionSteps ?? candidate.physicsSteps) < candidate.physicsSteps &&
+          candidate.rejection === null,
+      );
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    expect(sawPrefix).toBe(true);
+    expect(usedPrefixReplan).toBe(true);
   });
   it("requires explicit validation profile for larger work while preserving every other hard cap", () => {
     expect(validateNavigation()).toEqual(NAVIGATION_DEFAULTS);
