@@ -513,7 +513,16 @@ export interface ElementBinding {
   readonly skin?: ElementSkin;
 }
 
+export interface Orbit<Host = string> {
+  readonly angularSpeed: number;
+  readonly host: Host;
+  readonly phase: number;
+  readonly radius: number;
+}
+
 export interface Instance {
+  readonly id?: string;
+  readonly orbit?: Orbit;
   readonly behaviour?: BehaviourPlan;
   readonly character: string;
   readonly col: number;
@@ -760,6 +769,7 @@ export interface Reaches {
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
   readonly contactCue?: "red-hazard";
+  readonly orbit?: Orbit<number>;
   readonly contact?: SpriteContact;
   readonly spawnTemplates?: Readonly<Record<string, ObjectLayout>>;
   readonly behaviour?: BehaviourPlan;
