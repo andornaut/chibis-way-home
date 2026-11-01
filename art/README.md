@@ -6,7 +6,7 @@ The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served a
 
 - Pixel art: minimalist, cute, a little retro, refined.
 - Everything, UI included, is pixel art at one base resolution, 720x360. The game scales it to fill the screen at 2:1 with nearest-neighbour sampling and no smoothing, by a fractional factor, so on most screens some pixels come out one device pixel wider than others. On a landscape phone 1 base pixel is about 1 CSS pixel. Judge art at a fractional scale as well as at 3x, and avoid 1px patterns (checks, dashes, alternating rows) that turn uneven when pixels vary in width.
-- Playable and speaking characters use chibi proportions: the head at least as big as the body, so a character reads from head shape and markings alone. Decorative background animals use naturalistic adult proportions, restrained markings and species-appropriate movement; no oversized eyes, clothing or character expressions.
+- Playable and speaking characters use chibi proportions: the head at least as big as the body, so a character reads from head shape and markings alone. All natural background objects, including foliage, bushes, trees and animals, use realistic or naturalistic proportions, forms, silhouettes and motion within the pixel-art style and muted pastel palette. Avoid cute cartoon shapes, oversized eyes, clothing and character expressions in background nature. Playable and speaking chibi characters remain the exception.
 
 ## Zone design guide
 
