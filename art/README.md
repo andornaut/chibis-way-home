@@ -1,6 +1,6 @@
 # Art
 
-The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served art directory, `public/art/`.
+The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served art directory, `public/art/`. See the [layout guide](layout.md) for spacing, margins and alignment.
 
 ## Direction
 
