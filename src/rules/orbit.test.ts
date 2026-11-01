@@ -278,6 +278,15 @@ describe("continuous orbital contact", () => {
       stepZone(tuning, chord, Math.PI, idle, startZone(tuning, chord, 1)).death,
     ).toBeUndefined();
   });
+  it("composes the arc with the bird's continuous motion", () => {
+    const [originalHost, original] = pair();
+    const parent = { ...originalHost, origin: { x: -3, y: -0.5 } };
+    const follower = { ...original, orbit: { ...original.orbit!, radius: 10 } };
+    const leg = { end: Math.PI, from: parent.origin, start: 0, to: parent.origin };
+    const before = { height: 1, width: 1, x: -20, y: 9.5 };
+    expect(orbitSweptContact(follower, parent, leg, before, { ...before, x: 20 })).toBe(true);
+    expect(orbitSweptContact(follower, parent, leg, before, { ...before, x: -40 })).toBe(false);
+  });
   it("uses the actual red hitbox offset and preserves clear body space", () => {
     const [parent, original] = pair();
     const follower = {
