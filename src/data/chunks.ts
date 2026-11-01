@@ -1,3 +1,4 @@
+import { CHARACTERS } from "./characters";
 import {
   BOUNDARY_START,
   CHUNK_COLS,
@@ -23,7 +24,7 @@ import { INDUSTRIAL_CHUNKS } from "./zone2";
 import { COUNTRYSIDE_CHUNKS } from "./zone3";
 import { WOODLAND_CHUNKS } from "./zone4";
 import { HOME_CITY_CHUNKS } from "./zone5";
-import { APARTMENT_CHUNKS } from "./zone6";
+import { APARTMENT_CHUNKS, APARTMENT_ROWS, createApartmentMiddleChunks } from "./zone6";
 
 // The rows a chunk's entry and exit stand on.
 export const SEAM_ROWS = [30, 40, 50] as const;
@@ -239,7 +240,10 @@ function apartmentTheme(
     backdrops:
       wall === null
         ? [{ character: "street-sky", parallax: { x: 1, y: 1 }, role: "sky", row: 10 }]
-        : [0, 12, 24, 36, 48].map((row) => ({
+        : Array.from(
+            { length: Math.ceil(APARTMENT_ROWS / CHARACTERS["apartment-wall-panel"]!.rows) },
+            (_, index) => index * CHARACTERS["apartment-wall-panel"]!.rows,
+          ).map((row) => ({
             character: "apartment-wall-panel",
             parallax: { x: 1, y: 1 },
             role: "wall",
@@ -308,6 +312,12 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
     "apartment-wall-lobby",
     "apartment-wood",
     "apartment-plaster",
+    "apartment-lobby-sofa",
+  ),
+  "apartment-penthouse": apartmentTheme(
+    "apartment-wall-residential",
+    "apartment-wood",
+    "apartment-stone",
     "apartment-lobby-sofa",
   ),
   "apartment-pool": apartmentTheme(
@@ -1230,6 +1240,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
 );
 
 export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...createApartmentMiddleChunks(BASE_CHUNKS),
   ...Object.fromEntries(
     Object.entries(BASE_CHUNKS).map(([id, chunk]) => [
       id,

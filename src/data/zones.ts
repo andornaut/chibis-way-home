@@ -1,6 +1,12 @@
-import { EXTERIOR_DEPTH_ALIASES, WOODLAND_DEPTH_ALIASES } from "./chunks";
+import { WOODLAND_DEPTH_ALIASES } from "./chunks";
 import { CHUNK_COLS } from "./chunkTemplates";
 import type { ChunkPool, StageRecipe, ZonePlan } from "./types";
+import {
+  APARTMENT_ROWS,
+  APARTMENT_SPAWN_ROW,
+  APARTMENT_STAGE_EXIT,
+  apartmentChunkId,
+} from "./zone6";
 
 // PLACEHOLDER: parkour test zones, until gameplay designs the real zones.
 //
@@ -289,15 +295,6 @@ const DIFFICULTY_PROFILES = {
 const STAGE_ENCOUNTERS = { first: 0, later: 1 } as const;
 const STAGE_LENGTH = { max: 16 * CHUNK_COLS, min: 14 * CHUNK_COLS } as const;
 
-function sectionLength(count: number, index: number) {
-  const minChunks = STAGE_LENGTH.min / CHUNK_COLS;
-  const maxChunks = STAGE_LENGTH.max / CHUNK_COLS;
-  return {
-    max: (Math.floor(maxChunks / count) + (index < maxChunks % count ? 1 : 0)) * CHUNK_COLS,
-    min: (Math.floor(minChunks / count) + (index < minChunks % count ? 1 : 0)) * CHUNK_COLS,
-  };
-}
-
 const GROUND_CHALLENGES: ChunkPool = [
   "city-boundary-ground-hazard",
   "compound-ascent",
@@ -407,18 +404,22 @@ const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
   "horizontal-platform-orbit",
   "vertical-platform-orbit",
 ];
-const APARTMENT_CAPS = {
-  finish: "apartment-finish",
-  start: "apartment-start",
-  transitionRoles: { left: "transition-down", right: "transition-up" },
-} as const;
-const APARTMENT_ROOM_DOORS = [{ count: 1, room: "test" }] as const;
-const APARTMENT_SECTION_DEFAULTS = {
+const APARTMENT_LENGTH = { max: 12 * CHUNK_COLS, min: 11 * CHUNK_COLS };
+const apartmentRecipe = (theme: string, encounters: number): StageRecipe => ({
   ...DIFFICULTY_PROFILES.apartment,
-  doors: [],
+  chunks: APARTMENT_CHALLENGE_CHUNKS.map(apartmentChunkId),
+  doors: [{ count: 1, room: "test" }],
+  encounters,
   events: [],
+  finish: "apartment-floor-finish",
+  length: APARTMENT_LENGTH,
+  rows: APARTMENT_ROWS,
   spawnCol: 2,
-} as const;
+  spawnRow: APARTMENT_SPAWN_ROW,
+  stageExit: APARTMENT_STAGE_EXIT,
+  start: "apartment-floor-start",
+  theme,
+});
 
 // Generated stages use one continuous area or ordered floor sections.
 export const RECIPES: Readonly<Record<string, StageRecipe>> = {
@@ -470,41 +471,6 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "city-streets-start",
     theme: "city-streets",
   },
-  "climb-to-apartment": {
-    ...APARTMENT_CAPS,
-    encounters: STAGE_ENCOUNTERS.later,
-    sections: [
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        doors: APARTMENT_ROOM_DOORS,
-        id: "fire-escape-2",
-        length: sectionLength(4, 0),
-        theme: "apartment-exterior",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        id: "spa",
-        length: sectionLength(4, 1),
-        theme: "apartment-spa",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        id: "fire-escape-3",
-        length: sectionLength(4, 2),
-        theme: "apartment-exterior",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        id: "residential",
-        length: sectionLength(4, 3),
-        theme: "apartment-residential",
-      },
-    ],
-  },
   "country-lanes": {
     ...DIFFICULTY_PROFILES.countryside,
     chunks: STAGE_CHUNK_POOLS.countryside,
@@ -528,28 +494,6 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     spawnCol: 2,
     start: "deep-woods-start",
     theme: "deep-woods",
-  },
-  "entrance-and-lobby": {
-    ...APARTMENT_CAPS,
-    encounters: STAGE_ENCOUNTERS.first,
-    finish: "apartment-quiet-finish",
-    sections: [
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        doors: APARTMENT_ROOM_DOORS,
-        id: "entrance",
-        length: sectionLength(2, 0),
-        theme: "apartment-entrance",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        id: "lobby",
-        length: sectionLength(2, 1),
-        theme: "apartment-lobby",
-      },
-    ],
   },
   "familiar-neighbourhood": {
     ...DIFFICULTY_PROFILES.home,
@@ -613,6 +557,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "loading-yards-start",
     theme: "loading-yards",
   },
+  lobby: apartmentRecipe("apartment-lobby", 0),
   park: {
     difficulty: { max: 4, min: 2 },
     doors: [{ count: 1, room: "test" }],
@@ -623,6 +568,8 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "park-start",
     theme: "park",
   },
+  penthouse: apartmentRecipe("apartment-penthouse", 1),
+  pool: apartmentRecipe("apartment-pool", 0),
   ravine: {
     ...DIFFICULTY_PROFILES.woodland,
     chunks: STAGE_CHUNK_POOLS.woodland.map((id) => WOODLAND_DEPTH_ALIASES[id] ?? id),
@@ -635,6 +582,8 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "ravine-start",
     theme: "ravine",
   },
+  "residential-floors": apartmentRecipe("apartment-residential", 0),
+  restaurant: apartmentRecipe("apartment-restaurant", 1),
   "river-crossing": {
     ...DIFFICULTY_PROFILES.countryside,
     chunks: STAGE_CHUNK_POOLS.countryside,
@@ -647,36 +596,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "river-crossing-start",
     theme: "river-crossing",
   },
-  "shared-floors": {
-    ...APARTMENT_CAPS,
-    encounters: STAGE_ENCOUNTERS.later,
-    finish: "apartment-shared-finish",
-    sections: [
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        doors: APARTMENT_ROOM_DOORS,
-        id: "restaurant",
-        length: sectionLength(3, 0),
-        theme: "apartment-restaurant",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS.map((id) => EXTERIOR_DEPTH_ALIASES[id] ?? id),
-        id: "fire-escape-1",
-        length: sectionLength(3, 1),
-        theme: "apartment-exterior",
-      },
-      {
-        ...APARTMENT_SECTION_DEFAULTS,
-        chunks: APARTMENT_CHALLENGE_CHUNKS,
-        id: "pool",
-        length: sectionLength(3, 2),
-        theme: "apartment-pool",
-      },
-    ],
-    start: "apartment-intro-start",
-  },
+  spa: apartmentRecipe("apartment-spa", 0),
   street: {
     ...DIFFICULTY_PROFILES.blue,
     chunks: STAGE_CHUNK_POOLS.blue,

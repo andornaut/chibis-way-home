@@ -29,7 +29,7 @@ export interface Stats {
   readonly zones: Readonly<Record<string, number>>;
 }
 
-export const STATS_VERSION = 4;
+export const STATS_VERSION = 5;
 const KEYS = {
   backup: "chibis-way-home.stats-backup",
   save: "chibis-way-home.stats",

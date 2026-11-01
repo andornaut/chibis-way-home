@@ -1,61 +1,111 @@
-import { CHUNK_COLS, encounterStart, PATROL_ENCOUNTER, withoutEncounters } from "./chunkTemplates";
-import type { ChunkPlan } from "./types";
+import { CHUNK_COLS } from "./chunkTemplates";
+import { ZONE_ROWS } from "./screen";
+import type { ChunkPlan, TerrainRect } from "./types";
 
-const UPPER_FLOOR_OFFSET = 20;
-const QUIET_PATROL = withoutEncounters(PATROL_ENCOUNTER);
+export const APARTMENT_ROWS = 90;
+export const APARTMENT_SPAWN_ROW = 80;
+export const APARTMENT_STAGE_EXIT = { col: 54, cols: 4, row: 4, rows: 6 } as const;
+export const APARTMENT_THEMES = [
+  "apartment-lobby",
+  "apartment-penthouse",
+  "apartment-pool",
+  "apartment-residential",
+  "apartment-restaurant",
+  "apartment-spa",
+] as const;
 
-const APARTMENT_BOUNDARIES: Readonly<Record<string, ChunkPlan>> = {
-  "apartment-finish": {
+const shelf = (col: number, cols: number, row: number): TerrainRect => ({
+  col,
+  cols,
+  look: "raised",
+  row,
+  rows: 1,
+});
+
+export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  "apartment-floor-finish": {
     cols: CHUNK_COLS,
     difficulty: 4,
-    encounters: QUIET_PATROL.encounters,
+    encounters: 0,
     entry: { row: 30 },
     exit: { row: 30 },
     objects: [
-      ...QUIET_PATROL.objects.map((object) => ({
-        ...object,
-        row: object.row - UPPER_FLOOR_OFFSET,
-      })),
-      { character: "apartment-stairwell", col: 54, role: "final-goal", row: 24 },
+      {
+        character: "apartment-stairwell",
+        col: APARTMENT_STAGE_EXIT.col,
+        role: "transition-up",
+        row: APARTMENT_STAGE_EXIT.row,
+      },
     ],
-    solids: QUIET_PATROL.solids.map((solid) => ({
-      ...solid,
-      row: solid.row - UPPER_FLOOR_OFFSET,
-      rows: solid.rows + UPPER_FLOOR_OFFSET,
-    })),
-    theme: ["apartment-lobby", "apartment-residential"],
+    rows: APARTMENT_ROWS,
+    solids: [
+      shelf(0, 8, 30),
+      shelf(8, 6, 25),
+      shelf(20, 6, 20),
+      shelf(32, 6, 15),
+      shelf(44, 12, 10),
+      shelf(56, 4, 30),
+    ],
+    theme: APARTMENT_THEMES,
   },
-  "apartment-start": {
+  "apartment-floor-start": {
     cols: CHUNK_COLS,
-    difficulty: 1,
+    difficulty: 4,
     encounters: 0,
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
-    slots: [{ area: { col: 18, cols: 4, row: 44, rows: 6 }, id: "apartment-room", kind: "door" }],
+    rows: APARTMENT_ROWS,
+    slots: [{ area: { col: 2, cols: 4, row: 74, rows: 6 }, id: "apartment-room", kind: "door" }],
     solids: [
-      { col: 0, cols: 10, look: "ground", row: 50, rows: 10 },
-      { col: 10, cols: 3, look: "raised", row: 47, rows: 13 },
-      { col: 13, cols: 9, look: "ground", row: 50, rows: 10 },
-      { col: 22, cols: 3, look: "raised", row: 44, rows: 16 },
-      { col: 25, cols: CHUNK_COLS - 25, look: "ground", row: 50, rows: 10 },
+      shelf(0, 4, 50),
+      {
+        col: 0,
+        cols: 10,
+        look: "ground",
+        row: APARTMENT_SPAWN_ROW,
+        rows: APARTMENT_ROWS - APARTMENT_SPAWN_ROW,
+      },
+      shelf(6, 9, 75),
+      shelf(0, 4, 70),
+      shelf(6, 4, 65),
+      shelf(0, 4, 60),
+      shelf(6, 4, 55),
+      ...[70, 65, 60, 55].map((row, index) => shelf(15 + index * 5, 5, row)),
+      shelf(35, CHUNK_COLS - 35, 50),
     ],
-    theme: ["apartment-entrance", "apartment-exterior"],
+    theme: APARTMENT_THEMES,
   },
 };
 
-export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
-  ...APARTMENT_BOUNDARIES,
-  "apartment-intro-start": {
-    ...encounterStart(6, PATROL_ENCOUNTER),
-    theme: "apartment-restaurant",
-  },
-  "apartment-quiet-finish": {
-    ...withoutEncounters(APARTMENT_BOUNDARIES["apartment-finish"]!),
-    theme: "apartment-lobby",
-  },
-  "apartment-shared-finish": {
-    ...withoutEncounters(APARTMENT_BOUNDARIES["apartment-finish"]!),
-    theme: "apartment-pool",
-  },
-};
+export const apartmentChunkId = (id: string): string => `apartment-tall-${id}`;
+
+export function createApartmentMiddleChunks(
+  shared: Readonly<Record<string, ChunkPlan>>,
+): Readonly<Record<string, ChunkPlan>> {
+  return Object.fromEntries(
+    Object.entries(shared)
+      .filter(([id, chunk]) => {
+        const themes = typeof chunk.theme === "string" ? [chunk.theme] : chunk.theme;
+        return (
+          !Object.hasOwn(APARTMENT_CHUNKS, id) &&
+          themes.some((theme) =>
+            APARTMENT_THEMES.includes(theme as (typeof APARTMENT_THEMES)[number]),
+          )
+        );
+      })
+      .map(([id, chunk]) => [
+        apartmentChunkId(id),
+        {
+          ...chunk,
+          rows: APARTMENT_ROWS,
+          solids: chunk.solids.map((solid) =>
+            solid.row + solid.rows === ZONE_ROWS
+              ? { ...solid, rows: APARTMENT_ROWS - solid.row }
+              : solid,
+          ),
+          theme: APARTMENT_THEMES,
+        },
+      ]),
+  );
+}

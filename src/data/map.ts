@@ -38,7 +38,7 @@ const DESTINATIONS: readonly MapDestination[] = [
     at: { col: 10, row: 18 },
     icon: "map-icon-apartment",
     id: "apartment",
-    stages: ["entrance-and-lobby", "shared-floors", "climb-to-apartment"],
+    stages: ["lobby", "restaurant", "pool", "spa", "residential-floors", "penthouse"],
   },
 ];
 
@@ -69,7 +69,7 @@ export const ZONE_MAP: ZoneMap = {
       ? []
       : [{ built: from in BUILT_STAGES && to in BUILT_STAGES, from, to }];
   }),
-  finish: "climb-to-apartment",
+  finish: "penthouse",
   nodes: DESTINATIONS.flatMap(({ at, stages }) =>
     stages.map((id) => {
       const zone = BUILT_STAGES[id];
