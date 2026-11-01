@@ -1,4 +1,3 @@
-import { CHARACTERS } from "./characters";
 import {
   BOUNDARY_START,
   CHUNK_COLS,
@@ -24,7 +23,7 @@ import { INDUSTRIAL_CHUNKS } from "./zone2";
 import { COUNTRYSIDE_CHUNKS } from "./zone3";
 import { WOODLAND_CHUNKS } from "./zone4";
 import { HOME_CITY_CHUNKS } from "./zone5";
-import { APARTMENT_CHUNKS, APARTMENT_ROWS, createApartmentMiddleChunks } from "./zone6";
+import { APARTMENT_CHUNKS, createApartmentMiddleChunks } from "./zone6";
 
 // The rows a chunk's entry and exit stand on.
 export const SEAM_ROWS = [30, 40, 50] as const;
@@ -240,15 +239,7 @@ function apartmentTheme(
     backdrops:
       wall === null
         ? [{ character: "street-sky", parallax: { x: 1, y: 1 }, role: "sky", row: 10 }]
-        : Array.from(
-            { length: Math.ceil(APARTMENT_ROWS / CHARACTERS["apartment-wall-panel"]!.rows) },
-            (_, index) => index * CHARACTERS["apartment-wall-panel"]!.rows,
-          ).map((row) => ({
-            character: "apartment-wall-panel",
-            parallax: { x: 1, y: 1 },
-            role: "wall",
-            row,
-          })),
+        : [],
     bindings: {
       ...COMMON_BINDINGS,
       antagonist: { character: "ferret-antagonist", scene: null },

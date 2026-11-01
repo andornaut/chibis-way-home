@@ -1,9 +1,11 @@
+import { CHARACTERS } from "./characters";
 import { CHUNK_COLS } from "./chunkTemplates";
 import { ZONE_ROWS } from "./screen";
-import type { ChunkPlan, TerrainRect } from "./types";
+import type { ChunkPlan, Instance, TerrainRect } from "./types";
 
 export const APARTMENT_ROWS = 90;
 export const APARTMENT_SPAWN_ROW = 80;
+export const APARTMENT_WINDOW = { col: 12, cols: 36, row: 4, rows: 24 } as const;
 export const APARTMENT_STAGE_EXIT = { col: 54, cols: 4, row: 4, rows: 6 } as const;
 export const APARTMENT_THEMES = [
   "apartment-lobby",
@@ -22,8 +24,70 @@ const shelf = (col: number, cols: number, row: number): TerrainRect => ({
   rows: 1,
 });
 
+export function apartmentWallBands(col: number, cols: number, fromRow = 0): readonly Instance[] {
+  const rows = CHARACTERS["apartment-wall-panel"]!.rows;
+  return Array.from({ length: Math.ceil((APARTMENT_ROWS - fromRow) / rows) }, (_, index) => ({
+    character: "apartment-wall-panel",
+    col,
+    cols,
+    parallax: { x: 1, y: 1 },
+    role: "wall",
+    row: fromRow + index * rows,
+    rows: Math.min(rows, APARTMENT_ROWS - fromRow - index * rows),
+  }));
+}
+
+const LANDING_DEPTH: readonly Instance[] = [
+  {
+    character: "street-sky",
+    col: 0,
+    cols: CHUNK_COLS,
+    parallax: { x: 0, y: 0 },
+    role: "sky",
+    row: 10,
+  },
+  {
+    character: "street-city-far",
+    col: 0,
+    cols: CHUNK_COLS,
+    parallax: { x: 0.15, y: 0.05 },
+    role: "far-background",
+    row: 10,
+  },
+  {
+    character: "street-city-mid",
+    col: 0,
+    cols: CHUNK_COLS,
+    parallax: { x: 0.4, y: 0.15 },
+    role: "mid-background",
+    row: 10,
+  },
+];
+
 export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "apartment-floor-finish": {
+    backdrops: [
+      ...LANDING_DEPTH,
+      ...apartmentWallBands(0, APARTMENT_WINDOW.col),
+      ...apartmentWallBands(
+        APARTMENT_WINDOW.col + APARTMENT_WINDOW.cols,
+        CHUNK_COLS - APARTMENT_WINDOW.col - APARTMENT_WINDOW.cols,
+      ),
+      {
+        character: "apartment-wall-panel",
+        col: APARTMENT_WINDOW.col,
+        cols: APARTMENT_WINDOW.cols,
+        parallax: { x: 1, y: 1 },
+        role: "wall",
+        row: 0,
+        rows: APARTMENT_WINDOW.row,
+      },
+      ...apartmentWallBands(
+        APARTMENT_WINDOW.col,
+        APARTMENT_WINDOW.cols,
+        APARTMENT_WINDOW.row + APARTMENT_WINDOW.rows,
+      ),
+    ],
     cols: CHUNK_COLS,
     difficulty: 4,
     encounters: 0,
@@ -49,6 +113,7 @@ export const APARTMENT_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     theme: APARTMENT_THEMES,
   },
   "apartment-floor-start": {
+    backdrops: apartmentWallBands(0, CHUNK_COLS),
     cols: CHUNK_COLS,
     difficulty: 4,
     encounters: 0,
@@ -98,6 +163,7 @@ export function createApartmentMiddleChunks(
         apartmentChunkId(id),
         {
           ...chunk,
+          backdrops: [...apartmentWallBands(0, CHUNK_COLS), ...(chunk.backdrops ?? [])],
           rows: APARTMENT_ROWS,
           solids: chunk.solids.map((solid) =>
             solid.row + solid.rows === ZONE_ROWS

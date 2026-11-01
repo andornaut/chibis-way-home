@@ -1,5 +1,9 @@
+import { readFile } from "node:fs/promises";
+
+import { decodePng } from "@andornaut/game-kit/art/png";
 import { describe, expect, it } from "vitest";
 
+import artManifest from "../../public/art/manifest.json";
 import ferretSheet from "../../public/art/sprites/ferret-antagonist.json";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
@@ -9,11 +13,13 @@ import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zo
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
+import { chunkBackdropSpan, chunkParallax } from "../view/chunkParallax";
+import { artOffset } from "../view/objectArt";
 import { BIRD } from "./bird";
 import { ZONE_MAP } from "./map";
 import { SCREEN, TILE } from "./screen";
 import type { TilePoint, ZonePlan } from "./types";
-import { APARTMENT_CHUNKS, APARTMENT_SPAWN_ROW } from "./zone6";
+import { APARTMENT_CHUNKS, APARTMENT_SPAWN_ROW, APARTMENT_WINDOW } from "./zone6";
 import { RECIPES } from "./zones";
 
 const floors = ZONE_MAP.destinations.find(({ id }) => id === "apartment")!.stages;
@@ -134,6 +140,111 @@ describe("Apartment floor geometry", () => {
       expect(zone.turnedBack).toBe(true);
     },
   );
+  it("exposes actual sky, far and mid artwork through every floor's upper window", async () => {
+    const image = async (key: string) => {
+      const backdrop = artManifest.backdrops.find((item) => item.key === key)!;
+      return decodePng(
+        new Uint8Array(
+          await readFile(new URL(`../../public/art/${backdrop.png}`, import.meta.url)),
+        ),
+      );
+    };
+    const [far, mid] = await Promise.all([image("apartment-far"), image("apartment-exterior-mid")]);
+    const wallImages = new Map(
+      await Promise.all(
+        artManifest.backdrops
+          .filter((item) => item.key.startsWith("apartment-wall-"))
+          .map(async (item) => [item.key, await image(item.key)] as const),
+      ),
+    );
+    for (const id of floors) {
+      const plan = assembleZone(CHUNK_LIBRARY, 1, id, RECIPES[id]!);
+      const layout = layoutOf(plan);
+      const area = layout.areas[layout.start.area]!;
+      const finish = area.chunks.at(-1)!;
+      const left = finish.x + APARTMENT_WINDOW.col * TILE;
+      const right = left + APARTMENT_WINDOW.cols * TILE;
+      const walls = area.objects.filter((object) => object.art.startsWith("apartment-wall-"));
+      const rects = walls.map((wall) => {
+        const art = artManifest.backdrops.find((item) => item.key === wall.art)!;
+        const offset = artOffset("repeated-backdrop", wall, {
+          height: art.height,
+          width: wall.width,
+        });
+        return {
+          height: art.height,
+          width: wall.width,
+          x: wall.origin.x,
+          y: wall.origin.y + offset.y,
+        };
+      });
+      const top = APARTMENT_WINDOW.row * TILE;
+      const bottom = (APARTMENT_WINDOW.row + APARTMENT_WINDOW.rows) * TILE;
+      expect(
+        rects.some(
+          (wall) =>
+            wall.x < right &&
+            wall.x + wall.width > left &&
+            wall.y < bottom &&
+            wall.y + wall.height > top,
+        ),
+      ).toBe(false);
+      const wallImage = wallImages.get(walls[0]!.art)!;
+      expect(wallImage.data.every((value, index) => index % 4 !== 3 || value === 255)).toBe(true);
+      for (let row = 0; row < area.height / TILE; row++) {
+        for (const col of [0, APARTMENT_WINDOW.col, APARTMENT_WINDOW.col + APARTMENT_WINDOW.cols]) {
+          const x = finish.x + (col + 0.5) * TILE;
+          const y = (row + 0.5) * TILE;
+          const insideWindow = x > left && x < right && y > top && y < bottom;
+          expect(
+            rects.some(
+              (wall) =>
+                x >= wall.x && x < wall.x + wall.width && y >= wall.y && y < wall.y + wall.height,
+            ),
+          ).toBe(!insideWindow);
+        }
+      }
+      const layers = area.objects.filter((object) =>
+        ["apartment-sky", "apartment-far", "apartment-exterior-mid"].includes(object.art),
+      );
+      expect(layers).toHaveLength(3);
+      for (const layer of layers) {
+        const art = artManifest.backdrops.find((item) => item.key === layer.art)!;
+        const offset = artOffset("repeated-backdrop", layer, {
+          height: art.height,
+          width: layer.width,
+        });
+        expect(chunkBackdropSpan(area, layer)).toEqual(finish);
+        const frame = chunkParallax(
+          { parallax: layer.parallax!, scroll: { x: finish.x, y: 0 } },
+          { height: art.height, width: finish.width, x: finish.x, y: layer.origin.y + offset.y },
+        );
+        expect(frame.position.y).toBe(0);
+        expect(frame.textureX).toBeCloseTo(0);
+      }
+      let farVisible = false;
+      let midVisible = false;
+      let skyVisible = false;
+      for (let y = top; y < bottom; y++) {
+        for (
+          let x = APARTMENT_WINDOW.col * TILE;
+          x < (APARTMENT_WINDOW.col + APARTMENT_WINDOW.cols) * TILE;
+          x++
+        ) {
+          const a = far.data[(y * far.width + x) * 4 + 3]!;
+          const b = mid.data[(y * mid.width + x) * 4 + 3]!;
+          farVisible ||= a > 0 && b < 255;
+          midVisible ||= b > 0;
+          skyVisible ||= a < 255 && b < 255;
+        }
+      }
+      expect({ farVisible, midVisible, skyVisible }).toEqual({
+        farVisible: true,
+        midVisible: true,
+        skyVisible: true,
+      });
+    }
+  });
   it("climbs from the protected lower opening to its upper seam", () => {
     const plan = cap("apartment-floor-start");
     const control = climb(
