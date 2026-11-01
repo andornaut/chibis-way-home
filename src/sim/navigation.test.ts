@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { STATIC_MOTION } from "../data/archetypes";
 import { BIRD } from "../data/bird";
-import type { ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import type { BirdTuning, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { STEP_SECONDS } from "../rules/step";
 import { enterArea, retryZone, startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
 import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors } from "./bot";
-import { stageLoader } from "./catalogue";
+import capturedDock from "./fixtures/sharedDock.json";
 import {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
@@ -1740,10 +1740,13 @@ describe("bounded real-rule navigation", () => {
     ).toBe(true);
   });
   it("requires settled static dock landings near moving supports", () => {
-    const { layout } = stageLoader("shared-floors")(1);
-    const link = layout.areas.restaurant!.walkLinks!.right!;
+    const { layout, tuning } = capturedDock as unknown as {
+      layout: ZoneLayout;
+      tuning: BirdTuning;
+    };
+    const link = layout.start;
     expect(link.area).toBe("fire-escape-1");
-    let zone = enterArea(BIRD, layout, link, {
+    let zone = enterArea(tuning, layout, link, {
       attempt: 0,
       restarts: 0,
       seed: 1,
@@ -1787,7 +1790,7 @@ describe("bounded real-rule navigation", () => {
     ];
     for (const [ticks, move, jumpHeld] of approach) {
       for (let tick = 0; tick < ticks; tick++) {
-        zone = stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
+        zone = stepZone(tuning, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
       }
     }
     expect(zone.steps).toBe(6346);
@@ -1805,14 +1808,14 @@ describe("bounded real-rule navigation", () => {
     ];
     for (const [ticks, move, jumpHeld] of dockApproach) {
       for (let tick = 0; tick < ticks; tick++) {
-        unsafe = stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, unsafe);
+        unsafe = stepZone(tuning, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, unsafe);
       }
     }
     expect(unsafe.steps).toBe(6589);
     expect(unsafe.death?.reason).toBe("hazard");
     expect(unsafe.bird.x).toBeCloseTo(1539.6, 8);
     const bot = newBot(1);
-    let input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+    let input = plannedInput(tuning, layout, NAVIGATION_VALIDATION, 1, zone, bot);
     const decision = navigationSnapshot(bot)!;
     const dock = decision.candidates.find((candidate) => candidate.inputLabel === "approach")!;
     expect(dock.predictedEndpoint.grounded).toBe(true);
@@ -1821,11 +1824,11 @@ describe("bounded real-rule navigation", () => {
     expect(decision.chosenAction).not.toBe("approach");
     const queued = [input, ...bot.navigation!.queue];
     for (input of queued) {
-      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(tuning, layout, STEP_SECONDS, input, zone);
     }
     for (let tick = 0; tick < NAVIGATION_DEFAULTS.replanTicks; tick++) {
       zone = stepZone(
-        BIRD,
+        tuning,
         layout,
         STEP_SECONDS,
         { jumpHeld: false, move: 0, useHeld: false },

@@ -1,0 +1,3275 @@
+{
+  "tuning": {
+    "airAccel": 2880,
+    "coyoteTime": 0.1,
+    "flutterFallSpeed": 275,
+    "gravity": 1780,
+    "groundAccel": 2880,
+    "height": 36,
+    "jumpBuffer": 0.1,
+    "jumpHopHeight": 40,
+    "jumpReleaseBlendTime": 0.09,
+    "jumpRiseTime": 0.32,
+    "jumpSpeed": 535,
+    "jumpTapWindow": 0.1,
+    "walkSpeed": 288,
+    "width": 24,
+    "brakeAccel": 2880
+  },
+  "layout": {
+    "areas": {
+      "fire-escape-1": {
+        "walkLinks": {
+          "left": {
+            "area": "restaurant",
+            "entry": "return"
+          },
+          "right": {
+            "area": "pool",
+            "entry": "start"
+          }
+        },
+        "backX": 12,
+        "chunks": [
+          {
+            "width": 720,
+            "x": 0
+          },
+          {
+            "width": 720,
+            "x": 720
+          },
+          {
+            "width": 720,
+            "x": 1440
+          },
+          {
+            "width": 720,
+            "x": 2160
+          },
+          {
+            "width": 720,
+            "x": 2880
+          }
+        ],
+        "entries": {
+          "start": {
+            "x": 24,
+            "y": 600
+          },
+          "return": {
+            "x": 3576,
+            "y": 480
+          }
+        },
+        "exitX": 3588,
+        "height": 720,
+        "objects": [
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "apartment-sky",
+            "tileset": null,
+            "character": "street-sky",
+            "collision": "none",
+            "height": 600,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 0,
+              "y": 120
+            },
+            "parallax": {
+              "x": 0,
+              "y": 0
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 3600
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "apartment-far",
+            "tileset": null,
+            "character": "street-city-far",
+            "collision": "none",
+            "height": 600,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 0,
+              "y": 120
+            },
+            "parallax": {
+              "x": 0.15,
+              "y": 0.05
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 3600
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "apartment-exterior-mid",
+            "tileset": null,
+            "character": "street-city-mid",
+            "collision": "none",
+            "height": 600,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 0,
+              "y": 120
+            },
+            "parallax": {
+              "x": 0.4,
+              "y": 0.15
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 3600
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "hazard-top",
+            "tileset": "tiles-platforming",
+            "character": "red-edge-top",
+            "collision": "hazard",
+            "height": 12,
+            "hitbox": {
+              "height": 3,
+              "width": 96,
+              "x": 0,
+              "y": 9
+            },
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 96,
+              "y": 648
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 96
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "platform-face",
+            "tileset": "tiles-platforming",
+            "character": "red-edge-support",
+            "collision": "solid",
+            "height": 60,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 96,
+              "y": 660
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 96
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "hazard-left",
+            "tileset": "tiles-platforming",
+            "character": "red-edge-left",
+            "collision": "hazard",
+            "height": 72,
+            "hitbox": {
+              "height": 72,
+              "width": 3,
+              "x": 9,
+              "y": 0
+            },
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 324,
+              "y": 528
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 12
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "platform-ledge",
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 792,
+              "y": 408
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 72
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "platform-ledge",
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 1224,
+              "y": 408
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 72
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "ferret-antagonist",
+            "character": "ferret-antagonist",
+            "spawnTemplates": {
+              "ferret-parcel": {
+                "animations": {
+                  "open": "open"
+                },
+                "art": "ferret-parcel",
+                "character": "ferret-parcel",
+                "collision": "hazard",
+                "height": 24,
+                "hitbox": {
+                  "x": 4,
+                  "y": 8,
+                  "width": 16,
+                  "height": 16
+                },
+                "interaction": {
+                  "kind": "none",
+                  "range": 0
+                },
+                "lines": [],
+                "motion": {
+                  "algorithm": "static",
+                  "direction": "right",
+                  "distance": 0,
+                  "hopHeight": 0,
+                  "pause": 0,
+                  "speed": 0,
+                  "variance": 0
+                },
+                "origin": {
+                  "x": 0,
+                  "y": 0
+                },
+                "phase": 0,
+                "quips": [],
+                "quirks": [],
+                "reaction": {
+                  "kind": "none",
+                  "range": 0,
+                  "speed": 0
+                },
+                "width": 24,
+                "tileset": null
+              }
+            },
+            "behaviour": {
+              "axis": "x",
+              "distance": -216,
+              "inactiveAnimation": "idle",
+              "initial": "patrol-left",
+              "spotted": {
+                "line": "furt-spotted",
+                "speaker": "ferret"
+              },
+              "states": {
+                "crouch": {
+                  "animation": "crouch",
+                  "enter": "face-target",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "frustration",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.12
+                        },
+                        {
+                          "kind": "lost-target",
+                          "tolerance": 12
+                        }
+                      ]
+                    },
+                    {
+                      "to": "rush",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.12
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "frustration": {
+                  "animation": "frustration",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "pursuit",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.55
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "patrol-left": {
+                  "animation": "walk",
+                  "motion": {
+                    "direction": -1,
+                    "kind": "move",
+                    "speed": 56.25
+                  },
+                  "transitions": [
+                    {
+                      "to": "crouch",
+                      "when": [
+                        {
+                          "kind": "visible"
+                        }
+                      ]
+                    },
+                    {
+                      "to": "wait-left",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "patrol-right": {
+                  "animation": "walk",
+                  "motion": {
+                    "direction": 1,
+                    "kind": "move",
+                    "speed": 56.25
+                  },
+                  "transitions": [
+                    {
+                      "to": "crouch",
+                      "when": [
+                        {
+                          "kind": "visible"
+                        }
+                      ]
+                    },
+                    {
+                      "to": "wait-right",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "pursuit": {
+                  "animation": "walk",
+                  "motion": {
+                    "direction": "target",
+                    "kind": "move",
+                    "speed": 56.25
+                  },
+                  "transitions": [
+                    {
+                      "to": "frustration",
+                      "when": [
+                        {
+                          "kind": "lost-target",
+                          "tolerance": 12
+                        }
+                      ]
+                    },
+                    {
+                      "to": "crouch",
+                      "when": [
+                        {
+                          "kind": "nearby",
+                          "range": 720
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "rest": {
+                  "animation": "rest",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "prepare-throw",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.25
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "rush": {
+                  "animation": "rush",
+                  "motion": {
+                    "direction": "facing",
+                    "kind": "move",
+                    "speed": 375
+                  },
+                  "transitions": [
+                    {
+                      "to": "frustration",
+                      "when": [
+                        {
+                          "kind": "lost-target",
+                          "tolerance": 12
+                        }
+                      ]
+                    },
+                    {
+                      "to": "rest",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    },
+                    {
+                      "to": "rest",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.48
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-left": {
+                  "animation": "idle",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "crouch",
+                      "when": [
+                        {
+                          "kind": "visible"
+                        }
+                      ]
+                    },
+                    {
+                      "to": "patrol-right",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.14
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-right": {
+                  "animation": "idle",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "crouch",
+                      "when": [
+                        {
+                          "kind": "visible"
+                        }
+                      ]
+                    },
+                    {
+                      "to": "patrol-left",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.14
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "prepare-throw": {
+                  "animation": "crouch",
+                  "enter": "face-target",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "throw",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.12
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "throw": {
+                  "animation": "throw",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "onEnter": [
+                    {
+                      "armSeconds": 0,
+                      "character": "ferret-parcel",
+                      "gravity": 288,
+                      "kind": "spawn",
+                      "lifeSeconds": 3,
+                      "maxAlive": 2,
+                      "mirrorWithFacing": true,
+                      "offset": {
+                        "x": 27,
+                        "y": 10
+                      },
+                      "velocity": {
+                        "x": 168,
+                        "y": -120
+                      }
+                    }
+                  ],
+                  "transitions": [
+                    {
+                      "to": "throw-rest",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.14
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "throw-rest": {
+                  "animation": "rest",
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "pursuit",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "collision": "hazard",
+            "contact": {
+              "frame": {
+                "height": 48,
+                "width": 48
+              },
+              "frames": {
+                "ferret-antagonist 0.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [24, 18, 32],
+                  [25, 18, 31],
+                  [26, 17, 30],
+                  [27, 16, 29],
+                  [28, 16, 29],
+                  [29, 15, 29],
+                  [30, 15, 28],
+                  [31, 14, 28],
+                  [32, 14, 28],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 1.aseprite": [
+                  [3, 26, 31],
+                  [4, 25, 32],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 24, 32],
+                  [12, 23, 33],
+                  [13, 22, 33],
+                  [14, 22, 34],
+                  [15, 23, 35],
+                  [16, 22, 36],
+                  [17, 22, 36],
+                  [18, 22, 38],
+                  [19, 21, 39],
+                  [20, 21, 39],
+                  [21, 20, 38],
+                  [22, 19, 33],
+                  [23, 18, 32],
+                  [24, 18, 31],
+                  [25, 17, 30],
+                  [26, 16, 29],
+                  [27, 16, 29],
+                  [28, 15, 29],
+                  [29, 15, 28],
+                  [30, 14, 28],
+                  [31, 14, 28],
+                  [32, 14, 27],
+                  [33, 13, 27],
+                  [34, 13, 27],
+                  [35, 13, 28],
+                  [36, 13, 29],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 22],
+                  [41, 23, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 10.aseprite": [
+                  [12, 30, 35],
+                  [13, 29, 36],
+                  [14, 29, 36],
+                  [15, 29, 36],
+                  [16, 29, 36],
+                  [17, 29, 36],
+                  [18, 29, 36],
+                  [19, 29, 36],
+                  [20, 28, 36],
+                  [21, 27, 37],
+                  [22, 26, 37],
+                  [23, 26, 38],
+                  [24, 27, 39],
+                  [25, 26, 40],
+                  [26, 25, 40],
+                  [27, 22, 42],
+                  [28, 20, 43],
+                  [29, 18, 43],
+                  [30, 16, 42],
+                  [31, 15, 37],
+                  [32, 14, 36],
+                  [33, 14, 35],
+                  [34, 13, 36],
+                  [35, 13, 37],
+                  [36, 13, 37],
+                  [37, 13, 30],
+                  [37, 31, 37],
+                  [38, 12, 29],
+                  [38, 31, 37],
+                  [39, 11, 29],
+                  [39, 32, 36],
+                  [40, 10, 28],
+                  [41, 9, 28],
+                  [42, 8, 16],
+                  [42, 17, 28],
+                  [43, 6, 15],
+                  [43, 18, 29],
+                  [44, 4, 14],
+                  [44, 18, 30],
+                  [45, 3, 12],
+                  [45, 19, 30],
+                  [46, 3, 11],
+                  [46, 19, 30],
+                  [47, 4, 6],
+                  [47, 20, 29]
+                ],
+                "ferret-antagonist 11.aseprite": [
+                  [11, 30, 35],
+                  [12, 29, 36],
+                  [13, 29, 36],
+                  [14, 29, 36],
+                  [15, 29, 36],
+                  [16, 29, 36],
+                  [17, 29, 36],
+                  [18, 29, 36],
+                  [19, 28, 36],
+                  [20, 27, 37],
+                  [21, 26, 37],
+                  [22, 26, 38],
+                  [23, 27, 39],
+                  [24, 26, 40],
+                  [25, 25, 40],
+                  [26, 22, 42],
+                  [27, 20, 43],
+                  [28, 18, 43],
+                  [29, 16, 42],
+                  [30, 15, 37],
+                  [31, 14, 36],
+                  [32, 14, 35],
+                  [33, 13, 36],
+                  [34, 13, 37],
+                  [35, 13, 37],
+                  [36, 13, 30],
+                  [36, 31, 37],
+                  [37, 13, 29],
+                  [37, 31, 37],
+                  [38, 12, 29],
+                  [38, 32, 36],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 22],
+                  [41, 23, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 12.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [24, 18, 32],
+                  [25, 18, 31],
+                  [26, 17, 30],
+                  [27, 16, 29],
+                  [28, 16, 29],
+                  [29, 15, 29],
+                  [30, 15, 28],
+                  [31, 14, 28],
+                  [32, 14, 28],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 13.aseprite": [
+                  [3, 26, 31],
+                  [4, 25, 32],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 24, 32],
+                  [12, 23, 33],
+                  [13, 22, 33],
+                  [14, 22, 34],
+                  [15, 23, 35],
+                  [16, 22, 36],
+                  [17, 22, 36],
+                  [18, 22, 38],
+                  [19, 21, 39],
+                  [20, 21, 39],
+                  [21, 20, 38],
+                  [22, 19, 33],
+                  [23, 18, 32],
+                  [24, 18, 31],
+                  [25, 17, 30],
+                  [26, 16, 29],
+                  [27, 16, 29],
+                  [28, 15, 29],
+                  [29, 15, 28],
+                  [30, 14, 28],
+                  [31, 14, 28],
+                  [32, 14, 27],
+                  [33, 13, 27],
+                  [34, 13, 27],
+                  [35, 13, 28],
+                  [36, 13, 29],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 22],
+                  [41, 23, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 14.aseprite": [
+                  [4, 24, 29],
+                  [5, 23, 30],
+                  [6, 23, 30],
+                  [7, 23, 30],
+                  [8, 23, 30],
+                  [9, 23, 30],
+                  [10, 23, 30],
+                  [11, 23, 30],
+                  [12, 22, 30],
+                  [13, 21, 31],
+                  [14, 20, 31],
+                  [15, 20, 32],
+                  [16, 21, 33],
+                  [17, 20, 34],
+                  [18, 20, 34],
+                  [19, 20, 36],
+                  [20, 20, 37],
+                  [21, 19, 37],
+                  [22, 18, 36],
+                  [23, 18, 34],
+                  [24, 17, 35],
+                  [25, 17, 36],
+                  [26, 16, 36],
+                  [27, 16, 35],
+                  [28, 15, 34],
+                  [29, 15, 29],
+                  [30, 14, 27],
+                  [31, 14, 27],
+                  [32, 14, 27],
+                  [33, 13, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 15.aseprite": [
+                  [4, 27, 32],
+                  [5, 26, 33],
+                  [6, 26, 33],
+                  [7, 26, 33],
+                  [8, 26, 33],
+                  [9, 26, 33],
+                  [10, 26, 33],
+                  [11, 26, 33],
+                  [12, 25, 33],
+                  [13, 24, 34],
+                  [14, 23, 34],
+                  [15, 23, 35],
+                  [16, 24, 36],
+                  [17, 23, 37],
+                  [18, 23, 37],
+                  [19, 23, 39],
+                  [20, 22, 40],
+                  [21, 21, 40],
+                  [22, 21, 39],
+                  [23, 20, 34],
+                  [24, 19, 33],
+                  [25, 18, 32],
+                  [26, 18, 32],
+                  [27, 17, 37],
+                  [28, 16, 38],
+                  [29, 16, 39],
+                  [30, 15, 39],
+                  [31, 15, 28],
+                  [31, 30, 38],
+                  [32, 14, 28],
+                  [32, 33, 37],
+                  [33, 14, 28],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 16.aseprite": [
+                  [4, 28, 33],
+                  [5, 27, 34],
+                  [6, 27, 34],
+                  [7, 27, 34],
+                  [8, 27, 34],
+                  [9, 27, 34],
+                  [10, 27, 34],
+                  [11, 27, 34],
+                  [12, 26, 34],
+                  [13, 25, 35],
+                  [14, 24, 35],
+                  [15, 24, 36],
+                  [16, 25, 37],
+                  [17, 24, 38],
+                  [18, 24, 38],
+                  [19, 24, 40],
+                  [20, 23, 41],
+                  [21, 22, 41],
+                  [22, 21, 40],
+                  [23, 20, 38],
+                  [24, 20, 39],
+                  [25, 19, 40],
+                  [26, 18, 40],
+                  [27, 17, 39],
+                  [28, 17, 38],
+                  [29, 16, 33],
+                  [30, 15, 30],
+                  [31, 15, 29],
+                  [32, 14, 28],
+                  [33, 14, 28],
+                  [34, 13, 28],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 17.aseprite": [
+                  [4, 25, 30],
+                  [5, 24, 31],
+                  [6, 24, 31],
+                  [7, 24, 31],
+                  [8, 24, 31],
+                  [9, 24, 31],
+                  [10, 24, 31],
+                  [11, 24, 31],
+                  [12, 23, 31],
+                  [13, 22, 32],
+                  [14, 21, 32],
+                  [15, 21, 33],
+                  [16, 22, 34],
+                  [17, 21, 35],
+                  [18, 21, 35],
+                  [19, 21, 37],
+                  [20, 20, 38],
+                  [21, 20, 38],
+                  [22, 19, 37],
+                  [23, 18, 32],
+                  [24, 18, 31],
+                  [25, 17, 30],
+                  [26, 17, 30],
+                  [27, 16, 35],
+                  [28, 16, 36],
+                  [29, 15, 37],
+                  [30, 15, 37],
+                  [31, 14, 27],
+                  [31, 28, 36],
+                  [32, 14, 27],
+                  [32, 31, 35],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 18.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [24, 18, 32],
+                  [25, 18, 31],
+                  [26, 17, 30],
+                  [27, 16, 29],
+                  [28, 16, 29],
+                  [29, 15, 29],
+                  [30, 15, 28],
+                  [31, 14, 28],
+                  [32, 14, 28],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 19.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [24, 18, 32],
+                  [25, 18, 31],
+                  [26, 17, 30],
+                  [27, 16, 29],
+                  [28, 16, 29],
+                  [29, 15, 29],
+                  [30, 15, 28],
+                  [31, 14, 28],
+                  [32, 14, 28],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 2.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [24, 18, 32],
+                  [25, 18, 31],
+                  [26, 17, 30],
+                  [27, 16, 29],
+                  [28, 16, 29],
+                  [29, 15, 29],
+                  [30, 15, 28],
+                  [31, 14, 28],
+                  [32, 14, 28],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 30],
+                  [40, 10, 30],
+                  [41, 9, 30],
+                  [42, 8, 22],
+                  [42, 24, 31],
+                  [43, 6, 22],
+                  [43, 25, 33],
+                  [44, 4, 23],
+                  [44, 25, 34],
+                  [45, 3, 12],
+                  [45, 15, 23],
+                  [45, 26, 34],
+                  [46, 3, 11],
+                  [46, 15, 23],
+                  [46, 26, 34],
+                  [47, 4, 6],
+                  [47, 16, 22],
+                  [47, 27, 33]
+                ],
+                "ferret-antagonist 20.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [23, 37, 41],
+                  [24, 18, 42],
+                  [25, 18, 42],
+                  [26, 17, 42],
+                  [27, 16, 42],
+                  [28, 16, 41],
+                  [29, 15, 34],
+                  [30, 15, 28],
+                  [31, 14, 28],
+                  [32, 14, 28],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 21.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [24, 18, 32],
+                  [25, 18, 31],
+                  [26, 17, 30],
+                  [27, 16, 32],
+                  [28, 16, 36],
+                  [29, 15, 37],
+                  [30, 15, 37],
+                  [31, 14, 37],
+                  [32, 14, 28],
+                  [32, 30, 37],
+                  [33, 14, 27],
+                  [33, 32, 36],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 3.aseprite": [
+                  [3, 26, 31],
+                  [4, 25, 32],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 24, 32],
+                  [12, 23, 33],
+                  [13, 22, 33],
+                  [14, 22, 34],
+                  [15, 23, 35],
+                  [16, 22, 36],
+                  [17, 22, 36],
+                  [18, 22, 38],
+                  [19, 21, 39],
+                  [20, 21, 39],
+                  [21, 20, 38],
+                  [22, 19, 33],
+                  [23, 18, 32],
+                  [24, 18, 31],
+                  [25, 17, 30],
+                  [26, 16, 29],
+                  [27, 16, 29],
+                  [28, 15, 29],
+                  [29, 15, 28],
+                  [30, 14, 28],
+                  [31, 14, 28],
+                  [32, 14, 27],
+                  [33, 13, 27],
+                  [34, 13, 27],
+                  [35, 13, 28],
+                  [36, 13, 29],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 22],
+                  [41, 23, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 4.aseprite": [
+                  [4, 26, 31],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 25, 32],
+                  [12, 24, 32],
+                  [13, 23, 33],
+                  [14, 22, 33],
+                  [15, 22, 34],
+                  [16, 23, 35],
+                  [17, 22, 36],
+                  [18, 22, 36],
+                  [19, 22, 38],
+                  [20, 21, 39],
+                  [21, 21, 39],
+                  [22, 20, 38],
+                  [23, 19, 33],
+                  [24, 18, 32],
+                  [25, 18, 31],
+                  [26, 17, 30],
+                  [27, 16, 29],
+                  [28, 16, 29],
+                  [29, 15, 29],
+                  [30, 15, 28],
+                  [31, 14, 28],
+                  [32, 14, 28],
+                  [33, 14, 27],
+                  [34, 13, 27],
+                  [35, 13, 27],
+                  [36, 13, 28],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 28],
+                  [41, 9, 28],
+                  [42, 8, 16],
+                  [42, 17, 28],
+                  [43, 6, 15],
+                  [43, 18, 29],
+                  [44, 4, 14],
+                  [44, 18, 30],
+                  [45, 3, 12],
+                  [45, 19, 30],
+                  [46, 3, 11],
+                  [46, 19, 30],
+                  [47, 4, 6],
+                  [47, 20, 29]
+                ],
+                "ferret-antagonist 5.aseprite": [
+                  [3, 26, 31],
+                  [4, 25, 32],
+                  [5, 25, 32],
+                  [6, 25, 32],
+                  [7, 25, 32],
+                  [8, 25, 32],
+                  [9, 25, 32],
+                  [10, 25, 32],
+                  [11, 24, 32],
+                  [12, 23, 33],
+                  [13, 22, 33],
+                  [14, 22, 34],
+                  [15, 23, 35],
+                  [16, 22, 36],
+                  [17, 22, 36],
+                  [18, 22, 38],
+                  [19, 21, 39],
+                  [20, 21, 39],
+                  [21, 20, 38],
+                  [22, 19, 33],
+                  [23, 18, 32],
+                  [24, 18, 31],
+                  [25, 17, 30],
+                  [26, 16, 29],
+                  [27, 16, 29],
+                  [28, 15, 29],
+                  [29, 15, 28],
+                  [30, 14, 28],
+                  [31, 14, 28],
+                  [32, 14, 27],
+                  [33, 13, 27],
+                  [34, 13, 27],
+                  [35, 13, 28],
+                  [36, 13, 29],
+                  [37, 13, 29],
+                  [38, 12, 29],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 22],
+                  [41, 23, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 6.aseprite": [
+                  [12, 30, 35],
+                  [13, 29, 36],
+                  [14, 29, 36],
+                  [15, 29, 36],
+                  [16, 29, 36],
+                  [17, 29, 36],
+                  [18, 29, 36],
+                  [19, 29, 36],
+                  [20, 28, 36],
+                  [21, 27, 37],
+                  [22, 26, 37],
+                  [23, 26, 38],
+                  [24, 27, 39],
+                  [25, 26, 40],
+                  [26, 25, 40],
+                  [27, 22, 42],
+                  [28, 20, 43],
+                  [29, 18, 43],
+                  [30, 16, 42],
+                  [31, 15, 37],
+                  [32, 14, 36],
+                  [33, 14, 35],
+                  [34, 13, 36],
+                  [35, 13, 37],
+                  [36, 13, 37],
+                  [37, 13, 30],
+                  [37, 31, 37],
+                  [38, 12, 29],
+                  [38, 31, 37],
+                  [39, 11, 29],
+                  [39, 32, 36],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 7.aseprite": [
+                  [12, 30, 35],
+                  [13, 29, 36],
+                  [14, 29, 36],
+                  [15, 29, 36],
+                  [16, 29, 36],
+                  [17, 29, 36],
+                  [18, 29, 36],
+                  [19, 29, 36],
+                  [20, 28, 36],
+                  [21, 27, 37],
+                  [22, 26, 37],
+                  [23, 26, 38],
+                  [24, 27, 39],
+                  [25, 26, 40],
+                  [26, 25, 40],
+                  [27, 22, 42],
+                  [28, 20, 43],
+                  [29, 18, 43],
+                  [30, 16, 42],
+                  [31, 15, 37],
+                  [32, 14, 36],
+                  [33, 14, 35],
+                  [34, 13, 36],
+                  [35, 13, 37],
+                  [36, 13, 37],
+                  [37, 13, 30],
+                  [37, 31, 37],
+                  [38, 12, 29],
+                  [38, 31, 37],
+                  [39, 11, 29],
+                  [39, 32, 36],
+                  [40, 10, 29],
+                  [41, 9, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ],
+                "ferret-antagonist 8.aseprite": [
+                  [12, 30, 35],
+                  [13, 29, 36],
+                  [14, 29, 36],
+                  [15, 29, 36],
+                  [16, 29, 36],
+                  [17, 29, 36],
+                  [18, 29, 36],
+                  [19, 29, 36],
+                  [20, 28, 36],
+                  [21, 27, 37],
+                  [22, 26, 37],
+                  [23, 26, 38],
+                  [24, 27, 39],
+                  [25, 26, 40],
+                  [26, 25, 40],
+                  [27, 22, 42],
+                  [28, 20, 43],
+                  [29, 18, 43],
+                  [30, 16, 42],
+                  [31, 15, 37],
+                  [32, 14, 36],
+                  [33, 14, 35],
+                  [34, 13, 36],
+                  [35, 13, 37],
+                  [36, 13, 37],
+                  [37, 13, 30],
+                  [37, 31, 37],
+                  [38, 12, 29],
+                  [38, 31, 37],
+                  [39, 11, 30],
+                  [39, 32, 36],
+                  [40, 10, 30],
+                  [41, 9, 30],
+                  [42, 8, 22],
+                  [42, 24, 31],
+                  [43, 6, 22],
+                  [43, 25, 33],
+                  [44, 4, 23],
+                  [44, 25, 34],
+                  [45, 3, 12],
+                  [45, 15, 23],
+                  [45, 26, 34],
+                  [46, 3, 11],
+                  [46, 15, 23],
+                  [46, 26, 34],
+                  [47, 4, 6],
+                  [47, 16, 22],
+                  [47, 27, 33]
+                ],
+                "ferret-antagonist 9.aseprite": [
+                  [11, 30, 35],
+                  [12, 29, 36],
+                  [13, 29, 36],
+                  [14, 29, 36],
+                  [15, 29, 36],
+                  [16, 29, 36],
+                  [17, 29, 36],
+                  [18, 29, 36],
+                  [19, 28, 36],
+                  [20, 27, 37],
+                  [21, 26, 37],
+                  [22, 26, 38],
+                  [23, 27, 39],
+                  [24, 26, 40],
+                  [25, 25, 40],
+                  [26, 22, 42],
+                  [27, 20, 43],
+                  [28, 18, 43],
+                  [29, 16, 42],
+                  [30, 15, 37],
+                  [31, 14, 36],
+                  [32, 14, 35],
+                  [33, 13, 36],
+                  [34, 13, 37],
+                  [35, 13, 37],
+                  [36, 13, 30],
+                  [36, 31, 37],
+                  [37, 13, 29],
+                  [37, 31, 37],
+                  [38, 12, 29],
+                  [38, 32, 36],
+                  [39, 11, 29],
+                  [40, 10, 29],
+                  [41, 9, 22],
+                  [41, 23, 29],
+                  [42, 8, 22],
+                  [42, 23, 29],
+                  [43, 6, 15],
+                  [43, 16, 31],
+                  [44, 4, 14],
+                  [44, 16, 32],
+                  [45, 3, 12],
+                  [45, 17, 32],
+                  [46, 3, 11],
+                  [46, 17, 32],
+                  [47, 4, 6],
+                  [47, 18, 24],
+                  [47, 25, 31]
+                ]
+              },
+              "tags": {
+                "idle": {
+                  "frames": [
+                    {
+                      "frame": "ferret-antagonist 0.aseprite",
+                      "seconds": 0.4
+                    },
+                    {
+                      "frame": "ferret-antagonist 1.aseprite",
+                      "seconds": 0.4
+                    }
+                  ],
+                  "once": false
+                },
+                "walk": {
+                  "frames": [
+                    {
+                      "frame": "ferret-antagonist 2.aseprite",
+                      "seconds": 0.12
+                    },
+                    {
+                      "frame": "ferret-antagonist 3.aseprite",
+                      "seconds": 0.12
+                    },
+                    {
+                      "frame": "ferret-antagonist 4.aseprite",
+                      "seconds": 0.12
+                    },
+                    {
+                      "frame": "ferret-antagonist 5.aseprite",
+                      "seconds": 0.12
+                    }
+                  ],
+                  "once": false
+                },
+                "crouch": {
+                  "frames": [
+                    {
+                      "frame": "ferret-antagonist 6.aseprite",
+                      "seconds": 0.14
+                    },
+                    {
+                      "frame": "ferret-antagonist 7.aseprite",
+                      "seconds": 0.14
+                    }
+                  ],
+                  "once": false
+                },
+                "rush": {
+                  "frames": [
+                    {
+                      "frame": "ferret-antagonist 8.aseprite",
+                      "seconds": 0.08
+                    },
+                    {
+                      "frame": "ferret-antagonist 9.aseprite",
+                      "seconds": 0.08
+                    },
+                    {
+                      "frame": "ferret-antagonist 10.aseprite",
+                      "seconds": 0.08
+                    },
+                    {
+                      "frame": "ferret-antagonist 11.aseprite",
+                      "seconds": 0.08
+                    }
+                  ],
+                  "once": false
+                },
+                "rest": {
+                  "frames": [
+                    {
+                      "frame": "ferret-antagonist 12.aseprite",
+                      "seconds": 0.4
+                    },
+                    {
+                      "frame": "ferret-antagonist 13.aseprite",
+                      "seconds": 0.4
+                    }
+                  ],
+                  "once": false
+                },
+                "frustration": {
+                  "frames": [
+                    {
+                      "frame": "ferret-antagonist 14.aseprite",
+                      "seconds": 0.12
+                    },
+                    {
+                      "frame": "ferret-antagonist 15.aseprite",
+                      "seconds": 0.12
+                    },
+                    {
+                      "frame": "ferret-antagonist 16.aseprite",
+                      "seconds": 0.12
+                    },
+                    {
+                      "frame": "ferret-antagonist 17.aseprite",
+                      "seconds": 0.12
+                    }
+                  ],
+                  "once": false
+                },
+                "throw": {
+                  "frames": [
+                    {
+                      "frame": "ferret-antagonist 18.aseprite",
+                      "seconds": 0.1
+                    },
+                    {
+                      "frame": "ferret-antagonist 19.aseprite",
+                      "seconds": 0.1
+                    },
+                    {
+                      "frame": "ferret-antagonist 20.aseprite",
+                      "seconds": 0.1
+                    },
+                    {
+                      "frame": "ferret-antagonist 21.aseprite",
+                      "seconds": 0.1
+                    }
+                  ],
+                  "once": false
+                }
+              }
+            },
+            "height": 48,
+            "hitbox": {
+              "x": 2,
+              "y": 2,
+              "width": 44,
+              "height": 46
+            },
+            "interaction": {
+              "kind": "talk",
+              "range": 360
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 1092,
+              "y": 432
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 48
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "city-lift",
+            "behaviour": {
+              "axis": "y",
+              "distance": -144,
+              "initial": "back",
+              "states": {
+                "back": {
+                  "animation": null,
+                  "motion": {
+                    "direction": -1,
+                    "kind": "move",
+                    "speed": 48
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-near",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "forward": {
+                  "animation": null,
+                  "motion": {
+                    "direction": 1,
+                    "kind": "move",
+                    "speed": 48
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-far",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-far": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "back",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-near": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "forward",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 1560,
+              "y": 480
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 72
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "city-lift",
+            "behaviour": {
+              "axis": "y",
+              "distance": -144,
+              "initial": "back",
+              "states": {
+                "back": {
+                  "animation": null,
+                  "motion": {
+                    "direction": -1,
+                    "kind": "move",
+                    "speed": 48
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-near",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "forward": {
+                  "animation": null,
+                  "motion": {
+                    "direction": 1,
+                    "kind": "move",
+                    "speed": 48
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-far",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-far": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "back",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-near": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "forward",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 1848,
+              "y": 360
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 72
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "hazard-top",
+            "tileset": "tiles-platforming",
+            "character": "red-edge-top",
+            "collision": "hazard",
+            "height": 12,
+            "hitbox": {
+              "height": 3,
+              "width": 480,
+              "x": 0,
+              "y": 9
+            },
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 1536,
+              "y": 588
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 480
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "platform-face",
+            "tileset": "tiles-platforming",
+            "character": "red-edge-support",
+            "collision": "solid",
+            "height": 120,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 1536,
+              "y": 600
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 480
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "hazard-top",
+            "tileset": "tiles-platforming",
+            "character": "red-edge-top",
+            "collision": "hazard",
+            "height": 12,
+            "hitbox": {
+              "height": 3,
+              "width": 96,
+              "x": 0,
+              "y": 9
+            },
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 2352,
+              "y": 552
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 96
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "platform-face",
+            "tileset": "tiles-platforming",
+            "character": "red-edge-support",
+            "collision": "solid",
+            "height": 156,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 2352,
+              "y": 564
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 96
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "platform-ledge",
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 2544,
+              "y": 528
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 48
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "hazard-top",
+            "tileset": "tiles-platforming",
+            "character": "city-ground-hazard",
+            "behaviour": {
+              "axis": "x",
+              "distance": 120,
+              "initial": "forward",
+              "states": {
+                "back": {
+                  "animation": null,
+                  "motion": {
+                    "direction": -1,
+                    "kind": "move",
+                    "speed": 60
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-near",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "forward": {
+                  "animation": null,
+                  "motion": {
+                    "direction": 1,
+                    "kind": "move",
+                    "speed": 60
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-far",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-far": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "back",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.4
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-near": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "forward",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "collision": "hazard",
+            "height": 12,
+            "hitbox": {
+              "height": 3,
+              "width": 48,
+              "x": 0,
+              "y": 9
+            },
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 2592,
+              "y": 588
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 48
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "platform-ledge",
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 2760,
+              "y": 528
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 72
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "platform-ledge",
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 3024,
+              "y": 528
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 72
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "hazard-top",
+            "tileset": "tiles-platforming",
+            "character": "city-ground-hazard",
+            "behaviour": {
+              "axis": "x",
+              "distance": 120,
+              "initial": "forward",
+              "states": {
+                "back": {
+                  "animation": null,
+                  "motion": {
+                    "direction": -1,
+                    "kind": "move",
+                    "speed": 60
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-near",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "forward": {
+                  "animation": null,
+                  "motion": {
+                    "direction": 1,
+                    "kind": "move",
+                    "speed": 60
+                  },
+                  "transitions": [
+                    {
+                      "to": "wait-far",
+                      "when": [
+                        {
+                          "kind": "boundary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-far": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "back",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.4
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "wait-near": {
+                  "animation": null,
+                  "motion": {
+                    "kind": "wait"
+                  },
+                  "transitions": [
+                    {
+                      "to": "forward",
+                      "when": [
+                        {
+                          "kind": "elapsed",
+                          "seconds": 0.4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "collision": "hazard",
+            "height": 12,
+            "hitbox": {
+              "height": 3,
+              "width": 48,
+              "x": 0,
+              "y": 9
+            },
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 3096,
+              "y": 588
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 48
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "one-way-ledge",
+            "tileset": "tiles-platforming",
+            "character": "platform-ledge",
+            "collision": "ledge",
+            "height": 12,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 3264,
+              "y": 528
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 72
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "apartment-stairwell-down",
+            "tileset": null,
+            "character": "apartment-stairwell",
+            "collision": "none",
+            "height": 72,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 0,
+              "y": 528
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 48
+          },
+          {
+            "animations": {
+              "open": "open"
+            },
+            "art": "apartment-stairwell",
+            "character": "apartment-stairwell",
+            "collision": "none",
+            "height": 72,
+            "interaction": {
+              "kind": "none",
+              "range": 0
+            },
+            "lines": [],
+            "motion": {
+              "algorithm": "static",
+              "direction": "right",
+              "distance": 0,
+              "hopHeight": 0,
+              "pause": 0,
+              "speed": 0,
+              "variance": 0
+            },
+            "origin": {
+              "x": 3552,
+              "y": 408
+            },
+            "phase": 0,
+            "quips": [],
+            "quirks": [],
+            "reaction": {
+              "kind": "none",
+              "range": 0,
+              "speed": 0
+            },
+            "width": 48
+          }
+        ],
+        "solids": [
+          {
+            "height": 120,
+            "width": 96,
+            "x": 0,
+            "y": 600
+          },
+          {
+            "height": 120,
+            "width": 48,
+            "x": 192,
+            "y": 600
+          },
+          {
+            "height": 156,
+            "width": 48,
+            "x": 240,
+            "y": 564
+          },
+          {
+            "height": 120,
+            "width": 48,
+            "x": 288,
+            "y": 600
+          },
+          {
+            "height": 192,
+            "width": 48,
+            "x": 336,
+            "y": 528
+          },
+          {
+            "height": 180,
+            "width": 96,
+            "x": 384,
+            "y": 540
+          },
+          {
+            "height": 240,
+            "width": 240,
+            "x": 480,
+            "y": 480
+          },
+          {
+            "height": 240,
+            "width": 96,
+            "x": 720,
+            "y": 480
+          },
+          {
+            "height": 312,
+            "width": 48,
+            "x": 816,
+            "y": 408
+          },
+          {
+            "height": 240,
+            "width": 432,
+            "x": 864,
+            "y": 480
+          },
+          {
+            "height": 312,
+            "width": 48,
+            "x": 1296,
+            "y": 408
+          },
+          {
+            "height": 240,
+            "width": 96,
+            "x": 1344,
+            "y": 480
+          },
+          {
+            "height": 240,
+            "width": 96,
+            "x": 1440,
+            "y": 480
+          },
+          {
+            "height": 360,
+            "width": 72,
+            "x": 1704,
+            "y": 360
+          },
+          {
+            "height": 360,
+            "width": 144,
+            "x": 2016,
+            "y": 360
+          },
+          {
+            "height": 360,
+            "width": 96,
+            "x": 2160,
+            "y": 360
+          },
+          {
+            "height": 300,
+            "width": 96,
+            "x": 2256,
+            "y": 420
+          },
+          {
+            "height": 240,
+            "width": 48,
+            "x": 2448,
+            "y": 480
+          },
+          {
+            "height": 180,
+            "width": 48,
+            "x": 2496,
+            "y": 540
+          },
+          {
+            "height": 120,
+            "width": 336,
+            "x": 2544,
+            "y": 600
+          },
+          {
+            "height": 120,
+            "width": 96,
+            "x": 2880,
+            "y": 600
+          },
+          {
+            "height": 156,
+            "width": 48,
+            "x": 2976,
+            "y": 564
+          },
+          {
+            "height": 120,
+            "width": 288,
+            "x": 3024,
+            "y": 600
+          },
+          {
+            "height": 180,
+            "width": 72,
+            "x": 3312,
+            "y": 540
+          },
+          {
+            "height": 240,
+            "width": 216,
+            "x": 3384,
+            "y": 480
+          }
+        ],
+        "terrain": [
+          {
+            "col": 0,
+            "cols": 8,
+            "look": "apartment-metal",
+            "row": 50,
+            "rows": 10
+          },
+          {
+            "col": 16,
+            "cols": 4,
+            "look": "apartment-metal",
+            "row": 50,
+            "rows": 10
+          },
+          {
+            "col": 20,
+            "cols": 4,
+            "look": "apartment-brick",
+            "row": 47,
+            "rows": 13
+          },
+          {
+            "col": 24,
+            "cols": 4,
+            "look": "apartment-metal",
+            "row": 50,
+            "rows": 10
+          },
+          {
+            "col": 28,
+            "cols": 4,
+            "look": "apartment-brick",
+            "row": 44,
+            "rows": 16
+          },
+          {
+            "col": 32,
+            "cols": 8,
+            "look": "apartment-brick",
+            "row": 45,
+            "rows": 15
+          },
+          {
+            "col": 40,
+            "cols": 20,
+            "look": "apartment-brick",
+            "row": 40,
+            "rows": 20
+          },
+          {
+            "col": 60,
+            "cols": 8,
+            "look": "apartment-brick",
+            "row": 40,
+            "rows": 20
+          },
+          {
+            "col": 68,
+            "cols": 4,
+            "look": "apartment-brick",
+            "row": 34,
+            "rows": 26
+          },
+          {
+            "col": 72,
+            "cols": 36,
+            "look": "apartment-brick",
+            "row": 40,
+            "rows": 20
+          },
+          {
+            "col": 108,
+            "cols": 4,
+            "look": "apartment-brick",
+            "row": 34,
+            "rows": 26
+          },
+          {
+            "col": 112,
+            "cols": 8,
+            "look": "apartment-brick",
+            "row": 40,
+            "rows": 20
+          },
+          {
+            "col": 120,
+            "cols": 8,
+            "look": "apartment-brick",
+            "row": 40,
+            "rows": 20
+          },
+          {
+            "col": 142,
+            "cols": 6,
+            "look": "apartment-brick",
+            "row": 30,
+            "rows": 30
+          },
+          {
+            "col": 168,
+            "cols": 12,
+            "look": "apartment-brick",
+            "row": 30,
+            "rows": 30
+          },
+          {
+            "col": 180,
+            "cols": 8,
+            "look": "apartment-brick",
+            "row": 30,
+            "rows": 30
+          },
+          {
+            "col": 188,
+            "cols": 8,
+            "look": "apartment-brick",
+            "row": 35,
+            "rows": 25
+          },
+          {
+            "col": 204,
+            "cols": 4,
+            "look": "apartment-brick",
+            "row": 40,
+            "rows": 20
+          },
+          {
+            "col": 208,
+            "cols": 4,
+            "look": "apartment-brick",
+            "row": 45,
+            "rows": 15
+          },
+          {
+            "col": 212,
+            "cols": 28,
+            "look": "apartment-metal",
+            "row": 50,
+            "rows": 10
+          },
+          {
+            "col": 240,
+            "cols": 8,
+            "look": "apartment-metal",
+            "row": 50,
+            "rows": 10
+          },
+          {
+            "col": 248,
+            "cols": 4,
+            "look": "apartment-brick",
+            "row": 47,
+            "rows": 13
+          },
+          {
+            "col": 252,
+            "cols": 24,
+            "look": "apartment-metal",
+            "row": 50,
+            "rows": 10
+          },
+          {
+            "col": 276,
+            "cols": 6,
+            "look": "apartment-brick",
+            "row": 45,
+            "rows": 15
+          },
+          {
+            "col": 282,
+            "cols": 18,
+            "look": "apartment-brick",
+            "row": 40,
+            "rows": 20
+          }
+        ],
+        "tileset": "tiles-apartment",
+        "width": 3600
+      }
+    },
+    "birdFrame": {
+      "height": 42,
+      "width": 48
+    },
+    "start": {
+      "area": "fire-escape-1",
+      "entry": "start"
+    }
+  },
+  "source": {
+    "commit": "2203200f49b1607ecb397b5cfc993bbcd12770d2",
+    "sha256": "6b007d1c339219d3e574b0c64616a602c9775f68635c6645dd0e768621b752f0"
+  }
+}
