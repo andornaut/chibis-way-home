@@ -131,6 +131,17 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 - **Restart:** a full restart resets progress to its beginning state; the next actual stage entry starts a fresh run
 - **Retry:** death ends the attempt; Try again restarts the same stage directly, without the map or stage chooser, as another attempt of the same run, preserving its seed and generated layout
 
+### Stage design principles
+
+- **Encounters:** build each arena around observing and responding to its antagonist’s special attack, with reachable refuges and exposed routes that make the choice meaningful
+- **Learning:** teach a demand clearly, vary it, then combine it with another demand. Introduce the response before requiring it under combined pressure
+- **Moving platforms:** author and validate the complete approach, boarding, cycle, transfer and recovery sequence, not only jump reach. Validate and clearly present the available recovery options after missed boarding or transfers
+- **Primary demand:** each challenge has a clear required action. Judge variety by the primary route, including required climbs rather than optional upper detours; decorative or bypassable obstacles do not establish a new demand
+- **Readability:** show the hazard, approach and safe response before commitment. Provide observation positions and usable refuges so success does not depend solely on reacting after a short attack tell
+- **Rhythm:** alternate pressure with recovery that permits observation and preparation for the next challenge. Preserve meaningful movement rather than filling stage duration with repeated waits
+- **Variation:** vary required actions, not just chunk IDs. Repeated demanding sequences need variation in their required response; inserting a connector or changing a skin does not by itself provide that variation
+- **Zone identity:** give each zone a recognizable combination and rhythm of traversal demands and antagonist interactions while using the shared layouts and physics
+
 ### Stage statistics and interstitials
 
 The same four fields appear after every stage clear, on the death/retry card and at zone end:
@@ -161,10 +172,10 @@ This is the approved implementation scope for the current change, including the 
 
 - **Assembly:** every chunk, including fixed opening and ending caps, is exactly one screen wide: 720 px or 60 columns. Areas retain their two-screen height and vertical scrolling. A stage's recipe names its theme, start and finish chunks, a length range (start and finish included), a configurable difficulty band, and the events and doors to place. The seed varies the middle chunks within that band, without requiring difficulty to rise; the start and finish chunks are exempt. It never picks the same chunk twice in a row, and it fills the slots
 - **Difficulty:** 1 to 5. 1: walking and taps. 2: full jumps and still hazards. 3: gaps near the reach, single moving platforms and single low-ceiling tap spots. 4: timed platforms or moving hazards on the required path. 5: compounded tap-only, timed or platform-to-platform challenges
-- **Challenge variety:** the shared middle pools include required climbing routes, moving ledges, red ground strips and enemy yards. A climbing chunk requires ascent on its route rather than offering an optional upper detour. Mandatory challenges include climbs, moving ledges, overhead and vertical red surfaces, and blocks comparable to Chibi’s size. The primary route never has more than one screen of unchallenged flat travel, including across chunk seams. Recovery spaces remain between hazards. Blue cityscape has grade-four returns from upper routes, and later zones retain grade-four and grade-five low-ceiling challenges within their bands. Generation varies challenge combinations and order within the zone's difficulty band, preserving valid connections; a stage is not guaranteed to contain every challenge type
+- **Challenge variety:** the shared middle pools include required climbing routes, moving ledges, red ground strips and enemy yards. Mandatory challenges include climbs, moving ledges, overhead and vertical red surfaces, and blocks comparable to Chibi’s size. The primary route never has more than one screen of unchallenged flat travel, including across chunk seams. Blue cityscape has grade-four returns from upper routes, and later zones retain grade-four and grade-five low-ceiling challenges within their bands. Generation varies challenge combinations and order within the zone's difficulty band, preserving valid connections; a stage is not guaranteed to contain every challenge type
 - **Fairness:** isolated chunk physics checks cover entry to exit with slots empty and filled; synthetic zone and no-cross checks protect movement constraints, and recipe assembly contracts protect generated layouts. Gameplay may use one bounded stage playtest after major changes to answer a concrete reachability question. Exhaustive whole-stage searches are not a routine gate
 - **Seams:** a chunk's entry and exit are the ground rows at its left and right edges: 50, 40 or 30. The seam surface is terrain and runs at least 4 tiles in from the edge, with no gap there, and nothing (no solid, ledge, hazard or moving platform) in the 6 rows above it
-- **Shape:** one or two screens wide (60 to 120 tiles) and at most 60 rows (720 px) tall
+- **Shape:** at most 60 rows (720 px) tall
 - **Slots:** marked regions where the seed places an event or a door. A chunk must pass with every slot empty
 - **Shared layouts:** every zone uses the same layout templates and object/archetype library. Theme configuration supplies terrain, structures, props, enemies, doors, triggers, backgrounds, parallax and recipes; it does not add zone-specific mechanics
 - **Themes:** a theme sets the tileset, terrain looks and repeated backdrops for every chunk of that theme, so seams never show. A chunk can still place its own scenery. The park is an outdoor prototype theme
