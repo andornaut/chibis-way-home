@@ -738,6 +738,146 @@ describe("bounded real-rule navigation", () => {
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
   });
+  it("backs onto a raised support before jumping a lethal vertical face", () => {
+    const base = fixture([
+      { height: 156, width: 432, x: 0, y: 564 },
+      { height: 120, width: 48, x: 432, y: 600 },
+      { height: 192, width: 48, x: 480, y: 528 },
+      { height: 180, width: 372, x: 528, y: 540 },
+    ]);
+    const edge = {
+      ...movingObject("hazard", { x: 477, y: 528 }),
+      height: 72,
+      motion: STATIC_MOTION,
+      width: 3,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 461.4, y: 600 } },
+          exitX: 840,
+          height: 720,
+          objects: [edge],
+          width: 900,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    let backed = false;
+    for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      backed ||= input.move === -1 && input.jumpHeld;
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(backed).toBe(true);
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+  });
+  it("brakes after boarding a returning deck before committing its next transfer", () => {
+    const base = fixture([
+      { height: 360, width: 336, x: 0, y: 360 },
+      { height: 300, width: 96, x: 336, y: 420 },
+      { height: 240, width: 48, x: 432, y: 480 },
+      { height: 120, width: 48, x: 912, y: 600 },
+    ]);
+    const deck: ObjectLayout = {
+      ...movingObject("ledge", { x: 480, y: 540 }),
+      behaviour: {
+        axis: "x",
+        distance: 360,
+        initial: "forward",
+        states: {
+          back: {
+            animation: "idle",
+            motion: { direction: -1, kind: "move", speed: 72 },
+            transitions: [{ to: "near", when: [{ kind: "boundary" }] }],
+          },
+          far: {
+            animation: "idle",
+            motion: { kind: "wait" },
+            transitions: [{ to: "back", when: [{ kind: "elapsed", seconds: 1 }] }],
+          },
+          forward: {
+            animation: "idle",
+            motion: { direction: 1, kind: "move", speed: 72 },
+            transitions: [{ to: "far", when: [{ kind: "boundary" }] }],
+          },
+          near: {
+            animation: "idle",
+            motion: { kind: "wait" },
+            transitions: [{ to: "forward", when: [{ kind: "elapsed", seconds: 1 }] }],
+          },
+        },
+      },
+      motion: STATIC_MOTION,
+    };
+    const pit = {
+      ...movingObject("hazard", { x: 480, y: 645 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 432,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 284, y: 360 } },
+          exitX: 948,
+          height: 720,
+          objects: [deck, pit],
+          width: 960,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = startZone(BIRD, layout, 1);
+    for (let tick = 0; tick < 967; tick++) {
+      zone = stepZone(
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: false, move: 0, useHeld: false },
+        zone,
+      );
+    }
+    let boarded = false;
+    let unsettledEndpoint = false;
+    for (let tick = 0; tick < 2400 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      const at = zone.objects[0]!;
+      boarded ||=
+        zone.bird.grounded &&
+        Math.abs(zone.bird.y + BIRD.height - at.y) < 1 &&
+        zone.bird.x + BIRD.width > at.x &&
+        zone.bird.x < at.x + deck.width;
+      const ended = navigationSnapshot(bot)?.cacheRemaining === 0;
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+      const after = zone.objects[0]!;
+      if (
+        ended &&
+        zone.bird.grounded &&
+        Math.abs(zone.bird.y + BIRD.height - after.y) < 1 &&
+        zone.bird.x + BIRD.width > after.x &&
+        zone.bird.x < after.x + deck.width
+      ) {
+        unsettledEndpoint ||= Math.abs(zone.bird.vx) > 1e-6;
+      }
+    }
+    expect(boarded).toBe(true);
+    expect(unsettledEndpoint).toBe(false);
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+  });
   it("retains grounded walking when jumping under a roof is lethal", () => {
     const base = fixture([
       { height: 180, width: 144, x: 0, y: 240 },

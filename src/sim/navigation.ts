@@ -53,7 +53,7 @@ export interface NavigationCandidateSummary {
     readonly x: number;
     readonly y: number;
   };
-  readonly rejection: "death" | "wrong-area" | "airborne" | null;
+  readonly rejection: "death" | "wrong-area" | "airborne" | "unsettled-support" | null;
   readonly score: number | null;
   readonly verticalProgress: number;
 }
@@ -696,14 +696,31 @@ export function plannedInput(
   }
   navigation.counters.decisions++;
   navigation.waypoint = waypoint(tuning, layout, direction, zone);
-  const threatened = layout.areas[zone.area]!.objects.some(
-    (object, index) =>
-      object.collision === "hazard" &&
+  const threatened = layout.areas[zone.area]!.objects.some((object, index) => {
+    if (object.collision !== "hazard") {
+      return false;
+    }
+    const at = zone.objects[index] ?? object.origin;
+    const box = contactBox(
+      object,
+      at,
+      zone.behaviours[index]?.facing ?? 1,
+      zone.behaviours[index]?.axis,
+    );
+    const sideBand =
+      box.height > tuning.jumpHopHeight &&
+      box.width < box.height &&
+      box.y < zone.bird.y + tuning.height &&
+      box.y + box.height > zone.bird.y &&
+      Math.abs(box.x - zone.bird.x) <= tuning.width * 2;
+    return (
       (object.behaviour ||
         object.motion.algorithm !== "static" ||
-        object.reaction.kind !== "none") &&
-      Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
-  );
+        object.reaction.kind !== "none" ||
+        sideBand) &&
+      Math.abs(at.x - zone.bird.x) <= SCREEN.width / 2
+    );
+  });
   const movingSupport = layout.areas[zone.area]!.objects.some(
     (object, index) =>
       (object.collision === "ledge" || object.collision === "solid") &&
@@ -936,10 +953,21 @@ export function plannedInput(
         ? "wrong-area"
         : !predicted.bird.grounded && !predicted.cleared && predicted.area === zone.area
           ? "airborne"
-          : null;
-    const executionSteps =
+          : limits.profile === "validation" &&
+              !predicted.cleared &&
+              onMover(tuning, layout, predicted) &&
+              Math.abs(predicted.bird.vx) > 1e-6
+            ? "unsettled-support"
+            : null;
+    const landingPrefix =
       landedAt !== undefined && landedAt >= limits.horizonTicks
         ? Math.min(inputs.length, landedAt + 2)
+        : inputs.length;
+    const prefixState = states[landingPrefix] ?? predicted;
+    const executionSteps =
+      prefixState.bird.grounded &&
+      (!onMover(tuning, layout, prefixState) || Math.abs(prefixState.bird.vx) <= 1e-6)
+        ? landingPrefix
         : inputs.length;
     const executionEnd = states[executionSteps] ?? predicted;
     const executionProgress = direction * (executionEnd.bird.x - zone.bird.x);
