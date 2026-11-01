@@ -101,44 +101,43 @@ def sky():
 
 def far():
     im = image(720, 600)
-    # Flat, unoutlined distance silhouettes. Clear repeat boundaries leave no cut tower.
-    for x, width, top in ((18, 98, 266), (156, 74, 228), (278, 96, 316), (418, 88, 254), (552, 146, 286)):
+    # Broad factory halls, a few attached stacks and tanks, without window grids or contour bands.
+    for x, width, top in ((12, 144, 366), (196, 126, 332), (370, 156, 384), (568, 136, 350)):
         rect(im, SHADE, (x, top, x + width, 600))
-        rect(im, SHADE, (x + 10, top - 20, x + width - 10, top))
-    for x, top in ((46, 168), (188, 118), (454, 190), (610, 148)):
-        rect(im, SHADE, (x, top, x + 12, 420))
-        rect(im, SHADE, (x - 2, top, x + 14, top + 6))
-    for x, top in ((114, 330), (374, 352), (660, 326)):
-        ImageDraw.Draw(im).ellipse((x, top, x + 38, top + 18), fill=pixel.rgb(SHADE) + (255,))
-        rect(im, SHADE, (x, top + 9, x + 39, 600))
+        rect(im, SHADE, (x + 16, top - 14, x + width - 16, top))
+    for x, top in ((62, 270), (238, 248), (620, 282)):
+        rect(im, SHADE, (x, top, x + 14, 430))
+        rect(im, SHADE, (x - 2, top, x + 16, top + 6))
+    for x, top in ((144, 398), (510, 410)):
+        ImageDraw.Draw(im).ellipse((x, top, x + 42, top + 22), fill=pixel.rgb(SHADE) + (255,))
+        rect(im, SHADE, (x, top + 11, x + 43, 600))
     return im
 
 
 def warehouse_mid():
     im = image(720, 600)
-    for x, width, top in ((20, 180, 440), (250, 168, 410), (484, 216, 454)):
+    for x, width, top in ((12, 192, 456), (258, 144, 426), (468, 228, 466)):
         rect(im, "slate", (x, top, x + width, 600))
-        for start in range(x, x + width, 36):
-            polygon(im, "slate", ((start, top), (start + 30, top - 22), (start + 36, top)))
-            line(im, SHADE, 2, ((start + 2, top - 1), (start + 30, top - 20)))
-        rect(im, SHADE, (x + 8, top + 26, x + width - 8, top + 40))
+        for start in range(x, x + width, 48):
+            polygon(im, "slate", ((start, top), (start + 38, top - 20), (start + 48, top)))
+        rect(im, SHADE, (x + 12, top + 26, x + width - 12, top + 38))
+        rect(im, "zone-purple-shade", (x + width - 24, top + 38, x + width - 12, 600))
     return im
 
 
 def freight_mid():
     im = image(720, 600)
-    for x, width, top in ((24, 144, 492), (204, 168, 456), (444, 192, 510)):
+    for x, width, top in ((18, 168, 510), (238, 144, 474), (446, 240, 522)):
         rect(im, "slate", (x, top, x + width, 600))
-        rect(im, SHADE, (x, top, x + width, top + 3))
-        for y in range(top + 36, 600, 36):
+        rect(im, SHADE, (x, top, x + width, top + 4))
+        for y in range(top + 42, 600, 42):
             rect(im, SHADE, (x, y, x + width, y + 2))
-    # Distant cranes have no outlined landing edge or bright lip.
-    for x, top in ((146, 348), (472, 372)):
-        rect(im, "slate", (x, top, x + 8, 600))
-        rect(im, "slate", (x + 112, top, x + 120, 600))
-        rect(im, "slate", (x - 10, top, x + 134, top + 12))
-        line(im, SHADE, 2, ((x + 8, top + 12), (x + 112, top + 12)))
-        rect(im, "slate", (x + 60, top + 12, x + 62, top + 66))
+    for x, top in ((118, 388), (478, 362)):
+        rect(im, "slate", (x, top, x + 10, 600))
+        rect(im, "slate", (x + 120, top, x + 130, 600))
+        rect(im, "slate", (x - 8, top, x + 142, top + 14))
+        polygon(im, "slate", ((x + 10, top), (x + 64, top - 32), (x + 120, top)))
+        rect(im, "slate", (x + 68, top + 14, x + 70, top + 64))
     return im
 
 

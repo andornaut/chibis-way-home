@@ -78,32 +78,34 @@ def sky():
 
 def far():
     im = image(720, 600)
-    for x, top, width in ((0, 350, 80), (88, 298, 110), (220, 332, 88),
-                          (346, 314, 98), (478, 340, 100), (610, 300, 110)):
-        polygon(im, SHADE, ((x, top + 96), (x + width // 2, top), (x + width, top + 96)))
-        rect(im, SHADE, (x + width // 2 - 6, top + 80, x + width // 2 + 6, 600))
+    haze = "zone-blue-shade"
+    for x, top, width in ((18, 358, 100), (156, 324, 100), (294, 366, 110),
+                          (450, 340, 116), (600, 352, 100)):
+        rect(im, haze, (x + width // 2 - 5, top + 56, x + width // 2 + 5, 600))
+        d = ImageDraw.Draw(im)
+        d.ellipse((x, top, x + width, top + 90), fill=pixel.rgb(haze) + (255,))
+        d.ellipse((x + 18, top - 16, x + width - 16, top + 62), fill=pixel.rgb(haze) + (255,))
     return im
 
 
 def forest_mid():
     im = image(720, 600)
-    for x, top, width in ((24, 410, 96), (178, 390, 110), (370, 420, 100), (556, 382, 120)):
-        rect(im, "zone-green-shade", (x + width // 2 - 8, top, x + width // 2 + 8, 600))
-        polygon(im, "zone-green-shade", ((x, top + 70), (x + 14, top + 22),
-                                         (x + width // 2, top), (x + width - 12, top + 22),
-                                         (x + width, top + 70), (x + width - 24, top + 100),
-                                         (x + 20, top + 100)))
+    for x, top, width in ((16, 434, 110), (188, 410, 126), (382, 442, 100), (552, 420, 140)):
+        rect(im, SHADE, (x + width // 2 - 7, top + 46, x + width // 2 + 7, 600))
+        d = ImageDraw.Draw(im)
+        for box in ((x, top + 18, x + width, top + 94),
+                    (x + 16, top, x + width - 12, top + 76)):
+            d.ellipse(box, fill=pixel.rgb(SHADE) + (255,))
     return im
 
 
 def ravine_mid():
     im = image(720, 600)
-    polygon(im, "zone-green-shade", ((0, 430), (130, 406), (218, 448), (288, 456),
-                                     (348, 530), (408, 474), (490, 444), (610, 410),
-                                     (719, 430), (719, 600), (0, 600)))
-    polygon(im, "slate", ((0, 500), (112, 468), (218, 498), (288, 500), (348, 570),
-                          (408, 518), (510, 478), (624, 472), (719, 500), (719, 600), (0, 600)))
-    polygon(im, "zone-blue-shade", ((300, 600), (348, 554), (396, 600)))
+    polygon(im, SHADE, ((0, 450), (124, 428), (212, 458), (274, 470), (350, 542),
+                       (422, 478), (514, 444), (626, 432), (719, 450), (719, 600), (0, 600)))
+    polygon(im, "slate", ((0, 510), (106, 482), (208, 510), (274, 514), (350, 584),
+                          (422, 532), (510, 494), (628, 486), (719, 510), (719, 600), (0, 600)))
+    polygon(im, "zone-blue-shade", ((312, 600), (350, 568), (388, 600)))
     return im
 
 

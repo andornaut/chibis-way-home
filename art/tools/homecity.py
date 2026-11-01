@@ -89,22 +89,24 @@ def sky():
 
 def far():
     im = image(720, 600)
-    for x, width, top in ((-24, 104, 414), (104, 72, 380), (202, 86, 398), (316, 96, 350),
-                          (440, 80, 398), (552, 72, 376), (650, 94, 414)):
-        rect(im, SHADE, (x, top, x + width, 600))
-        rect(im, SHADE, (x + 12, top - 10, x + width - 12, top))
+    for x, width, top in ((-20, 110, 420), (126, 102, 398), (262, 136, 438),
+                          (434, 96, 384), (572, 166, 416)):
+        rect(im, SHADE, (x, top + 18, x + width, 600))
+        polygon(im, SHADE, ((x - 4, top + 20), (x + width // 2, top), (x + width + 4, top + 20)))
+        rect(im, SHADE, (x + width - 24, top + 4, x + width - 16, top + 20))
     return im
 
 
 def house(im, x, top, width, height, windows=True):
-    """One quiet middle-distance home; broad windows rather than repeated fine grids."""
-    rect(im, PRIMARY, (x, top + 16, x + width, top + height))
-    polygon(im, "zone-red-shade", ((x - 4, top + 18), (x + width // 2, top),
-                                  (x + width + 4, top + 18)))
-    rect(im, "zone-red-shade", (x + width - 18, top + 1, x + width - 12, top + 14))
+    """Warm complete plaster planes, a quiet rose roof and sparse attached window recesses."""
+    rect(im, PRIMARY, (x, top + 18, x + width, top + height))
+    rect(im, "zone-yellow", (x, top + 18, x + 8, top + height))
+    polygon(im, "zone-red-shade", ((x - 4, top + 20), (x + width // 2, top),
+                                  (x + width + 4, top + 20)))
+    rect(im, "zone-red-shade", (x + width - 20, top + 2, x + width - 12, top + 16))
     if windows:
-        for offset in (12, width - 24):
-            rect(im, SHADE, (x + offset, top + 38, x + offset + 12, top + 58))
+        for offset in (16, width - 28):
+            rect(im, SHADE, (x + offset, top + 44, x + offset + 12, top + 64))
 
 
 def outskirts_mid():

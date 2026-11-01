@@ -636,30 +636,36 @@ def city_blocks(g, colour, blocks):
 
 
 def street_city_far():
-    """720x600, bottom y 600, repeat x: muted blue distant city against powder-blue sky. No windows or outlined edges.
-    Suggested horizontal scroll factor 0.15; keep its vertical motion weak during climbs."""
-    return city_blocks(Grid(720, STREET_FY), "zone-blue-shade", (
-        (12, 54, 218, False), (90, 72, 148, True), (184, 42, 276, False),
-        (250, 66, 182, False), (342, 50, 110, False), (416, 60, 232, True),
-        (500, 54, 164, False), (580, 72, 254, False), (676, 32, 202, False),
+    """720x600 repeating window-free city masses, softened by the canonical powder-blue haze."""
+    g = city_blocks(Grid(720, STREET_FY), "zone-blue-shade", (
+        (0, 112, 350, False), (138, 70, 292, True), (228, 104, 324, False),
+        (356, 82, 248, False), (462, 108, 338, False), (594, 126, 304, True),
     ))
+    R(g, (18, 332, 60, 18, "zone-blue-shade"), (374, 228, 46, 20, "zone-blue-shade"),
+      (482, 322, 68, 16, "zone-blue-shade"))
+    return g
 
 
 def street_city_mid():
-    """720x600, bottom y 600, repeat x: sparse slate blocks behind the near facades. No windows or play lips.
-    Suggested horizontal scroll factor 0.4; all near facades and their attached objects keep factor 1."""
-    return city_blocks(Grid(720, STREET_FY), "slate", (
-        (24, 78, 432, False), (182, 58, 386, False), (302, 72, 446, False),
-        (438, 62, 410, False), (576, 90, 462, False),
+    """720x600 repeating complete low-rise blocks, varied roof masses and broad quiet recesses."""
+    g = city_blocks(Grid(720, STREET_FY), "slate", (
+        (20, 138, 442, False), (208, 110, 406, False), (372, 144, 462, False), (572, 126, 424, False),
     ))
+    R(g, (28, 434, 122, 8, "slate"), (224, 394, 78, 12, "slate"),
+      (390, 450, 108, 12, "slate"), (584, 412, 102, 12, "slate"),
+      (40, 480, 96, 12, "zone-blue-shade"), (230, 450, 66, 10, "zone-blue-shade"),
+      (398, 496, 92, 10, "zone-blue-shade"))
+    return g
 
 
 def street_boundary_mid():
-    """720x600, bottom y600, repeat x: low service roofs leave the far city visible for City boundary.
-    Suggested factors0.4,0.15. Decorative middle distance only, no windows or safe landing edges."""
-    return city_blocks(Grid(720, STREET_FY), "slate", (
-        (40, 144, 504, False), (292, 120, 528, False), (520, 156, 492, False),
+    """720x600 repeating low service roofs with broad gaps revealing the city beyond; no play lips."""
+    g = city_blocks(Grid(720, STREET_FY), "slate", (
+        (32, 160, 504, False), (292, 104, 532, False), (520, 168, 492, False),
     ))
+    R(g, (48, 494, 128, 10, "slate"), (542, 480, 124, 12, "slate"),
+      (52, 536, 116, 10, "zone-blue-shade"), (544, 526, 120, 10, "zone-blue-shade"))
+    return g
 
 
 def street_skyline():
