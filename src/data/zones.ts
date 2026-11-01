@@ -333,6 +333,8 @@ const STAGE_CHUNK_POOLS = {
     "city-boundary-lift",
     "city-boundary-shuttle",
     "compound-return-shuttle",
+    "horizontal-platform-orbit",
+    "vertical-platform-orbit",
     "vertical-red-gate",
   ],
   countryside: [
@@ -343,6 +345,8 @@ const STAGE_CHUNK_POOLS = {
     "compound-low-ceiling-shuttle",
     "compound-return-high",
     "compound-return-shuttle",
+    "horizontal-platform-orbit",
+    "vertical-platform-orbit",
     "vertical-red-gate",
   ],
   home: [
@@ -355,6 +359,8 @@ const STAGE_CHUNK_POOLS = {
     "vertical-stack-early",
     "vertical-stack-late",
     "vertical-stack-middle",
+    "horizontal-platform-orbit",
+    "vertical-platform-orbit",
     "vertical-red-gate",
   ],
   industrial: [
@@ -371,6 +377,8 @@ const STAGE_CHUNK_POOLS = {
     "flyer-shelter-early",
     "flyer-shelter-late",
     "flyer-shelter-middle",
+    "horizontal-platform-orbit",
+    "vertical-platform-orbit",
     "vertical-red-gate",
   ],
   woodland: [
@@ -383,6 +391,8 @@ const STAGE_CHUNK_POOLS = {
     "growl-cover-early",
     "growl-cover-late",
     "growl-cover-middle",
+    "horizontal-platform-orbit",
+    "vertical-platform-orbit",
     "vertical-red-gate",
   ],
 } satisfies Readonly<Record<string, ChunkPool>>;
@@ -394,6 +404,8 @@ const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
   "compound-low-ceiling-shuttle",
   "compound-patrol-lift",
   "compound-return-high",
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
 ];
 const APARTMENT_CAPS = {
   finish: "apartment-finish",

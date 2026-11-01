@@ -7,6 +7,7 @@ import {
   withoutEncounters,
 } from "./chunkTemplates";
 import { createHazardChunks } from "./hazardChunks";
+import { createOrbitHazardChunks } from "./orbitHazardChunks";
 import { ZONE_ROWS } from "./screen";
 import type {
   ChunkPlan,
@@ -775,6 +776,7 @@ const ENCOUNTER_YARDS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
 
 const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...createHazardChunks(MECHANICAL_THEMES),
+  ...createOrbitHazardChunks(MECHANICAL_THEMES),
   ...ENCOUNTER_YARDS,
   "bounded-flyer-post": FLYER_ASCENT,
   "city-boundary-climb-yard": moduleChunk(
@@ -1203,6 +1205,7 @@ export const EXTERIOR_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "compound-low-ceiling-shuttle",
     "compound-return-high",
     "compound-return-terrace",
+    "horizontal-platform-orbit",
     "patrol-cover-early",
     "patrol-cover-late",
     "patrol-cover-middle",
@@ -1221,6 +1224,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "growl-cover-early",
     "growl-cover-late",
     "growl-cover-middle",
+    "horizontal-platform-orbit",
     "vertical-red-gate",
   ].map((id) => [id, `${id}-woodland-depth`]),
 );
