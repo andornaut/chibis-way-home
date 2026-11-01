@@ -16,8 +16,6 @@ export const PHASER_BUILD: PhaserBuild = {
     "Plugins",
     "Sound",
     "Structs",
-    "Time",
-    "Tweens",
     "Utils",
   ],
 };
