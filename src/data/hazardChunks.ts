@@ -1,3 +1,4 @@
+import { CITY_GROUND_HAZARD_BEHAVIOUR } from "./behaviours";
 import { CHUNK_COLS, redCeiling } from "./chunkTemplates";
 import { ZONE_ROWS } from "./screen";
 import type { ChunkPlan, TerrainRect } from "./types";
@@ -39,6 +40,25 @@ export function createHazardChunks(theme: ChunkPlan["theme"]): Readonly<Record<s
       exit: { row: 50 },
       objects: redCeiling(14, 18, 42),
       solids: [floor(0, 20, 50), floor(20, 6, 49), floor(26, CHUNK_COLS - 26, 50)],
+      theme,
+    },
+    "vertical-red-gate": {
+      cols: CHUNK_COLS,
+      difficulty: 4,
+      encounters: 0,
+      entry: { row: 50 },
+      exit: { row: 50 },
+      objects: [
+        {
+          behaviour: { ...CITY_GROUND_HAZARD_BEHAVIOUR, axis: "y", distance: -10, initial: "back" },
+          character: "red-edge-left",
+          col: 30,
+          role: "edge-left",
+          row: 44,
+          rows: 6,
+        },
+      ],
+      solids: [floor(0, CHUNK_COLS, 50)],
       theme,
     },
   };

@@ -60,7 +60,46 @@ function face(result: ReturnType<typeof run>) {
 const foot = (zone: ZoneState) => zone.bird.y + BIRD.height;
 
 describe("directional hazard layouts", () => {
-  it("keeps both challenge families inside ordinary chunk and seam contracts", () => {
+  it("reaches both vertical endpoints and returns without crossing terrain", () => {
+    const ys: number[] = [];
+    const mover = Object.values(prepared("vertical-red-gate").areas)[0]!.objects.findIndex(
+      (object) => object.character === "red-edge-left",
+    );
+    const result = run(
+      "vertical-red-gate",
+      { col: 2, row: 50 },
+      (zone) => {
+        ys.push(zone.objects[mover]!.y);
+        return input(0);
+      },
+      () => false,
+    );
+    expect(result.zone.death).toBeUndefined();
+    expect(Math.min(...ys)).toBeCloseTo(34 * TILE);
+    expect(Math.max(...ys)).toBeCloseTo(44 * TILE);
+    const upper = ys.findIndex((y) => Math.abs(y - 34 * TILE) < 0.01);
+    expect(upper).toBeGreaterThan(0);
+    expect(ys.slice(upper + 1).some((y) => Math.abs(y - 44 * TILE) < 0.01)).toBe(true);
+  });
+  it("clears the vertical gate after observing its raised phase", () => {
+    let crossing = false;
+    const mover = Object.values(prepared("vertical-red-gate").areas)[0]!.objects.findIndex(
+      (object) => object.character === "red-edge-left",
+    );
+    const result = run("vertical-red-gate", { col: 26, row: 50 }, (zone) => {
+      crossing ||= zone.objects[mover]!.y <= 36 * TILE;
+      return input(crossing ? 1 : 0);
+    });
+    expect(result.zone.death).toBeUndefined();
+    expect(result.zone.cleared).toBe(true);
+  });
+  it("attributes a mistimed gate crossing to its moving red face", () => {
+    expect(face(run("vertical-red-gate", { col: 27, row: 50 }, () => input(1)))).toBe(
+      "red-edge-left",
+    );
+  });
+
+  it("keeps challenge families inside ordinary chunk and seam contracts", () => {
     for (const chunk of Object.values(chunks)) {
       expect(chunkProblems(library, CATALOGUE, chunk)).toEqual([]);
     }
