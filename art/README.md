@@ -197,6 +197,15 @@ The logo uses a full canonical cream bird standing on a simple platform above a 
 - The homepage image uses its intrinsic 558:239 ratio and natural height, without a fixed aspect-ratio box.
 - The title is supplied by `WORDMARK`; the 5x7 alphabet in `GLYPHS` provides its letters. All three image keys, paths and canvas sizes stay fixed so navigation and title-screen placements remain compatible.
 
+## Homepage
+
+Approved layout target for paired page implementation: reuse the existing logo and city backdrop assets with a quiet powder-blue hero field. Extend the skyline across that field rather than confining it to a rectangular tile directly behind the logo. Keep its contrast low enough that copy and controls remain the focus. The muted zone palette, natural 558:239 logo aspect ratio and nearest-neighbour image sampling remain unchanged; no new illustration is required.
+
+- Actions: retain Install on the left and primary Play on the right, with an 8px gap, 48px minimum height and at least 16px horizontal content padding. Preserve installation availability and existing interaction semantics. Play uses dark steel with a white label; secondary actions retain the shared grey treatment and disabled controls retain pale steel.
+- Copy: retain the existing game description, subline and input instructions. Use the existing full-size page type, with a 20px pitch and 16px body text. Reflow or allow vertical scrolling rather than shrinking text.
+- Layout: on wide views, place the logo beside one coherent text column containing the pitch, subline, actions and input instructions. Keep the actions with the copy rather than below the logo. On narrow views, stack logo, copy, actions and instructions in that reading order. Retain at least 16px safe-area page padding, 16px between content groups and clear space around the logo. Keep short landscape screens scrollable when their full-size content exceeds the available height.
+- Navigation: preserve the existing logo, Home and Play navigation links and their behaviour. Page headers and hero content remain distinct from modal framing.
+
 ## Stage cutscene placeholder
 
 <!-- CLEANUP (added 2026-10-31): Replace the neutral illustration when authored stage cutscenes are approved. -->
