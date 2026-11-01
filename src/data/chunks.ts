@@ -1,4 +1,10 @@
-import { BOUNDARY_START, CHUNK_COLS, GROWL_FINISH, PATROL_ENCOUNTER } from "./chunkTemplates";
+import {
+  BOUNDARY_START,
+  CHUNK_COLS,
+  GROWL_FINISH,
+  PATROL_ENCOUNTER,
+  withoutEncounters,
+} from "./chunkTemplates";
 import { ZONE_ROWS } from "./screen";
 import type {
   ChunkPlan,
@@ -623,7 +629,7 @@ const FLYER_ASCENT = moduleChunk(
   30,
   [floor(0, 24, 40), floor(24, 4, 30), floor(28, 16, 40), floor(44, 6, 35), floor(50, 10, 30)],
   [
-    ledge(12, 6, 35),
+    { character: "red-edge-support", col: 12, cols: 6, role: "support", row: 34, rows: 1 },
     { character: "pigeon-antagonist", col: 24, role: "antagonist", row: 26 },
     ledge(38, 6, 35),
   ],
@@ -686,7 +692,90 @@ const PARK_UP = moduleChunk(
 );
 
 // Every horizontal module occupies one screen. Moving tracks and lethal strips stay between seam footings.
+function horizontalYard(bear: boolean, origin: number): ChunkPlan {
+  const left = origin - 22;
+  const right = origin + 6;
+  return moduleChunk(
+    bear ? ["deep-woods", "forest-paths", "ravine"] : PATROL_THEMES,
+    4,
+    50,
+    50,
+    [
+      floor(0, left, 50),
+      floor(left, 4, 44),
+      floor(left + 4, right - left - 4 - (bear ? 2 : 0), 50),
+      floor(right, 4, 44),
+      floor(right + 4, CHUNK_COLS - right - 4, 50),
+    ],
+    [
+      {
+        character: bear ? "bear-antagonist" : "dog-antagonist",
+        col: origin,
+        role: "antagonist",
+        row: 46,
+      },
+      ledge(left + 4, 6, 44),
+      ledge(right - 6, 6, 44),
+      ...(bear ? red(right - 2, 2, 50) : []),
+    ],
+  );
+}
+function flyerYard(origin: number): ChunkPlan {
+  return moduleChunk(
+    ["freight-terminal", "loading-yards", "warehouse-district"],
+    4,
+    50,
+    50,
+    [
+      floor(0, origin, 50),
+      floor(origin, 4, 40),
+      floor(origin + 4, 48 - origin - 4, 50),
+      floor(48, 4, 47),
+      floor(52, 8, 50),
+    ],
+    [
+      { character: "pigeon-antagonist", col: origin, role: "antagonist", row: 36 },
+      {
+        character: "red-edge-support",
+        col: origin - 12,
+        cols: 6,
+        role: "support",
+        row: 44,
+        rows: 1,
+      },
+      ledge(origin + 6, 6, 45),
+    ],
+  );
+}
+function verticalYard(origin: number): ChunkPlan {
+  return moduleChunk(
+    ["back-streets", "city-outskirts", "familiar-neighbourhood"],
+    4,
+    50,
+    50,
+    [
+      floor(0, origin + 4, 50),
+      floor(origin + 4, 8, 40),
+      floor(origin + 12, 6, 45),
+      floor(origin + 18, CHUNK_COLS - origin - 18, 50),
+    ],
+    [
+      ledge(origin - 6, 6, 45),
+      { character: "raccoon-antagonist", col: origin, role: "antagonist", row: 46 },
+    ],
+  );
+}
+const ENCOUNTER_YARDS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
+  ["early", "middle", "late"].flatMap((position, index) => [
+    [`patrol-cover-${position}`, horizontalYard(false, 26 + index * 8)],
+    [`growl-cover-${position}`, horizontalYard(true, 26 + index * 8)],
+    [`flyer-shelter-${position}`, flyerYard(18 + index * 10)],
+    [`vertical-stack-${position}`, verticalYard(20 + index * 8)],
+  ]),
+);
+
 export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...ENCOUNTER_YARDS,
   "bounded-flyer-post": FLYER_ASCENT,
   "city-boundary-climb-yard": moduleChunk(
     PATROL_THEMES,
@@ -735,7 +824,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       { character: "red-edge-left", col: 27, role: "edge-left", row: 44, rows: 6 },
     ],
   ),
-  "city-boundary-finish": { ...PATROL_ENCOUNTER, theme: "city-boundary" },
+  "city-boundary-finish": { ...withoutEncounters(PATROL_ENCOUNTER), theme: "city-boundary" },
   "city-boundary-gaps": moduleChunk(
     MECHANICAL_THEMES,
     3,
@@ -942,6 +1031,11 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   },
   "growl-clearing": {
     ...shifted(-10, GROWL_FINISH),
+    encounters: 1,
+    objects: [
+      ...shifted(-10, GROWL_FINISH).objects,
+      { character: "bear-antagonist", col: 38, role: "antagonist", row: 36 },
+    ],
     theme: ["deep-woods", "forest-paths", "ravine"],
     weight: 2,
   },

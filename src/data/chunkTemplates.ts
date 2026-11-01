@@ -3,12 +3,11 @@ import type { ChunkPlan } from "./types";
 
 export const CHUNK_COLS = SCREEN.width / TILE;
 
-// A shared horizontal encounter with a waiting ledge on each side.
+// Required cover climbs with a waiting ledge on each side.
 export const PATROL_FINISH_GEOMETRY: Pick<ChunkPlan, "encounters" | "objects" | "solids"> = {
-  encounters: 1,
+  encounters: 0,
   objects: [
     { character: "platform-ledge", col: 6, cols: 6, role: "ledge", row: 44 },
-    { character: "dog-antagonist", col: 31, role: "antagonist", row: 46 },
     { character: "platform-ledge", col: 42, cols: 6, role: "ledge", row: 44 },
   ],
   solids: [
@@ -39,18 +38,15 @@ export const BOUNDARY_START: Omit<ChunkPlan, "theme"> = {
   ],
 };
 
-// The antagonist climbs beside the stack. The approach ledge lets the bird wait for its drop.
+// A waiting ledge breaks the climb beside the stack.
 export const VERTICAL_FINISH: Omit<ChunkPlan, "theme"> = {
   backdrops: [{ character: "facade-one-storey", col: 4, cols: 12, role: "near-wall", row: 34 }],
   cols: CHUNK_COLS,
   difficulty: 4,
-  encounters: 1,
+  encounters: 0,
   entry: { row: 50 },
   exit: { row: 50 },
-  objects: [
-    { character: "platform-ledge", col: 20, cols: 6, role: "ledge", row: 45 },
-    { character: "raccoon-antagonist", col: 26, role: "antagonist", row: 46 },
-  ],
+  objects: [{ character: "platform-ledge", col: 20, cols: 6, role: "ledge", row: 45 }],
   solids: [
     { col: 0, cols: 30, look: "ground", row: 50, rows: 10 },
     { col: 30, cols: 12, look: "raised", row: 40, rows: 20 },
@@ -59,16 +55,15 @@ export const VERTICAL_FINISH: Omit<ChunkPlan, "theme"> = {
   ],
 };
 
-// Perched flyers leave a stepped route past a solid post.
+// Stepped ledges lead past a solid post.
 export const PERCH_FINISH: Omit<ChunkPlan, "theme"> = {
   cols: CHUNK_COLS,
   difficulty: 4,
-  encounters: 1,
+  encounters: 0,
   entry: { row: 50 },
   exit: { row: 50 },
   objects: [
     { character: "platform-ledge", col: 18, cols: 6, role: "ledge", row: 45 },
-    { character: "pigeon-antagonist", col: 30, role: "antagonist", row: 36 },
     { character: "platform-ledge", col: 40, cols: 6, role: "ledge", row: 45 },
   ],
   solids: [
@@ -82,11 +77,10 @@ export const PERCH_FINISH: Omit<ChunkPlan, "theme"> = {
 export const GROWL_FINISH: Omit<ChunkPlan, "theme"> = {
   cols: CHUNK_COLS,
   difficulty: 4,
-  encounters: 1,
+  encounters: 0,
   entry: { row: 50 },
   exit: { row: 50 },
   objects: [
-    { character: "bear-antagonist", col: 38, role: "antagonist", row: 46 },
     { character: "platform-ledge", col: 28, cols: 6, role: "ledge", row: 44 },
     { character: "red-edge-top", col: 42, cols: 2, role: "edge-top", row: 49 },
     { character: "red-edge-support", col: 42, cols: 2, role: "support", row: 50, rows: 10 },
@@ -104,8 +98,13 @@ export const PATROL_ENCOUNTER: Omit<ChunkPlan, "theme"> = {
   ...PATROL_FINISH_GEOMETRY,
   cols: CHUNK_COLS,
   difficulty: 4,
+  encounters: 1,
   entry: { row: 50 },
   exit: { row: 50 },
+  objects: [
+    ...PATROL_FINISH_GEOMETRY.objects,
+    { character: "dog-antagonist", col: 31, role: "antagonist", row: 46 },
+  ],
 };
 
 export function withoutEncounters(chunk: Omit<ChunkPlan, "theme">): Omit<ChunkPlan, "theme"> {
