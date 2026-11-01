@@ -899,11 +899,15 @@ def lobby_sofa():
 
 
 def lobby_plant():
-    """48x120, bottom at y 672: a big leafy plant in a dark pot."""
+    """48x120, bottom at y672: branching indoor foliage with pointed leaves in a dark pot."""
     g = R(Grid(48, 120), (8, 84, 32, 36, "plum"), (6, 80, 36, 6, "dbrown"))
-    for x, y, w, h, c in ((0, 24, 20, 30, "forest"), (18, 0, 22, 34, "dgreen"), (6, 40, 36, 44, "forest"),
-                          (26, 30, 22, 28, "teal"), (4, 58, 16, 20, "teal")):
-        R(g, (x, y, w, h, c))
+    g.line(24, 79, 22, 10, "zone-green-shade")
+    g.line(25, 79, 23, 10, "zone-green-shade")
+    for x, y, joint in ((4, 14, 36), (39, 2, 26), (2, 40, 57), (45, 30, 53), (8, 61, 74), (42, 55, 75)):
+        side = -1 if x < 24 else 1
+        g.line(24, joint, x, y, "zone-green-shade")
+        g.tri((x, y), (x - side * 8, y + 18), (24, joint), "forest")
+        g.tri((x, y), (x + side * 4, y + 11), (24, joint), "zone-green-shade")
     return g
 
 

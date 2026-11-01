@@ -120,10 +120,10 @@ Pause card, settings card and install steps card (each over the game dimmed two 
   dark steel: a dslate face, a slate highlight and a navy lip. Label white (9.55:1 on dslate).
 - 16x16 row icons, one tag, rest: icon-settings (a cog: four 4x2 teeth on the axes and four 2x2 on the diagonals
   round a ring with a round hole), icon-home (dog-walker's solid house: a 1:1 pitched roof, a chimney on the right
-  slope and a door gap, cream with tan on its lower-right edges), icon-exit (ui-quit's doorway and arrow, 12 rows
+  slope and a door gap, filled dslate), icon-exit (ui-quit's doorway and arrow, 12 rows
   tall), icon-touch-controls (a round touch button with the Jump caret), icon-install (an arrow down into a tray),
   icon-ios-share (Safari's Share button), icon-browser-menu (three stacked dots) and icon-move-controls (the move
-  hint in small: a round ring with a chevron each side). All but icon-home are flat dslate in 2px strokes (5.83:1
+  hint in small: a round ring with a chevron each side). All are flat dslate; line icons use2px strokes (5.83:1
   on the card's lgrey).
 - ui-resume, 160x44: a green button with the play mark, the map's Continue at 280,300 (the hit area; art/tools/map.py
   places its label). Tags normal, pressed (the face sinks 2px into its lip).
@@ -510,14 +510,14 @@ HOME_20 = ["......aa.ao...", ".....aaaaao...", "....aaaaaao...", "...aaaaaaao...
 
 def home(n):
     """A solid house, centred: a 1:1 pitched roof with a chimney on the right slope and a door gap at the foot,
-    cream with tan on its lower-right edges. 12x10 in a 16x16 frame, 14x13 in a 20x20 one."""
+    dslate on pale cards, cream/tan on dark navigation. 12x10 in a16x16 frame, 14x13 in a20x20 one."""
     rows = HOME_16 if n == 16 else HOME_20
     g = Grid(n, n)
     x0, y0 = (n - len(rows[0])) // 2, (n - len(rows)) // 2
     for y, row in enumerate(rows):
         for x, ch in enumerate(row):
             if ch != ".":
-                g.p(x0 + x, y0 + y, "cream" if ch == "a" else "tan")
+                g.p(x0 + x, y0 + y, ROW_ICON if n == 16 else "cream" if ch == "a" else "tan")
     return g.px
 
 

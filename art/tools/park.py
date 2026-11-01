@@ -16,7 +16,7 @@ the next chunk's at one of those heights. A step of 1 or 2 rows is a tap's walk-
 full hold about 6.5); a taller terrace face is turf over soil, soil-left or soil-right running down the face, any
 height. There are no slopes.
 
-Look: a peach autumn sky with cream clouds, tall tan treetops and a skin2 city behind, close to the sky's value;
+Look: a peach autumn sky with cream clouds, tall muted peach treetops and a skin2 city behind, close to the sky's value;
 the ground two bright rows deep (a cream-lipped grass top over green turf) and then warm brown soil with sparse
 2px pebble clusters. Every walkable top carries a 2px light lip under a 1px dark edge, the brightest edge against
 what is behind it.
@@ -47,9 +47,9 @@ tiles-park (12x12; the tileset format and collision rules are in art/README.md, 
 Backdrops (bottom-left anchored at world y; repeat-x widths divide 720 so chunk seams never show)
 - park-sky 48x600 (y 600, x): peach above, a step deeper tan from y 200 behind play.
 - park-clouds 360x160 (y 200, x): two flat cream clouds.
-- park-treetops 360x420 (y 600, x): tall lobed tan treetops rising into the upper screen.
+- park-treetops 360x420 (y 600, x): branching muted peach treetops rising into the upper screen.
 - park-city 360x200 (y 540, x): the city behind the trees, skin2, with two water towers.
-- park-far-trees 240x120 (y 600, x): a band of distant crowns, skin2 over brown.
+- park-far-trees 240x120 (y 600, x): a low-contrast band of irregular distant peach crowns.
 Sprites (Aseprite, public/art/sprites/<key>.png + .json, listed under the manifest's "sprites")
 - park-boat, 72x18, facing right: a rowing boat, the moving platform on a pond. Its collision is 6x1 tiles (72x12)
   with its top on the frame's row 0, the deck line: a 1px dark-brown edge on row 0 and a 2px cream lip on rows 1
@@ -62,7 +62,7 @@ Sprites (Aseprite, public/art/sprites/<key>.png + .json, listed under the manife
   brown path (the way on); two leaves of 2px bars with scrolls. Tags idle (closed, 1 frame at 400ms) and open (4
   frames at 80ms, played once: the leaves swing back to the posts and hold open) when she uses it.
 Props (none; y is the ground top they stand on, given for row 50; add -120 per seam row up)
-- park-tree 96x150 (y 600): a lobed rust crown with ochre lit lobes; its one-way-branch row is 6 rows up.
+- park-tree 96x150 (y 600): an irregular autumn crown, branching trunk and restrained peach leaf planes; its one-way-branch row is 6 rows up.
 - park-bench 36x24 (y 600): the bench's legs and seat under its one-way-bench row, 2 rows up.
 - park-bandstand 120x84 (y 600): posts, rail and base under its one-way-bandstand row, 6 rows up.
 - park-lamp 16x84, park-fountain 96x48, park-flower-bed 72x16, park-bin 16x24, park-sign 24x40 (a tree icon, no
@@ -76,6 +76,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pixel  # noqa: E402
+import nature  # noqa: E402
 from pixel import rgb  # noqa: E402
 
 T = 12
@@ -299,9 +300,9 @@ def clouds():
 
 def treetops():
     im = image(360, 420)
-    for cx, top, r in ((40, 130, 54), (130, 70, 64), (230, 160, 54), (320, 100, 60)):
-        fill(im, cx - 4, top + r, 8, 420 - top - r, "brown")
-        crown(im, cx, top + r, r * 1.1, r, "skin2", "tan", "brown")
+    for i, (x, top, width, height) in enumerate(((-16, 112, 112, 130), (68, 64, 126, 148),
+                                               (180, 140, 108, 122), (262, 92, 116, 136))):
+        nature.broadleaf(im, x, top, width, height, 420, "zone-peach-shade", "brown", 8, seed=i * 3)
     return im
 
 
@@ -316,15 +317,18 @@ def city():
 
 
 def far_trees():
-    im = R(image(240, 120), (0, 84, 240, 36, "brown"))
-    for cx, r in ((0, 40), (60, 46), (120, 40), (180, 48), (240, 40)):
-        crown(im, cx, 74, r, r * 0.8, "skin2", None, "brown", lit_lobes=())
+    im = R(image(240, 120), (0, 94, 240, 26, "zone-peach-shade"))
+    for i, (x, top, width) in enumerate(((-32, 32, 80), (22, 20, 92), (88, 38, 82),
+                                        (144, 24, 96), (208, 32, 80))):
+        nature.broadleaf(im, x, top, width, 68, 120, "zone-peach", "zone-peach-shade", 4, seed=i)
     return im
 
 
 def tree():
-    im = R(image(96, 150), (42, 50, 10, 100, "dbrown"), (42, 50, 3, 100, "brown"))
-    return crown(im, 48, 38, 46, 36, "rust", "ochre", "dbrown")
+    im = image(96, 150)
+    nature.broadleaf(im, 1, 0, 94, 78, 150, "brown", "zone-peach-shade", 10, seed=4)
+    nature.leaves(im, "zone-peach-shade", (14, 4, 42, 36), seed=2)
+    return im
 
 
 def bench_legs():
