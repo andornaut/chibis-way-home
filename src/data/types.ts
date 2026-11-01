@@ -19,7 +19,17 @@ export type DeathReason = "crush" | "fall" | "hazard";
 
 // A frozen contact snapshot. Position is the bird body's top-left; support is the nearest
 // frozen solid or ledge below the body, or undefined over a void.
+export type DeathContact =
+  | { readonly contactCue?: "red-hazard"; readonly index: number; readonly kind: "object" }
+  | {
+      readonly contactCue?: "red-hazard";
+      readonly emitter: number;
+      readonly id: number;
+      readonly kind: "transient";
+    };
+
 export interface ZoneDeath {
+  readonly contact?: DeathContact;
   readonly position: Point;
   readonly reason: DeathReason;
   readonly support: Rect | undefined;
@@ -90,7 +100,24 @@ export interface BirdTuning {
 // How the camera follows her. groundSpot is the fraction of screen height from the top at
 // which her feet rest on the ground. seamEase is the fraction of screen width over which the
 // ground line blends between chunks, centred on the seam.
+export interface ContactCueTuning {
+  readonly borderWidth: number;
+  readonly durationMs: number;
+  readonly keylineWidth: number;
+  readonly tintAlpha: number;
+}
+
+export interface WorldShakeTuning {
+  readonly distance: number;
+  readonly durationMs: number;
+  readonly firstOffMs: number;
+  readonly secondOnMs: number;
+  readonly secondOffMs: number;
+}
+
 export interface CameraTuning {
+  // CLEANUP (added 2026-11-01): require this field when the paired contact-shake values land.
+  readonly contactShake?: WorldShakeTuning;
   readonly groundSpot: number;
   readonly seamEase: number;
 }
@@ -378,6 +405,7 @@ export interface Quirk {
 // box comes from art's manifest. lines and quips are keys into TEXT.lines and TEXT.quips; a prop
 // has none.
 export interface Character {
+  readonly contactCue?: "red-hazard";
   readonly behaviour?: BehaviourPlan;
   // A shared tileset for this character's art, otherwise its area's tileset.
   readonly tileset?: string;
@@ -707,6 +735,7 @@ export interface Reaches {
 // the view and dialogue need. hitbox: where a hazard touches her, from its top-left corner, when
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
+  readonly contactCue?: "red-hazard";
   readonly contact?: SpriteContact;
   readonly spawnTemplates?: Readonly<Record<string, ObjectLayout>>;
   readonly behaviour?: BehaviourPlan;
