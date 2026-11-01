@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import { orbitPosition } from "../rules/orbit";
 import type { Transient } from "../rules/transients";
 import { startZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
 import { emissionBounds } from "./behaviourBounds";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot";
+import { zoneSurfaces } from "./zoneWalk";
 
 const ground = { height: 20, width: 1100, x: 0, y: 120 };
 function fixture(solids: readonly Rect[], objects: readonly ObjectLayout[] = []): ZoneLayout {
@@ -86,6 +88,36 @@ describe("local bot decisions", () => {
       expect(prepareSensors(fixture([ground], [object])).movers.main?.has(0)).toBe(moving);
     },
   );
+  it("keeps orbiting hazards live without cutting their reference pose from static ground", () => {
+    const host = {
+      ...platform,
+      motion: { ...platform.motion, algorithm: "linear" as const, distance: 24, speed: 24 },
+      origin: { x: 600, y: 84 },
+    };
+    const orbit = { angularSpeed: Math.PI, host: 0, phase: Math.PI / 2, radius: 24 };
+    const child: ObjectLayout = {
+      ...platform,
+      collision: "hazard",
+      height: 4,
+      motion: { ...platform.motion, algorithm: "static", distance: 0, speed: 0 },
+      orbit,
+      origin: orbitPosition(0, { ...host.origin, height: host.height, width: host.width }, orbit, {
+        height: 4,
+        width: 4,
+      }),
+      width: 4,
+    };
+    const layout = fixture([ground], [host, child]);
+    expect(prepareSensors(layout).movers.main?.has(1)).toBe(true);
+    expect(
+      zoneSurfaces(BIRD, layout).some(
+        (surface) =>
+          surface.mover === undefined &&
+          surface.left === ground.x &&
+          surface.right === ground.x + ground.width,
+      ),
+    ).toBe(true);
+  });
   it("reads transient arming, movement, removal and attempt resets through the same sensor index", () => {
     const layout = fixture([ground]);
     const sensors = prepareSensors(layout);

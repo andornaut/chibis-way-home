@@ -141,6 +141,54 @@ describe("structural playability assessment", () => {
       expect(report.stages[0]!.mechanics).not.toHaveProperty("target-locked-flight");
     },
   );
+  it("records orbital hazards independently of their inert local motion", () => {
+    const input = context();
+    const makeReport = (angularSpeed: number) =>
+      assessPlayability(
+        {
+          ...input,
+          library: {
+            ...input.library,
+            characters: {
+              enemy: { archetype: "hazard", art: "enemy", cols: 1, rows: 1 },
+              host: { archetype: "platform", art: "host", cols: 6, rows: 1 },
+            },
+          },
+          load: () => ({
+            ...plan,
+            areas: Object.fromEntries(
+              Object.entries(plan.areas).map(([id, area]) => [
+                id,
+                {
+                  ...area,
+                  objects: [
+                    {
+                      character: "host",
+                      col: 5,
+                      id: "host",
+                      overrides: { motion: { distance: 2, speed: 1 } },
+                      row: 40,
+                    },
+                    {
+                      character: "enemy",
+                      col: 9.5,
+                      orbit: { angularSpeed, host: "host", phase: 0, radius: 2 },
+                      row: 40,
+                    },
+                  ],
+                },
+              ]),
+            ),
+          }),
+        },
+        [7],
+      );
+    const report = makeReport(Math.PI);
+    const faster = makeReport(2 * Math.PI);
+    expect(faster.stages[0]!.geometryFingerprint).toBe(report.stages[0]!.geometryFingerprint);
+    expect(faster.stages[0]!.demandFingerprint).not.toBe(report.stages[0]!.demandFingerprint);
+    expect(report.stages[0]!.mechanics["orbital-hazard"]).toBe(Object.keys(plan.areas).length);
+  });
   it("compares different provenance while rejecting different seeds and catalogue order", () => {
     const before = assessPlayability(context(), [7]);
     const after = assessPlayability(

@@ -6,6 +6,38 @@ export function hasDynamicBehaviour(pattern: BehaviourPlan): boolean {
   );
 }
 
+export function hasDynamicMotion(object: ObjectLayout): boolean {
+  return (
+    object.orbit !== undefined ||
+    (object.behaviour
+      ? hasDynamicBehaviour(object.behaviour)
+      : object.motion.algorithm !== "static" || object.reaction.kind !== "none")
+  );
+}
+
+// Only exact integer cycle ratios establish a finite shared period here.
+export function objectCycleSeconds(objects: readonly ObjectLayout[], object: ObjectLayout): number {
+  if (object.orbit) {
+    const host = objectCycleSeconds(objects, objects[object.orbit.host]!);
+    if (object.orbit.angularSpeed === 0) {
+      return host;
+    }
+    const spin = (2 * Math.PI) / Math.abs(object.orbit.angularSpeed);
+    if (host === 0) {
+      return spin;
+    }
+    return Number.isSafeInteger(host / spin) || Number.isSafeInteger(spin / host)
+      ? Math.max(host, spin)
+      : Infinity;
+  }
+  const { distance, pause, speed } = object.motion;
+  return object.behaviour
+    ? behaviourCycleSeconds(object.behaviour)
+    : speed > 0
+      ? 2 * (distance / speed + pause)
+      : 0;
+}
+
 function flightWaypoints(motion: Extract<BehaviourMotion, { kind: "fly" }>): readonly Point[] {
   if (motion.to !== "target") {
     return [motion.to];

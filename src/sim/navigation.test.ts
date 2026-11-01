@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { STATIC_MOTION } from "../data/archetypes";
 import { BIRD } from "../data/bird";
+import { TILE } from "../data/screen";
 import type { BirdTuning, ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import { orbitPosition } from "../rules/orbit";
 import { STEP_SECONDS } from "../rules/step";
 import { enterArea, retryZone, startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
@@ -1849,6 +1851,43 @@ describe("bounded real-rule navigation", () => {
     expect(zone.bird.grounded).toBe(true);
     expect(zone.bird.vx).toBe(0);
     expect(zone.bird.x).toBeLessThan(1536);
+  });
+  it("retains actual orbital hazard positions in its moving-world phase key", () => {
+    const host = {
+      ...movingObject("ledge", { x: 600, y: 180 }),
+      motion: { ...STATIC_MOTION, algorithm: "linear" as const, distance: 24, speed: 24 },
+    };
+    const orbit = { angularSpeed: Math.PI, host: 0, phase: 0, radius: 36 };
+    const child: ObjectLayout = {
+      ...movingObject("hazard", { x: 0, y: 0 }),
+      height: 4,
+      motion: STATIC_MOTION,
+      orbit,
+      origin: orbitPosition(0, { ...host.origin, height: host.height, width: host.width }, orbit, {
+        height: 4,
+        width: 4,
+      }),
+      width: 4,
+    };
+    const base = fixture([{ height: 60, width: 1200, x: 0, y: 240 }]);
+    const layout = {
+      ...base,
+      areas: { main: { ...base.areas.main!, objects: [host, child], width: 1200 } },
+    };
+    const zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    const bot = newBot(1);
+    plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+    const phase = JSON.parse(bot.navigation!.decision!.phase!);
+    expect(phase.find((row: readonly number[]) => row[0] === 1)?.slice(1, 3)).toEqual([
+      Math.round(zone.objects[1]!.x / TILE),
+      Math.round(zone.objects[1]!.y / TILE),
+    ]);
   });
   it("exposes bounded copied candidate and cache progress diagnostics without predicted states", () => {
     const layout = fixture([{ height: 60, width: 400, x: 0, y: 240 }]),

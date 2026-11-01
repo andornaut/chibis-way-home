@@ -1,12 +1,27 @@
 import { describe, expect, it } from "vitest";
 
+import platforming from "../../public/art/tilesets/tiles-platforming.json";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
+import { CHARACTERS } from "../data/characters";
+import { createOrbitHazardChunks } from "../data/orbitHazardChunks";
+import { TILE } from "../data/screen";
 import type { BehaviourMotion, BehaviourPlan } from "../data/types";
 import { startBehaviour, stepBehaviour } from "../rules/behaviour";
 import { startBird } from "../rules/bird";
-import { objectLayout } from "../rules/tiles";
-import { behaviourCycleSeconds, hasDynamicBehaviour, sweptBehaviourRect } from "./behaviourBounds";
+import { orbitBounds } from "../rules/orbit";
+import { STEP_SECONDS } from "../rules/step";
+import { areaLayout, objectLayout } from "../rules/tiles";
+import { startZone, stepZone } from "../rules/zone";
+import { BIRD_FRAME } from "../view/bird";
+import type { Tileset } from "../view/tiles";
+import {
+  behaviourCycleSeconds,
+  hasDynamicBehaviour,
+  hasDynamicMotion,
+  objectCycleSeconds,
+  sweptBehaviourRect,
+} from "./behaviourBounds";
 
 function pattern(motions: readonly BehaviourMotion[]): BehaviourPlan {
   return {
@@ -202,4 +217,72 @@ describe("behaviour phase bounds", () => {
     );
     expect(behaviourCycleSeconds(graph)).toBeCloseTo(seconds);
   });
+});
+
+describe("orbital motion envelopes", () => {
+  it.each(Object.entries(createOrbitHazardChunks("test")))(
+    "keeps actual %s hazard contact inside its host-relative envelope",
+    (_, chunk) => {
+      const area = areaLayout(
+        TILE,
+        { archetypes: ARCHETYPES, characters: CHARACTERS },
+        {},
+        { "tiles-platforming": platforming as Tileset },
+        new Set(),
+        {
+          cols: chunk.cols,
+          entries: { start: { col: 2, row: chunk.entry.row } },
+          objects: chunk.objects,
+          rows: 60,
+          solids: chunk.solids,
+        },
+      );
+      const layout = {
+        areas: { main: area },
+        birdFrame: BIRD_FRAME,
+        start: { area: "main", entry: "start" },
+      };
+      const child = area.objects.find((object) => object.orbit)!;
+      const index = area.objects.indexOf(child);
+      const host = area.objects[child.orbit!.host]!;
+      const bounds = orbitBounds(area.objects, child);
+      expect(hasDynamicMotion(child)).toBe(true);
+      expect(child.motion.algorithm).toBe("static");
+      expect(child.hitbox!.height).toBe(platforming.hitboxes["hazard-top"].height);
+      expect(objectCycleSeconds(area.objects, child)).toBe(Infinity);
+      const hostSeconds = objectCycleSeconds(area.objects, host);
+      let zone = startZone(BIRD, layout, 1);
+      for (let tick = 0; tick <= Math.ceil(hostSeconds / (2 * STEP_SECONDS)); tick++) {
+        const at = zone.objects[index]!;
+        expect(at.x).toBeGreaterThanOrEqual(bounds.x - 1e-8);
+        expect(at.x + child.width).toBeLessThanOrEqual(bounds.x + bounds.width + 1e-8);
+        expect(at.y).toBeGreaterThanOrEqual(bounds.y - 1e-8);
+        expect(at.y + child.height).toBeLessThanOrEqual(bounds.y + bounds.height + 1e-8);
+        zone = stepZone(
+          BIRD,
+          layout,
+          STEP_SECONDS,
+          { jumpHeld: false, move: 0, useHeld: false },
+          zone,
+        );
+      }
+      expect(zone.death).toBeUndefined();
+      const commensurateHost = {
+        ...host,
+        motion: { ...host.motion, distance: 4, pause: 1, speed: 4 },
+      };
+      const commensurateChild = {
+        ...child,
+        orbit: { ...child.orbit!, angularSpeed: Math.PI, host: 0 },
+      };
+      expect(objectCycleSeconds([commensurateHost, commensurateChild], commensurateChild)).toBe(4);
+      const lockedChild = {
+        ...commensurateChild,
+        orbit: { ...commensurateChild.orbit, angularSpeed: 0 },
+      };
+      expect(objectCycleSeconds([commensurateHost, lockedChild], lockedChild)).toBe(
+        objectCycleSeconds([commensurateHost], commensurateHost),
+      );
+    },
+  );
 });

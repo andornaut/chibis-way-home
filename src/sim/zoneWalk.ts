@@ -8,6 +8,7 @@ import type {
   ZoneLayout,
 } from "../data/types";
 import { startBird, stepBird } from "../rules/bird";
+import { orbitBounds } from "../rules/orbit";
 import { STEP_SECONDS } from "../rules/step";
 import {
   activateBehaviour,
@@ -21,9 +22,9 @@ import {
 } from "../rules/zone";
 import {
   type BehaviourBoundsContext,
-  behaviourCycleSeconds,
   emissionBounds,
-  hasDynamicBehaviour,
+  hasDynamicMotion,
+  objectCycleSeconds,
   sweptBehaviourRect,
 } from "./behaviourBounds";
 import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases";
@@ -102,10 +103,7 @@ const MAX_CYCLE = 16;
 // Slack on how far the walk looks for a move, in px.
 const MARGIN = 24;
 
-const isStill = (object: ObjectLayout) =>
-  object.behaviour
-    ? !hasDynamicBehaviour(object.behaviour)
-    : object.motion.algorithm === "static" && object.reaction.kind === "none";
+const isStill = (object: ObjectLayout) => !hasDynamicMotion(object);
 const movementSpeed = (object: ObjectLayout): number =>
   object.behaviour
     ? Math.max(
@@ -129,6 +127,9 @@ function sweptRect(
   area: AreaLayout,
   object: ObjectLayout,
 ): Rect {
+  if (object.orbit) {
+    return orbitBounds(area.objects, object);
+  }
   const pattern = object.behaviour;
   if (pattern) {
     return sweptBehaviourRect(
@@ -611,12 +612,8 @@ function moveBounds(tuning: BirdTuning, carry: number) {
 }
 
 // The steps a moving thing takes to go round its track once, at most MAX_CYCLE.
-function cycleSteps(object: ObjectLayout): number {
-  const { distance, pause, speed } = object.motion;
-  const patrol = speed > 0 ? 2 * (distance / speed + pause) : 0;
-  const pattern = object.behaviour;
-  const seconds = pattern ? behaviourCycleSeconds(pattern) : patrol;
-  return Math.ceil(Math.min(seconds, MAX_CYCLE) / STEP_SECONDS);
+function cycleSteps(objects: readonly ObjectLayout[], object: ObjectLayout): number {
+  return Math.ceil(Math.min(objectCycleSeconds(objects, object), MAX_CYCLE) / STEP_SECONDS);
 }
 
 // Moving colliders retain their own cycle lengths; only supports contribute carry speed.
@@ -652,7 +649,14 @@ function movingThings(tuning: BirdTuning, area: AreaLayout): MovingThings {
         return [];
       }
       const rect = emissionBounds(object, sweptRect(target, area, object));
-      return [{ cycleSteps: cycleSteps(object), index, left: rect.x, right: rect.x + rect.width }];
+      return [
+        {
+          cycleSteps: cycleSteps(area.objects, object),
+          index,
+          left: rect.x,
+          right: rect.x + rect.width,
+        },
+      ];
     }),
   };
   MOVING_THINGS.set(area, { tuning, value: result });

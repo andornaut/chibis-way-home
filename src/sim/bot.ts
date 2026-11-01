@@ -4,7 +4,7 @@ import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { transientBox } from "../rules/transients";
 import type { ZoneInput, ZoneState } from "../rules/zone";
-import { hasDynamicBehaviour } from "./behaviourBounds";
+import { hasDynamicMotion } from "./behaviourBounds";
 import {
   type NavigationConfig,
   type NavigationMemory,
@@ -89,17 +89,7 @@ export function prepareSensors(layout: ZoneLayout): SensorIndex {
     movers: Object.fromEntries(
       Object.entries(layout.areas).map(([key, area]) => [
         key,
-        new Set(
-          area.objects.flatMap((object, index) =>
-            (
-              object.behaviour
-                ? hasDynamicBehaviour(object.behaviour)
-                : object.motion.algorithm !== "static" || object.reaction.kind !== "none"
-            )
-              ? [index]
-              : [],
-          ),
-        ),
+        new Set(area.objects.flatMap((object, index) => (hasDynamicMotion(object) ? [index] : []))),
       ]),
     ),
     objects: Object.fromEntries(

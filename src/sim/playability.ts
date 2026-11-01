@@ -187,6 +187,7 @@ function demand(context: PlayabilityContext, object: Instance): unknown {
       : null,
     collision: archetype.collision,
     motion: { ...archetype.motion, ...character.tuning?.motion, ...object.overrides?.motion },
+    ...(object.orbit && { orbit: object.orbit }),
     phase: object.phase ?? 0,
     reaction: {
       ...archetype.reaction,
@@ -220,6 +221,9 @@ function objectMechanics(context: PlayabilityContext, object: Instance): readonl
   const art = object.skin?.art ?? character.art;
   if (art.startsWith("hazard-")) {
     tags.add(`edge:${art.slice("hazard-".length)}`);
+  }
+  if (object.orbit) {
+    tags.add("orbital-hazard");
   }
   if (graph) {
     const pending = [graph.initial];

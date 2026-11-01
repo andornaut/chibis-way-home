@@ -183,7 +183,8 @@ function phase(layout: ZoneLayout, zone: ZoneState): string {
       if (
         object.collision === "none" ||
         Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) > SCREEN.width ||
-        (!object.behaviour &&
+        (!object.orbit &&
+          !object.behaviour &&
           object.motion.algorithm === "static" &&
           object.reaction.kind === "none")
       ) {
@@ -209,7 +210,7 @@ function onMover(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): boole
     layout.areas[zone.area]!.objects.some((object, index) => {
       if (
         (object.collision !== "solid" && object.collision !== "ledge") ||
-        (!object.behaviour && object.motion.algorithm === "static")
+        (!object.orbit && !object.behaviour && object.motion.algorithm === "static")
       ) {
         return false;
       }
@@ -331,6 +332,7 @@ function landingSurfaces(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState
   const hazards = layout.areas[zone.area]!.objects.filter(
     (object) =>
       object.collision === "hazard" &&
+      !object.orbit &&
       !object.behaviour &&
       object.motion.algorithm === "static" &&
       object.reaction.kind === "none",
@@ -441,6 +443,7 @@ function approachEdge(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1,
   for (const object of layout.areas[zone.area]!.objects) {
     if (
       object.collision !== "hazard" ||
+      object.orbit ||
       object.behaviour ||
       object.contact ||
       object.motion.algorithm !== "static" ||
@@ -510,6 +513,7 @@ function followupHold(
     const footHazard = area.objects.some((object, index) => {
       if (
         object.collision !== "hazard" ||
+        object.orbit ||
         object.behaviour ||
         object.motion.algorithm !== "static"
       ) {
@@ -591,7 +595,12 @@ function policyKey(
 }
 function threats(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState) {
   const sideThreat = layout.areas[zone.area]!.objects.some((object, index) => {
-    if (object.collision !== "hazard" || object.behaviour || object.motion.algorithm !== "static") {
+    if (
+      object.collision !== "hazard" ||
+      object.orbit ||
+      object.behaviour ||
+      object.motion.algorithm !== "static"
+    ) {
       return false;
     }
     const box = contactBox(object, zone.objects[index] ?? object.origin, 1);
@@ -608,7 +617,8 @@ function threats(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState) {
     layout.areas[zone.area]!.objects.some(
       (object, index) =>
         object.collision === "hazard" &&
-        (object.behaviour ||
+        (object.orbit ||
+          object.behaviour ||
           object.motion.algorithm !== "static" ||
           object.reaction.kind !== "none") &&
         Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
@@ -727,7 +737,8 @@ export function plannedInput(
   const movingSupport = layout.areas[zone.area]!.objects.some(
     (object, index) =>
       (object.collision === "ledge" || object.collision === "solid") &&
-      (object.behaviour ||
+      (object.orbit ||
+        object.behaviour ||
         object.motion.algorithm !== "static" ||
         object.reaction.kind !== "none") &&
       Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
@@ -1124,7 +1135,9 @@ export function plannedInput(
       const at = zone.objects[index] ?? object.origin;
       return (
         (object.collision === "ledge" || object.collision === "solid") &&
-        (object.behaviour !== undefined || object.motion.algorithm !== "static") &&
+        (object.orbit !== undefined ||
+          object.behaviour !== undefined ||
+          object.motion.algorithm !== "static") &&
         Math.abs(at.y - navigation.waypoint!.y) < 1 &&
         Math.abs(at.x - navigation.waypoint!.x) < object.width
       );
