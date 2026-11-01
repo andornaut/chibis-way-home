@@ -277,6 +277,9 @@ function snapshot(
   };
 }
 function inputLabel(candidate: Candidate): string {
+  if (candidate.travel !== undefined) {
+    return "retreat-to-support";
+  }
   if (candidate.stopAt !== undefined) {
     return candidate.hold === 0 ? "approach" : "brake-full";
   }
@@ -396,6 +399,7 @@ function approachEdge(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1,
 }
 interface Candidate {
   readonly stopAt?: number | undefined;
+  readonly travel?: -1 | 1;
   readonly back: number;
   readonly delay: number;
   readonly hold: number;
@@ -415,20 +419,21 @@ function action(
   if (active < 0) {
     return IDLE;
   }
+  const travel = candidate.travel ?? direction;
   if (candidate.stopAt !== undefined) {
-    const remaining = direction * (candidate.stopAt - zone.bird.x);
+    const remaining = travel * (candidate.stopAt - zone.bird.x);
     const accel = zone.bird.grounded ? tuning.groundAccel : tuning.airAccel;
     const braking =
       (zone.bird.vx * zone.bird.vx) / (2 * accel) + Math.abs(zone.bird.vx) * STEP_SECONDS + 2;
     return {
       jumpHeld: active < candidate.hold,
-      move: remaining > braking ? direction : 0,
+      move: remaining > braking ? travel : 0,
       useHeld: false,
     };
   }
   return {
     jumpHeld: active < candidate.hold,
-    move: active < candidate.stationary ? 0 : direction,
+    move: active < candidate.stationary ? 0 : travel,
     useHeld: false,
   };
 }
@@ -542,6 +547,24 @@ export function plannedInput(
   const currentPhase = phase(layout, zone);
   const full = Math.ceil(tuning.jumpRiseTime / STEP_SECONDS) + 1;
   const approach = approachEdge(tuning, layout, direction, zone);
+  const refugeX =
+    navigation.waypoint?.width === undefined
+      ? undefined
+      : navigation.waypoint.x + (navigation.waypoint.width - tuning.width) / 2;
+  const retreat: Candidate | undefined =
+    zone.bird.grounded &&
+    refugeX !== undefined &&
+    direction * (refugeX - zone.bird.x) < -tuning.width &&
+    navigation.waypoint!.y < zone.bird.y + tuning.height
+      ? {
+          back: 0,
+          delay: 0,
+          hold: 0,
+          stationary: 0,
+          stopAt: refugeX,
+          travel: direction === 1 ? -1 : 1,
+        }
+      : undefined;
   const candidates: Candidate[] = [
     { back: 0, delay: 0, hold: 0, stationary: 0 },
     { back: 0, delay: 0, hold: 1, stationary: 0 },
@@ -558,7 +581,7 @@ export function plannedInput(
           : navigation.waypoint.x + (navigation.waypoint.width - tuning.width) / 2,
     },
     { back: 0, delay: 24, hold: full, stationary: 0 },
-    { back: 18, delay: 0, hold: full, stationary: 0 },
+    retreat ?? { back: 18, delay: 0, hold: full, stationary: 0 },
     approach === undefined
       ? { back: 0, delay: 0, hold: full, stationary: 12 }
       : { back: 0, delay: 0, hold: 0, stationary: 0, stopAt: approach },
@@ -576,6 +599,9 @@ export function plannedInput(
   const summaries: NavigationCandidateSummary[] = [];
   if (approach !== undefined) {
     candidates.splice(4, 0, candidates.pop()!);
+  }
+  if (retreat) {
+    candidates.splice(4, 0, candidates.splice(candidates.indexOf(retreat), 1)[0]!);
   }
   const choices = candidates.map((candidate) => ({ candidate, elapsed: 0 }));
   if (navigation.continuation) {
@@ -670,6 +696,15 @@ export function plannedInput(
     if (predicted.cleared || predicted.area !== zone.area) {
       score += 10000;
     }
+    // A backward support is a local goal only when no safe forward rollout advances.
+    if (candidate.travel !== undefined && candidate.stopAt !== undefined) {
+      if (summaries.some((entry) => entry.rejection === null && entry.forwardProgress > 0)) {
+        continue;
+      }
+      score +=
+        2 *
+        (Math.abs(candidate.stopAt - zone.bird.x) - Math.abs(candidate.stopAt - predicted.bird.x));
+    }
     score -= candidate.hold > 0 ? 1 : 0;
     if (candidate.back > 0 && navigation.stalledTicks >= 48) {
       score += 100;
@@ -687,6 +722,9 @@ export function plannedInput(
       }
     }
     summaries[summaries.length - 1] = { ...summary, score };
+    if (best?.candidate.travel !== undefined && summary.forwardProgress > 0) {
+      best = undefined;
+    }
     if (!best || score > best.score) {
       best = {
         candidate,

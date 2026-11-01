@@ -424,6 +424,56 @@ describe("bounded real-rule navigation", () => {
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared, JSON.stringify(navigationSnapshot(result.bot))).toBe(true);
   });
+  it("retreats to an intermediate ledge before climbing a post above full jump height", () => {
+    const base = fixture([
+      { height: 120, width: 360, x: 0, y: 300 },
+      { height: 240, width: 48, x: 360, y: 180 },
+      { height: 120, width: 264, x: 408, y: 300 },
+    ]);
+    const refuge = { ...movingObject("ledge", { x: 216, y: 240 }), motion: STATIC_MOTION };
+    const hovering = {
+      ...movingObject("hazard", { x: 312, y: 215 }),
+      height: 46,
+      motion: STATIC_MOTION,
+      width: 44,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 348, y: 300 } },
+          exitX: 620,
+          height: 420,
+          objects: [refuge, hovering],
+          width: 672,
+        },
+      },
+    };
+    const initial = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    const bot = newBot(1);
+    const retreat = plannedInput(BIRD, layout, undefined, 1, initial, bot);
+    expect(retreat).toEqual({ jumpHeld: false, move: -1, useHeld: false });
+    const decision = navigationSnapshot(bot)!;
+    expect(decision.chosenAction).toBe("retreat-to-support");
+    expect(decision.predictedProgress).toBeLessThan(0);
+    const endpoint = decision.candidates.find(
+      (candidate) => candidate.inputLabel === "retreat-to-support",
+    )!.predictedEndpoint;
+    expect(endpoint.grounded).toBe(true);
+    expect(endpoint.x).toBeLessThan(initial.bird.x);
+    const result = traverse(layout, 600);
+    expect(result.zone.death).toBeUndefined();
+    expect(result.landings).toContain(240);
+    expect(result.landings).toContain(180);
+    expect(result.zone.cleared, JSON.stringify(navigationSnapshot(result.bot))).toBe(true);
+  });
   it("executes a validated finite wait through stationary rechecks before jumping and clearing", () => {
     const base = fixture([
       { height: 180, width: 144, x: 0, y: 240 },
