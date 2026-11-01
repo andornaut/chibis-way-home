@@ -4,6 +4,7 @@ import type {
   AreaLayout,
   AreaLink,
   BirdTuning,
+  DialogueLine,
   ObjectLayout,
   Point,
   Rect,
@@ -34,6 +35,7 @@ import { collisionCandidates } from "./collisionIndex";
 import { deathSupport } from "./death";
 import { type ForcePulse, forcePulseVelocity } from "./force";
 import { axisOf, motionTrack, type Track } from "./motion";
+import { currentScreen, targetVisible } from "./perception";
 import { overlaps } from "./rect";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import { validateWalkEntries } from "./zoneLinks";
@@ -45,6 +47,8 @@ interface ObjectFrame {
   readonly object: ObjectLayout;
 }
 interface AreaObjects {
+  readonly perception: boolean;
+  readonly spotted: readonly number[];
   readonly behaviours: readonly number[];
   readonly emptyBehaviours: readonly (BehaviourState | undefined)[];
   readonly fixed: readonly (ObjectFrame | undefined)[];
@@ -122,8 +126,21 @@ function areaObjects(area: AreaLayout): AreaObjects {
     geometry,
     hazards: indices("hazard"),
     ledges,
+    perception: area.objects.some((object) => {
+      const plan = object.behaviour;
+      return (
+        plan !== undefined &&
+        (plan.spotted !== undefined ||
+          Object.values(plan.states).some((node) =>
+            node.transitions.some((transition) =>
+              transition.when.some((condition) => condition.kind === "visible"),
+            ),
+          ))
+      );
+    }),
     platforms,
     solids,
+    spotted: area.objects.flatMap((object, index) => (object.behaviour?.spotted ? [index] : [])),
   };
   AREA_OBJECTS.set(area, result);
   return result;
@@ -177,6 +194,8 @@ export interface ZonePulse extends ForcePulse {
 }
 
 export interface ZoneState {
+  readonly spotted: Readonly<Record<string, readonly number[]>>;
+  readonly barks: readonly DialogueLine[];
   readonly nextPulseId: number;
   readonly pulses: readonly ZonePulse[];
   readonly transients: readonly Transient[];
@@ -221,7 +240,8 @@ export function enterArea(
   tuning: BirdTuning,
   layout: ZoneLayout,
   link: AreaLink,
-  zone: Pick<ZoneState, "attempt" | "restarts" | "seed" | "steps">,
+  zone: Pick<ZoneState, "attempt" | "restarts" | "seed" | "steps"> &
+    Partial<Pick<ZoneState, "spotted">>,
 ): ZoneState {
   const area = areaOf(layout, link.area);
   const entry = area.entries[link.entry];
@@ -245,6 +265,7 @@ export function enterArea(
   return {
     ...zone,
     area: link.area,
+    barks: [],
     behaviours: area.objects.some((object) => object.behaviour)
       ? area.objects.map((object) => object.behaviour && startBehaviour(tuning, object, bird))
       : [],
@@ -259,6 +280,7 @@ export function enterArea(
     ),
     pulses: [],
     seconds: 0,
+    spotted: zone.spotted ?? {},
     tracks,
     transients: [],
     turnedBack: false,
@@ -441,8 +463,33 @@ export function stepZone(
   }
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
-  const geometry = behaviourGeometry(area, zone);
   const kinds = areaObjects(area);
+  const baseGeometry = behaviourGeometry(area, zone);
+  const geometry = kinds.perception
+    ? { ...baseGeometry, view: currentScreen(tuning, area, zone.bird) }
+    : baseGeometry;
+  const barks: DialogueLine[] = [];
+  const seen = new Set(zone.spotted[zone.area] ?? []);
+  kinds.spotted.forEach((index) => {
+    const object = area.objects[index]!;
+    const bark = object.behaviour?.spotted;
+    const state = zone.behaviours[index];
+    if (
+      bark &&
+      state?.active &&
+      !seen.has(index) &&
+      targetVisible(
+        geometry,
+        contactBox(object, zone.objects[index] ?? object.origin, state.facing, state.axis),
+        birdBox(tuning, zone.bird),
+        object,
+      )
+    ) {
+      seen.add(index);
+      barks.push(bark);
+    }
+  });
+  const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
   const objects = area.objects.map((object, index): ObjectFrame => {
     const before = zone.objects[index] ?? object.origin;
     const fixed = kinds.fixed[index];
@@ -642,6 +689,7 @@ export function stepZone(
   ) {
     const frozen: ZoneState = {
       ...zone,
+      barks,
       behaviours,
       bird,
       nextPulseId,
@@ -649,6 +697,7 @@ export function stepZone(
       objects: positions,
       pulses: remainingPulses,
       seconds: time,
+      spotted,
       steps,
       transients: transientStep.entities,
       useHeld: input.useHeld,
@@ -674,9 +723,14 @@ export function stepZone(
       attempt: zone.attempt,
       restarts: zone.restarts,
       seed: zone.seed,
+      spotted,
       steps,
     });
-    return { ...arrival, bird: { ...arrival.bird, facing: bird.facing, jumpHeld: input.jumpHeld } };
+    return {
+      ...arrival,
+      barks,
+      bird: { ...arrival.bird, facing: bird.facing, jumpHeld: input.jumpHeld },
+    };
   }
   const usePressed = input.useHeld && !zone.useHeld;
   const door = usePressed
@@ -684,6 +738,7 @@ export function stepZone(
     : undefined;
   return {
     ...zone,
+    barks,
     behaviours,
     bird,
     cleared: box.x + box.width > area.exitX,
@@ -693,6 +748,7 @@ export function stepZone(
     objects: positions,
     pulses: remainingPulses,
     seconds: time,
+    spotted,
     steps,
     transients: transientStep.entities,
     turnedBack: box.x < area.backX,

@@ -18,6 +18,7 @@ import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import { hopLift } from "./motion";
+import { targetVisible } from "./perception";
 
 export interface BehaviourState {
   readonly animationTag?: string;
@@ -373,6 +374,14 @@ function matches(
   state: BehaviourState,
   condition: BehaviourCondition,
 ): boolean {
+  if (condition.kind === "visible") {
+    return targetVisible(
+      world,
+      contactBox(object, at, state.facing, state.axis),
+      birdBox(tuning, bird),
+      object,
+    );
+  }
   if (condition.kind === "elapsed") {
     return state.elapsed >= condition.seconds;
   }

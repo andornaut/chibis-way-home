@@ -21,7 +21,6 @@ import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "ph
 
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
-import { CAMERA } from "../data/camera";
 import { CHARACTERS } from "../data/characters";
 import { DEATH } from "../data/death";
 import { ZONE_DIALOGUES } from "../data/dialogues";
@@ -58,6 +57,7 @@ import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
 import { nodeOf } from "../rules/map";
+import { currentScreen } from "../rules/perception";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_MS, STEP_SECONDS } from "../rules/step";
@@ -107,7 +107,6 @@ import { type TouchSetting, touchSettings, touchSettingShown } from "../settings
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
 import { behaviourPose } from "../view/behaviour";
 import { BIRD_FRAME, birdFrameAt, type BirdPose, startPose, stepPose } from "../view/bird";
-import { cameraScroll } from "../view/camera";
 import { characterState, nextQuirkAt } from "../view/character";
 import {
   deathFrameIndex,
@@ -132,6 +131,7 @@ import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
+import { bindZoneBarks } from "./zoneBarks";
 import type { ZoneDepartureData } from "./ZoneDepartureScene";
 import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene";
 
@@ -263,6 +263,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private departure: ZoneDepartureTarget | undefined;
   private readonly localSeenIntros = new Set<string>();
   private introductionActive = false;
+  private barks: ReturnType<typeof bindZoneBarks> | undefined;
   private dialogueAttempt = -1;
   private dialogueArea = "";
   private readonly heardDialogues = new Map<string, Set<number>>();
@@ -310,6 +311,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.departure = undefined;
     this.localSeenIntros.clear();
     this.introductionActive = false;
+    this.barks = undefined;
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
     this.heardDialogues.clear();
@@ -451,6 +453,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.events.once("shutdown", () =>
       this.scale.off(Scale.Events.RESIZE, this.placeControls, this),
     );
+    this.barks = bindZoneBarks(this);
     this.watchKeys();
     this.watchTouches();
     this.events.on("pause", () => {
@@ -644,6 +647,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         { jumpHeld: intent.jump, move: intent.move, useHeld: intent.use },
         this.zone,
       );
+      if (this.zone.steps !== beforeZone.steps) {
+        this.barks?.enqueue(this.zone.barks);
+      }
       recordActiveStageStep(this.stageKey(), STEP_SECONDS, beforeZone, this.zone);
       if (this.zone.area !== beforeZone.area) {
         this.clearControls();
@@ -798,6 +804,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (this.zone.death === undefined) {
       return;
     }
+    this.barks?.reset();
     retryStageRun(this.stageKey());
     this.zone = retryZone(BIRD, this.layout, this.zone);
     this.dying = undefined;
@@ -1375,8 +1382,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     show(this.bird, tag);
     const at = birdFrameAt(BIRD, this.bird.frame, bird);
     this.bird.setPosition(at.x, at.y).setFlipX(bird.facing < 0);
-    const feet = { x: bird.x + BIRD.width / 2, y: bird.y + BIRD.height };
-    const scroll = cameraScroll(CAMERA, SCREEN, areaOf(this.layout, this.zone.area), feet);
+    const scroll = currentScreen(BIRD, areaOf(this.layout, this.zone.area), bird);
     this.cameras.main.setScroll(scroll.x, scroll.y);
   }
 

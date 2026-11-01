@@ -1,4 +1,3 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
@@ -15,7 +14,6 @@ import {
   type DialogueAction,
   type DialogueControl,
   dialogueKeyAction,
-  dialogueLines,
   type DialogueParagraph,
   dialogueParagraphs,
   type DialoguePress,
@@ -28,27 +26,22 @@ import {
   departureDialogueButtons,
   DIALOGUE_SCREEN,
   dialogueButtons,
-  dialogueNameTab,
-  dialogueSpeakerLayout,
   liveDialogueContains,
 } from "../layout/dialogueScreen";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import type { LabelledButton } from "../layout/restartCard";
 import { stepFocus } from "../pause/focusInput";
 import {
-  addCardText,
-  addSlice,
   addTextButton,
   BODY_FONT,
   captureTab,
-  paletteColour,
   pressTextButton,
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-  TITLE_FONT,
 } from "./cardParts";
 import type { DialogueChoiceData } from "./DialogueChoiceScene";
+import { drawDialogueParagraph } from "./dialogueParagraph";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
@@ -198,43 +191,10 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private drawParagraph(): void {
     this.paragraphArt.forEach((object) => object.destroy());
     const paragraph = this.paragraphs[this.paragraph];
-    if (!paragraph || (paragraph.portrait !== null && !this.textures.exists(paragraph.portrait))) {
-      throw new Error(`Missing dialogue portrait ${paragraph?.portrait ?? ""}`);
+    if (!paragraph) {
+      throw new Error("Missing dialogue paragraph");
     }
-    const layout = dialogueSpeakerLayout(paragraph.side);
-    const text = DIALOGUE_SCREEN.text;
-    const nameFont = phaserBitmapFont(this.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
-    const tab = dialogueNameTab(paragraph.side, inkWidth(nameFont, text.scale, paragraph.name));
-    if (tab.x + tab.width > layout.textX + text.width) {
-      throw new Error(`Dialogue speaker name does not fit: ${paragraph.name}`);
-    }
-    const frame = sheetTags(this.cache.json.get("ui-name-tab") as AsepriteSheet).get(
-      paragraph.colour,
-    )?.[0]?.frame;
-    if (frame === undefined) {
-      throw new Error(`Missing dialogue name-tab colour ${paragraph.colour}`);
-    }
-    this.paragraphArt = [
-      this.add
-        .image(layout.portraitFrame.x, layout.portraitFrame.y, "ui-portrait-frame")
-        .setOrigin(0),
-      paragraph.portrait === null
-        ? this.add
-            .rectangle(layout.portrait.x, layout.portrait.y, 64, 64, paletteColour(this, "dslate"))
-            .setOrigin(0)
-        : this.add.image(layout.portrait.x, layout.portrait.y, paragraph.portrait).setOrigin(0),
-      addSlice(this, "ui-name-tab", tab, frame),
-      addCardText(this, TITLE_FONT, layout.name, paragraph.name, paletteColour(this, "ink")),
-      ...dialogueLines(this.bodyFont(), text, text.width, paragraph.text).map((line, index) =>
-        addCardText(
-          this,
-          BODY_FONT,
-          { x: layout.textX, y: text.y + index * text.pitch },
-          line,
-          paletteColour(this, "cream"),
-        ),
-      ),
-    ];
+    this.paragraphArt = drawDialogueParagraph(this, paragraph);
   }
 
   private finish(selection?: string): void {

@@ -9,6 +9,7 @@ export interface BehaviourPlatform {
   readonly rect: Rect;
 }
 export interface BehaviourWorld {
+  readonly view?: Rect;
   readonly platforms?: readonly BehaviourPlatform[];
   readonly solids: readonly Rect[];
 }

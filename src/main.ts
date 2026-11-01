@@ -28,6 +28,7 @@ import { SettingsScene } from "./scenes/SettingsScene";
 import { StageSelectScene } from "./scenes/StageSelectScene";
 import { StartScene } from "./scenes/StartScene";
 import { installUpdateModalBridge, UpdateScene } from "./scenes/UpdateScene";
+import { ZoneBarkScene } from "./scenes/ZoneBarkScene";
 import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene";
 import { ZoneIntroductionScene } from "./scenes/ZoneIntroductionScene";
 import { ZoneScene } from "./scenes/ZoneScene";
@@ -61,6 +62,7 @@ function startGame(): void {
       StartScene,
       MapScene,
       ZoneScene,
+      ZoneBarkScene,
       CelebrationScene,
       CutsceneScene,
       PauseScene,
