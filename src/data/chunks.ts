@@ -968,7 +968,7 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     5,
     50,
     30,
-    [floor(0, 8, 50), floor(22, 6, 40), floor(28, 4, 36), floor(56, 4, 30)],
+    [floor(0, 8, 50), floor(22, 10, 40), floor(56, 4, 30)],
     [lift(10, 50), shuttle(20, 36), ...red(8, 48, 57)],
   ),
   "compound-low-ceiling-hazard": moduleChunk(MECHANICAL_THEMES, 4, 50, 50, TAP_TERRAIN, [
@@ -1012,8 +1012,8 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     4,
     30,
     50,
-    [floor(0, 8, 30), floor(8, 8, 35), floor(16, 8, 40), floor(24, 4, 45), floor(56, 4, 50)],
-    [shuttle(20, 45), ...red(28, 28, 54)],
+    [floor(0, 8, 30), floor(8, 8, 35), floor(16, 4, 40), floor(56, 4, 50)],
+    [shuttle(20, 45), ...red(20, 36, 54)],
   ),
   "compound-return-terrace": moduleChunk(
     MECHANICAL_THEMES,
