@@ -73,6 +73,8 @@ export interface Size {
 export interface BirdTuning {
   // Speed gained per second while a direction is held, on the ground and in the air.
   readonly airAccel: number;
+  // CLEANUP (added 2026-11-01): require brakeAccel when its paired gameplay value is included.
+  readonly brakeAccel?: number;
   readonly groundAccel: number;
   // Seconds after walking off a ledge in which a jump still starts.
   readonly coyoteTime: number;
