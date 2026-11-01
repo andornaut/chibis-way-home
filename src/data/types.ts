@@ -135,6 +135,7 @@ export interface GameText {
   readonly stats: StatsText;
   readonly update: {
     readonly accept: string;
+    readonly cancel: string;
     readonly title: string;
   };
   readonly death: DeathText;
