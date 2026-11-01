@@ -74,6 +74,7 @@ The V1 map has six themed destinations with three catalogued stages each. The ro
 ### Interface
 
 - **Consistent:** the same element looks and behaves the same on every screen: top bars, panels, close controls, buttons, headings
+- **Disabled controls:** pressing an ordinary disabled control refuses activation with shared shake and red-label feedback. A locked stage card applies the refusal across its face, screenshot and both labels; keyboard selection skips locked stages. Reduced motion uses steady red feedback without shaking or flashing. Refusal never selects an answer or dismisses a card, and respects modal blocking, fresh-release and cancellation guards
 - **Exact:** spacing sits on a fixed pixel grid: equal margins, aligned edges, and text clear of its box's edge by the same amount on both sides
 - **Minimal:** show only what the player needs. No heading that repeats a tab's name, no label the picture already gives, and no decoration that competes with play
 - **Options:** art mocks up visual options for the user to pick
