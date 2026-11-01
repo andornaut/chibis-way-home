@@ -1,0 +1,44 @@
+.game-with-dev {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.dev-tools {
+  flex: none;
+  padding: 4px 12px;
+  color: #eee6d4;
+  font: 14px sans-serif;
+  touch-action: manipulation;
+  max-height: 40dvh;
+  overflow: auto;
+}
+.dev-link {
+  color: inherit;
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px;
+}
+.dev-tools fieldset {
+  margin: 4px 0;
+}
+.dev-tools label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 12px 4px 0;
+}
+.dev-tools input,
+.dev-tools select,
+.dev-tools button {
+  font: inherit;
+}
+.dev-tools [hidden] {
+  display: none;
+}
+.site-nav + .game-with-dev #game {
+  margin-left: 0;
+}

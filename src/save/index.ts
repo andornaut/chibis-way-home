@@ -3,6 +3,7 @@ import { localSaveStorage } from "@andornaut/game-kit/save/storage";
 
 import { ZONE_MAP } from "../data/map";
 import { RECIPES, ZONES } from "../data/zones";
+import { isDevelopmentSession } from "../dev/mode";
 import { activeStepSeconds } from "../rules/death";
 import type { ZoneState } from "../rules/zone";
 import { BEGINNING, mapProgress, type Progress, progressFormat } from "./progress";
@@ -28,26 +29,35 @@ function installStatsLifecycle(): void {
   }
   statsLifecycleInstalled = true;
   window.addEventListener("pagehide", () => {
-    void stats.flush();
+    void flushStats();
   });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
-      void stats.flush();
+      void flushStats();
     }
   });
 }
 
 // Reads the stored progress into savedProgress.
 export async function loadProgress(): Promise<void> {
+  if (isDevelopmentSession()) {
+    return;
+  }
   const [loaded] = await Promise.all([store.load(), stats.load()]);
   progress = loaded.save;
   installStatsLifecycle();
 }
 
 export function beginZoneVisit(zone: string): void {
+  if (isDevelopmentSession()) {
+    return;
+  }
   stats.beginVisit(zone);
 }
 export function beginStageRun(stage: string): void {
+  if (isDevelopmentSession()) {
+    return;
+  }
   if (STAGES.has(stage)) {
     if (progress.at === "beginning") {
       writeStand(stage);
@@ -56,22 +66,28 @@ export function beginStageRun(stage: string): void {
   }
 }
 export function retryStageRun(stage: string): void {
+  if (isDevelopmentSession()) {
+    return;
+  }
   if (STAGES.has(stage)) {
     stats.retryStage(stage);
   }
 }
 export function completeStageRun(stage: string): RunStatsSummary {
+  if (isDevelopmentSession()) {
+    return stats.summary("");
+  }
   return stats.completeStage(stage);
 }
 export function stageRunStats(stage: string): RunStatsSummary {
-  return stats.summary(stage);
+  return stats.summary(isDevelopmentSession() ? "" : stage);
 }
 export function zoneVisitStats(zone: string): ZoneStatsSummary {
-  return stats.visitSummary(zone);
+  return stats.visitSummary(isDevelopmentSession() ? "" : zone);
 }
 
 export function activeStageTime(stage: string): number {
-  return stats.seconds(stage);
+  return stats.seconds(isDevelopmentSession() ? "" : stage);
 }
 
 // Developer test chains have no persistent stage identity and do not write real-stage stats.
@@ -81,19 +97,22 @@ export function recordActiveStageStep(
   before: ZoneState,
   after: ZoneState,
 ): void {
-  if (STAGES.has(stage)) {
+  if (!isDevelopmentSession() && STAGES.has(stage)) {
     stats.addActiveTime(stage, activeStepSeconds(seconds, before, after));
   }
 }
 
 export function clearStageTime(stage: string): void {
+  if (isDevelopmentSession()) {
+    return;
+  }
   if (STAGES.has(stage)) {
     stats.clearStage(stage);
   }
 }
 
 export function flushStats(): Promise<void> {
-  return stats.flush();
+  return isDevelopmentSession() ? Promise.resolve() : stats.flush();
 }
 
 // The saved progress, or the beginning.
@@ -121,7 +140,10 @@ export function saveZoneIntro(zone: string): void {
 
 // Map browsing updates an existing game; only actual stage entry starts a new one.
 export function saveStand(stand: string): void {
-  void stats.flush();
+  if (isDevelopmentSession()) {
+    return;
+  }
+  void flushStats();
   if (progress.at !== "beginning") {
     writeStand(stand);
   }
@@ -143,6 +165,9 @@ export function saveCompleted(node: string): void {
 }
 
 function write(next: Progress): void {
+  if (isDevelopmentSession()) {
+    return;
+  }
   progress = next;
   void store.save(next);
 }
@@ -150,6 +175,9 @@ function write(next: Progress): void {
 // Restart: progress goes back to the beginning, and the map opens on the first zone with nothing
 // completed. Only progress is cleared.
 export function clearProgress(): void {
-  void stats.flush();
+  if (isDevelopmentSession()) {
+    return;
+  }
+  void flushStats();
   write(BEGINNING);
 }

@@ -40,6 +40,8 @@ import type {
   ZonePlan,
 } from "../data/types";
 import { RECIPES, TEST_ZONES } from "../data/zones";
+import { invulnerabilityEnabled, isDevelopmentSession } from "../dev/mode";
+import { developmentStep } from "../dev/step";
 import { FRAME_TURN } from "../input/frameTurn";
 import {
   combineIntents,
@@ -640,12 +642,15 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       const beforeZone = this.zone;
       const before = this.zone.bird;
-      this.zone = stepZone(
-        BIRD,
-        this.layout,
-        STEP_SECONDS,
-        { jumpHeld: intent.jump, move: intent.move, useHeld: intent.use },
-        this.zone,
+      this.zone = developmentStep(
+        invulnerabilityEnabled(),
+        stepZone(
+          BIRD,
+          this.layout,
+          STEP_SECONDS,
+          { jumpHeld: intent.jump, move: intent.move, useHeld: intent.use },
+          this.zone,
+        ),
       );
       if (this.zone.steps !== beforeZone.steps) {
         this.barks?.enqueue(this.zone.barks);
@@ -1001,7 +1006,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // debug and trial runs keep their existing replay route.
   private leave(): void {
     const { turnedBack } = this.zone;
-    if (this.mapNode !== undefined) {
+    if (this.mapNode !== undefined && !isDevelopmentSession()) {
       const story = this.story;
       if (!story) {
         throw new Error(`Missing zone story for ${this.mapNode}`);
@@ -1038,9 +1043,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       return;
     }
-    if (this.trial !== undefined) {
+    const trial =
+      this.trial ??
+      (isDevelopmentSession()
+        ? ZONE_MAP.nodes.find((node) => node.id === this.mapNode && node.kind === "zone")?.zone
+        : undefined);
+    if (trial !== undefined) {
       const seed = askedAssemblySeed(window.location.search) ?? newAssemblySeed();
-      this.loadPlan(zonePlanFor(seed, this.trial));
+      this.loadPlan(zonePlanFor(seed, trial));
     } else {
       this.loadZone(turnedBack ? this.zoneIndex : nextZoneIndex(this.zoneIndex, CHAIN_LENGTH));
     }

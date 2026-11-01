@@ -1,6 +1,7 @@
 import "./crash/install";
 import "@andornaut/game-kit/view/frameTurnLandscapeGame.css";
 import "./main.css";
+import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
 import { capFrameRate } from "@andornaut/game-kit/clock/phaser/capFrameRate";
@@ -11,6 +12,7 @@ import { Game, Scale, WEBGL } from "phaser";
 // eslint-disable-next-line no-duplicate-imports -- the side-effect import above runs it first.
 import { CRASH_SCREEN } from "./crash/install";
 import { SCREEN } from "./data/screen";
+import { mountDeveloperPanel } from "./dev/panel";
 import { FRAME_TURN } from "./input/frameTurn";
 import { setupPhoneApp } from "./pwa";
 import { installOffer } from "./pwa/installOffer";
@@ -82,6 +84,23 @@ function startGame(): void {
     width: SCREEN.width,
   });
   installUpdateModalBridge(game);
+  const gameHost = document.getElementById("game");
+  if (gameHost) {
+    const dispose = mountDeveloperPanel(
+      {
+        blocked: () =>
+          gameHost.hasAttribute("data-modal-open") ||
+          game.scene.isActive("boot") ||
+          (game.scene.isActive("zone") && (game.scene.getScene("zone") as ZoneScene).playCovered()),
+        subscribe: (sync) => {
+          game.events.on("poststep", sync);
+          return () => game.events.off("poststep", sync);
+        },
+      },
+      gameHost,
+    );
+    game.events.once("destroy", dispose);
+  }
   // Phaser fits the canvas to #game and measures and maps pointers through the frame's turn, and
   // the page is kept to the visible area with the fit refreshed whenever it or the turn may have
   // changed (the kit's followFrameTurn).
