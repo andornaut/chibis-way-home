@@ -379,6 +379,163 @@ describe("bounded real-rule navigation", () => {
       }),
     ).toBe(true);
   });
+  it("approaches a supported takeoff before crossing a long gap above lethal terrain", () => {
+    const base = fixture([
+      { height: 180, width: 144, x: 0, y: 240 },
+      { height: 180, width: 200, x: 336, y: 240 },
+    ]);
+    const hazard = {
+      ...movingObject("hazard", { x: 144, y: 357 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 192,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 107.2, y: 240 } },
+          exitX: 480,
+          height: 420,
+          objects: [hazard],
+          width: 536,
+        },
+      },
+    };
+    const initial = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    const bot = newBot(1);
+    plannedInput(BIRD, layout, undefined, 1, initial, bot);
+    const approach = navigationSnapshot(bot)!;
+    expect(approach.chosenAction).toBe("approach");
+    const endpoint = approach.candidates.find(
+      (candidate) => candidate.inputLabel === "approach",
+    )!.predictedEndpoint;
+    expect(endpoint.grounded).toBe(true);
+    expect(endpoint.x).toBeGreaterThan(initial.bird.x);
+    expect(endpoint.x + BIRD.width / 2).toBeLessThan(144);
+    const result = traverse(layout, 480);
+    expect(result.zone.death).toBeUndefined();
+    expect(result.zone.cleared, JSON.stringify(navigationSnapshot(result.bot))).toBe(true);
+  });
+  it("extends only validation airborne predictions through a bounded safe descent", () => {
+    const base = fixture([
+      { height: 420, width: 144, x: 0, y: 120 },
+      { height: 180, width: 480, x: 240, y: 360 },
+    ]);
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 72, y: 120 } },
+          exitX: 660,
+          height: 540,
+          width: 720,
+        },
+      },
+    };
+    const initial = stepZone(
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: false, move: 0, useHeld: false },
+        startZone(BIRD, layout, 1),
+      ),
+      quick = newBot(1),
+      validation = newBot(1);
+    plannedInput(BIRD, layout, undefined, 1, initial, quick);
+    expect(
+      navigationSnapshot(quick)!.candidates.every((candidate) => candidate.physicsSteps <= 90),
+    ).toBe(true);
+    expect(
+      navigationSnapshot(quick)!.candidates.find((candidate) => candidate.inputLabel === "walk")!
+        .rejection,
+    ).toBe("airborne");
+    plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, initial, validation);
+    const decision = navigationSnapshot(validation)!;
+    expect(
+      decision.candidates.some(
+        (candidate) =>
+          candidate.physicsSteps > 90 &&
+          candidate.rejection === null &&
+          candidate.predictedEndpoint.grounded,
+      ),
+      JSON.stringify(decision),
+    ).toBe(true);
+    expect(navigationCounters(validation).physicsSteps).toBeLessThanOrEqual(8 * 90 * 2);
+    expect(
+      decision.candidates.every(
+        (candidate) => candidate.continuationSteps! <= 90 && candidate.segmentCount! <= 2,
+      ),
+    ).toBe(true);
+    const limited = newBot(1);
+    plannedInput(
+      BIRD,
+      layout,
+      { ...NAVIGATION_VALIDATION, maxPhysicsSteps: 100 },
+      1,
+      initial,
+      limited,
+    );
+    expect(navigationCounters(limited).physicsSteps).toBe(100);
+    expect(
+      navigationSnapshot(limited)!.candidates.every((candidate) => candidate.rejection !== null),
+    ).toBe(true);
+    let zone = initial;
+    const bot = newBot(1);
+    for (let tick = 0; tick < 600 && !zone.cleared && !zone.death; tick++) {
+      zone = stepZone(
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot),
+        zone,
+      );
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    const lethal = {
+      ...movingObject("hazard", { x: 144, y: 300 }),
+      height: 12,
+      motion: STATIC_MOTION,
+      width: 576,
+    };
+    const blocked: ZoneLayout = {
+      ...layout,
+      areas: { main: { ...layout.areas.main!, objects: [lethal] } },
+    };
+    const rejected = newBot(1);
+    plannedInput(
+      BIRD,
+      blocked,
+      NAVIGATION_VALIDATION,
+      1,
+      stepZone(
+        BIRD,
+        blocked,
+        STEP_SECONDS,
+        { jumpHeld: false, move: 0, useHeld: false },
+        startZone(BIRD, blocked, 1),
+      ),
+      rejected,
+    );
+    expect(
+      navigationSnapshot(rejected)!.candidates.find((candidate) => candidate.inputLabel === "walk")!
+        .rejection,
+    ).toBe("death");
+    expect(
+      navigationSnapshot(rejected)!
+        .candidates.filter((candidate) => candidate.rejection === null)
+        .every((candidate) => candidate.predictedEndpoint.grounded),
+    ).toBe(true);
+  });
   it("exposes bounded copied candidate and cache progress diagnostics without predicted states", () => {
     const layout = fixture([{ height: 60, width: 400, x: 0, y: 240 }]),
       bot = newBot(1);

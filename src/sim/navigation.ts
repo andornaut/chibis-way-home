@@ -38,6 +38,8 @@ export interface NavigationMemory {
   readonly deaths: readonly FailedChoice[];
 }
 export interface NavigationCandidateSummary {
+  readonly continuationSteps?: number;
+  readonly segmentCount?: number;
   readonly elapsed: number;
   readonly forwardProgress: number;
   readonly inputLabel: string;
@@ -275,6 +277,9 @@ function snapshot(
   };
 }
 function inputLabel(candidate: Candidate): string {
+  if (candidate.stopAt !== undefined) {
+    return "approach";
+  }
   if (candidate.back > 0) {
     return "back-then-full";
   }
@@ -288,7 +293,7 @@ function inputLabel(candidate: Candidate): string {
     return "stationary-then-full";
   }
   if (candidate.brakeAfter !== undefined) {
-    return "brake-full";
+    return candidate.hold === 0 ? "approach" : "brake-full";
   }
   return candidate.hold === 0 ? "walk" : candidate.hold === 1 ? "tap" : "full";
 }
@@ -301,23 +306,28 @@ export function resetNavigation(bot: Navigator): void {
   }
 }
 const IDLE: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
-// The nearest blocking face selects a local support goal; every action still needs real-rule validation.
-function waypoint(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zone: ZoneState) {
+function supports(layout: ZoneLayout, zone: ZoneState): Rect[] {
   const area = layout.areas[zone.area]!;
-  const supports: Rect[] = [...area.solids];
+  const result: Rect[] = [...area.solids];
   area.objects.forEach((object, index) => {
     if (object.collision === "ledge" || object.collision === "solid") {
-      supports.push({
+      result.push({
         ...(zone.objects[index] ?? object.origin),
         height: object.height,
         width: object.width,
       });
     }
   });
+  return result;
+}
+// The nearest blocking face selects a local support goal; every action still needs real-rule validation.
+function waypoint(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zone: ZoneState) {
+  const area = layout.areas[zone.area]!;
+  const surfaces = supports(layout, zone);
   const foot = zone.bird.y + tuning.height,
     front = zone.bird.x + (direction === 1 ? tuning.width : 0);
   const distance = (rect: Rect) => (direction === 1 ? rect.x - front : front - rect.x - rect.width);
-  const nearby = supports
+  const nearby = surfaces
     .filter((rect) => distance(rect) >= -SCREEN.width / 2 && distance(rect) <= SCREEN.width / 2)
     .sort((a, b) => Math.abs(distance(a)) - Math.abs(distance(b)))
     .slice(0, 64);
@@ -369,14 +379,47 @@ function waypoint(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zon
     y: target.y,
   };
 }
+function approachEdge(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zone: ZoneState) {
+  if (!zone.bird.grounded) {
+    return undefined;
+  }
+  const foot = zone.bird.y + tuning.height;
+  const support = supports(layout, zone)
+    .filter(
+      (rect) =>
+        Math.abs(rect.y - foot) < 1 &&
+        rect.x < zone.bird.x + tuning.width &&
+        rect.x + rect.width > zone.bird.x,
+    )
+    .sort(
+      (a, b) =>
+        direction * (b.x + (direction === 1 ? b.width : 0) - a.x - (direction === 1 ? a.width : 0)),
+    )[0];
+  return support ? support.x + (direction === 1 ? support.width : 0) - tuning.width / 2 : undefined;
+}
 interface Candidate {
+  readonly stopAt?: number;
   readonly brakeAfter?: number;
   readonly back: number;
   readonly delay: number;
   readonly hold: number;
   readonly stationary: number;
 }
-function action(direction: -1 | 1, candidate: Candidate, tick: number): ZoneInput {
+function action(
+  tuning: BirdTuning,
+  direction: -1 | 1,
+  candidate: Candidate,
+  tick: number,
+  zone: ZoneState,
+): ZoneInput {
+  if (candidate.stopAt !== undefined) {
+    const remaining = direction * (candidate.stopAt - zone.bird.x);
+    const braking =
+      (zone.bird.vx * zone.bird.vx) / (2 * tuning.groundAccel) +
+      Math.abs(zone.bird.vx) * STEP_SECONDS +
+      2;
+    return { ...IDLE, move: remaining > braking ? direction : 0 };
+  }
   if (tick < candidate.back) {
     return { ...IDLE, move: direction === 1 ? -1 : 1 };
   }
@@ -475,6 +518,10 @@ export function plannedInput(
         navigation.continuation.elapsed++;
       }
       const input = navigation.queue.shift()!;
+      if (navigation.stalledTicks >= limits.replanTicks && cache.index % limits.replanTicks === 0) {
+        navigation.queue = [];
+        navigation.continuation = undefined;
+      }
       snapshot({ didReplan: false, direction, reason: "cache-reused", zone }, navigation);
       return input;
     }
@@ -494,6 +541,7 @@ export function plannedInput(
   navigation.waypoint = waypoint(tuning, layout, direction, zone);
   const currentPhase = phase(layout, zone);
   const full = Math.ceil(tuning.jumpRiseTime / STEP_SECONDS) + 1;
+  const approach = approachEdge(tuning, layout, direction, zone);
   const candidates: Candidate[] = [
     { back: 0, delay: 0, hold: 0, stationary: 0 },
     { back: 0, delay: 0, hold: 1, stationary: 0 },
@@ -522,7 +570,9 @@ export function plannedInput(
     },
     { back: 0, delay: 24, hold: full, stationary: 0 },
     { back: 18, delay: 0, hold: full, stationary: 0 },
-    { back: 0, delay: 0, hold: full, stationary: 12 },
+    approach === undefined
+      ? { back: 0, delay: 0, hold: full, stationary: 12 }
+      : { back: 0, delay: 0, hold: 0, stationary: 0, stopAt: approach },
   ];
   let best:
     | {
@@ -535,6 +585,9 @@ export function plannedInput(
       }
     | undefined;
   const summaries: NavigationCandidateSummary[] = [];
+  if (approach !== undefined) {
+    candidates.splice(4, 0, candidates.pop()!);
+  }
   const choices = candidates.map((candidate) => ({ candidate, elapsed: 0 }));
   if (navigation.continuation) {
     choices.unshift(navigation.continuation);
@@ -550,8 +603,24 @@ export function plannedInput(
     let landedAt: number | undefined;
     const inputs: ZoneInput[] = [];
     const states: ZoneState[] = [];
-    for (let tick = 0; tick < limits.horizonTicks; tick++) {
-      const input = landedAt === undefined ? action(direction, candidate, tick + elapsed) : IDLE;
+    for (
+      let tick = 0;
+      tick < limits.horizonTicks * (limits.profile === "validation" ? 2 : 1);
+      tick++
+    ) {
+      if (
+        tick === limits.horizonTicks &&
+        (predicted.bird.grounded || direction * (predicted.bird.x - zone.bird.x) <= 0)
+      ) {
+        break;
+      }
+      if (navigation.counters.physicsSteps >= limits.maxPhysicsSteps) {
+        break;
+      }
+      const input =
+        landedAt === undefined
+          ? action(tuning, direction, candidate, tick + elapsed, predicted)
+          : IDLE;
       inputs.push(input);
       states.push(predicted);
       predicted = stepZone(tuning, layout, STEP_SECONDS, input, predicted);
@@ -585,6 +654,7 @@ export function plannedInput(
           ? "airborne"
           : null;
     const summary: NavigationCandidateSummary = {
+      continuationSteps: Math.max(0, inputs.length - limits.horizonTicks),
       elapsed,
       forwardProgress: direction * (predicted.bird.x - zone.bird.x),
       inputLabel: inputLabel(candidate),
@@ -596,6 +666,7 @@ export function plannedInput(
       },
       rejection,
       score: null,
+      segmentCount: inputs.length > limits.horizonTicks ? 2 : 1,
       verticalProgress: zone.bird.y - predicted.bird.y,
     };
     summaries.push(summary);
