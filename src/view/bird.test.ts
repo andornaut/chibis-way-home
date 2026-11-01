@@ -8,6 +8,7 @@ import { birdFrameAt, type BirdPose, stepPose } from "./bird";
 const LAND_MS = 180;
 
 const STILL: BirdState = {
+  airJumpUsed: false,
   bufferLeft: 0,
   carryVx: 0,
   coyoteLeft: 0,

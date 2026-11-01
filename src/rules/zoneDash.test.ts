@@ -135,4 +135,28 @@ describe("fresh Use arbitration", () => {
       remainingSeconds: 0,
     });
   });
+  it("does not restore the air jump at an area boundary, but Retry starts a fresh airtime", () => {
+    const profile = { ...tuning, doubleJump: true };
+    const main = { ...area(), exitX: 160, walkLinks: { right: { area: "next", entry: "start" } } };
+    const plan = { ...layout(main), areas: { main, next: area() } };
+    let zone = startZone(profile, plan, 1);
+    zone = {
+      ...zone,
+      useHeld: false,
+      bird: { ...zone.bird, airJumpUsed: true, grounded: false, y: 100 },
+    };
+    zone = stepZone(profile, plan, 0.1, use, zone);
+    expect(zone.area).toBe("next");
+    expect(zone.bird.airJumpUsed).toBe(true);
+    const retry = retryZone(profile, plan, {
+      ...zone,
+      death: {
+        position: { x: zone.bird.x, y: zone.bird.y },
+        reason: "fall",
+        support: undefined,
+        velocity: { x: 0, y: 0 },
+      },
+    });
+    expect(retry.bird.airJumpUsed).toBe(false);
+  });
 });

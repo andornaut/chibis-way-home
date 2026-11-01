@@ -846,7 +846,13 @@ export function stepZone(
     return {
       ...arrival,
       barks,
-      bird: { ...arrival.bird, dash: bird.dash, facing: bird.facing, jumpHeld: input.jumpHeld },
+      bird: {
+        ...arrival.bird,
+        airJumpUsed: bird.airJumpUsed,
+        dash: bird.dash,
+        facing: bird.facing,
+        jumpHeld: input.jumpHeld,
+      },
     };
   }
   return {

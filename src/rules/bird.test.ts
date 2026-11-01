@@ -8,6 +8,7 @@ import { STEP_SECONDS } from "./step";
 const STEP = STEP_SECONDS;
 const GROUND: Rect = { height: 40, width: 2000, x: -1000, y: 300 };
 const IDLE: BirdInput = { jumpHeld: false, move: 0 };
+const SINGLE_JUMP = { ...BIRD, doubleJump: false };
 
 // Steps her from a standing start on GROUND, with input(step) each step; returns every state.
 function run(
@@ -26,14 +27,19 @@ function run(
 }
 
 // A short jump from the ground, and optionally a second press on pressStep.
-function hop(pressStep?: number): BirdState[] {
-  return run(600, (step) => ({ jumpHeld: step < 2 || step === pressStep, move: 0 }));
+function hop(pressStep?: number, tuning = BIRD): BirdState[] {
+  return run(
+    600,
+    (step) => ({ jumpHeld: step < 2 || step === pressStep, move: 0 }),
+    [GROUND],
+    tuning,
+  );
 }
 
 // Walking right off a narrow ledge, and optionally a jump press on jumpStep.
 const LEDGE: Rect = { height: 40, width: 40, x: -20, y: 300 };
-function walkOff(jumpStep?: number): BirdState[] {
-  return run(120, (step) => ({ jumpHeld: step === jumpStep, move: 1 }), [LEDGE]);
+function walkOff(jumpStep?: number, tuning = BIRD): BirdState[] {
+  return run(120, (step) => ({ jumpHeld: step === jumpStep, move: 1 }), [LEDGE], tuning);
 }
 
 const last = (states: BirdState[]) => states[states.length - 1] as BirdState;
@@ -158,18 +164,28 @@ describe("stepBird", () => {
     expect((states[apex + 1]?.vy ?? 0) - (states[apex]?.vy ?? 0)).toBeCloseTo(gravity * STEP);
   });
 
-  it("does not regain speed when Jump is pressed again during a released hop", () => {
-    const states = run(120, (step) => ({
-      jumpHeld: step === 0 || (step > 4 && step < 20),
-      move: 0,
-    }));
+  it("does not regain speed during a released hop when the separate air jump is disabled", () => {
+    const states = run(
+      120,
+      (step) => ({
+        jumpHeld: step === 0 || (step > 4 && step < 20),
+        move: 0,
+      }),
+      [GROUND],
+      SINGLE_JUMP,
+    );
     expect(Math.abs(startY - lowestY(states) - jumpHopHeight)).toBeLessThan(1);
   });
 
   it("hops when a buffered jump's button was already released", () => {
-    const land = hop().findIndex((state, i) => i > 2 && state.grounded);
+    const land = hop(undefined, SINGLE_JUMP).findIndex((state, i) => i > 2 && state.grounded);
     const press = land - 3;
-    const states = run(600, (step) => ({ jumpHeld: step < 2 || step === press, move: 0 }));
+    const states = run(
+      600,
+      (step) => ({ jumpHeld: step < 2 || step === press, move: 0 }),
+      [GROUND],
+      SINGLE_JUMP,
+    );
     const after = states.slice(land);
     const hopApex = BIRD.jumpHopHeight;
     expect(Math.abs(startY - lowestY(after) - hopApex)).toBeLessThanOrEqual(BIRD.jumpSpeed * STEP);
@@ -191,7 +207,7 @@ describe("stepBird", () => {
     ["after coyote time", Math.ceil(BIRD.coyoteTime / STEP) + 1, false],
   ])("jumps when pressed %s after leaving a ledge", (_name, after, jumps) => {
     const leave = walkOff().findIndex((state) => !state.grounded);
-    const states = walkOff(leave - 1 + after);
+    const states = walkOff(leave - 1 + after, SINGLE_JUMP);
     expect(states.some((state) => state.vy < 0)).toBe(jumps);
   });
 
@@ -201,8 +217,8 @@ describe("stepBird", () => {
     ["within the buffer", Math.floor(BIRD.jumpBuffer / STEP) - 2, true],
     ["before the buffer", Math.ceil(BIRD.jumpBuffer / STEP) + 1, false],
   ])("jumps as she lands when pressed %s", (_name, before, jumps) => {
-    const land = hop().findIndex((state, i) => i > 2 && state.grounded);
-    const states = hop(land - 1 - before);
+    const land = hop(undefined, SINGLE_JUMP).findIndex((state, i) => i > 2 && state.grounded);
+    const states = hop(land - 1 - before, SINGLE_JUMP);
     expect(states.slice(land).some((state) => state.vy < 0)).toBe(jumps);
   });
 

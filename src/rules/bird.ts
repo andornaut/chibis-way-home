@@ -31,6 +31,7 @@ export interface BirdDashState {
 }
 
 export interface BirdState {
+  readonly airJumpUsed: boolean;
   readonly dash?: BirdDashState | undefined;
   // Seconds a pressed jump still waits to start, should she land or still be in coyote time.
   readonly bufferLeft: number;
@@ -68,6 +69,7 @@ export function startsDash(tuning: BirdTuning, input: BirdInput, bird: BirdState
 
 export function startBird(tuning: BirdTuning, start: Point): BirdState {
   return {
+    airJumpUsed: false,
     bufferLeft: 0,
     carryVx: 0,
     coyoteLeft: 0,
@@ -312,7 +314,14 @@ export function stepBird(
   let jumpRelease = bird.jumpRelease;
   // Seconds Jump was held before this step, since it started her jump.
   let heldBefore = bird.jumpHeldFor;
-  if ((jumpPressed || bufferLeft > 0) && (bird.grounded || bird.coyoteLeft > 0)) {
+  let airJumpUsed = bird.airJumpUsed;
+  const groundJump = (jumpPressed || bufferLeft > 0) && (bird.grounded || bird.coyoteLeft > 0);
+  const airJump =
+    tuning.doubleJump === true && jumpPressed && !groundJump && !bird.grounded && !airJumpUsed;
+  if (groundJump || airJump) {
+    if (airJump) {
+      airJumpUsed = true;
+    }
     vy = -curve.initialSpeed;
     jumpFromY = bird.y;
     bufferLeft = 0;
@@ -439,6 +448,7 @@ export function stepBird(
     }
   }
   if (grounded) {
+    airJumpUsed = false;
     if (dash) {
       dash = { ...dash, airUsed: false };
     }
@@ -447,6 +457,7 @@ export function stepBird(
   }
 
   return {
+    airJumpUsed,
     bufferLeft,
     carryVx,
     coyoteLeft,
