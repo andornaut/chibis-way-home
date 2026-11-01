@@ -212,6 +212,7 @@ export const TEXT: GameText = {
   },
   update: {
     accept: "Update now",
+    cancel: "Cancel",
     title: "Update available",
   },
 };
