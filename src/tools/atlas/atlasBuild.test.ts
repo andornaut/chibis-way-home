@@ -15,7 +15,7 @@ import { EXTRUDE } from "./atlasLayout";
 const ART_DIR = join(import.meta.dirname, "../../../public", ART_PATH);
 const readArt = async (path: string) => new Uint8Array(await readFile(join(ART_DIR, path)));
 const ART = JSON.parse(new TextDecoder().decode(await readArt(ART_MANIFEST_FILE))) as ArtManifest;
-const ATLAS = await buildAtlas(readArt, ART);
+const ATLAS = await buildAtlas({ encode: () => new Uint8Array(), readArt }, ART);
 
 // Every PNG art's manifest lists for the game, by key: all but its images.
 const PNGS: ReadonlyMap<string, string> = new Map(
@@ -75,7 +75,7 @@ describe("buildAtlas", () => {
     }
     const texture = textureOf(key);
     const source = decodePng(await readArt(png));
-    const page = itemAt(ATLAS.pages, texture.page);
+    const { image: page } = itemAt(ATLAS.pages, texture.page);
     const { x, y } = topLeft(texture.frames);
     expect(pixels(page, x, y, source.width, source.height)).toEqual(
       pixels(source, 0, 0, source.width, source.height),
