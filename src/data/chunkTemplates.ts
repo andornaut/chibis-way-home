@@ -1,4 +1,7 @@
+import { SCREEN, TILE } from "./screen";
 import type { ChunkPlan } from "./types";
+
+export const CHUNK_COLS = SCREEN.width / TILE;
 
 // A shared horizontal encounter with a waiting ledge on each side.
 export const PATROL_FINISH_GEOMETRY: Pick<ChunkPlan, "encounters" | "objects" | "solids"> = {
