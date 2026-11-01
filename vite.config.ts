@@ -38,4 +38,10 @@ export default gameViteConfig<typeof ConfigModules>({
   repoRoot: import.meta.dirname,
   // Preserve Vitest's existing Node per-test default.
   testTimeout: 5_000,
-});
+}).then((config) => ({
+  ...config,
+  test: {
+    ...config.test,
+    include: ["src/**/*.test.ts"],
+  },
+}));

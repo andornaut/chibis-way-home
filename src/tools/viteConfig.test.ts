@@ -46,3 +46,13 @@ it("passes Duck's page entries, preview host and existing limits to the shared c
   expect(config.test?.testTimeout).toBe(5_000);
   expect(config.test?.maxWorkers).toBeUndefined();
 });
+
+it("discovers only game-owned tests while retaining the resolved Node test options", async () => {
+  const config = await configPromise;
+  expect(config.test?.include).toEqual(["src/**/*.test.ts"]);
+  expect(config.test).toMatchObject({
+    environment: "node",
+    root: resolve(import.meta.dirname, "../.."),
+    testTimeout: 5_000,
+  });
+});
