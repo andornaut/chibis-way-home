@@ -12,6 +12,7 @@ ravine-rock72x72 none at1,1. Near pieces align local floor. Decor has no collisi
 hazard marking. Natural decor uses tonal fills without dark contour bands. Keep silhouettes clear of required
 routes. Distant ravine water is decorative only.
 Large overlapping far and middle canopies span the upper texture bands; trunks extend to the base.
+Birch and conifer far/middle variants retain720x600/repeatx/bottom600 and the same parallax contracts.
 No actors or natural hidden lethality. Context uses identical illustrative geometry, not validated stages.
 """
 
@@ -124,6 +125,57 @@ def ravine_mid():
     return im
 
 
+def conifers(middle=False):
+    """Layered tapered spruce boughs and long trunks, distinct from broadleaf crowns."""
+    im = image(720, 600)
+    colour = "forest" if middle else SHADE
+    for x, top, width in ((-40, 28, 156), (92, 68, 136), (206, 12, 172),
+                          (356, 50, 148), (482, 22, 174), (632, 62, 142)):
+        if middle:
+            top += 62
+        for shift in (-720, 0, 720):
+            left = x + shift
+            centre = left + width // 2
+            rect(im, colour, (centre - 6, top + 100, centre + 6, 600))
+            for level, length in ((0, 128), (64, 160), (130, 172)):
+                spread = int(width * (0.54 + level / 400))
+                polygon(im, colour, ((centre, top + level),
+                                     (centre - spread // 2, top + level + length),
+                                     (centre + spread // 2, top + level + length)))
+            if middle:
+                polygon(im, SHADE, ((centre, top + 12), (centre - 24, top + 104),
+                                    (centre - 4, top + 86)))
+    return im
+
+
+def birches(middle=False):
+    """Slender pale birch trunks and smaller high leafy crowns; no dark decorative perimeter."""
+    im = image(720, 600)
+    crown = "forest" if middle else SHADE
+    for x, top, width in ((-38, 18, 158), (104, 52, 146), (226, 6, 166),
+                          (378, 38, 152), (510, 16, 160), (652, 54, 140)):
+        if middle:
+            top += 20
+            width = int(width * 0.76)
+        for shift in (-720, 0, 720):
+            left = x + shift
+            centre = left + width // 2
+            trunk = "lgrey" if middle else SHADE
+            rect(im, trunk, (centre - 5, top + 84, centre + 5, 600))
+            d = ImageDraw.Draw(im)
+            crown_height = 132 if middle else 194
+            for box in ((left, top + 28, left + width, top + crown_height),
+                        (left + 18, top, left + width - 14, top + crown_height - 24),
+                        (left - 8, top + 48, left + width - 24, top + crown_height - 12)):
+                d.ellipse(box, fill=pixel.rgb(crown) + (255,))
+            if middle:
+                d.ellipse((left + 14, top + 28, left + width - 42, top + 112),
+                          fill=pixel.rgb(SHADE) + (255,))
+                for y in range(top + 148, 590, 46):
+                    rect(im, "slate", (centre - 5, y, centre + 1, y + 2))
+    return im
+
+
 def tree():
     im = image(96, 216)
     rect(im, "zone-peach-shade", (36, 60, 60, 216))
@@ -157,11 +209,15 @@ def rock():
 
 BACKDROPS = {
     "forest-mid": (forest_mid, "x"),
+    "forest-mid-birch": (lambda: birches(True), "x"),
+    "forest-mid-conifers": (lambda: conifers(True), "x"),
     "forest-shrub": (shrub, "x"),
     "forest-tree": (tree, "none"),
     "ravine-mid": (ravine_mid, "x"),
     "ravine-rock": (rock, "none"),
     "woodland-far": (far, "x"),
+    "woodland-far-birch": (birches, "x"),
+    "woodland-far-conifers": (conifers, "x"),
     "woodland-sky": (sky, "x"),
 }
 

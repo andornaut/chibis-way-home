@@ -6,7 +6,7 @@ The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served a
 
 - Pixel art: minimalist, cute, a little retro, refined.
 - Everything, UI included, is pixel art at one base resolution, 720x360. The game scales it to fill the screen at 2:1 with nearest-neighbour sampling and no smoothing, by a fractional factor, so on most screens some pixels come out one device pixel wider than others. On a landscape phone 1 base pixel is about 1 CSS pixel. Judge art at a fractional scale as well as at 3x, and avoid 1px patterns (checks, dashes, alternating rows) that turn uneven when pixels vary in width.
-- Chibi proportions: the head at least as big as the body, so a character reads from head shape and markings alone.
+- Playable and speaking characters use chibi proportions: the head at least as big as the body, so a character reads from head shape and markings alone. Decorative background animals use naturalistic adult proportions, restrained markings and species-appropriate movement; no oversized eyes, clothing or character expressions.
 
 ## Zone design guide
 
@@ -955,3 +955,9 @@ Backdrops repeat in x at widths that divide 720, so chunk seams never show; prop
 ## Remaining for the first build
 
 - Any further encounter-specific animation or trap artwork requires an approved behaviour and asset contract.
+
+### Woodland species and background fauna
+
+Woodland can mix broadleaf, conifer and birch depth layers between appropriate chunks. The existing broadleaf `woodland-far` and `forest-mid` remain the default. `woodland-far-conifers`, `forest-mid-conifers`, `woodland-far-birch` and `forest-mid-birch` retain 720x600, bottom-left y600 and repeat x. Far layers use the existing 0.15,0.05 parallax contract; middle layers use 0.4,0.15. Gameplay owns their chunk bindings and placement, including keeping exterior depth out of enclosed interiors.
+
+`art/tools/woodland_fauna.py` draws naturalistic decorative `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and `background-swallow` (24x12, centre 12,6; `flight` four 120ms frames). All tags loop. These sprites have no contact mask, hitbox, interaction or dialogue. The renderer owns background depth; gameplay owns placement, motion and timing. Keep them subdued and separate from lethal enemies and points of interest.

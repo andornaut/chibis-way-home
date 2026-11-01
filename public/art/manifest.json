@@ -13,6 +13,18 @@
   ],
   "sprites": [
     {
+      "key": "background-deer",
+      "png": "sprites/background-deer.png",
+      "json": "sprites/background-deer.json",
+      "once": []
+    },
+    {
+      "key": "background-swallow",
+      "png": "sprites/background-swallow.png",
+      "json": "sprites/background-swallow.json",
+      "once": []
+    },
+    {
       "key": "bear-antagonist",
       "png": "sprites/bear-antagonist.png",
       "json": "sprites/bear-antagonist.json",
@@ -1146,6 +1158,24 @@
       "repeat": "x"
     },
     {
+      "key": "forest-mid-birch",
+      "png": "backdrops/forest-mid-birch.png",
+      "width": 720,
+      "height": 600,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "x"
+    },
+    {
+      "key": "forest-mid-conifers",
+      "png": "backdrops/forest-mid-conifers.png",
+      "width": 720,
+      "height": 600,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "x"
+    },
+    {
       "key": "forest-shrub",
       "png": "backdrops/forest-shrub.png",
       "width": 48,
@@ -1751,6 +1781,24 @@
     {
       "key": "woodland-far",
       "png": "backdrops/woodland-far.png",
+      "width": 720,
+      "height": 600,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "x"
+    },
+    {
+      "key": "woodland-far-birch",
+      "png": "backdrops/woodland-far-birch.png",
+      "width": 720,
+      "height": 600,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "x"
+    },
+    {
+      "key": "woodland-far-conifers",
+      "png": "backdrops/woodland-far-conifers.png",
       "width": 720,
       "height": 600,
       "anchor": "bottom-left",
