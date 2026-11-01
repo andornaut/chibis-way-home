@@ -1,0 +1,59 @@
+{
+  "viewport": {
+    "width": 720,
+    "height": 360
+  },
+  "frame": {
+    "width": 256,
+    "height": 256,
+    "columns": 2,
+    "rows": 2
+  },
+  "anchor": {
+    "x": 128,
+    "y": 232
+  },
+  "backgrounds": {
+    "home": "opening-home-background",
+    "transit": "opening-transit-background",
+    "depot": "opening-depot-background"
+  },
+  "poses": {
+    "opening-chibi": {
+      "rest": 0,
+      "blink": 1,
+      "sleep": 2,
+      "wake": 3
+    },
+    "opening-ferret": {
+      "friendly": 0,
+      "gesture": 1,
+      "argument": 2,
+      "pack": 3
+    },
+    "opening-parcel": {
+      "open": 0,
+      "half-closed": 1,
+      "sealed": 2,
+      "opened": 3
+    },
+    "opening-parcel-front": {
+      "open": 0,
+      "half-closed": 1,
+      "sealed": 2,
+      "opened": 3
+    }
+  },
+  "parcelFrontEdges": [
+    153,
+    151,
+    117,
+    159
+  ],
+  "layerOrder": [
+    "background",
+    "parcel",
+    "actors",
+    "parcel-front"
+  ]
+}

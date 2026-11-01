@@ -1,0 +1,50 @@
+# Opening story art
+
+The opening uses the approved stylized storybook treatment. Painted source images live in `source/`;
+`python3 art/tools/opening.py build`, run from the repository root, deterministically exports the runtime backgrounds and pose sheets.
+This treatment is scoped to the opening. Gameplay character sprites and pixel-art scenery are unchanged.
+
+## Assets
+
+| Key                        | Type                   | Size    | Purpose                                     |
+| -------------------------- | ---------------------- | ------- | ------------------------------------------- |
+| opening-chibi              | Four-pose sprite sheet | 512x512 | Rest, blink, sleep and wake                 |
+| opening-depot-background   | Opaque image           | 720x360 | Waking far from home                        |
+| opening-ferret             | Four-pose sprite sheet | 512x512 | Friendly, gesture, argument and pack        |
+| opening-home-background    | Opaque image           | 720x360 | Friendship, argument and packing            |
+| opening-parcel             | Four-pose sprite sheet | 512x512 | Open, half-closed, sealed and opened carton |
+| opening-parcel-front       | Four-pose sprite sheet | 512x512 | Matching carton foreground occlusion        |
+| opening-transit-background | Opaque image           | 720x360 | Abstract postal transit montage             |
+
+The sprite sheets use four 256x256 cells in row-major order. The common canvas anchor is x128,y232.
+`contract.json` records the pose indices, anchors, viewport and parcel-front edges. Sprite JSON tags each
+static pose independently. Its 1000ms frame metadata is a static art default, not a gameplay duration.
+`manifest-entries.json` supplies the registration objects for paired integration.
+
+The source cutouts are reduced to binary alpha during export, retaining their painted interior colours.
+No opening layer has collision or a hit box. Backgrounds are fully opaque; important scene content stays
+above the quiet bottom 80px. No words, character names, input controls or dialogue are baked into artwork.
+
+## Layered motion
+
+The four approved beats use five shots because packing and abstract transit share one story beat:
+
+1. Friendship in the shared apartment: breathing, a blink and a small paw gesture.
+2. The argument in the same room: a distinct disagreement pose, slight lean and small backward step.
+3. Packing while Chibi sleeps: a sleeping pose transfers towards the open carton, then the lid closes.
+4. Postal transit: the sealed parcel travels across an abstract backdrop without inventing a route or vehicle.
+5. Waking far from home: the carton opens and Chibi moves from sleep through a waking stretch to rest.
+
+For packing and waking, draw the complete parcel behind Chibi, then `opening-parcel-front` above him.
+This keeps his lower body inside the carton. The sealed parcel hides him completely. The renderer handles
+pose selection, graphic translation, rotation, scale and any camera movement; there is no physics simulation.
+
+The argument's cause and the friendship's outcome are undecided. No object, caption or expression explains
+the cause, and the sequence contains no final reconciliation, combat or boss reveal.
+
+## Preview and integration
+
+`python3 art/tools/opening.py preview OUT.gif` renders a short motion study. `python3 art/tools/opening.py board OUT.png` renders five sampled shots.
+The preview demonstrates actual pose changes and layer motion, not only pans over still illustrations.
+Its cadence is illustrative and does not prescribe runtime durations, controls, skipping, replay or saves.
+Gameplay owns those decisions and player text; tech owns scene integration.
