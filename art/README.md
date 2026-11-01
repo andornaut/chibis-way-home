@@ -10,7 +10,7 @@ The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served a
 
 ## Zone design guide
 
-- Accents: reserve amber for doors and small points of interest. Other hues add restrained foliage, signs and character details. Red contact edges always mean danger in every theme.
+- Accents: retain muted pastel zone themes, using brighter, more saturated colours for points of interest and highlight areas. Amber remains a door accent. Reserve canonical bright red for hazard signalling in these callouts, so a point of interest never falsely reads as a dangerous contact surface. Existing character costume colours do not define collision.
 - Colour: each V1 destination uses its canonical muted primary from [Zone primary colours](#zone-primary-colours), carried through atmosphere, materials, map identity and progress. Keep distant colours close to the sky and spend saturation on a few useful accents. The park remains a separate prototype outside the V1 route.
 - Detail: decorative foliage and rocks use adjacent material shades rather than heavy dark contour bands. Buildings retain complete, distinct wall faces and tonal material boundaries; doors and windows attach to their enclosing walls. Distant scenery uses broad silhouettes without window grids. Near architecture uses sparse window groups and quiet surfaces. Avoid repeated stripes and single-pixel texture that compete with the bird.
 - Layouts: every stage, including the first and final stages, assembles seeded middle chunks between fixed start and finish sections. Reusable tiles, scenery and gameplay chunks assemble independently; a background image never encodes a required route. Stages are at most two screens tall (720px, 60 rows).
@@ -431,7 +431,7 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 
 ## Hazards
 
-Hazard contact causes death; Try again returns to the stage checkpoint. `art/tools/hazards.py` draws the hazard sprites and `art/tools/floor1.py` the hazard tiles; their docstrings give every frame and tile.
+Hazard contact causes death; Try again returns to the stage checkpoint. Approved target for paired runtime integration: hazard contact also shakes the world while Chibi enters the existing death sequence. The render-only camera effect lasts 280ms with up to 5px diagonal offset, 5px overscan and a fixed HUD; elapsed time comes from the render loop, not physics. Restore the camera on completion, restart or shutdown. Reduced motion uses a static border cue without shaking. Retain Duck’s 1px border keyline and 0.12 tint alpha. Actor motion does not itself trigger this effect; explicit retry behaviour is unchanged. `art/tools/hazards.py` draws the hazard sprites and `art/tools/floor1.py` the hazard tiles; their docstrings give every frame and tile.
 
 - Every hazard sprite has an ink outline, so it holds 3:1 on every street ground, and is drawn at outdoor scale beside the bird.
 - Steel (the hatch and its leaves, the bike's wheels) uses the slate ramp (slate, dslate, navy), not grey: the leaves are slate because dslate does not separate from the dark facades in greyscale.
@@ -518,7 +518,7 @@ Every environment theme (a zone's street, a chunk theme's park) follows these ru
 
 ### Shared red contact edges
 
-For a dangerous top, use a plain solid face under the hazard instead of a safe white-lipped top. All themes use the same flat strip: two pixels of Endesga red (`#e43b44`) with a one-pixel ink backing. No spikes. Contact with any part of the three-pixel strip restarts the stage at its beginning. These tiles are hazards with no solid collision; place them in the cell immediately outside the supporting solid, which retains its ordinary collision. Repeat horizontally for floors and ceilings, vertically for walls. The orientation names describe the face of the supporting solid, not the edge of the hazard's own cell.
+For a dangerous top, use a plain solid face under the hazard instead of a safe white-lipped top. Approved target for paired art and runtime integration: the six zones share continuous three-pixel solid bright-red panels (`#e43b44`) on dangerous surfaces and edges, with no ink pixel inside the contact band and no spikes. Contact causes death; explicit Try again returns to the stage checkpoint. The approved white `pigeon-poop` exception remains white. This shared panel change does not redraw legacy park hazards, other projectiles or actor costumes. These tiles are hazards with no solid collision; place them in the cell immediately outside the supporting solid, which retains its ordinary collision. Repeat horizontally for floors and ceilings, vertically for walls. The orientation names describe the face of the supporting solid, not the edge of the hazard's own cell.
 
 | Tile            | Placement relative to solid | Hit box within its 12x12 cell (x, y, width, height) |
 | --------------- | --------------------------- | --------------------------------------------------- |
@@ -719,7 +719,7 @@ This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 The appended `set-trap` tag contains four looping 120ms placement frames. Existing poses and all prior frame indices and timings remain unchanged apart from the glasses overlay.
 
-`goose-trap` is a 24x12 floor overlay, bottom-centre anchor 12,12, with contact box x 0, y 9, width 24, height 3. Its `warning` tag loops four 120ms frames: an amber two-pixel edge, moving two-pixel yellow tick and ink rim provide the visible arming interval. Its `armed` tag loops one 400ms frame with the shared red two-pixel contact edge and ink rim. The red pixels derive from the same `hazard-top` geometry as ordinary floor hazards, repeated twice. Rows 0 through 8 remain transparent, with no spikes, teeth or safe white lip. Gameplay owns the delay and collision activation: warning is nonlethal; only the armed state uses the declared contact box. Retry and lifetime cleanup belong to the runtime. Both actor and trap retain empty `once` lists.
+`goose-trap` is a 24x12 floor overlay, bottom-centre anchor 12,12, with contact box x 0, y 9, width 24, height 3. Its `warning` tag loops four 120ms frames: an amber two-pixel edge, moving two-pixel yellow tick and ink rim provide the visible arming interval. Its `armed` tag loops one 400ms frame. Approved target for paired art and runtime integration: the armed edge uses the same three-pixel solid bright-red panel as ordinary floor hazards; the nonlethal warning artwork remains unchanged. The red pixels derive from the same `hazard-top` geometry as ordinary floor hazards, repeated twice. Rows 0 through 8 remain transparent, with no spikes, teeth or safe white lip. Gameplay owns the delay and collision activation: warning is nonlethal; only the armed state uses the declared contact box. Retry and lifetime cleanup belong to the runtime. Both actor and trap retain empty `once` lists.
 
 ## Bini bear
 
