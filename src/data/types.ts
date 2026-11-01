@@ -610,6 +610,7 @@ export interface AreaPlan {
 // A zone: its areas by name, and where she starts, its only checkpoint: a fall or a hazard
 // puts her back there.
 export interface ZonePlan {
+  readonly stageExit?: { readonly area: string; readonly rect: TileRect };
   readonly areaOrder?: readonly string[];
   readonly areas: Readonly<Record<string, AreaPlan>>;
   readonly start: AreaLink;
@@ -655,6 +656,7 @@ export interface ChunkRules {
 // scenery, drawn in front of the theme's repeated backdrops. slots: where the seed may place
 // events and doors; it must play with every slot empty.
 export interface ChunkPlan {
+  readonly rows?: number;
   readonly encounters: number;
   readonly backdrops?: readonly Instance[];
   readonly cols: number;
@@ -704,6 +706,11 @@ export type ChunkPool = readonly string[];
 // are exempt. spawnCol: her centre column within the opening chunk. events and doors: what the
 // seed places in the chunks' slots, count of each.
 export interface ZoneRecipe {
+  readonly rows?: number;
+  // Spawn inside the authored opening cap, independently of its horizontal seam.
+  readonly spawnRow?: number;
+  // Trigger coordinates are local to the authored final cap.
+  readonly stageExit?: TileRect;
   // Omit to use every compatible middle chunk of the theme.
   readonly chunks?: ChunkPool;
   readonly encounters?: number;
@@ -721,12 +728,21 @@ export interface ZoneRecipe {
 // Section lengths include their applicable global caps and one or more generated pool chunks.
 export interface ZoneSectionRecipe extends Pick<
   ZoneRecipe,
-  "difficulty" | "difficultyWeights" | "doors" | "events" | "length" | "spawnCol" | "theme"
+  | "difficulty"
+  | "difficultyWeights"
+  | "doors"
+  | "events"
+  | "length"
+  | "rows"
+  | "spawnCol"
+  | "spawnRow"
+  | "theme"
 > {
   readonly chunks: ChunkPool;
   readonly id: string;
 }
 export interface OrderedZoneRecipe {
+  readonly stageExit?: TileRect;
   // One quota across all sections, including the global caps.
   readonly encounters?: number;
   readonly finish: string;
@@ -878,6 +894,7 @@ export interface ArtHitbox {
 }
 
 export interface ZoneLayout {
+  readonly stageExit?: { readonly area: string; readonly rect: Rect };
   readonly areaOrder?: readonly string[];
   readonly areas: Readonly<Record<string, AreaLayout>>;
   // Her drawn frame's size, from art: Use reaches a door her drawn frame covers any of.
