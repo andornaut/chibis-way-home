@@ -1,3 +1,4 @@
+import { packAtlas } from "@andornaut/game-kit/art/atlasLayout";
 import type { Point } from "@andornaut/game-kit/rect";
 
 // Mobile GPUs guarantee textures up to 2048 pixels a side.
@@ -30,69 +31,40 @@ export interface AtlasLayout {
   readonly placements: readonly Placement[];
 }
 
-// Shelf packs items, tallest first, onto pages width wide, each cell EXTRUDE larger on every
-// side, so images sit 2 * EXTRUDE apart and EXTRUDE from the page's edges. Undefined when an
-// item is wider than width or taller than maxSize.
-function packShelves(
-  items: readonly PackItem[],
-  width: number,
-  maxSize: number,
-): AtlasLayout | undefined {
-  const pages: PageSize[] = [];
-  const placements: Placement[] = [];
-  let [x, y, shelfHeight, pageHeight] = [0, 0, 0, 0];
-  for (const { height, key, width: itemWidth } of items) {
-    const [cellWidth, cellHeight] = [itemWidth + 2 * EXTRUDE, height + 2 * EXTRUDE];
-    if (cellWidth > width || cellHeight > maxSize) {
-      return undefined;
-    }
-    if (x + cellWidth > width) {
-      [x, y, shelfHeight] = [0, y + shelfHeight, 0];
-    }
-    if (y + cellHeight > maxSize) {
-      pages.push({ height: pageHeight, width });
-      [x, y, shelfHeight, pageHeight] = [0, 0, 0, 0];
-    }
-    placements.push({ key, page: pages.length, x: x + EXTRUDE, y: y + EXTRUDE });
-    x += cellWidth;
-    shelfHeight = Math.max(shelfHeight, cellHeight);
-    pageHeight = Math.max(pageHeight, y + shelfHeight);
-  }
-  if (placements.length > 0) {
-    pages.push({ height: pageHeight, width });
-  }
-  return { pages, placements };
-}
-
-// Packs items into pages of at most maxSize a side, at the page width that needs the fewest
-// pages, each one a request, then the least area, preferring the narrower on a tie. Throws on
-// an item too large for a page.
+// Packs whole images with the shared shelf solver, preserving local ordering and errors.
 export function layoutAtlas(
   items: readonly PackItem[],
   maxSize: number = ATLAS_MAX_SIZE,
 ): AtlasLayout {
-  const sorted = [...items].sort(
-    (a, b) => b.height - a.height || b.width - a.width || (a.key < b.key ? -1 : 1),
+  const compare = (a: PackItem, b: PackItem) =>
+    b.height - a.height || b.width - a.width || (a.key < b.key ? -1 : 1);
+  const packed = packAtlas(
+    {
+      compare: (a, b) => compare(a.value, b.value),
+      extrude: EXTRUDE,
+      maxSize,
+      widths: [...PAGE_WIDTHS.filter((candidate) => candidate < maxSize), maxSize],
+    },
+    items.map((item) => ({
+      rectangles: [{ height: item.height, width: item.width }],
+      value: item,
+    })),
   );
-  const area = ({ pages }: AtlasLayout) =>
-    pages.reduce((sum, page) => sum + page.width * page.height, 0);
-  let best: AtlasLayout | undefined;
-  for (const width of [...PAGE_WIDTHS.filter((candidate) => candidate < maxSize), maxSize]) {
-    const layout = packShelves(sorted, width, maxSize);
-    if (
-      layout !== undefined &&
-      (best === undefined ||
-        layout.pages.length < best.pages.length ||
-        (layout.pages.length === best.pages.length && area(layout) < area(best)))
-    ) {
-      best = layout;
-    }
-  }
-  if (best === undefined) {
-    const largest = sorted.find(
-      ({ height, width }) => Math.max(width, height) + 2 * EXTRUDE > maxSize,
-    );
+  if (packed === undefined) {
+    const largest = [...items]
+      .sort(compare)
+      .find(({ height, width }) => Math.max(width, height) + 2 * EXTRUDE > maxSize);
     throw new Error(`${largest?.key ?? "An image"} is too large for a ${maxSize} px atlas page`);
   }
-  return best;
+  return {
+    pages: packed.pages.map(({ height, width }) => ({ height, width })),
+    placements: packed.pages.flatMap(({ placed }, page) =>
+      placed.map(({ at, item }) => ({
+        key: item.value.key,
+        page,
+        x: at[0]!.x,
+        y: at[0]!.y,
+      })),
+    ),
+  };
 }

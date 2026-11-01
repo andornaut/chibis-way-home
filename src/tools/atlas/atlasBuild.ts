@@ -1,7 +1,8 @@
 import { itemAt } from "@andornaut/game-kit/arrays";
 import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
+import { type AtlasBlit, buildAtlasPages } from "@andornaut/game-kit/art/atlasBuild";
 import { decodePng } from "@andornaut/game-kit/art/png";
-import { blankImage, blitExtruded, type RgbaImage } from "@andornaut/game-kit/art/rgbaImage";
+import type { RgbaImage } from "@andornaut/game-kit/art/rgbaImage";
 
 import { type AtlasFrame, type AtlasTexture, BASE_FRAME } from "../../assets/atlasManifest";
 import { TILE } from "../../data/screen";
@@ -13,6 +14,7 @@ interface Source {
   readonly frames: readonly AtlasFrame[];
   readonly image: RgbaImage;
   readonly key: string;
+  readonly png: string;
   readonly tags?: AsepriteSheet["meta"]["frameTags"];
 }
 
@@ -91,39 +93,53 @@ export async function buildAtlas(
         frames: spriteFrames(sheet),
         image: await readPng(png),
         key,
+        png,
         tags: sheet.meta.frameTags,
       };
     }),
     ...manifest.tilesets.map(async ({ key, png }) => {
       const image = await readPng(png);
-      return { frames: tileFrames(image), image, key };
+      return { frames: tileFrames(image), image, key, png };
     }),
     ...[...manifest.fonts, ...manifest.backdrops].map(async ({ key, png }) => {
       const image = await readPng(png);
-      return { frames: [wholeFrame(image)], image, key };
+      return { frames: [wholeFrame(image)], image, key, png };
     }),
   ]);
   const layout = layoutAtlas(
     sources.map(({ image: { height, width }, key }) => ({ height, key, width })),
   );
-  const pages = layout.pages.map(({ height, width }) => blankImage(width, height));
+  const pages = layout.pages.map(({ height, width }, page) => ({
+    blits: [] as AtlasBlit[],
+    height,
+    metadata: page,
+    width,
+  }));
   const textures = layout.placements.map(({ key, page, x, y }): AtlasTexture => {
     const source = sources.find((candidate) => candidate.key === key);
     if (source === undefined) {
       throw new Error(`No art for ${key}`);
     }
     const { height, width } = source.image;
-    blitExtruded(source.image, { height, width, x: 0, y: 0 }, EXTRUDE, itemAt(pages, page), {
-      x,
-      y,
+    itemAt(pages, page).blits.push({
+      at: { x, y },
+      from: { height, width, x: 0, y: 0 },
+      source: source.png,
     });
     const frames = source.frames.map((frame) => ({ ...frame, x: frame.x + x, y: frame.y + y }));
     return source.tags === undefined
       ? { frames, key, page }
       : { frames, key, page, tags: source.tags };
   });
-  return {
-    pages: await Promise.all(pages.map(async (image) => ({ bytes: await encode(image), image }))),
-    textures,
-  };
+  const built = await buildAtlasPages(
+    {
+      decode: decodePng,
+      decoded: new Map(sources.map(({ image, png }) => [png, image])),
+      encode,
+      extrude: EXTRUDE,
+      read: readArt,
+    },
+    pages,
+  );
+  return { pages: built.map(({ bytes, image }) => ({ bytes, image })), textures };
 }
