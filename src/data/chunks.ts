@@ -25,7 +25,7 @@ import { APARTMENT_CHUNKS } from "./zone6";
 export const SEAM_ROWS = [30, 40, 50] as const;
 
 export const CHUNK_RULES: ChunkRules = {
-  cols: { max: 120, min: CHUNK_COLS },
+  cols: { max: CHUNK_COLS, min: CHUNK_COLS },
   footing: 4,
   headroom: 6,
 };
