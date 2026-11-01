@@ -16,7 +16,7 @@ import { BIRD } from "./bird";
 import { CHARACTERS } from "./characters";
 import { ZONE_MAP } from "./map";
 import { ROOMS } from "./rooms";
-import { SCREEN, TILE } from "./screen";
+import { SCREEN, TILE, ZONE_ROWS } from "./screen";
 import { TEXT } from "./text";
 import type { AreaPlan, TileRect, ZonePlan } from "./types";
 import { RECIPES, TEST_ZONES, ZONES as ZONES_BY_KEY } from "./zones";
@@ -88,19 +88,32 @@ describe("the characters", () => {
 });
 
 describe("the zones", () => {
-  it.each(areas)("area %s is two screens tall, with its terrain inside it", (_, __, area) => {
-    expect(area.rows * TILE).toBe(2 * SCREEN.height);
-    const objects = area.objects.map((instance) => {
-      const { character } = resolveNames(CATALOGUE, instance);
-      return {
-        col: instance.col,
-        cols: instance.cols ?? character.cols,
-        row: instance.row,
-        rows: instance.rows ?? character.rows,
-      };
-    });
-    expect([...area.solids, ...objects].every((rect) => inside(area, rect))).toBe(true);
-  });
+  it.each(areas)(
+    "area %s uses its authored height, with its terrain inside it",
+    (_, zone, area) => {
+      const recipeKey = RECIPE_PLANS.find(([, plan]) => plan === zone)?.[0];
+      const recipe = recipeKey === undefined ? undefined : RECIPES[recipeKey];
+      const authored =
+        recipe && "sections" in recipe
+          ? recipe.sections.find(({ id }) => zone.areas[id] === area)
+          : recipe;
+      expect(area.rows).toBe(authored?.rows ?? ZONE_ROWS);
+      const apartment = ZONE_MAP.destinations.find(({ id }) => id === "apartment")!;
+      if (recipeKey === undefined || !apartment.stages.includes(recipeKey)) {
+        expect(area.rows * TILE).toBe(2 * SCREEN.height);
+      }
+      const objects = area.objects.map((instance) => {
+        const { character } = resolveNames(CATALOGUE, instance);
+        return {
+          col: instance.col,
+          cols: instance.cols ?? character.cols,
+          row: instance.row,
+          rows: instance.rows ?? character.rows,
+        };
+      });
+      expect([...area.solids, ...objects].every((rect) => inside(area, rect))).toBe(true);
+    },
+  );
 
   it.each(
     instances.filter(
