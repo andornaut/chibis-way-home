@@ -137,6 +137,7 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 ### Stage design principles
 
 - **Encounters:** build each arena around observing and responding to its antagonist’s special attack, with reachable refuges and exposed routes that make the choice meaningful
+- **Horizontal crossings:** use compact 22-tile horizontal ferry bank gaps that require platform assistance for an ordinary single jump. Dash and double-jump shortcuts are allowed, but neither ability is required to board, ride or reach the far bank. Fit horizontal tracks to the banks, retaining shared mover speeds and endpoint pauses, 60-column chunk widths and stage-length budgets. Vertical mover routes remain unchanged. The [shared crossings](../src/data/chunks.ts) and [orbital crossings](../src/data/orbitHazardChunks.ts) own track distances and docking geometry.
 - **Learning:** teach a demand clearly, vary it, then combine it with another demand. Introduce the response before requiring it under combined pressure
 - **Moving platforms:** author and validate the complete approach, boarding, cycle, transfer and recovery sequence, not only jump reach. Validate and clearly present the available recovery options after missed boarding or transfers
 - **Primary demand:** each challenge has a clear required action. Judge variety by the primary route, including required climbs rather than optional upper detours; decorative or bypassable obstacles do not establish a new demand
