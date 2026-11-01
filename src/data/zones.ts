@@ -401,8 +401,6 @@ const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
   "compound-low-ceiling-shuttle",
   "compound-patrol-lift",
   "compound-return-high",
-  "horizontal-platform-orbit",
-  "vertical-platform-orbit",
 ];
 const APARTMENT_LENGTH = { max: 12 * CHUNK_COLS, min: 11 * CHUNK_COLS };
 const apartmentRecipe = (theme: string, encounters: number): StageRecipe => ({
