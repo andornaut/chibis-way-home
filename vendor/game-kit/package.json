@@ -7,33 +7,7 @@
   "engines": {
     "node": ">=24.21.0"
   },
-  "scripts": {
-    "check": "tsc",
-    "format": "prettier --write . && eslint --fix .",
-    "lint": "prettier --check . && eslint --max-warnings 0 . && markdownlint-cli2",
-    "test": "vitest run",
-    "verify": "bash scripts/check.sh"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@jsquash/webp": "1.5.0",
-    "@types/node": "^24.19.2",
-    "@types/pngjs": "6.0.5",
-    "eslint": "^10.13.0",
-    "eslint-plugin-import-x": "4.17.1",
-    "eslint-plugin-simple-import-sort": "^14.0.0",
-    "eslint-plugin-sort-destructure-keys": "^3.0.0",
-    "globals": "^17.13.0",
-    "markdownlint-cli2": "^0.24.0",
-    "phaser": "^4.2.1",
-    "pngjs": "7.0.0",
-    "prettier": "^3.9.10",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.2",
-    "vite": "^8.3.5",
-    "vitest": "^5.0.5"
-  },
-  "version": "0.0.1",
+  "version": "0.2.1",
   "peerDependencies": {
     "@jsquash/webp": "1.5.0",
     "@types/node": "^24.19.2",
@@ -82,7 +56,9 @@
     "./art/rgbaImage": "./src/art/rgbaImage.ts",
     "./art/webp": "./src/art/webp.ts",
     "./assertNever": "./src/assertNever.ts",
-    "./build/buildInfo": "./src/build/buildInfo.d.ts",
+    "./build/buildInfo": {
+      "types": "./src/build/buildInfo.d.ts"
+    },
     "./build/buildLabel": "./src/build/buildLabel.ts",
     "./build/buildVersion": "./src/build/buildVersion.ts",
     "./build/contentHash": "./src/build/contentHash.ts",
@@ -110,9 +86,10 @@
     "./motion": "./src/motion.ts",
     "./numbers": "./src/numbers.ts",
     "./opaqueBounds": "./src/opaqueBounds.ts",
+    "./package.json": "./package.json",
+    "./progress": "./src/progress.ts",
     "./progress/dom/progressBar": "./src/progress/dom/progressBar.ts",
     "./progress/phaser/drawProgressBar": "./src/progress/phaser/drawProgressBar.ts",
-    "./progress": "./src/progress.ts",
     "./progressState": "./src/progressState.ts",
     "./pwa/appWindow": "./src/pwa/appWindow.ts",
     "./pwa/backNavigation": "./src/pwa/backNavigation.ts",
@@ -136,6 +113,7 @@
     "./records": "./src/records.ts",
     "./rect": "./src/rect.ts",
     "./rgba": "./src/rgba.ts",
+    "./save/contracts": "./src/save/contracts.ts",
     "./save/saveStore": "./src/save/saveStore.ts",
     "./save/storage": "./src/save/storage.ts",
     "./save/versionedSave": "./src/save/versionedSave.ts",
@@ -154,7 +132,6 @@
     "./view/phaser/followFrameTurn": "./src/view/phaser/followFrameTurn.ts",
     "./view/phaser/modalBackdrop": "./src/view/phaser/modalBackdrop.ts",
     "./view/phaser/snapshotRemap": "./src/view/phaser/snapshotRemap.ts",
-    "./view/settleFit": "./src/view/settleFit.ts",
-    "./package.json": "./package.json"
+    "./view/settleFit": "./src/view/settleFit.ts"
   }
 }
