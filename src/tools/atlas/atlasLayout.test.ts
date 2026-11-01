@@ -1,96 +1,95 @@
-import { describe, expect, it } from "vitest";
+import { type AtlasItem, type AtlasPolicy, packAtlas } from "@andornaut/game-kit/art/atlasLayout";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EXTRUDE, layoutAtlas, type PackItem } from "./atlasLayout";
+import { layoutAtlas, type PackItem } from "./atlasLayout";
 
-const items = (sizes: readonly (readonly [number, number])[]): PackItem[] =>
-  sizes.map(([width, height], index) => ({ height, key: `item-${index}`, width }));
+vi.mock("@andornaut/game-kit/art/atlasLayout", () => ({ packAtlas: vi.fn() }));
 
-// Each placed item's cell, its extruded border included.
-function cells(packed: readonly PackItem[], maxSize?: number) {
-  const layout = layoutAtlas(packed, maxSize);
-  return {
-    cells: layout.placements.map(({ key, page, x, y }) => {
-      const item = packed.find((candidate) => candidate.key === key);
-      return {
-        bottom: y + (item?.height ?? 0) + EXTRUDE,
-        key,
-        left: x - EXTRUDE,
-        page,
-        right: x + (item?.width ?? 0) + EXTRUDE,
-        top: y - EXTRUDE,
-      };
-    }),
-    layout,
-  };
+const pack = vi.mocked(packAtlas<PackItem>);
+beforeEach(() => {
+  pack.mockReset();
+});
+
+function policyFor(
+  items: readonly PackItem[],
+): [AtlasPolicy<PackItem>, readonly AtlasItem<PackItem>[]] {
+  pack.mockReturnValue({ pages: [], width: 2048 });
+  layoutAtlas(items);
+  return pack.mock.calls[0]!;
 }
 
-describe("layoutAtlas", () => {
-  it.each([
-    ["one image", items([[24, 24]]), undefined, 1],
-    [
-      "a row of sprites",
-      items([
-        [672, 42],
-        [384, 80],
-        [300, 36],
-        [250, 26],
-      ]),
-      undefined,
-      1,
-    ],
-    [
-      "tall and wide art",
-      items([
-        [48, 720],
-        [640, 96],
-        [336, 272],
-        [96, 204],
-      ]),
-      undefined,
-      1,
-    ],
-    [
-      "more than one page holds",
-      items([
-        [60, 60],
-        [60, 60],
-        [60, 60],
-        [60, 60],
-        [60, 60],
-      ]),
-      128,
-      2,
-    ],
-  ])("places %s once each, inside its page, clear of the others", (_, packed, maxSize, pages) => {
-    const { cells: placed, layout } = cells(packed, maxSize);
-    expect(placed.map(({ key }) => key).sort()).toEqual(packed.map(({ key }) => key).sort());
-    expect(layout.pages).toHaveLength(pages);
-    for (const cell of placed) {
-      const page = layout.pages[cell.page];
-      expect(cell.left).toBeGreaterThanOrEqual(0);
-      expect(cell.top).toBeGreaterThanOrEqual(0);
-      expect(cell.right).toBeLessThanOrEqual(page?.width ?? 0);
-      expect(cell.bottom).toBeLessThanOrEqual(page?.height ?? 0);
-      const overlapping = placed.filter(
-        (other) =>
-          other !== cell &&
-          other.page === cell.page &&
-          other.left < cell.right &&
-          cell.left < other.right &&
-          other.top < cell.bottom &&
-          cell.top < other.bottom,
-      );
-      expect(overlapping).toEqual([]);
-    }
+describe("game atlas packing adapter", () => {
+  it("passes whole PNG rectangles with the game's page widths, maximum and extrusion", () => {
+    const images = [{ height: 24, key: "portrait", width: 48 }];
+    const [policy, subjects] = policyFor(images);
+    expect(policy).toMatchObject({ extrude: 1, maxSize: 2048, widths: [256, 512, 1024, 2048] });
+    expect(subjects).toEqual([{ rectangles: [{ height: 24, width: 48 }], value: images[0] }]);
   });
 
-  it("throws on an image too large for a page, naming it", () => {
+  it.each([
+    {
+      after: { height: 8, key: "a", width: 16 },
+      before: { height: 16, key: "z", width: 8 },
+      name: "height",
+    },
+    {
+      after: { height: 8, key: "a", width: 8 },
+      before: { height: 8, key: "z", width: 16 },
+      name: "width",
+    },
+    {
+      after: { height: 8, key: "z", width: 8 },
+      before: { height: 8, key: "a", width: 8 },
+      name: "key",
+    },
+  ])("prioritizes $name in the comparator supplied to the shared solver", ({ after, before }) => {
+    const [policy, subjects] = policyFor([before, after]);
+    expect(policy.compare(subjects[0]!, subjects[1]!)).toBeLessThan(0);
+    expect(policy.compare(subjects[1]!, subjects[0]!)).toBeGreaterThan(0);
+  });
+
+  it("normalizes returned whole-image placements and applies the requested smaller page limit", () => {
+    const images = [
+      { height: 100, key: "b", width: 100 },
+      { height: 22, key: "c", width: 22 },
+      { height: 100, key: "a", width: 100 },
+    ];
+    pack.mockImplementation((_policy, subjects) => ({
+      pages: [
+        { height: 102, placed: [{ at: [{ x: 1, y: 1 }], item: subjects[2]! }], width: 128 },
+        {
+          height: 102,
+          placed: [
+            { at: [{ x: 1, y: 1 }], item: subjects[0]! },
+            { at: [{ x: 103, y: 1 }], item: subjects[1]! },
+          ],
+          width: 128,
+        },
+      ],
+      width: 128,
+    }));
+    expect(layoutAtlas(images, 128)).toEqual({
+      pages: [
+        { height: 102, width: 128 },
+        { height: 102, width: 128 },
+      ],
+      placements: [
+        { key: "a", page: 0, x: 1, y: 1 },
+        { key: "b", page: 1, x: 1, y: 1 },
+        { key: "c", page: 1, x: 103, y: 1 },
+      ],
+    });
+    expect(pack.mock.calls[0]![0]).toMatchObject({ extrude: 1, maxSize: 128, widths: [128] });
+  });
+
+  it("names an oversized game image when the shared solver rejects the page", () => {
+    pack.mockReturnValue(undefined);
     expect(() =>
       layoutAtlas(
-        items([
-          [24, 24],
-          [200, 24],
-        ]),
+        [
+          { height: 24, key: "item-0", width: 24 },
+          { height: 24, key: "item-1", width: 200 },
+        ],
         128,
       ),
     ).toThrow("item-1");
