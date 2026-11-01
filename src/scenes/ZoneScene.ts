@@ -28,6 +28,7 @@ import { ZONE_DIALOGUES } from "../data/dialogues";
 import { CONTACT_CUE } from "../data/feedback";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN, TILE } from "../data/screen";
+import { STAGE_BARKS } from "../data/stageBarks";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type {
@@ -63,6 +64,7 @@ import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
 import { nodeOf } from "../rules/map";
 import { currentScreen } from "../rules/perception";
+import { createStageBarks } from "../rules/stageBarks";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_MS, STEP_SECONDS } from "../rules/step";
@@ -279,6 +281,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private readonly localSeenIntros = new Set<string>();
   private introductionActive = false;
   private barks: ReturnType<typeof bindZoneBarks> | undefined;
+  private scheduledBarks: ReturnType<typeof createStageBarks> | undefined;
   private dialogueAttempt = -1;
   private dialogueArea = "";
   private readonly heardDialogues = new Map<string, Set<number>>();
@@ -340,6 +343,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.localSeenIntros.clear();
     this.introductionActive = false;
     this.barks = undefined;
+    this.scheduledBarks = undefined;
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
     this.heardDialogues.clear();
@@ -488,7 +492,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.events.once("shutdown", () =>
       this.scale.off(Scale.Events.RESIZE, this.placeControls, this),
     );
-    this.barks = bindZoneBarks(this);
+    this.barks = bindZoneBarks(() => this.barksCanPresent(), this);
+    this.events.once("shutdown", () => {
+      this.scheduledBarks = undefined;
+    });
     this.watchKeys();
     this.watchTouches();
     this.events.on("pause", () => {
@@ -710,6 +717,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.openDoor(time, this.zone.door);
         break;
       }
+      if (this.barksCanPresent()) {
+        this.scheduledBarks?.offer(
+          (onStart, line) => this.barks?.offer(onStart, line) ?? false,
+          this.progressFraction(),
+        );
+      }
     }
     if (this.dying !== undefined) {
       this.drawDeath();
@@ -728,6 +741,21 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // Pause and page controls stay inert throughout dialogue, death presentation and its card.
   playCovered(): boolean {
     return this.loading || this.dialogueOpen() || this.zone?.death !== undefined;
+  }
+
+  private barksCanPresent(): boolean {
+    return (
+      !this.preview &&
+      !this.backdrop &&
+      !this.playCovered() &&
+      !this.opening &&
+      !this.inRoom &&
+      !this.zone.cleared &&
+      !this.zone.turnedBack &&
+      this.zone.door === undefined &&
+      this.scene.isActive() &&
+      modalInput(this).accepts()
+    );
   }
 
   private stageKey(): string {
@@ -1122,6 +1150,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   private loadPlan(plan: ZonePlan): void {
+    this.barks?.reset();
+    this.scheduledBarks =
+      this.preview || this.backdrop ? undefined : createStageBarks(STAGE_BARKS, this.stageKey());
     this.heardDialogues.clear();
     this.dialogueAttempt = -1;
     this.dialogueArea = "";

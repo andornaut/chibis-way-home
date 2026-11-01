@@ -6,16 +6,20 @@ import { expect, it, vi } from "vitest";
 import { bindZoneBarks } from "./zoneBarks";
 
 it("keeps notices with the paused world beneath modal layers and resets them for retry", () => {
-  const bark = { enqueue: vi.fn(), reset: vi.fn() };
+  const bark = { enqueue: vi.fn(), offer: vi.fn(() => true), reset: vi.fn() };
   const scene = {
     events: new EventEmitter(),
     scene: { get: () => bark, launch: vi.fn(), pause: vi.fn(), resume: vi.fn(), stop: vi.fn() },
   } as unknown as Scene;
-  const notices = bindZoneBarks(scene);
-  expect(scene.scene.launch).toHaveBeenCalledExactlyOnceWith("zoneBark");
+  const canPresent = () => true;
+  const notices = bindZoneBarks(canPresent, scene);
+  expect(scene.scene.launch).toHaveBeenCalledExactlyOnceWith("zoneBark", { canPresent });
   const line = { line: "spotted", speaker: "speaker" };
   notices.enqueue([line]);
   expect(bark.enqueue).toHaveBeenCalledWith(line);
+  const started = vi.fn();
+  expect(notices.offer(started, line)).toBe(true);
+  expect(bark.offer).toHaveBeenCalledWith(started, line);
   scene.events.emit("pause");
   expect(scene.scene.pause).toHaveBeenCalledWith("zoneBark");
   scene.events.emit("resume");
