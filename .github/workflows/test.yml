@@ -47,8 +47,15 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      - name: Set up Python
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm run install:python
 
       # The gate is the whole repo, not the lines a change touched.
       - name: Type-check
@@ -79,8 +86,15 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      - name: Set up Python
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm run install:python
 
       # Includes markdownlint, pinned in package.json, so this gate and a local
       # `npm run lint` run one version from the lockfile.
