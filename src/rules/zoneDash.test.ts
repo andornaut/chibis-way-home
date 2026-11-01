@@ -142,8 +142,8 @@ describe("fresh Use arbitration", () => {
     let zone = startZone(profile, plan, 1);
     zone = {
       ...zone,
-      useHeld: false,
       bird: { ...zone.bird, airJumpUsed: true, grounded: false, y: 100 },
+      useHeld: false,
     };
     zone = stepZone(profile, plan, 0.1, use, zone);
     expect(zone.area).toBe("next");
