@@ -19,6 +19,12 @@
       "once": []
     },
     {
+      "key": "background-reeds",
+      "png": "sprites/background-reeds.png",
+      "json": "sprites/background-reeds.json",
+      "once": []
+    },
+    {
       "key": "background-swallow",
       "png": "sprites/background-swallow.png",
       "json": "sprites/background-swallow.json",

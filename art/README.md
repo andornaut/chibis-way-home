@@ -958,6 +958,10 @@ Woodland can mix broadleaf, conifer and birch depth layers between appropriate c
 
 `art/tools/woodland_fauna.py` draws naturalistic decorative `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and `background-swallow` (24x12, centre 12,6; `flight` four 120ms frames). All tags loop. These sprites have no contact mask, hitbox, interaction or dialogue. The renderer owns background depth; gameplay owns placement, motion and timing. Keep them subdued and separate from lethal enemies and points of interest.
 
+## Animated distant flora
+
+`art/tools/background_flora.py` draws `background-reeds`, a naturalistic 24x24 decorative sprite with bottom-centre anchor 12,24 and a four-frame 300ms looping `sway` tag. Its narrow seedheads and lanceolate leaves bend while the roots stay fixed. It has no hitbox, contact mask or interaction. Use the existing scenery animation contract, subdued background depth and a real supporting ground plane; parallax alone is not foliage animation.
+
 ## Remaining for the first build
 
 - Any further encounter-specific animation or trap artwork requires an approved behaviour and asset contract.

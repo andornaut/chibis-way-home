@@ -376,3 +376,9 @@ Opaque actual stage captures, 168x84, registered as manifest images. Keys follow
 | forest-mid-conifers   | repeating backdrop | 720x600 | bottom-left y600, repeat x                   |
 | woodland-far-birch    | repeating backdrop | 720x600 | bottom-left y600, repeat x                   |
 | woodland-far-conifers | repeating backdrop | 720x600 | bottom-left y600, repeat x                   |
+
+## Animated background flora
+
+| Key              | Type              | Size  | Contract                      |
+| ---------------- | ----------------- | ----- | ----------------------------- |
+| background-reeds | decorative sprite | 24x24 | sway 4x300ms; loop, no hitbox |

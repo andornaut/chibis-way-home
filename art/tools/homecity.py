@@ -29,6 +29,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pixel  # noqa: E402
+import nature  # noqa: E402
 import zone_themes  # noqa: E402
 from PIL import Image, ImageDraw  # noqa: E402
 
@@ -122,12 +123,10 @@ def neighbourhood_mid():
     for x, top, width in ((-12, 408, 84), (108, 390, 96), (240, 414, 84),
                           (360, 390, 96), (492, 408, 84), (624, 414, 108)):
         house(im, x, top, width, 600 - top)
-    # Garden crowns remain behind play, without walkable branch silhouettes.
-    for x in (82, 336, 592):
-        rect(im, SHADE, (x - 2, 540, x + 2, 600))
-        d = ImageDraw.Draw(im)
-        for cx, cy, radius in ((x - 10, 542, 14), (x + 9, 540, 16), (x, 528, 16)):
-            d.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=pixel.rgb("zone-green-shade"))
+    # Natural branching garden trees remain entirely decorative behind play.
+    for x, top, width in ((82, 510, 46), (336, 498, 54), (592, 514, 48)):
+        nature.broadleaf(im, x - width // 2, top, width, 64, 600, "zone-green-shade",
+                         SHADE, 4, seed=x % 11)
     return im
 
 

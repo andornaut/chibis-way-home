@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pixel  # noqa: E402
 import zone_themes  # noqa: E402
+import nature  # noqa: E402
 from PIL import Image, ImageDraw  # noqa: E402
 
 T = 12
@@ -78,20 +79,11 @@ def sky():
     return image(48, 600, PRIMARY)
 
 
-def woodland_mass(im, x, top, width, height, colour, trunk_width, light=None):
-    """A large canopy and rooted trunk, wrapped across the repeating image boundary."""
+def woodland_mass(im, x, top, width, height, colour, trunk_width):
+    """Large irregular broadleaf crowns on branching trunks, wrapped at the repeat boundary."""
     for shift in (-720, 0, 720):
-        left = x + shift
-        centre = left + width // 2
-        rect(im, colour, (centre - trunk_width // 2, top + height // 2,
-                          centre + trunk_width // 2, 600))
-        d = ImageDraw.Draw(im)
-        for box in ((left, top + height // 4, left + width, top + height),
-                    (left + width // 8, top, left + width * 7 // 8, top + height * 3 // 4)):
-            d.ellipse(box, fill=pixel.rgb(colour) + (255,))
-        if light:
-            d.ellipse((left + width // 8, top + 12, left + width * 5 // 8,
-                       top + height * 5 // 8), fill=pixel.rgb(light) + (255,))
+        nature.broadleaf(im, x + shift, top, width, height, 600, colour, colour,
+                         trunk_width, seed=int(x) % 11)
 
 
 def far():
@@ -108,7 +100,7 @@ def forest_mid():
     # Large near-middle trees overlap the distant canopy without a decorative contour band.
     for x, top, width, height in ((-84, 144, 236, 232), (110, 108, 224, 254),
                                   (304, 164, 242, 230), (506, 126, 244, 252)):
-        woodland_mass(im, x, top, width, height, "forest", 30, light=SHADE)
+        woodland_mass(im, x, top, width, height, "forest", 30)
     return im
 
 
@@ -116,7 +108,7 @@ def ravine_mid():
     im = image(720, 600)
     # Dense bank-side woods frame the ravine; its central opening remains visually open.
     for x, top, width in ((-62, 116, 236), (558, 132, 230)):
-        woodland_mass(im, x, top, width, 242, "forest", 26, light=SHADE)
+        woodland_mass(im, x, top, width, 242, "forest", 26)
     polygon(im, SHADE, ((0, 450), (124, 428), (212, 458), (274, 470), (350, 542),
                        (422, 478), (514, 444), (626, 432), (719, 450), (719, 600), (0, 600)))
     polygon(im, "slate", ((0, 510), (106, 482), (208, 510), (274, 514), (350, 584),
@@ -126,7 +118,7 @@ def ravine_mid():
 
 
 def conifers(middle=False):
-    """Layered tapered spruce boughs and long trunks, distinct from broadleaf crowns."""
+    """Natural tapered spruce crowns with irregular drooping boughs and connected trunks."""
     im = image(720, 600)
     colour = "forest" if middle else SHADE
     for x, top, width in ((-40, 28, 156), (92, 68, 136), (206, 12, 172),
@@ -134,22 +126,12 @@ def conifers(middle=False):
         if middle:
             top += 62
         for shift in (-720, 0, 720):
-            left = x + shift
-            centre = left + width // 2
-            rect(im, colour, (centre - 6, top + 100, centre + 6, 600))
-            for level, length in ((0, 128), (64, 160), (130, 172)):
-                spread = int(width * (0.54 + level / 400))
-                polygon(im, colour, ((centre, top + level),
-                                     (centre - spread // 2, top + level + length),
-                                     (centre + spread // 2, top + level + length)))
-            if middle:
-                polygon(im, SHADE, ((centre, top + 12), (centre - 24, top + 104),
-                                    (centre - 4, top + 86)))
+            nature.spruce(im, x + shift, top, width, 300, 600, colour, colour, seed=int(x) % 7)
     return im
 
 
 def birches(middle=False):
-    """Slender pale birch trunks and smaller high leafy crowns; no dark decorative perimeter."""
+    """High irregular leafy crowns above slender pale, forked and sparsely marked birch trunks."""
     im = image(720, 600)
     crown = "forest" if middle else SHADE
     for x, top, width in ((-38, 18, 158), (104, 52, 146), (226, 6, 166),
@@ -159,43 +141,28 @@ def birches(middle=False):
             width = int(width * 0.76)
         for shift in (-720, 0, 720):
             left = x + shift
-            centre = left + width // 2
-            trunk = "lgrey" if middle else SHADE
-            rect(im, trunk, (centre - 5, top + 84, centre + 5, 600))
-            d = ImageDraw.Draw(im)
-            crown_height = 132 if middle else 194
-            for box in ((left, top + 28, left + width, top + crown_height),
-                        (left + 18, top, left + width - 14, top + crown_height - 24),
-                        (left - 8, top + 48, left + width - 24, top + crown_height - 12)):
-                d.ellipse(box, fill=pixel.rgb(crown) + (255,))
+            nature.broadleaf(im, left, top, width, 150 if middle else 208, 600, crown,
+                             "lgrey" if middle else SHADE, 9, seed=int(x) % 11)
             if middle:
-                d.ellipse((left + 14, top + 28, left + width - 42, top + 112),
-                          fill=pixel.rgb(SHADE) + (255,))
-                for y in range(top + 148, 590, 46):
-                    rect(im, "slate", (centre - 5, y, centre + 1, y + 2))
+                centre = left + width * 0.52
+                for y in range(top + 160, 590, 46):
+                    rect(im, "slate", (int(centre) - 2, y, int(centre) + 2, y + 2))
     return im
 
 
 def tree():
     im = image(96, 216)
-    rect(im, "zone-peach-shade", (36, 60, 60, 216))
-    rect(im, "zone-peach", (39, 78, 44, 204))
-    polygon(im, SHADE, ((0, 74), (12, 28), (36, 4), (62, 4), (84, 30),
-                           (95, 74), (84, 112), (60, 128), (28, 124), (8, 106)))
-    polygon(im, "zone-green-shade", ((3, 74), (15, 30), (37, 8), (60, 8), (81, 32),
-                                     (92, 74), (81, 108), (58, 124), (30, 120), (12, 104)))
-    polygon(im, PRIMARY, ((6, 72), (18, 32), (38, 12), (58, 12), (78, 36),
-                          (82, 68), (62, 92), (28, 94), (12, 86)))
+    nature.broadleaf(im, 1, 4, 92, 148, 216, SHADE, "zone-peach-shade", 14, seed=3)
     return im
 
 
 def shrub():
     im = image(48, 48)
-    polygon(im, SHADE, ((0, 46), (2, 24), (12, 14), (24, 18), (34, 10),
-                           (44, 22), (47, 46)))
-    polygon(im, "zone-green-shade", ((3, 44), (5, 26), (13, 18), (24, 22),
-                                     (34, 14), (41, 24), (44, 44)))
-    polygon(im, PRIMARY, ((5, 28), (13, 20), (24, 24), (34, 16), (40, 26), (30, 32), (14, 32)))
+    for x in (8, 18, 31, 40):
+        nature.branch(im, SHADE, (24, 48), (x, 18 + x % 7), 3)
+    for x, y, width, height, seed in ((0, 18, 28, 24, 2), (17, 10, 29, 31, 5), (8, 28, 36, 20, 8)):
+        nature.leaves(im, SHADE, (x, y, width, height), seed)
+    nature.leaves(im, PRIMARY, (19, 12, 19, 18), 7)
     return im
 
 

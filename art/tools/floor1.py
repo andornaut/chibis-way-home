@@ -138,6 +138,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import nature  # noqa: E402
 import pixel  # noqa: E402
 from pixel import Grid, darker, rgb  # noqa: E402
 
@@ -769,12 +770,15 @@ def subway_railing():
 
 
 def street_tree():
-    """64x136: a soft sage crown and muted wood trunk, without a dark decorative contour.
-    Safe ledges and hazard markings are drawn independently of this nonphysical tree."""
-    g = R(Grid(64, 136), (28, 56, 8, 80, "zone-peach-shade"),
-          (29, 56, 2, 80, "zone-peach"))
-    g.ell(32, 32, 32, 32, "zone-green-shade")
-    g.ell(16, 16, 14, 12, "zone-green")
+    """64x136: branching street tree with an irregular sage crown, without a dark contour."""
+    from PIL import Image
+
+    im = Image.new("RGBA", (64, 136))
+    nature.broadleaf(im, 0, 0, 64, 84, 136, "zone-green-shade", "zone-peach-shade",
+                     7, seed=5)
+    g = Grid(64, 136)
+    g.px = [[("%02x%02x%02x" % im.getpixel((x, y))[:3]) if im.getpixel((x, y))[3] else None
+             for x in range(64)] for y in range(136)]
     return g
 
 

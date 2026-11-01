@@ -106,10 +106,14 @@ def draw(kind):
         rect(im, "zone-green-shade", (16, 70, 40, 86))
         rect(im, "zone-green", (16, 70, 40, 74))
     elif kind == "lobby-plant":
-        rect(im, "zone-green-shade", (16, 14, 20, 44))
-        for box in ((3, 17, 17, 29), (17, 7, 32, 20), (5, 1, 19, 16), (19, 24, 34, 37)):
-            ellipse(im, "zone-green-shade", box)
-            ellipse(im, "zone-green", (box[0] + 1, box[1], box[2] - 2, box[3] - 3))
+        d = ImageDraw.Draw(im)
+        for tip, side in (((5, 8), -1), ((29, 3), 1), ((3, 24), -1), ((32, 26), 1)):
+            d.line(((18, 42), tip), fill=pixel.rgb("zone-green-shade"), width=2)
+            x, y = tip
+            d.polygon(((x, y), (x + side * 3, y + 8), (18, y + 16), (x - side * 3, y + 4)),
+                      fill=pixel.rgb("zone-green-shade"))
+            d.polygon(((x, y + 2), (x - side * 2, y + 5), (17, y + 14)),
+                      fill=pixel.rgb("zone-green"))
         ImageDraw.Draw(im).polygon(((5, 40), (31, 40), (27, 59), (9, 59)), fill=pixel.rgb("dbrown"))
         ImageDraw.Draw(im).polygon(((7, 42), (29, 42), (25, 57), (11, 57)),
                                    fill=pixel.rgb("zone-red-shade"))
