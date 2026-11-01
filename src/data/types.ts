@@ -286,6 +286,7 @@ export interface Reaction {
 }
 
 export type BehaviourCondition =
+  | { readonly kind: "pursuit-ended" }
   | { readonly kind: "visible" }
   | { readonly kind: "boundary" }
   | { readonly kind: "arrived"; readonly tolerance: number }

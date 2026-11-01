@@ -194,7 +194,11 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           throw new Error(`Invalid behaviour transition in ${key}`);
         }
         const when = transition.when.map((condition): BehaviourCondition => {
-          if (condition.kind === "boundary" || condition.kind === "visible") {
+          if (
+            condition.kind === "boundary" ||
+            condition.kind === "visible" ||
+            condition.kind === "pursuit-ended"
+          ) {
             return condition;
           }
           const amount =
@@ -422,6 +426,9 @@ function matches(
   state: BehaviourState,
   condition: BehaviourCondition,
 ): boolean {
+  if (condition.kind === "pursuit-ended") {
+    return object.behaviour?.pursuit !== undefined && state.pursuit?.phase === "escaped";
+  }
   if (condition.kind === "visible") {
     if (object.behaviour?.pursuit) {
       return state.pursuit?.phase === "engaged";
