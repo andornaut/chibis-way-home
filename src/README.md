@@ -46,6 +46,16 @@
 - **Test helpers:** `src/testing/` is importable only from tests.
 - **View:** `src/view/` picks each sprite's tag and whole-pixel position from the game state, Phaser-free, so the scenes only draw what it picks.
 
+## Browser developer controls
+
+A Dev link below the game opens collapsed controls in regular browser tabs, without requiring a debug URL. Installed apps and fullscreen contexts hide the panel. Hiding it retains the selected controls. The build label remains in Settings, with no version footer in the panel.
+
+Zone and Stage selectors derive from the built catalogue. Load stage sets the selected stage's `zone` parameter and `devSession=1`, preserving existing seed parameters. The invulnerability checkbox records `invulnerable=1` in the URL, retained when loading another stage. Contact hazards and crush deaths are suppressed after the real physics step; falls remain lethal. This protection applies only in regular browser tabs.
+
+`devSession=1` or `invulnerable=1` activates a development session. Loading a stage or changing invulnerability also activates it; merely opening the panel does not. Once active, the central progress and statistics APIs skip loading, corrupt-save backups, writes, clears, statistics mutation and lifecycle flushes. Disabling invulnerability does not restore persistence during that page session. Developer state stays in the URL and page memory, not the save.
+
+Native controls are disabled during boot, modal input scopes and covered play. Modal changes invalidate pending presses, so dismissing a modal requires a fresh press before a panel action can activate.
+
 ## Bounded simulations
 
 `npm run simulate -- --help` describes the headless stage runner. Run it only inside the project container. For a small diagnostic run, use `npm run simulate -- --stage street --seed 1 --runs 1 --max-steps 600 --max-retries 0`. Larger batches require coordination with gameplay; this command is not a routine gate. Both this CLI and `src/sim/playabilityCli.ts` refuse an existing `--out` path.
