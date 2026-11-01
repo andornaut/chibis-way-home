@@ -424,6 +424,50 @@ describe("bounded real-rule navigation", () => {
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared, JSON.stringify(navigationSnapshot(result.bot))).toBe(true);
   });
+  it("brakes before a floor hazard's physical hitbox then jumps to a grounded safe landing", () => {
+    const base = fixture([{ height: 120, width: 600, x: 0, y: 300 }]);
+    const strip = {
+      ...movingObject("hazard", { x: 204, y: 288 }),
+      height: 12,
+      hitbox: { height: 3, width: 72, x: 36, y: 9 },
+      motion: STATIC_MOTION,
+      width: 120,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 134, y: 300 } },
+          exitX: 540,
+          height: 420,
+          objects: [strip],
+          width: 600,
+        },
+      },
+    };
+    const initial = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    const bot = newBot(1);
+    plannedInput(BIRD, layout, undefined, 1, initial, bot);
+    const decision = navigationSnapshot(bot)!;
+    expect(decision.chosenAction).toBe("approach");
+    const endpoint = decision.candidates.find(
+      (candidate) => candidate.inputLabel === "approach",
+    )!.predictedEndpoint;
+    expect(endpoint.grounded).toBe(true);
+    expect(endpoint.x + BIRD.width).toBeGreaterThan(strip.origin.x);
+    expect(endpoint.x + BIRD.width).toBeLessThan(strip.origin.x + strip.hitbox.x);
+    const result = traverse(layout, 480);
+    expect(result.zone.death).toBeUndefined();
+    expect(result.zone.cleared, JSON.stringify(navigationSnapshot(result.bot))).toBe(true);
+    expect(result.zone.bird.grounded).toBe(true);
+  });
   it("retreats to an intermediate ledge before climbing a post above full jump height", () => {
     const base = fixture([
       { height: 120, width: 360, x: 0, y: 300 },

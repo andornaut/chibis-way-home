@@ -1,5 +1,6 @@
 import { SCREEN, TILE } from "../data/screen";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
+import { contactBox } from "../rules/behaviour";
 import { STEP_SECONDS } from "../rules/step";
 import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 export interface NavigationConfig {
@@ -395,7 +396,36 @@ function approachEdge(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1,
       (a, b) =>
         direction * (b.x + (direction === 1 ? b.width : 0) - a.x - (direction === 1 ? a.width : 0)),
     )[0];
-  return support ? support.x + (direction === 1 ? support.width : 0) - tuning.width / 2 : undefined;
+  if (!support) {
+    return undefined;
+  }
+  const edge = support.x + (direction === 1 ? support.width : 0);
+  let target = edge - tuning.width / 2;
+  for (const object of layout.areas[zone.area]!.objects) {
+    if (
+      object.collision !== "hazard" ||
+      object.behaviour ||
+      object.contact ||
+      object.motion.algorithm !== "static" ||
+      object.reaction.kind !== "none"
+    ) {
+      continue;
+    }
+    const box = contactBox(object, object.origin, 1);
+    if (box.y >= foot || box.y + box.height < foot - 1) {
+      continue;
+    }
+    const front = direction === 1 ? box.x : box.x + box.width;
+    if (
+      direction * (front - zone.bird.x - (direction === 1 ? tuning.width : 0)) < 0 ||
+      direction * (front - edge) > 0
+    ) {
+      continue;
+    }
+    const safe = front - (direction === 1 ? tuning.width + 2 : -2);
+    target = direction === 1 ? Math.min(target, safe) : Math.max(target, safe);
+  }
+  return target;
 }
 interface Candidate {
   readonly stopAt?: number | undefined;
