@@ -1,12 +1,20 @@
-import { type GameObjects, Scene } from "phaser";
+import { containsPoint } from "@andornaut/game-kit/rect";
+import { type GameObjects, type Input, Scene } from "phaser";
 
 import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
 import { TEXT } from "../data/text";
+import { TOUCH } from "../data/touch";
 import type { DialogueLine } from "../data/types";
-import { dialogueParagraphs } from "../dialogue/conversation";
+import {
+  dialogueParagraphs,
+  type DialoguePress,
+  dialogueTapAction,
+  moveDialoguePress,
+} from "../dialogue/conversation";
 import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
 import { drawDialogueParagraph } from "./dialogueParagraph";
-import { fitPlayCamera } from "./playCamera";
+import { modalInput, onScenePointer } from "./modalInput";
+import { fitPlayCamera, playPoint } from "./playCamera";
 
 interface Bark {
   readonly line: DialogueLine;
@@ -14,12 +22,13 @@ interface Bark {
   readonly scheduled: boolean;
 }
 
-// Notices stay with the world below every modal and its captured backdrop. No input is owned.
+// Notices stay below every modal; only the current panel consumes a fresh dismissal tap.
 export class ZoneBarkScene extends Scene {
   private queue: Bark[] = [];
   private canPresent = () => false;
   private art: GameObjects.GameObject[] = [];
   private remaining = 0;
+  private press: DialoguePress | undefined;
 
   constructor() {
     super("zoneBark");
@@ -30,23 +39,80 @@ export class ZoneBarkScene extends Scene {
     this.queue = [];
     this.art = [];
     this.remaining = 0;
+    this.press = undefined;
   }
 
   create(): void {
     fitPlayCamera(this);
     this.scene.moveAbove("zone", this.scene.key);
+    this.watchInput();
+    modalInput(this).subscribe(() => {
+      this.press = undefined;
+    });
     this.events.once("shutdown", () => {
       this.queue = [];
       this.art = [];
       this.remaining = 0;
+      this.press = undefined;
     });
   }
 
   reset(): void {
     this.queue = [];
+    this.clearCurrent();
+  }
+
+  private clearCurrent(): void {
     this.art.forEach((object) => object.destroy());
     this.art = [];
     this.remaining = 0;
+    this.press = undefined;
+  }
+
+  private watchInput(): void {
+    const controls = [
+      { art: DIALOGUE_SCREEN.box, hit: DIALOGUE_SCREEN.box, key: "continue" as const },
+    ];
+    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
+      const at = playPoint(this, pointer);
+      if (
+        this.press ||
+        !this.art.length ||
+        !this.canPresent() ||
+        !containsPoint(DIALOGUE_SCREEN.box, at.x, at.y)
+      ) {
+        return;
+      }
+      this.input.stopPropagation();
+      this.press = { at, cancelled: false, control: "continue", id: pointer.id };
+    });
+    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
+      if (this.press?.id === pointer.id) {
+        this.input.stopPropagation();
+        this.press = moveDialoguePress(TOUCH.tapMaxDistance, playPoint(this, pointer), this.press);
+      }
+    });
+    const up = (pointer: Input.Pointer, outside: boolean) => {
+      if (this.press?.id !== pointer.id) {
+        return;
+      }
+      this.input.stopPropagation();
+      const press = this.press;
+      this.press = undefined;
+      if (
+        !outside &&
+        this.canPresent() &&
+        dialogueTapAction(controls, TOUCH.tapMaxDistance, press, {
+          ...playPoint(this, pointer),
+          id: pointer.id,
+          wasCanceled: pointer.wasCanceled,
+        }) === "advance"
+      ) {
+        this.clearCurrent();
+      }
+    };
+    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
+    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
   }
 
   idle(): boolean {
@@ -78,8 +144,7 @@ export class ZoneBarkScene extends Scene {
       if (this.remaining > 0) {
         return;
       }
-      this.art.forEach((object) => object.destroy());
-      this.art = [];
+      this.clearCurrent();
     }
     const bark = this.queue.shift();
     if (!bark) {

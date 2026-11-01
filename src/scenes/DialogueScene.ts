@@ -237,11 +237,14 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   }
 
   private pressAreas(): readonly PressArea<DialogueControl>[] {
-    return CONTROLS.map((key) => ({
-      art: this.layouts[key].button,
-      hit: this.layouts[key].hit,
-      key,
-    }));
+    return [
+      ...CONTROLS.map((key) => ({
+        art: this.layouts[key].button,
+        hit: this.layouts[key].hit,
+        key,
+      })),
+      { art: DIALOGUE_SCREEN.box, hit: DIALOGUE_SCREEN.box, key: "continue" },
+    ];
   }
 
   blocksPoint(point: Point): boolean {
