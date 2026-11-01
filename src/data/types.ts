@@ -69,8 +69,16 @@ export interface Size {
   readonly width: number;
 }
 
+// A finite horizontal burst: speed in pixels/second, durations in active-play seconds.
+export interface BirdDashTuning {
+  readonly cooldownSeconds: number;
+  readonly durationSeconds: number;
+  readonly speed: number;
+}
+
 // The bird's movement, in base pixels and seconds.
 export interface BirdTuning {
+  readonly dash?: BirdDashTuning;
   // Speed gained per second while a direction is held, on the ground and in the air.
   readonly airAccel: number;
   readonly groundAccel: number;
@@ -302,9 +310,23 @@ export type BehaviourCondition =
   | { readonly kind: "same-ground"; readonly tolerance: number }
   | { readonly kind: "reachable" | "lost-target"; readonly tolerance: number };
 
+// Ground pursuit physics: authored gravity in tiles/second squared and speeds in tiles/second.
+// The resolver scales all three spatial values to pixels without changing time units.
+export interface BehaviourTraversal {
+  readonly gravity: number;
+  readonly jumpSpeed: number;
+  readonly maxFallSpeed: number;
+}
+
 export type BehaviourMotion =
   | { readonly kind: "wait" }
-  | { readonly kind: "pursue"; readonly mode: "ground" | "fly"; readonly speed: number }
+  | { readonly kind: "pursue"; readonly mode: "fly"; readonly speed: number }
+  | {
+      readonly kind: "pursue";
+      readonly mode: "ground";
+      readonly speed: number;
+      readonly traversal?: BehaviourTraversal;
+    }
   | { readonly kind: "fly"; readonly to: Point; readonly speed: number }
   // Target flight captures contact-centred aim on entry; bounds limit relative top-left positions.
   | { readonly kind: "fly"; readonly to: "target"; readonly bounds: Rect; readonly speed: number }
