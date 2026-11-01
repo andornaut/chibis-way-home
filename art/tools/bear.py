@@ -71,7 +71,7 @@ def draw(state="idle", phase=0):
     # Broad shoulders, round ears and a cream muzzle retain the bear silhouette at phone scale.
     for x in (18 + shift, 34 + shift):
         g.ell(x, hy - 9, 4, 4, "brown", sh="dbrown", li="zone-peach")
-        g.ell(x, hy - 9, 2, 2, "zone-peach-shade")
+        g.ell(x, hy - 9, 2, 2, "dbrown")
     g.blob(24, 34, 13, 11, "brown", sh="dbrown", li="zone-peach-shade")
     g.ell(26, 35, 8, 8, "zone-peach", sh="zone-peach-shade")
     stride = (-2, 0, 2, 0)[phase] if moving else 0
@@ -106,7 +106,7 @@ def portrait(annoyed=False):
     g.blob(29, 60, 24, 22, "brown", sh="dbrown", li="zone-peach-shade")
     for x in (17, 42):
         g.ell(x, 15, 7, 7, "brown", sh="dbrown", li="zone-peach")
-        g.ell(x, 15, 3, 3, "zone-peach-shade")
+        g.ell(x, 15, 3, 3, "dbrown")
     g.blob(33, 32, 22, 20, "brown", sh="dbrown", li="zone-peach-shade")
     g.ell(46, 40, 13, 9, "cream", sh="zone-peach")
     g.rect(53, 35, 5, 4, "ink")

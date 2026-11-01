@@ -71,6 +71,11 @@ def draw(state="idle", phase=0):
         target = ((24, 29), (29, 22), (39, 26), (34, 31))[phase]
         ferret.disc_line(g, (hx - 4, hy + 9), target, 1.8, "brown")
         g.ell(*target, 2.5, 2, "brown")
+        # A light palm separates the release gesture from the connected brown forearm.
+        for y in range(target[1] - 1, target[1] + 1):
+            for x in range(target[0] - 1, target[0] + 1):
+                if g.px[y][x] == pixel.K["brown"]:
+                    g.p(x, y, "tan")
     if state == "rest":
         g.rect(hx + 1, hy, 3, 1, "skin2")
     return ferret.outline(g)

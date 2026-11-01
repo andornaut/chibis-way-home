@@ -93,6 +93,7 @@ def draw(state="idle", phase=0):
     bird.cel(g, bird.in_ell(hx, hy, 5.5, 5), "cream", "lgrey", "white", 2, 1)
     # A short bill and high dot eye retain a soft expression while keeping the neck unmistakable.
     g.rect(int(hx + 4), int(hy), 4, 3, "orange")
+    g.rect(int(hx + 4), int(hy) + 2, 4, 1, "ochre")
     g.rect(int(hx + 1), int(hy - 2), 3, 1 if resting else 3, "ink")
     if not warning:
         bird.cel(g, bird.in_ell(20, by + 1, 8, 4.5, -0.2), "grey", "dslate", None, 2, 1)

@@ -178,11 +178,14 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
         # foreshortened as it comes down: 19px pointing up, 14px level
         ln = 14 + 5 * min(1.0, max(0.0, (val - 186) / 50))
         sx, sy = C - 5, bcy - bh * 0.45
-        flat(g, in_ell(sx + math.cos(a) * ln * 0.5, sy + math.sin(a) * ln * 0.5, ln * 0.5, ln * 0.27, a), WING)
+        cel(g, in_ell(sx + math.cos(a) * ln * 0.5, sy + math.sin(a) * ln * 0.5,
+                      ln * 0.5, ln * 0.27, a), WING, "brown", None, 1, 1)
     cel(g, in_ell(hcx, hcy, HEAD_R, head_ry), BASE, SHADE, LIGHT, 3, 1)
     if kind == "fold":  # on the body's side, its tip pointing back
-        flat(g, in_ell(C - 2, bcy + 2 + val, BRX * 0.5, BRY * 0.3, -0.3), WING)
+        cel(g, in_ell(C - 2, bcy + 2 + val, BRX * 0.5, BRY * 0.3, -0.3),
+            WING, "brown", None, 1, 1)
     g.rect(int(hcx + HEAD_R - 2), int(hcy), 7, round(5 * head_squash), "orange")  # bill
+    g.rect(int(hcx + HEAD_R - 2), int(hcy) + round(5 * head_squash) - 1, 7, 1, "ochre")
     ey = int(hcy - head_ry * 0.55)
     if eye == "dead":
         # Ink is already the darkest palette colour; wider diagonal tips strengthen the death mark.
@@ -254,10 +257,11 @@ def portrait(expr):
     g = Grid(64, 64)
     hcx, hcy, hr = 30.0, 28.0, 19.0
     cel(g, in_blob(24, 64, 34, 22, 2.6), BASE, SHADE, LIGHT, 4, 1)  # the top of his body, the head set into it
-    flat(g, in_ell(14, 56, 13, 5.5, -0.25), WING)
+    cel(g, in_ell(14, 56, 13, 5.5, -0.25), WING, "brown", None, 2, 1)
     cel(g, in_ell(hcx, hcy, hr, hr), BASE, SHADE, LIGHT, 4, 1)
     by = int(hcy + 1) + (2 if expr == "worried" else 0)
     g.rect(int(hcx + hr - 4), by, 13, 9, "orange")  # bill
+    g.rect(int(hcx + hr - 4), by + 7, 13, 2, "ochre")
     ex, ey = int(hcx + 1), int(hcy - hr * 0.5)
     if expr == "happy":  # closed: an upward arc
         for i, dy in enumerate((4, 2, 1, 0, 0, 1, 2, 4)):
