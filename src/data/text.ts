@@ -126,6 +126,7 @@ export const TEXT: GameText = {
   map: {
     continue: "Continue",
     stageNumber: "Stage {number}",
+    stagePages: { next: "Next", page: "Page {page} of {pages}", previous: "Previous" },
     stages: {
       "back-streets": "Back streets",
       "city-boundary": "City boundary",
