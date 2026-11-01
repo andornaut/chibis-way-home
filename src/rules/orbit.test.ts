@@ -243,6 +243,7 @@ describe("continuous orbital contact", () => {
     const orbit = { ...original.orbit!, radius: 10 };
     const follower = {
       ...original,
+      contactCue: "red-hazard" as const,
       orbit,
       origin: orbitPosition(
         0,
@@ -273,6 +274,11 @@ describe("continuous orbital contact", () => {
     const curved = stage(0, 9.5);
     const caught = stepZone(tuning, curved, Math.PI, idle, startZone(tuning, curved, 1));
     expect(caught.death?.reason).toBe("hazard");
+    expect(caught.death?.contact).toEqual({
+      contactCue: "red-hazard",
+      index: 1,
+      kind: "object",
+    });
     const chord = stage(0, -0.5);
     expect(
       stepZone(tuning, chord, Math.PI, idle, startZone(tuning, chord, 1)).death,

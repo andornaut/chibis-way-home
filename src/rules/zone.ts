@@ -698,39 +698,39 @@ export function stepZone(
   const swept =
     seconds > 0
       ? kinds.hazards.find((index) => {
-      const { behaviour, object, orbitLegs } = objects[index]!;
-      if (object.orbit && orbitLegs) {
-        const host = area.objects[object.orbit.host]!;
-        return orbitLegs.some((leg) =>
-          orbitSweptContact(
-            object,
-            host,
-            leg,
-            birdAt(leg.start - zone.seconds),
-            birdAt(leg.end - zone.seconds),
-          ),
-        );
-      }
-      return behaviour?.segments.some((segment) => {
-        if (object.contact) {
-          if (!segment.frame) {
-            throw new Error(`Missing silhouette sweep frame for ${object.art}`);
+          const { behaviour, object, orbitLegs } = objects[index]!;
+          if (object.orbit && orbitLegs) {
+            const host = area.objects[object.orbit.host]!;
+            return orbitLegs.some((leg) =>
+              orbitSweptContact(
+                object,
+                host,
+                leg,
+                birdAt(leg.start - zone.seconds),
+                birdAt(leg.end - zone.seconds),
+              ),
+            );
           }
-          return silhouetteContact(
-            object,
-            segment.frame,
-            (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
-            segment.from,
-            segment.to,
-            birdAt(segment.start),
-            birdAt(segment.end),
-          );
-        }
-        const before = contactBox(object, segment.from, segment.facing, segment.axis);
-        const after = contactBox(object, segment.to, segment.facing, segment.axis);
-        return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
-      });
-    })
+          return behaviour?.segments.some((segment) => {
+            if (object.contact) {
+              if (!segment.frame) {
+                throw new Error(`Missing silhouette sweep frame for ${object.art}`);
+              }
+              return silhouetteContact(
+                object,
+                segment.frame,
+                (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
+                segment.from,
+                segment.to,
+                birdAt(segment.start),
+                birdAt(segment.end),
+              );
+            }
+            const before = contactBox(object, segment.from, segment.facing, segment.axis);
+            const after = contactBox(object, segment.to, segment.facing, segment.axis);
+            return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
+          });
+        })
       : undefined;
   const bodyContact = kinds.hazards.find((index) => {
     const { after, behaviour, object } = objects[index]!;
