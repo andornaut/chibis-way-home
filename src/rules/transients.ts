@@ -1,4 +1,4 @@
-import type { ObjectLayout, Point, Rect } from "../data/types";
+import type { DeathContact, ObjectLayout, Point, Rect } from "../data/types";
 import { type BehaviourEvent, sweptContact } from "./behaviour";
 
 export interface Transient {
@@ -62,7 +62,12 @@ export function stepTransients(
   events: readonly SpawnEvent[],
   existing: readonly Transient[],
   nextId: number,
-): { readonly entities: readonly Transient[]; readonly nextId: number; readonly lethal: boolean } {
+): {
+  readonly contact?: Extract<DeathContact, { readonly kind: "transient" }>;
+  readonly entities: readonly Transient[];
+  readonly nextId: number;
+  readonly lethal: boolean;
+} {
   if (seconds <= 0) {
     return { entities: existing, lethal: false, nextId };
   }
@@ -70,6 +75,7 @@ export function stepTransients(
   const entities: Transient[] = [];
   const occupancy: { entity: Transient; until: number }[] = [];
   let lethal = false;
+  let lethalContact: Extract<DeathContact, { readonly kind: "transient" }> | undefined;
   const interpolate = (time: number): Rect => ({
     ...birdBefore,
     x: birdBefore.x + ((birdAfter.x - birdBefore.x) * time) / seconds,
@@ -126,6 +132,12 @@ export function stepTransients(
       );
       if (contact !== undefined && fraction + contact * (1 - fraction) < landing) {
         lethal = true;
+        lethalContact ??= {
+          emitter: entity.emitter,
+          id: entity.id,
+          kind: "transient",
+          ...(entity.object.contactCue && { contactCue: entity.object.contactCue }),
+        };
       }
     }
     if (
@@ -193,5 +205,5 @@ export function stepTransients(
       advance(entity, event.time);
     }
   }
-  return { entities, lethal, nextId: id };
+  return { ...(lethalContact && { contact: lethalContact }), entities, lethal, nextId: id };
 }

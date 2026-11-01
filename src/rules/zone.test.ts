@@ -155,6 +155,7 @@ describe("behaviour encounters", () => {
       bird: { ...initial.bird, x: patrol.origin.x, y: patrol.origin.y },
     });
     expect(result.death?.reason).toBe("hazard");
+    expect(result.death?.contact?.contactCue).toBeUndefined();
   });
 
   it("detects a rush that crosses the bird entirely between fixed frames", () => {
@@ -195,6 +196,18 @@ describe("restarts", () => {
     height: 8,
     origin: { x: 150, y: GROUND.y - 8 },
     width: 20,
+  });
+  it.each([false, true])("records the actual lethal object's explicit cue opt-in=%s", (marked) => {
+    const layout = zone(
+      area([{ ...hazard, ...(marked && { contactCue: "red-hazard" as const }) }]),
+    );
+    const dead = run(layout, 3, RIGHT).find((state) => state.death !== undefined);
+    expect(dead?.death?.reason).toBe("hazard");
+    expect(dead?.death?.contact).toEqual({
+      index: 0,
+      kind: "object",
+      ...(marked && { contactCue: "red-hazard" }),
+    });
   });
   it.each([
     ["falling out of the area", zone(narrow)],

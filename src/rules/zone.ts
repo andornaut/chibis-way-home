@@ -4,6 +4,7 @@ import type {
   AreaLayout,
   AreaLink,
   BirdTuning,
+  DeathContact,
   DialogueLine,
   ObjectLayout,
   Point,
@@ -557,19 +558,18 @@ export function stepZone(
       crushed ||= solids.some((solid) => overlaps(birdBox(tuning, bird), solid));
     }
   }
-  const hazards = kinds.hazards
-    .filter((index) => !objects[index]!.object.contact)
-    .map((index) => {
-      const { after, behaviour, object } = objects[index]!;
-      return (
-        (objects[index] === kinds.fixed[index] ? kinds.fixedHazards[index] : undefined) ??
-        (behaviour
-          ? contactBox(object, after, behaviour.state.facing, behaviour.state.axis)
-          : object.hitbox
-            ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
-            : after)
-      );
-    });
+  const hazardIndices = kinds.hazards.filter((index) => !objects[index]!.object.contact);
+  const hazards = hazardIndices.map((index) => {
+    const { after, behaviour, object } = objects[index]!;
+    return (
+      (objects[index] === kinds.fixed[index] ? kinds.fixedHazards[index] : undefined) ??
+      (behaviour
+        ? contactBox(object, after, behaviour.state.facing, behaviour.state.axis)
+        : object.hitbox
+          ? { ...object.hitbox, x: after.x + object.hitbox.x, y: after.y + object.hitbox.y }
+          : after)
+    );
+  });
   const fixedLedges =
     kinds.fixedLedges && kinds.ledges.every((index) => objects[index] === kinds.fixed[index]);
   const ledges = fixedLedges
@@ -630,31 +630,31 @@ export function stepZone(
     y: beforeBox.y + ((box.y - beforeBox.y) * time) / seconds,
   });
   const swept =
-    zone.behaviours.length > 0 &&
-    seconds > 0 &&
-    kinds.hazards.some((index) => {
-      const { behaviour, object } = objects[index]!;
-      return behaviour?.segments.some((segment) => {
-        if (object.contact) {
-          if (!segment.frame) {
-            throw new Error(`Missing silhouette sweep frame for ${object.art}`);
-          }
-          return silhouetteContact(
-            object,
-            segment.frame,
-            (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
-            segment.from,
-            segment.to,
-            birdAt(segment.start),
-            birdAt(segment.end),
-          );
-        }
-        const before = contactBox(object, segment.from, segment.facing, segment.axis);
-        const after = contactBox(object, segment.to, segment.facing, segment.axis);
-        return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
-      });
-    });
-  const bodyContact = kinds.hazards.some((index) => {
+    zone.behaviours.length > 0 && seconds > 0
+      ? kinds.hazards.find((index) => {
+          const { behaviour, object } = objects[index]!;
+          return behaviour?.segments.some((segment) => {
+            if (object.contact) {
+              if (!segment.frame) {
+                throw new Error(`Missing silhouette sweep frame for ${object.art}`);
+              }
+              return silhouetteContact(
+                object,
+                segment.frame,
+                (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
+                segment.from,
+                segment.to,
+                birdAt(segment.start),
+                birdAt(segment.end),
+              );
+            }
+            const before = contactBox(object, segment.from, segment.facing, segment.axis);
+            const after = contactBox(object, segment.to, segment.facing, segment.axis);
+            return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
+          });
+        })
+      : undefined;
+  const bodyContact = kinds.hazards.find((index) => {
     const { after, behaviour, object } = objects[index]!;
     if (!object.contact) {
       return false;
@@ -678,14 +678,30 @@ export function stepZone(
       box,
     );
   });
+  const overlap = hazards.findIndex((hazard) => overlaps(box, hazard));
+  const objectContact = (index: number): DeathContact => {
+    const { contactCue } = objects[index]!.object;
+    return { index, kind: "object", ...(contactCue && { contactCue }) };
+  };
+  const contact =
+    crushed || bird.y > area.height
+      ? undefined
+      : bodyContact !== undefined
+        ? objectContact(bodyContact)
+        : (transientStep.contact ??
+          (swept !== undefined
+            ? objectContact(swept)
+            : overlap >= 0
+              ? objectContact(hazardIndices[overlap]!)
+              : undefined));
   const steps = zone.steps + 1;
   if (
-    bodyContact ||
+    bodyContact !== undefined ||
     transientStep.lethal ||
     crushed ||
-    swept ||
+    swept !== undefined ||
     bird.y > area.height ||
-    hazards.some((hazard) => overlaps(box, hazard))
+    overlap >= 0
   ) {
     const frozen: ZoneState = {
       ...zone,
@@ -705,6 +721,7 @@ export function stepZone(
     return {
       ...frozen,
       death: {
+        ...(contact && { contact }),
         position: { x: bird.x, y: bird.y },
         reason: crushed ? "crush" : bird.y > area.height ? "fall" : "hazard",
         support: deathSupport(tuning, layout, frozen, bird),

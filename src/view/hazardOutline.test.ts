@@ -16,7 +16,7 @@ describe("hazardOutline", () => {
     }
   });
 
-  it("draws the red edge followed by its ink backing and leaves the centre clear", () => {
+  it("draws the configured bands and leaves the centre clear", () => {
     const parts = hazardOutline(HAZARD_OUTLINE, BOX);
     for (let y = 0; y < BOX.height; y++) {
       for (let x = 0; x < BOX.width; x++) {

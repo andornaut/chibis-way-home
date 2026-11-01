@@ -21,9 +21,11 @@ import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "ph
 
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
+import { CAMERA } from "../data/camera";
 import { CHARACTERS } from "../data/characters";
 import { DEATH } from "../data/death";
 import { ZONE_DIALOGUES } from "../data/dialogues";
+import { CONTACT_CUE } from "../data/feedback";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN, TILE } from "../data/screen";
 import { TEXT } from "../data/text";
@@ -127,6 +129,7 @@ import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { proximityDialogue } from "../view/zoneDialogue";
+import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
 import type { CutsceneData } from "./CutsceneScene";
 import type { DeathData, DeathOpener } from "./DeathScene";
 import { type DialogueData, type DialogueOpener } from "./DialogueScene";
@@ -750,6 +753,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     coverZone("death", true);
     this.drawProgress();
     void flushStats();
+    if (death.contact?.contactCue === "red-hazard") {
+      playContactFeedback(this, {
+        cue: CONTACT_CUE,
+        depth: OVERLAY_DEPTH,
+        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        shake: CAMERA.contactShake,
+      });
+    }
   }
 
   private updateDeath(time: number): void {
@@ -770,6 +781,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
     this.drawDeath();
     if (this.dying.phase === "seated" && !this.deathModal) {
+      cancelContactFeedback(this.events);
       this.deathModal = true;
       const stage = this.stageKey();
       this.scene.launch("death", {
@@ -809,6 +821,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (this.zone.death === undefined) {
       return;
     }
+    cancelContactFeedback(this.events);
     this.barks?.reset();
     retryStageRun(this.stageKey());
     this.zone = retryZone(BIRD, this.layout, this.zone);

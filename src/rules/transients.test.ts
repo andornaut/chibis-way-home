@@ -69,6 +69,26 @@ describe("bounded transient hazards", () => {
     expect(result.entities).toEqual([]);
   });
 
+  it.each([false, true])(
+    "retains exact contact provenance after a lethal transient is removed, cue=%s",
+    (marked) => {
+      const source = {
+        ...event,
+        emitter: 7,
+        template: { ...template, ...(marked && { contactCue: "red-hazard" as const }) },
+      };
+      const result = run([{ height: 12, width: 300, x: 0, y: 100 }], bird, [source]);
+      expect(result.lethal).toBe(true);
+      expect(result.entities).toEqual([]);
+      expect(result.contact).toEqual({
+        emitter: 7,
+        id: 0,
+        kind: "transient",
+        ...(marked && { contactCue: "red-hazard" }),
+      });
+    },
+  );
+
   it("keeps a stationary trap harmless until armed and honours its live cap", () => {
     const trap = {
       ...event,

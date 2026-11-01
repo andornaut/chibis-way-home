@@ -17,8 +17,6 @@ export interface Point {
 
 export type DeathReason = "crush" | "fall" | "hazard";
 
-// A frozen contact snapshot. Position is the bird body's top-left; support is the nearest
-// frozen solid or ledge below the body, or undefined over a void.
 export type DeathContact =
   | { readonly contactCue?: "red-hazard"; readonly index: number; readonly kind: "object" }
   | {
@@ -28,6 +26,8 @@ export type DeathContact =
       readonly kind: "transient";
     };
 
+// A frozen contact snapshot. Position is the bird body's top-left; support is the nearest
+// frozen solid or ledge below the body, or undefined over a void.
 export interface ZoneDeath {
   readonly contact?: DeathContact;
   readonly position: Point;
@@ -116,8 +116,7 @@ export interface WorldShakeTuning {
 }
 
 export interface CameraTuning {
-  // CLEANUP (added 2026-11-01): require this field when the paired contact-shake values land.
-  readonly contactShake?: WorldShakeTuning;
+  readonly contactShake: WorldShakeTuning;
   readonly groundSpot: number;
   readonly seamEase: number;
 }

@@ -231,6 +231,7 @@ export function objectLayout(
     ...(Object.keys(spawnTemplates).length > 0 && { spawnTemplates }),
     ...(behaviour && { behaviour }),
     collision: archetype.collision,
+    ...(character.contactCue && { contactCue: character.contactCue }),
     ...(contact && { contact }),
     height,
     hitbox,
