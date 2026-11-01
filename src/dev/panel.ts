@@ -126,6 +126,12 @@ export function mountDeveloperPanel(
   section.addEventListener("keydown", (event) => {
     event.stopPropagation();
     gate.press();
+    if (event.key === "Escape" && gate.accepts()) {
+      event.preventDefault();
+      fields.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.focus();
+    }
   });
   section.addEventListener("keyup", (event) => event.stopPropagation());
   toggle.addEventListener("click", () => {

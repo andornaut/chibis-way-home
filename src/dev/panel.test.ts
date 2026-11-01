@@ -22,6 +22,7 @@ class Element extends EventTarget {
   ) {
     super();
   }
+  focus() {}
   get options() {
     return this.children;
   }
@@ -134,6 +135,13 @@ describe("browser developer panel", () => {
     checkbox.checked = true;
     click();
     click();
+    expect(checkbox.checked).toBe(true);
+    const escape = new Event("keydown", { cancelable: true });
+    Object.defineProperty(escape, "key", { value: "Escape" });
+    section.dispatchEvent(escape);
+    expect(fields!.hidden).toBe(true);
+    expect(toggle!.getAttribute("aria-expanded")).toBe("false");
+    expect(escape.defaultPrevented).toBe(true);
     expect(checkbox.checked).toBe(true);
     blocked = true;
     sync();
