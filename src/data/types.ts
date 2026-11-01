@@ -441,6 +441,13 @@ export interface DialogueLine {
   readonly speaker: string;
 }
 
+export interface StageBarkEvent {
+  readonly atProgress: number;
+  readonly id: string;
+  readonly line: DialogueLine;
+}
+export type StageBarkSchedule = Readonly<Record<string, readonly StageBarkEvent[]>>;
+
 // A terminal required choice. Prompt and labels are TEXT.lines keys; ids are returned to the
 // opener without applying actions, flags or a default answer.
 export interface DialogueChoice {
