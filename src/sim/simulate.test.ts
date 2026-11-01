@@ -368,7 +368,10 @@ describe("terminal diagnostic budgets and coverage", () => {
         witness: { maxSegments: 1 },
       };
       const run = simulateStage(BIRD, stage, options);
-      expect(run.status).toBe("cleared");
+      expect(run.status).toBe("wall-budget");
+      expect(run).not.toHaveProperty("successfulAttemptSeconds");
+      expect(run.activeSeconds).toBe(STEP_SECONDS);
+      expect(run.provenance).toEqual({ build: "checked" });
       expect(run.steps).toBe(1);
       expect(run.fullPass).toBe(false);
       const replay = replayCompletionWitness(
@@ -379,6 +382,7 @@ describe("terminal diagnostic budgets and coverage", () => {
         run.witness!,
       );
       expect(replay.status).toBe("mismatch");
+      expect(replay.reason).toBe("Replay wall budget exceeded");
       expect(replay.executedSteps).toBe(1);
     } finally {
       clock.mockRestore();

@@ -637,20 +637,6 @@ function executeStage(
     provenance.build.length > 0;
   const result: RunResult = {
     ...(witness ? { witness } : {}),
-    failures,
-    fullPass,
-    terminal: traceEvent(
-      tuning,
-      layout,
-      "terminal",
-      steps,
-      attemptTick,
-      lastInput,
-      stage.source?.chunkIds,
-      navigationSnapshot(bot),
-      zone,
-    ),
-    ...(status === "cleared" ? { successfulAttemptSeconds: attemptTick * STEP_SECONDS } : {}),
     activeSeconds: steps * STEP_SECONDS,
     config,
     coverage: {
@@ -672,11 +658,13 @@ function executeStage(
     deaths: deathsByReason.crush + deathsByReason.fall + deathsByReason.hazard,
     deathsByReason,
     dialogues,
+    failures,
     finalPolicy: {
       move: lastMove,
       waitingTicks: bot.waited,
       ...(bot.navigation === undefined ? {} : { plannerStatus: bot.navigation.status }),
     },
+    fullPass,
     lastAttemptSeconds: attemptTick * STEP_SECONDS,
     peakProgress,
     planning: {
@@ -694,12 +682,26 @@ function executeStage(
     start,
     status,
     steps,
+    terminal: traceEvent(
+      tuning,
+      layout,
+      "terminal",
+      steps,
+      attemptTick,
+      lastInput,
+      stage.source?.chunkIds,
+      navigationSnapshot(bot),
+      zone,
+    ),
     trace,
     traceDropped,
     tuning,
   };
-  return config.maxWallTimeMs !== undefined && result.runtimeMs >= config.maxWallTimeMs
-    ? { ...result, fullPass: false }
+  if (config.maxWallTimeMs !== undefined && result.runtimeMs >= config.maxWallTimeMs) {
+    return { ...result, fullPass: false, status: "wall-budget" };
+  }
+  return status === "cleared"
+    ? { ...result, successfulAttemptSeconds: attemptTick * STEP_SECONDS }
     : result;
 }
 
@@ -803,9 +805,11 @@ export function replayCompletionWitness(
       },
     );
     executedSteps = result.steps;
+    if (result.status === "wall-budget" || result.runtimeMs >= limits.maxWallTimeMs) {
+      return mismatch("Replay wall budget exceeded");
+    }
     if (
       result.status !== "cleared" ||
-      result.runtimeMs >= limits.maxWallTimeMs ||
       result.terminal.area !== witness.finalArea ||
       result.terminal.area !== (stage.layout.areaOrder?.at(-1) ?? stage.layout.start.area) ||
       result.steps !== witness.steps ||
