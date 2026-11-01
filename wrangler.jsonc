@@ -9,6 +9,5 @@
   "assets": {
     "directory": "./dist",
   },
-  // To serve a custom domain, add:
-  // "routes": [{ "pattern": "game.example.com", "custom_domain": true }]
+  "routes": [{ "pattern": "chibi.adabekele.com", "custom_domain": true }],
 }
