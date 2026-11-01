@@ -109,7 +109,7 @@ Primary and secondary buttons share one silhouette, cut corners and nine-slice g
 | Secondary, focused | Normal or pressed secondary | `ink`      | Shared yellow focus ring outside face      | Size unchanged                         | Implemented                                                      |
 | Any role, disabled | `lgrey`                     | `dslate`   | Flat face, no outline or raised lip        | Same outer size; no press displacement | Approved target                                                  |
 
-A disabled action retains its label and layout but cannot activate. The disabled face is pale steel (`lgrey`, `#c0cbdc`), with dark steel (`dslate`, `#3a4466`) text at 5.83:1 contrast. Primary is dark steel with white text; secondary is grey (`#8b9bb4`) with ink (`#181425`) text. Its flat silhouette distinguishes it from a raised secondary action without relying on colour alone. Ordinary buttons have no approved hover-specific visual treatment; hover must not change their size or role colour.
+A disabled action retains its label and layout but cannot activate. Approved target for paired runtime integration: a refused activation gives 320ms of feedback without invoking the action. In normal motion, all visible control parts, including a stage card’s screenshot, move horizontally by 3px with a 40ms yoyo repeated three times; labels alternate red and their original colour every 80ms over the same interval. Restore positions and label colours when feedback completes. Reduced motion holds labels steadily red for 320ms with no movement or flashing. Keep the existing disabled palette, focus treatment and keyboard skipping; this feedback does not enable the control. The disabled face is pale steel (`lgrey`, `#c0cbdc`), with dark steel (`dslate`, `#3a4466`) text at 5.83:1 contrast. Primary is dark steel with white text; secondary is grey (`#8b9bb4`) with ink (`#181425`) text. Its flat silhouette distinguishes it from a raised secondary action without relying on colour alone. Ordinary buttons have no approved hover-specific visual treatment; hover must not change their size or role colour.
 
 Dialogue Continue and Skip use the ordinary primary and secondary button styles, respectively, at 192x48 with an 8px gap. Required dialogue choices use ordinary buttons on a modal card rather than the legacy `ui-answer` artwork.
 
@@ -136,7 +136,7 @@ The switch uses knob position and a glyph: right with a tick for on; left with a
 
 ## Interaction and accessibility
 
-- Activating a disabled control has no effect. Keyboard navigation skips disabled controls; their labels remain visible.
+- Activating a disabled control never invokes its action. Its approved refusal feedback includes all visible parts, including screenshot images. Keyboard navigation skips disabled controls; their labels remain visible.
 - Focus is independent of pressed, selected and checked. Never remove the shared focus ring because a control is already coloured.
 - On existing menus, Tab and arrows move focus; Enter and Space activate the focused action. A held key does not repeatedly activate an action.
 - Every actual modal dims its background by three `palette.darker` steps through the canonical shared-kit backdrop painter and receives input exclusively. There are no Duck modal exceptions. This includes update notices, settings, pause, install, restart, death/retry, stage selection, stage clear, zone clear and modal dialogue or choices. Outside taps follow the modal’s dismissal rule and never activate controls underneath.
