@@ -3,6 +3,7 @@ import type { BirdTuning } from "./types";
 // PLACEHOLDER: starting values for gameplay to tune.
 export const BIRD: BirdTuning = {
   airAccel: 2880,
+  brakeAccel: 5760,
   coyoteTime: 0.1,
   flutterFallSpeed: 275,
   gravity: 1780,
