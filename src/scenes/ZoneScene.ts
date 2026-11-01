@@ -556,7 +556,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
   }
 
-  introductionClosed(): void {
+  introductionDepartureStarted(): void {
     if (!this.introductionActive) {
       return;
     }

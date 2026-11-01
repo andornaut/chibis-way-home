@@ -15,7 +15,7 @@ export interface ZoneIntroductionData {
 }
 
 export interface IntroductionOpener {
-  introductionClosed(): void;
+  introductionDepartureStarted(): void;
   introductionHeard(): void;
 }
 
@@ -89,6 +89,8 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
     const { entry } = this.introduction;
     const character = CHARACTERS[entry.character]!;
     this.actor.setFlipX(false).play(animationKey(character.art, entry.runAnimation));
+    modalInput(this).close();
+    (this.scene.get("zone") as unknown as IntroductionOpener).introductionDepartureStarted();
   }
 
   override update(_time: number, delta: number): void {
@@ -112,6 +114,5 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
     this.actor.destroy();
     this.actor = undefined;
     this.scene.stop();
-    (this.scene.get("zone") as unknown as IntroductionOpener).introductionClosed();
   }
 }

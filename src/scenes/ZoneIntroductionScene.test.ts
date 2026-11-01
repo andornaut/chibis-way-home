@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TILE } from "../data/screen";
 import type { ZoneEntryIntroduction } from "../data/types";
 
-const calls = vi.hoisted(() => ({ closed: vi.fn(), heard: vi.fn() }));
+const calls = vi.hoisted(() => ({ departing: vi.fn(), heard: vi.fn() }));
 vi.mock("../data/characters", () => ({ CHARACTERS: { actor: { art: "actor-art" } } }));
 vi.mock("./playCamera", () => ({ fitPlayCamera: vi.fn() }));
 vi.mock("phaser", () => ({
@@ -25,7 +25,10 @@ vi.mock("phaser", () => ({
     readonly events = new EventEmitter();
     readonly game = {};
     readonly scene = {
-      get: () => ({ introductionClosed: calls.closed, introductionHeard: calls.heard }),
+      get: () => ({
+        introductionDepartureStarted: calls.departing,
+        introductionHeard: calls.heard,
+      }),
       key: "zoneIntroduction",
       launch: vi.fn(),
       stop: vi.fn(),
@@ -44,7 +47,7 @@ const entry: ZoneEntryIntroduction = {
 };
 
 function introduction() {
-  calls.closed.mockClear();
+  calls.departing.mockClear();
   calls.heard.mockClear();
   const scene = new ZoneIntroductionScene();
   const add = vi.spyOn(scene.add, "sprite");
@@ -74,43 +77,75 @@ describe("stage entry introduction", () => {
     });
     scene.update(21000, 10000);
     expect(actor.x).toBe(width / 2);
-    expect(calls.closed).not.toHaveBeenCalled();
+    expect(calls.departing).not.toHaveBeenCalled();
     scene.dialogueClosed();
     scene.dialogueClosed();
     expect(calls.heard).toHaveBeenCalledOnce();
+    expect(calls.departing).toHaveBeenCalledOnce();
+    expect(calls.heard.mock.invocationCallOrder[0]).toBeLessThan(
+      calls.departing.mock.invocationCallOrder[0]!,
+    );
+    expect(actor.play.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      calls.departing.mock.invocationCallOrder[0]!,
+    );
     expect(actor.setFlipX).toHaveBeenLastCalledWith(false);
     scene.update(22000, 1000);
     expect(actor.x).toBe(width / 2 + entry.escapeTilesPerSecond * TILE);
-    expect(calls.closed).not.toHaveBeenCalled();
+    expect(calls.departing).toHaveBeenCalledOnce();
     scene.update(32000, 10000);
     expect(actor.x - actor.displayWidth / 2).toBeGreaterThan(width);
     expect(actor.destroy).toHaveBeenCalledOnce();
-    expect(calls.closed).toHaveBeenCalledOnce();
+    expect(calls.departing).toHaveBeenCalledOnce();
     scene.update(33000, 1000);
-    expect(calls.closed).toHaveBeenCalledOnce();
+    expect(calls.departing).toHaveBeenCalledOnce();
   });
 
-  it.each(["approach", "dialogue"])(
-    "cleans interrupted %s and releases its cinematic input scope",
-    (phase) => {
-      const { actor, scene } = introduction();
-      if (phase === "dialogue") {
-        scene.update(10000, 10000);
-      }
-      const world = { events: new EventEmitter(), game: scene.game } as unknown as typeof scene;
-      expect(modalInput(world).accepts()).toBe(false);
-      scene.events.emit("shutdown");
-      if (phase === "dialogue") {
-        expect(scene.scene.stop).toHaveBeenCalledWith("dialogue");
-      } else {
-        expect(scene.scene.stop).not.toHaveBeenCalled();
-      }
-      expect(actor.destroy).toHaveBeenCalledOnce();
-      expect(modalInput(world).accepts()).toBe(true);
-      scene.dialogueClosed();
-      scene.update(20000, 20000);
-      expect(calls.closed).not.toHaveBeenCalled();
-      expect(calls.heard).not.toHaveBeenCalled();
-    },
-  );
+  it("releases only its input scope at departure and cannot reopen gameplay through a later pause", () => {
+    const { actor, scene } = introduction();
+    const world = { events: new EventEmitter(), game: scene.game } as unknown as typeof scene;
+    const pause = { events: new EventEmitter(), game: scene.game } as unknown as typeof scene;
+    const duringApproach = modalInput(world).capture();
+    expect(modalInput(world).accepts()).toBe(false);
+    scene.update(10000, 10000);
+    const duringDialogue = modalInput(scene).capture();
+    scene.dialogueClosed();
+    expect(modalInput(world).accepts()).toBe(true);
+    expect(duringApproach()).toBe(false);
+    expect(duringDialogue()).toBe(false);
+    expect(actor.destroy).not.toHaveBeenCalled();
+    expect(calls.departing).toHaveBeenCalledOnce();
+    const beforePause = modalInput(world).capture();
+    modalInput(pause).open();
+    scene.update(20000, 10000);
+    scene.events.emit("shutdown");
+    scene.dialogueClosed();
+    expect(calls.departing).toHaveBeenCalledOnce();
+    expect(modalInput(world).accepts()).toBe(false);
+    expect(modalInput(pause).accepts()).toBe(true);
+    expect(beforePause()).toBe(false);
+    pause.events.emit("shutdown");
+    expect(modalInput(world).accepts()).toBe(true);
+    expect(beforePause()).toBe(false);
+  });
+
+  it.each(["approach", "dialogue"])("cleans interrupted %s without releasing gameplay", (phase) => {
+    const { actor, scene } = introduction();
+    if (phase === "dialogue") {
+      scene.update(10000, 10000);
+    }
+    const world = { events: new EventEmitter(), game: scene.game } as unknown as typeof scene;
+    expect(modalInput(world).accepts()).toBe(false);
+    scene.events.emit("shutdown");
+    if (phase === "dialogue") {
+      expect(scene.scene.stop).toHaveBeenCalledWith("dialogue");
+    } else {
+      expect(scene.scene.stop).not.toHaveBeenCalled();
+    }
+    expect(actor.destroy).toHaveBeenCalledOnce();
+    expect(modalInput(world).accepts()).toBe(true);
+    scene.dialogueClosed();
+    scene.update(20000, 20000);
+    expect(calls.departing).not.toHaveBeenCalled();
+    expect(calls.heard).not.toHaveBeenCalled();
+  });
 });
