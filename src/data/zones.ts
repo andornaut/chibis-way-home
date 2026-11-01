@@ -313,6 +313,9 @@ const APARTMENT_CHALLENGE_CHUNKS = [
   "compound-return-high",
   "compound-return-shuttle",
   "compound-return-terrace",
+  "patrol-cover-early",
+  "patrol-cover-late",
+  "patrol-cover-middle",
 ] as const;
 const APARTMENT_CAPS = {
   finish: "apartment-finish",
