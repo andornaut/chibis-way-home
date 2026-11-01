@@ -344,7 +344,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Boss encounters:** deferred to Next, outside V1
 - **Calling card:** every trap Fert sets carries a badge of his stovepipe hat and bow tie
 - **Ending:** Chibi returns home; the outcome of their friendship is undecided. There is no combat
-- **Journey barks:** Fert makes two scheduled live interjections per zone, twelve across the journey, spaced after the introduction. Each is a single four-second nonmodal message with no buttons, triggered by weighted stage progress. Apartment messages occur on the restaurant and residential floors. Cinematics, modal scenes and active barks defer presentation. Only actual presentation marks a message heard; that state survives retries, area transitions and room visits within the generated run, while fresh stage entry resets it. Retry clears queued but unshown messages without marking them heard, leaving them eligible again. Pausing the world freezes the message timer
+- **Journey barks:** Fert makes two scheduled live interjections per zone, twelve across the journey, spaced after the introduction. Each is a single four-second nonmodal message with no buttons, triggered by current weighted stage progress. Apartment messages occur on the restaurant and residential floors. Cinematics, modal scenes and active barks defer presentation. Only actual presentation marks a message heard; that state survives retries, area transitions and room visits within the generated run, while fresh stage entry resets it. Retry clears queued but unshown messages without marking them heard, leaving them eligible again when current progress reaches their threshold. Pausing the world freezes the message timer
 
 ### Choices
 
