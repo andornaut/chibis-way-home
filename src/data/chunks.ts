@@ -3,8 +3,10 @@ import {
   CHUNK_COLS,
   GROWL_FINISH,
   PATROL_ENCOUNTER,
+  redCeiling,
   withoutEncounters,
 } from "./chunkTemplates";
+import { createHazardChunks } from "./hazardChunks";
 import { ZONE_ROWS } from "./screen";
 import type {
   ChunkPlan,
@@ -575,13 +577,6 @@ const red = (col: number, cols: number, row: number): readonly Instance[] => [
   { character: "red-edge-top", col, cols, role: "edge-top", row: row - 1 },
   { character: "red-edge-support", col, cols, role: "support", row, rows: ZONE_ROWS - row },
 ];
-const roof = (col: number, cols: number, underside: number): readonly Instance[] => [
-  { character: "red-edge-bottom", col, cols, role: "edge-bottom", row: underside },
-  { character: "red-edge-left", col: col - 1, role: "edge-left", row: underside - 2, rows: 2 },
-  { character: "red-edge-right", col: col + cols, role: "edge-right", row: underside - 2, rows: 2 },
-  { character: "red-edge-top", col, cols, role: "edge-top", row: underside - 3 },
-  { character: "red-edge-support", col, cols, role: "support", row: underside - 2, rows: 2 },
-];
 function moduleChunk(
   theme: ChunkPlan["theme"],
   difficulty: ChunkPlan["difficulty"],
@@ -777,6 +772,7 @@ const ENCOUNTER_YARDS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
 );
 
 const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...createHazardChunks(MECHANICAL_THEMES),
   ...ENCOUNTER_YARDS,
   "bounded-flyer-post": FLYER_ASCENT,
   "city-boundary-climb-yard": moduleChunk(
@@ -841,7 +837,7 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     40,
     40,
     [floor(0, 12, 40), floor(12, 4, 37), floor(16, 28, 40), floor(44, 4, 37), floor(48, 12, 40)],
-    [ledge(18, 6, 34), mover(24, 39), ledge(38, 4, 34), ...roof(42, 8, 33)],
+    [ledge(18, 6, 34), mover(24, 39), ledge(38, 4, 34), ...redCeiling(42, 8, 33)],
   ),
   "city-boundary-jumps": moduleChunk(
     MECHANICAL_THEMES,
@@ -875,7 +871,7 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     50,
     40,
     [floor(0, 22, 50), floor(22, 4, 49), floor(26, 10, 50), floor(36, 8, 45), floor(44, 16, 40)],
-    roof(16, 14, 42),
+    redCeiling(16, 14, 42),
   ),
   "city-boundary-return-gap": moduleChunk(
     MECHANICAL_THEMES,
@@ -974,7 +970,7 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     [lift(10, 50), shuttle(20, 36), ...red(8, 48, 57)],
   ),
   "compound-low-ceiling-hazard": moduleChunk(MECHANICAL_THEMES, 4, 50, 50, TAP_TERRAIN, [
-    ...roof(12, 16, 40),
+    ...redCeiling(12, 16, 40),
     ledge(28, 4, 41),
     mover(32, 46),
     ledge(48, 6, 41),
@@ -985,7 +981,7 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     50,
     50,
     [floor(0, 4, 50), floor(4, 4, 47), floor(8, 4, 46), floor(12, 6, 47), floor(54, 6, 50)],
-    [...roof(5, 12, 40), shuttle(18, 47), ...red(18, 36, 57)],
+    [...redCeiling(5, 12, 40), shuttle(18, 47), ...red(18, 36, 57)],
   ),
   "compound-patrol-lift": PATROL_LIFT,
   "compound-perch-yard": {
@@ -1028,7 +1024,7 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "compound-vertical-yard": {
     ...VERTICAL_ASCENT,
     difficulty: 5,
-    objects: [...VERTICAL_ASCENT.objects, ...red(44, 4, 30), ...roof(40, 12, 22)],
+    objects: [...VERTICAL_ASCENT.objects, ...red(44, 4, 30), ...redCeiling(40, 12, 22)],
     solids: [floor(0, 28, 40), floor(28, 16, 30), floor(48, 12, 30)],
   },
   "growl-clearing": {
@@ -1102,7 +1098,7 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     50,
     50,
     [floor(0, 26, 50), floor(26, 4, 49), floor(30, 14, 50), floor(44, 4, 47), floor(48, 12, 50)],
-    roof(20, 18, 41),
+    redCeiling(20, 18, 41),
   ),
   "park-pond": {
     ...moduleChunk(

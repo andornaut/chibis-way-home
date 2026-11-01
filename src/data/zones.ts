@@ -314,6 +314,8 @@ const JUMP_CHALLENGES: ChunkPool = [
   "city-boundary-return-gap",
   "city-boundary-steps",
   "city-boundary-upper-climb",
+  "guarded-valley",
+  "overjump-low-roof",
 ];
 const PATROL_YARDS: ChunkPool = [
   "city-boundary-climb-yard",
@@ -331,6 +333,7 @@ const STAGE_CHUNK_POOLS = {
     "city-boundary-lift",
     "city-boundary-shuttle",
     "compound-return-shuttle",
+    "vertical-red-gate",
   ],
   countryside: [
     ...GROUND_CHALLENGES,
@@ -340,6 +343,7 @@ const STAGE_CHUNK_POOLS = {
     "compound-low-ceiling-shuttle",
     "compound-return-high",
     "compound-return-shuttle",
+    "vertical-red-gate",
   ],
   home: [
     ...GROUND_CHALLENGES,
@@ -351,6 +355,7 @@ const STAGE_CHUNK_POOLS = {
     "vertical-stack-early",
     "vertical-stack-late",
     "vertical-stack-middle",
+    "vertical-red-gate",
   ],
   industrial: [
     ...GROUND_CHALLENGES,
@@ -366,6 +371,7 @@ const STAGE_CHUNK_POOLS = {
     "flyer-shelter-early",
     "flyer-shelter-late",
     "flyer-shelter-middle",
+    "vertical-red-gate",
   ],
   woodland: [
     ...GROUND_CHALLENGES,
@@ -377,6 +383,7 @@ const STAGE_CHUNK_POOLS = {
     "growl-cover-early",
     "growl-cover-late",
     "growl-cover-middle",
+    "vertical-red-gate",
   ],
 } satisfies Readonly<Record<string, ChunkPool>>;
 const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
