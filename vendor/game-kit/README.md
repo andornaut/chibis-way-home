@@ -11,7 +11,59 @@ import { frameSteps } from "@andornaut/game-kit/clock/fixedStep";
 import { seededRandom } from "@andornaut/game-kit/random";
 ```
 
-This is a committed source copy, not a compiled package. Map `@andornaut/game-kit/*` to `vendor/game-kit/src/*` in TypeScript `paths` (tsc and tsx) and Vite `resolve.alias` (Vite and Vitest). Internal imports are relative. `KIT_COMMIT`, beside this file in a game's copy, records the exact source commit. Update the canonical game-kit repository, then copy it with `scripts/sync-into.sh`; never edit the vendor copy by hand.
+This is one source package at the repository root, not a compiled distribution. Explicit package exports expose the supported modules and stylesheets; tests are internal. Import individual modules so pure clients do not load an engine adapter. Map `@andornaut/game-kit/*` to `vendor/game-kit/src/*` in TypeScript `paths` (tsc and tsx) and Vite `resolve.alias` (Vite and Vitest). Internal imports are relative. `KIT_COMMIT`, beside this file in a game's copy, records the exact source commit. Update the canonical game-kit repository, then copy it with `scripts/sync-into.sh`; never edit the vendor copy by hand.
+
+## Package structure
+
+```text
+package.json          Public exports, optional peers and development commands
+package-lock.json     One dependency lockfile
+README.md             Package and client integration reference
+LICENSE               MIT licence
+src/                  Source modules and colocated tests
+  art/                Pixel/animation mechanisms and Node codecs
+  build/              Build metadata, Phaser analysis and Vite adapters
+  clock/              Pure clocks and Phaser frame adapter
+  crash/              Pure crash model and DOM presentation
+  headers/            Header generation and Vite adapter
+  input/              Pure input policies, DOM and Phaser adapters
+  progress/           DOM and Phaser bar adapters
+  pwa/                Browser lifecycle, service worker and Vite adapters
+  save/               Save interfaces and storage implementations
+  text/               Pure font metrics and Phaser font adapter
+  view/               Pure geometry, DOM layout and Phaser presentation
+scripts/              Isolated verification and exact-commit consumer sync
+```
+
+Every module belongs to this package. `phaser/`, `dom/` and `vite/` subdirectories identify adapters where present; the module table identifies the remaining browser and Node facilities. Internal imports are relative and acyclic. There is no root barrel that combines Node tooling, browser APIs and Phaser.
+
+## Standalone verification
+
+```bash
+bash scripts/check.sh
+```
+
+The gate uses Node 24.21.0, at most four CPUs and four Vitest workers. It installs into container tmpfs from the repository-local npm cache, then checks types, formatting, lint and tests without network access. The checkout is read-only and source fingerprints must remain stable. CI invokes the same script. Start below one-minute load 24.
+
+| Command                      | Purpose                                          |
+| ---------------------------- | ------------------------------------------------ |
+| `npm run check`              | Type-check the source and configuration          |
+| `npm run lint`               | Check formatting, ESLint boundaries and Markdown |
+| `npm test -- --maxWorkers=4` | Run unit and package contract tests              |
+| `npm run format`             | Format a writable checkout                       |
+
+These npm commands run inside the isolated verification container. The package ships TypeScript source; it has no separate compilation or release-build step.
+
+## Consumer sync
+
+```bash
+scripts/sync-into.sh <game repository or worktree>
+scripts/sync-into.sh --check <game repository or worktree>
+```
+
+Sync copies the committed `src/`, root manifest, README and licence into `vendor/game-kit/` and writes the exact source revision to `KIT_COMMIT`. It removes obsolete files only within that vendor directory. The vendor payload excludes standalone gate configuration and development tooling. `--check` reads the recorded commit and compares the entire payload, including copies made from the nested layout at older revisions. A dirty checkout is not exported.
+
+No registry, account or installation is required for source vendoring. Games retain their `@andornaut/game-kit/*` alias and `vendor/game-kit/src/*` layout. Import `gameViteConfig` by its relative vendor path from `vite.config.ts`, because Vite reads that file before applying the alias. Consumers include vendor source/tests in their type/test checks and exclude it from their own formatting/lint gates. Land a canonical commit, then sync that exact revision into each consumer in a separate commit.
 
 ## Modules and environments
 
@@ -57,7 +109,7 @@ The optional peers in [package.json](package.json) declare supported versions. I
 | `vite`          | `vite/` modules, including `runnerImport` in `build/vite/gameConfig`                                |
 | `vitest`        | Copied `*.test.ts` files and configuration types imported by `build/vite/gameConfig`                |
 
-Node tooling and the standalone gate target Node 24.21.0. Browser modules need DOM types; Node modules need Node types. Consumers that type-check all copied source or run all copied tests need every applicable peer and type package, even when the shipped browser entry imports only a subset. The canonical repository's root package and lockfile supply its own development dependencies.
+Node tooling and the standalone gate target Node 24.21.0. Browser modules need DOM types; Node modules need Node types. Consumers that type-check all copied source or run all copied tests need every applicable peer and type package, even when the shipped browser entry imports only a subset. The root package and lockfile supply the standalone development dependencies.
 
 ## Integration contracts
 
@@ -65,6 +117,25 @@ Node tooling and the standalone gate target Node 24.21.0. Browser modules need D
 - **Motion:** games validate finite coordinates, starts and nonnegative durations. Zero duration changes instantly at its start; infinite query positions select endpoints. Games retain clocks, randomness, movement profiles, physics and collisions.
 - **Progress:** `undefined` means an unknown total, drawn as a static centred segment; finite values are clamped from zero to one. `createProgressState` replaces the previous operation on each `begin`; stale handles cannot update or finish its replacement. DOM and Phaser adapters share geometry. Games own visibility, timing and accessible labels; the caller clears Phaser graphics.
 - **Saves:** games own keys, schemas, validation and migration policy. A newer stored version is preserved; a corrupt save is backed up before replacement. Failed storage access disables writes for the session.
+
+## Engine and client contract
+
+The kit provides mechanisms, not game policy. Clients own scene creation, clocks, content, strings, palettes, dimensions, schemas, tuning, randomness, physics, collisions and persistence keys. Pure modules accept explicit data and return values; browser and renderer adapters own only the resources specified by their interfaces. Clients mount and dispose adapters at their lifecycle boundaries.
+
+For example, `createProgressState()` returns operation handles that reject stale callbacks; clients decide when to begin, update, finish and display progress. `mountModalBackdrop(context, area)` receives a scene, depth, fallback colour, colour mapper and dimensions, and returns a `ready` promise and `destroy()` handle. The client chooses modal layout, input ownership and gameplay pausing. `saveStore(storage, keys, format)` receives the client's save schema and storage port; the kit does not choose a migration or reset policy.
+
+```ts
+import { createProgressState } from "@andornaut/game-kit/progressState";
+import { modalDimmer } from "@andornaut/game-kit/view/modalDim";
+
+const progress = createProgressState();
+const operation = progress.begin();
+operation.progress(0.5);
+operation.finish();
+// The client supplies its one-step palette map.
+declare const clientPaletteStep: ReadonlyMap<number, number>;
+const remap = modalDimmer(clientPaletteStep);
+```
 
 ## Boundary
 
