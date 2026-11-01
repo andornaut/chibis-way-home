@@ -93,6 +93,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 | pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                        |
 | portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                       |
 | portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                        |
+| portrait-pigeon           | Pebble dialogue portrait, transparent                      | 64x64  | neutral                                       |
 | ui-answer                 | sprite                                                     | 208x36 | normal, selected, pressed                     |
 | ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                               |
 | ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                               |

@@ -476,6 +476,12 @@
       "once": []
     },
     {
+      "key": "portrait-pigeon",
+      "png": "sprites/portrait-pigeon.png",
+      "json": "sprites/portrait-pigeon.json",
+      "once": []
+    },
+    {
       "key": "rabbit-antagonist",
       "png": "sprites/rabbit-antagonist.png",
       "json": "sprites/rabbit-antagonist.json",
