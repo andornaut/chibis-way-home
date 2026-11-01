@@ -359,7 +359,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Stage scenery previews
 
-Opaque actual stage captures, 168x84, registered as manifest images. Keys follow `stage-preview-zone-N-stage-M`; columns below identify stages 1, 2 and 3 in key order.
+Opaque actual stage captures, 168x84, registered as manifest images. Keys follow `stage-preview-zone-N-stage-M`; the first table identifies stages 1, 2 and 3 for Zones 1 through 5. Apartment uses the six floor keys listed below.
 
 | Zone | Stage 1            | Stage 2       | Stage 3                |
 | ---- | ------------------ | ------------- | ---------------------- |
@@ -368,7 +368,15 @@ Opaque actual stage captures, 168x84, registered as manifest images. Keys follow
 | 3    | farmland           | country-lanes | river-crossing         |
 | 4    | forest-paths       | deep-woods    | ravine                 |
 | 5    | city-outskirts     | back-streets  | familiar-neighbourhood |
-| 6    | entrance-and-lobby | shared-floors | climb-to-apartment     |
+
+| Apartment stage | Stage ID           |
+| --------------- | ------------------ |
+| 1               | lobby              |
+| 2               | restaurant         |
+| 3               | pool               |
+| 4               | spa                |
+| 5               | residential-floors |
+| 6               | penthouse          |
 
 ## Woodland species and fauna
 

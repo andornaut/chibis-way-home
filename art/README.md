@@ -25,23 +25,26 @@ The design starts with horizontal camera factors of 0 for sky, 0.15 for the far 
 
 ### Stage scenery identity
 
-Stage cards use captures of actual stage scenery. Keep each zone’s three stages inside its zone palette while selecting different existing middle-distance silhouettes and near materials. Interior scenes remain enclosed rooms; outdoor silhouettes are reserved for exterior sections. The bindings below describe appearance, not platform geometry or thumbnail-only illustrations.
+Stage cards use captures of actual stage scenery. Keep each zone’s stages inside its zone palette while selecting different existing middle-distance silhouettes and near materials. Interior scenes remain enclosed rooms; exterior silhouettes appear only in exterior sections or through framed depth windows. The bindings below describe appearance, not platform geometry or thumbnail-only illustrations.
 
-| Zone                 | Stage                  | Scenery building blocks                                              |
-| -------------------- | ---------------------- | -------------------------------------------------------------------- |
-| Blue cityscape       | Depot and streets      | Depot opening, `street-city-mid`, complete street facades            |
-| Blue cityscape       | City boundary          | `street-boundary-mid`, sparse street facades, open skyline           |
-| Industrial outskirts | Warehouse district     | `warehouse-mid`, warehouse walls and closed loading bays             |
-| Industrial outskirts | Freight terminal       | `freight-mid`, service gantries and container materials              |
-| Countryside          | Farmland               | `farmland-mid`, complete barn, timber fence and hay materials        |
-| Countryside          | River crossing         | `river-mid`, reeds, bank and timber materials                        |
-| Woodland             | Forest paths           | `forest-mid`, tonal trees, shrubs and root materials                 |
-| Woodland             | Ravine                 | `ravine-mid`, rock silhouettes and stone materials                   |
-| Home city            | City outskirts         | `outskirts-mid`, low masonry boundary walls                          |
-| Home city            | Familiar neighbourhood | `neighbourhood-mid`, complete windowed facades and garden crowns     |
-| Apartment            | Entrance and lobby     | Exterior entrance, then enclosed lobby wall, sofa and desk           |
-| Apartment            | Shared floors          | Enclosed restaurant and pool, alternating with exterior fire escapes |
-| Apartment            | Climb to the apartment | Exterior fire escape, then spa and residential rooms                 |
+| Zone                 | Stage                  | Scenery building blocks                                          |
+| -------------------- | ---------------------- | ---------------------------------------------------------------- |
+| Blue cityscape       | Depot and streets      | Depot opening, `street-city-mid`, complete street facades        |
+| Blue cityscape       | City boundary          | `street-boundary-mid`, sparse street facades, open skyline       |
+| Industrial outskirts | Warehouse district     | `warehouse-mid`, warehouse walls and closed loading bays         |
+| Industrial outskirts | Freight terminal       | `freight-mid`, service gantries and container materials          |
+| Countryside          | Farmland               | `farmland-mid`, complete barn, timber fence and hay materials    |
+| Countryside          | River crossing         | `river-mid`, reeds, bank and timber materials                    |
+| Woodland             | Forest paths           | `forest-mid`, tonal trees, shrubs and root materials             |
+| Woodland             | Ravine                 | `ravine-mid`, rock silhouettes and stone materials               |
+| Home city            | City outskirts         | `outskirts-mid`, low masonry boundary walls                      |
+| Home city            | Familiar neighbourhood | `neighbourhood-mid`, complete windowed facades and garden crowns |
+| Apartment            | Lobby                  | Lobby walls, wood and plaster, sofa and desk                     |
+| Apartment            | Restaurant             | Restaurant walls, wood and tile, counter and booth               |
+| Apartment            | Pool                   | Pool walls, tile and stone, contained water panel and bench      |
+| Apartment            | Spa                    | Spa walls, tile and plaster, folding screen and bench            |
+| Apartment            | Residential floors     | Residential walls, wood and plaster, shelf                       |
+| Apartment            | Penthouse              | Residential wall skin, stone and wood, lobby sofa                |
 
 `street-boundary-mid` is a 720x600 repeating backdrop, bottom-left anchored at y600, with suggested parallax 0.4,0.15. It replaces only the `mid-background` art binding in the City boundary theme; all other existing assets and bindings retain their contracts.
 
@@ -347,13 +350,13 @@ The map presents the six V1 zone destinations on a cool pastel overview. `art/to
 
 ### Stage picker
 
-Map Continue always opens the selected zone's three stage cards, even when only Stage 1 is unlocked. Selection immediately starts an available stage; there is no extra confirmation action.
+Map Continue opens the selected zone's stage cards, with three full-size cards per page. Apartment has six floors across two pages; the other zones have three stages. Selection immediately starts an available stage; there is no extra confirmation action.
 
 - Frame: content-fitted `ui-settings-card`, centred, with 16px padding, a minimum width of half the full logical viewport and the 6px top-right close-face inset with its full 48px press target. The three-card example is 688x236 at 16,62 in the 720x360 view. Its title remains horizontally centred on x360 and is vertically centred within the measured 42px header, with title origin y91.
 - Cards: three 208x154 faces at x32,256,480 and y128, with 16px gaps. Each displays an actual 168x84 stage capture, a small top-right Stage number in `font-body` at 1.5x, and its main name at the unchanged 2x scale, wrapping to at most two lines. Keep image and label positions fixed across the cards: previews begin 22px below each face top, at y150; the 32px name block begins 110px below the face top, at y238, leaving 12px below it. The row starts 66px below the panel top. Use the actual 16px group hit outset without an extra 4px row gap: the close target ends at y104 and the row target starts at y112, retaining exactly 8px clearance. The deliberate secondary number size does not change ordinary form labels.
 - States: available cards use the primary dark-steel face and white main label. Unavailable stages remain visible with pale-steel flat faces, dark-steel labels and greyed scene images. They cannot activate. Approved target for paired runtime integration: a refused activation animates the entire card, including its screenshot, with the shared 320ms disabled-control feedback. Normal motion uses 3px horizontal yoyo movement and red/original label alternation; reduced motion uses steady red labels without motion or flashing. Restore positions and colours after feedback. Retain the disabled palette, standard focus treatment, keyboard skipping and complete press targets.
 - Return: close, back and outside taps return to the map. Normal modal input isolation and keyboard focus apply.
-- Images: `stage-preview-zone-N-stage-M`, N 1 through 6 and M 1 through 3, are opaque 168x84 PNGs registered as manifest images. Capture the actual seeded stage at 720x360, then resize once with nearest-neighbour sampling. Preserve its full 2:1 view and actual default starting area; do not replace scenery with a concept illustration. Capture mode freezes the scene at time zero with explicit layout/motion seeds and camera coordinates, hides overlays and does not step physics or write progress.
+- Images: `stage-preview-zone-N-stage-M`, N 1 through 6 and M 1 through 3 (M 1 through 6 for Apartment), are opaque 168x84 PNGs registered as manifest images. Capture the actual seeded stage at 720x360, then resize once with nearest-neighbour sampling. Preserve its full 2:1 view and actual captured stage area; do not replace scenery with a concept illustration. Apartment floor previews use frozen final-cap views with their framed depth windows and local wall materials. Optional-room doors outside the capture are not added to the thumbnail. Capture mode freezes the scene at time zero with explicit layout/motion seeds and camera coordinates, hides overlays and does not step physics or write progress.
 
 ### Stage and zone summaries
 
@@ -617,7 +620,7 @@ City boundary is Blue cityscape, Zone 1 Stage 2. It reuses the street's existing
 
 ## Apartment appearance pack
 
-`art/tools/apartment.py`, `art/tools/apartment_props.py` and `art/tools/apartment_wayfinding.py` provide reusable building blocks for Entrance and lobby and Climb to the apartment. The canonical dusty-rose `zone-red` ties together the entrance, restaurant, pool, spa, residential sections and exterior fire escapes. Wood, sage and muted blue are secondary accents. Saturated hazard red retains its separate meaning.
+`art/tools/apartment.py`, `art/tools/apartment_props.py` and `art/tools/apartment_wayfinding.py` provide reusable building blocks for the six Apartment floors: Lobby, Restaurant, Pool, Spa, Residential floors and Penthouse. The canonical dusty-rose `zone-red` ties together the entrance, restaurant, pool, spa, residential sections and exterior fire escapes. Wood, sage and muted blue are secondary accents. Saturated hazard red retains its separate meaning.
 
 The artwork separates geometry from appearance. `tiles-apartment` contains 42 cells of 12x12 in eight columns, exported as a 96x72 sheet. Its six families are `apartment-wood`, `apartment-tile`, `apartment-plaster`, `apartment-stone`, `apartment-brick` and `apartment-metal`. Each supplies the common `top`, `top-left`, `top-right`, `top-joint`, `face`, `face-left` and `face-right` suffixes. Data can mix these families across short floor sections while using the existing ground, raised, wall and ceiling structures. Standable tops retain the dark edge and white lip. Shared ledges, movers and red contact bands keep their existing geometry and skins.
 
