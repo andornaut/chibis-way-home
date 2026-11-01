@@ -780,6 +780,81 @@ describe("bounded real-rule navigation", () => {
     expect(backward.physicsSteps).toBeGreaterThan(NAVIGATION_VALIDATION.horizonTicks);
     expect(backward.physicsSteps).toBeLessThanOrEqual(NAVIGATION_VALIDATION.horizonTicks * 2);
   });
+  it("waits for a delayed shuttle rather than sliding off a late narrow-post landing", () => {
+    const base = fixture([
+      { height: 240, width: 264, x: 0, y: 300 },
+      { height: 288, width: 48, x: 264, y: 252 },
+      { height: 36, width: 528, x: 264, y: 504 },
+      { height: 288, width: 408, x: 792, y: 252 },
+    ]);
+    const red = {
+      ...movingObject("hazard", { x: 264, y: 501 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 528,
+    };
+    const shuttle: ObjectLayout = {
+      ...movingObject("ledge", { x: 720, y: 252 }),
+      motion: {
+        algorithm: "linear",
+        direction: "left",
+        distance: 408,
+        hopHeight: 0,
+        pause: 0.5,
+        speed: 72,
+        variance: 0,
+      },
+    };
+    const lift: ObjectLayout = {
+      ...movingObject("ledge", { x: 48, y: 300 }),
+      motion: {
+        algorithm: "linear",
+        direction: "up",
+        distance: 120,
+        hopHeight: 0,
+        pause: 0.5,
+        speed: 48,
+        variance: 0,
+      },
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 181, y: 300 } },
+          exitX: 1140,
+          height: 540,
+          objects: [red, lift, shuttle],
+          width: 1200,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    let first: ReturnType<typeof navigationSnapshot>;
+    for (let tick = 0; tick < 2400 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      if (tick === 0) {
+        first = navigationSnapshot(bot);
+      }
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    const unstable = first!.candidates.find(
+      (candidate) => candidate.inputLabel === "wait-then-full",
+    )!;
+    expect(unstable.rejection).toBe("airborne");
+    expect(unstable.physicsSteps).toBeGreaterThan(NAVIGATION_VALIDATION.horizonTicks);
+    expect(unstable.physicsSteps).toBeLessThanOrEqual(NAVIGATION_VALIDATION.horizonTicks * 2);
+  });
   it("requires explicit validation profile for larger work while preserving every other hard cap", () => {
     expect(validateNavigation()).toEqual(NAVIGATION_DEFAULTS);
     expect(() =>

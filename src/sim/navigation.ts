@@ -613,6 +613,15 @@ export function plannedInput(
         object.reaction.kind !== "none") &&
       Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
   );
+  const movingSupport = layout.areas[zone.area]!.objects.some(
+    (object, index) =>
+      (object.collision === "ledge" || object.collision === "solid") &&
+      (object.behaviour ||
+        object.motion.algorithm !== "static" ||
+        object.reaction.kind !== "none") &&
+      Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
+  );
+  const needsStability = threatened || (limits.profile === "validation" && movingSupport);
   const currentPhase = phase(layout, zone);
   const full = Math.ceil(tuning.jumpRiseTime / STEP_SECONDS) + 1;
   const approach = approachEdge(tuning, layout, direction, zone);
@@ -775,7 +784,7 @@ export function plannedInput(
       }
       if (!followup && tick === limits.horizonTicks) {
         groundedContinuation =
-          limits.profile === "validation" && threatened && predicted.bird.grounded;
+          limits.profile === "validation" && needsStability && predicted.bird.grounded;
         if (
           !groundedContinuation &&
           (predicted.bird.grounded ||
@@ -788,7 +797,7 @@ export function plannedInput(
         break;
       }
       const guard =
-        threatened &&
+        needsStability &&
         predicted.bird.grounded &&
         tick >= (followup ? endTick : limits.horizonTicks) - limits.replanTicks * 2;
       const input =
@@ -819,7 +828,7 @@ export function plannedInput(
         landedAt = tick;
       }
       if (
-        !threatened &&
+        !needsStability &&
         landedAt !== undefined &&
         tick - landedAt >= limits.replanTicks &&
         predicted.bird.grounded
