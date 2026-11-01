@@ -1211,6 +1211,21 @@ export const EXTERIOR_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
   ].map((id) => [id, `${id}-exterior`]),
 );
 
+export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.fromEntries(
+  [
+    "city-boundary-ground-hazard",
+    "compound-low-ceiling-hazard",
+    "compound-low-ceiling-shuttle",
+    "compound-return-high",
+    "compound-return-shuttle",
+    "compound-return-terrace",
+    "growl-clearing",
+    "growl-cover-early",
+    "growl-cover-late",
+    "growl-cover-middle",
+  ].map((id) => [id, `${id}-woodland-depth`]),
+);
+
 export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...Object.fromEntries(
     Object.entries(BASE_CHUNKS).map(([id, chunk]) => [
@@ -1235,6 +1250,19 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
           ...chunk,
           backdrops: [...localDepth(10), ...(chunk.backdrops ?? [])],
           theme: "apartment-exterior",
+        },
+      ];
+    }),
+  ),
+  ...Object.fromEntries(
+    Object.entries(WOODLAND_DEPTH_ALIASES).map(([id, alias]) => {
+      const chunk = BASE_CHUNKS[id]!;
+      return [
+        alias,
+        {
+          ...chunk,
+          backdrops: [...localDepth(0), ...(chunk.backdrops ?? [])],
+          theme: ["deep-woods", "forest-paths", "ravine"],
         },
       ];
     }),

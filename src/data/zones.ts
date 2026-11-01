@@ -1,4 +1,4 @@
-import { EXTERIOR_DEPTH_ALIASES } from "./chunks";
+import { EXTERIOR_DEPTH_ALIASES, WOODLAND_DEPTH_ALIASES } from "./chunks";
 import { CHUNK_COLS } from "./chunkTemplates";
 import type { ChunkPool, StageRecipe, ZonePlan } from "./types";
 
@@ -500,7 +500,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "deep-woods": {
     ...DIFFICULTY_PROFILES.woodland,
-    chunks: STAGE_CHUNK_POOLS.woodland,
+    chunks: STAGE_CHUNK_POOLS.woodland.map((id) => WOODLAND_DEPTH_ALIASES[id] ?? id),
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -558,7 +558,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "forest-paths": {
     ...DIFFICULTY_PROFILES.woodland,
-    chunks: STAGE_CHUNK_POOLS.woodland,
+    chunks: STAGE_CHUNK_POOLS.woodland.map((id) => WOODLAND_DEPTH_ALIASES[id] ?? id),
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.first,
     events: [],
@@ -606,7 +606,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   ravine: {
     ...DIFFICULTY_PROFILES.woodland,
-    chunks: STAGE_CHUNK_POOLS.woodland,
+    chunks: STAGE_CHUNK_POOLS.woodland.map((id) => WOODLAND_DEPTH_ALIASES[id] ?? id),
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],

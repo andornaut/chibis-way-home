@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../../public/art/manifest.json";
 import { stageLoader } from "../sim/catalogue";
 import { artOffset } from "../view/objectArt";
-import { CHUNKS, EXTERIOR_DEPTH_ALIASES, THEMES } from "./chunks";
+import { CHUNKS, EXTERIOR_DEPTH_ALIASES, THEMES, WOODLAND_DEPTH_ALIASES } from "./chunks";
 import { ZONE_MAP } from "./map";
 import { TILE } from "./screen";
 import type { ChunkPlan, ObjectLayout, OrderedZoneRecipe } from "./types";
@@ -120,10 +120,53 @@ describe.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
         expect(
           [recipe.start, recipe.finish].some((id) => (CHUNKS[id]!.backdrops ?? []).some(depth)),
         ).toBe(true);
-        expect(recipe.chunks!.every((id) => !(CHUNKS[id]!.backdrops ?? []).some(depth))).toBe(true);
+        expect(
+          recipe.chunks!.every(
+            (id) =>
+              (CHUNKS[id]!.backdrops ?? []).some(depth) ===
+              Object.values(WOODLAND_DEPTH_ALIASES).includes(id),
+          ),
+        ).toBe(true);
       } else if (id !== "shared-floors") {
         expect((CHUNKS[recipe.start]!.backdrops ?? []).some(depth)).toBe(true);
       }
     });
   },
 );
+
+it("uses Woodland depth variants for horizontal challenges while preserving plain vertical templates", () => {
+  const themes = ["deep-woods", "forest-paths", "ravine"];
+  for (const [id, alias] of Object.entries(WOODLAND_DEPTH_ALIASES)) {
+    const physical = (chunk: ChunkPlan) =>
+      Object.fromEntries(
+        Object.entries(chunk).filter(([key]) => !["backdrops", "theme"].includes(key)),
+      );
+    expect(physical(CHUNKS[alias]!)).toEqual(physical(CHUNKS[id]!));
+    expect(CHUNKS[alias]!.theme).toEqual(themes);
+    expect(CHUNKS[alias]!.objects).toBe(CHUNKS[id]!.objects);
+    expect(CHUNKS[alias]!.solids).toBe(CHUNKS[id]!.solids);
+  }
+  const pools = themes.map((theme) => {
+    const recipe = RECIPES[theme]!;
+    if ("sections" in recipe) {
+      throw new Error("Woodland stages are continuous");
+    }
+    expect((CHUNKS[recipe.start]!.backdrops ?? []).some(depth)).toBe(true);
+    expect((CHUNKS[recipe.finish]!.backdrops ?? []).some(depth)).toBe(false);
+    expect(
+      recipe.chunks!.filter((id) => Object.values(WOODLAND_DEPTH_ALIASES).includes(id)),
+    ).toHaveLength(Object.keys(WOODLAND_DEPTH_ALIASES).length);
+    return recipe.chunks!;
+  });
+  expect(pools[1]).toEqual(pools[0]);
+  expect(pools[2]).toEqual(pools[0]);
+  for (const id of [
+    "compound-ascent",
+    "compound-compact-ascent",
+    "compound-compact-climb",
+    "compound-double-lift",
+  ]) {
+    expect(pools[0]).toContain(id);
+    expect((CHUNKS[id]!.backdrops ?? []).some(depth)).toBe(false);
+  }
+});
