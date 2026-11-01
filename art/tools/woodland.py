@@ -11,6 +11,7 @@ forest-mid/ravine-mid720x600 repeatx .4,.15; forest-tree96x216 none, forest-shru
 ravine-rock72x72 none at1,1. Near pieces align local floor. Decor has no collision, white safe lips or red
 hazard marking. Natural decor uses tonal fills without dark contour bands. Keep silhouettes clear of required
 routes. Distant ravine water is decorative only.
+Large overlapping far and middle canopies span the upper texture bands; trunks extend to the base.
 No actors or natural hidden lethality. Context uses identical illustrative geometry, not validated stages.
 """
 
@@ -76,31 +77,45 @@ def sky():
     return image(48, 600, PRIMARY)
 
 
+def woodland_mass(im, x, top, width, height, colour, trunk_width, light=None):
+    """A large canopy and rooted trunk, wrapped across the repeating image boundary."""
+    for shift in (-720, 0, 720):
+        left = x + shift
+        centre = left + width // 2
+        rect(im, colour, (centre - trunk_width // 2, top + height // 2,
+                          centre + trunk_width // 2, 600))
+        d = ImageDraw.Draw(im)
+        for box in ((left, top + height // 4, left + width, top + height),
+                    (left + width // 8, top, left + width * 7 // 8, top + height * 3 // 4)):
+            d.ellipse(box, fill=pixel.rgb(colour) + (255,))
+        if light:
+            d.ellipse((left + width // 8, top + 12, left + width * 5 // 8,
+                       top + height * 5 // 8), fill=pixel.rgb(light) + (255,))
+
+
 def far():
     im = image(720, 600)
-    haze = "zone-blue-shade"
-    for x, top, width in ((18, 358, 100), (156, 324, 100), (294, 366, 110),
-                          (450, 340, 116), (600, 352, 100)):
-        rect(im, haze, (x + width // 2 - 5, top + 56, x + width // 2 + 5, 600))
-        d = ImageDraw.Draw(im)
-        d.ellipse((x, top, x + width, top + 90), fill=pixel.rgb(haze) + (255,))
-        d.ellipse((x + 18, top - 16, x + width - 16, top + 62), fill=pixel.rgb(haze) + (255,))
+    # Continuous overlapping forest canopy, with trunks visible down to the texture's base.
+    for x, top, width, height in ((-60, 34, 190, 242), (76, 8, 204, 272), (224, 48, 182, 238),
+                                  (352, 18, 208, 264), (504, 46, 192, 242), (636, 12, 196, 268)):
+        woodland_mass(im, x, top, width, height, SHADE, 18)
     return im
 
 
 def forest_mid():
     im = image(720, 600)
-    for x, top, width in ((16, 434, 110), (188, 410, 126), (382, 442, 100), (552, 420, 140)):
-        rect(im, SHADE, (x + width // 2 - 7, top + 46, x + width // 2 + 7, 600))
-        d = ImageDraw.Draw(im)
-        for box in ((x, top + 18, x + width, top + 94),
-                    (x + 16, top, x + width - 12, top + 76)):
-            d.ellipse(box, fill=pixel.rgb(SHADE) + (255,))
+    # Large near-middle trees overlap the distant canopy without a decorative contour band.
+    for x, top, width, height in ((-84, 144, 236, 232), (110, 108, 224, 254),
+                                  (304, 164, 242, 230), (506, 126, 244, 252)):
+        woodland_mass(im, x, top, width, height, "forest", 30, light=SHADE)
     return im
 
 
 def ravine_mid():
     im = image(720, 600)
+    # Dense bank-side woods frame the ravine; its central opening remains visually open.
+    for x, top, width in ((-62, 116, 236), (558, 132, 230)):
+        woodland_mass(im, x, top, width, 242, "forest", 26, light=SHADE)
     polygon(im, SHADE, ((0, 450), (124, 428), (212, 458), (274, 470), (350, 542),
                        (422, 478), (514, 444), (626, 432), (719, 450), (719, 600), (0, 600)))
     polygon(im, "slate", ((0, 510), (106, 482), (208, 510), (274, 514), (350, 584),
