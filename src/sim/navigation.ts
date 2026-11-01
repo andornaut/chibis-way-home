@@ -400,7 +400,7 @@ function approachEdge(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1,
     return undefined;
   }
   const edge = support.x + (direction === 1 ? support.width : 0);
-  let target = edge - tuning.width / 2;
+  let target = edge - (direction * tuning.width) / 2;
   for (const object of layout.areas[zone.area]!.objects) {
     if (
       object.collision !== "hazard" ||
@@ -603,6 +603,41 @@ export function plannedInput(
           travel: direction === 1 ? -1 : 1,
         }
       : undefined;
+  const reverseEdge = threatened
+    ? approachEdge(tuning, layout, direction === 1 ? -1 : 1, zone)
+    : undefined;
+  const backwardColumn = layout.areas[zone.area]!.objects.flatMap((object, index) => {
+    if (object.collision !== "hazard" || !object.behaviour) {
+      return [];
+    }
+    const box = contactBox(
+      object,
+      zone.objects[index] ?? object.origin,
+      zone.behaviours[index]?.facing ?? 1,
+      zone.behaviours[index]?.axis,
+    );
+    if (box.x >= zone.bird.x + tuning.width || box.x + box.width <= zone.bird.x) {
+      return [];
+    }
+    return [direction === 1 ? box.x - tuning.width - 2 : box.x + box.width + 2];
+  }).sort((a, b) => direction * (b - a))[0];
+  const groundTarget =
+    reverseEdge === undefined
+      ? undefined
+      : direction === 1
+        ? Math.max(reverseEdge, backwardColumn ?? zone.bird.x - tuning.width * 2)
+        : Math.min(reverseEdge, backwardColumn ?? zone.bird.x + tuning.width * 2);
+  const groundEscape: Candidate | undefined =
+    groundTarget === undefined
+      ? undefined
+      : (retreat ?? {
+          back: 0,
+          delay: 0,
+          hold: 0,
+          stationary: 0,
+          stopAt: groundTarget,
+          travel: direction === 1 ? -1 : 1,
+        });
   const candidates: Candidate[] = [
     { back: 0, delay: 0, hold: 0, stationary: 0 },
     { back: 0, delay: 0, hold: 1, stationary: 0 },
@@ -619,10 +654,9 @@ export function plannedInput(
           : navigation.waypoint.x + (navigation.waypoint.width - tuning.width) / 2,
     },
     { back: 0, delay: 24, hold: full, stationary: 0 },
-    retreat ??
-      (threatened
-        ? { back: 0, delay: 0, hold: full, stationary: 0, travel: direction === 1 ? -1 : 1 }
-        : { back: 18, delay: 0, hold: full, stationary: 0 }),
+    threatened
+      ? { back: 0, delay: 0, hold: full, stationary: 0, travel: direction === 1 ? -1 : 1 }
+      : (retreat ?? { back: 18, delay: 0, hold: full, stationary: 0 }),
     approach === undefined
       ? { back: 0, delay: 0, hold: full, stationary: 12 }
       : { back: 0, delay: 0, hold: 0, stationary: 0, stopAt: approach },
@@ -643,16 +677,14 @@ export function plannedInput(
   if (approach !== undefined) {
     candidates.splice(4, 0, candidates.pop()!);
   }
-  if (retreat) {
+  if (groundEscape) {
+    candidates[0] = groundEscape;
+  }
+  if (retreat && !threatened) {
     candidates.splice(4, 0, candidates.splice(candidates.indexOf(retreat), 1)[0]!);
   }
-  if (threatened && !retreat) {
-    candidates.unshift(
-      candidates.splice(
-        candidates.findIndex((candidate) => candidate.travel !== undefined),
-        1,
-      )[0]!,
-    );
+  if (threatened) {
+    candidates.sort((a, b) => Number(b.travel !== undefined) - Number(a.travel !== undefined));
   }
   const choices = candidates.map((candidate) => ({ candidate, elapsed: 0 }));
   if (navigation.continuation) {
@@ -685,6 +717,7 @@ export function plannedInput(
     let safe = true;
     let airborne = !zone.bird.grounded;
     let landedAt: number | undefined;
+    let groundedContinuation = false;
     const inputs: ZoneInput[] = [];
     const states: ZoneState[] = [];
     for (
@@ -692,11 +725,15 @@ export function plannedInput(
       tick < limits.horizonTicks * (limits.profile === "validation" ? 2 : 1);
       tick++
     ) {
-      if (
-        tick === limits.horizonTicks &&
-        (predicted.bird.grounded || direction * (predicted.bird.x - zone.bird.x) <= 0)
-      ) {
-        break;
+      if (tick === limits.horizonTicks) {
+        groundedContinuation =
+          limits.profile === "validation" && threatened && predicted.bird.grounded;
+        if (
+          !groundedContinuation &&
+          (predicted.bird.grounded || direction * (predicted.bird.x - zone.bird.x) <= 0)
+        ) {
+          break;
+        }
       }
       if (navigation.counters.physicsSteps >= limits.maxPhysicsSteps) {
         break;
@@ -706,7 +743,7 @@ export function plannedInput(
         predicted.bird.grounded &&
         tick >= limits.horizonTicks - limits.replanTicks * 2;
       const input =
-        landedAt === undefined && !guard
+        landedAt === undefined && !guard && !groundedContinuation
           ? action(tuning, direction, candidate, tick + elapsed, predicted)
           : IDLE;
       inputs.push(input);
