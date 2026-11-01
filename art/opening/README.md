@@ -42,6 +42,22 @@ pose selection, graphic translation, rotation, scale and any camera movement; th
 The argument's cause and the friendship's outcome are undecided. No object, caption or expression explains
 the cause, and the sequence contains no final reconciliation, combat or boss reveal.
 
+## Normalized motion recipe
+
+`motion-recipe.json` supplies the art-authored layers for four beats, with shot counts `1, 1, 2, 1`.
+It deliberately omits the gameplay-owned beat `text` and shot `seconds`; supply those fields before using
+the recipe as runtime opening data. Packing and transit are consecutive shots of the third beat.
+
+Each layer uses the pixel anchor `{ "x": 128, "y": 232 }`. Keyframe positions place that anchor in the
+720x360 viewport. Pose strings select the tags in `contract.json`; progress runs from zero to one per shot.
+Interpolate position, scale and angle linearly, and change pose and visibility at each keyframe boundary.
+Angles are clockwise degrees, opposite the Pillow preview's rotation convention. Curved preview motion
+is sampled into linear segments; the recipe does not change the preview's illustrative cadence.
+
+Parcel and parcel-front keyframes are identical, including during transit. Draw parcel-front last.
+Chibi is invisible before the packing lid seals and remains hidden until the waking carton opens.
+The seated carton anchor remains fixed while Chibi's waking pose rises inside it.
+
 ## Preview and integration
 
 `python3 art/tools/opening.py preview OUT.gif` renders a short motion study. `python3 art/tools/opening.py board OUT.png` renders five sampled shots.
