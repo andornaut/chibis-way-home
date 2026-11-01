@@ -1,3 +1,4 @@
+import { CITY_SHUTTLE_BEHAVIOUR } from "./behaviours";
 import {
   BOUNDARY_START,
   CHUNK_COLS,
@@ -565,7 +566,8 @@ const lift = (col: number, row: number): Instance => ({
   role: "lift",
   row,
 });
-const shuttle = (col: number, row: number): Instance => ({
+const shuttle = (col: number, row: number, distance: number): Instance => ({
+  behaviour: { ...CITY_SHUTTLE_BEHAVIOUR, distance },
   character: "city-shuttle",
   col,
   role: "shuttle",
@@ -900,8 +902,8 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     3,
     40,
     40,
-    [floor(0, 8, 40), floor(46, 14, 40)],
-    [shuttle(10, 40), ...red(8, 38, 47)],
+    [floor(0, 8, 40), floor(30, CHUNK_COLS - 30, 40)],
+    [shuttle(10, 40, 14), ...red(8, 22, 47)],
   ),
   "city-boundary-start": { ...BOUNDARY_START, theme: "city-boundary" },
   "city-boundary-steps": moduleChunk(
@@ -971,8 +973,8 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     5,
     50,
     30,
-    [floor(0, 8, 50), floor(22, 10, 40), floor(56, 4, 30)],
-    [lift(10, 50), shuttle(20, 36), ...red(8, 48, 57)],
+    [floor(0, 8, 50), floor(22, 10, 40), floor(54, CHUNK_COLS - 54, 30)],
+    [lift(10, 50), shuttle(32, 36, 16), ...red(8, 46, 57)],
   ),
   "compound-low-ceiling-hazard": moduleChunk(MECHANICAL_THEMES, 4, 50, 50, TAP_TERRAIN, [
     ...redCeiling(12, 16, 40),
@@ -985,8 +987,15 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     5,
     50,
     50,
-    [floor(0, 4, 50), floor(4, 4, 47), floor(8, 4, 46), floor(12, 6, 47), floor(54, 6, 50)],
-    [...redCeiling(5, 12, 40), shuttle(18, 47), ...red(18, 36, 57)],
+    [
+      floor(0, 4, 50),
+      floor(4, 4, 47),
+      floor(8, 4, 46),
+      floor(12, 6, 47),
+      floor(40, 8, 47),
+      floor(48, CHUNK_COLS - 48, 50),
+    ],
+    [...redCeiling(5, 12, 40), shuttle(18, 47, 16), ...red(18, 22, 57)],
   ),
   "compound-patrol-lift": PATROL_LIFT,
   "compound-perch-yard": {
@@ -1015,8 +1024,15 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     4,
     30,
     50,
-    [floor(0, 8, 30), floor(8, 8, 35), floor(16, 4, 40), floor(56, 4, 50)],
-    [shuttle(20, 45), ...red(20, 36, 54)],
+    [
+      floor(0, 8, 30),
+      floor(8, 8, 35),
+      floor(16, 4, 40),
+      floor(42, 6, 40),
+      floor(48, 6, 45),
+      floor(54, CHUNK_COLS - 54, 50),
+    ],
+    [shuttle(22, 40, 14), ...red(20, 22, 54)],
   ),
   "compound-return-terrace": moduleChunk(
     MECHANICAL_THEMES,

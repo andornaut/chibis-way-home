@@ -62,8 +62,8 @@ export function createOrbitHazardChunks(
       encounters: 0,
       entry: { row: 40 },
       exit: { row: 40 },
-      objects: orbitingPlatform(18, 40, "right", 18),
-      solids: [floor(0, 12, 40), floor(48, CHUNK_COLS - 48, 40)],
+      objects: orbitingPlatform(18, 40, "right", 6),
+      solids: [floor(0, 12, 40), floor(34, CHUNK_COLS - 34, 40)],
       theme,
     },
     "vertical-platform-orbit": {

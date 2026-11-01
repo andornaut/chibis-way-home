@@ -50,7 +50,7 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
       child = area.objects[1]!;
     const cycle = 2 * (host.motion.distance / host.motion.speed + host.motion.pause);
     const ticks = Math.round(cycle / STEP_SECONDS);
-    expect(ticks + 1).toBeLessThanOrEqual(id === "horizontal-platform-orbit" ? 1225 : 745);
+    expect(ticks + 1).toBeLessThanOrEqual(id === "horizontal-platform-orbit" ? 600 : 745);
     const axis = host.motion.direction === "up" ? "y" : "x";
     const positions: number[] = [];
     let zone = startZone(BIRD, layout, 1),
@@ -106,7 +106,11 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
       jumpAt = -Infinity,
       boarded = false,
       carried = 0,
-      docked = false;
+      docked = false,
+      boardedHostX = 0,
+      availableCarry = 0,
+      settledCarry = 0,
+      hostCarry = 0;
     const trace: unknown[] = [];
     for (let tick = 0; tick < (vertical ? 1200 : 600) && !zone.cleared && !zone.death; tick++) {
       const at = zone.objects[0]!;
@@ -141,10 +145,15 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
         if (on) {
           phase = "ride";
           boarded = true;
+          boardedHostX = at.x;
         }
       }
-      if (phase === "ride" && (vertical ? at.y <= 414 : at.x >= 367)) {
+      if (
+        phase === "ride" &&
+        (vertical ? at.y <= 414 : at.x >= host.origin.x + host.motion.distance - TILE / 4)
+      ) {
         phase = "exit";
+        availableCarry = at.x - boardedHostX;
         jumpAt = tick;
       }
       if (phase === "exit") {
@@ -164,6 +173,10 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
       );
       if (on && phase === "ride") {
         carried += Math.hypot(zone.bird.x - before.x, zone.bird.y - before.y);
+        if (!vertical && before.vx === 0) {
+          settledCarry += zone.bird.x - before.x;
+          hostCarry += zone.objects[0]!.x - at.x;
+        }
       }
       const farDock = area.solids.at(-1)!;
       docked ||=
@@ -180,7 +193,14 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
     );
     expect(boarded).toBe(true);
     expect(docked).toBe(true);
-    expect(carried).toBeGreaterThan(host.width);
+    if (vertical) {
+      expect(carried).toBeGreaterThan(host.width);
+    } else {
+      expect(availableCarry).toBeGreaterThan(0);
+      expect(carried).toBeGreaterThanOrEqual(availableCarry);
+      expect(hostCarry).toBeGreaterThan(0);
+      expect(settledCarry).toBeCloseTo(hostCarry, 8);
+    }
   });
 });
 
