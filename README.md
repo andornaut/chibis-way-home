@@ -9,6 +9,7 @@ Help Chibi get home after Furt, his former best friend, mails him far away. A pi
 Each folder's README is its plan, with what's left for the first build:
 
 - [art/](art/README.md): art rules, assets and pipeline
+- [gameplay/](gameplay/README.md): rulebook, targets and playtesting
 - [src/](src/README.md): stack and architecture
 
 ## Playing
@@ -24,12 +25,14 @@ the first section's left edge after backtracking through earlier sections.
 Each zone has three stages, targeting an unmeasured three-minute successful clear
 each. Completing stage one or two enters the next stage directly through its
 cutscene. Stage one has live foreshadowing but no physical antagonist; stage two
-and three each have two physical encounters. Stage three shows the outgoing
+and three each have one physical encounter, for two per zone. Stage three shows the outgoing
 exchange before returning to the map, or the final celebration.
 
 ## Developing
 
-Requires Node 24 (`.nvmrc`).
+Requires Node 24.21.0 or newer (`.nvmrc` pins 24.21.0).
+
+Run checks, tests and builds inside an isolated Node 24.21.0 container. Mount only the checkout, scratch space and the project's npm cache writable.
 
 The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html` is `/`, the home page, and `pages/play/index.html` is `/play/`, the game).
 
@@ -66,7 +69,7 @@ npm run clean
 
 ## Deploying
 
-Releases use the scheduled integration queue at :10, :30 and :50 each hour
+Releases use the scheduled integration queue at :10 each hour
 (America/Toronto). Each nonempty batch runs the type check, lint, tests and build
 in an isolated container. A failed check stops the release without automatic
 test retries. After a passing gate, the release process pushes the exact commit
