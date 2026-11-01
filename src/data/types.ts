@@ -296,6 +296,7 @@ export type BehaviourCondition =
 
 export type BehaviourMotion =
   | { readonly kind: "wait" }
+  | { readonly kind: "pursue"; readonly mode: "ground" | "fly"; readonly speed: number }
   | { readonly kind: "fly"; readonly to: Point; readonly speed: number }
   // Target flight captures contact-centred aim on entry; bounds limit relative top-left positions.
   | { readonly kind: "fly"; readonly to: "target"; readonly bounds: Rect; readonly speed: number }
@@ -358,6 +359,11 @@ export interface BehaviourNode {
 // A reusable bounded movement graph. Distance is signed from its placed origin, in tiles in
 // data and pixels in a layout. Spatial conditions and speeds use the same units.
 export interface BehaviourPlan {
+  readonly pursuit?: {
+    readonly distance: number;
+    readonly unreachableGraceSeconds: number;
+    readonly escaped: DialogueLine;
+  };
   readonly spotted?: DialogueLine;
   readonly axis: "x" | "y";
   readonly distance: number;

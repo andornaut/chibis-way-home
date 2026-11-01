@@ -80,6 +80,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           (typeof node.animation !== "string" || node.animation.length === 0)) ||
         (node.motion.kind !== "wait" &&
           node.motion.kind !== "fly" &&
+          node.motion.kind !== "pursue" &&
           (!valid(node.motion.speed) ||
             ![-1, 1, "facing", "target"].includes(node.motion.direction))) ||
         (node.motion.kind === "move" && (node.motion.speed === 0 || track.distance === 0)) ||
@@ -240,6 +241,7 @@ function enterState(
   let facing =
     node.motion.kind !== "wait" &&
     node.motion.kind !== "fly" &&
+    node.motion.kind !== "pursue" &&
     typeof node.motion.direction === "number"
       ? node.motion.direction
       : state.facing;
@@ -247,6 +249,7 @@ function enterState(
     node.enter === "face-target" ||
     (node.motion.kind !== "wait" &&
       node.motion.kind !== "fly" &&
+      node.motion.kind !== "pursue" &&
       node.motion.direction === "target")
   ) {
     const axis = node.track?.axis ?? object.behaviour?.axis ?? "x";
@@ -349,6 +352,7 @@ export function contactBox(
 function heading(node: BehaviourNode, state: BehaviourState): -1 | 1 {
   return node.motion.kind !== "wait" &&
     node.motion.kind !== "fly" &&
+    node.motion.kind !== "pursue" &&
     typeof node.motion.direction === "number"
     ? node.motion.direction
     : state.facing;
@@ -602,6 +606,7 @@ export function stepBehaviour(
     if (
       node.motion.kind !== "wait" &&
       node.motion.kind !== "fly" &&
+      node.motion.kind !== "pursue" &&
       node.motion.direction === "target"
     ) {
       const mine = current[track.axis] + (track.axis === "x" ? object.width : object.height) / 2;
@@ -697,7 +702,12 @@ export function stepBehaviour(
         }
       }
     }
-    if (node.motion.kind !== "wait" && node.motion.kind !== "fly" && node.motion.speed > 0) {
+    if (
+      node.motion.kind !== "wait" &&
+      node.motion.kind !== "fly" &&
+      node.motion.kind !== "pursue" &&
+      node.motion.speed > 0
+    ) {
       const direction = heading(node, next);
       let desired = current[track.axis] + direction * node.motion.speed * slice;
       if (node.motion.direction === "target") {
