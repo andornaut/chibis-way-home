@@ -15,7 +15,7 @@ function maximumMovementSpeed(plan: BehaviourPlan): number {
 }
 
 // Default for transient barks; conversations advance only through player input.
-export const BARK_DURATION_SECONDS = 4;
+export const BARK_DURATION_SECONDS = 3;
 
 // Linear conversations, with paragraph text in TEXT.lines.
 export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
