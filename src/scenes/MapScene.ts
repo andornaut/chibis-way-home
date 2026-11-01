@@ -1,5 +1,5 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
+import { advanceWidth, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
@@ -40,7 +40,6 @@ import {
   destinationPathLook,
   destinationState,
 } from "../view/mapDestinations";
-import { advanceWidth } from "../view/mapMarks";
 import { bentCurve, curveWalk, pathRects } from "../view/mapPath";
 import {
   addTextButton,

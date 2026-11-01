@@ -1,3 +1,4 @@
+import { clamp } from "@andornaut/game-kit/numbers";
 import { containsPoint } from "@andornaut/game-kit/rect";
 
 import type { Point, Rect } from "../data/types";
@@ -22,7 +23,7 @@ export const TOUCH_CIRCLE_RADIUS = 63;
 // How far a drawn button's press area reaches past it on every side.
 export function hitMargin(art: Rect): number {
   const { leastMargin, marginShare, mostMargin } = HIT_RULE;
-  return Math.min(mostMargin, Math.max(leastMargin, marginShare * Math.min(art.width, art.height)));
+  return clamp(leastMargin, mostMargin, marginShare * Math.min(art.width, art.height));
 }
 
 // A drawn button's press area: art grown by hitMargin on every side, then to minTarget on each

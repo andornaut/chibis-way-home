@@ -1,5 +1,5 @@
 import { fillNames } from "@andornaut/game-kit/lines";
-import { clamp01 } from "@andornaut/game-kit/numbers";
+import { clamp, clamp01 } from "@andornaut/game-kit/numbers";
 
 import type {
   DeathText,
@@ -78,7 +78,7 @@ export function startDeathPresentation(
       x: death.position.x,
       y: fallback ? bottom - view.body.height - tuning.voidFallDistance : death.position.y,
     }),
-    speedY: Math.min(tuning.maxFallSpeed, Math.max(0, death.velocity.y)),
+    speedY: clamp(0, tuning.maxFallSpeed, death.velocity.y),
   };
 }
 
@@ -94,7 +94,7 @@ export function stepDeathPresentation(
   }
   const elapsed = pose.elapsed + seconds;
   if (pose.phase === "recoil") {
-    const move = Math.min(seconds, Math.max(0, tuning.recoilSeconds - pose.elapsed));
+    const move = clamp(0, seconds, tuning.recoilSeconds - pose.elapsed);
     const position = visiblePosition(view, {
       x: pose.position.x + tuning.recoilVelocity.x * pose.facing * move,
       y: pose.position.y + tuning.recoilVelocity.y * move,

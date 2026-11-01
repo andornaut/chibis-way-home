@@ -1,3 +1,5 @@
+import { clamp } from "@andornaut/game-kit/numbers";
+
 import type { Point, Size } from "../data/types";
 import { askedAssemblySeed } from "./zoneChain";
 
@@ -44,7 +46,7 @@ export function askedStagePreview(
 
 export function stagePreviewScroll(view: Size, area: Size, scroll: Point): Point {
   return {
-    x: Math.max(0, Math.min(Math.max(0, area.width - view.width), scroll.x)),
-    y: Math.max(0, Math.min(Math.max(0, area.height - view.height), scroll.y)),
+    x: clamp(0, Math.max(0, area.width - view.width), scroll.x),
+    y: clamp(0, Math.max(0, area.height - view.height), scroll.y),
   };
 }

@@ -1,3 +1,5 @@
+import { clamp, lerp } from "@andornaut/game-kit/numbers";
+
 import type { CameraTuning, Point, Rect, Size } from "../data/types";
 
 // What the camera reads of an area: its size, its terrain, and in an assembled area its chunks,
@@ -43,7 +45,7 @@ export function groundLine(
     if (Math.abs(x - seam) < half) {
       const t = (x - seam + half) / (2 * half);
       const eased = t * t * (3 - 2 * t);
-      return groundOf(index - 1) + (groundOf(index) - groundOf(index - 1)) * eased;
+      return lerp(groundOf(index - 1), groundOf(index), eased);
     }
   }
   const within = chunks.reduce((found, chunk, index) => (chunk.x <= x ? index : found), 0);
@@ -63,9 +65,8 @@ export function cameraScroll(
   const lowest = Math.max(screen.height, ...area.solids.map((solid) => solid.y + solid.height));
   const rest = groundLine(camera, screen, area, feet.x) - camera.groundSpot * screen.height;
   const y = Math.min(rest, feet.y - screen.height / 2);
-  const clamp = (value: number, max: number) => Math.round(Math.min(Math.max(value, 0), max));
   return {
-    x: clamp(feet.x - screen.width / 2, area.width - screen.width),
-    y: clamp(y, Math.min(area.height, lowest) - screen.height),
+    x: Math.round(clamp(0, area.width - screen.width, feet.x - screen.width / 2)),
+    y: Math.round(clamp(0, Math.min(area.height, lowest) - screen.height, y)),
   };
 }

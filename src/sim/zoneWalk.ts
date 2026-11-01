@@ -1,3 +1,5 @@
+import { clamp } from "@andornaut/game-kit/numbers";
+
 import type {
   AreaLayout,
   BirdTuning,
@@ -290,10 +292,7 @@ function surfaceUnder(
 function spotOf(surface: Surface, zone: ZoneState, layout: ZoneLayout, tuning: BirdTuning): Spot {
   const now = placed(surface, zone, layout);
   const centre = zone.bird.x + tuning.width / 2;
-  const bucket = Math.max(
-    0,
-    Math.floor((Math.min(Math.max(centre, now.left), now.right) - now.left) / BUCKET),
-  );
+  const bucket = Math.max(0, Math.floor((clamp(now.left, now.right, centre) - now.left) / BUCKET));
   return { bucket, state: zone, surface };
 }
 
@@ -703,8 +702,7 @@ function triesToward(tuning: BirdTuning, from: Spot, here: Surface, target: Targ
     const middle = (here.left + here.right) / 2;
     const minCentre = Math.min(here.left + FOOTING, middle);
     const maxCentre = Math.max(here.right - FOOTING, middle);
-    const preFor = (x: number) =>
-      Math.min(Math.max(x - dir * RUN_UP + half, minCentre), maxCentre) - half;
+    const preFor = (x: number) => clamp(minCentre, maxCentre, x - dir * RUN_UP + half) - half;
     // Along her surface, her centre every TAKEOFF_STEP px from its left.
     const first = Math.max(0, Math.floor((lo - here.left + half - width) / TAKEOFF_STEP));
     const last = Math.min(

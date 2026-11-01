@@ -1,4 +1,4 @@
-import { clamp01 } from "@andornaut/game-kit/numbers";
+import { clamp01, lerp } from "@andornaut/game-kit/numbers";
 
 import type { OpeningBeat, OpeningKeyframe, OpeningLayer } from "../data/types";
 import type { Progress } from "../save/progress";
@@ -15,16 +15,15 @@ export function openingPose(progress: number, layer: OpeningLayer): OpeningKeyfr
   const after = layer.keyframes.find((frame) => frame.progress > at) ?? before;
   const fraction =
     after === before ? 0 : (at - before.progress) / (after.progress - before.progress);
-  const mix = (from: number, to: number) => from + (to - from) * fraction;
   return {
     ...before,
-    angle: mix(before.angle, after.angle),
+    angle: lerp(before.angle, after.angle, fraction),
     position: {
-      x: mix(before.position.x, after.position.x),
-      y: mix(before.position.y, after.position.y),
+      x: lerp(before.position.x, after.position.x, fraction),
+      y: lerp(before.position.y, after.position.y, fraction),
     },
     progress: at,
-    scale: mix(before.scale, after.scale),
+    scale: lerp(before.scale, after.scale, fraction),
   };
 }
 

@@ -1,5 +1,5 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
+import { advanceWidth, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
@@ -15,7 +15,6 @@ import type { LabelledButton } from "../layout/restartCard";
 import { focusRingAround } from "../layout/settingsCard";
 import { ART_MANIFEST_KEY, type ArtManifest } from "../view/aseprite";
 import type { Palette } from "../view/dim";
-import { advanceWidth } from "../view/mapMarks";
 
 // What the pause, settings, install steps and restart cards draw with: art's 9-slices, card text,
 // buttons and the palette's colours.

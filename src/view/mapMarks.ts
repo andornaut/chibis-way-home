@@ -1,5 +1,4 @@
 import { clampIndex } from "@andornaut/game-kit/arrays";
-import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
 import type { MapEdge, MapNode, Point, Size, ZoneMap } from "../data/types";
 import type { PathLook } from "../layout/mapScreen";
@@ -71,20 +70,4 @@ export function pathLook(open: OpenMap, edge: MapEdge): PathLook {
     return "unbuilt";
   }
   return open.edges.includes(edge) ? "open" : "built";
-}
-
-// How far line moves the pen in font at scale: each glyph's advance and the kerning between
-// pairs, in screen pixels.
-export function advanceWidth(font: BitmapFont, scale: number, line: string): number {
-  let width = 0;
-  let previous: string | null = null;
-  for (const char of line) {
-    const glyph = font.glyphs.get(char);
-    if (glyph === undefined) {
-      continue;
-    }
-    width += glyph.advance + (previous === null ? 0 : (font.kernings.get(previous + char) ?? 0));
-    previous = char;
-  }
-  return width * scale;
 }

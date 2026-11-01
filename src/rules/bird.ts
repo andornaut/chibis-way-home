@@ -1,3 +1,4 @@
+import { clamp } from "@andornaut/game-kit/numbers";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
 import type { BirdTuning, Point, Rect, Size } from "../data/types";
@@ -289,7 +290,7 @@ export function stepBird(
     input.move * tuning.walkSpeed,
     accel * seconds,
   );
-  const dashSeconds = burst && dash ? Math.min(seconds, Math.max(0, dash.remainingSeconds)) : 0;
+  const dashSeconds = burst && dash ? clamp(0, seconds, dash.remainingSeconds) : 0;
   const horizontalDistance =
     burst && dash && dashSeconds > 0
       ? dash.direction * burst.speed * dashSeconds + ordinaryVx * (seconds - dashSeconds)

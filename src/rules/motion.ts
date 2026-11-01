@@ -1,5 +1,5 @@
 import { easeProgress, progressAt } from "@andornaut/game-kit/motion";
-import { clamp01 } from "@andornaut/game-kit/numbers";
+import { clamp01, lerp } from "@andornaut/game-kit/numbers";
 import type { Random } from "@andornaut/game-kit/random";
 
 import type { Direction, Motion, Point } from "../data/types";
@@ -41,7 +41,7 @@ function pointOn(motion: Motion, leg: Leg, sinceStart: number): Point {
   const axis = axisOf(motion.direction);
   const f = progressAt(0, leg.travel, sinceStart);
   const eased = easeProgress(motion.algorithm === "ease" ? "sineInOut" : "linear", f);
-  const along = leg.from + (leg.to - leg.from) * eased;
+  const along = lerp(leg.from, leg.to, eased);
   const lift = motion.algorithm === "hop" ? hopLift(motion.hopHeight, leg.travel, sinceStart) : 0;
   return { x: axis.x * along, y: axis.y * along - lift };
 }

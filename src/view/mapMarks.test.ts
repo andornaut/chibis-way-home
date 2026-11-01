@@ -1,17 +1,9 @@
-import type { BitmapFont, BitmapGlyph } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import type { MapEdge, ZoneMap } from "../data/types";
 import { MAP_SCREEN } from "../layout/mapScreen";
 import { nodeOf, openMap } from "../rules/map";
-import {
-  advanceWidth,
-  markerState,
-  nodeCentre,
-  pathLook,
-  steppedZone,
-  zoneAtTap,
-} from "./mapMarks";
+import { markerState, nodeCentre, pathLook, steppedZone, zoneAtTap } from "./mapMarks";
 
 // a, then a fork f a row down with built paths to b, up a row, and c, level, and an unbuilt one to
 // d, all three joining at the finish z, a fork.
@@ -136,34 +128,5 @@ describe("steppedZone", () => {
     ["a", -1, "a"],
   ] as const)("steps from %s by %i to %s", (stand, step, zone) => {
     expect(steppedZone(DONE_A, stand, step)).toBe(zone);
-  });
-});
-
-describe("advanceWidth", () => {
-  const glyph = (advance: number): BitmapGlyph => ({
-    advance,
-    height: 8,
-    width: advance - 1,
-    xOffset: 0,
-    yOffset: 0,
-  });
-  const FONT: BitmapFont = {
-    glyphs: new Map([
-      ["A", glyph(5)],
-      ["V", glyph(6)],
-    ]),
-    kernings: new Map([["AV", -1]]),
-    lineHeight: 10,
-  };
-
-  it.each([
-    ["", 2, 0],
-    ["A", 2, 10],
-    ["AV", 1, 10],
-    ["AV", 2, 20],
-    ["VA", 2, 22],
-    ["A?", 2, 10],
-  ])("moves the pen for %j at %ix by %i", (line, scale, width) => {
-    expect(advanceWidth(FONT, scale, line)).toBe(width);
   });
 });

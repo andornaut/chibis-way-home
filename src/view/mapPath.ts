@@ -1,3 +1,5 @@
+import { clamp } from "@andornaut/game-kit/numbers";
+
 import type { Point, Rect } from "../data/types";
 
 // A path on the map: a quadratic Bezier from one node's centre to the next.
@@ -161,5 +163,5 @@ export function curveWalk(curve: Curve): {
 } {
   const arc = arcOf(curve);
   const length = arc.lengths.at(-1) ?? 0;
-  return { at: (distance) => along(arc, Math.max(0, Math.min(length, distance))).point, length };
+  return { at: (distance) => along(arc, clamp(0, length, distance)).point, length };
 }
