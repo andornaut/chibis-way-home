@@ -738,50 +738,70 @@ describe("bounded real-rule navigation", () => {
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
   });
-  it("backs onto a raised support before jumping a lethal vertical face", () => {
-    const base = fixture([
-      { height: 156, width: 432, x: 0, y: 564 },
-      { height: 120, width: 48, x: 432, y: 600 },
-      { height: 192, width: 48, x: 480, y: 528 },
-      { height: 180, width: 372, x: 528, y: 540 },
-    ]);
-    const edge = {
-      ...movingObject("hazard", { x: 477, y: 528 }),
-      height: 72,
-      motion: STATIC_MOTION,
-      width: 3,
-    };
-    const layout: ZoneLayout = {
-      ...base,
-      areas: {
-        main: {
-          ...base.areas.main!,
-          entries: { start: { x: 461.4, y: 600 } },
-          exitX: 840,
-          height: 720,
-          objects: [edge],
-          width: 900,
+  it.each([false, true])(
+    "backs onto a raised support before a lethal face with a finite dock: %s",
+    (finite) => {
+      const base = fixture([
+        ...(finite
+          ? [
+              { height: 60, width: 384, x: 0, y: 660 },
+              { height: 156, width: 48, x: 384, y: 564 },
+            ]
+          : [{ height: 156, width: 432, x: 0, y: 564 }]),
+        { height: 120, width: 48, x: 432, y: 600 },
+        { height: 192, width: 48, x: 480, y: 528 },
+        { height: 180, width: 372, x: 528, y: 540 },
+      ]);
+      const edge = {
+        ...movingObject("hazard", { x: 477, y: 528 }),
+        height: 72,
+        motion: STATIC_MOTION,
+        width: 3,
+      };
+      const layout: ZoneLayout = {
+        ...base,
+        areas: {
+          main: {
+            ...base.areas.main!,
+            entries: { start: { x: 461.4, y: 600 } },
+            exitX: 840,
+            height: 720,
+            objects: [
+              edge,
+              ...(finite
+                ? [
+                    {
+                      ...movingObject("hazard", { x: 0, y: 657 }),
+                      height: 3,
+                      motion: STATIC_MOTION,
+                      width: 384,
+                    },
+                  ]
+                : []),
+            ],
+            width: 900,
+          },
         },
-      },
-    };
-    const bot = newBot(1);
-    let zone = stepZone(
-      BIRD,
-      layout,
-      STEP_SECONDS,
-      { jumpHeld: false, move: 0, useHeld: false },
-      startZone(BIRD, layout, 1),
-    );
-    let backed = false;
-    for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
-      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
-      backed ||= input.move === -1 && input.jumpHeld;
-      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
-    }
-    expect(backed).toBe(true);
-    expect(zone.death).toBeUndefined();
-    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
-  });
+      };
+      const bot = newBot(1);
+      let zone = stepZone(
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: false, move: 0, useHeld: false },
+        startZone(BIRD, layout, 1),
+      );
+      let backed = false;
+      for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
+        const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+        backed ||= input.move === -1 && input.jumpHeld;
+        zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+      }
+      expect(backed).toBe(true);
+      expect(zone.death).toBeUndefined();
+      expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
+    },
+  );
   it("brakes after boarding a returning deck before committing its next transfer", () => {
     const base = fixture([
       { height: 360, width: 336, x: 0, y: 360 },

@@ -696,31 +696,29 @@ export function plannedInput(
   }
   navigation.counters.decisions++;
   navigation.waypoint = waypoint(tuning, layout, direction, zone);
-  const threatened = layout.areas[zone.area]!.objects.some((object, index) => {
-    if (object.collision !== "hazard") {
+  const sideThreat = layout.areas[zone.area]!.objects.some((object, index) => {
+    if (object.collision !== "hazard" || object.behaviour || object.motion.algorithm !== "static") {
       return false;
     }
-    const at = zone.objects[index] ?? object.origin;
-    const box = contactBox(
-      object,
-      at,
-      zone.behaviours[index]?.facing ?? 1,
-      zone.behaviours[index]?.axis,
-    );
-    const sideBand =
+    const box = contactBox(object, zone.objects[index] ?? object.origin, 1);
+    return (
       box.height > tuning.jumpHopHeight &&
       box.width < box.height &&
       box.y < zone.bird.y + tuning.height &&
       box.y + box.height > zone.bird.y &&
-      Math.abs(box.x - zone.bird.x) <= tuning.width * 2;
-    return (
-      (object.behaviour ||
-        object.motion.algorithm !== "static" ||
-        object.reaction.kind !== "none" ||
-        sideBand) &&
-      Math.abs(at.x - zone.bird.x) <= SCREEN.width / 2
+      Math.abs(box.x - zone.bird.x) <= tuning.width * 2
     );
   });
+  const threatened =
+    sideThreat ||
+    layout.areas[zone.area]!.objects.some(
+      (object, index) =>
+        object.collision === "hazard" &&
+        (object.behaviour ||
+          object.motion.algorithm !== "static" ||
+          object.reaction.kind !== "none") &&
+        Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
+    );
   const movingSupport = layout.areas[zone.area]!.objects.some(
     (object, index) =>
       (object.collision === "ledge" || object.collision === "solid") &&
@@ -775,8 +773,35 @@ export function plannedInput(
       : direction === 1
         ? Math.max(reverseEdge, backwardColumn ?? zone.bird.x - tuning.width * 2)
         : Math.min(reverseEdge, backwardColumn ?? zone.bird.x + tuning.width * 2);
-  const groundEscape: Candidate | undefined =
-    groundTarget === undefined
+  const reverseSupport =
+    sideThreat && zone.bird.grounded
+      ? landingSurfaces(tuning, layout, zone)
+          .filter((rect) => {
+            const centre = rect.x + (rect.width - tuning.width) / 2;
+            const rise = zone.bird.y + tuning.height - rect.y;
+            return (
+              direction * (centre - zone.bird.x) < -tuning.width &&
+              Math.abs(centre - zone.bird.x) <= SCREEN.width / 2 &&
+              rise > 0 &&
+              rise <= (tuning.jumpSpeed * tuning.jumpRiseTime) / 2
+            );
+          })
+          .sort(
+            (a, b) =>
+              Math.abs(a.x + (a.width - tuning.width) / 2 - zone.bird.x) -
+              Math.abs(b.x + (b.width - tuning.width) / 2 - zone.bird.x),
+          )[0]
+      : undefined;
+  const groundEscape: Candidate | undefined = reverseSupport
+    ? {
+        back: 0,
+        delay: 0,
+        hold: full,
+        stationary: 0,
+        stopAt: reverseSupport.x + (reverseSupport.width - tuning.width) / 2,
+        travel: direction === 1 ? -1 : 1,
+      }
+    : groundTarget === undefined
       ? undefined
       : (retreat ?? {
           back: 0,
