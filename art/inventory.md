@@ -270,10 +270,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Goose antagonist
 
-| Key              | Type                                  | Size  | Tags                                                |
-| ---------------- | ------------------------------------- | ----- | --------------------------------------------------- |
-| goose-antagonist | Trixi character; hit box 2,2,44,46    | 48x48 | idle, walk, warn, rush, rest, frustration, set-trap |
-| goose-trap       | Arming floor hazard; hit box 0,9,24,3 | 24x12 | warning, armed                                      |
+| Key              | Type                                           | Size  | Tags                                                |
+| ---------------- | ---------------------------------------------- | ----- | --------------------------------------------------- |
+| goose-antagonist | Trixi character; hit box 2,2,44,46             | 48x48 | idle, walk, warn, rush, rest, frustration, set-trap |
+| goose-trap       | Arming floor hazard; approved hit box 0,8,24,4 | 24x12 | warning, armed                                      |
 
 ## Bini bear
 

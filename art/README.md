@@ -518,16 +518,16 @@ Every environment theme (a zone's street, a chunk theme's park) follows these ru
 
 ### Shared red contact edges
 
-For a dangerous top, use a plain solid face under the hazard instead of a safe white-lipped top. Approved target for paired art and runtime integration: the six zones share continuous three-pixel solid bright-red panels (`#e43b44`) on dangerous surfaces and edges, with no ink pixel inside the contact band and no spikes. Contact causes death; explicit Try again returns to the stage checkpoint. The approved white `pigeon-poop` exception remains white. This shared panel change does not redraw legacy park hazards, other projectiles or actor costumes. These tiles are hazards with no solid collision; place them in the cell immediately outside the supporting solid, which retains its ordinary collision. Repeat horizontally for floors and ceilings, vertically for walls. The orientation names describe the face of the supporting solid, not the edge of the hazard's own cell.
+For a dangerous top, use a plain solid face under the hazard instead of a safe white-lipped top. Approved target for paired art and runtime integration: the six zones share continuous four-pixel solid bright-red panels (`#e43b44`) on dangerous surfaces and edges, with no ink pixel inside the contact band and no spikes. Contact causes death; explicit Try again returns to the stage checkpoint. The approved white `pigeon-poop` exception remains white. This shared panel change does not redraw legacy park hazards, other projectiles or actor costumes. These tiles are hazards with no solid collision; place them in the cell immediately outside the supporting solid, which retains its ordinary collision. Repeat horizontally for floors and ceilings, vertically for walls. The orientation names describe the face of the supporting solid, not the edge of the hazard's own cell.
 
 | Tile            | Placement relative to solid | Hit box within its 12x12 cell (x, y, width, height) |
 | --------------- | --------------------------- | --------------------------------------------------- |
-| `hazard-bottom` | below                       | 0, 0, 12, 3                                         |
-| `hazard-left`   | left                        | 9, 0, 3, 12                                         |
-| `hazard-right`  | right                       | 0, 0, 3, 12                                         |
-| `hazard-top`    | above                       | 0, 9, 12, 3                                         |
+| `hazard-bottom` | below                       | 0, 0, 12, 4                                         |
+| `hazard-left`   | left                        | 8, 0, 4, 12                                         |
+| `hazard-right`  | right                       | 0, 0, 4, 12                                         |
+| `hazard-top`    | above                       | 0, 8, 12, 4                                         |
 
-Red strips never carry the bright safe lip. Red is a consistent danger cue across zones; the contrasting ink backing keeps the thin edge visible against both pale and dark scenery. Gameplay chooses the placement and clearance, including dangerous ceilings over short-jump routes and dangerous sides beside landings.
+Red strips never carry the bright safe lip. Red is a consistent danger cue across zones; all four pixels of the approved contact band are bright red. Gameplay chooses the placement and clearance, including dangerous ceilings over short-jump routes and dangerous sides beside landings.
 
 ## Zone 1: parcel depot and New York street
 
@@ -719,7 +719,7 @@ This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 The appended `set-trap` tag contains four looping 120ms placement frames. Existing poses and all prior frame indices and timings remain unchanged apart from the glasses overlay.
 
-`goose-trap` is a 24x12 floor overlay, bottom-centre anchor 12,12, with contact box x 0, y 9, width 24, height 3. Its `warning` tag loops four 120ms frames: an amber two-pixel edge, moving two-pixel yellow tick and ink rim provide the visible arming interval. Its `armed` tag loops one 400ms frame. Approved target for paired art and runtime integration: the armed edge uses the same three-pixel solid bright-red panel as ordinary floor hazards; the nonlethal warning artwork remains unchanged. The red pixels derive from the same `hazard-top` geometry as ordinary floor hazards, repeated twice. Rows 0 through 8 remain transparent, with no spikes, teeth or safe white lip. Gameplay owns the delay and collision activation: warning is nonlethal; only the armed state uses the declared contact box. Retry and lifetime cleanup belong to the runtime. Both actor and trap retain empty `once` lists.
+`goose-trap` is a 24x12 floor overlay, bottom-centre anchor 12,12, with approved contact box x 0, y 8, width 24, height 4. Its `warning` tag loops four 120ms frames: an amber two-pixel edge, moving two-pixel yellow tick and ink rim provide the visible arming interval. Its `armed` tag loops one 400ms frame. Approved target for paired art and runtime integration: the armed edge uses the same four-pixel solid bright-red panel as ordinary floor hazards; the nonlethal warning artwork remains unchanged. The red pixels derive from the same `hazard-top` geometry as ordinary floor hazards, repeated twice. In the armed frame, rows 0 through 7 remain transparent, with no spikes, teeth or safe white lip. Gameplay owns the delay and collision activation: warning is nonlethal; only the armed state uses the declared contact box. Retry and lifetime cleanup belong to the runtime. Both actor and trap retain empty `once` lists.
 
 ## Bini bear
 
