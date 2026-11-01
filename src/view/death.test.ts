@@ -10,14 +10,19 @@ import { STEP_SECONDS } from "../rules/step";
 import { BIRD_FRAME } from "./bird";
 import {
   deathLabels,
+  deathPresentationTarget,
   deathSummary,
   type DeathView,
   startDeathPresentation,
   stepDeathPresentation,
 } from "./death";
 
-const view: DeathView = { body: BIRD, bounds: { ...SCREEN, x: 0, y: 0 }, frame: BIRD_FRAME };
 const ground: Rect = { height: 120, width: SCREEN.width, x: 0, y: (SCREEN.height * 2) / 3 };
+const view: DeathView = {
+  body: BIRD,
+  bounds: { ...SCREEN, x: 0, y: ground.y - SCREEN.height },
+  frame: BIRD_FRAME,
+};
 const death: ZoneDeath = {
   position: { x: 100, y: ground.y - BIRD.height },
   reason: "hazard",
@@ -35,7 +40,7 @@ describe("death presentation", () => {
       let bounceRose = false;
       for (let step = 0; step < 1200 && pose.phase !== "seated"; step++) {
         const before = pose;
-        pose = stepDeathPresentation(DEATH, view, () => ground, STEP_SECONDS, pose);
+        pose = stepDeathPresentation(DEATH, view, STEP_SECONDS, pose);
         phases.add(pose.phase);
         if (before.phase === "bounce" && pose.position.y < before.position.y) {
           bounceRose = true;
@@ -45,7 +50,7 @@ describe("death presentation", () => {
       expect(Math.sign(pose.position.x - x)).toBe(Math.sign(DEATH.recoilVelocity.x * facing));
       expect(bounceRose).toBe(true);
       expect(pose.position.y + BIRD.height).toBe(ground.y);
-      expect(stepDeathPresentation(DEATH, view, () => ground, 100, pose)).toBe(pose);
+      expect(stepDeathPresentation(DEATH, view, 100, pose)).toBe(pose);
     },
   );
 
@@ -57,26 +62,34 @@ describe("death presentation", () => {
       support: undefined,
     });
     expect(pose.phase).toBe("fall");
-    expect(pose.position.y + BIRD.height).toBeLessThan(SCREEN.height);
+    expect(pose.floor - pose.position.y - BIRD.height).toBe(DEATH.voidFallDistance);
+    expect(pose.position.y + BIRD.height).toBeLessThan(ground.y);
     for (let step = 0; step < 1200 && pose.phase !== "seated"; step++) {
-      pose = stepDeathPresentation(DEATH, view, () => undefined, STEP_SECONDS, pose);
+      pose = stepDeathPresentation(DEATH, view, STEP_SECONDS, pose);
     }
     expect(pose.phase).toBe("seated");
-    expect(pose.position.y + BIRD.height).toBe(SCREEN.height);
+    expect(pose.position.y + BIRD.height).toBe(ground.y);
   });
 
-  it("queries frozen support at the recoil's new position", () => {
-    const queried: number[] = [];
-    const support = (position: { x: number }) => {
-      queried.push(position.x);
-      return ground;
-    };
-    let pose = startDeathPresentation(DEATH, view, 1, death);
-    for (let step = 0; step < 1200 && pose.phase !== "seated"; step++) {
-      pose = stepDeathPresentation(DEATH, view, support, STEP_SECONDS, pose);
-    }
-    expect(queried.length).toBeGreaterThan(0);
-    expect(queried[0]).toBeLessThan(death.position.x);
+  it("resolves frozen support at the final recoil position before the camera or animation starts", () => {
+    const queried: { x: number; y: number }[] = [];
+    const target = deathPresentationTarget(
+      DEATH,
+      BIRD,
+      (position) => {
+        queried.push(position);
+        return ground;
+      },
+      1,
+      death,
+    );
+    expect(queried).toEqual([
+      {
+        x: death.position.x + DEATH.recoilVelocity.x * DEATH.recoilSeconds,
+        y: death.position.y + DEATH.recoilVelocity.y * DEATH.recoilSeconds,
+      },
+    ]);
+    expect(target).toEqual({ x: queried[0]!.x, y: ground.y - BIRD.height });
   });
 });
 

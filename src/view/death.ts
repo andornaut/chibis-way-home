@@ -39,6 +39,26 @@ function visiblePosition(view: DeathView, at: Point): Point {
   };
 }
 
+// Resolve the frozen landing before framing the camera; the animation never changes its floor.
+export function deathPresentationTarget(
+  tuning: DeathTuning,
+  body: Size,
+  supportAt: (position: Point) => Rect | undefined,
+  facing: -1 | 1,
+  death: ZoneDeath,
+): Point {
+  const seconds = death.reason === "fall" ? 0 : tuning.recoilSeconds;
+  const position = {
+    x: death.position.x + tuning.recoilVelocity.x * facing * seconds,
+    y: death.position.y + tuning.recoilVelocity.y * seconds,
+  };
+  const support = supportAt(position) ?? death.support;
+  return {
+    x: position.x,
+    y: (support?.y ?? death.position.y + body.height) - body.height,
+  };
+}
+
 // A void death is shown within the frozen viewport, with room for the configured visible fall.
 export function startDeathPresentation(
   tuning: DeathTuning,
@@ -47,11 +67,11 @@ export function startDeathPresentation(
   death: ZoneDeath,
 ): DeathPresentation {
   const bottom = view.bounds.y + view.bounds.height;
-  const fallback = death.reason === "fall" || death.position.y + view.body.height > bottom;
+  const fallback = death.reason === "fall";
   return {
     elapsed: 0,
     facing,
-    floor: death.support && death.support.y <= bottom ? death.support.y : bottom,
+    floor: bottom,
     phase: fallback ? "fall" : "recoil",
     position: visiblePosition(view, {
       x: death.position.x,
@@ -61,11 +81,10 @@ export function startDeathPresentation(
   };
 }
 
-// Only the dying bird moves. Supports are queried from the frozen world, never advanced here.
+// Only the dying bird moves toward its resolved frozen floor; the world never advances here.
 export function stepDeathPresentation(
   tuning: DeathTuning,
   view: DeathView,
-  supportAt: (position: Point) => Rect | undefined,
   seconds: number,
   pose: DeathPresentation,
 ): DeathPresentation {
@@ -91,9 +110,7 @@ export function stepDeathPresentation(
       ? { ...pose, elapsed }
       : { ...pose, elapsed: 0, phase: "bounce", speedY: -tuning.bounceSpeed };
   }
-  const bottom = view.bounds.y + view.bounds.height;
-  const support = supportAt(pose.position);
-  const floor = pose.phase === "bounce" ? pose.floor : Math.min(bottom, support?.y ?? bottom);
+  const floor = pose.floor;
   const speedY = Math.min(tuning.maxFallSpeed, pose.speedY + tuning.fallGravity * seconds);
   const position = { ...pose.position, y: pose.position.y + speedY * seconds };
   if (speedY >= 0 && position.y + view.body.height >= floor) {

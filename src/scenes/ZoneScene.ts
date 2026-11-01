@@ -120,6 +120,7 @@ import {
   deathFrameIndex,
   deathLabels,
   type DeathPresentation,
+  deathPresentationTarget,
   type DeathView,
   startDeathPresentation,
   stepDeathPresentation,
@@ -142,6 +143,7 @@ import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchCont
 import { proximityDialogue } from "../view/zoneDialogue";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
 import type { CutsceneData } from "./CutsceneScene";
+import { frameDeathCamera } from "./deathCamera";
 import type { DeathData, DeathOpener } from "./DeathScene";
 import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
@@ -242,6 +244,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private dying: DeathPresentation | undefined;
   private deathView: DeathView | undefined;
   private deathModal = false;
+  private restoreDeathCamera: (() => void) | undefined;
   private progress!: GameObjects.Graphics;
   private loading = true;
   private zone!: ZoneState;
@@ -420,6 +423,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       this.dialogueObject = undefined;
       coverZone("dialogue", false);
+      cancelContactFeedback(this.events);
+      this.restoreDeathCamera?.();
+      this.restoreDeathCamera = undefined;
       this.scene.stop("death");
       coverZone("death", false);
       if (!this.backdrop && !this.preview) {
@@ -789,6 +795,18 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (death === undefined || this.dying !== undefined) {
       return;
     }
+    cancelContactFeedback(this.events);
+    const target = deathPresentationTarget(
+      DEATH,
+      BIRD,
+      (position) => deathSupport(BIRD, this.layout, this.zone, position),
+      this.zone.bird.facing,
+      death,
+    );
+    this.restoreDeathCamera = frameDeathCamera(this, {
+      ...BIRD_FRAME,
+      ...birdFrameAt(BIRD, BIRD_FRAME, { ...this.zone.bird, ...target }),
+    });
     const camera = this.cameras.main;
     this.deathView = {
       body: BIRD,
@@ -829,13 +847,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const frame = frameSteps({ maxFrameMs: MAX_FRAME_MS, stepMs: STEP_MS }, time, this.clock);
     this.clock = frame.clock;
     for (let step = 0; step < frame.steps; step++) {
-      this.dying = stepDeathPresentation(
-        DEATH,
-        view,
-        (position) => deathSupport(BIRD, this.layout, this.zone, position),
-        STEP_SECONDS,
-        this.dying,
-      );
+      this.dying = stepDeathPresentation(DEATH, view, STEP_SECONDS, this.dying);
     }
     this.drawDeath();
     if (this.dying.phase === "seated" && !this.deathModal) {
@@ -844,12 +856,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       const stage = this.stageKey();
       this.scene.launch("death", {
         activeSeconds: activeStageTime(stage),
-        bird: {
-          height: this.bird.height,
-          width: this.bird.width,
-          x: this.bird.x - this.cameras.main.scrollX,
-          y: this.bird.y - this.cameras.main.scrollY,
-        },
         runStats: { ...stageRunStats(stage) },
         ...deathLabels(ZONE_MAP, TEXT.map, String(this.zoneIndex + 1), stage),
         percent: this.progressFraction(),
@@ -880,6 +886,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       return;
     }
     cancelContactFeedback(this.events);
+    this.restoreDeathCamera?.();
+    this.restoreDeathCamera = undefined;
     this.barks?.reset();
     retryStageRun(this.stageKey());
     this.zone = retryZone(BIRD, this.layout, this.zone);
@@ -908,6 +916,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       return;
     }
     void flushStats();
+    cancelContactFeedback(this.events);
+    this.restoreDeathCamera?.();
+    this.restoreDeathCamera = undefined;
     coverZone("death", false);
     startWakeLock();
     this.scene.start("start");

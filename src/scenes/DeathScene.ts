@@ -4,7 +4,6 @@ import { type GameObjects, type Input, Scene } from "phaser";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
-import type { Rect } from "../data/types";
 import { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "../input/deathInput";
 import { deathCard } from "../layout/deathCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
@@ -26,7 +25,6 @@ import {
   type TextButton,
   TITLE_FONT,
 } from "./cardParts";
-import { frameDeathBackdrop } from "./deathCamera";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
@@ -34,7 +32,6 @@ import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DeathData extends DeathSummary {
   readonly runStats: RunStatsSummary;
-  readonly bird: Rect;
 }
 export interface DeathOpener {
   leaveDeath(): void;
@@ -57,7 +54,6 @@ export class DeathScene extends Scene {
       }
     | undefined;
   private finished = false;
-  private restoreCamera = () => {};
 
   constructor() {
     super("death");
@@ -140,7 +136,6 @@ export class DeathScene extends Scene {
     });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
-    this.restoreCamera = frameDeathBackdrop(this, this.layout.card, this.summary.bird);
     showModalBackdrop(this);
   }
   private render(): void {
@@ -165,7 +160,6 @@ export class DeathScene extends Scene {
       return;
     }
     this.finished = true;
-    this.restoreCamera();
     this.scene.stop();
     const opener = this.scene.get("zone") as unknown as DeathOpener;
     if (action === "retry") {
