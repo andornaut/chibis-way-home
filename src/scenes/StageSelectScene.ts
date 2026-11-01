@@ -31,6 +31,7 @@ import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
+import { refuseControl } from "./refuseControl";
 
 export interface StageSelectData {
   readonly destination: string;
@@ -48,6 +49,7 @@ interface StageCardView {
     readonly object: GameObjects.Image | GameObjects.BitmapText;
     readonly y: number;
   }[];
+  readonly labels: readonly GameObjects.BitmapText[];
   readonly layout: StageCardLayout;
   readonly normal: GameObjects.NineSlice;
   readonly pressed: GameObjects.NineSlice;
@@ -66,6 +68,7 @@ export class StageSelectScene extends Scene {
   private closeX!: GameObjects.Sprite;
   private buttons = new Map<string, StageCardView>();
   private finished = false;
+  private refusals = new Map<string, () => void>();
   constructor() {
     super("stageSelect");
   }
@@ -90,6 +93,7 @@ export class StageSelectScene extends Scene {
     this.pressed = undefined;
     this.buttons = new Map();
     this.finished = false;
+    this.refusals = new Map();
   }
   create(): void {
     fitPlayCamera(this);
@@ -149,6 +153,7 @@ export class StageSelectScene extends Scene {
       }
       this.buttons.set(id, {
         content: [image, name, number].map((object) => ({ object, y: object.y })),
+        labels: [name, number],
         layout,
         normal,
         pressed,
@@ -168,6 +173,9 @@ export class StageSelectScene extends Scene {
     });
     this.watchInput();
     modalInput(this).subscribe(() => {
+      for (const stop of this.refusals.values()) {
+        stop();
+      }
       this.pressed = undefined;
       this.render();
     });
@@ -188,7 +196,8 @@ export class StageSelectScene extends Scene {
   }
   private render(): void {
     for (const [id, button] of this.buttons) {
-      const pressed = this.pressed?.kind === "stage" && this.pressed.id === id;
+      const pressed =
+        this.available.includes(id) && this.pressed?.kind === "stage" && this.pressed.id === id;
       button.normal.setVisible(!pressed);
       button.pressed.setVisible(pressed);
       for (const { object, y } of button.content) {
@@ -208,15 +217,15 @@ export class StageSelectScene extends Scene {
   }
   private targetAt(pointer: Input.Pointer): Target | undefined {
     const areas: PressArea<string>[] = [
-      ...this.stages.flatMap((key, index) =>
-        this.available.includes(key)
-          ? [{ art: this.layout.buttons[index]!.button, hit: this.layout.buttons[index]!.hit, key }]
-          : [],
-      ),
+      ...this.stages.map((key, index) => ({
+        art: this.layout.buttons[index]!.button,
+        hit: this.layout.buttons[index]!.hit,
+        key,
+      })),
       { art: this.layout.close.art, hit: this.layout.close.hit, key: "close" },
     ];
     const key = pressedArea(areas, playPoint(this, pointer));
-    return key === undefined || (key !== "close" && !this.available.includes(key))
+    return key === undefined
       ? undefined
       : key === "close"
         ? { kind: "close" }
@@ -227,7 +236,21 @@ export class StageSelectScene extends Scene {
       this.back();
       return;
     }
-    if (this.finished || !this.available.includes(target.id)) {
+    if (this.finished || !modalInput(this).accepts()) {
+      return;
+    }
+    if (!this.available.includes(target.id)) {
+      const button = this.buttons.get(target.id);
+      if (button && !this.refusals.has(target.id)) {
+        const stop = refuseControl(
+          this,
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+          [button.normal, button.pressed, ...button.content.map(({ object }) => object)],
+          button.labels,
+          () => this.refusals.delete(target.id),
+        );
+        this.refusals.set(target.id, stop);
+      }
       return;
     }
     this.finished = true;
