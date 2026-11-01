@@ -1,5 +1,5 @@
 import { SCREEN, TILE, ZONE_ROWS } from "./screen";
-import type { ChunkPlan } from "./types";
+import type { ChunkPlan, Instance } from "./types";
 
 export const CHUNK_COLS = SCREEN.width / TILE;
 
@@ -148,4 +148,20 @@ export function encounterStart(
       { col: 40, cols: CHUNK_COLS - 40, look: "ground", row, rows: ZONE_ROWS - row },
     ],
   };
+}
+
+export function redCeiling(col: number, cols: number, underside: number): readonly Instance[] {
+  return [
+    { character: "red-edge-bottom", col, cols, role: "edge-bottom", row: underside },
+    { character: "red-edge-left", col: col - 1, role: "edge-left", row: underside - 2, rows: 2 },
+    {
+      character: "red-edge-right",
+      col: col + cols,
+      role: "edge-right",
+      row: underside - 2,
+      rows: 2,
+    },
+    { character: "red-edge-top", col, cols, role: "edge-top", row: underside - 3 },
+    { character: "red-edge-support", col, cols, role: "support", row: underside - 2, rows: 2 },
+  ];
 }
