@@ -588,6 +588,32 @@ function policyKey(
     }),
   ]);
 }
+function threats(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState) {
+  const sideThreat = layout.areas[zone.area]!.objects.some((object, index) => {
+    if (object.collision !== "hazard" || object.behaviour || object.motion.algorithm !== "static") {
+      return false;
+    }
+    const box = contactBox(object, zone.objects[index] ?? object.origin, 1);
+    return (
+      box.height > tuning.jumpHopHeight &&
+      box.width < box.height &&
+      box.y < zone.bird.y + tuning.height &&
+      box.y + box.height > zone.bird.y &&
+      Math.abs(box.x - zone.bird.x) <= tuning.width * 2
+    );
+  });
+  const threatened =
+    sideThreat ||
+    layout.areas[zone.area]!.objects.some(
+      (object, index) =>
+        object.collision === "hazard" &&
+        (object.behaviour ||
+          object.motion.algorithm !== "static" ||
+          object.reaction.kind !== "none") &&
+        Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
+    );
+  return { nearby: threatened, side: sideThreat };
+}
 function samePrediction(expected: ZoneState, actual: ZoneState, full: boolean): boolean {
   if (
     expected.area !== actual.area ||
@@ -696,29 +722,7 @@ export function plannedInput(
   }
   navigation.counters.decisions++;
   navigation.waypoint = waypoint(tuning, layout, direction, zone);
-  const sideThreat = layout.areas[zone.area]!.objects.some((object, index) => {
-    if (object.collision !== "hazard" || object.behaviour || object.motion.algorithm !== "static") {
-      return false;
-    }
-    const box = contactBox(object, zone.objects[index] ?? object.origin, 1);
-    return (
-      box.height > tuning.jumpHopHeight &&
-      box.width < box.height &&
-      box.y < zone.bird.y + tuning.height &&
-      box.y + box.height > zone.bird.y &&
-      Math.abs(box.x - zone.bird.x) <= tuning.width * 2
-    );
-  });
-  const threatened =
-    sideThreat ||
-    layout.areas[zone.area]!.objects.some(
-      (object, index) =>
-        object.collision === "hazard" &&
-        (object.behaviour ||
-          object.motion.algorithm !== "static" ||
-          object.reaction.kind !== "none") &&
-        Math.abs((zone.objects[index] ?? object.origin).x - zone.bird.x) <= SCREEN.width / 2,
-    );
+  const { nearby: threatened, side: sideThreat } = threats(tuning, layout, zone);
   const movingSupport = layout.areas[zone.area]!.objects.some(
     (object, index) =>
       (object.collision === "ledge" || object.collision === "solid") &&
@@ -899,7 +903,8 @@ export function plannedInput(
         predicted.bird.grounded &&
         tick > 0 &&
         tick <= limits.horizonTicks &&
-        ((jumped && landedAt !== undefined) || tick === limits.horizonTicks)
+        ((jumped && landedAt !== undefined) || tick === limits.horizonTicks) &&
+        threats(tuning, layout, predicted).nearby
       ) {
         const next = waypoint(tuning, layout, direction, predicted);
         followup = {
