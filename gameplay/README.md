@@ -46,17 +46,28 @@ Run statistics count the initial attempt and reset for a fresh generated run. De
 Targets are assessed per stage and player skill. Bands other than the successful-clear time target remain to be agreed with the user. The kinds of target:
 
 - **Encounter distribution:** satisfy the rulebook's encounter quotas across each zone’s catalogued stages, with distinct encounter sections, ordinary platforming between them and varied layout. Encounter spacing is flexible; it is not a time-based encounter rate
-- **Stage length:** target about two minutes of active play per successful stage in the first five zones, and about 90 seconds per Apartment floor (about nine minutes for Apartment). This target is unmeasured. It is a tuning target, not a hard time limit or a direct conversion to tile length. Track this generated run's total active time including retries separately from the historically fastest successful-attempt time, using the rulebook's active-time exclusions
+- **Stage length:** target about two minutes of active play per successful stage in the first five zones, and about 90 seconds per Apartment floor (about nine minutes for Apartment). Active-time calibration remains limited. It is a tuning target, not a hard time limit or a direct conversion to tile length. Track this generated run's total active time including retries separately from the historically fastest successful-attempt time, using the rulebook's active-time exclusions
 - **Reaches:** Chibi makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
 - **Session length:** the time to finish the game, by skill
 
+### Reported playtimes
+
+| Zone                 | Stage              | Reported clear time |
+| -------------------- | ------------------ | ------------------- |
+| Blue cityscape       | Parcel depot       | 1:06                |
+| Blue cityscape       | City streets       | 1:18                |
+| Blue cityscape       | City boundary      | 0:58                |
+| Industrial outskirts | Warehouse district | 1:06                |
+
+These four user-reported clears total 4:28 and average 1:07. They provide initial human pacing observations; layout seeds, retry counts and timer basis were not recorded, limiting comparison with successful-attempt active-time targets. Keep current recipe lengths unchanged.
+
 ## Remaining for the first build
 
 **Current implementation scope:** all six antagonists are always lethal on contact, periodically attempt a direct charge or body contact, and have distinct specials with data-driven frequencies. Archie adds a leaping pounce; Pebble pairs contact swoops with falling white-block poop; Trixi pairs ground rushes with visibly arming red-edged traps; Bini pairs charge and maul with the finite growl gust; Kiwi pairs ground charges with a vertical drop; Fert pairs charges with thrown parcels. Pebble's blocks disappear on landing, and Bini's push stops outside the gust or behind cover, with high ground the primary avoidance. These rules are paired with the matching runtime, values and art. Jump rules and the unresolved friendship outcome are unchanged.
 
-All twenty-one V1 stages are built. Successful-clear durations remain unmeasured; duration tuning and landscape-phone checks of jump feel, touch input and readability remain.
+All twenty-one V1 stages are built. Successful-clear active-time calibration remains limited; landscape-phone checks of jump feel, touch input and readability remain.
 
 Open questions:
 
