@@ -31,12 +31,16 @@
         color-scheme: light;
       }
       body.home {
-        background: var(--home-lgrey);
+        background: var(--home-blue);
         color: var(--home-ink);
         font: 16px/1.5 var(--home-font);
       }
       .home main {
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        isolation: isolate;
         flex: 1;
         min-height: 0;
         overflow-y: auto;
@@ -46,7 +50,9 @@
       }
       .home-content {
         display: grid;
-        grid-template-areas: "brand" "about" "actions" "keys";
+        position: relative;
+        flex: none;
+        grid-template-areas: "brand" "details";
         grid-template-columns: minmax(0, 558px);
         justify-content: center;
         justify-items: center;
@@ -58,8 +64,6 @@
       }
       .brand {
         grid-area: brand;
-        position: relative;
-        isolation: isolate;
         width: min(558px, 100%);
       }
       .scenery,
@@ -70,24 +74,24 @@
         pointer-events: none;
       }
       .scenery {
+        z-index: -1;
         overflow: hidden;
-        background: var(--home-blue);
       }
       .scenery::before,
       .scenery::after {
         content: "";
         background-repeat: repeat-x;
         background-position: center bottom;
-        background-size: 100% auto;
+        background-size: 720px 600px;
         image-rendering: pixelated;
       }
       .scenery::before {
         background-image: url("/art/backdrops/street-city-far.png");
-        opacity: 0.4;
+        opacity: 0.16;
       }
       .scenery::after {
         background-image: url("/art/backdrops/street-city-mid.png");
-        opacity: 0.3;
+        opacity: 0.12;
       }
       .hero {
         position: relative;
@@ -99,10 +103,16 @@
         height: auto;
         image-rendering: pixelated;
       }
-      .about {
-        grid-area: about;
+      .details {
+        grid-area: details;
         display: grid;
-        gap: 12px;
+        gap: 16px;
+        width: 100%;
+        max-width: 440px;
+      }
+      .about {
+        display: grid;
+        gap: 16px;
         max-width: 440px;
       }
       .pitch,
@@ -120,7 +130,6 @@
         color: var(--home-dslate);
       }
       .actions {
-        grid-area: actions;
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
@@ -171,14 +180,13 @@
         outline-offset: 3px;
       }
       .keys {
-        grid-area: keys;
         display: grid;
         gap: 8px;
         max-width: 440px;
         margin: 0;
         padding: 0;
         list-style: none;
-        font-size: 14px;
+        font-size: 16px;
       }
       .steps {
         box-sizing: border-box;
@@ -208,56 +216,43 @@
       .steps-close {
         justify-self: end;
       }
-      @media (min-width: 700px) and (orientation: landscape) {
+      @media (min-width: 900px) {
         .home-content {
-          grid-template-areas: "brand about" "brand keys" "actions .";
+          grid-template-areas: "brand details";
           grid-template-columns: minmax(0, 558px) minmax(0, 440px);
-          gap: 16px 32px;
+          gap: 32px;
           align-items: center;
           text-align: start;
         }
-        .about,
-        .actions,
-        .keys {
-          width: 100%;
-          justify-self: start;
-        }
-        .about {
-          align-self: end;
-        }
-        .keys {
-          align-self: start;
-        }
-      }
-      @media (min-height: 600px) and (min-width: 700px) {
-        .home main {
-          display: grid;
-          align-items: center;
+        .actions {
+          justify-content: flex-start;
         }
       }
     </style>
   </head>
   <body class="home">
     <main>
+      <div class="scenery" aria-hidden="true"></div>
       <div class="home-content">
         <div class="brand">
-          <div class="scenery" aria-hidden="true"></div>
           <h1 class="hero">
             <img class="logo" src="/art/logo.png" width="558" height="239" alt="Chibi's Way Home" />
           </h1>
         </div>
-        <div class="about">
-          <p class="pitch">%HOME_DESCRIPTION%</p>
-          <p class="sub">%HOME_SUBLINE%</p>
+        <div class="details">
+          <div class="about">
+            <p class="pitch">%HOME_DESCRIPTION%</p>
+            <p class="sub">%HOME_SUBLINE%</p>
+          </div>
+          <div class="actions">
+            <button class="install" id="install" type="button" hidden>%HOME_INSTALL%</button>
+            <a class="play" href="/play/">%HOME_PLAY%</a>
+          </div>
+          <ul class="keys">
+            <li>%HOME_TOUCH%</li>
+            <li>%HOME_KEYBOARD%</li>
+          </ul>
         </div>
-        <div class="actions">
-          <button class="install" id="install" type="button" hidden>%HOME_INSTALL%</button>
-          <a class="play" href="/play/">%HOME_PLAY%</a>
-        </div>
-        <ul class="keys">
-          <li>%HOME_TOUCH%</li>
-          <li>%HOME_KEYBOARD%</li>
-        </ul>
       </div>
     </main>
 
