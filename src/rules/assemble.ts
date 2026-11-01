@@ -461,6 +461,11 @@ export function zonePlanOf(
             ),
           ),
           ...doors,
+          ...chunks.flatMap((chunk, index) =>
+            (chunk.scenery ?? []).map((instance) =>
+              bindElement(theme.bindings, shiftInstance(at(index), instance)),
+            ),
+          ),
         ],
         outOfReach: chunks.flatMap((chunk, index) =>
           (chunk.outOfReach ?? []).map((spot) => shiftPoint(at(index), spot)),

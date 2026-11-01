@@ -23,12 +23,15 @@ export function sceneryParallax(object: ObjectLayout): Point | undefined {
     !factors ||
     (factors.x === 1 && factors.y === 1) ||
     object.contact !== undefined ||
+    (object.quirks?.length ?? 0) > 0 ||
     object.collision !== "none" ||
     object.interaction.kind !== "none" ||
     object.reaction.kind !== "none" ||
     object.motion.algorithm !== "static" ||
     (object.behaviour &&
-      Object.values(object.behaviour.states).some((state) => state.motion.kind !== "wait"))
+      Object.values(object.behaviour.states).some(
+        (state) => state.motion.kind !== "wait" || (state.onEnter?.length ?? 0) > 0,
+      ))
   ) {
     return undefined;
   }

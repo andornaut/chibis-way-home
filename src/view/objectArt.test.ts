@@ -79,6 +79,17 @@ describe("scenery sprite eligibility", () => {
     { motion: { algorithm: "linear" } },
     { reaction: { kind: "approach" } },
     { contact: {} },
+    { quirks: ["blink"] },
+    {
+      behaviour: {
+        states: { waiting: { motion: { kind: "wait" }, onEnter: [{ kind: "spawn" }] } },
+      },
+    },
+    {
+      behaviour: {
+        states: { waiting: { motion: { kind: "wait" }, onEnter: [{ kind: "force-pulse" }] } },
+      },
+    },
     { behaviour: { states: { moving: { motion: { kind: "move" } } } } },
   ])("retains sprite parallax rejection for physical or interactive state %j", (change) => {
     const invalid = { ...object, ...change } as ObjectLayout;

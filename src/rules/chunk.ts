@@ -1,4 +1,5 @@
 import type { ChunkPlan, ChunkSeam, Instance, StageRecipe, TileRect } from "../data/types";
+import { sceneryParallax } from "../view/objectArt";
 import {
   type ChunkLibrary,
   chunkPoolProblems,
@@ -202,13 +203,18 @@ export function chunkProblems(
         ...chunk,
         backdrops: (chunk.backdrops ?? []).map((instance) => bindElement(theme.bindings, instance)),
         objects: chunk.objects.map((instance) => bindElement(theme.bindings, instance)),
+        scenery: (chunk.scenery ?? []).map((instance) => bindElement(theme.bindings, instance)),
       };
     } catch (error) {
       problems.push(`${key}: ${error instanceof Error ? error.message : String(error)}`);
       continue;
     }
     let resolved = true;
-    for (const instance of [...(variant.backdrops ?? []), ...variant.objects]) {
+    for (const instance of [
+      ...(variant.backdrops ?? []),
+      ...variant.objects,
+      ...(variant.scenery ?? []),
+    ]) {
       const character = catalogue.characters[instance.character];
       if (!character || !catalogue.archetypes[character.archetype]) {
         problems.push(`no character ${instance.character}`);
@@ -224,6 +230,21 @@ export function chunkProblems(
       if (!inside(rows, chunk.cols, rect)) {
         problems.push(
           `${instance.character} at col ${instance.col} row ${instance.row} is outside`,
+        );
+      }
+    }
+    for (const instance of variant.scenery ?? []) {
+      try {
+        // Canonical checks need no visual metadata; the renderer validates sprite art and contact.
+        const physical = { ...instance };
+        delete physical.skin;
+        const object = objectLayout(1, catalogue, {}, undefined, {}, physical);
+        if (!sceneryParallax(object)) {
+          problems.push(`scenery ${instance.character} requires noninteractive static parallax`);
+        }
+      } catch (error) {
+        problems.push(
+          `scenery ${instance.character}: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }

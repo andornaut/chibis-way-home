@@ -621,6 +621,8 @@ export interface ChunkPlan {
   readonly noCross?: readonly NoCross[];
   readonly objects: readonly Instance[];
   readonly outOfReach?: readonly TilePoint[];
+  // Appended after existing objects and filled doors so their indices and motion seeds stay fixed.
+  readonly scenery?: readonly Instance[];
   readonly slots?: readonly ChunkSlot[];
   readonly solids: readonly TerrainRect[];
   readonly theme: string | readonly string[];
