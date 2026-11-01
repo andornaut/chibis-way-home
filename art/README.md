@@ -952,12 +952,12 @@ Backdrops repeat in x at widths that divide 720, so chunk seams never show; prop
 | park-reeds      | 24x30   | 610      | none   |
 | park-lily-pad   | 14x4    | 608      | none   |
 
-## Remaining for the first build
-
-- Any further encounter-specific animation or trap artwork requires an approved behaviour and asset contract.
-
-### Woodland species and background fauna
+## Woodland species and background fauna
 
 Woodland can mix broadleaf, conifer and birch depth layers between appropriate chunks. The existing broadleaf `woodland-far` and `forest-mid` remain the default. `woodland-far-conifers`, `forest-mid-conifers`, `woodland-far-birch` and `forest-mid-birch` retain 720x600, bottom-left y600 and repeat x. Far layers use the existing 0.15,0.05 parallax contract; middle layers use 0.4,0.15. Gameplay owns their chunk bindings and placement, including keeping exterior depth out of enclosed interiors.
 
 `art/tools/woodland_fauna.py` draws naturalistic decorative `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and `background-swallow` (24x12, centre 12,6; `flight` four 120ms frames). All tags loop. These sprites have no contact mask, hitbox, interaction or dialogue. The renderer owns background depth; gameplay owns placement, motion and timing. Keep them subdued and separate from lethal enemies and points of interest.
+
+## Remaining for the first build
+
+- Any further encounter-specific animation or trap artwork requires an approved behaviour and asset contract.
