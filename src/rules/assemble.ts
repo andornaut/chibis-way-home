@@ -19,6 +19,7 @@ import type {
 } from "../data/types";
 import { bindElement } from "./elementBinding";
 import { namespaceOrbitInstances } from "./orbit";
+import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry";
 
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
 // a zone's height in rows, and the characters by key, for the size of each theme's door.
@@ -65,7 +66,7 @@ export function recipeChunkPool(library: ChunkLibrary, recipe: ZoneRecipe): Chun
 
 export function chunkPoolProblems(
   library: ChunkLibrary,
-  context: Pick<ZoneRecipe, "finish" | "start" | "theme">,
+  context: Pick<ZoneRecipe, "finish" | "rows" | "start" | "theme">,
   pool: ChunkPool,
 ): string[] {
   const problems: string[] = [];
@@ -84,6 +85,8 @@ export function chunkPoolProblems(
     }
     if (!chunk) {
       problems.push(`no chunk ${id}`);
+    } else if (chunkRows(library, chunk) !== (context.rows ?? library.rows)) {
+      problems.push(`pool chunk ${id} height does not match its recipe`);
     } else if (
       id === context.start ||
       id === context.finish ||
@@ -97,12 +100,14 @@ export function chunkPoolProblems(
 
 function eligibleChunks(
   library: ChunkLibrary,
-  recipe: Pick<ZoneRecipe, "difficulty" | "difficultyWeights">,
+  recipe: Pick<ZoneRecipe, "difficulty" | "difficultyWeights" | "rows">,
   pool: ChunkPool,
 ): ChunkPool {
   return pool.filter((id) => {
-    const { difficulty } = chunkOf(library, id);
+    const chunk = chunkOf(library, id);
+    const { difficulty } = chunk;
     return (
+      chunkRows(library, chunk) === (recipe.rows ?? library.rows) &&
       difficulty >= recipe.difficulty.min &&
       difficulty <= recipe.difficulty.max &&
       (recipe.difficultyWeights?.[difficulty] ?? 1) > 0
@@ -364,6 +369,10 @@ export function zonePlanOf(
   }
   const chunks = ids.map((id) => chunkOf(library, id));
   const first = chunks[0];
+  const rows = first ? chunkRows(library, first) : library.rows;
+  if (!validRows(rows) || chunks.some((chunk) => chunkRows(library, chunk) !== rows)) {
+    throw new Error("Assembled chunks must share one positive authored height");
+  }
   if (!first || !Number.isInteger(spawnCol) || spawnCol <= 1 || spawnCol >= first.cols) {
     throw new Error(
       `Spawn column ${spawnCol} must be an integer beyond the first column and inside the opening chunk`,
@@ -479,7 +488,7 @@ export function zonePlanOf(
         outOfReach: chunks.flatMap((chunk, index) =>
           (chunk.outOfReach ?? []).map((spot) => shiftPoint(at(index), spot)),
         ),
-        rows: library.rows,
+        rows,
         slots: slots.map((slot) => {
           const fill = filled.get(slot);
           return fill === undefined ? slot : { ...slot, fill };
@@ -534,12 +543,16 @@ export function orderedRecipeProblems(library: ChunkLibrary, recipe: OrderedZone
       (!Number.isInteger(cap.cols) ||
         cap.cols < library.rules.cols.min ||
         cap.cols > library.rules.cols.max ||
-        !themesOf(cap).includes(section.theme))
+        !themesOf(cap).includes(section.theme) ||
+        chunkRows(library, cap) !== (section.rows ?? library.rows))
     ) {
       problems.push(`invalid cap ${id} for section ${section.id}`);
     }
   }
   for (const [index, section] of recipe.sections.entries()) {
+    if (!validRows(section.rows ?? library.rows)) {
+      problems.push(`invalid height for section ${section.id}`);
+    }
     if (!library.themes[section.theme]) {
       problems.push(`no theme ${section.theme}`);
     }
@@ -548,6 +561,7 @@ export function orderedRecipeProblems(library: ChunkLibrary, recipe: OrderedZone
         library,
         {
           finish: recipe.finish,
+          ...(section.rows !== undefined && { rows: section.rows }),
           start: recipe.start,
           theme: section.theme,
         },
@@ -772,13 +786,16 @@ function assembleOrdered(
         ...middle,
         ...(index === order.length - 1 ? [recipe.finish] : []),
       ];
-      const single = zonePlanOf(
-        library,
-        randomStream(seed, `slots:${key}:${section.id}`),
-        fillsOf(section),
-        section.theme,
-        section.spawnCol,
-        ids,
+      const single = applyStageGeometry(
+        section,
+        zonePlanOf(
+          library,
+          randomStream(seed, `slots:${key}:${section.id}`),
+          fillsOf(section),
+          section.theme,
+          section.spawnCol,
+          ids,
+        ),
       ).areas[ASSEMBLED_AREA];
       if (!single) {
         throw new Error(`No assembled section ${section.id}`);
@@ -831,7 +848,10 @@ function assembleOrdered(
       ];
     }),
   );
-  return { areaOrder: order, areas, start: { area: order[0] ?? "", entry: START_ENTRY } };
+  return applyStageGeometry(
+    { ...(recipe.stageExit && { stageExit: recipe.stageExit }) },
+    { areaOrder: order, areas, start: { area: order[0] ?? "", entry: START_ENTRY } },
+  );
 }
 
 // The zone key's recipe assembled for a seed: its start chunk, a seeded run of its
@@ -852,6 +872,13 @@ export function assembleZone(
       throw new Error(problems.join("; "));
     }
   }
+  const rows = recipe.rows ?? library.rows;
+  if (
+    !validRows(rows) ||
+    [recipe.start, recipe.finish].some((id) => chunkRows(library, chunkOf(library, id)) !== rows)
+  ) {
+    throw new Error("Recipe height must match its authored caps");
+  }
   const run = searchRun(library, randomStream(seed, `assemble:${key}`), recipe);
   if (!run) {
     throw new Error(
@@ -861,12 +888,15 @@ export function assembleZone(
         "with slots for its events and doors",
     );
   }
-  return zonePlanOf(
-    library,
-    randomStream(seed, `slots:${key}`),
-    fillsOf(recipe),
-    recipe.theme,
-    recipe.spawnCol,
-    [recipe.start, ...run, recipe.finish],
+  return applyStageGeometry(
+    recipe,
+    zonePlanOf(
+      library,
+      randomStream(seed, `slots:${key}`),
+      fillsOf(recipe),
+      recipe.theme,
+      recipe.spawnCol,
+      [recipe.start, ...run, recipe.finish],
+    ),
   );
 }

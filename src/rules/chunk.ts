@@ -10,6 +10,7 @@ import {
 } from "./assemble";
 import { bindElement } from "./elementBinding";
 import { orbitBounds, resolveOrbits } from "./orbit";
+import { chunkRows, validRows } from "./stageGeometry";
 import { type Catalogue, objectLayout } from "./tiles";
 
 // A rectangle in tiles, as columns [left, right) and rows [top, bottom).
@@ -184,8 +185,11 @@ export function chunkProblems(
   chunk: ChunkPlan,
 ): string[] {
   const { cols } = library.rules;
-  const { rows } = library;
+  const rows = chunkRows(library, chunk);
   const problems: string[] = [];
+  if (!validRows(rows)) {
+    problems.push(`invalid chunk height ${rows}`);
+  }
   if (!Number.isInteger(chunk.cols) || chunk.cols < cols.min || chunk.cols > cols.max) {
     problems.push(`${chunk.cols} cols, outside ${cols.min} to ${cols.max}`);
   }
@@ -193,7 +197,7 @@ export function chunkProblems(
     ["entry", chunk.entry],
     ["exit", chunk.exit],
   ] as const) {
-    if (!library.seams.includes(seam.row)) {
+    if (!library.seams.includes(seam.row) || seam.row <= 0 || seam.row > rows) {
       problems.push(`${side} row ${seam.row} is not a seam row`);
     }
   }
@@ -340,6 +344,10 @@ export function recipeProblems(library: ChunkLibrary, recipe: StageRecipe): stri
     return orderedRecipeProblems(library, recipe);
   }
   const problems: string[] = [];
+  const rows = recipe.rows ?? library.rows;
+  if (!validRows(rows)) {
+    problems.push(`invalid recipe height ${rows}`);
+  }
   const { max: hardest, min: easiest } = recipe.difficulty;
   if (
     !Number.isInteger(easiest) ||
@@ -357,6 +365,8 @@ export function recipeProblems(library: ChunkLibrary, recipe: StageRecipe): stri
     const chunk = library.chunks[id];
     if (!chunk) {
       problems.push(`no chunk ${id}`);
+    } else if (chunkRows(library, chunk) !== rows) {
+      problems.push(`cap ${id} height does not match its recipe`);
     } else if (!themesOf(chunk).includes(recipe.theme)) {
       problems.push(`chunk ${id} is not drawn in ${recipe.theme}`);
     }

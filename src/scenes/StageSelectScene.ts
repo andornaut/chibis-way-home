@@ -10,9 +10,15 @@ import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
 import { RECIPES, ZONES } from "../data/zones";
-import { stageSelectKey } from "../input/stageSelectInput";
+import { stagePickerKey } from "../input/stageSelectInput";
+import { cardTextOrigin } from "../layout/contentCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { STAGE_NUMBER_SCALE, stageSelectCard } from "../layout/stageSelectCard";
+import {
+  STAGE_NUMBER_SCALE,
+  stagePageOf,
+  STAGES_PER_PAGE,
+  stageSelectPages,
+} from "../layout/stageSelectCard";
 import { openMap } from "../rules/map";
 import { destinationOf, destinationSelection } from "../rules/mapDestinations";
 import { savedMap } from "../save";
@@ -20,11 +26,14 @@ import {
   addCardText,
   addCardTextIn,
   addSlice,
+  addTextButton,
   BODY_FONT,
   captureTab,
   cardFonts,
   paletteColour,
+  pressTextButton,
   ringFocus,
+  type TextButton,
   TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
@@ -41,9 +50,12 @@ export interface StageSelectOpener {
   stageSelectionClosed(): void;
 }
 
-type Target = { readonly kind: "stage"; readonly id: string } | { readonly kind: "close" };
+type Target =
+  | { readonly kind: "stage"; readonly id: string }
+  | { readonly kind: "close" }
+  | { readonly kind: "page"; readonly step: -1 | 1 };
 const PLANS = new Set([...Object.keys(ZONES), ...Object.keys(RECIPES)]);
-type StageCardLayout = ReturnType<typeof stageSelectCard>["buttons"][number];
+type StageCardLayout = ReturnType<typeof stageSelectPages>["buttons"][number];
 interface StageCardView {
   readonly content: readonly {
     readonly object: GameObjects.Image | GameObjects.BitmapText;
@@ -57,10 +69,13 @@ interface StageCardView {
 
 // Catalogue positions are fixed. Locked cards stay visible but cannot receive focus or activate.
 export class StageSelectScene extends Scene {
-  private layout!: ReturnType<typeof stageSelectCard>;
+  private layout!: ReturnType<typeof stageSelectPages>;
   private stages: readonly string[] = [];
   private available: readonly string[] = [];
   private latest = "";
+  private page = 0;
+  private pager = new Map<"previousPage" | "nextPage", TextButton>();
+  private pageCount: GameObjects.BitmapText | undefined;
   private destination = "";
   private focus: string | undefined;
   private ring: GameObjects.NineSlice | undefined;
@@ -87,6 +102,9 @@ export class StageSelectScene extends Scene {
     this.stages = catalogue.stages;
     this.available = selection.stages;
     this.latest = selection.latest;
+    this.page = stagePageOf(this.stages, this.latest);
+    this.pager = new Map();
+    this.pageCount = undefined;
     this.destination = destination;
     this.focus = undefined;
     this.ring = undefined;
@@ -101,8 +119,9 @@ export class StageSelectScene extends Scene {
     if (title === undefined) {
       throw new Error(`No destination label ${this.destination}`);
     }
-    this.layout = stageSelectCard(
+    this.layout = stageSelectPages(
       cardFonts(this),
+      TEXT.map.stagePages,
       title,
       this.stages.map((id) => TEXT.map.stages[id]!),
     );
@@ -159,6 +178,21 @@ export class StageSelectScene extends Scene {
         pressed,
       });
     });
+    if (this.layout.pager) {
+      for (const [key, layout, text] of [
+        ["previousPage", this.layout.pager.previous, TEXT.map.stagePages.previous],
+        ["nextPage", this.layout.pager.next, TEXT.map.stagePages.next],
+      ] as const) {
+        this.pager.set(key, addTextButton(this, layout, text));
+      }
+      this.pageCount = addCardTextIn(
+        this,
+        BODY_FONT,
+        this.layout.pager.count,
+        this.pageText(),
+        paletteColour(this, "ink"),
+      );
+    }
     this.closeX = this.add
       .sprite(this.layout.close.at.x, this.layout.close.at.y, "ui-close")
       .setOrigin(0);
@@ -168,7 +202,8 @@ export class StageSelectScene extends Scene {
       covered: () => [
         this.layout.card,
         this.layout.close.hit,
-        ...this.layout.buttons.map(({ hit }) => hit),
+        ...this.visibleStages().map((id) => this.buttons.get(id)!.layout.hit),
+        ...[...this.pager.values()].map(({ layout }) => layout.hit),
       ],
     });
     this.watchInput();
@@ -196,13 +231,29 @@ export class StageSelectScene extends Scene {
   }
   private render(): void {
     for (const [id, button] of this.buttons) {
+      const visible = this.visibleStages().includes(id);
       const pressed =
         this.available.includes(id) && this.pressed?.kind === "stage" && this.pressed.id === id;
-      button.normal.setVisible(!pressed);
-      button.pressed.setVisible(pressed);
+      button.normal.setVisible(visible && !pressed);
+      button.pressed.setVisible(visible && pressed);
       for (const { object, y } of button.content) {
-        object.setY(y + (pressed ? 1 : 0));
+        object.setVisible(visible).setY(y + (pressed ? 1 : 0));
       }
+    }
+    for (const [key, button] of this.pager) {
+      const enabled = this.pageKeys().includes(key);
+      const pressed =
+        enabled &&
+        this.pressed?.kind === "page" &&
+        this.pressed.step === (key === "previousPage" ? -1 : 1);
+      pressTextButton(button, pressed);
+      button.faces.normal.setTint(paletteColour(this, enabled ? "white" : "lgrey"));
+      button.label.label.setTint(paletteColour(this, enabled ? "ink" : "grey"));
+    }
+    if (this.pageCount && this.layout.pager) {
+      const text = this.pageText();
+      const origin = cardTextOrigin(cardFonts(this).body, this.layout.pager.count, text);
+      this.pageCount.setText(text).setPosition(origin.x, origin.y);
     }
     this.closeX.play(
       animationKey("ui-close", this.pressed?.kind === "close" ? "pressed" : "normal"),
@@ -212,14 +263,20 @@ export class StageSelectScene extends Scene {
         ? this.layout.close.art
         : this.focus === undefined
           ? undefined
-          : this.buttons.get(this.focus)?.layout.button;
+          : (this.pager.get(this.focus as "previousPage" | "nextPage")?.layout.button ??
+            this.buttons.get(this.focus)?.layout.button);
     this.ring = ringFocus(this, this.ring, at);
   }
   private targetAt(pointer: Input.Pointer): Target | undefined {
     const areas: PressArea<string>[] = [
-      ...this.stages.map((key, index) => ({
-        art: this.layout.buttons[index]!.button,
-        hit: this.layout.buttons[index]!.hit,
+      ...this.visibleStages().map((key) => ({
+        art: this.layout.buttons[this.stages.indexOf(key)]!.button,
+        hit: this.layout.buttons[this.stages.indexOf(key)]!.hit,
+        key,
+      })),
+      ...[...this.pager].map(([key, button]) => ({
+        art: button.layout.button,
+        hit: button.layout.hit,
         key,
       })),
       { art: this.layout.close.art, hit: this.layout.close.hit, key: "close" },
@@ -229,7 +286,9 @@ export class StageSelectScene extends Scene {
       ? undefined
       : key === "close"
         ? { kind: "close" }
-        : { id: key, kind: "stage" };
+        : key === "previousPage" || key === "nextPage"
+          ? { kind: "page", step: key === "previousPage" ? -1 : 1 }
+          : { id: key, kind: "stage" };
   }
   private activate(target: Target): void {
     if (target.kind === "close") {
@@ -237,6 +296,13 @@ export class StageSelectScene extends Scene {
       return;
     }
     if (this.finished || !modalInput(this).accepts()) {
+      return;
+    }
+    if (target.kind === "page") {
+      this.changePage(this.page + target.step);
+      return;
+    }
+    if (!this.visibleStages().includes(target.id)) {
       return;
     }
     if (!this.available.includes(target.id)) {
@@ -257,14 +323,70 @@ export class StageSelectScene extends Scene {
     this.scene.stop();
     (this.scene.get("map") as unknown as StageSelectOpener).stageSelected(target.id);
   }
+  private visibleStages(): readonly string[] {
+    return this.stages.slice(this.page * STAGES_PER_PAGE, (this.page + 1) * STAGES_PER_PAGE);
+  }
+  private pageKeys(): ("previousPage" | "nextPage")[] {
+    return [
+      ...(this.page > 0 ? ["previousPage" as const] : []),
+      ...(this.page + 1 < this.layout.pages ? ["nextPage" as const] : []),
+    ];
+  }
+  private pageText(): string {
+    return TEXT.map.stagePages.page
+      .replace("{page}", String(this.page + 1))
+      .replace("{pages}", String(this.layout.pages));
+  }
+  private changePage(page: number): void {
+    if (page === this.page || !modalInput(this).accepts()) {
+      return;
+    }
+    if (page < 0 || page >= this.layout.pages) {
+      const button = this.pager.get(page < 0 ? "previousPage" : "nextPage");
+      const key = page < 0 ? "previousPage" : "nextPage";
+      if (button && !this.refusals.has(key)) {
+        this.refusals.set(
+          key,
+          refuseControl(
+            this,
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+            [button.faces.normal, button.faces.pressed, button.label.label],
+            [button.label.label],
+            () => this.refusals.delete(key),
+          ),
+        );
+      }
+      return;
+    }
+    for (const stop of this.refusals.values()) {
+      stop();
+    }
+    this.refusals.clear();
+    this.pressed = undefined;
+    this.page = page;
+    if (this.focus !== undefined && !this.visibleStages().includes(this.focus)) {
+      this.focus = this.visibleStages().find((id) => this.available.includes(id));
+    }
+    modalInput(this).invalidate();
+    this.render();
+  }
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
       if (!modalInput(this).accepts(event)) {
         return;
       }
       event.stopPropagation();
-      const next = stageSelectKey(this.latest, this.available, this.focus, event);
+      const next = stagePickerKey(
+        { focus: this.focus, latest: this.latest, pages: this.pageKeys(), stages: this.available },
+        event,
+      );
       this.focus = next.focus;
+      if (next.focus !== undefined && this.stages.includes(next.focus)) {
+        this.changePage(stagePageOf(this.stages, next.focus));
+      }
+      if (next.page !== undefined) {
+        this.changePage(this.page + next.page);
+      }
       this.render();
       if (next.close) {
         this.back();
@@ -289,7 +411,9 @@ export class StageSelectScene extends Scene {
         down &&
         up &&
         down.kind === up.kind &&
-        (down.kind === "close" || (up.kind === "stage" && down.id === up.id))
+        (down.kind === "close" ||
+          (down.kind === "stage" && up.kind === "stage" && down.id === up.id) ||
+          (down.kind === "page" && up.kind === "page" && down.step === up.step))
       ) {
         this.activate(down);
       }

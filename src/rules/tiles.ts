@@ -315,7 +315,26 @@ export function zoneLayout(
   flags: ReadonlySet<string>,
   plan: ZonePlan,
 ): ZoneLayout {
+  if (plan.stageExit) {
+    const { area, rect } = plan.stageExit;
+    const target = plan.areas[area];
+    if (
+      !target ||
+      ![rect.col, rect.cols, rect.row, rect.rows].every(Number.isFinite) ||
+      rect.col < 0 ||
+      rect.row < 0 ||
+      rect.cols <= 0 ||
+      rect.rows <= 0 ||
+      rect.col + rect.cols > target.cols ||
+      rect.row + rect.rows > target.rows
+    ) {
+      throw new Error("Stage exit must fit inside a real area");
+    }
+  }
   const layout: ZoneLayout = {
+    ...(plan.stageExit && {
+      stageExit: { area: plan.stageExit.area, rect: tileRect(tile, plan.stageExit.rect) },
+    }),
     ...(plan.areaOrder && { areaOrder: plan.areaOrder }),
     areas: Object.fromEntries(
       Object.entries(plan.areas).map(([name, area]) => [

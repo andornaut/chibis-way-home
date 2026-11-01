@@ -9,7 +9,7 @@ import { CARD_FONTS } from "../testing/cardFonts";
 import { CARD_CONTENT } from "./contentCard";
 import { type PressArea, pressedArea } from "./hitAreas";
 import { CARD_TEXT_SCALE } from "./pauseCard";
-import { stageSelectCard } from "./stageSelectCard";
+import { stagePageOf, STAGES_PER_PAGE, stageSelectCard, stageSelectPages } from "./stageSelectCard";
 const STAGE_SELECT_CARD = stageSelectCard(
   CARD_FONTS,
   TEXT.map.zones[ZONE_MAP.destinations[0]!.id]!,
@@ -21,7 +21,12 @@ const STAGE_SELECT_CARD = stageSelectCard(
 describe("stage picker layout", () => {
   it.each(ZONE_MAP.destinations)("fits every $id stage label without shrinking", (destination) => {
     const labels = destination.stages.map((id) => TEXT.map.stages[id]!);
-    const layout = stageSelectCard(CARD_FONTS, TEXT.map.zones[destination.id]!, labels);
+    const layout = stageSelectPages(
+      CARD_FONTS,
+      TEXT.map.stagePages,
+      TEXT.map.zones[destination.id]!,
+      labels,
+    );
     for (const card of layout.buttons) {
       for (const line of card.text.split("\n")) {
         expect(inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, line)).toBeLessThanOrEqual(
@@ -95,5 +100,39 @@ describe("stage picker layout", () => {
     for (const { art, key } of areas) {
       expect(pressedArea(areas, { x: art.x + art.width / 2, y: art.y + art.height / 2 })).toBe(key);
     }
+  });
+});
+
+describe("paged stage-picker layout", () => {
+  it("keeps six screenshot cards full size and reserves independent standard pager controls", () => {
+    const labels = Array.from({ length: 6 }, (_, index) => `Floor ${index + 1}`);
+    const layout = stageSelectPages(CARD_FONTS, TEXT.map.stagePages, "Apartment", labels);
+    expect(layout.pages).toBe(Math.ceil(labels.length / STAGES_PER_PAGE));
+    expect(stagePageOf(labels, labels[4]!)).toBe(1);
+    for (const button of layout.buttons) {
+      expect(button.preview).toMatchObject({
+        height: STAGE_SELECT_CARD.buttons[0]!.preview.height,
+        width: STAGE_SELECT_CARD.buttons[0]!.preview.width,
+      });
+      expect(button.button).toMatchObject({
+        height: STAGE_SELECT_CARD.buttons[0]!.button.height,
+        width: STAGE_SELECT_CARD.buttons[0]!.button.width,
+      });
+    }
+    expect(layout.card.y).toBeGreaterThanOrEqual(0);
+    expect(layout.card.y + layout.card.height).toBeLessThanOrEqual(SCREEN.height);
+    expect(layout.card.x + layout.card.width - layout.close.art.x - layout.close.art.width).toBe(
+      CARD_CONTENT.closeInset,
+    );
+    expect(layout.pager!.previous.hit.width).toBeGreaterThanOrEqual(48);
+    expect(layout.pager!.previous.hit.height).toBeGreaterThanOrEqual(48);
+    expect(layout.pager!.previous.hit.x + layout.pager!.previous.hit.width).toBeLessThan(
+      layout.pager!.count.x,
+    );
+    expect(layout.pager!.count.x + layout.pager!.count.width).toBeLessThan(
+      layout.pager!.next.hit.x,
+    );
+    const bottom = Math.max(...layout.buttons.map(({ hit }) => hit.y + hit.height));
+    expect(bottom).toBeLessThanOrEqual(layout.pager!.previous.hit.y);
   });
 });

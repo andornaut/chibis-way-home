@@ -2,9 +2,17 @@ import { wrapWords } from "@andornaut/game-kit/lines";
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 
 import { SCREEN } from "../data/screen";
+import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { CARD_CONTENT, type CardFonts, cardTextSize, contentCardLayout } from "./contentCard";
+import {
+  CARD_CONTENT,
+  cardActionsSize,
+  type CardFonts,
+  cardTextSize,
+  contentCardLayout,
+} from "./contentCard";
 import { hitAround, hitMargin } from "./hitAreas";
+import { labelledButton } from "./labelledButton";
 
 export const STAGE_NUMBER_SCALE = 1.5;
 const PREVIEW_WIDTH = 168;
@@ -19,10 +27,45 @@ const STAGE_FACE = {
   width: PREVIEW_WIDTH + 2 * INSET,
 };
 
+export const STAGES_PER_PAGE = Math.max(
+  1,
+  Math.floor((SCREEN.width - 3 * CARD_CONTENT.padding) / (STAGE_FACE.width + CARD_CONTENT.padding)),
+);
+export interface StagePageLabels {
+  readonly next: string;
+  readonly page: string;
+  readonly previous: string;
+}
+
+export function stagePageOf(stages: readonly string[], stage: string): number {
+  return Math.floor(Math.max(0, stages.indexOf(stage)) / STAGES_PER_PAGE);
+}
+
 export function stageSelectCard(fonts: CardFonts, title: string, labels: readonly string[]) {
+  return stageSelectPages(fonts, undefined, title, labels);
+}
+
+export function stageSelectPages(
+  fonts: CardFonts,
+  pagerLabels: StagePageLabels | undefined,
+  title: string,
+  labels: readonly string[],
+) {
   if (labels.length === 0) {
     throw new Error("A stage picker requires at least one catalogue stage");
   }
+  const pages = Math.ceil(labels.length / STAGES_PER_PAGE);
+  if (pages > 1 && !pagerLabels) {
+    throw new Error("A paged stage picker requires pager labels");
+  }
+  const visible = Math.min(labels.length, STAGES_PER_PAGE);
+  const pagerSize =
+    pagerLabels && pages > 1
+      ? cardActionsSize(fonts.body, "row", [pagerLabels.previous, pagerLabels.next])
+      : undefined;
+  const countText =
+    pagerLabels?.page.replace("{page}", String(pages)).replace("{pages}", String(pages)) ?? "";
+  const countSize = cardTextSize(fonts.body, countText);
   const layout = contentCardLayout(
     { ...SCREEN, x: 0, y: 0 },
     [
@@ -30,8 +73,25 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
         height: STAGE_FACE.height,
         hitOutset: hitMargin({ ...STAGE_FACE, x: 0, y: 0 }),
         key: "stages",
-        width: labels.length * STAGE_FACE.width + (labels.length - 1) * CARD_CONTENT.padding,
+        width: visible * STAGE_FACE.width + (visible - 1) * CARD_CONTENT.padding,
       },
+      ...(pagerSize
+        ? [
+            {
+              ...pagerSize,
+              height:
+                pagerSize.height +
+                hitMargin({ ...STAGE_FACE, x: 0, y: 0 }) +
+                2 * (pagerSize.hitOutset ?? 0),
+              key: "pager",
+              width:
+                pagerSize.width +
+                countSize.width +
+                CARD_CONTENT.gap +
+                2 * (pagerSize.hitOutset ?? 0),
+            },
+          ]
+        : []),
     ],
     { close: true, titleWidth: cardTextSize(fonts.title, title).width },
   );
@@ -40,6 +100,26 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
   const centredTitle = titleRect && {
     ...titleRect,
     y: (titleRect.y + group.y - CARD_CONTENT.gap - titleRect.height) / 2,
+  };
+  const pagerGroup = layout.groups.pager;
+  const pager = pagerGroup &&
+    pagerSize && {
+      ...pagerGroup,
+      height: pagerSize.height,
+      y: pagerGroup.y + hitMargin({ ...STAGE_FACE, x: 0, y: 0 }) + (pagerSize.hitOutset ?? 0),
+    };
+  const pagerWidth = pagerSize ? (pagerSize.width - CARD_CONTENT.gap) / 2 : 0;
+  const pagerLayout = pager && {
+    count: {
+      ...countSize,
+      x: pager.x + (pager.width - countSize.width) / 2,
+      y: pager.y + (pager.height - countSize.height) / 2,
+    },
+    next: labelledButton(
+      { ...pager, width: pagerWidth, x: pager.x + pager.width - pagerWidth },
+      TEXT_BUTTON.labelDy,
+    ),
+    previous: labelledButton({ ...pager, width: pagerWidth }, TEXT_BUTTON.labelDy),
   };
   return {
     buttons: labels.map((label, index) => {
@@ -56,7 +136,7 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
       }
       const button = {
         ...STAGE_FACE,
-        x: group.x + index * (STAGE_FACE.width + CARD_CONTENT.padding),
+        x: group.x + (index % STAGES_PER_PAGE) * (STAGE_FACE.width + CARD_CONTENT.padding),
         y: group.y,
       };
       const textX = button.x + INSET;
@@ -81,6 +161,8 @@ export function stageSelectCard(fonts: CardFonts, title: string, labels: readonl
     }),
     card: layout.card,
     close: layout.close!,
+    pager: pagerLayout,
+    pages,
     title: centredTitle!,
   };
 }

@@ -807,8 +807,13 @@ export function stepZone(
       },
     };
   }
-  const link =
-    box.x < area.backX
+  const atStageExit =
+    layout.stageExit !== undefined &&
+    layout.stageExit.area === zone.area &&
+    overlaps(box, layout.stageExit.rect);
+  const link = atStageExit
+    ? undefined
+    : box.x < area.backX
       ? area.walkLinks?.left
       : box.x + box.width > area.exitX
         ? area.walkLinks?.right
@@ -828,15 +833,16 @@ export function stepZone(
     };
   }
   const usePressed = input.useHeld && !zone.useHeld;
-  const door = usePressed
-    ? doorAt(tuning, layout.birdFrame, area.objects, positions, bird)
-    : undefined;
+  const door =
+    usePressed && !atStageExit
+      ? doorAt(tuning, layout.birdFrame, area.objects, positions, bird)
+      : undefined;
   return {
     ...zone,
     barks,
     behaviours,
     bird,
-    cleared: box.x + box.width > area.exitX,
+    cleared: layout.stageExit ? atStageExit : box.x + box.width > area.exitX,
     door,
     nextPulseId,
     nextTransientId: transientStep.nextId,
@@ -846,7 +852,7 @@ export function stepZone(
     spotted,
     steps,
     transients: transientStep.entities,
-    turnedBack: box.x < area.backX,
+    turnedBack: !atStageExit && box.x < area.backX,
     useHeld: input.useHeld,
   };
 }

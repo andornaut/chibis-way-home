@@ -2,12 +2,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map";
 
-const state = vi.hoisted(() => ({ accepts: true, refuse: vi.fn(() => vi.fn()) }));
+const state = vi.hoisted(() => ({
+  accepts: true,
+  invalidate: vi.fn(),
+  refuse: vi.fn(() => vi.fn()),
+}));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./cardParts", () => ({}));
+vi.mock("./cardParts", () => ({ ringFocus: vi.fn() }));
 vi.mock("./modalBackdrop", () => ({ showModalBackdrop: vi.fn() }));
 vi.mock("./modalInput", () => ({
-  modalInput: () => ({ accepts: () => state.accepts }),
+  modalInput: () => ({ accepts: () => state.accepts, invalidate: state.invalidate }),
   onScenePointer: vi.fn(),
 }));
 vi.mock("./playCamera", () => ({
@@ -96,4 +100,53 @@ describe("disabled stage screenshot cards", () => {
     expect(state.refuse).not.toHaveBeenCalled();
     expect(f.opener.stageSelected).not.toHaveBeenCalled();
   });
+});
+
+it("rejects hidden stage activation and clears held capture when changing pages", () => {
+  const f = fixture();
+  const scene = f.scene as unknown as {
+    activate(target: { id: string; kind: "stage" }): void;
+    changePage(page: number): void;
+    page: number;
+    pressed: unknown;
+    render(): void;
+  };
+  const render = vi.fn();
+  Object.assign(scene, {
+    available: [f.available, "hidden"],
+    focus: f.available,
+    layout: { pages: 2 },
+    pressed: { id: f.available, kind: "stage" },
+    render,
+    stages: [f.available, f.locked, "middle", "hidden"],
+  });
+  scene.activate({ id: "hidden", kind: "stage" });
+  expect(f.opener.stageSelected).not.toHaveBeenCalled();
+  scene.changePage(1);
+  expect(scene.page).toBe(1);
+  expect(scene.pressed).toBeUndefined();
+  expect(state.invalidate).toHaveBeenCalledOnce();
+  expect(render).toHaveBeenCalledOnce();
+  scene.activate({ id: "hidden", kind: "stage" });
+  expect(f.opener.stageSelected).toHaveBeenCalledExactlyOnceWith("hidden");
+});
+
+it("hides every off-page face and content object while retaining full-size on-page cards", () => {
+  const part = () => ({ setVisible: vi.fn().mockReturnThis(), setY: vi.fn().mockReturnThis() });
+  const visible = { content: [{ object: part(), y: 100 }], normal: part(), pressed: part() };
+  const hidden = { content: [{ object: part(), y: 100 }], normal: part(), pressed: part() };
+  const scene = Object.assign(new StageSelectScene(), {
+    available: ["one", "four"],
+    buttons: new Map([
+      ["one", visible],
+      ["four", hidden],
+    ]),
+    closeX: { play: vi.fn() },
+    stages: ["one", "two", "three", "four"],
+  }) as unknown as { render(): void };
+  scene.render();
+  expect(visible.normal.setVisible).toHaveBeenCalledWith(true);
+  expect(hidden.normal.setVisible).toHaveBeenCalledWith(false);
+  expect(hidden.pressed.setVisible).toHaveBeenCalledWith(false);
+  expect(hidden.content[0]!.object.setVisible).toHaveBeenCalledWith(false);
 });
