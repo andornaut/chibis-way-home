@@ -548,9 +548,10 @@ function action(
   const travel = candidate.travel ?? direction;
   if (candidate.stopAt !== undefined) {
     const remaining = travel * (candidate.stopAt - zone.bird.x);
-    const accel = zone.bird.grounded ? tuning.groundAccel : tuning.airAccel;
     const braking =
-      (zone.bird.vx * zone.bird.vx) / (2 * accel) + Math.abs(zone.bird.vx) * STEP_SECONDS + 2;
+      (zone.bird.vx * zone.bird.vx) / (2 * tuning.brakeAccel) +
+      Math.abs(zone.bird.vx) * STEP_SECONDS +
+      2;
     return {
       jumpHeld: active < candidate.hold,
       move: remaining > braking ? travel : 0,
