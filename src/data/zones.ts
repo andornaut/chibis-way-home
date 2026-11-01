@@ -1,5 +1,5 @@
 import { CHUNK_COLS } from "./chunkTemplates";
-import type { StageRecipe, ZonePlan } from "./types";
+import type { ChunkPool, StageRecipe, ZonePlan } from "./types";
 
 // PLACEHOLDER: parkour test zones, until gameplay designs the real zones.
 //
@@ -286,7 +286,7 @@ const DIFFICULTY_PROFILES = {
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
 const STAGE_ENCOUNTERS = { first: 0, later: 1 } as const;
-const STAGE_LENGTH = { max: 24 * CHUNK_COLS, min: 20 * CHUNK_COLS } as const;
+const STAGE_LENGTH = { max: 16 * CHUNK_COLS, min: 14 * CHUNK_COLS } as const;
 
 function sectionLength(count: number, index: number) {
   const minChunks = STAGE_LENGTH.min / CHUNK_COLS;
@@ -297,26 +297,96 @@ function sectionLength(count: number, index: number) {
   };
 }
 
-const APARTMENT_CHALLENGE_CHUNKS = [
-  "city-boundary-climb-yard",
-  "city-boundary-dog-high",
-  "city-boundary-dog-terrace",
+const GROUND_CHALLENGES: ChunkPool = [
   "city-boundary-ground-hazard",
   "compound-ascent",
   "compound-compact-ascent",
   "compound-compact-climb",
-  "compound-double-lift",
-  "compound-lift-shuttle",
   "compound-low-ceiling-hazard",
-  "compound-low-ceiling-shuttle",
-  "compound-patrol-lift",
-  "compound-return-high",
-  "compound-return-shuttle",
   "compound-return-terrace",
+];
+const JUMP_CHALLENGES: ChunkPool = [
+  "city-boundary-edge-yard",
+  "city-boundary-gaps",
+  "city-boundary-jumps",
+  "city-boundary-low-ceiling",
+  "city-boundary-return-gap",
+  "city-boundary-steps",
+  "city-boundary-upper-climb",
+];
+const PATROL_YARDS: ChunkPool = [
+  "city-boundary-climb-yard",
+  "city-boundary-dog-high",
+  "city-boundary-dog-terrace",
   "patrol-cover-early",
   "patrol-cover-late",
   "patrol-cover-middle",
-] as const;
+];
+const STAGE_CHUNK_POOLS = {
+  blue: [
+    ...GROUND_CHALLENGES,
+    ...JUMP_CHALLENGES,
+    ...PATROL_YARDS,
+    "city-boundary-lift",
+    "city-boundary-shuttle",
+    "compound-return-shuttle",
+  ],
+  countryside: [
+    ...GROUND_CHALLENGES,
+    ...JUMP_CHALLENGES,
+    ...PATROL_YARDS,
+    "city-boundary-shuttle",
+    "compound-low-ceiling-shuttle",
+    "compound-return-high",
+    "compound-return-shuttle",
+  ],
+  home: [
+    ...GROUND_CHALLENGES,
+    "climbing-enemy-lane",
+    "compound-double-lift",
+    "compound-low-ceiling-shuttle",
+    "compound-return-high",
+    "compound-vertical-yard",
+    "vertical-stack-early",
+    "vertical-stack-late",
+    "vertical-stack-middle",
+  ],
+  industrial: [
+    ...GROUND_CHALLENGES,
+    ...JUMP_CHALLENGES,
+    "bounded-flyer-post",
+    "city-boundary-lift",
+    "city-boundary-shuttle",
+    "compound-double-lift",
+    "compound-lift-shuttle",
+    "compound-low-ceiling-shuttle",
+    "compound-perch-yard",
+    "compound-return-high",
+    "flyer-shelter-early",
+    "flyer-shelter-late",
+    "flyer-shelter-middle",
+  ],
+  woodland: [
+    ...GROUND_CHALLENGES,
+    "compound-double-lift",
+    "compound-low-ceiling-shuttle",
+    "compound-return-high",
+    "compound-return-shuttle",
+    "growl-clearing",
+    "growl-cover-early",
+    "growl-cover-late",
+    "growl-cover-middle",
+  ],
+} satisfies Readonly<Record<string, ChunkPool>>;
+const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
+  ...GROUND_CHALLENGES,
+  ...PATROL_YARDS,
+  "compound-double-lift",
+  "compound-lift-shuttle",
+  "compound-low-ceiling-shuttle",
+  "compound-patrol-lift",
+  "compound-return-high",
+];
 const APARTMENT_CAPS = {
   finish: "apartment-finish",
   start: "apartment-start",
@@ -334,6 +404,7 @@ const APARTMENT_SECTION_DEFAULTS = {
 export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "back-streets": {
     ...DIFFICULTY_PROFILES.home,
+    chunks: STAGE_CHUNK_POOLS.home,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -345,6 +416,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "city-boundary": {
     ...DIFFICULTY_PROFILES.blue,
+    chunks: STAGE_CHUNK_POOLS.blue,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -356,6 +428,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "city-outskirts": {
     ...DIFFICULTY_PROFILES.home,
+    chunks: STAGE_CHUNK_POOLS.home,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.first,
     events: [],
@@ -367,6 +440,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "city-streets": {
     ...DIFFICULTY_PROFILES.blue,
+    chunks: STAGE_CHUNK_POOLS.blue,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -413,6 +487,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "country-lanes": {
     ...DIFFICULTY_PROFILES.countryside,
+    chunks: STAGE_CHUNK_POOLS.countryside,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -424,6 +499,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "deep-woods": {
     ...DIFFICULTY_PROFILES.woodland,
+    chunks: STAGE_CHUNK_POOLS.woodland,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -457,6 +533,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "familiar-neighbourhood": {
     ...DIFFICULTY_PROFILES.home,
+    chunks: STAGE_CHUNK_POOLS.home,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -468,6 +545,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   farmland: {
     ...DIFFICULTY_PROFILES.countryside,
+    chunks: STAGE_CHUNK_POOLS.countryside,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.first,
     events: [],
@@ -479,6 +557,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "forest-paths": {
     ...DIFFICULTY_PROFILES.woodland,
+    chunks: STAGE_CHUNK_POOLS.woodland,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.first,
     events: [],
@@ -490,6 +569,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "freight-terminal": {
     ...DIFFICULTY_PROFILES.industrial,
+    chunks: STAGE_CHUNK_POOLS.industrial,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -503,6 +583,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   // No events exist yet.
   "loading-yards": {
     ...DIFFICULTY_PROFILES.industrial,
+    chunks: STAGE_CHUNK_POOLS.industrial,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -524,6 +605,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   ravine: {
     ...DIFFICULTY_PROFILES.woodland,
+    chunks: STAGE_CHUNK_POOLS.woodland,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -535,6 +617,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "river-crossing": {
     ...DIFFICULTY_PROFILES.countryside,
+    chunks: STAGE_CHUNK_POOLS.countryside,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.later,
     events: [],
@@ -576,6 +659,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   street: {
     ...DIFFICULTY_PROFILES.blue,
+    chunks: STAGE_CHUNK_POOLS.blue,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.first,
     events: [],
@@ -587,6 +671,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   },
   "warehouse-district": {
     ...DIFFICULTY_PROFILES.industrial,
+    chunks: STAGE_CHUNK_POOLS.industrial,
     doors: [{ count: 1, room: "test" }],
     encounters: STAGE_ENCOUNTERS.first,
     events: [],
