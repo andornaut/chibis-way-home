@@ -545,9 +545,13 @@ describe("bounded real-rule navigation", () => {
     let usedGroundEscape = false;
     let followupAt: number | undefined;
     let usedFollowup = false;
+    let followupLandingAt: number | undefined;
+    let replannedAfterFollowup = false;
     for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
       const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
       const decision = navigationSnapshot(bot)!;
+      replannedAfterFollowup ||=
+        followupLandingAt === zone.steps && decision.didReplan && zone.bird.grounded;
       expect(decision.candidates.length).toBeLessThanOrEqual(NAVIGATION_VALIDATION.maxCandidates);
       expect(
         decision.candidates.every(
@@ -563,6 +567,13 @@ describe("bounded real-rule navigation", () => {
             (candidate.executionProgress ?? candidate.forwardProgress) ===
               decision.predictedProgress,
         );
+        if (
+          selected?.followup &&
+          selected.executionSteps !== undefined &&
+          selected.executionSteps < selected.physicsSteps
+        ) {
+          followupLandingAt = zone.steps + selected.executionSteps;
+        }
         followupAt =
           selected?.followup === undefined ? undefined : zone.steps + selected.followup.startTick;
       }
@@ -574,6 +585,78 @@ describe("bounded real-rule navigation", () => {
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
     expect(usedGroundEscape).toBe(true);
     expect(usedFollowup).toBe(true);
+    expect(replannedAfterFollowup).toBe(true);
+  });
+  it.each([
+    { bump: false, first: 552, floor: 564, name: "walk off a low bump", roof: 480 },
+    { bump: true, first: 564, floor: 564, name: "tap over a low bump", roof: 480 },
+    {
+      bump: false,
+      first: 432,
+      floor: 432,
+      name: "pass under a red-covered refuge roof",
+      roof: 372,
+    },
+  ])("chooses a safe follow-up to $name", ({ bump, first, floor, roof }) => {
+    const roofX = roof === 372 ? 144 : 0;
+    const base = fixture([
+      { height: 720 - first, width: 144, x: 0, y: first },
+      ...(bump ? [{ height: 720 - floor + 12, width: 24, x: 144, y: floor - 12 }] : []),
+      { height: 720 - floor, width: 576, x: 144, y: floor },
+    ]);
+    const roofSolid = {
+      ...movingObject("solid", { x: roofX, y: roof }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 360,
+    };
+    const edge = {
+      ...movingObject("hazard", { x: roofX, y: roof + 3 }),
+      height: 3,
+      motion: STATIC_MOTION,
+      width: 360,
+    };
+    const top = { ...edge, origin: { x: roofX, y: roof - 3 } };
+    const actor: ObjectLayout = {
+      ...movingObject("hazard", { x: 300, y: 0 }),
+      behaviour: {
+        axis: "x",
+        distance: 0,
+        initial: "wait",
+        states: { wait: { animation: "idle", motion: { kind: "wait" }, transitions: [] } },
+      },
+      motion: STATIC_MOTION,
+    };
+    const layout: ZoneLayout = {
+      ...base,
+      areas: {
+        main: {
+          ...base.areas.main!,
+          entries: { start: { x: 60, y: first } },
+          exitX: 660,
+          height: 720,
+          objects: [roofSolid, edge, top, actor],
+          width: 720,
+        },
+      },
+    };
+    const bot = newBot(1);
+    let zone = stepZone(
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      startZone(BIRD, layout, 1),
+    );
+    let unsafeRoofTarget = false;
+    for (let tick = 0; tick < 900 && !zone.cleared && !zone.death; tick++) {
+      const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
+      unsafeRoofTarget ||= navigationSnapshot(bot)?.waypoint?.y === roof;
+      zone = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
+    }
+    expect(unsafeRoofTarget).toBe(false);
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
   });
   it("retains grounded walking when jumping under a roof is lethal", () => {
     const base = fixture([

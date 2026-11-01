@@ -326,10 +326,42 @@ function supports(layout: ZoneLayout, zone: ZoneState): Rect[] {
   });
   return result;
 }
+// Static lethal bands remove only the landing spans their contact boxes cover.
+function landingSurfaces(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): Rect[] {
+  const hazards = layout.areas[zone.area]!.objects.filter(
+    (object) =>
+      object.collision === "hazard" &&
+      !object.behaviour &&
+      object.motion.algorithm === "static" &&
+      object.reaction.kind === "none",
+  ).map((object) => contactBox(object, object.origin, 1));
+  return supports(layout, zone).flatMap((surface) => {
+    let spans = [surface];
+    for (const hazard of hazards) {
+      if (hazard.y >= surface.y || hazard.y + hazard.height <= surface.y - tuning.height) {
+        continue;
+      }
+      spans = spans.flatMap((span) => {
+        const left = Math.max(span.x, hazard.x),
+          right = Math.min(span.x + span.width, hazard.x + hazard.width);
+        if (left >= right) {
+          return [span];
+        }
+        return [
+          ...(left > span.x ? [{ ...span, width: left - span.x }] : []),
+          ...(right < span.x + span.width
+            ? [{ ...span, width: span.x + span.width - right, x: right }]
+            : []),
+        ];
+      });
+    }
+    return spans.filter((span) => span.width >= tuning.width);
+  });
+}
 // The nearest blocking face selects a local support goal; every action still needs real-rule validation.
 function waypoint(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zone: ZoneState) {
   const area = layout.areas[zone.area]!;
-  const surfaces = supports(layout, zone);
+  const surfaces = landingSurfaces(tuning, layout, zone);
   const foot = zone.bird.y + tuning.height,
     front = zone.bird.x + (direction === 1 ? tuning.width : 0);
   const distance = (rect: Rect) => (direction === 1 ? rect.x - front : front - rect.x - rect.width);
@@ -431,6 +463,53 @@ function approachEdge(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1,
     target = direction === 1 ? Math.min(target, safe) : Math.max(target, safe);
   }
   return target;
+}
+function followupHold(
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  direction: -1 | 1,
+  full: number,
+  zone: ZoneState,
+): number {
+  const next = waypoint(tuning, layout, direction, zone);
+  const rise = next ? Math.max(0, zone.bird.y + tuning.height - next.y) : 0;
+  const area = layout.areas[zone.area]!;
+  const ceilings = [
+    ...area.solids,
+    ...area.objects.flatMap((object, index) =>
+      object.collision === "solid"
+        ? [
+            contactBox(
+              object,
+              zone.objects[index] ?? object.origin,
+              zone.behaviours[index]?.facing ?? 1,
+              zone.behaviours[index]?.axis,
+            ),
+          ]
+        : [],
+    ),
+  ];
+  const clearance = Math.min(
+    Infinity,
+    ...ceilings
+      .filter(
+        (rect) =>
+          rect.y + rect.height <= zone.bird.y &&
+          rect.x < zone.bird.x + tuning.width &&
+          rect.x + rect.width > zone.bird.x,
+      )
+      .map((rect) => zone.bird.y - rect.y - rect.height),
+  );
+  if (rise > tuning.jumpHopHeight) {
+    return full;
+  }
+  if (clearance < tuning.jumpHopHeight) {
+    return 0;
+  }
+  if (clearance < (tuning.jumpSpeed * tuning.jumpRiseTime) / 2) {
+    return rise > 0 ? 1 : 0;
+  }
+  return rise > 0 ? 1 : full;
 }
 interface Candidate {
   readonly stopAt?: number | undefined;
@@ -772,7 +851,7 @@ export function plannedInput(
         followup = {
           back: 0,
           delay: 0,
-          hold: full,
+          hold: followupHold(tuning, layout, direction, full, predicted),
           stationary: 0,
           stopAt: next?.width === undefined ? undefined : next.x + (next.width - tuning.width) / 2,
         };
@@ -847,7 +926,7 @@ export function plannedInput(
           ? "airborne"
           : null;
     const executionSteps =
-      landedAt !== undefined && landedAt >= limits.horizonTicks && !followup
+      landedAt !== undefined && landedAt >= limits.horizonTicks
         ? Math.min(inputs.length, landedAt + 2)
         : inputs.length;
     const executionEnd = states[executionSteps] ?? predicted;
