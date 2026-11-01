@@ -377,9 +377,9 @@ function matches(
   if (condition.kind === "visible") {
     return targetVisible(
       world,
+      object,
       contactBox(object, at, state.facing, state.axis),
       birdBox(tuning, bird),
-      object,
     );
   }
   if (condition.kind === "elapsed") {

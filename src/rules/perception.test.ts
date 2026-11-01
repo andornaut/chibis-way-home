@@ -127,12 +127,15 @@ describe("screen and solid line-of-sight acquisition", () => {
     const target = { height: 36, width: 24, x: 48, y: 264 };
     const wall = { height: 200, width: 24, x: 180, y: 100 };
     const view = { height: 360, width: 720, x: 0, y: 60 };
-    expect(targetVisible({ solids: [], view }, observer, target)).toBe(true);
-    expect(targetVisible({ solids: [] }, observer, target)).toBe(false);
-    expect(targetVisible({ solids: [], view }, { ...observer, x: 900 }, target)).toBe(false);
+    expect(targetVisible({ solids: [], view }, undefined, observer, target)).toBe(true);
+    expect(targetVisible({ solids: [] }, undefined, observer, target)).toBe(false);
+    expect(targetVisible({ solids: [], view }, undefined, { ...observer, x: 900 }, target)).toBe(
+      false,
+    );
     expect(
       targetVisible(
         { platforms: [{ collision: "solid", owner: actor, rect: wall }], solids: [], view },
+        undefined,
         observer,
         target,
       ),
@@ -140,6 +143,7 @@ describe("screen and solid line-of-sight acquisition", () => {
     expect(
       targetVisible(
         { platforms: [{ collision: "ledge", owner: actor, rect: wall }], solids: [], view },
+        undefined,
         observer,
         target,
       ),
@@ -147,9 +151,9 @@ describe("screen and solid line-of-sight acquisition", () => {
     expect(
       targetVisible(
         { platforms: [{ collision: "solid", owner: actor, rect: observer }], solids: [], view },
+        actor,
         observer,
         target,
-        actor,
       ),
     ).toBe(true);
   });

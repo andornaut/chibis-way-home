@@ -43,9 +43,9 @@ function crosses(rect: Rect, from: Point, to: Point): boolean {
 // Ledges do not occlude sight. The observer's own solid body never blocks its view.
 export function targetVisible(
   world: BehaviourWorld,
+  owner: ObjectLayout | undefined,
   observer: Rect,
   target: Rect,
-  owner?: ObjectLayout,
 ): boolean {
   const centre = (rect: Rect): Point => ({
     x: rect.x + rect.width / 2,

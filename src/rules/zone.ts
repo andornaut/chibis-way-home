@@ -480,9 +480,9 @@ export function stepZone(
       !seen.has(index) &&
       targetVisible(
         geometry,
+        object,
         contactBox(object, zone.objects[index] ?? object.origin, state.facing, state.axis),
         birdBox(tuning, zone.bird),
-        object,
       )
     ) {
       seen.add(index);
