@@ -8,30 +8,71 @@ const duration = 0.25;
 const frame = { ...BIRD_FRAME, x: 100, y: 80 };
 const active = { direction: 1, remainingSeconds: duration } as const;
 
-describe("dash wind outside the full padded frame", () => {
+describe("bordered dash wind outside the full padded frame", () => {
   it.each(DASH_TRAIL.lines.map((line, index) => ({ index, line })))(
-    "mirrors line $index with its complete frame gap empty",
+    "mirrors line $index while keeping the outer border gap empty",
     ({ line }) => {
-      const right = dashTrail(DASH_TRAIL, duration, frame, active).filter(
-        (pixel) => pixel.y === frame.y + line.y,
+      const pixels = dashTrail(DASH_TRAIL, duration, frame, active);
+      const right = pixels.filter(
+        (pixel) => pixel.y === frame.y + line.y - DASH_TRAIL.borderThickness,
       );
-      const left = dashTrail(DASH_TRAIL, duration, frame, { ...active, direction: -1 }).filter(
-        (pixel) => pixel.y === frame.y + line.y,
+      const mirrored = dashTrail(DASH_TRAIL, duration, frame, { ...active, direction: -1 });
+      const left = mirrored.filter(
+        (pixel) => pixel.y === frame.y + line.y - DASH_TRAIL.borderThickness,
       );
-      expect(right).toHaveLength(line.length);
+      const leftCore = mirrored.filter((pixel) => pixel.y === frame.y + line.y);
+      const core = pixels.filter((pixel) => pixel.y === frame.y + line.y);
+      expect(right).toHaveLength(line.length + 2 * DASH_TRAIL.borderThickness);
+      expect(core).toHaveLength(line.length);
       expect(right[0]!.x + 1).toBe(frame.x - line.gap);
       expect(left[0]!.x).toBe(frame.x + frame.width + line.gap);
+      expect(core[0]!.x + core[0]!.width).toBe(frame.x - line.gap - DASH_TRAIL.borderThickness);
+      expect(leftCore[0]!.x).toBe(frame.x + frame.width + line.gap + DASH_TRAIL.borderThickness);
+      expect(leftCore).toEqual(
+        core.map((pixel) => ({ ...pixel, x: 2 * frame.x + frame.width - 1 - pixel.x })),
+      );
+      expect(core[0]!.height).toBe(DASH_TRAIL.thickness);
+      expect(right[0]!.height).toBe(DASH_TRAIL.thickness + 2 * DASH_TRAIL.borderThickness);
       expect(left).toEqual(
         right.map((pixel) => ({ ...pixel, x: 2 * frame.x + frame.width - 1 - pixel.x })),
       );
-      expect(
-        right.every((pixel) => pixel.height === DASH_TRAIL.thickness && pixel.x < frame.x),
-      ).toBe(true);
-      expect(left.every((pixel) => pixel.x >= frame.x + frame.width)).toBe(true);
+      expect(pixels.every((pixel) => pixel.x + pixel.width <= frame.x)).toBe(true);
       expect(right.at(-1)?.alpha).toBe(0);
+      expect(core.at(-1)!.alpha).toBeLessThan(core[0]!.alpha);
     },
   );
-  it("shortens and fades with actual normalized active age and has no post-dash tail", () => {
+
+  it("draws every ink perimeter before any cream core", () => {
+    const pixels = dashTrail(DASH_TRAIL, duration, frame, active);
+    const firstCore = pixels.findIndex((pixel) => pixel.colour !== DASH_TRAIL.borderColour);
+    expect(firstCore).toBeGreaterThan(0);
+    expect(
+      pixels.slice(0, firstCore).every((pixel) => pixel.colour === DASH_TRAIL.borderColour),
+    ).toBe(true);
+    expect(pixels.slice(firstCore).every((pixel) => pixel.colour !== DASH_TRAIL.borderColour)).toBe(
+      true,
+    );
+  });
+
+  it.each([
+    { alpha: 255, remaining: duration },
+    { alpha: 223, remaining: duration / 2 },
+    { alpha: 191, remaining: duration / 10000 },
+  ])(
+    "keeps the first six core columns readable at remaining=$remaining",
+    ({ alpha, remaining }) => {
+      const pixels = dashTrail(DASH_TRAIL, duration, frame, {
+        ...active,
+        remainingSeconds: remaining,
+      });
+      for (const line of DASH_TRAIL.lines) {
+        const core = pixels.filter((pixel) => pixel.y === frame.y + line.y);
+        expect(core.slice(0, 6).map((pixel) => pixel.alpha)).toEqual(Array(6).fill(alpha));
+      }
+    },
+  );
+
+  it("shortens by actual normalized age and disappears with no post-dash tail", () => {
     const full = dashTrail(DASH_TRAIL, duration, frame, active);
     const half = dashTrail(DASH_TRAIL, duration, frame, {
       ...active,
@@ -39,14 +80,8 @@ describe("dash wind outside the full padded frame", () => {
     });
     expect(
       DASH_TRAIL.lines.map((line) => half.filter((pixel) => pixel.y === frame.y + line.y).length),
-    ).toEqual([28, 21, 14]);
-    expect(
-      DASH_TRAIL.lines.map((line) => half.find((pixel) => pixel.y === frame.y + line.y)!.alpha),
-    ).toEqual([92, 77, 63]);
-    expect(full[15]!.alpha).toBe(99);
+    ).toEqual([32, 24, 16]);
     expect(half.length).toBeLessThan(full.length);
-    expect(half[0]!.alpha).toBeGreaterThan(0);
-    expect(half[0]!.alpha).toBeLessThan(full[0]!.alpha);
     expect(half).toEqual(
       dashTrail(DASH_TRAIL, duration * 2, frame, { ...active, remainingSeconds: duration }),
     );

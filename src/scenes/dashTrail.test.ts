@@ -22,7 +22,12 @@ it("clears on pause, draws only active dash time and ignores all calls after shu
     events,
     sys: { isActive: () => active },
   } as unknown as Scene;
-  const wind = mountDashTrail(DASH_TRAIL, 1, () => 0xead4aa, scene);
+  const wind = mountDashTrail(
+    DASH_TRAIL,
+    1,
+    (name) => (name === DASH_TRAIL.borderColour ? 0x181425 : 0xead4aa),
+    scene,
+  );
   const frame = { ...BIRD_FRAME, x: 100, y: 100 };
   const dash = {
     airUsed: false,
@@ -33,6 +38,11 @@ it("clears on pause, draws only active dash time and ignores all calls after shu
   } as const;
   wind.draw(0.25, frame, dash);
   expect(graphics.fillRect).toHaveBeenCalled();
+  const colours = graphics.fillStyle.mock.calls.map(([colour]) => colour);
+  const firstCore = colours.indexOf(0xead4aa);
+  expect(firstCore).toBeGreaterThan(0);
+  expect(colours.slice(0, firstCore).every((colour) => colour === 0x181425)).toBe(true);
+  expect(colours.slice(firstCore).every((colour) => colour === 0xead4aa)).toBe(true);
   const before = graphics.clear.mock.calls.length;
   active = false;
   events.emit("pause");

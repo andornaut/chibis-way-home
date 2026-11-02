@@ -24,24 +24,42 @@ export function dashTrail(
     return [];
   }
   const age = clamp01(1 - dash.remainingSeconds / durationSeconds);
-  const pixels: DashTrailPixel[] = [];
+  const borders: DashTrailPixel[] = [];
+  const cores: DashTrailPixel[] = [];
+  const border = tuning.borderThickness;
+  const headEnd = tuning.headColumns - 1;
   for (const line of tuning.lines) {
     const length = Math.max(1, Math.round(line.length * (1 - tuning.lengthDecay * age)));
-    const strength = line.alpha * (1 - age) ** tuning.timeFadeExponent;
+    const strength = line.alpha * (1 - tuning.headDecay * age);
+    const alpha = (plateau: number, column: number) =>
+      Math.round(
+        255 *
+          strength *
+          (1 - clamp01((column - plateau) / Math.max(1, length - headEnd))) **
+            tuning.tipFadeExponent,
+      );
+    const x = (gap: number, column: number) =>
+      dash.direction === 1 ? frame.x - gap - 1 - column : frame.x + frame.width + gap + column;
+    for (let column = 0; column < length + 2 * border; column++) {
+      borders.push({
+        alpha: alpha(headEnd + border, column),
+        colour: tuning.borderColour,
+        height: tuning.thickness + 2 * border,
+        width: 1,
+        x: x(line.gap, column),
+        y: frame.y + line.y - border,
+      });
+    }
     for (let column = 0; column < length; column++) {
-      const progress = column / Math.max(1, length - 1);
-      pixels.push({
-        alpha: Math.round(255 * strength * (1 - progress) ** tuning.tipFadeExponent),
+      cores.push({
+        alpha: alpha(headEnd, column),
         colour: line.colour,
         height: tuning.thickness,
         width: 1,
-        x:
-          dash.direction === 1
-            ? frame.x - line.gap - 1 - column
-            : frame.x + frame.width + line.gap + column,
+        x: x(line.gap + border, column),
         y: frame.y + line.y,
       });
     }
   }
-  return pixels;
+  return [...borders, ...cores];
 }
