@@ -1253,6 +1253,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (flow.kind === "next-stage") {
         this.scene.start("cutscene", {
           clearedStage: this.mapNode,
+          percent: 1,
           runStats,
           stage: flow.stage,
           wholeRun,
@@ -1266,6 +1267,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.scene.launch("zoneDeparture", {
           cleared: !turnedBack,
           clearedStage: this.mapNode,
+          percent: turnedBack ? this.progressFraction() : 1,
           runStats,
           stage: this.mapNode,
           wholeRun,

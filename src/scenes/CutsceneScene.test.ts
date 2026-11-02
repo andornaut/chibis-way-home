@@ -40,6 +40,7 @@ function cutscene() {
   const scene = new CutsceneScene();
   scene.init({
     clearedStage: "cleared-stage",
+    percent: 1,
     runStats: { attemptSeconds: 65, attempts: 2, bestSeconds: 65, runSeconds: 120 },
     stage: "next-stage",
     wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
@@ -107,6 +108,7 @@ it("draws the current clear statement once per entry, never on focus or resume",
   scene.events.emit("resume");
   expect(drawStatsStatement).toHaveBeenCalledExactlyOnceWith(scene, "clear", "cleared-stage");
   expect(vi.mocked(addStageSummary).mock.lastCall?.[2]).toMatchObject({
+    percent: 1,
     stage: "cleared-stage",
     wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
     zoneStats: { completed: 1 },
@@ -118,6 +120,7 @@ it("keeps final-zone Continue on the existing opener continuation without an exc
   vi.mocked(scene.scene.get).mockReturnValue(opener as never);
   scene.init({
     clearedStage: "cleared-stage",
+    percent: 1,
     runStats: { attemptSeconds: 1, attempts: 1, bestSeconds: 1, runSeconds: 1 },
     stage: "unused-next",
     wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
@@ -145,6 +148,7 @@ it("preserves a turned-back summary without claiming a clear or inventing a stat
   scene.init({
     cleared: false,
     clearedStage: "cleared-stage",
+    percent: 0.37,
     runStats: { attemptSeconds: 1, attempts: 1, bestSeconds: undefined, runSeconds: 1 },
     stage: "unused-next",
     wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
@@ -160,5 +164,8 @@ it("preserves a turned-back summary without claiming a clear or inventing a stat
   });
   scene.create();
   expect(drawStatsStatement).not.toHaveBeenCalled();
-  expect(vi.mocked(addStageSummary).mock.lastCall?.[2]).toMatchObject({ stage: "cleared-stage" });
+  expect(vi.mocked(addStageSummary).mock.lastCall?.[2]).toMatchObject({
+    percent: 0.37,
+    stage: "cleared-stage",
+  });
 });

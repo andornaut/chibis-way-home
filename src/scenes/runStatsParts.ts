@@ -23,6 +23,7 @@ export function addStageSummary(
   scene: Scene,
   bounds: Rect,
   data: {
+    readonly percent: number;
     readonly stage: string;
     readonly runStats: RunStatsSummary;
     readonly zoneStats: ZoneStatsSummary;

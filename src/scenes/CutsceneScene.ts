@@ -24,6 +24,7 @@ import { addStageSummary } from "./runStatsParts";
 import { drawStatsStatement } from "./statsStatement";
 
 export interface CutsceneData {
+  readonly percent: number;
   readonly stage: string;
   readonly clearedStage: string;
   readonly cleared?: boolean;
@@ -60,6 +61,7 @@ export class CutsceneScene extends Scene {
       drawStatsStatement(this, "clear", this.summary.clearedStage);
     }
     addStageSummary(this, STAGE_SUMMARY_BOUNDS, {
+      percent: this.summary.percent,
       runStats: this.summary.runStats,
       stage: this.summary.clearedStage,
       wholeRun: this.summary.wholeRun,

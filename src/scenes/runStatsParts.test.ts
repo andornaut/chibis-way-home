@@ -36,6 +36,7 @@ it("paints current-stage results and aggregate totals without background fills",
   } as unknown as Scene;
   const runStats = { attemptSeconds: 30, attempts: 2, bestSeconds: 20, runSeconds: 50 };
   const data = {
+    percent: 1,
     runStats,
     stage,
     wholeRun: { activeSeconds: 123456, completed: 19, deaths: 9876, total: 21 },
