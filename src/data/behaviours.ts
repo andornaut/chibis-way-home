@@ -52,6 +52,7 @@ const GROUND_TRAVERSAL = {
   gravity: BIRD.gravity / TILE,
   jumpSpeed: BIRD.jumpSpeed / TILE,
   maxFallSpeed: BIRD.flutterFallSpeed / TILE,
+  prepSeconds: 0.6,
 };
 
 const DETECTION = [{ kind: "visible" }] as const;
