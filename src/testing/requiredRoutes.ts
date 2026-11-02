@@ -1,4 +1,11 @@
+import { BIRD } from "../data/bird";
+import { CHUNKS, EXTERIOR_DEPTH_ALIASES, WOODLAND_DEPTH_ALIASES } from "../data/chunks";
 import { ROOMS } from "../data/rooms";
+import { TILE } from "../data/screen";
+import type { ChunkPlan } from "../data/types";
+import { type ChunkLibrary, themesOf } from "../rules/assemble";
+import { bindElement } from "../rules/elementBinding";
+import type { WalkRouteTarget } from "../sim/zoneWalk";
 import { ALL_CHUNKS, FIXTURE_RECIPE } from "./chunks";
 
 const ROOM_FILL = "test";
@@ -18,3 +25,203 @@ export const FILLED_CHUNK_SLOTS: Readonly<
     },
   ]),
 );
+
+type Target = Omit<WalkRouteTarget, "area">;
+const bodyCols = BIRD.width / TILE;
+const point = (col: number, row: number): Target => ({ at: { col, row } });
+const contracts = new Map<string, readonly Target[]>();
+
+function platforms(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
+  const theme = library.themes[themesOf(chunk)[0]!]!;
+  return chunk.objects
+    .filter(({ role }) => role === "ledge" || role === "lift" || role === "shuttle")
+    .map((instance) => {
+      const bound = bindElement(theme.bindings, instance);
+      const cols = bound.cols ?? library.characters[bound.character]!.cols;
+      return point(bound.col + cols / 2, bound.row);
+    });
+}
+function recovery(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
+  return [...platforms(library, chunk), point(chunk.cols - 2, chunk.exit.row)];
+}
+function encounter(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
+  const result = recovery(library, chunk);
+  const floor = Math.max(chunk.entry.row, chunk.exit.row);
+  for (const solid of chunk.solids.filter(({ row }) => row <= floor - 6)) {
+    result.push(point(solid.col + solid.cols / 2, solid.row));
+  }
+  for (const cover of chunk.objects.filter(({ role, rows }) => role === "support" && rows === 1)) {
+    const cols = cover.cols ?? library.characters[cover.character]!.cols;
+    const ground = chunk.solids
+      .filter(
+        (solid) =>
+          solid.col <= cover.col &&
+          solid.col + solid.cols >= cover.col + cols &&
+          solid.row - cover.row - cover.rows! >= BIRD.height / TILE,
+      )
+      .sort((a, b) => a.row - b.row)[0];
+    if (!ground || cols < bodyCols) {
+      throw new Error("Cover requires a grounded body-sized refuge");
+    }
+    result.push({
+      at: { col: cover.col + cols / 2, row: ground.row },
+      xRange: { max: cover.col + cols - bodyCols, min: cover.col },
+    });
+  }
+  return result;
+}
+function register(
+  build: (library: ChunkLibrary, chunk: ChunkPlan) => readonly Target[],
+  names: readonly string[],
+): void {
+  for (const name of names) {
+    if (contracts.has(name) || !CHUNKS[name]) {
+      throw new Error(`Invalid route classification ${name}`);
+    }
+    const tuple = ALL_CHUNKS.find(([display]) => display === name)!;
+    contracts.set(name, build(tuple[1], tuple[2]));
+  }
+}
+
+// These ordinary families promise the primary route, checked by actual right-edge completion.
+register(
+  () => [],
+  [
+    "overjump-low-roof",
+    "vertical-red-gate",
+    "city-boundary-edge-yard",
+    "city-boundary-gaps",
+    "city-boundary-jumps",
+    "city-boundary-low-ceiling",
+    "city-boundary-return-gap",
+    "city-boundary-return-high",
+    "city-boundary-return-terrace",
+    "city-boundary-steps",
+    "city-boundary-upper-climb",
+    "compound-ascent",
+    "park-bandstand",
+    "park-finish",
+    "park-high-walk",
+    "park-lawn",
+    "park-low-ceiling",
+    "park-slope-down",
+    "park-start",
+    "park-steps-down",
+    "park-terrace-down",
+    "park-terrace-up",
+    "park-upper-terrace",
+  ],
+);
+register(recovery, [
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
+  "city-boundary-ground-hazard",
+  "city-boundary-lift",
+  "city-boundary-shuttle",
+  "compound-compact-ascent",
+  "compound-compact-climb",
+  "compound-double-lift",
+  "compound-lift-shuttle",
+  "compound-low-ceiling-hazard",
+  "compound-low-ceiling-shuttle",
+  "compound-return-high",
+  "compound-return-shuttle",
+  "compound-return-terrace",
+  "park-pond",
+]);
+register(encounter, [
+  ...["early", "middle", "late"].flatMap((position) => [
+    `patrol-cover-${position}`,
+    `growl-cover-${position}`,
+    `flyer-shelter-${position}`,
+    `vertical-stack-${position}`,
+  ]),
+  "bounded-flyer-post",
+  "city-boundary-climb-yard",
+  "city-boundary-dog-high",
+  "city-boundary-dog-terrace",
+  "climbing-enemy-lane",
+  "compound-patrol-lift",
+  "compound-perch-yard",
+  "compound-vertical-yard",
+  "growl-clearing",
+  "growl-lift-clearing",
+]);
+register(
+  recovery,
+  [
+    "back-streets",
+    "city-boundary",
+    "city-outskirts",
+    "city-streets",
+    "country-lanes",
+    "deep-woods",
+    "familiar-neighbourhood",
+    "farmland",
+    "forest-paths",
+    "freight-terminal",
+    "loading-yards",
+    "ravine",
+    "river-crossing",
+    "street",
+    "warehouse-district",
+  ].flatMap((stage) => [`${stage}-start`, `${stage}-finish`]),
+);
+register(() => [point(2, 80), point(37, 50)], ["apartment-floor-start"]);
+register(
+  () => [point(11, 25), point(23, 20), point(35, 15), point(50, 10)],
+  ["apartment-floor-finish"],
+);
+register(() => [point(30, 50), point(58, 40)], ["guarded-valley"]);
+
+const fixtures = new Set([
+  "fixture test-down-50",
+  "fixture test-drop-50",
+  "fixture test-finish",
+  "fixture test-flat-40",
+  "fixture test-flat-50",
+  "fixture test-gap-30",
+  "fixture test-gap-50",
+  "fixture test-hazard-50",
+  "fixture test-start",
+  "fixture test-up-30",
+  "fixture test-up-40",
+  "fixture test-wide-50",
+]);
+const aliases = new Map(
+  [...Object.entries(EXTERIOR_DEPTH_ALIASES), ...Object.entries(WOODLAND_DEPTH_ALIASES)].map(
+    ([base, alias]) => [alias, base],
+  ),
+);
+
+function filledApproaches(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
+  const theme = library.themes[themesOf(chunk)[0]!]!;
+  const door = bindElement(theme.bindings, { character: "", col: 0, role: theme.door, row: 0 });
+  const doorCols = library.characters[door.character]!.cols;
+  return (chunk.slots ?? []).map(({ area, kind }) => {
+    const cols = kind === "door" ? doorCols : area.cols;
+    const col = area.col + (area.cols - cols) / 2;
+    if (cols < bodyCols) {
+      throw new Error("Slot approach must fit Chibi's body");
+    }
+    return {
+      at: { col: col + cols / 2, row: area.row + area.rows },
+      xRange: { max: col + cols - bodyCols, min: col },
+    };
+  });
+}
+
+// Synthetic fixtures retain exhaustive traversal; their secondary lists do not change that mode.
+export const REQUIRED_CHUNK_ROUTES: Readonly<Record<string, readonly Target[]>> =
+  Object.fromEntries(
+    ALL_CHUNKS.map(([name, library, chunk]) => {
+      const base = name.startsWith("apartment-tall-")
+        ? name.slice("apartment-tall-".length)
+        : (aliases.get(name) ?? name);
+      const targets = fixtures.has(name) ? [] : contracts.get(base);
+      if (!targets) {
+        throw new Error(`Unclassified required route ${name}`);
+      }
+      return [name, [...targets, ...filledApproaches(library, chunk)]];
+    }),
+  );
