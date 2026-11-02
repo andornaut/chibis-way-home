@@ -266,11 +266,11 @@ All positions are in base pixels (x, y, w, h) of the 720x360 layout as drawn. Th
 
 | Skill       | Art key                | 48x48 HUD target origin |
 | ----------- | ---------------------- | ----------------------- |
-| Double jump | icon-skill-double-jump | 664,8                   |
-| Dash        | icon-skill-dash        | 664,64                  |
-| Speedy      | icon-skill-speedy      | 608,8                   |
+| Dash        | icon-skill-dash        | 552,8                   |
+| Double jump | icon-skill-double-jump | 608,8                   |
+| Speedy      | icon-skill-speedy      | 664,8                   |
 
-The base 720x360 view uses this compact L with 8px between targets. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) reuses the 35x35 `ui-pause` rest disc, covers its baked pause bars with an opaque 16x16 navy (`#262b44`) square at local 9,9, then places the native glyph at that same position. Keep the original cream ring in all three states; only the glyph becomes grey when muted. The glyph's centre anchor is 8,8. The selected skill adds a steady 5x2 yellow (`#fee761`) bar at disc-local 15,27, over a one-pixel navy surround and after the glyph. It stays visible when the selected glyph is muted. Do not bake this selection mark, target coordinates or a second disc into the exports.
+The base 720x360 view places these targets left to right in one horizontal top row, with 8px between targets and 8px from the top and right edges. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) reuses the 35x35 `ui-pause` rest disc, covers its baked pause bars with an opaque 16x16 navy (`#262b44`) square at local 9,9, then places the native glyph at that same position. Keep the original cream ring in all three states; only the glyph becomes grey when muted. The glyph's centre anchor is 8,8. The selected skill adds a steady 5x2 yellow (`#fee761`) bar at disc-local 15,27, over a one-pixel navy surround and after the glyph. It stays visible when the selected glyph is muted. Do not bake this selection mark, target coordinates or a second disc into the exports.
 
 Locked icons are hidden. Unlocked icons remain visible, including when muted. Only one selected power-up affects play at a time. During play, tap selects that power-up without performing its movement action; a 400ms hold pauses and opens details without selecting the held skill. Selection and recharge produce three visual states:
 
