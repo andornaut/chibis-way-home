@@ -194,7 +194,7 @@ register(
   () => [point(11, 25), point(23, 20), point(35, 15), point(50, 10)],
   ["apartment-floor-finish"],
 );
-register(() => [point(30, 50), point(58, 40)], ["guarded-valley"]);
+register(() => [point(30, 45), point(58, 40)], ["guarded-valley"]);
 
 const fixtures = new Set([
   "fixture test-down-50",
