@@ -31,6 +31,7 @@ import {
   type BehaviourWorld,
   behaviourWorld,
   flightAxis,
+  flightContactApproach,
   groundPursuitEnd,
   targetReachable,
 } from "./behaviourReach";
@@ -830,13 +831,15 @@ function pursuitReachable(
     (node) => node.motion.kind === "pursue" && node.motion.mode === "fly",
   );
   if (flight) {
-    const hers = birdBox(tuning, bird);
-    const contact = contactBox(object, at, state.facing, state.axis);
-    const x = hers.x + hers.width / 2 - contact.width / 2 - (contact.x - at.x);
-    const y = hers.y + hers.height / 2 - contact.height / 2 - (contact.y - at.y);
-    const endX = flightAxis(object, world, at, "x", x);
-    const endY = flightAxis(object, world, { ...at, x: endX }, "y", y);
-    return Math.abs(endX - x) <= EDGE && Math.abs(endY - y) <= EDGE;
+    return (
+      flightContactApproach(
+        world,
+        object,
+        at,
+        contactBox(object, at, state.facing, state.axis),
+        birdBox(tuning, bird),
+      ) !== undefined
+    );
   }
   return targetReachable(
     tuning,

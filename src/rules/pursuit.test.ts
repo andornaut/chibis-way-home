@@ -19,8 +19,14 @@ import type {
   ZoneLayout,
 } from "../data/types";
 import { BIRD_FRAME } from "../view/bird";
-import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import type { BehaviourWorld } from "./behaviourReach";
+import {
+  type BehaviourState,
+  contactBox,
+  layoutBehaviour,
+  startBehaviour,
+  stepBehaviour,
+} from "./behaviour";
+import { type BehaviourWorld, flightContactApproach } from "./behaviourReach";
 import { startBird } from "./bird";
 import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
@@ -598,3 +604,103 @@ it("counts vertical centre separation and never substitutes a timed unreachable 
   expect(result.state.pursuit?.unreachableSeconds).toBeGreaterThan(3);
   expect(result.escaped).toBeUndefined();
 });
+
+function floorFlightFixture() {
+  const chase = plan("fly");
+  const object: ObjectLayout = {
+    ...actor({
+      ...chase,
+      states: {
+        ...chase.states,
+        chase: {
+          ...chase.states.chase!,
+          transitions: [{ to: "lost", when: [{ kind: "lost-target", tolerance: 0 }] }],
+        },
+        lost: { animation: "idle", motion: { kind: "wait" }, transitions: [] },
+      },
+    }),
+    height: 48,
+    hitbox: { height: 46, width: 44, x: 2, y: 2 },
+    origin: { x: 3336, y: 792 },
+    width: 48,
+  };
+  const geometry: BehaviourWorld = {
+    chunks: [{ width: 720, x: 2880 }],
+    solids: [
+      { height: 480, width: 456, x: 2880, y: 960 },
+      { height: 600, width: 48, x: 3336, y: 840 },
+    ],
+    view: { height: 360, width: 720, x: 2880, y: 720 },
+  };
+  const target = bird(3096, 924);
+  return { geometry, object, target };
+}
+
+it("accepts contact overlap when terrain clips flight five pixels before centre alignment", () => {
+  const { geometry, object, target } = floorFlightFixture();
+  const box = { height: BIRD.height, width: BIRD.width, x: target.x, y: target.y };
+  const approach = flightContactApproach(
+    geometry,
+    object,
+    object.origin,
+    contactBox(object, object.origin, 1),
+    box,
+  );
+  expect(approach).toEqual({ x: 3084, y: 912 });
+  expect(approach!.y + object.height).toBe(960);
+  const result = advance(object, target, STEP_SECONDS, object.origin, undefined, geometry);
+  expect(result.state.stateKey).toBe("chase");
+  expect(result.at.x).toBeLessThan(object.origin.x);
+});
+
+it("does not call a terrain-blocked non-overlapping flight endpoint reachable", () => {
+  const { geometry, object, target } = floorFlightFixture();
+  const blocked = {
+    ...geometry,
+    solids: [...geometry.solids, { height: 300, width: 48, x: 3200, y: 700 }],
+  };
+  expect(
+    flightContactApproach(blocked, object, object.origin, contactBox(object, object.origin, 1), {
+      height: BIRD.height,
+      width: BIRD.width,
+      x: target.x,
+      y: target.y,
+    }),
+  ).toBeUndefined();
+  const result = advance(object, target, STEP_SECONDS, object.origin, undefined, blocked);
+  expect(result.state.stateKey).toBe("lost");
+  expect(result.at).toEqual(object.origin);
+});
+
+it("retains hazard safety along the real clipped approach sweep", () => {
+  const { geometry, object, target } = floorFlightFixture();
+  const hazard = { ...object, character: "hazard" };
+  expect(
+    flightContactApproach(
+      {
+        ...geometry,
+        hazards: [{ owner: hazard, rect: { height: 80, width: 10, x: 3200, y: 780 } }],
+      },
+      object,
+      object.origin,
+      contactBox(object, object.origin, 1),
+      { height: BIRD.height, width: BIRD.width, x: target.x, y: target.y },
+    ),
+  ).toBeUndefined();
+});
+
+it.each([-1, 1] as const)(
+  "uses the already-resolved asymmetric contact offset facing %i without reflecting it twice",
+  (facing) => {
+    const { geometry, object: base, target } = floorFlightFixture();
+    const object = { ...base, hitbox: { ...base.hitbox!, width: 38, x: 4 } };
+    const approach = flightContactApproach(
+      geometry,
+      object,
+      object.origin,
+      contactBox(object, object.origin, facing),
+      { height: BIRD.height, width: BIRD.width, x: target.x, y: target.y },
+    );
+    expect(approach).toEqual({ x: facing === 1 ? 3085 : 3083, y: 912 });
+  },
+);

@@ -330,6 +330,52 @@ export function groundPursuitEnd(
 }
 
 // Axis-separated swept clipping prevents flight from crossing solid cover.
+// A clipped physical approach can make contact before the two body centres coincide.
+export function flightContactApproach(
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  at: Point,
+  contact: Rect,
+  target: Rect,
+): Point | undefined {
+  const x = target.x + target.width / 2 - contact.width / 2 - (contact.x - at.x);
+  const y = target.y + target.height / 2 - contact.height / 2 - (contact.y - at.y);
+  const across = { x: flightAxis(object, world, at, "x", x), y: at.y };
+  const end = { x: across.x, y: flightAxis(object, world, across, "y", y) };
+  const body = { ...end, height: object.height, width: object.width };
+  const solids = [
+    ...collisionCandidates(world.solids, body),
+    ...(world.platforms ?? [])
+      .filter(({ collision, owner }) => collision === "solid" && owner !== object)
+      .map(({ rect }) => rect),
+  ];
+  if (solids.some((rect) => rectsOverlap(body, rect))) {
+    return undefined;
+  }
+  const points = [at, across, end];
+  for (let index = 1; index < points.length; index++) {
+    const from = points[index - 1]!,
+      to = points[index]!;
+    const sweep = {
+      height: object.height + Math.abs(to.y - from.y),
+      width: object.width + Math.abs(to.x - from.x),
+      x: Math.min(from.x, to.x),
+      y: Math.min(from.y, to.y),
+    };
+    if (
+      (world.hazards ?? []).some(({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect))
+    ) {
+      return undefined;
+    }
+  }
+  return rectsOverlap(
+    { ...contact, x: contact.x + end.x - at.x, y: contact.y + end.y - at.y },
+    target,
+  )
+    ? end
+    : undefined;
+}
+
 export function flightAxis(
   object: ObjectLayout,
   world: BehaviourWorld,
