@@ -3,11 +3,12 @@
 The ordinary room door is 60x84; the unchanged stair markers are 48x72.
 
 Usage: apartment_wayfinding.py build | preview OUT.png
-Run from the repository root. Build writes only the three backdrop PNGs; the parent owns manifest registration.
+Run from the repository root. Build writes only the four backdrop PNGs; the parent owns manifest registration.
 
 - apartment-stairwell: an open recess containing an ascending stepped silhouette, with a white up-arrow on a
   dslate sign. It identifies an automatic upstairs walking trigger, not a Use action or physical stair mechanic.
 - apartment-stairwell-down: the same recess with a descending silhouette and a white down-arrow.
+- apartment-stairwell-door: a closed warm-panelled 48x72 stair entrance, without an arrow or Use action.
 - apartment-room-door: a muted peach-panelled 60x84 optional room door in grey jambs with a small amber handle.
   No arrow.
 
@@ -26,7 +27,7 @@ import room_doors
 from PIL import Image, ImageOps
 
 SIZE = (48, 72)
-KEYS = ("apartment-room-door", "apartment-stairwell", "apartment-stairwell-down")
+KEYS = ("apartment-room-door", "apartment-stairwell", "apartment-stairwell-door", "apartment-stairwell-down")
 BACKDROPS = "public/art/backdrops"
 REGISTRY = [
     {
@@ -89,10 +90,34 @@ def room_door():
     return room_doors.image("apartment")
 
 
+def stairwell_door():
+    """Closed 48x72 stair entrance skin, independent of ordinary Use-room door artwork."""
+    im = canvas()
+    for box, colour in (
+        ((5, 10, 43, 72), "dbrown"),
+        ((6, 11, 42, 72), "ochre"),
+        ((7, 12, 10, 72), "amber"),
+        ((10, 12, 39, 15), "amber"),
+        ((10, 15, 39, 72), "dbrown"),
+        ((12, 17, 37, 72), "tan"),
+        ((13, 18, 15, 70), "skin1"),
+        ((33, 18, 37, 72), "brown"),
+        ((17, 24, 31, 41), "brown"),
+        ((18, 25, 30, 40), "skin1"),
+        ((17, 48, 31, 65), "brown"),
+        ((18, 49, 30, 64), "skin1"),
+        ((32, 43, 35, 50), "dbrown"),
+        ((31, 44, 35, 47), "amber"),
+    ):
+        rect(im, box, colour)
+    return im
+
+
 def images():
     return {
         "apartment-room-door": room_door(),
         "apartment-stairwell": stairwell(),
+        "apartment-stairwell-door": stairwell_door(),
         "apartment-stairwell-down": stairwell(down=True),
     }
 

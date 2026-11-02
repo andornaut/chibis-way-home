@@ -5,7 +5,7 @@ to a small handle. No arrow, text, continuous white safe lip, hazard red, collis
 Existing non-door street tile indices and apartment stair markers retain their contracts.
 
 Usage from the repository root:
-  room_doors.py build             export the street tileset and apartment room-door backdrop only
+  room_doors.py build             export the street tileset, apartment room door and closed stair entrance
   room_doors.py preview OUT.png   compare both doors with native Chibi on enclosed wall sections
 """
 
@@ -66,7 +66,9 @@ def build():
     entry = pixel.write_tileset("tiles-street", [(key, floor.frame_image(grid.px)) for key, grid in tiles], pieces)
     pixel.update_manifest("tilesets", [entry])
     image("apartment").save("public/art/backdrops/apartment-room-door.png")
-    entries = [entry for entry in wayfinding.REGISTRY if entry["key"] == "apartment-room-door"]
+    wayfinding.stairwell_door().save("public/art/backdrops/apartment-stairwell-door.png")
+    keys = {"apartment-room-door", "apartment-stairwell-door"}
+    entries = [entry for entry in wayfinding.REGISTRY if entry["key"] in keys]
     pixel.update_manifest("backdrops", entries)
     print("built street door 5x7 and apartment-room-door 60x84")
 

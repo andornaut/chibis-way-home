@@ -930,6 +930,15 @@
       "repeat": "none"
     },
     {
+      "key": "apartment-stairwell-door",
+      "png": "backdrops/apartment-stairwell-door.png",
+      "width": 48,
+      "height": 72,
+      "anchor": "bottom-left",
+      "y": 720,
+      "repeat": "none"
+    },
+    {
       "key": "apartment-stairwell-down",
       "png": "backdrops/apartment-stairwell-down.png",
       "width": 48,

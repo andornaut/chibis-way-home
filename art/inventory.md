@@ -249,6 +249,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | apartment-spa-bench          | decorative backdrop                | 72x36   | Bottom-left, y 720, repeat none                 |
 | apartment-spa-screen         | decorative backdrop                | 72x96   | Bottom-left, y 720, repeat none                 |
 | apartment-stairwell          | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                 |
+| apartment-stairwell-door     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                 |
 | apartment-stairwell-down     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                 |
 | apartment-wall-lobby         | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                    |
 | apartment-wall-pool          | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                    |
