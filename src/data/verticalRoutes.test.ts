@@ -788,7 +788,6 @@ it.each(["city-boundary-steps", "outdoor-surface-return"])(
         witness,
       ).toBe(true);
     }
-    console.info("Connected route witness", { id, landings, takeoffs, ticks });
   },
 );
 
