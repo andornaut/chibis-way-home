@@ -1,4 +1,6 @@
-"""Apartment wayfinding props, each 48x72, transparent and bottom-left anchored on the local floor.
+"""Apartment wayfinding props, bottom-left anchored on the local floor.
+
+The ordinary room door is 60x84; the unchanged stair markers are 48x72.
 
 Usage: apartment_wayfinding.py build | preview OUT.png
 Run from the repository root. Build writes only the three backdrop PNGs; the parent owns manifest registration.
@@ -6,9 +8,11 @@ Run from the repository root. Build writes only the three backdrop PNGs; the par
 - apartment-stairwell: an open recess containing an ascending stepped silhouette, with a white up-arrow on a
   dslate sign. It identifies an automatic upstairs walking trigger, not a Use action or physical stair mechanic.
 - apartment-stairwell-down: the same recess with a descending silhouette and a white down-arrow.
-- apartment-room-door: a closed warm-panelled optional room door with amber framing and a small handle. No arrow.
+- apartment-room-door: a muted peach-panelled 60x84 optional room door in grey jambs with a small amber handle.
+  No arrow.
 
-Registry contract: each key uses backdrops/<key>.png, width 48, height 72, anchor bottom-left, y 720, repeat none.
+Registry contract: each key uses backdrops/<key>.png, size 60x84 for the room door and 48x72 for stairs,
+anchor bottom-left, y 720, repeat none.
 There are no animation tags, collision boxes or light anchors. Place the frame bottom on the local floor.
 Only real terrain carries a safe white lip; these props have no continuous white horizontal edge.
 """
@@ -18,6 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pixel
+import room_doors
 from PIL import Image, ImageOps
 
 SIZE = (48, 72)
@@ -27,8 +32,8 @@ REGISTRY = [
     {
         "key": key,
         "png": f"backdrops/{key}.png",
-        "width": 48,
-        "height": 72,
+        "width": 60 if key == "apartment-room-door" else 48,
+        "height": 84 if key == "apartment-room-door" else 72,
         "anchor": "bottom-left",
         "y": 720,
         "repeat": "none",
@@ -81,25 +86,7 @@ def stairwell(down=False):
 
 
 def room_door():
-    im = canvas()
-    for box, colour in (
-        ((5, 10, 43, 72), "dbrown"),
-        ((6, 11, 42, 72), "ochre"),
-        ((7, 12, 10, 72), "amber"),
-        ((10, 12, 39, 15), "amber"),
-        ((10, 15, 39, 72), "dbrown"),
-        ((12, 17, 37, 72), "tan"),
-        ((13, 18, 15, 70), "skin1"),
-        ((33, 18, 37, 72), "brown"),
-        ((17, 24, 31, 41), "brown"),
-        ((18, 25, 30, 40), "skin1"),
-        ((17, 48, 31, 65), "brown"),
-        ((18, 49, 30, 64), "skin1"),
-        ((32, 43, 35, 50), "dbrown"),
-        ((31, 44, 35, 47), "amber"),
-    ):
-        rect(im, box, colour)
-    return im
+    return room_doors.image("apartment")
 
 
 def images():
@@ -126,7 +113,8 @@ def preview(out):
     rect(im, (0, 252, 720, 253), "plum")
     rect(im, (0, 253, 720, 255), "cream")
     for key, x in (("apartment-stairwell", 180), ("apartment-stairwell-down", 336), ("apartment-room-door", 492)):
-        im.alpha_composite(images()[key], (x, 180))
+        prop = images()[key]
+        im.alpha_composite(prop, (x, 252 - prop.height))
     bird = Image.open("public/art/sprites/bird.png").convert("RGBA").crop((0, 0, 48, 42))
     im.alpha_composite(bird, (260, 210))
     im.save(out)

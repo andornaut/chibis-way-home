@@ -130,7 +130,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 | Key          | Type                                                                                                                                                       | Size            | Pieces      |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------- |
 | tiles-lobby  | tileset (kept for a later indoor zone): wood floor, one-way balcony, shelf, cushion and desk, wood post, stairwell exit                                    | 130 tiles, 12px | exit (7x15) |
-| tiles-street | tileset: sidewalk, kerb, road, one-way awning, one-way canopy, planter, door, cellar hatch, one-way fire-escape landing, sill, cornice and water-tower top | 54 tiles, 12px  | door (3x4)  |
+| tiles-street | tileset: sidewalk, kerb, road, one-way awning, one-way canopy, planter, door, cellar hatch, one-way fire-escape landing, sill, cornice and water-tower top | 77 tiles, 12px  | door (5x7)  |
 | tiles-park   | tileset (park theme): grass, turf, soil, path, stone stairs, one-way bench, branch and bandstand, pond and thorn hazards                                   | 32 tiles, 12px  |             |
 
 ## Backdrops
@@ -244,7 +244,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | apartment-residential-shelf  | decorative backdrop                | 72x96   | Bottom-left, y 720, repeat none                 |
 | apartment-restaurant-booth   | decorative backdrop                | 72x48   | Bottom-left, y 720, repeat none                 |
 | apartment-restaurant-counter | decorative backdrop                | 96x48   | Bottom-left, y 720, repeat none                 |
-| apartment-room-door          | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                 |
+| apartment-room-door          | decorative backdrop                | 60x84   | Bottom-left, y 720, repeat none                 |
 | apartment-sky                | decorative backdrop                | 48x720  | Bottom-left, y 720, repeat x                    |
 | apartment-spa-bench          | decorative backdrop                | 72x36   | Bottom-left, y 720, repeat none                 |
 | apartment-spa-screen         | decorative backdrop                | 72x96   | Bottom-left, y 720, repeat none                 |

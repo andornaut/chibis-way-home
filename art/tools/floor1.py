@@ -13,7 +13,7 @@ Run from the repository root.
 
 Scale
 - Outdoors the world is drawn as if zoomed out 4x while the bird and the 12px tiles keep their size: a storey is
-  180px and a door is about 45px, so the bird (42px) stands almost as tall as a street door. The street is 720px
+  180px and an ordinary room entrance is 84px, twice the bird's 42px frame height. The street is 720px
   (60 tiles) tall: the sidewalk's top is y 600 (row 50) with 10 rows of sidewalk and road below it, the ground
   storey runs from y 420 to it, and storeys stack every 180px above (a three-storey walk-up's roof is at y 60,
   row 5). Indoors (the lobby) is a separate scene at full scale, also 720px tall, its floor at y 672.
@@ -56,8 +56,8 @@ tiles-street
   laid on row 20 over the hotel door.
 - planter-top-left, planter-top, planter-top-right (a clipped hedge: the walkable top), planter-left, planter,
   planter-right (the box). A planter is 2 tiles tall: a 2-tile step.
-- door (piece, 3x4 tiles, 36x48): a pair of lit amber glass doors in a slate frame, a room's door
-  where the level has one. Tiles door-0 to door-11 in row order; no collision.
+- door (piece, 5x7 tiles, 60x84): a muted glazed leaf in complete grey jambs with a small amber handle,
+  for a room entrance. Tiles door-0 to door-34 in row order; no collision. Existing non-door indices stay fixed.
 - The cellar hatch, a hazard: an open pit in the sidewalk, any number of tiles wide, its two steel leaves standing
   up. On the sidewalk row: hatch-left, then pit-opening for each opening tile, then hatch-right. pit-opening fills
   every row below the opening to the level's bottom, and sidewalk-face-right and sidewalk-face-left run down under
@@ -142,6 +142,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import background_tones
 import nature
 import pixel
+import room_doors
 from PIL import Image
 from pixel import Grid, darker, rgb
 
@@ -233,8 +234,6 @@ COOL_TILES = {  # play tiles: white lips, a light concrete band over a soft slat
 }
 COOL_AWNING = {"dgreen": "ochre", "forest": "dbrown"}  # the awnings stay warm: ochre and cream
 COOL_CANOPY = {"tan": "white", "forest": "dbrown"}  # the exit canopy: dark brown, a white lip
-COOL_DOOR = {"tan": "slate", "cream": "grey", "brown": "dslate"}  # the exit's frame, darker so its amber glass
-# glows and the sidewalk's lip holds under it
 
 
 def recolour(g, mapping):
@@ -351,21 +350,8 @@ def planter(kind):
 
 
 def hotel_door():
-    """The hotel's front door, 36x48: a pair of lit amber glass doors in a tan frame, the brightest thing at the
-    door, so it reads as the way in."""
-    g = rects(
-        Grid(36, 48),
-        (0, 0, 36, 48, "ink"),
-        (1, 1, 34, 47, "tan"),
-        (1, 1, 34, 2, "cream"),
-        (1, 1, 2, 47, "cream"),
-        (32, 3, 2, 45, "brown"),
-        (5, 6, 26, 42, "ink"),
-    )
-    for x in (6, 19):
-        rects(g, (x, 7, 11, 41, "amber"), (x, 30, 11, 18, "ochre"), (x + 1, 9, 2, 16, "yellow"))
-    rects(g, (17, 6, 2, 42, "tan"), (14, 26, 2, 6, "brown"), (20, 26, 2, 6, "brown"))
-    return g
+    """Ordinary street room entrance, 60x84, with muted glazing and an amber handle."""
+    return room_doors.door()
 
 
 # The cellar hatch: an open pit in the sidewalk with its two steel leaves standing up. Steel is the slate ramp
@@ -455,9 +441,10 @@ def street_tiles():
         ("planter-left", planter("l")),
         ("planter", planter("")),
         ("planter-right", planter("r")),
-        *door,
+        *door[:12],
         *hatch_tiles(),
         *climb_tiles(),
+        *door[12:],
     ], {"door": door_rows}
 
 
@@ -472,7 +459,7 @@ def street_tiles_cool():
         if name.startswith("one-way-canopy"):
             return COOL_CANOPY
         if name.startswith("door-"):
-            return COOL_DOOR
+            return {}
         return COOL_TILES
 
     return [(n, recolour(g, m(n))) for n, g in tiles], pieces

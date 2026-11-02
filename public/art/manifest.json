@@ -887,8 +887,8 @@
     {
       "key": "apartment-room-door",
       "png": "backdrops/apartment-room-door.png",
-      "width": 48,
-      "height": 72,
+      "width": 60,
+      "height": 84,
       "anchor": "bottom-left",
       "y": 720,
       "repeat": "none"
