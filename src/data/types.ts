@@ -95,10 +95,14 @@ export interface DashTrailLine {
 }
 
 export interface DashTrailTuning {
+  readonly borderColour: string;
+  // Logical pixels around the core; line gaps stop at the outer border and y names the core top.
+  readonly borderThickness: number;
+  readonly headColumns: number;
+  readonly headDecay: number;
   readonly lengthDecay: number;
   readonly lines: readonly DashTrailLine[];
   readonly thickness: number;
-  readonly timeFadeExponent: number;
   readonly tipFadeExponent: number;
 }
 
