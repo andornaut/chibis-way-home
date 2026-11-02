@@ -89,7 +89,7 @@ describe("directional hazard layouts", () => {
     const mover = Object.values(prepared("vertical-red-gate").areas)[0]!.objects.findIndex(
       (object) => object.character === "red-edge-left",
     );
-    const result = run("vertical-red-gate", { col: 30, row: 45 }, (zone) => {
+    const result = run("vertical-red-gate", { col: 26, row: 50 }, (zone) => {
       crossing ||= zone.objects[mover]!.y <= 36 * TILE;
       return input(crossing ? 1 : 0);
     });
