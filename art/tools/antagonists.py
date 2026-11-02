@@ -7,16 +7,16 @@ dog-antagonist is Archie, an Australian Shepherd with a brown coat, white blaze,
 Frame 60x40, feet on row 39; all visible pixels stay inside hitbox x2,y2,width56,height38. Contact is lethal
 in every state, including crouch and rest. The game does not draw a red contact rectangle or silhouette
 outline; the hitbox remains collision metadata.
-Tags: idle 2x400ms; walk 4x120ms; crouch 1x400ms; rush 2x80ms; rest 2x400ms. All loop; the gameplay
-state machine owns how long each state lasts. Crouch lowers the head and body; rush stretches the paws;
-Frustration loops 4x120ms: compressed takeoff, two little airborne poses and a planted landing stomp.
-The whole body rises 3px then 5px inside the fixed frame, with a headshake and lifted forepaw.
-Pounce appends four100ms frames: crouched takeoff, two extended airborne poses and compressed landing.
-The fixed sprite anchor never moves; gameplay controls the actual leap arc and phase progression.
+Tags: idle 2x400ms; walk 4x120ms; crouch 1x400ms; rush 2x80ms; rest 2x400ms;
+frustration 4x120ms; pounce 4x100ms. All loop; gameplay owns state duration and the pounce arc.
+The torso clears the ground above straight chibi legs, tapering into white stockings and small paws.
+Hindlegs attach near the rump; forelegs attach beneath the shoulder. Walk exchanges diagonal pairs;
+rush alternates extension and gathered limbs.
+Crouch bends the limbs beneath the lowered torso. Frustration lifts the torso 3px then 5px with
+folded ears kept inside the frame, a headshake and lifted forepaw, followed by a planted landing.
+Pounce uses a crouched takeoff, two extended airborne poses and a compressed landing.
 Rest closes the eye. Idle breath lifts the torso 1px while the feet stay planted.
-
-Pounce appends four100ms frames: crouched takeoff, two extended airborne poses and compressed landing.
-The fixed anchor stays in place; gameplay owns the actual arc and phase progression.
+All frame alpha is paired with exact contact silhouettes and requires physics review when changed.
 
 portrait-dog is 64x64, right-facing towards text, transparent behind, chest cut off at the bottom, with
 one ink outer line. Tag neutral: 1x1000ms. It shares the brown and white coat, rose ears, red bandana
@@ -42,109 +42,105 @@ HITBOX = {"dog-antagonist": (2, 2, 56, 38)}
 
 
 def dog_image(state, phase=0):
-    if state == "pounce":
-        im = Image.new("RGBA", (60, 40))
-        if phase in (0, 3):
-            pose = dog_image("crouch")
-            height = 37 if phase == 0 else 35
-            im.alpha_composite(pose.resize((60, height), Image.Resampling.NEAREST), (0, 40 - height))
-        else:
-            # Extended rush limbs form the airborne silhouette inside the fixed frame.
-            pose = dog_image("rush", phase - 1)
-            im.alpha_composite(pose, (0, -5 if phase == 1 else -3))
-        return im
+    """Keep straight chibi legs attached to the rump and shoulder inside the fixed frame."""
     im = Image.new("RGBA", (60, 40))
     d = ImageDraw.Draw(im)
-    # Brown coat, white ruff, folded rose ears and bobtail preserve Archie's identity.
-    base, shade, light = ("brown", "dbrown", "skin2")
-    crouch = state == "crouch"
-    rush = state == "rush"
-    rest = state == "rest"
-    by = 23 if crouch else 19 if rush else 16
-    hy = 15 if crouch else 17 if rush else 11
-    shake = (-2, 0, -2, 0)[phase] if state == "frustration" else 0
+    crouch = state == "crouch" or (state == "pounce" and phase in (0, 3))
+    airborne = state == "pounce" and phase in (1, 2)
+    rush = state == "rush" or airborne
+    hop = (0, 3, 5, 0)[phase] if state == "frustration" else 0
+    bob = -1 if state in ("patrol", "rest") and phase % 2 else 0
+    by = (20 if crouch else 16 if rush else 14) + bob - hop
+    hy = (13 if crouch else 10 if rush else 6) + bob - hop
+    if airborne:
+        by -= 3
+        hy -= 3
+    if state == "pounce" and phase == 3:
+        by += 2
+        hy += 2
     if state == "frustration":
-        hy += (0, 1, 0, 1)[phase]
-    # Tail, far paws and back ear.
-    d.ellipse((4, 24, 13, 31), fill=rgba("plum"))
-    d.ellipse((5, 25, 12, 30), fill=rgba(base))
-    d.ellipse((4, 24, 8, 27), fill=rgba("white"))
-    for x in (16, 34):
-        d.rounded_rectangle((x, by + 11, x + 4, 38), radius=1, fill=rgba("plum"))
-    d.polygon(((38, hy + 5), (43, hy - 3), (48, hy + 5)), fill=rgba(shade))
-    # Slender or barrel-shaped torso, with a lower-right crescent.
-    d.ellipse((9, by, 42, 36), fill=rgba("plum"))
-    d.ellipse((10, by + 1, 41, 35), fill=rgba(shade))
-    d.ellipse((10, by + 1, 39, 32), fill=rgba(base))
-    d.arc((11, by + 1, 38, 32), 190, 275, fill=rgba(light), width=2)
-    d.ellipse((29, by + 3, 43, 36), fill=rgba("lgrey"))
-    d.ellipse((29, by + 3, 41, 34), fill=rgba("white"))
-    # Soft cheeks and a projecting muzzle, no teeth or angry brows.
-    head = Image.new("RGBA", im.size) if state == "frustration" else im
-    d = ImageDraw.Draw(head)
-    d.polygon(((32, hy + 6), (35, hy - 3), (42, hy + 3)), fill=rgba("plum"))
-    d.polygon(((33, hy + 4), (35, hy - 2), (40, hy + 3)), fill=rgba(base))
-    d.polygon(((35, hy - 2), (30, hy + 2), (36, hy + 2)), fill=rgba(shade))
-    headbox = (31, hy, 55, hy + 24)
-    d.ellipse(headbox, fill=rgba("plum"))
-    d.ellipse((headbox[0] + 1, hy + 1, headbox[2] - 1, headbox[3] - 1), fill=rgba(base))
-    d.ellipse((43, hy + 11, 57, hy + 20), fill=rgba("plum"))
-    d.ellipse((44, hy + 12, 57, hy + 19), fill=rgba("white"))
-    d.rectangle((56, hy + 13, 57, hy + 15), fill=rgba("ink"))
-    d.polygon(((32, hy + 4), (36, hy - 1), (42, hy + 6), (38, hy + 11)), fill=rgba("plum"))
-    d.polygon(((33, hy + 4), (36, hy), (40, hy + 6), (38, hy + 9)), fill=rgba(base))
-    d.polygon(((36, hy), (31, hy + 4), (37, hy + 4)), fill=rgba(shade))
-    d.polygon(((44, hy + 1), (47, hy + 2), (49, hy + 13), (43, hy + 13)), fill=rgba("white"))
-    neck = min(hy + 20, 32)
-    d.polygon(((34, neck), (53, neck), (44, min(39, neck + 7))), fill=rgba("red"))
-    d.polygon(((44, neck + 1), (53, neck), (44, min(39, neck + 7))), fill=rgba("dred"))
-    if rest:
-        d.line((48, hy + 8, 51, hy + 8), fill=rgba("ink"), width=1)
+        hy = max(5, hy + (1, 0, 1, 2)[phase])
+    # The bobtail attaches at the rump, above the hindlimb roots.
+    d.polygon(((5, by + 3), (11, by + 4), (13, by + 10), (6, by + 10), (3, by + 7)), fill=rgba("plum"))
+    d.polygon(((5, by + 4), (10, by + 5), (11, by + 8), (6, by + 8)), fill=rgba("brown"))
+    d.rectangle((4, by + 5, 6, by + 7), fill=rgba("white"))
+
+    def limb(root, ankle, toe, far=False):
+        # Straight chibi legs taper gently from the rump or shoulder into small white paws.
+        x, y = root
+        ax, ay = ankle
+        tx, ty = toe
+        d.polygon(
+            ((x - 2, y), (x + 2, y), (ax + 2, ay), (tx + 3, ty - 2), (tx + 3, ty), (ax - 2, ty), (ax - 2, ay)),
+            fill=rgba("plum"),
+        )
+        d.line((x, y + 1, ax, ay), fill=rgba("dbrown" if far else "brown"), width=3)
+        d.line((ax, ay - 2, ax, ty - 1, tx + 2, ty - 1), fill=rgba("lgrey" if far else "white"), width=2)
+
+    ground = 39 - hop - (3 if airborne else 0)
+    # Each table gives straight hindleg and foreleg strokes for a diagonal pair.
+    if state == "walk":
+        stride = ((-3, 3, 0, 0), (0, 0, -3, 2), (3, -3, 0, 0), (0, 0, 2, -3))[phase]
+        rear, front, rear_lift, front_lift = stride
+    elif rush:
+        rear, front, rear_lift, front_lift = ((-6, 7, -2, -5), (4, -3, -5, 0))[phase % 2]
     else:
-        d.rectangle((48, hy + 6, 51, hy + 10), fill=rgba("ink"))
-        d.rectangle((48, hy + 7, 50, hy + 9), fill=rgba("sky"))
-        d.rectangle((50, hy + 8, 51, hy + 9), fill=rgba("ink"))
-        d.point((48, hy + 7), fill=rgba("white"))
-    if state == "frustration":
-        im.alpha_composite(head, (shake, 0))
-        d = ImageDraw.Draw(im)
-    # Near paws clearly change readiness and stretch.
-    feet = ((12, 34, 18, 39), (38, 34, 45, 39)) if not rush else ((6, 33, 16, 39), (43, 30, 54, 35))
-    if state == "frustration":
-        feet = ((12, 34, 18, 39), (39, 27 if phase % 2 else 30, 46, 33 if phase % 2 else 36))
-    for box in feet:
-        d.rounded_rectangle(box, radius=1, fill=rgba("plum"))
-        d.rectangle((box[0] + 1, box[1], box[2] - 1, box[3] - 1), fill=rgba("white"))
+        rear, front, rear_lift, front_lift = 0, 0, 0, 0
+    if state == "frustration" and phase in (1, 2):
+        front_lift = -6
+    # Far legs remain visible in the belly gap and exchange support with the near pair.
+    limb((17, by + 9), (20 - rear, ground + front_lift - 2), (20 - rear, ground + front_lift - 1), True)
+    limb((34, by + 8), (31 - front, ground + rear_lift - 2), (31 - front, ground + rear_lift - 1), True)
+    # The belly clears the ground so the four legs read as limbs rather than white blocks.
+    d.ellipse((9, by, 41, by + 15), fill=rgba("plum"))
+    d.ellipse((10, by + 1, 40, by + 14), fill=rgba("dbrown"))
+    d.ellipse((10, by + 1, 38, by + 11), fill=rgba("brown"))
+    d.arc((11, by + 1, 37, by + 12), 190, 275, fill=rgba("skin2"), width=2)
+    d.polygon(
+        ((31, by + 2), (39, by + 2), (44, by + 10), (39, by + 16), (34, by + 15), (29, by + 9)), fill=rgba("lgrey")
+    )
+    d.polygon(
+        ((32, by + 2), (38, by + 2), (42, by + 9), (37, by + 14), (33, by + 12), (30, by + 8)), fill=rgba("white")
+    )
+    limb((12, by + 8), (12 + rear, ground + rear_lift - 2), (12 + rear, ground + rear_lift))
+    limb((38, by + 8), (38 + front, ground + front_lift - 2), (38 + front, ground + front_lift))
+    # A broad skull, folded rose ears and projecting white muzzle retain Archie's identity.
+    shake = (-1, 1, -1, 0)[phase] if state == "frustration" else 0
+    head = Image.new("RGBA", im.size)
+    d = ImageDraw.Draw(head)
+    d.polygon(((39, hy + 4), (43, hy - 3), (48, hy + 5)), fill=rgba("plum"))
+    d.polygon(((40, hy + 3), (43, hy - 1), (46, hy + 4)), fill=rgba("dbrown"))
+    d.ellipse((31, hy, 53, hy + 20), fill=rgba("plum"))
+    d.ellipse((32, hy + 1, 52, hy + 19), fill=rgba("brown"))
+    d.polygon(
+        ((44, hy + 1), (47, hy + 2), (48, hy + 10), (51, hy + 14), (42, hy + 14), (44, hy + 7)), fill=rgba("white")
+    )
+    d.polygon(
+        ((44, hy + 11), (54, hy + 10), (57, hy + 12), (57, hy + 16), (52, hy + 19), (44, hy + 18), (41, hy + 15)),
+        fill=rgba("plum"),
+    )
+    d.polygon(
+        ((44, hy + 12), (54, hy + 11), (56, hy + 13), (56, hy + 15), (51, hy + 17), (44, hy + 17), (43, hy + 15)),
+        fill=rgba("white"),
+    )
+    d.rectangle((54, hy + 11, 57, hy + 13), fill=rgba("ink"))
+    d.polygon(((32, hy + 5), (34, hy - 2), (41, hy + 3), (38, hy + 11), (34, hy + 10)), fill=rgba("plum"))
+    d.polygon(((33, hy + 5), (35, hy), (39, hy + 4), (37, hy + 9), (35, hy + 8)), fill=rgba("brown"))
+    d.polygon(((35, hy), (31, hy + 3), (37, hy + 4)), fill=rgba("dbrown"))
+    d.polygon(((33, hy + 18), (46, hy + 20), (39, hy + 24)), fill=rgba("red"))
+    d.polygon(((39, hy + 21), (46, hy + 20), (39, hy + 24)), fill=rgba("dred"))
+    if state == "rest":
+        d.line((47, hy + 7, 50, hy + 7), fill=rgba("ink"))
+    else:
+        d.rectangle((47, hy + 5, 50, hy + 9), fill=rgba("ink"))
+        d.rectangle((47, hy + 6, 49, hy + 8), fill=rgba("sky"))
+        d.rectangle((49, hy + 7, 50, hy + 8), fill=rgba("ink"))
+        d.point((47, hy + 6), fill=rgba("white"))
+    im.alpha_composite(head, (shake, 0))
+    # Keep all poses inside the declared reach box, including the hop's raised ears.
     im.paste((0, 0, 0, 0), (0, 0, 2, 40))
     im.paste((0, 0, 0, 0), (58, 0, 60, 40))
     im.paste((0, 0, 0, 0), (0, 0, 60, 2))
-    if state in ("patrol", "rest") and phase % 2:
-        shifted = Image.new("RGBA", im.size)
-        shifted.alpha_composite(im.crop((2, 2, 58, 36)), (2, 1))
-        shifted.alpha_composite(im.crop((2, 36, 58, 40)), (2, 36))
-        im = shifted
-    if state == "walk":
-        d = ImageDraw.Draw(im)
-        d.rectangle((8, 34, 46, 39), fill=(0, 0, 0, 0))
-        offset = (-2, 0, 2, 0)[phase]
-        for x, y in ((13 + offset, 35), (37 - offset, 34 if phase % 2 else 35)):
-            d.rectangle((x, y, x + 6, 39 if y == 35 else 37), fill=rgba("plum"))
-            d.rectangle((x + 1, y, x + 5, 38 if y == 35 else 36), fill=rgba("white"))
-    if state == "rush" and phase:
-        shifted = Image.new("RGBA", im.size)
-        shifted.alpha_composite(im.crop((2, 3, 58, 40)), (2, 2))
-        im = shifted
-    if state == "frustration":
-        # These small visual hops leave the runtime anchor and collision box fixed.
-        hopped = Image.new("RGBA", im.size)
-        if phase in (0, 3):
-            height = 36 if phase == 0 else 35
-            compressed = im.resize((60, height), Image.Resampling.NEAREST)
-            hopped.alpha_composite(compressed, (0, 40 - height))
-        else:
-            rise = 3 if phase == 1 else 5
-            hopped.alpha_composite(im, (0, -rise))
-        im = hopped
     return im
 
 
