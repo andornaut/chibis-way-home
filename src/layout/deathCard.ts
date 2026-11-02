@@ -46,28 +46,38 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
   const rows = texts.map((text, index) =>
     cardTextSize(index === 0 ? fonts.title : fonts.body, text),
   );
-  const valueWidth = Math.min(
-    innerWidth / 2,
-    Math.max(
-      ...[...words.stats, ...words.totals].map((row) => cardTextSize(fonts.body, row.value).width),
-    ),
-  );
-  const stats = [...words.stats, ...words.totals].map((row) => {
-    const label = wrappedCardText(
-      fonts.body,
-      innerWidth - valueWidth - CARD_CONTENT.gap,
-      row.label,
+  const columnLimit = (innerWidth - STATS_DIVIDER_HEIGHT - 2 * CARD_CONTENT.gap) / 2;
+  const columns = [words.stats, words.totals].map((metrics) => {
+    const valueWidth = Math.min(
+      columnLimit / 2,
+      Math.max(0, ...metrics.map((row) => cardTextSize(fonts.body, row.value).width)),
     );
-    const value = wrappedCardText(fonts.body, valueWidth, row.value);
+    const rows = metrics.map((row) => {
+      const label = wrappedCardText(
+        fonts.body,
+        columnLimit - valueWidth - CARD_CONTENT.gap,
+        row.label,
+      );
+      const value = wrappedCardText(fonts.body, valueWidth, row.value);
+      return {
+        label,
+        labelSize: cardTextSize(fonts.body, label),
+        value,
+        valueSize: cardTextSize(fonts.body, value),
+      };
+    });
     return {
-      label,
-      labelSize: cardTextSize(fonts.body, label),
-      value,
-      valueSize: cardTextSize(fonts.body, value),
+      height:
+        rows.reduce((sum, row) => sum + Math.max(row.labelSize.height, row.valueSize.height), 0) +
+        Math.max(0, rows.length - 1) * CARD_CONTENT.rowGap,
+      rows,
+      width:
+        Math.max(0, ...rows.map((row) => row.labelSize.width)) +
+        CARD_CONTENT.gap +
+        Math.max(0, ...rows.map((row) => row.valueSize.width)),
     };
   });
-  const labelWidth = Math.max(...stats.map((row) => row.labelSize.width));
-  const measuredValueWidth = Math.max(...stats.map((row) => row.valueSize.width));
+  const columnWidth = Math.max(...columns.map((column) => column.width));
   const groups = [
     {
       height:
@@ -80,13 +90,9 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
       ),
     },
     {
-      height:
-        stats.reduce((sum, row) => sum + Math.max(row.labelSize.height, row.valueSize.height), 0) +
-        (stats.length - 2) * CARD_CONTENT.rowGap +
-        STATS_DIVIDER_HEIGHT +
-        2 * CARD_CONTENT.gap,
+      height: Math.max(...columns.map((column) => column.height)),
       key: "stats",
-      width: labelWidth + CARD_CONTENT.gap + measuredValueWidth,
+      width: 2 * columnWidth + STATS_DIVIDER_HEIGHT + 2 * CARD_CONTENT.gap,
     },
     { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
   ];
@@ -115,7 +121,6 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
   const layout = {
     ...contentCardLayout(bounds, groups),
     rows,
-    stats,
     texts,
     titleReserve,
   };
@@ -135,39 +140,36 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
   if (!home || !retry || !positions[0] || !positions[1] || !positions[2]) {
     throw new Error("Missing death card rows or actions");
   }
-  let statY = statGroup.y;
-  let divider: Rect | undefined;
-  const placedStats = layout.stats.map((row, index) => {
-    if (index === words.stats.length) {
-      statY += CARD_CONTENT.gap - CARD_CONTENT.rowGap;
-      divider = {
-        height: STATS_DIVIDER_HEIGHT,
-        width: statGroup.width,
-        x: statGroup.x,
-        y: statY,
-      };
-      statY += STATS_DIVIDER_HEIGHT + CARD_CONTENT.gap;
-    }
-    const height = Math.max(row.labelSize.height, row.valueSize.height);
-    const rect = { height, width: statGroup.width, x: statGroup.x, y: statY };
-    const at = statY;
-    statY += height + CARD_CONTENT.rowGap;
-    return {
-      label: {
-        rect: { height, width: row.labelSize.width, x: statGroup.x, y: at },
-        text: row.label,
-      },
-      rect,
-      value: {
-        rect: {
-          height,
-          width: row.valueSize.width,
-          x: statGroup.x + statGroup.width - row.valueSize.width,
-          y: at,
+  const divider: Rect = {
+    height: statGroup.height,
+    width: STATS_DIVIDER_HEIGHT,
+    x: statGroup.x + columnWidth + CARD_CONTENT.gap,
+    y: statGroup.y,
+  };
+  const placedStats = columns.flatMap((column, index) => {
+    const x = statGroup.x + index * (columnWidth + STATS_DIVIDER_HEIGHT + 2 * CARD_CONTENT.gap);
+    let y = statGroup.y;
+    return column.rows.map((row) => {
+      const height = Math.max(row.labelSize.height, row.valueSize.height);
+      const rect = { height, width: columnWidth, x, y };
+      y += height + CARD_CONTENT.rowGap;
+      return {
+        label: {
+          rect: { height, width: row.labelSize.width, x, y: rect.y },
+          text: row.label,
         },
-        text: row.value,
-      },
-    };
+        rect,
+        value: {
+          rect: {
+            height,
+            width: row.valueSize.width,
+            x: x + columnWidth - row.valueSize.width,
+            y: rect.y,
+          },
+          text: row.value,
+        },
+      };
+    });
   });
   return {
     card: layout.card,

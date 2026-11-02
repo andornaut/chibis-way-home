@@ -54,19 +54,48 @@ describe("death card", () => {
     expect(result.stage.y).toBeGreaterThan(result.title.y);
     expect(result.progress.y).toBeGreaterThan(result.stage.y);
     expect(result.stats[0]!.rect.y - result.progress.y - result.progress.height).toBe(8);
-    const left = result.stats[0]!.label.rect.x;
-    const right = result.stats[0]!.value.rect.x + result.stats[0]!.value.rect.width;
+    expect(result.divider.x + result.divider.width / 2).toBe(SCREEN.width / 2);
+    expect(result.stats[0]!.rect.y).toBe(result.stats[3]!.rect.y);
     for (const [index, row] of result.stats.entries()) {
       expect(row.label.text).toBe([...words.stats, ...words.totals][index]?.label);
       expect(row.value.text).toBe([...words.stats, ...words.totals][index]?.value);
-      expect(row.label.rect.x).toBe(left);
-      expect(row.value.rect.x + row.value.rect.width).toBe(right);
+      const first = result.stats[index < words.stats.length ? 0 : words.stats.length]!;
+      expect(row.label.rect.x).toBe(first.rect.x);
+      expect(row.value.rect.x + row.value.rect.width).toBe(first.rect.x + first.rect.width);
+      if (index < words.stats.length) {
+        expect(result.divider.x - row.rect.x - row.rect.width).toBe(CARD_CONTENT.gap);
+      } else {
+        expect(row.rect.x - result.divider.x - result.divider.width).toBe(CARD_CONTENT.gap);
+      }
       expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBeGreaterThanOrEqual(8);
     }
     expect(result.home.button.height).toBe(TEXT_BUTTON.height);
     expect(result.home.button.x + result.home.button.width).toBeLessThan(result.retry.button.x);
     expect(result.title.x - result.card.x).toBe(50);
     expect(result.card.x + result.card.width - result.title.x - result.title.width).toBe(50);
+  });
+  it("widens both columns for an uncleared best time without crowding the divider", () => {
+    const result = deathCard(fonts, view, {
+      ...words,
+      stats: words.stats.map((row, index) =>
+        index === RUN_STAT_KEYS.indexOf("best") ? { ...row, value: TEXT.stats.notCleared } : row,
+      ),
+    });
+    expect(result.stats[2]!.value.text).toBe(TEXT.stats.notCleared);
+    expect(result.stats[2]!.value.rect.width).toBe(
+      inkWidth(fonts.body, CARD_TEXT_SCALE, TEXT.stats.notCleared),
+    );
+    expect(result.stats[0]!.rect.width).toBe(result.stats[3]!.rect.width);
+    expect(result.divider.x + result.divider.width / 2).toBe(SCREEN.width / 2);
+    expect(result.card.x).toBeGreaterThanOrEqual(CARD_CONTENT.padding);
+    expect(result.card.x + result.card.width).toBeLessThanOrEqual(
+      SCREEN.width - CARD_CONTENT.padding,
+    );
+    for (const row of result.stats) {
+      expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBeGreaterThanOrEqual(
+        CARD_CONTENT.gap,
+      );
+    }
   });
   it.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
     "measures the actual %s text without shrinking fonts",
@@ -138,14 +167,14 @@ it("fits all six actual retry statements and grouped totals within the centred s
       expect(result.card.y + result.card.height).toBeLessThanOrEqual(
         SCREEN.height - CARD_CONTENT.padding,
       );
-      expect(result.card.height).toBe(306);
-      expect(result.card.y).toBe(27);
-      expect(result.divider!.y - result.stats[2]!.rect.y - result.stats[2]!.rect.height).toBe(
-        CARD_CONTENT.gap,
-      );
-      expect(result.stats[3]!.rect.y - result.divider!.y - result.divider!.height).toBe(
-        CARD_CONTENT.gap,
-      );
+      expect(result.divider.x + result.divider.width / 2).toBe(SCREEN.width / 2);
+      expect(result.divider.y).toBe(result.stats[0]!.rect.y);
+      expect(result.stats[3]!.rect.y).toBe(result.stats[0]!.rect.y);
+      for (const last of [result.stats[2]!, result.stats[5]!]) {
+        expect(last.rect.y + last.rect.height).toBeLessThanOrEqual(
+          result.divider.y + result.divider.height,
+        );
+      }
       expect(result.statement!.text).toBe(statement);
       expect(result.statement!.rect.height).toBe(CARD_CONTENT.lineHeight);
       expect(inkWidth(fonts.body, CARD_TEXT_SCALE, statement)).toBeLessThanOrEqual(
