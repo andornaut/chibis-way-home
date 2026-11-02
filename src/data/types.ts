@@ -106,6 +106,15 @@ export interface DashTrailTuning {
   readonly tipFadeExponent: number;
 }
 
+// Visual-only second-jump cue. Offset is from the full frame centre; distances are logical pixels.
+export interface AirJumpCueTuning {
+  readonly colour: string;
+  readonly durationSeconds: number;
+  readonly offset: Point;
+  readonly rise: number;
+  readonly scale: number;
+}
+
 export interface BirdTuning {
   readonly dash?: BirdDashTuning;
   // Enables one fresh airborne jump per airtime; only actual supported landing restores it.
