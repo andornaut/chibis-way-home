@@ -8,7 +8,11 @@ const state = vi.hoisted(() => ({
   refuse: vi.fn(() => vi.fn()),
 }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./cardParts", () => ({ ringFocus: vi.fn() }));
+vi.mock("./cardParts", () => ({
+  pressTextButton: vi.fn(),
+  ringFocus: vi.fn(),
+  setTextButtonEnabled: vi.fn(),
+}));
 vi.mock("./modalBackdrop", () => ({ showModalBackdrop: vi.fn() }));
 vi.mock("./modalInput", () => ({
   modalInput: () => ({ accepts: () => state.accepts, invalidate: state.invalidate }),
@@ -20,6 +24,7 @@ vi.mock("./playCamera", () => ({
 }));
 vi.mock("./refuseControl", () => ({ refuseControl: state.refuse }));
 
+import { pressTextButton, setTextButtonEnabled } from "./cardParts";
 import { StageSelectScene } from "./StageSelectScene";
 
 afterEach(() => {
@@ -149,4 +154,25 @@ it("hides every off-page face and content object while retaining full-size on-pa
   expect(hidden.normal.setVisible).toHaveBeenCalledWith(false);
   expect(hidden.pressed.setVisible).toHaveBeenCalledWith(false);
   expect(hidden.content[0]!.object.setVisible).toHaveBeenCalledWith(false);
+});
+
+it("renders pager availability through the shared disabled button state", () => {
+  const previous = {},
+    next = {};
+  const scene = Object.assign(new StageSelectScene(), {
+    closeX: { play: vi.fn() },
+    layout: { pages: 2 },
+    pager: new Map([
+      ["previousPage", previous],
+      ["nextPage", next],
+    ]),
+  }) as unknown as { page: number; render(): void };
+  scene.render();
+  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, false, previous);
+  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, true, next);
+  expect(pressTextButton).toHaveBeenCalledWith(previous, false);
+  scene.page = 1;
+  scene.render();
+  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, true, previous);
+  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, false, next);
 });

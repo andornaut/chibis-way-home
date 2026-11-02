@@ -172,9 +172,11 @@ export type ButtonStyle = typeof BUTTON | typeof PRIMARY_BUTTON;
 // A labelled button in one of art's button styles (BUTTON by default) stretched over its rect: its
 // normal and pressed faces, and its label in the style's colour, led by the play mark when marked.
 export interface TextButton {
+  enabled: boolean;
   readonly faces: Readonly<Record<"normal" | "pressed", GameObjects.NineSlice>>;
   readonly label: ButtonLabel;
   readonly layout: LabelledButton;
+  readonly style: ButtonStyle;
 }
 
 export function addTextButton(
@@ -182,27 +184,67 @@ export function addTextButton(
   layout: LabelledButton,
   text: string,
   {
+    disabled = false,
     marked = false,
     style = BUTTON,
-  }: { readonly marked?: boolean; readonly style?: ButtonStyle } = {},
+  }: { readonly disabled?: boolean; readonly marked?: boolean; readonly style?: ButtonStyle } = {},
 ): TextButton {
   const frames = sheetTags(scene.cache.json.get(style.art) as AsepriteSheet);
-  const face = (tag: "normal" | "pressed") =>
-    addSlice(scene, style.art, layout.button, frames.get(tag)?.[0]?.frame);
+  const face = (tag: "normal" | "pressed") => {
+    const chosen = disabled ? "disabled" : tag;
+    const frame = frames.get(chosen)?.[0]?.frame;
+    if (disabled && frame === undefined) {
+      throw new Error(`No disabled frame for ${style.art}`);
+    }
+    return addSlice(scene, style.art, layout.button, frame);
+  };
   return {
+    enabled: !disabled,
     faces: { normal: face("normal"), pressed: face("pressed") },
     label: addButtonLabel(scene, layout.button, layout.labelY, text, {
-      colour: paletteColour(scene, style.label),
-      markTag: style.art === PRIMARY_BUTTON.art ? "light" : "rest",
+      colour: paletteColour(scene, disabled ? "dslate" : style.label),
+      markTag: !disabled && style.art === PRIMARY_BUTTON.art ? "light" : "rest",
       marked,
     }),
     layout,
+    style,
   };
 }
 
 // Shows a labelled button pressed or not: the pressed face, its label sunk.
-export function pressTextButton({ faces, label, layout }: TextButton, pressed: boolean): void {
-  faces.normal.setVisible(!pressed);
-  faces.pressed.setVisible(pressed);
-  placeButtonLabel(label, pressed ? layout.pressedLabelY : layout.labelY);
+export function pressTextButton(
+  { enabled, faces, label, layout }: TextButton,
+  pressed: boolean,
+): void {
+  const active = pressed && enabled;
+  faces.normal.setVisible(!active);
+  faces.pressed.setVisible(active);
+  placeButtonLabel(label, active ? layout.pressedLabelY : layout.labelY);
+}
+
+export function setTextButtonEnabled(scene: Scene, enabled: boolean, button: TextButton): void {
+  if (button.enabled === enabled) {
+    return;
+  }
+  const frames = sheetTags(scene.cache.json.get(button.style.art) as AsepriteSheet);
+  for (const tag of ["normal", "pressed"] as const) {
+    const chosen = enabled ? tag : "disabled";
+    const frame = frames.get(chosen)?.[0]?.frame;
+    if (frame === undefined) {
+      throw new Error(`No ${chosen} frame for ${button.style.art}`);
+    }
+    button.faces[tag].setFrame(frame);
+  }
+  button.label.label.setTint(paletteColour(scene, enabled ? button.style.label : "dslate"));
+  if (button.label.mark) {
+    const tag = enabled && button.style.art === PRIMARY_BUTTON.art ? "light" : "rest";
+    const frame = sheetTags(scene.cache.json.get("ui-play-mark") as AsepriteSheet).get(tag)?.[0]
+      ?.frame;
+    if (frame === undefined) {
+      throw new Error(`No ${tag} frame for ui-play-mark`);
+    }
+    button.label.mark.setFrame(frame);
+  }
+  button.enabled = enabled;
+  pressTextButton(button, false);
 }

@@ -33,6 +33,7 @@ import {
   paletteColour,
   pressTextButton,
   ringFocus,
+  setTextButtonEnabled,
   type TextButton,
   TITLE_FONT,
 } from "./cardParts";
@@ -246,9 +247,8 @@ export class StageSelectScene extends Scene {
         enabled &&
         this.pressed?.kind === "page" &&
         this.pressed.step === (key === "previousPage" ? -1 : 1);
+      setTextButtonEnabled(this, enabled, button);
       pressTextButton(button, pressed);
-      button.faces.normal.setTint(paletteColour(this, enabled ? "white" : "lgrey"));
-      button.label.label.setTint(paletteColour(this, enabled ? "ink" : "grey"));
     }
     if (this.pageCount && this.layout.pager) {
       const text = this.pageText();
