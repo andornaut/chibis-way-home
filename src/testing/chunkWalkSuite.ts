@@ -3,21 +3,15 @@ import { isDeepStrictEqual } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { TILE } from "../data/screen";
-import type { ChunkPlan, SlotKind, ZonePlan } from "../data/types";
-import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble";
+import type { SlotKind } from "../data/types";
 import { ALL_CHUNKS } from "./chunks";
-import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics } from "./chunkWalkCases";
+import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases";
 import { chunkWalkPartitions } from "./chunkWalkPartitions";
 import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";
 import { requiredWalkSuite, walkSuite } from "./walkSuite";
 
 type SlotFills = Readonly<Record<SlotKind, readonly string[]>>;
 const EMPTY_SLOTS: SlotFills = { door: [], event: [] };
-
-function alone(fills: SlotFills, library: ChunkLibrary, chunk: ChunkPlan): ZonePlan {
-  const only = { ...library, chunks: { chunk } };
-  return zonePlanOf(only, () => 0, fills, themesOf(chunk)[0] ?? "", 2, ["chunk"]);
-}
 
 const byName = new Map(ALL_CHUNKS.map((entry) => [entry[0], entry]));
 for (const name of [...Object.keys(REQUIRED_CHUNK_ROUTES), ...Object.keys(FILLED_CHUNK_SLOTS)]) {
@@ -66,7 +60,7 @@ export function registerChunkWalkPartition(index: number): void {
           }),
         );
       });
-      const plan = alone(slots, library, chunk);
+      const plan = chunkWalkPlan(slots, [name, library, chunk]);
       if (exhaustive) {
         walkSuite(plan);
       } else {

@@ -1,17 +1,33 @@
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
-import type { ObjectLayout, ZoneLayout } from "../data/types";
+import type { ObjectLayout, SlotKind, ZoneLayout } from "../data/types";
 import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble";
+import { applyStageGeometry } from "../rules/stageGeometry";
 import { zoneLayout } from "../rules/tiles";
 import { BIRD_FRAME } from "../view/bird";
-import type { ALL_CHUNKS } from "./chunks";
+import { type ALL_CHUNKS, ALL_RECIPES } from "./chunks";
 import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 export type ChunkWalkCase = (typeof ALL_CHUNKS)[number];
 
-export function chunkWalkPlan([, library, chunk]: ChunkWalkCase) {
+export function chunkWalkPlan(
+  fills: Readonly<Record<SlotKind, readonly string[]>>,
+  [, library, chunk]: ChunkWalkCase,
+) {
   const only: ChunkLibrary = { ...library, chunks: { chunk } };
-  return zonePlanOf(only, () => 0, { door: [], event: [] }, themesOf(chunk)[0] ?? "", 2, ["chunk"]);
+  const plan = zonePlanOf(only, () => 0, fills, themesOf(chunk)[0] ?? "", 2, ["chunk"]);
+  const spawnRows = new Set(
+    ALL_RECIPES.flatMap(([, source, recipe]) =>
+      source === library && !("sections" in recipe) && source.chunks[recipe.start] === chunk
+        ? [recipe.spawnRow]
+        : [],
+    ),
+  );
+  if (spawnRows.size > 1) {
+    throw new Error("Standalone opening requires one production spawn row");
+  }
+  const [spawnRow] = spawnRows;
+  return spawnRow === undefined ? plan : applyStageGeometry({ spawnRow }, plan);
 }
 
 // Keep physical object slots: their original indices select deterministic motion streams.
@@ -38,7 +54,7 @@ export function chunkWalkPhysics(subject: ChunkWalkCase): unknown {
     HITBOXES,
     TILESETS,
     new Set(),
-    chunkWalkPlan(subject),
+    chunkWalkPlan({ door: [], event: [] }, subject),
   );
   return {
     tuning: BIRD,
@@ -58,7 +74,7 @@ export function chunkWalkPhysics(subject: ChunkWalkCase): unknown {
       }),
     ),
     marks: Object.fromEntries(
-      Object.entries(chunkWalkPlan(subject).areas).map(([key, area]) => [
+      Object.entries(chunkWalkPlan({ door: [], event: [] }, subject).areas).map(([key, area]) => [
         key,
         { noCross: area.noCross ?? [], outOfReach: area.outOfReach ?? [] },
       ]),

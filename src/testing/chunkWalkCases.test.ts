@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { TILE } from "../data/screen";
+import { APARTMENT_SPAWN_ROW } from "../data/zone6";
 import { zoneLayout } from "../rules/tiles";
 import { BIRD_FRAME } from "../view/bird";
 import { ALL_CHUNKS } from "./chunks";
@@ -38,7 +39,7 @@ describe("standalone empty-slot physical equivalents", () => {
       HITBOXES,
       TILESETS,
       new Set(),
-      chunkWalkPlan(subject),
+      chunkWalkPlan({ door: [], event: [] }, subject),
     );
     const hazards = layout.areas.main!.objects.filter((object) => object.collision === "hazard");
     expect(hazards).not.toHaveLength(0);
@@ -57,3 +58,22 @@ it("keeps autonomous Woodland motion distinct from the same terrain without wild
     chunkWalkPhysics(byName.get("compound-low-ceiling-shuttle-exterior")!),
   );
 });
+
+it.each(["empty", "filled"] as const)(
+  "starts the %s opening profile on its production spawn without changing the seam",
+  (profile) => {
+    const subject = byName.get("apartment-floor-start")!;
+    const fills = profile === "filled" ? FILLED_CHUNK_SLOTS[subject[0]]! : { door: [], event: [] };
+    const plan = chunkWalkPlan(fills, subject);
+    expect(plan.areas[plan.start.area]!.entries[plan.start.entry]!.row).toBe(APARTMENT_SPAWN_ROW);
+    const geometry = (solids: (typeof subject)[2]["solids"]) =>
+      solids.map(({ col, cols, row, rows }) => ({ col, cols, row, rows }));
+    expect(geometry(plan.areas[plan.start.area]!.solids)).toEqual(geometry(subject[2].solids));
+    expect(subject[2].entry.row).not.toBe(APARTMENT_SPAWN_ROW);
+    const middle = byName.get("apartment-tall-compound-patrol-lift")!;
+    const middlePlan = chunkWalkPlan({ door: [], event: [] }, middle);
+    expect(middlePlan.areas[middlePlan.start.area]!.entries[middlePlan.start.entry]!.row).toBe(
+      middle[2].entry.row,
+    );
+  },
+);
