@@ -40,7 +40,8 @@ export const TEXT: GameText = {
   homePage: {
     description: "Help Chibi get home after Fert, his former best friend, mails him far away.",
     keyboard:
-      "Keyboard: arrows to walk and jump; jump again in the air; E for a door or dash; P to pause.",
+      "Keyboard: arrows/A-D move; Space, Up or W jump; E, F or Enter use a door or dash; P/Esc pause. " +
+      "Mouse: hold left/right over the playfield to move.",
     play: "Play",
     subline: "Jump through city streets, avoid red-edged hazards and get past Archie.",
     touch:
