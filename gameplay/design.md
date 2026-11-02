@@ -338,7 +338,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 ### Rooms
 
 - **Contents:** usually dialogue, and any of: items to buy or sell, quests to take, rewards, threats, and talk that advances the story or adds flavour
-- **Enter:** Use at a room's door plays the door's opening animation, if it has one, with play held, then shows the room as a full-screen still scene with a little animation, such as a bartender behind his bar. Play pauses until he leaves, and leaving returns him to the door, shown closed. He leaves with the Leave button in a corner, back, or Esc
+- **Enter:** Use at a room's door plays the door's opening animation, if it has one, with play held, then shows the room as a full-screen still scene with a little animation, such as a bartender behind his bar. Play pauses until he leaves, and leaving returns him to the door, shown closed. He leaves a skill gift room with its primary Continue button; ordinary rooms retain Leave. Back and Esc also leave the room
 - **Gifts:** the existing stage doors offer seven Dash, seven Double jump and seven Speedy grants across the twenty-one stages, with their assignments in `src/data/zones.ts`. The grant is saved on entry, before any dialogue acknowledgment. A supportive placeholder animal presents one top-panel gift line, alongside an in-room skill-details card. That card is ordinary nonmodal room content and adds no separate pause or dim layer; entering the room still holds the outside stage until Chibi leaves
 - **Per stage:** every stage has a skill gift room; repeated rooms make the skills easy to find and test
 - **World:** the side-scrolling stages are the game world; rooms are the only other places, each reached through a door

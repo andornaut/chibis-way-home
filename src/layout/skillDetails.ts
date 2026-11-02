@@ -1,38 +1,61 @@
 import { SCREEN } from "../data/screen";
 import type { Rect, SkillText } from "../data/types";
 import { dialogueLines } from "../dialogue/conversation";
+import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
-import { type CardFonts, cardTextSize, contentCardLayout } from "./contentCard";
+import {
+  cardActions,
+  cardActionsSize,
+  type CardFonts,
+  cardTextSize,
+  contentCardLayout,
+} from "./contentCard";
 import { DIALOGUE_SCREEN } from "./dialogueScreen";
 import { hitAround } from "./hitAreas";
-import { ROOM_SCREEN } from "./roomScreen";
 import { SKILL_BUTTON } from "./skillHud";
 
 const DESCRIPTION_WIDTH = 512;
 const DESCRIPTION_LINES = 12;
-const ROOM_LEAVE_BOTTOM = 10;
-const leaveArt = {
-  ...ROOM_SCREEN.leave.art,
-  y: SCREEN.height - ROOM_LEAVE_BOTTOM - ROOM_SCREEN.leave.art.height,
+const footer = {
+  height: TEXT_BUTTON.height,
+  width: SCREEN.width - 2 * CARD_CONTENT.padding,
+  x: CARD_CONTENT.padding,
+  y: SCREEN.height - CARD_CONTENT.padding - TEXT_BUTTON.height,
 };
 export const SKILL_ROOM = {
   bounds: {
     height:
-      hitAround(leaveArt).y -
+      hitAround(footer).y -
       CARD_CONTENT.gap -
       (DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height + CARD_CONTENT.gap),
     width: SCREEN.width,
     x: 0,
     y: DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height + CARD_CONTENT.gap,
   } satisfies Rect,
-  leave: {
-    ...ROOM_SCREEN.leave,
-    art: leaveArt,
-    hit: hitAround(leaveArt),
-    labelY: leaveArt.y + ROOM_SCREEN.leave.labelY - ROOM_SCREEN.leave.art.y,
-    pressedLabelY: leaveArt.y + ROOM_SCREEN.leave.pressedLabelY - ROOM_SCREEN.leave.art.y,
-  },
+  footer,
 };
+
+export function skillRoomContinue(fonts: CardFonts, text: string) {
+  const size = cardActionsSize(fonts.body, "row", [text]);
+  if (size.width > footer.width) {
+    throw new Error("Skill room action does not fit at the standard font size");
+  }
+  const action = cardActions(
+    fonts.body,
+    "row",
+    {
+      ...footer,
+      x: footer.x + footer.width - size.width,
+    },
+    [text],
+  )[0]!;
+  return {
+    art: action.button,
+    hit: action.hit,
+    labelY: action.labelY,
+    pressedLabelY: action.pressedLabelY,
+  };
+}
 
 export function skillDetails(fonts: CardFonts, bounds: Rect, close: boolean, words: SkillText) {
   const description = dialogueLines(

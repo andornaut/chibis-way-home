@@ -16,7 +16,7 @@ import { DIALOGUE_SCREEN, dialogueSpeakerLayout } from "../layout/dialogueScreen
 import { pressedArea } from "../layout/hitAreas";
 import { CARD_TEXT_SCALE } from "../layout/pauseCard";
 import { ROOM_SCREEN } from "../layout/roomScreen";
-import { SKILL_ROOM, skillDetails } from "../layout/skillDetails";
+import { SKILL_ROOM, skillDetails, skillRoomContinue } from "../layout/skillDetails";
 import { type RoomEvent, roomEvent } from "../pause/roomInput";
 import { coverZone, PHONE_EVENTS } from "../pwa";
 import { grantSkill } from "../save";
@@ -32,6 +32,7 @@ import {
   cardFonts,
   paletteColour,
   placeButtonLabel,
+  PRIMARY_BUTTON,
   ringFocus,
   TITLE_FONT,
 } from "./cardParts";
@@ -189,19 +190,29 @@ export class RoomScene extends Scene {
   }
 
   private leaveLayout() {
-    return this.room.grant === undefined ? ROOM_SCREEN.leave : SKILL_ROOM.leave;
+    return this.room.grant === undefined
+      ? ROOM_SCREEN.leave
+      : skillRoomContinue(cardFonts(this), TEXT.dialogue.continue);
   }
 
   private drawLeave(): void {
     const leave = this.leaveLayout();
-    const frames = sheetTags(this.cache.json.get(BUTTON.art) as AsepriteSheet);
+    const gift = this.room.grant !== undefined;
+    const style = gift ? PRIMARY_BUTTON : BUTTON;
+    const frames = sheetTags(this.cache.json.get(style.art) as AsepriteSheet);
     const face = (tag: "normal" | "pressed") =>
-      addSlice(this, BUTTON.art, leave.art, frames.get(tag)?.[0]?.frame);
+      addSlice(this, style.art, leave.art, frames.get(tag)?.[0]?.frame);
     this.leaveFaces = { normal: face("normal"), pressed: face("pressed") };
-    this.leaveLabel = addButtonLabel(this, leave.art, leave.labelY, TEXT.room.leave, {
-      colour: this.colour(BUTTON.label),
-      marked: false,
-    });
+    this.leaveLabel = addButtonLabel(
+      this,
+      leave.art,
+      leave.labelY,
+      gift ? TEXT.dialogue.continue : TEXT.room.leave,
+      {
+        colour: this.colour(style.label),
+        marked: false,
+      },
+    );
   }
 
   // Leave as the press and the focus leave it.

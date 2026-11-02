@@ -7,7 +7,10 @@ import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { SKILL_IDS } from "../rules/skills";
-import { SKILL_ROOM, skillDetails } from "./skillDetails";
+import { TEXT_BUTTON } from "./buttonLabel";
+import { CARD_CONTENT, cardTextSize } from "./contentCard";
+import { ROOM_SCREEN } from "./roomScreen";
+import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails";
 import { SKILL_BUTTON, SKILL_HUD, skillButton } from "./skillHud";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
@@ -21,13 +24,25 @@ const inside = (
   inner.y + inner.height <= outer.y + outer.height;
 
 describe("native skill presentation", () => {
+  it("measures the gift Continue footer at the shared native action size while ordinary rooms stay compact", () => {
+    const action = skillRoomContinue(fonts, TEXT.dialogue.continue);
+    expect(action.art.height).toBe(TEXT_BUTTON.height);
+    expect(action.art.width).toBe(
+      cardTextSize(fonts.body, TEXT.dialogue.continue).width + 2 * TEXT_BUTTON.inset,
+    );
+    expect(SCREEN.width - action.art.x - action.art.width).toBe(CARD_CONTENT.padding);
+    expect(SCREEN.height - action.art.y - action.art.height).toBe(CARD_CONTENT.padding);
+    expect(ROOM_SCREEN.leave.art).toEqual({ height: 28, width: 72, x: 640, y: 10 });
+  });
   it.each(SKILL_IDS)(
     "fits full-font %s descriptions in a nonmodal room and centred modal",
     (skill) => {
       const room = skillDetails(fonts, SKILL_ROOM.bounds, false, TEXT.skills[skill]);
       expect(room.close).toBeUndefined();
       expect(inside(SKILL_ROOM.bounds, room.card)).toBe(true);
-      expect(rectsOverlap(room.card, SKILL_ROOM.leave.hit)).toBe(false);
+      const action = skillRoomContinue(fonts, TEXT.dialogue.continue);
+      expect(rectsOverlap(room.card, action.hit)).toBe(false);
+      expect(inside({ ...SCREEN, x: 0, y: 0 }, action.hit)).toBe(true);
       const modal = skillDetails(fonts, { ...SCREEN, x: 0, y: 0 }, true, TEXT.skills[skill]);
       expect(modal.card.x + modal.card.width / 2).toBe(SCREEN.width / 2);
       expect(modal.card.y + modal.card.height / 2).toBe(SCREEN.height / 2);
