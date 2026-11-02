@@ -44,7 +44,7 @@ it("passes Duck's page entries, preview host and existing limits to the shared c
   ]);
   expect(config.build?.chunkSizeWarningLimit).toBe(1100);
   expect(config.test?.testTimeout).toBe(5_000);
-  expect(config.test?.maxWorkers).toBeUndefined();
+  expect(config.test?.maxWorkers).toBe(4);
 });
 
 it("discovers only game-owned tests while retaining the resolved Node test options", async () => {
