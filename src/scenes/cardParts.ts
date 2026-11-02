@@ -112,15 +112,29 @@ export function addButtonLabel(
   button: Rect,
   labelY: number,
   text: string,
-  options: { readonly colour: number; readonly marked: boolean },
+  options: {
+    readonly colour: number;
+    readonly marked: boolean;
+    readonly markTag?: "rest" | "light";
+  },
 ): ButtonLabel {
   const font = phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
   const ink = inkWidth(font, CARD_TEXT_SCALE, text);
   const { labelX, markX } = centredLabel(button, ink, options.marked ? PLAY_MARK : undefined);
   const label = addCardText(scene, BODY_FONT, { x: labelX, y: labelY }, text, options.colour);
-  return markX === undefined
-    ? { label }
-    : { label, mark: scene.add.image(markX, labelY + MARK_DROP, "ui-play-mark").setOrigin(0) };
+  if (markX === undefined) {
+    return { label };
+  }
+  const tag = options.markTag ?? "rest";
+  const frame = sheetTags(scene.cache.json.get("ui-play-mark") as AsepriteSheet).get(tag)?.[0]
+    ?.frame;
+  if (frame === undefined) {
+    throw new Error(`No ${tag} frame for ui-play-mark`);
+  }
+  return {
+    label,
+    mark: scene.add.image(markX, labelY + MARK_DROP, "ui-play-mark", frame).setOrigin(0),
+  };
 }
 
 // Moves a button's label, and its mark with it, to labelY: a pressed button's sink.
@@ -179,6 +193,7 @@ export function addTextButton(
     faces: { normal: face("normal"), pressed: face("pressed") },
     label: addButtonLabel(scene, layout.button, layout.labelY, text, {
       colour: paletteColour(scene, style.label),
+      markTag: style.art === PRIMARY_BUTTON.art ? "light" : "rest",
       marked,
     }),
     layout,
