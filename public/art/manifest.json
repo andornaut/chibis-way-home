@@ -501,9 +501,21 @@
       "once": []
     },
     {
+      "key": "portrait-goose",
+      "png": "sprites/portrait-goose.png",
+      "json": "sprites/portrait-goose.json",
+      "once": []
+    },
+    {
       "key": "portrait-pigeon",
       "png": "sprites/portrait-pigeon.png",
       "json": "sprites/portrait-pigeon.json",
+      "once": []
+    },
+    {
+      "key": "portrait-raccoon",
+      "png": "sprites/portrait-raccoon.png",
+      "json": "sprites/portrait-raccoon.json",
       "once": []
     },
     {

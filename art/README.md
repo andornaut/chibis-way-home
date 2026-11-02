@@ -783,7 +783,7 @@ Backdrops use bottom-left anchors with default bottom y 600. Use sky factors 0,0
 
 ## Goose antagonist
 
-`art/tools/goose.py` draws Trixi as the countryside's `goose-antagonist`. A long neck, small head, pale body and oversized ink-rimmed glasses distinguish her from Chibi; a warm beak and feet keep her silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline or dialogue portrait.
+`art/tools/goose.py` draws Trixi as the countryside's `goose-antagonist`. A long neck, small head, pale body and oversized ink-rimmed glasses distinguish her from Chibi; a warm beak and feet keep her silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline. `art/tools/speaker_portraits.py` supplies `portrait-goose`: a transparent right-facing 64x64 portrait retaining the long cream neck, grey wing, orange bill and oversized glasses. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot.
 
 The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is x 2, y 2, width 44, height 46, containing every pose and its mirrored version. The skin uses the shared enemy state graph; gameplay owns warning, charge and recovery durations. Contact remains lethal in every state.
 
@@ -961,9 +961,9 @@ The repeated atmosphere layers have a default bottom of y 600. Use sky factors 0
 | rush    | Four frames, 80ms each  | Low forward head, longer grounded strides  |
 | walk    | Four frames, 120ms each | Alternate steps and opposite swinging paws |
 
-All tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. No portrait or new conversation is supplied by this asset.
+All tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. The body sprite supplies no new conversation.
 
-Kiwi, the female raccoon, reuses the existing identity without added gender accessories. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
+Kiwi, the female raccoon, reuses the existing identity without added gender accessories. `art/tools/speaker_portraits.py` supplies `portrait-raccoon`: a transparent right-facing 64x64 portrait with rounded ears, paired ink masks, grey fur and a cream muzzle. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
