@@ -478,3 +478,67 @@ it("keeps inclusive query boundaries uncertain and rejects malformed bounds", ()
     context(() => ({ ...body(mover), x: NaN })).sampleColliders(10.1, STEP_SECONDS, query).complete,
   ).toBe(false);
 });
+it("rejects required support waits reached normally or through an escaped branch", () => {
+  const required = { ...wait, motion: { kind: "wait", support: "required" } } as const;
+  const object = actor({
+    ...waitingPlan(),
+    states: {
+      required,
+      wait: {
+        ...wait,
+        transitions: [{ to: "required", when: [{ kind: "elapsed", seconds: 0.1 }] }],
+      },
+    },
+  });
+  expect(certify(object)(10.09)).toBeDefined();
+  expect(certify(object)(10.1)).toBeUndefined();
+  const escaping = actor({
+    ...waitingPlan(),
+    initial: "reset",
+    pursuit,
+    states: {
+      required,
+      reset: wait,
+      tell: { ...wait, transitions: [{ to: "required", when: [{ kind: "pursuit-ended" }] }] },
+    },
+  });
+  const state = { ...startBehaviour(BIRD, escaping, target), stateKey: "tell" };
+  expect(
+    hazardBoundsAt([escaping], state, escaping.origin, body(escaping), 10, escaping)(10.1),
+  ).toBeUndefined();
+});
+it("keeps a supported landing unknown when the real carrier moves a waiting body", () => {
+  const object = actor({
+    ...waitingPlan(),
+    states: {
+      wait: { ...wait, motion: { kind: "wait", support: "required" } },
+    },
+  });
+  const owner = { ...object, character: "perch", collision: "ledge" as const };
+  const before = { height: 10, width: 100, x: 80, y: 148 };
+  const after = { ...before, x: 90, y: 138 };
+  const state = {
+    ...startBehaviour(BIRD, object, target),
+    landing: {
+      speed: 40,
+      status: "supported" as const,
+      support: { localX: 20, owner, rect: before },
+    },
+    pendingEntry: false,
+  };
+  const world = {
+    platforms: [{ collision: "ledge" as const, owner, rect: before }],
+    solids: [],
+    traversalFrame: {
+      bounds: { height: 400, width: 1000, x: 0, y: 0 },
+      dtSeconds: 0.1,
+      platforms: [{ after, before, collision: "ledge" as const, owner }],
+      timeSeconds: 0,
+    },
+  };
+  const carried = stepBehaviour(BIRD, object, world, 0.1, target, object.origin, state);
+  expect(carried.at).toEqual({ x: 110, y: 90 });
+  expect(
+    hazardBoundsAt([object, owner], state, object.origin, body(object), 0, object)(0.1),
+  ).toBeUndefined();
+});

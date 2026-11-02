@@ -530,13 +530,18 @@ describe("persistent pursuit", () => {
     ({ boundary, graph, raised }) => {
       const resolved = layoutBehaviour(TILE, graph);
       const object = actor(resolved);
-      const returnMotion = resolved.states["return-high"]?.motion;
+      const approachMotion = Object.values(resolved.states).find(
+        ({ motion, transitions }) =>
+          motion.kind === "fly" &&
+          typeof motion.to !== "string" &&
+          transitions.some(({ to }) => to === boundary),
+      )?.motion;
       const offset = !raised
         ? 0
         : resolved.axis === "y"
           ? resolved.distance
-          : returnMotion?.kind === "fly" && typeof returnMotion.to !== "string"
-            ? returnMotion.to.y
+          : approachMotion?.kind === "fly" && typeof approachMotion.to !== "string"
+            ? approachMotion.to.y
             : 0;
       if (raised) {
         expect(offset).toBeLessThan(0);

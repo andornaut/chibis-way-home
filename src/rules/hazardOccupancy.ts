@@ -20,7 +20,12 @@ export function hazardBoundsAt(
   const snapshot = state && {
     anchor: { ...(state.anchor ?? object.origin) },
     blocked: Boolean(
-      state.hop || state.traversal || state.idleWatchdog?.recovery || state.pursuit || state.rearm,
+      state.hop ||
+      state.traversal ||
+      state.idleWatchdog?.recovery ||
+      state.pursuit ||
+      state.rearm ||
+      state.landing,
     ),
     elapsed: state.elapsed,
     idleSeconds: state.idleWatchdog?.seconds ?? 0,
@@ -171,6 +176,7 @@ export function hazardBoundsAt(
         const node = plan.states[key];
         if (
           !node ||
+          (node.motion.kind === "wait" && node.motion.support === "required") ||
           (node.motion.kind !== "wait" &&
             !(node.motion.kind === "pursue" && node.motion.mode === "ground"))
         ) {
@@ -221,7 +227,11 @@ export function hazardBoundsAt(
         return undefined;
       }
       const node = plan.states[key];
-      if (!node || (node.motion.kind !== "wait" && (plan.pursuit || node.motion.kind !== "move"))) {
+      if (
+        !node ||
+        (node.motion.kind === "wait" && node.motion.support === "required") ||
+        (node.motion.kind !== "wait" && (plan.pursuit || node.motion.kind !== "move"))
+      ) {
         return undefined;
       }
       const extra = actionRange(node);
