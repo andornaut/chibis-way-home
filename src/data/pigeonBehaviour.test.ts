@@ -7,6 +7,7 @@ import {
   stepBehaviour,
 } from "../rules/behaviour";
 import { startBird } from "../rules/bird";
+import { supportedLanding } from "../rules/flyLanding";
 import { objectLayout } from "../rules/tiles";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import {
@@ -197,3 +198,41 @@ it.each([
     }
   },
 );
+
+it.each([
+  ["prepare-drop-left", "drop-burst", "burst-rest-left"],
+  ["prepare-drop-right", "drop-burst", "burst-rest-right"],
+  ["prepare-swoop-left", "swoop", "swoop-rest-left"],
+  ["prepare-swoop-right", "swoop", "swoop-rest-right"],
+] as const)("physically completes %s only after supported recovery", (entry, attack, rest) => {
+  const object = make();
+  const bird = { ...target(), y: 132 };
+  const physical = { solids: [{ height: 552, width: 720, x: 0, y: 168 }], view: world().view };
+  const component = { ...object, behaviour: { ...object.behaviour!, initial: entry } };
+  let at = object.origin;
+  let state = startBehaviour(BIRD, component, bird);
+  let rested = 0;
+  let committed = false;
+  let completed = false;
+  for (let tick = 0; tick < 2400; tick++) {
+    const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+    if (state.activeAttack?.phase === "committed") {
+      committed = true;
+      expect(state.activeAttack.id).toBe(attack);
+    }
+    if (state.stateKey === rest) {
+      expect(supportedLanding(object, physical, at)).toBe(true);
+      rested++;
+    }
+    if ((state.attackCooldownRemainingSeconds ?? 0) > 0) {
+      expect(committed).toBe(true);
+      expect(rested).toBeGreaterThanOrEqual(40);
+      expect(supportedLanding(object, physical, at)).toBe(true);
+      completed = true;
+      break;
+    }
+  }
+  expect(completed, `Incomplete ${entry}: ${state.stateKey}`).toBe(true);
+});
