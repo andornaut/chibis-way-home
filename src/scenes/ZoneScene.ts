@@ -320,7 +320,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     readonly bounds: Rect;
     readonly item: GameObjects.TileSprite;
     readonly parallax: Point;
-    readonly reference?: Point;
+    readonly reference?: { readonly scroll: Point; readonly textureTop: number };
   }[] = [];
   private readonly scenerySprites: {
     readonly coverage: { readonly width: number; readonly x: number };
@@ -1455,10 +1455,17 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           if (!object.groundAnchor) {
             throw new Error("Interior backdrop requires a ground anchor");
           }
-          const reference = backgroundGroundReference(
-            { area: areaOf(this.layout, this.zone.area), camera: CAMERA, screen: SCREEN },
-            object.groundAnchor,
-          ).scroll;
+          const backdrop = this.manifest.backdrops.find(({ key }) => key === object.art);
+          if (!backdrop) {
+            throw new Error(`Missing interior backdrop metadata: ${object.art}`);
+          }
+          const reference = {
+            scroll: backgroundGroundReference(
+              { area: areaOf(this.layout, this.zone.area), camera: CAMERA, screen: SCREEN },
+              object.groundAnchor,
+            ).scroll,
+            textureTop: backdrop.y - backdrop.height,
+          };
           const item = this.add
             .tileSprite(object.origin.x, object.origin.y, rect.width, rect.height, object.art)
             .setOrigin(0)
@@ -1564,7 +1571,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     for (const { bounds, item, parallax, reference } of this.chunkBackdrops) {
       if (reference) {
         const { position, textureX, textureY } = interiorBackdrop(
-          { parallax, reference, scroll },
+          { parallax, reference: reference.scroll, scroll, textureTop: reference.textureTop },
           bounds,
         );
         item.setPosition(position.x, position.y).setTilePosition(textureX, textureY);

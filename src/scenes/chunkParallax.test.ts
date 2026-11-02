@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 
 import { expect, it, vi } from "vitest";
 
+import manifest from "../../public/art/manifest.json";
 import type { ObjectLayout } from "../data/types";
 
 vi.mock("phaser", () => ({
@@ -76,4 +77,53 @@ it("bottom-aligns a taller apartment skin before applying chunk-local parallax",
   expect(scene.add.tileSprite).toHaveBeenCalledWith(0, 0, 720, 720, "apartment-far");
   expect(item.setScrollFactor).toHaveBeenCalledWith(1, 1);
   expect(scene.chunkBackdrops[0]?.bounds).toEqual({ height: 720, width: 720, x: 7200, y: 0 });
+});
+
+it("derives the interior texture origin from the manifest without moving its authored quad", () => {
+  const item = {
+    setDepth: vi.fn().mockReturnThis(),
+    setOrigin: vi.fn().mockReturnThis(),
+    setPosition: vi.fn().mockReturnThis(),
+    setScrollFactor: vi.fn().mockReturnThis(),
+    setTilePosition: vi.fn().mockReturnThis(),
+  };
+  const scene = {
+    add: { tileSprite: vi.fn(() => item) },
+    cameras: { main: { scrollX: 0, scrollY: 480 } },
+    chunkBackdrops: [],
+    layout: {
+      areas: {
+        main: {
+          chunks: [],
+          entries: { start: { x: 0, y: 600 } },
+          height: 1440,
+          solids: [{ height: 840, width: 720, x: 0, y: 600 }],
+          width: 720,
+        },
+      },
+    },
+    manifest,
+    scenerySprites: [],
+    zone: { area: "main" },
+  };
+  const object = {
+    art: "warehouse-wall",
+    backdropPlane: "interior",
+    groundAnchor: "start",
+    height: 240,
+    origin: { x: 0, y: 600 },
+    parallax: { x: 0.8, y: 1 },
+    width: 720,
+  } as ObjectLayout;
+  const methods = ZoneScene.prototype as unknown as {
+    drawObject(key: undefined, tileset: undefined, object: ObjectLayout, index: number): unknown;
+    renderBackdrops(): void;
+  };
+  methods.drawObject.call(scene, undefined, undefined, object, 0);
+  methods.renderBackdrops.call(scene);
+  expect(scene.add.tileSprite).toHaveBeenCalledWith(0, 600, 720, 240, "warehouse-wall");
+  expect(item.setScrollFactor).toHaveBeenCalledWith(1, 1);
+  expect(item.setDepth).toHaveBeenCalledWith(-3.5);
+  expect(item.setPosition).toHaveBeenCalledWith(0, 600);
+  expect(item.setTilePosition).toHaveBeenCalledWith(0, 240);
 });
