@@ -45,6 +45,8 @@ Drawn faces, content padding, texture nine-slice margins and expanded press targ
 | Settings icon           | 16x16       | logical px | Ordinary settings-row icons     | Verified [settings layout](../src/layout/settingsCard.ts)             |
 | Compact Install face    | 28 high     | logical px | Explicit settings-row exception | Existing exception; retain the whole 48px row target                  |
 
+Centre each button label's actual visible ink within its current drawn face, including its font bearings and kerning, rather than centring its baseline, advance width or press target. The shared [button geometry](../src/layout/buttonLabel.ts) excludes the 4px lower lip from normal and pressed faces, shifts the pressed face down 2px exactly once and uses the full flat rectangle for disabled faces. Optional marks and labels centre horizontally as one group, with the native 5x10 mark and 6px gap; each centres vertically within that state's face. Label origins derive from these measured bounds, with no fixed vertical label offset. These bitmap-font measurements apply to in-game controls; responsive HTML controls retain their CSS font metrics.
+
 Equalize face widths within an action group using its widest actual label and padding. Keep the normal 8px action gap. Expanded targets may meet; use the existing nearest-centre overlap handling. Navigation icons and continuous touch controls retain their specific geometry.
 
 ## Modals
