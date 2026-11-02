@@ -511,6 +511,7 @@ export function stepZone(
   const kinds = areaObjects(area);
   const baseGeometry = {
     ...behaviourGeometry(area, zone),
+    chunks: area.chunks,
     hazards: kinds.hazards.map((index) => {
       const object = area.objects[index]!;
       const at = zone.objects[index] ?? object.origin;
@@ -790,7 +791,8 @@ export function stepZone(
         ? stepBehaviour(
             tuning,
             object,
-            object.collision !== "solid" &&
+            {
+              ...(object.collision !== "solid" &&
               object.collision !== "ledge" &&
               Object.values(object.behaviour.states).some(
                 ({ motion }) =>
@@ -798,8 +800,13 @@ export function stepZone(
                   motion.mode === "ground" &&
                   motion.traversal !== undefined,
               )
-              ? traversalGeometry(object)
-              : geometry,
+                ? traversalGeometry(object)
+                : geometry),
+              idleDecision: {
+                namespace: `idle-roam:${zone.area}:${index}`,
+                seed: zone.seed + zone.attempt,
+              },
+            },
             seconds,
             zone.bird,
             before,

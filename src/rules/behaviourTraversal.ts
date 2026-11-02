@@ -15,6 +15,7 @@ import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import { EDGE } from "./bird";
 import { collisionCandidates } from "./collisionIndex";
+import { STEP_SECONDS } from "./step";
 
 export type TraversalSupport = ObjectLayout | Rect;
 export interface BehaviourTraversalState {
@@ -78,7 +79,11 @@ export function traversalContext(
     object.origin.x + distance + object.width,
   );
   return {
-    body: { height: object.height, offset: { x: 0, y: 0 }, width: object.width },
+    body: {
+      height: object.hitbox?.height ?? object.height,
+      offset: { x: object.hitbox?.x ?? 0, y: object.hitbox?.y ?? 0 },
+      width: object.hitbox?.width ?? object.width,
+    },
     bounds: { ...frame.bounds, width: right - left, x: left },
     dtSeconds: seconds,
     epsilon: EDGE,
@@ -178,6 +183,20 @@ export function traversalGoal(
       };
 }
 
+function originSegments(
+  object: ObjectLayout,
+  offset: Point,
+  segments: readonly TraversalSafety[],
+): readonly TraversalSafety[] {
+  const originRect = (rect: Rect): Rect => ({
+    height: object.height,
+    width: object.width,
+    x: rect.x - offset.x,
+    y: rect.y - offset.y,
+  });
+  return segments.map((leg) => ({ ...leg, from: originRect(leg.from), to: originRect(leg.to) }));
+}
+
 export function advanceTraversal(
   world: BehaviourWorld,
   object: ObjectLayout,
@@ -234,7 +253,7 @@ export function advanceTraversal(
   ) {
     return {
       at: direct.state,
-      segments: direct.segments,
+      segments: originSegments(object, context.body.offset, direct.segments),
       traversal: {
         geometry: key,
         ...(searchedAt && { searchedAt }),
@@ -245,9 +264,11 @@ export function advanceTraversal(
       },
     };
   }
+  // Start fixed-quantum witnesses on full steps; graph remainders only integrate motion.
   if (
     !inputs.length &&
     goal &&
+    seconds + EDGE >= STEP_SECONDS &&
     (!searchedAt ||
       searchedAt.x !== at.x ||
       searchedAt.y !== at.y ||
@@ -255,12 +276,15 @@ export function advanceTraversal(
       prior?.geometry !== key ||
       prior.status === "found")
   ) {
-    const result = findTraversal(context, {
-      ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
-      goal,
-      start: physical,
-      timeSeconds: frame.timeSeconds,
-    });
+    const result = findTraversal(
+      { ...context, dtSeconds: STEP_SECONDS },
+      {
+        ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
+        goal,
+        start: physical,
+        timeSeconds: frame.timeSeconds,
+      },
+    );
     searchedAt = at;
     status = result.status;
     inputs = result.status === "found" ? result.inputs : [];
@@ -279,7 +303,7 @@ export function advanceTraversal(
     result.status === "ok" && (planned || !physical.grounded || result.state.grounded);
   return {
     at: accepted ? result.state : at,
-    ...(accepted && { segments: result.segments }),
+    ...(accepted && { segments: originSegments(object, context.body.offset, result.segments) }),
     traversal: {
       geometry: key,
       ...(searchedAt && { searchedAt }),

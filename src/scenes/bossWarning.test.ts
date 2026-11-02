@@ -3,41 +3,52 @@ import { EventEmitter } from "node:events";
 import type { GameObjects, Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { BOSS_WARNING } from "../data/bossWarning";
+import type { SpriteContact } from "../data/types";
 import type { BehaviourState } from "../rules/behaviour";
 import { mountBossWarning } from "./bossWarning";
 
-it("draws steady ink/red strokes in world space, clears between frames and disposes once", () => {
+it("registers the actual frame outline with origin, flip and scale, and disposes once", () => {
+  let colour = 0;
+  const painted: { colour: number; rect: number[] }[] = [];
   const graphics = {
     clear: vi.fn(),
     destroy: vi.fn(),
-    lineStyle: vi.fn(),
+    fillRect: vi.fn((...rect: number[]) => {
+      painted.push({ colour, rect });
+    }),
+    fillStyle: vi.fn((value: number) => {
+      colour = value;
+    }),
     setDepth: vi.fn(),
     setScrollFactor: vi.fn(),
-    strokeCircle: vi.fn(),
   };
-  for (const method of [
-    graphics.lineStyle,
-    graphics.setDepth,
-    graphics.setScrollFactor,
-    graphics.strokeCircle,
-  ]) {
-    method.mockReturnValue(graphics);
-  }
+  graphics.setDepth.mockReturnValue(graphics);
+  graphics.setScrollFactor.mockReturnValue(graphics);
   const events = new EventEmitter();
   const scene = { add: { graphics: () => graphics }, events } as unknown as Scene;
-  const colours: Readonly<Record<string, number>> = { ink: 1, red: 2 };
-  const warning = mountBossWarning(BOSS_WARNING, -0.5, (name) => colours[name]!, scene);
+  const warning = mountBossWarning(
+    { colour: "red", inkColour: "ink", inkWidth: 1, strokeWidth: 2 },
+    -0.5,
+    (name) => (name === "red" ? 2 : 1),
+    scene,
+  );
   const sprite = {
-    frame: { realHeight: 48, realWidth: 48 },
+    flipX: false,
+    flipY: false,
+    frame: { name: "first", realHeight: 3, realWidth: 4 },
     originX: 0.5,
     originY: 1,
-    scaleX: 1,
-    scaleY: 1,
+    scaleX: 2,
+    scaleY: 2,
     visible: true,
     x: 100,
     y: 80,
-  } as GameObjects.Sprite;
+  } as unknown as GameObjects.Sprite;
+  const contact: SpriteContact = {
+    frame: { height: 3, width: 4 },
+    frames: { first: [[1, 0, 1]], second: [[1, 3, 4]] },
+    tags: {},
+  };
   const tell: BehaviourState = {
     active: true,
     activeAttack: { id: "attack", phase: "tell" },
@@ -45,26 +56,33 @@ it("draws steady ink/red strokes in world space, clears between frames and dispo
     facing: 1,
     stateKey: "tell",
   };
+  warning.draw(tell, sprite, contact);
+  expect(painted).toContainEqual({ colour: 2, rect: [92, 76, 4, 2] });
+  const first = painted.splice(0);
+  sprite.flipX = true;
+  warning.draw(tell, sprite, contact);
+  expect(painted).toEqual(
+    first.map(({ colour, rect: [x, y, width, height] }) => ({
+      colour,
+      rect: [200 - x! - width!, y, width, height],
+    })),
+  );
+  painted.length = 0;
+  sprite.flipX = false;
+  Object.assign(sprite.frame, { name: "second" });
+  warning.draw(tell, sprite, contact);
+  expect(painted).not.toEqual(first);
   warning.clear();
-  warning.draw(tell, sprite);
-  warning.draw({ ...tell, elapsed: 0.5 }, sprite);
-  expect(graphics.setScrollFactor).toHaveBeenCalledWith(1);
+  const count = graphics.fillRect.mock.calls.length;
+  warning.draw({ ...tell, activeAttack: { id: "attack", phase: "committed" } }, sprite, contact);
+  expect(graphics.fillRect).toHaveBeenCalledTimes(count);
   expect(graphics.setDepth).toHaveBeenCalledWith(-0.5);
-  expect(graphics.lineStyle.mock.calls).toEqual([
-    [BOSS_WARNING.inkWidth, colours.ink],
-    [BOSS_WARNING.strokeWidth, colours.red],
-    [BOSS_WARNING.inkWidth, colours.ink],
-    [BOSS_WARNING.strokeWidth, colours.red],
-  ]);
-  expect(graphics.strokeCircle.mock.calls).toEqual(Array.from({ length: 4 }, () => [100, 56, 40]));
-  warning.clear();
-  warning.draw({ ...tell, activeAttack: { id: "attack", phase: "committed" } }, sprite);
-  expect(graphics.clear).toHaveBeenCalledTimes(2);
-  expect(graphics.strokeCircle).toHaveBeenCalledTimes(4);
+  expect(graphics.setScrollFactor).toHaveBeenCalledWith(1);
+  expect(graphics.clear).toHaveBeenCalledOnce();
   events.emit("shutdown");
+  warning.draw(tell, sprite, contact);
   warning.clear();
-  warning.draw(tell, sprite);
   events.emit("destroy");
   expect(graphics.destroy).toHaveBeenCalledOnce();
-  expect(graphics.strokeCircle).toHaveBeenCalledTimes(4);
+  expect(graphics.fillRect).toHaveBeenCalledTimes(count);
 });

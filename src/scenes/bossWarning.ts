@@ -1,11 +1,11 @@
 import type { GameObjects, Scene } from "phaser";
 
-import type { BOSS_WARNING } from "../data/bossWarning";
+import type { SpriteContact } from "../data/types";
 import type { BehaviourState } from "../rules/behaviour";
-import { bossWarning } from "../view/bossWarning";
+import { bossWarning, type BossWarningTuning } from "../view/bossWarning";
 
 export function mountBossWarning(
-  tuning: typeof BOSS_WARNING,
+  tuning: BossWarningTuning,
   depth: number,
   colour: (name: string) => number,
   scene: Scene,
@@ -29,26 +29,39 @@ export function mountBossWarning(
         graphics.clear();
       }
     },
-    draw(state: BehaviourState | undefined, sprite: GameObjects.Sprite) {
+    draw(
+      state: BehaviourState | undefined,
+      sprite: GameObjects.Sprite,
+      contact: SpriteContact | undefined,
+    ) {
       if (!live || !sprite.visible) {
         return;
       }
-      const width = sprite.frame.realWidth * sprite.scaleX;
-      const height = sprite.frame.realHeight * sprite.scaleY;
-      const left = sprite.x - sprite.originX * width;
-      const top = sprite.y - sprite.originY * height;
-      const circle = bossWarning(tuning.clearance, state, {
-        height: Math.abs(height),
-        width: Math.abs(width),
-        x: Math.min(left, left + width),
-        y: Math.min(top, top + height),
-      });
-      if (circle) {
-        graphics
-          .lineStyle(tuning.inkWidth, colour(tuning.inkColour))
-          .strokeCircle(circle.x, circle.y, circle.radius)
-          .lineStyle(tuning.strokeWidth, colour(tuning.colour))
-          .strokeCircle(circle.x, circle.y, circle.radius);
+      const bands = bossWarning(tuning, state, contact, String(sprite.frame.name));
+      if (!bands) {
+        return;
+      }
+      const width = sprite.frame.realWidth;
+      const height = sprite.frame.realHeight;
+      for (const [runs, name] of [
+        [bands.ink, tuning.inkColour],
+        [bands.red, tuning.colour],
+      ] as const) {
+        graphics.fillStyle(colour(name));
+        for (const [y, left, right] of runs) {
+          const x0 = sprite.flipX ? width - right : left;
+          const y0 = sprite.flipY ? height - y - 1 : y;
+          const x = sprite.x + (x0 - sprite.originX * width) * sprite.scaleX;
+          const top = sprite.y + (y0 - sprite.originY * height) * sprite.scaleY;
+          const runWidth = (right - left) * sprite.scaleX;
+          const runHeight = sprite.scaleY;
+          graphics.fillRect(
+            Math.min(x, x + runWidth),
+            Math.min(top, top + runHeight),
+            Math.abs(runWidth),
+            Math.abs(runHeight),
+          );
+        }
       }
     },
   };

@@ -2,9 +2,10 @@ import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { describe, expect, it, vi } from "vitest";
 
 import { zonePlanOf } from "../rules/assemble";
-import { contactBox } from "../rules/behaviour";
+import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
 import type { BehaviourWorld } from "../rules/behaviourReach";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
+import { startBird } from "../rules/bird";
 import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
@@ -153,3 +154,99 @@ it.each(cases.filter(({ id }) => ["patrol-cover-early", "growl-clearing"].includ
     );
   },
 );
+
+it("keeps acquired Archie pursuing across the production middle-yard low wall", () => {
+  const layout = layoutOf("city-streets", "patrol-cover-middle");
+  const area = layout.areas[layout.start.area]!;
+  const object = area.objects.find((object) => object.character === "dog-antagonist")!;
+  const target = { ...startBird(ordinary, { x: 21 * TILE, y: 50 * TILE }), grounded: true };
+  const platforms = area.objects
+    .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
+    .map((owner) => ({
+      after: { ...owner.origin, height: owner.height, width: owner.width },
+      before: { ...owner.origin, height: owner.height, width: owner.width },
+      collision: owner.collision as "solid" | "ledge",
+      owner,
+    }));
+  const hazards = area.objects
+    .filter((owner) => owner.collision === "hazard")
+    .map((owner) => ({ owner, rect: contactBox(owner, owner.origin, 1) }));
+  let state: BehaviourState = {
+    ...startBehaviour(ordinary, object, target),
+    active: true,
+    pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+    stateKey: "pursuit",
+  };
+  let at = object.origin;
+  let jumped = false;
+  let deferredAt: number | undefined;
+  let plannedAfterDefer = false;
+  const nodes: Record<string, number> = {};
+  vi.mocked(findTraversal).mockClear();
+  for (let tick = 0; tick < 600; tick++) {
+    const world: BehaviourWorld = {
+      hazards,
+      platforms: platforms.map(({ after, collision, owner }) => ({
+        collision,
+        owner,
+        rect: after,
+      })),
+      solids: area.solids,
+      traversalFrame: {
+        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+        dtSeconds: STEP_SECONDS,
+        platforms,
+        sample: () => platforms,
+        timeSeconds: tick * STEP_SECONDS,
+      },
+      view: { height: 360, width: 720, x: 0, y: 240 },
+    };
+    const beforeMotion = object.behaviour!.states[state.stateKey]!.motion.kind;
+    const searchesBefore = vi.mocked(findTraversal).mock.calls.length;
+    const next = stepBehaviour(ordinary, object, world, STEP_SECONDS, target, at, state);
+    const searchesAfter = vi.mocked(findTraversal).mock.calls.length;
+    if (
+      beforeMotion !== "pursue" &&
+      object.behaviour!.states[next.state.stateKey]!.motion.kind === "pursue" &&
+      searchesAfter === searchesBefore
+    ) {
+      deferredAt ??= tick;
+    }
+    if (deferredAt !== undefined && tick === deferredAt + 1 && searchesAfter > searchesBefore) {
+      plannedAfterDefer = true;
+    }
+    at = next.at;
+    state = next.state;
+    nodes[state.stateKey] = (nodes[state.stateKey] ?? 0) + 1;
+    jumped ||= (state.traversal?.physical.vy ?? 0) < 0;
+    const box = contactBox(object, at, state.facing);
+    const hit =
+      box.x < target.x + ordinary.width &&
+      box.x + box.width > target.x &&
+      box.y < target.y + ordinary.height &&
+      box.y + box.height > target.y;
+    if (hit || (state.traversal?.physical.grounded && at.x + object.width <= 24 * TILE)) {
+      expect(jumped).toBe(true);
+      expect(plannedAfterDefer).toBe(true);
+      expect(vi.mocked(findTraversal).mock.calls.length).toBeGreaterThan(0);
+      expect(
+        vi
+          .mocked(findTraversal)
+          .mock.calls.every(([context]) => context.dtSeconds === STEP_SECONDS),
+      ).toBe(true);
+      return;
+    }
+  }
+  expect.fail(
+    JSON.stringify({
+      at,
+      goal: state.traversal?.target,
+      jumped,
+      nodes,
+      searches: vi
+        .mocked(findTraversal)
+        .mock.results.map(({ value }) => ({ status: value.status, work: value.work })),
+      status: state.traversal?.status,
+    }),
+  );
+});

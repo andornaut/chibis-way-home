@@ -88,6 +88,7 @@ function actor() {
 }
 function world(solids: readonly Rect[], timeSeconds: number): BehaviourWorld {
   return {
+    chunks: [{ width: 720, x: 0 }],
     solids,
     traversalFrame: {
       bounds: { height: 360, width: 720, x: 0, y: 0 },

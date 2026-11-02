@@ -45,7 +45,7 @@ import { contactFrameAt } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import { flyLandingRoute, supportedLanding } from "./flyLanding";
 import { hopLift } from "./motion";
-import { targetVisible } from "./perception";
+import { targetInSameChunk, targetVisible } from "./perception";
 
 export interface BehaviourState extends BehaviourAttackState {
   readonly idleWatchdog?: BehaviourIdleState;
@@ -871,11 +871,10 @@ function updatePursuit(
     config.unreachableGraceSeconds !== null && unreachableSeconds >= config.unreachableGraceSeconds;
   let reachable = pursuitReachable(tuning, object, world, at, currentState, bird);
   const prior = currentState.pursuit;
-  const visible = targetVisible(
+  const aware = targetInSameChunk(
     world,
-    object,
-    contactBox(object, at, currentState.facing, currentState.axis),
-    birdBox(tuning, bird),
+    { ...at, height: object.height, width: object.width },
+    { height: tuning.height, width: tuning.width, x: bird.x, y: bird.y },
   );
   if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true) {
     const motion = Object.values(object.behaviour!.states)
@@ -889,7 +888,7 @@ function updatePursuit(
         motion,
         currentState.anchor ?? at,
         currentState.stateKey,
-        visible,
+        aware,
         currentState.rearm,
         at,
         birdBox(tuning, bird),
@@ -913,7 +912,7 @@ function updatePursuit(
     }
   }
   const canAcquire = !prior || (prior.phase === "escaped" && prior.settled && inside && reachable);
-  if (canAcquire && visible) {
+  if (canAcquire && aware) {
     const unreachableSeconds = reachable === false ? seconds : 0;
     return {
       ...currentState,
@@ -1010,6 +1009,11 @@ function idleReady(
     return false;
   }
   const node = nodeOf(object, state.stateKey);
+  const recovery = nodeOf(object, watchdog.resume).motion;
+  const flyingHover =
+    recovery.kind === "pursue" &&
+    recovery.mode === "fly" &&
+    (node.motion.kind === "wait" || (node.motion.kind === "pursue" && node.motion.mode === "fly"));
   return (
     world.traversalFrame !== undefined &&
     !attackProtected(node, state) &&
@@ -1019,7 +1023,7 @@ function idleReady(
     !node.onEnter?.length &&
     !state.hop &&
     (!state.traversal || state.traversal.physical.grounded) &&
-    supportedLanding(object, world, at) &&
+    (supportedLanding(object, world, at) || flyingHover) &&
     idle.seconds >= watchdog.seconds &&
     (idle.attemptedAt === undefined || idle.seconds - idle.attemptedAt >= watchdog.seconds)
   );

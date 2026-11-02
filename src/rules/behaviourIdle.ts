@@ -1,3 +1,4 @@
+import { type Random, randomStream, shuffled } from "@andornaut/game-kit/random";
 import {
   findTraversal,
   stepTraversal,
@@ -29,9 +30,10 @@ type Recovery =
       readonly physical: TraversalState<TraversalSupport>;
       readonly inputs: readonly TraversalInput[];
     }
-  | { readonly kind: "fly"; readonly target: Point };
+  | { readonly kind: "fly"; readonly origin: Point; readonly target: Point };
 export interface BehaviourIdleState {
   readonly anchor: Point;
+  readonly decision?: number;
   readonly seconds: number;
   readonly attemptedAt?: number;
   readonly status?: IdleStatus;
@@ -55,11 +57,10 @@ export function observeIdle(
   for (const segment of segments) {
     const duration = Math.max(0, segment.end - segment.start);
     accounted += duration;
-    if (
-      Math.hypot(segment.to.x - state.anchor.x, segment.to.y - state.anchor.y) >= config.minMovement
-    ) {
+    if (Math.abs(segment.to.x - state.anchor.x) >= config.minMovement) {
       state = {
         anchor: segment.to,
+        ...(state.decision !== undefined && { decision: state.decision }),
         seconds: 0,
         ...(state.recovery && { recovery: state.recovery, status: "found" as const }),
       };
@@ -75,6 +76,8 @@ function candidates(
   object: ObjectLayout,
   world: BehaviourWorld,
   facing: -1 | 1,
+  mode: PursuitMotion["mode"],
+  random: Random | undefined,
   at: Point,
 ): readonly Point[] {
   const bounds = world.traversalFrame!.bounds;
@@ -87,13 +90,14 @@ function candidates(
     const y = support.y - object.height;
     const dy = y - at.y;
     if (
-      Math.abs(dy) > config.distance ||
+      (mode === "ground" && Math.abs(dy) > config.distance) ||
       y < bounds.y ||
       y + object.height > bounds.y + bounds.height
     ) {
       continue;
     }
-    const radius = Math.sqrt(Math.max(0, config.distance ** 2 - dy ** 2));
+    const radius =
+      mode === "fly" ? config.distance : Math.sqrt(Math.max(0, config.distance ** 2 - dy ** 2));
     const low = Math.max(support.x, bounds.x, object.origin.x - leash, at.x - radius);
     const high = Math.min(
       support.x + support.width - object.width,
@@ -104,14 +108,15 @@ function candidates(
     if (low > high) {
       continue;
     }
-    for (const x of facing === 1
-      ? [low, high, Math.max(low, Math.min(high, at.x))]
-      : [high, low, Math.max(low, Math.min(high, at.x))]) {
+    const varied = random ? [low + random() * (high - low)] : [];
+    for (const x of [
+      ...varied,
+      ...(facing === 1
+        ? [low, high, Math.max(low, Math.min(high, at.x))]
+        : [high, low, Math.max(low, Math.min(high, at.x))]),
+    ]) {
       const target = { x, y };
-      if (
-        Math.hypot(x - at.x, dy) < config.minMovement ||
-        !supportedLanding(object, world, target)
-      ) {
+      if (Math.abs(x - at.x) < config.minMovement || !supportedLanding(object, world, target)) {
         continue;
       }
       if (
@@ -120,6 +125,9 @@ function candidates(
         positions.push(target);
       }
     }
+  }
+  if (random) {
+    return shuffled(random, positions);
   }
   return positions.sort((a, b) => {
     const side = (point: Point) => (Math.sign(point.x - at.x) === -facing ? 0 : 1);
@@ -142,7 +150,7 @@ function groundGoal(
 ): Rect {
   const dy = target.y - at.y;
   const radius = Math.sqrt(Math.max(0, config.distance ** 2 - dy ** 2));
-  const minimum = Math.sqrt(Math.max(0, config.minMovement ** 2 - dy ** 2));
+  const minimum = config.minMovement;
   const support = [
     ...world.solids,
     ...(world.platforms ?? []).filter(({ owner }) => owner !== object).map(({ rect }) => rect),
@@ -190,7 +198,13 @@ export function planIdleRecovery(
   if (!world.traversalFrame) {
     return { ...attempted, status: "geometry-unavailable" };
   }
-  const targets = candidates(config, object, world, facing, at);
+  const decision = prior.decision ?? 0;
+  const context = world.idleDecision;
+  const random = context
+    ? randomStream(context.seed, `${context.namespace}:${decision}`)
+    : undefined;
+  const chosen = { ...attempted, decision: decision + 1 };
+  const targets = candidates(config, object, world, facing, motion.mode, random, at);
   const uncertain =
     world.traversalFrame.platforms.length > 0 ||
     (world.hazards ?? []).some(
@@ -210,13 +224,13 @@ export function planIdleRecovery(
   for (const target of targets.slice(0, config.maxAttempts)) {
     if (motion.mode === "fly") {
       if (flyLandingPath(object, world, at, target)) {
-        return { ...attempted, recovery: { kind: "fly", target }, status: "found" };
+        return { ...chosen, recovery: { kind: "fly", origin: at, target }, status: "found" };
       }
       continue;
     }
     const context = traversalContext(world, seconds, object, motion);
     if (!context) {
-      return { ...attempted, status: "geometry-unavailable" };
+      return { ...chosen, status: "geometry-unavailable" };
     }
     const start = { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 };
     const goal = groundGoal(config, motion.speed * seconds, object, world, at, target);
@@ -228,7 +242,7 @@ export function planIdleRecovery(
     });
     if (result.status === "found") {
       return {
-        ...attempted,
+        ...chosen,
         recovery: { goal, inputs: result.inputs, kind: "ground", physical: start },
         status: "found",
       };
@@ -237,7 +251,7 @@ export function planIdleRecovery(
       status = result.status;
     }
   }
-  return { ...attempted, status };
+  return { ...chosen, status };
 }
 
 export function advanceIdleRecovery(
@@ -315,8 +329,12 @@ export function advanceIdleRecovery(
       finished: finished && supportedLanding(object, world, current),
       idle:
         finished && supportedLanding(object, world, current)
-          ? clear("found")
-          : { ...prior, recovery: { kind: "fly", target } },
+          ? clear(
+              Math.abs(current.x - recovery.origin.x) >= object.behaviour!.idleWatchdog!.minMovement
+                ? "found"
+                : "invalidated",
+            )
+          : { ...prior, recovery: { ...recovery, target } },
       segments,
     };
   }

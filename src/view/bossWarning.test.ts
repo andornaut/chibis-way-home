@@ -1,32 +1,70 @@
 import { expect, it } from "vitest";
 
-import { BOSS_WARNING } from "../data/bossWarning";
-import { bossWarning } from "./bossWarning";
+import type { PixelRun, SpriteContact } from "../data/types";
+import { bossWarning, type BossWarningTuning } from "./bossWarning";
 
+const tuning: BossWarningTuning = { colour: "red", inkColour: "ink", inkWidth: 1, strokeWidth: 2 };
 const tell = { active: true, activeAttack: { id: "attack", phase: "tell" as const } };
-it.each([
-  { height: 48, radius: 40, width: 48 },
-  { height: 80, radius: 58, width: 64 },
-])("surrounds every corner of the full $width x $height frame", ({ height, radius, width }) => {
-  const frame = { height, width, x: 100, y: 80 };
-  const circle = bossWarning(BOSS_WARNING.clearance, tell, frame)!;
-  expect(circle).toEqual({ radius, x: 100 + width / 2, y: 80 + height / 2 });
-  for (const x of [frame.x, frame.x + width]) {
-    for (const y of [frame.y, frame.y + height]) {
-      expect(Math.hypot(x - circle.x, y - circle.y) + BOSS_WARNING.clearance).toBeLessThanOrEqual(
-        circle.radius,
-      );
-    }
-  }
+const contact: SpriteContact = {
+  frame: { height: 5, width: 5 },
+  frames: {
+    first: [
+      [1, 1, 2],
+      [2, 1, 3],
+      [4, 4, 5],
+    ],
+    ring: [
+      [0, 0, 5],
+      [1, 0, 1],
+      [1, 4, 5],
+      [2, 0, 1],
+      [2, 4, 5],
+      [3, 0, 1],
+      [3, 4, 5],
+      [4, 0, 5],
+    ],
+    second: [[0, 0, 1]],
+  },
+  tags: {},
+};
+function pixels(runs: readonly PixelRun[]) {
+  return new Set(
+    runs.flatMap(([y, left, right]) =>
+      Array.from({ length: right - left }, (_, x) => `${left + x},${y}`),
+    ),
+  );
+}
+
+it("follows irregular animated alpha including detached pixels, without painting the body", () => {
+  const original = JSON.stringify(contact);
+  const first = bossWarning(tuning, tell, contact, "first")!;
+  const red = pixels(first.red);
+  const ink = pixels(first.ink);
+  expect(red.has("-1,1")).toBe(true);
+  expect(ink.has("-2,1")).toBe(true);
+  expect(red.has("5,4")).toBe(true);
+  expect(red.has("1,1")).toBe(false);
+  expect(ink.has("1,1")).toBe(false);
+  expect([...ink].some((pixel) => red.has(pixel))).toBe(false);
+  const second = bossWarning(tuning, tell, contact, "second")!;
+  expect(pixels(second.red).has("5,4")).toBe(false);
+  expect(bossWarning(tuning, tell, contact, "first")).toBe(first);
+  expect(second).not.toBe(first);
+  expect(JSON.stringify(contact)).toBe(original);
+  expect(pixels(bossWarning(tuning, tell, contact, "ring")!.red).has("2,2")).toBe(false);
 });
-it("has no cue outside the active tell, including committed attacks and cooldown", () => {
-  const frame = { height: 48, width: 48, x: 0, y: 0 };
+
+it("only outlines active tells and keys cached geometry by the pixel widths", () => {
   for (const state of [
     undefined,
     { active: false, activeAttack: tell.activeAttack },
     { active: true },
     { active: true, activeAttack: { id: "attack", phase: "committed" as const } },
   ]) {
-    expect(bossWarning(BOSS_WARNING.clearance, state, frame)).toBeUndefined();
+    expect(bossWarning(tuning, state, contact, "first")).toBeUndefined();
   }
+  expect(bossWarning(tuning, tell, undefined, "first")).toBeUndefined();
+  const thin = bossWarning({ ...tuning, strokeWidth: 1 }, tell, contact, "first")!;
+  expect(pixels(thin.red).has("-1,1")).toBe(false);
+  expect(() => bossWarning(tuning, tell, contact, "missing")).toThrow("Missing warning silhouette");
 });

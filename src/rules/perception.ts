@@ -15,6 +15,15 @@ export function currentScreen(tuning: BirdTuning, area: AreaLayout, bird: BirdSt
   };
 }
 
+export function targetInSameChunk(world: BehaviourWorld, observer: Rect, target: Rect): boolean {
+  const observerX = observer.x + observer.width / 2;
+  const targetX = target.x + target.width / 2;
+  return (world.chunks ?? []).some(
+    ({ width, x }) =>
+      observerX >= x && observerX < x + width && targetX >= x && targetX < x + width,
+  );
+}
+
 function crosses(rect: Rect, from: Point, to: Point): boolean {
   let near = 0;
   let far = 1;

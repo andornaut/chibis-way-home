@@ -1,7 +1,13 @@
+export interface BossWarningTuning {
+  readonly colour: string;
+  readonly inkColour: string;
+  readonly inkWidth: number;
+  readonly strokeWidth: number;
+}
+
 export const BOSS_WARNING = {
-  clearance: 6,
   colour: "red",
   inkColour: "ink",
-  inkWidth: 4,
+  inkWidth: 1,
   strokeWidth: 2,
-} as const;
+} as const satisfies BossWarningTuning;

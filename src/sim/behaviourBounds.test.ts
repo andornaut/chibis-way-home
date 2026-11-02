@@ -112,6 +112,7 @@ describe("behaviour phase bounds", () => {
         y: mode === "ground" ? 300 : areaBounds.height - 1 + BIRD.height,
       });
       const world = {
+        chunks: [{ width: areaBounds.width, x: areaBounds.x }],
         solids: mode === "ground" ? [{ height: 100, width: areaBounds.width, x: 0, y: 300 }] : [],
         view: { ...areaBounds, height: areaBounds.height + BIRD.height },
       };

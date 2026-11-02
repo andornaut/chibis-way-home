@@ -15,6 +15,7 @@ import type { Archetype, BehaviourPlan, Rect, ZoneLayout } from "../data/types";
 import { behaviourPose } from "../view/behaviour";
 import { BIRD_FRAME } from "../view/bird";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
+import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle";
 import type { BehaviourWorld } from "./behaviourReach";
 import { startBird } from "./bird";
 import { supportedLanding } from "./flyLanding";
@@ -129,6 +130,7 @@ function actor(behaviour: BehaviourPlan = plan) {
 }
 function world(solids: readonly Rect[] = [floor], timeSeconds = 0): BehaviourWorld {
   return {
+    chunks: [{ width: 720, x: 0 }],
     solids,
     traversalFrame: {
       bounds: { height: 360, width: 720, x: 0, y: 0 },
@@ -247,7 +249,7 @@ it("does not interrupt a committed state or an unfinished airborne hop", () => {
   expect(state.hop).toBeDefined();
   expect(state.idleWatchdog!.recovery).toBeUndefined();
 });
-it("preserves zero-time, inactive and initially unseen acquisition lifetimes", () => {
+it("preserves zero-time, inactive and initially unacquired lifetimes", () => {
   const object = actor(),
     state = expired(object);
   expect(stepBehaviour(BIRD, object, world(), 0, target, object.origin, state).state).toBe(state);
@@ -259,7 +261,13 @@ it("preserves zero-time, inactive and initially unseen acquisition lifetimes", (
   const unseen = stepBehaviour(
     BIRD,
     object,
-    { ...world(), view: { height: 360, width: 720, x: 1000, y: 0 } },
+    {
+      ...world(),
+      chunks: [
+        { width: 100, x: 0 },
+        { width: 140, x: 100 },
+      ],
+    },
     1,
     target,
     object.origin,
@@ -489,3 +497,104 @@ it.each(["tell", "committed"] as const)(
     expect(result.at).toEqual(object.origin);
   },
 );
+
+it("counts vertical flight as horizontal idleness and retains its decision sequence", () => {
+  const config = plan.idleWatchdog!;
+  const prior = { anchor: { x: 60, y: 10 }, decision: 4, seconds: 0.2 };
+  const vertical = observeIdle(
+    config,
+    dt,
+    [{ end: dt, from: prior.anchor, start: 0, to: { x: 60, y: 90 } }],
+    prior,
+  );
+  expect(vertical.seconds).toBeCloseTo(0.25);
+  expect(vertical.anchor).toEqual(prior.anchor);
+  const horizontal = observeIdle(
+    config,
+    dt,
+    [{ end: dt, from: { x: 60, y: 90 }, start: 0, to: { x: 61, y: 90 } }],
+    vertical,
+  );
+  expect(horizontal.seconds).toBe(0);
+  expect(horizontal.decision).toBe(4);
+});
+
+it("recovers an eligible flying hover onto a horizontally different perch below its ground radius", () => {
+  const object = actor({
+    ...plan,
+    states: {
+      ...plan.states,
+      pursue: {
+        animation: "fly",
+        motion: { kind: "pursue", mode: "fly", speed: 10 },
+        transitions: [],
+      },
+    },
+  });
+  const hover = { x: object.origin.x, y: 10 };
+  const geometry = world([floor, { height: 10, width: 2, x: 58, y: 10 }]);
+  let state = {
+    ...expired(object),
+    idleWatchdog: { anchor: hover, seconds: plan.idleWatchdog!.seconds },
+  } as BehaviourState;
+  let at = hover;
+  const first = stepBehaviour(BIRD, object, geometry, dt, target, at, state);
+  expect(first.state.idleWatchdog!.recovery?.kind).toBe("fly");
+  expect(first.at.y).toBeGreaterThan(at.y);
+  expect(first.state.idleWatchdog!.seconds).toBeGreaterThan(plan.idleWatchdog!.seconds);
+  state = first.state;
+  at = first.at;
+  for (let tick = 1; tick < 200 && state.idleWatchdog!.recovery; tick++) {
+    const next = stepBehaviour(BIRD, object, geometry, dt, target, at, state);
+    state = next.state;
+    at = next.at;
+  }
+  expect(supportedLanding(object, geometry, at)).toBe(true);
+  expect(Math.abs(at.x - hover.x)).toBeGreaterThanOrEqual(plan.idleWatchdog!.minMovement);
+  expect(state.idleWatchdog!.status).toBe("found");
+  expect(state.idleWatchdog!.recovery).toBeUndefined();
+});
+
+it("does not report a vertical failsafe landing as a successful horizontal recovery", () => {
+  const object = actor();
+  const at = { x: 60, y: 10 };
+  const hazard = actor();
+  const geometry = {
+    ...world(),
+    hazards: [{ owner: hazard, rect: { height: 10, width: 1, x: 58, y: 90 } }],
+  };
+  const motion = { kind: "pursue", mode: "fly", speed: 10 } as const;
+  const result = advanceIdleRecovery(
+    geometry,
+    object,
+    motion,
+    10,
+    { anchor: at, recovery: { kind: "fly", origin: at, target: { x: 58, y: 90 } }, seconds: 1 },
+    at,
+  );
+  expect(result.at).toEqual({ x: 60, y: 90 });
+  expect(result.finished).toBe(true);
+  expect(result.idle.status).toBe("invalidated");
+});
+
+it("replays namespaced choices while varying eligible decisions independently of world time", () => {
+  const object = actor();
+  const motion = { kind: "pursue", mode: "fly", speed: 10 } as const;
+  const prior = { anchor: object.origin, seconds: 1 };
+  const geometry = { ...world(), idleDecision: { namespace: "idle-roam:main:0", seed: 37 } };
+  const choose = (
+    context: BehaviourWorld,
+    decision: import("./behaviourIdle").BehaviourIdleState = prior,
+  ) => planIdleRecovery(context, object, motion, dt, 1, decision, object.origin);
+  const first = choose(geometry);
+  expect(first).toEqual(
+    choose({ ...geometry, traversalFrame: { ...geometry.traversalFrame!, timeSeconds: 50 } }),
+  );
+  expect(first.recovery).toBeDefined();
+  expect(choose(geometry, { ...prior, decision: first.decision! }).recovery).not.toEqual(
+    first.recovery,
+  );
+  expect(
+    choose({ ...geometry, idleDecision: { namespace: "idle-roam:main:1", seed: 37 } }).recovery,
+  ).not.toEqual(first.recovery);
+});

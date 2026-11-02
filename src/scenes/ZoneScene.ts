@@ -1685,7 +1685,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         : { x, y };
       art.item.setPosition(position.x, position.y);
       if (art.sprite) {
-        this.bossWarning?.draw(behaviour, art.sprite);
+        this.bossWarning?.draw(behaviour, art.sprite, object.contact);
       }
     });
     this.drawTransients();

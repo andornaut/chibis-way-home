@@ -42,7 +42,11 @@ const archetype: Archetype = {
 };
 const escaped = { line: "escaped", speaker: "actor" };
 const floor: Rect = { height: 100, width: 4000, x: -1000, y: 300 };
-const world: BehaviourWorld = { solids: [floor], view: { height: 360, width: 720, x: 0, y: 0 } };
+const world: BehaviourWorld = {
+  chunks: [{ width: 4000, x: -1000 }],
+  solids: [floor],
+  view: { height: 360, width: 720, x: 0, y: 0 },
+};
 const bird = (x: number, y = floor.y - BIRD.height) => ({
   ...startBird(BIRD, { x: x + BIRD.width / 2, y: y + BIRD.height }),
   grounded: y === floor.y - BIRD.height,
@@ -173,6 +177,28 @@ describe("persistent pursuit", () => {
     expect(restored.state.pursuit?.phase).toBe("engaged");
     expect(restored.at.x).toBeGreaterThan(held.at.x);
   });
+  it("rearms a settled boss only in its current chunk without requiring a camera view", () => {
+    const object = actor();
+    const target = bird(400);
+    const state = {
+      ...startBehaviour(BIRD, object, target),
+      pursuit: { phase: "escaped" as const, settled: true, unreachableSeconds: 3 },
+    };
+    const different = advance(object, target, 0.1, object.origin, state, {
+      chunks: [
+        { width: 200, x: 0 },
+        { width: 600, x: 200 },
+      ],
+      solids: [floor],
+    });
+    expect(different.state.pursuit?.phase).toBe("escaped");
+    const same = advance(object, target, 0.1, object.origin, state, {
+      chunks: [{ width: 800, x: 0 }],
+      solids: [floor],
+    });
+    expect(same.state.pursuit?.phase).toBe("engaged");
+    expect(same.at.x).toBeGreaterThan(object.origin.x);
+  });
   it("keeps an airborne bird reachable over the same support and ignores a brief occlusion", () => {
     const object = actor();
     const seen = advance(object, bird(400), 0.1);
@@ -287,7 +313,7 @@ describe("persistent pursuit", () => {
       areas: {
         main: {
           backX: -1000,
-          chunks: [],
+          chunks: world.chunks!,
           entries: { start: { x: 400, y: 136 } },
           exitX: 3000,
           height: 720,

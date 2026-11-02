@@ -176,7 +176,7 @@ it.each(["tell", "return"] as const)(
     const result = stepBehaviour(
       BIRD,
       object,
-      { solids: [], view: { height: 360, width: 720, x: 0, y: 0 } },
+      { chunks: [{ width: 720, x: 0 }], solids: [], view: { height: 360, width: 720, x: 0, y: 0 } },
       0.1,
       target,
       object.origin,
