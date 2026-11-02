@@ -6,13 +6,6 @@ import {
   tagMs,
 } from "@andornaut/game-kit/art/aseprite";
 import { frameSteps, startStepClock, type StepClock } from "@andornaut/game-kit/clock/fixedStep";
-import {
-  clientPoint,
-  listenPagePresses,
-  onPageControl,
-  type PagePointerEvent,
-  type PagePress,
-} from "@andornaut/game-kit/input/pagePresses";
 import { drawProgressBar } from "@andornaut/game-kit/progress/phaser/drawProgressBar";
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { clampInto, containsPoint } from "@andornaut/game-kit/rect";
@@ -59,6 +52,13 @@ import { bottomShift, shifted, topShift } from "../layout/playView";
 import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
 import { PROGRESS_RECT, stageProgressStyle } from "../loading/style";
+import {
+  clientPoint,
+  listenPagePresses,
+  onPageControl,
+  type PagePointerEvent,
+  type PagePress,
+} from "../platform/input/pagePresses";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";

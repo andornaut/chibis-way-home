@@ -6,7 +6,7 @@ import type {
   HeaderList,
   HtmlPage,
   PageRule,
-} from "@andornaut/game-kit/headers/securityHeaders";
+} from "../platform/headers/securityHeaders";
 
 // Where the build writes its content-hashed files, as a _headers path pattern.
 export const HASHED_ASSET_PATH = "/assets/*";

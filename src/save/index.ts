@@ -1,9 +1,9 @@
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
-import { localSaveStorage } from "@andornaut/game-kit/save/storage";
 
 import { ZONE_MAP } from "../data/map";
 import { RECIPES, ZONES } from "../data/zones";
 import { isDevelopmentSession } from "../dev/mode";
+import { localSaveStorage } from "../platform/save/storage";
 import { activeStepSeconds } from "../rules/death";
 import type { ZoneState } from "../rules/zone";
 import { BEGINNING, mapProgress, type Progress, progressFormat } from "./progress";

@@ -1,12 +1,10 @@
 import "./crash/install";
-import "@andornaut/game-kit/view/frameTurnLandscapeGame.css";
+import "./platform/view/frameTurnLandscapeGame.css";
 import "./main.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
 import { capFrameRate } from "@andornaut/game-kit/clock/phaser/capFrameRate";
-import { lockGameOrientation } from "@andornaut/game-kit/view/frameTurn";
-import { followFrameTurn } from "@andornaut/game-kit/view/phaser/followFrameTurn";
 import { Game, Scale, WEBGL } from "phaser";
 
 // eslint-disable-next-line no-duplicate-imports -- the side-effect import above runs it first.
@@ -14,6 +12,7 @@ import { CRASH_SCREEN } from "./crash/install";
 import { SCREEN } from "./data/screen";
 import { mountDeveloperPanel } from "./dev/panel";
 import { FRAME_TURN } from "./input/frameTurn";
+import { lockGameOrientation } from "./platform/view/frameTurn";
 import { setupPhoneApp } from "./pwa";
 import { installOffer } from "./pwa/installOffer";
 import { BootScene } from "./scenes/BootScene";
@@ -25,6 +24,7 @@ import { DialogueScene } from "./scenes/DialogueScene";
 import { MapScene } from "./scenes/MapScene";
 import { OpeningScene } from "./scenes/OpeningScene";
 import { PauseScene } from "./scenes/PauseScene";
+import { followFrameTurn } from "./scenes/platform/followFrameTurn";
 import { RestartScene } from "./scenes/RestartScene";
 import { RoomScene } from "./scenes/RoomScene";
 import { SettingsScene } from "./scenes/SettingsScene";

@@ -1,5 +1,5 @@
+import type { SaveStorage } from "@andornaut/game-kit/save/contracts";
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
-import type { SaveStorage } from "@andornaut/game-kit/save/storage";
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
 import type { MapDestination } from "../data/types";

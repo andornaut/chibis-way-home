@@ -1,4 +1,4 @@
-import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/pwa/backNavigation";
+import { INSTALLED_APP_DISPLAY_QUERY } from "../platform/pwa/backNavigation";
 
 export function developmentFlags(search: string) {
   const params = new URLSearchParams(search);

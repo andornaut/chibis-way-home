@@ -1,4 +1,4 @@
-import type { PhaserBuild } from "@andornaut/game-kit/build/phaserBuild";
+import type { PhaserBuild } from "../platform/build/phaserBuild";
 
 // The production build's Phaser (the kit's build/vite/phaserBuildPlugin): WebGL alone, as
 // src/main.ts asks for, with no sound manager, since the game has no sound, and without the

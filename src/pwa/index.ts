@@ -4,24 +4,23 @@
 //
 // Offline registration retains its prepared-zone timing. Waiting updates activate only through
 // the explicit Start-screen offer, never automatically before input or during gameplay.
-import { appCannotClose } from "@andornaut/game-kit/pwa/appWindow";
+import { offlineActivity } from "../loading/serviceWorker";
+import { appCannotClose } from "../platform/pwa/appWindow";
 import {
   backCloseWatcher,
   browserCloseWatcher,
   guardBackNavigation,
   isFirefoxAndroidApp,
-} from "@andornaut/game-kit/pwa/backNavigation";
-import { pageRunsAsApp } from "@andornaut/game-kit/pwa/installFlow";
+} from "../platform/pwa/backNavigation";
+import { pageRunsAsApp } from "../platform/pwa/installFlow";
 import {
   browserOfflinePage,
   type OfflinePlay,
   startOfflinePlay,
-} from "@andornaut/game-kit/pwa/offlinePlay";
-import { serviceWorkerUrl } from "@andornaut/game-kit/pwa/serviceWorkerUrl";
-import { requestPersistentStorage } from "@andornaut/game-kit/pwa/storagePersistence";
-import { createScreenWakeLock, type ScreenWakeLock } from "@andornaut/game-kit/pwa/wakeLock";
-
-import { offlineActivity } from "../loading/serviceWorker";
+} from "../platform/pwa/offlinePlay";
+import { serviceWorkerUrl } from "../platform/pwa/serviceWorkerUrl";
+import { requestPersistentStorage } from "../platform/pwa/storagePersistence";
+import { createScreenWakeLock, type ScreenWakeLock } from "../platform/pwa/wakeLock";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events";
 import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen";
 import { createUpdateOffer } from "./updateOffer";

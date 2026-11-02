@@ -1,5 +1,4 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { browserExitPage, exitApp } from "@andornaut/game-kit/pwa/exitApp";
 import { snapshotRemapped } from "@andornaut/game-kit/view/phaser/snapshotRemap";
 import { type GameObjects, type Input, Scene } from "phaser";
 
@@ -14,6 +13,7 @@ import {
 } from "../layout/startScreen";
 import { startBackAction } from "../pause/cardInput";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
+import { browserExitPage, exitApp } from "../platform/pwa/exitApp";
 import {
   beginStartUpdateVisit,
   coverZone,

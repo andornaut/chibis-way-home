@@ -1,8 +1,7 @@
-import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/pwa/backNavigation";
-
 import { DEV_TEXT } from "../data/dev";
 import { ZONE_MAP } from "../data/map";
 import { TEXT } from "../data/text";
+import { INSTALLED_APP_DISPLAY_QUERY } from "../platform/pwa/backNavigation";
 import {
   changeInvulnerability,
   developmentFlags,

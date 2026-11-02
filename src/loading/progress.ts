@@ -1,4 +1,3 @@
-import { createDomProgressBar } from "@andornaut/game-kit/progress/dom/progressBar";
 import {
   createProgressState,
   type ProgressHandle,
@@ -6,6 +5,7 @@ import {
 } from "@andornaut/game-kit/progressState";
 
 import { SCREEN } from "../data/screen";
+import { createDomProgressBar } from "../platform/progress/dom/progressBar";
 import { PROGRESS_RECT, stageProgressStyle } from "./style";
 
 export const loadingProgress = createProgressState();

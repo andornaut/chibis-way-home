@@ -1,4 +1,4 @@
-import { contentHash } from "@andornaut/game-kit/build/contentHash";
+import { contentHash } from "../../platform/build/contentHash";
 
 // Where a build writes the atlas pages: under the path the headers and the service worker treat
 // as content-hashed build output.

@@ -1,12 +1,11 @@
 // Installs the kit's crash screen. src/main.ts imports this first, so an error thrown while any
 // other module loads shows the screen rather than a blank page.
-import "@andornaut/game-kit/crash/crash.css";
+import "../platform/crash/crash.css";
 import "./theme.css";
 
-import { BUILD_LABEL } from "@andornaut/game-kit/build/buildLabel";
-import { installCrashScreen } from "@andornaut/game-kit/crash/crashScreen";
-
 import { TEXT } from "../data/text";
+import { BUILD_LABEL } from "../platform/build/buildLabel";
+import { installCrashScreen } from "../platform/crash/crashScreen";
 import { CRASH_COLOURS, installCrashTheme } from "./theme";
 
 installCrashTheme(document.documentElement.style);

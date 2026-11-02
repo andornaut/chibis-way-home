@@ -1,4 +1,3 @@
-import { BUILD_LABEL } from "@andornaut/game-kit/build/buildLabel";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { expect, it } from "vitest";
 
@@ -6,6 +5,7 @@ import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
+import { BUILD_LABEL } from "../platform/build/buildLabel";
 import { CARD_FONTS } from "../testing/cardFonts";
 import {
   CARD_CONTENT,

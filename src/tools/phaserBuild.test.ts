@@ -1,8 +1,8 @@
 import { join } from "node:path";
 
-import { phaserBuildProblems, shippedModules } from "@andornaut/game-kit/build/phaserUses";
 import { describe, expect, it } from "vitest";
 
+import { phaserBuildProblems, shippedModules } from "../platform/build/phaserUses";
 import { PHASER_BUILD } from "./phaserBuild";
 
 const REPO = join(import.meta.dirname, "../..");

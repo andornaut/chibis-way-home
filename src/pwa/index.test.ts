@@ -17,21 +17,21 @@ const offline = vi.hoisted(() => {
     ),
   };
 });
-vi.mock("@andornaut/game-kit/pwa/offlinePlay", () => ({
+vi.mock("../platform/pwa/offlinePlay", () => ({
   browserOfflinePage: () => ({}),
   startOfflinePlay: offline.start,
 }));
-vi.mock("@andornaut/game-kit/pwa/appWindow", () => ({ appCannotClose: () => false }));
-vi.mock("@andornaut/game-kit/pwa/backNavigation", () => ({
+vi.mock("../platform/pwa/appWindow", () => ({ appCannotClose: () => false }));
+vi.mock("../platform/pwa/backNavigation", () => ({
   backCloseWatcher: vi.fn(),
   browserCloseWatcher: vi.fn(),
   isFirefoxAndroidApp: () => true,
 }));
-vi.mock("@andornaut/game-kit/pwa/installFlow", () => ({ pageRunsAsApp: () => false }));
-vi.mock("@andornaut/game-kit/pwa/storagePersistence", () => ({
+vi.mock("../platform/pwa/installFlow", () => ({ pageRunsAsApp: () => false }));
+vi.mock("../platform/pwa/storagePersistence", () => ({
   requestPersistentStorage: vi.fn(),
 }));
-vi.mock("@andornaut/game-kit/pwa/wakeLock", () => ({ createScreenWakeLock: vi.fn() }));
+vi.mock("../platform/pwa/wakeLock", () => ({ createScreenWakeLock: vi.fn() }));
 
 beforeEach(() => {
   vi.resetModules();

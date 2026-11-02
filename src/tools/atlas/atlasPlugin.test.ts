@@ -1,16 +1,16 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { encodeLosslessWebp } from "@andornaut/game-kit/art/webp";
 import { expect, it, vi } from "vitest";
 
 import art from "../../../public/art/manifest.json";
 import bird from "../../../public/art/sprites/bird.json";
 import type { AtlasManifest } from "../../assets/atlasManifest";
+import { encodeLosslessWebp } from "../../platform/art/webp";
 import { ATLAS_MODULE, atlasPlugin } from "./atlasPlugin";
 import { atlasPageFileName } from "./hashedArt";
 
-vi.mock("@andornaut/game-kit/art/webp", () => ({
+vi.mock("../../platform/art/webp", () => ({
   encodeLosslessWebp: vi.fn(async () => new Uint8Array([1, 2, 3])),
 }));
 

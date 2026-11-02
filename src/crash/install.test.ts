@@ -1,16 +1,16 @@
-import type { CrashScreenOptions } from "@andornaut/game-kit/crash/crashScreen";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
 import bird from "../../public/art/sprites/bird.json";
 import { TEXT } from "../data/text";
+import type { CrashScreenOptions } from "../platform/crash/crashScreen";
 
 const { install, screen } = vi.hoisted(() => {
   const screen = { stopGameOnCrash: vi.fn() };
   return { install: vi.fn<(options: CrashScreenOptions) => typeof screen>(() => screen), screen };
 });
-vi.mock("@andornaut/game-kit/crash/crashScreen", () => ({ installCrashScreen: install }));
-vi.mock("@andornaut/game-kit/build/buildLabel", () => ({ BUILD_LABEL: "test build" }));
+vi.mock("../platform/crash/crashScreen", () => ({ installCrashScreen: install }));
+vi.mock("../platform/build/buildLabel", () => ({ BUILD_LABEL: "test build" }));
 
 afterEach(() => {
   vi.unstubAllGlobals();

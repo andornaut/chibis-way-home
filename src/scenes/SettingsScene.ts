@@ -1,6 +1,4 @@
 import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { BUILD_LABEL } from "@andornaut/game-kit/build/buildLabel";
-import { type MenuInstallBrowser, offersInstall } from "@andornaut/game-kit/pwa/installState";
 import { type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
@@ -15,6 +13,8 @@ import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { CARD_TEXT_SCALE } from "../layout/pauseCard";
 import { focusRingAround, settingsCard, stepsCard } from "../layout/settingsCard";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
+import { BUILD_LABEL } from "../platform/build/buildLabel";
+import { type MenuInstallBrowser, offersInstall } from "../platform/pwa/installState";
 import { installOffer } from "../pwa/installOffer";
 import { TOUCH_SETTINGS, type TouchSetting, touchSettingShown } from "../settings/touchControls";
 import {
