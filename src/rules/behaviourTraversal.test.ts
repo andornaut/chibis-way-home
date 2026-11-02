@@ -522,3 +522,115 @@ it("keeps different sampled frames, contexts and unknown future geometry separat
     complete: false,
   });
 });
+
+it("reuses solid wrappers while preserving query order, live rectangle references and snapshot boundaries", () => {
+  const owner = actor();
+  const first = { height: 10, width: 100, x: 0, y: 100 };
+  const second = { height: 10, width: 100, x: 10, y: 100 };
+  let terrain = [first, second];
+  const base = world([], 0);
+  const snapshot = {
+    ...base,
+    get solids() {
+      return terrain;
+    },
+  };
+  const motion = plan.states.chase!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    throw Error("Expected ground pursuit");
+  }
+  const context = traversalContext(snapshot, STEP_SECONDS, owner, motion)!;
+  const query = { height: 20, width: 40, x: 20, y: 95 };
+  const initial = context.sampleColliders(0, STEP_SECONDS, query);
+  const repeated = context.sampleColliders(STEP_SECONDS, STEP_SECONDS, { ...query, x: 30 });
+  expect(repeated).toEqual(initial);
+  expect(repeated.colliders[0]).toBe(initial.colliders[0]);
+  expect(repeated.colliders[1]).toBe(initial.colliders[1]);
+  terrain = [second, first];
+  expect(context.sampleColliders(0, STEP_SECONDS, query).colliders).toEqual(
+    [...initial.colliders].reverse(),
+  );
+  first.y = 300;
+  expect(context.sampleColliders(0, STEP_SECONDS, query)).toEqual({
+    colliders: [initial.colliders[1]],
+    complete: true,
+  });
+  const moved = context.sampleColliders(0, STEP_SECONDS, { ...query, y: 295 });
+  expect(moved).toEqual({
+    colliders: [{ after: first, before: first, kind: "solid", supportId: first }],
+    complete: true,
+  });
+  expect(moved.colliders[0]).toBe(initial.colliders[0]);
+  expect(moved.colliders[0]!.before).toBe(first);
+  expect(moved.colliders[0]!.after).toBe(first);
+  expect(moved.colliders[0]!.supportId).toBe(first);
+  expect(
+    traversalContext(snapshot, STEP_SECONDS, owner, motion)!.sampleColliders(0, STEP_SECONDS, {
+      ...query,
+      y: 295,
+    }).colliders[0],
+  ).not.toBe(moved.colliders[0]);
+  const unknown = traversalContext(
+    {
+      ...snapshot,
+      traversalFrame: { ...base.traversalFrame!, platforms: [], sample: () => undefined },
+    },
+    STEP_SECONDS,
+    owner,
+    motion,
+  )!;
+  expect(unknown.sampleColliders(0, STEP_SECONDS, query)).toEqual({
+    colliders: [initial.colliders[1]],
+    complete: false,
+  });
+});
+it("preserves exact native step and search results when solid wrappers are reused", () => {
+  const object = actor();
+  const solids = [
+    { height: 60, width: 110, x: 0, y: 300 },
+    { height: 96, width: 610, x: 110, y: 264 },
+  ];
+  const motion = plan.states.chase!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    throw Error("Expected ground pursuit");
+  }
+  const context = traversalContext(world(solids, 0), STEP_SECONDS, object, motion)!;
+  const freshWrappers = {
+    ...context,
+    sampleColliders: (...args: Parameters<typeof context.sampleColliders>) => {
+      const geometry = context.sampleColliders(...args);
+      return { ...geometry, colliders: geometry.colliders.map((collider) => ({ ...collider })) };
+    },
+  };
+  const start = { fallFromY: 300, grounded: true, vy: 0, x: 30, y: 276 };
+  const input = { jump: true, move: 1 as const, timeSeconds: 0 };
+  expect(stepTraversal(context, input, start)).toEqual(stepTraversal(freshWrappers, input, start));
+  const request = {
+    goal: { height: 26, width: 300, x: 180, y: 239 },
+    horizonSteps: 120,
+    maxStates: 4096,
+    maxSteps: 8192,
+    start,
+    timeSeconds: 0,
+  };
+  const actual = findTraversal(context, request);
+  expect(actual).toEqual(findTraversal(freshWrappers, request));
+  expect(actual.status).toBe("budget-exhausted");
+  const flat = traversalContext(
+    world([{ height: 60, width: 720, x: 0, y: 300 }], 0),
+    STEP_SECONDS,
+    object,
+    motion,
+  )!;
+  const flatFresh = {
+    ...flat,
+    sampleColliders: (...args: Parameters<typeof flat.sampleColliders>) => {
+      const geometry = flat.sampleColliders(...args);
+      return { ...geometry, colliders: geometry.colliders.map((collider) => ({ ...collider })) };
+    },
+  };
+  const flatRequest = { ...request, goal: { height: 26, width: 100, x: 60, y: 275 } };
+  const found = findTraversal(flat, flatRequest);
+  expect(found).toEqual(findTraversal(flatFresh, flatRequest));
+  expect(found.status).toBe("found");
+});

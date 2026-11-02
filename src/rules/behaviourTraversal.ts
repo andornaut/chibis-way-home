@@ -2,6 +2,7 @@ import { rectsOverlap } from "@andornaut/game-kit/rect";
 import {
   findTraversal,
   stepTraversal,
+  type TraversalCollider,
   type TraversalContext,
   type TraversalInput,
   type TraversalResult,
@@ -68,6 +69,8 @@ export function traversalContext(
       });
   // Sampled platform arrays are immutable snapshots; query filtering stays outside the memo.
   const projections = new WeakMap<readonly BehaviourPlatformFrame[], ReturnType<typeof project>>();
+  // Wrappers retain the original rectangle references, including any in-place coordinate changes.
+  const solids = new WeakMap<Rect, TraversalCollider<TraversalSupport>>();
   const distance = object.behaviour!.pursuit!.distance;
   const left = Math.max(frame.bounds.x, object.origin.x - distance);
   const right = Math.min(
@@ -102,12 +105,14 @@ export function traversalContext(
           : frame.platforms.length === 0
             ? []
             : undefined;
-      const colliders = collisionCandidates(world.solids, query).map((rect) => ({
-        after: rect,
-        before: rect,
-        kind: "solid" as const,
-        supportId: rect,
-      }));
+      const colliders = collisionCandidates(world.solids, query).map((rect) => {
+        let collider = solids.get(rect);
+        if (!collider) {
+          collider = { after: rect, before: rect, kind: "solid", supportId: rect };
+          solids.set(rect, collider);
+        }
+        return collider;
+      });
       let projected = platforms && projections.get(platforms);
       if (platforms && !projected) {
         projected = project(platforms);
