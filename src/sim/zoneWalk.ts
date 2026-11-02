@@ -833,8 +833,50 @@ function phaseCorridor(
 // column on a surface that runs into it, she walks right to clear the zone. It never presses
 // Use, so doors and their rooms play no part, and a try that takes her back into the first
 // column, which would end the zone, fails. It stops when no try finds a new spot.
-export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
+export interface WalkRouteQuery {
+  readonly targets: readonly { readonly area: string; readonly at: TilePoint }[];
+  readonly tile: number;
+}
+
+export interface RequiredRouteWalk extends ZoneWalk {
+  readonly complete: boolean;
+}
+
+export function walkRequiredRoutes(
+  tuning: BirdTuning,
+  query: WalkRouteQuery,
+  layout: ZoneLayout,
+): RequiredRouteWalk {
+  if (!Number.isFinite(query.tile) || query.tile <= 0) {
+    throw new Error("Required routes need a positive tile size");
+  }
   const surfaces = zoneSurfaces(tuning, layout);
+  const required = new Set(
+    query.targets.map(({ area, at }) => {
+      const surface = surfaceAt(query.tile, surfaces, area, at);
+      if (!surface) {
+        throw new Error(`No required route surface in ${area} at ${at.col},${at.row}`);
+      }
+      return surface.key;
+    }),
+  );
+  const result = walk(tuning, required, surfaces, layout);
+  return {
+    ...result,
+    complete: result.cleared && [...required].every((key) => result.reached.has(key)),
+  };
+}
+
+export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
+  return walk(tuning, undefined, zoneSurfaces(tuning, layout), layout);
+}
+
+function walk(
+  tuning: BirdTuning,
+  required: ReadonlySet<string> | undefined,
+  surfaces: Surface[],
+  layout: ZoneLayout,
+): ZoneWalk {
   const seen = new Map<string, Spot>();
   const reached = new Set<string>();
   const queue: Spot[] = [];
@@ -842,6 +884,8 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
   const arrivals = new WeakSet<ZoneState>();
   let steps = 0;
   let cleared = false;
+  const complete = () =>
+    required !== undefined && cleared && [...required].every((key) => reached.has(key));
   const reach = (spot: Spot) => {
     if (!seen.has(spotKey(spot))) {
       seen.set(spotKey(spot), spot);
@@ -864,7 +908,7 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
     }
   };
   arrive(startZone(tuning, layout, 1));
-  for (let from = queue.shift(); from; from = queue.shift()) {
+  for (let from = queue.shift(); from && !complete(); from = queue.shift()) {
     const area = areaOf(layout, from.surface.area);
     const here = placed(from.surface, from.state, layout);
     const { carry, moving } = movingThings(tuning, area);
@@ -884,10 +928,40 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
     }, from.state);
     const startsFor = (corridor: { left: number; right: number }, target?: Surface) =>
       waited(phaseCount(WAIT_STEP, BUCKET, [from.surface.mover, target?.mover], moving, corridor));
+    if (required !== undefined && !cleared && here.right > area.exitX) {
+      const sourceSpan = sweptSpan(bounds, layout, from.surface);
+      for (const start of startsFor({
+        left: Math.min(
+          from.state.bird.x,
+          area.exitX,
+          from.surface.mover === undefined ? Infinity : sourceSpan.left,
+        ),
+        right: Math.max(
+          from.state.bird.x + tuning.width,
+          area.exitX + tuning.width,
+          from.surface.mover === undefined ? -Infinity : sourceSpan.right,
+        ),
+      })) {
+        const off = walkOff(tuning, layout, start);
+        steps += off.steps;
+        if (off.entered) {
+          arrive(off.entered);
+          break;
+        }
+        if (off.cleared) {
+          cleared = true;
+          break;
+        }
+      }
+    }
+    if (complete()) {
+      break;
+    }
     const { others, own } = targetsFrom(layout, surfaces, bounds, from, here);
     for (const target of [...own, ...others]) {
       const done = () =>
-        target.surface === from.surface ? seen.has(target.key) : reached.has(target.key);
+        complete() ||
+        (target.surface === from.surface ? seen.has(target.key) : reached.has(target.key));
       if (done()) {
         continue;
       }
@@ -932,7 +1006,7 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
       }
     }
     const hi = here.left + (from.bucket + 2) * BUCKET;
-    if (!cleared && here.right > area.exitX && hi > area.exitX) {
+    if (required === undefined && !cleared && here.right > area.exitX && hi > area.exitX) {
       const sourceSpan = sweptSpan(bounds, layout, from.surface);
       for (const start of startsFor({
         left: Math.min(
