@@ -4,11 +4,6 @@ import { SKILL_IDS } from "../rules/skills";
 import { CONTROL_EDGE } from "./playView";
 
 export const SKILL_BUTTON = { disc: 35, glyph: 16, target: 48 } as const;
-export const SKILL_SELECTION = {
-  bar: { height: 2, width: 5, x: 15, y: 27 },
-  colour: "yellow",
-  outline: 1,
-} as const;
 export const SKILL_HUD: Readonly<Record<SkillId, Point>> = Object.fromEntries(
   SKILL_IDS.map((skill, index) => [
     skill,
