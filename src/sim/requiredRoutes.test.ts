@@ -107,3 +107,78 @@ it("rejects a missing required surface instead of silently dropping it", () => {
     ),
   ).toThrow("No required route surface");
 });
+
+it.each([
+  { complete: false, exitX: 5 * TILE, name: "an exit before the shelter interval" },
+  {
+    complete: true,
+    exitX: 17 * TILE,
+    name: "an actual grounded walk through the shelter interval",
+  },
+])(
+  "requires interval evidence rather than surface-ever-reached for $name",
+  ({ complete, exitX }) => {
+    const base = layoutOf([
+      { ...floor, cols: 18 },
+      { col: 6, cols: 6, row: 44, rows: 1 },
+    ]);
+    const layout = {
+      ...base,
+      areas: { course: { ...base.areas.course!, exitX, width: 18 * TILE } },
+    };
+    const result = walkRequiredRoutes(
+      BIRD,
+      {
+        targets: [{ area: "course", at: { col: 2, row: 50 }, xRange: { max: 10, min: 6 } }],
+        tile: TILE,
+      },
+      layout,
+    );
+    const surface = surfaceAt(TILE, result.surfaces, "course", { col: 2, row: 50 })!;
+    expect(result.reached.has(surface.key)).toBe(true);
+    expect(result.cleared).toBe(true);
+    expect(result.complete).toBe(complete);
+  },
+);
+
+it("deliberately visits a required interval within an already seen single bucket", () => {
+  const base = layoutOf([{ ...floor, cols: 7 }]);
+  const layout = {
+    ...base,
+    areas: {
+      course: {
+        ...base.areas.course!,
+        entries: { start: { x: 5 * TILE, y: 50 * TILE } },
+        exitX: 6 * TILE,
+        width: 7 * TILE,
+      },
+    },
+  };
+  const direct = walkRequiredRoutes(BIRD, { targets: [], tile: TILE }, layout);
+  const required = walkRequiredRoutes(
+    BIRD,
+    {
+      targets: [{ area: "course", at: { col: 2, row: 50 }, xRange: { max: 2, min: 1 } }],
+      tile: TILE,
+    },
+    layout,
+  );
+  expect(direct.complete).toBe(true);
+  expect(required.complete).toBe(true);
+  expect(required.steps).toBeGreaterThan(direct.steps);
+});
+
+it.each([
+  { max: 10, min: Infinity },
+  { max: 6, min: 10 },
+  { max: 10, min: -1 },
+  { max: 60, min: 6 },
+])("rejects invalid body intervals without widening them: %j", (xRange) => {
+  expect(() =>
+    walkRequiredRoutes(
+      BIRD,
+      { targets: [{ area: "course", at: { col: 2, row: 50 }, xRange }], tile: TILE },
+      layoutOf([floor]),
+    ),
+  ).toThrow("Invalid required route xRange");
+});

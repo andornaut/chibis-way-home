@@ -9,7 +9,7 @@ import type {
   TilePoint,
   ZoneLayout,
 } from "../data/types";
-import { startBird, stepBird } from "../rules/bird";
+import { EDGE, startBird, stepBird } from "../rules/bird";
 import { orbitBounds } from "../rules/orbit";
 import { STEP_SECONDS } from "../rules/step";
 import {
@@ -32,6 +32,7 @@ import {
 import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases";
 
 const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
+const WALK_OBSERVERS = new WeakMap<ZoneLayout, (zone: ZoneState) => void>();
 
 // Conversations do not move the world. The walker activates their patrols explicitly so it
 // verifies the active encounter, including on any fresh attempt.
@@ -49,7 +50,11 @@ function stepZone(
     BEHAVIOUR_INDICES.set(area, indices);
   }
   const active = indices.reduce((state, index) => activateBehaviour(index, state), zone);
-  return stepActualZone(tuning, layout, seconds, input, active);
+  const next = stepActualZone(tuning, layout, seconds, input, active);
+  if (!zone.cleared) {
+    WALK_OBSERVERS.get(layout)?.(next);
+  }
+  return next;
 }
 
 // A top she can stand on in an area: a still span from left to right at height y, or a moving
@@ -300,6 +305,7 @@ const spotKey = (spot: Pick<Spot, "bucket" | "surface">) => `${spot.surface.key}
 
 // A stretch she may aim for: a whole surface, or one bucket of one (key: the spot's key).
 interface Target {
+  readonly fixed?: boolean;
   readonly key: string;
   readonly left: number;
   readonly right: number;
@@ -352,7 +358,7 @@ function steer(
   target: Target,
   zone: ZoneState,
 ): -1 | 0 | 1 {
-  const shift = placed(target.surface, zone, layout).left - target.surface.left;
+  const shift = target.fixed ? 0 : placed(target.surface, zone, layout).left - target.surface.left;
   const lo = target.left + shift + tuning.width / 2;
   const hi = target.right + shift - tuning.width / 2;
   const centre = zone.bird.x + tuning.width / 2;
@@ -845,6 +851,23 @@ export interface WalkRouteQuery {
   readonly tile: number;
 }
 
+interface WalkRequirements {
+  readonly intervals: {
+    readonly max: number;
+    readonly min: number;
+    readonly target: Target;
+    witnessed: boolean;
+  }[];
+  readonly surfaces: Set<string>;
+}
+
+function requiredComplete(required: WalkRequirements, reached: ReadonlySet<string>): boolean {
+  return (
+    [...required.surfaces].every((key) => reached.has(key)) &&
+    required.intervals.every(({ witnessed }) => witnessed)
+  );
+}
+
 export interface RequiredRouteWalk extends ZoneWalk {
   readonly complete: boolean;
 }
@@ -858,20 +881,82 @@ export function walkRequiredRoutes(
     throw new Error("Required routes need a positive tile size");
   }
   const surfaces = zoneSurfaces(tuning, layout);
-  const required = new Set(
-    query.targets.map(({ area, at }) => {
-      const surface = surfaceAt(query.tile, surfaces, area, at);
-      if (!surface) {
-        throw new Error(`No required route surface in ${area} at ${at.col},${at.row}`);
+  const required: WalkRequirements = { intervals: [], surfaces: new Set() };
+  query.targets.forEach(({ area, at, xRange }, index) => {
+    const surface = surfaceAt(query.tile, surfaces, area, at);
+    if (!surface) {
+      throw new Error(`No required route surface in ${area} at ${at.col},${at.row}`);
+    }
+    if (xRange === undefined) {
+      required.surfaces.add(surface.key);
+      return;
+    }
+    const min = xRange.min * query.tile;
+    const max = xRange.max * query.tile;
+    const local = areaOf(layout, area);
+    const span =
+      surface.mover === undefined
+        ? surface
+        : sweptSpan(moveBounds(tuning, movingThings(tuning, local).carry), layout, surface);
+    if (
+      !Number.isFinite(min) ||
+      !Number.isFinite(max) ||
+      min > max ||
+      min < span.left - EDGE ||
+      max + tuning.width > span.right + EDGE
+    ) {
+      throw new Error(`Invalid required route xRange in ${area}`);
+    }
+    required.intervals.push({
+      max,
+      min,
+      target: {
+        fixed: true,
+        key: `required:${index}`,
+        left: min,
+        right: max + tuning.width,
+        surface,
+      },
+      witnessed: false,
+    });
+  });
+  const observedLayout = { ...layout };
+  let pending = required.intervals.length;
+  if (pending > 0) {
+    WALK_OBSERVERS.set(observedLayout, (zone) => {
+      if (pending === 0 || zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
+        return;
       }
-      return surface.key;
-    }),
-  );
-  const result = walk(tuning, required, surfaces, layout);
-  return {
-    ...result,
-    complete: result.cleared && [...required].every((key) => result.reached.has(key)),
-  };
+      const under = surfaceUnder(tuning, observedLayout, surfaces, zone);
+      if (!under) {
+        return;
+      }
+      const support = placed(under, zone, observedLayout);
+      for (const interval of required.intervals) {
+        if (
+          !interval.witnessed &&
+          under.key === interval.target.surface.key &&
+          zone.bird.x >= interval.min - EDGE &&
+          zone.bird.x <= interval.max + EDGE &&
+          zone.bird.x >= support.left - EDGE &&
+          zone.bird.x + tuning.width <= support.right + EDGE
+        ) {
+          interval.witnessed = true;
+          pending--;
+          if (pending === 0) {
+            WALK_OBSERVERS.delete(observedLayout);
+            break;
+          }
+        }
+      }
+    });
+  }
+  try {
+    const result = walk(tuning, required, surfaces, observedLayout);
+    return { ...result, complete: result.cleared && requiredComplete(required, result.reached) };
+  } finally {
+    WALK_OBSERVERS.delete(observedLayout);
+  }
 }
 
 export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
@@ -880,7 +965,7 @@ export function walkZone(tuning: BirdTuning, layout: ZoneLayout): ZoneWalk {
 
 function walk(
   tuning: BirdTuning,
-  required: ReadonlySet<string> | undefined,
+  required: WalkRequirements | undefined,
   surfaces: Surface[],
   layout: ZoneLayout,
 ): ZoneWalk {
@@ -891,8 +976,7 @@ function walk(
   const arrivals = new WeakSet<ZoneState>();
   let steps = 0;
   let cleared = false;
-  const complete = () =>
-    required !== undefined && cleared && [...required].every((key) => reached.has(key));
+  const complete = () => required !== undefined && cleared && requiredComplete(required, reached);
   const reach = (spot: Spot) => {
     if (!seen.has(spotKey(spot))) {
       seen.set(spotKey(spot), spot);
@@ -965,10 +1049,22 @@ function walk(
       break;
     }
     const { others, own } = targetsFrom(layout, surfaces, bounds, from, here);
-    for (const target of [...own, ...others]) {
+    const intervals =
+      required?.intervals.filter(
+        (interval) =>
+          !interval.witnessed &&
+          (interval.target.surface === from.surface ||
+            others.some(({ surface }) => surface === interval.target.surface)),
+      ) ?? [];
+    for (const target of [...intervals.map((interval) => interval.target), ...own, ...others]) {
+      const interval = intervals.find((item) => item.target === target);
       const done = () =>
         complete() ||
-        (target.surface === from.surface ? seen.has(target.key) : reached.has(target.key));
+        (interval
+          ? interval.witnessed
+          : target.surface === from.surface
+            ? seen.has(target.key)
+            : reached.has(target.key));
       if (done()) {
         continue;
       }
