@@ -131,6 +131,8 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 - **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; Chibi, the tiles and the reaches stay the same everywhere
 - **Shape:** areas scroll sideways and up, with width defined by their recipes. All twenty-one catalogued stages use a four-screen vertical capacity (120 rows, 1440 px). Blue connects lower routes and upper challenges; Industrial connects underground descents and ascents; Countryside connects terraces and an upper ferry; Woodland connects guarded lower routes, canopy lifts and red gates; Home city connects lower climbing yards and upper routes. Apartment connects its lower zigzag ascent to the retained upper climbing route, window and automatic exit. Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
 
+- **Valleys:** every authored production valley has a physical floor with an explicit red lethal contact surface. The hazard is part of the terrain rather than an invisible fall threshold. Required crossings retain their safe banks, platforms and guarded middle ledges; off-world fall handling remains a safety fallback
+
 ### Runs and attempts
 
 - **Continue:** reopening the app shows the start screen. Continue and Restart appear only after an actual catalogued stage has been entered. Manually choosing Continue shows the map with Chibi on his saved zone, without opening a stage chooser or entering a stage
