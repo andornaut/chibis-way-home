@@ -445,6 +445,12 @@ it("reuses sampled collider projections across queries without sharing owner exc
     reads.mockClear();
     const wide = context.sampleColliders(0, STEP_SECONDS, broad);
     const projectedReads = reads.mock.calls.length;
+    const repeated = context.sampleColliders(0, STEP_SECONDS, broad);
+    expect(repeated.colliders).not.toBe(wide.colliders);
+    expect(repeated.colliders).toEqual(wide.colliders);
+    expect(repeated.colliders.every((collider, index) => collider === wide.colliders[index])).toBe(
+      true,
+    );
     const small = context.sampleColliders(0, STEP_SECONDS, narrow);
     expect(projectedReads).toBeGreaterThan(0);
     expect(reads).toHaveBeenCalledTimes(projectedReads);

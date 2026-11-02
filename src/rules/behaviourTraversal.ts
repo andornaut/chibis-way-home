@@ -116,25 +116,27 @@ export function traversalContext(
           : frame.platforms.length === 0
             ? []
             : undefined;
-      const colliders = collisionCandidates(world.solids, query).map((rect) => {
+      const colliders: TraversalCollider<TraversalSupport>[] = [];
+      for (const rect of collisionCandidates(world.solids, query)) {
         let collider = solids.get(rect);
         if (!collider) {
           collider = { after: rect, before: rect, kind: "solid", supportId: rect };
           solids.set(rect, collider);
         }
-        return collider;
-      });
+        colliders.push(collider);
+      }
       let projected = platforms && projections.get(platforms);
       if (platforms && !projected) {
         projected = project(platforms);
         projections.set(platforms, projected);
       }
-      const dynamic = (projected ?? [])
-        .filter(
-          ({ bounds, points }) =>
-            points.some((rect) => intersects(rect, query)) || intersects(bounds, query),
-        )
-        .map(({ collider }) => collider);
+      if (projected) {
+        for (const { bounds, collider, points } of projected) {
+          if (points.some((rect) => intersects(rect, query)) || intersects(bounds, query)) {
+            colliders.push(collider);
+          }
+        }
+      }
       const uncertainHazard =
         time > frame.timeSeconds &&
         (world.hazards ?? []).some(
@@ -164,7 +166,7 @@ export function traversalContext(
             })(),
         );
       return {
-        colliders: [...colliders, ...dynamic],
+        colliders,
         complete: platforms !== undefined && !uncertainHazard,
       };
     },
