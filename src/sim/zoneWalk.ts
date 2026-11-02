@@ -874,6 +874,7 @@ function targetsFrom(
         tuning.walkSpeed ** 2 / (2 * tuning.brakeAccel) + tuning.walkSpeed * STEP_SECONDS;
       const beforeExit = Math.min(surface.right, area.exitX) - tuning.width - stopping;
       if (
+        WALK_WITNESSES.has(layout) &&
         area.walkLinks?.right === undefined &&
         surface.right > area.exitX &&
         beforeExit >= surface.left
