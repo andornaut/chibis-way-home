@@ -128,11 +128,15 @@ function outline(tuning: BossWarningTuning, contact: SpriteContact, frame: strin
 
 export function bossWarning(
   tuning: BossWarningTuning,
-  state: Pick<BehaviourState, "active" | "activeAttack"> | undefined,
+  state: Pick<BehaviourState, "active" | "activeAttack" | "traversal"> | undefined,
   contact: SpriteContact | undefined,
   frame: string,
 ): Outline | undefined {
-  if (!state?.active || state.activeAttack?.phase !== "tell" || !contact) {
+  if (
+    !state?.active ||
+    (state.activeAttack?.phase !== "tell" && !state.traversal?.preparation) ||
+    !contact
+  ) {
     return undefined;
   }
   return outline(tuning, contact, frame);

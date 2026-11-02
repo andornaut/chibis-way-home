@@ -434,7 +434,7 @@ function enterState(
     stateKey: key,
   };
   delete (next as { flightTarget?: Point }).flightTarget;
-  if (leavingPursuit) {
+  if (leavingPursuit || (state.stateKey !== key && next.traversal?.preparation)) {
     delete (next as { traversal?: BehaviourTraversalState }).traversal;
   }
   const animation = syncAnimation(object, next);
@@ -1029,7 +1029,7 @@ function idleReady(
     node.motion.kind !== "fly" &&
     !node.onEnter?.length &&
     !state.hop &&
-    (!state.traversal || state.traversal.physical.grounded) &&
+    (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
     (supportedLanding(object, world, at) || flyingHover) &&
     idle.seconds >= watchdog.seconds &&
     (idle.attemptedAt === undefined || idle.seconds - idle.attemptedAt >= watchdog.seconds)
@@ -1128,6 +1128,11 @@ export function stepBehaviour(
     state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped"
       ? plan.pursuit?.escaped
       : undefined;
+  if (next.traversal?.preparation && next.pursuit?.phase !== "engaged") {
+    const withoutPreparation = { ...next };
+    delete (withoutPreparation as { traversal?: BehaviourTraversalState }).traversal;
+    next = withoutPreparation;
+  }
   const watchdog = plan.idleWatchdog;
   if (watchdog && next.pursuit && !next.idleWatchdog) {
     next = { ...next, idleWatchdog: { anchor: at, seconds: 0 } };
@@ -1237,6 +1242,7 @@ export function stepBehaviour(
     }
     const transition =
       traversalStep !== undefined ||
+      next.traversal?.preparation !== undefined ||
       settling ||
       (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded)
         ? undefined
@@ -1342,7 +1348,16 @@ export function stepBehaviour(
       const targetY = hers.y + hers.height / 2 - contact.height / 2 - (contact.y - current.y);
       const travel = node.motion.speed * slice;
       const dx = targetX - current.x;
-      next = { ...next, facing: dx === 0 ? next.facing : dx < 0 ? -1 : 1 };
+      next = {
+        ...next,
+        facing: next.traversal?.preparation
+          ? next.facing
+          : dx === 0
+            ? next.facing
+            : dx < 0
+              ? -1
+              : 1,
+      };
       if (node.motion.mode === "ground" && node.motion.traversal) {
         const advanced = (traversalStep ??= advanceTraversal(
           {

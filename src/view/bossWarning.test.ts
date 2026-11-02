@@ -68,3 +68,21 @@ it("only outlines active tells and keys cached geometry by the pixel widths", ()
   expect(pixels(thin.red).has("-1,1")).toBe(false);
   expect(() => bossWarning(tuning, tell, contact, "missing")).toThrow("Missing warning silhouette");
 });
+
+it("shows the same actual-alpha warning during traversal takeoff preparation without an active attack", () => {
+  const state = {
+    active: true,
+    traversal: {
+      geometry: "",
+      inputs: [],
+      physical: { fallFromY: 10, grounded: true, vy: 0, x: 0, y: 0 },
+      preparation: { move: 1 as const, remainingSeconds: 0.6 },
+      status: "found" as const,
+      target: { height: 10, width: 10, x: 20, y: 0 },
+    },
+  };
+  expect(bossWarning(tuning, state, contact, "first")).toBe(
+    bossWarning(tuning, tell, contact, "first"),
+  );
+  expect(bossWarning(tuning, { ...state, active: false }, contact, "first")).toBeUndefined();
+});

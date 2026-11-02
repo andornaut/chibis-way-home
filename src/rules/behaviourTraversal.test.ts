@@ -5,7 +5,7 @@ import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
-import { probeRearm, traversalContext } from "./behaviourTraversal";
+import { advanceTraversal, probeRearm, traversalContext } from "./behaviourTraversal";
 import { startBird } from "./bird";
 import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
@@ -634,4 +634,168 @@ it("preserves exact native step and search results when solid wrappers are reuse
   const found = findTraversal(flat, flatRequest);
   expect(found).toEqual(findTraversal(flatFresh, flatRequest));
   expect(found.status).toBe("found");
+});
+
+function readyTakeoff() {
+  const base = actor();
+  const motion = base.behaviour!.states.chase!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
+    throw new Error("Expected ground fixture");
+  }
+  const object = {
+    ...base,
+    behaviour: {
+      ...base.behaviour!,
+      states: {
+        ...base.behaviour!.states,
+        chase: {
+          ...base.behaviour!.states.chase!,
+          motion: { ...motion, traversal: { ...motion.traversal, prepSeconds: 0.6 } },
+        },
+      },
+    },
+  };
+  const solids = [
+    { height: 60, width: 110, x: 0, y: 300 },
+    { height: 96, width: 610, x: 110, y: 264 },
+  ];
+  const bird = { ...startBird(BIRD, { x: 250, y: 264 }), grounded: true };
+  let at = object.origin;
+  let state = {
+    ...startBehaviour(BIRD, object, bird),
+    pursuit: { phase: "engaged" as const, settled: false, unreachableSeconds: 0 },
+  };
+  let tick = 0;
+  for (; tick < 160 && !state.traversal?.preparation; tick++) {
+    const next = stepBehaviour(
+      BIRD,
+      object,
+      world(solids, tick * STEP_SECONDS),
+      STEP_SECONDS,
+      bird,
+      at,
+      state,
+    );
+    at = next.at;
+    state = next.state as typeof state;
+  }
+  expect(state.traversal?.preparation).toBeDefined();
+  return { at, bird, object, solids, state, tick };
+}
+
+it("holds a real verified takeoff for its tell and re-proves once before launching without an attack cooldown", () => {
+  const fixture = readyTakeoff();
+  let { at, state, tick } = fixture;
+  const start = at;
+  const started = tick;
+  vi.mocked(findTraversal).mockClear();
+  for (; tick < started + 100 && state.traversal?.preparation; tick++) {
+    const next = stepBehaviour(
+      BIRD,
+      fixture.object,
+      world(fixture.solids, tick * STEP_SECONDS),
+      STEP_SECONDS,
+      fixture.bird,
+      at,
+      state,
+    );
+    if (next.state.traversal?.preparation) {
+      expect(next.at).toEqual(start);
+    }
+    at = next.at;
+    state = next.state as typeof state;
+  }
+  expect((tick - started + 1) * STEP_SECONDS).toBeGreaterThanOrEqual(0.6 - STEP_SECONDS);
+  expect(state.traversal?.physical.grounded).toBe(false);
+  expect(at.y).toBeLessThan(start.y);
+  expect(vi.mocked(findTraversal)).toHaveBeenCalledOnce();
+  expect(state.activeAttack).toBeUndefined();
+  expect(state.attackCooldownRemainingSeconds).toBeUndefined();
+});
+
+it("cancels takeoff preparation when support is lost and retains real falling physics", () => {
+  const fixture = readyTakeoff();
+  const next = stepBehaviour(
+    BIRD,
+    fixture.object,
+    world([], fixture.tick * STEP_SECONDS),
+    STEP_SECONDS,
+    fixture.bird,
+    fixture.at,
+    fixture.state,
+  );
+  expect(next.state.traversal?.preparation).toBeUndefined();
+  expect(next.state.traversal?.physical.grounded).toBe(false);
+  expect(next.at.y).toBeGreaterThan(fixture.at.y);
+});
+
+it("carries a preparing actor on its actual moving support instead of freezing its world position", () => {
+  const object = actor();
+  const owner = { ...object, character: "support" };
+  const before = { height: 10, width: 110, x: 0, y: 300 };
+  const after = { ...before, x: 1 };
+  const geometry = {
+    ...world([], 1),
+    traversalFrame: {
+      ...world([], 1).traversalFrame!,
+      platforms: [{ after, before, collision: "ledge" as const, owner }],
+    },
+  };
+  const motion = object.behaviour!.states.chase!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    throw new Error("Expected ground fixture");
+  }
+  const result = advanceTraversal(
+    geometry,
+    object,
+    motion,
+    STEP_SECONDS,
+    {
+      geometry: "",
+      inputs: [],
+      physical: { ...object.origin, fallFromY: 300, grounded: true, supportId: owner, vy: 0 },
+      preparation: { move: 1, remainingSeconds: 0.6, supportId: owner },
+      status: "found",
+      target: { height: 24, width: 24, x: 200, y: 276 },
+    },
+    object.origin,
+    { height: 36, width: 24, x: 200, y: 264 },
+  );
+  expect(result.at.x).toBeCloseTo(object.origin.x + 1);
+  expect(result.traversal?.preparation?.remainingSeconds).toBeCloseTo(0.6 - STEP_SECONDS);
+});
+
+it("cancels an uncommitted takeoff tell on real pursuit escape", () => {
+  const fixture = readyTakeoff();
+  const next = stepBehaviour(
+    BIRD,
+    fixture.object,
+    world(fixture.solids, fixture.tick * STEP_SECONDS),
+    STEP_SECONDS,
+    { ...fixture.bird, x: 3000 },
+    fixture.at,
+    fixture.state,
+  );
+  expect(next.state.pursuit?.phase).toBe("escaped");
+  expect(next.state.traversal?.preparation).toBeUndefined();
+  expect(next.state.activeAttack).toBeUndefined();
+  expect(next.state.attackCooldownRemainingSeconds).toBeUndefined();
+});
+
+it("preserves preparation seconds while scaling traversal space", () => {
+  const motion = plan.states.chase!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
+    throw new Error("Expected ground fixture");
+  }
+  const resolved = layoutBehaviour(12, {
+    ...plan,
+    states: {
+      ...plan.states,
+      chase: {
+        ...plan.states.chase!,
+        motion: { ...motion, traversal: { ...motion.traversal, prepSeconds: 0.6 } },
+      },
+    },
+  }).states.chase!.motion;
+  expect(resolved).toMatchObject({ traversal: { prepSeconds: 0.6 } });
 });

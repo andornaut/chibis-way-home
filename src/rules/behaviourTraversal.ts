@@ -19,6 +19,11 @@ import { STEP_SECONDS } from "./step";
 
 export type TraversalSupport = ObjectLayout | Rect;
 export interface BehaviourTraversalState {
+  readonly preparation?: {
+    readonly remainingSeconds: number;
+    readonly move: -1 | 0 | 1;
+    readonly supportId?: TraversalSupport;
+  };
   readonly searchedAt?: Point;
   readonly physical: TraversalState<TraversalSupport>;
   readonly inputs: readonly TraversalInput[];
@@ -224,6 +229,84 @@ export function advanceTraversal(
           vy: 0,
           ...at,
         };
+  if (prior?.preparation) {
+    const preparation = prior.preparation;
+    const previous = { ...prior };
+    delete (previous as { preparation?: unknown }).preparation;
+    const waited = stepTraversal(
+      context,
+      { jump: false, move: 0, timeSeconds: frame.timeSeconds },
+      physical,
+    );
+    const hold = (state: BehaviourTraversalState) => ({
+      at: waited.status === "ok" ? waited.state : at,
+      ...(waited.status === "ok" && {
+        segments: originSegments(object, context.body.offset, waited.segments),
+      }),
+      traversal: { ...state, physical: waited.status === "ok" ? waited.state : physical },
+    });
+    if (
+      waited.status !== "ok" ||
+      !waited.state.grounded ||
+      waited.state.supportId !== preparation.supportId
+    ) {
+      return hold({
+        ...previous,
+        inputs: [],
+        status: waited.status === "geometry-unavailable" ? "geometry-unavailable" : previous.status,
+      });
+    }
+    if (preparation.remainingSeconds > EDGE) {
+      return hold({
+        ...previous,
+        preparation: {
+          ...preparation,
+          remainingSeconds: Math.max(0, preparation.remainingSeconds - seconds),
+        },
+      });
+    }
+    // The tell's wait invalidates timed mover predictions; prove the prepared takeoff again now.
+    const proof = findTraversal(
+      { ...context, dtSeconds: STEP_SECONDS },
+      {
+        ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
+        goal: prior.target,
+        start: physical,
+        timeSeconds: frame.timeSeconds,
+      },
+    );
+    const launch = proof.status === "found" ? proof.inputs[0] : undefined;
+    if (!launch?.jump || launch.move !== preparation.move) {
+      return hold({
+        ...previous,
+        inputs: proof.status === "found" ? proof.inputs : [],
+        status: proof.status,
+      });
+    }
+    const advanced = stepTraversal(
+      context,
+      { ...launch, timeSeconds: frame.timeSeconds },
+      physical,
+    );
+    if (advanced.status !== "ok") {
+      return hold({
+        ...previous,
+        inputs: [],
+        status:
+          advanced.status === "geometry-unavailable" ? "geometry-unavailable" : previous.status,
+      });
+    }
+    return {
+      at: advanced.state,
+      segments: originSegments(object, context.body.offset, advanced.segments),
+      traversal: {
+        ...previous,
+        inputs: proof.status === "found" ? proof.inputs.slice(1) : [],
+        physical: advanced.state,
+        status: "found" as const,
+      },
+    };
+  }
   const goal = traversalGoal(world, object, at, target);
   const key = frame.platforms
     .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
@@ -290,6 +373,35 @@ export function advanceTraversal(
     inputs = result.status === "found" ? result.inputs : [];
   }
   const planned = inputs[0];
+  if (planned?.jump && physical.grounded && motion.traversal!.prepSeconds > 0) {
+    const waited = stepTraversal(
+      context,
+      { jump: false, move: 0, timeSeconds: frame.timeSeconds },
+      physical,
+    );
+    return {
+      at: waited.status === "ok" ? waited.state : at,
+      ...(waited.status === "ok" && {
+        segments: originSegments(object, context.body.offset, waited.segments),
+      }),
+      traversal: {
+        geometry: key,
+        inputs: [],
+        physical: waited.status === "ok" ? waited.state : physical,
+        ...(waited.status === "ok" &&
+          waited.state.grounded && {
+            preparation: {
+              move: planned.move,
+              remainingSeconds: Math.max(0, motion.traversal!.prepSeconds - seconds),
+              ...(waited.state.supportId !== undefined && { supportId: waited.state.supportId }),
+            },
+          }),
+        status,
+        target: goal ?? target,
+      },
+    };
+  }
+
   let result = planned
     ? stepTraversal(context, { ...planned, timeSeconds: frame.timeSeconds }, physical)
     : direct;
