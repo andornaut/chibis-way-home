@@ -543,6 +543,10 @@ function comeToRest(
   run: ReturnType<typeof runner>,
 ): Spot | undefined {
   const under = surfaceUnder(tuning, layout, surfaces, run.zone);
+  const witnesses = WALK_WITNESSES.get(layout);
+  if (under && witnesses) {
+    witnesses.mark(run.zone, witnesses.surface(under.key));
+  }
   for (let i = 0; i < AIR_STEPS && Math.abs(run.zone.bird.vx) >= 1; i++) {
     if (!run.step(STILL) || !run.zone.bird.grounded) {
       return undefined;
