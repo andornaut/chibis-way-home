@@ -100,18 +100,27 @@ describe("append-only chunk scenery", () => {
     ).toBe(true);
   });
 
-  it("validates bound scenery placement and refuses physical, unbound or out-of-bounds entries", () => {
-    const source = library([placement]);
+  it.each([
+    { instance: placement, name: "bound parallax" },
+    { instance: { character: "scenery", col: 12, row: 48 }, name: "unbound world decoration" },
+  ])("accepts $name from the chunk scenery collection", ({ instance }) => {
+    const source = library([instance]);
     expect(chunkProblems(source, catalogue, source.chunks.middle!)).toEqual([]);
-    const invalid: Instance[] = [
-      { ...placement, col: 60 },
-      { ...placement, role: "missing" },
-      { ...placement, orbit: { angularSpeed: 1, host: "host", phase: 0, radius: 2 } },
-      { character: "scenery", col: 12, row: 48 },
-      { character: "hazard", col: 12, parallax: { x: 0.4, y: 1 }, row: 48 },
-    ];
-    for (const instance of invalid) {
-      expect(chunkProblems(source, catalogue, { ...chunk, scenery: [instance] })).not.toEqual([]);
-    }
+  });
+
+  it.each([
+    { instance: { ...placement, col: 60 }, name: "out-of-bounds placement" },
+    { instance: { ...placement, role: "missing" }, name: "missing role binding" },
+    {
+      instance: { ...placement, orbit: { angularSpeed: 1, host: "host", phase: 0, radius: 2 } },
+      name: "orbit relationship",
+    },
+    {
+      instance: { character: "hazard", col: 12, parallax: { x: 0.4, y: 1 }, row: 48 },
+      name: "physical hazard",
+    },
+  ])("rejects scenery with $name", ({ instance }) => {
+    const source = library([placement]);
+    expect(chunkProblems(source, catalogue, { ...chunk, scenery: [instance] })).not.toEqual([]);
   });
 });

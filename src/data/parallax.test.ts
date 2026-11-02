@@ -213,12 +213,41 @@ it("uses Woodland depth variants for horizontal challenges while preserving plai
     if ("sections" in recipe) {
       throw new Error("Woodland stages are continuous");
     }
-    expect((CHUNKS[recipe.start]!.backdrops ?? []).some(depth)).toBe(true);
-    expect((CHUNKS[recipe.finish]!.backdrops ?? []).some(depth)).toBe(false);
-    expect(
-      recipe.chunks!.filter((id) => Object.values(WOODLAND_DEPTH_ALIASES).includes(id)),
-    ).toHaveLength(Object.keys(WOODLAND_DEPTH_ALIASES).length);
-    expect(recipe.chunks).toContain(WOODLAND_DEPTH_ALIASES["vertical-red-gate"]);
+    const background = THEMES[recipe.theme]!.background;
+    expect(background).toBeDefined();
+    const factors = new Map(
+      background!.sections.flatMap((key) =>
+        BACKGROUND_SECTIONS[key]!.backdrops.map(
+          ({ parallax }) => [JSON.stringify(parallax), parallax] as const,
+        ),
+      ),
+    );
+    expect(factors.size).toBeGreaterThan(0);
+    const area = stageLoader(theme)(1).layout.areas.main!;
+    for (const cap of [area.chunks[0]!, area.chunks.at(-1)!]) {
+      for (const [key, parallax] of factors) {
+        const spans = area.objects
+          .filter(
+            (object) => object.parallax?.x === parallax?.x && object.parallax?.y === parallax?.y,
+          )
+          .map((object) => [object.origin.x, object.origin.x + object.width] as const)
+          .filter(([left, right]) => left < cap.x + cap.width && right > cap.x)
+          .sort(([a], [b]) => a - b);
+        let covered = cap.x;
+        for (const [left, right] of spans) {
+          expect(left, `${theme}:${key}:${cap.x}`).toBeLessThanOrEqual(covered);
+          covered = Math.max(covered, right);
+        }
+        expect(covered, `${theme}:${key}:${cap.x}`).toBeGreaterThanOrEqual(cap.x + cap.width);
+      }
+    }
+    const depthVariants = Object.keys(WOODLAND_DEPTH_ALIASES).map(
+      (id) => WOODLAND_VERTICAL_ALIASES[id]!,
+    );
+    expect(recipe.chunks!.filter((id) => depthVariants.includes(id))).toHaveLength(
+      depthVariants.length,
+    );
+    expect(recipe.chunks).toContain(WOODLAND_VERTICAL_ALIASES["vertical-red-gate"]);
     return recipe.chunks!;
   });
   expect(pools[1]).toEqual(pools[0]);
@@ -229,8 +258,12 @@ it("uses Woodland depth variants for horizontal challenges while preserving plai
     "compound-compact-climb",
     "compound-double-lift",
   ]) {
-    expect(pools[0]).toContain(id);
     expect((CHUNKS[id]!.backdrops ?? []).some(depth)).toBe(false);
+  }
+  for (const id of ["compound-ascent", "compound-double-lift"]) {
+    const variant = WOODLAND_VERTICAL_ALIASES[id]!;
+    expect(pools[0]).toContain(variant);
+    expect((CHUNKS[variant]!.backdrops ?? []).some(depth)).toBe(false);
   }
 });
 
