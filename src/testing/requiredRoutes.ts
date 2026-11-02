@@ -5,8 +5,11 @@ import { TILE } from "../data/screen";
 import type { ChunkPlan } from "../data/types";
 import { type ChunkLibrary, themesOf } from "../rules/assemble";
 import { bindElement } from "../rules/elementBinding";
+import { objectLayout } from "../rules/tiles";
+import { hasDynamicMotion } from "../sim/behaviourBounds";
 import type { WalkRouteTarget } from "../sim/zoneWalk";
 import { ALL_CHUNKS, FIXTURE_RECIPE } from "./chunks";
+import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 const ROOM_FILL = "test";
 if (!(ROOM_FILL in ROOMS)) {
@@ -47,8 +50,36 @@ function recovery(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
 function encounter(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
   const result = recovery(library, chunk);
   const floor = Math.max(chunk.entry.row, chunk.exit.row);
+  const theme = library.themes[themesOf(chunk)[0]!]!;
+  const hazards = chunk.objects
+    .filter(({ role }) => role === "edge-top")
+    .flatMap((instance) => {
+      const bound = bindElement(theme.bindings, instance);
+      if (bound.orbit) {
+        return [];
+      }
+      const character = CATALOGUE.characters[bound.character]!;
+      const tileset = TILESETS[character.tileset ?? theme.tileset];
+      const object = objectLayout(TILE, CATALOGUE, HITBOXES, tileset, TILESETS, bound);
+      if (object.collision !== "hazard" || hasDynamicMotion(object)) {
+        return [];
+      }
+      const rect = object.hitbox ?? { height: object.height, width: object.width, x: 0, y: 0 };
+      return [{ ...rect, x: object.origin.x + rect.x, y: object.origin.y + rect.y }];
+    });
   for (const solid of chunk.solids.filter(({ row }) => row <= floor - 6)) {
-    result.push(point(solid.col + solid.cols / 2, solid.row));
+    const top = solid.row * TILE;
+    // A physical red valley base is lethal terrain, not a required standing refuge.
+    const lethal = hazards.some(
+      (rect) =>
+        rect.x <= solid.col * TILE &&
+        rect.x + rect.width >= (solid.col + solid.cols) * TILE &&
+        rect.y < top &&
+        rect.y + rect.height > top - BIRD.height,
+    );
+    if (!lethal) {
+      result.push(point(solid.col + solid.cols / 2, solid.row));
+    }
   }
   for (const cover of chunk.objects.filter(({ role, rows }) => role === "support" && rows === 1)) {
     const cols = cover.cols ?? library.characters[cover.character]!.cols;
