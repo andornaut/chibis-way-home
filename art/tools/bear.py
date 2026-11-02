@@ -154,9 +154,10 @@ def portrait(annoyed=False):
     g.ell(46, 40, 13, 9, "cream", sh="zone-peach")
     g.rect(53, 35, 5, 4, "ink")
     g.rect(37, 25, 4, 5, "ink")
+    g.rect(37, 26 if annoyed else 25, 2, 2, "white")
     g.rect(37, 24 if annoyed else 22, 6, 2, "dbrown")
     phone(g, 45, 51)
-    return g.outlined(lambda _c: K["navy"])
+    return g.outlined(lambda _c: K["ink"])
 
 
 def wave(phase):

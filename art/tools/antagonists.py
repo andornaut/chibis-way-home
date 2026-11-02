@@ -179,11 +179,12 @@ def portrait_image():
         d.rectangle((x, y, x + width, y + 5), fill=rgba("ink"))
         d.rectangle((x + 1, y + 1, x + width - 1, y + 4), fill=rgba(iris))
         d.rectangle((x + width - 2, y + 3, x + width - 1, y + 4), fill=rgba("ink"))
-        d.point((x + 1, y + 1), fill=rgba("white"))
+        d.rectangle((x + 1, y + 1, x + 2, y + 2), fill=rgba("white"))
         d.line((x, y - 1, x + width, y - 1), fill=rgba("ochre"))
     d.polygon(((17, 44), (52, 44), (35, 62)), fill=rgba("ink"))
     d.polygon(((19, 45), (50, 45), (35, 60)), fill=rgba("red"))
     d.polygon(((35, 47), (50, 45), (35, 60)), fill=rgba("dred"))
+    d.point((14, 22), fill=rgba("ink"))
     return im
 
 

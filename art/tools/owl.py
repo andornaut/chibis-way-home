@@ -52,7 +52,6 @@ def draw(state="idle", phase=0):
     for eye_x in (18, 30):
         x = eye_x + hx
         g.ell(x, hy + 1, 6.5, 8, "cream", sh="zone-peach")
-        x += hx
         g.ell(x, hy + 1, 3, 4, "ink")
         g.rect(x - 1, hy - 1, 2, 2, "white")
     g.tri((21 + hx, hy + 5), (27 + hx, hy + 5), (24 + hx, hy + 10), "brown")

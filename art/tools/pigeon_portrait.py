@@ -25,7 +25,7 @@ def portrait():
     g.blob(35, 25, 18, 17, "grey", sh="slate", li="lgrey")
     g.tri((50, 29), (60, 33), (50, 36), "brown")
     g.rect(43, 20, 5, 5, "ink")
-    g.rect(43, 20, 2, 2, "cream")
+    g.rect(43, 20, 2, 2, "white")
     return g.outlined(lambda _colour: K["ink"])
 
 
