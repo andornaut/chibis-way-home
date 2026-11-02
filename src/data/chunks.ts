@@ -1457,7 +1457,7 @@ function tunnelWalls(): readonly Instance[] {
     col: 0,
     cols: CHUNK_COLS,
     groundAnchor: "start",
-    parallax: { x: 0.8, y: 0.25 },
+    parallax: { x: 0.8, y: 1 },
     role: "tunnel-wall",
     row: top + index * bandRows,
     rows: Math.min(bandRows, INDUSTRIAL_ROWS - top - index * bandRows),
