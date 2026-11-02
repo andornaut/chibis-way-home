@@ -22,6 +22,8 @@ export function createHazardChunks(theme: ChunkPlan["theme"]): Readonly<Record<s
       objects: [
         { character: "red-edge-right", col: 18, role: "edge-right", row: 47, rows: 3 },
         { character: "red-edge-left", col: 41, role: "edge-left", row: 47, rows: 3 },
+        { character: "platform-ledge", col: 28, cols: 6, role: "ledge", row: 45 },
+        { character: "red-edge-top", col: 18, cols: 24, role: "edge-top", row: 49 },
       ],
       solids: [
         floor(0, 12, 40),

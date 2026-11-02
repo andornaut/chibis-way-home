@@ -20,6 +20,7 @@ import type {
   TerrainRect,
   ThemePlan,
 } from "./types";
+import { withValleyFloors } from "./valleyFloors";
 import { WOODLAND_SCENERY, woodlandDepth, woodlandSpecies } from "./woodlandScenery";
 import { STREET_CHUNKS } from "./zone1";
 import { INDUSTRIAL_CHUNKS } from "./zone2";
@@ -835,7 +836,7 @@ const CLIMBING_GROWL = {
   solids: raisedBlock(24, 4, 4, GROWL_FINISH.solids),
 };
 
-const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...createHazardChunks(MECHANICAL_THEMES),
   ...createOrbitHazardChunks(MECHANICAL_THEMES),
   ...ENCOUNTER_YARDS,
@@ -1253,6 +1254,10 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...WOODLAND_CHUNKS,
 };
 
+const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
+  Object.entries(AUTHORED_CHUNKS).map(([id, chunk]) => [id, withValleyFloors(chunk)]),
+);
+
 const DEPTH_CAPS = new Set([
   "apartment-start",
   "back-streets-start",
@@ -1572,7 +1577,7 @@ const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "outdoor-deep-ascent": outdoorStairs([100, 95, 90, 85, 80]),
   "outdoor-deep-descent": outdoorStairs([80, 75, 80, 85, 90, 95, 100]),
   "outdoor-descent": outdoorStairs([50, 45, 50, 55, 60, 65, 70, 75, 80]),
-  "outdoor-lift-ascent": {
+  "outdoor-lift-ascent": withValleyFloors({
     cols: CHUNK_COLS,
     difficulty: 4,
     encounters: 0,
@@ -1591,7 +1596,7 @@ const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       blueFloor(46, 14, 40),
     ],
     theme: LIFT_GATE_THEMES,
-  },
+  }),
   "outdoor-surface-return": outdoorStairs([20, 15, 20, 25, 30, 35, 40, 45, 50]),
   "outdoor-upper-ascent": {
     cols: CHUNK_COLS,
