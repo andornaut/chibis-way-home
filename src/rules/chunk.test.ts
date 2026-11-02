@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
-import type { Instance } from "../data/types";
+import type { BehaviourPlan, Instance } from "../data/types";
 import { FIXTURE_LIBRARY } from "../testing/chunks";
 import { chunkProblems } from "./chunk";
 
@@ -63,3 +63,45 @@ it("rejects a world animation graph that senses Chibi", () => {
   };
   expect(problems(instance).some((problem) => problem.startsWith("scenery "))).toBe(true);
 });
+
+it.each([
+  { acquired: true, col: 30, seams: [] },
+  { acquired: false, col: 30, seams: ["entry", "exit"] },
+  { acquired: true, col: 0, seams: ["entry"] },
+])(
+  "certifies initial occupancy without dropping autonomous support flight: %j",
+  ({ acquired, col, seams }) => {
+    const behaviour: BehaviourPlan = {
+      axis: "x",
+      distance: 0,
+      initial: "watch",
+      pursuit: {
+        distance: 100,
+        escaped: { line: "escaped", speaker: "actor" },
+        unreachableGraceSeconds: 1,
+      },
+      states: {
+        landing: {
+          animation: null,
+          motion: { kind: "fly", speed: 10, to: "support" },
+          transitions: [],
+        },
+        watch: {
+          animation: null,
+          motion: { kind: "wait" },
+          transitions: [
+            {
+              to: "landing",
+              when: acquired ? [{ kind: "visible" }] : [{ kind: "elapsed", seconds: 1 }],
+            },
+          ],
+        },
+      },
+    };
+    const result = chunkProblems(FIXTURE_LIBRARY, catalogue, {
+      ...base,
+      objects: [{ behaviour, character: "test-hazard", col, row: 49 }],
+    }).filter((problem) => problem.includes("hazard test-hazard"));
+    expect(result.map((problem) => problem.split(":")[0])).toEqual(seams);
+  },
+);

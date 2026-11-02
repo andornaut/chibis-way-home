@@ -8,6 +8,7 @@ import {
   recipeChunkPool,
   themesOf,
 } from "./assemble";
+import { unacquiredBehaviourNodes } from "./behaviourScope";
 import { bindElement } from "./elementBinding";
 import { orbitBounds, resolveOrbits } from "./orbit";
 import { chunkRows, validRows } from "./stageGeometry";
@@ -65,16 +66,16 @@ function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance:
     };
   }
   if (object.behaviour) {
-    const { states } = object.behaviour;
-    const supportFlight = Object.values(states).some(
+    const nodes = unacquiredBehaviourNodes(object.behaviour);
+    const supportFlight = nodes.some(
       ({ motion }) => motion.kind === "fly" && motion.to === "support",
     );
-    const tracks = Object.values(states).flatMap((node) =>
+    const tracks = nodes.flatMap((node) =>
       node.motion.kind === "move" || node.motion.kind === "hop"
         ? [node.track ?? object.behaviour!]
         : [],
     );
-    const flights = Object.values(states).flatMap((node) =>
+    const flights = nodes.flatMap((node) =>
       node.motion.kind !== "fly" || node.motion.to === "support"
         ? []
         : typeof node.motion.to === "string"
@@ -99,9 +100,7 @@ function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance:
     ];
     const hopHeight = Math.max(
       0,
-      ...Object.values(states).map((node) =>
-        node.motion.kind === "hop" ? node.motion.hopHeight : 0,
-      ),
+      ...nodes.map((node) => (node.motion.kind === "hop" ? node.motion.hopHeight : 0)),
     );
     return {
       collision: object.collision,
@@ -110,7 +109,7 @@ function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance:
         flights.length > 0 ||
         hopHeight > 0 ||
         (tracks.some((track) => track.distance !== 0) &&
-          Object.values(states).some((node) => node.motion.kind === "move")),
+          nodes.some((node) => node.motion.kind === "move")),
       span: {
         // A chunk has no assembled support geometry to bound automatic landing vertically.
         bottom: supportFlight ? Infinity : object.origin.y + object.height + Math.max(...ys),
