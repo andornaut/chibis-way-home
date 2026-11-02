@@ -974,11 +974,11 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     40,
     [
       floor(0, 8, 50),
-      floor(8, 8, 47),
-      floor(16, 8, 44),
-      floor(24, 8, 41),
-      floor(32, 12, 40),
-      floor(44, 4, 37),
+      floor(8, 6, 45),
+      floor(14, 6, 40),
+      floor(20, 6, 35),
+      floor(26, 14, 30),
+      floor(40, 8, 35),
       floor(48, 12, 40),
     ],
     [],
@@ -1622,7 +1622,14 @@ const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     theme: LIFT_GATE_THEMES,
   }),
-  "outdoor-surface-return": outdoorStairs([20, 15, 20, 25, 30, 35, 40, 45, 50]),
+  "outdoor-surface-return": {
+    ...outdoorStairs([20, 15, 20, 25, 30, 35, 40, 45, 50]),
+    solids: [
+      ...outdoorStairs([20, 15, 20, 25, 30, 35, 40, 45, 50]).solids,
+      { col: 28, cols: 4, look: "raised", row: 0, rows: 24 },
+      { col: 46, cols: 4, look: "raised", row: 0, rows: 39 },
+    ],
+  },
   "outdoor-upper-ascent": {
     cols: CHUNK_COLS,
     difficulty: 4,

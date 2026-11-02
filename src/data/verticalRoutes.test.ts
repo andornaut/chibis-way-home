@@ -6,6 +6,8 @@ import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
+import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk";
+import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
 import { BIRD } from "./bird";
@@ -21,13 +23,14 @@ import {
   INDUSTRIAL_CONNECTORS,
   INDUSTRIAL_ROWS,
   industrialCapId,
+  industrialTunnelId,
   WOODLAND_DEPTH_ALIASES,
   WOODLAND_VERTICAL_ALIASES,
   woodlandVerticalId,
 } from "./chunks";
 import { REACH } from "./reach";
 import { TILE } from "./screen";
-import { APARTMENT_LOWER_SHELVES, APARTMENT_SPAWN_ROW } from "./zone6";
+import { APARTMENT_LOWER_SHELVES, APARTMENT_SPAWN_ROW, apartmentChunkId } from "./zone6";
 import { RECIPES } from "./zones";
 
 it("validates lower seams only inside the taller authored industrial chunks", () => {
@@ -177,7 +180,7 @@ it("keeps Blue vertical pools connected through lower space and the upper route"
   ).not.toEqual([]);
 });
 
-it.each(["outdoor-lift-ascent", "outdoor-upper-ascent", "outdoor-surface-return"])(
+it.each(["outdoor-lift-ascent", "outdoor-upper-ascent"])(
   "crosses %s with an ordinary no-ability route",
   (id) => {
     const chunk = CHUNKS[id]!;
@@ -684,4 +687,132 @@ it("climbs the four-screen Apartment opening with continuous ordinary phase carr
   }
   expect(zone.bird.y + BIRD.height).toBe(50 * TILE);
   expect(zone.steps).toBe(counts.reduce((sum, count) => sum + count, 0));
+});
+
+it.each(["city-boundary-steps", "outdoor-surface-return"])(
+  "connects grounded landings through %s with ordinary fixed controls",
+  (id) => {
+    const chunk = CHUNKS[id]!;
+    const ordinary = { ...BIRD, doubleJump: false };
+    delete ordinary.dash;
+    const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, "street", 2, [id]);
+    const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+    const grounds = chunk.solids.filter((solid) => solid.row + solid.rows === (chunk.rows ?? 60));
+    const targets = grounds.slice(1);
+    const ceilings = chunk.solids.filter((solid) => !grounds.includes(solid));
+    for (const ceiling of ceilings) {
+      expect(Math.min(...grounds.map(({ row }) => row)) - ceiling.row).toBeGreaterThan(REACH.jump);
+      const below = grounds.find(
+        (ground) =>
+          ground.col <= ceiling.col && ground.col + ground.cols >= ceiling.col + ceiling.cols,
+      );
+      expect(below).toBeDefined();
+      expect(below!.row - ceiling.row - ceiling.rows).toBeGreaterThanOrEqual(
+        CHUNK_LIBRARY.rules.headroom,
+      );
+    }
+    const contracts = REQUIRED_CHUNK_ROUTES[id]!;
+    const landings: { row: number; tick: number; x: number }[] = [];
+    const takeoffs: number[] = [];
+    let zone = startZone(ordinary, layout, 1);
+    let index = 0;
+    let jumpAt: number | undefined;
+    let ticks = 0;
+    const started = Date.now();
+    for (; ticks < 6000 && Date.now() - started < 60000 && !zone.death && !zone.cleared; ticks++) {
+      const target = targets[index];
+      let move: -1 | 0 | 1 = 1;
+      let jumpHeld = false;
+      if (target) {
+        const recovery = contracts.find(
+          ({ at, xRange }) =>
+            xRange &&
+            at.row === target.row &&
+            at.col >= target.col &&
+            at.col < target.col + target.cols,
+        );
+        const goal = recovery?.xRange
+          ? ((recovery.xRange.min + recovery.xRange.max) / 2) * TILE
+          : (target.col + target.cols / 2) * TILE - ordinary.width / 2;
+        const feet = zone.bird.y + ordinary.height;
+        const error = goal - zone.bird.x;
+        const braking = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * ordinary.brakeAccel);
+        move =
+          Math.abs(error) < 0.2 && Math.abs(zone.bird.vx) < 1 ? 0 : error - braking > 0 ? 1 : -1;
+        if (
+          zone.bird.grounded &&
+          Math.abs(feet - target.row * TILE) < 0.01 &&
+          Math.abs(error) < 2 &&
+          Math.abs(zone.bird.vx) <= ordinary.groundAccel * STEP_SECONDS
+        ) {
+          landings.push({ row: target.row, tick: ticks, x: zone.bird.x });
+          index++;
+          jumpAt = undefined;
+          move = 0;
+        } else if (feet > target.row * TILE + 0.01) {
+          if (zone.bird.grounded && !zone.bird.jumpHeld) {
+            jumpAt ??= ticks;
+          }
+          jumpHeld =
+            jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < ordinary.jumpRiseTime;
+        }
+      }
+      const before = zone;
+      zone = stepZone(ordinary, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
+      if (before.bird.grounded && !zone.bird.grounded && zone.bird.vy < 0) {
+        takeoffs.push(before.bird.y + ordinary.height);
+      }
+      expect(zone.bird.airJumpUsed).toBe(false);
+      expect(zone.bird.dash?.airUsed).not.toBe(true);
+    }
+    const witness = JSON.stringify({
+      bird: zone.bird,
+      death: zone.death,
+      id,
+      index,
+      landings,
+      takeoffs,
+      ticks,
+    });
+    expect(zone.death, witness).toBeUndefined();
+    expect(index, witness).toBe(targets.length);
+    expect(zone.cleared, witness).toBe(true);
+    if (id === "city-boundary-steps") {
+      expect(takeoffs.length, witness).toBeGreaterThanOrEqual(4);
+    }
+    for (const { at, xRange } of contracts.filter(({ xRange }) => xRange)) {
+      expect(
+        landings.some(
+          ({ row, x }) => row === at.row && x >= xRange!.min * TILE && x <= xRange!.max * TILE,
+        ),
+        witness,
+      ).toBe(true);
+    }
+    console.info("Connected route witness", { id, landings, takeoffs, ticks });
+  },
+);
+
+it("keeps connected climb and descent targets on actual surfaces in their derived chunks", () => {
+  const base = "city-boundary-steps";
+  for (const id of [
+    base,
+    blueVerticalId(base),
+    countrysideVerticalId(base),
+    industrialTunnelId(base),
+    apartmentChunkId(base),
+    "outdoor-surface-return",
+  ]) {
+    const chunk = CHUNKS[id]!;
+    expect(chunkProblems(CHUNK_LIBRARY, CATALOGUE, chunk), id).toEqual([]);
+    const theme = typeof chunk.theme === "string" ? chunk.theme : chunk.theme[0]!;
+    const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
+    const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+    const surfaces = zoneSurfaces(BIRD, layout);
+    for (const target of REQUIRED_CHUNK_ROUTES[id]!) {
+      expect(
+        surfaceAt(TILE, surfaces, plan.start.area, target.at),
+        `${id}/${JSON.stringify(target)}`,
+      ).toBeDefined();
+    }
+  }
 });

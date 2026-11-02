@@ -127,7 +127,6 @@ register(
     "city-boundary-return-gap",
     "city-boundary-return-high",
     "city-boundary-return-terrace",
-    "city-boundary-steps",
     "city-boundary-upper-climb",
     "compound-ascent",
     "park-bandstand",
@@ -206,7 +205,6 @@ register(recovery, [
   "outdoor-descent",
   "outdoor-lift-ascent",
   "outdoor-upper-ascent",
-  "outdoor-surface-return",
   "outdoor-deep-descent",
   "outdoor-deep-ascent",
   "outdoor-terrace-ascent",
@@ -220,6 +218,15 @@ register(recovery, [
   "home-deep-descent",
   "home-deep-ascent",
 ]);
+register(() => [point(36, 30)], ["city-boundary-steps"]);
+register(
+  (library, chunk) => [
+    ...recovery(library, chunk),
+    { at: { col: 29, row: 30 }, xRange: { max: 30, min: 28 } },
+    { at: { col: 47, row: 45 }, xRange: { max: 48, min: 46 } },
+  ],
+  ["outdoor-surface-return"],
+);
 register(() => [point(2, 110), point(2, 80), point(37, 50)], ["apartment-floor-start"]);
 register(
   () => [point(11, 25), point(23, 20), point(35, 15), point(50, 10)],
