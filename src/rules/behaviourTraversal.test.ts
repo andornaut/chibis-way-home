@@ -1,13 +1,24 @@
-import { findTraversal, stepTraversal } from "@andornaut/game-kit/terrain/traversal";
+import {
+  findTraversal,
+  stepTraversal,
+  type TraversalContext,
+  type TraversalState,
+} from "@andornaut/game-kit/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
 import { withAnticipationContact } from "../testing/behaviours";
 import { behaviourPose } from "../view/behaviour";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
-import { advanceTraversal, probeRearm, traversalContext } from "./behaviourTraversal";
+import {
+  advanceTraversal,
+  preferredDescentInputs,
+  probeRearm,
+  traversalContext,
+} from "./behaviourTraversal";
 import { startBird } from "./bird";
 import { contactFrameAt } from "./bodyContact";
 import { STEP_SECONDS } from "./step";
@@ -102,6 +113,129 @@ function world(solids: readonly Rect[], timeSeconds: number): BehaviourWorld {
     view: { height: 360, width: 720, x: 0, y: 0 },
   };
 }
+
+function descentFixture(move: -1 | 1 = 1, offset = { x: 2, y: 2 }) {
+  const mirror = (rect: Rect): Rect =>
+    move === 1 ? rect : { ...rect, x: 6000 - rect.x - rect.width };
+  const support = mirror({ height: 552, width: 48, x: 2544, y: 888 });
+  const landing = mirror({ height: 480, width: 288, x: 2592, y: 960 });
+  const solids = [support, landing];
+  const context: TraversalContext<Rect> = {
+    body: { height: 46, offset, width: 44 },
+    bounds: { height: 1440, width: 6840, x: 0, y: 0 },
+    dtSeconds: STEP_SECONDS,
+    epsilon: 1e-6,
+    maxCollisionSteps: BEHAVIOUR_TRAVERSAL_SEARCH.maxCollisionSteps,
+    maxDrop: 1440,
+    profile: { gravity: 1780, jumpSpeed: 535, maxFallSpeed: 275, walkSpeed: 336 },
+    safe: () => true,
+    sampleColliders: () => ({
+      colliders: solids.map((rect) => ({
+        after: rect,
+        before: rect,
+        kind: "solid",
+        supportId: rect,
+      })),
+      complete: true,
+    }),
+  };
+  const body = mirror({ height: 46, width: 44, x: 2547.600000000003, y: 842 });
+  const start: TraversalState<Rect> = {
+    fallFromY: 888,
+    grounded: true,
+    supportId: support,
+    vy: 0,
+    x: body.x - offset.x,
+    y: body.y - offset.y,
+  };
+  const goal = mirror({
+    height: 48.000002,
+    width: 286.3999999999969,
+    x: 2593.600000000003,
+    y: 911.999999,
+  });
+  const direct = stepTraversal(
+    context,
+    { jump: false, move, timeSeconds: 2.341666666666661 },
+    start,
+  );
+  return { context, direct, goal, landing, start, support, world: world(solids, 0) };
+}
+
+it.each([
+  { move: 1 as const, offset: { x: 2, y: 2 } },
+  { move: -1 as const, offset: { x: 2, y: 2 } },
+  { move: 1 as const, offset: { x: 7, y: 5 } },
+])(
+  "selects command-only descent inputs for the static bank, move=$move offset=$offset",
+  ({ move, offset }) => {
+    const fixture = descentFixture(move, offset);
+    expect(fixture.direct.status).toBe("ok");
+    expect(fixture.direct.state.grounded).toBe(false);
+    vi.mocked(stepTraversal).mockClear();
+    const inputs = preferredDescentInputs(
+      fixture.world,
+      fixture.context,
+      fixture.goal,
+      fixture.start,
+      fixture.direct,
+    );
+    expect(inputs).toEqual(
+      Array.from({ length: BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps }, () => ({
+        jump: false,
+        move,
+      })),
+    );
+    expect(stepTraversal).not.toHaveBeenCalled();
+  },
+);
+
+it.each([
+  "upward",
+  "same level",
+  "airborne",
+  "gap",
+  "moving support",
+  "moving landing",
+  "partial support",
+  "still supported",
+])("does not prefer a descent with %s", (kind) => {
+  const fixture = descentFixture();
+  const { context, landing, support } = fixture;
+  let { direct, goal, start } = fixture;
+  let geometry = fixture.world;
+  if (kind === "upward" || kind === "same level") {
+    const lower = { ...landing, y: support.y - (kind === "upward" ? 72 : 0) };
+    geometry = { ...geometry, solids: [support, lower] };
+    goal = { ...goal, y: lower.y - goal.height + context.epsilon };
+  } else if (kind === "airborne") {
+    start = { ...start, grounded: false };
+  } else if (kind === "gap") {
+    geometry = {
+      ...geometry,
+      solids: [support, { ...landing, width: landing.width - 12, x: landing.x + 12 }],
+    };
+    goal = { ...goal, width: goal.width - 12, x: goal.x + 12 };
+  } else if (kind === "moving support") {
+    geometry = {
+      ...geometry,
+      platforms: [{ collision: "solid", owner: actor(), rect: support }],
+      solids: [landing],
+    };
+  } else if (kind === "moving landing") {
+    geometry = {
+      ...geometry,
+      platforms: [{ collision: "solid", owner: actor(), rect: landing }],
+      solids: [support],
+    };
+  } else if (kind === "partial support") {
+    start = { ...start, x: start.x - support.width };
+  } else {
+    direct = { ...direct, state: { ...direct.state, grounded: true } };
+  }
+  expect(preferredDescentInputs(geometry, context, goal, start, direct)).toBeUndefined();
+});
+
 it("scales only authored spatial traversal units", () => {
   const resolved = layoutBehaviour(12, plan).states.chase!.motion;
   expect(resolved).toMatchObject({

@@ -8,6 +8,7 @@ import {
   type TraversalResult,
   type TraversalSafety,
   type TraversalState,
+  type TraversalStepResult,
 } from "@andornaut/game-kit/terrain/traversal";
 
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
@@ -207,6 +208,56 @@ export function traversalGoal(
         x,
         y: support.y - object.height - EDGE,
       };
+}
+
+// CLEANUP (added 2026-11-02): wire after the checked preferred-input package is pinned.
+export function preferredDescentInputs(
+  world: BehaviourWorld,
+  context: TraversalContext<TraversalSupport>,
+  goal: Rect,
+  start: TraversalState<TraversalSupport>,
+  direct: TraversalStepResult<TraversalSupport>,
+): readonly Pick<TraversalInput, "move" | "jump">[] | undefined {
+  if (!start.grounded || direct.status !== "ok" || direct.state.grounded) {
+    return undefined;
+  }
+  const support = world.solids.find((rect) => rect === start.supportId);
+  if (!support) {
+    return undefined;
+  }
+  const { body, epsilon } = context;
+  const left = start.x + body.offset.x;
+  const right = left + body.width;
+  const foot = start.y + body.offset.y + body.height;
+  if (
+    Math.abs(foot - support.y) > epsilon ||
+    left < support.x - epsilon ||
+    right > support.x + support.width + epsilon
+  ) {
+    return undefined;
+  }
+  const move = Math.sign(direct.state.x - start.x);
+  if (
+    (move !== -1 && move !== 1) ||
+    (move === 1 ? goal.x < right - epsilon : goal.x + goal.width > left + epsilon)
+  ) {
+    return undefined;
+  }
+  const landing = world.solids.find(
+    (rect) =>
+      rect.y > foot + epsilon &&
+      Math.abs(rect.y - (goal.y + goal.height - epsilon)) <= epsilon &&
+      goal.x >= rect.x - epsilon &&
+      goal.x + goal.width <= rect.x + rect.width + epsilon &&
+      Math.abs(move === 1 ? rect.x - support.x - support.width : rect.x + rect.width - support.x) <=
+        epsilon,
+  );
+  return landing
+    ? Array.from({ length: BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps }, () => ({
+        jump: false,
+        move,
+      }))
+    : undefined;
 }
 
 function originSegments(
