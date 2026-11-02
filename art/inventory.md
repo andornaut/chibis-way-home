@@ -51,7 +51,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 | Key                       | Type                                                       | Size   | Tags                                                |
 | ------------------------- | ---------------------------------------------------------- | ------ | --------------------------------------------------- |
-| bird                      | character                                                  | 48x42  | idle, walk, jump, flutter, land, death, dash (once) |
+| bird                      | character                                                  | 48x42  | idle, walk, jump, flutter, land, death, dash, double-jump (once) |
 | dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                       |
 | ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                                  |
 | ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                                    |

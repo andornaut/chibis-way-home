@@ -65,7 +65,8 @@
         "jump",
         "land",
         "death",
-        "dash"
+        "dash",
+        "double-jump"
       ]
     },
     {
