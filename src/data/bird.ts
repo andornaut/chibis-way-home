@@ -7,6 +7,7 @@ export const BIRD: BirdTuning = {
   coyoteTime: 0.1,
   dash: { cooldownSeconds: 1, durationSeconds: 0.25, speed: 480 },
   doubleJump: true,
+  doubleJumpHeightRatio: 0.5,
   flutterFallSpeed: 275,
   gravity: 1780,
   groundAccel: 2880,
