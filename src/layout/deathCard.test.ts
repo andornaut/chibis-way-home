@@ -53,22 +53,31 @@ describe("death card", () => {
     expect(result.card.width).toBeGreaterThanOrEqual(SCREEN.width / 2);
     expect(result.stage.y).toBeGreaterThan(result.title.y);
     expect(result.progress.y).toBeGreaterThan(result.stage.y);
-    expect(result.stats[0]!.rect.y - result.progress.y - result.progress.height).toBe(8);
+    expect(result.stats[0]!.rect.y - result.progress.y - result.progress.height).toBe(16);
     expect(result.divider.x + result.divider.width / 2).toBe(SCREEN.width / 2);
     expect(result.stats[0]!.rect.y).toBe(result.stats[3]!.rect.y);
     for (const [index, row] of result.stats.entries()) {
-      expect(row.label.text).toBe([...words.stats, ...words.totals][index]?.label);
-      expect(row.value.text).toBe([...words.stats, ...words.totals][index]?.value);
+      expect(row.label.text).toBe(
+        [words.stats[1], words.stats[2], words.stats[0], ...words.totals][index]?.label,
+      );
+      expect(row.value.text).toBe(
+        [words.stats[1], words.stats[2], words.stats[0], ...words.totals][index]?.value,
+      );
       const first = result.stats[index < words.stats.length ? 0 : words.stats.length]!;
       expect(row.label.rect.x).toBe(first.rect.x);
       expect(row.value.rect.x + row.value.rect.width).toBe(first.rect.x + first.rect.width);
       if (index < words.stats.length) {
-        expect(result.divider.x - row.rect.x - row.rect.width).toBe(CARD_CONTENT.gap);
+        expect(result.divider.x - row.rect.x - row.rect.width).toBe(2 * CARD_CONTENT.gap);
       } else {
-        expect(row.rect.x - result.divider.x - result.divider.width).toBe(CARD_CONTENT.gap);
+        expect(row.rect.x - result.divider.x - result.divider.width).toBe(2 * CARD_CONTENT.gap);
       }
       expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBeGreaterThanOrEqual(8);
     }
+    expect(result.stats[0]!.rect.x - result.card.x).toBeGreaterThanOrEqual(24);
+    expect(
+      result.card.x + result.card.width - result.stats[5]!.rect.x - result.stats[5]!.rect.width,
+    ).toBeGreaterThanOrEqual(24);
+    expect(result.home.button.y - result.divider.y - result.divider.height).toBe(16);
     expect(result.home.button.height).toBe(TEXT_BUTTON.height);
     expect(result.home.button.x + result.home.button.width).toBeLessThan(result.retry.button.x);
     expect(result.title.x - result.card.x).toBe(50);
@@ -81,8 +90,8 @@ describe("death card", () => {
         index === RUN_STAT_KEYS.indexOf("best") ? { ...row, value: TEXT.stats.notCleared } : row,
       ),
     });
-    expect(result.stats[2]!.value.text).toBe(TEXT.stats.notCleared);
-    expect(result.stats[2]!.value.rect.width).toBe(
+    expect(result.stats[1]!.value.text).toBe(TEXT.stats.notCleared);
+    expect(result.stats[1]!.value.rect.width).toBe(
       inkWidth(fonts.body, CARD_TEXT_SCALE, TEXT.stats.notCleared),
     );
     expect(result.stats[0]!.rect.width).toBe(result.stats[3]!.rect.width);
@@ -158,7 +167,9 @@ it("fits all six actual retry statements and grouped totals within the centred s
         ...labels,
         ...summary,
         statement,
-        stats: words.stats,
+        stats: words.stats.map((row, index) =>
+          index === RUN_STAT_KEYS.indexOf("best") ? { ...row, value: TEXT.stats.notCleared } : row,
+        ),
         totals: words.totals,
       });
       expect(result.card.x + result.card.width / 2).toBe(SCREEN.width / 2);
@@ -185,7 +196,11 @@ it("fits all six actual retry statements and grouped totals within the centred s
       );
       expect(
         result.stats[0]!.rect.y - result.statement!.rect.y - result.statement!.rect.height,
-      ).toBe(CARD_CONTENT.gap);
+      ).toBe(2 * CARD_CONTENT.gap);
+      expect(result.home.button.y - result.divider.y - result.divider.height).toBe(
+        2 * CARD_CONTENT.gap,
+      );
+      expect(result.card.height).toBe(248);
       expect(result.home.button.height).toBe(TEXT_BUTTON.height);
       expect(result.retry.button.height).toBe(TEXT_BUTTON.height);
       expect(result.title.x - result.card.x).toBe(50);

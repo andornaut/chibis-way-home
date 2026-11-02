@@ -8,7 +8,12 @@ import {
   contentCardLayout,
 } from "./contentCard";
 import { hitAround } from "./hitAreas";
-import { STATS_DIVIDER_HEIGHT, type StatsMetricRow, wrappedCardText } from "./runStats";
+import {
+  RUN_STAT_KEYS,
+  STATS_DIVIDER_HEIGHT,
+  type StatsMetricRow,
+  wrappedCardText,
+} from "./runStats";
 
 export const DEATH_PROGRESS_HEIGHT = 2;
 
@@ -25,6 +30,16 @@ export interface DeathCardWords {
 
 export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords) {
   const labels = [words.home, words.retry];
+  if (words.stats.length !== RUN_STAT_KEYS.length) {
+    throw new Error("Retry statistics require all three stage metrics");
+  }
+  const stageMetrics = (["lastAttempt", "best", "attempts"] as const).map(
+    (key) => words.stats[RUN_STAT_KEYS.indexOf(key)]!,
+  );
+  const statsInset = CARD_CONTENT.padding + CARD_CONTENT.gap;
+  const statsPadding = statsInset - CARD_CONTENT.padding;
+  const dividerGap = 2 * CARD_CONTENT.gap;
+  const sectionPadding = CARD_CONTENT.gap;
   const closeHit = hitAround({
     height: CARD_CONTENT.closeSize,
     width: CARD_CONTENT.closeSize,
@@ -35,7 +50,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     CARD_CONTENT.padding,
     closeHit.x + closeHit.width + CARD_CONTENT.gap,
   );
-  const innerWidth = bounds.width - 2 * CARD_CONTENT.padding;
+  const innerWidth = bounds.width - 2 * statsInset;
   const texts = [words.title, words.stage, words.progress].map((text, index) =>
     wrappedCardText(
       index === 0 ? fonts.title : fonts.body,
@@ -46,8 +61,8 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
   const rows = texts.map((text, index) =>
     cardTextSize(index === 0 ? fonts.title : fonts.body, text),
   );
-  const columnLimit = (innerWidth - STATS_DIVIDER_HEIGHT - 2 * CARD_CONTENT.gap) / 2;
-  const columns = [words.stats, words.totals].map((metrics) => {
+  const columnLimit = (innerWidth - STATS_DIVIDER_HEIGHT - 2 * dividerGap) / 2;
+  const columns = [stageMetrics, words.totals].map((metrics) => {
     const valueWidth = Math.min(
       columnLimit / 2,
       Math.max(0, ...metrics.map((row) => cardTextSize(fonts.body, row.value).width)),
@@ -90,9 +105,9 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
       ),
     },
     {
-      height: Math.max(...columns.map((column) => column.height)),
+      height: Math.max(...columns.map((column) => column.height)) + 2 * sectionPadding,
       key: "stats",
-      width: 2 * columnWidth + STATS_DIVIDER_HEIGHT + 2 * CARD_CONTENT.gap,
+      width: 2 * columnWidth + STATS_DIVIDER_HEIGHT + 2 * dividerGap + 2 * statsPadding,
     },
     { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
   ];
@@ -141,14 +156,15 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     throw new Error("Missing death card rows or actions");
   }
   const divider: Rect = {
-    height: statGroup.height,
+    height: statGroup.height - 2 * sectionPadding,
     width: STATS_DIVIDER_HEIGHT,
-    x: statGroup.x + columnWidth + CARD_CONTENT.gap,
-    y: statGroup.y,
+    x: statGroup.x + statsPadding + columnWidth + dividerGap,
+    y: statGroup.y + sectionPadding,
   };
   const placedStats = columns.flatMap((column, index) => {
-    const x = statGroup.x + index * (columnWidth + STATS_DIVIDER_HEIGHT + 2 * CARD_CONTENT.gap);
-    let y = statGroup.y;
+    const x =
+      statGroup.x + statsPadding + index * (columnWidth + STATS_DIVIDER_HEIGHT + 2 * dividerGap);
+    let y = statGroup.y + sectionPadding;
     return column.rows.map((row) => {
       const height = Math.max(row.labelSize.height, row.valueSize.height);
       const rect = { height, width: columnWidth, x, y };
