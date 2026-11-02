@@ -12,6 +12,7 @@ import { clampInto, containsPoint } from "@andornaut/game-kit/rect";
 import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
 import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
+import { AIR_JUMP_CUE } from "../data/airJumpCue";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { BOSS_WARNING } from "../data/bossWarning";
@@ -129,7 +130,14 @@ import { type TouchSetting, touchSettings, touchSettingShown } from "../settings
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
 import { backgroundGroundOffset, backgroundGroundReference } from "../view/backgroundGround";
 import { behaviourPose } from "../view/behaviour";
-import { BIRD_FRAME, birdFrameAt, type BirdPose, startPose, stepPose } from "../view/bird";
+import {
+  BIRD_FRAME,
+  birdFrameAt,
+  type BirdPose,
+  clearAirJumpPose,
+  startPose,
+  stepPose,
+} from "../view/bird";
 import { characterState, nextQuirkAt } from "../view/character";
 import { chunkBackdropSpan, chunkParallax } from "../view/chunkParallax";
 import {
@@ -159,6 +167,7 @@ import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";
+import { mountAirJumpCue } from "./airJumpCue";
 import { mountBossWarning } from "./bossWarning";
 import { paletteColour } from "./cardParts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
@@ -263,6 +272,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // The move hint's ring and knob.
   private moveHint!: { readonly knob: GameObjects.Sprite; readonly ring: GameObjects.Sprite };
   private bird!: GameObjects.Sprite;
+  private airCue: ReturnType<typeof mountAirJumpCue> | undefined;
   private dashWind: ReturnType<typeof mountDashTrail> | undefined;
   private bossWarning: ReturnType<typeof mountBossWarning> | undefined;
   private birdPose: BirdPose = startPose;
@@ -381,6 +391,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.heardDialogues.clear();
     this.clock = startStepClock;
     this.birdPose = startPose;
+    this.airCue = undefined;
     this.dashWind = undefined;
     this.bossWarning = undefined;
     this.dying = undefined;
@@ -474,6 +485,16 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       (name) => paletteColour(this, name),
       this,
     );
+    this.airCue = mountAirJumpCue(
+      AIR_JUMP_CUE,
+      BIRD_DEPTH,
+      (name) => paletteColour(this, name),
+      this,
+    );
+    const clearAirJump = () => this.clearAirJump();
+    this.events.on("pause", clearAirJump);
+    this.events.once("shutdown", () => this.events.off("pause", clearAirJump));
+    modalInput(this).subscribe(clearAirJump);
     this.dashWind = mountDashTrail(
       DASH_TRAIL,
       BIRD_DEPTH,
@@ -785,6 +806,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.beginDeath();
         break;
       }
+      this.airCue?.step(
+        STEP_SECONDS,
+        { ...BIRD_FRAME, ...birdFrameAt(BIRD, BIRD_FRAME, before) },
+        before,
+        this.zone.bird,
+      );
       this.birdPose = stepPose(this.landMs, STEP_MS, before, this.zone.bird, this.birdPose);
       if (this.zone.door !== undefined) {
         this.openDoor(time, this.zone.door);
@@ -1074,7 +1101,15 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     );
   }
 
+  private clearAirJump(): void {
+    this.airCue?.clear();
+    if (this.zone !== undefined) {
+      this.birdPose = clearAirJumpPose(this.zone.bird, this.birdPose);
+    }
+  }
+
   private clearControls(): void {
+    this.clearAirJump();
     this.heldKeys.clear();
     this.heldTouches.clear();
     this.presses.clear();
@@ -1762,12 +1797,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.bird.visible &&
       modalInput(this).accepts()
     ) {
+      this.airCue?.draw();
       this.dashWind?.draw(
         this.movementTuning().dash?.durationSeconds ?? 0,
         { ...BIRD_FRAME, ...at },
         bird.dash,
       );
     } else {
+      this.clearAirJump();
       this.dashWind?.clear();
     }
     const scroll = currentScreen(BIRD, areaOf(this.layout, this.zone.area), bird);

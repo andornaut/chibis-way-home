@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
-import { type BirdState, EDGE } from "../rules/bird";
-import { STEP_MS } from "../rules/step";
-import { birdFrameAt, type BirdPose, stepPose } from "./bird";
+import { type BirdState, EDGE, startBird, stepBird } from "../rules/bird";
+import { STEP_MS, STEP_SECONDS } from "../rules/step";
+import { birdFrameAt, type BirdPose, clearAirJumpPose, stepPose } from "./bird";
 
 const LAND_MS = 180;
 
@@ -115,4 +115,23 @@ describe("birdFrameAt", () => {
     expect(at.x + frame.width / 2).toBe(Math.round(x + BIRD.width / 2));
     expect(at.y + frame.height).toBe(Math.round(y + BIRD.height));
   });
+});
+
+it("plays the accepted second jump once beneath dash priority and clears on landing or cover", () => {
+  const before = startBird(BIRD, { x: 100, y: 100 });
+  const after = stepBird(BIRD, [], [], STEP_SECONDS, { jumpHeld: true, move: 0 }, before);
+  const second = stepPose(LAND_MS, STEP_MS, before, after, pose("jump"));
+  expect(second.tag).toBe("double-jump");
+  expect(second.airJumpRemainingMs).toBeGreaterThan(0);
+  const dash = { ...after, dash: DASHING.dash };
+  const overridden = stepPose(LAND_MS, STEP_MS, after, dash, second);
+  expect(overridden.tag).toBe("dash");
+  expect(overridden.airJumpRemainingMs).toBeLessThan(second.airJumpRemainingMs!);
+  const expired = stepPose(LAND_MS, second.airJumpRemainingMs!, after, after, second);
+  expect(expired.tag).toBe("jump");
+  expect(expired.airJumpRemainingMs).toBeUndefined();
+  const landed = stepPose(LAND_MS, STEP_MS, after, STILL, second);
+  expect(landed.tag).toBe("land");
+  expect(landed.airJumpRemainingMs).toBeUndefined();
+  expect(clearAirJumpPose(after, second)).toEqual(pose("jump"));
 });

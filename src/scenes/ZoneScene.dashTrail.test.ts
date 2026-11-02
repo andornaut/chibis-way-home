@@ -21,6 +21,7 @@ afterEach(() => {
 it("passes the full authored frame and active duration, then clears wind under modal, room and death covers", () => {
   vi.stubGlobal("window", { location: { search: "" } });
   const wind = { clear: vi.fn(), draw: vi.fn() };
+  const cue = { clear: vi.fn(), draw: vi.fn() };
   const actor = {
     anims: {},
     frame: BIRD_FRAME,
@@ -40,6 +41,7 @@ it("passes the full authored frame and active duration, then clears wind under m
   const bird = { ...startBird(BIRD, { x: 200, y: 200 }), dash, facing: -1 };
   const world = { area: "main", bird, death: undefined as unknown };
   const scene = Object.assign(new ZoneScene(), {
+    airCue: cue,
     bird: actor,
     cameras: { main: { setScroll: vi.fn() } },
     dashWind: wind,
@@ -53,6 +55,7 @@ it("passes the full authored frame and active duration, then clears wind under m
   }) as unknown as { drawBird(): void; inRoom: boolean };
   scene.drawBird();
   expect(wind.draw).toHaveBeenCalledOnce();
+  expect(cue.draw).toHaveBeenCalledOnce();
   const [duration, frame, state] = wind.draw.mock.calls[0]!;
   expect(duration).toBe(0.25);
   expect(frame).toMatchObject(BIRD_FRAME);
@@ -68,6 +71,8 @@ it("passes the full authored frame and active duration, then clears wind under m
   scene.drawBird();
   expect(wind.draw).toHaveBeenCalledOnce();
   expect(wind.clear).toHaveBeenCalledTimes(3);
+  expect(cue.clear).toHaveBeenCalledTimes(3);
+  expect(cue.draw).toHaveBeenCalledOnce();
 });
 
 it("draws proven world scenery at actual positions without camera compensation or chunk clipping", () => {

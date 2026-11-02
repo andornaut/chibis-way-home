@@ -1,15 +1,19 @@
+import { type AsepriteSheet, sheetTags, tagMs } from "@andornaut/game-kit/art/aseprite";
+
 import birdSheet from "../../public/art/sprites/bird.json";
 import type { BirdTuning, Point, Size } from "../data/types";
 import { birdFrameRect, type BirdState, EDGE } from "../rules/bird";
+import { airJumpStarted } from "./airJumpCue";
 import { sheetFrameSize } from "./aseprite";
 
 // Her drawn frame's size, from art's bird sheet: every frame is this big.
 export const BIRD_FRAME: Size = sheetFrameSize(birdSheet);
 
-export type BirdTag = "dash" | "flutter" | "idle" | "jump" | "land" | "walk";
+export type BirdTag = "dash" | "double-jump" | "flutter" | "idle" | "jump" | "land" | "walk";
 
 // The tag she shows, and how long she has shown it as of this step.
 export interface BirdPose {
+  readonly airJumpRemainingMs?: number;
   readonly ms: number;
   readonly tag: BirdTag;
 }
@@ -27,10 +31,22 @@ export function stepPose(
   after: BirdState,
   pose: BirdPose,
 ): BirdPose {
+  const started = airJumpStarted(before, after);
+  const duration = started ? tagMs(sheetTags(birdSheet as AsepriteSheet), "double-jump") : 0;
+  if (started && duration <= 0) {
+    throw new Error("Missing bird double-jump animation");
+  }
+  const remaining = after.grounded
+    ? 0
+    : started
+      ? duration
+      : Math.max(0, (pose.airJumpRemainingMs ?? 0) - stepMs);
   const ms = pose.ms + stepMs;
   let tag: BirdTag;
   if ((after.dash?.remainingSeconds ?? 0) > EDGE) {
     tag = "dash";
+  } else if (remaining > 0) {
+    tag = "double-jump";
   } else if (!after.grounded) {
     tag = after.vy < 0 ? "jump" : "flutter";
   } else if (!before.grounded) {
@@ -40,11 +56,21 @@ export function stepPose(
   } else {
     tag = after.vx === 0 ? "idle" : "walk";
   }
-  return tag === pose.tag ? { ms, tag } : { ms: 0, tag };
+  return {
+    ...(remaining > 0 && { airJumpRemainingMs: remaining }),
+    ms: tag === pose.tag && !(started && tag === "double-jump") ? ms : 0,
+    tag,
+  };
 }
 
 // The whole-pixel top-left of her frame (birdFrameRect).
 export function birdFrameAt(tuning: BirdTuning, frame: Size, bird: BirdState): Point {
   const { x, y } = birdFrameRect(tuning, frame, bird);
   return { x, y };
+}
+
+export function clearAirJumpPose(bird: BirdState, pose: BirdPose): BirdPose {
+  return pose.airJumpRemainingMs === undefined
+    ? pose
+    : stepPose(0, 0, bird, bird, { ms: pose.ms, tag: pose.tag });
 }
