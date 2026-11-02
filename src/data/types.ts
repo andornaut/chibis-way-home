@@ -108,6 +108,9 @@ export interface DashTrailTuning {
 
 // Visual-only second-jump cue. Offset is from the full frame centre; distances are logical pixels.
 export interface AirJumpCueTuning {
+  readonly borderColour: string;
+  // Logical pixels around the scaled glyph.
+  readonly borderThickness: number;
   readonly colour: string;
   readonly durationSeconds: number;
   readonly offset: Point;
