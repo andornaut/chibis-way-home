@@ -28,6 +28,7 @@ import {
 } from "./behaviour";
 import { type BehaviourWorld, flightContactApproach } from "./behaviourReach";
 import { startBird } from "./bird";
+import { flyLandingPath, flyLandingRoute, supportedLanding } from "./flyLanding";
 import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
@@ -704,3 +705,172 @@ it.each([-1, 1] as const)(
     expect(approach).toEqual({ x: facing === 1 ? 3085 : 3083, y: 912 });
   },
 );
+
+describe("supported flight and dwell", () => {
+  function landingPlan(): BehaviourPlan {
+    return {
+      ...plan("fly"),
+      attackCooldownSeconds: 1,
+      initial: "tell",
+      states: {
+        complete: {
+          animation: null,
+          attack: { id: "flight", phase: "completed" },
+          motion: { kind: "wait" },
+          transitions: [],
+        },
+        land: {
+          animation: null,
+          attack: { id: "flight", phase: "committed" },
+          motion: { kind: "fly", speed: 100, to: "support" },
+          transitions: [{ to: "rest", when: [{ kind: "arrived", tolerance: 1000 }] }],
+        },
+        rest: {
+          animation: null,
+          attack: { id: "flight", phase: "committed" },
+          motion: { kind: "wait", support: "required" },
+          transitions: [{ to: "complete", when: [{ kind: "elapsed", seconds: 0.2 }] }],
+        },
+        tell: {
+          animation: null,
+          attack: { id: "flight", phase: "tell" },
+          motion: { kind: "wait" },
+          transitions: [{ to: "land", when: [{ kind: "elapsed", seconds: 0 }] }],
+        },
+      },
+    };
+  }
+  it("requires actual full-body support before arrival, dwell and attack completion", () => {
+    const object = actor(landingPlan());
+    const target = bird(400);
+    const first = advance(object, target, 1, { x: 100, y: 100 });
+    expect(first.at).toEqual({ x: 100, y: 200 });
+    expect(first.state.stateKey).toBe("land");
+    expect(first.state.activeAttack).toEqual({ id: "flight", phase: "committed" });
+    expect(first.state.attackCooldownRemainingSeconds).toBeUndefined();
+    const landed = advance(object, target, 0.85, first.at, first.state);
+    expect(supportedLanding(object, world, landed.at)).toBe(true);
+    expect(landed.state.stateKey).toBe("rest");
+    expect(landed.state.elapsed).toBeCloseTo(0.05);
+    expect(landed.state.activeAttack?.id).toBe("flight");
+    const complete = advance(object, target, 0.2, landed.at, landed.state);
+    expect(complete.state.stateKey).toBe("complete");
+    expect(complete.state.activeAttack).toBeUndefined();
+    expect(complete.state.attackCooldownRemainingSeconds).toBeCloseTo(0.95);
+  });
+  it("keeps absent, narrow and hazardous supports incomplete", () => {
+    const object = actor(landingPlan());
+    const at = { x: 100, y: 100 };
+    for (const geometry of [
+      { solids: [] },
+      { solids: [{ height: 20, width: object.width - 1, x: 100, y: 300 }] },
+      {
+        hazards: [{ owner: { ...object }, rect: { height: 20, width: 4000, x: -1000, y: 260 } }],
+        solids: [floor],
+      },
+    ]) {
+      const result = advance(object, bird(400), 2, at, undefined, geometry);
+      expect(result.at).toEqual(at);
+      expect(result.state.stateKey).toBe("land");
+      expect(result.state.activeAttack?.id).toBe("flight");
+      expect(result.state.attackCooldownRemainingSeconds).toBeUndefined();
+    }
+  });
+  it("carries supported dwell along actual mover chords and resumes landing after support loss", () => {
+    const object = actor(landingPlan());
+    const owner = { ...object, character: "perch" };
+    const before = { height: 10, width: 100, x: 80, y: 300 };
+    const after = { ...before, x: 90, y: 290 };
+    const first = advance(object, bird(400), 0.05);
+    expect(first.state.stateKey).toBe("rest");
+    const geometry: BehaviourWorld = {
+      platforms: [{ collision: "ledge", owner, rect: before }],
+      solids: [],
+      traversalFrame: {
+        bounds: { height: 1000, width: 1000, x: 0, y: 0 },
+        dtSeconds: 0.1,
+        platforms: [{ after, before, collision: "ledge", owner }],
+        timeSeconds: 0,
+      },
+    };
+    const carried = advance(object, bird(400), 0.1, first.at, first.state, geometry);
+    expect(carried.at).toEqual({ x: 110, y: 270 });
+    expect(carried.segments.map(({ from, to }) => [from, to])).toEqual([[first.at, carried.at]]);
+    expect(carried.state.elapsed).toBeCloseTo(0.1);
+    const lost = advance(object, bird(400), 0.1, carried.at, carried.state, { solids: [] });
+    expect(lost.at).toEqual(carried.at);
+    expect(lost.state.elapsed).toBe(0);
+    expect(lost.state.stateKey).toBe("rest");
+    expect(lost.state.activeAttack?.id).toBe("flight");
+    const descending = advance(object, bird(400), 0.1, lost.at, lost.state);
+    expect(descending.at).toEqual({ x: 110, y: 280 });
+    expect(descending.state.elapsed).toBe(0);
+    const dwell = advance(object, bird(400), 0.1, descending.at, descending.state);
+    expect(dwell.state.elapsed).toBeCloseTo(0.1);
+  });
+  it("rejects unsafe mover chords and unknown mover samples without completing dwell", () => {
+    const object = actor(landingPlan());
+    const owner = { ...object, character: "perch" };
+    const before = { height: 10, width: 100, x: 80, y: 300 };
+    const right = { ...before, x: 180 };
+    const first = advance(object, bird(400), 0.05);
+    const frame = {
+      bounds: { height: 1000, width: 1000, x: 0, y: 0 },
+      dtSeconds: 0.1,
+      platforms: [
+        {
+          after: before,
+          before,
+          collision: "ledge" as const,
+          owner,
+          segments: [
+            { endSeconds: 0.05, from: before, startSeconds: 0, to: right },
+            { endSeconds: 0.1, from: right, startSeconds: 0.05, to: before },
+          ],
+        },
+      ],
+      timeSeconds: 0,
+    };
+    const geometry = {
+      hazards: [{ owner: { ...owner }, rect: { height: 10, width: 10, x: 160, y: 280 } }],
+      platforms: [{ collision: "ledge" as const, owner, rect: before }],
+      solids: [],
+      traversalFrame: frame,
+    };
+    for (const traversalFrame of [frame, { ...frame, sample: () => undefined }]) {
+      const result = advance(object, bird(400), 0.1, first.at, first.state, {
+        ...geometry,
+        traversalFrame,
+      });
+      expect(result.at).toEqual(first.at);
+      expect(result.state.elapsed).toBe(0);
+      expect(result.state.stateKey).toBe("rest");
+      expect(result.state.activeAttack?.id).toBe("flight");
+    }
+  });
+  it("does not invent recovery speed for an initial required wait", () => {
+    const base = landingPlan();
+    const rest = base.states.rest!;
+    const object = actor({
+      ...plan("fly"),
+      initial: "rest",
+      states: {
+        rest: { animation: rest.animation, motion: rest.motion, transitions: [] },
+      },
+    });
+    const result = advance(object, bird(400), 1);
+    expect(result.state.elapsed).toBe(0);
+    expect(result.state.landing).toBeUndefined();
+    expect(result.at).toEqual(object.origin);
+  });
+  it("rejects both automatic and preferred landing routes whose sweeps touch a hazard", () => {
+    const object = actor(landingPlan());
+    const geometry = {
+      hazards: [{ owner: { ...object }, rect: { height: 10, width: 100, x: 80, y: 200 } }],
+      solids: [{ height: 20, width: 20, x: 100, y: 300 }],
+    };
+    const at = { x: 100, y: 100 };
+    expect(flyLandingRoute(object, geometry, at)).toBeUndefined();
+    expect(flyLandingPath(object, geometry, at, { x: 100, y: 280 })).toBeUndefined();
+  });
+});

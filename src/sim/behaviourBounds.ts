@@ -2,7 +2,10 @@ import type { BehaviourMotion, BehaviourPlan, ObjectLayout, Point, Rect } from "
 
 export function hasDynamicBehaviour(pattern: BehaviourPlan): boolean {
   return Object.values(pattern.states).some(
-    (node) => node.motion.kind !== "wait" || (node.onEnter?.length ?? 0) > 0,
+    (node) =>
+      node.motion.kind !== "wait" ||
+      node.motion.support === "required" ||
+      (node.onEnter?.length ?? 0) > 0,
   );
 }
 
@@ -39,6 +42,10 @@ export function objectCycleSeconds(objects: readonly ObjectLayout[], object: Obj
 }
 
 function flightWaypoints(motion: Extract<BehaviourMotion, { kind: "fly" }>): readonly Point[] {
+  // Supported flight uses the actual-area pursuit envelope, not a relative waypoint.
+  if (motion.to === "support") {
+    return [];
+  }
   if (typeof motion.to !== "string") {
     return [motion.to];
   }
@@ -78,6 +85,14 @@ export function sweptBehaviourRect(
   pattern: BehaviourPlan,
   origin: Rect,
 ): Rect {
+  if (
+    Object.values(pattern.states).some(
+      ({ motion }) => motion.kind === "fly" && motion.to === "support",
+    ) &&
+    (!pattern.pursuit || !context)
+  ) {
+    throw new Error("Supported flight bounds require pursuit and actual area context");
+  }
   const points = waypoints(pattern);
   const left = Math.min(...points.map(({ x }) => x));
   const right = Math.max(...points.map(({ x }) => x));
@@ -132,7 +147,10 @@ export function sweptBehaviourRect(
 export function behaviourCycleSeconds(pattern: BehaviourPlan): number {
   if (
     Object.values(pattern.states).some(
-      (node) => node.motion.kind === "pursue" && node.motion.speed > 0,
+      (node) =>
+        (node.motion.kind === "pursue" && node.motion.speed > 0) ||
+        (node.motion.kind === "fly" && node.motion.to === "support") ||
+        (node.motion.kind === "wait" && node.motion.support === "required"),
     )
   ) {
     return Infinity;

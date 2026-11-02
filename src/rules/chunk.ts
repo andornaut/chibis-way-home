@@ -66,13 +66,16 @@ function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance:
   }
   if (object.behaviour) {
     const { states } = object.behaviour;
+    const supportFlight = Object.values(states).some(
+      ({ motion }) => motion.kind === "fly" && motion.to === "support",
+    );
     const tracks = Object.values(states).flatMap((node) =>
       node.motion.kind === "move" || node.motion.kind === "hop"
         ? [node.track ?? object.behaviour!]
         : [],
     );
     const flights = Object.values(states).flatMap((node) =>
-      node.motion.kind !== "fly"
+      node.motion.kind !== "fly" || node.motion.to === "support"
         ? []
         : typeof node.motion.to === "string"
           ? [
@@ -103,15 +106,22 @@ function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance:
     return {
       collision: object.collision,
       moves:
+        supportFlight ||
         flights.length > 0 ||
         hopHeight > 0 ||
         (tracks.some((track) => track.distance !== 0) &&
           Object.values(states).some((node) => node.motion.kind === "move")),
       span: {
-        bottom: object.origin.y + object.height + Math.max(...ys),
-        left: object.origin.x + Math.min(...xs),
-        right: object.origin.x + object.width + Math.max(...xs),
-        top: object.origin.y + Math.min(...ys) - hopHeight,
+        // A chunk has no assembled support geometry to bound automatic landing vertically.
+        bottom: supportFlight ? Infinity : object.origin.y + object.height + Math.max(...ys),
+        left:
+          object.origin.x +
+          Math.min(...xs, ...(supportFlight ? [-object.behaviour.pursuit!.distance] : [])),
+        right:
+          object.origin.x +
+          object.width +
+          Math.max(...xs, ...(supportFlight ? [object.behaviour.pursuit!.distance] : [])),
+        top: supportFlight ? -Infinity : object.origin.y + Math.min(...ys) - hopHeight,
       },
     };
   }

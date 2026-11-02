@@ -44,7 +44,14 @@ import {
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
-import { flyLandingRoute, supportedLanding } from "./flyLanding";
+import {
+  carryLandingSupport,
+  flyLandingRoute,
+  type FlyLandingState,
+  landingSupport,
+  landingWorldAt,
+  supportedLanding,
+} from "./flyLanding";
 import { hopLift } from "./motion";
 import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 
@@ -62,6 +69,7 @@ export interface BehaviourState extends BehaviourAttackState {
   readonly animationSeconds?: number;
   readonly axis?: "x" | "y";
   readonly flightTarget?: Point;
+  readonly landing?: FlyLandingState;
   readonly pendingEntry?: boolean;
   readonly active: boolean;
   readonly elapsed: number;
@@ -197,16 +205,18 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         node.motion.kind === "fly" &&
         (!valid(node.motion.speed) ||
           node.motion.speed === 0 ||
-          (typeof node.motion.to === "string"
-            ? ![
-                node.motion.bounds.x,
-                node.motion.bounds.y,
-                node.motion.bounds.width,
-                node.motion.bounds.height,
-              ].every(Number.isFinite) ||
-              node.motion.bounds.width <= 0 ||
-              node.motion.bounds.height <= 0
-            : !Number.isFinite(node.motion.to.x) || !Number.isFinite(node.motion.to.y)))
+          (node.motion.to === "support"
+            ? !plan.pursuit
+            : typeof node.motion.to === "string"
+              ? ![
+                  node.motion.bounds.x,
+                  node.motion.bounds.y,
+                  node.motion.bounds.width,
+                  node.motion.bounds.height,
+                ].every(Number.isFinite) ||
+                node.motion.bounds.width <= 0 ||
+                node.motion.bounds.height <= 0
+              : !Number.isFinite(node.motion.to.x) || !Number.isFinite(node.motion.to.y)))
       ) {
         throw new Error(`Invalid flight in ${key}`);
       }
@@ -335,19 +345,21 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                       },
                     }),
                   ...(node.motion.kind === "fly"
-                    ? typeof node.motion.to === "string"
-                      ? {
-                          ...(node.motion.to === "target-x" && {
-                            maxLead: node.motion.maxLead * tile,
-                          }),
-                          bounds: {
-                            height: node.motion.bounds.height * tile,
-                            width: node.motion.bounds.width * tile,
-                            x: node.motion.bounds.x * tile,
-                            y: node.motion.bounds.y * tile,
-                          },
-                        }
-                      : { to: { x: node.motion.to.x * tile, y: node.motion.to.y * tile } }
+                    ? node.motion.to === "support"
+                      ? {}
+                      : typeof node.motion.to === "string"
+                        ? {
+                            ...(node.motion.to === "target-x" && {
+                              maxLead: node.motion.maxLead * tile,
+                            }),
+                            bounds: {
+                              height: node.motion.bounds.height * tile,
+                              width: node.motion.bounds.width * tile,
+                              x: node.motion.bounds.x * tile,
+                              y: node.motion.bounds.y * tile,
+                            },
+                          }
+                        : { to: { x: node.motion.to.x * tile, y: node.motion.to.y * tile } }
                     : {}),
                   ...(node.motion.kind === "hop"
                     ? { hopHeight: node.motion.hopHeight * tile }
@@ -435,6 +447,12 @@ function enterState(
     stateKey: key,
   };
   delete (next as { flightTarget?: Point }).flightTarget;
+  if (
+    !(node.motion.kind === "fly" && node.motion.to === "support") &&
+    !(node.motion.kind === "wait" && node.motion.support === "required")
+  ) {
+    delete (next as { landing?: FlyLandingState }).landing;
+  }
   if (leavingPursuit || (state.stateKey !== key && next.traversal?.preparation)) {
     delete (next as { traversal?: BehaviourTraversalState }).traversal;
   }
@@ -557,6 +575,9 @@ function flightDestination(
   if (motion.kind !== "fly") {
     return undefined;
   }
+  if (motion.to === "support") {
+    return undefined;
+  }
   if (motion.to === "target") {
     return state.flightTarget;
   }
@@ -651,6 +672,9 @@ function matches(
     const motion = nodeOf(object, state.stateKey).motion;
     if (motion.kind !== "fly") {
       return false;
+    }
+    if (motion.to === "support") {
+      return supportedLanding(object, world, at);
     }
     if (motion.to === "target-x" && alignmentBlocked(tuning, object, world, bird, at, state)) {
       return false;
@@ -1160,6 +1184,35 @@ export function stepBehaviour(
   let traversalStep: ReturnType<typeof advanceTraversal> | undefined;
   while (true) {
     let node = nodeOf(object, next.stateKey);
+    const supportMotion =
+      (node.motion.kind === "fly" && node.motion.to === "support") ||
+      (node.motion.kind === "wait" && node.motion.support === "required");
+    const supportWorld = supportMotion ? landingWorldAt(world, time) : undefined;
+    const supported =
+      supportWorld !== undefined &&
+      supportedLanding(object, supportWorld, current) &&
+      (node.motion.kind !== "wait" || next.landing !== undefined);
+    if (supportMotion) {
+      const speed = node.motion.kind === "fly" ? node.motion.speed : next.landing?.speed;
+      const support = supportWorld && landingSupport(object, supportWorld, current);
+      const previous = next.landing?.support;
+      const changed =
+        previous &&
+        support &&
+        (previous.owner !== support.owner || (!support.owner && previous.rect !== support.rect));
+      if (speed !== undefined) {
+        next = {
+          ...next,
+          landing: {
+            speed,
+            ...(support && { support }),
+          },
+        };
+      }
+      if (node.motion.kind === "wait" && (!supported || changed)) {
+        next = { ...next, elapsed: 0 };
+      }
+    }
     if (
       next.pursuit?.phase === "escaped" &&
       !next.pursuit.settled &&
@@ -1222,7 +1275,10 @@ export function stepBehaviour(
       node.motion.kind === "pursue" &&
       node.motion.mode === "fly";
     const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
-    if (next.pendingEntry) {
+    if (
+      next.pendingEntry &&
+      !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
+    ) {
       next = enterAttack(
         plan,
         node,
@@ -1249,13 +1305,17 @@ export function stepBehaviour(
       traversalStep !== undefined ||
       next.traversal?.preparation !== undefined ||
       settling ||
+      (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
       (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded)
         ? undefined
         : node.transitions.find(
             ({ to, when }) =>
               canEnterAttack(nodeOf(object, to), next) &&
+              !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
               when.every((condition) =>
-                matches(tuning, object, world, bird, current, next, condition),
+                condition.kind === "arrived" && supportMotion
+                  ? supported
+                  : matches(tuning, object, supportWorld ?? world, bird, current, next, condition),
               ),
           );
     if (transition) {
@@ -1429,29 +1489,57 @@ export function stepBehaviour(
         to.y = flightAxis(object, world, { ...current, x: to.x }, "y", current.y + dy * fraction);
       }
     }
-    if (node.motion.kind === "fly") {
-      const target =
-        node.motion.to === "target-x" &&
-        alignmentBlocked(tuning, object, world, bird, current, next)
+    let supportedDwell = false;
+    let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
+    if (
+      node.motion.kind === "wait" &&
+      node.motion.support === "required" &&
+      supported &&
+      next.landing?.support
+    ) {
+      const carried = carryLandingSupport(
+        object,
+        world,
+        time,
+        slice,
+        current,
+        next.landing.support,
+      );
+      to.x = carried.at.x;
+      to.y = carried.at.y;
+      carryPoints = carried.points;
+      supportedDwell = carried.supported;
+    }
+    if (
+      node.motion.kind === "fly" ||
+      (node.motion.kind === "wait" && node.motion.support === "required" && !supported)
+    ) {
+      const landing = node.motion.kind === "wait" || node.motion.to === "support";
+      const speed = node.motion.kind === "fly" ? node.motion.speed : next.landing?.speed;
+      const target = landing
+        ? supportWorld && flyLandingRoute(object, supportWorld, current)?.[0]
+        : node.motion.kind === "fly" &&
+            node.motion.to === "target-x" &&
+            alignmentBlocked(tuning, object, world, bird, current, next)
           ? current
           : flightDestination(tuning, object, bird, current, next);
-      if (!target) {
+      if (!target && !landing) {
         throw new Error("Target flight must capture its destination on entry");
       }
-      const distance = Math.hypot(target.x - current.x, target.y - current.y);
-      if (distance > EDGE) {
-        slice = Math.min(slice, distance / node.motion.speed);
-        const fraction = Math.min(1, (node.motion.speed * slice) / distance);
+      const distance = target ? Math.hypot(target.x - current.x, target.y - current.y) : 0;
+      if (target && speed !== undefined && distance > EDGE) {
+        slice = Math.min(slice, distance / speed);
+        const fraction = Math.min(1, (speed * slice) / distance);
         to.x = flightAxis(
           object,
-          world,
+          supportWorld ?? world,
           current,
           "x",
           current.x + (target.x - current.x) * fraction,
         );
         to.y = flightAxis(
           object,
-          world,
+          supportWorld ?? world,
           { ...current, x: to.x },
           "y",
           current.y + (target.y - current.y) * fraction,
@@ -1496,7 +1584,34 @@ export function stepBehaviour(
     }
     const end = time + slice;
     const segmentStart = segments.length;
-    if (traversalSegments?.some((leg) => leg.endSeconds > leg.startSeconds)) {
+    if (carryPoints?.length) {
+      let previous = current;
+      let start = time;
+      for (const point of carryPoints) {
+        segments.push({
+          axis: track.axis,
+          end: time + point.seconds,
+          facing: next.facing,
+          from: previous,
+          start,
+          to: point.at,
+          ...(frame && { frame: frame.frame }),
+        });
+        previous = point.at;
+        start = time + point.seconds;
+      }
+      if (start < end) {
+        segments.push({
+          axis: track.axis,
+          end,
+          facing: next.facing,
+          from: previous,
+          start,
+          to,
+          ...(frame && { frame: frame.frame }),
+        });
+      }
+    } else if (traversalSegments?.some((leg) => leg.endSeconds > leg.startSeconds)) {
       for (const leg of traversalSegments) {
         if (leg.endSeconds <= leg.startSeconds) {
           continue;
@@ -1531,7 +1646,12 @@ export function stepBehaviour(
     current = to;
     next = {
       ...advanceAttackClock(slice, next),
-      elapsed: next.elapsed + slice,
+      elapsed:
+        node.motion.kind === "wait" && node.motion.support === "required"
+          ? supportedDwell
+            ? next.elapsed + slice
+            : 0
+          : next.elapsed + slice,
       ...(object.contact && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
     };
     time = end > time ? end : seconds;

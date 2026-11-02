@@ -319,3 +319,33 @@ it("includes the authored ground-traversal jump rise in pursuit bounds", () => {
   expect(physical.y).toBe(legacy.y - 45);
   expect(physical.y + physical.height).toBe(legacy.y + legacy.height);
 });
+
+it("requires actual area context for support flight and never invents a landing period", () => {
+  const graph: BehaviourPlan = {
+    ...pattern([
+      { kind: "fly", speed: 100, to: "support" },
+      { kind: "wait", support: "required" },
+    ]),
+    pursuit: {
+      distance: 200,
+      escaped: { line: "escaped", speaker: "actor" },
+      unreachableGraceSeconds: 1,
+    },
+  };
+  const origin = { height: 20, width: 20, x: 300, y: 280 };
+  const areaBounds = { height: 1000, width: 720, x: 0, y: 0 };
+  expect(behaviourCycleSeconds(graph)).toBe(Infinity);
+  expect(hasDynamicBehaviour(pattern([{ kind: "wait", support: "required" }]))).toBe(true);
+  expect(() => sweptBehaviourRect(undefined, graph, origin)).toThrow("actual area context");
+  const bounds = sweptBehaviourRect(
+    { areaBounds, maximumRise: 80, targetHeight: 40 },
+    graph,
+    origin,
+  );
+  expect(bounds.y).toBeLessThanOrEqual(areaBounds.y - origin.height);
+  expect(bounds.y + bounds.height).toBeGreaterThanOrEqual(areaBounds.height);
+  expect(bounds.x).toBeLessThanOrEqual(origin.x - graph.pursuit!.distance);
+  expect(bounds.x + bounds.width).toBeGreaterThanOrEqual(
+    origin.x + graph.pursuit!.distance + origin.width,
+  );
+});
