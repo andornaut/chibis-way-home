@@ -394,7 +394,7 @@ export interface BehaviourTraversal {
 }
 
 export type BehaviourMotion =
-  | { readonly kind: "wait" }
+  | { readonly kind: "wait"; readonly support?: "required" }
   | { readonly kind: "pursue"; readonly mode: "fly"; readonly speed: number }
   | {
       readonly kind: "pursue";
@@ -403,6 +403,7 @@ export type BehaviourMotion =
       readonly traversal?: BehaviourTraversal;
     }
   | { readonly kind: "fly"; readonly to: Point; readonly speed: number }
+  | { readonly kind: "fly"; readonly to: "support"; readonly speed: number }
   // Target flight captures contact-centred aim on entry; bounds limit relative top-left positions.
   | { readonly kind: "fly"; readonly to: "target"; readonly bounds: Rect; readonly speed: number }
   // Capture entry Y; track target-centred X with bounded velocity lead. Distances use tiles.
