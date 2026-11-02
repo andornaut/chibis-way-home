@@ -1,10 +1,33 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { ALL_CHUNKS } from "./chunks";
-import { assertChunkWalkCoverage, chunkWalkPartitions } from "./chunkWalkPartitions";
+import {
+  assertChunkWalkCoverage,
+  CHUNK_WALK_PARTITIONS,
+  chunkWalkPartitions,
+} from "./chunkWalkPartitions";
 import { FILLED_CHUNK_SLOTS } from "./requiredRoutes";
 
 describe("chunk walk partitions", () => {
+  it("registers every partition exactly once through the actual test entrypoints", () => {
+    const partitions = chunkWalkPartitions(ALL_CHUNKS);
+    const registered = Array.from({ length: CHUNK_WALK_PARTITIONS }, (_, index) => {
+      const suffix = index === 0 ? "" : `.${index}`;
+      const source = readFileSync(
+        new URL(`../sim/chunkWalk${suffix}.test.ts`, import.meta.url),
+        "utf8",
+      );
+      const calls = [...source.matchAll(/registerChunkWalkPartition\((\d+)\);/g)];
+      expect(calls).toHaveLength(1);
+      const partition = partitions[Number(calls[0]![1])];
+      expect(partition).toBeDefined();
+      return partition!;
+    });
+    assertChunkWalkCoverage(ALL_CHUNKS, registered);
+  });
+
   it("assigns every catalogue and filled-slot profile to exactly one file", () => {
     const partitions = chunkWalkPartitions(ALL_CHUNKS);
     const names = partitions.flat().map(([name]) => name);
