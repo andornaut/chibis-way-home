@@ -1,6 +1,7 @@
 import type { Point, TouchTuning } from "../data/types";
 import { pressedArea } from "../layout/hitAreas";
 import { TOUCH_PRESS_AREAS, type TouchControl } from "../layout/touchControls";
+import { MOUSE_KEYS } from "./mouseMovement";
 
 // What the player is asking for, from the keyboard and the touch controls together.
 export interface Intent {
@@ -9,12 +10,12 @@ export interface Intent {
   readonly use: boolean;
 }
 
-const LEFT_KEYS = ["ArrowLeft", "KeyA"];
-const RIGHT_KEYS = ["ArrowRight", "KeyD"];
+const LEFT_KEYS = ["ArrowLeft", "KeyA", MOUSE_KEYS.left];
+const RIGHT_KEYS = ["ArrowRight", "KeyD", MOUSE_KEYS.right];
 const JUMP_KEYS = ["ArrowUp", "KeyW", "Space"];
-const USE_KEYS = ["KeyE"];
+const USE_KEYS = ["Enter", "KeyE", "KeyF"];
 
-// The keys held, by KeyboardEvent.code. Left and right together cancel.
+// KeyboardEvent codes and eligible mouse-button controls held. Left and right together cancel.
 export function keyIntent(held: ReadonlySet<string>): Intent {
   const left = LEFT_KEYS.some((key) => held.has(key));
   const right = RIGHT_KEYS.some((key) => held.has(key));

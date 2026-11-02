@@ -54,6 +54,7 @@ import {
   touchIntent,
   touchRoleAt,
 } from "../input/intent";
+import { isMouseMovementKey, listenMouseMovement } from "../input/mouseMovement";
 import { PAUSE_BUTTON } from "../layout/pauseCard";
 import { bottomShift, shifted, topShift } from "../layout/playView";
 import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
@@ -553,6 +554,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.scheduledBarks = undefined;
     });
     this.watchKeys();
+    this.watchMouse();
     this.watchTouches();
     this.events.on("pause", () => {
       void flushStats();
@@ -1765,6 +1767,53 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.cameras.main.setScroll(scroll.x, scroll.y);
   }
 
+  private watchMouse(): void {
+    const canvas = this.game.canvas;
+    const stopListening = listenMouseMovement(
+      (event) => {
+        if (
+          event.target !== canvas ||
+          onPageControl(event.target) ||
+          !modalInput(this).accepts() ||
+          !this.scene.isActive() ||
+          this.playCovered()
+        ) {
+          return false;
+        }
+        const point = pageToGame(
+          FRAME_TURN.turn(),
+          canvas.getBoundingClientRect(),
+          this.scale.gameSize,
+          { x: event.clientX, y: event.clientY },
+        );
+        const top = shifted(topShift(this.scale.gameSize), point, -1);
+        if (
+          containsPoint(PAUSE_BUTTON.hit, top.x, top.y) ||
+          (this.skillState()?.shown &&
+            eligibleSkills(developmentSkillOverrides(), savedSkills()).some((key) =>
+              containsPoint(
+                { ...SKILL_HUD[key], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
+                top.x,
+                top.y,
+              ),
+            ))
+        ) {
+          return false;
+        }
+        const role = touchRoleAt(shifted(bottomShift(this.scale.gameSize), point, -1));
+        return role === "move" || !this.controls.get(role)?.visible;
+      },
+      window,
+      this.heldKeys,
+    );
+    const suppressMenu = (event: Event) => event.preventDefault();
+    canvas.addEventListener("contextmenu", suppressMenu);
+    this.events.once("shutdown", () => {
+      stopListening();
+      canvas.removeEventListener("contextmenu", suppressMenu);
+    });
+  }
+
   private watchKeys(): void {
     modalInput(this).subscribe(() => {
       this.dashWind?.clear();
@@ -1788,6 +1837,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     keyboard.on("keydown", (event: KeyboardEvent) => {
       if (
         modalInput(this).accepts(event) &&
+        !isMouseMovementKey(event.code) &&
         !event.repeat &&
         !this.playCovered() &&
         this.scene.isActive()
@@ -1795,7 +1845,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.heldKeys.add(event.code);
       }
     });
-    keyboard.on("keyup", (event: KeyboardEvent) => this.heldKeys.delete(event.code));
+    keyboard.on("keyup", (event: KeyboardEvent) => {
+      if (!isMouseMovementKey(event.code)) {
+        this.heldKeys.delete(event.code);
+      }
+    });
     // A key released while the page is hidden never sends keyup.
     this.game.events.on("blur", () => this.heldKeys.clear());
   }

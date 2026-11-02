@@ -27,6 +27,13 @@ describe("keyIntent", () => {
     [["ArrowUp"], { ...NONE, jump: true }],
     [["KeyW"], { ...NONE, jump: true }],
     [["KeyE"], { ...NONE, use: true }],
+    [["KeyF"], { ...NONE, use: true }],
+    [["Enter"], { ...NONE, use: true }],
+    [["MouseLeft"], { ...NONE, move: -1 }],
+    [["MouseRight"], { ...NONE, move: 1 }],
+    [["MouseLeft", "MouseRight"], NONE],
+    [["KeyA", "MouseRight"], NONE],
+    [["KeyD", "MouseLeft"], NONE],
     [["ArrowRight", "Space"], { ...NONE, jump: true, move: 1 }],
   ])("maps %j", (keys, intent) => {
     expect(keyIntent(new Set(keys))).toEqual(intent);

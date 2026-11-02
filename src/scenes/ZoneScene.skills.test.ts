@@ -8,7 +8,7 @@ import { SCREEN } from "../data/screen";
 import { SKILLS } from "../data/skills";
 import { TOUCH } from "../data/touch";
 import type { SkillId } from "../data/types";
-import { type HeldTouch, touchIntent } from "../input/intent";
+import { type HeldTouch, keyIntent, touchIntent } from "../input/intent";
 import { PAUSE_BUTTON } from "../layout/pauseCard";
 import { bottomShift, shifted, topShift } from "../layout/playView";
 import { SKILL_HUD } from "../layout/skillHud";
@@ -97,7 +97,7 @@ function touchFixture() {
   vi.stubGlobal("window", host);
   const size = { height: SCREEN.height + 120, width: SCREEN.width + 120 };
   const bounds = { height: size.height / 2, width: size.width / 2, x: 100, y: 50 };
-  const canvas = { getBoundingClientRect: () => bounds };
+  const canvas = Object.assign(new EventTarget(), { getBoundingClientRect: () => bounds });
   const sprite = () => ({
     anims: {},
     frame: { height: 1, width: 1 },
@@ -131,7 +131,11 @@ function touchFixture() {
     skillState: () => ({ shown: state.hudShown }),
   }) as unknown as {
     buttonTouches: Set<number>;
+    controls: Map<string, { visible: boolean }>;
+    heldKeys: Set<string>;
     heldTouches: Map<number, HeldTouch>;
+    clearControls(): void;
+    watchMouse(): void;
     watchTouches(): void;
     drawMoveHint(touches: readonly HeldTouch[]): void;
     showTouchControls(settings: { actionButtons: boolean; moveControls: boolean }): void;
@@ -160,8 +164,84 @@ function touchFixture() {
     scene.drawMoveHint([...scene.heldTouches.values()]);
     return ring.visible;
   };
-  return { canvas, draw, events, knob, ring, scene, send, size, state };
+  const mouse = (
+    type: string,
+    button: number,
+    buttons: number,
+    point: { x: number; y: number },
+    target: unknown = canvas,
+  ) => {
+    const event = new Event(type);
+    Object.defineProperties(event, {
+      button: { value: button },
+      buttons: { value: buttons },
+      clientX: { value: bounds.x + point.x / 2 },
+      clientY: { value: bounds.y + point.y / 2 },
+      target: { value: target },
+    });
+    host.dispatchEvent(event);
+  };
+  return { canvas, draw, events, host, knob, mouse, ring, scene, send, size, state };
 }
+
+it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])(
+  "keeps mouse presses on shown %s out of movement through drag and release",
+  (control) => {
+    const f = touchFixture();
+    f.scene.controls.set("use", { visible: true });
+    f.scene.controls.set("jump", { visible: true });
+    f.scene.watchMouse();
+    const point =
+      control === "use" || control === "jump"
+        ? shifted(bottomShift(f.size), TOUCH_CONTROLS[control].centre)
+        : control === "pause"
+          ? shifted(topShift(f.size), PAUSE_BUTTON.at)
+          : shifted(topShift(f.size), SKILL_HUD[control as SkillId] ?? { x: 100, y: 100 });
+    const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
+    f.mouse("mousedown", 0, 1, point, target);
+    f.mouse("mousemove", 0, 1, { x: 250, y: 180 });
+    expect(keyIntent(f.scene.heldKeys).move).toBe(0);
+    expect(f.scene.heldTouches.size).toBe(0);
+    f.mouse("mouseup", 0, 0, { x: 250, y: 180 });
+    f.events.emit("shutdown");
+  },
+);
+
+it("clears actual mouse holds without reviving them and preserves a separate touch finger", () => {
+  const f = touchFixture();
+  f.scene.watchMouse();
+  const point = { x: 250, y: 180 };
+  f.send("pointerdown", 1, point);
+  f.send("pointermove", 1, { ...point, x: point.x + TOUCH.moveDeadZone + 1 });
+  f.mouse("mousedown", 0, 1, point);
+  expect(keyIntent(f.scene.heldKeys).move).toBe(-1);
+  expect(touchIntent(TOUCH, [...f.scene.heldTouches.values()]).move).toBe(1);
+  expect(f.draw()).toBe(true);
+  f.mouse("mouseup", 0, 0, point, { closest: () => ({}) });
+  expect(keyIntent(f.scene.heldKeys).move).toBe(0);
+  expect(f.scene.heldTouches.has(1)).toBe(true);
+  f.mouse("mousedown", 2, 2, point);
+  f.scene.clearControls();
+  f.mouse("mousemove", 0, 2, point);
+  expect(keyIntent(f.scene.heldKeys).move).toBe(0);
+  f.events.emit("shutdown");
+});
+
+it("suppresses the context menu only on the play canvas while listening", () => {
+  const f = touchFixture();
+  f.scene.watchMouse();
+  const menu = () => new Event("contextmenu", { cancelable: true });
+  const canvasMenu = menu();
+  f.canvas.dispatchEvent(canvasMenu);
+  expect(canvasMenu.defaultPrevented).toBe(true);
+  const pageMenu = menu();
+  f.host.dispatchEvent(pageMenu);
+  expect(pageMenu.defaultPrevented).toBe(false);
+  f.events.emit("shutdown");
+  const after = menu();
+  f.canvas.dispatchEvent(after);
+  expect(after.defaultPrevented).toBe(false);
+});
 it.each([
   ...SKILL_IDS.map((skill) => ({ control: skill, role: undefined })),
   { control: "pause", role: undefined },
