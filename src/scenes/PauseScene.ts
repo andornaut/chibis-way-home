@@ -14,7 +14,7 @@ import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
 import { type CardAction, cardBackAction, cardKeyAction, cardTurnAction } from "../pause/cardInput";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
-import { startsAirJump, startsDash } from "../rules/bird";
+import { EDGE } from "../rules/bird";
 import { isSkillId, SKILL_IDS, skillEnabled } from "../rules/skills";
 import { activeSkill, savedSkills, selectActiveSkill } from "../save";
 import { setTouchSettingShown, type TouchSetting, touchSettings } from "../settings/touchControls";
@@ -335,12 +335,18 @@ export class PauseScene extends Scene implements SettingsOpener {
     if (state === undefined) {
       return false;
     }
-    const input = { dashPressed: true, jumpHeld: true, move: 0 } as const;
-    return skill === "dash"
-      ? startsDash(state.tuning, input, state.bird)
-      : skill === "doubleJump"
-        ? startsAirJump(state.tuning, input, state.bird)
-        : true;
+    if (skill === "dash") {
+      const dash = state.bird.dash;
+      return (
+        state.tuning.dash !== undefined &&
+        (dash?.remainingSeconds ?? 0) <= EDGE &&
+        (dash?.cooldownRemainingSeconds ?? 0) <= EDGE &&
+        !dash?.airUsed
+      );
+    }
+    return skill === "doubleJump"
+      ? state.tuning.doubleJump === true && !state.bird.airJumpUsed
+      : true;
   }
 
   private skillHudVisible(): boolean {
@@ -368,7 +374,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.hud.forEach((icon, skill) => {
       icon.place(shifted(topShift(this.scale.gameSize), SKILL_HUD[skill]));
       icon.visible(this.skillHudVisible() && enabled.includes(skill));
-      icon.ready(this.skillReady(skill));
+      icon.ready(skill === selected && this.skillReady(skill));
       icon.selected(skill === selected);
     });
   }

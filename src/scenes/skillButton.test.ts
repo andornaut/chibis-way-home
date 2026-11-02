@@ -1,11 +1,13 @@
+import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
 vi.mock("./cardParts", () => ({ paletteColour: () => 0 }));
 
+import { SKILL_ART } from "../layout/skillHud";
 import { drawSkillButton } from "./skillButton";
 
-it("retains the selected bar while its glyph is muted, without tinting the disc", () => {
+it("shows readiness independently of selection and retains the selected bar while muted", () => {
   const nodes: {
     visible: boolean;
     x: number;
@@ -46,11 +48,19 @@ it("retains the selected bar while its glyph is muted, without tinting the disc"
   } as unknown as Scene;
   const icon = drawSkillButton(scene, { x: 0, y: 0 }, "dash");
   const disc = nodes[0]!,
+    glyph = nodes[2]!,
     bar = nodes[4]!;
   expect([bar.x, bar.y, bar.width, bar.height]).toEqual([22, 34, 5, 2]);
   expect(bar.visible).toBe(false);
+  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "muted"));
+  icon.ready(true);
+  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "ready"));
+  expect(bar.visible).toBe(false);
   icon.selected(true);
+  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "ready"));
+  expect(bar.visible).toBe(true);
   icon.ready(false);
+  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "muted"));
   expect(bar.visible).toBe(true);
   expect(disc.setTint).not.toHaveBeenCalled();
   icon.visible(false);
@@ -58,5 +68,7 @@ it("retains the selected bar while its glyph is muted, without tinting the disc"
   icon.visible(true);
   expect(bar.visible).toBe(true);
   icon.selected(false);
+  icon.ready(true);
+  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "ready"));
   expect(bar.visible).toBe(false);
 });

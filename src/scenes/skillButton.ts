@@ -46,6 +46,13 @@ export function drawSkillButton(scene: Scene, at: Point, skill: SkillId) {
   let selected = false;
   let shown = true;
   let state: boolean | undefined;
+  const drawGlyph = (ready: boolean) => {
+    if (ready !== state) {
+      glyph.play(animationKey(SKILL_ART[skill], ready ? "ready" : "muted"));
+      state = ready;
+    }
+  };
+  drawGlyph(false);
   const objects: GameObjects.GameObject[] = [disc, face, glyph, outline, bar];
   return {
     objects,
@@ -60,11 +67,8 @@ export function drawSkillButton(scene: Scene, at: Point, skill: SkillId) {
       );
       bar.setPosition(position.disc.x + marker.bar.x, position.disc.y + marker.bar.y);
     },
-    ready(ready: boolean) {
-      if (ready !== state) {
-        glyph.play(animationKey(SKILL_ART[skill], ready ? "ready" : "muted"));
-        state = ready;
-      }
+    ready(value: boolean) {
+      drawGlyph(value);
     },
     selected(value: boolean) {
       selected = value;

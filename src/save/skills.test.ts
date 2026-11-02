@@ -92,3 +92,31 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
   expect(save.savedProgress().activeSkill).toBeNull();
   expect(write).not.toHaveBeenCalled();
 });
+
+it("restores every permanent grant and the sole selection after a fresh page module loads", async () => {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  const beforeExit = await import("./index");
+  await beforeExit.loadProgress();
+  for (const skill of SKILL_IDS) {
+    beforeExit.grantSkill(skill);
+  }
+  beforeExit.selectActiveSkill("speedy");
+  beforeExit.beginStageRun(ZONE_MAP.start);
+  beforeExit.saveStand(ZONE_MAP.start);
+  await beforeExit.loadProgress();
+  vi.resetModules();
+  const afterContinue = await import("./index");
+  await afterContinue.loadProgress();
+  expect(afterContinue.savedSkills()).toEqual(SKILL_IDS);
+  expect(afterContinue.activeSkill()).toBe("speedy");
+  expect(afterContinue.savedMap().stand).toBe(ZONE_MAP.start);
+  for (const skill of SKILL_IDS) {
+    expect(afterContinue.grantSkill(skill)).toBe(false);
+  }
+  expect(afterContinue.selectActiveSkill("dash")).toBe(true);
+  expect(afterContinue.savedSkills()).toEqual(SKILL_IDS);
+});

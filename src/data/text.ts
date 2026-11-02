@@ -229,8 +229,7 @@ export const TEXT: GameText = {
       title: "Double jump",
     },
     speedy: {
-      description:
-        "Move faster on the ground and in the air. Dash speed and jump height stay the same.",
+      description: "Move faster on the ground and in the air.",
       title: "Speedy",
     },
   },

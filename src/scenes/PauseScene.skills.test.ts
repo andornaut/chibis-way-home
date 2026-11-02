@@ -2,14 +2,18 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const selection = vi.hoisted(() => ({ active: "dash", select: vi.fn() }));
+const selection = vi.hoisted(() => ({
+  active: "dash",
+  owned: ["dash", "speedy"],
+  select: vi.fn(),
+}));
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), close: vi.fn(), open: vi.fn() }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("../pwa", () => ({ coverZone: vi.fn(), startWakeLock: vi.fn(), stopWakeLock: vi.fn() }));
 vi.mock("../save", () => ({
   activeSkill: () => selection.active,
-  savedSkills: () => ["dash", "speedy"],
+  savedSkills: () => selection.owned,
   selectActiveSkill: selection.select,
 }));
 vi.mock("./modalInput", () => ({
@@ -21,14 +25,20 @@ vi.mock("./modalInput", () => ({
   ) => scene.input.on(event, listener),
 }));
 
+import { BIRD } from "../data/bird";
+import { SCREEN } from "../data/screen";
 import { SKILL_GESTURE } from "../data/skills";
 import type { SkillId } from "../data/types";
 import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
+import { type BirdState, startBird } from "../rules/bird";
+import { SKILL_IDS } from "../rules/skills";
 import { PauseScene } from "./PauseScene";
 import type { SkillDetailData } from "./SkillDetailScene";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  selection.active = "dash";
+  selection.owned = ["dash", "speedy"];
   gate.accepts.mockReturnValue(true);
 });
 afterEach(() => vi.restoreAllMocks());
@@ -199,4 +209,98 @@ it("opens paused HUD details without selecting and covers their targets against 
   gate.accepts.mockReturnValue(true);
   scene.state = "settings";
   expect(scene.skillHudVisible()).toBe(false);
+});
+
+function readiness(bird: BirdState | undefined) {
+  return Object.assign(new PauseScene(), {
+    scene: {
+      get: () => ({ skillState: () => (bird === undefined ? undefined : { bird, tuning: BIRD }) }),
+    },
+  }) as unknown as {
+    skillReady(skill: SkillId): boolean;
+  };
+}
+it.each([
+  { grounded: true, jumpHeld: false, name: "grounded" },
+  { grounded: false, jumpHeld: true, name: "holding Jump" },
+  { grounded: false, jumpHeld: false, name: "inside coyote time" },
+])("keeps recharged Double jump ready while $name", ({ grounded, jumpHeld }) => {
+  const bird = {
+    ...startBird(BIRD, { x: 0, y: 0 }),
+    coyoteLeft: BIRD.coyoteTime,
+    grounded,
+    jumpHeld,
+  };
+  expect(readiness(bird).skillReady("doubleJump")).toBe(true);
+  expect(readiness({ ...bird, airJumpUsed: true }).skillReady("doubleJump")).toBe(false);
+});
+it("has no HUD readiness before the zone state exists", () => {
+  expect(readiness(undefined).skillReady("dash")).toBe(false);
+});
+it.each([
+  { airUsed: false, cooldownRemainingSeconds: 0, name: "active burst", remainingSeconds: 0.1 },
+  { airUsed: false, cooldownRemainingSeconds: 0.1, name: "cooldown", remainingSeconds: 0 },
+  { airUsed: true, cooldownRemainingSeconds: 0, name: "spent air charge", remainingSeconds: 0 },
+])(
+  "mutes equipped Dash during $name without changing passive Speedy",
+  ({ airUsed, cooldownRemainingSeconds, remainingSeconds }) => {
+    const bird = { ...startBird(BIRD, { x: 0, y: 0 }), grounded: false, jumpHeld: true };
+    expect(readiness(bird).skillReady("dash")).toBe(true);
+    const spent = {
+      ...bird,
+      dash: { ...bird.dash!, airUsed, cooldownRemainingSeconds, remainingSeconds },
+    };
+    expect(readiness(spent).skillReady("dash")).toBe(false);
+    expect(readiness(spent).skillReady("speedy")).toBe(true);
+  },
+);
+it("restores every owned HUD icon after returning home and continuing with one selected skill", () => {
+  selection.owned = [...SKILL_IDS];
+  let playing = true;
+  const bird = startBird(BIRD, { x: 0, y: 0 });
+  const zone = {
+    playCovered: () => false,
+    skillState: () => ({ bird, shown: true, tuning: BIRD }),
+  };
+  const icons = new Map(
+    selection.owned.map((skill) => [
+      skill,
+      { place: vi.fn(), ready: vi.fn(), selected: vi.fn(), visible: vi.fn() },
+    ]),
+  );
+  const scene = Object.assign(new PauseScene(), {
+    dims: new Map(),
+    hud: icons,
+    input: {},
+    scale: { gameSize: SCREEN },
+    scene: {
+      get: () => zone,
+      isActive: () => playing,
+      launch: vi.fn(),
+      stop: () => {
+        playing = false;
+      },
+    },
+    showCard: vi.fn(),
+    state: "closed",
+  }) as unknown as {
+    returnHome(): void;
+    showSkillHud(): void;
+  };
+  const check = () => {
+    scene.showSkillHud();
+    for (const [skill, icon] of icons) {
+      expect(icon.visible).toHaveBeenLastCalledWith(playing);
+      expect(icon.selected).toHaveBeenLastCalledWith(skill === selection.active);
+      expect(icon.ready).toHaveBeenLastCalledWith(skill === selection.active);
+    }
+  };
+  check();
+  scene.returnHome();
+  check();
+  playing = true;
+  check();
+  selection.active = "speedy";
+  check();
+  expect(selection.owned).toEqual(SKILL_IDS);
 });
