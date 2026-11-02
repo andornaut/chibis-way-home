@@ -12,7 +12,10 @@ export function frameDeathCamera(
   bird: Rect,
 ): () => void {
   if (
-    ![tuning.pixelsPerSecond, tuning.minSeconds, tuning.maxSeconds].every(Number.isFinite) ||
+    ![tuning.bottomInset, tuning.pixelsPerSecond, tuning.minSeconds, tuning.maxSeconds].every(
+      Number.isFinite,
+    ) ||
+    tuning.bottomInset < 0 ||
     tuning.pixelsPerSecond <= 0 ||
     tuning.minSeconds < 0 ||
     tuning.maxSeconds <= 0 ||
@@ -23,7 +26,7 @@ export function frameDeathCamera(
   const camera = scene.cameras.main;
   const before = { scrollX: camera.scrollX, scrollY: camera.scrollY, useBounds: camera.useBounds };
   const x = bird.x - (SCREEN.width - bird.width) / 2;
-  const y = bird.y - (SCREEN.height - bird.height);
+  const y = bird.y - (SCREEN.height - bird.height) + tuning.bottomInset;
   const distance = Math.hypot(x - before.scrollX, y - before.scrollY);
   let restored = false;
   let framed = false;

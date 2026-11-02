@@ -6,10 +6,11 @@ import { easeProgress } from "@andornaut/game-kit/motion";
 import type { Cameras, Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
+import { DEATH } from "../data/death";
 import { SCREEN } from "../data/screen";
 import { frameDeathCamera } from "./deathCamera";
 
-const tuning = { maxSeconds: 3, minSeconds: 1, pixelsPerSecond: 100 };
+const tuning = { bottomInset: 0, maxSeconds: 3, minSeconds: 1, pixelsPerSecond: 100 };
 type PanCallback = (camera: unknown, progress: number) => void;
 
 function fixture() {
@@ -65,6 +66,36 @@ describe("death presentation camera", () => {
     expect(camera.setScroll).toHaveBeenLastCalledWith(80, 100);
   });
 
+  it("leaves the requested logical context below the full sprite without delaying pan start", () => {
+    const { camera, scene } = fixture();
+    const done = vi.fn();
+    const inset = 24;
+    const bird = { height: 42, width: 48, x: 616, y: 418 };
+    frameDeathCamera({ ...tuning, bottomInset: inset }, done, scene, bird);
+    expect(camera.pan).toHaveBeenCalledOnce();
+    const [x, y] = camera.pan.mock.calls[0]!;
+    expect(bird.x - (x - camera.width / 2) + bird.width / 2).toBe(SCREEN.width / 2);
+    expect(bird.y - (y - camera.height / 2) + bird.height).toBe(SCREEN.height - inset);
+    expect(done).not.toHaveBeenCalled();
+  });
+
+  it.each([-1, Infinity, NaN])(
+    "rejects invalid bottom context %s before changing the camera",
+    (bottomInset) => {
+      const { camera, scene } = fixture();
+      expect(() =>
+        frameDeathCamera({ ...tuning, bottomInset }, vi.fn(), scene, {
+          height: 42,
+          width: 48,
+          x: 616,
+          y: 418,
+        }),
+      ).toThrow("Invalid death camera pan tuning");
+      expect(camera.pan).not.toHaveBeenCalled();
+      expect(camera.useBounds).toBe(true);
+    },
+  );
+
   it("reaches the requested scroll without an end snap using native pan with a different viewport and zoom", () => {
     const require = createRequire(import.meta.url);
     const phaser = dirname(require.resolve("phaser/package.json"));
@@ -83,7 +114,12 @@ describe("death presentation camera", () => {
     const events = new EventEmitter();
     const scene = { cameras: { main: camera }, events } as unknown as Scene;
     const done = vi.fn(() => [camera.scrollX, camera.scrollY]);
-    frameDeathCamera(tuning, done, scene, { height: 42, width: 48, x: 1216, y: 1018 });
+    frameDeathCamera({ ...tuning, bottomInset: DEATH.cameraPan.bottomInset }, done, scene, {
+      height: 42,
+      width: 48,
+      x: 1216,
+      y: 1018,
+    });
     expect([camera.scrollX, camera.scrollY]).toEqual([80, 100]);
     panEffect.update(0, panEffect.duration / 2);
     expect(camera.scrollX).toBeGreaterThan(80);
@@ -92,7 +128,7 @@ describe("death presentation camera", () => {
     panEffect.update(0, panEffect.duration / 2 - 1);
     const near = [camera.scrollX, camera.scrollY];
     panEffect.update(0, 1);
-    expect(done).toHaveReturnedWith([880, 700]);
+    expect(done).toHaveReturnedWith([880, 700 + DEATH.cameraPan.bottomInset]);
     expect(Math.hypot(camera.scrollX - near[0]!, camera.scrollY - near[1]!)).toBeLessThan(0.01);
   });
 

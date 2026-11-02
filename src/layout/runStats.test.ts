@@ -6,91 +6,100 @@ import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { ZONE_MAP } from "../data/map";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
-import { formatRunStats, formatWholeRunStats, formatZoneStats } from "../save/runSummary";
+import { formatRunStats } from "../save/runSummary";
 import { deathLabels } from "../view/death";
-import { runStatLabels, stageSummaryLayout, summaryTextOrigin } from "./runStats";
+import {
+  RUN_STAT_KEYS,
+  runStatLabels,
+  stageSummaryLayout,
+  statsTotalRows,
+  summaryTextOrigin,
+} from "./runStats";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
 const run = { attemptSeconds: 180, attempts: 12, bestSeconds: undefined, runSeconds: 1234 };
-const stageTemplates = { ...TEXT.stats, runTotal: STATS_SCOPE_TEXT.stageTotal };
-const zoneTemplates = { ...TEXT.stats, runTotal: STATS_SCOPE_TEXT.zoneTotal };
-const runWords = formatRunStats(stageTemplates, run);
-const metricLabels = { stage: runStatLabels(stageTemplates), zone: runStatLabels(zoneTemplates) };
-const wholeRun = formatWholeRunStats(STATS_SCOPE_TEXT.wholeRun, {
-  activeSeconds: 599999,
-  completed: 21,
-  deaths: 9999,
-  total: 21,
-});
+const values = formatRunStats(
+  { ...TEXT.stats, attempts: "{count}", best: "{time}", lastAttempt: "{time}" },
+  run,
+);
+const labels = runStatLabels(TEXT.stats);
+const words = {
+  aggregate: STATS_SCOPE_TEXT.aggregate,
+  stage: "Stage 2: Country lanes",
+  stats: RUN_STAT_KEYS.map((key) => ({ label: labels[key], value: values[key] })),
+  totals: statsTotalRows(
+    { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
+    { runSeconds: 599999, stageSeconds: run.runSeconds, zoneSeconds: 3400 },
+  ),
+};
+const bounds = { height: 164, width: 688, x: 16, y: 112 };
 
 describe("image-backed stage summaries", () => {
-  it("aligns full-size columns, page bounds and uncropped preview with the footer", () => {
-    const bounds = { height: 164, width: 688, x: 16, y: 112 };
-    const result = stageSummaryLayout(fonts, bounds, {
-      labels: metricLabels,
-      run: runWords,
-      stage: "Stage 2: Country lanes",
-      visit: formatZoneStats(zoneTemplates, { ...run, completed: 1, partial: true, total: 3 }),
-      wholeRun,
-      zone: "Countryside",
-    });
-    expect(result.zone!.panel).toEqual({ height: 144, width: 212, x: 16, y: 112 });
+  it("separates current-stage results and scoped totals around the uncropped preview", () => {
+    const result = stageSummaryLayout(fonts, bounds, words);
+    expect(result.stage.panel).toEqual({ height: 124, width: 212, x: 16, y: 112 });
     expect(result.image).toEqual({ height: 116, width: 232, x: 244, y: 128 });
-    expect(result.stage.panel).toEqual({ height: 144, width: 212, x: 492, y: 112 });
-    expect(result.wholeRun.rect).toEqual({ height: 16, width: 688, x: 16, y: 260 });
-    expect(result.wholeRun.rect.y + result.wholeRun.rect.height + 8).toBe(284);
-    expect(result.zone!.rows[1]!.label.text).toBe(metricLabels.zone.runTotal);
-    expect(result.stage.rows[1]!.label.text).toBe(metricLabels.stage.runTotal);
-    expect(result.zone!.title.x - result.zone!.panel.x).toBe(16);
-    expect(result.stage.title.x - result.stage.panel.x).toBe(16);
-    expect(result.zone!.rows.map(({ rect }) => rect.y)).toEqual(
-      result.stage.rows.map(({ rect }) => rect.y),
-    );
-    expect(result.stage.rows.map(({ text }) => text)).toEqual([
-      runWords.lastAttempt,
-      runWords.runTotal,
-      runWords.best,
-      runWords.attempts,
+    expect(result.aggregate.panel).toEqual({ height: 124, width: 212, x: 492, y: 112 });
+    expect(result.divider).toEqual({ height: 132, width: 2, x: 483, y: 112 });
+    expect(result.divider.x).toBeGreaterThan(result.image.x + result.image.width);
+    expect(result.divider.x + result.divider.width).toBeLessThan(result.aggregate.panel.x);
+    expect(result).not.toHaveProperty("wholeRun");
+    expect(result).not.toHaveProperty("zone");
+    expect(result.stage.rows.map(({ value }) => value.text)).toEqual([
+      values.attempts,
+      values.lastAttempt,
+      values.best,
     ]);
-    expect(new Set(result.stage.rows.map(({ value }) => value.rect.x)).size).toBe(1);
+    expect(result.aggregate.rows.map(({ value }) => value.text)).toEqual([
+      "20:34",
+      "56:40",
+      "9999:59",
+    ]);
+    expect(result.stage.title.x - result.stage.panel.x).toBe(16);
+    expect(result.aggregate.title.x - result.aggregate.panel.x).toBe(16);
+    expect(result.stage.rows.map(({ rect }) => rect.y)).toEqual(
+      result.aggregate.rows.map(({ rect }) => rect.y),
+    );
+    expect(
+      new Set([...result.stage.rows, ...result.aggregate.rows].map(({ value }) => value.rect.x))
+        .size,
+    ).toBe(2);
   });
-  it("fits every catalogued stage name and partial zone at unchanged font sizes", () => {
+  it("fits every catalogued stage name with full-size headings and footer clearance", () => {
     for (const destination of ZONE_MAP.destinations) {
       for (const stage of destination.stages) {
-        const labels = deathLabels(ZONE_MAP, TEXT.map, stage, stage);
-        const bounds = { height: 164, width: 688, x: 16, y: 112 };
+        const identity = deathLabels(ZONE_MAP, TEXT.map, stage, stage);
         const result = stageSummaryLayout(fonts, bounds, {
-          labels: metricLabels,
-          run: runWords,
+          ...words,
           stage: fillNames(TEXT.death.stage, {
-            name: labels.stageLabel,
-            number: labels.stageNumber,
+            name: identity.stageLabel,
+            number: identity.stageNumber,
           }),
-          visit: formatZoneStats(zoneTemplates, {
-            ...run,
-            completed: 1,
-            partial: true,
-            total: destination.stages.length,
-          }),
-          wholeRun,
-          zone: labels.zoneLabel,
         });
-        expect(result.image.x).toBeGreaterThanOrEqual(bounds.x);
         expect(result.image.width / result.image.height).toBe(2);
-        for (const block of [result.stage, result.zone!]) {
+        for (const block of [result.stage, result.aggregate]) {
           expect(block.title.x + block.title.width).toBeLessThanOrEqual(bounds.x + bounds.width);
           expect(block.rows.at(-1)!.rect.y + block.rows.at(-1)!.rect.height).toBeLessThanOrEqual(
             bounds.y + bounds.height,
           );
-          expect(block.rows[0]!.rect.y - block.title.y).toBeGreaterThanOrEqual(
-            block.title.height + 4,
-          );
+          expect(block.rows[0]!.rect.y - block.title.y).toBe(block.title.height + 4);
+          for (const row of block.rows) {
+            expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBe(8);
+          }
         }
       }
     }
   });
+  it("reports oversized metric values rather than shrinking or clipping their font", () => {
+    expect(() =>
+      stageSummaryLayout(fonts, bounds, {
+        ...words,
+        totals: words.totals.map((row) => ({ ...row, value: "9".repeat(20) })),
+      }),
+    ).toThrow("Stage summary metric exceeds its column");
+  });
   it("anchors visible text ink to the left edge rather than centring it inside the slot", () => {
-    const text = runWords.best;
+    const text = values.best;
     const rect = { height: 16, width: 300, x: 40, y: 70 };
     const origin = summaryTextOrigin(fonts.body, rect, text);
     const left = Math.min(
@@ -98,4 +107,14 @@ describe("image-backed stage summaries", () => {
     );
     expect(origin.x + left).toBe(rect.x);
   });
+});
+
+it("formats each total from its own read-only active-time snapshot", () => {
+  const totals = { runSeconds: 610.8, stageSeconds: 130.9, zoneSeconds: 290.2 };
+  expect(statsTotalRows({ ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal }, totals)).toEqual([
+    { label: STATS_SCOPE_TEXT.stageTotal.replace("{time}", "").trimEnd(), value: "2:10" },
+    { label: STATS_SCOPE_TEXT.zoneTotal.replace("{time}", "").trimEnd(), value: "4:50" },
+    { label: TEXT.stats.runTotal.replace("{time}", "").trimEnd(), value: "10:10" },
+  ]);
+  expect(totals).toEqual({ runSeconds: 610.8, stageSeconds: 130.9, zoneSeconds: 290.2 });
 });

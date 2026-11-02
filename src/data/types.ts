@@ -31,6 +31,8 @@ export interface ZoneDeath {
 
 // Death-camera travel uses pixels/second, with its duration bounded in seconds.
 export interface DeathCameraPanTuning {
+  // Logical pixels below the full sprite frame in the final presentation.
+  readonly bottomInset: number;
   readonly maxSeconds: number;
   readonly minSeconds: number;
   readonly pixelsPerSecond: number;
@@ -57,6 +59,7 @@ export interface DeathText {
 }
 
 export interface StatsScopeText {
+  readonly aggregate: string;
   readonly stageTotal: string;
   readonly wholeRun: string;
   readonly zoneTotal: string;

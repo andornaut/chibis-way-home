@@ -8,7 +8,7 @@ import {
   contentCardLayout,
 } from "./contentCard";
 import { hitAround } from "./hitAreas";
-import { wrappedCardText } from "./runStats";
+import { STATS_DIVIDER_HEIGHT, type StatsMetricRow, wrappedCardText } from "./runStats";
 
 export const DEATH_PROGRESS_HEIGHT = 2;
 
@@ -18,7 +18,8 @@ export interface DeathCardWords {
   readonly retry: string;
   readonly stage: string;
   readonly statement?: string;
-  readonly stats: readonly { readonly label: string; readonly value: string }[];
+  readonly stats: readonly StatsMetricRow[];
+  readonly totals: readonly StatsMetricRow[];
   readonly title: string;
 }
 
@@ -47,9 +48,11 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
   );
   const valueWidth = Math.min(
     innerWidth / 2,
-    Math.max(...words.stats.map((row) => cardTextSize(fonts.body, row.value).width)),
+    Math.max(
+      ...[...words.stats, ...words.totals].map((row) => cardTextSize(fonts.body, row.value).width),
+    ),
   );
-  const stats = words.stats.map((row) => {
+  const stats = [...words.stats, ...words.totals].map((row) => {
     const label = wrappedCardText(
       fonts.body,
       innerWidth - valueWidth - CARD_CONTENT.gap,
@@ -79,7 +82,9 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     {
       height:
         stats.reduce((sum, row) => sum + Math.max(row.labelSize.height, row.valueSize.height), 0) +
-        (stats.length - 1) * CARD_CONTENT.rowGap,
+        (stats.length - 2) * CARD_CONTENT.rowGap +
+        STATS_DIVIDER_HEIGHT +
+        2 * CARD_CONTENT.gap,
       key: "stats",
       width: labelWidth + CARD_CONTENT.gap + measuredValueWidth,
     },
@@ -131,8 +136,42 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     throw new Error("Missing death card rows or actions");
   }
   let statY = statGroup.y;
+  let divider: Rect | undefined;
+  const placedStats = layout.stats.map((row, index) => {
+    if (index === words.stats.length) {
+      statY += CARD_CONTENT.gap - CARD_CONTENT.rowGap;
+      divider = {
+        height: STATS_DIVIDER_HEIGHT,
+        width: statGroup.width,
+        x: statGroup.x,
+        y: statY,
+      };
+      statY += STATS_DIVIDER_HEIGHT + CARD_CONTENT.gap;
+    }
+    const height = Math.max(row.labelSize.height, row.valueSize.height);
+    const rect = { height, width: statGroup.width, x: statGroup.x, y: statY };
+    const at = statY;
+    statY += height + CARD_CONTENT.rowGap;
+    return {
+      label: {
+        rect: { height, width: row.labelSize.width, x: statGroup.x, y: at },
+        text: row.label,
+      },
+      rect,
+      value: {
+        rect: {
+          height,
+          width: row.valueSize.width,
+          x: statGroup.x + statGroup.width - row.valueSize.width,
+          y: at,
+        },
+        text: row.value,
+      },
+    };
+  });
   return {
     card: layout.card,
+    divider,
     home,
     progress: positions[2],
     retry,
@@ -142,28 +181,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
       statement !== undefined && layout.groups.statement
         ? { rect: layout.groups.statement, text: statement }
         : undefined,
-    stats: layout.stats.map((row) => {
-      const height = Math.max(row.labelSize.height, row.valueSize.height);
-      const rect = { height, width: statGroup.width, x: statGroup.x, y: statY };
-      const at = statY;
-      statY += height + CARD_CONTENT.rowGap;
-      return {
-        label: {
-          rect: { height, width: row.labelSize.width, x: statGroup.x, y: at },
-          text: row.label,
-        },
-        rect,
-        value: {
-          rect: {
-            height,
-            width: row.valueSize.width,
-            x: statGroup.x + statGroup.width - row.valueSize.width,
-            y: at,
-          },
-          text: row.value,
-        },
-      };
-    }),
+    stats: placedStats,
     title: {
       ...positions[0],
       width: layout.card.width - 2 * layout.titleReserve,

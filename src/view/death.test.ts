@@ -20,7 +20,7 @@ import {
 const ground: Rect = { height: 120, width: SCREEN.width, x: 0, y: (SCREEN.height * 2) / 3 };
 const view: DeathView = {
   body: BIRD,
-  bounds: { ...SCREEN, x: 0, y: ground.y - SCREEN.height },
+  bounds: { ...SCREEN, x: 0, y: ground.y - SCREEN.height + DEATH.cameraPan.bottomInset },
   frame: BIRD_FRAME,
 };
 const death: ZoneDeath = {
@@ -50,6 +50,9 @@ describe("death presentation", () => {
       expect(Math.sign(pose.position.x - x)).toBe(Math.sign(DEATH.recoilVelocity.x * facing));
       expect(bounceRose).toBe(true);
       expect(pose.position.y + BIRD.height).toBe(ground.y);
+      expect(view.bounds.y + view.bounds.height - pose.position.y - BIRD.height).toBe(
+        DEATH.cameraPan.bottomInset,
+      );
       expect(stepDeathPresentation(DEATH, view, 100, pose)).toBe(pose);
     },
   );

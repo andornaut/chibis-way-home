@@ -975,6 +975,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         activeSeconds: activeStageTime(stage),
         runStats: { ...stageRunStats(stage) },
         stage,
+        totals: {
+          runSeconds: wholeRunStats().activeSeconds,
+          stageSeconds: stageRunStats(stage).runSeconds,
+          zoneSeconds: zoneVisitStats(this.story?.zone ?? "").runSeconds,
+        },
         ...deathLabels(ZONE_MAP, TEXT.map, String(this.zoneIndex + 1), stage),
         percent: this.progressFraction(),
       } satisfies DeathData);

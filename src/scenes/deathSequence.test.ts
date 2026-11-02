@@ -4,6 +4,7 @@ import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep"
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
+import { DEATH } from "../data/death";
 import { SCREEN } from "../data/screen";
 import type { ZoneDeath } from "../data/types";
 import { STEP_MS } from "../rules/step";
@@ -16,7 +17,9 @@ vi.mock("../pwa", () => ({ coverZone: vi.fn(), startWakeLock: vi.fn(), stopWakeL
 vi.mock("../save", () => ({
   activeStageTime: () => 0,
   flushStats: vi.fn(),
-  stageRunStats: () => ({}),
+  stageRunStats: () => ({ runSeconds: 13 }),
+  wholeRunStats: () => ({ activeSeconds: 47, deaths: 2 }),
+  zoneVisitStats: () => ({ runSeconds: 29 }),
 }));
 vi.mock("../settings/touchControls", () => ({ touchSettings: () => ({}) }));
 vi.mock("./contactFeedback", () => ({
@@ -122,6 +125,7 @@ describe("one death presentation per attempt", () => {
       const { actor, camera, completePan, scene, start } = fixture(reason);
       const world = JSON.stringify(scene.zone);
       scene.beginDeath();
+      expect(camera.pan).toHaveBeenCalledOnce();
       expect(scene.deathFraming).toBe(true);
       expect(scene.input.enabled).toBe(false);
       expect(actor.anims.stop).toHaveBeenCalledOnce();
@@ -146,12 +150,20 @@ describe("one death presentation per attempt", () => {
       }
       expect(scene.dying?.phase).toBe("seated");
       expect(actor.x - camera.scrollX + BIRD_FRAME.width / 2).toBe(SCREEN.width / 2);
-      expect(actor.y - camera.scrollY + BIRD_FRAME.height).toBe(SCREEN.height);
+      expect(actor.y - camera.scrollY + BIRD_FRAME.height).toBe(
+        SCREEN.height - DEATH.cameraPan.bottomInset,
+      );
       expect(JSON.stringify(scene.zone)).toBe(world);
       scene.updateDeath(20000);
       camera.pan.mock.calls[0]![5](camera, 1);
       expect(start).toHaveBeenCalledOnce();
       expect(scene.scene.launch).toHaveBeenCalledOnce();
+      expect(scene.scene.launch).toHaveBeenCalledWith(
+        "death",
+        expect.objectContaining({
+          totals: { runSeconds: 47, stageSeconds: 13, zoneSeconds: 29 },
+        }),
+      );
       expect(scene.scene.pause).toHaveBeenCalledOnce();
       expect([camera.scrollX, camera.scrollY]).toEqual(framed);
       expect(camera.setScroll).toHaveBeenCalledOnce();

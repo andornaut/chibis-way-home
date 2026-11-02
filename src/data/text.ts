@@ -243,8 +243,8 @@ export const TEXT: GameText = {
   },
   stats: {
     attempts: "Attempts: {count}",
-    best: "Best: {time}",
-    lastAttempt: "Last attempt: {time}",
+    best: "Best time: {time}",
+    lastAttempt: "Last time: {time}",
     notCleared: "Not cleared",
     partial: "Zone ({completed}/{total} stages)",
     runTotal: "Run total: {time}",
@@ -257,7 +257,8 @@ export const TEXT: GameText = {
 };
 
 export const STATS_SCOPE_TEXT: StatsScopeText = {
-  stageTotal: "Stage time: {time}",
+  aggregate: "Totals",
+  stageTotal: "Stage total: {time}",
   wholeRun: "Whole run: {time} · Deaths: {deaths} · Stages: {completed}/{total}",
-  zoneTotal: "Visit time: {time}",
+  zoneTotal: "Zone total: {time}",
 };

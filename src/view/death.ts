@@ -67,7 +67,7 @@ export function startDeathPresentation(
   facing: -1 | 1,
   death: ZoneDeath,
 ): DeathPresentation {
-  const bottom = view.bounds.y + view.bounds.height;
+  const bottom = view.bounds.y + view.bounds.height - tuning.cameraPan.bottomInset;
   const fallback = death.reason === "fall";
   return {
     elapsed: 0,

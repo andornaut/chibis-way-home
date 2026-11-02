@@ -2,12 +2,12 @@ import { fillNames } from "@andornaut/game-kit/lines";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { SCREEN } from "../data/screen";
-import { TEXT } from "../data/text";
+import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "../input/deathInput";
 import { deathCard } from "../layout/deathCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { RUN_STAT_KEYS } from "../layout/runStats";
+import { RUN_STAT_KEYS, statsTotalRows, type StatsTotalsSnapshot } from "../layout/runStats";
 import { formatRunStats } from "../save/runSummary";
 import type { RunStatsSummary } from "../save/stats";
 import { type DeathSummary, deathSummary } from "../view/death";
@@ -32,6 +32,7 @@ import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DeathData extends DeathSummary {
+  readonly totals: StatsTotalsSnapshot;
   readonly runStats: RunStatsSummary;
   readonly stage: string;
 }
@@ -93,6 +94,10 @@ export class DeathScene extends Scene {
           label: fillNames(TEXT.stats[key], { count: "", time: "" }).trimEnd(),
           value: values[key],
         })),
+        totals: statsTotalRows(
+          { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
+          this.summary.totals,
+        ),
       },
     );
     addSlice(this, "ui-settings-card", this.layout.card);
@@ -133,6 +138,12 @@ export class DeathScene extends Scene {
         row.value.text,
         paletteColour(this, "ink"),
       ).setRightAlign();
+    }
+    if (this.layout.divider) {
+      const divider = this.layout.divider;
+      this.add
+        .rectangle(divider.x, divider.y, divider.width, divider.height, paletteColour(this, "ink"))
+        .setOrigin(0);
     }
     this.buttons = {
       home: addTextButton(this, this.layout.home, TEXT.pause.home),

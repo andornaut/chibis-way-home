@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 
+import { fillNames } from "@andornaut/game-kit/lines";
 import { expect, it, vi } from "vitest";
 
 const face = { height: 48, width: 136, x: 364, y: 242 };
@@ -51,6 +52,8 @@ vi.mock("./playCamera", () => ({
   fitPlayCamera: vi.fn(),
   playPoint: (_scene: unknown, point: unknown) => point,
 }));
+import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
+import { deathCard } from "../layout/deathCard";
 import { statsStatement } from "../view/statsStatement";
 import { DeathScene } from "./DeathScene";
 
@@ -61,13 +64,24 @@ it("selects the retry statement once per entry and keeps retry an explicit actio
   scene.init({
     activeSeconds: 1,
     percent: 0.5,
-    runStats: { attemptSeconds: 1, attempts: 1, bestSeconds: undefined, runSeconds: 1 },
+    runStats: { attemptSeconds: 65, attempts: 2, bestSeconds: 45, runSeconds: 130 },
     stage: "street",
     stageLabel: "Streets",
     stageNumber: "1",
+    totals: { runSeconds: 610, stageSeconds: 130, zoneSeconds: 290 },
     zoneLabel: "City",
   });
   scene.create();
+  expect(vi.mocked(deathCard).mock.lastCall?.[2].stats).toEqual([
+    { label: fillNames(TEXT.stats.attempts, { count: "" }).trimEnd(), value: "2" },
+    { label: fillNames(TEXT.stats.lastAttempt, { time: "" }).trimEnd(), value: "1:05" },
+    { label: fillNames(TEXT.stats.best, { time: "" }).trimEnd(), value: "0:45" },
+  ]);
+  expect(vi.mocked(deathCard).mock.lastCall?.[2].totals).toEqual([
+    { label: fillNames(STATS_SCOPE_TEXT.stageTotal, { time: "" }).trimEnd(), value: "2:10" },
+    { label: fillNames(STATS_SCOPE_TEXT.zoneTotal, { time: "" }).trimEnd(), value: "4:50" },
+    { label: fillNames(TEXT.stats.runTotal, { time: "" }).trimEnd(), value: "10:10" },
+  ]);
   scene.events.emit("resume");
   scene.input.keyboard!.emit("keydown", {
     key: "Tab",

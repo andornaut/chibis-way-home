@@ -5,14 +5,15 @@ import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
-import { TEXT } from "../data/text";
-import { BIRD_FRAME } from "../view/bird";
+import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
+import { formatRunStats } from "../save/runSummary";
 import { deathLabels, deathSummary } from "../view/death";
 import { statsStatement } from "../view/statsStatement";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { CARD_CONTENT } from "./contentCard";
 import { deathCard } from "./deathCard";
+import { RUN_STAT_KEYS, runStatLabels, statsTotalRows } from "./runStats";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
 const view = { ...SCREEN, x: 0, y: 0 };
@@ -21,13 +22,27 @@ const words = {
   ...labels,
   progress: "Progress: 25%",
   stage: "Stage 1",
-  stats: [
-    { label: "Last attempt:", value: "1:05" },
-    { label: "Run total:", value: "2:10" },
-    { label: "Best:", value: "Not cleared" },
-    { label: "Attempts:", value: "2" },
-  ],
+  stats: RUN_STAT_KEYS.map((key) => ({
+    label: runStatLabels(TEXT.stats)[key],
+    value: formatRunStats(
+      { ...TEXT.stats, attempts: "{count}", best: "{time}", lastAttempt: "{time}" },
+      {
+        attemptSeconds: 65,
+        attempts: 2,
+        bestSeconds: 45,
+        runSeconds: 130,
+      },
+    )[key],
+  })),
   title: "City",
+  totals: statsTotalRows(
+    { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
+    {
+      runSeconds: 610,
+      stageSeconds: 130,
+      zoneSeconds: 290,
+    },
+  ),
 };
 
 describe("death card", () => {
@@ -42,8 +57,8 @@ describe("death card", () => {
     const left = result.stats[0]!.label.rect.x;
     const right = result.stats[0]!.value.rect.x + result.stats[0]!.value.rect.width;
     for (const [index, row] of result.stats.entries()) {
-      expect(row.label.text).toBe(words.stats[index]?.label);
-      expect(row.value.text).toBe(words.stats[index]?.value);
+      expect(row.label.text).toBe([...words.stats, ...words.totals][index]?.label);
+      expect(row.value.text).toBe([...words.stats, ...words.totals][index]?.value);
       expect(row.label.rect.x).toBe(left);
       expect(row.value.rect.x + row.value.rect.width).toBe(right);
       expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBeGreaterThanOrEqual(8);
@@ -61,12 +76,18 @@ describe("death card", () => {
         ...deathLabels(ZONE_MAP, TEXT.map, "1", stageId),
         percent: 0.5,
       });
-      const layout = deathCard(fonts, view, { ...labels, ...summary, stats: words.stats });
+      const layout = deathCard(fonts, view, {
+        ...labels,
+        ...summary,
+        stats: words.stats,
+        totals: words.totals,
+      });
       expect(layout.card.x + layout.card.width / 2).toBe(SCREEN.width / 2);
       expect(layout.card.y + layout.card.height / 2).toBe(SCREEN.height / 2);
-      expect(
-        layout.card.y + layout.card.height + CARD_CONTENT.gap + BIRD_FRAME.height,
-      ).toBeLessThanOrEqual(SCREEN.height);
+      expect(layout.card.y).toBeGreaterThanOrEqual(CARD_CONTENT.padding);
+      expect(layout.card.y + layout.card.height).toBeLessThanOrEqual(
+        SCREEN.height - CARD_CONTENT.padding,
+      );
       for (const name of ["title", "stage", "progress"] as const) {
         expect(
           Math.max(
@@ -95,7 +116,7 @@ describe("death card", () => {
   );
 });
 
-it("fits all six actual retry statements at full size while preserving seated-frame clearance", () => {
+it("fits all six actual retry statements and grouped totals within the centred safe viewport", () => {
   for (const zone of ZONE_MAP.destinations) {
     for (const stageId of zone.stages) {
       const statement = statsStatement("retry", stageId)!.text;
@@ -109,12 +130,22 @@ it("fits all six actual retry statements at full size while preserving seated-fr
         ...summary,
         statement,
         stats: words.stats,
+        totals: words.totals,
       });
       expect(result.card.x + result.card.width / 2).toBe(SCREEN.width / 2);
       expect(result.card.y + result.card.height / 2).toBe(SCREEN.height / 2);
-      expect(
-        result.card.y + result.card.height + CARD_CONTENT.gap + BIRD_FRAME.height,
-      ).toBeLessThanOrEqual(SCREEN.height);
+      expect(result.card.y).toBeGreaterThanOrEqual(CARD_CONTENT.padding);
+      expect(result.card.y + result.card.height).toBeLessThanOrEqual(
+        SCREEN.height - CARD_CONTENT.padding,
+      );
+      expect(result.card.height).toBe(306);
+      expect(result.card.y).toBe(27);
+      expect(result.divider!.y - result.stats[2]!.rect.y - result.stats[2]!.rect.height).toBe(
+        CARD_CONTENT.gap,
+      );
+      expect(result.stats[3]!.rect.y - result.divider!.y - result.divider!.height).toBe(
+        CARD_CONTENT.gap,
+      );
       expect(result.statement!.text).toBe(statement);
       expect(result.statement!.rect.height).toBe(CARD_CONTENT.lineHeight);
       expect(inkWidth(fonts.body, CARD_TEXT_SCALE, statement)).toBeLessThanOrEqual(

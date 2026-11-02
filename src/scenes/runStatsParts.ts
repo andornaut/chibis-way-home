@@ -6,13 +6,14 @@ import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import type { Rect } from "../data/types";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "../layout/cardFrame";
-import { runStatLabels, stageSummaryLayout, summaryTextOrigin } from "../layout/runStats";
 import {
-  formatRunStats,
-  formatWholeRunStats,
-  formatZoneStats,
-  type WholeRunDisplaySummary,
-} from "../save/runSummary";
+  RUN_STAT_KEYS,
+  runStatLabels,
+  stageSummaryLayout,
+  statsTotalRows,
+  summaryTextOrigin,
+} from "../layout/runStats";
+import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
 import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
 import { deathLabels } from "../view/death";
 import { ZONE_THEMES_KEY, zoneTheme, type ZoneThemes } from "../view/zoneTheme";
@@ -29,15 +30,23 @@ export function addStageSummary(
   },
 ) {
   const labels = deathLabels(ZONE_MAP, TEXT.map, data.stage, data.stage);
-  const stageTemplates = { ...TEXT.stats, runTotal: STATS_SCOPE_TEXT.stageTotal };
-  const zoneTemplates = { ...TEXT.stats, runTotal: STATS_SCOPE_TEXT.zoneTotal };
+  const metricLabels = runStatLabels(TEXT.stats);
+  const values = formatRunStats(
+    { ...TEXT.stats, attempts: "{count}", best: "{time}", lastAttempt: "{time}" },
+    data.runStats,
+  );
   const words = {
-    labels: { stage: runStatLabels(stageTemplates), zone: runStatLabels(zoneTemplates) },
-    run: formatRunStats(stageTemplates, data.runStats),
+    aggregate: STATS_SCOPE_TEXT.aggregate,
     stage: fillNames(TEXT.death.stage, { name: labels.stageLabel, number: labels.stageNumber }),
-    wholeRun: formatWholeRunStats(STATS_SCOPE_TEXT.wholeRun, data.wholeRun),
-    zone: labels.zoneLabel,
-    ...(data.zoneStats && { visit: formatZoneStats(zoneTemplates, data.zoneStats) }),
+    stats: RUN_STAT_KEYS.map((key) => ({ label: metricLabels[key], value: values[key] })),
+    totals: statsTotalRows(
+      { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
+      {
+        runSeconds: data.wholeRun.activeSeconds,
+        stageSeconds: data.runStats.runSeconds,
+        zoneSeconds: data.zoneStats.runSeconds,
+      },
+    ),
   };
   const fonts = cardFonts(scene);
   const layout = stageSummaryLayout(fonts, bounds, words);
@@ -61,36 +70,29 @@ export function addStageSummary(
     .image(layout.image.x, layout.image.y, key)
     .setOrigin(0)
     .setDisplaySize(layout.image.width, layout.image.height);
-  for (const [block, font] of [
-    [layout.stage, BODY_FONT],
-    [layout.zone, TITLE_FONT],
-  ] as const) {
-    if (!block) {
-      continue;
-    }
-    scene.add
-      .rectangle(
-        block.panel.x,
-        block.panel.y,
-        block.panel.width,
-        block.panel.height,
-        paletteColour(scene, "navy"),
-      )
-      .setOrigin(0);
+  for (const block of [layout.stage, layout.aggregate]) {
     const colour =
-      block === layout.zone
+      block === layout.stage
         ? zoneTheme(ZONE_MAP, scene.cache.json.get(ZONE_THEMES_KEY) as ZoneThemes, data.stage)
             .primary
         : "lgrey";
     scene.add
       .rectangle(block.panel.x, block.panel.y, block.panel.width, 2, paletteColour(scene, colour))
       .setOrigin(0);
-    drawText(font, block.title, block.text, "cream");
+    drawText(BODY_FONT, block.title, block.text, "cream");
     for (const row of block.rows) {
       drawText(BODY_FONT, row.label.rect, row.label.text, "lgrey");
       drawText(BODY_FONT, row.value.rect, row.value.text, "white");
     }
   }
-  drawText(BODY_FONT, layout.wholeRun.rect, layout.wholeRun.text, "white");
+  scene.add
+    .rectangle(
+      layout.divider.x,
+      layout.divider.y,
+      layout.divider.width,
+      layout.divider.height,
+      paletteColour(scene, "lgrey"),
+    )
+    .setOrigin(0);
   return layout;
 }
