@@ -50,6 +50,7 @@ import {
   type FlyLandingState,
   landingSupport,
   landingWorldAt,
+  proveFlyLanding,
   supportedLanding,
 } from "./flyLanding";
 import { hopLift } from "./motion";
@@ -1192,6 +1193,7 @@ export function stepBehaviour(
       supportWorld !== undefined &&
       supportedLanding(object, supportWorld, current) &&
       (node.motion.kind !== "wait" || next.landing !== undefined);
+    let landingTarget: Point | undefined;
     if (supportMotion) {
       const speed = node.motion.kind === "fly" ? node.motion.speed : next.landing?.speed;
       const support = supportWorld && landingSupport(object, supportWorld, current);
@@ -1204,10 +1206,20 @@ export function stepBehaviour(
         next = {
           ...next,
           landing: {
+            ...next.landing,
             speed,
+            status: supported ? "supported" : "pending",
             ...(support && { support }),
           },
         };
+      }
+      if (next.landing && !supported) {
+        const withoutSupport = { ...next.landing };
+        delete (withoutSupport as { support?: FlyLandingState["support"] }).support;
+        const proof =
+          supportWorld && proveFlyLanding(object, supportWorld, current, withoutSupport);
+        next = { ...next, landing: proof?.state ?? { ...withoutSupport, status: "pending" } };
+        landingTarget = proof?.points?.[0];
       }
       if (node.motion.kind === "wait" && (!supported || changed)) {
         next = { ...next, elapsed: 0 };
@@ -1277,12 +1289,14 @@ export function stepBehaviour(
     const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
     if (
       next.pendingEntry &&
+      !(supportMotion && next.landing?.status === "pending") &&
       !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
     ) {
+      const entered = enterState(tuning, object, bird, current, next.stateKey, next);
       next = enterAttack(
         plan,
         node,
-        enterState(tuning, object, bird, current, next.stateKey, next),
+        supportMotion ? { ...entered, elapsed: next.elapsed } : entered,
       );
       for (const action of node.onEnter ?? []) {
         actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
@@ -1305,6 +1319,7 @@ export function stepBehaviour(
       traversalStep !== undefined ||
       next.traversal?.preparation !== undefined ||
       settling ||
+      (node.motion.kind === "fly" && node.motion.to === "support" && !supported) ||
       (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
       (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded)
         ? undefined
@@ -1517,7 +1532,7 @@ export function stepBehaviour(
       const landing = node.motion.kind === "wait" || node.motion.to === "support";
       const speed = node.motion.kind === "fly" ? node.motion.speed : next.landing?.speed;
       const target = landing
-        ? supportWorld && flyLandingRoute(object, supportWorld, current)?.[0]
+        ? landingTarget
         : node.motion.kind === "fly" &&
             node.motion.to === "target-x" &&
             alignmentBlocked(tuning, object, world, bird, current, next)
@@ -1651,7 +1666,9 @@ export function stepBehaviour(
           ? supportedDwell
             ? next.elapsed + slice
             : 0
-          : next.elapsed + slice,
+          : supportMotion && next.landing?.status === "pending"
+            ? next.elapsed
+            : next.elapsed + slice,
       ...(object.contact && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
     };
     time = end > time ? end : seconds;

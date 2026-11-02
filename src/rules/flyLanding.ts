@@ -146,12 +146,84 @@ export function flyLandingPath(
   return landingRoute(target, object, world, at);
 }
 
+interface PendingLandingProof {
+  readonly at: Point;
+  readonly hazards: NonNullable<BehaviourWorld["hazards"]>;
+  readonly platforms: NonNullable<BehaviourWorld["platforms"]>;
+  readonly solids: readonly Rect[];
+}
+
 export interface FlyLandingState {
+  readonly pending?: PendingLandingProof;
+  readonly status: "moving" | "pending" | "supported";
   readonly speed: number;
   readonly support?: {
     readonly owner?: ObjectLayout;
     readonly rect: Rect;
     readonly localX: number;
+  };
+}
+
+function sameRect(a: Rect, b: Rect): boolean {
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+}
+
+// Failed proofs are reusable only while actual support and hazard geometry remains unchanged.
+export function proveFlyLanding(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  at: Point,
+  state: FlyLandingState,
+): { readonly points?: readonly Point[]; readonly state: FlyLandingState } {
+  if (supportedLanding(object, world, at)) {
+    return { state: { speed: state.speed, status: "supported" } };
+  }
+  const pending = state.pending;
+  const platforms = world.platforms ?? [];
+  const hazards = world.hazards ?? [];
+  const dynamicHazards = hazards.some(
+    ({ owner }) =>
+      owner !== object &&
+      (owner.orbit !== undefined ||
+        owner.behaviour !== undefined ||
+        owner.motion.algorithm !== "static" ||
+        owner.reaction.kind !== "none"),
+  );
+  if (
+    !dynamicHazards &&
+    pending &&
+    pending.at.x === at.x &&
+    pending.at.y === at.y &&
+    pending.solids === world.solids &&
+    pending.platforms.length === platforms.length &&
+    pending.hazards.length === hazards.length &&
+    pending.platforms.every(
+      (item, i) =>
+        item.owner === platforms[i]!.owner &&
+        item.collision === platforms[i]!.collision &&
+        sameRect(item.rect, platforms[i]!.rect),
+    ) &&
+    pending.hazards.every(
+      (item, i) => item.owner === hazards[i]!.owner && sameRect(item.rect, hazards[i]!.rect),
+    )
+  ) {
+    return { state };
+  }
+  const points = flyLandingRoute(object, world, at);
+  if (points) {
+    return { points, state: { speed: state.speed, status: "moving" } };
+  }
+  return {
+    state: {
+      pending: {
+        at,
+        hazards: hazards.map((item) => ({ ...item, rect: { ...item.rect } })),
+        platforms: platforms.map((item) => ({ ...item, rect: { ...item.rect } })),
+        solids: world.solids,
+      },
+      speed: state.speed,
+      status: "pending",
+    },
   };
 }
 

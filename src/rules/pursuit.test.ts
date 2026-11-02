@@ -776,6 +776,71 @@ describe("supported flight and dwell", () => {
       expect(result.state.attackCooldownRemainingSeconds).toBeUndefined();
     }
   });
+  it("holds failed landing without retry or attack entry until geometry changes", () => {
+    const base = landingPlan();
+    const object = actor({
+      ...base,
+      states: {
+        ...base.states,
+        land: {
+          ...base.states.land!,
+          onEnter: [
+            { height: 1, kind: "force-pulse", range: 1, seconds: 1, velocity: { x: 1, y: 0 } },
+          ],
+          transitions: [
+            ...base.states.land!.transitions,
+            { to: "retry", when: [{ kind: "elapsed", seconds: 2.4 }] },
+          ],
+        },
+        retry: {
+          animation: null,
+          attack: { id: "flight", phase: "committed" },
+          motion: { kind: "fly", speed: 100, to: { x: 0, y: 0 } },
+          transitions: [],
+        },
+      },
+    });
+    const at = { x: 100, y: 100 };
+    const initial: BehaviourState = {
+      ...startBehaviour(BIRD, object, bird(400)),
+      activeAttack: { id: "flight", phase: "committed" },
+      elapsed: 1,
+      stateKey: "land",
+    };
+    const missing = { solids: [] };
+    const pending = advance(object, bird(400), 3, at, initial, missing);
+    expect(pending.state.stateKey).toBe("land");
+    expect(pending.state.landing?.status).toBe("pending");
+    expect(pending.state.elapsed).toBe(1);
+    expect(pending.state.activeAttack).toEqual(initial.activeAttack);
+    expect(pending.state.attackCooldownRemainingSeconds).toBeUndefined();
+    expect(pending.actions).toEqual([]);
+    const unchanged = advance(object, bird(400), 3, pending.at, pending.state, missing);
+    expect(unchanged.state.landing?.pending).toBe(pending.state.landing?.pending);
+    expect(unchanged.state.elapsed).toBe(1);
+    expect(unchanged.at).toEqual(at);
+    const retry = advance(object, bird(400), 0.25, unchanged.at, unchanged.state);
+    expect(retry.state.landing?.status).toBe("moving");
+    expect(retry.state.stateKey).toBe("land");
+    expect(retry.at).toEqual({ x: 100, y: 125 });
+    expect(retry.state.elapsed).toBe(1.25);
+    expect(retry.actions).toHaveLength(1);
+    const available = advance(object, bird(400), 0.1, retry.at, retry.state);
+    expect(available.actions).toEqual([]);
+  });
+  it("does not reuse a pending proof across unknown future phases of a moving hazard", () => {
+    const object = actor(landingPlan());
+    const geometry = {
+      hazards: [{ owner: { ...object }, rect: { height: 10, width: 100, x: 80, y: 200 } }],
+      solids: [floor],
+    };
+    const first = advance(object, bird(400), 0.1, { x: 100, y: 100 }, undefined, geometry);
+    const second = advance(object, bird(400), 0.1, first.at, first.state, geometry);
+    expect(first.state.landing?.status).toBe("pending");
+    expect(second.state.landing?.status).toBe("pending");
+    expect(second.state.landing?.pending).not.toBe(first.state.landing?.pending);
+    expect(second.state.stateKey).toBe("land");
+  });
   it("carries supported dwell along actual mover chords and resumes landing after support loss", () => {
     const object = actor(landingPlan());
     const owner = { ...object, character: "perch" };
