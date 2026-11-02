@@ -491,11 +491,30 @@ function trialsFrom(
     const result = play(tuning, layout, step, surfaces, from, prefix.zone, attempt);
     return { ...result, steps: steps + result.steps };
   };
+  const launch = (attempt: Pick<Try, "hold" | "rise" | "target">): TrialResult => {
+    let takeoff = start;
+    let releasedSteps = 0;
+    if (start.bird.jumpHeld) {
+      const release = runWith(step, start);
+      const alive = release.step(STILL);
+      releasedSteps = release.steps;
+      if (!alive || !release.zone.bird.grounded) {
+        return {
+          entered: release.zone.area === start.area ? undefined : release.zone,
+          landed: undefined,
+          steps: releasedSteps,
+        };
+      }
+      takeoff = release.zone;
+    }
+    const result = play(tuning, layout, step, surfaces, from, takeoff, attempt);
+    return { ...result, steps: result.steps + releasedSteps };
+  };
   return {
     drop: (target) =>
       play(tuning, layout, step, surfaces, from, start, { hold: 0, rise: 0, target }),
     jump,
-    launch: (attempt) => play(tuning, layout, step, surfaces, from, start, attempt),
+    launch,
   };
 }
 
@@ -1297,10 +1316,17 @@ function walkSearch(
             trial = trialsFrom(tuning, layout, surfaces, from, start);
             trials.set(start, trial);
           }
-          const lower =
-            placed(target.surface, start, layout).y > placed(from.surface, start, layout).y;
+          const heightDifference =
+            placed(target.surface, start, layout).y - placed(from.surface, start, layout).y;
+          const lower = heightDifference > 0;
+          const higherGrounded =
+            heightDifference < 0 &&
+            start.bird.grounded &&
+            start.death === undefined &&
+            !start.turnedBack;
           const immediate =
-            lower && tries.find(({ hold, rise }) => hold === AIR_STEPS && rise === 0);
+            (lower || higherGrounded) &&
+            tries.find(({ hold, rise }) => hold === AIR_STEPS && rise === 0);
           if (immediate) {
             const launched = trial.launch(immediate);
             steps += launched.steps;
