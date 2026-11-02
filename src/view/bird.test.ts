@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
-import type { BirdState } from "../rules/bird";
+import { type BirdState, EDGE } from "../rules/bird";
 import { STEP_MS } from "../rules/step";
 import { birdFrameAt, type BirdPose, stepPose } from "./bird";
 
@@ -27,10 +27,62 @@ const WALKING: BirdState = { ...STILL, vx: 60 };
 const RISING: BirdState = { ...STILL, grounded: false, vy: -100 };
 const FALLING: BirdState = { ...STILL, grounded: false, vy: 50 };
 const AT_APEX: BirdState = { ...STILL, grounded: false };
+const DASHING: BirdState = {
+  ...WALKING,
+  dash: {
+    airUsed: false,
+    cooldownRemainingSeconds: 1,
+    direction: 1,
+    ordinaryVx: WALKING.vx,
+    remainingSeconds: 0.25,
+  },
+};
 
 const pose = (tag: BirdPose["tag"], ms = 0): BirdPose => ({ ms, tag });
 
 describe("stepPose", () => {
+  it.each([
+    ["ground movement", DASHING, pose("walk")],
+    ["rising", { ...DASHING, grounded: false, vy: -100 }, pose("jump")],
+    ["falling", { ...DASHING, grounded: false, vy: 50 }, pose("flutter")],
+    ["landing hold", DASHING, pose("land")],
+  ])("shows the active dash over %s", (_, after, from) => {
+    expect(stepPose(LAND_MS, STEP_MS, STILL, after, from)).toEqual(pose("dash"));
+  });
+
+  it("keeps the same dash pose clock while the burst remains active", () => {
+    expect(stepPose(LAND_MS, STEP_MS, DASHING, DASHING, pose("dash", 60))).toEqual(
+      pose("dash", 60 + STEP_MS),
+    );
+  });
+
+  it.each([
+    [
+      "expired on the ground",
+      { ...DASHING, dash: { ...DASHING.dash!, remainingSeconds: 0 } },
+      "walk",
+    ],
+    ["blocked to a stop", { ...STILL, dash: { ...DASHING.dash!, remainingSeconds: 0 } }, "idle"],
+    [
+      "at the activity boundary",
+      { ...DASHING, dash: { ...DASHING.dash!, remainingSeconds: EDGE } },
+      "walk",
+    ],
+    [
+      "expired while rising",
+      { ...RISING, dash: { ...DASHING.dash!, airUsed: true, remainingSeconds: 0 } },
+      "jump",
+    ],
+    [
+      "expired while falling",
+      { ...FALLING, dash: { ...DASHING.dash!, airUsed: true, remainingSeconds: 0 } },
+      "flutter",
+    ],
+    ["dash absent", WALKING, "walk"],
+  ] as const)("returns to locomotion with dash %s", (_, after, tag) => {
+    expect(stepPose(LAND_MS, STEP_MS, DASHING, after, pose("dash", 130))).toEqual(pose(tag));
+  });
+
   it.each([
     ["idles grounded and still", STILL, STILL, pose("idle", 100), pose("idle", 100 + STEP_MS)],
     ["walks grounded and moving", STILL, WALKING, pose("idle", 100), pose("walk")],

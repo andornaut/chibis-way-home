@@ -1,12 +1,12 @@
 import birdSheet from "../../public/art/sprites/bird.json";
 import type { BirdTuning, Point, Size } from "../data/types";
-import { birdFrameRect, type BirdState } from "../rules/bird";
+import { birdFrameRect, type BirdState, EDGE } from "../rules/bird";
 import { sheetFrameSize } from "./aseprite";
 
 // Her drawn frame's size, from art's bird sheet: every frame is this big.
 export const BIRD_FRAME: Size = sheetFrameSize(birdSheet);
 
-export type BirdTag = "flutter" | "idle" | "jump" | "land" | "walk";
+export type BirdTag = "dash" | "flutter" | "idle" | "jump" | "land" | "walk";
 
 // The tag she shows, and how long she has shown it as of this step.
 export interface BirdPose {
@@ -16,7 +16,8 @@ export interface BirdPose {
 
 export const startPose: BirdPose = { ms: 0, tag: "flutter" };
 
-// Her pose after one step of stepMs from before to after. Rising, she jumps; falling, she
+// Her pose after one step of stepMs from before to after. An active dash takes priority.
+// Rising, she jumps; falling, she
 // flutters; on the step she lands, land starts and plays for landMs; on the ground she walks
 // while moving and idles while still.
 export function stepPose(
@@ -28,7 +29,9 @@ export function stepPose(
 ): BirdPose {
   const ms = pose.ms + stepMs;
   let tag: BirdTag;
-  if (!after.grounded) {
+  if ((after.dash?.remainingSeconds ?? 0) > EDGE) {
+    tag = "dash";
+  } else if (!after.grounded) {
     tag = after.vy < 0 ? "jump" : "flutter";
   } else if (!before.grounded) {
     tag = "land";
