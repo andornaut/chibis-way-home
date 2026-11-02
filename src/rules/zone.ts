@@ -38,6 +38,7 @@ import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyCont
 import { collisionCandidates } from "./collisionIndex";
 import { deathSupport } from "./death";
 import { type ForcePulse, forcePulseVelocity } from "./force";
+import { hazardBoundsAt } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
@@ -514,13 +515,22 @@ export function stepZone(
     chunks: area.chunks,
     hazards: kinds.hazards.map((index) => {
       const object = area.objects[index]!;
-      const at = zone.objects[index] ?? object.origin;
+      const at = { ...(zone.objects[index] ?? object.origin) };
       const state = zone.behaviours[index];
+      const rect = object.contact
+        ? { ...spriteFrameOrigin(object.contact.frame, object, at), ...object.contact.frame }
+        : contactBox(object, at, state?.facing ?? 1, state?.axis);
+      const dynamic =
+        object.orbit !== undefined ||
+        object.behaviour !== undefined ||
+        object.motion.algorithm !== "static" ||
+        object.reaction.kind !== "none";
       return {
+        ...(dynamic && {
+          boundsAt: hazardBoundsAt(area.objects, state, at, rect, zone.seconds, object),
+        }),
         owner: object,
-        rect: object.contact
-          ? { ...spriteFrameOrigin(object.contact.frame, object, at), ...object.contact.frame }
-          : contactBox(object, at, state?.facing ?? 1, state?.axis),
+        rect,
       };
     }),
   };

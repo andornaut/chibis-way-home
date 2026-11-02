@@ -137,12 +137,30 @@ export function traversalContext(
       const uncertainHazard =
         time > frame.timeSeconds &&
         (world.hazards ?? []).some(
-          ({ owner }) =>
+          ({ boundsAt, owner }) =>
             owner !== object &&
             (owner.orbit !== undefined ||
               owner.behaviour !== undefined ||
               owner.motion.algorithm !== "static" ||
-              owner.reaction.kind !== "none"),
+              owner.reaction.kind !== "none") &&
+            (() => {
+              const bounds = boundsAt?.(time + dt);
+              return (
+                !bounds ||
+                !Object.values(bounds).every(Number.isFinite) ||
+                bounds.width <= 0 ||
+                bounds.height <= 0 ||
+                intersects(
+                  {
+                    height: bounds.height + 2 * EDGE,
+                    width: bounds.width + 2 * EDGE,
+                    x: bounds.x - EDGE,
+                    y: bounds.y - EDGE,
+                  },
+                  query,
+                )
+              );
+            })(),
         );
       return {
         colliders: [...colliders, ...dynamic],

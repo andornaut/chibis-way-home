@@ -111,6 +111,8 @@ it("supplies actual traversal context to flying pursuit for idle recovery", () =
   }
   expect(world.solids).toContain(floor);
   expect(world.hazards?.[0]?.owner).toBe(actor);
+  expect(world.hazards?.[0]?.boundsAt).toBeTypeOf("function");
+  expect(world.hazards?.[0]?.boundsAt?.(STEP_SECONDS)).toBeUndefined();
   expect(world.traversalFrame).toMatchObject({
     bounds: { height: 360, width: 1100, x: 0, y: 0 },
     dtSeconds: STEP_SECONDS,

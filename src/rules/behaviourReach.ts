@@ -37,7 +37,12 @@ export interface BehaviourWorld {
   readonly idleDecision?: { readonly seed: number; readonly namespace: string };
   readonly chunks?: AreaLayout["chunks"];
   readonly traversalFrame?: BehaviourTraversalFrame;
-  readonly hazards?: readonly { readonly owner: ObjectLayout; readonly rect: Rect }[];
+  readonly hazards?: readonly {
+    readonly owner: ObjectLayout;
+    readonly rect: Rect;
+    // Certified occupancy through this absolute time; undefined keeps future geometry unknown.
+    readonly boundsAt?: (endSeconds: number) => Rect | undefined;
+  }[];
   readonly view?: Rect;
   readonly platforms?: readonly BehaviourPlatform[];
   readonly solids: readonly Rect[];
