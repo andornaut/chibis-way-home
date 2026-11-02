@@ -158,9 +158,9 @@ export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
   bird: { colour: "amber", portrait: "portrait-bird", side: "left" },
   dog: { colour: "green", portrait: "portrait-dog", side: "right" },
   ferret: { colour: "tan", portrait: "portrait-ferret", side: "right" },
-  goose: { colour: "tan", portrait: null, side: "right" },
+  goose: { colour: "tan", portrait: "portrait-goose", side: "right" },
   pigeon: { colour: "tan", portrait: "portrait-pigeon", side: "right" },
-  raccoon: { colour: "tan", portrait: null, side: "right" },
+  raccoon: { colour: "tan", portrait: "portrait-raccoon", side: "right" },
   "room-helper": { colour: "green", portrait: "dog-pug", side: "right" },
 };
 
