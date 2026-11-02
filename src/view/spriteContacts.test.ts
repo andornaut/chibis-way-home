@@ -9,7 +9,7 @@ import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
 import type { SpriteSilhouettes, ZoneLayout } from "../data/types";
-import { startBehaviour } from "../rules/behaviour";
+import { contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
 import { startBird } from "../rules/bird";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../rules/bodyContact";
 import { objectLayout } from "../rules/tiles";
@@ -246,6 +246,114 @@ it.each(["walk", "rush"] as const)(
         );
         expect(next.death !== undefined).toBe(lethal);
         expect(next.objects[0]!.y + body.height).toBe(288);
+      }
+    }
+  },
+);
+
+const anticipationSheets = import.meta.glob<AsepriteSheet & Parameters<typeof sheetFrameSize>[0]>(
+  "../../public/art/sprites/*.json",
+  { eager: true, import: "default" },
+);
+const anticipationSheet = (key: string) => {
+  const value = anticipationSheets[`../../public/art/sprites/${key}.json`];
+  if (!value) {
+    throw new Error(`Missing anticipation sheet ${key}`);
+  }
+  return value;
+};
+const anticipationContacts = spriteContacts(
+  manifestJson as ArtManifest,
+  anticipationSheet,
+  (key) => sheetFrameSize(anticipationSheet(key)),
+  maskJson,
+);
+const anticipationHitboxes = artHitboxes(
+  (key) => sheetFrameSize(anticipationSheet(key)),
+  manifestJson as ArtManifest,
+  anticipationContacts,
+);
+
+it.each([
+  "bear-antagonist",
+  "dog-antagonist",
+  "ferret-antagonist",
+  "goose-antagonist",
+  "pigeon-antagonist",
+  "raccoon-antagonist",
+])(
+  "uses actual %s anticipation alpha for the authoritative clock and mirrored swept contact",
+  (key) => {
+    const resolved = objectLayout(
+      TILE,
+      { archetypes: ARCHETYPES, characters: CHARACTERS },
+      anticipationHitboxes,
+      undefined,
+      {},
+      { character: key, col: 20, row: 20 },
+    );
+    const tell = Object.entries(resolved.behaviour!.states).find(
+      ([, node]) =>
+        node.attack?.phase === "tell" && (node.track?.axis ?? resolved.behaviour!.axis) === "x",
+    )!;
+    const object = { ...resolved, behaviour: { ...resolved.behaviour!, initial: tell[0] } };
+    const bird = startBird(BIRD, { x: 0, y: 0 });
+    const start = startBehaviour(BIRD, object, bird);
+    const step = stepBehaviour(BIRD, object, [], 0.55, bird, object.origin, start);
+    const cue = object.contact!.tags["anticipate-lift"]!;
+    expect(step.at).toEqual(object.origin);
+    expect(step.state.animationTag).toBe("anticipate-lift");
+    expect(step.state.animationSeconds).toBeCloseTo(0.55);
+    expect([...new Set(step.segments.map(({ frame }) => frame))]).toEqual(
+      cue.frames.map(({ frame }) => frame),
+    );
+    expect(
+      contactFrameAt(object.contact!, step.state.animationTag!, step.state.animationSeconds!).frame,
+    ).toBe(cue.frames.at(-1)!.frame);
+    const at = { x: 240, y: 240 };
+    const origin = spriteFrameOrigin(object.contact!.frame, object, at);
+    for (const facing of [-1, 1] as const) {
+      expect(behaviourPose(object, { ...step.state, facing })).toEqual({
+        animation: "anticipate-lift",
+        flipX: facing === -1,
+      });
+      const reach = contactBox(object, at, facing, "x");
+      for (const { frame } of cue.frames) {
+        const runs = object.contact!.frames[frame]!;
+        const left = Math.min(
+          ...runs.map((run) => (facing === 1 ? run[1] : object.contact!.frame.width - run[2])),
+        );
+        const right = Math.max(
+          ...runs.map((run) => (facing === 1 ? run[2] : object.contact!.frame.width - run[1])),
+        );
+        expect(origin.x + left).toBeGreaterThanOrEqual(reach.x);
+        expect(origin.x + right).toBeLessThanOrEqual(reach.x + reach.width);
+        expect(origin.y + Math.min(...runs.map(([y]) => y))).toBeGreaterThanOrEqual(reach.y);
+        expect(origin.y + Math.max(...runs.map(([y]) => y)) + 1).toBeLessThanOrEqual(
+          reach.y + reach.height,
+        );
+        const [y, x] = runs[0]!;
+        const opaque = {
+          height: 0.5,
+          width: 0.5,
+          x: origin.x + (facing === 1 ? x : object.contact!.frame.width - x - 1) + 0.25,
+          y: origin.y + y + 0.25,
+        };
+        const clear = { height: 0.5, width: 0.5, x: origin.x + 0.25, y: origin.y + 0.25 };
+        expect(silhouetteContact(object, frame, facing === -1, at, at, opaque, opaque)).toBe(true);
+        expect(silhouetteContact(object, frame, facing === -1, at, at, clear, clear)).toBe(false);
+        const travel = 2 * object.contact!.frame.width;
+        const crossing = { ...opaque, x: opaque.x + travel / 2 };
+        const end = { ...at, x: at.x + travel };
+        expect(silhouetteContact(object, frame, facing === -1, at, at, crossing, crossing)).toBe(
+          false,
+        );
+        expect(silhouetteContact(object, frame, facing === -1, end, end, crossing, crossing)).toBe(
+          false,
+        );
+        expect(silhouetteContact(object, frame, facing === -1, at, end, crossing, crossing)).toBe(
+          true,
+        );
       }
     }
   },
