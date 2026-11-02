@@ -1,6 +1,11 @@
 """Trixi, the countryside goose antagonist with oversized glasses: a long-necked cream-and-grey bird, distinct from the
 round bird.
 
+Anticipate-lift appends load120ms, lift160ms and return-brace200ms, playing once
+and holding its final prepared pose. The visual lift stays inside the existing
+frame and reach envelope; world position and physical movement stay unchanged.
+Gameplay owns the tell window. New frames have exact alpha-derived contact masks.
+
 Usage, from the repository root:
   python3 -I art/tools/goose.py build
   python3 -I art/tools/goose.py preview OUT.png
@@ -16,7 +21,7 @@ forward into a short committed charge; rest is still lethal, never a safe state.
 Tags in frame order: idle 2x400ms; walk 4x120ms; warn 2x160ms; rush 4x80ms; rest 2x400ms.
 Frustration appends 4x120ms: a short headshake and low wing flaps, feet planted.
 Set-trap appends 4x120ms: a groundward head and wing placement gesture; no trap type or object is depicted.
-All tags loop. These are art cycle defaults; gameplay owns state durations and all physical movement.
+All earlier motion tags loop. These are art cycle defaults; gameplay owns state durations and all physical movement.
 The build writes art/antagonists/goose-antagonist.aseprite and its PNG/JSON exports.
 
 goose-trap: 24x12, bottom-centre 12,12, fixed contact bounds 0,8,24,4. Warning loops 4x120ms with
@@ -39,7 +44,7 @@ from pixel import Grid, K
 KEY = "goose-antagonist"
 SRC = "art/antagonists"
 TRAP = "goose-trap"
-ONCE = {KEY: [], TRAP: []}
+ONCE = {KEY: ["anticipate-lift"], TRAP: []}
 HITBOX = {KEY: (2, 2, 44, 46), TRAP: (0, 8, 24, 4)}
 
 
@@ -142,6 +147,10 @@ def trap(state="armed", phase=0):
     return g.px
 
 
+def anticipate_lift(phase):
+    return draw("warn", 1 if phase == 1 else 0)
+
+
 def sprites():
     yield (
         KEY,
@@ -153,6 +162,7 @@ def sprites():
             ("rest", [draw("rest", i) for i in range(2)], 400),
             ("frustration", [draw("frustration", i) for i in range(4)], 120),
             ("set-trap", [draw("set-trap", i) for i in range(4)], 120),
+            ("anticipate-lift", [anticipate_lift(i) for i in range(3)], (120, 160, 200)),
         ],
     )
     yield (

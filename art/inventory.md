@@ -226,10 +226,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Dog antagonist
 
-| Key            | Type                                  | Size  | Tags                                                |
-| -------------- | ------------------------------------- | ----- | --------------------------------------------------- |
-| dog-antagonist | Archie character; hit box 2,2,56,38   | 60x40 | idle, walk, crouch, rush, rest, frustration, pounce |
-| portrait-dog   | Archie dialogue portrait, transparent | 64x64 | neutral                                             |
+| Key            | Type                                  | Size  | Tags                                                                        |
+| -------------- | ------------------------------------- | ----- | --------------------------------------------------------------------------- |
+| dog-antagonist | Archie character; hit box 2,2,56,38   | 60x40 | idle, walk, crouch, rush, rest, frustration, pounce, anticipate-lift (once) |
+| portrait-dog   | Archie dialogue portrait, transparent | 64x64 | neutral                                                                     |
 
 ## Apartment building blocks
 
@@ -262,10 +262,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Ferret obstacle skin
 
-| Key               | Type                                 | Size  | Tags                                               |
-| ----------------- | ------------------------------------ | ----- | -------------------------------------------------- |
-| ferret-antagonist | character; hit box 2,2,44,46         | 48x48 | idle, walk, crouch, rush, rest, frustration, throw |
-| ferret-parcel     | active projectile; hit box 4,8,16,16 | 24x24 | idle                                               |
+| Key               | Type                                 | Size  | Tags                                                                       |
+| ----------------- | ------------------------------------ | ----- | -------------------------------------------------------------------------- |
+| ferret-antagonist | character; hit box 2,2,44,46         | 48x48 | idle, walk, crouch, rush, rest, frustration, throw, anticipate-lift (once) |
+| ferret-parcel     | active projectile; hit box 4,8,16,16 | 24x24 | idle                                                                       |
 
 ## Countryside materials
 
@@ -282,18 +282,18 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Goose antagonist
 
-| Key              | Type                                           | Size  | Tags                                                |
-| ---------------- | ---------------------------------------------- | ----- | --------------------------------------------------- |
-| goose-antagonist | Trixi character; hit box 2,2,44,46             | 48x48 | idle, walk, warn, rush, rest, frustration, set-trap |
-| goose-trap       | Arming floor hazard; approved hit box 0,8,24,4 | 24x12 | warning, armed                                      |
+| Key              | Type                                           | Size  | Tags                                                                        |
+| ---------------- | ---------------------------------------------- | ----- | --------------------------------------------------------------------------- |
+| goose-antagonist | Trixi character; hit box 2,2,44,46             | 48x48 | idle, walk, warn, rush, rest, frustration, set-trap, anticipate-lift (once) |
+| goose-trap       | Arming floor hazard; approved hit box 0,8,24,4 | 24x12 | warning, armed                                                              |
 
 ## Bini bear
 
-| Key             | Type                              | Size  | Tags                                                                      |
-| --------------- | --------------------------------- | ----- | ------------------------------------------------------------------------- |
-| bear-antagonist | Bini character; hit box 2,2,44,46 | 48x48 | idle, prepare, growl, walk, rush, maul, rest, frustration, prepare-attack |
-| bear-growl-wave | Noncolliding directional effect   | 48x32 | pulse (once)                                                              |
-| portrait-bear   | Right-facing dialogue portrait    | 64x64 | neutral, annoyed                                                          |
+| Key             | Type                              | Size  | Tags                                                                                              |
+| --------------- | --------------------------------- | ----- | ------------------------------------------------------------------------------------------------- |
+| bear-antagonist | Bini character; hit box 2,2,44,46 | 48x48 | idle, prepare, growl, walk, rush, maul, rest, frustration, prepare-attack, anticipate-lift (once) |
+| bear-growl-wave | Noncolliding directional effect   | 48x32 | pulse (once)                                                                                      |
+| portrait-bear   | Right-facing dialogue portrait    | 64x64 | neutral, annoyed                                                                                  |
 
 ## Owl antagonist
 
@@ -335,10 +335,10 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Pebble pigeon
 
-| Key               | Type                                | Size  | Tags                                                            |
-| ----------------- | ----------------------------------- | ----- | --------------------------------------------------------------- |
-| pigeon-antagonist | Pebble character; hit box 2,2,44,46 | 48x48 | idle, prepare, fly, drop, rest, frustration, swoop, prepare-air |
-| pigeon-poop       | White projectile; hit box 0,0,12,12 | 12x12 | idle                                                            |
+| Key               | Type                                | Size  | Tags                                                                                    |
+| ----------------- | ----------------------------------- | ----- | --------------------------------------------------------------------------------------- |
+| pigeon-antagonist | Pebble character; hit box 2,2,44,46 | 48x48 | idle, prepare, fly, drop, rest, frustration, swoop, prepare-air, anticipate-lift (once) |
+| pigeon-poop       | White projectile; hit box 0,0,12,12 | 12x12 | idle                                                                                    |
 
 ## Industrial materials
 
@@ -355,9 +355,9 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Raccoon antagonist
 
-| Key                | Type                         | Size  | Tags                                                      |
-| ------------------ | ---------------------------- | ----- | --------------------------------------------------------- |
-| raccoon-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, climb, prepare, drop, rest, frustration, walk, rush |
+| Key                | Type                         | Size  | Tags                                                                              |
+| ------------------ | ---------------------------- | ----- | --------------------------------------------------------------------------------- |
+| raccoon-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, climb, prepare, drop, rest, frustration, walk, rush, anticipate-lift (once) |
 
 ## Stage scenery variants
 

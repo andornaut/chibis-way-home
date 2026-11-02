@@ -1,5 +1,10 @@
 """The climbing raccoon antagonist, separate from the retained pedestrian/room cast.
 
+Anticipate-lift appends load120ms, lift160ms and return-brace200ms, playing once
+and holding its final prepared pose. The visual lift stays inside the existing
+frame and reach envelope; world position and physical movement stay unchanged.
+Gameplay owns the tell window. New frames have exact alpha-derived contact masks.
+
 Usage, from the repository root:
   python3 -I art/tools/raccoon.py build
   python3 -I art/tools/raccoon.py preview OUT.png
@@ -22,8 +27,9 @@ Tags, in frame order:
 - walk: 4x120ms, alternating grounded steps and opposite swinging paws.
 - rush: 4x80ms, lowered forward head and body, longer strides and forward reaching paws.
 
-All tags loop. The generic behaviour state machine owns state timing and physical movement; frame durations
-are art cycle defaults. Build writes art/antagonists/raccoon-antagonist.aseprite and its PNG/JSON export.
+All earlier motion tags loop. The generic behaviour state machine owns state timing and physical movement;
+Frame durations are art cycle defaults.
+Build writes art/antagonists/raccoon-antagonist.aseprite and its PNG/JSON export.
 """
 
 import sys
@@ -35,7 +41,7 @@ from pixel import Grid, K
 
 SRC = "art/antagonists"
 KEY = "raccoon-antagonist"
-ONCE = {KEY: []}
+ONCE = {KEY: ["anticipate-lift"]}
 HITBOX = {KEY: (2, 2, 44, 46)}
 
 
@@ -128,6 +134,13 @@ def draw(state="idle", phase=0):
     return g.outlined(lambda c: K["ink"] if c in (K["cream"], K["white"]) else K["navy"])
 
 
+def anticipate_lift(phase):
+    if phase != 1:
+        return draw("prepare")
+    frame = draw("idle")
+    return frame[2:] + [[None] * 48 for _ in range(2)]
+
+
 def sprites():
     yield (
         KEY,
@@ -140,6 +153,7 @@ def sprites():
             ("frustration", [draw("frustration", i) for i in range(4)], 120),
             ("walk", [draw("walk", i) for i in range(4)], 120),
             ("rush", [draw("rush", i) for i in range(4)], 80),
+            ("anticipate-lift", [anticipate_lift(i) for i in range(3)], (120, 160, 200)),
         ],
     )
 

@@ -40,14 +40,16 @@
       "key": "bear-antagonist",
       "png": "sprites/bear-antagonist.png",
       "json": "sprites/bear-antagonist.json",
-      "once": [],
+      "once": [
+        "anticipate-lift"
+      ],
+      "contact": "silhouette",
       "hitbox": {
         "x": 2,
         "y": 2,
         "width": 44,
         "height": 46
-      },
-      "contact": "silhouette"
+      }
     },
     {
       "key": "bear-growl-wave",
@@ -73,14 +75,16 @@
       "key": "dog-antagonist",
       "png": "sprites/dog-antagonist.png",
       "json": "sprites/dog-antagonist.json",
-      "once": [],
+      "once": [
+        "anticipate-lift"
+      ],
+      "contact": "silhouette",
       "hitbox": {
         "x": 2,
         "y": 2,
         "width": 56,
         "height": 38
-      },
-      "contact": "silhouette"
+      }
     },
     {
       "key": "dog-pug",
@@ -100,14 +104,16 @@
       "key": "ferret-antagonist",
       "png": "sprites/ferret-antagonist.png",
       "json": "sprites/ferret-antagonist.json",
-      "once": [],
+      "once": [
+        "anticipate-lift"
+      ],
+      "contact": "silhouette",
       "hitbox": {
         "x": 2,
         "y": 2,
         "width": 44,
         "height": 46
-      },
-      "contact": "silhouette"
+      }
     },
     {
       "key": "ferret-parcel",
@@ -151,14 +157,16 @@
       "key": "goose-antagonist",
       "png": "sprites/goose-antagonist.png",
       "json": "sprites/goose-antagonist.json",
-      "once": [],
+      "once": [
+        "anticipate-lift"
+      ],
+      "contact": "silhouette",
       "hitbox": {
         "x": 2,
         "y": 2,
         "width": 44,
         "height": 46
-      },
-      "contact": "silhouette"
+      }
     },
     {
       "key": "goose-trap",
@@ -456,14 +464,16 @@
       "key": "pigeon-antagonist",
       "png": "sprites/pigeon-antagonist.png",
       "json": "sprites/pigeon-antagonist.json",
-      "once": [],
+      "once": [
+        "anticipate-lift"
+      ],
+      "contact": "silhouette",
       "hitbox": {
         "x": 2,
         "y": 2,
         "width": 44,
         "height": 46
-      },
-      "contact": "silhouette"
+      }
     },
     {
       "key": "pigeon-poop",
@@ -535,14 +545,16 @@
       "key": "raccoon-antagonist",
       "png": "sprites/raccoon-antagonist.png",
       "json": "sprites/raccoon-antagonist.json",
-      "once": [],
+      "once": [
+        "anticipate-lift"
+      ],
+      "contact": "silhouette",
       "hitbox": {
         "x": 2,
         "y": 2,
         "width": 44,
         "height": 46
-      },
-      "contact": "silhouette"
+      }
     },
     {
       "key": "ui-answer",

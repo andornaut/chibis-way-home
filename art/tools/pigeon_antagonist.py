@@ -1,5 +1,10 @@
 """Pebble, the pigeon antagonist, and a separate falling white-block hazard. Neither adds story or text.
 
+Anticipate-lift appends load120ms, lift160ms and return-brace200ms, playing once
+and holding its final prepared pose. The visual lift stays inside the existing
+frame and reach envelope; world position and physical movement stay unchanged.
+Gameplay owns the tell window. New frames have exact alpha-derived contact masks.
+
 Usage: pigeon_antagonist.py build | preview OUT.png
 Run from the repository root. Sources: art/antagonists/. Exports: public/art/sprites/.
 
@@ -7,7 +12,7 @@ pigeon-antagonist: 48x48, facing right; bottom-centre anchor 24,48. Fixed hitbox
 pose and its mirror. Perched feet end on row 46, with their outline on 47. Grey and lilac feathers, a
 cream breast, short beak and rounded head distinguish this pigeon from Chibi. No clothes or red outline.
 Tags in frame order: idle 2x400ms; prepare 2x160ms; fly 4x100ms; drop 2x100ms; rest 2x400ms;
-frustration 4x120ms; swoop 4x100ms; prepare-air 2x160ms. Every tag loops, once []. Prepare raises the head;
+frustration 4x120ms; swoop 4x100ms; prepare-air 2x160ms. These earlier tags loop. Prepare raises the head;
 prepare-air tucks the feet, draws the wings back and aims the head before an airborne attack. Fly flaps;
 drop tucks the feet
 and lifts the tail; frustration shakes the head and flaps one wing. Generic gameplay owns movement,
@@ -29,7 +34,7 @@ from pixel import Grid, K
 SRC = "art/antagonists"
 KEY = "pigeon-antagonist"
 POOP = "pigeon-poop"
-ONCE = {KEY: [], POOP: []}
+ONCE = {KEY: ["anticipate-lift"], POOP: []}
 HITBOX = {KEY: (2, 2, 44, 46), POOP: (0, 0, 12, 12)}
 
 
@@ -69,7 +74,7 @@ def swoop(phase):
     return g.outlined(lambda _c: K["navy"])
 
 
-def prepare_air(phase):
+def _air_pose(lift_wings, phase):
     """Held airborne anticipation: tucked feet, swept-back wings and a forward/downward head aim."""
     g = Grid(48, 48)
     g.tri((5, 25), (19, 25), (18, 37), "slate")
@@ -78,9 +83,14 @@ def prepare_air(phase):
     g.rect(23, 38, 4, 2, "pink")
     g.rect(29, 38, 4, 2, "pink")
     # Both wings draw behind the breast rather than continuing the regular wingbeat.
-    g.blob(14, 19 - phase, 8, 7, "grey", sh="slate", li="lgrey")
-    g.tri((6, 12 - phase), (20, 18), (17, 28), "slate")
-    g.rect(9, 16 - phase, 7, 2, "lgrey")
+    if lift_wings:
+        g.blob(14, 17 - phase * 3, 6, 9, "grey", sh="slate", li="lgrey")
+        g.tri((8, 6 - phase * 2), (20, 15), (17, 27), "slate")
+        g.rect(10, 10 - phase * 2, 2, 8, "slate")
+    else:
+        g.blob(14, 19 - phase, 8, 7, "grey", sh="slate", li="lgrey")
+        g.tri((6, 12 - phase), (20, 18), (17, 28), "slate")
+        g.rect(9, 16 - phase, 7, 2, "lgrey")
     g.ell(30, 25, 7, 7, "zone-purple-shade")
     hx, hy = 33, 21 + phase
     g.blob(hx, hy, 8, 7, "grey", sh="slate", li="lgrey")
@@ -88,6 +98,10 @@ def prepare_air(phase):
     g.rect(35, hy - 2, 4, 3, "ink")
     g.rect(35, hy - 2, 2, 2, "cream")
     return g.outlined(lambda _c: K["navy"])
+
+
+def prepare_air(phase):
+    return _air_pose(False, phase)
 
 
 def draw(state="idle", phase=0):
@@ -142,6 +156,10 @@ def poop():
     return g.px
 
 
+def anticipate_lift(phase):
+    return _air_pose(phase == 1, 0 if phase == 0 else 1)
+
+
 def sprites():
     yield (
         KEY,
@@ -154,6 +172,7 @@ def sprites():
             ("frustration", [draw("frustration", i) for i in range(4)], 120),
             ("swoop", [draw("swoop", i) for i in range(4)], 100),
             ("prepare-air", [draw("prepare-air", i) for i in range(2)], 160),
+            ("anticipate-lift", [anticipate_lift(i) for i in range(3)], (120, 160, 200)),
         ],
     )
     yield POOP, [("idle", [poop()], 400)]

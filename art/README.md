@@ -458,6 +458,10 @@ The runtime caches these runs and applies the sprite's current frame, facing, an
 
 For all six antagonists, during an attack sequence's tell or grounded jump takeoff preparation, including pursuit and idle recovery, draw a temporary outline around the current animated frame's alpha silhouette, accounting for facing, origin and scale. A 2px canonical red band directly adjoins the opaque sprite pixels, with a 1px outer ink border. Draw only in exterior transparency, leaving body pixels and enclosed transparent holes unchanged. Keep the cue on the world plane behind the actor, following both grounded and airborne poses. The outline warns of an upcoming attack or jump; it is not a contact boundary, damage indicator or permanent enemy outline. Show it only while either preparation is active. Keep it steady, including in reduced motion, without strobing or pulsing. Reuse the preparation pose without changing body pixels, contact masks, animation metadata or raster assets; gameplay owns preparation durations.
 
+### Enemy anticipation movement
+
+The six registered antagonists append `anticipate-lift`: load 120ms, lift 160ms and return-brace 200ms. This 480ms tag plays once and holds its final prepared pose until the existing gameplay tell ends. Archie, Bini, Fert and Kiwi use a small in-frame visual hop; Trixi raises a wing with her feet planted; Pebble lifts his wings and returns to the established airborne tuck. World positions, path origins, frame sizes, anchors and physical movement remain unchanged. The new exact alpha silhouettes join the contact export; no contact is clipped to the reach box. Existing frames, tag indices and timings stay unchanged.
+
 ### Enemy frustration
 
 The shared stage-enemy reaction uses the looping `frustration` tag. The cycle has four 120ms frames, lasting 480ms before repeating. Its head, paw, wing or ear gesture clearly differs from standing rest and preparation, while retaining the animal's cute silhouette. No world movement, text, effect outline or new story is baked into the reaction.
@@ -759,7 +763,7 @@ The looping `throw` tag appends after existing frames. Its release paw is at loc
 | throw  | Four frames, 100ms each | Parcel wind-up and release |
 | walk   | Four frames, 120ms each | Patrol steps               |
 
-All tags loop, with `once: []`. These are art playback defaults, not gameplay state durations. There is no boss-specific visual system or new ending artwork.
+The earlier motion tags loop. These are art playback defaults, not gameplay state durations. There is no boss-specific visual system or new ending artwork.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
@@ -800,7 +804,7 @@ The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is 
 | walk | Four frames, 120ms each | Alternating steps               |
 | warn | Two frames, 160ms each  | Raised wing and neck signal     |
 
-All tags loop; state transitions belong to the runtime. These art timings do not define the charge's distance or duration.
+The earlier motion tags loop; state transitions belong to the runtime. These art timings do not define the charge's distance or duration.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
@@ -826,7 +830,7 @@ The frame is 48x48 with bottom-centre anchor 24,48 and fixed contact box x 2, y 
 | rush           | Four frames, 80ms each   | Grounded four-foot charge       |
 | walk           | Four frames, 120ms each  | Alternating four-foot steps     |
 
-All actor tags loop. `portrait-bear` is 64x64, authored facing right, with `neutral` and `annoyed` tags of one 1000ms frame each. Dialogue text belongs to gameplay data.
+The earlier actor tags loop. `portrait-bear` is 64x64, authored facing right, with `neutral` and `annoyed` tags of one 1000ms frame each. Dialogue text belongs to gameplay data.
 
 `bear-growl-wave` is a noncolliding 48x32 directional effect. Its `pulse` tag has four 100ms frames, plays once and requires runtime removal when finished. Place its left-centre anchor 0,16 at the bear's mouth, frame-local 36,22; the unmirrored image origin is therefore actor origin plus 36,6. Mirror this attachment for left-facing use. The effect does not define reach or force. Gameplay supplies the height-limited push volume and solid cover checks, with high ground as the primary avoidance route. Keep the drawn pulse within that configured band.
 
@@ -927,7 +931,7 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 | rest        | Two frames, 400ms each  | Perched recovery             |
 | swoop       | Four frames, 100ms each | Head-down contact dive       |
 
-All tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; gameplay data owns the anticipation duration for each action. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
+The earlier motion tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; gameplay data owns the anticipation duration for each action. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
 
 ## Industrial material pack
 
@@ -966,7 +970,7 @@ The repeated atmosphere layers have a default bottom of y 600. Use sky factors 0
 | rush    | Four frames, 80ms each  | Low forward head, longer grounded strides  |
 | walk    | Four frames, 120ms each | Alternate steps and opposite swinging paws |
 
-All tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. The body sprite supplies no new conversation.
+The earlier motion tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. The body sprite supplies no new conversation.
 
 Kiwi, the female raccoon, reuses the existing identity without added gender accessories. `art/tools/speaker_portraits.py` supplies `portrait-raccoon`: a transparent right-facing 64x64 portrait with rounded ears, paired ink masks, grey fur and a cream muzzle. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
 

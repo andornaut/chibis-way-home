@@ -174,6 +174,30 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
     "sourceSize": { "w": 48, "h": 48 },
     "duration": 120
+   },
+   "goose-antagonist 22.aseprite": {
+    "frame": { "x": 1056, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 120
+   },
+   "goose-antagonist 23.aseprite": {
+    "frame": { "x": 1104, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 160
+   },
+   "goose-antagonist 24.aseprite": {
+    "frame": { "x": 1152, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 200
    }
  },
  "meta": {
@@ -181,7 +205,7 @@
   "version": "1.2.30-x64",
   "image": "goose-antagonist.png",
   "format": "RGBA8888",
-  "size": { "w": 1056, "h": 48 },
+  "size": { "w": 1200, "h": 48 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward" },
@@ -190,7 +214,8 @@
    { "name": "rush", "from": 8, "to": 11, "direction": "forward" },
    { "name": "rest", "from": 12, "to": 13, "direction": "forward" },
    { "name": "frustration", "from": 14, "to": 17, "direction": "forward" },
-   { "name": "set-trap", "from": 18, "to": 21, "direction": "forward" }
+   { "name": "set-trap", "from": 18, "to": 21, "direction": "forward" },
+   { "name": "anticipate-lift", "from": 22, "to": 24, "direction": "forward" }
   ]
  }
 }

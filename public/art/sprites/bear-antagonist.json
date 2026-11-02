@@ -214,6 +214,30 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
     "sourceSize": { "w": 48, "h": 48 },
     "duration": 160
+   },
+   "bear-antagonist 27.aseprite": {
+    "frame": { "x": 1296, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 120
+   },
+   "bear-antagonist 28.aseprite": {
+    "frame": { "x": 1344, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 160
+   },
+   "bear-antagonist 29.aseprite": {
+    "frame": { "x": 1392, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 200
    }
  },
  "meta": {
@@ -221,7 +245,7 @@
   "version": "1.2.30-x64",
   "image": "bear-antagonist.png",
   "format": "RGBA8888",
-  "size": { "w": 1296, "h": 48 },
+  "size": { "w": 1440, "h": 48 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward" },
@@ -232,7 +256,8 @@
    { "name": "maul", "from": 16, "to": 18, "direction": "forward" },
    { "name": "rest", "from": 19, "to": 20, "direction": "forward" },
    { "name": "frustration", "from": 21, "to": 24, "direction": "forward" },
-   { "name": "prepare-attack", "from": 25, "to": 26, "direction": "forward" }
+   { "name": "prepare-attack", "from": 25, "to": 26, "direction": "forward" },
+   { "name": "anticipate-lift", "from": 27, "to": 29, "direction": "forward" }
   ]
  }
 }

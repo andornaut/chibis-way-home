@@ -1,5 +1,10 @@
 """The first antagonist dog and its dialogue portrait, facing right with no baked hazard outline.
 
+Anticipate-lift appends load120ms, lift160ms and return-brace200ms, playing once
+and holding its final prepared pose. The visual lift stays inside the existing
+frame and reach envelope; world position and physical movement stay unchanged.
+Gameplay owns the tell window. New frames have exact alpha-derived contact masks.
+
 Usage: antagonists.py build | preview OUT.png
 Run from the repository root. Sources: art/antagonists/. Exports: public/art/sprites/.
 
@@ -8,7 +13,7 @@ Frame 60x40, feet on row 39; all visible pixels stay inside hitbox x2,y2,width56
 in every state, including crouch and rest. The game does not draw a red contact rectangle or silhouette
 outline; the hitbox remains collision metadata.
 Tags: idle 2x400ms; walk 4x120ms; crouch 1x400ms; rush 2x80ms; rest 2x400ms;
-frustration 4x120ms; pounce 4x100ms. All loop; gameplay owns state duration and the pounce arc.
+frustration 4x120ms; pounce 4x100ms. These earlier tags loop; gameplay owns state duration and the pounce arc.
 The torso clears the ground above straight chibi legs, tapering into white stockings and small paws.
 Hindlegs attach near the rump; forelegs attach beneath the shoulder. Walk exchanges diagonal pairs;
 rush alternates extension and gathered limbs.
@@ -37,7 +42,7 @@ def rgba(name):
     return (*pixel.rgb(name), 255)
 
 
-ONCE = {"dog-antagonist": [], "portrait-dog": []}
+ONCE = {"dog-antagonist": ["anticipate-lift"], "portrait-dog": []}
 HITBOX = {"dog-antagonist": (2, 2, 56, 38)}
 
 
@@ -188,6 +193,12 @@ def portrait_image():
     return im
 
 
+def anticipate_lift(phase):
+    if phase == 1:
+        return pixels(dog_image("frustration", 2))
+    return pixels(dog_image("crouch"))
+
+
 def sprites():
     yield (
         "dog-antagonist",
@@ -199,6 +210,7 @@ def sprites():
             ("rest", [pixels(dog_image("rest", i)) for i in range(2)], 400),
             ("frustration", [pixels(dog_image("frustration", i)) for i in range(4)], 120),
             ("pounce", [pixels(dog_image("pounce", i)) for i in range(4)], 100),
+            ("anticipate-lift", [anticipate_lift(i) for i in range(3)], (120, 160, 200)),
         ],
     )
     yield "portrait-dog", [("neutral", [pixels(portrait_image())], 1000)]

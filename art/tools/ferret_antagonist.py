@@ -1,12 +1,17 @@
 """Compact apartment ferret encounter skin retaining the established champagne ferret identity.
 
+Anticipate-lift appends load120ms, lift160ms and return-brace200ms, playing once
+and holding its final prepared pose. The visual lift stays inside the existing
+frame and reach envelope; world position and physical movement stay unchanged.
+Gameplay owns the tell window. New frames have exact alpha-derived contact masks.
+
 Frustration: four120ms looping headshake and raised wing/paw poses, fixed feet, no world displacement.
 
 Usage: ferret_antagonist.py build | preview OUT.png, from the repository root.
 48x48 facing right, bottom centre (24,48), fixed hitbox (2,2,44,46), stable when mirrored.
 Champagne and cream slender body, small wedge head, warm brown legs and tapering tail, plum stovepipe
 with red band and red bow. Cute and sly, no teeth, red contact outline, dialogue or new story details.
-Idle 2x400ms, walk 4x120ms, crouch 2x140ms, rush 4x80ms, rest 2x400ms. All loop.
+Idle 2x400ms, walk 4x120ms, crouch 2x140ms, rush 4x80ms, rest 2x400ms. These earlier tags loop.
 Throw4x100ms loops: wind-up, raised paw, release, recovery; local release offset39,26.
 Art cycles do not set gameplay state duration or bake world movement into the sprite anchor.
 All states are lethal. The original 64x80 story ferret and its portraits remain separate and unchanged.
@@ -23,7 +28,7 @@ from pixel import Grid
 
 KEY = "ferret-antagonist"
 SRC = "art/antagonists"
-ONCE = {KEY: []}
+ONCE = {KEY: ["anticipate-lift"]}
 HITBOX = {KEY: (2, 2, 44, 46)}
 
 
@@ -80,6 +85,13 @@ def draw(state="idle", phase=0):
     return ferret.outline(g)
 
 
+def anticipate_lift(phase):
+    if phase != 1:
+        return draw("crouch", 0 if phase == 0 else 1)
+    frame = draw("idle")
+    return frame[2:] + [[None] * 48 for _ in range(2)]
+
+
 def sprites():
     yield (
         KEY,
@@ -91,6 +103,7 @@ def sprites():
             ("rest", [draw("rest", i) for i in range(2)], 400),
             ("frustration", [draw("frustration", i) for i in range(4)], 120),
             ("throw", [draw("throw", i) for i in range(4)], 100),
+            ("anticipate-lift", [anticipate_lift(i) for i in range(3)], (120, 160, 200)),
         ],
     )
 

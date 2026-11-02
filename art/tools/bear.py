@@ -1,9 +1,14 @@
 """Bini bear encounter art: cute brown bear, no outfit, contact outline, new dialogue or mechanics.
 
+Anticipate-lift appends load120ms, lift160ms and return-brace200ms, playing once
+and holding its final prepared pose. The visual lift stays inside the existing
+frame and reach envelope; world position and physical movement stay unchanged.
+Gameplay owns the tell window. New frames have exact alpha-derived contact masks.
+
 Usage: bear.py build | preview OUT.png, from repository root. Binary-alpha Endesga/house-ramp pixels.
 Bear-antagonist48x48, bottom24,48, fixed hitbox2,2,44,46 all poses and mirrors. Mouth offset36,22.
 Idle2x400ms seated with9x13phone; prepare2x160 annoyed looking up; growl4x120; walk4x120; rush4x80;
-maul3x100 forward paw; rest2x400; frustration4x120; prepare-attack2x160. All loop, once[]. Feet remain inside fixed
+maul3x100 forward paw; rest2x400; frustration4x120; prepare-attack2x160. All earlier tags loop. Feet remain inside fixed
 frame.
 Walk/rush use a low four-foot stance with alternating diagonal contacts; expressive poses stay upright.
 Phone shows a tiny green road, cream dog and red bandana motif for Archie's Dog Walks, with no tiny text.
@@ -23,7 +28,7 @@ SRC = "art/antagonists"
 KEY = "bear-antagonist"
 PORTRAIT = "portrait-bear"
 WAVE = "bear-growl-wave"
-ONCE = {KEY: [], PORTRAIT: [], WAVE: ["pulse"]}
+ONCE = {KEY: ["anticipate-lift"], PORTRAIT: [], WAVE: ["pulse"]}
 HITBOX = {KEY: (2, 2, 44, 46)}
 MOUTH = (36, 22)
 
@@ -109,7 +114,7 @@ def draw(state="idle", phase=0):
     seated = state == "idle"
     moving = state in ("walk", "rush")
     shift = (-1, 1, 1, -1)[phase] if state == "frustration" else 0
-    hy = 19 if seated else 18 - phase if state == "prepare" else 17
+    hy = 19 if seated or state == "anticipate-lift" else 18 - phase if state == "prepare" else 17
     hx = 27 + shift
     # Broad shoulders, round ears and a cream muzzle retain the bear silhouette at phone scale.
     for x in (18 + shift, 34 + shift):
@@ -171,6 +176,13 @@ def wave(phase):
     return g.outlined(lambda _c: K["dslate"])
 
 
+def anticipate_lift(phase):
+    if phase != 1:
+        return prepare_attack(0 if phase == 0 else 1)
+    frame = draw("anticipate-lift")
+    return frame[3:] + [[None] * 48 for _ in range(3)]
+
+
 def sprites():
     yield (
         KEY,
@@ -187,7 +199,8 @@ def sprites():
                 ("frustration", 4, 120),
                 ("prepare-attack", 2, 160),
             )
-        ],
+        ]
+        + [("anticipate-lift", [anticipate_lift(i) for i in range(3)], (120, 160, 200))],
     )
     yield PORTRAIT, [("neutral", [portrait()], 1000), ("annoyed", [portrait(True)], 1000)]
     yield WAVE, [("pulse", [wave(i) for i in range(4)], 100)]

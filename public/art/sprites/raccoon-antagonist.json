@@ -182,6 +182,30 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
     "sourceSize": { "w": 48, "h": 48 },
     "duration": 80
+   },
+   "raccoon-antagonist 23.aseprite": {
+    "frame": { "x": 1104, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 120
+   },
+   "raccoon-antagonist 24.aseprite": {
+    "frame": { "x": 1152, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 160
+   },
+   "raccoon-antagonist 25.aseprite": {
+    "frame": { "x": 1200, "y": 0, "w": 48, "h": 48 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 200
    }
  },
  "meta": {
@@ -189,7 +213,7 @@
   "version": "1.2.30-x64",
   "image": "raccoon-antagonist.png",
   "format": "RGBA8888",
-  "size": { "w": 1104, "h": 48 },
+  "size": { "w": 1248, "h": 48 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward" },
@@ -199,7 +223,8 @@
    { "name": "rest", "from": 9, "to": 10, "direction": "forward" },
    { "name": "frustration", "from": 11, "to": 14, "direction": "forward" },
    { "name": "walk", "from": 15, "to": 18, "direction": "forward" },
-   { "name": "rush", "from": 19, "to": 22, "direction": "forward" }
+   { "name": "rush", "from": 19, "to": 22, "direction": "forward" },
+   { "name": "anticipate-lift", "from": 23, "to": 25, "direction": "forward" }
   ]
  }
 }
