@@ -19,6 +19,12 @@
       "once": []
     },
     {
+      "key": "background-deer-large",
+      "png": "sprites/background-deer-large.png",
+      "json": "sprites/background-deer-large.json",
+      "once": []
+    },
+    {
       "key": "background-reeds",
       "png": "sprites/background-reeds.png",
       "json": "sprites/background-reeds.json",

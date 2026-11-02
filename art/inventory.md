@@ -384,14 +384,15 @@ Opaque actual stage captures, 168x84, registered as manifest images. Keys follow
 
 ## Woodland species and fauna
 
-| Key                   | Type               | Size    | Contract                                     |
-| --------------------- | ------------------ | ------- | -------------------------------------------- |
-| background-deer       | decorative sprite  | 32x24   | idle 2x900ms, graze 4x300ms; loop, no hitbox |
-| background-swallow    | decorative sprite  | 24x12   | flight 4x120ms; loop, no hitbox              |
-| forest-mid-birch      | repeating backdrop | 720x600 | bottom-left y600, repeat x                   |
-| forest-mid-conifers   | repeating backdrop | 720x600 | bottom-left y600, repeat x                   |
-| woodland-far-birch    | repeating backdrop | 720x600 | bottom-left y600, repeat x                   |
-| woodland-far-conifers | repeating backdrop | 720x600 | bottom-left y600, repeat x                   |
+| Key                   | Type               | Size    | Contract                                                     |
+| --------------------- | ------------------ | ------- | ------------------------------------------------------------ |
+| background-deer       | decorative sprite  | 32x24   | idle 2x900ms, graze 4x300ms; loop, no hitbox                 |
+| background-deer-large | decorative sprite  | 216x144 | idle 4 frames, graze 8 frames; loop, planted feet, no hitbox |
+| background-swallow    | decorative sprite  | 24x12   | flight 4x120ms; loop, no hitbox                              |
+| forest-mid-birch      | repeating backdrop | 720x600 | bottom-left y600, repeat x                                   |
+| forest-mid-conifers   | repeating backdrop | 720x600 | bottom-left y600, repeat x                                   |
+| woodland-far-birch    | repeating backdrop | 720x600 | bottom-left y600, repeat x                                   |
+| woodland-far-conifers | repeating backdrop | 720x600 | bottom-left y600, repeat x                                   |
 
 ## Animated background flora
 
