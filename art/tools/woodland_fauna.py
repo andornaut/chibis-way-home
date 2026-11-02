@@ -2,7 +2,8 @@
 
 Usage: woodland_fauna.py build | preview OUT.png, from repository root.
 background-deer32x24, bottom-centre16,24: idle2x900ms and graze4x300ms, all loop once[]. Adult body,
-small head, slender neck and long planted legs. Muted coat, no clothes or exaggerated eyes.
+small head, slender neck and tapered planted legs with fixed hoof patches. Muted coat, no clothes or
+exaggerated eyes.
 background-swallow24x12, centre12,6: flight4x120ms loop once[]. Pointed swept wings and forked tail,
 small streamlined body. Animation contains pose changes only; gameplay owns placement and movement.
 Neither sprite declares a hitbox or contact mask. Tech owns decorative background depth and parallax.
@@ -21,8 +22,15 @@ ONCE = {"background-deer": [], "background-swallow": []}
 
 def deer(state="idle", phase=0):
     g = Grid(32, 24)
-    for x in (9, 14, 20, 23):
-        g.rect(x, 14, 2, 10, "dbrown" if x in (9, 23) else "plum")
+    for root, foot, far in ((9, 9, False), (12, 14, True), (20, 20, True), (23, 23, False)):
+        colour = "plum" if far else "dbrown"
+        if root < 16:
+            g.tri((root - 1, 13), (root + 3, 16), (foot + 1, 19), colour)
+            g.rect(foot, 18, 2, 2, colour)
+        else:
+            g.tri((root - 1, 13), (root + 2, 14), (foot + 1, 19), colour)
+        g.rect(foot + 1, 18, 1, 5, colour)
+        g.rect(foot, 22, 2, 2, colour)
     g.ell(15, 12, 9, 4, "dbrown")
     g.ell(14, 12, 7, 2, "zone-peach-shade")
     g.tri((7, 11), (3, 9), (4, 12), "dbrown")
