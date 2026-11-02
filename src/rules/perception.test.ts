@@ -12,7 +12,7 @@ import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { BIRD_FRAME } from "../view/bird";
 import { layoutBehaviour } from "./behaviour";
-import { currentScreen, targetInSameChunk, targetVisible } from "./perception";
+import { currentScreen, targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { enterArea, retryZone, startZone, stepZone } from "./zone";
@@ -171,7 +171,21 @@ describe("screen and solid line-of-sight acquisition", () => {
   });
 });
 
-describe("current-chunk pursuit awareness", () => {
+describe("current-chunk or current-viewport pursuit awareness", () => {
+  it("uses both body centres in the half-open viewport without line of sight", () => {
+    const view = { height: 100, width: 200, x: 100, y: 50 };
+    const observer = { height: 20, width: 20, x: 90, y: 40 };
+    const target = { ...observer, x: 280, y: 130 };
+    const world = { solids: [{ height: 100, width: 10, x: 200, y: 50 }], view };
+    expect(targetInCurrentView(world, observer, target)).toBe(true);
+    expect(targetVisible(world, undefined, observer, target)).toBe(false);
+    expect(targetInCurrentView(world, observer, { ...target, x: 290 })).toBe(false);
+    expect(targetInCurrentView(world, observer, { ...target, y: 140 })).toBe(false);
+    expect(targetInCurrentView(world, { ...observer, x: 89 }, target)).toBe(false);
+    expect(targetInCurrentView(world, { ...observer, y: 39 }, target)).toBe(false);
+    expect(targetInCurrentView({ solids: [] }, observer, target)).toBe(false);
+  });
+
   it("uses current body centres and authored half-open spans without camera or sight", () => {
     const world = {
       chunks: [
@@ -197,39 +211,46 @@ describe("current-chunk pursuit awareness", () => {
     ["Kiwi", RACCOON_BEHAVIOUR],
     ["Pebble", PIGEON_BEHAVIOUR],
     ["Trixi", GOOSE_BEHAVIOUR],
-  ] as const)("%s acquires through a wall on chunk entry without a spotted bark", (_, profile) => {
-    const object = {
-      ...actor,
-      behaviour: layoutBehaviour(12, profile),
-      origin: { x: 740, y: 276 },
-    };
-    const stage = layout([{ height: 300, width: 12, x: 714, y: 0 }], object);
-    const area = stage.areas.main!;
-    const chunked = {
-      ...stage,
-      areas: {
-        main: {
-          ...area,
-          chunks: [
-            { width: 720, x: 0 },
-            { width: 380, x: 720 },
-          ],
+  ] as const)(
+    "%s acquires across visible chunks through a wall without a spotted bark",
+    (_, profile) => {
+      const object = {
+        ...actor,
+        behaviour: layoutBehaviour(12, profile),
+        origin: { x: 740, y: 276 },
+      };
+      const stage = layout([{ height: 300, width: 12, x: 714, y: 0 }], object);
+      const area = stage.areas.main!;
+      const chunked = {
+        ...stage,
+        areas: {
+          main: {
+            ...area,
+            chunks: [
+              { width: 720, x: 0 },
+              { width: 380, x: 720 },
+            ],
+          },
         },
-      },
-    };
-    let zone = startZone(BIRD, chunked, 1);
-    zone = { ...zone, bird: { ...zone.bird, x: 696 - BIRD.width / 2 } };
-    const adjacent = stepZone(BIRD, chunked, STEP_SECONDS, STILL, zone);
-    expect(adjacent.behaviours[0]?.pursuit).toBeUndefined();
-    const entered = {
-      ...adjacent,
-      bird: { ...adjacent.bird, x: 720 - BIRD.width / 2 },
-    };
-    const acquired = stepZone(BIRD, chunked, STEP_SECONDS, STILL, entered);
-    expect(acquired.behaviours[0]?.pursuit?.phase).toBe("engaged");
-    expect(acquired.barks).toEqual([]);
-    expect(acquired.spotted.main ?? []).toEqual([]);
-  });
+      };
+      let zone = startZone(BIRD, chunked, 1);
+      const offscreen = stepZone(BIRD, chunked, STEP_SECONDS, STILL, zone);
+      expect(offscreen.behaviours[0]?.pursuit).toBeUndefined();
+      zone = { ...zone, bird: { ...zone.bird, x: 696 - BIRD.width / 2 } };
+      const adjacent = stepZone(BIRD, chunked, STEP_SECONDS, STILL, zone);
+      expect(adjacent.behaviours[0]?.pursuit?.phase).toBe("engaged");
+      expect(adjacent.barks).toEqual([]);
+      expect(adjacent.spotted.main ?? []).toEqual([]);
+      const entered = {
+        ...adjacent,
+        bird: { ...adjacent.bird, x: 720 - BIRD.width / 2 },
+      };
+      const acquired = stepZone(BIRD, chunked, STEP_SECONDS, STILL, entered);
+      expect(acquired.behaviours[0]?.pursuit?.phase).toBe("engaged");
+      expect(acquired.barks).toEqual([]);
+      expect(acquired.spotted.main ?? []).toEqual([]);
+    },
+  );
 
   it("acquires an offscreen boss in the current chunk without marking its bark heard", () => {
     const object = {

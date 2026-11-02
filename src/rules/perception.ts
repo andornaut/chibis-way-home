@@ -24,6 +24,22 @@ export function targetInSameChunk(world: BehaviourWorld, observer: Rect, target:
   );
 }
 
+function insideView(view: Rect | undefined, point: Point): boolean {
+  return (
+    view !== undefined &&
+    point.x >= view.x &&
+    point.x < view.x + view.width &&
+    point.y >= view.y &&
+    point.y < view.y + view.height
+  );
+}
+
+export function targetInCurrentView(world: BehaviourWorld, observer: Rect, target: Rect): boolean {
+  return [observer, target].every((rect) =>
+    insideView(world.view, { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }),
+  );
+}
+
 function crosses(rect: Rect, from: Point, to: Point): boolean {
   let near = 0;
   let far = 1;
@@ -62,16 +78,9 @@ export function targetVisible(
   });
   const from = centre(observer);
   const to = centre(target);
-  const view = world.view;
-  const inside = (point: Point) =>
-    view !== undefined &&
-    point.x >= view.x &&
-    point.x < view.x + view.width &&
-    point.y >= view.y &&
-    point.y < view.y + view.height;
   return (
-    inside(from) &&
-    inside(to) &&
+    insideView(world.view, from) &&
+    insideView(world.view, to) &&
     !world.solids.some((rect) => crosses(rect, from, to)) &&
     !(world.platforms ?? []).some(
       (platform) =>

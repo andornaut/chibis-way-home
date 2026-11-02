@@ -45,7 +45,7 @@ import { contactFrameAt } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import { flyLandingRoute, supportedLanding } from "./flyLanding";
 import { hopLift } from "./motion";
-import { targetInSameChunk, targetVisible } from "./perception";
+import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 
 export interface BehaviourState extends BehaviourAttackState {
   readonly idleWatchdog?: BehaviourIdleState;
@@ -878,11 +878,10 @@ function updatePursuit(
     config.unreachableGraceSeconds !== null && unreachableSeconds >= config.unreachableGraceSeconds;
   let reachable = pursuitReachable(tuning, object, world, at, currentState, bird);
   const prior = currentState.pursuit;
-  const aware = targetInSameChunk(
-    world,
-    { ...at, height: object.height, width: object.width },
-    { height: tuning.height, width: tuning.width, x: bird.x, y: bird.y },
-  );
+  const observer = { ...at, height: object.height, width: object.width };
+  const target = birdBox(tuning, bird);
+  const aware =
+    targetInSameChunk(world, observer, target) || targetInCurrentView(world, observer, target);
   if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true) {
     const motion = Object.values(object.behaviour!.states)
       .map(({ motion }) => motion)
