@@ -279,6 +279,16 @@ function pushedPosition(
   return end;
 }
 
+function onSupport(tuning: BirdTuning, surfaces: readonly Rect[], bird: BirdState): boolean {
+  const feet = bird.y + tuning.height;
+  return surfaces.some(
+    (surface) =>
+      Math.abs(feet - surface.y) <= EDGE &&
+      bird.x < surface.x + surface.width &&
+      bird.x + tuning.width > surface.x,
+  );
+}
+
 // One fixed step of seconds: steer, jump, fall, then move along x and along y in turn, each
 // stopped at the first solid in the way. Ledges stop her only from above: falling onto one from
 // at or above its top, never rising or walking through it. Every fall flutters: it never passes
@@ -354,14 +364,21 @@ export function stepBird(
   // Seconds Jump was held before this step, since it started her jump.
   let heldBefore = bird.jumpHeldFor;
   let airJumpUsed = bird.airJumpUsed;
-  const groundJump = (jumpPressed || bufferLeft > 0) && (bird.grounded || bird.coyoteLeft > 0);
-  const airJump = startsAirJump(tuning, input, bird);
+  const supported =
+    bird.grounded ||
+    ((jumpPressed || bufferLeft > 0) &&
+      bird.vy >= 0 &&
+      (onSupport(tuning, solids, bird) || onSupport(tuning, ledges, bird)));
+  const groundJump = (jumpPressed || bufferLeft > 0) && (supported || bird.coyoteLeft > 0);
+  const airJump = !groundJump && startsAirJump(tuning, input, bird);
   const airAscent = airJump || (!groundJump && bird.airJumpUsed);
   const curve = airAscent ? airAscentCurve(tuning) : ascentCurve(tuning);
   const hopHeight = tuning.jumpHopHeight * (airAscent ? tuning.doubleJumpHeightRatio : 1);
   if (groundJump || airJump) {
     if (airJump) {
       airJumpUsed = true;
+    } else if (supported) {
+      airJumpUsed = false;
     }
     vy = -curve.initialSpeed;
     jumpFromY = bird.y;

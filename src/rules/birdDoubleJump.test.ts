@@ -17,6 +17,38 @@ function standing() {
 }
 
 describe("one additional airborne jump", () => {
+  it.each(["solid", "ledge"] as const)(
+    "starts the full first jump on a newly spawned %s support",
+    (kind) => {
+      const solids = kind === "solid" ? [floor] : [];
+      const ledges = kind === "ledge" ? [floor] : [];
+      const spawned = startBird(tuning, { x: 0, y: floor.y });
+      const settled = stepBird(tuning, solids, ledges, STEP_SECONDS, idle, spawned);
+      expect(spawned.grounded).toBe(false);
+      expect(settled.grounded).toBe(true);
+      const first = stepBird(tuning, solids, ledges, STEP_SECONDS, jump, spawned);
+      const expected = stepBird(tuning, solids, ledges, STEP_SECONDS, jump, settled);
+      expect(first).toEqual(expected);
+      expect(first.airJumpUsed).toBe(false);
+    },
+  );
+
+  it("keeps an edge-adjacent unsupported press as the shorter airborne jump", () => {
+    const spawned = startBird(tuning, { x: floor.x + floor.width + tuning.width / 2, y: floor.y });
+    const next = stepBird(tuning, [floor], [], STEP_SECONDS, jump, spawned);
+    expect(next.airJumpUsed).toBe(true);
+    expect(next).toEqual(stepBird(tuning, [], [], STEP_SECONDS, jump, spawned));
+  });
+
+  it("does not turn rising pass-through contact with a ledge into a ground jump", () => {
+    const rising = step(step(standing(), true), false, []);
+    expect(rising.vy).toBeLessThan(0);
+    const ledge = { ...floor, y: rising.y + tuning.height };
+    const result = stepBird(tuning, [], [ledge], STEP_SECONDS, jump, rising);
+    expect(result).toEqual(stepBird(tuning, [], [], STEP_SECONDS, jump, rising));
+    expect(result.airJumpUsed).toBe(true);
+  });
+
   it("requires a fresh press and never grants a third jump before supported landing", () => {
     let bird = step(standing(), true);
     expect(bird.airJumpUsed).toBe(false);
