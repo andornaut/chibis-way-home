@@ -55,6 +55,70 @@ function object(
   };
 }
 
+it("supplies actual traversal context to flying pursuit for idle recovery", () => {
+  vi.mocked(stepBehaviour).mockClear();
+  const actor = object(
+    {
+      axis: "x",
+      distance: 120,
+      initial: "chase",
+      pursuit: {
+        distance: 1000,
+        escaped: { line: "escaped", speaker: "fixture" },
+        unreachableGraceSeconds: null,
+      },
+      states: {
+        chase: {
+          animation: null,
+          motion: { kind: "pursue", mode: "fly", speed: 60 },
+          transitions: [],
+        },
+      },
+    },
+    "hazard",
+    400,
+    180,
+  );
+  const floor = { height: 60, width: 1100, x: 0, y: 300 };
+  const layout: ZoneLayout = {
+    areas: {
+      main: {
+        backX: 12,
+        chunks: [],
+        entries: { start: { x: 100, y: 300 } },
+        exitX: 1088,
+        height: 360,
+        objects: [actor],
+        solids: [floor],
+        terrain: [],
+        tileset: undefined,
+        width: 1100,
+      },
+    },
+    birdFrame: BIRD_FRAME,
+    start: { area: "main", entry: "start" },
+  };
+  stepZone(
+    BIRD,
+    layout,
+    STEP_SECONDS,
+    { jumpHeld: false, move: 0, useHeld: false },
+    startZone(BIRD, layout, 1),
+  );
+  const world = vi.mocked(stepBehaviour).mock.calls.find(([, owner]) => owner === actor)![2];
+  if (!("solids" in world)) {
+    throw new Error("Expected world geometry");
+  }
+  expect(world.solids).toContain(floor);
+  expect(world.hazards?.[0]?.owner).toBe(actor);
+  expect(world.traversalFrame).toMatchObject({
+    bounds: { height: 360, width: 1100, x: 0, y: 0 },
+    dtSeconds: STEP_SECONDS,
+    platforms: [],
+    timeSeconds: 0,
+  });
+});
+
 it.each([
   { reversed: false, turning: false },
   { reversed: true, turning: false },

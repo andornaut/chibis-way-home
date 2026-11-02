@@ -268,6 +268,7 @@ it("preserves zero-time, inactive and initially unacquired lifetimes", () => {
         { width: 100, x: 0 },
         { width: 140, x: 100 },
       ],
+      view: { height: 120, width: 100, x: 0, y: 0 },
     },
     1,
     target,

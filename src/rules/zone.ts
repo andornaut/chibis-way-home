@@ -797,8 +797,8 @@ export function stepZone(
               Object.values(object.behaviour.states).some(
                 ({ motion }) =>
                   motion.kind === "pursue" &&
-                  motion.mode === "ground" &&
-                  motion.traversal !== undefined,
+                  (motion.mode === "fly" ||
+                    (motion.mode === "ground" && motion.traversal !== undefined)),
               )
                 ? traversalGeometry(object)
                 : geometry),
