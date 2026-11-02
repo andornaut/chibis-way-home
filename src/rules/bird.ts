@@ -127,6 +127,7 @@ function approach(speed: number, target: number, step: number): number {
 }
 
 interface AscentCurve {
+  readonly seconds: number;
   readonly height: number;
   readonly initialSpeed: number;
   readonly shape: number;
@@ -154,24 +155,44 @@ function ascentCurve(tuning: BirdTuning): AscentCurve {
   const curve = {
     height,
     initialSpeed: tuning.jumpRiseTime * (tuning.gravity / 5 + shape / 30),
+    seconds: tuning.jumpRiseTime,
     shape,
   };
   ASCENT_CURVES.set(tuning, curve);
   return curve;
 }
 
+const AIR_ASCENT_CURVES = new WeakMap<BirdTuning, AscentCurve>();
+
+function airAscentCurve(tuning: BirdTuning): AscentCurve {
+  const cached = AIR_ASCENT_CURVES.get(tuning);
+  if (cached) {
+    return cached;
+  }
+  const normal = ascentCurve(tuning);
+  const scale = Math.sqrt(tuning.doubleJumpHeightRatio);
+  const curve = {
+    height: normal.height * tuning.doubleJumpHeightRatio,
+    initialSpeed: normal.initialSpeed * scale,
+    seconds: normal.seconds * scale,
+    shape: normal.shape,
+  };
+  AIR_ASCENT_CURVES.set(tuning, curve);
+  return curve;
+}
+
 // Integrate a smooth deceleration that is nonnegative throughout the configured ascent and
 // joins normal gravity at the apex. The initial speed reserves room for a smooth low-hop stop.
 function ascentPoint(tuning: BirdTuning, curve: AscentCurve, elapsed: number): CurvePoint {
-  const time = Math.min(elapsed, tuning.jumpRiseTime);
-  const s = time / tuning.jumpRiseTime;
+  const time = Math.min(elapsed, curve.seconds);
+  const s = time / curve.seconds;
   const s2 = s * s;
   const s4 = s2 * s2;
   const s5 = s4 * s;
   const s6 = s5 * s;
   const s7 = s6 * s;
-  if (elapsed >= tuning.jumpRiseTime) {
-    const fall = elapsed - tuning.jumpRiseTime;
+  if (elapsed >= curve.seconds) {
+    const fall = elapsed - curve.seconds;
     return {
       acceleration: tuning.gravity,
       rise: curve.height - (tuning.gravity * fall * fall) / 2,
@@ -182,11 +203,10 @@ function ascentPoint(tuning: BirdTuning, curve: AscentCurve, elapsed: number): C
     acceleration: s4 * (tuning.gravity + curve.shape * (1 - s)),
     rise:
       curve.initialSpeed * time -
-      tuning.jumpRiseTime ** 2 *
-        (((tuning.gravity + curve.shape) * s6) / 30 - (curve.shape * s7) / 42),
+      curve.seconds ** 2 * (((tuning.gravity + curve.shape) * s6) / 30 - (curve.shape * s7) / 42),
     velocity:
       -curve.initialSpeed +
-      tuning.jumpRiseTime * (((tuning.gravity + curve.shape) * s5) / 5 - (curve.shape * s6) / 6),
+      curve.seconds * (((tuning.gravity + curve.shape) * s5) / 5 - (curve.shape * s6) / 6),
   };
 }
 
@@ -330,13 +350,15 @@ export function stepBird(
   let coyoteLeft = Math.max(0, bird.coyoteLeft - seconds);
   let jumpRise = bird.jumpRise;
   let jumpFromY = bird.jumpFromY;
-  const curve = ascentCurve(tuning);
   let jumpRelease = bird.jumpRelease;
   // Seconds Jump was held before this step, since it started her jump.
   let heldBefore = bird.jumpHeldFor;
   let airJumpUsed = bird.airJumpUsed;
   const groundJump = (jumpPressed || bufferLeft > 0) && (bird.grounded || bird.coyoteLeft > 0);
   const airJump = startsAirJump(tuning, input, bird);
+  const airAscent = airJump || (!groundJump && bird.airJumpUsed);
+  const curve = airAscent ? airAscentCurve(tuning) : ascentCurve(tuning);
+  const hopHeight = tuning.jumpHopHeight * (airAscent ? tuning.doubleJumpHeightRatio : 1);
   if (groundJump || airJump) {
     if (airJump) {
       airJumpUsed = true;
@@ -347,9 +369,7 @@ export function stepBird(
     coyoteLeft = 0;
     heldBefore = 0;
     jumpRise = input.jumpHeld ? "held" : "hop";
-    jumpRelease = input.jumpHeld
-      ? undefined
-      : releaseCurve(tuning.gravity, -vy, 0, tuning.jumpHopHeight);
+    jumpRelease = input.jumpHeld ? undefined : releaseCurve(tuning.gravity, -vy, 0, hopHeight);
   }
   const jumpHeldFor = input.jumpHeld ? heldBefore + seconds : 0;
   const released = bird.jumpHeld && !input.jumpHeld;
@@ -359,7 +379,7 @@ export function stepBird(
       Math.min(1, (heldBefore - tuning.jumpTapWindow) / tuning.jumpReleaseBlendTime),
     );
     const retained = progress * progress * (3 - 2 * progress);
-    const target = tuning.jumpHopHeight + retained * (curve.height - tuning.jumpHopHeight);
+    const target = hopHeight + retained * (curve.height - hopHeight);
     const remaining = Math.max(0, target - (jumpFromY - bird.y));
     jumpRelease = releaseCurve(
       tuning.gravity,

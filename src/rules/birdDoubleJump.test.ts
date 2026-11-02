@@ -34,21 +34,105 @@ describe("one additional airborne jump", () => {
     expect(bird.jumpFromY).toBe(secondStart);
   });
 
-  it.each([1, 30])(
-    "uses the same relative tap/hold ascent on the second jump, held ticks=%s",
-    (heldTicks) => {
-      let airborne = step(step(standing(), true), false);
-      const from = airborne.y;
-      let primary = { ...standing(), y: from };
-      for (let tick = 0; tick < 80; tick++) {
-        const held = tick < heldTicks;
-        airborne = step(airborne, held, []);
-        primary = step(primary, held, []);
-        expect({ vy: airborne.vy, y: airborne.y }).toEqual({ vy: primary.vy, y: primary.y });
+  function readyForAirJump(phase: "rising" | "falling") {
+    let bird = step(standing(), true);
+    if (phase === "rising") {
+      for (let tick = 0; tick < 6; tick++) {
+        bird = step(bird, true, []);
       }
-      expect(airborne.airJumpUsed).toBe(true);
+    } else {
+      while (bird.vy < 0) {
+        bird = step(bird, true, []);
+      }
+    }
+    return step(bird, false, []);
+  }
+
+  function ascent(before: BirdState, heldTicks: number, profile = tuning) {
+    let bird = before;
+    const states: BirdState[] = [];
+    const ticks = Math.ceil((2 * profile.jumpRiseTime) / STEP_SECONDS);
+    for (let tick = 0; tick < ticks; tick++) {
+      bird = step(bird, tick < heldTicks, [], profile);
+      states.push(bird);
+    }
+    return { rise: before.y - Math.min(...states.map((state) => state.y)), states };
+  }
+
+  it.each(["rising", "falling"] as const)(
+    "limits the airborne jump to its authored share of normal height while %s",
+    (phase) => {
+      const before = readyForAirJump(phase);
+      expect(phase === "rising" ? before.vy < 0 : before.vy >= 0).toBe(true);
+      const normal = ascent(standing(), Infinity);
+      const second = ascent(before, Infinity);
+      const tolerance = tuning.gravity * STEP_SECONDS ** 2;
+      expect(
+        Math.abs(second.rise - normal.rise * tuning.doubleJumpHeightRatio),
+      ).toBeLessThanOrEqual(tolerance);
+      expect(second.states[0]!.jumpFromY).toBe(before.y);
+      expect(second.states[0]!.airJumpUsed).toBe(true);
+      expect(second.states[0]!.vy).toBeLessThan(0);
+      const apex = second.states.findIndex((state) => state.vy >= 0);
+      expect(second.states[apex + 1]!.vy - second.states[apex]!.vy).toBeCloseTo(
+        tuning.gravity * STEP_SECONDS,
+      );
     },
   );
+
+  it("retains responsive tap release without exceeding the second-jump height cap", () => {
+    const before = readyForAirJump("rising");
+    const held = ascent(before, Infinity);
+    const normal = ascent(standing(), Infinity);
+    const cap = normal.rise * tuning.doubleJumpHeightRatio;
+    const holds = [
+      1,
+      Math.ceil(tuning.jumpTapWindow / STEP_SECONDS),
+      Math.ceil((tuning.jumpTapWindow + tuning.jumpReleaseBlendTime / 2) / STEP_SECONDS),
+    ];
+    for (const hold of holds) {
+      const released = ascent(before, hold);
+      expect(released.rise).toBeLessThanOrEqual(cap + tuning.gravity * STEP_SECONDS ** 2);
+      const rising = released.states.slice(hold).filter((state) => state.vy < 0);
+      expect(rising.every((state, index) => index === 0 || state.vy >= rising[index - 1]!.vy)).toBe(
+        true,
+      );
+    }
+    expect(ascent(before, 1).rise).toBeLessThan(held.rise);
+  });
+
+  it("leaves every first-jump state unchanged by the airborne height ratio", () => {
+    let limited = standing(),
+      normal = standing();
+    const control = { ...tuning, doubleJumpHeightRatio: 1 };
+    for (let tick = 0; tick < 120; tick++) {
+      const held = tick < Math.ceil(tuning.jumpRiseTime / STEP_SECONDS);
+      limited = step(limited, held, [floor]);
+      normal = step(normal, held, [floor], control);
+      expect(limited).toEqual(normal);
+    }
+  });
+
+  it("preserves carry and ceiling collision, restoring the charge only on supported landing", () => {
+    const before = { ...readyForAirJump("rising"), carryVx: 60 };
+    const ordinary = step(before, false, []);
+    let bird = step(before, true, []);
+    expect(bird.x).toBe(ordinary.x);
+    expect(bird.carryVx).toBe(before.carryVx);
+    const ceiling = { height: 5, width: 400, x: -200, y: bird.y - 10 };
+    for (let tick = 0; tick < 10; tick++) {
+      bird = step(bird, true, [ceiling]);
+    }
+    expect(bird.y).toBeGreaterThanOrEqual(ceiling.y + ceiling.height);
+    expect(bird.jumpRise).toBe("free");
+    expect(bird.airJumpUsed).toBe(true);
+    for (let tick = 0; tick < 120 && !bird.grounded; tick++) {
+      bird = step(bird, false, [floor]);
+    }
+    expect(bird.grounded).toBe(true);
+    expect(bird.airJumpUsed).toBe(false);
+    expect(bird.carryVx).toBe(0);
+  });
 
   it("keeps a coyote jump separate from the single airborne charge", () => {
     let bird = { ...startBird(tuning, { x: 0, y: 0 }), coyoteLeft: tuning.coyoteTime };
