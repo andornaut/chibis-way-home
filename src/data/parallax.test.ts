@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
 import deerSheet from "../../public/art/sprites/background-deer.json";
+import largeDeerSheet from "../../public/art/sprites/background-deer-large.json";
 import reedSheet from "../../public/art/sprites/background-reeds.json";
 import swallowSheet from "../../public/art/sprites/background-swallow.json";
 import { assembleZone } from "../rules/assemble";
@@ -13,7 +14,13 @@ import { artOffset, sceneryParallax, worldScenery } from "../view/objectArt";
 import { ARCHETYPES } from "./archetypes";
 import { BACKGROUND_SECTIONS } from "./backgrounds";
 import { CAMERA } from "./camera";
-import { CHUNKS, EXTERIOR_DEPTH_ALIASES, THEMES, WOODLAND_DEPTH_ALIASES } from "./chunks";
+import {
+  CHUNKS,
+  EXTERIOR_DEPTH_ALIASES,
+  THEMES,
+  WOODLAND_DEPTH_ALIASES,
+  WOODLAND_VERTICAL_ALIASES,
+} from "./chunks";
 import { ZONE_MAP } from "./map";
 import { SCREEN, TILE } from "./screen";
 import type { ChunkPlan, Instance, ObjectLayout } from "./types";
@@ -257,7 +264,17 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
     expect(object.contact).toBeUndefined();
     expect(object.interaction.kind).toBe("none");
     if (object.art !== "background-swallow") {
-      expect(object.origin.y + object.height).toBe(600);
+      const area = Object.values(prepared.layout.areas).find(({ objects }) =>
+        objects.includes(object),
+      )!;
+      expect(
+        area.solids.some(
+          (solid) =>
+            solid.y === object.origin.y + object.height &&
+            solid.x <= object.origin.x &&
+            solid.x + solid.width >= object.origin.x + object.width,
+        ),
+      ).toBe(true);
       expect(object.parallax!.y).toBe(1);
     }
   }
@@ -266,7 +283,10 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
       ({ character }) => character in WOODLAND_SCENERY_CHARACTERS,
     );
     if (fauna.length) {
-      expect(Object.values(WOODLAND_DEPTH_ALIASES)).toContain(id);
+      expect([
+        ...Object.values(WOODLAND_DEPTH_ALIASES),
+        ...Object.values(WOODLAND_VERTICAL_ALIASES),
+      ]).toContain(id);
       for (const instance of fauna) {
         if (instance.character === "background-swallow") {
           continue;
@@ -288,6 +308,7 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
 it("uses looping art tags and only stationary animation nodes for decorative wildlife", () => {
   const sheets = {
     "background-deer": deerSheet,
+    "background-deer-large": largeDeerSheet,
     "background-reeds": reedSheet,
     "background-swallow": swallowSheet,
   };
@@ -340,7 +361,12 @@ it("resolves Woodland wildlife as autonomous world scenery with supported deer a
         ...objectLayout(TILE, catalogue, {}, undefined, {}, instance),
         scenerySource: "chunk" as const,
       };
-      const sheet = instance.character === "background-deer" ? deerSheet : swallowSheet;
+      const sheet =
+        instance.character === "background-deer-large"
+          ? largeDeerSheet
+          : instance.character === "background-deer"
+            ? deerSheet
+            : swallowSheet;
       const native = Object.values(sheet.frames)[0]!.sourceSize;
       expect({ height: object.height, width: object.width }).toEqual({
         height: native.h,
@@ -351,7 +377,7 @@ it("resolves Woodland wildlife as autonomous world scenery with supported deer a
       expect(object.contact).toBeUndefined();
       expect(object.scene).toBeUndefined();
       expect(object.reaction.kind).toBe("none");
-      if (instance.character === "background-deer") {
+      if (instance.character.startsWith("background-deer")) {
         deer++;
         expect(object.motion.algorithm).toBe("static");
         expect(
@@ -381,4 +407,55 @@ it("resolves Woodland wildlife as autonomous world scenery with supported deer a
   }
   expect(deer).toBeGreaterThan(0);
   expect(swallows).toBeGreaterThan(0);
+});
+
+it.each([
+  WOODLAND_DEPTH_ALIASES["vertical-red-gate"]!,
+  WOODLAND_VERTICAL_ALIASES["vertical-red-gate"]!,
+])("supports the complete planted large deer silhouette in %s", (id) => {
+  const chunk = CHUNKS[id]!;
+  const instance = chunk.scenery!.find(({ character }) => character === "background-deer-large")!;
+  const object = {
+    ...objectLayout(
+      TILE,
+      { archetypes: ARCHETYPES, characters: WOODLAND_SCENERY_CHARACTERS },
+      {},
+      undefined,
+      {},
+      instance,
+    ),
+    scenerySource: "chunk" as const,
+  };
+  const frames = Object.values(largeDeerSheet.frames);
+  const native = frames[0]!.sourceSize;
+  expect(object.width).toBe(native.w);
+  expect(object.height).toBe(native.h);
+  expect(object.parallax).toEqual({ x: 1, y: 1 });
+  expect(worldScenery(object)).toBe(true);
+  expect(object.collision).toBe("none");
+  expect(object.contact).toBeUndefined();
+  expect(object.interaction.kind).toBe("none");
+  expect(object.motion.algorithm).toBe("static");
+  expect(
+    chunk.solids.some(
+      (solid) =>
+        solid.row * TILE === object.origin.y + object.height &&
+        solid.col * TILE <= object.origin.x &&
+        (solid.col + solid.cols) * TILE >= object.origin.x + object.width,
+    ),
+  ).toBe(true);
+  for (const tag of largeDeerSheet.meta.frameTags) {
+    const node = Object.values(object.behaviour!.states).find(
+      ({ animation }) => animation === tag.name,
+    )!;
+    expect(node.motion).toEqual({ kind: "wait" });
+    const cycle =
+      frames.slice(tag.from, tag.to + 1).reduce((sum, { duration }) => sum + duration, 0) / 1000;
+    expect(
+      node.transitions.some(({ when }) =>
+        when.some((condition) => condition.kind === "elapsed" && condition.seconds === cycle),
+      ),
+    ).toBe(true);
+  }
+  expect(manifest.sprites.find(({ key }) => key === object.art)!.once).toEqual([]);
 });

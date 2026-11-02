@@ -19,6 +19,29 @@ const DEER_BEHAVIOUR: BehaviourPlan = {
   },
 };
 
+const LARGE_DEER_POSE_SECONDS = { graze: 3.25, idle: 2.36 } as const;
+const LARGE_DEER_BEHAVIOUR: BehaviourPlan = {
+  axis: "x",
+  distance: 0,
+  initial: "idle",
+  states: {
+    graze: {
+      animation: "graze",
+      motion: { kind: "wait" },
+      transitions: [
+        { to: "idle", when: [{ kind: "elapsed", seconds: LARGE_DEER_POSE_SECONDS.graze }] },
+      ],
+    },
+    idle: {
+      animation: "idle",
+      motion: { kind: "wait" },
+      transitions: [
+        { to: "graze", when: [{ kind: "elapsed", seconds: LARGE_DEER_POSE_SECONDS.idle }] },
+      ],
+    },
+  },
+};
+
 export const WOODLAND_SCENERY_CHARACTERS: Readonly<Record<string, Character>> = {
   "background-deer": {
     archetype: "scenery",
@@ -26,6 +49,13 @@ export const WOODLAND_SCENERY_CHARACTERS: Readonly<Record<string, Character>> = 
     behaviour: DEER_BEHAVIOUR,
     cols: 32 / TILE,
     rows: 24 / TILE,
+  },
+  "background-deer-large": {
+    archetype: "scenery",
+    art: "background-deer-large",
+    behaviour: LARGE_DEER_BEHAVIOUR,
+    cols: 216 / TILE,
+    rows: 144 / TILE,
   },
   "background-reeds": {
     animations: { idle: "sway" },
@@ -90,5 +120,6 @@ export const WOODLAND_SCENERY: Readonly<Record<string, readonly Instance[]>> = {
   "vertical-red-gate": [
     { character: "background-deer", col: 10, parallax: { x: 1, y: 1 }, row: 48 },
     { character: "background-reeds", col: 44, parallax: { x: 0.4, y: 1 }, row: 48 },
+    { character: "background-deer-large", col: 40, parallax: { x: 1, y: 1 }, row: 38 },
   ],
 };
