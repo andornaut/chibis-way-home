@@ -30,13 +30,21 @@ import {
   sweptBehaviourRect,
 } from "./behaviourBounds";
 import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases";
+import { type WalkStep, walkTransitions } from "./walkTransitions";
 
 const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
-const WALK_OBSERVERS = new WeakMap<ZoneLayout, (zone: ZoneState) => void>();
+const WALK_OBSERVERS = new WeakMap<ZoneLayout, (before: ZoneState, next: ZoneState) => void>();
+const WALK_SPANS = new WeakMap<
+  ZoneLayout,
+  WeakMap<
+    Pick<BehaviourBoundsContext, "maximumRise" | "targetHeight">,
+    WeakMap<Surface, ReturnType<typeof sweptSpan>>
+  >
+>();
 
 // Conversations do not move the world. The walker activates their patrols explicitly so it
 // verifies the active encounter, including on any fresh attempt.
-function stepZone(
+function physicalStep(
   tuning: BirdTuning,
   layout: ZoneLayout,
   seconds: number,
@@ -50,11 +58,24 @@ function stepZone(
     BEHAVIOUR_INDICES.set(area, indices);
   }
   const active = indices.reduce((state, index) => activateBehaviour(index, state), zone);
-  const next = stepActualZone(tuning, layout, seconds, input, active);
-  if (!zone.cleared) {
-    WALK_OBSERVERS.get(layout)?.(next);
+  return stepActualZone(tuning, layout, seconds, input, active);
+}
+
+function observeTransition(layout: ZoneLayout, before: ZoneState, next: ZoneState): ZoneState {
+  if (!before.cleared) {
+    WALK_OBSERVERS.get(layout)?.(before, next);
   }
   return next;
+}
+
+function stepZone(
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  seconds: number,
+  input: ZoneInput,
+  zone: ZoneState,
+): ZoneState {
+  return observeTransition(layout, zone, physicalStep(tuning, layout, seconds, input, zone));
 }
 
 // A top she can stand on in an area: a still span from left to right at height y, or a moving
@@ -333,10 +354,14 @@ const trailing = (tuning: BirdTuning, dir: -1 | 1, x: number) => (dir > 0 ? x : 
 // Runs zone on one step at a time; step returns false once she restarts or turns back into the
 // area's first column, which would end the zone, so no try counts a spot past it.
 function runner(tuning: BirdTuning, layout: ZoneLayout, start: ZoneState) {
+  return runWith((input, zone) => stepZone(tuning, layout, STEP_SECONDS, input, zone), start);
+}
+
+function runWith(step: WalkStep, start: ZoneState) {
   const run = {
     step: (input: ZoneInput) => {
       const before = run.zone.restarts;
-      run.zone = stepZone(tuning, layout, STEP_SECONDS, input, run.zone);
+      run.zone = step(input, run.zone);
       run.steps++;
       return (
         run.zone.death === undefined &&
@@ -370,11 +395,12 @@ function steer(
 function prepare(
   tuning: BirdTuning,
   layout: ZoneLayout,
+  step: WalkStep,
   from: Spot,
   start: ZoneState,
   attempt: Try,
 ): { ready: boolean; steps: number; zone: ZoneState } {
-  const run = runner(tuning, layout, start);
+  const run = runWith(step, start);
   const missed = () => ({ ready: false, steps: run.steps, zone: run.zone });
   const base = () => placed(from.surface, run.zone, layout).left;
   const { dir } = attempt;
@@ -430,14 +456,23 @@ function trialsFrom(
   surfaces: readonly Surface[],
   from: Spot,
   start: ZoneState,
-): (attempt: Try) => TrialResult {
+): {
+  readonly drop: (target: Target) => TrialResult;
+  readonly jump: (attempt: Try) => TrialResult;
+  readonly launch: (attempt: Pick<Try, "hold" | "rise" | "target">) => TrialResult;
+} {
   const prepared = new Map<string, ReturnType<typeof prepare>>();
-  return (attempt) => {
+  const cached = walkTransitions((input, zone) =>
+    physicalStep(tuning, layout, STEP_SECONDS, input, zone),
+  );
+  // Query-local observation belongs to each logical step, including reused physics results.
+  const step: WalkStep = (input, zone) => observeTransition(layout, zone, cached(input, zone));
+  const jump = (attempt: Try) => {
     const key = `${attempt.dir}:${attempt.pre}:${attempt.takeoff}:${attempt.late}`;
     let prefix = prepared.get(key);
     let steps = 0;
     if (!prefix) {
-      prefix = prepare(tuning, layout, from, start, attempt);
+      prefix = prepare(tuning, layout, step, from, start, attempt);
       prepared.set(key, prefix);
       steps = prefix.steps;
     }
@@ -448,21 +483,28 @@ function trialsFrom(
         steps,
       };
     }
-    const result = play(tuning, layout, surfaces, from, prefix.zone, attempt);
+    const result = play(tuning, layout, step, surfaces, from, prefix.zone, attempt);
     return { ...result, steps: steps + result.steps };
+  };
+  return {
+    drop: (target) =>
+      play(tuning, layout, step, surfaces, from, start, { hold: 0, rise: 0, target }),
+    jump,
+    launch: (attempt) => play(tuning, layout, step, surfaces, from, start, attempt),
   };
 }
 
-// From a prepared takeoff, press Jump and steer until the first landing.
+// Steer from the actual state until the first landing, optionally holding Jump.
 function play(
   tuning: BirdTuning,
   layout: ZoneLayout,
+  step: WalkStep,
   surfaces: readonly Surface[],
   from: Spot,
   start: ZoneState,
-  attempt: Try,
+  attempt: Pick<Try, "hold" | "rise" | "target">,
 ): TrialResult {
-  const run = runner(tuning, layout, start);
+  const run = runWith(step, start);
   const missed = (): TrialResult => ({
     entered: run.zone.area === start.area ? undefined : run.zone,
     landed: undefined,
@@ -751,23 +793,38 @@ function sweptSpan(
   layout: ZoneLayout,
   surface: Surface,
 ): { bottom: number; left: number; right: number; top: number } {
+  const spans = WALK_SPANS.get(layout);
+  let bySurface = spans?.get(target);
+  const previous = bySurface?.get(surface);
+  if (previous) {
+    return previous;
+  }
   const object =
     surface.mover === undefined ? undefined : areaOf(layout, surface.area).objects[surface.mover];
-  if (!object) {
-    return { bottom: surface.y, left: surface.left, right: surface.right, top: surface.y };
+  const rect = object ? sweptRect(target, areaOf(layout, surface.area), object) : undefined;
+  const span =
+    rect && object
+      ? {
+          bottom: rect.y + rect.height - object.height,
+          left: rect.x,
+          right: rect.x + rect.width,
+          top: rect.y,
+        }
+      : { bottom: surface.y, left: surface.left, right: surface.right, top: surface.y };
+  if (spans) {
+    if (!bySurface) {
+      bySurface = new WeakMap();
+      spans.set(target, bySurface);
+    }
+    bySurface.set(surface, span);
   }
-  const rect = sweptRect(target, areaOf(layout, surface.area), object);
-  return {
-    bottom: rect.y + rect.height - object.height,
-    left: rect.x,
-    right: rect.x + rect.width,
-    top: rect.y,
-  };
+  return span;
 }
 
 // The stretches a spot might reach in one move: the other surfaces in its area within the
 // bird's bounds, and its own surface's buckets nearby.
 function targetsFrom(
+  tuning: Pick<BirdTuning, "width">,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   bounds: ReturnType<typeof moveBounds>,
@@ -785,7 +842,24 @@ function targetsFrom(
       const dx = Math.max(0, span.left - hi, lo - span.right);
       return own.top - span.bottom <= bounds.rise && dx <= bounds.across(span.bottom - own.top);
     })
-    .map((surface) => ({ key: surface.key, left: surface.left, right: surface.right, surface }));
+    .flatMap((surface) => {
+      const target = { key: surface.key, left: surface.left, right: surface.right, surface };
+      if (surface.mover !== undefined) {
+        return [target];
+      }
+      // A lower bank may require descending just beyond an upper ledge instead of steering
+      // back underneath it. Keep the full target and try its actual overhang boundaries too.
+      const edges = surfaces
+        .filter(
+          (upper) =>
+            upper.area === surface.area && upper.mover === undefined && upper.y < surface.y,
+        )
+        .flatMap((upper) => [upper.right, upper.left - tuning.width]);
+      const aims = [...new Set(edges)]
+        .filter((left) => left >= surface.left && left + tuning.width <= surface.right)
+        .map((left) => ({ ...target, left, right: left + tuning.width }));
+      return [...aims, target];
+    });
   const stretches = OWN_BUCKETS.map((offset) => from.bucket + offset)
     .filter((bucket) => bucket >= 0 && here.left + bucket * BUCKET < here.right)
     .map((bucket) => ({
@@ -923,7 +997,7 @@ export function walkRequiredRoutes(
   const observedLayout = { ...layout };
   let pending = required.intervals.length;
   if (pending > 0) {
-    WALK_OBSERVERS.set(observedLayout, (zone) => {
+    WALK_OBSERVERS.set(observedLayout, (_before, zone) => {
       if (pending === 0 || zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
         return;
       }
@@ -969,6 +1043,40 @@ function walk(
   surfaces: Surface[],
   layout: ZoneLayout,
 ): ZoneWalk {
+  const observedLayout = { ...layout };
+  // Fixed full-track bounds depend only on this layout, exact bounds object and surface.
+  WALK_SPANS.set(observedLayout, new WeakMap());
+  const observe = WALK_OBSERVERS.get(layout);
+  let cleared = false;
+  WALK_OBSERVERS.set(observedLayout, (before, next) => {
+    if (
+      next.cleared &&
+      before.death === undefined &&
+      next.death === undefined &&
+      !before.turnedBack &&
+      !next.turnedBack &&
+      before.restarts === next.restarts
+    ) {
+      cleared = true;
+    }
+    observe?.(before, next);
+  });
+  try {
+    const result = walkSearch(tuning, required, surfaces, observedLayout, () => cleared);
+    return { ...result, cleared: result.cleared || cleared };
+  } finally {
+    WALK_OBSERVERS.delete(observedLayout);
+    WALK_SPANS.delete(observedLayout);
+  }
+}
+
+function walkSearch(
+  tuning: BirdTuning,
+  required: WalkRequirements | undefined,
+  surfaces: Surface[],
+  layout: ZoneLayout,
+  engineCleared: () => boolean,
+): ZoneWalk {
   const seen = new Map<string, Spot>();
   const reached = new Set<string>();
   const queue: Spot[] = [];
@@ -976,7 +1084,8 @@ function walk(
   const arrivals = new WeakSet<ZoneState>();
   let steps = 0;
   let cleared = false;
-  const complete = () => required !== undefined && cleared && requiredComplete(required, reached);
+  const complete = () =>
+    required !== undefined && (cleared || engineCleared()) && requiredComplete(required, reached);
   const reach = (spot: Spot) => {
     if (!seen.has(spotKey(spot))) {
       seen.set(spotKey(spot), spot);
@@ -1048,7 +1157,7 @@ function walk(
     if (complete()) {
       break;
     }
-    const { others, own } = targetsFrom(layout, surfaces, bounds, from, here);
+    const { others, own } = targetsFrom(tuning, layout, surfaces, bounds, from, here);
     const intervals =
       required?.intervals.filter(
         (interval) =>
@@ -1093,11 +1202,34 @@ function walk(
           trial = trialsFrom(tuning, layout, surfaces, from, start);
           trials.set(start, trial);
         }
+        const lower =
+          placed(target.surface, start, layout).y > placed(from.surface, start, layout).y;
+        const immediate = lower && tries.find(({ hold, rise }) => hold === AIR_STEPS && rise === 0);
+        if (immediate) {
+          const launched = trial.launch(immediate);
+          steps += launched.steps;
+          if (launched.entered) {
+            arrive(launched.entered);
+          }
+          if (launched.landed) {
+            reach(launched.landed);
+          }
+        }
+        if (lower && !done()) {
+          const dropped = trial.drop(target);
+          steps += dropped.steps;
+          if (dropped.entered) {
+            arrive(dropped.entered);
+          }
+          if (dropped.landed) {
+            reach(dropped.landed);
+          }
+        }
         for (const attempt of tries) {
           if (done()) {
             break;
           }
-          const { entered, landed, steps: ran } = trial(attempt);
+          const { entered, landed, steps: ran } = trial.jump(attempt);
           steps += ran;
           if (entered) {
             arrive(entered);
@@ -1172,7 +1304,7 @@ export function crosses(
     );
     return waitStates(tuning, layout, state, count).states.some((start) => {
       const trial = trialsFrom(tuning, layout, surfaces, spot, start);
-      return tries.some((attempt) => trial(attempt).landed?.surface.key === to.key);
+      return tries.some((attempt) => trial.jump(attempt).landed?.surface.key === to.key);
     });
   });
 }

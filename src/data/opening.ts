@@ -1,24 +1,41 @@
-import motion from "../../art/opening/motion-recipe.json";
-import type { OpeningBeat } from "./types";
+import type { OpeningBeat, OpeningLayer, Point } from "./types";
 
-const TIMING = [
-  { seconds: [2.4], text: "opening-friendship" },
-  { seconds: [1.6], text: "opening-argument" },
-  { seconds: [2, 1.6], text: "opening-packing" },
-  { seconds: [2], text: "opening-waking" },
-] as const;
-
-// Each beat waits for Continue; shot durations control animation, never input availability.
-export const OPENING: readonly OpeningBeat[] = motion.beats.map((beat, index) => {
-  const timing = TIMING[index];
-  if (!timing || timing.seconds.length !== beat.shots.length) {
-    throw new Error("Opening art shots and authored timing must match");
-  }
+function stillSprite(anchor: Point, flipX: boolean, position: Point, art: string): OpeningLayer {
   return {
-    shots: beat.shots.map((shot, shotIndex) => ({
-      ...shot,
-      seconds: timing.seconds[shotIndex]!,
+    anchor,
+    art,
+    flipX,
+    keyframes: [0, 1].map((progress) => ({
+      angle: 0,
+      pose: "idle",
+      position,
+      progress,
+      scale: 1,
+      visible: true,
     })),
-    text: timing.text,
   };
-});
+}
+
+const chibi = (x: number) => stillSprite({ x: 24, y: 42 }, false, { x, y: 240 }, "bird");
+const fert = (x: number) => stillSprite({ x: 24, y: 48 }, true, { x, y: 240 }, "ferret-antagonist");
+const parcel = (x: number) => stillSprite({ x: 12, y: 24 }, false, { x, y: 240 }, "ferret-parcel");
+
+// Every beat waits for Continue, including after its single shot reaches its final pose.
+export const OPENING: readonly OpeningBeat[] = [
+  {
+    shots: [{ background: null, layers: [chibi(240), fert(480)], seconds: 1 }],
+    text: "opening-friendship",
+  },
+  {
+    shots: [{ background: null, layers: [chibi(240), fert(480)], seconds: 1 }],
+    text: "opening-argument",
+  },
+  {
+    shots: [{ background: null, layers: [parcel(360), fert(480)], seconds: 1 }],
+    text: "opening-packing",
+  },
+  {
+    shots: [{ background: null, layers: [parcel(360), chibi(240)], seconds: 1 }],
+    text: "opening-waking",
+  },
+];

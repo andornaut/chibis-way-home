@@ -9,7 +9,32 @@ export interface BehaviourPlatform {
   readonly owner: ObjectLayout;
   readonly rect: Rect;
 }
+export interface BehaviourPlatformFrame {
+  readonly after: Rect;
+  readonly before: Rect;
+  readonly collision: "ledge" | "solid";
+  readonly owner: ObjectLayout;
+  readonly segments?: readonly {
+    readonly endSeconds: number;
+    readonly from: Rect;
+    readonly startSeconds: number;
+    readonly to: Rect;
+  }[];
+}
+
+export interface BehaviourTraversalFrame {
+  readonly sample?: (
+    timeSeconds: number,
+    dtSeconds: number,
+  ) => readonly BehaviourPlatformFrame[] | undefined;
+  readonly bounds: Rect;
+  readonly dtSeconds: number;
+  readonly platforms: readonly BehaviourPlatformFrame[];
+  readonly timeSeconds: number;
+}
+
 export interface BehaviourWorld {
+  readonly traversalFrame?: BehaviourTraversalFrame;
   readonly hazards?: readonly { readonly owner: ObjectLayout; readonly rect: Rect }[];
   readonly view?: Rect;
   readonly platforms?: readonly BehaviourPlatform[];

@@ -31,7 +31,8 @@ export function wrappedCardText(font: BitmapFont, width: number, text: string): 
 export interface SummaryWords {
   readonly stage: string;
   readonly zone: string;
-  readonly labels: RunStatWords;
+  readonly labels: { readonly stage: RunStatWords; readonly zone: RunStatWords };
+  readonly wholeRun: string;
   readonly run: RunStatWords;
   readonly visit?: RunStatWords & { readonly partial: string | undefined };
 }
@@ -66,113 +67,102 @@ export function summaryTextOrigin(font: BitmapFont, rect: Rect, text: string): P
 }
 
 export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: SummaryWords) {
-  const count = words.visit ? 2 : 1;
-  const room = (bounds.width - STAGE_PREVIEW_SIZE.width - count * CARD_CONTENT.padding) / count;
-  const labels = RUN_STAT_KEYS.map((key) => words.labels[key]);
-  const labelWidth = Math.max(...labels.map((text) => cardTextSize(fonts.body, text).width));
+  const padding = CARD_CONTENT.padding;
+  const headingHeight = 2 * CARD_CONTENT.lineHeight;
+  const contentHeight =
+    headingHeight +
+    CARD_CONTENT.rowGap +
+    RUN_STAT_KEYS.length * CARD_CONTENT.lineHeight +
+    (RUN_STAT_KEYS.length - 1) * CARD_CONTENT.rowGap;
+  const imageWidth = STAGE_PREVIEW_SIZE.width + 4 * padding;
+  const panelWidth = (bounds.width - imageWidth - 2 * padding) / 2;
+  const room = panelWidth - 2 * padding;
+  const labelWidth = Math.max(
+    ...Object.values(words.labels).flatMap((labels) =>
+      RUN_STAT_KEYS.map((key) => cardTextSize(fonts.body, labels[key]).width),
+    ),
+  );
   const valueRoom = room - labelWidth - CARD_CONTENT.gap;
-  if (valueRoom <= 0) {
-    throw new Error("Stage summary has no room for metric values");
+  const panelHeight = contentHeight + 2 * padding;
+  if (
+    valueRoom <= 0 ||
+    panelHeight + CARD_CONTENT.rowGap + CARD_CONTENT.lineHeight > bounds.height
+  ) {
+    throw new Error("Stage summary has no room for full-size metrics");
   }
-  const block = (title: string, metrics: RunStatWords, titleFont: BitmapFont, partial?: string) => {
-    const heading = wrappedCardText(titleFont, room, title);
-    const headingSize = cardTextSize(titleFont, heading);
-    const subtitle = partial ? wrappedCardText(fonts.body, room, partial) : undefined;
-    const subtitleSize = subtitle ? cardTextSize(fonts.body, subtitle) : undefined;
+  const top = bounds.y;
+  const block = (
+    x: number,
+    titleText: string,
+    metrics: RunStatWords,
+    labels: RunStatWords,
+    font: BitmapFont,
+  ) => {
+    const panel: Rect = { height: panelHeight, width: panelWidth, x, y: top };
+    const heading = wrappedCardText(font, room, titleText);
+    if (cardTextSize(font, heading).height > headingHeight) {
+      throw new Error(`Stage summary heading exceeds two lines: ${titleText}`);
+    }
+    const title = { height: headingHeight, width: room, x: x + padding, y: top + padding };
     const rows = RUN_STAT_KEYS.map((key, index) => {
       const text = metrics[key],
-        label = labels[index]!;
+        label = labels[key];
       if (!text.startsWith(label)) {
         throw new Error(`Metric label mismatch: ${key}`);
       }
-      const value = wrappedCardText(fonts.body, valueRoom, text.slice(label.length).trimStart());
-      return { label, text, value, valueSize: cardTextSize(fonts.body, value) };
+      const value = text.slice(label.length).trimStart();
+      if (cardTextSize(fonts.body, value).width > valueRoom) {
+        throw new Error(`Stage summary metric exceeds its column: ${key}`);
+      }
+      const rect: Rect = {
+        height: CARD_CONTENT.lineHeight,
+        width: room,
+        x: title.x,
+        y:
+          title.y +
+          headingHeight +
+          CARD_CONTENT.rowGap +
+          index * (CARD_CONTENT.lineHeight + CARD_CONTENT.rowGap),
+      };
+      return {
+        label: { rect: { ...rect, width: labelWidth }, text: label },
+        rect,
+        text,
+        value: {
+          rect: { ...rect, width: valueRoom, x: rect.x + labelWidth + CARD_CONTENT.gap },
+          text: value,
+        },
+      };
     });
-    return {
-      headerHeight:
-        headingSize.height + (subtitleSize ? CARD_CONTENT.rowGap + subtitleSize.height : 0),
-      heading,
-      headingSize,
-      rows,
-      subtitle,
-      subtitleSize,
-      width: Math.max(
-        headingSize.width,
-        subtitleSize?.width ?? 0,
-        labelWidth + CARD_CONTENT.gap + Math.max(...rows.map(({ valueSize }) => valueSize.width)),
-      ),
-    };
+    return { panel, rows, text: heading, title };
   };
-  const run = block(
-    words.visit ? words.stage : `${words.zone}\n${words.stage}`,
+  const zone = words.visit
+    ? block(bounds.x, words.zone, words.visit, words.labels.zone, fonts.title)
+    : undefined;
+  const image: Rect = {
+    height: (imageWidth * STAGE_PREVIEW_SIZE.height) / STAGE_PREVIEW_SIZE.width,
+    width: imageWidth,
+    x: bounds.x + panelWidth + padding,
+    y: top + padding,
+  };
+  const stage = block(
+    image.x + image.width + padding,
+    words.stage,
     words.run,
+    words.labels.stage,
     fonts.body,
   );
-  const visit = words.visit
-    ? block(words.zone, words.visit, fonts.title, words.visit.partial)
-    : undefined;
-  const headerHeight = Math.max(run.headerHeight, visit?.headerHeight ?? 0);
-  const rowHeights = run.rows.map((row, index) =>
-    Math.max(
-      CARD_CONTENT.lineHeight,
-      row.valueSize.height,
-      visit?.rows[index]?.valueSize.height ?? 0,
-    ),
-  );
-  const height = Math.max(
-    STAGE_PREVIEW_SIZE.height,
-    headerHeight +
-      CARD_CONTENT.gap +
-      rowHeights.reduce((sum, n) => sum + n, 0) +
-      (RUN_STAT_KEYS.length - 1) * CARD_CONTENT.rowGap,
-  );
-  const width =
-    STAGE_PREVIEW_SIZE.width +
-    CARD_CONTENT.padding +
-    run.width +
-    (visit ? CARD_CONTENT.padding + visit.width : 0);
-  if (width > bounds.width || height > bounds.height) {
-    throw new Error(
-      `Stage summary ${width}x${height} exceeds ${bounds.width}x${bounds.height}: ${words.stage}`,
-    );
+  if (cardTextSize(fonts.body, words.wholeRun).width > bounds.width) {
+    throw new Error("Whole-run summary exceeds the page width");
   }
-  const left = bounds.x + (bounds.width - width) / 2,
-    top = bounds.y + (bounds.height - height) / 2;
-  const image = { ...STAGE_PREVIEW_SIZE, x: left, y: top };
-  const placed = (value: typeof run, x: number) => {
-    const title: Rect = { height: value.headingSize.height, width: value.width, x, y: top };
-    const subtitle =
-      value.subtitle && value.subtitleSize
-        ? {
-            rect: {
-              height: value.subtitleSize.height,
-              width: value.width,
-              x,
-              y: top + title.height + CARD_CONTENT.rowGap,
-            },
-            text: value.subtitle,
-          }
-        : undefined;
-    let y = top + headerHeight + CARD_CONTENT.gap;
-    const rows = value.rows.map((row, index) => {
-      const rect: Rect = { height: rowHeights[index]!, width: value.width, x, y };
-      const label = { rect: { ...rect, width: labelWidth }, text: row.label };
-      const metric = {
-        rect: {
-          ...rect,
-          width: value.width - labelWidth - CARD_CONTENT.gap,
-          x: x + labelWidth + CARD_CONTENT.gap,
-        },
-        text: row.value,
-      };
-      y += rect.height + CARD_CONTENT.rowGap;
-      return { label, rect, text: row.text, value: metric };
-    });
-    return { rows, subtitle, text: value.heading, title };
+  const wholeRun = {
+    rect: {
+      height: CARD_CONTENT.lineHeight,
+      width: bounds.width,
+      x: bounds.x,
+      y: top + panelHeight + CARD_CONTENT.rowGap,
+    },
+    text: words.wholeRun,
   };
-  const stage = placed(run, image.x + image.width + CARD_CONTENT.padding);
-  const zone = visit
-    ? placed(visit, stage.title.x + stage.title.width + CARD_CONTENT.padding)
-    : undefined;
-  return { image, stage, zone };
+  return { image, stage, wholeRun, zone };
 }

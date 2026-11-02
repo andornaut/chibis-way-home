@@ -30,6 +30,12 @@ Sky, distant skyline and middle-distance scenery are separate repeating images. 
 
 The design starts with horizontal camera factors of 0 for sky, 0.15 for the far skyline, 0.4 for middle scenery and 1 for play. Gameplay owns the runtime values; initial far and middle vertical factors are 0.05 and 0.15. Vertical movement should be weaker on distant layers to keep climbs legible. Windows between near buildings reveal the distant layers; do not fill every opening with foreground decoration. Repeating layers must cover camera travel without exposing an empty edge.
 
+Maintain an interesting backdrop throughout every stage's camera travel; sky and clouds can supply quiet stretches. V1 background sections use an independently seeded stream, separate from terrain and physical motion. Preserve authored scenery and species: append complementary coverage clipped to uncovered spans on the required parallax planes rather than replacing existing scenery. Keep one consistent weather treatment per zone in V1; changing weather and additional weather effects remain parked for V2. Interior wall materials, framed windows and occlusion remain intact, so background motion is not necessarily visible behind opaque walls. Coverage contracts are not a browser visibility check.
+
+Outdoor generated repeated far and middle backdrops opt into `groundAnchor: "start"`, referencing a valid entry in their area. Resolve their vertical offset from the stable entrance-ground baseline: `G - (1 - py) * C0 - artHeight`, where `G` is that entry's ground line, `C0` its existing clamped entry-camera scroll and `py` the layer's vertical parallax factor. Add this to the authored row offset. Preserve horizontal and weak vertical parallax; the reference does not follow individual platforms or use asset-specific corrective offsets. Weather and authored Woodland and Apartment stacks retain their existing placement contracts.
+
+Apartment decorative depth planes use `backdropPlane: "interior"`, `backdropSpan: true` and a valid `groundAnchor: "start"` entry. Their authored col, row, cols and rows define a fixed world rectangle: its quad scrolls at 1,1 and draws at depth -3.5, above the opaque base walls and below props and terrain. Only the repeated texture's phase moves with parallax relative to the existing clamped entry-camera reference; do not apply the outdoor ground-anchor position offset. Derive these rectangles from actual wall bands and exclude window openings. Preserve the base walls, physical props, terrain and seeded layout; absent the interior opt-in, legacy outdoor and weather rendering is unchanged. Gameplay owns placement and parallax factors.
+
 ### Stage scenery identity
 
 Stage cards use captures of actual stage scenery. Keep each zone’s stages inside its zone palette while selecting different existing middle-distance silhouettes and near materials. Interior scenes remain enclosed rooms; exterior silhouettes appear only in exterior sections or through framed depth windows. The bindings below describe appearance, not platform geometry or thumbnail-only illustrations.
@@ -121,12 +127,17 @@ Install Python 3.12 art dependencies with `python3.12 -m venv .venv-art` and `.v
 - Keys are kebab-case, named after what the player sees. Internal names match displayed names.
 - Checks run in a container: the art manifest, art tests that assert every key the game uses exists with its tags, and prettier on the docs. PLACEHOLDER: the image and command.
 
+### Asset gallery and tuning reference
+
+The read-only [asset gallery](../pages/art/index.html) at `/art/` includes every entry in the [served manifest](../public/art/manifest.json): backdrops, data, fonts, images, sprites and tilesets. Its DOM/canvas previews use the game palette and game-kit Aseprite/BMFont parsers, with native frames, animation tags, exported timings, once-only playback, zoom and background controls. These controls change only the viewer. The [tuning reference](../pages/tuning/index.html) at `/tuning/` lists searchable values directly from the game's tuning data; it does not create overrides, edit the game or run simulations.
+
 ## Style rules
 
 ### Palette
 
 - One fixed house palette, plus a few game-specific ramps that each end on a house colour. The house palette is [Endesga 32](https://lospec.com/palette-list/endesga-32); colour names are the `K` names in `art/tools/pixel.py`.
 - Every pixel is fully opaque or fully transparent.
+- Background paint uses the compressed pastel ramps in `art/tools/background_tones.py`: pale far haze and quiet middle/local scenery separate in value from the stronger play materials. Preserve the existing flat zone-primary skies, silhouettes, species, complete buildings and opaque indoor walls. Functional doors, stair markers, the walk signal and the opened parcel retain their authored cues. `python3 -I art/tools/background_tones.py build` refreshes only background PNGs; the individual generators apply the same policy when publishing backdrops. Foreground tiles, actors, UI and opening artwork are unchanged.
 - Each colour has a one-step-darker mapping (its ramp). Shadows and dimming step each colour down its ramp, never blend with black.
 - Greys (lgrey, grey) may be used for environment scenery and characters. Disabled UI keeps its own treatment: greyed with the grey ramp and changed in shape, so it stays recognisable.
 
@@ -154,7 +165,7 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 - Against the play ground, keep stepping down the ramp until the outline holds 3:1 contrast on every ground it can appear on.
 - A dark area takes a light rim on its top-left-facing edges, so it separates from dark ground.
 - Faces and portraits take one ink outer line.
-- Effects take a fixed 1px rim instead of a ramp outline.
+- Effects take a fixed 1px rim instead of a ramp outline, except for the flat procedural strokes of [dash wind](#dash-wind).
 
 ### Shading and faces
 
@@ -218,6 +229,10 @@ Approved layout target for paired page implementation: reuse the existing logo a
 - Layout: on wide views, place the logo beside one coherent text column containing the pitch, subline, actions and input instructions. Keep the actions with the copy rather than below the logo. On narrow views, stack logo, copy, actions and instructions in that reading order. Retain at least 16px safe-area page padding, 16px between content groups and clear space around the logo. Keep short landscape screens scrollable when their full-size content exceeds the available height.
 - Navigation: preserve the existing logo, Home and Play navigation links and their behaviour. Page headers and hero content remain distinct from modal framing.
 
+## Opening presentation
+
+The runtime opening uses four single-shot beats on a plain `ink` field. Each shot has `background: null`, so it performs no background-image lookup. It uses the actual `bird`, `ferret-antagonist` and `ferret-parcel` sprites at native 1x in their `idle` poses; Fert is mirrored through `flipX` metadata while Chibi and the parcel are not. The authored anchors are 24,42 for Chibi, 24,48 for Fert and 12,24 for the parcel, all placed at y240. Existing captions, manual Continue, whole-opening Skip and save acknowledgment remain unchanged. The [painted opening pack](opening/README.md) and its originals remain retained separately; they are not the current runtime presentation.
+
 ## Stage cutscene placeholder
 
 <!-- CLEANUP (added 2026-10-31): Replace the neutral illustration when authored stage cutscenes are approved. -->
@@ -245,6 +260,28 @@ The [form control style guide](controls.md) defines standard buttons, selection 
 
 All positions are in base pixels (x, y, w, h) of the 720x360 layout as drawn. The game derives every press area from the drawn button at runtime: the button plus 25% of its shorter side on each side, clamped between 6 and 16px, and at least 48x48. Use and Jump instead press within 100 of each one's centre (a clear circle of 63 plus the move hint's radius of 37), cut along the line midway between their centres so the two never overlap; Jump's also reaches the screen's bottom-right corner, as the rect from its centre to the corner. Art gives only the drawn rects and centres.
 
+### Skills and room rewards
+
+`art/tools/skill_icons.py` exports three transparent 16x16 glyphs. Each has one static `ready` frame at index 0 and one `muted` frame at index 1, both 100ms and looping. The alpha geometry is identical; `ready` uses cream and `muted` uses grey. These assets have no contact box or baked background.
+
+| Skill       | Art key                | 48x48 HUD target origin |
+| ----------- | ---------------------- | ----------------------- |
+| Double jump | icon-skill-double-jump | 664,8                   |
+| Dash        | icon-skill-dash        | 664,64                  |
+| Speedy      | icon-skill-speedy      | 608,8                   |
+
+The base 720x360 view uses this compact L with 8px between targets. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) reuses the 35x35 `ui-pause` rest disc, covers its baked pause bars with an opaque 16x16 navy (`#262b44`) square at local 9,9, then places the native glyph at that same position. Keep the original cream ring in both states; only the glyph becomes grey when muted. The glyph's centre anchor is 8,8. The selected skill adds a steady 5x2 yellow (`#fee761`) bar at disc-local 15,27, over a one-pixel navy surround and after the glyph. It stays visible when the selected glyph is muted. Do not bake this selection mark, target coordinates or a second disc into the exports.
+
+Locked icons are hidden. Unlocked icons remain visible, including when muted. Only one selected power-up affects play at a time. During play, tap selects that power-up without performing its movement action; a 400ms hold pauses and opens details without selecting the held skill. Selection and readiness are separate: the yellow mark identifies the selection while glyph colour follows the live movement rules:
+
+- Double jump uses [`startsAirJump`](../src/rules/bird.ts) with a prospective Jump press. It requires the skill enabled, Chibi off the ground and outside the coyote window, Jump not already held, and the air jump not spent. Airborne alone is insufficient.
+- Dash uses `startsDash` with a prospective dash press: the skill is enabled, no burst or cooldown remains, and Chibi is grounded or has not spent the airborne dash.
+- Speedy is passive and ready whenever enabled. [Ownership and development overrides](../src/rules/skills.ts) determine availability; a false development override falls back to saved ownership and does not erase it.
+
+The world HUD is hidden and blocked beneath dialogue and all modals except Pause. While Pause is open, the same HUD icons remain visible and a tap opens details, replacing Pause without changing the selection. There is no duplicate skill row inside the Pause card. Details use the standard centred, content-fitted pale-steel card, full-size fonts, three-step scene dim and [ordinary close control](controls.md#modal-content-fitting), with a 24x24 X inset 6px and its 48x48 target. Closing details resumes play with fresh input; it does not return to the Pause stack.
+
+Secret-room entry grants a permanent skill; repeated grants do not stack. The first gift becomes selected automatically, while later gifts keep the current selection. The room reuses the top dialogue rectangle at 40,8,640,96 with the harmless `dog-pug` idle image at native 44x32, centred in the existing 68x68 portrait frame. Supportive text, descriptions and grant placement belong to gameplay data. The separate in-room details card is nonmodal: reuse native card and icon artwork without a close X, modal dim or additional pause behaviour. [Its measured layout](../src/layout/skillDetails.ts) fits between the dialogue and the bottom-right Leave control, retaining the existing fonts and complete press-target clearances. Room lifecycle remains source-owned; do not hardcode the illustrative mock's card dimensions.
+
 ### Dialogue box
 
 - The dialogue panel is at the top, 40,8,640,96. One paragraph of at most three lines shows at a time; advancing replaces that paragraph rather than adding a chat history. Play is frozen and touch controls hide while the conversation is open.
@@ -271,13 +308,18 @@ Live zone foreshadow dialogue remains nonmodal and interactive during active pla
 Approved target for paired runtime integration. The rulebook owns failure behaviour, timing, progress calculation and time accumulation; the game supplies every label and value.
 
 - Progress is a restrained 2px line at the top of the game view. Its filled length shows percentage through the stage, using the current destination's canonical primary from `zone-themes` over a `dslate` track. Keep it separate from UI buttons, with no glow or pulse.
-- On failure, show a small recoil, a pronounced falling tilt to support, a brief impact squash and a small rebound into a round grounded sit. Its belly has a short flat centre and rounded contact ends. Feet remain visible during recoil and fall, and are hidden during impact and seated rest. The sprite has no baked world movement. Before the first death pose, frame the paused world for the final bottom-centre presentation described below. Show the retry card as soon as the seated pose is reached, holding that pose beneath it without an extra timed pause or automatic retry.
-- Before the first death pose, position the camera for the final sprite frame centred horizontally at x360 with frame bottom y360 in the logical 720x360 view. Preserve the authored 48x42 frame and its transparent padding. For a void fall, begin the presentation 96px above the final floor so the whole fall remains visible. Resolve the presentation floor once at the planned post-recoil position; only the presentation sprite moves while the rules state stays frozen. Keep the same camera framing through recoil, fall, impact, bounce, seated rest and the centred modal snapshot. Play the death sequence once; opening the modal neither reframes the camera nor replays the animation.
+- On failure, show a small recoil, a pronounced falling tilt to support, a brief impact squash and a small rebound into a round grounded sit. Its belly has a short flat centre and rounded contact ends. Feet remain visible during recoil and fall, and are hidden during impact and seated rest. The sprite has no baked world movement. Before the first death pose, visibly pan the paused world to the final bottom-centre framing described below. Show the retry card as soon as the seated pose is reached, holding that pose beneath it without an extra timed pause or automatic retry.
+- Before the first death pose, visibly scroll the camera to place the final sprite frame centred horizontally at x360 with frame bottom y360 in the logical 720x360 view. Derive pan duration from actual camera distance at 360px/s, clamped to 0.5 through 2 seconds, using shared `sineInOut` easing; an exactly zero-distance pan completes immediately. Keep simulation, input and active-play statistics frozen throughout the pan, then play the death sequence once before opening the modal. Cancel pending pan completion on shutdown so it cannot start a late animation. Preserve the authored 48x42 frame and its transparent padding. For a void fall, begin the presentation 96px above the final floor so the whole fall remains visible. Resolve the presentation floor once at the planned post-recoil position; only the presentation sprite moves while the rules state stays frozen. Keep the same camera framing through recoil, fall, impact, bounce, seated rest and the centred modal snapshot. Play the death sequence once; opening the modal neither reframes the camera nor replays the animation.
 - Dim the frozen environment once through the canonical shared-kit modal backdrop painter with three `palette.darker` steps. Pass the ordinary snapshot without the `alreadyDimmed` bypass or another dim pass. Centre the measured modal on both axes of the full logical viewport. The world owns idempotent camera scroll and bounds restoration on retry, title return or shutdown; cancel contact-feedback offsets before restoring the original camera. Physics and retry behaviour remain unchanged.
 - Reuse the content-fitted `ui-settings-card`, with no close X or title bar. Centre the identity/progress group: zone name, `Stage <number>: <stage name>` and Progress. After an 8px group gap, show Last attempt, Run total, Best and Attempts on shared left-label and right-value axes. The title retains symmetric 50px clearance without adding a close X. Stage numbers are 1 through 6 within Apartment and 1 through 3 within the other zones. Keep standard fonts and sizes; wrap measured headings rather than shrinking text.
 - Apply the [shared modal content-fitting rule](controls.md#modal-content-fitting): 16px padding, 16px line boxes with 4px row gaps, an 8px gap before the 48px action row, and a minimum of half the full logical viewport capped by actual safe available width. Three identity/progress rows and four metric rows form separate measured groups with an 8px gap between them. Derive the card height from the actual full-size text, padding, gaps and actions rather than a fixed canvas; wrapped lines increase measured height.
+- Inside the centred retry card, show one current-antagonist statement as a single 16px body-text line, without a separate speaker name, portrait or top overlay. Measure its full visible ink before wrapping and allow the content-fitted card to widen within the existing safe cap. The current retry strings fit at the normal 360px minimum except Fert's 344px line, which needs 376px including two 16px insets. Insert the statement between identity/progress and metrics, with the standard 8px group gaps. With the current single-line groups, the card measures 252px high at y54..306; the required 8px clearance plus 42px bird frame ends at y356 within the 360px view. Preserve full fonts, symmetric 50px title reservation, 48px actions and the existing death-camera sequence.
 - Last attempt measures the current attempt. Run total accumulates active play across attempts in this generated run. Best is the fastest successful attempt and excludes failures. Attempts includes the current attempt. Death/retry preserves the run; a freshly generated run resets its counts. Live foreshadow dialogue counts as active play, while paused dialogue, interstitials and menus do not.
 - Place the secondary Back to title action on the left and primary Try again on the right, using the standard faces, equal sizes, label font and focus treatment in [the form control guide](controls.md#retry-actions). Neither an outside tap nor an elapsed timer retries the stage.
+
+### Live barks
+
+Live antagonist barks use `ui-dialogue-box` at 0.75 alpha; text and portraits remain opaque. Present a bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner. Ordinary paused dialogue retains its existing presentation.
 
 ### Quip
 
@@ -295,6 +337,10 @@ Two round buttons for the right thumb, Use above and to the left of Jump. Each i
 - Centres are the base 720x360 layout, as drawn. At runtime the game anchors Jump, Use and the pause button to the screen's corners, so on a wide or tall screen they sit in the spare space outside the game.
 - Press: the band and icon turn white and the ring swells 1px for the first frame (frame 0, then frame 1, 60ms each), then hold until release, which snaps back to rest.
 - Movement: a touch anywhere off a button sets its own neutral point. The move hint (`ui-move-hint`, 75x75) shows where to put the left thumb: an open ring 73px across with no face, a 2px cream band between 1px ink lines and an ink-fringed chevron each side, so it reads on any ground, the sky and any character. It is a drawing only, with no press area. At rest its centre is level with Jump's and its ring as far in from the view's left as Use's is from its right: 121,303 at 720 wide. While a touch moves her, the game draws it on that touch's neutral point, anywhere on screen, lights the dragged side's chevron (`held-left`, `held-right`) and slides its knob (`ui-move-knob`, 11x11) up to 12px left or right; on release it returns to rest.
+
+### Dash wind
+
+Dash wind uses three flat horizontal strokes behind Chibi, with no outline or body afterimage. Their base lengths are 32, 24 and 16px, each 2px thick, at local rows 14, 23 and 32 of the unchanged 48x42 frame. The first stroke uses cream; the other two use lgrey. Leave gaps of 4, 8 and 5px beyond the rear frame edge, mirroring the placement with facing so no stroke appears ahead of or inside the frame. Each stroke fades towards its distant tip; its opacity decreases and length shortens as the effect ages, disappearing completely at the end. Age follows the configured active dash phase, with no separate lifetime or post-dash tail. The effect draws on the world plane behind the bird, outside the controls camera, and clears for pause, modal, room, death and retry views. This procedural effect adds no texture, contact mask, body pose, invincibility cue or cooldown icon.
 
 ### Start screen
 
@@ -370,11 +416,13 @@ Map Continue opens the selected zone's stage cards, with three full-size cards p
 
 ### Stage and zone summaries
 
-Stage-clear interstitials reuse the exact `STAGE_PREVIEWS[stage]` image displayed by that stage's selector card, at 168x84. Do not capture the death or end position or generate another screenshot. Show its four stat rows and the existing primary Continue action, with no close X, invented story illustration or automatic dismissal.
+Stage-clear interstitials reuse the exact `STAGE_PREVIEWS[stage]` image displayed by that stage's selector card. Preserve its complete 2:1 scene and resize with nearest-neighbour sampling; do not capture the death or end position or generate another screenshot. A cleared stage shows one current-antagonist statement and the primary Continue action, without Skip, a close X or automatic dismissal. Fresh Continue activation or a guarded statement-panel tap follows the existing continuation route. Turning back retains its summary route but shows no clear statement. Gameplay supplies the statement and values.
 
-Centre the combined image, stage text and optional zone text block within the existing full-page content bounds. Stage-clear bounds begin at x16,y16, span 688px, and derive their height from the Continue press target's top minus the 8px gap and 16px padding. Zone-departure summaries retain their existing dialogue-panel and footer reservations. The image and both headings share a top edge. Use 16px gaps between columns and a shared measured header band, including any partial-zone N/3 subheading, followed by an 8px gap. Synchronize the four metric rows across groups, with a minimum 16px line box and 4px row gaps; wrapped full-size values grow the shared row height. All text aligns left: headings and labels use their group's left axis, and values use a shared measured label width plus 8px. Do not centre individual labels or values within their columns. Continue and footer bounds remain unchanged. This full-page alignment does not alter centred modal titles or the death/retry layout.
+Use the selected navy-panel layout for full-page summaries: zone stats on the left, the image in the centre and stage stats on the right. In the 720x360 zone-departure view, preserve the top dialogue and footer reservations, with summary content inside x16..704 and y112..276. Derive the outer columns from the shared 16px page inset, aligning their left and right edges with the footer actions, including Continue’s right edge. Use the same 16px token for panel padding and column gaps, with 8px between metric labels and values and 4px between rows. In the selected 720x360 example, 212px-wide panels have 180px inner text areas; their 144px height derives from the 112px text group plus two 16px insets, placing them at 16,112 and 492,112. Each uses `navy` and a 2px top rule. The zone rule uses its canonical muted primary; the stage rule uses `lgrey`. Headings are `cream`, metric labels `lgrey` and values `white`. Display the same selector image at 232x116, top-left 244,128, preserving its aspect ratio and staying approximately the same height as the 112px text group. Keep a shared 32px heading band, a 4px heading-to-metrics row gap and four 16px metric line boxes with 4px gaps. Headings, labels and values align left to their measured axes; values begin at the shared widest label plus 8px. Wrap long headings at full native font size rather than shrinking text. Omit the redundant zone stage-count line. Retain the existing footer action reservation. This full-page layout does not change centred modal titles or convert death/retry into a full-page summary.
 
-Zone clear adds a separate whole-zone stat group alongside the stage group and image. The zone group covers only the actual visit. A replay starting at a later stage shows the partial N/3 coverage label and never mixes in historic stages. Zone Best requires all three stages successfully completed during that same visit and uses their successful-attempt sum. Wrap headings and measured rows within their available columns; do not shrink fonts. The rulebook and runtime data own the labels, values and timing.
+Below the panels, show one full-width `Whole run: {time} · Deaths: {deaths} · Stages: {completed}/{total}` row at x16,y260,688x16. Its 4px separation from the panels and bottom at y276 preserve the 8px clearance before the footer press target at y284. Use the existing full native body font and one formatted line, not three independently centred groups. Label the stage panel's accumulated time `Stage time` and the zone panel's accumulated time `Visit time`, distinguishing them from whole-run totals. The Whole run row reports active play time including retries, the death count and the completed-stage count since New Game or a confirmed Restart; saved Continue preserves these totals. Completion is recorded before the summary snapshot, so its stage count includes the newly cleared stage. This row does not change the retry modal.
+
+Zone statistics cover only the actual visit and never mix in historic stages. Zone Best requires all stages successfully completed during that same visit and uses their successful-attempt sum. The rulebook and runtime data own metric meanings and timing.
 
 ## Animation
 
@@ -393,6 +441,10 @@ The six antagonist body sprites declare `contact: "silhouette"` in the manifest.
 Run `python3 -I art/tools/contact_silhouettes.py build` after changing body exports or contact registration. Each opted-in actor build also refreshes this shared export. `public/art/contact-silhouettes.json`, registered as the `contact-silhouettes` data key, contains version 1 and a `sprites` object keyed by art key. Each sprite contains `width`, `height` and `frames`; each exact Aseprite frame name maps to sorted `[y, left, rightExclusive]` runs in untrimmed frame coordinates. Adjacent occupied pixels merge into one run; an empty frame has an empty array. Alpha greater than zero is occupied, and partial alpha fails export. No animation tags or timings are duplicated.
 
 The runtime caches these runs and applies the sprite's current frame, facing, anchor and scale. This export changes no artwork, layout, motion or animation metadata.
+
+### Enemy attack warning
+
+During an attack sequence's tell, draw a temporary complete halo centred on the antagonist's full rendered frame, accounting for its origin and scale. Its circle radius is `ceil(hypot(frameWidth, frameHeight) / 2) + 6px`, with a 2px canonical red stroke and a 1px ink rim on each side. Keep the entire cue outside the frame, on the world plane behind the actor, following both grounded and airborne poses. The halo warns of an upcoming attack; it is not a contact boundary, damage indicator or permanent enemy outline. Show it only during the tell, never during chase, attack or cooldown. Keep it steady, including in reduced motion, without strobing or pulsing. Reuse the preparation pose without changing body pixels, contact masks, animation metadata or raster assets; gameplay owns the tell's duration.
 
 ### Enemy frustration
 
@@ -747,7 +799,7 @@ The appended `set-trap` tag contains four looping 120ms placement frames. Existi
 
 `art/tools/bear.py` draws `bear-antagonist`: Bini, a cute brown bear with round ears, a cream muzzle and a seated phone-playing idle. The tiny phone screen uses a road, cream dog and red-bandana motif for Archie, without miniature text or external runtime dependencies. His annoyed preparation, growl and forward paw gestures remain cute, without teeth, gore or a red contact outline.
 
-The frame is 48x48 with bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, containing every pose and its mirror. Contact remains lethal. The phone and seated pose do not create another collision profile.
+The frame is 48x48 with bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, containing every pose and its mirror. Contact remains lethal. The phone and seated pose do not create another collision profile. Walk and rush use a low four-foot stance with alternating diagonal support and small weight transfers; the phone idle and expressive tells retain their upright poses. Body contact follows the regenerated opaque silhouettes of these locomotion frames.
 
 | Tag            | Art cycle                | Pose                            |
 | -------------- | ------------------------ | ------------------------------- |
@@ -758,8 +810,8 @@ The frame is 48x48 with bottom-centre anchor 24,48 and fixed contact box x 2, y 
 | prepare        | Two frames, 160ms each   | Annoyed look up from the phone  |
 | prepare-attack | Two frames, 160ms each   | Drawn-back paw and lifted chest |
 | rest           | Two frames, 400ms each   | Settled recovery                |
-| rush           | Four frames, 80ms each   | Committed charge                |
-| walk           | Four frames, 120ms each  | Grounded steps                  |
+| rush           | Four frames, 80ms each   | Grounded four-foot charge       |
+| walk           | Four frames, 120ms each  | Alternating four-foot steps     |
 
 All actor tags loop. `portrait-bear` is 64x64, authored facing right, with `neutral` and `annoyed` tags of one 1000ms frame each. Dialogue text belongs to gameplay data.
 
@@ -862,7 +914,7 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 | rest        | Two frames, 400ms each  | Perched recovery             |
 | swoop       | Four frames, 100ms each | Head-down contact dive       |
 
-All tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; runtime owns the 120ms anticipation duration. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
+All tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; gameplay data owns the anticipation duration for each action. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. There is no new dialogue portrait or story artwork.
 
 ## Industrial material pack
 
@@ -978,7 +1030,7 @@ Backdrops repeat in x at widths that divide 720, so chunk seams never show; prop
 
 Woodland can mix broadleaf, conifer and birch depth layers between appropriate chunks. The existing broadleaf `woodland-far` and `forest-mid` remain the default. `woodland-far-conifers`, `forest-mid-conifers`, `woodland-far-birch` and `forest-mid-birch` retain 720x600, bottom-left y600 and repeat x. Far layers use the existing 0.15,0.05 parallax contract; middle layers use 0.4,0.15. Gameplay owns their chunk bindings and placement, including keeping exterior depth out of enclosed interiors.
 
-`art/tools/woodland_fauna.py` draws naturalistic decorative `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and `background-swallow` (24x12, centre 12,6; `flight` four 120ms frames). All tags loop. These sprites have no contact mask, hitbox, interaction or dialogue. The renderer owns background depth; gameplay owns placement, motion and timing. Keep them subdued and separate from lethal enemies and points of interest.
+`art/tools/woodland_fauna.py` draws naturalistic decorative `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and `background-swallow` (24x12, centre 12,6; `flight` four 120ms frames). The pose tags loop and both sprites use the selected dark muted palette. Keep their native frame sizes for authored viewport intersection. These sprites have no contact mask, hitbox, interaction or dialogue. Generated fauna move on the world plane at 1,1, behind gameplay actors: deer stay planted with elapsed idle/graze poses, while the swallow uses a finite linear or hop traversal. Its first viewport intersection starts an independent local active-world clock; it finishes without returning or ping-ponging, then its render object is disposed without changing stable object indices. Pause stops that clock; Retry and area entry reset playback. The renderer owns background depth; gameplay owns placement, motion and timing. Keep them subdued and separate from lethal enemies and points of interest.
 
 ## Animated distant flora
 

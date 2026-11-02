@@ -14,8 +14,10 @@ function maximumMovementSpeed(plan: BehaviourPlan): number {
   );
 }
 
+export const BARK_BACKGROUND_ALPHA = 0.75;
+
 // Default for transient barks; conversations advance only through player input.
-export const BARK_DURATION_SECONDS = 3;
+export const BARK_DURATION_SECONDS = 5;
 
 // Linear conversations, with paragraph text in TEXT.lines.
 export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
@@ -52,12 +54,18 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
       { line: "bini-outro-2", speaker: "bird" },
     ],
   },
+  "dash-gift": {
+    lines: [{ line: "dash-gift", speaker: "room-helper" }],
+  },
   "depot-dog-intro": {
     lines: [
       { line: "depot-dog-intro-1", speaker: "dog" },
       { line: "depot-dog-intro-2", speaker: "bird" },
       { line: "depot-dog-intro-3", speaker: "dog" },
     ],
+  },
+  "double-jump-gift": {
+    lines: [{ line: "double-jump-gift", speaker: "room-helper" }],
   },
   "furt-foreshadow": {
     lines: [
@@ -119,6 +127,9 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
       { line: "pebble-outro-2", speaker: "bird" },
     ],
   },
+  "speedy-gift": {
+    lines: [{ line: "speedy-gift", speaker: "room-helper" }],
+  },
   "trixi-foreshadow": {
     lines: [
       { line: "trixi-foreshadow-1", speaker: "goose" },
@@ -150,6 +161,7 @@ export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
   goose: { colour: "tan", portrait: null, side: "right" },
   pigeon: { colour: "tan", portrait: "portrait-pigeon", side: "right" },
   raccoon: { colour: "tan", portrait: null, side: "right" },
+  "room-helper": { colour: "green", portrait: "dog-pug", side: "right" },
 };
 
 export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
@@ -162,6 +174,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
     },
     foreshadow: "furt-foreshadow",
     intro: "furt-intro",
+    introStage: "spa",
     outro: "furt-outro",
   },
   "blue-cityscape": {
@@ -173,6 +186,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
     },
     foreshadow: "archie-foreshadow",
     intro: "depot-dog-intro",
+    introStage: "street",
     outro: "archie-outro",
   },
   countryside: {
@@ -184,6 +198,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
     },
     foreshadow: "trixi-foreshadow",
     intro: "trixi-intro",
+    introStage: "farmland",
     outro: "trixi-outro",
   },
   "home-city": {
@@ -195,6 +210,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
     },
     foreshadow: "kiwi-foreshadow",
     intro: "kiwi-intro",
+    introStage: "city-outskirts",
     outro: "kiwi-outro",
   },
   industrial: {
@@ -206,6 +222,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
     },
     foreshadow: "pebble-foreshadow",
     intro: "pebble-intro",
+    introStage: "warehouse-district",
     outro: "pebble-outro",
   },
   woodland: {
@@ -217,6 +234,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
     },
     foreshadow: "bini-foreshadow",
     intro: "bini-intro",
+    introStage: "forest-paths",
     outro: "bini-outro",
   },
 };

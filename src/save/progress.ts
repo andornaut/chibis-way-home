@@ -1,25 +1,31 @@
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
-import type { ZoneMap } from "../data/types";
+import type { SkillSelection, ZoneMap } from "../data/types";
 import { openMap } from "../rules/map";
+import { isSkillId } from "../rules/skills";
 
 // The player's progress: the beginning (no progress saved, the start screen offers Start), or
 // the map, with the zone nodes he has completed and the zone node he stands on.
-export type Progress = { readonly openingSeen: boolean } & (
-  | { readonly at: "beginning" }
-  | {
-      readonly at: "map";
-      readonly completed: readonly string[];
-      readonly seenZoneIntros: readonly string[];
-      readonly stand: string;
-    }
-);
+export type Progress = SkillSelection & { readonly openingSeen: boolean } & (
+    | { readonly at: "beginning" }
+    | {
+        readonly at: "map";
+        readonly completed: readonly string[];
+        readonly seenZoneIntros: readonly string[];
+        readonly stand: string;
+      }
+  );
 
-export const BEGINNING: Progress = { at: "beginning", openingSeen: false };
+export const BEGINNING: Progress = {
+  activeSkill: null,
+  at: "beginning",
+  openingSeen: false,
+  skills: [],
+};
 
 // The save format's version. Before the first release, a change to the format or a map node or
 // zone renamed bumps it, and older saves reset to the beginning.
-export const PROGRESS_VERSION = 8;
+export const PROGRESS_VERSION = 10;
 
 // Where he is on the map for progress: the beginning stands him on the map's start with
 // nothing completed.
@@ -66,6 +72,20 @@ export function progressFormat(
   zones: Readonly<Record<string, unknown>>,
 ): SaveFormat<Progress> {
   const checked = (progress: Progress): Checked<Progress> => {
+    if (
+      !Array.isArray(progress.skills) ||
+      !progress.skills.every(isSkillId) ||
+      new Set(progress.skills).size !== progress.skills.length
+    ) {
+      return { ok: false, reason: "the save has an invalid skill list" };
+    }
+    if (
+      progress.activeSkill === null
+        ? progress.skills.length > 0
+        : !isSkillId(progress.activeSkill) || !progress.skills.includes(progress.activeSkill)
+    ) {
+      return { ok: false, reason: "the save has an invalid active skill" };
+    }
     if (typeof progress.openingSeen !== "boolean") {
       return { ok: false, reason: "the save has no opening acknowledgement" };
     }
@@ -84,17 +104,25 @@ export function progressFormat(
   };
   return {
     decode: ({
+      activeSkill,
       at,
       completed,
       openingSeen,
       seenZoneIntros,
+      skills,
       stand,
     }: StoredObject): Checked<Progress> => {
       if (typeof openingSeen !== "boolean") {
         return { ok: false, reason: "the save has no opening acknowledgement" };
       }
+      if (!Array.isArray(skills) || !skills.every(isSkillId)) {
+        return { ok: false, reason: "the save has no valid skill list" };
+      }
+      if (activeSkill !== null && !isSkillId(activeSkill)) {
+        return { ok: false, reason: "the save has no valid active skill" };
+      }
       if (at === "beginning") {
-        return { ok: true, value: { at, openingSeen } };
+        return checked({ activeSkill, at, openingSeen, skills });
       }
       if (at !== "map") {
         return { ok: false, reason: "the save does not say where he is" };
@@ -108,7 +136,7 @@ export function progressFormat(
       if (!isNames(seenZoneIntros)) {
         return { ok: false, reason: "the save has no zone introduction list" };
       }
-      return checked({ at, completed, openingSeen, seenZoneIntros, stand });
+      return checked({ activeSkill, at, completed, openingSeen, seenZoneIntros, skills, stand });
     },
     encode: (progress: Progress): Checked<StoredObject> => {
       const valid = checked(progress);

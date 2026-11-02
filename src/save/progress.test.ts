@@ -44,19 +44,32 @@ const ZONE_KEYS = { built: {}, start: {}, unbuilt: {} };
 const FORMAT = progressFormat(MAP, ZONE_KEYS);
 
 const stored = (fields: object, version = PROGRESS_VERSION) =>
-  JSON.stringify({ openingSeen: false, seenZoneIntros: [], ...fields, version });
+  JSON.stringify({
+    activeSkill: null,
+    openingSeen: false,
+    seenZoneIntros: [],
+    skills: [],
+    ...fields,
+    version,
+  });
 const at = (stand: string, completed: string[] = []): Progress => ({
+  activeSkill: null,
   at: "map",
   completed,
   openingSeen: false,
   seenZoneIntros: [],
+  skills: [],
   stand,
 });
 
 describe("progressFormat", () => {
   it.each<[string, Progress]>([
     ["the beginning", BEGINNING],
-    ["acknowledged beginning", { ...BEGINNING, openingSeen: true }],
+    [
+      "all permanent skills",
+      { ...BEGINNING, activeSkill: "dash", skills: ["dash", "doubleJump", "speedy"] },
+    ],
+    ["acknowledged beginning", { ...BEGINNING, openingSeen: true, skills: [] }],
     [
       "a remembered zone introduction",
       { ...at("start"), seenZoneIntros: ["test-zone"] } as Progress,
@@ -73,8 +86,21 @@ describe("progressFormat", () => {
   });
 
   it.each([
-    ["missing opening acknowledgement", stored({ at: "beginning", openingSeen: undefined })],
-    ["invalid opening acknowledgement", stored({ at: "beginning", openingSeen: "yes" })],
+    ["missing active selection", stored({ activeSkill: undefined, at: "beginning" })],
+    ["unowned active selection", stored({ activeSkill: "dash", at: "beginning" })],
+    ["null with owned skills", stored({ activeSkill: null, at: "beginning", skills: ["dash"] })],
+    ["unknown active selection", stored({ activeSkill: "fly", at: "beginning" })],
+    ["missing skills", stored({ at: "beginning", skills: undefined })],
+    ["unknown skill", stored({ activeSkill: "dash", at: "beginning", skills: ["dash", "fly"] })],
+    ["duplicate skill", stored({ activeSkill: "dash", at: "beginning", skills: ["dash", "dash"] })],
+    [
+      "missing opening acknowledgement",
+      stored({ activeSkill: null, at: "beginning", openingSeen: undefined }),
+    ],
+    [
+      "invalid opening acknowledgement",
+      stored({ activeSkill: null, at: "beginning", openingSeen: "yes" }),
+    ],
     [
       "missing introduction list",
       stored({ at: "map", completed: [], seenZoneIntros: undefined, stand: "start" }),
@@ -150,10 +176,12 @@ describe("built cityscape progress", () => {
     "keeps current-format progress at $stand with $completed completed",
     ({ completed, stand, unlocked }) => {
       const progress = {
+        activeSkill: null,
         at: "map" as const,
         completed,
         openingSeen: true,
         seenZoneIntros: [],
+        skills: [],
         stand,
       };
       const loaded = loadSave(format, JSON.stringify({ ...progress, version: PROGRESS_VERSION }));

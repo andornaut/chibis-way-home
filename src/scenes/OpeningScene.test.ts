@@ -3,9 +3,25 @@ import { EventEmitter } from "node:events";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { OPENING } from "../data/opening";
+import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { openingLayout } from "../layout/opening";
 import { CARD_FONTS } from "../testing/cardFonts";
+
+const backgroundFixture = vi.hoisted(() => ({ value: undefined as string | null | undefined }));
+vi.mock("../data/opening", async (original) => {
+  const actual = await original<typeof import("../data/opening")>();
+  return {
+    get OPENING() {
+      return backgroundFixture.value === undefined
+        ? actual.OPENING
+        : actual.OPENING.map((beat) => ({
+            ...beat,
+            shots: beat.shots.map((shot) => ({ ...shot, background: backgroundFixture.value! })),
+          }));
+    },
+  };
+});
 
 vi.mock("phaser", () => {
   const drawable = () => {
@@ -14,6 +30,7 @@ vi.mock("phaser", () => {
       "destroy",
       "play",
       "setAngle",
+      "setFlipX",
       "setOrigin",
       "setPosition",
       "setScale",
@@ -29,8 +46,8 @@ vi.mock("phaser", () => {
     Scene: class {
       readonly add = {
         container: () => ({ add: vi.fn() }),
-        image: drawable,
-        rectangle: drawable,
+        image: vi.fn(drawable),
+        rectangle: vi.fn(drawable),
         sprite: drawable,
       };
       readonly events = new EventEmitter();
@@ -65,7 +82,11 @@ import { pressTextButton } from "./cardParts";
 import { modalInput } from "./modalInput";
 import { OpeningScene } from "./OpeningScene";
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(pressTextButton).mockReset();
+  backgroundFixture.value = undefined;
+});
 function opening() {
   const scene = new OpeningScene();
   scene.create();
@@ -135,4 +156,23 @@ it("rejects inherited releases, drags and modal-crossing gestures before whole-o
   scene.input.emit("pointerup", tap);
   expect(saveOpeningSeen).toHaveBeenCalledTimes(1);
   expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("map");
+});
+
+it("draws palette ink for explicit null backgrounds without any image texture lookup", () => {
+  backgroundFixture.value = null;
+  const scene = opening();
+  scene.update(0, 100000);
+  key(scene, "Enter");
+  expect(scene.add.rectangle).toHaveBeenCalledWith(0, 0, SCREEN.width, SCREEN.height, 0);
+  expect(scene.add.image).not.toHaveBeenCalled();
+  expect(saveOpeningSeen).not.toHaveBeenCalled();
+});
+it("retains nonnull texture backgrounds and disposes the previous shot image", () => {
+  backgroundFixture.value = "fixture-background";
+  const scene = opening();
+  expect(scene.add.image).toHaveBeenCalledWith(0, 0, "fixture-background");
+  const image = vi.mocked(scene.add.image).mock.results[0]!.value;
+  key(scene, "Enter");
+  expect(image.destroy).toHaveBeenCalledOnce();
+  expect(scene.add.image).toHaveBeenCalledTimes(2);
 });

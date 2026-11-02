@@ -5,6 +5,7 @@ import { zoneLayout } from "../rules/tiles";
 import { BIRD_FRAME } from "../view/bird";
 import { ALL_CHUNKS } from "./chunks";
 import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases";
+import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 const byName = new Map(ALL_CHUNKS.map((entry) => [entry[0], entry]));
@@ -21,6 +22,9 @@ describe("standalone empty-slot physical equivalents", () => {
         CHUNK_WALK_EQUIVALENTS[representative],
         "representative retains its own walk",
       ).toBeUndefined();
+      expect(name.startsWith("fixture ")).toBe(representative.startsWith("fixture "));
+      expect(REQUIRED_CHUNK_ROUTES[name]).toEqual(REQUIRED_CHUNK_ROUTES[representative]);
+      expect(FILLED_CHUNK_SLOTS[name]).toEqual(FILLED_CHUNK_SLOTS[representative]);
       expect(chunkWalkPhysics(subject!)).toEqual(chunkWalkPhysics(original!));
     },
   );
@@ -44,4 +48,12 @@ describe("standalone empty-slot physical equivalents", () => {
       },
     });
   });
+});
+
+it("keeps autonomous Woodland motion distinct from the same terrain without wildlife", () => {
+  const name = "compound-low-ceiling-shuttle-woodland-depth";
+  expect(CHUNK_WALK_EQUIVALENTS[name]).toBeUndefined();
+  expect(chunkWalkPhysics(byName.get(name)!)).not.toEqual(
+    chunkWalkPhysics(byName.get("compound-low-ceiling-shuttle-exterior")!),
+  );
 });

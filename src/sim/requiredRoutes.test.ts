@@ -1,11 +1,15 @@
-import { expect, it } from "vitest";
+import { createHash } from "node:crypto";
+
+import { expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Instance, TerrainRect, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
+import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
+import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
 import { surfaceAt, walkRequiredRoutes, walkZone } from "./zoneWalk";
 
 const floor: TerrainRect = { col: 0, cols: 60, row: 50, rows: 10 };
@@ -181,4 +185,109 @@ it.each([
       layoutOf([floor]),
     ),
   ).toThrow("Invalid required route xRange");
+});
+
+it("preserves fresh grounded interval evidence and moving-state traces with cached transitions", async () => {
+  async function run(cached: boolean) {
+    vi.resetModules();
+    const engine = await import("../rules/zone");
+    const calls = vi.spyOn(engine, "stepZone");
+    const trace = createHash("sha256");
+    let transitions = 0;
+    vi.doMock("./walkTransitions", () => ({
+      walkTransitions: (step: WalkStep): WalkStep => {
+        const advance = cached ? memoizeTransitions(step) : step;
+        return (input, zone) => {
+          const next = advance(input, zone);
+          trace.update(JSON.stringify({ input, next }));
+          transitions++;
+          return next;
+        };
+      },
+    }));
+    try {
+      const walker = await import("./zoneWalk");
+      const layout = layoutOf(
+        [floor, ledge],
+        [
+          {
+            character: "test-mover",
+            col: 32,
+            overrides: { motion: { distance: 2, pause: 0, speed: 2, variance: 0.25 } },
+            phase: 0.35,
+            row: 46,
+          },
+        ],
+      );
+      const results = [
+        { max: 24, min: 22 },
+        { max: 22, min: 20 },
+      ].map((xRange) =>
+        walker.walkRequiredRoutes(
+          BIRD,
+          {
+            targets: [{ area: "course", at: { col: 22, row: 45 }, xRange }],
+            tile: TILE,
+          },
+          layout,
+        ),
+      );
+      return { calls: calls.mock.calls.length, results, trace: trace.digest("hex"), transitions };
+    } finally {
+      calls.mockRestore();
+      vi.doUnmock("./walkTransitions");
+    }
+  }
+  const original = await run(false);
+  const cached = await run(true);
+  expect(cached.results.every(({ complete }) => complete)).toBe(true);
+  expect(cached.results).toEqual(original.results);
+  expect(cached.transitions).toBe(original.transitions);
+  expect(cached.trace).toBe(original.trace);
+  expect(cached.calls).toBeLessThan(original.calls);
+});
+
+it("records an alive airborne engine exit before landing without inventing required witnesses", () => {
+  const base = layoutOf([
+    { col: 0, cols: 8, row: 40, rows: 20 },
+    { col: 20, cols: 10, row: 50, rows: 10 },
+  ]);
+  const layout = {
+    ...base,
+    areas: {
+      course: {
+        ...base.areas.course!,
+        entries: { start: { x: 4 * TILE, y: 40 * TILE } },
+        exitX: 10 * TILE,
+        width: 30 * TILE,
+      },
+    },
+  };
+  let actual = startZone(BIRD, layout, 1);
+  for (let tick = 0; tick < 120 && !actual.cleared && !actual.death; tick++) {
+    actual = stepZone(BIRD, layout, 1 / 60, { jumpHeld: false, move: 1, useHeld: false }, actual);
+  }
+  expect(actual.cleared).toBe(true);
+  expect(actual.death).toBeUndefined();
+  expect(actual.bird.grounded).toBe(false);
+
+  const direct = walkRequiredRoutes(BIRD, { targets: [], tile: TILE }, layout);
+  expect(direct.cleared).toBe(true);
+  expect(direct.complete).toBe(true);
+  expect(walkZone(BIRD, layout).cleared).toBe(true);
+
+  for (const xRange of [undefined, { max: 24, min: 22 }]) {
+    const required = walkRequiredRoutes(
+      BIRD,
+      {
+        targets: [{ area: "course", at: { col: 24, row: 50 }, ...(xRange ? { xRange } : {}) }],
+        tile: TILE,
+      },
+      layout,
+    );
+    const bank = surfaceAt(TILE, required.surfaces, "course", { col: 24, row: 50 })!;
+    expect(required.cleared).toBe(true);
+    expect(required.reached.has(bank.key)).toBe(false);
+    expect(required.complete).toBe(false);
+  }
 });

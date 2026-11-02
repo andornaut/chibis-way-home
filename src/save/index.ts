@@ -1,24 +1,33 @@
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
+import { loadSave } from "@andornaut/game-kit/save/versionedSave";
 
 import { ZONE_MAP } from "../data/map";
+import type { SkillId } from "../data/types";
 import { RECIPES, ZONES } from "../data/zones";
-import { isDevelopmentSession } from "../dev/mode";
+import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode";
 import { localSaveStorage } from "../platform/save/storage";
 import { activeStepSeconds } from "../rules/death";
+import { eligibleSkills, resolveActiveSkill } from "../rules/skills";
 import type { ZoneState } from "../rules/zone";
 import { BEGINNING, mapProgress, type Progress, progressFormat } from "./progress";
-import { type RunStatsSummary, stageStatsStore, type ZoneStatsSummary } from "./stats";
+import {
+  type RunStatsSummary,
+  stageStatsStore,
+  type WholeRunStatsSummary,
+  type ZoneStatsSummary,
+} from "./stats";
 
 export { type Progress } from "./progress";
 
 const KEYS = { backup: "chibis-way-home.save-backup", save: "chibis-way-home.save" } as const;
 
-const store = saveStore(
-  localSaveStorage(),
-  KEYS,
-  progressFormat(ZONE_MAP, { ...ZONES, ...RECIPES }),
-);
+const storage = localSaveStorage();
+const format = progressFormat(ZONE_MAP, { ...ZONES, ...RECIPES });
+const store = saveStore(storage, KEYS, format);
 let progress: Progress = BEGINNING;
+let developmentOwned: readonly SkillId[] | undefined;
+let developmentSavedSelection: SkillId | null | undefined;
+let temporarySelection: SkillId | null | undefined;
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
 const stats = stageStatsStore(localSaveStorage(), STAGES, ZONE_MAP.destinations);
 let statsLifecycleInstalled = false;
@@ -41,6 +50,14 @@ function installStatsLifecycle(): void {
 // Reads the stored progress into savedProgress.
 export async function loadProgress(): Promise<void> {
   if (isDevelopmentSession()) {
+    try {
+      const loaded = loadSave(format, await storage.read(KEYS.save));
+      developmentOwned = loaded.status === "loaded" ? loaded.save.skills : [];
+      developmentSavedSelection = loaded.status === "loaded" ? loaded.save.activeSkill : null;
+    } catch {
+      developmentOwned = [];
+      developmentSavedSelection = null;
+    }
     return;
   }
   const [loaded] = await Promise.all([store.load(), stats.load()]);
@@ -98,7 +115,11 @@ export function recordActiveStageStep(
   after: ZoneState,
 ): void {
   if (!isDevelopmentSession() && STAGES.has(stage)) {
-    stats.addActiveTime(stage, activeStepSeconds(seconds, before, after));
+    const active = activeStepSeconds(seconds, before, after);
+    stats.addActiveTime(stage, active);
+    if (active > 0 && before.death === undefined && after.death !== undefined) {
+      stats.recordDeath(stage);
+    }
   }
 }
 
@@ -113,6 +134,61 @@ export function clearStageTime(stage: string): void {
 
 export function flushStats(): Promise<void> {
   return isDevelopmentSession() ? Promise.resolve() : stats.flush();
+}
+
+export function wholeRunStats(): WholeRunStatsSummary {
+  return isDevelopmentSession() ? { activeSeconds: 0, deaths: 0 } : stats.wholeRun();
+}
+
+export function resetWholeRunStats(): void {
+  if (isDevelopmentSession()) {
+    return;
+  }
+  stats.resetWholeRun();
+  void stats.flush();
+}
+
+export function savedSkills(): readonly SkillId[] {
+  return developmentOwned ?? progress.skills;
+}
+
+export function activeSkill(): SkillId | null {
+  const eligible = eligibleSkills(developmentSkillOverrides(), savedSkills());
+  if (!isDevelopmentSession()) {
+    return resolveActiveSkill(eligible, progress.activeSkill);
+  }
+  const saved =
+    developmentSavedSelection === undefined ? progress.activeSkill : developmentSavedSelection;
+  temporarySelection = resolveActiveSkill(
+    eligible,
+    temporarySelection === undefined ? saved : temporarySelection,
+  );
+  return temporarySelection;
+}
+
+export function selectActiveSkill(skill: SkillId): boolean {
+  const eligible = eligibleSkills(developmentSkillOverrides(), savedSkills());
+  if (!eligible.includes(skill) || activeSkill() === skill) {
+    return false;
+  }
+  if (isDevelopmentSession()) {
+    temporarySelection = skill;
+  } else {
+    write({ ...progress, activeSkill: skill });
+  }
+  return true;
+}
+
+export function grantSkill(skill: SkillId): boolean {
+  if (isDevelopmentSession() || progress.skills.includes(skill)) {
+    return false;
+  }
+  write({
+    ...progress,
+    activeSkill: progress.activeSkill ?? skill,
+    skills: [...progress.skills, skill],
+  });
+  return true;
 }
 
 // The saved progress, or the beginning.
@@ -140,10 +216,12 @@ export function saveZoneIntro(zone: string): void {
     return;
   }
   write({
+    activeSkill: progress.activeSkill,
     at: "map",
     ...savedMap(),
     openingSeen: progress.openingSeen,
     seenZoneIntros: [...seen, zone],
+    skills: progress.skills,
   });
 }
 
@@ -160,10 +238,12 @@ export function saveStand(stand: string): void {
 
 function writeStand(stand: string): void {
   write({
+    activeSkill: progress.activeSkill,
     at: "map",
     completed: savedMap().completed,
     openingSeen: progress.openingSeen,
     seenZoneIntros: seenZoneIntros(),
+    skills: progress.skills,
     stand,
   });
 }
@@ -172,10 +252,12 @@ function writeStand(stand: string): void {
 export function saveCompleted(node: string): void {
   const { completed } = savedMap();
   write({
+    activeSkill: progress.activeSkill,
     at: "map",
     completed: completed.includes(node) ? completed : [...completed, node],
     openingSeen: progress.openingSeen,
     seenZoneIntros: seenZoneIntros(),
+    skills: progress.skills,
     stand: node,
   });
 }

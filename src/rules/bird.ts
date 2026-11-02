@@ -69,6 +69,14 @@ export function startsDash(tuning: BirdTuning, input: BirdInput, bird: BirdState
   );
 }
 
+export function startsAirJump(tuning: BirdTuning, input: BirdInput, bird: BirdState): boolean {
+  const jumpPressed = input.jumpHeld && !bird.jumpHeld;
+  const groundJump = jumpPressed && (bird.grounded || bird.coyoteLeft > 0);
+  return (
+    tuning.doubleJump === true && jumpPressed && !groundJump && !bird.grounded && !bird.airJumpUsed
+  );
+}
+
 export function startBird(tuning: BirdTuning, start: Point): BirdState {
   return {
     airJumpUsed: false,
@@ -264,16 +272,21 @@ export function stepBird(
   bird: BirdState,
 ): BirdState {
   const burst = tuning.dash;
-  let dash = burst
-    ? (bird.dash ?? {
-        airUsed: false,
-        cooldownRemainingSeconds: 0,
-        direction: bird.facing,
-        ordinaryVx: bird.vx,
-        remainingSeconds: 0,
-      })
-    : undefined;
+  let dash =
+    bird.dash ??
+    (burst
+      ? {
+          airUsed: false,
+          cooldownRemainingSeconds: 0,
+          direction: bird.facing,
+          ordinaryVx: bird.vx,
+          remainingSeconds: 0,
+        }
+      : undefined);
   const activeBefore = (dash?.remainingSeconds ?? 0) > EDGE;
+  if (!burst && dash && activeBefore) {
+    dash = { ...dash, remainingSeconds: 0 };
+  }
   if (burst && dash && startsDash(tuning, input, bird)) {
     dash = {
       ...dash,
@@ -296,11 +309,16 @@ export function stepBird(
       ? dash.direction * burst.speed * dashSeconds + ordinaryVx * (seconds - dashSeconds)
       : ordinaryVx * seconds;
   if (dash) {
+    const remaining = Math.max(0, dash.remainingSeconds - seconds);
+    const roundoff =
+      burst && seconds > 0
+        ? Number.EPSILON * burst.durationSeconds * Math.ceil(burst.durationSeconds / seconds)
+        : 0;
     dash = {
       ...dash,
       cooldownRemainingSeconds: Math.max(0, dash.cooldownRemainingSeconds - seconds),
       ordinaryVx,
-      remainingSeconds: Math.max(0, dash.remainingSeconds - seconds),
+      remainingSeconds: remaining > roundoff ? remaining : 0,
     };
   }
   let vx =
@@ -318,8 +336,7 @@ export function stepBird(
   let heldBefore = bird.jumpHeldFor;
   let airJumpUsed = bird.airJumpUsed;
   const groundJump = (jumpPressed || bufferLeft > 0) && (bird.grounded || bird.coyoteLeft > 0);
-  const airJump =
-    tuning.doubleJump === true && jumpPressed && !groundJump && !bird.grounded && !airJumpUsed;
+  const airJump = startsAirJump(tuning, input, bird);
   if (groundJump || airJump) {
     if (airJump) {
       airJumpUsed = true;

@@ -139,6 +139,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import background_tones
 import nature
 import pixel
 from PIL import Image
@@ -1348,7 +1349,7 @@ def build():
         tilesets.append(pixel.write_tileset(key, [(n, frame_image(g.px)) for n, g in tiles], pieces))
     for key, (fn, y, repeat) in BACKDROP_DEFS.items():
         g = fn()
-        frame_image(g.px).save(f"{BACKDROPS}/{key}.png")
+        background_tones.apply(key, frame_image(g.px)).save(f"{BACKDROPS}/{key}.png")
         backdrops.append(
             {
                 "key": key,

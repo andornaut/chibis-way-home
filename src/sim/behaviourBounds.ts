@@ -39,7 +39,7 @@ export function objectCycleSeconds(objects: readonly ObjectLayout[], object: Obj
 }
 
 function flightWaypoints(motion: Extract<BehaviourMotion, { kind: "fly" }>): readonly Point[] {
-  if (motion.to !== "target") {
+  if (typeof motion.to !== "string") {
     return [motion.to];
   }
   const { height, width, x, y } = motion.bounds;
@@ -86,7 +86,11 @@ export function sweptBehaviourRect(
   const hop = Math.max(
     0,
     ...Object.values(pattern.states).map((node) =>
-      node.motion.kind === "hop" ? node.motion.hopHeight : 0,
+      node.motion.kind === "hop"
+        ? node.motion.hopHeight
+        : node.motion.kind === "pursue" && node.motion.mode === "ground" && node.motion.traversal
+          ? node.motion.traversal.jumpSpeed ** 2 / (2 * node.motion.traversal.gravity)
+          : 0,
     ),
   );
   if (pattern.pursuit) {

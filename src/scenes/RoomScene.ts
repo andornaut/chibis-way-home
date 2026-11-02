@@ -7,28 +7,38 @@ import {
 import { type Cameras, type GameObjects, type Input, Scene, Scenes } from "phaser";
 
 import { CHARACTERS } from "../data/characters";
+import { DIALOGUES, SPEAKERS } from "../data/dialogues";
 import { ROOMS } from "../data/rooms";
 import { TEXT } from "../data/text";
 import type { RoomPlan } from "../data/types";
+import { dialogueParagraphs } from "../dialogue/conversation";
+import { DIALOGUE_SCREEN, dialogueSpeakerLayout } from "../layout/dialogueScreen";
 import { pressedArea } from "../layout/hitAreas";
 import { CARD_TEXT_SCALE } from "../layout/pauseCard";
 import { ROOM_SCREEN } from "../layout/roomScreen";
+import { SKILL_ROOM, skillDetails } from "../layout/skillDetails";
 import { type RoomEvent, roomEvent } from "../pause/roomInput";
 import { coverZone, PHONE_EVENTS } from "../pwa";
+import { grantSkill } from "../save";
 import {
   addButtonLabel,
   addCardText,
+  addCardTextIn,
   addSlice,
+  BODY_FONT,
   BUTTON,
   type ButtonLabel,
   captureTab,
+  cardFonts,
   paletteColour,
   placeButtonLabel,
   ringFocus,
   TITLE_FONT,
 } from "./cardParts";
+import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
+import { drawSkillButton } from "./skillButton";
 
 const ZONE = "zone";
 // The placeholder frame's line, in base pixels.
@@ -70,6 +80,9 @@ export class RoomScene extends Scene {
     this.focusRing = undefined;
     this.leaving = false;
     this.pressed = undefined;
+    if (room.grant !== undefined) {
+      grantSkill(room.grant);
+    }
   }
 
   create(): void {
@@ -98,6 +111,40 @@ export class RoomScene extends Scene {
   }
 
   private drawRoom(): void {
+    if (this.room.grant !== undefined) {
+      const words = TEXT.skills[this.room.grant];
+      const layout = skillDetails(cardFonts(this), SKILL_ROOM.bounds, false, words);
+      addSlice(this, "ui-settings-card", layout.card);
+      addCardTextIn(this, TITLE_FONT, layout.title!, words.title, this.colour("ink"));
+      addCardTextIn(
+        this,
+        BODY_FONT,
+        layout.groups.description!,
+        layout.description,
+        this.colour("ink"),
+      );
+      const icon = drawSkillButton(this, layout.groups.icon!, this.room.grant);
+      icon.ready(true);
+      const dialogue = this.room.enter === undefined ? undefined : DIALOGUES[this.room.enter];
+      if (dialogue === undefined) {
+        throw new Error("A skill room needs an entry dialogue");
+      }
+      {
+        const paragraph = dialogueParagraphs(SPEAKERS, TEXT, dialogue)[0]!;
+        this.add
+          .image(DIALOGUE_SCREEN.box.x, DIALOGUE_SCREEN.box.y, "ui-dialogue-box")
+          .setOrigin(0);
+        drawDialogueParagraph(this, { ...paragraph, portrait: null });
+        if (paragraph.portrait !== null) {
+          const at = dialogueSpeakerLayout(paragraph.side).portrait;
+          const portraitRoom = 64;
+          this.add
+            .sprite(at.x + portraitRoom / 2, at.y + portraitRoom / 2, paragraph.portrait)
+            .play(animationKey(paragraph.portrait, "idle"));
+        }
+      }
+      return;
+    }
     const { animations = [], art, cast = [] } = this.room;
     if (art === undefined) {
       // PLACEHOLDER: a plain frame on the ink until the room has art.
@@ -141,8 +188,12 @@ export class RoomScene extends Scene {
     );
   }
 
+  private leaveLayout() {
+    return this.room.grant === undefined ? ROOM_SCREEN.leave : SKILL_ROOM.leave;
+  }
+
   private drawLeave(): void {
-    const { leave } = ROOM_SCREEN;
+    const leave = this.leaveLayout();
     const frames = sheetTags(this.cache.json.get(BUTTON.art) as AsepriteSheet);
     const face = (tag: "normal" | "pressed") =>
       addSlice(this, BUTTON.art, leave.art, frames.get(tag)?.[0]?.frame);
@@ -155,7 +206,7 @@ export class RoomScene extends Scene {
 
   // Leave as the press and the focus leave it.
   private render(): void {
-    const { leave } = ROOM_SCREEN;
+    const leave = this.leaveLayout();
     const pressed = this.pressed === "leave";
     this.leaveFaces.normal.setVisible(!pressed);
     this.leaveFaces.pressed.setVisible(pressed);
@@ -164,7 +215,7 @@ export class RoomScene extends Scene {
   }
 
   private controlAt(pointer: Input.Pointer): "leave" | undefined {
-    const { art, hit } = ROOM_SCREEN.leave;
+    const { art, hit } = this.leaveLayout();
     return pressedArea(
       [{ art, hit, key: "leave" as const }],
       playPoint(this, pointer, this.contentCamera),

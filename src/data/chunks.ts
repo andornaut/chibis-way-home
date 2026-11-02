@@ -1,4 +1,5 @@
-import { CITY_SHUTTLE_BEHAVIOUR } from "./behaviours";
+import { outdoorBackground } from "./backgrounds";
+import { CITY_LIFT_BEHAVIOUR, CITY_SHUTTLE_BEHAVIOUR } from "./behaviours";
 import {
   BOUNDARY_START,
   CHUNK_COLS,
@@ -9,9 +10,10 @@ import {
 } from "./chunkTemplates";
 import { createHazardChunks } from "./hazardChunks";
 import { createOrbitHazardChunks } from "./orbitHazardChunks";
-import { ZONE_ROWS } from "./screen";
+import { SCREEN, TILE, ZONE_ROWS } from "./screen";
 import type {
   ChunkPlan,
+  ChunkPool,
   ChunkRules,
   ElementBinding,
   Instance,
@@ -27,7 +29,7 @@ import { HOME_CITY_CHUNKS } from "./zone5";
 import { APARTMENT_CHUNKS, createApartmentMiddleChunks } from "./zone6";
 
 // The rows a chunk's entry and exit stand on.
-export const SEAM_ROWS = [30, 40, 50] as const;
+export const SEAM_ROWS = [20, 30, 40, 50, 60, 70, 80, 100] as const;
 
 export const CHUNK_RULES: ChunkRules = {
   cols: { max: CHUNK_COLS, min: CHUNK_COLS },
@@ -87,6 +89,7 @@ const COMMON_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 
 const CITY_THEME: ThemePlan = {
   backdrops: [{ character: "street-sky", parallax: { x: 1, y: 1 }, role: "sky", row: 0 }],
+  background: outdoorBackground(false),
   bindings: {
     ...COMMON_BINDINGS,
     antagonist: { character: "dog-antagonist", scene: null },
@@ -144,6 +147,10 @@ const INDUSTRIAL_BINDINGS: Readonly<Record<string, ElementBinding>> = {
     skin: { art: "warehouse-wall", tileset: null },
   },
   sky: { character: "street-sky", skin: { art: "industrial-sky", tileset: null } },
+  "tunnel-wall": {
+    character: "apartment-wall-panel",
+    skin: { art: "warehouse-wall", tileset: null },
+  },
 };
 
 const COMMON_BACKDROPS: ThemePlan["backdrops"] = CITY_THEME.backdrops;
@@ -338,6 +345,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   ),
   "back-streets": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: {
       ...HOME_CITY_BINDINGS,
       "near-wall": {
@@ -361,6 +369,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "city-outskirts": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: HOME_CITY_BINDINGS,
     door: "door",
     looks: { ground: "outskirts-ground", raised: "brick-stack" },
@@ -369,6 +378,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   "city-streets": CITY_THEME,
   "country-lanes": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: {
       ...COUNTRYSIDE_BINDINGS,
       "loading-bay": {
@@ -382,6 +392,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "deep-woods": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(true),
     bindings: { ...WOODLAND_BINDINGS, ...woodlandSpecies("woodland-far", "forest-mid-conifers") },
     door: "door",
     looks: { ground: "forest-ground", raised: "root-stack" },
@@ -389,6 +400,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "familiar-neighbourhood": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: {
       ...HOME_CITY_BINDINGS,
       "boundary-wall": {
@@ -410,6 +422,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   farmland: {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: COUNTRYSIDE_BINDINGS,
     door: "door",
     looks: { ground: "country-ground", raised: "hay-stack" },
@@ -417,6 +430,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "forest-paths": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(true),
     bindings: { ...WOODLAND_BINDINGS, ...woodlandSpecies("woodland-far", "forest-mid-birch") },
     door: "door",
     looks: { ground: "forest-ground", raised: "root-stack" },
@@ -424,6 +438,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "freight-terminal": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: {
       ...INDUSTRIAL_BINDINGS,
       "boundary-wall": {
@@ -449,6 +464,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "loading-yards": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: {
       ...INDUSTRIAL_BINDINGS,
       "loading-bay": {
@@ -500,6 +516,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   ravine: {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(true),
     bindings: {
       ...WOODLAND_BINDINGS,
       ...woodlandSpecies("woodland-far-conifers", "forest-mid-birch"),
@@ -523,6 +540,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   },
   "river-crossing": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: {
       ...COUNTRYSIDE_BINDINGS,
       "loading-bay": {
@@ -539,6 +557,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
   street: CITY_THEME,
   "warehouse-district": {
     backdrops: COMMON_BACKDROPS,
+    background: outdoorBackground(false),
     bindings: INDUSTRIAL_BINDINGS,
     door: "door",
     looks: { ground: "industrial-floor", raised: "crate-stack" },
@@ -694,22 +713,51 @@ const PARK_UP = moduleChunk(
   red(12, 4, 50),
 );
 
+function raisedBlock(
+  col: number,
+  cols: number,
+  rise: number,
+  solids: readonly TerrainRect[],
+): readonly TerrainRect[] {
+  const support = solids.find((solid) => solid.col < col && col + cols < solid.col + solid.cols);
+  if (!support) {
+    throw new Error(`No ground span surrounds climb ${col}..${col + cols}`);
+  }
+  return solids.flatMap((solid) =>
+    solid !== support
+      ? [solid]
+      : [
+          { ...solid, cols: col - solid.col },
+          {
+            ...solid,
+            col,
+            cols,
+            look: "raised" as const,
+            row: solid.row - rise,
+            rows: solid.rows + rise,
+          },
+          { ...solid, col: col + cols, cols: solid.col + solid.cols - col - cols },
+        ],
+  );
+}
+
 // Every horizontal module occupies one screen. Moving tracks and lethal strips stay between seam footings.
-function horizontalYard(bear: boolean, origin: number): ChunkPlan {
+function horizontalYard(bear: boolean, origin: number, climb: boolean): ChunkPlan {
   const left = origin - 22;
   const right = origin + 6;
+  const solids = [
+    floor(0, left, 50),
+    floor(left, 4, 44),
+    floor(left + 4, right - left - 4 - (bear ? 2 : 0), 50),
+    floor(right, 4, 44),
+    floor(right + 4, CHUNK_COLS - right - 4, 50),
+  ];
   return moduleChunk(
     bear ? ["deep-woods", "forest-paths", "ravine"] : PATROL_THEMES,
     4,
     50,
     50,
-    [
-      floor(0, left, 50),
-      floor(left, 4, 44),
-      floor(left + 4, right - left - 4 - (bear ? 2 : 0), 50),
-      floor(right, 4, 44),
-      floor(right + 4, CHUNK_COLS - right - 4, 50),
-    ],
+    climb ? raisedBlock(origin - 10, 4, 4, solids) : solids,
     [
       {
         character: bear ? "bear-antagonist" : "dog-antagonist",
@@ -723,19 +771,20 @@ function horizontalYard(bear: boolean, origin: number): ChunkPlan {
     ],
   );
 }
-function flyerYard(origin: number): ChunkPlan {
+function flyerYard(origin: number, climb: boolean): ChunkPlan {
+  const solids = [
+    floor(0, origin, 50),
+    floor(origin, 4, 40),
+    floor(origin + 4, 48 - origin - 4, 50),
+    floor(48, 4, 47),
+    floor(52, 8, 50),
+  ];
   return moduleChunk(
     ["freight-terminal", "loading-yards", "warehouse-district"],
     4,
     50,
     50,
-    [
-      floor(0, origin, 50),
-      floor(origin, 4, 40),
-      floor(origin + 4, 48 - origin - 4, 50),
-      floor(48, 4, 47),
-      floor(52, 8, 50),
-    ],
+    climb ? raisedBlock(origin + 14, 4, 5, solids) : solids,
     [
       { character: "pigeon-antagonist", col: origin, role: "antagonist", row: 36 },
       {
@@ -770,12 +819,21 @@ function verticalYard(origin: number): ChunkPlan {
 }
 const ENCOUNTER_YARDS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
   ["early", "middle", "late"].flatMap((position, index) => [
-    [`patrol-cover-${position}`, horizontalYard(false, 26 + index * 8)],
-    [`growl-cover-${position}`, horizontalYard(true, 26 + index * 8)],
-    [`flyer-shelter-${position}`, flyerYard(18 + index * 10)],
+    [`patrol-cover-${position}`, horizontalYard(false, 26 + index * 8, index < 2)],
+    [`growl-cover-${position}`, horizontalYard(true, 26 + index * 8, index < 2)],
+    [`flyer-shelter-${position}`, flyerYard(18 + index * 10, index < 2)],
     [`vertical-stack-${position}`, verticalYard(20 + index * 8)],
   ]),
 );
+
+const CLIMBING_PATROL = {
+  ...PATROL_ENCOUNTER,
+  solids: raisedBlock(20, 4, 4, PATROL_ENCOUNTER.solids),
+};
+const CLIMBING_GROWL = {
+  ...GROWL_FINISH,
+  solids: raisedBlock(24, 4, 4, GROWL_FINISH.solids),
+};
 
 const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...createHazardChunks(MECHANICAL_THEMES),
@@ -802,9 +860,9 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       ledge(52, 4, 34),
     ],
   ),
-  "city-boundary-dog-high": { ...shifted(-20, PATROL_ENCOUNTER), theme: PATROL_THEMES, weight: 2 },
+  "city-boundary-dog-high": { ...shifted(-20, CLIMBING_PATROL), theme: PATROL_THEMES, weight: 2 },
   "city-boundary-dog-terrace": {
-    ...shifted(-10, PATROL_ENCOUNTER),
+    ...shifted(-10, CLIMBING_PATROL),
     theme: PATROL_THEMES,
     weight: 2,
   },
@@ -1049,7 +1107,7 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     solids: [floor(0, 28, 40), floor(28, 16, 30), floor(48, 12, 30)],
   },
   "growl-clearing": {
-    ...shifted(-10, GROWL_FINISH),
+    ...shifted(-10, CLIMBING_GROWL),
     encounters: 1,
     objects: [
       ...shifted(-10, GROWL_FINISH).objects,
@@ -1246,7 +1304,488 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
   ].map((id) => [id, `${id}-woodland-depth`]),
 );
 
+export const GROUND_CHALLENGES: ChunkPool = [
+  "city-boundary-ground-hazard",
+  "compound-ascent",
+  "compound-compact-ascent",
+  "compound-compact-climb",
+  "compound-low-ceiling-hazard",
+  "compound-return-terrace",
+];
+export const JUMP_CHALLENGES: ChunkPool = [
+  "city-boundary-edge-yard",
+  "city-boundary-gaps",
+  "city-boundary-jumps",
+  "city-boundary-low-ceiling",
+  "city-boundary-return-gap",
+  "city-boundary-steps",
+  "city-boundary-upper-climb",
+  "guarded-valley",
+  "overjump-low-roof",
+];
+export const INDUSTRIAL_CHALLENGES: ChunkPool = [
+  ...GROUND_CHALLENGES,
+  ...JUMP_CHALLENGES,
+  "bounded-flyer-post",
+  "city-boundary-lift",
+  "city-boundary-shuttle",
+  "compound-double-lift",
+  "compound-lift-shuttle",
+  "compound-low-ceiling-shuttle",
+  "compound-perch-yard",
+  "compound-return-high",
+  "flyer-shelter-early",
+  "flyer-shelter-late",
+  "flyer-shelter-middle",
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
+  "vertical-red-gate",
+];
+
+export const PATROL_YARDS: ChunkPool = [
+  "city-boundary-climb-yard",
+  "city-boundary-dog-high",
+  "city-boundary-dog-terrace",
+  "patrol-cover-early",
+  "patrol-cover-late",
+  "patrol-cover-middle",
+];
+export const BLUE_CHALLENGES: ChunkPool = [
+  ...GROUND_CHALLENGES,
+  ...JUMP_CHALLENGES,
+  ...PATROL_YARDS,
+  "city-boundary-lift",
+  "city-boundary-shuttle",
+  "compound-return-shuttle",
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
+  "vertical-red-gate",
+];
+
+export const COUNTRYSIDE_CHALLENGES: ChunkPool = [
+  ...GROUND_CHALLENGES,
+  ...JUMP_CHALLENGES,
+  ...PATROL_YARDS,
+  "city-boundary-shuttle",
+  "compound-low-ceiling-shuttle",
+  "compound-return-high",
+  "compound-return-shuttle",
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
+  "vertical-red-gate",
+];
+
+export const WOODLAND_CHALLENGES: ChunkPool = [
+  ...GROUND_CHALLENGES,
+  "compound-double-lift",
+  "compound-low-ceiling-shuttle",
+  "compound-return-high",
+  "compound-return-shuttle",
+  "growl-clearing",
+  "growl-cover-early",
+  "growl-cover-late",
+  "growl-cover-middle",
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
+  "vertical-red-gate",
+];
+
+export const HOME_CHALLENGES: ChunkPool = [
+  ...GROUND_CHALLENGES,
+  "climbing-enemy-lane",
+  "compound-double-lift",
+  "compound-low-ceiling-shuttle",
+  "compound-return-high",
+  "compound-vertical-yard",
+  "vertical-stack-early",
+  "vertical-stack-late",
+  "vertical-stack-middle",
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
+  "vertical-red-gate",
+];
+
+export const FOUR_SCREEN_ROWS = (4 * SCREEN.height) / TILE;
+export const INDUSTRIAL_ROWS = FOUR_SCREEN_ROWS;
+const LOWER_ROUTE_OFFSET = 30;
+const INDUSTRIAL_ROOF_ROW = 35;
+const INDUSTRIAL_THEMES = ["freight-terminal", "loading-yards", "warehouse-district"];
+export const industrialCapId = (id: string): string => `industrial-tall-${id}`;
+export const industrialTunnelId = (id: string): string => `industrial-tunnel-${id}`;
+export const INDUSTRIAL_CONNECTORS = [
+  "industrial-descent",
+  "industrial-ascent",
+  "industrial-deep-descent",
+  "industrial-deep-ascent",
+] as const;
+
+function tunnelWalls(): readonly Instance[] {
+  const bandRows = 20;
+  const top = 50;
+  return Array.from({ length: Math.ceil((INDUSTRIAL_ROWS - top) / bandRows) }, (_, index) => ({
+    backdropPlane: "interior",
+    backdropSpan: true,
+    character: "apartment-wall-panel",
+    col: 0,
+    cols: CHUNK_COLS,
+    groundAnchor: "start",
+    parallax: { x: 0.8, y: 0.25 },
+    role: "tunnel-wall",
+    row: top + index * bandRows,
+    rows: Math.min(bandRows, INDUSTRIAL_ROWS - top - index * bandRows),
+  }));
+}
+
+function fourScreenChunk(
+  context: { readonly offset: number; readonly underground: boolean },
+  chunk: ChunkPlan,
+): ChunkPlan {
+  const { offset, underground } = context;
+  const point = <T extends { readonly row: number }>(value: T): T => ({
+    ...value,
+    row: value.row + offset,
+  });
+  return {
+    ...chunk,
+    backdrops: (chunk.backdrops ?? []).map(point),
+    entry: { row: (chunk.entry.row + offset) as ChunkPlan["entry"]["row"] },
+    exit: { row: (chunk.exit.row + offset) as ChunkPlan["exit"]["row"] },
+    ...(chunk.noCross && {
+      noCross: chunk.noCross.map(({ from, to }) => ({ from: point(from), to: point(to) })),
+    }),
+    objects: chunk.objects.map(point),
+    ...((chunk.outOfReach || underground) && {
+      outOfReach: [
+        ...(chunk.outOfReach ?? []).map(point),
+        ...(underground ? [{ col: CHUNK_COLS / 2, row: INDUSTRIAL_ROOF_ROW }] : []),
+      ],
+    }),
+    rows: FOUR_SCREEN_ROWS,
+    scenery: [...(chunk.scenery ?? []).map(point), ...(underground ? tunnelWalls() : [])],
+    ...(chunk.slots && { slots: chunk.slots.map((slot) => ({ ...slot, area: point(slot.area) })) }),
+    solids: [
+      ...chunk.solids.map((solid) => ({
+        ...point(solid),
+        rows:
+          solid.row + solid.rows === ZONE_ROWS ? FOUR_SCREEN_ROWS - solid.row - offset : solid.rows,
+      })),
+      ...(underground
+        ? [{ col: 0, cols: CHUNK_COLS, look: "ground", row: INDUSTRIAL_ROOF_ROW, rows: 1 }]
+        : []),
+    ],
+    theme: underground ? INDUSTRIAL_THEMES : chunk.theme,
+  };
+}
+
+function industrialStairs(rows: readonly number[]): ChunkPlan {
+  const final = rows.length - 1;
+  const solids = rows.map((row, index) => {
+    const col = index === 0 ? 0 : 8 + (index - 1) * 6;
+    return {
+      col,
+      cols: index === final ? CHUNK_COLS - col : index === 0 ? 8 : 6,
+      look: "ground",
+      row,
+      rows: INDUSTRIAL_ROWS - row,
+    };
+  });
+  return {
+    cols: CHUNK_COLS,
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: rows[0] as ChunkPlan["entry"]["row"] },
+    exit: { row: rows[final] as ChunkPlan["exit"]["row"] },
+    maxPerZone: 1,
+    objects: [],
+    rows: INDUSTRIAL_ROWS,
+    scenery: tunnelWalls(),
+    solids,
+    theme: INDUSTRIAL_THEMES,
+  };
+}
+
+const INDUSTRIAL_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...Object.fromEntries(
+    Object.entries(INDUSTRIAL_CHUNKS).map(([id, chunk]) => [
+      industrialCapId(id),
+      fourScreenChunk({ offset: 0, underground: false }, chunk),
+    ]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(BASE_CHUNKS)
+      .filter(([id]) => INDUSTRIAL_CHALLENGES.includes(id))
+      .map(([id, chunk]) => [
+        industrialTunnelId(id),
+        fourScreenChunk({ offset: LOWER_ROUTE_OFFSET, underground: true }, chunk),
+      ]),
+  ),
+  "industrial-ascent": industrialStairs([80, 75, 70, 65, 60, 55, 50]),
+  "industrial-deep-ascent": industrialStairs([100, 95, 90, 85, 80]),
+  "industrial-deep-descent": industrialStairs([80, 75, 80, 85, 90, 95, 100]),
+  "industrial-descent": industrialStairs([50, 45, 50, 55, 60, 65, 70, 75, 80]),
+};
+
+const BLUE_THEMES = ["street", "city-streets", "city-boundary"];
+const COUNTRYSIDE_THEMES = ["country-lanes", "farmland", "river-crossing"];
+const WOODLAND_ROUTE_THEMES = ["deep-woods", "forest-paths", "ravine"];
+const HOME_ROUTE_THEMES = ["back-streets", "city-outskirts", "familiar-neighbourhood"];
+const LIFT_GATE_THEMES = [...BLUE_THEMES, ...WOODLAND_ROUTE_THEMES, ...HOME_ROUTE_THEMES];
+const OPEN_ROUTE_THEMES = [...BLUE_THEMES, ...COUNTRYSIDE_THEMES];
+export const blueVerticalId = (id: string): string => `blue-vertical-${id}`;
+export const BLUE_CONNECTORS = [
+  "outdoor-descent",
+  "outdoor-lift-ascent",
+  "outdoor-upper-ascent",
+  "outdoor-surface-return",
+  "outdoor-deep-descent",
+  "outdoor-deep-ascent",
+] as const;
+
+function outdoorStairs(rows: readonly number[]): ChunkPlan {
+  return { ...industrialStairs(rows), scenery: [], theme: OPEN_ROUTE_THEMES };
+}
+const blueFloor = (col: number, cols: number, row: number): TerrainRect => ({
+  col,
+  cols,
+  look: "ground",
+  row,
+  rows: FOUR_SCREEN_ROWS - row,
+});
+const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...Object.fromEntries(
+    Object.entries(BASE_CHUNKS)
+      .filter(([id, chunk]) => {
+        const themes = typeof chunk.theme === "string" ? [chunk.theme] : chunk.theme;
+        return (
+          BLUE_CHALLENGES.includes(id) ||
+          (themes.length === 1 && BLUE_THEMES.includes(themes[0]!) && /-(start|finish)$/.test(id))
+        );
+      })
+      .map(([id, chunk]) => [
+        blueVerticalId(id),
+        fourScreenChunk(
+          { offset: BLUE_CHALLENGES.includes(id) ? LOWER_ROUTE_OFFSET : 0, underground: false },
+          chunk,
+        ),
+      ]),
+  ),
+  "outdoor-deep-ascent": outdoorStairs([100, 95, 90, 85, 80]),
+  "outdoor-deep-descent": outdoorStairs([80, 75, 80, 85, 90, 95, 100]),
+  "outdoor-descent": outdoorStairs([50, 45, 50, 55, 60, 65, 70, 75, 80]),
+  "outdoor-lift-ascent": {
+    cols: CHUNK_COLS,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 40 },
+    maxPerZone: 1,
+    objects: [{ ...lift(27, 65), behaviour: { ...CITY_LIFT_BEHAVIOUR, initial: "wait-far" } }],
+    rows: FOUR_SCREEN_ROWS,
+    solids: [
+      blueFloor(0, 8, 80),
+      blueFloor(8, 6, 75),
+      blueFloor(14, 6, 70),
+      blueFloor(20, 6, 65),
+      blueFloor(34, 6, 50),
+      blueFloor(40, 6, 45),
+      blueFloor(46, 14, 40),
+    ],
+    theme: LIFT_GATE_THEMES,
+  },
+  "outdoor-surface-return": outdoorStairs([20, 15, 20, 25, 30, 35, 40, 45, 50]),
+  "outdoor-upper-ascent": {
+    cols: CHUNK_COLS,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 40 },
+    exit: { row: 20 },
+    maxPerZone: 1,
+    objects: BASE_CHUNKS["vertical-red-gate"]!.objects.map((object) => ({
+      ...object,
+      col: 28,
+      row: 24,
+    })),
+    rows: FOUR_SCREEN_ROWS,
+    solids: [
+      blueFloor(0, 8, 40),
+      blueFloor(8, 12, 35),
+      blueFloor(20, 12, 30),
+      blueFloor(32, 12, 25),
+      blueFloor(44, 16, 20),
+    ],
+    theme: LIFT_GATE_THEMES,
+  },
+};
+
+export const countrysideVerticalId = (id: string): string => `countryside-vertical-${id}`;
+export const COUNTRYSIDE_CONNECTORS = [
+  "outdoor-descent",
+  "outdoor-terrace-ascent",
+  "outdoor-ferry-ascent",
+  "outdoor-surface-return",
+  "outdoor-deep-descent",
+  "outdoor-deep-ascent",
+] as const;
+
+const COUNTRYSIDE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...Object.fromEntries(
+    Object.entries(BASE_CHUNKS)
+      .filter(([id, chunk]) => {
+        const themes = typeof chunk.theme === "string" ? [chunk.theme] : chunk.theme;
+        return (
+          COUNTRYSIDE_CHALLENGES.includes(id) ||
+          (themes.length === 1 &&
+            COUNTRYSIDE_THEMES.includes(themes[0]!) &&
+            /-(start|finish)$/.test(id))
+        );
+      })
+      .map(([id, chunk]) => [
+        countrysideVerticalId(id),
+        fourScreenChunk(
+          {
+            offset: COUNTRYSIDE_CHALLENGES.includes(id) ? LOWER_ROUTE_OFFSET : 0,
+            underground: false,
+          },
+          chunk,
+        ),
+      ]),
+  ),
+  "outdoor-ferry-ascent": {
+    cols: CHUNK_COLS,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 40 },
+    exit: { row: 20 },
+    maxPerZone: 1,
+    objects: [shuttle(18, 35, 16), ...red(18, 22, 45)],
+    rows: FOUR_SCREEN_ROWS,
+    solids: [
+      blueFloor(0, 12, 40),
+      blueFloor(12, 6, 35),
+      blueFloor(18, 22, 45),
+      blueFloor(40, 6, 35),
+      blueFloor(46, 6, 30),
+      blueFloor(52, 4, 25),
+      blueFloor(56, 4, 20),
+    ],
+    theme: OPEN_ROUTE_THEMES,
+  },
+  "outdoor-terrace-ascent": outdoorStairs([80, 75, 70, 65, 60, 55, 50, 45, 40]),
+};
+
+export const woodlandVerticalId = (id: string): string => `woodland-vertical-${id}`;
+export const WOODLAND_VERTICAL_ALIASES: Readonly<Record<string, string>> = Object.fromEntries(
+  WOODLAND_CHALLENGES.map((id) => [id, woodlandVerticalId(id)]),
+);
+export const WOODLAND_CONNECTORS = [
+  "woodland-timed-descent",
+  "outdoor-lift-ascent",
+  "outdoor-upper-ascent",
+  "woodland-timed-return",
+  "woodland-deep-descent",
+  "woodland-deep-ascent",
+] as const;
+
+function woodlandHeight(id: string, chunk: ChunkPlan): ChunkPlan {
+  const layered = WOODLAND_DEPTH_ALIASES[id]
+    ? {
+        ...chunk,
+        backdrops: [...woodlandDepth(localDepth(0)), ...(chunk.backdrops ?? [])],
+        scenery: WOODLAND_SCENERY[id] ?? [],
+        theme: WOODLAND_ROUTE_THEMES,
+      }
+    : chunk;
+  const offset = WOODLAND_CHALLENGES.includes(id) ? LOWER_ROUTE_OFFSET : 0;
+  const tall = fourScreenChunk({ offset, underground: false }, layered);
+  const visual = (instance: Instance): Instance =>
+    instance.parallax && instance.parallax.y < 1
+      ? instance
+      : { ...instance, row: instance.row + offset };
+  return {
+    ...tall,
+    backdrops: (layered.backdrops ?? []).map(visual),
+    scenery: (layered.scenery ?? []).map(visual),
+  };
+}
+
+function guardedWoodlandStairs(col: number, rows: readonly number[]): ChunkPlan {
+  const chunk = outdoorStairs(rows);
+  const ground = chunk.solids.find((solid) => solid.col <= col && solid.col + solid.cols > col)!;
+  return {
+    ...chunk,
+    difficulty: 4,
+    objects: BASE_CHUNKS["vertical-red-gate"]!.objects.map((object) => ({
+      ...object,
+      col,
+      row: ground.row - object.rows!,
+    })),
+    theme: WOODLAND_ROUTE_THEMES,
+  };
+}
+
+const WOODLAND_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...Object.fromEntries(
+    Object.entries(BASE_CHUNKS)
+      .filter(([id, chunk]) => {
+        const themes = typeof chunk.theme === "string" ? [chunk.theme] : chunk.theme;
+        return (
+          WOODLAND_CHALLENGES.includes(id) ||
+          (themes.length === 1 &&
+            WOODLAND_ROUTE_THEMES.includes(themes[0]!) &&
+            /-(start|finish)$/.test(id))
+        );
+      })
+      .map(([id, chunk]) => [woodlandVerticalId(id), woodlandHeight(id, chunk)]),
+  ),
+  "woodland-deep-ascent": guardedWoodlandStairs(36, [100, 95, 90, 85, 80]),
+  "woodland-deep-descent": guardedWoodlandStairs(17, [80, 75, 80, 85, 90, 95, 100]),
+  "woodland-timed-descent": guardedWoodlandStairs(17, [50, 45, 50, 55, 60, 65, 70, 75, 80]),
+  "woodland-timed-return": guardedWoodlandStairs(17, [20, 15, 20, 25, 30, 35, 40, 45, 50]),
+};
+
+export const homeVerticalId = (id: string): string => `home-vertical-${id}`;
+export const HOME_CONNECTORS = [
+  "home-timed-descent",
+  "outdoor-lift-ascent",
+  "outdoor-upper-ascent",
+  "home-timed-return",
+  "home-deep-descent",
+  "home-deep-ascent",
+] as const;
+const HOME_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...Object.fromEntries(
+    Object.entries(BASE_CHUNKS)
+      .filter(([id, chunk]) => {
+        const themes = typeof chunk.theme === "string" ? [chunk.theme] : chunk.theme;
+        return (
+          HOME_CHALLENGES.includes(id) ||
+          (themes.length === 1 &&
+            HOME_ROUTE_THEMES.includes(themes[0]!) &&
+            /-(start|finish)$/.test(id))
+        );
+      })
+      .map(([id, chunk]) => [
+        homeVerticalId(id),
+        fourScreenChunk(
+          { offset: HOME_CHALLENGES.includes(id) ? LOWER_ROUTE_OFFSET : 0, underground: false },
+          chunk,
+        ),
+      ]),
+  ),
+  ...Object.fromEntries(
+    ["timed-descent", "timed-return", "deep-descent", "deep-ascent"].map((kind) => [
+      `home-${kind}`,
+      { ...WOODLAND_VERTICAL_CHUNKS[`woodland-${kind}`]!, theme: HOME_ROUTE_THEMES },
+    ]),
+  ),
+};
+
 export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  ...HOME_VERTICAL_CHUNKS,
+  ...WOODLAND_VERTICAL_CHUNKS,
+  ...COUNTRYSIDE_VERTICAL_CHUNKS,
+  ...BLUE_VERTICAL_CHUNKS,
+  ...INDUSTRIAL_VERTICAL_CHUNKS,
   ...createApartmentMiddleChunks(BASE_CHUNKS),
   ...Object.fromEntries(
     Object.entries(BASE_CHUNKS).map(([id, chunk]) => [

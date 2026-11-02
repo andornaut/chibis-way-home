@@ -14,13 +14,16 @@ import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "ph
 
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
+import { BOSS_WARNING } from "../data/bossWarning";
 import { CAMERA } from "../data/camera";
 import { CHARACTERS } from "../data/characters";
+import { DASH_TRAIL } from "../data/dashTrail";
 import { DEATH } from "../data/death";
 import { ZONE_DIALOGUES } from "../data/dialogues";
 import { CONTACT_CUE } from "../data/feedback";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN, TILE } from "../data/screen";
+import { SKILLS } from "../data/skills";
 import { STAGE_BARKS } from "../data/stageBarks";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
@@ -64,6 +67,7 @@ import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
 import { nodeOf } from "../rules/map";
 import { currentScreen } from "../rules/perception";
+import { skillTuning } from "../rules/skills";
 import { createStageBarks } from "../rules/stageBarks";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
@@ -78,6 +82,7 @@ import {
   roomOf,
   startZone,
   stepZone,
+  type ZoneBark,
   type ZoneState,
 } from "../rules/zone";
 import {
@@ -96,6 +101,7 @@ import {
 } from "../rules/zoneFlow";
 import { zonePlanFor } from "../rules/zonePlans";
 import {
+  activeSkill,
   activeStageTime,
   beginStageRun,
   beginZoneVisit,
@@ -108,10 +114,13 @@ import {
   saveZoneIntro,
   seenZoneIntros,
   stageRunStats,
+  wholeRunStats,
   zoneVisitStats,
 } from "../save";
+import { wholeRunSummary } from "../save/runSummary";
 import { type TouchSetting, touchSettings, touchSettingShown } from "../settings/touchControls";
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
+import { backgroundGroundOffset, backgroundGroundReference } from "../view/backgroundGround";
 import { behaviourPose } from "../view/behaviour";
 import { BIRD_FRAME, birdFrameAt, type BirdPose, startPose, stepPose } from "../view/bird";
 import { characterState, nextQuirkAt } from "../view/character";
@@ -127,6 +136,7 @@ import {
 } from "../view/death";
 import { doorPhase } from "../view/doorOpen";
 import { forceVisualPosition } from "../view/forceVisual";
+import { interiorBackdrop } from "../view/interiorBackdrop";
 import { moveHintView } from "../view/moveHint";
 import {
   type ArtKind,
@@ -134,15 +144,19 @@ import {
   artOffset,
   artScrollFactor,
   sceneryParallax,
+  worldScenery,
 } from "../view/objectArt";
 import { type PlayHold, stepAction } from "../view/playHold";
 import { scenerySpriteFrame } from "../view/scenerySprite";
 import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
-import { proximityDialogue } from "../view/zoneDialogue";
+import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";
+import { mountBossWarning } from "./bossWarning";
+import { paletteColour } from "./cardParts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
 import type { CutsceneData } from "./CutsceneScene";
+import { mountDashTrail } from "./dashTrail";
 import { frameDeathCamera } from "./deathCamera";
 import type { DeathData, DeathOpener } from "./DeathScene";
 import { type DialogueData, type DialogueOpener } from "./DialogueScene";
@@ -150,6 +164,7 @@ import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
 import { bindZoneBarks } from "./zoneBarks";
+import type { ZoneBarkScene } from "./ZoneBarkScene";
 import type { ZoneDepartureData } from "./ZoneDepartureScene";
 import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene";
 
@@ -210,6 +225,7 @@ const OVERLAY_DEPTH = 2;
 // Everything drawn for one object, placed at its top-left corner plus offset. A sprite faces the
 // way it last moved.
 interface ObjectArt {
+  disposed?: boolean;
   readonly item: GameObjects.Components.Transform & GameObjects.GameObject;
   readonly offset: Point;
   readonly scenery?: boolean;
@@ -240,10 +256,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // The move hint's ring and knob.
   private moveHint!: { readonly knob: GameObjects.Sprite; readonly ring: GameObjects.Sprite };
   private bird!: GameObjects.Sprite;
+  private dashWind: ReturnType<typeof mountDashTrail> | undefined;
+  private bossWarning: ReturnType<typeof mountBossWarning> | undefined;
   private birdPose: BirdPose = startPose;
   private dying: DeathPresentation | undefined;
   private deathView: DeathView | undefined;
   private deathModal = false;
+  private deathFraming = false;
   private restoreDeathCamera: (() => void) | undefined;
   private progress!: GameObjects.Graphics;
   private loading = true;
@@ -293,6 +312,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     readonly bounds: Rect;
     readonly item: GameObjects.TileSprite;
     readonly parallax: Point;
+    readonly reference?: Point;
   }[] = [];
   private readonly scenerySprites: {
     readonly coverage: { readonly width: number; readonly x: number };
@@ -352,9 +372,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.heardDialogues.clear();
     this.clock = startStepClock;
     this.birdPose = startPose;
+    this.dashWind = undefined;
+    this.bossWarning = undefined;
     this.dying = undefined;
     this.deathView = undefined;
     this.deathModal = false;
+    this.deathFraming = false;
   }
 
   create(): void {
@@ -423,6 +446,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       this.dialogueObject = undefined;
       coverZone("dialogue", false);
+      this.deathFraming = false;
       cancelContactFeedback(this.events);
       this.restoreDeathCamera?.();
       this.restoreDeathCamera = undefined;
@@ -435,6 +459,18 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
 
     this.landMs = tagMs(this.sheet(BIRD_SPRITE), "land");
 
+    this.bossWarning = mountBossWarning(
+      BOSS_WARNING,
+      (DEPTHS.tiles + DEPTHS.sprite) / 2,
+      (name) => paletteColour(this, name),
+      this,
+    );
+    this.dashWind = mountDashTrail(
+      DASH_TRAIL,
+      BIRD_DEPTH,
+      (name) => paletteColour(this, name),
+      this,
+    );
     this.bird = this.add.sprite(0, 0, BIRD_SPRITE).setOrigin(0).setDepth(BIRD_DEPTH);
     this.manifest = this.cache.json.get(ART_MANIFEST_KEY) as ArtManifest;
     this.hitboxes = artHitboxes(
@@ -498,7 +534,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.events.once("shutdown", () =>
       this.scale.off(Scale.Events.RESIZE, this.placeControls, this),
     );
-    this.barks = bindZoneBarks(() => this.barksCanPresent(), this);
+    this.barks = bindZoneBarks(
+      {
+        canPresent: () => this.barksCanPresent(),
+        ownerVisible: (owner) => this.barkOwnerOnscreen(owner),
+      },
+      this,
+    );
     this.events.once("shutdown", () => {
       this.scheduledBarks = undefined;
     });
@@ -586,7 +628,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
 
   private freezePreview(preview: StagePreview): void {
     if (preview.area && preview.area !== this.zone.area) {
-      this.zone = enterArea(BIRD, this.layout, { area: preview.area, entry: "start" }, this.zone);
+      this.zone = enterArea(
+        this.movementTuning(),
+        this.layout,
+        { area: preview.area, entry: "start" },
+        this.zone,
+      );
       this.drawArea();
     }
     this.progress.setVisible(false);
@@ -663,6 +710,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (this.loading) {
       return;
     }
+    if (this.deathFraming) {
+      return;
+    }
     if (this.dying !== undefined) {
       this.updateDeath(time);
       return;
@@ -691,7 +741,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.zone = developmentStep(
         invulnerabilityEnabled(),
         stepZone(
-          BIRD,
+          this.movementTuning(),
           this.layout,
           STEP_SECONDS,
           { jumpHeld: intent.jump, move: intent.move, useHeld: intent.use },
@@ -730,6 +780,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         );
       }
     }
+    if (this.deathFraming) {
+      return;
+    }
     if (this.dying !== undefined) {
       this.drawDeath();
       return;
@@ -744,9 +797,58 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.drawProgress();
   }
 
+  private movementTuning() {
+    return skillTuning(SKILLS, activeSkill(), BIRD);
+  }
+
+  skillState() {
+    if (this.loading || this.zone === undefined) {
+      return undefined;
+    }
+    return {
+      bird: this.zone.bird,
+      shown:
+        !this.playCovered() &&
+        !this.inRoom &&
+        !this.opening &&
+        !this.zone.cleared &&
+        !this.zone.turnedBack &&
+        (!this.scene.isActive("zoneBark") || (this.scene.get("zoneBark") as ZoneBarkScene).idle()),
+      tuning: this.movementTuning(),
+    };
+  }
+
+  resumeSkillPlay(): void {
+    this.clearControls();
+    this.clock = startStepClock;
+  }
+
   // Pause and page controls stay inert throughout dialogue, death presentation and its card.
   playCovered(): boolean {
     return this.loading || this.dialogueOpen() || this.zone?.death !== undefined;
+  }
+
+  private barkOwnerOnscreen(owner: ZoneBark["owner"]): boolean {
+    const camera = this.cameras.main;
+    return barkOwnerOnscreen(
+      {
+        area: this.zone.area,
+        attempt: this.zone.attempt,
+        view: {
+          height: camera.height / camera.zoomY,
+          width: camera.width / camera.zoomX,
+          x: camera.scrollX,
+          y: camera.scrollY,
+        },
+      },
+      (index) => {
+        const sprite = this.objectArt[index]?.sprite;
+        return sprite
+          ? { bounds: sprite.getBounds(), rendered: sprite.willRender(camera) }
+          : undefined;
+      },
+      owner,
+    );
   }
 
   private barksCanPresent(): boolean {
@@ -792,9 +894,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
 
   private beginDeath(): void {
     const death = this.zone.death;
-    if (death === undefined || this.dying !== undefined) {
+    if (death === undefined || this.deathFraming || this.dying !== undefined) {
       return;
     }
+    this.dashWind?.clear();
     cancelContactFeedback(this.events);
     const target = deathPresentationTarget(
       DEATH,
@@ -803,17 +906,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.zone.bird.facing,
       death,
     );
-    this.restoreDeathCamera = frameDeathCamera(this, {
-      ...BIRD_FRAME,
-      ...birdFrameAt(BIRD, BIRD_FRAME, { ...this.zone.bird, ...target }),
-    });
-    const camera = this.cameras.main;
-    this.deathView = {
-      body: BIRD,
-      bounds: { height: SCREEN.height, width: SCREEN.width, x: camera.scrollX, y: camera.scrollY },
-      frame: BIRD_FRAME,
-    };
-    this.dying = startDeathPresentation(DEATH, this.deathView, this.zone.bird.facing, death);
+    this.deathFraming = true;
     this.deathModal = false;
     this.clearControls();
     this.input.enabled = false;
@@ -829,14 +922,38 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     coverZone("death", true);
     this.drawProgress();
     void flushStats();
-    if (death.contact?.contactCue === "red-hazard") {
-      playContactFeedback(this, {
-        cue: CONTACT_CUE,
-        depth: OVERLAY_DEPTH,
-        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-        shake: CAMERA.contactShake,
-      });
-    }
+    this.restoreDeathCamera = frameDeathCamera(
+      DEATH.cameraPan,
+      () => {
+        if (!this.deathFraming || this.zone.death !== death) {
+          return;
+        }
+        this.deathFraming = false;
+        const camera = this.cameras.main;
+        this.deathView = {
+          body: BIRD,
+          bounds: {
+            height: SCREEN.height,
+            width: SCREEN.width,
+            x: camera.scrollX,
+            y: camera.scrollY,
+          },
+          frame: BIRD_FRAME,
+        };
+        this.dying = startDeathPresentation(DEATH, this.deathView, this.zone.bird.facing, death);
+        this.clock = startStepClock;
+        if (death.contact?.contactCue === "red-hazard") {
+          playContactFeedback(this, {
+            cue: CONTACT_CUE,
+            depth: OVERLAY_DEPTH,
+            reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+            shake: CAMERA.contactShake,
+          });
+        }
+      },
+      this,
+      { ...BIRD_FRAME, ...birdFrameAt(BIRD, BIRD_FRAME, { ...this.zone.bird, ...target }) },
+    );
   }
 
   private updateDeath(time: number): void {
@@ -857,6 +974,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.scene.launch("death", {
         activeSeconds: activeStageTime(stage),
         runStats: { ...stageRunStats(stage) },
+        stage,
         ...deathLabels(ZONE_MAP, TEXT.map, String(this.zoneIndex + 1), stage),
         percent: this.progressFraction(),
       } satisfies DeathData);
@@ -882,15 +1000,17 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // The modal stops before returning here. Reuse the layout and cumulative clock, reset inputs
   // and conversations, and let the core create the next explicit attempt.
   retryDeath(): void {
+    this.dashWind?.clear();
     if (this.zone.death === undefined) {
       return;
     }
+    this.deathFraming = false;
     cancelContactFeedback(this.events);
     this.restoreDeathCamera?.();
     this.restoreDeathCamera = undefined;
     this.barks?.reset();
     retryStageRun(this.stageKey());
-    this.zone = retryZone(BIRD, this.layout, this.zone);
+    this.zone = retryZone(this.movementTuning(), this.layout, this.zone);
     this.dying = undefined;
     this.deathView = undefined;
     this.deathModal = false;
@@ -916,6 +1036,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       return;
     }
     void flushStats();
+    this.deathFraming = false;
     cancelContactFeedback(this.events);
     this.restoreDeathCamera?.();
     this.restoreDeathCamera = undefined;
@@ -1073,6 +1194,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
 
   // Shows the room behind the door she used, the zone paused under it until she leaves.
   private openRoom(): void {
+    this.dashWind?.clear();
     const room = roomOf(this.layout, this.zone);
     this.opening = undefined;
     if (room === undefined) {
@@ -1102,12 +1224,19 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (!turnedBack) {
         saveCompleted(this.mapNode);
       }
+      const wholeRun = wholeRunSummary(
+        ZONE_MAP.destinations.flatMap(({ stages }) => stages),
+        savedMap().completed,
+        wholeRunStats(),
+      );
       this.clearControls();
       if (flow.kind === "next-stage") {
         this.scene.start("cutscene", {
           clearedStage: this.mapNode,
           runStats,
           stage: flow.stage,
+          wholeRun,
+          zoneStats,
         } satisfies CutsceneData);
       } else {
         this.departure = flow.target;
@@ -1116,9 +1245,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.showTouchControls(touchSettings());
         this.scene.launch("zoneDeparture", {
           cleared: !turnedBack,
+          clearedStage: this.mapNode,
           runStats,
-          scene: flow.scene,
           stage: this.mapNode,
+          wholeRun,
           zoneStats,
         } satisfies ZoneDepartureData);
         this.scene.pause();
@@ -1176,7 +1306,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const seed =
       this.preview?.motionSeed ??
       (Number.isInteger(asked) && asked > 0 ? asked : Math.floor(Math.random() * 2 ** 31));
-    this.zone = startZone(BIRD, this.layout, seed);
+    this.zone = startZone(this.movementTuning(), this.layout, seed);
     this.story =
       this.preview || this.backdrop
         ? undefined
@@ -1193,6 +1323,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // Draws the area she is in, with the camera kept inside it: its terrain from its tileset, or
   // flat where it has none, and each object's art.
   private drawArea(): void {
+    this.bossWarning?.clear();
     const area = areaOf(this.layout, this.zone.area);
     this.areaShown = this.zone.area;
     this.attemptShown = this.zone.attempt;
@@ -1217,8 +1348,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
     this.chunkBackdrops.length = 0;
     this.scenerySprites.length = 0;
-    for (const { item } of this.objectArt) {
-      item.destroy();
+    for (const art of this.objectArt) {
+      if (!art.disposed) {
+        art.item.destroy();
+      }
     }
     for (const art of this.transientArt.values()) {
       art.item.destroy();
@@ -1266,8 +1399,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   ): ObjectArt {
     const kind = artKind(this.manifest, tileset, object.art);
     const scenery = kind === "sprite" ? sceneryParallax(object) : undefined;
+    const world = kind === "sprite" && worldScenery(object);
     const parallax = scenery ?? artScrollFactor(kind, object.parallax);
     const rect = { height: object.height, width: object.width };
+    if (object.backdropPlane === "interior" && kind !== "repeated-backdrop") {
+      throw new Error(`Interior backdrop requires repeated art: ${object.art}`);
+    }
     switch (kind) {
       case "tiles": {
         const images = objectTiles(
@@ -1290,6 +1427,27 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         return { item, offset: artOffset(kind, rect, item), sprite: undefined };
       }
       case "repeated-backdrop": {
+        if (object.backdropPlane === "interior") {
+          if (!object.groundAnchor) {
+            throw new Error("Interior backdrop requires a ground anchor");
+          }
+          const reference = backgroundGroundReference(
+            { area: areaOf(this.layout, this.zone.area), camera: CAMERA, screen: SCREEN },
+            object.groundAnchor,
+          ).scroll;
+          const item = this.add
+            .tileSprite(object.origin.x, object.origin.y, rect.width, rect.height, object.art)
+            .setOrigin(0)
+            .setScrollFactor(1, 1)
+            .setDepth((DEPTHS["repeated-backdrop"] + DEPTHS.backdrop) / 2);
+          this.chunkBackdrops.push({
+            bounds: { ...object.origin, ...rect },
+            item,
+            parallax,
+            reference,
+          });
+          return { item, offset: { x: 0, y: 0 }, sprite: undefined };
+        }
         const height = this.textures.getFrame(object.art).height;
         const span = chunkBackdropSpan(areaOf(this.layout, this.zone.area), object);
         const offset = artOffset(kind, rect, { height, width: rect.width });
@@ -1300,7 +1458,18 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           .setDepth(DEPTHS["repeated-backdrop"]);
         if (span) {
           this.chunkBackdrops.push({
-            bounds: { height, width: span.width, x: span.x, y: object.origin.y + offset.y },
+            bounds: {
+              height,
+              width: span.width,
+              x: span.x,
+              y:
+                object.origin.y +
+                offset.y +
+                backgroundGroundOffset(
+                  { area: areaOf(this.layout, this.zone.area), camera: CAMERA, screen: SCREEN },
+                  object,
+                ),
+            },
             item,
             parallax,
           });
@@ -1311,7 +1480,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         const sprite = this.add
           .sprite(0, 0, object.art)
           .setOrigin(0)
-          .setDepth(scenery ? DEPTHS.backdrop : DEPTHS.sprite);
+          .setDepth(scenery || world ? DEPTHS.backdrop : DEPTHS.sprite);
+        if (world) {
+          sprite.setScrollFactor(1, 1);
+          if (object.motion.playback === "once-visible") {
+            sprite.setVisible(this.zone.sceneryPlayback?.[index]?.status === "active");
+          }
+        }
         const tag = object.animations.idle ?? [...this.sheet(object.art).keys()][0];
         if (tag !== undefined) {
           show(sprite, tag);
@@ -1362,9 +1537,17 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private renderBackdrops(): void {
     const camera = this.cameras.main;
     const scroll = { x: camera.scrollX, y: camera.scrollY };
-    for (const { bounds, item, parallax } of this.chunkBackdrops) {
-      const { position, textureX } = chunkParallax({ parallax, scroll }, bounds);
-      item.setPosition(position.x, position.y).setTilePosition(textureX, 0);
+    for (const { bounds, item, parallax, reference } of this.chunkBackdrops) {
+      if (reference) {
+        const { position, textureX, textureY } = interiorBackdrop(
+          { parallax, reference, scroll },
+          bounds,
+        );
+        item.setPosition(position.x, position.y).setTilePosition(textureX, textureY);
+      } else {
+        const { position, textureX } = chunkParallax({ parallax, scroll }, bounds);
+        item.setPosition(position.x, position.y).setTilePosition(textureX, 0);
+      }
     }
     for (const { coverage, frame, item, parallax } of this.scenerySprites) {
       const { crop, position, visible } = scenerySpriteFrame({ coverage, parallax, scroll }, frame);
@@ -1378,6 +1561,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // Each object where the rules put it, in whole pixels. A character's sprite faces the way it
   // moved and plays the tag for its state, and an idle one now and then plays a quirk.
   private drawObjects(): void {
+    this.bossWarning?.clear();
     const area = areaOf(this.layout, this.zone.area);
     const { bird } = this.zone;
     const hers = { x: bird.x + BIRD.width / 2, y: bird.y + BIRD.height / 2 };
@@ -1387,6 +1571,18 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (!art || !object) {
         return;
       }
+      if (object.motion.playback === "once-visible") {
+        const status = this.zone.sceneryPlayback?.[index]?.status ?? "waiting";
+        if (status === "completed") {
+          if (!art.disposed) {
+            art.item.destroy();
+            art.disposed = true;
+          }
+          return;
+        }
+        art.sprite?.setVisible(status === "active");
+      }
+
       const x = Math.round(at.x + art.offset.x);
       const y = Math.round(at.y + art.offset.y);
       const moved = !art.scenery && (x !== art.item.x || y !== art.item.y);
@@ -1422,6 +1618,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         ? spriteFrameOrigin(object.contact.frame, object, at)
         : { x, y };
       art.item.setPosition(position.x, position.y);
+      if (art.sprite) {
+        this.bossWarning?.draw(behaviour, art.sprite);
+      }
     });
     this.drawTransients();
     this.drawPulses();
@@ -1525,12 +1724,28 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     show(this.bird, tag);
     const at = birdFrameAt(BIRD, this.bird.frame, bird);
     this.bird.setPosition(at.x, at.y).setFlipX(bird.facing < 0);
+    if (
+      !this.playCovered() &&
+      !this.inRoom &&
+      !this.opening &&
+      this.bird.visible &&
+      modalInput(this).accepts()
+    ) {
+      this.dashWind?.draw(
+        this.movementTuning().dash?.durationSeconds ?? 0,
+        { ...BIRD_FRAME, ...at },
+        bird.dash,
+      );
+    } else {
+      this.dashWind?.clear();
+    }
     const scroll = currentScreen(BIRD, areaOf(this.layout, this.zone.area), bird);
     this.cameras.main.setScroll(scroll.x, scroll.y);
   }
 
   private watchKeys(): void {
     modalInput(this).subscribe(() => {
+      this.dashWind?.clear();
       this.heldKeys.clear();
       this.heldTouches.clear();
       this.presses.clear();

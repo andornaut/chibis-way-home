@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map";
 import type { ZoneState } from "../rules/zone";
+import { PROGRESS_VERSION } from "./progress";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -37,7 +38,10 @@ it("keeps browser progress normal until developer activation, then blocks mutati
   save.saveCompleted(stage);
   save.saveStand(stage);
   save.saveZoneIntro("woodland");
+  expect(save.grantSkill("speedy")).toBe(false);
   save.clearProgress();
+  save.resetWholeRunStats();
+  expect(save.wholeRunStats()).toEqual({ activeSeconds: 0, deaths: 0 });
   window.dispatchEvent(new Event("pagehide"));
   document.dispatchEvent(new Event("visibilitychange"));
   await save.flushStats();
@@ -45,13 +49,52 @@ it("keeps browser progress normal until developer activation, then blocks mutati
   expect(write).toHaveBeenCalledTimes(writes);
   expect(JSON.stringify(save.savedProgress())).toBe(before);
 });
-it("does not read or back up production saves when opened directly in a developer URL", async () => {
-  vi.stubGlobal("window", { location: new URL("https://example.test/play/?devSession=1") });
-  const read = vi.fn(),
-    write = vi.fn();
-  vi.stubGlobal("localStorage", { getItem: read, setItem: write });
-  const save = await import("./index");
-  await save.loadProgress();
-  expect(read).not.toHaveBeenCalled();
-  expect(write).not.toHaveBeenCalled();
-});
+it.each([
+  {
+    expected: ["dash"],
+    name: "valid",
+    raw: {
+      activeSkill: "dash",
+      at: "beginning",
+      openingSeen: true,
+      skills: ["dash"],
+      version: PROGRESS_VERSION,
+    },
+  },
+  {
+    expected: [],
+    name: "invalid",
+    raw: {
+      activeSkill: null,
+      at: "beginning",
+      openingSeen: true,
+      skills: ["fly"],
+      version: PROGRESS_VERSION,
+    },
+  },
+  {
+    expected: [],
+    name: "old",
+    raw: { activeSkill: null, at: "beginning", openingSeen: true, version: PROGRESS_VERSION - 1 },
+  },
+])(
+  "reads only validated $name skill ownership for direct Dev entry without restoring progress or writing",
+  async ({ expected, raw }) => {
+    vi.stubGlobal("window", { location: new URL("https://example.test/play/?devSession=1") });
+    const read = vi.fn(() => JSON.stringify(raw)),
+      write = vi.fn();
+    vi.stubGlobal("localStorage", { getItem: read, setItem: write });
+    const save = await import("./index");
+    await save.loadProgress();
+    expect(read).toHaveBeenCalledExactlyOnceWith("chibis-way-home.save");
+    expect(save.savedSkills()).toEqual(expected);
+    expect(save.savedProgress()).toEqual({
+      activeSkill: null,
+      at: "beginning",
+      openingSeen: false,
+      skills: [],
+    });
+    expect(save.grantSkill("speedy")).toBe(false);
+    expect(write).not.toHaveBeenCalled();
+  },
+);

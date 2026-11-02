@@ -8,6 +8,7 @@ import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { BIRD_FRAME } from "../view/bird";
 import { deathLabels, deathSummary } from "../view/death";
+import { statsStatement } from "../view/statsStatement";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { CARD_CONTENT } from "./contentCard";
@@ -92,4 +93,42 @@ describe("death card", () => {
       }
     },
   );
+});
+
+it("fits all six actual retry statements at full size while preserving seated-frame clearance", () => {
+  for (const zone of ZONE_MAP.destinations) {
+    for (const stageId of zone.stages) {
+      const statement = statsStatement("retry", stageId)!.text;
+      const summary = deathSummary(TEXT.death, {
+        activeSeconds: 65,
+        ...deathLabels(ZONE_MAP, TEXT.map, "1", stageId),
+        percent: 0.5,
+      });
+      const result = deathCard(fonts, view, {
+        ...labels,
+        ...summary,
+        statement,
+        stats: words.stats,
+      });
+      expect(result.card.x + result.card.width / 2).toBe(SCREEN.width / 2);
+      expect(result.card.y + result.card.height / 2).toBe(SCREEN.height / 2);
+      expect(
+        result.card.y + result.card.height + CARD_CONTENT.gap + BIRD_FRAME.height,
+      ).toBeLessThanOrEqual(SCREEN.height);
+      expect(result.statement!.text).toBe(statement);
+      expect(result.statement!.rect.height).toBe(CARD_CONTENT.lineHeight);
+      expect(inkWidth(fonts.body, CARD_TEXT_SCALE, statement)).toBeLessThanOrEqual(
+        result.card.width - 2 * CARD_CONTENT.padding,
+      );
+      expect(result.statement!.rect.y - result.progress.y - result.progress.height).toBe(
+        CARD_CONTENT.gap,
+      );
+      expect(
+        result.stats[0]!.rect.y - result.statement!.rect.y - result.statement!.rect.height,
+      ).toBe(CARD_CONTENT.gap);
+      expect(result.home.button.height).toBe(TEXT_BUTTON.height);
+      expect(result.retry.button.height).toBe(TEXT_BUTTON.height);
+      expect(result.title.x - result.card.x).toBe(50);
+    }
+  }
 });

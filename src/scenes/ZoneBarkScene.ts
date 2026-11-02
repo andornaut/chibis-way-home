@@ -1,7 +1,7 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { type GameObjects, type Input, Scene, Scenes } from "phaser";
 
-import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
+import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { DialogueLine } from "../data/types";
@@ -12,6 +12,7 @@ import {
   moveDialoguePress,
 } from "../dialogue/conversation";
 import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
+import type { ZoneBark } from "../rules/zone";
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
@@ -19,6 +20,7 @@ import { fitPlayCamera, playPoint } from "./playCamera";
 interface Bark {
   readonly line: DialogueLine;
   readonly onStart?: () => void;
+  readonly owner: ZoneBark["owner"];
   readonly scheduled: boolean;
 }
 
@@ -26,6 +28,8 @@ interface Bark {
 export class ZoneBarkScene extends Scene {
   private queue: Bark[] = [];
   private canPresent = () => false;
+  private ownerVisible: (owner: ZoneBark["owner"]) => boolean = () => false;
+  private current: Bark | undefined;
   private art: GameObjects.GameObject[] = [];
   private remaining = 0;
   private press: DialoguePress | undefined;
@@ -34,8 +38,13 @@ export class ZoneBarkScene extends Scene {
     super("zoneBark");
   }
 
-  init(data: { readonly canPresent: () => boolean }): void {
+  init(data: {
+    readonly canPresent: () => boolean;
+    readonly ownerVisible: (owner: ZoneBark["owner"]) => boolean;
+  }): void {
     this.canPresent = data.canPresent;
+    this.ownerVisible = data.ownerVisible;
+    this.current = undefined;
     this.queue = [];
     this.art = [];
     this.remaining = 0;
@@ -46,10 +55,14 @@ export class ZoneBarkScene extends Scene {
     fitPlayCamera(this);
     this.scene.moveAbove("zone", this.scene.key);
     this.watchInput();
+    const validateOwner = () => this.validateOwner();
+    this.events.on(Scenes.Events.PRE_RENDER, validateOwner);
     modalInput(this).subscribe(() => {
       this.press = undefined;
     });
     this.events.once("shutdown", () => {
+      this.events.off(Scenes.Events.PRE_RENDER, validateOwner);
+      this.current = undefined;
       this.queue = [];
       this.art = [];
       this.remaining = 0;
@@ -62,7 +75,14 @@ export class ZoneBarkScene extends Scene {
     this.clearCurrent();
   }
 
+  private validateOwner(): void {
+    if (this.current && !this.ownerVisible(this.current.owner)) {
+      this.clearCurrent();
+    }
+  }
+
   private clearCurrent(): void {
+    this.current = undefined;
     this.art.forEach((object) => object.destroy());
     this.art = [];
     this.remaining = 0;
@@ -78,6 +98,8 @@ export class ZoneBarkScene extends Scene {
       if (
         this.press ||
         !this.art.length ||
+        !this.current ||
+        !this.ownerVisible(this.current.owner) ||
         !this.canPresent() ||
         !containsPoint(DIALOGUE_SCREEN.box, at.x, at.y)
       ) {
@@ -102,6 +124,8 @@ export class ZoneBarkScene extends Scene {
       if (
         !outside &&
         this.canPresent() &&
+        this.current !== undefined &&
+        this.ownerVisible(this.current.owner) &&
         dialogueTapAction(controls, TOUCH.tapMaxDistance, press, {
           ...playPoint(this, pointer),
           id: pointer.id,
@@ -119,23 +143,31 @@ export class ZoneBarkScene extends Scene {
     return this.queue.length === 0 && this.art.length === 0;
   }
 
-  enqueue(line: DialogueLine): void {
+  enqueue(line: DialogueLine, owner: ZoneBark["owner"]): void {
     const firstScheduled = this.queue.findIndex(({ scheduled }) => scheduled);
     this.queue.splice(firstScheduled < 0 ? this.queue.length : firstScheduled, 0, {
       line,
+      owner,
       scheduled: false,
     });
   }
 
-  offer(onStart: () => void, line: DialogueLine): boolean {
-    if (!this.idle() || !this.canPresent()) {
+  offer(onStart: () => void, line: DialogueLine, owner?: ZoneBark["owner"]): boolean {
+    if (
+      !owner ||
+      this.art.length > 0 ||
+      this.queue.some((bark) => this.ownerVisible(bark.owner)) ||
+      !this.canPresent() ||
+      !this.ownerVisible(owner)
+    ) {
       return false;
     }
-    this.queue.push({ line, onStart, scheduled: true });
+    this.queue.push({ line, onStart, owner, scheduled: true });
     return true;
   }
 
   override update(_time: number, delta: number): void {
+    this.validateOwner();
     if (!this.canPresent()) {
       return;
     }
@@ -146,13 +178,18 @@ export class ZoneBarkScene extends Scene {
       }
       this.clearCurrent();
     }
-    const bark = this.queue.shift();
-    if (!bark) {
+    const index = this.queue.findIndex((bark) => this.ownerVisible(bark.owner));
+    if (index < 0) {
       return;
     }
+    const bark = this.queue.splice(index, 1)[0]!;
+    this.current = bark;
     const paragraph = dialogueParagraphs(SPEAKERS, TEXT, { lines: [bark.line] })[0]!;
     this.art = [
-      this.add.image(DIALOGUE_SCREEN.box.x, DIALOGUE_SCREEN.box.y, "ui-dialogue-box").setOrigin(0),
+      this.add
+        .image(DIALOGUE_SCREEN.box.x, DIALOGUE_SCREEN.box.y, "ui-dialogue-box")
+        .setOrigin(0)
+        .setAlpha(BARK_BACKGROUND_ALPHA),
       ...drawDialogueParagraph(this, paragraph),
     ];
     this.remaining = BARK_DURATION_SECONDS * 1000;

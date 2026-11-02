@@ -2,10 +2,13 @@ import { DEV_TEXT } from "../data/dev";
 import { ZONE_MAP } from "../data/map";
 import { TEXT } from "../data/text";
 import { INSTALLED_APP_DISPLAY_QUERY } from "../platform/pwa/backNavigation";
+import { SKILL_IDS } from "../rules/skills";
 import {
   changeInvulnerability,
+  changeSkillOverride,
   developmentFlags,
   regularBrowser,
+  skillOverridesFromSearch,
   stageDevelopmentUrl,
 } from "./mode";
 
@@ -103,6 +106,19 @@ export function mountDeveloperPanel(
   invulnerable.type = "checkbox";
   invulnerable.checked = developmentFlags(page.location.search).invulnerable;
   labelled(DEV_TEXT.invulnerable, invulnerable);
+  for (const skill of SKILL_IDS) {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = skillOverridesFromSearch(page.location.search)[skill] === true;
+    labelled(TEXT.skills[skill].title, checkbox);
+    checkbox.addEventListener("change", () => {
+      if (!gate.accepts()) {
+        checkbox.checked = skillOverridesFromSearch(page.location.search)[skill] === true;
+        return;
+      }
+      changeSkillOverride(page, checkbox.checked, skill);
+    });
+  }
   section.append(toggle, fields);
   container.append(section);
   const gate = panelInputGate(blocked);

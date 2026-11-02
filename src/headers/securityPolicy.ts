@@ -66,8 +66,10 @@ export const BASE_DIRECTIVES: Directives = {
 // Each built HTML page must match exactly one of these, or the build fails: two matching
 // policies would join into one header and the browser would enforce both.
 export const PAGE_RULES: readonly PageRule[] = [
+  { comment: "The art gallery.", directives: {}, path: "/art/*" },
   { comment: "The home page.", directives: {}, path: "/" },
   { comment: "The game.", directives: {}, path: "/play/*" },
+  { comment: "The tuning reference.", directives: {}, path: "/tuning/*" },
 ];
 
 const NAV_SCRIPT_PATTERN = /<script\b[^>]*\ssrc\s*=\s*["']?\/nav\.js["'\s>]/i;

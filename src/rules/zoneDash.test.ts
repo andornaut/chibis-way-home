@@ -6,10 +6,7 @@ import { BIRD_FRAME } from "../view/bird";
 import { STEP_SECONDS } from "./step";
 import { leaveRoom, retryZone, startZone, stepZone } from "./zone";
 
-const tuning: BirdTuning = {
-  ...BIRD,
-  dash: { cooldownSeconds: 0.65, durationSeconds: 0.14, speed: 640 },
-};
+const tuning: BirdTuning = BIRD;
 const floor = { height: 40, width: 1100, x: 0, y: 300 };
 const idle = { jumpHeld: false, move: 0, useHeld: false } as const;
 const use = { ...idle, useHeld: true };
@@ -116,10 +113,13 @@ describe("fresh Use arbitration", () => {
     const main = { ...area(), exitX: 160, walkLinks: { right: { area: "next", entry: "start" } } };
     const plan = { ...layout(main), areas: { main, next: area() } };
     let zone = stepZone(tuning, plan, STEP_SECONDS, idle, startZone(tuning, plan, 1));
-    zone = stepZone(tuning, plan, 0.1, use, zone);
+    const elapsed = tuning.dash!.durationSeconds / 2;
+    zone = stepZone(tuning, plan, elapsed, use, zone);
     expect(zone.area).toBe("next");
-    expect(zone.bird.dash!.remainingSeconds).toBeCloseTo(0.04);
-    expect(zone.bird.dash!.cooldownRemainingSeconds).toBeCloseTo(0.55);
+    expect(zone.bird.dash!.remainingSeconds).toBeCloseTo(tuning.dash!.durationSeconds - elapsed);
+    expect(zone.bird.dash!.cooldownRemainingSeconds).toBeCloseTo(
+      tuning.dash!.cooldownSeconds - elapsed,
+    );
     const retry = retryZone(tuning, plan, {
       ...zone,
       death: {
@@ -145,7 +145,7 @@ describe("fresh Use arbitration", () => {
       bird: { ...zone.bird, airJumpUsed: true, grounded: false, y: 100 },
       useHeld: false,
     };
-    zone = stepZone(profile, plan, 0.1, use, zone);
+    zone = stepZone(profile, plan, profile.dash!.durationSeconds / 2, use, zone);
     expect(zone.area).toBe("next");
     expect(zone.bird.airJumpUsed).toBe(true);
     const retry = retryZone(profile, plan, {

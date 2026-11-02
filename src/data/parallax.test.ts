@@ -5,14 +5,19 @@ import deerSheet from "../../public/art/sprites/background-deer.json";
 import reedSheet from "../../public/art/sprites/background-reeds.json";
 import swallowSheet from "../../public/art/sprites/background-swallow.json";
 import { assembleZone } from "../rules/assemble";
+import { objectLayout } from "../rules/tiles";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { stageLoader } from "../sim/catalogue";
-import { artOffset, sceneryParallax } from "../view/objectArt";
+import { backgroundGroundOffset } from "../view/backgroundGround";
+import { artOffset, sceneryParallax, worldScenery } from "../view/objectArt";
+import { ARCHETYPES } from "./archetypes";
+import { BACKGROUND_SECTIONS } from "./backgrounds";
+import { CAMERA } from "./camera";
 import { CHUNKS, EXTERIOR_DEPTH_ALIASES, THEMES, WOODLAND_DEPTH_ALIASES } from "./chunks";
 import { ZONE_MAP } from "./map";
-import { TILE } from "./screen";
-import type { ChunkPlan, ObjectLayout } from "./types";
-import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
+import { SCREEN, TILE } from "./screen";
+import type { ChunkPlan, Instance, ObjectLayout } from "./types";
+import { WOODLAND_SCENERY, WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
 import { APARTMENT_WINDOW } from "./zone6";
 import { RECIPES } from "./zones";
 
@@ -80,73 +85,106 @@ it("guarantees a framed depth window in every Apartment finish while keeping ord
   }
 });
 
+it("matches Apartment interior planes to opaque wall rectangles without filling the window", () => {
+  const rectangle = ({
+    col,
+    cols,
+    row,
+    rows,
+  }: Pick<Instance, "col" | "cols" | "row" | "rows">) => ({ col, cols, row, rows });
+  for (const [id, chunk] of Object.entries(CHUNKS)) {
+    const themes = typeof chunk.theme === "string" ? [chunk.theme] : chunk.theme;
+    if (!themes.some((theme) => theme.startsWith("apartment-")) || chunk.rows !== 90) {
+      continue;
+    }
+    const walls = (chunk.backdrops ?? []).filter(({ role }) => role === "wall");
+    const planes = (chunk.scenery ?? []).filter(
+      ({ backdropPlane }) => backdropPlane === "interior",
+    );
+    expect(planes.map(rectangle), id).toEqual(walls.map(rectangle));
+    for (const plane of planes) {
+      expect(plane.cols).toBeGreaterThan(0);
+      expect(plane.rows).toBeGreaterThan(0);
+      expect(plane.backdropSpan).toBe(true);
+      expect(plane.groundAnchor).toBe("start");
+      if (id === "apartment-floor-finish") {
+        const overlaps =
+          plane.col < APARTMENT_WINDOW.col + APARTMENT_WINDOW.cols &&
+          plane.col + plane.cols! > APARTMENT_WINDOW.col &&
+          plane.row < APARTMENT_WINDOW.row + APARTMENT_WINDOW.rows &&
+          plane.row + plane.rows! > APARTMENT_WINDOW.row;
+        expect(overlaps).toBe(false);
+      }
+    }
+  }
+});
+
 describe.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
   "stage %s depth coverage",
   (id) => {
-    it("resolves both selected depth chunks and plain chunks without changing stage limits", () => {
+    it("covers outdoor areas continuously and preserves authored indoor windows and stage limits", () => {
       const prepared = stageLoader(id)(1);
       const recipe = RECIPES[id]!;
-      let selected = 0;
-      let plain = 0;
       let cols = 0;
       let encounters = 0;
       for (const [areaId, area] of Object.entries(prepared.layout.areas)) {
-        const theme =
+        const themeId =
           "sections" in recipe
             ? recipe.sections.find((section) => section.id === areaId)!.theme
             : recipe.theme;
-        const layers = area.objects.filter(depth);
-        if (
-          theme.startsWith("apartment-") &&
-          !["apartment-entrance", "apartment-exterior"].includes(theme)
-        ) {
-          expect(layers).toHaveLength(3);
-          expect(layers.every((layer) => layer.origin.x === area.chunks.at(-1)!.x)).toBe(true);
-        }
-        expect(THEMES[theme]!.backdrops.some(depth)).toBe(false);
-        for (const chunk of area.chunks) {
-          cols += chunk.width / TILE;
-          const layersHere = layers.filter(
-            (object) => object.origin.x === chunk.x && object.width === chunk.width,
-          );
-          if (layersHere.length) {
-            selected++;
-            expect(layersHere).toHaveLength(3);
-            for (const object of layersHere) {
-              const art = manifest.backdrops.find(({ key }) => key === object.art)!;
-              const offset = artOffset("repeated-backdrop", object, art);
-              expect(object.origin.y + offset.y).toBe(0);
-              expect(object.origin.y + offset.y + art.height).toBe(art.y);
+        const theme = THEMES[themeId]!;
+        const authored = area.objects.filter((object) => depth(object) && !object.backdropSpan);
+        if (theme.background) {
+          const planes = [
+            ...theme.background.weather,
+            ...theme.background.sections.flatMap((key) => BACKGROUND_SECTIONS[key]!.backdrops),
+          ];
+          for (const plane of planes) {
+            const spans = area.objects
+              .filter(
+                (object) =>
+                  object.parallax?.x === plane.parallax?.x &&
+                  object.parallax?.y === plane.parallax?.y,
+              )
+              .map((object) => [object.origin.x, object.origin.x + object.width] as const)
+              .sort((a, b) => a[0] - b[0]);
+            let covered = 0;
+            for (const [start, end] of spans) {
+              expect(start, `${themeId}:${JSON.stringify(plane.parallax)}`).toBeLessThanOrEqual(
+                covered,
+              );
+              covered = Math.max(covered, end);
             }
-          } else {
-            plain++;
+            expect(covered).toBeGreaterThanOrEqual(area.width);
+          }
+        } else {
+          expect(themeId.startsWith("apartment-")).toBe(true);
+          expect(authored).toHaveLength(3);
+          expect(
+            area.objects
+              .filter((object) => object.backdropSpan)
+              .every((object) => object.backdropPlane === "interior"),
+          ).toBe(true);
+          expect(authored.every((layer) => layer.origin.x === area.chunks.at(-1)!.x)).toBe(true);
+        }
+        for (const object of authored) {
+          const art = manifest.backdrops.find(({ key }) => key === object.art);
+          if (art) {
+            const offset = artOffset("repeated-backdrop", object, art);
+            expect(object.origin.y + offset.y).toBe(0);
+            expect(object.origin.y + offset.y + art.height).toBe(art.y);
           }
         }
+        cols += area.chunks.reduce((sum, chunk) => sum + chunk.width / TILE, 0);
         for (const chunkId of prepared.source!.chunkIds![areaId]!) {
           encounters += CHUNKS[chunkId]!.encounters;
         }
       }
-      expect(selected).toBeGreaterThan(0);
-      expect(plain).toBeGreaterThan(0);
       const lengths =
         "sections" in recipe ? recipe.sections.map(({ length }) => length) : [recipe.length];
       expect(cols).toBeGreaterThanOrEqual(lengths.reduce((sum, { min }) => sum + min, 0));
       expect(cols).toBeLessThanOrEqual(lengths.reduce((sum, { max }) => sum + max, 0));
       expect(encounters).toBe(recipe.encounters);
-      if (!("sections" in recipe)) {
-        expect(
-          [recipe.start, recipe.finish].some((id) => (CHUNKS[id]!.backdrops ?? []).some(depth)),
-        ).toBe(true);
-        expect(
-          recipe.chunks!.every(
-            (id) =>
-              (CHUNKS[id]!.backdrops ?? []).some(depth) ===
-              Object.values(WOODLAND_DEPTH_ALIASES).includes(id),
-          ),
-        ).toBe(true);
-      } else {
-        expect((CHUNKS[recipe.start]!.backdrops ?? []).some(depth)).toBe(true);
-      }
     });
   },
 );
@@ -201,7 +239,9 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
   const after = assembleZone(CHUNK_LIBRARY, 1, "deep-woods", recipe);
   for (const [id, area] of Object.entries(after.areas)) {
     const original = before.areas[id]!;
-    expect(area.objects.slice(0, original.objects.length)).toEqual(original.objects);
+    const previous = original.objects.filter((object) => !object.backdropSpan);
+    const current = area.objects.filter((object) => !object.backdropSpan);
+    expect(current.slice(0, previous.length)).toEqual(previous);
     expect(area.solids).toEqual(original.solids);
     expect(area.chunks).toEqual(original.chunks);
     expect(area.objects.length).toBeGreaterThan(original.objects.length);
@@ -212,7 +252,7 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
   );
   expect(scenery.length).toBeGreaterThan(0);
   for (const object of scenery) {
-    expect(sceneryParallax(object)).toEqual(object.parallax);
+    expect(worldScenery(object) || sceneryParallax(object) !== undefined).toBe(true);
     expect(object.collision).toBe("none");
     expect(object.contact).toBeUndefined();
     expect(object.interaction.kind).toBe("none");
@@ -222,9 +262,12 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
     }
   }
   for (const [id, chunk] of Object.entries(CHUNKS)) {
-    if ((chunk.scenery ?? []).length) {
+    const fauna = (chunk.scenery ?? []).filter(
+      ({ character }) => character in WOODLAND_SCENERY_CHARACTERS,
+    );
+    if (fauna.length) {
       expect(Object.values(WOODLAND_DEPTH_ALIASES)).toContain(id);
-      for (const instance of chunk.scenery!) {
+      for (const instance of fauna) {
         if (instance.character === "background-swallow") {
           continue;
         }
@@ -259,4 +302,83 @@ it("uses looping art tags and only stationary animation nodes for decorative wil
     expect(animations.every((tag) => tags.includes(tag!))).toBe(true);
     expect(manifest.sprites.find(({ key }) => key === character.art)!.once).toEqual([]);
   }
+});
+
+it("keeps generated Woodland fills on the authored same-art vertical reference", () => {
+  const prepared = stageLoader("deep-woods")(1);
+  let compared = 0;
+  for (const area of Object.values(prepared.layout.areas)) {
+    const authored = area.objects.filter((object) => depth(object) && !object.backdropSpan);
+    const generated = area.objects.filter((object) => depth(object) && object.backdropSpan);
+    for (const object of generated) {
+      const matches = authored.filter(
+        (other) => other.art === object.art && other.parallax?.y === object.parallax?.y,
+      );
+      for (const other of matches) {
+        const verticalReference = (value: ObjectLayout) =>
+          value.origin.y + backgroundGroundOffset({ area, camera: CAMERA, screen: SCREEN }, value);
+        expect(verticalReference(object), object.art).toBe(verticalReference(other));
+        compared++;
+      }
+    }
+  }
+  expect(compared).toBeGreaterThan(0);
+});
+
+it("resolves Woodland wildlife as autonomous world scenery with supported deer and finite flybys", () => {
+  const catalogue = { archetypes: ARCHETYPES, characters: WOODLAND_SCENERY_CHARACTERS };
+  let deer = 0;
+  let swallows = 0;
+  for (const [family, instances] of Object.entries(WOODLAND_SCENERY)) {
+    const chunk = CHUNKS[WOODLAND_DEPTH_ALIASES[family]!]!;
+    expect(chunk.scenery).toEqual(instances);
+    for (const instance of instances) {
+      if (instance.character === "background-reeds") {
+        continue;
+      }
+      const object = {
+        ...objectLayout(TILE, catalogue, {}, undefined, {}, instance),
+        scenerySource: "chunk" as const,
+      };
+      const sheet = instance.character === "background-deer" ? deerSheet : swallowSheet;
+      const native = Object.values(sheet.frames)[0]!.sourceSize;
+      expect({ height: object.height, width: object.width }).toEqual({
+        height: native.h,
+        width: native.w,
+      });
+      expect(worldScenery(object)).toBe(true);
+      expect(object.collision).toBe("none");
+      expect(object.contact).toBeUndefined();
+      expect(object.scene).toBeUndefined();
+      expect(object.reaction.kind).toBe("none");
+      if (instance.character === "background-deer") {
+        deer++;
+        expect(object.motion.algorithm).toBe("static");
+        expect(
+          Object.values(object.behaviour!.states).every(({ motion }) => motion.kind === "wait"),
+        ).toBe(true);
+        expect(
+          chunk.solids.some(
+            (solid) =>
+              solid.row * TILE === object.origin.y + object.height &&
+              solid.col * TILE <= object.origin.x &&
+              (solid.col + solid.cols) * TILE >= object.origin.x + object.width,
+          ),
+        ).toBe(true);
+      } else {
+        swallows++;
+        expect(object.behaviour).toBeUndefined();
+        expect(object.motion.playback).toBe("once-visible");
+        expect(object.motion.algorithm).toBe("hop");
+        expect(object.phase).toBe(0);
+        expect(object.motion.pause).toBe(0);
+        expect(object.motion.variance).toBe(0);
+        expect(object.motion.distance).toBeGreaterThan(SCREEN.width);
+        expect(object.motion.speed).toBeGreaterThan(0);
+        expect(object.motion.hopHeight).toBeGreaterThan(0);
+      }
+    }
+  }
+  expect(deer).toBeGreaterThan(0);
+  expect(swallows).toBeGreaterThan(0);
 });

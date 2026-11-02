@@ -1,6 +1,7 @@
 import { randomStream } from "@andornaut/game-kit/random";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import type {
   AreaLayout,
   AreaLink,
@@ -22,7 +23,7 @@ import {
   stepBehaviour,
   sweptContact,
 } from "./behaviour";
-import type { BehaviourWorld } from "./behaviourReach";
+import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import {
   birdBox,
   birdFrameRect,
@@ -40,6 +41,7 @@ import { type ForcePulse, forcePulseVelocity } from "./force";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
+import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import { validateWalkEntries } from "./zoneLinks";
 
@@ -198,9 +200,18 @@ export interface ZonePulse extends ForcePulse {
   };
 }
 
+export interface ZoneBark extends DialogueLine {
+  readonly owner: {
+    readonly area: string;
+    readonly attempt: number;
+    readonly objectIndex: number;
+  };
+}
+
 export interface ZoneState {
+  readonly sceneryPlayback?: readonly (SceneryPlaybackState | undefined)[] | undefined;
   readonly spotted: Readonly<Record<string, readonly number[]>>;
-  readonly barks: readonly DialogueLine[];
+  readonly barks: readonly ZoneBark[];
   readonly nextPulseId: number;
   readonly pulses: readonly ZonePulse[];
   readonly transients: readonly Transient[];
@@ -296,6 +307,7 @@ export function enterArea(
     nextTransientId: 0,
     objects,
     pulses: [],
+    sceneryPlayback: undefined,
     seconds: 0,
     spotted: zone.spotted ?? {},
     tracks,
@@ -480,6 +492,22 @@ export function stepZone(
   }
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
+  const playbackView = area.objects.some((object) => object.motion.playback === "once-visible")
+    ? currentScreen(tuning, area, zone.bird)
+    : undefined;
+  const playback =
+    playbackView &&
+    area.objects.map((object, index) =>
+      object.motion.playback === "once-visible"
+        ? stepSceneryPlayback(
+            { seconds, track: zone.tracks[index]!, view: playbackView },
+            object,
+            zone.sceneryPlayback?.[index],
+          )
+        : undefined,
+    );
+  const sceneryPlayback = playback?.map((frame) => frame?.state);
+
   const kinds = areaObjects(area);
   const baseGeometry = {
     ...behaviourGeometry(area, zone),
@@ -498,7 +526,7 @@ export function stepZone(
   const geometry = kinds.perception
     ? { ...baseGeometry, view: currentScreen(tuning, area, zone.bird) }
     : baseGeometry;
-  const barks: DialogueLine[] = [];
+  const barks: ZoneBark[] = [];
   const seen = new Set(zone.spotted[zone.area] ?? []);
   kinds.spotted.forEach((index) => {
     const object = area.objects[index]!;
@@ -516,12 +544,201 @@ export function stepZone(
       )
     ) {
       seen.add(index);
-      barks.push(bark);
+      barks.push({
+        ...bark,
+        owner: { area: zone.area, attempt: zone.attempt, objectIndex: index },
+      });
     }
   });
   const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
   const frames = new Map<number, ObjectFrame>();
   const resolving = new Set<number>();
+  let supportFrames: readonly BehaviourPlatformFrame[] | undefined;
+  let futureSupports:
+    ((time: number, dt: number) => readonly BehaviourPlatformFrame[] | undefined) | undefined;
+  const traversalGeometry = (owner: ObjectLayout): BehaviourWorld => {
+    supportFrames ??= kinds.platforms.map((index): BehaviourPlatformFrame => {
+      const frame = resolveFrame(index);
+      return {
+        after: frame.after,
+        before: frame.before,
+        collision: frame.object.collision as "solid" | "ledge",
+        owner: frame.object,
+        ...(frame.behaviour && {
+          segments: frame.behaviour.segments.map((segment) => ({
+            endSeconds: zone.seconds + segment.end,
+            from: rectAt(frame.object, segment.from),
+            startSeconds: zone.seconds + segment.start,
+            to: rectAt(frame.object, segment.to),
+          })),
+        }),
+      };
+    });
+    futureSupports ??= (() => {
+      const samples = [supportFrames!];
+      let states = kinds.platforms.map((index) => resolveFrame(index).behaviour?.state);
+      const predictable = kinds.platforms.every((index) => {
+        const object = area.objects[index]!;
+        if (object.orbit || object.reaction.kind !== "none") {
+          return false;
+        }
+        if (!object.behaviour) {
+          return (
+            object.motion.variance === 0 &&
+            ["static", "linear", "ease"].includes(object.motion.algorithm)
+          );
+        }
+        return (
+          !object.behaviour.pursuit &&
+          Object.values(object.behaviour.states).every(
+            ({ motion, onEnter, transitions }) =>
+              !onEnter?.length &&
+              (motion.kind === "wait" ||
+                (motion.kind === "move" && typeof motion.direction === "number")) &&
+              transitions.every(({ when }) =>
+                when.every(({ kind }) => kind === "elapsed" || kind === "boundary"),
+              ),
+          )
+        );
+      });
+      const atTime = (frame: BehaviourPlatformFrame, at: number): Rect => {
+        const legs = frame.segments;
+        if (!legs?.length) {
+          const fraction = Math.max(0, Math.min(1, (at - zone.seconds) / seconds));
+          return {
+            ...frame.before,
+            x: frame.before.x + (frame.after.x - frame.before.x) * fraction,
+            y: frame.before.y + (frame.after.y - frame.before.y) * fraction,
+          };
+        }
+        const leg = legs.find(({ endSeconds }) => at <= endSeconds) ?? legs.at(-1)!;
+        const fraction = Math.max(
+          0,
+          Math.min(1, (at - leg.startSeconds) / (leg.endSeconds - leg.startSeconds)),
+        );
+        return {
+          ...leg.from,
+          x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
+          y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
+        };
+      };
+      const sample = (start: number, dt: number) => {
+        const offset = (start - zone.seconds) / seconds;
+        const tick = Math.floor(offset + EDGE);
+        if (
+          tick < 0 ||
+          tick > BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps ||
+          dt <= 0 ||
+          start + dt > zone.seconds + (tick + 1) * seconds + EDGE
+        ) {
+          return undefined;
+        }
+        if (tick > 0 && !predictable) {
+          return undefined;
+        }
+        while (samples.length <= tick) {
+          const previous = samples.at(-1)!;
+          const time = zone.seconds + samples.length * seconds;
+          const futureGeometry = {
+            ...geometry,
+            platforms: previous.map(({ after, collision, owner }) => ({
+              collision,
+              owner,
+              rect: after,
+            })),
+          };
+          const nextStates: (BehaviourState | undefined)[] = [];
+          samples.push(
+            kinds.platforms.map((index, slot) => {
+              const object = area.objects[index]!;
+              const before = previous[slot]!.after;
+              const state = states[slot];
+              const behaviour =
+                object.behaviour && state
+                  ? stepBehaviour(tuning, object, futureGeometry, seconds, zone.bird, before, state)
+                  : undefined;
+              nextStates.push(behaviour?.state);
+              const after = rectAt(
+                object,
+                behaviour?.at ??
+                  objectStep(
+                    tuning,
+                    object,
+                    seconds,
+                    pathAt(object, zone.tracks[index]!, time + seconds),
+                    zone.bird,
+                    before,
+                  ),
+              );
+              return {
+                after,
+                before,
+                collision: object.collision as "solid" | "ledge",
+                owner: object,
+                segments: behaviour
+                  ? behaviour.segments.map((leg) => ({
+                      endSeconds: time + leg.end,
+                      from: rectAt(object, leg.from),
+                      startSeconds: time + leg.start,
+                      to: rectAt(object, leg.to),
+                    }))
+                  : [{ endSeconds: time + seconds, from: before, startSeconds: time, to: after }],
+              };
+            }),
+          );
+          states = nextStates;
+        }
+        return samples[tick]!.map((frame) => {
+          const startTick = zone.seconds + tick * seconds;
+          const whole = frame.segments ?? [
+            {
+              endSeconds: startTick + seconds,
+              from: frame.before,
+              startSeconds: startTick,
+              to: frame.after,
+            },
+          ];
+          // Clip the exact fixed-step chords at animation/graph slice boundaries.
+          const framed = { ...frame, segments: whole };
+          const before = atTime(framed, start);
+          const after = atTime(framed, start + dt);
+          const legs = whole
+            .filter((leg) => leg.endSeconds > start && leg.startSeconds < start + dt)
+            .map((leg) => ({
+              endSeconds: Math.min(start + dt, leg.endSeconds),
+              from: atTime(framed, Math.max(start, leg.startSeconds)),
+              startSeconds: Math.max(start, leg.startSeconds),
+              to: atTime(framed, Math.min(start + dt, leg.endSeconds)),
+            }));
+          return { ...frame, after, before, segments: legs };
+        });
+      };
+      const clipped = new Map<number, Map<number, readonly BehaviourPlatformFrame[] | undefined>>();
+      return (start: number, dt: number) => {
+        let durations = clipped.get(start);
+        if (durations?.has(dt)) {
+          return durations.get(dt);
+        }
+        const result = sample(start, dt);
+        if (!durations) {
+          durations = new Map();
+          clipped.set(start, durations);
+        }
+        durations.set(dt, result);
+        return result;
+      };
+    })();
+    return {
+      ...geometry,
+      traversalFrame: {
+        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+        dtSeconds: seconds,
+        platforms: supportFrames.filter((frame) => frame.owner !== owner),
+        sample: futureSupports,
+        timeSeconds: zone.seconds,
+      },
+    };
+  };
   const resolveFrame = (index: number): ObjectFrame => {
     const prior = frames.get(index);
     if (prior) {
@@ -550,6 +767,16 @@ export function stepZone(
       }
 
       const before = zone.objects[index] ?? object.origin;
+      const scenery = playback?.[index];
+      if (scenery) {
+        return {
+          after: rectAt(object, scenery.at),
+          before: rectAt(object, before),
+          behaviour: undefined,
+          object,
+        };
+      }
+
       const fixed = kinds.fixed[index];
       if (
         fixed &&
@@ -563,7 +790,16 @@ export function stepZone(
         ? stepBehaviour(
             tuning,
             object,
-            geometry,
+            object.collision !== "solid" &&
+              object.collision !== "ledge" &&
+              Object.values(object.behaviour.states).some(
+                ({ motion }) =>
+                  motion.kind === "pursue" &&
+                  motion.mode === "ground" &&
+                  motion.traversal !== undefined,
+              )
+              ? traversalGeometry(object)
+              : geometry,
             seconds,
             zone.bird,
             before,
@@ -579,9 +815,12 @@ export function stepZone(
     return frame;
   };
   const objects = area.objects.map((_, index) => resolveFrame(index));
-  for (const frame of objects) {
+  for (const [index, frame] of objects.entries()) {
     if (frame.behaviour?.escaped) {
-      barks.push(frame.behaviour.escaped);
+      barks.push({
+        ...frame.behaviour.escaped,
+        owner: { area: zone.area, attempt: zone.attempt, objectIndex: index },
+      });
     }
   }
   const positions = objects.map((frame, index): Point =>
@@ -807,6 +1046,7 @@ export function stepZone(
       nextTransientId: transientStep.nextId,
       objects: positions,
       pulses: remainingPulses,
+      sceneryPlayback,
       seconds: time,
       spotted,
       steps,
@@ -866,6 +1106,7 @@ export function stepZone(
     nextTransientId: transientStep.nextId,
     objects: positions,
     pulses: remainingPulses,
+    sceneryPlayback,
     seconds: time,
     spotted,
     steps,

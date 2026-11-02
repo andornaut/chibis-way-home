@@ -167,7 +167,29 @@ register(
     "warehouse-district",
   ].flatMap((stage) => [`${stage}-start`, `${stage}-finish`]),
 );
-register(() => [point(2, 80), point(37, 50)], ["apartment-floor-start"]);
+register(recovery, [
+  "industrial-ascent",
+  "industrial-deep-ascent",
+  "industrial-deep-descent",
+  "industrial-descent",
+  "outdoor-descent",
+  "outdoor-lift-ascent",
+  "outdoor-upper-ascent",
+  "outdoor-surface-return",
+  "outdoor-deep-descent",
+  "outdoor-deep-ascent",
+  "outdoor-terrace-ascent",
+  "outdoor-ferry-ascent",
+  "woodland-timed-descent",
+  "woodland-timed-return",
+  "woodland-deep-descent",
+  "woodland-deep-ascent",
+  "home-timed-descent",
+  "home-timed-return",
+  "home-deep-descent",
+  "home-deep-ascent",
+]);
+register(() => [point(2, 110), point(2, 80), point(37, 50)], ["apartment-floor-start"]);
 register(
   () => [point(11, 25), point(23, 20), point(35, 15), point(50, 10)],
   ["apartment-floor-finish"],
@@ -215,10 +237,23 @@ function filledApproaches(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
 export const REQUIRED_CHUNK_ROUTES: Readonly<Record<string, readonly Target[]>> =
   Object.fromEntries(
     ALL_CHUNKS.map(([name, library, chunk]) => {
-      const base = name.startsWith("apartment-tall-")
-        ? name.slice("apartment-tall-".length)
-        : (aliases.get(name) ?? name);
-      const targets = fixtures.has(name) ? [] : contracts.get(base);
+      const prefix = [
+        "apartment-tall-",
+        "industrial-tall-",
+        "industrial-tunnel-",
+        "blue-vertical-",
+        "countryside-vertical-",
+        "woodland-vertical-",
+        "home-vertical-",
+      ].find((prefix) => name.startsWith(prefix));
+      const original = prefix ? name.slice(prefix.length) : name;
+      const base = aliases.get(original) ?? original;
+      const sourceTargets = fixtures.has(name) ? [] : contracts.get(base);
+      const offset = prefix && CHUNKS[base] ? chunk.entry.row - CHUNKS[base]!.entry.row : 0;
+      const targets = sourceTargets?.map((target) => ({
+        ...target,
+        at: { ...target.at, row: target.at.row + offset },
+      }));
       if (!targets) {
         throw new Error(`Unclassified required route ${name}`);
       }

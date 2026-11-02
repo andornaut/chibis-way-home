@@ -1,4 +1,4 @@
-import type { GameText } from "./types";
+import type { GameText, StatsScopeText } from "./types";
 
 export const TEXT: GameText = {
   buttons: {
@@ -34,6 +34,7 @@ export const TEXT: GameText = {
       goose: "Trixi",
       pigeon: "Pebble",
       raccoon: "Kiwi",
+      "room-helper": "Helper",
     },
   },
   homePage: {
@@ -63,9 +64,11 @@ export const TEXT: GameText = {
     "bini-outro-1": "I am calling that a loading screen.",
     "bini-outro-2": "Call it what you like. I am going home.",
     "bini-spotted": "Pause. You again?",
+    "dash-gift": "A little boost for the road. Dash is yours!",
     "depot-dog-intro-1": "Fert asked me to stop a parcel. Parcels do not usually have feet.",
     "depot-dog-intro-2": "This one is walking home.",
     "depot-dog-intro-3": "Then I had better stop the feet.",
+    "double-jump-gift": "Need a lift? Try another jump in the air!",
     "fert-journey-back-streets": "Kiwi knows these streets. You know one apartment.",
     "fert-journey-city-boundary": "You have travelled far enough to qualify for extra postage.",
     "fert-journey-city-streets": "Archie, I said stop the parcel. Not admire its determination.",
@@ -114,6 +117,19 @@ export const TEXT: GameText = {
     "pebble-outro-1": "You walked out of my airspace. Very technical.",
     "pebble-outro-2": "Walking is working for me.",
     "pebble-spotted": "Ground traffic! That means you!",
+    "speedy-gift": "Keep moving. Speedy is yours!",
+    "stats-clear-archie": "Fine. Express delivery. Happy now?",
+    "stats-clear-bini": "You got past me. I am counting that as my break.",
+    "stats-clear-fert": "You are alarmingly committed to this address.",
+    "stats-clear-kiwi": "I had a clever hiding place. You had somewhere to be.",
+    "stats-clear-pebble": "You crossed my airspace on foot. Very impressive. Very rude.",
+    "stats-clear-trixi": "I will allow it. After the fact.",
+    "stats-retry-archie": "Careful! Parcels are meant to stay in one piece.",
+    "stats-retry-bini": "That looked difficult. I was watching my game.",
+    "stats-retry-fert": "Return delivery delayed. The box remains available.",
+    "stats-retry-kiwi": "Take your time. I am excellent at waiting.",
+    "stats-retry-pebble": "Rough landing. Wings would help.",
+    "stats-retry-trixi": "That was not in the safety briefing.",
     "trixi-escaped": "I have not dismissed you!",
     "trixi-foreshadow-1": "Fert told me about you.",
     "trixi-foreshadow-2": "I am going home.",
@@ -180,7 +196,9 @@ export const TEXT: GameText = {
     leave: "Leave",
   },
   rooms: {
-    // PLACEHOLDER: until gameplay designs the rooms.
+    "dash-gift": { name: "Dash gift room" },
+    "double-jump-gift": { name: "Double jump gift room" },
+    "speedy-gift": { name: "Speedy gift room" },
     test: { name: "Test room" },
   },
   settings: {
@@ -194,6 +212,27 @@ export const TEXT: GameText = {
     },
     moveControls: "Move controls",
     title: "Settings",
+  },
+  skills: {
+    dash: {
+      description: [
+        "Press E or Use to dash. Doors take priority.",
+        "Move to choose a direction; otherwise dash the way you face.",
+        "One air dash recharges on landing. Wait between dashes.",
+        "Walls block you. Hazards and bosses stay lethal.",
+      ].join(" "),
+      title: "Dash",
+    },
+    doubleJump: {
+      description:
+        "Press Jump again in the air. Tap for a low hop or hold to rise higher. Landing restores one extra jump.",
+      title: "Double jump",
+    },
+    speedy: {
+      description:
+        "Move faster on the ground and in the air. Dash speed and jump height stay the same.",
+      title: "Speedy",
+    },
   },
   start: {
     continue: "Continue",
@@ -215,4 +254,10 @@ export const TEXT: GameText = {
     cancel: "Cancel",
     title: "Update available",
   },
+};
+
+export const STATS_SCOPE_TEXT: StatsScopeText = {
+  stageTotal: "Stage time: {time}",
+  wholeRun: "Whole run: {time} · Deaths: {deaths} · Stages: {completed}/{total}",
+  zoneTotal: "Visit time: {time}",
 };

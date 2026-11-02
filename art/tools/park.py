@@ -74,6 +74,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import background_tones
 import nature
 import pixel
 from PIL import Image, ImageDraw
@@ -570,7 +571,7 @@ def build():
     backdrops = []
     for key, (fn, y, repeat) in BACKDROP_DEFS.items():
         im = fn()
-        im.save(f"{BACKDROPS}/{key}.png")
+        background_tones.apply(key, im).save(f"{BACKDROPS}/{key}.png")
         backdrops.append(
             {
                 "key": key,

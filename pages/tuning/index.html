@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tuning | Chibi's Way Home</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/art/favicon.png" />
+    <link rel="stylesheet" href="/nav.css" />
+    <script src="/nav.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Tuning</h1>
+      <p>
+        Current game data, read directly from its source modules. This page does not change the game
+        or run simulations.
+      </p>
+      <label for="tuning-search"
+        >Search <input id="tuning-search" type="search" /><output
+          id="tuning-count"
+          aria-live="polite"
+        ></output
+      ></label>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Group</th>
+              <th scope="col">Key</th>
+              <th scope="col">Value</th>
+            </tr>
+          </thead>
+          <tbody id="tuning-values"></tbody>
+        </table>
+      </div>
+    </main>
+    <script type="module" src="/src/tuningPage/main.ts"></script>
+  </body>
+</html>

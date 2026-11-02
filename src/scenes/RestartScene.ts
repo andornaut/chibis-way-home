@@ -4,7 +4,7 @@ import { TEXT } from "../data/text";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { restartCard } from "../layout/restartCard";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
-import { clearProgress } from "../save";
+import { clearProgress, resetWholeRunStats } from "../save";
 import {
   addCardTextIn,
   addSlice,
@@ -50,6 +50,7 @@ export class RestartScene extends Scene {
   private focus: Target | undefined;
   private focusRing: GameObjects.NineSlice | undefined;
   private opener = "";
+  private decided = false;
   // The button a press landed on, which acts if the press lifts on it too.
   private pressed: Target | undefined;
 
@@ -59,6 +60,7 @@ export class RestartScene extends Scene {
 
   init(data: RestartData): void {
     this.opener = data.opener;
+    this.decided = false;
     this.focus = undefined;
     this.focusRing = undefined;
     this.pressed = undefined;
@@ -98,7 +100,7 @@ export class RestartScene extends Scene {
 
   // A key the opener passes on while the card shows.
   key(event: KeyboardEvent): void {
-    if (!this.sys.isActive() || !modalInput(this).accepts(event)) {
+    if (this.decided || !this.sys.isActive() || !modalInput(this).accepts(event)) {
       return;
     }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
@@ -116,9 +118,10 @@ export class RestartScene extends Scene {
 
   // Back, Escape, P and a tap outside the card cancel.
   back(): void {
-    if (!this.sys.isActive() || !modalInput(this).accepts()) {
+    if (this.decided || !this.sys.isActive() || !modalInput(this).accepts()) {
       return;
     }
+    this.decided = true;
     this.scene.stop();
     this.openerScene().restartClosed();
   }
@@ -128,10 +131,15 @@ export class RestartScene extends Scene {
   }
 
   private act(target: Target): void {
+    if (this.decided || !this.sys.isActive() || !modalInput(this).accepts()) {
+      return;
+    }
     if (target === "cancel") {
       this.back();
     } else {
+      this.decided = true;
       clearProgress();
+      resetWholeRunStats();
       this.scene.stop(this.opener);
       this.scene.start("opening");
     }

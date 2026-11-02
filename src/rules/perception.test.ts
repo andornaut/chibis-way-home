@@ -89,7 +89,9 @@ describe("screen and solid line-of-sight acquisition", () => {
     });
     const seen = stepZone(BIRD, stage, STEP_SECONDS, STILL, start);
     expect(seen.behaviours[0]?.stateKey).toBe("seen");
-    expect(seen.barks).toEqual([plan.spotted]);
+    expect(seen.barks).toEqual([
+      { ...plan.spotted, owner: { area: "main", attempt: 0, objectIndex: 0 } },
+    ]);
     const blocked = layout([{ height: 200, width: 24, x: 180, y: 100 }]);
     const hidden = stepZone(BIRD, blocked, STEP_SECONDS, STILL, startZone(BIRD, blocked, 1));
     expect(hidden.behaviours[0]?.stateKey).toBe("watch");
@@ -120,7 +122,9 @@ describe("screen and solid line-of-sight acquisition", () => {
         velocity: { x: 0, y: 0 },
       },
     });
-    expect(stepZone(BIRD, stage, STEP_SECONDS, STILL, retry).barks).toEqual([plan.spotted]);
+    expect(stepZone(BIRD, stage, STEP_SECONDS, STILL, retry).barks).toEqual([
+      { ...plan.spotted, owner: { area: "main", attempt: 1, objectIndex: 0 } },
+    ]);
   });
   it("ignores one-way ledges and self bodies, while solid objects and offscreen centres block sight", () => {
     const observer = { height: 24, width: 24, x: 300, y: 120 };

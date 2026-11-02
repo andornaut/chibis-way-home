@@ -12,14 +12,16 @@ it("keeps notices with the paused world beneath modal layers and resets them for
     scene: { get: () => bark, launch: vi.fn(), pause: vi.fn(), resume: vi.fn(), stop: vi.fn() },
   } as unknown as Scene;
   const canPresent = () => true;
-  const notices = bindZoneBarks(canPresent, scene);
-  expect(scene.scene.launch).toHaveBeenCalledExactlyOnceWith("zoneBark", { canPresent });
+  const context = { canPresent, ownerVisible: () => true };
+  const notices = bindZoneBarks(context, scene);
+  expect(scene.scene.launch).toHaveBeenCalledExactlyOnceWith("zoneBark", context);
   const line = { line: "spotted", speaker: "speaker" };
-  notices.enqueue([line]);
-  expect(bark.enqueue).toHaveBeenCalledWith(line);
+  const owner = { area: "main", attempt: 0, objectIndex: 2 };
+  notices.enqueue([{ ...line, owner }]);
+  expect(bark.enqueue).toHaveBeenCalledWith(line, owner);
   const started = vi.fn();
-  expect(notices.offer(started, line)).toBe(true);
-  expect(bark.offer).toHaveBeenCalledWith(started, line);
+  expect(notices.offer(started, line, owner)).toBe(true);
+  expect(bark.offer).toHaveBeenCalledWith(started, line, owner);
   scene.events.emit("pause");
   expect(scene.scene.pause).toHaveBeenCalledWith("zoneBark");
   scene.events.emit("resume");

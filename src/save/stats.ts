@@ -7,10 +7,11 @@ import {
   type RunCounters,
   type RunStatsSummary,
   runSummary,
+  type WholeRunStatsSummary,
   type ZoneStatsSummary,
 } from "./runSummary";
 
-export type { RunStatsSummary, ZoneStatsSummary } from "./runSummary";
+export type { RunStatsSummary, WholeRunStatsSummary, ZoneStatsSummary } from "./runSummary";
 
 export interface StageRun extends RunCounters {
   readonly completed: boolean;
@@ -24,19 +25,21 @@ interface ZoneVisit {
   readonly zone: string;
 }
 export interface Stats {
+  readonly wholeRun: WholeRunStatsSummary;
   readonly stages: Readonly<Record<string, StageStats>>;
   readonly visit?: ZoneVisit;
   readonly zones: Readonly<Record<string, number>>;
 }
 
-export const STATS_VERSION = 5;
+export const STATS_VERSION = 6;
 const KEYS = {
   backup: "chibis-way-home.stats-backup",
   save: "chibis-way-home.stats",
 } as const;
 // A dirty clock is checkpointed at most once per second between lifecycle flushes.
 const CHECKPOINT_MS = 1000;
-const fresh = (): Stats => ({ stages: {}, zones: {} });
+const emptyWholeRun = (): WholeRunStatsSummary => ({ activeSeconds: 0, deaths: 0 });
+const fresh = (): Stats => ({ stages: {}, wholeRun: emptyWholeRun(), zones: {} });
 
 type Destinations = readonly Pick<MapDestination, "id" | "stages">[];
 const record = (value: unknown): value is Record<string, unknown> =>
@@ -59,6 +62,14 @@ export function statsFormat(
   const checked = (value: unknown): Checked<Stats> => {
     if (!record(value) || !record(value.stages) || !record(value.zones)) {
       return { ok: false, reason: "stats are not records" };
+    }
+    if (
+      !record(value.wholeRun) ||
+      !duration(value.wholeRun.activeSeconds) ||
+      !Number.isSafeInteger(value.wholeRun.deaths) ||
+      (value.wholeRun.deaths as number) < 0
+    ) {
+      return { ok: false, reason: "stats contain invalid whole-run totals" };
     }
     for (const [key, stage] of Object.entries(value.stages)) {
       if (
@@ -108,6 +119,9 @@ export interface StageStatsStore {
   beginRun(stage: string): void;
   completeStage(stage: string): RunStatsSummary;
   retryStage(stage: string): void;
+  recordDeath(stage: string): void;
+  resetWholeRun(): void;
+  wholeRun(): WholeRunStatsSummary;
   summary(stage: string): RunStatsSummary;
   visitSummary(zone: string): ZoneStatsSummary;
   addActiveTime(stage: string, seconds: number): void;
@@ -210,6 +224,10 @@ export function stageStatsStore(
           attemptSeconds: run.attemptSeconds + seconds,
           runSeconds: run.runSeconds + seconds,
         });
+        stats = {
+          ...stats,
+          wholeRun: { ...stats.wholeRun, activeSeconds: stats.wholeRun.activeSeconds + seconds },
+        };
       }
     },
     beginRun(stage) {
@@ -263,6 +281,19 @@ export function stageStatsStore(
     async load() {
       stats = (await store.load()).save;
     },
+    recordDeath(stage) {
+      knownStage(stage);
+      const run = stats.stages[stage]?.run;
+      if (!run || run.completed) {
+        throw new Error("Cannot record a death without an active stage run");
+      }
+      stats = { ...stats, wholeRun: { ...stats.wholeRun, deaths: stats.wholeRun.deaths + 1 } };
+      changed();
+    },
+    resetWholeRun() {
+      stats = { ...stats, wholeRun: emptyWholeRun() };
+      changed();
+    },
     retryStage(stage) {
       const run = stats.stages[stage]?.run;
       if (!run) {
@@ -273,5 +304,6 @@ export function stageStatsStore(
     seconds: (stage) => stats.stages[stage]?.run?.runSeconds ?? 0,
     summary,
     visitSummary,
+    wholeRun: () => ({ ...stats.wholeRun }),
   };
 }

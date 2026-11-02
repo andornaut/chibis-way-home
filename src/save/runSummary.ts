@@ -2,6 +2,30 @@ import { fillNames } from "@andornaut/game-kit/lines";
 
 import type { StatsText } from "../data/types";
 
+export interface WholeRunStatsSummary {
+  readonly activeSeconds: number;
+  readonly deaths: number;
+}
+
+export interface WholeRunDisplaySummary extends WholeRunStatsSummary {
+  readonly completed: number;
+  readonly total: number;
+}
+
+export function wholeRunSummary(
+  stages: readonly string[],
+  completed: readonly string[],
+  counters: WholeRunStatsSummary,
+): WholeRunDisplaySummary {
+  const catalogue = new Set(stages),
+    cleared = new Set(completed);
+  return {
+    ...counters,
+    completed: [...catalogue].filter((id) => cleared.has(id)).length,
+    total: catalogue.size,
+  };
+}
+
 export interface RunCounters {
   readonly attemptSeconds: number;
   readonly attempts: number;
@@ -37,6 +61,15 @@ export function runSummary(
 function timeText(seconds: number): string {
   const whole = Math.max(0, Math.floor(seconds));
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
+export function formatWholeRunStats(template: string, summary: WholeRunDisplaySummary): string {
+  return fillNames(template, {
+    completed: String(summary.completed),
+    deaths: String(summary.deaths),
+    time: timeText(summary.activeSeconds),
+    total: String(summary.total),
+  });
 }
 
 export function formatRunStats(words: StatsText, summary: RunStatsSummary) {

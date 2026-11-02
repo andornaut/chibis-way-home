@@ -1,3 +1,4 @@
+import { BIRD } from "./bird";
 import { SCREEN, TILE } from "./screen";
 import type {
   BehaviourAction,
@@ -8,17 +9,28 @@ import type {
   Point,
 } from "./types";
 
-const BEAR_PURSUIT_SPEED = 5;
+const BEAR_PURSUIT_SPEED = (1.4 * BIRD.walkSpeed) / TILE;
 const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
 const DOG_PATROL_PAUSE = 0.14;
 const DOG_PATROL_SPEED = 4.6875;
 const FRUSTRATION_SECONDS = 0.55;
 const GOOSE_PATROL_SPEED = 3.125;
-const PIGEON_FLIGHT_SPEED = 20;
+const GROUND_PURSUIT_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
+const PIGEON_FLIGHT_SPEED = (1.6 * BIRD.walkSpeed) / TILE;
+const PIGEON_PURSUIT_SPEED = PIGEON_FLIGHT_SPEED;
+const PIGEON_SWOOP_SPEED = 20;
 const RACCOON_RETURN_SPEED = 4.6875;
 
-export const ATTACK_ANTICIPATION_SECONDS = 0.12;
+export const ATTACK_ANTICIPATION_SECONDS = 0.6;
+const ATTACK_COOLDOWN_SECONDS = 2.5;
+const GROWL_TELL_SECONDS = 1;
+const SPECIAL_TELL_SECONDS = 0.8;
+const PIGEON_SWOOP_PREPARATION_SECONDS = SPECIAL_TELL_SECONDS;
+export const BEHAVIOUR_TRAVERSAL_SEARCH = {
+  budget: { horizonSteps: 120, maxStates: 256, maxSteps: 4096 },
+  maxCollisionSteps: 16,
+} as const;
 const RABBIT_DISTANCE = -12;
 const RABBIT_PAUSE = 0.6;
 const RABBIT_SPEED = 10;
@@ -27,12 +39,28 @@ const RABBIT_HOP_SECONDS = Math.abs(RABBIT_DISTANCE) / RABBIT_SPEED;
 export const ANIMAL_DETECTION_RANGE = SCREEN.width / TILE;
 export const ANIMAL_INTERACTION_RANGE = SCREEN.width / (2 * TILE);
 
+const ANIMAL_IDLE_WATCHDOG: NonNullable<BehaviourPlan["idleWatchdog"]> = {
+  distance: 4,
+  maxAttempts: 2,
+  minMovement: 0.5,
+  resume: "pursuit",
+  seconds: 2,
+};
+
+const ATTACK_ENGAGEMENT_RANGE = 12;
+const GROUND_TRAVERSAL = {
+  gravity: BIRD.gravity / TILE,
+  jumpSpeed: BIRD.jumpSpeed / TILE,
+  maxFallSpeed: BIRD.flutterFallSpeed / TILE,
+};
+
 const DETECTION = [{ kind: "visible" }] as const;
 const LOST_TARGET = [{ kind: "lost-target", tolerance: 1 }] as const;
 
 const PURSUIT_LIMITS = {
-  distance: (3 * SCREEN.width) / TILE,
-  unreachableGraceSeconds: 3,
+  distance: (6 * SCREEN.width) / TILE,
+  escapeDistance: SCREEN.width / TILE,
+  unreachableGraceSeconds: null,
 };
 function persistentPursuit(escaped: DialogueLine): NonNullable<BehaviourPlan["pursuit"]> {
   return { ...PURSUIT_LIMITS, escaped };
@@ -44,13 +72,80 @@ function chaseNode(
   next: string,
 ): BehaviourNode {
   return {
+    allowIdleReposition: true,
     animation: mode === "fly" ? "fly" : "walk",
-    motion: { kind: "pursue", mode, speed },
+    motion:
+      mode === "ground"
+        ? { kind: "pursue", mode, speed, traversal: GROUND_TRAVERSAL }
+        : { kind: "pursue", mode, speed },
     transitions: [
       { to: failure, when: LOST_TARGET },
-      { to: next, when: [{ kind: "nearby", range: ANIMAL_DETECTION_RANGE }] },
+      { to: next, when: [{ kind: "nearby", range: ATTACK_ENGAGEMENT_RANGE }] },
     ],
   };
+}
+
+interface AttackSequence {
+  readonly committed: readonly string[];
+  readonly finished: readonly { readonly from: string; readonly to: string }[];
+  readonly id: string;
+  readonly tells: Readonly<Record<string, number>>;
+}
+
+function attackProfile(plan: BehaviourPlan, sequences: readonly AttackSequence[]): BehaviourPlan {
+  const states: Record<string, BehaviourNode> = { ...plan.states };
+  const tells = new Set(sequences.flatMap(({ tells }) => Object.keys(tells)));
+  for (const sequence of sequences) {
+    for (const [key, seconds] of Object.entries(sequence.tells)) {
+      const node = states[key]!;
+      states[key] = {
+        ...node,
+        allowIdleReposition: false,
+        attack: { id: sequence.id, phase: "tell" },
+        transitions: node.transitions.map((transition) => ({
+          ...transition,
+          when: transition.when.map((condition) =>
+            condition.kind === "elapsed" ? { ...condition, seconds } : condition,
+          ),
+        })),
+      };
+    }
+    for (const key of sequence.committed) {
+      states[key] = {
+        ...states[key]!,
+        allowIdleReposition: false,
+        attack: { id: sequence.id, phase: "committed" },
+      };
+    }
+    for (const { from, to } of sequence.finished) {
+      const key = `${sequence.id}-completed-${from}-${to}`;
+      const destination = states[to]!;
+      states[key] = {
+        animation: destination.animation,
+        attack: { id: sequence.id, phase: "completed" },
+        motion: plan.states.pursuit!.motion,
+        ...(plan.states.pursuit!.track ? { track: plan.states.pursuit!.track } : {}),
+        transitions: [{ to, when: [{ kind: "elapsed", seconds: 0 }] }],
+      };
+      states[from] = {
+        ...states[from]!,
+        transitions: states[from]!.transitions.map((transition) =>
+          transition.to === to ? { ...transition, to: key } : transition,
+        ),
+      };
+    }
+  }
+  for (const [key, node] of Object.entries(states)) {
+    states[key] = {
+      ...node,
+      transitions: node.transitions.map((transition) =>
+        tells.has(transition.to)
+          ? { ...transition, when: [...transition.when, { kind: "attack-ready" }] }
+          : transition,
+      ),
+    };
+  }
+  return { ...plan, attackCooldownSeconds: ATTACK_COOLDOWN_SECONDS, states };
 }
 
 function escapeTransition(to: string): BehaviourTransition {
@@ -122,6 +217,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
     },
     frustration: frustrationNode("pursuit"),
     "patrol-left": {
+      allowIdleReposition: true,
       animation: "walk",
       motion: { direction: -1, kind: "move", speed: tuning.patrolSpeed },
       transitions: [
@@ -130,6 +226,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       ],
     },
     "patrol-right": {
+      allowIdleReposition: true,
       animation: "walk",
       motion: { direction: 1, kind: "move", speed: tuning.patrolSpeed },
       transitions: [
@@ -137,7 +234,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
         { to: "wait-right", when: [{ kind: "boundary" }] },
       ],
     },
-    pursuit: chaseNode("ground", tuning.patrolSpeed, "frustration", tuning.preparation),
+    pursuit: chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", tuning.preparation),
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
@@ -147,12 +244,13 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "rush",
       motion: { direction: "facing", kind: "move", speed: tuning.rushSpeed },
       transitions: [
-        { to: "frustration", when: LOST_TARGET },
+        { to: "rest", when: LOST_TARGET },
         { to: "rest", when: [{ kind: "boundary" }] },
         { to: "rest", when: [{ kind: "elapsed", seconds: tuning.rushSeconds }] },
       ],
     },
     "wait-left": {
+      allowIdleReposition: true,
       animation: "idle",
       motion: { kind: "wait" },
       transitions: [
@@ -161,6 +259,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       ],
     },
     "wait-right": {
+      allowIdleReposition: true,
       animation: "idle",
       motion: { kind: "wait" },
       transitions: [
@@ -257,155 +356,200 @@ const GROUND_CHARGE: PatrolChargeTuning = {
   rushSpeed: 31.25,
 };
 
-export const DOG_BEHAVIOUR: BehaviourPlan = {
-  axis: "x",
-  distance: -18,
-  inactiveAnimation: "idle",
-  initial: "patrol-left",
-  pursuit: persistentPursuit({ line: "archie-escaped", speaker: "dog" }),
-  spotted: { line: "archie-spotted", speaker: "dog" },
-  states: {
-    ...patrolChargeStates(GROUND_CHARGE),
-    pounce: {
-      animation: "pounce",
-      motion: { direction: "facing", hopHeight: 3, hopSeconds: 0.48, kind: "hop", speed: 12.5 },
-      transitions: [{ to: "pounce-rest", when: [{ kind: "elapsed", seconds: 0.48 }] }],
-    },
-    "pounce-rest": {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
-    },
-    "prepare-pounce": {
-      animation: "crouch",
-      enter: "face-target",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("pursuit-pounce"),
-        {
-          to: "frustration",
-          when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
-        },
-        { to: "pounce", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "pursuit-pounce": chaseNode(
-      "ground",
-      GROUND_CHARGE.patrolSpeed,
-      "frustration",
-      "prepare-pounce",
-    ),
-    rest: {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "pursuit-pounce", when: [{ kind: "elapsed", seconds: 0.25 }] }],
+export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
+  {
+    axis: "x",
+    distance: -18,
+    idleWatchdog: ANIMAL_IDLE_WATCHDOG,
+    inactiveAnimation: "idle",
+    initial: "patrol-left",
+    pursuit: persistentPursuit({ line: "archie-escaped", speaker: "dog" }),
+    spotted: { line: "archie-spotted", speaker: "dog" },
+    states: {
+      ...patrolChargeStates(GROUND_CHARGE),
+      pounce: {
+        animation: "pounce",
+        motion: { direction: "facing", hopHeight: 3, hopSeconds: 0.48, kind: "hop", speed: 12.5 },
+        transitions: [{ to: "pounce-rest", when: [{ kind: "elapsed", seconds: 0.48 }] }],
+      },
+      "pounce-rest": {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+      },
+      "prepare-pounce": {
+        animation: "crouch",
+        enter: "face-target",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("pursuit-pounce"),
+          {
+            to: "frustration",
+            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
+          },
+          { to: "pounce", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+        ],
+      },
+      "pursuit-pounce": chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "prepare-pounce"),
+      rest: {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit-pounce", when: [{ kind: "elapsed", seconds: 0.25 }] }],
+      },
     },
   },
-};
+  [
+    {
+      committed: ["rush", "rest"],
+      finished: [{ from: "rest", to: "pursuit-pounce" }],
+      id: "charge",
+      tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
+    },
+    {
+      committed: ["pounce", "pounce-rest"],
+      finished: [{ from: "pounce-rest", to: "pursuit" }],
+      id: "pounce",
+      tells: { "prepare-pounce": SPECIAL_TELL_SECONDS },
+    },
+  ],
+);
 
-export const FERRET_BEHAVIOUR: BehaviourPlan = {
-  axis: "x",
-  distance: -18,
-  inactiveAnimation: "idle",
-  initial: "patrol-left",
-  pursuit: persistentPursuit({ line: "furt-escaped", speaker: "ferret" }),
-  spotted: { line: "furt-spotted", speaker: "ferret" },
-  states: {
-    ...patrolChargeStates(GROUND_CHARGE),
-    "prepare-throw": {
-      animation: "crouch",
-      enter: "face-target",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("pursuit-throw"),
-        { to: "throw", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "pursuit-throw": chaseNode("ground", GROUND_CHARGE.patrolSpeed, "frustration", "prepare-throw"),
-    rest: {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "pursuit-throw", when: [{ kind: "elapsed", seconds: 0.25 }] }],
-    },
-    throw: {
-      animation: "throw",
-      motion: { kind: "wait" },
-      onEnter: [
-        {
-          armSeconds: 0,
-          character: "ferret-parcel",
-          gravity: 24,
-          kind: "spawn",
-          lifeSeconds: 3,
-          maxAlive: 2,
-          mirrorWithFacing: true,
-          offset: { x: 2.25, y: 5 / 6 },
-          velocity: { x: 14, y: -10 },
-        },
-      ],
-      transitions: [{ to: "throw-rest", when: [{ kind: "elapsed", seconds: 0.14 }] }],
-    },
-    "throw-rest": {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
+  {
+    axis: "x",
+    distance: -18,
+    idleWatchdog: ANIMAL_IDLE_WATCHDOG,
+    inactiveAnimation: "idle",
+    initial: "patrol-left",
+    pursuit: persistentPursuit({ line: "furt-escaped", speaker: "ferret" }),
+    spotted: { line: "furt-spotted", speaker: "ferret" },
+    states: {
+      ...patrolChargeStates(GROUND_CHARGE),
+      "prepare-throw": {
+        animation: "crouch",
+        enter: "face-target",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("pursuit-throw"),
+          { to: "throw", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+        ],
+      },
+      "pursuit-throw": chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "prepare-throw"),
+      rest: {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit-throw", when: [{ kind: "elapsed", seconds: 0.25 }] }],
+      },
+      throw: {
+        animation: "throw",
+        motion: { kind: "wait" },
+        onEnter: [
+          {
+            armSeconds: 0,
+            character: "ferret-parcel",
+            gravity: 24,
+            kind: "spawn",
+            lifeSeconds: 3,
+            maxAlive: 2,
+            mirrorWithFacing: true,
+            offset: { x: 2.25, y: 5 / 6 },
+            velocity: { x: 14, y: -10 },
+          },
+        ],
+        transitions: [{ to: "throw-rest", when: [{ kind: "elapsed", seconds: 0.14 }] }],
+      },
+      "throw-rest": {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+      },
     },
   },
-};
-
-export const GOOSE_BEHAVIOUR: BehaviourPlan = {
-  axis: "x",
-  distance: -12,
-  inactiveAnimation: "idle",
-  initial: "patrol-left",
-  pursuit: persistentPursuit({ line: "trixi-escaped", speaker: "goose" }),
-  spotted: { line: "trixi-spotted", speaker: "goose" },
-  states: {
-    ...patrolChargeStates({
-      attackRange: ANIMAL_DETECTION_RANGE,
-      patrolPause: 0.25,
-      patrolSpeed: GOOSE_PATROL_SPEED,
-      preparation: "warn",
-      preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
-      restSeconds: 0.35,
-      rushSeconds: 0.36,
-      rushSpeed: 21.875,
-    }),
-    "pursuit-trap": chaseNode("ground", GOOSE_PATROL_SPEED, "frustration", "set-trap"),
-    "release-trap": {
-      animation: "set-trap",
-      motion: { kind: "wait" },
-      onEnter: [
-        {
-          armSeconds: 0.8,
-          armingAnimation: "warning",
-          character: "goose-trap",
-          gravity: 0,
-          kind: "spawn",
-          lifeSeconds: 5,
-          maxAlive: 3,
-          offset: { x: 1, y: 3 },
-          velocity: { x: 0, y: 0 },
-        },
-      ],
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.14 }] }],
+  [
+    {
+      committed: ["rush", "rest"],
+      finished: [{ from: "rest", to: "pursuit-throw" }],
+      id: "charge",
+      tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
     },
-    rest: {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "pursuit-trap", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+    {
+      committed: ["throw", "throw-rest"],
+      finished: [{ from: "throw-rest", to: "pursuit" }],
+      id: "parcel",
+      tells: { "prepare-throw": SPECIAL_TELL_SECONDS },
     },
+  ],
+);
 
-    "set-trap": {
-      animation: "warn",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("pursuit-trap"),
-        { to: "release-trap", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
+export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
+  {
+    axis: "x",
+    distance: -12,
+    idleWatchdog: ANIMAL_IDLE_WATCHDOG,
+    inactiveAnimation: "idle",
+    initial: "patrol-left",
+    pursuit: persistentPursuit({ line: "trixi-escaped", speaker: "goose" }),
+    spotted: { line: "trixi-spotted", speaker: "goose" },
+    states: {
+      ...patrolChargeStates({
+        attackRange: ANIMAL_DETECTION_RANGE,
+        patrolPause: 0.25,
+        patrolSpeed: GOOSE_PATROL_SPEED,
+        preparation: "warn",
+        preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
+        restSeconds: 0.35,
+        rushSeconds: 0.36,
+        rushSpeed: 21.875,
+      }),
+      "pursuit-trap": chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "set-trap"),
+      "release-trap": {
+        animation: "set-trap",
+        motion: { kind: "wait" },
+        onEnter: [
+          {
+            armSeconds: 0.8,
+            armingAnimation: "warning",
+            character: "goose-trap",
+            gravity: 0,
+            kind: "spawn",
+            lifeSeconds: 5,
+            maxAlive: 3,
+            offset: { x: 1, y: 3 },
+            velocity: { x: 0, y: 0 },
+          },
+        ],
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.14 }] }],
+      },
+      rest: {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit-trap", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+      },
+      "set-trap": {
+        animation: "warn",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("pursuit-trap"),
+          { to: "release-trap", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+        ],
+      },
     },
   },
-};
+  [
+    {
+      committed: ["rush", "rest"],
+      finished: [{ from: "rest", to: "pursuit-trap" }],
+      id: "charge",
+      tells: { warn: ATTACK_ANTICIPATION_SECONDS },
+    },
+    {
+      committed: ["release-trap"],
+      finished: [{ from: "release-trap", to: "pursuit" }],
+      id: "trap",
+      tells: { "set-trap": SPECIAL_TELL_SECONDS },
+    },
+  ],
+);
 
 export const OWL_BEHAVIOUR: BehaviourPlan = {
   axis: "y",
@@ -469,177 +613,294 @@ const RACCOON_VERTICAL_STATES = verticalDropStates({
   returnState: "climb",
 });
 
-export const RACCOON_BEHAVIOUR: BehaviourPlan = {
-  axis: "y",
-  distance: -15,
-  inactiveAnimation: "idle",
-  initial: "watch",
-  pursuit: persistentPursuit({ line: "kiwi-escaped", speaker: "raccoon" }),
-  spotted: { line: "kiwi-spotted", speaker: "raccoon" },
-  states: {
-    ...RACCOON_VERTICAL_STATES,
-    "charge-rest": {
-      animation: "rest",
-      motion: { kind: "wait" },
-      track: RACCOON_GROUND_TRACK,
-      transitions: [{ to: "return-ground", when: [{ kind: "elapsed", seconds: 0.3 }] }],
-    },
-    "frustration-ground": { ...frustrationNode("pursuit"), track: RACCOON_GROUND_TRACK },
-    "frustration-return": { ...frustrationNode("return-ground"), track: RACCOON_GROUND_TRACK },
-    prepare: {
-      ...RACCOON_VERTICAL_STATES.prepare!,
-      transitions: [
-        escapeTransition("return-down"),
-        ...RACCOON_VERTICAL_STATES.prepare!.transitions,
-      ],
-    },
-    "prepare-charge": {
-      animation: "prepare",
-      enter: "face-target",
-      motion: { kind: "wait" },
-      track: RACCOON_GROUND_TRACK,
-      transitions: [
-        escapeTransition("pursuit"),
-        {
-          to: "frustration-ground",
-          when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
-        },
-        { to: "rush", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    pursuit: {
-      ...chaseNode("ground", RACCOON_RETURN_SPEED, "frustration-ground", "prepare-charge"),
-      animation: "climb",
-      track: RACCOON_GROUND_TRACK,
-    },
-    rest: {
-      animation: "rest",
-      motion: { kind: "wait" },
-      track: RACCOON_GROUND_TRACK,
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
-    },
-    "return-down": RACCOON_VERTICAL_STATES.drop!,
-    "return-ground": {
-      animation: "climb",
-      motion: { direction: 1, kind: "move", speed: RACCOON_RETURN_SPEED },
-      track: RACCOON_GROUND_TRACK,
-      transitions: [
-        { to: "pursuit", when: [{ kind: "boundary" }, { kind: "pursuit-ended" }] },
-        { to: "climb", when: [{ kind: "boundary" }] },
-        { to: "frustration-return", when: [{ kind: "elapsed", seconds: 3.2 }] },
-      ],
-    },
-    rush: {
-      animation: "rush",
-      motion: { direction: "facing", kind: "move", speed: 25 },
-      track: RACCOON_GROUND_TRACK,
-      transitions: [
-        { to: "charge-rest", when: [{ kind: "boundary" }] },
-        { to: "charge-rest", when: [{ kind: "elapsed", seconds: 0.48 }] },
-      ],
-    },
-    watch: {
-      animation: "idle",
-      motion: { kind: "wait" },
-      track: RACCOON_GROUND_TRACK,
-      transitions: [{ to: "prepare-charge", when: DETECTION }],
+export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
+  {
+    axis: "y",
+    distance: -15,
+    idleWatchdog: ANIMAL_IDLE_WATCHDOG,
+    inactiveAnimation: "idle",
+    initial: "watch",
+    pursuit: persistentPursuit({ line: "kiwi-escaped", speaker: "raccoon" }),
+    spotted: { line: "kiwi-spotted", speaker: "raccoon" },
+    states: {
+      ...RACCOON_VERTICAL_STATES,
+      "charge-rest": {
+        animation: "rest",
+        motion: { kind: "wait" },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [{ to: "return-ground", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+      },
+      "drop-abort-return": {
+        ...RACCOON_VERTICAL_STATES.drop!,
+        transitions: [{ to: "pursuit", when: [{ kind: "boundary" }] }],
+      },
+      "frustration-ground": { ...frustrationNode("pursuit"), track: RACCOON_GROUND_TRACK },
+      "frustration-return": { ...frustrationNode("return-ground"), track: RACCOON_GROUND_TRACK },
+      prepare: {
+        ...RACCOON_VERTICAL_STATES.prepare!,
+        transitions: [
+          escapeTransition("drop-abort-return"),
+          ...RACCOON_VERTICAL_STATES.prepare!.transitions,
+        ],
+      },
+      "prepare-charge": {
+        animation: "prepare",
+        enter: "face-target",
+        motion: { kind: "wait" },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [
+          escapeTransition("pursuit"),
+          {
+            to: "frustration-ground",
+            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
+          },
+          { to: "rush", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+        ],
+      },
+      pursuit: {
+        ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration-ground", "prepare-charge"),
+        animation: "climb",
+        track: RACCOON_GROUND_TRACK,
+      },
+      "pursuit-drop": {
+        ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration-ground", "climb"),
+        track: RACCOON_GROUND_TRACK,
+        transitions: [
+          { to: "frustration-ground", when: LOST_TARGET },
+          { to: "return-ground-staging", when: [...DETECTION, { kind: "attack-ready" }] },
+        ],
+      },
+      rest: {
+        animation: "rest",
+        motion: { kind: "wait" },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+      },
+      "return-ground": {
+        animation: "climb",
+        motion: { direction: 1, kind: "move", speed: RACCOON_RETURN_SPEED },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [
+          { to: "pursuit", when: [{ kind: "boundary" }, { kind: "pursuit-ended" }] },
+          { to: "pursuit-drop", when: [{ kind: "boundary" }] },
+          { to: "frustration-return", when: [{ kind: "elapsed", seconds: 3.2 }] },
+        ],
+      },
+      "return-ground-staging": {
+        animation: "climb",
+        motion: { direction: 1, kind: "move", speed: RACCOON_RETURN_SPEED },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [{ to: "climb", when: [{ kind: "boundary" }] }],
+      },
+      rush: {
+        animation: "rush",
+        motion: { direction: "facing", kind: "move", speed: 25 },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [
+          { to: "charge-rest", when: [{ kind: "boundary" }] },
+          { to: "charge-rest", when: [{ kind: "elapsed", seconds: 0.48 }] },
+        ],
+      },
+      watch: {
+        allowIdleReposition: true,
+        animation: "idle",
+        motion: { kind: "wait" },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [{ to: "prepare-charge", when: DETECTION }],
+      },
     },
   },
-};
+  [
+    {
+      committed: ["rush", "charge-rest", "return-ground", "frustration-return"],
+      finished: [
+        { from: "return-ground", to: "pursuit-drop" },
+        { from: "return-ground", to: "pursuit" },
+      ],
+      id: "charge",
+      tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
+    },
+    {
+      committed: ["drop", "rest"],
+      finished: [{ from: "rest", to: "pursuit" }],
+      id: "drop",
+      tells: { prepare: SPECIAL_TELL_SECONDS },
+    },
+  ],
+);
 
-export const BEAR_BEHAVIOUR: BehaviourPlan = {
-  axis: "x",
-  distance: -18,
-  inactiveAnimation: "idle",
-  initial: "watch",
-  pursuit: persistentPursuit({ line: "bini-escaped", speaker: "bear" }),
-  spotted: { line: "bini-spotted", speaker: "bear" },
-  states: {
-    frustration: frustrationNode("pursuit-growl"),
-    growl: {
-      animation: "growl",
-      motion: { kind: "wait" },
-      onEnter: [
-        {
-          height: 3,
-          kind: "force-pulse",
-          range: 42,
-          seconds: 0.35,
-          velocity: { x: 20, y: 0 },
-          visual: { animation: "pulse", art: "bear-growl-wave", offset: { x: 3, y: 0.5 } },
-        },
-      ],
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-    },
-    maul: {
-      animation: "maul",
-      motion: { kind: "wait" },
-      transitions: [{ to: "rest", when: [{ kind: "elapsed", seconds: 0.3 }] }],
-    },
-    "prepare-charge": {
-      animation: "prepare-attack",
-      enter: "face-target",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("pursuit"),
-        {
-          to: "frustration",
-          when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
-        },
-        { to: "rush", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "prepare-growl": {
-      animation: "prepare-attack",
-      enter: "face-target",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("pursuit-growl"),
-        { to: "growl", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "prepare-maul": {
-      animation: "prepare-attack",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("pursuit-maul"),
-        { to: "maul", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    pursuit: chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-charge"),
-    "pursuit-growl": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-growl"),
-    "pursuit-maul": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-maul"),
-    rest: {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "pursuit-growl", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-    },
-    rush: {
-      animation: "rush",
-      motion: { direction: "facing", kind: "move", speed: 31.25 },
-      transitions: [
-        { to: "pursuit-maul", when: [{ kind: "boundary" }] },
-        { to: "pursuit-maul", when: [{ kind: "elapsed", seconds: 0.44 }] },
-      ],
-    },
-    watch: {
-      animation: "idle",
-      motion: { kind: "wait" },
-      transitions: [{ to: "prepare-growl", when: DETECTION }],
+export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
+  {
+    axis: "x",
+    distance: -18,
+    idleWatchdog: ANIMAL_IDLE_WATCHDOG,
+    inactiveAnimation: "idle",
+    initial: "watch",
+    pursuit: persistentPursuit({ line: "bini-escaped", speaker: "bear" }),
+    spotted: { line: "bini-spotted", speaker: "bear" },
+    states: {
+      frustration: frustrationNode("pursuit-growl"),
+      growl: {
+        animation: "growl",
+        motion: { kind: "wait" },
+        onEnter: [
+          {
+            height: 3,
+            kind: "force-pulse",
+            range: 42,
+            seconds: 0.35,
+            velocity: { x: 20, y: 0 },
+            visual: { animation: "pulse", art: "bear-growl-wave", offset: { x: 3, y: 0.5 } },
+          },
+        ],
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+      },
+      maul: {
+        animation: "maul",
+        motion: { kind: "wait" },
+        transitions: [{ to: "rest", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+      },
+      "prepare-charge": {
+        animation: "prepare-attack",
+        enter: "face-target",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("pursuit"),
+          {
+            to: "frustration",
+            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
+          },
+          { to: "rush", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+        ],
+      },
+      "prepare-growl": {
+        animation: "prepare-attack",
+        enter: "face-target",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("pursuit-growl"),
+          { to: "growl", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+        ],
+      },
+      "prepare-maul": {
+        animation: "prepare-attack",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("pursuit-maul"),
+          { to: "maul", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+        ],
+      },
+      pursuit: chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-charge"),
+      "pursuit-growl": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-growl"),
+      "pursuit-maul": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-maul"),
+      rest: {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit-growl", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+      },
+      rush: {
+        animation: "rush",
+        motion: { direction: "facing", kind: "move", speed: 31.25 },
+        transitions: [
+          { to: "pursuit-maul", when: [{ kind: "boundary" }] },
+          { to: "pursuit-maul", when: [{ kind: "elapsed", seconds: 0.44 }] },
+        ],
+      },
+      watch: {
+        allowIdleReposition: true,
+        animation: "idle",
+        motion: { kind: "wait" },
+        transitions: [{ to: "prepare-growl", when: DETECTION }],
+      },
     },
   },
-};
+  [
+    {
+      committed: ["rush"],
+      finished: [{ from: "rush", to: "pursuit-maul" }],
+      id: "charge",
+      tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
+    },
+    {
+      committed: ["maul", "rest"],
+      finished: [{ from: "rest", to: "pursuit-growl" }],
+      id: "maul",
+      tells: { "prepare-maul": SPECIAL_TELL_SECONDS },
+    },
+    {
+      committed: ["growl"],
+      finished: [{ from: "growl", to: "pursuit" }],
+      id: "growl",
+      tells: { "prepare-growl": GROWL_TELL_SECONDS },
+    },
+  ],
+);
 
 const PIGEON_POOP: BehaviourAction = {
   armSeconds: 0,
   character: "pigeon-poop",
-  gravity: 30,
+  gravity: 60,
   kind: "spawn",
   lifeSeconds: 3,
   maxAlive: 3,
   offset: { x: 1.5, y: 4 },
-  velocity: { x: 0, y: 0 },
+  velocity: { x: 0, y: 6 },
 };
+
+const PIGEON_DROP_INTERVAL_SECONDS = 0.3;
+function pigeonAlignmentMotion(): BehaviourNode["motion"] {
+  return {
+    bounds: { height: 19, width: 24, x: -12, y: -8 },
+    kind: "fly",
+    leadSeconds: 0.1,
+    maxLead: 2,
+    speed: PIGEON_FLIGHT_SPEED,
+    to: "target-x",
+  };
+}
+function pigeonDropBurst(side: "left" | "right"): BehaviourPlan["states"] {
+  return Object.fromEntries(
+    ["", "-2", "-3"].flatMap((suffix, index) => {
+      const align = `align-drop-${side}${suffix}`;
+      const drop = `drop-${side}${suffix}`;
+      const next = index === 2 ? `return-swoop-${side}` : `align-drop-${side}-${index + 2}`;
+      return [
+        [
+          align,
+          {
+            animation: "fly",
+            motion: pigeonAlignmentMotion(),
+            transitions: [
+              escapeTransition("burst-return-high"),
+              { to: "burst-return-high", when: [{ kind: "alignment-blocked" }] },
+              { to: drop, when: [{ kind: "arrived", tolerance: 0.1 }, { kind: "line-of-sight" }] },
+              { to: "burst-return-high", when: [{ kind: "arrived", tolerance: 0.1 }] },
+              { to: "burst-return-high", when: [{ kind: "elapsed", seconds: 2.4 }] },
+            ],
+          } satisfies BehaviourNode,
+        ],
+        [
+          drop,
+          {
+            animation: "drop",
+            motion: pigeonAlignmentMotion(),
+            onEnter: [PIGEON_POOP],
+            transitions: [
+              escapeTransition("burst-return-high"),
+              { to: "burst-return-high", when: [{ kind: "alignment-blocked" }] },
+              {
+                to: next,
+                when: [
+                  { kind: "elapsed", seconds: index === 2 ? 0.14 : PIGEON_DROP_INTERVAL_SECONDS },
+                ],
+              },
+            ],
+          } satisfies BehaviourNode,
+        ],
+      ];
+    }),
+  );
+}
 
 function pigeonFlight(next: string, failure: string, to: Point): BehaviourNode {
   return {
@@ -658,98 +919,204 @@ function pigeonSwoop(failure: string, x: number): BehaviourNode {
     motion: {
       bounds: { height: 19, width: 8, x, y: -8 },
       kind: "fly",
-      speed: 37.5,
+      speed: PIGEON_SWOOP_SPEED,
       to: "target",
     },
     transitions: [
       { to: failure, when: [{ kind: "arrived", tolerance: 0.6 }] },
-      { to: failure, when: [{ kind: "elapsed", seconds: 0.88 }] },
+      { to: failure, when: [{ kind: "elapsed", seconds: 1.2 }] },
     ],
   };
 }
 
-export const PIGEON_BEHAVIOUR: BehaviourPlan = {
-  axis: "x",
-  distance: 24,
-  inactiveAnimation: "idle",
-  initial: "watch",
-  pursuit: persistentPursuit({ line: "pebble-escaped", speaker: "pigeon" }),
-  spotted: { line: "pebble-spotted", speaker: "pigeon" },
-  states: {
-    "ascend-left": pigeonFlight("fly-right", "frustration-left", { x: -12, y: -8 }),
-    "ascend-right": pigeonFlight("return-high", "frustration-right", { x: 12, y: -8 }),
-    "drop-left": {
-      animation: "drop",
-      motion: { kind: "wait" },
-      onEnter: [PIGEON_POOP],
-      transitions: [{ to: "prepare-swoop-left", when: [{ kind: "elapsed", seconds: 0.14 }] }],
-    },
-    "drop-right": {
-      animation: "drop",
-      motion: { kind: "wait" },
-      onEnter: [PIGEON_POOP],
-      transitions: [{ to: "prepare-swoop-right", when: [{ kind: "elapsed", seconds: 0.14 }] }],
-    },
-    "fly-left": pigeonFlight("prepare-drop-left", "frustration-left", { x: -12, y: -8 }),
-    "fly-right": pigeonFlight("prepare-drop-right", "frustration-right", { x: 12, y: -8 }),
-    "frustration-left": frustrationNode("ascend-left"),
-    "frustration-perch": frustrationNode("land-perch"),
-    "frustration-return": frustrationNode("return-high"),
-    "frustration-right": frustrationNode("ascend-right"),
-    "land-perch": pigeonFlight("rest", "frustration-perch", { x: 0, y: 0 }),
-    prepare: {
-      animation: "prepare-air",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("return-high"),
-        { to: "fly-left", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "prepare-drop-left": {
-      animation: "prepare-air",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("return-high"),
-        { to: "drop-left", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "prepare-drop-right": {
-      animation: "prepare-air",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("return-high"),
-        { to: "drop-right", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "prepare-swoop-left": {
-      animation: "prepare-air",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("return-high"),
-        { to: "swoop-left", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    "prepare-swoop-right": {
-      animation: "prepare-air",
-      motion: { kind: "wait" },
-      transitions: [
-        escapeTransition("return-high"),
-        { to: "swoop-right", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
-      ],
-    },
-    pursuit: chaseNode("fly", PIGEON_FLIGHT_SPEED, "frustration-return", "prepare"),
-    rest: {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-    },
-    "return-high": pigeonFlight("land-perch", "frustration-return", { x: 0, y: -8 }),
-    "swoop-left": pigeonSwoop("frustration-left", -12),
-    "swoop-right": pigeonSwoop("frustration-right", 4),
-    watch: {
-      animation: "idle",
-      motion: { kind: "wait" },
-      transitions: [{ to: "prepare", when: DETECTION }],
+export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
+  {
+    axis: "x",
+    distance: 24,
+    idleWatchdog: ANIMAL_IDLE_WATCHDOG,
+    inactiveAnimation: "idle",
+    initial: "watch",
+    pursuit: persistentPursuit({ line: "pebble-escaped", speaker: "pigeon" }),
+    spotted: { line: "pebble-spotted", speaker: "pigeon" },
+    states: {
+      ...pigeonDropBurst("left"),
+      ...pigeonDropBurst("right"),
+      "ascend-left": pigeonFlight("fly-right", "frustration-left", { x: -12, y: -8 }),
+      "ascend-right": pigeonFlight("return-high", "frustration-right", { x: 12, y: -8 }),
+      "burst-land-perch": pigeonFlight("burst-recovery", "burst-return-high", { x: 0, y: 0 }),
+      "burst-recovery": {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+      },
+      "burst-return-high": pigeonFlight("burst-land-perch", "burst-return-high", { x: 0, y: -8 }),
+      "fly-left": pigeonFlight("prepare-drop-left", "frustration-left", { x: -12, y: -8 }),
+      "fly-right": pigeonFlight("prepare-drop-right", "frustration-right", { x: 12, y: -8 }),
+      "frustration-left": frustrationNode("ascend-left"),
+      "frustration-perch": frustrationNode("land-perch"),
+      "frustration-return": frustrationNode("return-high"),
+      "frustration-right": frustrationNode("ascend-right"),
+      "land-perch": pigeonFlight("rest", "frustration-perch", { x: 0, y: 0 }),
+      "prepare-drop-left": {
+        animation: "prepare-air",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("return-high"),
+          {
+            to: "align-drop-left",
+            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }],
+          },
+        ],
+      },
+      "prepare-drop-right": {
+        animation: "prepare-air",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("return-high"),
+          {
+            to: "align-drop-right",
+            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }],
+          },
+        ],
+      },
+      "prepare-swoop-left": {
+        animation: "prepare-air",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("return-high"),
+          {
+            to: "swoop-left",
+            when: [{ kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS }],
+          },
+        ],
+      },
+      "prepare-swoop-right": {
+        animation: "prepare-air",
+        motion: { kind: "wait" },
+        transitions: [
+          escapeTransition("return-high"),
+          {
+            to: "swoop-right",
+            when: [{ kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS }],
+          },
+        ],
+      },
+      pursuit: {
+        ...chaseNode("fly", PIGEON_PURSUIT_SPEED, "frustration-return", "fly-left"),
+        transitions: [
+          { to: "frustration-return", when: LOST_TARGET },
+          { to: "fly-left", when: [...DETECTION, { kind: "attack-ready" }] },
+        ],
+      },
+      "pursuit-burst-right": {
+        ...chaseNode("fly", PIGEON_PURSUIT_SPEED, "frustration-return", "fly-right"),
+        transitions: [
+          { to: "frustration-return", when: LOST_TARGET },
+          { to: "fly-right", when: [...DETECTION, { kind: "attack-ready" }] },
+        ],
+      },
+      "pursuit-swoop-left": chaseNode(
+        "fly",
+        PIGEON_PURSUIT_SPEED,
+        "frustration-return",
+        "prepare-swoop-left",
+      ),
+      "pursuit-swoop-right": chaseNode(
+        "fly",
+        PIGEON_PURSUIT_SPEED,
+        "frustration-return",
+        "prepare-swoop-right",
+      ),
+      rest: {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+      },
+      "return-high": pigeonFlight("land-perch", "frustration-return", { x: 0, y: -8 }),
+      "return-swoop-left": pigeonFlight("pursuit-swoop-left", "burst-return-high", {
+        x: -12,
+        y: -8,
+      }),
+      "return-swoop-right": pigeonFlight("pursuit-swoop-right", "burst-return-high", {
+        x: 12,
+        y: -8,
+      }),
+      "swoop-land-left": pigeonFlight("swoop-rest-left", "swoop-return-left", { x: 0, y: 0 }),
+      "swoop-land-right": pigeonFlight("swoop-rest-right", "swoop-return-right", { x: 0, y: 0 }),
+      "swoop-left": pigeonSwoop("swoop-return-left", -12),
+      "swoop-rest-left": {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit-burst-right", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+      },
+      "swoop-rest-right": {
+        animation: "rest",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+      },
+      "swoop-return-left": pigeonFlight("swoop-land-left", "swoop-return-left", { x: 0, y: -8 }),
+      "swoop-return-right": pigeonFlight("swoop-land-right", "swoop-return-right", { x: 0, y: -8 }),
+      "swoop-right": pigeonSwoop("swoop-return-right", 4),
+      watch: {
+        allowIdleReposition: true,
+        animation: "idle",
+        motion: { kind: "wait" },
+        transitions: [{ to: "pursuit", when: DETECTION }],
+      },
     },
   },
-};
+  [
+    {
+      committed: [
+        "align-drop-left",
+        "drop-left",
+        "align-drop-left-2",
+        "drop-left-2",
+        "align-drop-left-3",
+        "drop-left-3",
+        "align-drop-right",
+        "drop-right",
+        "align-drop-right-2",
+        "drop-right-2",
+        "align-drop-right-3",
+        "drop-right-3",
+        "return-swoop-left",
+        "return-swoop-right",
+        "burst-return-high",
+        "burst-land-perch",
+        "burst-recovery",
+      ],
+      finished: [
+        { from: "return-swoop-left", to: "pursuit-swoop-left" },
+        { from: "return-swoop-right", to: "pursuit-swoop-right" },
+        { from: "burst-recovery", to: "pursuit" },
+      ],
+      id: "drop-burst",
+      tells: {
+        "prepare-drop-left": SPECIAL_TELL_SECONDS,
+        "prepare-drop-right": SPECIAL_TELL_SECONDS,
+      },
+    },
+    {
+      committed: [
+        "swoop-left",
+        "swoop-right",
+        "swoop-return-left",
+        "swoop-return-right",
+        "swoop-land-left",
+        "swoop-land-right",
+        "swoop-rest-left",
+        "swoop-rest-right",
+      ],
+      finished: [
+        { from: "swoop-rest-left", to: "pursuit-burst-right" },
+        { from: "swoop-rest-right", to: "pursuit" },
+      ],
+      id: "swoop",
+      tells: {
+        "prepare-swoop-left": SPECIAL_TELL_SECONDS,
+        "prepare-swoop-right": SPECIAL_TELL_SECONDS,
+      },
+    },
+  ],
+);

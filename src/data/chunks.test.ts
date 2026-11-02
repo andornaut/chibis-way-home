@@ -1,16 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
-import { ASSEMBLED_AREA, assembleZone, themesOf } from "../rules/assemble";
+import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { bindElement } from "../rules/elementBinding";
-import { resolveNames } from "../rules/tiles";
+import { STEP_SECONDS } from "../rules/step";
+import { resolveNames, zoneLayout } from "../rules/tiles";
+import { standsOn, startZone, stepZone } from "../rules/zone";
+import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { ALL_CHUNKS, ALL_RECIPES, ALL_THEMES, FIXTURE_LIBRARY } from "../testing/chunks";
+import { HITBOXES, TILESETS as WALK_TILESETS } from "../testing/walkSuite";
 import type { ArtManifest } from "../view/aseprite";
+import { BIRD_FRAME } from "../view/bird";
 import { lookTiles, type Tileset } from "../view/tiles";
 import { ARCHETYPES } from "./archetypes";
+import { BIRD } from "./bird";
 import { CHARACTERS } from "./characters";
 import { ROOMS } from "./rooms";
+import { TILE } from "./screen";
 import type { ChunkPlan, ZonePlan } from "./types";
 import { RECIPES, ZONES } from "./zones";
 
@@ -263,3 +270,151 @@ describe.each(ALL_RECIPES)("recipe %s", (key, library, recipe) => {
     }
   });
 });
+
+it("bounds the wide reachable fixture with an ordinary running jump", () => {
+  const source = FIXTURE_LIBRARY.chunks["test-wide-50"]!;
+  const near = source.solids[0]!;
+  const outcomes = [0, 1].map((extraGap) => {
+    const col = source.solids[1]!.col + extraGap;
+    const gap = col - near.col - near.cols;
+    const chunk = {
+      ...source,
+      solids: [near, { ...source.solids[1]!, col, cols: source.cols - col }],
+    };
+    const library = { ...FIXTURE_LIBRARY, chunks: { wide: chunk } };
+    const plan = zonePlanOf(library, () => 0, { door: [], event: [] }, "test", 2, ["wide"]);
+    const layout = zoneLayout(
+      TILE,
+      BIRD_FRAME,
+      CATALOGUE,
+      HITBOXES,
+      WALK_TILESETS,
+      new Set(),
+      plan,
+    );
+    const far = layout.areas.main!.solids[1]!;
+    let zone = startZone(BIRD, layout, 1);
+    let jumped = false;
+    let landed = false;
+    let usedAirJump = false;
+    let ticks = 0;
+    for (; ticks < 600 && !zone.death && !zone.cleared; ticks++) {
+      jumped ||=
+        !zone.bird.grounded && zone.bird.coyoteLeft > 0 && zone.bird.coyoteLeft <= 2 * STEP_SECONDS;
+      zone = stepZone(
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: jumped, move: 1, useHeld: false },
+        zone,
+      );
+      usedAirJump ||= zone.bird.airJumpUsed;
+      landed ||= zone.bird.grounded && standsOn(BIRD, zone.bird, far);
+    }
+    expect(jumped).toBe(true);
+    expect(usedAirJump).toBe(false);
+    return { cleared: zone.cleared, death: zone.death?.reason, gap, landed, ticks };
+  });
+  console.info("Wide fixture ordinary jump outcomes", outcomes);
+  expect(outcomes[0]!.landed).toBe(true);
+  expect(outcomes[0]!.cleared).toBe(true);
+  expect(outcomes[1]!.landed).toBe(false);
+  expect(outcomes[1]!.cleared).toBe(false);
+  expect(outcomes[1]!.death).toBe("fall");
+});
+
+it.each([
+  {
+    id: "apartment-tall-city-boundary-climb-yard",
+    route: [
+      [9, 45],
+      [15, 40],
+      [19, 34],
+      [40, 40],
+      [50, 34],
+      [56.5, 40],
+    ],
+    theme: "apartment-lobby",
+  },
+  {
+    id: "growl-clearing-woodland-depth",
+    route: [
+      [14, 34],
+      [30, 34],
+      [46, 34],
+      [53, 40],
+    ],
+    theme: "forest-paths",
+  },
+])(
+  "crosses actual $id through its grounded refuges without movement abilities",
+  ({ id, route, theme }) => {
+    const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
+    const layout = zoneLayout(
+      TILE,
+      BIRD_FRAME,
+      CATALOGUE,
+      HITBOXES,
+      WALK_TILESETS,
+      new Set(),
+      plan,
+    );
+    let zone = startZone(BIRD, layout, 1);
+    let targetIndex = 0;
+    let jumpStart = -1000;
+    let previousJump = false;
+    const trace: unknown[] = [];
+    for (let tick = 0; tick < 600 && !zone.death && !zone.cleared; tick++) {
+      const target = route[targetIndex];
+      const feet = zone.bird.y + BIRD.height;
+      if (
+        target &&
+        zone.bird.grounded &&
+        Math.abs(feet - target[1]! * TILE) < 0.1 &&
+        Math.abs(zone.bird.x / TILE - target[0]!) < 1.5
+      ) {
+        trace.push({ feet, reached: targetIndex, tick, x: zone.bird.x });
+        targetIndex++;
+      }
+      const goal = route[targetIndex];
+      const dx = goal ? goal[0]! * TILE - zone.bird.x : 100;
+      const braking = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * BIRD.brakeAccel);
+      const move = Math.abs(dx - braking) < 2 ? 0 : dx - braking > 0 ? 1 : -1;
+      const needsJump = goal && (feet > goal[1]! * TILE + 0.1 || Math.abs(dx) > 3 * TILE);
+      if (needsJump && zone.bird.grounded && !previousJump) {
+        jumpStart = tick;
+      }
+      const jumpHeld = (tick - jumpStart) * STEP_SECONDS < BIRD.jumpRiseTime;
+      zone = stepZone(
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: Boolean(jumpHeld), move, useHeld: false },
+        zone,
+      );
+      previousJump = Boolean(jumpHeld);
+      if (tick % 60 === 0) {
+        trace.push({
+          grounded: zone.bird.grounded,
+          targetIndex,
+          tick,
+          x: zone.bird.x,
+          y: zone.bird.y,
+        });
+      }
+    }
+    const witness = JSON.stringify({
+      bird: zone.bird,
+      cleared: zone.cleared,
+      death: zone.death,
+      id,
+      targetIndex,
+      trace,
+    });
+    expect(zone.death, witness).toBeUndefined();
+    expect(targetIndex, witness).toBe(route.length);
+    expect(zone.bird.airJumpUsed, witness).toBe(false);
+    expect(zone.bird.dash?.airUsed, witness).not.toBe(true);
+    expect(zone.cleared, witness).toBe(true);
+  },
+);

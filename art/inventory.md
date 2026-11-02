@@ -64,6 +64,9 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 | icon-move-controls        | sprite                                                     | 16x16  | rest                                          |
 | icon-settings             | sprite                                                     | 16x16  | rest                                          |
 | icon-settings-nav         | sprite                                                     | 20x20  | rest                                          |
+| icon-skill-dash           | skill glyph, no contact                                    | 16x16  | ready, muted                                  |
+| icon-skill-double-jump    | skill glyph, no contact                                    | 16x16  | ready, muted                                  |
+| icon-skill-speedy         | skill glyph, no contact                                    | 16x16  | ready, muted                                  |
 | icon-touch-controls       | sprite                                                     | 16x16  | rest                                          |
 | map-compass               | map pen mark, tan                                          | 25x33  | rest                                          |
 | map-bird                  | map marker, the bird at half size                          | 26x22  | idle                                          |

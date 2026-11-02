@@ -40,6 +40,18 @@ export const WOODLAND_SCENERY_CHARACTERS: Readonly<Record<string, Character>> = 
     art: "background-swallow",
     cols: 24 / TILE,
     rows: 12 / TILE,
+    tuning: {
+      motion: {
+        algorithm: "hop",
+        direction: "right",
+        distance: 72,
+        hopHeight: 2,
+        pause: 0,
+        playback: "once-visible",
+        speed: 9,
+        variance: 0,
+      },
+    },
   },
 };
 
@@ -61,22 +73,22 @@ export function woodlandDepth(layers: readonly Instance[]): readonly Instance[] 
   }));
 }
 
-// Rooted scenery shares the ground plane; only its horizontal camera factor differs.
+// Wildlife follows world coordinates; rooted flora retains its decorative parallax.
 export const WOODLAND_SCENERY: Readonly<Record<string, readonly Instance[]>> = {
   "compound-low-ceiling-shuttle": [
-    { character: "background-swallow", col: 18, parallax: { x: 0.15, y: 0.05 }, row: 14 },
+    { character: "background-swallow", col: 18, parallax: { x: 1, y: 1 }, phase: 0, row: 38 },
   ],
   "compound-return-high": [
-    { character: "background-deer", col: 45, parallax: { x: 0.4, y: 1 }, row: 48 },
+    { character: "background-deer", col: 45, parallax: { x: 1, y: 1 }, row: 48 },
   ],
   "compound-return-terrace": [
     { character: "background-reeds", col: 54, parallax: { x: 0.4, y: 1 }, row: 48 },
   ],
   "growl-cover-middle": [
-    { character: "background-swallow", col: 38, parallax: { x: 0.15, y: 0.05 }, row: 14 },
+    { character: "background-swallow", col: 38, parallax: { x: 1, y: 1 }, phase: 0, row: 38 },
   ],
   "vertical-red-gate": [
-    { character: "background-deer", col: 10, parallax: { x: 0.4, y: 1 }, row: 48 },
+    { character: "background-deer", col: 10, parallax: { x: 1, y: 1 }, row: 48 },
     { character: "background-reeds", col: 44, parallax: { x: 0.4, y: 1 }, row: 48 },
   ],
 };

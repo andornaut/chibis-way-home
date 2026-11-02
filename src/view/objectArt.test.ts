@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ObjectLayout } from "../data/types";
 import type { ArtManifest } from "./aseprite";
-import { type ArtKind, artKind, artScrollFactor, sceneryParallax } from "./objectArt";
+import { type ArtKind, artKind, artScrollFactor, sceneryParallax, worldScenery } from "./objectArt";
 import type { Tileset } from "./tiles";
 
 const MANIFEST = {
@@ -112,5 +112,71 @@ describe("scenery sprite eligibility", () => {
     delete ordinary.parallax;
     expect(sceneryParallax(ordinary)).toBeUndefined();
     expect(sceneryParallax({ ...object, parallax: { x: 1, y: 1 } })).toBeUndefined();
+  });
+});
+
+describe("assembly-proven world scenery", () => {
+  const object = {
+    collision: "none",
+    interaction: { kind: "none" },
+    motion: { algorithm: "static" },
+    parallax: { x: 1, y: 1 },
+    quirks: [],
+    reaction: { kind: "none" },
+    scenerySource: "chunk",
+  } as unknown as ObjectLayout;
+  it.each(["static", "linear", "hop"] as const)(
+    "allows the existing time-only %s track without inferring provenance",
+    (algorithm) => {
+      expect(worldScenery({ ...object, motion: { ...object.motion, algorithm } })).toBe(true);
+      const ordinary = { ...object };
+      delete ordinary.scenerySource;
+      expect(worldScenery(ordinary)).toBe(false);
+      const legacy = { ...object, parallax: { x: 0.4, y: 0.15 } };
+      expect(worldScenery(legacy)).toBe(false);
+      expect(sceneryParallax(legacy)).toEqual(legacy.parallax);
+    },
+  );
+  it("allows only wait/elapsed animation graphs in the initial world mode", () => {
+    const behaviour: NonNullable<ObjectLayout["behaviour"]> = {
+      axis: "x",
+      distance: 0,
+      initial: "graze",
+      states: {
+        graze: {
+          animation: "graze",
+          motion: { kind: "wait" },
+          transitions: [{ to: "graze", when: [{ kind: "elapsed", seconds: 1 }] }],
+        },
+      },
+    };
+    expect(worldScenery({ ...object, behaviour })).toBe(true);
+    const sensing = {
+      ...behaviour,
+      states: {
+        graze: {
+          ...behaviour.states.graze!,
+          transitions: [{ to: "graze", when: [{ kind: "visible" as const }] }],
+        },
+      },
+    };
+    expect(worldScenery({ ...object, behaviour: sensing })).toBe(false);
+  });
+  it.each([
+    { collision: "hazard" },
+    { interaction: { kind: "talk" } },
+    { reaction: { kind: "avoid" } },
+    { contact: {} },
+    { quirks: ["blink"] },
+    { orbit: {} },
+    { scene: "intro" },
+    { behaviour: { pursuit: {} } },
+    {
+      behaviour: { states: { attack: { motion: { kind: "wait" }, onEnter: [{ kind: "spawn" }] } } },
+    },
+    { behaviour: { states: { jump: { motion: { kind: "hop" } } } } },
+    { behaviour: { states: { target: { motion: { kind: "pursue" } } } } },
+  ])("rejects unsafe world decoration %j", (change) => {
+    expect(worldScenery({ ...object, ...change } as ObjectLayout)).toBe(false);
   });
 });

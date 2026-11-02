@@ -31,12 +31,14 @@ it("retains the game's ordered HTML, loading, atlas, offline and security pipeli
   ]);
 });
 
-it("passes Duck's page entries, preview host and existing limits to the shared config", async () => {
+it("passes the game's page entries, preview host and existing limits to its local config", async () => {
   const config = await configPromise;
   const repoRoot = resolve(import.meta.dirname, "../..");
   expect(config.build?.rolldownOptions?.input).toEqual({
+    art: resolve(repoRoot, "pages/art/index.html"),
     main: resolve(repoRoot, "pages/index.html"),
     play: resolve(repoRoot, "pages/play/index.html"),
+    tuning: resolve(repoRoot, "pages/tuning/index.html"),
   });
   expect([config.preview?.allowedHosts, config.server?.allowedHosts]).toEqual([
     ["duck-preview"],

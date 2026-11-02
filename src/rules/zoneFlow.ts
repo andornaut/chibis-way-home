@@ -22,6 +22,11 @@ export function zoneStoryForStage(
   if (!pair) {
     throw new Error(`Missing zone dialogue pair ${destination.id}`);
   }
+  if (pair.introStage !== undefined && !destination.stages.includes(pair.introStage)) {
+    throw new Error(
+      `Introduction stage ${pair.introStage} is outside destination ${destination.id}`,
+    );
+  }
   return { ...pair, zone: destination.id };
 }
 
@@ -50,7 +55,7 @@ export function introductionForRun(
     return undefined;
   }
   const destination = map.destinations.find((destination) => destination.id === story.zone);
-  if (destination?.stages[0] !== stage) {
+  if (!destination || (story.introStage ?? destination.stages[0]) !== stage) {
     return undefined;
   }
   if (!story.entry) {

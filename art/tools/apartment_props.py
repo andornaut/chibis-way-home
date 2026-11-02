@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import background_tones
 import pixel
 from PIL import Image, ImageDraw
 
@@ -146,7 +147,7 @@ def registry():
 def build():
     Path("public/art/backdrops").mkdir(parents=True, exist_ok=True)
     for key in SIZES:
-        draw(key).save("public/art/backdrops/apartment-" + key + ".png")
+        background_tones.apply("apartment-" + key, draw(key)).save("public/art/backdrops/apartment-" + key + ".png")
 
 
 def preview(out):

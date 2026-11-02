@@ -1,15 +1,22 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type Cameras, Core, type GameObjects, type Input, Scale, Scene, Scenes } from "phaser";
 
+import { SKILL_GESTURE } from "../data/skills";
 import { TEXT } from "../data/text";
-import type { Rect } from "../data/types";
+import { TOUCH } from "../data/touch";
+import type { Rect, SkillId } from "../data/types";
+import { developmentSkillOverrides } from "../dev/mode";
 import { FRAME_TURN } from "../input/frameTurn";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { PAUSE_BUTTON, pauseCard } from "../layout/pauseCard";
 import { shifted, topShift } from "../layout/playView";
+import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
 import { type CardAction, cardBackAction, cardKeyAction, cardTurnAction } from "../pause/cardInput";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
+import { startsAirJump, startsDash } from "../rules/bird";
+import { isSkillId, SKILL_IDS, skillEnabled } from "../rules/skills";
+import { activeSkill, savedSkills, selectActiveSkill } from "../save";
 import { setTouchSettingShown, type TouchSetting, touchSettings } from "../settings/touchControls";
 import type { Palette } from "../view/dim";
 import {
@@ -32,6 +39,8 @@ import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
+import { drawSkillButton } from "./skillButton";
+import type { SkillDetailData } from "./SkillDetailScene";
 import type { ZoneScene } from "./ZoneScene";
 
 const ZONE = "zone";
@@ -48,13 +57,13 @@ function dimTexture({ actionButtons, moveControls }: Readonly<Record<TouchSettin
   return `pause-dim-move-${String(moveControls)}-action-${String(actionButtons)}`;
 }
 
-type Control = "close" | "home" | "pauseButton" | "resume" | "settings";
+type Control = "close" | "home" | "pauseButton" | "resume" | "settings" | SkillId;
 type CardControl = Exclude<Control, "pauseButton">;
 
 // The card's controls, in the order the keyboard's focus moves through them.
-const FOCUS_ORDER: readonly CardControl[] = ["resume", "settings", "home", "close"];
+
 // The card's buttons, top to bottom.
-type CardButton = Exclude<CardControl, "close">;
+type CardButton = "home" | "resume" | "settings";
 const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
 
 // The pause card over the dimmed zone, and the pause button that opens it, which shows on a
@@ -64,6 +73,8 @@ const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
 // Settings opens SettingsScene's card over the same dim in the pause card's place, and passes it
 // the keys and back until it closes; Back to title ends the zone for the start screen.
 export class PauseScene extends Scene implements SettingsOpener {
+  private skillVisit = 0;
+  private hud = new Map<SkillId, ReturnType<typeof drawSkillButton>>();
   private layout!: ReturnType<typeof pauseCard>;
   private card!: GameObjects.Container;
   // The control the keyboard's focus is on, and art's ring round it.
@@ -75,8 +86,18 @@ export class PauseScene extends Scene implements SettingsOpener {
   // The control a press landed on, which acts if the press lifts on it too.
   private cardCamera!: Cameras.Scene2D.Camera;
   private pressed: Control | undefined;
+  private pressStart:
+    | {
+        readonly control: Control;
+        readonly id: number;
+        readonly startedAt: number;
+        readonly x: number;
+        readonly y: number;
+        cancelled: boolean;
+      }
+    | undefined;
   private buttons!: Readonly<Record<CardButton, TextButton>>;
-  private state: "closed" | "open" | "opening" | "settings" = "closed";
+  private state: "closed" | "open" | "opening" | "settings" | "skill" = "closed";
 
   constructor() {
     super("pause");
@@ -100,6 +121,14 @@ export class PauseScene extends Scene implements SettingsOpener {
     );
     this.dims = new Map();
     this.cardCamera.ignore(this.pauseButton);
+    this.hud = new Map(
+      SKILL_IDS.map((skill) => {
+        const icon = drawSkillButton(this, SKILL_HUD[skill], skill);
+        icon.visible(false);
+        this.cardCamera.ignore(icon.objects);
+        return [skill, icon];
+      }),
+    );
     const toCards = (object: GameObjects.GameObject) => canvasCamera.ignore(object);
     this.events.on(Scenes.Events.ADDED_TO_SCENE, toCards);
     this.events.once("shutdown", () => this.events.off(Scenes.Events.ADDED_TO_SCENE, toCards));
@@ -107,17 +136,13 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.card = this.drawCard();
     this.showCard(false);
     this.watchPresses();
-    modalInput(this).subscribe(() => this.setPressed(undefined));
+    modalInput(this).subscribe(() => {
+      this.pressStart = undefined;
+      this.setPressed(undefined);
+    });
     catchModalTaps(this, this.cardCamera, {
       close: () => this.close(),
-      covered: () =>
-        this.state === "open"
-          ? [
-              this.layout.card,
-              this.layout.close.hit,
-              ...BUTTONS.map((name) => this.layout[name].hit),
-            ]
-          : undefined,
+      covered: () => this.coveredCard(),
     });
     this.watchKeys();
     const onBack = (event: Event) => {
@@ -140,6 +165,14 @@ export class PauseScene extends Scene implements SettingsOpener {
       window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
       stopTurns();
     });
+    this.events.once("shutdown", () => {
+      this.pressStart = undefined;
+      if (this.state === "skill") {
+        this.state = "closed";
+        this.scene.stop("skillDetail");
+        coverZone("pauseCard", false);
+      }
+    });
     startWakeLock();
     // The zone's first frame: the game page is now the home screen.
     this.game.events.once(Core.Events.POST_RENDER, () => zoneShown());
@@ -161,7 +194,11 @@ export class PauseScene extends Scene implements SettingsOpener {
     if (this.state !== "closed" || !this.scene.isActive(ZONE) || this.playCovered()) {
       return;
     }
+    this.card.destroy(true);
+    this.layout = pauseCard(cardFonts(this), TEXT.pause);
+    this.card = this.drawCard();
     this.state = "opening";
+    this.hud.forEach((icon) => icon.visible(false));
     modalInput(this).open();
     this.setPressed(undefined);
     this.scene.pause(ZONE);
@@ -228,6 +265,132 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.scene.launch(SETTINGS, { opener: this.scene.key } satisfies SettingsData);
   }
 
+  private coveredCard(): readonly Rect[] | undefined {
+    return this.state === "open"
+      ? [
+          this.layout.card,
+          this.layout.close.hit,
+          ...BUTTONS.map((name) => this.layout[name].hit),
+          ...this.hudAreas().map(({ hit }) => hit),
+        ]
+      : undefined;
+  }
+
+  private enabledSkills(): readonly SkillId[] {
+    const overrides = developmentSkillOverrides();
+    const owned = savedSkills();
+    return SKILL_IDS.filter((skill) => skillEnabled(overrides, owned, skill));
+  }
+
+  private openSkill(skill: SkillId): void {
+    if (
+      (this.state !== "closed" && this.state !== "open") ||
+      this.playCovered() ||
+      !this.enabledSkills().includes(skill) ||
+      !modalInput(this).accepts()
+    ) {
+      return;
+    }
+    if (this.state === "closed" && !this.scene.isActive(ZONE)) {
+      return;
+    }
+    this.state = "skill";
+    const visit = ++this.skillVisit;
+    modalInput(this).open();
+    this.dims.forEach((dim) => dim.destroy());
+    this.dims.clear();
+    this.showCard(false);
+    this.hud.forEach((icon) => icon.visible(false));
+    captureTab(this, false);
+    this.scene.pause(ZONE);
+    stopWakeLock();
+    coverZone("pauseCard", true);
+    this.scene.launch("skillDetail", {
+      onClose: () => {
+        if (this.skillVisit === visit) {
+          this.skillClosed();
+        }
+      },
+      skill,
+    } satisfies SkillDetailData);
+  }
+
+  private skillClosed(): void {
+    if (this.state !== "skill") {
+      return;
+    }
+    this.state = "closed";
+    modalInput(this).close();
+    coverZone("pauseCard", false);
+    const zone = this.scene.get(ZONE) as ZoneScene;
+    zone.resumeSkillPlay();
+    if (!this.playCovered() && modalInput(this).accepts()) {
+      this.scene.resume(ZONE);
+      startWakeLock();
+    }
+  }
+
+  private skillReady(skill: SkillId): boolean {
+    const state = (this.scene.get(ZONE) as ZoneScene).skillState();
+    if (state === undefined) {
+      return false;
+    }
+    const input = { dashPressed: true, jumpHeld: true, move: 0 } as const;
+    return skill === "dash"
+      ? startsDash(state.tuning, input, state.bird)
+      : skill === "doubleJump"
+        ? startsAirJump(state.tuning, input, state.bird)
+        : true;
+  }
+
+  private skillHudVisible(): boolean {
+    if (!modalInput(this).accepts() || this.playCovered()) {
+      return false;
+    }
+    return this.state === "open"
+      ? this.scene.isPaused(ZONE)
+      : this.state === "closed" &&
+          this.scene.isActive(ZONE) &&
+          (this.scene.get(ZONE) as ZoneScene).skillState()?.shown === true;
+  }
+
+  private hudAreas(): { readonly art: Rect; readonly hit: Rect; readonly key: SkillId }[] {
+    return this.enabledSkills().map((skill) => ({
+      art: { ...SKILL_HUD[skill], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
+      hit: { ...SKILL_HUD[skill], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
+      key: skill,
+    }));
+  }
+
+  private showSkillHud(): void {
+    const enabled = this.enabledSkills();
+    const selected = activeSkill();
+    this.hud.forEach((icon, skill) => {
+      icon.place(shifted(topShift(this.scale.gameSize), SKILL_HUD[skill]));
+      icon.visible(this.skillHudVisible() && enabled.includes(skill));
+      icon.ready(this.skillReady(skill));
+      icon.selected(skill === selected);
+    });
+  }
+
+  private updateSkillHold(): void {
+    const press = this.pressStart;
+    if (
+      !this.sys.isActive() ||
+      !press ||
+      press.cancelled ||
+      !isSkillId(press.control) ||
+      this.state !== "closed" ||
+      !this.skillHudVisible() ||
+      this.time.now - press.startedAt < SKILL_GESTURE.holdMilliseconds
+    ) {
+      return;
+    }
+    this.pressStart = undefined;
+    this.setPressed(undefined);
+    this.openSkill(press.control);
+  }
+
   // The settings card has closed: the pause card shows again.
   settingsClosed(): void {
     if (this.state === "settings") {
@@ -266,6 +429,9 @@ export class PauseScene extends Scene implements SettingsOpener {
       const { at } = this.layout.close;
       return { height: this.closeX.height, width: this.closeX.width, ...at };
     }
+    if (isSkillId(control)) {
+      return { ...SKILL_HUD[control], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target };
+    }
     return this.layout[control].button;
   }
 
@@ -285,7 +451,9 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   override update(): void {
+    this.updateSkillHold();
     this.showPauseButton();
+    this.showSkillHud();
   }
 
   // Capture the next rendered frame, with an opaque palette fallback when readback fails.
@@ -354,6 +522,7 @@ export class PauseScene extends Scene implements SettingsOpener {
       this.state === "open"
         ? [
             { art: close.art, hit: close.hit, key: "close" },
+
             ...BUTTONS.map((key) => ({
               art: this.layout[key].button,
               hit: this.layout[key].hit,
@@ -363,6 +532,9 @@ export class PauseScene extends Scene implements SettingsOpener {
         : this.pauseButton.visible
           ? [{ art: PAUSE_BUTTON.art, hit: PAUSE_BUTTON.hit, key: "pauseButton" }]
           : [];
+    if (this.skillHudVisible()) {
+      areas.push(...this.hudAreas());
+    }
     const point =
       this.state === "open"
         ? playPoint(this, pointer, this.cardCamera)
@@ -373,19 +545,78 @@ export class PauseScene extends Scene implements SettingsOpener {
   // A control acts when a press lands on it and lifts on it.
   private watchPresses(): void {
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.setPressed(this.controlAt(pointer));
+      if (this.pressStart) {
+        return;
+      }
+      const control = this.controlAt(pointer);
+      if (control === undefined) {
+        return;
+      }
+      this.input.stopPropagation();
+      this.pressStart = {
+        cancelled: false,
+        control,
+        id: pointer.id,
+        startedAt: this.time.now,
+        x: pointer.x,
+        y: pointer.y,
+      };
+      this.setPressed(control);
     });
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
-      const control = this.pressed;
-      this.setPressed(undefined);
-      if (control !== undefined && control === this.controlAt(pointer)) {
-        this.press(control);
+    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
+      if (this.pressStart?.id === pointer.id) {
+        this.input.stopPropagation();
+        this.pressStart.cancelled ||=
+          this.controlAt(pointer) !== this.pressStart.control ||
+          Math.hypot(pointer.x - this.pressStart.x, pointer.y - this.pressStart.y) >
+            TOUCH.tapMaxDistance;
+        if (this.pressStart.cancelled) {
+          this.setPressed(undefined);
+        }
       }
     });
+    const up = (pointer: Input.Pointer, outside: boolean) => {
+      if (this.pressStart?.id !== pointer.id) {
+        return;
+      }
+      this.input.stopPropagation();
+      const start = this.pressStart;
+      const control = this.pressed;
+      this.pressStart = undefined;
+      this.setPressed(undefined);
+      if (
+        !outside &&
+        !pointer.wasCanceled &&
+        !start.cancelled &&
+        Math.hypot(pointer.x - start.x, pointer.y - start.y) <= TOUCH.tapMaxDistance &&
+        control !== undefined &&
+        control === this.controlAt(pointer)
+      ) {
+        if (
+          this.state === "closed" &&
+          isSkillId(control) &&
+          this.time.now - start.startedAt >= SKILL_GESTURE.holdMilliseconds
+        ) {
+          this.openSkill(control);
+        } else {
+          this.press(control);
+        }
+      }
+    };
+    onScenePointer(this, "pointerup", (pointer) => up(pointer, false));
+    onScenePointer(this, "pointerupoutside", (pointer) => up(pointer, true));
   }
 
   private press(control: Control): void {
-    const actions: Record<Control, () => void> = {
+    if (control === "dash" || control === "doubleJump" || control === "speedy") {
+      if (this.state === "open") {
+        this.openSkill(control);
+      } else {
+        selectActiveSkill(control);
+      }
+      return;
+    }
+    const actions: Record<Exclude<Control, SkillId>, () => void> = {
       close: () => this.close(),
       home: () => this.returnHome(),
       pauseButton: () => void this.open(),
@@ -397,7 +628,7 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   private watchKeys(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (this.state === "opening" || this.playCovered()) {
+      if (this.state === "opening" || this.state === "skill" || this.playCovered()) {
         return;
       }
       if (this.state === "settings") {
@@ -410,7 +641,11 @@ export class PauseScene extends Scene implements SettingsOpener {
       const action =
         this.state === "open" ? focusKeyAction(event.key, event.shiftKey, event.repeat) : undefined;
       if (action === "next" || action === "previous") {
-        this.focus = stepFocus(FOCUS_ORDER, this.focus, action);
+        this.focus = stepFocus<CardControl>(
+          [...BUTTONS, ...this.enabledSkills(), "close"],
+          this.focus,
+          action,
+        );
         this.drawFocus();
       } else if (action === "press") {
         if (this.focus !== undefined) {

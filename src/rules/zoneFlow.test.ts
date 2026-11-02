@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { CHARACTERS } from "../data/characters";
 import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues";
 import { ZONE_MAP } from "../data/map";
+import type { ZoneDialoguePlan } from "../data/types";
 import { DESTINATION_FIXTURE as map } from "../testing/mapDestinations";
 import { introductionForRun, zoneExitFlow, zoneStoryForStage } from "./zoneFlow";
 
@@ -25,7 +26,7 @@ describe("zone story routing", () => {
     for (const destination of ZONE_MAP.destinations) {
       const story = introductionForRun(
         ZONE_MAP,
-        destination.stages[0]!,
+        ZONE_DIALOGUES[destination.id]!.introStage ?? destination.stages[0]!,
         new Set(),
         zoneStoryForStage(ZONE_MAP, ZONE_DIALOGUES, destination.stages[0]!),
       )!;
@@ -61,6 +62,54 @@ describe("zone story routing", () => {
     const missing = { ...story! };
     delete missing.entry;
     expect(() => introductionForRun(map, "one", new Set(), missing)).toThrow(
+      "Missing entry introduction profile first",
+    );
+  });
+  it.each<{ expected: string | undefined; name: string; plan: ZoneDialoguePlan; stage: string }>([
+    { expected: "first", name: "default opening stage", plan: pairs.first, stage: "one" },
+    {
+      expected: "first",
+      name: "explicit later stage",
+      plan: { ...pairs.first, introStage: "two" },
+      stage: "two",
+    },
+    {
+      expected: undefined,
+      name: "earlier unselected stage",
+      plan: { ...pairs.first, introStage: "two" },
+      stage: "one",
+    },
+    {
+      expected: undefined,
+      name: "later unselected stage",
+      plan: { ...pairs.first, introStage: "one" },
+      stage: "two",
+    },
+  ])("selects the $name without recording unseen introductions", ({ expected, plan, stage }) => {
+    const story = zoneStoryForStage(map, { ...pairs, first: plan }, stage);
+    const seen = new Set<string>();
+    expect(introductionForRun(map, stage, seen, story)?.zone).toBe(expected);
+    expect(seen.size).toBe(0);
+    expect(introductionForRun(map, stage, new Set(["first"]), story)).toBeUndefined();
+  });
+  it.each(["three", "unknown", ""])(
+    "rejects an introduction selector outside its destination: %j",
+    (introStage) => {
+      expect(() =>
+        zoneStoryForStage(map, { ...pairs, first: { ...pairs.first, introStage } }, "one"),
+      ).toThrow("outside destination first");
+    },
+  );
+  it("still requires an entry profile on an explicitly selected later stage", () => {
+    const story = {
+      foreshadow: "before",
+      intro: "entry",
+      introStage: "two",
+      outro: "after",
+      zone: "first",
+    };
+    expect(introductionForRun(map, "one", new Set(), story)).toBeUndefined();
+    expect(() => introductionForRun(map, "two", new Set(), story)).toThrow(
       "Missing entry introduction profile first",
     );
   });

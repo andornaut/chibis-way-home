@@ -34,13 +34,13 @@ it("updates paused preview backdrops after camera changes and removes the render
   ZoneScene.prototype.create.call(scene as unknown as ZoneScene);
   scene.events.emit("prerender");
   expect(item.setPosition).toHaveBeenLastCalledWith(7200, 120);
-  expect(item.setTilePosition.mock.lastCall?.[0]).toBeCloseTo(0);
+  expect(item.setTilePosition.mock.lastCall?.[0]).toBeCloseTo(2880);
   expect(item.setTilePosition.mock.lastCall?.[1]).toBe(0);
   scene.cameras.main.scrollX = 7300;
   scene.cameras.main.scrollY = 300;
   scene.events.emit("prerender");
   expect(item.setPosition).toHaveBeenLastCalledWith(7200, 375);
-  expect(item.setTilePosition).toHaveBeenLastCalledWith(-60, 0);
+  expect(item.setTilePosition).toHaveBeenLastCalledWith(2820, 0);
   scene.events.emit("shutdown");
   expect(scene.events.listenerCount("prerender")).toBe(0);
   item.setPosition.mockClear();

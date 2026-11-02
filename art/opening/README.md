@@ -1,8 +1,15 @@
 # Opening story art
 
-The opening uses the approved stylized storybook treatment. Painted source images live in `source/`;
-`python3 art/tools/opening.py build`, run from the repository root, deterministically exports the runtime backgrounds and pose sheets.
-This treatment is scoped to the opening. Gameplay character sprites and pixel-art scenery are unchanged.
+The current runtime opening uses four single-shot beats on a plain `ink` field, with `background: null`
+and no background-image lookup. It reuses the native `bird`, `ferret-antagonist` and `ferret-parcel` sprites
+at 1x in `idle` poses. Fert uses `flipX: true`; Chibi and the parcel use `false`. Their anchors are
+24,42; 24,48; and 12,24 respectively, at y240. Captions, manual Continue, whole-opening Skip and save
+acknowledgment retain their existing behaviour.
+
+The following asset contracts and motion recipes describe the retained painted storybook pack, not the
+current runtime data. Preserve this pack and its originals. Painted source images live in `source/`;
+`python3 art/tools/opening.py build`, run from the repository root, deterministically exports that pack's
+backgrounds and pose sheets.
 
 ## Assets
 
@@ -27,7 +34,7 @@ above the quiet bottom 80px. No words, character names, input controls or dialog
 
 ## Layered motion
 
-The four approved beats use five shots because packing and abstract transit share one story beat:
+The retained painted recipe uses five shots because packing and abstract transit share one story beat:
 
 1. Friendship in the shared apartment: breathing, a blink and a small paw gesture.
 2. The argument in the same room: a distinct disagreement pose, slight lean and small backward step.

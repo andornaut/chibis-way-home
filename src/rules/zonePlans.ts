@@ -1,3 +1,4 @@
+import { BACKGROUND_SECTIONS } from "../data/backgrounds";
 import { CHARACTERS } from "../data/characters";
 import { CHUNK_RULES, CHUNKS, SEAM_ROWS, THEMES } from "../data/chunks";
 import { ZONE_ROWS } from "../data/screen";
@@ -7,6 +8,7 @@ import { assembleZone, type ChunkLibrary } from "./assemble";
 
 // The game's chunks and themes.
 export const CHUNK_LIBRARY: ChunkLibrary = {
+  backgrounds: BACKGROUND_SECTIONS,
   characters: CHARACTERS,
   chunks: CHUNKS,
   rows: ZONE_ROWS,

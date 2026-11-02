@@ -1,6 +1,7 @@
 import { type Random, randomInt, randomStream, shuffled } from "@andornaut/game-kit/random";
 
 import type {
+  BackgroundSection,
   Character,
   ChunkPlan,
   ChunkPool,
@@ -17,6 +18,7 @@ import type {
   ZonePlan,
   ZoneRecipe,
 } from "../data/types";
+import { withBackgroundSections } from "./backgroundSections";
 import { bindElement } from "./elementBinding";
 import { namespaceOrbitInstances } from "./orbit";
 import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry";
@@ -24,6 +26,7 @@ import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry";
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
 // a zone's height in rows, and the characters by key, for the size of each theme's door.
 export interface ChunkLibrary {
+  readonly backgrounds?: Readonly<Record<string, BackgroundSection>>;
   readonly characters: Readonly<Record<string, Pick<Character, "cols" | "rows">>>;
   readonly chunks: Readonly<Record<string, ChunkPlan>>;
   readonly rows: number;
@@ -447,6 +450,28 @@ export function zonePlanOf(
       },
     ];
   });
+  const scenery = chunks.flatMap((chunk, index) =>
+    (chunk.scenery ?? []).map((instance) =>
+      bindElement(theme.bindings, shiftInstance(at(index), instance)),
+    ),
+  );
+  const objects: Instance[] = [
+    ...theme.backdrops.map((backdrop) =>
+      bindElement(theme.bindings, { ...backdrop, col: 0, cols }),
+    ),
+    ...chunks.flatMap((_, index) =>
+      scoped[index]!.backdrops.map((instance) =>
+        bindElement(theme.bindings, shiftInstance(at(index), instance)),
+      ),
+    ),
+    ...chunks.flatMap((_, index) =>
+      scoped[index]!.objects.map((instance) =>
+        bindElement(theme.bindings, shiftInstance(at(index), instance)),
+      ),
+    ),
+    ...doors,
+    ...scenery,
+  ];
   return {
     areas: {
       [ASSEMBLED_AREA]: {
@@ -464,27 +489,10 @@ export function zonePlanOf(
             to: shiftPoint(at(index), to),
           })),
         ),
-        objects: [
-          ...theme.backdrops.map((backdrop) =>
-            bindElement(theme.bindings, { ...backdrop, col: 0, cols }),
-          ),
-          ...chunks.flatMap((_, index) =>
-            scoped[index]!.backdrops.map((instance) =>
-              bindElement(theme.bindings, shiftInstance(at(index), instance)),
-            ),
-          ),
-          ...chunks.flatMap((_, index) =>
-            scoped[index]!.objects.map((instance) =>
-              bindElement(theme.bindings, shiftInstance(at(index), instance)),
-            ),
-          ),
-          ...doors,
-          ...chunks.flatMap((chunk, index) =>
-            (chunk.scenery ?? []).map((instance) =>
-              bindElement(theme.bindings, shiftInstance(at(index), instance)),
-            ),
-          ),
-        ],
+        objects,
+        ...(scenery.length > 0 && {
+          sceneryIndices: scenery.map((_, index) => objects.length - scenery.length + index),
+        }),
         outOfReach: chunks.flatMap((chunk, index) =>
           (chunk.outOfReach ?? []).map((spot) => shiftPoint(at(index), spot)),
         ),
@@ -864,7 +872,13 @@ export function assembleZone(
   recipe: StageRecipe,
 ): ZonePlan {
   if ("sections" in recipe) {
-    return assembleOrdered(library, seed, key, recipe);
+    return withBackgroundSections(
+      library,
+      seed,
+      key,
+      Object.fromEntries(recipe.sections.map(({ id, theme }) => [id, theme])),
+      assembleOrdered(library, seed, key, recipe),
+    );
   }
   if (recipe.chunks !== undefined) {
     const problems = chunkPoolProblems(library, recipe, recipe.chunks);
@@ -888,15 +902,21 @@ export function assembleZone(
         "with slots for its events and doors",
     );
   }
-  return applyStageGeometry(
-    recipe,
-    zonePlanOf(
-      library,
-      randomStream(seed, `slots:${key}`),
-      fillsOf(recipe),
-      recipe.theme,
-      recipe.spawnCol,
-      [recipe.start, ...run, recipe.finish],
+  return withBackgroundSections(
+    library,
+    seed,
+    key,
+    { [ASSEMBLED_AREA]: recipe.theme },
+    applyStageGeometry(
+      recipe,
+      zonePlanOf(
+        library,
+        randomStream(seed, `slots:${key}`),
+        fillsOf(recipe),
+        recipe.theme,
+        recipe.spawnCol,
+        [recipe.start, ...run, recipe.finish],
+      ),
     ),
   );
 }

@@ -284,6 +284,9 @@ function snapshot(
   };
 }
 function inputLabel(candidate: Candidate): string {
+  if (candidate.jumpAt !== undefined) {
+    return "run-up-full";
+  }
   if (candidate.travel !== undefined) {
     return candidate.stopAt === undefined ? "backward-full" : "retreat-to-support";
   }
@@ -549,7 +552,91 @@ function followupHold(
   }
   return rise > tuning.jumpHopHeight || rise === 0 ? full : 1;
 }
+// A supported run-up clears a low ceiling or uses the remaining physical takeoff span.
+function runningTakeoff(
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  direction: -1 | 1,
+  approach: number | undefined,
+  zone: ZoneState,
+): number | undefined {
+  if (!zone.bird.grounded) {
+    return undefined;
+  }
+  const stepTravel = tuning.walkSpeed * STEP_SECONDS;
+  const fullHeight = (tuning.jumpSpeed * tuning.jumpRiseTime) / 2;
+  const ceiling = layout.areas[zone.area]!.solids.filter(
+    (rect) =>
+      rect.x < zone.bird.x + tuning.width &&
+      rect.x + rect.width > zone.bird.x &&
+      rect.y + rect.height <= zone.bird.y &&
+      zone.bird.y - rect.y - rect.height < fullHeight,
+  )
+    .map((rect) =>
+      direction === 1 ? rect.x + rect.width + stepTravel : rect.x - tuning.width - stepTravel,
+    )
+    .sort((a, b) => direction * (b - a))[0];
+  if (ceiling !== undefined) {
+    const obstruction = layout.areas[zone.area]!.objects.flatMap((object, index) =>
+      object.collision === "hazard"
+        ? [
+            contactBox(
+              object,
+              zone.objects[index] ?? object.origin,
+              zone.behaviours[index]?.facing ?? 1,
+            ),
+          ]
+        : [],
+    )
+      .filter(
+        (rect) =>
+          rect.y < zone.bird.y + tuning.height &&
+          rect.y + rect.height > zone.bird.y &&
+          direction * (rect.x + rect.width / 2 - zone.bird.x - tuning.width / 2) > 0,
+      )
+      .sort((a, b) => direction * (a.x - b.x))[0];
+    const apexAligned =
+      obstruction === undefined
+        ? ceiling
+        : obstruction.x +
+          (obstruction.width - tuning.width) / 2 -
+          direction * tuning.walkSpeed * tuning.jumpRiseTime;
+    return direction === 1 ? Math.max(ceiling, apexAligned) : Math.min(ceiling, apexAligned);
+  }
+  if (approach === undefined || Math.abs(zone.bird.x - approach) > stepTravel) {
+    return undefined;
+  }
+  const support = supports(layout, zone).find(
+    (rect) =>
+      Math.abs(rect.y - zone.bird.y - tuning.height) < 1 &&
+      rect.x < zone.bird.x + tuning.width &&
+      rect.x + rect.width > zone.bird.x &&
+      Math.abs(
+        approach -
+          (direction === 1 ? rect.x + rect.width - tuning.width / 2 : rect.x - tuning.width / 2),
+      ) <= stepTravel,
+  );
+  if (support === undefined) {
+    return undefined;
+  }
+  const edge = support.x + (direction === 1 ? support.width : 0);
+  const canLandAhead = landingSurfaces(tuning, layout, zone).some((rect) => {
+    const distance = direction * (rect.x + (direction === 1 ? 0 : rect.width) - edge);
+    return (
+      distance > 0 &&
+      distance <= 2 * tuning.walkSpeed * tuning.jumpRiseTime + tuning.width &&
+      support.y - rect.y <= fullHeight
+    );
+  });
+  if (!canLandAhead) {
+    return undefined;
+  }
+  return direction === 1
+    ? support.x + support.width - stepTravel
+    : support.x - tuning.width + stepTravel;
+}
 interface Candidate {
+  readonly jumpAt?: number;
   readonly stopAt?: number | undefined;
   readonly travel?: -1 | 1;
   readonly back: number;
@@ -572,6 +659,18 @@ function action(
     return IDLE;
   }
   const travel = candidate.travel ?? direction;
+  if (candidate.jumpAt !== undefined) {
+    const launching = travel * (zone.bird.x - candidate.jumpAt) >= 0;
+    return {
+      jumpHeld:
+        launching &&
+        (zone.bird.jumpHeld
+          ? zone.bird.jumpHeldFor < tuning.jumpRiseTime + STEP_SECONDS
+          : zone.bird.grounded),
+      move: travel,
+      useHeld: false,
+    };
+  }
   if (candidate.stopAt !== undefined) {
     const remaining = travel * (candidate.stopAt - zone.bird.x);
     const braking =
@@ -598,6 +697,7 @@ function policyKey(
 ): string {
   return JSON.stringify([
     candidate.travel !== undefined,
+    candidate.jumpAt,
     Array.from({ length: horizon }, (_, tick) => {
       const at = tick + elapsed;
       if (at < candidate.back) {
@@ -872,6 +972,10 @@ export function plannedInput(
       ? { back: 0, delay: 0, hold: full, stationary: 12 }
       : { back: 0, delay: 0, hold: 0, stationary: 0, stopAt: approach },
   ];
+  const jumpAt = runningTakeoff(tuning, layout, direction, approach, zone);
+  if (jumpAt !== undefined) {
+    candidates.splice(3, 0, { back: 0, delay: 0, hold: full, jumpAt, stationary: 0 });
+  }
   let best:
     | {
         candidate: Candidate;
@@ -929,6 +1033,16 @@ export function plannedInput(
     const inputs: ZoneInput[] = [];
     const states: ZoneState[] = [];
     for (let tick = 0; tick < endTick; tick++) {
+      if (
+        limits.profile === "quick" &&
+        candidate.jumpAt !== undefined &&
+        tick > 0 &&
+        !jumped &&
+        predicted.bird.grounded &&
+        direction * (predicted.bird.x - candidate.jumpAt) >= 0
+      ) {
+        break;
+      }
       if (
         !followup &&
         limits.profile === "validation" &&

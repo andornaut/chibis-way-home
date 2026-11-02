@@ -132,6 +132,11 @@ describe("directional hazard layouts", () => {
   it("clears the valley with braking and both five-tile exit climbs", () => {
     let phase = 0;
     let phaseTick = 0;
+    let exitJumpTick: number | undefined;
+    const bank = chunks["guarded-valley"]!.solids!.filter((solid) => solid.row === 45).sort(
+      (a, b) => b.col - a.col,
+    )[0]!;
+    const takeoff = bank.col * TILE - BIRD.walkSpeed * BIRD.jumpRiseTime;
     const result = run("guarded-valley", { col: 2, row: 40 }, (zone, tick) => {
       if (phase === 0 && zone.bird.grounded && foot(zone) === 45 * TILE) {
         phase = 1;
@@ -156,6 +161,9 @@ describe("directional hazard layouts", () => {
       if (phase === 0) {
         return input(zone.bird.x < 14 * TILE ? 1 : 0);
       }
+      if (phase === 2 && exitJumpTick === undefined && zone.bird.x >= takeoff) {
+        exitJumpTick = tick;
+      }
       const hold = phase === 1 ? BIRD.jumpTapWindow / 2 : BIRD.jumpRiseTime;
       const move =
         phase === 1
@@ -167,8 +175,10 @@ describe("directional hazard layouts", () => {
               ? 1
               : 0
             : 1;
-      return input(move, (tick - phaseTick) * STEP_SECONDS < hold);
+      const jumpTick = phase === 2 ? exitJumpTick : phaseTick;
+      return input(move, jumpTick !== undefined && (tick - jumpTick) * STEP_SECONDS < hold);
     });
+    expect(phase).toBe(3);
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared).toBe(true);
   });

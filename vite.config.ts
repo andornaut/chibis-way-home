@@ -1,13 +1,18 @@
 // Node types for this config file only, so browser code type-checks without Node globals.
 /// <reference types="node" />
 
-import { gameViteConfig } from "./src/platform/build/vite/gameConfig";
+import { gameViteConfig } from "./src/platform/build/vite/gameConfig.ts";
 import type * as ConfigModules from "./src/tools/viteConfigModules.ts";
 
 export default gameViteConfig<typeof ConfigModules>({
   chunkSizeWarningLimit: 1100,
   configModules: "src/tools/viteConfigModules.ts",
-  pages: { main: "pages/index.html", play: "pages/play/index.html" },
+  pages: {
+    art: "pages/art/index.html",
+    main: "pages/index.html",
+    play: "pages/play/index.html",
+    tuning: "pages/tuning/index.html",
+  },
   plugins: (
     {
       ICONS,

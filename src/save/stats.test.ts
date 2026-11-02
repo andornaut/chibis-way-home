@@ -73,10 +73,19 @@ describe("persistent active stage clocks", () => {
     { stages: { unbuilt: {} }, zones: {} },
     { stages: [], zones: {} },
   ])("refuses invalid stats %j", (value) => {
-    expect(loadSave(FORMAT, JSON.stringify({ ...value, version: STATS_VERSION })).status).toBe(
-      "corrupt",
-    );
-    expect(encodeSave(FORMAT, value as never).ok).toBe(false);
+    expect(
+      loadSave(
+        FORMAT,
+        JSON.stringify({
+          ...value,
+          version: STATS_VERSION,
+          wholeRun: { activeSeconds: 0, deaths: 0 },
+        }),
+      ).status,
+    ).toBe("corrupt");
+    expect(
+      encodeSave(FORMAT, { ...value, wholeRun: { activeSeconds: 0, deaths: 0 } } as never).ok,
+    ).toBe(false);
   });
 
   it("keeps retries in one run and isolates each actual zone visit", async () => {

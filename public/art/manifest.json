@@ -219,6 +219,24 @@
       "once": []
     },
     {
+      "key": "icon-skill-dash",
+      "png": "sprites/icon-skill-dash.png",
+      "json": "sprites/icon-skill-dash.json",
+      "once": []
+    },
+    {
+      "key": "icon-skill-double-jump",
+      "png": "sprites/icon-skill-double-jump.png",
+      "json": "sprites/icon-skill-double-jump.json",
+      "once": []
+    },
+    {
+      "key": "icon-skill-speedy",
+      "png": "sprites/icon-skill-speedy.png",
+      "json": "sprites/icon-skill-speedy.json",
+      "once": []
+    },
+    {
       "key": "icon-touch-controls",
       "png": "sprites/icon-touch-controls.png",
       "json": "sprites/icon-touch-controls.json",

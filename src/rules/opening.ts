@@ -36,7 +36,11 @@ export function createOpeningPlayback(onFinish: () => void, beats: readonly Open
       throw new Error("Invalid opening beat");
     }
     for (const shot of beat.shots) {
-      if (!shot.background || !Number.isFinite(shot.seconds) || shot.seconds <= 0) {
+      if (
+        (shot.background !== null && (typeof shot.background !== "string" || !shot.background)) ||
+        !Number.isFinite(shot.seconds) ||
+        shot.seconds <= 0
+      ) {
         throw new Error("Invalid opening shot");
       }
       for (const layer of shot.layers) {

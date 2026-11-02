@@ -1,10 +1,46 @@
+import type { SkillId } from "../data/types";
 import { INSTALLED_APP_DISPLAY_QUERY } from "../platform/pwa/backNavigation";
+import { SKILL_IDS, type SkillOverrides } from "../rules/skills";
+
+const SKILL_PARAMS: Readonly<Record<SkillId, string>> = {
+  dash: "skillDash",
+  doubleJump: "skillDoubleJump",
+  speedy: "skillSpeedy",
+};
+
+export function skillOverridesFromSearch(search: string): SkillOverrides {
+  const params = new URLSearchParams(search);
+  return Object.fromEntries(
+    SKILL_IDS.map((skill) => [skill, params.get(SKILL_PARAMS[skill]) === "1"]),
+  );
+}
+
+export function developmentSkillOverrides(): SkillOverrides {
+  return typeof window !== "undefined" && regularBrowser(window)
+    ? skillOverridesFromSearch(window.location.search)
+    : {};
+}
+
+export function changeSkillOverride(host: Window, enabled: boolean, skill: SkillId): void {
+  sessionStarted = true;
+  const url = new URL(host.location.href);
+  url.searchParams.set("devSession", "1");
+  if (enabled) {
+    url.searchParams.set(SKILL_PARAMS[skill], "1");
+  } else {
+    url.searchParams.delete(SKILL_PARAMS[skill]);
+  }
+  host.history.replaceState(host.history.state, "", url);
+}
 
 export function developmentFlags(search: string) {
   const params = new URLSearchParams(search);
   return {
     invulnerable: params.get("invulnerable") === "1",
-    session: params.get("devSession") === "1" || params.get("invulnerable") === "1",
+    session:
+      params.get("devSession") === "1" ||
+      params.get("invulnerable") === "1" ||
+      SKILL_IDS.some((skill) => params.get(SKILL_PARAMS[skill]) === "1"),
   };
 }
 let sessionStarted = false;

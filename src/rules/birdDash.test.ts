@@ -5,10 +5,7 @@ import type { BirdTuning, Rect } from "../data/types";
 import { startBird, stepBird } from "./bird";
 import { STEP_SECONDS } from "./step";
 
-const tuning: BirdTuning = {
-  ...BIRD,
-  dash: { cooldownSeconds: 0.65, durationSeconds: 0.14, speed: 640 },
-};
+const tuning: BirdTuning = BIRD;
 const floor: Rect = { height: 40, width: 4000, x: -2000, y: 300 };
 const idle = { jumpHeld: false, move: 0 } as const;
 

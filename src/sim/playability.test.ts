@@ -276,6 +276,45 @@ describe("structural playability assessment", () => {
       comparePlayability(before, { ...after, stages: [{ ...after.stages[0]!, zone: "other" }] }),
     ).toThrow("Incompatible");
   });
+  it("distinguishes live horizontal target alignment from authored waypoint flight", () => {
+    const input = context();
+    const alignment: BehaviourPlan = {
+      ...graph,
+      initial: "align",
+      states: {
+        align: {
+          animation: null,
+          motion: {
+            bounds: { height: 8, width: 24, x: -12, y: -8 },
+            kind: "fly",
+            leadSeconds: 0.1,
+            maxLead: 2,
+            speed: 3,
+            to: "target-x",
+          },
+          transitions: [],
+        },
+      },
+    };
+    const report = assessPlayability(
+      {
+        ...input,
+        library: {
+          ...input.library,
+          characters: {
+            ...input.library.characters,
+            enemy: { ...input.library.characters.enemy!, behaviour: alignment },
+          },
+        },
+      },
+      [7],
+    );
+    expect(report.stages[0]!.mechanics["live-target-alignment"]).toBe(
+      Object.keys(plan.areas).length,
+    );
+    expect(report.stages[0]!.mechanics).not.toHaveProperty("waypoint-flight");
+    expect(report.stages[0]!.mechanics).not.toHaveProperty("target-locked-flight");
+  });
   it("rejects missing provenance, duplicate seeds and unresolved selected chunks", () => {
     expect(() =>
       assessPlayability({ ...context(), provenance: { data: "x", source: "" } }, [1]),

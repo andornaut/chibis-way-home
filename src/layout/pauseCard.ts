@@ -13,11 +13,11 @@ import { CONTROL_EDGE } from "./playView";
 // Pause actions share the width of their widest label.
 export function pauseCard(fonts: CardFonts, words: GameText["pause"]) {
   const labels = [words.resume, words.settings, words.home];
-  const layout = contentCardLayout(
-    { ...SCREEN, x: 0, y: 0 },
-    [{ key: "actions", ...cardActionsSize(fonts.body, "stack", labels) }],
-    { close: true, titleWidth: cardTextSize(fonts.title, words.title).width },
-  );
+  const actions = cardActionsSize(fonts.body, "stack", labels);
+  const layout = contentCardLayout({ ...SCREEN, x: 0, y: 0 }, [{ ...actions, key: "actions" }], {
+    close: true,
+    titleWidth: cardTextSize(fonts.title, words.title).width,
+  });
   const [resume, settings, home] = cardActions(fonts.body, "stack", layout.groups.actions!, labels);
   return {
     card: layout.card,

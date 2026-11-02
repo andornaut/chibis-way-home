@@ -166,6 +166,9 @@ describe("Apartment floor geometry", () => {
       const right = left + APARTMENT_WINDOW.cols * TILE;
       const walls = area.objects.filter((object) => object.art.startsWith("apartment-wall-"));
       const rects = walls.map((wall) => {
+        if (wall.backdropPlane === "interior") {
+          return { height: wall.height, width: wall.width, x: wall.origin.x, y: wall.origin.y };
+        }
         const art = artManifest.backdrops.find((item) => item.key === wall.art)!;
         const offset = artOffset("repeated-backdrop", wall, {
           height: art.height,
@@ -208,6 +211,7 @@ describe("Apartment floor geometry", () => {
         ["apartment-sky", "apartment-far", "apartment-exterior-mid"].includes(object.art),
       );
       expect(layers).toHaveLength(3);
+      const texturePhases = new Map<string, number>();
       for (const layer of layers) {
         const art = artManifest.backdrops.find((item) => item.key === layer.art)!;
         const offset = artOffset("repeated-backdrop", layer, {
@@ -220,7 +224,7 @@ describe("Apartment floor geometry", () => {
           { height: art.height, width: finish.width, x: finish.x, y: layer.origin.y + offset.y },
         );
         expect(frame.position.y).toBe(0);
-        expect(frame.textureX).toBeCloseTo(0);
+        texturePhases.set(layer.art, frame.textureX);
       }
       let farVisible = false;
       let midVisible = false;
@@ -231,8 +235,12 @@ describe("Apartment floor geometry", () => {
           x < (APARTMENT_WINDOW.col + APARTMENT_WINDOW.cols) * TILE;
           x++
         ) {
-          const a = far.data[(y * far.width + x) * 4 + 3]!;
-          const b = mid.data[(y * mid.width + x) * 4 + 3]!;
+          const farX = Math.floor(x + texturePhases.get("apartment-far")!);
+          const midX = Math.floor(x + texturePhases.get("apartment-exterior-mid")!);
+          const a =
+            far.data[(y * far.width + (((farX % far.width) + far.width) % far.width)) * 4 + 3]!;
+          const b =
+            mid.data[(y * mid.width + (((midX % mid.width) + mid.width) % mid.width)) * 4 + 3]!;
           farVisible ||= a > 0 && b < 255;
           midVisible ||= b > 0;
           skyVisible ||= a < 255 && b < 255;
@@ -245,7 +253,7 @@ describe("Apartment floor geometry", () => {
       });
     }
   });
-  it("climbs from the protected lower opening to its upper seam", () => {
+  it("climbs from the retained opening shelf to its upper seam", () => {
     const plan = cap("apartment-floor-start");
     const control = climb(
       [75, 70, 65, 60, 55, 50].map((row, index) => ({ col: 12 + index * 5, row })),
@@ -253,7 +261,7 @@ describe("Apartment floor geometry", () => {
     );
     const zone = stepUntil(
       plan,
-      { col: 2, row: APARTMENT_SPAWN_ROW },
+      { col: 2, row: 80 },
       control,
       (state) => state.bird.grounded && state.bird.y + BIRD.height === 50 * TILE,
     );

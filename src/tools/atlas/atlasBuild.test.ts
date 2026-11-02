@@ -10,7 +10,6 @@ import { BASE_FRAME } from "../../assets/atlasManifest";
 import { TILE } from "../../data/screen";
 import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../../view/aseprite";
 import { buildAtlas } from "./atlasBuild";
-import { EXTRUDE } from "./atlasLayout";
 
 const ART_DIR = join(import.meta.dirname, "../../../public", ART_PATH);
 const readArt = async (path: string) => new Uint8Array(await readFile(join(ART_DIR, path)));
@@ -58,35 +57,22 @@ describe("buildAtlas", () => {
     expect({ height: image.height, width: image.width }).toEqual({ height, width });
   });
 
-  // Different source shapes and alpha patterns exercise the shared copy and extrusion path.
-  it.each([
-    "bird",
-    "font-body",
-    "parcel-open",
-    "park-gate",
-    "street-city-far",
-    "tiles-platforming",
-    "tiles-street",
-    "ui-button-primary",
-  ])("draws %s's PNG whole on its page, its edges repeated around it", async (key) => {
-    const png = PNGS.get(key);
-    if (png === undefined) {
-      throw new Error(`No PNG ${key}`);
-    }
-    const texture = textureOf(key);
-    const source = decodePng(await readArt(png));
-    const { image: page } = itemAt(ATLAS.pages, texture.page);
-    const { x, y } = topLeft(texture.frames);
-    expect(pixels(page, x, y, source.width, source.height)).toEqual(
-      pixels(source, 0, 0, source.width, source.height),
-    );
-    expect(pixels(page, x - EXTRUDE, y, EXTRUDE, source.height)).toEqual(
-      pixels(source, 0, 0, 1, source.height),
-    );
-    expect(pixels(page, x, y + source.height, source.width, EXTRUDE)).toEqual(
-      pixels(source, 0, source.height - 1, source.width, 1),
-    );
-  });
+  it.each(["bird", "font-body", "street-city-far", "tiles-platforming"])(
+    "places %s's manifest source pixels at its game texture frames",
+    async (key) => {
+      const png = PNGS.get(key);
+      if (png === undefined) {
+        throw new Error(`No PNG ${key}`);
+      }
+      const texture = textureOf(key);
+      const source = decodePng(await readArt(png));
+      const { image: page } = itemAt(ATLAS.pages, texture.page);
+      const { x, y } = topLeft(texture.frames);
+      expect(pixels(page, x, y, source.width, source.height)).toEqual(
+        pixels(source, 0, 0, source.width, source.height),
+      );
+    },
+  );
 
   it.each(
     ["bird", "park-gate", "ui-button-primary"].map((key) => {

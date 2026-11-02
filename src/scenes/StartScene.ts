@@ -22,7 +22,7 @@ import {
   startScreenShown,
 } from "../pwa";
 import { openingDestination } from "../rules/opening";
-import { savedProgress } from "../save";
+import { resetWholeRunStats, savedProgress } from "../save";
 import { setTouchSettingShown, type TouchSetting } from "../settings/touchControls";
 import { dimColour } from "../view/dim";
 import {
@@ -76,6 +76,7 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   private focus: Control | undefined;
   private focusRing: GameObjects.NineSlice | undefined;
   private card: Card | undefined;
+  private starting = false;
   private startButton!: TextButton;
   private restartButton: TextButton | undefined;
   private street!: GameObjects.Image;
@@ -85,6 +86,7 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   }
 
   create(): void {
+    this.starting = false;
     beginStartUpdateVisit();
     let currentCreate = true;
     fitPlayCamera(this);
@@ -305,6 +307,13 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
 
   private act(control: Control): void {
     if (control === "start") {
+      if (this.starting) {
+        return;
+      }
+      this.starting = true;
+      if (this.layout.restart === undefined) {
+        resetWholeRunStats();
+      }
       // Unseen new games show the opening; Continue returns directly to the map.
       this.scene.start(openingDestination(savedProgress()));
     } else if (control === "settings") {

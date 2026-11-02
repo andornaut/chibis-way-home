@@ -286,3 +286,35 @@ describe("orbital motion envelopes", () => {
     },
   );
 });
+
+it("includes the authored ground-traversal jump rise in pursuit bounds", () => {
+  const graph: BehaviourPlan = {
+    ...pattern([
+      {
+        kind: "pursue",
+        mode: "ground",
+        speed: 120,
+        traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500 },
+      },
+    ]),
+    pursuit: {
+      distance: 200,
+      escaped: { line: "escaped", speaker: "actor" },
+      unreachableGraceSeconds: 3,
+    },
+  };
+  const origin = { height: 24, width: 24, x: 100, y: 276 };
+  const context = {
+    areaBounds: { height: 360, width: 720, x: 0, y: 0 },
+    maximumRise: 0,
+    targetHeight: 0,
+  };
+  const legacy = sweptBehaviourRect(
+    context,
+    { ...graph, states: pattern([{ kind: "pursue", mode: "ground", speed: 120 }]).states },
+    origin,
+  );
+  const physical = sweptBehaviourRect(context, graph, origin);
+  expect(physical.y).toBe(legacy.y - 45);
+  expect(physical.y + physical.height).toBe(legacy.y + legacy.height);
+});

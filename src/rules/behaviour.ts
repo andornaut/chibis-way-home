@@ -1,3 +1,5 @@
+import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
+
 import type {
   BehaviourAction,
   BehaviourCondition,
@@ -10,6 +12,20 @@ import type {
   Rect,
 } from "../data/types";
 import {
+  advanceAttackClock,
+  attackProtected,
+  attackReady,
+  type BehaviourAttackState,
+  canEnterAttack,
+  enterAttack,
+} from "./behaviourAttack";
+import {
+  advanceIdleRecovery,
+  type BehaviourIdleState,
+  observeIdle,
+  planIdleRecovery,
+} from "./behaviourIdle";
+import {
   type BehaviourGeometry,
   type BehaviourTrack,
   type BehaviourWorld,
@@ -18,6 +34,12 @@ import {
   groundPursuitEnd,
   targetReachable,
 } from "./behaviourReach";
+import {
+  advanceTraversal,
+  type BehaviourRearmState,
+  type BehaviourTraversalState,
+  probeRearm,
+} from "./behaviourTraversal";
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
@@ -25,7 +47,10 @@ import { flyLandingRoute, supportedLanding } from "./flyLanding";
 import { hopLift } from "./motion";
 import { targetVisible } from "./perception";
 
-export interface BehaviourState {
+export interface BehaviourState extends BehaviourAttackState {
+  readonly idleWatchdog?: BehaviourIdleState;
+  readonly rearm?: BehaviourRearmState;
+  readonly traversal?: BehaviourTraversalState;
   readonly anchor?: Point;
   readonly pursuit?: {
     readonly phase: "engaged" | "escaped";
@@ -85,14 +110,56 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
     plan.pursuit &&
     (!valid(plan.pursuit.distance) ||
       plan.pursuit.distance === 0 ||
-      !valid(plan.pursuit.unreachableGraceSeconds) ||
+      (plan.pursuit.unreachableGraceSeconds !== null &&
+        !valid(plan.pursuit.unreachableGraceSeconds)) ||
+      (plan.pursuit.escapeDistance !== undefined && !valid(plan.pursuit.escapeDistance)) ||
       !plan.pursuit.escaped.line ||
       !plan.pursuit.escaped.speaker)
   ) {
     throw new Error("Invalid pursuit configuration");
   }
+  if (plan.attackCooldownSeconds !== undefined && !valid(plan.attackCooldownSeconds)) {
+    throw new Error("Invalid attack cooldown");
+  }
+  const watchdog = plan.idleWatchdog;
+  if (
+    watchdog &&
+    (!plan.pursuit ||
+      ![watchdog.seconds, watchdog.minMovement, watchdog.distance].every(
+        (value) => Number.isFinite(value) && value > 0,
+      ) ||
+      !Number.isInteger(watchdog.maxAttempts) ||
+      watchdog.maxAttempts <= 0 ||
+      plan.states[watchdog.resume]?.motion.kind !== "pursue" ||
+      (plan.states[watchdog.resume]?.onEnter?.length ?? 0) > 0)
+  ) {
+    throw new Error("Invalid idle watchdog configuration");
+  }
   const states = Object.fromEntries(
     Object.entries(plan.states).map(([key, node]) => {
+      if (
+        node.attack &&
+        (plan.attackCooldownSeconds === undefined ||
+          !node.attack.id ||
+          !["tell", "committed", "completed"].includes(node.attack.phase))
+      ) {
+        throw new Error(`Invalid attack phase in ${key}`);
+      }
+      for (const transition of node.transitions) {
+        const target = plan.states[transition.to]?.attack;
+        if (
+          node.attack?.phase === "committed" &&
+          (!target || target.id !== node.attack.id || target.phase === "tell")
+        ) {
+          throw new Error(`Committed attack requires a completed boundary in ${key}`);
+        }
+        if (
+          target?.phase === "committed" &&
+          (!node.attack || node.attack.id !== target.id || node.attack.phase === "completed")
+        ) {
+          throw new Error(`Committed attack requires a tell in ${key}`);
+        }
+      }
       const track = node.track ?? plan;
       if (!["x", "y"].includes(track.axis) || !Number.isFinite(track.distance)) {
         throw new Error(`Invalid behaviour track in ${key}`);
@@ -129,7 +196,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         node.motion.kind === "fly" &&
         (!valid(node.motion.speed) ||
           node.motion.speed === 0 ||
-          (node.motion.to === "target"
+          (typeof node.motion.to === "string"
             ? ![
                 node.motion.bounds.x,
                 node.motion.bounds.y,
@@ -141,6 +208,21 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             : !Number.isFinite(node.motion.to.x) || !Number.isFinite(node.motion.to.y)))
       ) {
         throw new Error(`Invalid flight in ${key}`);
+      }
+      if (
+        node.motion.kind === "pursue" &&
+        node.motion.mode === "ground" &&
+        node.motion.traversal &&
+        !Object.values(node.motion.traversal).every((value) => Number.isFinite(value) && value > 0)
+      ) {
+        throw new Error(`Invalid ground traversal in ${key}`);
+      }
+      if (
+        node.motion.kind === "fly" &&
+        node.motion.to === "target-x" &&
+        (!valid(node.motion.leadSeconds) || !valid(node.motion.maxLead))
+      ) {
+        throw new Error(`Invalid horizontal target lead in ${key}`);
       }
       const onEnter = node.onEnter?.map((action): BehaviourAction => {
         const finitePoint = (point: Point) => Number.isFinite(point.x) && Number.isFinite(point.y);
@@ -197,8 +279,11 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         }
         const when = transition.when.map((condition): BehaviourCondition => {
           if (
+            condition.kind === "attack-ready" ||
             condition.kind === "boundary" ||
             condition.kind === "visible" ||
+            condition.kind === "line-of-sight" ||
+            condition.kind === "alignment-blocked" ||
             condition.kind === "pursuit-ended"
           ) {
             return condition;
@@ -232,9 +317,21 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
               : {
                   ...node.motion,
                   speed: node.motion.speed * tile,
+                  ...(node.motion.kind === "pursue" &&
+                    node.motion.mode === "ground" &&
+                    node.motion.traversal && {
+                      traversal: {
+                        gravity: node.motion.traversal.gravity * tile,
+                        jumpSpeed: node.motion.traversal.jumpSpeed * tile,
+                        maxFallSpeed: node.motion.traversal.maxFallSpeed * tile,
+                      },
+                    }),
                   ...(node.motion.kind === "fly"
-                    ? node.motion.to === "target"
+                    ? typeof node.motion.to === "string"
                       ? {
+                          ...(node.motion.to === "target-x" && {
+                            maxLead: node.motion.maxLead * tile,
+                          }),
                           bounds: {
                             height: node.motion.bounds.height * tile,
                             width: node.motion.bounds.width * tile,
@@ -255,7 +352,22 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   );
   return {
     ...plan,
-    ...(plan.pursuit && { pursuit: { ...plan.pursuit, distance: plan.pursuit.distance * tile } }),
+    ...(watchdog && {
+      idleWatchdog: {
+        ...watchdog,
+        distance: watchdog.distance * tile,
+        minMovement: watchdog.minMovement * tile,
+      },
+    }),
+    ...(plan.pursuit && {
+      pursuit: {
+        ...plan.pursuit,
+        distance: plan.pursuit.distance * tile,
+        ...(plan.pursuit.escapeDistance !== undefined && {
+          escapeDistance: plan.pursuit.escapeDistance * tile,
+        }),
+      },
+    }),
     distance: plan.distance * tile,
     states,
   };
@@ -300,7 +412,7 @@ function enterState(
     const target = bird[axis] + (axis === "x" ? tuning.width : tuning.height) / 2;
     facing = target < mine ? -1 : 1;
   }
-  if (node.motion.kind === "fly" && node.motion.to === "target") {
+  if (node.motion.kind === "fly" && typeof node.motion.to === "string") {
     const target = birdBox(tuning, bird);
     const mine = contactBox(object, at, facing, node.track?.axis ?? object.behaviour?.axis);
     facing = target.x + target.width / 2 < mine.x + mine.width / 2 ? -1 : 1;
@@ -315,7 +427,13 @@ function enterState(
     stateKey: key,
   };
   delete (next as { flightTarget?: Point }).flightTarget;
+  if (leavingPursuit) {
+    delete (next as { traversal?: BehaviourTraversalState }).traversal;
+  }
   const animation = syncAnimation(object, next);
+  if (node.motion.kind === "fly" && node.motion.to === "target-x") {
+    return { ...animation, flightTarget: { x: at.x, y: at.y } };
+  }
   if (node.motion.kind === "fly" && node.motion.to === "target") {
     const contact = contactBox(object, at, facing, next.axis);
     const target = birdBox(tuning, bird);
@@ -348,10 +466,11 @@ function syncAnimation(object: ObjectLayout, state: BehaviourState): BehaviourSt
   if (!object.contact) {
     return state;
   }
+  const key = state.idleWatchdog?.recovery
+    ? object.behaviour!.idleWatchdog!.resume
+    : state.stateKey;
   const tag = state.active
-    ? (object.behaviour?.states[state.stateKey]?.animation ??
-      state.animationTag ??
-      object.animations.idle)
+    ? (object.behaviour?.states[key]?.animation ?? state.animationTag ?? object.animations.idle)
     : (object.behaviour?.inactiveAnimation ?? object.animations.idle);
   if (!tag || !object.contact.tags[tag]) {
     throw new Error(`Missing silhouette animation for ${object.art}`);
@@ -419,6 +538,63 @@ function endpoint(object: ObjectLayout, direction: -1 | 1, state: BehaviourState
     : Math.min(origin, origin + plan.distance);
 }
 
+function flightDestination(
+  tuning: BirdTuning,
+  object: ObjectLayout,
+  bird: BirdState,
+  at: Point,
+  state: BehaviourState,
+): Point | undefined {
+  const motion = nodeOf(object, state.stateKey).motion;
+  if (motion.kind !== "fly") {
+    return undefined;
+  }
+  if (motion.to === "target") {
+    return state.flightTarget;
+  }
+  if (motion.to === "target-x") {
+    if (!state.flightTarget) {
+      return undefined;
+    }
+    const contact = contactBox(object, at, state.facing, state.axis);
+    const target = birdBox(tuning, bird);
+    const lead = Math.max(-motion.maxLead, Math.min(motion.maxLead, bird.vx * motion.leadSeconds));
+    return {
+      x: target.x + target.width / 2 - contact.width / 2 - (contact.x - at.x) + lead,
+      y: state.flightTarget.y,
+    };
+  }
+  return {
+    x: (state.anchor ?? object.origin).x + motion.to.x,
+    y: (state.anchor ?? object.origin).y + motion.to.y,
+  };
+}
+function alignmentBlocked(
+  tuning: BirdTuning,
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  bird: BirdState,
+  at: Point,
+  state: BehaviourState,
+): boolean {
+  const motion = nodeOf(object, state.stateKey).motion;
+  if (motion.kind !== "fly" || motion.to !== "target-x") {
+    return false;
+  }
+  const target = flightDestination(tuning, object, bird, at, state);
+  if (!target) {
+    return true;
+  }
+  const origin = state.anchor ?? object.origin;
+  return (
+    target.x < origin.x + motion.bounds.x - EDGE ||
+    target.x > origin.x + motion.bounds.x + motion.bounds.width + EDGE ||
+    target.y < origin.y + motion.bounds.y - EDGE ||
+    target.y > origin.y + motion.bounds.y + motion.bounds.height + EDGE ||
+    Math.abs(flightAxis(object, world, at, "x", target.x) - target.x) > EDGE
+  );
+}
+
 function matches(
   tuning: BirdTuning,
   object: ObjectLayout,
@@ -428,11 +604,25 @@ function matches(
   state: BehaviourState,
   condition: BehaviourCondition,
 ): boolean {
+  if (condition.kind === "attack-ready") {
+    return attackReady(state);
+  }
   if (condition.kind === "pursuit-ended") {
     return (
       object.behaviour?.pursuit !== undefined &&
       state.pursuit?.phase === "escaped" &&
       !state.pursuit.settled
+    );
+  }
+  if (condition.kind === "alignment-blocked") {
+    return alignmentBlocked(tuning, object, world, bird, at, state);
+  }
+  if (condition.kind === "line-of-sight") {
+    return targetVisible(
+      world,
+      object,
+      contactBox(object, at, state.facing, state.axis),
+      birdBox(tuning, bird),
     );
   }
   if (condition.kind === "visible") {
@@ -454,13 +644,10 @@ function matches(
     if (motion.kind !== "fly") {
       return false;
     }
-    const target =
-      motion.to === "target"
-        ? state.flightTarget
-        : {
-            x: (state.anchor ?? object.origin).x + motion.to.x,
-            y: (state.anchor ?? object.origin).y + motion.to.y,
-          };
+    if (motion.to === "target-x" && alignmentBlocked(tuning, object, world, bird, at, state)) {
+      return false;
+    }
+    const target = flightDestination(tuning, object, bird, at, state);
     return (
       target !== undefined && Math.hypot(at.x - target.x, at.y - target.y) <= condition.tolerance
     );
@@ -487,7 +674,7 @@ function matches(
             },
             bird,
           );
-    return condition.kind === "reachable" ? reachable : !reachable;
+    return condition.kind === "reachable" ? reachable === true : reachable === false;
   }
   if (condition.kind === "same-ground") {
     return (
@@ -594,7 +781,44 @@ function pursuitReachable(
   at: Point,
   state: BehaviourState,
   bird: BirdState,
-): boolean {
+): boolean | undefined {
+  const traversal = Object.values(object.behaviour!.states).some(
+    ({ motion }) => motion.kind === "pursue" && motion.mode === "ground" && motion.traversal,
+  );
+  if (traversal) {
+    if (state.traversal?.status === "found" && !state.traversal.physical.grounded) {
+      return true;
+    }
+    const connected = targetReachable(
+      tuning,
+      object,
+      world,
+      at,
+      { ...at, height: object.height, width: object.width },
+      at.y,
+      EDGE,
+      pursuitTrack(object),
+      bird,
+    );
+    if (connected) {
+      return true;
+    }
+    if (state.pursuit?.phase === "escaped") {
+      return undefined;
+    }
+    const previous = state.traversal;
+    const hers = birdBox(tuning, bird);
+    const sameTarget =
+      previous &&
+      hers.x + hers.width / 2 >= previous.target.x &&
+      hers.x + hers.width / 2 <= previous.target.x + previous.target.width &&
+      Math.abs(hers.y + hers.height - previous.target.y - previous.target.height) <= 2 * EDGE;
+    return sameTarget && previous.status === "unreachable"
+      ? false
+      : sameTarget && previous.status === "found"
+        ? true
+        : undefined;
+  }
   const flight = Object.values(object.behaviour!.states).some(
     (node) => node.motion.kind === "pursue" && node.motion.mode === "fly",
   );
@@ -629,30 +853,73 @@ function updatePursuit(
   at: Point,
   state: BehaviourState,
 ): BehaviourState {
+  let currentState = state;
   const config = object.behaviour!.pursuit;
   if (!config) {
-    return state;
+    return currentState;
   }
   const inside =
     Math.abs(bird.x + tuning.width / 2 - object.origin.x - object.width / 2) <= config.distance;
-  const reachable = pursuitReachable(tuning, object, world, at, state, bird);
-  const prior = state.pursuit;
+  const outsideEscape =
+    config.escapeDistance === undefined
+      ? !inside
+      : Math.hypot(
+          bird.x + tuning.width / 2 - at.x - object.width / 2,
+          bird.y + tuning.height / 2 - at.y - object.height / 2,
+        ) > config.escapeDistance;
+  const timedOut = (unreachableSeconds: number) =>
+    config.unreachableGraceSeconds !== null && unreachableSeconds >= config.unreachableGraceSeconds;
+  let reachable = pursuitReachable(tuning, object, world, at, currentState, bird);
+  const prior = currentState.pursuit;
+  const visible = targetVisible(
+    world,
+    object,
+    contactBox(object, at, currentState.facing, currentState.axis),
+    birdBox(tuning, bird),
+  );
+  if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true) {
+    const motion = Object.values(object.behaviour!.states)
+      .map(({ motion }) => motion)
+      .find((motion) => motion.kind === "pursue" && motion.mode === "ground" && motion.traversal);
+    if (motion?.kind === "pursue" && motion.mode === "ground") {
+      const probed = probeRearm(
+        world,
+        seconds,
+        object,
+        motion,
+        currentState.anchor ?? at,
+        currentState.stateKey,
+        visible,
+        currentState.rearm,
+        at,
+        birdBox(tuning, bird),
+      );
+      currentState = {
+        ...currentState,
+        rearm: probed.rearm,
+        ...(probed.reachable === true &&
+          probed.rearm.goal && {
+            traversal: {
+              geometry: probed.rearm.geometry,
+              inputs: probed.rearm.inputs,
+              physical: { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 },
+              searchedAt: at,
+              status: "found" as const,
+              target: probed.rearm.goal,
+            },
+          }),
+      };
+      reachable = probed.reachable;
+    }
+  }
   const canAcquire = !prior || (prior.phase === "escaped" && prior.settled && inside && reachable);
-  if (
-    canAcquire &&
-    targetVisible(
-      world,
-      object,
-      contactBox(object, at, state.facing, state.axis),
-      birdBox(tuning, bird),
-    )
-  ) {
-    const unreachableSeconds = reachable ? 0 : seconds;
+  if (canAcquire && visible) {
+    const unreachableSeconds = reachable === false ? seconds : 0;
     return {
-      ...state,
+      ...currentState,
       pursuit: {
         phase:
-          !inside || (!reachable && unreachableSeconds >= config.unreachableGraceSeconds)
+          outsideEscape || (reachable === false && timedOut(unreachableSeconds))
             ? "escaped"
             : "engaged",
         settled: false,
@@ -661,18 +928,148 @@ function updatePursuit(
     };
   }
   if (prior?.phase !== "engaged") {
-    return state;
+    return currentState;
   }
-  const unreachableSeconds = reachable ? 0 : prior.unreachableSeconds + seconds;
-  const escaped = !inside || (!reachable && unreachableSeconds >= config.unreachableGraceSeconds);
+  const unreachableSeconds =
+    reachable === true
+      ? 0
+      : reachable === false
+        ? prior.unreachableSeconds + seconds
+        : prior.unreachableSeconds;
+  const escaped = outsideEscape || (reachable === false && timedOut(unreachableSeconds));
   return {
-    ...state,
+    ...currentState,
     pursuit: { phase: escaped ? "escaped" : "engaged", settled: false, unreachableSeconds },
   };
 }
 
 // Generic state graphs choose the motion, animation and transition order. The executor knows
 // only bounded move/wait/hop primitives and conditions; it has no character-specific cycle.
+function idleSegments(
+  object: ObjectLayout,
+  seconds: number,
+  state: BehaviourState,
+  legs: readonly {
+    readonly start: number;
+    readonly end: number;
+    readonly from: Point;
+    readonly to: Point;
+  }[],
+): { readonly segments: readonly BehaviourSegment[]; readonly state: BehaviourState } {
+  const segments: BehaviourSegment[] = [];
+  let next = syncAnimation(object, { ...state, axis: "x" });
+  for (const leg of legs) {
+    let time = leg.start;
+    const direction = leg.to.x - leg.from.x;
+    if (direction !== 0) {
+      next = { ...next, facing: direction < 0 ? -1 : 1 };
+    }
+    const point = (at: number) => {
+      const fraction = (at - leg.start) / (leg.end - leg.start);
+      return {
+        x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
+        y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
+      };
+    };
+    while (time < leg.end) {
+      const frame = object.contact
+        ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
+        : undefined;
+      const end = Math.min(leg.end, time + (frame?.remaining ?? Infinity));
+      segments.push({
+        axis: "x",
+        end,
+        facing: next.facing,
+        from: point(time),
+        start: time,
+        to: point(end),
+        ...(frame && { frame: frame.frame }),
+      });
+      if (object.contact) {
+        next = { ...next, animationSeconds: (next.animationSeconds ?? 0) + end - time };
+      }
+      time = end;
+    }
+  }
+  const duration = legs.reduce((sum, leg) => sum + leg.end - leg.start, 0);
+  if (object.contact && duration < seconds) {
+    next = { ...next, animationSeconds: (next.animationSeconds ?? 0) + seconds - duration };
+  }
+  return { segments, state: next };
+}
+
+function idleReady(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  at: Point,
+  state: BehaviourState,
+): boolean {
+  const watchdog = object.behaviour!.idleWatchdog,
+    idle = state.idleWatchdog;
+  if (!watchdog || !idle || idle.recovery) {
+    return false;
+  }
+  const node = nodeOf(object, state.stateKey);
+  return (
+    world.traversalFrame !== undefined &&
+    !attackProtected(node, state) &&
+    node.allowIdleReposition === true &&
+    node.motion.kind !== "hop" &&
+    node.motion.kind !== "fly" &&
+    !node.onEnter?.length &&
+    !state.hop &&
+    (!state.traversal || state.traversal.physical.grounded) &&
+    supportedLanding(object, world, at) &&
+    idle.seconds >= watchdog.seconds &&
+    (idle.attemptedAt === undefined || idle.seconds - idle.attemptedAt >= watchdog.seconds)
+  );
+}
+
+function idleRecoveryStep(
+  tuning: BirdTuning,
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  seconds: number,
+  bird: BirdState,
+  at: Point,
+  state: BehaviourState,
+): { readonly state: BehaviourState; readonly step?: BehaviourStep } {
+  const watchdog = object.behaviour!.idleWatchdog,
+    idle = state.idleWatchdog;
+  if (!watchdog || !idle) {
+    return { state };
+  }
+  const motion = nodeOf(object, watchdog.resume).motion;
+  if (motion.kind !== "pursue") {
+    throw new Error("Idle recovery requires a pursuit profile");
+  }
+  const prepared = idleReady(object, world, at, state)
+    ? planIdleRecovery(world, object, motion, seconds, state.facing, idle, at)
+    : idle;
+  const active = { ...state, idleWatchdog: prepared };
+  if (!prepared.recovery) {
+    return { state: active };
+  }
+  delete (active as { traversal?: BehaviourTraversalState }).traversal;
+  const advanced = advanceIdleRecovery(world, object, motion, seconds, prepared, at);
+  const animated = idleSegments(object, seconds, active, advanced.segments);
+  let next = {
+    ...animated.state,
+    idleWatchdog: observeIdle(watchdog, seconds, advanced.segments, advanced.idle),
+  };
+  if (advanced.finished) {
+    next = {
+      ...enterState(tuning, object, bird, advanced.at, watchdog.resume, next),
+      idleWatchdog: next.idleWatchdog,
+      pendingEntry: false,
+    };
+  }
+  return {
+    state: next,
+    step: { actions: [], at: advanced.at, segments: animated.segments, state: next },
+  };
+}
+
 export function stepBehaviour(
   tuning: BirdTuning,
   object: ObjectLayout,
@@ -720,15 +1117,32 @@ export function stepBehaviour(
     state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped"
       ? plan.pursuit?.escaped
       : undefined;
+  const watchdog = plan.idleWatchdog;
+  if (watchdog && next.pursuit && !next.idleWatchdog) {
+    next = { ...next, idleWatchdog: { anchor: at, seconds: 0 } };
+  }
+  if (watchdog) {
+    const initialRecovery = idleRecoveryStep(tuning, object, world, seconds, bird, at, next);
+    next = initialRecovery.state;
+    if (initialRecovery.step) {
+      return {
+        ...initialRecovery.step,
+        state: advanceAttackClock(seconds, initialRecovery.step.state),
+        ...(escaped && { escaped }),
+      };
+    }
+  }
   const flyGateway = Object.entries(plan.states).find(
     ([, node]) => node.motion.kind === "pursue" && node.motion.mode === "fly",
   )?.[0];
   let time = 0;
+  let traversalStep: ReturnType<typeof advanceTraversal> | undefined;
   while (true) {
     let node = nodeOf(object, next.stateKey);
     if (
       next.pursuit?.phase === "escaped" &&
       !next.pursuit.settled &&
+      !attackProtected(node, next) &&
       next.stateKey === plan.initial &&
       node.motion.kind === "wait" &&
       flyGateway &&
@@ -741,8 +1155,10 @@ export function stepBehaviour(
     if (
       next.pursuit?.phase === "escaped" &&
       !next.pursuit.settled &&
+      !attackProtected(node, next) &&
       (node.motion.kind === "pursue" || next.stateKey === plan.initial) &&
       !next.hop &&
+      (!next.traversal || next.traversal.physical.grounded) &&
       (node.motion.kind !== "pursue" ||
         node.motion.mode !== "fly" ||
         supportedLanding(object, world, current))
@@ -754,14 +1170,43 @@ export function stepBehaviour(
       });
       node = nodeOf(object, next.stateKey);
     }
+    if (watchdog && idleReady(object, world, current, next)) {
+      // Keep the safe graph phase until the next complete physics step can prove its route.
+      const remaining = seconds - time;
+      const hold = [{ end: remaining, from: current, start: 0, to: current }];
+      const animated = idleSegments(object, remaining, next, hold);
+      next = advanceAttackClock(remaining, {
+        ...animated.state,
+        idleWatchdog: observeIdle(watchdog, remaining, hold, next.idleWatchdog!),
+      });
+      return {
+        actions,
+        at: current,
+        segments: [
+          ...segments,
+          ...animated.segments.map((segment) => ({
+            ...segment,
+            end: segment.end + time,
+            start: segment.start + time,
+          })),
+        ],
+        state: next,
+        ...(escaped && { escaped }),
+      };
+    }
     const settling =
       next.pursuit?.phase === "escaped" &&
       !next.pursuit.settled &&
+      !attackProtected(node, next) &&
       node.motion.kind === "pursue" &&
       node.motion.mode === "fly";
     const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
     if (next.pendingEntry) {
-      next = enterState(tuning, object, bird, current, next.stateKey, next);
+      next = enterAttack(
+        plan,
+        node,
+        enterState(tuning, object, bird, current, next.stateKey, next),
+      );
       for (const action of node.onEnter ?? []) {
         actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
       }
@@ -779,11 +1224,18 @@ export function stepBehaviour(
         next = { ...next, facing: target < mine ? -1 : 1 };
       }
     }
-    const transition = settling
-      ? undefined
-      : node.transitions.find(({ when }) =>
-          when.every((condition) => matches(tuning, object, world, bird, current, next, condition)),
-        );
+    const transition =
+      traversalStep !== undefined ||
+      settling ||
+      (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded)
+        ? undefined
+        : node.transitions.find(
+            ({ to, when }) =>
+              canEnterAttack(nodeOf(object, to), next) &&
+              when.every((condition) =>
+                matches(tuning, object, world, bird, current, next, condition),
+              ),
+          );
     if (transition) {
       if (instant.has(next.stateKey)) {
         throw new Error(`Instant behaviour transition cycle for ${object.character}`);
@@ -799,6 +1251,9 @@ export function stepBehaviour(
       ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
       : undefined;
     let slice = Math.min(seconds - time, frame?.remaining ?? Infinity);
+    if ((next.attackCooldownRemainingSeconds ?? 0) > 0) {
+      slice = Math.min(slice, next.attackCooldownRemainingSeconds!);
+    }
     for (const { when } of settling ? [] : node.transitions) {
       if (
         when.every(
@@ -837,6 +1292,7 @@ export function stepBehaviour(
       );
     }
     const to = { ...current };
+    let traversalSegments: readonly TraversalSafety[] | undefined;
     if (settling && node.motion.kind === "pursue") {
       const target = flyLandingRoute(object, world, current)?.[0];
       if (target) {
@@ -859,7 +1315,10 @@ export function stepBehaviour(
         );
       }
     }
-    if (node.motion.kind === "pursue" && next.pursuit?.phase === "engaged") {
+    if (
+      node.motion.kind === "pursue" &&
+      (next.pursuit?.phase === "engaged" || (next.traversal && !next.traversal.physical.grounded))
+    ) {
       const hers = birdBox(tuning, bird);
       const contact = contactBox(object, current, next.facing, next.axis);
       const targetX = Math.max(
@@ -873,7 +1332,56 @@ export function stepBehaviour(
       const travel = node.motion.speed * slice;
       const dx = targetX - current.x;
       next = { ...next, facing: dx === 0 ? next.facing : dx < 0 ? -1 : 1 };
-      if (node.motion.mode === "ground") {
+      if (node.motion.mode === "ground" && node.motion.traversal) {
+        const advanced = (traversalStep ??= advanceTraversal(
+          {
+            ...world,
+            ...(world.traversalFrame && {
+              traversalFrame: {
+                ...world.traversalFrame,
+                timeSeconds: world.traversalFrame.timeSeconds + time,
+              },
+            }),
+          },
+          object,
+          node.motion,
+          seconds - time,
+          next.traversal,
+          current,
+          hers,
+        ));
+        const endSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time + slice;
+        const startSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time;
+        const pointAt = (atSeconds: number): Point => {
+          const leg = advanced.segments?.find(
+            (leg) => leg.endSeconds >= atSeconds && leg.endSeconds > leg.startSeconds,
+          );
+          if (!leg) {
+            return advanced.at;
+          }
+          const fraction = Math.max(
+            0,
+            Math.min(1, (atSeconds - leg.startSeconds) / (leg.endSeconds - leg.startSeconds)),
+          );
+          return {
+            x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
+            y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
+          };
+        };
+        const endPoint = pointAt(endSeconds);
+        to.x = endPoint.x;
+        to.y = endPoint.y;
+        traversalSegments = advanced.segments
+          ?.filter((leg) => leg.endSeconds > startSeconds && leg.startSeconds < endSeconds)
+          .map((leg) => ({
+            ...leg,
+            endSeconds: Math.min(endSeconds, leg.endSeconds),
+            from: { ...leg.from, ...pointAt(Math.max(startSeconds, leg.startSeconds)) },
+            startSeconds: Math.max(startSeconds, leg.startSeconds),
+            to: { ...leg.to, ...pointAt(Math.min(endSeconds, leg.endSeconds)) },
+          }));
+        next = { ...next, ...(advanced.traversal && { traversal: advanced.traversal }) };
+      } else if (node.motion.mode === "ground") {
         const desired = current.x + Math.max(-travel, Math.min(travel, dx));
         to.x = groundPursuitEnd(
           object,
@@ -892,12 +1400,10 @@ export function stepBehaviour(
     }
     if (node.motion.kind === "fly") {
       const target =
-        node.motion.to === "target"
-          ? next.flightTarget
-          : {
-              x: (next.anchor ?? object.origin).x + node.motion.to.x,
-              y: (next.anchor ?? object.origin).y + node.motion.to.y,
-            };
+        node.motion.to === "target-x" &&
+        alignmentBlocked(tuning, object, world, bird, current, next)
+          ? current
+          : flightDestination(tuning, object, bird, current, next);
       if (!target) {
         throw new Error("Target flight must capture its destination on entry");
       }
@@ -958,18 +1464,42 @@ export function stepBehaviour(
       }
     }
     const end = time + slice;
-    segments.push({
-      axis: track.axis,
-      end,
-      facing: next.facing,
-      from: current,
-      start: time,
-      to,
-      ...(frame && { frame: frame.frame }),
-    });
+    const segmentStart = segments.length;
+    if (traversalSegments?.some((leg) => leg.endSeconds > leg.startSeconds)) {
+      for (const leg of traversalSegments) {
+        if (leg.endSeconds <= leg.startSeconds) {
+          continue;
+        }
+        segments.push({
+          axis: track.axis,
+          end: leg.endSeconds - world.traversalFrame!.timeSeconds,
+          facing: next.facing,
+          from: { x: leg.from.x, y: leg.from.y },
+          start: leg.startSeconds - world.traversalFrame!.timeSeconds,
+          to: { x: leg.to.x, y: leg.to.y },
+          ...(frame && { frame: frame.frame }),
+        });
+      }
+    } else {
+      segments.push({
+        axis: track.axis,
+        end,
+        facing: next.facing,
+        from: current,
+        start: time,
+        to,
+        ...(frame && { frame: frame.frame }),
+      });
+    }
+    if (watchdog && next.idleWatchdog) {
+      next = {
+        ...next,
+        idleWatchdog: observeIdle(watchdog, slice, segments.slice(segmentStart), next.idleWatchdog),
+      };
+    }
     current = to;
     next = {
-      ...next,
+      ...advanceAttackClock(slice, next),
       elapsed: next.elapsed + slice,
       ...(object.contact && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
     };

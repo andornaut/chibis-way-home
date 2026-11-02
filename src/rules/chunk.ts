@@ -1,5 +1,5 @@
 import type { ChunkPlan, ChunkSeam, Instance, StageRecipe, TileRect } from "../data/types";
-import { sceneryParallax } from "../view/objectArt";
+import { sceneryParallax, worldScenery } from "../view/objectArt";
 import {
   type ChunkLibrary,
   chunkPoolProblems,
@@ -74,7 +74,7 @@ function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance:
     const flights = Object.values(states).flatMap((node) =>
       node.motion.kind !== "fly"
         ? []
-        : node.motion.to === "target"
+        : typeof node.motion.to === "string"
           ? [
               { x: node.motion.bounds.x, y: node.motion.bounds.y },
               {
@@ -274,9 +274,28 @@ export function chunkProblems(
         // Canonical checks need no visual metadata; the renderer validates sprite art and contact.
         const physical = { ...instance };
         delete physical.skin;
-        const object = objectLayout(1, catalogue, {}, undefined, {}, physical);
-        if (!sceneryParallax(object)) {
-          problems.push(`scenery ${instance.character} requires noninteractive static parallax`);
+        const object = {
+          ...objectLayout(1, catalogue, {}, undefined, {}, physical),
+          scenerySource: "chunk" as const,
+        };
+        if (!sceneryParallax(object) && !worldScenery(object)) {
+          problems.push(
+            `scenery ${instance.character} requires static parallax or autonomous world motion`,
+          );
+        }
+        if (
+          object.motion.playback !== undefined &&
+          (!["linear", "hop"].includes(object.motion.algorithm) ||
+            object.phase !== 0 ||
+            object.motion.pause !== 0 ||
+            object.motion.distance <= 0 ||
+            object.motion.speed <= 0 ||
+            !Number.isFinite(object.motion.distance) ||
+            !Number.isFinite(object.motion.speed))
+        ) {
+          problems.push(
+            `scenery ${instance.character} requires finite linear/hop travel with zero phase/pause`,
+          );
         }
       } catch (error) {
         problems.push(

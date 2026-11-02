@@ -18,6 +18,7 @@ import type {
   ZoneLayout,
   ZonePlan,
 } from "../data/types";
+import { worldScenery } from "../view/objectArt";
 import { drawsFrom, tileHitbox, type Tileset } from "../view/tiles";
 import { layoutBehaviour } from "./behaviour";
 import { resolveOrbits, validateOrbitReferences } from "./orbit";
@@ -138,6 +139,36 @@ export function objectLayout(
       );
     }
   }
+  if (
+    instance.backdropSpan &&
+    (archetype.collision !== "none" ||
+      interaction.kind !== "none" ||
+      instance.orbit !== undefined ||
+      motion.algorithm !== "static" ||
+      reaction.kind !== "none" ||
+      (behaviour &&
+        Object.values(behaviour.states).some(
+          (node) => node.motion.kind !== "wait" || (node.onEnter?.length ?? 0) > 0,
+        )))
+  ) {
+    throw new Error(`Backdrop span on ${instance.character} requires nonphysical static scenery`);
+  }
+  if (instance.groundAnchor !== undefined && (!instance.backdropSpan || !instance.groundAnchor)) {
+    throw new Error(`Ground anchor on ${instance.character} requires a named backdrop span`);
+  }
+  if (
+    instance.backdropPlane !== undefined &&
+    (instance.backdropPlane !== "interior" ||
+      !instance.backdropSpan ||
+      !instance.groundAnchor ||
+      instance.cols === undefined ||
+      instance.rows === undefined ||
+      ![instance.cols, instance.rows].every((value) => Number.isFinite(value) && value > 0))
+  ) {
+    throw new Error(
+      `Interior backdrop on ${instance.character} requires an explicit rectangle and ground anchor`,
+    );
+  }
   const width = (instance.cols ?? character.cols) * tile;
   const height = (instance.rows ?? character.rows) * tile;
   const art = hitboxes[character.art];
@@ -248,6 +279,9 @@ export function objectLayout(
     },
     origin: tilePoint(tile, instance),
     ...(parallax && { parallax }),
+    ...(instance.backdropSpan !== undefined && { backdropSpan: instance.backdropSpan }),
+    ...(instance.backdropPlane !== undefined && { backdropPlane: instance.backdropPlane }),
+    ...(instance.groundAnchor !== undefined && { groundAnchor: instance.groundAnchor }),
     phase: instance.phase ?? 0,
     quips: character.quips ?? [],
     quirks: character.quirks ?? [],
@@ -277,14 +311,56 @@ export function areaLayout(
 ): AreaLayout {
   const tileset = area.tileset === undefined ? undefined : tilesets[area.tileset];
   validateOrbitReferences(area.objects);
-  const instances = area.objects.filter((instance) => isPlaced(flags, instance));
-  const objects = instances.map((instance) => {
+  const scenery = new Set(area.sceneryIndices ?? []);
+  if (
+    scenery.size !== (area.sceneryIndices?.length ?? 0) ||
+    [...scenery].some(
+      (index) => !Number.isSafeInteger(index) || index < 0 || index >= area.objects.length,
+    )
+  ) {
+    throw new Error("Invalid assembled scenery indices");
+  }
+  const placedIndices = area.objects.flatMap((instance, index) =>
+    isPlaced(flags, instance) ? [index] : [],
+  );
+  const instances = placedIndices.map((index) => area.objects[index]!);
+  const objects = instances.map((instance, index) => {
+    if (instance.groundAnchor !== undefined && !area.entries[instance.groundAnchor]) {
+      throw new Error(`No ground anchor entry ${instance.groundAnchor}`);
+    }
     const key = resolveNames(catalogue, instance).character.tileset;
     const source = key === undefined ? tileset : tilesets[key];
     if (key !== undefined && !source) {
       throw new Error(`No tileset ${key} for ${instance.character}`);
     }
-    return objectLayout(tile, catalogue, hitboxes, source, tilesets, instance);
+    const object = objectLayout(tile, catalogue, hitboxes, source, tilesets, instance);
+    if (
+      object.motion.playback !== undefined &&
+      (!scenery.has(placedIndices[index]!) ||
+        !["linear", "hop"].includes(object.motion.algorithm) ||
+        object.phase !== 0 ||
+        object.motion.pause !== 0 ||
+        object.motion.distance <= 0 ||
+        object.motion.speed <= 0 ||
+        !Number.isFinite(object.motion.distance) ||
+        !Number.isFinite(object.motion.speed))
+    ) {
+      throw new Error(
+        "Finite scenery playback requires chunk scenery, linear/hop motion, zero phase/pause and positive travel",
+      );
+    }
+
+    if (!scenery.has(placedIndices[index]!)) {
+      return object;
+    }
+    const marked = { ...object, scenerySource: "chunk" as const };
+    if (
+      (!marked.parallax || (marked.parallax.x === 1 && marked.parallax.y === 1)) &&
+      !worldScenery(marked)
+    ) {
+      throw new Error(`World scenery ${marked.character} requires nonphysical autonomous motion`);
+    }
+    return marked;
   });
   return {
     ...(area.walkLinks && { walkLinks: area.walkLinks }),

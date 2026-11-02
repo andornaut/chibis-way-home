@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   changeInvulnerability,
+  changeSkillOverride,
   developmentFlags,
   isDevelopmentSession,
   regularBrowser,
+  skillOverridesFromSearch,
   stageDevelopmentUrl,
 } from "./mode";
 
@@ -34,6 +36,37 @@ describe("developer session routing", () => {
     url.search = "";
     expect(isDevelopmentSession()).toBe(true);
   });
+  it.each([
+    { key: "skillDash", skill: "dash" },
+    { key: "skillDoubleJump", skill: "doubleJump" },
+    { key: "skillSpeedy", skill: "speedy" },
+  ] as const)(
+    "keeps $skill overrides temporary and preserves unrelated URL context",
+    ({ key, skill }) => {
+      const url = new URL("https://example.test/play/?seed=8&assembly=4");
+      const host = {
+        history: {
+          replaceState: (_state: unknown, _title: string, next: URL) => {
+            url.href = next.href;
+          },
+          state: null,
+        },
+        location: url,
+      } as unknown as Window;
+      changeSkillOverride(host, true, skill);
+      expect(url.searchParams.get(key)).toBe("1");
+      expect(skillOverridesFromSearch(url.search)[skill]).toBe(true);
+      expect(developmentFlags(url.search).session).toBe(true);
+      const routed = new URL(stageDevelopmentUrl(url.href, "street"));
+      expect(routed.searchParams.get(key)).toBe("1");
+      changeSkillOverride(host, false, skill);
+      expect(url.searchParams.has(key)).toBe(false);
+      expect(skillOverridesFromSearch(url.search)[skill]).toBe(false);
+      expect(url.searchParams.get("seed")).toBe("8");
+      expect(url.searchParams.get("assembly")).toBe("4");
+      expect(developmentFlags(url.search).session).toBe(true);
+    },
+  );
   it("hides the controls in installed and fullscreen contexts", () => {
     const page = (installed: boolean, standalone: boolean, fullscreen: boolean) =>
       ({

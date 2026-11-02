@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DEV_TEXT } from "../data/dev";
 import { ZONE_MAP } from "../data/map";
+import { TEXT } from "../data/text";
+import { SKILL_IDS } from "../rules/skills";
 import { developerStages, mountDeveloperPanel, panelInputGate } from "./panel";
 
 class Element extends EventTarget {
@@ -66,6 +68,12 @@ class Element extends EventTarget {
 class FakeDocument extends EventTarget {
   defaultView = {
     document: { fullscreenElement: null },
+    history: {
+      replaceState: (_state: unknown, _title: string, url: URL) => {
+        this.defaultView.location.href = url.href;
+      },
+      state: null,
+    },
     location: new URL("https://example.test/play/"),
     matchMedia: () => ({ addEventListener() {}, matches: false, removeEventListener() {} }),
     navigator: {},
@@ -95,6 +103,56 @@ describe("browser developer panel", () => {
     expect(gate.accepts()).toBe(false);
     gate.press();
     expect(gate.accepts()).toBe(true);
+  });
+  it.each(SKILL_IDS)("routes the %s override through the same fresh modal input gate", (skill) => {
+    vi.stubGlobal(
+      "MutationObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const document = new FakeDocument();
+    const body = document.createElement("body"),
+      game = document.createElement("game");
+    body.append(game);
+    let blocked = false,
+      sync = () => {};
+    const dispose = mountDeveloperPanel(
+      {
+        blocked: () => blocked,
+        subscribe: (refresh) => {
+          sync = refresh;
+          return () => {};
+        },
+      },
+      game as unknown as HTMLElement,
+    );
+    const section = body.children[0]!.children[1]!;
+    const fields = section.children[1]!;
+    const label = fields.children.find(
+      (item) => item.children[0]?.textContent === TEXT.skills[skill].title,
+    )!;
+    const checkbox = label.children[1]!;
+    section.dispatchEvent(new Event("pointerdown"));
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change"));
+    expect(document.defaultView.location.search).toContain("devSession=1");
+    const enabled = document.defaultView.location.href;
+    blocked = true;
+    sync();
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event("change"));
+    expect(checkbox.checked).toBe(true);
+    expect(document.defaultView.location.href).toBe(enabled);
+    blocked = false;
+    sync();
+    section.dispatchEvent(new Event("pointerdown"));
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event("change"));
+    expect(document.defaultView.location.href).not.toBe(enabled);
+    expect(document.defaultView.location.search).toBe("?devSession=1");
+    dispose();
   });
   it("starts collapsed under a Dev link, preserves controls on hide and disables them under modals", () => {
     vi.stubGlobal(

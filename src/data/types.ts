@@ -29,9 +29,17 @@ export interface ZoneDeath {
   readonly velocity: Point;
 }
 
+// Death-camera travel uses pixels/second, with its duration bounded in seconds.
+export interface DeathCameraPanTuning {
+  readonly maxSeconds: number;
+  readonly minSeconds: number;
+  readonly pixelsPerSecond: number;
+}
+
 // Death presentation values use pixels and seconds. Recoil x is relative to facing.
 export interface DeathTuning {
   readonly bounceSpeed: number;
+  readonly cameraPan: DeathCameraPanTuning;
   readonly fallGravity: number;
   readonly impactSeconds: number;
   readonly maxFallSpeed: number;
@@ -46,6 +54,12 @@ export interface DeathText {
   readonly stage: string;
   readonly time: string;
   readonly title: string;
+}
+
+export interface StatsScopeText {
+  readonly stageTotal: string;
+  readonly wholeRun: string;
+  readonly zoneTotal: string;
 }
 
 export interface StatsText {
@@ -67,6 +81,24 @@ export interface BirdDashTuning {
 }
 
 // The bird's movement, in base pixels and seconds.
+// Dash wind is visual only. Distances are full sprite-frame pixels; alpha is 0..1.
+export interface DashTrailLine {
+  readonly alpha: number;
+  // A named key in the art palette's colours map.
+  readonly colour: string;
+  readonly gap: number;
+  readonly length: number;
+  readonly y: number;
+}
+
+export interface DashTrailTuning {
+  readonly lengthDecay: number;
+  readonly lines: readonly DashTrailLine[];
+  readonly thickness: number;
+  readonly timeFadeExponent: number;
+  readonly tipFadeExponent: number;
+}
+
 export interface BirdTuning {
   readonly dash?: BirdDashTuning;
   // Enables one fresh airborne jump per airtime; only actual supported landing restores it.
@@ -130,8 +162,32 @@ export interface CameraTuning {
   readonly seamEase: number;
 }
 
+export type SkillId = "dash" | "doubleJump" | "speedy";
+
+export interface SkillGestureTuning {
+  readonly holdMilliseconds: number;
+}
+
+export interface SkillTuning {
+  readonly speedyWalkMultiplier: number;
+}
+
+export interface SkillOwnership {
+  readonly skills: readonly SkillId[];
+}
+
+export interface SkillSelection extends SkillOwnership {
+  readonly activeSkill: SkillId | null;
+}
+
+export interface SkillText {
+  readonly description: string;
+  readonly title: string;
+}
+
 // The words the player reads.
 export interface GameText {
+  readonly skills: Readonly<Record<SkillId, SkillText>>;
   readonly stats: StatsText;
   readonly update: {
     readonly accept: string;
@@ -275,6 +331,8 @@ export type ReactionKind = "approach" | "avoid" | "none";
 // and the far end. variance (0 to 1): each leg's speed, distance and pause vary by up to that
 // fraction.
 export interface Motion {
+  // Scenery-only first leg, activated once by viewport intersection; phase and pause must be zero.
+  readonly playback?: "once-visible";
   readonly algorithm: MotionAlgorithm;
   readonly direction: Direction;
   readonly distance: number;
@@ -294,8 +352,11 @@ export interface Reaction {
 }
 
 export type BehaviourCondition =
+  | { readonly kind: "attack-ready" }
   | { readonly kind: "pursuit-ended" }
   | { readonly kind: "visible" }
+  | { readonly kind: "line-of-sight" }
+  | { readonly kind: "alignment-blocked" }
   | { readonly kind: "boundary" }
   | { readonly kind: "arrived"; readonly tolerance: number }
   | { readonly kind: "elapsed"; readonly seconds: number }
@@ -323,6 +384,15 @@ export type BehaviourMotion =
   | { readonly kind: "fly"; readonly to: Point; readonly speed: number }
   // Target flight captures contact-centred aim on entry; bounds limit relative top-left positions.
   | { readonly kind: "fly"; readonly to: "target"; readonly bounds: Rect; readonly speed: number }
+  // Capture entry Y; track target-centred X with bounded velocity lead. Distances use tiles.
+  | {
+      readonly kind: "fly";
+      readonly to: "target-x";
+      readonly bounds: Rect;
+      readonly speed: number;
+      readonly leadSeconds: number;
+      readonly maxLead: number;
+    }
   | {
       readonly direction: -1 | 1 | "facing" | "target";
       readonly kind: "move";
@@ -369,7 +439,22 @@ export type BehaviourAction =
       readonly seconds: number;
     };
 
+export interface BehaviourIdleWatchdog {
+  readonly distance: number;
+  readonly maxAttempts: number;
+  readonly minMovement: number;
+  readonly resume: string;
+  readonly seconds: number;
+}
+
 export interface BehaviourNode {
+  // Tell starts one attack; committed includes its recovery; completed begins the actor cooldown.
+  readonly attack?: {
+    readonly id: string;
+    readonly phase: "tell" | "committed" | "completed";
+  };
+  // Only these uncommitted states may yield to a verified idle reposition.
+  readonly allowIdleReposition?: boolean;
   // Override this state's axis and signed placed-origin extent.
   readonly track?: { readonly axis: "x" | "y"; readonly distance: number };
   readonly onEnter?: readonly BehaviourAction[];
@@ -382,9 +467,15 @@ export interface BehaviourNode {
 // A reusable bounded movement graph. Distance is signed from its placed origin, in tiles in
 // data and pixels in a layout. Spatial conditions and speeds use the same units.
 export interface BehaviourPlan {
+  // Seconds between complete attacks, independent of graph-state changes.
+  readonly attackCooldownSeconds?: number;
+  readonly idleWatchdog?: BehaviourIdleWatchdog;
   readonly pursuit?: {
     readonly distance: number;
-    readonly unreachableGraceSeconds: number;
+    // Null disables elapsed-time giveup; unknown planner results never establish unreachability.
+    readonly unreachableGraceSeconds: number | null;
+    // Current physical body-centre separation in both axes: tiles in data, pixels in layouts.
+    readonly escapeDistance?: number;
     readonly escaped: DialogueLine;
   };
   readonly spotted?: DialogueLine;
@@ -483,11 +574,12 @@ export interface OpeningLayer {
   // Source-frame pixels, normalized by the selected frame dimensions at rendering.
   readonly anchor: Point;
   readonly art: string;
+  readonly flipX?: boolean;
   readonly keyframes: readonly OpeningKeyframe[];
 }
 // Durations advance animation only; the beat always waits for a fresh Continue.
 export interface OpeningShot {
-  readonly background: string;
+  readonly background: string | null;
   readonly layers: readonly OpeningLayer[];
   readonly seconds: number;
 }
@@ -515,6 +607,7 @@ export interface ZoneDialoguePlan {
   readonly entry?: ZoneEntryIntroduction;
   readonly foreshadow: string;
   readonly intro: string;
+  readonly introStage?: string;
   readonly outro: string;
 }
 
@@ -580,6 +673,12 @@ export interface Instance {
   readonly overrides?: Tuning;
   // Decorative backdrop scroll factors, from 0 (fixed) to 1 (world speed), on each axis.
   readonly parallax?: Point;
+  // Clip repeating decorative art to this instance's own horizontal span.
+  readonly backdropSpan?: boolean;
+  // An interior backdrop repeats only inside its fixed authored world rectangle.
+  readonly backdropPlane?: "interior";
+  // Area entry naming the stable ground reference for this decorative backdrop.
+  readonly groundAnchor?: string;
   readonly phase?: number;
   readonly requires?: readonly string[];
   readonly room?: string;
@@ -614,6 +713,8 @@ export interface NoCross {
 // never reach from the start. An assembled zone's area also lists the chunks it is made of, left
 // to right, and its slots with what the seed put in each; a hand-built area has neither.
 export interface AreaPlan {
+  // Assembly-only source indices from ChunkPlan.scenery, before carried-choice filtering.
+  readonly sceneryIndices?: readonly number[];
   readonly walkLinks?: { readonly left?: AreaLink; readonly right?: AreaLink };
   readonly chunks?: readonly PlacedChunk[];
   readonly cols: number;
@@ -698,10 +799,17 @@ export interface ChunkPlan {
 // A repeated backdrop drawn across a whole assembled zone: its character, top at row.
 export interface ThemeBackdrop {
   readonly character: string;
+  // Area entry naming the stable ground reference; row remains an authored offset.
+  readonly groundAnchor?: string;
   readonly parallax?: Point;
   readonly role?: string;
   readonly row: number;
   readonly skin?: ElementSkin;
+}
+
+export interface BackgroundSection {
+  readonly cols: number;
+  readonly backdrops: readonly ThemeBackdrop[];
 }
 
 // What every chunk of a theme is drawn with, so seams never show (THEMES by key, in
@@ -710,6 +818,10 @@ export interface ThemeBackdrop {
 // the binding role whose selected door character each filled slot places at its own size,
 // centred across the slot and standing on its floor.
 export interface ThemePlan {
+  readonly background?: {
+    readonly weather: readonly ThemeBackdrop[];
+    readonly sections: readonly string[];
+  };
   readonly backdrops: readonly ThemeBackdrop[];
   readonly bindings: Readonly<Record<string, ElementBinding>>;
   readonly door: string;
@@ -794,12 +906,14 @@ export interface RoomShop {
 // A room behind a door (ROOMS by key, in src/data/rooms.ts): a full-screen still scene that Use at
 // its door shows, play paused, until she leaves. Its name is TEXT.rooms[key].name. art: its
 // backdrop, the whole game view; without one, a plain placeholder. animations and cast: what is
-// drawn over it. enter (a dialogue scene that plays as she enters) and shop are not built yet.
+// drawn over it. enter selects its entry dialogue; grant names its permanent skill.
 export interface RoomPlan {
   readonly animations?: readonly RoomAnimation[];
   readonly art?: string;
   readonly cast?: readonly RoomCast[];
+  // Entry dialogue key in DIALOGUES; skill grants are idempotent on every entry.
   readonly enter?: string;
+  readonly grant?: SkillId;
   readonly shop?: RoomShop;
 }
 
@@ -832,6 +946,8 @@ export interface Reaches {
 // the view and dialogue need. hitbox: where a hazard touches her, from its top-left corner, when
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
+  // Resolved from the original scenery collection, never from art, names or scroll factors.
+  readonly scenerySource?: "chunk";
   readonly contactCue?: "red-hazard";
   readonly orbit?: Orbit<number>;
   readonly contact?: SpriteContact;
@@ -850,6 +966,12 @@ export interface ObjectLayout {
   readonly motion: Motion;
   readonly origin: Point;
   readonly parallax?: Point;
+  // Clip repeating decorative art to this instance's own horizontal span.
+  readonly backdropSpan?: boolean;
+  // An interior backdrop repeats only inside its fixed authored world rectangle.
+  readonly backdropPlane?: "interior";
+  // Area entry naming the stable ground reference for this decorative backdrop.
+  readonly groundAnchor?: string;
   readonly phase: number;
   readonly quips: readonly string[];
   readonly quirks: readonly Quirk[];

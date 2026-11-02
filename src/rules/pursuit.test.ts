@@ -291,7 +291,7 @@ describe("persistent pursuit", () => {
           entries: { start: { x: 400, y: 136 } },
           exitX: 3000,
           height: 720,
-          objects: [object, refuge],
+          objects: [refuge, object],
           solids: [floor],
           terrain: [],
           tileset: undefined,
@@ -304,9 +304,13 @@ describe("persistent pursuit", () => {
     const input = { jumpHeld: false, move: 0, useHeld: false } as const;
     const start = startZone(BIRD, layout, 1);
     const seen = stepZone(BIRD, layout, STEP_SECONDS, input, start);
-    expect(seen.barks).toEqual([object.behaviour!.spotted]);
+    expect(seen.barks).toEqual([
+      { ...object.behaviour!.spotted, owner: { area: "main", attempt: 0, objectIndex: 1 } },
+    ]);
     const fled = stepZone(BIRD, layout, STEP_SECONDS, input, seen);
-    expect(fled.barks).toEqual([escaped]);
+    expect(fled.barks).toEqual([
+      { ...escaped, owner: { area: "main", attempt: 0, objectIndex: 1 } },
+    ]);
     expect(stepZone(BIRD, layout, STEP_SECONDS, input, fled).barks).toEqual([]);
     const retry = retryZone(BIRD, layout, {
       ...fled,
@@ -317,9 +321,9 @@ describe("persistent pursuit", () => {
         velocity: { x: 0, y: 0 },
       },
     });
-    expect(retry.behaviours[0]?.pursuit).toBeUndefined();
+    expect(retry.behaviours[1]?.pursuit).toBeUndefined();
     expect(stepZone(BIRD, layout, STEP_SECONDS, input, retry).barks).toEqual([
-      object.behaviour!.spotted,
+      { ...object.behaviour!.spotted, owner: { area: "main", attempt: 1, objectIndex: 1 } },
     ]);
   });
   it.each([
@@ -498,7 +502,7 @@ describe("persistent pursuit", () => {
         ? 0
         : resolved.axis === "y"
           ? resolved.distance
-          : returnMotion?.kind === "fly" && returnMotion.to !== "target"
+          : returnMotion?.kind === "fly" && typeof returnMotion.to !== "string"
             ? returnMotion.to.y
             : 0;
       if (raised) {
@@ -522,4 +526,49 @@ describe("persistent pursuit", () => {
       expect(object.origin).toEqual({ x: 100, y: 280 });
     },
   );
+});
+
+it("scales current separation and explicitly disables timed giveup", () => {
+  const resolved = layoutBehaviour(12, {
+    ...plan(),
+    pursuit: { ...plan().pursuit!, escapeDistance: 60, unreachableGraceSeconds: null },
+  });
+  expect(resolved.pursuit?.escapeDistance).toBe(720);
+  expect(resolved.pursuit?.unreachableGraceSeconds).toBeNull();
+});
+it("stays engaged with a nearby target beyond the original planner boundary", () => {
+  const object = actor({
+    ...plan(),
+    pursuit: {
+      ...plan().pursuit!,
+      distance: 20,
+      escapeDistance: 120,
+      unreachableGraceSeconds: null,
+    },
+  });
+  const result = advance(object, bird(150), 0.1);
+  expect(result.state.pursuit?.phase).toBe("engaged");
+  expect(result.escaped).toBeUndefined();
+});
+it("counts vertical centre separation and never substitutes a timed unreachable escape", () => {
+  const object = actor({
+    ...plan(),
+    pursuit: { ...plan().pursuit!, escapeDistance: 120, unreachableGraceSeconds: null },
+  });
+  const high = advance(object, bird(100, 100), 0.1);
+  expect(high.escaped).toEqual(escaped);
+  const blocked = actor({
+    ...plan(),
+    pursuit: { ...plan().pursuit!, escapeDistance: 1000, unreachableGraceSeconds: null },
+  });
+  const result = advance(blocked, bird(400), 10, blocked.origin, undefined, {
+    ...world,
+    solids: [
+      { ...floor, width: 120 },
+      { ...floor, x: 200 },
+    ],
+  });
+  expect(result.state.pursuit?.phase).toBe("engaged");
+  expect(result.state.pursuit?.unreachableSeconds).toBeGreaterThan(3);
+  expect(result.escaped).toBeUndefined();
 });

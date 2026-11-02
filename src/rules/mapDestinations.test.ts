@@ -47,10 +47,12 @@ describe("destination selection", () => {
 
   it("preserves stage-two unlock and latest highlight while replaying stage one", () => {
     const progress = {
+      activeSkill: null,
       at: "map" as const,
       completed: ["one"],
       openingSeen: true,
       seenZoneIntros: [],
+      skills: [],
       stand: "one",
     };
     const format = progressFormat(MAP, PLANS);

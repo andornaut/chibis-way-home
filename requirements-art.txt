@@ -1,2 +1,2 @@
-art-kit @ https://github.com/andornaut/art-kit/releases/download/v0.0.2/art_kit-0.0.2-py3-none-any.whl#sha256=c2660da6ab36b20740baea5d29b547c898f70fc3a5a10006058792b9e771b7a1
+art-kit @ https://github.com/andornaut/art-kit/releases/download/v0.4.0/art_kit-0.4.0-py3-none-any.whl#sha256=844c4b473fe865510d53a977ba8730603718c1d2cd10b1adc9925a492fdd1f9c
 Pillow==13.0.0

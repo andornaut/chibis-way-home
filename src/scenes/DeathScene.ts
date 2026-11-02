@@ -11,6 +11,7 @@ import { RUN_STAT_KEYS } from "../layout/runStats";
 import { formatRunStats } from "../save/runSummary";
 import type { RunStatsSummary } from "../save/stats";
 import { type DeathSummary, deathSummary } from "../view/death";
+import { statsStatement } from "../view/statsStatement";
 import {
   addCardTextIn,
   addSlice,
@@ -32,6 +33,7 @@ import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DeathData extends DeathSummary {
   readonly runStats: RunStatsSummary;
+  readonly stage: string;
 }
 export interface DeathOpener {
   leaveDeath(): void;
@@ -78,6 +80,7 @@ export class DeathScene extends Scene {
       },
       this.summary.runStats,
     );
+    const statement = statsStatement("retry", this.summary.stage);
     this.layout = deathCard(
       cardFonts(this),
       { ...SCREEN, x: 0, y: 0 },
@@ -85,6 +88,7 @@ export class DeathScene extends Scene {
         ...words,
         home: TEXT.pause.home,
         retry: TEXT.death.retry,
+        ...(statement && { statement: statement.text }),
         stats: RUN_STAT_KEYS.map((key) => ({
           label: fillNames(TEXT.stats[key], { count: "", time: "" }).trimEnd(),
           value: values[key],
@@ -104,6 +108,15 @@ export class DeathScene extends Scene {
             : words[name],
         paletteColour(this, "ink"),
       );
+    }
+    if (this.layout.statement) {
+      addCardTextIn(
+        this,
+        BODY_FONT,
+        this.layout.statement.rect,
+        this.layout.statement.text,
+        paletteColour(this, "ink"),
+      ).setLeftAlign();
     }
     for (const row of this.layout.stats) {
       addCardTextIn(

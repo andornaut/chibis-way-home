@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events";
 import { describe, expect, it, vi } from "vitest";
 
 import { CUTSCENE_CONTINUE } from "../layout/cutscene";
+import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
 
 vi.mock("phaser", () => ({
   Scene: class {
@@ -13,9 +14,10 @@ vi.mock("phaser", () => ({
       keyboard: new EventEmitter(),
       stopPropagation: vi.fn(),
     });
-    readonly scene = { start: vi.fn() };
+    readonly scene = { get: vi.fn(), start: vi.fn(), stop: vi.fn() };
   },
 }));
+vi.mock("./statsStatement", () => ({ drawStatsStatement: vi.fn() }));
 vi.mock("./runStatsParts", () => ({ addStageSummary: vi.fn() }));
 vi.mock("./cardParts", () => ({
   PRIMARY_BUTTON: {},
@@ -30,6 +32,9 @@ vi.mock("./playCamera", () => ({
 }));
 
 import { CutsceneScene } from "./CutsceneScene";
+import { addStageSummary } from "./runStatsParts";
+import { drawStatsStatement } from "./statsStatement";
+import { ZoneDepartureScene } from "./ZoneDepartureScene";
 
 function cutscene() {
   const scene = new CutsceneScene();
@@ -37,6 +42,16 @@ function cutscene() {
     clearedStage: "cleared-stage",
     runStats: { attemptSeconds: 65, attempts: 2, bestSeconds: 65, runSeconds: 120 },
     stage: "next-stage",
+    wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
+    zoneStats: {
+      attemptSeconds: 65,
+      attempts: 2,
+      bestSeconds: undefined,
+      completed: 1,
+      partial: true,
+      runSeconds: 120,
+      total: 3,
+    },
   });
   scene.create();
   return scene;
@@ -62,9 +77,11 @@ describe("required inter-stage cutscene", () => {
     });
   });
 
-  it("requires a fresh undragged tap on Continue rather than an inherited release or outside tap", () => {
+  it.each([
+    { name: "Continue", rect: CUTSCENE_CONTINUE.button },
+    { name: "statement panel", rect: DIALOGUE_SCREEN.box },
+  ])("requires a fresh undragged $name tap", ({ rect: button }) => {
     const scene = cutscene();
-    const { button } = CUTSCENE_CONTINUE;
     const pointer = { id: 1, wasCanceled: false, x: button.x + button.width / 2, y: button.y + 1 };
     scene.input.emit("pointerup", pointer);
     scene.input.emit("pointerdown", { ...pointer, x: 0, y: 0 });
@@ -80,4 +97,68 @@ describe("required inter-stage cutscene", () => {
       node: "next-stage",
     });
   });
+});
+
+it("draws the current clear statement once per entry, never on focus or resume", () => {
+  vi.mocked(drawStatsStatement).mockClear();
+  const scene = cutscene();
+  key(scene, "Tab");
+  key(scene, "ArrowRight");
+  scene.events.emit("resume");
+  expect(drawStatsStatement).toHaveBeenCalledExactlyOnceWith(scene, "clear", "cleared-stage");
+  expect(vi.mocked(addStageSummary).mock.lastCall?.[2]).toMatchObject({
+    stage: "cleared-stage",
+    wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
+    zoneStats: { completed: 1 },
+  });
+});
+it("keeps final-zone Continue on the existing opener continuation without an exchange", () => {
+  const scene = new ZoneDepartureScene();
+  const opener = { dialogueClosed: vi.fn() };
+  vi.mocked(scene.scene.get).mockReturnValue(opener as never);
+  scene.init({
+    clearedStage: "cleared-stage",
+    runStats: { attemptSeconds: 1, attempts: 1, bestSeconds: 1, runSeconds: 1 },
+    stage: "unused-next",
+    wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
+    zoneStats: {
+      attemptSeconds: 1,
+      attempts: 1,
+      bestSeconds: 1,
+      completed: 3,
+      partial: false,
+      runSeconds: 1,
+      total: 3,
+    },
+  });
+  scene.create();
+  key(scene, "Enter");
+  key(scene, "Enter");
+  expect(scene.scene.stop).toHaveBeenCalledOnce();
+  expect(opener.dialogueClosed).toHaveBeenCalledOnce();
+  expect(scene.scene.start).not.toHaveBeenCalled();
+});
+
+it("preserves a turned-back summary without claiming a clear or inventing a statement", () => {
+  vi.mocked(drawStatsStatement).mockClear();
+  const scene = new ZoneDepartureScene();
+  scene.init({
+    cleared: false,
+    clearedStage: "cleared-stage",
+    runStats: { attemptSeconds: 1, attempts: 1, bestSeconds: undefined, runSeconds: 1 },
+    stage: "unused-next",
+    wholeRun: { activeSeconds: 185, completed: 1, deaths: 1, total: 21 },
+    zoneStats: {
+      attemptSeconds: 1,
+      attempts: 1,
+      bestSeconds: undefined,
+      completed: 0,
+      partial: true,
+      runSeconds: 1,
+      total: 3,
+    },
+  });
+  scene.create();
+  expect(drawStatsStatement).not.toHaveBeenCalled();
+  expect(vi.mocked(addStageSummary).mock.lastCall?.[2]).toMatchObject({ stage: "cleared-stage" });
 });

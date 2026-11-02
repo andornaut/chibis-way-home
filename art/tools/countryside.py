@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import json
 
+import background_tones
 import pixel
 import zone_themes
 from PIL import Image, ImageDraw
@@ -190,7 +191,7 @@ def build():
     entries = []
     for key, (draw, repeat) in BACKDROPS.items():
         im = draw()
-        im.save(f"public/art/backdrops/{key}.png")
+        background_tones.apply(key, im).save(f"public/art/backdrops/{key}.png")
         entries.append(
             {
                 "key": key,

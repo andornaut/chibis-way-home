@@ -5,10 +5,11 @@ import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point } from "../data/types";
-import { CARD_CONTENT } from "../layout/contentCard";
-import { CUTSCENE_CONTINUE } from "../layout/cutscene";
+import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "../layout/cutscene";
+import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
 import { focusKeyAction } from "../pause/focusInput";
-import type { RunStatsSummary } from "../save/stats";
+import type { WholeRunDisplaySummary } from "../save/runSummary";
+import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
 import {
   addTextButton,
   captureTab,
@@ -20,11 +21,15 @@ import {
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import { addStageSummary } from "./runStatsParts";
+import { drawStatsStatement } from "./statsStatement";
 
 export interface CutsceneData {
   readonly stage: string;
   readonly clearedStage: string;
+  readonly cleared?: boolean;
   readonly runStats: RunStatsSummary;
+  readonly zoneStats: ZoneStatsSummary;
+  readonly wholeRun: WholeRunDisplaySummary;
 }
 
 // A required inter-stage screen. Only a fresh Continue activation starts the next stage.
@@ -37,8 +42,8 @@ export class CutsceneScene extends Scene {
   private ring: GameObjects.NineSlice | undefined;
   private press: { readonly id: number; readonly at: Point; cancelled: boolean } | undefined;
 
-  constructor() {
-    super("cutscene");
+  constructor(key = "cutscene") {
+    super(key);
   }
   init(data: CutsceneData): void {
     this.stage = data.stage;
@@ -51,16 +56,15 @@ export class CutsceneScene extends Scene {
   create(): void {
     fitPlayCamera(this);
     this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, 0x000000).setOrigin(0);
-    addStageSummary(
-      this,
-      {
-        height: CUTSCENE_CONTINUE.hit.y - CARD_CONTENT.gap - CARD_CONTENT.padding,
-        width: SCREEN.width - 2 * CARD_CONTENT.padding,
-        x: CARD_CONTENT.padding,
-        y: CARD_CONTENT.padding,
-      },
-      { runStats: this.summary.runStats, stage: this.summary.clearedStage },
-    );
+    if (this.summary.cleared !== false) {
+      drawStatsStatement(this, "clear", this.summary.clearedStage);
+    }
+    addStageSummary(this, STAGE_SUMMARY_BOUNDS, {
+      runStats: this.summary.runStats,
+      stage: this.summary.clearedStage,
+      wholeRun: this.summary.wholeRun,
+      zoneStats: this.summary.zoneStats,
+    });
     this.button = addTextButton(this, CUTSCENE_CONTINUE, TEXT.map.continue, {
       style: PRIMARY_BUTTON,
     });
@@ -86,7 +90,7 @@ export class CutsceneScene extends Scene {
         return;
       }
       const at = playPoint(this, pointer);
-      if (containsPoint(CUTSCENE_CONTINUE.hit, at.x, at.y)) {
+      if (this.continueContains(at)) {
         this.press = { at, cancelled: false, id: pointer.id };
         this.render();
       }
@@ -113,7 +117,7 @@ export class CutsceneScene extends Scene {
         !outside &&
         !pointer.wasCanceled &&
         !press.cancelled &&
-        containsPoint(CUTSCENE_CONTINUE.hit, at.x, at.y) &&
+        this.continueContains(at) &&
         Math.hypot(at.x - press.at.x, at.y - press.at.y) <= TOUCH.tapMaxDistance
       ) {
         this.continue();
@@ -121,6 +125,12 @@ export class CutsceneScene extends Scene {
     };
     onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
     onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+  }
+  private continueContains(at: Point): boolean {
+    return (
+      containsPoint(CUTSCENE_CONTINUE.hit, at.x, at.y) ||
+      (this.summary.cleared !== false && containsPoint(DIALOGUE_SCREEN.box, at.x, at.y))
+    );
   }
   private render(): void {
     pressTextButton(this.button, this.press !== undefined && !this.press.cancelled);
@@ -132,6 +142,9 @@ export class CutsceneScene extends Scene {
     }
     this.finished = true;
     this.press = undefined;
+    this.finish();
+  }
+  protected finish(): void {
     this.scene.start("zone", { continueVisit: true, node: this.stage });
   }
 }

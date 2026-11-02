@@ -28,6 +28,7 @@ import { followFrameTurn } from "./scenes/platform/followFrameTurn";
 import { RestartScene } from "./scenes/RestartScene";
 import { RoomScene } from "./scenes/RoomScene";
 import { SettingsScene } from "./scenes/SettingsScene";
+import { SkillDetailScene } from "./scenes/SkillDetailScene";
 import { StageSelectScene } from "./scenes/StageSelectScene";
 import { StartScene } from "./scenes/StartScene";
 import { installUpdateModalBridge, UpdateScene } from "./scenes/UpdateScene";
@@ -72,6 +73,7 @@ function startGame(): void {
       PauseScene,
       RoomScene,
       SettingsScene,
+      SkillDetailScene,
       RestartScene,
       DialogueScene,
       ZoneDepartureScene,

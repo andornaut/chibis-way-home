@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gallery | Chibi's Way Home</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/art/favicon.png" />
+    <link rel="stylesheet" href="/nav.css" />
+    <script src="/nav.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Gallery</h1>
+      <p>Current exported artwork, animation tags, fonts and source metadata.</p>
+      <div class="gallery-controls">
+        <label for="gallery-search">Search <input id="gallery-search" type="search" /></label>
+        <label for="gallery-zoom"
+          >Zoom
+          <select id="gallery-zoom">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+            <option value="4">4x</option>
+          </select></label
+        >
+        <label for="gallery-ground"
+          >Ground
+          <select id="gallery-ground">
+            <option value="checker">Checker</option>
+          </select></label
+        >
+        <label for="gallery-animate"
+          ><input id="gallery-animate" type="checkbox" checked />Animate</label
+        >
+        <output id="gallery-count" aria-live="polite"></output>
+      </div>
+      <div id="gallery"></div>
+    </main>
+    <script type="module" src="/src/gallery/main.ts"></script>
+  </body>
+</html>

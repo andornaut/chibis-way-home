@@ -17,6 +17,7 @@ export interface DeathCardWords {
   readonly progress: string;
   readonly retry: string;
   readonly stage: string;
+  readonly statement?: string;
   readonly stats: readonly { readonly label: string; readonly value: string }[];
   readonly title: string;
 }
@@ -84,6 +85,28 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     },
     { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
   ];
+  const base = contentCardLayout(bounds, groups);
+  const statementCardWidth =
+    words.statement === undefined
+      ? base.card.width
+      : Math.min(
+          bounds.width,
+          Math.max(
+            base.card.width,
+            cardTextSize(fonts.body, words.statement).width + 2 * CARD_CONTENT.padding,
+          ),
+        );
+  const statement =
+    words.statement === undefined
+      ? undefined
+      : wrappedCardText(fonts.body, statementCardWidth - 2 * CARD_CONTENT.padding, words.statement);
+  if (statement !== undefined) {
+    groups.splice(1, 0, {
+      ...cardTextSize(fonts.body, statement),
+      key: "statement",
+      width: statementCardWidth - 2 * CARD_CONTENT.padding,
+    });
+  }
   const layout = {
     ...contentCardLayout(bounds, groups),
     rows,
@@ -115,6 +138,10 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     retry,
     stage: positions[1],
     stageText: layout.texts[1] as string,
+    statement:
+      statement !== undefined && layout.groups.statement
+        ? { rect: layout.groups.statement, text: statement }
+        : undefined,
     stats: layout.stats.map((row) => {
       const height = Math.max(row.labelSize.height, row.valueSize.height);
       const rect = { height, width: statGroup.width, x: statGroup.x, y: statY };

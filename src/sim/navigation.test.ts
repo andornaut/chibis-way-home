@@ -1120,7 +1120,7 @@ describe("bounded real-rule navigation", () => {
       areas: {
         main: {
           ...base.areas.main!,
-          entries: { start: { x: 60, y: 408 } },
+          entries: { start: { x: 40, y: 408 } },
           exitX: 888,
           height: 720,
           objects: [lift(312, 480), lift(600, 360), pit],
@@ -1375,7 +1375,7 @@ describe("bounded real-rule navigation", () => {
     const tuning = { ...BIRD, brakeAccel: BIRD.groundAccel };
     const base = fixture([
       { height: 240, width: 264, x: 0, y: 300 },
-      { height: 288, width: 48, x: 264, y: 252 },
+      { height: 288, width: 36, x: 264, y: 252 },
       { height: 36, width: 528, x: 264, y: 504 },
       { height: 288, width: 408, x: 792, y: 252 },
     ]);
@@ -1655,23 +1655,47 @@ describe("bounded real-rule navigation", () => {
     const tuning = { ...BIRD, brakeAccel: BIRD.groundAccel };
     const base = fixture([
       { height: 180, width: 144, x: 0, y: 240 },
-      { height: 180, width: 200, x: 336, y: 240 },
+      { height: 180, width: 212, x: 324, y: 240 },
     ]);
     const hazard = {
       ...movingObject("hazard", { x: 144, y: 357 }),
       height: 3,
       motion: STATIC_MOTION,
-      width: 192,
+      width: 180,
+    };
+    const launchGate: ObjectLayout = {
+      ...movingObject("hazard", { x: 180, y: 120 }),
+      behaviour: {
+        axis: "y",
+        distance: -240,
+        initial: "blocked",
+        states: {
+          blocked: {
+            animation: "idle",
+            motion: { kind: "wait" },
+            transitions: [{ to: "up", when: [{ kind: "elapsed", seconds: tuning.jumpTapWindow }] }],
+          },
+          clear: { animation: "idle", motion: { kind: "wait" }, transitions: [] },
+          up: {
+            animation: "idle",
+            motion: { direction: -1, kind: "move", speed: 720 },
+            transitions: [{ to: "clear", when: [{ kind: "boundary" }] }],
+          },
+        },
+      },
+      height: 120,
+      motion: STATIC_MOTION,
+      width: 12,
     };
     const layout: ZoneLayout = {
       ...base,
       areas: {
         main: {
           ...base.areas.main!,
-          entries: { start: { x: 143, y: 240 } },
+          entries: { start: { x: 155, y: 240 } },
           exitX: 480,
           height: 420,
-          objects: [hazard],
+          objects: [hazard, launchGate],
           width: 536,
         },
       },
@@ -1688,7 +1712,11 @@ describe("bounded real-rule navigation", () => {
     for (let tick = 0; tick < 360 && !zone.cleared && !zone.death; tick++) {
       const input = plannedInput(tuning, layout, NAVIGATION_VALIDATION, 1, zone, bot);
       if (tick === 0) {
-        expect(navigationSnapshot(bot)!.chosenAction).toBe("wait-then-full");
+        const snapshot = navigationSnapshot(bot)!;
+        expect(snapshot.chosenAction).toBe("wait-then-full");
+        expect(
+          snapshot.candidates.find((candidate) => candidate.inputLabel === "full")!.rejection,
+        ).toBe("death");
       }
       inputs.push(input);
       zone = stepZone(tuning, layout, STEP_SECONDS, input, zone);

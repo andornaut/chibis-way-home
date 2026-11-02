@@ -1,13 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
+
+import { describe, expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
 import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
 import { TEST_ZONES, ZONES as FIXED_ZONES } from "../data/zones";
+import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
+import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
+import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
 import { crosses, type Surface, walkZone, zoneSurfaces } from "./zoneWalk";
 
 // Recipe stages are walked in chunkWalk.test.ts, alongside every individual chunk.
@@ -93,4 +98,119 @@ describe("crosses", () => {
     },
     WALK_MS,
   );
+});
+
+function transitionCourse(): ZonePlan {
+  return {
+    areas: {
+      course: {
+        cols: 24,
+        entries: { start: { col: 2, row: 50 } },
+        objects: [
+          {
+            character: "test-mover",
+            col: 8,
+            overrides: { motion: { distance: 2, pause: 0, speed: 2, variance: 0.2 } },
+            phase: 0,
+            row: 46,
+          },
+          { character: "test-hazard", col: 16, row: 49 },
+        ],
+        rows: 60,
+        solids: [{ col: 0, cols: 24, row: 50, rows: 10 }],
+      },
+    },
+    start: { area: "course", entry: "start" },
+  };
+}
+
+function frozen<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) {
+      frozen(child);
+    }
+  }
+  return value;
+}
+
+describe("walk transition prerequisites", () => {
+  it("replays exact inputs without mutating a frozen state or layout, including lazy mover tracks", () => {
+    const layout = frozen(
+      zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), transitionCourse()),
+    );
+    const state = frozen(startZone(BIRD, layout, 42));
+    const input = frozen({ jumpHeld: true, move: 1 as const, useHeld: false });
+    const original = JSON.stringify(state);
+    const first = stepZone(BIRD, layout, STEP_SECONDS, input, state);
+    state.tracks[0]!.at(20);
+    expect(stepZone(BIRD, layout, STEP_SECONDS, input, state)).toEqual(first);
+    expect(JSON.stringify(state)).toBe(original);
+    expect(first).not.toBe(state);
+    expect(first.objects[0]).not.toEqual(state.objects[0]);
+  });
+});
+
+describe("walk transition cache", () => {
+  it("preserves hazard/mover results and ordered states with fewer physics calls", async () => {
+    async function run(cached: boolean) {
+      vi.resetModules();
+      const engine = await import("../rules/zone");
+      const calls = vi.spyOn(engine, "stepZone");
+      const trace = createHash("sha256");
+      let transitions = 0;
+      let lethalSteps = 0;
+      vi.doMock("./walkTransitions", () => ({
+        walkTransitions: (step: WalkStep): WalkStep => {
+          const advance = cached ? memoizeTransitions(step) : step;
+          return (input, zone) => {
+            const next = advance(input, zone);
+            trace.update(JSON.stringify({ input, next }));
+            transitions++;
+            if (next.death !== undefined) {
+              lethalSteps++;
+            }
+            return next;
+          };
+        },
+      }));
+      try {
+        const walker = await import("./zoneWalk");
+        const layout = frozen(
+          zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), transitionCourse()),
+        );
+        const result = walker.walkZone(BIRD, layout);
+        return {
+          calls: calls.mock.calls.length,
+          lethalSteps,
+          result,
+          trace: trace.digest("hex"),
+          transitions,
+        };
+      } finally {
+        calls.mockRestore();
+        vi.doUnmock("./walkTransitions");
+      }
+    }
+    const original = await run(false);
+    const cached = await run(true);
+    expect(cached.result).toEqual(original.result);
+    expect(cached.transitions).toBe(original.transitions);
+    expect(cached.trace).toBe(original.trace);
+    expect(cached.lethalSteps).toBe(original.lethalSteps);
+    expect(original.lethalSteps).toBeGreaterThan(0);
+    expect(cached.calls).toBeLessThan(original.calls);
+    expect(cached.result.cleared).toBe(true);
+    console.log(
+      "Walk transition proof",
+      JSON.stringify({
+        cached: cached.calls,
+        lethalSteps: cached.lethalSteps,
+        orderedStateTrace: cached.trace,
+        original: original.calls,
+        steps: cached.result.steps,
+        trialTransitions: cached.transitions,
+      }),
+    );
+  });
 });

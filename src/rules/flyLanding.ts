@@ -35,7 +35,8 @@ export function supportedLanding(object: ObjectLayout, world: BehaviourWorld, at
 }
 
 // Candidates use complete body support and the original encounter's horizontal leash.
-export function flyLandingRoute(
+function landingRoute(
+  preferred: Point | undefined,
   object: ObjectLayout,
   world: BehaviourWorld,
   at: Point,
@@ -67,7 +68,15 @@ export function flyLandingRoute(
       );
     }
     for (const [left, right] of intervals) {
-      const target = { x: Math.max(left, Math.min(right, at.x)), y };
+      if (
+        preferred &&
+        (Math.abs(preferred.y - y) > EDGE ||
+          preferred.x < left - EDGE ||
+          preferred.x > right + EDGE)
+      ) {
+        continue;
+      }
+      const target = preferred ?? { x: Math.max(left, Math.min(right, at.x)), y };
       if (!supportedLanding(object, world, target)) {
         continue;
       }
@@ -77,6 +86,29 @@ export function flyLandingRoute(
         if (
           Math.abs(flightAxis(object, world, at, axis, via[axis]) - via[axis]) > EDGE ||
           Math.abs(flightAxis(object, world, via, across, target[across]) - target[across]) > EDGE
+        ) {
+          continue;
+        }
+        if (
+          preferred &&
+          [
+            {
+              height: object.height + Math.abs(via.y - at.y),
+              width: object.width + Math.abs(via.x - at.x),
+              x: Math.min(at.x, via.x),
+              y: Math.min(at.y, via.y),
+            },
+            {
+              height: object.height + Math.abs(target.y - via.y),
+              width: object.width + Math.abs(target.x - via.x),
+              x: Math.min(via.x, target.x),
+              y: Math.min(via.y, target.y),
+            },
+          ].some((sweep) =>
+            (world.hazards ?? []).some(
+              ({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect),
+            ),
+          )
         ) {
           continue;
         }
@@ -95,4 +127,22 @@ export function flyLandingRoute(
       (a.points.at(-1)?.y ?? at.y) - (b.points.at(-1)?.y ?? at.y),
   );
   return routes[0]?.points;
+}
+
+export function flyLandingRoute(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  at: Point,
+): readonly Point[] | undefined {
+  return landingRoute(undefined, object, world, at);
+}
+
+// A selected refuge uses the same supported-perch and two-axis clipping proof.
+export function flyLandingPath(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  at: Point,
+  target: Point,
+): readonly Point[] | undefined {
+  return landingRoute(target, object, world, at);
 }

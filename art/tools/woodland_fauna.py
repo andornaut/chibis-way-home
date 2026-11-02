@@ -22,35 +22,35 @@ ONCE = {"background-deer": [], "background-swallow": []}
 def deer(state="idle", phase=0):
     g = Grid(32, 24)
     for x in (9, 14, 20, 23):
-        g.rect(x, 14, 2, 10, "zone-peach-shade" if x in (9, 23) else "dbrown")
-    g.ell(15, 12, 9, 4, "zone-peach-shade")
-    g.ell(14, 12, 7, 2, "zone-peach")
-    g.tri((7, 11), (3, 9), (4, 12), "zone-peach-shade")
+        g.rect(x, 14, 2, 10, "dbrown" if x in (9, 23) else "plum")
+    g.ell(15, 12, 9, 4, "dbrown")
+    g.ell(14, 12, 7, 2, "zone-peach-shade")
+    g.tri((7, 11), (3, 9), (4, 12), "dbrown")
     if state == "graze":
         hy = 17 + (0, 1, 2, 1)[phase]
-        g.tri((21, 9), (28, hy - 2), (24, hy + 2), "zone-peach-shade")
-        g.ell(27, hy, 4, 2, "zone-peach-shade")
-        g.rect(29, hy, 2, 2, "dbrown")
-        g.tri((25, hy - 1), (24, hy - 6), (27, hy - 3), "zone-peach-shade")
+        g.tri((21, 9), (28, hy - 2), (24, hy + 2), "dbrown")
+        g.ell(27, hy, 4, 2, "dbrown")
+        g.rect(29, hy, 2, 2, "plum")
+        g.tri((25, hy - 1), (24, hy - 6), (27, hy - 3), "dbrown")
     else:
-        g.tri((20, 13), (23, 4), (26, 9), "zone-peach-shade")
-        g.ell(27, 5, 4, 2, "zone-peach-shade")
-        g.rect(29, 5, 2, 2, "dbrown")
-        g.rect(24 + phase, 0, 2, 5, "zone-peach-shade")
+        g.tri((20, 13), (23, 4), (26, 9), "dbrown")
+        g.ell(27, 5, 4, 2, "dbrown")
+        g.rect(29, 5, 2, 2, "plum")
+        g.rect(24 + phase, 0, 2, 5, "dbrown")
     return g.px
 
 
 def swallow(phase):
     g = Grid(24, 12)
-    g.rect(8, 5, 12, 3, "dslate")
-    g.rect(17, 4, 4, 3, "dslate")
-    g.rect(20, 5, 3, 1, "slate")
-    g.tri((9, 5), (1, 2), (5, 6), "dslate")
-    g.tri((9, 7), (1, 10), (5, 6), "dslate")
+    g.rect(8, 5, 12, 3, "navy")
+    g.rect(17, 4, 4, 3, "navy")
+    g.rect(20, 5, 3, 1, "dslate")
+    g.tri((9, 5), (1, 2), (5, 6), "navy")
+    g.tri((9, 7), (1, 10), (5, 6), "navy")
     tip = ((8, 0), (5, 3), (12, 11), (7, 8))[phase]
-    g.tri((10, 6), tip, (17, 6), "dslate")
-    g.tri((11, 5), (tip[0] + 4, max(0, min(11, tip[1] - 1))), (17, 6), "slate")
-    g.rect(13, 7, 5, 1, "grey")
+    g.tri((10, 6), tip, (17, 6), "navy")
+    g.tri((11, 5), (tip[0] + 4, max(0, min(11, tip[1] - 1))), (17, 6), "dslate")
+    g.rect(13, 7, 5, 1, "slate")
     return g.px
 
 

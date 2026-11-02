@@ -7,6 +7,7 @@ import type { Direction, Motion, Point } from "../data/types";
 // Where a moving object is relative to where it was placed, in the units of its motion (tiles in
 // a plan, pixels in a layout), at a time since its area was entered.
 export interface Track {
+  readonly durationSeconds?: number;
   at(seconds: number): Point;
 }
 
@@ -79,6 +80,16 @@ function nextLeg(motion: Motion, random: Random, from: number, index: number): L
 export function motionTrack(motion: Motion, phase: number, random: Random): Track {
   if (motion.algorithm === "static" || motion.distance === 0 || motion.speed === 0) {
     return { at: () => ({ x: 0, y: 0 }) };
+  }
+  if (motion.playback === "once-visible") {
+    const leg = nextLeg(motion, random, 0, 0);
+    if (!Number.isFinite(leg.travel) || leg.travel <= 0) {
+      throw new Error("Finite scenery playback requires a positive travel duration");
+    }
+    return {
+      at: (seconds) => pointOn(motion, leg, Math.min(leg.travel, Math.max(0, seconds))),
+      durationSeconds: leg.travel,
+    };
   }
   const travel = motion.distance / motion.speed;
   const trip = 2 * (travel + motion.pause);

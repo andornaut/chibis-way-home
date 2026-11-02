@@ -2,6 +2,7 @@
 // gameplay's chunks and recipes.
 import { CHARACTERS } from "../data/characters";
 import { CHUNK_RULES, CHUNKS, SEAM_ROWS, THEMES } from "../data/chunks";
+import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
 import type { ChunkPlan, StageRecipe, TerrainRect, ThemePlan, ZoneRecipe } from "../data/types";
 import { RECIPES } from "../data/zones";
@@ -26,6 +27,9 @@ const hazard = (col: number, row: number, rows: number) => ({
 });
 
 // Each 60 wide, on the seam rows 50, 40 and 30, at each difficulty.
+const WIDE_BANK_COLS = 21;
+const WIDE_LANDING_COL = WIDE_BANK_COLS + REACH.gap;
+
 const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "test-down-50": {
     cols: 60,
@@ -149,7 +153,10 @@ const FIXTURE_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     entry: { row: 50 },
     exit: { row: 50 },
     objects: [],
-    solids: [ground(0, 21, 50), ground(39, 21, 50)],
+    solids: [
+      ground(0, WIDE_BANK_COLS, 50),
+      ground(WIDE_LANDING_COL, CHUNK_RULES.cols.max - WIDE_LANDING_COL, 50),
+    ],
     theme: "test",
   },
 };

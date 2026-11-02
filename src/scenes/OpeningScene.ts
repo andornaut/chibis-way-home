@@ -31,7 +31,7 @@ type Action = "continue" | "skip";
 export class OpeningScene extends Scene {
   private playback!: ReturnType<typeof createOpeningPlayback>;
   private art!: GameObjects.Container;
-  private background!: GameObjects.Image;
+  private background: GameObjects.Image | undefined;
   private layers: GameObjects.Sprite[] = [];
   private caption!: GameObjects.BitmapText;
   private buttons!: Record<Action, TextButton>;
@@ -60,9 +60,9 @@ export class OpeningScene extends Scene {
       saveOpeningSeen();
       this.scene.start("map");
     }, OPENING);
+    this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, paletteColour(this, "ink")).setOrigin(0);
     this.art = this.add.container(0, 0);
-    this.background = this.add.image(0, 0, OPENING[0]!.shots[0]!.background).setOrigin(0);
-    this.art.add(this.background);
+    this.background = undefined;
     const footerY = openingLayout(
       cardFonts(this).body,
       TEXT.dialogue,
@@ -197,7 +197,12 @@ export class OpeningScene extends Scene {
     const frame = this.playback.frame();
     if (this.shot !== frame.shot) {
       this.layers.forEach((sprite) => sprite.destroy());
-      this.background.setTexture(frame.shot.background);
+      this.background?.destroy();
+      this.background = undefined;
+      if (frame.shot.background !== null) {
+        this.background = this.add.image(0, 0, frame.shot.background).setOrigin(0);
+        this.art.add(this.background);
+      }
       this.layers = frame.shot.layers.map((layer) => {
         const sprite = this.add.sprite(0, 0, layer.art);
         this.art.add(sprite);

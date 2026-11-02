@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import background_tones
 import nature
 import pixel
 import zone_themes
@@ -194,7 +195,7 @@ def build():
     Path("public/art/backdrops").mkdir(parents=True, exist_ok=True)
     ts = pixel.write_tileset(TILESET, tiles())
     for key, (fn, _, _) in BACKDROPS.items():
-        fn().save(f"public/art/backdrops/{key}.png")
+        background_tones.apply(key, fn()).save(f"public/art/backdrops/{key}.png")
     pixel.update_manifest("tilesets", [ts])
     pixel.update_manifest("backdrops", registry())
 

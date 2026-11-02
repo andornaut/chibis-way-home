@@ -16,6 +16,7 @@ export function renderOpeningLayer(
   sprite
     .setPosition(pose.position.x, pose.position.y)
     .setScale(pose.scale)
+    .setFlipX(layer.flipX ?? false)
     .setAngle(pose.angle)
     .setVisible(pose.visible);
 }
