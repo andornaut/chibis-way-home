@@ -1,4 +1,7 @@
+import { SCREEN } from "../data/screen";
 import type { Point, Rect, SkillId } from "../data/types";
+import { SKILL_IDS } from "../rules/skills";
+import { CONTROL_EDGE } from "./playView";
 
 export const SKILL_BUTTON = { disc: 35, glyph: 16, target: 48 } as const;
 export const SKILL_SELECTION = {
@@ -6,11 +9,19 @@ export const SKILL_SELECTION = {
   colour: "yellow",
   outline: 1,
 } as const;
-export const SKILL_HUD: Readonly<Record<SkillId, Point>> = {
-  dash: { x: 664, y: 64 },
-  doubleJump: { x: 664, y: 8 },
-  speedy: { x: 608, y: 8 },
-};
+export const SKILL_HUD: Readonly<Record<SkillId, Point>> = Object.fromEntries(
+  SKILL_IDS.map((skill, index) => [
+    skill,
+    {
+      x:
+        SCREEN.width -
+        CONTROL_EDGE -
+        SKILL_BUTTON.target -
+        (SKILL_IDS.length - 1 - index) * (SKILL_BUTTON.target + CONTROL_EDGE),
+      y: CONTROL_EDGE,
+    },
+  ]),
+) as Readonly<Record<SkillId, Point>>;
 export const SKILL_ART: Readonly<Record<SkillId, string>> = {
   dash: "icon-skill-dash",
   doubleJump: "icon-skill-double-jump",

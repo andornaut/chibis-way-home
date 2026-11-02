@@ -9,6 +9,9 @@ import { TEXT } from "../data/text";
 import { SKILL_IDS } from "../rules/skills";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT, cardTextSize } from "./contentCard";
+import { HIT_RULE } from "./hitAreas";
+import { PAUSE_BUTTON } from "./pauseCard";
+import { CONTROL_EDGE, playView, shifted, topShift } from "./playView";
 import { ROOM_SCREEN } from "./roomScreen";
 import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails";
 import { SKILL_BUTTON, SKILL_HUD, skillButton } from "./skillHud";
@@ -50,12 +53,29 @@ describe("native skill presentation", () => {
       expect(inside(modal.card, modal.groups.description!)).toBe(true);
     },
   );
-  it("keeps the compact L targets disjoint inside the view without scaling their native art", () => {
-    const hits = SKILL_IDS.map((skill) => skillButton(SKILL_HUD[skill]).hit);
+  it("keeps one top row of native skill targets right-aligned, disjoint and clear of Pause", () => {
+    const canvas = {
+      height: SCREEN.height + SKILL_BUTTON.target,
+      width: SCREEN.width + SKILL_BUTTON.target,
+    };
+    const view = playView(canvas);
+    const shift = topShift(canvas);
+    const hits = SKILL_IDS.map((skill) => skillButton(shifted(shift, SKILL_HUD[skill])).hit);
+    const pause = { ...PAUSE_BUTTON.hit, ...shifted(shift, PAUSE_BUTTON.hit) };
     hits.forEach((hit, index) => {
-      expect(inside({ ...SCREEN, x: 0, y: 0 }, hit)).toBe(true);
+      expect(inside(view, hit)).toBe(true);
+      expect(hit.y).toBe(view.y + CONTROL_EDGE);
+      expect(hit.width).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
+      expect(hit.height).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
+      expect(rectsOverlap(hit, pause)).toBe(false);
       hits.slice(index + 1).forEach((other) => expect(rectsOverlap(hit, other)).toBe(false));
+      const next = hits[index + 1];
+      if (next) {
+        expect(next.x - hit.x - hit.width).toBe(CONTROL_EDGE);
+      }
     });
+    const last = hits.at(-1)!;
+    expect(last.x + last.width).toBe(view.x + view.width - CONTROL_EDGE);
     expect(SKILL_BUTTON.target).toBeGreaterThanOrEqual(SKILL_BUTTON.disc);
     expect(SKILL_BUTTON.disc).toBeGreaterThan(SKILL_BUTTON.glyph);
   });
