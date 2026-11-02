@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, Character, ObjectLayout, Rect } from "../data/types";
-import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
+import { TEST_PURSUER, TEST_SHUTTLE, withAnticipationContact } from "../testing/behaviours";
 import { behaviourPose } from "../view/behaviour";
 import {
   contactBox,
@@ -12,6 +12,7 @@ import {
   sweptContact,
 } from "./behaviour";
 import { birdBox, startBird } from "./bird";
+import { contactFrameAt } from "./bodyContact";
 import { objectLayout } from "./tiles";
 
 const ACTOR: Archetype = {
@@ -574,4 +575,93 @@ describe("composed contact attempts", () => {
       to: "target",
     });
   });
+});
+
+it.each([0.6, 0.8, 1])(
+  "plays a tell cue once and restarts only at a new same-tag tell after %ss",
+  (seconds) => {
+    const behaviour: BehaviourPlan = {
+      attackCooldownSeconds: 1,
+      axis: "x",
+      distance: 0,
+      initial: "first",
+      states: {
+        first: {
+          animation: "anticipate-lift",
+          attack: { id: "move", phase: "tell" },
+          motion: { kind: "wait" },
+          transitions: [{ to: "second", when: [{ kind: "elapsed", seconds }] }],
+        },
+        second: {
+          animation: "anticipate-lift",
+          attack: { id: "move", phase: "tell" },
+          motion: { kind: "wait" },
+          transitions: [],
+        },
+      },
+    };
+    const object = withAnticipationContact(resolve(CHARACTER, ACTOR, 1, behaviour));
+    const start = startBehaviour(BIRD, object, bird());
+    const held = stepBehaviour(BIRD, object, [], 0.55, bird(), object.origin, start);
+    expect(held.at).toEqual(object.origin);
+    expect(held.state.stateKey).toBe("first");
+    expect(held.state.animationSeconds).toBeCloseTo(0.55);
+    expect(held.segments.map(({ frame }) => frame)).toEqual(["load", "lift", "brace", "brace"]);
+    expect(
+      contactFrameAt(object.contact!, held.state.animationTag!, held.state.animationSeconds!).frame,
+    ).toBe("brace");
+    const restarted = stepBehaviour(BIRD, object, [], seconds - 0.5, bird(), held.at, held.state);
+    expect(restarted.state.stateKey).toBe("second");
+    expect(restarted.state.animationSeconds).toBeCloseTo(0.05);
+    expect(
+      contactFrameAt(
+        object.contact!,
+        restarted.state.animationTag!,
+        restarted.state.animationSeconds!,
+      ).frame,
+    ).toBe("load");
+    expect(behaviourPose(object, restarted.state).animation).toBe("anticipate-lift");
+    const continued = stepBehaviour(BIRD, object, [], 0.12, bird(), restarted.at, restarted.state);
+    expect(continued.state.animationSeconds).toBeCloseTo(0.17);
+    expect(
+      contactFrameAt(
+        object.contact!,
+        continued.state.animationTag!,
+        continued.state.animationSeconds!,
+      ).frame,
+    ).toBe("lift");
+  },
+);
+
+it("validates the optional takeoff tag against its paired silhouette export", () => {
+  const object = withAnticipationContact(resolve());
+  const physical = { ...object.contact!.frame, x: 0, y: 0 };
+  const artwork = { contact: object.contact!, frame: object.contact!.frame, hitbox: physical };
+  const catalogue = {
+    archetypes: { actor: ACTOR },
+    characters: { actor: { ...CHARACTER, behaviour: object.behaviour! } },
+  };
+  const place = () =>
+    objectLayout(
+      1,
+      catalogue,
+      { [CHARACTER.art]: artwork },
+      undefined,
+      {},
+      { character: "actor", col: 0, row: 0 },
+    );
+  expect(place().behaviour?.takeoffAnimation).toBe("anticipate-lift");
+  const { ["anticipate-lift"]: removed, ...tags } = object.contact!.tags;
+  void removed;
+  const missing = { ...artwork, contact: { ...object.contact!, tags } };
+  expect(() =>
+    objectLayout(
+      1,
+      catalogue,
+      { [CHARACTER.art]: missing },
+      undefined,
+      {},
+      { character: "actor", col: 0, row: 0 },
+    ),
+  ).toThrow("Missing silhouette animation");
 });

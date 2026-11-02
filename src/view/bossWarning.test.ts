@@ -76,7 +76,7 @@ it("shows the same actual-alpha warning during traversal takeoff preparation wit
       geometry: "",
       inputs: [],
       physical: { fallFromY: 10, grounded: true, vy: 0, x: 0, y: 0 },
-      preparation: { move: 1 as const, remainingSeconds: 0.6 },
+      preparation: { move: 1 as const, remainingSeconds: 0.6, startedAtSeconds: 0 },
       status: "found" as const,
       target: { height: 10, width: 10, x: 20, y: 0 },
     },

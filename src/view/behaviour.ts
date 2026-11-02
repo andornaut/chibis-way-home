@@ -10,7 +10,7 @@ export function behaviourPose(
     : state.stateKey;
   return {
     animation: state.active
-      ? (object.behaviour?.states[key]?.animation ?? undefined)
+      ? (state.animationTag ?? object.behaviour?.states[key]?.animation ?? undefined)
       : (object.behaviour?.inactiveAnimation ?? object.animations.idle),
     flipX: (state.axis ?? object.behaviour?.axis) === "x" && state.facing === -1,
   };

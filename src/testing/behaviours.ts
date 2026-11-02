@@ -1,4 +1,4 @@
-import type { BehaviourPlan } from "../data/types";
+import type { BehaviourPlan, ObjectLayout, SpriteContact } from "../data/types";
 
 export const TEST_PURSUER: BehaviourPlan = {
   axis: "x",
@@ -80,3 +80,50 @@ export const TEST_SHUTTLE: BehaviourPlan = {
     },
   },
 };
+
+// Synthetic masks isolate native cue timing from production artwork review.
+export function withAnticipationContact(object: ObjectLayout): ObjectLayout {
+  if (!object.behaviour) {
+    throw new Error("Anticipation fixture requires a behaviour");
+  }
+  const runs = Array.from(
+    { length: Math.ceil(object.height) },
+    (_, y) => [y, 0, Math.ceil(object.width)] as const,
+  );
+  const tags = [
+    ...new Set([
+      ...Object.values(object.behaviour.states).flatMap(({ animation }) =>
+        animation ? [animation] : [],
+      ),
+      object.behaviour.inactiveAnimation ?? "idle",
+    ]),
+  ];
+  const contact: SpriteContact = {
+    frame: { height: object.height, width: object.width },
+    frames: { brace: runs, lift: runs, load: runs, normal: runs },
+    tags: {
+      ...Object.fromEntries(
+        tags.map((tag) => [
+          tag,
+          {
+            frames: [{ frame: "normal", seconds: 0.12 }],
+            once: false,
+          },
+        ]),
+      ),
+      "anticipate-lift": {
+        frames: [
+          { frame: "load", seconds: 0.12 },
+          { frame: "lift", seconds: 0.16 },
+          { frame: "brace", seconds: 0.2 },
+        ],
+        once: true,
+      },
+    },
+  };
+  return {
+    ...object,
+    behaviour: { ...object.behaviour, takeoffAnimation: "anticipate-lift" },
+    contact,
+  };
+}

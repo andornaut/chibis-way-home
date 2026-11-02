@@ -242,6 +242,7 @@ export function objectLayout(
         node.animation === null ? [] : [node.animation],
       ),
       behaviour.inactiveAnimation ?? character.animations?.idle,
+      behaviour.takeoffAnimation,
     ];
     if (tags.some((tag) => tag !== undefined && !contact.tags[tag])) {
       throw new Error(`Missing silhouette animation for ${instance.character}`);

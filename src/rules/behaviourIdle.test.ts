@@ -12,6 +12,7 @@ import {
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect, ZoneLayout } from "../data/types";
+import { withAnticipationContact } from "../testing/behaviours";
 import { behaviourPose } from "../view/behaviour";
 import { BIRD_FRAME } from "../view/bird";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
@@ -601,8 +602,8 @@ it("replays namespaced choices while varying eligible decisions independently of
   ).not.toEqual(first.recovery);
 });
 
-function idleJumpFixture() {
-  const object = actor({
+function idleJumpFixture(contact = false) {
+  const physical = actor({
     ...plan,
     idleWatchdog: { ...plan.idleWatchdog!, distance: 24 },
     states: {
@@ -619,6 +620,7 @@ function idleJumpFixture() {
       },
     },
   });
+  const object = contact ? withAnticipationContact(physical) : physical;
   const solids = [
     { height: 20, width: 10, x: 60, y: 100 },
     { height: 24, width: 80, x: 80, y: 96 },
@@ -641,7 +643,7 @@ function idleJumpFixture() {
 }
 
 it("uses the shared visible takeoff preparation for a verified idle-recovery jump", () => {
-  const fixture = idleJumpFixture();
+  const fixture = idleJumpFixture(true);
   let state = { ...expired(fixture.object), idleWatchdog: fixture.idle };
   let at = fixture.object.origin;
   let preparedAt: number | undefined;
@@ -659,6 +661,11 @@ it("uses the shared visible takeoff preparation for a verified idle-recovery jum
     );
     if (next.state.traversal?.preparation) {
       preparedAt ??= tick;
+      expect(next.state.animationTag).toBe("anticipate-lift");
+      expect(next.state.animationSeconds).toBeCloseTo(
+        (tick + 1) * STEP_SECONDS - next.state.traversal.preparation.startedAtSeconds,
+      );
+      expect(behaviourPose(fixture.object, next.state).animation).toBe("anticipate-lift");
       resting ??= next.at;
       expect(next.at).toEqual(resting);
       const recovery = next.state.idleWatchdog!.recovery;

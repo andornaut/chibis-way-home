@@ -20,6 +20,7 @@ import { STEP_SECONDS } from "./step";
 export type TraversalSupport = ObjectLayout | Rect;
 export interface BehaviourTraversalState {
   readonly preparation?: {
+    readonly startedAtSeconds: number;
     readonly remainingSeconds: number;
     readonly move: -1 | 0 | 1;
     readonly supportId?: TraversalSupport;
@@ -449,6 +450,7 @@ function advanceTraversalStep(
             preparation: {
               move: planned.move,
               remainingSeconds: Math.max(0, motion.traversal!.prepSeconds - seconds),
+              startedAtSeconds: frame.timeSeconds,
               ...(waited.state.supportId !== undefined && { supportId: waited.state.supportId }),
             },
           }),

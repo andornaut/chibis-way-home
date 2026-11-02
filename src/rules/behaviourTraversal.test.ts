@@ -3,10 +3,13 @@ import { expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
+import { withAnticipationContact } from "../testing/behaviours";
+import { behaviourPose } from "../view/behaviour";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import { advanceTraversal, probeRearm, traversalContext } from "./behaviourTraversal";
 import { startBird } from "./bird";
+import { contactFrameAt } from "./bodyContact";
 import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 
@@ -636,13 +639,13 @@ it("preserves exact native step and search results when solid wrappers are reuse
   expect(found.status).toBe("found");
 });
 
-function readyTakeoff() {
+function readyTakeoff(contact = false) {
   const base = actor();
   const motion = base.behaviour!.states.chase!.motion;
   if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
     throw new Error("Expected ground fixture");
   }
-  const object = {
+  const physical = {
     ...base,
     behaviour: {
       ...base.behaviour!,
@@ -650,11 +653,13 @@ function readyTakeoff() {
         ...base.behaviour!.states,
         chase: {
           ...base.behaviour!.states.chase!,
+          animation: contact ? "walk" : base.behaviour!.states.chase!.animation,
           motion: { ...motion, traversal: { ...motion.traversal, prepSeconds: 0.6 } },
         },
       },
     },
   };
+  const object = contact ? withAnticipationContact(physical) : physical;
   const solids = [
     { height: 60, width: 110, x: 0, y: 300 },
     { height: 96, width: 610, x: 110, y: 264 },
@@ -666,6 +671,7 @@ function readyTakeoff() {
     pursuit: { phase: "engaged" as const, settled: false, unreachableSeconds: 0 },
   };
   let tick = 0;
+  let segments: ReturnType<typeof stepBehaviour>["segments"] = [];
   for (; tick < 160 && !state.traversal?.preparation; tick++) {
     const next = stepBehaviour(
       BIRD,
@@ -678,9 +684,10 @@ function readyTakeoff() {
     );
     at = next.at;
     state = next.state as typeof state;
+    segments = next.segments;
   }
   expect(state.traversal?.preparation).toBeDefined();
-  return { at, bird, object, solids, state, tick };
+  return { at, bird, object, segments, solids, state, tick };
 }
 
 it("holds a real verified takeoff for its tell and re-proves once before launching without an attack cooldown", () => {
@@ -754,7 +761,7 @@ it("carries a preparing actor on its actual moving support instead of freezing i
       geometry: "",
       inputs: [],
       physical: { ...object.origin, fallFromY: 300, grounded: true, supportId: owner, vy: 0 },
-      preparation: { move: 1, remainingSeconds: 0.6, supportId: owner },
+      preparation: { move: 1, remainingSeconds: 0.6, startedAtSeconds: 0, supportId: owner },
       status: "found",
       target: { height: 24, width: 24, x: 200, y: 276 },
     },
@@ -798,4 +805,71 @@ it("preserves preparation seconds while scaling traversal space", () => {
     },
   }).states.chase!.motion;
   expect(resolved).toMatchObject({ traversal: { prepSeconds: 0.6 } });
+});
+
+it("binds the first actual takeoff wait, native cue boundaries and final pose to the preparation clock", () => {
+  const fixture = readyTakeoff(true);
+  let { at, state, tick } = fixture;
+  const started = state.traversal!.preparation!.startedAtSeconds;
+  expect(state.animationTag).toBe("anticipate-lift");
+  expect(state.animationSeconds).toBeCloseTo(tick * STEP_SECONDS - started);
+  expect(fixture.segments.every(({ frame }) => frame === "load")).toBe(true);
+  const seen = new Set(fixture.segments.map(({ frame }) => frame));
+  const finish =
+    fixture.tick + Math.ceil(state.traversal!.preparation!.remainingSeconds / STEP_SECONDS) + 2;
+  for (; tick < finish && state.traversal?.preparation; tick++) {
+    const next = stepBehaviour(
+      BIRD,
+      fixture.object,
+      world(fixture.solids, tick * STEP_SECONDS),
+      STEP_SECONDS,
+      fixture.bird,
+      at,
+      state,
+    );
+    if (next.state.traversal?.preparation) {
+      expect(next.state.traversal.preparation.startedAtSeconds).toBe(started);
+      expect(next.state.animationSeconds).toBeCloseTo((tick + 1) * STEP_SECONDS - started);
+      expect(behaviourPose(fixture.object, next.state).animation).toBe("anticipate-lift");
+      for (const segment of next.segments) {
+        seen.add(segment.frame);
+      }
+      expect(
+        contactFrameAt(
+          fixture.object.contact!,
+          next.state.animationTag!,
+          next.state.animationSeconds!,
+        ).frame,
+      ).toBe(
+        next.state.animationSeconds! < 0.12 - 1e-9
+          ? "load"
+          : next.state.animationSeconds! < 0.28 - 1e-9
+            ? "lift"
+            : "brace",
+      );
+    } else {
+      expect(next.state.animationTag).toBe("walk");
+    }
+    at = next.at;
+    state = next.state as typeof state;
+  }
+  expect(seen).toEqual(new Set(["load", "lift", "brace"]));
+  expect(state.traversal?.preparation).toBeUndefined();
+  expect(state.traversal?.physical.grounded).toBe(false);
+});
+
+it("restores the ordinary pose when physical support cancels takeoff preparation", () => {
+  const fixture = readyTakeoff(true);
+  const next = stepBehaviour(
+    BIRD,
+    fixture.object,
+    world([], fixture.tick * STEP_SECONDS),
+    STEP_SECONDS,
+    fixture.bird,
+    fixture.at,
+    fixture.state,
+  );
+  expect(next.state.traversal?.preparation).toBeUndefined();
+  expect(next.state.animationTag).toBe("walk");
+  expect(next.segments.every(({ frame }) => frame === "normal")).toBe(true);
 });

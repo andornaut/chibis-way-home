@@ -457,7 +457,10 @@ function enterState(
   if (leavingPursuit || (state.stateKey !== key && next.traversal?.preparation)) {
     delete (next as { traversal?: BehaviourTraversalState }).traversal;
   }
-  const animation = syncAnimation(object, next);
+  let animation = syncAnimation(object, next);
+  if (node.attack?.phase === "tell" && object.contact) {
+    animation = { ...animation, animationSeconds: 0 };
+  }
   if (node.motion.kind === "fly" && node.motion.to === "target-x") {
     return { ...animation, flightTarget: { x: at.x, y: at.y } };
   }
@@ -489,25 +492,38 @@ function enterState(
   return animation;
 }
 
-function syncAnimation(object: ObjectLayout, state: BehaviourState): BehaviourState {
+function syncAnimation(
+  object: ObjectLayout,
+  state: BehaviourState,
+  timeSeconds?: number,
+): BehaviourState {
   if (!object.contact) {
     return state;
   }
   const key = state.idleWatchdog?.recovery
     ? object.behaviour!.idleWatchdog!.resume
     : state.stateKey;
+  const preparation = state.active && state.traversal?.preparation;
+  const takeoff = preparation && object.behaviour?.takeoffAnimation;
   const tag = state.active
-    ? (object.behaviour?.states[key]?.animation ?? state.animationTag ?? object.animations.idle)
+    ? (takeoff ??
+      object.behaviour?.states[key]?.animation ??
+      state.animationTag ??
+      object.animations.idle)
     : (object.behaviour?.inactiveAnimation ?? object.animations.idle);
   if (!tag || !object.contact.tags[tag]) {
     throw new Error(`Missing silhouette animation for ${object.art}`);
   }
-  if (state.animationTag === tag && state.animationSeconds !== undefined) {
+  const seconds =
+    takeoff && timeSeconds !== undefined
+      ? Math.max(0, timeSeconds - preparation.startedAtSeconds)
+      : undefined;
+  if (state.animationTag === tag && state.animationSeconds !== undefined && seconds === undefined) {
     return state;
   }
   return {
     ...state,
-    animationSeconds: state.animationTag === tag ? (state.animationSeconds ?? 0) : 0,
+    animationSeconds: seconds ?? (state.animationTag === tag ? (state.animationSeconds ?? 0) : 0),
     animationTag: tag,
   };
 }
@@ -978,7 +994,7 @@ function updatePursuit(
 
 // Generic state graphs choose the motion, animation and transition order. The executor knows
 // only bounded move/wait/hop primitives and conditions; it has no character-specific cycle.
-function idleSegments(
+function animateSegments(
   object: ObjectLayout,
   seconds: number,
   state: BehaviourState,
@@ -988,13 +1004,15 @@ function idleSegments(
     readonly from: Point;
     readonly to: Point;
   }[],
+  timeSeconds?: number,
+  faceMovement = true,
 ): { readonly segments: readonly BehaviourSegment[]; readonly state: BehaviourState } {
   const segments: BehaviourSegment[] = [];
-  let next = syncAnimation(object, { ...state, axis: "x" });
+  let next = syncAnimation(object, { ...state, axis: "x" }, timeSeconds);
   for (const leg of legs) {
     let time = leg.start;
     const direction = leg.to.x - leg.from.x;
-    if (direction !== 0) {
+    if (faceMovement && direction !== 0) {
       next = { ...next, facing: direction < 0 ? -1 : 1 };
     }
     const point = (at: number) => {
@@ -1090,7 +1108,18 @@ function idleRecoveryStep(
   }
   delete (active as { traversal?: BehaviourTraversalState }).traversal;
   const advanced = advanceIdleRecovery(world, object, motion, seconds, prepared, at);
-  const animated = idleSegments(object, seconds, active, advanced.segments);
+  const animated = animateSegments(
+    object,
+    seconds,
+    {
+      ...active,
+      ...(advanced.idle.recovery?.kind === "ground" && {
+        traversal: advanced.idle.recovery.traversal,
+      }),
+    },
+    advanced.segments,
+    world.traversalFrame?.timeSeconds,
+  );
   let next = {
     ...animated.state,
     idleWatchdog: observeIdle(watchdog, seconds, advanced.segments, advanced.idle),
@@ -1260,7 +1289,7 @@ export function stepBehaviour(
       // Keep the safe graph phase until the next complete physics step can prove its route.
       const remaining = seconds - time;
       const hold = [{ end: remaining, from: current, start: 0, to: current }];
-      const animated = idleSegments(object, remaining, next, hold);
+      const animated = animateSegments(object, remaining, next, hold);
       next = advanceAttackClock(remaining, {
         ...animated.state,
         idleWatchdog: observeIdle(watchdog, remaining, hold, next.idleWatchdog!),
@@ -1344,7 +1373,7 @@ export function stepBehaviour(
     if (time >= seconds) {
       break;
     }
-    const frame = object.contact
+    let frame = object.contact
       ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
       : undefined;
     let slice = Math.min(seconds - time, frame?.remaining ?? Infinity);
@@ -1486,7 +1515,14 @@ export function stepBehaviour(
             startSeconds: Math.max(startSeconds, leg.startSeconds),
             to: { ...leg.to, ...pointAt(Math.min(endSeconds, leg.endSeconds)) },
           }));
-        next = { ...next, ...(advanced.traversal && { traversal: advanced.traversal }) };
+        next = syncAnimation(
+          object,
+          { ...next, ...(advanced.traversal && { traversal: advanced.traversal }) },
+          (world.traversalFrame?.timeSeconds ?? 0) + time,
+        );
+        frame = object.contact
+          ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
+          : undefined;
       } else if (node.motion.mode === "ground") {
         const desired = current.x + Math.max(-travel, Math.min(travel, dx));
         to.x = groundPursuitEnd(
@@ -1599,6 +1635,7 @@ export function stepBehaviour(
     }
     const end = time + slice;
     const segmentStart = segments.length;
+    let animationAdvanced = false;
     if (carryPoints?.length) {
       let previous = current;
       let start = time;
@@ -1627,20 +1664,30 @@ export function stepBehaviour(
         });
       }
     } else if (traversalSegments?.some((leg) => leg.endSeconds > leg.startSeconds)) {
-      for (const leg of traversalSegments) {
-        if (leg.endSeconds <= leg.startSeconds) {
-          continue;
-        }
-        segments.push({
-          axis: track.axis,
-          end: leg.endSeconds - world.traversalFrame!.timeSeconds,
-          facing: next.facing,
-          from: { x: leg.from.x, y: leg.from.y },
-          start: leg.startSeconds - world.traversalFrame!.timeSeconds,
-          to: { x: leg.to.x, y: leg.to.y },
-          ...(frame && { frame: frame.frame }),
-        });
-      }
+      const animated = animateSegments(
+        object,
+        slice,
+        next,
+        traversalSegments
+          .filter((leg) => leg.endSeconds > leg.startSeconds)
+          .map((leg) => ({
+            end: leg.endSeconds - world.traversalFrame!.timeSeconds - time,
+            from: { x: leg.from.x, y: leg.from.y },
+            start: leg.startSeconds - world.traversalFrame!.timeSeconds - time,
+            to: { x: leg.to.x, y: leg.to.y },
+          })),
+        (world.traversalFrame?.timeSeconds ?? 0) + time,
+        false,
+      );
+      next = animated.state;
+      segments.push(
+        ...animated.segments.map((segment) => ({
+          ...segment,
+          end: segment.end + time,
+          start: segment.start + time,
+        })),
+      );
+      animationAdvanced = true;
     } else {
       segments.push({
         axis: track.axis,
@@ -1669,7 +1716,8 @@ export function stepBehaviour(
           : supportMotion && next.landing?.status === "pending"
             ? next.elapsed
             : next.elapsed + slice,
-      ...(object.contact && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
+      ...(object.contact &&
+        !animationAdvanced && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
     };
     time = end > time ? end : seconds;
     instant.clear();
