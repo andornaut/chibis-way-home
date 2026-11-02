@@ -1,6 +1,6 @@
 import { modalWidth } from "@andornaut/game-kit/modalLayout";
 import { insetRect } from "@andornaut/game-kit/rect";
-import { type BitmapFont, inkWidth, laidGlyphs } from "@andornaut/game-kit/text/bitmapFont";
+import { type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 
 import { SCREEN } from "../data/screen";
 import type { Point, Rect, Size } from "../data/types";
@@ -8,6 +8,7 @@ import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
 import { hitAround, hitMargin } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./labelledButton";
+import { textInkBounds } from "./textInk";
 
 export interface CardFonts {
   readonly body: BitmapFont;
@@ -205,44 +206,20 @@ export function cardActions(
         Math.max(1, labels.length)
       : size.width;
   return labels.map((_, index) =>
-    labelledButton(
-      {
-        height: TEXT_BUTTON.height,
-        width,
-        x: rect.x + (axis === "row" ? index * (width + CARD_CONTENT.gap) : 0),
-        y: rect.y + (axis === "stack" ? index * (TEXT_BUTTON.height + CARD_CONTENT.rowGap) : 0),
-      },
-      TEXT_BUTTON.labelDy,
-    ),
+    labelledButton({
+      height: TEXT_BUTTON.height,
+      width,
+      x: rect.x + (axis === "row" ? index * (width + CARD_CONTENT.gap) : 0),
+      y: rect.y + (axis === "stack" ? index * (TEXT_BUTTON.height + CARD_CONTENT.rowGap) : 0),
+    }),
   );
 }
 
 // Centre visible ink instead of the font's advance, side bearings or line-height padding.
 export function cardTextOrigin(font: BitmapFont, rect: Rect, text: string): Point {
-  const lines = text.split("\n");
-  const spans = lines.flatMap((line) =>
-    laidGlyphs(font, CARD_TEXT_SCALE, line).flatMap(({ ink }) => ink ?? []),
-  );
-  const topRows = lines.flatMap((line, index) =>
-    [...line].flatMap((char) => {
-      const glyph = font.glyphs.get(char);
-      return glyph && glyph.width > 0 && glyph.height > 0
-        ? [
-            {
-              bottom:
-                index * CARD_CONTENT.lineHeight + (glyph.yOffset + glyph.height) * CARD_TEXT_SCALE,
-              top: index * CARD_CONTENT.lineHeight + glyph.yOffset * CARD_TEXT_SCALE,
-            },
-          ]
-        : [];
-    }),
-  );
-  const left = spans.length === 0 ? 0 : Math.min(...spans.map((span) => span.left));
-  const right = spans.length === 0 ? 0 : Math.max(...spans.map((span) => span.right));
-  const top = topRows.length === 0 ? 0 : Math.min(...topRows.map((row) => row.top));
-  const bottom = topRows.length === 0 ? 0 : Math.max(...topRows.map((row) => row.bottom));
+  const ink = textInkBounds(font, CARD_TEXT_SCALE, CARD_CONTENT.lineHeight, text);
   return {
-    x: Math.round(rect.x + (rect.width - (right - left)) / 2 - left),
-    y: Math.round(rect.y + (rect.height - (bottom - top)) / 2 - top),
+    x: Math.round(rect.x + (rect.width - ink.width) / 2 - ink.x),
+    y: Math.round(rect.y + (rect.height - ink.height) / 2 - ink.y),
   };
 }

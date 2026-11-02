@@ -67,15 +67,12 @@ export function settingsCard(
     };
   };
   const install = row(2, words.install);
-  const button = labelledButton(
-    {
-      height: ROW_HEIGHT,
-      width: actionWidth,
-      x: install.row.x + rowWidth - actionWidth,
-      y: install.row.y,
-    },
-    13,
-  );
+  const button = labelledButton({
+    height: ROW_HEIGHT,
+    width: actionWidth,
+    x: install.row.x + rowWidth - actionWidth,
+    y: install.row.y,
+  });
   return {
     actionButtons: row(1, words.actionButtons),
     buildLabel: { ...layout.groups.build!, centreX: layout.card.x + layout.card.width / 2 },
@@ -84,7 +81,6 @@ export function settingsCard(
     install: {
       ...install,
       button: button.button,
-      buttonLabel: { pressedY: button.pressedLabelY, room: actionWidth - 32, y: button.labelY },
     },
     moveControls: row(0, words.moveControls),
     title: layout.title!,

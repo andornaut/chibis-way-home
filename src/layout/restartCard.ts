@@ -37,8 +37,8 @@ export function restartCard(fonts: CardFonts, words: GameText["restart"]) {
 // `ui-button` stretched) and Continue (art's `ui-resume`, led by the play mark) side by side.
 export const CELEBRATION = {
   card: cardRect(184),
-  continue: labelledButton({ height: 44, width: 160, x: 368, y: CARD_FRAME.firstRowY + 72 }, 11),
+  continue: labelledButton({ height: 44, width: 160, x: 368, y: CARD_FRAME.firstRowY + 72 }),
   message: { x: 198, y: CARD_FRAME.firstRowY + 4 } satisfies Point,
-  restart: labelledButton({ height: 44, width: 160, x: 192, y: CARD_FRAME.firstRowY + 72 }, 11),
+  restart: labelledButton({ height: 44, width: 160, x: 192, y: CARD_FRAME.firstRowY + 72 }),
   room: 324,
 } as const;

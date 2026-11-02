@@ -17,10 +17,7 @@ export const MAP_LABEL_PADDING = 2;
 const ACTION_WIDTH = 192;
 const ACTION_Y = 300;
 const actionButton = (x: number) =>
-  labelledButton(
-    { height: TEXT_BUTTON.height, width: ACTION_WIDTH, x, y: ACTION_Y },
-    TEXT_BUTTON.labelDy,
-  );
+  labelledButton({ height: TEXT_BUTTON.height, width: ACTION_WIDTH, x, y: ACTION_Y });
 const ZONE_MARKER = 35;
 const NODE_HIT = hitAround({
   height: ZONE_MARKER,

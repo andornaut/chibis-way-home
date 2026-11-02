@@ -205,13 +205,12 @@ export class RoomScene extends Scene {
     this.leaveFaces = { normal: face("normal"), pressed: face("pressed") };
     this.leaveLabel = addButtonLabel(
       this,
-      leave.art,
-      leave.labelY,
-      gift ? TEXT.dialogue.continue : TEXT.room.leave,
       {
         colour: this.colour(style.label),
         marked: false,
       },
+      leave.art,
+      gift ? TEXT.dialogue.continue : TEXT.room.leave,
     );
   }
 
@@ -221,7 +220,7 @@ export class RoomScene extends Scene {
     const pressed = this.pressed === "leave";
     this.leaveFaces.normal.setVisible(!pressed);
     this.leaveFaces.pressed.setVisible(pressed);
-    placeButtonLabel(this.leaveLabel, pressed ? leave.pressedLabelY : leave.labelY);
+    placeButtonLabel(pressed, false, this.leaveLabel);
     this.focusRing = ringFocus(this, this.focusRing, this.focused ? leave.art : undefined);
   }
 

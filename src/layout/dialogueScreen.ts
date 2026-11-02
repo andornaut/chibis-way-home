@@ -63,8 +63,7 @@ function placedDialogueButtons(
   if (groupWidth > DIALOGUE_SCREEN.box.width) {
     throw new Error("Dialogue action labels do not fit the footer");
   }
-  const button = (x: number) =>
-    labelledButton({ height: TEXT_BUTTON.height, width, x, y }, TEXT_BUTTON.labelDy);
+  const button = (x: number) => labelledButton({ height: TEXT_BUTTON.height, width, x, y });
   return {
     continue: button(right - width),
     skip: button(right - groupWidth),

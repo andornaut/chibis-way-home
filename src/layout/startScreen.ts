@@ -85,8 +85,8 @@ export function startScreenLayout(
       y: logoY,
     },
     nav: { height: NAV_HEIGHT, width: SCREEN.width, x: 0, y: 0 },
-    ...(saved ? { restart: labelledButton({ height, width, x: left, y }, START.labelDy) } : {}),
+    ...(saved ? { restart: labelledButton({ height, width, x: left, y }) } : {}),
     settings: iconButton(exitShown ? 1 : 0),
-    start: labelledButton({ height, width, x: saved ? middle + ROW_GAP / 2 : x, y }, START.labelDy),
+    start: labelledButton({ height, width, x: saved ? middle + ROW_GAP / 2 : x, y }),
   };
 }

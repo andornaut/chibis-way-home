@@ -67,10 +67,15 @@ export class CelebrationScene extends Scene implements RestartOpener {
     this.restartButton = addTextButton(this, CELEBRATION.restart, words.restart);
     const go = CELEBRATION.continue;
     this.continueFace = this.add.sprite(go.button.x, go.button.y, "ui-resume").setOrigin(0);
-    this.continueLabel = addButtonLabel(this, go.button, go.labelY, words.continue, {
-      colour: this.colour("ink"),
-      marked: true,
-    });
+    this.continueLabel = addButtonLabel(
+      this,
+      {
+        colour: this.colour("ink"),
+        marked: true,
+      },
+      go.button,
+      words.continue,
+    );
     this.render();
     this.watchPresses();
     modalInput(this).subscribe(() => {
@@ -153,10 +158,9 @@ export class CelebrationScene extends Scene implements RestartOpener {
   // Each button as the press leaves it, and art's focus ring round the focused one while no card
   // shows.
   private render(): void {
-    const { labelY, pressedLabelY } = CELEBRATION.continue;
     const continuing = this.pressed === "continue";
     this.continueFace.play(animationKey("ui-resume", continuing ? "pressed" : "normal"));
-    placeButtonLabel(this.continueLabel, continuing ? pressedLabelY : labelY);
+    placeButtonLabel(continuing, false, this.continueLabel);
     pressTextButton(this.restartButton, this.pressed === "restart");
     const focused =
       this.focus === undefined || this.restartOpen ? undefined : CELEBRATION[this.focus].button;

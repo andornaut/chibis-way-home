@@ -52,8 +52,6 @@ export function skillRoomContinue(fonts: CardFonts, text: string) {
   return {
     art: action.button,
     hit: action.hit,
-    labelY: action.labelY,
-    pressedLabelY: action.pressedLabelY,
   };
 }
 

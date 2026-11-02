@@ -1,7 +1,9 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
+import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import manifest from "../../public/art/manifest.json";
 import palette from "../../public/art/palette.json";
 import button from "../../public/art/sprites/ui-button.json";
@@ -20,10 +22,11 @@ import {
 
 const playMark = playMarkJson as AsepriteSheet;
 
-function drawing(sheet = playMark) {
+function drawing(sheet = playMark, native = false) {
   const node = () => ({
     setFrame: vi.fn().mockReturnThis(),
     setOrigin: vi.fn().mockReturnThis(),
+    setPosition: vi.fn().mockReturnThis(),
     setScale: vi.fn().mockReturnThis(),
     setTint: vi.fn().mockReturnThis(),
     setVisible: vi.fn().mockReturnThis(),
@@ -40,18 +43,28 @@ function drawing(sheet = playMark) {
     ["ui-button-primary", primary],
     ["ui-play-mark", sheet],
   ]);
+  const bitmapText = vi.fn().mockImplementation(node);
+  const font = parseBitmapFont(fontBody);
+  const chars = native
+    ? Object.fromEntries(
+        [...font.glyphs].map(([char, glyph]) => [
+          char.codePointAt(0)!,
+          { ...glyph, kerning: {}, xAdvance: glyph.advance },
+        ]),
+      )
+    : {};
   const scene = {
-    add: { bitmapText: node, image, nineslice },
+    add: { bitmapText, image, nineslice },
     cache: {
-      bitmapFont: { get: () => ({ data: { chars: {}, lineHeight: 12 } }) },
+      bitmapFont: { get: () => ({ data: { chars, lineHeight: native ? font.lineHeight : 12 } }) },
       json: { get: (key: string) => json.get(key) },
     },
   } as unknown as Scene;
-  return { image, json, nineslice, scene };
+  return { bitmapText, image, json, nineslice, scene };
 }
 
 const rect = { height: 48, width: 160, x: 0, y: 0 };
-const layout = labelledButton(rect, 13);
+const layout = labelledButton(rect);
 
 describe("button play-mark frames", () => {
   it.each([
@@ -72,7 +85,7 @@ describe("button play-mark frames", () => {
 
   it("preserves the rest tag for direct legacy labels", () => {
     const { image, scene } = drawing();
-    addButtonLabel(scene, rect, 13, "", { colour: 0, marked: true });
+    addButtonLabel(scene, { colour: 0, marked: true }, rect, "");
     expect(image.mock.calls[0]![3]).toBe(sheetTags(playMark).get("rest")![0]!.frame);
   });
 
@@ -108,7 +121,9 @@ describe("disabled text buttons", () => {
       pressTextButton(result, true);
       expect(result.faces.normal.setVisible).toHaveBeenLastCalledWith(true);
       expect(result.faces.pressed.setVisible).toHaveBeenLastCalledWith(false);
-      expect(result.label.label.setY).toHaveBeenLastCalledWith(layout.labelY);
+      expect(result.label.label.setY).toHaveBeenLastCalledWith(
+        result.label.positions.disabled.label.y,
+      );
       setTextButtonEnabled(scene, true, result);
       expect(result.faces.normal.setFrame).toHaveBeenLastCalledWith(tags.get("normal")![0]!.frame);
       expect(result.faces.pressed.setFrame).toHaveBeenLastCalledWith(
@@ -122,12 +137,16 @@ describe("disabled text buttons", () => {
       );
       pressTextButton(result, true);
       expect(result.faces.pressed.setVisible).toHaveBeenLastCalledWith(true);
-      expect(result.label.label.setY).toHaveBeenLastCalledWith(layout.pressedLabelY);
+      expect(result.label.label.setY).toHaveBeenLastCalledWith(
+        result.label.positions.pressed.label.y,
+      );
       setTextButtonEnabled(scene, false, result);
       for (const face of Object.values(result.faces)) {
         expect(face.setFrame).toHaveBeenLastCalledWith(tags.get("disabled")![0]!.frame);
       }
-      expect(result.label.label.setY).toHaveBeenLastCalledWith(layout.labelY);
+      expect(result.label.label.setY).toHaveBeenLastCalledWith(
+        result.label.positions.disabled.label.y,
+      );
       expect(result.label.mark!.setFrame).toHaveBeenLastCalledWith(
         sheetTags(playMark).get("rest")![0]!.frame,
       );
@@ -147,4 +166,18 @@ describe("disabled text buttons", () => {
       "No disabled frame for ui-button",
     );
   });
+});
+
+it("centres native Continue ink on each visible face and applies its pressed shift once", () => {
+  const { bitmapText, scene } = drawing(playMark, true);
+  const result = addTextButton(scene, layout, "Continue", { style: PRIMARY_BUTTON });
+  expect(bitmapText).toHaveBeenLastCalledWith(expect.any(Number), 14, "font-body", "Continue");
+  pressTextButton(result, true);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(16);
+  setTextButtonEnabled(scene, false, result);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(16);
+  pressTextButton(result, true);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(16);
+  setTextButtonEnabled(scene, true, result);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(14);
 });

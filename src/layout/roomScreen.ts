@@ -5,7 +5,7 @@ import { hitAround } from "./hitAreas";
 // screen's nav buttons and ending where they do, clear of the pause button's top-left corner;
 // the room's name centred on nameCentre; and, for a room without art, a PLACEHOLDER frame below
 // Leave. Leave is art's secondary button (ui-button, as Install), its label centred across it at
-// labelY, or pressedLabelY while pressed, in at most room pixels. Its press area, hit, is the
+// its visible face, in at most room pixels. Its press area, hit, is the
 // button grown by hitAreas.ts's rule.
 const LEAVE_ART: Rect = { height: 28, width: 72, x: 640, y: 10 };
 
@@ -14,8 +14,6 @@ export const ROOM_SCREEN = {
   leave: {
     art: LEAVE_ART,
     hit: hitAround(LEAVE_ART),
-    labelY: 13,
-    pressedLabelY: 15,
     room: 56,
   },
   nameCentre: { x: 360, y: 192 } satisfies Point,

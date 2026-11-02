@@ -59,10 +59,9 @@ it.each([
     expect(paletteColour).toHaveBeenLastCalledWith(scene, style.label);
     expect(addButtonLabel).toHaveBeenCalledWith(
       scene,
-      expect.any(Object),
-      expect.any(Number),
-      text,
       { colour: 0, marked: false },
+      expect.any(Object),
+      text,
     );
     scene.act({ down: undefined, kind: "press", up: "leave" });
     expect(controller.resume).not.toHaveBeenCalled();

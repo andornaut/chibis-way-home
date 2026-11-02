@@ -1,16 +1,9 @@
 import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
-import {
-  phaserBitmapFont,
-  type PhaserFontData,
-} from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
-import { centredLabel } from "../layout/buttonLabel";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { CARD_TEXT_SCALE } from "../layout/pauseCard";
 import { focusRingAround, settingsCard, stepsCard } from "../layout/settingsCard";
 import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { BUILD_LABEL } from "../platform/build/buildLabel";
@@ -18,13 +11,15 @@ import { type MenuInstallBrowser, offersInstall } from "../platform/pwa/installS
 import { installOffer } from "../pwa/installOffer";
 import { TOUCH_SETTINGS, type TouchSetting, touchSettingShown } from "../settings/touchControls";
 import {
-  addCardText,
+  addButtonLabel,
   addCardTextIn,
   addSlice,
   BODY_FONT,
   BUTTON,
+  type ButtonLabel,
   cardFonts,
   paletteColour,
+  placeButtonLabel,
   TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
@@ -85,7 +80,7 @@ export class SettingsScene extends Scene {
   private focusRing: GameObjects.NineSlice | undefined;
   // The Install button's face, normal and pressed.
   private installButton: Readonly<Record<"normal" | "pressed", GameObjects.NineSlice>> | undefined;
-  private installButtonLabel: GameObjects.BitmapText | undefined;
+  private installButtonLabel: ButtonLabel | undefined;
   private installLabel: GameObjects.BitmapText | undefined;
   private opener = "";
   // The control a press landed on, which acts if the press lifts on it too.
@@ -292,22 +287,21 @@ export class SettingsScene extends Scene {
       const face = (tag: "normal" | "pressed") =>
         addSlice(this, BUTTON.art, install.button, frames.get(tag)?.[0]?.frame);
       this.installButton = { normal: face("normal"), pressed: face("pressed") };
-      this.installButtonLabel = addCardText(
+      this.installButtonLabel = addButtonLabel(
         this,
-        BODY_FONT,
-        { x: install.button.x, y: install.buttonLabel.y },
+        {
+          colour: this.colour(BUTTON.label),
+          marked: false,
+        },
+        install.button,
         words.installButton,
-        this.colour(BUTTON.label),
-      );
-      this.installButtonLabel.setX(
-        centredLabel(install.button, this.inkWidth(words.installButton)).labelX,
       );
       objects.push(
         this.add.image(install.icon.x, install.icon.y, "icon-install"),
         this.installLabel,
         this.installButton.normal,
         this.installButton.pressed,
-        this.installButtonLabel,
+        this.installButtonLabel.label,
       );
     }
     const label = addCardTextIn(this, BODY_FONT, buildLabel, BUILD_LABEL, this.colour("dslate"));
@@ -320,7 +314,6 @@ export class SettingsScene extends Scene {
 
   // Each control as the setting, the press and the focus leave it.
   private render(): void {
-    const { install } = this.layout;
     const pressed = this.pressed;
     // A pressed row's label turns dslate, from ink.
     const label = (target: Target) => this.colour(pressed === target ? "dslate" : "ink");
@@ -332,9 +325,9 @@ export class SettingsScene extends Scene {
     this.closeX.play(animationKey("ui-close", pressed === "close" ? "pressed" : "normal"));
     this.installButton?.normal.setVisible(pressed !== "install");
     this.installButton?.pressed.setVisible(pressed === "install");
-    this.installButtonLabel?.setY(
-      pressed === "install" ? install.buttonLabel.pressedY : install.buttonLabel.y,
-    );
+    if (this.installButtonLabel) {
+      placeButtonLabel(pressed === "install", false, this.installButtonLabel);
+    }
     this.drawFocus();
   }
 
@@ -397,14 +390,6 @@ export class SettingsScene extends Scene {
         this.act(target);
       }
     });
-  }
-
-  private font(): BitmapFont {
-    return phaserBitmapFont(this.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
-  }
-
-  private inkWidth(text: string): number {
-    return inkWidth(this.font(), CARD_TEXT_SCALE, text);
   }
 
   private colour(name: string): number {

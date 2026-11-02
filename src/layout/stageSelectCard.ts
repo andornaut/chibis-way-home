@@ -2,7 +2,6 @@ import { wrapWords } from "@andornaut/game-kit/lines";
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 
 import { SCREEN } from "../data/screen";
-import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
   CARD_CONTENT,
@@ -115,11 +114,8 @@ export function stageSelectPages(
       x: pager.x + (pager.width - countSize.width) / 2,
       y: pager.y + (pager.height - countSize.height) / 2,
     },
-    next: labelledButton(
-      { ...pager, width: pagerWidth, x: pager.x + pager.width - pagerWidth },
-      TEXT_BUTTON.labelDy,
-    ),
-    previous: labelledButton({ ...pager, width: pagerWidth }, TEXT_BUTTON.labelDy),
+    next: labelledButton({ ...pager, width: pagerWidth, x: pager.x + pager.width - pagerWidth }),
+    previous: labelledButton({ ...pager, width: pagerWidth }),
   };
   return {
     buttons: labels.map((label, index) => {

@@ -1,5 +1,5 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { advanceWidth, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
+import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
@@ -7,7 +7,13 @@ import {
 import type { GameObjects, Scene } from "phaser";
 
 import type { Point, Rect } from "../data/types";
-import { centredLabel, MARK_DROP, PLAY_MARK } from "../layout/buttonLabel";
+import {
+  buttonFace,
+  type ButtonFaceState,
+  type ButtonLabelPlacement,
+  buttonLabelPlacement,
+  PLAY_MARK,
+} from "../layout/buttonLabel";
 import { cardTitleAt } from "../layout/cardFrame";
 import { CARD_CONTENT, type CardFonts, cardTextOrigin } from "../layout/contentCard";
 import { CARD_TEXT_SCALE } from "../layout/pauseCard";
@@ -103,27 +109,39 @@ export function addCardTitle(scene: Scene, card: Rect, text: string): GameObject
 export interface ButtonLabel {
   readonly label: GameObjects.BitmapText;
   readonly mark?: GameObjects.Image;
+  readonly positions: Readonly<Record<ButtonFaceState, ButtonLabelPlacement>>;
 }
 
-// A button's label in body text, centred across the button with the play mark before it when
-// marked, its origin at labelY.
+// Centre the actual label and optional mark ink inside each visible native face.
 export function addButtonLabel(
   scene: Scene,
-  button: Rect,
-  labelY: number,
-  text: string,
   options: {
     readonly colour: number;
+    readonly disabled?: boolean;
     readonly marked: boolean;
     readonly markTag?: "rest" | "light";
   },
+  button: Rect,
+  text: string,
 ): ButtonLabel {
   const font = phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
-  const ink = inkWidth(font, CARD_TEXT_SCALE, text);
-  const { labelX, markX } = centredLabel(button, ink, options.marked ? PLAY_MARK : undefined);
-  const label = addCardText(scene, BODY_FONT, { x: labelX, y: labelY }, text, options.colour);
-  if (markX === undefined) {
-    return { label };
+  const position = (state: ButtonFaceState) =>
+    buttonLabelPlacement(
+      font,
+      CARD_TEXT_SCALE,
+      options.marked ? PLAY_MARK : undefined,
+      buttonFace(state, button),
+      text,
+    );
+  const positions = {
+    disabled: position("disabled"),
+    normal: position("normal"),
+    pressed: position("pressed"),
+  };
+  const at = positions[options.disabled ? "disabled" : "normal"];
+  const label = addCardText(scene, BODY_FONT, at.label, text, options.colour);
+  if (!at.mark) {
+    return { label, positions };
   }
   const tag = options.markTag ?? "rest";
   const frame = sheetTags(scene.cache.json.get("ui-play-mark") as AsepriteSheet).get(tag)?.[0]
@@ -133,14 +151,21 @@ export function addButtonLabel(
   }
   return {
     label,
-    mark: scene.add.image(markX, labelY + MARK_DROP, "ui-play-mark", frame).setOrigin(0),
+    mark: scene.add.image(at.mark.x, at.mark.y, "ui-play-mark", frame).setOrigin(0),
+    positions,
   };
 }
 
-// Moves a button's label, and its mark with it, to labelY: a pressed button's sink.
-export function placeButtonLabel({ label, mark }: ButtonLabel, labelY: number): void {
-  label.setY(labelY);
-  mark?.setY(labelY + MARK_DROP);
+export function placeButtonLabel(
+  pressed: boolean,
+  disabled: boolean,
+  { label, mark, positions }: ButtonLabel,
+): void {
+  const at = positions[disabled ? "disabled" : pressed ? "pressed" : "normal"];
+  label.setY(at.label.y);
+  if (at.mark) {
+    mark?.setY(at.mark.y);
+  }
 }
 
 // Art's keyboard focus ring round rect, in place of the last one, or none for no focus.
@@ -201,25 +226,28 @@ export function addTextButton(
   return {
     enabled: !disabled,
     faces: { normal: face("normal"), pressed: face("pressed") },
-    label: addButtonLabel(scene, layout.button, layout.labelY, text, {
-      colour: paletteColour(scene, disabled ? "dslate" : style.label),
-      markTag: !disabled && style.art === PRIMARY_BUTTON.art ? "light" : "rest",
-      marked,
-    }),
+    label: addButtonLabel(
+      scene,
+      {
+        colour: paletteColour(scene, disabled ? "dslate" : style.label),
+        disabled,
+        markTag: !disabled && style.art === PRIMARY_BUTTON.art ? "light" : "rest",
+        marked,
+      },
+      layout.button,
+      text,
+    ),
     layout,
     style,
   };
 }
 
 // Shows a labelled button pressed or not: the pressed face, its label sunk.
-export function pressTextButton(
-  { enabled, faces, label, layout }: TextButton,
-  pressed: boolean,
-): void {
+export function pressTextButton({ enabled, faces, label }: TextButton, pressed: boolean): void {
   const active = pressed && enabled;
   faces.normal.setVisible(!active);
   faces.pressed.setVisible(active);
-  placeButtonLabel(label, active ? layout.pressedLabelY : layout.labelY);
+  placeButtonLabel(active, !enabled, label);
 }
 
 export function setTextButtonEnabled(scene: Scene, enabled: boolean, button: TextButton): void {
