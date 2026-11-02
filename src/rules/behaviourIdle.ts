@@ -1,11 +1,8 @@
 import { type Random, randomStream, shuffled } from "@andornaut/game-kit/random";
 import {
   findTraversal,
-  stepTraversal,
-  type TraversalInput,
   type TraversalResult,
   type TraversalSafety,
-  type TraversalState,
 } from "@andornaut/game-kit/terrain/traversal";
 
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
@@ -17,7 +14,12 @@ import type {
   Rect,
 } from "../data/types";
 import type { BehaviourWorld } from "./behaviourReach";
-import { traversalContext, type TraversalSupport } from "./behaviourTraversal";
+import {
+  advanceTraversalTo,
+  type BehaviourTraversalState,
+  traversalContext,
+  type TraversalSupport,
+} from "./behaviourTraversal";
 import { EDGE } from "./bird";
 import { flyLandingPath, flyLandingRoute, supportedLanding } from "./flyLanding";
 
@@ -26,9 +28,7 @@ type IdleStatus = TraversalResult<TraversalSupport>["status"] | "invalidated";
 type Recovery =
   | {
       readonly kind: "ground";
-      readonly goal: Rect;
-      readonly physical: TraversalState<TraversalSupport>;
-      readonly inputs: readonly TraversalInput[];
+      readonly traversal: BehaviourTraversalState;
     }
   | { readonly kind: "fly"; readonly origin: Point; readonly target: Point };
 export interface BehaviourIdleState {
@@ -243,7 +243,16 @@ export function planIdleRecovery(
     if (result.status === "found") {
       return {
         ...chosen,
-        recovery: { goal, inputs: result.inputs, kind: "ground", physical: start },
+        recovery: {
+          kind: "ground",
+          traversal: {
+            geometry: "",
+            inputs: result.inputs,
+            physical: start,
+            status: "found",
+            target: goal,
+          },
+        },
         status: "found",
       };
     }
@@ -341,9 +350,17 @@ export function advanceIdleRecovery(
   if (motion.mode !== "ground") {
     throw new Error("Ground recovery requires its authored pursuit profile");
   }
-  const context = traversalContext(world, seconds, object, motion);
-  const input = recovery.inputs[0];
-  if (!context || !world.traversalFrame) {
+  const advanced = advanceTraversalTo(
+    world,
+    object,
+    motion,
+    seconds,
+    recovery.traversal,
+    recovery.traversal.target,
+    at,
+  );
+  const traversal = advanced.traversal;
+  if (!traversal || !world.traversalFrame) {
     return {
       at,
       finished: false,
@@ -352,54 +369,31 @@ export function advanceIdleRecovery(
     };
   }
   const timeSeconds = world.traversalFrame.timeSeconds;
-  let step = stepTraversal(
-    context,
-    { jump: input?.jump ?? false, move: input?.move ?? 0, timeSeconds },
-    recovery.physical,
-  );
-  if (step.status !== "ok" && !recovery.physical.grounded) {
-    step = stepTraversal(context, { jump: false, move: 0, timeSeconds }, recovery.physical);
-  }
-  if (step.status !== "ok") {
-    const finished = recovery.physical.grounded && supportedLanding(object, world, at);
-    const status =
-      step.status === "budget-exhausted"
-        ? "budget-exhausted"
-        : step.status === "geometry-unavailable"
-          ? "geometry-unavailable"
-          : "invalidated";
-    return {
-      at,
-      finished,
-      idle: finished ? clear(status) : { ...prior, status },
-      segments: [{ end: seconds, from: at, start: 0, to: at }],
-    };
-  }
-  const box = { ...step.state, height: object.height, width: object.width };
+  const physical = traversal.physical;
+  const goal = recovery.traversal.target;
+  const box = { ...physical, height: object.height, width: object.width };
   const reached =
-    step.state.grounded &&
-    box.x >= recovery.goal.x - EDGE &&
-    box.x + box.width <= recovery.goal.x + recovery.goal.width + EDGE &&
-    box.y >= recovery.goal.y - EDGE &&
-    box.y + box.height <= recovery.goal.y + recovery.goal.height + EDGE;
-  const exhausted = recovery.inputs.length <= 1 && step.state.grounded;
-  const finished = (reached || exhausted) && supportedLanding(object, world, step.state);
-  const status = reached ? "found" : "invalidated";
-  const idle = finished
-    ? clear(status)
-    : {
-        ...prior,
-        recovery: { ...recovery, inputs: recovery.inputs.slice(1), physical: step.state },
-      };
+    physical.grounded &&
+    box.x >= goal.x - EDGE &&
+    box.x + box.width <= goal.x + goal.width + EDGE &&
+    box.y >= goal.y - EDGE &&
+    box.y + box.height <= goal.y + goal.height + EDGE;
+  const exhausted = traversal.inputs.length === 0 && physical.grounded && !traversal.preparation;
+  const finished = (reached || exhausted) && supportedLanding(object, world, physical);
+  const status = reached
+    ? "found"
+    : traversal.status === "found"
+      ? "invalidated"
+      : traversal.status;
   return {
-    at: { x: step.state.x, y: step.state.y },
+    at: advanced.at,
     finished,
-    idle,
-    segments: step.segments.map((leg: TraversalSafety) => ({
+    idle: finished ? clear(status) : { ...prior, recovery: { kind: "ground", traversal } },
+    segments: advanced.segments?.map((leg: TraversalSafety) => ({
       end: leg.endSeconds - timeSeconds,
       from: leg.from,
       start: leg.startSeconds - timeSeconds,
       to: leg.to,
-    })),
+    })) ?? [{ end: seconds, from: at, start: 0, to: advanced.at }],
   };
 }

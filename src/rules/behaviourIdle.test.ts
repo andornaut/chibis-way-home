@@ -19,6 +19,7 @@ import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourI
 import type { BehaviourWorld } from "./behaviourReach";
 import { startBird } from "./bird";
 import { supportedLanding } from "./flyLanding";
+import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
 
@@ -597,4 +598,123 @@ it("replays namespaced choices while varying eligible decisions independently of
   expect(
     choose({ ...geometry, idleDecision: { namespace: "idle-roam:main:1", seed: 37 } }).recovery,
   ).not.toEqual(first.recovery);
+});
+
+function idleJumpFixture() {
+  const object = actor({
+    ...plan,
+    idleWatchdog: { ...plan.idleWatchdog!, distance: 24 },
+    states: {
+      ...plan.states,
+      pursue: {
+        animation: "walk",
+        motion: {
+          kind: "pursue",
+          mode: "ground",
+          speed: 40,
+          traversal: { gravity: 100, jumpSpeed: 40, maxFallSpeed: 100, prepSeconds: 0.6 },
+        },
+        transitions: [],
+      },
+    },
+  });
+  const solids = [
+    { height: 20, width: 10, x: 60, y: 100 },
+    { height: 24, width: 80, x: 80, y: 96 },
+  ];
+  const motion = object.behaviour!.states.pursue!.motion;
+  if (motion.kind !== "pursue") {
+    throw new Error("Expected pursuit fixture");
+  }
+  const idle = planIdleRecovery(
+    world(solids),
+    object,
+    motion,
+    STEP_SECONDS,
+    1,
+    expired(object).idleWatchdog!,
+    object.origin,
+  );
+  expect(idle.recovery?.kind).toBe("ground");
+  return { idle, object, solids };
+}
+
+it("uses the shared visible takeoff preparation for a verified idle-recovery jump", () => {
+  const fixture = idleJumpFixture();
+  let state = { ...expired(fixture.object), idleWatchdog: fixture.idle };
+  let at = fixture.object.origin;
+  let preparedAt: number | undefined;
+  let jumpedAt: number | undefined;
+  let resting: typeof at | undefined;
+  for (let tick = 0; tick < 240 && state.idleWatchdog.recovery; tick++) {
+    const next = stepBehaviour(
+      BIRD,
+      fixture.object,
+      world(fixture.solids, tick * STEP_SECONDS),
+      STEP_SECONDS,
+      target,
+      at,
+      state,
+    );
+    if (next.state.traversal?.preparation) {
+      preparedAt ??= tick;
+      resting ??= next.at;
+      expect(next.at).toEqual(resting);
+      const recovery = next.state.idleWatchdog!.recovery;
+      expect(recovery?.kind).toBe("ground");
+      if (recovery?.kind === "ground") {
+        expect(next.state.traversal).toBe(recovery.traversal);
+      }
+    }
+    if (
+      preparedAt !== undefined &&
+      next.state.traversal &&
+      !next.state.traversal.physical.grounded
+    ) {
+      jumpedAt ??= tick;
+    }
+    at = next.at;
+    state = next.state as typeof state;
+  }
+  expect(preparedAt).toBeDefined();
+  expect(jumpedAt).toBeDefined();
+  expect((jumpedAt! - preparedAt!) * STEP_SECONDS).toBeGreaterThanOrEqual(0.6 - STEP_SECONDS);
+  expect(supportedLanding(fixture.object, world(fixture.solids), at)).toBe(true);
+  expect(at.x).toBeCloseTo(80, 6);
+  expect(state.idleWatchdog.recovery).toBeUndefined();
+  expect(state.activeAttack).toBeUndefined();
+  expect(state.attackCooldownRemainingSeconds).toBeUndefined();
+});
+
+it("cancels an idle jump tell on lost support through the same physical executor", () => {
+  const fixture = idleJumpFixture();
+  const motion = fixture.object.behaviour!.states.pursue!.motion;
+  if (motion.kind !== "pursue") {
+    throw new Error("Expected pursuit fixture");
+  }
+  let idle = fixture.idle;
+  let at = fixture.object.origin;
+  for (let tick = 0; tick < 60; tick++) {
+    const next = advanceIdleRecovery(
+      world(fixture.solids, tick * STEP_SECONDS),
+      fixture.object,
+      motion,
+      STEP_SECONDS,
+      idle,
+      at,
+    );
+    idle = next.idle;
+    at = next.at;
+    if (idle.recovery?.kind === "ground" && idle.recovery.traversal.preparation) {
+      break;
+    }
+  }
+  expect(idle.recovery?.kind).toBe("ground");
+  const next = advanceIdleRecovery(world([], 1), fixture.object, motion, STEP_SECONDS, idle, at);
+  expect(next.at.y).toBeGreaterThan(at.y);
+  expect(next.idle.recovery?.kind).toBe("ground");
+  if (next.idle.recovery?.kind === "ground") {
+    expect(next.idle.recovery.traversal.preparation).toBeUndefined();
+    expect(next.idle.recovery.traversal.physical.grounded).toBe(false);
+  }
 });

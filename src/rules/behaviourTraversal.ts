@@ -215,6 +215,44 @@ export function advanceTraversal(
   readonly segments?: readonly TraversalSafety[];
   readonly traversal?: BehaviourTraversalState;
 } {
+  return advanceTraversalStep(
+    world,
+    object,
+    motion,
+    seconds,
+    prior,
+    () => traversalGoal(world, object, at, target),
+    at,
+    target,
+  );
+}
+
+export function advanceTraversalTo(
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  motion: GroundMotion,
+  seconds: number,
+  prior: BehaviourTraversalState,
+  goal: Rect,
+  at: Point,
+) {
+  return advanceTraversalStep(world, object, motion, seconds, prior, () => goal, at, goal);
+}
+
+function advanceTraversalStep(
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  motion: GroundMotion,
+  seconds: number,
+  prior: BehaviourTraversalState | undefined,
+  resolveGoal: () => Rect | undefined,
+  at: Point,
+  target: Rect,
+): {
+  readonly at: Point;
+  readonly segments?: readonly TraversalSafety[];
+  readonly traversal?: BehaviourTraversalState;
+} {
   const context = traversalContext(world, seconds, object, motion);
   const frame = world.traversalFrame;
   if (!context || !frame) {
@@ -307,7 +345,7 @@ export function advanceTraversal(
       },
     };
   }
-  const goal = traversalGoal(world, object, at, target);
+  const goal = resolveGoal();
   const key = frame.platforms
     .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
     .join(";");

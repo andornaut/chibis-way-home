@@ -1067,6 +1067,9 @@ function idleRecoveryStep(
   let next = {
     ...animated.state,
     idleWatchdog: observeIdle(watchdog, seconds, advanced.segments, advanced.idle),
+    ...(advanced.idle.recovery?.kind === "ground" && {
+      traversal: advanced.idle.recovery.traversal,
+    }),
   };
   if (advanced.finished) {
     next = {
