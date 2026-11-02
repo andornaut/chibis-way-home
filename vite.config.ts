@@ -43,5 +43,6 @@ export default gameViteConfig<typeof ConfigModules>({
   test: {
     ...config.test,
     include: ["src/**/*.test.ts"],
+    maxWorkers: 4,
   },
 }));
