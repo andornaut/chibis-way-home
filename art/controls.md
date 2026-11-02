@@ -120,7 +120,7 @@ Dialogue Continue and Skip use the ordinary primary and secondary button styles,
 - Keep labels mixed case, short and consistent for the same action. The game supplies words; do not bake text into textures.
 - Maintain at least 4.5:1 label contrast and 3:1 for essential marks. Use an icon colour suited to the face, rather than reusing a dark icon on a dark primary button.
 
-The current ink `ui-play-mark` is unsuitable for a dslate face. A light variant or a tintable equivalent is required before restoring that mark on primary actions.
+`ui-play-mark` retains ink `rest` for pale and legacy green faces and supplies cream `light` for dslate primary faces. Both tags share the same 5x10 triangle and 100ms timing. The primary consumer must select `light`; its contrast on dslate is 6.59:1.
 
 ## Selection controls
 
@@ -156,7 +156,7 @@ Full-page stage-end summaries centre their combined content block while left-ali
 | Colour source             | Served palette data                                                                    | Keep control tokens tied to palette names                                                     |
 | Focus asset               | `ui-focus`, nine-slice 16x16, margins 4 on all sides                                   | Retain for every ordinary control                                                             |
 | Geometry source           | Runtime layout values                                                                  | Add approved shared size/spacing tokens without copying literals between screens              |
-| Label rendering           | Runtime `font-body` at 2x                                                              | Light primary icon required                                                                   |
+| Label rendering           | Runtime `font-body` at 2x                                                              | Primary icon uses `light` tag                                                                 |
 | Nine-slice face           | 16x28, margins left/top/right/bottom 2/4/2/6                                           | Primary, secondary and disabled use the same outer geometry                                   |
 | Map actions               | Back to title: shared secondary on the left; Continue: shared primary on the right     | Equal widths, 48px height and an 8px gap                                                      |
 | Start-screen actions      | Start/Continue: shared primary; Restart: shared secondary; all 192x48 with 8px row gap | Implemented without play mark; nav icons remain explicit exceptions                           |
@@ -176,4 +176,4 @@ Full-page stage-end summaries centre their combined content block while left-ali
 
 None for the standard colours, dimensions, spacing or disabled navigation defined here. New bespoke controls require an explicit exception and a contextual review before implementation.
 
-Remaining implementation: provide a light primary play mark, add disabled states and supply checkbox/radio assets when implementing forms. The asset and code contract above records these gaps.
+Remaining implementation: select the light play-mark tag on primary actions, add disabled states and supply checkbox/radio assets when implementing forms. The asset and code contract above records these gaps.

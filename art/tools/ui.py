@@ -67,7 +67,8 @@ Button labels
   label's visible width (advance - 2). Start, Resume and Continue lead with ui-play-mark: the mark, a 6px gap and
   the label's ink are centred as one group by the same rule, the mark at the group's x and the label's origin 11 to
   its right. Origin y is fixed per button, below; the label and the mark sink 2px while pressed.
-- ui-play-mark, 5x10, one tag, rest: the ink play triangle, its top 4 rows below the label's origin y.
+- ui-play-mark, 5x10: rest is ink for pale/green faces; light is cream for dark primary faces.
+  Both static 100ms tags share the same triangle, its top 4 rows below the label's origin y.
 
 Start screen (720x360, over the street)
 - ui-nav-bar, nine-slice 12x48, margins 1,1,1,3: a navy band ending in a slate line over an ink line, drawn
@@ -656,10 +657,10 @@ def start(state):
     return g.px
 
 
-def play_icon():
-    """5x10: the play triangle drawn in ink on Start, as Resume has it drawn in."""
+def play_icon(colour="ink"):
+    """5x10: the same triangle in ink for pale/green faces or cream for dark primary faces."""
     g = Grid(5, 10)
-    tri_right(g, 0, 0, 10, "ink")
+    tri_right(g, 0, 0, 10, colour)
     return g.px
 
 
@@ -734,7 +735,7 @@ def sprites():
     yield "ui-name-tab", [(c, [name_tab(c)], 100) for c in TAB_FILLS]
     yield "ui-nav-bar", one(nav_bar())
     yield "ui-pause", touch_button("pause")
-    yield "ui-play-mark", one(play_icon())
+    yield "ui-play-mark", [("rest", [play_icon()], 100), ("light", [play_icon("cream")], 100)]
     yield "ui-portrait-frame", one(portrait_frame())
     yield "ui-quit", [(s, [quit_icon(s)], 100) for s in ("normal", "pressed")]
     yield "ui-quip-strip", one(quip_strip())

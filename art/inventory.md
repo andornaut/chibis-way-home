@@ -107,7 +107,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 | ui-name-tab               | nine-slice (2,2,2,2)                                       | 12x20  | amber, green, pink, tan                       |
 | ui-nav-bar                | nine-slice (1,1,1,3)                                       | 12x48  | rest                                          |
 | ui-pause                  | sprite                                                     | 35x35  | rest, press, held                             |
-| ui-play-mark              | sprite                                                     | 5x10   | rest                                          |
+| ui-play-mark              | sprite                                                     | 5x10   | rest, light                                   |
 | ui-portrait-frame         | sprite                                                     | 68x68  | rest                                          |
 | ui-quip-strip             | nine-slice (2,2,2,2)                                       | 12x24  | rest                                          |
 | ui-quit                   | sprite                                                     | 20x20  | normal, pressed                               |

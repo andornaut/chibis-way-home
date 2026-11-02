@@ -1,6 +1,14 @@
 { "frames": {
-   "ui-play-mark.aseprite": {
+   "ui-play-mark 0.aseprite": {
     "frame": { "x": 0, "y": 0, "w": 5, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 5, "h": 10 },
+    "sourceSize": { "w": 5, "h": 10 },
+    "duration": 100
+   },
+   "ui-play-mark 1.aseprite": {
+    "frame": { "x": 5, "y": 0, "w": 5, "h": 10 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 5, "h": 10 },
@@ -13,10 +21,11 @@
   "version": "1.2.30-x64",
   "image": "ui-play-mark.png",
   "format": "RGBA8888",
-  "size": { "w": 5, "h": 10 },
+  "size": { "w": 10, "h": 10 },
   "scale": "1",
   "frameTags": [
-   { "name": "rest", "from": 0, "to": 0, "direction": "forward" }
+   { "name": "rest", "from": 0, "to": 0, "direction": "forward" },
+   { "name": "light", "from": 1, "to": 1, "direction": "forward" }
   ]
  }
 }
