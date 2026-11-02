@@ -93,6 +93,8 @@ interface AttackSequence {
   readonly tells: Readonly<Record<string, number>>;
 }
 
+const ANTICIPATION_ANIMATION = "anticipate-lift";
+
 function attackProfile(plan: BehaviourPlan, sequences: readonly AttackSequence[]): BehaviourPlan {
   const states: Record<string, BehaviourNode> = { ...plan.states };
   const tells = new Set(sequences.flatMap(({ tells }) => Object.keys(tells)));
@@ -102,6 +104,7 @@ function attackProfile(plan: BehaviourPlan, sequences: readonly AttackSequence[]
       states[key] = {
         ...node,
         allowIdleReposition: false,
+        animation: ANTICIPATION_ANIMATION,
         attack: { id: sequence.id, phase: "tell" },
         transitions: node.transitions.map((transition) => ({
           ...transition,
@@ -398,6 +401,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
         transitions: [{ to: "pursuit-pounce", when: [{ kind: "elapsed", seconds: 0.25 }] }],
       },
     },
+    takeoffAnimation: ANTICIPATION_ANIMATION,
   },
   [
     {
@@ -465,6 +469,7 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
         transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
       },
     },
+    takeoffAnimation: ANTICIPATION_ANIMATION,
   },
   [
     {
@@ -535,6 +540,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
         ],
       },
     },
+    takeoffAnimation: ANTICIPATION_ANIMATION,
   },
   [
     {
@@ -710,6 +716,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
         transitions: [{ to: "prepare-charge", when: DETECTION }],
       },
     },
+    takeoffAnimation: ANTICIPATION_ANIMATION,
   },
   [
     {
@@ -814,6 +821,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
         transitions: [{ to: "prepare-growl", when: DETECTION }],
       },
     },
+    takeoffAnimation: ANTICIPATION_ANIMATION,
   },
   [
     {
