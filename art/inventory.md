@@ -41,6 +41,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | logo-icon                  | nav-column logo: bird on a platform, no lettering | 53x41   | `public/art/logo-icon.png`                         |
 | logo-nav                   | nav-bar logo, one line                            | 226x30  | `public/art/logo-nav.png`                          |
 | stage-cutscene-placeholder | neutral stage-transition illustration             | 720x360 | `public/art/images/stage-cutscene-placeholder.png` |
+| start-background           | static start-screen sky, skyline and ground       | 720x360 | `public/art/images/start-background.png`           |
 
 ## Opening story
 

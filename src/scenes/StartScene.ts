@@ -1,11 +1,9 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { snapshotRemapped } from "@andornaut/game-kit/view/phaser/snapshotRemap";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { playView } from "../layout/playView";
 import {
   type IconButtonLayout,
   type StartScreenLayout,
@@ -24,12 +22,10 @@ import {
 import { openingDestination } from "../rules/opening";
 import { resetWholeRunStats, savedProgress } from "../save";
 import { setTouchSettingShown, type TouchSetting } from "../settings/touchControls";
-import { dimColour } from "../view/dim";
 import {
   addSlice,
   addTextButton,
   captureTab,
-  palette,
   paletteColour,
   pressTextButton,
   PRIMARY_BUTTON,
@@ -40,14 +36,11 @@ import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
-import type { ZoneData } from "./ZoneScene";
 
+const BACKGROUND = "start-background";
 const LOGO = "logo";
 const RESTART = "restart";
 const SETTINGS = "settings";
-const ZONE = "zone";
-// Zone 1's street dimmed, read back once and kept for every later visit to the start screen.
-const STREET_DIM = "start-street-dim";
 
 type Control = "exit" | "restart" | "settings" | "start";
 // The card over the start screen, if one shows.
@@ -79,7 +72,6 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   private starting = false;
   private startButton!: TextButton;
   private restartButton: TextButton | undefined;
-  private street!: GameObjects.Image;
 
   constructor() {
     super("start");
@@ -88,7 +80,6 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   create(): void {
     this.starting = false;
     beginStartUpdateVisit();
-    let currentCreate = true;
     fitPlayCamera(this);
     this.pressed = undefined;
     this.card = undefined;
@@ -101,11 +92,6 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
       savedProgress().at !== "beginning",
     );
     this.draw();
-    void this.showStreet().then(() => {
-      if (currentCreate && this.sys.isActive()) {
-        startScreenShown(true);
-      }
-    });
     this.showPressed(undefined);
     this.watchPresses();
     modalInput(this).subscribe(() => this.showPressed(undefined));
@@ -124,12 +110,12 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
     captureTab(this, true);
     this.events.once("shutdown", () => {
-      currentCreate = false;
       startScreenShown(false);
       coverZone("startCard", false);
       window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
       captureTab(this, false);
     });
+    startScreenShown(true);
   }
 
   // The start screen has no zone to show the setting in: saving it is enough.
@@ -149,11 +135,11 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     this.drawFocus();
   }
 
-  // Zone 1's street dimmed behind everything, over plain ink until it is read back.
+  // The static logical-view background stays behind the logo, nav and actions.
   private draw(): void {
     const { exit, logo, nav, restart, settings, start } = this.layout;
     this.cameras.main.setBackgroundColor(this.colour("ink"));
-    this.street = this.add.image(0, 0, "__DEFAULT").setOrigin(0).setVisible(false);
+    this.add.image(0, 0, BACKGROUND).setOrigin(0);
     addSlice(this, "ui-nav-bar", nav);
     this.add.image(logo.x, logo.y, LOGO).setOrigin(0).setDisplaySize(logo.width, logo.height);
     this.buttons = new Map([
@@ -168,45 +154,6 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     );
     this.restartButton =
       restart === undefined ? undefined : addTextButton(this, restart, TEXT.start.restart);
-  }
-
-  // Shows the dimmed street, reading it back first if no visit has yet. Nothing of this scene is
-  // drawn while the street is read back, and the canvas is hidden over the page's ink meanwhile,
-  // so the undimmed street never shows. Where the renderer gives no image, the ink stays.
-  private async showStreet(): Promise<void> {
-    if (!this.textures.exists(STREET_DIM)) {
-      const camera = this.cameras.main.setVisible(false);
-      const canvas = this.game.canvas.style;
-      canvas.visibility = "hidden";
-      await this.dimStreet();
-      canvas.visibility = "";
-      if (!this.sys.isActive()) {
-        return;
-      }
-      camera.setVisible(true);
-    }
-    if (this.textures.exists(STREET_DIM)) {
-      this.street.setTexture(STREET_DIM).setVisible(true);
-    }
-  }
-
-  // Draws zone 1's street as ZoneScene's still backdrop, reads the frame it first renders in back
-  // two steps down each colour's ramp, as the pause card dims the zone, and stops the zone.
-  private dimStreet(): Promise<boolean> {
-    return new Promise((resolve) => {
-      this.scene.get(ZONE).events.once("create", () => {
-        void snapshotRemapped(
-          dimColour(palette(this)),
-          this,
-          playView(this.scale.gameSize),
-          STREET_DIM,
-        ).then((dimmed) => {
-          this.scene.stop(ZONE);
-          resolve(dimmed);
-        });
-      });
-      this.scene.launch(ZONE, { backdrop: true } satisfies ZoneData);
-    });
   }
 
   // A nav icon button: its face, and its icon (the icon's first frame) over it.

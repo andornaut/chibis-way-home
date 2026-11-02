@@ -2043,6 +2043,12 @@
       "png": "images/stage-preview-zone-6-stage-6.png",
       "width": 168,
       "height": 84
+    },
+    {
+      "key": "start-background",
+      "png": "images/start-background.png",
+      "width": 720,
+      "height": 360
     }
   ]
 }

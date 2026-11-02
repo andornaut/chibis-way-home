@@ -346,6 +346,8 @@ Dash wind uses three flat horizontal strokes behind Chibi, with no outline or bo
 
 The game boots into the start screen; Start goes to the map. A nav bar runs across the top with icon buttons at its right, and Start sits below the logo.
 
+`start-background` is an opaque 720x360 static image at origin 0,0, drawn by `art/tools/start.py`: pale steel sky, seven low outer skyline silhouettes and one ground band. Its three existing palette colours leave the logo and actions clear. Use it directly without ambient dimming; it has no repeat, animation, collision or lights. The responsive homepage retains its separate composition.
+
 - Nav bar `ui-nav-bar`, 0,0,720,48.
 - Icon buttons `ui-icon-button`, 36x36 at y 6, each with a 20x20 icon 8 in and 6 down (8 down while pressed). With Exit: Settings at x 632 and Exit at x 676, so Exit is at the far right. Without Exit (Firefox for Android's installed app hides it): Settings alone at x 676.
 - Logo (`logo`, intrinsic 558x239) is proportionally contained in the available horizontal and vertical space above the action row. Its top remains y 60; derive its display size from the texture ratio and available space. At the default 720x360 view it displays about 450.6x193, centred horizontally, leaving 15px to the drawn actions and 3px to their expanded hit areas. Start (`ui-button-primary`, 192x48, dslate with a white label) remains at 264,268. With saved progress, Restart uses the secondary `ui-button` (grey with an ink label) at 164,268 on the left, and Continue the primary style at 364,268 on the right: both 192x48, with an 8px gap, centred under the logo. Continue remains the default action for keyboard activation. Nav and icon controls keep their separate styles.
