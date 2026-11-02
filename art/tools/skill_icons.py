@@ -2,6 +2,7 @@
 
 Usage: skill_icons.py build | preview OUT.png, from the repository root.
 Double-jump, dash and speedy use transparent 16x16 glyphs with two-pixel strokes.
+Double-jump shows two upward open carets; dash shows three horizontal wind lines without an arrowhead.
 Both have ready (frame0,100ms,cream) and muted (frame1,100ms,grey) tags, one static frame per tag.
 Tags loop and have identical alpha geometry; there is no contact box, nine-slice or third state.
 The source layers these glyphs over the reused navy UI disc and supplies the 48px touch target.
@@ -39,11 +40,8 @@ def glyph(colour, skill):
         g.rect(1, 3, 5, 2, colour)
         g.rect(0, 7, 5, 2, colour)
     else:
-        for x, y, width in ((2, 3, 6), (0, 7, 11), (3, 11, 5)):
+        for x, y, width in ((3, 3, 10), (1, 7, 14), (3, 11, 10)):
             g.rect(x, y, width, 2, colour)
-        for step in range(5):
-            g.rect(9 + step, 3 + step, 2, 2, colour)
-            g.rect(9 + step, 11 - step, 2, 2, colour)
     return g.px
 
 
