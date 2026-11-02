@@ -833,8 +833,15 @@ function phaseCorridor(
 // column on a surface that runs into it, she walks right to clear the zone. It never presses
 // Use, so doors and their rooms play no part, and a try that takes her back into the first
 // column, which would end the zone, fails. It stops when no try finds a new spot.
+export interface WalkRouteTarget {
+  readonly area: string;
+  readonly at: TilePoint;
+  // Inclusive actor body top-left X interval in area tile units, not sprite/centre coordinates.
+  readonly xRange?: { readonly min: number; readonly max: number };
+}
+
 export interface WalkRouteQuery {
-  readonly targets: readonly { readonly area: string; readonly at: TilePoint }[];
+  readonly targets: readonly WalkRouteTarget[];
   readonly tile: number;
 }
 
