@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
 
+import { decodePng } from "@andornaut/art-kit/png";
 import { describe, expect, it } from "vitest";
 
 import artManifest from "../../public/art/manifest.json";
 import ferretSheet from "../../public/art/sprites/ferret-antagonist.json";
-import { decodePng } from "../platform/art/png";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { STEP_SECONDS } from "../rules/step";

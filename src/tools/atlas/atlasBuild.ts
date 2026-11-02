@@ -1,11 +1,11 @@
+import { type AtlasBlit, buildAtlasPages } from "@andornaut/art-kit/atlasBuild";
+import { decodePng } from "@andornaut/art-kit/png";
+import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { itemAt } from "@andornaut/game-kit/arrays";
 import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
-import type { RgbaImage } from "@andornaut/game-kit/art/rgbaImage";
 
 import { type AtlasFrame, type AtlasTexture, BASE_FRAME } from "../../assets/atlasManifest";
 import { TILE } from "../../data/screen";
-import { type AtlasBlit, buildAtlasPages } from "../../platform/art/atlasBuild";
-import { decodePng } from "../../platform/art/png";
 import type { ArtManifest } from "../../view/aseprite";
 import { EXTRUDE, layoutAtlas } from "./atlasLayout";
 

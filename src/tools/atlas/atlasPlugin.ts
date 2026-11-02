@@ -1,7 +1,7 @@
+import { encodeLosslessWebp } from "@andornaut/art-kit/webp";
 import type { Plugin } from "vite";
 
 import type { AtlasManifest } from "../../assets/atlasManifest";
-import { encodeLosslessWebp } from "../../platform/art/webp";
 import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../../view/aseprite";
 import { buildAtlas } from "./atlasBuild";
 import { atlasPageFileName } from "./hashedArt";
