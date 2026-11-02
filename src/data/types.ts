@@ -504,6 +504,7 @@ export interface BehaviourPlan {
   readonly axis: "x" | "y";
   readonly distance: number;
   readonly inactiveAnimation?: string;
+  readonly takeoffAnimation?: string;
   readonly initial: string;
   readonly states: Readonly<Record<string, BehaviourNode>>;
 }
