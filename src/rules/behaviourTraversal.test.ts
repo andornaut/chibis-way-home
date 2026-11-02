@@ -2,6 +2,7 @@ import {
   findTraversal,
   stepTraversal,
   type TraversalContext,
+  type TraversalRequest,
   type TraversalState,
 } from "@andornaut/game-kit/terrain/traversal";
 import { expect, it, vi } from "vitest";
@@ -15,6 +16,7 @@ import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import {
   advanceTraversal,
+  type BehaviourTraversalState,
   preferredDescentInputs,
   probeRearm,
   traversalContext,
@@ -159,7 +161,13 @@ function descentFixture(move: -1 | 1 = 1, offset = { x: 2, y: 2 }) {
     { jump: false, move, timeSeconds: 2.341666666666661 },
     start,
   );
-  return { context, direct, goal, landing, start, support, world: world(solids, 0) };
+  const request: TraversalRequest<Rect> = {
+    ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
+    goal,
+    start,
+    timeSeconds: 2.341666666666661,
+  };
+  return { context, direct, goal, landing, request, start, support, world: world(solids, 0) };
 }
 
 it.each([
@@ -176,8 +184,7 @@ it.each([
     const inputs = preferredDescentInputs(
       fixture.world,
       fixture.context,
-      fixture.goal,
-      fixture.start,
+      fixture.request,
       fixture.direct,
     );
     expect(inputs).toEqual(
@@ -187,6 +194,14 @@ it.each([
       })),
     );
     expect(stepTraversal).not.toHaveBeenCalled();
+    expect(
+      preferredDescentInputs(
+        fixture.world,
+        fixture.context,
+        { ...fixture.request, horizonSteps: 1 },
+        fixture.direct,
+      ),
+    ).toEqual([{ jump: false, move }]);
   },
 );
 
@@ -233,8 +248,168 @@ it.each([
   } else {
     direct = { ...direct, state: { ...direct.state, grounded: true } };
   }
-  expect(preferredDescentInputs(geometry, context, goal, start, direct)).toBeUndefined();
+  expect(
+    preferredDescentInputs(geometry, context, { ...fixture.request, goal, start }, direct),
+  ).toBeUndefined();
 });
+
+function descentActorFixture(move: -1 | 1 = 1) {
+  const fixture = descentFixture(move);
+  const motion = {
+    kind: "pursue",
+    mode: "ground",
+    speed: fixture.context.profile.walkSpeed,
+    traversal: { ...fixture.context.profile, prepSeconds: 0.6 },
+  } as const;
+  const object = {
+    ...actor(),
+    behaviour: {
+      ...plan,
+      pursuit: { ...plan.pursuit!, distance: 4320 },
+      states: { chase: { ...plan.states.chase!, motion } },
+    },
+    height: 48,
+    hitbox: { height: 46, width: 44, x: 2, y: 2 },
+    origin: { x: move === 1 ? 2472 : 6000 - 2472 - 48, y: 912 },
+    width: 48,
+  };
+  const geometry = {
+    ...fixture.world,
+    traversalFrame: {
+      ...fixture.world.traversalFrame!,
+      bounds: fixture.context.bounds,
+      timeSeconds: fixture.request.timeSeconds,
+    },
+  };
+  const target = {
+    height: BIRD.height,
+    width: BIRD.width,
+    x: move === 1 ? 2800 : 6000 - 2800 - BIRD.width,
+    y: fixture.landing.y - BIRD.height,
+  };
+  const prior: BehaviourTraversalState = {
+    geometry: "",
+    inputs: [],
+    physical: fixture.start,
+    status: "found",
+    target: fixture.goal,
+  };
+  return { ...fixture, geometry, motion, object, prior, target };
+}
+
+it.each([-1, 1] as const)("executes a proved static bank descent with move=%s", (move) => {
+  const fixture = descentActorFixture(move);
+  let at = { x: fixture.start.x, y: fixture.start.y };
+  let prior: BehaviourTraversalState | undefined = fixture.prior;
+  vi.mocked(findTraversal).mockClear();
+  let landed = false;
+  for (let tick = 0; tick < fixture.request.horizonSteps; tick++) {
+    const next = advanceTraversal(
+      {
+        ...fixture.geometry,
+        traversalFrame: {
+          ...fixture.geometry.traversalFrame,
+          timeSeconds: fixture.request.timeSeconds + tick * STEP_SECONDS,
+        },
+      },
+      fixture.object,
+      fixture.motion,
+      STEP_SECONDS,
+      prior,
+      at,
+      fixture.target,
+    );
+    expect(Math.abs(next.at.x - at.x)).toBeCloseTo(fixture.motion.speed * STEP_SECONDS);
+    expect(next.traversal?.preparation).toBeUndefined();
+    at = next.at;
+    prior = next.traversal;
+    if (prior?.physical.grounded && at.y > fixture.start.y) {
+      landed = true;
+      break;
+    }
+  }
+  expect(landed).toBe(true);
+  expect(at.y).toBeCloseTo(fixture.landing.y - fixture.object.height);
+  expect(at.x).toBeCloseTo(fixture.start.x + move * fixture.motion.speed * STEP_SECONDS * 57);
+  expect(prior?.physical.supportId).toBe(fixture.landing);
+  expect(findTraversal).toHaveBeenCalledOnce();
+  const request = vi.mocked(findTraversal).mock.calls[0]![1];
+  expect(request).toMatchObject(BEHAVIOUR_TRAVERSAL_SEARCH.budget);
+  expect(request.preferredInputs).toHaveLength(request.horizonSteps);
+  expect(request.preferredInputs?.every((input) => input.move === move && !input.jump)).toBe(true);
+  expect(vi.mocked(findTraversal).mock.results[0]!.value).toMatchObject({
+    status: "found",
+    work: { states: 58, steps: 57 },
+  });
+  const proof = vi.mocked(findTraversal).mock.results[0]!.value;
+  if (proof.status !== "found") {
+    throw new Error("Expected a proved descent");
+  }
+  expect(prior?.physical).toEqual(proof.state);
+});
+
+it.each(["hazard", "unknown future hazard", "entering mover"])(
+  "does not cross an unproved descent with %s",
+  (kind) => {
+    const fixture = descentActorFixture();
+    let geometry: BehaviourWorld = fixture.geometry;
+    const owner = actor();
+    const staticOwner = { ...owner };
+    delete staticOwner.behaviour;
+    const barrier = { height: 960, width: 260, x: 2620, y: 0 };
+    if (kind === "hazard" || kind === "unknown future hazard") {
+      geometry = {
+        ...geometry,
+        hazards: [
+          {
+            owner: kind === "hazard" ? staticOwner : owner,
+            rect: kind === "hazard" ? barrier : { ...barrier, x: 6000 },
+          },
+        ],
+      };
+    } else {
+      const initial = { ...barrier, x: 3000 };
+      geometry = {
+        ...geometry,
+        traversalFrame: {
+          ...geometry.traversalFrame!,
+          platforms: [{ after: initial, before: initial, collision: "solid", owner }],
+          sample: (time) => {
+            const tick = Math.round((time - fixture.request.timeSeconds) / STEP_SECONDS);
+            return [
+              {
+                after: tick < 1 ? initial : barrier,
+                before: tick < 2 ? initial : barrier,
+                collision: "solid",
+                owner,
+              },
+            ];
+          },
+        },
+      };
+    }
+    vi.mocked(findTraversal).mockClear();
+    const result = advanceTraversal(
+      geometry,
+      fixture.object,
+      fixture.motion,
+      STEP_SECONDS,
+      fixture.prior,
+      fixture.start,
+      fixture.target,
+    );
+    expect(findTraversal).toHaveBeenCalledOnce();
+    expect(vi.mocked(findTraversal).mock.calls[0]![1].preferredInputs).toHaveLength(
+      fixture.request.horizonSteps,
+    );
+    expect(result.at).toEqual(fixture.start);
+    expect(result.traversal?.inputs).toEqual([]);
+    expect(result.traversal?.status).not.toBe("found");
+    if (kind === "unknown future hazard") {
+      expect(result.traversal?.status).toBe("geometry-unavailable");
+    }
+  },
+);
 
 it("scales only authored spatial traversal units", () => {
   const resolved = layoutBehaviour(12, plan).states.chase!.motion;

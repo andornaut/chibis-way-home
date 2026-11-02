@@ -3,8 +3,10 @@ import {
   findTraversal,
   stepTraversal,
   type TraversalCollider,
+  type TraversalCommand,
   type TraversalContext,
   type TraversalInput,
+  type TraversalRequest,
   type TraversalResult,
   type TraversalSafety,
   type TraversalState,
@@ -210,14 +212,13 @@ export function traversalGoal(
       };
 }
 
-// CLEANUP (added 2026-11-02): wire after the checked preferred-input package is pinned.
 export function preferredDescentInputs(
   world: BehaviourWorld,
   context: TraversalContext<TraversalSupport>,
-  goal: Rect,
-  start: TraversalState<TraversalSupport>,
+  request: TraversalRequest<TraversalSupport>,
   direct: TraversalStepResult<TraversalSupport>,
-): readonly Pick<TraversalInput, "move" | "jump">[] | undefined {
+): readonly TraversalCommand[] | undefined {
+  const { goal, start } = request;
   if (!start.grounded || direct.status !== "ok" || direct.state.grounded) {
     return undefined;
   }
@@ -253,7 +254,7 @@ export function preferredDescentInputs(
         epsilon,
   );
   return landing
-    ? Array.from({ length: BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps }, () => ({
+    ? Array.from({ length: request.horizonSteps }, () => ({
         jump: false,
         move,
       }))
@@ -469,15 +470,18 @@ function advanceTraversalStep(
       prior?.geometry !== key ||
       prior.status === "found")
   ) {
-    const result = findTraversal(
-      { ...context, dtSeconds: STEP_SECONDS },
-      {
-        ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
-        goal,
-        start: physical,
-        timeSeconds: frame.timeSeconds,
-      },
-    );
+    const searchContext = { ...context, dtSeconds: STEP_SECONDS };
+    const request: TraversalRequest<TraversalSupport> = {
+      ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
+      goal,
+      start: physical,
+      timeSeconds: frame.timeSeconds,
+    };
+    const preferredInputs = preferredDescentInputs(world, searchContext, request, direct);
+    const result = findTraversal(searchContext, {
+      ...request,
+      ...(preferredInputs && { preferredInputs }),
+    });
     searchedAt = at;
     status = result.status;
     inputs = result.status === "found" ? result.inputs : [];
