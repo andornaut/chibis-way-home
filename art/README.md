@@ -270,13 +270,15 @@ All positions are in base pixels (x, y, w, h) of the 720x360 layout as drawn. Th
 | Double jump | icon-skill-double-jump | 608,8                   |
 | Speedy      | icon-skill-speedy      | 664,8                   |
 
-The base 720x360 view places these targets left to right in one horizontal top row, with 8px between targets and 8px from the top and right edges. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) reuses the 35x35 `ui-pause` rest disc, covers its baked pause bars with an opaque 16x16 navy (`#262b44`) square at local 9,9, then places the native glyph at that same position. Keep the original cream ring in all three states; only the glyph becomes grey when muted. The glyph's centre anchor is 8,8. The selected skill adds a steady 5x2 yellow (`#fee761`) bar at disc-local 15,27, over a one-pixel navy surround and after the glyph. It stays visible when the selected glyph is muted. Do not bake this selection mark, target coordinates or a second disc into the exports.
+The base 720x360 view places these targets left to right in one horizontal top row, with 8px between targets and 8px from the top and right edges. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) reuses the 35x35 `ui-pause` rest disc and its cream ring. Draw an opaque pixel-disc face with radius 13 at disc-local 17,17 to cover the baked pause bars completely, then place the native 16x16 glyph at local 9,9. The glyph's centre anchor is 8,8.
+
+The selected skill has an additional steady outer yellow ring in both ready and recharging states. Compose it behind the native disc as concentric opaque discs centred at 17,17: radius 21 `ink`, radius 20 `yellow`, then radius 18 `ink`. Its outer bounds fit inside the existing 48x48 target. Pixel-disc fills use the native rule `dx² + dy² <= (radius + 0.5)²`, with no smoothing. Do not bake selection, face colours or target coordinates into the glyph exports.
 
 Locked icons are hidden. Unlocked icons remain visible, including when muted. Only one selected power-up affects play at a time. During play, tap selects that power-up without performing its movement action; a 400ms hold pauses and opens details without selecting the held skill. Selection and recharge produce three visual states:
 
-- Enabled and ready: the selected skill uses its cream `ready` glyph and yellow selection bar.
-- Enabled and recharging: the selected skill uses its grey `muted` glyph and retains the yellow bar.
-- Disabled by another selected power-up: the unselected skill uses its grey `muted` glyph without a bar.
+- Enabled and ready: the selected skill has the extra outer ring and a bright `yellow` (`#fee761`) face throughout, with its native `ready` glyph rendered in `ink` (`#181425`). The glyph holds 14.43:1 contrast against the face.
+- Enabled and recharging: the selected skill retains the extra outer ring, with an opaque `navy` (`#262b44`) face and its native `grey` (`#8b9bb4`) `muted` glyph, holding 4.93:1 contrast.
+- Disabled by another selected power-up: the unselected skill has the same flat opaque navy face and grey `muted` glyph, without the extra outer ring.
 
 Double jump recharges when support resets its spent air jump. Being grounded or holding Jump alone does not mute it. Dash is recharging during its burst, cooldown or spent airborne charge. Speedy is passive and ready whenever selected. [Ownership and development overrides](../src/rules/skills.ts) determine availability; a false development override falls back to saved ownership and does not erase it.
 
