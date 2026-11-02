@@ -49,79 +49,79 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 ## Sprites
 
-| Key                       | Type                                                       | Size   | Tags                                          |
-| ------------------------- | ---------------------------------------------------------- | ------ | --------------------------------------------- |
-| bird                      | character                                                  | 48x42  | idle, walk, jump, flutter, land, death (once) |
-| dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                 |
-| ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                            |
-| ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                              |
-| frog-courier              | hazard, hit box 6,6,48,30                                  | 60x36  | ride, idle                                    |
-| icon-browser-menu         | sprite                                                     | 16x16  | rest                                          |
-| icon-exit                 | sprite                                                     | 16x16  | rest                                          |
-| icon-home                 | sprite                                                     | 16x16  | rest                                          |
-| icon-home-nav             | sprite                                                     | 20x20  | rest                                          |
-| icon-install              | sprite                                                     | 16x16  | rest                                          |
-| icon-ios-share            | sprite                                                     | 16x16  | rest                                          |
-| icon-move-controls        | sprite                                                     | 16x16  | rest                                          |
-| icon-settings             | sprite                                                     | 16x16  | rest                                          |
-| icon-settings-nav         | sprite                                                     | 20x20  | rest                                          |
-| icon-skill-dash           | skill glyph, no contact                                    | 16x16  | ready, muted                                  |
-| icon-skill-double-jump    | skill glyph, no contact                                    | 16x16  | ready, muted                                  |
-| icon-skill-speedy         | skill glyph, no contact                                    | 16x16  | ready, muted                                  |
-| icon-touch-controls       | sprite                                                     | 16x16  | rest                                          |
-| map-compass               | map pen mark, tan                                          | 25x33  | rest                                          |
-| map-bird                  | map marker, the bird at half size                          | 26x22  | idle                                          |
-| map-fork                  | map fork marker                                            | 29x29  | normal, current, visited, unbuilt             |
-| map-hill                  | map pen mark, tan                                          | 20x11  | rest                                          |
-| map-icon-apartment        | map zone icon, apartment building                          | 14x14  | normal, visited                               |
-| map-icon-blue-cityscape   | map zone icon, city towers                                 | 14x14  | normal, visited                               |
-| map-icon-countryside      | map zone icon, farm and fields                             | 14x14  | normal, visited                               |
-| map-icon-home-city        | map zone icon, neighbourhood house                         | 14x14  | normal, visited                               |
-| map-icon-industrial       | map zone icon, factory                                     | 14x14  | normal, visited                               |
-| map-icon-street           | map zone icon, brownstone                                  | 14x14  | normal, visited                               |
-| map-icon-woodland         | map zone icon, trees                                       | 14x14  | normal, visited                               |
-| map-icon-zone             | map zone icon, generic map pin                             | 14x14  | normal, visited                               |
-| map-paper                 | nine-slice (13,13,13,13), pale steel map frame             | 32x32  | rest                                          |
-| map-region-apartment      | decorative destination illustration                        | 120x60 | rest                                          |
-| map-region-blue-cityscape | decorative destination illustration                        | 120x60 | rest                                          |
-| map-region-countryside    | decorative destination illustration                        | 120x60 | rest                                          |
-| map-region-home-city      | decorative destination illustration                        | 120x60 | rest                                          |
-| map-region-industrial     | decorative destination illustration                        | 120x60 | rest                                          |
-| map-region-woodland       | decorative destination illustration                        | 120x60 | rest                                          |
-| map-wave                  | map pen mark, tan                                          | 22x4   | rest                                          |
-| map-zone                  | map zone marker                                            | 35x35  | normal, current, visited, locked, unbuilt     |
-| park-boat                 | park, moving platform: deck line on row 0, collision 72x12 | 72x18  | idle                                          |
-| park-gate                 | park room door, a Use zone, no collision                   | 36x60  | idle, open (once)                             |
-| pedestrian-cat            | street cast                                                | 34x50  | walk, idle                                    |
-| pedestrian-raccoon        | street cast                                                | 36x50  | walk, idle                                    |
-| pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                        |
-| portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                       |
-| portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                        |
-| portrait-pigeon           | Pebble dialogue portrait, transparent                      | 64x64  | neutral                                       |
-| ui-answer                 | sprite                                                     | 208x36 | normal, selected, pressed                     |
-| ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                               |
-| ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                               |
-| ui-close                  | sprite                                                     | 24x24  | normal, pressed                               |
-| ui-dialogue-box           | sprite                                                     | 640x96 | rest                                          |
-| ui-focus                  | nine-slice (4,4,4,4)                                       | 16x16  | rest                                          |
-| ui-forward-mark           | sprite                                                     | 10x14  | idle                                          |
-| ui-icon-button            | sprite                                                     | 36x36  | normal, pressed                               |
-| ui-move-hint              | sprite                                                     | 75x75  | rest, held-left, held-right                   |
-| ui-move-knob              | sprite                                                     | 11x11  | rest, held                                    |
-| ui-name-tab               | nine-slice (2,2,2,2)                                       | 12x20  | amber, green, pink, tan                       |
-| ui-nav-bar                | nine-slice (1,1,1,3)                                       | 12x48  | rest                                          |
-| ui-pause                  | sprite                                                     | 35x35  | rest, press, held                             |
-| ui-play-mark              | sprite                                                     | 5x10   | rest, light                                   |
-| ui-portrait-frame         | sprite                                                     | 68x68  | rest                                          |
-| ui-quip-strip             | nine-slice (2,2,2,2)                                       | 12x24  | rest                                          |
-| ui-quit                   | sprite                                                     | 20x20  | normal, pressed                               |
-| ui-resume                 | sprite                                                     | 160x44 | normal, pressed                               |
-| ui-settings-card          | nine-slice (2,2,2,2)                                       | 16x16  | rest                                          |
-| ui-skip                   | sprite                                                     | 78x20  | normal, pressed, disabled                     |
-| ui-start                  | sprite                                                     | 192x52 | normal, pressed                               |
-| ui-switch                 | sprite                                                     | 32x16  | on, off                                       |
-| ui-touch-jump             | sprite                                                     | 75x75  | rest, press, held                             |
-| ui-touch-use              | sprite                                                     | 75x75  | rest, press, held                             |
+| Key                       | Type                                                       | Size   | Tags                                                |
+| ------------------------- | ---------------------------------------------------------- | ------ | --------------------------------------------------- |
+| bird                      | character                                                  | 48x42  | idle, walk, jump, flutter, land, death, dash (once) |
+| dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                       |
+| ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                                  |
+| ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                                    |
+| frog-courier              | hazard, hit box 6,6,48,30                                  | 60x36  | ride, idle                                          |
+| icon-browser-menu         | sprite                                                     | 16x16  | rest                                                |
+| icon-exit                 | sprite                                                     | 16x16  | rest                                                |
+| icon-home                 | sprite                                                     | 16x16  | rest                                                |
+| icon-home-nav             | sprite                                                     | 20x20  | rest                                                |
+| icon-install              | sprite                                                     | 16x16  | rest                                                |
+| icon-ios-share            | sprite                                                     | 16x16  | rest                                                |
+| icon-move-controls        | sprite                                                     | 16x16  | rest                                                |
+| icon-settings             | sprite                                                     | 16x16  | rest                                                |
+| icon-settings-nav         | sprite                                                     | 20x20  | rest                                                |
+| icon-skill-dash           | skill glyph, no contact                                    | 16x16  | ready, muted                                        |
+| icon-skill-double-jump    | skill glyph, no contact                                    | 16x16  | ready, muted                                        |
+| icon-skill-speedy         | skill glyph, no contact                                    | 16x16  | ready, muted                                        |
+| icon-touch-controls       | sprite                                                     | 16x16  | rest                                                |
+| map-compass               | map pen mark, tan                                          | 25x33  | rest                                                |
+| map-bird                  | map marker, the bird at half size                          | 26x22  | idle                                                |
+| map-fork                  | map fork marker                                            | 29x29  | normal, current, visited, unbuilt                   |
+| map-hill                  | map pen mark, tan                                          | 20x11  | rest                                                |
+| map-icon-apartment        | map zone icon, apartment building                          | 14x14  | normal, visited                                     |
+| map-icon-blue-cityscape   | map zone icon, city towers                                 | 14x14  | normal, visited                                     |
+| map-icon-countryside      | map zone icon, farm and fields                             | 14x14  | normal, visited                                     |
+| map-icon-home-city        | map zone icon, neighbourhood house                         | 14x14  | normal, visited                                     |
+| map-icon-industrial       | map zone icon, factory                                     | 14x14  | normal, visited                                     |
+| map-icon-street           | map zone icon, brownstone                                  | 14x14  | normal, visited                                     |
+| map-icon-woodland         | map zone icon, trees                                       | 14x14  | normal, visited                                     |
+| map-icon-zone             | map zone icon, generic map pin                             | 14x14  | normal, visited                                     |
+| map-paper                 | nine-slice (13,13,13,13), pale steel map frame             | 32x32  | rest                                                |
+| map-region-apartment      | decorative destination illustration                        | 120x60 | rest                                                |
+| map-region-blue-cityscape | decorative destination illustration                        | 120x60 | rest                                                |
+| map-region-countryside    | decorative destination illustration                        | 120x60 | rest                                                |
+| map-region-home-city      | decorative destination illustration                        | 120x60 | rest                                                |
+| map-region-industrial     | decorative destination illustration                        | 120x60 | rest                                                |
+| map-region-woodland       | decorative destination illustration                        | 120x60 | rest                                                |
+| map-wave                  | map pen mark, tan                                          | 22x4   | rest                                                |
+| map-zone                  | map zone marker                                            | 35x35  | normal, current, visited, locked, unbuilt           |
+| park-boat                 | park, moving platform: deck line on row 0, collision 72x12 | 72x18  | idle                                                |
+| park-gate                 | park room door, a Use zone, no collision                   | 36x60  | idle, open (once)                                   |
+| pedestrian-cat            | street cast                                                | 34x50  | walk, idle                                          |
+| pedestrian-raccoon        | street cast                                                | 36x50  | walk, idle                                          |
+| pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                              |
+| portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                             |
+| portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                              |
+| portrait-pigeon           | Pebble dialogue portrait, transparent                      | 64x64  | neutral                                             |
+| ui-answer                 | sprite                                                     | 208x36 | normal, selected, pressed                           |
+| ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                                     |
+| ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                                     |
+| ui-close                  | sprite                                                     | 24x24  | normal, pressed                                     |
+| ui-dialogue-box           | sprite                                                     | 640x96 | rest                                                |
+| ui-focus                  | nine-slice (4,4,4,4)                                       | 16x16  | rest                                                |
+| ui-forward-mark           | sprite                                                     | 10x14  | idle                                                |
+| ui-icon-button            | sprite                                                     | 36x36  | normal, pressed                                     |
+| ui-move-hint              | sprite                                                     | 75x75  | rest, held-left, held-right                         |
+| ui-move-knob              | sprite                                                     | 11x11  | rest, held                                          |
+| ui-name-tab               | nine-slice (2,2,2,2)                                       | 12x20  | amber, green, pink, tan                             |
+| ui-nav-bar                | nine-slice (1,1,1,3)                                       | 12x48  | rest                                                |
+| ui-pause                  | sprite                                                     | 35x35  | rest, press, held                                   |
+| ui-play-mark              | sprite                                                     | 5x10   | rest, light                                         |
+| ui-portrait-frame         | sprite                                                     | 68x68  | rest                                                |
+| ui-quip-strip             | nine-slice (2,2,2,2)                                       | 12x24  | rest                                                |
+| ui-quit                   | sprite                                                     | 20x20  | normal, pressed                                     |
+| ui-resume                 | sprite                                                     | 160x44 | normal, pressed                                     |
+| ui-settings-card          | nine-slice (2,2,2,2)                                       | 16x16  | rest                                                |
+| ui-skip                   | sprite                                                     | 78x20  | normal, pressed, disabled                           |
+| ui-start                  | sprite                                                     | 192x52 | normal, pressed                                     |
+| ui-switch                 | sprite                                                     | 32x16  | on, off                                             |
+| ui-touch-jump             | sprite                                                     | 75x75  | rest, press, held                                   |
+| ui-touch-use              | sprite                                                     | 75x75  | rest, press, held                                   |
 
 ## Tilesets
 

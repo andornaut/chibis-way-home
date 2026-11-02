@@ -64,7 +64,8 @@
       "once": [
         "jump",
         "land",
-        "death"
+        "death",
+        "dash"
       ]
     },
     {

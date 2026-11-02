@@ -38,10 +38,16 @@ head and bill 10px on the right, and he stops 2px below its top. The raised wing
 | death   | 2     | 80  | brief impact squash, rounded belly, feet hidden               | -2   | 38 x 16    | 39       |
 | death   | 3     | 400 | spring to round sitting rest, soft contact ends, feet hidden | -2   | 34 x 21    | 39       |
 
+Dash appends frames 18 to 20 after death, with 60, 130 and 60ms durations. The wing lifts up and back,
+then recovers, while the head, torso and feet retain the rest pose. Its rounded tip and shoulder stay
+inside the 48x42 frame. Dash plays once; gameplay selects it only during the active dash and restores
+locomotion as soon as the dash ends. The 250ms art sequence matches the current configured burst.
+Player collision remains the fixed 24x36 body; bird alpha is not registered for silhouette contact.
+
 Lift is how far the body's bottom edge sits above its rest row, in pixels. Body w x h is the body's
 superellipse; normal locomotion keeps its area within 2% of rest. Shadow w is for a ground shadow the game
 may draw under him: the land contact frame's is the largest. flutter and jump 1 are airborne, so their shadow
-is the game's to place. jump, land and death play once and hold their last frame (the manifest's "once"); every
+is the game's to place. jump, land, death and dash play once and hold their last frame (the manifest's "once"); every
 other tag loops. After land, play idle. Death is appended after the existing tags; frame indices stay fixed.
 Death has no baked world movement: the runtime uses frame 0 for recoil, holds frame 1 during the physical fall,
 then shows frame 2 on support and springs back to seated frame 3, held while the retry card is open.
@@ -194,6 +200,25 @@ def draw(lift=0, bw=BRX, bh=BRY, wing=("fold", 0), feet=((-5, 0), (2, 0)), eye="
             1,
             1,
         )
+    if kind == "dash":
+        # The wing pivots from its shoulder while the head, torso and feet retain the rest pose.
+        angle = (196, 218, 206)[val]
+        length = (13, 20, 16)[val]
+        a = math.radians(angle)
+        sx, sy = C + 1, bcy + 1
+
+        def wing_shape(x, y):
+            dx, dy = x + 0.5 - sx, y + 0.5 - sy
+            along = dx * math.cos(a) + dy * math.sin(a)
+            across = -dx * math.sin(a) + dy * math.cos(a)
+            if along < 0:
+                return (along / 3) ** 2 + (across / 4) ** 2 <= 1
+            taper = length - 2
+            if along <= taper:
+                return abs(across) <= 4 - 2 * along / taper
+            return (along - taper) ** 2 + across**2 <= 4
+
+        cel(g, wing_shape, WING, "brown", None, 1, 1)
     cel(g, in_ell(hcx, hcy, HEAD_R, head_ry), BASE, SHADE, LIGHT, 3, 1)
     if kind == "fold":  # on the body's side, its tip pointing back
         cel(g, in_ell(C - 2, bcy + 2 + val, BRX * 0.5, BRY * 0.3, -0.3), WING, "brown", None, 1, 1)
@@ -269,6 +294,7 @@ def bird_tags():
             ],
             [100, 120, 80, 400],
         ),
+        ("dash", [draw(wing=("dash", phase)) for phase in range(3)], [60, 130, 60]),
     ]
 
 
@@ -304,7 +330,7 @@ def sprites():
 
 
 # Tags that play once and hold their last frame; every other tag loops.
-ONCE = {"bird": ("jump", "land", "death")}
+ONCE = {"bird": ("jump", "land", "death", "dash")}
 
 
 if __name__ == "__main__":
