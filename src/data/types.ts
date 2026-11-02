@@ -110,6 +110,7 @@ export interface BirdTuning {
   readonly dash?: BirdDashTuning;
   // Enables one fresh airborne jump per airtime; only actual supported landing restores it.
   readonly doubleJump?: boolean;
+  readonly doubleJumpHeightRatio: number;
   // Speed gained per second while a direction is held, on the ground and in the air.
   readonly airAccel: number;
   readonly groundAccel: number;
