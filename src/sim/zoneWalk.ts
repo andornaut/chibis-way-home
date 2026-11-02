@@ -34,6 +34,7 @@ import { type WalkStep, walkTransitions } from "./walkTransitions";
 import { WalkWitnesses } from "./zoneWalkWitnesses";
 
 const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
+const WALK_TERMINALS = new WeakMap<ZoneLayout, (zone: ZoneState, support: Surface) => void>();
 const WALK_WITNESSES = new WeakMap<ZoneLayout, WalkWitnesses>();
 const WALK_OBSERVERS = new WeakMap<ZoneLayout, (before: ZoneState, next: ZoneState) => void>();
 const WALK_SPANS = new WeakMap<
@@ -546,6 +547,7 @@ function comeToRest(
   const witnesses = WALK_WITNESSES.get(layout);
   if (under && witnesses) {
     witnesses.mark(run.zone, witnesses.surface(under.key));
+    WALK_TERMINALS.get(layout)?.(run.zone, under);
   }
   for (let i = 0; i < AIR_STEPS && Math.abs(run.zone.bird.vx) >= 1; i++) {
     if (!run.step(STILL) || !run.zone.bird.grounded) {
@@ -833,7 +835,7 @@ function sweptSpan(
 // The stretches a spot might reach in one move: the other surfaces in its area within the
 // bird's bounds, and its own surface's buckets nearby.
 function targetsFrom(
-  tuning: Pick<BirdTuning, "width">,
+  tuning: Pick<BirdTuning, "brakeAccel" | "walkSpeed" | "width">,
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   bounds: ReturnType<typeof moveBounds>,
@@ -867,6 +869,17 @@ function targetsFrom(
       const aims = [...new Set(edges)]
         .filter((left) => left >= surface.left && left + tuning.width <= surface.right)
         .map((left) => ({ ...target, left, right: left + tuning.width }));
+      const area = areaOf(layout, surface.area);
+      const stopping =
+        tuning.walkSpeed ** 2 / (2 * tuning.brakeAccel) + tuning.walkSpeed * STEP_SECONDS;
+      const beforeExit = Math.min(surface.right, area.exitX) - tuning.width - stopping;
+      if (
+        area.walkLinks?.right === undefined &&
+        surface.right > area.exitX &&
+        beforeExit >= surface.left
+      ) {
+        aims.unshift({ ...target, left: beforeExit, right: beforeExit + tuning.width });
+      }
       return [...aims, target];
     });
   const stretches = OWN_BUCKETS.map((offset) => from.bucket + offset)
@@ -1079,6 +1092,7 @@ function walk(
     WALK_OBSERVERS.delete(observedLayout);
     WALK_SPANS.delete(observedLayout);
     WALK_WITNESSES.delete(observedLayout);
+    WALK_TERMINALS.delete(observedLayout);
   }
 }
 
@@ -1101,8 +1115,37 @@ function walkSearch(
   const profiles = new Map<string, bigint[]>();
   let activeProfile = 0n;
   let depth = 0;
+  const terminalAttempts = new WeakSet<ZoneState>();
+  if (required) {
+    WALK_TERMINALS.set(layout, (zone, support) => {
+      if (zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
+        return;
+      }
+      reached.add(support.key);
+      const area = areaOf(layout, zone.area);
+      if (
+        complete() ||
+        zone.cleared ||
+        area.walkLinks?.right !== undefined ||
+        (layout.stageExit !== undefined && layout.stageExit.area !== zone.area) ||
+        placed(support, zone, layout).right <= area.exitX ||
+        !required.witnesses.ready(zone) ||
+        terminalAttempts.has(zone)
+      ) {
+        return;
+      }
+      terminalAttempts.add(zone);
+      const off = walkOff(tuning, layout, zone);
+      steps += off.steps;
+      if (off.entered) {
+        arrive(off.entered);
+      }
+      cleared ||= off.cleared;
+    });
+  }
   const reach = (spot: Spot) => {
     required?.witnesses.mark(spot.state, required.witnesses.surface(spot.surface.key));
+    WALK_TERMINALS.get(layout)?.(spot.state, spot.surface);
     const profile = required?.witnesses.profile(spot.state) ?? 0n;
     const key = required ? pathSpotKey(layout, spot) : spotKey(spot);
     if (!seen.has(key)) {
@@ -1208,16 +1251,23 @@ function walkSearch(
         ) ?? [];
       for (const target of [...intervals.map((interval) => interval.target), ...own, ...others]) {
         const interval = intervals.find((item) => item.target === target);
+        const terminalTarget =
+          required !== undefined &&
+          target.surface !== from.surface &&
+          area.walkLinks?.right === undefined &&
+          sweptSpan(bounds, layout, target.surface).right > area.exitX;
         const done = () =>
           complete() ||
-          (required
-            ? covered(
-                target.surface === from.surface && !interval ? target.key : target.surface.key,
-                activeProfile | (interval?.token ?? required.witnesses.surface(target.surface.key)),
-              )
-            : target.surface === from.surface
-              ? seen.has(target.key)
-              : reached.has(target.key));
+          (!terminalTarget &&
+            (required
+              ? covered(
+                  target.surface === from.surface && !interval ? target.key : target.surface.key,
+                  activeProfile |
+                    (interval?.token ?? required.witnesses.surface(target.surface.key)),
+                )
+              : target.surface === from.surface
+                ? seen.has(target.key)
+                : reached.has(target.key)));
         if (done()) {
           continue;
         }

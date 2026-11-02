@@ -50,6 +50,10 @@ export class WalkWitnesses {
     return this.mask(this.node(state));
   }
 
+  ready(state: ZoneState): boolean {
+    return (this.profile(state) & this.full) === this.full;
+  }
+
   finish(state: ZoneState): void {
     this.terminals.add(this.node(state));
   }
