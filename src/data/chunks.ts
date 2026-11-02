@@ -268,7 +268,9 @@ function apartmentTheme(
         character: "apartment-stairwell",
         skin: {
           art:
-            wall === "apartment-wall-residential" ? "apartment-room-door" : "apartment-stairwell",
+            wall === "apartment-wall-residential"
+              ? "apartment-stairwell-door"
+              : "apartment-stairwell",
           tileset: null,
         },
       },
@@ -1254,8 +1256,29 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...WOODLAND_CHUNKS,
 };
 
+const ROOM_DOOR_COLUMNS: Readonly<Record<string, number>> = {
+  "apartment-room": 1,
+  "country-room": 17,
+  "depot-room": 40,
+  "encounter-room": 6,
+  "loading-room": 17,
+};
+
+function roomDoorSlot(slot: NonNullable<ChunkPlan["slots"]>[number]): typeof slot {
+  const col = ROOM_DOOR_COLUMNS[slot.id];
+  return slot.kind !== "door" || col === undefined
+    ? slot
+    : {
+        ...slot,
+        area: { col, cols: 5, row: slot.area.row + slot.area.rows - 7, rows: 7 },
+      };
+}
+
 const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
-  Object.entries(AUTHORED_CHUNKS).map(([id, chunk]) => [id, withValleyFloors(chunk)]),
+  Object.entries(AUTHORED_CHUNKS).map(([id, authored]) => {
+    const chunk = withValleyFloors(authored);
+    return [id, { ...chunk, ...(chunk.slots && { slots: chunk.slots.map(roomDoorSlot) }) }];
+  }),
 );
 
 const DEPTH_CAPS = new Set([
@@ -1467,7 +1490,9 @@ function fourScreenChunk(
     }),
     rows: FOUR_SCREEN_ROWS,
     scenery: [...(chunk.scenery ?? []).map(point), ...(underground ? tunnelWalls() : [])],
-    ...(chunk.slots && { slots: chunk.slots.map((slot) => ({ ...slot, area: point(slot.area) })) }),
+    ...(chunk.slots && {
+      slots: chunk.slots.map(roomDoorSlot).map((slot) => ({ ...slot, area: point(slot.area) })),
+    }),
     solids: [
       ...chunk.solids.map((solid) => ({
         ...point(solid),

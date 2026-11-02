@@ -96,6 +96,73 @@ describe.each(ALL_CHUNKS)("chunk %s", (_, library, chunk) => {
   }
 });
 
+it("supports ordinary room doors without intersecting terrain or platforms", () => {
+  const roomSlots = new Set([
+    "apartment-room",
+    "country-room",
+    "depot-room",
+    "encounter-room",
+    "loading-room",
+  ]);
+  let checked = 0;
+  for (const [id, library, chunk] of ALL_CHUNKS) {
+    for (const slot of chunk.slots ?? []) {
+      if (slot.kind !== "door" || !roomSlots.has(slot.id)) {
+        continue;
+      }
+      for (const key of themesOf(chunk)) {
+        const theme = library.themes[key]!;
+        const door = CHARACTERS[theme.bindings[theme.door]!.character]!;
+        const rect = {
+          col: slot.area.col + (slot.area.cols - door.cols) / 2,
+          cols: door.cols,
+          row: slot.area.row + slot.area.rows - door.rows,
+          rows: door.rows,
+        };
+        const label = `${id}/${slot.id}/${key}`;
+        expect(slot.area.cols, label).toBeGreaterThanOrEqual(door.cols);
+        expect(slot.area.rows, label).toBeGreaterThanOrEqual(door.rows);
+        const platforms = chunk.objects.flatMap((object) => {
+          const instance = bindElement(theme.bindings, object);
+          const character = CHARACTERS[instance.character ?? ""];
+          const collision = character && ARCHETYPES[character.archetype]?.collision;
+          return character && (collision === "solid" || collision === "ledge")
+            ? [
+                {
+                  col: instance.col,
+                  cols: instance.cols ?? character.cols,
+                  row: instance.row,
+                  rows: instance.rows ?? character.rows,
+                },
+              ]
+            : [];
+        });
+        expect(
+          [...chunk.solids, ...platforms].filter(
+            (solid) =>
+              rect.col < solid.col + solid.cols &&
+              rect.col + rect.cols > solid.col &&
+              rect.row < solid.row + solid.rows &&
+              rect.row + rect.rows > solid.row,
+          ),
+          label,
+        ).toEqual([]);
+        expect(
+          chunk.solids.some(
+            (solid) =>
+              solid.row === rect.row + rect.rows &&
+              solid.col <= rect.col &&
+              solid.col + solid.cols >= rect.col + rect.cols,
+          ),
+          label,
+        ).toBe(true);
+        checked++;
+      }
+    }
+  }
+  expect(checked).toBeGreaterThan(0);
+});
+
 describe("the seam rule", () => {
   it.each<[string, Partial<ChunkPlan>, string]>([
     [
