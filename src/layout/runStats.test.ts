@@ -1,4 +1,3 @@
-import { fillNames } from "@andornaut/game-kit/lines";
 import { laidGlyphs, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
@@ -7,7 +6,9 @@ import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { ZONE_MAP } from "../data/map";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import { formatRunStats } from "../save/runSummary";
-import { deathLabels } from "../view/death";
+import { deathLabels, deathSummary } from "../view/death";
+import { statsStatement } from "../view/statsStatement";
+import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./cutscene";
 import {
   RUN_STAT_KEYS,
   runStatLabels,
@@ -23,82 +24,100 @@ const values = formatRunStats(
   run,
 );
 const labels = runStatLabels(TEXT.stats);
-const words = {
-  aggregate: STATS_SCOPE_TEXT.aggregate,
-  stage: "Stage 2: Country lanes",
-  stats: RUN_STAT_KEYS.map((key) => ({ label: labels[key], value: values[key] })),
-  totals: statsTotalRows(
-    { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
-    { runSeconds: 599999, stageSeconds: run.runSeconds, zoneSeconds: 3400 },
-  ),
-};
-const bounds = { height: 164, width: 688, x: 16, y: 112 };
+const sampleStage = ZONE_MAP.destinations.find((zone) => zone.id === "industrial")!.stages[1]!;
+function wordsFor(stage: string) {
+  const identity = deathSummary(TEXT.death, {
+    ...deathLabels(ZONE_MAP, TEXT.map, stage, stage),
+    activeSeconds: run.attemptSeconds,
+    percent: 1,
+  });
+  return {
+    progress: identity.progress,
+    stage: identity.stage,
+    statement: statsStatement("clear", stage),
+    stats: RUN_STAT_KEYS.map((key) => ({ label: labels[key], value: values[key] })),
+    totals: statsTotalRows(
+      { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
+      {
+        runSeconds: 599999,
+        stageSeconds: run.runSeconds,
+        zoneSeconds: 3400,
+      },
+    ),
+    zone: identity.title,
+  };
+}
+const words = wordsFor(sampleStage);
 
-describe("image-backed stage summaries", () => {
-  it("separates current-stage results and scoped totals around the uncropped preview", () => {
-    const result = stageSummaryLayout(fonts, bounds, words);
-    expect(result.stage.panel).toEqual({ height: 124, width: 212, x: 16, y: 112 });
-    expect(result.image).toEqual({ height: 116, width: 232, x: 244, y: 128 });
-    expect(result.aggregate.panel).toEqual({ height: 124, width: 212, x: 492, y: 112 });
-    expect(result.divider).toEqual({ height: 132, width: 2, x: 483, y: 112 });
-    expect(result.divider.x).toBeGreaterThan(result.image.x + result.image.width);
-    expect(result.divider.x + result.divider.width).toBeLessThan(result.aggregate.panel.x);
-    expect(result).not.toHaveProperty("wholeRun");
-    expect(result).not.toHaveProperty("zone");
-    expect(result.stage.rows.map(({ value }) => value.text)).toEqual([
-      values.attempts,
+describe("preview-first stage summaries", () => {
+  it("centres the preview and joint statistics block below zone, stage and actual progress", () => {
+    const result = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, words);
+    expect([result.zone.rect.y, result.stage.rect.y, result.progress.rect.y]).toEqual([16, 34, 52]);
+    expect(result.image).toEqual({ height: 120, width: 240, x: 240, y: 72 });
+    expect(result.stats.map((row) => row.label.rect.y)).toEqual([200, 220, 240]);
+    expect(result.totals.map((row) => row.label.rect.y)).toEqual([200, 220, 240]);
+    expect(result.stats.map((row) => row.label.rect.x)).toEqual([192, 192, 192]);
+    expect(result.totals.map((row) => row.label.rect.x)).toEqual([376, 376, 376]);
+    expect(result.stats.map((row) => row.value.rect.x + row.value.rect.width)).toEqual([
+      344, 344, 344,
+    ]);
+    expect(result.totals.map((row) => row.value.rect.x + row.value.rect.width)).toEqual([
+      528, 528, 528,
+    ]);
+    expect(result.stats.map((row) => row.value.text)).toEqual([
       values.lastAttempt,
       values.best,
+      values.attempts,
     ]);
-    expect(result.aggregate.rows.map(({ value }) => value.text)).toEqual([
-      "20:34",
-      "56:40",
-      "9999:59",
-    ]);
-    expect(result.stage.title.x - result.stage.panel.x).toBe(16);
-    expect(result.aggregate.title.x - result.aggregate.panel.x).toBe(16);
-    expect(result.stage.rows.map(({ rect }) => rect.y)).toEqual(
-      result.aggregate.rows.map(({ rect }) => rect.y),
-    );
-    expect(
-      new Set([...result.stage.rows, ...result.aggregate.rows].map(({ value }) => value.rect.x))
-        .size,
-    ).toBe(2);
+    expect(result.totals.map((row) => row.value.text)).toEqual(["20:34", "56:40", "9999:59"]);
+    expect(result.statement!.rect.y).toBe(260);
+    expect(result.statement!.rect.y + result.statement!.rect.height).toBe(274);
+    expect(result).not.toHaveProperty("divider");
+    expect(result).not.toHaveProperty("wholeRun");
+    expect(result).not.toHaveProperty("aggregate");
   });
-  it("fits every catalogued stage name with full-size headings and footer clearance", () => {
+  it("fits all actual stage names and clear statements at native font size before the footer", () => {
     for (const destination of ZONE_MAP.destinations) {
       for (const stage of destination.stages) {
-        const identity = deathLabels(ZONE_MAP, TEXT.map, stage, stage);
-        const result = stageSummaryLayout(fonts, bounds, {
-          ...words,
-          stage: fillNames(TEXT.death.stage, {
-            name: identity.stageLabel,
-            number: identity.stageNumber,
-          }),
-        });
+        const result = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, wordsFor(stage));
+        for (const heading of [result.zone, result.stage, result.progress]) {
+          expect(heading.rect.x + heading.rect.width / 2).toBe(360);
+          expect(heading.rect.x).toBeGreaterThanOrEqual(STAGE_SUMMARY_BOUNDS.x);
+          expect(heading.rect.x + heading.rect.width).toBeLessThanOrEqual(704);
+        }
         expect(result.image.width / result.image.height).toBe(2);
-        for (const block of [result.stage, result.aggregate]) {
-          expect(block.title.x + block.title.width).toBeLessThanOrEqual(bounds.x + bounds.width);
-          expect(block.rows.at(-1)!.rect.y + block.rows.at(-1)!.rect.height).toBeLessThanOrEqual(
-            bounds.y + bounds.height,
+        expect(result.statement!.rect.x).toBeGreaterThanOrEqual(16);
+        expect(result.statement!.rect.x + result.statement!.rect.width).toBeLessThanOrEqual(704);
+        expect(result.statement!.rect.y + result.statement!.rect.height).toBeLessThanOrEqual(
+          CUTSCENE_CONTINUE.hit.y - 8,
+        );
+        expect(
+          CUTSCENE_CONTINUE.hit.y - result.statement!.rect.y - result.statement!.rect.height,
+        ).toBeGreaterThanOrEqual(10);
+        for (const row of [...result.stats, ...result.totals]) {
+          expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBeGreaterThanOrEqual(
+            8,
           );
-          expect(block.rows[0]!.rect.y - block.title.y).toBe(block.title.height + 4);
-          for (const row of block.rows) {
-            expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBe(8);
-          }
         }
       }
     }
   });
-  it("reports oversized metric values rather than shrinking or clipping their font", () => {
+  it("reports values that exceed the measured columns without shrinking or clipping", () => {
     expect(() =>
-      stageSummaryLayout(fonts, bounds, {
+      stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, {
         ...words,
         totals: words.totals.map((row) => ({ ...row, value: "9".repeat(20) })),
       }),
     ).toThrow("Stage summary metric exceeds its column");
   });
-  it("anchors visible text ink to the left edge rather than centring it inside the slot", () => {
+  it("omits the statement and its hit rectangle when there is no actual clear statement", () => {
+    const result = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, {
+      ...words,
+      statement: undefined,
+    });
+    expect(result.statement).toBeUndefined();
+  });
+  it("anchors visible glyph ink at the supplied top-left point", () => {
     const text = values.best;
     const rect = { height: 16, width: 300, x: 40, y: 70 };
     const origin = summaryTextOrigin(fonts.body, rect, text);

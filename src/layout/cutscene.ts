@@ -1,6 +1,5 @@
 import { SCREEN } from "../data/screen";
 import { CARD_CONTENT } from "./cardFrame";
-import { DIALOGUE_SCREEN } from "./dialogueScreen";
 import { labelledButton } from "./labelledButton";
 import { MAP_SCREEN } from "./mapScreen";
 
@@ -13,11 +12,8 @@ export const CUTSCENE_CONTINUE = labelledButton({
 });
 
 export const STAGE_SUMMARY_BOUNDS = {
-  height:
-    CUTSCENE_CONTINUE.hit.y -
-    CARD_CONTENT.gap -
-    (DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height + CARD_CONTENT.gap),
+  height: CUTSCENE_CONTINUE.hit.y - CARD_CONTENT.gap - CARD_CONTENT.padding,
   width: SCREEN.width - 2 * CARD_CONTENT.padding,
   x: CARD_CONTENT.padding,
-  y: DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height + CARD_CONTENT.gap,
+  y: CARD_CONTENT.padding,
 };

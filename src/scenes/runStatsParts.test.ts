@@ -6,13 +6,17 @@ import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
-import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
+import { TEXT } from "../data/text";
+import type { Point } from "../data/types";
+import { STAGE_SUMMARY_BOUNDS } from "../layout/cutscene";
+import { textInkBounds } from "../layout/textInk";
+import { statsStatement } from "../view/statsStatement";
 
 vi.mock("./cardParts", () => ({
   BODY_FONT: "font-body",
   TITLE_FONT: "font-title",
-  addCardText: (_scene: unknown, _font: string, _point: unknown, text: string) => {
-    paintedText.push(text);
+  addCardText: (_scene: unknown, font: string, point: Point, text: string) => {
+    painted.push({ font, point, text });
     return { setLeftAlign: () => ({ setLineSpacing: vi.fn() }) };
   },
   cardFonts: () => ({ body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) }),
@@ -21,46 +25,55 @@ vi.mock("./cardParts", () => ({
 
 import { addStageSummary } from "./runStatsParts";
 
-const paintedText: string[] = [];
+const painted: { font: string; point: Point; text: string }[] = [];
 
-it("paints current-stage results and aggregate totals without background fills", () => {
-  paintedText.length = 0;
-  const destination = ZONE_MAP.destinations[0]!;
-  const stage = destination.stages[0]!;
-  const rectangle = vi.fn(() => ({ setOrigin: vi.fn() }));
-  const image = vi.fn(() => ({ setOrigin: () => ({ setDisplaySize: vi.fn() }) }));
-  const scene = {
-    add: { image, rectangle },
-    cache: { json: { get: () => ({ [destination.id]: { primary: "zone-yellow" } }) } },
-    textures: { exists: () => true },
-  } as unknown as Scene;
+it("paints the preview-first page and its single unboxed statement without panels or dividers", () => {
+  painted.length = 0;
+  const stage = ZONE_MAP.destinations.find((zone) => zone.id === "industrial")!.stages[1]!;
+  const rectangle = vi.fn();
+  const size = vi.fn();
+  const image = vi.fn(() => ({ setOrigin: () => ({ setDisplaySize: size }) }));
+  const scene = { add: { image, rectangle }, textures: { exists: () => true } } as unknown as Scene;
   const runStats = { attemptSeconds: 30, attempts: 2, bestSeconds: 20, runSeconds: 50 };
   const data = {
     percent: 1,
     runStats,
     stage,
+    statement: statsStatement("clear", stage),
     wholeRun: { activeSeconds: 123456, completed: 19, deaths: 9876, total: 21 },
     zoneStats: { ...runStats, completed: 1, partial: true, total: 3 },
   };
   const unchanged = structuredClone(data);
-  const layout = addStageSummary(scene, { height: 164, width: 688, x: 16, y: 112 }, data);
-  expect(image).toHaveBeenCalledExactlyOnceWith(244, 128, STAGE_PREVIEWS[stage]);
-  expect(rectangle.mock.calls).toEqual([
-    [16, 112, 212, 2, "zone-yellow"],
-    [492, 112, 212, 2, "lgrey"],
-    [483, 112, 2, 132, "lgrey"],
+  const layout = addStageSummary(scene, STAGE_SUMMARY_BOUNDS, data);
+  expect(image).toHaveBeenCalledExactlyOnceWith(240, 72, STAGE_PREVIEWS[stage]);
+  expect(size).toHaveBeenCalledExactlyOnceWith(240, 120);
+  expect(rectangle).not.toHaveBeenCalled();
+  expect(painted.map(({ text }) => text)).toEqual([
+    layout.zone.text,
+    layout.stage.text,
+    layout.progress.text,
+    ...[...layout.stats, ...layout.totals].flatMap((row) => [row.label.text, row.value.text]),
+    layout.statement!.name.text,
+    layout.statement!.text.text,
   ]);
-  expect(paintedText).toHaveLength(14);
-  expect(paintedText).toEqual([
-    ...[layout.stage, layout.aggregate].flatMap((block) => [
-      block.text,
-      ...block.rows.flatMap((row) => [row.label.text, row.value.text]),
-    ]),
-  ]);
-  expect(layout.aggregate.rows.map(({ label }) => label.text)).toEqual([
-    STATS_SCOPE_TEXT.stageTotal.replace("{time}", "").trimEnd(),
-    STATS_SCOPE_TEXT.zoneTotal.replace("{time}", "").trimEnd(),
-    TEXT.stats.runTotal.replace("{time}", "").trimEnd(),
-  ]);
+  expect(painted).toHaveLength(17);
+  const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
+  const tops = painted.map(({ font, point, text }) => {
+    const ink = textInkBounds(font === "font-title" ? fonts.title : fonts.body, 2, 16, text);
+    return { x: point.x + ink.x, y: point.y + ink.y };
+  });
+  expect(tops.slice(0, 3).map(({ y }) => y)).toEqual([16, 34, 52]);
+  expect(tops.slice(3, 9).map(({ y }) => y)).toEqual([200, 200, 220, 220, 240, 240]);
+  expect(tops.slice(-2).map(({ y }) => y)).toEqual([260, 260]);
   expect(data).toEqual(unchanged);
+  painted.length = 0;
+  const returned = addStageSummary(scene, STAGE_SUMMARY_BOUNDS, {
+    ...data,
+    percent: 0.37,
+    statement: undefined,
+  });
+  expect(returned.statement).toBeUndefined();
+  expect(painted.some(({ text }) => text === TEXT.death.progress.replace("{percent}", "37"))).toBe(
+    true,
+  );
 });

@@ -4,12 +4,12 @@ import { type GameObjects, type Input, Scene } from "phaser";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
-import type { Point } from "../data/types";
+import type { Point, Rect } from "../data/types";
 import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "../layout/cutscene";
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
 import { focusKeyAction } from "../pause/focusInput";
 import type { WholeRunDisplaySummary } from "../save/runSummary";
 import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
+import { statsStatement } from "../view/statsStatement";
 import {
   addTextButton,
   captureTab,
@@ -21,7 +21,6 @@ import {
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import { addStageSummary } from "./runStatsParts";
-import { drawStatsStatement } from "./statsStatement";
 
 export interface CutsceneData {
   readonly percent: number;
@@ -40,6 +39,7 @@ export class CutsceneScene extends Scene {
   private button!: TextButton;
   private focused = false;
   private finished = false;
+  private statementHit: Rect | undefined;
   private ring: GameObjects.NineSlice | undefined;
   private press: { readonly id: number; readonly at: Point; cancelled: boolean } | undefined;
 
@@ -51,22 +51,26 @@ export class CutsceneScene extends Scene {
     this.summary = data;
     this.focused = false;
     this.finished = false;
+    this.statementHit = undefined;
     this.ring = undefined;
     this.press = undefined;
   }
   create(): void {
     fitPlayCamera(this);
     this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, 0x000000).setOrigin(0);
-    if (this.summary.cleared !== false) {
-      drawStatsStatement(this, "clear", this.summary.clearedStage);
-    }
-    addStageSummary(this, STAGE_SUMMARY_BOUNDS, {
+    const statement =
+      this.summary.cleared === false
+        ? undefined
+        : statsStatement("clear", this.summary.clearedStage);
+    const layout = addStageSummary(this, STAGE_SUMMARY_BOUNDS, {
       percent: this.summary.percent,
       runStats: this.summary.runStats,
       stage: this.summary.clearedStage,
+      ...(statement && { statement }),
       wholeRun: this.summary.wholeRun,
       zoneStats: this.summary.zoneStats,
     });
+    this.statementHit = layout.statement?.rect;
     this.button = addTextButton(this, CUTSCENE_CONTINUE, TEXT.map.continue, {
       style: PRIMARY_BUTTON,
     });
@@ -131,7 +135,7 @@ export class CutsceneScene extends Scene {
   private continueContains(at: Point): boolean {
     return (
       containsPoint(CUTSCENE_CONTINUE.hit, at.x, at.y) ||
-      (this.summary.cleared !== false && containsPoint(DIALOGUE_SCREEN.box, at.x, at.y))
+      (this.statementHit !== undefined && containsPoint(this.statementHit, at.x, at.y))
     );
   }
   private render(): void {

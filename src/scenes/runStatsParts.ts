@@ -1,10 +1,10 @@
-import { fillNames } from "@andornaut/game-kit/lines";
 import type { Scene } from "phaser";
 
 import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import type { Rect } from "../data/types";
+import type { DialogueParagraph } from "../dialogue/conversation";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "../layout/cardFrame";
 import {
   RUN_STAT_KEYS,
@@ -15,8 +15,7 @@ import {
 } from "../layout/runStats";
 import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
 import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
-import { deathLabels } from "../view/death";
-import { ZONE_THEMES_KEY, zoneTheme, type ZoneThemes } from "../view/zoneTheme";
+import { deathLabels, deathSummary } from "../view/death";
 import { addCardText, BODY_FONT, cardFonts, paletteColour, TITLE_FONT } from "./cardParts";
 
 export function addStageSummary(
@@ -25,20 +24,27 @@ export function addStageSummary(
   data: {
     readonly percent: number;
     readonly stage: string;
+    readonly statement?: DialogueParagraph | undefined;
     readonly runStats: RunStatsSummary;
     readonly zoneStats: ZoneStatsSummary;
     readonly wholeRun: WholeRunDisplaySummary;
   },
 ) {
   const labels = deathLabels(ZONE_MAP, TEXT.map, data.stage, data.stage);
+  const identity = deathSummary(TEXT.death, {
+    ...labels,
+    activeSeconds: data.runStats.attemptSeconds,
+    percent: data.percent,
+  });
   const metricLabels = runStatLabels(TEXT.stats);
   const values = formatRunStats(
     { ...TEXT.stats, attempts: "{count}", best: "{time}", lastAttempt: "{time}" },
     data.runStats,
   );
   const words = {
-    aggregate: STATS_SCOPE_TEXT.aggregate,
-    stage: fillNames(TEXT.death.stage, { name: labels.stageLabel, number: labels.stageNumber }),
+    progress: identity.progress,
+    stage: identity.stage,
+    ...(data.statement && { statement: data.statement }),
     stats: RUN_STAT_KEYS.map((key) => ({ label: metricLabels[key], value: values[key] })),
     totals: statsTotalRows(
       { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
@@ -48,6 +54,7 @@ export function addStageSummary(
         zoneSeconds: data.zoneStats.runSeconds,
       },
     ),
+    zone: identity.title,
   };
   const fonts = cardFonts(scene);
   const layout = stageSummaryLayout(fonts, bounds, words);
@@ -71,29 +78,21 @@ export function addStageSummary(
     .image(layout.image.x, layout.image.y, key)
     .setOrigin(0)
     .setDisplaySize(layout.image.width, layout.image.height);
-  for (const block of [layout.stage, layout.aggregate]) {
-    const colour =
-      block === layout.stage
-        ? zoneTheme(ZONE_MAP, scene.cache.json.get(ZONE_THEMES_KEY) as ZoneThemes, data.stage)
-            .primary
-        : "lgrey";
-    scene.add
-      .rectangle(block.panel.x, block.panel.y, block.panel.width, 2, paletteColour(scene, colour))
-      .setOrigin(0);
-    drawText(BODY_FONT, block.title, block.text, "cream");
-    for (const row of block.rows) {
-      drawText(BODY_FONT, row.label.rect, row.label.text, "lgrey");
-      drawText(BODY_FONT, row.value.rect, row.value.text, "white");
-    }
+  drawText(TITLE_FONT, layout.zone.rect, layout.zone.text, "lgrey");
+  drawText(BODY_FONT, layout.stage.rect, layout.stage.text, "cream");
+  drawText(BODY_FONT, layout.progress.rect, layout.progress.text, "lgrey");
+  for (const row of [...layout.stats, ...layout.totals]) {
+    drawText(BODY_FONT, row.label.rect, row.label.text, "lgrey");
+    drawText(BODY_FONT, row.value.rect, row.value.text, "white");
   }
-  scene.add
-    .rectangle(
-      layout.divider.x,
-      layout.divider.y,
-      layout.divider.width,
-      layout.divider.height,
-      paletteColour(scene, "lgrey"),
-    )
-    .setOrigin(0);
+  if (layout.statement) {
+    drawText(
+      BODY_FONT,
+      layout.statement.name.rect,
+      layout.statement.name.text,
+      layout.statement.colour,
+    );
+    drawText(BODY_FONT, layout.statement.text.rect, layout.statement.text.text, "cream");
+  }
   return layout;
 }

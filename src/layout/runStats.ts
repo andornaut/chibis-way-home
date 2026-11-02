@@ -4,9 +4,11 @@ import { bitmapMeasure, fitsRoom, fittingText } from "@andornaut/game-kit/text/t
 
 import { SCREEN } from "../data/screen";
 import type { Point, Rect } from "../data/types";
+import type { DialogueParagraph } from "../dialogue/conversation";
 import { timeText } from "../save/runSummary";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { CARD_CONTENT, type CardFonts, cardTextSize } from "./contentCard";
+import { CARD_CONTENT, type CardFonts } from "./contentCard";
+import { textInkBounds } from "./textInk";
 
 export const RUN_STAT_KEYS = ["attempts", "lastAttempt", "best"] as const;
 export const STATS_DIVIDER_HEIGHT = 2;
@@ -58,10 +60,12 @@ export function wrappedCardText(font: BitmapFont, width: number, text: string): 
 }
 
 export interface SummaryWords {
-  readonly aggregate: string;
+  readonly progress: string;
   readonly stage: string;
+  readonly statement?: Pick<DialogueParagraph, "colour" | "name" | "text"> | undefined;
   readonly stats: readonly StatsMetricRow[];
   readonly totals: readonly StatsMetricRow[];
+  readonly zone: string;
 }
 
 export function runStatLabels(templates: RunStatWords): RunStatWords {
@@ -93,84 +97,112 @@ export function summaryTextOrigin(font: BitmapFont, rect: Rect, text: string): P
   };
 }
 
+const SUMMARY_PREVIEW_HEIGHT = 120;
+const SUMMARY_COLUMN_WIDTH = 152;
+
 export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: SummaryWords) {
-  const padding = CARD_CONTENT.padding;
-  const headingHeight = 2 * CARD_CONTENT.lineHeight;
-  const imageWidth = STAGE_PREVIEW_SIZE.width + 4 * padding;
-  const panelWidth = (bounds.width - imageWidth - 2 * padding) / 2;
-  const room = panelWidth - 2 * padding;
-  const block = (x: number, titleText: string, rows: readonly StatsMetricRow[]) => {
-    if (rows.length !== RUN_STAT_KEYS.length) {
-      throw new Error("Stage summary requires three rows in each statistics group");
+  const ink = (font: BitmapFont, text: string) =>
+    textInkBounds(font, CARD_TEXT_SCALE, CARD_CONTENT.lineHeight, text);
+  const centred = (font: BitmapFont, y: number, text: string) => {
+    const size = ink(font, text);
+    if (text.includes("\n") || size.width > bounds.width) {
+      throw new Error(`Stage summary heading exceeds the page width: ${text}`);
     }
-    const labelWidth = Math.max(...rows.map((row) => cardTextSize(fonts.body, row.label).width));
-    const valueRoom = room - labelWidth - CARD_CONTENT.gap;
-    const contentHeight =
-      headingHeight +
-      CARD_CONTENT.rowGap +
-      rows.length * CARD_CONTENT.lineHeight +
-      (rows.length - 1) * CARD_CONTENT.rowGap;
-    const panel: Rect = { height: contentHeight + 2 * padding, width: panelWidth, x, y: bounds.y };
-    const heading = wrappedCardText(fonts.body, room, titleText);
-    if (cardTextSize(fonts.body, heading).height > headingHeight) {
-      throw new Error(`Stage summary heading exceeds two lines: ${titleText}`);
-    }
-    const title: Rect = {
-      height: headingHeight,
-      width: room,
-      x: x + padding,
-      y: bounds.y + padding,
-    };
-    return {
-      panel,
-      rows: rows.map((row, index) => {
-        if (valueRoom <= 0 || cardTextSize(fonts.body, row.value).width > valueRoom) {
-          throw new Error(`Stage summary metric exceeds its column: ${row.label}`);
-        }
-        const rect: Rect = {
-          height: CARD_CONTENT.lineHeight,
-          width: room,
-          x: title.x,
-          y:
-            title.y +
-            headingHeight +
-            CARD_CONTENT.rowGap +
-            index * (CARD_CONTENT.lineHeight + CARD_CONTENT.rowGap),
-        };
-        return {
-          label: { rect: { ...rect, width: labelWidth }, text: row.label },
-          rect,
-          value: {
-            rect: { ...rect, width: valueRoom, x: rect.x + labelWidth + CARD_CONTENT.gap },
-            text: row.value,
-          },
-        };
-      }),
-      text: heading,
-      title,
-    };
+    return { rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y }, text };
   };
-  const stage = block(bounds.x, words.stage, words.stats);
-  const image: Rect = {
-    height: (imageWidth * STAGE_PREVIEW_SIZE.height) / STAGE_PREVIEW_SIZE.width,
-    width: imageWidth,
-    x: bounds.x + panelWidth + padding,
-    y: bounds.y + padding,
-  };
-  const aggregate = block(image.x + image.width + padding, words.aggregate, words.totals);
-  const bottom = Math.max(
-    stage.panel.y + stage.panel.height,
-    aggregate.panel.y + aggregate.panel.height,
-    image.y + image.height,
+  const zone = centred(fonts.title, bounds.y, words.zone);
+  const stage = centred(fonts.body, zone.rect.y + zone.rect.height + CARD_CONTENT.gap, words.stage);
+  const progress = centred(
+    fonts.body,
+    stage.rect.y + stage.rect.height + CARD_CONTENT.rowGap,
+    words.progress,
   );
-  if (bottom > bounds.y + bounds.height) {
+  const imageWidth =
+    (SUMMARY_PREVIEW_HEIGHT * STAGE_PREVIEW_SIZE.width) / STAGE_PREVIEW_SIZE.height;
+  const image: Rect = {
+    height: SUMMARY_PREVIEW_HEIGHT,
+    width: imageWidth,
+    x: bounds.x + (bounds.width - imageWidth) / 2,
+    y: progress.rect.y + progress.rect.height + CARD_CONTENT.gap,
+  };
+  const columnGap = 2 * CARD_CONTENT.padding;
+  const groupWidth = 2 * SUMMARY_COLUMN_WIDTH + columnGap;
+  const groupX = bounds.x + (bounds.width - groupWidth) / 2;
+  const statsY = image.y + image.height + CARD_CONTENT.gap;
+  const primary = (["lastAttempt", "best", "attempts"] as const).map((key) => {
+    const row = words.stats[RUN_STAT_KEYS.indexOf(key)];
+    if (!row) {
+      throw new Error(`Missing current-stage statistic: ${key}`);
+    }
+    return row;
+  });
+  if (
+    words.stats.length !== RUN_STAT_KEYS.length ||
+    words.totals.length !== RUN_STAT_KEYS.length ||
+    groupWidth > bounds.width
+  ) {
+    throw new Error("Stage summary requires two complete statistics columns");
+  }
+  const columns = [primary, words.totals].map((rows, column) =>
+    rows.map((row, index) => {
+      const label = ink(fonts.body, row.label);
+      const value = ink(fonts.body, row.value);
+      if (label.width + CARD_CONTENT.gap + value.width > SUMMARY_COLUMN_WIDTH) {
+        throw new Error(`Stage summary metric exceeds its column: ${row.label}`);
+      }
+      const x = groupX + column * (SUMMARY_COLUMN_WIDTH + columnGap);
+      const y = statsY + index * (CARD_CONTENT.lineHeight + CARD_CONTENT.rowGap);
+      return {
+        label: { rect: { ...label, x, y }, text: row.label },
+        value: {
+          rect: { ...value, x: x + SUMMARY_COLUMN_WIDTH - value.width, y },
+          text: row.value,
+        },
+      };
+    }),
+  );
+  const stats = columns[0]!;
+  const totals = columns[1]!;
+  const metricsBottom = Math.max(
+    ...columns
+      .flat()
+      .flatMap((row) => [
+        row.label.rect.y + row.label.rect.height,
+        row.value.rect.y + row.value.rect.height,
+      ]),
+  );
+  const statement =
+    words.statement === undefined
+      ? undefined
+      : (() => {
+          const nameText = `${words.statement.name}:`;
+          const nameInk = ink(fonts.body, nameText);
+          const textInk = ink(fonts.body, words.statement.text);
+          const width = nameInk.width + CARD_CONTENT.gap + textInk.width;
+          if (words.statement.text.includes("\n") || width > bounds.width) {
+            throw new Error("Stage summary statement exceeds one full-size line");
+          }
+          const rect: Rect = {
+            height: Math.max(nameInk.height, textInk.height),
+            width,
+            x: bounds.x + (bounds.width - width) / 2,
+            y: metricsBottom + CARD_CONTENT.gap,
+          };
+          return {
+            colour: words.statement.colour,
+            name: { rect: { ...nameInk, x: rect.x, y: rect.y }, text: nameText },
+            rect,
+            text: {
+              rect: { ...textInk, x: rect.x + nameInk.width + CARD_CONTENT.gap, y: rect.y },
+              text: words.statement.text,
+            },
+          };
+        })();
+  if (
+    Math.max(metricsBottom, statement ? statement.rect.y + statement.rect.height : 0) >
+    bounds.y + bounds.height
+  ) {
     throw new Error("Stage summary exceeds the footer reservation");
   }
-  const divider: Rect = {
-    height: bottom - bounds.y,
-    width: STATS_DIVIDER_HEIGHT,
-    x: aggregate.panel.x - padding / 2 - STATS_DIVIDER_HEIGHT / 2,
-    y: bounds.y,
-  };
-  return { aggregate, divider, image, stage };
+  return { image, progress, stage, statement, stats, totals, zone };
 }

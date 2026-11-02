@@ -17,8 +17,21 @@ vi.mock("phaser", () => ({
     readonly scene = { get: vi.fn(), start: vi.fn(), stop: vi.fn() };
   },
 }));
-vi.mock("./statsStatement", () => ({ drawStatsStatement: vi.fn() }));
-vi.mock("./runStatsParts", () => ({ addStageSummary: vi.fn() }));
+const statementRect = vi.hoisted(() => ({ height: 14, width: 480, x: 120, y: 260 }));
+vi.mock("../view/statsStatement", () => ({
+  statsStatement: vi.fn(() => ({
+    colour: "tan",
+    name: "Speaker",
+    portrait: null,
+    side: "right",
+    text: "One statement",
+  })),
+}));
+vi.mock("./runStatsParts", () => ({
+  addStageSummary: vi.fn((_scene: unknown, _bounds: unknown, data: { statement?: unknown }) => ({
+    statement: data.statement ? { rect: statementRect } : undefined,
+  })),
+}));
 vi.mock("./cardParts", () => ({
   PRIMARY_BUTTON: {},
   addTextButton: vi.fn(),
@@ -31,9 +44,9 @@ vi.mock("./playCamera", () => ({
   playPoint: (_scene: unknown, pointer: { x: number; y: number }) => pointer,
 }));
 
+import { statsStatement } from "../view/statsStatement";
 import { CutsceneScene } from "./CutsceneScene";
 import { addStageSummary } from "./runStatsParts";
-import { drawStatsStatement } from "./statsStatement";
 import { ZoneDepartureScene } from "./ZoneDepartureScene";
 
 function cutscene() {
@@ -69,6 +82,14 @@ describe("required inter-stage cutscene", () => {
       key(scene, name);
     }
     key(scene, "Enter", true);
+    const oldPanel = {
+      id: 2,
+      wasCanceled: false,
+      x: DIALOGUE_SCREEN.box.x + 1,
+      y: DIALOGUE_SCREEN.box.y + 1,
+    };
+    scene.input.emit("pointerdown", oldPanel);
+    scene.input.emit("pointerup", oldPanel);
     expect(scene.scene.start).not.toHaveBeenCalled();
     key(scene, "Enter");
     key(scene, " ");
@@ -80,7 +101,7 @@ describe("required inter-stage cutscene", () => {
 
   it.each([
     { name: "Continue", rect: CUTSCENE_CONTINUE.button },
-    { name: "statement panel", rect: DIALOGUE_SCREEN.box },
+    { name: "statement line", rect: statementRect },
   ])("requires a fresh undragged $name tap", ({ rect: button }) => {
     const scene = cutscene();
     const pointer = { id: 1, wasCanceled: false, x: button.x + button.width / 2, y: button.y + 1 };
@@ -101,12 +122,12 @@ describe("required inter-stage cutscene", () => {
 });
 
 it("draws the current clear statement once per entry, never on focus or resume", () => {
-  vi.mocked(drawStatsStatement).mockClear();
+  vi.mocked(statsStatement).mockClear();
   const scene = cutscene();
   key(scene, "Tab");
   key(scene, "ArrowRight");
   scene.events.emit("resume");
-  expect(drawStatsStatement).toHaveBeenCalledExactlyOnceWith(scene, "clear", "cleared-stage");
+  expect(statsStatement).toHaveBeenCalledExactlyOnceWith("clear", "cleared-stage");
   expect(vi.mocked(addStageSummary).mock.lastCall?.[2]).toMatchObject({
     percent: 1,
     stage: "cleared-stage",
@@ -143,7 +164,7 @@ it("keeps final-zone Continue on the existing opener continuation without an exc
 });
 
 it("preserves a turned-back summary without claiming a clear or inventing a statement", () => {
-  vi.mocked(drawStatsStatement).mockClear();
+  vi.mocked(statsStatement).mockClear();
   const scene = new ZoneDepartureScene();
   scene.init({
     cleared: false,
@@ -163,7 +184,7 @@ it("preserves a turned-back summary without claiming a clear or inventing a stat
     },
   });
   scene.create();
-  expect(drawStatsStatement).not.toHaveBeenCalled();
+  expect(statsStatement).not.toHaveBeenCalled();
   expect(vi.mocked(addStageSummary).mock.lastCall?.[2]).toMatchObject({
     percent: 0.37,
     stage: "cleared-stage",
