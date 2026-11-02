@@ -25,8 +25,8 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
   "apartment-room-door": {
     archetype: "door",
     art: "apartment-room-door",
-    cols: 4,
-    rows: 6,
+    cols: 5,
+    rows: 7,
   },
   "apartment-stairwell": {
     archetype: "scenery",
@@ -581,8 +581,8 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
   "street-door": {
     archetype: "door",
     art: "door",
-    cols: 3,
-    rows: 4,
+    cols: 5,
+    rows: 7,
   },
   // The street's sky and far skyline, backdrops repeated across the street.
   "street-sky": {
