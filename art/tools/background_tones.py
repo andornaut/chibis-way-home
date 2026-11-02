@@ -3,8 +3,9 @@
 Usage: background_tones.py build, from the repository root. This exports existing backdrop keys only.
 The original generators retain their geometry. Their normal builds apply this same publication policy.
 Foreground tiles, actors, UI, portraits and opening art never pass through this adapter.
-Far atmosphere uses pale haze, middle and local scenery use compressed pastel ramps, and functional
-wayfinding retains its authored colours. Existing flat zone skies are already muted identity colours.
+Ordered far, middle and near backgrounds use the named small-step ramps in background_palette.py.
+Their material roles stay distinct. Other local props and functional wayfinding retain their existing paint.
+Existing flat zone skies are unchanged identity colours.
 """
 
 import importlib
@@ -12,22 +13,99 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import background_palette
 import pixel
 
 PRODUCERS = ("floor1", "depot", "park", "industrial", "countryside", "woodland", "homecity", "apartment")
-FUNCTIONAL = frozenset({"apartment-room-door", "apartment-stairwell", "apartment-stairwell-down",
-                        "lobby-front-door", "parcel-open", "walk-signal"})
-SKIES = frozenset({"apartment-sky", "countryside-sky", "homecity-sky", "industrial-sky", "street-sky",
-                   "woodland-sky"})
-FAR = frozenset({"apartment-far", "countryside-far", "homecity-far", "industrial-far", "park-city",
-                 "park-clouds", "park-far-trees", "street-city-far", "street-skyline", "woodland-far",
-                 "woodland-far-birch", "woodland-far-conifers"})
-MID = frozenset({"apartment-exterior-mid", "farmland-mid", "forest-mid", "forest-mid-birch",
-                 "forest-mid-conifers", "freight-mid", "neighbourhood-mid", "outskirts-mid",
-                 "park-treetops", "ravine-mid", "river-mid", "street-boundary-mid", "street-city-mid"})
+FUNCTIONAL = frozenset(
+    {
+        "apartment-room-door",
+        "apartment-stairwell",
+        "apartment-stairwell-down",
+        "lobby-front-door",
+        "parcel-open",
+        "walk-signal",
+    }
+)
+SKIES = frozenset({"apartment-sky", "countryside-sky", "homecity-sky", "industrial-sky", "street-sky", "woodland-sky"})
+FAR = frozenset(
+    {
+        "apartment-far",
+        "countryside-far",
+        "homecity-far",
+        "industrial-far",
+        "park-city",
+        "park-clouds",
+        "park-far-trees",
+        "street-city-far",
+        "street-skyline",
+        "woodland-far",
+        "woodland-far-birch",
+        "woodland-far-conifers",
+    }
+)
+MID = frozenset(
+    {
+        "apartment-exterior-mid",
+        "farmland-mid",
+        "forest-mid",
+        "forest-mid-birch",
+        "forest-mid-conifers",
+        "freight-mid",
+        "neighbourhood-mid",
+        "outskirts-mid",
+        "park-treetops",
+        "ravine-mid",
+        "river-mid",
+        "street-boundary-mid",
+        "street-city-mid",
+        "warehouse-mid",
+    }
+)
+NEAR = frozenset(
+    {
+        "apartment-facade",
+        "apartment-wall-lobby",
+        "apartment-wall-pool",
+        "apartment-wall-residential",
+        "apartment-wall-restaurant",
+        "apartment-wall-spa",
+        "depot-wall",
+        "facade-brownstone",
+        "facade-brownstone-upper",
+        "facade-hotel",
+        "facade-hotel-upper",
+        "facade-one-storey",
+        "facade-walkup",
+        "facade-walkup-upper",
+        "farmland-fence",
+        "forest-shrub",
+        "forest-tree",
+        "neighbourhood-wall",
+        "outskirts-wall",
+        "ravine-rock",
+        "roofline-brownstone",
+        "roofline-hotel",
+        "roofline-walkup",
+        "storefront-cafe",
+        "storefront-diner",
+        "storefront-florist",
+        "storefront-gift-shop",
+        "storefront-makeup-store",
+        "storefront-noodle-bar",
+        "storefront-pet-shop",
+        "warehouse-wall",
+    }
+)
+DEPTH_KEYS = (FAR | MID | NEAR) - {key for key in FAR | MID | NEAR if key.startswith("park-")} - {"street-skyline"}
 ZONES = {
-    "apartment": "zone-red", "countryside": "zone-yellow", "homecity": "zone-peach",
-    "industrial": "zone-purple", "park": "zone-peach", "street": "zone-blue", "woodland": "zone-green",
+    "apartment": "zone-red",
+    "countryside": "zone-yellow",
+    "homecity": "zone-peach",
+    "industrial": "zone-purple",
+    "park": "zone-peach",
+    "street": "zone-blue",
+    "woodland": "zone-green",
 }
 GROUPS = {
     "apartment": ("apartment-", "lobby-"),
@@ -48,16 +126,22 @@ ACCENTS = {
 # Each authored wall paint represents a material role: keep joints distinct from adjacent panels.
 WALL_PAINT = {
     "apartment-wall-lobby": {
-        "zone-red": "lgrey", "zone-red-shade": "zone-red",
-        "zone-peach-shade": "zone-peach", "brown": "zone-red-shade",
+        "zone-red": "lgrey",
+        "zone-red-shade": "zone-red",
+        "zone-peach-shade": "zone-peach",
+        "brown": "zone-red-shade",
     },
     "apartment-wall-pool": {
-        "zone-red": "lgrey", "zone-red-shade": "zone-red",
-        "zone-blue": "zone-blue", "zone-blue-shade": "grey",
+        "zone-red": "lgrey",
+        "zone-red-shade": "zone-red",
+        "zone-blue": "zone-blue",
+        "zone-blue-shade": "grey",
     },
     "apartment-wall-spa": {
-        "zone-red": "lgrey", "zone-red-shade": "zone-red",
-        "zone-green": "zone-green", "zone-green-shade": "zone-green-shade",
+        "zone-red": "lgrey",
+        "zone-red-shade": "zone-red",
+        "zone-green": "zone-green",
+        "zone-green-shade": "zone-green-shade",
     },
     "lobby-wall": {"dbrown": "zone-red", "plum": "grey", "ink": "slate", "brown": "zone-peach"},
 }
@@ -65,11 +149,81 @@ WALL_PAINT = {
 
 def profile(key):
     zone = next((name for name, prefixes in GROUPS.items() if key.startswith(prefixes)), "street")
-    layer = "sky" if key in SKIES else "far" if key in FAR else "mid" if key in MID else "local"
+    layer = (
+        "sky" if key in SKIES else "far" if key in FAR else "mid" if key in MID else "near" if key in NEAR else "local"
+    )
     return zone, layer
 
 
+def depth_colour_map(key):
+    zone, layer = profile(key)
+    result = {}
+    for source, colour in pixel.K.items():
+        brightness = pixel.contrast(colour, pixel.K["ink"])
+        role = "shade" if brightness < 3 else "base" if brightness < 8 else "light"
+        target = background_palette.name(zone, layer, role)
+        if zone == "countryside" and layer == "far" and source == "zone-peach":
+            target = "bg-countryside-far-warm"
+        elif zone == "woodland" and layer == "mid" and source == "white":
+            target = "bg-woodland-mid-bark"
+        elif zone == "woodland" and layer == "near" and source == "zone-peach-shade":
+            target = "bg-woodland-near-wood"
+        result[pixel.rgb(colour)] = pixel.rgb(target)
+    # Authored plaster, panels and joints keep separate material roles at the same near depth.
+    walls = {
+        "apartment-wall-lobby": {
+            "zone-red": "bg-apartment-near-light",
+            "zone-red-shade": "bg-apartment-near-shade",
+            "zone-peach-shade": "bg-apartment-near-wood",
+            "brown": "bg-apartment-near-wood-shade",
+        },
+        "apartment-wall-pool": {
+            "zone-red": "bg-apartment-near-light",
+            "zone-red-shade": "bg-apartment-near-shade",
+            "zone-blue": "bg-apartment-near-blue",
+            "zone-blue-shade": "bg-apartment-near-blue-shade",
+        },
+        "apartment-wall-spa": {
+            "zone-red": "bg-apartment-near-light",
+            "zone-red-shade": "bg-apartment-near-shade",
+            "zone-green": "bg-apartment-near-green",
+            "zone-green-shade": "bg-apartment-near-green-shade",
+        },
+    }
+    walls.update(
+        {
+            "apartment-wall-residential": {
+                "zone-red": "bg-apartment-near-light",
+                "zone-red-shade": "bg-apartment-near-shade",
+            },
+            "apartment-wall-restaurant": {
+                "zone-red": "bg-apartment-near-light",
+                "zone-red-shade": "bg-apartment-near-shade",
+                "zone-peach": "bg-apartment-near-wood",
+            },
+            "apartment-facade": {
+                "zone-red": "bg-apartment-near-light",
+                "zone-red-shade": "bg-apartment-near-shade",
+                "dslate": "bg-apartment-near-shade",
+                "zone-blue-shade": "bg-apartment-near-blue",
+                "slate": "bg-apartment-near-blue-shade",
+            },
+            "warehouse-wall": {
+                "zone-purple": "bg-industrial-near-light",
+                "zone-purple-shade": "bg-industrial-near",
+                "slate": "bg-industrial-near-shade",
+                "dslate": "bg-industrial-near-shade",
+            },
+            "outskirts-wall": {"zone-red-shade": "bg-homecity-near-shade"},
+        }
+    )
+    result.update({pixel.rgb(source): pixel.rgb(target) for source, target in walls.get(key, {}).items()})
+    return result
+
+
 def colour_map(key):
+    if key in DEPTH_KEYS:
+        return depth_colour_map(key)
     zone, layer = profile(key)
     primary = ZONES[zone]
     result = {}

@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import background_palette
 import zone_themes
 from art_kit.aseprite import export as export_aseprite
 from art_kit.aseprite import lua as aseprite_lua
@@ -52,6 +53,7 @@ K = {
     "skin2": "c28569",
 }
 K.update(zone_themes.colours())
+K.update(background_palette.colours(K))
 PALETTE = list(K.values())
 # One ramp step darker for each colour. Shadows and dimming step down this, never blend with black.
 DARKER = dict(
@@ -92,6 +94,7 @@ DARKER = dict(
     ]
 )
 DARKER.update(zone_themes.ramps(K))
+DARKER.update(background_palette.ramps(K))
 
 MANIFEST = "public/art/manifest.json"
 SPRITES = "public/art/sprites"
