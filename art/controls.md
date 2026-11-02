@@ -152,7 +152,7 @@ Full-page stage-end summaries centre their combined content block while left-ali
 
 | Concern                   | Current contract                                                                       | Intended change or gap                                                                        |
 | ------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Button face assets        | `ui-button` and `ui-button-primary`; tags `normal`, `pressed`                          | Shared disabled treatment needs an asset/tag and runtime support                              |
+| Button face assets        | `ui-button` and `ui-button-primary`; tags `normal`, `pressed`, `disabled`              | Flat pale-steel disabled frame supplied; runtime tag selection remains required               |
 | Checkbox and radio assets | None                                                                                   | Target 16x16 square checkbox and circular radio; check mark or centre dot indicates selection |
 | Colour source             | Served palette data                                                                    | Keep control tokens tied to palette names                                                     |
 | Focus asset               | `ui-focus`, nine-slice 16x16, margins 4 on all sides                                   | Retain for every ordinary control                                                             |

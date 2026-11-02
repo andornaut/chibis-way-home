@@ -99,8 +99,8 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 | portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                              |
 | portrait-pigeon           | Pebble dialogue portrait, transparent                      | 64x64  | neutral                                             |
 | ui-answer                 | sprite                                                     | 208x36 | normal, selected, pressed                           |
-| ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                                     |
-| ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed                                     |
+| ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                     |
+| ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                     |
 | ui-close                  | sprite                                                     | 24x24  | normal, pressed                                     |
 | ui-dialogue-box           | sprite                                                     | 640x96 | rest                                                |
 | ui-focus                  | nine-slice (4,4,4,4)                                       | 16x16  | rest                                                |

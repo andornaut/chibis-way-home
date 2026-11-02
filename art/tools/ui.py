@@ -116,9 +116,10 @@ Pause card, settings card and install steps card (each over the game dimmed two 
 - ui-button, nine-slice 16x28, margins 2,4,2,6: the secondary button, dog-walker-game's shape with no outline and
   cut corners: a grey face, one step darker than the card, with an lgrey highlight on its top row and a slate lip
   4px deep. Label ink (6.39:1 on grey). Tags normal, pressed (the face sinks 2px and the lip is gone, so its label
-  moves down 2).
+  moves down 2). The appended disabled tag keeps normal alpha geometry with one flat opaque lgrey fill.
 - ui-button-primary, nine-slice 16x28, margins 2,4,2,6: the primary button, ui-button's geometry, tags and press in
-  dark steel: a dslate face, a slate highlight and a navy lip. Label white (9.55:1 on dslate).
+  dark steel: a dslate face, a slate highlight and a navy lip. Label white (9.55:1 on dslate). Its appended
+  disabled tag matches ui-button's flat lgrey face; runtime disabled labels use dslate.
 - 16x16 row icons, one tag, rest: icon-settings (a cog: four 4x2 teeth on the axes and four 2x2 on the diagonals
   round a ring with a round hole), icon-home (dog-walker's solid house: a 1:1 pitched roof, a chimney on the right
   slope and a door gap, filled dslate), icon-exit (ui-quit's doorway and arrow, 12 rows
@@ -331,6 +332,9 @@ X = (
 def plate(face, lip, hi, state):
     """16x28 nine-slice, the dog-walker-game button: no outline, cut corners, a face with a 1px highlight on its top
     row and a lip 4px deep; pressed, the face sinks 2px and the lip is gone."""
+    if state == "disabled":
+        face = lip = hi = "lgrey"
+        state = "normal"
     g = Grid(16, 28)
     top = 0 if state == "normal" else 2
     if not top:
@@ -719,8 +723,8 @@ def sprites():
     yield "icon-move-controls", one(move_controls_icon())
     yield "icon-touch-controls", one(touch_controls_icon())
     yield "ui-answer", [(s, [answer(s)], 100) for s in ("normal", "selected", "pressed")]
-    yield "ui-button", [(s, [button(s)], 100) for s in ("normal", "pressed")]
-    yield "ui-button-primary", [(s, [button_primary(s)], 100) for s in ("normal", "pressed")]
+    yield "ui-button", [(s, [button(s)], 100) for s in ("normal", "pressed", "disabled")]
+    yield "ui-button-primary", [(s, [button_primary(s)], 100) for s in ("normal", "pressed", "disabled")]
     yield "ui-switch", [(s, [switch(s == "on")], 100) for s in ("on", "off")]
     yield "ui-close", [(s, [close(s)], 100) for s in ("normal", "pressed")]
     yield "ui-dialogue-box", one(dialogue_box())
