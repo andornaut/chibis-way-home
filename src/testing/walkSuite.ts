@@ -8,7 +8,16 @@ import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
 import type { SpriteSilhouettes, TilePoint, ZoneLayout, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
-import { crosses, type Surface, surfaceAt, walkZone, type ZoneWalk } from "../sim/zoneWalk";
+import {
+  crosses,
+  type RequiredRouteWalk,
+  type Surface,
+  surfaceAt,
+  walkRequiredRoutes,
+  type WalkRouteQuery,
+  walkZone,
+  type ZoneWalk,
+} from "../sim/zoneWalk";
 import { artHitboxes, type ArtManifest, sheetFrameSize } from "../view/aseprite";
 import { BIRD_FRAME } from "../view/bird";
 import { spriteContacts } from "../view/spriteContacts";
@@ -98,10 +107,19 @@ export function walkSuite(plan: ZonePlan): void {
     });
   }
 
+  noCrossSuite(() => ({ layout, walk }), plan);
+}
+
+function noCrossSuite(
+  context: () => { readonly layout: ZoneLayout; readonly walk: ZoneWalk },
+  plan: ZonePlan,
+): void {
+  const areas = Object.entries(plan.areas);
   if (areas.some(([, area]) => (area.noCross?.length ?? 0) > 0)) {
     it(
       "can't be crossed at a no-cross spot in one move",
       () => {
+        const { layout, walk } = context();
         const crossed = areas.flatMap(([area, { noCross = [] }]) =>
           noCross.flatMap(({ from, to }) => {
             const start = surfaceAt(TILE, walk.surfaces, area, from);
@@ -118,4 +136,20 @@ export function walkSuite(plan: ZonePlan): void {
       WALK_MS,
     );
   }
+}
+
+// Required-route completion includes only actual entry-connected witnesses, not optional surfaces.
+export function requiredWalkSuite(query: WalkRouteQuery, plan: ZonePlan): void {
+  let walk: RequiredRouteWalk;
+  let layout: ZoneLayout;
+  beforeAll(() => {
+    layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+    walk = walkRequiredRoutes(BIRD, query, layout);
+  }, WALK_MS);
+  it("clears from entry through every declared required route target", () => {
+    expect(walk.complete, JSON.stringify({ cleared: walk.cleared, targets: query.targets })).toBe(
+      true,
+    );
+  });
+  noCrossSuite(() => ({ layout, walk }), plan);
 }
