@@ -387,6 +387,7 @@ export type BehaviourCondition =
 // Ground pursuit physics: authored gravity in tiles/second squared and speeds in tiles/second.
 // The resolver scales all three spatial values to pixels without changing time units.
 export interface BehaviourTraversal {
+  readonly prepSeconds: number;
   readonly gravity: number;
   readonly jumpSpeed: number;
   readonly maxFallSpeed: number;

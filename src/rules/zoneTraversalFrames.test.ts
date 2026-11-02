@@ -108,7 +108,7 @@ it.each([
               kind: "pursue",
               mode: "ground",
               speed: 60,
-              traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500 },
+              traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0 },
             },
             transitions: [],
           },

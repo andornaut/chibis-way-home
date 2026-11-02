@@ -213,7 +213,13 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         node.motion.kind === "pursue" &&
         node.motion.mode === "ground" &&
         node.motion.traversal &&
-        !Object.values(node.motion.traversal).every((value) => Number.isFinite(value) && value > 0)
+        (![
+          node.motion.traversal.gravity,
+          node.motion.traversal.jumpSpeed,
+          node.motion.traversal.maxFallSpeed,
+        ].every((value) => Number.isFinite(value) && value > 0) ||
+          !Number.isFinite(node.motion.traversal.prepSeconds) ||
+          node.motion.traversal.prepSeconds < 0)
       ) {
         throw new Error(`Invalid ground traversal in ${key}`);
       }
@@ -324,6 +330,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                         gravity: node.motion.traversal.gravity * tile,
                         jumpSpeed: node.motion.traversal.jumpSpeed * tile,
                         maxFallSpeed: node.motion.traversal.maxFallSpeed * tile,
+                        prepSeconds: node.motion.traversal.prepSeconds,
                       },
                     }),
                   ...(node.motion.kind === "fly"

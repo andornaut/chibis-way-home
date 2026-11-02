@@ -65,7 +65,7 @@ const plan: BehaviourPlan = {
         kind: "pursue",
         mode: "ground",
         speed: 120,
-        traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500 },
+        traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0 },
       },
       transitions: [],
     },
@@ -103,7 +103,7 @@ it("scales only authored spatial traversal units", () => {
   const resolved = layoutBehaviour(12, plan).states.chase!.motion;
   expect(resolved).toMatchObject({
     speed: 1440,
-    traversal: { gravity: 12000, jumpSpeed: 3600, maxFallSpeed: 6000 },
+    traversal: { gravity: 12000, jumpSpeed: 3600, maxFallSpeed: 6000, prepSeconds: 0 },
   });
 });
 it.each([
