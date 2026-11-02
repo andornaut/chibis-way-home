@@ -26,7 +26,10 @@ function run(
   finished: (zone: ZoneState) => boolean = (zone) => zone.cleared,
 ) {
   const layout = prepared(id);
-  const initial = startZone(BIRD, layout, 1);
+  const { dash, ...withoutDash } = BIRD;
+  void dash;
+  const ordinary = { ...withoutDash, doubleJump: false };
+  const initial = startZone(ordinary, layout, 1);
   let zone: ZoneState = {
     ...initial,
     bird: {
@@ -39,7 +42,7 @@ function run(
     },
   };
   for (let tick = 0; tick < 600 && !zone.death && !zone.turnedBack && !finished(zone); tick++) {
-    zone = stepZone(BIRD, layout, STEP_SECONDS, control(zone, tick), zone);
+    zone = stepZone(ordinary, layout, STEP_SECONDS, control(zone, tick), zone);
   }
   return { layout, zone };
 }
@@ -86,7 +89,7 @@ describe("directional hazard layouts", () => {
     const mover = Object.values(prepared("vertical-red-gate").areas)[0]!.objects.findIndex(
       (object) => object.character === "red-edge-left",
     );
-    const result = run("vertical-red-gate", { col: 26, row: 50 }, (zone) => {
+    const result = run("vertical-red-gate", { col: 30, row: 45 }, (zone) => {
       crossing ||= zone.objects[mover]!.y <= 36 * TILE;
       return input(crossing ? 1 : 0);
     });
@@ -123,62 +126,65 @@ describe("directional hazard layouts", () => {
       "red-edge-bottom",
     );
   });
-  it.each([
-    { character: "red-edge-left", col: 32, move: 1 as const },
-    { character: "red-edge-right", col: 28, move: -1 as const },
-  ])("attributes ground overrun to $character", ({ character, col, move }) => {
-    expect(face(run("guarded-valley", { col, row: 50 }, () => input(move)))).toBe(character);
+  it.each([20, 38])("lands a missed crossing at column %s on its physical red floor", (col) => {
+    const result = run("guarded-valley", { col, row: 45 }, () => input(0));
+    expect(face(result)).toBe("red-edge-top");
+    const area = result.layout.areas[result.zone.area]!;
+    const contact = result.zone.death!.contact!;
+    if (contact.kind !== "object") {
+      throw new Error("Expected floor contact");
+    }
+    const hazard = area.objects[contact.index]!;
+    const box = hazard.hitbox!;
+    const bottom = hazard.origin.y + box.y + box.height;
+    expect(
+      area.solids.some(
+        (solid) =>
+          solid.y === bottom &&
+          solid.x <= result.zone.bird.x &&
+          solid.x + solid.width >= result.zone.bird.x + BIRD.width,
+      ),
+    ).toBe(true);
+    expect(foot(result.zone)).toBeLessThan(area.height);
   });
-  it("clears the valley with braking and both five-tile exit climbs", () => {
+  it("clears the valley over its refuge with ordinary jumps", () => {
+    const targets = [
+      { col: 14, row: 45 },
+      { col: 30, row: 45 },
+      { col: 44, row: 45 },
+      { col: 54, row: 40 },
+    ];
     let phase = 0;
-    let phaseTick = 0;
-    let exitJumpTick: number | undefined;
-    const bank = chunks["guarded-valley"]!.solids!.filter((solid) => solid.row === 45).sort(
-      (a, b) => b.col - a.col,
-    )[0]!;
-    const takeoff = bank.col * TILE - BIRD.walkSpeed * BIRD.jumpRiseTime;
+    let jumpAt: number | undefined;
+    let release = false;
     const result = run("guarded-valley", { col: 2, row: 40 }, (zone, tick) => {
-      if (phase === 0 && zone.bird.grounded && foot(zone) === 45 * TILE) {
-        phase = 1;
-        phaseTick = tick;
-      } else if (
-        phase === 1 &&
-        tick > phaseTick &&
+      const target = targets[phase];
+      if (!target) {
+        return input(1);
+      }
+      if (
         zone.bird.grounded &&
-        foot(zone) === 50 * TILE
+        foot(zone) === target.row * TILE &&
+        zone.bird.x >= target.col * TILE - 1
       ) {
-        phase = 2;
-        phaseTick = tick;
-      } else if (
-        phase === 2 &&
-        tick > phaseTick &&
-        zone.bird.grounded &&
-        foot(zone) === 45 * TILE
-      ) {
-        phase = 3;
-        phaseTick = tick;
+        phase++;
+        jumpAt = undefined;
+        release = true;
+        return input(0);
       }
-      if (phase === 0) {
-        return input(zone.bird.x < 14 * TILE ? 1 : 0);
+      if (release) {
+        release = false;
+        return input(0);
       }
-      if (phase === 2 && exitJumpTick === undefined && zone.bird.x >= takeoff) {
-        exitJumpTick = tick;
+      if (phase > 0) {
+        jumpAt ??= tick;
       }
-      const hold = phase === 1 ? BIRD.jumpTapWindow / 2 : BIRD.jumpRiseTime;
-      const move =
-        phase === 1
-          ? zone.bird.x < 32 * TILE
-            ? 1
-            : 0
-          : phase === 2
-            ? zone.bird.x < 44 * TILE
-              ? 1
-              : 0
-            : 1;
-      const jumpTick = phase === 2 ? exitJumpTick : phaseTick;
-      return input(move, jumpTick !== undefined && (tick - jumpTick) * STEP_SECONDS < hold);
+      return input(
+        zone.bird.x < target.col * TILE ? 1 : 0,
+        jumpAt !== undefined && (tick - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime,
+      );
     });
-    expect(phase).toBe(3);
+    expect(phase).toBe(targets.length);
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared).toBe(true);
   });
@@ -187,7 +193,7 @@ describe("directional hazard layouts", () => {
     let phaseTick = 0;
     const result = run(
       "guarded-valley",
-      { col: 26, row: 50 },
+      { col: 30, row: 45 },
       (zone, tick) => {
         if (phase === 0 && tick > 0 && zone.bird.grounded && foot(zone) === 45 * TILE) {
           phase = 1;
