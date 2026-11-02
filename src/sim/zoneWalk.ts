@@ -31,8 +31,10 @@ import {
 } from "./behaviourBounds";
 import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases";
 import { type WalkStep, walkTransitions } from "./walkTransitions";
+import { WalkWitnesses } from "./zoneWalkWitnesses";
 
 const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
+const WALK_WITNESSES = new WeakMap<ZoneLayout, WalkWitnesses>();
 const WALK_OBSERVERS = new WeakMap<ZoneLayout, (before: ZoneState, next: ZoneState) => void>();
 const WALK_SPANS = new WeakMap<
   ZoneLayout,
@@ -323,6 +325,8 @@ function spotOf(surface: Surface, zone: ZoneState, layout: ZoneLayout, tuning: B
 }
 
 const spotKey = (spot: Pick<Spot, "bucket" | "surface">) => `${spot.surface.key}#${spot.bucket}`;
+const pathSpotKey = (layout: ZoneLayout, spot: Spot) =>
+  `${spotKey(spot)}:${WALK_WITNESSES.get(layout)?.profile(spot.state) ?? 0n}`;
 
 // A stretch she may aim for: a whole surface, or one bucket of one (key: the spot's key).
 interface Target {
@@ -521,7 +525,8 @@ function play(
       const landed = comeToRest(tuning, layout, surfaces, run);
       return {
         entered: run.zone.area === start.area ? undefined : run.zone,
-        landed: landed && spotKey(landed) !== spotKey(from) ? landed : undefined,
+        landed:
+          landed && pathSpotKey(layout, landed) !== pathSpotKey(layout, from) ? landed : undefined,
         steps: run.steps,
       };
     }
@@ -563,7 +568,7 @@ function walkInto(
       const spot = under ? spotOf(under, run.zone, layout, tuning) : undefined;
       return {
         entered: undefined,
-        landed: spot && spotKey(spot) === target.key ? spot : undefined,
+        landed: spot && (target.fixed || spotKey(spot) === target.key) ? spot : undefined,
         steps: run.steps,
       };
     }
@@ -930,16 +935,14 @@ interface WalkRequirements {
     readonly max: number;
     readonly min: number;
     readonly target: Target;
-    witnessed: boolean;
+    readonly token: bigint;
   }[];
   readonly surfaces: Set<string>;
+  readonly witnesses: WalkWitnesses;
 }
 
-function requiredComplete(required: WalkRequirements, reached: ReadonlySet<string>): boolean {
-  return (
-    [...required.surfaces].every((key) => reached.has(key)) &&
-    required.intervals.every(({ witnessed }) => witnessed)
-  );
+function requiredComplete(required: WalkRequirements): boolean {
+  return required.witnesses.complete();
 }
 
 export interface RequiredRouteWalk extends ZoneWalk {
@@ -955,7 +958,11 @@ export function walkRequiredRoutes(
     throw new Error("Required routes need a positive tile size");
   }
   const surfaces = zoneSurfaces(tuning, layout);
-  const required: WalkRequirements = { intervals: [], surfaces: new Set() };
+  const required: WalkRequirements = {
+    intervals: [],
+    surfaces: new Set(),
+    witnesses: new WalkWitnesses(),
+  };
   query.targets.forEach(({ area, at, xRange }, index) => {
     const surface = surfaceAt(query.tile, surfaces, area, at);
     if (!surface) {
@@ -963,6 +970,7 @@ export function walkRequiredRoutes(
     }
     if (xRange === undefined) {
       required.surfaces.add(surface.key);
+      required.witnesses.token(`surface:${surface.key}`);
       return;
     }
     const min = xRange.min * query.tile;
@@ -991,14 +999,13 @@ export function walkRequiredRoutes(
         right: max + tuning.width,
         surface,
       },
-      witnessed: false,
+      token: required.witnesses.token(`interval:${index}`),
     });
   });
   const observedLayout = { ...layout };
-  let pending = required.intervals.length;
-  if (pending > 0) {
+  if (required.intervals.length > 0) {
     WALK_OBSERVERS.set(observedLayout, (_before, zone) => {
-      if (pending === 0 || zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
+      if (zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
         return;
       }
       const under = surfaceUnder(tuning, observedLayout, surfaces, zone);
@@ -1008,26 +1015,21 @@ export function walkRequiredRoutes(
       const support = placed(under, zone, observedLayout);
       for (const interval of required.intervals) {
         if (
-          !interval.witnessed &&
+          (required.witnesses.profile(zone) & interval.token) === 0n &&
           under.key === interval.target.surface.key &&
           zone.bird.x >= interval.min - EDGE &&
           zone.bird.x <= interval.max + EDGE &&
           zone.bird.x >= support.left - EDGE &&
           zone.bird.x + tuning.width <= support.right + EDGE
         ) {
-          interval.witnessed = true;
-          pending--;
-          if (pending === 0) {
-            WALK_OBSERVERS.delete(observedLayout);
-            break;
-          }
+          required.witnesses.mark(zone, interval.token);
         }
       }
     });
   }
   try {
     const result = walk(tuning, required, surfaces, observedLayout);
-    return { ...result, complete: result.cleared && requiredComplete(required, result.reached) };
+    return { ...result, complete: result.cleared && requiredComplete(required) };
   } finally {
     WALK_OBSERVERS.delete(observedLayout);
   }
@@ -1047,8 +1049,12 @@ function walk(
   // Fixed full-track bounds depend only on this layout, exact bounds object and surface.
   WALK_SPANS.set(observedLayout, new WeakMap());
   const observe = WALK_OBSERVERS.get(layout);
+  if (required) {
+    WALK_WITNESSES.set(observedLayout, required.witnesses);
+  }
   let cleared = false;
   WALK_OBSERVERS.set(observedLayout, (before, next) => {
+    required?.witnesses.transition(before, next);
     if (
       next.cleared &&
       before.death === undefined &&
@@ -1058,6 +1064,7 @@ function walk(
       before.restarts === next.restarts
     ) {
       cleared = true;
+      required?.witnesses.finish(next);
     }
     observe?.(before, next);
   });
@@ -1067,6 +1074,7 @@ function walk(
   } finally {
     WALK_OBSERVERS.delete(observedLayout);
     WALK_SPANS.delete(observedLayout);
+    WALK_WITNESSES.delete(observedLayout);
   }
 }
 
@@ -1085,12 +1093,34 @@ function walkSearch(
   let steps = 0;
   let cleared = false;
   const complete = () =>
-    required !== undefined && (cleared || engineCleared()) && requiredComplete(required, reached);
+    required !== undefined && (cleared || engineCleared()) && requiredComplete(required);
+  const profiles = new Map<string, bigint[]>();
+  let activeProfile = 0n;
+  let depth = 0;
   const reach = (spot: Spot) => {
-    if (!seen.has(spotKey(spot))) {
-      seen.set(spotKey(spot), spot);
+    required?.witnesses.mark(spot.state, required.witnesses.surface(spot.surface.key));
+    const profile = required?.witnesses.profile(spot.state) ?? 0n;
+    const key = required ? pathSpotKey(layout, spot) : spotKey(spot);
+    if (!seen.has(key)) {
+      seen.set(key, spot);
       reached.add(spot.surface.key);
-      queue.push(spot);
+      for (const key of [spotKey(spot), spot.surface.key]) {
+        const earned = profiles.get(key) ?? [];
+        earned.push(profile);
+        profiles.set(key, earned);
+      }
+      // Every immediate expansion earns another target; its depth cannot exceed target count.
+      if (
+        required &&
+        depth > 0 &&
+        depth <= required.witnesses.size &&
+        profile !== activeProfile &&
+        (profile & activeProfile) === activeProfile
+      ) {
+        expand(spot);
+      } else {
+        queue.push(spot);
+      }
     }
   };
   const arrive = (zone: ZoneState) => {
@@ -1107,166 +1137,185 @@ function walkSearch(
       reach(spotOf(under, settled, layout, tuning));
     }
   };
-  arrive(startZone(tuning, layout, 1));
-  for (let from = queue.shift(); from && !complete(); from = queue.shift()) {
-    const area = areaOf(layout, from.surface.area);
-    const here = placed(from.surface, from.state, layout);
-    const { carry, moving } = movingThings(tuning, area);
-    let bounds = areaBounds.get(area);
-    if (!bounds) {
-      bounds = moveBounds(tuning, carry);
-      areaBounds.set(area, bounds);
-    }
-    const trials = new Map<ZoneState, ReturnType<typeof trialsFrom>>();
-    const waited = phaseStarts((start: ZoneState) => {
-      const result = waitStates(tuning, layout, start, 2);
-      steps += result.steps;
-      if (result.entered) {
-        arrive(result.entered);
+  const covered = (key: string, profile: bigint) =>
+    profiles.get(key)?.some((earned) => (earned & profile) === profile) ?? false;
+  function expand(from: Spot): void {
+    const previousProfile = activeProfile;
+    activeProfile = required?.witnesses.profile(from.state) ?? 0n;
+    depth++;
+    try {
+      const area = areaOf(layout, from.surface.area);
+      const here = placed(from.surface, from.state, layout);
+      const { carry, moving } = movingThings(tuning, area);
+      let bounds = areaBounds.get(area);
+      if (!bounds) {
+        bounds = moveBounds(tuning, carry);
+        areaBounds.set(area, bounds);
       }
-      return result.states[1];
-    }, from.state);
-    const startsFor = (corridor: { left: number; right: number }, target?: Surface) =>
-      waited(phaseCount(WAIT_STEP, BUCKET, [from.surface.mover, target?.mover], moving, corridor));
-    if (required !== undefined && !cleared && here.right > area.exitX) {
-      const sourceSpan = sweptSpan(bounds, layout, from.surface);
-      for (const start of startsFor({
-        left: Math.min(
-          from.state.bird.x,
-          area.exitX,
-          from.surface.mover === undefined ? Infinity : sourceSpan.left,
-        ),
-        right: Math.max(
-          from.state.bird.x + tuning.width,
-          area.exitX + tuning.width,
-          from.surface.mover === undefined ? -Infinity : sourceSpan.right,
-        ),
-      })) {
-        const off = walkOff(tuning, layout, start);
-        steps += off.steps;
-        if (off.entered) {
-          arrive(off.entered);
-          break;
+      const trials = new Map<ZoneState, ReturnType<typeof trialsFrom>>();
+      const waited = phaseStarts((start: ZoneState) => {
+        const result = waitStates(tuning, layout, start, 2);
+        steps += result.steps;
+        if (result.entered) {
+          arrive(result.entered);
         }
-        if (off.cleared) {
-          cleared = true;
-          break;
-        }
-      }
-    }
-    if (complete()) {
-      break;
-    }
-    const { others, own } = targetsFrom(tuning, layout, surfaces, bounds, from, here);
-    const intervals =
-      required?.intervals.filter(
-        (interval) =>
-          !interval.witnessed &&
-          (interval.target.surface === from.surface ||
-            others.some(({ surface }) => surface === interval.target.surface)),
-      ) ?? [];
-    for (const target of [...intervals.map((interval) => interval.target), ...own, ...others]) {
-      const interval = intervals.find((item) => item.target === target);
-      const done = () =>
-        complete() ||
-        (interval
-          ? interval.witnessed
-          : target.surface === from.surface
-            ? seen.has(target.key)
-            : reached.has(target.key));
-      if (done()) {
-        continue;
-      }
-      const tries = triesToward(tuning, from, here, target);
-      const starts = startsFor(
-        phaseCorridor(tuning, layout, bounds, from, here, target, tries),
-        target.surface,
-      );
-      for (const start of starts) {
-        if (done()) {
-          break;
-        }
-        if (target.surface === from.surface) {
-          const walked = walkInto(tuning, layout, surfaces, start, target);
-          steps += walked.steps;
-          if (walked.entered) {
-            arrive(walked.entered);
+        return result.states[1];
+      }, from.state);
+      const startsFor = (corridor: { left: number; right: number }, target?: Surface) =>
+        waited(
+          phaseCount(WAIT_STEP, BUCKET, [from.surface.mover, target?.mover], moving, corridor),
+        );
+      if (required !== undefined && !complete() && here.right > area.exitX) {
+        const sourceSpan = sweptSpan(bounds, layout, from.surface);
+        for (const start of startsFor({
+          left: Math.min(
+            from.state.bird.x,
+            area.exitX,
+            from.surface.mover === undefined ? Infinity : sourceSpan.left,
+          ),
+          right: Math.max(
+            from.state.bird.x + tuning.width,
+            area.exitX + tuning.width,
+            from.surface.mover === undefined ? -Infinity : sourceSpan.right,
+          ),
+        })) {
+          const off = walkOff(tuning, layout, start);
+          steps += off.steps;
+          if (off.entered) {
+            arrive(off.entered);
+            break;
           }
-          if (walked.landed) {
-            reach(walked.landed);
+          if (off.cleared) {
+            cleared = true;
             break;
           }
         }
-        let trial = trials.get(start);
-        if (!trial) {
-          trial = trialsFrom(tuning, layout, surfaces, from, start);
-          trials.set(start, trial);
+      }
+      if (complete()) {
+        return;
+      }
+      const { others, own } = targetsFrom(tuning, layout, surfaces, bounds, from, here);
+      const intervals =
+        required?.intervals.filter(
+          (interval) =>
+            (required!.witnesses.profile(from.state) & interval.token) === 0n &&
+            (interval.target.surface === from.surface ||
+              others.some(({ surface }) => surface === interval.target.surface)),
+        ) ?? [];
+      for (const target of [...intervals.map((interval) => interval.target), ...own, ...others]) {
+        const interval = intervals.find((item) => item.target === target);
+        const done = () =>
+          complete() ||
+          (required
+            ? covered(
+                target.surface === from.surface && !interval ? target.key : target.surface.key,
+                activeProfile | (interval?.token ?? required.witnesses.surface(target.surface.key)),
+              )
+            : target.surface === from.surface
+              ? seen.has(target.key)
+              : reached.has(target.key));
+        if (done()) {
+          continue;
         }
-        const lower =
-          placed(target.surface, start, layout).y > placed(from.surface, start, layout).y;
-        const immediate = lower && tries.find(({ hold, rise }) => hold === AIR_STEPS && rise === 0);
-        if (immediate) {
-          const launched = trial.launch(immediate);
-          steps += launched.steps;
-          if (launched.entered) {
-            arrive(launched.entered);
-          }
-          if (launched.landed) {
-            reach(launched.landed);
-          }
-        }
-        if (lower && !done()) {
-          const dropped = trial.drop(target);
-          steps += dropped.steps;
-          if (dropped.entered) {
-            arrive(dropped.entered);
-          }
-          if (dropped.landed) {
-            reach(dropped.landed);
-          }
-        }
-        for (const attempt of tries) {
+        const tries = triesToward(tuning, from, here, target);
+        const starts = startsFor(
+          phaseCorridor(tuning, layout, bounds, from, here, target, tries),
+          target.surface,
+        );
+        for (const start of starts) {
           if (done()) {
             break;
           }
-          const { entered, landed, steps: ran } = trial.jump(attempt);
-          steps += ran;
-          if (entered) {
-            arrive(entered);
+          if (target.surface === from.surface) {
+            const walked = walkInto(tuning, layout, surfaces, start, target);
+            steps += walked.steps;
+            if (walked.entered) {
+              arrive(walked.entered);
+            }
+            if (walked.landed) {
+              reach(walked.landed);
+              break;
+            }
           }
-          if (landed) {
-            reach(landed);
+          let trial = trials.get(start);
+          if (!trial) {
+            trial = trialsFrom(tuning, layout, surfaces, from, start);
+            trials.set(start, trial);
+          }
+          const lower =
+            placed(target.surface, start, layout).y > placed(from.surface, start, layout).y;
+          const immediate =
+            lower && tries.find(({ hold, rise }) => hold === AIR_STEPS && rise === 0);
+          if (immediate) {
+            const launched = trial.launch(immediate);
+            steps += launched.steps;
+            if (launched.entered) {
+              arrive(launched.entered);
+            }
+            if (launched.landed) {
+              reach(launched.landed);
+            }
+          }
+          if (lower && !done()) {
+            const dropped = trial.drop(target);
+            steps += dropped.steps;
+            if (dropped.entered) {
+              arrive(dropped.entered);
+            }
+            if (dropped.landed) {
+              reach(dropped.landed);
+            }
+          }
+          for (const attempt of tries) {
+            if (done()) {
+              break;
+            }
+            const { entered, landed, steps: ran } = trial.jump(attempt);
+            steps += ran;
+            if (entered) {
+              arrive(entered);
+            }
+            if (landed) {
+              reach(landed);
+            }
           }
         }
       }
-    }
-    const hi = here.left + (from.bucket + 2) * BUCKET;
-    if (required === undefined && !cleared && here.right > area.exitX && hi > area.exitX) {
-      const sourceSpan = sweptSpan(bounds, layout, from.surface);
-      for (const start of startsFor({
-        left: Math.min(
-          from.state.bird.x,
-          area.exitX,
-          from.surface.mover === undefined ? Infinity : sourceSpan.left,
-        ),
-        right: Math.max(
-          from.state.bird.x + tuning.width,
-          area.exitX + tuning.width,
-          from.surface.mover === undefined ? -Infinity : sourceSpan.right,
-        ),
-      })) {
-        const off = walkOff(tuning, layout, start);
-        steps += off.steps;
-        if (off.entered) {
-          arrive(off.entered);
-          break;
-        }
-        if (off.cleared) {
-          cleared = true;
-          break;
+      const hi = here.left + (from.bucket + 2) * BUCKET;
+      if (required === undefined && !cleared && here.right > area.exitX && hi > area.exitX) {
+        const sourceSpan = sweptSpan(bounds, layout, from.surface);
+        for (const start of startsFor({
+          left: Math.min(
+            from.state.bird.x,
+            area.exitX,
+            from.surface.mover === undefined ? Infinity : sourceSpan.left,
+          ),
+          right: Math.max(
+            from.state.bird.x + tuning.width,
+            area.exitX + tuning.width,
+            from.surface.mover === undefined ? -Infinity : sourceSpan.right,
+          ),
+        })) {
+          const off = walkOff(tuning, layout, start);
+          steps += off.steps;
+          if (off.entered) {
+            arrive(off.entered);
+            break;
+          }
+          if (off.cleared) {
+            cleared = true;
+            break;
+          }
         }
       }
+    } finally {
+      depth--;
+      activeProfile = previousProfile;
     }
+  }
+  arrive(startZone(tuning, layout, 1));
+  for (let from = queue.shift(); from && !complete(); from = queue.shift()) {
+    expand(from);
   }
   return { cleared, reached, steps, surfaces };
 }
