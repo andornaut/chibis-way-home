@@ -48,7 +48,7 @@
     "duration": 300
    },
    "background-deer-large 6.aseprite": {
-    "frame": { "x": 1296, "y": 0, "w": 216, "h": 144 },
+    "frame": { "x": 0, "y": 144, "w": 216, "h": 144 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 216, "h": 144 },
@@ -56,7 +56,7 @@
     "duration": 300
    },
    "background-deer-large 7.aseprite": {
-    "frame": { "x": 1512, "y": 0, "w": 216, "h": 144 },
+    "frame": { "x": 216, "y": 144, "w": 216, "h": 144 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 216, "h": 144 },
@@ -64,7 +64,7 @@
     "duration": 650
    },
    "background-deer-large 8.aseprite": {
-    "frame": { "x": 1728, "y": 0, "w": 216, "h": 144 },
+    "frame": { "x": 432, "y": 144, "w": 216, "h": 144 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 216, "h": 144 },
@@ -72,7 +72,7 @@
     "duration": 650
    },
    "background-deer-large 9.aseprite": {
-    "frame": { "x": 1944, "y": 0, "w": 216, "h": 144 },
+    "frame": { "x": 648, "y": 144, "w": 216, "h": 144 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 216, "h": 144 },
@@ -80,7 +80,7 @@
     "duration": 350
    },
    "background-deer-large 10.aseprite": {
-    "frame": { "x": 2160, "y": 0, "w": 216, "h": 144 },
+    "frame": { "x": 864, "y": 144, "w": 216, "h": 144 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 216, "h": 144 },
@@ -88,7 +88,7 @@
     "duration": 300
    },
    "background-deer-large 11.aseprite": {
-    "frame": { "x": 2376, "y": 0, "w": 216, "h": 144 },
+    "frame": { "x": 1080, "y": 144, "w": 216, "h": 144 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 216, "h": 144 },
@@ -101,7 +101,7 @@
   "version": "1.2.30-x64",
   "image": "background-deer-large.png",
   "format": "RGBA8888",
-  "size": { "w": 2592, "h": 144 },
+  "size": { "w": 1296, "h": 288 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 3, "direction": "forward" },

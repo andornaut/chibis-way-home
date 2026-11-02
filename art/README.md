@@ -1028,7 +1028,7 @@ Backdrops repeat in x at widths that divide 720, so chunk seams never show; prop
 
 ## Woodland species and background fauna
 
-`art/tools/large_wildlife.py` draws `background-deer-large` at 216x144 with bottom-centre anchor 108,144. Its four-frame `idle` uses 1000,180,180,1000ms; its eight-frame `graze` uses 350,300,300,650,650,350,300,350ms. Both tags loop. The naturalistic compact silhouette uses flat dslate (`#3a4466`), binary alpha and four fixed hoof patches. Render at native dimensions with a fixed world origin and ordinary camera movement. It has no contact mask, hitbox, interaction, portrait or dialogue.
+`art/tools/large_wildlife.py` draws `background-deer-large` at 216x144 with bottom-centre anchor 108,144. Its four-frame `idle` uses 1000,180,180,1000ms; its eight-frame `graze` uses 350,300,300,650,650,350,300,350ms. Both tags loop. Export with art-kit 0.5.0 in six columns and two rows (1296x288), keeping the native frame dimensions. The naturalistic compact silhouette uses flat dslate (`#3a4466`), binary alpha and four fixed hoof patches. Render at native dimensions with a fixed world origin and ordinary camera movement. It has no contact mask, hitbox, interaction, portrait or dialogue.
 
 Woodland can mix broadleaf, conifer and birch depth layers between appropriate chunks. The existing broadleaf `woodland-far` and `forest-mid` remain the default. `woodland-far-conifers`, `forest-mid-conifers`, `woodland-far-birch` and `forest-mid-birch` retain 720x600, bottom-left y600 and repeat x. Far layers use the existing 0.15,0.05 parallax contract; middle layers use 0.4,0.15. Gameplay owns their chunk bindings and placement, including keeping exterior depth out of enclosed interiors.
 

@@ -3,6 +3,7 @@
 Usage: large_wildlife.py build | preview OUT.png, from repository root.
 Idle: 1000, 180, 180, 1000ms. Graze: 350, 300, 300, 650, 650, 350, 300, 350ms.
 Both tags loop, once[]. Flat dslate, binary alpha, no outlines or interior detail.
+Export requires art-kit 0.5.0: six columns and two rows make a 1296x288 sheet.
 Four hoof patches at x33,46,126,138 occupy y140..143 in every frame.
 Naturalistic compact torso, fixed planted limbs, articulated grazing neck and head.
 Placement uses native dimensions and ordinary world camera movement. No locomotion,
@@ -10,9 +11,11 @@ contact mask, hitbox, portrait, interaction or dialogue.
 """
 
 import math
+import shutil
 import sys
 from pathlib import Path
 
+from art_kit.aseprite import export
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -150,5 +153,29 @@ def sprites():
     )
 
 
-if __name__ == "__main__":
+def build():
+    executable = shutil.which("aseprite")
+    if executable is None:
+        raise FileNotFoundError("aseprite")
+    for key, tags in sprites():
+        export(
+            executable,
+            pixel.PALETTE,
+            tags,
+            f"{SRC}/{key}.aseprite",
+            f"{pixel.SPRITES}/{key}.png",
+            f"{pixel.SPRITES}/{key}.json",
+            key=key,
+            columns=6,
+        )
+        pixel.update_manifest(
+            "sprites",
+            [{"key": key, "png": f"sprites/{key}.png", "json": f"sprites/{key}.json", "once": ONCE[key]}],
+        )
+    print("built", KEY)
+
+
+if __name__ == "__main__" and sys.argv[1:] == ["build"]:
+    build()
+elif __name__ == "__main__":
     pixel.main(sys.argv, sprites, SRC, __doc__, grounds=(pixel.K["zone-green"], pixel.K["forest"]), once=ONCE)
