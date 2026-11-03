@@ -1,6 +1,9 @@
 import { randomStream } from "@andornaut/game-kit/random";
 import {
   findTraversal,
+  type TraversalCommand,
+  type TraversalContext,
+  type TraversalRequest,
   type TraversalResult,
   type TraversalSafety,
 } from "@andornaut/game-kit/terrain/traversal";
@@ -73,7 +76,7 @@ export function observeIdle(
 }
 
 function groundGoal(
-  config: BehaviourIdleWatchdog,
+  config: Pick<BehaviourIdleWatchdog, "distance" | "minMovement">,
   stepDistance: number,
   object: ObjectLayout,
   world: BehaviourWorld,
@@ -125,7 +128,53 @@ export function planIdleRecovery(
   prior: BehaviourIdleState,
   at: Point,
 ): BehaviourIdleState {
-  const config = object.behaviour!.idleWatchdog!;
+  return planSupportedRecovery(
+    undefined,
+    object.behaviour!.idleWatchdog!,
+    world,
+    object,
+    motion,
+    seconds,
+    facing,
+    prior,
+    at,
+  );
+}
+
+// Native traversal validates and charges every suggested tick before accepting the landing.
+export function preferredGroundWalk(
+  context: TraversalContext<TraversalSupport>,
+  request: TraversalRequest<TraversalSupport>,
+): readonly TraversalCommand[] | undefined {
+  const { goal, start } = request;
+  if (!start.grounded || Math.abs(goal.y + context.epsilon - start.y) > context.epsilon) {
+    return undefined;
+  }
+  const centre = start.x + context.body.offset.x + context.body.width / 2;
+  const target = goal.x + goal.width / 2;
+  if (centre === target) {
+    return undefined;
+  }
+  const move = target < centre ? (-1 as const) : (1 as const);
+  return Array.from({ length: request.horizonSteps }, () => ({ jump: false, move }));
+}
+
+export function planSupportedRecovery(
+  prefer:
+    | ((
+        context: TraversalContext<TraversalSupport>,
+        request: TraversalRequest<TraversalSupport>,
+      ) => readonly TraversalCommand[] | undefined)
+    | undefined,
+  config: Pick<BehaviourIdleWatchdog, "distance" | "maxAttempts" | "minMovement">,
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  motion: PursuitMotion,
+  seconds: number,
+  facing: -1 | 1,
+  prior: BehaviourIdleState,
+  at: Point,
+): BehaviourIdleState {
   const attempted = { ...prior, attemptedAt: prior.seconds };
   if (!world.traversalFrame) {
     return { ...attempted, status: "geometry-unavailable" };
@@ -175,11 +224,16 @@ export function planIdleRecovery(
     }
     const start = { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 };
     const goal = groundGoal(config, motion.speed * seconds, object, world, at, target);
-    const result = findTraversal(context, {
+    const request: TraversalRequest<TraversalSupport> = {
       ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
       goal,
       start,
       timeSeconds: world.traversalFrame.timeSeconds,
+    };
+    const preferredInputs = prefer?.(context, request);
+    const result = findTraversal(context, {
+      ...request,
+      ...(preferredInputs && { preferredInputs }),
     });
     if (result.status === "found") {
       return {
@@ -205,6 +259,31 @@ export function planIdleRecovery(
 }
 
 export function advanceIdleRecovery(
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  motion: PursuitMotion,
+  seconds: number,
+  prior: BehaviourIdleState,
+  at: Point,
+): {
+  readonly at: Point;
+  readonly idle: BehaviourIdleState;
+  readonly segments: readonly IdleSegment[];
+  readonly finished: boolean;
+} {
+  return advanceSupportedRecovery(
+    object.behaviour!.idleWatchdog!,
+    world,
+    object,
+    motion,
+    seconds,
+    prior,
+    at,
+  );
+}
+
+export function advanceSupportedRecovery(
+  config: Pick<BehaviourIdleWatchdog, "minMovement">,
   world: BehaviourWorld,
   object: ObjectLayout,
   motion: PursuitMotion,
@@ -280,7 +359,7 @@ export function advanceIdleRecovery(
       idle:
         finished && supportedLanding(object, world, current)
           ? clear(
-              Math.abs(current.x - recovery.origin.x) >= object.behaviour!.idleWatchdog!.minMovement
+              Math.abs(current.x - recovery.origin.x) >= config.minMovement
                 ? "found"
                 : "invalidated",
             )

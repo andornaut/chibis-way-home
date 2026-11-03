@@ -22,9 +22,12 @@ import {
 import { type FlightSelectionState, selectSupportedFlight } from "./behaviourFlightSelection";
 import {
   advanceIdleRecovery,
+  advanceSupportedRecovery,
   type BehaviourIdleState,
   observeIdle,
   planIdleRecovery,
+  planSupportedRecovery,
+  preferredGroundWalk,
 } from "./behaviourIdle";
 import {
   type BehaviourGeometry,
@@ -61,6 +64,7 @@ import { targetInCurrentView, targetInSameChunk, targetVisible } from "./percept
 
 export interface BehaviourState extends BehaviourAttackState {
   readonly idleWatchdog?: BehaviourIdleState;
+  readonly groundReposition?: BehaviourIdleState;
   readonly rearm?: BehaviourRearmState;
   readonly traversal?: BehaviourTraversalState;
   readonly anchor?: Point;
@@ -151,8 +155,43 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   ) {
     throw new Error("Invalid idle watchdog configuration");
   }
+  const groundReposition = plan.groundReposition;
+  if (groundReposition) {
+    const resume = plan.states[groundReposition.resume];
+    if (
+      !plan.pursuit ||
+      ![
+        groundReposition.intervalSeconds,
+        groundReposition.distance,
+        groundReposition.minDistance,
+      ].every((value) => Number.isFinite(value) && value > 0) ||
+      groundReposition.minDistance > groundReposition.distance ||
+      !Number.isSafeInteger(groundReposition.maxAttempts) ||
+      groundReposition.maxAttempts <= 0 ||
+      !resume ||
+      resume.attack ||
+      resume.onEnter?.length ||
+      resume.motion.kind !== "pursue" ||
+      resume.motion.mode !== "ground" ||
+      !resume.motion.traversal
+    ) {
+      throw new Error("Invalid periodic ground reposition configuration");
+    }
+  }
   const states = Object.fromEntries(
     Object.entries(plan.states).map(([key, node]) => {
+      if (
+        node.allowGroundReposition &&
+        (!groundReposition ||
+          node.attack ||
+          node.onEnter?.length ||
+          node.motion.kind !== "pursue" ||
+          node.motion.mode !== "ground" ||
+          !node.motion.traversal ||
+          (node.track?.axis ?? plan.axis) !== "x")
+      ) {
+        throw new Error(`Invalid periodic ground reposition state ${key}`);
+      }
       if (
         node.attack &&
         (plan.attackCooldownSeconds === undefined ||
@@ -440,6 +479,13 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   );
   return {
     ...plan,
+    ...(groundReposition && {
+      groundReposition: {
+        ...groundReposition,
+        distance: groundReposition.distance * tile,
+        minDistance: groundReposition.minDistance * tile,
+      },
+    }),
     ...(watchdog && {
       idleWatchdog: {
         ...watchdog,
@@ -1360,6 +1406,128 @@ function idleRecoveryStep(
   };
 }
 
+function groundRepositionStep(
+  tuning: BirdTuning,
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  seconds: number,
+  bird: BirdState,
+  at: Point,
+  state: BehaviourState,
+): { readonly state: BehaviourState; readonly step?: BehaviourStep } {
+  const config = object.behaviour!.groundReposition!,
+    prior = state.groundReposition!;
+  const node = nodeOf(object, state.stateKey),
+    motion = nodeOf(object, config.resume).motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    throw new Error("Periodic reposition requires ground pursuit physics");
+  }
+  const eligible =
+    state.pursuit?.phase === "engaged" &&
+    node.allowGroundReposition === true &&
+    !attackProtected(node, state) &&
+    !node.onEnter?.length &&
+    !state.hop &&
+    !state.idleWatchdog?.recovery &&
+    (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
+    supportedLanding(object, world, at);
+  const firstTransition =
+    !prior.recovery &&
+    eligible &&
+    prior.seconds >= config.intervalSeconds &&
+    node.transitions.find(
+      ({ to, when }) =>
+        canEnterAttack(nodeOf(object, to), state) &&
+        when.every((condition) => matches(tuning, object, world, bird, at, state, condition)),
+    );
+  const attackOpportunity =
+    firstTransition && nodeOf(object, firstTransition.to).attack?.phase === "tell";
+  const policy = {
+    distance: config.distance,
+    maxAttempts: config.maxAttempts,
+    minMovement: config.minDistance,
+  };
+  const selectionWorld = {
+    ...world,
+    ...(world.idleDecision && {
+      idleDecision: {
+        ...world.idleDecision,
+        namespace: `${world.idleDecision.namespace}:ground-periodic`,
+      },
+    }),
+  };
+  let prepared = prior;
+  if (
+    !prepared.recovery &&
+    eligible &&
+    !attackOpportunity &&
+    prepared.seconds >= config.intervalSeconds
+  ) {
+    // Periodic variation requires its per-object seed, never a deterministic-facing fallback.
+    prepared = { ...prepared, anchor: at };
+    prepared = world.idleDecision
+      ? planSupportedRecovery(
+          preferredGroundWalk,
+          policy,
+          selectionWorld,
+          object,
+          motion,
+          seconds,
+          state.facing,
+          prepared,
+          at,
+        )
+      : { ...prepared, status: "geometry-unavailable" };
+    if (!prepared.recovery) {
+      return { state: { ...state, groundReposition: { ...prepared, seconds: 0 } } };
+    }
+  }
+  if (!prepared.recovery) {
+    return { state };
+  }
+  const active = { ...state, groundReposition: prepared };
+  delete (active as { traversal?: BehaviourTraversalState }).traversal;
+  const advanced = advanceSupportedRecovery(policy, world, object, motion, seconds, prepared, at);
+  const animated = animateSegments(
+    object,
+    seconds,
+    {
+      ...active,
+      ...(advanced.idle.recovery?.kind === "ground" && {
+        traversal: advanced.idle.recovery.traversal,
+      }),
+    },
+    advanced.segments,
+    world.traversalFrame?.timeSeconds,
+  );
+  let next: BehaviourState = {
+    ...animated.state,
+    groundReposition: { ...advanced.idle, seconds: advanced.finished ? 0 : advanced.idle.seconds },
+    ...(advanced.idle.recovery?.kind === "ground" && {
+      traversal: advanced.idle.recovery.traversal,
+    }),
+    ...(object.behaviour!.idleWatchdog &&
+      state.idleWatchdog && {
+        idleWatchdog: observeIdle(
+          object.behaviour!.idleWatchdog,
+          seconds,
+          advanced.segments,
+          state.idleWatchdog,
+        ),
+      }),
+  };
+  if (advanced.finished) {
+    next = {
+      ...enterState(tuning, object, bird, advanced.at, config.resume, next),
+      pendingEntry: false,
+    };
+  }
+  return {
+    state: next,
+    step: { actions: [], at: advanced.at, segments: animated.segments, state: next },
+  };
+}
+
 export function stepBehaviour(
   tuning: BirdTuning,
   object: ObjectLayout,
@@ -1411,6 +1579,25 @@ export function stepBehaviour(
     const withoutPreparation = { ...next };
     delete (withoutPreparation as { traversal?: BehaviourTraversalState }).traversal;
     next = withoutPreparation;
+  }
+  const periodic = plan.groundReposition;
+  if (periodic && next.pursuit) {
+    const prior = next.groundReposition ?? { anchor: at, seconds: 0 };
+    next = {
+      ...next,
+      groundReposition: prior.recovery
+        ? prior
+        : { ...prior, seconds: Math.min(periodic.intervalSeconds, prior.seconds + seconds) },
+    };
+    const reposition = groundRepositionStep(tuning, object, world, seconds, bird, at, next);
+    next = reposition.state;
+    if (reposition.step) {
+      return {
+        ...reposition.step,
+        state: advanceAttackClock(seconds, reposition.step.state),
+        ...(escaped && { escaped }),
+      };
+    }
   }
   const watchdog = plan.idleWatchdog;
   if (watchdog && next.pursuit && !next.idleWatchdog) {
