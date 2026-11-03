@@ -75,7 +75,7 @@ export function addStageSummary(
       paletteColour(scene, colour),
     )
       .setScale(scale)
-      .setLineSpacing((lineHeight ?? metrics.lineHeight * scale) - metrics.lineHeight * scale)
+      .setLineSpacing((lineHeight ?? metrics.lineHeight * scale) / scale - metrics.lineHeight)
       .setLeftAlign();
   };
   const key = STAGE_PREVIEWS[data.stage];
