@@ -1,9 +1,10 @@
 import { SCREEN } from "../data/screen";
 import type { Point, Rect, SkillId } from "../data/types";
 import { SKILL_IDS } from "../rules/skills";
+import { PAUSE_VISIBLE_DIAMETER } from "./controlChrome";
 import { CONTROL_EDGE } from "./playView";
 
-export const SKILL_BUTTON = { disc: 35, glyph: 16, target: 48 } as const;
+export const SKILL_BUTTON = { disc: PAUSE_VISIBLE_DIAMETER, glyph: 16, target: 48 } as const;
 export const SKILL_HUD: Readonly<Record<SkillId, Point>> = Object.fromEntries(
   SKILL_IDS.map((skill, index) => [
     skill,
