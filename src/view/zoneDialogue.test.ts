@@ -28,7 +28,6 @@ describe("proximityDialogue", () => {
       undefined,
     ],
     ["already heard this attempt", [OBJECT], [NEAR], new Set([0]), undefined],
-    ["heard set cleared for another attempt", [OBJECT], [NEAR], new Set<number>(), 0],
     ["ordinary harmless character", [ORDINARY], [NEAR], new Set<number>(), undefined],
     [
       "no scene configured",

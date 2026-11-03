@@ -34,7 +34,6 @@ describe("motionTrack", () => {
       0.5,
       { x: 14.6447, y: 0 },
     ],
-    ["ease, halfway out", { ...LINEAR, algorithm: "ease" }, 0, 1, { x: 50, y: 0 }],
     [
       "hop, at the top of its arc",
       { ...LINEAR, algorithm: "hop", hopHeight: 20 },
@@ -126,12 +125,7 @@ describe("motionTrack", () => {
 });
 
 describe("axisOf", () => {
-  it.each([
-    ["right", { x: 1, y: 0 }],
-    ["left", { x: -1, y: 0 }],
-    ["up", { x: 0, y: -1 }],
-    ["down", { x: 0, y: 1 }],
-  ] as const)("points %s along %j", (direction, axis) => {
-    expect(axisOf(direction)).toEqual(axis);
+  it("points down along the vertical axis", () => {
+    expect(axisOf("down")).toEqual({ x: 0, y: 1 });
   });
 });

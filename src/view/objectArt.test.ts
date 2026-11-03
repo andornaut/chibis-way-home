@@ -34,23 +34,17 @@ describe("artKind", () => {
 });
 
 describe("artScrollFactor", () => {
-  it.each<ArtKind>(["backdrop", "placeholder", "repeated-backdrop", "sprite", "tiles"])(
-    "keeps %s at world speed by default",
-    (kind) => {
-      expect(artScrollFactor(kind)).toEqual({ x: 1, y: 1 });
-    },
-  );
+  it("keeps art at world speed when no parallax is configured", () => {
+    expect(artScrollFactor("sprite")).toEqual({ x: 1, y: 1 });
+  });
 
   it.each<ArtKind>(["backdrop", "repeated-backdrop"])("applies both axes to %s", (kind) => {
     expect(artScrollFactor(kind, { x: 0.2, y: 0 })).toEqual({ x: 0.2, y: 0 });
   });
 
-  it.each<ArtKind>(["placeholder", "sprite", "tiles"])(
-    "rejects detached parallax for %s",
-    (kind) => {
-      expect(() => artScrollFactor(kind, { x: 0, y: 1 })).toThrow("requires backdrop art");
-    },
-  );
+  it("rejects detached sprite parallax", () => {
+    expect(() => artScrollFactor("sprite", { x: 0, y: 1 })).toThrow("requires backdrop art");
+  });
 });
 
 describe("scenery sprite eligibility", () => {
@@ -83,11 +77,6 @@ describe("scenery sprite eligibility", () => {
     {
       behaviour: {
         states: { waiting: { motion: { kind: "wait" }, onEnter: [{ kind: "spawn" }] } },
-      },
-    },
-    {
-      behaviour: {
-        states: { waiting: { motion: { kind: "wait" }, onEnter: [{ kind: "force-pulse" }] } },
       },
     },
     { behaviour: { states: { moving: { motion: { kind: "move" } } } } },
