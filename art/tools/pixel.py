@@ -54,6 +54,7 @@ K = {
 }
 K.update(zone_themes.colours())
 K.update(background_palette.colours(K))
+K["warning-red"] = "d45253"
 PALETTE = list(K.values())
 # One ramp step darker for each colour. Shadows and dimming step down this, never blend with black.
 DARKER = dict(
@@ -68,6 +69,7 @@ DARKER = dict(
         "3e2731:181425",
         "a22633:3e2731",
         "e43b44:a22633",
+        "d45253:a22633",
         "f77622:be4a2f",
         "feae34:f77622",
         "fee761:feae34",
