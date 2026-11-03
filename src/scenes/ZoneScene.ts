@@ -167,6 +167,7 @@ import { scenerySpriteFrame } from "../view/scenerySprite";
 import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { STAGE_PROGRESS_STYLE } from "../view/stageProgress";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
+import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../view/touchChrome";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";
 import { mountAirJumpCue } from "./airJumpCue";
@@ -182,6 +183,7 @@ import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
+import { createTouchChrome } from "./touchChrome";
 import { bindZoneBarks } from "./zoneBarks";
 import type { ZoneBarkScene } from "./ZoneBarkScene";
 import type { ZoneDepartureData } from "./ZoneDepartureScene";
@@ -222,8 +224,6 @@ const OBJECT_COLOURS: Readonly<Record<Collision, number>> = {
 const FADE_MS = 250;
 
 const BIRD_SPRITE = "bird";
-const MOVE_HINT_SPRITE = "ui-move-hint";
-const MOVE_KNOB_SPRITE = "ui-move-knob";
 const CONTROL_SPRITES: Readonly<Record<TouchControl, string>> = {
   jump: "ui-touch-jump",
   use: "ui-touch-use",
@@ -543,19 +543,18 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
 
     for (const control of Object.keys(CONTROL_SPRITES) as TouchControl[]) {
-      const sprite = this.add
-        .sprite(0, 0, CONTROL_SPRITES[control])
-        .setOrigin(0)
-        .setScrollFactor(0)
-        .setDepth(OVERLAY_DEPTH);
-      const at = centredAt(TOUCH_CONTROLS[control].centre, sprite.frame);
+      const sprite = createTouchChrome(this, control).setScrollFactor(0).setDepth(OVERLAY_DEPTH);
+      const at = centredAt(TOUCH_CONTROLS[control].centre, {
+        height: TOUCH_CHROME_FRAME,
+        width: TOUCH_CHROME_FRAME,
+      });
       this.controls.set(control, sprite.setPosition(at.x, at.y));
       this.cameras.main.ignore(sprite);
       sprite.cameraFilter &= ~controlsCamera.id;
     }
     this.moveHint = {
-      knob: this.add.sprite(0, 0, MOVE_KNOB_SPRITE).setOrigin(0),
-      ring: this.add.sprite(0, 0, MOVE_HINT_SPRITE).setOrigin(0),
+      knob: createTouchChrome(this, "knob"),
+      ring: createTouchChrome(this, "move"),
     };
     for (const part of [this.moveHint.ring, this.moveHint.knob]) {
       part.setScrollFactor(0).setDepth(OVERLAY_DEPTH);
@@ -704,7 +703,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const shift = bottomShift(this.scale.gameSize);
     for (const [control, sprite] of this.controls) {
       const { centre } = TOUCH_CONTROLS[control];
-      const at = shifted(shift, centredAt(centre, sprite.frame));
+      const at = shifted(
+        shift,
+        centredAt(centre, { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME }),
+      );
       sprite.setPosition(at.x, at.y);
     }
     this.drawProgress();
@@ -742,8 +744,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const view = moveHintView(TOUCH, MOVE_HINT.knobReach, rest, touches);
     show(ring, view.ringTag);
     show(knob, view.knobTag);
-    const ringAt = centredAt(view.centre, ring.frame);
-    const knobAt = centredAt(view.knob, knob.frame);
+    const ringAt = centredAt(view.centre, {
+      height: TOUCH_CHROME_FRAME,
+      width: TOUCH_CHROME_FRAME,
+    });
+    const knobAt = centredAt(view.knob, { height: TOUCH_KNOB_FRAME, width: TOUCH_KNOB_FRAME });
     ring.setPosition(ringAt.x, ringAt.y).setVisible(shown);
     knob.setPosition(knobAt.x, knobAt.y).setVisible(shown);
   }
@@ -2039,7 +2044,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       } else {
         this.presses.set(control, since);
       }
-      const tag = controlTag(this.sheet(sprite.texture.key), nowMs, since);
+      const tag = controlTag(this.sheet(CONTROL_SPRITES[control]), nowMs, since);
       show(sprite, tag);
     }
   }

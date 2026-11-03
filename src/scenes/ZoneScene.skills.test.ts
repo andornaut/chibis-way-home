@@ -287,7 +287,8 @@ it("retains the movement finger's joystick while another finger holds or release
     use: true,
   });
   expect(f.draw()).toBe(true);
-  expect({ x: f.ring.x, y: f.ring.y }).toEqual(start);
+  const half = (TOUCH_CONTROLS.jump.art.width - 1) / 2;
+  expect({ x: f.ring.x + half, y: f.ring.y + half }).toEqual(start);
   f.send("pointerup", 2, use);
   expect(f.scene.heldTouches.has(1)).toBe(true);
   expect(f.draw()).toBe(true);
