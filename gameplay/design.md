@@ -1,12 +1,12 @@
 # Game Design
 
-The rulebook: every rule the game is built to. What's left to build and tune is in [`README.md`](README.md), and undecided ideas are in [`ideas.md`](ideas.md).
+The rulebook: every rule the game is built to. Tuning and release work are in [`README.md`](README.md), undecided questions are in [`ideas.md`](ideas.md), and agreed later scope is in [`next.md`](next.md).
 
 `src/data/` holds every number and all player text. This doc states the rules, with numbers only where they define one.
 
 ## Pitch
 
-A landscape platformer: Chibi travels back to the apartment he shared with his former best friend, Fert, a ferret, after Fert mails him far away. V1 follows one linear route; branching routes are planned for Next.
+A landscape platformer: Chibi travels back to the apartment he shared with his former best friend, Fert, a ferret, after Fert mails him far away. V1 follows one linear route.
 
 ## Setting
 
@@ -33,7 +33,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 ## Core loop
 
 1. **A stage:** travel through one place, mostly left to right and bottom to top: platforming and talking with animals. The first five zones contain three stages each; Apartment contains six floor stages. V1 follows a linear route.
-2. **Between stages:** completing a nonfinal stage shows an image-backed statistics interstitial and Continue, which enters the next stage directly. Completing a zone’s final stage shows the zone's outgoing exchange and statistics, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route; Next adds branching routes.
+2. **Between stages:** completing a nonfinal stage shows an image-backed statistics interstitial and Continue, which enters the next stage directly. Completing a zone’s final stage shows the zone's outgoing exchange and statistics, then returns to the map and animates Chibi walking to the next zone, except for the final celebration. V1 continues along its linear route.
 3. **Home:** Chibi returns to the shared apartment. The outcome of his friendship with Fert is undecided.
 
 ## Voice
@@ -92,7 +92,7 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 
 ### Chibi
 
-- **Abilities:** new games start with no owned skills. Entering a gift room permanently grants Dash, Double jump or Speedy. Ownership and active selection are separate: exactly one eligible skill is selected, and only its effect applies. The first grant selects itself; later grants keep the current selection. Selecting another owned skill replaces the selection, never toggles the sole skill off. Revisiting an already owned grant changes nothing and does not stack it. Ordinary required routes remain completable without dash or double jump, while those skills can help with optional shortcuts, boss avoidance, secrets and dialogue access. Further ability upgrades through special-room dialogue and quests are future progression. Extra lives are planned only, with no life counter or extra-life mechanic
+- **Abilities:** new games start with no owned skills. Entering a gift room permanently grants Dash, Double jump or Speedy. Ownership and active selection are separate: exactly one eligible skill is selected, and only its effect applies. The first grant selects itself; later grants keep the current selection. Selecting another owned skill replaces the selection, never toggles the sole skill off. Revisiting an already owned grant changes nothing and does not stack it. Ordinary required routes remain completable without dash or double jump, while those skills can help with optional shortcuts, boss avoidance, secrets and dialogue access. There is no life counter or extra-life mechanic; later progression is listed in [`next.md`](next.md)
 - **Double jump:** after leaving support, one fresh airborne Jump press can start an additional jump with half the first jump’s maximum rise. Its short-hop rise scales by the same ratio, with the existing release and hold controls. The ordinary first jump is unchanged. A grounded or coyote-time jump does not consume that extra jump. Actual supported landing restores it; holding Jump does not repeatedly trigger it
 - **Flutter:** every fall flutters, after a jump or off a ledge: his fall is slow enough to use, and the player steers him in the air
 - **Jump height:** every jump has one uninterrupted decelerating ascent, with no timed lift, upward reboost or pause at the apex while Jump is held. Releases within the first 120 ms produce the minimum hop of 40 px, about 3 tiles; releasing later blends continuously toward a higher apex, up to the full height of about 6.5 tiles, without a velocity snap, upward reboost or apex pause. Chibi flutters on the fall. A buffered jump whose button was already released is the low hop. Low ceilings are placed so a short jump clears the obstacle without touching the overhead red edge; a full hold hits that edge. Jump tuning lives in `src/data/bird.ts`
@@ -111,7 +111,7 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 - **Buttons:** Back to title is on the left; Continue is on the right and is the default keyboard action
 - **Celebration:** only clearing Apartment building's sixth stage, Penthouse, shows Fert's outgoing exchange and the final statistics interstitial followed by the finish celebration, including on replay. Clearing the depot does not finish V1. Continue returns to the map; Restart asks first, as on the start screen
 - **Checkpoints:** each stage begins at its own checkpoint, with unlimited retries. Walking left from any stage entrance returns to the map. The entrance exit stays reachable and has no blocking wall; an apartment stage returns through its first section's left edge
-- **Forks:** branching routes are deferred to Next. V1 is linear and has no laps
+- **Forks:** V1 is linear and has no route forks or laps
 - **Progression:** Parcel depot is unlocked from the start. Clearing a stage unlocks the next built stage in the route table. Clearing a zone’s final stage opens the next zone. Completed stages remain available for replay, and unbuilt content remains unavailable
 - **Selection:** only manually pressing Continue on the map opens the selected zone's stage-selection modal. Up to three full-size side-by-side cards per page stay in catalogue order, including locked stages, which remain grey and disabled. Previous and Next controls change pages; the modal opens on the page containing the highlighted latest available stage. Keyboard navigation can focus unlocked stages across pages or activate enabled page controls. Each card shows an actual scene screenshot, the main stage name at the standard font size, and a smaller, lighter Stage {number} label using its catalogue ordinal at the top right. Names never shrink to fit. Stage scenery differs slightly while preserving the zone's palette and visual style. Persisted unlocks survive replays
 - **Walk:** Chibi stands on a zone. Left and Right move through available zones, and Continue selects the zone he stands on
@@ -198,7 +198,7 @@ This is the approved implementation scope for the current change, including the 
 - **Slots:** marked regions where the seed places an event or a door. A chunk must pass with every slot empty
 - **Shared layouts:** every zone uses the same layout templates and object/archetype library. Theme configuration supplies terrain, structures, props, enemies, doors, triggers, backgrounds, parallax and recipes; it does not add zone-specific mechanics
 - **Themes:** a theme sets the tileset, terrain looks and repeated backdrops for every chunk of that theme, so seams never show. A chunk can still place its own scenery. The park is an outdoor prototype theme
-- **Background coverage:** every outdoor area has continuous interesting background coverage, including vertical challenges. Independently randomized visual sections supply coherent far and middle layers beneath the zone's fixed sky and weather treatment, preserving complete authored layers, tree species and background animals. Selection does not change terrain, physical object indices or gameplay randomness. Opaque interiors retain their authored base walls, props and framed depth windows. Apartment interior depth textures repeat only inside the exact fixed authored opaque wall bands: only the texture phase moves relative to the area-entry reference, not the wall bounds. The window aperture stays uncovered. Existing exterior depth, fauna, physical geometry and gameplay randomness remain unchanged. V1 uses one consistent weather treatment per zone; dynamic weather and weather effects are reserved for V2.
+- **Background coverage:** every outdoor area has continuous interesting background coverage, including vertical challenges. Independently randomized visual sections supply coherent far and middle layers beneath the zone's fixed sky and weather treatment, preserving complete authored layers, tree species and background animals. Selection does not change terrain, physical object indices or gameplay randomness. Opaque interiors retain their authored base walls, props and framed depth windows. Apartment interior depth textures repeat only inside the exact fixed authored opaque wall bands: only the texture phase moves relative to the area-entry reference, not the wall bounds. The window aperture stays uncovered. Existing exterior depth, fauna, physical geometry and gameplay randomness remain unchanged. V1 uses one consistent weather treatment per zone.
 
 ### Objects
 
@@ -378,7 +378,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 ### Fert
 
 - **Appearances:** Fert enlists his friends as a favour. A friend or group is responsible for a themed zone and appears in person or through dialogue overlays; identities beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided
-- **Boss encounters:** the named antagonists use their existing contact attacks and specials. Dedicated boss arenas and combat remain deferred to Next, outside V1
+- **Boss encounters:** the named antagonists use their existing contact attacks and specials. V1 has no dedicated boss arenas or combat
 - **Calling card:** every trap Fert sets carries a badge of his stovepipe hat and bow tie
 - **Ending:** Chibi returns home; the outcome of their friendship is undecided. There is no combat
 - **Journey barks:** Fert has two authored live-bark schedule entries per zone, twelve across the journey, spaced after the introduction. Each entry still requires an actual visible Fert world actor at presentation; an entry without one remains unshown and never creates an actor or an offscreen voice. Each is a single five-second nonmodal message with no buttons, triggered by current weighted stage progress. Apartment messages occur on the restaurant and residential floors. Cinematics, modal scenes and active barks defer presentation. Only actual presentation marks a message heard; that state survives retries, area transitions and room visits within the generated run, while fresh stage entry resets it. Retry clears queued but unshown messages without marking them heard, leaving them eligible again when current progress reaches their threshold. Pausing the world freezes the message timer
@@ -386,8 +386,8 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 ### Choices
 
 - **Effect:** a choice changes where Chibi goes, what he does and what he sees
-- **Kinds:** dialogue choices always appear in a modal. Route forks in zones and on the map are planned for Next
-- **Reach:** choice effects on later zones or the ending are undecided. Branching routes are planned for Next
+- **Kinds:** dialogue choices always appear in a modal; V1 has no route forks
+- **Reach:** choice effects on later zones or the ending remain undecided; see [`ideas.md`](ideas.md#open-questions)
 
 ### Opening story
 
