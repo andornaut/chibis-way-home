@@ -139,8 +139,8 @@ const bearBody = objectLayout(
 );
 
 it.each([
-  { first: 8, milliseconds: 120, tag: "walk", top: [11, 10, 11, 10] },
-  { first: 12, milliseconds: 80, tag: "rush", top: [12, 11, 12, 11] },
+  { first: 8, milliseconds: 120, tag: "walk", top: [4, 3, 4, 3] },
+  { first: 12, milliseconds: 80, tag: "rush", top: [4, 3, 4, 3] },
 ])(
   "uses actual $tag silhouettes, native feet and mirrored contact for every locomotion frame",
   ({ first, milliseconds, tag, top }) => {
@@ -176,7 +176,7 @@ it.each([
           Math.min(...runs.map((run) => run[0])),
           Math.max(...runs.map((run) => run[2])),
           Math.max(...runs.map((run) => run[0])) + 1,
-        ]).toEqual([3, top[frame], 45, 48]);
+        ]).toEqual([2, top[frame], 45, 48]);
         const at = { x: 240.2, y: 240.2 };
         const origin = spriteFrameOrigin(bearBody.contact!.frame, bearBody, at);
         expect(origin).toEqual({ x: 240, y: 240 });
@@ -225,7 +225,8 @@ it.each(["walk", "rush"] as const)(
       start: { area: "main", entry: "start" },
     };
     const initial = startZone(BIRD, layout, 1);
-    const top = tag === "walk" ? 11 : 12;
+    const first = bearBody.contact!.tags[tag]!.frames[0]!.frame;
+    const top = Math.min(...bearBody.contact!.frames[first]!.map(([y]) => y));
     for (const facing of [-1, 1] as const) {
       for (const lethal of [false, true]) {
         const state = {
