@@ -377,6 +377,7 @@ export interface Reaction {
 
 export type BehaviourCondition =
   | { readonly kind: "attack-ready" }
+  | { readonly kind: "targeted-attack-allowed" }
   | { readonly kind: "pursuit-ended" }
   | { readonly kind: "visible" }
   | { readonly kind: "line-of-sight" }
@@ -747,8 +748,75 @@ export interface Orbit<Host = string> {
   readonly radius: number;
 }
 
+export type ForcedTransitInterval = readonly [minimum: number, maximum: number];
+export type ForcedTransitBankPurpose = "forward" | "refuge" | "retreat";
+export type ForcedTransitCertification = "uncertified" | "ordinary";
+export type TargetedAttackWindow = "allowed" | "deferred" | "unknown";
+
+export type ForcedTransitResult =
+  { readonly kind: "egress"; readonly bankId: string } | { readonly kind: "forced" };
+
+// Authored coordinates are tile offsets from the placed mover's nominal origin.
+export interface ForcedTransitTileBank {
+  readonly col: number;
+  readonly cols: number;
+  readonly id: string;
+  readonly purpose: ForcedTransitBankPurpose;
+  readonly row: number;
+}
+
+export interface ForcedTransitTileOriginWindow {
+  readonly col: ForcedTransitInterval;
+  readonly row: ForcedTransitInterval;
+}
+
+export interface ForcedTransitTileWindow {
+  readonly certification: ForcedTransitCertification;
+  readonly result: ForcedTransitResult;
+  readonly riderBodyOrigin: ForcedTransitTileOriginWindow;
+  readonly supportOrigin: ForcedTransitTileOriginWindow;
+}
+
+export interface ForcedTransit {
+  readonly banks: readonly ForcedTransitTileBank[];
+  readonly boardingBanks: readonly string[];
+  readonly group: string;
+  readonly leg: string;
+  readonly windows: readonly ForcedTransitTileWindow[];
+}
+
+// Resolved coordinates are absolute layout pixels, independent of the mover's current pose.
+export interface ForcedTransitLayoutBank {
+  readonly id: string;
+  readonly purpose: ForcedTransitBankPurpose;
+  readonly width: number;
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface ForcedTransitLayoutOriginWindow {
+  readonly x: ForcedTransitInterval;
+  readonly y: ForcedTransitInterval;
+}
+
+export interface ForcedTransitLayoutWindow {
+  readonly certification: ForcedTransitCertification;
+  readonly result: ForcedTransitResult;
+  readonly riderBodyOrigin: ForcedTransitLayoutOriginWindow;
+  readonly supportOrigin: ForcedTransitLayoutOriginWindow;
+}
+
+export interface ForcedTransitLayout {
+  readonly banks: readonly ForcedTransitLayoutBank[];
+  readonly boardingBanks: readonly string[];
+  readonly group: string;
+  readonly leg: string;
+  readonly windows: readonly ForcedTransitLayoutWindow[];
+}
+
 export interface Instance {
   readonly crumbling?: CrumblingProfile;
+  readonly forcedTransit?: ForcedTransit;
   readonly id?: string;
   readonly orbit?: Orbit;
   readonly behaviour?: BehaviourPlan;
@@ -1041,6 +1109,7 @@ export interface Reaches {
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
   readonly crumbling?: CrumblingProfile;
+  readonly forcedTransit?: ForcedTransitLayout;
   // Resolved from the original scenery collection, never from art, names or scroll factors.
   readonly scenerySource?: "chunk";
   readonly contactCue?: "red-hazard";

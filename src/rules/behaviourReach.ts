@@ -1,6 +1,13 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import type { AreaLayout, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
+import type {
+  AreaLayout,
+  BirdTuning,
+  ObjectLayout,
+  Point,
+  Rect,
+  TargetedAttackWindow,
+} from "../data/types";
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { collisionCandidates } from "./collisionIndex";
 import type { TimedHazardSampler } from "./timedHazard";
@@ -43,6 +50,7 @@ export interface BehaviourTraversalFrame {
 }
 
 export interface BehaviourWorld {
+  readonly targetedAttackWindow?: TargetedAttackWindow;
   readonly idleDecision?: { readonly seed: number; readonly namespace: string };
   readonly chunks?: AreaLayout["chunks"];
   readonly traversalFrame?: BehaviourTraversalFrame;

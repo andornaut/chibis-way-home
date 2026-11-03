@@ -399,6 +399,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         const when = transition.when.map((condition): BehaviourCondition => {
           if (
             condition.kind === "attack-ready" ||
+            condition.kind === "targeted-attack-allowed" ||
             condition.kind === "boundary" ||
             condition.kind === "visible" ||
             condition.kind === "line-of-sight" ||
@@ -890,6 +891,9 @@ function matches(
 ): boolean {
   if (condition.kind === "attack-ready") {
     return attackReady(state);
+  }
+  if (condition.kind === "targeted-attack-allowed") {
+    return world.targetedAttackWindow === "allowed";
   }
   if (condition.kind === "pursuit-ended") {
     return (
