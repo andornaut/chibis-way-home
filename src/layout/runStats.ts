@@ -133,8 +133,8 @@ export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: Summar
     fonts.title,
     bounds.y,
     words.zone,
-    FONT_METRICS.mainHeading.size / FONT_NATIVE_SIZE,
-    FONT_METRICS.mainHeading.lineHeight,
+    FONT_METRICS.compactMainHeading.size / FONT_NATIVE_SIZE,
+    FONT_METRICS.compactMainHeading.lineHeight,
   );
   const stage = centred(
     fonts.body,
