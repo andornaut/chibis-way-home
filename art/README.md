@@ -272,7 +272,7 @@ All positions are in base pixels (x, y, w, h) of the 720x360 layout as drawn. Th
 | Double jump | icon-skill-double-jump | 608,8                   |
 | Speedy      | icon-skill-speedy      | 664,8                   |
 
-The base 720x360 view places these targets left to right in one horizontal top row, with 8px between targets and 8px from the top and right edges. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) draws smooth procedural circles centred at target-local 24,24: the face radius is 17.5px, and the selected skill adds a 4px dark `ink` annulus with an outer radius of 21.5px. Both fit the existing 48x48 target. There are no light-coloured rings or reused `ui-pause` chrome. Place the unchanged native 16x16 glyph at target-local 16,16; its centre anchor remains 8,8.
+The base 720x360 view places these targets left to right in one horizontal top row, with 8px between targets and 8px from the top and right edges. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) draws smooth procedural circles centred at target-local 24,24: every skill and state uses the same 21.5px outer radius (43px diameter) within its existing 48x48 target. The selected skill draws a 4px dark `ink` annulus inside that fixed circle, leaving a 17.5px face radius. An unselected face fills the complete circle. Selection, recharge and disablement never enlarge or scale either the circle or glyph. There are no light-coloured rings or reused `ui-pause` chrome. Place the unchanged native 16x16 glyph at target-local 16,16; its centre anchor remains 8,8.
 
 Cache the circle chrome in a 192x192 CanvasTexture at 4x resolution and display it at 48x48 with local linear filtering. Fractional RGBA coverage smooths only the circle boundaries; face and ring interiors remain opaque. Preserve the global pixel-art renderer and nearest-neighbour glyph sampling. Do not bake selection, circle chrome or target coordinates into the glyph exports.
 
@@ -280,7 +280,7 @@ Locked icons are hidden. Unlocked icons remain visible, including when muted. On
 
 - Enabled and ready: the selected skill has the dark ink ring and a bright `yellow` (`#fee761`) face throughout, with its native `ready` glyph rendered in `ink` (`#181425`). The glyph holds 14.43:1 contrast against the face.
 - Enabled and recharging: the selected skill retains the dark ink ring, with an opaque `navy` (`#262b44`) face and its native `grey` (`#8b9bb4`) `muted` glyph, holding 4.93:1 contrast.
-- Disabled by another selected power-up: the unselected skill has the same flat opaque navy face and grey `muted` glyph, without the dark enabled ring.
+- Disabled by another selected power-up: the unselected skill fills the complete fixed circle with flat opaque navy and retains its grey `muted` glyph, without the dark enabled ring.
 
 Double jump recharges when support resets its spent air jump. Being grounded or holding Jump alone does not mute it. Dash is recharging during its burst, cooldown or spent airborne charge. Speedy is passive and ready whenever selected. [Ownership and development overrides](../src/rules/skills.ts) determine availability; a false development override falls back to saved ownership and does not erase it.
 
