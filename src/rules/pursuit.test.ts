@@ -564,6 +564,44 @@ describe("persistent pursuit", () => {
       expect(object.origin).toEqual({ x: 100, y: 280 });
     },
   );
+  it("settles an escaped varied relocation only after supported recovery without a new attack", () => {
+    const resolved = layoutBehaviour(TILE, PIGEON_BEHAVIOUR);
+    const object = actor(resolved);
+    const motion = resolved.states.relocate!.motion;
+    if (motion.kind !== "fly" || motion.to !== "support" || !motion.selection) {
+      throw new Error("Expected the actual varied supported relocation");
+    }
+    const at = { x: 400, y: 184 };
+    const state: BehaviourState = {
+      ...startBehaviour(BIRD, object, bird(600)),
+      anchor: { x: 400, y: 280 },
+      elapsed: 0,
+      pendingEntry: true,
+      pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+      stateKey: "relocate",
+    };
+    const geometry: BehaviourWorld = {
+      ...world,
+      idleDecision: { namespace: "idle-roam:main:0", seed: 17 },
+      traversalFrame: {
+        bounds: { height: floor.y + floor.height, width: floor.width, x: floor.x, y: 0 },
+        dtSeconds: 4,
+        platforms: [],
+        sample: () => [],
+        timeSeconds: 0,
+      },
+    };
+    const result = advance(object, bird(3000), 4, at, state, geometry);
+    expect(result.escaped).toEqual(resolved.pursuit!.escaped);
+    expect(result.actions).toEqual([]);
+    expect(result.state.activeAttack).toBeUndefined();
+    expect(result.state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+    expect(result.state.pursuit).toMatchObject({ phase: "escaped", settled: true });
+    expect(supportedLanding(object, geometry, result.at)).toBe(true);
+    expect(Math.abs(result.at.x - at.x)).toBeGreaterThanOrEqual(motion.selection.minDistance);
+    expect(result.state.anchor).toEqual(result.at);
+    expect(object.origin).toEqual({ x: 100, y: 280 });
+  });
 });
 
 it("scales current separation and explicitly disables timed giveup", () => {
