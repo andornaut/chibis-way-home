@@ -57,7 +57,9 @@ const sampler = () =>
 
 it("clips the actual executor's active slices to absolute query times and full volume", () => {
   const sample = sampler();
-  expect(sample(snapshotTime, activeTime)).toEqual([]);
+  expect(sample(snapshotTime, activeTime)).toEqual([
+    { endSeconds: activeTime, rect: full, startSeconds: activeTime },
+  ]);
   const contacts = sample(activeTime - 0.01, activeTime + 0.02)!;
   expect(contacts).toHaveLength(1);
   expect(contacts[0]!.startSeconds).toBeCloseTo(activeTime);
@@ -150,6 +152,7 @@ it("uses native timed safety without rejecting inactive geometry as permanently 
   expect(native.safe(request(snapshotTime, snapshotTime + 0.1))).toBe(true);
   expect(native.sampleColliders(snapshotTime + 0.1, 0.1, full).complete).toBe(true);
   expect(native.safe(request(activeTime - 0.01, activeTime + 0.01))).toBe(false);
+  expect(native.safe(request(snapshotTime, activeTime))).toBe(false);
   expect(
     native.safe(request(activeTime, activeTime + 0.01, { ...full, x: full.x + full.width + 2 })),
   ).toBe(true);

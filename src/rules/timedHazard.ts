@@ -22,6 +22,7 @@ export function timedHazardRect(object: ObjectLayout, at: Point): Rect {
 
 const MAX_TRANSITIONS = 4096;
 const MAX_CHECKPOINTS = 64;
+const TIMED_OBJECTS = new WeakMap<ObjectLayout, boolean>();
 
 // Each sampler owns a bounded, immutable snapshot of one stationary elapsed-only graph.
 // Undefined is unknown; an empty array certifies no active contact during the interval.
@@ -35,10 +36,20 @@ export function createTimedHazardSampler(
   },
 ): TimedHazardSampler | undefined {
   const plan = object.behaviour;
-  if (!plan || !Object.values(plan.states).some((node) => node.hazardPhase !== undefined)) {
+  if (!plan) {
     return undefined;
   }
-  validateHazardPhases(object);
+  let timed = TIMED_OBJECTS.get(object);
+  if (timed === undefined) {
+    timed = Object.values(plan.states).some((node) => node.hazardPhase !== undefined);
+    if (timed) {
+      validateHazardPhases(object);
+    }
+    TIMED_OBJECTS.set(object, timed);
+  }
+  if (!timed) {
+    return undefined;
+  }
   const { state, timeSeconds } = snapshot;
   const at = { ...snapshot.at };
   const rect = Object.freeze(timedHazardRect(object, at));
@@ -119,7 +130,7 @@ export function createTimedHazardSampler(
     if (!result) {
       return undefined;
     }
-    return result.segments.flatMap((segment) => {
+    const contacts = result.segments.flatMap((segment) => {
       const start = startSeconds + segment.start;
       const end = startSeconds + segment.end;
       // Absolute-clock conversion can collapse a rounding-sized slice to zero duration.
@@ -127,6 +138,14 @@ export function createTimedHazardSampler(
         ? [{ endSeconds: end, rect, startSeconds: start }]
         : [];
     });
+    // A newly active endpoint is lethal even when its preceding interval was nonlethal.
+    if (
+      effectiveHazardPhase(object, result.state) === "active" &&
+      !contacts.some((contact) => contact.endSeconds === endSeconds)
+    ) {
+      contacts.push({ endSeconds, rect, startSeconds: endSeconds });
+    }
+    return contacts;
   };
 }
 
