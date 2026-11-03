@@ -72,6 +72,7 @@ import {
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
+import { effectiveHazardPhase } from "../rules/effectiveCollision";
 import { nodeOf } from "../rules/map";
 import { currentScreen } from "../rules/perception";
 import { eligibleSkills, skillTuning } from "../rules/skills";
@@ -80,6 +81,7 @@ import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rul
 import { stageProgress } from "../rules/stageProgress";
 import { STEP_MS, STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
+import { timedHazardRect } from "../rules/timedHazard";
 import {
   activateBehaviour,
   areaOf,
@@ -183,6 +185,7 @@ import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
+import { createTimedHazardArt } from "./timedHazard";
 import { createTouchChrome } from "./touchChrome";
 import { bindZoneBarks } from "./zoneBarks";
 import type { ZoneBarkScene } from "./ZoneBarkScene";
@@ -249,6 +252,7 @@ interface ObjectArt {
   readonly item: GameObjects.Components.Transform & GameObjects.GameObject;
   readonly offset: Point;
   readonly scenery?: boolean;
+  readonly timedHazard?: ReturnType<typeof createTimedHazardArt>["draw"];
   // When its next quirk plays, and the draws that time it.
   readonly quirk?: { at: number; readonly random: Random };
   readonly sprite: GameObjects.Sprite | undefined;
@@ -1470,6 +1474,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     object: ObjectLayout,
     index: number,
   ): ObjectArt {
+    if (effectiveHazardPhase(object, undefined) !== undefined) {
+      const { draw, item } = createTimedHazardArt(
+        DEPTHS.sprite,
+        (name) => paletteColour(this, name),
+        this,
+      );
+      return { item, offset: { x: 0, y: 0 }, sprite: undefined, timedHazard: draw };
+    }
     const kind = artKind(this.manifest, tileset, object.art);
     const scenery = kind === "sprite" ? sceneryParallax(object) : undefined;
     const world = kind === "sprite" && worldScenery(object);
@@ -1705,6 +1717,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       const y = Math.round(at.y + art.offset.y);
       const moved = !art.scenery && (x !== art.item.x || y !== art.item.y);
       const behaviour = this.zone.behaviours[index];
+      if (art.timedHazard) {
+        const phase = effectiveHazardPhase(object, behaviour);
+        if (phase === undefined) {
+          throw new Error(`Missing timed hazard phase for ${object.character}`);
+        }
+        art.timedHazard(phase, timedHazardRect(object, at));
+        return;
+      }
       if (behaviour) {
         if (art.sprite) {
           const pose = behaviourPose(object, behaviour);
