@@ -425,7 +425,15 @@ export function overheadFlightGoal(
   bird: BirdState,
   object: ObjectLayout,
 ): Point {
-  const target = birdBox(tuning, bird);
+  return overheadFlightGoalForRect(overhead, direction, birdBox(tuning, bird), object);
+}
+
+export function overheadFlightGoalForRect(
+  overhead: { readonly ahead: number; readonly clearance: number },
+  direction: -1 | 1,
+  target: Rect,
+  object: ObjectLayout,
+): Point {
   return {
     x: target.x + target.width / 2 + direction * overhead.ahead - object.width / 2,
     y: target.y - overhead.clearance - object.height,

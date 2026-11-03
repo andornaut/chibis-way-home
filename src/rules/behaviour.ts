@@ -30,6 +30,13 @@ import {
   preferredGroundWalk,
 } from "./behaviourIdle";
 import {
+  advancePursuitIntent,
+  capturePursuitIntent,
+  pauseGroundIntent,
+  type PursuitIntentState,
+  safeIntentHover,
+} from "./behaviourIntent";
+import {
   type BehaviourGeometry,
   type BehaviourTrack,
   type BehaviourWorld,
@@ -38,6 +45,7 @@ import {
   flightContactApproach,
   groundPursuitEnd,
   overheadFlightGoal,
+  overheadFlightGoalForRect,
   overheadFlightRoute,
   targetReachable,
 } from "./behaviourReach";
@@ -78,6 +86,8 @@ export interface BehaviourState extends BehaviourAttackState {
   readonly axis?: "x" | "y";
   readonly flightApproachDirection?: -1 | 1;
   readonly flightTarget?: Point;
+  readonly intent?: PursuitIntentState;
+  readonly intentDecision?: number;
   readonly flightDecision?: number;
   readonly flightSelection?: FlightSelectionState;
   readonly landing?: FlyLandingState;
@@ -246,6 +256,24 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           node.motion.speed === 0)
       ) {
         throw new Error(`Invalid pursuit motion in ${key}`);
+      }
+      if (node.motion.kind === "pursue" && node.motion.intent) {
+        const intent = node.motion.intent;
+        const range = (value: { readonly min: number; readonly max: number }) =>
+          Number.isFinite(value.min) && Number.isFinite(value.max) && value.min <= value.max;
+        if (
+          node.attack ||
+          node.onEnter?.length ||
+          (node.motion.mode === "ground" && !node.motion.traversal) ||
+          ![intent.decisionSeconds, intent.pauseSeconds, intent.offset].every(range) ||
+          intent.decisionSeconds.min <= 0 ||
+          intent.pauseSeconds.min < 0 ||
+          !Number.isFinite(intent.pauseChance) ||
+          intent.pauseChance < 0 ||
+          intent.pauseChance > 1
+        ) {
+          throw new Error(`Invalid sampled pursuit intent in ${key}`);
+        }
       }
       if (
         node.motion.kind === "pursue" &&
@@ -422,6 +450,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                   ...node.motion,
                   speed: node.motion.speed * tile,
                   ...(node.motion.kind === "pursue" &&
+                    node.motion.intent && {
+                      intent: {
+                        ...node.motion.intent,
+                        offset: {
+                          max: node.motion.intent.offset.max * tile,
+                          min: node.motion.intent.offset.min * tile,
+                        },
+                      },
+                    }),
+                  ...(node.motion.kind === "pursue" &&
                     node.motion.mode === "ground" &&
                     node.motion.traversal && {
                       traversal: {
@@ -561,6 +599,7 @@ function enterState(
     stateKey: key,
   };
   delete (next as { flightTarget?: Point }).flightTarget;
+  delete (next as { intent?: PursuitIntentState }).intent;
   if (
     key !== state.stateKey ||
     !(node.motion.kind === "fly" && node.motion.to === "support" && node.motion.selection)
@@ -1627,6 +1666,8 @@ export function stepBehaviour(
   const { flyGateway } = pursuitKinds(plan);
   let time = 0;
   let traversalStep: ReturnType<typeof advanceTraversal> | undefined;
+  let capturedIntent = false;
+  let intentPause: boolean | undefined;
   while (true) {
     let node = nodeOf(object, next.stateKey);
     const supportMotion =
@@ -1840,6 +1881,80 @@ export function stepBehaviour(
     if (time >= seconds) {
       break;
     }
+    const sampledMotion =
+      node.motion.kind === "pursue" &&
+      node.motion.intent !== undefined &&
+      !attackProtected(node, next) &&
+      !settling &&
+      next.pursuit?.phase === "engaged";
+    if (sampledMotion && node.motion.kind === "pursue" && node.motion.intent) {
+      const previous = next.intent;
+      const needsCapture = !previous || previous.remainingSeconds <= 0;
+      let capture =
+        needsCapture &&
+        !next.traversal?.preparation &&
+        (!next.traversal || next.traversal.physical.grounded);
+      if (needsCapture && node.motion.mode === "fly" && previous) {
+        const target =
+          node.motion.overhead &&
+          overheadFlightGoalForRect(
+            node.motion.overhead,
+            previous.travelDirection,
+            previous.target,
+            object,
+          );
+        capture =
+          safeIntentHover(world, seconds - time, object, current) &&
+          (!target || Math.abs(target.y - current.y) <= EDGE);
+      }
+      if (needsCapture && capture && !capturedIntent) {
+        let intent = capturePursuitIntent(
+          world,
+          node.motion.intent,
+          tuning,
+          bird,
+          next.intentDecision ?? 0,
+          next.facing,
+          object,
+          current,
+        );
+        if (node.motion.mode === "fly" && node.motion.overhead) {
+          const goal = overheadFlightGoalForRect(
+            node.motion.overhead,
+            intent.travelDirection,
+            intent.target,
+            object,
+          );
+          intent = {
+            ...intent,
+            facing: goal.x === current.x ? next.facing : goal.x < current.x ? -1 : 1,
+          };
+        }
+        next = {
+          ...next,
+          intent,
+          intentDecision: (next.intentDecision ?? 0) + 1,
+          ...(node.motion.mode === "fly" &&
+            node.motion.overhead && { flightApproachDirection: intent.travelDirection }),
+        };
+        if (next.traversal) {
+          const fresh = { ...next.traversal, inputs: [] };
+          delete (fresh as { searchedAt?: Point }).searchedAt;
+          next = { ...next, traversal: fresh };
+        }
+        capturedIntent = true;
+        intentPause = undefined;
+      }
+      if (intentPause === undefined) {
+        intentPause =
+          (next.intent?.pauseRemainingSeconds ?? 0) > 0 &&
+          (node.motion.mode === "ground"
+            ? supportedLanding(object, world, current) &&
+              !next.traversal?.preparation &&
+              (!next.traversal || next.traversal.physical.grounded)
+            : safeIntentHover(world, seconds - time, object, current));
+      }
+    }
     let frame = object.contact
       ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
       : undefined;
@@ -1891,11 +2006,10 @@ export function stepBehaviour(
       next.pursuit?.phase === "engaged" &&
       next.flightApproachDirection !== undefined
     ) {
-      const target = overheadFlightGoal(
-        tuning,
+      const target = overheadFlightGoalForRect(
         node.motion.overhead,
         next.flightApproachDirection,
-        bird,
+        sampledMotion && next.intent ? next.intent.target : birdBox(tuning, bird),
         object,
       );
       const vertical = Math.abs(target.y - current.y);
@@ -1931,7 +2045,12 @@ export function stepBehaviour(
       node.motion.kind === "pursue" &&
       (next.pursuit?.phase === "engaged" || (next.traversal && !next.traversal.physical.grounded))
     ) {
-      const hers = birdBox(tuning, bird);
+      const hers =
+        sampledMotion && next.intent
+          ? next.intent.target
+          : sampledMotion && next.traversal
+            ? next.traversal.target
+            : birdBox(tuning, bird);
       const contact = contactBox(object, current, next.facing, next.axis);
       const targetX = Math.max(
         object.origin.x - plan.pursuit!.distance,
@@ -1954,23 +2073,40 @@ export function stepBehaviour(
               : 1,
       };
       if (node.motion.mode === "ground" && node.motion.traversal) {
-        const advanced = (traversalStep ??= advanceTraversal(
-          {
-            ...world,
-            ...(world.traversalFrame && {
-              traversalFrame: {
-                ...world.traversalFrame,
-                timeSeconds: world.traversalFrame.timeSeconds + time,
+        const advanced = (traversalStep ??= intentPause
+          ? pauseGroundIntent(
+              {
+                ...world,
+                ...(world.traversalFrame && {
+                  traversalFrame: {
+                    ...world.traversalFrame,
+                    timeSeconds: world.traversalFrame.timeSeconds + time,
+                  },
+                }),
               },
-            }),
-          },
-          object,
-          node.motion,
-          seconds - time,
-          next.traversal,
-          current,
-          hers,
-        ));
+              object,
+              node.motion,
+              seconds - time,
+              next.traversal,
+              current,
+            )
+          : advanceTraversal(
+              {
+                ...world,
+                ...(world.traversalFrame && {
+                  traversalFrame: {
+                    ...world.traversalFrame,
+                    timeSeconds: world.traversalFrame.timeSeconds + time,
+                  },
+                }),
+              },
+              object,
+              node.motion,
+              seconds - time,
+              next.traversal,
+              current,
+              hers,
+            ));
         const endSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time + slice;
         const startSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time;
         const pointAt = (atSeconds: number): Point => {
@@ -2010,7 +2146,7 @@ export function stepBehaviour(
           ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
           : undefined;
       } else if (node.motion.mode === "ground") {
-        const desired = current.x + Math.max(-travel, Math.min(travel, dx));
+        const desired = current.x + (intentPause ? 0 : Math.max(-travel, Math.min(travel, dx)));
         to.x = groundPursuitEnd(
           object,
           world,
@@ -2019,15 +2155,16 @@ export function stepBehaviour(
           contactBox(object, current, next.facing, "x"),
           desired,
         );
+      } else if (intentPause) {
+        // Safe hovering consumes the sampled decision clock without changing a live attack target.
       } else if (node.motion.overhead) {
         if (next.flightApproachDirection === undefined) {
           throw new Error("Overhead pursuit requires a committed approach direction");
         }
-        const target = overheadFlightGoal(
-          tuning,
+        const target = overheadFlightGoalForRect(
           node.motion.overhead,
           next.flightApproachDirection,
-          bird,
+          hers,
           object,
         );
         const route = overheadFlightRoute(world, object, current, target);
@@ -2055,6 +2192,9 @@ export function stepBehaviour(
         const fraction = Math.min(1, travel / (Math.hypot(dx, dy) || 1));
         to.x = flightAxis(object, world, current, "x", current.x + dx * fraction);
         to.y = flightAxis(object, world, { ...current, x: to.x }, "y", current.y + dy * fraction);
+      }
+      if (sampledMotion && next.intent) {
+        next = { ...next, facing: next.intent.facing };
       }
     }
     let supportedDwell = false;
@@ -2225,6 +2365,7 @@ export function stepBehaviour(
     current = to;
     next = {
       ...advanceAttackClock(slice, next),
+      ...(sampledMotion && next.intent && { intent: advancePursuitIntent(slice, next.intent) }),
       elapsed:
         node.motion.kind === "wait" && node.motion.support === "required"
           ? supportedDwell
