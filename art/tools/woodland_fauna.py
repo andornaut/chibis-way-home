@@ -4,8 +4,9 @@ Usage: woodland_fauna.py build | preview OUT.png, from repository root.
 background-deer32x24, bottom-centre16,24: idle2x900ms and graze4x300ms, all loop once[]. Adult body,
 small head, slender neck and tapered planted legs with fixed hoof patches. Muted coat, no clothes or
 exaggerated eyes.
-background-swallow24x12, centre12,6: flight4x120ms loop once[]. Pointed swept wings and forked tail,
-small streamlined body. Animation contains pose changes only; gameplay owns placement and movement.
+background-swallow144x96, centre72,48: flight4x120ms loop once[]. Flat zone-fauna silhouette with
+pointed swept wings, a long forked tail and a small head and streamlined body. Animation contains pose
+changes only; gameplay owns placement and movement. Native dimensions also define viewport intersection.
 Neither sprite declares a hitbox or contact mask. Tech owns decorative background depth and parallax.
 """
 
@@ -14,6 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pixel
+from PIL import Image, ImageDraw
 from pixel import Grid, K
 
 SRC = "art/scenery"
@@ -49,17 +51,30 @@ def deer(state="idle", phase=0):
 
 
 def swallow(phase):
-    g = Grid(24, 12)
-    g.rect(8, 5, 12, 3, "navy")
-    g.rect(17, 4, 4, 3, "navy")
-    g.rect(20, 5, 3, 1, "dslate")
-    g.tri((9, 5), (1, 2), (5, 6), "navy")
-    g.tri((9, 7), (1, 10), (5, 6), "navy")
-    tip = ((8, 0), (5, 3), (12, 11), (7, 8))[phase]
-    g.tri((10, 6), tip, (17, 6), "navy")
-    g.tri((11, 5), (tip[0] + 4, max(0, min(11, tip[1] - 1))), (17, 6), "dslate")
-    g.rect(13, 7, 5, 1, "slate")
-    return g.px
+    """Native swept-wing silhouette, keeping the head, torso and forked tail stable in flight."""
+    wings = (
+        ((88, 46), (99, 41), (89, 31), (72, 19), (48, 8), (30, 2), (44, 18), (56, 32), (69, 43), (78, 49)),
+        ((88, 47), (100, 41), (86, 34), (69, 26), (42, 15), (15, 11), (32, 23), (49, 35), (69, 46), (78, 50)),
+        ((88, 44), (100, 48), (98, 60), (78, 79), (35, 91), (54, 73), (66, 57), (76, 46)),
+        ((88, 47), (101, 42), (87, 30), (64, 17), (32, 10), (48, 27), (62, 41), (72, 48)),
+    )
+    far_wings = (
+        ((90, 42), (96, 27), (84, 10), (71, 8), (75, 28), (75, 43)),
+        ((92, 43), (93, 31), (79, 24), (51, 30), (73, 41)),
+        ((90, 48), (94, 60), (81, 75), (62, 79), (69, 62), (74, 49)),
+        ((91, 43), (96, 30), (80, 16), (65, 18), (73, 34), (77, 43)),
+    )
+    mask = Image.new("1", (144, 96))
+    draw = ImageDraw.Draw(mask)
+    draw.polygon(far_wings[phase], fill=1)
+    draw.polygon(((8, 30), (58, 41), (67, 47), (50, 50), (22, 43)), fill=1)
+    draw.polygon(((8, 67), (60, 54), (67, 47), (51, 47), (22, 55)), fill=1)
+    draw.ellipse((54, 40, 119, 57), fill=1)
+    draw.ellipse((111, 34, 129, 49), fill=1)
+    draw.polygon(((126, 38), (138, 41), (128, 44)), fill=1)
+    draw.polygon(wings[phase], fill=1)
+    colour = K["bg-woodland-fauna"]
+    return [[colour if mask.getpixel((x, y)) else None for x in range(144)] for y in range(96)]
 
 
 def sprites():
