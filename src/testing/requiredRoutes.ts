@@ -206,6 +206,14 @@ register(
   },
   ["compound-transfer-gate"],
 );
+register(
+  () => [
+    { at: { col: 26, row: 44 }, xRange: { max: 28 - bodyCols, min: 24 } },
+    { at: { col: 34, row: 44 }, xRange: { max: 36 - bodyCols, min: 32 } },
+    point(58, 50),
+  ],
+  ["warned-vent-terrace"],
+);
 register(encounter, [
   "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",
