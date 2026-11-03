@@ -42,6 +42,32 @@ describe("chunk walk partitions", () => {
     expect(chunkWalkPartitions([...ALL_CHUNKS].reverse())).toEqual(partitions);
   });
 
+  it("puts measured expensive chunks first and assigns new chunks to the lightest file", () => {
+    const cases = [
+      ["new chunk"],
+      ["city-boundary-climb-yard"],
+      ["industrial-tunnel-flyer-shelter-late"],
+      ["blue-vertical-city-boundary-climb-yard"],
+      ["countryside-vertical-city-boundary-climb-yard"],
+    ] as const;
+    expect(chunkWalkPartitions(cases)).toEqual([
+      [cases[4]],
+      [cases[3]],
+      [cases[2]],
+      [cases[1], cases[0]],
+    ]);
+  });
+
+  it("uses positive equal costs and lexical ties for unmeasured chunks", () => {
+    const cases = [["new-f"], ["new-c"], ["new-e"], ["new-a"], ["new-d"], ["new-b"]] as const;
+    expect(chunkWalkPartitions(cases)).toEqual([
+      [cases[3], cases[2]],
+      [cases[5], cases[0]],
+      [cases[1]],
+      [cases[4]],
+    ]);
+  });
+
   it.each([
     ["missing", [[["a"]]]],
     ["duplicate", [[["a"], ["b"]], [["a"]]]],

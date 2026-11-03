@@ -1,3 +1,5 @@
+import { CHUNK_WALK_COSTS } from "./chunkWalkCosts";
+
 export const CHUNK_WALK_PARTITIONS = 4;
 
 type NamedCase = readonly [string, ...unknown[]];
@@ -23,9 +25,20 @@ export function assertChunkWalkCoverage<T extends NamedCase>(
 
 export function chunkWalkPartitions<T extends NamedCase>(cases: readonly T[]): T[][] {
   const partitions = Array.from({ length: CHUNK_WALK_PARTITIONS }, (): T[] => []);
-  const ordered = [...cases].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  for (const [index, entry] of ordered.entries()) {
-    partitions[index % CHUNK_WALK_PARTITIONS]!.push(entry);
+  const costs = Array<number>(CHUNK_WALK_PARTITIONS).fill(0);
+  const cost = ([name]: T) => CHUNK_WALK_COSTS[name] ?? 1;
+  const ordered = [...cases].sort(
+    (a, b) => cost(b) - cost(a) || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0),
+  );
+  for (const entry of ordered) {
+    let lightest = 0;
+    for (let index = 1; index < CHUNK_WALK_PARTITIONS; index++) {
+      if (costs[index]! < costs[lightest]!) {
+        lightest = index;
+      }
+    }
+    partitions[lightest]!.push(entry);
+    costs[lightest]! += cost(entry);
   }
   assertChunkWalkCoverage(cases, partitions);
   return partitions;
