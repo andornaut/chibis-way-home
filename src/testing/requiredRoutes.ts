@@ -168,6 +168,7 @@ register(
   ["low-central-crossing"],
 );
 register(encounter, [
+  "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",
   ...["early", "middle", "late"].flatMap((position) => [
     `patrol-cover-${position}`,

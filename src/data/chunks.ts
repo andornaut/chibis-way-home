@@ -793,6 +793,34 @@ const CONNECTED_TERRAIN_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     CENTRAL_CROSSING_TERRAIN,
     CENTRAL_CROSSING_REFUGES,
   ),
+  "offset-two-level-terrace-encounter": moduleChunk(
+    [
+      ...PATROL_THEMES,
+      "back-streets",
+      "city-outskirts",
+      "deep-woods",
+      "familiar-neighbourhood",
+      "forest-paths",
+      "ravine",
+    ],
+    4,
+    50,
+    50,
+    [
+      floor(0, 12, 50),
+      floor(12, 8, 46),
+      floor(20, 8, 42),
+      floor(28, 12, 58),
+      floor(40, 8, 42),
+      floor(48, 6, 46),
+      floor(54, 6, 50),
+    ],
+    [
+      { character: "dog-antagonist", col: 22, role: "antagonist", row: 38 },
+      ledge(28, 12, 38),
+      ...red(28, 12, 58),
+    ],
+  ),
   "open-stepped-ridge-encounter": moduleChunk(
     [
       ...PATROL_THEMES,
