@@ -7,7 +7,7 @@ import {
   startBehaviour,
   stepBehaviour,
 } from "../rules/behaviour";
-import { birdBox, startBird } from "../rules/bird";
+import { birdBox, startBird, stepBird } from "../rules/bird";
 import { supportedLanding } from "../rules/flyLanding";
 import { targetVisible } from "../rules/perception";
 import { objectLayout } from "../rules/tiles";
@@ -71,6 +71,19 @@ function initial(object: ReturnType<typeof make>, bird: ReturnType<typeof target
     stateKey: "align-drop-left",
   };
 }
+function initialTellTicks(object: ReturnType<typeof make>, entry: string): number {
+  const node = object.behaviour!.states[entry]!;
+  if (node.motion.kind !== "pursue" || !node.motion.intent) {
+    throw Error("Expected sampled approach");
+  }
+  const approach = Math.max(
+    ...node.transitions.flatMap(({ when }) =>
+      when.flatMap((condition) => (condition.kind === "elapsed" ? [condition.seconds] : [])),
+    ),
+  );
+  return Math.ceil((node.motion.intent.decisionSeconds.max + approach) * 120);
+}
+
 it.each([0, BIRD.walkSpeed / 2])(
   "actual Pebble burst follows current target vx=%s and releases three straight-down shots",
   (vx) => {
@@ -285,7 +298,7 @@ it.each([
   ["pursuit", "prepare-drop-left", { x: 650, y: 324 }],
   ["pursuit-swoop-left", "prepare-swoop-left", { x: 264, y: 5 }],
 ] as const)(
-  "actual %s aborts an invalid moving tell through supported rest and a fresh approach",
+  "actual %s aborts an invalid tell, lands, and starts a fresh tell when Chibi walks onto its held course",
   (entry, tell, invalid) => {
     const object = make(),
       bird = target(),
@@ -293,7 +306,7 @@ it.each([
     const component = { ...object, behaviour: { ...object.behaviour!, initial: entry } };
     let at = object.origin,
       state = startBehaviour(BIRD, component, bird);
-    for (let tick = 0; tick < 1200 && state.stateKey !== tell; tick++) {
+    for (let tick = 0; tick < initialTellTicks(object, entry) && state.stateKey !== tell; tick++) {
       const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
       at = step.at;
       state = step.state;
@@ -316,8 +329,18 @@ it.each([
     expect(state.stateKey).toBe("rest");
     expect(supportedLanding(object, physical, at)).toBe(true);
     let approached = false;
+    let liveBird = bird;
+    const arrival = object
+      .behaviour!.states.pursuit!.transitions.flatMap(({ when }) => when)
+      .find((condition) => condition.kind === "arrived");
+    if (arrival?.kind !== "arrived") {
+      throw Error("Expected live arrival gate");
+    }
     for (let tick = 0; tick < 1200 && state.stateKey !== "prepare-drop-left"; tick++) {
-      step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+      const error = state.intent ? state.intent.target.x - liveBird.x : 0;
+      const move = Math.abs(error) <= arrival.tolerance ? 0 : error < 0 ? -1 : 1;
+      liveBird = stepBird(BIRD, physical.solids, [], 1 / 120, { jumpHeld: false, move }, liveBird);
+      step = stepBehaviour(BIRD, object, physical, 1 / 120, liveBird, at, state);
       expect(step.actions).toEqual([]);
       approached ||= step.state.stateKey === "pursuit";
       at = step.at;
@@ -386,7 +409,11 @@ it("actual Pebble cancels a blocked-sight tell on time and returns to support wi
   const component = { ...object, behaviour: { ...object.behaviour!, initial: "pursuit" } };
   let at = object.origin,
     state = startBehaviour(BIRD, component, bird);
-  for (let tick = 0; tick < 120 && state.stateKey !== "prepare-drop-left"; tick++) {
+  for (
+    let tick = 0;
+    tick < initialTellTicks(object, "pursuit") && state.stateKey !== "prepare-drop-left";
+    tick++
+  ) {
     const step = stepBehaviour(BIRD, object, world(), 1 / 120, bird, at, state);
     at = step.at;
     state = step.state;
