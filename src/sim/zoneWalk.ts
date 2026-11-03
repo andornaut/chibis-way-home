@@ -462,6 +462,7 @@ function trialsFrom(
   from: Spot,
   start: ZoneState,
 ): {
+  readonly continuous: (attempt: Pick<Try, "hold" | "rise" | "target">) => TrialResult;
   readonly drop: (target: Target) => TrialResult;
   readonly jump: (attempt: Try) => TrialResult;
   readonly launch: (attempt: Pick<Try, "hold" | "rise" | "target">) => TrialResult;
@@ -511,6 +512,8 @@ function trialsFrom(
     return { ...result, steps: result.steps + releasedSteps };
   };
   return {
+    continuous: (attempt) =>
+      play(tuning, layout, step, surfaces, from, start, { ...attempt, continuous: true }),
     drop: (target) =>
       play(tuning, layout, step, surfaces, from, start, { hold: 0, rise: 0, target }),
     jump,
@@ -518,7 +521,8 @@ function trialsFrom(
   };
 }
 
-// Steer from the actual state until the first landing, optionally holding Jump.
+// Rested trials stop at the first landing. Continuous trials preserve moving intermediate
+// landings and real release/press edges within the same horizon toward the original target.
 function play(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -526,8 +530,9 @@ function play(
   surfaces: readonly Surface[],
   from: Spot,
   start: ZoneState,
-  attempt: Pick<Try, "hold" | "rise" | "target">,
+  attempt: Pick<Try, "hold" | "rise" | "target"> & { readonly continuous?: boolean },
 ): TrialResult {
+  const continuous = attempt.continuous === true;
   const run = runWith(step, start);
   const missed = (): TrialResult => ({
     entered: run.zone.area === start.area ? undefined : run.zone,
@@ -535,13 +540,36 @@ function play(
     steps: run.steps,
   });
   let left = !run.zone.bird.grounded;
+  let jumpAt = continuous && start.bird.jumpHeld ? 1 : 0;
   for (let i = 0; i < AIR_STEPS; i++) {
-    const move = i < attempt.rise ? 0 : steer(tuning, layout, attempt.target, run.zone);
-    if (!run.step({ jumpHeld: i < attempt.hold, move, useHeld: false })) {
+    const move =
+      i >= jumpAt && i - jumpAt < attempt.rise
+        ? 0
+        : steer(tuning, layout, attempt.target, run.zone);
+    if (!run.step({ jumpHeld: i >= jumpAt && i - jumpAt < attempt.hold, move, useHeld: false })) {
       return missed();
     }
     left ||= !run.zone.bird.grounded;
     if (left && run.zone.bird.grounded) {
+      if (continuous) {
+        const under = recordLanding(tuning, layout, surfaces, run.zone);
+        if (!under) {
+          return missed();
+        }
+        if (
+          under.key === attempt.target.surface.key &&
+          steer(tuning, layout, attempt.target, run.zone) === 0
+        ) {
+          return {
+            entered: run.zone.area === start.area ? undefined : run.zone,
+            landed: spotOf(under, run.zone, layout, tuning),
+            steps: run.steps,
+          };
+        }
+        jumpAt = i + (run.zone.bird.jumpHeld ? 2 : 1);
+        left = false;
+        continue;
+      }
       const landed = comeToRest(tuning, layout, surfaces, run);
       return {
         entered: run.zone.area === start.area ? undefined : run.zone,
@@ -554,6 +582,21 @@ function play(
   return missed();
 }
 
+function recordLanding(
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  surfaces: readonly Surface[],
+  zone: ZoneState,
+): Surface | undefined {
+  const under = surfaceUnder(tuning, layout, surfaces, zone);
+  const witnesses = WALK_WITNESSES.get(layout);
+  if (under && witnesses) {
+    witnesses.mark(zone, witnesses.surface(under.key));
+    WALK_TERMINALS.get(layout)?.(zone, under);
+  }
+  return under;
+}
+
 // Brings her to a stop where she landed: the spot she stands still on, unless stopping takes her
 // off it or into a hazard.
 function comeToRest(
@@ -562,12 +605,7 @@ function comeToRest(
   surfaces: readonly Surface[],
   run: ReturnType<typeof runner>,
 ): Spot | undefined {
-  const under = surfaceUnder(tuning, layout, surfaces, run.zone);
-  const witnesses = WALK_WITNESSES.get(layout);
-  if (under && witnesses) {
-    witnesses.mark(run.zone, witnesses.surface(under.key));
-    WALK_TERMINALS.get(layout)?.(run.zone, under);
-  }
+  const under = recordLanding(tuning, layout, surfaces, run.zone);
   for (let i = 0; i < AIR_STEPS && Math.abs(run.zone.bird.vx) >= 1; i++) {
     if (!run.step(STILL) || !run.zone.bird.grounded) {
       return undefined;
@@ -1315,6 +1353,27 @@ function walkSearch(
           if (!trial) {
             trial = trialsFrom(tuning, layout, surfaces, from, start);
             trials.set(start, trial);
+          }
+          if (target.surface !== from.surface) {
+            const variants = new Set<string>();
+            for (const attempt of tries) {
+              const key = `${attempt.hold}:${attempt.rise}`;
+              if (variants.has(key)) {
+                continue;
+              }
+              variants.add(key);
+              const continued = trial.continuous(attempt);
+              steps += continued.steps;
+              if (continued.entered) {
+                arrive(continued.entered);
+              }
+              if (continued.landed) {
+                reach(continued.landed);
+              }
+              if (done()) {
+                break;
+              }
+            }
           }
           const heightDifference =
             placed(target.surface, start, layout).y - placed(from.surface, start, layout).y;
