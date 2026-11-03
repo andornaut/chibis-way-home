@@ -2,12 +2,14 @@ import { expect, it } from "vitest";
 
 import {
   type BehaviourState,
+  contactBox,
   layoutBehaviour,
   startBehaviour,
   stepBehaviour,
 } from "../rules/behaviour";
-import { startBird } from "../rules/bird";
+import { birdBox, startBird } from "../rules/bird";
 import { supportedLanding } from "../rules/flyLanding";
+import { targetVisible } from "../rules/perception";
 import { objectLayout } from "../rules/tiles";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import {
@@ -375,4 +377,57 @@ it("actual close swoop tell retreats to overhead range and restarts its full tel
   }
   expect(state.activeAttack?.phase).toBe("committed");
   expect(elapsed).toBeGreaterThanOrEqual(duration.seconds - 1e-6);
+});
+
+it("actual Pebble cancels a blocked-sight tell on time and returns to support without cooldown", () => {
+  const object = make(),
+    bird = target();
+  const component = { ...object, behaviour: { ...object.behaviour!, initial: "pursuit" } };
+  let at = object.origin,
+    state = startBehaviour(BIRD, component, bird);
+  for (let tick = 0; tick < 120 && state.stateKey !== "prepare-drop-left"; tick++) {
+    const step = stepBehaviour(BIRD, object, world(), 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+  }
+  expect(state.stateKey).toBe("prepare-drop-left");
+  const covered = world(true);
+  expect(
+    targetVisible(covered, object, contactBox(object, at, state.facing), birdBox(BIRD, bird)),
+  ).toBe(false);
+  const duration = object
+    .behaviour!.states["prepare-drop-left"]!.transitions.flatMap(({ when }) => when)
+    .find((condition) => condition.kind === "elapsed");
+  if (duration?.kind !== "elapsed") {
+    throw Error("Expected bounded tell");
+  }
+  let step = stepBehaviour(BIRD, object, covered, 1 / 120, bird, at, state);
+  // The sight blocker leaves the overhead flight route valid, so this is not an immediate route abort.
+  expect(step.state.stateKey).toBe("prepare-drop-left");
+  at = step.at;
+  state = step.state;
+  for (
+    let tick = 1;
+    tick <= Math.ceil(duration.seconds * 120) + 1 && state.stateKey === "prepare-drop-left";
+    tick++
+  ) {
+    step = stepBehaviour(BIRD, object, covered, 1 / 120, bird, at, state);
+    expect(step.actions).toEqual([]);
+    expect(step.state.activeAttack?.phase).not.toBe("committed");
+    at = step.at;
+    state = step.state;
+  }
+  expect(state.stateKey).toBe("return-high");
+  expect(state.activeAttack).toBeUndefined();
+  expect(state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+  for (let tick = 0; tick < 120 && state.stateKey !== "rest"; tick++) {
+    step = stepBehaviour(BIRD, object, covered, 1 / 120, bird, at, state);
+    expect(step.actions).toEqual([]);
+    expect(step.state.activeAttack).toBeUndefined();
+    expect(step.state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+    at = step.at;
+    state = step.state;
+  }
+  expect(state.stateKey).toBe("rest");
+  expect(supportedLanding(object, covered, at)).toBe(true);
 });
