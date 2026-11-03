@@ -39,6 +39,7 @@ const target = (vx = 0) => ({
 const floor = { height: 360, width: 720, x: 0, y: 360 };
 const roof = { height: 12, width: 240, x: 180, y: 240 };
 const world = (covered = false) => ({
+  idleDecision: { namespace: "idle-roam:main:0", seed: 1 },
   solids: covered ? [floor, roof] : [floor],
   traversalFrame: {
     bounds: { height: 720, width: 720, x: 0, y: 0 },
@@ -430,4 +431,50 @@ it("actual Pebble cancels a blocked-sight tell on time and returns to support wi
   }
   expect(state.stateKey).toBe("rest");
   expect(supportedLanding(object, covered, at)).toBe(true);
+});
+
+it("actual Pebble takes off to a varied supported perch before checking another attack", () => {
+  const object = make(),
+    bird = target(),
+    physical = { ...world(), idleDecision: { namespace: "pebble-perch-profile", seed: 1 } };
+  const component = { ...object, behaviour: { ...object.behaviour!, initial: "rest" } };
+  const relocation = object.behaviour!.states.relocate!.motion;
+  if (relocation.kind !== "fly" || relocation.to !== "support" || !relocation.selection) {
+    throw Error("Expected varied supported flight");
+  }
+  const origin = { x: 48, y: floor.y - object.height };
+  let at = origin,
+    state = startBehaviour(BIRD, component, bird),
+    movedHorizontally = false,
+    landed = false,
+    highest = origin.y;
+  expect(supportedLanding(object, physical, at)).toBe(true);
+  for (let tick = 0; tick < 900 && !landed; tick++) {
+    const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+    expect(step.actions).toEqual([]);
+    expect(state.activeAttack).toBeUndefined();
+    expect(state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+    highest = Math.min(highest, at.y);
+    if (!movedHorizontally && Math.abs(at.x - origin.x) > 1e-6) {
+      expect(at.y).toBeLessThan(origin.y);
+      movedHorizontally = true;
+    }
+    landed = state.stateKey === "relocation-rest";
+  }
+  expect(landed).toBe(true);
+  expect(movedHorizontally).toBe(true);
+  expect(highest).toBeLessThanOrEqual(origin.y - relocation.selection.clearance + 1e-6);
+  expect(Math.abs(at.x - origin.x)).toBeGreaterThanOrEqual(relocation.selection.minDistance - 1e-6);
+  expect(Math.abs(at.x - origin.x)).toBeLessThanOrEqual(relocation.selection.distance + 1e-6);
+  expect(supportedLanding(object, physical, at)).toBe(true);
+  let approached = false;
+  for (let tick = 0; tick < 60 && !approached; tick++) {
+    const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+    approached = state.stateKey === "pursuit";
+  }
+  expect(approached).toBe(true);
 });

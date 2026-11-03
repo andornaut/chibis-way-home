@@ -860,6 +860,14 @@ const PIGEON_DROP_AHEAD = 8;
 const PIGEON_OVERHEAD_CLEARANCE = 6;
 const PIGEON_SWOOP_AHEAD = 18;
 const PIGEON_SWOOP_MIN_GAP = 12;
+const PIGEON_RELOCATION_SECONDS = 2;
+const PIGEON_RELOCATION_SELECTION = {
+  clearance: PIGEON_OVERHEAD_CLEARANCE,
+  distance: SCREEN.width / TILE,
+  kind: "varied",
+  maxAttempts: 4,
+  minDistance: SCREEN.width / (4 * TILE),
+} as const;
 
 function pigeonOverhead(ahead: number): BehaviourNode["motion"] {
   return {
@@ -897,6 +905,7 @@ function pigeonApproach(swoop: boolean, next: string): BehaviourNode {
             ],
           }))
         : [{ to: next, when: ready }]),
+      { to: "relocate", when: [{ kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS }] },
     ],
   };
 }
@@ -1106,10 +1115,40 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
       "pursuit-burst-right": pigeonApproach(false, "prepare-drop-right"),
       "pursuit-swoop-left": pigeonApproach(true, "prepare-swoop-left"),
       "pursuit-swoop-right": pigeonApproach(true, "prepare-swoop-right"),
+      relocate: {
+        animation: "fly",
+        motion: {
+          kind: "fly",
+          selection: PIGEON_RELOCATION_SELECTION,
+          speed: PIGEON_FLIGHT_SPEED,
+          to: "support",
+        },
+        transitions: [
+          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
+          { to: "relocation-rest", when: [{ kind: "arrived", tolerance: 0.1 }] },
+        ],
+      },
+      "relocation-rest": {
+        animation: "rest",
+        motion: { kind: "wait", support: "required" },
+        transitions: [
+          {
+            to: "pursuit",
+            when: [
+              { kind: "elapsed", seconds: 0.35 },
+              { kind: "attack-ready" },
+              { kind: "line-of-sight" },
+            ],
+          },
+          { to: "relocate", when: [{ kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS }] },
+        ],
+      },
       rest: {
         animation: "rest",
         motion: { kind: "wait", support: "required" },
-        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+        transitions: [
+          { to: "relocate", when: [{ kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS }] },
+        ],
       },
       "return-high": pigeonFlight("land-perch", "frustration-return", "support"),
       "return-swoop-left": pigeonFlight("burst-rest-left", "burst-return-high", "support"),
