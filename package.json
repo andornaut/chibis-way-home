@@ -44,6 +44,7 @@
     "markdownlint-cli2": "^0.24.0",
     "pngjs": "7.0.0",
     "prettier": "^3.9.10",
+    "skia-canvas": "4.0.0",
     "tsx": "4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
