@@ -12,6 +12,7 @@ import {
   statsTotalRows,
   summaryTextOrigin,
 } from "../layout/runStats";
+import { FONT_SCALE } from "../layout/fontRoles";
 import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
 import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
 import { deathLabels, deathSummary } from "../view/death";
@@ -57,15 +58,15 @@ export function addStageSummary(
   };
   const fonts = cardFonts(scene);
   const layout = stageSummaryLayout(fonts, bounds, words);
-  const drawText = (font: string, rect: Rect, text: string, colour: string) => {
+  const drawText = (font: string, rect: Rect, text: string, colour: string, scale = FONT_SCALE) => {
     const metrics = font === TITLE_FONT ? fonts.title : fonts.body;
     return addCardText(
       scene,
       font,
-      summaryTextOrigin(metrics, rect, text),
+      summaryTextOrigin(metrics, rect, text, scale),
       text,
       paletteColour(scene, colour),
-    ).setLeftAlign();
+    ).setScale(scale).setLeftAlign();
   };
   const key = STAGE_PREVIEWS[data.stage];
   if (!key || !scene.textures.exists(key)) {
@@ -75,7 +76,7 @@ export function addStageSummary(
     .image(layout.image.x, layout.image.y, key)
     .setOrigin(0)
     .setDisplaySize(layout.image.width, layout.image.height);
-  drawText(TITLE_FONT, layout.zone.rect, layout.zone.text, "lgrey");
+  drawText(TITLE_FONT, layout.zone.rect, layout.zone.text, "lgrey", layout.zone.scale);
   drawText(BODY_FONT, layout.stage.rect, layout.stage.text, "cream");
   drawText(BODY_FONT, layout.progress.rect, layout.progress.text, "lgrey");
   for (const row of [...layout.stats, ...layout.totals]) {

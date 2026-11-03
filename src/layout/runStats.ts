@@ -8,6 +8,7 @@ import type { DialogueParagraph } from "../dialogue/conversation";
 import { timeText } from "../save/runSummary";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { CARD_CONTENT, type CardFonts } from "./contentCard";
+import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
 import { textInkBounds } from "./textInk";
 
 export const RUN_STAT_KEYS = ["attempts", "lastAttempt", "best"] as const;
@@ -81,15 +82,20 @@ export function runStatLabels(templates: RunStatWords): RunStatWords {
 }
 
 // Full-page summary text aligns its visible ink to the top-left of its measured slot.
-export function summaryTextOrigin(font: BitmapFont, rect: Rect, text: string): Point {
+export function summaryTextOrigin(
+  font: BitmapFont,
+  rect: Rect,
+  text: string,
+  scale = CARD_TEXT_SCALE,
+): Point {
   const lefts = text
     .split("\n")
     .flatMap((line) =>
-      laidGlyphs(font, CARD_TEXT_SCALE, line).flatMap(({ ink }) => (ink ? [ink.left] : [])),
+      laidGlyphs(font, scale, line).flatMap(({ ink }) => (ink ? [ink.left] : [])),
     );
   const tops = [...(text.split("\n")[0] ?? "")].flatMap((char) => {
     const glyph = font.glyphs.get(char);
-    return glyph && glyph.width > 0 && glyph.height > 0 ? [glyph.yOffset * CARD_TEXT_SCALE] : [];
+    return glyph && glyph.width > 0 && glyph.height > 0 ? [glyph.yOffset * scale] : [];
   });
   return {
     x: rect.x - (lefts.length ? Math.min(...lefts) : 0),
@@ -101,33 +107,37 @@ const SUMMARY_PREVIEW_HEIGHT = 120;
 const SUMMARY_COLUMN_WIDTH = 152;
 
 export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: SummaryWords) {
-  const ink = (font: BitmapFont, text: string) =>
-    textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text);
-  const centred = (font: BitmapFont, y: number, text: string) => {
-    const size = ink(font, text);
+  const ink = (font: BitmapFont, text: string, scale = CARD_TEXT_SCALE) =>
+    textInkBounds(font, scale, font.lineHeight * scale, text);
+  const centred = (font: BitmapFont, y: number, text: string, scale = CARD_TEXT_SCALE) => {
+    const size = ink(font, text, scale);
     if (text.includes("\n") || size.width > bounds.width) {
       throw new Error(`Stage summary heading exceeds the page width: ${text}`);
     }
-    return { rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y }, text };
+    return { rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y }, text, scale };
   };
-  const zone = centred(fonts.title, bounds.y, words.zone);
-  const stage = centred(
-    fonts.body,
-    zone.rect.y + zone.rect.height + CARD_CONTENT.rowGap,
-    words.stage,
+  const zone = centred(
+    fonts.title,
+    bounds.y,
+    words.zone,
+    FONT_METRICS.mainHeading.size / FONT_NATIVE_SIZE,
   );
-  const progress = centred(
-    fonts.body,
-    stage.rect.y + stage.rect.height + CARD_CONTENT.rowGap,
-    words.progress,
-  );
+  const headerY = zone.rect.y + zone.rect.height + CARD_CONTENT.rowGap;
+  const stage = centred(fonts.body, headerY, words.stage);
+  const progress = centred(fonts.body, headerY, words.progress);
+  const headerWidth = stage.rect.width + CARD_CONTENT.padding + progress.rect.width;
+  if (headerWidth > bounds.width) {
+    throw new Error("Stage summary identity and progress exceed the page width");
+  }
+  stage.rect.x = bounds.x + (bounds.width - headerWidth) / 2;
+  progress.rect.x = stage.rect.x + stage.rect.width + CARD_CONTENT.padding;
   const imageWidth =
     (SUMMARY_PREVIEW_HEIGHT * STAGE_PREVIEW_SIZE.width) / STAGE_PREVIEW_SIZE.height;
   const image: Rect = {
     height: SUMMARY_PREVIEW_HEIGHT,
     width: imageWidth,
     x: bounds.x + (bounds.width - imageWidth) / 2,
-    y: progress.rect.y + progress.rect.height + CARD_CONTENT.rowGap,
+    y: headerY + Math.max(stage.rect.height, progress.rect.height) + CARD_CONTENT.rowGap,
   };
   const columnGap = 2 * CARD_CONTENT.padding;
   const groupWidth = 2 * SUMMARY_COLUMN_WIDTH + columnGap;
