@@ -214,6 +214,10 @@ register(
   ],
   ["warned-vent-terrace"],
 );
+register(
+  () => [{ at: { col: 27, row: 48 }, xRange: { max: 30 - bodyCols, min: 24 } }, point(58, 50)],
+  ["crumbling-support-crossing"],
+);
 register(encounter, [
   "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",

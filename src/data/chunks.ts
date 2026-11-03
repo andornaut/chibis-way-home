@@ -13,6 +13,7 @@ import {
   withoutEncounters,
 } from "./chunkTemplates";
 import { createHazardChunks } from "./hazardChunks";
+import { CRUMBLING_SUPPORT_TUNING } from "./obstacleTuning";
 import { createOrbitHazardChunks } from "./orbitHazardChunks";
 import { SCREEN, TILE, ZONE_ROWS } from "./screen";
 import type {
@@ -1235,6 +1236,14 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     objects: [...VERTICAL_ASCENT.objects, ...red(44, 4, 30), ...redCeiling(40, 12, 22)],
     solids: [floor(0, 28, 40), floor(28, 16, 30), floor(48, 12, 30)],
   },
+  "crumbling-support-crossing": moduleChunk(
+    MECHANICAL_THEMES,
+    4,
+    50,
+    50,
+    [floor(0, 12, 50), floor(12, 30, 58), floor(42, 18, 50)],
+    [{ ...ledge(24, 6, 48), crumbling: CRUMBLING_SUPPORT_TUNING }, ...red(12, 30, 58)],
+  ),
   "growl-clearing": {
     ...shifted(-10, CLIMBING_GROWL),
     encounters: 1,
