@@ -42,11 +42,17 @@ import { deathSupport } from "./death";
 import { effectiveCollision, effectiveHazardPhase } from "./effectiveCollision";
 import { type ForcePulse, forcePulseVelocity } from "./force";
 import { type ForcedTransitState, stepForcedTransit } from "./forcedTransit";
+import {
+  type ForcedTransitForecast,
+  forcedTransitTakeoffOrigin,
+  forecastForcedTransit,
+} from "./forcedTransitForecast";
 import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
 import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
+import { STEP_SECONDS } from "./step";
 import { timedHazardRect } from "./timedHazard";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import {
@@ -240,6 +246,7 @@ export interface ZoneState {
   // Crumbling support phases and contacts at the latest boundary; reset on area entry.
   readonly crumbling?: ZoneCrumblingWorld | undefined;
   readonly forcedTransit?: ForcedTransitState;
+  readonly forcedTransitForecast?: ForcedTransitForecast | undefined;
   readonly sceneryPlayback?: readonly (SceneryPlaybackState | undefined)[] | undefined;
   readonly spotted: Readonly<Record<string, readonly number[]>>;
   readonly barks: readonly ZoneBark[];
@@ -443,6 +450,7 @@ function transitObservation(
   tuning: BirdTuning,
   area: AreaLayout,
   kinds: AreaObjects,
+  seconds: number,
   zone: ZoneState,
 ): ForcedTransitState | undefined {
   if (kinds.forcedTransit.length === 0 && !zone.forcedTransit) {
@@ -499,6 +507,17 @@ function transitObservation(
       ...(support && {
         support: {
           index: support.index,
+          ordinaryTakeoffOrigin: forcedTransitTakeoffOrigin(
+            { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: zone.seconds },
+            zone.bird,
+            {
+              ...support,
+              owner: support.object,
+              state: zone.behaviours[support.index],
+              track: zone.tracks[support.index]!,
+            },
+            zone.forcedTransitForecast,
+          ),
           origin: { x: support.rect.x, y: support.rect.y },
           ...(support.object.forcedTransit && { transit: support.object.forcedTransit }),
         },
@@ -636,7 +655,7 @@ export function stepZone(
     !kinds.crumblingObjects.includes(index) || supportPresent(crumbling, area.objects[index]!);
   const terrain = presentTerrain(crumbling, area.solids);
   const presentPlatforms = kinds.platforms.filter(present);
-  const forcedTransit = transitObservation(tuning, area, kinds, zone);
+  const forcedTransit = transitObservation(tuning, area, kinds, seconds, zone);
   const baseGeometry = {
     ...behaviourGeometry(area, terrain, present, zone),
     chunks: area.chunks,
@@ -1259,6 +1278,23 @@ export function stepZone(
       },
     };
   }
+  const carrier = bird.grounded
+    ? kinds.platforms.find((index) => standsOn(tuning, bird, objects[index]!.after))
+    : undefined;
+  const forcedTransitForecast =
+    carrier !== undefined && area.objects[carrier]!.forcedTransit && seconds === STEP_SECONDS
+      ? forecastForcedTransit(
+          { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: time },
+          traversalGeometry(area.objects[carrier]!).traversalFrame?.sample,
+          {
+            index: carrier,
+            owner: area.objects[carrier]!,
+            rect: objects[carrier]!.after,
+            state: behaviours[carrier],
+            track: zone.tracks[carrier]!,
+          },
+        )
+      : undefined;
   const atStageExit =
     layout.stageExit !== undefined &&
     layout.stageExit.area === zone.area &&
@@ -1299,6 +1335,7 @@ export function stepZone(
     cleared: layout.stageExit ? atStageExit : box.x + box.width > area.exitX,
     crumbling: crumblingAfter,
     door: atStageExit ? undefined : door,
+    forcedTransitForecast,
     nextPulseId,
     nextTransientId: transientStep.nextId,
     objects: positions,

@@ -29,6 +29,7 @@ export interface ForcedTransitObservation {
   readonly safeDisembark?: boolean;
   readonly support?: {
     readonly index: number;
+    readonly ordinaryTakeoffOrigin?: Point | undefined;
     readonly origin: Point;
     readonly transit?: ForcedTransitLayout;
   };
@@ -83,7 +84,7 @@ export function stepForcedTransit(
   if (episode.group !== transit.group || episode.leg !== transit.leg) {
     return snapshot("unknown", episode, lastBank);
   }
-  if (!observation.ordinaryControl) {
+  if (!observation.ordinaryControl || !support.ordinaryTakeoffOrigin) {
     return snapshot("unknown", episode, lastBank);
   }
   const windows = transit.windows.filter(

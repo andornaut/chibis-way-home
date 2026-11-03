@@ -13,6 +13,7 @@ import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
 import { BIRD_FRAME } from "../view/bird";
 import { birdBox, birdFrameRect, startBird } from "./bird";
+import { forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
 import { STEP_SECONDS } from "./step";
 import {
   activateBehaviour,
@@ -245,6 +246,99 @@ describe("mandatory ride admission", () => {
     const next = stepZone(BIRD, layout, STEP, STILL, dashing);
     expect(next.forcedTransit?.attackWindow).toBe("unknown");
     expect(next.bird.dash?.remainingSeconds).toBeGreaterThan(0);
+  });
+
+  it("binds next-state forecasts to the actual next one and two native frames", () => {
+    const layout = zone(
+      area(
+        [
+          object({
+            behaviour: TEST_SHUTTLE,
+            forcedTransit: transit,
+            origin: { x: 80, y: 200 },
+            width: 72,
+          }),
+        ],
+        {
+          entries: { start: { x: 104, y: 200 } },
+        },
+      ),
+    );
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    const forecast = initial.forcedTransitForecast!;
+    expect(forecast).toBeDefined();
+    const next = stepZone(BIRD, layout, STEP, STILL, initial);
+    const afterTwo = stepZone(BIRD, layout, STEP, STILL, next);
+    expect(forecast.afterOneSeconds).toBe(initial.seconds + STEP);
+    expect(forecast.afterTwoSeconds).toBe(initial.seconds + 2 * STEP);
+    expect(forecast.afterOne).toEqual({ ...next.objects[0], height: 12, width: 72 });
+    expect(forecast.afterTwo).toEqual({ ...afterTwo.objects[0], height: 12, width: 72 });
+    const context = {
+      area: initial.area,
+      attempt: initial.attempt,
+      dtSeconds: STEP,
+      seconds: initial.seconds,
+    };
+    expect(forcedTransitTakeoffOrigin(context, initial.bird, forecast.carrier, forecast)).toEqual(
+      next.objects[0],
+    );
+    expect(
+      forcedTransitTakeoffOrigin(
+        context,
+        { bufferLeft: 0, jumpHeld: true },
+        forecast.carrier,
+        forecast,
+      ),
+    ).toEqual(afterTwo.objects[0]);
+    expect(
+      forcedTransitTakeoffOrigin(
+        context,
+        { bufferLeft: STEP, jumpHeld: true },
+        forecast.carrier,
+        forecast,
+      ),
+    ).toEqual(next.objects[0]);
+    for (const stale of [
+      { ...context, area: "other" },
+      { ...context, attempt: context.attempt + 1 },
+      { ...context, dtSeconds: 2 * STEP },
+      { ...context, seconds: context.seconds + STEP },
+    ]) {
+      expect(
+        forcedTransitTakeoffOrigin(stale, initial.bird, forecast.carrier, forecast),
+      ).toBeUndefined();
+    }
+    for (const stale of [
+      { ...forecast.carrier, index: 1 },
+      { ...forecast.carrier, owner: { ...forecast.carrier.owner } },
+      { ...forecast.carrier, rect: { ...forecast.carrier.rect, x: forecast.carrier.rect.x + 1 } },
+      { ...forecast.carrier, state: { ...forecast.carrier.state! } },
+      { ...forecast.carrier, track: { ...forecast.carrier.track } },
+    ]) {
+      expect(forcedTransitTakeoffOrigin(context, initial.bird, stale, forecast)).toBeUndefined();
+    }
+  });
+
+  it("keeps unrelated unpredictable platform futures unknown", () => {
+    const layout = zone(
+      area(
+        [
+          object({ forcedTransit: transit, origin: { x: 80, y: 200 }, width: 72 }),
+          object({
+            origin: { x: 800, y: 300 },
+            reaction: { kind: "avoid", range: 200, speed: 100 },
+          }),
+        ],
+        { entries: { start: { x: 104, y: 200 } } },
+      ),
+    );
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    expect(initial.forcedTransitForecast).toBeUndefined();
+    const next = stepZone(BIRD, layout, STEP, STILL, {
+      ...initial,
+      forcedTransit: { attackWindow: "allowed", episode },
+    });
+    expect(next.forcedTransit?.attackWindow).toBe("unknown");
   });
 });
 
