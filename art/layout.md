@@ -1,6 +1,6 @@
 # Layout guide
 
-The shared structure for Chibi's Way Home spacing and alignment. Values below distinguish verified consumer geometry from approved design targets; they do not assert that every existing page conforms. [Controls](controls.md) owns control states and interaction details; [the art plan](README.md) owns appearance and assets.
+The shared structure for Chibi's Way Home spacing and alignment. Values below distinguish verified consumer geometry from approved design targets; they do not assert that every existing page conforms. [Controls](controls.md) owns control states and interaction details; [the style guide](style-guide.md) owns appearance and assets; [Art](README.md) owns the drawing pipeline.
 
 ## Coordinates and scale
 
@@ -12,26 +12,26 @@ Keep the existing full-size fonts. Measure visible glyph ink and full line boxes
 
 Use a shared token for repeated spacing, rather than unrelated coordinates that happen to match. A named design token is not a claim that every consumer already imports one implementation constant.
 
-| Token             | Value      | Unit       | Scope                                               | Status or source                                                            |
-| ----------------- | ---------- | ---------- | --------------------------------------------------- | --------------------------------------------------------------------------- |
-| Row gap           | 4          | logical px | Related text rows                                   | Verified `CARD_CONTENT.rowGap`, [card geometry](../src/layout/cardFrame.ts) |
-| Related-group gap | 8          | logical px | Heading to metrics, label to value, grouped actions | Verified `CARD_CONTENT.gap` and `TEXT_BUTTON.gap`                           |
-| Page inset        | 16         | logical px | Ordinary full-page content and footer alignment     | Approved shared layout target; consumers derive their available bounds      |
-| Panel padding     | 16         | logical px | Ordinary modal bodies and selected summary panels   | Verified modal `CARD_CONTENT.padding`; summary-panel integration pending    |
-| Column gap        | 16         | logical px | Image and statistics columns                        | Approved shared layout target                                               |
-| Text line box     | 16 minimum | logical px | Ordinary game text rows at existing 2x scale        | Verified `CARD_CONTENT.lineHeight`; wrapped rows grow                       |
+| Token             | Value                   | Unit       | Scope                                                | Status or source                                                                      |
+| ----------------- | ----------------------- | ---------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Row gap           | 4                       | logical px | Related text rows                                    | Verified `CARD_CONTENT.rowGap`, [card geometry](../src/layout/cardFrame.ts)           |
+| Related-group gap | 8                       | logical px | Heading to metrics, label to value, grouped actions  | Verified `CARD_CONTENT.gap` and `TEXT_BUTTON.gap`                                     |
+| Page inset        | 16                      | logical px | Ordinary full-page content and footer alignment      | Approved shared layout target; consumers derive their available bounds                |
+| Panel padding     | 16                      | logical px | Ordinary modal bodies                                | Verified modal `CARD_CONTENT.padding`; retry statistics retain their documented inset |
+| Column gap        | 16 ordinary, 32 summary | logical px | Ordinary columns and paired stage-summary statistics | [Measured summary layout](style-guide.md#stage-and-zone-summaries)                    |
+| Text line box     | 16 minimum              | logical px | Ordinary game text rows at existing 2x scale         | Verified `CARD_CONTENT.lineHeight`; wrapped rows grow                                 |
 
 ## Page bounds/alignment
 
-Derive the content region and footer from the same page inset. The outer left and right statistics edges align with those footer bounds, including the Continue face's right edge. At the standard 16px inset, the 720px game view offers 688px of horizontal content space. Derive this width instead of storing another independent margin.
+Derive the available content region and footer from the same page inset. At the standard 16px inset, the 720px game view offers 688px of horizontal content space. Centre the stage summary’s measured content within that region; the Continue face’s right edge uses the same page inset. Derive the available width instead of storing another independent margin.
 
 Respect top dialogue and footer reservations before fitting the remaining content. Full-page interstitials are page layouts, not modal cards. Responsive pages preserve readable text and safe-area padding; reflow or allow their intended scrolling rather than squeezing the game canvas rules into HTML.
 
 ## Groups/columns
 
-Use 16px between ordinary columns and inside panels, 8px between related groups or label/value axes, and 4px between metric rows. Share measured header and row heights across adjacent statistic groups. Left-align their headings, labels and values to explicit axes; place the value axis after the widest label plus the related-group gap.
+Use 16px between ordinary columns and inside panels, 8px between related groups or label/value axes, and 4px between metric rows. Share measured header and row heights across adjacent statistic groups. Align headings, labels and values to each group’s explicit axes; retain at least the related-group gap between the widest label and its value. Stage summaries use their measured 32px statistics-column gap.
 
-The selected full-page summary target orders zone statistics, the existing stage image and stage statistics from left to right. Preserve the complete 2:1 image, with height matching the text group; use nearest-neighbour scaling. Derive panel height from text height plus two panel insets. Its final source integration and detailed geometry remain in the separate stage-summary change. Do not convert death/retry into this full-page arrangement.
+The [full-page stage summary](style-guide.md#stage-and-zone-summaries) centres its identity and existing stage image above paired statistics columns. Preserve the complete 2:1 image with nearest-neighbour scaling, left-aligned metric labels and right-aligned values. The style guide owns the measured geometry. Death/retry retains its separate compact modal.
 
 ## Controls/targets
 
@@ -73,12 +73,12 @@ The top zone-dialogue panel keeps its 40px horizontal screen inset, portrait reg
 
 ## Exceptions and verification
 
-| Exception                     | Concrete reason                                      | Retained rules                                       | Status or source                            |
-| ----------------------------- | ---------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------- |
-| Compact Install face          | Embedded in a full-height settings row               | Full font, labelled action and 48px row target       | Existing control exception                  |
-| Dialogue panel                | Fixed portrait and speaker regions                   | Full fonts, measured text and reserved footer        | `DIALOGUE_SCREEN`                           |
-| Navigation and touch controls | Icon navigation or continuous directional input      | Contrast, target handling and clear state            | Existing bespoke geometry                   |
-| Responsive homepage           | HTML content reflows outside the game canvas         | Safe insets, full fonts and ordinary action sizing   | Approved homepage contract                  |
-| Selected summary panels       | User-selected full-page image/statistics arrangement | Shared 16/8/4 spacing, existing image and full fonts | Approved target; source integration pending |
+| Exception                     | Concrete reason                                   | Retained rules                                                     | Status or source                                          |
+| ----------------------------- | ------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| Compact Install face          | Embedded in a full-height settings row            | Full font, labelled action and 48px row target                     | Existing control exception                                |
+| Dialogue panel                | Fixed portrait and speaker regions                | Full fonts, measured text and reserved footer                      | `DIALOGUE_SCREEN`                                         |
+| Navigation and touch controls | Icon navigation or continuous directional input   | Contrast, target handling and clear state                          | Existing bespoke geometry                                 |
+| Responsive homepage           | HTML content reflows outside the game canvas      | Safe insets, full fonts and ordinary action sizing                 | Approved homepage contract                                |
+| Stage summary                 | Full-page identity, preview and paired statistics | Shared page inset, measured columns, existing image and full fonts | [Summary layout](style-guide.md#stage-and-zone-summaries) |
 
 For a layout change, verify only the affected consumer geometry and content fit. Check native and fractional context, long actual labels, complete press targets and the intended safe bounds. Reuse existing source-owner evidence and library contracts; do not repeat library implementation tests. Record unresolved source integration as pending rather than claiming complete page conformance.
