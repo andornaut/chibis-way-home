@@ -126,6 +126,26 @@ function approach(speed: number, target: number, step: number): number {
   return speed < target ? Math.min(target, speed + step) : Math.max(target, speed - step);
 }
 
+export function ordinaryHorizontalVelocity(
+  tuning: BirdTuning,
+  seconds: number,
+  move: BirdInput["move"],
+  grounded: boolean,
+  velocity: number,
+): number {
+  const acceleration =
+    move === 0 ? tuning.brakeAccel : grounded ? tuning.groundAccel : tuning.airAccel;
+  return approach(velocity, move * tuning.walkSpeed, acceleration * seconds);
+}
+
+export function ordinaryFallVelocity(
+  tuning: BirdTuning,
+  seconds: number,
+  velocity: number,
+): number {
+  return Math.min(velocity + tuning.gravity * seconds, tuning.flutterFallSpeed);
+}
+
 interface AscentCurve {
   readonly seconds: number;
   readonly height: number;
@@ -409,12 +429,12 @@ function solveBird(
       remainingSeconds: burst.durationSeconds,
     };
   }
-  const accel =
-    input.move === 0 ? tuning.brakeAccel : bird.grounded ? tuning.groundAccel : tuning.airAccel;
-  const ordinaryVx = approach(
+  const ordinaryVx = ordinaryHorizontalVelocity(
+    tuning,
+    seconds,
+    input.move,
+    bird.grounded,
     activeBefore ? dash!.ordinaryVx : bird.vx,
-    input.move * tuning.walkSpeed,
-    accel * seconds,
   );
   const dashSeconds = burst && dash ? clamp(0, seconds, dash.remainingSeconds) : 0;
   const horizontalDistance =
@@ -503,7 +523,7 @@ function solveBird(
     rise = after.rise - before.rise;
     vy = after.velocity;
   } else {
-    vy += tuning.gravity * seconds;
+    vy = ordinaryFallVelocity(tuning, seconds, vy);
   }
   vy = Math.min(vy, tuning.flutterFallSpeed);
   if (vy >= 0) {

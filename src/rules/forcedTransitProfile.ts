@@ -8,15 +8,8 @@ const PROFILES = [null, ...SKILL_IDS].map((selected) => skillTuning(SKILLS, sele
 const MAXIMUM_WALK_SPEED = Math.max(...PROFILES.map(({ walkSpeed }) => walkSpeed));
 
 export function ordinaryTransitControl(tuning: BirdTuning, bird: BirdState): boolean {
-  // Inactive Dash and extra-jump eligibility do not affect a fresh ordinary ground Jump.
-  const keys = [...new Set([...Object.keys(tuning), ...Object.keys(BIRD)])].filter(
-    (key) => key !== "dash" && key !== "doubleJump",
-  ) as (keyof BirdTuning)[];
-  const supportedProfile = PROFILES.some((profile) =>
-    keys.every((key) => tuning[key] === profile[key]),
-  );
   return (
-    supportedProfile &&
+    ordinaryTransitProfile(tuning) !== undefined &&
     bird.grounded &&
     Number.isFinite(bird.vx) &&
     Math.abs(bird.vx) <= MAXIMUM_WALK_SPEED &&
@@ -24,4 +17,12 @@ export function ordinaryTransitControl(tuning: BirdTuning, bird: BirdState): boo
     bird.carryVx === 0 &&
     (bird.dash?.remainingSeconds ?? 0) <= EDGE
   );
+}
+
+export function ordinaryTransitProfile(tuning: BirdTuning): BirdTuning | undefined {
+  // Inactive Dash and extra-jump eligibility do not affect a fresh ordinary ground Jump.
+  const keys = [...new Set([...Object.keys(tuning), ...Object.keys(BIRD)])].filter(
+    (key) => key !== "dash" && key !== "doubleJump",
+  ) as (keyof BirdTuning)[];
+  return PROFILES.find((profile) => keys.every((key) => tuning[key] === profile[key]));
 }

@@ -5,6 +5,8 @@ import type { Rect } from "../data/types";
 import {
   type BirdInput,
   type BirdState,
+  ordinaryFallVelocity,
+  ordinaryHorizontalVelocity,
   ordinaryJumpApexFeetY,
   ordinaryJumpAscent,
   startBird,
@@ -136,6 +138,24 @@ function walkOff(jumpStep?: number, tuning = BIRD): BirdState[] {
 }
 
 const last = (states: BirdState[]) => states[states.length - 1] as BirdState;
+
+it("uses shared ordinary velocity primitives during actual ground, air and falling steps", () => {
+  const input = (tick: number): BirdInput => ({ jumpHeld: tick < 44, move: tick < 60 ? 1 : 0 });
+  const states = run(100, input);
+  let falling = 0;
+  for (let tick = 0; tick < 100; tick++) {
+    const before = states[tick]!;
+    const after = states[tick + 1]!;
+    expect(after.vx).toBe(
+      ordinaryHorizontalVelocity(BIRD, STEP, input(tick).move, before.grounded, before.vx),
+    );
+    if (before.vy >= 0 && !after.grounded && tick > 44) {
+      expect(after.vy).toBe(ordinaryFallVelocity(BIRD, STEP, before.vy));
+      falling++;
+    }
+  }
+  expect(falling).toBeGreaterThan(20);
+});
 
 it("exposes the actual full-jump ascent through the first native apex crossing", () => {
   const count = Math.ceil(BIRD.jumpRiseTime / STEP);
