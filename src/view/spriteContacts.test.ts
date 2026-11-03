@@ -320,6 +320,7 @@ it.each([
         : { x: 0, y: 0 },
     );
     const world = {
+      idleDecision: { namespace: "idle-roam:main:0", seed: 1 },
       solids: [],
       traversalFrame: {
         bounds: { height: 720, width: 1440, x: 0, y: 0 },
