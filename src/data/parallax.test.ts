@@ -272,16 +272,38 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
   const beforeLibrary = {
     ...CHUNK_LIBRARY,
     chunks: Object.fromEntries(
-      Object.entries(CHUNKS).map(([id, chunk]) => [id, { ...chunk, scenery: [] }]),
+      Object.entries(CHUNKS).map(([id, chunk]) => [
+        id,
+        {
+          ...chunk,
+          scenery: (chunk.scenery ?? []).filter(
+            ({ character }) => !(character in WOODLAND_SCENERY_CHARACTERS),
+          ),
+        },
+      ]),
     ),
   };
   const before = assembleZone(beforeLibrary, 1, "deep-woods", recipe);
   const after = assembleZone(CHUNK_LIBRARY, 1, "deep-woods", recipe);
   for (const [id, area] of Object.entries(after.areas)) {
     const original = before.areas[id]!;
-    const previous = original.objects.filter((object) => !object.backdropSpan);
-    const current = area.objects.filter((object) => !object.backdropSpan);
-    expect(current.slice(0, previous.length)).toEqual(previous);
+    const physical = (objects: readonly Instance[], indices: readonly number[] | undefined) => {
+      const scenery = new Set(indices);
+      return objects.flatMap((object, index) =>
+        !object.backdropSpan && !scenery.has(index) ? [{ index, object }] : [],
+      );
+    };
+    expect(physical(area.objects, area.sceneryIndices)).toEqual(
+      physical(original.objects, original.sceneryIndices),
+    );
+    expect(
+      area.objects.filter(({ character }) => !(character in WOODLAND_SCENERY_CHARACTERS)),
+    ).toEqual(original.objects);
+    area.objects.forEach(({ character }, index) => {
+      if (character in WOODLAND_SCENERY_CHARACTERS) {
+        expect(area.sceneryIndices).toContain(index);
+      }
+    });
     expect(area.solids).toEqual(original.solids);
     expect(area.chunks).toEqual(original.chunks);
     expect(area.objects.length).toBeGreaterThan(original.objects.length);
