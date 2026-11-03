@@ -51,10 +51,10 @@ describe("chunk walk partitions", () => {
       ["countryside-vertical-city-boundary-climb-yard"],
     ] as const;
     expect(chunkWalkPartitions(cases)).toEqual([
-      [cases[4]],
-      [cases[3]],
       [cases[2]],
-      [cases[1], cases[0]],
+      [cases[1]],
+      [cases[4]],
+      [cases[3], cases[0]],
     ]);
   });
 
