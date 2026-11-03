@@ -699,6 +699,8 @@ export interface Instance {
   readonly parallax?: Point;
   // Clip repeating decorative art to this instance's own horizontal span.
   readonly backdropSpan?: boolean;
+  // Extend the native bottom row of generated outdoor art to the viewport bottom.
+  readonly backdropExtendBottom?: boolean;
   // An interior backdrop repeats only inside its fixed authored world rectangle.
   readonly backdropPlane?: "interior";
   // Area entry naming the stable ground reference for this decorative backdrop.
@@ -992,6 +994,8 @@ export interface ObjectLayout {
   readonly parallax?: Point;
   // Clip repeating decorative art to this instance's own horizontal span.
   readonly backdropSpan?: boolean;
+  // Extend the native bottom row of generated outdoor art to the viewport bottom.
+  readonly backdropExtendBottom?: boolean;
   // An interior backdrop repeats only inside its fixed authored world rectangle.
   readonly backdropPlane?: "interior";
   // Area entry naming the stable ground reference for this decorative backdrop.

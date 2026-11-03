@@ -128,6 +128,7 @@ import {
 import { wholeRunSummary } from "../save/runSummary";
 import { type TouchSetting, touchSettings, touchSettingShown } from "../settings/touchControls";
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
+import { backdropBottomRect } from "../view/backdropBottom";
 import { backgroundGroundOffset, backgroundGroundReference } from "../view/backgroundGround";
 import { behaviourPose } from "../view/behaviour";
 import {
@@ -168,6 +169,7 @@ import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";
 import { mountAirJumpCue } from "./airJumpCue";
+import { backdropBottomFrame } from "./backdropBottomFrame";
 import { mountBossWarning } from "./bossWarning";
 import { paletteColour } from "./cardParts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
@@ -329,6 +331,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private readonly chunkBackdrops: {
     readonly bounds: Rect;
     readonly item: GameObjects.TileSprite;
+    readonly extension?: GameObjects.TileSprite;
     readonly parallax: Point;
     readonly reference?: { readonly scroll: Point; readonly textureTop: number };
   }[] = [];
@@ -1459,6 +1462,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (object.backdropPlane === "interior" && kind !== "repeated-backdrop") {
       throw new Error(`Interior backdrop requires repeated art: ${object.art}`);
     }
+    if (
+      object.backdropExtendBottom &&
+      (kind !== "repeated-backdrop" || !object.backdropSpan || object.backdropPlane !== undefined)
+    ) {
+      throw new Error("Bottom backdrop extension requires repeat-X outdoor art");
+    }
     switch (kind) {
       case "tiles": {
         const images = objectTiles(
@@ -1518,6 +1527,24 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           .setScrollFactor(span ? 1 : parallax.x, span ? 1 : parallax.y)
           .setDepth(DEPTHS["repeated-backdrop"]);
         if (span) {
+          const extension = object.backdropExtendBottom
+            ? this.add
+                .tileSprite(
+                  0,
+                  0,
+                  span.width,
+                  1,
+                  object.art,
+                  backdropBottomFrame(this.textures.get(object.art)),
+                )
+                .setOrigin(0)
+                .setScrollFactor(1, 1)
+                .setDepth(DEPTHS["repeated-backdrop"])
+                .setVisible(false)
+            : undefined;
+          if (extension) {
+            item.once("destroy", () => extension.destroy());
+          }
           this.chunkBackdrops.push({
             bounds: {
               height,
@@ -1531,6 +1558,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
                   object,
                 ),
             },
+            ...(extension && { extension }),
             item,
             parallax,
           });
@@ -1598,7 +1626,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private renderBackdrops(): void {
     const camera = this.cameras.main;
     const scroll = { x: camera.scrollX, y: camera.scrollY };
-    for (const { bounds, item, parallax, reference } of this.chunkBackdrops) {
+    for (const { bounds, extension, item, parallax, reference } of this.chunkBackdrops) {
       if (reference) {
         const { position, textureX, textureY } = interiorBackdrop(
           { parallax, reference: reference.scroll, scroll, textureTop: reference.textureTop },
@@ -1608,6 +1636,19 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       } else {
         const { position, textureX } = chunkParallax({ parallax, scroll }, bounds);
         item.setPosition(position.x, position.y).setTilePosition(textureX, 0);
+        if (extension) {
+          const fill = backdropBottomRect(
+            { height: camera.height / camera.zoomY, y: scroll.y },
+            { ...bounds, ...position },
+          );
+          extension.setVisible(fill !== undefined);
+          if (fill) {
+            extension
+              .setPosition(fill.x, fill.y)
+              .setSize(fill.width, fill.height)
+              .setTilePosition(textureX, 0);
+          }
+        }
       }
     }
     for (const { coverage, frame, item, parallax } of this.scenerySprites) {

@@ -127,3 +127,73 @@ it("derives the interior texture origin from the manifest without moving its aut
   expect(item.setPosition).toHaveBeenCalledWith(0, 600);
   expect(item.setTilePosition).toHaveBeenCalledWith(0, 240);
 });
+
+it("extends opted-in outdoor pixels below the quad at the same phase and cleans up with it", () => {
+  const make = () => ({
+    destroy: vi.fn(),
+    once: vi.fn().mockReturnThis(),
+    setDepth: vi.fn().mockReturnThis(),
+    setOrigin: vi.fn().mockReturnThis(),
+    setPosition: vi.fn().mockReturnThis(),
+    setScrollFactor: vi.fn().mockReturnThis(),
+    setSize: vi.fn().mockReturnThis(),
+    setTilePosition: vi.fn().mockReturnThis(),
+    setVisible: vi.fn().mockReturnThis(),
+  });
+  const base = make();
+  const extension = make();
+  const texture = {
+    add: vi.fn(),
+    firstFrame: "__BASE",
+    get: () => ({ cutHeight: 600, cutWidth: 720, cutX: 0, cutY: 0, sourceIndex: 0 }),
+    has: () => false,
+  };
+  const scene = {
+    add: { tileSprite: vi.fn().mockReturnValueOnce(base).mockReturnValueOnce(extension) },
+    cameras: { main: { height: 360, scrollX: 360, scrollY: 240, zoomY: 1 } },
+    chunkBackdrops: [],
+    layout: {
+      areas: {
+        main: {
+          chunks: [{ width: 720, x: 0 }],
+          entries: { start: { x: 0, y: 600 } },
+          height: 1440,
+          solids: [{ height: 840, width: 720, x: 0, y: 600 }],
+          width: 720,
+        },
+      },
+    },
+    manifest,
+    scenerySprites: [],
+    textures: { get: () => texture, getFrame: () => ({ height: 600 }) },
+    zone: { area: "main" },
+  };
+  const object = {
+    art: "warehouse-mid",
+    backdropExtendBottom: true,
+    backdropSpan: true,
+    groundAnchor: "start",
+    height: 600,
+    origin: { x: 0, y: 0 },
+    parallax: { x: 0.4, y: 0.15 },
+    width: 720,
+  } as ObjectLayout;
+  const methods = ZoneScene.prototype as unknown as {
+    drawObject(key: undefined, tileset: undefined, object: ObjectLayout, index: number): unknown;
+    renderBackdrops(): void;
+  };
+  methods.drawObject.call(scene, undefined, undefined, object, 0);
+  methods.renderBackdrops.call(scene);
+  expect(base.setPosition).toHaveBeenLastCalledWith(0, -102);
+  expect(extension.setPosition).toHaveBeenLastCalledWith(0, 498);
+  expect(extension.setSize).toHaveBeenLastCalledWith(720, 102);
+  expect(extension.setTilePosition).toHaveBeenLastCalledWith(-216, 0);
+  expect(extension.setDepth.mock.lastCall).toEqual(base.setDepth.mock.lastCall);
+  scene.cameras.main.scrollY = 360;
+  methods.renderBackdrops.call(scene);
+  expect(extension.setPosition).toHaveBeenLastCalledWith(0, 600);
+  expect(extension.setSize).toHaveBeenLastCalledWith(720, 120);
+  const destroy = base.once.mock.calls.find(([event]) => event === "destroy")![1] as () => void;
+  destroy();
+  expect(extension.destroy).toHaveBeenCalledOnce();
+});

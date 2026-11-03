@@ -153,6 +153,12 @@ export function objectLayout(
   ) {
     throw new Error(`Backdrop span on ${instance.character} requires nonphysical static scenery`);
   }
+  if (
+    instance.backdropExtendBottom &&
+    (!instance.backdropSpan || instance.backdropPlane !== undefined)
+  ) {
+    throw new Error("Bottom backdrop extension requires an outdoor backdrop span");
+  }
   if (instance.groundAnchor !== undefined && (!instance.backdropSpan || !instance.groundAnchor)) {
     throw new Error(`Ground anchor on ${instance.character} requires a named backdrop span`);
   }
@@ -281,6 +287,9 @@ export function objectLayout(
     origin: tilePoint(tile, instance),
     ...(parallax && { parallax }),
     ...(instance.backdropSpan !== undefined && { backdropSpan: instance.backdropSpan }),
+    ...(instance.backdropExtendBottom !== undefined && {
+      backdropExtendBottom: instance.backdropExtendBottom,
+    }),
     ...(instance.backdropPlane !== undefined && { backdropPlane: instance.backdropPlane }),
     ...(instance.groundAnchor !== undefined && { groundAnchor: instance.groundAnchor }),
     phase: instance.phase ?? 0,

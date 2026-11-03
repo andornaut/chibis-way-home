@@ -104,16 +104,24 @@ it("appends background coverage without changing terrain, slots, indices or phys
   const area = layered.areas.main!;
   expect({ ...area, objects: area.objects.slice(0, original.objects.length) }).toEqual(original);
   expect(layered.start).toEqual(plain.start);
+  expect(
+    area.objects
+      .slice(original.objects.length)
+      .every((object) => object.backdropExtendBottom === true),
+  ).toBe(true);
+  expect(original.objects.every((object) => object.backdropExtendBottom === undefined)).toBe(true);
   const before = startZone(
     BIRD,
     zoneLayout(12, BIRD_FRAME, catalogue, {}, {}, new Set(), plain),
     1,
   );
-  const after = startZone(
-    BIRD,
-    zoneLayout(12, BIRD_FRAME, catalogue, {}, {}, new Set(), layered),
-    1,
-  );
+  const resolved = zoneLayout(12, BIRD_FRAME, catalogue, {}, {}, new Set(), layered);
+  expect(
+    resolved.areas
+      .main!.objects.slice(before.objects.length)
+      .every((object) => object.backdropExtendBottom === true),
+  ).toBe(true);
+  const after = startZone(BIRD, resolved, 1);
   expect(after.objects.slice(0, before.objects.length)).toEqual(before.objects);
   before.tracks.forEach((track, index) => expect(after.tracks[index]!.at(1)).toEqual(track.at(1)));
 });
@@ -123,7 +131,7 @@ it("replays a separate background stream and covers the final partial section wi
   expect(assembleZone(depthLibrary, 1, "stage", recipe)).toEqual(first);
   const generated = first.areas.main!.objects.slice(original.objects.length);
   expect(generated.filter(({ character }) => character === "sky")).toEqual([
-    { ...profile.weather[0]!, backdropSpan: true, col: 0, cols: 240 },
+    { ...profile.weather[0]!, backdropExtendBottom: true, backdropSpan: true, col: 0, cols: 240 },
   ]);
   const pieces = generated.filter(({ character }) => character === "far");
   let edge = 0;
@@ -289,12 +297,26 @@ it("resolves an interior plane only from an explicit static rectangle and named 
     rows: 5,
   };
   const object = objectLayout(12, catalogue, {}, undefined, {}, instance);
+  expect(object.backdropExtendBottom).toBeUndefined();
+  expect(() =>
+    objectLayout(
+      12,
+      catalogue,
+      {},
+      undefined,
+      {},
+      { backdropExtendBottom: true, character: "far", col: 0, row: 0 },
+    ),
+  ).toThrow(/outdoor backdrop span/);
   expect(object).toMatchObject({
     backdropPlane: "interior",
     height: 60,
     origin: { x: 24, y: 48 },
     width: 36,
   });
+  expect(() =>
+    objectLayout(12, catalogue, {}, undefined, {}, { ...instance, backdropExtendBottom: true }),
+  ).toThrow(/outdoor backdrop span/);
   expect(() => objectLayout(12, catalogue, {}, undefined, {}, { ...instance, cols: 0 })).toThrow(
     /explicit rectangle/,
   );

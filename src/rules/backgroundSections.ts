@@ -102,7 +102,13 @@ export function withBackgroundSections(
         }
       }
       const place = (col: number, cols: number, layer: ThemeBackdrop): Instance => {
-        const instance = bindElement(theme.bindings, { ...layer, backdropSpan: true, col, cols });
+        const instance = bindElement(theme.bindings, {
+          ...layer,
+          backdropExtendBottom: true,
+          backdropSpan: true,
+          col,
+          cols,
+        });
         if (!library.characters[instance.character]) {
           throw new Error(`No background character ${instance.character}`);
         }
