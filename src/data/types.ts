@@ -773,7 +773,8 @@ export interface ForcedTransitTileOriginWindow {
 export interface ForcedTransitTileWindow {
   readonly certification: ForcedTransitCertification;
   readonly result: ForcedTransitResult;
-  readonly riderBodyOrigin: ForcedTransitTileOriginWindow;
+  // Body-origin tile offsets from the actual physical support rectangle.
+  readonly riderOnSupport: ForcedTransitTileOriginWindow;
   readonly supportOrigin: ForcedTransitTileOriginWindow;
 }
 
@@ -802,7 +803,8 @@ export interface ForcedTransitLayoutOriginWindow {
 export interface ForcedTransitLayoutWindow {
   readonly certification: ForcedTransitCertification;
   readonly result: ForcedTransitResult;
-  readonly riderBodyOrigin: ForcedTransitLayoutOriginWindow;
+  // Body-origin pixel offsets from the actual physical support rectangle.
+  readonly riderOnSupport: ForcedTransitLayoutOriginWindow;
   readonly supportOrigin: ForcedTransitLayoutOriginWindow;
 }
 

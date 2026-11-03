@@ -23,6 +23,7 @@ import { drawsFrom, tileHitbox, type Tileset } from "../view/tiles";
 import { layoutBehaviour } from "./behaviour";
 import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling";
 import { validateHazardPhases } from "./effectiveCollision";
+import { resolveForcedTransit, validateForcedTransitGroups } from "./forcedTransitLayout";
 import { resolveOrbits, validateOrbitReferences } from "./orbit";
 import { validateZoneLinks } from "./zoneLinks";
 
@@ -191,6 +192,13 @@ export function objectLayout(
       `Interior backdrop on ${instance.character} requires an explicit rectangle and ground anchor`,
     );
   }
+  if (
+    instance.forcedTransit &&
+    archetype.collision !== "ledge" &&
+    archetype.collision !== "solid"
+  ) {
+    throw new Error("Forced transit requires a physical support");
+  }
   const width = (instance.cols ?? character.cols) * tile;
   const height = (instance.rows ?? character.rows) * tile;
   const art = hitboxes[character.art];
@@ -301,6 +309,9 @@ export function objectLayout(
       hopHeight: motion.hopHeight * tile,
       speed: motion.speed * tile,
     },
+    ...(instance.forcedTransit && {
+      forcedTransit: resolveForcedTransit(tile, tilePoint(tile, instance), instance.forcedTransit),
+    }),
     origin: tilePoint(tile, instance),
     ...(parallax && { parallax }),
     ...(instance.backdropSpan !== undefined && { backdropSpan: instance.backdropSpan }),
@@ -391,6 +402,7 @@ export function areaLayout(
     }
     return marked;
   });
+  validateForcedTransitGroups(objects);
   const layout: AreaLayout = {
     ...(area.walkLinks && { walkLinks: area.walkLinks }),
     backX: tile,

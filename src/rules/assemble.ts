@@ -20,6 +20,7 @@ import type {
 } from "../data/types";
 import { withBackgroundSections } from "./backgroundSections";
 import { bindElement } from "./elementBinding";
+import { namespaceForcedTransit } from "./forcedTransitLayout";
 import { namespaceOrbitInstances } from "./orbit";
 import { withRoomBuildings } from "./roomBuildings";
 import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry";
@@ -424,10 +425,10 @@ export function zonePlanOf(
     return list;
   }, []);
   const scoped = chunks.map((chunk, index) => {
-    const combined = namespaceOrbitInstances(`chunk${index}`, [
-      ...(chunk.backdrops ?? []),
-      ...chunk.objects,
-    ]);
+    const combined = namespaceForcedTransit(
+      `chunk${index}`,
+      namespaceOrbitInstances(`chunk${index}`, [...(chunk.backdrops ?? []), ...chunk.objects]),
+    );
     const count = chunk.backdrops?.length ?? 0;
     return { backdrops: combined.slice(0, count), objects: combined.slice(count) };
   });
