@@ -11,6 +11,10 @@
 
 Vite builds the HTML inputs in [`pages/`](../pages/) and serves the game at `/play/`, the home page at `/`, the gallery at `/art/` and tuning at `/tuning/`. [`vite.config.ts`](../vite.config.ts) uses the local [game configuration adapter](platform/build/vite/gameConfig.ts); native package exports resolve the pinned shared libraries without source aliases. Build and deployment commands are in the [root README](../README.md).
 
+Tech owns implementation, integration and reviewed release approval. The monitor
+owns bus operations after approval; the [deployment workflow](../README.md#deploying)
+defines the handoff and scheduled checks.
+
 ## Architecture
 
 Player-facing rules live in the [gameplay design](../gameplay/design.md); this section describes their implementation.
