@@ -1165,6 +1165,9 @@ function walkSearch(
   const seen = new Map<string, Spot>();
   const reached = new Set<string>();
   const queue: Spot[] = [];
+  const priority: Spot[] = [];
+  const scheduledSurfaces = new Set<string>();
+  const claimed = new WeakSet<Spot>();
   const areaBounds = new Map<AreaLayout, ReturnType<typeof moveBounds>>();
   const arrivals = new WeakSet<ZoneState>();
   let steps = 0;
@@ -1173,7 +1176,6 @@ function walkSearch(
     required !== undefined && (cleared || engineCleared()) && requiredComplete(required);
   const profiles = new Map<string, bigint[]>();
   let activeProfile = 0n;
-  let depth = 0;
   const terminalAttempts = new WeakSet<ZoneState>();
   if (required) {
     WALK_TERMINALS.set(layout, (zone, support) => {
@@ -1208,6 +1210,8 @@ function walkSearch(
     const profile = required?.witnesses.profile(spot.state) ?? 0n;
     const key = required ? pathSpotKey(layout, spot) : spotKey(spot);
     if (!seen.has(key)) {
+      const firstSurface = !scheduledSurfaces.has(spot.surface.key);
+      scheduledSurfaces.add(spot.surface.key);
       seen.set(key, spot);
       reached.add(spot.surface.key);
       for (const key of [spotKey(spot), spot.surface.key]) {
@@ -1215,15 +1219,11 @@ function walkSearch(
         earned.push(profile);
         profiles.set(key, earned);
       }
-      // Every immediate expansion earns another target; its depth cannot exceed target count.
       if (
         required &&
-        depth > 0 &&
-        depth <= required.witnesses.size &&
-        profile !== activeProfile &&
-        (profile & activeProfile) === activeProfile
+        (firstSurface || (profile !== activeProfile && (profile & activeProfile) === activeProfile))
       ) {
-        expand(spot);
+        priority.push(spot);
       } else {
         queue.push(spot);
       }
@@ -1245,10 +1245,10 @@ function walkSearch(
   };
   const covered = (key: string, profile: bigint) =>
     profiles.get(key)?.some((earned) => (earned & profile) === profile) ?? false;
-  function expand(from: Spot): void {
+  function* expand(from: Spot): Generator<void> {
     const previousProfile = activeProfile;
-    activeProfile = required?.witnesses.profile(from.state) ?? 0n;
-    depth++;
+    const profile = required?.witnesses.profile(from.state) ?? 0n;
+    activeProfile = profile;
     try {
       const area = areaOf(layout, from.surface.area);
       const here = placed(from.surface, from.state, layout);
@@ -1285,10 +1285,16 @@ function walkSearch(
             from.surface.mover === undefined ? -Infinity : sourceSpan.right,
           ),
         })) {
+          if (priority.length) {
+            yield;
+          }
           const off = walkOff(tuning, layout, start);
           steps += off.steps;
           if (off.entered) {
             arrive(off.entered);
+            if (priority.length) {
+              yield;
+            }
             break;
           }
           if (off.cleared) {
@@ -1321,8 +1327,7 @@ function walkSearch(
             (required
               ? covered(
                   target.surface === from.surface && !interval ? target.key : target.surface.key,
-                  activeProfile |
-                    (interval?.token ?? required.witnesses.surface(target.surface.key)),
+                  profile | (interval?.token ?? required.witnesses.surface(target.surface.key)),
                 )
               : target.surface === from.surface
                 ? seen.has(target.key)
@@ -1336,6 +1341,9 @@ function walkSearch(
           target.surface,
         );
         for (const start of starts) {
+          if (priority.length) {
+            yield;
+          }
           if (done()) {
             break;
           }
@@ -1347,7 +1355,13 @@ function walkSearch(
             }
             if (walked.landed) {
               reach(walked.landed);
+              if (priority.length) {
+                yield;
+              }
               break;
+            }
+            if (priority.length) {
+              yield;
             }
           }
           let trial = trials.get(start);
@@ -1370,6 +1384,9 @@ function walkSearch(
               }
               if (continued.landed) {
                 reach(continued.landed);
+              }
+              if (priority.length) {
+                yield;
               }
               if (done()) {
                 break;
@@ -1396,6 +1413,9 @@ function walkSearch(
             if (launched.landed) {
               reach(launched.landed);
             }
+            if (priority.length) {
+              yield;
+            }
           }
           if (lower && !done()) {
             const dropped = trial.drop(target);
@@ -1405,6 +1425,9 @@ function walkSearch(
             }
             if (dropped.landed) {
               reach(dropped.landed);
+            }
+            if (priority.length) {
+              yield;
             }
           }
           for (const attempt of tries) {
@@ -1422,6 +1445,9 @@ function walkSearch(
               }
               if (landed) {
                 reach(landed);
+              }
+              if (priority.length) {
+                yield;
               }
             }
           }
@@ -1455,13 +1481,35 @@ function walkSearch(
         }
       }
     } finally {
-      depth--;
       activeProfile = previousProfile;
     }
   }
   arrive(startZone(tuning, layout, 1));
-  for (let from = queue.shift(); from && !complete(); from = queue.shift()) {
-    expand(from);
+  const work: { readonly iterator: Generator<void>; readonly profile: bigint }[] = [];
+  // A claimed generator retains every remaining attempt and phase while a new support is explored.
+  while (!complete()) {
+    const next = priority.shift() ?? (work.length === 0 ? queue.shift() : undefined);
+    if (next && !claimed.has(next)) {
+      claimed.add(next);
+      work.push({
+        iterator: expand(next),
+        profile: required?.witnesses.profile(next.state) ?? 0n,
+      });
+    }
+    const current = work[work.length - 1];
+    if (!current) {
+      if (priority.length || queue.length) {
+        continue;
+      }
+      break;
+    }
+    activeProfile = current.profile;
+    if (current.iterator.next().done) {
+      work.pop();
+    }
+  }
+  for (const current of work.reverse()) {
+    current.iterator.return(undefined);
   }
   return { cleared, reached, steps, surfaces };
 }
