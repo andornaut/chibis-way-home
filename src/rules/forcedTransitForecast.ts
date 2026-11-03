@@ -1,8 +1,10 @@
-import type { ObjectLayout, Point, Rect } from "../data/types";
+import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import type { BehaviourTraversalFrame } from "./behaviourReach";
-import { EDGE } from "./bird";
+import { type BirdState, EDGE, stepBird } from "./bird";
+import { ordinaryTransitControl } from "./forcedTransitProfile";
 import type { Track } from "./motion";
+import { finishPlatformBird, preparePlatformBird } from "./platformBird";
 import { STEP_SECONDS } from "./step";
 
 export interface ForcedTransitCarrier {
@@ -20,6 +22,21 @@ export interface ForcedTransitForecastContext {
   readonly seconds: number;
 }
 
+export interface ForcedTransitRiderContext {
+  readonly bird: BirdState;
+  readonly terrainSolids: readonly Rect[];
+  readonly tuning: BirdTuning;
+  readonly unknownPush: boolean;
+}
+
+export interface ForcedTransitTakeoffBody {
+  readonly airCarryVx: number;
+  readonly prefix: "none" | "release";
+  readonly releasedBody?: BirdState;
+  readonly rider: ForcedTransitRiderContext;
+  readonly takeoff: BirdState;
+}
+
 // Ephemeral identity-bound evidence, not a saved or extrapolated mover trajectory.
 export interface ForcedTransitForecast {
   readonly afterOne: Rect;
@@ -28,6 +45,7 @@ export interface ForcedTransitForecast {
   readonly afterTwoSeconds: number;
   readonly carrier: ForcedTransitCarrier;
   readonly context: ForcedTransitForecastContext;
+  readonly ordinaryBody?: ForcedTransitTakeoffBody;
 }
 
 function sameRect(left: Rect, right: Rect): boolean {
@@ -87,6 +105,7 @@ function predictable(carrier: ForcedTransitCarrier): boolean {
 export function forecastForcedTransit(
   context: ForcedTransitForecastContext,
   sample: BehaviourTraversalFrame["sample"],
+  rider: ForcedTransitRiderContext,
   carrier: ForcedTransitCarrier,
 ): ForcedTransitForecast | undefined {
   if (
@@ -97,10 +116,10 @@ export function forecastForcedTransit(
   ) {
     return undefined;
   }
-  const first = sample(context.seconds, STEP_SECONDS)?.find(({ owner }) => owner === carrier.owner);
-  const second = sample(context.seconds + STEP_SECONDS, STEP_SECONDS)?.find(
-    ({ owner }) => owner === carrier.owner,
-  );
+  const firstFrames = sample(context.seconds, STEP_SECONDS);
+  const secondFrames = sample(context.seconds + STEP_SECONDS, STEP_SECONDS);
+  const first = firstFrames?.find(({ owner }) => owner === carrier.owner);
+  const second = secondFrames?.find(({ owner }) => owner === carrier.owner);
   if (
     !first ||
     !second ||
@@ -110,6 +129,8 @@ export function forecastForcedTransit(
   ) {
     return undefined;
   }
+  const ordinaryBody =
+    firstFrames && secondFrames && projectOrdinaryBody(rider, firstFrames, secondFrames);
   return {
     afterOne: first.after,
     afterOneSeconds: context.seconds + STEP_SECONDS,
@@ -117,7 +138,105 @@ export function forecastForcedTransit(
     afterTwoSeconds: context.seconds + STEP_SECONDS + STEP_SECONDS,
     carrier,
     context,
+    ...(ordinaryBody && { ordinaryBody }),
   };
+}
+
+function projectOrdinaryBody(
+  rider: ForcedTransitRiderContext,
+  first: NonNullable<ReturnType<NonNullable<BehaviourTraversalFrame["sample"]>>>,
+  second: NonNullable<ReturnType<NonNullable<BehaviourTraversalFrame["sample"]>>>,
+): ForcedTransitTakeoffBody | undefined {
+  if (rider.unknownPush || !ordinaryTransitControl(rider.tuning, rider.bird)) {
+    return undefined;
+  }
+  const objects = (frames: typeof first) =>
+    frames.map((frame) => ({ ...frame, object: frame.owner }));
+  const solids = (frames: typeof first) => [
+    ...rider.terrainSolids,
+    ...frames.filter(({ collision }) => collision === "solid").map(({ after }) => after),
+  ];
+  const ledges = first.filter(({ collision }) => collision === "ledge").map(({ after }) => after);
+  const firstPrepared = preparePlatformBird(
+    rider.tuning,
+    rider.terrainSolids,
+    solids(first),
+    objects(first),
+    rider.bird,
+  );
+  if (firstPrepared.crushed) {
+    return undefined;
+  }
+  if (!rider.bird.jumpHeld || rider.bird.bufferLeft > 0) {
+    return {
+      airCarryVx: firstPrepared.riding
+        ? firstPrepared.dx / STEP_SECONDS
+        : firstPrepared.bird.carryVx,
+      prefix: "none",
+      rider,
+      takeoff: firstPrepared.bird,
+    };
+  }
+  const releasedBody = finishPlatformBird(
+    STEP_SECONDS,
+    firstPrepared,
+    stepBird(
+      rider.tuning,
+      solids(first),
+      ledges,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0 },
+      firstPrepared.bird,
+    ),
+  );
+  const nextPrepared = preparePlatformBird(
+    rider.tuning,
+    rider.terrainSolids,
+    solids(second),
+    objects(second),
+    releasedBody,
+  );
+  if (nextPrepared.crushed || (!nextPrepared.bird.grounded && nextPrepared.bird.coyoteLeft <= 0)) {
+    return undefined;
+  }
+  return {
+    airCarryVx: nextPrepared.riding ? nextPrepared.dx / STEP_SECONDS : nextPrepared.bird.carryVx,
+    prefix: "release",
+    releasedBody,
+    rider,
+    takeoff: nextPrepared.bird,
+  };
+}
+
+export function forcedTransitTakeoffBody(
+  context: ForcedTransitForecastContext,
+  rider: ForcedTransitRiderContext,
+  carrier: ForcedTransitCarrier,
+  forecast: ForcedTransitForecast | undefined,
+): ForcedTransitTakeoffBody | undefined {
+  const body = forecast?.ordinaryBody;
+  if (
+    !body ||
+    !forcedTransitTakeoffOrigin(context, rider.bird, carrier, forecast) ||
+    rider.unknownPush ||
+    !ordinaryTransitControl(rider.tuning, rider.bird) ||
+    rider.terrainSolids !== body.rider.terrainSolids
+  ) {
+    return undefined;
+  }
+  const riderKeys = [
+    ...new Set([...Object.keys(rider.bird), ...Object.keys(body.rider.bird)]),
+  ].filter((key) => key !== "dash") as (keyof BirdState)[];
+  if (riderKeys.some((key) => rider.bird[key] !== body.rider.bird[key])) {
+    return undefined;
+  }
+  const profileKeys = [
+    ...new Set([...Object.keys(rider.tuning), ...Object.keys(body.rider.tuning)]),
+  ].filter((key) => !["dash", "doubleJump", "walkSpeed"].includes(key)) as (keyof BirdTuning)[];
+  if (profileKeys.some((key) => rider.tuning[key] !== body.rider.tuning[key])) {
+    return undefined;
+  }
+  return body;
 }
 
 export function forcedTransitTakeoffOrigin(

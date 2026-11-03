@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
+import { SKILLS } from "../data/skills";
 import type {
   AreaLayout,
   ForcedTransitLayout,
@@ -13,7 +14,8 @@ import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
 import { BIRD_FRAME } from "../view/bird";
 import { birdBox, birdFrameRect, startBird } from "./bird";
-import { forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
+import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
+import { skillTuning } from "./skills";
 import { STEP_SECONDS } from "./step";
 import {
   activateBehaviour,
@@ -301,6 +303,30 @@ describe("mandatory ride admission", () => {
         forecast,
       ),
     ).toEqual(next.objects[0]);
+    const rider = {
+      bird: initial.bird,
+      terrainSolids: layout.areas.main!.solids,
+      tuning: BIRD,
+      unknownPush: false,
+    };
+    expect(forcedTransitTakeoffBody(context, rider, forecast.carrier, forecast)).toBeDefined();
+    expect(
+      forcedTransitTakeoffBody(
+        context,
+        { ...rider, tuning: skillTuning(SKILLS, "speedy", BIRD) },
+        forecast.carrier,
+        forecast,
+      ),
+    ).toBeDefined();
+    for (const stale of [
+      { ...rider, bird: { ...initial.bird, vx: initial.bird.vx + 1 } },
+      { ...rider, bird: { ...initial.bird, jumpHeld: !initial.bird.jumpHeld } },
+      { ...rider, bird: { ...initial.bird, bufferLeft: initial.bird.bufferLeft + STEP } },
+      { ...rider, terrainSolids: [...rider.terrainSolids] },
+      { ...rider, unknownPush: true },
+    ]) {
+      expect(forcedTransitTakeoffBody(context, stale, forecast.carrier, forecast)).toBeUndefined();
+    }
     for (const stale of [
       { ...context, area: "other" },
       { ...context, attempt: context.attempt + 1 },
@@ -373,6 +399,97 @@ describe("mandatory ride admission", () => {
     expect(partial).toBe(true);
     expect(state.forcedTransit?.episode?.boardingBank).toBe("near");
     expect(state.death).toBeUndefined();
+  });
+
+  it("projects a real held release into coyote time after losing partial left support", () => {
+    const layout = zone(
+      area(
+        [
+          object({
+            forcedTransit: transit,
+            motion: { ...STATIC, algorithm: "linear", direction: "up", distance: 60, speed: 20 },
+            origin: { x: 100, y: 200 },
+            width: 72,
+          }),
+        ],
+        { entries: { start: { x: 111.2, y: 200 } } },
+      ),
+    );
+    let state = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    for (let tick = 0; tick < 120; tick++) {
+      state = stepZone(BIRD, layout, STEP, { ...STILL, jumpHeld: true }, state);
+    }
+    expect(state.bird.grounded).toBe(true);
+    for (let tick = 0; tick < 30 && state.bird.x > 76.3; tick++) {
+      state = stepZone(BIRD, layout, STEP, { ...LEFT, jumpHeld: true }, state);
+    }
+    expect(state.bird.grounded).toBe(true);
+    expect(state.bird.jumpHeld).toBe(true);
+    const forecast = state.forcedTransitForecast!;
+    const rider = {
+      bird: state.bird,
+      terrainSolids: layout.areas.main!.solids,
+      tuning: BIRD,
+      unknownPush: false,
+    };
+    const body = forcedTransitTakeoffBody(
+      { area: state.area, attempt: state.attempt, dtSeconds: STEP, seconds: state.seconds },
+      rider,
+      forecast.carrier,
+      forecast,
+    )!;
+    expect(body.prefix).toBe("release");
+    expect(body.releasedBody?.grounded).toBe(false);
+    expect(body.releasedBody!.coyoteLeft).toBeGreaterThan(0);
+    expect(body.takeoff.y).toBe(body.releasedBody!.y);
+    expect(body.takeoff.y + BIRD.height).toBeGreaterThan(forecast.afterTwo.y);
+    const released = stepZone(BIRD, layout, STEP, STILL, state);
+    expect(released.bird).toEqual(body.releasedBody);
+    const jumped = stepZone(BIRD, layout, STEP, { ...STILL, jumpHeld: true }, released);
+    expect(jumped.bird.jumpFromY).toBe(body.takeoff.y);
+    expect(jumped.bird.vy).toBeLessThan(0);
+    expect(jumped.bird.airJumpUsed).toBe(false);
+    expect(jumped.death).toBeUndefined();
+  });
+
+  it("shares native wall clamping with a held release on the right overhang", () => {
+    const layout = zone(
+      area([object({ forcedTransit: transit, origin: { x: 324, y: 660 }, width: 72 })], {
+        entries: { start: { x: 391.2, y: 660 } },
+        height: 1440,
+        solids: [{ height: 840, width: 72, x: 408, y: 600 }],
+      }),
+    );
+    let state = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    for (let tick = 0; tick < 120; tick++) {
+      state = stepZone(BIRD, layout, STEP, { ...STILL, jumpHeld: true }, state);
+    }
+    for (let tick = 0; tick < 6; tick++) {
+      state = stepZone(BIRD, layout, STEP, { ...RIGHT, jumpHeld: true }, state);
+    }
+    expect(state.bird.grounded).toBe(true);
+    expect(state.bird.x).toBeCloseTo(383.4, 8);
+    const forecast = state.forcedTransitForecast!;
+    const body = forcedTransitTakeoffBody(
+      { area: state.area, attempt: state.attempt, dtSeconds: STEP, seconds: state.seconds },
+      {
+        bird: state.bird,
+        terrainSolids: layout.areas.main!.solids,
+        tuning: BIRD,
+        unknownPush: false,
+      },
+      forecast.carrier,
+      forecast,
+    )!;
+    expect(body.releasedBody?.x).toBe(384);
+    expect(body.releasedBody?.vx).toBe(0);
+    expect(body.releasedBody?.grounded).toBe(true);
+    const released = stepZone(BIRD, layout, STEP, STILL, state);
+    expect(released.bird).toEqual(body.releasedBody);
+    const jumped = stepZone(BIRD, layout, STEP, { ...RIGHT, jumpHeld: true }, released);
+    expect(jumped.bird.jumpFromY).toBe(body.takeoff.y);
+    expect(jumped.bird.vy).toBeLessThan(0);
+    expect(jumped.death).toBeUndefined();
   });
 });
 

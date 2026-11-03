@@ -36,7 +36,6 @@ import {
   stepBirdWithSupport,
 } from "./bird";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
-import { collisionCandidates } from "./collisionIndex";
 import { initialCrumblingWorld } from "./crumbling";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
 import { deathSupport } from "./death";
@@ -45,6 +44,7 @@ import { type ForcePulse, forcePulseVelocity } from "./force";
 import { type ForcedTransitState, stepForcedTransit } from "./forcedTransit";
 import {
   type ForcedTransitForecast,
+  forcedTransitTakeoffBody,
   forcedTransitTakeoffOrigin,
   forecastForcedTransit,
 } from "./forcedTransitForecast";
@@ -53,6 +53,8 @@ import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
+import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird";
+export { pushedAside, standsOn } from "./platformBird";
 import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
 import { STEP_SECONDS } from "./step";
 import { timedHazardRect } from "./timedHazard";
@@ -439,15 +441,6 @@ export function retryZone(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneStat
       });
 }
 
-// Whether her feet are on top of rect.
-export function standsOn(tuning: BirdTuning, bird: BirdState, rect: Rect): boolean {
-  return (
-    Math.abs(bird.y + tuning.height - rect.y) < EDGE &&
-    bird.x < rect.x + rect.width &&
-    bird.x + tuning.width > rect.x
-  );
-}
-
 function transitObservation(
   tuning: BirdTuning,
   area: AreaLayout,
@@ -516,6 +509,19 @@ function transitObservation(
       },
       zone.forcedTransitForecast,
     );
+  const takeoffBody =
+    support &&
+    forcedTransitTakeoffBody(
+      { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: zone.seconds },
+      { bird: zone.bird, terrainSolids: area.solids, tuning, unknownPush: zone.pulses.length > 0 },
+      {
+        ...support,
+        owner: support.object,
+        state: zone.behaviours[support.index],
+        track: zone.tracks[support.index]!,
+      },
+      zone.forcedTransitForecast,
+    );
   return stepForcedTransit(
     {
       ...(bank && { bank }),
@@ -526,8 +532,8 @@ function transitObservation(
       ...(support && {
         support: {
           index: support.index,
-          ordinaryJumpApexFeetY: takeoffOrigin
-            ? ordinaryJumpApexFeetY(tuning, takeoffOrigin.y + zone.bird.y - support.rect.y)
+          ordinaryJumpApexFeetY: takeoffBody
+            ? ordinaryJumpApexFeetY(tuning, takeoffBody.takeoff.y)
             : undefined,
           ordinaryTakeoffOrigin: takeoffOrigin,
           origin: { x: support.rect.x, y: support.rect.y },
@@ -567,40 +573,6 @@ export function objectStep(
   const dy = path.y - at.y;
   const away = Math.hypot(dx, dy);
   return away <= reach ? path : { x: at.x + (dx / away) * reach, y: at.y + (dy / away) * reach };
-}
-
-// Moves her with the platform she rides, by (dx, dy), along each axis only as far as no solid
-// is in the way.
-function ride(
-  tuning: BirdTuning,
-  solids: readonly Rect[],
-  dx: number,
-  dy: number,
-  bird: BirdState,
-): BirdState {
-  const clear = (x: number, y: number) =>
-    !collisionCandidates(solids, { ...birdBox(tuning, bird), x, y }).some((solid) =>
-      rectsOverlap({ ...birdBox(tuning, bird), x, y }, solid),
-    );
-  const x = clear(bird.x + dx, bird.y) ? bird.x + dx : bird.x;
-  const y = clear(x, bird.y + dy) ? bird.y + dy : bird.y;
-  return { ...bird, x, y };
-}
-
-// A solid moving along x into her side pushes her out of its way, to the side she was on before
-// it moved: its leading edge, as it runs into her. One that has not moved along x leaves her to
-// the bird's own collision, which stops her by her own motion.
-export function pushedAside(
-  tuning: BirdTuning,
-  before: Rect,
-  after: Rect,
-  bird: BirdState,
-): BirdState {
-  if (after.x === before.x || !rectsOverlap(birdBox(tuning, bird), after)) {
-    return bird;
-  }
-  const left = bird.x + tuning.width / 2 < before.x + before.width / 2;
-  return { ...bird, x: left ? after.x - tuning.width : after.x + after.width };
 }
 
 // One fixed step of the zone. Pure, so the game and a headless simulator run the same rules.
@@ -1011,22 +983,6 @@ export function stepZone(
     behaviours = next;
   }
   const platforms = presentPlatforms.map((index) => objects[index]!);
-  const riding = platforms.find(({ before }) => standsOn(tuning, zone.bird, before));
-  let bird = zone.bird;
-  let dx = 0;
-  if (riding) {
-    dx = riding.after.x - riding.before.x;
-    bird = ride(tuning, terrain, dx, riding.after.y - riding.before.y, bird);
-  }
-  // A platform rising into her from below lifts her onto it, rather than meeting her as a wall.
-  for (const { after, before } of platforms) {
-    const feet = bird.y + tuning.height;
-    if (feet <= before.y + EDGE && feet > after.y && rectsOverlap(birdBox(tuning, bird), after)) {
-      bird = { ...bird, y: after.y - tuning.height };
-    }
-  }
-  // A solid platform running into her side pushes her ahead of it. Pushed into a solid, she is
-  // crushed, which restarts the zone as a hazard does.
   const fixedSolids =
     terrain === area.solids &&
     kinds.fixedSolids &&
@@ -1034,14 +990,9 @@ export function stepZone(
   const solids = fixedSolids
     ? kinds.fixedSolids!
     : [...terrain, ...kinds.solids.filter(present).map((index) => objects[index]!.after)];
-  let crushed = false;
-  for (const { after, before, object } of platforms) {
-    const pushed = object.collision === "solid" ? pushedAside(tuning, before, after, bird) : bird;
-    if (pushed !== bird) {
-      bird = pushed;
-      crushed ||= solids.some((solid) => rectsOverlap(birdBox(tuning, bird), solid));
-    }
-  }
+  const preparedBird = preparePlatformBird(tuning, terrain, solids, platforms, zone.bird);
+  let bird = preparedBird.bird;
+  const crushed = preparedBird.crushed;
   const hazardIndices = kinds.hazards.filter((index) => {
     const { behaviour, object } = objects[index]!;
     return !object.contact && effectiveCollision(object, behaviour?.state) === "hazard";
@@ -1126,9 +1077,7 @@ export function stepZone(
     zone.transients,
     zone.nextTransientId,
   );
-  if (riding && !bird.grounded) {
-    bird = { ...bird, carryVx: dx / seconds };
-  }
+  bird = finishPlatformBird(seconds, preparedBird, bird);
   const crumblingAfter =
     crumbling &&
     endCrumblingFrame(
@@ -1298,6 +1247,7 @@ export function stepZone(
       ? forecastForcedTransit(
           { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: time },
           traversalGeometry(area.objects[carrier]!).traversalFrame?.sample,
+          { bird, terrainSolids: area.solids, tuning, unknownPush: remainingPulses.length > 0 },
           {
             index: carrier,
             owner: area.objects[carrier]!,
