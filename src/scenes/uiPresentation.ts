@@ -122,21 +122,27 @@ export function mountUiPresentation(game: Game): () => void {
         if (!active || disabled || disposed) {
           return undefined;
         }
-        let complete!: Capture["complete"];
-        const ready = new Promise<UiSnapshotResult>((resolve) => {
-          complete = resolve;
+        let resolve!: Capture["complete"];
+        const ready = new Promise<UiSnapshotResult>((done) => {
+          resolve = done;
         });
-        const request: Capture = {
-          area: { ...area },
-          cancel: () => destroy(),
-          complete,
-          remap,
-          scene,
-        };
-        const destroy = () => {
+        let settled = false;
+        const settle: Capture["complete"] = (result) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
           captures.delete(request);
           scene.events.off("shutdown", destroy);
-          complete({ status: "disposed" });
+          resolve(result);
+        };
+        const destroy = () => settle({ status: "disposed" });
+        const request: Capture = {
+          area: { ...area },
+          cancel: destroy,
+          complete: settle,
+          remap,
+          scene,
         };
         scene.events.once("shutdown", destroy);
         captures.add(request);
