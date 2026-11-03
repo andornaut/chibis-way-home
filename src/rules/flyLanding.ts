@@ -242,8 +242,12 @@ function sampledPlatforms(
     }));
   }
   const start = frame.timeSeconds + offset;
-  if (frame.sample) {
+  if (frame.sample && seconds > 0) {
     return frame.sample(start, seconds);
+  }
+  // Zero-duration snapshots use resolved current-frame chords, not predictive intervals.
+  if (seconds === 0 && (offset < 0 || offset > frame.dtSeconds)) {
+    return undefined;
   }
   if (offset < -EDGE || offset + seconds > frame.dtSeconds + EDGE) {
     return frame.platforms.length === 0 ? [] : undefined;

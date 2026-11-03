@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   BEAR_BEHAVIOUR,
@@ -28,7 +28,7 @@ import {
 } from "./behaviour";
 import { type BehaviourWorld, flightContactApproach } from "./behaviourReach";
 import { startBird } from "./bird";
-import { flyLandingPath, flyLandingRoute, supportedLanding } from "./flyLanding";
+import { flyLandingPath, flyLandingRoute, landingWorldAt, supportedLanding } from "./flyLanding";
 import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
@@ -745,6 +745,64 @@ describe("supported flight and dwell", () => {
       },
     };
   }
+  it("uses actual current-frame snapshots when the production sampler rejects zero-duration intervals", () => {
+    const object = actor(landingPlan());
+    const owner = { ...object, character: "perch" };
+    const before = { height: 10, width: 100, x: 80, y: 300 };
+    const after = { ...before, x: 100, y: 290 };
+    const sample = vi.fn((_time: number, seconds: number) => (seconds > 0 ? [] : undefined));
+    const geometry: BehaviourWorld = {
+      platforms: [{ collision: "ledge", owner, rect: before }],
+      solids: [],
+      traversalFrame: {
+        bounds: { height: 1000, width: 1000, x: 0, y: 0 },
+        dtSeconds: 1,
+        platforms: [{ after, before, collision: "ledge", owner }],
+        sample,
+        timeSeconds: 10,
+      },
+    };
+    expect(landingWorldAt(geometry, 0)?.platforms?.[0]?.rect).toEqual(before);
+    expect(landingWorldAt(geometry, 1)?.platforms?.[0]?.rect).toEqual(after);
+    for (const platforms of [geometry.traversalFrame!.platforms, []]) {
+      const actual = { ...geometry, traversalFrame: { ...geometry.traversalFrame!, platforms } };
+      expect(landingWorldAt(actual, -0.001)).toBeUndefined();
+      expect(landingWorldAt(actual, 1.001)).toBeUndefined();
+    }
+    expect(sample).not.toHaveBeenCalled();
+  });
+  it("enters a supported return from its actual tell with a positive-interval-only production sampler", () => {
+    const object = actor(landingPlan());
+    const sample = vi.fn((_time: number, seconds: number) => (seconds > 0 ? [] : undefined));
+    const geometry = (timeSeconds: number, dtSeconds: number): BehaviourWorld => ({
+      solids: [floor],
+      traversalFrame: {
+        bounds: { height: 1000, width: 1000, x: 0, y: 0 },
+        dtSeconds,
+        platforms: [],
+        sample,
+        timeSeconds,
+      },
+    });
+    const entered = advance(
+      object,
+      bird(400),
+      0.5,
+      { x: 100, y: 100 },
+      undefined,
+      geometry(0, 0.5),
+    );
+    expect(entered.state.stateKey).toBe("land");
+    expect(entered.state.pendingEntry).toBe(false);
+    expect(entered.state.activeAttack).toEqual({ id: "flight", phase: "committed" });
+    expect(entered.at).toEqual({ x: 100, y: 150 });
+    const completed = advance(object, bird(400), 2, entered.at, entered.state, geometry(0.5, 2));
+    expect(completed.at).toEqual({ x: 100, y: 280 });
+    expect(completed.state.stateKey).toBe("complete");
+    expect(completed.state.activeAttack).toBeUndefined();
+    expect(completed.state.attackCooldownRemainingSeconds).toBeGreaterThan(0);
+    expect(sample.mock.calls.every(([, seconds]) => seconds > 0)).toBe(true);
+  });
   it("requires actual full-body support before arrival, dwell and attack completion", () => {
     const object = actor(landingPlan());
     const target = bird(400);
