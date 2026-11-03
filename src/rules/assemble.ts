@@ -21,6 +21,7 @@ import type {
 import { withBackgroundSections } from "./backgroundSections";
 import { bindElement } from "./elementBinding";
 import { namespaceOrbitInstances } from "./orbit";
+import { withRoomBuildings } from "./roomBuildings";
 import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry";
 
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
@@ -872,12 +873,17 @@ export function assembleZone(
   recipe: StageRecipe,
 ): ZonePlan {
   if ("sections" in recipe) {
-    return withBackgroundSections(
+    const themes = Object.fromEntries(recipe.sections.map(({ id, theme }) => [id, theme]));
+    return withRoomBuildings(
       library,
-      seed,
-      key,
-      Object.fromEntries(recipe.sections.map(({ id, theme }) => [id, theme])),
-      assembleOrdered(library, seed, key, recipe),
+      themes,
+      withBackgroundSections(
+        library,
+        seed,
+        key,
+        themes,
+        assembleOrdered(library, seed, key, recipe),
+      ),
     );
   }
   if (recipe.chunks !== undefined) {
@@ -902,20 +908,25 @@ export function assembleZone(
         "with slots for its events and doors",
     );
   }
-  return withBackgroundSections(
+  const themes = { [ASSEMBLED_AREA]: recipe.theme };
+  return withRoomBuildings(
     library,
-    seed,
-    key,
-    { [ASSEMBLED_AREA]: recipe.theme },
-    applyStageGeometry(
-      recipe,
-      zonePlanOf(
-        library,
-        randomStream(seed, `slots:${key}`),
-        fillsOf(recipe),
-        recipe.theme,
-        recipe.spawnCol,
-        [recipe.start, ...run, recipe.finish],
+    themes,
+    withBackgroundSections(
+      library,
+      seed,
+      key,
+      themes,
+      applyStageGeometry(
+        recipe,
+        zonePlanOf(
+          library,
+          randomStream(seed, `slots:${key}`),
+          fillsOf(recipe),
+          recipe.theme,
+          recipe.spawnCol,
+          [recipe.start, ...run, recipe.finish],
+        ),
       ),
     ),
   );

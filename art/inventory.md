@@ -403,3 +403,15 @@ Opaque actual stage captures, 168x84, registered as manifest images. Keys follow
 | Key              | Type              | Size  | Contract                      |
 | ---------------- | ----------------- | ----- | ----------------------------- |
 | background-reeds | decorative sprite | 24x24 | sway 4x300ms; loop, no hitbox |
+
+## Room entrance buildings
+
+Static outdoor facades from `art/tools/room_buildings.py`, with a transparent 60x84 opening at 60,96. Bottom-left anchor, default y 600, repeat none; no collision, animation or lights. Place on the door's world plane and local ground. Indoor entrances reuse themed wall skins.
+
+| Key                          | Size    | Opening     |
+| ---------------------------- | ------- | ----------- |
+| room-building-blue-cityscape | 180x180 | 60,96,60,84 |
+| room-building-countryside    | 180x180 | 60,96,60,84 |
+| room-building-home-city      | 180x180 | 60,96,60,84 |
+| room-building-industrial     | 180x180 | 60,96,60,84 |
+| room-building-woodland       | 180x180 | 60,96,60,84 |

@@ -523,6 +523,36 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 4,
     rows: 4,
   },
+  "room-building-blue-cityscape": {
+    archetype: "scenery",
+    art: "room-building-blue-cityscape",
+    cols: 15,
+    rows: 15,
+  },
+  "room-building-countryside": {
+    archetype: "scenery",
+    art: "room-building-countryside",
+    cols: 15,
+    rows: 15,
+  },
+  "room-building-home-city": {
+    archetype: "scenery",
+    art: "room-building-home-city",
+    cols: 15,
+    rows: 15,
+  },
+  "room-building-industrial": {
+    archetype: "scenery",
+    art: "room-building-industrial",
+    cols: 15,
+    rows: 15,
+  },
+  "room-building-woodland": {
+    archetype: "scenery",
+    art: "room-building-woodland",
+    cols: 15,
+    rows: 15,
+  },
   "storefront-cafe": {
     archetype: "scenery",
     art: "storefront-cafe",

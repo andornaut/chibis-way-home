@@ -1703,6 +1703,51 @@
       "repeat": "x"
     },
     {
+      "key": "room-building-blue-cityscape",
+      "png": "backdrops/room-building-blue-cityscape.png",
+      "width": 180,
+      "height": 180,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "none"
+    },
+    {
+      "key": "room-building-countryside",
+      "png": "backdrops/room-building-countryside.png",
+      "width": 180,
+      "height": 180,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "none"
+    },
+    {
+      "key": "room-building-home-city",
+      "png": "backdrops/room-building-home-city.png",
+      "width": 180,
+      "height": 180,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "none"
+    },
+    {
+      "key": "room-building-industrial",
+      "png": "backdrops/room-building-industrial.png",
+      "width": 180,
+      "height": 180,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "none"
+    },
+    {
+      "key": "room-building-woodland",
+      "png": "backdrops/room-building-woodland.png",
+      "width": 180,
+      "height": 180,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "none"
+    },
+    {
       "key": "storefront-cafe",
       "png": "backdrops/storefront-cafe.png",
       "width": 84,
