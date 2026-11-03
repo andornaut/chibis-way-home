@@ -2013,8 +2013,47 @@ export function stepBehaviour(
         object,
       );
       const vertical = Math.abs(target.y - current.y);
-      if (vertical > EDGE && overheadFlightRoute(world, object, current, target)) {
+      const route = overheadFlightRoute(world, object, current, target);
+      if (vertical > EDGE && route) {
         slice = Math.min(slice, vertical / node.motion.speed);
+      } else if (sampledMotion && next.intent && !intentPause && route && vertical <= EDGE) {
+        const live = overheadFlightGoal(
+          tuning,
+          node.motion.overhead,
+          next.flightApproachDirection,
+          bird,
+          object,
+        );
+        const remaining = target.x - current.x,
+          crossing = live.x - current.x;
+        const crossingSeconds = Math.abs(crossing) / node.motion.speed;
+        if (
+          crossing * remaining > 0 &&
+          Math.abs(crossing) <= Math.abs(remaining) &&
+          crossingSeconds <= slice
+        ) {
+          const atCrossing = { x: live.x, y: current.y };
+          const future = advanceAttackClock(crossingSeconds, {
+            ...next,
+            elapsed: next.elapsed + crossingSeconds,
+            ...(object.contact && {
+              animationSeconds: (next.animationSeconds ?? 0) + crossingSeconds,
+            }),
+          });
+          if (
+            node.transitions.some(
+              ({ to, when }) =>
+                when.some((condition) => condition.kind === "arrived") &&
+                canEnterAttack(nodeOf(object, to), future) &&
+                when.every((condition) =>
+                  matches(tuning, object, world, bird, atCrossing, future, condition),
+                ),
+            )
+          ) {
+            // Stop on the real path event so live guards observe it before any remaining overshoot.
+            slice = crossingSeconds;
+          }
+        }
       }
     }
     const to = { ...current };
@@ -2073,40 +2112,41 @@ export function stepBehaviour(
               : 1,
       };
       if (node.motion.mode === "ground" && node.motion.traversal) {
-        const advanced = (traversalStep ??= intentPause
-          ? pauseGroundIntent(
-              {
-                ...world,
-                ...(world.traversalFrame && {
-                  traversalFrame: {
-                    ...world.traversalFrame,
-                    timeSeconds: world.traversalFrame.timeSeconds + time,
-                  },
-                }),
-              },
-              object,
-              node.motion,
-              seconds - time,
-              next.traversal,
-              current,
-            )
-          : advanceTraversal(
-              {
-                ...world,
-                ...(world.traversalFrame && {
-                  traversalFrame: {
-                    ...world.traversalFrame,
-                    timeSeconds: world.traversalFrame.timeSeconds + time,
-                  },
-                }),
-              },
-              object,
-              node.motion,
-              seconds - time,
-              next.traversal,
-              current,
-              hers,
-            ));
+        const advanced = (traversalStep ??=
+          sampledMotion && intentPause
+            ? pauseGroundIntent(
+                {
+                  ...world,
+                  ...(world.traversalFrame && {
+                    traversalFrame: {
+                      ...world.traversalFrame,
+                      timeSeconds: world.traversalFrame.timeSeconds + time,
+                    },
+                  }),
+                },
+                object,
+                node.motion,
+                seconds - time,
+                next.traversal,
+                current,
+              )
+            : advanceTraversal(
+                {
+                  ...world,
+                  ...(world.traversalFrame && {
+                    traversalFrame: {
+                      ...world.traversalFrame,
+                      timeSeconds: world.traversalFrame.timeSeconds + time,
+                    },
+                  }),
+                },
+                object,
+                node.motion,
+                seconds - time,
+                next.traversal,
+                current,
+                hers,
+              ));
         const endSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time + slice;
         const startSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time;
         const pointAt = (atSeconds: number): Point => {
@@ -2146,7 +2186,8 @@ export function stepBehaviour(
           ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
           : undefined;
       } else if (node.motion.mode === "ground") {
-        const desired = current.x + (intentPause ? 0 : Math.max(-travel, Math.min(travel, dx)));
+        const desired =
+          current.x + (sampledMotion && intentPause ? 0 : Math.max(-travel, Math.min(travel, dx)));
         to.x = groundPursuitEnd(
           object,
           world,
@@ -2155,7 +2196,7 @@ export function stepBehaviour(
           contactBox(object, current, next.facing, "x"),
           desired,
         );
-      } else if (intentPause) {
+      } else if (sampledMotion && intentPause) {
         // Safe hovering consumes the sampled decision clock without changing a live attack target.
       } else if (node.motion.overhead) {
         if (next.flightApproachDirection === undefined) {

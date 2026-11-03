@@ -1,7 +1,9 @@
 import { expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
+import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, BehaviourPursuitIntent } from "../data/types";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import { capturePursuitIntent, safeIntentHover } from "./behaviourIntent";
 import type { BehaviourWorld } from "./behaviourReach";
@@ -383,3 +385,158 @@ it("keeps inactive and zero-time intent clocks unchanged", () => {
   expect(inactive.state.intent).toEqual(held);
   expect(inactive.state.intentDecision).toBe(1);
 });
+
+it.each([
+  ["dog-antagonist", "pursuit"],
+  ["dog-antagonist", "pursuit-pounce"],
+  ["ferret-antagonist", "pursuit"],
+  ["ferret-antagonist", "pursuit-throw"],
+  ["goose-antagonist", "pursuit"],
+  ["goose-antagonist", "pursuit-trap"],
+  ["bear-antagonist", "pursuit"],
+  ["bear-antagonist", "pursuit-growl"],
+  ["bear-antagonist", "pursuit-maul"],
+  ["raccoon-antagonist", "pursuit"],
+  ["raccoon-antagonist", "pursuit-drop"],
+  ["pigeon-antagonist", "pursuit"],
+  ["pigeon-antagonist", "pursuit-burst-right"],
+  ["pigeon-antagonist", "pursuit-swoop-left"],
+  ["pigeon-antagonist", "pursuit-swoop-right"],
+] as const)(
+  "holds an actual %s/%s movement snapshot while leaving marked states untouched",
+  (character, entry) => {
+    const object = objectLayout(
+      TILE,
+      CATALOGUE,
+      HITBOXES,
+      TILESETS["tiles-street"],
+      {},
+      { character, col: 20, row: 20 },
+    );
+    const node = object.behaviour!.states[entry]!;
+    if (node.motion.kind !== "pursue" || !node.motion.intent) {
+      throw Error("Expected opted-in production pursuit");
+    }
+    for (const candidate of Object.values(object.behaviour!.states)) {
+      if (candidate.attack || candidate.onEnter?.length) {
+        expect(
+          candidate.motion.kind === "pursue" ? candidate.motion.intent : undefined,
+        ).toBeUndefined();
+      }
+    }
+    const support = { height: 600, width: 4000, x: 0, y: object.origin.y + object.height };
+    const target = {
+      ...startBird(BIRD, { x: object.origin.x + 500, y: support.y }),
+      vx: BIRD.walkSpeed,
+    };
+    const physical: BehaviourWorld = {
+      idleDecision: { namespace: `actual:${character}:${entry}`, seed: 31 },
+      solids: [support],
+      traversalFrame: {
+        bounds: { height: 1200, width: 4000, x: 0, y: 0 },
+        dtSeconds: 1 / 120,
+        platforms: [],
+        timeSeconds: 0,
+      },
+      view: { height: 1200, width: 4000, x: 0, y: 0 },
+    };
+    const component = { ...object, behaviour: { ...object.behaviour!, initial: entry } };
+    const start: BehaviourState = {
+      ...startBehaviour(BIRD, component, target),
+      attackCooldownRemainingSeconds: 0.75,
+      pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+    };
+    const first = stepBehaviour(BIRD, object, physical, 1 / 120, target, object.origin, start);
+    expect(first.state.intentDecision).toBe(1);
+    expect(first.state.intent?.travelDirection).toBe(1);
+    expect(first.state.intent!.offset).toBeGreaterThanOrEqual(node.motion.intent.offset.min);
+    expect(first.state.intent!.offset).toBeLessThanOrEqual(node.motion.intent.offset.max);
+    const reversed = { ...target, vx: -BIRD.walkSpeed, x: target.x - 50 };
+    const next = stepBehaviour(
+      BIRD,
+      object,
+      { ...physical, traversalFrame: { ...physical.traversalFrame!, timeSeconds: 1 / 120 } },
+      1 / 120,
+      reversed,
+      first.at,
+      first.state,
+    );
+    expect(next.state.intentDecision).toBe(1);
+    expect(next.state.intent?.target).toEqual(first.state.intent?.target);
+    expect(next.state.intent?.travelDirection).toBe(1);
+    expect(next.state.facing).toBe(first.state.facing);
+    expect(next.actions).toEqual([]);
+    if (node.motion.mode === "fly") {
+      expect(next.state.flightApproachDirection).toBe(1);
+    }
+  },
+);
+
+it.each([false, true])(
+  "observes a real live-arrival crossing without homing or bypassing blocked sight=%s",
+  (blocked) => {
+    const motion = {
+      intent: { ...intent, decisionSeconds: { max: 1, min: 1 }, offset: { max: 2, min: 2 } },
+      kind: "pursue",
+      mode: "fly",
+      overhead: { ahead: 20, clearance: 10 },
+      speed: 384,
+    } as const;
+    const profile: BehaviourPlan = {
+      ...plan,
+      states: {
+        ...plan.states,
+        pursuit: {
+          animation: null,
+          motion,
+          transitions: [
+            {
+              to: "tell",
+              when: [
+                { kind: "arrived", tolerance: 1.2 },
+                { kind: "line-of-sight" },
+                { kind: "attack-ready" },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    const object = actor(profile),
+      target = bird(135),
+      physical = {
+        ...world(),
+        solids: [floor, ...(blocked ? [{ height: 4, width: 30, x: 125, y: 457 }] : [])],
+        traversalFrame: { ...world().traversalFrame!, dtSeconds: 1 / 120 },
+      };
+    let at = object.origin,
+      state = initial(object),
+      crossed = false;
+    const liveX = target.x + BIRD.width / 2 + motion.overhead.ahead - object.width / 2;
+    for (let tick = 0; tick < 60 && state.stateKey !== "tell"; tick++) {
+      const step = stepBehaviour(BIRD, object, physical, 1 / 120, target, at, state);
+      expect(
+        step.segments.reduce((sum, segment) => sum + segment.end - segment.start, 0),
+      ).toBeCloseTo(1 / 120, 10);
+      crossed ||= step.segments.some(
+        (segment) =>
+          segment.to.x === liveX && segment.from.x < liveX && segment.end > segment.start,
+      );
+      expect(step.actions).toEqual([]);
+      at = step.at;
+      state = step.state;
+    }
+    if (blocked) {
+      expect(state.stateKey).toBe("pursuit");
+      expect(state.activeAttack).toBeUndefined();
+      expect(at.x).toBeCloseTo(liveX + motion.intent.offset.max);
+    } else {
+      expect(crossed).toBe(true);
+      expect(state.stateKey).toBe("tell");
+      expect(at.x).toBeCloseTo(liveX);
+      expect(state.activeAttack?.phase).toBe("tell");
+      expect(state.elapsed).toBeGreaterThan(0);
+      expect(state.elapsed).toBeLessThan(1 / 120);
+    }
+  },
+);
