@@ -6,7 +6,7 @@ export interface BossWarningTuning {
 }
 
 export const BOSS_WARNING = {
-  colour: "dred",
+  colour: "warning-red",
   inkColour: "ink",
   inkWidth: 1,
   strokeWidth: 1,
