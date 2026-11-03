@@ -347,6 +347,33 @@ describe("mandatory ride admission", () => {
     });
     expect(next.forcedTransit?.attackWindow).toBe("unknown");
   });
+
+  it("retains the actual boarding bank through partial footing while walking onto a carrier", () => {
+    const contract = {
+      ...transit,
+      banks: [{ id: "near", purpose: "retreat" as const, width: 96, x: 0, y: 300 }],
+    };
+    const layout = zone(
+      area([object({ forcedTransit: contract, origin: { x: 108, y: 300 }, width: 72 })], {
+        entries: { start: { x: 84, y: 300 } },
+        solids: [{ height: 40, width: 96, x: 0, y: 300 }],
+      }),
+    );
+    let state = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    state = stepZone(BIRD, layout, STEP, STILL, state);
+    expect(state.forcedTransit?.lastBank).toEqual({ group: transit.group, id: "near" });
+    let partial = false;
+    for (let tick = 0; tick < 30 && !state.forcedTransit?.episode; tick++) {
+      state = stepZone(BIRD, layout, STEP, RIGHT, state);
+      if (state.bird.x > 72 && state.bird.x + BIRD.width <= 108) {
+        partial = true;
+        expect(state.forcedTransit?.lastBank).toEqual({ group: transit.group, id: "near" });
+      }
+    }
+    expect(partial).toBe(true);
+    expect(state.forcedTransit?.episode?.boardingBank).toBe("near");
+    expect(state.death).toBeUndefined();
+  });
 });
 
 describe("behaviour encounters", () => {

@@ -474,25 +474,35 @@ function transitObservation(
       supportedTo = rect.x + rect.width;
     }
   }
-  const banks =
-    zone.bird.grounded && supportedTo >= box.x + box.width - EDGE
-      ? kinds.forcedTransit.flatMap((index) => {
-          const transit = area.objects[index]!.forcedTransit!;
-          return transit.banks
-            .filter(
-              (bank) =>
-                Math.abs(box.y + box.height - bank.y) < EDGE &&
-                box.x >= bank.x - EDGE &&
-                box.x + box.width <= bank.x + bank.width + EDGE,
-            )
-            .map((bank) => ({ group: transit.group, id: bank.id }));
-        })
-      : [];
+  const banks = zone.bird.grounded
+    ? kinds.forcedTransit.flatMap((index) => {
+        const transit = area.objects[index]!.forcedTransit!;
+        return transit.banks
+          .filter(
+            (bank) =>
+              Math.abs(box.y + box.height - bank.y) < EDGE &&
+              box.x < bank.x + bank.width &&
+              box.x + box.width > bank.x,
+          )
+          .map((bank) => ({
+            fullSupport:
+              supportedTo >= box.x + box.width - EDGE &&
+              box.x >= bank.x - EDGE &&
+              box.x + box.width <= bank.x + bank.width + EDGE,
+            group: transit.group,
+            id: bank.id,
+          }));
+      })
+    : [];
   const uniqueBanks = banks.filter(
     (bank, index) =>
       banks.findIndex((other) => other.group === bank.group && other.id === bank.id) === index,
   );
-  const bank = uniqueBanks.length === 1 ? uniqueBanks[0] : undefined;
+  const priorBank = zone.forcedTransit?.lastBank;
+  const contact =
+    uniqueBanks.find((bank) => bank.group === priorBank?.group && bank.id === priorBank.id) ??
+    (uniqueBanks.length === 1 ? uniqueBanks[0] : undefined);
+  const bank = contact && { group: contact.group, id: contact.id };
   const takeoffOrigin =
     support &&
     forcedTransitTakeoffOrigin(
@@ -512,7 +522,7 @@ function transitObservation(
       grounded: zone.bird.grounded,
       ordinaryControl: ordinaryTransitControl(tuning, zone.bird),
       riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
-      safeDisembark: bank !== undefined && support?.object.forcedTransit === undefined,
+      safeDisembark: contact?.fullSupport === true && support?.object.forcedTransit === undefined,
       ...(support && {
         support: {
           index: support.index,

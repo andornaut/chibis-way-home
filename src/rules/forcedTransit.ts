@@ -61,7 +61,12 @@ export function stepForcedTransit(
   if (observation.grounded && !transit && observation.safeDisembark === true) {
     return snapshot("allowed", undefined, observation.bank);
   }
-  const lastBank = observation.grounded && !support ? undefined : previous?.lastBank;
+  const sameBankContact =
+    observation.bank?.group === previous?.lastBank?.group &&
+    observation.bank?.id === previous?.lastBank?.id &&
+    observation.bank !== undefined;
+  const lastBank =
+    observation.grounded && !support && !sameBankContact ? undefined : previous?.lastBank;
   let episode = previous?.episode;
   if (episode?.phase === "spent") {
     return snapshot("allowed", episode, lastBank);
