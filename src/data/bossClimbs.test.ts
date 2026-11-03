@@ -164,7 +164,6 @@ it("keeps acquired Archie pursuing across the production middle-yard low wall", 
   const layout = layoutOf("city-streets", "patrol-cover-middle");
   const area = layout.areas[layout.start.area]!;
   const object = area.objects.find((object) => object.character === "dog-antagonist")!;
-  const initial = startZone(ordinary, layout, 1);
   const target = { ...startBird(ordinary, { x: 21 * TILE, y: 50 * TILE }), grounded: true };
   const platforms = area.objects
     .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
@@ -192,10 +191,6 @@ it("keeps acquired Archie pursuing across the production middle-yard low wall", 
   for (let tick = 0; tick < 600; tick++) {
     const world: BehaviourWorld = {
       hazards,
-      idleDecision: {
-        namespace: `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
-        seed: initial.seed + initial.attempt,
-      },
       platforms: platforms.map(({ after, collision, owner }) => ({
         collision,
         owner,
@@ -366,8 +361,12 @@ it("assembles Penthouse quota and room with distinct capped encounter templates"
   }
 });
 
-it.each([-1, 1] as const)("ordinary route crosses the open ridge facing %s", (direction) => {
-  const base = layoutOf("city-streets", "open-stepped-ridge-encounter");
+it.each(
+  ["open-stepped-ridge-encounter", "offset-two-level-terrace-encounter"].flatMap((chunkId) =>
+    ([-1, 1] as const).map((direction) => ({ chunkId, direction })),
+  ),
+)("ordinary route crosses $chunkId facing $direction", ({ chunkId, direction }) => {
+  const base = layoutOf("city-streets", chunkId);
   const id = base.start.area;
   const area = base.areas[id]!;
   const layout = {
@@ -414,9 +413,13 @@ it.each(
     { name: "Archie", theme: "city-streets" },
     { name: "Bini", theme: "deep-woods" },
     { name: "Trixi", theme: "country-lanes" },
-  ].flatMap((profile) => ([-1, 1] as const).map((direction) => ({ ...profile, direction }))),
-)("actual full $name leaves the open ridge safely facing $direction", ({ direction, theme }) => {
-  const layout = layoutOf(theme, "open-stepped-ridge-encounter");
+  ].flatMap((profile) =>
+    ["open-stepped-ridge-encounter", "offset-two-level-terrace-encounter"].flatMap((chunkId) =>
+      ([-1, 1] as const).map((direction) => ({ ...profile, chunkId, direction })),
+    ),
+  ),
+)("actual full $name leaves $chunkId safely facing $direction", ({ chunkId, direction, theme }) => {
+  const layout = layoutOf(theme, chunkId);
   const area = layout.areas[layout.start.area]!;
   const object = area.objects.find((owner) => owner.behaviour?.pursuit)!;
   const motion = object.behaviour!.states.pursuit!.motion;
@@ -429,17 +432,33 @@ it.each(
     x: direction === 1 ? 684 : 12,
     y: 50 * TILE - ordinary.height,
   };
+  const platforms = area.objects
+    .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
+    .map((owner) => ({
+      after: { ...owner.origin, height: owner.height, width: owner.width },
+      before: { ...owner.origin, height: owner.height, width: owner.width },
+      collision: owner.collision as "solid" | "ledge",
+      owner,
+    }));
+  const hazards = area.objects
+    .filter((owner) => owner !== object && owner.collision === "hazard")
+    .map((owner) => ({ owner, rect: contactBox(owner, owner.origin, 1) }));
   let at = object.origin;
   let traversal: BehaviourTraversalState | undefined;
   for (let tick = 0; tick < 1200; tick++) {
     const world: BehaviourWorld = {
-      hazards: [],
+      hazards,
+      platforms: platforms.map(({ after, collision, owner }) => ({
+        collision,
+        owner,
+        rect: after,
+      })),
       solids: area.solids,
       traversalFrame: {
         bounds: { height: area.height, width: area.width, x: 0, y: 0 },
         dtSeconds: STEP_SECONDS,
-        platforms: [],
-        sample: () => [],
+        platforms,
+        sample: () => platforms,
         timeSeconds: tick * STEP_SECONDS,
       },
     };
