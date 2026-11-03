@@ -52,6 +52,17 @@ export function crumblingDefinitions(
       throw new Error("Crumbling support requires a finite positive collider volume");
     }
   }
+  // Neighbour-derived terrain tiles have one painted owner; hidden underlays are not retained.
+  for (const [index, terrain] of area.terrain.entries()) {
+    if (
+      terrain.crumbling &&
+      area.solids.some(
+        (other, otherIndex) => otherIndex !== index && rectsOverlap(area.solids[index]!, other),
+      )
+    ) {
+      throw new Error("Crumbling terrain must not overlap another terrain collider");
+    }
+  }
   return definitions;
 }
 

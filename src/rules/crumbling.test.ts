@@ -41,6 +41,27 @@ const plan = {
 };
 
 describe("crumbling authoring boundary", () => {
+  it("rejects hidden terrain underlays but allows touching edges and independent object skins", () => {
+    const marked = { ...plan.solids[0]!, crumbling: profile };
+    expect(() =>
+      areaLayout(12, catalogue, {}, {}, new Set(), {
+        ...plan,
+        solids: [marked, { ...plan.solids[0]!, row: marked.row + 1 }],
+      }),
+    ).toThrow("must not overlap another terrain collider");
+    expect(() =>
+      areaLayout(12, catalogue, {}, {}, new Set(), {
+        ...plan,
+        solids: [marked, { ...plan.solids[0]!, col: marked.col + marked.cols }],
+      }),
+    ).not.toThrow();
+    const objectUnderlay = areaLayout(12, catalogue, {}, {}, new Set(), {
+      ...plan,
+      objects: [{ ...instance, crumbling: profile, row: marked.row }],
+    });
+    expect(objectUnderlay.crumbling![0]!.supportId).toBe(objectUnderlay.objects[0]);
+  });
+
   it("preserves omitted metadata and binds terrain and object definitions to actual collider identities", () => {
     const plain = areaLayout(12, catalogue, {}, {}, new Set(), plan);
     expect(plain).not.toHaveProperty("crumbling");
