@@ -410,7 +410,10 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
         ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "prepare-pounce"),
         transitions: [
           { to: "frustration", when: LOST_TARGET },
-          { to: "prepare-pounce", when: [{ kind: "nearby", range: POUNCE_ENGAGEMENT_RANGE }] },
+          {
+            to: "prepare-pounce",
+            when: [{ kind: "nearby", range: POUNCE_ENGAGEMENT_RANGE }, { kind: "line-of-sight" }],
+          },
         ],
       },
       rest: {
