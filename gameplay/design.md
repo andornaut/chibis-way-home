@@ -74,6 +74,8 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 
 ### Interface
 
+- **Stage progress:** a thin, full-width bar stays fixed at the bottom of the gameplay HUD and has no input target. It shows the current stage fraction, including vertical route and area weighting, rather than the furthest position reached. Backtracking updates the current fraction; Retry resets progress to the current stage’s beginning
+
 - **Consistent:** the same element looks and behaves the same on every screen: top bars, panels, close controls, buttons, headings
 - **Disabled controls:** pressing an ordinary disabled control refuses activation with shared shake and red-label feedback. A locked stage card applies the refusal across its face, screenshot and both labels; keyboard selection skips locked stages. Reduced motion uses steady red feedback without shaking or flashing. Refusal never selects an answer or dismisses a card, and respects modal blocking, fresh-release and cancellation guards
 - **Exact:** spacing sits on a fixed pixel grid: equal margins, aligned edges, and text clear of its box's edge by the same amount on both sides
