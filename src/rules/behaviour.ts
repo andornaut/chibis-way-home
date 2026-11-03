@@ -1729,7 +1729,7 @@ export function stepBehaviour(
       });
       node = nodeOf(object, next.stateKey);
     }
-    if (watchdog && idleReady(object, world, current, next)) {
+    if (watchdog && !deferToAttack && idleReady(object, world, current, next)) {
       // Keep the safe graph phase until the next complete physics step can prove its route.
       const remaining = seconds - time;
       const hold = [{ end: remaining, from: current, start: 0, to: current }];
