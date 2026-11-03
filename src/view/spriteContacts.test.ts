@@ -297,10 +297,53 @@ it.each([
       ([, node]) =>
         node.attack?.phase === "tell" && (node.track?.axis ?? resolved.behaviour!.axis) === "x",
     )!;
-    const object = { ...resolved, behaviour: { ...resolved.behaviour!, initial: tell[0] } };
-    const bird = startBird(BIRD, { x: 0, y: 0 });
-    const start = startBehaviour(BIRD, object, bird);
-    const step = stepBehaviour(BIRD, object, [], 0.55, bird, object.origin, start);
+    const motion = tell[1].motion;
+    const overhead = motion.kind === "pursue" && motion.mode === "fly" && motion.overhead;
+    const entry = overhead
+      ? Object.entries(resolved.behaviour!.states).find(
+          ([, node]) =>
+            node.attack?.phase !== "tell" &&
+            node.motion.kind === "pursue" &&
+            node.motion.mode === "fly" &&
+            node.motion.overhead !== undefined &&
+            node.transitions.some(({ to }) => to === tell[0]),
+        )![0]
+      : tell[0];
+    const object = { ...resolved, behaviour: { ...resolved.behaviour!, initial: entry } };
+    const bird = startBird(
+      BIRD,
+      overhead
+        ? {
+            x: object.origin.x + object.width / 2 - overhead.ahead,
+            y: object.origin.y + object.height + overhead.clearance + BIRD.height,
+          }
+        : { x: 0, y: 0 },
+    );
+    const world = {
+      solids: [],
+      traversalFrame: {
+        bounds: { height: 720, width: 1440, x: 0, y: 0 },
+        dtSeconds: 1 / 120,
+        platforms: [],
+        timeSeconds: 0,
+      },
+      view: { height: 720, width: 1440, x: 0, y: 0 },
+    };
+    let at = object.origin,
+      start = startBehaviour(BIRD, object, bird);
+    for (let tick = 0; tick < 120 && start.stateKey !== tell[0]; tick++) {
+      const approach = stepBehaviour(BIRD, object, world, 1 / 120, bird, at, start);
+      expect(approach.actions).toEqual([]);
+      at = approach.at;
+      start = approach.state;
+    }
+    expect(start.stateKey).toBe(tell[0]);
+    if (overhead) {
+      expect(start.activeAttack?.phase).toBe("tell");
+    }
+    const remaining = 0.55 - (start.animationSeconds ?? 0);
+    expect(remaining).toBeGreaterThan(0);
+    const step = stepBehaviour(BIRD, object, world, remaining, bird, at, start);
     const cue = object.contact!.tags["anticipate-lift"]!;
     expect(step.at).toEqual(object.origin);
     expect(step.state.animationTag).toBe("anticipate-lift");
@@ -311,7 +354,7 @@ it.each([
     expect(
       contactFrameAt(object.contact!, step.state.animationTag!, step.state.animationSeconds!).frame,
     ).toBe(cue.frames.at(-1)!.frame);
-    const at = { x: 240, y: 240 };
+    at = { x: 240, y: 240 };
     const origin = spriteFrameOrigin(object.contact!.frame, object, at);
     for (const facing of [-1, 1] as const) {
       expect(behaviourPose(object, { ...step.state, facing })).toEqual({
