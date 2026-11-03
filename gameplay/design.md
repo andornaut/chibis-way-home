@@ -40,7 +40,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 
 - **Data:** every string a player sees lives in the text data files, with `{placeholders}` the game fills, never as a literal in code
 - **Fit:** text never shrinks to fit. Reword it or grow its box
-- **Labels:** one label for one action, everywhere
+- **Labels:** one label for one action, everywhere. Player instructions name Move, Jump and Use with their matching inline control icons, rather than keyboard mappings; each icon and action label form one unit
 - **Lengths:** text is Tiny5 drawn at 2×, about 6.5 base px a character on average; measure the width, don't count characters. A dialogue paragraph fits 3 lines of 504 px (about 72 characters a line). An answer fits 166 px (about 25 characters). A quip, with its speaker's name, fits 452 px (about 60 characters)
 - **Spelling:** Canadian (colour, favourite, neighbour). No em dashes and no emojis
 - **Style:** concise exchanges with distinct voices and brief jokes. Chibi stays determined to reclaim his home. Archie is earnest about his territory, Pebble is smug about flying, Trixi invents convenient rules, Bini is a distracted gamer, Kiwi is dry and observant, and Fert is theatrical about his failed delivery. Do not resolve the initial fight or their friendship

@@ -3,6 +3,7 @@ import type { GameText, StatsScopeText } from "./types";
 export const TEXT: GameText = {
   buttons: {
     jump: "Jump",
+    move: "Move",
     use: "Use",
   },
   celebration: {
@@ -39,13 +40,13 @@ export const TEXT: GameText = {
   },
   homePage: {
     description: "Help Chibi get home after Fert, his former best friend, mails him far away.",
-    keyboard:
-      "Keyboard: arrows/A-D move; Space, Up or W jump; E, F or Enter use a door or dash; P/Esc pause. " +
-      "Mouse: hold left/right over the playfield to move.",
+    instructions: [
+      "{move} travels left or right.",
+      "Press {jump} to jump. With Double jump selected, press again in the air.",
+      "Press {use} to enter a door, or dash when Dash is selected.",
+    ],
     play: "Play",
     subline: "Jump through city streets, avoid red-edged hazards and get past Archie.",
-    touch:
-      "Touch: drag to walk; press {jump} to jump, then again in the air; {use} opens a door or dashes.",
   },
   lines: {
     "archie-escaped": "Hey! This is still my territory!",
@@ -217,20 +218,20 @@ export const TEXT: GameText = {
   skills: {
     dash: {
       description: [
-        "Press E or Use to dash. Doors take priority.",
-        "Move to choose a direction; otherwise dash the way you face.",
-        "One air dash recharges on landing. Wait between dashes.",
+        "{use} dashes; doors come first.",
+        "{move} aims; otherwise dash the way you face.",
+        "One air dash per landing. Wait between dashes.",
         "Walls block you. Hazards and bosses stay lethal.",
       ].join(" "),
       title: "Dash",
     },
     doubleJump: {
       description:
-        "Press Jump again in the air. Tap for a low hop or hold to rise higher. Landing restores one extra jump.",
+        "Press {jump} again in the air. Tap for a low hop or hold to rise higher. Landing restores one extra jump.",
       title: "Double jump",
     },
     speedy: {
-      description: "Move faster on the ground and in the air.",
+      description: "{move} faster on the ground and in the air.",
       title: "Speedy",
     },
   },
