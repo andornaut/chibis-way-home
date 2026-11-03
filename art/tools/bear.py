@@ -51,6 +51,18 @@ def phone(g, x, y):
     g.rect(x + 3, y + 11, 3, 1, "grey")
 
 
+def leg(g, far, root, foot):
+    """Embed the upper limb under the moving coat and taper towards the paw."""
+    colour = "plum" if far else "dbrown"
+    rx, ry = root
+    fx, fy = foot
+    steps = max(abs(fx - rx), abs(fy - 2 - ry))
+    for step in range(steps + 1):
+        t = step / steps
+        width = (3 if far else 4) * (1 - t) + 2.5 * t
+        g.ell(rx + (fx - rx) * t, ry + (fy - 2 - ry) * t, width, 3, colour)
+
+
 def draw(state="idle", phase=0):
     g = Grid(48, 48)
     walk = state in ("walk", "rush")
@@ -74,11 +86,12 @@ def draw(state="idle", phase=0):
     if state == "rest":
         head_y += 1
     feet = []
+    roots = ((12, body_y + 4), (18, body_y + 5), (28, shoulder_y + 7), (34, shoulder_y + 4))
     for i, x in enumerate((9, 17, 29, 38)):
         up = 2 if walk and ((phase == 0 and i in (0, 2)) or (phase == 2 and i in (1, 3))) else 0
         xx = x + (stride if i in (0, 2) else -stride)
         feet.append((xx, 44 - up))
-        g.rect(xx - 2, 35, 5, 10 - up, "plum" if i in (1, 2) else "dbrown")
+        leg(g, i in (1, 2), roots[i], feet[-1])
     g.ell(5, 32 + compress, 2, 2, "dbrown", sh="plum")
     g.blob(22, body_y, 16, 11 - compress * 0.5, "dbrown", sh="plum")
     g.rect(11, 16 + compress - bob, 8, 2, "brown")
