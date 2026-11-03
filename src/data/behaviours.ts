@@ -5,6 +5,7 @@ import type {
   BehaviourGroundReposition,
   BehaviourNode,
   BehaviourPlan,
+  BehaviourPursuitIntent,
   BehaviourTransition,
   DialogueLine,
   Point,
@@ -56,6 +57,25 @@ const GROUND_BOSS_REPOSITION: BehaviourGroundReposition = {
   minDistance: 4,
   resume: "pursuit",
 };
+
+const BOSS_PURSUIT_INTENT: BehaviourPursuitIntent = {
+  decisionSeconds: { max: 1.2, min: 0.8 },
+  offset: { max: 2, min: -2 },
+  pauseChance: 0.2,
+  pauseSeconds: { max: 0.3, min: 0.1 },
+};
+
+function withPursuitIntent(plan: BehaviourPlan, eligible: readonly string[]): BehaviourPlan {
+  const states = { ...plan.states };
+  for (const key of eligible) {
+    const node = states[key];
+    if (!node || node.motion.kind !== "pursue" || node.attack || node.onEnter?.length) {
+      throw new Error(`Invalid pursuit intent state ${key}`);
+    }
+    states[key] = { ...node, motion: { ...node.motion, intent: BOSS_PURSUIT_INTENT } };
+  }
+  return { ...plan, states };
+}
 
 const ATTACK_ENGAGEMENT_RANGE = 12;
 const GROUND_TRAVERSAL = {
@@ -373,7 +393,7 @@ const GROUND_CHARGE: PatrolChargeTuning = {
   rushSpeed: 31.25,
 };
 
-export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
+const DOG_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
@@ -453,7 +473,9 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
   ],
 );
 
-export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
+export const DOG_BEHAVIOUR = withPursuitIntent(DOG_ATTACK_PROFILE, ["pursuit", "pursuit-pounce"]);
+
+const FERRET_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
@@ -522,7 +544,12 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
   ],
 );
 
-export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
+export const FERRET_BEHAVIOUR = withPursuitIntent(FERRET_ATTACK_PROFILE, [
+  "pursuit",
+  "pursuit-throw",
+]);
+
+const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -12,
@@ -594,6 +621,8 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
   ],
 );
 
+export const GOOSE_BEHAVIOUR = withPursuitIntent(GOOSE_ATTACK_PROFILE, ["pursuit", "pursuit-trap"]);
+
 export const OWL_BEHAVIOUR: BehaviourPlan = {
   axis: "y",
   distance: -15,
@@ -656,7 +685,7 @@ const RACCOON_VERTICAL_STATES = verticalDropStates({
   returnState: "climb",
 });
 
-export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
+const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   {
     axis: "y",
     distance: -15,
@@ -775,7 +804,12 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
   ],
 );
 
-export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
+export const RACCOON_BEHAVIOUR = withPursuitIntent(RACCOON_ATTACK_PROFILE, [
+  "pursuit",
+  "pursuit-drop",
+]);
+
+const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
@@ -831,6 +865,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
       },
       "prepare-maul": {
         animation: "prepare-attack",
+        enter: "face-target",
         motion: { kind: "wait" },
         transitions: [
           escapeTransition("pursuit-maul"),
@@ -886,6 +921,12 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
     },
   ],
 );
+
+export const BEAR_BEHAVIOUR = withPursuitIntent(BEAR_ATTACK_PROFILE, [
+  "pursuit",
+  "pursuit-growl",
+  "pursuit-maul",
+]);
 
 const PIGEON_POOP: BehaviourAction = {
   armSeconds: 0,
@@ -1037,7 +1078,7 @@ function pigeonSwoop(failure: string, x: number): BehaviourNode {
   };
 }
 
-export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
+const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: 24,
@@ -1287,3 +1328,10 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
     },
   ],
 );
+
+export const PIGEON_BEHAVIOUR = withPursuitIntent(PIGEON_ATTACK_PROFILE, [
+  "pursuit",
+  "pursuit-burst-right",
+  "pursuit-swoop-left",
+  "pursuit-swoop-right",
+]);
