@@ -1,10 +1,13 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
-import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
-import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import portrait from "../../public/art/sprites/portrait-bird.json";
+import { DIALOGUES, SPEAKERS } from "../data/dialogues";
 import { SCREEN } from "../data/screen";
+import { TEXT } from "../data/text";
+import { dialogueLines, dialogueParagraphs } from "../dialogue/conversation";
+import { CARD_FONTS } from "../testing/cardFonts";
 import { TEXT_BUTTON } from "./buttonLabel";
 import {
   departureDialogueButtons,
@@ -14,8 +17,9 @@ import {
   dialogueSpeakerLayout,
   liveDialogueContains,
 } from "./dialogueScreen";
+import { textInkBounds } from "./textInk";
 
-const font = parseBitmapFont(fontBody);
+const font = CARD_FONTS.title;
 const width = (name: string) => inkWidth(font, DIALOGUE_SCREEN.text.scale, name);
 
 describe("dialogue layout", () => {
@@ -97,4 +101,25 @@ describe("dialogue layout", () => {
       false,
     );
   });
+});
+
+it("fits actual authored dialogue paragraphs at native body size inside the existing panel", () => {
+  const style = DIALOGUE_SCREEN.text;
+  for (const plan of Object.values(DIALOGUES)) {
+    for (const paragraph of dialogueParagraphs(SPEAKERS, TEXT, plan)) {
+      const lines = dialogueLines(CARD_FONTS.body, style, style.width, paragraph.text);
+      expect(lines.length, paragraph.text).toBeLessThanOrEqual(style.lines);
+      for (const [index, line] of lines.entries()) {
+        const ink = textInkBounds(CARD_FONTS.body, style.scale, style.pitch, line);
+        expect(ink.width).toBeLessThanOrEqual(style.width);
+        expect(style.y + index * style.pitch + ink.y + ink.height).toBeLessThanOrEqual(
+          DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height,
+        );
+      }
+      const tab = dialogueNameTab(paragraph.side, width(paragraph.name));
+      expect(tab.x + tab.width).toBeLessThanOrEqual(
+        dialogueSpeakerLayout(paragraph.side).textX + style.width,
+      );
+    }
+  }
 });

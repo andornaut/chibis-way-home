@@ -8,6 +8,7 @@ import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
 import type { Point } from "../data/types";
+import { CARD_TEXT_SCALE } from "../layout/cardFrame";
 import { STAGE_SUMMARY_BOUNDS } from "../layout/cutscene";
 import { textInkBounds } from "../layout/textInk";
 import { statsStatement } from "../view/statsStatement";
@@ -51,7 +52,11 @@ it("paints the preview-first page and its single unboxed statement without panel
   };
   const unchanged = structuredClone(data);
   const layout = addStageSummary(scene, STAGE_SUMMARY_BOUNDS, data);
-  expect(image).toHaveBeenCalledExactlyOnceWith(240, 72, STAGE_PREVIEWS[stage]);
+  expect(image).toHaveBeenCalledExactlyOnceWith(
+    layout.image.x,
+    layout.image.y,
+    STAGE_PREVIEWS[stage],
+  );
   expect(size).toHaveBeenCalledExactlyOnceWith(240, 120);
   expect(rectangle).not.toHaveBeenCalled();
   expect(painted.map(({ text }) => text)).toEqual([
@@ -66,12 +71,26 @@ it("paints the preview-first page and its single unboxed statement without panel
   expect(layout.totals.map(({ value }) => value.text)).toEqual(["1:15", "2:10", "2057:36"]);
   const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
   const tops = painted.map(({ font, point, text }) => {
-    const ink = textInkBounds(font === "font-title" ? fonts.title : fonts.body, 2, 16, text);
+    const ink = textInkBounds(
+      font === "font-title" ? fonts.title : fonts.body,
+      CARD_TEXT_SCALE,
+      fonts.body.lineHeight * CARD_TEXT_SCALE,
+      text,
+    );
     return { x: point.x + ink.x, y: point.y + ink.y };
   });
-  expect(tops.slice(0, 3).map(({ y }) => y)).toEqual([16, 34, 52]);
-  expect(tops.slice(3, 9).map(({ y }) => y)).toEqual([200, 200, 220, 220, 240, 240]);
-  expect(tops.slice(-2).map(({ y }) => y)).toEqual([260, 260]);
+  expect(tops.slice(0, 3).map(({ y }) => y)).toEqual([
+    layout.zone.rect.y,
+    layout.stage.rect.y,
+    layout.progress.rect.y,
+  ]);
+  expect(tops.slice(3, 9).map(({ y }) => y)).toEqual(
+    layout.stats.flatMap(({ label, value }) => [label.rect.y, value.rect.y]),
+  );
+  expect(tops.slice(-2).map(({ y }) => y)).toEqual([
+    layout.statement!.name.rect.y,
+    layout.statement!.text.rect.y,
+  ]);
   expect(data).toEqual(unchanged);
   painted.length = 0;
   const returned = addStageSummary(scene, STAGE_SUMMARY_BOUNDS, {

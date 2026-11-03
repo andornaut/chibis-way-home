@@ -3,13 +3,15 @@ import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
-import fontBody from "../../public/art/fonts/font-body.fnt?raw";
+import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import manifest from "../../public/art/manifest.json";
 import palette from "../../public/art/palette.json";
 import button from "../../public/art/sprites/ui-button.json";
 import primary from "../../public/art/sprites/ui-button-primary.json";
 import playMarkJson from "../../public/art/sprites/ui-play-mark.json";
+import { CARD_TEXT_SCALE } from "../layout/cardFrame";
 import { labelledButton } from "../layout/labelledButton";
+import { textInkBounds } from "../layout/textInk";
 import { ART_MANIFEST_KEY } from "../view/aseprite";
 import {
   addButtonLabel,
@@ -44,7 +46,7 @@ function drawing(sheet = playMark, native = false) {
     ["ui-play-mark", sheet],
   ]);
   const bitmapText = vi.fn().mockImplementation(node);
-  const font = parseBitmapFont(fontBody);
+  const font = parseBitmapFont(fontTitle);
   const chars = native
     ? Object.fromEntries(
         [...font.glyphs].map(([char, glyph]) => [
@@ -171,13 +173,22 @@ describe("disabled text buttons", () => {
 it("centres native Continue ink on each visible face and applies its pressed shift once", () => {
   const { bitmapText, scene } = drawing(playMark, true);
   const result = addTextButton(scene, layout, "Continue", { style: PRIMARY_BUTTON });
-  expect(bitmapText).toHaveBeenLastCalledWith(expect.any(Number), 14, "font-body", "Continue");
+  const normalY = bitmapText.mock.calls.at(-1)![1] as number;
+  const font = parseBitmapFont(fontTitle);
+  const ink = textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, "Continue");
+  expect(bitmapText).toHaveBeenLastCalledWith(
+    expect.any(Number),
+    normalY,
+    "font-title",
+    "Continue",
+  );
+  expect(normalY + ink.y + ink.height / 2).toBe(22);
   pressTextButton(result, true);
-  expect(result.label.label.setY).toHaveBeenLastCalledWith(16);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(normalY + 2);
   setTextButtonEnabled(scene, false, result);
-  expect(result.label.label.setY).toHaveBeenLastCalledWith(16);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(normalY + 2);
   pressTextButton(result, true);
-  expect(result.label.label.setY).toHaveBeenLastCalledWith(16);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(normalY + 2);
   setTextButtonEnabled(scene, true, result);
-  expect(result.label.label.setY).toHaveBeenLastCalledWith(14);
+  expect(result.label.label.setY).toHaveBeenLastCalledWith(normalY);
 });

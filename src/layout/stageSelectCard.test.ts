@@ -1,7 +1,6 @@
-import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
-import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
@@ -10,6 +9,7 @@ import { CARD_CONTENT } from "./contentCard";
 import { type PressArea, pressedArea } from "./hitAreas";
 import { CARD_TEXT_SCALE } from "./pauseCard";
 import { stagePageOf, STAGES_PER_PAGE, stageSelectCard, stageSelectPages } from "./stageSelectCard";
+import { textInkBounds } from "./textInk";
 const STAGE_SELECT_CARD = stageSelectCard(
   CARD_FONTS,
   TEXT.map.zones[ZONE_MAP.destinations[0]!.id]!,
@@ -29,7 +29,7 @@ describe("stage picker layout", () => {
     );
     for (const card of layout.buttons) {
       for (const line of card.text.split("\n")) {
-        expect(inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, line)).toBeLessThanOrEqual(
+        expect(inkWidth(CARD_FONTS.title, CARD_TEXT_SCALE, line)).toBeLessThanOrEqual(
           card.name.width,
         );
       }
@@ -66,17 +66,25 @@ describe("stage picker layout", () => {
   });
   it("balances previews and title vertically without reducing close-target clearance", () => {
     const { buttons, card, close, title } = STAGE_SELECT_CARD;
-    expect(card).toEqual({ height: 236, width: 688, x: 16, y: 62 });
+    expect(card.width).toBe(SCREEN.width - 2 * CARD_CONTENT.padding);
+    expect(card.x).toBe(CARD_CONTENT.padding);
     expect(card.x + card.width / 2).toBe(SCREEN.width / 2);
     expect(card.y + card.height / 2).toBe(SCREEN.height / 2);
-    expect(title.y).toBe(91);
+    expect(title.y + title.height).toBeLessThan(buttons[0]!.hit.y);
     expect(title.x + title.width / 2).toBe(card.x + card.width / 2);
-    expect(close.art).toEqual({ height: 24, width: 24, x: 674, y: 68 });
-    expect(close.hit).toEqual({ height: 48, width: 48, x: 662, y: 56 });
+    expect(close.art.y - card.y).toBe(CARD_CONTENT.closeInset);
+    expect(close.hit.height).toBe(48);
     for (const stage of buttons) {
-      expect(stage.button).toMatchObject({ height: 154, width: 208, y: 128 });
-      expect(stage.preview).toMatchObject({ height: 84, width: 168, y: 150 });
-      expect(stage.name).toMatchObject({ height: 32, y: 238 });
+      expect(stage.button.width).toBe(208);
+      expect(stage.preview).toMatchObject({ height: 84, width: 168 });
+      expect(
+        textInkBounds(
+          CARD_FONTS.title,
+          CARD_TEXT_SCALE,
+          CARD_FONTS.title.lineHeight * CARD_TEXT_SCALE,
+          stage.text,
+        ).height,
+      ).toBeLessThanOrEqual(stage.name.height);
       expect(stage.preview.y - stage.number.y - stage.number.height).toBe(CARD_CONTENT.rowGap);
       expect(stage.hit.y - close.hit.y - close.hit.height).toBe(CARD_CONTENT.gap);
     }

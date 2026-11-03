@@ -25,14 +25,14 @@ export interface LabelMark {
 export const PLAY_MARK: LabelMark = { gap: 6, height: 10, width: 5 };
 
 // Where a button's label starts, with its mark before it when it has one, so that the two are
-// centred across the button as one group, with an indivisible spare pixel after it.
+// centred across the button as one group, retaining fractional native-font placement.
 export function centredLabel(
   button: Rect,
   labelInk: number,
   mark?: Pick<LabelMark, "gap" | "width">,
 ): { readonly labelX: number; readonly markX?: number } {
   const lead = mark === undefined ? 0 : mark.width + (labelInk > 0 ? mark.gap : 0);
-  const left = button.x + Math.floor((button.width - lead - labelInk) / 2);
+  const left = button.x + (button.width - lead - labelInk) / 2;
   return mark === undefined ? { labelX: left } : { labelX: left + lead, markX: left };
 }
 
@@ -60,7 +60,7 @@ export function buttonLabelPlacement(
   const ink = textInkBounds(font, scale, font.lineHeight * scale, text);
   const { labelX, markX } = centredLabel(face, ink.width, mark);
   return {
-    label: { x: labelX - ink.x, y: face.y + Math.floor((face.height - ink.height) / 2) - ink.y },
+    label: { x: labelX - ink.x, y: face.y + (face.height - ink.height) / 2 - ink.y },
     ...(mark &&
       markX !== undefined && {
         mark: { x: markX, y: face.y + Math.floor((face.height - mark.height) / 2) },

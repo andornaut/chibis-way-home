@@ -4,7 +4,7 @@ import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import fontBody from "../../public/art/fonts/font-body.fnt?raw";
+import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import palette from "../../public/art/palette.json";
 import secondary from "../../public/art/sprites/ui-button.json";
 import primary from "../../public/art/sprites/ui-button-primary.json";
@@ -19,6 +19,7 @@ import {
 } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./pauseCard";
 import { startScreenLayout } from "./startScreen";
+import { textInkBounds } from "./textInk";
 
 const button = { height: 28, width: 72, x: 452, y: 198 };
 
@@ -26,14 +27,14 @@ describe("centredLabel", () => {
   it.each([
     { expected: { labelX: 468 }, ink: 40, mark: undefined, name: "an even label" },
     {
-      expected: { labelX: 468 },
+      expected: { labelX: 468.5 },
       ink: 39,
       mark: undefined,
-      name: "an odd label, its spare pixel after it",
+      name: "an odd label at a fractional origin",
     },
     { expected: { labelX: 452 }, ink: 72, mark: undefined, name: "a label as wide as the button" },
     {
-      expected: { labelX: 473, markX: 462 },
+      expected: { labelX: 473.5, markX: 462.5 },
       ink: 40,
       mark: { gap: 6, width: 5 },
       name: "a label with a mark before it",
@@ -42,13 +43,12 @@ describe("centredLabel", () => {
     expect(centredLabel(button, ink, mark)).toEqual(expected);
   });
 
-  it("leaves the spare pixel after an unmarked 41 px label", () => {
+  it("balances both margins of an unmarked odd-width label", () => {
     const ink = 41;
     const { labelX } = centredLabel(button, ink);
     const before = labelX - button.x;
     const after = button.x + button.width - (labelX + ink);
-    expect(after - before).toBeGreaterThanOrEqual(0);
-    expect(after - before).toBeLessThanOrEqual(1);
+    expect(after).toBe(before);
   });
 
   it.each([
@@ -56,7 +56,7 @@ describe("centredLabel", () => {
     ["Continue", TEXT.start.continue],
   ])("fits the start screen's unmarked %s label with standard padding", (_, text) => {
     const { button: start } = startScreenLayout(SCREEN, true, false).start;
-    const ink = inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, text);
+    const ink = inkWidth(parseBitmapFont(fontTitle), CARD_TEXT_SCALE, text);
     const { labelX } = centredLabel(start, ink);
     const margins = [labelX - start.x, start.x + start.width - (labelX + ink)];
     expect(Math.min(...margins)).toBeGreaterThanOrEqual(16);
@@ -64,7 +64,7 @@ describe("centredLabel", () => {
 
   it("fits the start screen's Restart label on its button", () => {
     const restart = startScreenLayout(SCREEN, true, true).restart?.button;
-    const ink = inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, TEXT.start.restart);
+    const ink = inkWidth(parseBitmapFont(fontTitle), CARD_TEXT_SCALE, TEXT.start.restart);
     const labelX = restart && centredLabel(restart, ink).labelX;
     const margins = restart &&
       labelX !== undefined && [labelX - restart.x, restart.x + restart.width - (labelX + ink)];
@@ -72,7 +72,7 @@ describe("centredLabel", () => {
   });
 
   it("centres Start's label without a play mark on the primary face", () => {
-    const ink = inkWidth(parseBitmapFont(fontBody), CARD_TEXT_SCALE, TEXT.start.start);
+    const ink = inkWidth(parseBitmapFont(fontTitle), CARD_TEXT_SCALE, TEXT.start.start);
     const button = startScreenLayout(SCREEN, true, false).start.button;
     const { labelX, markX } = centredLabel(button, ink);
     expect(markX).toBeUndefined();
@@ -87,7 +87,7 @@ it.each([
 ])(
   "centres actual $text ink and its optional mark in every visible $height px face",
   ({ height, marked, text }) => {
-    const font = parseBitmapFont(fontBody);
+    const font = parseBitmapFont(fontTitle);
     const button = { height, width: 192, x: 40, y: 50 };
     const glyphs = [...text]
       .map((char) => font.glyphs.get(char)!)
@@ -109,7 +109,10 @@ it.each([
       if (height === TEXT_BUTTON.height) {
         expect(at.label.y + top - face.y).toBeGreaterThanOrEqual(TEXT_BUTTON.verticalInset);
       }
-      const left = at.mark?.x ?? at.label.x;
+      const left =
+        at.mark?.x ??
+        at.label.x +
+          textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text).x;
       expect(
         Math.abs(
           left +

@@ -150,7 +150,7 @@ describe("death card", () => {
         expect(layout[name].hit.width).toBeGreaterThanOrEqual(48);
         expect(layout[name].hit.height).toBeGreaterThanOrEqual(48);
         expect(
-          layout[name].button.width - inkWidth(fonts.body, CARD_TEXT_SCALE, labels[name]),
+          layout[name].button.width - inkWidth(fonts.title, CARD_TEXT_SCALE, labels[name]),
         ).toBeGreaterThanOrEqual(2 * TEXT_BUTTON.inset);
       }
     },

@@ -31,7 +31,7 @@ describe("native skill presentation", () => {
     const action = skillRoomContinue(fonts, TEXT.dialogue.continue);
     expect(action.art.height).toBe(TEXT_BUTTON.height);
     expect(action.art.width).toBe(
-      cardTextSize(fonts.body, TEXT.dialogue.continue).width + 2 * TEXT_BUTTON.inset,
+      cardTextSize(fonts.title, TEXT.dialogue.continue).width + 2 * TEXT_BUTTON.inset,
     );
     expect(SCREEN.width - action.art.x - action.art.width).toBe(CARD_CONTENT.padding);
     expect(SCREEN.height - action.art.y - action.art.height).toBe(CARD_CONTENT.padding);

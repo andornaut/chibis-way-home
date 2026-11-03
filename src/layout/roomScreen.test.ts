@@ -2,7 +2,6 @@ import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
-import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import buttonSheet from "../../public/art/sprites/ui-button.json";
 import { SCREEN } from "../data/screen";
@@ -11,7 +10,6 @@ import type { Rect } from "../data/types";
 import { CARD_TEXT_SCALE, PAUSE_BUTTON } from "./pauseCard";
 import { ROOM_SCREEN } from "./roomScreen";
 
-const BODY = parseBitmapFont(fontBody);
 const TITLE = parseBitmapFont(fontTitle);
 const inside = (outer: Rect, inner: Rect) =>
   inner.x >= outer.x &&
@@ -37,7 +35,7 @@ describe("the room screen", () => {
   });
 
   it("fits Leave's label in its room", () => {
-    expect(inkWidth(BODY, CARD_TEXT_SCALE, TEXT.room.leave)).toBeLessThanOrEqual(leave.room);
+    expect(inkWidth(TITLE, CARD_TEXT_SCALE, TEXT.room.leave)).toBeLessThanOrEqual(leave.room);
   });
 
   it.each(Object.entries(TEXT.rooms))("fits %s's name inside the frame", (_, { name }) => {

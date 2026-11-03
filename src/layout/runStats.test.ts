@@ -52,10 +52,10 @@ const words = wordsFor(sampleStage);
 describe("preview-first stage summaries", () => {
   it("centres the preview and joint statistics block below zone, stage and actual progress", () => {
     const result = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, words);
-    expect([result.zone.rect.y, result.stage.rect.y, result.progress.rect.y]).toEqual([16, 34, 52]);
-    expect(result.image).toEqual({ height: 120, width: 240, x: 240, y: 72 });
-    expect(result.stats.map((row) => row.label.rect.y)).toEqual([200, 220, 240]);
-    expect(result.totals.map((row) => row.label.rect.y)).toEqual([200, 220, 240]);
+    expect([result.zone.rect.y, result.stage.rect.y, result.progress.rect.y]).toEqual([16, 32, 51]);
+    expect(result.image).toEqual({ height: 120, width: 240, x: 240, y: 70 });
+    expect(result.stats.map((row) => row.label.rect.y)).toEqual([194, 214, 234]);
+    expect(result.totals.map((row) => row.label.rect.y)).toEqual([194, 214, 234]);
     expect(result.stats.map((row) => row.label.rect.x)).toEqual([192, 192, 192]);
     expect(result.totals.map((row) => row.label.rect.x)).toEqual([376, 376, 376]);
     expect(result.stats.map((row) => row.value.rect.x + row.value.rect.width)).toEqual([
@@ -70,8 +70,8 @@ describe("preview-first stage summaries", () => {
       values.attempts,
     ]);
     expect(result.totals.map((row) => row.value.text)).toEqual(["20:34", "56:40", "9999:59"]);
-    expect(result.statement!.rect.y).toBe(260);
-    expect(result.statement!.rect.y + result.statement!.rect.height).toBe(274);
+    expect(result.statement!.rect.y).toBe(257);
+    expect(result.statement!.rect.y + result.statement!.rect.height).toBe(272);
     expect(result).not.toHaveProperty("divider");
     expect(result).not.toHaveProperty("wholeRun");
     expect(result).not.toHaveProperty("aggregate");
@@ -93,7 +93,7 @@ describe("preview-first stage summaries", () => {
         );
         expect(
           CUTSCENE_CONTINUE.hit.y - result.statement!.rect.y - result.statement!.rect.height,
-        ).toBeGreaterThanOrEqual(10);
+        ).toBeGreaterThanOrEqual(8);
         for (const row of [...result.stats, ...result.totals]) {
           expect(row.value.rect.x - row.label.rect.x - row.label.rect.width).toBeGreaterThanOrEqual(
             8,

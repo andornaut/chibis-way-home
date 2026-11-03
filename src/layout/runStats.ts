@@ -111,7 +111,11 @@ export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: Summar
     return { rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y }, text };
   };
   const zone = centred(fonts.title, bounds.y, words.zone);
-  const stage = centred(fonts.body, zone.rect.y + zone.rect.height + CARD_CONTENT.gap, words.stage);
+  const stage = centred(
+    fonts.body,
+    zone.rect.y + zone.rect.height + CARD_CONTENT.rowGap,
+    words.stage,
+  );
   const progress = centred(
     fonts.body,
     stage.rect.y + stage.rect.height + CARD_CONTENT.rowGap,
@@ -123,12 +127,12 @@ export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: Summar
     height: SUMMARY_PREVIEW_HEIGHT,
     width: imageWidth,
     x: bounds.x + (bounds.width - imageWidth) / 2,
-    y: progress.rect.y + progress.rect.height + CARD_CONTENT.gap,
+    y: progress.rect.y + progress.rect.height + CARD_CONTENT.rowGap,
   };
   const columnGap = 2 * CARD_CONTENT.padding;
   const groupWidth = 2 * SUMMARY_COLUMN_WIDTH + columnGap;
   const groupX = bounds.x + (bounds.width - groupWidth) / 2;
-  const statsY = image.y + image.height + CARD_CONTENT.gap;
+  const statsY = image.y + image.height + CARD_CONTENT.rowGap;
   const primary = (["lastAttempt", "best", "attempts"] as const).map((key) => {
     const row = words.stats[RUN_STAT_KEYS.indexOf(key)];
     if (!row) {

@@ -18,6 +18,7 @@ const RESTART_CARD = restartCard(CARD_FONTS, TEXT.restart);
 const FONT = parseBitmapFont(fontBody);
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };
 const ink = (text: string) => inkWidth(FONT, CARD_TEXT_SCALE, text);
+const actionInk = (text: string) => inkWidth(CARD_FONTS.title, CARD_TEXT_SCALE, text);
 const frameOf = (sheet: { frames: Record<string, { frame: { h: number; w: number } }> }) => {
   const { h: height, w: width } = Object.values(sheet.frames)[0]?.frame ?? { h: 0, w: 0 };
   return { height, width };
@@ -75,8 +76,11 @@ describe.each(CARDS)("the %s", (_, card, buttons) => {
   });
 
   it.each(buttons)("fits %s's label, %s, on its button", (__, { button }, text, marked) => {
-    const { labelX, markX } = centredLabel(button, ink(text), marked ? PLAY_MARK : undefined);
-    const margins = [(markX ?? labelX) - button.x, button.x + button.width - (labelX + ink(text))];
+    const { labelX, markX } = centredLabel(button, actionInk(text), marked ? PLAY_MARK : undefined);
+    const margins = [
+      (markX ?? labelX) - button.x,
+      button.x + button.width - (labelX + actionInk(text)),
+    ];
     expect(Math.min(...margins)).toBeGreaterThan(0);
   });
 });

@@ -41,13 +41,13 @@ const stageSelect = stageSelectCard(
   TEXT.map.zones[destination.id]!,
   destination.stages.map((id) => TEXT.map.stages[id]!),
 );
-const updateActions = cardActionsSize(CARD_FONTS.body, "row", [TEXT.update.accept]);
+const updateActions = cardActionsSize(CARD_FONTS.title, "row", [TEXT.update.accept]);
 const update = contentCardLayout(
   { ...SCREEN, x: 0, y: 0 },
   [{ key: "actions", ...updateActions }],
   { close: true, titleWidth: cardTextSize(CARD_FONTS.title, TEXT.update.title).width },
 );
-const updateButton = cardActions(CARD_FONTS.body, "row", update.groups.actions!, [
+const updateButton = cardActions(CARD_FONTS.title, "row", update.groups.actions!, [
   TEXT.update.accept,
 ])[0]!;
 
@@ -79,7 +79,7 @@ it("sizes equal pause actions to their widest label and preserves distinct hit s
   }));
   const widest = Math.max(
     ...[TEXT.pause.resume, TEXT.pause.settings, TEXT.pause.home].map(
-      (text) => cardTextSize(CARD_FONTS.body, text).width,
+      (text) => cardTextSize(CARD_FONTS.title, text).width,
     ),
   );
   for (const action of actions) {

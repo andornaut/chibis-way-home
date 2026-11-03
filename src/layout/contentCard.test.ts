@@ -1,4 +1,4 @@
-import { laidGlyphs, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { inkWidth, laidGlyphs, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
@@ -12,8 +12,10 @@ import {
   cardActionsSize,
   cardTextOrigin,
   cardTextRowsSize,
+  cardTextSize,
   contentCardLayout,
 } from "./contentCard";
+import { textInkBounds } from "./textInk";
 
 const BODY = parseBitmapFont(fontBody);
 const TITLE = parseBitmapFont(fontTitle);
@@ -22,7 +24,7 @@ const VIEW = { ...SCREEN, x: 0, y: 0 };
 describe("measured content cards", () => {
   it("measures equal action faces from the widest actual label and includes only present gaps", () => {
     const labels = [TEXT.pause.home, TEXT.death.retry];
-    const actions = cardActionsSize(BODY, "row", labels);
+    const actions = cardActionsSize(TITLE, "row", labels);
     const rows = cardTextRowsSize(BODY, ["City", "Stage 1", "Progress: 25%", "Time: 1:05"]);
     const result = contentCardLayout(VIEW, [
       { key: "rows", ...rows },
@@ -36,10 +38,16 @@ describe("measured content cards", () => {
     if (!rect) {
       throw new Error("Missing measured actions");
     }
-    const faces = cardActions(BODY, "row", rect, labels).map(({ button }) => button);
+    const faces = cardActions(TITLE, "row", rect, labels).map(({ button }) => button);
     expect(faces.map(({ height, width }) => ({ height, width }))).toEqual([
-      { height: 48, width: 114 },
-      { height: 48, width: 114 },
+      {
+        height: 48,
+        width: Math.max(...labels.map((text) => inkWidth(TITLE, CARD_TEXT_SCALE, text))) + 32,
+      },
+      {
+        height: 48,
+        width: Math.max(...labels.map((text) => inkWidth(TITLE, CARD_TEXT_SCALE, text))) + 32,
+      },
     ]);
     expect(rect.x + rect.width / 2).toBe(result.card.x + result.card.width / 2);
   });
@@ -82,11 +90,26 @@ describe("measured content cards", () => {
 
   it.each([BODY, TITLE])("centres actual ink rather than the first glyph bearing", (font) => {
     const text = "Hint";
-    const rect = { height: 16, width: 180, x: 20, y: 30 };
+    const rect = { height: 16, width: 180, x: 20.5, y: 30.5 };
     const at = cardTextOrigin(font, rect, text);
     const spans = laidGlyphs(font, CARD_TEXT_SCALE, text).flatMap(({ ink }) => ink ?? []);
     const left = Math.min(...spans.map((span) => span.left)) + at.x;
     const right = Math.max(...spans.map((span) => span.right)) + at.x;
-    expect(Math.abs((left + right) / 2 - (rect.x + rect.width / 2))).toBeLessThanOrEqual(0.5);
+    expect((left + right) / 2).toBe(rect.x + rect.width / 2);
   });
 });
+
+it.each([BODY, TITLE])(
+  "contains native signed-bearing glyph ink without shrinking or clipping",
+  (font) => {
+    const text = "j_w";
+    const ink = textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text);
+    expect(ink.x).toBeLessThan(0);
+    const rect = { ...cardTextSize(font, text), x: 30, y: 50 };
+    const at = cardTextOrigin(font, rect, text);
+    expect(at.x + ink.x).toBeGreaterThanOrEqual(rect.x);
+    expect(at.y + ink.y).toBeGreaterThanOrEqual(rect.y);
+    expect(at.x + ink.x + ink.width).toBeLessThanOrEqual(rect.x + rect.width);
+    expect(at.y + ink.y + ink.height).toBeLessThanOrEqual(rect.y + rect.height);
+  },
+);
