@@ -186,6 +186,84 @@ describe("assembleZone", () => {
     expect(runs(lib, zone).size).toBeGreaterThan(1);
   });
 
+  it("places three real quiet chunks between encounter caps and middles", () => {
+    const lib = library({
+      enemy: chunk(50, 50, { encounters: 1, maxPerZone: 1, weight: 1000 }),
+      finish: chunk(50, 50, { encounters: 1 }),
+      quietA: chunk(50, 50),
+      quietB: chunk(50, 50),
+      start: chunk(50, 50, { encounters: 1 }),
+    });
+    const selected = recipe(7, { encounters: 3, minEncounterGap: 3 });
+    const ids = areaOf(assembleZone(lib, 7, "spaced", selected)).chunks!.map(({ chunk }) => chunk);
+    expect(ids).toHaveLength(9);
+    expect(ids.flatMap((id, index) => (lib.chunks[id]!.encounters > 0 ? [index] : []))).toEqual([
+      0, 4, 8,
+    ]);
+    expect(ids.filter((id) => id === "enemy")).toHaveLength(1);
+  });
+
+  it("enforces an explicit gap without a quota and rejects invalid gap metadata", () => {
+    const lib = library({
+      finish: chunk(50, 50, { encounters: 1 }),
+      quietA: chunk(50, 50),
+      quietB: chunk(50, 50),
+      start: chunk(50, 50, { encounters: 1 }),
+    });
+    expect(() => assembleZone(lib, 7, "short", recipe(2, { minEncounterGap: 3 }))).toThrow(
+      "No assembly",
+    );
+    expect(
+      areaOf(assembleZone(lib, 7, "fits", recipe(3, { minEncounterGap: 3 }))).chunks,
+    ).toHaveLength(5);
+    for (const gap of [-1, 1.5, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(() => assembleZone(lib, 7, "invalid", recipe(3, { minEncounterGap: gap }))).toThrow(
+        "Minimum encounter gap",
+      );
+    }
+    const bad = library({ bad: chunk(50, 50, { encounters: NaN }) });
+    expect(() => assembleZone(bad, 7, "invalid-count", recipe(1, { minEncounterGap: 1 }))).toThrow(
+      "Invalid encounter count",
+    );
+  });
+
+  it("backtracks equal-width prefixes with different gaps and resets spacing for each stage", () => {
+    const lib = library({
+      enemy: chunk(50, 50, { encounters: 1, weight: 0.001 }),
+      finish: chunk(50, 50, { encounters: 1 }),
+      quietA: chunk(50, 50),
+      quietB: chunk(50, 50),
+      quietC: chunk(50, 50),
+    });
+    const selected = recipe(4, { encounters: 2, minEncounterGap: 3 });
+    for (const stage of ["first-stage", "next-stage"]) {
+      const ids = areaOf(assembleZone(lib, 42, stage, selected)).chunks!.map(({ chunk }) => chunk);
+      expect(ids[1]).toBe("enemy");
+      expect(ids.slice(2, -1).every((id) => lib.chunks[id]!.encounters === 0)).toBe(true);
+    }
+  });
+
+  it.each([undefined, 3])("zero extra gap preserves legacy seeded quota %s", (encounters) => {
+    const lib = library({
+      enemy: chunk(50, 50, { encounters: 1 }),
+      finish: chunk(50, 50, { encounters: 1 }),
+      quiet: chunk(50, 50),
+      start: chunk(50, 50, { encounters: 1 }),
+    });
+    const selected = recipe(3, encounters === undefined ? {} : { encounters });
+    const legacy = assembleZone(lib, 7, "legacy", selected);
+    expect(assembleZone(lib, 7, "legacy", { ...selected, minEncounterGap: 0 })).toEqual(legacy);
+    if (encounters !== undefined) {
+      expect(areaOf(legacy).chunks!.map(({ chunk }) => chunk)).toEqual([
+        "start",
+        "quiet",
+        "enemy",
+        "quiet",
+        "finish",
+      ]);
+    }
+  });
+
   it("counts caps from metadata and leaves a zero-encounter chunk between encounters", () => {
     const lib = library({
       encounter: chunk(50, 50, { encounters: 1, weight: 1000 }),
@@ -672,6 +750,41 @@ describe("ordered section assembly", () => {
       (id) => plan.areas[id]?.chunks?.map(({ chunk }) => chunk) ?? [],
     );
     expect(ids).toEqual(["start", "b", "a", "b", "finish"]);
+  });
+
+  it("carries three quiet chunks across section boundaries and includes hostile global caps", () => {
+    const spaced: ChunkLibrary = {
+      ...lib,
+      chunks: {
+        ...lib.chunks,
+        a: chunk(50, 50, { encounters: 1, maxPerZone: 1, weight: 1000 }),
+        c: chunk(50, 50),
+        finish: chunk(50, 50, { encounters: 1 }),
+        start: chunk(50, 50, { encounters: 1 }),
+      },
+    };
+    const selected = {
+      ...ordered,
+      encounters: 3,
+      sections: ordered.sections.map((part) => ({
+        ...part,
+        chunks: ["a", "b", "c"],
+        length: { max: 180, min: 180 },
+      })),
+    };
+    const plan = assembleZone(spaced, 42, "ordered-spaced", { ...selected, minEncounterGap: 3 });
+    const ids = plan.areaOrder!.flatMap((id) => plan.areas[id]!.chunks!.map(({ chunk }) => chunk));
+    expect(plan.areaOrder).toEqual(["lobby", "landing", "home"]);
+    expect(ids).toHaveLength(9);
+    expect(ids.flatMap((id, index) => (spaced.chunks[id]!.encounters > 0 ? [index] : []))).toEqual([
+      0, 4, 8,
+    ]);
+    expect(assembleZone(spaced, 42, "ordered-legacy", { ...selected, minEncounterGap: 0 })).toEqual(
+      assembleZone(spaced, 42, "ordered-legacy", selected),
+    );
+    expect(() =>
+      assembleZone(spaced, 42, "ordered-invalid", { ...selected, minEncounterGap: -1 }),
+    ).toThrow("Minimum encounter gap");
   });
 
   it("requires a quiet chunk across section boundaries only for quota recipes", () => {

@@ -902,6 +902,8 @@ export interface ZoneRecipe {
   // Omit to use every compatible middle chunk of the theme.
   readonly chunks?: ChunkPool;
   readonly encounters?: number;
+  // Minimum intervening chunks with encounters === 0; zero adds no constraint.
+  readonly minEncounterGap?: number;
   readonly difficulty: { readonly max: Difficulty; readonly min: Difficulty };
   readonly difficultyWeights?: Readonly<Partial<Record<Difficulty, number>>>;
   readonly doors: readonly { readonly count: number; readonly room: string }[];
@@ -933,6 +935,8 @@ export interface OrderedZoneRecipe {
   readonly stageExit?: TileRect;
   // One quota across all sections, including the global caps.
   readonly encounters?: number;
+  // Minimum intervening chunks with encounters === 0; zero adds no constraint.
+  readonly minEncounterGap?: number;
   readonly finish: string;
   readonly sections: readonly ZoneSectionRecipe[];
   readonly start: string;
