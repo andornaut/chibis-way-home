@@ -1,9 +1,9 @@
-import { advanceWidth, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
+import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 
 import type { ControlAction, Rect, Size } from "../data/types";
 import { type ActionHelpPart, actionHelpParts } from "../view/actionHelp";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
-import type { CardFonts } from "./contentCard";
+import { cardTextOrigin, type CardFonts } from "./contentCard";
 
 export const ACTION_HELP = {
   gap: CARD_CONTENT.rowGap,
@@ -33,15 +33,22 @@ export function actionHelpLayout(
     line = { height: CARD_CONTENT.lineHeight, parts: [], width: 0 };
     space = false;
   };
+  const labelWidth = (action: ControlAction) => {
+    const text = actions[action];
+    const advance = advanceWidth(fonts.title, CARD_TEXT_SCALE, text);
+    const offset = cardTextOrigin(
+      fonts.title,
+      { height: CARD_CONTENT.lineHeight, width: advance, x: 0, y: 0 },
+      text,
+    ).x;
+    return advance + 2 * Math.max(0, offset);
+  };
   const append = (part: ActionHelpPart) => {
     const size =
       part.kind === "action"
         ? {
             height: ACTION_HELP.lineHeight,
-            width:
-              inkWidth(fonts.title, CARD_TEXT_SCALE, actions[part.action]) +
-              ACTION_HELP.gap +
-              ACTION_HELP.icon,
+            width: labelWidth(part.action) + ACTION_HELP.gap + ACTION_HELP.icon,
           }
         : {
             height: CARD_CONTENT.lineHeight,
