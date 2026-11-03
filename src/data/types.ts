@@ -403,11 +403,21 @@ export interface BehaviourTraversal {
   readonly maxFallSpeed: number;
 }
 
+export interface BehaviourPursuitIntent {
+  // Active seconds per decision, including its optional safe pause.
+  readonly decisionSeconds: { readonly min: number; readonly max: number };
+  readonly pauseChance: number;
+  readonly pauseSeconds: { readonly min: number; readonly max: number };
+  // Signed horizontal world-X offset: tiles in authored data, pixels in a resolved plan.
+  readonly offset: { readonly min: number; readonly max: number };
+}
+
 export type BehaviourMotion =
   | { readonly kind: "wait"; readonly support?: "required" }
   | {
       readonly kind: "pursue";
       readonly mode: "fly";
+      readonly intent?: BehaviourPursuitIntent;
       // Tiles: frame-bottom clearance above the target top, and lead along its captured travel side.
       readonly overhead?: { readonly ahead: number; readonly clearance: number };
       readonly speed: number;
@@ -415,6 +425,7 @@ export type BehaviourMotion =
   | {
       readonly kind: "pursue";
       readonly mode: "ground";
+      readonly intent?: BehaviourPursuitIntent;
       readonly speed: number;
       readonly traversal?: BehaviourTraversal;
     }
