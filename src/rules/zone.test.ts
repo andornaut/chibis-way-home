@@ -312,6 +312,10 @@ describe("mandatory ride admission", () => {
       { ...forecast.carrier, index: 1 },
       { ...forecast.carrier, owner: { ...forecast.carrier.owner } },
       { ...forecast.carrier, rect: { ...forecast.carrier.rect, x: forecast.carrier.rect.x + 1 } },
+      {
+        ...forecast.carrier,
+        rect: { ...forecast.carrier.rect, x: forecast.carrier.rect.x + 0.0000005 },
+      },
       { ...forecast.carrier, state: { ...forecast.carrier.state! } },
       { ...forecast.carrier, track: { ...forecast.carrier.track } },
     ]) {

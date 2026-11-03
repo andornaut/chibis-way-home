@@ -137,7 +137,9 @@ export function forcedTransitTakeoffOrigin(
     carrier.owner !== forecast.carrier.owner ||
     carrier.state !== forecast.carrier.state ||
     carrier.track !== forecast.carrier.track ||
-    !sameRect(carrier.rect, forecast.carrier.rect) ||
+    !(["x", "y", "width", "height"] as const).every(
+      (axis) => carrier.rect[axis] === forecast.carrier.rect[axis],
+    ) ||
     !Number.isFinite(jump.bufferLeft) ||
     forecast.afterOneSeconds !== context.seconds + STEP_SECONDS ||
     forecast.afterTwoSeconds !== context.seconds + 2 * STEP_SECONDS
