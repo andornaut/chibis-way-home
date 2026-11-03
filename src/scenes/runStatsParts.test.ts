@@ -16,9 +16,19 @@ vi.mock("./cardParts", () => ({
   BODY_FONT: "font-body",
   TITLE_FONT: "font-title",
   addCardText: (_scene: unknown, font: string, point: Point, text: string) => {
-    const record = { font, point, text, scale: 1 };
+    const record = { font, point, text, scale: 1, lineSpacing: 0 };
     painted.push(record);
-    const object = { setScale: (scale: number) => { record.scale = scale; return object; }, setLeftAlign: () => ({ setLineSpacing: vi.fn() }) };
+    const object = {
+      setScale: (scale: number) => {
+        record.scale = scale;
+        return object;
+      },
+      setLineSpacing: (lineSpacing: number) => {
+        record.lineSpacing = lineSpacing;
+        return object;
+      },
+      setLeftAlign: () => ({ setLineSpacing: vi.fn() }),
+    };
     return object;
   },
   cardFonts: () => ({ body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) }),
@@ -27,7 +37,8 @@ vi.mock("./cardParts", () => ({
 
 import { addStageSummary } from "./runStatsParts";
 
-const painted: { font: string; point: Point; text: string; scale: number }[] = [];
+const painted: { font: string; point: Point; text: string; scale: number; lineSpacing: number }[] =
+  [];
 
 it("paints the preview-first page and its single unboxed statement without panels or dividers", () => {
   painted.length = 0;
@@ -69,7 +80,7 @@ it("paints the preview-first page and its single unboxed statement without panel
     layout.statement!.text.text,
   ]);
   expect(painted).toHaveLength(17);
-  expect(painted[0]).toMatchObject({ font: "font-title", scale: 1.5 });
+  expect(painted[0]).toMatchObject({ font: "font-title", scale: 1.5, lineSpacing: -2 });
   expect(painted.slice(1).every(({ scale }) => scale === 1)).toBe(true);
   expect(painted[1]!.font).toBe("font-body");
   expect(layout.totals.map(({ value }) => value.text)).toEqual(["1:15", "2:10", "2057:36"]);

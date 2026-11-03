@@ -90,9 +90,7 @@ export function summaryTextOrigin(
 ): Point {
   const lefts = text
     .split("\n")
-    .flatMap((line) =>
-      laidGlyphs(font, scale, line).flatMap(({ ink }) => (ink ? [ink.left] : [])),
-    );
+    .flatMap((line) => laidGlyphs(font, scale, line).flatMap(({ ink }) => (ink ? [ink.left] : [])));
   const tops = [...(text.split("\n")[0] ?? "")].flatMap((char) => {
     const glyph = font.glyphs.get(char);
     return glyph && glyph.width > 0 && glyph.height > 0 ? [glyph.yOffset * scale] : [];
@@ -107,20 +105,36 @@ const SUMMARY_PREVIEW_HEIGHT = 120;
 const SUMMARY_COLUMN_WIDTH = 152;
 
 export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: SummaryWords) {
-  const ink = (font: BitmapFont, text: string, scale = CARD_TEXT_SCALE) =>
-    textInkBounds(font, scale, font.lineHeight * scale, text);
-  const centred = (font: BitmapFont, y: number, text: string, scale = CARD_TEXT_SCALE) => {
-    const size = ink(font, text, scale);
+  const ink = (
+    font: BitmapFont,
+    text: string,
+    scale = CARD_TEXT_SCALE,
+    lineHeight = font.lineHeight * scale,
+  ) => textInkBounds(font, scale, lineHeight, text);
+  const centred = (
+    font: BitmapFont,
+    y: number,
+    text: string,
+    scale = CARD_TEXT_SCALE,
+    lineHeight = font.lineHeight * scale,
+  ) => {
+    const size = ink(font, text, scale, lineHeight);
     if (text.includes("\n") || size.width > bounds.width) {
       throw new Error(`Stage summary heading exceeds the page width: ${text}`);
     }
-    return { rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y }, text, scale };
+    return {
+      rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y },
+      text,
+      scale,
+      lineHeight,
+    };
   };
   const zone = centred(
     fonts.title,
     bounds.y,
     words.zone,
     FONT_METRICS.mainHeading.size / FONT_NATIVE_SIZE,
+    FONT_METRICS.mainHeading.lineHeight,
   );
   const headerY = zone.rect.y + zone.rect.height + CARD_CONTENT.rowGap;
   const stage = centred(fonts.body, headerY, words.stage);

@@ -81,12 +81,13 @@ describe("preview-first stage summaries", () => {
       for (const stage of destination.stages) {
         const result = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, wordsFor(stage));
         for (const heading of [result.zone, result.stage, result.progress]) {
-
           expect(heading.rect.x).toBeGreaterThanOrEqual(STAGE_SUMMARY_BOUNDS.x);
           expect(heading.rect.x + heading.rect.width).toBeLessThanOrEqual(704);
         }
         expect(result.zone.rect.x + result.zone.rect.width / 2).toBe(360);
-        expect((result.stage.rect.x + result.progress.rect.x + result.progress.rect.width) / 2).toBe(360);
+        expect(
+          (result.stage.rect.x + result.progress.rect.x + result.progress.rect.width) / 2,
+        ).toBe(360);
         expect(result.progress.rect.x - result.stage.rect.x - result.stage.rect.width).toBe(16);
         expect(result.stage.rect.y).toBe(result.progress.rect.y);
         expect(result.zone.scale).toBe(1.5);
@@ -94,9 +95,16 @@ describe("preview-first stage summaries", () => {
         expect(result.progress.scale).toBe(1);
         expect(result.image.width).toBe(240);
         expect(result.image.height).toBe(120);
-        const origin = summaryTextOrigin(fonts.title, result.zone.rect, result.zone.text, result.zone.scale);
-        const glyphs = laidGlyphs(fonts.title, result.zone.scale, result.zone.text).flatMap(({ink}) => ink ? [ink] : []);
-        expect(origin.x + Math.min(...glyphs.map(ink => ink.left))).toBe(result.zone.rect.x);
+        const origin = summaryTextOrigin(
+          fonts.title,
+          result.zone.rect,
+          result.zone.text,
+          result.zone.scale,
+        );
+        const glyphs = laidGlyphs(fonts.title, result.zone.scale, result.zone.text).flatMap(
+          ({ ink }) => (ink ? [ink] : []),
+        );
+        expect(origin.x + Math.min(...glyphs.map((ink) => ink.left))).toBe(result.zone.rect.x);
         expect(result.image.width / result.image.height).toBe(2);
         expect(result.statement!.rect.x).toBeGreaterThanOrEqual(16);
         expect(result.statement!.rect.x + result.statement!.rect.width).toBeLessThanOrEqual(704);

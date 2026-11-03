@@ -58,7 +58,14 @@ export function addStageSummary(
   };
   const fonts = cardFonts(scene);
   const layout = stageSummaryLayout(fonts, bounds, words);
-  const drawText = (font: string, rect: Rect, text: string, colour: string, scale = FONT_SCALE) => {
+  const drawText = (
+    font: string,
+    rect: Rect,
+    text: string,
+    colour: string,
+    scale = FONT_SCALE,
+    lineHeight?: number,
+  ) => {
     const metrics = font === TITLE_FONT ? fonts.title : fonts.body;
     return addCardText(
       scene,
@@ -66,7 +73,10 @@ export function addStageSummary(
       summaryTextOrigin(metrics, rect, text, scale),
       text,
       paletteColour(scene, colour),
-    ).setScale(scale).setLeftAlign();
+    )
+      .setScale(scale)
+      .setLineSpacing((lineHeight ?? metrics.lineHeight * scale) - metrics.lineHeight * scale)
+      .setLeftAlign();
   };
   const key = STAGE_PREVIEWS[data.stage];
   if (!key || !scene.textures.exists(key)) {
@@ -76,7 +86,14 @@ export function addStageSummary(
     .image(layout.image.x, layout.image.y, key)
     .setOrigin(0)
     .setDisplaySize(layout.image.width, layout.image.height);
-  drawText(TITLE_FONT, layout.zone.rect, layout.zone.text, "lgrey", layout.zone.scale);
+  drawText(
+    TITLE_FONT,
+    layout.zone.rect,
+    layout.zone.text,
+    "lgrey",
+    layout.zone.scale,
+    layout.zone.lineHeight,
+  );
   drawText(BODY_FONT, layout.stage.rect, layout.stage.text, "cream");
   drawText(BODY_FONT, layout.progress.rect, layout.progress.text, "lgrey");
   for (const row of [...layout.stats, ...layout.totals]) {
