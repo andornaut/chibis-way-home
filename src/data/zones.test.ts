@@ -111,13 +111,15 @@ describe("the zones", () => {
     },
   );
 
-  it.each(
-    instances.filter(
-      ([, , instance]) =>
-        instance.room !== undefined ||
-        resolveNames(CATALOGUE, instance).archetype.collision === "use",
-    ),
-  )("door %s names a room that exists", (_, __, instance) => {
+  const doors = instances.filter(
+    ([, , instance]) =>
+      instance.room !== undefined ||
+      resolveNames(CATALOGUE, instance).archetype.collision === "use",
+  );
+  const doorInputs = new Map(
+    doors.map((entry) => [JSON.stringify([entry[2].character, entry[2].room]), entry] as const),
+  );
+  it.each([...doorInputs.values()])("door %s names a room that exists", (_, __, instance) => {
     const { archetype } = resolveNames(CATALOGUE, instance);
     expect(archetype.collision).toBe("use");
     expect(instance.room && ROOMS[instance.room], `${instance.room} in ROOMS`).toBeDefined();

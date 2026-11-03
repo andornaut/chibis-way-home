@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
@@ -47,8 +49,43 @@ function seamCase(extra: Partial<ChunkPlan>): ChunkPlan {
   };
 }
 
-describe.each(ALL_THEMES)("theme %s", (_, theme) => {
-  it("draws from a tileset art has, with every look's tiles, or from a placeholder drawn flat", () => {
+function distinctInputs<T>(inputOf: (subject: T) => unknown, subjects: readonly T[]): T[] {
+  const seen: unknown[] = [];
+  return subjects.filter((subject) => {
+    const input = inputOf(subject);
+    if (seen.some((previous) => isDeepStrictEqual(previous, input))) {
+      return false;
+    }
+    seen.push(input);
+    return true;
+  });
+}
+
+const TILE_THEMES = distinctInputs(([, theme]) => [theme.tileset, theme.looks], ALL_THEMES);
+const BACKDROP_THEMES = distinctInputs(
+  ([, theme]) =>
+    [
+      ...new Set(
+        theme.backdrops.map(
+          (backdrop) => bindElement(theme.bindings, { ...backdrop, col: 0 }).character,
+        ),
+      ),
+    ].sort(),
+  ALL_THEMES.filter(([, theme]) => theme.backdrops.length > 0),
+);
+const DOOR_THEMES = distinctInputs(
+  ([, theme]) => theme.bindings[theme.door]?.character,
+  ALL_THEMES,
+);
+const LIBRARIES = [...new Set(ALL_CHUNKS.map(([, library]) => library))];
+const RULE_CHUNKS = distinctInputs(
+  ([, library, chunk]) => [LIBRARIES.indexOf(library), chunk],
+  ALL_CHUNKS,
+);
+
+it.each(TILE_THEMES)(
+  "theme %s draws from a tileset art has, with every look's tiles, or from a placeholder drawn flat",
+  (_, theme) => {
     if (theme.tileset.startsWith("placeholder-")) {
       return;
     }
@@ -58,23 +95,29 @@ describe.each(ALL_THEMES)("theme %s", (_, theme) => {
       lookTiles(look).filter((name) => !(tileset && name in tileset.tiles)),
     );
     expect(missing).toEqual([]);
-  });
+  },
+);
 
-  it("draws each backdrop from a character that exists", () => {
+it.each(BACKDROP_THEMES)(
+  "theme %s draws each backdrop from a character that exists",
+  (_, theme) => {
     expect(
       theme.backdrops
         .map((backdrop) => bindElement(theme.bindings, { ...backdrop, col: 0 }))
         .filter(({ character }) => !(character in CHARACTERS)),
     ).toEqual([]);
-  });
+  },
+);
 
-  it("places doors as a character whose archetype is a door", () => {
+it.each(DOOR_THEMES)(
+  "theme %s places doors as a character whose archetype is a door",
+  (_, theme) => {
     const character = theme.bindings[theme.door]?.character;
     expect(character && CHARACTERS[character]?.archetype, theme.door).toBe("door");
-  });
-});
+  },
+);
 
-describe.each(ALL_CHUNKS)("chunk %s", (_, library, chunk) => {
+describe.each(RULE_CHUNKS)("chunk %s", (_, library, chunk) => {
   it("keeps the chunk rules and the seam rule", () => {
     expect(chunkProblems(library, CATALOGUE, chunk)).toEqual([]);
   });
