@@ -6,7 +6,7 @@ import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Instance, TerrainRect, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone } from "../rules/zone";
+import { startZone, stepZone, type ZoneInput } from "../rules/zone";
 import { CATALOGUE } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
@@ -290,4 +290,38 @@ it("records an alive airborne engine exit before landing without inventing requi
     expect(required.reached.has(bank.key)).toBe(false);
     expect(required.complete).toBe(false);
   }
+});
+
+it("keeps full-input branches, state identities and throwing transitions isolated", () => {
+  const state = startZone(BIRD, layoutOf([floor]), 1);
+  const still: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
+  const inputs: ZoneInput[] = [
+    still,
+    { ...still, jumpHeld: true },
+    { ...still, move: 1 },
+    { ...still, dashPressed: true },
+    { ...still, push: { x: 1, y: 0 } },
+    { ...still, push: { x: 0, y: 1 } },
+  ];
+  let refused = true;
+  const step = vi.fn<WalkStep>((input, zone) => {
+    if (input.useHeld && refused) {
+      throw new Error("refused transition");
+    }
+    return { ...zone, seconds: zone.seconds + 1 };
+  });
+  const advance = memoizeTransitions(step);
+  const results = inputs.map((input) => advance(input, state));
+  expect(new Set(results).size).toBe(inputs.length);
+  inputs.forEach((input, index) => expect(advance({ ...input }, state)).toBe(results[index]));
+  expect(step.mock.calls).toEqual(inputs.map((input) => [input, state]));
+  const use = { ...still, useHeld: true };
+  expect(() => advance(use, state)).toThrow("refused transition");
+  refused = false;
+  const accepted = advance(use, state);
+  expect(advance(use, state)).toBe(accepted);
+  expect(step).toHaveBeenCalledTimes(inputs.length + 2);
+  expect(advance(still, { ...state })).not.toBe(results[0]);
+  expect(memoizeTransitions(step)(still, state)).not.toBe(results[0]);
+  expect(step).toHaveBeenCalledTimes(inputs.length + 4);
 });

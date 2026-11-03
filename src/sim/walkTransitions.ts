@@ -5,20 +5,30 @@ export type WalkStep = (input: ZoneInput, zone: ZoneState) => ZoneState;
 // One trial group shares immutable states and fixed tuning, layout and step duration.
 // Key the complete input so optional controls and external velocity cannot share a transition.
 export function walkTransitions(step: WalkStep): WalkStep {
-  const states = new WeakMap<ZoneState, Map<string, ZoneState>>();
+  const states = new WeakMap<
+    ZoneState,
+    {
+      additional?: Map<string, ZoneState>;
+      readonly key: string;
+      readonly next: ZoneState;
+    }
+  >();
   return (input, zone) => {
-    let inputs = states.get(zone);
+    const entry = states.get(zone);
     const key = JSON.stringify(input);
-    const previous = inputs?.get(key);
+    if (entry?.key === key) {
+      return entry.next;
+    }
+    const previous = entry?.additional?.get(key);
     if (previous) {
       return previous;
     }
     const next = step(input, zone);
-    if (!inputs) {
-      inputs = new Map();
-      states.set(zone, inputs);
+    if (entry) {
+      (entry.additional ??= new Map()).set(key, next);
+    } else {
+      states.set(zone, { key, next });
     }
-    inputs.set(key, next);
     return next;
   };
 }
