@@ -10,7 +10,7 @@ import { chunkProblems } from "../rules/chunk";
 import { supportedLanding } from "../rules/flyLanding";
 import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone } from "../rules/zone";
+import { standsOn, startZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
@@ -584,4 +584,206 @@ it("actual Pebble flies beneath the dry gallery roof and returns to supported re
     }
   }
   expect.fail(JSON.stringify({ at, shots, state: state.stateKey }));
+});
+
+function transferGateFixture() {
+  const layout = layoutOf("city-streets", "compound-transfer-gate");
+  const area = layout.areas[layout.start.area]!;
+  const hosts = area.objects.flatMap((object, index) =>
+    object.character === "city-shuttle" ? [{ index, object }] : [],
+  );
+  const gate = area.objects.findIndex((object) => object.character === "red-edge-left");
+  return { area, gate, hosts, layout };
+}
+
+it("transfer gate completes both ferry tracks and the perpendicular gate cycle", () => {
+  const { gate, hosts, layout } = transferGateFixture();
+  const indices = [...hosts.map(({ index }) => index), gate];
+  const ranges = indices.map(() => ({ max: -Infinity, min: Infinity, states: new Set<string>() }));
+  let zone = startZone(ordinary, layout, 1);
+  for (let tick = 0; tick < 960; tick++) {
+    zone = stepZone(ordinary, layout, STEP_SECONDS, idle, zone);
+    expect(zone.death).toBeUndefined();
+    indices.forEach((index, cursor) => {
+      const coordinate = index === gate ? zone.objects[index]!.y : zone.objects[index]!.x;
+      ranges[cursor]!.min = Math.min(ranges[cursor]!.min, coordinate);
+      ranges[cursor]!.max = Math.max(ranges[cursor]!.max, coordinate);
+      ranges[cursor]!.states.add(zone.behaviours[index]!.stateKey);
+    });
+  }
+  hosts.forEach(({ object }, cursor) => {
+    expect(ranges[cursor]!.min).toBeCloseTo(object.origin.x);
+    expect(ranges[cursor]!.max).toBeCloseTo(object.origin.x + object.behaviour!.distance);
+  });
+  expect(ranges[2]!.min).toBeCloseTo(34 * TILE);
+  expect(ranges[2]!.max).toBeCloseTo(44 * TILE);
+  for (const range of ranges) {
+    for (const key of ["forward", "back", "wait-far", "wait-near"]) {
+      expect(range.states.has(key)).toBe(true);
+    }
+  }
+});
+
+it("ordinary transfer gate route boards, observes, crosses the gate and rides the second ferry", () => {
+  const { area, gate, hosts, layout } = transferGateFixture();
+  const [first, second] = hosts;
+  if (!first || !second) {
+    throw Error("Expected two ferries");
+  }
+  let zone = startZone(ordinary, layout, 1);
+  let phase = "first-board";
+  let launch = 0;
+  let boardSecond: number | undefined;
+  let crossing = false;
+  const carried = [0, 0];
+  for (let tick = 0; tick < 1200; tick++) {
+    const on = hosts.map(({ index, object }) =>
+      standsOn(ordinary, zone.bird, {
+        ...zone.objects[index]!,
+        height: object.height,
+        width: object.width,
+      }),
+    );
+    if (phase === "first-board" && on[0]) {
+      phase = "first-ride";
+    }
+    if (
+      phase === "first-ride" &&
+      zone.objects[first.index]!.x >=
+        first.object.origin.x + first.object.behaviour!.distance - 1e-6
+    ) {
+      phase = "first-transfer";
+      launch = tick;
+    }
+    if (
+      phase === "first-transfer" &&
+      zone.bird.grounded &&
+      zone.bird.x >= 24 * TILE &&
+      zone.bird.x + ordinary.width <= 28 * TILE
+    ) {
+      phase = "gate";
+    }
+    if (
+      phase === "gate" &&
+      zone.objects[gate]!.y + area.objects[gate]!.height <= zone.bird.y - 3 * TILE
+    ) {
+      crossing = true;
+    }
+    if (phase === "gate" && crossing && zone.bird.x >= 30 * TILE - 4) {
+      phase = "second-board";
+    }
+    if (
+      phase === "second-board" &&
+      boardSecond === undefined &&
+      zone.behaviours[second.index]!.stateKey === "back" &&
+      zone.objects[second.index]!.x <= second.object.origin.x + second.object.width / 2
+    ) {
+      boardSecond = tick;
+    }
+    if (phase === "second-board" && on[1]) {
+      phase = "second-ride";
+    }
+    if (
+      phase === "second-ride" &&
+      zone.objects[second.index]!.x >=
+        second.object.origin.x + second.object.behaviour!.distance - 1e-6
+    ) {
+      phase = "second-transfer";
+      launch = tick;
+    }
+    const goal =
+      phase === "first-board"
+        ? zone.objects[first.index]!.x + (first.object.width - ordinary.width) / 2
+        : phase === "first-transfer"
+          ? 25 * TILE
+          : phase === "gate" && crossing
+            ? 30 * TILE
+            : phase === "second-board" && boardSecond !== undefined
+              ? zone.objects[second.index]!.x + (second.object.width - ordinary.width) / 2
+              : phase === "second-transfer"
+                ? 55 * TILE
+                : zone.bird.x;
+    const move = Math.abs(goal - zone.bird.x) <= 4 ? 0 : goal > zone.bird.x ? 1 : -1;
+    const jumpHeld =
+      phase === "first-board"
+        ? tick < 8
+        : phase === "first-transfer" || phase === "second-transfer"
+          ? tick - launch < 8
+          : phase === "second-board" && boardSecond !== undefined
+            ? tick - boardSecond < 8
+            : false;
+    const previous = zone.bird.x;
+    zone = stepZone(ordinary, layout, STEP_SECONDS, { ...idle, jumpHeld, move }, zone);
+    expect(zone.death, phase).toBeUndefined();
+    on.forEach((standing, index) => {
+      if (standing) {
+        carried[index]! += Math.max(0, zone.bird.x - previous);
+      }
+    });
+    if (
+      phase === "second-transfer" &&
+      zone.bird.grounded &&
+      zone.bird.x >= 54 * TILE &&
+      zone.bird.x + ordinary.width <= 60 * TILE
+    ) {
+      expect(crossing).toBe(true);
+      expect(carried.every((distance) => distance > 8 * TILE)).toBe(true);
+      expect(zone.bird.y + ordinary.height).toBeCloseTo(50 * TILE);
+      return;
+    }
+  }
+  expect.fail(JSON.stringify({ bird: zone.bird, carried, phase }));
+});
+
+it("transfer gate missed near boarding recovers on a ledge and reboards normally", () => {
+  const { hosts, layout } = transferGateFixture();
+  const first = hosts[0]!;
+  let zone = startZone(ordinary, layout, 1);
+  let recovered = false;
+  let boardAt: number | undefined;
+  for (let tick = 0; tick < 1200; tick++) {
+    const at = zone.objects[first.index]!;
+    if (zone.bird.grounded && Math.abs(zone.bird.y + ordinary.height - 54 * TILE) < 1e-6) {
+      recovered = true;
+    }
+    if (
+      recovered &&
+      boardAt === undefined &&
+      zone.behaviours[first.index]!.stateKey === "back" &&
+      at.x <= first.object.origin.x + 2 * TILE
+    ) {
+      boardAt = tick;
+    }
+    const goal =
+      boardAt === undefined ? 5 * TILE : at.x + (first.object.width - ordinary.width) / 2;
+    const move =
+      (recovered && boardAt === undefined) || Math.abs(goal - zone.bird.x) <= 4
+        ? 0
+        : goal > zone.bird.x
+          ? 1
+          : -1;
+    zone = stepZone(
+      ordinary,
+      layout,
+      STEP_SECONDS,
+      {
+        ...idle,
+        jumpHeld: boardAt !== undefined && (tick - boardAt) * STEP_SECONDS < ordinary.jumpRiseTime,
+        move,
+      },
+      zone,
+    );
+    expect(zone.death).toBeUndefined();
+    if (
+      recovered &&
+      standsOn(ordinary, zone.bird, {
+        ...zone.objects[first.index]!,
+        height: first.object.height,
+        width: first.object.width,
+      })
+    ) {
+      return;
+    }
+  }
+  expect.fail(JSON.stringify({ bird: zone.bird, recovered }));
 });

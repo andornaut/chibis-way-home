@@ -1,5 +1,9 @@
 import { outdoorBackground } from "./backgrounds";
-import { CITY_LIFT_BEHAVIOUR, CITY_SHUTTLE_BEHAVIOUR } from "./behaviours";
+import {
+  CITY_GROUND_HAZARD_BEHAVIOUR,
+  CITY_LIFT_BEHAVIOUR,
+  CITY_SHUTTLE_BEHAVIOUR,
+} from "./behaviours";
 import {
   BOUNDARY_START,
   CHUNK_COLS,
@@ -1202,6 +1206,29 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     [floor(0, 36, 40), floor(36, 8, 45), floor(44, 4, 50), floor(52, 8, 50)],
     [ledge(8, 6, 34), mover(16, 39), ledge(30, 6, 34), ...red(48, 4, 50)],
   ),
+  "compound-transfer-gate": moduleChunk(
+    MECHANICAL_THEMES,
+    5,
+    50,
+    50,
+    [floor(0, 4, 50), floor(24, 8, 50), floor(52, 8, 50)],
+    [
+      shuttle(4, 50, 14),
+      ledge(4, 4, 54),
+      {
+        behaviour: { ...CITY_GROUND_HAZARD_BEHAVIOUR, axis: "y", distance: -10, initial: "back" },
+        character: "red-edge-left",
+        col: 28,
+        role: "edge-left",
+        row: 44,
+        rows: 6,
+      },
+      shuttle(32, 50, 14),
+      ledge(32, 4, 54),
+      ...red(4, 20, 58),
+      ...red(32, 20, 58),
+    ],
+  ),
   "compound-vertical-yard": {
     ...VERTICAL_ASCENT,
     difficulty: 5,
@@ -1429,6 +1456,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "compound-return-high",
     "compound-return-shuttle",
     "compound-return-terrace",
+    "compound-transfer-gate",
     "growl-clearing",
     "growl-cover-early",
     "growl-cover-late",
@@ -1449,6 +1477,7 @@ export const GROUND_CHALLENGES: ChunkPool = [
   "compound-compact-climb",
   "compound-low-ceiling-hazard",
   "compound-return-terrace",
+  "compound-transfer-gate",
 ];
 export const JUMP_CHALLENGES: ChunkPool = [
   "city-boundary-edge-yard",

@@ -171,6 +171,10 @@ register(
   (library, chunk) => [...recovery(library, chunk), point(33, chunk.solids[3]!.row)],
   ["dry-underground-gallery-encounter"],
 );
+register(
+  () => [point(7, 50), point(26, 50), point(31, 50), point(35, 50), point(58, 50)],
+  ["compound-transfer-gate"],
+);
 register(encounter, [
   "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",
