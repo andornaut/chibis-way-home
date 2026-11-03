@@ -32,6 +32,7 @@ type IdleStatus = TraversalResult<TraversalSupport>["status"] | "invalidated";
 type Recovery =
   | {
       readonly kind: "ground";
+      readonly footprint?: TraversalContext<TraversalSupport>["body"];
       readonly traversal: BehaviourTraversalState;
     }
   | { readonly kind: "fly"; readonly origin: Point; readonly target: Point };
@@ -147,7 +148,10 @@ export function preferredGroundWalk(
   request: TraversalRequest<TraversalSupport>,
 ): readonly TraversalCommand[] | undefined {
   const { goal, start } = request;
-  if (!start.grounded || Math.abs(goal.y + context.epsilon - start.y) > context.epsilon) {
+  if (
+    !start.grounded ||
+    Math.abs(goal.y + context.epsilon - start.y - context.body.offset.y) > context.epsilon
+  ) {
     return undefined;
   }
   const centre = start.x + context.body.offset.x + context.body.width / 2;
@@ -166,7 +170,9 @@ export function planSupportedRecovery(
         request: TraversalRequest<TraversalSupport>,
       ) => readonly TraversalCommand[] | undefined)
     | undefined,
-  config: Pick<BehaviourIdleWatchdog, "distance" | "maxAttempts" | "minMovement">,
+  config: Pick<BehaviourIdleWatchdog, "distance" | "maxAttempts" | "minMovement"> & {
+    readonly fullFrameGoal?: boolean;
+  },
   world: BehaviourWorld,
   object: ObjectLayout,
   motion: PursuitMotion,
@@ -223,7 +229,17 @@ export function planSupportedRecovery(
       return { ...chosen, status: "geometry-unavailable" };
     }
     const start = { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 };
-    const goal = groundGoal(config, motion.speed * seconds, object, world, at, target);
+    const frameGoal = groundGoal(config, motion.speed * seconds, object, world, at, target);
+    // Convert the frame-origin landing interval into the native body's coordinate envelope.
+    const footprint = config.fullFrameGoal ? context.body : undefined;
+    const goal = footprint
+      ? {
+          height: frameGoal.height - object.height + footprint.height,
+          width: frameGoal.width - object.width + footprint.width,
+          x: frameGoal.x + footprint.offset.x,
+          y: frameGoal.y + footprint.offset.y,
+        }
+      : frameGoal;
     const request: TraversalRequest<TraversalSupport> = {
       ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
       goal,
@@ -240,6 +256,7 @@ export function planSupportedRecovery(
         ...chosen,
         recovery: {
           kind: "ground",
+          ...(footprint && { footprint }),
           traversal: {
             geometry: "",
             inputs: result.inputs,
@@ -391,7 +408,14 @@ export function advanceSupportedRecovery(
   const timeSeconds = world.traversalFrame.timeSeconds;
   const physical = traversal.physical;
   const goal = recovery.traversal.target;
-  const box = { ...physical, height: object.height, width: object.width };
+  const box = recovery.footprint
+    ? {
+        height: recovery.footprint.height,
+        width: recovery.footprint.width,
+        x: physical.x + recovery.footprint.offset.x,
+        y: physical.y + recovery.footprint.offset.y,
+      }
+    : { ...physical, height: object.height, width: object.width };
   const reached =
     physical.grounded &&
     box.x >= goal.x - EDGE &&
@@ -408,7 +432,7 @@ export function advanceSupportedRecovery(
   return {
     at: advanced.at,
     finished,
-    idle: finished ? clear(status) : { ...prior, recovery: { kind: "ground", traversal } },
+    idle: finished ? clear(status) : { ...prior, recovery: { ...recovery, traversal } },
     segments: advanced.segments?.map((leg: TraversalSafety) => ({
       end: leg.endSeconds - timeSeconds,
       from: leg.from,

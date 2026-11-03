@@ -1414,7 +1414,11 @@ function groundRepositionStep(
   bird: BirdState,
   at: Point,
   state: BehaviourState,
-): { readonly state: BehaviourState; readonly step?: BehaviourStep } {
+): {
+  readonly state: BehaviourState;
+  readonly step?: BehaviourStep;
+  readonly deferToAttack?: boolean;
+} {
   const config = object.behaviour!.groundReposition!,
     prior = state.groundReposition!;
   const node = nodeOf(object, state.stateKey),
@@ -1442,8 +1446,12 @@ function groundRepositionStep(
     );
   const attackOpportunity =
     firstTransition && nodeOf(object, firstTransition.to).attack?.phase === "tell";
+  if (attackOpportunity) {
+    return { deferToAttack: true, state };
+  }
   const policy = {
     distance: config.distance,
+    fullFrameGoal: true,
     maxAttempts: config.maxAttempts,
     minMovement: config.minDistance,
   };
@@ -1581,6 +1589,7 @@ export function stepBehaviour(
     next = withoutPreparation;
   }
   const periodic = plan.groundReposition;
+  let deferToAttack = false;
   if (periodic && next.pursuit) {
     const prior = next.groundReposition ?? { anchor: at, seconds: 0 };
     next = {
@@ -1591,6 +1600,7 @@ export function stepBehaviour(
     };
     const reposition = groundRepositionStep(tuning, object, world, seconds, bird, at, next);
     next = reposition.state;
+    deferToAttack = reposition.deferToAttack === true;
     if (reposition.step) {
       return {
         ...reposition.step,
@@ -1603,7 +1613,7 @@ export function stepBehaviour(
   if (watchdog && next.pursuit && !next.idleWatchdog) {
     next = { ...next, idleWatchdog: { anchor: at, seconds: 0 } };
   }
-  if (watchdog) {
+  if (watchdog && !deferToAttack) {
     const initialRecovery = idleRecoveryStep(tuning, object, world, seconds, bird, at, next);
     next = initialRecovery.state;
     if (initialRecovery.step) {

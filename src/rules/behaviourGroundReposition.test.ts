@@ -2,7 +2,9 @@ import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
+import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourWorld } from "./behaviourReach";
 import { startBird } from "./bird";
@@ -180,10 +182,18 @@ it("periodically varies successful ordinary pursuit with one supported native wi
 it("takes an actual attack opportunity before a due reposition and retains the due clock through the tell", () => {
   const profile = {
     ...plan,
+    idleWatchdog: {
+      distance: 30,
+      maxAttempts: 2,
+      minMovement: 10,
+      resume: "pursuit",
+      seconds: 0.2,
+    },
     states: {
       ...plan.states,
       pursuit: {
         ...plan.states.pursuit!,
+        allowIdleReposition: true,
         transitions: [
           {
             to: "tell",
@@ -194,7 +204,11 @@ it("takes an actual attack opportunity before a due reposition and retains the d
     },
   };
   const object = actor(profile),
-    start = { ...initial(object), groundReposition: { anchor: object.origin, seconds: 1 } };
+    start = {
+      ...initial(object),
+      groundReposition: { anchor: object.origin, seconds: 1 },
+      idleWatchdog: { anchor: object.origin, seconds: 1 },
+    };
   const step = stepBehaviour(BIRD, object, world(), 1 / 120, bird(), object.origin, start);
   expect(step.state.stateKey).toBe("tell");
   expect(step.state.activeAttack?.phase).toBe("tell");
@@ -339,3 +353,84 @@ it("retains real falling recovery after support loss until it settles on actual 
   expect(at.y + object.height).toBe(physical.solids[0]!.y);
   expect(supportedLanding(object, physical, at)).toBe(true);
 });
+
+it.each([
+  "dog-antagonist",
+  "ferret-antagonist",
+  "goose-antagonist",
+  "bear-antagonist",
+  "raccoon-antagonist",
+])(
+  "physically completes a periodic supported route with the actual %s production profile",
+  (character) => {
+    const object = objectLayout(
+      TILE,
+      CATALOGUE,
+      HITBOXES,
+      TILESETS["tiles-street"],
+      {},
+      { character, col: 20, row: 20 },
+    );
+    const config = object.behaviour!.groundReposition!;
+    expect(config).toBeDefined();
+    expect(
+      Object.entries(object.behaviour!.states)
+        .filter(([, node]) => node.allowGroundReposition)
+        .map(([key]) => key),
+    ).toEqual([config.resume]);
+    const support = { height: 600, width: 4000, x: 0, y: object.origin.y + object.height };
+    const target = startBird(BIRD, { x: object.origin.x + 500, y: support.y });
+    const component = { ...object, behaviour: { ...object.behaviour!, initial: config.resume } };
+    let at = object.origin,
+      state: BehaviourState = {
+        ...startBehaviour(BIRD, component, target),
+        attackCooldownRemainingSeconds: 0.75,
+        groundReposition: { anchor: at, seconds: config.intervalSeconds },
+        pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+      };
+    let began = false,
+      ticks = 0,
+      chosenGoal: Rect | undefined;
+    const physical = (time: number): BehaviourWorld => ({
+      idleDecision: { namespace: `production:${character}`, seed: 31 },
+      solids: [support],
+      traversalFrame: {
+        bounds: { height: 1200, width: 4000, x: 0, y: 0 },
+        dtSeconds: 1 / 120,
+        platforms: [],
+        timeSeconds: time,
+      },
+      view: { height: 1200, width: 4000, x: 0, y: 0 },
+    });
+    for (; ticks < 180 && (!began || state.groundReposition?.recovery); ticks++) {
+      const step = stepBehaviour(BIRD, object, physical(ticks / 120), 1 / 120, target, at, state);
+      expect(step.actions).toEqual([]);
+      expect(step.state.activeAttack).toBeUndefined();
+      began ||= step.state.groundReposition?.recovery?.kind === "ground";
+      const recovery = step.state.groundReposition?.recovery;
+      if (recovery?.kind === "ground") {
+        chosenGoal ??= recovery.traversal.target;
+      }
+      at = step.at;
+      state = step.state;
+    }
+    expect(began, JSON.stringify(state.groundReposition)).toBe(true);
+    expect(state.groundReposition?.recovery).toBeUndefined();
+    expect(
+      state.groundReposition?.status,
+      JSON.stringify({
+        at,
+        goal: chosenGoal,
+        hitbox: object.hitbox,
+        periodic: state.groundReposition,
+      }),
+    ).toBe("found");
+    expect(Math.abs(at.x - object.origin.x)).toBeGreaterThanOrEqual(config.minDistance - 1e-6);
+    expect(Math.hypot(at.x - object.origin.x, at.y - object.origin.y)).toBeLessThanOrEqual(
+      config.distance + 1e-6,
+    );
+    expect(supportedLanding(object, physical(ticks / 120), at)).toBe(true);
+    expect(state.stateKey).toBe(config.resume);
+    expect(state.attackCooldownRemainingSeconds).toBeCloseTo(Math.max(0, 0.75 - ticks / 120));
+  },
+);
