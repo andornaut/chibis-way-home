@@ -209,7 +209,49 @@ function staticSupportSpan(solids: readonly Rect[], support: Rect): SupportSpan 
   return spans.get(support) ?? { left: support.x, right: support.x + support.width };
 }
 
-// The target envelope is supported terrain containing the complete pursuer, not Chibi's box.
+function supportedSpan(world: BehaviourWorld, support: Rect): SupportSpan {
+  let span = world.solids.includes(support)
+    ? staticSupportSpan(world.solids, support)
+    : { left: support.x, right: support.x + support.width };
+  const stationary = (world.platforms ?? [])
+    .filter(
+      ({ owner }) =>
+        owner.motion.algorithm === "static" &&
+        !owner.behaviour &&
+        !owner.orbit &&
+        owner.reaction.kind === "none",
+    )
+    .map(({ rect }) => rect);
+  if (
+    (!world.solids.includes(support) && !stationary.includes(support)) ||
+    !stationary.some(
+      (rect) =>
+        Math.abs(rect.y - support.y) <= EDGE &&
+        rect.x <= span.right + EDGE &&
+        rect.x + rect.width >= span.left - EDGE,
+    )
+  ) {
+    return span;
+  }
+  const surfaces = [...world.solids, ...stationary].filter(
+    (rect) => Math.abs(rect.y - support.y) <= EDGE,
+  );
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    for (const rect of surfaces) {
+      if (rect.x <= span.right + EDGE && rect.x + rect.width >= span.left - EDGE) {
+        const left = Math.min(span.left, rect.x);
+        const right = Math.max(span.right, rect.x + rect.width);
+        expanded ||= left !== span.left || right !== span.right;
+        span = { left, right };
+      }
+    }
+  }
+  return span;
+}
+
+// The target envelope contains the native collision body on actual support.
 export function traversalGoal(
   world: BehaviourWorld,
   object: ObjectLayout,
@@ -232,19 +274,20 @@ export function traversalGoal(
   if (!support) {
     return undefined;
   }
-  const span = world.solids.includes(support)
-    ? staticSupportSpan(world.solids, support)
-    : { left: support.x, right: support.x + support.width };
-  const rightward = target.x + target.width / 2 >= at.x + object.width / 2;
-  const x = rightward ? Math.max(span.left, at.x + object.width) : span.left;
-  const right = rightward ? span.right : Math.min(span.right, at.x);
-  return right - x < object.width
+  const span = supportedSpan(world, support);
+  const width = object.hitbox?.width ?? object.width;
+  const height = object.hitbox?.height ?? object.height;
+  const left = at.x + (object.hitbox?.x ?? 0);
+  const rightward = target.x + target.width / 2 >= left + width / 2;
+  const x = rightward ? Math.max(span.left, left + width) : span.left;
+  const right = rightward ? span.right : Math.min(span.right, left);
+  return right - x < width
     ? undefined
     : {
-        height: object.height + 2 * EDGE,
+        height: height + 2 * EDGE,
         width: right - x,
         x,
-        y: support.y - object.height - EDGE,
+        y: support.y - height - EDGE,
       };
 }
 
