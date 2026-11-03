@@ -8,8 +8,8 @@ import { paletteColour } from "./cardParts";
 
 const CHROME_SCALE = 4;
 const CHROME_CENTRE = SKILL_BUTTON.target / 2;
-const FACE_RADIUS = SKILL_BUTTON.disc / 2;
-const SELECTED_RADIUS = FACE_RADIUS + 4;
+const SELECTED_FACE_RADIUS = SKILL_BUTTON.disc / 2;
+const OUTER_RADIUS = SELECTED_FACE_RADIUS + 4;
 
 function chromeTexture(scene: Scene, selected: boolean, ready: boolean): string {
   const face = paletteColour(scene, ready ? "yellow" : "navy");
@@ -32,8 +32,10 @@ function chromeTexture(scene: Scene, selected: boolean, ready: boolean): string 
         (y + 0.5) / CHROME_SCALE - CHROME_CENTRE,
       );
       // Coverage stays local to the circle edges, independently of the renderer's pixel-art mode.
-      const faceCoverage = clamp01(FACE_RADIUS + 0.5 - distance);
-      const coverage = selected ? clamp01(SELECTED_RADIUS + 0.5 - distance) : faceCoverage;
+      const faceCoverage = clamp01(
+        (selected ? SELECTED_FACE_RADIUS : OUTER_RADIUS) + 0.5 - distance,
+      );
+      const coverage = clamp01(OUTER_RADIUS + 0.5 - distance);
       if (coverage === 0) {
         continue;
       }

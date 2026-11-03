@@ -93,7 +93,7 @@ function fixture() {
 it("keeps only the selected ink annulus through cooldown and paints ready faces yellow", () => {
   const { draw, pixel } = fixture();
   const { chrome, glyph, icon } = draw();
-  expect(pixel(chrome, 24, 3).alpha).toBe(0);
+  expect(pixel(chrome, 24, 3)).toEqual({ alpha: 255, colour: colour("navy") });
   expect(pixel(chrome, 24, 24)).toEqual({ alpha: 255, colour: colour("navy") });
   expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "muted"));
   icon.selected(true);
@@ -108,19 +108,30 @@ it("keeps only the selected ink annulus through cooldown and paints ready faces 
   expect(pixel(chrome, 24, 24)).toEqual({ alpha: 255, colour: colour("navy") });
   expect(glyph.clearTint).toHaveBeenCalledTimes(2);
   icon.selected(false);
-  expect(pixel(chrome, 24, 3).alpha).toBe(0);
+  expect(pixel(chrome, 24, 3)).toEqual({ alpha: 255, colour: colour("navy") });
 });
 
-it("smooths only the circle edges inside the unchanged target with locally filtered chrome", () => {
+it("keeps identical outer coverage and native glyph size in every locally filtered chrome state", () => {
   const { draw, pixel, textures } = fixture();
   const { chrome, glyph, icon } = draw();
   expect(chrome.setDisplaySize).toHaveBeenCalledWith(SKILL_BUTTON.target, SKILL_BUTTON.target);
   expect(glyph.art).toBe(SKILL_ART.dash);
   expect(icon.objects).toHaveLength(2);
-  expect(pixel(chrome, 24, 6.5).alpha).toBeGreaterThan(0);
-  expect(pixel(chrome, 24, 6.5).alpha).toBeLessThan(255);
-  expect(pixel(chrome, 24, 7.5).alpha).toBe(255);
-  icon.selected(true);
+  const alpha = () =>
+    textures.get(chrome.art)!.image.data.filter((_value, index) => index % 4 === 3);
+  const envelope = alpha();
+  for (const [selected, ready] of [
+    [true, true],
+    [true, false],
+    [false, false],
+    [false, true],
+  ] as const) {
+    icon.selected(selected);
+    icon.ready(ready);
+    expect(alpha()).toEqual(envelope);
+    expect([glyph.x, glyph.y]).toEqual([16, 16]);
+    expect(glyph.setDisplaySize).not.toHaveBeenCalled();
+  }
   expect(pixel(chrome, 24, 2.5).alpha).toBeGreaterThan(0);
   expect(pixel(chrome, 24, 2.5).alpha).toBeLessThan(255);
   expect(pixel(chrome, 24, 1.5).alpha).toBe(0);
@@ -136,7 +147,7 @@ it("preserves ready unselected room illustrations and visibility after moving", 
   const { draw, pixel } = fixture();
   const { chrome, glyph, icon } = draw();
   icon.ready(true);
-  expect(pixel(chrome, 24, 3).alpha).toBe(0);
+  expect(pixel(chrome, 24, 3)).toEqual({ alpha: 255, colour: colour("yellow") });
   expect(pixel(chrome, 24, 24)).toEqual({ alpha: 255, colour: colour("yellow") });
   expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "ready"));
   icon.place({ x: 100, y: 50 });
@@ -160,7 +171,9 @@ it("reuses chrome across skills while exactly one selected annulus changes owner
       icon.ready(false);
     }
     expect(
-      icons.filter(({ chrome }) => pixel(chrome, 24, 3).alpha > 0).map(({ skill }) => skill),
+      icons
+        .filter(({ chrome }) => pixel(chrome, 24, 3).colour === colour("ink"))
+        .map(({ skill }) => skill),
     ).toEqual([active]);
   }
   expect(createCanvas).toHaveBeenCalledTimes(2);
