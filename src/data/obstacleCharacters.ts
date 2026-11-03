@@ -7,6 +7,7 @@ export const OBSTACLE_CHARACTERS: Readonly<Record<string, Character>> = {
     art: "placeholder-hazard",
     behaviour: WARNED_VENT_BEHAVIOUR,
     cols: 4,
+    contactCue: "red-hazard",
     rows: 6,
   },
 };
