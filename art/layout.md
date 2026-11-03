@@ -4,22 +4,22 @@ The shared structure for Chibi's Way Home spacing and alignment. Values below di
 
 ## Coordinates and scale
 
-The game uses a 720x360 logical view, defined in [screen data](../src/data/screen.ts). Measure game layout in logical pixels, then scale the complete view with nearest-neighbour sampling. Review native and fractional scales. Responsive HTML pages use CSS pixels and safe-area insets instead of inheriting the game's fixed canvas dimensions.
+The game uses a 720x360 logical view, defined in [screen data](../src/data/screen.ts). Measure game layout in logical pixels. Artwork keeps nearest-neighbour sampling; dedicated font textures use their local linear filter without changing shared sprite-atlas filtering. Review native and fractional scales. Responsive HTML pages use CSS pixels and safe-area insets instead of inheriting the game's fixed canvas dimensions.
 
-Keep the existing full-size fonts. Measure visible glyph ink and full line boxes separately. Wrap text and grow its measured region instead of reducing font size to fit.
+Use native 16px Liberation Sans at scale 1: Regular body and Bold headings/actions. Wrapped lines use the exported 20px pitch. Measure signed glyph ink, kerning and full line boxes separately. Wrap text and grow its measured region instead of reducing font size to fit.
 
 ## Spacing tokens
 
 Use a shared token for repeated spacing, rather than unrelated coordinates that happen to match. A named design token is not a claim that every consumer already imports one implementation constant.
 
-| Token             | Value                   | Unit       | Scope                                                | Status or source                                                                      |
-| ----------------- | ----------------------- | ---------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Row gap           | 4                       | logical px | Related text rows                                    | Verified `CARD_CONTENT.rowGap`, [card geometry](../src/layout/cardFrame.ts)           |
-| Related-group gap | 8                       | logical px | Heading to metrics, label to value, grouped actions  | Verified `CARD_CONTENT.gap` and `TEXT_BUTTON.gap`                                     |
-| Page inset        | 16                      | logical px | Ordinary full-page content and footer alignment      | Approved shared layout target; consumers derive their available bounds                |
-| Panel padding     | 16                      | logical px | Ordinary modal bodies                                | Verified modal `CARD_CONTENT.padding`; retry statistics retain their documented inset |
-| Column gap        | 16 ordinary, 32 summary | logical px | Ordinary columns and paired stage-summary statistics | [Measured summary layout](style-guide.md#stage-and-zone-summaries)                    |
-| Text line box     | 16 minimum              | logical px | Ordinary game text rows at existing 2x scale         | Verified `CARD_CONTENT.lineHeight`; wrapped rows grow                                 |
+| Token             | Value                   | Unit       | Scope                                                 | Status or source                                                                      |
+| ----------------- | ----------------------- | ---------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Row gap           | 4                       | logical px | Related text rows                                     | Verified `CARD_CONTENT.rowGap`, [card geometry](../src/layout/cardFrame.ts)           |
+| Related-group gap | 8                       | logical px | Heading to metrics, label to value, grouped actions   | Verified `CARD_CONTENT.gap` and `TEXT_BUTTON.gap`                                     |
+| Page inset        | 16                      | logical px | Ordinary full-page content and footer alignment       | Approved shared layout target; consumers derive their available bounds                |
+| Panel padding     | 16                      | logical px | Ordinary modal bodies                                 | Verified modal `CARD_CONTENT.padding`; retry statistics retain their documented inset |
+| Column gap        | 16 ordinary, 32 summary | logical px | Ordinary columns and paired stage-summary statistics  | [Measured summary layout](style-guide.md#stage-and-zone-summaries)                    |
+| Text line box     | 16 minimum              | logical px | Native 16px text at scale 1; taller ink grows the row | Verified `CARD_CONTENT.lineHeight`; wrapped rows grow                                 |
 
 ## Page bounds/alignment
 

@@ -12,10 +12,10 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 
 ## Fonts
 
-| Key        | Type               | Size         | Tags |
-| ---------- | ------------------ | ------------ | ---- |
-| font-body  | BMFont, Tiny5      | 8px, line 10 |      |
-| font-title | BMFont, Silkscreen | 8px, line 12 |      |
+| Key        | Type                            | Size                                | Tags |
+| ---------- | ------------------------------- | ----------------------------------- | ---- |
+| font-body  | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 256x64 PNG  |      |
+| font-title | BMFont, Liberation Sans Bold    | 16px, base 15, line 20; 256x128 PNG |      |
 
 ## Icons
 
