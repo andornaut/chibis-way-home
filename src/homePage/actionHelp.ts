@@ -1,11 +1,8 @@
+import palette from "../../public/art/palette.json";
 import type { ControlAction } from "../data/types";
 import { ACTION_HELP } from "../layout/actionHelp";
-import {
-  ACTION_HELP_ICONS,
-  ACTION_HELP_KNOB,
-  type ActionHelpIcon,
-  actionHelpParts,
-} from "../view/actionHelp";
+import { actionHelpParts } from "../view/actionHelp";
+import { helpChromeSvg } from "../view/helpChrome";
 
 export const escaped = (value: string) =>
   value
@@ -15,22 +12,7 @@ export const escaped = (value: string) =>
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
 
-function spriteCss(name: string, scale: number, icon: ActionHelpIcon): string {
-  const style = [
-    `width:${icon.width * scale}px`,
-    `height:${icon.height * scale}px`,
-    `background-image:url('${icon.png}')`,
-    `background-size:${icon.sheetWidth * scale}px ${icon.sheetHeight * scale}px`,
-    `background-position:${-icon.x * scale}px ${-icon.y * scale}px`,
-  ].join(";");
-  return `.action-help-${name}{${style}}`;
-}
-
 export function actionHelpCss(): string {
-  const faces = (Object.keys(ACTION_HELP_ICONS) as ControlAction[]).map((action) => {
-    const face = ACTION_HELP_ICONS[action];
-    return spriteCss(action, ACTION_HELP.icon / face.width, face);
-  });
   return `
     .action-help-action {
       display:inline-flex;
@@ -41,16 +23,21 @@ export function actionHelpCss(): string {
       white-space:nowrap;
     }
     .action-help-icon {
-      position:relative;
       display:inline-block;
+      flex:0 0 ${ACTION_HELP.icon}px;
       width:${ACTION_HELP.icon}px;
       height:${ACTION_HELP.icon}px;
     }
-    .action-help-sprite { display:block; image-rendering:pixelated; }
-    .action-help-knob { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
-    ${[...faces, spriteCss("knob-frame", ACTION_HELP.icon / ACTION_HELP_ICONS.move.width, ACTION_HELP_KNOB)].join("\n")}
+    .action-help-icon svg { display:block; image-rendering:auto; }
   `;
 }
+
+const colours = {
+  cream: parseInt(palette.colours.cream.slice(1), 16),
+  ink: parseInt(palette.colours.ink.slice(1), 16),
+  navy: parseInt(palette.colours.navy.slice(1), 16),
+  white: parseInt(palette.colours.white.slice(1), 16),
+};
 
 export function actionHelpHtml(
   actions: Readonly<Record<ControlAction, string>>,
@@ -61,14 +48,10 @@ export function actionHelpHtml(
       if (part.kind === "text") {
         return escaped(part.text);
       }
-      const knob =
-        part.action === "move"
-          ? '<span class="action-help-knob"><span class="action-help-sprite action-help-knob-frame"></span></span>'
-          : "";
       return [
         `<span class="action-help-action"><span>${escaped(actions[part.action])}</span>`,
-        '<span class="action-help-icon" aria-hidden="true">',
-        `<span class="action-help-sprite action-help-${part.action}"></span>${knob}`,
+        `<span class="action-help-icon action-help-${part.action}" aria-hidden="true">`,
+        helpChromeSvg(colours, ACTION_HELP.icon, part.action),
         "</span></span>",
       ].join("");
     })

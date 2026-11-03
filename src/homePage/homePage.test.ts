@@ -3,11 +3,11 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
+import palette from "../../public/art/palette.json";
 import { CHUNKS } from "../data/chunks";
 import { TEXT } from "../data/text";
 import { RECIPES } from "../data/zones";
 import { themesOf } from "../rules/assemble";
-import { ACTION_HELP_ICONS } from "../view/actionHelp";
 import { homePageHtml } from "./html";
 
 // The home page and the nav bar are static files, so what they state is checked against the
@@ -52,14 +52,14 @@ describe("the logos", () => {
 });
 
 describe("the home page's controls", () => {
-  it("renders each authored action beside its existing decorative control icon", async () => {
+  it("renders each authored action beside a filled vector control icon", async () => {
     const html = await pageText();
     const controls = /<ul class="keys">(.*?)<\/ul>/u.exec(html)![1]!;
     expect([...controls.matchAll(/<li>/gu)]).toHaveLength(TEXT.homePage.instructions.length);
     for (const action of ["move", "jump", "use"] as const) {
       expect(controls).toContain(`<span>${TEXT.buttons[action]}</span>`);
       expect(controls).toContain(`action-help-${action}`);
-      expect(html).toContain(ACTION_HELP_ICONS[action].png);
+      expect(controls).toContain(`fill="${palette.colours.navy}"`);
     }
     expect(controls).toContain('aria-hidden="true"');
     expect(controls).not.toContain("style=");

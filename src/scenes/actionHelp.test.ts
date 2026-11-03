@@ -1,36 +1,35 @@
+import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { TEXT } from "../data/text";
-import { actionHelpLayout } from "../layout/actionHelp";
 import { CARD_FONTS } from "../testing/cardFonts";
-import { ACTION_HELP_ICONS, ACTION_HELP_KNOB } from "../view/actionHelp";
+import { TEXT } from "../data/text";
+import { ACTION_HELP, actionHelpLayout } from "../layout/actionHelp";
+import { CARD_TEXT_SCALE } from "../layout/cardFrame";
+import { cardTextOrigin } from "../layout/contentCard";
 import { drawActionHelp } from "./actionHelp";
 import { addCardTextIn } from "./cardParts";
+import { drawHelpChrome } from "./helpChrome";
 
-vi.mock("./cardParts", () => ({
-  ACTION_FONT: "font-title",
-  BODY_FONT: "font-body",
-  addCardTextIn: vi.fn(),
-}));
+vi.mock("./cardParts", () => ({ ACTION_FONT: "font-title", BODY_FONT: "font-body", addCardTextIn: vi.fn() }));
+vi.mock("./helpChrome", () => ({ drawHelpChrome: vi.fn() }));
 
-it("mounts the existing rest frames and centres the existing move knob without a hit target", () => {
-  const image = vi.fn(() => ({
-    setDisplaySize: vi.fn().mockReturnThis(),
-    setOrigin: vi.fn().mockReturnThis(),
-    setScale: vi.fn().mockReturnThis(),
-  }));
-  const scene = { add: { image } } as unknown as Scene;
-  const layout = actionHelpLayout(CARD_FONTS, TEXT.buttons, 512, "{move} {jump}");
-  drawActionHelp(scene, 0, { x: 20, y: 30 }, TEXT.buttons, layout);
-  expect(image.mock.calls.map((args) => args.slice(2))).toEqual([
-    [ACTION_HELP_ICONS.move.key, ACTION_HELP_ICONS.move.frame],
-    [ACTION_HELP_KNOB.key, ACTION_HELP_KNOB.frame],
-    [ACTION_HELP_ICONS.jump.key, ACTION_HELP_ICONS.jump.frame],
-  ]);
-  expect(addCardTextIn).toHaveBeenCalledTimes(2);
+it("draws separate filled icons after the actual label advance and gap without input targets", () => {
+  const scene = {} as Scene;
+  const font = CARD_FONTS.title;
+  const at = { x: 20, y: 30 };
+  const layout = actionHelpLayout(CARD_FONTS, TEXT.buttons, 180, "{move} {jump} {use}");
+  drawActionHelp(scene, 0, at, TEXT.buttons, layout);
+  expect(drawHelpChrome).toHaveBeenCalledTimes(3);
   expect(vi.mocked(addCardTextIn).mock.calls.every((args) => args[1] === "font-title")).toBe(true);
-  expect(image.mock.results[1]!.value.setScale).toHaveBeenCalledWith(
-    40 / ACTION_HELP_ICONS.move.width,
-  );
+  for (const [index, action] of (["move", "jump", "use"] as const).entries()) {
+    const call = vi.mocked(drawHelpChrome).mock.calls[index]!;
+    expect(call[0]).toBe(scene);
+    expect(call[2]).toBe(action);
+    const rect = vi.mocked(addCardTextIn).mock.calls[index]![2];
+    const origin = cardTextOrigin(font, rect, TEXT.buttons[action]);
+    expect(
+      origin.x + advanceWidth(font, CARD_TEXT_SCALE, TEXT.buttons[action]) + ACTION_HELP.gap,
+    ).toBeLessThanOrEqual(call[1].x);
+  }
 });
