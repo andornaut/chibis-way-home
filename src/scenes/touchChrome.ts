@@ -26,6 +26,8 @@ const SOURCE: Readonly<Record<TouchChromeKind, string>> = {
   use: "ui-touch-use",
 };
 
+import { uiObject } from "./uiRoots";
+
 export function createChromeTexture(
   scene: Scene,
   key: string,
@@ -108,9 +110,8 @@ export function createTouchChrome(scene: Scene, kind: TouchChromeKind): GameObje
     }
   }
   const rest = sheetTags(scene.cache.json.get(source) as AsepriteSheet).get("rest")?.[0]?.frame;
-  return scene.add
-    .sprite(0, 0, key, rest)
-    .setOrigin(0)
-    .setDisplaySize(logical, logical)
-    .setAlpha(0.85);
+  return uiObject(
+    scene,
+    scene.add.sprite(0, 0, key, rest).setOrigin(0).setDisplaySize(logical, logical).setAlpha(0.85),
+  );
 }

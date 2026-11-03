@@ -31,6 +31,7 @@ import { SettingsScene } from "./scenes/SettingsScene";
 import { SkillDetailScene } from "./scenes/SkillDetailScene";
 import { StageSelectScene } from "./scenes/StageSelectScene";
 import { StartScene } from "./scenes/StartScene";
+import { mountUiPresentation } from "./scenes/uiPresentation";
 import { installUpdateModalBridge, UpdateScene } from "./scenes/UpdateScene";
 import { ZoneBarkScene } from "./scenes/ZoneBarkScene";
 import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene";
@@ -87,6 +88,7 @@ function startGame(): void {
     type: WEBGL,
     width: SCREEN.width,
   });
+  mountUiPresentation(game);
   installUpdateModalBridge(game);
   const gameHost = document.getElementById("game");
   if (gameHost) {

@@ -53,6 +53,7 @@ import {
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import type { StageSelectData, StageSelectOpener, StageSelectScene } from "./StageSelectScene";
+import { uiObject } from "./uiRoots";
 import type { ZoneData } from "./ZoneScene";
 
 const PALETTE = "palette";
@@ -136,10 +137,13 @@ export class MapScene extends Scene implements StageSelectOpener {
     this.drawPaths();
     this.drawNodes();
     const { textScale, title } = MAP_SCREEN;
-    this.add
-      .bitmapText(title.x, title.y, TITLE_FONT, TEXT.map.title)
-      .setScale(textScale)
-      .setTint(this.colour("ink"));
+    uiObject(
+      this,
+      this.add
+        .bitmapText(title.x, title.y, TITLE_FONT, TEXT.map.title)
+        .setScale(textScale)
+        .setTint(this.colour("ink")),
+    );
     this.addActions();
     this.showPressed(undefined);
     modalInput(this).subscribe(() => this.showPressed(undefined));
@@ -307,10 +311,13 @@ export class MapScene extends Scene implements StageSelectOpener {
       }
     }
     for (const { at, name } of labels) {
-      this.add
-        .bitmapText(at.x, at.y, TITLE_FONT, name)
-        .setScale(textScale)
-        .setTint(this.colour("ink"));
+      uiObject(
+        this,
+        this.add
+          .bitmapText(at.x, at.y, TITLE_FONT, name)
+          .setScale(textScale)
+          .setTint(this.colour("ink")),
+      );
     }
     const current = destinationForStage(ZONE_MAP, this.stand);
     const centre = this.centre(current);

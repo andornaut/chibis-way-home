@@ -263,6 +263,8 @@ function show(sprite: GameObjects.Sprite, tag: string): void {
 }
 
 // What a zone starts with: see ZoneScene.init.
+import { uiObject } from "./uiRoots";
+
 export interface ZoneData {
   readonly backdrop?: boolean;
   readonly node?: string;
@@ -458,7 +460,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.cameras.main.setBackgroundColor(BACKGROUND);
     this.cameras.main.setRoundPixels(true);
     this.areaArt = this.add.graphics();
-    this.progress = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    this.progress = uiObject(this, this.add.graphics().setDepth(OVERLAY_DEPTH));
     this.cameras.main.ignore(this.progress);
     this.progress.cameraFilter &= ~controlsCamera.id;
     this.events.once("shutdown", () => {

@@ -5,6 +5,7 @@ import { modalColour } from "../view/modalDim";
 import { palette, paletteColour } from "./cardParts";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera } from "./playCamera";
+import { mountUiModalBackdrop } from "./uiModalBackdrop";
 
 // Capture only the underlying scenes, and draw the owned backdrop before the card cameras.
 export function showModalBackdrop(
@@ -35,15 +36,14 @@ export function showModalBackdrop(
     fit();
   };
   scene.events.on(Scenes.Events.ADDED_TO_SCENE, toBackdrop);
-  const backdrop = mountModalBackdrop(
-    {
-      depth: -100,
-      fallbackColour: paletteColour(scene, "ink"),
-      remap: alreadyDimmed ? (colour) => colour : modalColour(palette(scene)),
-      scene,
-    },
-    canvasRect(scene),
-  );
+  const context = {
+    depth: -100,
+    fallbackColour: paletteColour(scene, "ink"),
+    remap: alreadyDimmed ? (colour: number) => colour : modalColour(palette(scene)),
+    scene,
+  };
+  const area = canvasRect(scene);
+  const backdrop = mountUiModalBackdrop(context, area) ?? mountModalBackdrop(context, area);
   const toContent = (object: GameObjects.GameObject) => backdropCamera.ignore(object);
   const destroy = () => {
     if (disposed) {

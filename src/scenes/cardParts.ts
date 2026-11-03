@@ -22,6 +22,7 @@ import { focusRingAround } from "../layout/settingsCard";
 import { textInkBounds } from "../layout/textInk";
 import { ART_MANIFEST_KEY, type ArtManifest } from "../view/aseprite";
 import type { Palette } from "../view/dim";
+import { uiObject } from "./uiRoots";
 
 // What the pause, settings, install steps and restart cards draw with: art's 9-slices, card text,
 // buttons and the palette's colours.
@@ -79,11 +80,14 @@ export function addCardText(
   text: string,
   colour: number,
 ): GameObjects.BitmapText {
-  return scene.add
-    .bitmapText(at.x, at.y, font, text)
-    .setScale(CARD_TEXT_SCALE)
-    .setOrigin(0)
-    .setTint(colour);
+  return uiObject(
+    scene,
+    scene.add
+      .bitmapText(at.x, at.y, font, text)
+      .setScale(CARD_TEXT_SCALE)
+      .setOrigin(0)
+      .setTint(colour),
+  );
 }
 
 export function addCardTextIn(
