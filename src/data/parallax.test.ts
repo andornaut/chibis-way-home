@@ -408,6 +408,9 @@ it("resolves Woodland wildlife as autonomous world scenery with supported deer a
   for (const [family, instances] of Object.entries(WOODLAND_SCENERY)) {
     const chunk = CHUNKS[WOODLAND_DEPTH_ALIASES[family]!]!;
     expect(chunk.scenery).toEqual(instances);
+    expect(
+      instances.filter(({ character }) => character.startsWith("background-deer")).length,
+    ).toBeLessThanOrEqual(1);
     for (const instance of instances) {
       if (instance.character === "background-reeds") {
         continue;
@@ -422,7 +425,11 @@ it("resolves Woodland wildlife as autonomous world scenery with supported deer a
           : instance.character === "background-deer"
             ? deerSheet
             : swallowSheet;
-      const native = Object.values(sheet.frames)[0]!.sourceSize;
+      const frames = Object.values(sheet.frames);
+      const native = frames[0]!.sourceSize;
+      expect(
+        frames.every(({ sourceSize }) => sourceSize.w === native.w && sourceSize.h === native.h),
+      ).toBe(true);
       expect({ height: object.height, width: object.width }).toEqual({
         height: native.h,
         width: native.w,
@@ -433,6 +440,7 @@ it("resolves Woodland wildlife as autonomous world scenery with supported deer a
       expect(object.scene).toBeUndefined();
       expect(object.reaction.kind).toBe("none");
       if (instance.character.startsWith("background-deer")) {
+        expect(instance.character).toBe("background-deer-large");
         deer++;
         expect(object.motion.algorithm).toBe("static");
         expect(
@@ -464,10 +472,12 @@ it("resolves Woodland wildlife as autonomous world scenery with supported deer a
   expect(swallows).toBeGreaterThan(0);
 });
 
-it.each([
-  WOODLAND_DEPTH_ALIASES["vertical-red-gate"]!,
-  WOODLAND_VERTICAL_ALIASES["vertical-red-gate"]!,
-])("supports the complete planted large deer silhouette in %s", (id) => {
+it.each(
+  ["compound-return-high", "vertical-red-gate"].flatMap((family) => [
+    WOODLAND_DEPTH_ALIASES[family]!,
+    WOODLAND_VERTICAL_ALIASES[family]!,
+  ]),
+)("supports the complete planted large deer silhouette in %s", (id) => {
   const chunk = CHUNKS[id]!;
   const instance = chunk.scenery!.find(({ character }) => character === "background-deer-large")!;
   const object = {

@@ -68,8 +68,8 @@ export const WOODLAND_SCENERY_CHARACTERS: Readonly<Record<string, Character>> = 
     animations: { idle: "flight" },
     archetype: "scenery",
     art: "background-swallow",
-    cols: 24 / TILE,
-    rows: 12 / TILE,
+    cols: 144 / TILE,
+    rows: 96 / TILE,
     tuning: {
       motion: {
         algorithm: "hop",
@@ -106,19 +106,18 @@ export function woodlandDepth(layers: readonly Instance[]): readonly Instance[] 
 // Wildlife follows world coordinates; rooted flora retains its decorative parallax.
 export const WOODLAND_SCENERY: Readonly<Record<string, readonly Instance[]>> = {
   "compound-low-ceiling-shuttle": [
-    { character: "background-swallow", col: 18, parallax: { x: 1, y: 1 }, phase: 0, row: 38 },
+    { character: "background-swallow", col: 13, parallax: { x: 1, y: 1 }, phase: 0, row: 34.5 },
   ],
   "compound-return-high": [
-    { character: "background-deer", col: 45, parallax: { x: 1, y: 1 }, row: 48 },
+    { character: "background-deer-large", col: 37, parallax: { x: 1, y: 1 }, row: 38 },
   ],
   "compound-return-terrace": [
     { character: "background-reeds", col: 54, parallax: { x: 0.4, y: 1 }, row: 48 },
   ],
   "growl-cover-middle": [
-    { character: "background-swallow", col: 38, parallax: { x: 1, y: 1 }, phase: 0, row: 38 },
+    { character: "background-swallow", col: 33, parallax: { x: 1, y: 1 }, phase: 0, row: 34.5 },
   ],
   "vertical-red-gate": [
-    { character: "background-deer", col: 10, parallax: { x: 1, y: 1 }, row: 48 },
     { character: "background-reeds", col: 44, parallax: { x: 0.4, y: 1 }, row: 48 },
     { character: "background-deer-large", col: 40, parallax: { x: 1, y: 1 }, row: 38 },
   ],
