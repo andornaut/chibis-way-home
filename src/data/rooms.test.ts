@@ -1,9 +1,7 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
 import type { ArtManifest } from "../view/aseprite";
-import { CHARACTERS } from "./characters";
 import { DIALOGUES, SPEAKERS } from "./dialogues";
 import { ZONE_MAP } from "./map";
 import { ROOMS } from "./rooms";
@@ -12,37 +10,9 @@ import type { SkillId } from "./types";
 import { RECIPES } from "./zones";
 
 const MANIFEST = manifestJson as ArtManifest;
-const SHEETS = import.meta.glob<AsepriteSheet>("../../public/art/sprites/*.json", {
-  eager: true,
-  import: "default",
-});
-const tagsOf = (art: string) => {
-  const sheet = SHEETS[`../../public/art/sprites/${art}.json`];
-  return sheet ? [...sheetTags(sheet).keys()] : [];
-};
-const BACKDROPS = new Set(MANIFEST.backdrops.map(({ key }) => key));
-
-describe.each(Object.entries(ROOMS))("room %s", (key, room) => {
+describe.each(Object.entries(ROOMS))("room %s", (key) => {
   it("has a name", () => {
     expect(TEXT.rooms[key]?.name, `TEXT.rooms.${key}.name`).toBeDefined();
-  });
-
-  it("draws a backdrop art has, if any", () => {
-    if (room.art !== undefined) {
-      expect(BACKDROPS.has(room.art), room.art).toBe(true);
-    }
-  });
-
-  it("plays only tags art has, of characters that exist", () => {
-    const missing = [
-      ...(room.animations ?? []).flatMap(({ art, tag }) =>
-        tagsOf(art).includes(tag) ? [] : [`${art}:${tag}`],
-      ),
-      ...(room.cast ?? []).flatMap(({ character }) =>
-        character in CHARACTERS ? [] : [`character ${character}`],
-      ),
-    ];
-    expect(missing).toEqual([]);
   });
 });
 

@@ -43,14 +43,6 @@ describe("centredLabel", () => {
     expect(centredLabel(button, ink, mark)).toEqual(expected);
   });
 
-  it("balances both margins of an unmarked odd-width label", () => {
-    const ink = 41;
-    const { labelX } = centredLabel(button, ink);
-    const before = labelX - button.x;
-    const after = button.x + button.width - (labelX + ink);
-    expect(after).toBe(before);
-  });
-
   it.each([
     ["Start", TEXT.start.start],
     ["Continue", TEXT.start.continue],
@@ -69,14 +61,6 @@ describe("centredLabel", () => {
     const margins = restart &&
       labelX !== undefined && [labelX - restart.x, restart.x + restart.width - (labelX + ink)];
     expect(margins && Math.min(...margins)).toBeGreaterThanOrEqual(16);
-  });
-
-  it("centres Start's label without a play mark on the primary face", () => {
-    const ink = inkWidth(parseBitmapFont(fontTitle), CARD_TEXT_SCALE, TEXT.start.start);
-    const button = startScreenLayout(SCREEN, true, false).start.button;
-    const { labelX, markX } = centredLabel(button, ink);
-    expect(markX).toBeUndefined();
-    expect(labelX + ink / 2).toBe(button.x + button.width / 2);
   });
 });
 

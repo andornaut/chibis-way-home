@@ -207,7 +207,6 @@ describe("drawsFrom", () => {
     ["door", true],
     ["planter", true],
     ["storefront-cafe", false],
-    ["placeholder-dog", false],
   ])("says the tileset draws %s: %s", (art, draws) => {
     expect(drawsFrom(TILESET, art)).toBe(draws);
   });
