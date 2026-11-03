@@ -73,12 +73,13 @@ The top zone-dialogue panel keeps its 40px horizontal screen inset, portrait reg
 
 ## Exceptions and verification
 
-| Exception                     | Concrete reason                                   | Retained rules                                                     | Status or source                                          |
-| ----------------------------- | ------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
-| Compact Install face          | Embedded in a full-height settings row            | Full font, labelled action and 48px row target                     | Existing control exception                                |
-| Dialogue panel                | Fixed portrait and speaker regions                | Full fonts, measured text and reserved footer                      | `DIALOGUE_SCREEN`                                         |
-| Navigation and touch controls | Icon navigation or continuous directional input   | Contrast, target handling and clear state                          | Existing bespoke geometry                                 |
-| Responsive homepage           | HTML content reflows outside the game canvas      | Safe insets, full fonts and ordinary action sizing                 | Approved homepage contract                                |
-| Stage summary                 | Full-page identity, preview and paired statistics | Shared page inset, measured columns, existing image and full fonts | [Summary layout](style-guide.md#stage-and-zone-summaries) |
+| Exception                     | Concrete reason                                                                  | Retained rules                                                           | Status or source                                          |
+| ----------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Compact Install face          | Embedded in a full-height settings row                                           | Full font, labelled action and 48px row target                           | Existing control exception                                |
+| Compact summary heading       | Separate identity rows, complete preview and footer clearance share a fixed page | Uniform compact heading role; full body/action fonts and measured bounds | [Typography exception](style-guide.md#typography-scale)   |
+| Dialogue panel                | Fixed portrait and speaker regions                                               | Full fonts, measured text and reserved footer                            | `DIALOGUE_SCREEN`                                         |
+| Navigation and touch controls | Icon navigation or continuous directional input                                  | Contrast, target handling and clear state                                | Existing bespoke geometry                                 |
+| Responsive homepage           | HTML content reflows outside the game canvas                                     | Safe insets, full fonts and ordinary action sizing                       | Approved homepage contract                                |
+| Stage summary                 | Full-page identity, preview and paired statistics                                | Shared page inset, measured columns, existing image and full fonts       | [Summary layout](style-guide.md#stage-and-zone-summaries) |
 
 For a layout change, verify only the affected consumer geometry and content fit. Check native and fractional context, long actual labels, complete press targets and the intended safe bounds. Reuse existing source-owner evidence and library contracts; do not repeat library implementation tests. Record unresolved source integration as pending rather than claiming complete page conformance.
