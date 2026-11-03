@@ -437,7 +437,7 @@ it("actual Pebble takes off to a varied supported perch before checking another 
   const object = make(),
     bird = target(),
     physical = { ...world(), idleDecision: { namespace: "pebble-perch-profile", seed: 1 } };
-  const component = { ...object, behaviour: { ...object.behaviour!, initial: "rest" } };
+  const component = { ...object, behaviour: { ...object.behaviour!, initial: "return-high" } };
   const relocation = object.behaviour!.states.relocate!.motion;
   if (relocation.kind !== "fly" || relocation.to !== "support" || !relocation.selection) {
     throw Error("Expected varied supported flight");
@@ -446,6 +446,7 @@ it("actual Pebble takes off to a varied supported perch before checking another 
   let at = origin,
     state = startBehaviour(BIRD, component, bird),
     movedHorizontally = false,
+    rested = false,
     landed = false,
     highest = origin.y;
   expect(supportedLanding(object, physical, at)).toBe(true);
@@ -456,6 +457,7 @@ it("actual Pebble takes off to a varied supported perch before checking another 
     expect(step.actions).toEqual([]);
     expect(state.activeAttack).toBeUndefined();
     expect(state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+    rested ||= state.stateKey === "rest";
     highest = Math.min(highest, at.y);
     if (!movedHorizontally && Math.abs(at.x - origin.x) > 1e-6) {
       expect(at.y).toBeLessThan(origin.y);
@@ -463,7 +465,8 @@ it("actual Pebble takes off to a varied supported perch before checking another 
     }
     landed = state.stateKey === "relocation-rest";
   }
-  expect(landed).toBe(true);
+  expect(rested).toBe(true);
+  expect(landed, `Incomplete relocation: ${state.stateKey} at ${at.x},${at.y}`).toBe(true);
   expect(movedHorizontally).toBe(true);
   expect(highest).toBeLessThanOrEqual(origin.y - relocation.selection.clearance + 1e-6);
   expect(Math.abs(at.x - origin.x)).toBeGreaterThanOrEqual(relocation.selection.minDistance - 1e-6);
