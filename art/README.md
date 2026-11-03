@@ -460,7 +460,7 @@ For all six antagonists, during an attack sequence's tell or grounded jump takeo
 
 ### Enemy anticipation movement
 
-The six registered antagonists append `anticipate-lift`: load 120ms, lift 160ms and return-brace 200ms. This 480ms tag plays once and holds its final prepared pose until the existing gameplay tell ends. Archie, Bini, Fert and Kiwi use a small in-frame visual hop; Trixi raises a wing with her feet planted; Pebble lifts his wings and returns to the established airborne tuck. World positions, path origins, frame sizes, anchors and physical movement remain unchanged. The new exact alpha silhouettes join the contact export; no contact is clipped to the reach box. Existing frames, tag indices and timings stay unchanged.
+The six registered antagonists append `anticipate-lift`: load 120ms, lift 160ms and return-brace 200ms. This 480ms tag plays once and holds its final prepared pose until the existing gameplay tell ends. Archie, Fert and Kiwi use a small in-frame visual hop; Bini stays grounded through four-paw shoulder compression; Trixi raises a wing with her feet planted; Pebble lifts his wings and returns to the established airborne tuck. World positions, path origins, frame sizes, anchors and physical movement remain unchanged. The new exact alpha silhouettes join the contact export; no contact is clipped to the reach box. Existing frames, tag indices and timings stay unchanged.
 
 ### Enemy frustration
 
@@ -814,23 +814,23 @@ The appended `set-trap` tag contains four looping 120ms placement frames. Existi
 
 ## Bini bear
 
-`art/tools/bear.py` draws `bear-antagonist`: Bini, a cute brown bear with round ears, a cream muzzle and a seated phone-playing idle. The tiny phone screen uses a road, cream dog and red-bandana motif for Archie, without miniature text or external runtime dependencies. His annoyed preparation, growl and forward paw gestures remain cute, without teeth, gore or a red contact outline.
+`art/tools/bear.py` draws `bear-antagonist`: Bini, a dark-brown quadruped with high broad shoulders, a compact barrel body, short round ears, a broad short muzzle, a compact tail and four heavy plantigrade paws. His shorter body, taller shoulders and solid dark coat distinguish him from Archie. The world body has no held phone; the recoloured dialogue portrait retains the existing phone and its road-and-dog motif.
 
-The frame is 48x48 with bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, containing every pose and its mirror. Contact remains lethal. The phone and seated pose do not create another collision profile. Walk and rush use a low four-foot stance with alternating diagonal support and small weight transfers; the phone idle and expressive tells retain their upright poses. Body contact follows the regenerated opaque silhouettes of these locomotion frames.
+The frame remains 48x48, bottom-centre anchor 24,48, with fixed reach box x 2, y 2, width 44, height 46. Idle, preparation, growl, maul, rest, frustration and anticipation keep all four paws planted; walk and rush alternate diagonal contacts naturally. `anticipate-lift` uses grounded load, shoulder compression and a planted brace with its existing once-only 120/160/200ms cadence. Its frame indices and all other tags and art timings remain unchanged. The exact alpha silhouettes define contact independently of the reach box. Gameplay owns physical movement and state durations.
 
 | Tag            | Art cycle                | Pose                            |
 | -------------- | ------------------------ | ------------------------------- |
 | frustration    | Shared four-frame loop   | Blocked-route reaction          |
 | growl          | Four frames, 120ms each  | Mouth opens for the sonic push  |
-| idle           | Two frames, 400ms each   | Seated, playing on the phone    |
-| maul           | Three frames, 100ms each | Forward paw gesture             |
-| prepare        | Two frames, 160ms each   | Annoyed look up from the phone  |
-| prepare-attack | Two frames, 160ms each   | Drawn-back paw and lifted chest |
+| idle           | Two frames, 400ms each   | Four planted paws, quiet breath |
+| maul           | Three frames, 100ms each | Planted head and shoulder press |
+| prepare        | Two frames, 160ms each   | Grounded head and shoulder load |
+| prepare-attack | Two frames, 160ms each   | Four-paw shoulder compression   |
 | rest           | Two frames, 400ms each   | Settled recovery                |
 | rush           | Four frames, 80ms each   | Grounded four-foot charge       |
 | walk           | Four frames, 120ms each  | Alternating four-foot steps     |
 
-The earlier actor tags loop. `portrait-bear` is 64x64, authored facing right, with `neutral` and `annoyed` tags of one 1000ms frame each. Dialogue text belongs to gameplay data.
+The earlier actor tags loop. `portrait-bear` is 64x64, authored facing right, with the matching dark coat and retained phone. Its `neutral` and `annoyed` tags have one 1000ms frame each. Dialogue text belongs to gameplay data.
 
 `bear-growl-wave` is a noncolliding 48x32 directional effect. Its `pulse` tag has four 100ms frames, plays once and requires runtime removal when finished. Place its left-centre anchor 0,16 at the bear's mouth, frame-local 36,22; the unmirrored image origin is therefore actor origin plus 36,6. Mirror this attachment for left-facing use. The effect does not define reach or force. Gameplay supplies the height-limited push volume and solid cover checks, with high ground as the primary avoidance route. Keep the drawn pulse within that configured band.
 
