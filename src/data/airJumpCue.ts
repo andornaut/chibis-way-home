@@ -5,7 +5,7 @@ export const AIR_JUMP_CUE: AirJumpCueTuning = {
   borderThickness: 1,
   colour: "cream",
   durationSeconds: 0.24,
-  offset: { x: 0, y: 41 },
-  rise: 12,
+  forwardLead: 4,
+  offset: { x: 0, y: 35 },
   scale: 2,
 };
