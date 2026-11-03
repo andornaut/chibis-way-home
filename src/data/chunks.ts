@@ -1299,7 +1299,14 @@ function roomDoorSlot(slot: NonNullable<ChunkPlan["slots"]>[number]): typeof slo
 const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
   Object.entries(AUTHORED_CHUNKS).map(([id, authored]) => {
     const chunk = withValleyFloors(authored);
-    return [id, { ...chunk, ...(chunk.slots && { slots: chunk.slots.map(roomDoorSlot) }) }];
+    return [
+      id,
+      {
+        ...chunk,
+        ...(chunk.encounters > 0 && { maxPerZone: Math.min(chunk.maxPerZone ?? 1, 1) }),
+        ...(chunk.slots && { slots: chunk.slots.map(roomDoorSlot) }),
+      },
+    ];
   }),
 );
 

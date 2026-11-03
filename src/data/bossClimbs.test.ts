@@ -1,7 +1,7 @@
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { describe, expect, it, vi } from "vitest";
 
-import { zonePlanOf } from "../rules/assemble";
+import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
 import type { BehaviourWorld } from "../rules/behaviourReach";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
@@ -18,6 +18,7 @@ import { BIRD } from "./bird";
 import { CHUNKS } from "./chunks";
 import { TILE } from "./screen";
 import { apartmentChunkId } from "./zone6";
+import { RECIPES } from "./zones";
 
 vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
   const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
@@ -334,5 +335,28 @@ it("keeps quiet connected terrain valid with explicit Apartment route contracts"
     expect(tall.difficulty).toBeGreaterThanOrEqual(4);
     expect(tall.rows).toBe(120);
     expect(REQUIRED_CHUNK_ROUTES[tallId]!.length, tallId).toBeGreaterThan(0);
+  }
+});
+
+it("assembles Penthouse quota and room with distinct capped encounter templates", () => {
+  const recipe = RECIPES.penthouse!;
+  if ("sections" in recipe) {
+    throw new Error("Expected a continuous Penthouse recipe");
+  }
+  const plan = assembleZone(CHUNK_LIBRARY, 1, "penthouse", recipe);
+  const area = plan.areas[plan.start.area]!;
+  const placements = area.chunks!;
+  const hostile = placements.filter(({ chunk }) => CHUNK_LIBRARY.chunks[chunk]!.encounters > 0);
+  expect(hostile.reduce((sum, { chunk }) => sum + CHUNK_LIBRARY.chunks[chunk]!.encounters, 0)).toBe(
+    recipe.encounters,
+  );
+  expect(new Set(hostile.map(({ chunk }) => chunk)).size).toBe(hostile.length);
+  expect(area.objects.filter(({ room }) => room !== undefined)).toHaveLength(
+    recipe.doors.reduce((sum, door) => sum + door.count, 0),
+  );
+  for (let index = 1; index < placements.length; index++) {
+    const previous = CHUNK_LIBRARY.chunks[placements[index - 1]!.chunk]!;
+    const next = CHUNK_LIBRARY.chunks[placements[index]!.chunk]!;
+    expect(previous.exit.row).toBe(next.entry.row);
   }
 });
