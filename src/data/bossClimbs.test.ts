@@ -365,3 +365,112 @@ it("assembles Penthouse quota and room with distinct capped encounter templates"
     expect(previous.exit.row).toBe(next.entry.row);
   }
 });
+
+it.each([-1, 1] as const)("ordinary route crosses the open ridge facing %s", (direction) => {
+  const base = layoutOf("city-streets", "open-stepped-ridge-encounter");
+  const id = base.start.area;
+  const area = base.areas[id]!;
+  const layout = {
+    ...base,
+    areas: {
+      ...base.areas,
+      [id]: {
+        ...area,
+        entries: {
+          ...area.entries,
+          [base.start.entry]: { x: direction === 1 ? 24 : 684, y: 50 * TILE },
+        },
+        objects: area.objects.filter((object) => !object.behaviour?.pursuit),
+      },
+    },
+  };
+  let zone = startZone(ordinary, layout, 1);
+  let held = 0;
+  for (let tick = 0; tick < 1200; tick++) {
+    const arrived = direction === 1 ? zone.bird.x >= 648 : zone.bird.x <= 60;
+    if (zone.bird.grounded && !arrived) {
+      held = 44;
+    }
+    zone = stepZone(
+      ordinary,
+      layout,
+      STEP_SECONDS,
+      { ...idle, jumpHeld: !arrived && held-- > 0, move: arrived ? 0 : direction },
+      zone,
+    );
+    expect(zone.death).toBeUndefined();
+    expect(zone.cleared).toBe(false);
+    expect(zone.turnedBack).toBe(false);
+    if (zone.bird.grounded && arrived) {
+      expect(zone.bird.y + ordinary.height).toBeCloseTo(50 * TILE);
+      return;
+    }
+  }
+  expect.fail(JSON.stringify({ bird: zone.bird, direction }));
+});
+
+it.each(
+  [
+    { name: "Archie", theme: "city-streets" },
+    { name: "Bini", theme: "deep-woods" },
+    { name: "Trixi", theme: "country-lanes" },
+  ].flatMap((profile) => ([-1, 1] as const).map((direction) => ({ ...profile, direction }))),
+)("actual full $name leaves the open ridge safely facing $direction", ({ direction, theme }) => {
+  const layout = layoutOf(theme, "open-stepped-ridge-encounter");
+  const area = layout.areas[layout.start.area]!;
+  const object = area.objects.find((owner) => owner.behaviour?.pursuit)!;
+  const motion = object.behaviour!.states.pursuit!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
+    throw Error("Expected actual ground traversal");
+  }
+  const target = {
+    height: ordinary.height,
+    width: ordinary.width,
+    x: direction === 1 ? 684 : 12,
+    y: 50 * TILE - ordinary.height,
+  };
+  let at = object.origin;
+  let traversal: BehaviourTraversalState | undefined;
+  for (let tick = 0; tick < 1200; tick++) {
+    const world: BehaviourWorld = {
+      hazards: [],
+      solids: area.solids,
+      traversalFrame: {
+        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+        dtSeconds: STEP_SECONDS,
+        platforms: [],
+        sample: () => [],
+        timeSeconds: tick * STEP_SECONDS,
+      },
+    };
+    const next = advanceTraversal(world, object, motion, STEP_SECONDS, traversal, at, target);
+    at = next.at;
+    traversal = next.traversal;
+    if (traversal?.physical.grounded && (direction === 1 ? at.x >= 636 : at.x <= 48)) {
+      expect(at.y + object.height).toBeCloseTo(50 * TILE);
+      return;
+    }
+  }
+  expect.fail(
+    JSON.stringify({ at, direction, status: traversal?.status, target: traversal?.target }),
+  );
+});
+
+it("shares the qualified Trixi ridge collider and traversal with Fert and Kiwi", () => {
+  const objectOf = (theme: string) => {
+    const layout = layoutOf(theme, "open-stepped-ridge-encounter");
+    return layout.areas[layout.start.area]!.objects.find((owner) => owner.behaviour?.pursuit)!;
+  };
+  const trixi = objectOf("country-lanes");
+  for (const theme of ["apartment-restaurant", "back-streets"]) {
+    const object = objectOf(theme);
+    expect({ height: object.height, hitbox: object.hitbox, width: object.width }).toEqual({
+      height: trixi.height,
+      hitbox: trixi.hitbox,
+      width: trixi.width,
+    });
+    expect(object.behaviour!.states.pursuit!.motion).toEqual(
+      trixi.behaviour!.states.pursuit!.motion,
+    );
+  }
+});

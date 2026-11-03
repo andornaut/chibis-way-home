@@ -793,6 +793,30 @@ const CONNECTED_TERRAIN_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     CENTRAL_CROSSING_TERRAIN,
     CENTRAL_CROSSING_REFUGES,
   ),
+  "open-stepped-ridge-encounter": moduleChunk(
+    [
+      ...PATROL_THEMES,
+      "back-streets",
+      "city-outskirts",
+      "deep-woods",
+      "familiar-neighbourhood",
+      "forest-paths",
+      "ravine",
+    ],
+    4,
+    50,
+    50,
+    [
+      floor(0, 8, 50),
+      floor(8, 9, 46),
+      floor(17, 12, 42),
+      floor(29, 10, 38),
+      floor(39, 8, 43),
+      floor(47, 7, 47),
+      floor(54, 6, 50),
+    ],
+    [{ character: "dog-antagonist", col: 32, role: "antagonist", row: 34 }],
+  ),
 };
 
 function flyerYard(origin: number, climb: boolean): ChunkPlan {
@@ -1357,6 +1381,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "growl-cover-late",
     "growl-cover-middle",
     "horizontal-platform-orbit",
+    "open-stepped-ridge-encounter",
     "vertical-red-gate",
   ].map((id) => [id, `${id}-woodland-depth`]),
 );
@@ -1402,6 +1427,7 @@ export const INDUSTRIAL_CHALLENGES: ChunkPool = [
 ];
 
 export const PATROL_YARDS: ChunkPool = [
+  "open-stepped-ridge-encounter",
   "city-boundary-climb-yard",
   "city-boundary-dog-high",
   "city-boundary-dog-terrace",
@@ -1436,6 +1462,7 @@ export const COUNTRYSIDE_CHALLENGES: ChunkPool = [
 
 export const WOODLAND_CHALLENGES: ChunkPool = [
   ...GROUND_CHALLENGES,
+  "open-stepped-ridge-encounter",
   "compound-double-lift",
   "compound-low-ceiling-shuttle",
   "compound-return-high",
@@ -1451,6 +1478,7 @@ export const WOODLAND_CHALLENGES: ChunkPool = [
 
 export const HOME_CHALLENGES: ChunkPool = [
   ...GROUND_CHALLENGES,
+  "open-stepped-ridge-encounter",
   "climbing-enemy-lane",
   "compound-double-lift",
   "compound-low-ceiling-shuttle",

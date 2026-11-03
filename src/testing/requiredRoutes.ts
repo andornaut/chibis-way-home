@@ -168,6 +168,7 @@ register(
   ["low-central-crossing"],
 );
 register(encounter, [
+  "open-stepped-ridge-encounter",
   ...["early", "middle", "late"].flatMap((position) => [
     `patrol-cover-${position}`,
     `growl-cover-${position}`,
