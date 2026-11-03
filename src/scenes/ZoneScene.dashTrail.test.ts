@@ -143,7 +143,7 @@ it("draws proven world scenery at actual positions without camera compensation o
     scenerySprites: unknown[];
   };
   scene.objectArt = [scene.drawObject(undefined, undefined, object, 0)];
-  expect(sprite.setDepth).toHaveBeenLastCalledWith(-3);
+  expect(sprite.setDepth).toHaveBeenLastCalledWith(-2.5);
   expect(sprite.setScrollFactor).toHaveBeenLastCalledWith(1, 1);
   expect(scene.scenerySprites).toEqual([]);
   scene.drawObjects();
@@ -161,6 +161,8 @@ it("draws proven world scenery at actual positions without camera compensation o
   scene.drawObjects();
   expect(sprite.setPosition).toHaveBeenLastCalledWith(180, 140);
   expect(sprite.setFlipX).toHaveBeenLastCalledWith(true);
+  scene.drawObject(undefined, undefined, { ...object, collision: "hazard" }, 0);
+  expect(sprite.setDepth).toHaveBeenLastCalledWith(0);
   const ordinary = { ...object };
   delete ordinary.scenerySource;
   scene.drawObject(undefined, undefined, ordinary, 0);

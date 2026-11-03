@@ -76,7 +76,7 @@ it("places animated scenery behind actors, crops it before rendering and ignores
     renderBackdrops(): void;
   };
   scene.objectArt = [methods.drawObject.call(scene, undefined, undefined, object, 0)];
-  expect(sprite.setDepth.mock.lastCall?.[0]).toBeLessThan(0);
+  expect(sprite.setDepth).toHaveBeenLastCalledWith(-3);
   expect(sprite.play).toHaveBeenCalledWith("ambient:idle");
   methods.renderBackdrops.call(scene);
   expect(sprite.setCrop).toHaveBeenLastCalledWith(14, 0, 18, 24);

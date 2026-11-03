@@ -240,6 +240,7 @@ const DEPTHS: Readonly<Record<ArtKind | "terrain", number>> = {
 };
 const BIRD_DEPTH = 1;
 const OVERLAY_DEPTH = 2;
+const WORLD_SCENERY_DEPTH = (DEPTHS.backdrop + DEPTHS.terrain) / 2;
 
 // Everything drawn for one object, placed at its top-left corner plus offset. A sprite faces the
 // way it last moved.
@@ -1582,7 +1583,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         const sprite = this.add
           .sprite(0, 0, object.art)
           .setOrigin(0)
-          .setDepth(scenery || world ? DEPTHS.backdrop : DEPTHS.sprite);
+          .setDepth(world ? WORLD_SCENERY_DEPTH : scenery ? DEPTHS.backdrop : DEPTHS.sprite);
         if (world) {
           sprite.setScrollFactor(1, 1);
           if (object.motion.playback === "once-visible") {
