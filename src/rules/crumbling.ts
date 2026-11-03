@@ -66,6 +66,15 @@ export function initialCrumblingWorld<ActorId>(
   };
 }
 
+export function crumblingSupportPresent<ActorId>(
+  world: CrumblingWorld<CrumblingSupportId, ActorId>,
+  supportId: CrumblingSupportId,
+): boolean {
+  return !world.supports.some(
+    (support) => support.supportId === supportId && support.phase.kind === "absent",
+  );
+}
+
 export interface CrumblingActor<ActorId> {
   readonly actorId: ActorId;
   readonly body: Rect;
@@ -193,11 +202,8 @@ export function crumblingTraversalAdapter<ActorId, OtherWorld>(
       const geometry = context.sampleColliders(world.otherWorld, time, seconds, bounds);
       return {
         ...geometry,
-        colliders: geometry.colliders.filter(
-          ({ supportId }) =>
-            !world.crumbling.supports.some(
-              (support) => support.supportId === supportId && support.phase.kind === "absent",
-            ),
+        colliders: geometry.colliders.filter(({ supportId }) =>
+          crumblingSupportPresent(world.crumbling, supportId),
         ),
       };
     },
