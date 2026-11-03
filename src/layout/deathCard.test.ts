@@ -83,7 +83,7 @@ describe("death card", () => {
     expect(result.title.x - result.card.x).toBe(50);
     expect(result.card.x + result.card.width - result.title.x - result.title.width).toBe(50);
   });
-  it("widens both columns for an uncleared best time without crowding the divider", () => {
+  it("right-aligns a missing best with the other times without crowding the divider", () => {
     const result = deathCard(fonts, view, {
       ...words,
       stats: words.stats.map((row, index) =>
@@ -91,6 +91,9 @@ describe("death card", () => {
       ),
     });
     expect(result.stats[1]!.value.text).toBe(TEXT.stats.notCleared);
+    const right = (index: number) =>
+      result.stats[index]!.value.rect.x + result.stats[index]!.value.rect.width;
+    expect(right(1)).toBe(right(0));
     expect(result.stats[1]!.value.rect.width).toBe(
       inkWidth(fonts.body, CARD_TEXT_SCALE, TEXT.stats.notCleared),
     );
