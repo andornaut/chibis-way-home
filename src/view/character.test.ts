@@ -1,4 +1,4 @@
-import { seededRandom } from "@andornaut/game-kit/random";
+import { randomPick, seededRandom } from "@andornaut/game-kit/random";
 import { describe, expect, it } from "vitest";
 
 import type { ObjectLayout } from "../data/types";
@@ -44,7 +44,10 @@ describe("chooseWord", () => {
       const random = seededRandom(seed);
       return Array.from({ length: 12 }, () => chooseWord(random, keys));
     };
-    expect(draw(3)).toEqual(draw(3));
-    expect(draw(4)).not.toEqual(draw(3));
+    const first = draw(3);
+    const expectedRandom = seededRandom(3);
+    expect(first).toEqual(Array.from({ length: 12 }, () => randomPick(expectedRandom, keys)));
+    expect(draw(3)).toEqual(first);
+    expect(draw(4)).not.toEqual(first);
   });
 });

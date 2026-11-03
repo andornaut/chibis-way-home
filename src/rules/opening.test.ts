@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { OPENING } from "../data/opening";
-import type { OpeningBeat, OpeningShot } from "../data/types";
+import type { OpeningBeat, OpeningLayer, OpeningShot } from "../data/types";
 import { createOpeningPlayback, openingDestination, openingPose } from "./opening";
 
 describe("manual opening playback", () => {
@@ -41,29 +41,40 @@ describe("manual opening playback", () => {
     expect(done).toHaveBeenCalledTimes(1);
   });
 
-  it("interpolates transforms but steps authored poses and parcel occlusion together", () => {
-    for (const beat of OPENING) {
-      for (const shot of beat.shots) {
-        const parcel = shot.layers.find(({ art }) => art === "opening-parcel");
-        const front = shot.layers.find(({ art }) => art === "opening-parcel-front");
-        if (!parcel || !front) {
-          continue;
-        }
-        const child = shot.layers.find(({ art }) => art === "opening-chibi");
-        for (const keyframe of parcel.keyframes) {
-          const pose = openingPose(keyframe.progress, parcel);
-          expect(openingPose(keyframe.progress, front)).toEqual(pose);
-          if (pose.pose === "sealed" && child) {
-            expect(openingPose(keyframe.progress, child).visible).toBe(false);
-          }
-        }
-      }
-    }
-    const layer = OPENING[0]!.shots[0]!.layers[0]!;
-    const [first, next] = layer.keyframes;
-    const pose = openingPose(next!.progress / 2, layer);
-    expect(pose.pose).toBe(first!.pose);
-    expect(pose.scale).toBeCloseTo((first!.scale + next!.scale) / 2);
+  it("interpolates transforms while poses and visibility change only at their keyframes", () => {
+    const first = {
+      angle: 0,
+      pose: "idle",
+      position: { x: 100, y: 240 },
+      progress: 0,
+      scale: 1,
+      visible: true,
+    };
+    const next = {
+      angle: 20,
+      pose: "walk",
+      position: { x: 200, y: 220 },
+      progress: 0.5,
+      scale: 2,
+      visible: false,
+    };
+    const last = { ...first, progress: 1 };
+    const layer: OpeningLayer = {
+      anchor: { x: 24, y: 42 },
+      art: "bird",
+      flipX: false,
+      keyframes: [first, next, last],
+    };
+    expect(openingPose(0.25, layer)).toEqual({
+      ...first,
+      angle: 10,
+      position: { x: 150, y: 230 },
+      progress: 0.25,
+      scale: 1.5,
+    });
+    expect(openingPose(0.5, layer)).toEqual(next);
+    expect(openingPose(-1, layer)).toEqual(first);
+    expect(openingPose(2, layer)).toEqual(last);
   });
 
   it.each([

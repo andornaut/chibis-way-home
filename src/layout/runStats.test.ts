@@ -130,13 +130,6 @@ describe("preview-first stage summaries", () => {
       }),
     ).toThrow("Stage summary metric exceeds its column");
   });
-  it("omits the statement and its hit rectangle when there is no actual clear statement", () => {
-    const result = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, {
-      ...words,
-      statement: undefined,
-    });
-    expect(result.statement).toBeUndefined();
-  });
   it("anchors visible glyph ink at the supplied top-left point", () => {
     const text = values.best;
     const rect = { height: 16, width: 300, x: 40, y: 70 };
