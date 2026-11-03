@@ -382,7 +382,11 @@ export type BehaviourCondition =
   | { readonly kind: "alignment-blocked" }
   | { readonly kind: "flight-approach-direction"; readonly direction: -1 | 1 }
   | { readonly kind: "boundary" }
-  | { readonly kind: "arrived"; readonly tolerance: number }
+  | {
+      readonly kind: "arrived";
+      readonly target?: "live" | "intent";
+      readonly tolerance: number;
+    }
   | { readonly kind: "elapsed"; readonly seconds: number }
   | { readonly kind: "nearby"; readonly range: number }
   | {

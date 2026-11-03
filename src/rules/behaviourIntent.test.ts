@@ -540,3 +540,95 @@ it.each([false, true])(
     }
   },
 );
+
+it.each([false, true])(
+  "allows explicit held-course arrival for a stationary target while retaining live sight blocked=%s",
+  (blocked) => {
+    const motion = {
+      intent: { ...intent, decisionSeconds: { max: 1, min: 1 }, offset: { max: -24, min: -24 } },
+      kind: "pursue",
+      mode: "fly",
+      overhead: { ahead: 20, clearance: 10 },
+      speed: 384,
+    } as const;
+    const profile: BehaviourPlan = {
+      ...plan,
+      states: {
+        ...plan.states,
+        pursuit: {
+          animation: null,
+          motion,
+          transitions: [
+            {
+              to: "tell",
+              when: [
+                { kind: "arrived", target: "intent", tolerance: 1.2 },
+                { kind: "line-of-sight" },
+                { kind: "attack-ready" },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    const object = actor(profile),
+      target = bird(135, 0);
+    const physical = {
+      ...world(),
+      solids: [floor, ...(blocked ? [{ height: 4, width: 30, x: 125, y: 457 }] : [])],
+      traversalFrame: { ...world().traversalFrame!, dtSeconds: 1 / 120 },
+    };
+    const liveX = target.x + BIRD.width / 2 + motion.overhead.ahead - object.width / 2;
+    const atLive = { x: liveX, y: target.y - motion.overhead.clearance - object.height };
+    const uncaptured = stepBehaviour(BIRD, object, physical, 0, target, atLive, {
+      ...initial(object),
+      flightApproachDirection: 1,
+    });
+    expect(uncaptured.state.stateKey).toBe("pursuit");
+    expect(uncaptured.state.intent).toBeUndefined();
+    let at = object.origin,
+      state = initial(object);
+    for (let tick = 0; tick < 60 && state.stateKey !== "tell"; tick++) {
+      const next = stepBehaviour(BIRD, object, physical, 1 / 120, target, at, state);
+      expect(next.actions).toEqual([]);
+      at = next.at;
+      state = next.state;
+    }
+    expect(at.x).toBeCloseTo(liveX + motion.intent.offset.min);
+    if (blocked) {
+      expect(state.stateKey).toBe("pursuit");
+      expect(state.activeAttack).toBeUndefined();
+    } else {
+      expect(state.stateKey).toBe("tell");
+      expect(state.activeAttack?.phase).toBe("tell");
+    }
+  },
+);
+
+it("rejects intent-target arrival outside sampled overhead pursuit", () => {
+  for (const motion of [
+    plan.states.pursuit!.motion,
+    {
+      kind: "pursue" as const,
+      mode: "fly" as const,
+      overhead: { ahead: 20, clearance: 10 },
+      speed: 384,
+    },
+  ]) {
+    expect(() =>
+      layoutBehaviour(1, {
+        ...plan,
+        states: {
+          ...plan.states,
+          pursuit: {
+            ...plan.states.pursuit!,
+            motion,
+            transitions: [
+              { to: "tell", when: [{ kind: "arrived", target: "intent", tolerance: 1 }] },
+            ],
+          },
+        },
+      }),
+    ).toThrow("Intent arrival requires sampled overhead pursuit");
+  }
+});

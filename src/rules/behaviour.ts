@@ -420,6 +420,21 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             }
             return { ...condition, distance: condition.distance * tile };
           }
+          if (condition.kind === "arrived") {
+            if (condition.target !== undefined && !["live", "intent"].includes(condition.target)) {
+              throw new Error(`Invalid arrival target in ${key}`);
+            }
+            if (
+              condition.target === "intent" &&
+              (node.attack !== undefined ||
+                node.motion.kind !== "pursue" ||
+                node.motion.mode !== "fly" ||
+                node.motion.overhead === undefined ||
+                node.motion.intent === undefined)
+            ) {
+              throw new Error(`Intent arrival requires sampled overhead pursuit in ${key}`);
+            }
+          }
           const amount =
             condition.kind === "elapsed"
               ? condition.seconds
@@ -923,17 +938,20 @@ function matches(
       if (state.flightApproachDirection === undefined) {
         return false;
       }
-      const target = overheadFlightGoal(
-        tuning,
+      const tracked = condition.target === "intent" ? state.intent?.target : birdBox(tuning, bird);
+      if (!tracked) {
+        return false;
+      }
+      const target = overheadFlightGoalForRect(
         motion.overhead,
         state.flightApproachDirection,
-        bird,
+        tracked,
         object,
       );
       return (
         overheadFlightRoute(world, object, at, target) !== undefined &&
-        at.y + object.height <= bird.y - motion.overhead.clearance + EDGE &&
-        state.flightApproachDirection * (at.x + object.width / 2 - bird.x - tuning.width / 2) >=
+        at.y + object.height <= tracked.y - motion.overhead.clearance + EDGE &&
+        state.flightApproachDirection * (at.x + object.width / 2 - tracked.x - tracked.width / 2) >=
           motion.overhead.ahead - EDGE &&
         Math.hypot(at.x - target.x, at.y - target.y) <= condition.tolerance
       );

@@ -963,7 +963,7 @@ function pigeonOverhead(ahead: number): BehaviourNode["motion"] {
 
 function pigeonApproach(swoop: boolean, next: string): BehaviourNode {
   const ready = [
-    { kind: "arrived", tolerance: 0.1 },
+    { kind: "arrived", target: "intent", tolerance: 0.1 },
     { kind: "attack-ready" },
     { kind: "line-of-sight" },
   ] as const;

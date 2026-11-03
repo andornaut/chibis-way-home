@@ -5,7 +5,7 @@ import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
 import type { BehaviourWorld } from "../rules/behaviourReach";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
-import { startBird } from "../rules/bird";
+import { EDGE, startBird } from "../rules/bird";
 import { chunkProblems } from "../rules/chunk";
 import { supportedLanding } from "../rules/flyLanding";
 import { STEP_SECONDS } from "../rules/step";
@@ -544,6 +544,7 @@ it("actual Pebble flies beneath the dry gallery roof and returns to supported re
       },
       view: { height: 360, width: 720, x: 0, y: 240 },
     };
+    const before = { at, state };
     const next = stepBehaviour(ordinary, object, world, STEP_SECONDS, target, at, state);
     at = next.at;
     state = next.state;
@@ -563,7 +564,22 @@ it("actual Pebble flies beneath the dry gallery roof and returns to supported re
     if ((state.attackCooldownRemainingSeconds ?? 0) > 0) {
       expect(overheadTell).toBe(true);
       expect(shots).toBe(3);
-      expect(supportedLanding(object, world, at)).toBe(true);
+      expect(before.state.activeAttack?.phase).toBe("committed");
+      expect(object.behaviour!.states[before.state.stateKey]!.motion).toMatchObject({
+        kind: "wait",
+        support: "required",
+      });
+      const cooldownAt =
+        STEP_SECONDS -
+        (object.behaviour!.attackCooldownSeconds! - state.attackCooldownRemainingSeconds!);
+      const recovery = next.segments.find(
+        ({ end, start }) => start <= cooldownAt + EDGE && end >= cooldownAt - EDGE,
+      );
+      expect(recovery).toBeDefined();
+      expect(recovery!.end).toBeCloseTo(cooldownAt, 10);
+      expect(recovery!.from).toEqual(before.at);
+      expect(recovery!.to).toEqual(before.at);
+      expect(supportedLanding(object, world, recovery!.to)).toBe(true);
       return;
     }
   }
