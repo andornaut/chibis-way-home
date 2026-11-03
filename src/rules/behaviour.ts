@@ -954,6 +954,31 @@ function pursuitTrack(object: ObjectLayout): BehaviourTrack {
   };
 }
 
+interface PursuitKinds {
+  readonly flight: boolean;
+  readonly groundTraversal: boolean;
+}
+
+const pursuitKindsCache = new WeakMap<BehaviourPlan, PursuitKinds>();
+
+function pursuitKinds(plan: BehaviourPlan): PursuitKinds {
+  const cached = pursuitKindsCache.get(plan);
+  if (cached) {
+    return cached;
+  }
+  let flight = false;
+  let groundTraversal = false;
+  for (const { motion } of Object.values(plan.states)) {
+    if (motion.kind === "pursue") {
+      flight ||= motion.mode === "fly";
+      groundTraversal ||= motion.mode === "ground" && Boolean(motion.traversal);
+    }
+  }
+  const kinds = { flight, groundTraversal };
+  pursuitKindsCache.set(plan, kinds);
+  return kinds;
+}
+
 function pursuitReachable(
   tuning: BirdTuning,
   object: ObjectLayout,
@@ -962,10 +987,8 @@ function pursuitReachable(
   state: BehaviourState,
   bird: BirdState,
 ): boolean | undefined {
-  const traversal = Object.values(object.behaviour!.states).some(
-    ({ motion }) => motion.kind === "pursue" && motion.mode === "ground" && motion.traversal,
-  );
-  if (traversal) {
+  const kinds = pursuitKinds(object.behaviour!);
+  if (kinds.groundTraversal) {
     if (state.traversal?.status === "found" && !state.traversal.physical.grounded) {
       return true;
     }
@@ -999,10 +1022,7 @@ function pursuitReachable(
         ? true
         : undefined;
   }
-  const flight = Object.values(object.behaviour!.states).some(
-    (node) => node.motion.kind === "pursue" && node.motion.mode === "fly",
-  );
-  if (flight) {
+  if (kinds.flight) {
     const current = nodeOf(object, state.stateKey).motion;
     const overhead =
       current.kind === "pursue" && current.mode === "fly" && current.overhead
