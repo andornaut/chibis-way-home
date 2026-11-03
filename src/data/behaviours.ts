@@ -2,6 +2,7 @@ import { BIRD } from "./bird";
 import { SCREEN, TILE } from "./screen";
 import type {
   BehaviourAction,
+  BehaviourGroundReposition,
   BehaviourNode,
   BehaviourPlan,
   BehaviourTransition,
@@ -46,6 +47,14 @@ const ANIMAL_IDLE_WATCHDOG: NonNullable<BehaviourPlan["idleWatchdog"]> = {
   minMovement: 0.5,
   resume: "pursuit",
   seconds: 2,
+};
+
+const GROUND_BOSS_REPOSITION: BehaviourGroundReposition = {
+  distance: 12,
+  intervalSeconds: 2,
+  maxAttempts: 2,
+  minDistance: 4,
+  resume: "pursuit",
 };
 
 const ATTACK_ENGAGEMENT_RANGE = 12;
@@ -239,7 +248,10 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
         { to: "wait-right", when: [{ kind: "boundary" }] },
       ],
     },
-    pursuit: chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", tuning.preparation),
+    pursuit: {
+      ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", tuning.preparation),
+      allowGroundReposition: true,
+    },
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
@@ -365,6 +377,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
+    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "patrol-left",
@@ -444,6 +457,7 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
+    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "patrol-left",
@@ -512,6 +526,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -12,
+    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "patrol-left",
@@ -645,6 +660,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "y",
     distance: -15,
+    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "watch",
@@ -687,6 +703,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
       },
       pursuit: {
         ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration-ground", "prepare-charge"),
+        allowGroundReposition: true,
         animation: "climb",
         track: RACCOON_GROUND_TRACK,
       },
@@ -762,6 +779,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
+    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "watch",
@@ -819,7 +837,10 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
           { to: "maul", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
       },
-      pursuit: chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-charge"),
+      pursuit: {
+        ...chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-charge"),
+        allowGroundReposition: true,
+      },
       "pursuit-growl": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-growl"),
       "pursuit-maul": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-maul"),
       rest: {
