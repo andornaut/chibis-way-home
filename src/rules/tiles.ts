@@ -21,6 +21,7 @@ import type {
 import { worldScenery } from "../view/objectArt";
 import { drawsFrom, tileHitbox, type Tileset } from "../view/tiles";
 import { layoutBehaviour } from "./behaviour";
+import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling";
 import { validateHazardPhases } from "./effectiveCollision";
 import { resolveOrbits, validateOrbitReferences } from "./orbit";
 import { validateZoneLinks } from "./zoneLinks";
@@ -116,6 +117,20 @@ export function objectLayout(
   const behaviour = pattern && layoutBehaviour(tile, pattern);
   if (behaviour && (instance.phase ?? 0) !== 0) {
     throw new Error(`Behaviour ${instance.character} uses its initial state, not a motion phase`);
+  }
+  if (instance.crumbling !== undefined) {
+    validateCrumblingProfile(instance.crumbling);
+    if (
+      !["solid", "ledge"].includes(archetype.collision) ||
+      motion.algorithm !== "static" ||
+      behaviour !== undefined ||
+      instance.orbit !== undefined ||
+      reaction.kind !== "none" ||
+      instance.overrides?.motion !== undefined ||
+      instance.overrides?.reaction !== undefined
+    ) {
+      throw new Error(`Crumbling ${instance.character} requires stationary physical support`);
+    }
   }
   const parallax = instance.parallax;
   if (parallax) {
@@ -270,6 +285,7 @@ export function objectLayout(
         ? { tileset: character.tileset }
         : {}),
     character: instance.character,
+    ...(instance.crumbling && { crumbling: instance.crumbling }),
     ...(Object.keys(spawnTemplates).length > 0 && { spawnTemplates }),
     ...(behaviour && { behaviour }),
     collision: archetype.collision,
@@ -375,7 +391,7 @@ export function areaLayout(
     }
     return marked;
   });
-  return {
+  const layout: AreaLayout = {
     ...(area.walkLinks && { walkLinks: area.walkLinks }),
     backX: tile,
     chunks: (area.chunks ?? []).map(({ col, cols }) => ({ width: cols * tile, x: col * tile })),
@@ -390,6 +406,8 @@ export function areaLayout(
     tileset: area.tileset,
     width: area.cols * tile,
   };
+  const crumbling = crumblingDefinitions(layout);
+  return crumbling.length === 0 ? layout : { ...layout, crumbling };
 }
 
 // A zone plan in base pixels, for the rules: each instance resolved against the catalogue, with

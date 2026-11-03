@@ -1,6 +1,7 @@
 // The shapes of the game data. The value files beside this one fill them.
 
 import type { Point as SharedPoint, Rect as SharedRect } from "@andornaut/game-kit/rect";
+import type { CrumblingDefinition, CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
 
 import type { SEAM_ROWS } from "./chunks";
 
@@ -747,6 +748,7 @@ export interface Orbit<Host = string> {
 }
 
 export interface Instance {
+  readonly crumbling?: CrumblingProfile;
   readonly id?: string;
   readonly orbit?: Orbit;
   readonly behaviour?: BehaviourPlan;
@@ -781,6 +783,7 @@ export interface Instance {
 // a face), "road" (a top over road, with a kerb on the terrain beside it) or "post" (2 wide: a
 // cap, a shaft and a base). Without a tileset it is a flat rectangle and has no look.
 export interface TerrainRect extends TileRect {
+  readonly crumbling?: CrumblingProfile;
   readonly look?: string;
 }
 
@@ -1037,6 +1040,7 @@ export interface Reaches {
 // the view and dialogue need. hitbox: where a hazard touches her, from its top-left corner, when
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
+  readonly crumbling?: CrumblingProfile;
   // Resolved from the original scenery collection, never from art, names or scroll factors.
   readonly scenerySource?: "chunk";
   readonly contactCue?: "red-hazard";
@@ -1074,12 +1078,15 @@ export interface ObjectLayout {
   readonly width: number;
 }
 
+export type CrumblingSupportId = Rect | ObjectLayout;
+
 // An area in base pixels. Falling below its height restarts the zone, her collision box
 // reaching past exitX, the left edge of its last column, clears it, and reaching back past backX,
 // the right edge of its first column, ends it without clearing it. terrain and tileset are its
 // plan's, in tiles, for drawing. chunks: an assembled area's chunks, left to right, for the
 // camera; none in a hand-built one.
 export interface AreaLayout {
+  readonly crumbling?: readonly CrumblingDefinition<CrumblingSupportId>[];
   readonly walkLinks?: { readonly left?: AreaLink; readonly right?: AreaLink };
   readonly backX: number;
   readonly chunks: readonly { readonly width: number; readonly x: number }[];
