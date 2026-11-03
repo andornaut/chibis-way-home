@@ -172,7 +172,38 @@ register(
   ["dry-underground-gallery-encounter"],
 );
 register(
-  () => [point(7, 50), point(26, 50), point(31, 50), point(35, 50), point(58, 50)],
+  (library, chunk) => {
+    const theme = library.themes[themesOf(chunk)[0]!]!;
+    const gate = bindElement(
+      theme.bindings,
+      chunk.objects.find(({ role }) => role === "edge-left")!,
+    );
+    const character = CATALOGUE.characters[gate.character]!;
+    const object = objectLayout(
+      TILE,
+      CATALOGUE,
+      HITBOXES,
+      TILESETS[character.tileset ?? theme.tileset],
+      TILESETS,
+      gate,
+    );
+    const rect = object.hitbox!;
+    const left = (object.origin.x + rect.x) / TILE;
+    const right = left + rect.width / TILE;
+    const refuge = chunk.solids.find(
+      ({ col, cols, row }) => col <= gate.col && col + cols >= right && row === chunk.entry.row,
+    )!;
+    return [
+      point(7, 50),
+      { at: { col: 26, row: 50 }, xRange: { max: Math.floor(left - bodyCols), min: refuge.col } },
+      {
+        at: { col: 31, row: 50 },
+        xRange: { max: refuge.col + refuge.cols - bodyCols, min: Math.ceil(right) },
+      },
+      point(35, 50),
+      point(58, 50),
+    ];
+  },
   ["compound-transfer-gate"],
 );
 register(encounter, [
