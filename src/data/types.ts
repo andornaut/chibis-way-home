@@ -419,7 +419,20 @@ export type BehaviourMotion =
       readonly traversal?: BehaviourTraversal;
     }
   | { readonly kind: "fly"; readonly to: Point; readonly speed: number }
-  | { readonly kind: "fly"; readonly to: "support"; readonly speed: number }
+  | {
+      readonly kind: "fly";
+      readonly to: "support";
+      readonly speed: number;
+      readonly selection?: {
+        readonly kind: "varied";
+        // Horizontal tile displacement; the same support may contain another landing point.
+        readonly distance: number;
+        readonly minDistance: number;
+        // Tiles above both endpoints for the ascent, cruise and supported descent.
+        readonly clearance: number;
+        readonly maxAttempts: number;
+      };
+    }
   // Target flight captures contact-centred aim on entry; bounds limit relative top-left positions.
   | { readonly kind: "fly"; readonly to: "target"; readonly bounds: Rect; readonly speed: number }
   // Capture entry Y; track target-centred X with bounded velocity lead. Distances use tiles.

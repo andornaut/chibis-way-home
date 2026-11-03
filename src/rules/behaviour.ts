@@ -234,6 +234,20 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
       ) {
         throw new Error(`Invalid flight in ${key}`);
       }
+      if (node.motion.kind === "fly" && node.motion.to === "support" && node.motion.selection) {
+        const selection = node.motion.selection;
+        if (
+          selection.kind !== "varied" ||
+          ![selection.distance, selection.minDistance, selection.clearance].every(
+            (value) => Number.isFinite(value) && value > 0,
+          ) ||
+          selection.minDistance > selection.distance ||
+          !Number.isSafeInteger(selection.maxAttempts) ||
+          selection.maxAttempts <= 0
+        ) {
+          throw new Error(`Invalid supported flight selection in ${key}`);
+        }
+      }
       if (
         node.motion.kind === "pursue" &&
         node.motion.mode === "ground" &&
@@ -385,7 +399,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                     }),
                   ...(node.motion.kind === "fly"
                     ? node.motion.to === "support"
-                      ? {}
+                      ? node.motion.selection
+                        ? {
+                            selection: {
+                              ...node.motion.selection,
+                              clearance: node.motion.selection.clearance * tile,
+                              distance: node.motion.selection.distance * tile,
+                              minDistance: node.motion.selection.minDistance * tile,
+                            },
+                          }
+                        : {}
                       : typeof node.motion.to === "string"
                         ? {
                             ...(node.motion.to === "target-x" && {

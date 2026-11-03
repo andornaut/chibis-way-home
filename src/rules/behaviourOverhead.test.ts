@@ -488,3 +488,41 @@ describe("physical horizontal gap", () => {
     },
   );
 });
+
+it("resolves bounded varied support selection distances without scaling its attempt count", () => {
+  const selection = {
+    clearance: 3,
+    distance: 40,
+    kind: "varied" as const,
+    maxAttempts: 4,
+    minDistance: 10,
+  };
+  const profile = (policy = selection): BehaviourPlan => ({
+    ...plan,
+    states: {
+      ...plan.states,
+      relocate: {
+        animation: null,
+        motion: { kind: "fly", selection: policy, speed: 20, to: "support" },
+        transitions: [],
+      },
+    },
+  });
+  expect(layoutBehaviour(12, profile()).states.relocate!.motion).toEqual({
+    kind: "fly",
+    selection: { ...selection, clearance: 36, distance: 480, minDistance: 120 },
+    speed: 240,
+    to: "support",
+  });
+  for (const invalid of [
+    { distance: 0 },
+    { minDistance: 41 },
+    { clearance: 0 },
+    { maxAttempts: 1.5 },
+    { distance: Infinity },
+  ]) {
+    expect(() => layoutBehaviour(12, profile({ ...selection, ...invalid }))).toThrow(
+      "Invalid supported flight selection",
+    );
+  }
+});
