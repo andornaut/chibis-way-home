@@ -255,8 +255,18 @@ function releasePoint(gravity: number, curve: JumpReleaseCurve, elapsed: number)
   };
 }
 
+export interface BirdStepResult {
+  readonly bird: BirdState;
+  readonly support: Rect | undefined;
+}
+
+interface LandingSupport {
+  support: Rect | undefined;
+}
+
 // A forced move cannot pass through a thin solid between its starting and ending boxes.
 function pushedPosition(
+  landing: LandingSupport | undefined,
   solids: readonly Rect[],
   axis: "x" | "y",
   box: Rect,
@@ -270,10 +280,14 @@ function pushedPosition(
     if (box[across] >= solid[across] + solid[depth] || solid[across] >= box[across] + box[depth]) {
       continue;
     }
+    const previous = end;
     if (desired > box[axis] && box[axis] + box[length] <= solid[axis] + EDGE) {
       end = Math.min(end, solid[axis] - box[length]);
     } else if (desired < box[axis] && box[axis] >= solid[axis] + solid[length] - EDGE) {
       end = Math.max(end, solid[axis] + solid[length]);
+    }
+    if (landing && axis === "y" && desired > box.y && end < previous) {
+      landing.support = solid;
     }
   }
   return end;
@@ -301,6 +315,34 @@ export function stepBird(
   input: BirdInput,
   bird: BirdState,
 ): BirdState {
+  return solveBird(tuning, solids, ledges, seconds, input, undefined, bird);
+}
+
+export function stepBirdWithSupport(
+  tuning: BirdTuning,
+  solids: readonly Rect[],
+  ledges: readonly Rect[],
+  seconds: number,
+  input: BirdInput,
+  bird: BirdState,
+): BirdStepResult {
+  const landing: LandingSupport = { support: undefined };
+  const next = solveBird(tuning, solids, ledges, seconds, input, landing, bird);
+  return { bird: next, support: landing.support };
+}
+
+function solveBird(
+  tuning: BirdTuning,
+  solids: readonly Rect[],
+  ledges: readonly Rect[],
+  seconds: number,
+  input: BirdInput,
+  landing: LandingSupport | undefined,
+  bird: BirdState,
+): BirdState {
+  if (landing) {
+    landing.support = undefined;
+  }
   const burst = tuning.dash;
   let dash =
     bird.dash ??
@@ -435,7 +477,7 @@ export function stepBird(
   const intendedX = bird.x + moving * seconds;
   let x =
     input.push?.x || dashSeconds > 0
-      ? pushedPosition(solids, "x", birdBox(tuning, bird), intendedX)
+      ? pushedPosition(undefined, solids, "x", birdBox(tuning, bird), intendedX)
       : intendedX;
   if (x !== intendedX) {
     vx = 0;
@@ -460,10 +502,10 @@ export function stepBird(
   const falling = (rise === undefined ? vy : -rise / seconds) + verticalPush;
   const intendedY = bird.y + (rise === undefined ? vy * seconds : -rise) + verticalPush * seconds;
   let y = input.push?.y
-    ? pushedPosition(solids, "y", { ...birdBox(tuning, bird), x }, intendedY)
+    ? pushedPosition(landing, solids, "y", { ...birdBox(tuning, bird), x }, intendedY)
     : intendedY;
   if (input.push?.y && falling > 0) {
-    y = pushedPosition(ledges, "y", { ...birdBox(tuning, bird), x }, y);
+    y = pushedPosition(landing, ledges, "y", { ...birdBox(tuning, bird), x }, y);
   }
   let grounded = y !== intendedY && falling > 0;
   if (y !== intendedY) {
@@ -478,8 +520,14 @@ export function stepBird(
       if ((verticalPush === 0 && rise === undefined ? vy : falling) > 0) {
         y = solid.y - tuning.height;
         grounded = true;
+        if (landing) {
+          landing.support = solid;
+        }
       } else {
         y = solid.y + solid.height;
+        if (landing) {
+          landing.support = undefined;
+        }
       }
       vy = 0;
       jumpRise = "free";
@@ -497,11 +545,17 @@ export function stepBird(
     ) {
       y = ledge.y - tuning.height;
       grounded = true;
+      if (landing) {
+        landing.support = ledge;
+      }
       vy = 0;
       jumpRise = "free";
       jumpRelease = undefined;
       rise = undefined;
     }
+  }
+  if (landing && !grounded) {
+    landing.support = undefined;
   }
   if (grounded) {
     airJumpUsed = false;

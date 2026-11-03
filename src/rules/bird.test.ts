@@ -2,13 +2,98 @@ import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { Rect } from "../data/types";
-import { type BirdInput, type BirdState, startBird, stepBird } from "./bird";
+import { type BirdInput, type BirdState, startBird, stepBird, stepBirdWithSupport } from "./bird";
 import { STEP_SECONDS } from "./step";
 
 const STEP = STEP_SECONDS;
 const GROUND: Rect = { height: 40, width: 2000, x: -1000, y: 300 };
 const IDLE: BirdInput = { jumpHeld: false, move: 0 };
 const SINGLE_JUMP = { ...BIRD, doubleJump: false };
+
+describe("resolved standing support", () => {
+  it("reports the selected terrain reference and clears it on a real jump and walk-off", () => {
+    const initial = startBird(BIRD, { x: 0, y: GROUND.y });
+    const landed = stepBirdWithSupport(BIRD, [GROUND], [], STEP, IDLE, initial);
+    expect(landed.bird).toEqual(stepBird(BIRD, [GROUND], [], STEP, IDLE, initial));
+    expect(landed.support).toBe(GROUND);
+    const jumped = stepBirdWithSupport(
+      BIRD,
+      [GROUND],
+      [],
+      STEP,
+      { jumpHeld: true, move: 0 },
+      landed.bird,
+    );
+    expect(jumped.support).toBeUndefined();
+    expect(jumped.bird.grounded).toBe(false);
+    const ledge = { height: 40, width: 40, x: -20, y: GROUND.y };
+    let bird = stepBird(BIRD, [ledge], [], STEP, IDLE, initial);
+    let lastSupport: Rect | undefined = ledge;
+    for (let tick = 0; tick < 30; tick++) {
+      const input = { jumpHeld: false, move: 1 as const };
+      const next = stepBirdWithSupport(BIRD, [ledge], [], STEP, input, bird);
+      expect(next.bird).toEqual(stepBird(BIRD, [ledge], [], STEP, input, bird));
+      bird = next.bird;
+      lastSupport = next.support;
+    }
+    expect(bird.grounded).toBe(false);
+    expect(lastSupport).toBeUndefined();
+  });
+
+  it.each(["solid", "ledge"] as const)(
+    "retains actual %s candidate order for coincident surfaces",
+    (kind) => {
+      const first = { height: 12, width: 100, x: -50, y: 200 };
+      const second = { ...first };
+      for (const surfaces of [
+        [first, second],
+        [second, first],
+      ]) {
+        const solids = kind === "solid" ? surfaces : [];
+        const ledges = kind === "ledge" ? surfaces : [];
+        let bird = startBird(BIRD, { x: 0, y: 100 });
+        let support: Rect | undefined;
+        for (let tick = 0; tick < 120 && !bird.grounded; tick++) {
+          const next = stepBirdWithSupport(BIRD, solids, ledges, STEP, IDLE, bird);
+          expect(next.bird).toEqual(stepBird(BIRD, solids, ledges, STEP, IDLE, bird));
+          bird = next.bird;
+          support = next.support;
+        }
+        expect(bird.grounded).toBe(true);
+        expect(support).toBe(surfaces[0]);
+      }
+    },
+  );
+
+  it.each(["solid", "ledge"] as const)(
+    "reports the strict-winning pushedPosition %s landing",
+    (kind) => {
+      const lower = { height: 2, width: 100, x: -50, y: 260 };
+      const upper = { ...lower, y: 200 };
+      const tied = { ...upper };
+      const solids = kind === "solid" ? [lower, upper, tied] : [lower];
+      const ledges = kind === "ledge" ? [upper, tied] : [];
+      const initial = startBird(BIRD, { x: 0, y: 100 });
+      const input = { ...IDLE, push: { x: 0, y: 24_000 } };
+      const result = stepBirdWithSupport(BIRD, solids, ledges, STEP, input, initial);
+      expect(result.bird).toEqual(stepBird(BIRD, solids, ledges, STEP, input, initial));
+      expect(result.bird.grounded).toBe(true);
+      expect(result.bird.y + BIRD.height).toBe(upper.y);
+      expect(result.support).toBe(upper);
+    },
+  );
+
+  it("does not report a ceiling clamp as standing support", () => {
+    const ceiling = { height: 12, width: 100, x: -50, y: 100 };
+    const initial = startBird(BIRD, { x: 0, y: 250 });
+    const input = { ...IDLE, push: { x: 0, y: -24_000 } };
+    const result = stepBirdWithSupport(BIRD, [ceiling], [], STEP, input, initial);
+    expect(result.bird).toEqual(stepBird(BIRD, [ceiling], [], STEP, input, initial));
+    expect(result.bird.y).toBe(ceiling.y + ceiling.height);
+    expect(result.bird.grounded).toBe(false);
+    expect(result.support).toBeUndefined();
+  });
+});
 
 // Steps her from a standing start on GROUND, with input(step) each step; returns every state.
 function run(
