@@ -524,7 +524,11 @@ export interface BehaviourGroundReposition {
   readonly resume: string;
 }
 
+export type HazardPhase = "inactive" | "warning" | "active";
+
 export interface BehaviourNode {
+  // Stationary timed hazards label every state; recovery uses inactive.
+  readonly hazardPhase?: HazardPhase;
   // Tell starts one attack; committed includes its recovery; completed begins the actor cooldown.
   readonly attack?: {
     readonly id: string;
