@@ -159,6 +159,14 @@ register(recovery, [
   "compound-return-terrace",
   "park-pond",
 ]);
+register(
+  (library, chunk) => [...recovery(library, chunk), point(30, chunk.solids[2]!.row)],
+  ["broad-mesa"],
+);
+register(
+  (library, chunk) => [...recovery(library, chunk), point(30, chunk.solids[1]!.row)],
+  ["low-central-crossing"],
+);
 register(encounter, [
   ...["early", "middle", "late"].flatMap((position) => [
     `patrol-cover-${position}`,

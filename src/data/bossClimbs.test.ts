@@ -6,14 +6,18 @@ import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "
 import type { BehaviourWorld } from "../rules/behaviourReach";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
 import { startBird } from "../rules/bird";
+import { chunkProblems } from "../rules/chunk";
 import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
+import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
 import { BIRD } from "./bird";
+import { CHUNKS } from "./chunks";
 import { TILE } from "./screen";
+import { apartmentChunkId } from "./zone6";
 
 vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
   const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
@@ -249,4 +253,86 @@ it("keeps acquired Archie pursuing across the production middle-yard low wall", 
       status: state.traversal?.status,
     }),
   );
+});
+
+const connectedRoutes = [
+  {
+    goals: [
+      { jumpFrom: 6, row: 46, x: 14 },
+      { jumpFrom: 16, row: 42, x: 27 },
+      { row: 46, x: 44 },
+      { row: 50, x: 56 },
+    ],
+    id: "broad-mesa",
+  },
+  {
+    goals: [
+      { jumpFrom: 20, row: 46, x: 29 },
+      { row: 50, x: 56 },
+    ],
+    id: "low-central-crossing",
+  },
+];
+it.each(connectedRoutes)(
+  "ordinary connected encounter terrain $id clears without abilities",
+  ({ goals, id }) => {
+    const layout = layoutOf("city-streets", id);
+    let zone = startZone(ordinary, layout, 1);
+    let phase = 0;
+    let jumpAt: number | undefined;
+    const landings: { phase: number; tick: number; x: number; row: number }[] = [];
+    for (let tick = 0; tick < 600 && !zone.death && !zone.cleared; tick++) {
+      const goal = goals[phase];
+      let move: -1 | 0 | 1 = 1;
+      let jumpHeld = false;
+      if (goal) {
+        if (
+          zone.bird.grounded &&
+          Math.abs(zone.bird.y + ordinary.height - goal.row * TILE) < 0.01 &&
+          zone.bird.x >= goal.x * TILE - 1
+        ) {
+          landings.push({ phase, row: goal.row, tick, x: zone.bird.x });
+          phase++;
+          jumpAt = undefined;
+        } else {
+          if (
+            goal.jumpFrom !== undefined &&
+            zone.bird.grounded &&
+            !zone.bird.jumpHeld &&
+            zone.bird.x >= goal.jumpFrom * TILE
+          ) {
+            jumpAt ??= tick;
+          }
+          jumpHeld = jumpAt !== undefined && (tick - jumpAt) * STEP_SECONDS < ordinary.jumpRiseTime;
+          const stop = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * ordinary.brakeAccel);
+          if (zone.bird.x + stop >= goal.x * TILE) {
+            move = 0;
+          }
+        }
+      }
+      zone = stepZone(ordinary, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
+      expect(zone.bird.airJumpUsed).toBe(false);
+      expect(zone.bird.dash).toBeUndefined();
+    }
+    const witness = JSON.stringify({ bird: zone.bird, death: zone.death, id, landings, phase });
+    expect(zone.death, witness).toBeUndefined();
+    expect(phase, witness).toBe(goals.length);
+    expect(zone.cleared, witness).toBe(true);
+  },
+);
+
+it("keeps quiet connected terrain valid with explicit Apartment route contracts", () => {
+  for (const id of ["broad-mesa", "low-central-crossing"]) {
+    const chunk = CHUNKS[id]!;
+    expect(chunkProblems(CHUNK_LIBRARY, CATALOGUE, chunk), id).toEqual([]);
+    expect(chunk.encounters).toBe(0);
+    expect(REQUIRED_CHUNK_ROUTES[id]!.length, id).toBeGreaterThan(0);
+    const tallId = apartmentChunkId(id);
+    const tall = CHUNKS[tallId]!;
+    expect(chunkProblems(CHUNK_LIBRARY, CATALOGUE, tall), tallId).toEqual([]);
+    expect(tall.encounters).toBe(0);
+    expect(tall.difficulty).toBeGreaterThanOrEqual(4);
+    expect(tall.rows).toBe(120);
+    expect(REQUIRED_CHUNK_ROUTES[tallId]!.length, tallId).toBeGreaterThan(0);
+  }
 });

@@ -774,6 +774,27 @@ function horizontalYard(bear: boolean, origin: number, climb: boolean): ChunkPla
     ],
   );
 }
+const MESA_TERRAIN = [
+  floor(0, 10, 50),
+  floor(10, 10, 46),
+  floor(20, 20, 42),
+  floor(40, 10, 46),
+  floor(50, 10, 50),
+];
+const CENTRAL_CROSSING_TERRAIN = [floor(0, 24, 50), floor(24, 12, 46), floor(36, 24, 50)];
+const CENTRAL_CROSSING_REFUGES = [ledge(10, 12, 42), ledge(38, 12, 42)];
+const CONNECTED_TERRAIN_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
+  "broad-mesa": moduleChunk(MECHANICAL_THEMES, 4, 50, 50, MESA_TERRAIN),
+  "low-central-crossing": moduleChunk(
+    MECHANICAL_THEMES,
+    4,
+    50,
+    50,
+    CENTRAL_CROSSING_TERRAIN,
+    CENTRAL_CROSSING_REFUGES,
+  ),
+};
+
 function flyerYard(origin: number, climb: boolean): ChunkPlan {
   const solids = [
     floor(0, origin, 50),
@@ -842,6 +863,7 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...createHazardChunks(MECHANICAL_THEMES),
   ...createOrbitHazardChunks(MECHANICAL_THEMES),
   ...ENCOUNTER_YARDS,
+  ...CONNECTED_TERRAIN_CHUNKS,
   "bounded-flyer-post": FLYER_ASCENT,
   "city-boundary-climb-yard": moduleChunk(
     PATROL_THEMES,
@@ -1333,6 +1355,8 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
 );
 
 export const GROUND_CHALLENGES: ChunkPool = [
+  "broad-mesa",
+  "low-central-crossing",
   "city-boundary-ground-hazard",
   "compound-ascent",
   "compound-compact-ascent",
