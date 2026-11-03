@@ -264,13 +264,16 @@ describe("mandatory ride admission", () => {
         },
       ),
     );
-    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    let initial = startZone(BIRD, layout, SEED);
+    for (let tick = 0; tick < 86; tick++) {
+      initial = stepZone(BIRD, layout, STEP, STILL, initial);
+    }
     const forecast = initial.forcedTransitForecast!;
     expect(forecast).toBeDefined();
     const next = stepZone(BIRD, layout, STEP, STILL, initial);
     const afterTwo = stepZone(BIRD, layout, STEP, STILL, next);
     expect(forecast.afterOneSeconds).toBe(initial.seconds + STEP);
-    expect(forecast.afterTwoSeconds).toBe(initial.seconds + 2 * STEP);
+    expect(forecast.afterTwoSeconds).toBe(afterTwo.seconds);
     expect(forecast.afterOne).toEqual({ ...next.objects[0], height: 12, width: 72 });
     expect(forecast.afterTwo).toEqual({ ...afterTwo.objects[0], height: 12, width: 72 });
     const context = {

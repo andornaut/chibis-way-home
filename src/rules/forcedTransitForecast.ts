@@ -114,7 +114,7 @@ export function forecastForcedTransit(
     afterOne: first.after,
     afterOneSeconds: context.seconds + STEP_SECONDS,
     afterTwo: second.after,
-    afterTwoSeconds: context.seconds + 2 * STEP_SECONDS,
+    afterTwoSeconds: context.seconds + STEP_SECONDS + STEP_SECONDS,
     carrier,
     context,
   };
@@ -142,7 +142,7 @@ export function forcedTransitTakeoffOrigin(
     ) ||
     !Number.isFinite(jump.bufferLeft) ||
     forecast.afterOneSeconds !== context.seconds + STEP_SECONDS ||
-    forecast.afterTwoSeconds !== context.seconds + 2 * STEP_SECONDS
+    forecast.afterTwoSeconds !== context.seconds + STEP_SECONDS + STEP_SECONDS
   ) {
     return undefined;
   }
