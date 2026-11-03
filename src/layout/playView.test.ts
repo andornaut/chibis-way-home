@@ -5,6 +5,7 @@ import type { Point } from "../data/types";
 import { touchRoleAt } from "../input/intent";
 import { PAUSE_BUTTON } from "./pauseCard";
 import { bottomShift, CONTROL_BOTTOM, CONTROL_EDGE, playView, shifted, topShift } from "./playView";
+import { stageProgressRect } from "./stageProgress";
 import { MOVE_HINT, TOUCH_CONTROLS } from "./touchControls";
 
 // Canvases the play area makes at the game's scale: the game's own size, wider, and taller.
@@ -67,5 +68,16 @@ describe("the controls' edges", () => {
     const shift = bottomShift(canvas);
     const jump = shifted(shift, TOUCH_CONTROLS.jump.centre);
     expect(touchRoleAt(shifted(shift, jump, -1))).toBe("jump");
+  });
+});
+
+describe("the stage progress strip", () => {
+  it.each(CASES)("in %s follows the canvas bottom without changing the game view", (_, canvas) => {
+    const rect = stageProgressRect(canvas);
+    const view = playView(canvas);
+    expect(rect.width).toBe(view.width);
+    expect(rect.x).toBe(view.x);
+    expect(rect.y + rect.height).toBe(Math.floor(canvas.height));
+    expect(rect.height).toBe(4);
   });
 });

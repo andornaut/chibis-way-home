@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events";
 import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
 import { afterEach, expect, it, vi } from "vitest";
 
+import palette from "../../public/art/palette.json";
 import { BIRD } from "../data/bird";
 import { SCREEN } from "../data/screen";
 import { SKILLS } from "../data/skills";
@@ -325,4 +326,34 @@ it("keeps blocked modal and room presses out of movement and clears their lifeti
   f.events.emit("shutdown");
   expect(f.scene.buttonTouches.size).toBe(0);
   expect(f.scene.heldTouches.size).toBe(0);
+});
+
+it("draws current-stage progress on the existing HUD graphics with bottom loading-style rows", () => {
+  const graphics = {
+    clear: vi.fn(),
+    fillRect: vi.fn().mockReturnThis(),
+    fillStyle: vi.fn().mockReturnThis(),
+  };
+  const scene = Object.assign(Object.create(ZoneScene.prototype), {
+    layout: {
+      areas: { main: { entries: { start: { x: 0 } }, exitX: SCREEN.width } },
+      start: { area: "main", entry: "start" },
+    },
+    progress: graphics,
+    scale: { gameSize: SCREEN },
+    zone: { area: "main", bird: { x: SCREEN.width / 4 - BIRD.width / 2 }, cleared: false },
+  }) as { drawProgress(): void };
+  scene.drawProgress();
+  expect(graphics.clear).toHaveBeenCalledExactlyOnceWith();
+  expect(graphics.fillRect.mock.calls).toEqual([
+    [0, SCREEN.height - 4, SCREEN.width, 4],
+    [1, SCREEN.height - 3, SCREEN.width - 2, 2],
+    [1, SCREEN.height - 3, Math.floor((SCREEN.width - 2) / 4), 1],
+    [1, SCREEN.height - 2, Math.floor((SCREEN.width - 2) / 4), 1],
+  ]);
+  expect(graphics.fillStyle.mock.calls.map(([colour]) => colour)).toEqual(
+    ["ink", "dslate", "yellow", "amber"].map((key) =>
+      Number.parseInt(palette.colours[key as keyof typeof palette.colours].slice(1), 16),
+    ),
+  );
 });

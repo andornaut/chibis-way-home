@@ -59,9 +59,9 @@ import { isMouseMovementKey, listenMouseMovement } from "../input/mouseMovement"
 import { PAUSE_BUTTON } from "../layout/pauseCard";
 import { bottomShift, shifted, topShift } from "../layout/playView";
 import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
+import { stageProgressRect } from "../layout/stageProgress";
 import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
-import { PROGRESS_RECT, stageProgressStyle } from "../loading/style";
 import {
   clientPoint,
   listenPagePresses,
@@ -165,6 +165,7 @@ import {
 import { type PlayHold, stepAction } from "../view/playHold";
 import { scenerySpriteFrame } from "../view/scenerySprite";
 import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
+import { STAGE_PROGRESS_STYLE } from "../view/stageProgress";
 import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";
@@ -924,12 +925,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   private drawProgress(): void {
-    const at = topShift(this.scale.gameSize);
     this.progress.clear();
     drawProgressBar(
       this.progress,
-      stageProgressStyle(this.stageKey()),
-      { ...PROGRESS_RECT, ...at },
+      STAGE_PROGRESS_STYLE,
+      stageProgressRect(this.scale.gameSize),
       this.progressFraction(),
     );
   }
