@@ -1,10 +1,11 @@
 import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../view/aseprite";
+import { UI_FONT_RESOURCES } from "../view/uiFonts";
 
 export const ART_MANIFEST_URL = `${ART_PATH}${ART_MANIFEST_FILE}`;
 
-// Every URL a build loads from art's manifest: the manifest itself, each data file, each font's
-// PNG and descriptor and each tileset's description, which BootScene loads, and each image,
-// which the site's pages show as a plain file. Other PNGs are on the build's atlas pages
+// Standalone manifest resources and the UI's two explicit typefaces are emitted for caching.
+// Boot loads data, bitmap fonts and tileset descriptions; site images remain standalone.
+// Other PNGs are on the build's atlas pages
 // (src/tools/atlas/atlasPlugin.ts), which the build lists apart.
 export function artUrls(manifest: ArtManifest): string[] {
   const files = [
@@ -13,5 +14,9 @@ export function artUrls(manifest: ArtManifest): string[] {
     ...manifest.tilesets.map((tileset) => tileset.json),
     ...manifest.images.map((image) => image.png),
   ];
-  return [ART_MANIFEST_URL, ...files.map((file) => `${ART_PATH}${file}`)];
+  return [
+    ART_MANIFEST_URL,
+    ...files.map((file) => `${ART_PATH}${file}`),
+    ...UI_FONT_RESOURCES.map(({ url }) => url),
+  ];
 }
