@@ -1,6 +1,6 @@
 # Chibi's Way Home
 
-[![Test](https://github.com/andornaut/duck-platformer/actions/workflows/test.yml/badge.svg)](https://github.com/andornaut/duck-platformer/actions/workflows/test.yml)
+[![Test](https://github.com/andornaut/chibis-way-home/actions/workflows/test.yml/badge.svg)](https://github.com/andornaut/chibis-way-home/actions/workflows/test.yml)
 
 Help Chibi get home after Furt, his former best friend, mails him far away. A pixel-art platformer for landscape phone browsers and desktop. Built with [Phaser](https://phaser.io/) and TypeScript, and served as static files from [Cloudflare Workers](https://developers.cloudflare.com/workers/static-assets/).
 
@@ -8,7 +8,7 @@ Help Chibi get home after Furt, his former best friend, mails him far away. A pi
 
 The folder READMEs describe the current design and implementation:
 
-- [art/](art/README.md): art rules, assets and pipeline
+- [art/](art/README.md): pipeline and tooling, with the [visual style guide](art/style-guide.md)
 - [gameplay/](gameplay/README.md): gameplay scope, tuning and playtesting, with links to [current rules](gameplay/design.md), [undecided ideas](gameplay/ideas.md) and [later work](gameplay/next.md)
 - [src/](src/README.md): stack, architecture and save data
 
