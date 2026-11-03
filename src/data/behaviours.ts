@@ -20,6 +20,7 @@ const GROUND_PURSUIT_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
 const PIGEON_FLIGHT_SPEED = (1.6 * BIRD.walkSpeed) / TILE;
 const PIGEON_PURSUIT_SPEED = PIGEON_FLIGHT_SPEED;
 const PIGEON_SWOOP_SPEED = 20;
+const POUNCE_ENGAGEMENT_RANGE = 8;
 const RACCOON_RETURN_SPEED = 4.6875;
 
 export const ATTACK_ANTICIPATION_SECONDS = 0.6;
@@ -391,10 +392,27 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
             to: "frustration",
             when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
           },
-          { to: "pounce", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
+          {
+            to: "pounce",
+            when: [
+              { kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS },
+              { kind: "nearby", range: POUNCE_ENGAGEMENT_RANGE },
+              { kind: "line-of-sight" },
+            ],
+          },
+          {
+            to: "pursuit-pounce",
+            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }],
+          },
         ],
       },
-      "pursuit-pounce": chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "prepare-pounce"),
+      "pursuit-pounce": {
+        ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "prepare-pounce"),
+        transitions: [
+          { to: "frustration", when: LOST_TARGET },
+          { to: "prepare-pounce", when: [{ kind: "nearby", range: POUNCE_ENGAGEMENT_RANGE }] },
+        ],
+      },
       rest: {
         animation: "rest",
         motion: { kind: "wait" },

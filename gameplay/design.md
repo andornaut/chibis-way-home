@@ -350,7 +350,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Contact:** Archie is always lethal on contact, including during crouch and rest. It has no red contact outline
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
 - **Dialogue:** the first introduction has three lines: Archie treats Chibi as a parcel Fert asked him to stop; Chibi insists on walking home; Archie resolves to stop him. The player-facing wording lives in the text data files, with Skip available
-- **Special:** Archie makes a leaping pounce as his distinct special attack, alongside periodic ground rushes for direct contact
+- **Special:** Archie makes a leaping pounce as his distinct special attack, alongside periodic ground rushes for direct contact. Pounce preparation starts within its separately tuned engagement range; at the end of the full tell he rechecks that range and current line of sight. If either fails, he resumes pursuit without committing or starting attack cooldown
 - **Timing:** Archie uses the same timing across physical encounters in the first zone; their layouts vary. The first physical encounter occurs in the randomized middle of stage two
 
 ### Rooms
