@@ -71,7 +71,7 @@ it.each([
   },
 );
 
-it("sizes equal pause actions to their widest label and preserves distinct hit selection", () => {
+it("fills pause actions with equal panel insets and preserves distinct hit selection", () => {
   const actions = (["resume", "settings", "home"] as const).map((key) => ({
     art: pause[key].button,
     hit: pause[key].hit,
@@ -83,7 +83,12 @@ it("sizes equal pause actions to their widest label and preserves distinct hit s
     ),
   );
   for (const action of actions) {
-    expect(action.art.width).toBe(widest + 32);
+    expect(action.art.width).toBe(pause.card.width - 2 * CARD_CONTENT.padding);
+    expect(action.art.width).toBeGreaterThanOrEqual(widest + 32);
+    expect(action.art.x - pause.card.x).toBe(CARD_CONTENT.padding);
+    expect(pause.card.x + pause.card.width - action.art.x - action.art.width).toBe(
+      CARD_CONTENT.padding,
+    );
     expect(
       pressedArea(actions, {
         x: action.art.x + action.art.width / 2,
@@ -92,6 +97,20 @@ it("sizes equal pause actions to their widest label and preserves distinct hit s
     ).toBe(action.key);
   }
   expect(rectsOverlap(actions[0]!.art, actions[1]!.art)).toBe(false);
+  for (let index = 1; index < actions.length; index++) {
+    expect(actions[index]!.art.y - actions[index - 1]!.art.y - actions[index - 1]!.art.height).toBe(
+      CARD_CONTENT.gap,
+    );
+  }
+  expect(pause.title.y - pause.card.y).toBe(CARD_CONTENT.padding);
+  expect(
+    pause.card.y + pause.card.height - actions.at(-1)!.art.y - actions.at(-1)!.art.height,
+  ).toBe(CARD_CONTENT.padding);
+  expect(pause.card.x + pause.card.width / 2).toBe(SCREEN.width / 2);
+  expect(pause.card.y + pause.card.height / 2).toBe(SCREEN.height / 2);
+  expect(pause.resume.hit.y).toBeGreaterThanOrEqual(
+    pause.close.hit.y + pause.close.hit.height + CARD_CONTENT.gap,
+  );
 });
 
 it.each([false, true])(

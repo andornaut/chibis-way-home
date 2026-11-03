@@ -1,28 +1,49 @@
 import { SCREEN } from "../data/screen";
 import type { GameText, Point, Rect } from "../data/types";
+import { TEXT_BUTTON } from "./buttonLabel";
 import {
-  cardActions,
+  CARD_CONTENT,
   cardActionsSize,
   type CardFonts,
   cardTextSize,
   contentCardLayout,
 } from "./contentCard";
-import { hitAround } from "./hitAreas";
+import { hitAround, hitMargin } from "./hitAreas";
+import { labelledButton } from "./labelledButton";
 import { CONTROL_EDGE } from "./playView";
 
-// Pause actions share the width of their widest label.
+// Pause actions fill the panel body with equal side padding and standard action gaps.
 export function pauseCard(fonts: CardFonts, words: GameText["pause"]) {
   const labels = [words.resume, words.settings, words.home];
-  const actions = cardActionsSize(fonts.title, "stack", labels);
-  const layout = contentCardLayout({ ...SCREEN, x: 0, y: 0 }, [{ ...actions, key: "actions" }], {
-    close: true,
-    titleWidth: cardTextSize(fonts.title, words.title).width,
-  });
-  const [resume, settings, home] = cardActions(
-    fonts.title,
-    "stack",
-    layout.groups.actions!,
-    labels,
+  const actions = {
+    ...cardActionsSize(fonts.title, "stack", labels),
+    height: labels.length * TEXT_BUTTON.height + (labels.length - 1) * CARD_CONTENT.gap,
+  };
+  const bounds = { ...SCREEN, x: 0, y: 0 };
+  const header = { close: true, titleWidth: cardTextSize(fonts.title, words.title).width };
+  const measured = contentCardLayout(bounds, [{ ...actions, key: "actions" }], header);
+  const width = measured.card.width - 2 * CARD_CONTENT.padding;
+  // Reserve the expanded hit area of the actual filled-width actions below the close target.
+  const layout = contentCardLayout(
+    bounds,
+    [
+      {
+        ...actions,
+        hitOutset: hitMargin({ height: TEXT_BUTTON.height, width, x: 0, y: 0 }),
+        key: "actions",
+        width,
+      },
+    ],
+    header,
+  );
+  const group = layout.groups.actions!;
+  const [resume, settings, home] = labels.map((_, index) =>
+    labelledButton({
+      height: TEXT_BUTTON.height,
+      width: group.width,
+      x: group.x,
+      y: group.y + index * (TEXT_BUTTON.height + CARD_CONTENT.gap),
+    }),
   );
   return {
     card: layout.card,
