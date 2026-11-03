@@ -167,6 +167,10 @@ register(
   (library, chunk) => [...recovery(library, chunk), point(30, chunk.solids[1]!.row)],
   ["low-central-crossing"],
 );
+register(
+  (library, chunk) => [...recovery(library, chunk), point(33, chunk.solids[3]!.row)],
+  ["dry-underground-gallery-encounter"],
+);
 register(encounter, [
   "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",

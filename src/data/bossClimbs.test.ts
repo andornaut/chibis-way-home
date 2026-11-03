@@ -7,6 +7,7 @@ import type { BehaviourWorld } from "../rules/behaviourReach";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
 import { startBird } from "../rules/bird";
 import { chunkProblems } from "../rules/chunk";
+import { supportedLanding } from "../rules/flyLanding";
 import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
@@ -367,11 +368,16 @@ it("assembles Penthouse quota and room with distinct capped encounter templates"
 });
 
 it.each(
-  ["open-stepped-ridge-encounter", "offset-two-level-terrace-encounter"].flatMap((chunkId) =>
-    ([-1, 1] as const).map((direction) => ({ chunkId, direction })),
-  ),
+  [
+    "open-stepped-ridge-encounter",
+    "offset-two-level-terrace-encounter",
+    "dry-underground-gallery-encounter",
+  ].flatMap((chunkId) => ([-1, 1] as const).map((direction) => ({ chunkId, direction }))),
 )("ordinary route crosses $chunkId facing $direction", ({ chunkId, direction }) => {
-  const base = layoutOf("city-streets", chunkId);
+  const base = layoutOf(
+    chunkId === "dry-underground-gallery-encounter" ? "loading-yards" : "city-streets",
+    chunkId,
+  );
   const id = base.start.area;
   const area = base.areas[id]!;
   const layout = {
@@ -497,4 +503,69 @@ it("shares the qualified Trixi ridge collider and traversal with Fert and Kiwi",
       trixi.behaviour!.states.pursuit!.motion,
     );
   }
+});
+
+it("actual Pebble flies beneath the dry gallery roof and returns to supported recovery", () => {
+  const layout = layoutOf("loading-yards", "dry-underground-gallery-encounter");
+  const area = layout.areas[layout.start.area]!;
+  const object = area.objects.find((owner) => owner.behaviour?.pursuit)!;
+  const initial = startZone(ordinary, layout, 1);
+  const target = { ...startBird(ordinary, { x: 42 * TILE, y: 44 * TILE }), grounded: true };
+  const platforms = area.objects
+    .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
+    .map((owner) => ({
+      after: { ...owner.origin, height: owner.height, width: owner.width },
+      before: { ...owner.origin, height: owner.height, width: owner.width },
+      collision: owner.collision as "solid" | "ledge",
+      owner,
+    }));
+  let at = object.origin;
+  let state = startBehaviour(ordinary, object, target);
+  let shots = 0;
+  let overheadTell = false;
+  for (let tick = 0; tick < 1200; tick++) {
+    const world: BehaviourWorld = {
+      idleDecision: {
+        namespace: `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
+        seed: initial.seed + initial.attempt,
+      },
+      platforms: platforms.map(({ after, collision, owner }) => ({
+        collision,
+        owner,
+        rect: after,
+      })),
+      solids: area.solids,
+      traversalFrame: {
+        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+        dtSeconds: STEP_SECONDS,
+        platforms,
+        sample: () => platforms,
+        timeSeconds: tick * STEP_SECONDS,
+      },
+      view: { height: 360, width: 720, x: 0, y: 240 },
+    };
+    const next = stepBehaviour(ordinary, object, world, STEP_SECONDS, target, at, state);
+    at = next.at;
+    state = next.state;
+    for (const solid of area.solids) {
+      expect(
+        at.x < solid.x + solid.width &&
+          at.x + object.width > solid.x &&
+          at.y < solid.y + solid.height &&
+          at.y + object.height > solid.y,
+      ).toBe(false);
+    }
+    if (state.stateKey.startsWith("prepare-drop")) {
+      overheadTell = true;
+      expect(at.y + object.height).toBeLessThanOrEqual(target.y - 6 * TILE + 1e-6);
+    }
+    shots += next.actions.filter(({ action }) => action.kind === "spawn").length;
+    if ((state.attackCooldownRemainingSeconds ?? 0) > 0) {
+      expect(overheadTell).toBe(true);
+      expect(shots).toBe(3);
+      expect(supportedLanding(object, world, at)).toBe(true);
+      return;
+    }
+  }
+  expect.fail(JSON.stringify({ at, shots, state: state.stateKey }));
 });
