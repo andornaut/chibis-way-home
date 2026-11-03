@@ -22,6 +22,7 @@ vi.mock("./cardParts", () => ({
 vi.mock("./playCamera", () => ({ fitPlayCamera: vi.fn() }));
 
 import { startScreenLayout } from "../layout/startScreen";
+import { addSlice } from "./cardParts";
 import { StartScene } from "./StartScene";
 
 afterEach(() => {
@@ -74,22 +75,35 @@ it("begins one offer visit per Start create, retains it on resume, and covers it
   expect(lifecycle.shown).toHaveBeenLastCalledWith(false);
 });
 
-it("draws the native start background before controls without launching or capturing a zone", () => {
-  const node = { setDisplaySize: vi.fn().mockReturnThis(), setOrigin: vi.fn().mockReturnThis() };
-  const image = vi.fn(() => node);
-  const launch = vi.fn();
-  const snapshotArea = vi.fn();
-  const scene = Object.assign(new StartScene(), {
-    add: { image, sprite: () => node },
-    cameras: { main: { setBackgroundColor: vi.fn() } },
-    game: { renderer: { snapshotArea } },
-    layout: startScreenLayout({ height: 239, width: 558 }, false, true),
-    scene: { launch },
-  }) as unknown as { draw(): void };
-  scene.draw();
-  expect(image).toHaveBeenNthCalledWith(1, 0, 0, "start-background");
-  expect(image).toHaveBeenNthCalledWith(2, expect.any(Number), expect.any(Number), "logo");
-  expect(node.setDisplaySize).toHaveBeenCalledOnce();
-  expect(launch).not.toHaveBeenCalled();
-  expect(snapshotArea).not.toHaveBeenCalled();
-});
+it.each([false, true])(
+  "retains the Start header and Settings when Exit is shown=%s",
+  (exitShown) => {
+    const node = { setDisplaySize: vi.fn().mockReturnThis(), setOrigin: vi.fn().mockReturnThis() };
+    const image = vi.fn<(x: number, y: number, key: string) => typeof node>(() => node);
+    const launch = vi.fn();
+    const sprite = vi.fn(() => node);
+    const snapshotArea = vi.fn();
+    const scene = Object.assign(new StartScene(), {
+      add: { image, sprite },
+      cameras: { main: { setBackgroundColor: vi.fn() } },
+      game: { renderer: { snapshotArea } },
+      layout: startScreenLayout({ height: 239, width: 558 }, exitShown, true),
+      scene: { launch },
+    }) as unknown as { draw(): void };
+    scene.draw();
+    expect(image).toHaveBeenNthCalledWith(1, 0, 0, "start-background");
+    expect(image).toHaveBeenNthCalledWith(2, expect.any(Number), expect.any(Number), "logo");
+    expect(node.setDisplaySize).toHaveBeenCalledOnce();
+    expect(addSlice).toHaveBeenCalledWith(scene, "ui-nav-bar", {
+      height: 48,
+      width: 720,
+      x: 0,
+      y: 0,
+    });
+    expect(image).toHaveBeenCalledWith(expect.any(Number), 12, "icon-settings-nav");
+    expect(image.mock.calls.some(([, , key]) => key === "ui-quit")).toBe(exitShown);
+    expect(sprite).toHaveBeenCalledTimes(exitShown ? 2 : 1);
+    expect(launch).not.toHaveBeenCalled();
+    expect(snapshotArea).not.toHaveBeenCalled();
+  },
+);
