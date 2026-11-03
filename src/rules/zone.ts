@@ -48,6 +48,7 @@ import {
   forcedTransitTakeoffOrigin,
   forecastForcedTransit,
 } from "./forcedTransitForecast";
+import { ordinaryTransitControl } from "./forcedTransitProfile";
 import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
@@ -509,13 +510,7 @@ function transitObservation(
     {
       ...(bank && { bank }),
       grounded: zone.bird.grounded,
-      ordinaryControl:
-        zone.bird.grounded &&
-        Number.isFinite(zone.bird.vx) &&
-        Math.abs(zone.bird.vx) <= tuning.walkSpeed &&
-        zone.bird.vy === 0 &&
-        zone.bird.carryVx === 0 &&
-        (zone.bird.dash?.remainingSeconds ?? 0) <= EDGE,
+      ordinaryControl: ordinaryTransitControl(tuning, zone.bird),
       riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
       safeDisembark: bank !== undefined && support?.object.forcedTransit === undefined,
       ...(support && {
