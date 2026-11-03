@@ -19,6 +19,7 @@ import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import { EDGE } from "./bird";
 import { collisionCandidates } from "./collisionIndex";
 import { STEP_SECONDS } from "./step";
+import { timedHazardSafe } from "./timedHazard";
 
 export type TraversalSupport = ObjectLayout | Rect;
 export interface BehaviourTraversalState {
@@ -99,7 +100,8 @@ export function traversalContext(
     maxCollisionSteps: BEHAVIOUR_TRAVERSAL_SEARCH.maxCollisionSteps,
     maxDrop: frame.bounds.height,
     profile: { ...motion.traversal, walkSpeed: motion.speed },
-    safe: ({ from, to }) => {
+    safe: (request) => {
+      const { from, to } = request;
       const sweep = {
         height: from.height + Math.abs(to.y - from.y),
         width: from.width + Math.abs(to.x - from.x),
@@ -107,7 +109,9 @@ export function traversalContext(
         y: Math.min(from.y, to.y),
       };
       return !(world.hazards ?? []).some(
-        ({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect),
+        ({ owner, rect, timedContacts }) =>
+          owner !== object &&
+          (timedContacts ? !timedHazardSafe(timedContacts, request) : rectsOverlap(sweep, rect)),
       );
     },
     sampleColliders: (time, dt, query) => {
@@ -140,34 +144,35 @@ export function traversalContext(
           }
         }
       }
-      const uncertainHazard =
-        time > frame.timeSeconds &&
-        (world.hazards ?? []).some(
-          ({ boundsAt, owner }) =>
-            owner !== object &&
-            (owner.orbit !== undefined ||
-              owner.behaviour !== undefined ||
-              owner.motion.algorithm !== "static" ||
-              owner.reaction.kind !== "none") &&
-            (() => {
-              const bounds = boundsAt?.(time + dt);
-              return (
-                !bounds ||
-                !Object.values(bounds).every(Number.isFinite) ||
-                bounds.width <= 0 ||
-                bounds.height <= 0 ||
-                intersects(
-                  {
-                    height: bounds.height + 2 * EDGE,
-                    width: bounds.width + 2 * EDGE,
-                    x: bounds.x - EDGE,
-                    y: bounds.y - EDGE,
-                  },
-                  query,
-                )
-              );
-            })(),
-        );
+      const uncertainHazard = (world.hazards ?? []).some(
+        ({ boundsAt, owner, timedContacts }) =>
+          owner !== object &&
+          (timedContacts
+            ? timedContacts(time, time + dt) === undefined
+            : time > frame.timeSeconds &&
+              (owner.orbit !== undefined ||
+                owner.behaviour !== undefined ||
+                owner.motion.algorithm !== "static" ||
+                owner.reaction.kind !== "none") &&
+              (() => {
+                const bounds = boundsAt?.(time + dt);
+                return (
+                  !bounds ||
+                  !Object.values(bounds).every(Number.isFinite) ||
+                  bounds.width <= 0 ||
+                  bounds.height <= 0 ||
+                  intersects(
+                    {
+                      height: bounds.height + 2 * EDGE,
+                      width: bounds.width + 2 * EDGE,
+                      x: bounds.x - EDGE,
+                      y: bounds.y - EDGE,
+                    },
+                    query,
+                  )
+                );
+              })()),
+      );
       return {
         colliders,
         complete: platforms !== undefined && !uncertainHazard,

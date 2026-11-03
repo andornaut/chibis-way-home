@@ -3,6 +3,7 @@ import { rectsOverlap } from "@andornaut/game-kit/rect";
 import type { AreaLayout, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { collisionCandidates } from "./collisionIndex";
+import type { TimedHazardSampler } from "./timedHazard";
 
 export interface BehaviourPlatform {
   readonly collision: "ledge" | "solid";
@@ -40,6 +41,7 @@ export interface BehaviourWorld {
   readonly hazards?: readonly {
     readonly owner: ObjectLayout;
     readonly rect: Rect;
+    readonly timedContacts?: TimedHazardSampler;
     // Certified occupancy through this absolute time; undefined keeps future geometry unknown.
     readonly boundsAt?: (endSeconds: number) => Rect | undefined;
   }[];

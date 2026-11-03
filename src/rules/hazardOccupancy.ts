@@ -1,8 +1,9 @@
-import type { BehaviourNode, ObjectLayout, Point, Rect } from "../data/types";
+import type { BehaviourNode, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import { EDGE } from "./bird";
 import { axisOf } from "./motion";
 import { orbitBounds } from "./orbit";
+import { createTimedHazardSampler, timedHazardRect } from "./timedHazard";
 
 const MAX_GRAPH_STATES = 128;
 
@@ -321,5 +322,23 @@ export function hazardBoundsAt(
       results.set(endSeconds, calculate(endSeconds));
     }
     return results.get(endSeconds);
+  };
+}
+
+// Preserve the legacy envelope while exposing certified timed contacts explicitly.
+export function hazardOccupancy(
+  tuning: BirdTuning,
+  objects: readonly ObjectLayout[],
+  state: BehaviourState | undefined,
+  at: Point,
+  contact: Rect,
+  timeSeconds: number,
+  object: ObjectLayout,
+) {
+  const timedContacts = createTimedHazardSampler(tuning, object, { at, state, timeSeconds });
+  return {
+    boundsAt: hazardBoundsAt(objects, state, at, contact, timeSeconds, object),
+    rect: timedContacts ? timedHazardRect(object, at) : contact,
+    ...(timedContacts && { timedContacts }),
   };
 }
