@@ -5,7 +5,7 @@
 // Offline registration retains its prepared-zone timing. Waiting updates activate only through
 // the explicit Start-screen offer, never automatically before input or during gameplay.
 import { offlineActivity } from "../loading/serviceWorker";
-import { runsInAppWindow } from "../platform/pwa/appWindow";
+import { appCannotClose } from "../platform/pwa/appWindow";
 import {
   backCloseWatcher,
   browserCloseWatcher,
@@ -39,7 +39,7 @@ export const updateOffer = createUpdateOffer(
 // A startup check may hold the first screen and saves for this long; activation remains manual.
 const BOOT_WAIT_MS = 4000;
 
-// Installed app windows retain Settings on Start without an Exit action.
+// Capture close eligibility before the back guard can add a history entry.
 let exitHidden = false;
 let home: HomeScreen | undefined;
 // Resolves once the game may show its first screen and write a save (UpdateFlow.bootable).
@@ -81,7 +81,7 @@ export function setupPhoneApp(): void {
     "storage" in navigator ? navigator.storage : undefined,
   );
   const createCloseWatcher = backCloseWatcher(navigator.userAgent, browserCloseWatcher());
-  exitHidden = runsInAppWindow(window);
+  exitHidden = appCannotClose(createCloseWatcher, window);
   // Firefox for Android's installed app keeps its own back.
   // WORKAROUND: https://bugzilla.mozilla.org/show_bug.cgi?id=2079243 (see isFirefoxAndroidApp).
   if (!isFirefoxAndroidApp(navigator.userAgent, (query) => matchMedia(query).matches)) {
@@ -103,7 +103,7 @@ export function setupPhoneApp(): void {
 }
 
 // Whether the start screen offers to leave the game: Exit, and back with no card open. A browser
-// tab can always leave for the site's home page; installed app windows never show Exit.
+// tab can always leave for the site's home page; app windows need a supported close path.
 export function exitShown(): boolean {
   return !exitHidden;
 }

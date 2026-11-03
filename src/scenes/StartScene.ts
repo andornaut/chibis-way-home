@@ -57,7 +57,8 @@ interface IconButton {
 // under a nav bar with Settings and Exit at its right end. Settings opens the settings card over
 // this screen, and Restart the restart card; the card that shows takes the keys and back until it
 // closes. Exit, and back with no card open, leave the browser game. Installed app windows keep
-// Settings without Exit (exitShown), and back there is the browser's own. A control acts when a
+// Settings without Exit when closing is unsupported (exitShown), and back there is the browser's
+// own. A control acts when a
 // press lands on it and lifts on it.
 export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   // The nav's icon buttons: Settings and, where the game can exit, Exit.

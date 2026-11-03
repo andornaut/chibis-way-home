@@ -86,19 +86,43 @@ it("wires manual updates to prepared registration and explicit Start visits", as
 });
 
 it.each([
-  { displayApp: false, iosApp: false, name: "browser tab", shown: true },
-  { displayApp: false, iosApp: true, name: "iOS Home Screen app", shown: false },
-  { displayApp: true, iosApp: false, name: "display-mode app window", shown: false },
-])("shows Start Exit only in a browser tab: $name", async ({ displayApp, iosApp, shown }) => {
-  Object.assign(window, {
-    matchMedia: () => ({ matches: displayApp }),
-    navigator: {
-      maxTouchPoints: 5,
-      standalone: iosApp,
-      userAgent: iosApp ? "iPhone Safari" : "Chrome/142.0",
-    },
-  });
-  const pwa = await import("./index");
-  pwa.setupPhoneApp();
-  expect(pwa.exitShown()).toBe(shown);
-});
+  { app: false, name: "browser tab", shown: true, ua: "iPhone Safari" },
+  { app: true, name: "Chrome Android app", shown: true, ua: "Android Chrome/142.0" },
+  { app: true, name: "desktop Chrome app", shown: true, ua: "Chrome/142.0" },
+  { app: true, name: "desktop Edge app", shown: true, ua: "Chrome/142.0 Edg/142.0" },
+  { app: true, name: "iOS Home Screen app", shown: false, ua: "iPhone Safari" },
+  { app: true, name: "Firefox Android app", shown: false, ua: "Android Firefox/149.0" },
+  { app: true, name: "Edge Android app", shown: false, ua: "Android Chrome/142.0 EdgA/142.0" },
+  { app: true, name: "Samsung app", shown: false, ua: "Android Chrome/142.0 SamsungBrowser/29" },
+  { app: true, name: "unknown app", shown: false, ua: "Other" },
+  {
+    app: true,
+    historyLength: 2,
+    name: "Chrome app with earlier history",
+    shown: false,
+    ua: "Android Chrome/142.0",
+  },
+  {
+    app: true,
+    name: "Chrome app requiring a history back guard",
+    shown: false,
+    ua: "Android Chrome/119.0",
+    watcher: false,
+  },
+])(
+  "offers Start Exit only with a usable exit path: $name",
+  async ({ app, historyLength = 1, shown, ua, watcher = true }) => {
+    const { backCloseWatcher } = await import("../platform/pwa/backNavigation");
+    vi.mocked(backCloseWatcher).mockReturnValueOnce(watcher ? () => new EventTarget() : undefined);
+    const appNavigator = { maxTouchPoints: 5, standalone: app && /iPhone/.test(ua), userAgent: ua };
+    Object.assign(window, {
+      history: { length: historyLength },
+      matchMedia: () => ({ matches: app }),
+      navigator: appNavigator,
+    });
+    vi.stubGlobal("navigator", appNavigator);
+    const pwa = await import("./index");
+    pwa.setupPhoneApp();
+    expect(pwa.exitShown()).toBe(shown);
+  },
+);
