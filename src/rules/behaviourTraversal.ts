@@ -209,11 +209,8 @@ function staticSupportSpan(solids: readonly Rect[], support: Rect): SupportSpan 
   return spans.get(support) ?? { left: support.x, right: support.x + support.width };
 }
 
-function supportedSpan(world: BehaviourWorld, support: Rect): SupportSpan {
-  let span = world.solids.includes(support)
-    ? staticSupportSpan(world.solids, support)
-    : { left: support.x, right: support.x + support.width };
-  const stationary = (world.platforms ?? [])
+function stationaryPlatforms(world: BehaviourWorld): readonly Rect[] {
+  return (world.platforms ?? [])
     .filter(
       ({ owner }) =>
         owner.motion.algorithm === "static" &&
@@ -222,6 +219,25 @@ function supportedSpan(world: BehaviourWorld, support: Rect): SupportSpan {
         owner.reaction.kind === "none",
     )
     .map(({ rect }) => rect);
+}
+
+function stationarySupport(
+  world: BehaviourWorld,
+  supportId: TraversalSupport | undefined,
+): Rect | undefined {
+  return (
+    world.solids.find((rect) => rect === supportId) ??
+    (world.platforms ?? []).find(
+      ({ owner, rect }) => owner === supportId && stationaryPlatforms(world).includes(rect),
+    )?.rect
+  );
+}
+
+function supportedSpan(world: BehaviourWorld, support: Rect): SupportSpan {
+  let span = world.solids.includes(support)
+    ? staticSupportSpan(world.solids, support)
+    : { left: support.x, right: support.x + support.width };
+  const stationary = stationaryPlatforms(world);
   if (
     (!world.solids.includes(support) && !stationary.includes(support)) ||
     !stationary.some(
@@ -301,12 +317,12 @@ export function preferredDescentInputs(
   if (!start.grounded || direct.status !== "ok" || direct.state.grounded) {
     return undefined;
   }
-  const support = world.solids.find((rect) => rect === start.supportId);
+  const support = stationarySupport(world, start.supportId);
   if (!support) {
     return undefined;
   }
   const { body, epsilon } = context;
-  const departure = staticSupportSpan(world.solids, support);
+  const departure = supportedSpan(world, support);
   const left = start.x + body.offset.x;
   const right = left + body.width;
   const foot = start.y + body.offset.y + body.height;
@@ -336,7 +352,7 @@ export function preferredDescentInputs(
     goal.x >= span.left - epsilon &&
     goal.x + goal.width <= span.right + epsilon &&
     Math.abs(move === 1 ? span.left - departure.right : span.right - departure.left) <= epsilon
-    ? descentWaypointInputs(context, request, move)
+    ? waypointInputs(context, request, move)
     : undefined;
 }
 
@@ -382,28 +398,55 @@ export function preferredAscentInputs(
       rise <= maximumRise
     );
   });
-  return wall
-    ? Array.from({ length: request.horizonSteps }, (_, index) => ({ jump: index === 0, move }))
-    : undefined;
+  if (wall) {
+    return Array.from({ length: request.horizonSteps }, (_, index) => ({
+      jump: index === 0,
+      move,
+    }));
+  }
+  const support = stationarySupport(world, start.supportId);
+  if (!support || Math.abs(foot - support.y) > epsilon) {
+    return undefined;
+  }
+  const departure = supportedSpan(world, support);
+  if (left < departure.left - epsilon || right > departure.right + epsilon) {
+    return undefined;
+  }
+  const landingFloor = goal.y + goal.height - epsilon;
+  const bridge = stationaryPlatforms(world).find((rect) => {
+    const rise = foot - rect.y;
+    if (
+      rise <= epsilon ||
+      rise > maximumRise ||
+      Math.abs(rect.y - landingFloor) > epsilon ||
+      Math.abs(move === 1 ? rect.x - departure.right : rect.x + rect.width - departure.left) >
+        epsilon
+    ) {
+      return false;
+    }
+    const span = supportedSpan(world, rect);
+    return goal.x >= span.left - epsilon && goal.x + goal.width <= span.right + epsilon;
+  });
+  return bridge ? waypointInputs(context, request, move, true) : undefined;
 }
 
-// Descending routes can require several supported landings within separate native horizons.
-function descentWaypoint(
+// Routes can require several supported landings within separate native horizons.
+function supportedWaypoint(
   world: BehaviourWorld,
   context: TraversalContext<TraversalSupport>,
   direct: TraversalStepResult<TraversalSupport>,
   start: TraversalState<TraversalSupport>,
   goal: Rect,
-): Rect | undefined {
+): { readonly goal: Rect; readonly jump: boolean } | undefined {
   if (!start.grounded || direct.status !== "ok" || direct.state.grounded) {
     return undefined;
   }
-  const support = world.solids.find((rect) => rect === start.supportId);
+  const support = stationarySupport(world, start.supportId);
   if (!support) {
     return undefined;
   }
   const { body, epsilon } = context;
-  const departure = staticSupportSpan(world.solids, support);
+  const departure = supportedSpan(world, support);
   const left = start.x + body.offset.x;
   const right = left + body.width;
   const foot = start.y + body.offset.y + body.height;
@@ -413,7 +456,6 @@ function descentWaypoint(
     Math.abs(foot - support.y) > epsilon ||
     left < departure.left - epsilon ||
     right > departure.right + epsilon ||
-    goal.y + goal.height - epsilon <= foot + epsilon ||
     (move === 1 ? goal.x < right - epsilon : goal.x + goal.width > left + epsilon)
   ) {
     return undefined;
@@ -427,28 +469,49 @@ function descentWaypoint(
           epsilon,
     )
     .sort((a, b) => a.y - b.y)[0];
-  if (!landing) {
+  const maximumRise =
+    (context.profile.jumpSpeed * context.profile.jumpSpeed) / (2 * context.profile.gravity);
+  const upper =
+    !landing &&
+    stationaryPlatforms(world)
+      .filter((rect) => {
+        const rise = foot - rect.y;
+        return (
+          rise > epsilon &&
+          rise <= maximumRise &&
+          Math.abs(move === 1 ? rect.x - departure.right : rect.x + rect.width - departure.left) <=
+            epsilon
+        );
+      })
+      .sort((a, b) => b.y - a.y)[0];
+  const next = landing ?? upper;
+  if (!next) {
     return undefined;
   }
-  const span = staticSupportSpan(world.solids, landing);
-  if (
-    span.right - span.left < body.width ||
-    (goal.x >= span.left - epsilon && goal.x + goal.width <= span.right + epsilon)
-  ) {
+  const span = supportedSpan(world, next);
+  const sameLanding = goal.x >= span.left - epsilon && goal.x + goal.width <= span.right + epsilon;
+  if (span.right - span.left < body.width || (!upper && sameLanding)) {
     return undefined;
   }
   return {
-    height: body.height + 2 * epsilon,
-    width: span.right - span.left,
-    x: span.left,
-    y: landing.y - body.height - epsilon,
+    goal:
+      upper && sameLanding
+        ? goal
+        : {
+            height: body.height + 2 * epsilon,
+            width: span.right - span.left,
+            x: span.left,
+            y: next.y - body.height - epsilon,
+          },
+    jump: Boolean(upper),
   };
 }
 
-function descentWaypointInputs(
+function waypointInputs(
   context: TraversalContext<TraversalSupport>,
   request: TraversalRequest<TraversalSupport>,
   move: -1 | 1,
+  jump = false,
 ): readonly TraversalCommand[] {
   const { body, dtSeconds, epsilon, profile } = context;
   const left = request.start.x + body.offset.x;
@@ -456,7 +519,7 @@ function descentWaypointInputs(
     move === 1 ? request.goal.x + request.goal.width - left - body.width : left - request.goal.x;
   const steps = Math.max(0, Math.floor((distance + epsilon) / (profile.walkSpeed * dtSeconds)));
   return Array.from({ length: request.horizonSteps }, (_, index) => ({
-    jump: false,
+    jump: jump && index === 0,
     move: index < steps ? move : 0,
   }));
 }
@@ -638,9 +701,9 @@ function advanceTraversalStep(
   const direct = stepTraversal(context, input, physical);
   const progress = direct.status === "ok" && Math.abs(direct.state.x - physical.x) > EDGE;
   const waypoint =
-    !inputs.length && goal && descentWaypoint(world, context, direct, physical, goal);
+    !inputs.length && goal && supportedWaypoint(world, context, direct, physical, goal);
   if (waypoint) {
-    goal = waypoint;
+    goal = waypoint.goal;
   }
   const sameGoal =
     goal &&
@@ -686,7 +749,7 @@ function advanceTraversalStep(
       timeSeconds: frame.timeSeconds,
     };
     const preferredInputs = waypoint
-      ? descentWaypointInputs(searchContext, request, move === -1 ? -1 : 1)
+      ? waypointInputs(searchContext, request, move === -1 ? -1 : 1, waypoint.jump)
       : (preferredDescentInputs(world, searchContext, request, direct) ??
         (!progress ? preferredAscentInputs(world, searchContext, request) : undefined));
     const result = findTraversal(searchContext, {

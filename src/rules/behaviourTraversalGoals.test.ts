@@ -6,6 +6,7 @@ import { TILE } from "../data/screen";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
 import { zonePlanOf } from "./assemble";
+import { contactBox } from "./behaviour";
 import { advanceTraversal, type BehaviourTraversalState } from "./behaviourTraversal";
 import { STEP_SECONDS } from "./step";
 import { objectLayout, zoneLayout } from "./tiles";
@@ -155,3 +156,80 @@ it.each([-1, 1] as const)(
     expect.fail(JSON.stringify({ at, prior }));
   },
 );
+
+it("crosses the offset terrace through its actual supported upper bridge", () => {
+  const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, "city-streets", 2, [
+    "offset-two-level-terrace-encounter",
+  ]);
+  const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+  const area = layout.areas[layout.start.area]!;
+  const object = area.objects.find((owner) => owner.behaviour?.pursuit)!;
+  const motion = object.behaviour!.states.pursuit!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    throw new Error("Expected production ground pursuit");
+  }
+  const platforms = area.objects
+    .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
+    .map((owner) => ({
+      after: { ...owner.origin, height: owner.height, width: owner.width },
+      before: { ...owner.origin, height: owner.height, width: owner.width },
+      collision: owner.collision as "solid" | "ledge",
+      owner,
+    }));
+  const hazards = area.objects
+    .filter((owner) => owner !== object && owner.collision === "hazard")
+    .map((owner) => ({ owner, rect: contactBox(owner, owner.origin, 1) }));
+  const bank = area.solids.at(-1)!;
+  const target = {
+    height: BIRD.height,
+    width: BIRD.width,
+    x: bank.x + bank.width - BIRD.width - TILE,
+    y: bank.y - BIRD.height,
+  };
+  let at = object.origin;
+  let prior: BehaviourTraversalState | undefined;
+  let prepared = false;
+  let supportedBridge = false;
+  for (let tick = 0; tick < 600; tick++) {
+    const next = advanceTraversal(
+      {
+        hazards,
+        platforms: platforms.map(({ after, collision, owner }) => ({
+          collision,
+          owner,
+          rect: after,
+        })),
+        solids: area.solids,
+        traversalFrame: {
+          bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+          dtSeconds: STEP_SECONDS,
+          platforms,
+          sample: () => platforms,
+          timeSeconds: tick * STEP_SECONDS,
+        },
+      },
+      object,
+      motion,
+      STEP_SECONDS,
+      prior,
+      at,
+      target,
+    );
+    at = next.at;
+    prior = next.traversal;
+    prepared ||= Boolean(prior?.preparation);
+    supportedBridge ||= Boolean(
+      prior?.physical.grounded &&
+      platforms.some(({ owner }) => owner === prior?.physical.supportId),
+    );
+    if (prior?.physical.grounded && at.y + object.height === bank.y) {
+      expect(prepared).toBe(true);
+      expect(supportedBridge).toBe(true);
+      const left = at.x + object.hitbox!.x;
+      expect(left).toBeGreaterThanOrEqual(bank.x);
+      expect(left + object.hitbox!.width).toBeLessThanOrEqual(bank.x + bank.width);
+      return;
+    }
+  }
+  expect.fail(JSON.stringify({ at, prior }));
+});
