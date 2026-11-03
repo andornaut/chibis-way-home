@@ -20,6 +20,7 @@ import {
   preferredDescentInputs,
   probeRearm,
   traversalContext,
+  traversalGoal,
 } from "./behaviourTraversal";
 import { startBird } from "./bird";
 import { contactFrameAt } from "./bodyContact";
@@ -346,6 +347,159 @@ it.each([-1, 1] as const)("executes a proved static bank descent with move=%s", 
     throw new Error("Expected a proved descent");
   }
   expect(prior?.physical).toEqual(proof.state);
+});
+
+function fragmentedDescentFixture(bank: number, extension: number, move: -1 | 1) {
+  const base = descentActorFixture(move);
+  const mirror = (rect: Rect): Rect =>
+    move === 1 ? rect : { ...rect, x: 11520 - rect.x - rect.width };
+  const support = mirror({ height: 552, width: 48, x: bank, y: 888 });
+  const first = mirror({ height: 480, width: 96, x: bank + 48, y: 960 });
+  const second = mirror({ height: 480, width: extension, x: bank + 144, y: 960 });
+  const wallY = extension === 48 ? 924 : 900;
+  const wall = mirror({
+    height: 1440 - wallY,
+    width: extension === 48 ? 48 : 72,
+    x: bank + 144 + extension,
+    y: wallY,
+  });
+  const originalX = bank === 8496 ? 8497.599999999988 : 5617.600000000003;
+  const body = mirror({ height: 46, width: 44, x: originalX + 2, y: 842 });
+  const start = {
+    ...base.start,
+    supportId: support,
+    x: body.x - 2,
+    y: body.y - 2,
+  };
+  const origin = mirror({ height: 48, width: 48, x: bank - 72, y: 912 });
+  const object = { ...base.object, origin: { x: origin.x, y: origin.y } };
+  const geometry = {
+    ...base.geometry,
+    // Rectangle order does not define the connected support interval.
+    solids: [wall, second, support, first],
+    traversalFrame: {
+      ...base.geometry.traversalFrame,
+      bounds: { height: 1440, width: 11520, x: 0, y: 0 },
+      timeSeconds: 5.791666666666744,
+    },
+  };
+  const target = mirror({ height: BIRD.height, width: BIRD.width, x: bank + 133, y: 924 });
+  return {
+    ...base,
+    first,
+    geometry,
+    object,
+    prior: { ...base.prior, physical: start },
+    second,
+    start,
+    support,
+    target,
+  };
+}
+
+it.each([
+  { bank: 8496, extension: 96, move: 1 as const },
+  { bank: 5616, extension: 48, move: 1 as const },
+  { bank: 8496, extension: 96, move: -1 as const },
+])(
+  "lands across the static support seam bank=$bank extension=$extension move=$move",
+  ({ bank, extension, move }) => {
+    const fixture = fragmentedDescentFixture(bank, extension, move);
+    let at = { x: fixture.start.x, y: fixture.start.y };
+    let prior: BehaviourTraversalState | undefined = fixture.prior;
+    vi.mocked(findTraversal).mockClear();
+    for (let tick = 0; tick < BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps; tick++) {
+      const next = advanceTraversal(
+        {
+          ...fixture.geometry,
+          traversalFrame: {
+            ...fixture.geometry.traversalFrame,
+            timeSeconds: fixture.geometry.traversalFrame.timeSeconds + tick * STEP_SECONDS,
+          },
+        },
+        fixture.object,
+        fixture.motion,
+        STEP_SECONDS,
+        prior,
+        at,
+        fixture.target,
+      );
+      expect(Math.abs(next.at.x - at.x)).toBeLessThanOrEqual(
+        fixture.motion.speed * STEP_SECONDS + 1e-8,
+      );
+      at = next.at;
+      prior = next.traversal;
+      if (prior?.physical.grounded && at.y > fixture.start.y) {
+        break;
+      }
+    }
+    expect(findTraversal).toHaveBeenCalledOnce();
+    const request = vi.mocked(findTraversal).mock.calls[0]![1];
+    expect(request).toMatchObject(BEHAVIOUR_TRAVERSAL_SEARCH.budget);
+    expect(request.preferredInputs).toHaveLength(request.horizonSteps);
+    expect(move === 1 ? request.goal.x + request.goal.width : request.goal.x).toBeCloseTo(
+      move === 1 ? fixture.second.x + fixture.second.width : fixture.second.x,
+    );
+    const proof = vi.mocked(findTraversal).mock.results[0]!.value;
+    expect(proof).toMatchObject({ status: "found", work: { states: 58, steps: 57 } });
+    if (proof.status !== "found") {
+      throw new Error("Expected a proved descent across the static seam");
+    }
+    expect(prior?.physical).toEqual(proof.state);
+    expect(prior?.physical.supportId).toBe(fixture.second);
+    expect(at.y).toBeCloseTo(912);
+    const rightX = extension === 48 ? 5762 : 8657.2;
+    expect(at.x).toBeCloseTo(move === 1 ? rightX : 11520 - rightX - fixture.object.width);
+  },
+);
+
+it.each(["gap", "different height", "moving continuation"])(
+  "does not merge a static goal across %s",
+  (kind) => {
+    const fixture = fragmentedDescentFixture(8496, 96, 1);
+    const continuation = {
+      ...fixture.second,
+      x: fixture.second.x + (kind === "gap" ? 1 : 0),
+      y: fixture.second.y - (kind === "different height" ? 1 : 0),
+    };
+    const geometry = {
+      ...fixture.geometry,
+      platforms:
+        kind === "moving continuation"
+          ? [{ collision: "solid" as const, owner: actor(), rect: continuation }]
+          : [],
+      solids: [
+        fixture.support,
+        fixture.first,
+        ...(kind === "moving continuation" ? [] : [continuation]),
+      ],
+    };
+    const goal = traversalGoal(geometry, fixture.object, fixture.start, fixture.target);
+    expect(goal).toBeDefined();
+    expect(goal!.x + goal!.width).toBeCloseTo(fixture.first.x + fixture.first.width);
+  },
+);
+
+it("reuses static spans without sharing them with replacement terrain", () => {
+  const fixture = fragmentedDescentFixture(8496, 96, 1);
+  traversalGoal(fixture.geometry, fixture.object, fixture.start, fixture.target);
+  const sort = vi.spyOn(Array.prototype, "sort");
+  let calls: number;
+  try {
+    traversalGoal(fixture.geometry, fixture.object, fixture.start, fixture.target);
+    calls = sort.mock.calls.length;
+  } finally {
+    sort.mockRestore();
+  }
+  // Target-height ordering still sorts; the cached terrain span adds no sort.
+  expect(calls).toBe(1);
+  const replaced = traversalGoal(
+    { ...fixture.geometry, solids: [fixture.support, fixture.first] },
+    fixture.object,
+    fixture.start,
+    fixture.target,
+  );
+  expect(replaced!.x + replaced!.width).toBeCloseTo(fixture.first.x + fixture.first.width);
 });
 
 it.each(["hazard", "unknown future hazard", "entering mover"])(

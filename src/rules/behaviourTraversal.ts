@@ -176,6 +176,39 @@ export function traversalContext(
   };
 }
 
+interface SupportSpan {
+  readonly left: number;
+  readonly right: number;
+}
+// Static terrain shares collisionCandidates' immutable array and rectangle contract.
+const SUPPORT_SPANS = new WeakMap<readonly Rect[], Map<number, ReadonlyMap<Rect, SupportSpan>>>();
+
+function staticSupportSpan(solids: readonly Rect[], support: Rect): SupportSpan {
+  let heights = SUPPORT_SPANS.get(solids);
+  if (!heights) {
+    heights = new Map();
+    SUPPORT_SPANS.set(solids, heights);
+  }
+  const cached = heights.get(support.y);
+  if (cached) {
+    return cached.get(support) ?? { left: support.x, right: support.x + support.width };
+  }
+  const spans = new Map<Rect, SupportSpan>();
+  let span: { left: number; right: number } | undefined;
+  for (const rect of solids
+    .filter((rect) => Math.abs(rect.y - support.y) <= EDGE)
+    .sort((a, b) => a.x - b.x)) {
+    if (!span || rect.x > span.right + EDGE) {
+      span = { left: rect.x, right: rect.x + rect.width };
+    } else {
+      span.right = Math.max(span.right, rect.x + rect.width);
+    }
+    spans.set(rect, span);
+  }
+  heights.set(support.y, spans);
+  return spans.get(support) ?? { left: support.x, right: support.x + support.width };
+}
+
 // The target envelope is supported terrain containing the complete pursuer, not Chibi's box.
 export function traversalGoal(
   world: BehaviourWorld,
@@ -199,9 +232,12 @@ export function traversalGoal(
   if (!support) {
     return undefined;
   }
+  const span = world.solids.includes(support)
+    ? staticSupportSpan(world.solids, support)
+    : { left: support.x, right: support.x + support.width };
   const rightward = target.x + target.width / 2 >= at.x + object.width / 2;
-  const x = rightward ? Math.max(support.x, at.x + object.width) : support.x;
-  const right = rightward ? support.x + support.width : Math.min(support.x + support.width, at.x);
+  const x = rightward ? Math.max(span.left, at.x + object.width) : span.left;
+  const right = rightward ? span.right : Math.min(span.right, at.x);
   return right - x < object.width
     ? undefined
     : {
@@ -227,13 +263,14 @@ export function preferredDescentInputs(
     return undefined;
   }
   const { body, epsilon } = context;
+  const departure = staticSupportSpan(world.solids, support);
   const left = start.x + body.offset.x;
   const right = left + body.width;
   const foot = start.y + body.offset.y + body.height;
   if (
     Math.abs(foot - support.y) > epsilon ||
-    left < support.x - epsilon ||
-    right > support.x + support.width + epsilon
+    left < departure.left - epsilon ||
+    right > departure.right + epsilon
   ) {
     return undefined;
   }
@@ -248,12 +285,14 @@ export function preferredDescentInputs(
     (rect) =>
       rect.y > foot + epsilon &&
       Math.abs(rect.y - (goal.y + goal.height - epsilon)) <= epsilon &&
-      goal.x >= rect.x - epsilon &&
-      goal.x + goal.width <= rect.x + rect.width + epsilon &&
-      Math.abs(move === 1 ? rect.x - support.x - support.width : rect.x + rect.width - support.x) <=
+      Math.abs(move === 1 ? rect.x - departure.right : rect.x + rect.width - departure.left) <=
         epsilon,
   );
-  return landing
+  const span = landing && staticSupportSpan(world.solids, landing);
+  return span &&
+    goal.x >= span.left - epsilon &&
+    goal.x + goal.width <= span.right + epsilon &&
+    Math.abs(move === 1 ? span.left - departure.right : span.right - departure.left) <= epsilon
     ? Array.from({ length: request.horizonSteps }, () => ({
         jump: false,
         move,
