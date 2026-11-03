@@ -3,6 +3,7 @@
 import importlib
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -13,8 +14,8 @@ from art_kit.aseprite import export as export_aseprite
 from art_kit.aseprite import lua as aseprite_lua
 from art_kit.colour import contrast as hex_contrast
 from art_kit.colour import rgb as hex_rgb
-from art_kit.frames import contact_sheet, tile_sheet
 from art_kit.frames import flipped as flip_frame
+from art_kit.frames import tile_sheet
 from art_kit.grid import Grid as SharedGrid
 
 # Endesga 32, by role.
@@ -194,7 +195,24 @@ def flipped(frame):
 def preview(sprites, out, grounds=("5a6988", "e4a672", "ead4aa"), scale=3, gap=4):
     """Contact sheet: one row per sprite and ground colour, every frame in tag order."""
 
-    contact_sheet(rgb, sprites, grounds, background=rgb("ink"), scale=scale, gap=gap).save(out)
+    executable = shutil.which("node")
+    if executable is None:
+        raise FileNotFoundError("node")
+    subprocess.run(  # noqa: S603  # Fixed local entrypoint and separate arguments, without a shell.
+        [executable, str(Path(__file__).with_name("preview.ts")), str(out)],
+        input=json.dumps(
+            {
+                "palette": K,
+                "sprites": list(sprites),
+                "grounds": list(grounds),
+                "background": K["ink"],
+                "scale": scale,
+                "gap": gap,
+            }
+        ),
+        text=True,
+        check=True,
+    )
 
 
 def _lua(tags, out, key, margins=None):

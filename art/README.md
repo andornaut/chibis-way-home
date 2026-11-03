@@ -19,6 +19,8 @@ Chibi's Way Home artwork, drawing pipeline and remaining art work. The [style gu
 
 Install Python 3.12 art dependencies with `python3.12 -m venv .venv-art` and `.venv-art/bin/python -m pip install -r requirements-art.txt`. Run entrypoints with `.venv-art/bin/python -I`, for example `.venv-art/bin/python -I art/tools/fonts.py preview OUT.png`, from the repository root. `requirements-art.txt` pins the published art-kit v0.7.0 GitHub release wheel by SHA256 and Pillow 13.0.0. Installed site packages supply art-kit in isolated mode; no registry, source-vendor or editable fallback is used. Asset and font licences remain unchanged.
 
+Shared sprite previews require Node >=24.21 and installed project npm dependencies (art-kit 0.10 and Skia 4), while retaining the `.venv-art/bin/python -I art/tools/<generator>.py preview OUT.png` command.
+
 - Author raster assets through Python scripts: `art/tools/<set>.py`, each with `build` and `preview OUT.png` commands.
 - [art-kit](https://github.com/andornaut/art-kit) provides drawing, outline, frame composition, Aseprite export and font mechanisms. Local `art/tools/pixel.py` and `fonts.py` adapters retain the game palette and ramps, glyph selection, paths, manifest and contact metadata.
 - A build writes the Aseprite sources (`art/<set>/<key>.aseprite`) and exports them as PNG plus JSON, with Aseprite tags for animations, to `public/art/sprites/<key>.png` and `.json`.
