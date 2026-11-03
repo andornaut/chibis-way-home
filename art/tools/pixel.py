@@ -96,7 +96,7 @@ DARKER = dict(
     ]
 )
 DARKER.update(zone_themes.ramps(K))
-DARKER.update(background_palette.ramps(K))
+DARKER.update(background_palette.ramps(DARKER, K))
 
 MANIFEST = "public/art/manifest.json"
 SPRITES = "public/art/sprites"

@@ -3,9 +3,10 @@
 Usage: background_tones.py build, from the repository root. This exports existing backdrop keys only.
 The original generators retain their geometry. Their normal builds apply this same publication policy.
 Foreground tiles, actors, UI, portraits and opening art never pass through this adapter.
-Ordered far, middle and near backgrounds use the named small-step ramps in background_palette.py.
-Their material roles stay distinct. Other local props and functional wayfinding retain their existing paint.
-Existing flat zone skies are unchanged identity colours.
+Ordered far, middle and near backgrounds use perceptual ranks in background_palette.py.
+Continuous source-colour residuals retain material and detail differences. Local decorative props use
+the near rank. Functional wayfinding, flat zone skies and the inactive Park prototype retain their
+existing publication policy.
 """
 
 import importlib
@@ -157,11 +158,13 @@ def profile(key):
 
 def depth_colour_map(key):
     zone, layer = profile(key)
+    if layer == "sky":
+        return {pixel.rgb(colour): pixel.rgb(colour) for colour in pixel.K.values()}
+    if layer == "local":
+        layer = "near"
     result = {}
-    for source, colour in pixel.K.items():
-        brightness = pixel.contrast(colour, pixel.K["ink"])
-        role = "shade" if brightness < 3 else "base" if brightness < 8 else "light"
-        target = background_palette.name(zone, layer, role)
+    for source, colour in background_palette.source_colours(pixel.K).items():
+        target = background_palette.detail_name(zone, layer, source)
         if zone == "countryside" and layer == "far" and source == "zone-peach":
             target = "bg-countryside-far-warm"
         elif zone == "woodland" and layer == "mid" and source == "white":
@@ -222,9 +225,9 @@ def depth_colour_map(key):
 
 
 def colour_map(key):
-    if key in DEPTH_KEYS:
-        return depth_colour_map(key)
     zone, layer = profile(key)
+    if zone != "park":
+        return depth_colour_map(key)
     primary = ZONES[zone]
     result = {}
     for name, colour in pixel.K.items():
