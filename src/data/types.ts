@@ -106,15 +106,16 @@ export interface DashTrailTuning {
   readonly tipFadeExponent: number;
 }
 
-// Visual-only second-jump cue. Offset is from the full frame centre; distances are logical pixels.
+// Visual-only second-jump cue. Offset uses the current full frame centre, in logical pixels.
 export interface AirJumpCueTuning {
   readonly borderColour: string;
   // Logical pixels around the scaled glyph.
   readonly borderThickness: number;
   readonly colour: string;
   readonly durationSeconds: number;
+  // Horizontal lead follows actual velocity; a stationary bird receives no lead.
+  readonly forwardLead: number;
   readonly offset: Point;
-  readonly rise: number;
   readonly scale: number;
 }
 
