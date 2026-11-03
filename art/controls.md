@@ -14,7 +14,7 @@ Apply this guide to menu actions, modal actions and ordinary form controls. A pr
 | Icon-only navigation   | Compact, recognisable action without a text label                        | Consistent icon placement, accessible action name, focus and press area      |
 | Movement hint and knob | Continuous directional input rather than a form action                   | Contrast and clear state indication                                          |
 | Pause, Use and Jump    | In-game controls must remain visible over varied scenery                 | Contrast, adequate press area and consistent press feedback                  |
-| Skill HUD icons        | Native 16px glyphs within fixed 43px circles; selected ring stays inside | 48x48 targets; play tap selects, hold opens details; Pause tap opens details |
+| Skill HUD icons        | Native 16px glyphs within fixed 33px circles; selected ring stays inside | 48x48 targets; play tap selects, hold opens details; Pause tap opens details |
 
 Ordinary modal close controls use a 24x24 face exactly 6px from the panel's top and right edges, with their existing 48x48 press target. For panel width W, the face spans (W-30,6) through (W-6,30), while the centred press target spans (W-42,-6) through (W+6,42). Keep the target centred on its face; do not clamp or shift it into the panel. This positioning exception does not apply to bespoke page or top-bar controls. Ordinary body content retains 16px padding.
 
