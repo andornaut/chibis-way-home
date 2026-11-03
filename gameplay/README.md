@@ -54,6 +54,12 @@ Targets are assessed per stage and player skill. Bands other than the successful
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
 - **Session length:** the time to finish the game, by skill
 
+### Boss playtest criteria
+
+For each placement, record the source, seed, starting support, active skills and whether entry is natural or staged. Check ordinary no-powerup forward passage, boss traversal and escape routes, visible tells, actual effects and contact, supported recovery and the next attack boundary. Include neighbouring terrain, cover and exits rather than checking an isolated animation alone.
+
+Report observed outcomes separately from unobserved specials, incomplete recovery, controller limitations and exhausted work. A cooldown is not a contact grace period. Record any declared reaction delay and whether the cue was actually visible; automated success does not establish human fairness or enjoyment. Compare distinct physical encounter layouts rather than counting cosmetic aliases as variety.
+
 ### Reported playtimes
 
 | Zone                 | Stage              | Reported clear time |

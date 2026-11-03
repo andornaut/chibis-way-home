@@ -222,6 +222,18 @@ Everything in a stage except its terrain is placed in data through archetypes, c
 - **Reaction:** none, avoiding Chibi, or approaching him, within a range
 - **Static art:** a behaviour state can use `animation: null` for static art, including a moving inanimate object. Motion and transitions still come from its reusable behaviour graph
 
+### Boss encounter principles
+
+Boss encounters are noncombat chase-and-escape platforming, not dedicated arenas or fights. Apply these criteria to each authored placement and its neighbouring route, not only to the shared behaviour graph.
+
+- **Escape:** provide an ordinary route past the encounter to an open exit, with reachable supported refuges and room to react. Dash, Double jump and Speedy must not be required. Avoid trapping Chibi between lethal bodies, terrain and hazards without an ordinary response; cover must not permanently confine the boss either
+- **Evidence:** qualify the actual placement, body dimensions, terrain and current behaviour together. Observe the warning, committed motion, accepted effects, contact, physical recovery and next attack boundary. A state transition, observed spawn or successful planner query alone is not a full encounter pass. Unknown or exhausted planning work is not proof of an impossible route. Automated response scripts state their reaction delay and limitations; human readability and enjoyment require playtesting
+- **Flight:** provide overhead catch-up clearance and space for standoff swoops, avoiding stationary body blockades over the only route. Cover and landing supports must remain usable through the actual attack and return. Certify supported recovery before another attack; an airborne pause is not a perch or a completed landing
+- **Identity:** give each boss one or two recognisable specials alongside ordinary pursuit and charges. Distinguish attacks through their actual movement, exposure, effects and ordinary responses, rather than only their names or animation tags
+- **Readability:** retain the half-to-one-second tell with its visible pose and silhouette outline before commitment. Place encounters so the cue and a useful ordinary response are observable before contact; a tell does not make an already overlapping body safe. Rendered phase, animation frame, effects and lethal contact must agree. Do not credit an unseen cue or obscure it with another presentation
+- **Recovery:** preserve one committed attack at a time and the 2.5-second cooldown after physical completion. Test a useful forward getaway through that cycle. Cooldown permits pursuit and body contact remains lethal, so cooldown duration alone does not certify safe passage
+- **Traversal and variety:** place bosses on real support, with body-sized clearance and physical routes across relevant blocks, ledges and gaps. Vary supported spawn positions and encounter geometry through seeded authored choices, while Retry preserves its layout and seed. More entries with equivalent geometry do not establish more distinct challenges. Test ordinary player traversal separately from boss traversal, including approaches and departures across chunk seams
+
 ### V1 route
 
 The route spans six themed zones and twenty-one stages. The first five zones have three stages each, targeting about 60 seconds of successful active play without any powerup active. Apartment has six floor stages targeting about 90 seconds each, about nine minutes for the zone. Human pacing calibration remains incomplete; these targets are not hard timers. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
