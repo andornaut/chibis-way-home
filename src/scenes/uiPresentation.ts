@@ -78,10 +78,16 @@ export function mountUiPresentation(game: Game): () => void {
     );
     const recorder = createUiRecorder({
       fontsReady: fonts.fontsReady,
-      image: (frame) => ({
-        image: frame.source.image,
-        source: { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY },
-      }),
+      image: (frame) => {
+        const image = frame.source.image;
+        if (!(image instanceof HTMLImageElement || image instanceof HTMLCanvasElement)) {
+          return undefined;
+        }
+        return {
+          image,
+          source: { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY },
+        };
+      },
       textStyle: (text) => {
         const baseline = sourceFonts.get(text.font)?.baseline;
         if (baseline === undefined) {
@@ -93,12 +99,10 @@ export function mountUiPresentation(game: Game): () => void {
         });
         return { baseline, face: { family, role, style, weight }, size };
       },
-      viewport: ({ camera }) => ({
-        height: camera.height,
-        width: camera.width,
-        x: camera.x,
-        y: camera.y,
-      }),
+      viewport: ({ camera }) =>
+        camera
+          ? { height: camera.height, width: camera.width, x: camera.x, y: camera.y }
+          : undefined,
     });
     const roots = createUiRootManager(recorder);
     const captures = new Set<Capture>();
@@ -236,7 +240,15 @@ export function mountUiPresentation(game: Game): () => void {
               : { reason: "context", status: "unavailable" },
           createSurface,
           releaseSurface,
-          remap: (pixels) => remapRgb(request.remap, pixels.data),
+          remap: (pixels) =>
+            remapRgb(
+              request.remap,
+              new Uint8ClampedArray(
+                pixels.data.buffer,
+                pixels.data.byteOffset,
+                pixels.data.byteLength,
+              ),
+            ),
         });
         const owner = roots.owner(request.scene);
         const result = compositor.capture({
