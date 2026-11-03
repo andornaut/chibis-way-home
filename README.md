@@ -6,11 +6,11 @@ Help Chibi get home after Furt, his former best friend, mails him far away. A pi
 
 ## Docs
 
-Each folder's README is its plan, with what's left for the first build:
+The folder READMEs describe the current design and implementation:
 
 - [art/](art/README.md): art rules, assets and pipeline
-- [gameplay/](gameplay/README.md): rulebook, targets and playtesting
-- [src/](src/README.md): stack and architecture
+- [gameplay/](gameplay/README.md): gameplay scope, tuning and playtesting, with links to [current rules](gameplay/design.md), [undecided ideas](gameplay/ideas.md) and [later work](gameplay/next.md)
+- [src/](src/README.md): stack, architecture and save data
 
 ## Playing
 
