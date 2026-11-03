@@ -245,7 +245,7 @@ export const TEXT: GameText = {
     attempts: "Attempts: {count}",
     best: "Best time: {time}",
     lastAttempt: "Last time: {time}",
-    notCleared: "Not cleared",
+    notCleared: "--",
     partial: "Zone ({completed}/{total} stages)",
     runTotal: "Run total: {time}",
   },
