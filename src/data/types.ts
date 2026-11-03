@@ -380,10 +380,17 @@ export type BehaviourCondition =
   | { readonly kind: "visible" }
   | { readonly kind: "line-of-sight" }
   | { readonly kind: "alignment-blocked" }
+  | { readonly kind: "flight-approach-direction"; readonly direction: -1 | 1 }
   | { readonly kind: "boundary" }
   | { readonly kind: "arrived"; readonly tolerance: number }
   | { readonly kind: "elapsed"; readonly seconds: number }
   | { readonly kind: "nearby"; readonly range: number }
+  | {
+      readonly kind: "horizontal-gap";
+      readonly comparison: "at-least" | "below";
+      // Tiles between the current opaque boss body and Chibi's collision box, ignoring Y.
+      readonly distance: number;
+    }
   | { readonly kind: "same-ground"; readonly tolerance: number }
   | { readonly kind: "reachable" | "lost-target"; readonly tolerance: number };
 
@@ -398,7 +405,13 @@ export interface BehaviourTraversal {
 
 export type BehaviourMotion =
   | { readonly kind: "wait"; readonly support?: "required" }
-  | { readonly kind: "pursue"; readonly mode: "fly"; readonly speed: number }
+  | {
+      readonly kind: "pursue";
+      readonly mode: "fly";
+      // Tiles: frame-bottom clearance above the target top, and lead along its captured travel side.
+      readonly overhead?: { readonly ahead: number; readonly clearance: number };
+      readonly speed: number;
+    }
   | {
       readonly kind: "pursue";
       readonly mode: "ground";
@@ -413,6 +426,8 @@ export type BehaviourMotion =
   | {
       readonly kind: "fly";
       readonly to: "target-x";
+      // Tiles along the same travel side captured by an overhead pursuit approach.
+      readonly ahead?: number;
       readonly bounds: Rect;
       readonly speed: number;
       readonly leadSeconds: number;

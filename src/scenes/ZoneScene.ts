@@ -1019,8 +1019,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         stage,
         totals: {
           runSeconds: wholeRunStats().activeSeconds,
-          stageSeconds: stageRunStats(stage).runSeconds,
-          zoneSeconds: zoneVisitStats(this.story?.zone ?? "").runSeconds,
+          stageSeconds: stageRunStats(stage).cumulativeSeconds ?? stageRunStats(stage).runSeconds,
+          zoneSeconds:
+            zoneVisitStats(this.story?.zone ?? "").cumulativeSeconds ??
+            zoneVisitStats(this.story?.zone ?? "").runSeconds,
         },
         ...deathLabels(ZONE_MAP, TEXT.map, String(this.zoneIndex + 1), stage),
         percent: this.progressFraction(),
@@ -1266,6 +1268,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private leave(): void {
     const { turnedBack } = this.zone;
     if (this.mapNode !== undefined && !isDevelopmentSession()) {
+      if (turnedBack) {
+        this.clearControls();
+        void flushStats();
+        this.scene.start("map");
+        return;
+      }
       const story = this.story;
       if (!story) {
         throw new Error(`Missing zone story for ${this.mapNode}`);

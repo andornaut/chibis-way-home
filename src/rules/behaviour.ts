@@ -33,6 +33,8 @@ import {
   flightAxis,
   flightContactApproach,
   groundPursuitEnd,
+  overheadFlightGoal,
+  overheadFlightRoute,
   targetReachable,
 } from "./behaviourReach";
 import {
@@ -42,7 +44,7 @@ import {
   probeRearm,
 } from "./behaviourTraversal";
 import { birdBox, type BirdState, EDGE } from "./bird";
-import { contactFrameAt } from "./bodyContact";
+import { contactFrameAt, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import {
   carryLandingSupport,
@@ -69,6 +71,7 @@ export interface BehaviourState extends BehaviourAttackState {
   readonly animationTag?: string;
   readonly animationSeconds?: number;
   readonly axis?: "x" | "y";
+  readonly flightApproachDirection?: -1 | 1;
   readonly flightTarget?: Point;
   readonly landing?: FlyLandingState;
   readonly pendingEntry?: boolean;
@@ -203,6 +206,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         throw new Error(`Invalid pursuit motion in ${key}`);
       }
       if (
+        node.motion.kind === "pursue" &&
+        node.motion.mode === "fly" &&
+        node.motion.overhead &&
+        (!Number.isFinite(node.motion.overhead.ahead) ||
+          node.motion.overhead.ahead <= 0 ||
+          !valid(node.motion.overhead.clearance))
+      ) {
+        throw new Error(`Invalid overhead pursuit in ${key}`);
+      }
+      if (
         node.motion.kind === "fly" &&
         (!valid(node.motion.speed) ||
           node.motion.speed === 0 ||
@@ -238,7 +251,9 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
       if (
         node.motion.kind === "fly" &&
         node.motion.to === "target-x" &&
-        (!valid(node.motion.leadSeconds) || !valid(node.motion.maxLead))
+        (!valid(node.motion.leadSeconds) ||
+          !valid(node.motion.maxLead) ||
+          (node.motion.ahead !== undefined && !valid(node.motion.ahead)))
       ) {
         throw new Error(`Invalid horizontal target lead in ${key}`);
       }
@@ -306,6 +321,21 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           ) {
             return condition;
           }
+          if (condition.kind === "flight-approach-direction") {
+            if (![-1, 1].includes(condition.direction)) {
+              throw new Error(`Invalid flight approach direction in ${key}`);
+            }
+            return condition;
+          }
+          if (condition.kind === "horizontal-gap") {
+            if (
+              !["at-least", "below"].includes(condition.comparison) ||
+              !valid(condition.distance)
+            ) {
+              throw new Error(`Invalid horizontal gap in ${key}`);
+            }
+            return { ...condition, distance: condition.distance * tile };
+          }
           const amount =
             condition.kind === "elapsed"
               ? condition.seconds
@@ -345,12 +375,23 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                         prepSeconds: node.motion.traversal.prepSeconds,
                       },
                     }),
+                  ...(node.motion.kind === "pursue" &&
+                    node.motion.mode === "fly" &&
+                    node.motion.overhead && {
+                      overhead: {
+                        ahead: node.motion.overhead.ahead * tile,
+                        clearance: node.motion.overhead.clearance * tile,
+                      },
+                    }),
                   ...(node.motion.kind === "fly"
                     ? node.motion.to === "support"
                       ? {}
                       : typeof node.motion.to === "string"
                         ? {
                             ...(node.motion.to === "target-x" && {
+                              ...(node.motion.ahead !== undefined && {
+                                ahead: node.motion.ahead * tile,
+                              }),
                               maxLead: node.motion.maxLead * tile,
                             }),
                             bounds: {
@@ -457,6 +498,16 @@ function enterState(
   if (leavingPursuit || (state.stateKey !== key && next.traversal?.preparation)) {
     delete (next as { traversal?: BehaviourTraversalState }).traversal;
   }
+  if (node.motion.kind === "pursue" && node.motion.mode === "fly" && node.motion.overhead) {
+    if (node.attack?.phase === "tell") {
+      if (next.flightApproachDirection === undefined) {
+        throw new Error("Overhead tell requires a committed approach direction");
+      }
+    } else {
+      (next as { flightApproachDirection: -1 | 1 }).flightApproachDirection =
+        bird.vx === 0 ? bird.facing : bird.vx < 0 ? -1 : 1;
+    }
+  }
   let animation = syncAnimation(object, next);
   if (node.attack?.phase === "tell" && object.contact) {
     animation = { ...animation, animationSeconds: 0 };
@@ -561,6 +612,39 @@ export function contactBox(
   };
 }
 
+function horizontalBodyBounds(object: ObjectLayout, at: Point, state: BehaviourState): Rect {
+  const contact = object.contact;
+  if (!contact) {
+    return contactBox(object, at, state.facing, state.axis);
+  }
+  if (state.animationTag === undefined || state.animationSeconds === undefined) {
+    throw new Error(`Missing silhouette pose for ${object.art}`);
+  }
+  const frame = contactFrameAt(contact, state.animationTag, state.animationSeconds).frame;
+  const rows = contact.frames[frame];
+  if (!rows?.length) {
+    throw new Error(`Missing opaque body bounds for ${object.art}`);
+  }
+  let left = Infinity,
+    right = -Infinity,
+    top = Infinity,
+    bottom = -Infinity;
+  for (const [y, from, to] of rows) {
+    left = Math.min(left, from);
+    right = Math.max(right, to);
+    top = Math.min(top, y);
+    bottom = Math.max(bottom, y + 1);
+  }
+  const origin = spriteFrameOrigin(contact.frame, object, at);
+  const flipped = state.facing < 0 && (state.axis ?? object.behaviour?.axis) !== "y";
+  return {
+    height: bottom - top,
+    width: right - left,
+    x: origin.x + (flipped ? contact.frame.width - right : left),
+    y: origin.y + top,
+  };
+}
+
 function heading(node: BehaviourNode, state: BehaviourState): -1 | 1 {
   return node.motion.kind !== "wait" &&
     node.motion.kind !== "fly" &&
@@ -604,9 +688,13 @@ function flightDestination(
     }
     const contact = contactBox(object, at, state.facing, state.axis);
     const target = birdBox(tuning, bird);
+    if (motion.ahead !== undefined && state.flightApproachDirection === undefined) {
+      throw new Error("Ahead alignment requires a committed overhead approach direction");
+    }
+    const ahead = motion.ahead === undefined ? 0 : motion.ahead * state.flightApproachDirection!;
     const lead = Math.max(-motion.maxLead, Math.min(motion.maxLead, bird.vx * motion.leadSeconds));
     return {
-      x: target.x + target.width / 2 - contact.width / 2 - (contact.x - at.x) + lead,
+      x: target.x + target.width / 2 - contact.width / 2 - (contact.x - at.x) + ahead + lead,
       y: state.flightTarget.y,
     };
   }
@@ -624,6 +712,19 @@ function alignmentBlocked(
   state: BehaviourState,
 ): boolean {
   const motion = nodeOf(object, state.stateKey).motion;
+  if (motion.kind === "pursue" && motion.mode === "fly" && motion.overhead) {
+    if (state.flightApproachDirection === undefined) {
+      return true;
+    }
+    const target = overheadFlightGoal(
+      tuning,
+      motion.overhead,
+      state.flightApproachDirection,
+      bird,
+      object,
+    );
+    return overheadFlightRoute(world, object, at, target) === undefined;
+  }
   if (motion.kind !== "fly" || motion.to !== "target-x") {
     return false;
   }
@@ -660,6 +761,17 @@ function matches(
       !state.pursuit.settled
     );
   }
+  if (condition.kind === "flight-approach-direction") {
+    return state.flightApproachDirection === condition.direction;
+  }
+  if (condition.kind === "horizontal-gap") {
+    const body = horizontalBodyBounds(object, at, state);
+    const target = birdBox(tuning, bird);
+    const gap = Math.max(0, body.x - target.x - target.width, target.x - body.x - body.width);
+    return condition.comparison === "at-least"
+      ? gap >= condition.distance
+      : gap < condition.distance;
+  }
   if (condition.kind === "alignment-blocked") {
     return alignmentBlocked(tuning, object, world, bird, at, state);
   }
@@ -687,6 +799,25 @@ function matches(
   }
   if (condition.kind === "arrived") {
     const motion = nodeOf(object, state.stateKey).motion;
+    if (motion.kind === "pursue" && motion.mode === "fly" && motion.overhead) {
+      if (state.flightApproachDirection === undefined) {
+        return false;
+      }
+      const target = overheadFlightGoal(
+        tuning,
+        motion.overhead,
+        state.flightApproachDirection,
+        bird,
+        object,
+      );
+      return (
+        overheadFlightRoute(world, object, at, target) !== undefined &&
+        at.y + object.height <= bird.y - motion.overhead.clearance + EDGE &&
+        state.flightApproachDirection * (at.x + object.width / 2 - bird.x - tuning.width / 2) >=
+          motion.overhead.ahead - EDGE &&
+        Math.hypot(at.x - target.x, at.y - target.y) <= condition.tolerance
+      );
+    }
     if (motion.kind !== "fly") {
       return false;
     }
@@ -872,6 +1003,22 @@ function pursuitReachable(
     (node) => node.motion.kind === "pursue" && node.motion.mode === "fly",
   );
   if (flight) {
+    const current = nodeOf(object, state.stateKey).motion;
+    const overhead =
+      current.kind === "pursue" && current.mode === "fly" && current.overhead
+        ? current
+        : Object.values(object.behaviour!.states).find(
+            ({ motion }) => motion.kind === "pursue" && motion.mode === "fly" && motion.overhead,
+          )?.motion;
+    if (overhead?.kind === "pursue" && overhead.mode === "fly" && overhead.overhead) {
+      if (!world.traversalFrame) {
+        return undefined;
+      }
+      const direction =
+        state.flightApproachDirection ?? (bird.vx === 0 ? bird.facing : bird.vx < 0 ? -1 : 1);
+      const target = overheadFlightGoal(tuning, overhead.overhead, direction, bird, object);
+      return overheadFlightRoute(world, object, at, target) !== undefined;
+    }
     return (
       flightContactApproach(
         world,
@@ -1062,6 +1209,14 @@ function idleReady(
   }
   const node = nodeOf(object, state.stateKey);
   const recovery = nodeOf(object, watchdog.resume).motion;
+  if (
+    state.pursuit?.phase === "engaged" &&
+    recovery.kind === "pursue" &&
+    recovery.mode === "fly" &&
+    recovery.overhead
+  ) {
+    return false;
+  }
   const flyingHover =
     recovery.kind === "pursue" &&
     recovery.mode === "fly" &&
@@ -1098,6 +1253,11 @@ function idleRecoveryStep(
   const motion = nodeOf(object, watchdog.resume).motion;
   if (motion.kind !== "pursue") {
     throw new Error("Idle recovery requires a pursuit profile");
+  }
+  if (state.pursuit?.phase === "engaged" && motion.mode === "fly" && motion.overhead) {
+    const pending = { ...idle };
+    delete (pending as { recovery?: BehaviourIdleState["recovery"] }).recovery;
+    return { state: { ...state, idleWatchdog: pending } };
   }
   const prepared = idleReady(object, world, at, state)
     ? planIdleRecovery(world, object, motion, seconds, state.facing, idle, at)
@@ -1417,6 +1577,25 @@ export function stepBehaviour(
         (hop.elapsed < hop.seconds / 2 ? hop.seconds / 2 : hop.seconds) - hop.elapsed,
       );
     }
+    if (
+      node.motion.kind === "pursue" &&
+      node.motion.mode === "fly" &&
+      node.motion.overhead &&
+      next.pursuit?.phase === "engaged" &&
+      next.flightApproachDirection !== undefined
+    ) {
+      const target = overheadFlightGoal(
+        tuning,
+        node.motion.overhead,
+        next.flightApproachDirection,
+        bird,
+        object,
+      );
+      const vertical = Math.abs(target.y - current.y);
+      if (vertical > EDGE && overheadFlightRoute(world, object, current, target)) {
+        slice = Math.min(slice, vertical / node.motion.speed);
+      }
+    }
     const to = { ...current };
     let traversalSegments: readonly TraversalSafety[] | undefined;
     if (settling && node.motion.kind === "pursue") {
@@ -1533,6 +1712,37 @@ export function stepBehaviour(
           contactBox(object, current, next.facing, "x"),
           desired,
         );
+      } else if (node.motion.overhead) {
+        if (next.flightApproachDirection === undefined) {
+          throw new Error("Overhead pursuit requires a committed approach direction");
+        }
+        const target = overheadFlightGoal(
+          tuning,
+          node.motion.overhead,
+          next.flightApproachDirection,
+          bird,
+          object,
+        );
+        const route = overheadFlightRoute(world, object, current, target);
+        if (route) {
+          let remaining = travel;
+          let position = current;
+          for (const waypoint of route) {
+            const distance = Math.hypot(waypoint.x - position.x, waypoint.y - position.y);
+            const fraction = Math.min(1, remaining / (distance || 1));
+            position = {
+              x: position.x + (waypoint.x - position.x) * fraction,
+              y: position.y + (waypoint.y - position.y) * fraction,
+            };
+            remaining -= distance * fraction;
+            if (fraction < 1) {
+              break;
+            }
+          }
+          to.x = position.x;
+          to.y = position.y;
+          next = { ...next, facing: to.x === current.x ? next.facing : to.x < current.x ? -1 : 1 };
+        }
       } else {
         const dy = targetY - current.y;
         const fraction = Math.min(1, travel / (Math.hypot(dx, dy) || 1));

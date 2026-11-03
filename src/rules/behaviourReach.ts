@@ -417,3 +417,63 @@ export function flightAxis(
   }
   return to;
 }
+
+export function overheadFlightGoal(
+  tuning: BirdTuning,
+  overhead: { readonly ahead: number; readonly clearance: number },
+  direction: -1 | 1,
+  bird: BirdState,
+  object: ObjectLayout,
+): Point {
+  const target = birdBox(tuning, bird);
+  return {
+    x: target.x + target.width / 2 + direction * overhead.ahead - object.width / 2,
+    y: target.y - overhead.clearance - object.height,
+  };
+}
+
+// Prove ascent before lateral travel with the same full-body swept clipping used by flight.
+export function overheadFlightRoute(
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  at: Point,
+  target: Point,
+): readonly Point[] | undefined {
+  const bounds = world.traversalFrame?.bounds;
+  const distance = object.behaviour?.pursuit?.distance;
+  if (
+    !bounds ||
+    distance === undefined ||
+    target.x < Math.max(bounds.x, object.origin.x - distance) - EDGE ||
+    target.x >
+      Math.min(bounds.x + bounds.width - object.width, object.origin.x + distance) + EDGE ||
+    target.y < bounds.y - EDGE ||
+    target.y + object.height > bounds.y + bounds.height + EDGE
+  ) {
+    return undefined;
+  }
+  const above = { x: at.x, y: target.y };
+  if (
+    Math.abs(flightAxis(object, world, at, "y", above.y) - above.y) > EDGE ||
+    Math.abs(flightAxis(object, world, above, "x", target.x) - target.x) > EDGE
+  ) {
+    return undefined;
+  }
+  const points = [at, above, target];
+  for (let index = 1; index < points.length; index++) {
+    const from = points[index - 1]!,
+      to = points[index]!;
+    const sweep = {
+      height: object.height + Math.abs(to.y - from.y),
+      width: object.width + Math.abs(to.x - from.x),
+      x: Math.min(from.x, to.x),
+      y: Math.min(from.y, to.y),
+    };
+    if (
+      (world.hazards ?? []).some(({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect))
+    ) {
+      return undefined;
+    }
+  }
+  return [above, target];
+}

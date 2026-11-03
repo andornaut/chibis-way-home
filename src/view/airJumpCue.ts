@@ -47,12 +47,14 @@ export function airJumpCue(
     return [];
   }
   const age = cue.elapsedSeconds / tuning.durationSeconds;
-  const x = frame.x + frame.width / 2 + tuning.offset.x + Math.sign(vx) * tuning.forwardLead;
-  const y = frame.y + frame.height / 2 + tuning.offset.y;
+  const x = Math.round(
+    frame.x + frame.width / 2 + tuning.offset.x + Math.sign(vx) * tuning.forwardLead,
+  );
+  const y = Math.round(frame.y + frame.height / 2 + tuning.offset.y);
   const core = new Map<string, Point>();
   const pixel = (column: number, row: number) => {
-    const left = Math.round(x + (column - 8) * tuning.scale);
-    const top = Math.round(y + (row - 8) * tuning.scale);
+    const left = x + Math.round((column - 8) * tuning.scale);
+    const top = y + Math.round((row - 8) * tuning.scale);
     for (let dy = 0; dy < 2 * tuning.scale; dy++) {
       for (let dx = 0; dx < 2 * tuning.scale; dx++) {
         const at = { x: left + dx, y: top + dy };

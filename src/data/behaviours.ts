@@ -856,9 +856,55 @@ const PIGEON_POOP: BehaviourAction = {
   velocity: { x: 0, y: 6 },
 };
 
+const PIGEON_DROP_AHEAD = 8;
+const PIGEON_OVERHEAD_CLEARANCE = 6;
+const PIGEON_SWOOP_AHEAD = 18;
+const PIGEON_SWOOP_MIN_GAP = 12;
+
+function pigeonOverhead(ahead: number): BehaviourNode["motion"] {
+  return {
+    kind: "pursue",
+    mode: "fly",
+    overhead: { ahead, clearance: PIGEON_OVERHEAD_CLEARANCE },
+    speed: PIGEON_PURSUIT_SPEED,
+  };
+}
+
+function pigeonApproach(swoop: boolean, next: string): BehaviourNode {
+  const ready = [
+    { kind: "arrived", tolerance: 0.1 },
+    { kind: "attack-ready" },
+    { kind: "line-of-sight" },
+  ] as const;
+  return {
+    allowIdleReposition: true,
+    animation: "fly",
+    motion: pigeonOverhead(swoop ? PIGEON_SWOOP_AHEAD : PIGEON_DROP_AHEAD),
+    transitions: [
+      { to: "return-high", when: [{ kind: "alignment-blocked" }] },
+      { to: "frustration-return", when: LOST_TARGET },
+      ...(swoop
+        ? ([1, -1] as const).map((direction) => ({
+            to: direction === 1 ? "prepare-swoop-left" : "prepare-swoop-right",
+            when: [
+              ...ready,
+              { direction, kind: "flight-approach-direction" as const },
+              {
+                comparison: "at-least" as const,
+                distance: PIGEON_SWOOP_MIN_GAP,
+                kind: "horizontal-gap" as const,
+              },
+            ],
+          }))
+        : [{ to: next, when: ready }]),
+    ],
+  };
+}
+
 const PIGEON_DROP_INTERVAL_SECONDS = 0.3;
 function pigeonAlignmentMotion(): BehaviourNode["motion"] {
   return {
+    ahead: PIGEON_DROP_AHEAD,
     bounds: { height: 19, width: 24, x: -12, y: -8 },
     kind: "fly",
     leadSeconds: 0.1,
@@ -928,7 +974,7 @@ function pigeonSwoop(failure: string, x: number): BehaviourNode {
   return {
     animation: "swoop",
     motion: {
-      bounds: { height: 19, width: 8, x, y: -8 },
+      bounds: { height: 19, width: 16, x, y: -8 },
       kind: "fly",
       speed: PIGEON_SWOOP_SPEED,
       to: "target",
@@ -980,74 +1026,82 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
       "land-perch": pigeonFlight("rest", "frustration-perch", "support"),
       "prepare-drop-left": {
         animation: "prepare-air",
-        motion: { kind: "wait" },
+        motion: pigeonOverhead(PIGEON_DROP_AHEAD),
         transitions: [
+          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
           escapeTransition("return-high"),
           {
             to: "align-drop-left",
-            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }],
+            when: [
+              { kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS },
+              { kind: "arrived", tolerance: 0.1 },
+              { kind: "line-of-sight" },
+            ],
           },
         ],
       },
       "prepare-drop-right": {
         animation: "prepare-air",
-        motion: { kind: "wait" },
+        motion: pigeonOverhead(PIGEON_DROP_AHEAD),
         transitions: [
+          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
           escapeTransition("return-high"),
           {
             to: "align-drop-right",
-            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }],
+            when: [
+              { kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS },
+              { kind: "arrived", tolerance: 0.1 },
+              { kind: "line-of-sight" },
+            ],
           },
         ],
       },
       "prepare-swoop-left": {
         animation: "prepare-air",
-        motion: { kind: "wait" },
+        motion: pigeonOverhead(PIGEON_SWOOP_AHEAD),
         transitions: [
+          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
           escapeTransition("return-high"),
           {
+            to: "pursuit-swoop-left",
+            when: [{ comparison: "below", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" }],
+          },
+          {
             to: "swoop-left",
-            when: [{ kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS }],
+            when: [
+              { kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS },
+              { kind: "arrived", tolerance: 0.1 },
+              { comparison: "at-least", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" },
+              { kind: "line-of-sight" },
+            ],
           },
         ],
       },
       "prepare-swoop-right": {
         animation: "prepare-air",
-        motion: { kind: "wait" },
+        motion: pigeonOverhead(PIGEON_SWOOP_AHEAD),
         transitions: [
+          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
           escapeTransition("return-high"),
           {
+            to: "pursuit-swoop-right",
+            when: [{ comparison: "below", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" }],
+          },
+          {
             to: "swoop-right",
-            when: [{ kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS }],
+            when: [
+              { kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS },
+              { kind: "arrived", tolerance: 0.1 },
+              { comparison: "at-least", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" },
+              { kind: "line-of-sight" },
+            ],
           },
         ],
       },
-      pursuit: {
-        ...chaseNode("fly", PIGEON_PURSUIT_SPEED, "frustration-return", "fly-left"),
-        transitions: [
-          { to: "frustration-return", when: LOST_TARGET },
-          { to: "fly-left", when: [...DETECTION, { kind: "attack-ready" }] },
-        ],
-      },
-      "pursuit-burst-right": {
-        ...chaseNode("fly", PIGEON_PURSUIT_SPEED, "frustration-return", "fly-right"),
-        transitions: [
-          { to: "frustration-return", when: LOST_TARGET },
-          { to: "fly-right", when: [...DETECTION, { kind: "attack-ready" }] },
-        ],
-      },
-      "pursuit-swoop-left": chaseNode(
-        "fly",
-        PIGEON_PURSUIT_SPEED,
-        "frustration-return",
-        "prepare-swoop-left",
-      ),
-      "pursuit-swoop-right": chaseNode(
-        "fly",
-        PIGEON_PURSUIT_SPEED,
-        "frustration-return",
-        "prepare-swoop-right",
-      ),
+      pursuit: pigeonApproach(false, "prepare-drop-left"),
+      "pursuit-burst-right": pigeonApproach(false, "prepare-drop-right"),
+      "pursuit-swoop-left": pigeonApproach(true, "prepare-swoop-left"),
+      "pursuit-swoop-right": pigeonApproach(true, "prepare-swoop-right"),
       rest: {
         animation: "rest",
         motion: { kind: "wait", support: "required" },
@@ -1058,7 +1112,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
       "return-swoop-right": pigeonFlight("burst-rest-right", "burst-return-high", "support"),
       "swoop-land-left": pigeonFlight("swoop-rest-left", "swoop-return-left", "support"),
       "swoop-land-right": pigeonFlight("swoop-rest-right", "swoop-return-right", "support"),
-      "swoop-left": pigeonSwoop("swoop-return-left", -12),
+      "swoop-left": pigeonSwoop("swoop-return-left", -20),
       "swoop-rest-left": {
         animation: "rest",
         motion: { kind: "wait", support: "required" },

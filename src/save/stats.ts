@@ -24,7 +24,12 @@ interface ZoneVisit {
   readonly stages: Readonly<Record<string, StageRun>>;
   readonly zone: string;
 }
+interface TimeTotals {
+  readonly stages: Readonly<Record<string, number>>;
+  readonly zones: Readonly<Record<string, number>>;
+}
 export interface Stats {
+  readonly totals?: TimeTotals;
   readonly wholeRun: WholeRunStatsSummary;
   readonly stages: Readonly<Record<string, StageStats>>;
   readonly visit?: ZoneVisit;
@@ -39,7 +44,13 @@ const KEYS = {
 // A dirty clock is checkpointed at most once per second between lifecycle flushes.
 const CHECKPOINT_MS = 1000;
 const emptyWholeRun = (): WholeRunStatsSummary => ({ activeSeconds: 0, deaths: 0 });
-const fresh = (): Stats => ({ stages: {}, wholeRun: emptyWholeRun(), zones: {} });
+const emptyTotals = (): TimeTotals => ({ stages: {}, zones: {} });
+const fresh = (): Stats => ({
+  stages: {},
+  totals: emptyTotals(),
+  wholeRun: emptyWholeRun(),
+  zones: {},
+});
 
 type Destinations = readonly Pick<MapDestination, "id" | "stages">[];
 const record = (value: unknown): value is Record<string, unknown> =>
@@ -84,6 +95,22 @@ export function statsFormat(
     for (const [zone, seconds] of Object.entries(value.zones)) {
       if (!destinations.some(({ id }) => id === zone) || !duration(seconds)) {
         return { ok: false, reason: "stats contain an unknown zone or invalid best" };
+      }
+    }
+    if (value.totals !== undefined) {
+      const totals = value.totals;
+      if (
+        !record(totals) ||
+        !record(totals.stages) ||
+        !record(totals.zones) ||
+        Object.entries(totals.stages).some(
+          ([stage, seconds]) => !stages.has(stage) || !duration(seconds),
+        ) ||
+        Object.entries(totals.zones).some(
+          ([zone, seconds]) => !destinations.some(({ id }) => id === zone) || !duration(seconds),
+        )
+      ) {
+        return { ok: false, reason: "stats contain invalid cumulative totals" };
       }
     }
     if (value.visit !== undefined) {
@@ -195,7 +222,10 @@ export function stageStatsStore(
   };
   const summary = (stage: string): RunStatsSummary => {
     const current = stats.stages[stage];
-    return runSummary(current?.bestSeconds, current?.run ? [current.run] : []);
+    return {
+      ...runSummary(current?.bestSeconds, current?.run ? [current.run] : []),
+      ...(stats.totals && { cumulativeSeconds: stats.totals.stages[stage] ?? 0 }),
+    };
   };
   const visitSummary = (zone: string): ZoneStatsSummary => {
     const destination = destinations.find(({ id }) => id === zone);
@@ -207,6 +237,7 @@ export function stageStatsStore(
     const total = destination.stages.length;
     return {
       ...runSummary(stats.zones[zone], runs),
+      ...(stats.totals && { cumulativeSeconds: stats.totals.zones[zone] ?? 0 }),
       completed,
       partial: completed !== total,
       total,
@@ -224,8 +255,19 @@ export function stageStatsStore(
           attemptSeconds: run.attemptSeconds + seconds,
           runSeconds: run.runSeconds + seconds,
         });
+        const totals = stats.totals;
+        const zone = destinations.find(({ stages }) => stages.includes(stage))?.id;
         stats = {
           ...stats,
+          ...(totals && {
+            totals: {
+              stages: { ...totals.stages, [stage]: (totals.stages[stage] ?? 0) + seconds },
+              zones:
+                zone === undefined
+                  ? totals.zones
+                  : { ...totals.zones, [zone]: (totals.zones[zone] ?? 0) + seconds },
+            },
+          }),
           wholeRun: { ...stats.wholeRun, activeSeconds: stats.wholeRun.activeSeconds + seconds },
         };
       }
@@ -280,6 +322,11 @@ export function stageStatsStore(
     flush,
     async load() {
       stats = (await store.load()).save;
+      if (stats.totals === undefined) {
+        stats = { ...stats, totals: emptyTotals() };
+        changed();
+        await flush();
+      }
     },
     recordDeath(stage) {
       knownStage(stage);
@@ -291,7 +338,7 @@ export function stageStatsStore(
       changed();
     },
     resetWholeRun() {
-      stats = { ...stats, wholeRun: emptyWholeRun() };
+      stats = { ...stats, totals: emptyTotals(), wholeRun: emptyWholeRun() };
       changed();
     },
     retryStage(stage) {

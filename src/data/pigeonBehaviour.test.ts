@@ -29,19 +29,40 @@ const make = () =>
     {},
     { character: "pigeon-antagonist", col: 20, row: 10 },
   );
-const target = (vx = 0) => ({ ...startBird(BIRD, { x: 264, y: 360 }), grounded: true, vx });
+const target = (vx = 0) => ({
+  ...startBird(BIRD, { x: 264, y: floor.y - BIRD.height }),
+  grounded: true,
+  vx,
+});
 const floor = { height: 360, width: 720, x: 0, y: 360 };
 const roof = { height: 12, width: 240, x: 180, y: 240 };
 const world = (covered = false) => ({
   solids: covered ? [floor, roof] : [floor],
+  traversalFrame: {
+    bounds: { height: 720, width: 720, x: 0, y: 0 },
+    dtSeconds: 1 / 120,
+    platforms: [],
+    timeSeconds: 0,
+  },
   view: { height: 360, width: 720, x: 0, y: 0 },
 });
+function alignedPosition(object: ReturnType<typeof make>, bird: ReturnType<typeof target>) {
+  const motion = object.behaviour!.states["prepare-drop-left"]!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "fly" || !motion.overhead) {
+    throw Error("Expected overhead approach");
+  }
+  return {
+    x: bird.x + BIRD.width / 2 + motion.overhead.ahead - object.width / 2,
+    y: bird.y - motion.overhead.clearance - object.height,
+  };
+}
 function initial(object: ReturnType<typeof make>, bird: ReturnType<typeof target>): BehaviourState {
   return {
     ...startBehaviour(BIRD, object, bird),
     activeAttack: { id: "drop-burst", phase: "committed" },
-    anchor: object.origin,
+    anchor: alignedPosition(object, bird),
     elapsed: 0,
+    flightApproachDirection: 1,
     pendingEntry: true,
     pursuit: { phase: "engaged" as const, settled: false, unreachableSeconds: 0 },
     stateKey: "align-drop-left",
@@ -68,7 +89,7 @@ it.each([0, BIRD.walkSpeed / 2])(
       throw new Error("Expected live aligned drop profile");
     }
     let bird = target(vx),
-      at = object.origin,
+      at = alignedPosition(object, bird),
       state = initial(object, bird);
     const shots: { time: number; x: number; expected: number }[] = [];
     for (let tick = 0; tick < 240 && shots.length < 3; tick++) {
@@ -83,7 +104,11 @@ it.each([0, BIRD.walkSpeed / 2])(
         expect(event.action.velocity.x).toBe(0);
         const template = object.spawnTemplates![event.action.character]!;
         shots.push({
-          expected: bird.x + BIRD.width / 2 + Math.min(motion.maxLead, vx * motion.leadSeconds),
+          expected:
+            bird.x +
+            BIRD.width / 2 +
+            (motion.ahead ?? 0) +
+            Math.min(motion.maxLead, vx * motion.leadSeconds),
           time: tick / 120 + event.time,
           x: event.at.x + event.action.offset.x + template.width / 2,
         });
@@ -100,7 +125,7 @@ it.each([0, BIRD.walkSpeed / 2])(
 it("actual next shot is suppressed when solid cover appears after the first release", () => {
   const object = make();
   const bird = target();
-  let at = object.origin,
+  let at = alignedPosition(object, bird),
     state = initial(object, bird),
     shots = 0;
   for (let tick = 0; tick < 120; tick++) {
@@ -206,19 +231,34 @@ it.each([
   ["prepare-swoop-right", "swoop", "swoop-rest-right"],
 ] as const)("physically completes %s only after supported recovery", (entry, attack, rest) => {
   const object = make();
-  const bird = { ...target(), y: 132 };
-  const physical = { solids: [{ height: 552, width: 720, x: 0, y: 168 }], view: world().view };
-  const component = { ...object, behaviour: { ...object.behaviour!, initial: entry } };
+  const bird = {
+    ...target(),
+    facing: entry.endsWith("left") ? (1 as const) : (-1 as const),
+    y: 132,
+  };
+  const physical = { ...world(), solids: [{ height: 552, width: 720, x: 0, y: 168 }] };
+  const approach = entry.includes("swoop")
+    ? "pursuit-swoop-left"
+    : entry.endsWith("left")
+      ? "pursuit"
+      : "pursuit-burst-right";
+  const component = { ...object, behaviour: { ...object.behaviour!, initial: approach } };
   let at = object.origin;
   let state = startBehaviour(BIRD, component, bird);
   let rested = 0;
   let committed = false;
   let completed = false;
+  let told = false;
   for (let tick = 0; tick < 2400; tick++) {
+    const before = { at, state };
     const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
     at = step.at;
     state = step.state;
+    if (state.stateKey === entry) {
+      told = true;
+    }
     if (state.activeAttack?.phase === "committed") {
+      expect(told).toBe(true);
       committed = true;
       expect(state.activeAttack.id).toBe(attack);
     }
@@ -229,10 +269,110 @@ it.each([
     if ((state.attackCooldownRemainingSeconds ?? 0) > 0) {
       expect(committed).toBe(true);
       expect(rested).toBeGreaterThanOrEqual(40);
-      expect(supportedLanding(object, physical, at)).toBe(true);
+      expect(before.state.stateKey).toBe(rest);
+      expect(supportedLanding(object, physical, before.at)).toBe(true);
       completed = true;
       break;
     }
   }
   expect(completed, `Incomplete ${entry}: ${state.stateKey}`).toBe(true);
+});
+
+it.each([
+  ["pursuit", "prepare-drop-left", { x: 650, y: 324 }],
+  ["pursuit-swoop-left", "prepare-swoop-left", { x: 264, y: 5 }],
+] as const)(
+  "actual %s aborts an invalid moving tell through supported rest and a fresh approach",
+  (entry, tell, invalid) => {
+    const object = make(),
+      bird = target(),
+      physical = world();
+    const component = { ...object, behaviour: { ...object.behaviour!, initial: entry } };
+    let at = object.origin,
+      state = startBehaviour(BIRD, component, bird);
+    for (let tick = 0; tick < 1200 && state.stateKey !== tell; tick++) {
+      const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+      at = step.at;
+      state = step.state;
+    }
+    expect(state.stateKey).toBe(tell);
+    const blocked = { ...bird, ...invalid };
+    let step = stepBehaviour(BIRD, object, physical, 1 / 120, blocked, at, state);
+    expect(step.state.stateKey).toBe("return-high");
+    expect(step.state.activeAttack).toBeUndefined();
+    expect(step.state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+    at = step.at;
+    state = step.state;
+    for (let tick = 0; tick < 1200 && state.stateKey !== "rest"; tick++) {
+      step = stepBehaviour(BIRD, object, physical, 1 / 120, blocked, at, state);
+      expect(step.actions).toEqual([]);
+      expect(step.state.activeAttack).toBeUndefined();
+      at = step.at;
+      state = step.state;
+    }
+    expect(state.stateKey).toBe("rest");
+    expect(supportedLanding(object, physical, at)).toBe(true);
+    let approached = false;
+    for (let tick = 0; tick < 1200 && state.stateKey !== "prepare-drop-left"; tick++) {
+      step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+      expect(step.actions).toEqual([]);
+      approached ||= step.state.stateKey === "pursuit";
+      at = step.at;
+      state = step.state;
+    }
+    expect(approached).toBe(true);
+    expect(state.stateKey).toBe("prepare-drop-left");
+    expect(state.elapsed).toBeLessThan(1 / 120);
+    expect(state.activeAttack?.phase).toBe("tell");
+  },
+);
+
+it("actual close swoop tell retreats to overhead range and restarts its full tell", () => {
+  const object = make(),
+    physical = world();
+  let bird = target();
+  const component = {
+    ...object,
+    behaviour: { ...object.behaviour!, initial: "pursuit-swoop-left" },
+  };
+  let at = object.origin,
+    state = startBehaviour(BIRD, component, bird);
+  for (let tick = 0; tick < 1200 && state.stateKey !== "prepare-swoop-left"; tick++) {
+    const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+  }
+  expect(state.stateKey).toBe("prepare-swoop-left");
+  bird = { ...bird, x: at.x };
+  let step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+  expect(step.state.stateKey).toBe("pursuit-swoop-left");
+  expect(step.state.activeAttack).toBeUndefined();
+  expect(step.state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+  at = step.at;
+  state = step.state;
+  for (let tick = 0; tick < 1200 && state.stateKey !== "prepare-swoop-left"; tick++) {
+    step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+    expect(step.actions).toEqual([]);
+    at = step.at;
+    state = step.state;
+  }
+  expect(state.stateKey).toBe("prepare-swoop-left");
+  expect(state.elapsed).toBeLessThan(1 / 120);
+  const tell = object.behaviour!.states["prepare-swoop-left"]!;
+  const duration = tell.transitions
+    .flatMap(({ when }) => when)
+    .find((condition) => condition.kind === "elapsed")!;
+  if (duration.kind !== "elapsed") {
+    throw Error("Expected tell duration");
+  }
+  let elapsed = state.elapsed;
+  for (let tick = 0; tick < 240 && state.activeAttack?.phase !== "committed"; tick++) {
+    step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+    elapsed += 1 / 120;
+    expect(step.actions).toEqual([]);
+  }
+  expect(state.activeAttack?.phase).toBe("committed");
+  expect(elapsed).toBeGreaterThanOrEqual(duration.seconds - 1e-6);
 });

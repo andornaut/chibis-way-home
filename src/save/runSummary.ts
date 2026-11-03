@@ -33,6 +33,7 @@ export interface RunCounters {
 }
 
 export interface RunStatsSummary extends RunCounters {
+  readonly cumulativeSeconds?: number;
   readonly bestSeconds: number | undefined;
 }
 

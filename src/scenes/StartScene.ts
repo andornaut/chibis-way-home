@@ -20,7 +20,7 @@ import {
   startScreenShown,
 } from "../pwa";
 import { openingDestination } from "../rules/opening";
-import { resetWholeRunStats, savedProgress } from "../save";
+import { savedProgress } from "../save";
 import { setTouchSettingShown, type TouchSetting } from "../settings/touchControls";
 import {
   addSlice,
@@ -258,9 +258,6 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
         return;
       }
       this.starting = true;
-      if (this.layout.restart === undefined) {
-        resetWholeRunStats();
-      }
       // Unseen new games show the opening; Continue returns directly to the map.
       this.scene.start(openingDestination(savedProgress()));
     } else if (control === "settings") {

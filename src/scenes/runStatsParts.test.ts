@@ -34,14 +34,20 @@ it("paints the preview-first page and its single unboxed statement without panel
   const size = vi.fn();
   const image = vi.fn(() => ({ setOrigin: () => ({ setDisplaySize: size }) }));
   const scene = { add: { image, rectangle }, textures: { exists: () => true } } as unknown as Scene;
-  const runStats = { attemptSeconds: 30, attempts: 2, bestSeconds: 20, runSeconds: 50 };
+  const runStats = {
+    attemptSeconds: 30,
+    attempts: 2,
+    bestSeconds: 20,
+    cumulativeSeconds: 75,
+    runSeconds: 50,
+  };
   const data = {
     percent: 1,
     runStats,
     stage,
     statement: statsStatement("clear", stage),
     wholeRun: { activeSeconds: 123456, completed: 19, deaths: 9876, total: 21 },
-    zoneStats: { ...runStats, completed: 1, partial: true, total: 3 },
+    zoneStats: { ...runStats, completed: 1, cumulativeSeconds: 130, partial: true, total: 3 },
   };
   const unchanged = structuredClone(data);
   const layout = addStageSummary(scene, STAGE_SUMMARY_BOUNDS, data);
@@ -57,6 +63,7 @@ it("paints the preview-first page and its single unboxed statement without panel
     layout.statement!.text.text,
   ]);
   expect(painted).toHaveLength(17);
+  expect(layout.totals.map(({ value }) => value.text)).toEqual(["1:15", "2:10", "2057:36"]);
   const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
   const tops = painted.map(({ font, point, text }) => {
     const ink = textInkBounds(font === "font-title" ? fonts.title : fonts.body, 2, 16, text);

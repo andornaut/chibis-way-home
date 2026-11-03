@@ -74,15 +74,14 @@ it("never defaults to clearing and commits a confirmed restart only once before 
 });
 
 it.each([
-  { expected: 1, hasContinue: false, name: "genuine New Game", progress: "beginning" },
-  { expected: 0, hasContinue: true, name: "Continue", progress: "map" },
+  { hasContinue: false, name: "Start with beginning progress", progress: "beginning" },
+  { hasContinue: true, name: "Continue", progress: "map" },
   {
-    expected: 0,
     hasContinue: true,
     name: "Continue context with beginning progress",
     progress: "beginning",
   },
-] as const)("resets whole-run totals only for $name", ({ expected, hasContinue, progress }) => {
+] as const)("preserves saved totals for $name", ({ hasContinue, progress }) => {
   saved.progress = { at: progress, openingSeen: true };
   const start = vi.fn();
   const scene = Object.assign(new StartScene(), {
@@ -91,7 +90,7 @@ it.each([
   }) as unknown as { act(control: "start"): void };
   scene.act("start");
   scene.act("start");
-  expect(resetWholeRunStats).toHaveBeenCalledTimes(expected);
+  expect(resetWholeRunStats).not.toHaveBeenCalled();
   expect(clearProgress).not.toHaveBeenCalled();
   expect(start).toHaveBeenCalledExactlyOnceWith("map");
 });

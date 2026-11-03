@@ -28,10 +28,12 @@ import {
   addSlice,
   addTextButton,
   BODY_FONT,
+  BUTTON,
   captureTab,
   cardFonts,
   paletteColour,
   pressTextButton,
+  PRIMARY_BUTTON,
   ringFocus,
   setTextButtonEnabled,
   type TextButton,
@@ -133,7 +135,9 @@ export class StageSelectScene extends Scene {
       const layout = this.layout.buttons[index]!;
       const available = this.available.includes(id);
       const primary = id === this.latest;
-      const art = primary ? "ui-button-primary" : "ui-button";
+      const style = primary ? PRIMARY_BUTTON : BUTTON;
+      const art = style.art;
+      const labelColour = paletteColour(this, available ? style.label : "grey");
       const normal = addSlice(this, art, layout.button, "normal");
       const pressed = addSlice(this, art, layout.button, "pressed").setVisible(false);
       const previewKey = STAGE_PREVIEWS[id];
@@ -144,13 +148,7 @@ export class StageSelectScene extends Scene {
         .image(layout.preview.x, layout.preview.y, previewKey)
         .setOrigin(0)
         .setDisplaySize(layout.preview.width, layout.preview.height);
-      const name = addCardTextIn(
-        this,
-        BODY_FONT,
-        layout.name,
-        layout.text,
-        paletteColour(this, available ? (primary ? "white" : "ink") : "grey"),
-      );
+      const name = addCardTextIn(this, BODY_FONT, layout.name, layout.text, labelColour);
       const numberText = TEXT.map.stageNumber.replace("{number}", String(index + 1));
       const numberWidth = inkWidth(font, STAGE_NUMBER_SCALE, numberText);
       if (numberWidth > layout.number.width) {
@@ -161,15 +159,14 @@ export class StageSelectScene extends Scene {
         BODY_FONT,
         { x: layout.number.x + layout.number.width - numberWidth, y: layout.number.y },
         numberText,
-        paletteColour(this, primary ? "white" : "grey"),
+        labelColour,
       )
         .setScale(STAGE_NUMBER_SCALE)
-        .setAlpha(0.7);
+        .setAlpha(available ? 1 : 0.5);
       if (!available) {
         normal.setTint(paletteColour(this, "lgrey"));
         image.setTint(paletteColour(this, "grey")).setAlpha(0.45);
         name.setAlpha(0.7);
-        number.setAlpha(0.5);
       }
       this.buttons.set(id, {
         content: [image, name, number].map((object) => ({ object, y: object.y })),

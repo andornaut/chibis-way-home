@@ -59,8 +59,62 @@ describe("second-jump cue", () => {
     const still = airJumpCue(AIR_JUMP_CUE, frame, 0, cue);
     const moving = airJumpCue(AIR_JUMP_CUE, frame, vx, cue);
     expect(moving.map(({ x, y }) => ({ x, y }))).toEqual(
-      still.map(({ x, y }) => ({ x: x + Math.sign(vx) * AIR_JUMP_CUE.forwardLead, y })),
+      still.map(({ x, y }) => ({
+        x: x + Math.sign(vx) * AIR_JUMP_CUE.forwardLead,
+        y,
+      })),
     );
+  });
+
+  it.each([
+    { fraction: 0, id: "integer frame" },
+    { fraction: 0.25, id: "lower fractional frame" },
+    { fraction: 0.75, id: "upper fractional frame" },
+  ])("keeps integer pixels, a fixed keyline and a full-frame gap at $id", ({ fraction }) => {
+    const current = {
+      ...frame,
+      x: frame.x + fraction,
+      y: frame.y + fraction,
+    };
+    const pixels = airJumpCue(AIR_JUMP_CUE, current, 0, {
+      elapsedSeconds: 0,
+    });
+    expect(pixels).toEqual(
+      airJumpCue(AIR_JUMP_CUE, frame, 0, { elapsedSeconds: 0 }).map((pixel) => ({
+        ...pixel,
+        x: pixel.x + Math.round(fraction),
+        y: pixel.y + Math.round(fraction),
+      })),
+    );
+    const core = pixels.filter(({ colour }) => colour === AIR_JUMP_CUE.colour);
+    const bounds = (points: typeof pixels) => ({
+      bottom: Math.max(...points.map(({ y }) => y)) + 1,
+      left: Math.min(...points.map(({ x }) => x)),
+      right: Math.max(...points.map(({ x }) => x)) + 1,
+      top: Math.min(...points.map(({ y }) => y)),
+    });
+    const outer = bounds(pixels);
+    const inner = bounds(core);
+    expect(
+      pixels.every(
+        ({ height, width, x, y }) =>
+          Number.isInteger(x) && Number.isInteger(y) && width === 1 && height === 1,
+      ),
+    ).toBe(true);
+    expect({
+      height: outer.bottom - outer.top,
+      width: outer.right - outer.left,
+    }).toEqual({
+      height: 22,
+      width: 17,
+    });
+    expect(outer).toEqual({
+      bottom: inner.bottom + 1,
+      left: inner.left - 1,
+      right: inner.right + 1,
+      top: inner.top - 1,
+    });
+    expect(outer.top - Math.round(current.y + current.height)).toBe(1);
   });
 
   it("draws two open upward carets close beneath the full frame with an unscaled keyline", () => {
@@ -77,8 +131,10 @@ describe("second-jump cue", () => {
     };
     const hasCore = (x: number, y: number) => cores.some((at) => at.x === x && at.y === y);
     for (const top of [2, 9]) {
-      expect(hasCore(centre.x, centre.y + (top - 8) * AIR_JUMP_CUE.scale)).toBe(true);
-      expect(hasCore(centre.x, centre.y + (top - 8 + 4) * AIR_JUMP_CUE.scale)).toBe(false);
+      expect(hasCore(centre.x, centre.y + Math.round((top - 8) * AIR_JUMP_CUE.scale))).toBe(true);
+      expect(hasCore(centre.x, centre.y + Math.round((top - 8 + 4) * AIR_JUMP_CUE.scale))).toBe(
+        false,
+      );
     }
     const gap = Math.min(...pixels.map(({ y }) => y)) - frame.y - frame.height;
     expect(gap).toBeGreaterThanOrEqual(0);

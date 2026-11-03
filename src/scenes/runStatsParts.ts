@@ -50,8 +50,8 @@ export function addStageSummary(
       { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
       {
         runSeconds: data.wholeRun.activeSeconds,
-        stageSeconds: data.runStats.runSeconds,
-        zoneSeconds: data.zoneStats.runSeconds,
+        stageSeconds: data.runStats.cumulativeSeconds ?? data.runStats.runSeconds,
+        zoneSeconds: data.zoneStats.cumulativeSeconds ?? data.zoneStats.runSeconds,
       },
     ),
     zone: identity.title,
