@@ -152,7 +152,35 @@ describe("walk transition prerequisites", () => {
 });
 
 describe("walk transition cache", () => {
-  it("preserves hazard/mover results and ordered states with fewer physics calls", async () => {
+  it("reuses an actual lethal transition independently of walker search order", () => {
+    const layout = frozen(
+      zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), transitionCourse()),
+    );
+    const step = vi.fn<WalkStep>((input, state) =>
+      stepZone(BIRD, layout, STEP_SECONDS, input, state),
+    );
+    const advance = memoizeTransitions(step);
+    const input = frozen({ jumpHeld: false, move: 1 as const, useHeld: false });
+    let state = frozen(startZone(BIRD, layout, 42));
+    let previous = state;
+    const limit = Math.ceil(
+      (layout.areas.course!.width / BIRD.walkSpeed + BIRD.walkSpeed / BIRD.groundAccel) /
+        STEP_SECONDS,
+    );
+    for (let tick = 0; tick < limit && state.death === undefined; tick++) {
+      previous = state;
+      state = frozen(advance(input, state));
+    }
+    expect(state.death).toMatchObject({
+      contact: { index: 1, kind: "object" },
+      reason: "hazard",
+    });
+    const calls = step.mock.calls.length;
+    expect(advance(input, previous)).toEqual(state);
+    expect(step).toHaveBeenCalledTimes(calls);
+  });
+
+  it("preserves mover-course search results and ordered states with fewer physics calls", async () => {
     async function run(cached: boolean) {
       vi.resetModules();
       const engine = await import("../rules/zone");
@@ -198,7 +226,6 @@ describe("walk transition cache", () => {
     expect(cached.transitions).toBe(original.transitions);
     expect(cached.trace).toBe(original.trace);
     expect(cached.lethalSteps).toBe(original.lethalSteps);
-    expect(original.lethalSteps).toBeGreaterThan(0);
     expect(cached.calls).toBeLessThan(original.calls);
     expect(cached.result.cleared).toBe(true);
     console.log(
