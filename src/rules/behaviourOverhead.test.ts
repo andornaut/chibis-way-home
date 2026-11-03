@@ -4,6 +4,7 @@ import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, Character, Rect } from "../data/types";
 import { sweptBehaviourRect } from "../sim/behaviourBounds";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
+import { selectSupportedFlight } from "./behaviourFlightSelection";
 import type { BehaviourWorld } from "./behaviourReach";
 import { startBird } from "./bird";
 import { supportedLanding } from "./flyLanding";
@@ -525,4 +526,292 @@ it("resolves bounded varied support selection distances without scaling its atte
       "Invalid supported flight selection",
     );
   }
+});
+
+describe("varied supported flight destination", () => {
+  const motion = {
+    kind: "fly",
+    selection: { clearance: 40, distance: 400, kind: "varied", maxAttempts: 8, minDistance: 100 },
+    speed: 200,
+    to: "support",
+  } as const;
+  const floor = { height: 100, width: 1000, x: 0, y: 500 };
+  const world = (): BehaviourWorld => ({
+    ...geometry([floor]),
+    idleDecision: { namespace: "fixture:0", seed: 17 },
+  });
+  it("physically ascends, crosses and lands before the graph can complete the selected relocation", () => {
+    const profile: BehaviourPlan = {
+      ...plan,
+      initial: "relocate",
+      states: {
+        ...plan.states,
+        done: { animation: null, motion: { kind: "wait", support: "required" }, transitions: [] },
+        relocate: {
+          animation: null,
+          motion,
+          transitions: [{ to: "done", when: [{ kind: "arrived", tolerance: 0.01 }] }],
+        },
+      },
+    };
+    const object = actor(profile),
+      bird = target(),
+      physical = world();
+    let at = object.origin,
+      state: BehaviourState = initial(object, bird),
+      crossed = false;
+    let chosen: { x: number; y: number } | undefined;
+    for (let tick = 0; tick < 100 && state.stateKey !== "done"; tick++) {
+      const step = stepBehaviour(BIRD, object, physical, 0.1, bird, at, state);
+      chosen ??= step.state.flightSelection?.target;
+      if (step.state.flightSelection) {
+        expect(step.state.flightSelection.target).toEqual(chosen);
+      }
+      for (const leg of step.segments) {
+        if (leg.from.x !== leg.to.x) {
+          crossed = true;
+          expect(leg.from.y).toBeLessThanOrEqual(
+            object.origin.y - motion.selection.clearance + 1e-6,
+          );
+          expect(leg.to.y).toBe(leg.from.y);
+        }
+      }
+      if (tick === 0) {
+        expect(step.at.x).toBe(object.origin.x);
+        expect(step.at.y).toBeLessThan(object.origin.y);
+        expect(step.state.stateKey).toBe("relocate");
+      }
+      at = step.at;
+      state = step.state;
+    }
+    expect(crossed).toBe(true);
+    expect(state.stateKey).toBe("done");
+    expect(at).toEqual(chosen);
+    expect(supportedLanding(object, physical, at)).toBe(true);
+    expect(state.flightDecision).toBe(1);
+  });
+  it("allows only explicit uncommitted failed-selection fallback and then physically lands", () => {
+    const profile: BehaviourPlan = {
+      ...plan,
+      initial: "relocate",
+      states: {
+        ...plan.states,
+        done: { animation: null, motion: { kind: "wait", support: "required" }, transitions: [] },
+        fallback: {
+          animation: null,
+          motion: { kind: "fly", speed: 200, to: "support" },
+          transitions: [{ to: "done", when: [{ kind: "arrived", tolerance: 0.01 }] }],
+        },
+        relocate: {
+          animation: null,
+          motion,
+          transitions: [
+            { to: "tell", when: [{ kind: "elapsed", seconds: 0 }] },
+            { to: "done", when: [{ kind: "elapsed", seconds: 0 }] },
+            { to: "fallback", when: [{ kind: "alignment-blocked" }] },
+          ],
+        },
+      },
+    };
+    const object = actor(profile),
+      bird = target(),
+      physical = { ...world(), solids: [floor, { height: 20, width: 1000, x: 0, y: 350 }] };
+    let at = { ...object.origin, y: 400 },
+      state: BehaviourState = initial(object, bird);
+    let step = stepBehaviour(BIRD, object, physical, 0.1, bird, at, state);
+    expect(step.state.stateKey).toBe("fallback");
+    expect(step.state.activeAttack).toBeUndefined();
+    expect(step.at.y).toBeGreaterThan(at.y);
+    expect(supportedLanding(object, physical, step.at)).toBe(false);
+    at = step.at;
+    state = step.state;
+    for (let tick = 0; tick < 10 && state.stateKey !== "done"; tick++) {
+      step = stepBehaviour(BIRD, object, physical, 0.1, bird, at, state);
+      at = step.at;
+      state = step.state;
+    }
+    expect(state.stateKey).toBe("done");
+    expect(supportedLanding(object, physical, at)).toBe(true);
+    expect(state.attackCooldownRemainingSeconds ?? 0).toBe(0);
+  });
+  it("keeps an unavailable nearest-support fallback pending instead of reporting a landing", () => {
+    const profile: BehaviourPlan = {
+      ...plan,
+      initial: "relocate",
+      states: {
+        ...plan.states,
+        done: { animation: null, motion: { kind: "wait" }, transitions: [] },
+        fallback: {
+          animation: null,
+          motion: { kind: "fly", speed: 200, to: "support" },
+          transitions: [{ to: "done", when: [{ kind: "arrived", tolerance: 0.01 }] }],
+        },
+        relocate: {
+          animation: null,
+          motion,
+          transitions: [{ to: "fallback", when: [{ kind: "alignment-blocked" }] }],
+        },
+      },
+    };
+    const object = actor(profile),
+      bird = target(),
+      known = world();
+    const physical = { ...known, solids: [] };
+    const at = { ...object.origin, y: 400 };
+    let state: BehaviourState = initial(object, bird);
+    for (let tick = 0; tick < 5; tick++) {
+      const step = stepBehaviour(BIRD, object, physical, 0.1, bird, at, state);
+      expect(step.at).toEqual(at);
+      expect(step.state.stateKey).toBe("fallback");
+      expect(step.state.landing?.status).toBe("pending");
+      expect(step.actions).toEqual([]);
+      state = step.state;
+    }
+  });
+  it.each(["committed", "nearest"] as const)(
+    "preserves protected %s support flight instead of evaluating an early fallback",
+    (kind) => {
+      const committed = kind === "committed";
+      const chosenMotion = committed
+        ? motion
+        : ({ kind: "fly", speed: 200, to: "support" } as const);
+      const attack = committed ? { id: "burst", phase: "committed" as const } : undefined;
+      const profile: BehaviourPlan = {
+        ...plan,
+        initial: "relocate",
+        states: {
+          ...plan.states,
+          done: { animation: null, motion: { kind: "wait" }, transitions: [] },
+          fallback: {
+            animation: null,
+            ...(attack && { attack }),
+            motion: { kind: "fly", speed: 200, to: "support" },
+            transitions: [],
+          },
+          relocate: {
+            animation: null,
+            ...(attack && { attack }),
+            motion: chosenMotion,
+            transitions: [{ to: "fallback", when: [{ kind: "alignment-blocked" }] }],
+          },
+        },
+      };
+      const object = actor(profile),
+        bird = target(),
+        physical = { ...world(), solids: [floor, { height: 20, width: 1000, x: 0, y: 350 }] };
+      const start = {
+        ...initial(object, bird),
+        ...(attack && { activeAttack: attack, pendingEntry: false }),
+      };
+      const step = stepBehaviour(
+        BIRD,
+        object,
+        physical,
+        0.1,
+        bird,
+        { ...object.origin, y: 400 },
+        start,
+      );
+      expect(step.state.stateKey).toBe("relocate");
+      if (committed) {
+        expect(step.state.activeAttack).toEqual(attack);
+      } else {
+        expect(step.at.y).toBeGreaterThan(400);
+      }
+    },
+  );
+  it("replays object-local choices and flies above the same floor to a different landing point", () => {
+    const object = actor(),
+      physical = world();
+    const first = selectSupportedFlight(physical, object, motion, 1, 0, object.origin);
+    expect(first).toEqual(selectSupportedFlight(physical, object, motion, 1, 0, object.origin));
+    expect(first.state.status).toBe("moving");
+    expect(Math.abs(first.state.target!.x - object.origin.x)).toBeGreaterThanOrEqual(
+      motion.selection.minDistance,
+    );
+    expect(first.points).toHaveLength(3);
+    expect(first.points![0]!.x).toBe(object.origin.x);
+    expect(first.points![0]!.y).toBeLessThan(object.origin.y);
+    expect(first.points![1]!.y).toBe(first.points![0]!.y);
+    expect(supportedLanding(object, physical, first.points![2]!)).toBe(true);
+    const moving = selectSupportedFlight(
+      physical,
+      object,
+      motion,
+      1,
+      first.decision,
+      first.points![0]!,
+      first.state,
+    );
+    expect(moving.decision).toBe(first.decision);
+    expect(moving.state.target).toEqual(first.state.target);
+    const arrived = selectSupportedFlight(
+      physical,
+      object,
+      motion,
+      1,
+      moving.decision,
+      first.state.target!,
+      moving.state,
+    );
+    expect(arrived.state.status).toBe("supported");
+    expect(
+      selectSupportedFlight(physical, object, motion, 1, arrived.decision, first.state.target!)
+        .state.target,
+    ).not.toEqual(first.state.target);
+  });
+  it("retains a blocked decision until actual geometry changes instead of rerolling each tick", () => {
+    const object = actor(),
+      open = world(),
+      roof = { height: 10, width: 1000, x: 0, y: 450 };
+    const blocked = { ...open, solids: [floor, roof] };
+    const first = selectSupportedFlight(blocked, object, motion, 1, 0, object.origin);
+    expect(first.state.status).toBe("pending");
+    expect(first.state.target).toBeUndefined();
+    const repeat = selectSupportedFlight(
+      blocked,
+      object,
+      motion,
+      1,
+      first.decision,
+      object.origin,
+      first.state,
+    );
+    expect(repeat.decision).toBe(first.decision);
+    expect(repeat.state).toBe(first.state);
+    const repaired = selectSupportedFlight(
+      open,
+      object,
+      motion,
+      1,
+      repeat.decision,
+      object.origin,
+      repeat.state,
+    );
+    expect(repaired.state.status).toBe("moving");
+    expect(repaired.decision).toBe(repeat.decision + 1);
+  });
+  it("rejects lethal landing surfaces and revalidates a selected target before every physical leg", () => {
+    const object = actor(),
+      physical = world();
+    const first = selectSupportedFlight(physical, object, motion, 1, 0, object.origin);
+    const red = {
+      ...physical,
+      hazards: [{ owner: { ...object }, rect: { height: 20, width: 1000, x: 0, y: 480 } }],
+    };
+    const invalid = selectSupportedFlight(
+      red,
+      object,
+      motion,
+      1,
+      first.decision,
+      object.origin,
+      first.state,
+    );
+    expect(invalid.state.status).toBe("pending");
+    expect(invalid.points).toBeUndefined();
+    expect(selectSupportedFlight(red, object, motion, 1, 0, object.origin).state.status).toBe(
+      "pending",
+    );
+  });
 });

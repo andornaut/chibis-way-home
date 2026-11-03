@@ -19,6 +19,7 @@ import {
   canEnterAttack,
   enterAttack,
 } from "./behaviourAttack";
+import { type FlightSelectionState, selectSupportedFlight } from "./behaviourFlightSelection";
 import {
   advanceIdleRecovery,
   type BehaviourIdleState,
@@ -73,6 +74,8 @@ export interface BehaviourState extends BehaviourAttackState {
   readonly axis?: "x" | "y";
   readonly flightApproachDirection?: -1 | 1;
   readonly flightTarget?: Point;
+  readonly flightDecision?: number;
+  readonly flightSelection?: FlightSelectionState;
   readonly landing?: FlyLandingState;
   readonly pendingEntry?: boolean;
   readonly active: boolean;
@@ -513,6 +516,12 @@ function enterState(
   };
   delete (next as { flightTarget?: Point }).flightTarget;
   if (
+    key !== state.stateKey ||
+    !(node.motion.kind === "fly" && node.motion.to === "support" && node.motion.selection)
+  ) {
+    delete (next as { flightSelection?: FlightSelectionState }).flightSelection;
+  }
+  if (
     !(node.motion.kind === "fly" && node.motion.to === "support") &&
     !(node.motion.kind === "wait" && node.motion.support === "required")
   ) {
@@ -735,6 +744,9 @@ function alignmentBlocked(
   state: BehaviourState,
 ): boolean {
   const motion = nodeOf(object, state.stateKey).motion;
+  if (motion.kind === "fly" && motion.to === "support" && motion.selection) {
+    return state.flightSelection?.status === "pending";
+  }
   if (motion.kind === "pursue" && motion.mode === "fly" && motion.overhead) {
     if (state.flightApproachDirection === undefined) {
       return true;
@@ -1424,12 +1436,41 @@ export function stepBehaviour(
       (node.motion.kind === "fly" && node.motion.to === "support") ||
       (node.motion.kind === "wait" && node.motion.support === "required");
     const supportWorld = supportMotion ? landingWorldAt(world, time) : undefined;
-    const supported =
+    let supported =
       supportWorld !== undefined &&
       supportedLanding(object, supportWorld, current) &&
       (node.motion.kind !== "wait" || next.landing !== undefined);
     let landingTarget: Point | undefined;
-    if (supportMotion) {
+    if (node.motion.kind === "fly" && node.motion.to === "support" && node.motion.selection) {
+      const proof =
+        supportWorld &&
+        selectSupportedFlight(
+          supportWorld,
+          object,
+          node.motion,
+          next.facing,
+          next.flightDecision ?? 0,
+          current,
+          next.flightSelection,
+        );
+      const selection = proof?.state ?? {
+        entry: next.flightSelection?.entry ?? current,
+        status: "pending" as const,
+      };
+      supported = selection.status === "supported";
+      landingTarget = proof?.points?.[0];
+      const support = supported && supportWorld && landingSupport(object, supportWorld, current);
+      next = {
+        ...next,
+        flightDecision: proof?.decision ?? next.flightDecision ?? 0,
+        flightSelection: selection,
+        landing: {
+          speed: node.motion.speed,
+          status: selection.status,
+          ...(support && { support }),
+        },
+      };
+    } else if (supportMotion) {
       const speed = node.motion.kind === "fly" ? node.motion.speed : next.landing?.speed;
       const support = supportWorld && landingSupport(object, supportWorld, current);
       const previous = next.landing?.support;
@@ -1550,16 +1591,39 @@ export function stepBehaviour(
         next = { ...next, facing: target < mine ? -1 : 1 };
       }
     }
+    const selectionFallback =
+      node.motion.kind === "fly" &&
+      node.motion.to === "support" &&
+      node.motion.selection !== undefined &&
+      next.flightSelection?.status === "pending" &&
+      node.attack?.phase !== "committed" &&
+      node.attack?.phase !== "completed" &&
+      next.activeAttack?.phase !== "committed";
     const transition =
       traversalStep !== undefined ||
       next.traversal?.preparation !== undefined ||
       settling ||
-      (node.motion.kind === "fly" && node.motion.to === "support" && !supported) ||
+      (node.motion.kind === "fly" &&
+        node.motion.to === "support" &&
+        !supported &&
+        !selectionFallback) ||
       (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
       (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded)
         ? undefined
         : node.transitions.find(
             ({ to, when }) =>
+              (!selectionFallback ||
+                (when.length === 1 &&
+                  when[0]!.kind === "alignment-blocked" &&
+                  (() => {
+                    const fallback = nodeOf(object, to);
+                    return (
+                      fallback.attack === undefined &&
+                      fallback.motion.kind === "fly" &&
+                      fallback.motion.to === "support" &&
+                      !fallback.motion.selection
+                    );
+                  })())) &&
               canEnterAttack(nodeOf(object, to), next) &&
               !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
               when.every((condition) =>
