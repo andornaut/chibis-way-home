@@ -37,12 +37,14 @@ import {
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import { deathSupport } from "./death";
+import { effectiveCollision, effectiveHazardPhase } from "./effectiveCollision";
 import { type ForcePulse, forcePulseVelocity } from "./force";
-import { hazardBoundsAt } from "./hazardOccupancy";
+import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
 import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
+import { timedHazardRect } from "./timedHazard";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import { validateWalkEntries } from "./zoneLinks";
 
@@ -526,11 +528,10 @@ export function stepZone(
         object.motion.algorithm !== "static" ||
         object.reaction.kind !== "none";
       return {
-        ...(dynamic && {
-          boundsAt: hazardBoundsAt(area.objects, state, at, rect, zone.seconds, object),
-        }),
+        ...(dynamic
+          ? hazardOccupancy(tuning, area.objects, state, at, rect, zone.seconds, object)
+          : { rect }),
         owner: object,
-        rect,
       };
     }),
   };
@@ -881,10 +882,16 @@ export function stepZone(
       crushed ||= solids.some((solid) => rectsOverlap(birdBox(tuning, bird), solid));
     }
   }
-  const hazardIndices = kinds.hazards.filter((index) => !objects[index]!.object.contact);
+  const hazardIndices = kinds.hazards.filter((index) => {
+    const { behaviour, object } = objects[index]!;
+    return !object.contact && effectiveCollision(object, behaviour?.state) === "hazard";
+  });
   const hazards = hazardIndices.map((index) => {
     const { after, behaviour, object } = objects[index]!;
     return (
+      (effectiveHazardPhase(object, behaviour?.state) !== undefined
+        ? timedHazardRect(object, after)
+        : undefined) ??
       (objects[index] === kinds.fixed[index] ? kinds.fixedHazards[index] : undefined) ??
       (behaviour
         ? contactBox(object, after, behaviour.state.facing, behaviour.state.axis)
@@ -985,6 +992,17 @@ export function stepZone(
             );
           }
           return behaviour?.segments.some((segment) => {
+            if (segment.hazardPhase !== undefined) {
+              return (
+                segment.hazardPhase === "active" &&
+                sweptContact(
+                  timedHazardRect(object, segment.from),
+                  timedHazardRect(object, segment.to),
+                  birdAt(segment.start),
+                  birdAt(segment.end),
+                )
+              );
+            }
             if (object.contact) {
               if (!segment.frame) {
                 throw new Error(`Missing silhouette sweep frame for ${object.art}`);
