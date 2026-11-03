@@ -164,6 +164,7 @@ it("keeps acquired Archie pursuing across the production middle-yard low wall", 
   const layout = layoutOf("city-streets", "patrol-cover-middle");
   const area = layout.areas[layout.start.area]!;
   const object = area.objects.find((object) => object.character === "dog-antagonist")!;
+  const initial = startZone(ordinary, layout, 1);
   const target = { ...startBird(ordinary, { x: 21 * TILE, y: 50 * TILE }), grounded: true };
   const platforms = area.objects
     .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
@@ -191,6 +192,10 @@ it("keeps acquired Archie pursuing across the production middle-yard low wall", 
   for (let tick = 0; tick < 600; tick++) {
     const world: BehaviourWorld = {
       hazards,
+      idleDecision: {
+        namespace: `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
+        seed: initial.seed + initial.attempt,
+      },
       platforms: platforms.map(({ after, collision, owner }) => ({
         collision,
         owner,
