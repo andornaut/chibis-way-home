@@ -1,5 +1,5 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { type Scene, TintModes } from "phaser";
+import { type Scene, Textures, TintModes } from "phaser";
 import { expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
@@ -7,8 +7,7 @@ import type { SkillId } from "../data/types";
 import { SKILL_ART, SKILL_BUTTON } from "../layout/skillHud";
 import { SKILL_IDS } from "../rules/skills";
 
-vi.mock("phaser", () => ({ TintModes: { FILL: 1 } }));
-
+vi.mock("phaser", () => ({ Textures: { FilterMode: { LINEAR: 1 } }, TintModes: { FILL: 1 } }));
 vi.mock("./cardParts", () => ({
   paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
     Number.parseInt(palette.colours[name].slice(1), 16),
@@ -20,34 +19,20 @@ const colour = (name: keyof typeof palette.colours) =>
   Number.parseInt(palette.colours[name].slice(1), 16);
 
 function fixture() {
-  function layer(x = 0, y = 0, art?: string) {
-    let fill = 0;
-    const node = {
+  function layer(x: number, y: number, art: string) {
+    return {
       art,
-      clear() {
-        this.pixels.clear();
-        return this;
-      },
       clearTint: vi.fn().mockReturnThis(),
-      fillRect(x: number, y: number, width: number, height: number) {
-        for (let row = y; row < y + height; row++) {
-          for (let col = x; col < x + width; col++) {
-            this.pixels.set(`${col},${row}`, fill);
-          }
-        }
-        return this;
-      },
-      fillStyle(value: number, alpha: number) {
-        expect(alpha).toBe(1);
-        fill = value;
-        return this;
-      },
-      pixels: new Map<string, number>(),
       play: vi.fn().mockReturnThis(),
+      setDisplaySize: vi.fn().mockReturnThis(),
       setOrigin: vi.fn().mockReturnThis(),
       setPosition(x: number, y: number) {
         this.x = x;
         this.y = y;
+        return this;
+      },
+      setTexture(key: string) {
+        this.art = key;
         return this;
       },
       setTint: vi.fn().mockReturnThis(),
@@ -60,93 +45,123 @@ function fixture() {
       x,
       y,
     };
-    return node;
   }
+  const textures = new Map<
+    string,
+    {
+      image: { data: Uint8ClampedArray; height: number; width: number };
+      setFilter: ReturnType<typeof vi.fn>;
+    }
+  >();
+  const createCanvas = vi.fn((key: string, width: number, height: number) => {
+    const image = { data: new Uint8ClampedArray(width * height * 4), height, width };
+    const setFilter = vi.fn();
+    return {
+      getContext: () => ({
+        createImageData: () => image,
+        putImageData: () => textures.set(key, { image, setFilter }),
+      }),
+      refresh: vi.fn(),
+      setFilter,
+    };
+  });
   const layers: ReturnType<typeof layer>[] = [];
-  function addLayer(...args: Parameters<typeof layer>) {
+  const addLayer = (...args: Parameters<typeof layer>) => {
     const node = layer(...args);
     layers.push(node);
     return node;
-  }
+  };
   const scene = {
-    add: {
-      graphics: () => addLayer(),
-      sprite: (x: number, y: number, art: string) => addLayer(x, y, art),
-    },
+    add: { image: addLayer, sprite: addLayer },
+    textures: { createCanvas, exists: (key: string) => textures.has(key) },
   } as unknown as Scene;
   const draw = (skill: SkillId = "dash") => {
     const icon = drawSkillButton(scene, { x: 0, y: 0 }, skill);
-    const [ring, disc, face, glyph] = layers.slice(-4);
-    return { disc: disc!, face: face!, glyph: glyph!, icon, ring: ring! };
+    const [chrome, glyph] = layers.slice(-2);
+    return { chrome: chrome!, glyph: glyph!, icon };
   };
-  return { draw };
+  const pixel = (chrome: ReturnType<typeof layer>, x: number, y: number) => {
+    const { image } = textures.get(chrome.art)!;
+    const scale = image.width / SKILL_BUTTON.target;
+    const offset = 4 * (Math.floor(y * scale) * image.width + Math.floor(x * scale));
+    const [r, g, b, alpha] = image.data.slice(offset, offset + 4);
+    return { alpha: alpha!, colour: (r! << 16) | (g! << 8) | b! };
+  };
+  return { createCanvas, draw, pixel, textures };
 }
 
-it("keeps the selected outer ring through cooldown and paints only ready faces bright", () => {
-  const { disc, face, glyph, icon, ring } = fixture().draw();
-  expect(disc.art).toBe("ui-pause");
-  expect(disc.play).toHaveBeenCalledWith(animationKey("ui-pause", "rest"));
-  expect(ring.visible).toBe(false);
-  expect(face.pixels.get("17,17")).toBe(colour("navy"));
+it("keeps only the selected ink annulus through cooldown and paints ready faces yellow", () => {
+  const { draw, pixel } = fixture();
+  const { chrome, glyph, icon } = draw();
+  expect(pixel(chrome, 24, 3).alpha).toBe(0);
+  expect(pixel(chrome, 24, 24)).toEqual({ alpha: 255, colour: colour("navy") });
   expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "muted"));
   icon.selected(true);
   icon.ready(true);
-  expect(ring.visible).toBe(true);
-  expect(face.pixels.get("17,17")).toBe(colour("yellow"));
+  expect(pixel(chrome, 24, 3)).toEqual({ alpha: 255, colour: colour("ink") });
+  expect(pixel(chrome, 24, 24)).toEqual({ alpha: 255, colour: colour("yellow") });
   expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "ready"));
   expect(glyph.setTint).toHaveBeenLastCalledWith(colour("ink"));
   expect(glyph.setTintMode).toHaveBeenLastCalledWith(TintModes.FILL);
   icon.ready(false);
-  expect(ring.visible).toBe(true);
-  expect(face.pixels.get("17,17")).toBe(colour("navy"));
-  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "muted"));
+  expect(pixel(chrome, 24, 3)).toEqual({ alpha: 255, colour: colour("ink") });
+  expect(pixel(chrome, 24, 24)).toEqual({ alpha: 255, colour: colour("navy") });
   expect(glyph.clearTint).toHaveBeenCalledTimes(2);
   icon.selected(false);
-  expect(ring.visible).toBe(false);
+  expect(pixel(chrome, 24, 3).alpha).toBe(0);
 });
 
-it("keeps the integer rings inside the existing target and masks the full circular face", () => {
-  const { face, ring } = fixture().draw();
-  expect(ring.pixels.get("17,-4")).toBe(colour("ink"));
-  expect(ring.pixels.get("17,-3")).toBe(colour("yellow"));
-  expect(ring.pixels.get("17,-1")).toBe(colour("ink"));
-  const points = [...ring.pixels.keys()].map((point) => point.split(",").map(Number));
-  expect(Math.min(...points.map(([x]) => x! + ring.x))).toBe(3);
-  expect(Math.max(...points.map(([x]) => x! + ring.x))).toBe(SKILL_BUTTON.target - 3);
-  expect(Math.min(...points.map(([, y]) => y! + ring.y))).toBe(3);
-  expect(Math.max(...points.map(([, y]) => y! + ring.y))).toBe(SKILL_BUTTON.target - 3);
-  expect(face.pixels.get("17,4")).toBe(colour("navy"));
-  expect(face.pixels.has("17,3")).toBe(false);
-  expect(face.pixels.has("4,4")).toBe(false);
-});
-
-it("preserves ready unselected room/detail illustrations and owned visibility after moving", () => {
-  const { disc, face, glyph, icon, ring } = fixture().draw();
-  icon.ready(true);
-  expect(ring.visible).toBe(false);
-  expect(face.pixels.get("17,17")).toBe(colour("yellow"));
-  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "ready"));
-  expect(glyph.setTint).toHaveBeenLastCalledWith(colour("ink"));
-  expect(glyph.setTintMode).toHaveBeenLastCalledWith(TintModes.FILL);
+it("smooths only the circle edges inside the unchanged target with locally filtered chrome", () => {
+  const { draw, pixel, textures } = fixture();
+  const { chrome, glyph, icon } = draw();
+  expect(chrome.setDisplaySize).toHaveBeenCalledWith(SKILL_BUTTON.target, SKILL_BUTTON.target);
+  expect(glyph.art).toBe(SKILL_ART.dash);
+  expect(icon.objects).toHaveLength(2);
+  expect(pixel(chrome, 24, 6.5).alpha).toBeGreaterThan(0);
+  expect(pixel(chrome, 24, 6.5).alpha).toBeLessThan(255);
+  expect(pixel(chrome, 24, 7.5).alpha).toBe(255);
   icon.selected(true);
-  icon.place({ x: 100, y: 50 });
-  expect([ring.x, ring.y, disc.x, disc.y, face.x, face.y, glyph.x, glyph.y]).toEqual([
-    107, 57, 107, 57, 107, 57, 116, 66,
-  ]);
-  icon.visible(false);
-  expect([ring, disc, face, glyph].every((node) => !node.visible)).toBe(true);
-  icon.visible(true);
-  expect([ring, disc, face, glyph].every((node) => node.visible)).toBe(true);
+  expect(pixel(chrome, 24, 2.5).alpha).toBeGreaterThan(0);
+  expect(pixel(chrome, 24, 2.5).alpha).toBeLessThan(255);
+  expect(pixel(chrome, 24, 1.5).alpha).toBe(0);
+  expect(pixel(chrome, 0, 0).alpha).toBe(0);
+  for (const [key, texture] of textures) {
+    expect(key.startsWith("skill-button-chrome-")).toBe(true);
+    expect(texture.image.width).toBeGreaterThan(SKILL_BUTTON.target);
+    expect(texture.setFilter).toHaveBeenCalledExactlyOnceWith(Textures.FilterMode.LINEAR);
+  }
 });
 
-it("shows exactly one outer ring as the exclusive selected skill changes", () => {
-  const { draw } = fixture();
+it("preserves ready unselected room illustrations and visibility after moving", () => {
+  const { draw, pixel } = fixture();
+  const { chrome, glyph, icon } = draw();
+  icon.ready(true);
+  expect(pixel(chrome, 24, 3).alpha).toBe(0);
+  expect(pixel(chrome, 24, 24)).toEqual({ alpha: 255, colour: colour("yellow") });
+  expect(glyph.play).toHaveBeenLastCalledWith(animationKey(SKILL_ART.dash, "ready"));
+  icon.place({ x: 100, y: 50 });
+  expect([chrome.x, chrome.y, glyph.x, glyph.y]).toEqual([100, 50, 116, 66]);
+  icon.visible(false);
+  expect(icon.objects.every((node) => !(node as unknown as { visible: boolean }).visible)).toBe(
+    true,
+  );
+  icon.visible(true);
+  expect(icon.objects.every((node) => (node as unknown as { visible: boolean }).visible)).toBe(
+    true,
+  );
+});
+
+it("reuses chrome across skills while exactly one selected annulus changes owners", () => {
+  const { createCanvas, draw, pixel } = fixture();
   const icons = SKILL_IDS.map((skill) => ({ skill, ...draw(skill) }));
   for (const active of SKILL_IDS) {
     for (const { icon, skill } of icons) {
       icon.selected(skill === active);
       icon.ready(false);
     }
-    expect(icons.filter(({ ring }) => ring.visible).map(({ skill }) => skill)).toEqual([active]);
+    expect(
+      icons.filter(({ chrome }) => pixel(chrome, 24, 3).alpha > 0).map(({ skill }) => skill),
+    ).toEqual([active]);
   }
+  expect(createCanvas).toHaveBeenCalledTimes(2);
 });

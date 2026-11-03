@@ -1,44 +1,71 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { type GameObjects, type Scene, TintModes } from "phaser";
+import { clamp01 } from "@andornaut/game-kit/numbers";
+import { type GameObjects, type Scene, Textures, TintModes } from "phaser";
 
 import type { Point, SkillId } from "../data/types";
 import { SKILL_ART, SKILL_BUTTON, skillButton } from "../layout/skillHud";
 import { paletteColour } from "./cardParts";
 
-const DISC_CENTRE = Math.floor(SKILL_BUTTON.disc / 2);
+const CHROME_SCALE = 4;
+const CHROME_CENTRE = SKILL_BUTTON.target / 2;
+const FACE_RADIUS = SKILL_BUTTON.disc / 2;
+const SELECTED_RADIUS = FACE_RADIUS + 4;
 
-function fillDisc(graphics: GameObjects.Graphics, colour: number, radius: number) {
-  graphics.fillStyle(colour, 1);
-  const squared = (radius + 0.5) ** 2;
-  for (let y = -radius; y <= radius; y++) {
-    let left = -radius;
-    while (left * left + y * y > squared) {
-      left++;
-    }
-    graphics.fillRect(DISC_CENTRE + left, DISC_CENTRE + y, 1 - 2 * left, 1);
+function chromeTexture(scene: Scene, selected: boolean, ready: boolean): string {
+  const face = paletteColour(scene, ready ? "yellow" : "navy");
+  const ink = paletteColour(scene, "ink");
+  const key = `skill-button-chrome-${selected}-${face}-${ink}`;
+  if (scene.textures.exists(key)) {
+    return key;
   }
+  const size = SKILL_BUTTON.target * CHROME_SCALE;
+  const texture = scene.textures.createCanvas(key, size, size);
+  if (texture === null) {
+    throw new Error(`Cannot create ${key}`);
+  }
+  const context = texture.getContext();
+  const image = context.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const distance = Math.hypot(
+        (x + 0.5) / CHROME_SCALE - CHROME_CENTRE,
+        (y + 0.5) / CHROME_SCALE - CHROME_CENTRE,
+      );
+      // Coverage stays local to the circle edges, independently of the renderer's pixel-art mode.
+      const faceCoverage = clamp01(FACE_RADIUS + 0.5 - distance);
+      const coverage = selected ? clamp01(SELECTED_RADIUS + 0.5 - distance) : faceCoverage;
+      if (coverage === 0) {
+        continue;
+      }
+      const offset = 4 * (y * size + x);
+      for (const [channel, shift] of [16, 8, 0].entries()) {
+        image.data[offset + channel] = Math.round(
+          (((face >> shift) & 255) * faceCoverage +
+            ((ink >> shift) & 255) * (coverage - faceCoverage)) /
+            coverage,
+        );
+      }
+      image.data[offset + 3] = Math.round(255 * coverage);
+    }
+  }
+  context.putImageData(image, 0, 0);
+  texture.refresh();
+  texture.setFilter(Textures.FilterMode.LINEAR);
+  return key;
 }
 
-// Keep the native cream disc and replace its baked pause bars with an opaque pixel face.
 export function drawSkillButton(scene: Scene, at: Point, skill: SkillId) {
   const layout = skillButton(at);
-  const ring = scene.add.graphics().setPosition(layout.disc.x, layout.disc.y).setVisible(false);
-  fillDisc(ring, paletteColour(scene, "ink"), 21);
-  fillDisc(ring, paletteColour(scene, "yellow"), 20);
-  fillDisc(ring, paletteColour(scene, "ink"), 18);
-  const disc = scene.add
-    .sprite(layout.disc.x, layout.disc.y, "ui-pause")
+  const chrome = scene.add
+    .image(at.x, at.y, chromeTexture(scene, false, false))
     .setOrigin(0)
-    .play(animationKey("ui-pause", "rest"));
-  const face = scene.add.graphics().setPosition(layout.disc.x, layout.disc.y);
+    .setDisplaySize(SKILL_BUTTON.target, SKILL_BUTTON.target);
   const glyph = scene.add.sprite(layout.glyph.x, layout.glyph.y, SKILL_ART[skill]).setOrigin(0);
   let selected = false;
-  let shown = true;
   let state: boolean | undefined;
+  const drawChrome = () => chrome.setTexture(chromeTexture(scene, selected, state === true));
   const drawGlyph = (ready: boolean) => {
     if (ready !== state) {
-      face.clear();
-      fillDisc(face, paletteColour(scene, ready ? "yellow" : "navy"), 13);
       glyph.play(animationKey(SKILL_ART[skill], ready ? "ready" : "muted"));
       if (ready) {
         glyph.setTint(paletteColour(scene, "ink")).setTintMode(TintModes.FILL);
@@ -46,31 +73,29 @@ export function drawSkillButton(scene: Scene, at: Point, skill: SkillId) {
         glyph.clearTint();
       }
       state = ready;
+      drawChrome();
     }
   };
   drawGlyph(false);
-  const objects: GameObjects.GameObject[] = [ring, disc, face, glyph];
+  const objects: GameObjects.GameObject[] = [chrome, glyph];
   return {
     objects,
     place(at: Point) {
       const position = skillButton(at);
-      ring.setPosition(position.disc.x, position.disc.y);
-      disc.setPosition(position.disc.x, position.disc.y);
-      face.setPosition(position.disc.x, position.disc.y);
+      chrome.setPosition(at.x, at.y);
       glyph.setPosition(position.glyph.x, position.glyph.y);
     },
     ready(value: boolean) {
       drawGlyph(value);
     },
     selected(value: boolean) {
-      selected = value;
-      ring.setVisible(shown && selected);
+      if (selected !== value) {
+        selected = value;
+        drawChrome();
+      }
     },
     visible(visible: boolean) {
-      shown = visible;
-      ring.setVisible(visible && selected);
-      disc.setVisible(visible);
-      face.setVisible(visible);
+      chrome.setVisible(visible);
       glyph.setVisible(visible);
     },
   };
