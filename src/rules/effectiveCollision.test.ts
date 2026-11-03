@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
+import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
 import type { Archetype, BehaviourNode, BehaviourPlan, ObjectLayout } from "../data/types";
 import { TEST_PURSUER, withAnticipationContact } from "../testing/behaviours";
 import { behaviourPose } from "../view/behaviour";
@@ -65,6 +66,37 @@ function resolve(behaviour = plan): ObjectLayout {
 }
 const object = resolve();
 const bird = startBird(BIRD, { x: 0, y: 0 });
+
+it("resolves the actual warned vent cycle with contact only during its active window", () => {
+  const vent = resolve(WARNED_VENT_BEHAVIOUR);
+  const initial = startBehaviour(BIRD, vent, bird);
+  const activeStart = WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning;
+  const recoveryStart = activeStart + WARNED_VENT_SECONDS.active;
+  const cycle = Object.values(WARNED_VENT_SECONDS).reduce((total, seconds) => total + seconds, 0);
+  expect(initial.elapsed).toBe(0);
+  expect(effectiveHazardPhase(vent, initial)).toBe("inactive");
+  expect(effectiveCollision(vent, initial)).toBe("none");
+  for (const [seconds, phase, collision] of [
+    [WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning / 2, "warning", "none"],
+    [activeStart + WARNED_VENT_SECONDS.active / 2, "active", "hazard"],
+    [recoveryStart + WARNED_VENT_SECONDS.recovery / 2, "inactive", "none"],
+  ] as const) {
+    const result = stepBehaviour(BIRD, vent, [], seconds, bird, vent.origin, initial);
+    expect(effectiveHazardPhase(vent, result.state)).toBe(phase);
+    expect(effectiveCollision(vent, result.state)).toBe(collision);
+    expect(result.at).toEqual(vent.origin);
+  }
+  const whole = stepBehaviour(BIRD, vent, [], cycle, bird, vent.origin, initial);
+  const active = whole.segments.filter(({ hazardPhase }) => hazardPhase === "active");
+  expect(active).toHaveLength(1);
+  expect(active[0]!.start).toBeCloseTo(activeStart);
+  expect(active[0]!.end).toBeCloseTo(recoveryStart);
+  expect(effectiveCollision(vent, whole.state)).toBe("none");
+  const retry = startBehaviour(BIRD, vent, bird);
+  expect(retry.elapsed).toBe(0);
+  expect(effectiveHazardPhase(vent, retry)).toBe("inactive");
+  expect(effectiveCollision(vent, retry)).toBe("none");
+});
 
 it("keeps timed contacts and rendered state on the executor's exact boundaries", () => {
   const start = startBehaviour(BIRD, object, bird);
