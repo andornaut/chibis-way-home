@@ -1373,6 +1373,22 @@ it("suggests a proved ascent only at a touching static wall", () => {
   );
   expect(stepTraversal).not.toHaveBeenCalled();
   expect(
+    preferredAscentInputs(
+      {
+        ...geometry,
+        platforms: [
+          {
+            collision: "ledge",
+            owner: actor(),
+            rect: { height: 1, width: 72, x: 90, y: 264 },
+          },
+        ],
+      },
+      context,
+      request,
+    ),
+  ).toBeUndefined();
+  expect(
     preferredAscentInputs(geometry, context, {
       ...request,
       start: { ...request.start, grounded: false },

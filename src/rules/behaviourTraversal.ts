@@ -320,13 +320,26 @@ export function preferredAscentInputs(
   if (move === 0) {
     return undefined;
   }
+  const maximumRise = (profile.jumpSpeed * profile.jumpSpeed) / (2 * profile.gravity);
+  // An upper landing can intercept the straight jump before its lower goal corridor.
+  // Leave that route to the independent search without charging an unsuitable preference.
+  const intercepted = [...world.solids, ...(world.platforms ?? []).map(({ rect }) => rect)].some(
+    (rect) =>
+      rect.x < goal.x + goal.width &&
+      rect.x + rect.width > goal.x &&
+      rect.y >= foot - maximumRise - epsilon &&
+      rect.y < goal.y + body.height - epsilon,
+  );
+  if (intercepted) {
+    return undefined;
+  }
   const wall = world.solids.some((rect) => {
     const rise = foot - rect.y;
     return (
       Math.abs(move === 1 ? rect.x - right : rect.x + rect.width - left) <= epsilon &&
       rect.y + rect.height > top + epsilon &&
       rise > epsilon &&
-      rise <= (profile.jumpSpeed * profile.jumpSpeed) / (2 * profile.gravity)
+      rise <= maximumRise
     );
   });
   return wall
