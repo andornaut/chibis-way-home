@@ -956,6 +956,7 @@ function pursuitTrack(object: ObjectLayout): BehaviourTrack {
 
 interface PursuitKinds {
   readonly flight: boolean;
+  readonly flyGateway: string | undefined;
   readonly groundTraversal: boolean;
 }
 
@@ -967,14 +968,18 @@ function pursuitKinds(plan: BehaviourPlan): PursuitKinds {
     return cached;
   }
   let flight = false;
+  let flyGateway: string | undefined;
   let groundTraversal = false;
-  for (const { motion } of Object.values(plan.states)) {
+  for (const [key, { motion }] of Object.entries(plan.states)) {
     if (motion.kind === "pursue") {
       flight ||= motion.mode === "fly";
+      if (motion.mode === "fly") {
+        flyGateway ??= key;
+      }
       groundTraversal ||= motion.mode === "ground" && Boolean(motion.traversal);
     }
   }
-  const kinds = { flight, groundTraversal };
+  const kinds = { flight, flyGateway, groundTraversal };
   pursuitKindsCache.set(plan, kinds);
   return kinds;
 }
@@ -1387,9 +1392,7 @@ export function stepBehaviour(
       };
     }
   }
-  const flyGateway = Object.entries(plan.states).find(
-    ([, node]) => node.motion.kind === "pursue" && node.motion.mode === "fly",
-  )?.[0];
+  const { flyGateway } = pursuitKinds(plan);
   let time = 0;
   let traversalStep: ReturnType<typeof advanceTraversal> | undefined;
   while (true) {
