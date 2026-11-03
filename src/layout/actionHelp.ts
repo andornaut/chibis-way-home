@@ -3,7 +3,7 @@ import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import type { ControlAction, Rect, Size } from "../data/types";
 import { type ActionHelpPart, actionHelpParts } from "../view/actionHelp";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
-import { cardTextOrigin, type CardFonts } from "./contentCard";
+import { type CardFonts, cardTextOrigin } from "./contentCard";
 
 export const ACTION_HELP = {
   gap: CARD_CONTENT.rowGap,

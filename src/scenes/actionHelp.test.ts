@@ -2,16 +2,20 @@ import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { CARD_FONTS } from "../testing/cardFonts";
 import { TEXT } from "../data/text";
 import { ACTION_HELP, actionHelpLayout } from "../layout/actionHelp";
 import { CARD_TEXT_SCALE } from "../layout/cardFrame";
 import { cardTextOrigin } from "../layout/contentCard";
+import { CARD_FONTS } from "../testing/cardFonts";
 import { drawActionHelp } from "./actionHelp";
 import { addCardTextIn } from "./cardParts";
 import { drawHelpChrome } from "./helpChrome";
 
-vi.mock("./cardParts", () => ({ ACTION_FONT: "font-title", BODY_FONT: "font-body", addCardTextIn: vi.fn() }));
+vi.mock("./cardParts", () => ({
+  ACTION_FONT: "font-title",
+  BODY_FONT: "font-body",
+  addCardTextIn: vi.fn(),
+}));
 vi.mock("./helpChrome", () => ({ drawHelpChrome: vi.fn() }));
 
 it("draws separate filled icons after the actual label advance and gap without input targets", () => {
