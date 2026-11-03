@@ -5,7 +5,7 @@ The art plan and pipeline for Chibi's Way Home. Art owns `art/` and the served a
 ## Direction
 
 - Pixel art: minimalist, cute, a little retro, refined.
-- Everything, UI included, is pixel art at one base resolution, 720x360. The game scales it to fill the screen at 2:1 with nearest-neighbour sampling and no smoothing, by a fractional factor, so on most screens some pixels come out one device pixel wider than others. On a landscape phone 1 base pixel is about 1 CSS pixel. Judge art at a fractional scale as well as at 3x, and avoid 1px patterns (checks, dashes, alternating rows) that turn uneven when pixels vary in width.
+- Game artwork and native UI glyphs use pixel art at one base resolution, 720x360. Procedural skill-button circles are the local antialiased exception described below. The game scales it to fill the screen at 2:1 with nearest-neighbour sampling and no smoothing, by a fractional factor, so on most screens some pixels come out one device pixel wider than others. On a landscape phone 1 base pixel is about 1 CSS pixel. Judge art at a fractional scale as well as at 3x, and avoid 1px patterns (checks, dashes, alternating rows) that turn uneven when pixels vary in width.
 - Playable and speaking characters use chibi proportions: the head at least as big as the body, so a character reads from head shape and markings alone. All natural background objects, including foliage, bushes, trees and animals, use realistic or naturalistic proportions, forms, silhouettes and motion within the pixel-art style and muted pastel palette. Avoid cute cartoon shapes, oversized eyes, clothing and character expressions in background nature. Playable and speaking chibi characters remain the exception.
 
 ### Naturalistic animal anatomy
@@ -136,7 +136,7 @@ The read-only [asset gallery](../pages/art/index.html) at `/art/` includes every
 ### Palette
 
 - One fixed house palette, plus a few game-specific ramps that each end on a house colour. The house palette is [Endesga 32](https://lospec.com/palette-list/endesga-32); colour names are the `K` names in `art/tools/pixel.py`.
-- Every pixel is fully opaque or fully transparent.
+- Raster art pixels are fully opaque or fully transparent. Procedural skill-button circles alone use fractional coverage at their edges; face and ring interiors remain opaque.
 - Background paint uses the named depth ramps in `art/tools/background_palette.py` through `art/tools/background_tones.py`: sky is lightest, then far, middle and near background materials become slightly darker. Base linear relative luminance steps are 0.035, 0.070 and 0.105 below the unchanged zone sky. Near wall panels, joints, window groups and natural material accents retain separate paint roles. Modal dimming joins the existing substantial shade ramps rather than walking these small depth steps. Preserve the existing flat zone-primary skies, silhouettes, species, complete buildings and opaque indoor walls. Functional doors, stair markers, the walk signal and the opened parcel retain their authored cues. `python3 -I art/tools/background_tones.py build` refreshes only background PNGs; the individual generators apply the same policy when publishing backdrops. Foreground tiles, actors, UI and opening artwork are unchanged.
 - Each colour has a one-step-darker mapping (its ramp). Shadows and dimming step each colour down its ramp, never blend with black.
 - Greys (lgrey, grey) may be used for environment scenery and characters. Disabled UI keeps its own treatment: greyed with the grey ramp and changed in shape, so it stays recognisable.
@@ -272,15 +272,15 @@ All positions are in base pixels (x, y, w, h) of the 720x360 layout as drawn. Th
 | Double jump | icon-skill-double-jump | 608,8                   |
 | Speedy      | icon-skill-speedy      | 664,8                   |
 
-The base 720x360 view places these targets left to right in one horizontal top row, with 8px between targets and 8px from the top and right edges. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) reuses the 35x35 `ui-pause` rest disc and its cream ring. Draw an opaque pixel-disc face with radius 13 at disc-local 17,17 to cover the baked pause bars completely, then place the native 16x16 glyph at local 9,9. The glyph's centre anchor is 8,8.
+The base 720x360 view places these targets left to right in one horizontal top row, with 8px between targets and 8px from the top and right edges. [The source layout](../src/layout/skillHud.ts) adapts the positions to the view. [Button composition](../src/scenes/skillButton.ts) draws smooth procedural circles centred at target-local 24,24: the face radius is 17.5px, and the selected skill adds a 4px dark `ink` annulus with an outer radius of 21.5px. Both fit the existing 48x48 target. There are no light-coloured rings or reused `ui-pause` chrome. Place the unchanged native 16x16 glyph at target-local 16,16; its centre anchor remains 8,8.
 
-The selected skill has an additional steady outer yellow ring in both ready and recharging states. Compose it behind the native disc as concentric opaque discs centred at 17,17: radius 21 `ink`, radius 20 `yellow`, then radius 18 `ink`. Its outer bounds fit inside the existing 48x48 target. Pixel-disc fills use the native rule `dx² + dy² <= (radius + 0.5)²`, with no smoothing. Do not bake selection, face colours or target coordinates into the glyph exports.
+Cache the circle chrome in a 192x192 CanvasTexture at 4x resolution and display it at 48x48 with local linear filtering. Fractional RGBA coverage smooths only the circle boundaries; face and ring interiors remain opaque. Preserve the global pixel-art renderer and nearest-neighbour glyph sampling. Do not bake selection, circle chrome or target coordinates into the glyph exports.
 
 Locked icons are hidden. Unlocked icons remain visible, including when muted. Only one selected power-up affects play at a time. During play, tap selects that power-up without performing its movement action; a 400ms hold pauses and opens details without selecting the held skill. Selection and recharge produce three visual states:
 
-- Enabled and ready: the selected skill has the extra outer ring and a bright `yellow` (`#fee761`) face throughout, with its native `ready` glyph rendered in `ink` (`#181425`). The glyph holds 14.43:1 contrast against the face.
-- Enabled and recharging: the selected skill retains the extra outer ring, with an opaque `navy` (`#262b44`) face and its native `grey` (`#8b9bb4`) `muted` glyph, holding 4.93:1 contrast.
-- Disabled by another selected power-up: the unselected skill has the same flat opaque navy face and grey `muted` glyph, without the extra outer ring.
+- Enabled and ready: the selected skill has the dark ink ring and a bright `yellow` (`#fee761`) face throughout, with its native `ready` glyph rendered in `ink` (`#181425`). The glyph holds 14.43:1 contrast against the face.
+- Enabled and recharging: the selected skill retains the dark ink ring, with an opaque `navy` (`#262b44`) face and its native `grey` (`#8b9bb4`) `muted` glyph, holding 4.93:1 contrast.
+- Disabled by another selected power-up: the unselected skill has the same flat opaque navy face and grey `muted` glyph, without the dark enabled ring.
 
 Double jump recharges when support resets its spent air jump. Being grounded or holding Jump alone does not mute it. Dash is recharging during its burst, cooldown or spent airborne charge. Speedy is passive and ready whenever selected. [Ownership and development overrides](../src/rules/skills.ts) determine availability; a false development override falls back to saved ownership and does not erase it.
 
