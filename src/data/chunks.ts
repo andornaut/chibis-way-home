@@ -1409,6 +1409,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "growl-cover-late",
     "growl-cover-middle",
     "horizontal-platform-orbit",
+    "offset-two-level-terrace-encounter",
     "open-stepped-ridge-encounter",
     "vertical-red-gate",
   ].map((id) => [id, `${id}-woodland-depth`]),
@@ -1455,6 +1456,7 @@ export const INDUSTRIAL_CHALLENGES: ChunkPool = [
 ];
 
 export const PATROL_YARDS: ChunkPool = [
+  "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",
   "city-boundary-climb-yard",
   "city-boundary-dog-high",
@@ -1490,6 +1492,7 @@ export const COUNTRYSIDE_CHALLENGES: ChunkPool = [
 
 export const WOODLAND_CHALLENGES: ChunkPool = [
   ...GROUND_CHALLENGES,
+  "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",
   "compound-double-lift",
   "compound-low-ceiling-shuttle",
@@ -1506,6 +1509,7 @@ export const WOODLAND_CHALLENGES: ChunkPool = [
 
 export const HOME_CHALLENGES: ChunkPool = [
   ...GROUND_CHALLENGES,
+  "offset-two-level-terrace-encounter",
   "open-stepped-ridge-encounter",
   "climbing-enemy-lane",
   "compound-double-lift",
