@@ -57,6 +57,7 @@ it("passes the full authored frame and active duration, then clears wind under m
   expect(wind.draw).toHaveBeenCalledOnce();
   expect(cue.draw).toHaveBeenCalledOnce();
   const [duration, frame, state] = wind.draw.mock.calls[0]!;
+  expect(cue.draw).toHaveBeenCalledExactlyOnceWith(frame, bird.vx);
   expect(duration).toBe(0.25);
   expect(frame).toMatchObject(BIRD_FRAME);
   expect(state.direction).toBe(1);

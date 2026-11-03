@@ -3,7 +3,6 @@ import type { BirdState } from "../rules/bird";
 
 export interface AirJumpCue {
   readonly elapsedSeconds: number;
-  readonly origin: Point;
 }
 
 export function airJumpStarted(before: BirdState, after: BirdState): boolean {
@@ -21,7 +20,6 @@ export function airJumpStarted(before: BirdState, after: BirdState): boolean {
 export function stepAirJumpCue(
   tuning: AirJumpCueTuning,
   seconds: number,
-  frame: Rect,
   before: BirdState,
   after: BirdState,
   cue: AirJumpCue | undefined,
@@ -30,10 +28,7 @@ export function stepAirJumpCue(
     return undefined;
   }
   if (airJumpStarted(before, after)) {
-    return {
-      elapsedSeconds: 0,
-      origin: { x: frame.x + frame.width / 2, y: frame.y + frame.height / 2 },
-    };
+    return { elapsedSeconds: 0 };
   }
   if (cue === undefined) {
     return undefined;
@@ -42,13 +37,18 @@ export function stepAirJumpCue(
   return elapsedSeconds < tuning.durationSeconds ? { ...cue, elapsedSeconds } : undefined;
 }
 
-export function airJumpCue(tuning: AirJumpCueTuning, cue: AirJumpCue | undefined) {
+export function airJumpCue(
+  tuning: AirJumpCueTuning,
+  frame: Rect,
+  vx: number,
+  cue: AirJumpCue | undefined,
+) {
   if (cue === undefined || cue.elapsedSeconds >= tuning.durationSeconds) {
     return [];
   }
   const age = cue.elapsedSeconds / tuning.durationSeconds;
-  const x = cue.origin.x + tuning.offset.x;
-  const y = cue.origin.y + tuning.offset.y - tuning.rise * age;
+  const x = frame.x + frame.width / 2 + tuning.offset.x + Math.sign(vx) * tuning.forwardLead;
+  const y = frame.y + frame.height / 2 + tuning.offset.y;
   const core = new Map<string, Point>();
   const pixel = (column: number, row: number) => {
     const left = Math.round(x + (column - 8) * tuning.scale);

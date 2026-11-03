@@ -28,32 +28,43 @@ describe("second-jump cue", () => {
       before,
     );
     expect(airJumpStarted(before, ordinary)).toBe(false);
-    expect(airJumpCue(AIR_JUMP_CUE, undefined)).toEqual([]);
+    expect(airJumpCue(AIR_JUMP_CUE, frame, 0, undefined)).toEqual([]);
   });
 
-  it("keeps launch coordinates as Chibi moves away and expires without an aftertail", () => {
-    const launched = stepAirJumpCue(AIR_JUMP_CUE, STEP_SECONDS, frame, before, after, undefined)!;
+  it("tracks the current presented frame without an independent rise and expires without an aftertail", () => {
+    const launched = stepAirJumpCue(AIR_JUMP_CUE, STEP_SECONDS, before, after, undefined)!;
     const next = stepAirJumpCue(
       AIR_JUMP_CUE,
       AIR_JUMP_CUE.durationSeconds / 2,
-      { ...frame, x: 900 },
       after,
-      { ...after, x: 900 },
+      after,
       launched,
     )!;
-    expect(next.origin).toEqual(launched.origin);
-    expect(airJumpCue(AIR_JUMP_CUE, next).every(({ alpha }) => alpha === 0.5)).toBe(true);
+    const initial = airJumpCue(AIR_JUMP_CUE, frame, 0, launched);
+    const moved = airJumpCue(AIR_JUMP_CUE, { ...frame, x: 900, y: 800 }, 0, next);
+    expect(moved.map(({ x, y }) => ({ x, y }))).toEqual(
+      initial.map(({ x, y }) => ({ x: x + 800, y: y + 700 })),
+    );
+    expect(moved.every(({ alpha }) => alpha === 0.5)).toBe(true);
     expect(
-      stepAirJumpCue(AIR_JUMP_CUE, AIR_JUMP_CUE.durationSeconds, frame, after, after, next),
+      stepAirJumpCue(AIR_JUMP_CUE, AIR_JUMP_CUE.durationSeconds, after, after, next),
     ).toBeUndefined();
     expect(
-      stepAirJumpCue(AIR_JUMP_CUE, 0, frame, after, { ...after, grounded: true }, next),
+      stepAirJumpCue(AIR_JUMP_CUE, 0, after, { ...after, grounded: true }, next),
     ).toBeUndefined();
   });
 
-  it("draws two open upward carets with an unscaled keyline, not horizontal wind lines", () => {
-    const cue = stepAirJumpCue(AIR_JUMP_CUE, STEP_SECONDS, frame, before, after, undefined)!;
-    const pixels = airJumpCue(AIR_JUMP_CUE, cue);
+  it.each([-100, 0, 100])("leads only the actual horizontal velocity %s", (vx) => {
+    const cue = { elapsedSeconds: 0 };
+    const still = airJumpCue(AIR_JUMP_CUE, frame, 0, cue);
+    const moving = airJumpCue(AIR_JUMP_CUE, frame, vx, cue);
+    expect(moving.map(({ x, y }) => ({ x, y }))).toEqual(
+      still.map(({ x, y }) => ({ x: x + Math.sign(vx) * AIR_JUMP_CUE.forwardLead, y })),
+    );
+  });
+
+  it("draws two open upward carets close beneath the full frame with an unscaled keyline", () => {
+    const pixels = airJumpCue(AIR_JUMP_CUE, frame, 0, { elapsedSeconds: 0 });
     const cores = pixels.filter(({ colour }) => colour === AIR_JUMP_CUE.colour);
     const border = pixels.filter(({ colour }) => colour === AIR_JUMP_CUE.borderColour);
     expect(cores.length).toBeGreaterThan(0);
@@ -61,14 +72,17 @@ describe("second-jump cue", () => {
     expect(new Set(pixels.map(({ x, y }) => `${x},${y}`)).size).toBe(pixels.length);
     expect(pixels.slice(0, border.length)).toEqual(border);
     const centre = {
-      x: cue.origin.x + AIR_JUMP_CUE.offset.x,
-      y: cue.origin.y + AIR_JUMP_CUE.offset.y,
+      x: frame.x + frame.width / 2 + AIR_JUMP_CUE.offset.x,
+      y: frame.y + frame.height / 2 + AIR_JUMP_CUE.offset.y,
     };
     const hasCore = (x: number, y: number) => cores.some((at) => at.x === x && at.y === y);
     for (const top of [2, 9]) {
       expect(hasCore(centre.x, centre.y + (top - 8) * AIR_JUMP_CUE.scale)).toBe(true);
       expect(hasCore(centre.x, centre.y + (top - 8 + 4) * AIR_JUMP_CUE.scale)).toBe(false);
     }
+    const gap = Math.min(...pixels.map(({ y }) => y)) - frame.y - frame.height;
+    expect(gap).toBeGreaterThanOrEqual(0);
+    expect(gap).toBeLessThanOrEqual(2);
     expect(Math.min(...border.map(({ x }) => x))).toBe(
       Math.min(...cores.map(({ x }) => x)) - AIR_JUMP_CUE.borderThickness,
     );

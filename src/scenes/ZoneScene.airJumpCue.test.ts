@@ -5,7 +5,6 @@ import { BIRD } from "../data/bird";
 import { startBird, stepBird } from "../rules/bird";
 import { STEP_MS, STEP_SECONDS } from "../rules/step";
 import * as engine from "../rules/zone";
-import { BIRD_FRAME, birdFrameAt } from "../view/bird";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
@@ -70,12 +69,7 @@ it.each(["accepted", "death", "area"])(
     scene.update(STEP_MS);
     expect(engine.stepZone).toHaveBeenCalledOnce();
     if (outcome === "accepted") {
-      expect(cue.step).toHaveBeenCalledExactlyOnceWith(
-        STEP_SECONDS,
-        { ...BIRD_FRAME, ...birdFrameAt(BIRD, BIRD_FRAME, before) },
-        before,
-        after,
-      );
+      expect(cue.step).toHaveBeenCalledExactlyOnceWith(STEP_SECONDS, before, after);
     } else {
       expect(cue.step).not.toHaveBeenCalled();
     }

@@ -806,12 +806,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.beginDeath();
         break;
       }
-      this.airCue?.step(
-        STEP_SECONDS,
-        { ...BIRD_FRAME, ...birdFrameAt(BIRD, BIRD_FRAME, before) },
-        before,
-        this.zone.bird,
-      );
+      this.airCue?.step(STEP_SECONDS, before, this.zone.bird);
       this.birdPose = stepPose(this.landMs, STEP_MS, before, this.zone.bird, this.birdPose);
       if (this.zone.door !== undefined) {
         this.openDoor(time, this.zone.door);
@@ -1797,7 +1792,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.bird.visible &&
       modalInput(this).accepts()
     ) {
-      this.airCue?.draw();
+      this.airCue?.draw({ ...BIRD_FRAME, ...at }, bird.vx);
       this.dashWind?.draw(
         this.movementTuning().dash?.durationSeconds ?? 0,
         { ...BIRD_FRAME, ...at },

@@ -35,7 +35,7 @@ export function mountAirJumpCue(
   scene.events.once("destroy", dispose);
   return {
     clear,
-    draw() {
+    draw(frame: Rect, vx: number) {
       if (!live) {
         return;
       }
@@ -43,15 +43,15 @@ export function mountAirJumpCue(
       if (!scene.sys.isActive()) {
         return;
       }
-      for (const pixel of airJumpCue(tuning, cue)) {
+      for (const pixel of airJumpCue(tuning, frame, vx, cue)) {
         graphics
           .fillStyle(colour(pixel.colour), pixel.alpha)
           .fillRect(pixel.x, pixel.y, pixel.width, pixel.height);
       }
     },
-    step(seconds: number, frame: Rect, before: BirdState, after: BirdState) {
+    step(seconds: number, before: BirdState, after: BirdState) {
       if (live && scene.sys.isActive()) {
-        cue = stepAirJumpCue(tuning, seconds, frame, before, after, cue);
+        cue = stepAirJumpCue(tuning, seconds, before, after, cue);
       }
     },
   };
