@@ -19,7 +19,7 @@ it("emits hashed atlas assets and exposes their dimensions, frames and URLs to t
   const publicDir = join(import.meta.dirname, "../../../public");
   const emitted: { fileName: string; source: Uint8Array; type: string }[] = [];
   const source = art.sprites.find(({ key }) => key === "bird")!;
-  const manifest = { backdrops: [], fonts: [], sprites: [source], tilesets: [] };
+  const manifest = { backdrops: [], fonts: art.fonts, sprites: [source], tilesets: [] };
   const context = {
     emitFile: (asset: (typeof emitted)[number]) => emitted.push(asset),
     environment: { config: { command: "build", publicDir }, logger: { info: vi.fn() } },

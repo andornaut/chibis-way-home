@@ -11,7 +11,8 @@ import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
 import { loadProgress } from "../save";
 import { ART_MANIFEST_FILE, ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../view/aseprite";
-import { addAtlasArt, ATLAS, queueAtlasFonts, queueAtlasPages } from "./atlasArt";
+import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
+import { filterFontArt, queueFontArt } from "./fontArt";
 
 // First scene to run. Loads everything art's manifest lists, makes an animation of every sprite
 // tag, looping unless the manifest lists it as played once, then, once launchReady resolves,
@@ -21,9 +22,8 @@ export class BootScene extends Scene {
     super("boot");
   }
 
-  // A build loads its atlas pages, in parallel with the manifest, and each font's .fnt: every
-  // game PNG listed outside standalone images is on the pages. The dev server has no atlas, so
-  // each art file loads on its own there and every edit shows on reload.
+  // Font PNG/FNT pairs load independently in both modes. A production build loads the
+  // remaining game art from shared nearest-filtered atlas pages.
   preload(): void {
     this.load.on("progress", (fraction: number) => startupLoading.progress(fraction));
     this.load.once("complete", () => startupLoading.progress(undefined));
@@ -44,15 +44,12 @@ export class BootScene extends Scene {
       for (const { key, png } of manifest.images) {
         this.load.image(key, png);
       }
+      queueFontArt(this, manifest);
       if (ATLAS !== null) {
-        queueAtlasFonts(this, manifest);
         return;
       }
       for (const { json, key, png } of manifest.sprites) {
         this.load.aseprite(key, png, json);
-      }
-      for (const { fnt, key, png } of manifest.fonts) {
-        this.load.bitmapFont(key, png, fnt);
       }
       for (const { key, png } of manifest.tilesets) {
         this.load.spritesheet(key, png, { frameHeight: TILE, frameWidth: TILE });
@@ -64,8 +61,9 @@ export class BootScene extends Scene {
   }
 
   create(): void {
+    filterFontArt(this, this.manifest());
     if (ATLAS !== null) {
-      addAtlasArt(this, ATLAS, this.manifest());
+      addAtlasArt(this, ATLAS);
     }
     for (const { key, once } of this.manifest().sprites) {
       const sheet = this.cache.json.get(key) as AsepriteSheet;

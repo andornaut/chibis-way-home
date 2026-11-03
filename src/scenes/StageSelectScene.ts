@@ -1,5 +1,4 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
@@ -19,6 +18,7 @@ import {
   STAGES_PER_PAGE,
   stageSelectPages,
 } from "../layout/stageSelectCard";
+import { textInkBounds } from "../layout/textInk";
 import { openMap } from "../rules/map";
 import { destinationOf, destinationSelection } from "../rules/mapDestinations";
 import { savedMap } from "../save";
@@ -148,16 +148,24 @@ export class StageSelectScene extends Scene {
         .image(layout.preview.x, layout.preview.y, previewKey)
         .setOrigin(0)
         .setDisplaySize(layout.preview.width, layout.preview.height);
-      const name = addCardTextIn(this, BODY_FONT, layout.name, layout.text, labelColour);
+      const name = addCardTextIn(this, TITLE_FONT, layout.name, layout.text, labelColour);
       const numberText = TEXT.map.stageNumber.replace("{number}", String(index + 1));
-      const numberWidth = inkWidth(font, STAGE_NUMBER_SCALE, numberText);
-      if (numberWidth > layout.number.width) {
+      const numberInk = textInkBounds(
+        font,
+        STAGE_NUMBER_SCALE,
+        font.lineHeight * STAGE_NUMBER_SCALE,
+        numberText,
+      );
+      if (numberInk.width > layout.number.width) {
         throw new Error(`Stage number does not fit: ${id}`);
       }
       const number = addCardText(
         this,
         BODY_FONT,
-        { x: layout.number.x + layout.number.width - numberWidth, y: layout.number.y },
+        {
+          x: layout.number.x + layout.number.width - numberInk.width - numberInk.x,
+          y: layout.number.y + (layout.number.height - numberInk.height) / 2 - numberInk.y,
+        },
         numberText,
         labelColour,
       )

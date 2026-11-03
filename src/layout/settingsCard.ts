@@ -20,7 +20,7 @@ export function settingsCard(
   build: string,
   hasInstall: boolean,
 ) {
-  const actionWidth = cardActionsSize(fonts.body, "row", [words.installButton]).width;
+  const actionWidth = cardActionsSize(fonts.title, "row", [words.installButton]).width;
   const labelWidth = (label: string) => cardTextSize(fonts.body, label).width;
   const widths = [words.moveControls, words.actionButtons].map(
     (text) => ICON + CARD_CONTENT.gap + labelWidth(text) + CARD_CONTENT.gap + SWITCH.width,

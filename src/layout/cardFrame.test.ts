@@ -3,12 +3,14 @@ import { describe, expect, it } from "vitest";
 import { CARD_FRAME, cardRect, cardTitleAt } from "./cardFrame";
 
 describe("cardTitleAt", () => {
-  // Art's rule on its 368-wide card at x 176: origin x = 358 - floor((A - 4) / 2), y 96.
-  it.each([38, 39])("centres a title %i px in advance as art does", (advance) => {
-    expect(cardTitleAt(cardRect(100), advance)).toEqual({
-      x: 358 - Math.floor((advance - 4) / 2),
-      y: 96,
-    });
+  it.each([
+    { height: 12, width: 38, x: 2, y: 3 },
+    { height: 15, width: 39, x: -1, y: 1 },
+  ])("centres title ink with its own bearings: %j", (ink) => {
+    const card = cardRect(100);
+    const origin = cardTitleAt(card, ink);
+    expect(origin.x + ink.x + ink.width / 2).toBe(card.x + card.width / 2);
+    expect(origin.y + ink.y + ink.height / 2).toBe(CARD_FRAME.titleY + 8);
   });
 });
 

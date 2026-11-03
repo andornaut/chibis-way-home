@@ -10,25 +10,22 @@ import {
   cardTextSize,
   contentCardLayout,
 } from "./contentCard";
+import { FONT_SCALE } from "./fontRoles";
 import { hitAround, hitMargin } from "./hitAreas";
 import { labelledButton } from "./labelledButton";
 
-export const STAGE_NUMBER_SCALE = 1.5;
+export const STAGE_NUMBER_SCALE = FONT_SCALE;
 const PREVIEW_WIDTH = 168;
 const PREVIEW_HEIGHT = PREVIEW_WIDTH / 2;
 const INSET = CARD_CONTENT.padding + CARD_CONTENT.rowGap;
 const NUMBER_HEIGHT = (CARD_CONTENT.lineHeight * STAGE_NUMBER_SCALE) / CARD_TEXT_SCALE;
 const PREVIEW_TOP = CARD_CONTENT.closeInset + NUMBER_HEIGHT + CARD_CONTENT.rowGap;
 const NAME_TOP = PREVIEW_TOP + PREVIEW_HEIGHT + CARD_CONTENT.rowGap;
-const NAME_HEIGHT = 2 * CARD_CONTENT.lineHeight;
-const STAGE_FACE = {
-  height: NAME_TOP + NAME_HEIGHT + CARD_CONTENT.padding - CARD_CONTENT.rowGap,
-  width: PREVIEW_WIDTH + 2 * INSET,
-};
+const STAGE_FACE_WIDTH = PREVIEW_WIDTH + 2 * INSET;
 
 export const STAGES_PER_PAGE = Math.max(
   1,
-  Math.floor((SCREEN.width - 3 * CARD_CONTENT.padding) / (STAGE_FACE.width + CARD_CONTENT.padding)),
+  Math.floor((SCREEN.width - 3 * CARD_CONTENT.padding) / (STAGE_FACE_WIDTH + CARD_CONTENT.padding)),
 );
 export interface StagePageLabels {
   readonly next: string;
@@ -57,10 +54,15 @@ export function stageSelectPages(
   if (pages > 1 && !pagerLabels) {
     throw new Error("A paged stage picker requires pager labels");
   }
+  const nameHeight = fonts.title.lineHeight * CARD_TEXT_SCALE + CARD_CONTENT.lineHeight;
+  const stageFace = {
+    height: NAME_TOP + nameHeight + CARD_CONTENT.padding - CARD_CONTENT.rowGap,
+    width: STAGE_FACE_WIDTH,
+  };
   const visible = Math.min(labels.length, STAGES_PER_PAGE);
   const pagerSize =
     pagerLabels && pages > 1
-      ? cardActionsSize(fonts.body, "row", [pagerLabels.previous, pagerLabels.next])
+      ? cardActionsSize(fonts.title, "row", [pagerLabels.previous, pagerLabels.next])
       : undefined;
   const countText =
     pagerLabels?.page.replace("{page}", String(pages)).replace("{pages}", String(pages)) ?? "";
@@ -69,10 +71,10 @@ export function stageSelectPages(
     { ...SCREEN, x: 0, y: 0 },
     [
       {
-        height: STAGE_FACE.height,
-        hitOutset: hitMargin({ ...STAGE_FACE, x: 0, y: 0 }),
+        height: stageFace.height,
+        hitOutset: hitMargin({ ...stageFace, x: 0, y: 0 }),
         key: "stages",
-        width: visible * STAGE_FACE.width + (visible - 1) * CARD_CONTENT.padding,
+        width: visible * stageFace.width + (visible - 1) * CARD_CONTENT.padding,
       },
       ...(pagerSize
         ? [
@@ -80,7 +82,7 @@ export function stageSelectPages(
               ...pagerSize,
               height:
                 pagerSize.height +
-                hitMargin({ ...STAGE_FACE, x: 0, y: 0 }) +
+                hitMargin({ ...stageFace, x: 0, y: 0 }) +
                 2 * (pagerSize.hitOutset ?? 0),
               key: "pager",
               width:
@@ -105,7 +107,7 @@ export function stageSelectPages(
     pagerSize && {
       ...pagerGroup,
       height: pagerSize.height,
-      y: pagerGroup.y + hitMargin({ ...STAGE_FACE, x: 0, y: 0 }) + (pagerSize.hitOutset ?? 0),
+      y: pagerGroup.y + hitMargin({ ...stageFace, x: 0, y: 0 }) + (pagerSize.hitOutset ?? 0),
     };
   const pagerWidth = pagerSize ? (pagerSize.width - CARD_CONTENT.gap) / 2 : 0;
   const pagerLayout = pager && {
@@ -120,26 +122,26 @@ export function stageSelectPages(
   return {
     buttons: labels.map((label, index) => {
       const lines = wrapWords(
-        (line) => inkWidth(fonts.body, CARD_TEXT_SCALE, line),
+        (line) => inkWidth(fonts.title, CARD_TEXT_SCALE, line),
         PREVIEW_WIDTH,
         label,
       );
       if (
         lines.length > 2 ||
-        lines.some((line) => inkWidth(fonts.body, CARD_TEXT_SCALE, line) > PREVIEW_WIDTH)
+        lines.some((line) => inkWidth(fonts.title, CARD_TEXT_SCALE, line) > PREVIEW_WIDTH)
       ) {
         throw new Error(`Stage label exceeds two lines: ${label}`);
       }
       const button = {
-        ...STAGE_FACE,
-        x: group.x + (index % STAGES_PER_PAGE) * (STAGE_FACE.width + CARD_CONTENT.padding),
+        ...stageFace,
+        x: group.x + (index % STAGES_PER_PAGE) * (stageFace.width + CARD_CONTENT.padding),
         y: group.y,
       };
       const textX = button.x + INSET;
       return {
         button,
         hit: hitAround(button),
-        name: { height: NAME_HEIGHT, width: PREVIEW_WIDTH, x: textX, y: button.y + NAME_TOP },
+        name: { height: nameHeight, width: PREVIEW_WIDTH, x: textX, y: button.y + NAME_TOP },
         number: {
           height: NUMBER_HEIGHT,
           width: PREVIEW_WIDTH,

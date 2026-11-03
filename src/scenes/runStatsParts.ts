@@ -5,7 +5,6 @@ import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import type { Rect } from "../data/types";
 import type { DialogueParagraph } from "../dialogue/conversation";
-import { CARD_CONTENT, CARD_TEXT_SCALE } from "../layout/cardFrame";
 import {
   RUN_STAT_KEYS,
   runStatLabels,
@@ -66,9 +65,7 @@ export function addStageSummary(
       summaryTextOrigin(metrics, rect, text),
       text,
       paletteColour(scene, colour),
-    )
-      .setLeftAlign()
-      .setLineSpacing(CARD_CONTENT.lineHeight / CARD_TEXT_SCALE - metrics.lineHeight);
+    ).setLeftAlign();
   };
   const key = STAGE_PREVIEWS[data.stage];
   if (!key || !scene.textures.exists(key)) {

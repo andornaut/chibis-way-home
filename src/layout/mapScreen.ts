@@ -2,6 +2,7 @@ import { SCREEN } from "../data/screen";
 import type { MapNode, Point, Rect, Size } from "../data/types";
 import type { PathStroke } from "../view/mapPath";
 import { TEXT_BUTTON } from "./buttonLabel";
+import { FONT_SCALE } from "./fontRoles";
 import { hitAround } from "./hitAreas";
 import { labelledButton } from "./restartCard";
 
@@ -40,7 +41,7 @@ export const MAP_SCREEN = {
   },
   nodeHit: { height: NODE_HIT.height, width: NODE_HIT.width } satisfies Size,
   paper: { height: 360, width: 720, x: 0, y: 0 } satisfies Rect,
-  textScale: 2,
+  textScale: FONT_SCALE,
   title: { x: 24, y: 16 } satisfies Point,
 } as const;
 
@@ -62,17 +63,19 @@ export const MAP_PATH_LOOKS = {
 
 export type PathLook = keyof typeof MAP_PATH_LOOKS;
 
-// A zone's name under its marker, from the name's advance width at the text scale: its text's
-// origin, and the cream knock-out drawn under it, over the paths.
-export function mapLabel(advance: number, centre: Point): { knockout: Rect; origin: Point } {
-  const origin = { x: centre.x - Math.floor((advance - 4) / 2) - 2, y: centre.y + 12 };
+// Centre the actual glyph ink within the label background.
+export function mapLabel(ink: Rect, centre: Point): { knockout: Rect; origin: Point } {
+  const knockout = {
+    height: 16,
+    width: MAP_LABEL_WIDTH,
+    x: centre.x - MAP_LABEL_WIDTH / 2,
+    y: centre.y + 17,
+  };
   return {
-    knockout: {
-      height: 16,
-      width: MAP_LABEL_WIDTH,
-      x: centre.x - MAP_LABEL_WIDTH / 2,
-      y: centre.y + 17,
+    knockout,
+    origin: {
+      x: centre.x - ink.width / 2 - ink.x,
+      y: knockout.y + (knockout.height - ink.height) / 2 - ink.y,
     },
-    origin,
   };
 }

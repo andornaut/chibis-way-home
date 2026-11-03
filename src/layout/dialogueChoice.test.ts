@@ -8,7 +8,7 @@ import { dialogueChoiceLayout } from "./dialogueChoice";
 describe("required dialogue choice layout", () => {
   it.each([2, 3])("fits %i answers below a multiline prompt without a close control", (count) => {
     const layout = dialogueChoiceLayout(
-      CARD_FONTS.body,
+      CARD_FONTS,
       "First paragraph\nSecond paragraph\nLast paragraph",
       Array.from({ length: count }, (_, index) => ({
         id: String(index),

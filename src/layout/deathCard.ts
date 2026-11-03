@@ -109,7 +109,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
       key: "stats",
       width: 2 * columnWidth + STATS_DIVIDER_HEIGHT + 2 * dividerGap + 2 * statsPadding,
     },
-    { key: "actions", ...cardActionsSize(fonts.body, "row", labels) },
+    { key: "actions", ...cardActionsSize(fonts.title, "row", labels) },
   ];
   const base = contentCardLayout(bounds, groups);
   const statementCardWidth =
@@ -151,7 +151,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     y += height + CARD_CONTENT.rowGap;
     return row;
   });
-  const [home, retry] = cardActions(fonts.body, "row", actionGroup, labels);
+  const [home, retry] = cardActions(fonts.title, "row", actionGroup, labels);
   if (!home || !retry || !positions[0] || !positions[1] || !positions[2]) {
     throw new Error("Missing death card rows or actions");
   }

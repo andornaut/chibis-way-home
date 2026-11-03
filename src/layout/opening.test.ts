@@ -11,7 +11,7 @@ import { openingLayout } from "./opening";
 it("fits every actual caption at full shared font beside full-size controls in the quiet footer", () => {
   for (const beat of OPENING) {
     const text = TEXT.lines[beat.text]!;
-    const layout = openingLayout(CARD_FONTS.body, TEXT.dialogue, text);
+    const layout = openingLayout(CARD_FONTS, TEXT.dialogue, text);
     expect(layout.footerY).toBe(SCREEN.height - 80);
     expect(layout.caption).toMatchObject(cardTextSize(CARD_FONTS.body, text));
     expect(layout.caption.x + layout.caption.width + CARD_CONTENT.gap).toBeLessThanOrEqual(

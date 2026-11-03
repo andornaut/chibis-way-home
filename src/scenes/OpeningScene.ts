@@ -64,7 +64,7 @@ export class OpeningScene extends Scene {
     this.art = this.add.container(0, 0);
     this.background = undefined;
     const footerY = openingLayout(
-      cardFonts(this).body,
+      cardFonts(this),
       TEXT.dialogue,
       TEXT.lines[OPENING[0]!.text]!,
     ).footerY;
@@ -72,7 +72,7 @@ export class OpeningScene extends Scene {
       .rectangle(0, footerY, SCREEN.width, SCREEN.height - footerY, paletteColour(this, "ink"))
       .setOrigin(0);
     this.caption = addCardText(this, BODY_FONT, { x: 0, y: 0 }, "", paletteColour(this, "white"));
-    this.layout = openingLayout(cardFonts(this).body, TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!);
+    this.layout = openingLayout(cardFonts(this), TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!);
     this.buttons = {
       continue: addTextButton(this, this.layout.continue, TEXT.dialogue.continue, {
         marked: true,
@@ -218,7 +218,7 @@ export class OpeningScene extends Scene {
       if (text === undefined) {
         throw new Error(`Missing opening caption ${frame.beat.text}`);
       }
-      this.layout = openingLayout(cardFonts(this).body, TEXT.dialogue, text);
+      this.layout = openingLayout(cardFonts(this), TEXT.dialogue, text);
       this.caption.setText(text).setPosition(this.layout.caption.x, this.layout.caption.y);
       this.beat = frame.beat;
     }

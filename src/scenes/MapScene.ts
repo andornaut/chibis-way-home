@@ -1,5 +1,5 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { advanceWidth, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
+import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
@@ -22,6 +22,7 @@ import {
   mapLabel,
   type PathLook,
 } from "../layout/mapScreen";
+import { textInkBounds } from "../layout/textInk";
 import { PHONE_EVENTS } from "../pwa";
 import { type OpenMap, openMap } from "../rules/map";
 import {
@@ -276,11 +277,11 @@ export class MapScene extends Scene implements StageSelectOpener {
       if (name === undefined) {
         throw new Error(`No destination label ${destination.id}`);
       }
-      const advance = advanceWidth(font, textScale, name);
+      const ink = textInkBounds(font, textScale, font.lineHeight * textScale, name);
       if (inkWidth(font, textScale, name) > MAP_LABEL_WIDTH - 2 * MAP_LABEL_PADDING) {
         throw new Error(`Destination label does not fit: ${destination.id}`);
       }
-      const { knockout, origin } = mapLabel(advance, this.centre(destination));
+      const { knockout, origin } = mapLabel(ink, this.centre(destination));
       knockouts.fillRect(knockout.x, knockout.y, knockout.width, knockout.height);
       labels.push({ at: origin, name });
     }

@@ -16,12 +16,9 @@ const readArt = async (path: string) => new Uint8Array(await readFile(join(ART_D
 const ART = JSON.parse(new TextDecoder().decode(await readArt(ART_MANIFEST_FILE))) as ArtManifest;
 const ATLAS = await buildAtlas({ encode: () => new Uint8Array(), readArt }, ART);
 
-// Every PNG art's manifest lists for the game, by key: all but its images.
+// Shared nearest-filtered art excludes standalone images and dedicated font textures.
 const PNGS: ReadonlyMap<string, string> = new Map(
-  [...ART.sprites, ...ART.tilesets, ...ART.fonts, ...ART.backdrops].map(({ key, png }) => [
-    key,
-    png,
-  ]),
+  [...ART.sprites, ...ART.tilesets, ...ART.backdrops].map(({ key, png }) => [key, png]),
 );
 
 function textureOf(key: string) {
@@ -48,7 +45,7 @@ function pixels(image: RgbaImage, x: number, y: number, width: number, height: n
 }
 
 describe("buildAtlas", () => {
-  it("packs every PNG art's manifest lists for the game, once, and none of its images", () => {
+  it("packs each shared-art PNG once without standalone images or dedicated fonts", () => {
     expect(ATLAS.textures.map(({ key }) => key).sort()).toEqual([...PNGS.keys()].sort());
   });
 
@@ -57,7 +54,7 @@ describe("buildAtlas", () => {
     expect({ height: image.height, width: image.width }).toEqual({ height, width });
   });
 
-  it.each(["bird", "font-body", "street-city-far", "tiles-platforming"])(
+  it.each(["bird", "street-city-far", "tiles-platforming"])(
     "places %s's manifest source pixels at its game texture frames",
     async (key) => {
       const png = PNGS.get(key);

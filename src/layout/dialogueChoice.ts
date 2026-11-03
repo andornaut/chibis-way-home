@@ -1,32 +1,32 @@
-import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
-
 import { SCREEN } from "../data/screen";
 import { dialogueLines } from "../dialogue/conversation";
 import {
   CARD_CONTENT,
   cardActions,
   cardActionsSize,
+  type CardFonts,
   cardTextSize,
   contentCardLayout,
 } from "./contentCard";
+import { FONT_SCALE } from "./fontRoles";
 
 export function dialogueChoiceLayout(
-  font: BitmapFont,
+  fonts: CardFonts,
   prompt: string,
   options: readonly { readonly id: string; readonly label: string }[],
 ) {
   const text = dialogueLines(
-    font,
-    { lines: 3, scale: 2 },
+    fonts.body,
+    { lines: 3, scale: FONT_SCALE },
     SCREEN.width - 2 * CARD_CONTENT.padding,
     prompt,
   ).join("\n");
   const labels = options.map(({ label }) => label);
   const layout = contentCardLayout({ ...SCREEN, x: 0, y: 0 }, [
-    { key: "question", ...cardTextSize(font, text) },
-    { key: "actions", ...cardActionsSize(font, "stack", labels) },
+    { key: "question", ...cardTextSize(fonts.body, text) },
+    { key: "actions", ...cardActionsSize(fonts.title, "stack", labels) },
   ]);
-  const buttons = cardActions(font, "stack", layout.groups.actions!, labels);
+  const buttons = cardActions(fonts.title, "stack", layout.groups.actions!, labels);
   return {
     buttons: options.map(({ id }, index) => ({ id, layout: buttons[index]! })),
     card: layout.card,

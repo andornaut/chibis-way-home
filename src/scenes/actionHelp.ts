@@ -4,7 +4,7 @@ import type { ControlAction, Point } from "../data/types";
 import { ACTION_HELP, type ActionHelpLayout } from "../layout/actionHelp";
 import { CARD_CONTENT } from "../layout/cardFrame";
 import { ACTION_HELP_ICONS, ACTION_HELP_KNOB } from "../view/actionHelp";
-import { addCardTextIn, BODY_FONT } from "./cardParts";
+import { ACTION_FONT, addCardTextIn, BODY_FONT } from "./cardParts";
 
 export function drawActionHelp(
   scene: Scene,
@@ -22,7 +22,7 @@ export function drawActionHelp(
     const labelWidth = rect.width - ACTION_HELP.gap - ACTION_HELP.icon;
     addCardTextIn(
       scene,
-      BODY_FONT,
+      ACTION_FONT,
       {
         height: CARD_CONTENT.lineHeight,
         width: labelWidth,

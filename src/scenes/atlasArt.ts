@@ -1,5 +1,5 @@
 import { itemAt } from "@andornaut/game-kit/arrays";
-import { GameObjects, type Scene } from "phaser";
+import type { Scene } from "phaser";
 import atlas from "virtual:atlas-manifest";
 
 import {
@@ -9,24 +9,13 @@ import {
   type AtlasTexture,
   BASE_FRAME,
 } from "../assets/atlasManifest";
-import type { ArtManifest } from "../view/aseprite";
 
 // The build's atlas, or null on the dev server, where every art file loads on its own.
 export const ATLAS: AtlasManifest | null = atlas;
 
-// The XML cache key a font's .fnt loads under, for the font to be made from its atlas frame.
-const fontXmlKey = (key: string): string => `${key}:fnt`;
-
 // Queues every atlas page, by its URL in the build output: call before the loader's path is set.
 export function queueAtlasPages(scene: Scene, { pages }: AtlasManifest): void {
   pages.forEach(({ url }, page) => scene.load.image(atlasPageKey(page), url));
-}
-
-// Queues each font's .fnt as XML, for addAtlasArt to make the font from.
-export function queueAtlasFonts(scene: Scene, art: ArtManifest): void {
-  for (const { fnt, key } of art.fonts) {
-    scene.load.xml(fontXmlKey(key), fnt);
-  }
 }
 
 // A texture keyed as art's manifest keys it, whose frames are rects of its loaded atlas page.
@@ -52,13 +41,9 @@ function addAtlasTexture(scene: Scene, atlased: AtlasTexture): void {
   }
 }
 
-// Adds a texture for each key on the loaded atlas pages, and makes each font from its .fnt and
-// its PNG's frame there: the same glyphs, kerning and line height, drawn from the same pixels.
-export function addAtlasArt(scene: Scene, { textures }: AtlasManifest, art: ArtManifest): void {
+// Adds sprite, tile and backdrop aliases without changing their shared source filtering.
+export function addAtlasArt(scene: Scene, { textures }: AtlasManifest): void {
   for (const texture of textures) {
     addAtlasTexture(scene, texture);
-  }
-  for (const { key } of art.fonts) {
-    GameObjects.BitmapText.ParseFromAtlas(scene, key, key, BASE_FRAME, fontXmlKey(key));
   }
 }

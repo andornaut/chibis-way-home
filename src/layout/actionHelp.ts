@@ -1,8 +1,9 @@
-import { advanceWidth, type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
+import { advanceWidth, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 
 import type { ControlAction, Rect, Size } from "../data/types";
 import { type ActionHelpPart, actionHelpParts } from "../view/actionHelp";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
+import type { CardFonts } from "./contentCard";
 
 export const ACTION_HELP = {
   gap: CARD_CONTENT.rowGap,
@@ -19,7 +20,7 @@ export interface ActionHelpLayout extends Size {
 }
 
 export function actionHelpLayout(
-  font: BitmapFont,
+  fonts: CardFonts,
   actions: Readonly<Record<ControlAction, string>>,
   width: number,
   text: string,
@@ -38,18 +39,18 @@ export function actionHelpLayout(
         ? {
             height: ACTION_HELP.lineHeight,
             width:
-              inkWidth(font, CARD_TEXT_SCALE, actions[part.action]) +
+              inkWidth(fonts.title, CARD_TEXT_SCALE, actions[part.action]) +
               ACTION_HELP.gap +
               ACTION_HELP.icon,
           }
         : {
             height: CARD_CONTENT.lineHeight,
-            width: advanceWidth(font, CARD_TEXT_SCALE, part.text),
+            width: advanceWidth(fonts.body, CARD_TEXT_SCALE, part.text),
           };
     if (size.width > width) {
       throw new Error("Action help item exceeds the native text width");
     }
-    let gap = space && line.parts.length ? advanceWidth(font, CARD_TEXT_SCALE, " ") : 0;
+    let gap = space && line.parts.length ? advanceWidth(fonts.body, CARD_TEXT_SCALE, " ") : 0;
     if (line.parts.length && line.width + gap + size.width > width) {
       finish();
       gap = 0;

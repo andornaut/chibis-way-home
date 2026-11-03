@@ -94,7 +94,7 @@ export class UpdateScene extends Scene {
     const labels = [TEXT.update.cancel, TEXT.update.accept];
     this.layout = contentCardLayout(
       { ...SCREEN, x: 0, y: 0 },
-      [{ key: "actions", ...cardActionsSize(fonts.body, "row", labels) }],
+      [{ key: "actions", ...cardActionsSize(fonts.title, "row", labels) }],
       { close: true, titleWidth: cardTextSize(fonts.title, TEXT.update.title).width },
     );
     const group = this.layout.groups.actions;
@@ -103,7 +103,7 @@ export class UpdateScene extends Scene {
     if (!group || !title || !close) {
       throw new Error("Missing upgrade card content");
     }
-    const [cancel, accept] = cardActions(fonts.body, "row", group, labels);
+    const [cancel, accept] = cardActions(fonts.title, "row", group, labels);
     if (!accept || !cancel) {
       throw new Error("Missing upgrade action");
     }

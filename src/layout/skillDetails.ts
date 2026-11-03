@@ -35,12 +35,12 @@ export const SKILL_ROOM = {
 };
 
 export function skillRoomContinue(fonts: CardFonts, text: string) {
-  const size = cardActionsSize(fonts.body, "row", [text]);
+  const size = cardActionsSize(fonts.title, "row", [text]);
   if (size.width > footer.width) {
     throw new Error("Skill room action does not fit at the standard font size");
   }
   const action = cardActions(
-    fonts.body,
+    fonts.title,
     "row",
     {
       ...footer,
@@ -62,7 +62,7 @@ export function skillDetails(
   words: SkillText,
 ) {
   const description = actionHelpLayout(
-    fonts.body,
+    fonts,
     actions,
     Math.min(
       DESCRIPTION_WIDTH,

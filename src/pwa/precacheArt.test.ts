@@ -20,7 +20,11 @@ describe("artUrls", () => {
       { ...EMPTY, sprites: [{ json: "s/a.json", key: "a", once: [], png: "s/a.png" }] },
       [],
     ],
-    ["a font", { ...EMPTY, fonts: [{ fnt: "f/b.fnt", key: "b", png: "f/b.png" }] }, ["f/b.fnt"]],
+    [
+      "a font",
+      { ...EMPTY, fonts: [{ fnt: "f/b.fnt", key: "b", png: "f/b.png" }] },
+      ["f/b.png", "f/b.fnt"],
+    ],
     ["a data file", { ...EMPTY, data: [{ json: "c.json", key: "c" }] }, ["c.json"]],
     [
       "a tileset",

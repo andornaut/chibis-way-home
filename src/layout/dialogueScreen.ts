@@ -4,6 +4,7 @@ import { SCREEN } from "../data/screen";
 import type { DialogueSpeaker, Point, Rect } from "../data/types";
 import type { DialogueControl } from "../dialogue/conversation";
 import { TEXT_BUTTON } from "./buttonLabel";
+import { FONT_SCALE } from "./fontRoles";
 import { type PressArea, pressedArea } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./restartCard";
 
@@ -13,7 +14,7 @@ const NAME_TAB_Y = 13;
 // One top paragraph panel. Portraits are repositioned by speaker; neither asset is mirrored.
 export const DIALOGUE_SCREEN = {
   box: { height: 96, width: 640, x: 40, y: 8 } satisfies Rect,
-  text: { lines: 3, pitch: 20, scale: 2, width: 504, y: 42 },
+  text: { lines: 3, pitch: 20, scale: FONT_SCALE, width: 504, y: 42 },
 } as const;
 
 export function dialogueSpeakerLayout(side: DialogueSpeaker["side"]) {

@@ -102,7 +102,7 @@ const SUMMARY_COLUMN_WIDTH = 152;
 
 export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: SummaryWords) {
   const ink = (font: BitmapFont, text: string) =>
-    textInkBounds(font, CARD_TEXT_SCALE, CARD_CONTENT.lineHeight, text);
+    textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text);
   const centred = (font: BitmapFont, y: number, text: string) => {
     const size = ink(font, text);
     if (text.includes("\n") || size.width > bounds.width) {

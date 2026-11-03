@@ -8,7 +8,14 @@ import type { GameObjects, Scene } from "phaser";
 
 import { dialogueLines, type DialogueParagraph } from "../dialogue/conversation";
 import { DIALOGUE_SCREEN, dialogueNameTab, dialogueSpeakerLayout } from "../layout/dialogueScreen";
-import { addCardText, addSlice, BODY_FONT, paletteColour, TITLE_FONT } from "./cardParts";
+import {
+  addCardText,
+  addCardTextIn,
+  addSlice,
+  BODY_FONT,
+  paletteColour,
+  TITLE_FONT,
+} from "./cardParts";
 
 export function drawDialogueParagraph(
   scene: Scene,
@@ -40,7 +47,13 @@ export function drawDialogueParagraph(
           .setOrigin(0)
       : scene.add.image(layout.portrait.x, layout.portrait.y, paragraph.portrait).setOrigin(0),
     addSlice(scene, "ui-name-tab", tab, frame),
-    addCardText(scene, TITLE_FONT, layout.name, paragraph.name, paletteColour(scene, "ink")),
+    addCardTextIn(
+      scene,
+      TITLE_FONT,
+      { ...tab, width: tab.width - 12, x: tab.x + 6 },
+      paragraph.name,
+      paletteColour(scene, "ink"),
+    ),
     ...dialogueLines(
       phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData),
       text,

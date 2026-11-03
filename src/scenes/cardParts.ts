@@ -1,5 +1,4 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
@@ -15,10 +14,12 @@ import {
   PLAY_MARK,
 } from "../layout/buttonLabel";
 import { cardTitleAt } from "../layout/cardFrame";
-import { CARD_CONTENT, type CardFonts, cardTextOrigin } from "../layout/contentCard";
+import { type CardFonts, cardTextOrigin } from "../layout/contentCard";
+import { FONT_ROLES } from "../layout/fontRoles";
 import { CARD_TEXT_SCALE } from "../layout/pauseCard";
 import type { LabelledButton } from "../layout/restartCard";
 import { focusRingAround } from "../layout/settingsCard";
+import { textInkBounds } from "../layout/textInk";
 import { ART_MANIFEST_KEY, type ArtManifest } from "../view/aseprite";
 import type { Palette } from "../view/dim";
 
@@ -26,8 +27,9 @@ import type { Palette } from "../view/dim";
 // buttons and the palette's colours.
 
 const PALETTE = "palette";
-export const BODY_FONT = "font-body";
-export const TITLE_FONT = "font-title";
+export const BODY_FONT = FONT_ROLES.body;
+export const TITLE_FONT = FONT_ROLES.heading;
+export const ACTION_FONT = FONT_ROLES.action;
 
 export function cardFonts(scene: Scene): CardFonts {
   const font = (key: string) =>
@@ -92,16 +94,17 @@ export function addCardTextIn(
   colour: number,
 ): GameObjects.BitmapText {
   const font = phaserBitmapFont(scene.cache.bitmapFont.get(fontKey).data as PhaserFontData);
-  return addCardText(scene, fontKey, cardTextOrigin(font, rect, text), text, colour).setLineSpacing(
-    CARD_CONTENT.lineHeight / CARD_TEXT_SCALE - font.lineHeight,
-  );
+  return addCardText(scene, fontKey, cardTextOrigin(font, rect, text), text, colour);
 }
 
 // A card's title in ink, centred across card near its top, as every card's frame places it
 // (cardFrame.ts's cardTitleAt).
 export function addCardTitle(scene: Scene, card: Rect, text: string): GameObjects.BitmapText {
   const font = phaserBitmapFont(scene.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
-  const at = cardTitleAt(card, advanceWidth(font, CARD_TEXT_SCALE, text));
+  const at = cardTitleAt(
+    card,
+    textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text),
+  );
   return addCardText(scene, TITLE_FONT, at, text, paletteColour(scene, "ink"));
 }
 
@@ -124,7 +127,7 @@ export function addButtonLabel(
   button: Rect,
   text: string,
 ): ButtonLabel {
-  const font = phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
+  const font = phaserBitmapFont(scene.cache.bitmapFont.get(ACTION_FONT).data as PhaserFontData);
   const position = (state: ButtonFaceState) =>
     buttonLabelPlacement(
       font,
@@ -139,7 +142,7 @@ export function addButtonLabel(
     pressed: position("pressed"),
   };
   const at = positions[options.disabled ? "disabled" : "normal"];
-  const label = addCardText(scene, BODY_FONT, at.label, text, options.colour);
+  const label = addCardText(scene, ACTION_FONT, at.label, text, options.colour);
   if (!at.mark) {
     return { label, positions };
   }

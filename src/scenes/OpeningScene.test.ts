@@ -102,9 +102,7 @@ function key(scene: OpeningScene, key: string, repeat = false) {
   });
 }
 function pointer(action: "skip" | "continue") {
-  const layout = openingLayout(CARD_FONTS.body, TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!)[
-    action
-  ];
+  const layout = openingLayout(CARD_FONTS, TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!)[action];
   return {
     id: 1,
     wasCanceled: false,

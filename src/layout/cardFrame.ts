@@ -1,9 +1,10 @@
 import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
 
 import type { Point, Rect } from "../data/types";
+import { FONT_SCALE } from "./fontRoles";
 import { hitAround } from "./hitAreas";
 
-export const CARD_TEXT_SCALE = 2;
+export const CARD_TEXT_SCALE = FONT_SCALE;
 
 export const CARD_CONTENT = {
   closeInset: 6,
@@ -43,11 +44,10 @@ export function cardRect(height: number): Rect {
   return { height, width: CARD_WIDTH, ...CARD_AT };
 }
 
-// The origin of a card's title, advance px wide (its advance width at its scale), centred across
-// card as art centres it: 2 px of the advance either side is not ink.
-export function cardTitleAt(card: Rect, advance: number): Point {
+// Centre title ink in the shared single-line title slot.
+export function cardTitleAt(card: Rect, ink: Rect): Point {
   return {
-    x: card.x + card.width / 2 - 2 - Math.floor((advance - 4) / 2),
-    y: card.y + CARD_FRAME.titleY - CARD_AT.y,
+    x: card.x + (card.width - ink.width) / 2 - ink.x,
+    y: card.y + CARD_FRAME.titleY - CARD_AT.y + (CARD_CONTENT.lineHeight - ink.height) / 2 - ink.y,
   };
 }

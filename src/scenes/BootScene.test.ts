@@ -13,6 +13,7 @@ vi.mock("phaser", () => ({
     readonly game = { canvas: { style: { visibility: "" } }, events: new EventEmitter() };
     readonly cache = { json: { get: vi.fn() } };
     readonly load = Object.assign(new EventEmitter(), {
+      bitmapFont: vi.fn(),
       image: vi.fn(),
       json: vi.fn(),
       setPath: vi.fn(),
@@ -25,7 +26,6 @@ vi.mock("./atlasArt", () => ({
   get ATLAS() {
     return art.atlas;
   },
-  queueAtlasFonts: vi.fn(),
   queueAtlasPages: vi.fn(),
 }));
 
@@ -38,13 +38,18 @@ it("loads standalone manifest images in development and atlas mode", () => {
     vi.mocked(scene.cache.json.get).mockReturnValue({
       backdrops: [],
       data: [],
-      fonts: [],
+      fonts: [{ fnt: "fonts/body.fnt", key: "font-body", png: "fonts/body.png" }],
       images: [{ key: "standalone-image", png: "images/standalone.png" }],
       sprites: [],
       tilesets: [],
     });
     scene.preload();
     scene.load.emit(`filecomplete-json-${ART_MANIFEST_KEY}`);
+    expect(scene.load.bitmapFont).toHaveBeenCalledExactlyOnceWith(
+      "font-body",
+      "fonts/body.png",
+      "fonts/body.fnt",
+    );
     expect(scene.load.image).toHaveBeenCalledExactlyOnceWith(
       "standalone-image",
       "images/standalone.png",
@@ -76,7 +81,7 @@ it.each([
     }),
   );
   const scene = new BootScene();
-  vi.mocked(scene.cache.json.get).mockReturnValue({ sprites: [] });
+  vi.mocked(scene.cache.json.get).mockReturnValue({ fonts: [], sprites: [] });
   scene.create();
   expect(startup.load).not.toHaveBeenCalled();
   expect(scene.scene.start).not.toHaveBeenCalled();
@@ -96,7 +101,7 @@ it("keeps stage previews independent of startup and saved progress", () => {
   art.atlas = null;
   vi.stubGlobal("window", { location: { search: "?stagePreview=street" } });
   const scene = new BootScene();
-  vi.mocked(scene.cache.json.get).mockReturnValue({ sprites: [] });
+  vi.mocked(scene.cache.json.get).mockReturnValue({ fonts: [], sprites: [] });
   scene.create();
   expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone");
   expect(startup.ready).not.toHaveBeenCalled();

@@ -1,7 +1,3 @@
-import {
-  phaserBitmapFont,
-  type PhaserFontData,
-} from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
@@ -20,6 +16,7 @@ import {
   addTextButton,
   BODY_FONT,
   captureTab,
+  cardFonts,
   paletteColour,
   pressTextButton,
   ringFocus,
@@ -67,8 +64,7 @@ export class DialogueChoiceScene extends Scene {
 
   create(): void {
     fitPlayCamera(this);
-    const font = phaserBitmapFont(this.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
-    this.layouts = dialogueChoiceLayout(font, this.choice.prompt, this.choice.options);
+    this.layouts = dialogueChoiceLayout(cardFonts(this), this.choice.prompt, this.choice.options);
     addSlice(this, "ui-settings-card", this.layouts.card);
     addCardTextIn(
       this,

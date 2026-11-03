@@ -1,5 +1,4 @@
 import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
@@ -17,6 +16,7 @@ import { pressedArea } from "../layout/hitAreas";
 import { CARD_TEXT_SCALE } from "../layout/pauseCard";
 import { ROOM_SCREEN } from "../layout/roomScreen";
 import { SKILL_ROOM, skillDetails, skillRoomContinue } from "../layout/skillDetails";
+import { textInkBounds } from "../layout/textInk";
 import { type RoomEvent, roomEvent } from "../pause/roomInput";
 import { coverZone, PHONE_EVENTS } from "../pwa";
 import { grantSkill } from "../save";
@@ -176,13 +176,13 @@ export class RoomScene extends Scene {
     const name = TEXT.rooms[this.roomKey]?.name ?? "";
     const font = phaserBitmapFont(this.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
     const { nameCentre } = ROOM_SCREEN;
-    const lineHeight = font.lineHeight * CARD_TEXT_SCALE;
+    const ink = textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, name);
     addCardText(
       this,
       TITLE_FONT,
       {
-        x: nameCentre.x - Math.floor(inkWidth(font, CARD_TEXT_SCALE, name) / 2),
-        y: nameCentre.y - Math.floor(lineHeight / 2),
+        x: nameCentre.x - ink.width / 2 - ink.x,
+        y: nameCentre.y - ink.height / 2 - ink.y,
       },
       name,
       this.colour("cream"),

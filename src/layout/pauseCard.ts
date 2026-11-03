@@ -13,12 +13,17 @@ import { CONTROL_EDGE } from "./playView";
 // Pause actions share the width of their widest label.
 export function pauseCard(fonts: CardFonts, words: GameText["pause"]) {
   const labels = [words.resume, words.settings, words.home];
-  const actions = cardActionsSize(fonts.body, "stack", labels);
+  const actions = cardActionsSize(fonts.title, "stack", labels);
   const layout = contentCardLayout({ ...SCREEN, x: 0, y: 0 }, [{ ...actions, key: "actions" }], {
     close: true,
     titleWidth: cardTextSize(fonts.title, words.title).width,
   });
-  const [resume, settings, home] = cardActions(fonts.body, "stack", layout.groups.actions!, labels);
+  const [resume, settings, home] = cardActions(
+    fonts.title,
+    "stack",
+    layout.groups.actions!,
+    labels,
+  );
   return {
     card: layout.card,
     close: layout.close!,
@@ -40,5 +45,5 @@ export const PAUSE_BUTTON = {
   hit: hitAround(PAUSE_ART),
 } as const;
 
-// Text on the card is set at this scale: art's fonts are native at 8px and drawn at 2x.
+// Cards use the shared native bitmap-font scale.
 export { CARD_TEXT_SCALE } from "./cardFrame";

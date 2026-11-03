@@ -38,7 +38,7 @@ export interface ContentCardLayout {
 export function cardTextSize(font: BitmapFont, text: string): Size {
   const lines = text.split("\n");
   return {
-    height: lines.length * CARD_CONTENT.lineHeight,
+    height: (lines.length - 1) * font.lineHeight * CARD_TEXT_SCALE + CARD_CONTENT.lineHeight,
     width: Math.max(0, ...lines.map((line) => inkWidth(font, CARD_TEXT_SCALE, line))),
   };
 }
@@ -217,7 +217,7 @@ export function cardActions(
 
 // Centre visible ink instead of the font's advance, side bearings or line-height padding.
 export function cardTextOrigin(font: BitmapFont, rect: Rect, text: string): Point {
-  const ink = textInkBounds(font, CARD_TEXT_SCALE, CARD_CONTENT.lineHeight, text);
+  const ink = textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text);
   return {
     x: Math.round(rect.x + (rect.width - ink.width) / 2 - ink.x),
     y: Math.round(rect.y + (rect.height - ink.height) / 2 - ink.y),

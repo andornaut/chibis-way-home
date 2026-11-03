@@ -35,6 +35,7 @@ import {
   addTextButton,
   BODY_FONT,
   captureTab,
+  cardFonts,
   pressTextButton,
   PRIMARY_BUTTON,
   ringFocus,
@@ -158,7 +159,8 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (!words.continue.trim() || !words.skip.trim()) {
       throw new Error("Dialogue actions need labels");
     }
-    const width = (label: string) => inkWidth(this.bodyFont(), DIALOGUE_SCREEN.text.scale, label);
+    const font = cardFonts(this).title;
+    const width = (label: string) => inkWidth(font, DIALOGUE_SCREEN.text.scale, label);
     this.layouts = (this.departure ? departureDialogueButtons : dialogueButtons)({
       continue: width(words.continue),
       skip: width(words.skip),
