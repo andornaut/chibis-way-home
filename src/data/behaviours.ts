@@ -1175,6 +1175,10 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
         motion: { kind: "wait", support: "required" },
         transitions: [
           {
+            to: "watch",
+            when: [{ kind: "elapsed", seconds: 0.35 }, { kind: "pursuit-ended" }],
+          },
+          {
             to: "pursuit",
             when: [
               { kind: "elapsed", seconds: 0.35 },
@@ -1189,6 +1193,13 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
         animation: "rest",
         motion: { kind: "wait", support: "required" },
         transitions: [
+          {
+            to: "watch",
+            when: [
+              { kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS },
+              { kind: "pursuit-ended" },
+            ],
+          },
           { to: "relocate", when: [{ kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS }] },
         ],
       },
