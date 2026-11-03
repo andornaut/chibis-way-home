@@ -345,6 +345,7 @@ interface Target {
 // target: the stretch she steers to land on. pre and takeoff are from the left
 // of the surface she starts on, wherever a moving one has got to.
 interface Try {
+  readonly continuous?: boolean;
   readonly dir: -1 | 1;
   readonly hold: number;
   readonly late: number | undefined;
@@ -1410,13 +1411,18 @@ function walkSearch(
             if (done()) {
               break;
             }
-            const { entered, landed, steps: ran } = trial.jump(attempt);
-            steps += ran;
-            if (entered) {
-              arrive(entered);
-            }
-            if (landed) {
-              reach(landed);
+            for (const policy of [{ ...attempt, continuous: true }, attempt]) {
+              if (done()) {
+                break;
+              }
+              const { entered, landed, steps: ran } = trial.jump(policy);
+              steps += ran;
+              if (entered) {
+                arrive(entered);
+              }
+              if (landed) {
+                reach(landed);
+              }
             }
           }
         }
