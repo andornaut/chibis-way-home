@@ -1038,6 +1038,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
               { kind: "line-of-sight" },
             ],
           },
+          { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
         ],
       },
       "prepare-drop-right": {
@@ -1054,6 +1055,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
               { kind: "line-of-sight" },
             ],
           },
+          { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
         ],
       },
       "prepare-swoop-left": {
@@ -1075,6 +1077,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
               { kind: "line-of-sight" },
             ],
           },
+          { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
         ],
       },
       "prepare-swoop-right": {
@@ -1096,6 +1099,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
               { kind: "line-of-sight" },
             ],
           },
+          { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
         ],
       },
       pursuit: pigeonApproach(false, "prepare-drop-left"),
