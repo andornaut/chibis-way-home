@@ -500,6 +500,15 @@ export interface BehaviourIdleWatchdog {
   readonly seconds: number;
 }
 
+export interface BehaviourGroundReposition {
+  readonly intervalSeconds: number;
+  // Maximum two-dimensional displacement radius and minimum horizontal displacement, in tiles.
+  readonly distance: number;
+  readonly minDistance: number;
+  readonly maxAttempts: number;
+  readonly resume: string;
+}
+
 export interface BehaviourNode {
   // Tell starts one attack; committed includes its recovery; completed begins the actor cooldown.
   readonly attack?: {
@@ -508,6 +517,8 @@ export interface BehaviourNode {
   };
   // Only these uncommitted states may yield to a verified idle reposition.
   readonly allowIdleReposition?: boolean;
+  // Periodic variation is permitted only in explicitly eligible uncommitted ground states.
+  readonly allowGroundReposition?: boolean;
   // Override this state's axis and signed placed-origin extent.
   readonly track?: { readonly axis: "x" | "y"; readonly distance: number };
   readonly onEnter?: readonly BehaviourAction[];
@@ -523,6 +534,7 @@ export interface BehaviourPlan {
   // Seconds between complete attacks, independent of graph-state changes.
   readonly attackCooldownSeconds?: number;
   readonly idleWatchdog?: BehaviourIdleWatchdog;
+  readonly groundReposition?: BehaviourGroundReposition;
   readonly pursuit?: {
     readonly distance: number;
     // Null disables elapsed-time giveup; unknown planner results never establish unreachability.
