@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
-import type { AreaLayout, Motion, ObjectLayout, Point, ZoneLayout } from "../data/types";
+import type {
+  AreaLayout,
+  ForcedTransitLayout,
+  Motion,
+  ObjectLayout,
+  Point,
+  ZoneLayout,
+} from "../data/types";
 import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
 import { BIRD_FRAME } from "../view/bird";
@@ -103,6 +110,119 @@ function run(
 }
 
 const bottomOf = (state: ZoneState | undefined) => (state?.bird.y ?? 0) + BIRD.height;
+
+describe("mandatory ride admission", () => {
+  const transit: ForcedTransitLayout = {
+    banks: [{ id: "near", purpose: "retreat", width: 96, x: 80, y: 300 }],
+    boardingBanks: ["near"],
+    group: "test:ride",
+    leg: "forward",
+    windows: [
+      {
+        certification: "ordinary",
+        result: { kind: "forced" },
+        riderOnSupport: { x: [0, 48], y: [-BIRD.height, -BIRD.height] },
+        supportOrigin: { x: [80, 80], y: [200, 210] },
+      },
+    ],
+  };
+  const episode = {
+    boardingBank: "near",
+    group: transit.group,
+    leg: transit.leg,
+    phase: "boarding" as const,
+    supportIndex: 0,
+  };
+
+  it("observes the actual before support rect rather than its nominal origin or hitbox", () => {
+    const carrier = object({
+      forcedTransit: transit,
+      hitbox: { height: 2, width: 2, x: 10, y: 10 },
+      motion: { ...STATIC, algorithm: "linear", direction: "up", distance: 100, speed: 20 },
+      origin: { x: 80, y: 300 },
+      phase: 0.5,
+      width: 72,
+    });
+    const layout = zone(area([carrier], { entries: { start: { x: 104, y: 200 } } }));
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    expect(initial.bird.grounded).toBe(true);
+    const next = stepZone(BIRD, layout, STEP, STILL, {
+      ...initial,
+      forcedTransit: { attackWindow: "allowed", episode },
+    });
+    expect(next.forcedTransit?.attackWindow).toBe("deferred");
+    expect(next.forcedTransit?.episode?.supportIndex).toBe(0);
+    expect(next.bird.grounded).toBe(true);
+    expect(next.bird.y).toBeGreaterThan(initial.bird.y);
+    expect(next.death).toBeUndefined();
+  });
+
+  it("clears spent only on a fully supported authored bank, including adjacent floor joins", () => {
+    const layout = zone(
+      area([object({ forcedTransit: transit, origin: { x: 80, y: 200 } })], {
+        entries: { start: { x: 104, y: 300 } },
+        solids: [
+          { height: 40, width: 104, x: 0, y: 300 },
+          { height: 40, width: 996, x: 104, y: 300 },
+        ],
+      }),
+    );
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    expect(initial.bird.grounded).toBe(true);
+    const next = stepZone(BIRD, layout, STEP, STILL, {
+      ...initial,
+      forcedTransit: { attackWindow: "allowed", episode: { ...episode, phase: "spent" } },
+    });
+    expect(next.forcedTransit?.episode).toBeUndefined();
+    expect(next.forcedTransit?.lastBank).toEqual({ group: transit.group, id: "near" });
+  });
+
+  it("keeps a spent episode when the authored bank supports only part of the body", () => {
+    const layout = zone(
+      area([object({ forcedTransit: transit, origin: { x: 80, y: 200 } })], {
+        entries: { start: { x: 104, y: 300 } },
+        solids: [{ height: 40, width: 4, x: 102, y: 300 }],
+      }),
+    );
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    expect(initial.bird.grounded).toBe(true);
+    const next = stepZone(BIRD, layout, STEP, STILL, {
+      ...initial,
+      forcedTransit: { attackWindow: "allowed", episode: { ...episode, phase: "spent" } },
+    });
+    expect(next.forcedTransit?.episode?.phase).toBe("spent");
+    expect(next.forcedTransit?.lastBank).toBeUndefined();
+  });
+
+  it("keeps an uncertified opt-in ride unknown", () => {
+    const layout = zone(
+      area(
+        [
+          object({
+            forcedTransit: {
+              ...transit,
+              windows: transit.windows.map((window) => ({
+                ...window,
+                certification: "uncertified",
+              })),
+            },
+            origin: { x: 80, y: 200 },
+            width: 72,
+          }),
+        ],
+        { entries: { start: { x: 104, y: 200 } } },
+      ),
+    );
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    expect(initial.bird.grounded).toBe(true);
+    const next = stepZone(BIRD, layout, STEP, STILL, {
+      ...initial,
+      forcedTransit: { attackWindow: "allowed", episode },
+    });
+    expect(next.forcedTransit?.attackWindow).toBe("unknown");
+    expect(next.forcedTransit?.episode?.phase).toBe("boarding");
+  });
+});
 
 describe("behaviour encounters", () => {
   const patrol = object({

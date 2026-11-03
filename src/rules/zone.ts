@@ -41,6 +41,7 @@ import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
 import { deathSupport } from "./death";
 import { effectiveCollision, effectiveHazardPhase } from "./effectiveCollision";
 import { type ForcePulse, forcePulseVelocity } from "./force";
+import { type ForcedTransitState, stepForcedTransit } from "./forcedTransit";
 import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
@@ -68,6 +69,7 @@ interface ObjectFrame {
 interface AreaObjects {
   readonly crumblingActors: readonly number[];
   readonly crumblingObjects: readonly number[];
+  readonly forcedTransit: readonly number[];
   readonly perception: boolean;
   readonly spotted: readonly number[];
   readonly behaviours: readonly number[];
@@ -149,6 +151,7 @@ function areaObjects(area: AreaLayout): AreaObjects {
     fixedLedges: fixedRects(ledges),
     fixedSolids:
       solidRects && (solidRects.length > 0 ? [...area.solids, ...solidRects] : area.solids),
+    forcedTransit: area.objects.flatMap((object, index) => (object.forcedTransit ? [index] : [])),
     geometry,
     hazards: indices("hazard"),
     ledges,
@@ -236,6 +239,7 @@ export interface ZoneBark extends DialogueLine {
 export interface ZoneState {
   // Crumbling support phases and contacts at the latest boundary; reset on area entry.
   readonly crumbling?: ZoneCrumblingWorld | undefined;
+  readonly forcedTransit?: ForcedTransitState;
   readonly sceneryPlayback?: readonly (SceneryPlaybackState | undefined)[] | undefined;
   readonly spotted: Readonly<Record<string, readonly number[]>>;
   readonly barks: readonly ZoneBark[];
@@ -435,6 +439,68 @@ export function standsOn(tuning: BirdTuning, bird: BirdState, rect: Rect): boole
   );
 }
 
+function transitObservation(
+  tuning: BirdTuning,
+  area: AreaLayout,
+  kinds: AreaObjects,
+  zone: ZoneState,
+): ForcedTransitState | undefined {
+  if (kinds.forcedTransit.length === 0 && !zone.forcedTransit) {
+    return undefined;
+  }
+  const supports = kinds.platforms.map((index) => ({
+    index,
+    object: area.objects[index]!,
+    rect: rectAt(area.objects[index]!, zone.objects[index] ?? area.objects[index]!.origin),
+  }));
+  const support = supports.find(({ rect }) => standsOn(tuning, zone.bird, rect));
+  const box = birdBox(tuning, zone.bird);
+  const surfaces = [...area.solids, ...supports.map(({ rect }) => rect)]
+    .filter((rect) => Math.abs(box.y + box.height - rect.y) < EDGE)
+    .sort((left, right) => left.x - right.x);
+  let supportedTo = box.x;
+  for (const rect of surfaces) {
+    if (rect.x <= supportedTo + EDGE && rect.x + rect.width > supportedTo) {
+      supportedTo = rect.x + rect.width;
+    }
+  }
+  const banks =
+    zone.bird.grounded && supportedTo >= box.x + box.width - EDGE
+      ? kinds.forcedTransit.flatMap((index) => {
+          const transit = area.objects[index]!.forcedTransit!;
+          return transit.banks
+            .filter(
+              (bank) =>
+                Math.abs(box.y + box.height - bank.y) < EDGE &&
+                box.x >= bank.x - EDGE &&
+                box.x + box.width <= bank.x + bank.width + EDGE,
+            )
+            .map((bank) => ({ group: transit.group, id: bank.id }));
+        })
+      : [];
+  const uniqueBanks = banks.filter(
+    (bank, index) =>
+      banks.findIndex((other) => other.group === bank.group && other.id === bank.id) === index,
+  );
+  const bank = uniqueBanks.length === 1 ? uniqueBanks[0] : undefined;
+  return stepForcedTransit(
+    {
+      ...(bank && { bank }),
+      grounded: zone.bird.grounded,
+      riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
+      safeDisembark: bank !== undefined && support?.object.forcedTransit === undefined,
+      ...(support && {
+        support: {
+          index: support.index,
+          origin: { x: support.rect.x, y: support.rect.y },
+          ...(support.object.forcedTransit && { transit: support.object.forcedTransit }),
+        },
+      }),
+    },
+    zone.forcedTransit,
+  );
+}
+
 // Where an object goes this step. Without a reaction, it follows its track. Within its reaction's
 // range of her it moves along its motion's axis, away from her or toward her; out of range it
 // heads back to its track, at the reaction's speed either way.
@@ -563,6 +629,7 @@ export function stepZone(
     !kinds.crumblingObjects.includes(index) || supportPresent(crumbling, area.objects[index]!);
   const terrain = presentTerrain(crumbling, area.solids);
   const presentPlatforms = kinds.platforms.filter(present);
+  const forcedTransit = transitObservation(tuning, area, kinds, zone);
   const baseGeometry = {
     ...behaviourGeometry(area, terrain, present, zone),
     chunks: area.chunks,
@@ -585,6 +652,7 @@ export function stepZone(
         owner: object,
       };
     }),
+    targetedAttackWindow: forcedTransit?.attackWindow ?? "allowed",
   };
   const geometry = kinds.perception
     ? { ...baseGeometry, view: currentScreen(tuning, area, zone.bird) }
@@ -1157,6 +1225,7 @@ export function stepZone(
   ) {
     const frozen: ZoneState = {
       ...zone,
+      ...(forcedTransit && { forcedTransit }),
       barks,
       behaviours,
       bird,
@@ -1216,6 +1285,7 @@ export function stepZone(
   }
   return {
     ...zone,
+    ...(forcedTransit && { forcedTransit }),
     barks,
     behaviours,
     bird,

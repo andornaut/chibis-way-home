@@ -75,3 +75,49 @@ it.each([false, true])(
     expect(next.state.pursuit?.phase).toBe("engaged");
   },
 );
+
+it.each(["allowed", "deferred", "unknown", undefined] as const)(
+  "admits a targeted sequence only for explicit allowed observation, %s",
+  (targetedAttackWindow) => {
+    const plan: BehaviourPlan = {
+      axis: "x",
+      distance: 1,
+      initial: "watch",
+      states: {
+        seen: { animation: null, motion: { kind: "wait" }, transitions: [] },
+        watch: {
+          animation: null,
+          motion: { kind: "wait" },
+          transitions: [{ to: "seen", when: [{ kind: "targeted-attack-allowed" }] }],
+        },
+      },
+    };
+    expect(layoutBehaviour(12, plan).states.watch!.transitions[0]!.when).toEqual([
+      { kind: "targeted-attack-allowed" },
+    ]);
+    const object = objectLayout(
+      1,
+      {
+        archetypes: { actor: archetype },
+        characters: {
+          actor: { archetype: "actor", art: "actor", behaviour: plan, cols: 24, rows: 24 },
+        },
+      },
+      {},
+      undefined,
+      {},
+      { character: "actor", col: 30, row: 276 },
+    );
+    const target = startBird(BIRD, { x: 200, y: 300 });
+    const next = stepBehaviour(
+      BIRD,
+      object,
+      { solids: [], ...(targetedAttackWindow !== undefined && { targetedAttackWindow }) },
+      STEP_SECONDS,
+      target,
+      object.origin,
+      startBehaviour(BIRD, object, target),
+    );
+    expect(next.state.stateKey).toBe(targetedAttackWindow === "allowed" ? "seen" : "watch");
+  },
+);
