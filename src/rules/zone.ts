@@ -487,6 +487,13 @@ function transitObservation(
     {
       ...(bank && { bank }),
       grounded: zone.bird.grounded,
+      ordinaryControl:
+        zone.bird.grounded &&
+        Number.isFinite(zone.bird.vx) &&
+        Math.abs(zone.bird.vx) <= tuning.walkSpeed &&
+        zone.bird.vy === 0 &&
+        zone.bird.carryVx === 0 &&
+        (zone.bird.dash?.remainingSeconds ?? 0) <= EDGE,
       riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
       safeDisembark: bank !== undefined && support?.object.forcedTransit === undefined,
       ...(support && {

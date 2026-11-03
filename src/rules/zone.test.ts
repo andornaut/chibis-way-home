@@ -222,6 +222,30 @@ describe("mandatory ride admission", () => {
     expect(next.forcedTransit?.attackWindow).toBe("unknown");
     expect(next.forcedTransit?.episode?.phase).toBe("boarding");
   });
+
+  it("does not apply an ordinary ride certificate during an actual fixed dash", () => {
+    const layout = zone(
+      area([object({ forcedTransit: transit, origin: { x: 80, y: 200 }, width: 72 })], {
+        entries: { start: { x: 104, y: 200 } },
+      }),
+    );
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    const dashing = stepZone(
+      BIRD,
+      layout,
+      STEP,
+      { ...STILL, useHeld: true },
+      {
+        ...initial,
+        forcedTransit: { attackWindow: "allowed", episode },
+      },
+    );
+    expect(dashing.bird.grounded).toBe(true);
+    expect(dashing.bird.dash?.remainingSeconds).toBeGreaterThan(0);
+    const next = stepZone(BIRD, layout, STEP, STILL, dashing);
+    expect(next.forcedTransit?.attackWindow).toBe("unknown");
+    expect(next.bird.dash?.remainingSeconds).toBeGreaterThan(0);
+  });
 });
 
 describe("behaviour encounters", () => {

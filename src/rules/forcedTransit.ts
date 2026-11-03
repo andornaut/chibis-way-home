@@ -24,6 +24,7 @@ export interface ForcedTransitState {
 export interface ForcedTransitObservation {
   readonly bank?: ForcedTransitBankContact;
   readonly grounded: boolean;
+  readonly ordinaryControl: boolean;
   readonly riderBodyOrigin: Point;
   readonly safeDisembark?: boolean;
   readonly support?: {
@@ -80,6 +81,9 @@ export function stepForcedTransit(
     };
   }
   if (episode.group !== transit.group || episode.leg !== transit.leg) {
+    return snapshot("unknown", episode, lastBank);
+  }
+  if (!observation.ordinaryControl) {
     return snapshot("unknown", episode, lastBank);
   }
   const windows = transit.windows.filter(

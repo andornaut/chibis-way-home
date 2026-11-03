@@ -34,6 +34,7 @@ const transit: ForcedTransitLayout = {
 const grounded = {
   bank: { group: transit.group, id: "near" },
   grounded: true,
+  ordinaryControl: true,
   riderBodyOrigin: { x: 0, y: 0 },
   safeDisembark: true,
 };
@@ -41,6 +42,7 @@ function aboard(contract: ForcedTransitLayout, x: number, previous?: ForcedTrans
   return stepForcedTransit(
     {
       grounded: true,
+      ordinaryControl: true,
       riderBodyOrigin: { x, y: 0 },
       support: { index: 7, origin: { x, y: 36 }, transit: contract },
     },
@@ -82,7 +84,10 @@ it("keeps unmatched and uncertified windows unknown", () => {
 
 it("cannot rearm by hopping or transferring without safe disembark", () => {
   const spent = aboard(transit, 2, forced());
-  const airborne = stepForcedTransit({ grounded: false, riderBodyOrigin: { x: 1, y: -1 } }, spent);
+  const airborne = stepForcedTransit(
+    { grounded: false, ordinaryControl: false, riderBodyOrigin: { x: 1, y: -1 } },
+    spent,
+  );
   expect(aboard(transit, 1, airborne)).toEqual(spent);
   const transferred = aboard({ ...transit, leg: "next" }, 1, spent);
   expect(transferred).toEqual(spent);
@@ -98,6 +103,22 @@ it("requires actual safe supported disembark before a fresh leg", () => {
 });
 
 it("allows ordinary nonopt-in targets without inventing a ride episode", () => {
-  const ordinary = stepForcedTransit({ grounded: false, riderBodyOrigin: { x: 0, y: 0 } });
+  const ordinary = stepForcedTransit({
+    grounded: false,
+    ordinaryControl: false,
+    riderBodyOrigin: { x: 0, y: 0 },
+  });
   expect(ordinary).toEqual({ attackWindow: "allowed" });
+});
+
+it("keeps nonordinary controls unknown without rearming a spent episode", () => {
+  const observation = {
+    grounded: true,
+    ordinaryControl: false,
+    riderBodyOrigin: { x: 2, y: 0 },
+    support: { index: 7, origin: { x: 2, y: 36 }, transit },
+  };
+  expect(stepForcedTransit(observation, forced()).attackWindow).toBe("unknown");
+  const spent = aboard(transit, 2, forced());
+  expect(stepForcedTransit(observation, spent)).toEqual(spent);
 });

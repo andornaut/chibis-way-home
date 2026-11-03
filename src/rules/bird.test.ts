@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { Rect } from "../data/types";
-import { type BirdInput, type BirdState, startBird, stepBird, stepBirdWithSupport } from "./bird";
+import {
+  type BirdInput,
+  type BirdState,
+  ordinaryJumpAscent,
+  startBird,
+  stepBird,
+  stepBirdWithSupport,
+} from "./bird";
 import { STEP_SECONDS } from "./step";
 
 const STEP = STEP_SECONDS;
@@ -128,6 +135,18 @@ function walkOff(jumpStep?: number, tuning = BIRD): BirdState[] {
 }
 
 const last = (states: BirdState[]) => states[states.length - 1] as BirdState;
+
+it("exposes the actual full-jump ascent through the first native apex crossing", () => {
+  const count = Math.ceil(BIRD.jumpRiseTime / STEP);
+  const states = run(count, () => ({ jumpHeld: true, move: 0 }));
+  for (let tick = 1; tick <= count; tick++) {
+    const sample = ordinaryJumpAscent(BIRD, tick * STEP);
+    expect(sample.rise).toBeCloseTo(states[0]!.y - states[tick]!.y, 8);
+    expect(sample.velocity).toBeCloseTo(states[tick]!.vy, 8);
+    expect(sample.rise).toBeLessThanOrEqual(sample.apexRise);
+  }
+  expect(() => ordinaryJumpAscent(BIRD, (count + 1) * STEP)).toThrow(RangeError);
+});
 const lowestY = (states: BirdState[]) => Math.min(...states.map((state) => state.y));
 const startY = GROUND.y - BIRD.height;
 
