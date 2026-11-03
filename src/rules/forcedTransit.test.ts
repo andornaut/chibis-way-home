@@ -46,6 +46,7 @@ function aboard(contract: ForcedTransitLayout, x: number, previous?: ForcedTrans
       riderBodyOrigin: { x, y: 0 },
       support: {
         index: 7,
+        ordinaryJumpApexFeetY: 0,
         ordinaryTakeoffOrigin: { x, y: 36 },
         origin: { x, y: 36 },
         transit: contract,
@@ -121,9 +122,39 @@ it("keeps nonordinary controls unknown without rearming a spent episode", () => 
     grounded: true,
     ordinaryControl: false,
     riderBodyOrigin: { x: 2, y: 0 },
-    support: { index: 7, ordinaryTakeoffOrigin: { x: 2, y: 36 }, origin: { x: 2, y: 36 }, transit },
+    support: {
+      index: 7,
+      ordinaryJumpApexFeetY: 0,
+      ordinaryTakeoffOrigin: { x: 2, y: 36 },
+      origin: { x: 2, y: 36 },
+      transit,
+    },
   };
   expect(stepForcedTransit(observation, forced()).attackWindow).toBe("unknown");
   const spent = aboard(transit, 2, forced());
   expect(stepForcedTransit(observation, spent)).toEqual(spent);
+});
+
+it("filters certified egress when native apex evidence is absent or below the bank", () => {
+  const observation = {
+    grounded: true,
+    ordinaryControl: true,
+    riderBodyOrigin: { x: 2, y: 0 },
+    support: {
+      index: 7,
+      ordinaryJumpApexFeetY: 36,
+      ordinaryTakeoffOrigin: { x: 2, y: 36 },
+      origin: { x: 2, y: 36 },
+      transit,
+    },
+  };
+  for (const apex of [undefined, Infinity, 36.001]) {
+    expect(
+      stepForcedTransit(
+        { ...observation, support: { ...observation.support, ordinaryJumpApexFeetY: apex } },
+        forced(),
+      ).attackWindow,
+    ).toBe("unknown");
+  }
+  expect(stepForcedTransit(observation, forced()).episode?.phase).toBe("spent");
 });

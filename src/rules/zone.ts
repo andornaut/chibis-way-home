@@ -30,6 +30,7 @@ import {
   type BirdInput,
   type BirdState,
   EDGE,
+  ordinaryJumpApexFeetY,
   startBird,
   startsDash,
   stepBirdWithSupport,
@@ -491,6 +492,19 @@ function transitObservation(
       banks.findIndex((other) => other.group === bank.group && other.id === bank.id) === index,
   );
   const bank = uniqueBanks.length === 1 ? uniqueBanks[0] : undefined;
+  const takeoffOrigin =
+    support &&
+    forcedTransitTakeoffOrigin(
+      { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: zone.seconds },
+      zone.bird,
+      {
+        ...support,
+        owner: support.object,
+        state: zone.behaviours[support.index],
+        track: zone.tracks[support.index]!,
+      },
+      zone.forcedTransitForecast,
+    );
   return stepForcedTransit(
     {
       ...(bank && { bank }),
@@ -507,17 +521,10 @@ function transitObservation(
       ...(support && {
         support: {
           index: support.index,
-          ordinaryTakeoffOrigin: forcedTransitTakeoffOrigin(
-            { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: zone.seconds },
-            zone.bird,
-            {
-              ...support,
-              owner: support.object,
-              state: zone.behaviours[support.index],
-              track: zone.tracks[support.index]!,
-            },
-            zone.forcedTransitForecast,
-          ),
+          ordinaryJumpApexFeetY: takeoffOrigin
+            ? ordinaryJumpApexFeetY(tuning, takeoffOrigin.y + zone.bird.y - support.rect.y)
+            : undefined,
+          ordinaryTakeoffOrigin: takeoffOrigin,
           origin: { x: support.rect.x, y: support.rect.y },
           ...(support.object.forcedTransit && { transit: support.object.forcedTransit }),
         },

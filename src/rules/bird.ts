@@ -138,6 +138,10 @@ interface CurvePoint {
   readonly velocity: number;
 }
 const ASCENT_CURVES = new WeakMap<BirdTuning, AscentCurve>();
+const SAMPLED_ASCENT_PEAKS = new WeakMap<
+  BirdTuning,
+  { readonly frames: number; readonly rise: number }
+>();
 
 function ascentCurve(tuning: BirdTuning): AscentCurve {
   const cached = ASCENT_CURVES.get(tuning);
@@ -224,6 +228,27 @@ export function ordinaryJumpAscent(
     apexRise: curve.height,
     apexSeconds: curve.seconds,
   };
+}
+
+// A conservative feet bound for the native sampled ascent, before terrain contact.
+export function ordinaryJumpApexFeetY(tuning: BirdTuning, takeoffBodyY: number): number {
+  const curve = ascentCurve(tuning);
+  let peak = SAMPLED_ASCENT_PEAKS.get(tuning);
+  if (!peak) {
+    let elapsed = 0;
+    let rise = 0;
+    let frames = 0;
+    while (elapsed < curve.seconds) {
+      elapsed += STEP_SECONDS;
+      rise = Math.max(rise, ascentPoint(tuning, curve, elapsed).rise);
+      frames++;
+    }
+    peak = { frames, rise };
+    SAMPLED_ASCENT_PEAKS.set(tuning, peak);
+  }
+  const magnitude = Math.max(1, Math.abs(takeoffBodyY) + tuning.height + peak.rise);
+  const roundoff = (4 * peak.frames + 4) * Number.EPSILON * magnitude;
+  return takeoffBodyY + tuning.height - peak.rise + roundoff;
 }
 
 function releaseCurve(

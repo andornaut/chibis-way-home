@@ -5,6 +5,7 @@ import type { Rect } from "../data/types";
 import {
   type BirdInput,
   type BirdState,
+  ordinaryJumpApexFeetY,
   ordinaryJumpAscent,
   startBird,
   stepBird,
@@ -146,6 +147,28 @@ it("exposes the actual full-jump ascent through the first native apex crossing",
     expect(sample.rise).toBeLessThanOrEqual(sample.apexRise);
   }
   expect(() => ordinaryJumpAscent(BIRD, (count + 1) * STEP)).toThrow(RangeError);
+});
+
+it("bounds the actual sampled apex feet conservatively after a vertical layout translation", () => {
+  for (const offset of [0, 480]) {
+    const ground = { ...GROUND, y: GROUND.y + offset };
+    const initial = stepBird(
+      BIRD,
+      [ground],
+      [],
+      STEP,
+      IDLE,
+      startBird(BIRD, { x: 0, y: ground.y }),
+    );
+    const states = [initial];
+    for (let tick = 0; tick < Math.ceil(BIRD.jumpRiseTime / STEP); tick++) {
+      states.push(stepBird(BIRD, [ground], [], STEP, { jumpHeld: true, move: 0 }, states.at(-1)!));
+    }
+    const bound = ordinaryJumpApexFeetY(BIRD, initial.y);
+    const actual = Math.min(...states.map(({ y }) => y + BIRD.height));
+    expect(bound).toBeGreaterThanOrEqual(actual);
+    expect(bound - actual).toBeLessThan(1e-6);
+  }
 });
 const lowestY = (states: BirdState[]) => Math.min(...states.map((state) => state.y));
 const startY = GROUND.y - BIRD.height;

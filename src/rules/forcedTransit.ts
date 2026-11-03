@@ -29,6 +29,7 @@ export interface ForcedTransitObservation {
   readonly safeDisembark?: boolean;
   readonly support?: {
     readonly index: number;
+    readonly ordinaryJumpApexFeetY?: number | undefined;
     readonly ordinaryTakeoffOrigin?: Point | undefined;
     readonly origin: Point;
     readonly transit?: ForcedTransitLayout;
@@ -84,7 +85,13 @@ export function stepForcedTransit(
   if (episode.group !== transit.group || episode.leg !== transit.leg) {
     return snapshot("unknown", episode, lastBank);
   }
-  if (!observation.ordinaryControl || !support.ordinaryTakeoffOrigin) {
+  const apexFeetY = support.ordinaryJumpApexFeetY;
+  if (
+    !observation.ordinaryControl ||
+    !support.ordinaryTakeoffOrigin ||
+    apexFeetY === undefined ||
+    !Number.isFinite(apexFeetY)
+  ) {
     return snapshot("unknown", episode, lastBank);
   }
   const windows = transit.windows.filter(
@@ -96,7 +103,9 @@ export function stepForcedTransit(
       contains(window.riderOnSupport.y, observation.riderBodyOrigin.y - support.origin.y),
   );
   const offered = windows.flatMap(({ result }) =>
-    result.kind === "egress" ? transit.banks.filter(({ id }) => id === result.bankId) : [],
+    result.kind === "egress"
+      ? transit.banks.filter(({ id, y }) => id === result.bankId && y >= apexFeetY)
+      : [],
   );
   if (offered.some(({ purpose }) => purpose === "forward" || purpose === "refuge")) {
     return snapshot("allowed", { ...episode, phase: "spent" }, lastBank);
