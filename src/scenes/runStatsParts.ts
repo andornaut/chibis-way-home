@@ -5,6 +5,7 @@ import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import type { Rect } from "../data/types";
 import type { DialogueParagraph } from "../dialogue/conversation";
+import { FONT_SCALE } from "../layout/fontRoles";
 import {
   RUN_STAT_KEYS,
   runStatLabels,
@@ -12,7 +13,6 @@ import {
   statsTotalRows,
   summaryTextOrigin,
 } from "../layout/runStats";
-import { FONT_SCALE } from "../layout/fontRoles";
 import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
 import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
 import { deathLabels, deathSummary } from "../view/death";

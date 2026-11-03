@@ -123,10 +123,10 @@ export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: Summar
       throw new Error(`Stage summary heading exceeds the page width: ${text}`);
     }
     return {
-      rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y },
-      text,
-      scale,
       lineHeight,
+      rect: { ...size, x: bounds.x + (bounds.width - size.width) / 2, y },
+      scale,
+      text,
     };
   };
   const zone = centred(

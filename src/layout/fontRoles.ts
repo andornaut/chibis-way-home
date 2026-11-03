@@ -8,5 +8,5 @@ export const FONT_ROLES = {
 
 export const FONT_NATIVE_SIZE = 16;
 export const FONT_METRICS = {
-  mainHeading: { size: 24, lineHeight: 28 },
+  mainHeading: { lineHeight: 28, size: 24 },
 } as const;
