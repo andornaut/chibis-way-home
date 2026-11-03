@@ -80,7 +80,11 @@ it("paints the preview-first page and its single unboxed statement without panel
     layout.statement!.text.text,
   ]);
   expect(painted).toHaveLength(17);
-  expect(painted[0]).toMatchObject({ font: "font-title", lineSpacing: 28 / 1.5 - 20, scale: 1.5 });
+  expect(painted[0]).toMatchObject({
+    font: "font-title",
+    lineSpacing: 20 / (17 / 16) - 20,
+    scale: 17 / 16,
+  });
   expect(painted.slice(1).every(({ scale }) => scale === 1)).toBe(true);
   expect(painted[1]!.font).toBe("font-body");
   expect(layout.totals.map(({ value }) => value.text)).toEqual(["1:15", "2:10", "2057:36"]);

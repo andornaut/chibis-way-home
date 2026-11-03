@@ -136,22 +136,23 @@ export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: Summar
     FONT_METRICS.mainHeading.size / FONT_NATIVE_SIZE,
     FONT_METRICS.mainHeading.lineHeight,
   );
-  const headerY = zone.rect.y + zone.rect.height + CARD_CONTENT.rowGap;
-  const stage = centred(fonts.body, headerY, words.stage);
-  const progress = centred(fonts.body, headerY, words.progress);
-  const headerWidth = stage.rect.width + CARD_CONTENT.padding + progress.rect.width;
-  if (headerWidth > bounds.width) {
-    throw new Error("Stage summary identity and progress exceed the page width");
-  }
-  stage.rect.x = bounds.x + (bounds.width - headerWidth) / 2;
-  progress.rect.x = stage.rect.x + stage.rect.width + CARD_CONTENT.padding;
+  const stage = centred(
+    fonts.body,
+    zone.rect.y + zone.rect.height + CARD_CONTENT.rowGap,
+    words.stage,
+  );
+  const progress = centred(
+    fonts.body,
+    stage.rect.y + stage.rect.height + CARD_CONTENT.rowGap,
+    words.progress,
+  );
   const imageWidth =
     (SUMMARY_PREVIEW_HEIGHT * STAGE_PREVIEW_SIZE.width) / STAGE_PREVIEW_SIZE.height;
   const image: Rect = {
     height: SUMMARY_PREVIEW_HEIGHT,
     width: imageWidth,
     x: bounds.x + (bounds.width - imageWidth) / 2,
-    y: headerY + Math.max(stage.rect.height, progress.rect.height) + CARD_CONTENT.rowGap,
+    y: progress.rect.y + progress.rect.height + CARD_CONTENT.rowGap,
   };
   const columnGap = 2 * CARD_CONTENT.padding;
   const groupWidth = 2 * SUMMARY_COLUMN_WIDTH + columnGap;

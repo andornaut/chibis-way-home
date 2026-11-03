@@ -52,10 +52,12 @@ const words = wordsFor(sampleStage);
 describe("preview-first stage summaries", () => {
   it("centres the preview and joint statistics block below zone, stage and actual progress", () => {
     const result = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, words);
-    expect([result.zone.rect.y, result.stage.rect.y, result.progress.rect.y]).toEqual([16, 38, 38]);
-    expect(result.image).toEqual({ height: 120, width: 240, x: 240, y: 57 });
-    expect(result.stats.map((row) => row.label.rect.y)).toEqual([181, 201, 221]);
-    expect(result.totals.map((row) => row.label.rect.y)).toEqual([181, 201, 221]);
+    expect([result.zone.rect.y, result.stage.rect.y, result.progress.rect.y]).toEqual([
+      16, 32.75, 51.75,
+    ]);
+    expect(result.image).toEqual({ height: 120, width: 240, x: 240, y: 70.75 });
+    expect(result.stats.map((row) => row.label.rect.y)).toEqual([194.75, 214.75, 234.75]);
+    expect(result.totals.map((row) => row.label.rect.y)).toEqual([194.75, 214.75, 234.75]);
     expect(result.stats.map((row) => row.label.rect.x)).toEqual([192, 192, 192]);
     expect(result.totals.map((row) => row.label.rect.x)).toEqual([376, 376, 376]);
     expect(result.stats.map((row) => row.value.rect.x + row.value.rect.width)).toEqual([
@@ -70,8 +72,8 @@ describe("preview-first stage summaries", () => {
       values.attempts,
     ]);
     expect(result.totals.map((row) => row.value.text)).toEqual(["20:34", "56:40", "9999:59"]);
-    expect(result.statement!.rect.y).toBe(244);
-    expect(result.statement!.rect.y + result.statement!.rect.height).toBe(259);
+    expect(result.statement!.rect.y).toBe(257.75);
+    expect(result.statement!.rect.y + result.statement!.rect.height).toBe(272.75);
     expect(result).not.toHaveProperty("divider");
     expect(result).not.toHaveProperty("wholeRun");
     expect(result).not.toHaveProperty("aggregate");
@@ -85,12 +87,10 @@ describe("preview-first stage summaries", () => {
           expect(heading.rect.x + heading.rect.width).toBeLessThanOrEqual(704);
         }
         expect(result.zone.rect.x + result.zone.rect.width / 2).toBe(360);
-        expect(
-          (result.stage.rect.x + result.progress.rect.x + result.progress.rect.width) / 2,
-        ).toBe(360);
-        expect(result.progress.rect.x - result.stage.rect.x - result.stage.rect.width).toBe(16);
-        expect(result.stage.rect.y).toBe(result.progress.rect.y);
-        expect(result.zone.scale).toBe(1.5);
+        expect(result.stage.rect.x + result.stage.rect.width / 2).toBe(360);
+        expect(result.progress.rect.x + result.progress.rect.width / 2).toBe(360);
+        expect(result.progress.rect.y - result.stage.rect.y - result.stage.rect.height).toBe(4);
+        expect(result.zone.scale).toBe(17 / 16);
         expect(result.stage.scale).toBe(1);
         expect(result.progress.scale).toBe(1);
         expect(result.image.width).toBe(240);
