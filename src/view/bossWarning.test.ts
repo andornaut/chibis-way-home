@@ -1,9 +1,10 @@
 import { expect, it } from "vitest";
 
+import { BOSS_WARNING } from "../data/bossWarning";
 import type { PixelRun, SpriteContact } from "../data/types";
-import { bossWarning, type BossWarningTuning } from "./bossWarning";
+import { bossWarning } from "./bossWarning";
 
-const tuning: BossWarningTuning = { colour: "red", inkColour: "ink", inkWidth: 1, strokeWidth: 2 };
+const tuning = BOSS_WARNING;
 const tell = { active: true, activeAttack: { id: "attack", phase: "tell" as const } };
 const contact: SpriteContact = {
   frame: { height: 5, width: 5 },
@@ -40,8 +41,8 @@ it("follows irregular animated alpha including detached pixels, without painting
   const first = bossWarning(tuning, tell, contact, "first")!;
   const red = pixels(first.red);
   const ink = pixels(first.ink);
-  expect(red.has("-1,1")).toBe(true);
-  expect(ink.has("-2,1")).toBe(true);
+  expect(red.has("0,1")).toBe(true);
+  expect(ink.has("-1,1")).toBe(true);
   expect(red.has("5,4")).toBe(true);
   expect(red.has("1,1")).toBe(false);
   expect(ink.has("1,1")).toBe(false);
@@ -64,8 +65,13 @@ it("only outlines active tells and keys cached geometry by the pixel widths", ()
     expect(bossWarning(tuning, state, contact, "first")).toBeUndefined();
   }
   expect(bossWarning(tuning, tell, undefined, "first")).toBeUndefined();
-  const thin = bossWarning({ ...tuning, strokeWidth: 1 }, tell, contact, "first")!;
-  expect(pixels(thin.red).has("-1,1")).toBe(false);
+  const wide = bossWarning(
+    { ...tuning, strokeWidth: tuning.strokeWidth + 1 },
+    tell,
+    contact,
+    "first",
+  )!;
+  expect(pixels(wide.red).has("-1,1")).toBe(true);
   expect(() => bossWarning(tuning, tell, contact, "missing")).toThrow("Missing warning silhouette");
 });
 

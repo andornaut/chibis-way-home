@@ -3,6 +3,8 @@ import { EventEmitter } from "node:events";
 import type { GameObjects, Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
+import palette from "../../public/art/palette.json";
+import { BOSS_WARNING } from "../data/bossWarning";
 import type { SpriteContact } from "../data/types";
 import type { BehaviourState } from "../rules/behaviour";
 import { mountBossWarning } from "./bossWarning";
@@ -27,9 +29,9 @@ it("registers the actual frame outline with origin, flip and scale, and disposes
   const events = new EventEmitter();
   const scene = { add: { graphics: () => graphics }, events } as unknown as Scene;
   const warning = mountBossWarning(
-    { colour: "red", inkColour: "ink", inkWidth: 1, strokeWidth: 2 },
+    BOSS_WARNING,
     -0.5,
-    (name) => (name === "red" ? 2 : 1),
+    (name) => Number.parseInt(palette.colours[name as keyof typeof palette.colours].slice(1), 16),
     scene,
   );
   const sprite = {
@@ -57,7 +59,10 @@ it("registers the actual frame outline with origin, flip and scale, and disposes
     stateKey: "tell",
   };
   warning.draw(tell, sprite, contact);
-  expect(painted).toContainEqual({ colour: 2, rect: [92, 76, 4, 2] });
+  expect(painted).toContainEqual({
+    colour: Number.parseInt(palette.colours[BOSS_WARNING.colour].slice(1), 16),
+    rect: [94, 76, 2, 2],
+  });
   const first = painted.splice(0);
   sprite.flipX = true;
   warning.draw(tell, sprite, contact);
