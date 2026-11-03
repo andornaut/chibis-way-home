@@ -13,6 +13,7 @@ import {
   RABBIT_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
 } from "./behaviours";
+import { OBSTACLE_CHARACTERS } from "./obstacleCharacters";
 import type { Character } from "./types";
 import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
 
@@ -21,6 +22,7 @@ import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
 // yet. Tiled pieces (awnings, the canopy, planters and pit openings) take their width from each
 // placement.
 export const CHARACTERS: Readonly<Record<string, Character>> = {
+  ...OBSTACLE_CHARACTERS,
   ...WOODLAND_SCENERY_CHARACTERS,
   "apartment-room-door": {
     archetype: "door",
