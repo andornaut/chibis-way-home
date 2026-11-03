@@ -8,10 +8,10 @@ import { TOUCH } from "../data/touch";
 import type { Point, SkillId } from "../data/types";
 import { skillDetails } from "../layout/skillDetails";
 import { PHONE_EVENTS } from "../pwa";
+import { drawActionHelp } from "./actionHelp";
 import {
   addCardTextIn,
   addSlice,
-  BODY_FONT,
   captureTab,
   cardFonts,
   paletteColour,
@@ -52,16 +52,22 @@ export class SkillDetailScene extends Scene {
     const visit = this.visit;
     fitPlayCamera(this);
     const words = TEXT.skills[this.detail.skill];
-    const layout = skillDetails(cardFonts(this), { ...SCREEN, x: 0, y: 0 }, true, words);
+    const layout = skillDetails(
+      cardFonts(this),
+      { ...SCREEN, x: 0, y: 0 },
+      true,
+      TEXT.buttons,
+      words,
+    );
     const close = layout.close!;
     addSlice(this, "ui-settings-card", layout.card);
     addCardTextIn(this, TITLE_FONT, layout.title!, words.title, paletteColour(this, "ink"));
-    addCardTextIn(
+    drawActionHelp(
       this,
-      BODY_FONT,
-      layout.groups.description!,
-      layout.description,
       paletteColour(this, "ink"),
+      layout.groups.description!,
+      TEXT.buttons,
+      layout.description,
     );
     drawSkillButton(this, layout.groups.icon!, this.detail.skill).ready(true);
     const closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);

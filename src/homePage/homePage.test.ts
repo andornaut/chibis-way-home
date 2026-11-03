@@ -6,9 +6,8 @@ import manifest from "../../public/art/manifest.json";
 import { CHUNKS } from "../data/chunks";
 import { TEXT } from "../data/text";
 import { RECIPES } from "../data/zones";
-import { keyIntent } from "../input/intent";
-import { cardKeyAction } from "../pause/cardInput";
 import { themesOf } from "../rules/assemble";
+import { ACTION_HELP_ICONS } from "../view/actionHelp";
 import { homePageHtml } from "./html";
 
 // The home page and the nav bar are static files, so what they state is checked against the
@@ -53,32 +52,32 @@ describe("the logos", () => {
 });
 
 describe("the home page's controls", () => {
-  const instructions = async () => {
-    const match = /<ul class="keys">\s*<li>(.*?)<\/li>\s*<li>(.*?)<\/li>\s*<\/ul>/u.exec(
-      await pageText(),
-    );
-    expect(match, "rendered touch and keyboard instruction rows").not.toBeNull();
-    return { keyboard: match![2]!, touch: match![1]! };
-  };
-
-  it("names both actual touch controls in their instruction row", async () => {
-    const { touch } = await instructions();
-    for (const label of [TEXT.buttons.jump, TEXT.buttons.use]) {
-      expect(touch).toContain(label);
+  it("renders each authored action beside its existing decorative control icon", async () => {
+    const html = await pageText();
+    const controls = /<ul class="keys">(.*?)<\/ul>/u.exec(html)![1]!;
+    expect([...controls.matchAll(/<li>/gu)]).toHaveLength(TEXT.homePage.instructions.length);
+    for (const action of ["move", "jump", "use"] as const) {
+      expect(controls).toContain(`<span>${TEXT.buttons[action]}</span>`);
+      expect(controls).toContain(`action-help-${action}`);
+      expect(html).toContain(ACTION_HELP_ICONS[action].png);
     }
+    expect(controls).toContain('aria-hidden="true"');
+    expect(controls).not.toContain("style=");
+    expect(controls).not.toMatch(/\{(?:move|jump|use)\}|Keyboard:|KeyE|Space|arrows/iu);
   });
-
-  it.each([
-    ["Left", /\barrow(?: keys|s)\b/u, () => keyIntent(new Set(["ArrowLeft"])).move === -1],
-    ["Right", /\barrow(?: keys|s)\b/u, () => keyIntent(new Set(["ArrowRight"])).move === 1],
-    ["Up", /\barrow(?: keys|s)\b/u, () => keyIntent(new Set(["ArrowUp"])).jump],
-    ["E", /\bE\b/u, () => keyIntent(new Set(["KeyE"])).use],
-    ["P", /\bP\b/u, () => cardKeyAction(false, "p", false) === "open"],
-  ])("names the bound %s key in keyboard instructions", async (_key, token, does) => {
-    expect({ does: does(), stated: token.test((await instructions()).keyboard) }).toEqual({
-      does: true,
-      stated: true,
-    });
+  it("escapes action labels and prose while preserving only renderer-owned markup", async () => {
+    const html = homePageHtml(
+      {
+        ...TEXT,
+        buttons: { ...TEXT.buttons, use: "Use <unsafe>" },
+        homePage: { ...TEXT.homePage, instructions: ["<script>{use}</script>"] },
+      },
+      await readFile(HOME_PAGE, "utf8"),
+    );
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).toContain("Use &lt;unsafe&gt;");
+    expect(html).toContain("&lt;/script&gt;");
+    expect(html).not.toContain("<unsafe>");
   });
 });
 

@@ -201,6 +201,8 @@ export interface SkillSelection extends SkillOwnership {
   readonly activeSkill: SkillId | null;
 }
 
+export type ControlAction = "move" | "jump" | "use";
+
 export interface SkillText {
   readonly description: string;
   readonly title: string;
@@ -224,10 +226,9 @@ export interface GameText {
   };
   readonly homePage: {
     readonly description: string;
-    readonly keyboard: string;
+    readonly instructions: readonly string[];
     readonly play: string;
     readonly subline: string;
-    readonly touch: string;
   };
   // What characters say in dialogue, by key.
   readonly lines: Readonly<Record<string, string>>;
@@ -244,9 +245,10 @@ export interface GameText {
     readonly title: string;
     readonly zones: Readonly<Record<string, string>>;
   };
-  // The touch buttons' names, which the home page's controls text uses.
+  // Canonical action names used by control help and the touch buttons.
   readonly buttons: {
     readonly jump: string;
+    readonly move: string;
     readonly use: string;
   };
   // What characters say in passing, by key.

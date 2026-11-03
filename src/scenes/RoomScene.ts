@@ -20,12 +20,12 @@ import { SKILL_ROOM, skillDetails, skillRoomContinue } from "../layout/skillDeta
 import { type RoomEvent, roomEvent } from "../pause/roomInput";
 import { coverZone, PHONE_EVENTS } from "../pwa";
 import { grantSkill } from "../save";
+import { drawActionHelp } from "./actionHelp";
 import {
   addButtonLabel,
   addCardText,
   addCardTextIn,
   addSlice,
-  BODY_FONT,
   BUTTON,
   type ButtonLabel,
   captureTab,
@@ -114,15 +114,15 @@ export class RoomScene extends Scene {
   private drawRoom(): void {
     if (this.room.grant !== undefined) {
       const words = TEXT.skills[this.room.grant];
-      const layout = skillDetails(cardFonts(this), SKILL_ROOM.bounds, false, words);
+      const layout = skillDetails(cardFonts(this), SKILL_ROOM.bounds, false, TEXT.buttons, words);
       addSlice(this, "ui-settings-card", layout.card);
       addCardTextIn(this, TITLE_FONT, layout.title!, words.title, this.colour("ink"));
-      addCardTextIn(
+      drawActionHelp(
         this,
-        BODY_FONT,
-        layout.groups.description!,
-        layout.description,
         this.colour("ink"),
+        layout.groups.description!,
+        TEXT.buttons,
+        layout.description,
       );
       const icon = drawSkillButton(this, layout.groups.icon!, this.room.grant);
       icon.ready(true);

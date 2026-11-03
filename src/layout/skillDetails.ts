@@ -1,8 +1,8 @@
 import { SCREEN } from "../data/screen";
-import type { Rect, SkillText } from "../data/types";
-import { dialogueLines } from "../dialogue/conversation";
+import type { ControlAction, Rect, SkillText } from "../data/types";
+import { actionHelpLayout } from "./actionHelp";
 import { TEXT_BUTTON } from "./buttonLabel";
-import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
+import { CARD_CONTENT } from "./cardFrame";
 import {
   cardActions,
   cardActionsSize,
@@ -15,7 +15,6 @@ import { hitAround } from "./hitAreas";
 import { SKILL_BUTTON } from "./skillHud";
 
 const DESCRIPTION_WIDTH = 512;
-const DESCRIPTION_LINES = 12;
 const footer = {
   height: TEXT_BUTTON.height,
   width: SCREEN.width - 2 * CARD_CONTENT.padding,
@@ -55,23 +54,53 @@ export function skillRoomContinue(fonts: CardFonts, text: string) {
   };
 }
 
-export function skillDetails(fonts: CardFonts, bounds: Rect, close: boolean, words: SkillText) {
-  const description = dialogueLines(
+export function skillDetails(
+  fonts: CardFonts,
+  bounds: Rect,
+  close: boolean,
+  actions: Readonly<Record<ControlAction, string>>,
+  words: SkillText,
+) {
+  const description = actionHelpLayout(
     fonts.body,
-    { lines: DESCRIPTION_LINES, scale: CARD_TEXT_SCALE },
-    Math.min(DESCRIPTION_WIDTH, bounds.width - 2 * CARD_CONTENT.padding),
+    actions,
+    Math.min(
+      DESCRIPTION_WIDTH,
+      bounds.width - 2 * CARD_CONTENT.padding - SKILL_BUTTON.target - CARD_CONTENT.gap,
+    ),
     words.description,
-  ).join("\n");
+  );
   const layout = contentCardLayout(
     bounds,
     [
-      { height: SKILL_BUTTON.target, key: "icon", width: SKILL_BUTTON.target },
-      { key: "description", ...cardTextSize(fonts.body, description) },
+      {
+        height: Math.max(SKILL_BUTTON.target, description.height),
+        key: "body",
+        width: SKILL_BUTTON.target + CARD_CONTENT.gap + description.width,
+      },
     ],
     { close, titleWidth: cardTextSize(fonts.title, words.title).width },
   );
   if (layout.card.height > bounds.height) {
     throw new Error("Skill details do not fit at the standard font size");
   }
-  return { ...layout, description };
+  const body = layout.groups.body!;
+  return {
+    ...layout,
+    description,
+    groups: {
+      description: {
+        ...body,
+        height: description.height,
+        width: description.width,
+        x: body.x + SKILL_BUTTON.target + CARD_CONTENT.gap,
+      },
+      icon: {
+        height: SKILL_BUTTON.target,
+        width: SKILL_BUTTON.target,
+        x: body.x,
+        y: body.y + Math.round((body.height - SKILL_BUTTON.target) / 2),
+      },
+    },
+  };
 }

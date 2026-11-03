@@ -40,13 +40,19 @@ describe("native skill presentation", () => {
   it.each(SKILL_IDS)(
     "fits full-font %s descriptions in a nonmodal room and centred modal",
     (skill) => {
-      const room = skillDetails(fonts, SKILL_ROOM.bounds, false, TEXT.skills[skill]);
+      const room = skillDetails(fonts, SKILL_ROOM.bounds, false, TEXT.buttons, TEXT.skills[skill]);
       expect(room.close).toBeUndefined();
       expect(inside(SKILL_ROOM.bounds, room.card)).toBe(true);
       const action = skillRoomContinue(fonts, TEXT.dialogue.continue);
       expect(rectsOverlap(room.card, action.hit)).toBe(false);
       expect(inside({ ...SCREEN, x: 0, y: 0 }, action.hit)).toBe(true);
-      const modal = skillDetails(fonts, { ...SCREEN, x: 0, y: 0 }, true, TEXT.skills[skill]);
+      const modal = skillDetails(
+        fonts,
+        { ...SCREEN, x: 0, y: 0 },
+        true,
+        TEXT.buttons,
+        TEXT.skills[skill],
+      );
       expect(modal.card.x + modal.card.width / 2).toBe(SCREEN.width / 2);
       expect(modal.card.y + modal.card.height / 2).toBe(SCREEN.height / 2);
       expect(modal.close?.hit.width).toBeGreaterThanOrEqual(48);
