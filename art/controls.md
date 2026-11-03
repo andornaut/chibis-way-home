@@ -22,7 +22,7 @@ A new exception names its concrete purpose and retained rules in this table. Pla
 
 ## Design tokens
 
-Palette names refer to [palette.json](../public/art/palette.json). Colours are opaque; disabled controls do not become translucent. Procedural skill-button circles and live touch-control chrome use fractional coverage only at their antialiased edges, with opaque painted interiors. Skill glyphs remain native pixel art; live Move, Use and Jump symbols use the procedural geometry in the [style guide](style-guide.md#touch-controls). Dedicated touch textures use local linear filtering without changing world art or shared atlases.
+Palette names refer to [palette.json](../public/art/palette.json). Colours are opaque; disabled controls do not become translucent. Procedural skill-button circles, live touch-control chrome and filled action-help illustrations use fractional coverage only at their antialiased edges, with opaque painted interiors. Skill glyphs remain native pixel art; live Move, Use and Jump symbols use the procedural geometry in the [style guide](style-guide.md#touch-controls). Dedicated touch and help textures use local linear filtering without changing world art or shared atlases. Filled help illustrations retain their [inline spacing contract](style-guide.md#action-help-illustrations); live controls retain open ring interiors.
 
 | Name            | Value                                                 | Unit            | Purpose                                    | Status                                                           |
 | --------------- | ----------------------------------------------------- | --------------- | ------------------------------------------ | ---------------------------------------------------------------- |
