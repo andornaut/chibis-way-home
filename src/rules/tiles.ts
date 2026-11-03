@@ -21,6 +21,7 @@ import type {
 import { worldScenery } from "../view/objectArt";
 import { drawsFrom, tileHitbox, type Tileset } from "../view/tiles";
 import { layoutBehaviour } from "./behaviour";
+import { validateHazardPhases } from "./effectiveCollision";
 import { resolveOrbits, validateOrbitReferences } from "./orbit";
 import { validateZoneLinks } from "./zoneLinks";
 
@@ -255,7 +256,7 @@ export function objectLayout(
     }
   }
   const idle = character.animations?.idle;
-  return {
+  const object: ObjectLayout = {
     animations: {
       ...(Object.fromEntries(
         STATES.map((state) => [state, character.animations?.[state] ?? idle]),
@@ -300,6 +301,8 @@ export function objectLayout(
     scene: instance.scene,
     width,
   };
+  validateHazardPhases(object);
+  return object;
 }
 
 // Whether an instance is placed, given the carried-choice flags that are set: every flag it

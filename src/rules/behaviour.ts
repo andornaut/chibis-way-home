@@ -7,6 +7,7 @@ import type {
   BehaviourPlan,
   BirdTuning,
   DialogueLine,
+  HazardPhase,
   ObjectLayout,
   Point,
   Rect,
@@ -105,6 +106,7 @@ export interface BehaviourState extends BehaviourAttackState {
 }
 
 export interface BehaviourSegment {
+  readonly hazardPhase?: HazardPhase;
   readonly frame?: string;
   readonly axis?: "x" | "y";
   readonly end: number;
@@ -930,7 +932,12 @@ function matches(
     );
   }
   if (condition.kind === "elapsed") {
-    return state.elapsed >= condition.seconds;
+    // Timed hazard boundaries tolerate arithmetic rounding, without extending legacy clocks.
+    const rounding =
+      object.behaviour?.states[state.stateKey]?.hazardPhase === undefined
+        ? 0
+        : Number.EPSILON * Math.max(1, state.elapsed, condition.seconds) * 4;
+    return state.elapsed + rounding >= condition.seconds;
   }
   if (condition.kind === "arrived") {
     const motion = nodeOf(object, state.stateKey).motion;
@@ -2412,6 +2419,7 @@ export function stepBehaviour(
         from: current,
         start: time,
         to,
+        ...(node.hazardPhase && { hazardPhase: node.hazardPhase }),
         ...(frame && { frame: frame.frame }),
       });
     }
