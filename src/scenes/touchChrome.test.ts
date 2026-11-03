@@ -50,6 +50,7 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
     return texture;
   });
   const sprite = vi.fn(() => ({
+    setAlpha: vi.fn().mockReturnThis(),
     setDisplaySize: vi.fn().mockReturnThis(),
     setOrigin: vi.fn().mockReturnThis(),
   }));
@@ -65,6 +66,7 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
       kind === "move" ? "ui-move-hint" : kind === "knob" ? "ui-move-knob" : `ui-touch-${kind}`;
     createTouchChrome(scene, kind);
     createTouchChrome(scene, kind);
+    expect(sprite.mock.results.at(-1)!.value.setAlpha).toHaveBeenCalledExactlyOnceWith(0.85);
     expect(sprite.mock.results.at(-1)!.value.setDisplaySize).toHaveBeenCalledWith(
       kind === "knob" ? 11 : 75,
       kind === "knob" ? 11 : 75,

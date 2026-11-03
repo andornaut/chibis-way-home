@@ -50,6 +50,13 @@ export function helpChromeSvg(
   const shapes = helpChromeLayers(colours, action)
     .map((layer) => {
       const colour = `#${layer.colour.toString(16).padStart(6, "0")}`;
+      if (layer.kind === "rect") {
+        const { rect } = layer;
+        return [
+          `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}"`,
+          `height="${rect.height}" fill="${colour}"/>`,
+        ].join(" ");
+      }
       if (layer.kind === "stroke") {
         const path = layer.path.map(({ x, y }, index) => `${index ? "L" : "M"}${x} ${y}`).join(" ");
         return [

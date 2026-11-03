@@ -1,6 +1,6 @@
 import { clamp01 } from "@andornaut/game-kit/numbers";
 
-import type { Point } from "../data/types";
+import type { Point, Rect } from "../data/types";
 
 export type TouchChromeKind = "jump" | "knob" | "move" | "use";
 export type TouchChromePose = "held" | "held-left" | "held-right" | "press" | "rest";
@@ -32,7 +32,8 @@ export type TouchChromeLayer =
       readonly kind: "stroke";
       readonly path: readonly Point[];
       readonly width: number;
-    };
+    }
+  | { readonly colour: number; readonly kind: "rect"; readonly rect: Rect };
 
 const CENTRE = { x: 37.5, y: 37.5 };
 const JUMP = [
@@ -110,7 +111,12 @@ export function touchChromePixel(
   let blue = 0;
   for (const layer of layers) {
     let amount: number;
-    if (layer.kind === "stroke") {
+    if (layer.kind === "rect") {
+      const { rect } = layer;
+      amount =
+        coverage(Math.max(rect.x - point.x, point.x - rect.x - rect.width)) *
+        coverage(Math.max(rect.y - point.y, point.y - rect.y - rect.height));
+    } else if (layer.kind === "stroke") {
       let distance = Infinity;
       for (let index = 1; index < layer.path.length; index++) {
         distance = Math.min(

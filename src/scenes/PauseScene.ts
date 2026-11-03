@@ -37,6 +37,7 @@ import {
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
+import { createPauseChrome, PAUSE_CHROME_KEY } from "./pauseChrome";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
 import { drawSkillButton } from "./skillButton";
@@ -111,9 +112,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     fitCanvasCamera(this, canvasCamera);
     this.cardCamera = this.cameras.add();
     fitPlayCamera(this, this.cardCamera);
-    this.pauseButton = this.add
-      .sprite(PAUSE_BUTTON.at.x, PAUSE_BUTTON.at.y, "ui-pause")
-      .setOrigin(0);
+    this.pauseButton = createPauseChrome(this);
     this.placePauseButton();
     this.scale.on(Scale.Events.RESIZE, this.placePauseButton, this);
     this.events.once("shutdown", () =>
@@ -506,10 +505,10 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.pauseButton.chain();
     if (control === "pauseButton") {
       this.pauseButton
-        .play(animationKey("ui-pause", "press"))
-        .chain(animationKey("ui-pause", "held"));
+        .play(animationKey(PAUSE_CHROME_KEY, "press"))
+        .chain(animationKey(PAUSE_CHROME_KEY, "held"));
     } else {
-      this.pauseButton.play(animationKey("ui-pause", "rest"));
+      this.pauseButton.play(animationKey(PAUSE_CHROME_KEY, "rest"));
     }
   }
 

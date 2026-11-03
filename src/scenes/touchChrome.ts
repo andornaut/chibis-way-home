@@ -108,5 +108,9 @@ export function createTouchChrome(scene: Scene, kind: TouchChromeKind): GameObje
     }
   }
   const rest = sheetTags(scene.cache.json.get(source) as AsepriteSheet).get("rest")?.[0]?.frame;
-  return scene.add.sprite(0, 0, key, rest).setOrigin(0).setDisplaySize(logical, logical);
+  return scene.add
+    .sprite(0, 0, key, rest)
+    .setOrigin(0)
+    .setDisplaySize(logical, logical)
+    .setAlpha(0.85);
 }
