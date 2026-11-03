@@ -9,14 +9,20 @@ import { expect, it, vi } from "vitest";
 
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { BIRD } from "../data/bird";
+import { blueVerticalId } from "../data/chunks";
+import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
 import { withAnticipationContact } from "../testing/behaviours";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { behaviourPose } from "../view/behaviour";
+import { BIRD_FRAME } from "../view/bird";
+import { zonePlanOf } from "./assemble";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import {
   advanceTraversal,
   type BehaviourTraversalState,
+  preferredAscentInputs,
   preferredDescentInputs,
   probeRearm,
   traversalContext,
@@ -25,7 +31,9 @@ import {
 import { startBird } from "./bird";
 import { contactFrameAt } from "./bodyContact";
 import { STEP_SECONDS } from "./step";
-import { objectLayout } from "./tiles";
+import { objectLayout, zoneLayout } from "./tiles";
+import { activateBehaviour, startZone, stepZone } from "./zone";
+import { CHUNK_LIBRARY } from "./zonePlans";
 
 vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
   const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
@@ -1341,4 +1349,134 @@ it("restores the ordinary pose when physical support cancels takeoff preparation
   expect(next.state.traversal?.preparation).toBeUndefined();
   expect(next.state.animationTag).toBe("walk");
   expect(next.segments.every(({ frame }) => frame === "normal")).toBe(true);
+});
+
+it("suggests a proved ascent only at a touching static wall", () => {
+  const object = actor();
+  const floor = { height: 60, width: 720, x: 0, y: 300 };
+  const wall = { height: 96, width: 36, x: 54, y: 264 };
+  const geometry = world([floor, wall], 0);
+  const motion = plan.states.chase!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    throw Error("Expected ground pursuit");
+  }
+  const context = traversalContext(geometry, STEP_SECONDS, object, motion)!;
+  const request = {
+    ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
+    goal: { height: 26, width: 120, x: 90, y: 275 },
+    start: { fallFromY: 300, grounded: true, vy: 0, x: 30, y: 276 },
+    timeSeconds: 0,
+  };
+  vi.mocked(stepTraversal).mockClear();
+  expect(preferredAscentInputs(geometry, context, request)).toEqual(
+    Array.from({ length: request.horizonSteps }, (_, index) => ({ jump: index === 0, move: 1 })),
+  );
+  expect(stepTraversal).not.toHaveBeenCalled();
+  expect(
+    preferredAscentInputs(geometry, context, {
+      ...request,
+      start: { ...request.start, grounded: false },
+    }),
+  ).toBeUndefined();
+  expect(preferredAscentInputs(world([floor], 0), context, request)).toBeUndefined();
+  expect(
+    preferredAscentInputs(world([floor, { ...wall, x: 55 }], 0), context, request),
+  ).toBeUndefined();
+  expect(
+    preferredAscentInputs(world([floor, { ...wall, height: 120, y: 240 }], 0), context, request),
+  ).toBeUndefined();
+});
+
+it("executes a prepared production early-yard escape toward the supported far bank", () => {
+  const ordinary = { ...BIRD, doubleJump: false };
+  delete ordinary.dash;
+  const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, "city-streets", 40, [
+    blueVerticalId("patrol-cover-early"),
+    "outdoor-deep-descent",
+  ]);
+  const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+  const area = layout.areas[layout.start.area]!;
+  const index = area.objects.findIndex((object) => object.character === "dog-antagonist");
+  const object = area.objects[index]!;
+  const wall = area.solids.find(
+    (rect) =>
+      rect.x > object.origin.x &&
+      rect.y < object.origin.y &&
+      rect.x - object.origin.x < object.width * 2,
+  )!;
+  let zone = activateBehaviour(index, startZone(ordinary, layout, 1));
+  let crossed = false;
+  let jumped = false;
+  let preparedAt: number | undefined;
+  let launchedAt: number | undefined;
+  const trace: unknown[] = [];
+  vi.mocked(findTraversal).mockClear();
+  for (let tick = 0; tick < 600; tick++) {
+    zone = stepZone(
+      ordinary,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      zone,
+    );
+    const state = zone.behaviours[index]!;
+    const at = zone.objects[index]!;
+    preparedAt ??= state.traversal?.preparation?.startedAtSeconds;
+    if ((state.traversal?.physical.vy ?? 0) < 0) {
+      jumped = true;
+      launchedAt ??= zone.seconds;
+    }
+    if (tick % 15 === 0 || zone.death) {
+      trace.push({
+        at,
+        death: zone.death,
+        phase: state.stateKey,
+        pursuit: state.pursuit,
+        tick,
+        time: zone.seconds,
+        traversal: state.traversal,
+      });
+    }
+    const left = at.x + (object.hitbox?.x ?? 0);
+    crossed = left >= wall.x + wall.width - 1e-6;
+    if (crossed || zone.death || zone.cleared || zone.turnedBack) {
+      break;
+    }
+  }
+  const searches = vi.mocked(findTraversal).mock.results.map(({ value }, index) => ({
+    request: vi.mocked(findTraversal).mock.calls[index]![1],
+    result: value,
+  }));
+  const evidence = {
+    crossed,
+    final: { at: zone.objects[index], death: zone.death, state: zone.behaviours[index] },
+    jumped,
+    launchedAt,
+    object,
+    preparedAt,
+    searches,
+    trace,
+    wall,
+  };
+  expect(crossed, JSON.stringify(evidence)).toBe(true);
+  expect(jumped).toBe(true);
+  expect(zone.behaviours[index]!.pursuit?.phase).toBe("engaged");
+  const motion = object.behaviour!.states.pursuit!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
+    throw Error("Expected production ground traversal");
+  }
+  expect(preparedAt).toBeDefined();
+  expect(launchedAt! - preparedAt!).toBeGreaterThanOrEqual(motion.traversal.prepSeconds);
+  expect(searches.length).toBeGreaterThanOrEqual(2);
+  for (const { request, result } of searches) {
+    expect(request).toMatchObject(BEHAVIOUR_TRAVERSAL_SEARCH.budget);
+    expect(result.work.states).toBeLessThanOrEqual(request.maxStates);
+    expect(result.work.steps).toBeLessThanOrEqual(request.maxSteps);
+  }
+  expect(
+    searches.some(
+      ({ request, result }) =>
+        request.preferredInputs?.[0]?.jump && result.status === "found" && result.state.grounded,
+    ),
+  ).toBe(true);
 });

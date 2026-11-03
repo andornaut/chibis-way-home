@@ -300,6 +300,40 @@ export function preferredDescentInputs(
     : undefined;
 }
 
+// A touching wall can require an ascent before the final landing corridor gets nearer.
+// These commands are suggestions; the native search charges and validates every step.
+export function preferredAscentInputs(
+  world: BehaviourWorld,
+  context: TraversalContext<TraversalSupport>,
+  request: TraversalRequest<TraversalSupport>,
+): readonly TraversalCommand[] | undefined {
+  const { goal, start } = request;
+  if (!start.grounded) {
+    return undefined;
+  }
+  const { body, epsilon, profile } = context;
+  const left = start.x + body.offset.x;
+  const right = left + body.width;
+  const top = start.y + body.offset.y;
+  const foot = top + body.height;
+  const move = goal.x >= right - epsilon ? 1 : goal.x + goal.width <= left + epsilon ? -1 : 0;
+  if (move === 0) {
+    return undefined;
+  }
+  const wall = world.solids.some((rect) => {
+    const rise = foot - rect.y;
+    return (
+      Math.abs(move === 1 ? rect.x - right : rect.x + rect.width - left) <= epsilon &&
+      rect.y + rect.height > top + epsilon &&
+      rise > epsilon &&
+      rise <= (profile.jumpSpeed * profile.jumpSpeed) / (2 * profile.gravity)
+    );
+  });
+  return wall
+    ? Array.from({ length: request.horizonSteps }, (_, index) => ({ jump: index === 0, move }))
+    : undefined;
+}
+
 function originSegments(
   object: ObjectLayout,
   offset: Point,
@@ -416,15 +450,18 @@ function advanceTraversalStep(
       });
     }
     // The tell's wait invalidates timed mover predictions; prove the prepared takeoff again now.
-    const proof = findTraversal(
-      { ...context, dtSeconds: STEP_SECONDS },
-      {
-        ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
-        goal: prior.target,
-        start: physical,
-        timeSeconds: frame.timeSeconds,
-      },
-    );
+    const searchContext = { ...context, dtSeconds: STEP_SECONDS };
+    const request: TraversalRequest<TraversalSupport> = {
+      ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
+      goal: prior.target,
+      start: physical,
+      timeSeconds: frame.timeSeconds,
+    };
+    const preferredInputs = preferredAscentInputs(world, searchContext, request);
+    const proof = findTraversal(searchContext, {
+      ...request,
+      ...(preferredInputs && { preferredInputs }),
+    });
     const launch = proof.status === "found" ? proof.inputs[0] : undefined;
     if (!launch?.jump || launch.move !== preparation.move) {
       return hold({
@@ -516,7 +553,9 @@ function advanceTraversalStep(
       start: physical,
       timeSeconds: frame.timeSeconds,
     };
-    const preferredInputs = preferredDescentInputs(world, searchContext, request, direct);
+    const preferredInputs =
+      preferredDescentInputs(world, searchContext, request, direct) ??
+      (!progress ? preferredAscentInputs(world, searchContext, request) : undefined);
     const result = findTraversal(searchContext, {
       ...request,
       ...(preferredInputs && { preferredInputs }),
