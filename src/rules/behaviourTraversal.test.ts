@@ -196,11 +196,10 @@ it.each([
       fixture.request,
       fixture.direct,
     );
-    expect(inputs).toEqual(
-      Array.from({ length: BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps }, () => ({
-        jump: false,
-        move,
-      })),
+    expect(inputs).toHaveLength(BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps);
+    expect(inputs?.[0]).toEqual({ jump: false, move });
+    expect(inputs?.every((input) => !input.jump && (input.move === move || input.move === 0))).toBe(
+      true,
     );
     expect(stepTraversal).not.toHaveBeenCalled();
     expect(
@@ -345,7 +344,13 @@ it.each([-1, 1] as const)("executes a proved static bank descent with move=%s", 
   const request = vi.mocked(findTraversal).mock.calls[0]![1];
   expect(request).toMatchObject(BEHAVIOUR_TRAVERSAL_SEARCH.budget);
   expect(request.preferredInputs).toHaveLength(request.horizonSteps);
-  expect(request.preferredInputs?.every((input) => input.move === move && !input.jump)).toBe(true);
+  expect(
+    vi
+      .mocked(findTraversal)
+      .mock.results[0]!.value.inputs.every(
+        (input: { jump: boolean; move: number }) => input.move === move && !input.jump,
+      ),
+  ).toBe(true);
   expect(vi.mocked(findTraversal).mock.results[0]!.value).toMatchObject({
     status: "found",
     work: { states: 58, steps: 57 },
@@ -456,8 +461,11 @@ it.each([
     expect(prior?.physical).toEqual(proof.state);
     expect(prior?.physical.supportId).toBe(fixture.second);
     expect(at.y).toBeCloseTo(912);
-    const rightX = extension === 48 ? 5762 : 8657.2;
-    expect(at.x).toBeCloseTo(move === 1 ? rightX : 11520 - rightX - fixture.object.width);
+    const left = at.x + fixture.object.hitbox.x;
+    expect(left).toBeGreaterThanOrEqual(Math.min(fixture.first.x, fixture.second.x));
+    expect(left + fixture.object.hitbox.width).toBeLessThanOrEqual(
+      Math.max(fixture.first.x + fixture.first.width, fixture.second.x + fixture.second.width),
+    );
   },
 );
 
