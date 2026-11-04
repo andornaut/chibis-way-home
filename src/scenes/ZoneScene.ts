@@ -1781,19 +1781,24 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (behaviour) {
         if (art.sprite) {
           const pose = behaviourPose(object, behaviour);
-          art.sprite.setFlipX(pose.flipX);
+          if (art.sprite.flipX !== pose.flipX) {
+            art.sprite.setFlipX(pose.flipX);
+          }
           if (object.contact) {
             if (!behaviour.animationTag) {
               throw new Error(`Missing rendered silhouette pose for ${object.art}`);
             }
-            art.sprite.anims.stop();
-            art.sprite.setFrame(
-              contactFrameAt(
-                object.contact,
-                behaviour.animationTag,
-                behaviour.animationSeconds ?? 0,
-              ).frame,
+            if (art.sprite.anims.isPlaying) {
+              art.sprite.anims.stop();
+            }
+            const { frame } = contactFrameAt(
+              object.contact,
+              behaviour.animationTag,
+              behaviour.animationSeconds ?? 0,
             );
+            if (art.sprite.frame.name !== frame) {
+              art.sprite.setFrame(frame);
+            }
           } else if (pose.animation !== undefined) {
             show(art.sprite, pose.animation);
           }
@@ -1808,7 +1813,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       const position = object.contact
         ? spriteFrameOrigin(object.contact.frame, object, at)
         : { x, y };
-      art.item.setPosition(position.x, position.y);
+      if (art.item.x !== position.x || art.item.y !== position.y) {
+        art.item.setPosition(position.x, position.y);
+      }
       if (art.sprite) {
         this.bossWarning?.draw(behaviour, art.sprite, object.contact);
       }

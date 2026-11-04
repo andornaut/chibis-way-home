@@ -9,7 +9,7 @@ import type { SpriteContact } from "../data/types";
 import type { BehaviourState } from "../rules/behaviour";
 import { mountBossWarning } from "./bossWarning";
 
-it("registers the actual frame outline with origin, flip and scale, and disposes once", () => {
+it("outlines the actual frame with origin, flip and scale, clears only a drawn outline, disposes once", () => {
   let colour = 0;
   const painted: { colour: number; rect: number[] }[] = [];
   const graphics = {
@@ -81,6 +81,7 @@ it("registers the actual frame outline with origin, flip and scale, and disposes
   const count = graphics.fillRect.mock.calls.length;
   warning.draw({ ...tell, activeAttack: { id: "attack", phase: "committed" } }, sprite, contact);
   expect(graphics.fillRect).toHaveBeenCalledTimes(count);
+  warning.clear();
   expect(graphics.setDepth).toHaveBeenCalledWith(-0.5);
   expect(graphics.setScrollFactor).toHaveBeenCalledWith(1);
   expect(graphics.clear).toHaveBeenCalledOnce();

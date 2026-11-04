@@ -12,6 +12,8 @@ export function mountBossWarning(
 ) {
   const graphics = scene.add.graphics().setDepth(depth).setScrollFactor(1);
   let live = true;
+  // Whether graphics holds an outline, so a frame without one clears nothing.
+  let drawn = false;
   const dispose = () => {
     if (!live) {
       return;
@@ -25,8 +27,9 @@ export function mountBossWarning(
   scene.events.once("destroy", dispose);
   return {
     clear() {
-      if (live) {
+      if (live && drawn) {
         graphics.clear();
+        drawn = false;
       }
     },
     draw(
@@ -41,6 +44,7 @@ export function mountBossWarning(
       if (!bands) {
         return;
       }
+      drawn = true;
       const width = sprite.frame.realWidth;
       const height = sprite.frame.realHeight;
       for (const [runs, name] of [
