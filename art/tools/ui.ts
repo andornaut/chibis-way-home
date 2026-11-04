@@ -1,6 +1,5 @@
 /**
- * UI art: the dialogue box, quip strip, touch buttons, start screen and cards, at the 720x360 base
- * resolution.
+ * UI art: the dialogue box, touch buttons, start screen and cards, at the 720x360 base resolution.
  *
  * Usage:
  *   node art/tools/ui.ts build             write public/art/sprites/<key>.png + .json and list them in
@@ -24,11 +23,6 @@
  * - ui-name-tab, nine-slice 12x20, margins 2,2,2,2; tags amber, green, pink, tan (the fill; one per
  *   speaker). Drawn A+12 wide at 124,237, so its bottom row lies on the box's top border. Name ink,
  *   origin x+6, y 234.
- *
- * Quip
- * - ui-quip-strip, nine-slice 12x24, margins 2,2,2,2. Drawn An+Ab+24 wide (An the name, Ab the
- *   line), at most 452, centred on x 360 at y 8 (within 138..590). Name in font-title in the
- *   speaker's tab colour, origin x+9, y 7; line cream in font-body, origin x+15+An, y 11.
  *
  * Touch controls (two round buttons for the right thumb, a pause button at the top left and the
  * move hint at the left)
@@ -147,8 +141,8 @@ type Points = [number, number][];
 const USAGE = "Usage: ui.ts build | preview OUT.png";
 
 // Name tab fills, one tag each: hues the panels do not use. Ink text holds at least 6.6:1 on each,
-// and each holds at least 5:1 as text on the navy panels, so the quip strip sets the speaker's name
-// in the same colour.
+// and each holds at least 5:1 as text on the navy panels, so a speaker's name can be set in the
+// same colour.
 const TAB_FILLS = ["amber", "green", "pink", "tan"];
 
 /** A bitmap from strings: '#' is set. */
@@ -239,12 +233,6 @@ function portraitFrame(): pixel.Frame {
 function nameTab(fill: string): pixel.Frame {
   const g = new Grid(12, 20);
   panel({ rim: [null, darker(fill)] }, g, 0, 0, 12, 20, fill);
-  return g.px;
-}
-
-function quipStrip(): pixel.Frame {
-  const g = new Grid(12, 24);
-  panel({}, g, 0, 0, 12, 24, "navy");
   return g.px;
 }
 
@@ -755,7 +743,6 @@ export const SLICES: Record<string, pixel.Margins> = {
   "ui-button": [2, 4, 2, 6],
   "ui-button-primary": [2, 4, 2, 6],
   "ui-focus": [4, 4, 4, 4],
-  "ui-quip-strip": [2, 2, 2, 2],
   "ui-settings-card": [2, 2, 2, 2],
 };
 
@@ -811,7 +798,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
   yield ["ui-portrait-frame", one(portraitFrame())];
   yield ["ui-quit", states(["normal", "pressed"], quitIcon)];
-  yield ["ui-quip-strip", one(quipStrip())];
   yield ["ui-resume", states(["normal", "pressed"], resume)];
   yield ["ui-settings-card", one(settingsCard())];
   yield ["ui-touch-jump", touchButton("jump")];

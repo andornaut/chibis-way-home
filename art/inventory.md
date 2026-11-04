@@ -112,7 +112,6 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | ui-pause                  | sprite                                                     | 35x35  | rest, press (once), held                                                                     |
 | ui-play-mark              | sprite                                                     | 5x10   | rest, light                                                                                  |
 | ui-portrait-frame         | sprite                                                     | 68x68  | rest                                                                                         |
-| ui-quip-strip             | nine-slice (2,2,2,2)                                       | 12x24  | rest                                                                                         |
 | ui-quit                   | sprite                                                     | 20x20  | normal, pressed                                                                              |
 | ui-resume                 | sprite                                                     | 160x44 | normal, pressed                                                                              |
 | ui-settings-card          | nine-slice (2,2,2,2)                                       | 16x16  | rest                                                                                         |

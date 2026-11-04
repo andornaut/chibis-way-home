@@ -349,10 +349,6 @@ Approved target for paired runtime integration. The rulebook owns failure behavi
 
 Live antagonist barks use `ui-dialogue-box` at 0.75 alpha; text and portraits remain opaque. Present a bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner. Ordinary paused dialogue retains its existing presentation.
 
-### Quip
-
-A one-line strip at the top centre (x 360), y 8, height 24, sized to its text and at most 452 wide (x 138 to 590), led by the speaker's name in their name-tab colour. It never pauses play and never reaches the lower corners.
-
 ### Touch controls
 
 Two round buttons for the right thumb, Use above and to the left of Jump. Each is the move hint's open ring, 73px across with no face: a 3px cream band between 1px ink lines, with its icon centred and fringed in ink, so it holds 3:1 on any ground, the sky and any character. No label. Hidden on desktop and when the setting is off.
