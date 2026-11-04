@@ -37,14 +37,6 @@ const KNOWN_FAILURES: readonly KnownFailure[] = [
     scenario: "crumbling archie ledge still",
     tick: 305,
   },
-  {
-    cause:
-      "Pebble's drop-burst tell, burst, perch return and two-second rest before relocating keep " +
-      "him within half a tile of x 95 for over four seconds while Chibi stands still: data timing",
-    property: "no-stall",
-    scenario: "encounter flyer-shelter-early loading-yards still",
-    tick: 89,
-  },
 ];
 
 const known = (scenario: string, property: string) =>

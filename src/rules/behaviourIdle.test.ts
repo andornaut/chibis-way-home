@@ -317,12 +317,14 @@ it("flies the authored profile to a real supported perch while keeping the eligi
   let state = expired(object),
     at = object.origin;
   const first = stepBehaviour(BIRD, object, world(), dt, target, at, state);
-  expect(first.at.x).toBeLessThan(at.x);
+  // A flyer on support lifts off before any horizontal travel.
+  expect(first.at.x).toBe(at.x);
+  expect(first.at.y).toBeLessThan(at.y);
   expect(first.state.stateKey).toBe("watch");
   expect(behaviourPose(object, first.state).animation).toBe("fly");
   state = first.state;
   at = first.at;
-  for (let tick = 1; tick < 4; tick++) {
+  for (let tick = 1; tick < 100 && state.idleWatchdog!.recovery; tick++) {
     const result = stepBehaviour(BIRD, object, world([floor], tick * dt), dt, target, at, state);
     state = result.state;
     at = result.at;
@@ -438,8 +440,9 @@ it("uses the safe side of a perch instead of flying through a red hazard", () =>
     object.origin,
     expired(object),
   );
-  expect(result.at.x).toBeGreaterThan(object.origin.x);
-  expect(result.at.y).toBe(object.origin.y);
+  const recovery = result.state.idleWatchdog!.recovery;
+  expect(recovery?.kind === "fly" && recovery.target.x).toBeGreaterThan(object.origin.x);
+  expect(result.at).toEqual({ x: object.origin.x, y: object.origin.y - 0.5 });
   expect(result.actions).toEqual([]);
 });
 
@@ -757,12 +760,15 @@ it.each([
   const geometry = world();
   let state = expired(object);
   let at = object.origin;
-  // Recovery resumes the overhead pursuit from its new perch.
-  for (let tick = 0; tick < 200 && state.stateKey === "rest"; tick++) {
+  // One recovery lifts off, crosses and lands back in the perch's own dwell.
+  let started = false;
+  for (let tick = 0; tick < 200 && !(started && !state.idleWatchdog!.recovery); tick++) {
     const next = stepBehaviour(BIRD, object, geometry, dt, target, at, state);
     state = next.state;
     at = next.at;
+    started ||= state.idleWatchdog!.recovery !== undefined;
   }
+  expect(state.stateKey).toBe("rest");
   expect(supportedLanding(object, geometry, at)).toBe(true);
   expect(Math.abs(at.x - object.origin.x) >= plan.idleWatchdog!.minMovement).toBe(
     allowIdleReposition,

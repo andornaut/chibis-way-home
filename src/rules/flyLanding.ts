@@ -228,6 +228,45 @@ export function flyLandingPath(
   return landingRoute(target, object, world, at);
 }
 
+// A perched flyer lifts to a cruise height before crossing to a supported target and descending
+// onto it, so it never slides along its support. Each leg is single-axis, clipped like flight and
+// clear of hazards.
+export function liftedLandingPath(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  cruise: number,
+  at: Point,
+  target: Point,
+): readonly Point[] | undefined {
+  if (!supportedLanding(object, world, target)) {
+    return undefined;
+  }
+  const crossing = Math.abs(at.x - target.x) > EDGE;
+  const points = [
+    ...(crossing && at.y > cruise + EDGE ? [{ x: at.x, y: cruise }] : []),
+    ...(crossing ? [{ x: target.x, y: Math.min(at.y, cruise) }] : []),
+    target,
+  ];
+  let from = at;
+  for (const to of points) {
+    const axis = Math.abs(to.x - from.x) > EDGE ? "x" : "y";
+    const sweep = {
+      height: object.height + Math.abs(to.y - from.y),
+      width: object.width + Math.abs(to.x - from.x),
+      x: Math.min(from.x, to.x),
+      y: Math.min(from.y, to.y),
+    };
+    if (
+      Math.abs(flightAxis(object, world, from, axis, to[axis]) - to[axis]) > EDGE ||
+      (world.hazards ?? []).some(({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect))
+    ) {
+      return undefined;
+    }
+    from = to;
+  }
+  return points;
+}
+
 interface PendingLandingProof {
   readonly at: Point;
   readonly hazards: NonNullable<BehaviourWorld["hazards"]>;
@@ -299,7 +338,8 @@ export function proveFlyLanding(
     state: {
       pending: {
         at,
-        hazards: hazards.map((item) => ({ ...item, rect: { ...item.rect } })),
+        // Only the identity and rect are compared; occupancy samplers stay out of state.
+        hazards: hazards.map(({ owner, rect }) => ({ owner, rect: { ...rect } })),
         platforms: platforms.map((item) => ({ ...item, rect: { ...item.rect } })),
         solids: world.solids,
       },

@@ -24,7 +24,13 @@ import {
   type TraversalSupport,
 } from "./behaviourTraversal";
 import { EDGE } from "./bird";
-import { flyLandingPath, flyLandingRoute, supportContact, supportedLanding } from "./flyLanding";
+import {
+  flyLandingPath,
+  flyLandingRoute,
+  liftedLandingPath,
+  supportContact,
+  supportedLanding,
+} from "./flyLanding";
 
 type PursuitMotion = Extract<BehaviourMotion, { kind: "pursue" }>;
 type IdleStatus = TraversalResult<TraversalSupport>["status"] | "invalidated";
@@ -34,7 +40,13 @@ type Recovery =
       readonly footprint?: TraversalContext<TraversalSupport>["body"];
       readonly traversal: BehaviourTraversalState;
     }
-  | { readonly kind: "fly"; readonly origin: Point; readonly target: Point };
+  | {
+      // The lift height of a recovery that starts on support.
+      readonly cruise?: number;
+      readonly kind: "fly";
+      readonly origin: Point;
+      readonly target: Point;
+    };
 export interface BehaviourIdleState {
   readonly anchor: Point;
   readonly decision?: number;
@@ -215,8 +227,20 @@ export function planSupportedRecovery(
         : "unreachable";
   for (const target of targets.slice(0, config.maxAttempts)) {
     if (motion.mode === "fly") {
-      if (flyLandingPath(object, world, at, target)) {
-        return { ...chosen, recovery: { kind: "fly", origin: at, target }, status: "found" };
+      // From support the flyer lifts by its own height before crossing.
+      const cruise = supportContact(object, world, at)
+        ? Math.min(at.y, target.y) - object.height
+        : undefined;
+      if (
+        cruise === undefined
+          ? flyLandingPath(object, world, at, target)
+          : liftedLandingPath(object, world, cruise, at, target)
+      ) {
+        return {
+          ...chosen,
+          recovery: { ...(cruise !== undefined && { cruise }), kind: "fly", origin: at, target },
+          status: "found",
+        };
       }
       continue;
     }
@@ -317,7 +341,10 @@ export function advanceSupportedRecovery(
   };
   if (recovery.kind === "fly") {
     let target = recovery.target;
-    let path = flyLandingPath(object, world, at, target);
+    let path =
+      recovery.cruise === undefined
+        ? flyLandingPath(object, world, at, target)
+        : liftedLandingPath(object, world, recovery.cruise, at, target);
     if (!path) {
       if (supportContact(object, world, at)) {
         return {

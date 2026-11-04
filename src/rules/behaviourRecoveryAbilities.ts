@@ -17,7 +17,7 @@ import type { BehaviourPerception } from "./behaviourPerception";
 import type { BehaviourWorld } from "./behaviourReach";
 import { nodeOf } from "./behaviourTrack";
 import type { BehaviourTraversalState } from "./behaviourTraversal";
-import { supportContact } from "./flyLanding";
+import { landingSupport, supportContact } from "./flyLanding";
 
 export type BehaviourRecoveryParams =
   { readonly kind: "idle-recovery" } | { readonly kind: "periodic-reposition" };
@@ -152,12 +152,22 @@ const IDLE_RECOVERY: RecoveryAbility<"idle-recovery"> = {
         traversal: advanced.idle.recovery.traversal,
       }),
     };
+    // A perch recovery lands back in its own dwell on the new support, keeping the dwell's clock
+    // so its graph continues; other recoveries resume pursuit.
     if (advanced.finished) {
-      next = {
-        ...context.enter(advanced.at, watchdog.resume, next),
-        idleWatchdog: next.idleWatchdog,
-        pendingEntry: false,
-      };
+      const support = perchedWait(object, state)
+        ? landingSupport(object, world, advanced.at)
+        : undefined;
+      next = support
+        ? {
+            ...next,
+            landing: { speed: next.landing?.speed ?? motion.speed, status: "supported", support },
+          }
+        : {
+            ...context.enter(advanced.at, watchdog.resume, next),
+            idleWatchdog: next.idleWatchdog,
+            pendingEntry: false,
+          };
     }
     return {
       state: next,
