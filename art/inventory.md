@@ -51,83 +51,83 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 ## Sprites
 
-| Key                       | Type                                                       | Size   | Tags                                                             |
-| ------------------------- | ---------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| Key                       | Type                                                       | Size   | Tags                                                                                         |
+| ------------------------- | ---------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------- |
 | bird                      | character                                                  | 48x42  | idle, walk, jump (once), flutter, land (once), death (once), dash (once), double-jump (once) |
-| dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                                    |
-| ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                                               |
-| ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                                                 |
-| frog-courier              | hazard, hit box 6,6,48,30                                  | 60x36  | ride, idle                                                       |
-| icon-achievement          | achievement glyph, no contact                              | 16x16  | one per achievement ID (frames unlocked, locked)                 |
-| icon-achievements         | sprite                                                     | 20x20  | rest                                                             |
-| icon-browser-menu         | sprite                                                     | 16x16  | rest                                                             |
-| icon-exit                 | sprite                                                     | 16x16  | rest                                                             |
-| icon-home                 | sprite                                                     | 16x16  | rest                                                             |
-| icon-home-nav             | sprite                                                     | 20x20  | rest                                                             |
-| icon-install              | sprite                                                     | 16x16  | rest                                                             |
-| icon-ios-share            | sprite                                                     | 16x16  | rest                                                             |
-| icon-move-controls        | sprite                                                     | 16x16  | rest                                                             |
-| icon-settings             | sprite                                                     | 16x16  | rest                                                             |
-| icon-settings-nav         | sprite                                                     | 20x20  | rest                                                             |
-| icon-skill-dash           | skill glyph, no contact                                    | 16x16  | ready, muted                                                     |
-| icon-skill-double-jump    | skill glyph, no contact                                    | 16x16  | ready, muted                                                     |
-| icon-skill-speedy         | skill glyph, no contact                                    | 16x16  | ready, muted                                                     |
-| icon-touch-controls       | sprite                                                     | 16x16  | rest                                                             |
-| map-compass               | map pen mark, tan                                          | 25x33  | rest                                                             |
-| map-bird                  | map marker, the bird at half size                          | 26x22  | idle                                                             |
-| map-fork                  | map fork marker                                            | 29x29  | normal, current, visited, unbuilt                                |
-| map-hill                  | map pen mark, tan                                          | 20x11  | rest                                                             |
-| map-icon-apartment        | map zone icon, apartment building                          | 14x14  | normal, visited                                                  |
-| map-icon-blue-cityscape   | map zone icon, city towers                                 | 14x14  | normal, visited                                                  |
-| map-icon-countryside      | map zone icon, farm and fields                             | 14x14  | normal, visited                                                  |
-| map-icon-home-city        | map zone icon, neighbourhood house                         | 14x14  | normal, visited                                                  |
-| map-icon-industrial       | map zone icon, factory                                     | 14x14  | normal, visited                                                  |
-| map-icon-street           | map zone icon, brownstone                                  | 14x14  | normal, visited                                                  |
-| map-icon-woodland         | map zone icon, trees                                       | 14x14  | normal, visited                                                  |
-| map-icon-zone             | map zone icon, generic map pin                             | 14x14  | normal, visited                                                  |
-| map-paper                 | nine-slice (13,13,13,13), pale steel map frame             | 32x32  | rest                                                             |
-| map-region-apartment      | decorative destination illustration                        | 120x60 | rest                                                             |
-| map-region-blue-cityscape | decorative destination illustration                        | 120x60 | rest                                                             |
-| map-region-countryside    | decorative destination illustration                        | 120x60 | rest                                                             |
-| map-region-home-city      | decorative destination illustration                        | 120x60 | rest                                                             |
-| map-region-industrial     | decorative destination illustration                        | 120x60 | rest                                                             |
-| map-region-woodland       | decorative destination illustration                        | 120x60 | rest                                                             |
-| map-wave                  | map pen mark, tan                                          | 22x4   | rest                                                             |
-| map-zone                  | map zone marker                                            | 35x35  | normal, current, visited, locked, unbuilt                        |
-| park-boat                 | park, moving platform: deck line on row 0, collision 72x12 | 72x18  | idle                                                             |
-| park-gate                 | park room door, a Use zone, no collision                   | 36x60  | idle, open (once)                                                |
-| pedestrian-cat            | street cast                                                | 34x50  | walk, idle                                                       |
-| pedestrian-raccoon        | street cast                                                | 36x50  | walk, idle                                                       |
-| pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                                           |
-| portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                                          |
-| portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                                           |
-| portrait-goose            | Trixi dialogue portrait, transparent                       | 64x64  | neutral                                                          |
-| portrait-pigeon           | Pebble dialogue portrait, transparent                      | 64x64  | neutral                                                          |
-| portrait-raccoon          | Kiwi dialogue portrait, transparent                        | 64x64  | neutral                                                          |
-| ui-answer                 | sprite                                                     | 208x36 | normal, selected, pressed                                        |
-| ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                        |
-| ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                        |
-| ui-close                  | sprite                                                     | 24x24  | normal, pressed                                                  |
-| ui-dialogue-box           | sprite                                                     | 640x96 | rest                                                             |
-| ui-focus                  | nine-slice (4,4,4,4)                                       | 16x16  | rest                                                             |
-| ui-forward-mark           | sprite                                                     | 10x14  | idle                                                             |
-| ui-icon-button            | sprite                                                     | 36x36  | normal, pressed                                                  |
-| ui-move-hint              | sprite                                                     | 75x75  | rest, held-left, held-right                                      |
-| ui-move-knob              | sprite                                                     | 11x11  | rest, held                                                       |
-| ui-name-tab               | nine-slice (2,2,2,2)                                       | 12x20  | amber, green, pink, tan                                          |
-| ui-nav-bar                | nine-slice (1,1,1,3)                                       | 12x48  | rest                                                             |
-| ui-pause                  | sprite                                                     | 35x35  | rest, press (once), held                                                |
-| ui-play-mark              | sprite                                                     | 5x10   | rest, light                                                      |
-| ui-portrait-frame         | sprite                                                     | 68x68  | rest                                                             |
-| ui-quip-strip             | nine-slice (2,2,2,2)                                       | 12x24  | rest                                                             |
-| ui-quit                   | sprite                                                     | 20x20  | normal, pressed                                                  |
-| ui-resume                 | sprite                                                     | 160x44 | normal, pressed                                                  |
-| ui-settings-card          | nine-slice (2,2,2,2)                                       | 16x16  | rest                                                             |
-| ui-skip                   | sprite                                                     | 78x20  | normal, pressed, disabled                                        |
-| ui-start                  | sprite                                                     | 192x52 | normal, pressed                                                  |
-| ui-switch                 | sprite                                                     | 32x16  | on, off                                                          |
-| ui-touch-jump             | sprite                                                     | 75x75  | rest, press (once), held                                                |
-| ui-touch-use              | sprite                                                     | 75x75  | rest, press (once), held                                                |
+| dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                                                                |
+| ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                                                                           |
+| ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                                                                             |
+| frog-courier              | hazard, hit box 6,6,48,30                                  | 60x36  | ride, idle                                                                                   |
+| icon-achievement          | achievement glyph, no contact                              | 16x16  | one per achievement ID (frames unlocked, locked)                                             |
+| icon-achievements         | sprite                                                     | 20x20  | rest                                                                                         |
+| icon-browser-menu         | sprite                                                     | 16x16  | rest                                                                                         |
+| icon-exit                 | sprite                                                     | 16x16  | rest                                                                                         |
+| icon-home                 | sprite                                                     | 16x16  | rest                                                                                         |
+| icon-home-nav             | sprite                                                     | 20x20  | rest                                                                                         |
+| icon-install              | sprite                                                     | 16x16  | rest                                                                                         |
+| icon-ios-share            | sprite                                                     | 16x16  | rest                                                                                         |
+| icon-move-controls        | sprite                                                     | 16x16  | rest                                                                                         |
+| icon-settings             | sprite                                                     | 16x16  | rest                                                                                         |
+| icon-settings-nav         | sprite                                                     | 20x20  | rest                                                                                         |
+| icon-skill-dash           | skill glyph, no contact                                    | 16x16  | ready, muted                                                                                 |
+| icon-skill-double-jump    | skill glyph, no contact                                    | 16x16  | ready, muted                                                                                 |
+| icon-skill-speedy         | skill glyph, no contact                                    | 16x16  | ready, muted                                                                                 |
+| icon-touch-controls       | sprite                                                     | 16x16  | rest                                                                                         |
+| map-compass               | map pen mark, tan                                          | 25x33  | rest                                                                                         |
+| map-bird                  | map marker, the bird at half size                          | 26x22  | idle                                                                                         |
+| map-fork                  | map fork marker                                            | 29x29  | normal, current, visited, unbuilt                                                            |
+| map-hill                  | map pen mark, tan                                          | 20x11  | rest                                                                                         |
+| map-icon-apartment        | map zone icon, apartment building                          | 14x14  | normal, visited                                                                              |
+| map-icon-blue-cityscape   | map zone icon, city towers                                 | 14x14  | normal, visited                                                                              |
+| map-icon-countryside      | map zone icon, farm and fields                             | 14x14  | normal, visited                                                                              |
+| map-icon-home-city        | map zone icon, neighbourhood house                         | 14x14  | normal, visited                                                                              |
+| map-icon-industrial       | map zone icon, factory                                     | 14x14  | normal, visited                                                                              |
+| map-icon-street           | map zone icon, brownstone                                  | 14x14  | normal, visited                                                                              |
+| map-icon-woodland         | map zone icon, trees                                       | 14x14  | normal, visited                                                                              |
+| map-icon-zone             | map zone icon, generic map pin                             | 14x14  | normal, visited                                                                              |
+| map-paper                 | nine-slice (13,13,13,13), pale steel map frame             | 32x32  | rest                                                                                         |
+| map-region-apartment      | decorative destination illustration                        | 120x60 | rest                                                                                         |
+| map-region-blue-cityscape | decorative destination illustration                        | 120x60 | rest                                                                                         |
+| map-region-countryside    | decorative destination illustration                        | 120x60 | rest                                                                                         |
+| map-region-home-city      | decorative destination illustration                        | 120x60 | rest                                                                                         |
+| map-region-industrial     | decorative destination illustration                        | 120x60 | rest                                                                                         |
+| map-region-woodland       | decorative destination illustration                        | 120x60 | rest                                                                                         |
+| map-wave                  | map pen mark, tan                                          | 22x4   | rest                                                                                         |
+| map-zone                  | map zone marker                                            | 35x35  | normal, current, visited, locked, unbuilt                                                    |
+| park-boat                 | park, moving platform: deck line on row 0, collision 72x12 | 72x18  | idle                                                                                         |
+| park-gate                 | park room door, a Use zone, no collision                   | 36x60  | idle, open (once)                                                                            |
+| pedestrian-cat            | street cast                                                | 34x50  | walk, idle                                                                                   |
+| pedestrian-raccoon        | street cast                                                | 36x50  | walk, idle                                                                                   |
+| pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                                                                       |
+| portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                                                                      |
+| portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                                                                       |
+| portrait-goose            | Trixi dialogue portrait, transparent                       | 64x64  | neutral                                                                                      |
+| portrait-pigeon           | Pebble dialogue portrait, transparent                      | 64x64  | neutral                                                                                      |
+| portrait-raccoon          | Kiwi dialogue portrait, transparent                        | 64x64  | neutral                                                                                      |
+| ui-answer                 | sprite                                                     | 208x36 | normal, selected, pressed                                                                    |
+| ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
+| ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
+| ui-close                  | sprite                                                     | 24x24  | normal, pressed                                                                              |
+| ui-dialogue-box           | sprite                                                     | 640x96 | rest                                                                                         |
+| ui-focus                  | nine-slice (4,4,4,4)                                       | 16x16  | rest                                                                                         |
+| ui-forward-mark           | sprite                                                     | 10x14  | idle                                                                                         |
+| ui-icon-button            | sprite                                                     | 36x36  | normal, pressed                                                                              |
+| ui-move-hint              | sprite                                                     | 75x75  | rest, held-left, held-right                                                                  |
+| ui-move-knob              | sprite                                                     | 11x11  | rest, held                                                                                   |
+| ui-name-tab               | nine-slice (2,2,2,2)                                       | 12x20  | amber, green, pink, tan                                                                      |
+| ui-nav-bar                | nine-slice (1,1,1,3)                                       | 12x48  | rest                                                                                         |
+| ui-pause                  | sprite                                                     | 35x35  | rest, press (once), held                                                                     |
+| ui-play-mark              | sprite                                                     | 5x10   | rest, light                                                                                  |
+| ui-portrait-frame         | sprite                                                     | 68x68  | rest                                                                                         |
+| ui-quip-strip             | nine-slice (2,2,2,2)                                       | 12x24  | rest                                                                                         |
+| ui-quit                   | sprite                                                     | 20x20  | normal, pressed                                                                              |
+| ui-resume                 | sprite                                                     | 160x44 | normal, pressed                                                                              |
+| ui-settings-card          | nine-slice (2,2,2,2)                                       | 16x16  | rest                                                                                         |
+| ui-skip                   | sprite                                                     | 78x20  | normal, pressed, disabled                                                                    |
+| ui-start                  | sprite                                                     | 192x52 | normal, pressed                                                                              |
+| ui-switch                 | sprite                                                     | 32x16  | on, off                                                                                      |
+| ui-touch-jump             | sprite                                                     | 75x75  | rest, press (once), held                                                                     |
+| ui-touch-use              | sprite                                                     | 75x75  | rest, press (once), held                                                                     |
 
 ## Tilesets
 
@@ -143,69 +143,69 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 Pieces placed from stage data by their bottom-left corner at the bottom y given: `park-*` from `art/tools/park.ts`, the rest from `art/tools/floor1.ts` (Zone 1: New York street, 720px tall, sidewalk top y 600, row 50).
 
-| Key                     | Type                                                                 | Size    | Bottom y, repeat |
-| ----------------------- | -------------------------------------------------------------------- | ------- | ---------------- |
-| cab                     | street furniture, yellow cab                                         | 96x40   | 600, none        |
-| canopy-poles            | street furniture, under the canopy                                   | 60x60   | 600, none        |
-| cross-street            | far avenue down a cross street                                       | 120x26  | 600, none        |
-| doorman-podium          | street furniture                                                     | 18x24   | 600, none        |
-| facade-brownstone       | building facade, brownstone                                          | 48x312  | 600, x           |
-| facade-brownstone-upper | building facade, a brownstone's upper storey                         | 48x180  | 288, x           |
-| facade-hotel            | building facade, tall dark stone | 48x312  | 600, x           |
-| facade-hotel-upper      | building facade, the tall stone building's upper storey              | 48x180  | 288, x           |
-| facade-one-storey       | building facade, one-storey brick                                    | 48x192  | 600, x           |
-| facade-walkup           | building facade, brick walk-up                                       | 48x312  | 600, x           |
-| facade-walkup-upper     | building facade, a walk-up's upper storey                            | 48x180  | 288, x           |
-| fire-escape             | facade piece, walk-up                                                | 196x185 | 473, none        |
-| fire-escape-ladder      | climbing, fire-escape ladder between landings 8 rows apart           | 24x96   | 432, none        |
-| fire-escape-ladder-4    | climbing, fire-escape ladder between landings 4 rows apart           | 24x48   | 432, none        |
-| fire-escape-ladder-5    | climbing, fire-escape ladder between landings 5 rows apart           | 24x60   | 432, none        |
-| fire-escape-ladder-6    | climbing, fire-escape ladder between landings 6 rows apart           | 24x72   | 432, none        |
-| fire-escape-ladder-7    | climbing, fire-escape ladder between landings 7 rows apart           | 24x84   | 432, none        |
-| fire-escape-railing     | climbing, fire-escape railing on a landing                           | 48x24   | 432, x           |
-| hot-dog-cart            | street furniture                                                     | 40x70   | 600, none        |
+| Key                     | Type                                                       | Size    | Bottom y, repeat |
+| ----------------------- | ---------------------------------------------------------- | ------- | ---------------- |
+| cab                     | street furniture, yellow cab                               | 96x40   | 600, none        |
+| canopy-poles            | street furniture, under the canopy                         | 60x60   | 600, none        |
+| cross-street            | far avenue down a cross street                             | 120x26  | 600, none        |
+| doorman-podium          | street furniture                                           | 18x24   | 600, none        |
+| facade-brownstone       | building facade, brownstone                                | 48x312  | 600, x           |
+| facade-brownstone-upper | building facade, a brownstone's upper storey               | 48x180  | 288, x           |
+| facade-hotel            | building facade, tall dark stone                           | 48x312  | 600, x           |
+| facade-hotel-upper      | building facade, the tall stone building's upper storey    | 48x180  | 288, x           |
+| facade-one-storey       | building facade, one-storey brick                          | 48x192  | 600, x           |
+| facade-walkup           | building facade, brick walk-up                             | 48x312  | 600, x           |
+| facade-walkup-upper     | building facade, a walk-up's upper storey                  | 48x180  | 288, x           |
+| fire-escape             | facade piece, walk-up                                      | 196x185 | 473, none        |
+| fire-escape-ladder      | climbing, fire-escape ladder between landings 8 rows apart | 24x96   | 432, none        |
+| fire-escape-ladder-4    | climbing, fire-escape ladder between landings 4 rows apart | 24x48   | 432, none        |
+| fire-escape-ladder-5    | climbing, fire-escape ladder between landings 5 rows apart | 24x60   | 432, none        |
+| fire-escape-ladder-6    | climbing, fire-escape ladder between landings 6 rows apart | 24x72   | 432, none        |
+| fire-escape-ladder-7    | climbing, fire-escape ladder between landings 7 rows apart | 24x84   | 432, none        |
+| fire-escape-railing     | climbing, fire-escape railing on a landing                 | 48x24   | 432, x           |
+| hot-dog-cart            | street furniture                                           | 40x70   | 600, none        |
 | hotel-crest             | facade piece, banners and crest                            | 98x44   | 478, none        |
 | hotel-window            | facade piece, tall window                                  | 32x152  | 592, none        |
-| lobby-balustrade        | lobby (later indoor zone), balcony railing                           | 48x36   | 288, x           |
-| lobby-bookcase          | lobby (later indoor zone), tall bookcase                             | 84x384  | 672, none        |
-| lobby-desk              | lobby (later indoor zone), reception desk                            | 120x96  | 672, none        |
-| lobby-front-door        | lobby (later indoor zone), inside of the front door                  | 156x180 | 672, none        |
-| lobby-lamp              | lobby (later indoor zone), pendant lamp, lit bulb                    | 48x192  | 220, none        |
-| lobby-plant             | lobby (later indoor zone), potted plant                              | 48x120  | 672, none        |
-| lobby-sofa              | lobby (later indoor zone), sofa                                      | 120x72  | 672, none        |
-| lobby-wall              | lobby wall (later indoor zone), wood panelling                       | 48x720  | 720, x           |
-| lobby-window            | lobby (later indoor zone), tall window                               | 96x240  | 552, none        |
-| park-bandstand          | park prop, bandstand under its one-way roof                          | 120x84  | 600, none        |
-| park-bench              | park prop, bench under its one-way top                               | 36x24   | 600, none        |
-| park-bin                | park prop, bin                                                       | 16x24   | 600, none        |
-| park-city               | park, the city behind                                                | 360x200 | 540, x           |
-| park-clouds             | park, cream clouds                                                   | 360x160 | 200, x           |
-| park-far-trees          | park, distant crowns                                                 | 240x120 | 600, x           |
-| park-flower-bed         | park prop, flower bed                                                | 72x16   | 600, none        |
-| park-fountain           | park prop, fountain                                                  | 96x48   | 600, none        |
-| park-lamp               | park prop, lamp                                                      | 16x84   | 600, none        |
-| park-lily-pad           | park prop, lily pad                                                  | 14x4    | 608, none        |
-| park-reeds              | park prop, pond reeds                                                | 24x30   | 610, none        |
-| park-sign               | park prop, sign with a tree icon                                     | 24x40   | 600, none        |
-| park-sky                | park, peach sky                                                      | 48x600  | 600, x           |
-| park-tree               | park prop, autumn tree                                               | 96x150  | 600, none        |
-| park-treetops           | park, tall autumn treetops                                           | 360x420 | 600, x           |
-| roofline-brownstone     | roofline, brownstone                                                 | 48x48   | 108, x           |
-| roofline-hotel          | roofline, tall stone building                                        | 48x48   | 108, x           |
-| roofline-walkup         | roofline, walk-up                                                    | 48x48   | 108, x           |
-| storefront-cafe         | storefront, cup sign                                                 | 84x120  | 600, none        |
-| storefront-diner        | storefront, fork-and-knife sign                                      | 108x120 | 600, none        |
-| storefront-florist      | storefront, flower sign                                              | 84x120  | 600, none        |
-| storefront-gift-shop    | storefront, gift sign                                                | 96x120  | 600, none        |
-| storefront-makeup-store | storefront, lipstick sign                                            | 96x120  | 600, none        |
-| storefront-noodle-bar   | storefront, noodle-bowl sign                                         | 120x120 | 600, none        |
-| storefront-pet-shop     | storefront, paw sign                                                 | 108x120 | 600, none        |
-| street-sky              | day sky, both screens                                                | 48x600  | 600, x           |
-| street-skyline          | far skyline, water towers, two towers                                | 336x600 | 600, x           |
-| street-tree             | street furniture                                                     | 64x136  | 600, none        |
-| subway-railing          | street furniture                                                     | 72x62   | 600, none        |
-| walk-signal             | street furniture                                                     | 12x82   | 600, none        |
-| water-tower             | climbing, water tower (top one-way tiles)                            | 48x84   | 240, none        |
+| lobby-balustrade        | lobby (later indoor zone), balcony railing                 | 48x36   | 288, x           |
+| lobby-bookcase          | lobby (later indoor zone), tall bookcase                   | 84x384  | 672, none        |
+| lobby-desk              | lobby (later indoor zone), reception desk                  | 120x96  | 672, none        |
+| lobby-front-door        | lobby (later indoor zone), inside of the front door        | 156x180 | 672, none        |
+| lobby-lamp              | lobby (later indoor zone), pendant lamp, lit bulb          | 48x192  | 220, none        |
+| lobby-plant             | lobby (later indoor zone), potted plant                    | 48x120  | 672, none        |
+| lobby-sofa              | lobby (later indoor zone), sofa                            | 120x72  | 672, none        |
+| lobby-wall              | lobby wall (later indoor zone), wood panelling             | 48x720  | 720, x           |
+| lobby-window            | lobby (later indoor zone), tall window                     | 96x240  | 552, none        |
+| park-bandstand          | park prop, bandstand under its one-way roof                | 120x84  | 600, none        |
+| park-bench              | park prop, bench under its one-way top                     | 36x24   | 600, none        |
+| park-bin                | park prop, bin                                             | 16x24   | 600, none        |
+| park-city               | park, the city behind                                      | 360x200 | 540, x           |
+| park-clouds             | park, cream clouds                                         | 360x160 | 200, x           |
+| park-far-trees          | park, distant crowns                                       | 240x120 | 600, x           |
+| park-flower-bed         | park prop, flower bed                                      | 72x16   | 600, none        |
+| park-fountain           | park prop, fountain                                        | 96x48   | 600, none        |
+| park-lamp               | park prop, lamp                                            | 16x84   | 600, none        |
+| park-lily-pad           | park prop, lily pad                                        | 14x4    | 608, none        |
+| park-reeds              | park prop, pond reeds                                      | 24x30   | 610, none        |
+| park-sign               | park prop, sign with a tree icon                           | 24x40   | 600, none        |
+| park-sky                | park, peach sky                                            | 48x600  | 600, x           |
+| park-tree               | park prop, autumn tree                                     | 96x150  | 600, none        |
+| park-treetops           | park, tall autumn treetops                                 | 360x420 | 600, x           |
+| roofline-brownstone     | roofline, brownstone                                       | 48x48   | 108, x           |
+| roofline-hotel          | roofline, tall stone building                              | 48x48   | 108, x           |
+| roofline-walkup         | roofline, walk-up                                          | 48x48   | 108, x           |
+| storefront-cafe         | storefront, cup sign                                       | 84x120  | 600, none        |
+| storefront-diner        | storefront, fork-and-knife sign                            | 108x120 | 600, none        |
+| storefront-florist      | storefront, flower sign                                    | 84x120  | 600, none        |
+| storefront-gift-shop    | storefront, gift sign                                      | 96x120  | 600, none        |
+| storefront-makeup-store | storefront, lipstick sign                                  | 96x120  | 600, none        |
+| storefront-noodle-bar   | storefront, noodle-bowl sign                               | 120x120 | 600, none        |
+| storefront-pet-shop     | storefront, paw sign                                       | 108x120 | 600, none        |
+| street-sky              | day sky, both screens                                      | 48x600  | 600, x           |
+| street-skyline          | far skyline, water towers, two towers                      | 336x600 | 600, x           |
+| street-tree             | street furniture                                           | 64x136  | 600, none        |
+| subway-railing          | street furniture                                           | 72x62   | 600, none        |
+| walk-signal             | street furniture                                           | 12x82   | 600, none        |
+| water-tower             | climbing, water tower (top one-way tiles)                  | 48x84   | 240, none        |
 
 ## Modular platforming
 
