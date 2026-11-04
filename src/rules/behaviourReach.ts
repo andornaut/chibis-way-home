@@ -412,27 +412,29 @@ export function flightAxis(
   const across = axis === "x" ? "y" : "x";
   const depth = axis === "x" ? "height" : "width";
   const length = axis === "x" ? "width" : "height";
-  const body = { ...at, height: object.height, width: object.width };
-  const sweep = {
-    ...body,
-    [axis]: Math.min(at[axis], desired) - EDGE,
-    [length]: object[length] + Math.abs(desired - at[axis]) + 2 * EDGE,
-  };
-  const solids = [
-    ...collisionCandidates(world.solids, sweep),
-    ...(world.platforms ?? [])
-      .filter((platform) => platform.owner !== object && platform.collision === "solid")
-      .map((platform) => platform.rect),
-  ];
-  for (const solid of solids) {
+  const start = Math.min(at[axis], desired) - EDGE;
+  const extent = object[length] + Math.abs(desired - at[axis]) + 2 * EDGE;
+  const sweep =
+    axis === "x"
+      ? { height: object.height, width: extent, x: start, y: at.y }
+      : { height: extent, width: object.width, x: at.x, y: start };
+  const clip = (solid: Rect) => {
     if (at[across] >= solid[across] + solid[depth] || at[across] + object[depth] <= solid[across]) {
-      continue;
+      return;
     }
     if (desired > at[axis] && at[axis] + object[length] <= solid[axis] + EDGE) {
       to = Math.min(to, solid[axis] - object[length]);
     }
     if (desired < at[axis] && at[axis] >= solid[axis] + solid[length] - EDGE) {
       to = Math.max(to, solid[axis] + solid[length]);
+    }
+  };
+  for (const solid of collisionCandidates(world.solids, sweep)) {
+    clip(solid);
+  }
+  for (const platform of world.platforms ?? []) {
+    if (platform.owner !== object && platform.collision === "solid") {
+      clip(platform.rect);
     }
   }
   return to;

@@ -11,27 +11,58 @@ function supports(object: ObjectLayout, world: BehaviourWorld): readonly Rect[] 
     ...(world.platforms ?? []).filter(({ owner }) => owner !== object).map(({ rect }) => rect),
   ];
 }
-function obstacles(object: ObjectLayout, world: BehaviourWorld, body: Rect): readonly Rect[] {
+// Other objects' solid platforms and hazards, in obstacle order after the terrain candidates.
+function movingObstacles(object: ObjectLayout, world: BehaviourWorld): readonly Rect[] {
   return [
-    ...collisionCandidates(world.solids, body),
     ...(world.platforms ?? [])
       .filter(({ collision, owner }) => collision === "solid" && owner !== object)
       .map(({ rect }) => rect),
     ...(world.hazards ?? []).filter(({ owner }) => owner !== object).map(({ rect }) => rect),
   ];
 }
+function obstacles(object: ObjectLayout, world: BehaviourWorld, body: Rect): readonly Rect[] {
+  return [...collisionCandidates(world.solids, body), ...movingObstacles(object, world)];
+}
 
+function fitsOn(object: ObjectLayout, at: Point, rect: Rect): boolean {
+  return (
+    Math.abs(at.y + object.height - rect.y) <= EDGE &&
+    at.x >= rect.x - EDGE &&
+    at.x + object.width <= rect.x + rect.width + EDGE
+  );
+}
+
+// The body is clear of terrain, other objects' solid platforms and hazards, and rests on
+// terrain or another object's platform.
 export function supportedLanding(object: ObjectLayout, world: BehaviourWorld, at: Point): boolean {
   const body = { ...at, height: object.height, width: object.width };
-  return (
-    !obstacles(object, world, body).some((rect) => rectsOverlap(body, rect)) &&
-    supports(object, world).some(
-      (rect) =>
-        Math.abs(at.y + object.height - rect.y) <= EDGE &&
-        at.x >= rect.x - EDGE &&
-        at.x + object.width <= rect.x + rect.width + EDGE,
-    )
-  );
+  for (const rect of collisionCandidates(world.solids, body)) {
+    if (rectsOverlap(body, rect)) {
+      return false;
+    }
+  }
+  const platforms = world.platforms ?? [];
+  for (const { collision, owner, rect } of platforms) {
+    if (collision === "solid" && owner !== object && rectsOverlap(body, rect)) {
+      return false;
+    }
+  }
+  for (const { owner, rect } of world.hazards ?? []) {
+    if (owner !== object && rectsOverlap(body, rect)) {
+      return false;
+    }
+  }
+  for (const rect of world.solids) {
+    if (fitsOn(object, at, rect)) {
+      return true;
+    }
+  }
+  for (const { owner, rect } of platforms) {
+    if (owner !== object && fitsOn(object, at, rect)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Candidates use complete body support and the original encounter's horizontal leash.
@@ -43,6 +74,7 @@ function landingRoute(
 ): readonly Point[] | undefined {
   const distance = object.behaviour!.pursuit!.distance;
   const routes: { readonly points: readonly Point[]; readonly length: number }[] = [];
+  const moving = movingObstacles(object, world);
   for (const support of supports(object, world)) {
     const low = Math.max(support.x, object.origin.x - distance);
     const high = Math.min(support.x + support.width - object.width, object.origin.x + distance);
@@ -52,9 +84,9 @@ function landingRoute(
     const y = support.y - object.height;
     const body = { height: object.height, width: high - low + object.width, x: low, y };
     let intervals: readonly (readonly [number, number])[] = [[low, high]];
-    for (const rect of obstacles(object, world, body)) {
+    const cut = (rect: Rect) => {
       if (rect.y >= support.y || rect.y + rect.height <= y) {
-        continue;
+        return;
       }
       const from = rect.x - object.width;
       const to = rect.x + rect.width;
@@ -66,6 +98,12 @@ function landingRoute(
               ...(to <= right ? [[to, right] as const] : []),
             ],
       );
+    };
+    for (const rect of collisionCandidates(world.solids, body)) {
+      cut(rect);
+    }
+    for (const rect of moving) {
+      cut(rect);
     }
     for (const [left, right] of intervals) {
       if (
