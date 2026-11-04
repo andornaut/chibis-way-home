@@ -15,7 +15,7 @@
  *   edges: the back flap leans back, the side flaps splay out and the front flap folds down over
  *   the brown front face, casting a dark-brown line. A tan rim encloses a dark-brown and plum
  *   interior; the right side is dark brown. Cream tape, torn at the rim, and a cream label with two
- *   marks. Ink outline and a flat bottom row. Nonlethal scenery, with no light walkable lip or red
+ *   marks. Plum outline and a flat bottom row. Nonlethal scenery, with no light walkable lip or red
  *   band.
  *
  * All three share the gameplay plane's scroll factor (1, 1). Positions and terrain belong to game
@@ -49,6 +49,9 @@ import * as pixel from "./pixel.ts";
 import { drawLabel } from "./previewText.ts";
 
 const FLOOR_Y = 600;
+// Two ramp steps below the brown front, and the first step on the cardboard ramp holding 3:1
+// against the pavement and the muted depot wall.
+const OUTLINE = "plum";
 const USAGE = "Usage: depot.ts build | preview OUT.png";
 
 function wall(): RgbaImage {
@@ -131,12 +134,23 @@ function parcel(): RgbaImage {
       ["tan", [backLeft, backRight, [right + depth + 3, back - 7], [left + depth + 3, back - 7]]],
       ["tan", [[left, top], backLeft, [9, 2], [1, 10]]],
       ["cream", [backLeft, [9, 2], [8, 4], [left + depth - 1, back + 2]]],
-      ["tan", [[right, top], backRight, [70, 6], [62, 14]]],
-      ["cream", [backRight, [70, 6], [69, 8], [right + depth - 1, back + 2]]],
+      ["tan", [[right, top], backRight, [60, 5], [62, 14]]],
+      ["tan", [backRight, [60, 5], [70, 6], [62, 14]]],
+      [
+        "cream",
+        [
+          [60, 5],
+          [70, 6],
+          [69, 8],
+          [59, 7],
+        ],
+      ],
     ],
     g,
   );
   g.rect(left + depth + 3, back - 7, width, 1, "cream");
+  // The right flap overlaps the back flap; a crease marks its near edge.
+  g.line(...backRight, 60, 5, "dbrown");
   // Box: the front face, the shaded right side and the opening inside the rim.
   g.rect(left, top, width, 35 - top, "brown");
   for (let k = 1; k <= depth; k++) {
@@ -160,7 +174,7 @@ function parcel(): RgbaImage {
   g.rect(37, 27, 9, 6, "cream");
   g.rect(39, 28, 5, 1, "dbrown");
   g.rect(39, 30, 3, 1, "dbrown");
-  return frameImage(g.outlined({ edge: () => pixel.hex("ink") }));
+  return frameImage(g.outlined({ edge: () => pixel.hex(OUTLINE) }));
 }
 
 export function assets(): Record<string, readonly [image: RgbaImage, repeat: string]> {
