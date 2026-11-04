@@ -4,42 +4,6 @@ import type { ForcedTransit } from "./types";
 
 const RIDER_ROWS = BIRD.height / TILE;
 
-export const CITY_BOUNDARY_SHUTTLE_TRANSIT = {
-  banks: [
-    { col: -10, cols: 8, id: "near", purpose: "retreat", row: 0 },
-    { col: 20, cols: 30, id: "far", purpose: "forward", row: 0 },
-  ],
-  boardingBanks: ["near"],
-  group: "crossing",
-  leg: "forward",
-  windows: [
-    {
-      certification: "uncertified",
-      result: { bankId: "far", kind: "egress" },
-      riderOnSupport: { col: [2, 4], row: [-RIDER_ROWS, -RIDER_ROWS] },
-      supportOrigin: { col: [14, 14], row: [0, 0] },
-    },
-  ],
-} as const satisfies ForcedTransit;
-
-export const OUTDOOR_FERRY_ASCENT_TRANSIT = {
-  banks: [
-    { col: -6, cols: 6, id: "near", purpose: "retreat", row: 0 },
-    { col: 22, cols: 6, id: "far", purpose: "forward", row: 0 },
-  ],
-  boardingBanks: ["near"],
-  group: "crossing",
-  leg: "forward",
-  windows: [
-    {
-      certification: "uncertified",
-      result: { bankId: "far", kind: "egress" },
-      riderOnSupport: { col: [2, 4], row: [-RIDER_ROWS, -RIDER_ROWS] },
-      supportOrigin: { col: [16, 16], row: [0, 0] },
-    },
-  ],
-} as const satisfies ForcedTransit;
-
 export const OUTDOOR_LIFT_ASCENT_TRANSIT = {
   banks: [
     { col: -7, cols: 6, id: "lower", purpose: "retreat", row: 0 },
