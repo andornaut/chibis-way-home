@@ -11,7 +11,7 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 ## Setting
 
 - **Characters:** Chibi is the male bird the player controls: a small, round, cream bird with tiny wings and feet, an orange bill and a dot eye. His full design is in the [art style guide](../art/style-guide.md#chibi). Animals talk; there are no humans.
-- **Fert:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art style guide](../art/style-guide.md#furt)
+- **Fert:** Chibi's male former best friend and apartment-mate: a champagne (cream-coloured) ferret, about twice Chibi's height, standing upright, with a tall plum stovepipe hat and a red bow tie. His full design is in the [art style guide](../art/style-guide.md#fert)
 - **Story:** Chibi and Fert share an apartment in a big city. After a big fight, while Chibi sleeps, Fert packages him and mails him far away. Chibi knows Fert is responsible and wants to get home. The cause of the fight and the outcome of their friendship are undecided
 - **World:** the modern day, mixing fantasy and reality
 - **Zones:** a zone is one themed map destination containing playable stages, indoors, outdoors or a hybrid of both. V1 has six zones and twenty-one stages: three per outdoor zone and six Apartment floors. The V1 route and current stage availability are listed below
