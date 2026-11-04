@@ -5,22 +5,20 @@
  * contour pass.
  */
 
+import * as draw from "@andornaut/art-kit/draw";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import * as pixel from "./pixel.ts";
 
 type Point = readonly [number, number];
 
-// CLEANUP (added 2026-11-04): replace with @andornaut/art-kit/draw once 0.12.0 is pinned
-function fillPolygon(rgba: readonly number[], points: readonly Point[], image: RgbaImage): void {
-  throw new Error(
-    `pending art-kit draw: a ${points.length}-point polygon in rgba ${rgba.join(",")} ` +
-      `on a ${image.width}x${image.height} image`,
-  );
-}
-
+/** Fill the polygon through points with an opaque palette colour, as Pillow's ImageDraw does. */
 export function polygon(im: RgbaImage, colour: string, points: readonly Point[]): void {
-  fillPolygon([...pixel.rgb(colour), 255], points, im);
+  draw.polygon(
+    { fill: [...pixel.rgb(colour), 255] },
+    points.map(([x, y]) => ({ x, y })),
+    im,
+  );
 }
 
 /** Distance from the origin, as sqrt of the sum of squares rather than Math.hypot. */
