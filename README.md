@@ -56,11 +56,7 @@ docker run --rm --network none --cpus=4 \
     && npm run check && npm run lint && npm test -- --maxWorkers=4'
 ```
 
-Replace the last line with any command below. Art builds that export through Aseprite use the `chibi-check:node24.21.0-aseprite1.2.30` image in place of `node:24.21.0`: `node:24.21.0` with a licensed `Aseprite_1.2.30-1_amd64.deb` kept in the sibling `game-dev` checkout's `var/vendor/aseprite/`, outside version control. Build it from the checkout:
-
-```sh
-docker build -f docker/chibi-check.Dockerfile --build-context aseprite-deb=../game-dev/var/vendor/aseprite -t chibi-check:node24.21.0-aseprite1.2.30 docker
-```
+Replace the last line with any command below, including the art generators (`node art/tools/<tool>.ts <command>`), which need no extra tools.
 
 WORKAROUND: Parent-scoped development overrides pin [KaTeX](https://github.com/advisories/GHSA-238p-pmpm-9mq7) `0.18.2`, [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249) `11.0.3` and [re2js](https://github.com/advisories/GHSA-gg6h-894w-4m9c) `2.8.7`. ESLint loads the cycle and restricted-paths rules and the resolver through exported plugin subpaths because the full plugin imports an unused rule requiring the removed minimatch `makeRe` API. Keep cycle detection enabled. Remove each override when its parent range supports the patched version; restore the full plugin import when it supports minimatch 11.
 
