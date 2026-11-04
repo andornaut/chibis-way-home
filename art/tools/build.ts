@@ -1,25 +1,24 @@
-// Rebuild the art: run `node art/tools/<set>.ts build` for every set, in an order where each set runs
+// Rebuild the art on art-kit's build runner: run `node art/tools/<set>.ts build` for every set, each
 // after the sets in NEEDS, and stop at the first failure.
 //
 // A full rebuild first resets the manifest to its SECTIONS in order, holding only the entries
 // registered by hand (HAND_IMAGES), so a key that no set draws any longer leaves the manifest
-// without a hand edit. Named sets rebuild those sets and every set downstream of them over the
-// committed manifest.
+// without a hand edit. The reset runs as part of the first set's build, after --check has taken its
+// snapshot. Named sets rebuild those sets and every set downstream of them over the committed
+// manifest.
 //
-// --check hashes every file under TREES (art/ and every path the builds write) before the rebuild,
-// then fails when a file changed, disappeared or appeared, and lists those paths. It needs no git, so
-// it runs in a copy of the checkout without .git. Builds are deterministic, so on a clean checkout
-// every difference is a generator change.
+// --check fails when the rebuild changes, removes or adds a file under CHECK_PATHS (art/ and every
+// path the builds write), and lists those paths. It needs no git, so it runs in a copy of the
+// checkout without .git. Builds are deterministic, so on a clean checkout every difference is a
+// generator change.
 //
 // Run from the repository root in the node:24.21.0 check container. It spawns only node and reaches
 // no network.
-//
-// CLEANUP (added 2026-11-04): replace with art-kit's shared build runner once released.
 import { spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync } from "node:fs";
 
-import { run as runMain } from "./cli.ts";
+import { buildCommand, buildOrder, type BuildSets } from "@andornaut/art-kit/build";
+
 import * as pixel from "./pixel.ts";
 
 const USAGE = `Usage:
@@ -29,8 +28,7 @@ const USAGE = `Usage:
                                                under art/ or the paths the builds write
                                                (public/art/, public/favicon.ico, public/icons/)`;
 
-// Every set with a build command, in build order: the sets that need no other set (alphabetical),
-// then the sets that do (alphabetical, which meets every entry in NEEDS).
+// Every set with a build command. Declaration order breaks ties in the build order.
 const SETS = [
   "achievementIcons",
   "antagonists",
@@ -124,170 +122,83 @@ const SECTIONS = ["fonts", "sprites", "data", "tilesets", "backdrops", "images"]
 const HAND_IMAGES = /^stage-preview-zone-\d+-stage-\d+$/;
 
 // art/, which no build writes, and every path a build writes.
-const TREES = ["art", "public/art", "public/favicon.ico", "public/icons"];
+const CHECK_PATHS = ["art", "public/art", "public/favicon.ico", "public/icons"];
 
-class UsageError extends Error {}
-
-function fail(message: string): never {
-  console.error(message);
-  process.exit(1);
-}
-
-// Problems with SETS and NEEDS: a module in dir that is neither a set nor listed in NOT_SETS, or a set
-// ordered before one it needs.
-function problems(dir: string): string[] {
-  const out: string[] = [];
+// The modules in dir that are neither a set nor listed in NOT_SETS.
+function unlisted(dir: string): string[] {
   const known = new Set<string>([...SETS, ...NOT_SETS]);
-  for (const name of readdirSync(dir)) {
-    const stem = name.replace(/\.ts$/, "");
-    if (name.endsWith(".ts") && !known.has(stem)) {
-      out.push(`${name} is not in SETS or NOT_SETS`);
-    }
-  }
-  for (const [set, needs] of Object.entries(NEEDS)) {
-    for (const need of needs) {
-      if (SETS.indexOf(need) > SETS.indexOf(set as ArtSet)) {
-        out.push(`${set} runs before ${need}, which it needs`);
-      }
-    }
-  }
-  return out;
+  return readdirSync(dir)
+    .filter((name) => name.endsWith(".ts") && !known.has(name.replace(/\.ts$/, "")))
+    .map((name) => `${name} is not in SETS or NOT_SETS`);
 }
 
-// The named sets and every set that needs them, directly or through another, in build order; every
-// set when none is named.
-function selected(named: readonly ArtSet[]): ArtSet[] {
-  if (!named.length) {
-    return [...SETS];
-  }
-  const chosen = new Set<ArtSet>(named);
-  for (const set of SETS) {
-    if (NEEDS[set]?.some((need) => chosen.has(need))) {
-      chosen.add(set);
-    }
-  }
-  return SETS.filter((set) => chosen.has(set));
-}
-
-// The committed manifest's hand-registered entries, every section present and in order.
-function handRegistered(): Record<string, pixel.ManifestEntry[]> {
+// Reset the manifest to the committed manifest's hand-registered entries, every section present
+// and in order.
+function resetManifest(): void {
   const previous = pixel.readManifest();
-  return Object.fromEntries(
-    SECTIONS.map((section) => [
-      section,
-      ((previous[section] as pixel.ManifestEntry[] | undefined) ?? []).filter(
-        ({ key }) => section === "images" && HAND_IMAGES.test(key),
-      ),
-    ]),
+  pixel.writeJson(
+    {},
+    pixel.MANIFEST,
+    Object.fromEntries(
+      SECTIONS.map((section) => [
+        section,
+        ((previous[section] as pixel.ManifestEntry[] | undefined) ?? []).filter(
+          ({ key }) => section === "images" && HAND_IMAGES.test(key),
+        ),
+      ]),
+    ),
   );
 }
 
-function spawn(command: string, args: readonly string[]): number {
-  const result = spawnSync(command, args, { stdio: "inherit" });
+// Run the set's generator build in its own node process; a nonzero exit fails the set.
+function spawnBuild(set: ArtSet): void {
+  const result = spawnSync(process.execPath, [`art/tools/${set}.ts`, "build"], {
+    stdio: "inherit",
+  });
   if (result.error) {
-    fail(`${command}: ${result.error.message}`);
+    throw result.error;
   }
-  return result.status ?? 1;
+  if (result.status !== 0) {
+    throw new Error(`${set} build failed (exit ${result.status ?? result.signal})`);
+  }
 }
 
-// The sha256 of every file under TREES, by path; a missing tree adds nothing.
-function snapshot(): Map<string, string> {
-  const files = new Map<string, string>();
-  const visit = (path: string): void => {
-    if (!existsSync(path)) {
-      return;
-    }
-    if (statSync(path).isDirectory()) {
-      for (const name of readdirSync(path).sort()) {
-        visit(`${path}/${name}`);
-      }
-      return;
-    }
-    files.set(path, createHash("sha256").update(readFileSync(path)).digest("hex"));
+// Every set, with the manifest reset ahead of the first set's build when full is set.
+function sets(full: boolean): BuildSets {
+  const all: BuildSets = Object.fromEntries(
+    SETS.map((set) => [set, { build: () => spawnBuild(set), needs: NEEDS[set] ?? [] }]),
+  );
+  if (!full) {
+    return all;
+  }
+  const first = buildOrder(all)[0] as ArtSet;
+  return {
+    ...all,
+    [first]: {
+      ...all[first],
+      build: () => {
+        resetManifest();
+        spawnBuild(first);
+      },
+    },
   };
-  for (const tree of TREES) {
-    visit(tree);
-  }
-  return files;
 }
 
-// The paths under TREES that changed (M), disappeared (D) or appeared (A) since before, printed; true
-// when there are none.
-function unchanged(before: ReadonlyMap<string, string>): boolean {
-  const after = snapshot();
-  const changes: [string, string][] = [];
-  for (const [path, hash] of before) {
-    const now = after.get(path);
-    if (now === undefined) {
-      changes.push(["D", path]);
-    } else if (now !== hash) {
-      changes.push(["M", path]);
-    }
-  }
-  for (const path of after.keys()) {
-    if (!before.has(path)) {
-      changes.push(["A", path]);
-    }
-  }
-  changes.sort(([, a], [, b]) => (a < b ? -1 : 1));
-  for (const [kind, path] of changes) {
-    console.log(`${kind}\t${path}`);
-  }
-  return !changes.length;
-}
-
-// Rebuild the named sets and those downstream, or every set from a reset manifest, then check the
-// trees if check is set.
-function rebuild(check: boolean, named: readonly string[]): void {
-  const unknown = named.filter((arg) => !(SETS as readonly string[]).includes(arg));
-  if (unknown.length) {
-    console.error(`unknown set ${unknown.join(", ")}`);
-    throw new UsageError();
-  }
-  const found = problems("art/tools");
-  if (found.length) {
-    fail(found.join("\n"));
-  }
-  const before = check ? snapshot() : new Map<string, string>();
-  const started = performance.now();
-  if (!named.length) {
-    pixel.writeJson({}, pixel.MANIFEST, handRegistered());
-  }
-  for (const set of selected(named as ArtSet[])) {
-    console.log(`build ${set}`);
-    const status = spawn(process.execPath, [`art/tools/${set}.ts`, "build"]);
-    if (status !== 0) {
-      fail(`${set} build failed (exit ${status})`);
-    }
-  }
-  console.log(`built in ${((performance.now() - started) / 1000).toFixed(0)}s`);
-  if (check && !unchanged(before)) {
-    fail(`the rebuild changed ${TREES.join(", ")}`);
-  }
-}
-
-// Parse argv: `--help`, `-h` or `help` prints the usage; `--check` may lead the set names.
-function main(argv: readonly string[]): void {
+// `--help`, `-h` or `help` prints the usage; otherwise art-kit parses `[--check] [SET...]` and returns
+// the exit status: 0, 1 for a failing build, check differences or a module missing from SETS and
+// NOT_SETS, or 2 for a usage error.
+async function main(argv: readonly string[]): Promise<number> {
   if (argv.length === 1 && ["--help", "-h", "help"].includes(argv[0] as string)) {
     console.log(USAGE);
-    return;
+    return 0;
   }
-  const check = argv[0] === "--check";
-  const named = check ? argv.slice(1) : argv;
-  try {
-    if (named.some((arg) => arg.startsWith("-"))) {
-      throw new UsageError();
-    }
-    rebuild(check, named);
-  } catch (error) {
-    if (!(error instanceof UsageError)) {
-      throw error;
-    }
-    console.error(USAGE);
-    process.exit(2);
+  const problems = unlisted("art/tools");
+  if (problems.length) {
+    console.error(problems.join("\n"));
+    return 1;
   }
+  const full = argv.every((arg) => arg === "--check");
+  return buildCommand({ sets: sets(full), check: { paths: CHECK_PATHS }, usage: USAGE }, argv);
 }
 
-if (import.meta.main) {
-  runMain(() => main(process.argv.slice(2)));
-}
+process.exitCode = await main(process.argv.slice(2));
