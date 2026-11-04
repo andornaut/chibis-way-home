@@ -6,11 +6,11 @@
  *   {
  *     "colours": {"amber": "#feae34", ...},   every palette colour by its K name in pixel.ts
  *     "darker": {"#181425": "#181425", ...},  each colour one ramp step down
- *     "dim2": {"#181425": "#181425", ...}     each colour two ramp steps down: the settings dim
+ *     "dim2": {"#181425": "#181425", ...}     each colour two ramp steps down
  *   }
  *
- * The game dims the frame behind the settings card by replacing each colour with its "dim2" entry,
- * so it never chains lookups. Ink is the bottom of every ramp and maps to itself.
+ * "dim2" spares a reader chaining two "darker" lookups. Ink is the bottom of every ramp and maps to
+ * itself.
  *
  * The manifest lists it under "data" as {"key": "palette", "json": "palette.json"}.
  *

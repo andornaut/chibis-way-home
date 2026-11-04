@@ -249,8 +249,7 @@ export function preview(scale: number, out: string): void {
   const samples = [
     "Chibi  Archie  Fert  Trixi  Bini  Pebble  Kiwi",
     "Try again  Back to title  Continue",
-    "Whole run: 02:34.56 · Deaths: 3 · Stages: 2/6",
-    "j _ w AV To Wy 0123456789 !?.,:;'\"+-/%&()",
+    "j _ w AV To Wy 0123456789 !?.,:;'\"+-/%&() ·",
   ];
   const faces = Object.values(FONTS);
   const sheet = filledImage([...pixel.rgb("navy"), 255], 720, faces.length * 112);
