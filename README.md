@@ -14,27 +14,7 @@ The folder READMEs describe the current design and implementation:
 
 ## Playing
 
-Reopening the app shows the start screen, with Continue and Restart when progress
-is saved. Choosing Continue shows Chibi on the map without a stage chooser. Only pressing Continue on the
-map opens the selected zone's stage cards. Entering a stage from the map starts
-a fresh run. Death's Try again restarts the same stage directly in the same run;
-pause and Resume preserve the active position and run.
-
-Walking left from a stage's entrance returns to the map; Apartment floors use
-their lower entrance edge. The six zones contain twenty-one stages: three in each
-of the first five zones and six standalone Apartment floors. Target successful
-active play is about 60 seconds on ordinary required routes without any powerup
-active, with Apartment retaining about 90 seconds per floor. These are tuning
-targets, not hard timers or fully calibrated times for every stage.
-
-The first five zones have a paused cinematic introduction in stage one, two
-randomized middle hostile encounters in stage two and three in stage three.
-Apartment has no physical Fert in Lobby, Restaurant or Pool; Spa has the cinematic
-introduction only, Residential floors has two hostile encounters and Penthouse
-has three. Cinematic introductions are outside hostile quotas and release play
-when the antagonist starts leaving. Nonfinal clears show statistics before the
-next stage; each zone's final exchange and statistics lead back to the map, except
-Penthouse leads to the final celebration.
+The [gameplay design](gameplay/design.md) holds the rules, and the [gameplay README](gameplay/README.md) the timing targets.
 
 ## Developing
 
