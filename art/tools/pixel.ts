@@ -20,6 +20,7 @@ import {
 import type { Canvas } from "skia-canvas";
 
 import * as backgroundPalette from "./backgroundPalette.ts";
+import { commands } from "./cli.ts";
 import * as zoneThemes from "./zoneThemes.ts";
 
 export type { AsepriteTag, Frame };
@@ -425,7 +426,7 @@ export async function build(
 
 interface MainOptions extends Omit<BuildOptions, "srcDir"> {
   srcDir: string;
-  /** Printed with a usage error. */
+  /** The usage, printed for help and with a usage error. */
   doc: string;
   grounds?: readonly string[];
 }
@@ -439,12 +440,12 @@ export async function main(
   sprites: () => Iterable<SpriteEntry>,
   argv: readonly string[] = process.argv.slice(2),
 ): Promise<void> {
-  if (argv.length === 2 && argv[0] === "preview") {
-    await preview({ out: argv[1] as string, grounds }, [...sprites()]);
-  } else if (argv.length === 1 && argv[0] === "build") {
-    await build(buildOptions, [...sprites()]);
-  } else {
-    console.error(doc);
-    process.exit(1);
-  }
+  await commands(
+    {
+      usage: doc,
+      build: () => build(buildOptions, [...sprites()]),
+      preview: (out) => preview({ out, grounds }, [...sprites()]),
+    },
+    argv,
+  );
 }

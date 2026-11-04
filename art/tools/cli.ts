@@ -17,18 +17,24 @@ interface Commands {
   more?: Readonly<Record<string, (out: string) => unknown>>;
 }
 
-/** Run argv's `build`, `preview OUT` or other `NAME OUT` command, or exit 1 with the usage. */
+const HELP = new Set(["--help", "-h", "help"]);
+
+/**
+ * Run argv's `build`, `preview OUT` or other `NAME OUT` command. `help`, `-h` or `--help` prints
+ * the usage to stdout; any other argv prints it to stderr and exits 2.
+ */
 export async function commands(
   { build, more = {}, preview, usage }: Commands,
   argv: readonly string[] = process.argv.slice(2),
 ): Promise<void> {
-  if (build && argv.length === 1 && argv[0] === "build") await build();
+  if (argv.length === 1 && HELP.has(argv[0] as string)) console.log(usage);
+  else if (build && argv.length === 1 && argv[0] === "build") await build();
   else if (preview && argv.length === 2 && argv[0] === "preview") await preview(argv[1] as string);
   else if (argv.length === 2 && Object.hasOwn(more, argv[0] as string))
     await (more[argv[0] as string] as (out: string) => unknown)(argv[1] as string);
   else {
     console.error(usage);
-    process.exit(1);
+    process.exit(2);
   }
 }
 
