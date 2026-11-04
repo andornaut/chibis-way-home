@@ -219,13 +219,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 2,
     rows: 7,
   },
-  // A fire escape's landing: one-way, on a walk-up.
-  "fire-escape-landing": {
-    archetype: "ledge",
-    art: "one-way-fire-escape",
-    cols: 3,
-    rows: 1,
-  },
   "fire-escape-railing": {
     archetype: "scenery",
     art: "fire-escape-railing",
@@ -417,14 +410,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
   "pigeon-poop": {
     archetype: "hazard",
     art: "pigeon-poop",
-    cols: 1,
-    rows: 1,
-  },
-  // The dark floor of a pit, 4 below the sidewalk's top: a quick restart for a fall into an
-  // opening.
-  "pit-floor": {
-    archetype: "hazard",
-    art: "placeholder-pit-floor",
     cols: 1,
     rows: 1,
   },
@@ -668,47 +653,17 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 4,
     rows: 1,
   },
-  "test-pigeon": {
-    archetype: "hopper-avoider",
-    art: "test-pigeon",
-    cols: 2,
-    rows: 2,
-    tuning: {
-      motion: { direction: "right", distance: 8, speed: 3, variance: 0.3 },
-      reaction: { range: 8, speed: 10 },
-    },
-  },
-  // A thorny hedge, one row tall: a hazard, not solid, placed with a width.
-  "thorn-hedge": {
-    archetype: "hazard",
-    art: "hazard-thorn",
-    cols: 3,
-    rows: 1,
-  },
   "walk-signal": {
     archetype: "scenery",
     art: "walk-signal",
     cols: 1,
     rows: 7,
   },
-  // A water tower on a brownstone's roof, and its tank's flat top: one-way, 6 above the roof.
-  "water-tank": {
-    archetype: "ledge",
-    art: "one-way-tank",
-    cols: 4,
-    rows: 1,
-  },
+  // A water tower on a brownstone's roof.
   "water-tower": {
     archetype: "scenery",
     art: "water-tower",
     cols: 4,
     rows: 7,
-  },
-  // A window sill: one-way, on a brownstone.
-  "window-sill": {
-    archetype: "ledge",
-    art: "one-way-sill",
-    cols: 3,
-    rows: 1,
   },
 };
