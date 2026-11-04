@@ -3,11 +3,19 @@ import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import portrait from "../../../public/art/sprites/portrait-bird.json";
+import * as behaviours from "../../data/behaviours";
+import { CHARACTERS } from "../../data/characters";
 import { DIALOGUES, SPEAKERS } from "../../data/dialogues";
 import { SCREEN } from "../../data/screen";
+import { STAGE_BARKS } from "../../data/stageBarks";
 import { TEXT } from "../../data/text";
+import type { DialogueLine } from "../../data/types";
 import { CARD_FONTS } from "../../testing/cardFonts";
-import { dialogueLines, dialogueParagraphs } from "../dialogue/conversation";
+import {
+  dialogueLines,
+  type DialogueParagraph,
+  dialogueParagraphs,
+} from "../dialogue/conversation";
 import { TEXT_BUTTON } from "./buttonLabel";
 import {
   departureDialogueButtons,
@@ -81,23 +89,56 @@ describe("dialogue layout", () => {
   });
 });
 
-it("fits actual authored dialogue paragraphs at native body size inside the existing panel", () => {
-  const style = DIALOGUE_SCREEN.text;
-  for (const plan of Object.values(DIALOGUES)) {
-    for (const paragraph of dialogueParagraphs(SPEAKERS, TEXT, plan)) {
-      const lines = dialogueLines(CARD_FONTS.body, style, style.width, paragraph.text);
-      expect(lines.length, paragraph.text).toBeLessThanOrEqual(style.lines);
-      for (const [index, line] of lines.entries()) {
-        const ink = textInkBounds(CARD_FONTS.body, style.scale, style.pitch, line);
-        expect(ink.width).toBeLessThanOrEqual(style.width);
-        expect(style.y + index * style.pitch + ink.y + ink.height).toBeLessThanOrEqual(
-          DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height,
-        );
-      }
-      const tab = dialogueNameTab(paragraph.side, width(paragraph.name));
-      expect(tab.x + tab.width).toBeLessThanOrEqual(
-        dialogueSpeakerLayout(paragraph.side).textX + style.width,
-      );
+// Every bark the zone shows in the dialogue box: boss spotted and escaped lines, and the stage's
+// journey statements, found as { line, speaker } pairs anywhere in their data.
+function barkLines(...sources: readonly unknown[]): readonly DialogueLine[] {
+  const found = new Map<string, DialogueLine>();
+  const visit = (value: unknown): void => {
+    if (typeof value !== "object" || value === null) {
+      return;
     }
+    const { line, speaker } = value as Partial<DialogueLine>;
+    if (typeof line === "string" && typeof speaker === "string") {
+      found.set(`${speaker} ${line}`, { line, speaker });
+    }
+    Object.values(value).forEach(visit);
+  };
+  sources.forEach(visit);
+  return [...found.values()];
+}
+
+function expectFits(paragraph: DialogueParagraph): void {
+  const style = DIALOGUE_SCREEN.text;
+  const lines = dialogueLines(CARD_FONTS.body, style, style.width, paragraph.text);
+  expect(lines.length, paragraph.text).toBeLessThanOrEqual(style.lines);
+  for (const [index, line] of lines.entries()) {
+    const ink = textInkBounds(CARD_FONTS.body, style.scale, style.pitch, line);
+    expect(ink.width, line).toBeLessThanOrEqual(style.width);
+    expect(style.y + index * style.pitch + ink.y + ink.height, line).toBeLessThanOrEqual(
+      DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height,
+    );
+  }
+  const tab = dialogueNameTab(paragraph.side, width(paragraph.name));
+  expect(tab.x + tab.width, paragraph.name).toBeLessThanOrEqual(
+    dialogueSpeakerLayout(paragraph.side).textX + style.width,
+  );
+}
+
+it("fits actual authored dialogue paragraphs at native body size inside the existing panel", () => {
+  for (const plan of Object.values(DIALOGUES)) {
+    dialogueParagraphs(SPEAKERS, TEXT, plan).forEach(expectFits);
+  }
+});
+
+it("fits every boss bark and journey statement at native body size inside the bark panel", () => {
+  const lines = barkLines(behaviours, CHARACTERS, STAGE_BARKS);
+  for (const kind of ["-escaped", "-spotted", "fert-journey-"]) {
+    expect(
+      lines.some(({ line }) => line.includes(kind)),
+      kind,
+    ).toBe(true);
+  }
+  for (const line of lines) {
+    dialogueParagraphs(SPEAKERS, TEXT, { lines: [line] }).forEach(expectFits);
   }
 });
