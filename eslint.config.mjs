@@ -36,6 +36,7 @@ const BOUNDARIES = [
 ];
 
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
+// Tests are exempt, so a test may build its fixtures from any context.
 // Each context imports only contexts below it, bottom first: data; core; ai and
 // assets; camera and stage; rules; progress; presentation and ui; view; loading; pwa; the side
 // pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
@@ -48,54 +49,24 @@ const CONTEXTS = {
   camera: ["data"],
   core: ["data"],
   crash: ["data"],
-  data: [
-    "ai/randomStreams",
-    "assets/index",
-    "core/index",
-    "presentation/index",
-    "progress/index",
-    "rules/assemble",
-    "rules/behaviour",
-    "rules/behaviourReach",
-    "rules/behaviourTraversal",
-    "rules/bird",
-    "rules/chunk",
-    "rules/effectiveCollision",
-    "rules/elementBinding",
-    "rules/flyLanding",
-    "rules/perception",
-    "rules/tiles",
-    "rules/timedHazard",
-    "rules/zone",
-    "rules/zonePlans",
-    "sim/catalogue",
-    "sim/zoneWalk",
-    "stage/index",
-  ],
+  data: [],
   dev: ["data", "progress", "rules"],
   gallery: ["assets"],
   headers: [],
-  homePage: ["data", "rules", "ui"],
+  homePage: ["data", "ui"],
   loading: ["data", "presentation", "ui"],
   presentation: ["assets", "camera", "core", "data", "progress", "rules", "stage"],
-  progress: ["assets/index", "data", "rules"],
+  progress: ["data"],
   pwa: ["assets", "loading", "ui"],
   rules: [
     "ai",
-    "assets/index",
     "camera",
     "core",
     "data",
-    "presentation/index",
     // CLEANUP (added 2026-11-04): remove once forcedTransitProfile's skill tuning is passed into
     // stepZone, after the boss perf and step 4 branches merge.
     "progress/index",
-    "sim/behaviourBounds",
-    "sim/zoneWalk",
     "stage",
-    "ui/index",
-    "view/behaviour",
-    "view/bird",
   ],
   scenes: [
     "assets",
@@ -115,7 +86,7 @@ const CONTEXTS = {
   stage: ["data"],
   tools: ["assets", "data", "headers", "homePage", "loading", "pwa"],
   tuningPage: ["data", "gallery"],
-  ui: ["data", "presentation/index", "progress", "rules"],
+  ui: ["data", "progress", "rules"],
   view: ["assets", "presentation"],
 };
 
@@ -172,7 +143,7 @@ function contextBoundary(context) {
     return `${escapeRegex(folder)}(?:/${rest}${index})`;
   });
   return {
-    files: [`src/${context}/**/*.ts`],
+    files: [`src/${context}/**/!(*.test).ts`],
     forbid: {
       message:
         allowed.length === 0
