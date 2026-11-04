@@ -198,17 +198,11 @@ export const TEXT: GameText = {
   },
   skills: {
     dash: {
-      description: [
-        "{use} dashes; doors come first.",
-        "{move} aims; otherwise dash the way you face.",
-        "One air dash per landing. Wait between dashes.",
-        "Walls block you. Hazards and bosses stay lethal.",
-      ].join(" "),
+      description: "Press {use} to dash the way you aim or face, once in the air per landing.",
       title: "Dash",
     },
     doubleJump: {
-      description:
-        "Press {jump} again in the air. Tap for a low hop or hold to rise higher. Landing restores one extra jump.",
+      description: "Press {jump} again in the air for one extra jump per landing.",
       title: "Double jump",
     },
     speedy: {
