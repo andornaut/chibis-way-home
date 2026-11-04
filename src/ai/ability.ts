@@ -4,6 +4,14 @@ export interface Ability<Context, Params, Agent, Result> {
   readonly act: (context: Context, params: Params, agent: Agent) => Result;
 }
 
+// What an ability produced for one step: the agent's next state, and any motion segments and
+// effects for the caller to apply. A concrete agent extends it with its own step outputs.
+export interface AbilityResult<State, Segment, Effect> {
+  readonly effects?: readonly Effect[];
+  readonly segments?: readonly Segment[];
+  readonly state: State;
+}
+
 interface Kinded {
   readonly kind: string;
 }

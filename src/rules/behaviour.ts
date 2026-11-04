@@ -13,7 +13,7 @@ import type {
   Point,
   Rect,
 } from "../data/types";
-import { BEHAVIOUR_ABILITIES } from "./behaviourAbilities";
+import { BEHAVIOUR_ABILITIES, behaviourAbilityParams } from "./behaviourAbilities";
 import {
   advanceAttackClock,
   attackProtected,
@@ -63,7 +63,6 @@ import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
 import {
-  carryLandingSupport,
   flyLandingRoute,
   type FlyLandingState,
   landingSupport,
@@ -2188,38 +2187,12 @@ export function advanceBehaviour(
         next = { ...next, facing: next.intent.facing };
       }
     }
-    let supportedDwell = false;
-    let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
-    if (
-      node.motion.kind === "wait" &&
-      node.motion.support === "required" &&
-      supported &&
-      next.landing?.support
-    ) {
-      const carried = carryLandingSupport(
-        object,
-        world,
-        time,
-        slice,
-        current,
-        next.landing.support,
-      );
-      to.x = carried.at.x;
-      to.y = carried.at.y;
-      carryPoints = carried.points;
-      supportedDwell = carried.supported;
-    }
-    if (
-      node.motion.kind === "fly" ||
-      (node.motion.kind === "wait" && node.motion.support === "required" && !supported)
-    ) {
-      const landing = node.motion.kind === "wait" || node.motion.to === "support";
-      const speed = node.motion.kind === "fly" ? node.motion.speed : next.landing?.speed;
+    if (node.motion.kind === "fly") {
+      const landing = node.motion.to === "support";
+      const speed = node.motion.speed;
       const target = landing
         ? landingTarget
-        : node.motion.kind === "fly" &&
-            node.motion.to === "target-x" &&
-            alignmentBlocked(perception, object, current, next)
+        : node.motion.to === "target-x" && alignmentBlocked(perception, object, current, next)
           ? current
           : flightDestination(perception, object, current, next);
       if (!target && !landing) {
@@ -2248,15 +2221,29 @@ export function advanceBehaviour(
         }
       }
     }
-    const ability = abilityFor(BEHAVIOUR_ABILITIES, node.motion);
-    if (ability) {
-      const acted = ability.act({ object, perception, slice, track }, node.motion, {
-        at: current,
-        state: next,
-      });
+    let supportedDwell: boolean | undefined;
+    let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
+    const params = behaviourAbilityParams(node.motion);
+    const ability = params && abilityFor(BEHAVIOUR_ABILITIES, params);
+    if (params && ability) {
+      const acted = ability.act(
+        {
+          object,
+          perception,
+          slice,
+          support: { supported, target: landingTarget, world: supportWorld },
+          time,
+          track,
+        },
+        params,
+        { at: current, state: next, to: { ...to } },
+      );
       slice = acted.slice;
+      next = acted.state;
       to.x = acted.to.x;
       to.y = acted.to.y;
+      carryPoints = acted.carry;
+      supportedDwell = acted.dwell;
     }
     if (hop) {
       const elapsed = Math.min(hop.seconds, hop.elapsed + slice);
@@ -2348,7 +2335,7 @@ export function advanceBehaviour(
       ...advanceAttackClock(slice, next),
       ...(sampledMotion && next.intent && { intent: advancePursuitIntent(slice, next.intent) }),
       elapsed:
-        node.motion.kind === "wait" && node.motion.support === "required"
+        supportedDwell !== undefined
           ? supportedDwell
             ? next.elapsed + slice
             : 0

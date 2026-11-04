@@ -1,63 +1,169 @@
-import type { Ability, AbilityTable } from "../ai/ability";
+import type { Ability, AbilityResult, AbilityTable } from "../ai/ability";
 import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import type { BehaviourPerception } from "./behaviourPerception";
+import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { trackReach, travelHeading } from "./behaviourTrack";
+import { EDGE } from "./bird";
+import { carryLandingSupport } from "./flyLanding";
+
+type Motion<Kind extends BehaviourMotion["kind"]> = Extract<
+  BehaviourMotion,
+  { readonly kind: Kind }
+>;
+
+// Which ability acts a motion: the graph decides the motion; the ability moves the body.
+export type BehaviourAbilityParams =
+  | { readonly kind: "track-travel"; readonly motion: Motion<"hop" | "move"> }
+  | { readonly kind: "wait"; readonly motion: Motion<"wait"> };
+
+export function behaviourAbilityParams(
+  motion: BehaviourMotion,
+): BehaviourAbilityParams | undefined {
+  switch (motion.kind) {
+    case "hop":
+    case "move":
+      return { kind: "track-travel", motion };
+    case "wait":
+      return { kind: "wait", motion };
+    default:
+      return undefined;
+  }
+}
 
 export interface BehaviourAbilityContext {
   readonly object: ObjectLayout;
   readonly perception: BehaviourPerception;
   // The slice decided so far; an ability may shorten it to its motion's next event.
   readonly slice: number;
+  // Support evaluated for supported motions this slice: whether the body rests on it, the
+  // proven landing waypoint and the support world at the slice start.
+  readonly support: {
+    readonly supported: boolean;
+    readonly target: Point | undefined;
+    readonly world: BehaviourWorld | undefined;
+  };
+  // Seconds into the step at the slice start.
+  readonly time: number;
   readonly track: { readonly axis: "x" | "y" };
 }
 
 export interface BehaviourActor {
   readonly at: Point;
   readonly state: BehaviourState;
+  // The slice end chosen by earlier abilities this slice; the body's start when none acted.
+  readonly to: Point;
 }
 
-export interface BehaviourMotionStep {
+export interface BehaviourMotionStep extends AbilityResult<BehaviourState, never, never> {
+  // Carried support waypoints, in seconds from the slice start.
+  readonly carry?: readonly { readonly at: Point; readonly seconds: number }[];
+  // Whether a supported dwell held this slice; undefined for motions without a dwell clock.
+  readonly dwell?: boolean;
   readonly slice: number;
   readonly to: Point;
 }
 
-type BehaviourAbility<Motion extends BehaviourMotion> = Ability<
+type BehaviourAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
   BehaviourAbilityContext,
-  Motion,
+  Extract<BehaviourAbilityParams, { readonly kind: Kind }>,
   BehaviourActor,
   BehaviourMotionStep
 >;
 
+// Straight flight towards target at speed, clipped by solid terrain, facing its travel.
+export function flyToward(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  slice: number,
+  speed: number | undefined,
+  target: Point | undefined,
+  { at, state, to }: BehaviourActor,
+): BehaviourMotionStep {
+  const distance = target ? Math.hypot(target.x - at.x, target.y - at.y) : 0;
+  if (!(target && speed !== undefined && distance > EDGE)) {
+    return { slice, state, to };
+  }
+  const limited = Math.min(slice, distance / speed);
+  const fraction = Math.min(1, (speed * limited) / distance);
+  const x = flightAxis(object, world, at, "x", at.x + (target.x - at.x) * fraction);
+  const y = flightAxis(object, world, { ...at, x }, "y", at.y + (target.y - at.y) * fraction);
+  return {
+    slice: limited,
+    state: x === at.x ? state : { ...state, facing: x < at.x ? -1 : 1 },
+    to: { x, y },
+  };
+}
+
 // Bounded travel along the state's track at the motion's speed, stopping at the track end,
 // solid terrain and other solid platforms. Target-relative travel stops level with Chibi.
-const TRACK_TRAVEL: BehaviourAbility<Extract<BehaviourMotion, { readonly kind: "hop" | "move" }>> =
-  {
-    act: ({ object, perception, slice, track }, motion, { at, state }) => {
-      if (motion.speed <= 0) {
-        return { slice, to: at };
-      }
-      const direction = travelHeading(motion, state);
-      let desired = at[track.axis] + direction * motion.speed * slice;
-      if (motion.direction === "target") {
-        const { target: bird, tuning } = perception;
-        const target =
-          bird[track.axis] +
-          (track.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
-        desired = direction === 1 ? Math.min(desired, target) : Math.max(desired, target);
-      }
-      const end = trackReach(object, perception.world, at, state, direction, desired);
-      const moving = Math.abs(end - at[track.axis]) / motion.speed;
-      return moving > 0
-        ? { slice: Math.min(slice, moving), to: { ...at, [track.axis]: end } }
-        : { slice, to: at };
-    },
-  };
+const TRACK_TRAVEL: BehaviourAbility<"track-travel"> = {
+  act: ({ object, perception, slice, track }, { motion }, { at, state, to }) => {
+    if (motion.speed <= 0) {
+      return { slice, state, to };
+    }
+    const direction = travelHeading(motion, state);
+    let desired = at[track.axis] + direction * motion.speed * slice;
+    if (motion.direction === "target") {
+      const { target: bird, tuning } = perception;
+      const target =
+        bird[track.axis] +
+        (track.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
+      desired = direction === 1 ? Math.min(desired, target) : Math.max(desired, target);
+    }
+    const end = trackReach(object, perception.world, at, state, direction, desired);
+    const moving = Math.abs(end - at[track.axis]) / motion.speed;
+    return moving > 0
+      ? { slice: Math.min(slice, moving), state, to: { ...to, [track.axis]: end } }
+      : { slice, state, to };
+  },
+};
 
-// Motion kinds without an entry still run inline in the executor.
+// A plain wait holds still. A supported dwell rides its support and counts only while that
+// support still carries the body; without support it flies back to the proven landing.
+const WAIT: BehaviourAbility<"wait"> = {
+  act: ({ object, perception, slice, support, time }, { motion }, actor) => {
+    if (motion.support !== "required") {
+      return { slice, state: actor.state, to: actor.to };
+    }
+    const landing = actor.state.landing;
+    if (!support.supported) {
+      return {
+        ...flyToward(
+          object,
+          support.world ?? perception.world,
+          slice,
+          landing?.speed,
+          support.target,
+          actor,
+        ),
+        dwell: false,
+      };
+    }
+    if (!landing?.support) {
+      return { dwell: false, slice, state: actor.state, to: actor.to };
+    }
+    const carried = carryLandingSupport(
+      object,
+      perception.world,
+      time,
+      slice,
+      actor.at,
+      landing.support,
+    );
+    return {
+      carry: carried.points,
+      dwell: carried.supported,
+      slice,
+      state: actor.state,
+      to: { x: carried.at.x, y: carried.at.y },
+    };
+  },
+};
+
 export const BEHAVIOUR_ABILITIES: AbilityTable<
   BehaviourAbilityContext,
-  BehaviourMotion,
+  BehaviourAbilityParams,
   BehaviourActor,
   BehaviourMotionStep
-> = { hop: TRACK_TRAVEL, move: TRACK_TRAVEL };
+> = { "track-travel": TRACK_TRAVEL, wait: WAIT };
