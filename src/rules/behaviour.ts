@@ -18,6 +18,7 @@ import {
   BEHAVIOUR_ABILITIES,
   type BehaviourAbilityParams,
   behaviourAbilityParams,
+  groundFallParams,
   type TraversalAdvance,
 } from "./behaviourAbilities";
 import { animateSegments, syncAnimation } from "./behaviourAnimation";
@@ -1485,12 +1486,15 @@ function actSlice(context: BehaviourRunContext, decision: SliceDecision, run: Be
   let traversalSegments: readonly TraversalSafety[] | undefined;
   let supportedDwell: boolean | undefined;
   let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
-  // An escaped flier settles before its chase ability, which finishes any airborne leg.
+  // An escaped flier settles before its chase ability, which finishes any airborne leg, and an
+  // unsupported ground boss falls before its committed motion.
   const primary = behaviourAbilityParams(node.motion);
+  const fall = groundFallParams(object, next);
   const chosen: BehaviourAbilityParams[] = [
     ...(settling && node.motion.kind === "pursue"
       ? [{ kind: "escape-settle" as const, motion: node.motion }]
       : []),
+    ...(fall ? [fall] : []),
     ...(primary ? [primary] : []),
   ];
   for (const params of chosen) {

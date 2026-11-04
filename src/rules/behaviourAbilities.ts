@@ -12,8 +12,8 @@ import {
   OVERHEAD_SWOOP,
 } from "./behaviourPursuitAbilities";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
-import { trackReach, travelHeading } from "./behaviourTrack";
-import type { advanceTraversal } from "./behaviourTraversal";
+import { groundBoss, nodeOf, trackReach, travelHeading } from "./behaviourTrack";
+import { type advanceTraversal, supportFall } from "./behaviourTraversal";
 import { EDGE } from "./bird";
 import { carryLandingSupport } from "./flyLanding";
 
@@ -29,6 +29,7 @@ export type BehaviourAbilityParams =
       readonly motion: Extract<Motion<"pursue">, { readonly mode: "fly" }>;
     }
   | { readonly kind: "escape-settle"; readonly motion: Motion<"pursue"> }
+  | { readonly kind: "ground-fall"; readonly motion: Motion<"move" | "wait"> }
   | {
       readonly kind: "ground-chase";
       readonly motion: Extract<Motion<"pursue">, { readonly mode: "ground" }>;
@@ -70,6 +71,40 @@ export function behaviourAbilityParams(
     default:
       return undefined;
   }
+}
+
+// A ground boss's committed move or recovery wait falls once its support has gone; a hop still
+// in the air keeps its own arc.
+export function groundFallParams(
+  object: ObjectLayout,
+  state: BehaviourState,
+): Extract<BehaviourAbilityParams, { readonly kind: "ground-fall" }> | undefined {
+  const node = nodeOf(object, state.stateKey);
+  const { motion } = node;
+  return (motion.kind === "move" || motion.kind === "wait") &&
+    !state.hop &&
+    node.attack?.phase === "committed" &&
+    (state.axis ?? object.behaviour?.axis ?? "x") === "x" &&
+    groundBoss(object)
+    ? { kind: "ground-fall", motion }
+    : undefined;
+}
+
+const groundPhysics = new WeakMap<ObjectLayout, Extract<Motion<"pursue">, { mode: "ground" }>>();
+
+function groundPhysicsOf(object: ObjectLayout) {
+  let motion = groundPhysics.get(object);
+  if (!motion) {
+    const found = Object.values(object.behaviour!.states).find(
+      ({ motion }) => motion.kind === "pursue" && motion.mode === "ground" && motion.traversal,
+    )?.motion;
+    if (found?.kind !== "pursue" || found.mode !== "ground") {
+      return undefined;
+    }
+    motion = found;
+    groundPhysics.set(object, motion);
+  }
+  return motion;
 }
 
 export interface BehaviourAbilityContext {
@@ -150,6 +185,40 @@ export function flyToward(
     to: { x, y },
   };
 }
+
+// Gravity on a ground boss whose support has gone, before its committed motion acts.
+const GROUND_FALL: BehaviourAbility<"ground-fall"> = {
+  act: ({ object, perception, slice, time }, _, actor) => {
+    const physics = groundPhysicsOf(object);
+    const { world } = perception;
+    const fall =
+      physics &&
+      supportFall(
+        world.traversalFrame
+          ? {
+              ...world,
+              traversalFrame: {
+                ...world.traversalFrame,
+                timeSeconds: world.traversalFrame.timeSeconds + time,
+              },
+            }
+          : world,
+        object,
+        physics,
+        slice,
+        actor.state.traversal,
+        actor.at,
+      );
+    return fall
+      ? {
+          segments: fall.segments,
+          slice,
+          state: { ...actor.state, traversal: fall.traversal },
+          to: { x: fall.at.x, y: fall.at.y },
+        }
+      : { slice, state: actor.state, to: actor.to };
+  },
+};
 
 // Flight to an anchored point, a target captured on entry, or a live aligned drop point with
 // bounded lead. A blocked drop alignment holds position.
@@ -254,6 +323,7 @@ export const BEHAVIOUR_ABILITIES: AbilityTable<
   "air-chase": AIR_CHASE,
   "escape-settle": ESCAPE_SETTLE,
   "ground-chase": GROUND_CHASE,
+  "ground-fall": GROUND_FALL,
   "overhead-swoop": OVERHEAD_SWOOP,
   "supported-landing": SUPPORTED_LANDING,
   "target-flight": TARGET_FLIGHT,

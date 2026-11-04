@@ -603,6 +603,52 @@ function originSegments(
   return segments.map((leg) => ({ ...leg, from: originRect(leg.from), to: originRect(leg.to) }));
 }
 
+// A ground body whose support has gone falls under its pursuit physics with no input. The fall
+// is not a chosen move, so hazards do not veto it. Undefined while the body stands on support.
+export function supportFall(
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  motion: GroundMotion,
+  seconds: number,
+  prior: BehaviourTraversalState | undefined,
+  at: Point,
+):
+  | {
+      readonly at: Point;
+      readonly segments: readonly TraversalSafety[];
+      readonly traversal: BehaviourTraversalState;
+    }
+  | undefined {
+  const context = traversalContext(world, seconds, object, motion);
+  const frame = world.traversalFrame;
+  if (!context || !frame) {
+    return undefined;
+  }
+  const physical =
+    prior?.physical.x === at.x && prior.physical.y === at.y
+      ? prior.physical
+      : { fallFromY: at.y + object.height, grounded: true, vy: 0, ...at };
+  const fell = stepTraversal(
+    { ...context, safe: () => true },
+    { jump: false, move: 0, timeSeconds: frame.timeSeconds },
+    physical,
+  );
+  if (fell.status !== "ok" || (physical.grounded && fell.state.grounded)) {
+    return undefined;
+  }
+  return {
+    at: fell.state,
+    segments: originSegments(object, context.body.offset, fell.segments),
+    traversal: {
+      geometry: "",
+      inputs: [],
+      physical: fell.state,
+      status: "geometry-unavailable",
+      target: { ...at, height: object.height, width: object.width },
+    },
+  };
+}
+
 export function advanceTraversal(
   world: BehaviourWorld,
   object: ObjectLayout,
@@ -765,6 +811,26 @@ function advanceTraversalStep(
   let status = prior?.status ?? "geometry-unavailable";
   const input = { jump: false, move, timeSeconds: frame.timeSeconds } as const;
   const direct = stepTraversal(context, input, physical);
+  // Without planned inputs, a grounded body whose support has gone falls instead of holding
+  // its place.
+  if (
+    !prior?.inputs.length &&
+    physical.grounded &&
+    direct.status === "ok" &&
+    !direct.state.grounded
+  ) {
+    const fall = supportFall(world, object, motion, seconds, prior, at);
+    if (fall) {
+      return {
+        ...fall,
+        traversal: {
+          ...fall.traversal,
+          status: prior?.status ?? fall.traversal.status,
+          target: goal ?? target,
+        },
+      };
+    }
+  }
   const progress = direct.status === "ok" && Math.abs(direct.state.x - physical.x) > EDGE;
   const waypoint =
     !inputs.length && goal && supportedWaypoint(world, context, direct, physical, goal);
