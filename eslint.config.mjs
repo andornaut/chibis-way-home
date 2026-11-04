@@ -104,9 +104,19 @@ const INDEXED = {
   ui: { "*": ["./input/frameTurn.ts"], loading: ["./layout/deathCard.ts"] },
 };
 
-// CLEANUP (added 2026-11-04): the boss behaviour and timed hazard modules import each other's
-// values. Remove this exemption once the timedHazard/behaviour cycle is broken.
-const CYCLE_EXEMPT_FILES = ["src/ai/**", "src/rules/behaviour*", "src/rules/timedHazard.ts"];
+// CLEANUP (added 2026-11-04): the files of the one value import cycle, where timedHazard imports
+// behaviour and behaviourTraversal imports timedHazardSafe from timedHazard. Remove this
+// exemption once the cycle is broken.
+const CYCLE_EXEMPT_FILES = [
+  "src/rules/behaviour.ts",
+  "src/rules/behaviourAbilities.ts",
+  "src/rules/behaviourIdle.ts",
+  "src/rules/behaviourIntent.ts",
+  "src/rules/behaviourPursuitAbilities.ts",
+  "src/rules/behaviourRecoveryAbilities.ts",
+  "src/rules/behaviourTraversal.ts",
+  "src/rules/timedHazard.ts",
+];
 
 const IMPORT_X = { rules: { "no-cycle": noCycle, "no-restricted-paths": noRestrictedPaths } };
 const IMPORT_X_SETTINGS = {
