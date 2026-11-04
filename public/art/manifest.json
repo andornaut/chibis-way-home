@@ -72,6 +72,14 @@
       ]
     },
     {
+      "key": "boss-removal",
+      "png": "sprites/boss-removal.png",
+      "json": "sprites/boss-removal.json",
+      "once": [
+        "puff"
+      ]
+    },
+    {
       "key": "dog-antagonist",
       "png": "sprites/dog-antagonist.png",
       "json": "sprites/dog-antagonist.json",
