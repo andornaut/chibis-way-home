@@ -1017,6 +1017,33 @@ interface WalkRequirements {
   readonly witnesses: WalkWitnesses;
 }
 
+// A required walk first tries the stretches that advance its route: those carrying a required
+// surface this path has not touched, then, once every requirement is met, surfaces that reach
+// the exit. Each of these tries its whole surface before narrower aims at it. Order alone
+// changes; every other stretch still runs unless already covered.
+function progressFirst(
+  required: WalkRequirements,
+  profile: bigint,
+  terminal: (target: Target) => boolean,
+  state: ZoneState,
+  targets: readonly Target[],
+): Target[] {
+  const ready = required.witnesses.ready(state);
+  const rank = (target: Target) => {
+    const narrow =
+      target.left !== target.surface.left || target.right !== target.surface.right ? 1 : 0;
+    return (required.witnesses.surface(target.surface.key) & ~profile) !== 0n
+      ? narrow
+      : ready && terminal(target)
+        ? 2 + narrow
+        : 4;
+  };
+  return targets
+    .map((target, index) => ({ index, rank: rank(target), target }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(({ target }) => target);
+}
+
 function requiredComplete(required: WalkRequirements): boolean {
   return required.witnesses.complete();
 }
@@ -1314,13 +1341,17 @@ function walkSearch(
             (interval.target.surface === from.surface ||
               others.some(({ surface }) => surface === interval.target.surface)),
         ) ?? [];
-      for (const target of [...intervals.map((interval) => interval.target), ...own, ...others]) {
+      const terminal = (target: Target) =>
+        required !== undefined &&
+        target.surface !== from.surface &&
+        area.walkLinks?.right === undefined &&
+        sweptSpan(bounds, layout, target.surface).right > area.exitX;
+      const stretches = required
+        ? progressFirst(required, profile, terminal, from.state, [...own, ...others])
+        : [...own, ...others];
+      for (const target of [...intervals.map((interval) => interval.target), ...stretches]) {
         const interval = intervals.find((item) => item.target === target);
-        const terminalTarget =
-          required !== undefined &&
-          target.surface !== from.surface &&
-          area.walkLinks?.right === undefined &&
-          sweptSpan(bounds, layout, target.surface).right > area.exitX;
+        const terminalTarget = terminal(target);
         const done = () =>
           complete() ||
           (!terminalTarget &&
