@@ -40,9 +40,27 @@ Penthouse leads to the final celebration.
 
 Requires Node 24.21.0 or newer (`.nvmrc` pins 24.21.0).
 
-Run checks, tests and builds inside an isolated Node 24.21.0 container as the dedicated uid 19001 with the checkout's group (`--user 19001:19001 --group-add "$(stat -c %g .)" -e HOME=/tmp`), which owns nothing on the host. Mount every host path read-only and write outputs and caches only to container paths, tmpfs or named volumes.
+Run checks, tests and builds inside an isolated `node:24.21.0` container, as the dedicated uid 19001 with the checkout's group, which owns nothing on the host. Mount host paths read-only and only with `--mount` (`-v` creates a missing source as root), keep outputs and caches inside the container and copy results out with `docker cp`. From the checkout, with `NPM_CACHE` naming a populated npm cache the checkout's group can read:
 
-Checks run on the upstream `node:24.21.0` image. Art builds that export through Aseprite use `chibi-check:node24.21.0-aseprite1.2.30`, built on `node:24.21.0` from a licensed `Aseprite_1.2.30-1_amd64.deb` kept in the sibling `game-dev` checkout's `var/vendor/aseprite/`, outside version control: `docker build -f scripts/check-aseprite.Dockerfile --build-context aseprite-deb=../game-dev/var/vendor/aseprite -t chibi-check:node24.21.0-aseprite1.2.30 scripts`.
+```sh
+docker run --rm --network none --cpus=4 \
+  --user 19001:19001 --group-add "$(stat -c %g .)" --group-add "$(stat -c %g "$NPM_CACHE")" \
+  -e HOME=/tmp \
+  --mount type=bind,src="$PWD",dst=/src,readonly \
+  --mount type=bind,src="$NPM_CACHE",dst=/npm-cache,readonly \
+  node:24.21.0 sh -c 'mkdir /tmp/work \
+    && tar -C /src --exclude=./.claude --exclude=./.worktrees --exclude=./node_modules -cf - . \
+    | tar -C /tmp/work -xf - \
+    && cp -r /npm-cache /tmp/npm-cache && cd /tmp/work \
+    && npm ci --offline --cache /tmp/npm-cache \
+    && npm run check && npm run lint && npm test -- --maxWorkers=4'
+```
+
+Replace the last line with any command below. Art builds that export through Aseprite use the `chibi-check:node24.21.0-aseprite1.2.30` image in place of `node:24.21.0`: `node:24.21.0` with a licensed `Aseprite_1.2.30-1_amd64.deb` kept in the sibling `game-dev` checkout's `var/vendor/aseprite/`, outside version control. Build it from the checkout:
+
+```sh
+docker build -f docker/chibi-check.Dockerfile --build-context aseprite-deb=../game-dev/var/vendor/aseprite -t chibi-check:node24.21.0-aseprite1.2.30 docker
+```
 
 WORKAROUND: Parent-scoped development overrides pin [KaTeX](https://github.com/advisories/GHSA-238p-pmpm-9mq7) `0.18.2`, [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249) `11.0.3` and [re2js](https://github.com/advisories/GHSA-gg6h-894w-4m9c) `2.8.7`. ESLint loads the cycle and restricted-paths rules and the resolver through exported plugin subpaths because the full plugin imports an unused rule requiring the removed minimatch `makeRe` API. Keep cycle detection enabled. Remove each override when its parent range supports the patched version; restore the full plugin import when it supports minimatch 11.
 

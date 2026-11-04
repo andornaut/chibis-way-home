@@ -1,5 +1,8 @@
 # Check image chibi-check:node24.21.0-aseprite1.2.30: upstream node:24.21.0 with headless Aseprite
 # 1.2.30 for the art export checks.
+# Build from the repository root. The licensed Aseprite_1.2.30-1_amd64.deb lives in the sibling
+# game-dev checkout at var/vendor/aseprite/, which is never committed:
+# docker build -f docker/chibi-check.Dockerfile --build-context aseprite-deb=../game-dev/var/vendor/aseprite -t chibi-check:node24.21.0-aseprite1.2.30 docker
 # The licensed vendor .deb comes from the named build context aseprite-deb, outside the repository.
 # The binary links libGL, libXcursor and libXfixes, which the package does not declare; apt resolves
 # libGL through Mesa. Batch mode opens no display, so no X server is installed.
