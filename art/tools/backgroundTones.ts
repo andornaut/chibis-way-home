@@ -3,7 +3,7 @@
  * pixel.
  *
  * The original generators retain their geometry. Their normal builds apply this same publication
- * policy. Foreground tiles, actors, UI, portraits and opening art never pass through this adapter.
+ * policy. Foreground tiles, actors, UI and portraits never pass through this adapter.
  * Ordered far, middle and near backgrounds use perceptual ranks in backgroundPalette.ts. Continuous
  * source-colour residuals retain material and detail differences. Local decorative props use the
  * near rank. Functional wayfinding, flat zone skies and the inactive Park prototype retain their

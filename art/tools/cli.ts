@@ -14,18 +14,16 @@ interface Commands {
   usage: string;
   build?: () => unknown;
   preview?: (out: string) => unknown;
-  /** Further `NAME OUT` commands, such as the opening's board. */
-  more?: Readonly<Record<string, (out: string) => unknown>>;
 }
 
 const HELP = new Set(["--help", "-h", "help"]);
 
 /**
- * Run argv's `build`, `preview OUT` or other `NAME OUT` command. `help`, `-h` or `--help` prints
- * the usage to stdout; any other argv prints it to stderr and exits 2.
+ * Run argv's `build` or `preview OUT` command. `help`, `-h` or `--help` prints the usage to
+ * stdout; any other argv prints it to stderr and exits 2.
  */
 export async function commands(
-  { build, more = {}, preview, usage }: Commands,
+  { build, preview, usage }: Commands,
   argv: readonly string[] = process.argv.slice(2),
 ): Promise<void> {
   if (argv.length === 1 && HELP.has(argv[0] as string)) {
@@ -34,8 +32,6 @@ export async function commands(
     await build();
   } else if (preview && argv.length === 2 && argv[0] === "preview") {
     await preview(argv[1] as string);
-  } else if (argv.length === 2 && Object.hasOwn(more, argv[0] as string)) {
-    await (more[argv[0] as string] as (out: string) => unknown)(argv[1] as string);
   } else {
     console.error(usage);
     process.exit(2);

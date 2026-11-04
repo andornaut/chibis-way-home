@@ -2,28 +2,27 @@
 
 Chibi's Way Home artwork, drawing pipeline and remaining art work. The [style guide](style-guide.md) owns appearance, characters, environments and animation.
 
-| Document                             | Owns                                                                   |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| [Controls](controls.md)              | Control roles, states, interaction and visible-face label alignment    |
-| [Inventory](inventory.md)            | Every served asset: key, type, size and tags                           |
-| [Layout](layout.md)                  | Shared spacing, content fitting and press-target clearance             |
-| [Opening artwork](opening/README.md) | Retained painted opening assets and their contract                     |
-| [Style guide](style-guide.md)        | Visual rules, scene compositions, asset contracts and review checklist |
+| Document                      | Owns                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| [Controls](controls.md)       | Control roles, states, interaction and visible-face label alignment    |
+| [Inventory](inventory.md)     | Every served asset: key, type, size and tags                           |
+| [Layout](layout.md)           | Shared spacing, content fitting and press-target clearance             |
+| [Style guide](style-guide.md) | Visual rules, scene compositions, asset contracts and review checklist |
 
 ## Scope
 
-- `art/`: generator scripts, font sources, the painted opening pack and art documentation.
+- `art/`: generator scripts, font sources and art documentation.
 - `public/art/`: served sprites, images, fonts, palette, manifest and contact metadata. The art pipeline also supplies the app and favicon assets in `public/icons/` and `public/`.
 
 ## Pipeline
 
 Generators are TypeScript on [art-kit](https://github.com/andornaut/art-kit)'s public API and run with Node's native type stripping, from the repository root: `node art/tools/<tool>.ts <command>`, for example `node art/tools/palette.ts build` or `node art/tools/fonts.ts preview OUT.png`. Run them in the plain `node:24.21.0` isolated container described in [Developing](../README.md#developing). Asset and font licences remain unchanged.
 
-To bring generator output back to the checkout, run that container from the repository root with every earlier step's stdout sent to stderr (`>&2`), end its command with the archive below, which leaves the protected `art/opening/source/` out, and pipe it into `tar -xf -` on the host:
+To bring generator output back to the checkout, run that container from the repository root with every earlier step's stdout sent to stderr (`>&2`) and end its command with the archive below, then pipe it into `tar -xf -` on the host:
 
 ```sh
   && node art/tools/<tool>.ts build >&2 \
-  && tar -C /tmp/work --exclude=art/opening/source -cf - public/art art/opening' | tar -xf -
+  && tar -C /tmp/work -cf - public/art' | tar -xf -
 ```
 
 - Author raster assets through generators: `art/tools/<set>.ts`, each with `build` and `preview OUT.png` commands.

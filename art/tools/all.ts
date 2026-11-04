@@ -7,14 +7,11 @@
  *
  * ORDER runs data, fonts, sprites (bird first: later builds read its exported sheet), contact
  * silhouettes over every contact sprite, tilesets and backdrops (tiles-platforming first: material
- * packs read it), background tones over the backdrops, images, icons and the opening pack.
+ * packs read it), background tones over the backdrops, images and icons.
  *
  * The manifest starts with its SECTIONS in order and no entries except those registered by hand,
- * which no generator writes and which carry over unchanged: the opening pack's entries, listed in
- * art/opening/manifest-entries.json, and the HAND_IMAGES.
+ * which no generator writes and which carry over unchanged: the HAND_IMAGES.
  */
-
-import { readFileSync } from "node:fs";
 
 import * as achievementIcons from "./achievementIcons.ts";
 import * as antagonists from "./antagonists.ts";
@@ -46,7 +43,6 @@ import * as largeWildlife from "./largeWildlife.ts";
 import * as logo from "./logo.ts";
 import * as map from "./map.ts";
 import * as obstacles from "./obstacles.ts";
-import * as opening from "./opening.ts";
 import * as owl from "./owl.ts";
 import * as palette from "./palette.ts";
 import * as park from "./park.ts";
@@ -68,7 +64,6 @@ import * as zoneThemes from "./zoneThemes.ts";
 const USAGE = "Usage: all.ts build";
 // The manifest's sections, in their served order.
 const SECTIONS = ["fonts", "sprites", "data", "tilesets", "backdrops", "images"] as const;
-const OPENING_ENTRIES = "art/opening/manifest-entries.json";
 // Image entries registered by hand: the stage cutscene placeholder, whose build writes only its
 // PNG, and the hand-captured stage previews.
 const HAND_IMAGES = /^(stage-cutscene-placeholder|stage-preview-zone-\d+-stage-\d+)$/;
@@ -118,27 +113,21 @@ const ORDER: readonly (() => unknown)[] = [
   roomBuildings.build,
   woodland.build,
   backgroundTones.build,
-  // Images, icons and the opening pack.
+  // Images and icons.
   cutscene.build,
   logo.build,
   start.build,
   icons.build,
-  opening.build,
 ];
 
 /** The previous manifest's hand-registered entries, every section present and in order. */
 function handRegistered(): Record<string, pixel.ManifestEntry[]> {
   const previous = pixel.readManifest();
-  const pack = JSON.parse(readFileSync(OPENING_ENTRIES, "utf8")) as Record<
-    string,
-    pixel.ManifestEntry[]
-  >;
-  const packKeys = new Set(Object.values(pack).flatMap((entries) => entries.map(({ key }) => key)));
   return Object.fromEntries(
     SECTIONS.map((section) => [
       section,
       ((previous[section] as pixel.ManifestEntry[] | undefined) ?? []).filter(
-        ({ key }) => packKeys.has(key) || (section === "images" && HAND_IMAGES.test(key)),
+        ({ key }) => section === "images" && HAND_IMAGES.test(key),
       ),
     ]),
   );
