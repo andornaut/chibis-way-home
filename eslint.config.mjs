@@ -135,7 +135,7 @@ const CONTEXTS = {
     "view",
   ],
   settings: [],
-  sim: ["data", "rules", "stage", "view"],
+  sim: ["ai", "data", "rules", "stage", "view"],
   stage: ["data"],
   tools: ["assets", "data", "headers", "homePage", "loading", "platform", "pwa", "view"],
   tuningPage: ["data", "gallery"],
