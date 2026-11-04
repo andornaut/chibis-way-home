@@ -8,9 +8,7 @@ import {
   DOG_BEHAVIOUR,
   FERRET_BEHAVIOUR,
   GOOSE_BEHAVIOUR,
-  OWL_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
-  RABBIT_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
 } from "./behaviours";
 import { OBSTACLE_CHARACTERS } from "./obstacleCharacters";
@@ -95,19 +93,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     rows: 1,
     tileset: "tiles-platforming",
   },
-  // A roof's cornice: one-way, along the top of its roofline.
-  cornice: {
-    archetype: "ledge",
-    art: "one-way-cornice",
-    cols: 3,
-    rows: 1,
-  },
-  "cross-street": {
-    archetype: "scenery",
-    art: "cross-street",
-    cols: 10,
-    rows: 2,
-  },
   "depot-loading-bay": {
     archetype: "scenery",
     art: "depot-loading-bay",
@@ -139,7 +124,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     rows: 3,
   },
   // Facades, each a backdrop repeated across its run: the ground and second storeys standing on
-  // the sidewalk line, and a walk-up's upper storey stacked above.
+  // the sidewalk line.
   "facade-brownstone": {
     archetype: "scenery",
     art: "facade-brownstone",
@@ -151,18 +136,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     art: "facade-one-storey",
     cols: 4,
     rows: 16,
-  },
-  "facade-walkup": {
-    archetype: "scenery",
-    art: "facade-walkup",
-    cols: 4,
-    rows: 26,
-  },
-  "facade-walkup-upper": {
-    archetype: "scenery",
-    art: "facade-walkup-upper",
-    cols: 4,
-    rows: 15,
   },
   "ferret-antagonist": {
     archetype: "hazard",
@@ -179,60 +152,12 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     contactCue: "red-hazard",
     rows: 2,
   },
-  // The ferret's first trap, set near zone 1's end.
-  "ferret-trap-snap": {
-    animations: { idle: "set", move: "set", react: "set", talk: "set" },
-    archetype: "hazard",
-    art: "ferret-trap-snap",
-    cols: 4,
-    rows: 2,
-  },
-  // A fire escape's ladder between its landings, one piece per spacing in rows (8 for the plain
-  // one), and the railing standing on each landing.
-  "fire-escape-ladder": {
-    archetype: "scenery",
-    art: "fire-escape-ladder",
-    cols: 2,
-    rows: 8,
-  },
-  "fire-escape-ladder-4": {
-    archetype: "scenery",
-    art: "fire-escape-ladder-4",
-    cols: 2,
-    rows: 4,
-  },
-  "fire-escape-ladder-5": {
-    archetype: "scenery",
-    art: "fire-escape-ladder-5",
-    cols: 2,
-    rows: 5,
-  },
-  "fire-escape-ladder-6": {
-    archetype: "scenery",
-    art: "fire-escape-ladder-6",
-    cols: 2,
-    rows: 6,
-  },
-  "fire-escape-ladder-7": {
-    archetype: "scenery",
-    art: "fire-escape-ladder-7",
-    cols: 2,
-    rows: 7,
-  },
+  // A fire escape's railing, standing on each landing.
   "fire-escape-railing": {
     archetype: "scenery",
     art: "fire-escape-railing",
     cols: 4,
     rows: 2,
-  },
-  // The rolling traffic: a frog courier on a delivery bike, back and forth along the sidewalk.
-  // 3 tall, so a full jump clears it.
-  "frog-courier": {
-    animations: { idle: "idle", move: "ride", react: "idle", talk: "idle" },
-    archetype: "hazard-patroller",
-    art: "frog-courier",
-    cols: 5,
-    rows: 3,
   },
   "goose-antagonist": {
     archetype: "hazard",
@@ -263,21 +188,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 1,
     rows: 3,
   },
-  "hot-dog-cart": {
-    archetype: "solid",
-    art: "hot-dog-cart",
-    cols: 3,
-    rows: 6,
-  },
-  "owl-antagonist": {
-    archetype: "hazard",
-    art: "owl-antagonist",
-    behaviour: OWL_BEHAVIOUR,
-    cols: 4,
-    rows: 4,
-  },
-  // Pedestrians walking past, back and forth, paying him no attention. React and talk fall back
-  // to idle.
   // The park's pieces. The bandstand, 7 tall, with its roof a one-way ledge 6 above its base.
   "parcel-open": {
     archetype: "scenery",
@@ -376,20 +286,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 30,
     rows: 35,
   },
-  "pedestrian-cat": {
-    animations: { idle: "idle", move: "walk", react: "idle", talk: "idle" },
-    archetype: "walker",
-    art: "pedestrian-cat",
-    cols: 3,
-    rows: 5,
-  },
-  "pedestrian-raccoon": {
-    animations: { idle: "idle", move: "walk", react: "idle", talk: "idle" },
-    archetype: "walker",
-    art: "pedestrian-raccoon",
-    cols: 3,
-    rows: 5,
-  },
   // Pigeons pecking about in flocks, which flee as he comes near: react plays flee once, then
   // move's fly. Talk falls back to idle.
   pigeon: {
@@ -435,7 +331,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     rows: 1,
     tileset: "tiles-platforming",
   },
-  // A roofline capping a facade, repeated across its run: a cornice goes along its top.
   // A shallow pond, two rows deep: touching the water restarts him. Placed with a width, between
   // solid banks.
   pond: {
@@ -443,13 +338,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     art: "hazard-pond",
     cols: 3,
     rows: 2,
-  },
-  "rabbit-antagonist": {
-    archetype: "hazard",
-    art: "rabbit-antagonist",
-    behaviour: RABBIT_BEHAVIOUR,
-    cols: 4,
-    rows: 4,
   },
   "raccoon-antagonist": {
     archetype: "hazard",
@@ -498,15 +386,10 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     rows: 1,
     tileset: "tiles-platforming",
   },
+  // A roofline capping a facade, repeated across its run.
   "roofline-brownstone": {
     archetype: "scenery",
     art: "roofline-brownstone",
-    cols: 4,
-    rows: 4,
-  },
-  "roofline-walkup": {
-    archetype: "scenery",
-    art: "roofline-walkup",
     cols: 4,
     rows: 4,
   },
@@ -546,40 +429,10 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 7,
     rows: 10,
   },
-  "storefront-diner": {
-    archetype: "scenery",
-    art: "storefront-diner",
-    cols: 9,
-    rows: 10,
-  },
-  "storefront-florist": {
-    archetype: "scenery",
-    art: "storefront-florist",
-    cols: 7,
-    rows: 10,
-  },
-  "storefront-gift-shop": {
-    archetype: "scenery",
-    art: "storefront-gift-shop",
-    cols: 8,
-    rows: 10,
-  },
-  "storefront-makeup-store": {
-    archetype: "scenery",
-    art: "storefront-makeup-store",
-    cols: 8,
-    rows: 10,
-  },
   "storefront-noodle-bar": {
     archetype: "scenery",
     art: "storefront-noodle-bar",
     cols: 10,
-    rows: 10,
-  },
-  "storefront-pet-shop": {
-    archetype: "scenery",
-    art: "storefront-pet-shop",
-    cols: 9,
     rows: 10,
   },
   "street-city-far": {
@@ -601,30 +454,12 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 5,
     rows: 7,
   },
-  // The street's sky and far skyline, backdrops repeated across the street.
+  // The street's sky, a backdrop repeated across the street.
   "street-sky": {
     archetype: "scenery",
     art: "street-sky",
     cols: 4,
     rows: 50,
-  },
-  "street-skyline": {
-    archetype: "scenery",
-    art: "street-skyline",
-    cols: 28,
-    rows: 50,
-  },
-  "street-tree": {
-    archetype: "scenery",
-    art: "street-tree",
-    cols: 5,
-    rows: 11,
-  },
-  "subway-railing": {
-    archetype: "scenery",
-    art: "subway-railing",
-    cols: 6,
-    rows: 5,
   },
   // PLACEHOLDER: the test fixtures' objects, drawn as flat rectangles: a door (a Use zone),
   // hazards, moving platforms whose motion each placement sets and a wandering cart.
@@ -656,13 +491,6 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     archetype: "scenery",
     art: "walk-signal",
     cols: 1,
-    rows: 7,
-  },
-  // A water tower on a brownstone's roof.
-  "water-tower": {
-    archetype: "scenery",
-    art: "water-tower",
-    cols: 4,
     rows: 7,
   },
 };
