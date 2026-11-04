@@ -185,7 +185,7 @@ export const TEXT: GameText = {
     test: { name: "Test room" },
   },
   settings: {
-    actionButtons: "Display jump and use buttons",
+    actionButtons: "Action buttons",
     install: "Install",
     installButton: "Install",
     installSteps: {
@@ -193,7 +193,7 @@ export const TEXT: GameText = {
       ios: { first: "Tap Share.", second: "Tap Add to Home Screen." },
       title: "Install",
     },
-    moveControls: "Display joystick",
+    moveControls: "Move controls",
     title: "Settings",
   },
   skills: {
