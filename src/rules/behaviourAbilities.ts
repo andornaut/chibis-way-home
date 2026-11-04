@@ -1,6 +1,7 @@
 import type { Ability, AbilityResult, AbilityTable } from "../ai/ability";
 import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
 import type { BehaviourState } from "./behaviour";
+import { alignmentBlocked, flightDestination } from "./behaviourFlight";
 import type { BehaviourPerception } from "./behaviourPerception";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { trackReach, travelHeading } from "./behaviourTrack";
@@ -14,6 +15,10 @@ type Motion<Kind extends BehaviourMotion["kind"]> = Extract<
 
 // Which ability acts a motion: the graph decides the motion; the ability moves the body.
 export type BehaviourAbilityParams =
+  | {
+      readonly kind: "target-flight";
+      readonly motion: Exclude<Motion<"fly">, { readonly to: "support" }>;
+    }
   | { readonly kind: "track-travel"; readonly motion: Motion<"hop" | "move"> }
   | { readonly kind: "wait"; readonly motion: Motion<"wait"> };
 
@@ -24,6 +29,8 @@ export function behaviourAbilityParams(
     case "hop":
     case "move":
       return { kind: "track-travel", motion };
+    case "fly":
+      return motion.to === "support" ? undefined : { kind: "target-flight", motion };
     case "wait":
       return { kind: "wait", motion };
     default:
@@ -94,6 +101,21 @@ export function flyToward(
     to: { x, y },
   };
 }
+
+// Flight to an anchored point, a target captured on entry, or a live aligned drop point with
+// bounded lead. A blocked drop alignment holds position.
+const TARGET_FLIGHT: BehaviourAbility<"target-flight"> = {
+  act: ({ object, perception, slice }, { motion }, actor) => {
+    const target =
+      motion.to === "target-x" && alignmentBlocked(perception, object, actor.at, actor.state)
+        ? actor.at
+        : flightDestination(perception, object, actor.at, actor.state);
+    if (!target) {
+      throw new Error("Target flight must capture its destination on entry");
+    }
+    return flyToward(object, perception.world, slice, motion.speed, target, actor);
+  },
+};
 
 // Bounded travel along the state's track at the motion's speed, stopping at the track end,
 // solid terrain and other solid platforms. Target-relative travel stops level with Chibi.
@@ -166,4 +188,4 @@ export const BEHAVIOUR_ABILITIES: AbilityTable<
   BehaviourAbilityParams,
   BehaviourActor,
   BehaviourMotionStep
-> = { "track-travel": TRACK_TRAVEL, wait: WAIT };
+> = { "target-flight": TARGET_FLIGHT, "track-travel": TRACK_TRAVEL, wait: WAIT };

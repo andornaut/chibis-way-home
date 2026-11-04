@@ -22,6 +22,7 @@ import {
   canEnterAttack,
   enterAttack,
 } from "./behaviourAttack";
+import { alignmentBlocked, flightDestination } from "./behaviourFlight";
 import { type FlightSelectionState, selectSupportedFlight } from "./behaviourFlightSelection";
 import {
   advanceIdleRecovery,
@@ -756,85 +757,6 @@ function horizontalBodyBounds(object: ObjectLayout, at: Point, state: BehaviourS
     x: origin.x + (flipped ? contact.frame.width - right : left),
     y: origin.y + top,
   };
-}
-
-function flightDestination(
-  perception: BehaviourPerception,
-  object: ObjectLayout,
-  at: Point,
-  state: BehaviourState,
-): Point | undefined {
-  const { target: bird, tuning } = perception;
-  const motion = nodeOf(object, state.stateKey).motion;
-  if (motion.kind !== "fly") {
-    return undefined;
-  }
-  if (motion.to === "support") {
-    return undefined;
-  }
-  if (motion.to === "target") {
-    return state.flightTarget;
-  }
-  if (motion.to === "target-x") {
-    if (!state.flightTarget) {
-      return undefined;
-    }
-    const contact = contactBox(object, at, state.facing, state.axis);
-    const target = birdBox(tuning, bird);
-    if (motion.ahead !== undefined && state.flightApproachDirection === undefined) {
-      throw new Error("Ahead alignment requires a committed overhead approach direction");
-    }
-    const ahead = motion.ahead === undefined ? 0 : motion.ahead * state.flightApproachDirection!;
-    const lead = Math.max(-motion.maxLead, Math.min(motion.maxLead, bird.vx * motion.leadSeconds));
-    return {
-      x: target.x + target.width / 2 - contact.width / 2 - (contact.x - at.x) + ahead + lead,
-      y: state.flightTarget.y,
-    };
-  }
-  return {
-    x: (state.anchor ?? object.origin).x + motion.to.x,
-    y: (state.anchor ?? object.origin).y + motion.to.y,
-  };
-}
-function alignmentBlocked(
-  perception: BehaviourPerception,
-  object: ObjectLayout,
-  at: Point,
-  state: BehaviourState,
-): boolean {
-  const { target: bird, tuning, world } = perception;
-  const motion = nodeOf(object, state.stateKey).motion;
-  if (motion.kind === "fly" && motion.to === "support" && motion.selection) {
-    return state.flightSelection?.status === "pending";
-  }
-  if (motion.kind === "pursue" && motion.mode === "fly" && motion.overhead) {
-    if (state.flightApproachDirection === undefined) {
-      return true;
-    }
-    const target = overheadFlightGoal(
-      tuning,
-      motion.overhead,
-      state.flightApproachDirection,
-      bird,
-      object,
-    );
-    return overheadFlightRoute(world, object, at, target) === undefined;
-  }
-  if (motion.kind !== "fly" || motion.to !== "target-x") {
-    return false;
-  }
-  const target = flightDestination(perception, object, at, state);
-  if (!target) {
-    return true;
-  }
-  const origin = state.anchor ?? object.origin;
-  return (
-    target.x < origin.x + motion.bounds.x - EDGE ||
-    target.x > origin.x + motion.bounds.x + motion.bounds.width + EDGE ||
-    target.y < origin.y + motion.bounds.y - EDGE ||
-    target.y > origin.y + motion.bounds.y + motion.bounds.height + EDGE ||
-    Math.abs(flightAxis(object, world, at, "x", target.x) - target.x) > EDGE
-  );
 }
 
 function matches(
@@ -2187,17 +2109,9 @@ export function advanceBehaviour(
         next = { ...next, facing: next.intent.facing };
       }
     }
-    if (node.motion.kind === "fly") {
-      const landing = node.motion.to === "support";
+    if (node.motion.kind === "fly" && node.motion.to === "support") {
+      const target = landingTarget;
       const speed = node.motion.speed;
-      const target = landing
-        ? landingTarget
-        : node.motion.to === "target-x" && alignmentBlocked(perception, object, current, next)
-          ? current
-          : flightDestination(perception, object, current, next);
-      if (!target && !landing) {
-        throw new Error("Target flight must capture its destination on entry");
-      }
       const distance = target ? Math.hypot(target.x - current.x, target.y - current.y) : 0;
       if (target && speed !== undefined && distance > EDGE) {
         slice = Math.min(slice, distance / speed);
