@@ -1473,6 +1473,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "offset-two-level-terrace-encounter",
     "open-stepped-ridge-encounter",
     "vertical-red-gate",
+    "warned-vent-terrace",
   ].map((id) => [id, `${id}-woodland-depth`]),
 );
 
@@ -1486,6 +1487,7 @@ export const GROUND_CHALLENGES: ChunkPool = [
   "compound-low-ceiling-hazard",
   "compound-return-terrace",
   "compound-transfer-gate",
+  "warned-vent-terrace",
 ];
 export const JUMP_CHALLENGES: ChunkPool = [
   "city-boundary-edge-yard",
