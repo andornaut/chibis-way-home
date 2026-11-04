@@ -37,15 +37,11 @@ import { dirname } from "node:path";
 
 import { encodeIco } from "@andornaut/art-kit/ico";
 import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
-import {
-  composite,
-  filledImage,
-  frameToRgba,
-  opaque,
-  resizeNearest,
-} from "@andornaut/art-kit/raster";
+import { composite, filledImage, opaque, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
+import { frameImage } from "./imageArt.ts";
 import * as bird from "./bird.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
@@ -180,7 +176,7 @@ function icon(side: number, ground: Ground): pixel.Frame {
 }
 
 function image(px: pixel.Frame, z = 1): RgbaImage {
-  const im = frameToRgba({ resolveRgb: pixel.rgb }, px);
+  const im = frameImage(px);
   return z !== 1 ? resizeNearest(im.width * z, im.height * z, im) : im;
 }
 
@@ -250,12 +246,4 @@ function preview(out: string): void {
   save(out, encodeRgbPng(PNG, opaque(sheet)));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 2 && argv[0] === "preview") preview(argv[1] as string);
-  else if (argv.length === 1 && argv[0] === "build") build();
-  else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

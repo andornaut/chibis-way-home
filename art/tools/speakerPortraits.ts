@@ -10,6 +10,7 @@
  * cream face band and muzzle, and white eye glints, without accessories.
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -66,6 +67,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-raccoon", [["neutral", [raccoon()], 1000]]];
 }
 
-if (import.meta.main) {
-  await pixel.main({ doc: USAGE, grounds: [K.dslate, K.lgrey], once: ONCE, srcDir: SRC }, sprites);
-}
+if (import.meta.main)
+  run(() =>
+    pixel.main({ doc: USAGE, grounds: [K.dslate, K.lgrey], once: ONCE, srcDir: SRC }, sprites),
+  );

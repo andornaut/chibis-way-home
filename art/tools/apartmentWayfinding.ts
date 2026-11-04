@@ -25,17 +25,11 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
-import {
-  composite,
-  crop,
-  fill,
-  filledImage,
-  grayscale,
-  resizeNearest,
-} from "@andornaut/art-kit/raster";
+import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
-import * as pixel from "./pixel.ts";
+import { commands, run } from "./cli.ts";
+import { greyscale, rect, rgba } from "./imageArt.ts";
 import * as roomDoors from "./roomDoors.ts";
 
 const SIZE = [48, 72] as const;
@@ -58,16 +52,6 @@ export const REGISTRY = KEYS.map((key) => ({
   repeat: "none",
 }));
 
-type Box = readonly [x0: number, y0: number, x1: number, y1: number];
-
-const rgba = (colour: string) => [...pixel.rgb(colour), 255] as const;
-
-/** Fill box, [x0, y0, x1, y1) like Pillow's paste(colour, box), with an opaque colour. */
-function rect(im: RgbaImage, box: Box, colour: string): void {
-  const [x0, y0, x1, y1] = box;
-  fill({ rect: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } }, rgba(colour), im);
-}
-
 function canvas(): RgbaImage {
   return filledImage([0, 0, 0, 0], ...SIZE);
 }
@@ -83,7 +67,7 @@ export function stairwell(down = false): RgbaImage {
     [[8, 10, 11, 72], "slate"],
     [[39, 10, 41, 72], "ink"],
   ] as const)
-    rect(im, box, colour);
+    rect(colour, box, im);
   // Quiet broad steps rise into the recess; they have no bright standable lip.
   if (down) {
     for (const [x, y] of [
@@ -92,8 +76,8 @@ export function stairwell(down = false): RgbaImage {
       [23, 56],
       [30, 64],
     ] as const) {
-      rect(im, [x, y, Math.min(x + 7, 40), 72], "grey");
-      rect(im, [x, y, Math.min(x + 7, 40), y + 2], "slate");
+      rect("grey", [x, y, Math.min(x + 7, 40), 72], im);
+      rect("slate", [x, y, Math.min(x + 7, 40), y + 2], im);
     }
   } else {
     for (const [x, y] of [
@@ -102,15 +86,15 @@ export function stairwell(down = false): RgbaImage {
       [23, 48],
       [30, 40],
     ] as const) {
-      rect(im, [x, y, 40, 72], "grey");
-      rect(im, [x, y, 40, y + 2], "slate");
+      rect("grey", [x, y, 40, 72], im);
+      rect("slate", [x, y, 40, y + 2], im);
     }
   }
-  rect(im, [14, 4, 39, 29], "navy");
-  rect(im, [15, 5, 38, 28], "dslate");
+  rect("navy", [14, 4, 39, 29], im);
+  rect("dslate", [15, 5, 38, 28], im);
   // A compact directional arrow, separated from the architecture by a dark sign.
   if (down) {
-    rect(im, [24, 10, 29, 19], "white");
+    rect("white", [24, 10, 29, 19], im);
     for (const [y, half] of [
       [18, 6],
       [19, 5],
@@ -119,7 +103,7 @@ export function stairwell(down = false): RgbaImage {
       [22, 2],
       [23, 1],
     ] as const)
-      rect(im, [26 - half, y, 27 + half, y + 1], "white");
+      rect("white", [26 - half, y, 27 + half, y + 1], im);
   } else {
     for (const [y, half] of [
       [10, 1],
@@ -129,8 +113,8 @@ export function stairwell(down = false): RgbaImage {
       [14, 5],
       [15, 6],
     ] as const)
-      rect(im, [26 - half, y, 27 + half, y + 1], "white");
-    rect(im, [24, 15, 29, 24], "white");
+      rect("white", [26 - half, y, 27 + half, y + 1], im);
+    rect("white", [24, 15, 29, 24], im);
   }
   return im;
 }
@@ -158,7 +142,7 @@ export function stairwellDoor(): RgbaImage {
     [[32, 43, 35, 50], "dbrown"],
     [[31, 44, 35, 47], "amber"],
   ] as const)
-    rect(im, box, colour);
+    rect(colour, box, im);
   return im;
 }
 
@@ -177,21 +161,14 @@ export function build(): void {
     writeFileSync(`${BACKDROPS}/${key}.png`, encodeRgbaPng(PNG, im));
 }
 
-/** One plane of grey levels as an opaque RGB image. */
-function greyImage(plane: { data: Uint8Array; width: number; height: number }): RgbaImage {
-  const grey = filledImage([0, 0, 0, 255], plane.width, plane.height);
-  plane.data.forEach((level, i) => grey.data.set([level, level, level], i * 4));
-  return grey;
-}
-
 export function preview(out: string): void {
   const im = filledImage(rgba("zone-red"), 720, 360);
-  for (let x = 0; x < 720; x += 144) rect(im, [x, 48, x + 2, 252], "zone-red-shade");
-  rect(im, [0, 244, 720, 252], "zone-red-shade");
-  rect(im, [0, 252, 720, 360], "dbrown");
+  for (let x = 0; x < 720; x += 144) rect("zone-red-shade", [x, 48, x + 2, 252], im);
+  rect("zone-red-shade", [0, 244, 720, 252], im);
+  rect("dbrown", [0, 252, 720, 360], im);
   // The bright edge below belongs to actual floor terrain, never either backdrop.
-  rect(im, [0, 252, 720, 253], "plum");
-  rect(im, [0, 253, 720, 255], "cream");
+  rect("plum", [0, 252, 720, 253], im);
+  rect("cream", [0, 253, 720, 255], im);
   for (const [key, x] of [
     ["apartment-stairwell", 180],
     ["apartment-stairwell-down", 336],
@@ -208,19 +185,9 @@ export function preview(out: string): void {
   writeFileSync(out, encodeRgbaPng(PNG, im));
   const stem = out.replace(/\.[^./]*$/, "");
   // Grey levels as in Pillow's ImageOps.grayscale, written as an RGB PNG.
-  writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyImage(grayscale(im))));
+  writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyscale(im)));
   writeFileSync(`${stem}-phone.png`, encodeRgbaPng(PNG, resizeNearest(864, 432, im)));
   writeFileSync(`${stem}-3x.png`, encodeRgbaPng(PNG, resizeNearest(2160, 1080, im)));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") {
-    build();
-  } else if (argv.length === 2 && argv[0] === "preview") {
-    preview(argv[1] as string);
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

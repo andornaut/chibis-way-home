@@ -39,12 +39,12 @@
 
 import { opaque } from "@andornaut/art-kit/raster";
 
+import * as backgroundTones from "./backgroundTones.ts";
+import { commands, run } from "./cli.ts";
 import {
   BACKDROPS_DIR,
   backdropEntry,
-  backgroundTones,
   canvasOf,
-  cli,
   cropBox,
   ellipse,
   image,
@@ -272,7 +272,6 @@ export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage,
   };
 
 async function build(): Promise<void> {
-  const tones = await backgroundTones();
   const entry = await pixel.writeTileset(
     { key: TILESET },
     tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),
@@ -280,7 +279,7 @@ async function build(): Promise<void> {
   pixel.updateManifest("tilesets", [entry]);
   const entries = Object.entries(BACKDROPS).map(([key, [draw, repeat]]) => {
     const im = draw();
-    writeImage(`${BACKDROPS_DIR}/${key}.png`, tones.apply(key, im));
+    writeImage(`${BACKDROPS_DIR}/${key}.png`, backgroundTones.apply(key, im));
     return backdropEntry({ bottom: BOTTOM, repeat }, key, im);
   });
   pixel.updateManifest("backdrops", entries);
@@ -328,4 +327,4 @@ async function preview(out: string): Promise<void> {
   writeRgbImage(out, sheet);
 }
 
-if (import.meta.main) await cli({ usage: USAGE, build, preview });
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

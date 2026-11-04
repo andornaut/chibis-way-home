@@ -154,6 +154,7 @@
  *   lip).
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { darker, Grid } from "./pixel.ts";
 
@@ -926,6 +927,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["ui-touch-use", touchButton("use")];
 }
 
-if (import.meta.main) {
-  await pixel.main({ doc: USAGE, once: ONCE, slices: SLICES, srcDir: SRC }, sprites);
-}
+if (import.meta.main)
+  run(() => pixel.main({ doc: USAGE, once: ONCE, slices: SLICES, srcDir: SRC }, sprites));

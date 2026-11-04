@@ -25,6 +25,7 @@ import { basename } from "node:path";
 
 import { Canvas } from "skia-canvas";
 
+import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
 export const OUT = "public/art/palette.json";
@@ -76,14 +77,5 @@ export async function preview({ cell = 24, gap = 4 }, out: string): Promise<void
   await scaled.toFile(out);
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 2 && argv[0] === "preview") {
-    await preview({}, argv[1] as string);
-  } else if (argv.length === 1 && argv[0] === "build") {
-    build();
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main)
+  run(() => commands({ usage: USAGE, build, preview: (out) => preview({}, out) }));

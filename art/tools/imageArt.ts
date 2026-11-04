@@ -9,7 +9,16 @@ import { dirname } from "node:path";
 
 import * as draw from "@andornaut/art-kit/draw";
 import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
-import { composite, crop, fill, filledImage, opaque, type Rgba } from "@andornaut/art-kit/raster";
+import {
+  composite,
+  crop,
+  fill,
+  filledImage,
+  frameToRgba,
+  grayscale,
+  opaque,
+  type Rgba,
+} from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { Canvas, ImageData } from "skia-canvas";
 
@@ -33,9 +42,10 @@ export function image(width: number, height: number, colour?: string): RgbaImage
   return colour ? filledImage(rgba(colour), width, height) : blankImage(width, height);
 }
 
-/** Pillow's im.paste(colour, box): replace the box's pixels, clipped to the image. */
-export function rect(colour: string, [x0, y0, x1, y1]: Box, target: RgbaImage): void {
-  fill({ rect: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } }, rgba(colour), target);
+/** Pillow's im.paste(colour, box): replace the box's pixels, clipped; null clears them. */
+export function rect(colour: string | null, [x0, y0, x1, y1]: Box, target: RgbaImage): void {
+  const value: Rgba = colour === null ? [0, 0, 0, 0] : rgba(colour);
+  fill({ rect: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } }, value, target);
 }
 
 /** Pillow's ImageDraw polygon(points, fill=colour[, outline]). */
@@ -94,13 +104,26 @@ export function writeRgbImage(path: string, source: RgbaImage): void {
   writeFileSync(path, encodeRgbPng(PNG_OPTIONS, opaque(source)));
 }
 
-/** A Skia canvas holding an image whose pixels are opaque or fully clear, for writeTileset. */
+/** A CPU Skia canvas holding an image whose pixels are opaque or fully clear, for writeTileset. */
 export function canvasOf(source: RgbaImage): Canvas {
   const canvas = new Canvas(source.width, source.height);
-  canvas
-    .getContext("2d")
-    .putImageData(new ImageData(source.data, source.width, source.height), 0, 0);
+  canvas.gpu = false;
+  const data = new ImageData(new Uint8ClampedArray(source.data), source.width, source.height);
+  canvas.getContext("2d").putImageData(data, 0, 0);
   return canvas;
+}
+
+/** A palette frame as an image, with clear pixels where the frame has none. */
+export function frameImage(px: pixel.Frame): RgbaImage {
+  return frameToRgba({ resolveRgb: pixel.rgb }, px);
+}
+
+/** Pillow's ImageOps.grayscale as an opaque image, for an RGB or L save. */
+export function greyscale(source: RgbaImage): RgbaImage {
+  const plane = grayscale(source);
+  const grey = filledImage([0, 0, 0, 255], plane.width, plane.height);
+  plane.data.forEach((level, i) => grey.data.set([level, level, level], i * 4));
+  return grey;
 }
 
 /** The first frame of an exported sprite sheet, public/art/sprites/<key>.png. */
@@ -113,19 +136,6 @@ export function spriteFrame(key: string): RgbaImage {
   if (!first) throw new Error(`${key}: sprite sheet has no frames`);
   const { h, w, x, y } = first.frame;
   return cropBox([x, y, x + w, y + h], readImage(`${path}.png`));
-}
-
-export interface BackgroundTones {
-  /** The published paint of backdrop key: muted background tones over the drawn image. */
-  apply(key: string, source: RgbaImage): RgbaImage;
-}
-
-/** The background tone adapter that every backdrop build publishes through. */
-export async function backgroundTones(): Promise<BackgroundTones> {
-  // CLEANUP (added 2026-11-03): import ./backgroundTones.ts statically once background_tones.py
-  // has its TypeScript port; loading it by name keeps the previews and type checks independent.
-  const module = "./backgroundTones.ts";
-  return (await import(module)) as BackgroundTones;
 }
 
 /** Suffixes of a terrain block's tile at column x, row y of a width-wide block. */
@@ -233,20 +243,3 @@ export function backdropEntry(
 }
 
 export const BACKDROPS_DIR = "public/art/backdrops";
-
-/** Exit with the usage text unless argv is `build` or `preview OUT`. */
-export async function cli(
-  {
-    build,
-    preview,
-    usage,
-  }: { usage: string; build: () => Promise<void>; preview: (out: string) => Promise<void> },
-  argv: readonly string[] = process.argv.slice(2),
-): Promise<void> {
-  if (argv.length === 1 && argv[0] === "build") await build();
-  else if (argv.length === 2 && argv[0] === "preview") await preview(argv[1] as string);
-  else {
-    console.error(usage);
-    process.exit(1);
-  }
-}

@@ -83,6 +83,7 @@
  * | pedestrian-raccoon | `idle` | `walk` | none, falls back to `idle` | none, falls back to `idle` | none  |
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { contrast, darker, Grid, K } from "./pixel.ts";
 
@@ -517,6 +518,4 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 const ONCE = { pigeon: ["flee"], "dog-pug": ["perk"] };
 
-if (import.meta.main) {
-  await pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites);
-}
+if (import.meta.main) run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));

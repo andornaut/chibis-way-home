@@ -41,6 +41,7 @@
  * outside taps return to the map.
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 import * as zoneThemes from "./zoneThemes.ts";
@@ -503,15 +504,16 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main) {
-  await pixel.main(
-    {
-      doc: USAGE,
-      grounds: ["c0cbdc", "ead4aa", "5a6988"],
-      once: ONCE,
-      slices: SLICES,
-      srcDir: SRC,
-    },
-    sprites,
+if (import.meta.main)
+  run(() =>
+    pixel.main(
+      {
+        doc: USAGE,
+        grounds: ["c0cbdc", "ead4aa", "5a6988"],
+        once: ONCE,
+        slices: SLICES,
+        srcDir: SRC,
+      },
+      sprites,
+    ),
   );
-}

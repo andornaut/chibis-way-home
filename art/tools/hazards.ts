@@ -53,6 +53,7 @@
  * carries it.
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
@@ -247,6 +248,5 @@ const HITBOX: Record<string, pixel.HitboxTuple> = {
   "ferret-trap-snap": [4, 14, 42, 12],
 };
 
-if (import.meta.main) {
-  await pixel.main({ doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC }, sprites);
-}
+if (import.meta.main)
+  run(() => pixel.main({ doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC }, sprites));

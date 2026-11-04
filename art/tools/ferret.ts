@@ -57,6 +57,7 @@
  * (a short brow dipped towards the snout, the lid at a third, the mouth turned down).
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
@@ -346,6 +347,4 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-ferret", portraitTags()];
 }
 
-if (import.meta.main) {
-  await pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites);
-}
+if (import.meta.main) run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));

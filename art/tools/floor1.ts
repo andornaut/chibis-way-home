@@ -156,19 +156,20 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 import { renderFrame } from "@andornaut/art-kit/generate";
-import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
+import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import {
   composite,
   crop,
   filledImage,
-  frameToRgba,
   opaque,
   paste,
   resizeNearest,
 } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
 import * as backgroundTones from "./backgroundTones.ts";
+import { frameImage, readImage } from "./imageArt.ts";
 import * as nature from "./nature.ts";
 import * as pixel from "./pixel.ts";
 import { darker, Grid, rgb } from "./pixel.ts";
@@ -1526,10 +1527,6 @@ export const BACKDROP_DEFS = new Map<string, BackdropDef>([
 
 // ---------------------------------------------------------------- export
 
-export function frameImage(px: pixel.Frame): RgbaImage {
-  return frameToRgba({ resolveRgb: rgb }, px);
-}
-
 function lookup<T>(map: ReadonlyMap<string, T>, key: string): T {
   const value = map.get(key);
   if (value === undefined) throw new Error(`Unknown key ${key}`);
@@ -1667,10 +1664,6 @@ const BUTTONS = [
   ["ui-touch-use", [592, 210]],
   ["ui-touch-jump", [667, 307]],
 ] as const;
-
-function readImage(path: string): RgbaImage {
-  return decodePng(readFileSync(path));
-}
 
 /** Draw the Use and Jump buttons' rest frame on each screen whose top is in tops. */
 function touchButtons(im: RgbaImage, tops: readonly number[]): void {
@@ -1853,14 +1846,4 @@ export function preview(out: string): void {
   writeFileSync(out, encodeRgbPng(PNG_OPTIONS, sheet));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 2 && argv[0] === "preview") {
-    preview(argv[1] as string);
-  } else if (argv.length === 1 && argv[0] === "build") {
-    await build();
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

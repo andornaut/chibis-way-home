@@ -37,13 +37,13 @@ import {
   crop,
   fill,
   filledImage,
-  frameToRgba,
   grayscale,
   resizeNearest,
-  type Rgba,
 } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
+import { frameImage, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -214,14 +214,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [POOP, [["idle", [poop()], 400]]];
 }
 
-function image(px: pixel.Frame): RgbaImage {
-  return frameToRgba({ resolveRgb: pixel.rgb }, px);
-}
-
-function rgba(name: string): Rgba {
-  return [...pixel.rgb(name), 255];
-}
-
 /** Pillow's rectangle((x0, y0, x1, y1)) fill: an inclusive box. */
 function box(target: RgbaImage, x0: number, y0: number, x1: number, y1: number, c: string): void {
   fill({ rect: { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 } }, rgba(c), target);
@@ -245,9 +237,9 @@ function context(bird: RgbaImage, state = "idle", phase = 0): RgbaImage {
   box(im, 215, 221, 238, 222, "white");
   const px = ["idle", "prepare", "rest", "frustration"].includes(state) ? 203 : 300;
   const py = px === 203 ? 172 : 120;
-  composite({ x: px, y: py }, image(draw(state, phase)), im);
+  composite({ x: px, y: py }, frameImage(draw(state, phase)), im);
   composite({ x: 440, y: 218 }, bird, im);
-  if (state === "drop") composite({ x: 319, y: 174 + phase * 10 }, image(poop()), im);
+  if (state === "drop") composite({ x: 319, y: 174 + phase * 10 }, frameImage(poop()), im);
   return im;
 }
 
@@ -255,9 +247,11 @@ async function preview(out: string): Promise<void> {
   const tags: pixel.Tags = ([...sprites()][0] as pixel.SpriteEntry)[1];
   const sheet = filledImage(rgba("zone-purple"), 720, Math.max(360, tags.length * 56 + 16));
   tags.forEach(([, frames], row) => {
-    frames.forEach((px, col) => composite({ x: 24 + col * 72, y: 8 + row * 56 }, image(px), sheet));
+    frames.forEach((px, col) =>
+      composite({ x: 24 + col * 72, y: 8 + row * 56 }, frameImage(px), sheet),
+    );
   });
-  composite({ x: 368, y: 24 }, image(poop()), sheet);
+  composite({ x: 368, y: 24 }, frameImage(poop()), sheet);
   writeFileSync(out, encodeRgbaPng(PNG, sheet));
   const stem = out.replace(/\.[^./]*$/, "");
   const bird = crop(
@@ -279,21 +273,12 @@ async function preview(out: string): Promise<void> {
   writeFileSync(`${stem}.gif`, encodeGif({ loop: 0, durations }, frames));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 2 && argv[0] === "preview") {
-    await preview(argv[1] as string);
-  } else {
-    await pixel.main(
-      {
-        contacts: [KEY],
-        doc: USAGE,
-        grounds: [K["zone-purple"] as string, K.slate as string, K.cream as string],
-        hitboxes: HITBOX,
-        once: ONCE,
-        srcDir: SRC,
-      },
-      sprites,
-    );
-  }
-}
+if (import.meta.main)
+  run(() =>
+    commands({
+      usage: USAGE,
+      build: () =>
+        pixel.build({ contacts: [KEY], hitboxes: HITBOX, once: ONCE, srcDir: SRC }, [...sprites()]),
+      preview,
+    }),
+  );

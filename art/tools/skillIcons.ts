@@ -12,6 +12,7 @@
  * chrome is baked into these glyphs.
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
 const SRC = "art/ui";
@@ -62,6 +63,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   }
 }
 
-if (import.meta.main) {
-  await pixel.main({ doc: USAGE, grounds: [pixel.K.navy], once: ONCE, srcDir: SRC }, sprites);
-}
+if (import.meta.main)
+  run(() => pixel.main({ doc: USAGE, grounds: [pixel.K.navy], once: ONCE, srcDir: SRC }, sprites));

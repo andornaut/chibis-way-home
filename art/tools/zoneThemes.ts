@@ -10,6 +10,8 @@
  * Run from the repository root.
  */
 
+import { commands, run } from "./cli.ts";
+
 export interface Theme {
   primary: string;
   colour: string;
@@ -62,16 +64,4 @@ export async function build(): Promise<void> {
   console.log("built zone themes");
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") {
-    // Not awaited at top level: pixel.ts imports this module, which must finish loading first.
-    build().catch((error: unknown) => {
-      console.error(error);
-      process.exitCode = 1;
-    });
-  } else {
-    console.error("Usage: zoneThemes.ts build");
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: "Usage: zoneThemes.ts build", build }));

@@ -15,6 +15,7 @@ import { exportAseprite } from "@andornaut/art-kit/generate";
 import { polygon } from "@andornaut/art-kit/draw";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
 const SRC = "art/scenery";
@@ -213,19 +214,13 @@ async function build(): Promise<void> {
   console.log("built", KEY);
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") {
-    await build();
-  } else {
-    await pixel.main(
-      {
-        doc: USAGE,
-        grounds: [pixel.K["zone-green"] as string, pixel.K.forest as string],
-        once: ONCE,
-        srcDir: SRC,
-      },
-      sprites,
-    );
-  }
-}
+const GROUNDS = [pixel.K["zone-green"] as string, pixel.K.forest as string];
+
+if (import.meta.main)
+  run(() =>
+    commands({
+      usage: USAGE,
+      build,
+      preview: (out) => pixel.preview({ out, grounds: GROUNDS }, [...sprites()]),
+    }),
+  );

@@ -36,6 +36,7 @@
  * art/antagonists/raccoon-antagonist.aseprite and its PNG/JSON export.
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -263,16 +264,17 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main) {
-  await pixel.main(
-    {
-      contacts: [KEY],
-      doc: USAGE,
-      grounds: [K["zone-purple"], K.slate, K.cream],
-      hitboxes: HITBOX,
-      once: ONCE,
-      srcDir: SRC,
-    },
-    sprites,
+if (import.meta.main)
+  run(() =>
+    pixel.main(
+      {
+        contacts: [KEY],
+        doc: USAGE,
+        grounds: [K["zone-purple"], K.slate, K.cream],
+        hitboxes: HITBOX,
+        once: ONCE,
+        srcDir: SRC,
+      },
+      sprites,
+    ),
   );
-}

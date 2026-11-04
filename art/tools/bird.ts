@@ -82,6 +82,7 @@
 import { crop, frameToRgba, paste, rotateNearest } from "@andornaut/art-kit/raster";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -525,6 +526,4 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 // Tags that play once and hold their last frame; every other tag loops.
 export const ONCE = { bird: ["jump", "land", "death", "dash", "double-jump"] };
 
-if (import.meta.main) {
-  await pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites);
-}
+if (import.meta.main) run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));

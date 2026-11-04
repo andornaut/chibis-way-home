@@ -12,10 +12,10 @@
 
 import { paste } from "@andornaut/art-kit/raster";
 
+import * as backgroundTones from "./backgroundTones.ts";
+import { commands, run } from "./cli.ts";
 import {
   BACKDROPS_DIR,
-  backgroundTones,
-  cli,
   cropBox,
   ellipse,
   image,
@@ -28,7 +28,7 @@ import {
   writeRgbImage,
 } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
-import { drawLabel } from "./previewText.ts";
+import { drawLabel, labelHeight } from "./previewText.ts";
 
 export const SIZES: Readonly<Record<string, readonly [width: number, height: number]>> = {
   "restaurant-counter": [96, 48],
@@ -206,16 +206,25 @@ export function registry(): pixel.ManifestEntry[] {
   }));
 }
 
-async function build(): Promise<void> {
-  const tones = await backgroundTones();
+function build(): void {
   for (const key of Object.keys(SIZES))
-    writeImage(`${BACKDROPS_DIR}/apartment-${key}.png`, tones.apply(`apartment-${key}`, draw(key)));
+    writeImage(
+      `${BACKDROPS_DIR}/apartment-${key}.png`,
+      backgroundTones.apply(`apartment-${key}`, draw(key)),
+    );
 }
 
-async function preview(out: string): Promise<void> {
-  const im = image(720, 480, "zone-red");
+function preview(out: string): void {
+  const keys = Object.keys(SIZES);
+  const label = (key: string) => key.replaceAll("-", "\n");
+  // Rows of five 240px cells, extended below the last row so its labels are not clipped.
+  const bottom = keys.reduce(
+    (most, key, i) => Math.max(most, Math.floor(i / 5) * 240 + 212 + labelHeight(label(key)) + 4),
+    480,
+  );
+  const im = image(720, bottom, "zone-red");
   const bird = cropBox([0, 0, 48, 42], readImage(`${pixel.SPRITES}/bird.png`));
-  Object.keys(SIZES).forEach((key, i) => {
+  keys.forEach((key, i) => {
     const x = (i % 5) * 144;
     const y = Math.floor(i / 5) * 240;
     rect("zone-red-shade", [x + 4, y + 32, x + 140, y + 204], im);
@@ -223,9 +232,9 @@ async function preview(out: string): Promise<void> {
     const prop = draw(key);
     paste({ at: { x: x + 8, y: y + 204 - prop.height }, mask: "alpha", keepAlpha: true }, prop, im);
     paste({ at: { x: x + 94, y: y + 162 }, mask: "alpha", keepAlpha: true }, bird, im);
-    drawLabel({ x: x + 5, y: y + 212, colour: "ink" }, key.replaceAll("-", "\n"), im);
+    drawLabel({ x: x + 5, y: y + 212, colour: "ink" }, label(key), im);
   });
   writeRgbImage(out, im);
 }
 
-if (import.meta.main) await cli({ usage: USAGE, build, preview });
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

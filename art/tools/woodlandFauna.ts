@@ -16,6 +16,7 @@ import { ellipse, polygon } from "@andornaut/art-kit/draw";
 import { channel } from "@andornaut/art-kit/raster";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -193,14 +194,15 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["background-swallow", [["flight", [0, 1, 2, 3].map(swallow), 120]]];
 }
 
-if (import.meta.main) {
-  await pixel.main(
-    {
-      doc: USAGE,
-      grounds: [K["zone-green"] as string, K.forest as string],
-      once: ONCE,
-      srcDir: SRC,
-    },
-    sprites,
+if (import.meta.main)
+  run(() =>
+    pixel.main(
+      {
+        doc: USAGE,
+        grounds: [K["zone-green"] as string, K.forest as string],
+        once: ONCE,
+        srcDir: SRC,
+      },
+      sprites,
+    ),
   );
-}

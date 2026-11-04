@@ -21,26 +21,18 @@ import { dirname } from "node:path";
 
 import { rectangle, roundedRectangle } from "@andornaut/art-kit/draw";
 import { decodePng, encodeRgbaPng } from "@andornaut/art-kit/png";
-import {
-  composite,
-  crop,
-  filledImage,
-  grayscale,
-  type Plane,
-  type Rgba,
-  resizeNearest,
-} from "@andornaut/art-kit/raster";
+import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
-import * as pixel from "./pixel.ts";
+import { commands, run } from "./cli.ts";
+import { greyscale, rgba } from "./imageArt.ts";
+import { bitmapFont, type Glyph } from "./previewText.ts";
 
 const USAGE = "Usage: cutscene.ts build | preview OUT.png";
 const PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
 const KEY = "stage-cutscene-placeholder";
 const OUT = `public/art/images/${KEY}.png`;
 const SIZE = [720, 360] as const;
-
-const colour = (name: string): Rgba => [...pixel.rgb(name), 255];
 
 interface SpriteSheet {
   frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
@@ -60,7 +52,7 @@ function sprite(key: string, tag: string): RgbaImage {
 }
 
 function illustration(): RgbaImage {
-  const im = filledImage(colour("lgrey"), SIZE[0], SIZE[1]);
+  const im = filledImage(rgba("lgrey"), SIZE[0], SIZE[1]);
   // Broad neutral blocks suggest depth without depicting a new destination or story prop.
   for (const [x0, y0, x1, y1] of [
     [0, 142, 112, 247],
@@ -68,17 +60,17 @@ function illustration(): RgbaImage {
     [560, 118, 656, 247],
     [624, 160, 719, 247],
   ] as const)
-    roundedRectangle({ radius: 10, fill: colour("grey") }, { x0, y0, x1, y1 }, im);
+    roundedRectangle({ radius: 10, fill: rgba("grey") }, { x0, y0, x1, y1 }, im);
   for (const [x0, y0, x1, y1] of [
     [0, 218, 184, 247],
     [536, 218, 719, 247],
   ] as const)
-    roundedRectangle({ radius: 6, fill: colour("slate") }, { x0, y0, x1, y1 }, im);
+    roundedRectangle({ radius: 6, fill: rgba("slate") }, { x0, y0, x1, y1 }, im);
   // Shared safe-edge grammar: one dark edge and two light pixels over the solid floor.
-  rectangle({ fill: colour("slate") }, { x0: 0, y0: 248, x1: 719, y1: 359 }, im);
-  rectangle({ fill: colour("navy") }, { x0: 0, y0: 248, x1: 719, y1: 248 }, im);
-  rectangle({ fill: colour("white") }, { x0: 0, y0: 249, x1: 719, y1: 250 }, im);
-  rectangle({ fill: colour("grey") }, { x0: 0, y0: 251, x1: 719, y1: 254 }, im);
+  rectangle({ fill: rgba("slate") }, { x0: 0, y0: 248, x1: 719, y1: 359 }, im);
+  rectangle({ fill: rgba("navy") }, { x0: 0, y0: 248, x1: 719, y1: 248 }, im);
+  rectangle({ fill: rgba("white") }, { x0: 0, y0: 249, x1: 719, y1: 250 }, im);
+  rectangle({ fill: rgba("grey") }, { x0: 0, y0: 251, x1: 719, y1: 254 }, im);
   const bird = sprite("bird", "idle");
   composite({ x: 336, y: 248 - bird.height }, bird, im);
   return im;
@@ -91,21 +83,6 @@ function save(path: string, image: RgbaImage): void {
 
 function build(): void {
   save(OUT, illustration());
-}
-
-type Glyph = Record<"x" | "y" | "width" | "height" | "xoffset" | "yoffset" | "xadvance", number>;
-
-/** font-body's glyph metrics by character code. */
-function fontChars(): Map<number, Glyph> {
-  const text = readFileSync("public/art/fonts/font-body.fnt", "utf8");
-  const chars = new Map<number, Glyph>();
-  for (const match of text.matchAll(/<char\s([^>]*)\/>/g)) {
-    const values = Object.fromEntries(
-      [...(match[1] as string).matchAll(/(\w+)="([^"]*)"/g)].map((m) => [m[1], Number(m[2])]),
-    ) as Glyph & { id: number };
-    chars.set(values.id, values);
-  }
-  return chars;
 }
 
 function button(im: RgbaImage, box: readonly [number, number, number, number]): void {
@@ -135,11 +112,10 @@ function button(im: RgbaImage, box: readonly [number, number, number, number]): 
       composite({ x: at(dx, col), y: at(dy, row) }, scaled, im);
     }
   // Preview-only existing action label, never exported in the backdrop.
-  const chars = fontChars();
-  const atlas = decodePng(new Uint8Array(readFileSync("public/art/fonts/font-body.png")));
+  const { atlas, glyphs } = bitmapFont();
   const label = "Continue";
   const glyphOf = (c: string): Glyph => {
-    const glyph = chars.get(c.charCodeAt(0));
+    const glyph = glyphs.get(c.charCodeAt(0));
     if (!glyph) throw new Error(`font-body has no ${c}`);
     return glyph;
   };
@@ -154,28 +130,13 @@ function button(im: RgbaImage, box: readonly [number, number, number, number]): 
   }
 }
 
-/** A grey plane as an opaque RGBA image, as Pillow decodes an L PNG. */
-function fromPlane(plane: Plane): RgbaImage {
-  const data = new Uint8Array(plane.width * plane.height * 4);
-  plane.data.forEach((value, i) => data.set([value, value, value, 255], i * 4));
-  return { width: plane.width, height: plane.height, data };
-}
-
 function preview(out: string): void {
   const im = illustration();
   button(im, [280, 296, 160, 48]);
   save(out, im);
   const stem = out.replace(/\.[^./]*$/, "");
-  save(`${stem}-grey.png`, fromPlane(grayscale(im)));
+  save(`${stem}-grey.png`, greyscale(im));
   save(`${stem}-phone.png`, resizeNearest(864, 432, im));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") build();
-  else if (argv.length === 2 && argv[0] === "preview") preview(argv[1] as string);
-  else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

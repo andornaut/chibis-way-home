@@ -34,6 +34,8 @@ import { arc, ellipse, line, point, polygon, rectangle } from "@andornaut/art-ki
 import { composite, fill, type Rgba } from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { run } from "./cli.ts";
+import { rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 
 const SRC = "art/antagonists";
@@ -56,10 +58,6 @@ const RUSH: readonly Stride[] = [
   [-6, 7, -2, -5],
   [4, -3, -5, 0],
 ];
-
-function rgba(name: string): Rgba {
-  return [...pixel.rgb(name), 255];
-}
 
 /** Pillow-style drawing on one image: flat x, y coordinates and inclusive boxes. */
 function drawer(image: RgbaImage) {
@@ -491,9 +489,10 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-dog", [["neutral", [pixels(portraitImage())], 1000]]];
 }
 
-if (import.meta.main) {
-  await pixel.main(
-    { contacts: ["dog-antagonist"], doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC },
-    sprites,
+if (import.meta.main)
+  run(() =>
+    pixel.main(
+      { contacts: ["dog-antagonist"], doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC },
+      sprites,
+    ),
   );
-}

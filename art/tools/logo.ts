@@ -28,14 +28,14 @@ import {
   composite,
   crop,
   filledImage,
-  frameToRgba,
   opaque,
   paste,
-  type Rgba,
   resizeNearest,
 } from "@andornaut/art-kit/raster";
 import { blankImage, opaqueRect, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
+import { frameImage, rgba } from "./imageArt.ts";
 import * as birdArt from "./bird.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
@@ -97,12 +97,6 @@ const CANVASES: Readonly<Record<Key, readonly [number, number]>> = {
   "logo-icon": [53, 41],
 };
 
-const colour = (name: string): Rgba => [...pixel.rgb(name), 255];
-
-function image(px: pixel.Frame): RgbaImage {
-  return frameToRgba({ resolveRgb: pixel.rgb }, px);
-}
-
 /** Flat 5x7 lettering: one dark outline and a single upper-left light edge at larger sizes. */
 function word({ b, fill, light }: WordStyle, text: string): RgbaImage {
   const gap = b;
@@ -127,7 +121,7 @@ function word({ b, fill, light }: WordStyle, text: string): RgbaImage {
     const rim = b >= 3 && (!mask.has(at - 1) || !mask.has(at - width));
     g.p(x, y, rim ? light : fill);
   }
-  return image(g.outlined({ edge: () => K.ink as string }));
+  return frameImage(g.outlined({ edge: () => K.ink as string }));
 }
 
 function canvas(key: Key): RgbaImage {
@@ -137,9 +131,9 @@ function canvas(key: Key): RgbaImage {
 
 /** A restrained flat ledge: powder-blue face, light top and dark lower edge. */
 function platform(im: RgbaImage, x: number, y: number, width: number): void {
-  rectangle({ fill: colour("ink") }, { x0: x, y0: y, x1: x + width - 1, y1: y + 3 }, im);
+  rectangle({ fill: rgba("ink") }, { x0: x, y0: y, x1: x + width - 1, y1: y + 3 }, im);
   line(
-    { fill: colour("lgrey") },
+    { fill: rgba("lgrey") },
     [
       { x: x + 1, y },
       { x: x + width - 2, y },
@@ -147,7 +141,7 @@ function platform(im: RgbaImage, x: number, y: number, width: number): void {
     im,
   );
   rectangle(
-    { fill: colour("zone-blue") },
+    { fill: rgba("zone-blue") },
     { x0: x + 1, y0: y + 1, x1: x + width - 2, y1: y + 2 },
     im,
   );
@@ -250,7 +244,7 @@ function birdAt(s: number, pose: "rest" | "downstroke" = "rest"): RgbaImage {
     pixel.round(4 * s),
     "ink",
   );
-  return image(g.outlined({ edge: () => K[birdArt.OUTLINE] as string }));
+  return frameImage(g.outlined({ edge: () => K[birdArt.OUTLINE] as string }));
 }
 
 /** image cropped to its non-transparent pixels, like Pillow's crop(getbbox()). */
@@ -264,8 +258,8 @@ function logo(): RgbaImage {
   const im = canvas("logo");
   const d = trimmed(birdAt(1.6));
   composite({ x: Math.floor((im.width - d.width) / 2), y: 74 - d.height }, d, im);
-  rectangle({ fill: colour("ink") }, { x0: 35, y0: 76, x1: 522, y1: 238 }, im);
-  rectangle({ fill: colour("dslate") }, { x0: 36, y0: 77, x1: 521, y1: 237 }, im);
+  rectangle({ fill: rgba("ink") }, { x0: 35, y0: 76, x1: 522, y1: 238 }, im);
+  rectangle({ fill: rgba("dslate") }, { x0: 36, y0: 77, x1: 521, y1: 237 }, im);
   platform(im, Math.floor((im.width - 210) / 2), 74, 210);
   for (const [text, spec, y] of [
     [WORDMARK[0], BIG, 82],
@@ -282,7 +276,7 @@ function logoNav(): RgbaImage {
   const d = trimmed(birdAt(0.65));
   composite({ x: 0, y: Math.floor((im.height - d.height) / 2) }, d, im);
   const lettering = word(NAV, WORDMARK.join(" "));
-  rectangle({ fill: colour("dslate") }, { x0: 31, y0: 6, x1: im.width - 1, y1: 23 }, im);
+  rectangle({ fill: rgba("dslate") }, { x0: 31, y0: 6, x1: im.width - 1, y1: 23 }, im);
   composite({ x: 32, y: Math.floor((im.height - lettering.height) / 2) }, lettering, im);
   return im;
 }
@@ -330,13 +324,13 @@ function preview(out: string): void {
   for (const ground of ["lgrey", "navy"])
     for (const z of [1, 3])
       for (const im of ims.values()) {
-        const t = filledImage(colour(ground), im.width + 16, im.height + 16);
+        const t = filledImage(rgba(ground), im.width + 16, im.height + 16);
         composite({ x: 8, y: 8 }, im, t);
         tiles.push(resizeNearest(t.width * z, t.height * z, t));
       }
   const width = Math.max(...tiles.map((t) => t.width));
   const sheet = filledImage(
-    colour("ink"),
+    rgba("ink"),
     width,
     tiles.reduce((sum, t) => sum + t.height, 0),
   );
@@ -348,12 +342,4 @@ function preview(out: string): void {
   save(out, encodeRgbPng(PNG, sheet));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 2 && argv[0] === "preview") preview(argv[1] as string);
-  else if (argv.length === 1 && argv[0] === "build") build();
-  else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

@@ -9,6 +9,7 @@
  * from nonlethal opening parcels.
  */
 
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -39,15 +40,16 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [KEY, [["idle", [draw()], 400]]];
 }
 
-if (import.meta.main) {
-  await pixel.main(
-    {
-      doc: USAGE,
-      grounds: [K["zone-red"], K.slate],
-      hitboxes: HITBOX,
-      once: ONCE,
-      srcDir: SRC,
-    },
-    sprites,
+if (import.meta.main)
+  run(() =>
+    pixel.main(
+      {
+        doc: USAGE,
+        grounds: [K["zone-red"], K.slate],
+        hitboxes: HITBOX,
+        once: ONCE,
+        srcDir: SRC,
+      },
+      sprites,
+    ),
   );
-}

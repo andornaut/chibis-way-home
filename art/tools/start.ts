@@ -19,6 +19,7 @@ import { encodeRgbaPng } from "@andornaut/art-kit/png";
 import { filledImage, type Rgba, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
 import { dumpJson, type ManifestEntry, rgb } from "./pixel.ts";
 
 const USAGE = "Usage: start.ts build | preview OUT.png";
@@ -86,12 +87,4 @@ function preview(out: string): void {
   save(out, resizeNearest(SIZE[0] * 3, SIZE[1] * 3, background()));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") build();
-  else if (argv.length === 2 && argv[0] === "preview") preview(argv[1] as string);
-  else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

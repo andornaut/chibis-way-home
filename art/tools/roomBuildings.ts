@@ -17,19 +17,13 @@ import { dirname } from "node:path";
 
 import { polygon } from "@andornaut/art-kit/draw";
 import { decodePng, encodeRgbaPng } from "@andornaut/art-kit/png";
-import {
-  composite,
-  crop,
-  fill,
-  filledImage,
-  grayscale,
-  type Plane,
-  type Rgba,
-  resizeNearest,
-} from "@andornaut/art-kit/raster";
+import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
+import { greyscale, rect, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
+import * as roomDoors from "./roomDoors.ts";
 
 const USAGE = "Usage: roomBuildings.ts build | preview OUT.png";
 const PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
@@ -45,13 +39,6 @@ const STYLES: Readonly<Record<string, readonly [zone: string, gable: boolean]>> 
 };
 const OUT = "public/art/backdrops";
 
-const colour = (name: string): Rgba => [...pixel.rgb(name), 255];
-
-/** Pillow's Image.paste(colour, box): replace the pixels of an exclusive box. */
-function paste(image: RgbaImage, [x0, y0, x1, y1]: Box, rgba: Rgba): void {
-  fill({ rect: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } }, rgba, image);
-}
-
 function draw(style: string): RgbaImage {
   const [zone, gable] = STYLES[style] as readonly [string, boolean];
   const base = `bg-${zone}-near`;
@@ -59,11 +46,11 @@ function draw(style: string): RgbaImage {
   const light = `${base}-light`;
   const roof = style === "woodland" ? "bg-woodland-near-wood" : shade;
   const image = blankImage(SIZE[0], SIZE[1]);
-  const rectangle = (box: Box, c: string) => paste(image, box, colour(c));
+  const rectangle = (box: Box, c: string) => rect(c, box, image);
 
   if (gable) {
     polygon(
-      { fill: colour(roof) },
+      { fill: rgba(roof) },
       [
         { x: 0, y: 52 },
         { x: 90, y: 0 },
@@ -72,7 +59,7 @@ function draw(style: string): RgbaImage {
       image,
     );
     polygon(
-      { fill: colour(light) },
+      { fill: rgba(light) },
       [
         { x: 10, y: 52 },
         { x: 90, y: 12 },
@@ -99,7 +86,7 @@ function draw(style: string): RgbaImage {
     rectangle([x + 2, 122, x + 30, 124], base);
     rectangle([x - 2, 144, x + 34, 148], shade);
   }
-  paste(image, OPENING, [0, 0, 0, 0]);
+  rect(null, OPENING, image);
   return image;
 }
 
@@ -126,38 +113,20 @@ function build(): void {
   console.log("built", Object.keys(STYLES).length, "room entrance buildings");
 }
 
-/** A grey plane as an opaque RGBA image, as Pillow decodes an L PNG. */
-function fromPlane(plane: Plane): RgbaImage {
-  const data = new Uint8Array(plane.width * plane.height * 4);
-  plane.data.forEach((value, i) => data.set([value, value, value, 255], i * 4));
-  return { width: plane.width, height: plane.height, data };
-}
-
-async function preview(out: string): Promise<void> {
-  // Loaded by name: the room door is drawn by its own generator.
-  const doorsModule = "./roomDoors.ts";
-  const doors = (await import(doorsModule)) as { image: () => RgbaImage };
-  const result = filledImage(colour("lgrey"), 960, 228);
+function preview(out: string): void {
+  const result = filledImage(rgba("lgrey"), 960, 228);
   const sheet = decodePng(new Uint8Array(readFileSync("public/art/sprites/bird.png")));
   Object.keys(STYLES).forEach((style, i) => {
     const x = 6 + i * 192;
     composite({ x, y: 24 }, draw(style), result);
-    composite({ x: x + OPENING[0], y: 24 + OPENING[1] }, doors.image(), result);
+    composite({ x: x + OPENING[0], y: 24 + OPENING[1] }, roomDoors.image(), result);
     composite({ x: x + 128, y: 162 }, crop({ x: 0, y: 0, width: 48, height: 42 }, sheet), result);
   });
   save(out, result);
   const stem = out.replace(/\.[^./]*$/, "");
-  save(`${stem}-grey.png`, fromPlane(grayscale(result)));
+  save(`${stem}-grey.png`, greyscale(result));
   save(`${stem}-phone.png`, resizeNearest(1152, 274, result));
   save(`${stem}-3x.png`, resizeNearest(2880, 684, result));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") build();
-  else if (argv.length === 2 && argv[0] === "preview") await preview(argv[1] as string);
-  else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

@@ -18,12 +18,12 @@
  * geometry, not a validated playable stage.
  */
 
+import * as backgroundTones from "./backgroundTones.ts";
+import { commands, run } from "./cli.ts";
 import {
   BACKDROPS_DIR,
   backdropEntry,
-  backgroundTones,
   canvasOf,
-  cli,
   cropBox,
   image,
   over,
@@ -180,7 +180,6 @@ export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage,
   };
 
 async function build(): Promise<void> {
-  const tones = await backgroundTones();
   pixel.updateManifest("tilesets", [
     await pixel.writeTileset(
       { key: TILESET },
@@ -189,7 +188,7 @@ async function build(): Promise<void> {
   ]);
   const entries = Object.entries(BACKDROPS).map(([key, [draw, repeat]]) => {
     const im = draw();
-    writeImage(`${BACKDROPS_DIR}/${key}.png`, tones.apply(key, im));
+    writeImage(`${BACKDROPS_DIR}/${key}.png`, backgroundTones.apply(key, im));
     return backdropEntry({ bottom: BOTTOM, repeat }, key, im);
   });
   pixel.updateManifest("backdrops", entries);
@@ -229,4 +228,4 @@ async function preview(out: string): Promise<void> {
   writeRgbImage(out, context());
 }
 
-if (import.meta.main) await cli({ usage: USAGE, build, preview });
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

@@ -15,7 +15,7 @@ const FONT = "public/art/fonts/font-body";
 /** Pillow's default multiline spacing between lines. */
 const LINE_SPACING = 4;
 
-interface Glyph {
+export interface Glyph {
   x: number;
   y: number;
   width: number;
@@ -25,7 +25,7 @@ interface Glyph {
   xadvance: number;
 }
 
-interface BitmapFont {
+export interface BitmapFont {
   lineHeight: number;
   glyphs: Map<number, Glyph>;
   kernings: Map<string, number>;
@@ -38,7 +38,8 @@ function attributes(tag: string): Record<string, string> {
   return Object.fromEntries([...tag.matchAll(/(\w+)="([^"]*)"/g)].map(([, k, v]) => [k, v]));
 }
 
-function loadFont(): BitmapFont {
+/** font-body's metrics, kernings and atlas, parsed once. */
+export function bitmapFont(): BitmapFont {
   if (font) return font;
   const xml = readFileSync(`${FONT}.fnt`, "utf8");
   const common = attributes(/<common\b[^>]*>/.exec(xml)?.[0] ?? "");
@@ -69,6 +70,12 @@ function loadFont(): BitmapFont {
   return font;
 }
 
+/** The height of text's lines as drawLabel sets them, from the first line's top. */
+export function labelHeight(text: string): number {
+  const lines = text.split("\n").length;
+  return lines * bitmapFont().lineHeight + (lines - 1) * LINE_SPACING;
+}
+
 /**
  * Draw text with its top-left at x, y in colour (a K name or hex string), each glyph's coverage
  * composited over image. "\n" starts a new line.
@@ -78,7 +85,7 @@ export function drawLabel(
   text: string,
   image: RgbaImage,
 ): void {
-  const { atlas, glyphs, kernings, lineHeight } = loadFont();
+  const { atlas, glyphs, kernings, lineHeight } = bitmapFont();
   const [r, g, b] = pixel.rgb(colour);
   text.split("\n").forEach((line, row) => {
     const top = y + row * (lineHeight + LINE_SPACING);

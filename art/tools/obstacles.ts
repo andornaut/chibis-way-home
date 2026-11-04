@@ -32,10 +32,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { decodePng, encodeRgbPng } from "@andornaut/art-kit/png";
-import { composite, crop, fill, filledImage, grayscale } from "@andornaut/art-kit/raster";
+import { composite, crop, filledImage } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
-import { Canvas, ImageData } from "skia-canvas";
 
+import { commands, run } from "./cli.ts";
+import { canvasOf, greyscale, rect, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 
 const KEY = "tiles-platforming";
@@ -49,28 +50,18 @@ export const HITBOXES: Record<string, pixel.Hitbox> = {
 const USAGE = "Usage: obstacles.ts build | preview OUT.png";
 const PNG = { deflateLevel: 9, deflateStrategy: 0, filterType: 0 };
 
-type Box = readonly [x0: number, y0: number, x1: number, y1: number];
-
-const rgba = (colour: string) => [...pixel.rgb(colour), 255] as const;
-
-/** Fill box, [x0, y0, x1, y1) like Pillow's paste(colour, box), with an opaque colour. */
-export function rect(im: RgbaImage, box: Box, colour: string): void {
-  const [x0, y0, x1, y1] = box;
-  fill({ rect: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } }, rgba(colour), im);
-}
-
 function solid(top = false, bottom = false, left = false, right = false): RgbaImage {
   const im = filledImage(rgba("slate"), T, T);
-  if (left) rect(im, [0, 0, 2, T], "dslate");
-  if (right) rect(im, [10, 0, 12, T], "dslate");
+  if (left) rect("dslate", [0, 0, 2, T], im);
+  if (right) rect("dslate", [10, 0, 12, T], im);
   if (bottom) {
-    rect(im, [0, 9, T, 11], "dslate");
-    rect(im, [0, 11, T, 12], "navy");
+    rect("dslate", [0, 9, T, 11], im);
+    rect("navy", [0, 11, T, 12], im);
   }
   if (top) {
-    rect(im, [0, 0, T, 1], "navy");
-    rect(im, [0, 1, T, 3], "white");
-    rect(im, [0, 3, T, 5], "lgrey");
+    rect("navy", [0, 0, T, 1], im);
+    rect("white", [0, 1, T, 3], im);
+    rect("lgrey", [0, 3, T, 5], im);
   }
   return im;
 }
@@ -83,9 +74,9 @@ function ledge(side: string): RgbaImage {
     [3, 5, "lgrey"],
     [5, 6, "dslate"],
   ] as const)
-    rect(im, [0, y0, T, y1], colour);
-  if (side === "left") rect(im, [0, 3, 1, 6], "navy");
-  if (side === "right") rect(im, [11, 3, 12, 6], "navy");
+    rect(colour, [0, y0, T, y1], im);
+  if (side === "left") rect("navy", [0, 3, 1, 6], im);
+  if (side === "right") rect("navy", [11, 3, 12, 6], im);
   return im;
 }
 
@@ -114,7 +105,7 @@ function crumblingLedge(state: string, side: string): RgbaImage {
 export function hazard(side: string): RgbaImage {
   const im = filledImage([0, 0, 0, 0], T, T);
   const { height, width, x, y } = HITBOXES[`hazard-${side}`] as pixel.Hitbox;
-  rect(im, [x, y, x + width, y + height], "red");
+  rect("red", [x, y, x + width, y + height], im);
   return im;
 }
 
@@ -134,7 +125,7 @@ export function tiles(): [name: string, tile: RgbaImage][] {
   ] as const) {
     const [top, bottom, left, right] = flags.map(Boolean) as [boolean, boolean, boolean, boolean];
     const tile = solid(top, bottom, left, right);
-    if (name === "platform-top-joint") rect(tile, [10, 5, 12, 7], "dslate");
+    if (name === "platform-top-joint") rect("dslate", [10, 5, 12, 7], tile);
     items.push([name, tile]);
   }
   for (const side of ["left", "middle", "right"])
@@ -151,19 +142,10 @@ export function tiles(): [name: string, tile: RgbaImage][] {
   return items;
 }
 
-/** A CPU canvas holding image's pixels, for the shared tileset writer. */
-function toCanvas(image: RgbaImage): Canvas {
-  const canvas = new Canvas(image.width, image.height);
-  canvas.gpu = false;
-  const data = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
-  canvas.getContext("2d").putImageData(data, 0, 0);
-  return canvas;
-}
-
 export async function build(): Promise<void> {
   const entry = await pixel.writeTileset(
     { hitboxes: HITBOXES, key: KEY },
-    tiles().map(([name, tile]) => [name, toCanvas(tile)] as const),
+    tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),
   );
   const path = `public/art/${String(entry.json)}`;
   const data = JSON.parse(readFileSync(path, "utf8")) as { tiles: Record<string, number> };
@@ -171,13 +153,6 @@ export async function build(): Promise<void> {
     data.tiles[alias] = data.tiles[`${alias}-middle`] as number;
   pixel.writeJson({ sortKeys: true }, path, data);
   pixel.updateManifest("tilesets", [entry]);
-}
-
-/** One plane of grey levels as an opaque RGB image. */
-function greyImage(plane: { data: Uint8Array; width: number; height: number }): RgbaImage {
-  const image = filledImage([0, 0, 0, 255], plane.width, plane.height);
-  plane.data.forEach((level, i) => image.data.set([level, level, level], i * 4));
-  return image;
 }
 
 export function preview(out: string): void {
@@ -203,7 +178,7 @@ export function preview(out: string): void {
     [37, 3, 8],
     [50, 11, 10],
   ] as const)
-    rect(im, [c * T, r * T, (c + w) * T, 600], "grey");
+    rect("grey", [c * T, r * T, (c + w) * T, 600], im);
   block(0, 50, 60, 10);
   block(5, 44, 8, 2);
   block(18, 39, 7, 3);
@@ -242,17 +217,7 @@ export function preview(out: string): void {
     encodeRgbPng(PNG, crop({ x: 0, y: 0, width: 720, height: 360 }, im)),
   );
   // Grey levels as in Pillow's convert("L"), written as an RGB PNG.
-  writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyImage(grayscale(im))));
+  writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyscale(im)));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") {
-    await build();
-  } else if (argv.length === 2 && argv[0] === "preview") {
-    preview(argv[1] as string);
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

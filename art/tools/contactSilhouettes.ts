@@ -16,6 +16,7 @@ import { decodePng } from "@andornaut/art-kit/png";
 import { channel, crop } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
 export const OUT = "public/art/contact-silhouettes.json";
@@ -132,11 +133,4 @@ export function build(): void {
   console.log("built contact silhouettes:", Object.keys(sprites).sort().join(", "));
 }
 
-if (import.meta.main) {
-  if (process.argv.length === 3 && process.argv[2] === "build") {
-    build();
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build }));

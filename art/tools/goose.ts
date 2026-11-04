@@ -35,6 +35,7 @@
  * the fixed shape only.
  */
 
+import { run } from "./cli.ts";
 import * as bird from "./bird.ts";
 import * as obstacles from "./obstacles.ts";
 import * as pixel from "./pixel.ts";
@@ -239,16 +240,17 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main) {
-  await pixel.main(
-    {
-      contacts: [KEY],
-      doc: USAGE,
-      grounds: [K["zone-green"] as string, K.slate as string, K.cream as string],
-      hitboxes: HITBOX,
-      once: ONCE,
-      srcDir: SRC,
-    },
-    sprites,
+if (import.meta.main)
+  run(() =>
+    pixel.main(
+      {
+        contacts: [KEY],
+        doc: USAGE,
+        grounds: [K["zone-green"] as string, K.slate as string, K.cream as string],
+        hitboxes: HITBOX,
+        once: ONCE,
+        srcDir: SRC,
+      },
+      sprites,
+    ),
   );
-}

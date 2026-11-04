@@ -18,24 +18,16 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 import { renderFrame } from "@andornaut/art-kit/generate";
 import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
-import {
-  composite,
-  crop,
-  fill,
-  filledImage,
-  frameToRgba,
-  grayscale,
-  resizeNearest,
-} from "@andornaut/art-kit/raster";
+import { composite, crop, fill, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { commands, run } from "./cli.ts";
+import { frameImage, greyscale, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 
 const SIZE = [60, 84] as const;
 const USAGE = "Usage: roomDoors.ts build | preview OUT.png";
 const PNG = { deflateLevel: 9, deflateStrategy: 0, filterType: 0 };
-
-const rgba = (colour: string) => [...pixel.rgb(colour), 255] as const;
 
 export function door(style = "street"): pixel.Grid {
   const apartment = style === "apartment";
@@ -67,21 +59,12 @@ export function door(style = "street"): pixel.Grid {
 }
 
 export function image(style = "street"): RgbaImage {
-  return frameToRgba({ resolveRgb: pixel.rgb }, door(style).px);
-}
-
-/** The parts of floor1.ts this build uses. */
-interface Floor1 {
-  streetTilesCool(): readonly [
-    tiles: readonly (readonly [key: string, grid: pixel.Grid])[],
-    pieces: Readonly<Record<string, readonly (readonly string[])[]>>,
-  ];
+  return frameImage(door(style).px);
 }
 
 export async function build(): Promise<void> {
-  // Loaded by name, as the Python build loads its producers.
-  const floorModule = "./floor1.ts";
-  const floor = (await import(floorModule)) as Floor1;
+  // Loaded when building, as the Python build loads it: floor1.ts imports this module.
+  const floor = await import("./floor1.ts");
   const wayfinding = await import("./apartmentWayfinding.ts");
   const [tiles, pieces] = floor.streetTilesCool();
   const entry = await pixel.writeTileset(
@@ -105,13 +88,6 @@ export async function build(): Promise<void> {
   console.log("built street door 5x7 and apartment-room-door 60x84");
 }
 
-/** One plane of grey levels as an opaque RGB image. */
-function greyImage(plane: { data: Uint8Array; width: number; height: number }): RgbaImage {
-  const grey = filledImage([0, 0, 0, 255], plane.width, plane.height);
-  plane.data.forEach((level, i) => grey.data.set([level, level, level], i * 4));
-  return grey;
-}
-
 export function preview(out: string): void {
   const result = filledImage(rgba("lgrey"), 720, 360);
   for (const [left, style, wall] of [
@@ -131,19 +107,9 @@ export function preview(out: string): void {
   writeFileSync(out, encodeRgbaPng(PNG, result));
   const stem = out.replace(/\.[^./]*$/, "");
   // Grey levels as in Pillow's ImageOps.grayscale, written as an RGB PNG.
-  writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyImage(grayscale(result))));
+  writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyscale(result)));
   writeFileSync(`${stem}-phone.png`, encodeRgbaPng(PNG, resizeNearest(864, 432, result)));
   writeFileSync(`${stem}-3x.png`, encodeRgbaPng(PNG, resizeNearest(2160, 1080, result)));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") {
-    await build();
-  } else if (argv.length === 2 && argv[0] === "preview") {
-    preview(argv[1] as string);
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));

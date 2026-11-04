@@ -22,12 +22,14 @@
 
 import { opaque, paste } from "@andornaut/art-kit/raster";
 
+import * as backgroundTones from "./backgroundTones.ts";
+import * as floor1 from "./floor1.ts";
+import { commands, run } from "./cli.ts";
 import {
   BACKDROPS_DIR,
   backdropEntry,
-  backgroundTones,
-  cli,
   cropBox,
+  frameImage,
   image,
   line,
   over,
@@ -171,40 +173,24 @@ export function assets(): Record<string, readonly [image: RgbaImage, repeat: str
   };
 }
 
-async function build(): Promise<void> {
-  const tones = await backgroundTones();
+function build(): void {
   const entries = Object.entries(assets()).map(([key, [im, repeat]]) => {
-    writeImage(`${BACKDROPS_DIR}/${key}.png`, tones.apply(key, im));
+    writeImage(`${BACKDROPS_DIR}/${key}.png`, backgroundTones.apply(key, im));
     return backdropEntry({ bottom: FLOOR_Y, repeat }, key, im);
   });
   pixel.updateManifest("backdrops", entries);
   console.log("built", Object.keys(assets()).join(", "));
 }
 
-/** The floor1.ts exports the preview draws the street behind the depot with. */
-interface Floor1 {
-  BACKDROP_DEFS: ReadonlyMap<string, readonly [draw: () => { px: pixel.Frame }, ...unknown[]]>;
-  frameImage(px: pixel.Frame): RgbaImage;
-  streetTilesCool(): [readonly (readonly [name: string, tile: { px: pixel.Frame }])[], unknown];
-}
-
-async function loadFloor1(): Promise<Floor1> {
-  // CLEANUP (added 2026-11-03): import ./floor1.ts statically once floor1.py has its TypeScript
-  // port; loading it by name keeps the build and type checks independent of it.
-  const module = "./floor1.ts";
-  return (await import(module)) as Floor1;
-}
-
 /** Runs of a street backdrop from x0 to x1 standing on y, cropped at x1. */
 function streetRuns(
-  floor1: Floor1,
   runs: readonly (readonly [key: string, x0: number, x1: number, y: number])[],
   im: RgbaImage,
 ): void {
   for (const [key, x0, x1, y] of runs) {
     const def = floor1.BACKDROP_DEFS.get(key);
     if (!def) throw new Error(`floor1 has no backdrop ${key}`);
-    const p = floor1.frameImage(def[0]().px);
+    const p = frameImage(def[0]().px);
     for (let x = x0; x < x1; x += p.width) {
       const q = cropBox([0, 0, Math.min(p.width, x1 - x), p.height], p);
       over([x, y - q.height], q, im);
@@ -212,10 +198,9 @@ function streetRuns(
   }
 }
 
-function context(floor1: Floor1, birdCentre = 60): RgbaImage {
+function context(birdCentre = 60): RgbaImage {
   const im = image(720, 720, "lgrey");
   streetRuns(
-    floor1,
     ["street-sky", "street-city-far", "street-city-mid"].map(
       (key) => [key, 0, 720, FLOOR_Y] as const,
     ),
@@ -227,7 +212,7 @@ function context(floor1: Floor1, birdCentre = 60): RgbaImage {
   for (let x = 0; x < 720; x += wallIm.width) over([x, FLOOR_Y - wallIm.height], wallIm, im);
   over([360, FLOOR_Y - bayIm.height], bayIm, im);
   const tiles = new Map(
-    floor1.streetTilesCool()[0].map(([name, g]) => [name, floor1.frameImage(g.px)] as const),
+    floor1.streetTilesCool()[0].map(([name, g]) => [name, frameImage(g.px)] as const),
   );
   for (let row = 50; row < 60; row++)
     for (let col = 0; col < 60; col++) {
@@ -241,8 +226,7 @@ function context(floor1: Floor1, birdCentre = 60): RgbaImage {
   return opaque(im);
 }
 
-async function preview(out: string): Promise<void> {
-  const floor1 = await loadFloor1();
+function preview(out: string): void {
   const sheet = image(1456, 752, "ink");
   (
     [
@@ -252,9 +236,9 @@ async function preview(out: string): Promise<void> {
   ).forEach(([centre, label], i) => {
     const x = 8 + i * 728;
     drawLabel({ x, y: 6, colour: "cream" }, label, sheet);
-    paste({ at: { x, y: 28 } }, context(floor1, centre), sheet);
+    paste({ at: { x, y: 28 } }, context(centre), sheet);
   });
   writeRgbImage(out, sheet);
 }
 
-if (import.meta.main) await cli({ usage: USAGE, build, preview });
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
