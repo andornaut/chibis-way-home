@@ -148,37 +148,56 @@ it.each([...INDUSTRIAL_CONNECTORS, "outdoor-terrace-ascent"] as const)(
   },
 );
 
-it("keeps Blue vertical pools connected through lower space and the upper route", () => {
-  for (const stage of ["street", "city-streets", "city-boundary"]) {
-    const recipe = RECIPES[stage]!;
+it.each([
+  {
+    ascents: ["outdoor-lift-ascent", "outdoor-upper-ascent"],
+    assembled: "city-boundary",
+    connectors: BLUE_CONNECTORS,
+    name: "Blue",
+    stages: ["street", "city-streets", "city-boundary"],
+    verticalId: blueVerticalId,
+  },
+  {
+    ascents: COUNTRYSIDE_CONNECTORS.filter((id) => id.includes("ascent") && !id.includes("deep")),
+    assembled: "river-crossing",
+    connectors: COUNTRYSIDE_CONNECTORS,
+    name: "Countryside",
+    stages: ["farmland", "country-lanes", "river-crossing"],
+    verticalId: countrysideVerticalId,
+  },
+])(
+  "connects $name vertical pools through lower space and the upper ascents without moving the opening",
+  ({ ascents, assembled, connectors, name, stages, verticalId }) => {
+    for (const stage of stages) {
+      const recipe = RECIPES[stage]!;
+      if ("sections" in recipe) {
+        throw Error(`Expected continuous ${name} stage`);
+      }
+      for (const id of [...recipe.chunks!, recipe.start, recipe.finish]) {
+        expect(chunkProblems(CHUNK_LIBRARY, CATALOGUE, CHUNKS[id]!), id).toEqual([]);
+        expect(CHUNKS[id]!.rows).toBe(FOUR_SCREEN_ROWS);
+      }
+      const original = CHUNKS[`${stage}-start`]!;
+      const start = CHUNKS[verticalId(`${stage}-start`)]!;
+      expect(start.objects).toEqual(original.objects);
+      expect(start.slots).toEqual(original.slots);
+      expect(start.entry).toEqual(original.entry);
+    }
+    const recipe = RECIPES[assembled]!;
     if ("sections" in recipe) {
-      throw Error("Expected continuous Blue stage");
+      throw Error(`Expected continuous ${name} stage`);
     }
-    for (const id of [...recipe.chunks!, recipe.start, recipe.finish]) {
-      expect(chunkProblems(CHUNK_LIBRARY, CATALOGUE, CHUNKS[id]!), id).toEqual([]);
-      expect(CHUNKS[id]!.rows).toBe(FOUR_SCREEN_ROWS);
+    const plan = assembleZone(CHUNK_LIBRARY, 1, assembled, recipe);
+    const ids = plan.areas.main!.chunks!.map(({ chunk }) => chunk);
+    expect(ids[1]).toBe("outdoor-descent");
+    expect(ids.at(-2)).toBe("outdoor-surface-return");
+    expect(ascents).not.toEqual([]);
+    for (const id of ascents) {
+      expect(ids).toContain(id);
     }
-    const original = CHUNKS[`${stage}-start`]!;
-    const start = CHUNKS[blueVerticalId(`${stage}-start`)]!;
-    expect(start.objects).toEqual(original.objects);
-    expect(start.slots).toEqual(original.slots);
-    expect(start.entry).toEqual(original.entry);
-  }
-  const recipe = RECIPES["city-boundary"]!;
-  if ("sections" in recipe) {
-    throw Error("Expected continuous Blue stage");
-  }
-  const plan = assembleZone(CHUNK_LIBRARY, 1, "city-boundary", recipe);
-  const ids = plan.areas.main!.chunks!.map(({ chunk }) => chunk);
-  expect(ids[1]).toBe("outdoor-descent");
-  expect(ids.at(-2)).toBe("outdoor-surface-return");
-  for (const id of ["outdoor-lift-ascent", "outdoor-upper-ascent"]) {
-    expect(ids).toContain(id);
-  }
-  expect(
-    ids.filter((id) => BLUE_CONNECTORS.includes(id as (typeof BLUE_CONNECTORS)[number])),
-  ).not.toEqual([]);
-});
+    expect(ids.filter((id) => (connectors as readonly string[]).includes(id))).not.toEqual([]);
+  },
+);
 
 it.each(["outdoor-lift-ascent", "outdoor-upper-ascent"])(
   "crosses %s with an ordinary no-ability route",
@@ -314,37 +333,6 @@ it.each(["outdoor-lift-ascent", "outdoor-upper-ascent"])(
     }
   },
 );
-
-it("connects Countryside lower terraces and the timed upper bank without moving its opening", () => {
-  for (const stage of ["farmland", "country-lanes", "river-crossing"]) {
-    const recipe = RECIPES[stage]!;
-    if ("sections" in recipe) {
-      throw Error("Expected continuous Countryside stage");
-    }
-    for (const id of [...recipe.chunks!, recipe.start, recipe.finish]) {
-      expect(chunkProblems(CHUNK_LIBRARY, CATALOGUE, CHUNKS[id]!), id).toEqual([]);
-      expect(CHUNKS[id]!.rows).toBe(FOUR_SCREEN_ROWS);
-    }
-    const original = CHUNKS[`${stage}-start`]!;
-    const start = CHUNKS[countrysideVerticalId(`${stage}-start`)]!;
-    expect(start.objects).toEqual(original.objects);
-    expect(start.slots).toEqual(original.slots);
-    expect(start.entry).toEqual(original.entry);
-  }
-  const recipe = RECIPES["river-crossing"]!;
-  if ("sections" in recipe) {
-    throw Error("Expected continuous Countryside stage");
-  }
-  const plan = assembleZone(CHUNK_LIBRARY, 1, "river-crossing", recipe);
-  const ids = plan.areas.main!.chunks!.map(({ chunk }) => chunk);
-  expect(ids[1]).toBe("outdoor-descent");
-  expect(ids.at(-2)).toBe("outdoor-surface-return");
-  for (const id of COUNTRYSIDE_CONNECTORS.filter(
-    (id) => id.includes("ascent") && !id.includes("deep"),
-  )) {
-    expect(ids).toContain(id);
-  }
-});
 
 it("boards, rides and leaves the upper bank ferry from the actual approach phase", () => {
   const id = "outdoor-ferry-ascent";
