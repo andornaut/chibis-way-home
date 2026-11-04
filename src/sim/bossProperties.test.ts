@@ -65,12 +65,6 @@ const KNOWN_FAILURES: readonly KnownFailure[] = [
     scenario: "encounter bounded-flyer-post loading-yards still",
     tick: undefined,
   },
-  {
-    cause: "Pebble hovers without support in relocate at (475, 240)",
-    property: "no-stall",
-    scenario: "encounter bounded-flyer-post loading-yards still",
-    tick: 728,
-  },
 ];
 
 const known = (scenario: string, property: string) =>

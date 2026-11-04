@@ -328,7 +328,7 @@ function sampledPlatforms(
     return frame.crumbling?.unknown(start).length ? undefined : frame.sample(start, seconds);
   }
   // Zero-duration snapshots use resolved current-frame chords, not predictive intervals.
-  if (seconds === 0 && (offset < 0 || offset > frame.dtSeconds)) {
+  if (seconds === 0 && (offset < -EDGE || offset > frame.dtSeconds + EDGE)) {
     return undefined;
   }
   if (offset < -EDGE || offset + seconds > frame.dtSeconds + EDGE) {
