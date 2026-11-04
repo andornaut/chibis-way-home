@@ -9,7 +9,7 @@
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const KEY = "portrait-pigeon";
 const SRC = "art/antagonists";
@@ -25,7 +25,7 @@ function portrait(): pixel.Frame {
   g.tri([50, 29], [60, 33], [50, 36], "brown");
   g.rect(43, 20, 5, 5, "ink");
   g.rect(43, 20, 2, 2, "white");
-  return g.outlined({ edge: () => K.ink });
+  return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 export function* sprites(): Generator<pixel.SpriteEntry> {
@@ -33,4 +33,9 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 if (import.meta.main)
-  run(() => pixel.main({ doc: USAGE, grounds: [K.dslate, K.lgrey], srcDir: SRC }, sprites));
+  run(() =>
+    pixel.main(
+      { doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], srcDir: SRC },
+      sprites,
+    ),
+  );

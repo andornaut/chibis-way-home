@@ -44,7 +44,7 @@ import { commands, run } from "./cli.ts";
 import { frameImage } from "./imageArt.ts";
 import * as bird from "./bird.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const USAGE = "Usage: icons.ts build | preview OUT.png";
 const PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
@@ -129,7 +129,7 @@ function birdPx(
   ); // bill
   const e = Math.max(2, pixel.round(4 * s));
   g.rect(Math.trunc(hx), Math.trunc(hy - hr * 0.55), e, e, "ink"); // dot eye
-  return g.outlined({ edge: () => K[bird.OUTLINE] as string });
+  return g.outlined({ edge: () => pixel.hex(bird.OUTLINE) });
 }
 
 /**
@@ -151,9 +151,11 @@ function icon(side: number, ground: Ground): pixel.Frame {
   }
 
   const groundAt = (x: number, y: number): string => {
-    if (side <= 16) return K[FLAT] as string;
+    if (side <= 16) return pixel.hex(FLAT);
     const a = Math.atan2(y + 0.5 - c * 0.95, x + 0.5 - c);
-    return K[RAYS[Math.trunc(((a + Math.PI) / (2 * Math.PI)) * RAY_COUNT) % 2] as string] as string;
+    const ray =
+      Math.trunc(((a + Math.PI) / (2 * Math.PI)) * RAY_COUNT) % 2 === 0 ? RAYS[0] : RAYS[1];
+    return pixel.hex(ray);
   };
 
   const out = new Grid(side, side);

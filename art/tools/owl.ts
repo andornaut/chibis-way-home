@@ -16,7 +16,7 @@
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/antagonists";
 const KEY = "owl-antagonist";
@@ -60,7 +60,7 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   g.tri([21 + hx, hy + 5], [27 + hx, hy + 5], [24 + hx, hy + 10], "brown");
   // Feet stay visible without suggesting a perch or a standable wing edge.
   for (const x of [19, 28]) g.rect(x, flying ? 42 : 44, 3, 3, "brown");
-  return g.outlined({ edge: () => K.navy });
+  return g.outlined({ edge: () => pixel.hex("navy") });
 }
 
 const STATES = [
@@ -87,7 +87,7 @@ if (import.meta.main)
     pixel.main(
       {
         doc: USAGE,
-        grounds: [K["zone-green"], K.slate, K.cream],
+        grounds: [pixel.hex("zone-green"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
         srcDir: SRC,

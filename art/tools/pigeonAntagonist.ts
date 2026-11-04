@@ -45,7 +45,7 @@ import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { commands, run } from "./cli.ts";
 import { frameImage, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/antagonists";
 const KEY = "pigeon-antagonist";
@@ -54,7 +54,7 @@ const USAGE = "Usage: pigeonAntagonist.ts build | preview OUT.png";
 const ONCE = { [KEY]: ["anticipate-lift"], [POOP]: [] };
 const HITBOX: Record<string, pixel.HitboxTuple> = { [KEY]: [2, 2, 44, 46], [POOP]: [0, 0, 12, 12] };
 const PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
-const navy = () => K.navy as string;
+const navy = () => pixel.hex("navy");
 
 /** Near wing's broad feather groups, with no one-pixel texture. */
 function wing(g: Grid, pose: string, lift: number): void {

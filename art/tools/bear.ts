@@ -25,7 +25,7 @@
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/antagonists";
 const KEY = "bear-antagonist";
@@ -129,7 +129,7 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     const back = i === 1 || i === 2;
     g.blob(x, y, back ? 3 : 3.5, 3, back ? "plum" : "dbrown", "ink", "brown");
   });
-  return g.outlined({ edge: () => K.ink });
+  return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 function portrait(annoyed = false): pixel.Frame {
@@ -146,7 +146,7 @@ function portrait(annoyed = false): pixel.Frame {
   g.rect(37, annoyed ? 26 : 25, 2, 2, "white");
   g.rect(37, annoyed ? 24 : 22, 6, 2, "plum");
   phone(g, 45, 51);
-  return g.outlined({ edge: () => K.ink });
+  return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 function wave(phase: number): pixel.Frame {
@@ -159,7 +159,7 @@ function wave(phase: number): pixel.Frame {
       }
     }
   }
-  return g.outlined({ edge: () => K.dslate });
+  return g.outlined({ edge: () => pixel.hex("dslate") });
 }
 
 function anticipateLift(phase: number): pixel.Frame {
@@ -207,7 +207,7 @@ if (import.meta.main)
       {
         contacts: [KEY],
         doc: USAGE,
-        grounds: [K["zone-green"], K.slate],
+        grounds: [pixel.hex("zone-green"), pixel.hex("slate")],
         hitboxes: HITBOX,
         once: ONCE,
         srcDir: SRC,

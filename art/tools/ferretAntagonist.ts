@@ -131,7 +131,7 @@ if (import.meta.main)
       {
         contacts: [KEY],
         doc: USAGE,
-        grounds: [pixel.K["zone-red"] as string, pixel.K.slate as string],
+        grounds: [pixel.hex("zone-red"), pixel.hex("slate")],
         hitboxes: HITBOX,
         once: ONCE,
         srcDir: SRC,

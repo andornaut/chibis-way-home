@@ -12,7 +12,7 @@
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/antagonists";
 const ONCE = { "portrait-goose": [], "portrait-raccoon": [] };
@@ -35,7 +35,7 @@ function goose(): pixel.Frame {
     g.rect(x - 3, 18, 2, 2, "white");
   }
   g.rect(40, 19, 3, 2, "ink");
-  return g.outlined({ edge: () => K.ink });
+  return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 function raccoon(): pixel.Frame {
@@ -59,7 +59,7 @@ function raccoon(): pixel.Frame {
   g.ell(41, 43, 13, 8, "cream", "lgrey");
   g.rect(43, 36, 5, 3, "ink");
   g.rect(41, 45, 6, 1, "slate");
-  return g.outlined({ edge: () => K.ink });
+  return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 export function* sprites(): Generator<pixel.SpriteEntry> {
@@ -69,5 +69,8 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 if (import.meta.main)
   run(() =>
-    pixel.main({ doc: USAGE, grounds: [K.dslate, K.lgrey], once: ONCE, srcDir: SRC }, sprites),
+    pixel.main(
+      { doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], once: ONCE, srcDir: SRC },
+      sprites,
+    ),
   );

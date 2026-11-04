@@ -64,4 +64,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 if (import.meta.main)
-  run(() => pixel.main({ doc: USAGE, grounds: [pixel.K.navy], once: ONCE, srcDir: SRC }, sprites));
+  run(() =>
+    pixel.main({ doc: USAGE, grounds: [pixel.hex("navy")], once: ONCE, srcDir: SRC }, sprites),
+  );

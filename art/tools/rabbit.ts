@@ -73,7 +73,7 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   g.rect(33, hy - 2, 3, resting ? 1 : 3, "ink");
   if (state === "frustration") g.ell(39, phase % 2 === 0 ? 33 : 37, 3, 3, "lgrey");
   return g.outlined({
-    edge: (c) => (c === K.grey || c === K.dslate ? (K.navy as string) : (K.dslate as string)),
+    edge: (c) => (c === K.grey || c === K.dslate ? pixel.hex("navy") : pixel.hex("dslate")),
   });
 }
 
@@ -99,7 +99,7 @@ if (import.meta.main)
     pixel.main(
       {
         doc: USAGE,
-        grounds: [K["zone-peach"], K.slate, K.cream],
+        grounds: [pixel.hex("zone-peach"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
         srcDir: SRC,

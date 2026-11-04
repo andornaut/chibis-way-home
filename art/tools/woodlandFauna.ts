@@ -18,7 +18,7 @@ import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/scenery";
 const USAGE = "Usage: woodlandFauna.ts build | preview OUT.png";
@@ -177,7 +177,7 @@ function swallow(phase: number): pixel.Frame {
   ]);
   shape(WINGS[phase] as Path);
   const alpha = channel(3, mask).data;
-  const colour = K["bg-woodland-fauna"] as string;
+  const colour = pixel.hex("bg-woodland-fauna");
   return Array.from({ length: 96 }, (_, y) =>
     Array.from({ length: 144 }, (_, x) => (alpha[y * 144 + x] ? colour : null)),
   );
@@ -199,7 +199,7 @@ if (import.meta.main)
     pixel.main(
       {
         doc: USAGE,
-        grounds: [K["zone-green"] as string, K.forest as string],
+        grounds: [pixel.hex("zone-green"), pixel.hex("forest")],
         once: ONCE,
         srcDir: SRC,
       },

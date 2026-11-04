@@ -243,7 +243,7 @@ function colourMap(key: string): ColourMap {
   const primary = ZONES[zone] as string;
   const result: ColourMap = new Map();
   for (const [name, colour] of Object.entries(pixel.K)) {
-    const brightness = pixel.contrast(colour, pixel.K.ink as string);
+    const brightness = pixel.contrast(colour, pixel.hex("ink"));
     // Only the park reaches here, so its far layer fills lgrey.
     let tone: string;
     if (layer === "far") {

@@ -89,7 +89,7 @@ import { contrast, darker, Grid, K } from "./pixel.ts";
 
 const SRC = "art/cast";
 const USAGE = "Usage: cast.ts build | preview OUT.png";
-const SIDEWALK = K.skin2 as string;
+const SIDEWALK = pixel.hex("skin2");
 
 type Point = readonly [x: number, y: number];
 type RectSpec = readonly [x: number, y: number, w: number, h: number, c: string];

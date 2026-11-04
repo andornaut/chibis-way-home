@@ -84,7 +84,7 @@ import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/bird";
 const USAGE = "Usage: bird.ts build | preview OUT.png";
@@ -322,7 +322,7 @@ export function draw({
   } else {
     g.rect(Math.trunc(hcx), eye === "open" ? ey : ey + 2, 4, eye === "open" ? 4 : 1, "ink");
   }
-  return g.outlined({ edge: () => K[OUTLINE] as string });
+  return g.outlined({ edge: () => pixel.hex(OUTLINE) });
 }
 
 // Squash and stretch: [bw, bh] keep bw * bh within 2% of the rest pose's 16.4 * 13.0 = 213.2.
@@ -509,7 +509,7 @@ export function portrait(expr: string): pixel.Frame {
       for (let i = 0; i < 8; i++) g.rect(ex - 2 + i, ey - 5 + Math.floor((7 - i) / 3), 1, 2, "ink");
     }
   }
-  return g.outlined({ edge: () => K.ink as string });
+  return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 export function portraitTags(): pixel.Tags {

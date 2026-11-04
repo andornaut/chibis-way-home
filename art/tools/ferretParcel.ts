@@ -11,7 +11,7 @@
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const KEY = "ferret-parcel";
 const SRC = "art/antagonists";
@@ -45,7 +45,7 @@ if (import.meta.main)
     pixel.main(
       {
         doc: USAGE,
-        grounds: [K["zone-red"], K.slate],
+        grounds: [pixel.hex("zone-red"), pixel.hex("slate")],
         hitboxes: HITBOX,
         once: ONCE,
         srcDir: SRC,

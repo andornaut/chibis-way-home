@@ -385,7 +385,7 @@ function bird(frame: number): pixel.Frame {
   g.ell(8.5, 12.5 - up, 5, 2, "tan");
   g.rect(7, 20, 3, 1, "orange");
   g.rect(12, 20, 3, 1, "orange");
-  return g.outlined({ edge: () => pixel.K.dslate });
+  return g.outlined({ edge: () => pixel.hex("dslate") });
 }
 
 // ---------------------------------------------------------------- the set

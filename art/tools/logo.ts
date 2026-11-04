@@ -38,7 +38,7 @@ import { commands, run } from "./cli.ts";
 import { frameImage, rgba } from "./imageArt.ts";
 import * as birdArt from "./bird.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const USAGE = "Usage: logo.ts build | preview OUT.png";
 const PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
@@ -121,7 +121,7 @@ function word({ b, fill, light }: WordStyle, text: string): RgbaImage {
     const rim = b >= 3 && (!mask.has(at - 1) || !mask.has(at - width));
     g.p(x, y, rim ? light : fill);
   }
-  return frameImage(g.outlined({ edge: () => K.ink as string }));
+  return frameImage(g.outlined({ edge: () => pixel.hex("ink") }));
 }
 
 function canvas(key: Key): RgbaImage {
@@ -244,7 +244,7 @@ function birdAt(s: number, pose: "rest" | "downstroke" = "rest"): RgbaImage {
     pixel.round(4 * s),
     "ink",
   );
-  return frameImage(g.outlined({ edge: () => K[birdArt.OUTLINE] as string }));
+  return frameImage(g.outlined({ edge: () => pixel.hex(birdArt.OUTLINE) }));
 }
 
 /** image cropped to the bounding box of its non-transparent pixels. */

@@ -11,7 +11,7 @@
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/scenery";
 const KEY = "background-reeds";
@@ -59,7 +59,12 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 if (import.meta.main)
   run(() =>
     pixel.main(
-      { doc: USAGE, grounds: [K["zone-green"], K.forest], once: ONCE, srcDir: SRC },
+      {
+        doc: USAGE,
+        grounds: [pixel.hex("zone-green"), pixel.hex("forest")],
+        once: ONCE,
+        srcDir: SRC,
+      },
       sprites,
     ),
   );

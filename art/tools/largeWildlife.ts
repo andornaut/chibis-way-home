@@ -22,7 +22,7 @@ const SRC = "art/scenery";
 const KEY = "background-deer-large";
 const USAGE = "Usage: largeWildlife.ts build | preview OUT.png";
 const [W, H] = [216, 144];
-const COLOUR = pixel.K["bg-woodland-fauna"] as string;
+const COLOUR = pixel.hex("bg-woodland-fauna");
 const C = { fill: [...pixel.rgb(COLOUR), 255] } as const;
 const IDLE_MS = [1000, 180, 180, 1000];
 const GRAZE_MS = [350, 300, 300, 650, 650, 350, 300, 350];
@@ -214,7 +214,7 @@ async function build(): Promise<void> {
   console.log("built", KEY);
 }
 
-const GROUNDS = [pixel.K["zone-green"] as string, pixel.K.forest as string];
+const GROUNDS = [pixel.hex("zone-green"), pixel.hex("forest")];
 
 if (import.meta.main)
   run(() =>

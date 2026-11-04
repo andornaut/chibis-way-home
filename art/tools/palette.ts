@@ -54,7 +54,7 @@ function css(c: string): string {
 
 /** One row per colour: the colour, then one and two ramp steps down. */
 export async function preview({ cell = 24, gap = 4 }, out: string): Promise<void> {
-  const order = (name: string) => pixel.PALETTE.indexOf(pixel.K[name] as string);
+  const order = (name: string) => pixel.PALETTE.indexOf(pixel.hex(name));
   const names = Object.keys(pixel.K).sort((a, b) => order(a) - order(b));
   const width = 3 * (cell + gap) + gap;
   const height = names.length * (cell + gap) + gap;

@@ -67,7 +67,7 @@ type Point = readonly [number, number];
 const radians = (degrees: number): number => degrees * (Math.PI / 180);
 
 function inkOutline(g: Grid): pixel.Frame {
-  return g.outlined({ edge: () => pixel.K.ink });
+  return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 /** A line drawn with a square brush w px wide. */

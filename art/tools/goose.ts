@@ -186,7 +186,7 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     bird.cel(g, bird.inEll(25, y, 8, 3, 0.3), "grey", "dslate", null, 2, 1);
   }
   const px = g.outlined({
-    edge: (c) => (c === K.grey || c === K.dslate ? (K.navy as string) : (K.dslate as string)),
+    edge: (c) => (c === K.grey || c === K.dslate ? pixel.hex("navy") : pixel.hex("dslate")),
   });
   const framed = glasses({ resting }, px, hx, hy);
   if (!skidding) return framed;
@@ -284,7 +284,7 @@ if (import.meta.main)
       {
         contacts: [KEY],
         doc: USAGE,
-        grounds: [K["zone-green"] as string, K.slate as string, K.cream as string],
+        grounds: [pixel.hex("zone-green"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
         srcDir: SRC,

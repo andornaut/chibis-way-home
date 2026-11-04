@@ -38,7 +38,7 @@
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
-import { Grid, K } from "./pixel.ts";
+import { Grid } from "./pixel.ts";
 
 const SRC = "art/antagonists";
 const KEY = "raccoon-antagonist";
@@ -234,7 +234,10 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   }
   arm(g, [34, 31 - lift], near);
   arm(g, [18, 31 - lift], far, true);
-  return g.outlined({ edge: (c) => (c === K.cream || c === K.white ? K.ink : K.navy) });
+  return g.outlined({
+    edge: (c) =>
+      c === pixel.hex("cream") || c === pixel.hex("white") ? pixel.hex("ink") : pixel.hex("navy"),
+  });
 }
 
 function anticipateLift(phase: number): pixel.Frame {
@@ -270,7 +273,7 @@ if (import.meta.main)
       {
         contacts: [KEY],
         doc: USAGE,
-        grounds: [K["zone-purple"], K.slate, K.cream],
+        grounds: [pixel.hex("zone-purple"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
         srcDir: SRC,

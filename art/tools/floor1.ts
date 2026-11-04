@@ -438,7 +438,7 @@ function hatchLeaf(): Grid {
     rects(g, [5 - lean + (Math.floor(y / 4) % 2 ? 1 : 3), y, 2, 2, "dslate"]);
   }
   rects(g, [9, 2 * T - 3, 2, 3, "dslate"]);
-  g.px = g.outlined({ edge: () => pixel.K.ink as string });
+  g.px = g.outlined({ edge: () => pixel.hex("ink") });
   return g;
 }
 

@@ -126,6 +126,13 @@ export const SPRITES = "public/art/sprites";
 export const TILESETS = "public/art/tilesets";
 const DEFAULT_GROUNDS = ["5a6988", "e4a672", "ead4aa"] as const;
 
+/** The hex value of a K name; an unknown name fails the build. */
+export function hex(name: string): string {
+  const value = K[name];
+  if (value === undefined) throw new Error(`Unknown palette colour: ${name}`);
+  return value;
+}
+
 /** A K name or hex string as hex. */
 export function hexc(c: string): string {
   return Object.hasOwn(K, c) ? (K[c] as string) : c;
