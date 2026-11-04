@@ -1,7 +1,7 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 
 import type { Point, Size } from "../data/types";
-import { askedAssemblySeed } from "./pageParams";
+import { askedSeed } from "./pageParams";
 
 export interface StagePreview {
   readonly area?: string;
@@ -21,12 +21,12 @@ export function askedStagePreview(
     return undefined;
   }
   const key = params.get("stagePreview");
-  const assemblySeed = askedAssemblySeed(search);
+  const assemblySeed = askedSeed("assembly", search);
+  const motionSeed = askedSeed("seed", search);
   const numberParam = (name: string) => {
     const raw = params.get(name);
     return raw === null || raw === "" ? NaN : Number(raw);
   };
-  const motionSeed = numberParam("seed");
   const x = numberParam("previewX");
   const y = numberParam("previewY");
   const area = params.get("previewArea");
@@ -34,8 +34,7 @@ export function askedStagePreview(
     !key ||
     !keys.includes(key) ||
     assemblySeed === undefined ||
-    !Number.isSafeInteger(motionSeed) ||
-    motionSeed <= 0 ||
+    motionSeed === undefined ||
     ![x, y].every((value) => Number.isFinite(value) && value >= 0) ||
     area === ""
   ) {

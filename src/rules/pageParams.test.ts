@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { askedAssemblySeed, askedRecipe } from "./pageParams";
+import { askedRecipe, askedSeed } from "./pageParams";
 
 describe("askedRecipe", () => {
   it.each([
@@ -14,7 +14,7 @@ describe("askedRecipe", () => {
   });
 });
 
-describe("askedAssemblySeed", () => {
+describe("askedSeed", () => {
   it.each([
     ["", undefined],
     ["?assembly=", undefined],
@@ -26,6 +26,11 @@ describe("askedAssemblySeed", () => {
     ["?assembly=1.5", undefined],
     ["?assembly=one", undefined],
   ])("reads %j as %s", (search, seed) => {
-    expect(askedAssemblySeed(search)).toBe(seed);
+    expect(askedSeed("assembly", search)).toBe(seed);
+  });
+
+  it("reads only its own parameter", () => {
+    expect(askedSeed("seed", "?assembly=7&seed=9")).toBe(9);
+    expect(askedSeed("seed", "?assembly=7")).toBeUndefined();
   });
 });

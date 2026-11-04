@@ -111,7 +111,7 @@ import { eligibleSkills, nodeOf, skillTuning, stageExit, wholeRunSummary } from 
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
-import { askedAssemblySeed, askedRecipe } from "../rules/pageParams";
+import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams";
 import { currentScreen } from "../rules/perception";
 import { createStageBarks } from "../rules/stageBarks";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
@@ -209,10 +209,10 @@ import type { ZoneBarkScene } from "./ZoneBarkScene";
 import type { ZoneDepartureData } from "./ZoneDepartureScene";
 import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene";
 
-// A new seed to assemble a zone from: a whole number in [0, 2^32). Rules stay seeded, so the
-// scene draws the entropy.
-function newAssemblySeed(): number {
-  return Math.floor(Math.random() * 2 ** 32);
+// A new seed for a zone's assembly or its objects' motion: a whole number in [0, SEED_LIMIT).
+// Rules stay seeded, so the scene draws the entropy.
+function newSeed(): number {
+  return Math.floor(Math.random() * SEED_LIMIT);
 }
 
 // The zone a map node plays, assembled for seed where it is a recipe.
@@ -549,7 +549,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     );
     const node = this.mapNode;
     const seed =
-      this.preview?.assemblySeed ?? askedAssemblySeed(window.location.search) ?? newAssemblySeed();
+      this.preview?.assemblySeed ?? askedSeed("assembly", window.location.search) ?? newSeed();
     if (this.preview) {
       const key = this.preview.key;
       const node = ZONE_MAP.nodes.find((node) => node.id === key && node.kind === "zone");
@@ -1366,7 +1366,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       (isDevelopmentSession()
         ? ZONE_MAP.nodes.find((node) => node.id === this.mapNode && node.kind === "zone")?.zone
         : undefined);
-    const seed = askedAssemblySeed(window.location.search) ?? newAssemblySeed();
+    const seed = askedSeed("assembly", window.location.search) ?? newSeed();
     this.loadPlan(trial === undefined ? zoneAt(seed, ZONE_MAP.start) : zonePlanFor(seed, trial));
     this.drawObjects();
     this.drawBird();
@@ -1392,10 +1392,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.manifest.tilesets.map(({ key }) => [key, this.cache.json.get(key) as Tileset]),
     );
     this.layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, this.hitboxes, tilesets, new Set(), plan);
-    const asked = Number(new URLSearchParams(window.location.search).get("seed"));
-    const seed =
-      this.preview?.motionSeed ??
-      (Number.isInteger(asked) && asked > 0 ? asked : Math.floor(Math.random() * 2 ** 31));
+    const seed = this.preview?.motionSeed ?? askedSeed("seed", window.location.search) ?? newSeed();
     this.zone = startZone(this.movementTuning(), this.layout, seed);
     this.story =
       this.preview || this.backdrop
