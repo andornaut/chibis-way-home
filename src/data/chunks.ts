@@ -1431,6 +1431,48 @@ const BASE_CHUNKS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
   }),
 );
 
+// A one-row solid slab whose underside is at `underside`.
+const ceiling = (col: number, cols: number, underside: number): Instance => ({
+  character: "red-edge-support",
+  col,
+  cols,
+  role: "support",
+  row: underside - 1,
+  rows: 1,
+});
+// A one-column solid post standing `rows` tall on the floor at `row`.
+const post = (col: number, row: number, rows: number): Instance => ({
+  character: "red-edge-support",
+  col,
+  cols: 1,
+  role: "support",
+  row: row - rows,
+  rows,
+});
+// Kiwi's yards: low ceilings she cannot climb past, six rows above the floor beneath.
+const KIWI_CEILINGS: Readonly<Record<string, readonly Instance[]>> = {
+  "climbing-enemy-lane": [ceiling(4, 6, 34)],
+  "compound-vertical-yard": [ceiling(4, 6, 34)],
+  "offset-two-level-terrace-encounter": [ceiling(51, 3, 40)],
+  "open-stepped-ridge-encounter": [ceiling(50, 4, 41)],
+  "vertical-stack-early": [ceiling(4, 6, 44)],
+  "vertical-stack-late": [ceiling(4, 6, 44)],
+  "vertical-stack-middle": [ceiling(4, 6, 44)],
+};
+// Fert's floors: cover four rows tall, above his parcel arc. The other encounter chunks in his
+// pool already have terrain cover at least that tall.
+const FERT_COVER: Readonly<Record<string, readonly Instance[]>> = {
+  "offset-two-level-terrace-encounter": [post(44, 42, 4)],
+  "open-stepped-ridge-encounter": [post(23, 42, 4)],
+};
+function withObjects(
+  extra: Readonly<Record<string, readonly Instance[]>>,
+  id: string,
+  chunk: ChunkPlan,
+): ChunkPlan {
+  return extra[id] ? { ...chunk, objects: [...chunk.objects, ...extra[id]] } : chunk;
+}
+
 const DEPTH_CAPS = new Set([
   "apartment-start",
   "back-streets-start",
@@ -1978,7 +2020,7 @@ const HOME_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
         homeVerticalId(id),
         fourScreenChunk(
           { offset: HOME_CHALLENGES.includes(id) ? LOWER_ROUTE_OFFSET : 0, underground: false },
-          chunk,
+          withObjects(KIWI_CEILINGS, id, chunk),
         ),
       ]),
   ),
@@ -1996,7 +2038,11 @@ export const CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...COUNTRYSIDE_VERTICAL_CHUNKS,
   ...BLUE_VERTICAL_CHUNKS,
   ...INDUSTRIAL_VERTICAL_CHUNKS,
-  ...createApartmentMiddleChunks(BASE_CHUNKS),
+  ...createApartmentMiddleChunks(
+    Object.fromEntries(
+      Object.entries(BASE_CHUNKS).map(([id, chunk]) => [id, withObjects(FERT_COVER, id, chunk)]),
+    ),
+  ),
   ...Object.fromEntries(
     Object.entries(BASE_CHUNKS).map(([id, chunk]) => [
       id,
