@@ -41,7 +41,7 @@ The named cast uses shared data-driven behaviours.
 - **Data:** every string a player sees lives in the text data files, with `{placeholders}` the game fills, never as a literal in code
 - **Fit:** text never shrinks to fit. Reword it or grow its box
 - **Labels:** one label for one action, everywhere. Player instructions name Move, Jump and Use with their matching inline control icons, rather than keyboard mappings; each icon and action label form one unit
-- **Lengths:** text is 16 px Liberation Sans drawn at 1×; measure the width, don't count characters. A dialogue paragraph fits 3 lines of 504 px. An answer fits 166 px. A quip, with its speaker's name, fits 452 px
+- **Lengths:** text is 16 px Liberation Sans drawn at 1×; measure the width, don't count characters. A dialogue paragraph or bark fits 3 lines of 504 px in the dialogue box
 - **Spelling:** Canadian (colour, favourite, neighbour). No em dashes and no emojis
 - **Style:** concise exchanges with distinct voices and brief jokes. Chibi stays determined to reclaim his home. Archie is earnest about his territory, Pebble is smug about flying, Trixi invents convenient rules, Bini is a distracted gamer, Kiwi is dry and observant, and Fert is theatrical about his failed delivery. Do not resolve the initial fight or their friendship
 - **Terms:** the home page is the website's page at `/`; it is never shown inside an installed app. The start screen is the game's first screen, in a browser and in an installed app. Back to title always goes to the start screen, from any zone, the map or a card
