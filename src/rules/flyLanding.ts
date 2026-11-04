@@ -11,13 +11,27 @@ function supports(object: ObjectLayout, world: BehaviourWorld): readonly Rect[] 
     ...(world.platforms ?? []).filter(({ owner }) => owner !== object).map(({ rect }) => rect),
   ];
 }
+// Other objects' hazards as a flight or landing plan must avoid them: a moving hazard by all it
+// can reach before the idle watchdog would move the flyer on, when that is certified, so a perch
+// or route never lies in its lane.
+function hazardReach(object: ObjectLayout, world: BehaviourWorld): readonly Rect[] {
+  const frame = world.traversalFrame;
+  const horizon = object.behaviour?.idleWatchdog?.seconds ?? 0;
+  return (world.hazards ?? []).flatMap(({ boundsAt, owner, rect }) => {
+    if (owner === object) {
+      return [];
+    }
+    const reach = frame && horizon > 0 ? boundsAt?.(frame.timeSeconds + horizon) : undefined;
+    return reach ? [rect, reach] : [rect];
+  });
+}
 // Other objects' solid platforms and hazards, in obstacle order after the terrain candidates.
 function movingObstacles(object: ObjectLayout, world: BehaviourWorld): readonly Rect[] {
   return [
     ...(world.platforms ?? [])
       .filter(({ collision, owner }) => collision === "solid" && owner !== object)
       .map(({ rect }) => rect),
-    ...(world.hazards ?? []).filter(({ owner }) => owner !== object).map(({ rect }) => rect),
+    ...hazardReach(object, world),
   ];
 }
 function obstacles(object: ObjectLayout, world: BehaviourWorld, body: Rect): readonly Rect[] {
@@ -119,6 +133,7 @@ function landingRoute(
   const distance = object.behaviour!.pursuit!.distance;
   const routes: { readonly points: readonly Point[]; readonly length: number }[] = [];
   const moving = movingObstacles(object, world);
+  const reach = hazardReach(object, world);
   for (const support of supports(object, world)) {
     const low = Math.max(support.x, object.origin.x - distance);
     const high = Math.min(support.x + support.width - object.width, object.origin.x + distance);
@@ -185,11 +200,7 @@ function landingRoute(
               x: Math.min(via.x, target.x),
               y: Math.min(via.y, target.y),
             },
-          ].some((sweep) =>
-            (world.hazards ?? []).some(
-              ({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect),
-            ),
-          )
+          ].some((sweep) => reach.some((rect) => rectsOverlap(sweep, rect)))
         ) {
           continue;
         }
@@ -258,7 +269,7 @@ export function liftedLandingPath(
     };
     if (
       Math.abs(flightAxis(object, world, from, axis, to[axis]) - to[axis]) > EDGE ||
-      (world.hazards ?? []).some(({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect))
+      hazardReach(object, world).some((rect) => rectsOverlap(sweep, rect))
     ) {
       return undefined;
     }

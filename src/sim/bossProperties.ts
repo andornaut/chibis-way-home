@@ -300,6 +300,25 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
         ? `alive on a red hazard at ${agent.at.x.toFixed(1)}, ${agent.at.y.toFixed(1)}`
         : undefined;
     }),
+    // A flyer's flight and landing paths check hazards, so no flying boss dies on one.
+    {
+      check: (ticks) => {
+        const found = new Set<string>();
+        return ticks.flatMap((tick) =>
+          tick.world.defeated.flatMap((id) => {
+            const [area, index] = id.split(":");
+            const object = layout.areas[area!]!.objects[Number(index)]!;
+            if (found.has(id) || !flies(object.behaviour!)) {
+              return [];
+            }
+            found.add(id);
+            return [{ agent: id, detail: `${object.character} died`, tick: tick.tick }];
+          }),
+        );
+      },
+      id: "flyer-alive",
+      rule: RULES.bossDeath,
+    },
     everyTick("supported-completion", RULES.pebbleCycle, (_, agent, previous) =>
       flies(plan(agent)) &&
       previous?.attack?.phase === "committed" &&
