@@ -1,6 +1,6 @@
 import type { ArtHitbox, Rect, Size, SpriteContact } from "../data/types";
 
-// Art's sprites, as public/art/manifest.json lists them and Aseprite exports them.
+// Art's sprites, as public/art/manifest.json lists them and art-kit writes their json-hash sheets.
 
 // public/art/ is served here, with its manifest of everything BootScene loads.
 export const ART_PATH = "/art/";

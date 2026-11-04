@@ -1826,7 +1826,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.drawPulses();
   }
 
-  // A dead boss's removal: the seam where Art's puff replaces the interim fade.
+  // A dead boss's removal: Art's puff where its texture is loaded, otherwise a fade.
   private drawRemoval(index: number, art: ObjectArt, behaviour: BehaviourState): void {
     const view = bossRemovalView(
       removalProgress(behaviour)!,

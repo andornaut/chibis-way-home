@@ -21,7 +21,7 @@ export function queueAtlasPages(scene: Scene, { pages }: AtlasManifest): void {
 // A texture keyed as art's manifest keys it, whose frames are rects of its loaded atlas page.
 // It shares the page's source, so the page uploads to the GPU once and every key on it draws in
 // one batch, and code that names the key and its frames works as it does with the key's own
-// files. A sprite's base frame is its first, as nothing draws a whole sheet, and its Aseprite
+// files. A sprite's base frame is its first, as nothing draws a whole sheet, and its json-hash
 // sheet goes in the JSON cache, where Phaser's Aseprite loader would put it.
 function addAtlasTexture(scene: Scene, atlased: AtlasTexture): void {
   const { frames, key, page, tags } = atlased;

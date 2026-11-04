@@ -5,7 +5,7 @@ import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 // Phaser's name for the frame that covers a whole texture.
 export const BASE_FRAME = "__BASE";
 
-// A frame's rect on its atlas page. A sprite's frame carries its Aseprite duration.
+// A frame's rect on its atlas page. A sprite's frame carries its sheet duration.
 export interface AtlasFrame {
   readonly duration?: number;
   readonly h: number;
@@ -16,7 +16,7 @@ export interface AtlasFrame {
 }
 
 // One key of art's manifest, drawn from one atlas page: a sprite's frames in export order with
-// its Aseprite tags, a tileset's tiles by index, or a font's or backdrop's one frame.
+// its sheet tags, a tileset's tiles by index, or a font's or backdrop's one frame.
 export interface AtlasTexture {
   readonly frames: readonly AtlasFrame[];
   readonly key: string;
@@ -42,7 +42,7 @@ export function atlasPageKey(page: number): string {
   return `atlas:${page}`;
 }
 
-// The Aseprite sheet a sprite's animations are built from, as Phaser's Aseprite loader caches
+// The json-hash sheet a sprite's animations are built from, as Phaser's Aseprite loader caches
 // it: frame durations keyed by frame name, and the tags.
 export function asepriteSheetOf({ frames, tags = [] }: AtlasTexture): AsepriteSheet {
   return {

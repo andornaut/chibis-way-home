@@ -17,7 +17,7 @@ interface Source {
   readonly tags?: AsepriteSheet["meta"]["frameTags"];
 }
 
-// An Aseprite json-hash export's frames, with each frame's rect.
+// A json-hash sprite sheet's frames, with each frame's rect.
 interface AsepriteExport extends AsepriteSheet {
   readonly frames: Readonly<
     Record<

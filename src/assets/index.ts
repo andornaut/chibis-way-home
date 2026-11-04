@@ -1,4 +1,4 @@
-// Art's files as the game reads them: the manifest and Aseprite sheets, the build's atlas
+// Art's files as the game reads them: the manifest and json-hash sprite sheets, the build's atlas
 // manifest, sprite contact silhouettes and the bird's frame size.
 export {
   ART_MANIFEST_FILE,
