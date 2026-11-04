@@ -39,3 +39,27 @@ it("refuses a simulation output created while the run was executing", () => {
   expect(() => simulationCli(["--build-id", "checked", "--out", output])).toThrow("EEXIST");
   expect(readFileSync(output, "utf8")).toBe("other report");
 });
+
+it("passes the tick limits to the batch", () => {
+  vi.mocked(simulateBatch).mockReturnValue({ validation: { fullPass: true } } as BatchResult);
+  simulationCli([
+    "--build-id",
+    "checked",
+    "--jump",
+    "planned",
+    "--max-ticks",
+    "50",
+    "--plan-ticks",
+    "70",
+    "--stop-stall-ticks",
+    "30",
+    "--trace-stall-ticks",
+    "20",
+  ]);
+  expect(vi.mocked(simulateBatch).mock.calls[0]?.[2]).toMatchObject({
+    maxSteps: 50,
+    skill: { navigation: { maxPhysicsSteps: 70 } },
+    stopAfterStallTicks: 30,
+    trace: { stallTicks: 20 },
+  });
+});

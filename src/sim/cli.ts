@@ -17,17 +17,17 @@ import { VALIDATION_LIMITS } from "./diagnostics";
 import { simulateBatch } from "./report";
 import { type SimulationConfig, type SimulationSeeds, validateSimulation } from "./simulate";
 
-const HELP = `npm run simulate -- [--stage ID] [--seed N] [--runs N] [--max-steps N]
+const HELP = `npm run simulate -- [--stage ID] [--seed N] [--runs N] [--max-ticks N]
   [--max-retries N] [--reaction-ticks N] [--look-ahead PX] [--hold-ticks N]
   [--layout-seed N] [--motion-seed N] [--bot-seed N]
   [--area ID --entry ID | --area ID --start-x PX --start-y PX] [--goal-x PX]
-  [--trace-cap N] [--trace-every N] [--stall-ticks N]
+  [--trace-cap N] [--trace-every N] [--trace-stall-ticks N]
   [--[no-]adaptive-jump] [--min-hold-ticks N] [--[no-]wait-for-movers]
   [--max-wait-ticks N] [--build-id ID] [--data-id ID]
-  [--max-wall-ms N] [--batch-wall-ms N] [--stall-limit N]
+  [--max-wall-ms N] [--batch-wall-ms N] [--stop-stall-ticks N]
   [--profile quick|validation]
   [--witness-segments N] [--[no-]require-full-pass]
-  [--plan-horizon N] [--plan-candidates N] [--plan-replan N] [--plan-steps N]
+  [--plan-horizon N] [--plan-candidates N] [--plan-replan N] [--plan-ticks N]
   [--error-rate 0..1] [--jump reactive|continuous|never|planned] [--move=-1|0|1] [--out FILE]
 
 Defaults: first map stage, seed 1, one run, 3600 total ticks/run, zero retries.
@@ -55,7 +55,7 @@ const OPTIONS = {
   "layout-seed": { type: "string" },
   "look-ahead": { type: "string" },
   "max-retries": { type: "string" },
-  "max-steps": { type: "string" },
+  "max-ticks": { type: "string" },
   "max-wait-ticks": { type: "string" },
   "max-wall-ms": { type: "string" },
   "min-hold-ticks": { type: "string" },
@@ -65,19 +65,19 @@ const OPTIONS = {
   "plan-candidates": { type: "string" },
   "plan-horizon": { type: "string" },
   "plan-replan": { type: "string" },
-  "plan-steps": { type: "string" },
+  "plan-ticks": { type: "string" },
   profile: { type: "string" },
   "reaction-ticks": { type: "string" },
   "require-full-pass": { type: "boolean" },
   runs: { type: "string" },
   seed: { type: "string" },
   stage: { type: "string" },
-  "stall-limit": { type: "string" },
-  "stall-ticks": { type: "string" },
   "start-x": { type: "string" },
   "start-y": { type: "string" },
+  "stop-stall-ticks": { type: "string" },
   "trace-cap": { type: "string" },
   "trace-every": { type: "string" },
+  "trace-stall-ticks": { type: "string" },
   "wait-for-movers": { type: "boolean" },
   "witness-segments": { type: "string" },
 } as const;
@@ -106,19 +106,19 @@ export function simulationCli(args: readonly string[]): number {
   const stage = values.stage ?? ZONE_MAP.start;
   const seed = number("seed") ?? 1;
   const runs = number("runs") ?? 1;
-  let maxSteps = number("max-steps") ?? 3600;
+  let maxSteps = number("max-ticks") ?? 3600;
   let maxRetries = number("max-retries") ?? 0;
   let witnessSegments = number("witness-segments");
   let requireFullPass = values["require-full-pass"] ?? false;
   let maxWallTimeMs = number("max-wall-ms");
   let batchWallTimeMs = number("batch-wall-ms");
-  let stopAfterStallTicks = number("stall-limit");
+  let stopAfterStallTicks = number("stop-stall-ticks");
   const navigation: { -readonly [Key in keyof NavigationConfig]?: NavigationConfig[Key] } = {};
   const planning = [
     ["plan-horizon", "horizonTicks"],
     ["plan-candidates", "maxCandidates"],
     ["plan-replan", "replanTicks"],
-    ["plan-steps", "maxPhysicsSteps"],
+    ["plan-ticks", "maxPhysicsSteps"],
   ] as const;
   for (const [name, key] of planning) {
     const value = number(name);
@@ -144,9 +144,10 @@ export function simulationCli(args: readonly string[]): number {
   const startY = number("start-y");
   const goalX = number("goal-x");
   const traceCap =
-    number("trace-cap") ?? (explicit("trace-every") || explicit("stall-ticks") ? 128 : undefined);
+    number("trace-cap") ??
+    (explicit("trace-every") || explicit("trace-stall-ticks") ? 128 : undefined);
   const traceEvery = number("trace-every");
-  const stallTicks = number("stall-ticks") ?? 120;
+  const stallTicks = number("trace-stall-ticks") ?? 120;
   let build = values["build-id"];
   const data = values["data-id"];
   const skill = { ...DIAGNOSTIC_SKILL };
@@ -180,7 +181,7 @@ export function simulationCli(args: readonly string[]): number {
     throw new Error(`Output already exists: ${out}`);
   }
   if (profile === "validation") {
-    if (!explicit("max-steps")) {
+    if (!explicit("max-ticks")) {
       maxSteps = VALIDATION_LIMITS.maxSteps;
     }
     if (!explicit("max-retries")) {
@@ -192,7 +193,7 @@ export function simulationCli(args: readonly string[]): number {
     if (!explicit("batch-wall-ms")) {
       batchWallTimeMs = VALIDATION_LIMITS.batchWallTimeMs;
     }
-    if (!explicit("stall-limit")) {
+    if (!explicit("stop-stall-ticks")) {
       stopAfterStallTicks = VALIDATION_LIMITS.stopAfterStallTicks;
     }
     if (!explicit("jump")) {
