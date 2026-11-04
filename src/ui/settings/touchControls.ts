@@ -9,16 +9,13 @@ const STORAGE_KEYS: Readonly<Record<TouchSetting, string>> = {
   actionButtons: "chibis-way-home.action-buttons",
   moveControls: "chibis-way-home.move-controls",
 };
-// CLEANUP (added 2026-10-29): the single Touch controls setting the two replace, read for a
-// setting the player has not set since. Remove once every player's game has stored both.
-const OLD_STORAGE_KEY = "chibis-way-home.touch-controls";
 const HIDDEN = "hidden";
 const SHOWN = "shown";
 
-// A setting from its own stored value or, with none, the old single setting's: shown for
-// anything but the hidden value, nothing stored included.
-export function decodeTouchSetting(own: string | null, old: string | null): boolean {
-  return (own ?? old) !== HIDDEN;
+// A setting from its stored value: shown for anything but the hidden value, nothing stored
+// included.
+export function decodeTouchSetting(stored: string | null): boolean {
+  return stored !== HIDDEN;
 }
 
 export function encodeTouchSetting(shown: boolean): string {
@@ -40,7 +37,7 @@ const shown = new Map<TouchSetting, boolean>();
 export function touchSettingShown(setting: TouchSetting): boolean {
   let value = shown.get(setting);
   if (value === undefined) {
-    value = decodeTouchSetting(readStored(STORAGE_KEYS[setting]), readStored(OLD_STORAGE_KEY));
+    value = decodeTouchSetting(readStored(STORAGE_KEYS[setting]));
     shown.set(setting, value);
   }
   return value;
