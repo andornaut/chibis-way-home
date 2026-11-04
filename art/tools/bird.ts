@@ -79,6 +79,9 @@
  * each.
  */
 
+import { crop, frameToRgba, paste, rotateNearest } from "@andornaut/art-kit/raster";
+import { blankImage } from "@andornaut/art-kit/rgbaImage";
+
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -329,21 +332,37 @@ export const STRETCH_LIFT = [14.4, 14.8] as const;
 export const SQUASH_LAND = [19.6, 10.8] as const;
 export const SQUASH_RECOVER = [17.8, 11.9] as const;
 
-// CLEANUP (added 2026-11-04): replace with @andornaut/art-kit/raster rotateNearest once 0.11.0 is pinned
-function rotateNearest(
-  { centre, degrees }: { centre: readonly [number, number]; degrees: number },
+/**
+ * frame rotated counter-clockwise by degrees about centre by nearest pixel, keeping its size, like
+ * Pillow's rotate(degrees, NEAREST, center=centre). rotateNearest turns about the image centre, so
+ * the frame is padded transparent below and right until centre is the middle, then cropped back;
+ * the padding leaves every sampled row of the original frame unchanged.
+ */
+function rotated(
+  { centre: [cx, cy], degrees }: { centre: readonly [number, number]; degrees: number },
   frame: pixel.Frame,
 ): pixel.Frame {
-  throw new Error(
-    `pending art-kit rotateNearest: ${degrees} degrees about ${centre.join(",")} ` +
-      `for a ${frame[0]?.length ?? 0}x${frame.length} frame`,
+  const h = frame.length;
+  const w = frame[0]?.length ?? 0;
+  if (!(Number.isInteger(2 * cx) && Number.isInteger(2 * cy) && 2 * cx >= w && 2 * cy >= h))
+    throw new RangeError(`centre ${cx},${cy} is not on or past the middle of a ${w}x${h} frame`);
+  const padded = blankImage(2 * cx, 2 * cy);
+  paste({ at: { x: 0, y: 0 } }, frameToRgba({ resolveRgb: pixel.rgb }, frame), padded);
+  const image = crop({ height: h, width: w, x: 0, y: 0 }, rotateNearest(degrees, padded));
+  const hex = (i: number) =>
+    [...image.data.subarray(i, i + 3)].map((v) => v.toString(16).padStart(2, "0")).join("");
+  return Array.from({ length: h }, (_, y) =>
+    Array.from({ length: w }, (_, x) => {
+      const i = (y * w + x) * 4;
+      return image.data[i + 3] ? hex(i) : null;
+    }),
   );
 }
 
 /** A pronounced clockwise tilt, with visible tucked soles and no baked world translation. */
 export function fallingPose(): pixel.Frame {
   const px = draw({ bh: 12, bw: 17, eye: "closed", feet: "tucked", lift: 1, wing: ["fold", 2] });
-  return rotateNearest({ centre: [C, 29], degrees: -20 }, px);
+  return rotated({ centre: [C, 29], degrees: -20 }, px);
 }
 
 export function birdTags(): pixel.Tags {
