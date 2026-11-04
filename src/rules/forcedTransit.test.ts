@@ -54,6 +54,7 @@ const ground = (
   grounded: true,
   ordinaryControl: true,
   riderBodyOrigin: { x: 0, y: 0 },
+  safeGround: true,
 });
 const nearBank = ground([{ group: transit.group, id: "near" }]);
 const airborne: ForcedTransitObservation = {
@@ -61,14 +62,22 @@ const airborne: ForcedTransitObservation = {
   grounded: false,
   ordinaryControl: false,
   riderBodyOrigin: { x: 1, y: -1 },
+  safeGround: false,
 };
-function aboard(contract: ForcedTransitLayout, x: number, previous?: ForcedTransitState) {
+function aboard(
+  contract: ForcedTransitLayout,
+  x: number,
+  previous?: ForcedTransitState,
+  straddle: Partial<ForcedTransitObservation> = {},
+) {
   return stepForcedTransit(
     {
       bankAdmissions: [],
       grounded: true,
       ordinaryControl: true,
       riderBodyOrigin: { x, y: 0 },
+      safeGround: false,
+      ...straddle,
       support: {
         index: 7,
         ordinaryJumpApexFeetY: 0,
@@ -144,6 +153,27 @@ it("ends the protected leg on any safe grounded surface, authored bank or not", 
   );
 });
 
+it("ends the protected leg on safe ground straddled while the ride still supports her", () => {
+  const bank = [{ group: transit.group, id: "near" }];
+  expect(aboard(transit, 1, forced(), { bankAdmissions: bank, safeGround: true })).toEqual({
+    attackWindow: "allowed",
+    boardingAdmissions: bank,
+    evidence: "certified",
+  });
+  expect(aboard(transit, 1, forced()).attackWindow).toBe("deferred");
+});
+
+it("keeps deferral through a direct hop onto another ride until safe ground", () => {
+  const exits: ForcedTransitLayout = {
+    ...second,
+    windows: [window("ordinary", 2, { bankId: "end", kind: "egress" })],
+  };
+  const hopped = aboard(exits, 2, stepForcedTransit(airborne, forced()));
+  expect(hopped).toMatchObject({ attackWindow: "deferred", evidence: "unknown" });
+  expect(hopped.episode).toMatchObject({ group: transit.group, phase: "forced" });
+  expect(stepForcedTransit(ground([]), hopped).attackWindow).toBe("allowed");
+});
+
 it("starts a fresh leg after re-boarding from a listed bank", () => {
   const landed = stepForcedTransit(nearBank, aboard(transit, 2, forced()));
   expect(landed.episode).toBeUndefined();
@@ -181,6 +211,7 @@ it("keeps nonordinary controls unknown without rearming a spent episode", () => 
     grounded: true,
     ordinaryControl: false,
     riderBodyOrigin: { x: 2, y: 0 },
+    safeGround: false,
     support: {
       index: 7,
       ordinaryJumpApexFeetY: 0,
@@ -203,6 +234,7 @@ it("filters certified egress when native apex evidence is absent or below the ba
     grounded: true,
     ordinaryControl: true,
     riderBodyOrigin: { x: 2, y: 0 },
+    safeGround: false,
     support: {
       index: 7,
       ordinaryJumpApexFeetY: 36,

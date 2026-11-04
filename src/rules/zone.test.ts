@@ -208,6 +208,32 @@ describe("mandatory ride admission", () => {
     });
   });
 
+  it.each([
+    ["the ride alone", false, [], []],
+    ["terrain", true, [{ height: 100, width: 100, x: 128, y: 200 }], []],
+    ["a ledge", true, [], [object({ collision: "ledge", origin: { x: 128, y: 200 } })]],
+  ])("on %s, ends a forced leg only at safe grounded contact", (_, safe, solids, others) => {
+    const carrier = object({ forcedTransit: transit, origin: { x: 80, y: 200 } });
+    const layout = zone(
+      area([carrier, ...others], {
+        entries: { start: { x: 122, y: 200 } },
+        solids: [GROUND, ...solids],
+      }),
+    );
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    expect(initial.bird.grounded).toBe(true);
+    const next = stepZone(BIRD, layout, STEP, STILL, {
+      ...initial,
+      forcedTransit: {
+        attackWindow: "deferred",
+        episode: { ...episode, phase: "forced" },
+        evidence: "certified",
+      },
+    });
+    expect(next.forcedTransit?.attackWindow).toBe(safe ? "allowed" : "deferred");
+    expect(next.forcedTransit?.episode).toEqual(safe ? undefined : { ...episode, phase: "forced" });
+  });
+
   it("keeps the last certified state on an uncertified opt-in ride", () => {
     const layout = zone(
       area(

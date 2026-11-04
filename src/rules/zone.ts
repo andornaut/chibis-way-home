@@ -36,6 +36,7 @@ import {
   stepBirdWithSupport,
 } from "./bird";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
+import { collisionCandidates } from "./collisionIndex";
 import { initialCrumblingWorld } from "./crumbling";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
 import { deathSupport } from "./death";
@@ -461,12 +462,19 @@ function transitObservation(
     rect: rectAt(area.objects[index]!, zone.objects[index] ?? area.objects[index]!.origin),
   }));
   const support = supports.find(({ rect }) => standsOn(tuning, zone.bird, rect));
+  const box = birdBox(tuning, zone.bird);
   const bankAdmissions = zone.bird.grounded
     ? forcedTransitBankAdmissions(
         kinds.forcedTransit.map((index) => area.objects[index]!.forcedTransit!),
-        birdBox(tuning, zone.bird),
+        box,
       )
     : [];
+  const safeGround =
+    zone.bird.grounded &&
+    (collisionCandidates(area.solids, box).some((rect) => standsOn(tuning, zone.bird, rect)) ||
+      supports.some(
+        ({ object, rect }) => !object.forcedTransit && standsOn(tuning, zone.bird, rect),
+      ));
   const takeoffOrigin =
     support &&
     forcedTransitTakeoffOrigin(
@@ -499,6 +507,7 @@ function transitObservation(
       grounded: zone.bird.grounded,
       ordinaryControl: ordinaryTransitControl(tuning, zone.bird),
       riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
+      safeGround,
       ...(support && {
         support: {
           index: support.index,

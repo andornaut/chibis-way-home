@@ -29,6 +29,8 @@ export interface ForcedTransitObservation {
   readonly grounded: boolean;
   readonly ordinaryControl: boolean;
   readonly riderBodyOrigin: Point;
+  // Grounded contact with terrain or a support that is not a forced-transit ride.
+  readonly safeGround: boolean;
   readonly support?: {
     readonly index: number;
     readonly ordinaryJumpApexFeetY?: number | undefined;
@@ -94,8 +96,9 @@ export function stepForcedTransit(
 ): ForcedTransitState {
   const support = observation.grounded ? observation.support : undefined;
   const transit = support?.transit;
-  // Any safe grounded surface ends the leg; its banks become the boarding admissions.
-  if (observation.grounded && !transit) {
+  // Safe grounded contact ends the leg even while a ride still supports her; its banks become
+  // the boarding admissions.
+  if (observation.grounded && (observation.safeGround || !transit)) {
     return snapshot("allowed", undefined, observation.bankAdmissions);
   }
   const admissions = previous?.boardingAdmissions;
