@@ -17,7 +17,7 @@ import {
 import { pressedArea } from "./hitAreas";
 import { pauseCard } from "./pauseCard";
 import { settingsCard, stepsCard } from "./settingsCard";
-import { stageSelectCard } from "./stageSelectCard";
+import { stageSelectPages } from "./stageSelectCard";
 
 const BUILD_LABEL = buildLabel(__APP_VERSION__, __COMMIT__);
 const pause = pauseCard(CARD_FONTS, TEXT.pause);
@@ -37,8 +37,9 @@ const inside = (outer: Rect, inner: Rect) =>
   inner.y + inner.height <= outer.y + outer.height;
 
 const destination = ZONE_MAP.destinations[0]!;
-const stageSelect = stageSelectCard(
+const stageSelect = stageSelectPages(
   CARD_FONTS,
+  undefined,
   TEXT.map.zones[destination.id]!,
   destination.stages.map((id) => TEXT.map.stages[id]!),
 );

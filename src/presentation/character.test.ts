@@ -1,8 +1,8 @@
-import { randomPick, seededRandom } from "@andornaut/game-kit/random";
+import { seededRandom } from "@andornaut/game-kit/random";
 import { describe, expect, it } from "vitest";
 
 import type { ObjectLayout } from "../data/types";
-import { characterState, chooseWord, nextQuirkAt } from "./character";
+import { characterState, nextQuirkAt } from "./character";
 
 const avoider = { reaction: { kind: "avoid", range: 50, speed: 1 } } as ObjectLayout;
 const calm = { reaction: { kind: "none", range: 0, speed: 0 } } as ObjectLayout;
@@ -27,27 +27,5 @@ describe("nextQuirkAt", () => {
     );
     expect(Math.min(...times)).toBeGreaterThanOrEqual(10 + 4 * (1 - variance));
     expect(Math.max(...times)).toBeLessThanOrEqual(10 + 4 * (1 + variance));
-  });
-});
-
-describe("chooseWord", () => {
-  it.each([
-    ["no keys", [], undefined],
-    ["one key", ["hello"], "hello"],
-  ])("from %s picks %j", (_, keys, word) => {
-    expect(chooseWord(seededRandom(1), keys)).toBe(word);
-  });
-
-  it("picks the same words from the same seed and others from another", () => {
-    const keys = ["a", "b", "c", "d", "e"];
-    const draw = (seed: number) => {
-      const random = seededRandom(seed);
-      return Array.from({ length: 12 }, () => chooseWord(random, keys));
-    };
-    const first = draw(3);
-    const expectedRandom = seededRandom(3);
-    expect(first).toEqual(Array.from({ length: 12 }, () => randomPick(expectedRandom, keys)));
-    expect(draw(3)).toEqual(first);
-    expect(draw(4)).not.toEqual(first);
   });
 });

@@ -1,20 +1,8 @@
 import { focusKeyAction, stepFocus } from "../focus";
 
 // Highlighting the latest stage does not activate it. A new navigation press must focus an
-// action before Enter/Space can choose; the key that opened the modal cannot choose a stage.
-export function stageSelectKey(
-  latest: string,
-  stages: readonly string[],
-  focus: string | undefined,
-  event: Pick<KeyboardEvent, "key" | "repeat" | "shiftKey">,
-): {
-  readonly close: boolean;
-  readonly focus: string | undefined;
-  readonly stage: string | undefined;
-} {
-  return stagePickerKey({ focus, latest, pages: [], stages }, event);
-}
-
+// action before Enter/Space can choose; the key that opened the modal cannot choose a stage. A
+// focused enabled page control turns the page.
 export function stagePickerKey(
   context: {
     readonly focus: string | undefined;

@@ -93,8 +93,3 @@ export function pressedArea<K>(areas: readonly PressArea<K>[], point: Point): K 
   }
   return best?.key;
 }
-
-// A button's press area with its drawn button (hitAround).
-export function pressArea<K>(key: K, art: Rect): PressArea<K> {
-  return { art, hit: hitAround(art), key };
-}

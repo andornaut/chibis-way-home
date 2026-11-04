@@ -51,16 +51,6 @@ export function cardTextSize(font: BitmapFont, text: string): Size {
   };
 }
 
-export function cardTextRowsSize(font: BitmapFont, texts: readonly string[]): Size {
-  const sizes = texts.map((text) => cardTextSize(font, text));
-  return {
-    height:
-      sizes.reduce((sum, size) => sum + size.height, 0) +
-      Math.max(0, sizes.length - 1) * CARD_CONTENT.rowGap,
-    width: Math.max(0, ...sizes.map(({ width }) => width)),
-  };
-}
-
 export function cardActionsSize(
   font: BitmapFont,
   axis: CardAxis,

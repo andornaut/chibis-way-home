@@ -231,22 +231,6 @@ function ascentPoint(tuning: BirdTuning, curve: AscentCurve, elapsed: number): C
   };
 }
 
-// Later falling steps use the native velocity recurrence, not this ascent envelope.
-export function ordinaryJumpAscent(
-  tuning: BirdTuning,
-  elapsed: number,
-): CurvePoint & { readonly apexRise: number; readonly apexSeconds: number } {
-  const curve = ascentCurve(tuning);
-  if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed > curve.seconds + STEP_SECONDS) {
-    throw new RangeError("Ordinary ascent sample exceeds the first apex-crossing step");
-  }
-  return {
-    ...ascentPoint(tuning, curve, elapsed),
-    apexRise: curve.height,
-    apexSeconds: curve.seconds,
-  };
-}
-
 // The highest native fixed-step rise over every ordinary release, from tap to full hold.
 function releaseFamilyPeak(tuning: BirdTuning): { readonly frames: number; readonly rise: number } {
   const cached = SAMPLED_ASCENT_PEAKS.get(tuning);

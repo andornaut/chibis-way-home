@@ -2,7 +2,7 @@ import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave } from "@andornaut/game-kit/save/versionedSave";
 import { expect, it, vi } from "vitest";
 
-import { formatWholeRunStats, wholeRunSummary } from "./runSummary";
+import { wholeRunSummary } from "./runSummary";
 import { stageStatsStore, statsFormat } from "./stats";
 
 const stageIds = ["first", "second"] as const;
@@ -80,7 +80,7 @@ it.each([
   expect(encodeSave(statsFormat(stages), { stages: {}, wholeRun, zones: {} }).ok).toBe(false);
 });
 
-it("derives completed stages from progress and formats whole-run counters without duplicating progress", () => {
+it("derives completed stages from progress without changing the whole-run counters", () => {
   const counters = { activeSeconds: 65.9, deaths: 2 };
   const summary = wholeRunSummary(
     ["first", "second"],
@@ -88,7 +88,6 @@ it("derives completed stages from progress and formats whole-run counters withou
     counters,
   );
   expect(summary).toEqual({ activeSeconds: 65.9, completed: 1, deaths: 2, total: 2 });
-  expect(formatWholeRunStats("{time}|{deaths}|{completed}/{total}", summary)).toBe("1:05|2|1/2");
   expect(counters).toEqual({ activeSeconds: 65.9, deaths: 2 });
 });
 

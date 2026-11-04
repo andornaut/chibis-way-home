@@ -64,15 +64,6 @@ export function timeText(seconds: number): string {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
 }
 
-export function formatWholeRunStats(template: string, summary: WholeRunDisplaySummary): string {
-  return fillNames(template, {
-    completed: String(summary.completed),
-    deaths: String(summary.deaths),
-    time: timeText(summary.activeSeconds),
-    total: String(summary.total),
-  });
-}
-
 export function formatRunStats(words: StatsText, summary: RunStatsSummary) {
   return {
     attempts: fillNames(words.attempts, { count: String(summary.attempts) }),

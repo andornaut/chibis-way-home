@@ -11,7 +11,6 @@ import {
   ordinaryFallVelocity,
   ordinaryHorizontalVelocity,
   ordinaryJumpApexFeetY,
-  ordinaryJumpAscent,
   startBird,
   stepBird,
   stepBirdWithSupport,
@@ -157,18 +156,6 @@ it("uses shared ordinary velocity primitives during actual ground, air and falli
     }
   }
   expect(falling).toBeGreaterThan(20);
-});
-
-it("exposes the actual full-jump ascent through the first native apex crossing", () => {
-  const count = Math.ceil(BIRD.jumpRiseTime / STEP);
-  const states = run(count, () => ({ jumpHeld: true, move: 0 }));
-  for (let tick = 1; tick <= count; tick++) {
-    const sample = ordinaryJumpAscent(BIRD, tick * STEP);
-    expect(sample.rise).toBeCloseTo(states[0]!.y - states[tick]!.y, 8);
-    expect(sample.velocity).toBeCloseTo(states[tick]!.vy, 8);
-    expect(sample.rise).toBeLessThanOrEqual(sample.apexRise);
-  }
-  expect(() => ordinaryJumpAscent(BIRD, (count + 1) * STEP)).toThrow(RangeError);
 });
 
 it.each([null, ...SKILL_IDS])(

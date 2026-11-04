@@ -11,7 +11,6 @@ import {
   cardActions,
   cardActionsSize,
   cardTextOrigin,
-  cardTextRowsSize,
   cardTextSize,
   contentCardLayout,
 } from "./contentCard";
@@ -25,7 +24,8 @@ describe("measured content cards", () => {
   it("measures equal action faces from the widest actual label and includes only present gaps", () => {
     const labels = [TEXT.pause.home, TEXT.death.retry];
     const actions = cardActionsSize(TITLE, "row", labels);
-    const rows = cardTextRowsSize(BODY, ["City", "Stage 1", "Progress: 25%", "Time: 1:05"]);
+    // A measured block of four body-text rows.
+    const rows = { height: 76, width: 103 };
     const result = contentCardLayout(VIEW, [
       { key: "rows", ...rows },
       { height: 0, key: "absent", width: 0 },

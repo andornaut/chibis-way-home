@@ -8,10 +8,11 @@ import { CARD_FONTS } from "../../testing/cardFonts";
 import { CARD_CONTENT } from "./contentCard";
 import { type PressArea, pressedArea } from "./hitAreas";
 import { CARD_TEXT_SCALE } from "./pauseCard";
-import { stagePageOf, STAGES_PER_PAGE, stageSelectCard, stageSelectPages } from "./stageSelectCard";
+import { stagePageOf, STAGES_PER_PAGE, stageSelectPages } from "./stageSelectCard";
 import { textInkBounds } from "./textInk";
-const STAGE_SELECT_CARD = stageSelectCard(
+const STAGE_SELECT_CARD = stageSelectPages(
   CARD_FONTS,
+  undefined,
   TEXT.map.zones[ZONE_MAP.destinations[0]!.id]!,
   ZONE_MAP.destinations
     .flatMap(({ stages }) => stages.map((id) => TEXT.map.stages[id]!))
@@ -91,7 +92,7 @@ describe("stage picker layout", () => {
   });
   it("lays out any nonempty catalogue count that fits without changing face geometry", () => {
     const labels = STAGE_SELECT_CARD.buttons.map(({ text }) => text.replaceAll("\n", " "));
-    const pair = stageSelectCard(CARD_FONTS, "", labels.slice(0, 2));
+    const pair = stageSelectPages(CARD_FONTS, undefined, "", labels.slice(0, 2));
     expect(pair.buttons.map(({ button }) => button.width)).toEqual(
       STAGE_SELECT_CARD.buttons.slice(0, 2).map(({ button }) => button.width),
     );

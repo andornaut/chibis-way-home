@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { stagePickerKey, stageSelectKey } from "./stageSelectInput";
+import { stagePickerKey } from "./stageSelectInput";
 
 const STAGES = ["one", "two", "three"];
 const LATEST = STAGES.at(-1)!;
+// A single-page picker.
+const stageSelectKey = (
+  latest: string,
+  stages: readonly string[],
+  focus: string | undefined,
+  event: Pick<KeyboardEvent, "key" | "repeat" | "shiftKey">,
+) => stagePickerKey({ focus, latest, pages: [], stages }, event);
 
 describe("stage-picker input", () => {
   it.each(["Enter", " "])("does not auto-select through the opening %s key", (key) => {

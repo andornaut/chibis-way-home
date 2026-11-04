@@ -37,10 +37,6 @@ export function stagePageOf(stages: readonly string[], stage: string): number {
   return Math.floor(Math.max(0, stages.indexOf(stage)) / STAGES_PER_PAGE);
 }
 
-export function stageSelectCard(fonts: CardFonts, title: string, labels: readonly string[]) {
-  return stageSelectPages(fonts, undefined, title, labels);
-}
-
 export function stageSelectPages(
   fonts: CardFonts,
   pagerLabels: StagePageLabels | undefined,

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { SCREEN } from "../../data/screen";
-import { HIT_RULE, hitAround, hitMargin, pressArea, pressedArea } from "./hitAreas";
+import type { Rect } from "../../data/types";
+import { HIT_RULE, hitAround, hitMargin, type PressArea, pressedArea } from "./hitAreas";
 import { PAUSE_BUTTON } from "./pauseCard";
 import { startScreenLayout } from "./startScreen";
 import { TOUCH_CONTROLS } from "./touchControls";
@@ -48,8 +49,9 @@ describe("hitAround", () => {
 
 describe("pressedArea", () => {
   // Two 40 px tall buttons side by side, each grown by 10 (a quarter of 40), overlapping by 20.
-  const LEFT = pressArea("left", { height: 40, width: 50, x: 0, y: 0 });
-  const RIGHT = pressArea("right", { height: 40, width: 50, x: 50, y: 0 });
+  const button = (key: string, art: Rect): PressArea<string> => ({ art, hit: hitAround(art), key });
+  const LEFT = button("left", { height: 40, width: 50, x: 0, y: 0 });
+  const RIGHT = button("right", { height: 40, width: 50, x: 50, y: 0 });
   it.each([
     ["just inside the left margin", { x: -10, y: 20 }, "left"],
     ["just outside the left margin", { x: -11, y: 20 }, undefined],
