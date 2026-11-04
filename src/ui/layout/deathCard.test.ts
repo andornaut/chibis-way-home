@@ -7,7 +7,7 @@ import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { STATS_SCOPE_TEXT, TEXT } from "../../data/text";
 import { deathLabels, deathSummary } from "../../presentation";
-import { formatRunStats } from "../../save/runSummary";
+import { formatRunStats } from "../../progress";
 import { statsStatement } from "../dialogue/statsStatement";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";

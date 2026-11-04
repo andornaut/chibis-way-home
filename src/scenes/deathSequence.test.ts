@@ -14,7 +14,7 @@ import * as deathPresentation from "../presentation";
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("../pwa", () => ({ coverZone: vi.fn(), startWakeLock: vi.fn(), stopWakeLock: vi.fn() }));
-vi.mock("../save", () => ({
+vi.mock("./save", () => ({
   activeStageTime: () => 0,
   flushStats: vi.fn(),
   stageRunStats: () => ({ runSeconds: 13 }),

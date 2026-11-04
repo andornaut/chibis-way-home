@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { isLastZone, openMap } from "../rules/map";
-import { destinationForStage, destinationSelection } from "../rules/mapDestinations";
-import { stageCompletion } from "../rules/stageCompletion";
+import {
+  destinationForStage,
+  destinationSelection,
+  isLastZone,
+  openMap,
+  stageCompletion,
+} from "../progress";
 import { ZONE_MAP } from "./map";
 import { TEXT } from "./text";
 import { RECIPES, ZONES } from "./zones";

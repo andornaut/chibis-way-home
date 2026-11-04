@@ -7,9 +7,8 @@ import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Rect, SkillId } from "../data/types";
 import { developmentSkillOverrides } from "../dev/mode";
+import { isSkillId, SKILL_IDS, skillEnabled } from "../progress";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
-import { isSkillId, SKILL_IDS, skillEnabled } from "../rules/skills";
-import { activeSkill, savedSkills, selectActiveSkill } from "../save";
 import {
   type CardAction,
   cardBackAction,
@@ -52,6 +51,7 @@ import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { createPauseChrome, PAUSE_CHROME_KEY } from "./pauseChrome";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
+import { activeSkill, savedSkills, selectActiveSkill } from "./save";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
 import { drawSkillButton } from "./skillButton";
 import type { SkillDetailData } from "./SkillDetailScene";

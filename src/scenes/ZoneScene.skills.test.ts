@@ -10,8 +10,8 @@ import { SCREEN } from "../data/screen";
 import { SKILLS } from "../data/skills";
 import { TOUCH } from "../data/touch";
 import type { SkillId } from "../data/types";
+import { SKILL_IDS } from "../progress";
 import { startBird } from "../rules/bird";
-import { SKILL_IDS } from "../rules/skills";
 import * as engine from "../rules/zone";
 import {
   bottomShift,
@@ -39,7 +39,7 @@ vi.mock("../dev/mode", () => ({
   invulnerabilityEnabled: () => false,
   isDevelopmentSession: () => false,
 }));
-vi.mock("../save", () => ({
+vi.mock("./save", () => ({
   activeSkill: () => saved.active,
   recordActiveStageStep: vi.fn(),
   savedSkills: () => saved.owned,

@@ -12,12 +12,12 @@ import type {
   Point,
   ZoneLayout,
 } from "../data/types";
+import { skillTuning } from "../progress";
 import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
 import { birdBox, birdFrameRect, ordinaryJumpApexFeetY, startBird } from "./bird";
 import { crumblingDefinitions } from "./crumbling";
 import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
-import { skillTuning } from "./skills";
 import {
   activateBehaviour,
   doorAt,

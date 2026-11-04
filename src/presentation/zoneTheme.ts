@@ -1,5 +1,5 @@
 import type { ZoneMap } from "../data/types";
-import { destinationForStage } from "../rules/mapDestinations";
+import { destinationForStage } from "../progress";
 
 export const ZONE_THEMES_KEY = "zone-themes";
 export type ZoneThemes = Readonly<Record<string, { readonly primary: string }>>;

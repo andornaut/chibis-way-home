@@ -1,5 +1,5 @@
 import type { ZoneDialoguePlan, ZoneMap } from "../data/types";
-import { type StageCompletion, stageCompletion } from "./stageCompletion";
+import { type StageCompletion, stageCompletion } from "../progress";
 
 export interface ZoneStory extends ZoneDialoguePlan {
   readonly zone: string;

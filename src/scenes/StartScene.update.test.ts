@@ -11,7 +11,7 @@ vi.mock("../pwa", () => ({
   exitShown: () => false,
   startScreenShown: lifecycle.shown,
 }));
-vi.mock("../save", () => ({ savedProgress: () => ({ at: "map" }) }));
+vi.mock("./save", () => ({ savedProgress: () => ({ at: "map" }) }));
 vi.mock("./cardParts", () => ({
   PRIMARY_BUTTON: { art: "ui-button-primary", label: "white" },
   addSlice: vi.fn(),

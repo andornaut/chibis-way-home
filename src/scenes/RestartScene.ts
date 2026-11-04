@@ -1,7 +1,6 @@
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
-import { clearProgress, resetWholeRunStats } from "../save";
 import { focusKeyAction, type PressArea, pressedArea, restartCard, stepFocus } from "../ui";
 import {
   addCardTextIn,
@@ -19,6 +18,7 @@ import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
+import { clearProgress, resetWholeRunStats } from "./save";
 
 // The scene that opens the restart card, the start screen or the celebration: it passes the card
 // its keys and back while the card shows, and hears when Cancel closes it.

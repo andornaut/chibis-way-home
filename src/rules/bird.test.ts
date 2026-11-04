@@ -4,6 +4,7 @@ import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
 import type { Rect } from "../data/types";
+import { SKILL_IDS, skillTuning } from "../progress";
 import {
   type BirdInput,
   type BirdState,
@@ -15,7 +16,6 @@ import {
   stepBird,
   stepBirdWithSupport,
 } from "./bird";
-import { SKILL_IDS, skillTuning } from "./skills";
 
 const STEP = STEP_SECONDS;
 const GROUND: Rect = { height: 40, width: 2000, x: -1000, y: 300 };

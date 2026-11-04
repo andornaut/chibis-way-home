@@ -29,7 +29,7 @@ vi.mock("phaser", () => ({
   },
 }));
 vi.mock("../pwa", () => ({ launchReady: startup.ready }));
-vi.mock("../save", () => ({ loadProgress: startup.load }));
+vi.mock("./save", () => ({ loadProgress: startup.load }));
 vi.mock("./atlasArt", () => ({
   get ATLAS() {
     return art.atlas;

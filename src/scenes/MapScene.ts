@@ -12,17 +12,17 @@ import { TILE } from "../data/screen";
 import { TEXT } from "../data/text";
 import type { MapDestination, Point, Rect } from "../data/types";
 import { RECIPES, ZONES } from "../data/zones";
-import { PHONE_EVENTS } from "../pwa";
-import { type OpenMap, openMap } from "../rules/map";
 import {
   destinationForStage,
   destinationOf,
   destinationSelection,
   destinationStages,
+  type OpenMap,
+  openMap,
+  stageCompletion,
   steppedDestination,
-} from "../rules/mapDestinations";
-import { stageCompletion } from "../rules/stageCompletion";
-import { savedMap, saveStand } from "../save";
+} from "../progress";
+import { PHONE_EVENTS } from "../pwa";
 import {
   bentCurve,
   curveWalk,
@@ -55,6 +55,7 @@ import {
 } from "./cardParts";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
+import { savedMap, saveStand } from "./save";
 import type { StageSelectData, StageSelectOpener, StageSelectScene } from "./StageSelectScene";
 import { uiObject } from "./uiRoots";
 import type { ZoneData } from "./ZoneScene";

@@ -13,7 +13,7 @@ it("persists a zone introduction across stage moves, clears and reopen, then res
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./index");
+  const save = await import("./save");
   await save.loadProgress();
   const destination = ZONE_MAP.destinations[0]!;
   const stage = destination.stages[0];

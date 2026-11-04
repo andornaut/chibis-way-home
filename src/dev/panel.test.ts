@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEV_TEXT } from "../data/dev";
 import { ZONE_MAP } from "../data/map";
 import { TEXT } from "../data/text";
-import { SKILL_IDS } from "../rules/skills";
+import { SKILL_IDS } from "../progress";
 import { developerStages, mountDeveloperPanel, panelInputGate } from "./panel";
 
 class Element extends EventTarget {

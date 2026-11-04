@@ -5,8 +5,7 @@ import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point, Rect } from "../data/types";
-import type { WholeRunDisplaySummary } from "../save/runSummary";
-import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
+import type { RunStatsSummary, WholeRunDisplaySummary, ZoneStatsSummary } from "../progress";
 import { CUTSCENE_CONTINUE, focusKeyAction, STAGE_SUMMARY_BOUNDS, statsStatement } from "../ui";
 import {
   addTextButton,

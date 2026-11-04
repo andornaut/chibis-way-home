@@ -5,8 +5,7 @@ import { SCREEN } from "../data/screen";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import { type DeathSummary, deathSummary } from "../presentation";
-import { formatRunStats } from "../save/runSummary";
-import type { RunStatsSummary } from "../save/stats";
+import { formatRunStats, type RunStatsSummary } from "../progress";
 import {
   DEATH_ACTIONS,
   type DeathAction,

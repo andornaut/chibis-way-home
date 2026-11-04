@@ -60,7 +60,7 @@ vi.mock("phaser", () => {
     },
   };
 });
-vi.mock("../save", () => ({ saveOpeningSeen: vi.fn() }));
+vi.mock("./save", () => ({ saveOpeningSeen: vi.fn() }));
 vi.mock("./cardParts", () => ({
   BODY_FONT: "font-body",
   PRIMARY_BUTTON: {},
@@ -77,10 +77,10 @@ vi.mock("./playCamera", () => ({
   playPoint: (_scene: unknown, pointer: { x: number; y: number }) => pointer,
 }));
 
-import { saveOpeningSeen } from "../save";
 import { pressTextButton } from "./cardParts";
 import { modalInput } from "./modalInput";
 import { OpeningScene } from "./OpeningScene";
+import { saveOpeningSeen } from "./save";
 
 beforeEach(() => {
   vi.clearAllMocks();

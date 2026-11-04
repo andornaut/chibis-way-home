@@ -5,8 +5,12 @@ import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import type { Rect } from "../data/types";
 import { deathLabels, deathSummary } from "../presentation";
-import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
-import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
+import {
+  formatRunStats,
+  type RunStatsSummary,
+  type WholeRunDisplaySummary,
+  type ZoneStatsSummary,
+} from "../progress";
 import {
   type DialogueParagraph,
   FONT_SCALE,

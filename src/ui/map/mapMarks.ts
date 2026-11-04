@@ -1,7 +1,7 @@
 import { clampIndex } from "@andornaut/game-kit/arrays";
 
 import type { MapEdge, MapNode, Point, Size, ZoneMap } from "../../data/types";
-import { nodeOf, type OpenMap } from "../../rules/map";
+import { nodeOf, type OpenMap } from "../../progress";
 import type { PathLook } from "../layout/mapScreen";
 
 export type MarkerState = "current" | "locked" | "normal" | "unbuilt" | "visited";

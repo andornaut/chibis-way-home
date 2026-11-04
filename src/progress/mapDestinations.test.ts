@@ -1,7 +1,6 @@
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { describe, expect, it } from "vitest";
 
-import { progressFormat } from "../save/progress";
 import {
   DESTINATION_FIXTURE as MAP,
   DESTINATION_PLAN_RECORD as PLANS,
@@ -14,6 +13,7 @@ import {
   destinationStages,
   steppedDestination,
 } from "./mapDestinations";
+import { progressFormat } from "./save/progress";
 
 describe("destination selection", () => {
   it.each([

@@ -5,8 +5,7 @@ import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point } from "../data/types";
-import { createOpeningPlayback } from "../rules/opening";
-import { saveOpeningSeen } from "../save";
+import { createOpeningPlayback } from "../progress";
 import { focusKeyAction, openingLayout, pressedArea, stepFocus } from "../ui";
 import {
   addCardText,
@@ -23,6 +22,7 @@ import {
 import { modalInput, onScenePointer } from "./modalInput";
 import { renderOpeningLayer } from "./openingLayer";
 import { fitPlayCamera, playPoint } from "./playCamera";
+import { saveOpeningSeen } from "./save";
 
 type Action = "continue" | "skip";
 

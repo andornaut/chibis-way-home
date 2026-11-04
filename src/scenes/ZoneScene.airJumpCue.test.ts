@@ -13,7 +13,7 @@ vi.mock("../dev/mode", () => ({
   invulnerabilityEnabled: () => false,
   isDevelopmentSession: () => false,
 }));
-vi.mock("../save", () => ({ activeSkill: () => "doubleJump", recordActiveStageStep: vi.fn() }));
+vi.mock("./save", () => ({ activeSkill: () => "doubleJump", recordActiveStageStep: vi.fn() }));
 
 import { ZoneScene } from "./ZoneScene";
 

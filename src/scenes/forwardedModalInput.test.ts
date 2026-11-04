@@ -5,7 +5,7 @@ vi.mock("phaser", () => ({
     readonly sys = { isActive: () => false };
   },
 }));
-vi.mock("../save", () => ({ clearProgress: vi.fn() }));
+vi.mock("./save", () => ({ clearProgress: vi.fn() }));
 vi.mock("./modalBackdrop", () => ({ showModalBackdrop: vi.fn() }));
 
 import { RestartScene } from "./RestartScene";

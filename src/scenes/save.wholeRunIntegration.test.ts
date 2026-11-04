@@ -13,7 +13,7 @@ it("counts active death edges and retains whole-run totals across stage entry an
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./index");
+  const save = await import("./save");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   save.beginStageRun(stage);

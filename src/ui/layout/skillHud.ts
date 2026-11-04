@@ -1,6 +1,6 @@
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect, SkillId } from "../../data/types";
-import { SKILL_IDS } from "../../rules/skills";
+import { SKILL_IDS } from "../../progress";
 import { PAUSE_VISIBLE_DIAMETER } from "./controlChrome";
 import { CONTROL_EDGE } from "./playView";
 

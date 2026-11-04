@@ -1,8 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map";
+import { PROGRESS_VERSION } from "../progress";
 import type { ZoneState } from "../rules/zone";
-import { PROGRESS_VERSION } from "./progress";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -20,7 +20,7 @@ it("keeps browser progress normal until developer activation, then blocks mutati
   vi.stubGlobal("window", window);
   const document = Object.assign(new EventTarget(), { visibilityState: "hidden" });
   vi.stubGlobal("document", document);
-  const save = await import("./index");
+  const save = await import("./save");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   save.beginStageRun(stage);
@@ -84,7 +84,7 @@ it.each([
     const read = vi.fn(() => JSON.stringify(raw)),
       write = vi.fn();
     vi.stubGlobal("localStorage", { getItem: read, setItem: write });
-    const save = await import("./index");
+    const save = await import("./save");
     await save.loadProgress();
     expect(read).toHaveBeenCalledExactlyOnceWith("chibis-way-home.save");
     expect(save.savedSkills()).toEqual(expected);

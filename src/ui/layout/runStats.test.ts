@@ -6,7 +6,7 @@ import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
 import { ZONE_MAP } from "../../data/map";
 import { STATS_SCOPE_TEXT, TEXT } from "../../data/text";
 import { deathLabels, deathSummary } from "../../presentation";
-import { formatRunStats } from "../../save/runSummary";
+import { formatRunStats } from "../../progress";
 import { statsStatement } from "../dialogue/statsStatement";
 import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./cutscene";
 import {

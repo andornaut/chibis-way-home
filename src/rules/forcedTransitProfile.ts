@@ -2,8 +2,8 @@ import { EDGE } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
 import type { BirdTuning } from "../data/types";
+import { SKILL_IDS, skillTuning } from "../progress";
 import type { BirdState } from "./bird";
-import { SKILL_IDS, skillTuning } from "./skills";
 
 const PROFILES = [null, ...SKILL_IDS].map((selected) => skillTuning(SKILLS, selected, BIRD));
 const MAXIMUM_WALK_SPEED = Math.max(...PROFILES.map(({ walkSpeed }) => walkSpeed));

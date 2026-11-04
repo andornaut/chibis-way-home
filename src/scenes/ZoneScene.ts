@@ -107,12 +107,11 @@ import {
   stepPose,
   terrainTiles,
 } from "../presentation";
+import { eligibleSkills, nodeOf, skillTuning, wholeRunSummary } from "../progress";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
-import { nodeOf } from "../rules/map";
 import { currentScreen } from "../rules/perception";
-import { eligibleSkills, skillTuning } from "../rules/skills";
 import { createStageBarks } from "../rules/stageBarks";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
@@ -139,25 +138,6 @@ import {
   zoneStoryForStage,
 } from "../rules/zoneFlow";
 import { zonePlanFor } from "../rules/zonePlans";
-import {
-  activeSkill,
-  activeStageTime,
-  beginStageRun,
-  beginZoneVisit,
-  completeStageRun,
-  flushStats,
-  recordActiveStageStep,
-  retryStageRun,
-  saveCompleted,
-  savedMap,
-  savedSkills,
-  saveZoneIntro,
-  seenZoneIntros,
-  stageRunStats,
-  wholeRunStats,
-  zoneVisitStats,
-} from "../save";
-import { wholeRunSummary } from "../save/runSummary";
 import { sceneryParallax, type Tileset, worldScenery } from "../stage";
 import {
   bottomShift,
@@ -204,6 +184,24 @@ import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
 import type { RoomData } from "./RoomScene";
+import {
+  activeSkill,
+  activeStageTime,
+  beginStageRun,
+  beginZoneVisit,
+  completeStageRun,
+  flushStats,
+  recordActiveStageStep,
+  retryStageRun,
+  saveCompleted,
+  savedMap,
+  savedSkills,
+  saveZoneIntro,
+  seenZoneIntros,
+  stageRunStats,
+  wholeRunStats,
+  zoneVisitStats,
+} from "./save";
 import { createTimedHazardArt } from "./timedHazard";
 import { createTouchChrome } from "./touchChrome";
 import { bindZoneBarks } from "./zoneBarks";

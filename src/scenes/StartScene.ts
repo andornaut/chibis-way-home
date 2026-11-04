@@ -4,6 +4,7 @@ import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
+import { openingDestination } from "../progress";
 import {
   beginStartUpdateVisit,
   coverZone,
@@ -11,8 +12,6 @@ import {
   PHONE_EVENTS,
   startScreenShown,
 } from "../pwa";
-import { openingDestination } from "../rules/opening";
-import { savedProgress } from "../save";
 import {
   focusKeyAction,
   type IconButtonLayout,
@@ -38,6 +37,7 @@ import {
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene";
+import { savedProgress } from "./save";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
 
 const BACKGROUND = "start-background";

@@ -17,7 +17,7 @@ function storage(): void {
 
 it("keeps confirmed Restart cleared across map browsing and reopen until real stage entry", async () => {
   storage();
-  const save = await import("./index");
+  const save = await import("./save");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   save.beginStageRun(stage);
@@ -47,7 +47,7 @@ it("keeps confirmed Restart cleared across map browsing and reopen until real st
 
 it("does not begin saved progress for a non-catalogued diagnostic stage", async () => {
   storage();
-  const save = await import("./index");
+  const save = await import("./save");
   await save.loadProgress();
   save.beginStageRun("diagnostic-fixture");
   save.saveStand(ZONE_MAP.start);

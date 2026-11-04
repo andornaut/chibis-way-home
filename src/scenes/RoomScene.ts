@@ -11,7 +11,6 @@ import { ROOMS } from "../data/rooms";
 import { TEXT } from "../data/text";
 import type { RoomPlan } from "../data/types";
 import { coverZone, PHONE_EVENTS } from "../pwa";
-import { grantSkill } from "../save";
 import {
   CARD_TEXT_SCALE,
   DIALOGUE_SCREEN,
@@ -45,6 +44,7 @@ import {
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
+import { grantSkill } from "./save";
 import { drawSkillButton } from "./skillButton";
 
 const ZONE = "zone";

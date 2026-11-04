@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { TILE } from "../../data/screen";
-import { openMap } from "../../rules/map";
+import { openMap } from "../../progress";
 import {
   DESTINATION_FIXTURE as MAP,
   DESTINATION_PLANS as PLANS,

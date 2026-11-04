@@ -8,7 +8,7 @@ import { expect, it, vi } from "vitest";
 import palette from "../../public/art/palette.json";
 import pauseSheet from "../../public/art/sprites/ui-pause.json";
 import type { SkillId } from "../data/types";
-import { SKILL_IDS } from "../rules/skills";
+import { SKILL_IDS } from "../progress";
 import { PAUSE_VISIBLE_DIAMETER, SKILL_ART, SKILL_BUTTON } from "../ui";
 
 vi.mock("phaser", () => ({ Textures: { FilterMode: { LINEAR: 1 } }, TintModes: { FILL: 1 } }));

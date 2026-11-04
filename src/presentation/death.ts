@@ -11,7 +11,7 @@ import type {
   ZoneDeath,
   ZoneMap,
 } from "../data/types";
-import { destinationForStage } from "../rules/mapDestinations";
+import { destinationForStage } from "../progress";
 
 export type DeathPhase = "bounce" | "fall" | "impact" | "recoil" | "seated";
 export interface DeathPresentation {

@@ -9,9 +9,7 @@ import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
 import { RECIPES, ZONES } from "../data/zones";
-import { openMap } from "../rules/map";
-import { destinationOf, destinationSelection } from "../rules/mapDestinations";
-import { savedMap } from "../save";
+import { destinationOf, destinationSelection, openMap } from "../progress";
 import {
   cardTextOrigin,
   type PressArea,
@@ -45,6 +43,7 @@ import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import { refuseControl } from "./refuseControl";
+import { savedMap } from "./save";
 
 export interface StageSelectData {
   readonly destination: string;

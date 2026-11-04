@@ -11,9 +11,9 @@ import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
 import { TILE } from "../data/screen";
 import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
-import { loadProgress } from "../save";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
 import { filterFontArt, queueFontArt } from "./fontArt";
+import { loadProgress } from "./save";
 
 // The manifest ships inside the hashed bundle rather than loading from /art/, so a copy an earlier
 // version cached can never be paired with this code.

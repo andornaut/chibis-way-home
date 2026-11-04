@@ -1,6 +1,5 @@
 import type { MapDestination, Point, Size, ZoneMap } from "../../data/types";
-import { nodeOf, type OpenMap } from "../../rules/map";
-import { destinationStages } from "../../rules/mapDestinations";
+import { destinationStages, nodeOf, type OpenMap } from "../../progress";
 import type { PathLook } from "../layout/mapScreen";
 import type { MarkerState } from "./mapMarks";
 

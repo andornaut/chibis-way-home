@@ -4,7 +4,7 @@ import { bitmapMeasure, fitsRoom, fittingText } from "@andornaut/game-kit/text/t
 
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect } from "../../data/types";
-import { timeText } from "../../save/runSummary";
+import { timeText } from "../../progress";
 import type { DialogueParagraph } from "../dialogue/conversation";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { CARD_CONTENT, type CardFonts } from "./contentCard";

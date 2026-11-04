@@ -36,10 +36,10 @@ const BOUNDARIES = [
 ];
 
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
-// Each context imports only contexts below it, bottom first: data; ai, assets and settings;
-// camera, stage and ui; rules; save; dialogue; layout; input; view; pause; loading;
-// pwa; the side pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling
-// (dev, sim, tools). "folder/module" allows one module of a folder ("folder/index" its index):
+// Each context imports only contexts below it, bottom first: data; core; ai and
+// assets; camera and stage; rules; progress; presentation and ui; view; loading; pwa; the side
+// pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
+// tools). "folder/module" allows one module of a folder ("folder/index" its index):
 // each is an import that a later move removes, by moving the module into a context or the
 // importer out of one. The boundaries above govern src/testing/.
 const CONTEXTS = {
@@ -53,6 +53,7 @@ const CONTEXTS = {
     "assets/index",
     "core/index",
     "presentation/index",
+    "progress/index",
     "rules/assemble",
     "rules/behaviour",
     "rules/behaviourReach",
@@ -62,10 +63,7 @@ const CONTEXTS = {
     "rules/effectiveCollision",
     "rules/elementBinding",
     "rules/flyLanding",
-    "rules/map",
-    "rules/mapDestinations",
     "rules/perception",
-    "rules/stageCompletion",
     "rules/tiles",
     "rules/timedHazard",
     "rules/zone",
@@ -74,12 +72,13 @@ const CONTEXTS = {
     "sim/zoneWalk",
     "stage/index",
   ],
-  dev: ["data", "rules"],
+  dev: ["data", "progress", "rules"],
   gallery: ["assets"],
   headers: [],
   homePage: ["data", "rules", "ui"],
   loading: ["data", "presentation", "ui"],
-  presentation: ["assets", "camera", "core", "data", "rules", "stage"],
+  presentation: ["assets", "camera", "core", "data", "progress", "rules", "stage"],
+  progress: ["assets/index", "data", "rules"],
   pwa: ["assets", "loading", "ui"],
   rules: [
     "ai",
@@ -88,7 +87,7 @@ const CONTEXTS = {
     "core",
     "data",
     "presentation/index",
-    "save/progress",
+    "progress/index",
     "sim/behaviourBounds",
     "sim/zoneWalk",
     "stage",
@@ -96,7 +95,6 @@ const CONTEXTS = {
     "view/behaviour",
     "view/bird",
   ],
-  save: ["assets/index", "data", "dev/mode", "rules"],
   scenes: [
     "assets",
     "core",
@@ -105,9 +103,9 @@ const CONTEXTS = {
     "dev/step",
     "loading",
     "presentation",
+    "progress",
     "pwa",
     "rules",
-    "save",
     "stage",
     "ui",
   ],
@@ -115,7 +113,7 @@ const CONTEXTS = {
   stage: ["data"],
   tools: ["assets", "data", "headers", "homePage", "loading", "pwa"],
   tuningPage: ["data", "gallery"],
-  ui: ["data", "presentation/index", "rules", "save"],
+  ui: ["data", "presentation/index", "progress", "rules"],
   view: ["assets", "presentation"],
 };
 
@@ -126,6 +124,7 @@ const INDEXED = {
   camera: [],
   core: [],
   presentation: [],
+  progress: [],
   stage: [],
   // The page's frame watcher starts on load, so importing the index has no side effects.
   ui: ["./input/frameTurn.ts"],

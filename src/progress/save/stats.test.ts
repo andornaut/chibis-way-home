@@ -2,12 +2,11 @@ import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import { ZONE_MAP } from "../data/map";
-import { activeStepSeconds } from "../rules/death";
-import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone, type ZoneState } from "../rules/zone";
+import { BIRD_FRAME } from "../../assets";
+import { BIRD } from "../../data/bird";
+import { activeStepSeconds } from "../../rules/death";
+import { zoneLayout } from "../../rules/tiles";
+import { startZone, stepZone, type ZoneState } from "../../rules/zone";
 import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats";
 
 const STAGES = new Set(["park", "street"]);
@@ -224,45 +223,6 @@ describe("active-step time", () => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
-});
-
-it("preserves run statistics across progress restart and completion", async () => {
-  const values = new Map<string, string>([
-    [
-      "chibis-way-home.stats",
-      JSON.stringify({
-        stages: { park: { activeSeconds: 2 }, street: { activeSeconds: 3 } },
-        version: STATS_VERSION - 1,
-      }),
-    ],
-  ]);
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-  });
-  const save = await import("./index");
-  await save.loadProgress();
-  expect(values.has("chibis-way-home.stats-backup")).toBe(true);
-  expect(save.activeStageTime("street")).toBe(0);
-  save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
-  save.beginStageRun("street");
-  save.recordActiveStageStep("park", 0.1, INITIAL, ACTIVE);
-  expect(save.activeStageTime("park")).toBe(0);
-  save.recordActiveStageStep("street", 0.1, INITIAL, ACTIVE);
-  save.clearProgress();
-  await save.flushStats();
-  expect(save.activeStageTime("street")).toBe(0.1);
-  expect(values.has("chibis-way-home.stats")).toBe(true);
-  const completed = save.completeStageRun("street");
-  save.saveCompleted("street");
-  await save.flushStats();
-  expect(save.stageRunStats("street")).toEqual(completed);
-  expect(completed).toMatchObject({
-    attemptSeconds: 0.1,
-    attempts: 1,
-    bestSeconds: 0.1,
-    runSeconds: 0.1,
-  });
 });
 
 it("resets version-two level clocks without migrating them", () => {

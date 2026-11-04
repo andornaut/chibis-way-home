@@ -6,7 +6,7 @@ import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
-import { SKILL_IDS } from "../../rules/skills";
+import { SKILL_IDS } from "../../progress";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT, cardTextSize } from "./contentCard";
 import { HIT_RULE } from "./hitAreas";

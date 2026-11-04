@@ -1,8 +1,8 @@
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
-import type { SkillSelection, ZoneMap } from "../data/types";
-import { openMap } from "../rules/map";
-import { isSkillId } from "../rules/skills";
+import type { SkillSelection, ZoneMap } from "../../data/types";
+import { openMap } from "../map";
+import { isSkillId } from "../skills";
 
 // The player's progress: the beginning (no progress saved, the start screen offers Start), or
 // the map, with the zone nodes he has completed and the zone node he stands on.

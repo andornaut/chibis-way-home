@@ -2,7 +2,7 @@ import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { afterEach, expect, it, vi } from "vitest";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../save", () => ({ grantSkill: vi.fn() }));
+vi.mock("./save", () => ({ grantSkill: vi.fn() }));
 vi.mock("../data/rooms", () => ({ ROOMS: { gift: { grant: "dash" }, ordinary: {} } }));
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
@@ -10,10 +10,10 @@ import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import button from "../../public/art/sprites/ui-button.json";
 import primary from "../../public/art/sprites/ui-button-primary.json";
 import { TEXT } from "../data/text";
-import { grantSkill } from "../save";
 import type { RoomEvent } from "../ui";
 import { addButtonLabel, addSlice, BUTTON, paletteColour, PRIMARY_BUTTON } from "./cardParts";
 import { RoomScene } from "./RoomScene";
+import { grantSkill } from "./save";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
 vi.mock("./cardParts", async (original) => {

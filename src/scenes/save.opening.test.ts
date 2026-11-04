@@ -13,7 +13,7 @@ it("preserves opening acknowledgement through progress writes and resets it inde
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./index");
+  const save = await import("./save");
   await save.loadProgress();
   save.saveStand(ZONE_MAP.start);
   expect(save.savedProgress()).toEqual({

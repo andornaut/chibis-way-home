@@ -16,8 +16,8 @@ const save = vi.hoisted(() => ({
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("../dev/mode", () => ({ isDevelopmentSession: () => false }));
-vi.mock("../save", () => save);
-vi.mock("../save/runSummary", () => ({ wholeRunSummary: () => ({}) }));
+vi.mock("./save", () => save);
+vi.mock("../progress/save/runSummary", () => ({ wholeRunSummary: () => ({}) }));
 
 import { ZoneScene } from "./ZoneScene";
 

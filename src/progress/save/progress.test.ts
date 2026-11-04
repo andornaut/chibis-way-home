@@ -1,11 +1,11 @@
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { describe, expect, it } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import type { MapNode, ZoneMap } from "../data/types";
-import { RECIPES, ZONES } from "../data/zones";
-import { openMap } from "../rules/map";
-import { destinationForStage, destinationSelection } from "../rules/mapDestinations";
+import { ZONE_MAP } from "../../data/map";
+import type { MapNode, ZoneMap } from "../../data/types";
+import { RECIPES, ZONES } from "../../data/zones";
+import { openMap } from "../map";
+import { destinationForStage, destinationSelection } from "../mapDestinations";
 import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./progress";
 
 const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({

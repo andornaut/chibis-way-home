@@ -6,17 +6,17 @@ const saved = vi.hoisted(() => ({
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true) }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa", () => ({ coverZone: vi.fn() }));
-vi.mock("../save", () => ({
+vi.mock("./save", () => ({
   clearProgress: vi.fn(),
   resetWholeRunStats: vi.fn(),
   savedProgress: () => saved.progress,
 }));
 vi.mock("./modalInput", () => ({ modalInput: () => gate }));
 
-import { clearProgress, resetWholeRunStats } from "../save";
 import { startScreenLayout } from "../ui";
 import { CelebrationScene } from "./CelebrationScene";
 import { RestartScene } from "./RestartScene";
+import { clearProgress, resetWholeRunStats } from "./save";
 import { StartScene } from "./StartScene";
 
 beforeEach(() => {

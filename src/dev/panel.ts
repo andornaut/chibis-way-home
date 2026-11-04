@@ -3,7 +3,7 @@ import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/web/pwa/backNav
 import { DEV_TEXT } from "../data/dev";
 import { ZONE_MAP } from "../data/map";
 import { TEXT } from "../data/text";
-import { SKILL_IDS } from "../rules/skills";
+import { SKILL_IDS } from "../progress";
 import {
   changeInvulnerability,
   changeSkillOverride,
