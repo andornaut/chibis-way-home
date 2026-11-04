@@ -238,10 +238,25 @@ it.each(["ArrowLeft", "ArrowRight", "ArrowUp", " ", "e"])(
   },
 );
 
-it("keeps explicit live dialogue keyboard controls usable without taking movement keys", () => {
-  const event = { key: "Enter", repeat: false, shiftKey: false };
-  expect(liveDialogueKeyAction(undefined, event)).toBe("advance");
-  expect(liveDialogueKeyAction("skip", event)).toBe("skip");
-  expect(liveDialogueKeyAction(undefined, { ...event, key: "Tab" })).toBe("nextFocus");
-  expect(liveDialogueKeyAction(undefined, { ...event, repeat: true })).toBeUndefined();
+it.each<
+  [string, Parameters<typeof liveDialogueKeyAction>, ReturnType<typeof liveDialogueKeyAction>]
+>([
+  [
+    "Enter with no focus advances",
+    [undefined, { key: "Enter", repeat: false, shiftKey: false }],
+    "advance",
+  ],
+  [
+    "Enter on a focused Skip skips",
+    ["skip", { key: "Enter", repeat: false, shiftKey: false }],
+    "skip",
+  ],
+  ["Tab moves focus", [undefined, { key: "Tab", repeat: false, shiftKey: false }], "nextFocus"],
+  [
+    "a repeated Enter does nothing",
+    [undefined, { key: "Enter", repeat: true, shiftKey: false }],
+    undefined,
+  ],
+])("keeps explicit live dialogue keyboard controls usable: %s", (_, args, action) => {
+  expect(liveDialogueKeyAction(...args)).toBe(action);
 });
