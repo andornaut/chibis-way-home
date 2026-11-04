@@ -9,8 +9,8 @@ export const STATIC_MOTION: Motion = {
   speed: 0,
   variance: 0,
 };
-export const NO_REACTION: Reaction = { kind: "none", range: 0, speed: 0 };
-export const NO_INTERACTION: Interaction = { kind: "none", range: 0 };
+const NO_REACTION: Reaction = { kind: "none", range: 0, speed: 0 };
+const NO_INTERACTION: Interaction = { kind: "none", range: 0 };
 
 // How each kind of thing behaves, by name: its collision, which it always has, and the default
 // motion, reaction and interaction its characters tune.

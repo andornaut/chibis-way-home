@@ -1542,7 +1542,7 @@ export const GROUND_CHALLENGES: ChunkPool = [
   "crumbling-support-crossing",
   "warned-vent-terrace",
 ];
-export const JUMP_CHALLENGES: ChunkPool = [
+const JUMP_CHALLENGES: ChunkPool = [
   "city-boundary-edge-yard",
   "city-boundary-gaps",
   "city-boundary-jumps",
