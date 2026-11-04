@@ -1831,6 +1831,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const view = bossRemovalView(
       removalProgress(behaviour)!,
       this.textures.exists(BOSS_REMOVAL_ART.key),
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
     let puff = this.removalArt.get(index);
     if (view.kind === "fade") {
@@ -1852,7 +1853,16 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         )
         .setOrigin(0.5)
         .setDepth(DEPTHS.sprite);
-      show(puff, BOSS_REMOVAL_ART.tag);
+      if (view.play) {
+        show(puff, BOSS_REMOVAL_ART.tag);
+      } else {
+        // Reduced motion holds the effect's peak frame, the tag's first.
+        const first = this.anims.get(animationKey(BOSS_REMOVAL_ART.key, BOSS_REMOVAL_ART.tag))
+          ?.frames[0]?.textureFrame;
+        if (first !== undefined) {
+          puff.setFrame(first);
+        }
+      }
       this.removalArt.set(index, puff);
     }
   }
