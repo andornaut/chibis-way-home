@@ -458,7 +458,11 @@ export function flightAxis(
       ? { height: object.height, width: extent, x: start, y: at.y }
       : { height: extent, width: object.width, x: at.x, y: start };
   const clip = (solid: Rect) => {
-    if (at[across] >= solid[across] + solid[depth] || at[across] + object[depth] <= solid[across]) {
+    // Contact within EDGE across the travel is beside the solid, not over it.
+    if (
+      at[across] >= solid[across] + solid[depth] - EDGE ||
+      at[across] + object[depth] <= solid[across] + EDGE
+    ) {
       return;
     }
     if (desired > at[axis] && at[axis] + object[length] <= solid[axis] + EDGE) {

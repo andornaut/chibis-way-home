@@ -40,12 +40,6 @@ const KNOWN_FAILURES: readonly KnownFailure[] = [
     tick: undefined,
   },
   {
-    cause: "Pebble hovers without support in relocate at (621, 360)",
-    property: "no-stall",
-    scenario: "encounter flyer-shelter-early loading-yards still",
-    tick: 770,
-  },
-  {
     cause:
       "Archie stops at the far bank's edge; his traversal search exhausts its budget on the " +
       "12-tile jump to the crumbling ledge, so he never stands on it",
