@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
 import type { Rect } from "../data/types";
@@ -15,7 +16,6 @@ import {
   stepBirdWithSupport,
 } from "./bird";
 import { SKILL_IDS, skillTuning } from "./skills";
-import { STEP_SECONDS } from "./step";
 
 const STEP = STEP_SECONDS;
 const GROUND: Rect = { height: 40, width: 2000, x: -1000, y: 300 };

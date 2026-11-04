@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -13,7 +14,6 @@ import type { Archetype, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from ".
 import { BIRD_FRAME } from "../view/bird";
 import { layoutBehaviour } from "./behaviour";
 import { currentScreen, targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { enterArea, retryZone, startZone, stepZone } from "./zone";
 

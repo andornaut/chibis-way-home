@@ -2,14 +2,14 @@ import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { describe, expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams";
+import { EDGE, STEP_SECONDS } from "../core";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
 import type { BehaviourWorld } from "../rules/behaviourReach";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
-import { EDGE, startBird } from "../rules/bird";
+import { startBird } from "../rules/bird";
 import { chunkProblems } from "../rules/chunk";
 import { supportedLanding } from "../rules/flyLanding";
-import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";

@@ -1,5 +1,7 @@
 import { type Random, randomStream } from "@andornaut/game-kit/random";
+import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { rectAt } from "../core";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { transientBox } from "../rules/transients";
@@ -120,10 +122,6 @@ export function newBot(seed: number): Bot {
   };
 }
 
-function intersects(a: Rect, b: Rect): boolean {
-  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-}
-
 // Local probes only. Static terrain is indexed once; moving objects use the real current poses.
 function obstacleAhead(
   tuning: BirdTuning,
@@ -163,12 +161,12 @@ function obstacleAhead(
   const last = Math.floor(Math.max(probe.x + probe.width, foot.x + foot.width) / CELL);
   for (let cell = first; cell <= last; cell++) {
     for (const rect of cells?.get(cell) ?? []) {
-      if (intersects(probe, rect)) {
+      if (rectsOverlap(probe, rect)) {
         obstacle = true;
         height = Math.max(height, bird.y + tuning.height - rect.y);
       }
-      supported ||= intersects(foot, rect);
-      nearSupported ||= intersects(nearFoot, rect);
+      supported ||= rectsOverlap(foot, rect);
+      nearSupported ||= rectsOverlap(nearFoot, rect);
     }
   }
   const area = layout.areas[zone.area];
@@ -184,18 +182,18 @@ function obstacleAhead(
     const rect =
       object.collision === "hazard"
         ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1, zone.behaviours[index]?.axis)
-        : { ...at, height: object.height, width: object.width };
+        : rectAt(object, at);
     if (
       (object.collision === "hazard" || object.collision === "solid") &&
-      intersects(probe, rect)
+      rectsOverlap(probe, rect)
     ) {
       obstacle = true;
       danger ||= object.collision === "hazard";
       height = Math.max(height, bird.y + tuning.height - rect.y);
     }
     if (object.collision === "solid" || object.collision === "ledge") {
-      supported ||= intersects(foot, rect);
-      nearSupported ||= intersects(nearFoot, rect);
+      supported ||= rectsOverlap(foot, rect);
+      nearSupported ||= rectsOverlap(nearFoot, rect);
       const distance = direction === 1 ? rect.x - front : front - rect.x - rect.width;
       const reachableHeight =
         rect.y >= bird.y + tuning.height - (tuning.jumpSpeed * tuning.jumpRiseTime) / 2 &&
@@ -222,7 +220,7 @@ function obstacleAhead(
       continue;
     }
     const rect = transientBox(entity);
-    if (intersects(probe, rect)) {
+    if (rectsOverlap(probe, rect)) {
       danger = true;
       obstacle = true;
       height = Math.max(height, bird.y + tuning.height - rect.y);

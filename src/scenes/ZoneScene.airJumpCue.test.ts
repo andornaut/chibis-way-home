@@ -1,9 +1,9 @@
 import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
 import { afterEach, expect, it, vi } from "vitest";
 
+import { STEP_MS, STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { startBird, stepBird } from "../rules/bird";
-import { STEP_MS, STEP_SECONDS } from "../rules/step";
 import * as engine from "../rules/zone";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));

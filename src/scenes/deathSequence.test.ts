@@ -3,11 +3,11 @@ import { EventEmitter } from "node:events";
 import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { STEP_MS } from "../core";
 import { BIRD } from "../data/bird";
 import { DEATH } from "../data/death";
 import { SCREEN } from "../data/screen";
 import type { ZoneDeath } from "../data/types";
-import { STEP_MS } from "../rules/step";
 import { BIRD_FRAME } from "../view/bird";
 import * as deathPresentation from "../view/death";
 

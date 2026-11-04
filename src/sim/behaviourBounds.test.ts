@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import platforming from "../../public/art/tilesets/tiles-platforming.json";
+import { STEP_SECONDS } from "../core";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
@@ -10,7 +11,6 @@ import type { BehaviourMotion, BehaviourPlan } from "../data/types";
 import { startBehaviour, stepBehaviour } from "../rules/behaviour";
 import { startBird } from "../rules/bird";
 import { orbitBounds } from "../rules/orbit";
-import { STEP_SECONDS } from "../rules/step";
 import { areaLayout, objectLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import type { Tileset } from "../stage";

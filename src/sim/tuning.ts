@@ -1,4 +1,4 @@
-import { STEP_SECONDS } from "../rules/step";
+import { STEP_SECONDS } from "../core";
 import type { PlayabilityReport } from "./playability";
 import type { RunResult } from "./simulate";
 

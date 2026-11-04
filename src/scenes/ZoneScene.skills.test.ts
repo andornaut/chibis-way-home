@@ -4,6 +4,7 @@ import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep"
 import { afterEach, expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
+import { STEP_MS } from "../core";
 import { BIRD } from "../data/bird";
 import { SCREEN } from "../data/screen";
 import { SKILLS } from "../data/skills";
@@ -16,7 +17,6 @@ import { SKILL_HUD } from "../layout/skillHud";
 import { TOUCH_CONTROLS } from "../layout/touchControls";
 import { startBird } from "../rules/bird";
 import { SKILL_IDS } from "../rules/skills";
-import { STEP_MS } from "../rules/step";
 import * as engine from "../rules/zone";
 
 const saved = vi.hoisted(() => ({ active: null as SkillId | null, owned: [] as SkillId[] }));

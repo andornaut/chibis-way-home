@@ -3,11 +3,11 @@ import { isDeepStrictEqual } from "node:util";
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
+import { STEP_SECONDS } from "../core";
 import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble";
 import { contactBox } from "../rules/behaviour";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { bindElement } from "../rules/elementBinding";
-import { STEP_SECONDS } from "../rules/step";
 import { resolveNames, zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";

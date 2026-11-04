@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
 import type { Archetype, ZoneLayout } from "../data/types";
 import { BIRD_FRAME } from "../view/bird";
 import { stepBehaviour } from "./behaviour";
 import { effectiveHazardPhase } from "./effectiveCollision";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
 

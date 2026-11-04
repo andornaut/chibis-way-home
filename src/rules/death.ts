@@ -1,7 +1,7 @@
 import { clamp01 } from "@andornaut/game-kit/numbers";
 
+import { EDGE, rectAt } from "../core";
 import type { BirdTuning, Point, Rect, ZoneLayout } from "../data/types";
-import { EDGE } from "./bird";
 import type { ZoneState } from "./zone";
 import { supportPresent } from "./zoneCrumbling";
 
@@ -24,7 +24,7 @@ export function deathSupport(
       return at &&
         (object.collision === "solid" || object.collision === "ledge") &&
         supportPresent(zone.crumbling, object)
-        ? [{ ...at, height: object.height, width: object.width }]
+        ? [rectAt(object, at)]
         : [];
     }),
   ];

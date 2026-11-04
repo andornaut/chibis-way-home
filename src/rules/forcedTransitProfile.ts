@@ -1,7 +1,8 @@
+import { EDGE } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
 import type { BirdTuning } from "../data/types";
-import { type BirdState, EDGE } from "./bird";
+import type { BirdState } from "./bird";
 import { SKILL_IDS, skillTuning } from "./skills";
 
 const PROFILES = [null, ...SKILL_IDS].map((selected) => skillTuning(SKILLS, selected, BIRD));

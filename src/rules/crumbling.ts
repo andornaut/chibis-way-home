@@ -14,6 +14,7 @@ import type {
   TraversalWorldSafety,
 } from "@andornaut/game-kit/terrain/traversal";
 
+import { rectAt } from "../core";
 import type { AreaLayout, CrumblingSupportId, Rect } from "../data/types";
 
 export function validateCrumblingProfile(profile: CrumblingProfile): void {
@@ -37,7 +38,7 @@ export function crumblingDefinitions(
       definitions.push({
         profile: object.crumbling,
         supportId: object,
-        volume: { ...object.origin, height: object.height, width: object.width },
+        volume: rectAt(object, object.origin),
       });
     }
   }

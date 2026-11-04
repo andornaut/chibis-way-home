@@ -5,9 +5,9 @@ import { describe, expect, it } from "vitest";
 
 import artManifest from "../../public/art/manifest.json";
 import ferretSheet from "../../public/art/sprites/ferret-antagonist.json";
+import { STEP_SECONDS } from "../core";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
-import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";

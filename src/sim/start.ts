@@ -1,5 +1,6 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { rectAt } from "../core";
 import type { BirdTuning, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
@@ -65,7 +66,7 @@ export function validateStart(tuning: BirdTuning, layout: ZoneLayout, zone: Zone
     const rect =
       object.collision === "hazard"
         ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1, zone.behaviours[index]?.axis)
-        : { ...at, height: object.height, width: object.width };
+        : rectAt(object, at);
     return rectsOverlap(box, rect);
   });
   if (unsafe) {

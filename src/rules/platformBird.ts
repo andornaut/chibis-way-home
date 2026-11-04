@@ -1,8 +1,8 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { collisionCandidates, EDGE } from "../core";
 import type { BirdTuning, ObjectLayout, Rect } from "../data/types";
-import { birdBox, type BirdState, EDGE } from "./bird";
-import { collisionCandidates } from "./collisionIndex";
+import { birdBox, type BirdState } from "./bird";
 
 export interface PlatformBirdFrame {
   readonly after: Rect;

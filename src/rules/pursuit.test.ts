@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams";
+import { STEP_SECONDS } from "../core";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -30,7 +31,6 @@ import {
 import { type BehaviourWorld, flightContactApproach } from "./behaviourReach";
 import { startBird } from "./bird";
 import { flyLandingPath, flyLandingRoute, landingWorldAt, supportedLanding } from "./flyLanding";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
 

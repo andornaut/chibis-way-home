@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { zonePlanOf } from "../rules/assemble";
-import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";

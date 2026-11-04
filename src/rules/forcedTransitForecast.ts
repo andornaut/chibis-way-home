@@ -1,11 +1,11 @@
+import { EDGE, sameRect, STEP_SECONDS } from "../core";
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import type { BehaviourTraversalFrame } from "./behaviourReach";
-import { type BirdState, EDGE, stepBird } from "./bird";
+import { type BirdState, stepBird } from "./bird";
 import { ordinaryTransitControl } from "./forcedTransitProfile";
 import type { Track } from "./motion";
 import { finishPlatformBird, preparePlatformBird } from "./platformBird";
-import { STEP_SECONDS } from "./step";
 
 export interface ForcedTransitCarrier {
   readonly index: number;
@@ -46,15 +46,6 @@ export interface ForcedTransitForecast {
   readonly carrier: ForcedTransitCarrier;
   readonly context: ForcedTransitForecastContext;
   readonly ordinaryBody?: ForcedTransitTakeoffBody;
-}
-
-function sameRect(left: Rect, right: Rect): boolean {
-  return (["x", "y", "width", "height"] as const).every(
-    (axis) =>
-      Number.isFinite(left[axis]) &&
-      Number.isFinite(right[axis]) &&
-      Math.abs(left[axis] - right[axis]) < EDGE,
-  );
 }
 
 function predictable(carrier: ForcedTransitCarrier): boolean {
@@ -123,9 +114,9 @@ export function forecastForcedTransit(
   if (
     !first ||
     !second ||
-    !sameRect(first.before, carrier.rect) ||
-    !sameRect(first.after, second.before) ||
-    !sameRect(second.after, second.after)
+    !sameRect(first.before, carrier.rect, EDGE) ||
+    !sameRect(first.after, second.before, EDGE) ||
+    !sameRect(second.after, second.after, EDGE)
   ) {
     return undefined;
   }

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { rectAt, STEP_SECONDS } from "../core";
 import { SCREEN } from "../data/screen";
 import type {
   BehaviourMotion,
@@ -13,7 +14,6 @@ import type {
 } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
-import { STEP_SECONDS } from "../rules/step";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 import type { NavigationDiagnostic } from "./bot";
 import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate";
@@ -134,7 +134,7 @@ export function traceEvent(
     const rect =
       object.collision === "hazard"
         ? contactBox(object, at, behaviour?.facing ?? 1, behaviour?.axis)
-        : { ...at, height: object.height, width: object.width };
+        : rectAt(object, at);
     const distance = distanceTo(rect);
     if (object.collision !== "use") {
       retain(objects, {

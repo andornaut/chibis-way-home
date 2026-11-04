@@ -1,5 +1,6 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { rectAt } from "../core";
 import type { ObjectLayout, Point, Rect } from "../data/types";
 import type { Track } from "./motion";
 
@@ -24,8 +25,7 @@ export function stepSceneryPlayback(
     throw new Error("Missing finite scenery track duration");
   }
   const visible =
-    previous.status === "waiting" &&
-    rectsOverlap(context.view, { ...object.origin, height: object.height, width: object.width });
+    previous.status === "waiting" && rectsOverlap(context.view, rectAt(object, object.origin));
   const advances = context.seconds > 0 && (previous.status === "active" || visible);
   const elapsedSeconds = advances
     ? Math.min(duration, previous.elapsedSeconds + context.seconds)

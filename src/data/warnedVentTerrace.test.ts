@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { zonePlanOf } from "../rules/assemble";
 import { effectiveCollision, effectiveHazardPhase } from "../rules/effectiveCollision";
-import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { timedHazardRect } from "../rules/timedHazard";
 import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";

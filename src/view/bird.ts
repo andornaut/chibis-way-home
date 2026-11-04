@@ -1,8 +1,9 @@
 import { type AsepriteSheet, sheetTags, tagMs } from "@andornaut/game-kit/art/aseprite";
 
 import birdSheet from "../../public/art/sprites/bird.json";
+import { EDGE } from "../core";
 import type { BirdTuning, Point, Size } from "../data/types";
-import { birdFrameRect, type BirdState, EDGE } from "../rules/bird";
+import { birdFrameRect, type BirdState } from "../rules/bird";
 import { airJumpStarted } from "./airJumpCue";
 import { sheetFrameSize } from "./aseprite";
 

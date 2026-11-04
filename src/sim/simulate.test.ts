@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { STATIC_MOTION } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types";
 import { stageProgress } from "../rules/stageProgress";
-import { STEP_SECONDS } from "../rules/step";
 import * as zoneRules from "../rules/zone";
 import { startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";

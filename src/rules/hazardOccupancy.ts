@@ -1,6 +1,6 @@
+import { EDGE } from "../core";
 import type { BehaviourNode, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
-import { EDGE } from "./bird";
 import { axisOf } from "./motion";
 import { orbitBounds } from "./orbit";
 import { createTimedHazardSampler, timedHazardRect } from "./timedHazard";

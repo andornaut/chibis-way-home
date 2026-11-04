@@ -1,5 +1,6 @@
 import { assertNever } from "@andornaut/game-kit/assertNever";
 
+import { STEP_SECONDS } from "../core";
 import type {
   AreaLayout,
   BirdTuning,
@@ -10,7 +11,6 @@ import type {
   ZoneLayout,
   ZonePlan,
 } from "../data/types";
-import { STEP_SECONDS } from "../rules/step";
 import { tileRect, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";

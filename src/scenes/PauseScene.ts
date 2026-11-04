@@ -1,6 +1,7 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type Cameras, Core, type GameObjects, type Input, Scale, Scene, Scenes } from "phaser";
 
+import { EDGE } from "../core";
 import { SKILL_GESTURE } from "../data/skills";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
@@ -13,7 +14,6 @@ import { shifted, topShift } from "../layout/playView";
 import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
 import { type CardAction, cardBackAction, cardKeyAction, cardTurnAction } from "../pause/cardInput";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
-import { EDGE } from "../rules/bird";
 import { isSkillId, SKILL_IDS, skillEnabled } from "../rules/skills";
 import { activeSkill, savedSkills, selectActiveSkill } from "../save";
 import {

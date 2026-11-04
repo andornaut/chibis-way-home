@@ -1,3 +1,4 @@
+import { sameRect } from "../core";
 import type {
   Archetype,
   AreaLayout,
@@ -71,10 +72,6 @@ function alignedHitbox(art: ArtHitbox, width: number, height: number): Rect {
     x: art.hitbox.x + (width - art.frame.width) / 2,
     y: art.hitbox.y + height - art.frame.height,
   };
-}
-
-function sameRect(a: Rect, b: Rect): boolean {
-  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 }
 
 // An instance resolved into one flat object, in pixels: its instance's overrides over its

@@ -19,6 +19,7 @@ import {
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
 import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
+import { contactFrameAt, spriteFrameOrigin, STEP_MS, STEP_SECONDS } from "../core";
 import { AIR_JUMP_CUE } from "../data/airJumpCue";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
@@ -72,7 +73,6 @@ import { stageProgressRect } from "../layout/stageProgress";
 import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
-import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
 import { nodeOf } from "../rules/map";
@@ -81,7 +81,6 @@ import { eligibleSkills, skillTuning } from "../rules/skills";
 import { createStageBarks } from "../rules/stageBarks";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
-import { STEP_MS, STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { timedHazardRect } from "../rules/timedHazard";
 import {

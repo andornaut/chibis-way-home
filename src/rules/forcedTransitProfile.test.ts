@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
 import { startBird, stepBird } from "./bird";
 import { ordinaryTransitControl } from "./forcedTransitProfile";
 import { skillTuning } from "./skills";
-import { STEP_SECONDS } from "./step";
 
 const ground = { height: 40, width: 2000, x: -1000, y: 300 };
 const idle = { jumpHeld: false, move: 0 as const };

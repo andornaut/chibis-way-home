@@ -1,7 +1,7 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 
+import { prepareSpriteContact } from "../core";
 import type { Size, SpriteContact, SpriteSilhouettes } from "../data/types";
-import { prepareSpriteContact } from "../rules/bodyContact";
 import type { ArtManifest } from "./aseprite";
 
 export const CONTACT_SILHOUETTES = "contact-silhouettes";

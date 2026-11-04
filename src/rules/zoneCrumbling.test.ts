@@ -1,12 +1,12 @@
 import { expect, it, vi } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { BIRD_FRAME } from "../view/bird";
 import { advanceBehaviour } from "./behaviour";
 import { traversalContext } from "./behaviourTraversal";
 import { crumblingDefinitions } from "./crumbling";
-import { STEP_SECONDS } from "./step";
 import { startZone, stepZone, type ZoneState } from "./zone";
 
 vi.mock("./behaviour", async (original) => {

@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { AreaLayout, ZoneLayout } from "../data/types";
-import { STEP_SECONDS } from "../rules/step";
 import { startZone, stepZone } from "../rules/zone";
 import { BIRD_FRAME } from "../view/bird";
 import { walkRequiredRoutes } from "./zoneWalk";

@@ -1,5 +1,5 @@
+import { EDGE, rectAt } from "../core";
 import type { Instance, ObjectLayout, Orbit, Point, Rect, Size } from "../data/types";
-import { EDGE } from "./bird";
 import { axisOf, type Track } from "./motion";
 
 export function validateOrbitReferences(
@@ -119,12 +119,7 @@ export function resolveOrbits(
       throw new Error("Orbit requires an inert non-silhouette hazard");
     }
     const orbit = { ...authored, host: hostIndex, radius: authored.radius * tile };
-    const expected = orbitPosition(
-      0,
-      { ...host.origin, height: host.height, width: host.width },
-      orbit,
-      object,
-    );
+    const expected = orbitPosition(0, rectAt(host, host.origin), orbit, object);
     if (
       Math.abs(expected.x - object.origin.x) > EDGE ||
       Math.abs(expected.y - object.origin.y) > EDGE

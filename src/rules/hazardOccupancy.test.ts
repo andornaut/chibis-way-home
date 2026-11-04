@@ -1,14 +1,13 @@
 import { expect, it } from "vitest";
 
+import { EDGE, prepareSpriteContact, spriteFrameOrigin, STEP_SECONDS } from "../core";
 import { BEAR_BEHAVIOUR } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import type { BehaviourPlan, ObjectLayout, Rect } from "../data/types";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import { traversalContext } from "./behaviourTraversal";
-import { EDGE, startBird } from "./bird";
-import { prepareSpriteContact, spriteFrameOrigin } from "./bodyContact";
+import { startBird } from "./bird";
 import { hazardBoundsAt } from "./hazardOccupancy";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 const target = startBird(BIRD, { x: 200, y: 300 });
 const wait = { animation: null, motion: { kind: "wait" }, transitions: [] } as const;

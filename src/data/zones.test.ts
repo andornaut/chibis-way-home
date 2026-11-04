@@ -2,7 +2,7 @@ import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite"
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
-import { STEP_SECONDS } from "../rules/step";
+import { STEP_SECONDS } from "../core";
 import { resolveNames, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { zonePlanFor } from "../rules/zonePlans";

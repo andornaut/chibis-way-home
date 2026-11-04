@@ -4,6 +4,7 @@ import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import { createNodeResolver } from "eslint-plugin-import-x/node-resolver";
 import noCycle from "eslint-plugin-import-x/rules/no-cycle";
+import noRestrictedPaths from "eslint-plugin-import-x/rules/no-restricted-paths";
 import globals from "globals";
 import ts from "typescript-eslint";
 
@@ -36,18 +37,20 @@ const BOUNDARIES = [
 
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
 // Each context imports only contexts below it, bottom first: data; ai, assets and settings;
-// camera, stage and ui; rules; save; dialogue; layout; input; view; pause; loading; pwa; the side
-// pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
-// tools). "folder/module" allows one module of a folder ("folder/index" its index):
+// camera, stage and ui; rules; save; dialogue; layout; input; view; pause; loading;
+// pwa; the side pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling
+// (dev, sim, tools). "folder/module" allows one module of a folder ("folder/index" its index):
 // each is an import that a later move removes, by moving the module into a context or the
 // importer out of one. The boundaries above govern src/testing/.
 const CONTEXTS = {
   ai: [],
   assets: [],
   camera: ["data"],
+  core: ["data"],
   crash: ["data"],
   data: [
     "ai/randomStreams",
+    "core/index",
     "rules/assemble",
     "rules/behaviour",
     "rules/behaviourReach",
@@ -61,7 +64,6 @@ const CONTEXTS = {
     "rules/mapDestinations",
     "rules/perception",
     "rules/stageCompletion",
-    "rules/step",
     "rules/tiles",
     "rules/timedHazard",
     "rules/zone",
@@ -102,6 +104,7 @@ const CONTEXTS = {
   rules: [
     "ai",
     "camera",
+    "core",
     "data",
     "dialogue/conversation",
     "save/progress",
@@ -115,6 +118,7 @@ const CONTEXTS = {
   save: ["data", "dev/mode", "rules", "view/bird"],
   scenes: [
     "assets",
+    "core",
     "data",
     "dev/mode",
     "dev/step",
@@ -132,17 +136,27 @@ const CONTEXTS = {
     "view",
   ],
   settings: [],
-  sim: ["ai", "data", "rules", "stage", "view"],
+  sim: ["ai", "core", "data", "rules", "stage", "view"],
   stage: ["data"],
   tools: ["assets", "data", "headers", "homePage", "loading", "pwa", "view"],
   tuningPage: ["data", "gallery"],
   ui: [],
-  view: ["ai", "camera", "data", "dialogue", "input", "layout", "rules", "stage"],
+  view: ["ai", "camera", "core", "data", "dialogue", "input", "layout", "rules", "stage"],
 };
+
+// The components whose files outside them may import only their index.ts, so the index is the
+// component's whole contract.
+const INDEXED = ["camera", "core", "stage", "ui"];
 
 // CLEANUP (added 2026-11-04): the boss behaviour and timed hazard modules import each other's
 // values. Remove this exemption once the timedHazard/behaviour cycle is broken.
 const CYCLE_EXEMPT_FILES = ["src/ai/**", "src/rules/behaviour*", "src/rules/timedHazard.ts"];
+
+const IMPORT_X = { rules: { "no-cycle": noCycle, "no-restricted-paths": noRestrictedPaths } };
+const IMPORT_X_SETTINGS = {
+  "import-x/extensions": [".ts"],
+  "import-x/resolver-next": [createNodeResolver({ extensions: [".ts", ".js"] })],
+};
 
 const SRC_FOLDERS = folders("src").filter((folder) => folder !== "testing");
 
@@ -255,12 +269,28 @@ export default defineConfig(
   {
     files: SOURCE_FILES,
     ignores: CYCLE_EXEMPT_FILES,
-    plugins: { "import-x": { rules: { "no-cycle": noCycle } } },
+    plugins: { "import-x": IMPORT_X },
     rules: { "import-x/no-cycle": "error" },
-    settings: {
-      "import-x/extensions": [".ts"],
-      "import-x/resolver-next": [createNodeResolver({ extensions: [".ts", ".js"] })],
+    settings: IMPORT_X_SETTINGS,
+  },
+  // Index-only components: resolved paths, so a relative path of any depth is caught.
+  {
+    files: SOURCE_FILES,
+    plugins: { "import-x": IMPORT_X },
+    rules: {
+      "import-x/no-restricted-paths": [
+        "error",
+        {
+          zones: INDEXED.map((component) => ({
+            except: ["./index.ts"],
+            from: `./src/${component}`,
+            message: `Import src/${component}/ through its index.ts.`,
+            target: ["./src/*.ts", `./src/!(${component})/**`],
+          })),
+        },
+      ],
     },
+    settings: IMPORT_X_SETTINGS,
   },
   // Rules and the agent core replay from explicit seeds and step inputs, never ambient entropy
   // or wall-clock time.

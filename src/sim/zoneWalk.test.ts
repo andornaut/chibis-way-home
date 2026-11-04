@@ -2,12 +2,12 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it, vi } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
 import { TEST_ZONES, ZONES as FIXED_ZONES } from "../data/zones";
-import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";

@@ -1,7 +1,7 @@
+import { STEP_SECONDS } from "../core";
 import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
 import { birdBox } from "../rules/bird";
 import { stageProgress } from "../rules/stageProgress";
-import { STEP_SECONDS } from "../rules/step";
 import {
   activateBehaviour,
   areaOf,

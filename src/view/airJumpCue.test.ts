@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { AIR_JUMP_CUE } from "../data/airJumpCue";
 import { BIRD } from "../data/bird";
 import { startBird, stepBird } from "../rules/bird";
-import { STEP_SECONDS } from "../rules/step";
 import { airJumpCue, airJumpStarted, stepAirJumpCue } from "./airJumpCue";
 
 const frame = { height: 42, width: 48, x: 100, y: 100 };

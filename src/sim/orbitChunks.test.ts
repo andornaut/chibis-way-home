@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS, sweptContact } from "../core";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
@@ -9,8 +10,6 @@ import type { ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
 import { orbitPosition } from "../rules/orbit";
-import { STEP_SECONDS } from "../rules/step";
-import { sweptContact } from "../rules/sweptContact";
 import { areaLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
 import { TILESETS } from "../testing/walkSuite";

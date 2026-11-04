@@ -1,5 +1,5 @@
+import { EDGE } from "../core";
 import type { ForcedTransitLayout, Point, Rect, TargetedAttackWindow } from "../data/types";
-import { EDGE } from "./bird";
 
 export interface ForcedTransitBankContact {
   readonly group: string;

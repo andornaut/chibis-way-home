@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
+import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, SpriteContact, ZoneLayout } from "../data/types";
 import { startBehaviour, stepBehaviour } from "./behaviour";
 import { startBird } from "./bird";
-import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
 import { objectLayout } from "./tiles";
 import { startZone, stepZone } from "./zone";
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { sweptContact } from "../core";
 import { BIRD } from "../data/bird";
 import type { Archetype, AreaPlan, Instance, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { BIRD_FRAME } from "../view/bird";
@@ -12,7 +13,6 @@ import {
   orbitSweptContact,
   validateOrbitReferences,
 } from "./orbit";
-import { sweptContact } from "./sweptContact";
 import { areaLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
 

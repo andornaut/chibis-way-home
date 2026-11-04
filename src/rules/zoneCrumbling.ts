@@ -1,5 +1,6 @@
 import type { CrumblingWorld } from "@andornaut/game-kit/terrain/crumbling";
 
+import { EDGE, rectAt } from "../core";
 import type {
   AreaLayout,
   BirdTuning,
@@ -10,7 +11,7 @@ import type {
 } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import type { CrumblingPrediction } from "./behaviourReach";
-import { birdBox, type BirdState, EDGE } from "./bird";
+import { birdBox, type BirdState } from "./bird";
 import { type CrumblingActor, crumblingSupportPresent } from "./crumbling";
 import { effectiveHazardPhase } from "./effectiveCollision";
 import { type Transient, transientBox } from "./transients";
@@ -77,7 +78,7 @@ export function crumblingActors(
     physical.push({
       actorId: object,
       // The whole layout rect bounds every pose and contact box.
-      body: { ...at, height: object.height, width: object.width },
+      body: rectAt(object, at),
       standingSupportIds: support ? [support] : [],
     });
   }

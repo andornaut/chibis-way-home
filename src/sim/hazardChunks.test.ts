@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { createHazardChunks } from "../data/hazardChunks";
 import { TILE } from "../data/screen";
 import type { TilePoint } from "../data/types";
 import { zonePlanOf } from "../rules/assemble";
 import { chunkProblems } from "../rules/chunk";
-import { STEP_SECONDS } from "../rules/step";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { BirdTuning, Rect } from "../data/types";
 import { type BirdState, startBird, stepBird } from "./bird";
-import { STEP_SECONDS } from "./step";
 
 const tuning: BirdTuning = { ...BIRD, doubleJump: true };
 const floor: Rect = { height: 40, width: 4000, x: -2000, y: 300 };

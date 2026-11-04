@@ -1,11 +1,11 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { EDGE, STEP_SECONDS } from "../core";
 import type { BirdTuning, Point, Rect, Size } from "../data/types";
-import { STEP_SECONDS } from "./step";
 
-// Pixels of rounding error allowed when she stands exactly on an edge.
-export const EDGE = 1e-6;
+// CLEANUP (added 2026-11-04): remove when the boss files import core directly.
+export { EDGE } from "../core";
 
 // What the player asks of the bird this step. jumpHeld is the button's state; a jump starts on
 // the step it goes down.

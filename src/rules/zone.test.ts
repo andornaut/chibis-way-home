@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
 import type {
@@ -17,7 +18,6 @@ import { birdBox, birdFrameRect, ordinaryJumpApexFeetY, startBird } from "./bird
 import { crumblingDefinitions } from "./crumbling";
 import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
 import { skillTuning } from "./skills";
-import { STEP_SECONDS } from "./step";
 import {
   activateBehaviour,
   doorAt,

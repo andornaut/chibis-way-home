@@ -3,10 +3,10 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { AIR_JUMP_CUE } from "../data/airJumpCue";
 import { BIRD } from "../data/bird";
 import { startBird, stepBird } from "../rules/bird";
-import { STEP_SECONDS } from "../rules/step";
 import { mountAirJumpCue } from "./airJumpCue";
 
 it("clears on pause and disposes once, without advancing or replaying a covered cue", () => {
