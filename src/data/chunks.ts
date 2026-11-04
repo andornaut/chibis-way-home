@@ -1474,6 +1474,7 @@ export const WOODLAND_DEPTH_ALIASES: Readonly<Record<string, string>> = Object.f
     "compound-return-shuttle",
     "compound-return-terrace",
     "compound-transfer-gate",
+    "crumbling-support-crossing",
     "growl-clearing",
     "growl-cover-early",
     "growl-cover-late",
@@ -1496,6 +1497,7 @@ export const GROUND_CHALLENGES: ChunkPool = [
   "compound-low-ceiling-hazard",
   "compound-return-terrace",
   "compound-transfer-gate",
+  "crumbling-support-crossing",
   "warned-vent-terrace",
 ];
 export const JUMP_CHALLENGES: ChunkPool = [
