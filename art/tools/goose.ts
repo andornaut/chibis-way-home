@@ -7,6 +7,10 @@
  * world position and physical movement stay unchanged. Gameplay owns the tell window. New frames
  * have exact alpha-derived contact masks.
  *
+ * Skid appends 2x100ms, looping, for the slide after a committed rush: feet braced forward, body
+ * leaning back, wing half-flared and a 2px lgrey scuff alternating at the leading toes. Each frame
+ * reads as braking on its own because gameplay may cut the slide short before rest.
+ *
  * Usage, from the repository root:
  *   node art/tools/goose.ts build
  *   node art/tools/goose.ts preview OUT.png
@@ -23,9 +27,9 @@
  *
  * Tags in frame order: idle 2x400ms; walk 4x120ms; warn 2x160ms; rush 4x80ms; rest 2x400ms.
  * Frustration appends 4x120ms: a short headshake and low wing flaps, feet planted. Set-trap appends
- * 4x120ms: a groundward head and wing placement gesture; no trap type or object is depicted. All
- * earlier motion tags loop. These are art cycle defaults; gameplay owns state durations and all
- * physical movement. The build writes art/antagonists/goose-antagonist.aseprite and its PNG/JSON
+ * 4x120ms: a groundward head and wing placement gesture; no trap type or object is depicted.
+ * Anticipate-lift then skid follow. All motion tags except anticipate-lift loop. These are art
+ * cycle defaults; gameplay owns state durations and all physical movement. The build writes art/antagonists/goose-antagonist.aseprite and its PNG/JSON
  * exports.
  *
  * goose-trap: 24x12, bottom-centre 12,12, fixed contact bounds 0,8,24,4. Warning loops 4x120ms
@@ -74,11 +78,13 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   const rushing = state === "rush";
   const warning = state === "warn";
   const resting = state === "rest";
+  const skidding = state === "skid";
   const lift = moving ? phase % 2 : state === "idle" || state === "rest" ? phase : 0;
   const by = 34 - lift;
   // Feet remain the ground reference even while the torso rises on a passing pose.
   const stride = moving ? ([-2, 0, 2, 0][phase] as number) : 0;
   [17 + stride, 27 - stride].forEach((x, i) => {
+    if (skidding) return;
     const up = moving && (phase === 0 || phase === 2) && i === Math.floor(phase / 2) ? 2 : 0;
     g.rect(x, 41 - lift, 2, 5 + lift - up, "orange");
     g.rect(x - 1, 45 - up, 5, 2, "orange");
@@ -88,12 +94,31 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     const angle = phase === 0 ? -0.65 : -0.78;
     bird.cel(g, bird.inEll(14, 20 - phase, 4, 12, angle), "lgrey", "grey", "white", 2, 1);
   }
-  bird.cel(g, bird.inEll(7, by - 2, 3.8, 2.5, -0.4), "cream", "lgrey", null, 1, 1);
-  bird.cel(g, bird.inEll(21, by, 14.5, 9.5), "cream", "lgrey", "white", 3, 1);
+  // A skid leans the body back: the tail drops and the breast rises over the braced feet.
+  const lean = skidding ? 2 : 0;
+  bird.cel(g, bird.inEll(7, by - 2 + lean, 3.8, 2.5, -0.4), "cream", "lgrey", null, 1, 1);
+  const body = bird.inEll(21 - lean, by + lean / 2, 14.5, 9.5, -0.14 * lean);
+  bird.cel(g, body, "cream", "lgrey", "white", 3, 1);
+  if (skidding) {
+    // Both legs brace diagonally forward from the hips, toes planted ahead of the body.
+    for (const x of [23, 29]) {
+      for (let s = 0; s < 4; s++) g.rect(x + s, 40 + s, 2, 2, "orange");
+      g.rect(x + 3, 45, 5, 2, "orange");
+    }
+  }
   let hx: number;
   let hy: number;
   let points: Point[];
-  if (rushing) {
+  if (skidding) {
+    // The neck tilts back behind the feet, braced against the slide.
+    [hx, hy] = [27, 13];
+    points = [
+      [27, by - 3],
+      [27, 25],
+      [25, 18],
+      [hx, hy + 1],
+    ];
+  } else if (rushing) {
     [hx, hy] = [37, 25 - lift];
     points = [
       [28, by - 1],
@@ -145,7 +170,13 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   g.rect(Math.trunc(hx + 4), Math.trunc(hy), 4, 3, "orange");
   g.rect(Math.trunc(hx + 4), Math.trunc(hy) + 2, 4, 1, "ochre");
   g.rect(Math.trunc(hx + 1), Math.trunc(hy - 2), 3, resting ? 1 : 3, "ink");
-  if (!warning) bird.cel(g, bird.inEll(20, by + 1, 8, 4.5, -0.2), "grey", "dslate", null, 2, 1);
+  if (skidding) {
+    // The wing half-flares, its tip raised back and up for balance.
+    const wing = bird.inEll(15, 30 - phase, 9.5, 4, phase === 0 ? 0.45 : 0.55);
+    bird.cel(g, wing, "grey", "dslate", "lgrey", 2, 1);
+  } else if (!warning) {
+    bird.cel(g, bird.inEll(20, by + 1, 8, 4.5, -0.2), "grey", "dslate", null, 2, 1);
+  }
   if (state === "frustration") {
     const angle = phase % 2 ? -0.45 : 0.4;
     bird.cel(g, bird.inEll(19, phase % 2 ? 30 : 35, 11, 4, angle), "lgrey", "grey", "white", 2, 1);
@@ -157,7 +188,13 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   const px = g.outlined({
     edge: (c) => (c === K.grey || c === K.dslate ? (K.navy as string) : (K.dslate as string)),
   });
-  return glasses({ resting }, px, hx, hy);
+  const framed = glasses({ resting }, px, hx, hy);
+  if (!skidding) return framed;
+  // A 2px ground scuff ahead of the leading toes alternates between the skid frames.
+  const scuff = new Grid(48, 48);
+  scuff.px = framed;
+  scuff.rect(phase === 0 ? 38 : 39, phase === 0 ? 46 : 45, 2, 1, "lgrey");
+  return scuff.px;
 }
 
 /** Oversized paired ink rims, a short bridge and temple, contained inside the shared contact box. */
@@ -229,6 +266,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
           [state, Array.from({ length: count }, (_, i) => draw(state, i)), ms] as const,
       ),
       ["anticipate-lift", [0, 1, 2].map(anticipateLift), [120, 160, 200]],
+      ["skid", [0, 1].map((i) => draw("skid", i)), 100],
     ],
   ];
   yield [
