@@ -15,7 +15,7 @@ export const NO_INTERACTION: Interaction = { kind: "none", range: 0 };
 // How each kind of thing behaves, by name: its collision, which it always has, and the default
 // motion, reaction and interaction its characters tune.
 export const ARCHETYPES: Readonly<Record<string, Archetype>> = {
-  // Wanders near its spot and comes toward her when she is near.
+  // Wanders near its spot and comes toward him when he is near.
   approacher: {
     collision: "none",
     interaction: NO_INTERACTION,
@@ -72,7 +72,7 @@ export const ARCHETYPES: Readonly<Record<string, Archetype>> = {
     },
     reaction: NO_REACTION,
   },
-  // Hops about and flees from her.
+  // Hops about and flees from him.
   "hopper-avoider": {
     collision: "none",
     interaction: NO_INTERACTION,
@@ -95,7 +95,7 @@ export const ARCHETYPES: Readonly<Record<string, Archetype>> = {
     motion: STATIC_MOTION,
     reaction: NO_REACTION,
   },
-  // A solid platform going back and forth; she rides it.
+  // A solid platform going back and forth; he rides it.
   platform: {
     collision: "solid",
     interaction: NO_INTERACTION,
@@ -116,7 +116,7 @@ export const ARCHETYPES: Readonly<Record<string, Archetype>> = {
     motion: STATIC_MOTION,
     reaction: NO_REACTION,
   },
-  // Walks back and forth, paying her no attention.
+  // Walks back and forth, paying him no attention.
   walker: {
     collision: "none",
     interaction: NO_INTERACTION,

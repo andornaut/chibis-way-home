@@ -130,7 +130,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
       interaction: { kind: "talk", range: ANIMAL_INTERACTION_RANGE },
     },
   },
-  // A harmless pug that trots up to her.
+  // A harmless pug that trots up to him.
   "dog-pug": {
     animations: { idle: "idle", move: "walk", react: "perk", talk: "talk" },
     archetype: "approacher",
@@ -276,7 +276,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 4,
     rows: 4,
   },
-  // Pedestrians walking past, back and forth, paying her no attention. React and talk fall back
+  // Pedestrians walking past, back and forth, paying him no attention. React and talk fall back
   // to idle.
   // The park's pieces. The bandstand, 7 tall, with its roof a one-way ledge 6 above its base.
   "parcel-open": {
@@ -345,7 +345,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 20,
     rows: 10,
   },
-  // The park's door to a room: a gate that opens when she uses it.
+  // The park's door to a room: a gate that opens when he uses it.
   "park-gate": {
     archetype: "door",
     art: "park-gate",
@@ -390,7 +390,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 3,
     rows: 5,
   },
-  // Pigeons pecking about in flocks, which flee as she comes near: react plays flee once, then
+  // Pigeons pecking about in flocks, which flee as he comes near: react plays flee once, then
   // move's fly. Talk falls back to idle.
   pigeon: {
     animations: { idle: "idle", move: "fly", react: "flee", talk: "idle" },
@@ -413,7 +413,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 1,
     rows: 1,
   },
-  // The open cellar between a hatch's edges: drawn only, over a gap in the sidewalk she falls
+  // The open cellar between a hatch's edges: drawn only, over a gap in the sidewalk he falls
   // through.
   "pit-opening": {
     archetype: "scenery",
@@ -436,7 +436,7 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     tileset: "tiles-platforming",
   },
   // A roofline capping a facade, repeated across its run: a cornice goes along its top.
-  // A shallow pond, two rows deep: touching the water restarts her. Placed with a width, between
+  // A shallow pond, two rows deep: touching the water restarts him. Placed with a width, between
   // solid banks.
   pond: {
     archetype: "hazard",
