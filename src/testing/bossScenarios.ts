@@ -83,8 +83,9 @@ function botEncounter(theme: string, ids: readonly string[], seed: number): Boss
   };
 }
 
-// Archie on the far bank of the crumbling crossing, so his route to Chibi at the entry crosses
-// the crumbling ledge over the red pit: a synthetic placement.
+// Archie on the crumbling crossing's ledge over the red pit, with Chibi at the entry: both banks
+// are twelve tiles from the ledge, beyond a ground boss's jump, so he starts on it. A synthetic
+// placement.
 const CRUMBLING_ARCHIE: BossScenario = {
   controller: scripted("still"),
   layout: () =>
@@ -92,10 +93,10 @@ const CRUMBLING_ARCHIE: BossScenario = {
       "city-streets",
       ["crumbling-support-crossing"],
       withInstances("crumbling-support-crossing", [
-        { character: "dog-antagonist", col: 44, role: "antagonist", row: 46 },
+        { character: "dog-antagonist", col: 25, role: "antagonist", row: 44 },
       ]),
     ),
-  name: "crumbling archie far-bank still",
+  name: "crumbling archie ledge still",
   seed: 1,
   ticks: ENCOUNTER_TICKS,
 };
@@ -161,7 +162,7 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     boss: "Archie",
     covers: ["boss-on-crumbling"],
     scenario: CRUMBLING_ARCHIE,
-    subject: "crumbling support: Archie's route to Chibi crosses the crumbling ledge",
+    subject: "crumbling support: Archie stands on the crumbling ledge until it gives way",
   },
   {
     boss: "Pebble",

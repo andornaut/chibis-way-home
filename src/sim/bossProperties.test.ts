@@ -31,19 +31,19 @@ interface KnownFailure {
 const KNOWN_FAILURES: readonly KnownFailure[] = [
   {
     cause:
+      "the crumbling ledge drops Archie onto the pit floor, which the red hazard covers; idle " +
+      "recovery proves no safe route, so he holds against the left wall at x 142",
+    property: "no-stall",
+    scenario: "crumbling archie ledge still",
+    tick: 305,
+  },
+  {
+    cause:
       "Pebble's drop-burst tell, burst, perch return and two-second rest before relocating keep " +
       "him within half a tile of x 95 for over four seconds while Chibi stands still: data timing",
     property: "no-stall",
     scenario: "encounter flyer-shelter-early loading-yards still",
     tick: 89,
-  },
-  {
-    cause:
-      "Archie stops at the far bank's edge; his traversal search exhausts its budget on the " +
-      "12-tile jump to the crumbling ledge, so he never stands on it",
-    property: "covers boss-on-crumbling",
-    scenario: "crumbling archie far-bank still",
-    tick: undefined,
   },
 ];
 
