@@ -238,7 +238,7 @@ export function registerTraceSuite(group: string, scenarios: readonly TraceScena
     it.each(scenarios.map((scenario) => [scenario.name, scenario] as const))(
       "%s",
       (name, { run }) => {
-        const recorder = traceRecorder(DUMP !== undefined);
+        const recorder = traceRecorder({ retain: DUMP !== undefined });
         TRACE.active = recorder;
         try {
           run();
