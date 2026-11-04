@@ -2,28 +2,30 @@
  * Achievement art: the nav icon and one glyph per achievement.
  *
  * Usage: node art/tools/achievementIcons.ts build | preview OUT.png, from the repository root.
- * preview writes the review board: every achievement unlocked and locked at 1x on navy and lgrey
- * and at 4x on navy, labelled with its ID in font-body, and the nav icon at 1x and 4x on the nav
- * button's dslate face.
+ * preview writes the review board: the nav icon at 1x and 4x on the nav button's dslate face, then
+ * every achievement labelled with its ID in font-body, unlocked and locked at 1x and 4x on the
+ * ui-settings-card lgrey face (the list card) and again on navy.
  *
  * - icon-achievements, 20x20, one tag rest (100ms): the nav icon, a trophy cup with two handles, a
  *   stem and a stepped foot, cream with tan on its lower-right edges and no outline, like
  *   icon-home-nav. It goes in ui-icon-button at button + (8,6), or (8,8) pressed.
  * - icon-achievement, 16x16: one tag per achievement ID, in ACHIEVEMENTS order. Each tag has frame
- *   0 unlocked (full colour, ink outlines) and frame 1 locked (the same alpha geometry in flat
- *   grey, the muted skill glyphs' colour), 100ms each, looping. Transparent ground, no contact box,
- *   hit box or slice. The game picks a tag by ID and a frame by state; nothing is tinted at runtime.
+ *   0 unlocked (full colour) and frame 1 locked (the same alpha geometry in flat slate, 3.36:1 on
+ *   the lgrey card face), 100ms each. Transparent ground, no contact box, hit box or slice. The
+ *   game picks a tag by ID and shows the frame for the state; nothing is tinted at runtime.
  *
  * Families, each with a silhouette that survives the flat locked fill:
  * - escape-<boss>: the boss's head (HEADS) with an amber exit arrow at the lower right.
- * - clean-<boss>: the same head over a green laurel wreath open at the top.
+ * - clean-<boss>: the same head over a gold (yellow and amber) laurel wreath open at the top.
  * - zone-<zone>: the zone's emblem (EMBLEMS) in its zone primary and shade, outlined ink, with ink
  *   and dslate details. Fence gaps and apartment windows are transparent, so they hold when locked.
- * - spotless-<zone>: the same emblem with a yellow sparkle at each upper corner.
+ * - spotless-<zone>: the same emblem, one row lower, with a 7x7 yellow sparkle at the upper left
+ *   and a 5x5 one at the upper right.
  * - all-gifts: a red gift box with a yellow ribbon and bow.
  * - just-a-bird: Chibi, cream with an orange bill, facing a small zone-peach house.
- * Every part carries its own ink outline. An overlaid part (arrow, laurel, sparkle, house) knocks a
- * 1px transparent gap out of what it covers, so the parts stay separate shapes when locked.
+ * An overlaid part (arrow, laurel, sparkle, house) knocks a 1px transparent gap out of what it
+ * covers, so the parts stay separate shapes when locked. Every pixel that meets the background is
+ * ink (11.0:1 on lgrey), so no pale fill touches the card face.
  */
 
 import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
@@ -101,7 +103,8 @@ const SRC = "art/ui";
 const ICON = "icon-achievement";
 const NAV = "icon-achievements";
 const SIDE = 16;
-const LOCKED = "grey";
+const LOCKED = "slate";
+const CARD = "lgrey"; // the ui-settings-card face the list sits on
 const USAGE = "Usage: achievementIcons.ts build | preview OUT.png";
 
 type Legend = Readonly<Record<string, string>>;
@@ -243,9 +246,9 @@ const ARROW: Part = {
   rows: [".kk...", "kaak..", "kaaak.", ".kaaak", "kaaak.", "kaak..", ".kk..."],
 };
 
-/** Two laurel sprigs curving up from the foot, open at the top. */
+/** A gold laurel wreath, two sprigs curving up from the foot, open at the top. */
 const LAUREL: Part = {
-  legend: {},
+  legend: { g: "yellow", G: "amber" },
   rows: [
     "k..............k",
     "kk............kk",
@@ -259,8 +262,14 @@ const LAUREL: Part = {
   ],
 };
 
-/** A four-point sparkle. */
+/** A four-point sparkle, 7x7 with its outline. */
 const SPARKLE: Part = {
+  legend: {},
+  rows: ["...k...", "..kyk..", ".kkykk.", "kyyyyyk", ".kkykk.", "..kyk..", "...k..."],
+};
+
+/** A smaller four-point sparkle, 5x5 with its outline. */
+const SMALL_SPARKLE: Part = {
   legend: {},
   rows: ["..k..", ".kyk.", "kyyyk", ".kyk.", "..k.."],
 };
@@ -482,10 +491,11 @@ function unlocked(art: Art): pixel.Frame {
     place({ knock: true, x: 0, y: 7 }, partFrame(LAUREL), f);
   } else if (art[0] === "zone" || art[0] === "spotless") {
     const e = partFrame(emblem(art[1]));
-    place(centred(e, 15), e, f);
-    if (art[0] === "spotless") {
+    if (art[0] === "zone") place(centred(e, 15), e, f);
+    else {
+      place(centred(e, 16), e, f);
       place({ knock: true, x: 0, y: 0 }, partFrame(SPARKLE), f);
-      place({ knock: true, x: 11, y: 0 }, partFrame(SPARKLE), f);
+      place({ knock: true, x: 11, y: 0 }, partFrame(SMALL_SPARKLE), f);
     }
   } else if (art[0] === "all-gifts") {
     const gift = partFrame(GIFT);
@@ -494,13 +504,30 @@ function unlocked(art: Art): pixel.Frame {
     place({ x: 0, y: 3 }, partFrame(BIRD), f);
     place({ knock: true, x: 8, y: 8 }, partFrame(HOUSE), f);
   }
-  return f;
+  return inked(f);
 }
 
-/** The same alpha geometry in one flat grey. */
+/**
+ * Ink every pixel that meets the background (a transparent pixel or the frame edge, 4
+ * neighbours), so no fill colour touches the pale card. Parts already carry ink outlines; this
+ * closes the edges a knock-out gap leaves.
+ */
+function inked(frame: pixel.Frame): pixel.Frame {
+  const ink = pixel.hexc("ink");
+  const clear = (x: number, y: number): boolean => !frame[y]?.[x];
+  return frame.map((row, y) =>
+    row.map((colour, x) =>
+      colour && [clear(x - 1, y), clear(x + 1, y), clear(x, y - 1), clear(x, y + 1)].some(Boolean)
+        ? ink
+        : colour,
+    ),
+  );
+}
+
+/** The same alpha geometry in one flat LOCKED colour. */
 function locked(frame: pixel.Frame): pixel.Frame {
-  const grey = pixel.hexc(LOCKED);
-  return frame.map((row) => row.map((colour) => (colour ? grey : null)));
+  const flat = pixel.hexc(LOCKED);
+  return frame.map((row) => row.map((colour) => (colour ? flat : null)));
 }
 
 // a is cream, o tan on the lower-right edges, as icon-home-nav
@@ -550,7 +577,9 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 const ZOOM = 4;
 const GAP = 8;
 const LABEL_W = 232;
-const CELL_W = LABEL_W + 4 * (SIDE + GAP) + 2 * (SIDE * ZOOM + GAP) + GAP;
+const GROUNDS = [CARD, "navy"] as const; // the list card face first, then navy
+const GROUP_W = 2 * (SIDE + GAP) + 2 * (SIDE * ZOOM + GAP) + GAP;
+const CELL_W = LABEL_W + GROUNDS.length * GROUP_W;
 const CELL_H = SIDE * ZOOM + 2 * GAP;
 const COLUMNS = 2;
 
@@ -563,9 +592,14 @@ function well(colour: string, at: { x: number; y: number }, im: RgbaImage, sheet
   composite(at, im, sheet);
 }
 
+/**
+ * The review board: the nav icon on its button face, then per achievement its ID and, on the card
+ * face and then on navy, unlocked and locked at 1x and at 4x.
+ */
 function preview(out: string): void {
   const rows = Math.ceil(ACHIEVEMENTS.length / COLUMNS);
-  const top = 20 * ZOOM + 3 * GAP;
+  const head = 20 * ZOOM + 3 * GAP;
+  const top = head + 20 + GAP;
   const sheet = filledImage(
     [...pixel.rgb("ink"), 255],
     COLUMNS * CELL_W + GAP,
@@ -580,25 +614,32 @@ function preview(out: string): void {
     resizeNearest(20 * ZOOM, 20 * ZOOM, nav),
     sheet,
   );
+  for (let column = 0; column < COLUMNS; column++)
+    GROUNDS.forEach((ground, g) =>
+      drawLabel(
+        { colour: "cream", x: GAP + column * CELL_W + LABEL_W + g * GROUP_W, y: head },
+        ground === CARD ? "card face: 1x, 4x" : "navy: 1x, 4x",
+        sheet,
+      ),
+    );
   ACHIEVEMENTS.forEach(([id, , art], i) => {
     const x0 = GAP + Math.floor(i / rows) * CELL_W;
     const y0 = top + (i % rows) * CELL_H;
-    const frames = [unlocked(art)];
-    frames.push(locked(frames[0] as pixel.Frame));
-    const ims = frames.map(frameImage);
+    const open = unlocked(art);
+    const ims = [open, locked(open)].map(frameImage);
     drawLabel({ colour: "cream", x: x0, y: y0 + GAP + 22 }, id, sheet);
-    let x = x0 + LABEL_W;
     const midY = y0 + GAP + (SIDE * ZOOM - SIDE) / 2;
-    for (const ground of ["navy", "lgrey"])
+    GROUNDS.forEach((ground, g) => {
+      let x = x0 + LABEL_W + g * GROUP_W;
       for (const im of ims) {
         well(ground, { x, y: midY }, im, sheet);
         x += SIDE + GAP;
       }
-    x += GAP;
-    for (const im of ims) {
-      well("navy", { x, y: y0 + GAP }, resizeNearest(SIDE * ZOOM, SIDE * ZOOM, im), sheet);
-      x += SIDE * ZOOM + GAP;
-    }
+      for (const im of ims) {
+        well(ground, { x, y: y0 + GAP }, resizeNearest(SIDE * ZOOM, SIDE * ZOOM, im), sheet);
+        x += SIDE * ZOOM + GAP;
+      }
+    });
   });
   writeRgbImage(out, sheet);
 }
