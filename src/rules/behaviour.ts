@@ -4,6 +4,7 @@ import { abilityFor } from "../ai/ability";
 import type {
   BehaviourAction,
   BehaviourCondition,
+  BehaviourMotion,
   BehaviourNode,
   BehaviourPlan,
   BirdTuning,
@@ -893,6 +894,10 @@ interface PursuitKinds {
   readonly flight: boolean;
   readonly flyGateway: string | undefined;
   readonly groundTraversal: boolean;
+  // The first ground pursuit with a traversal profile and the first overhead flight, in state
+  // order.
+  readonly groundTraversalMotion: BehaviourMotion | undefined;
+  readonly overhead: BehaviourMotion | undefined;
 }
 
 const pursuitKindsCache = new WeakMap<BehaviourPlan, PursuitKinds>();
@@ -905,16 +910,24 @@ function pursuitKinds(plan: BehaviourPlan): PursuitKinds {
   let flight = false;
   let flyGateway: string | undefined;
   let groundTraversal = false;
+  let groundTraversalMotion: BehaviourMotion | undefined;
+  let overhead: BehaviourMotion | undefined;
   for (const [key, { motion }] of Object.entries(plan.states)) {
     if (motion.kind === "pursue") {
       flight ||= motion.mode === "fly";
       if (motion.mode === "fly") {
         flyGateway ??= key;
+        if (motion.overhead) {
+          overhead ??= motion;
+        }
       }
       groundTraversal ||= motion.mode === "ground" && Boolean(motion.traversal);
+      if (motion.mode === "ground" && motion.traversal) {
+        groundTraversalMotion ??= motion;
+      }
     }
   }
-  const kinds = { flight, flyGateway, groundTraversal };
+  const kinds = { flight, flyGateway, groundTraversal, groundTraversalMotion, overhead };
   pursuitKindsCache.set(plan, kinds);
   return kinds;
 }
@@ -966,9 +979,7 @@ function pursuitReachable(
     const overhead =
       current.kind === "pursue" && current.mode === "fly" && current.overhead
         ? current
-        : Object.values(object.behaviour!.states).find(
-            ({ motion }) => motion.kind === "pursue" && motion.mode === "fly" && motion.overhead,
-          )?.motion;
+        : kinds.overhead;
     if (overhead?.kind === "pursue" && overhead.mode === "fly" && overhead.overhead) {
       if (!world.traversalFrame) {
         return undefined;
@@ -1032,9 +1043,7 @@ function updatePursuit(
   const aware =
     targetInSameChunk(world, observer, target) || targetInCurrentView(world, observer, target);
   if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true) {
-    const motion = Object.values(object.behaviour!.states)
-      .map(({ motion }) => motion)
-      .find((motion) => motion.kind === "pursue" && motion.mode === "ground" && motion.traversal);
+    const motion = pursuitKinds(object.behaviour!).groundTraversalMotion;
     if (motion?.kind === "pursue" && motion.mode === "ground") {
       const probed = probeRearm(
         world,
