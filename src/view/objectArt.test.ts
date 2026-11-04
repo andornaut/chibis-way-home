@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ObjectLayout } from "../data/types";
+import type { ObjectLayout, Point } from "../data/types";
 import type { ArtManifest } from "./aseprite";
 import { type ArtKind, artKind, artScrollFactor, sceneryParallax, worldScenery } from "./objectArt";
 import type { Tileset } from "./tiles";
@@ -34,12 +34,17 @@ describe("artKind", () => {
 });
 
 describe("artScrollFactor", () => {
-  it("keeps art at world speed when no parallax is configured", () => {
-    expect(artScrollFactor("sprite")).toEqual({ x: 1, y: 1 });
-  });
-
-  it.each<ArtKind>(["backdrop", "repeated-backdrop"])("applies both axes to %s", (kind) => {
-    expect(artScrollFactor(kind, { x: 0.2, y: 0 })).toEqual({ x: 0.2, y: 0 });
+  it.each<[string, ArtKind, Point | undefined, Point]>([
+    ["keeps sprite art at world speed with no parallax", "sprite", undefined, { x: 1, y: 1 }],
+    ["applies both axes to backdrop art", "backdrop", { x: 0.2, y: 0 }, { x: 0.2, y: 0 }],
+    [
+      "applies both axes to repeated-backdrop art",
+      "repeated-backdrop",
+      { x: 0.2, y: 0 },
+      { x: 0.2, y: 0 },
+    ],
+  ])("%s", (_, kind, parallax, expected) => {
+    expect(artScrollFactor(kind, parallax)).toEqual(expected);
   });
 
   it("rejects detached sprite parallax", () => {

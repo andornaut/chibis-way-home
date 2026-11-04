@@ -42,11 +42,51 @@ it("centres round Use dots and preserves the white press core", () => {
   expect(sample("use", "rest", 28.5, 42).colour).toBe(colours.ink);
   expect(sample("jump", "held", 37.5, 33)).toEqual({ alpha: 255, colour: colours.white });
 });
-it("lights only the dragged Move chevron while keeping its ring cream", () => {
-  expect(sample("move", "held-left", 13, 37.5).colour).toBe(colours.white);
-  expect(sample("move", "held-left", 62, 37.5).colour).toBe(colours.cream);
-  expect(sample("move", "held-right", 13, 37.5).colour).toBe(colours.cream);
-  expect(sample("move", "held-right", 62, 37.5).colour).toBe(colours.white);
-  expect(sample("move", "held-left", 72, 37.5).colour).toBe(colours.cream);
-  expect(sample("knob", "held", 5.5, 5.5).colour).toBe(colours.white);
-});
+it.each<{
+  colour: keyof typeof colours;
+  kind: TouchChromeKind;
+  name: string;
+  pose: TouchChromePose;
+  x: number;
+  y: number;
+}>([
+  {
+    colour: "white",
+    kind: "move",
+    name: "left chevron dragged left",
+    pose: "held-left",
+    x: 13,
+    y: 37.5,
+  },
+  {
+    colour: "cream",
+    kind: "move",
+    name: "right chevron dragged left",
+    pose: "held-left",
+    x: 62,
+    y: 37.5,
+  },
+  {
+    colour: "cream",
+    kind: "move",
+    name: "left chevron dragged right",
+    pose: "held-right",
+    x: 13,
+    y: 37.5,
+  },
+  {
+    colour: "white",
+    kind: "move",
+    name: "right chevron dragged right",
+    pose: "held-right",
+    x: 62,
+    y: 37.5,
+  },
+  { colour: "cream", kind: "move", name: "ring dragged left", pose: "held-left", x: 72, y: 37.5 },
+  { colour: "white", kind: "knob", name: "held knob", pose: "held", x: 5.5, y: 5.5 },
+])(
+  "lights only the dragged Move chevron: paints the $name $colour",
+  ({ colour, kind, pose, x, y }) => {
+    expect(sample(kind, pose, x, y).colour).toBe(colours[colour]);
+  },
+);
