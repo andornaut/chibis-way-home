@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { ZONE_MAP } from "../../data/map";
 import type { MapNode, ZoneMap } from "../../data/types";
-import { RECIPES, ZONES } from "../../data/zones";
+import { RECIPES } from "../../data/zones";
 import { openMap } from "../map";
 import { destinationForStage, destinationSelection } from "../mapDestinations";
 import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./progress";
@@ -157,14 +157,12 @@ describe("progressFormat", () => {
   });
 
   it("takes the game's map start, nothing completed, as a place to stand", () => {
-    expect(
-      encodeSave(progressFormat(ZONE_MAP, { ...ZONES, ...RECIPES }), at(ZONE_MAP.start)).ok,
-    ).toBe(true);
+    expect(encodeSave(progressFormat(ZONE_MAP, RECIPES), at(ZONE_MAP.start)).ok).toBe(true);
   });
 });
 
 describe("built cityscape progress", () => {
-  const plans = { ...ZONES, ...RECIPES };
+  const plans = RECIPES;
   const format = progressFormat(ZONE_MAP, plans);
 
   const stages = ZONE_MAP.destinations[0]!.stages;

@@ -3,7 +3,7 @@
 import type { Point, TilePoint } from "./geometry";
 
 // A point on the map: a zone she plays, or a fork where paths split or join. at: where it is
-// drawn on the map screen, on its tile grid. zone: a zone node's key in ZONES or RECIPES; a zone
+// drawn on the map screen, on its tile grid. zone: a zone node's key in RECIPES; a zone
 // not built yet has none.
 export interface MapNode {
   readonly at: TilePoint;

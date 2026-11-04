@@ -18,7 +18,7 @@ import { ROOMS } from "./rooms";
 import { TILE, ZONE_ROWS } from "./screen";
 import { TEXT } from "./text";
 import type { AreaPlan, TileRect, ZonePlan } from "./types";
-import { RECIPES, ZONES as ZONES_BY_KEY } from "./zones";
+import { RECIPES } from "./zones";
 
 const MANIFEST = manifestJson as ArtManifest;
 const SHEETS = import.meta.glob<AsepriteSheet>("../../public/art/sprites/*.json", {
@@ -30,11 +30,7 @@ const tagsOf = (art: string) => {
   return sheet ? [...sheetTags(sheet).keys()] : [];
 };
 const RECIPE_PLANS = Object.keys(RECIPES).map((key) => [key, zonePlanFor(1, key)] as const);
-const ZONES = [
-  ...Object.values(ZONES_BY_KEY),
-  ...RECIPE_PLANS.map(([, plan]) => plan),
-  ...TEST_ZONES,
-];
+const ZONES = [...RECIPE_PLANS.map(([, plan]) => plan), ...TEST_ZONES];
 const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
 
 const inside = (area: AreaPlan, rect: TileRect) =>
@@ -174,10 +170,6 @@ const doorsOf = (plan: ZonePlan) =>
   );
 
 describe("the real zones", () => {
-  it.each(Object.entries(ZONES_BY_KEY))("hand-built zone %s has a door to a room", (_, plan) => {
-    expect(doorsOf(plan).length).toBeGreaterThan(0);
-  });
-
   it.each(RECIPE_PLANS)("recipe %s fills a slot with a door to a room", (_, plan) => {
     expect(doorsOf(plan).length).toBeGreaterThan(0);
   });
@@ -193,12 +185,12 @@ const startsClear = (plan: ZonePlan) => {
 };
 
 describe("every zone's start", () => {
-  it.each([
-    ...Object.entries(ZONES_BY_KEY),
-    ...TEST_ZONES.map((plan, index): [string, ZonePlan] => [`test zone ${index + 1}`, plan]),
-  ])("starts %s clear of its first column", (_, plan) => {
-    expect(startsClear(plan)).toBe(true);
-  });
+  it.each(TEST_ZONES.map((plan, index): [string, ZonePlan] => [`test zone ${index + 1}`, plan]))(
+    "starts %s clear of its first column",
+    (_, plan) => {
+      expect(startsClear(plan)).toBe(true);
+    },
+  );
 
   it.each(RECIPE_PLANS)("starts recipe %s clear of its first column", (_, plan) => {
     expect(startsClear(plan)).toBe(true);
@@ -224,7 +216,6 @@ const turnsBackWithin = (seconds: number, plan: ZonePlan) => {
 
 describe("going back from a zone's start", () => {
   it.each([
-    ...Object.entries(ZONES_BY_KEY),
     ...TEST_ZONES.map((plan, index): [string, ZonePlan] => [`test zone ${index + 1}`, plan]),
     ...RECIPE_PLANS.map(([key, plan]): [string, ZonePlan] => [`recipe ${key}`, plan]),
   ])("held left from %s's start, she turns back", (_, plan) => {
@@ -255,11 +246,11 @@ describe("the map", () => {
     expect([ZONE_MAP.start, ZONE_MAP.finish].filter((id) => !ids.includes(id))).toEqual([]);
   });
 
-  it("names a zone for every zone node a built path reaches, and only zones or recipes that exist", () => {
+  it("names a zone for every zone node a built path reaches, and only recipes that exist", () => {
     const built = reach(ZONE_MAP.start, (id) => after(id, true));
     for (const node of ZONE_MAP.nodes) {
       if (node.zone !== undefined) {
-        expect(ZONES_BY_KEY[node.zone] ?? RECIPES[node.zone], node.zone).toBeDefined();
+        expect(RECIPES[node.zone], node.zone).toBeDefined();
       }
       if (node.kind === "zone" && built.has(node.id)) {
         expect(node.zone, node.id).toBeDefined();

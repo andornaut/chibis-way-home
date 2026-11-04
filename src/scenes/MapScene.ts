@@ -11,7 +11,7 @@ import { MAP_TRAVEL, ZONE_MAP } from "../data/map";
 import { TILE } from "../data/screen";
 import { TEXT } from "../data/text";
 import type { MapDestination, Point, Rect } from "../data/types";
-import { RECIPES, ZONES } from "../data/zones";
+import { RECIPES } from "../data/zones";
 import {
   destinationForStage,
   destinationOf,
@@ -62,7 +62,7 @@ import type { ZoneData } from "./ZoneScene";
 
 const PALETTE = "palette";
 const TITLE_FONT = "font-title";
-const PLANS = new Set([...Object.keys(ZONES), ...Object.keys(RECIPES)]);
+const PLANS = new Set(Object.keys(RECIPES));
 // Paths are drawn in this order, so the open ones lie on top.
 const LOOK_ORDER: readonly PathLook[] = ["unbuilt", "built", "open"];
 

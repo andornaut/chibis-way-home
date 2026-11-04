@@ -9,10 +9,10 @@ import {
 } from "../progress";
 import { ZONE_MAP } from "./map";
 import { TEXT } from "./text";
-import { RECIPES, ZONES } from "./zones";
+import { RECIPES } from "./zones";
 
 const CATALOGUE = ZONE_MAP.destinations.flatMap(({ stages }) => stages);
-const PLANS = new Set([...Object.keys(ZONES), ...Object.keys(RECIPES)]);
+const PLANS = new Set(Object.keys(RECIPES));
 
 describe("ZONE_MAP", () => {
   it("names every stage and destination and assigns each stage exactly once", () => {

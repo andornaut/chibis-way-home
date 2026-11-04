@@ -1,9 +1,10 @@
 import { TILE } from "./screen";
 import type { MapDestination, ZoneMap } from "./types";
-import { RECIPES, ZONES } from "./zones";
+import { RECIPES } from "./zones";
 
-// V1's ordered destinations are the source of stage order and marker positions.
-const DESTINATIONS: readonly MapDestination[] = [
+// V1's ordered destinations are the source of stage order and marker positions. The map starts
+// at the first destination's first stage and finishes at the last destination's last stage.
+const DESTINATIONS: readonly [MapDestination, ...MapDestination[]] = [
   {
     at: { col: 10, row: 7 },
     icon: "map-icon-blue-cityscape",
@@ -43,14 +44,16 @@ const DESTINATIONS: readonly MapDestination[] = [
 ];
 
 const STAGES = DESTINATIONS.flatMap(({ stages }) => stages);
-// A catalogue node is playable only when its plan is implemented.
-const BUILT_STAGES: Readonly<Record<string, string>> = Object.fromEntries(
-  STAGES.filter((id) => Object.hasOwn(RECIPES, id) || Object.hasOwn(ZONES, id)).map((id) => [
-    id,
-    id,
-  ]),
+// A catalogue node is playable only when its recipe is implemented.
+const BUILT_STAGES: ReadonlySet<string> = new Set(
+  STAGES.filter((id) => Object.hasOwn(RECIPES, id)),
 );
 const REGION_ORIGIN = { x: 60, y: 36 };
+
+// The last item of a non-empty list.
+function last<T>(items: readonly [T, ...T[]]): T {
+  return items.reduce((_, item) => item);
+}
 
 export const MAP_TRAVEL = { speed: 180 } as const;
 
@@ -67,14 +70,16 @@ export const ZONE_MAP: ZoneMap = {
     const to = STAGES[index + 1];
     return to === undefined
       ? []
-      : [{ built: from in BUILT_STAGES && to in BUILT_STAGES, from, to }];
+      : [{ built: BUILT_STAGES.has(from) && BUILT_STAGES.has(to), from, to }];
   }),
-  finish: "penthouse",
+  finish: last(last(DESTINATIONS).stages),
   nodes: DESTINATIONS.flatMap(({ at, stages }) =>
-    stages.map((id) => {
-      const zone = BUILT_STAGES[id];
-      return { at, id, kind: "zone" as const, ...(zone === undefined ? {} : { zone }) };
-    }),
+    stages.map((id) => ({
+      at,
+      id,
+      kind: "zone" as const,
+      ...(BUILT_STAGES.has(id) ? { zone: id } : {}),
+    })),
   ),
-  start: "street",
+  start: DESTINATIONS[0].stages[0],
 };

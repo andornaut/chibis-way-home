@@ -8,7 +8,7 @@ import { type GameObjects, type Input, Scene } from "phaser";
 import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
-import { RECIPES, ZONES } from "../data/zones";
+import { RECIPES } from "../data/zones";
 import { destinationOf, destinationSelection, openMap } from "../progress";
 import {
   cardTextOrigin,
@@ -57,7 +57,7 @@ type Target =
   | { readonly kind: "stage"; readonly id: string }
   | { readonly kind: "close" }
   | { readonly kind: "page"; readonly step: -1 | 1 };
-const PLANS = new Set([...Object.keys(ZONES), ...Object.keys(RECIPES)]);
+const PLANS = new Set(Object.keys(RECIPES));
 type StageCardLayout = ReturnType<typeof stageSelectPages>["buttons"][number];
 interface StageCardView {
   readonly content: readonly {

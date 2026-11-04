@@ -4,7 +4,7 @@ import { existsSync, writeFileSync } from "node:fs";
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
 import { ZONE_MAP } from "../data/map";
-import { RECIPES, ZONES } from "../data/zones";
+import { RECIPES } from "../data/zones";
 import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans";
 import { choiceOption, parseOptions, runMain, UsageError } from "./command";
 import { assessPlayability, formatPlayabilityMarkdown } from "./playability";
@@ -48,7 +48,6 @@ export function playabilityCli(args: readonly string[]): number {
         characters: CHARACTERS,
         library: CHUNK_LIBRARY,
         recipes: RECIPES,
-        zones: ZONES,
       }),
     )
     .digest("hex")}`;

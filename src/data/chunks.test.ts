@@ -22,7 +22,6 @@ import { CHARACTERS } from "./characters";
 import { ROOMS } from "./rooms";
 import { TILE } from "./screen";
 import type { ChunkPlan, ZonePlan } from "./types";
-import { RECIPES, ZONES } from "./zones";
 
 const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
 const ENCOUNTER_ART = new Set(
@@ -271,12 +270,6 @@ describe("the seam rule", () => {
     ["a seam off the seam rows", { exit: { row: 45 as 50 } }, "exit row 45 is not a seam row"],
   ])("refuses %s", (_, extra, problem) => {
     expect(chunkProblems(FIXTURE_LIBRARY, CATALOGUE, seamCase(extra))).toContain(problem);
-  });
-});
-
-describe("the recipes", () => {
-  it("never share a key with a hand-built zone", () => {
-    expect(Object.keys(RECIPES).filter((key) => key in ZONES)).toEqual([]);
   });
 });
 

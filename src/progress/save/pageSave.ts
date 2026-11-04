@@ -4,7 +4,7 @@ import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStor
 
 import { ZONE_MAP } from "../../data/map";
 import type { SkillId } from "../../data/types";
-import { RECIPES, ZONES } from "../../data/zones";
+import { RECIPES } from "../../data/zones";
 import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills";
 import { BEGINNING, mapProgress, type Progress, progressFormat } from "./progress";
 import {
@@ -27,7 +27,7 @@ export interface SaveSession {
 const KEYS = { backup: "chibis-way-home.save-backup", save: "chibis-way-home.save" } as const;
 
 const storage = localSaveStorage();
-const format = progressFormat(ZONE_MAP, { ...ZONES, ...RECIPES });
+const format = progressFormat(ZONE_MAP, RECIPES);
 const store = saveStore(storage, KEYS, format);
 let progress: Progress = BEGINNING;
 let developmentOwned: readonly SkillId[] | undefined;

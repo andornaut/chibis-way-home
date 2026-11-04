@@ -5,10 +5,10 @@ import { expect, it } from "vitest";
 import manifest from "../../public/art/manifest.json";
 import { ZONE_MAP } from "./map";
 import { STAGE_PREVIEWS } from "./stagePreviews";
-import { RECIPES, ZONES } from "./zones";
+import { RECIPES } from "./zones";
 
 it("registers an existing PNG for every built catalogue stage preview", () => {
-  const plans = new Set([...Object.keys(RECIPES), ...Object.keys(ZONES)]);
+  const plans = new Set(Object.keys(RECIPES));
   const previews = ZONE_MAP.destinations
     .flatMap(({ stages }) => stages)
     .filter((stage) =>

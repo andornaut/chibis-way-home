@@ -8,7 +8,6 @@ import { BIRD } from "../data/bird";
 import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
-import { ZONES as FIXED_ZONES } from "../data/zones";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
@@ -17,10 +16,10 @@ import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTran
 import { crosses, type Surface, walkZone, zoneSurfaces } from "./zoneWalk";
 
 // Recipe stages are walked in chunkWalk.test.ts, alongside every individual chunk.
-const ZONES: [string, ZonePlan][] = [
-  ...Object.entries(FIXED_ZONES),
-  ...TEST_ZONES.map((zone, index): [string, ZonePlan] => [`test ${index + 1}`, zone]),
-];
+const ZONES: [string, ZonePlan][] = TEST_ZONES.map((zone, index): [string, ZonePlan] => [
+  `test ${index + 1}`,
+  zone,
+]);
 
 describe.each(ZONES)("zone %s", (_, plan) => {
   walkSuite(plan);
