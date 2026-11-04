@@ -44,7 +44,6 @@ import { commands, run } from "./cli.ts";
 import {
   backdropEntry,
   BACKDROPS_DIR,
-  canvasOf,
   cropBox,
   ellipse,
   image,
@@ -282,10 +281,7 @@ export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage,
   };
 
 export async function build(): Promise<void> {
-  const entry = await pixel.writeTileset(
-    { key: TILESET },
-    tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),
-  );
+  const entry = await pixel.writeTileset({ key: TILESET }, tiles());
   pixel.updateManifest("tilesets", [entry]);
   const entries = Object.entries(BACKDROPS).map(([key, [draw, repeat]]) => {
     const im = draw();

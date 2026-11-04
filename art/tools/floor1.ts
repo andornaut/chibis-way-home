@@ -141,12 +141,12 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { renderFrame } from "@andornaut/art-kit/generate";
 import { encodeRgbPng } from "@andornaut/art-kit/png";
 import {
   composite,
   crop,
   filledImage,
+  frameToRgba,
   opaque,
   paste,
   resizeNearest,
@@ -1334,7 +1334,7 @@ export async function build(): Promise<void> {
       const [tiles, pieces] = fn();
       const entry = await pixel.writeTileset(
         { key, pieces },
-        tiles.map(([n, g]) => [n, renderFrame({ resolveRgb: rgb }, g.px)] as const),
+        tiles.map(([n, g]) => [n, frameToRgba({ resolveRgb: rgb }, g.px)] as const),
       );
       return [...written, entry];
     },

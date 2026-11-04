@@ -36,7 +36,7 @@ import { composite, crop, filledImage } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import { commands, run } from "./cli.ts";
-import { canvasOf, greyscale, rect, rgba } from "./imageArt.ts";
+import { greyscale, rect, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 
 const KEY = "tiles-platforming";
@@ -159,10 +159,7 @@ export function tiles(): [name: string, tile: RgbaImage][] {
 }
 
 export async function build(): Promise<void> {
-  const entry = await pixel.writeTileset(
-    { hitboxes: HITBOXES, key: KEY },
-    tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),
-  );
+  const entry = await pixel.writeTileset({ hitboxes: HITBOXES, key: KEY }, tiles());
   const path = `public/art/${String(entry.json)}`;
   const data = JSON.parse(readFileSync(path, "utf8")) as { tiles: Record<string, number> };
   for (const alias of ["crumbling-ledge", "crumbling-ledge-warn", "one-way-ledge"]) {

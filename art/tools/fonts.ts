@@ -21,12 +21,11 @@
 
 import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 
-import { buildBitmapFont } from "@andornaut/art-kit/fonts";
+import { rasteriseGlyphs } from "@andornaut/art-kit/fonts";
 import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/glyphAtlas";
 import { encodeRgbaPng } from "@andornaut/art-kit/png";
-import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
+import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
-import { Canvas, FontLibrary } from "skia-canvas";
 
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
@@ -45,9 +44,6 @@ const CHARS: readonly string[] = [
 ];
 const ATLAS_W = 256;
 const PNG_OPTIONS = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
-// Skia's measured ink bounds can miss antialiased edge pixels; wide spacing keeps them separable.
-const RENDER_PADDING = 4;
-const BLEED = 2;
 const USAGE = "Usage: fonts.ts build | preview OUT.png";
 
 /** A glyph's white coverage image (undefined without ink), x and y offsets and advance. */
@@ -66,105 +62,34 @@ interface Rasterised {
   kernings: Kerning[];
 }
 
-const families = new Map<string, string>();
-
-/** The face's line ascent and descent in whole pixels, rounded outwards. */
-function metrics(size: number, path: string): readonly [ascent: number, descent: number] {
-  let family = families.get(path);
-  if (!family) {
-    family = `fonts_metrics_${families.size}`;
-    FontLibrary.use(family, path);
-    families.set(path, family);
-  }
-  const canvas = new Canvas(1, 1);
-  canvas.gpu = false;
-  const context = canvas.getContext("2d");
-  context.font = `${size}px "${family}"`;
-  const measured = context.measureText(" ");
-  return [Math.ceil(measured.fontBoundingBoxAscent), Math.ceil(measured.fontBoundingBoxDescent)];
-}
-
-/** The smallest box holding every pixel with nonzero alpha, or undefined when there is none. */
-function inkBox(
-  image: RgbaImage,
-): { x: number; y: number; width: number; height: number } | undefined {
-  let [left, top, right, bottom] = [Infinity, Infinity, -1, -1];
-  for (let y = 0; y < image.height; y++) {
-    for (let x = 0; x < image.width; x++) {
-      if (image.data[(y * image.width + x) * 4 + 3]) {
-        left = Math.min(left, x);
-        right = Math.max(right, x);
-        top = Math.min(top, y);
-        bottom = Math.max(bottom, y);
-      }
-    }
-  }
-  return right < 0
-    ? undefined
-    : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
-}
-
 /** Antialiased glyphs, line metrics and every nonzero pair kerning, in CHARS order. */
 function rasterise(size: number, path: string): Rasterised {
-  const [ascent, descent] = metrics(size, path);
-  const font = buildBitmapFont({
+  const rasterised = rasteriseGlyphs({
+    antialias: true,
+    characters: CHARS,
+    hinting: true,
+    kerning: "all",
     path,
     size,
-    key: "glyphs",
-    characters: CHARS,
-    atlasWidth: 1024,
-    padding: RENDER_PADDING,
-    base: ascent,
-    kerning: "all",
-    antialias: true,
-    hinting: true,
   });
-  const atlas = font.image.getContext("2d").getImageData(0, 0, font.image.width, font.image.height);
-  const sheet: RgbaImage = {
-    width: atlas.width,
-    height: atlas.height,
-    data: new Uint8Array(atlas.data.buffer, atlas.data.byteOffset, atlas.data.byteLength),
-  };
   const glyphs = new Map<string, Glyph>();
-  for (const char of CHARS) {
-    const placed = font.metadata.glyphs.get(char);
-    if (!placed) {
-      throw new Error(`No glyph for ${JSON.stringify(char)}`);
-    }
-    const cell = placed.width
-      ? crop(
-          {
-            x: placed.x - BLEED,
-            y: placed.y - BLEED,
-            width: placed.width + 2 * BLEED,
-            height: placed.height + 2 * BLEED,
-          },
-          sheet,
-        )
-      : undefined;
-    const box = cell && inkBox(cell);
-    if (!cell || !box) {
-      glyphs.set(char, [undefined, 0, 0, placed.xadvance]);
+  for (const [char, { image, xadvance, xoffset, yoffset }] of rasterised.glyphs) {
+    if (!image) {
+      glyphs.set(char, [undefined, 0, 0, xadvance]);
       continue;
     }
     // White everywhere, coverage in alpha.
-    const image = crop(box, cell);
     for (let i = 0; i < image.data.length; i += 4) {
       image.data.fill(255, i, i + 3);
     }
-    glyphs.set(char, [
-      image,
-      placed.xoffset - BLEED + box.x,
-      placed.yoffset - BLEED + box.y,
-      placed.xadvance,
-    ]);
+    glyphs.set(char, [image, xoffset, yoffset, xadvance]);
   }
-  const kernings = font.metadata.kernings.map(({ amount, first, second }): Kerning => [
+  const kernings = rasterised.kernings.map(({ amount, first, second }): Kerning => [
     String.fromCodePoint(first),
     String.fromCodePoint(second),
     amount,
   ]);
-  return { glyphs, ascent, descent, kernings };
+  return { ascent: rasterised.base, descent: Math.ceil(rasterised.descent), glyphs, kernings };
 }
 
 function buildFont(key: string, face: string, size: number, path: string): void {

@@ -87,7 +87,6 @@ import { commands, run } from "./cli.ts";
 import {
   backdropEntry,
   BACKDROPS_DIR,
-  canvasOf,
   cropBox,
   ellipse,
   frameImage,
@@ -639,7 +638,7 @@ export async function build(): Promise<void> {
   mkdirSync(BACKDROPS_DIR, { recursive: true });
   const tileset = await pixel.writeTileset(
     { columns: COLUMNS, hitboxes: HITBOXES, key: TILESET, size: T },
-    tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),
+    tiles(),
   );
   const backdrops = [...BACKDROP_DEFS].map(([key, [draw, y, repeat]]) => {
     const im = draw();

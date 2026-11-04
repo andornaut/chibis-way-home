@@ -6,18 +6,16 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
+import { contrast as hexContrast, rgb as hexRgb } from "@andornaut/art-kit/colour";
+import { flipped as flipFrame, type Frame, Grid as SharedGrid } from "@andornaut/art-kit/grid";
+import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import {
+  composeContactSheet,
   composeSheet,
-  contrast as hexContrast,
-  flipped as flipFrame,
-  type Frame,
-  Grid as SharedGrid,
-  renderContactSheet,
-  rgb as hexRgb,
-  type SpriteSheetTag,
-  writeSpriteSheet,
-} from "@andornaut/art-kit/generate";
-import type { Canvas } from "skia-canvas";
+  type Tag as SpriteSheetTag,
+} from "@andornaut/art-kit/raster";
+import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 
 import * as backgroundPalette from "./backgroundPalette.ts";
 import { commands } from "./cli.ts";
@@ -252,18 +250,18 @@ interface TilesetOptions {
  *    "tiles": {"<name>": <index>},                 index = row * columns + column
  *    "pieces": {"<name>": [[<index>, ...], ...]},  multi-tile pieces, rows of indices
  *    "hitboxes": {"<name>": {"x", "y", "width", "height"}}}  only when some tile has one
- * items lists [name, size x size Canvas]. Returns the manifest entry.
+ * items lists [name, size x size image]. Returns the manifest entry.
  */
 export async function writeTileset(
   { columns = 8, hitboxes, key, pieces = {}, size = 12 }: TilesetOptions,
-  items: readonly (readonly [name: string, tile: Canvas])[],
+  items: readonly (readonly [name: string, tile: RgbaImage])[],
 ): Promise<ManifestEntry> {
   mkdirSync(TILESETS, { recursive: true });
   const sheet = composeSheet(
     { columns, cellWidth: size, cellHeight: size },
     items.map(([, tile]) => tile),
   );
-  await sheet.toFile(`${TILESETS}/${key}.png`);
+  writeFileSync(`${TILESETS}/${key}.png`, encodeRgbaPng(SHEET_PNG, sheet));
   const index: Record<string, number> = {};
   items.forEach(([name], i) => {
     index[name] = i;
@@ -295,6 +293,8 @@ export async function writeTileset(
   return { key, png: `tilesets/${key}.png`, json: `tilesets/${key}.json` };
 }
 
+const SHEET_PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
+
 interface PreviewOptions {
   out: string;
   grounds?: readonly string[];
@@ -307,11 +307,13 @@ export async function preview(
   { gap = 4, grounds = DEFAULT_GROUNDS, out, scale = 3 }: PreviewOptions,
   sprites: readonly SpriteEntry[],
 ): Promise<void> {
-  await renderContactSheet(
-    { resolveRgb: rgb, background: rgb("ink"), scale, gap },
+  const sheet = composeContactSheet(
+    { resolveRgb: rgb, background: rgb("ink"), cellSize: "largest-frame", scale, gap },
     sprites,
     grounds,
-  ).toFile(out);
+  );
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, encodeRgbPng(SHEET_PNG, sheet));
 }
 
 interface BuildOptions {

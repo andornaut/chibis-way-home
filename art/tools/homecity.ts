@@ -38,7 +38,6 @@ import { commands, run } from "./cli.ts";
 import {
   backdropEntry,
   BACKDROPS_DIR,
-  canvasOf,
   cropBox,
   image,
   over,
@@ -295,10 +294,7 @@ function registry(): pixel.ManifestEntry[] {
 }
 
 export async function build(): Promise<void> {
-  const entry = await pixel.writeTileset(
-    { key: TILESET },
-    tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),
-  );
+  const entry = await pixel.writeTileset({ key: TILESET }, tiles());
   for (const [key, [draw]] of Object.entries(BACKDROPS)) {
     writeImage(`${BACKDROPS_DIR}/${key}.png`, backgroundTones.apply(key, draw()));
   }

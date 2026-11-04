@@ -20,7 +20,6 @@ import {
   type Rgba,
 } from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
-import { Canvas, ImageData } from "skia-canvas";
 
 import * as pixel from "./pixel.ts";
 
@@ -102,15 +101,6 @@ export function writeImage(path: string, source: RgbaImage): void {
 export function writeRgbImage(path: string, source: RgbaImage): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, encodeRgbPng(PNG_OPTIONS, opaque(source)));
-}
-
-/** A CPU Skia canvas holding an image whose pixels are opaque or fully clear, for writeTileset. */
-export function canvasOf(source: RgbaImage): Canvas {
-  const canvas = new Canvas(source.width, source.height);
-  canvas.gpu = false;
-  const data = new ImageData(new Uint8ClampedArray(source.data), source.width, source.height);
-  canvas.getContext("2d").putImageData(data, 0, 0);
-  return canvas;
 }
 
 /** A palette frame as an image, with clear pixels where the frame has none. */

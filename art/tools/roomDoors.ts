@@ -16,9 +16,15 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { renderFrame } from "@andornaut/art-kit/generate";
 import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
-import { composite, crop, fill, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
+import {
+  composite,
+  crop,
+  fill,
+  filledImage,
+  frameToRgba,
+  resizeNearest,
+} from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import { commands, run } from "./cli.ts";
@@ -70,7 +76,7 @@ export async function build(): Promise<void> {
   const [tiles, pieces] = floor.streetTilesCool();
   const entry = await pixel.writeTileset(
     { key: "tiles-street", pieces },
-    tiles.map(([key, grid]) => [key, renderFrame({ resolveRgb: pixel.rgb }, grid.px)] as const),
+    tiles.map(([key, grid]) => [key, frameToRgba({ resolveRgb: pixel.rgb }, grid.px)] as const),
   );
   pixel.updateManifest("tilesets", [entry]);
   writeFileSync(
