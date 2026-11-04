@@ -55,11 +55,11 @@ describe.each(skillLayouts)("the %s card description", (_skill, layout) => {
     expect(baselines.length).toBe(layout.baselines.length);
     baselines.forEach((ys, line) => expect(ys).toEqual([layout.baselines[line]]));
   });
-  it("centres each icon on its line's capitals at one line pitch", () => {
+  it("centres each icon on its line's capitals, smaller than one line pitch", () => {
     const icons = layout.placements.filter((placement) => placement.kind === "icon");
     expect(icons.length).toBeGreaterThan(0);
     for (const { line, rect } of icons) {
-      expect(rect.height).toBeLessThanOrEqual(lineHeight);
+      expect(rect.height).toBeLessThan(lineHeight);
       expect(
         Math.abs(rect.y + rect.height / 2 - (layout.baselines[line]! - capHeight / 2)),
       ).toBeLessThanOrEqual(0.5);

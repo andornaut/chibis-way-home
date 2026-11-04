@@ -31,12 +31,16 @@ export type ActionHelpPlacement = ActionHelpIcon | ActionHelpText;
 export interface ActionHelpLayout extends Size {
   // The y of each line's baseline, in layout coordinates.
   readonly baselines: readonly number[];
-  // The control icon's side: one line pitch, so an icon never changes the line spacing.
+  // The control icon's side: a little under one line pitch, so an icon never changes the line
+  // spacing.
   readonly icon: number;
   // The distance between consecutive baselines: the body font's line height.
   readonly linePitch: number;
   readonly placements: readonly ActionHelpPlacement[];
 }
+
+// How much smaller than one line pitch an inline control icon is drawn.
+const ICON_INSET = 4;
 
 // The baseline's offset below a font's line top, at card scale: the capitals' bottom row.
 function baselineOffset(font: BitmapFont): number {
@@ -46,7 +50,7 @@ function baselineOffset(font: BitmapFont): number {
 
 // Text and inline control icons laid out like a paragraph: every word on a line sits on that
 // line's baseline, lines are one body-font line height apart, and each icon is centred on its
-// line's capital height at one line pitch square, so it never changes the line spacing.
+// line's capital height, a little smaller than one line pitch, so it never changes the line spacing.
 export function actionHelpLayout(
   fonts: CardFonts,
   actions: Readonly<Record<ControlAction, string>>,
@@ -54,7 +58,7 @@ export function actionHelpLayout(
   text: string,
 ): ActionHelpLayout {
   const linePitch = fonts.body.lineHeight * CARD_TEXT_SCALE;
-  const icon = linePitch;
+  const icon = linePitch - ICON_INSET;
   const baseline = baselineOffset(fonts.body);
   const capHeight = fontMetrics(fonts.body).capHeight * CARD_TEXT_SCALE;
   const iconTop = Math.round(baseline - capHeight / 2 - icon / 2);
