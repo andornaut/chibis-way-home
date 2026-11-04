@@ -609,18 +609,6 @@
       "once": []
     },
     {
-      "key": "ui-quip-strip",
-      "png": "sprites/ui-quip-strip.png",
-      "json": "sprites/ui-quip-strip.json",
-      "once": [],
-      "slice": {
-        "left": 2,
-        "top": 2,
-        "right": 2,
-        "bottom": 2
-      }
-    },
-    {
       "key": "ui-quit",
       "png": "sprites/ui-quit.png",
       "json": "sprites/ui-quit.json",
