@@ -11,11 +11,6 @@ export function askedRecipe(search: string, keys: readonly string[]): string | u
   return asked !== null && keys.includes(asked) ? asked : undefined;
 }
 
-// A new seed to assemble a zone from: a whole number in [0, 2^32).
-export function newAssemblySeed(): number {
-  return Math.floor(Math.random() * 2 ** 32);
-}
-
 // The assembly seed ?assembly=<n> fixes, when n is a whole number in [0, 2^32).
 export function askedAssemblySeed(search: string): number | undefined {
   const asked = new URLSearchParams(search).get("assembly");

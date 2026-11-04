@@ -61,6 +61,24 @@ export default defineConfig(
     ignores: PHASER_FILES,
     rules: restrictImports([phaserBoundary]),
   },
+  // Rules and the agent core replay from explicit seeds and step inputs, never ambient entropy
+  // or wall-clock time.
+  {
+    files: ["src/ai/**/*.ts", "src/rules/**/*.ts"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        { message: "Pass time in as a step input.", name: "Date" },
+        { message: "Pass time in as a step input.", name: "performance" },
+      ],
+      "no-restricted-properties": [
+        "error",
+        { message: "Use a seeded game-kit random stream.", object: "Math", property: "random" },
+        { message: "Pass time in as a step input.", object: "globalThis", property: "Date" },
+        { message: "Pass time in as a step input.", object: "globalThis", property: "performance" },
+      ],
+    },
+  },
   // Config files: they produce what ships rather than being it.
   {
     files: ["*.ts", "*.js", "*.mjs"],

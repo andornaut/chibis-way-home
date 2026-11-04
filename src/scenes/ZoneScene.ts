@@ -94,13 +94,7 @@ import {
   type ZoneBark,
   type ZoneState,
 } from "../rules/zone";
-import {
-  askedAssemblySeed,
-  askedRecipe,
-  newAssemblySeed,
-  nextZoneIndex,
-  startZoneIndex,
-} from "../rules/zoneChain";
+import { askedAssemblySeed, askedRecipe, nextZoneIndex, startZoneIndex } from "../rules/zoneChain";
 import {
   introductionForRun,
   type ZoneDepartureTarget,
@@ -199,6 +193,12 @@ import { bindZoneBarks } from "./zoneBarks";
 import type { ZoneBarkScene } from "./ZoneBarkScene";
 import type { ZoneDepartureData } from "./ZoneDepartureScene";
 import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene";
+
+// A new seed to assemble a zone from: a whole number in [0, 2^32). Rules stay seeded, so the
+// scene draws the entropy.
+function newAssemblySeed(): number {
+  return Math.floor(Math.random() * 2 ** 32);
+}
 
 // The zone a map node plays, assembled for seed where it is a recipe.
 function zoneAt(seed: number, node: string): ZonePlan {
