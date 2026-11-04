@@ -12,6 +12,7 @@ import {
   redCeiling,
   withoutEncounters,
 } from "./chunkTemplates";
+import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "./forcedTransit";
 import { createHazardChunks } from "./hazardChunks";
 import { CRUMBLING_SUPPORT_TUNING } from "./obstacleTuning";
 import { createOrbitHazardChunks } from "./orbitHazardChunks";
@@ -1776,7 +1777,13 @@ const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     entry: { row: 80 },
     exit: { row: 40 },
     maxPerZone: 1,
-    objects: [{ ...lift(27, 65), behaviour: { ...CITY_LIFT_BEHAVIOUR, initial: "wait-far" } }],
+    objects: [
+      {
+        ...lift(27, 65),
+        behaviour: { ...CITY_LIFT_BEHAVIOUR, initial: "wait-far" },
+        forcedTransit: OUTDOOR_LIFT_ASCENT_TRANSIT,
+      },
+    ],
     rows: FOUR_SCREEN_ROWS,
     solids: [
       blueFloor(0, 8, 80),
