@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
 import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble";
+import { contactBox } from "../rules/behaviour";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { bindElement } from "../rules/elementBinding";
 import { STEP_SECONDS } from "../rules/step";
@@ -435,18 +436,23 @@ it("bounds the wide reachable fixture with an ordinary running jump", () => {
 
 it.each([
   {
+    budget: 720,
     id: "apartment-tall-city-boundary-climb-yard",
     route: [
       [9, 45],
       [15, 40],
       [19, 34],
-      [40, 40],
+      [25, 40],
+      [37, 36],
+      [44, 40],
       [50, 34],
       [56.5, 40],
     ],
     theme: "apartment-lobby",
+    underpass: 4,
   },
   {
+    budget: 600,
     id: "growl-clearing-woodland-depth",
     route: [
       [14, 34],
@@ -455,10 +461,11 @@ it.each([
       [53, 40],
     ],
     theme: "forest-paths",
+    underpass: undefined,
   },
 ])(
   "crosses actual $id through its grounded refuges without movement abilities",
-  ({ id, route, theme }) => {
+  ({ budget, id, route, theme, underpass }) => {
     const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
     const layout = zoneLayout(
       TILE,
@@ -469,12 +476,18 @@ it.each([
       new Set(),
       plan,
     );
-    let zone = startZone(BIRD, layout, 1);
+    const startObjects = layout.areas[layout.start.area]!.objects;
+    const pursuer = startObjects.findIndex((object) => object.behaviour?.pursuit);
+    const ordinary = { ...BIRD, doubleJump: false };
+    delete ordinary.dash;
+    let zone = startZone(ordinary, layout, 1);
     let targetIndex = 0;
     let jumpStart = -1000;
     let previousJump = false;
+    let pursuerX = Infinity;
+    let pursuerLeapedWest = false;
     const trace: unknown[] = [];
-    for (let tick = 0; tick < 600 && !zone.death && !zone.cleared; tick++) {
+    for (let tick = 0; tick < budget && !zone.death && !zone.cleared; tick++) {
       const target = route[targetIndex];
       const feet = zone.bird.y + BIRD.height;
       if (
@@ -489,23 +502,41 @@ it.each([
       const goal = route[targetIndex];
       const dx = goal ? goal[0]! * TILE - zone.bird.x : 100;
       const braking = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * BIRD.brakeAccel);
-      const move = Math.abs(dx - braking) < 2 ? 0 : dx - braking > 0 ? 1 : -1;
-      const needsJump = goal && (feet > goal[1]! * TILE + 0.1 || Math.abs(dx) > 3 * TILE);
+      let move: -1 | 0 | 1 = Math.abs(dx - braking) < 2 ? 0 : dx - braking > 0 ? 1 : -1;
+      let needsJump =
+        goal &&
+        (feet > goal[1]! * TILE + 0.1 ||
+          (Math.abs(feet - goal[1]! * TILE) < 0.1 && Math.abs(dx) > 3 * TILE));
+      const pursuerAt = pursuer < 0 ? undefined : zone.objects[pursuer];
+      const pursuerState = pursuer < 0 ? undefined : zone.behaviours?.[pursuer];
+      if (pursuerAt) {
+        // The pursuer has committed to a westward leap once it is airborne and its x decreases.
+        pursuerLeapedWest ||=
+          pursuerState?.traversal?.physical.grounded === false && pursuerAt.x < pursuerX;
+        pursuerX = pursuerAt.x;
+      }
+      if (targetIndex === underpass && pursuerAt) {
+        // Wait on the ground side until the pursuer leaps west, run east under its arc while
+        // its contact box still reaches Chibi's column, then climb once it is behind Chibi.
+        const box = contactBox(startObjects[pursuer]!, pursuerAt, pursuerState?.facing ?? 1);
+        if (!pursuerLeapedWest) {
+          move = 0;
+          needsJump = false;
+        } else if (box.x + box.width >= zone.bird.x) {
+          move = 1;
+          needsJump = false;
+        }
+      }
       if (needsJump && zone.bird.grounded && !previousJump) {
         jumpStart = tick;
       }
       const jumpHeld = (tick - jumpStart) * STEP_SECONDS < BIRD.jumpRiseTime;
-      zone = stepZone(
-        BIRD,
-        layout,
-        STEP_SECONDS,
-        { jumpHeld: Boolean(jumpHeld), move, useHeld: false },
-        zone,
-      );
-      previousJump = Boolean(jumpHeld);
+      zone = stepZone(ordinary, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
+      previousJump = jumpHeld;
       if (tick % 60 === 0) {
         trace.push({
           grounded: zone.bird.grounded,
+          pursuer: pursuerAt && { leapedWest: pursuerLeapedWest, x: pursuerAt.x, y: pursuerAt.y },
           targetIndex,
           tick,
           x: zone.bird.x,

@@ -161,106 +161,131 @@ it.each(cases.filter(({ id }) => ["patrol-cover-early", "growl-clearing"].includ
   },
 );
 
-it("keeps acquired Archie pursuing across the production middle-yard low wall", () => {
-  const layout = layoutOf("city-streets", "patrol-cover-middle");
-  const area = layout.areas[layout.start.area]!;
-  const object = area.objects.find((object) => object.character === "dog-antagonist")!;
-  const initial = startZone(ordinary, layout, 1);
-  const target = { ...startBird(ordinary, { x: 21 * TILE, y: 50 * TILE }), grounded: true };
-  const platforms = area.objects
-    .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
-    .map((owner) => ({
-      after: { ...owner.origin, height: owner.height, width: owner.width },
-      before: { ...owner.origin, height: owner.height, width: owner.width },
-      collision: owner.collision as "solid" | "ledge",
-      owner,
-    }));
-  const hazards = area.objects
-    .filter((owner) => owner.collision === "hazard")
-    .map((owner) => ({ owner, rect: contactBox(owner, owner.origin, 1) }));
-  let state: BehaviourState = {
-    ...startBehaviour(ordinary, object, target),
-    active: true,
-    pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
-    stateKey: "pursuit",
-  };
-  let at = object.origin;
-  let jumped = false;
-  let deferredAt: number | undefined;
-  let plannedAfterDefer = false;
-  const nodes: Record<string, number> = {};
-  vi.mocked(findTraversal).mockClear();
-  for (let tick = 0; tick < 600; tick++) {
-    const world: BehaviourWorld = {
-      hazards,
-      idleDecision: {
-        namespace: `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
-        seed: initial.seed + initial.attempt,
-      },
-      platforms: platforms.map(({ after, collision, owner }) => ({
-        collision,
-        owner,
-        rect: after,
-      })),
-      solids: area.solids,
-      traversalFrame: {
-        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
-        dtSeconds: STEP_SECONDS,
-        platforms,
-        sample: () => platforms,
-        timeSeconds: tick * STEP_SECONDS,
-      },
-      view: { height: 360, width: 720, x: 0, y: 240 },
+it.each([
+  {
+    actor: "dog-antagonist",
+    floor: 50,
+    id: "patrol-cover-middle",
+    name: "Archie",
+    targetCol: 21,
+    theme: "city-streets",
+    wallCol: 24,
+  },
+  {
+    actor: "ferret-antagonist",
+    floor: 40,
+    id: "apartment-tall-city-boundary-climb-yard",
+    name: "Fert",
+    targetCol: 30,
+    theme: "apartment-lobby",
+    wallCol: 34,
+  },
+])(
+  "keeps acquired $name pursuing across production low cover",
+  ({ actor, floor, id, targetCol, theme, wallCol }) => {
+    const layout = layoutOf(theme, id);
+    const area = layout.areas[layout.start.area]!;
+    const object = area.objects.find((object) => object.character === actor)!;
+    const initial = startZone(ordinary, layout, 1);
+    const target = {
+      ...startBird(ordinary, { x: targetCol * TILE, y: floor * TILE }),
+      grounded: true,
     };
-    const beforeMotion = object.behaviour!.states[state.stateKey]!.motion.kind;
-    const searchesBefore = vi.mocked(findTraversal).mock.calls.length;
-    const next = stepBehaviour(ordinary, object, world, STEP_SECONDS, target, at, state);
-    const searchesAfter = vi.mocked(findTraversal).mock.calls.length;
-    if (
-      beforeMotion !== "pursue" &&
-      object.behaviour!.states[next.state.stateKey]!.motion.kind === "pursue" &&
-      searchesAfter === searchesBefore
-    ) {
-      deferredAt ??= tick;
+    const platforms = area.objects
+      .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
+      .map((owner) => ({
+        after: { ...owner.origin, height: owner.height, width: owner.width },
+        before: { ...owner.origin, height: owner.height, width: owner.width },
+        collision: owner.collision as "solid" | "ledge",
+        owner,
+      }));
+    const hazards = area.objects
+      .filter((owner) => owner.collision === "hazard")
+      .map((owner) => ({ owner, rect: contactBox(owner, owner.origin, 1) }));
+    let state: BehaviourState = {
+      ...startBehaviour(ordinary, object, target),
+      active: true,
+      pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+      stateKey: "pursuit",
+    };
+    let at = object.origin;
+    let jumped = false;
+    let deferredAt: number | undefined;
+    let plannedAfterDefer = false;
+    const nodes: Record<string, number> = {};
+    vi.mocked(findTraversal).mockClear();
+    for (let tick = 0; tick < 600; tick++) {
+      const world: BehaviourWorld = {
+        hazards,
+        idleDecision: {
+          namespace: `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
+          seed: initial.seed + initial.attempt,
+        },
+        platforms: platforms.map(({ after, collision, owner }) => ({
+          collision,
+          owner,
+          rect: after,
+        })),
+        solids: area.solids,
+        traversalFrame: {
+          bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+          dtSeconds: STEP_SECONDS,
+          platforms,
+          sample: () => platforms,
+          timeSeconds: tick * STEP_SECONDS,
+        },
+        view: { height: 360, width: 720, x: 0, y: 240 },
+      };
+      const beforeMotion = object.behaviour!.states[state.stateKey]!.motion.kind;
+      const searchesBefore = vi.mocked(findTraversal).mock.calls.length;
+      const next = stepBehaviour(ordinary, object, world, STEP_SECONDS, target, at, state);
+      const searchesAfter = vi.mocked(findTraversal).mock.calls.length;
+      if (
+        beforeMotion !== "pursue" &&
+        object.behaviour!.states[next.state.stateKey]!.motion.kind === "pursue" &&
+        searchesAfter === searchesBefore
+      ) {
+        deferredAt ??= tick;
+      }
+      if (deferredAt !== undefined && tick === deferredAt + 1 && searchesAfter > searchesBefore) {
+        plannedAfterDefer = true;
+      }
+      at = next.at;
+      state = next.state;
+      nodes[state.stateKey] = (nodes[state.stateKey] ?? 0) + 1;
+      jumped ||= (state.traversal?.physical.vy ?? 0) < 0;
+      const box = contactBox(object, at, state.facing);
+      const hit =
+        box.x < target.x + ordinary.width &&
+        box.x + box.width > target.x &&
+        box.y < target.y + ordinary.height &&
+        box.y + box.height > target.y;
+      if (hit || (state.traversal?.physical.grounded && at.x + object.width <= wallCol * TILE)) {
+        expect(jumped).toBe(true);
+        expect(plannedAfterDefer).toBe(true);
+        expect(vi.mocked(findTraversal).mock.calls.length).toBeGreaterThan(0);
+        expect(
+          vi
+            .mocked(findTraversal)
+            .mock.calls.every(([context]) => context.dtSeconds === STEP_SECONDS),
+        ).toBe(true);
+        return;
+      }
     }
-    if (deferredAt !== undefined && tick === deferredAt + 1 && searchesAfter > searchesBefore) {
-      plannedAfterDefer = true;
-    }
-    at = next.at;
-    state = next.state;
-    nodes[state.stateKey] = (nodes[state.stateKey] ?? 0) + 1;
-    jumped ||= (state.traversal?.physical.vy ?? 0) < 0;
-    const box = contactBox(object, at, state.facing);
-    const hit =
-      box.x < target.x + ordinary.width &&
-      box.x + box.width > target.x &&
-      box.y < target.y + ordinary.height &&
-      box.y + box.height > target.y;
-    if (hit || (state.traversal?.physical.grounded && at.x + object.width <= 24 * TILE)) {
-      expect(jumped).toBe(true);
-      expect(plannedAfterDefer).toBe(true);
-      expect(vi.mocked(findTraversal).mock.calls.length).toBeGreaterThan(0);
-      expect(
-        vi
+    expect.fail(
+      JSON.stringify({
+        at,
+        goal: state.traversal?.target,
+        jumped,
+        nodes,
+        searches: vi
           .mocked(findTraversal)
-          .mock.calls.every(([context]) => context.dtSeconds === STEP_SECONDS),
-      ).toBe(true);
-      return;
-    }
-  }
-  expect.fail(
-    JSON.stringify({
-      at,
-      goal: state.traversal?.target,
-      jumped,
-      nodes,
-      searches: vi
-        .mocked(findTraversal)
-        .mock.results.map(({ value }) => ({ status: value.status, work: value.work })),
-      status: state.traversal?.status,
-    }),
-  );
-});
+          .mock.results.map(({ value }) => ({ status: value.status, work: value.work })),
+        status: state.traversal?.status,
+      }),
+    );
+  },
+);
 
 const connectedRoutes = [
   {
