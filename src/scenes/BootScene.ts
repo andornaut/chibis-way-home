@@ -6,13 +6,18 @@ import {
 } from "@andornaut/game-kit/art/aseprite";
 import { Scene } from "phaser";
 
+import manifestJson from "../../public/art/manifest.json";
 import { TILE } from "../data/screen";
 import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
 import { loadProgress } from "../save";
-import { ART_MANIFEST_FILE, ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../view/aseprite";
+import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../view/aseprite";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
 import { filterFontArt, queueFontArt } from "./fontArt";
+
+// The manifest ships inside the hashed bundle rather than loading from /art/, so a copy an earlier
+// version cached can never be paired with this code.
+const MANIFEST = manifestJson as ArtManifest;
 
 // First scene to run. Loads everything art's manifest lists, makes an animation of every sprite
 // tag, looping unless the manifest lists it as played once, then, once launchReady resolves,
@@ -31,41 +36,38 @@ export class BootScene extends Scene {
       queueAtlasPages(this, ATLAS);
     }
     this.load.setPath(ART_PATH);
-    this.load.json(ART_MANIFEST_KEY, ART_MANIFEST_FILE);
-    this.load.once(`filecomplete-json-${ART_MANIFEST_KEY}`, () => {
-      const manifest = this.manifest();
-      for (const { json, key } of manifest.data) {
-        this.load.json(key, json);
-      }
-      for (const { json, key } of manifest.tilesets) {
-        this.load.json(key, json);
-      }
-      // Standalone images are excluded from the atlas and loaded in both rendering modes.
-      for (const { key, png } of manifest.images) {
-        this.load.image(key, png);
-      }
-      queueFontArt(this, manifest);
-      if (ATLAS !== null) {
-        return;
-      }
-      for (const { json, key, png } of manifest.sprites) {
-        this.load.aseprite(key, png, json);
-      }
-      for (const { key, png } of manifest.tilesets) {
-        this.load.spritesheet(key, png, { frameHeight: TILE, frameWidth: TILE });
-      }
-      for (const { key, png } of manifest.backdrops) {
-        this.load.image(key, png);
-      }
-    });
+    this.cache.json.add(ART_MANIFEST_KEY, MANIFEST);
+    for (const { json, key } of MANIFEST.data) {
+      this.load.json(key, json);
+    }
+    for (const { json, key } of MANIFEST.tilesets) {
+      this.load.json(key, json);
+    }
+    // Standalone images are excluded from the atlas and loaded in both rendering modes.
+    for (const { key, png } of MANIFEST.images) {
+      this.load.image(key, png);
+    }
+    queueFontArt(this, MANIFEST);
+    if (ATLAS !== null) {
+      return;
+    }
+    for (const { json, key, png } of MANIFEST.sprites) {
+      this.load.aseprite(key, png, json);
+    }
+    for (const { key, png } of MANIFEST.tilesets) {
+      this.load.spritesheet(key, png, { frameHeight: TILE, frameWidth: TILE });
+    }
+    for (const { key, png } of MANIFEST.backdrops) {
+      this.load.image(key, png);
+    }
   }
 
   create(): void {
-    filterFontArt(this, this.manifest());
+    filterFontArt(this, MANIFEST);
     if (ATLAS !== null) {
       addAtlasArt(this, ATLAS);
     }
-    for (const { key, once } of this.manifest().sprites) {
+    for (const { key, once } of MANIFEST.sprites) {
       const sheet = this.cache.json.get(key) as AsepriteSheet;
       for (const [tag, frames] of sheetTags(sheet)) {
         this.anims.create({
@@ -99,9 +101,5 @@ export class BootScene extends Scene {
           this.scene.start("start");
         }
       });
-  }
-
-  private manifest(): ArtManifest {
-    return this.cache.json.get(ART_MANIFEST_KEY) as ArtManifest;
   }
 }

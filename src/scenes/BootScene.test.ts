@@ -2,16 +2,24 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, expect, it, vi } from "vitest";
 
-import { ART_MANIFEST_KEY } from "../view/aseprite";
-
 const startup = vi.hoisted(() => ({ load: vi.fn(), ready: vi.fn() }));
 const art = vi.hoisted(() => ({ atlas: null as null | object }));
+const manifest = vi.hoisted(() => ({
+  backdrops: [],
+  data: [],
+  fonts: [{ fnt: "fonts/body.fnt", key: "font-body", png: "fonts/body.png" }],
+  images: [{ key: "standalone-image", png: "images/standalone.png" }],
+  sprites: [],
+  tilesets: [],
+}));
+vi.mock("../../public/art/manifest.json", () => ({ default: manifest }));
 vi.mock("phaser", () => ({
   Scene: class {
     readonly anims = { create: vi.fn() };
     readonly scene = { launch: vi.fn(), start: vi.fn() };
     readonly game = { canvas: { style: { visibility: "" } }, events: new EventEmitter() };
-    readonly cache = { json: { get: vi.fn() } };
+    readonly cache = { json: { add: vi.fn(), get: vi.fn() } };
+    readonly textures = { get: vi.fn(() => ({ source: [] })) };
     readonly load = Object.assign(new EventEmitter(), {
       bitmapFont: vi.fn(),
       image: vi.fn(),
@@ -35,16 +43,9 @@ it("loads standalone manifest images in development and atlas mode", () => {
   for (const atlas of [null, {}]) {
     art.atlas = atlas;
     const scene = new BootScene();
-    vi.mocked(scene.cache.json.get).mockReturnValue({
-      backdrops: [],
-      data: [],
-      fonts: [{ fnt: "fonts/body.fnt", key: "font-body", png: "fonts/body.png" }],
-      images: [{ key: "standalone-image", png: "images/standalone.png" }],
-      sprites: [],
-      tilesets: [],
-    });
     scene.preload();
-    scene.load.emit(`filecomplete-json-${ART_MANIFEST_KEY}`);
+    expect(scene.load.json).not.toHaveBeenCalledWith("manifest", expect.anything());
+    expect(scene.cache.json.add).toHaveBeenCalledExactlyOnceWith("manifest", manifest);
     expect(scene.load.bitmapFont).toHaveBeenCalledExactlyOnceWith(
       "font-body",
       "fonts/body.png",
@@ -81,7 +82,6 @@ it.each([
     }),
   );
   const scene = new BootScene();
-  vi.mocked(scene.cache.json.get).mockReturnValue({ fonts: [], sprites: [] });
   scene.create();
   expect(startup.load).not.toHaveBeenCalled();
   expect(scene.scene.start).not.toHaveBeenCalled();
@@ -101,7 +101,6 @@ it("keeps stage previews independent of startup and saved progress", () => {
   art.atlas = null;
   vi.stubGlobal("window", { location: { search: "?stagePreview=street" } });
   const scene = new BootScene();
-  vi.mocked(scene.cache.json.get).mockReturnValue({ fonts: [], sprites: [] });
   scene.create();
   expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone");
   expect(startup.ready).not.toHaveBeenCalled();
