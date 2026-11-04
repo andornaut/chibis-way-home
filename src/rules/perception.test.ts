@@ -172,21 +172,29 @@ describe("screen and solid line-of-sight acquisition", () => {
 });
 
 describe("current-chunk or current-viewport pursuit awareness", () => {
-  it("uses both body centres in the half-open viewport without line of sight", () => {
+  describe("current viewport", () => {
     const view = { height: 100, width: 200, x: 100, y: 50 };
     const observer = { height: 20, width: 20, x: 90, y: 40 };
     const target = { ...observer, x: 280, y: 130 };
     const world = { solids: [{ height: 100, width: 10, x: 200, y: 50 }], view };
-    expect(targetInCurrentView(world, observer, target)).toBe(true);
-    expect(targetVisible(world, undefined, observer, target)).toBe(false);
-    expect(targetInCurrentView(world, observer, { ...target, x: 290 })).toBe(false);
-    expect(targetInCurrentView(world, observer, { ...target, y: 140 })).toBe(false);
-    expect(targetInCurrentView(world, { ...observer, x: 89 }, target)).toBe(false);
-    expect(targetInCurrentView(world, { ...observer, y: 39 }, target)).toBe(false);
-    expect(targetInCurrentView({ solids: [] }, observer, target)).toBe(false);
+
+    it("has no line of sight through the wall between the in-view bodies", () => {
+      expect(targetVisible(world, undefined, observer, target)).toBe(false);
+    });
+
+    it.each<[string, boolean, Parameters<typeof targetInCurrentView>]>([
+      ["both body centres inside it, behind a wall", true, [world, observer, target]],
+      ["the target's centre on its right edge", false, [world, observer, { ...target, x: 290 }]],
+      ["the target's centre on its bottom edge", false, [world, observer, { ...target, y: 140 }]],
+      ["the observer's centre left of it", false, [world, { ...observer, x: 89 }, target]],
+      ["the observer's centre above it", false, [world, { ...observer, y: 39 }, target]],
+      ["no camera view", false, [{ solids: [] }, observer, target]],
+    ])("with %s: in view %s", (_, expected, args) => {
+      expect(targetInCurrentView(...args)).toBe(expected);
+    });
   });
 
-  it("uses current body centres and authored half-open spans without camera or sight", () => {
+  describe("current chunk", () => {
     const world = {
       chunks: [
         { width: 120, x: 80 },
@@ -196,12 +204,29 @@ describe("current-chunk or current-viewport pursuit awareness", () => {
     };
     const observer = { height: 20, width: 20, x: 180, y: 0 };
     const target = { height: 20, width: 20, x: 189, y: 900 };
-    expect(targetInSameChunk(world, observer, target)).toBe(true);
-    expect(targetInSameChunk(world, observer, { ...target, x: 190 })).toBe(false);
-    expect(targetInSameChunk(world, { ...observer, x: 190 }, { ...target, x: 190 })).toBe(true);
-    expect(targetInSameChunk(world, observer, { ...target, x: 550 })).toBe(false);
-    expect(targetInSameChunk({ solids: [] }, observer, target)).toBe(false);
-    expect(targetInSameChunk({ ...world, chunks: [] }, observer, target)).toBe(false);
+
+    it.each<[string, boolean, Parameters<typeof targetInSameChunk>]>([
+      ["both centres in the first span, far apart vertically", true, [world, observer, target]],
+      [
+        "the target's centre on the next span's start",
+        false,
+        [world, observer, { ...target, x: 190 }],
+      ],
+      [
+        "both centres on the next span's start",
+        true,
+        [world, { ...observer, x: 190 }, { ...target, x: 190 }],
+      ],
+      [
+        "the target's centre on the last span's end",
+        false,
+        [world, observer, { ...target, x: 550 }],
+      ],
+      ["no chunk list", false, [{ solids: [] }, observer, target]],
+      ["an empty chunk list", false, [{ ...world, chunks: [] }, observer, target]],
+    ])("with %s: in the same chunk %s", (_, expected, args) => {
+      expect(targetInSameChunk(...args)).toBe(expected);
+    });
   });
 
   it.each([

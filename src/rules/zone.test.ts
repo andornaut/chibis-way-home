@@ -161,35 +161,20 @@ describe("mandatory ride admission", () => {
     expect(next.death).toBeUndefined();
   });
 
-  it("ends a spent leg on a supported authored bank across adjacent floor joins", () => {
+  it.each([
+    [
+      "a supported authored bank across adjacent floor joins",
+      [
+        { height: 40, width: 104, x: 0, y: 300 },
+        { height: 40, width: 996, x: 104, y: 300 },
+      ],
+    ],
+    ["partial safe footing", [{ height: 40, width: 4, x: 102, y: 300 }]],
+  ])("ends a spent leg on %s and admits the touched bank", (_, solids) => {
     const layout = zone(
       area([object({ forcedTransit: transit, origin: { x: 80, y: 200 } })], {
         entries: { start: { x: 104, y: 300 } },
-        solids: [
-          { height: 40, width: 104, x: 0, y: 300 },
-          { height: 40, width: 996, x: 104, y: 300 },
-        ],
-      }),
-    );
-    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
-    expect(initial.bird.grounded).toBe(true);
-    const next = stepZone(BIRD, layout, STEP, STILL, {
-      ...initial,
-      forcedTransit: {
-        attackWindow: "allowed",
-        episode: { ...episode, phase: "spent" },
-        evidence: "certified",
-      },
-    });
-    expect(next.forcedTransit?.episode).toBeUndefined();
-    expect(next.forcedTransit?.boardingAdmissions).toEqual([{ group: transit.group, id: "near" }]);
-  });
-
-  it("ends a spent leg on partial safe footing and admits the touched bank", () => {
-    const layout = zone(
-      area([object({ forcedTransit: transit, origin: { x: 80, y: 200 } })], {
-        entries: { start: { x: 104, y: 300 } },
-        solids: [{ height: 40, width: 4, x: 102, y: 300 }],
+        solids,
       }),
     );
     const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));

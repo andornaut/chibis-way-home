@@ -53,44 +53,44 @@ it("retains an entire autonomous coordinate itinerary", () => {
   ]);
 });
 
-it("retains unresolved autonomous support flight instead of claiming static occupancy", () => {
+function withAutonomousTransitions(transitions: BehaviourNode["transitions"]): BehaviourPlan {
   const plan = graph();
-  const autonomous: BehaviourNode = {
-    ...plan.states.autonomous!,
-    transitions: [{ to: "landing", when: [{ kind: "elapsed", seconds: 1 }] }] as const,
+  return {
+    ...plan,
+    states: { ...plan.states, autonomous: { ...plan.states.autonomous!, transitions } },
   };
-  expect(unacquiredBehaviourNodes({ ...plan, states: { ...plan.states, autonomous } })).toContain(
-    plan.states.landing,
-  );
-});
+}
+const pursuing = graph();
 
-it("retains a nonacquisition alternative to the same reactive destination", () => {
-  const plan = graph();
-  const autonomous: BehaviourNode = {
-    ...plan.states.autonomous!,
-    transitions: [
-      ...plan.states.autonomous!.transitions,
+it.each<{ name: string; plan: BehaviourPlan }>([
+  {
+    name: "unresolved autonomous support flight instead of claiming static occupancy",
+    plan: withAutonomousTransitions([{ to: "landing", when: [{ kind: "elapsed", seconds: 1 }] }]),
+  },
+  {
+    name: "a nonacquisition alternative to the same reactive destination",
+    plan: withAutonomousTransitions([
+      ...pursuing.states.autonomous!.transitions,
       { to: "landing", when: [{ kind: "elapsed", seconds: 1 }] },
-    ],
-  };
-  expect(unacquiredBehaviourNodes({ ...plan, states: { ...plan.states, autonomous } })).toContain(
-    plan.states.landing,
-  );
-});
-
-it("retains ordinary visibility branches without persistent pursuit", () => {
-  const source = graph();
-  const landing: BehaviourNode = {
-    ...source.states.landing!,
-    motion: { kind: "fly", speed: 10, to: { x: 0, y: 0 } },
-  };
-  const plan: BehaviourPlan = {
-    axis: source.axis,
-    distance: source.distance,
-    initial: source.initial,
-    states: { ...source.states, landing },
-  };
-  expect(unacquiredBehaviourNodes(plan)).toContain(landing);
+    ]),
+  },
+  {
+    name: "ordinary visibility branches without persistent pursuit",
+    plan: {
+      axis: pursuing.axis,
+      distance: pursuing.distance,
+      initial: pursuing.initial,
+      states: {
+        ...pursuing.states,
+        landing: {
+          ...pursuing.states.landing!,
+          motion: { kind: "fly", speed: 10, to: { x: 0, y: 0 } },
+        },
+      },
+    },
+  },
+])("retains $name", ({ plan }) => {
+  expect(unacquiredBehaviourNodes(plan)).toContain(plan.states.landing);
 });
 
 it("keeps the authored Pebble initial body and excludes its acquired flight graph", () => {
