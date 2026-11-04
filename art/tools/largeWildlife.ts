@@ -4,7 +4,7 @@
  * Usage: node art/tools/largeWildlife.ts build | preview OUT.png, from the repository root.
  * Idle: 1000, 180, 180, 1000ms. Graze: 350, 300, 300, 650, 650, 350, 300, 350ms.
  * Both tags loop, once []. Flat woodland fauna tone, binary alpha, no outlines or interior detail.
- * Export requires art-kit 0.5.0: six columns and two rows make a 1296x288 sheet.
+ * Export: six columns and two rows make a 1296x288 sheet.
  * Four hoof patches at x33,46,126,138 occupy y140..143 in every frame.
  * Naturalistic compact torso, fixed planted limbs, articulated grazing neck and head.
  * Placement uses native dimensions and ordinary world camera movement. No locomotion,
