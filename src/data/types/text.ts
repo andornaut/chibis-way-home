@@ -14,7 +14,6 @@ export interface DeathText {
 export interface StatsScopeText {
   readonly aggregate: string;
   readonly stageTotal: string;
-  readonly wholeRun: string;
   readonly zoneTotal: string;
 }
 

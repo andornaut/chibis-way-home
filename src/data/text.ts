@@ -242,6 +242,5 @@ export const TEXT: GameText = {
 export const STATS_SCOPE_TEXT: StatsScopeText = {
   aggregate: "Totals",
   stageTotal: "Stage total: {time}",
-  wholeRun: "Whole run: {time} · Deaths: {deaths} · Stages: {completed}/{total}",
   zoneTotal: "Zone total: {time}",
 };
