@@ -42,6 +42,7 @@ const roof = { height: 12, width: 240, x: 180, y: 240 };
 const world = (covered = false) => ({
   decisions: namedStreams(1, "idle-roam:main:0"),
   solids: covered ? [floor, roof] : [floor],
+  targetedAttackWindow: "allowed" as const,
   traversalFrame: {
     bounds: { height: 720, width: 720, x: 0, y: 0 },
     dtSeconds: 1 / 120,

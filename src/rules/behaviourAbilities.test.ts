@@ -86,6 +86,7 @@ function world(covered: boolean, tick: number): BehaviourWorld {
   return {
     decisions: namedStreams(1, "ability-trace:0"),
     solids: covered ? [floor, roof, ledge] : [floor],
+    targetedAttackWindow: "allowed",
     traversalFrame: {
       bounds: { height: 1080, width: 1440, x: 0, y: 0 },
       dtSeconds: DT,

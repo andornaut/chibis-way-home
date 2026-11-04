@@ -561,6 +561,7 @@ it("actual Pebble flies beneath the dry gallery roof and returns to supported re
         rect: after,
       })),
       solids: area.solids,
+      targetedAttackWindow: "allowed",
       traversalFrame: {
         bounds: { height: area.height, width: area.width, x: 0, y: 0 },
         dtSeconds: STEP_SECONDS,

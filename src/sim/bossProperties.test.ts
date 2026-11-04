@@ -177,9 +177,7 @@ it("reads every boss's tells within the shared bounds from its data", () => {
   }
 });
 
-// Known failure: Pebble's data enters neither tell through the targeted-attack-allowed
-// condition, so a deferred window does not hold them back.
-it.fails("gates the deferred attacks on the targeted-attack window in data", () => {
+it("gates the deferred attacks on the targeted-attack window in data", () => {
   for (const [character, attacks] of Object.entries(DEFERRED_ATTACKS)) {
     expect([...targetedAttacks(PLANS[character]!)].sort()).toEqual([...attacks].sort());
   }
