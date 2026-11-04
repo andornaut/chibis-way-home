@@ -25,6 +25,7 @@ it("retains the game's ordered HTML, loading, atlas, offline and security pipeli
     "bird-atlas",
     "game-kit-phaser-build",
     "game-kit-hashed-icons",
+    "home-page-web-manifest",
     "chibis-way-home-precache-art",
     "game-kit-precache",
     "game-kit-security-headers",

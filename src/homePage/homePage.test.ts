@@ -8,12 +8,13 @@ import { CHUNKS } from "../data/chunks";
 import { TEXT } from "../data/text";
 import { RECIPES } from "../data/zones";
 import { themesOf } from "../rules/assemble";
-import { homePageHtml } from "./html";
+import { homePageHtml, webManifestJson } from "./html";
 
 // The home page and the nav bar are static files, so what they state is checked against the
 // game here.
 const HOME_PAGE = new URL("../../pages/index.html", import.meta.url);
 const NAV_SCRIPT = new URL("../../public/nav.js", import.meta.url);
+const WEB_MANIFEST = new URL("../../public/manifest.webmanifest", import.meta.url);
 
 const pageText = async () =>
   homePageHtml(TEXT, await readFile(HOME_PAGE, "utf8")).replaceAll(/\s+/gu, " ");
@@ -33,6 +34,14 @@ it("renders one escaped description in the pitch and metadata", async () => {
   expect(rendered).toContain(`name="description" content="${description}"`);
   expect(rendered).toContain(`<p class="pitch">${description}</p>`);
   expect(rendered).not.toMatch(/%HOME_[A-Z_]+%/u);
+});
+
+it("renders the home page's description into the web app manifest", async () => {
+  const text = { ...TEXT, homePage: { ...TEXT.homePage, description: 'A "bird" & <ferret>' } };
+  const json = await readFile(WEB_MANIFEST, "utf8");
+  expect(JSON.parse(webManifestJson(text, json))).toMatchObject({
+    description: 'A "bird" & <ferret>',
+  });
 });
 
 describe("the logos", () => {

@@ -25,6 +25,7 @@ export default gameViteConfig<typeof ConfigModules>({
       phaserBuildPlugin,
       precachePlugin,
       securityHeadersPlugin,
+      webManifestPlugin,
     },
     repoPath,
   ) => {
@@ -35,6 +36,7 @@ export default gameViteConfig<typeof ConfigModules>({
       atlas,
       phaserBuildPlugin(PHASER_BUILD),
       hashedIconsPlugin({ icons: ICONS }),
+      webManifestPlugin(),
       precachePlugin("play/index.html", repoPath("src/pwa/serviceWorker.ts"), atlas.api.pageUrls),
       securityHeadersPlugin(),
     ];
