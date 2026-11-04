@@ -3,8 +3,8 @@ import { expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
 import { BIRD } from "../data/bird";
+import { HAZARD_PHASE_STYLE } from "../data/hazardPhaseStyle";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
-import { HAZARD_OUTLINE } from "../data/screen";
 import type { Archetype, ObjectLayout, Rect } from "../data/types";
 import { startBehaviour, stepBehaviour } from "../rules/behaviour";
 import { startBird } from "../rules/bird";
@@ -61,15 +61,15 @@ it("paints neutral recovery, inset amber warning and the full active red contact
   const rect = { height: 36, width: 24, x: 10.25, y: 20.5 };
   painter.draw("inactive", rect);
   expect(art.painted).toEqual([
-    { alpha: 1, colour: colour("dslate"), rect: { ...rect, x: 0, y: 0 } },
+    { alpha: 1, colour: colour(HAZARD_PHASE_STYLE.inactive), rect: { ...rect, x: 0, y: 0 } },
   ]);
   painter.draw("warning", rect);
-  const width = HAZARD_OUTLINE.width;
-  expect(art.pixel(width / 2, rect.height / 2)).toBe(colour("amber"));
-  expect(art.pixel(rect.width - width / 2, rect.height / 2)).toBe(colour("amber"));
-  expect(art.pixel(rect.width / 2, width / 2)).toBe(colour("amber"));
-  expect(art.pixel(rect.width / 2, rect.height - width / 2)).toBe(colour("amber"));
-  expect(art.pixel(rect.width / 2, rect.height / 2)).toBe(colour("dslate"));
+  const width = HAZARD_PHASE_STYLE.warningWidth;
+  expect(art.pixel(width / 2, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
+  expect(art.pixel(rect.width - width / 2, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
+  expect(art.pixel(rect.width / 2, width / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
+  expect(art.pixel(rect.width / 2, rect.height - width / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
+  expect(art.pixel(rect.width / 2, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
   expect(art.pixel(-0.5, 0)).toBeUndefined();
   for (const paint of art.painted) {
     expect(paint.alpha).toBe(1);
@@ -80,12 +80,12 @@ it("paints neutral recovery, inset amber warning and the full active red contact
   }
   painter.draw("active", rect);
   expect(art.painted).toEqual([
-    { alpha: 1, colour: colour(HAZARD_OUTLINE.colour), rect: { ...rect, x: 0, y: 0 } },
+    { alpha: 1, colour: colour(HAZARD_PHASE_STYLE.active), rect: { ...rect, x: 0, y: 0 } },
   ]);
   painter.draw("inactive", rect);
-  expect(art.pixel(rect.width / 2, rect.height / 2)).toBe(colour("dslate"));
+  expect(art.pixel(rect.width / 2, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
   painter.draw("warning", { ...rect, width: 6 });
-  expect(art.pixel(3, rect.height / 2)).toBe(colour("amber"));
+  expect(art.pixel(3, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
   expect(
     art.painted.every(
       ({ rect: paint }) => paint.width >= 0 && paint.height >= 0 && paint.x + paint.width <= 6,
@@ -176,10 +176,10 @@ it("consumes the authoritative graph phase and full producer collider in the liv
   expect(scene.add.sprite).not.toHaveBeenCalled();
   const activeStart = WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning;
   for (const [seconds, expected, collision] of [
-    [0, "dslate", "none"],
-    [WARNED_VENT_SECONDS.inactive, "amber", "none"],
-    [activeStart, "red", "hazard"],
-    [activeStart + WARNED_VENT_SECONDS.active, "dslate", "none"],
+    [0, HAZARD_PHASE_STYLE.inactive, "none"],
+    [WARNED_VENT_SECONDS.inactive, HAZARD_PHASE_STYLE.warning, "none"],
+    [activeStart, HAZARD_PHASE_STYLE.active, "hazard"],
+    [activeStart + WARNED_VENT_SECONDS.active, HAZARD_PHASE_STYLE.inactive, "none"],
   ] as const) {
     const state = stepBehaviour(BIRD, object, [], seconds, bird, object.origin, initial).state;
     zone.behaviours[0] = state;
@@ -199,7 +199,7 @@ it("consumes the authoritative graph phase and full producer collider in the liv
   }
   zone.behaviours[0] = initial;
   scene.drawObjects();
-  expect(art.pixel(0, 0)).toBe(colour("dslate"));
+  expect(art.pixel(0, 0)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
 });
 
 it("replaces the timed object painter through the existing area and retry lifecycle", () => {
@@ -211,6 +211,6 @@ it("replaces the timed object painter through the existing area and retry lifecy
   expect(scene.objectArt[0].item).toBe(replacement.item);
   zone.behaviours[0] = initial;
   scene.drawObjects();
-  expect(replacement.pixel(0, 0)).toBe(colour("dslate"));
+  expect(replacement.pixel(0, 0)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
   expect(art.item.destroy).toHaveBeenCalledOnce();
 });
