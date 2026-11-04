@@ -565,25 +565,26 @@ export function objectStep(
   return away <= reach ? path : { x: at.x + (dx / away) * reach, y: at.y + (dy / away) * reach };
 }
 
-// One fixed step of the zone. Pure, so the game and a headless simulator run the same rules.
-// Solid objects block like terrain and ledge objects only from above; standing on a moving one,
-// she moves with it, and leaving it by a jump or a walk off its edge she keeps its speed along x
-// until she lands. A solid one running into her side pushes her ahead of it. Touching a hazard,
-// being pushed into a solid or falling out of the area freezes a death snapshot until an
-// explicit retry starts the next attempt. Her box reaching the last column clears the zone, and
-// reaching back into its first column ends it uncleared (turnedBack).
-// Use with her drawn frame over a door sets `door` (doorAt), and the zone holds still until
-// leaveRoom.
-export function stepZone(
+// The physical part of one live zone step: object frames, with every behaviour object's perceive,
+// decide and act, crumbling, forced transit, Chibi's body, transients, contact and death.
+// stepZone adds spotting and escape barks, walk links and the stage exit to it.
+export interface ZoneBodyStep {
+  // Escape lines of the objects whose pursuit ended this step, by object index.
+  readonly escaped: readonly (readonly [number, DialogueLine])[];
+  // The behaviour world the objects perceived at the start of the step.
+  readonly geometry: BehaviourWorld;
+  // The zone after the step, without its barks, walk link or exit; a death freezes it.
+  readonly zone: ZoneState;
+}
+
+// Requires a live zone: no death, door, clear or turn back.
+export function stepZoneBodies(
   tuning: BirdTuning,
   layout: ZoneLayout,
   seconds: number,
   input: ZoneInput,
   zone: ZoneState,
-): ZoneState {
-  if (zone.death !== undefined || zone.cleared || zone.turnedBack || zone.door !== undefined) {
-    return zone;
-  }
+): ZoneBodyStep {
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
   const playbackView = area.objects.some((object) => object.motion.playback === "once-visible")
@@ -665,31 +666,6 @@ export function stepZone(
   const geometry = kinds.perception
     ? { ...baseGeometry, view: currentScreen(tuning, area, zone.bird) }
     : baseGeometry;
-  const barks: ZoneBark[] = [];
-  const seen = new Set(zone.spotted[zone.area] ?? []);
-  kinds.spotted.forEach((index) => {
-    const object = area.objects[index]!;
-    const bark = object.behaviour?.spotted;
-    const state = zone.behaviours[index];
-    if (
-      bark &&
-      state?.active &&
-      !seen.has(index) &&
-      targetVisible(
-        geometry,
-        object,
-        contactBox(object, zone.objects[index] ?? object.origin, state.facing, state.axis),
-        birdBox(tuning, zone.bird),
-      )
-    ) {
-      seen.add(index);
-      barks.push({
-        ...bark,
-        owner: { area: zone.area, attempt: zone.attempt, objectIndex: index },
-      });
-    }
-  });
-  const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
   const frames = new Map<number, ObjectFrame>();
   const resolving = new Set<number>();
   let supportFrames: readonly BehaviourPlatformFrame[] | undefined;
@@ -970,14 +946,9 @@ export function stepZone(
     return frame;
   };
   const objects = area.objects.map((_, index) => resolveFrame(index));
-  for (const [index, frame] of objects.entries()) {
-    if (frame.behaviour?.escaped) {
-      barks.push({
-        ...frame.behaviour.escaped,
-        owner: { area: zone.area, attempt: zone.attempt, objectIndex: index },
-      });
-    }
-  }
+  const escaped = objects.flatMap((frame, index) =>
+    frame.behaviour?.escaped ? [[index, frame.behaviour.escaped] as const] : [],
+  );
   const positions = objects.map((frame, index): Point =>
     frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
   );
@@ -1206,7 +1177,6 @@ export function stepZone(
     const frozen: ZoneState = {
       ...zone,
       ...(forcedTransit && { forcedTransit }),
-      barks,
       behaviours,
       bird,
       crumbling: crumblingAfter,
@@ -1216,19 +1186,22 @@ export function stepZone(
       pulses: remainingPulses,
       sceneryPlayback,
       seconds: time,
-      spotted,
       steps,
       transients: transientStep.entities,
       useHeld: input.useHeld,
     };
     return {
-      ...frozen,
-      death: {
-        ...(contact && { contact }),
-        position: { x: bird.x, y: bird.y },
-        reason: crushed ? "crush" : bird.y > area.height ? "fall" : "hazard",
-        support: deathSupport(tuning, layout, frozen, bird),
-        velocity: { x: bird.vx, y: bird.vy },
+      escaped,
+      geometry,
+      zone: {
+        ...frozen,
+        death: {
+          ...(contact && { contact }),
+          position: { x: bird.x, y: bird.y },
+          reason: crushed ? "crush" : bird.y > area.height ? "fall" : "hazard",
+          support: deathSupport(tuning, layout, frozen, bird),
+          velocity: { x: bird.vx, y: bird.vy },
+        },
       },
     };
   }
@@ -1250,6 +1223,86 @@ export function stepZone(
           },
         )
       : undefined;
+  return {
+    escaped,
+    geometry,
+    zone: {
+      ...zone,
+      ...(forcedTransit && { forcedTransit }),
+      behaviours,
+      bird,
+      crumbling: crumblingAfter,
+      door,
+      forcedTransitForecast,
+      nextPulseId,
+      nextTransientId: transientStep.nextId,
+      objects: positions,
+      pulses: remainingPulses,
+      sceneryPlayback,
+      seconds: time,
+      steps,
+      transients: transientStep.entities,
+      useHeld: input.useHeld,
+    },
+  };
+}
+
+// One fixed step of the zone. Pure, so the game and a headless simulator run the same rules.
+// Solid objects block like terrain and ledge objects only from above; standing on a moving one,
+// she moves with it, and leaving it by a jump or a walk off its edge she keeps its speed along x
+// until she lands. A solid one running into her side pushes her ahead of it. Touching a hazard,
+// being pushed into a solid or falling out of the area freezes a death snapshot until an
+// explicit retry starts the next attempt. Her box reaching the last column clears the zone, and
+// reaching back into its first column ends it uncleared (turnedBack).
+// Use with her drawn frame over a door sets `door` (doorAt), and the zone holds still until
+// leaveRoom.
+export function stepZone(
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  seconds: number,
+  input: ZoneInput,
+  zone: ZoneState,
+): ZoneState {
+  if (zone.death !== undefined || zone.cleared || zone.turnedBack || zone.door !== undefined) {
+    return zone;
+  }
+  const area = areaOf(layout, zone.area);
+  const kinds = areaObjects(area);
+  const body = stepZoneBodies(tuning, layout, seconds, input, zone);
+  const { geometry } = body;
+  const barks: ZoneBark[] = [];
+  const seen = new Set(zone.spotted[zone.area] ?? []);
+  kinds.spotted.forEach((index) => {
+    const object = area.objects[index]!;
+    const bark = object.behaviour?.spotted;
+    const state = zone.behaviours[index];
+    if (
+      bark &&
+      state?.active &&
+      !seen.has(index) &&
+      targetVisible(
+        geometry,
+        object,
+        contactBox(object, zone.objects[index] ?? object.origin, state.facing, state.axis),
+        birdBox(tuning, zone.bird),
+      )
+    ) {
+      seen.add(index);
+      barks.push({
+        ...bark,
+        owner: { area: zone.area, attempt: zone.attempt, objectIndex: index },
+      });
+    }
+  });
+  const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
+  for (const [index, line] of body.escaped) {
+    barks.push({ ...line, owner: { area: zone.area, attempt: zone.attempt, objectIndex: index } });
+  }
+  if (body.zone.death) {
+    return { ...body.zone, barks, spotted };
+  }
+  const { bird, steps } = body.zone;
+  const box = birdBox(tuning, bird);
   const atStageExit =
     layout.stageExit !== undefined &&
     layout.stageExit.area === zone.area &&
@@ -1282,25 +1335,11 @@ export function stepZone(
     };
   }
   return {
-    ...zone,
-    ...(forcedTransit && { forcedTransit }),
+    ...body.zone,
     barks,
-    behaviours,
-    bird,
     cleared: layout.stageExit ? atStageExit : box.x + box.width > area.exitX,
-    crumbling: crumblingAfter,
-    door: atStageExit ? undefined : door,
-    forcedTransitForecast,
-    nextPulseId,
-    nextTransientId: transientStep.nextId,
-    objects: positions,
-    pulses: remainingPulses,
-    sceneryPlayback,
-    seconds: time,
+    door: atStageExit ? undefined : body.zone.door,
     spotted,
-    steps,
-    transients: transientStep.entities,
     turnedBack: !atStageExit && box.x < area.backX,
-    useHeld: input.useHeld,
   };
 }
