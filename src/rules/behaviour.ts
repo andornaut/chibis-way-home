@@ -1803,63 +1803,6 @@ export function advanceBehaviour(
         (hop.elapsed < hop.seconds / 2 ? hop.seconds / 2 : hop.seconds) - hop.elapsed,
       );
     }
-    if (
-      node.motion.kind === "pursue" &&
-      node.motion.mode === "fly" &&
-      node.motion.overhead &&
-      next.pursuit?.phase === "engaged" &&
-      next.flightApproachDirection !== undefined
-    ) {
-      const target = overheadFlightGoalForRect(
-        node.motion.overhead,
-        next.flightApproachDirection,
-        sampledMotion && next.intent ? next.intent.target : birdBox(tuning, bird),
-        object,
-      );
-      const vertical = Math.abs(target.y - current.y);
-      const route = overheadFlightRoute(world, object, current, target);
-      if (vertical > EDGE && route) {
-        slice = Math.min(slice, vertical / node.motion.speed);
-      } else if (sampledMotion && next.intent && !intentPause && route && vertical <= EDGE) {
-        const live = overheadFlightGoal(
-          tuning,
-          node.motion.overhead,
-          next.flightApproachDirection,
-          bird,
-          object,
-        );
-        const remaining = target.x - current.x,
-          crossing = live.x - current.x;
-        const crossingSeconds = Math.abs(crossing) / node.motion.speed;
-        if (
-          crossing * remaining > 0 &&
-          Math.abs(crossing) <= Math.abs(remaining) &&
-          crossingSeconds <= slice
-        ) {
-          const atCrossing = { x: live.x, y: current.y };
-          const future = advanceAttackClock(crossingSeconds, {
-            ...next,
-            elapsed: next.elapsed + crossingSeconds,
-            ...(object.contact && {
-              animationSeconds: (next.animationSeconds ?? 0) + crossingSeconds,
-            }),
-          });
-          if (
-            node.transitions.some(
-              ({ to, when }) =>
-                when.some((condition) => condition.kind === "arrived") &&
-                canEnterAttack(nodeOf(object, to), future) &&
-                when.every((condition) =>
-                  matches(perception, object, atCrossing, future, condition),
-                ),
-            )
-          ) {
-            // Stop on the real path event so live guards observe it before any remaining overshoot.
-            slice = crossingSeconds;
-          }
-        }
-      }
-    }
     const to = { ...current };
     let traversalSegments: readonly TraversalSafety[] | undefined;
     if (settling && node.motion.kind === "pursue") {
@@ -1886,7 +1829,7 @@ export function advanceBehaviour(
     }
     if (
       node.motion.kind === "pursue" &&
-      (node.motion.mode === "ground" || node.motion.overhead) &&
+      node.motion.mode === "ground" &&
       (next.pursuit?.phase === "engaged" || (next.traversal && !next.traversal.physical.grounded))
     ) {
       const hers =
@@ -2000,38 +1943,6 @@ export function advanceBehaviour(
           contactBox(object, current, next.facing, "x"),
           desired,
         );
-      } else if (sampledMotion && intentPause) {
-        // Safe hovering consumes the sampled decision clock without changing a live attack target.
-      } else if (node.motion.overhead) {
-        if (next.flightApproachDirection === undefined) {
-          throw new Error("Overhead pursuit requires a committed approach direction");
-        }
-        const target = overheadFlightGoalForRect(
-          node.motion.overhead,
-          next.flightApproachDirection,
-          hers,
-          object,
-        );
-        const route = overheadFlightRoute(world, object, current, target);
-        if (route) {
-          let remaining = travel;
-          let position = current;
-          for (const waypoint of route) {
-            const distance = Math.hypot(waypoint.x - position.x, waypoint.y - position.y);
-            const fraction = Math.min(1, remaining / (distance || 1));
-            position = {
-              x: position.x + (waypoint.x - position.x) * fraction,
-              y: position.y + (waypoint.y - position.y) * fraction,
-            };
-            remaining -= distance * fraction;
-            if (fraction < 1) {
-              break;
-            }
-          }
-          to.x = position.x;
-          to.y = position.y;
-          next = { ...next, facing: to.x === current.x ? next.facing : to.x < current.x ? -1 : 1 };
-        }
       }
       if (sampledMotion && next.intent) {
         next = { ...next, facing: next.intent.facing };
@@ -2044,6 +1955,21 @@ export function advanceBehaviour(
     if (params && ability) {
       const acted = ability.act(
         {
+          arrives: (point, after, state) => {
+            const future = advanceAttackClock(after, {
+              ...state,
+              elapsed: state.elapsed + after,
+              ...(object.contact && {
+                animationSeconds: (state.animationSeconds ?? 0) + after,
+              }),
+            });
+            return node.transitions.some(
+              ({ to, when }) =>
+                when.some((condition) => condition.kind === "arrived") &&
+                canEnterAttack(nodeOf(object, to), future) &&
+                when.every((condition) => matches(perception, object, point, future, condition)),
+            );
+          },
           intent: { paused: intentPause === true, sampled: sampledMotion },
           object,
           perception,

@@ -109,7 +109,7 @@ function run(
   object: ObjectLayout,
   entry: string,
   covered: boolean,
-  aligned: boolean,
+  start: "aligned" | "origin" | "pacing",
   coverage: Coverage,
 ) {
   const recorder = traceRecorder({ retain: false });
@@ -119,7 +119,10 @@ function run(
     .map(({ motion }) => motion)
     .find((motion) => motion.kind === "pursue" && motion.mode === "fly" && motion.overhead);
   let at =
-    aligned && overhead?.kind === "pursue" && overhead.mode === "fly" && overhead.overhead
+    start !== "origin" &&
+    overhead?.kind === "pursue" &&
+    overhead.mode === "fly" &&
+    overhead.overhead
       ? {
           x: bird.x + BIRD.width / 2 + overhead.overhead.ahead - object.width / 2,
           y: bird.y - overhead.overhead.clearance - object.height,
@@ -142,7 +145,17 @@ function run(
   for (let tick = 0; tick < TICKS; tick++) {
     const physical = world(covered, tick);
     const aim = state.intent?.target.x ?? state.flightTarget?.x;
-    const move = aim === undefined || Math.abs(aim - bird.x) < 4 ? 0 : aim < bird.x ? -1 : 1;
+    // Pacing walks under the boss and back, so sampled approaches cross Chibi's live goal.
+    const move =
+      start === "pacing"
+        ? Math.floor(tick / 90) % 2 === 0
+          ? -1
+          : 1
+        : aim === undefined || Math.abs(aim - bird.x) < 4
+          ? 0
+          : aim < bird.x
+            ? -1
+            : 1;
     bird = stepBird(BIRD, physical.solids, [], DT, { jumpHeld: false, move }, bird);
     let step: ReturnType<typeof stepBehaviour>;
     try {
@@ -178,9 +191,14 @@ describe("behaviour ability traces", () => {
       const object = variant(character);
       for (const entry of Object.keys(object.behaviour!.states).sort()) {
         for (const covered of [false, true]) {
-          for (const aligned of character === "pigeon-antagonist" ? [false, true] : [false]) {
-            const name = `${character} ${entry} ${covered ? "covered" : "open"}${aligned ? " aligned" : ""}`;
-            observed[name] = run(object, entry, covered, aligned, coverage);
+          const starts =
+            character === "pigeon-antagonist"
+              ? (["origin", "aligned", "pacing"] as const)
+              : (["origin"] as const);
+          for (const start of starts) {
+            const suffix = start === "origin" ? "" : ` ${start}`;
+            const name = `${character} ${entry} ${covered ? "covered" : "open"}${suffix}`;
+            observed[name] = run(object, entry, covered, start, coverage);
             if (!UPDATE) {
               expect(observed[name], name).toBe(baseline[name]);
             }

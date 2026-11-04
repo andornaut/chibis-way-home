@@ -7,9 +7,14 @@ import type {
   BehaviourActor,
   BehaviourMotionStep,
 } from "./behaviourAbilities";
-import { flightAxis } from "./behaviourReach";
+import {
+  flightAxis,
+  overheadFlightGoal,
+  overheadFlightGoalForRect,
+  overheadFlightRoute,
+} from "./behaviourReach";
 import { contactBox } from "./behaviourTrack";
-import { birdBox } from "./bird";
+import { birdBox, EDGE } from "./bird";
 
 type PursuitAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
   BehaviourAbilityContext,
@@ -103,5 +108,88 @@ export const AIR_CHASE: PursuitAbility<"air-chase"> = {
       to = { x, y: flightAxis(context.object, world, { ...at, x }, "y", at.y + dy * fraction) };
     }
     return { slice, state: intentFacing(context, aim.state), to };
+  },
+};
+
+// Ascends above Chibi, then follows the collision-checked overhead route to the approach goal
+// along the captured travel side. The slice ends at the ascent's top, or where a sampled
+// approach crosses Chibi's live goal and the graph would arrive, so live guards observe it.
+export const OVERHEAD_SWOOP: PursuitAbility<"overhead-swoop"> = {
+  act: (context, { motion }, actor) => {
+    const { intent, object, perception } = context;
+    const overhead = motion.overhead!;
+    const { at, state } = actor;
+    let { slice } = context;
+    if (state.pursuit?.phase === "engaged" && state.flightApproachDirection !== undefined) {
+      const target = overheadFlightGoalForRect(
+        overhead,
+        state.flightApproachDirection,
+        intent.sampled && state.intent
+          ? state.intent.target
+          : birdBox(perception.tuning, perception.target),
+        object,
+      );
+      const vertical = Math.abs(target.y - at.y);
+      const route = overheadFlightRoute(perception.world, object, at, target);
+      if (vertical > EDGE && route) {
+        slice = Math.min(slice, vertical / motion.speed);
+      } else if (intent.sampled && state.intent && !intent.paused && route && vertical <= EDGE) {
+        const live = overheadFlightGoal(
+          perception.tuning,
+          overhead,
+          state.flightApproachDirection,
+          perception.target,
+          object,
+        );
+        const remaining = target.x - at.x,
+          crossing = live.x - at.x;
+        const crossingSeconds = Math.abs(crossing) / motion.speed;
+        if (
+          crossing * remaining > 0 &&
+          Math.abs(crossing) <= Math.abs(remaining) &&
+          crossingSeconds <= slice &&
+          context.arrives({ x: live.x, y: at.y }, crossingSeconds, state)
+        ) {
+          slice = crossingSeconds;
+        }
+      }
+    }
+    if (!pursuing(state)) {
+      return { slice, state, to: actor.to };
+    }
+    const aim = pursuitAim({ ...context, slice }, motion.speed, actor);
+    let next = aim.state;
+    let to = actor.to;
+    if (!(intent.sampled && intent.paused)) {
+      if (next.flightApproachDirection === undefined) {
+        throw new Error("Overhead pursuit requires a committed approach direction");
+      }
+      const goal = overheadFlightGoalForRect(
+        overhead,
+        next.flightApproachDirection,
+        aim.hers,
+        object,
+      );
+      const route = overheadFlightRoute(perception.world, object, at, goal);
+      if (route) {
+        let remaining = aim.travel;
+        let position = at;
+        for (const waypoint of route) {
+          const distance = Math.hypot(waypoint.x - position.x, waypoint.y - position.y);
+          const fraction = Math.min(1, remaining / (distance || 1));
+          position = {
+            x: position.x + (waypoint.x - position.x) * fraction,
+            y: position.y + (waypoint.y - position.y) * fraction,
+          };
+          remaining -= distance * fraction;
+          if (fraction < 1) {
+            break;
+          }
+        }
+        to = { x: position.x, y: position.y };
+        next = { ...next, facing: to.x === at.x ? next.facing : to.x < at.x ? -1 : 1 };
+      }
+    }
+    return { slice, state: intentFacing(context, next), to };
   },
 };

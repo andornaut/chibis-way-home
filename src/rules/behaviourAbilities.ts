@@ -3,7 +3,7 @@ import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
 import type { BehaviourPerception } from "./behaviourPerception";
-import { AIR_CHASE } from "./behaviourPursuitAbilities";
+import { AIR_CHASE, OVERHEAD_SWOOP } from "./behaviourPursuitAbilities";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { trackReach, travelHeading } from "./behaviourTrack";
 import { EDGE } from "./bird";
@@ -18,6 +18,10 @@ type Motion<Kind extends BehaviourMotion["kind"]> = Extract<
 export type BehaviourAbilityParams =
   | {
       readonly kind: "air-chase";
+      readonly motion: Extract<Motion<"pursue">, { readonly mode: "fly" }>;
+    }
+  | {
+      readonly kind: "overhead-swoop";
       readonly motion: Extract<Motion<"pursue">, { readonly mode: "fly" }>;
     }
   | {
@@ -43,7 +47,11 @@ export function behaviourAbilityParams(
         ? { kind: "supported-landing", motion }
         : { kind: "target-flight", motion };
     case "pursue":
-      return motion.mode === "fly" && !motion.overhead ? { kind: "air-chase", motion } : undefined;
+      return motion.mode === "ground"
+        ? undefined
+        : motion.overhead
+          ? { kind: "overhead-swoop", motion }
+          : { kind: "air-chase", motion };
     case "wait":
       return { kind: "wait", motion };
     default:
@@ -52,6 +60,9 @@ export function behaviourAbilityParams(
 }
 
 export interface BehaviourAbilityContext {
+  // Whether the graph would take an arrival transition with the body at a point after that
+  // many more seconds of this state.
+  readonly arrives: (at: Point, seconds: number, state: BehaviourState) => boolean;
   // Whether the motion follows a sampled pursuit intent this slice, and whether it pauses.
   readonly intent: { readonly paused: boolean; readonly sampled: boolean };
   readonly object: ObjectLayout;
@@ -218,6 +229,7 @@ export const BEHAVIOUR_ABILITIES: AbilityTable<
   BehaviourMotionStep
 > = {
   "air-chase": AIR_CHASE,
+  "overhead-swoop": OVERHEAD_SWOOP,
   "supported-landing": SUPPORTED_LANDING,
   "target-flight": TARGET_FLIGHT,
   "track-travel": TRACK_TRAVEL,
