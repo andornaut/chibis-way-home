@@ -56,7 +56,7 @@ Report observed outcomes separately from unobserved specials, incomplete recover
 | Zone                 | Stage              | Reported clear time |
 | -------------------- | ------------------ | ------------------- |
 | Blue cityscape       | Parcel depot       | 1:06                |
-| Blue cityscape       | City streets       | 1:18                |
+| Blue cityscape       | Streets            | 1:18                |
 | Blue cityscape       | City boundary      | 0:58                |
 | Industrial outskirts | Warehouse district | 1:06                |
 
