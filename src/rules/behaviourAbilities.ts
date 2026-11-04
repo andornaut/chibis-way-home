@@ -3,6 +3,7 @@ import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
 import type { BehaviourPerception } from "./behaviourPerception";
+import { AIR_CHASE } from "./behaviourPursuitAbilities";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { trackReach, travelHeading } from "./behaviourTrack";
 import { EDGE } from "./bird";
@@ -15,6 +16,10 @@ type Motion<Kind extends BehaviourMotion["kind"]> = Extract<
 
 // Which ability acts a motion: the graph decides the motion; the ability moves the body.
 export type BehaviourAbilityParams =
+  | {
+      readonly kind: "air-chase";
+      readonly motion: Extract<Motion<"pursue">, { readonly mode: "fly" }>;
+    }
   | {
       readonly kind: "supported-landing";
       readonly motion: Extract<Motion<"fly">, { readonly to: "support" }>;
@@ -37,6 +42,8 @@ export function behaviourAbilityParams(
       return motion.to === "support"
         ? { kind: "supported-landing", motion }
         : { kind: "target-flight", motion };
+    case "pursue":
+      return motion.mode === "fly" && !motion.overhead ? { kind: "air-chase", motion } : undefined;
     case "wait":
       return { kind: "wait", motion };
     default:
@@ -45,6 +52,8 @@ export function behaviourAbilityParams(
 }
 
 export interface BehaviourAbilityContext {
+  // Whether the motion follows a sampled pursuit intent this slice, and whether it pauses.
+  readonly intent: { readonly paused: boolean; readonly sampled: boolean };
   readonly object: ObjectLayout;
   readonly perception: BehaviourPerception;
   // The slice decided so far; an ability may shorten it to its motion's next event.
@@ -208,6 +217,7 @@ export const BEHAVIOUR_ABILITIES: AbilityTable<
   BehaviourActor,
   BehaviourMotionStep
 > = {
+  "air-chase": AIR_CHASE,
   "supported-landing": SUPPORTED_LANDING,
   "target-flight": TARGET_FLIGHT,
   "track-travel": TRACK_TRAVEL,

@@ -27,7 +27,47 @@ const CHARACTERS = [
   "pigeon-antagonist",
   "raccoon-antagonist",
 ] as const;
+// Pebble's graph with plain direct flight in place of his overhead approach, with and without
+// sampled intent: no production boss flies a plain chase.
+const FLIGHT_VARIANTS = [
+  "pigeon-antagonist plain-sampled",
+  "pigeon-antagonist plain-live",
+] as const;
 const TICKS = 720;
+
+function variant(
+  name: (typeof CHARACTERS)[number] | (typeof FLIGHT_VARIANTS)[number],
+): ObjectLayout {
+  const [character, flight] = name.split(" ") as [(typeof CHARACTERS)[number], string?];
+  const object = objectLayout(
+    TILE,
+    CATALOGUE,
+    HITBOXES,
+    TILESETS["tiles-street"],
+    {},
+    { character, col: 10, row: 14 },
+  );
+  if (!flight) {
+    return object;
+  }
+  const plan = object.behaviour!;
+  const states = Object.fromEntries(
+    Object.entries(plan.states).map(([key, node]) => {
+      const motion = node.motion;
+      if (motion.kind !== "pursue" || motion.mode !== "fly") {
+        return [key, node];
+      }
+      const plain = {
+        kind: "pursue" as const,
+        mode: "fly" as const,
+        speed: motion.speed,
+        ...(flight === "plain-sampled" && motion.intent && { intent: motion.intent }),
+      };
+      return [key, { ...node, motion: plain }];
+    }),
+  );
+  return { ...object, behaviour: { ...plan, states } };
+}
 const DT = 1 / 120;
 
 const floor = { height: 360, width: 1440, x: 0, y: 720 };
@@ -132,17 +172,10 @@ describe("behaviour ability traces", () => {
     ? (JSON.parse(readFileSync(FIXTURE, "utf8")) as Record<string, string>)
     : {};
 
-  it.each(CHARACTERS)(
+  it.each([...CHARACTERS, ...FLIGHT_VARIANTS])(
     "%s reproduces every entry state's recorded trace",
     (character) => {
-      const object = objectLayout(
-        TILE,
-        CATALOGUE,
-        HITBOXES,
-        TILESETS["tiles-street"],
-        {},
-        { character, col: 10, row: 14 },
-      );
+      const object = variant(character);
       for (const entry of Object.keys(object.behaviour!.states).sort()) {
         for (const covered of [false, true]) {
           for (const aligned of character === "pigeon-antagonist" ? [false, true] : [false]) {

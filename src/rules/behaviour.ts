@@ -1886,6 +1886,7 @@ export function advanceBehaviour(
     }
     if (
       node.motion.kind === "pursue" &&
+      (node.motion.mode === "ground" || node.motion.overhead) &&
       (next.pursuit?.phase === "engaged" || (next.traversal && !next.traversal.physical.grounded))
     ) {
       const hers =
@@ -1902,7 +1903,6 @@ export function advanceBehaviour(
           hers.x + hers.width / 2 - contact.width / 2 - (contact.x - current.x),
         ),
       );
-      const targetY = hers.y + hers.height / 2 - contact.height / 2 - (contact.y - current.y);
       const travel = node.motion.speed * slice;
       const dx = targetX - current.x;
       next = {
@@ -2032,11 +2032,6 @@ export function advanceBehaviour(
           to.y = position.y;
           next = { ...next, facing: to.x === current.x ? next.facing : to.x < current.x ? -1 : 1 };
         }
-      } else {
-        const dy = targetY - current.y;
-        const fraction = Math.min(1, travel / (Math.hypot(dx, dy) || 1));
-        to.x = flightAxis(object, world, current, "x", current.x + dx * fraction);
-        to.y = flightAxis(object, world, { ...current, x: to.x }, "y", current.y + dy * fraction);
       }
       if (sampledMotion && next.intent) {
         next = { ...next, facing: next.intent.facing };
@@ -2049,6 +2044,7 @@ export function advanceBehaviour(
     if (params && ability) {
       const acted = ability.act(
         {
+          intent: { paused: intentPause === true, sampled: sampledMotion },
           object,
           perception,
           slice,
