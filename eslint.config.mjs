@@ -232,8 +232,9 @@ function boundaryConfigs() {
 
 export default defineConfig(
   {
-    // .claude/ holds agent worktrees: full copies of the repo that CI never checks out.
-    ignores: [".claude/", ".wrangler/", "dist/", "node_modules/", "vendor/"],
+    // .claude/ and .worktrees/ hold agent and role worktrees: full copies of the repo that CI
+    // never checks out.
+    ignores: [".claude/", ".worktrees/", ".wrangler/", "dist/", "node_modules/"],
   },
   js.configs.recommended,
   ts.configs.recommended,
