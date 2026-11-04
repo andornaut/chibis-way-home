@@ -727,3 +727,44 @@ it("cancels an idle jump tell on lost support through the same physical executor
     expect(next.idle.recovery.traversal.physical.grounded).toBe(false);
   }
 });
+
+it.each([
+  ["recovers from a perch that allows idle reposition", true],
+  ["holds a perch that does not", false],
+] as const)("engaged overhead flyer: %s", (_, allowIdleReposition) => {
+  const object = actor({
+    ...plan,
+    initial: "rest",
+    states: {
+      pursue: {
+        animation: "fly",
+        motion: {
+          kind: "pursue",
+          mode: "fly",
+          overhead: { ahead: 8, clearance: 6 },
+          speed: 10,
+        },
+        transitions: [],
+      },
+      rest: {
+        ...(allowIdleReposition && { allowIdleReposition }),
+        animation: "rest",
+        motion: { kind: "wait", support: "required" },
+        transitions: [],
+      },
+    },
+  });
+  const geometry = world();
+  let state = expired(object);
+  let at = object.origin;
+  // Recovery resumes the overhead pursuit from its new perch.
+  for (let tick = 0; tick < 200 && state.stateKey === "rest"; tick++) {
+    const next = stepBehaviour(BIRD, object, geometry, dt, target, at, state);
+    state = next.state;
+    at = next.at;
+  }
+  expect(supportedLanding(object, geometry, at)).toBe(true);
+  expect(Math.abs(at.x - object.origin.x) >= plan.idleWatchdog!.minMovement).toBe(
+    allowIdleReposition,
+  );
+});

@@ -47,6 +47,17 @@ type RecoveryAbility<Kind extends BehaviourRecoveryParams["kind"]> = Ability<
   BehaviourRecoveryStep
 >;
 
+// A supported dwell that allows idle reposition: an engaged overhead flyer may recover only from
+// such a perch, never during its overhead approach or attack.
+function perchedWait(object: ObjectLayout, state: BehaviourState): boolean {
+  const node = nodeOf(object, state.stateKey);
+  return (
+    node.motion.kind === "wait" &&
+    node.motion.support === "required" &&
+    node.allowIdleReposition === true
+  );
+}
+
 export function idleReady(
   object: ObjectLayout,
   world: BehaviourWorld,
@@ -60,15 +71,17 @@ export function idleReady(
   }
   const node = nodeOf(object, state.stateKey);
   const recovery = nodeOf(object, watchdog.resume).motion;
-  if (
+  const overheadEngaged =
     state.pursuit?.phase === "engaged" &&
     recovery.kind === "pursue" &&
     recovery.mode === "fly" &&
-    recovery.overhead
-  ) {
+    recovery.overhead !== undefined;
+  if (overheadEngaged && !perchedWait(object, state)) {
     return false;
   }
+  // A perched overhead flyer recovers only from actual support.
   const flyingHover =
+    !overheadEngaged &&
     recovery.kind === "pursue" &&
     recovery.mode === "fly" &&
     (node.motion.kind === "wait" || (node.motion.kind === "pursue" && node.motion.mode === "fly"));
@@ -101,7 +114,12 @@ const IDLE_RECOVERY: RecoveryAbility<"idle-recovery"> = {
     if (motion.kind !== "pursue") {
       throw new Error("Idle recovery requires a pursuit profile");
     }
-    if (state.pursuit?.phase === "engaged" && motion.mode === "fly" && motion.overhead) {
+    if (
+      state.pursuit?.phase === "engaged" &&
+      motion.mode === "fly" &&
+      motion.overhead &&
+      !perchedWait(object, state)
+    ) {
       const pending = { ...idle };
       delete (pending as { recovery?: BehaviourIdleState["recovery"] }).recovery;
       return { state: { ...state, idleWatchdog: pending } };
