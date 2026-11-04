@@ -35,10 +35,6 @@ export const BEHAVIOUR_TRAVERSAL_SEARCH = {
   budget: { horizonSteps: 120, maxStates: 256, maxSteps: 4096 },
   maxCollisionSteps: 16,
 } as const;
-const RABBIT_DISTANCE = -12;
-const RABBIT_PAUSE = 0.6;
-const RABBIT_SPEED = 10;
-const RABBIT_HOP_SECONDS = Math.abs(RABBIT_DISTANCE) / RABBIT_SPEED;
 
 export const ANIMAL_DETECTION_RANGE = SCREEN.width / TILE;
 export const ANIMAL_INTERACTION_RANGE = SCREEN.width / (2 * TILE);
@@ -623,58 +619,6 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
 );
 
 export const GOOSE_BEHAVIOUR = withPursuitIntent(GOOSE_ATTACK_PROFILE, ["pursuit", "pursuit-trap"]);
-
-export const OWL_BEHAVIOUR: BehaviourPlan = {
-  axis: "y",
-  distance: -15,
-  initial: "watch",
-  states: verticalDropStates({
-    dropSpeed: 15,
-    preparationSeconds: 0.65,
-    restSeconds: 0.6,
-    returnSpeed: 5,
-    returnState: "return",
-  }),
-};
-
-export const RABBIT_BEHAVIOUR: BehaviourPlan = {
-  axis: "x",
-  distance: RABBIT_DISTANCE,
-  initial: "watch",
-  states: {
-    frustration: frustrationNode("prepare"),
-    hop: {
-      animation: "hop",
-      motion: {
-        direction: "facing",
-        hopHeight: 3,
-        hopSeconds: RABBIT_HOP_SECONDS,
-        kind: "hop",
-        speed: RABBIT_SPEED,
-      },
-      transitions: [
-        {
-          to: "prepare",
-          when: [{ kind: "elapsed", seconds: RABBIT_HOP_SECONDS }],
-        },
-      ],
-    },
-    prepare: {
-      animation: "rest",
-      enter: "face-target",
-      motion: { kind: "wait" },
-      transitions: [
-        { to: "frustration", when: [{ kind: "elapsed", seconds: RABBIT_PAUSE }, ...LOST_TARGET] },
-        { to: "hop", when: [{ kind: "elapsed", seconds: RABBIT_PAUSE }] },
-      ],
-    },
-    watch: {
-      animation: "rest",
-      motion: { kind: "wait" },
-      transitions: [{ to: "prepare", when: DETECTION }],
-    },
-  },
-};
 
 const KIWI_DROP_ALIGNMENT = 1;
 const RACCOON_CLIMB_CLEAR = { kind: "track-clear", state: "climb" } as const;
