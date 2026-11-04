@@ -87,25 +87,25 @@ import { Grid, K } from "./pixel.ts";
 
 const SRC = "art/bird";
 const USAGE = "Usage: bird.ts build | preview OUT.png";
-const W = 48;
-const H = 42;
+export const W = 48;
+export const H = 42;
 export const BOX_W = 24; // collision body
 export const BOX_H = 36;
 const C = W / 2; // body centre x: the frame's centre line
-const BRX = 16.4; // body superellipse at rest
-const BRY = 13.0;
+export const BRX = 16.4; // body superellipse at rest
+export const BRY = 13.0;
 const POWER = 2.15;
-const HEAD_R = 9.2; // head radius
-const NAPE_DROP = 3; // how far the body's top dips at the nape, below the back of his head, in px
-const BACK_FLAT = 2; // how far the middle of his back is pressed down, to soften its hump, in px
-const HEAD_X = 0.43; // head centre: right of the body centre and above it, in body radii
-const HEAD_UP = 0.62;
-const BODY_BOTTOM = H - 3; // the body's bottom edge at rest; the feet fill the two rows under it
-const BASE = "cream";
-const SHADE = "tan";
-const LIGHT = "white";
-const WING = "tan"; // a flat patch, no line
-const OUTLINE = "dslate";
+export const HEAD_R = 9.2; // head radius
+export const NAPE_DROP = 3; // how far the body's top dips at the nape, below the back of his head, in px
+export const BACK_FLAT = 2; // how far the middle of his back is pressed down, to soften its hump, in px
+export const HEAD_X = 0.43; // head centre: right of the body centre and above it, in body radii
+export const HEAD_UP = 0.62;
+export const BODY_BOTTOM = H - 3; // the body's bottom edge at rest; the feet fill the two rows under it
+export const BASE = "cream";
+export const SHADE = "tan";
+export const LIGHT = "white";
+export const WING = "tan"; // a flat patch, no line
+export const OUTLINE = "dslate";
 
 export type Inside = (x: number, y: number) => boolean;
 type Colour = string | null;
