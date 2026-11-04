@@ -3,7 +3,7 @@
 import type { Point as SharedPoint, Rect as SharedRect } from "@andornaut/game-kit/rect";
 import type { CrumblingDefinition, CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { SEAM_ROWS } from "./chunks";
+import type { SEAM_ROWS } from "./seams";
 
 // An axis-aligned rectangle in base pixels: x and y are its top-left corner, y grows downward.
 export type Rect = Readonly<SharedRect>;
@@ -900,7 +900,7 @@ export interface ZonePlan {
 // A chunk's difficulty, 1 to 5, as gameplay/design.md's Chunks section grades it.
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
-// A row a chunk's entry or exit stands on: one of SEAM_ROWS (src/data/chunks.ts).
+// A row a chunk's entry or exit stands on: one of SEAM_ROWS (src/data/seams.ts).
 export type SeamRow = (typeof SEAM_ROWS)[number];
 
 // The ground at a chunk's left or right edge: its top is row `row`.

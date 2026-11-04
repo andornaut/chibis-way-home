@@ -1,9 +1,10 @@
 // Small chunks, a theme and a recipe for the chunk tests, which run on these as well as on
 // gameplay's chunks and recipes.
 import { CHARACTERS } from "../data/characters";
-import { CHUNK_RULES, CHUNKS, SEAM_ROWS, THEMES } from "../data/chunks";
+import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
 import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
+import { SEAM_ROWS } from "../data/seams";
 import type { ChunkPlan, StageRecipe, TerrainRect, ThemePlan, ZoneRecipe } from "../data/types";
 import { RECIPES } from "../data/zones";
 import type { ChunkLibrary } from "../rules/assemble";

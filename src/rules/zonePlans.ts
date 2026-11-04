@@ -1,7 +1,8 @@
 import { BACKGROUND_SECTIONS } from "../data/backgrounds";
 import { CHARACTERS } from "../data/characters";
-import { CHUNK_RULES, CHUNKS, SEAM_ROWS, THEMES } from "../data/chunks";
+import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
 import { ZONE_ROWS } from "../data/screen";
+import { SEAM_ROWS } from "../data/seams";
 import type { ZonePlan } from "../data/types";
 import { RECIPES, ZONES } from "../data/zones";
 import { assembleZone, type ChunkLibrary } from "./assemble";

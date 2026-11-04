@@ -35,9 +35,6 @@ import { WOODLAND_CHUNKS } from "./zone4";
 import { HOME_CITY_CHUNKS } from "./zone5";
 import { APARTMENT_CHUNKS, createApartmentMiddleChunks } from "./zone6";
 
-// The rows a chunk's entry and exit stand on.
-export const SEAM_ROWS = [20, 30, 40, 50, 60, 70, 80, 100] as const;
-
 export const CHUNK_RULES: ChunkRules = {
   cols: { max: CHUNK_COLS, min: CHUNK_COLS },
   footing: 4,
