@@ -9,6 +9,7 @@ import { resolveNames, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { zonePlanFor } from "../rules/zonePlans";
 import { HITBOXES, TILESETS } from "../testing/walkSuite";
+import { TEST_ZONES } from "../testing/zones";
 import { ARCHETYPES } from "./archetypes";
 import { BIRD } from "./bird";
 import { CHARACTERS } from "./characters";
@@ -17,7 +18,7 @@ import { ROOMS } from "./rooms";
 import { TILE, ZONE_ROWS } from "./screen";
 import { TEXT } from "./text";
 import type { AreaPlan, TileRect, ZonePlan } from "./types";
-import { RECIPES, TEST_ZONES, ZONES as ZONES_BY_KEY } from "./zones";
+import { RECIPES, ZONES as ZONES_BY_KEY } from "./zones";
 
 const MANIFEST = manifestJson as ArtManifest;
 const SHEETS = import.meta.glob<AsepriteSheet>("../../public/art/sprites/*.json", {

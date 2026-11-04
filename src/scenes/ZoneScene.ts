@@ -58,7 +58,7 @@ import type {
   ZoneLayout,
   ZonePlan,
 } from "../data/types";
-import { RECIPES, TEST_ZONES } from "../data/zones";
+import { RECIPES } from "../data/zones";
 import {
   developmentSkillOverrides,
   invulnerabilityEnabled,
@@ -111,6 +111,7 @@ import { eligibleSkills, nodeOf, skillTuning, stageExit, wholeRunSummary } from 
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
+import { askedAssemblySeed, askedRecipe } from "../rules/pageParams";
 import { currentScreen } from "../rules/perception";
 import { createStageBarks } from "../rules/stageBarks";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
@@ -129,7 +130,6 @@ import {
   type ZoneBark,
   type ZoneState,
 } from "../rules/zone";
-import { askedAssemblySeed, askedRecipe, nextZoneIndex, startZoneIndex } from "../rules/zoneChain";
 import {
   introductionForRun,
   type ZoneDepartureTarget,
@@ -227,9 +227,6 @@ function zoneAt(seed: number, node: string): ZonePlan {
 // What every zone's instances are resolved against.
 const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
 
-// The debug chain starts with the opening stage, followed by the test zones.
-const CHAIN_LENGTH = 1 + TEST_ZONES.length;
-
 // After a stall, run at most this much time at once rather than lurching ahead.
 const MAX_FRAME_MS = 250;
 
@@ -324,8 +321,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private readonly buttonTouches = new Set<number>();
   private landMs = 0;
   private layout!: ZoneLayout;
-  private zoneIndex = startZoneIndex(window.location.search, CHAIN_LENGTH);
-  // The map node she plays, or undefined when ?zone=<n> chains the zones without the map.
+  // The map node she plays, or undefined when played without the map.
   private mapNode: string | undefined;
   // The recipe ?zone=<key> plays on its own, assembled afresh each time she clears it unless
   // ?assembly=<n> fixes the seed.
@@ -387,8 +383,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     super("zone");
   }
 
-  // data.node: the map node to play; without one, the recipe ?zone=<key> names, or the chain from
-  // ?zone=<n>. data.backdrop: the start screen's backdrop instead (holdStill).
+  // data.node: the map node to play; without one, the recipe ?zone=<key> names, or else the
+  // opening stage. data.backdrop: the start screen's backdrop instead (holdStill).
   init(data: ZoneData): void {
     const { search } = window.location;
     this.preview = askedStagePreview(
@@ -404,7 +400,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.backdrop = data.backdrop === true;
     this.mapNode = data.node;
     this.continueVisit = data.continueVisit === true;
-    this.trial = askedRecipe(search, Object.keys(RECIPES));
+    this.trial = askedRecipe(Object.keys(RECIPES), search);
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objectArt = [];
     this.chunkBackdrops.length = 0;
@@ -573,7 +569,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     } else if (this.trial !== undefined) {
       this.loadPlan(zonePlanFor(seed, this.trial));
     } else {
-      this.loadZone(this.zoneIndex);
+      this.loadPlan(zoneAt(seed, ZONE_MAP.start));
     }
 
     for (const control of Object.keys(CONTROL_SPRITES) as TouchControl[]) {
@@ -958,9 +954,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       return this.mapNode;
     }
     return this.trial === undefined
-      ? this.zoneIndex === 0
-        ? ZONE_MAP.start
-        : ""
+      ? ZONE_MAP.start
       : (ZONE_MAP.nodes.find(({ zone }) => zone === this.trial)?.id ?? "");
   }
 
@@ -1068,7 +1062,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
             zoneVisitStats(this.story?.zone ?? "").cumulativeSeconds ??
             zoneVisitStats(this.story?.zone ?? "").runSeconds,
         },
-        ...deathLabels(ZONE_MAP, TEXT.map, String(this.zoneIndex + 1), stage),
+        ...deathLabels(ZONE_MAP, TEXT.map, "1", stage),
         percent: this.progressFraction(),
       } satisfies DeathData);
       stopWakeLock();
@@ -1372,12 +1366,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       (isDevelopmentSession()
         ? ZONE_MAP.nodes.find((node) => node.id === this.mapNode && node.kind === "zone")?.zone
         : undefined);
-    if (trial !== undefined) {
-      const seed = askedAssemblySeed(window.location.search) ?? newAssemblySeed();
-      this.loadPlan(zonePlanFor(seed, trial));
-    } else {
-      this.loadZone(turnedBack ? this.zoneIndex : nextZoneIndex(this.zoneIndex, CHAIN_LENGTH));
-    }
+    const seed = askedAssemblySeed(window.location.search) ?? newAssemblySeed();
+    this.loadPlan(trial === undefined ? zoneAt(seed, ZONE_MAP.start) : zonePlanFor(seed, trial));
     this.drawObjects();
     this.drawBird();
     const camera = this.cameras.main;
@@ -1388,20 +1378,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     });
   }
 
-  // Starts the zone at index from its start. Each load draws a fresh seed, so the random
-  // motion differs from one play to the next; ?seed=<n> fixes it.
-  private loadZone(index: number): void {
-    const plan =
-      index === 0
-        ? zoneAt(askedAssemblySeed(window.location.search) ?? newAssemblySeed(), ZONE_MAP.start)
-        : TEST_ZONES[index - 1];
-    if (!plan) {
-      throw new Error(`No zone ${index + 1}`);
-    }
-    this.zoneIndex = index;
-    this.loadPlan(plan);
-  }
-
+  // Starts plan from its start. Each load draws a fresh motion seed, so the random motion differs
+  // from one play to the next; ?seed=<n> fixes it.
   private loadPlan(plan: ZonePlan): void {
     this.barks?.reset();
     this.scheduledBarks =

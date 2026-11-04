@@ -8,10 +8,11 @@ import { BIRD } from "../data/bird";
 import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
-import { TEST_ZONES, ZONES as FIXED_ZONES } from "../data/zones";
+import { ZONES as FIXED_ZONES } from "../data/zones";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
+import { TEST_ZONES } from "../testing/zones";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
 import { crosses, type Surface, walkZone, zoneSurfaces } from "./zoneWalk";
 

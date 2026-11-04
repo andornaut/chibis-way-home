@@ -626,9 +626,8 @@ export const CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 6,
     rows: 5,
   },
-  // PLACEHOLDER: the test zones' objects, drawn as flat rectangles: a door (a Use zone),
-  // hazards, moving platforms whose motion each placement sets, a wandering cart and a pigeon
-  // that hops about and flies from her.
+  // PLACEHOLDER: the test fixtures' objects, drawn as flat rectangles: a door (a Use zone),
+  // hazards, moving platforms whose motion each placement sets and a wandering cart.
   "test-cart": {
     archetype: "hazard-wanderer",
     art: "test-cart",
