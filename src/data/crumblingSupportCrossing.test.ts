@@ -9,7 +9,7 @@ import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { BIRD_FRAME } from "../view/bird";
-import { crumblingAppearance, crumblingObjectFace } from "../view/crumblingPresentation";
+import { crumblingAppearance, crumblingSkinTiles } from "../view/crumblingPresentation";
 import type { Tileset } from "../view/tiles";
 import { BIRD } from "./bird";
 import { CHUNKS } from "./chunks";
@@ -44,8 +44,10 @@ function fixture() {
   const tileset = JSON.parse(
     readFileSync(new URL(`../../public/art/tilesets/${key}.json`, import.meta.url), "utf8"),
   ) as Tileset;
-  const face = crumblingObjectFace(key, tileset, ledge, ledge.origin);
-  return { area, banks: { left: left!, right: right! }, definition, face, layout, ledge };
+  // The real ledge resolves to its dedicated skins at load.
+  const skins = crumblingSkinTiles(tileset, ledge);
+  expect(skins.warning).toHaveLength(ledge.width / TILE);
+  return { area, banks: { left: left!, right: right! }, definition, layout, ledge };
 }
 
 type Fixture = ReturnType<typeof fixture>;
@@ -106,10 +108,7 @@ it("crumbling support warns on landing, gives an ordinary jump to the far bank, 
         warnedAt + CRUMBLING_SUPPORT_TUNING.warningSeconds,
         9,
       );
-      // The warning is drawn over the unchanged skin's opaque face.
-      const shown = crumblingAppearance(phase, f.face);
-      expect(shown.visible).toBe(true);
-      expect(shown.cracks.length).toBeGreaterThan(0);
+      expect(crumblingAppearance(phase)).toBe("warning");
     }
     if (takeoff === undefined && onLedge(f, before) && !zone.bird.grounded) {
       takeoff = before.seconds;
@@ -127,7 +126,7 @@ it("crumbling support warns on landing, gives an ordinary jump to the far bank, 
       expect(removedAt).toBeLessThan(
         warnedAt! + CRUMBLING_SUPPORT_TUNING.warningSeconds + STEP_SECONDS,
       );
-      expect(crumblingAppearance(phase, f.face)).toEqual({ cracks: [], visible: false });
+      expect(crumblingAppearance(phase)).toBeUndefined();
     }
     if (removedAt !== undefined && restoredAt === undefined && phase.kind === "intact") {
       restoredAt = zone.crumbling!.begunAtSeconds!;

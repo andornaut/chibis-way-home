@@ -1,49 +1,37 @@
 import type { CrumblingPhase } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { AreaLayout, Point, Rect } from "../data/types";
-import { objectTiles, type PlacedTile, type Tileset } from "./tiles";
+import type { AreaLayout, Rect } from "../data/types";
+import { drawsFrom, objectTiles, type PlacedTile, type Tileset } from "./tiles";
 
-// Palette colour of warning cracks.
-export const CRUMBLING_CRACK = "ink";
-
-// Tile-local opaque body faces of skins that can crumble, below the navy, white and light grey
-// safe lip and inside the side outlines (art/tools/obstacles.py ledge()).
-export const CRUMBLING_FACES: Readonly<Record<string, Readonly<Record<string, Rect>>>> = {
-  "tiles-platforming": {
-    "one-way-ledge-left": { height: 1, width: 11, x: 1, y: 5 },
-    "one-way-ledge-middle": { height: 1, width: 12, x: 0, y: 5 },
-    "one-way-ledge-right": { height: 1, width: 11, x: 0, y: 5 },
-  },
+// Base object skin to the dedicated skin a crumbling object draws with.
+export const CRUMBLING_SKINS: Readonly<Record<string, string>> = {
+  "one-way-ledge": "crumbling-ledge",
 };
 
-// The world-space opaque face of an object's actual selected tile skin, spanning its tiles.
-export function crumblingObjectFace(
-  key: string,
+export type CrumblingSkin = "intact" | "warning";
+
+// The intact and warning tiles of a crumbling object; the warning skin inserts "-warn" after the
+// mapped key. Throws for unmapped art or a skin missing from the tileset.
+export function crumblingSkinTiles(
   tileset: Tileset,
   object: { readonly art: string; readonly height: number; readonly width: number },
-  at: Point,
-): Rect {
-  const faces = CRUMBLING_FACES[key] ?? {};
-  const size = tileset.tileSize;
-  const rects = objectTiles(tileset, object.art, object.width / size, object.height / size).map(
-    ({ col, index, row }) => {
-      const name = Object.keys(faces).find((face) => tileset.tiles[face] === index);
-      if (!name) {
-        throw new Error(`No crumbling face for ${key} tile ${index}`);
-      }
-      const face = faces[name]!;
-      return { ...face, x: at.x + col * size + face.x, y: at.y + row * size + face.y };
-    },
-  );
-  if (
-    rects.length === 0 ||
-    rects.some(({ height, y }) => y !== rects[0]!.y || height !== rects[0]!.height)
-  ) {
-    throw new Error(`Crumbling face for ${object.art} must be one row band`);
+): Readonly<Record<CrumblingSkin, readonly PlacedTile[]>> {
+  const intact = CRUMBLING_SKINS[object.art];
+  if (!intact) {
+    throw new Error(`No crumbling skin for ${object.art}`);
   }
-  const left = Math.min(...rects.map(({ x }) => x));
-  const right = Math.max(...rects.map(({ width, x }) => x + width));
-  return { height: rects[0]!.height, width: right - left, x: left, y: rects[0]!.y };
+  const tiles = (skin: string) => {
+    if (!drawsFrom(tileset, skin)) {
+      throw new Error(`No crumbling skin ${skin} in the tileset`);
+    }
+    return objectTiles(
+      tileset,
+      skin,
+      object.width / tileset.tileSize,
+      object.height / tileset.tileSize,
+    );
+  };
+  return { intact: tiles(intact), warning: tiles(`${intact}-warn`) };
 }
 
 export interface CrumblingTerrainBatch {
@@ -108,34 +96,7 @@ export function crumblingTerrainBatches(
   };
 }
 
-// The supplied opaque face excludes the skin's safe lip, outline and transparent margins.
-// Fill these whole logical pixels with ink over the unchanged skin.
-export function crumblingAppearance(
-  phase: CrumblingPhase,
-  face: Rect,
-): { readonly cracks: readonly Rect[]; readonly visible: boolean } {
-  if (phase.kind !== "warning") {
-    return { cracks: [], visible: phase.kind !== "absent" };
-  }
-  const left = Math.ceil(face.x);
-  const right = Math.floor(face.x + face.width) - 1;
-  const top = Math.ceil(face.y);
-  const bottom = Math.floor(face.y + face.height) - 1;
-  const cracks: Rect[] = [];
-  if (left <= right && top <= bottom) {
-    const branches = right - left >= 8 ? [1 / 3, 2 / 3] : [1 / 2];
-    const offsets = [0, 1, 2, 1, 0, -1, 0, 1];
-    for (const fraction of branches) {
-      const anchor = Math.round(left + fraction * (right - left));
-      for (let index = 0; index < Math.min(offsets.length, bottom - top + 1); index++) {
-        cracks.push({
-          height: 1,
-          width: 1,
-          x: Math.max(left, Math.min(right, anchor + offsets[index]!)),
-          y: top + index,
-        });
-      }
-    }
-  }
-  return { cracks, visible: true };
+// The skin shown for a phase: intact, warning, or none while absent.
+export function crumblingAppearance(phase: CrumblingPhase): CrumblingSkin | undefined {
+  return phase.kind === "absent" ? undefined : phase.kind === "warning" ? "warning" : "intact";
 }

@@ -143,7 +143,7 @@ import {
 } from "../view/bird";
 import { characterState, nextQuirkAt } from "../view/character";
 import { chunkBackdropSpan, chunkParallax } from "../view/chunkParallax";
-import { CRUMBLING_CRACK, crumblingObjectFace } from "../view/crumblingPresentation";
+import { type CrumblingSkin, crumblingSkinTiles } from "../view/crumblingPresentation";
 import {
   deathFrameIndex,
   deathLabels,
@@ -169,7 +169,13 @@ import { type PlayHold, stepAction } from "../view/playHold";
 import { scenerySpriteFrame } from "../view/scenerySprite";
 import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { STAGE_PROGRESS_STYLE } from "../view/stageProgress";
-import { loadedTileset, objectTiles, terrainTiles, type Tileset } from "../view/tiles";
+import {
+  loadedTileset,
+  objectTiles,
+  type PlacedTile,
+  terrainTiles,
+  type Tileset,
+} from "../view/tiles";
 import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../view/touchChrome";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";
@@ -250,6 +256,8 @@ const WORLD_SCENERY_DEPTH = (DEPTHS.backdrop + DEPTHS.terrain) / 2;
 // Everything drawn for one object, placed at its top-left corner plus offset. A sprite faces the
 // way it last moved.
 interface ObjectArt {
+  // A crumbling object's intact and warning tile images.
+  readonly crumbling?: Readonly<Record<CrumblingSkin, readonly GameObjects.Image[]>>;
   disposed?: boolean;
   readonly item: GameObjects.Components.Transform & GameObjects.GameObject;
   readonly offset: Point;
@@ -1450,37 +1458,19 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       );
       return this.drawObject(key, source, object, index);
     });
-    this.crumblingArt?.item.destroy();
     this.crumblingArt = area.crumbling && this.drawCrumbling(area);
   }
 
-  // Marked supports keep their ordinary skins; terrain needs its own registered face first.
+  // Only objects crumble on screen: each swaps between its dedicated intact and warning skins.
   private drawCrumbling(area: AreaLayout): ReturnType<typeof createCrumblingArt> {
     const targets = (area.crumbling ?? []).map(({ supportId }) => {
-      const index = area.objects.indexOf(supportId as ObjectLayout);
-      const object = area.objects[index];
-      const art = this.objectArt[index];
-      if (!object || !art) {
-        throw new Error("Crumbling terrain has no registered skin face");
+      const skins = this.objectArt[area.objects.indexOf(supportId as ObjectLayout)]?.crumbling;
+      if (!skins) {
+        throw new Error("Crumbling terrain has no registered skin");
       }
-      const key = object.tileset === null ? undefined : (object.tileset ?? area.tileset);
-      const tileset = loadedTileset(
-        TILE,
-        (name) => this.cache.json.get(name) as Tileset | undefined,
-        key,
-      );
-      return {
-        face: key && tileset ? crumblingObjectFace(key, tileset, object, object.origin) : undefined,
-        item: art.item as unknown as { setVisible(visible: boolean): unknown },
-        supportId,
-      };
+      return { skins, supportId };
     });
-    return createCrumblingArt(
-      (DEPTHS.tiles + DEPTHS.sprite) / 2,
-      paletteColour(this, CRUMBLING_CRACK),
-      this,
-      targets,
-    );
+    return createCrumblingArt(targets);
   }
 
   private drawTerrain(key: string, tileset: Tileset, area: AreaLayout): Tilemaps.Tilemap {
@@ -1508,6 +1498,22 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     object: ObjectLayout,
     index: number,
   ): ObjectArt {
+    if (object.crumbling) {
+      if (!key || !tileset) {
+        throw new Error(`No crumbling skin for ${object.art} without a tileset`);
+      }
+      const tiles = crumblingSkinTiles(tileset, object);
+      const image = ({ col, index, row }: PlacedTile) =>
+        this.add.image(col * TILE, row * TILE, key, index).setOrigin(0);
+      const crumbling = {
+        intact: tiles.intact.map(image),
+        warning: tiles.warning.map((placed) => image(placed).setVisible(false)),
+      };
+      const item = this.add
+        .container(0, 0, [...crumbling.intact, ...crumbling.warning])
+        .setDepth(DEPTHS.tiles);
+      return { crumbling, item, offset: { x: 0, y: 0 }, sprite: undefined };
+    }
     if (effectiveHazardPhase(object, undefined) !== undefined) {
       const { draw, item } = createTimedHazardArt(
         DEPTHS.sprite,

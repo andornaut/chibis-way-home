@@ -2,23 +2,22 @@ import { readFileSync } from "node:fs";
 
 import { expect, it, vi } from "vitest";
 
-import palette from "../../public/art/palette.json";
 import type { AreaLayout, ObjectLayout } from "../data/types";
 import { initialCrumblingWorld } from "../rules/crumbling";
 import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling";
-import { CRUMBLING_CRACK } from "../view/crumblingPresentation";
+import type { Tileset } from "../view/tiles";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
 
 import { ZoneScene } from "./ZoneScene";
 
-const tileset: unknown = JSON.parse(
+const tileset = JSON.parse(
   readFileSync(
     new URL("../../public/art/tilesets/tiles-platforming.json", import.meta.url),
     "utf8",
   ),
-);
+) as Tileset;
 
 function fixture() {
   const ledge = {
@@ -42,43 +41,44 @@ function fixture() {
     objects: [ledge],
     tileset: "tiles-platforming",
   } as unknown as AreaLayout;
-  const painted: { colour: number; x: number; y: number }[] = [];
-  let fill = 0;
-  const cracks = {
-    clear: vi.fn(() => {
-      painted.length = 0;
-      return cracks;
-    }),
-    destroy: vi.fn(),
-    fillRect: vi.fn((x: number, y: number) => painted.push({ colour: fill, x, y })),
-    fillStyle: vi.fn((value: number) => {
-      fill = value;
-      return cracks;
-    }),
-    setDepth: vi.fn().mockReturnThis(),
-    setScrollFactor: vi.fn().mockReturnThis(),
+  const images: { frame: number; visible: boolean }[] = [];
+  const image = (_x: number, _y: number, _key: string, frame: number) => {
+    const shown = { frame, visible: true };
+    images.push(shown);
+    const handle = {
+      setOrigin: () => handle,
+      setVisible: (visible: boolean) => {
+        shown.visible = visible;
+        return handle;
+      },
+    };
+    return handle;
   };
-  const skin = { setPosition: vi.fn(), setVisible: vi.fn(), x: 288, y: 576 };
+  const container = { setDepth: vi.fn().mockReturnThis(), setPosition: vi.fn(), x: 288, y: 576 };
   const zone: { crumbling: ZoneCrumblingWorld; objects: { x: number; y: number }[] } = {
     crumbling: initialCrumblingWorld(area.crumbling!),
     objects: [ledge.origin],
   };
   const scene = Object.assign(Object.create(ZoneScene.prototype), {
-    add: { graphics: vi.fn(() => cracks) },
-    cache: { json: { get: (key: string) => (key === "tiles-platforming" ? tileset : palette) } },
+    add: { container: vi.fn(() => container), image },
     drawPulses: vi.fn(),
     drawTransients: vi.fn(),
     layout: { areas: { main: area } },
-    objectArt: [{ item: skin, offset: { x: 0, y: 0 }, sprite: undefined }],
     zone: { ...zone, area: "main", behaviours: [], bird: { x: 0, y: 0 } },
   });
+  scene.objectArt = [scene.drawObject("tiles-platforming", tileset, ledge, 0)];
   scene.crumblingArt = scene.drawCrumbling(area);
-  return { area, cracks, ledge, painted, scene, skin };
+  // Visible tile indices, left to right.
+  const shown = () => images.filter(({ visible }) => visible).map(({ frame }) => frame);
+  return { area, ledge, scene, shown };
 }
 
-it("draws the live phase over the unchanged ledge skin: cracks while warned, hidden while absent", () => {
-  const { ledge, painted, scene, skin } = fixture();
-  const ink = Number.parseInt(palette.colours[CRUMBLING_CRACK].slice(1), 16);
+it("swaps the ledge onto its dedicated intact and warning skins and hides it while absent", () => {
+  const { ledge, scene, shown } = fixture();
+  const run = (key: string) =>
+    [`${key}-left`, ...Array(4).fill(`${key}-middle`), `${key}-right`].map(
+      (name) => tileset.tiles[name],
+    );
   const phase = (kind: "intact" | "warning" | "absent") => {
     scene.zone.crumbling = {
       ...scene.zone.crumbling,
@@ -95,26 +95,21 @@ it("draws the live phase over the unchanged ledge skin: cracks while warned, hid
       ],
     };
     scene.drawObjects();
+    return shown();
   };
-  phase("intact");
-  expect(skin.setVisible).toHaveBeenLastCalledWith(true);
-  expect(painted).toEqual([]);
-  phase("warning");
-  expect(skin.setVisible).toHaveBeenLastCalledWith(true);
-  expect(painted.length).toBeGreaterThan(0);
-  // Cracks stay on the skin's one-pixel opaque body row inside the side outlines.
-  expect(
-    painted.every(({ colour, x, y }) => colour === ink && y === 581 && x >= 289 && x < 359),
-  ).toBe(true);
-  phase("absent");
-  expect(skin.setVisible).toHaveBeenLastCalledWith(false);
-  expect(painted).toEqual([]);
-  phase("intact");
-  expect(skin.setVisible).toHaveBeenLastCalledWith(true);
+  // Before the first live draw the intact skin already shows; the base skin never does.
+  expect(shown()).toEqual(run("crumbling-ledge"));
+  expect(phase("intact")).toEqual(run("crumbling-ledge"));
+  expect(phase("warning")).toEqual(run("crumbling-ledge-warn"));
+  expect(phase("absent")).toEqual([]);
+  expect(phase("intact")).toEqual(run("crumbling-ledge"));
 });
 
-it("rejects crumbling terrain until its skin has a registered face", () => {
-  const { area, scene } = fixture();
+it("fails at load for a crumbling object without a mapped skin, and for crumbling terrain", () => {
+  const { area, ledge, scene } = fixture();
+  expect(() =>
+    scene.drawObject("tiles-platforming", tileset, { ...ledge, art: "platform-top" }, 0),
+  ).toThrow("No crumbling skin for platform-top");
   const terrain = { height: 12, width: 12, x: 0, y: 0 };
   expect(() =>
     scene.drawCrumbling({
@@ -123,5 +118,5 @@ it("rejects crumbling terrain until its skin has a registered face", () => {
         { profile: { absentSeconds: 2, warningSeconds: 0.8 }, supportId: terrain, volume: terrain },
       ],
     }),
-  ).toThrow("Crumbling terrain has no registered skin face");
+  ).toThrow("Crumbling terrain has no registered skin");
 });
