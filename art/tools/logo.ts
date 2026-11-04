@@ -247,7 +247,7 @@ function birdAt(s: number, pose: "rest" | "downstroke" = "rest"): RgbaImage {
   return frameImage(g.outlined({ edge: () => K[birdArt.OUTLINE] as string }));
 }
 
-/** image cropped to its non-transparent pixels, like Pillow's crop(getbbox()). */
+/** image cropped to the bounding box of its non-transparent pixels. */
 function trimmed(im: RgbaImage): RgbaImage {
   const box = opaqueRect({ x: 0, y: 0, width: im.width, height: im.height }, im);
   if (!box) throw new Error("trimmed: the image is empty");

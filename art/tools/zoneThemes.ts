@@ -50,7 +50,7 @@ export function ramps(house: Readonly<Record<string, string>>): Record<string, s
   return result;
 }
 
-export function assignments(): Record<string, { primary: string }> {
+function assignments(): Record<string, { primary: string }> {
   return Object.fromEntries(
     Object.entries(THEMES).map(([destination, theme]) => [destination, { primary: theme.primary }]),
   );

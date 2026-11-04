@@ -1,7 +1,7 @@
 /**
- * RGBA image helpers shared by the backdrop and tileset generators, over art-kit's raster and
- * Pillow-exact draw modules. Boxes are Pillow paste boxes: [x0, y0, x1, y1) with exclusive right
- * and bottom edges; draw bounds (ellipse, rectangle) stay inclusive as in Pillow.
+ * RGBA image helpers shared by the backdrop and tileset generators, over art-kit's raster and draw
+ * modules. A Box is [x0, y0, x1, y1) with exclusive right and bottom edges for rect and cropBox;
+ * ellipse and rectangle treat it as inclusive bounds.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -42,13 +42,13 @@ export function image(width: number, height: number, colour?: string): RgbaImage
   return colour ? filledImage(rgba(colour), width, height) : blankImage(width, height);
 }
 
-/** Pillow's im.paste(colour, box): replace the box's pixels, clipped; null clears them. */
+/** Replace the box's pixels with colour, clipped; null clears them. */
 export function rect(colour: string | null, [x0, y0, x1, y1]: Box, target: RgbaImage): void {
   const value: Rgba = colour === null ? [0, 0, 0, 0] : rgba(colour);
   fill({ rect: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } }, value, target);
 }
 
-/** Pillow's ImageDraw polygon(points, fill=colour[, outline]). */
+/** Fill the polygon through vertices with colour, with an optional outline colour. */
 export function polygon(
   { colour, outline }: { colour: string; outline?: string },
   vertices: readonly XY[],
@@ -58,7 +58,7 @@ export function polygon(
   draw.polygon(style, points(vertices), target);
 }
 
-/** Pillow's ImageDraw line(points, fill=colour, width=width). */
+/** Draw a polyline through xy in colour, width pixels wide. */
 export function line(
   { colour, width = 1 }: { colour: string; width?: number },
   xy: readonly XY[],
@@ -67,27 +67,27 @@ export function line(
   draw.line({ fill: rgba(colour), width }, points(xy), target);
 }
 
-/** Pillow's ImageDraw ellipse(box, fill=colour), box inclusive. */
+/** Fill the ellipse inscribed in the inclusive box with colour. */
 export function ellipse(colour: string, [x0, y0, x1, y1]: Box, target: RgbaImage): void {
   draw.ellipse({ fill: rgba(colour) }, { x0, y0, x1, y1 }, target);
 }
 
-/** Pillow's ImageDraw rectangle(box, fill=colour), box inclusive. */
+/** Fill the inclusive box with colour. */
 export function rectangle(colour: string, [x0, y0, x1, y1]: Box, target: RgbaImage): void {
   draw.rectangle({ fill: rgba(colour) }, { x0, y0, x1, y1 }, target);
 }
 
-/** Pillow's im.crop(box); pixels outside the source are clear. */
+/** The box cut from source; pixels outside the source are clear. */
 export function cropBox([x0, y0, x1, y1]: Box, source: RgbaImage): RgbaImage {
   return crop({ x: x0, y: y0, width: x1 - x0, height: y1 - y0 }, source);
 }
 
-/** Pillow's im.alpha_composite(source, at). */
+/** Alpha-composite source over target with its top-left at at. */
 export function over(at: XY, source: RgbaImage, target: RgbaImage): void {
   composite({ x: at[0], y: at[1] }, source, target);
 }
 
-/** A PNG as RGBA, like Image.open(path).convert("RGBA"). */
+/** A PNG decoded as RGBA. */
 export function readImage(path: string): RgbaImage {
   return decodePng(readFileSync(path));
 }
@@ -98,7 +98,7 @@ export function writeImage(path: string, source: RgbaImage): void {
   writeFileSync(path, encodeRgbaPng(PNG_OPTIONS, source));
 }
 
-/** Save an RGB PNG, like im.convert("RGB").save(path). */
+/** Save an opaque RGB PNG, dropping alpha, creating the parent directory. */
 export function writeRgbImage(path: string, source: RgbaImage): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, encodeRgbPng(PNG_OPTIONS, opaque(source)));
@@ -118,7 +118,7 @@ export function frameImage(px: pixel.Frame): RgbaImage {
   return frameToRgba({ resolveRgb: pixel.rgb }, px);
 }
 
-/** Pillow's ImageOps.grayscale as an opaque image, for an RGB or L save. */
+/** ITU-R 601-2 luma of each pixel as an opaque grey image, for an RGB save. */
 export function greyscale(source: RgbaImage): RgbaImage {
   const plane = grayscale(source);
   const grey = filledImage([0, 0, 0, 255], plane.width, plane.height);
@@ -139,7 +139,7 @@ export function spriteFrame(key: string): RgbaImage {
 }
 
 /** Suffixes of a terrain block's tile at column x, row y of a width-wide block. */
-export function terrainSuffix(x: number, y: number, width: number): string {
+function terrainSuffix(x: number, y: number, width: number): string {
   if (y === 0)
     return x === 0 ? "top-left" : x === width - 1 ? "top-right" : x % 2 ? "top-joint" : "top";
   return x === 0 ? "face-left" : x === width - 1 ? "face-right" : "face";
@@ -216,7 +216,7 @@ export function skinForeground(
   over([72, 558], spriteFrame("bird"), target);
 }
 
-export interface BackdropEntry extends pixel.ManifestEntry {
+interface BackdropEntry extends pixel.ManifestEntry {
   png: string;
   width: number;
   height: number;

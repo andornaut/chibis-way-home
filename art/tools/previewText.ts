@@ -12,7 +12,7 @@ import * as pixel from "./pixel.ts";
 import { readImage } from "./imageArt.ts";
 
 const FONT = "public/art/fonts/font-body";
-/** Pillow's default multiline spacing between lines. */
+/** Pixels between preview text lines. */
 const LINE_SPACING = 4;
 
 export interface Glyph {
@@ -25,7 +25,7 @@ export interface Glyph {
   xadvance: number;
 }
 
-export interface BitmapFont {
+interface BitmapFont {
   lineHeight: number;
   glyphs: Map<number, Glyph>;
   kernings: Map<string, number>;

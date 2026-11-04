@@ -184,7 +184,7 @@ export function preview(out: string): void {
   composite({ x: 260, y: 210 }, bird, im);
   writeFileSync(out, encodeRgbaPng(PNG, im));
   const stem = out.replace(/\.[^./]*$/, "");
-  // Grey levels as in Pillow's ImageOps.grayscale, written as an RGB PNG.
+  // ITU-R 601-2 luma grey levels, written as an RGB PNG.
   writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyscale(im)));
   writeFileSync(`${stem}-phone.png`, encodeRgbaPng(PNG, resizeNearest(864, 432, im)));
   writeFileSync(`${stem}-3x.png`, encodeRgbaPng(PNG, resizeNearest(2160, 1080, im)));

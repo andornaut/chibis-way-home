@@ -1,5 +1,5 @@
 /**
- * Furt's active thrown parcel: 24x24 canvas, bottom-centre 12,24, visible 16x16 at hitbox
+ * Fert's active thrown parcel: 24x24 canvas, bottom-centre 12,24, visible 16x16 at hitbox
  * 4,8,16,16.
  *
  * Usage: node art/tools/ferretParcel.ts build | preview OUT.png, from the repository root.

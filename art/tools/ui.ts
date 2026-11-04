@@ -11,7 +11,7 @@
  * Run from the repository root. Text is never baked in: the game sets it with font-body or
  * font-title at 2x. A text origin below is a BitmapText's top-left at scale 2, and A is the text's
  * advance width at 2x (the sum of xadvance, doubled). Positions are in base pixels, top-left of the
- * frame, matching the layout in art/README.md.
+ * frame, matching art/layout.md.
  *
  * Nine-slice textures carry their margins (left, top, right, bottom) as an Aseprite slice named
  * after the key and as "slice" in the manifest entry. Single-state art has one tag, "rest", at

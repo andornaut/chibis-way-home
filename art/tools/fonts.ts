@@ -30,13 +30,12 @@ import { Canvas, FontLibrary } from "skia-canvas";
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
-export const FONTS: Readonly<Record<string, readonly [face: string, path: string, size: number]>> =
-  {
-    "font-body": ["Liberation Sans Regular", "art/fonts/liberation/LiberationSans-Regular.ttf", 16],
-    "font-title": ["Liberation Sans Bold", "art/fonts/liberation/LiberationSans-Bold.ttf", 16],
-  };
+const FONTS: Readonly<Record<string, readonly [face: string, path: string, size: number]>> = {
+  "font-body": ["Liberation Sans Regular", "art/fonts/liberation/LiberationSans-Regular.ttf", 16],
+  "font-title": ["Liberation Sans Bold", "art/fonts/liberation/LiberationSans-Bold.ttf", 16],
+};
 const OUT = "public/art/fonts";
-export const CHARS: readonly string[] = [
+const CHARS: readonly string[] = [
   ...Array.from({ length: 127 - 32 }, (_, i) => String.fromCharCode(32 + i)),
   "·",
 ];
@@ -54,9 +53,9 @@ export type Glyph = readonly [
   yoffset: number,
   xadvance: number,
 ];
-export type Kerning = readonly [first: string, second: string, amount: number];
+type Kerning = readonly [first: string, second: string, amount: number];
 
-export interface Rasterised {
+interface Rasterised {
   glyphs: Map<string, Glyph>;
   ascent: number;
   descent: number;
@@ -100,7 +99,7 @@ function inkBox(
 }
 
 /** Antialiased glyphs, line metrics and every nonzero pair kerning, in CHARS order. */
-export function rasterise(size: number, path: string): Rasterised {
+function rasterise(size: number, path: string): Rasterised {
   const [ascent, descent] = metrics(size, path);
   const font = buildBitmapFont({
     path,

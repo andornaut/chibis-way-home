@@ -59,7 +59,7 @@ const RUSH: readonly Stride[] = [
   [4, -3, -5, 0],
 ];
 
-/** Pillow-style drawing on one image: flat x, y coordinates and inclusive boxes. */
+/** Drawing helpers on one image: flat x, y coordinates and inclusive boxes. */
 function drawer(image: RgbaImage) {
   const points = (xy: readonly Xy[]) => xy.map(([x, y]) => ({ x, y }));
   const box = (x0: number, y0: number, x1: number, y1: number) => ({ x0, y0, x1, y1 });

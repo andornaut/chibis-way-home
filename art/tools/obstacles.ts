@@ -216,7 +216,7 @@ export function preview(out: string): void {
     `${stem}-upper.png`,
     encodeRgbPng(PNG, crop({ x: 0, y: 0, width: 720, height: 360 }, im)),
   );
-  // Grey levels as in Pillow's convert("L"), written as an RGB PNG.
+  // ITU-R 601-2 luma grey levels, written as an RGB PNG.
   writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyscale(im)));
 }
 

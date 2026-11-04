@@ -107,7 +107,6 @@ function smoothCanvas(width: number, height: number): Canvas {
 
 /** image resampled smoothly to width x height. */
 function resizeSmooth(width: number, height: number, image: RgbaImage): RgbaImage {
-  // re-baseline: no Pillow-exact LANCZOS/BICUBIC
   const canvas = smoothCanvas(width, height);
   canvas
     .getContext("2d")
@@ -117,7 +116,6 @@ function resizeSmooth(width: number, height: number, image: RgbaImage): RgbaImag
 
 /** image rotated counter-clockwise by angle degrees about centre, keeping its size. */
 function rotateSmooth(angle: number, [cx, cy]: readonly [number, number], image: RgbaImage) {
-  // re-baseline: no Pillow-exact LANCZOS/BICUBIC
   const canvas = smoothCanvas(image.width, image.height);
   const context = canvas.getContext("2d");
   context.translate(cx, cy);
@@ -335,7 +333,7 @@ function actor(
 }
 
 /** A normalized motion demonstration, independent of production playback timing. */
-export function studyFrame(beat: number, phase: number): RgbaImage {
+function studyFrame(beat: number, phase: number): RgbaImage {
   const background = beat === 4 ? "depot" : beat === 3 ? "transit" : "home";
   const committed = readCached(`public/art/images/opening-${background}-background.png`);
   const image = { ...committed, data: committed.data.slice() };

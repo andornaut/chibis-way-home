@@ -106,7 +106,7 @@ export function preview(out: string): void {
   }
   writeFileSync(out, encodeRgbaPng(PNG, result));
   const stem = out.replace(/\.[^./]*$/, "");
-  // Grey levels as in Pillow's ImageOps.grayscale, written as an RGB PNG.
+  // ITU-R 601-2 luma grey levels, written as an RGB PNG.
   writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyscale(result)));
   writeFileSync(`${stem}-phone.png`, encodeRgbaPng(PNG, resizeNearest(864, 432, result)));
   writeFileSync(`${stem}-3x.png`, encodeRgbaPng(PNG, resizeNearest(2160, 1080, result)));

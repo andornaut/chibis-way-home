@@ -24,16 +24,16 @@ export const ZONES: Readonly<Record<string, string>> = {
   street: "blue-cityscape",
   woodland: "woodland",
 };
-export const RANK: Readonly<Record<Layer, number>> = { far: 1, mid: 2, near: 3 };
-export const LIGHTNESS_STEP = 0.035;
-export const WIDTH: Readonly<Record<Layer, number>> = { far: 0.01, mid: 0.014, near: 0.018 };
-export const CHROMA: Readonly<Record<Layer, number>> = { far: 0.022, mid: 0.03, near: 0.038 };
-export const MATERIAL_WEIGHT: Readonly<Record<Layer, number>> = { far: 0.25, mid: 0.4, near: 0.6 };
-export const ROLES: Readonly<Record<Role, number>> = { light: 1, base: 0, shade: -1 };
-export const FAUNA_CONTRAST = 2;
-export const FAUNA_CHROMA_FRACTION = 0.35;
-export const FAUNA_CHROMA_CAP = 0.028;
-export const FAUNA_SHADES: Readonly<Record<string, string>> = {
+const RANK: Readonly<Record<Layer, number>> = { far: 1, mid: 2, near: 3 };
+const LIGHTNESS_STEP = 0.035;
+const WIDTH: Readonly<Record<Layer, number>> = { far: 0.01, mid: 0.014, near: 0.018 };
+const CHROMA: Readonly<Record<Layer, number>> = { far: 0.022, mid: 0.03, near: 0.038 };
+const MATERIAL_WEIGHT: Readonly<Record<Layer, number>> = { far: 0.25, mid: 0.4, near: 0.6 };
+const ROLES: Readonly<Record<Role, number>> = { light: 1, base: 0, shade: -1 };
+const FAUNA_CONTRAST = 2;
+const FAUNA_CHROMA_FRACTION = 0.35;
+const FAUNA_CHROMA_CAP = 0.028;
+const FAUNA_SHADES: Readonly<Record<string, string>> = {
   apartment: "plum",
   countryside: "dbrown",
   homecity: "dbrown",
@@ -41,7 +41,7 @@ export const FAUNA_SHADES: Readonly<Record<string, string>> = {
   street: "navy",
   woodland: "forest",
 };
-export const MATERIALS: Readonly<Record<string, readonly [string, Layer, Role, string]>> = {
+const MATERIALS: Readonly<Record<string, readonly [string, Layer, Role, string]>> = {
   "bg-apartment-near-blue": ["apartment", "near", "base", "zone-blue"],
   "bg-apartment-near-blue-shade": ["apartment", "near", "shade", "zone-blue"],
   "bg-apartment-near-green": ["apartment", "near", "base", "zone-green"],
@@ -90,7 +90,7 @@ export function linear(channel: number): number {
 
 const LUMINANCE_WEIGHTS = [0.2126, 0.7152, 0.0722];
 
-export function luminance(colour: string): number {
+function luminance(colour: string): number {
   const channels = bytes(colour);
   return sum(channels.map((channel, i) => linear(channel) * (LUMINANCE_WEIGHTS[i] as number)));
 }
@@ -107,7 +107,7 @@ export function primary(zone: string): string {
 }
 
 /** Keep the game layer's cap after byte quantisation, using canonical conversions. */
-export function encoded(chromaCap: number, colour: readonly [number, number, number]): string {
+function encoded(chromaCap: number, colour: readonly [number, number, number]): string {
   const lightness = colour[0];
   let [, a, b] = colour;
   for (let i = 0; i < 16; i++) {
@@ -202,7 +202,7 @@ export function colours(house: Palette): Record<string, string> {
 }
 
 /** Follow the existing shade family until modal dimming decreases luminance. */
-export function firstDarker(darker: Palette, target: string, colour: string): string {
+function firstDarker(darker: Palette, target: string, colour: string): string {
   const seen = new Set<string>();
   while (luminance(target) >= luminance(colour)) {
     if (seen.has(target) || !Object.hasOwn(darker, target))

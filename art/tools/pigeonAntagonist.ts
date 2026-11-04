@@ -214,7 +214,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [POOP, [["idle", [poop()], 400]]];
 }
 
-/** Pillow's rectangle((x0, y0, x1, y1)) fill: an inclusive box. */
+/** Fill the inclusive box x0, y0 to x1, y1 with colour c. */
 function box(target: RgbaImage, x0: number, y0: number, x1: number, y1: number, c: string): void {
   fill({ rect: { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 } }, rgba(c), target);
 }

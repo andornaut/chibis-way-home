@@ -40,7 +40,7 @@ function check(condition: boolean, message = "Assertion failed"): void {
 }
 
 /** Full-frame rows, top to bottom; intervals are half open and merged left to right. */
-export function occupiedRuns(im: RgbaImage): Run[] {
+function occupiedRuns(im: RgbaImage): Run[] {
   const alpha = channel(3, im);
   check(
     alpha.data.every((value) => value === 0 || value === 255),
@@ -63,7 +63,7 @@ export function occupiedRuns(im: RgbaImage): Run[] {
 }
 
 /** Read final exported frame rectangles, retaining exact Aseprite names and untrimmed coordinates. */
-export function spriteMasks(entry: pixel.ManifestEntry): {
+function spriteMasks(entry: pixel.ManifestEntry): {
   width: number;
   height: number;
   frames: Record<string, Run[]>;

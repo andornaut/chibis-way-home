@@ -84,7 +84,7 @@ function stroke(g: Grid, x0: number, y0: number, x1: number, y1: number, c: stri
  * The ferret's hat-and-bow mark, 7x11 at x, y: a plum stovepipe (dark-brown rim light, red band,
  * brim) over a red bow tie with a dark-red knot.
  */
-export function emblem(g: Grid, x: number, y: number): void {
+function emblem(g: Grid, x: number, y: number): void {
   g.rect(x + 1, y, 5, 5, "plum");
   g.rect(x + 1, y, 1, 5, "dbrown");
   g.rect(x + 1, y + 4, 5, 1, "red");

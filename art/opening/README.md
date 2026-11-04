@@ -1,7 +1,7 @@
 # Opening story art
 
 The current runtime opening uses four single-shot beats on a plain `ink` field, with `background: null`
-and no background-image lookup. It reuses the native `bird`, `ferret-antagonist` and `ferret-parcel` sprites
+and no background-image lookup. It uses the native `bird`, `ferret-antagonist` and `ferret-parcel` sprites
 at 1x in `idle` poses. Fert uses `flipX: true`; Chibi and the parcel use `false`. Their anchors are
 24,42; 24,48; and 12,24 respectively, at y240. Captions, manual Continue, whole-opening Skip and save
 acknowledgment retain their existing behaviour.
@@ -26,7 +26,7 @@ backgrounds and pose sheets.
 The sprite sheets use four 256x256 cells in row-major order. The common canvas anchor is x128,y232.
 `contract.json` records the pose indices, anchors, viewport and parcel-front edges. Sprite JSON tags each
 static pose independently. Its 1000ms frame metadata is a static art default, not a gameplay duration.
-`manifest-entries.json` supplies the registration objects for paired integration.
+`manifest-entries.json` holds the pack's manifest registration objects, which the served manifest lists.
 
 The source cutouts are reduced to binary alpha during export, retaining their painted interior colours.
 No opening layer has collision or a hit box. Backgrounds are fully opaque; important scene content stays

@@ -153,10 +153,10 @@
  *   arrives; never a way back).
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 import { renderFrame } from "@andornaut/art-kit/generate";
-import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
+import { encodeRgbPng } from "@andornaut/art-kit/png";
 import {
   composite,
   crop,
@@ -169,7 +169,7 @@ import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import { commands, run } from "./cli.ts";
 import * as backgroundTones from "./backgroundTones.ts";
-import { frameImage, readImage } from "./imageArt.ts";
+import { frameImage, readImage, writeImage } from "./imageArt.ts";
 import * as nature from "./nature.ts";
 import * as pixel from "./pixel.ts";
 import { darker, Grid, rgb } from "./pixel.ts";
@@ -486,7 +486,7 @@ function cut(g: Grid, prefix: string): [tiles: Tile[], rows: string[][]] {
   return [tiles, rows];
 }
 
-export function streetTiles(): [Tile[], Pieces] {
+function streetTiles(): [Tile[], Pieces] {
   const [door, doorRows] = cut(hotelDoor(), "door");
   return [
     [
@@ -1534,7 +1534,6 @@ function lookup<T>(map: ReadonlyMap<string, T>, key: string): T {
 }
 
 export async function build(): Promise<void> {
-  mkdirSync(BACKDROPS, { recursive: true });
   const tilesets: pixel.ManifestEntry[] = [];
   const backdrops: pixel.ManifestEntry[] = [];
   for (const [key, fn] of TILESET_DEFS) {
@@ -1549,7 +1548,7 @@ export async function build(): Promise<void> {
   for (const [key, [fn, y, repeat]] of BACKDROP_DEFS) {
     const g = fn();
     const image = backgroundTones.apply(key, frameImage(g.px));
-    writeFileSync(`${BACKDROPS}/${key}.png`, encodeRgbaPng(PNG_OPTIONS, image));
+    writeImage(`${BACKDROPS}/${key}.png`, image);
     backdrops.push({
       key,
       png: `backdrops/${key}.png`,

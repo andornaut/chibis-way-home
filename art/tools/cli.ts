@@ -9,7 +9,7 @@
  * imports nothing, so any generator, including one pixel.ts loads, can use it.
  */
 
-export interface Commands {
+interface Commands {
   usage: string;
   build?: () => unknown;
   preview?: (out: string) => unknown;

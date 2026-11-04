@@ -25,7 +25,7 @@ const USAGE = "Usage: backgroundTones.ts build";
 type Layer = "far" | "mid" | "near";
 type Rgb = readonly [number, number, number];
 
-export const FUNCTIONAL: ReadonlySet<string> = new Set([
+const FUNCTIONAL: ReadonlySet<string> = new Set([
   "apartment-room-door",
   "apartment-stairwell",
   "apartment-stairwell-down",
@@ -33,7 +33,7 @@ export const FUNCTIONAL: ReadonlySet<string> = new Set([
   "parcel-open",
   "walk-signal",
 ]);
-export const SKIES: ReadonlySet<string> = new Set([
+const SKIES: ReadonlySet<string> = new Set([
   "apartment-sky",
   "countryside-sky",
   "homecity-sky",
@@ -41,7 +41,7 @@ export const SKIES: ReadonlySet<string> = new Set([
   "street-sky",
   "woodland-sky",
 ]);
-export const FAR: ReadonlySet<string> = new Set([
+const FAR: ReadonlySet<string> = new Set([
   "apartment-far",
   "countryside-far",
   "homecity-far",
@@ -55,7 +55,7 @@ export const FAR: ReadonlySet<string> = new Set([
   "woodland-far-birch",
   "woodland-far-conifers",
 ]);
-export const MID: ReadonlySet<string> = new Set([
+const MID: ReadonlySet<string> = new Set([
   "apartment-exterior-mid",
   "farmland-mid",
   "forest-mid",
@@ -71,7 +71,7 @@ export const MID: ReadonlySet<string> = new Set([
   "street-city-mid",
   "warehouse-mid",
 ]);
-export const NEAR: ReadonlySet<string> = new Set([
+const NEAR: ReadonlySet<string> = new Set([
   "apartment-facade",
   "apartment-wall-lobby",
   "apartment-wall-pool",
@@ -104,9 +104,6 @@ export const NEAR: ReadonlySet<string> = new Set([
   "storefront-pet-shop",
   "warehouse-wall",
 ]);
-export const DEPTH_KEYS: ReadonlySet<string> = new Set(
-  [...FAR, ...MID, ...NEAR].filter((key) => !key.startsWith("park-") && key !== "street-skyline"),
-);
 export const ZONES: Readonly<Record<string, string>> = {
   apartment: "zone-red",
   countryside: "zone-yellow",
@@ -116,7 +113,7 @@ export const ZONES: Readonly<Record<string, string>> = {
   street: "zone-blue",
   woodland: "zone-green",
 };
-export const GROUPS: readonly (readonly [zone: string, prefixes: readonly string[]])[] = [
+const GROUPS: readonly (readonly [zone: string, prefixes: readonly string[]])[] = [
   ["apartment", ["apartment-", "lobby-"]],
   ["countryside", ["countryside-", "farmland-", "river-"]],
   ["homecity", ["homecity-", "neighbourhood-", "outskirts-"]],
@@ -133,7 +130,7 @@ export const ACCENTS: Readonly<Record<string, string>> = Object.fromEntries([
 ]);
 
 // Each authored wall paint represents a material role: keep joints distinct from adjacent panels.
-export const WALL_PAINT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+const WALL_PAINT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   "apartment-wall-lobby": {
     "zone-red": "lgrey",
     "zone-red-shade": "zone-red",
@@ -201,7 +198,7 @@ const WALLS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 };
 
 /** Source RGB to target RGB, keyed by "r,g,b". */
-export type ColourMap = Map<string, Rgb>;
+type ColourMap = Map<string, Rgb>;
 
 const rgbKey = (colour: Rgb): string => colour.join(",");
 
@@ -209,7 +206,7 @@ function set(mapping: ColourMap, source: string, target: string): void {
   mapping.set(rgbKey(pixel.rgb(source)), pixel.rgb(target));
 }
 
-export function profile(key: string): [zone: string, layer: Layer | "sky" | "local"] {
+function profile(key: string): [zone: string, layer: Layer | "sky" | "local"] {
   const zone =
     GROUPS.find(([, prefixes]) => prefixes.some((prefix) => key.startsWith(prefix)))?.[0] ??
     "street";
@@ -225,7 +222,7 @@ export function profile(key: string): [zone: string, layer: Layer | "sky" | "loc
   return [zone, layer];
 }
 
-export function depthColourMap(key: string): ColourMap {
+function depthColourMap(key: string): ColourMap {
   const [zone, profiled] = profile(key);
   const result: ColourMap = new Map();
   if (profiled === "sky") {
@@ -247,7 +244,7 @@ export function depthColourMap(key: string): ColourMap {
   return result;
 }
 
-export function colourMap(key: string): ColourMap {
+function colourMap(key: string): ColourMap {
   const [zone, layer] = profile(key);
   if (zone !== "park") return depthColourMap(key);
   const primary = ZONES[zone] as string;

@@ -1,5 +1,5 @@
 /**
- * Furt the ferret: the villain's sprite and its dialogue portrait.
+ * Fert the ferret: the villain's sprite and its dialogue portrait.
  *
  * Usage, from the repository root:
  *   node art/tools/ferret.ts build            write art/ferret/<key>.aseprite and
@@ -66,7 +66,7 @@ const USAGE = "Usage: ferret.ts build | preview OUT.png";
 const W = 64;
 const H = 80;
 const GROUND = 78; // the feet's bottom row; the outline is row 79
-export const COAT = {
+const COAT = {
   coat: "skin1",
   shade: "skin2",
   rim: "cream",
@@ -157,7 +157,7 @@ export function bowTie(g: Grid, x: number, y: number, k = 1.0): void {
   rect(g, x - 1 * k, y - 1 * k, 3 * k, 3 * k, BOW[1]);
 }
 
-export interface FaceOptions {
+interface FaceOptions {
   eyeState: EyeState;
   mouth: Mouth;
   big?: boolean;

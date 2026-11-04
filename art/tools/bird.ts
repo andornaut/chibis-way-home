@@ -90,8 +90,6 @@ const SRC = "art/bird";
 const USAGE = "Usage: bird.ts build | preview OUT.png";
 export const W = 48;
 export const H = 42;
-export const BOX_W = 24; // collision body
-export const BOX_H = 36;
 const C = W / 2; // body centre x: the frame's centre line
 export const BRX = 16.4; // body superellipse at rest
 export const BRY = 13.0;
@@ -174,7 +172,7 @@ export function inBody(
   };
 }
 
-export function inBlob(cx: number, cy: number, rx: number, ry: number, power = POWER): Inside {
+function inBlob(cx: number, cy: number, rx: number, ry: number, power = POWER): Inside {
   return (x, y) =>
     (Math.abs(x + 0.5 - cx) / rx) ** power + (Math.abs(y + 0.5 - cy) / ry) ** power <= 1;
 }
@@ -183,13 +181,13 @@ export function flat(g: Grid, inside: Inside, c: Colour): void {
   for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) if (inside(x, y)) g.p(x, y, c);
 }
 
-export type Wing =
+type Wing =
   | readonly ["fold", number]
   | readonly ["raise", number]
   | readonly ["dash", number]
   | readonly ["double-jump", number];
 /** [dx, up] for one foot: its left column relative to the body centre, and its lift. */
-export type Foot = readonly [dx: number, up: number];
+type Foot = readonly [dx: number, up: number];
 export type Feet = readonly [far: Foot, near: Foot] | "tucked" | "hidden";
 
 export interface DrawOptions {
@@ -328,16 +326,16 @@ export function draw({
 }
 
 // Squash and stretch: [bw, bh] keep bw * bh within 2% of the rest pose's 16.4 * 13.0 = 213.2.
-export const SQUASH_CROUCH = [18.9, 11.2] as const;
-export const STRETCH_LIFT = [14.4, 14.8] as const;
-export const SQUASH_LAND = [19.6, 10.8] as const;
-export const SQUASH_RECOVER = [17.8, 11.9] as const;
+const SQUASH_CROUCH = [18.9, 11.2] as const;
+const STRETCH_LIFT = [14.4, 14.8] as const;
+const SQUASH_LAND = [19.6, 10.8] as const;
+const SQUASH_RECOVER = [17.8, 11.9] as const;
 
 /**
- * frame rotated counter-clockwise by degrees about centre by nearest pixel, keeping its size, like
- * Pillow's rotate(degrees, NEAREST, center=centre). rotateNearest turns about the image centre, so
- * the frame is padded transparent below and right until centre is the middle, then cropped back;
- * the padding leaves every sampled row of the original frame unchanged.
+ * frame rotated counter-clockwise by degrees about centre by nearest pixel, keeping its size.
+ * rotateNearest turns about the image centre, so the frame is padded transparent below and right
+ * until centre is the middle, then cropped back; the padding leaves every sampled row of the
+ * original frame unchanged.
  */
 function rotated(
   { centre: [cx, cy], degrees }: { centre: readonly [number, number]; degrees: number },
@@ -361,12 +359,12 @@ function rotated(
 }
 
 /** A pronounced clockwise tilt, with visible tucked soles and no baked world translation. */
-export function fallingPose(): pixel.Frame {
+function fallingPose(): pixel.Frame {
   const px = draw({ bh: 12, bw: 17, eye: "closed", feet: "tucked", lift: 1, wing: ["fold", 2] });
   return rotated({ centre: [C, 29], degrees: -20 }, px);
 }
 
-export function birdTags(): pixel.Tags {
+function birdTags(): pixel.Tags {
   // feet stay planted while the body rises
   const idle = [
     draw(),

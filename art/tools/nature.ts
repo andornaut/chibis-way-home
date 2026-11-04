@@ -12,7 +12,7 @@ import * as pixel from "./pixel.ts";
 
 type Point = readonly [number, number];
 
-/** Fill the polygon through points with an opaque palette colour, as Pillow's ImageDraw does. */
+/** Fill the polygon through points with an opaque palette colour. */
 export function polygon(im: RgbaImage, colour: string, points: readonly Point[]): void {
   draw.polygon(
     { fill: [...pixel.rgb(colour), 255] },

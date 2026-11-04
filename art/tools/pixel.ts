@@ -7,7 +7,6 @@ import { accessSync, constants, existsSync, mkdirSync, readFileSync, writeFileSy
 import { delimiter, dirname, join } from "node:path";
 
 import {
-  asepriteLua as asepriteLuaSource,
   type AsepriteTag,
   composeSheet,
   contrast as hexContrast,
@@ -82,7 +81,7 @@ Object.assign(K, backgroundPalette.colours(K));
 K["warning-red"] = "d45253";
 export const PALETTE: string[] = Object.values(K);
 // One ramp step darker for each colour. Shadows and dimming step down this, never blend with black.
-export const DARKER: Record<string, string> = Object.fromEntries(
+const DARKER: Record<string, string> = Object.fromEntries(
   [
     "be4a2f:733e39",
     "d77643:be4a2f",
@@ -125,7 +124,7 @@ Object.assign(DARKER, backgroundPalette.ramps(DARKER, K));
 export const MANIFEST = "public/art/manifest.json";
 export const SPRITES = "public/art/sprites";
 export const TILESETS = "public/art/tilesets";
-export const DEFAULT_GROUNDS = ["5a6988", "e4a672", "ead4aa"] as const;
+const DEFAULT_GROUNDS = ["5a6988", "e4a672", "ead4aa"] as const;
 
 /** A K name or hex string as hex. */
 export function hexc(c: string): string {
@@ -221,7 +220,7 @@ export function updateManifest(section: string, entries: readonly ManifestEntry[
   writeJson({}, MANIFEST, manifest);
 }
 
-export interface TilesetOptions {
+interface TilesetOptions {
   key: string;
   /** A piece name to rows of tile names, top row first. */
   pieces?: Readonly<Record<string, readonly (readonly string[])[]>>;
@@ -278,7 +277,7 @@ export async function writeTileset(
   return { key, png: `tilesets/${key}.png`, json: `tilesets/${key}.json` };
 }
 
-export interface PreviewOptions {
+interface PreviewOptions {
   out: string;
   grounds?: readonly string[];
   scale?: number;
@@ -297,16 +296,6 @@ export async function preview(
   ).toFile(out);
 }
 
-/** The Aseprite source script for tags, with the game palette. */
-export function lua(
-  { key, margins }: { key?: string; margins?: Margins },
-  out: string,
-  tags: Tags,
-): string {
-  const options = { ...(key === undefined ? {} : { key }), ...(margins ? { margins } : {}) };
-  return asepriteLuaSource(PALETTE, tags, out, options);
-}
-
 /** The first executable named command on PATH, or undefined. */
 export function which(command: string): string | undefined {
   for (const directory of (process.env.PATH ?? "").split(delimiter)) {
@@ -322,7 +311,7 @@ export function which(command: string): string | undefined {
   return undefined;
 }
 
-export interface BuildOptions {
+interface BuildOptions {
   srcDir: string;
   /** Nine-slice margins by key, exported as an Aseprite slice named after the key. */
   slices?: Readonly<Record<string, Margins>>;
@@ -427,7 +416,7 @@ export async function build(
   console.log("built", [...built.keys()].join(", "));
 }
 
-export interface MainOptions extends Omit<BuildOptions, "srcDir"> {
+interface MainOptions extends Omit<BuildOptions, "srcDir"> {
   srcDir: string;
   /** Printed with a usage error. */
   doc: string;

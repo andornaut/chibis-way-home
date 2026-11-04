@@ -17,7 +17,7 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 | font-body  | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 256x64 PNG  |      |
 | font-title | BMFont, Liberation Sans Bold    | 16px, base 15, line 20; 256x128 PNG |      |
 
-The public [Liberation Sans Regular TTF](../public/art/fonts/liberation/LiberationSans-Regular.ttf), [Bold TTF](../public/art/fonts/liberation/LiberationSans-Bold.ttf) and [SIL OFL 1.1 licence](../public/art/fonts/liberation/OFL.txt) are byte-identical copies of `art/fonts/liberation/`. They are prepared runtime inputs; consumer activation requires checked integration.
+The public [Liberation Sans Regular TTF](../public/art/fonts/liberation/LiberationSans-Regular.ttf), [Bold TTF](../public/art/fonts/liberation/LiberationSans-Bold.ttf) and [SIL OFL 1.1 licence](../public/art/fonts/liberation/OFL.txt) are byte-identical copies of `art/fonts/liberation/`, loaded as the runtime UI fonts (`src/view/uiFonts.ts`).
 
 ## Icons
 
@@ -53,7 +53,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 | Key                       | Type                                                       | Size   | Tags                                                             |
 | ------------------------- | ---------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
-| bird                      | character                                                  | 48x42  | idle, walk, jump, flutter, land, death, dash, double-jump (once) |
+| bird                      | character                                                  | 48x42  | idle, walk, jump (once), flutter, land (once), death (once), dash (once), double-jump (once) |
 | dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                                    |
 | ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                                               |
 | ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                                                 |
@@ -116,7 +116,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 | ui-move-knob              | sprite                                                     | 11x11  | rest, held                                                       |
 | ui-name-tab               | nine-slice (2,2,2,2)                                       | 12x20  | amber, green, pink, tan                                          |
 | ui-nav-bar                | nine-slice (1,1,1,3)                                       | 12x48  | rest                                                             |
-| ui-pause                  | sprite                                                     | 35x35  | rest, press, held                                                |
+| ui-pause                  | sprite                                                     | 35x35  | rest, press (once), held                                                |
 | ui-play-mark              | sprite                                                     | 5x10   | rest, light                                                      |
 | ui-portrait-frame         | sprite                                                     | 68x68  | rest                                                             |
 | ui-quip-strip             | nine-slice (2,2,2,2)                                       | 12x24  | rest                                                             |
@@ -126,12 +126,12 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 | ui-skip                   | sprite                                                     | 78x20  | normal, pressed, disabled                                        |
 | ui-start                  | sprite                                                     | 192x52 | normal, pressed                                                  |
 | ui-switch                 | sprite                                                     | 32x16  | on, off                                                          |
-| ui-touch-jump             | sprite                                                     | 75x75  | rest, press, held                                                |
-| ui-touch-use              | sprite                                                     | 75x75  | rest, press, held                                                |
+| ui-touch-jump             | sprite                                                     | 75x75  | rest, press (once), held                                                |
+| ui-touch-use              | sprite                                                     | 75x75  | rest, press (once), held                                                |
 
 ## Tilesets
 
-12x12 tiles in rows of 8, from `art/tools/floor1.ts`. One-way ledges are named `one-way-*`; doorways (`door-*`, `exit-*`) and pits (`pit-*`) have no collision.
+12x12 tiles in rows of 8: `tiles-lobby` and `tiles-street` from `art/tools/floor1.ts`, `tiles-park` from `art/tools/park.ts`. One-way ledges are named `one-way-*`; doorways (`door-*`, `exit-*`) and pits (`pit-*`) have no collision.
 
 | Key          | Type                                                                                                                                                       | Size            | Pieces      |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------- |
@@ -141,7 +141,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 ## Backdrops
 
-Pieces placed from stage data by their bottom-left corner at the bottom y given, from `art/tools/floor1.ts` (Zone 1: New York street, 720px tall, sidewalk top y 600, row 50).
+Pieces placed from stage data by their bottom-left corner at the bottom y given: `park-*` from `art/tools/park.ts`, the rest from `art/tools/floor1.ts` (Zone 1: New York street, 720px tall, sidewalk top y 600, row 50).
 
 | Key                     | Type                                                                 | Size    | Bottom y, repeat |
 | ----------------------- | -------------------------------------------------------------------- | ------- | ---------------- |
@@ -151,7 +151,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | doorman-podium          | street furniture                                                     | 18x24   | 600, none        |
 | facade-brownstone       | building facade, brownstone                                          | 48x312  | 600, x           |
 | facade-brownstone-upper | building facade, a brownstone's upper storey                         | 48x180  | 288, x           |
-| facade-hotel            | building facade, tall dark stone (generic until the exit is decided) | 48x312  | 600, x           |
+| facade-hotel            | building facade, tall dark stone | 48x312  | 600, x           |
 | facade-hotel-upper      | building facade, the tall stone building's upper storey              | 48x180  | 288, x           |
 | facade-one-storey       | building facade, one-storey brick                                    | 48x192  | 600, x           |
 | facade-walkup           | building facade, brick walk-up                                       | 48x312  | 600, x           |
@@ -164,9 +164,9 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 | fire-escape-ladder-7    | climbing, fire-escape ladder between landings 7 rows apart           | 24x84   | 432, none        |
 | fire-escape-railing     | climbing, fire-escape railing on a landing                           | 48x24   | 432, x           |
 | hot-dog-cart            | street furniture                                                     | 40x70   | 600, none        |
-| hotel-crest             | facade piece, banners and crest (generic)                            | 98x44   | 478, none        |
-| hotel-window            | facade piece, tall window (generic)                                  | 32x152  | 592, none        |
-| lobby-balustrade        | lobby (later indoor zone), balcony railing                           | 48x36   | balcony line, x  |
+| hotel-crest             | facade piece, banners and crest                            | 98x44   | 478, none        |
+| hotel-window            | facade piece, tall window                                  | 32x152  | 592, none        |
+| lobby-balustrade        | lobby (later indoor zone), balcony railing                           | 48x36   | 288, x           |
 | lobby-bookcase          | lobby (later indoor zone), tall bookcase                             | 84x384  | 672, none        |
 | lobby-desk              | lobby (later indoor zone), reception desk                            | 120x96  | 672, none        |
 | lobby-front-door        | lobby (later indoor zone), inside of the front door                  | 156x180 | 672, none        |
@@ -303,7 +303,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 | Key            | Type                         | Size  | Tags                                           |
 | -------------- | ---------------------------- | ----- | ---------------------------------------------- |
-| owl-antagonist | character; hit box 2,2,44,46 | 48x48 | drop, idle, prepare, rest, return, frustration |
+| owl-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, prepare, drop, return, rest, frustration |
 
 ## Woodland materials
 
@@ -322,7 +322,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 | Key               | Type                         | Size  | Tags                         |
 | ----------------- | ---------------------------- | ----- | ---------------------------- |
-| rabbit-antagonist | character; hit box 2,2,44,46 | 48x48 | hop, idle, rest, frustration |
+| rabbit-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, hop, rest, frustration |
 
 ## Home city materials
 

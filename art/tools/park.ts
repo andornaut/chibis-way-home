@@ -21,7 +21,7 @@
  * turf) and then warm brown soil with sparse 2px pebble clusters. Every walkable top carries a 2px
  * light lip under a 1px dark edge, the brightest edge against what is behind it.
  *
- * tiles-park (12x12; the tileset format and collision rules are in art/README.md, Pipeline)
+ * tiles-park (12x12; the tileset format and collision rules are in art/style-guide.md, Export contracts)
  * - grass-top, grass-top-left, grass-top-right: the walkable top, solid; the end tiles round the
  *   lip on an exposed side (a step's riser).
  * - turf, turf-left, turf-right: the row under a grass top, solid: green with 2px roots into the

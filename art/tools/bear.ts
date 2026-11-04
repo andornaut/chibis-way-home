@@ -33,7 +33,6 @@ const PORTRAIT = "portrait-bear";
 const WAVE = "bear-growl-wave";
 const ONCE = { [KEY]: ["anticipate-lift"], [PORTRAIT]: [], [WAVE]: ["pulse"] };
 const HITBOX: Record<string, pixel.HitboxTuple> = { [KEY]: [2, 2, 44, 46] };
-export const MOUTH = [36, 22] as const;
 const USAGE = "Usage: bear.ts build | preview OUT.png";
 
 type Point = readonly [number, number];

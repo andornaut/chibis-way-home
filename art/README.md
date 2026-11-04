@@ -24,7 +24,7 @@ Generators are TypeScript on [art-kit](https://github.com/andornaut/art-kit)'s p
 - A build writes the Aseprite sources (`art/<set>/<key>.aseprite`) and exports them as PNG plus JSON, with Aseprite tags for animations, to `public/art/sprites/<key>.png` and `.json`.
 - Change the generator, never the `.aseprite`: a build overwrites it.
 - Each generator's header comment is its spec: every asset's size, tags, frame timings and placement.
-- Art reads game layout and data from the generated export files the game writes, never from `src/`. The export files are in `shared/export/`. Art writes the shared data files the game reads (`lights.json`, `palette.json`).
+- Generators never import or read `src/`. Art writes the data files the game reads: `contact-silhouettes.json`, `palette.json` and `zone-themes.json`, registered under `data` in the manifest.
 - Keys are kebab-case, named after what the player sees. Internal names match displayed names.
 - Run the relevant art manifest and consumer asset key/tag checks in isolated containers, and format changed Markdown before handoff.
 
