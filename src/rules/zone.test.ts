@@ -151,7 +151,7 @@ describe("mandatory ride admission", () => {
     expect(initial.bird.grounded).toBe(true);
     const next = stepZone(BIRD, layout, STEP, STILL, {
       ...initial,
-      forcedTransit: { attackWindow: "allowed", episode },
+      forcedTransit: { attackWindow: "allowed", episode, evidence: "certified" },
     });
     expect(next.forcedTransit?.attackWindow).toBe("deferred");
     expect(next.forcedTransit?.episode?.supportIndex).toBe(0);
@@ -160,7 +160,7 @@ describe("mandatory ride admission", () => {
     expect(next.death).toBeUndefined();
   });
 
-  it("clears spent only on a fully supported authored bank, including adjacent floor joins", () => {
+  it("ends a spent leg on a supported authored bank across adjacent floor joins", () => {
     const layout = zone(
       area([object({ forcedTransit: transit, origin: { x: 80, y: 200 } })], {
         entries: { start: { x: 104, y: 300 } },
@@ -174,13 +174,17 @@ describe("mandatory ride admission", () => {
     expect(initial.bird.grounded).toBe(true);
     const next = stepZone(BIRD, layout, STEP, STILL, {
       ...initial,
-      forcedTransit: { attackWindow: "allowed", episode: { ...episode, phase: "spent" } },
+      forcedTransit: {
+        attackWindow: "allowed",
+        episode: { ...episode, phase: "spent" },
+        evidence: "certified",
+      },
     });
     expect(next.forcedTransit?.episode).toBeUndefined();
-    expect(next.forcedTransit?.lastBank).toEqual({ group: transit.group, id: "near" });
+    expect(next.forcedTransit?.boardingAdmissions).toEqual([{ group: transit.group, id: "near" }]);
   });
 
-  it("keeps a spent episode when the authored bank supports only part of the body", () => {
+  it("ends a spent leg on partial safe footing and admits the touched bank", () => {
     const layout = zone(
       area([object({ forcedTransit: transit, origin: { x: 80, y: 200 } })], {
         entries: { start: { x: 104, y: 300 } },
@@ -191,13 +195,20 @@ describe("mandatory ride admission", () => {
     expect(initial.bird.grounded).toBe(true);
     const next = stepZone(BIRD, layout, STEP, STILL, {
       ...initial,
-      forcedTransit: { attackWindow: "allowed", episode: { ...episode, phase: "spent" } },
+      forcedTransit: {
+        attackWindow: "allowed",
+        episode: { ...episode, phase: "spent" },
+        evidence: "certified",
+      },
     });
-    expect(next.forcedTransit?.episode?.phase).toBe("spent");
-    expect(next.forcedTransit?.lastBank).toBeUndefined();
+    expect(next.forcedTransit).toEqual({
+      attackWindow: "allowed",
+      boardingAdmissions: [{ group: transit.group, id: "near" }],
+      evidence: "certified",
+    });
   });
 
-  it("keeps an uncertified opt-in ride unknown", () => {
+  it("keeps the last certified state on an uncertified opt-in ride", () => {
     const layout = zone(
       area(
         [
@@ -220,9 +231,9 @@ describe("mandatory ride admission", () => {
     expect(initial.bird.grounded).toBe(true);
     const next = stepZone(BIRD, layout, STEP, STILL, {
       ...initial,
-      forcedTransit: { attackWindow: "allowed", episode },
+      forcedTransit: { attackWindow: "allowed", episode, evidence: "certified" },
     });
-    expect(next.forcedTransit?.attackWindow).toBe("unknown");
+    expect(next.forcedTransit).toMatchObject({ attackWindow: "allowed", evidence: "unknown" });
     expect(next.forcedTransit?.episode?.phase).toBe("boarding");
   });
 
@@ -240,13 +251,17 @@ describe("mandatory ride admission", () => {
       { ...STILL, useHeld: true },
       {
         ...initial,
-        forcedTransit: { attackWindow: "allowed", episode },
+        forcedTransit: {
+          attackWindow: "deferred",
+          episode: { ...episode, phase: "forced" },
+          evidence: "certified",
+        },
       },
     );
     expect(dashing.bird.grounded).toBe(true);
     expect(dashing.bird.dash?.remainingSeconds).toBeGreaterThan(0);
     const next = stepZone(BIRD, layout, STEP, STILL, dashing);
-    expect(next.forcedTransit?.attackWindow).toBe("unknown");
+    expect(next.forcedTransit).toMatchObject({ attackWindow: "deferred", evidence: "unknown" });
     expect(next.bird.dash?.remainingSeconds).toBeGreaterThan(0);
   });
 
@@ -369,9 +384,13 @@ describe("mandatory ride admission", () => {
     expect(initial.forcedTransitForecast).toBeUndefined();
     const next = stepZone(BIRD, layout, STEP, STILL, {
       ...initial,
-      forcedTransit: { attackWindow: "allowed", episode },
+      forcedTransit: {
+        attackWindow: "deferred",
+        episode: { ...episode, phase: "forced" },
+        evidence: "certified",
+      },
     });
-    expect(next.forcedTransit?.attackWindow).toBe("unknown");
+    expect(next.forcedTransit).toMatchObject({ attackWindow: "deferred", evidence: "unknown" });
   });
 
   it("retains the actual boarding bank through partial footing while walking onto a carrier", () => {
@@ -387,13 +406,15 @@ describe("mandatory ride admission", () => {
     );
     let state = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
     state = stepZone(BIRD, layout, STEP, STILL, state);
-    expect(state.forcedTransit?.lastBank).toEqual({ group: transit.group, id: "near" });
+    expect(state.forcedTransit?.boardingAdmissions).toEqual([{ group: transit.group, id: "near" }]);
     let partial = false;
     for (let tick = 0; tick < 30 && !state.forcedTransit?.episode; tick++) {
       state = stepZone(BIRD, layout, STEP, RIGHT, state);
       if (state.bird.x > 72 && state.bird.x + BIRD.width <= 108) {
         partial = true;
-        expect(state.forcedTransit?.lastBank).toEqual({ group: transit.group, id: "near" });
+        expect(state.forcedTransit?.boardingAdmissions).toEqual([
+          { group: transit.group, id: "near" },
+        ]);
       }
     }
     expect(partial).toBe(true);

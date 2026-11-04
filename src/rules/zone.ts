@@ -41,7 +41,11 @@ import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
 import { deathSupport } from "./death";
 import { effectiveCollision, effectiveHazardPhase } from "./effectiveCollision";
 import { type ForcePulse, forcePulseVelocity } from "./force";
-import { type ForcedTransitState, stepForcedTransit } from "./forcedTransit";
+import {
+  forcedTransitBankAdmissions,
+  type ForcedTransitState,
+  stepForcedTransit,
+} from "./forcedTransit";
 import {
   type ForcedTransitForecast,
   forcedTransitTakeoffBody,
@@ -457,45 +461,12 @@ function transitObservation(
     rect: rectAt(area.objects[index]!, zone.objects[index] ?? area.objects[index]!.origin),
   }));
   const support = supports.find(({ rect }) => standsOn(tuning, zone.bird, rect));
-  const box = birdBox(tuning, zone.bird);
-  const surfaces = [...area.solids, ...supports.map(({ rect }) => rect)]
-    .filter((rect) => Math.abs(box.y + box.height - rect.y) < EDGE)
-    .sort((left, right) => left.x - right.x);
-  let supportedTo = box.x;
-  for (const rect of surfaces) {
-    if (rect.x <= supportedTo + EDGE && rect.x + rect.width > supportedTo) {
-      supportedTo = rect.x + rect.width;
-    }
-  }
-  const banks = zone.bird.grounded
-    ? kinds.forcedTransit.flatMap((index) => {
-        const transit = area.objects[index]!.forcedTransit!;
-        return transit.banks
-          .filter(
-            (bank) =>
-              Math.abs(box.y + box.height - bank.y) < EDGE &&
-              box.x < bank.x + bank.width &&
-              box.x + box.width > bank.x,
-          )
-          .map((bank) => ({
-            fullSupport:
-              supportedTo >= box.x + box.width - EDGE &&
-              box.x >= bank.x - EDGE &&
-              box.x + box.width <= bank.x + bank.width + EDGE,
-            group: transit.group,
-            id: bank.id,
-          }));
-      })
+  const bankAdmissions = zone.bird.grounded
+    ? forcedTransitBankAdmissions(
+        kinds.forcedTransit.map((index) => area.objects[index]!.forcedTransit!),
+        birdBox(tuning, zone.bird),
+      )
     : [];
-  const uniqueBanks = banks.filter(
-    (bank, index) =>
-      banks.findIndex((other) => other.group === bank.group && other.id === bank.id) === index,
-  );
-  const priorBank = zone.forcedTransit?.lastBank;
-  const contact =
-    uniqueBanks.find((bank) => bank.group === priorBank?.group && bank.id === priorBank.id) ??
-    (uniqueBanks.length === 1 ? uniqueBanks[0] : undefined);
-  const bank = contact && { group: contact.group, id: contact.id };
   const takeoffOrigin =
     support &&
     forcedTransitTakeoffOrigin(
@@ -524,11 +495,10 @@ function transitObservation(
     );
   return stepForcedTransit(
     {
-      ...(bank && { bank }),
+      bankAdmissions,
       grounded: zone.bird.grounded,
       ordinaryControl: ordinaryTransitControl(tuning, zone.bird),
       riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
-      safeDisembark: contact?.fullSupport === true && support?.object.forcedTransit === undefined,
       ...(support && {
         support: {
           index: support.index,

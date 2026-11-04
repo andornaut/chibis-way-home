@@ -1,7 +1,12 @@
 import { expect, it } from "vitest";
 
 import type { ForcedTransitLayout, ForcedTransitLayoutWindow } from "../data/types";
-import { type ForcedTransitState, stepForcedTransit } from "./forcedTransit";
+import {
+  forcedTransitBankAdmissions,
+  type ForcedTransitObservation,
+  type ForcedTransitState,
+  stepForcedTransit,
+} from "./forcedTransit";
 
 const window = (
   certification: ForcedTransitLayoutWindow["certification"],
@@ -31,16 +36,36 @@ const transit: ForcedTransitLayout = {
     window("uncertified", 5, { bankId: "far", kind: "egress" }),
   ],
 };
-const grounded = {
-  bank: { group: transit.group, id: "near" },
+// A second ride whose boarding bank is the first ride's forward bank.
+const second: ForcedTransitLayout = {
+  ...transit,
+  banks: [
+    { id: "middle", purpose: "retreat", width: 72, x: 200, y: 36 },
+    { id: "end", purpose: "forward", width: 72, x: 400, y: 36 },
+  ],
+  boardingBanks: ["middle"],
+  group: "chunk1:crossing",
+  windows: [window("ordinary", 1, { kind: "forced" })],
+};
+const ground = (
+  bankAdmissions: ForcedTransitObservation["bankAdmissions"],
+): ForcedTransitObservation => ({
+  bankAdmissions,
   grounded: true,
   ordinaryControl: true,
   riderBodyOrigin: { x: 0, y: 0 },
-  safeDisembark: true,
+});
+const nearBank = ground([{ group: transit.group, id: "near" }]);
+const airborne: ForcedTransitObservation = {
+  bankAdmissions: [],
+  grounded: false,
+  ordinaryControl: false,
+  riderBodyOrigin: { x: 1, y: -1 },
 };
 function aboard(contract: ForcedTransitLayout, x: number, previous?: ForcedTransitState) {
   return stepForcedTransit(
     {
+      bankAdmissions: [],
       grounded: true,
       ordinaryControl: true,
       riderBodyOrigin: { x, y: 0 },
@@ -56,19 +81,29 @@ function aboard(contract: ForcedTransitLayout, x: number, previous?: ForcedTrans
   );
 }
 function forced() {
-  return aboard(transit, 1, aboard(transit, 0, stepForcedTransit(grounded)));
+  return aboard(transit, 1, aboard(transit, 0, stepForcedTransit(nearBank)));
 }
 
 it("leaves boarding unprotected and defers only after certified departure", () => {
-  const boarding = aboard(transit, 0, stepForcedTransit(grounded));
+  const boarding = aboard(transit, 0, stepForcedTransit(nearBank));
   expect(boarding.attackWindow).toBe("allowed");
   expect(boarding.episode?.phase).toBe("boarding");
   const departed = aboard(transit, 1, boarding);
-  expect(departed.attackWindow).toBe("deferred");
+  expect(departed).toMatchObject({ attackWindow: "deferred", evidence: "certified" });
   expect(departed.episode?.phase).toBe("forced");
 });
 
-it.each([2, 4])("spends the episode at forward/refuge opportunity%s while still aboard", (x) => {
+it.each([
+  ["unlisted ground", ground([])],
+  ["another group's bank", ground([{ group: second.group, id: "near" }])],
+  ["an unlisted bank", ground([{ group: transit.group, id: "refuge" }])],
+])("follows ordinary attack rules after boarding from %s", (_, origin) => {
+  const boarding = aboard(transit, 0, stepForcedTransit(origin));
+  expect(boarding.episode?.boardingBank).toBeUndefined();
+  expect(aboard(transit, 1, boarding).attackWindow).toBe("allowed");
+});
+
+it.each([2, 4])("spends the episode at forward/refuge opportunity %s while still aboard", (x) => {
   const spent = aboard(transit, x, forced());
   expect(spent.attackWindow).toBe("allowed");
   expect(spent.episode?.phase).toBe("spent");
@@ -76,49 +111,73 @@ it.each([2, 4])("spends the episode at forward/refuge opportunity%s while still 
   expect(aboard(transit, 5, spent)).toEqual(spent);
 });
 
-it("does not treat retreat alone as forward egress", () => {
+it("keeps deferral through a retreat opportunity and airborne retreat", () => {
   const retreat = aboard(transit, 3, forced());
-  expect(retreat.attackWindow).toBe("unknown");
+  expect(retreat).toMatchObject({ attackWindow: "deferred", evidence: "unknown" });
   expect(retreat.episode?.phase).toBe("forced");
+  expect(stepForcedTransit(airborne, retreat).attackWindow).toBe("deferred");
 });
 
-it("keeps unmatched and uncertified windows unknown", () => {
-  expect(aboard(transit, 5, forced()).attackWindow).toBe("unknown");
-  expect(aboard(transit, 9, forced()).attackWindow).toBe("unknown");
-  expect(aboard(transit, 1).attackWindow).toBe("unknown");
+it("follows the last certified state while ride state is unknown", () => {
+  for (const x of [5, 9]) {
+    expect(aboard(transit, x, forced())).toMatchObject({
+      attackWindow: "deferred",
+      evidence: "unknown",
+    });
+  }
+  const boarding = aboard(transit, 0, stepForcedTransit(nearBank));
+  expect(aboard(transit, 9, boarding)).toMatchObject({
+    attackWindow: "allowed",
+    evidence: "unknown",
+  });
 });
 
-it("cannot rearm by hopping or transferring without safe disembark", () => {
-  const spent = aboard(transit, 2, forced());
-  const airborne = stepForcedTransit(
-    { grounded: false, ordinaryControl: false, riderBodyOrigin: { x: 1, y: -1 } },
-    spent,
+it("ends the protected leg on any safe grounded surface, authored bank or not", () => {
+  for (const previous of [forced(), aboard(transit, 2, forced())]) {
+    const landed = stepForcedTransit(ground([]), previous);
+    expect(landed).toEqual({ attackWindow: "allowed", evidence: "certified" });
+    expect(stepForcedTransit(airborne, landed)).toEqual(landed);
+    expect(aboard(transit, 1, aboard(transit, 0, landed)).attackWindow).toBe("allowed");
+  }
+  expect(stepForcedTransit({ ...nearBank, grounded: false }, forced()).episode?.phase).toBe(
+    "forced",
   );
-  expect(aboard(transit, 1, airborne)).toEqual(spent);
-  const transferred = aboard({ ...transit, leg: "next" }, 1, spent);
-  expect(transferred).toEqual(spent);
 });
 
-it("requires actual safe supported disembark before a fresh leg", () => {
-  const spent = aboard(transit, 2, forced());
-  const falseLanding = stepForcedTransit({ ...grounded, grounded: false }, spent);
-  expect(falseLanding.episode?.phase).toBe("spent");
-  const landed = stepForcedTransit(grounded, spent);
+it("starts a fresh leg after re-boarding from a listed bank", () => {
+  const landed = stepForcedTransit(nearBank, aboard(transit, 2, forced()));
   expect(landed.episode).toBeUndefined();
   expect(aboard(transit, 1, landed).attackWindow).toBe("deferred");
 });
 
+it("lets one safe middle bank admit the next ride's fresh leg", () => {
+  const middle = ground([
+    { group: transit.group, id: "far" },
+    { group: second.group, id: "middle" },
+  ]);
+  const landed = stepForcedTransit(middle, aboard(transit, 2, forced()));
+  expect(landed.boardingAdmissions).toEqual(middle.bankAdmissions);
+  const fresh = aboard(second, 1, landed);
+  expect(fresh).toMatchObject({ attackWindow: "deferred", evidence: "certified" });
+  expect(fresh.episode).toMatchObject({ boardingBank: "middle", group: second.group });
+});
+
+it("never re-arms protection by hopping directly between rides", () => {
+  const spent = aboard(transit, 2, forced());
+  expect(aboard(transit, 1, stepForcedTransit(airborne, spent))).toEqual(spent);
+  expect(aboard(second, 1, stepForcedTransit(airborne, spent))).toEqual(spent);
+  expect(aboard({ ...transit, leg: "next" }, 1, spent)).toEqual(spent);
+  const boarding = aboard(transit, 0, stepForcedTransit(nearBank));
+  expect(aboard(second, 1, boarding).attackWindow).toBe("allowed");
+});
+
 it("allows ordinary nonopt-in targets without inventing a ride episode", () => {
-  const ordinary = stepForcedTransit({
-    grounded: false,
-    ordinaryControl: false,
-    riderBodyOrigin: { x: 0, y: 0 },
-  });
-  expect(ordinary).toEqual({ attackWindow: "allowed" });
+  expect(stepForcedTransit(airborne)).toEqual({ attackWindow: "allowed", evidence: "certified" });
 });
 
 it("keeps nonordinary controls unknown without rearming a spent episode", () => {
   const observation = {
+    bankAdmissions: [],
     grounded: true,
     ordinaryControl: false,
     riderBodyOrigin: { x: 2, y: 0 },
@@ -130,13 +189,17 @@ it("keeps nonordinary controls unknown without rearming a spent episode", () => 
       transit,
     },
   };
-  expect(stepForcedTransit(observation, forced()).attackWindow).toBe("unknown");
+  expect(stepForcedTransit(observation, forced())).toMatchObject({
+    attackWindow: "deferred",
+    evidence: "unknown",
+  });
   const spent = aboard(transit, 2, forced());
   expect(stepForcedTransit(observation, spent)).toEqual(spent);
 });
 
 it("filters certified egress when native apex evidence is absent or below the bank", () => {
   const observation = {
+    bankAdmissions: [],
     grounded: true,
     ordinaryControl: true,
     riderBodyOrigin: { x: 2, y: 0 },
@@ -153,8 +216,22 @@ it("filters certified egress when native apex evidence is absent or below the ba
       stepForcedTransit(
         { ...observation, support: { ...observation.support, ordinaryJumpApexFeetY: apex } },
         forced(),
-      ).attackWindow,
-    ).toBe("unknown");
+      ),
+    ).toMatchObject({ attackWindow: "deferred", evidence: "unknown" });
   }
   expect(stepForcedTransit(observation, forced()).episode?.phase).toBe("spent");
+});
+
+it("admits every touched bank once per group, including partial footing", () => {
+  const twin = { ...transit, banks: [transit.banks[0]!, transit.banks[0]!] };
+  const feet = (x: number, bottom: number) => ({ height: 36, width: 24, x, y: bottom - 36 });
+  expect(forcedTransitBankAdmissions([transit, twin, second], feet(60, 36))).toEqual([
+    { group: transit.group, id: "near" },
+  ]);
+  expect(forcedTransitBankAdmissions([transit, second], feet(250, 36))).toEqual([
+    { group: transit.group, id: "far" },
+    { group: second.group, id: "middle" },
+  ]);
+  expect(forcedTransitBankAdmissions([transit], feet(72, 36))).toEqual([]);
+  expect(forcedTransitBankAdmissions([transit], feet(30, 37))).toEqual([]);
 });

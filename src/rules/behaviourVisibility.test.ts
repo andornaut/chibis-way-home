@@ -76,7 +76,7 @@ it.each([false, true])(
   },
 );
 
-it.each(["allowed", "deferred", "unknown", undefined] as const)(
+it.each(["allowed", "deferred", undefined] as const)(
   "admits a targeted sequence only for explicit allowed observation, %s",
   (targetedAttackWindow) => {
     const plan: BehaviourPlan = {

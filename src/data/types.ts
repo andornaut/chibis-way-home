@@ -751,7 +751,7 @@ export interface Orbit<Host = string> {
 export type ForcedTransitInterval = readonly [minimum: number, maximum: number];
 export type ForcedTransitBankPurpose = "forward" | "refuge" | "retreat";
 export type ForcedTransitCertification = "uncertified" | "ordinary";
-export type TargetedAttackWindow = "allowed" | "deferred" | "unknown";
+export type TargetedAttackWindow = "allowed" | "deferred";
 
 export type ForcedTransitResult =
   { readonly kind: "egress"; readonly bankId: string } | { readonly kind: "forced" };

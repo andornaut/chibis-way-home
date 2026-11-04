@@ -1,4 +1,4 @@
-import type { ForcedTransitLayout, Point, TargetedAttackWindow } from "../data/types";
+import type { ForcedTransitLayout, Point, Rect, TargetedAttackWindow } from "../data/types";
 import { EDGE } from "./bird";
 
 export interface ForcedTransitBankContact {
@@ -14,19 +14,21 @@ export interface ForcedTransitEpisode {
   readonly supportIndex: number;
 }
 
+// attackWindow is the last certified admission; evidence says whether this step certified it.
 export interface ForcedTransitState {
   readonly attackWindow: TargetedAttackWindow;
+  // Banks touched on the most recent safe ground. They only admit boarding.
+  readonly boardingAdmissions?: readonly ForcedTransitBankContact[];
   readonly episode?: ForcedTransitEpisode;
-  readonly lastBank?: ForcedTransitBankContact;
+  readonly evidence: "certified" | "unknown";
 }
 
-// Support and safe disembark are observations from the actual collision/carry adapter.
+// Support and bank contact are observations from the actual collision/carry adapter.
 export interface ForcedTransitObservation {
-  readonly bank?: ForcedTransitBankContact;
+  readonly bankAdmissions: readonly ForcedTransitBankContact[];
   readonly grounded: boolean;
   readonly ordinaryControl: boolean;
   readonly riderBodyOrigin: Point;
-  readonly safeDisembark?: boolean;
   readonly support?: {
     readonly index: number;
     readonly ordinaryJumpApexFeetY?: number | undefined;
@@ -40,15 +42,49 @@ function contains(interval: readonly [number, number], value: number): boolean {
   return value >= interval[0] - EDGE && value <= interval[1] + EDGE;
 }
 
+// Every authored bank the grounded feet touch, once per group and bank id.
+export function forcedTransitBankAdmissions(
+  transits: readonly ForcedTransitLayout[],
+  feet: Rect,
+): readonly ForcedTransitBankContact[] {
+  const bottom = feet.y + feet.height;
+  const admissions: ForcedTransitBankContact[] = [];
+  for (const transit of transits) {
+    for (const bank of transit.banks) {
+      if (
+        Math.abs(bottom - bank.y) < EDGE &&
+        feet.x < bank.x + bank.width &&
+        feet.x + feet.width > bank.x &&
+        !admissions.some(({ group, id }) => group === transit.group && id === bank.id)
+      ) {
+        admissions.push({ group: transit.group, id: bank.id });
+      }
+    }
+  }
+  return admissions;
+}
+
 function snapshot(
   attackWindow: TargetedAttackWindow,
-  episode?: ForcedTransitEpisode,
-  lastBank?: ForcedTransitBankContact,
+  episode: ForcedTransitEpisode | undefined,
+  boardingAdmissions: readonly ForcedTransitBankContact[] | undefined,
 ): ForcedTransitState {
   return {
     attackWindow,
+    ...(boardingAdmissions && boardingAdmissions.length > 0 && { boardingAdmissions }),
     ...(episode && { episode }),
-    ...(lastBank && { lastBank }),
+    evidence: "certified",
+  };
+}
+
+// Unknown ride state keeps the last certified admission.
+function unknown(
+  previous: ForcedTransitState | undefined,
+  episode: ForcedTransitEpisode,
+): ForcedTransitState {
+  return {
+    ...snapshot(previous?.attackWindow ?? "allowed", episode, previous?.boardingAdmissions),
+    evidence: "unknown",
   };
 }
 
@@ -58,27 +94,22 @@ export function stepForcedTransit(
 ): ForcedTransitState {
   const support = observation.grounded ? observation.support : undefined;
   const transit = support?.transit;
-  if (observation.grounded && !transit && observation.safeDisembark === true) {
-    return snapshot("allowed", undefined, observation.bank);
+  // Any safe grounded surface ends the leg; its banks become the boarding admissions.
+  if (observation.grounded && !transit) {
+    return snapshot("allowed", undefined, observation.bankAdmissions);
   }
-  const sameBankContact =
-    observation.bank?.group === previous?.lastBank?.group &&
-    observation.bank?.id === previous?.lastBank?.id &&
-    observation.bank !== undefined;
-  const lastBank =
-    observation.grounded && !support && !sameBankContact ? undefined : previous?.lastBank;
+  const admissions = previous?.boardingAdmissions;
   let episode = previous?.episode;
   if (episode?.phase === "spent") {
-    return snapshot("allowed", episode, lastBank);
+    return snapshot("allowed", episode, admissions);
   }
   if (!transit || !support) {
-    return snapshot(episode ? "unknown" : "allowed", episode, lastBank);
+    return episode ? unknown(previous, episode) : snapshot("allowed", undefined, admissions);
   }
   if (!episode) {
-    const boardingBank =
-      lastBank?.group === transit.group && transit.boardingBanks.includes(lastBank.id)
-        ? lastBank.id
-        : undefined;
+    const boardingBank = admissions?.find(
+      ({ group, id }) => group === transit.group && transit.boardingBanks.includes(id),
+    )?.id;
     episode = {
       ...(boardingBank && { boardingBank }),
       group: transit.group,
@@ -88,7 +119,7 @@ export function stepForcedTransit(
     };
   }
   if (episode.group !== transit.group || episode.leg !== transit.leg) {
-    return snapshot("unknown", episode, lastBank);
+    return unknown(previous, episode);
   }
   const apexFeetY = support.ordinaryJumpApexFeetY;
   if (
@@ -97,7 +128,7 @@ export function stepForcedTransit(
     apexFeetY === undefined ||
     !Number.isFinite(apexFeetY)
   ) {
-    return snapshot("unknown", episode, lastBank);
+    return unknown(previous, episode);
   }
   const windows = transit.windows.filter(
     (window) =>
@@ -113,16 +144,16 @@ export function stepForcedTransit(
       : [],
   );
   if (offered.some(({ purpose }) => purpose === "forward" || purpose === "refuge")) {
-    return snapshot("allowed", { ...episode, phase: "spent" }, lastBank);
+    return snapshot("allowed", { ...episode, phase: "spent" }, admissions);
   }
   if (
     episode.phase === "boarding" &&
     offered.some(({ id }) => transit.boardingBanks.includes(id))
   ) {
-    return snapshot("allowed", episode, lastBank);
+    return snapshot("allowed", episode, admissions);
   }
   if (episode.boardingBank && windows.some(({ result }) => result.kind === "forced")) {
-    return snapshot("deferred", { ...episode, phase: "forced" }, lastBank);
+    return snapshot("deferred", { ...episode, phase: "forced" }, admissions);
   }
-  return snapshot("unknown", episode, lastBank);
+  return unknown(previous, episode);
 }
