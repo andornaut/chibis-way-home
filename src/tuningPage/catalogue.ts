@@ -9,7 +9,7 @@ import { OPENING } from "../data/opening";
 import { REACH } from "../data/reach";
 import * as screen from "../data/screen";
 import { TOUCH } from "../data/touch";
-import { RECIPES, ZONE_DIFFICULTY } from "../data/zones";
+import { RECIPES } from "../data/zones";
 
 export const TUNING_GROUPS = {
   Behaviours: behaviours,
@@ -19,7 +19,6 @@ export const TUNING_GROUPS = {
   "Contact feedback": CONTACT_CUE,
   "Control refusal": CONTROL_REFUSAL,
   Death: DEATH,
-  Difficulty: ZONE_DIFFICULTY,
   "Live barks": Object.fromEntries(
     Object.entries(dialogues).filter(([key]) => key.startsWith("BARK_")),
   ),
