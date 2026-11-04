@@ -18,5 +18,5 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "*.ts"]
+  "include": ["art/tools", "src", "*.ts"]
 }
