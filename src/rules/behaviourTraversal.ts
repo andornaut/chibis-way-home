@@ -515,6 +515,48 @@ function supportedWaypoint(
   };
 }
 
+// A clearable wall's top surface stages a climb whose whole route exceeds one native horizon.
+function ascentWaypoint(
+  world: BehaviourWorld,
+  context: TraversalContext<TraversalSupport>,
+  start: TraversalState<TraversalSupport>,
+  goal: Rect,
+): Rect | undefined {
+  if (!start.grounded) {
+    return undefined;
+  }
+  const { body, epsilon, profile } = context;
+  const left = start.x + body.offset.x;
+  const right = left + body.width;
+  const top = start.y + body.offset.y;
+  const foot = top + body.height;
+  const move = goal.x >= right - epsilon ? 1 : goal.x + goal.width <= left + epsilon ? -1 : 0;
+  if (move === 0) {
+    return undefined;
+  }
+  const touching = world.solids.filter(
+    (rect) =>
+      Math.abs(move === 1 ? rect.x - right : rect.x + rect.width - left) <= epsilon &&
+      rect.y < foot - epsilon &&
+      rect.y + rect.height > top + epsilon,
+  );
+  const wall = touching.sort((a, b) => a.y - b.y)[0];
+  const maximumRise = (profile.jumpSpeed * profile.jumpSpeed) / (2 * profile.gravity);
+  if (!wall || foot - wall.y > maximumRise) {
+    return undefined;
+  }
+  const span = supportedSpan(world, wall);
+  const sameLanding = goal.x >= span.left - epsilon && goal.x + goal.width <= span.right + epsilon;
+  return span.right - span.left < body.width || sameLanding
+    ? undefined
+    : {
+        height: body.height + 2 * epsilon,
+        width: span.right - span.left,
+        x: span.left,
+        y: wall.y - body.height - epsilon,
+      };
+}
+
 function waypointInputs(
   context: TraversalContext<TraversalSupport>,
   request: TraversalRequest<TraversalSupport>,
@@ -714,11 +756,12 @@ function advanceTraversalStep(
   if (waypoint) {
     goal = waypoint.goal;
   }
+  const resolved = goal;
   const sameGoal =
-    goal &&
+    resolved &&
     prior &&
     ["x", "y", "width", "height"].every(
-      (axis) => goal[axis as keyof Rect] === prior.target[axis as keyof Rect],
+      (axis) => resolved[axis as keyof Rect] === prior.target[axis as keyof Rect],
     );
   if (
     !inputs.length &&
@@ -761,10 +804,29 @@ function advanceTraversalStep(
       ? waypointInputs(searchContext, request, move === -1 ? -1 : 1, waypoint.jump)
       : (preferredDescentInputs(world, searchContext, request, direct) ??
         (!progress ? preferredAscentInputs(world, searchContext, request) : undefined));
-    const result = findTraversal(searchContext, {
+    let result = findTraversal(searchContext, {
       ...request,
       ...(preferredInputs && { preferredInputs }),
     });
+    // An exhausted climb retries toward the blocking wall's top in this search event,
+    // so the unchanged position, goal and geometry cannot leave it without a staged leg.
+    const ascent =
+      result.status === "budget-exhausted" &&
+      !waypoint &&
+      !progress &&
+      ascentWaypoint(world, searchContext, physical, goal);
+    if (ascent) {
+      const staged = { ...request, goal: ascent };
+      const climbInputs = preferredAscentInputs(world, searchContext, staged);
+      const climb = findTraversal(searchContext, {
+        ...staged,
+        ...(climbInputs && { preferredInputs: climbInputs }),
+      });
+      if (climb.status === "found") {
+        goal = ascent;
+        result = climb;
+      }
+    }
     searchedAt = at;
     status = result.status;
     inputs = result.status === "found" ? result.inputs : [];
