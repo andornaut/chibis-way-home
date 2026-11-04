@@ -21,6 +21,8 @@ Install Python 3.12 art dependencies with `python3.12 -m venv .venv-art` and `.v
 
 Shared sprite previews require Node >=24.21 and installed project npm dependencies (art-kit 0.10 and Skia 4), while retaining the `.venv-art/bin/python -I art/tools/<generator>.py preview OUT.png` command.
 
+TypeScript ports run with Node's native type stripping, for example `node art/tools/palette.ts build`, from the repository root: `pixel.ts`, `backgroundPalette.ts` and `zoneThemes.ts` mirror their Python modules over the art-kit TypeScript API. `art/tools/parity.sh TOOL ARGS...` runs a Python generator at a pinned commit and its TypeScript port on separate repository copies in an isolated container, then writes a per-asset exact or first-difference report; its header lists the required environment.
+
 - Author raster assets through Python scripts: `art/tools/<set>.py`, each with `build` and `preview OUT.png` commands.
 - [art-kit](https://github.com/andornaut/art-kit) provides drawing, outline, frame composition, Aseprite export and font mechanisms. Local `art/tools/pixel.py` and `fonts.py` adapters retain the game palette and ramps, glyph selection, paths, manifest and contact metadata.
 - A build writes the Aseprite sources (`art/<set>/<key>.aseprite`) and exports them as PNG plus JSON, with Aseprite tags for animations, to `public/art/sprites/<key>.png` and `.json`.
