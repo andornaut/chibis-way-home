@@ -4,6 +4,7 @@ import { abilityFor } from "../ai/ability";
 import type {
   BehaviourAction,
   BehaviourCondition,
+  BehaviourNode,
   BehaviourPlan,
   BirdTuning,
   DialogueLine,
@@ -16,6 +17,7 @@ import {
   BEHAVIOUR_ABILITIES,
   type BehaviourAbilityParams,
   behaviourAbilityParams,
+  type TraversalAdvance,
 } from "./behaviourAbilities";
 import { animateSegments, syncAnimation } from "./behaviourAnimation";
 import {
@@ -53,7 +55,6 @@ import {
 import { prepareSupport } from "./behaviourSupport";
 import { contactBox, nodeOf, pursuitTrack, trackEndpoint, travelHeading } from "./behaviourTrack";
 import {
-  advanceTraversal,
   type BehaviourRearmState,
   type BehaviourTraversalState,
   probeRearm,
@@ -1096,6 +1097,538 @@ function updatePursuit(
   };
 }
 
+// One advance's loop-carried state across its slices.
+interface BehaviourRun {
+  readonly actions: BehaviourEvent[];
+  capturedIntent: boolean;
+  current: Point;
+  readonly instant: Set<string>;
+  intentPause: boolean | undefined;
+  next: BehaviourState;
+  readonly segments: BehaviourSegment[];
+  time: number;
+  traversalStep: TraversalAdvance | undefined;
+}
+
+interface BehaviourRunContext {
+  readonly deferToAttack: boolean;
+  readonly escaped: DialogueLine | undefined;
+  readonly flyGateway: string | undefined;
+  readonly object: ObjectLayout;
+  readonly perception: BehaviourPerception;
+  readonly seconds: number;
+  readonly watchdog: BehaviourPlan["idleWatchdog"];
+}
+
+interface SliceDecision {
+  // Whether the graph would take an arrival transition with the body at a point after that
+  // many more seconds of the decided state.
+  readonly arrives: (at: Point, seconds: number, state: BehaviourState) => boolean;
+  readonly frame: ReturnType<typeof contactFrameAt> | undefined;
+  readonly node: BehaviourNode;
+  // Whether the motion follows a sampled pursuit intent this slice.
+  readonly sampled: boolean;
+  readonly settling: boolean;
+  readonly slice: number;
+  readonly support: {
+    readonly supported: boolean;
+    readonly target: Point | undefined;
+    readonly world: BehaviourWorld | undefined;
+  };
+  readonly supportMotion: boolean;
+  readonly track: { readonly axis: "x" | "y" };
+}
+
+type SliceOutcome =
+  | { readonly decision: SliceDecision; readonly kind: "act" }
+  | { readonly kind: "again" }
+  | { readonly kind: "end" }
+  | { readonly kind: "hold"; readonly step: BehaviourStep };
+
+// Decides one slice from the snapshot and the object's own state: support, escape settling,
+// entry and its effects, the first matching transition and any sampled intent, then how long
+// the decision holds before an animation, cooldown or elapsed boundary.
+function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutcome {
+  const { deferToAttack, escaped, flyGateway, object, perception, seconds, watchdog } = context;
+  const { target: bird, tuning, world } = perception;
+  const plan = object.behaviour!;
+  const { actions, current, instant, segments, time, traversalStep } = run;
+  let { capturedIntent, intentPause, next } = run;
+  const save = () => {
+    run.capturedIntent = capturedIntent;
+    run.intentPause = intentPause;
+    run.next = next;
+  };
+  let node = nodeOf(object, next.stateKey);
+  const supportMotion =
+    (node.motion.kind === "fly" && node.motion.to === "support") ||
+    (node.motion.kind === "wait" && node.motion.support === "required");
+  const support = prepareSupport(perception, object, node.motion, time, current, next);
+  next = support.state;
+  const supportWorld = support.world;
+  const supportPerception = supportWorld ? { ...perception, world: supportWorld } : perception;
+  const supported = support.supported;
+  const landingTarget = support.target;
+  if (
+    next.pursuit?.phase === "escaped" &&
+    !next.pursuit.settled &&
+    !attackProtected(node, next) &&
+    next.stateKey === plan.initial &&
+    node.motion.kind === "wait" &&
+    flyGateway &&
+    !next.hop &&
+    !supportedLanding(object, world, current)
+  ) {
+    next = enterState(perception, object, current, flyGateway, next);
+    node = nodeOf(object, next.stateKey);
+  }
+  if (
+    next.pursuit?.phase === "escaped" &&
+    !next.pursuit.settled &&
+    !attackProtected(node, next) &&
+    (node.motion.kind === "pursue" || next.stateKey === plan.initial) &&
+    !next.hop &&
+    (!next.traversal || next.traversal.physical.grounded) &&
+    (node.motion.kind !== "pursue" ||
+      node.motion.mode !== "fly" ||
+      supportedLanding(object, world, current))
+  ) {
+    next = enterState(perception, object, current, plan.initial, {
+      ...next,
+      anchor: current,
+      pursuit: { ...next.pursuit, settled: true },
+    });
+    node = nodeOf(object, next.stateKey);
+  }
+  if (watchdog && !deferToAttack && idleReady(object, world, current, next)) {
+    // Keep the safe graph phase until the next complete physics step can prove its route.
+    const remaining = seconds - time;
+    const hold = [{ end: remaining, from: current, start: 0, to: current }];
+    const animated = animateSegments(object, remaining, next, hold);
+    next = advanceAttackClock(remaining, {
+      ...animated.state,
+      idleWatchdog: observeIdle(watchdog, remaining, hold, next.idleWatchdog!),
+    });
+    save();
+    return {
+      kind: "hold",
+      step: {
+        actions,
+        at: current,
+        segments: [
+          ...segments,
+          ...animated.segments.map((segment) => ({
+            ...segment,
+            end: segment.end + time,
+            start: segment.start + time,
+          })),
+        ],
+        state: next,
+        ...(escaped && { escaped }),
+      },
+    };
+  }
+  const settling =
+    next.pursuit?.phase === "escaped" &&
+    !next.pursuit.settled &&
+    !attackProtected(node, next) &&
+    node.motion.kind === "pursue" &&
+    node.motion.mode === "fly";
+  const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
+  if (
+    next.pendingEntry &&
+    !(supportMotion && next.landing?.status === "pending") &&
+    !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
+  ) {
+    const entered = enterState(perception, object, current, next.stateKey, next);
+    next = enterAttack(plan, node, supportMotion ? { ...entered, elapsed: next.elapsed } : entered);
+    for (const action of node.onEnter ?? []) {
+      actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
+    }
+    next = { ...next, pendingEntry: false };
+  }
+  if (
+    node.motion.kind !== "wait" &&
+    node.motion.kind !== "fly" &&
+    node.motion.kind !== "pursue" &&
+    node.motion.direction === "target"
+  ) {
+    const mine = current[track.axis] + (track.axis === "x" ? object.width : object.height) / 2;
+    const target = bird[track.axis] + (track.axis === "x" ? tuning.width : tuning.height) / 2;
+    if (target !== mine) {
+      next = { ...next, facing: target < mine ? -1 : 1 };
+    }
+  }
+  const selectionFallback =
+    node.motion.kind === "fly" &&
+    node.motion.to === "support" &&
+    node.motion.selection !== undefined &&
+    next.flightSelection?.status === "pending" &&
+    node.attack?.phase !== "committed" &&
+    node.attack?.phase !== "completed" &&
+    next.activeAttack?.phase !== "committed";
+  const transition =
+    traversalStep !== undefined ||
+    next.traversal?.preparation !== undefined ||
+    settling ||
+    (node.motion.kind === "fly" &&
+      node.motion.to === "support" &&
+      !supported &&
+      !selectionFallback) ||
+    (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
+    (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded)
+      ? undefined
+      : node.transitions.find(
+          ({ to, when }) =>
+            (!selectionFallback ||
+              (when.length === 1 &&
+                when[0]!.kind === "alignment-blocked" &&
+                (() => {
+                  const fallback = nodeOf(object, to);
+                  return (
+                    fallback.attack === undefined &&
+                    fallback.motion.kind === "fly" &&
+                    fallback.motion.to === "support" &&
+                    !fallback.motion.selection
+                  );
+                })())) &&
+            canEnterAttack(nodeOf(object, to), next) &&
+            !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
+            when.every((condition) =>
+              condition.kind === "arrived" && supportMotion
+                ? supported
+                : matches(supportPerception, object, current, next, condition),
+            ),
+        );
+  if (transition) {
+    if (instant.has(next.stateKey)) {
+      throw new Error(`Instant behaviour transition cycle for ${object.character}`);
+    }
+    instant.add(next.stateKey);
+    next = enterState(perception, object, current, transition.to, next);
+    save();
+    return { kind: "again" };
+  }
+  if (time >= seconds) {
+    save();
+    return { kind: "end" };
+  }
+  const sampledMotion =
+    node.motion.kind === "pursue" &&
+    node.motion.intent !== undefined &&
+    !attackProtected(node, next) &&
+    !settling &&
+    next.pursuit?.phase === "engaged";
+  if (sampledMotion && node.motion.kind === "pursue" && node.motion.intent) {
+    const previous = next.intent;
+    const needsCapture = !previous || previous.remainingSeconds <= 0;
+    let capture =
+      needsCapture &&
+      !next.traversal?.preparation &&
+      (!next.traversal || next.traversal.physical.grounded);
+    if (needsCapture && node.motion.mode === "fly" && previous) {
+      const target =
+        node.motion.overhead &&
+        overheadFlightGoalForRect(
+          node.motion.overhead,
+          previous.travelDirection,
+          previous.target,
+          object,
+        );
+      capture =
+        safeIntentHover(world, seconds - time, object, current) &&
+        (!target || Math.abs(target.y - current.y) <= EDGE);
+    }
+    if (needsCapture && capture && !capturedIntent) {
+      let intent = capturePursuitIntent(
+        world,
+        node.motion.intent,
+        tuning,
+        bird,
+        next.intentDecision ?? 0,
+        next.facing,
+        object,
+        current,
+      );
+      if (node.motion.mode === "fly" && node.motion.overhead) {
+        const goal = overheadFlightGoalForRect(
+          node.motion.overhead,
+          intent.travelDirection,
+          intent.target,
+          object,
+        );
+        intent = {
+          ...intent,
+          facing: goal.x === current.x ? next.facing : goal.x < current.x ? -1 : 1,
+        };
+      }
+      next = {
+        ...next,
+        intent,
+        intentDecision: (next.intentDecision ?? 0) + 1,
+        ...(node.motion.mode === "fly" &&
+          node.motion.overhead && { flightApproachDirection: intent.travelDirection }),
+      };
+      if (next.traversal) {
+        const fresh = { ...next.traversal, inputs: [] };
+        delete (fresh as { searchedAt?: Point }).searchedAt;
+        next = { ...next, traversal: fresh };
+      }
+      capturedIntent = true;
+      intentPause = undefined;
+    }
+    if (intentPause === undefined) {
+      intentPause =
+        (next.intent?.pauseRemainingSeconds ?? 0) > 0 &&
+        (node.motion.mode === "ground"
+          ? supportedLanding(object, world, current) &&
+            !next.traversal?.preparation &&
+            (!next.traversal || next.traversal.physical.grounded)
+          : safeIntentHover(world, seconds - time, object, current));
+    }
+  }
+  const frame = object.contact
+    ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
+    : undefined;
+  let slice = Math.min(seconds - time, frame?.remaining ?? Infinity);
+  if ((next.attackCooldownRemainingSeconds ?? 0) > 0) {
+    slice = Math.min(slice, next.attackCooldownRemainingSeconds!);
+  }
+  for (const { when } of settling ? [] : node.transitions) {
+    if (
+      when.every(
+        (condition) =>
+          condition.kind === "elapsed" || matches(perception, object, current, next, condition),
+      )
+    ) {
+      const threshold = Math.max(
+        0,
+        ...when
+          .filter((condition) => condition.kind === "elapsed")
+          .map((condition) => condition.seconds),
+      );
+      if (threshold > next.elapsed) {
+        slice = Math.min(slice, threshold - next.elapsed);
+      }
+    }
+  }
+  save();
+  return {
+    decision: {
+      arrives: (point: Point, after: number, state: BehaviourState) => {
+        const future = advanceAttackClock(after, {
+          ...state,
+          elapsed: state.elapsed + after,
+          ...(object.contact && {
+            animationSeconds: (state.animationSeconds ?? 0) + after,
+          }),
+        });
+        return node.transitions.some(
+          ({ to, when }) =>
+            when.some((condition) => condition.kind === "arrived") &&
+            canEnterAttack(nodeOf(object, to), future) &&
+            when.every((condition) => matches(perception, object, point, future, condition)),
+        );
+      },
+      frame,
+      node,
+      sampled: sampledMotion,
+      settling,
+      slice,
+      support: { supported, target: landingTarget, world: supportWorld },
+      supportMotion,
+      track,
+    },
+    kind: "act",
+  };
+}
+
+// Acts one decided slice: the hop clock, the registered motion abilities, the hop arc, the
+// slice's segments, and the clocks the slice advances.
+function actSlice(context: BehaviourRunContext, decision: SliceDecision, run: BehaviourRun): void {
+  const { object, perception, seconds, watchdog } = context;
+  const { world } = perception;
+  const { node, settling, supportMotion, track } = decision;
+  const { supported, target: landingTarget, world: supportWorld } = decision.support;
+  const sampledMotion = decision.sampled;
+  const { instant, intentPause, segments } = run;
+  let { current, next, time, traversalStep } = run;
+  let { frame, slice } = decision;
+  if (node.motion.kind === "hop" && !next.hop) {
+    next = {
+      ...next,
+      hop: {
+        elapsed: 0,
+        groundY: current.y,
+        height: node.motion.hopHeight,
+        seconds: node.motion.hopSeconds,
+      },
+    };
+  }
+  const hop = next.hop;
+  if (hop) {
+    slice = Math.min(
+      slice,
+      (hop.elapsed < hop.seconds / 2 ? hop.seconds / 2 : hop.seconds) - hop.elapsed,
+    );
+  }
+  const to = { ...current };
+  let traversalSegments: readonly TraversalSafety[] | undefined;
+  let supportedDwell: boolean | undefined;
+  let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
+  // An escaped flier settles before its chase ability, which finishes any airborne leg.
+  const primary = behaviourAbilityParams(node.motion);
+  const chosen: BehaviourAbilityParams[] = [
+    ...(settling && node.motion.kind === "pursue"
+      ? [{ kind: "escape-settle" as const, motion: node.motion }]
+      : []),
+    ...(primary ? [primary] : []),
+  ];
+  for (const params of chosen) {
+    const ability = abilityFor(BEHAVIOUR_ABILITIES, params);
+    if (!ability) {
+      continue;
+    }
+    const acted = ability.act(
+      {
+        arrives: decision.arrives,
+        intent: { paused: intentPause === true, sampled: sampledMotion },
+        object,
+        perception,
+        seconds,
+        slice,
+        support: { supported, target: landingTarget, world: supportWorld },
+        time,
+        track,
+        traversal: traversalStep,
+      },
+      params,
+      { at: current, state: next, to: { ...to } },
+    );
+    slice = acted.slice;
+    next = acted.state;
+    to.x = acted.to.x;
+    to.y = acted.to.y;
+    carryPoints = acted.carry;
+    supportedDwell = acted.dwell;
+    traversalStep = acted.traversal ?? traversalStep;
+    if (acted.segments) {
+      traversalSegments = acted.segments;
+    }
+    if (acted.resynced) {
+      frame = object.contact
+        ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
+        : undefined;
+    }
+  }
+  if (hop) {
+    const elapsed = Math.min(hop.seconds, hop.elapsed + slice);
+    const desired = hop.groundY - hopLift(hop.height, hop.seconds, elapsed);
+    to.y = hopY(object, world, { ...current, x: to.x }, desired);
+    if (elapsed >= hop.seconds - EDGE || (desired > current.y && to.y < desired - EDGE)) {
+      const landed = { ...next };
+      delete landed.hop;
+      next = landed;
+    } else {
+      next = { ...next, hop: { ...hop, elapsed } };
+    }
+  }
+  const end = time + slice;
+  const segmentStart = segments.length;
+  let animationAdvanced = false;
+  if (carryPoints?.length) {
+    let previous = current;
+    let start = time;
+    for (const point of carryPoints) {
+      segments.push({
+        axis: track.axis,
+        end: time + point.seconds,
+        facing: next.facing,
+        from: previous,
+        start,
+        to: point.at,
+        ...(frame && { frame: frame.frame }),
+      });
+      previous = point.at;
+      start = time + point.seconds;
+    }
+    if (start < end) {
+      segments.push({
+        axis: track.axis,
+        end,
+        facing: next.facing,
+        from: previous,
+        start,
+        to,
+        ...(frame && { frame: frame.frame }),
+      });
+    }
+  } else if (traversalSegments?.some((leg) => leg.endSeconds > leg.startSeconds)) {
+    const animated = animateSegments(
+      object,
+      slice,
+      next,
+      traversalSegments
+        .filter((leg) => leg.endSeconds > leg.startSeconds)
+        .map((leg) => ({
+          end: leg.endSeconds - world.traversalFrame!.timeSeconds - time,
+          from: { x: leg.from.x, y: leg.from.y },
+          start: leg.startSeconds - world.traversalFrame!.timeSeconds - time,
+          to: { x: leg.to.x, y: leg.to.y },
+        })),
+      (world.traversalFrame?.timeSeconds ?? 0) + time,
+      false,
+    );
+    next = animated.state;
+    segments.push(
+      ...animated.segments.map((segment) => ({
+        ...segment,
+        end: segment.end + time,
+        start: segment.start + time,
+      })),
+    );
+    animationAdvanced = true;
+  } else {
+    segments.push({
+      axis: track.axis,
+      end,
+      facing: next.facing,
+      from: current,
+      start: time,
+      to,
+      ...(node.hazardPhase && { hazardPhase: node.hazardPhase }),
+      ...(frame && { frame: frame.frame }),
+    });
+  }
+  if (watchdog && next.idleWatchdog) {
+    next = {
+      ...next,
+      idleWatchdog: observeIdle(watchdog, slice, segments.slice(segmentStart), next.idleWatchdog),
+    };
+  }
+  current = to;
+  next = {
+    ...advanceAttackClock(slice, next),
+    ...(sampledMotion && next.intent && { intent: advancePursuitIntent(slice, next.intent) }),
+    elapsed:
+      supportedDwell !== undefined
+        ? supportedDwell
+          ? next.elapsed + slice
+          : 0
+        : supportMotion && next.landing?.status === "pending"
+          ? next.elapsed
+          : next.elapsed + slice,
+    ...(object.contact &&
+      !animationAdvanced && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
+  };
+  time = end > time ? end : seconds;
+  instant.clear();
+  run.current = current;
+  run.next = next;
+  run.time = time;
+  run.traversalStep = traversalStep;
+}
+
 // Fixtures and predictions that hold their own geometry perceive and advance in one call.
 export function stepBehaviour(
   tuning: BirdTuning,
@@ -1147,7 +1680,6 @@ export function advanceBehaviour(
     }
     return { actions: [], at, segments, state: next };
   }
-  const { target: bird, tuning, world } = perception;
   const recovery: BehaviourRecoveryContext = {
     enter: (point, key, current) => enterState(perception, object, point, key, current),
     firstTransition: (point, current) =>
@@ -1163,7 +1695,7 @@ export function advanceBehaviour(
   const actions: BehaviourEvent[] = [];
   const segments: BehaviourSegment[] = [];
   const instant = new Set<string>();
-  let current = at;
+  const current = at;
   let next = updatePursuit(perception, object, seconds, at, state);
   const escaped =
     state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped"
@@ -1211,447 +1743,39 @@ export function advanceBehaviour(
     }
   }
   const { flyGateway } = pursuitKinds(plan);
-  let time = 0;
-  let traversalStep: ReturnType<typeof advanceTraversal> | undefined;
-  let capturedIntent = false;
-  let intentPause: boolean | undefined;
+  const context: BehaviourRunContext = {
+    deferToAttack,
+    escaped,
+    flyGateway,
+    object,
+    perception,
+    seconds,
+    watchdog,
+  };
+  const run: BehaviourRun = {
+    actions,
+    capturedIntent: false,
+    current,
+    instant,
+    intentPause: undefined,
+    next,
+    segments,
+    time: 0,
+    traversalStep: undefined,
+  };
   while (true) {
-    let node = nodeOf(object, next.stateKey);
-    const supportMotion =
-      (node.motion.kind === "fly" && node.motion.to === "support") ||
-      (node.motion.kind === "wait" && node.motion.support === "required");
-    const support = prepareSupport(perception, object, node.motion, time, current, next);
-    next = support.state;
-    const supportWorld = support.world;
-    const supportPerception = supportWorld ? { ...perception, world: supportWorld } : perception;
-    const supported = support.supported;
-    const landingTarget = support.target;
-    if (
-      next.pursuit?.phase === "escaped" &&
-      !next.pursuit.settled &&
-      !attackProtected(node, next) &&
-      next.stateKey === plan.initial &&
-      node.motion.kind === "wait" &&
-      flyGateway &&
-      !next.hop &&
-      !supportedLanding(object, world, current)
-    ) {
-      next = enterState(perception, object, current, flyGateway, next);
-      node = nodeOf(object, next.stateKey);
+    const outcome = decideSlice(context, run);
+    if (outcome.kind === "hold") {
+      return outcome.step;
     }
-    if (
-      next.pursuit?.phase === "escaped" &&
-      !next.pursuit.settled &&
-      !attackProtected(node, next) &&
-      (node.motion.kind === "pursue" || next.stateKey === plan.initial) &&
-      !next.hop &&
-      (!next.traversal || next.traversal.physical.grounded) &&
-      (node.motion.kind !== "pursue" ||
-        node.motion.mode !== "fly" ||
-        supportedLanding(object, world, current))
-    ) {
-      next = enterState(perception, object, current, plan.initial, {
-        ...next,
-        anchor: current,
-        pursuit: { ...next.pursuit, settled: true },
-      });
-      node = nodeOf(object, next.stateKey);
-    }
-    if (watchdog && !deferToAttack && idleReady(object, world, current, next)) {
-      // Keep the safe graph phase until the next complete physics step can prove its route.
-      const remaining = seconds - time;
-      const hold = [{ end: remaining, from: current, start: 0, to: current }];
-      const animated = animateSegments(object, remaining, next, hold);
-      next = advanceAttackClock(remaining, {
-        ...animated.state,
-        idleWatchdog: observeIdle(watchdog, remaining, hold, next.idleWatchdog!),
-      });
-      return {
-        actions,
-        at: current,
-        segments: [
-          ...segments,
-          ...animated.segments.map((segment) => ({
-            ...segment,
-            end: segment.end + time,
-            start: segment.start + time,
-          })),
-        ],
-        state: next,
-        ...(escaped && { escaped }),
-      };
-    }
-    const settling =
-      next.pursuit?.phase === "escaped" &&
-      !next.pursuit.settled &&
-      !attackProtected(node, next) &&
-      node.motion.kind === "pursue" &&
-      node.motion.mode === "fly";
-    const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
-    if (
-      next.pendingEntry &&
-      !(supportMotion && next.landing?.status === "pending") &&
-      !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
-    ) {
-      const entered = enterState(perception, object, current, next.stateKey, next);
-      next = enterAttack(
-        plan,
-        node,
-        supportMotion ? { ...entered, elapsed: next.elapsed } : entered,
-      );
-      for (const action of node.onEnter ?? []) {
-        actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
-      }
-      next = { ...next, pendingEntry: false };
-    }
-    if (
-      node.motion.kind !== "wait" &&
-      node.motion.kind !== "fly" &&
-      node.motion.kind !== "pursue" &&
-      node.motion.direction === "target"
-    ) {
-      const mine = current[track.axis] + (track.axis === "x" ? object.width : object.height) / 2;
-      const target = bird[track.axis] + (track.axis === "x" ? tuning.width : tuning.height) / 2;
-      if (target !== mine) {
-        next = { ...next, facing: target < mine ? -1 : 1 };
-      }
-    }
-    const selectionFallback =
-      node.motion.kind === "fly" &&
-      node.motion.to === "support" &&
-      node.motion.selection !== undefined &&
-      next.flightSelection?.status === "pending" &&
-      node.attack?.phase !== "committed" &&
-      node.attack?.phase !== "completed" &&
-      next.activeAttack?.phase !== "committed";
-    const transition =
-      traversalStep !== undefined ||
-      next.traversal?.preparation !== undefined ||
-      settling ||
-      (node.motion.kind === "fly" &&
-        node.motion.to === "support" &&
-        !supported &&
-        !selectionFallback) ||
-      (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
-      (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded)
-        ? undefined
-        : node.transitions.find(
-            ({ to, when }) =>
-              (!selectionFallback ||
-                (when.length === 1 &&
-                  when[0]!.kind === "alignment-blocked" &&
-                  (() => {
-                    const fallback = nodeOf(object, to);
-                    return (
-                      fallback.attack === undefined &&
-                      fallback.motion.kind === "fly" &&
-                      fallback.motion.to === "support" &&
-                      !fallback.motion.selection
-                    );
-                  })())) &&
-              canEnterAttack(nodeOf(object, to), next) &&
-              !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
-              when.every((condition) =>
-                condition.kind === "arrived" && supportMotion
-                  ? supported
-                  : matches(supportPerception, object, current, next, condition),
-              ),
-          );
-    if (transition) {
-      if (instant.has(next.stateKey)) {
-        throw new Error(`Instant behaviour transition cycle for ${object.character}`);
-      }
-      instant.add(next.stateKey);
-      next = enterState(perception, object, current, transition.to, next);
-      continue;
-    }
-    if (time >= seconds) {
+    if (outcome.kind === "end") {
       break;
     }
-    const sampledMotion =
-      node.motion.kind === "pursue" &&
-      node.motion.intent !== undefined &&
-      !attackProtected(node, next) &&
-      !settling &&
-      next.pursuit?.phase === "engaged";
-    if (sampledMotion && node.motion.kind === "pursue" && node.motion.intent) {
-      const previous = next.intent;
-      const needsCapture = !previous || previous.remainingSeconds <= 0;
-      let capture =
-        needsCapture &&
-        !next.traversal?.preparation &&
-        (!next.traversal || next.traversal.physical.grounded);
-      if (needsCapture && node.motion.mode === "fly" && previous) {
-        const target =
-          node.motion.overhead &&
-          overheadFlightGoalForRect(
-            node.motion.overhead,
-            previous.travelDirection,
-            previous.target,
-            object,
-          );
-        capture =
-          safeIntentHover(world, seconds - time, object, current) &&
-          (!target || Math.abs(target.y - current.y) <= EDGE);
-      }
-      if (needsCapture && capture && !capturedIntent) {
-        let intent = capturePursuitIntent(
-          world,
-          node.motion.intent,
-          tuning,
-          bird,
-          next.intentDecision ?? 0,
-          next.facing,
-          object,
-          current,
-        );
-        if (node.motion.mode === "fly" && node.motion.overhead) {
-          const goal = overheadFlightGoalForRect(
-            node.motion.overhead,
-            intent.travelDirection,
-            intent.target,
-            object,
-          );
-          intent = {
-            ...intent,
-            facing: goal.x === current.x ? next.facing : goal.x < current.x ? -1 : 1,
-          };
-        }
-        next = {
-          ...next,
-          intent,
-          intentDecision: (next.intentDecision ?? 0) + 1,
-          ...(node.motion.mode === "fly" &&
-            node.motion.overhead && { flightApproachDirection: intent.travelDirection }),
-        };
-        if (next.traversal) {
-          const fresh = { ...next.traversal, inputs: [] };
-          delete (fresh as { searchedAt?: Point }).searchedAt;
-          next = { ...next, traversal: fresh };
-        }
-        capturedIntent = true;
-        intentPause = undefined;
-      }
-      if (intentPause === undefined) {
-        intentPause =
-          (next.intent?.pauseRemainingSeconds ?? 0) > 0 &&
-          (node.motion.mode === "ground"
-            ? supportedLanding(object, world, current) &&
-              !next.traversal?.preparation &&
-              (!next.traversal || next.traversal.physical.grounded)
-            : safeIntentHover(world, seconds - time, object, current));
-      }
+    if (outcome.kind === "act") {
+      actSlice(context, outcome.decision, run);
     }
-    let frame = object.contact
-      ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
-      : undefined;
-    let slice = Math.min(seconds - time, frame?.remaining ?? Infinity);
-    if ((next.attackCooldownRemainingSeconds ?? 0) > 0) {
-      slice = Math.min(slice, next.attackCooldownRemainingSeconds!);
-    }
-    for (const { when } of settling ? [] : node.transitions) {
-      if (
-        when.every(
-          (condition) =>
-            condition.kind === "elapsed" || matches(perception, object, current, next, condition),
-        )
-      ) {
-        const threshold = Math.max(
-          0,
-          ...when
-            .filter((condition) => condition.kind === "elapsed")
-            .map((condition) => condition.seconds),
-        );
-        if (threshold > next.elapsed) {
-          slice = Math.min(slice, threshold - next.elapsed);
-        }
-      }
-    }
-    if (node.motion.kind === "hop" && !next.hop) {
-      next = {
-        ...next,
-        hop: {
-          elapsed: 0,
-          groundY: current.y,
-          height: node.motion.hopHeight,
-          seconds: node.motion.hopSeconds,
-        },
-      };
-    }
-    const hop = next.hop;
-    if (hop) {
-      slice = Math.min(
-        slice,
-        (hop.elapsed < hop.seconds / 2 ? hop.seconds / 2 : hop.seconds) - hop.elapsed,
-      );
-    }
-    const to = { ...current };
-    let traversalSegments: readonly TraversalSafety[] | undefined;
-    let supportedDwell: boolean | undefined;
-    let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
-    // An escaped flier settles before its chase ability, which finishes any airborne leg.
-    const primary = behaviourAbilityParams(node.motion);
-    const chosen: BehaviourAbilityParams[] = [
-      ...(settling && node.motion.kind === "pursue"
-        ? [{ kind: "escape-settle" as const, motion: node.motion }]
-        : []),
-      ...(primary ? [primary] : []),
-    ];
-    for (const params of chosen) {
-      const ability = abilityFor(BEHAVIOUR_ABILITIES, params);
-      if (!ability) {
-        continue;
-      }
-      const acted = ability.act(
-        {
-          arrives: (point, after, state) => {
-            const future = advanceAttackClock(after, {
-              ...state,
-              elapsed: state.elapsed + after,
-              ...(object.contact && {
-                animationSeconds: (state.animationSeconds ?? 0) + after,
-              }),
-            });
-            return node.transitions.some(
-              ({ to, when }) =>
-                when.some((condition) => condition.kind === "arrived") &&
-                canEnterAttack(nodeOf(object, to), future) &&
-                when.every((condition) => matches(perception, object, point, future, condition)),
-            );
-          },
-          intent: { paused: intentPause === true, sampled: sampledMotion },
-          object,
-          perception,
-          seconds,
-          slice,
-          support: { supported, target: landingTarget, world: supportWorld },
-          time,
-          track,
-          traversal: traversalStep,
-        },
-        params,
-        { at: current, state: next, to: { ...to } },
-      );
-      slice = acted.slice;
-      next = acted.state;
-      to.x = acted.to.x;
-      to.y = acted.to.y;
-      carryPoints = acted.carry;
-      supportedDwell = acted.dwell;
-      traversalStep = acted.traversal ?? traversalStep;
-      if (acted.segments) {
-        traversalSegments = acted.segments;
-      }
-      if (acted.resynced) {
-        frame = object.contact
-          ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
-          : undefined;
-      }
-    }
-    if (hop) {
-      const elapsed = Math.min(hop.seconds, hop.elapsed + slice);
-      const desired = hop.groundY - hopLift(hop.height, hop.seconds, elapsed);
-      to.y = hopY(object, world, { ...current, x: to.x }, desired);
-      if (elapsed >= hop.seconds - EDGE || (desired > current.y && to.y < desired - EDGE)) {
-        const landed = { ...next };
-        delete landed.hop;
-        next = landed;
-      } else {
-        next = { ...next, hop: { ...hop, elapsed } };
-      }
-    }
-    const end = time + slice;
-    const segmentStart = segments.length;
-    let animationAdvanced = false;
-    if (carryPoints?.length) {
-      let previous = current;
-      let start = time;
-      for (const point of carryPoints) {
-        segments.push({
-          axis: track.axis,
-          end: time + point.seconds,
-          facing: next.facing,
-          from: previous,
-          start,
-          to: point.at,
-          ...(frame && { frame: frame.frame }),
-        });
-        previous = point.at;
-        start = time + point.seconds;
-      }
-      if (start < end) {
-        segments.push({
-          axis: track.axis,
-          end,
-          facing: next.facing,
-          from: previous,
-          start,
-          to,
-          ...(frame && { frame: frame.frame }),
-        });
-      }
-    } else if (traversalSegments?.some((leg) => leg.endSeconds > leg.startSeconds)) {
-      const animated = animateSegments(
-        object,
-        slice,
-        next,
-        traversalSegments
-          .filter((leg) => leg.endSeconds > leg.startSeconds)
-          .map((leg) => ({
-            end: leg.endSeconds - world.traversalFrame!.timeSeconds - time,
-            from: { x: leg.from.x, y: leg.from.y },
-            start: leg.startSeconds - world.traversalFrame!.timeSeconds - time,
-            to: { x: leg.to.x, y: leg.to.y },
-          })),
-        (world.traversalFrame?.timeSeconds ?? 0) + time,
-        false,
-      );
-      next = animated.state;
-      segments.push(
-        ...animated.segments.map((segment) => ({
-          ...segment,
-          end: segment.end + time,
-          start: segment.start + time,
-        })),
-      );
-      animationAdvanced = true;
-    } else {
-      segments.push({
-        axis: track.axis,
-        end,
-        facing: next.facing,
-        from: current,
-        start: time,
-        to,
-        ...(node.hazardPhase && { hazardPhase: node.hazardPhase }),
-        ...(frame && { frame: frame.frame }),
-      });
-    }
-    if (watchdog && next.idleWatchdog) {
-      next = {
-        ...next,
-        idleWatchdog: observeIdle(watchdog, slice, segments.slice(segmentStart), next.idleWatchdog),
-      };
-    }
-    current = to;
-    next = {
-      ...advanceAttackClock(slice, next),
-      ...(sampledMotion && next.intent && { intent: advancePursuitIntent(slice, next.intent) }),
-      elapsed:
-        supportedDwell !== undefined
-          ? supportedDwell
-            ? next.elapsed + slice
-            : 0
-          : supportMotion && next.landing?.status === "pending"
-            ? next.elapsed
-            : next.elapsed + slice,
-      ...(object.contact &&
-        !animationAdvanced && { animationSeconds: (next.animationSeconds ?? 0) + slice }),
-    };
-    time = end > time ? end : seconds;
-    instant.clear();
   }
-  return { actions, at: current, segments, state: next, ...(escaped && { escaped }) };
+  return { actions, at: run.current, segments, state: run.next, ...(escaped && { escaped }) };
 }
 
 export { contactBox } from "./behaviourTrack";
