@@ -758,7 +758,14 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
               RACCOON_CLIMB_CLEAR,
             ],
           },
-          { to: "pursuit", when: [...DETECTION, { kind: "attack-ready" }] },
+          {
+            to: "pursuit",
+            when: [
+              ...DETECTION,
+              { kind: "attack-ready" },
+              { condition: RACCOON_CLIMB_CLEAR, kind: "not" },
+            ],
+          },
         ],
       },
       rest: {
