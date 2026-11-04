@@ -25,9 +25,6 @@ Format: `- [status] **Idea**: short description · notes`. Statuses: **floated**
 These are unresolved, not current implementation requirements.
 
 - **Beginning:** the cause of Chibi and Fert's fight
-- **Confirm, keyboard has no overlay:** assumed, the touch control overlay shows only with touch
-- **Confirm, one-way ledges:** assumed, he jumps up through an awning or other one-way ledge from below and lands on top of it
-- **Confirm, restarts reset choices:** assumed, a zone restart also resets the choices made in that zone
 - **Ending:** the outcome of their friendship when Chibi returns to the shared apartment
 - **Friends:** the identities of the friends Fert enlists beyond Archie, Pebble, Trixi, Bini and Kiwi, and their encounters
 - **Rooms:** the currency and what items do; what quests and rewards give and how they are tracked; what a threat leads to; whether a room can be revisited, and whether its dialogue changes
