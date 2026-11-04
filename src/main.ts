@@ -1,10 +1,12 @@
 import "./crash/install";
-import "./platform/view/frameTurnLandscapeGame.css";
+import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
 import "./main.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
 import { capFrameRate } from "@andornaut/game-kit/clock/phaser/capFrameRate";
+import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
+import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
 import { Game, Scale, WEBGL } from "phaser";
 
 // eslint-disable-next-line no-duplicate-imports -- the side-effect import above runs it first.
@@ -12,7 +14,6 @@ import { CRASH_SCREEN } from "./crash/install";
 import { SCREEN } from "./data/screen";
 import { mountDeveloperPanel } from "./dev/panel";
 import { FRAME_TURN } from "./input/frameTurn";
-import { lockGameOrientation } from "./platform/view/frameTurn";
 import { setupPhoneApp } from "./pwa";
 import { installOffer } from "./pwa/installOffer";
 import { BootScene } from "./scenes/BootScene";
@@ -24,7 +25,6 @@ import { DialogueScene } from "./scenes/DialogueScene";
 import { MapScene } from "./scenes/MapScene";
 import { OpeningScene } from "./scenes/OpeningScene";
 import { PauseScene } from "./scenes/PauseScene";
-import { followFrameTurn } from "./scenes/platform/followFrameTurn";
 import { RestartScene } from "./scenes/RestartScene";
 import { RoomScene } from "./scenes/RoomScene";
 import { SettingsScene } from "./scenes/SettingsScene";
@@ -112,7 +112,7 @@ function startGame(): void {
   // changed (the kit's followFrameTurn).
   const parent = document.getElementById("game");
   if (parent !== null) {
-    followFrameTurn(game, parent, FRAME_TURN, game.scale.gameSize);
+    followFrameTurn(FRAME_TURN, game.scale.gameSize, parent, game);
   }
   // Menus draw at most about MENU_FPS frames a second; gameplay and the animated opening draw
   // every display frame.
@@ -125,7 +125,7 @@ function startGame(): void {
 installOffer();
 
 // Asks for landscape, on the game page only; where the browser refuses, the frame turns.
-lockGameOrientation(screen, "landscape");
+lockGameOrientation("landscape", screen);
 
 setupPhoneApp();
 startGame();

@@ -10,6 +10,13 @@ import { drawProgressBar } from "@andornaut/game-kit/progress/phaser/drawProgres
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { clampInto, containsPoint } from "@andornaut/game-kit/rect";
 import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
+import {
+  clientPoint,
+  listenPagePresses,
+  onPageControl,
+  type PagePointerEvent,
+  type PagePress,
+} from "@andornaut/game-kit/web/input/dom/pagePresses";
 import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
 import { AIR_JUMP_CUE } from "../data/airJumpCue";
@@ -64,13 +71,6 @@ import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
 import { stageProgressRect } from "../layout/stageProgress";
 import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
-import {
-  clientPoint,
-  listenPagePresses,
-  onPageControl,
-  type PagePointerEvent,
-  type PagePress,
-} from "../platform/input/pagePresses";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { contactFrameAt, spriteFrameOrigin } from "../rules/bodyContact";
 import { deathSupport } from "../rules/death";

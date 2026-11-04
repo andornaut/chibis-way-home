@@ -35,17 +35,17 @@ const BOUNDARIES = [
 ];
 
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
-// Each context imports only contexts below it, bottom first: data; platform, ai, assets and
-// settings; camera, stage and ui; rules; save; dialogue; layout; input; view; pause; loading;
-// pwa; the side pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling
-// (dev, sim, tools). "folder/module" allows one module of a folder ("folder/index" its index):
+// Each context imports only contexts below it, bottom first: data; ai, assets and settings;
+// camera, stage and ui; rules; save; dialogue; layout; input; view; pause; loading; pwa; the side
+// pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
+// tools). "folder/module" allows one module of a folder ("folder/index" its index):
 // each is an import that a later move removes, by moving the module into a context or the
 // importer out of one. The boundaries above govern src/testing/.
 const CONTEXTS = {
   ai: [],
   assets: [],
   camera: ["data"],
-  crash: ["data", "platform"],
+  crash: ["data"],
   data: [
     "ai/randomStreams",
     "rules/assemble",
@@ -77,18 +77,17 @@ const CONTEXTS = {
     "view/objectArt",
     "view/tiles",
   ],
-  dev: ["data", "platform", "rules"],
+  dev: ["data", "rules"],
   dialogue: ["data", "layout/dialogueScreen", "layout/hitAreas", "ui"],
   gallery: ["view"],
-  headers: ["platform"],
-  homePage: ["data", "layout", "platform", "rules", "view"],
-  input: ["data", "layout", "platform", "ui"],
+  headers: [],
+  homePage: ["data", "layout", "rules", "view"],
+  input: ["data", "layout", "ui"],
   layout: [
     "data",
     "dialogue",
     "input/intent",
     "input/mapInput",
-    "platform",
     "rules",
     "save",
     "view/actionHelp",
@@ -97,10 +96,9 @@ const CONTEXTS = {
     "view/mapPath",
     "view/statsStatement",
   ],
-  loading: ["data", "layout", "platform", "view"],
+  loading: ["data", "layout", "view"],
   pause: ["ui"],
-  platform: [],
-  pwa: ["loading", "platform", "view"],
+  pwa: ["loading", "view"],
   rules: [
     "ai",
     "camera",
@@ -114,7 +112,7 @@ const CONTEXTS = {
     "view/bird",
     "view/chunkParallax",
   ],
-  save: ["data", "dev/mode", "platform", "rules", "view/bird"],
+  save: ["data", "dev/mode", "rules", "view/bird"],
   scenes: [
     "assets",
     "data",
@@ -125,7 +123,6 @@ const CONTEXTS = {
     "layout",
     "loading",
     "pause",
-    "platform",
     "pwa",
     "rules",
     "save",
@@ -137,7 +134,7 @@ const CONTEXTS = {
   settings: [],
   sim: ["ai", "data", "rules", "stage", "view"],
   stage: ["data"],
-  tools: ["assets", "data", "headers", "homePage", "loading", "platform", "pwa", "view"],
+  tools: ["assets", "data", "headers", "homePage", "loading", "pwa", "view"],
   tuningPage: ["data", "gallery"],
   ui: [],
   view: ["ai", "camera", "data", "dialogue", "input", "layout", "rules", "stage"],
@@ -157,7 +154,7 @@ function folders(path) {
 
 // An import names a folder only by its path, so the pattern matches only a relative path that
 // climbs straight into a forbidden folder (`../view/x`). A module beside the importer
-// (`./camera`), a subfolder of an allowed folder (`../platform/view/x`) and a package subpath
+// (`./camera`), a subfolder of an allowed folder (`../data/view/x`) and a package subpath
 // (`@andornaut/game-kit/save/x`) that share a forbidden folder's name stay allowed, and a
 // context's own subfolders are never forbidden to it.
 function contextBoundary(context) {

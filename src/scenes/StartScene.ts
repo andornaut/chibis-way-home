@@ -1,4 +1,5 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
+import { browserExitPage, exitApp } from "@andornaut/game-kit/web/pwa/dom/exitApp";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
@@ -10,7 +11,6 @@ import {
   startScreenLayout,
 } from "../layout/startScreen";
 import { startBackAction } from "../pause/cardInput";
-import { browserExitPage, exitApp } from "../platform/pwa/exitApp";
 import {
   beginStartUpdateVisit,
   coverZone,

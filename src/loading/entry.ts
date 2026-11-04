@@ -1,4 +1,4 @@
-import "../platform/view/frameTurnLandscapeGame.css";
+import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
 import "../main.css";
 
 import { mountLoading, startupLoading } from "./progress";

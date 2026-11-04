@@ -3,9 +3,9 @@
 export { securityHeadersPlugin } from "../headers/securityHeadersPlugin";
 export { homePagePlugin } from "../homePage/html";
 export { loadingPlugin } from "../loading/html";
-export { phaserBuildPlugin } from "../platform/build/vite/phaserBuildPlugin";
-export { hashedIconsPlugin } from "../platform/pwa/vite/hashedIconsPlugin";
 export { ICONS } from "../pwa/icons";
 export { precachePlugin } from "../pwa/precachePlugin";
 export { atlasPlugin } from "./atlas/atlasPlugin";
 export { PHASER_BUILD } from "./phaserBuild";
+export { phaserBuildPlugin } from "@andornaut/game-kit/web/build/vite/phaserBuildPlugin";
+export { hashedIconsPlugin } from "@andornaut/game-kit/web/pwa/vite/hashedIconsPlugin";

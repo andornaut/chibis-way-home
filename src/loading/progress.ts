@@ -3,9 +3,9 @@ import {
   type ProgressHandle,
   type ProgressSnapshot,
 } from "@andornaut/game-kit/progressState";
+import { createDomProgressBar } from "@andornaut/game-kit/web/progress/dom/progressBar";
 
 import { SCREEN } from "../data/screen";
-import { createDomProgressBar } from "../platform/progress/dom/progressBar";
 import { PROGRESS_RECT, stageProgressStyle } from "./style";
 
 export const loadingProgress = createProgressState();

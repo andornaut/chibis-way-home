@@ -1,11 +1,11 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { buildLabel } from "@andornaut/game-kit/web/build/buildLabel";
 import { expect, it } from "vitest";
 
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
-import { BUILD_LABEL } from "../platform/build/buildLabel";
 import { CARD_FONTS } from "../testing/cardFonts";
 import {
   CARD_CONTENT,
@@ -19,6 +19,7 @@ import { pauseCard } from "./pauseCard";
 import { settingsCard, stepsCard } from "./settingsCard";
 import { stageSelectCard } from "./stageSelectCard";
 
+const BUILD_LABEL = buildLabel(__APP_VERSION__, __COMMIT__);
 const pause = pauseCard(CARD_FONTS, TEXT.pause);
 const variants = [false, true].map((install) =>
   settingsCard(CARD_FONTS, TEXT.settings, BUILD_LABEL, install),

@@ -1,12 +1,12 @@
 import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { buildLabel as formatBuildLabel } from "@andornaut/game-kit/web/build/buildLabel";
+import { type MenuInstallBrowser, offersInstall } from "@andornaut/game-kit/web/pwa/installState";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { focusRingAround, settingsCard, stepsCard } from "../layout/settingsCard";
-import { BUILD_LABEL } from "../platform/build/buildLabel";
-import { type MenuInstallBrowser, offersInstall } from "../platform/pwa/installState";
 import { installOffer } from "../pwa/installOffer";
 import { TOUCH_SETTINGS, type TouchSetting, touchSettingShown } from "../settings/touchControls";
 import { focusKeyAction, stepFocus } from "../ui";
@@ -42,6 +42,9 @@ export interface SettingsData {
 
 // The settings card's controls: the close X, the Install row and each touch setting's row.
 type Target = "close" | "install" | TouchSetting;
+
+// This build's version and commit, as the card's last line shows them.
+const BUILD_LABEL = formatBuildLabel(__APP_VERSION__, __COMMIT__);
 
 // The icon on each touch setting's row.
 const SETTING_ICONS: Readonly<Record<TouchSetting, string>> = {

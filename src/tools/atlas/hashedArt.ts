@@ -1,4 +1,4 @@
-import { contentHash } from "../../platform/build/contentHash";
+import { contentHash } from "@andornaut/game-kit/web/build/vite/contentHash";
 
 // Where a build writes the atlas pages: under the path the headers and the service worker treat
 // as content-hashed build output.

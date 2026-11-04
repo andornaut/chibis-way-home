@@ -2,8 +2,8 @@
 // prompt where it gives one, the steps for the browser's own menu where it installs only from
 // there (iOS, Firefox for Android), and hidden once installed or where neither works. Homepage
 // copy from data/text.ts is rendered into pages/index.html by Vite.
-import { wireInstallButton } from "../platform/pwa/installButton";
-import { watchInstall } from "../platform/pwa/installFlow";
+import { wireInstallButton } from "@andornaut/game-kit/web/pwa/dom/installButton";
+import { watchInstall } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 
 // Elements in pages/index.html. The steps dialog holds one section per browser, each marked
 // data-browser with its MenuInstallBrowser and titled by its h2.

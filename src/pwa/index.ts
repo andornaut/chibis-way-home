@@ -4,23 +4,26 @@
 //
 // Offline registration retains its prepared-zone timing. Waiting updates activate only through
 // the explicit Start-screen offer, never automatically before input or during gameplay.
-import { offlineActivity } from "../loading/serviceWorker";
-import { appCannotClose } from "../platform/pwa/appWindow";
+import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
+import { backCloseWatcher, isFirefoxAndroidApp } from "@andornaut/game-kit/web/pwa/backNavigation";
 import {
-  backCloseWatcher,
   browserCloseWatcher,
   guardBackNavigation,
-  isFirefoxAndroidApp,
-} from "../platform/pwa/backNavigation";
-import { pageRunsAsApp } from "../platform/pwa/installFlow";
+} from "@andornaut/game-kit/web/pwa/dom/backNavigation";
+import { pageRunsAsApp } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 import {
   browserOfflinePage,
   type OfflinePlay,
   startOfflinePlay,
-} from "../platform/pwa/offlinePlay";
-import { serviceWorkerUrl } from "../platform/pwa/serviceWorkerUrl";
-import { requestPersistentStorage } from "../platform/pwa/storagePersistence";
-import { createScreenWakeLock, type ScreenWakeLock } from "../platform/pwa/wakeLock";
+} from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+import {
+  createScreenWakeLock,
+  type ScreenWakeLock,
+} from "@andornaut/game-kit/web/pwa/dom/wakeLock";
+import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
+import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
+
+import { offlineActivity } from "../loading/serviceWorker";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events";
 import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen";
 import { createUpdateOffer } from "./updateOffer";
@@ -97,8 +100,9 @@ export function setupPhoneApp(): void {
     );
   }
   screenWakeLock = createScreenWakeLock(
-    "wakeLock" in navigator ? navigator.wakeLock : undefined,
+    window,
     document,
+    "wakeLock" in navigator ? navigator.wakeLock : undefined,
   );
 }
 

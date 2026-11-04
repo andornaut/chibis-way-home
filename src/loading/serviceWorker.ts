@@ -1,6 +1,6 @@
 import type { ProgressHandle } from "@andornaut/game-kit/progressState";
+import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
 
-import type { OfflineActivity } from "../platform/pwa/offlinePlay";
 import { installProgress } from "./progress";
 
 let operation: ProgressHandle | undefined;

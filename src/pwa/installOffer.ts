@@ -1,4 +1,4 @@
-import { type InstallFlow, watchInstall } from "../platform/pwa/installFlow";
+import { type InstallFlow, watchInstall } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 
 let flow: InstallFlow | undefined;
 

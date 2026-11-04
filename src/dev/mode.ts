@@ -1,5 +1,6 @@
+import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/web/pwa/backNavigation";
+
 import type { SkillId } from "../data/types";
-import { INSTALLED_APP_DISPLAY_QUERY } from "../platform/pwa/backNavigation";
 import { SKILL_IDS, type SkillOverrides } from "../rules/skills";
 
 const SKILL_PARAMS: Readonly<Record<SkillId, string>> = {

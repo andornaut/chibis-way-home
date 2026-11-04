@@ -1,11 +1,11 @@
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
 import { loadSave } from "@andornaut/game-kit/save/versionedSave";
+import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
 
 import { ZONE_MAP } from "../data/map";
 import type { SkillId } from "../data/types";
 import { RECIPES, ZONES } from "../data/zones";
 import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode";
-import { localSaveStorage } from "../platform/save/storage";
 import { activeStepSeconds } from "../rules/death";
 import { eligibleSkills, resolveActiveSkill } from "../rules/skills";
 import type { ZoneState } from "../rules/zone";

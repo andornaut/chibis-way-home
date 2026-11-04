@@ -1,6 +1,7 @@
+import type { CrashColours } from "@andornaut/game-kit/web/crash/dom/crashScreen";
+
 import palette from "../../public/art/palette.json";
 import bird from "../../public/art/sprites/bird.json";
-import type { CrashColours } from "../platform/crash/crashScreen";
 
 const { dslate, ink, lgrey, navy, white, yellow } = palette.colours;
 

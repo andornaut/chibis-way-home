@@ -17,21 +17,24 @@ const offline = vi.hoisted(() => {
     ),
   };
 });
-vi.mock("../platform/pwa/offlinePlay", () => ({
+vi.mock("@andornaut/game-kit/web/pwa/dom/offlinePlay", () => ({
   browserOfflinePage: () => ({}),
   startOfflinePlay: offline.start,
 }));
-vi.mock("../platform/pwa/backNavigation", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../platform/pwa/backNavigation")>()),
+vi.mock("@andornaut/game-kit/web/pwa/backNavigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@andornaut/game-kit/web/pwa/backNavigation")>()),
   backCloseWatcher: vi.fn(() => () => new EventTarget()),
-  browserCloseWatcher: vi.fn(),
   isFirefoxAndroidApp: () => true,
 }));
-vi.mock("../platform/pwa/installFlow", () => ({ pageRunsAsApp: () => false }));
-vi.mock("../platform/pwa/storagePersistence", () => ({
+vi.mock("@andornaut/game-kit/web/pwa/dom/backNavigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@andornaut/game-kit/web/pwa/dom/backNavigation")>()),
+  browserCloseWatcher: vi.fn(),
+}));
+vi.mock("@andornaut/game-kit/web/pwa/dom/installFlow", () => ({ pageRunsAsApp: () => false }));
+vi.mock("@andornaut/game-kit/web/pwa/storagePersistence", () => ({
   requestPersistentStorage: vi.fn(),
 }));
-vi.mock("../platform/pwa/wakeLock", () => ({ createScreenWakeLock: vi.fn() }));
+vi.mock("@andornaut/game-kit/web/pwa/dom/wakeLock", () => ({ createScreenWakeLock: vi.fn() }));
 
 beforeEach(() => {
   vi.resetModules();
@@ -112,7 +115,7 @@ it.each([
 ])(
   "offers Start Exit only with a usable exit path: $name",
   async ({ app, historyLength = 1, shown, ua, watcher = true }) => {
-    const { backCloseWatcher } = await import("../platform/pwa/backNavigation");
+    const { backCloseWatcher } = await import("@andornaut/game-kit/web/pwa/backNavigation");
     vi.mocked(backCloseWatcher).mockReturnValueOnce(watcher ? () => new EventTarget() : undefined);
     const appNavigator = { maxTouchPoints: 5, standalone: app && /iPhone/.test(ua), userAgent: ua };
     Object.assign(window, {

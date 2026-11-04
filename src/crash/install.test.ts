@@ -1,16 +1,19 @@
+import type { CrashScreenOptions } from "@andornaut/game-kit/web/crash/dom/crashScreen";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
 import bird from "../../public/art/sprites/bird.json";
 import { TEXT } from "../data/text";
-import type { CrashScreenOptions } from "../platform/crash/crashScreen";
 
 const { install, screen } = vi.hoisted(() => {
   const screen = { stopGameOnCrash: vi.fn() };
-  return { install: vi.fn<(options: CrashScreenOptions) => typeof screen>(() => screen), screen };
+  return {
+    install: vi.fn<(page: unknown, options: CrashScreenOptions) => typeof screen>(() => screen),
+    screen,
+  };
 });
-vi.mock("../platform/crash/crashScreen", () => ({ installCrashScreen: install }));
-vi.mock("../platform/build/buildLabel", () => ({ BUILD_LABEL: "test build" }));
+vi.mock("@andornaut/game-kit/web/crash/dom/crashScreen", () => ({ installCrashScreen: install }));
+vi.mock("@andornaut/game-kit/web/build/buildLabel", () => ({ buildLabel: () => "test build" }));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -32,7 +35,7 @@ describe("native crash screen adapter", () => {
       const { CRASH_SCREEN } = await import("./install");
       expect(CRASH_SCREEN).toBe(screen);
       expect(install).toHaveBeenCalledOnce();
-      const options = install.mock.calls[0]![0];
+      const options = install.mock.calls[0]![1];
       expect(options).toMatchObject({ buildLabel: "test build", dev, words: TEXT.crash });
       expect(options.colours).toEqual({
         background: palette.colours.navy,
