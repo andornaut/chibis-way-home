@@ -1,6 +1,7 @@
 import { randomStream } from "@andornaut/game-kit/random";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import { namedStreams } from "../ai/randomStreams";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import type {
   AreaLayout,
@@ -938,10 +939,7 @@ export function stepZone(
               )
                 ? traversalGeometry(object)
                 : geometry),
-              idleDecision: {
-                namespace: `idle-roam:${zone.area}:${index}`,
-                seed: zone.seed + zone.attempt,
-              },
+              decisions: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
             },
             seconds,
             zone.bird,

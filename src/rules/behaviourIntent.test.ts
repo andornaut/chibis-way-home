@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, BehaviourPursuitIntent } from "../data/types";
@@ -87,7 +88,7 @@ const actor = (profile = plan) =>
 const bird = (x = 300, vx = 100) => ({ ...startBird(BIRD, { x, y: 500 }), vx });
 const floor = { height: 100, width: 1000, x: 0, y: 500 };
 const world = (): BehaviourWorld => ({
-  idleDecision: { namespace: "intent:main:0", seed: 31 },
+  decisions: namedStreams(31, "intent:main:0"),
   solids: [floor],
   traversalFrame: {
     bounds: { height: 600, width: 1000, x: 0, y: 0 },
@@ -251,7 +252,7 @@ it("replays object-local decisions without consuming a shared random stream", ()
     config = { ...intent, offset: { max: 20, min: -20 } };
   const first = capturePursuitIntent(physical, config, BIRD, bird(), 0, 1, object, object.origin);
   capturePursuitIntent(
-    { ...physical, idleDecision: { namespace: "other", seed: 31 } },
+    { ...physical, decisions: namedStreams(31, "other") },
     config,
     BIRD,
     bird(),
@@ -430,7 +431,7 @@ it.each([
       vx: BIRD.walkSpeed,
     };
     const physical: BehaviourWorld = {
-      idleDecision: { namespace: `actual:${character}:${entry}`, seed: 31 },
+      decisions: namedStreams(31, `actual:${character}:${entry}`),
       solids: [support],
       traversalFrame: {
         bounds: { height: 1200, width: 4000, x: 0, y: 0 },

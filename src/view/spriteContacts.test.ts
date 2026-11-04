@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import maskJson from "../../public/art/contact-silhouettes.json";
 import manifestJson from "../../public/art/manifest.json";
 import bearSheet from "../../public/art/sprites/bear-antagonist.json";
+import { namedStreams } from "../ai/randomStreams";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
@@ -320,7 +321,7 @@ it.each([
         : { x: 0, y: 0 },
     );
     const world = {
-      idleDecision: { namespace: "idle-roam:main:0", seed: 1 },
+      decisions: namedStreams(1, "idle-roam:main:0"),
       solids: [],
       traversalFrame: {
         bounds: { height: 720, width: 1440, x: 0, y: 0 },

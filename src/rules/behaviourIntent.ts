@@ -1,4 +1,3 @@
-import { randomStream } from "@andornaut/game-kit/random";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { stepTraversal, type TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
@@ -33,11 +32,10 @@ export function capturePursuitIntent(
   object: ObjectLayout,
   at: Point,
 ): PursuitIntentState {
-  const context = world.idleDecision;
-  if (!context) {
+  if (!world.decisions) {
     throw new Error("Sampled pursuit requires an object-local decision context");
   }
-  const random = randomStream(context.seed, `${context.namespace}:pursuit-intent:${decision}`);
+  const random = world.decisions(`pursuit-intent:${decision}`);
   const between = ({ max, min }: { readonly min: number; readonly max: number }) =>
     min + random() * (max - min);
   const remainingSeconds = between(config.decisionSeconds);

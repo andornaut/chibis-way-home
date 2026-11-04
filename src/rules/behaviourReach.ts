@@ -1,5 +1,6 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
+import type { RandomStreams } from "../ai/randomStreams";
 import type {
   AreaLayout,
   BirdTuning,
@@ -51,7 +52,8 @@ export interface BehaviourTraversalFrame {
 
 export interface BehaviourWorld {
   readonly targetedAttackWindow?: TargetedAttackWindow;
-  readonly idleDecision?: { readonly seed: number; readonly namespace: string };
+  // Object-local decision streams; equal keys replay equal draws.
+  readonly decisions?: RandomStreams;
   readonly chunks?: AreaLayout["chunks"];
   readonly traversalFrame?: BehaviourTraversalFrame;
   readonly hazards?: readonly {

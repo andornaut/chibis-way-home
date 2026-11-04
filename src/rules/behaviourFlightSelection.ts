@@ -1,5 +1,3 @@
-import { randomStream } from "@andornaut/game-kit/random";
-
 import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types";
 import { supportedDestinations } from "./behaviourDestinations";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
@@ -153,11 +151,10 @@ export function selectSupportedFlight(
     }
     return { decision, state: pending() };
   }
-  const context = world.idleDecision;
-  if (!context || !world.traversalFrame) {
+  if (!world.decisions || !world.traversalFrame) {
     return { decision, state: pending() };
   }
-  const random = randomStream(context.seed, `${context.namespace}:supported-flight:${decision}`);
+  const random = world.decisions(`supported-flight:${decision}`);
   const targets = supportedDestinations(
     (point) => supportedLanding(object, world, point),
     { distance: policy.distance, minMovement: policy.minDistance },

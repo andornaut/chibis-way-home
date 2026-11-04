@@ -1,4 +1,3 @@
-import { randomStream } from "@andornaut/game-kit/random";
 import {
   findTraversal,
   type TraversalCommand,
@@ -186,10 +185,7 @@ export function planSupportedRecovery(
     return { ...attempted, status: "geometry-unavailable" };
   }
   const decision = prior.decision ?? 0;
-  const context = world.idleDecision;
-  const random = context
-    ? randomStream(context.seed, `${context.namespace}:${decision}`)
-    : undefined;
+  const random = world.decisions?.(`${decision}`);
   const chosen = { ...attempted, decision: decision + 1 };
   const targets = supportedDestinations(
     (target) => supportedLanding(object, world, target),

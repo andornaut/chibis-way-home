@@ -1,6 +1,7 @@
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { afterEach, expect, it, vi } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -584,7 +585,7 @@ it("replays namespaced choices while varying eligible decisions independently of
   const object = actor();
   const motion = { kind: "pursue", mode: "fly", speed: 10 } as const;
   const prior = { anchor: object.origin, seconds: 1 };
-  const geometry = { ...world(), idleDecision: { namespace: "idle-roam:main:0", seed: 37 } };
+  const geometry = { ...world(), decisions: namedStreams(37, "idle-roam:main:0") };
   const choose = (
     context: BehaviourWorld,
     decision: import("./behaviourIdle").BehaviourIdleState = prior,
@@ -598,7 +599,7 @@ it("replays namespaced choices while varying eligible decisions independently of
     first.recovery,
   );
   expect(
-    choose({ ...geometry, idleDecision: { namespace: "idle-roam:main:1", seed: 37 } }).recovery,
+    choose({ ...geometry, decisions: namedStreams(37, "idle-roam:main:1") }).recovery,
   ).not.toEqual(first.recovery);
 });
 

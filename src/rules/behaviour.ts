@@ -1,5 +1,6 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
+import { scopedStreams } from "../ai/randomStreams";
 import type {
   BehaviourAction,
   BehaviourCondition,
@@ -1525,12 +1526,7 @@ function groundRepositionStep(
   };
   const selectionWorld = {
     ...world,
-    ...(world.idleDecision && {
-      idleDecision: {
-        ...world.idleDecision,
-        namespace: `${world.idleDecision.namespace}:ground-periodic`,
-      },
-    }),
+    ...(world.decisions && { decisions: scopedStreams("ground-periodic", world.decisions) }),
   };
   let prepared = prior;
   if (
@@ -1541,7 +1537,7 @@ function groundRepositionStep(
   ) {
     // Periodic variation requires its per-object seed, never a deterministic-facing fallback.
     prepared = { ...prepared, anchor: at };
-    prepared = world.idleDecision
+    prepared = world.decisions
       ? planSupportedRecovery(
           preferredGroundWalk,
           policy,

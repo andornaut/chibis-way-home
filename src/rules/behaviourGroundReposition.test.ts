@@ -1,6 +1,7 @@
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { afterEach, expect, it, vi } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
@@ -107,7 +108,7 @@ const actor = (profile = plan) =>
   );
 const floor: Rect = { height: 300, width: 1000, x: 0, y: 300 };
 const world = (time = 0): BehaviourWorld => ({
-  idleDecision: { namespace: "ground:main:0", seed: 31 },
+  decisions: namedStreams(31, "ground:main:0"),
   solids: [floor],
   traversalFrame: {
     bounds: { height: 600, width: 1000, x: 0, y: 0 },
@@ -277,7 +278,7 @@ it("replays object-local target decisions independently of world time", () => {
   const other = stepBehaviour(
     BIRD,
     object,
-    { ...world(), idleDecision: { namespace: "ground:main:1", seed: 31 } },
+    { ...world(), decisions: namedStreams(31, "ground:main:1") },
     1 / 120,
     bird(),
     object.origin,
@@ -392,7 +393,7 @@ it.each([
       ticks = 0,
       chosenGoal: Rect | undefined;
     const physical = (time: number): BehaviourWorld => ({
-      idleDecision: { namespace: `production:${character}`, seed: 31 },
+      decisions: namedStreams(31, `production:${character}`),
       solids: [support],
       traversalFrame: {
         bounds: { height: 1200, width: 4000, x: 0, y: 0 },

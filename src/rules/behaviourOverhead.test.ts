@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, Character, Rect } from "../data/types";
 import { sweptBehaviourRect } from "../sim/behaviourBounds";
@@ -538,7 +539,7 @@ describe("varied supported flight destination", () => {
   const floor = { height: 100, width: 1000, x: 0, y: 500 };
   const world = (): BehaviourWorld => ({
     ...geometry([floor]),
-    idleDecision: { namespace: "fixture:0", seed: 17 },
+    decisions: namedStreams(17, "fixture:0"),
   });
   it("physically ascends, crosses and lands before the graph can complete the selected relocation", () => {
     const profile: BehaviourPlan = {

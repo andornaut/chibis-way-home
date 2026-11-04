@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import {
   type BehaviourState,
   contactBox,
@@ -39,7 +40,7 @@ const target = (vx = 0) => ({
 const floor = { height: 360, width: 720, x: 0, y: 360 };
 const roof = { height: 12, width: 240, x: 180, y: 240 };
 const world = (covered = false) => ({
-  idleDecision: { namespace: "idle-roam:main:0", seed: 1 },
+  decisions: namedStreams(1, "idle-roam:main:0"),
   solids: covered ? [floor, roof] : [floor],
   traversalFrame: {
     bounds: { height: 720, width: 720, x: 0, y: 0 },
@@ -463,7 +464,7 @@ it("actual Pebble cancels a blocked-sight tell on time and returns to support wi
 it("actual Pebble takes off to a varied supported perch before checking another attack", () => {
   const object = make(),
     bird = target(),
-    physical = { ...world(), idleDecision: { namespace: "pebble-perch-profile", seed: 1 } };
+    physical = { ...world(), decisions: namedStreams(1, "pebble-perch-profile") };
   const component = { ...object, behaviour: { ...object.behaviour!, initial: "return-high" } };
   const relocation = object.behaviour!.states.relocate!.motion;
   if (relocation.kind !== "fly" || relocation.to !== "support" || !relocation.selection) {

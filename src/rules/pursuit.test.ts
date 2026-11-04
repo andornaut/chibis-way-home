@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -582,7 +583,7 @@ describe("persistent pursuit", () => {
     };
     const geometry: BehaviourWorld = {
       ...world,
-      idleDecision: { namespace: "idle-roam:main:0", seed: 17 },
+      decisions: namedStreams(17, "idle-roam:main:0"),
       traversalFrame: {
         bounds: { height: floor.y + floor.height, width: floor.width, x: floor.x, y: 0 },
         dtSeconds: 4,

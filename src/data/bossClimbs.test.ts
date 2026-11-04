@@ -1,6 +1,7 @@
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { describe, expect, it, vi } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
 import type { BehaviourWorld } from "../rules/behaviourReach";
@@ -216,11 +217,11 @@ it.each([
     vi.mocked(findTraversal).mockClear();
     for (let tick = 0; tick < 600; tick++) {
       const world: BehaviourWorld = {
+        decisions: namedStreams(
+          initial.seed + initial.attempt,
+          `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
+        ),
         hazards,
-        idleDecision: {
-          namespace: `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
-          seed: initial.seed + initial.attempt,
-        },
         platforms: platforms.map(({ after, collision, owner }) => ({
           collision,
           owner,
@@ -550,10 +551,10 @@ it("actual Pebble flies beneath the dry gallery roof and returns to supported re
   let overheadTell = false;
   for (let tick = 0; tick < 1200; tick++) {
     const world: BehaviourWorld = {
-      idleDecision: {
-        namespace: `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
-        seed: initial.seed + initial.attempt,
-      },
+      decisions: namedStreams(
+        initial.seed + initial.attempt,
+        `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
+      ),
       platforms: platforms.map(({ after, collision, owner }) => ({
         collision,
         owner,
