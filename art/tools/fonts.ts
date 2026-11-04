@@ -9,7 +9,7 @@
  * alpha for tinting; font textures require linear sampling independently of art.
  *
  * Glyphs rasterise with art-kit's Skia bitmap font renderer, so their coverage, advances and
- * kerning follow Skia rather than FreeType. Each glyph is cropped to its ink and packed in
+ * kerning follow Skia rather than FreeType. Each glyph is cropped to its ink and art-kit packs it in
  * insertion order from the atlas's top-left with 1px spacing and a power-of-two atlas height.
  *
  * Usage, from the repository root:
@@ -21,8 +21,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { buildBitmapFont } from "@andornaut/art-kit/fonts";
+import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/glyphAtlas";
 import { encodeRgbaPng } from "@andornaut/art-kit/png";
-import { composite, crop, paste, resizeNearest, filledImage } from "@andornaut/art-kit/raster";
+import { composite, crop, resizeNearest, filledImage } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { Canvas, FontLibrary } from "skia-canvas";
 
@@ -157,83 +158,35 @@ export function rasterise(size: number, path: string): Rasterised {
   return { glyphs, ascent, descent, kernings };
 }
 
-// CLEANUP (added 2026-11-04): remove once @andornaut/art-kit 0.13.0 ships buildBitmapFontFromGlyphs layout "packed"
-
-type Places = ReadonlyMap<string, readonly [x: number, y: number]>;
-
-/** Insertion order, 1px spacing from the top-left and a power-of-two atlas height. */
-function pack(glyphs: ReadonlyMap<string, Glyph>): { atlas: RgbaImage; places: Places } {
-  let [x, y, rowHeight] = [0, 0, 0];
-  const places = new Map<string, readonly [number, number]>();
-  for (const [char, [image]] of glyphs) {
-    if (!image) {
-      places.set(char, [0, 0]);
-      continue;
-    }
-    if (x + image.width + 1 > ATLAS_W) [x, y, rowHeight] = [0, y + rowHeight + 1, 0];
-    places.set(char, [x, y]);
-    x += image.width + 1;
-    rowHeight = Math.max(rowHeight, image.height);
-  }
-  let height = 1;
-  while (height < y + rowHeight + 1) height *= 2;
-  const atlas = filledImage([0, 0, 0, 0], ATLAS_W, height);
-  for (const [char, [image]] of glyphs) {
-    const [px, py] = places.get(char) as readonly [number, number];
-    if (image) paste({ at: { x: px, y: py } }, image, atlas);
-  }
-  return { atlas, places };
-}
-
-/** Antialiased BMFont XML in art-kit's Python field set and order. */
-function bmfontXml(
-  {
-    base,
-    face,
-    key,
-    lineHeight,
-    size,
-  }: Record<"face" | "key", string> & Record<"base" | "lineHeight" | "size", number>,
-  { atlas, places }: { atlas: RgbaImage; places: Places },
-  { glyphs, kernings }: Pick<Rasterised, "glyphs" | "kernings">,
-): string {
-  const code = (char: string) => char.codePointAt(0) as number;
-  const lines = [
-    '<?xml version="1.0"?>',
-    "<font>",
-    `  <info face="${face}" size="${size}" bold="0" italic="0" charset="" unicode="1" ` +
-      'stretchH="100" smooth="1" aa="1" padding="0,0,0,0" spacing="1,1"/>',
-    `  <common lineHeight="${lineHeight}" base="${base}" scaleW="${atlas.width}" ` +
-      `scaleH="${atlas.height}" pages="1" packed="0"/>`,
-    `  <pages><page id="0" file="${key}.png"/></pages>`,
-    `  <chars count="${glyphs.size}">`,
-  ];
-  for (const [char, [image, ox, oy, advance]] of glyphs) {
-    const [x, y] = places.get(char) as readonly [number, number];
-    lines.push(
-      `    <char id="${code(char)}" x="${x}" y="${y}" width="${image?.width ?? 0}" ` +
-        `height="${image?.height ?? 0}" xoffset="${ox}" yoffset="${oy}" xadvance="${advance}" ` +
-        'page="0" chnl="15"/>',
-    );
-  }
-  lines.push("  </chars>");
-  if (kernings.length) {
-    lines.push(`  <kernings count="${kernings.length}">`);
-    for (const [a, b, n] of kernings)
-      lines.push(`    <kerning first="${code(a)}" second="${code(b)}" amount="${n}"/>`);
-    lines.push("  </kernings>");
-  }
-  lines.push("</font>", "");
-  return lines.join("\n");
-}
-
 function buildFont(key: string, face: string, size: number, path: string): void {
   const font = rasterise(size, path);
-  const packed = pack(font.glyphs);
+  const code = (char: string) => char.codePointAt(0) as number;
+  const { image, xml } = buildBitmapFontFromGlyphs(
+    {
+      layout: "packed",
+      antialias: true,
+      key,
+      face,
+      size,
+      base: font.ascent,
+      lineHeight: font.ascent + font.descent + 1,
+      atlasWidth: ATLAS_W,
+      kernings: font.kernings.map(([first, second, amount]) => ({
+        first: code(first),
+        second: code(second),
+        amount,
+      })),
+    },
+    new Map(
+      [...font.glyphs].map(([char, [glyph, xoffset, yoffset, xadvance]]) => [
+        char,
+        { image: glyph, xoffset, yoffset, xadvance },
+      ]),
+    ),
+  );
   mkdirSync(OUT, { recursive: true });
-  writeFileSync(`${OUT}/${key}.png`, encodeRgbaPng(PNG_OPTIONS, packed.atlas));
-  const info = { key, face, size, lineHeight: font.ascent + font.descent + 1, base: font.ascent };
-  writeFileSync(`${OUT}/${key}.fnt`, bmfontXml(info, packed, font));
+  writeFileSync(`${OUT}/${key}.png`, encodeRgbaPng(PNG_OPTIONS, image));
+  writeFileSync(`${OUT}/${key}.fnt`, xml);
 }
 
 export function build(): void {
