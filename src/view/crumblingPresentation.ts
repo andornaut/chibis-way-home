@@ -1,7 +1,50 @@
 import type { CrumblingPhase } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { AreaLayout, Rect } from "../data/types";
-import type { PlacedTile } from "./tiles";
+import type { AreaLayout, Point, Rect } from "../data/types";
+import { objectTiles, type PlacedTile, type Tileset } from "./tiles";
+
+// Palette colour of warning cracks.
+export const CRUMBLING_CRACK = "ink";
+
+// Tile-local opaque body faces of skins that can crumble, below the navy, white and light grey
+// safe lip and inside the side outlines (art/tools/obstacles.py ledge()).
+export const CRUMBLING_FACES: Readonly<Record<string, Readonly<Record<string, Rect>>>> = {
+  "tiles-platforming": {
+    "one-way-ledge-left": { height: 1, width: 11, x: 1, y: 5 },
+    "one-way-ledge-middle": { height: 1, width: 12, x: 0, y: 5 },
+    "one-way-ledge-right": { height: 1, width: 11, x: 0, y: 5 },
+  },
+};
+
+// The world-space opaque face of an object's actual selected tile skin, spanning its tiles.
+export function crumblingObjectFace(
+  key: string,
+  tileset: Tileset,
+  object: { readonly art: string; readonly height: number; readonly width: number },
+  at: Point,
+): Rect {
+  const faces = CRUMBLING_FACES[key] ?? {};
+  const size = tileset.tileSize;
+  const rects = objectTiles(tileset, object.art, object.width / size, object.height / size).map(
+    ({ col, index, row }) => {
+      const name = Object.keys(faces).find((face) => tileset.tiles[face] === index);
+      if (!name) {
+        throw new Error(`No crumbling face for ${key} tile ${index}`);
+      }
+      const face = faces[name]!;
+      return { ...face, x: at.x + col * size + face.x, y: at.y + row * size + face.y };
+    },
+  );
+  if (
+    rects.length === 0 ||
+    rects.some(({ height, y }) => y !== rects[0]!.y || height !== rects[0]!.height)
+  ) {
+    throw new Error(`Crumbling face for ${object.art} must be one row band`);
+  }
+  const left = Math.min(...rects.map(({ x }) => x));
+  const right = Math.max(...rects.map(({ width, x }) => x + width));
+  return { height: rects[0]!.height, width: right - left, x: left, y: rects[0]!.y };
+}
 
 export interface CrumblingTerrainBatch {
   readonly supportId: Rect;

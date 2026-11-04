@@ -143,6 +143,7 @@ import {
 } from "../view/bird";
 import { characterState, nextQuirkAt } from "../view/character";
 import { chunkBackdropSpan, chunkParallax } from "../view/chunkParallax";
+import { CRUMBLING_CRACK, crumblingObjectFace } from "../view/crumblingPresentation";
 import {
   deathFrameIndex,
   deathLabels,
@@ -177,6 +178,7 @@ import { backdropBottomFrame } from "./backdropBottomFrame";
 import { mountBossWarning } from "./bossWarning";
 import { paletteColour } from "./cardParts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
+import { createCrumblingArt } from "./crumblingArt";
 import type { CutsceneData } from "./CutsceneScene";
 import { mountDashTrail } from "./dashTrail";
 import { frameDeathCamera } from "./deathCamera";
@@ -306,6 +308,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // ?assembly=<n> fixes the seed.
   private trial: string | undefined;
   private areaArt!: GameObjects.Graphics;
+  private crumblingArt: ReturnType<typeof createCrumblingArt> | undefined;
   // Drawn as the start screen's backdrop rather than played.
   private backdrop = false;
   private preview: StagePreview | undefined;
@@ -1447,6 +1450,37 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       );
       return this.drawObject(key, source, object, index);
     });
+    this.crumblingArt?.item.destroy();
+    this.crumblingArt = area.crumbling && this.drawCrumbling(area);
+  }
+
+  // Marked supports keep their ordinary skins; terrain needs its own registered face first.
+  private drawCrumbling(area: AreaLayout): ReturnType<typeof createCrumblingArt> {
+    const targets = (area.crumbling ?? []).map(({ supportId }) => {
+      const index = area.objects.indexOf(supportId as ObjectLayout);
+      const object = area.objects[index];
+      const art = this.objectArt[index];
+      if (!object || !art) {
+        throw new Error("Crumbling terrain has no registered skin face");
+      }
+      const key = object.tileset === null ? undefined : (object.tileset ?? area.tileset);
+      const tileset = loadedTileset(
+        TILE,
+        (name) => this.cache.json.get(name) as Tileset | undefined,
+        key,
+      );
+      return {
+        face: key && tileset ? crumblingObjectFace(key, tileset, object, object.origin) : undefined,
+        item: art.item as unknown as { setVisible(visible: boolean): unknown },
+        supportId,
+      };
+    });
+    return createCrumblingArt(
+      (DEPTHS.tiles + DEPTHS.sprite) / 2,
+      paletteColour(this, CRUMBLING_CRACK),
+      this,
+      targets,
+    );
   }
 
   private drawTerrain(key: string, tileset: Tileset, area: AreaLayout): Tilemaps.Tilemap {
@@ -1760,6 +1794,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.bossWarning?.draw(behaviour, art.sprite, object.contact);
       }
     });
+    this.crumblingArt?.draw(this.zone.crumbling);
     this.drawTransients();
     this.drawPulses();
   }

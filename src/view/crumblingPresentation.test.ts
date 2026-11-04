@@ -1,7 +1,15 @@
+import { readFileSync } from "node:fs";
+
+import { decodePng } from "@andornaut/art-kit/png";
 import { expect, it } from "vitest";
 
 import type { AreaLayout, Rect } from "../data/types";
-import { crumblingAppearance, crumblingTerrainBatches } from "./crumblingPresentation";
+import {
+  CRUMBLING_FACES,
+  crumblingAppearance,
+  crumblingObjectFace,
+  crumblingTerrainBatches,
+} from "./crumblingPresentation";
 import { terrainTiles, type Tileset } from "./tiles";
 
 const tileset: Tileset = {
@@ -105,4 +113,72 @@ it("confines warning marks to the actual thin opaque ledge face", () => {
   expect(result.cracks.length).toBeGreaterThan(0);
   expect(result.cracks.every((pixel) => pixel.y === 105 && pixel.height === 1)).toBe(true);
   expect(result.cracks.every((pixel) => pixel.x >= 50 && pixel.x + pixel.width <= 70)).toBe(true);
+});
+
+it("registers each crumbling face on the actual opaque body below the safe lip", () => {
+  for (const [key, faces] of Object.entries(CRUMBLING_FACES)) {
+    const url = (path: string) =>
+      new URL(`../../public/art/tilesets/${key}.${path}`, import.meta.url);
+    const tileset = JSON.parse(readFileSync(url("json"), "utf8")) as Tileset;
+    const image = decodePng(new Uint8Array(readFileSync(url("png"))));
+    for (const [name, face] of Object.entries(faces)) {
+      const index = tileset.tiles[name]!;
+      const pixel = (x: number, y: number) => {
+        const at =
+          ((Math.floor(index / tileset.columns) * tileset.tileSize + y) * image.width +
+            (index % tileset.columns) * tileset.tileSize +
+            x) *
+          4;
+        return [...image.data.slice(at, at + 4)].join(",");
+      };
+      const body = new Set<string>();
+      for (let y = face.y; y < face.y + face.height; y++) {
+        for (let x = face.x; x < face.x + face.width; x++) {
+          body.add(pixel(x, y));
+        }
+      }
+      expect(body.size, name).toBe(1);
+      const [colour] = [...body];
+      expect(colour!.endsWith(",255"), name).toBe(true);
+      // Every lip row above the face and any outline column beside it uses other colours.
+      for (let y = 0; y < face.y; y++) {
+        expect(pixel(face.x, y), `${name} lip ${y}`).not.toBe(colour);
+      }
+      for (const x of [face.x - 1, face.x + face.width]) {
+        if (x >= 0 && x < tileset.tileSize) {
+          expect(pixel(x, face.y), `${name} outline ${x}`).not.toBe(colour);
+        }
+      }
+      for (let y = face.y + face.height; y < tileset.tileSize; y++) {
+        expect(pixel(face.x, y).endsWith(",0"), `${name} under ${y}`).toBe(true);
+      }
+    }
+  }
+});
+
+it("spans the selected ledge skin's tiles with one inner face band", () => {
+  const tileset = JSON.parse(
+    readFileSync(
+      new URL("../../public/art/tilesets/tiles-platforming.json", import.meta.url),
+      "utf8",
+    ),
+  ) as Tileset;
+  const face = crumblingObjectFace(
+    "tiles-platforming",
+    tileset,
+    { art: "one-way-ledge", height: 12, width: 72 },
+    { x: 288, y: 576 },
+  );
+  expect(face).toEqual({ height: 1, width: 70, x: 289, y: 581 });
+  expect(() =>
+    crumblingObjectFace(
+      "tiles-platforming",
+      tileset,
+      { art: "platform-top", height: 12, width: 12 },
+      {
+        x: 0,
+        y: 0,
+      },
+    ),
+  ).toThrow("No crumbling face");
 });
