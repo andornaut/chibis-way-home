@@ -27,7 +27,6 @@ import * as cast from "./cast.ts";
 import { commands, run } from "./cli.ts";
 import * as contactSilhouettes from "./contactSilhouettes.ts";
 import * as countryside from "./countryside.ts";
-import * as cutscene from "./cutscene.ts";
 import * as depot from "./depot.ts";
 import * as ferret from "./ferret.ts";
 import * as ferretAntagonist from "./ferretAntagonist.ts";
@@ -64,9 +63,8 @@ import * as zoneThemes from "./zoneThemes.ts";
 const USAGE = "Usage: all.ts build";
 // The manifest's sections, in their served order.
 const SECTIONS = ["fonts", "sprites", "data", "tilesets", "backdrops", "images"] as const;
-// Image entries registered by hand: the stage cutscene placeholder, whose build writes only its
-// PNG, and the hand-captured stage previews.
-const HAND_IMAGES = /^(stage-cutscene-placeholder|stage-preview-zone-\d+-stage-\d+)$/;
+// Image entries registered by hand: the hand-captured stage previews.
+const HAND_IMAGES = /^stage-preview-zone-\d+-stage-\d+$/;
 
 const ORDER: readonly (() => unknown)[] = [
   // Data and fonts.
@@ -114,7 +112,6 @@ const ORDER: readonly (() => unknown)[] = [
   woodland.build,
   backgroundTones.build,
   // Images and icons.
-  cutscene.build,
   logo.build,
   start.build,
   icons.build,

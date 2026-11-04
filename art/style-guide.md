@@ -248,12 +248,6 @@ Approved layout target for paired page implementation: reuse the existing logo a
 
 The runtime opening uses four single-shot beats on a plain `ink` field. Each shot has `background: null`, so it performs no background-image lookup. It uses the actual `bird`, `ferret-antagonist` and `ferret-parcel` sprites at native 1x in their `idle` poses; Fert is mirrored through `flipX` metadata while Chibi and the parcel are not. The authored anchors are 24,42 for Chibi, 24,48 for Fert and 12,24 for the parcel, all placed at y240.
 
-## Stage cutscene placeholder
-
-<!-- CLEANUP (added 2026-10-31): Replace the neutral illustration when authored stage cutscenes are approved. -->
-
-`art/tools/cutscene.ts` draws `stage-cutscene-placeholder`, a plain opaque 720x360 image registered under `images`. Its neutral palette and canonical bird add no plot, location or dialogue. Keep the bottom 80px quiet for the runtime's standard Continue button; the image contains no words or controls. Gameplay owns the transition and its text.
-
 Map travel reuses the existing `bird` sprite's looping `walk` tag, four 130ms frames on the 48x42 canvas, with bottom-centre anchor 24,42. Direction uses horizontal mirroring, and a stopped bird can return to `idle`. No separate map character artwork is required.
 
 ## Fert
