@@ -1,0 +1,80 @@
+import { describe, expect, it } from "vitest";
+
+import { zonePlanFor } from "./zonePlans";
+
+// Seeds whose assembly backtracks through many states. A change to the search must keep these
+// runs; update them only with a deliberate change to the chunks or recipes.
+const PINNED: readonly (readonly [string, number, readonly string[]])[] = [
+  [
+    "city-boundary",
+    3,
+    [
+      "blue-vertical-city-boundary-start",
+      "outdoor-descent",
+      "blue-vertical-overjump-low-roof",
+      "blue-vertical-patrol-cover-late",
+      "blue-vertical-compound-ascent",
+      "blue-vertical-compound-return-terrace",
+      "blue-vertical-compound-compact-ascent",
+      "blue-vertical-city-boundary-dog-terrace",
+      "blue-vertical-city-boundary-ground-hazard",
+      "blue-vertical-guarded-valley",
+      "blue-vertical-compound-return-terrace",
+      "blue-vertical-offset-two-level-terrace-encounter",
+      "outdoor-lift-ascent",
+      "outdoor-upper-ascent",
+      "outdoor-surface-return",
+      "blue-vertical-city-boundary-finish",
+    ],
+  ],
+  [
+    "freight-terminal",
+    7,
+    [
+      "industrial-tall-freight-terminal-start",
+      "industrial-descent",
+      "industrial-tunnel-city-boundary-gaps",
+      "industrial-tunnel-compound-return-terrace",
+      "industrial-tunnel-broad-mesa",
+      "industrial-tunnel-dry-underground-gallery-encounter",
+      "industrial-tunnel-compound-low-ceiling-hazard",
+      "industrial-tunnel-compound-low-ceiling-shuttle",
+      "industrial-tunnel-compound-transfer-gate",
+      "industrial-tunnel-flyer-shelter-late",
+      "industrial-tunnel-vertical-red-gate",
+      "industrial-tunnel-overjump-low-roof",
+      "industrial-tunnel-crumbling-support-crossing",
+      "industrial-tunnel-flyer-shelter-early",
+      "industrial-ascent",
+      "industrial-tall-freight-terminal-finish",
+    ],
+  ],
+  [
+    "river-crossing",
+    5,
+    [
+      "countryside-vertical-river-crossing-start",
+      "outdoor-descent",
+      "countryside-vertical-city-boundary-edge-yard",
+      "countryside-vertical-city-boundary-dog-terrace",
+      "countryside-vertical-city-boundary-ground-hazard",
+      "countryside-vertical-guarded-valley",
+      "countryside-vertical-city-boundary-upper-climb",
+      "countryside-vertical-city-boundary-dog-high",
+      "countryside-vertical-city-boundary-return-gap",
+      "countryside-vertical-broad-mesa",
+      "countryside-vertical-compound-transfer-gate",
+      "countryside-vertical-patrol-cover-early",
+      "outdoor-terrace-ascent",
+      "outdoor-ferry-ascent",
+      "outdoor-surface-return",
+      "countryside-vertical-river-crossing-finish",
+    ],
+  ],
+];
+
+describe("zonePlanFor", () => {
+  it.each(PINNED)("assembles %s seed %i from its pinned chunks", (key, seed, chunks) => {
+    expect(zonePlanFor(seed, key).areas.main?.chunks?.map(({ chunk }) => chunk)).toEqual(chunks);
+  });
+});

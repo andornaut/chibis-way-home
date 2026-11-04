@@ -238,23 +238,28 @@ function encounterFits(
   );
 }
 
-// Where the search stands: the chunks so far after the start, the columns they take with the
-// start's, and the event and door slots so far.
-interface Run {
-  readonly counts: ReadonlyMap<string, number>;
+// A pool chunk with the facts the search reads at every node.
+interface PoolChunk {
+  readonly cols: number;
   readonly doors: number;
+  readonly encounters: number;
+  readonly entryRow: number;
   readonly events: number;
-  readonly ids: readonly string[];
-  readonly remaining: number | undefined;
-  readonly quietChunks: number;
-  readonly width: number;
+  readonly exitRow: number;
+  readonly id: string;
+  // The exponent of its weighted-order key: 1 / (weight * difficulty weight).
+  readonly keyPower: number;
+  // Its slot in the counts array, or -1 when it has no maxPerZone.
+  readonly limit: number;
+  readonly maxPerZone: number;
 }
 
 // The ids of the chunks between the recipe's start and finish, left to right: a seeded run
 // whose seams join, never the same chunk twice in a row, each chunk at most its maxPerZone
 // times, within the difficulty band, with slots enough for the recipe's events and doors,
 // and the whole zone within the recipe's length. It aims for a length drawn from the seed, tries
-// the chunks in a seeded weighted order, and backtracks when stuck. Undefined when none exists.
+// the chunks in a seeded weighted order (as weightedOrder), and backtracks when stuck. Undefined
+// when none exists.
 function searchRun(
   library: ChunkLibrary,
   random: Random,
@@ -269,115 +274,147 @@ function searchRun(
     recipe.finish,
     ...pool,
   ]);
-  const remaining = quota === undefined ? undefined : quota - start.encounters - finish.encounters;
-  if (remaining !== undefined && remaining < 0) {
+  const initialRemaining =
+    quota === undefined ? undefined : quota - start.encounters - finish.encounters;
+  if (initialRemaining !== undefined && initialRemaining < 0) {
     return undefined;
   }
   const { max, min } = recipe.length;
   const target = randomInt(random, min, max + 1);
   const needEvents = wanted(recipe.events);
   const needDoors = wanted(recipe.doors);
-  const failed = new Set<string>();
-  const keyOf = (run: Run) =>
-    [
-      run.width,
-      run.ids.at(-1) ?? recipe.start,
-      Math.min(run.events, needEvents),
-      Math.min(run.doors, needDoors),
-      ...(run.remaining === undefined
-        ? []
-        : [run.remaining, chunkOf(library, run.ids.at(-1) ?? recipe.start).encounters > 0]),
-      ...(minimumGap > 0 ? [run.quietChunks] : []),
-      ...pool.flatMap((id) =>
-        chunkOf(library, id).maxPerZone === undefined ? [] : [run.counts.get(id) ?? 0],
-      ),
-    ].join("|");
-
-  const finishes = (run: Run, prev: string, exitRow: number) => {
-    const total = run.width + finish.cols;
-    return (
-      prev !== recipe.finish &&
-      exitRow === finish.entry.row &&
-      total >= min &&
-      total <= max &&
-      (finish.encounters === 0 || run.quietChunks >= minimumGap) &&
-      (run.remaining === undefined ||
-        (run.remaining === 0 && encounterFits(library, finish.encounters, prev, recipe.finish))) &&
-      run.events + slotCount(finish, "event") >= needEvents &&
-      run.doors + slotCount(finish, "door") >= needDoors
-    );
-  };
-
-  const extend = (run: Run, id: string): Run => {
+  const weights = recipe.difficultyWeights;
+  let limits = 0;
+  const chunks: readonly PoolChunk[] = pool.map((id) => {
     const chunk = chunkOf(library, id);
-    const width = run.width + chunk.cols;
     return {
-      counts: new Map(run.counts).set(id, (run.counts.get(id) ?? 0) + 1),
-      doors: run.doors + slotCount(chunk, "door"),
-      events: run.events + slotCount(chunk, "event"),
-      ids: [...run.ids, id],
-      quietChunks: quietAfter(minimumGap, run.quietChunks, chunk.encounters),
-      remaining: run.remaining === undefined ? undefined : run.remaining - chunk.encounters,
-      width,
+      cols: chunk.cols,
+      doors: slotCount(chunk, "door"),
+      encounters: chunk.encounters,
+      entryRow: chunk.entry.row,
+      events: slotCount(chunk, "event"),
+      exitRow: chunk.exit.row,
+      id,
+      keyPower: 1 / ((chunk.weight ?? 1) * (weights?.[chunk.difficulty] ?? 1)),
+      limit: chunk.maxPerZone === undefined ? -1 : limits++,
+      maxPerZone: chunk.maxPerZone ?? Infinity,
     };
+  });
+  // The run so far: pool indexes after the start, and the uses of each maxPerZone chunk.
+  const ids: number[] = [];
+  const counts = new Int32Array(limits);
+  // Weighted-order keys by pool index, read only while sorting one node's candidates.
+  const keys = new Float64Array(chunks.length);
+  const failed = new Set<string>();
+  const finishCols = finish.cols;
+  const finishDoors = slotCount(finish, "door");
+  const finishEvents = slotCount(finish, "event");
+
+  // The failed-state key: the last chunk (-1 for the start) determines its encounters.
+  const keyOf = (
+    width: number,
+    last: number,
+    events: number,
+    doors: number,
+    remaining: number | undefined,
+    quietChunks: number,
+  ) => {
+    let key = `${width}|${last}|${Math.min(events, needEvents)}|${Math.min(doors, needDoors)}`;
+    if (remaining !== undefined) {
+      key += `|${remaining}`;
+    }
+    if (minimumGap > 0) {
+      key += `|${quietChunks}`;
+    }
+    for (let index = 0; index < limits; index++) {
+      key += `|${counts[index]}`;
+    }
+    return key;
   };
 
-  const search = (run: Run): readonly string[] | undefined => {
-    const key = keyOf(run);
+  const search = (
+    width: number,
+    events: number,
+    doors: number,
+    remaining: number | undefined,
+    quietChunks: number,
+  ): boolean => {
+    const last = ids.length === 0 ? -1 : ids[ids.length - 1]!;
+    const key = keyOf(width, last, events, doors, remaining, quietChunks);
     if (failed.has(key)) {
-      return undefined;
+      return false;
     }
-    const prev = run.ids.at(-1) ?? recipe.start;
-    const exitRow = chunkOf(library, prev).exit.row;
-    const next = pool.filter((id) => {
-      const chunk = chunkOf(library, id);
-      return (
-        id !== prev &&
-        encounterFits(library, run.remaining, prev, id) &&
-        (chunk.encounters === 0 || run.quietChunks >= minimumGap) &&
-        chunk.entry.row === exitRow &&
-        (run.counts.get(id) ?? 0) < (chunk.maxPerZone ?? Infinity) &&
-        run.width + chunk.cols + finish.cols <= max
+    const prev = last < 0 ? undefined : chunks[last]!;
+    const exitRow = prev ? prev.exitRow : start.exit.row;
+    const prevEncounters = prev ? prev.encounters : start.encounters;
+    const order: number[] = [];
+    for (let index = 0; index < chunks.length; index++) {
+      const chunk = chunks[index]!;
+      if (
+        index !== last &&
+        (remaining === undefined ||
+          (chunk.encounters <= remaining && (chunk.encounters === 0 || prevEncounters === 0))) &&
+        (chunk.encounters === 0 || quietChunks >= minimumGap) &&
+        chunk.entryRow === exitRow &&
+        (chunk.limit < 0 || counts[chunk.limit]! < chunk.maxPerZone) &&
+        width + chunk.cols + finishCols <= max
+      ) {
+        keys[index] = random() ** chunk.keyPower;
+        order.push(index);
+      }
+    }
+    order.sort((a, b) => keys[b]! - keys[a]!);
+    const finishFirst = width + finishCols >= target;
+    const finishes = () =>
+      (prev ? prev.id : recipe.start) !== recipe.finish &&
+      exitRow === finish.entry.row &&
+      width + finishCols >= min &&
+      width + finishCols <= max &&
+      (finish.encounters === 0 || quietChunks >= minimumGap) &&
+      (remaining === undefined ||
+        (remaining === 0 && (finish.encounters === 0 || prevEncounters === 0))) &&
+      events + finishEvents >= needEvents &&
+      doors + finishDoors >= needDoors;
+    if (finishFirst && finishes()) {
+      return true;
+    }
+    for (const index of order) {
+      const chunk = chunks[index]!;
+      ids.push(index);
+      if (chunk.limit >= 0) {
+        counts[chunk.limit]!++;
+      }
+      const found = search(
+        width + chunk.cols,
+        events + chunk.events,
+        doors + chunk.doors,
+        remaining === undefined ? undefined : remaining - chunk.encounters,
+        quietAfter(minimumGap, quietChunks, chunk.encounters),
       );
-    });
-    const order: (string | undefined)[] = weightedOrder(
-      random,
-      library,
-      recipe.difficultyWeights,
-      next,
-    );
-    // undefined stands for the finish: tried first once the run is long enough.
-    if (run.width + finish.cols >= target) {
-      order.unshift(undefined);
-    } else {
-      order.push(undefined);
-    }
-    for (const id of order) {
-      if (id === undefined) {
-        if (finishes(run, prev, exitRow)) {
-          return run.ids;
-        }
-        continue;
-      }
-      const longer = extend(run, id);
-      const found = search(longer);
       if (found) {
-        return found;
+        return true;
       }
+      ids.pop();
+      if (chunk.limit >= 0) {
+        counts[chunk.limit]!--;
+      }
+    }
+    if (!finishFirst && finishes()) {
+      return true;
     }
     failed.add(key);
-    return undefined;
+    return false;
   };
 
-  return search({
-    counts: new Map(),
-    doors: slotCount(start, "door"),
-    events: slotCount(start, "event"),
-    ids: [],
-    quietChunks: start.encounters > 0 ? 0 : minimumGap,
-    remaining,
-    width: start.cols,
-  });
+  return search(
+    start.cols,
+    slotCount(start, "event"),
+    slotCount(start, "door"),
+    initialRemaining,
+    start.encounters > 0 ? 0 : minimumGap,
+  )
+    ? ids.map((index) => chunks[index]!.id)
+    : undefined;
 }
 
 const shiftPoint = (col: number, point: TilePoint): TilePoint => ({
