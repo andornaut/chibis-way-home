@@ -434,16 +434,17 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
+const OPTIONS: pixel.MainOptions = {
+  grounds: ["c0cbdc", "ead4aa", "5a6988"],
+  once: ONCE,
+  slices: SLICES,
+  usage: USAGE,
+};
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() =>
-    pixel.main(
-      {
-        grounds: ["c0cbdc", "ead4aa", "5a6988"],
-        once: ONCE,
-        slices: SLICES,
-        usage: USAGE,
-      },
-      sprites,
-    ),
-  );
+  run(() => pixel.main(OPTIONS, sprites));
 }

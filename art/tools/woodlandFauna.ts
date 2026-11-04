@@ -193,15 +193,16 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["background-swallow", [["flight", [0, 1, 2, 3].map(swallow), 120]]];
 }
 
+const OPTIONS: pixel.MainOptions = {
+  grounds: [pixel.hex("zone-green"), pixel.hex("forest")],
+  once: ONCE,
+  usage: USAGE,
+};
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() =>
-    pixel.main(
-      {
-        grounds: [pixel.hex("zone-green"), pixel.hex("forest")],
-        once: ONCE,
-        usage: USAGE,
-      },
-      sprites,
-    ),
-  );
+  run(() => pixel.main(OPTIONS, sprites));
 }

@@ -87,7 +87,7 @@ function save(path: string, image: RgbaImage): void {
   writeFileSync(path, encodeRgbaPng(PNG, image));
 }
 
-function build(): void {
+export function build(): void {
   save(OUT, illustration());
 }
 

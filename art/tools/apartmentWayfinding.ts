@@ -4,8 +4,7 @@
  * The ordinary room door is 60x84; the unchanged stair markers are 48x72.
  *
  * Usage: node art/tools/apartmentWayfinding.ts build | preview OUT.png
- * Run from the repository root. Build writes only the four backdrop PNGs; the parent owns manifest
- * registration.
+ * Run from the repository root. Build writes the four backdrop PNGs and lists them in the manifest.
  *
  * - apartment-stairwell: an open recess containing an ascending stepped silhouette, with a white
  *   up-arrow on a dslate sign. It identifies an automatic upstairs walking trigger, not a Use action
@@ -30,6 +29,7 @@ import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import { commands, run } from "./cli.ts";
 import { greyscale, rect, rgba } from "./imageArt.ts";
+import * as pixel from "./pixel.ts";
 import * as roomDoors from "./roomDoors.ts";
 
 const SIZE = [48, 72] as const;
@@ -164,6 +164,7 @@ export function build(): void {
   for (const [key, im] of Object.entries(images())) {
     writeFileSync(`${BACKDROPS}/${key}.png`, encodeRgbaPng(PNG, im));
   }
+  pixel.updateManifest("backdrops", REGISTRY);
 }
 
 export function preview(out: string): void {

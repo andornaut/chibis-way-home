@@ -107,7 +107,7 @@ function save(path: string, image: RgbaImage): void {
   writeFileSync(path, encodeRgbaPng(PNG, image));
 }
 
-function build(): void {
+export function build(): void {
   for (const style of Object.keys(STYLES)) {
     save(`${OUT}/room-building-${style}.png`, draw(style));
   }

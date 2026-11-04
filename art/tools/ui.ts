@@ -818,6 +818,12 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["ui-touch-use", touchButton("use")];
 }
 
+const OPTIONS: pixel.MainOptions = { once: ONCE, slices: SLICES, usage: USAGE };
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() => pixel.main({ once: ONCE, slices: SLICES, usage: USAGE }, sprites));
+  run(() => pixel.main(OPTIONS, sprites));
 }

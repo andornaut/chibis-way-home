@@ -281,7 +281,7 @@ export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage,
     "warehouse-wall": [warehouseWall, "x"],
   };
 
-async function build(): Promise<void> {
+export async function build(): Promise<void> {
   const entry = await pixel.writeTileset(
     { key: TILESET },
     tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),

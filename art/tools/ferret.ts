@@ -350,6 +350,12 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-ferret", portraitTags()];
 }
 
+const OPTIONS: pixel.MainOptions = { once: ONCE, usage: USAGE };
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() => pixel.main({ once: ONCE, usage: USAGE }, sprites));
+  run(() => pixel.main(OPTIONS, sprites));
 }

@@ -248,6 +248,12 @@ const HITBOX: Record<string, pixel.HitboxTuple> = {
   "ferret-trap-snap": [4, 14, 42, 12],
 };
 
+const OPTIONS: pixel.MainOptions = { hitboxes: HITBOX, once: ONCE, usage: USAGE };
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() => pixel.main({ hitboxes: HITBOX, once: ONCE, usage: USAGE }, sprites));
+  run(() => pixel.main(OPTIONS, sprites));
 }

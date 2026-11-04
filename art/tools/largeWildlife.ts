@@ -193,7 +193,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-async function build(): Promise<void> {
+export async function build(): Promise<void> {
   // One export at a time, each followed by its manifest update, so the shared manifest is read
   // and written in sprite order.
   await [...sprites()].reduce(async (previous, [key, tags]) => {

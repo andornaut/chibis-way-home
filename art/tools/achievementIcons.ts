@@ -670,7 +670,7 @@ function preview(out: string): void {
   writeRgbImage(out, sheet);
 }
 
-async function build(): Promise<void> {
+export async function build(): Promise<void> {
   await pixel.build({}, [...sprites()]);
 }
 

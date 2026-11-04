@@ -1,13 +1,13 @@
 /**
  * Reusable decorative apartment furnishings at the canonical bird scale.
  *
- * Usage: node art/tools/apartmentProps.ts build | preview OUT.png, from the repository root. Plain
- * PNG exports. Five bottom-left backdrops default to world y 720. Only pool-water repeats x; its
- * horizontal edges match. All props are decorative with no collision, white walkable lip, hazard
- * paint, characters or text. Physical platforms and doors remain separately placed objects. Pool
- * water has no lethal behaviour. Zone-red rose ties the rooms together with quiet wood, sage and
- * blue accents from the existing palette. The preview is a furniture contact sheet beside the 48x42
- * bird, not a proposed level layout.
+ * Usage: node art/tools/apartmentProps.ts build | preview OUT.png, from the repository root. Build
+ * writes five bottom-left backdrops, default world y 720, and lists them in the manifest. Only
+ * pool-water repeats x; its horizontal edges match. All props are decorative with no collision,
+ * white walkable lip, hazard paint, characters or text. Physical platforms and doors remain
+ * separately placed objects. Pool water has no lethal behaviour. Zone-red rose ties the rooms
+ * together with quiet wood, sage and blue accents from the existing palette. The preview is a
+ * furniture contact sheet beside the 48x42 bird, not a proposed level layout.
  */
 
 import { paste } from "@andornaut/art-kit/raster";
@@ -16,6 +16,7 @@ import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
   BACKDROPS_DIR,
+  backdropEntry,
   cropBox,
   ellipse,
   image,
@@ -120,13 +121,14 @@ export function draw(kind: string): RgbaImage {
   return im;
 }
 
-function build(): void {
-  for (const key of Object.keys(SIZES)) {
-    writeImage(
-      `${BACKDROPS_DIR}/apartment-${key}.png`,
-      backgroundTones.apply(`apartment-${key}`, draw(key)),
-    );
-  }
+export function build(): void {
+  const entries = Object.keys(SIZES).map((kind) => {
+    const key = `apartment-${kind}`;
+    const im = draw(kind);
+    writeImage(`${BACKDROPS_DIR}/${key}.png`, backgroundTones.apply(key, im));
+    return backdropEntry({ bottom: 720, repeat: kind === "pool-water" ? "x" : "none" }, key, im);
+  });
+  pixel.updateManifest("backdrops", entries);
 }
 
 function preview(out: string): void {

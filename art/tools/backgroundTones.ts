@@ -321,7 +321,7 @@ async function* sourceImages(): AsyncGenerator<readonly [key: string, image: Rgb
   }
 }
 
-async function build(): Promise<void> {
+export async function build(): Promise<void> {
   for await (const [key, image] of sourceImages()) {
     if (!FUNCTIONAL.has(key)) {
       writeImage(`${BACKDROPS_DIR}/${key}.png`, apply(key, image));

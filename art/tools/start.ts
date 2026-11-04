@@ -65,7 +65,7 @@ function save(path: string, image: RgbaImage): void {
   writeFileSync(path, encodeRgbaPng(PNG, image));
 }
 
-function build(): void {
+export function build(): void {
   save(OUT, background());
   const manifest = JSON.parse(readFileSync(MANIFEST, "utf8")) as Record<string, unknown>;
   const entries = new Map<string, ManifestEntry>();

@@ -41,16 +41,17 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [KEY, [["idle", [draw()], 400]]];
 }
 
+const OPTIONS: pixel.MainOptions = {
+  grounds: [pixel.hex("zone-red"), pixel.hex("slate")],
+  hitboxes: HITBOX,
+  once: ONCE,
+  usage: USAGE,
+};
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() =>
-    pixel.main(
-      {
-        grounds: [pixel.hex("zone-red"), pixel.hex("slate")],
-        hitboxes: HITBOX,
-        once: ONCE,
-        usage: USAGE,
-      },
-      sprites,
-    ),
-  );
+  run(() => pixel.main(OPTIONS, sprites));
 }

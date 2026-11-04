@@ -548,6 +548,12 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 // Tags that play once and hold their last frame; every other tag loops.
 export const ONCE = { bird: ["jump", "land", "death", "dash", "double-jump"] };
 
+const OPTIONS: pixel.MainOptions = { once: ONCE, usage: USAGE };
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() => pixel.main({ once: ONCE, usage: USAGE }, sprites));
+  run(() => pixel.main(OPTIONS, sprites));
 }

@@ -634,7 +634,7 @@ function tilesetImage(items: readonly Tile[]): RgbaImage {
   return im;
 }
 
-async function build(): Promise<void> {
+export async function build(): Promise<void> {
   mkdirSync(pixel.TILESETS, { recursive: true });
   mkdirSync(BACKDROPS_DIR, { recursive: true });
   const tileset = await pixel.writeTileset(

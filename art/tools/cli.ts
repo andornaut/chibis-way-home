@@ -1,5 +1,6 @@
 /**
- * The art generators' command-line entry. Each generator ends with
+ * The art generators' command-line entry. Each generator exports its build, which all.ts runs with
+ * the others, and ends with
  *
  *   if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
  *

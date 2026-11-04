@@ -531,6 +531,12 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 const ONCE = { pigeon: ["flee"], "dog-pug": ["perk"] };
 
+const OPTIONS: pixel.MainOptions = { once: ONCE, usage: USAGE };
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() => pixel.main({ once: ONCE, usage: USAGE }, sprites));
+  run(() => pixel.main(OPTIONS, sprites));
 }

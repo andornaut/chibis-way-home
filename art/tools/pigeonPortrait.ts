@@ -31,8 +31,15 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [KEY, [["neutral", [portrait()], 1000]]];
 }
 
+const OPTIONS: pixel.MainOptions = {
+  grounds: [pixel.hex("dslate"), pixel.hex("lgrey")],
+  usage: USAGE,
+};
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() =>
-    pixel.main({ grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], usage: USAGE }, sprites),
-  );
+  run(() => pixel.main(OPTIONS, sprites));
 }

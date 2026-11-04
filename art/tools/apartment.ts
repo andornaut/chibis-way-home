@@ -189,7 +189,7 @@ export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage,
     ),
   };
 
-async function build(): Promise<void> {
+export async function build(): Promise<void> {
   pixel.updateManifest("tilesets", [
     await pixel.writeTileset(
       { key: TILESET },

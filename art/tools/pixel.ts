@@ -419,7 +419,7 @@ export async function build(
   console.log("built", [...built.keys()].join(", "));
 }
 
-interface MainOptions extends BuildOptions {
+export interface MainOptions extends BuildOptions {
   /** The usage, printed for help and with a usage error. */
   usage: string;
   grounds?: readonly string[];

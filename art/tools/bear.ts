@@ -209,17 +209,18 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [WAVE, [["pulse", range(4).map(wave), 100]]];
 }
 
+const OPTIONS: pixel.MainOptions = {
+  contacts: [KEY],
+  grounds: [pixel.hex("zone-green"), pixel.hex("slate")],
+  hitboxes: HITBOX,
+  once: ONCE,
+  usage: USAGE,
+};
+
+export function build(): Promise<void> {
+  return pixel.build(OPTIONS, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() =>
-    pixel.main(
-      {
-        contacts: [KEY],
-        grounds: [pixel.hex("zone-green"), pixel.hex("slate")],
-        hitboxes: HITBOX,
-        once: ONCE,
-        usage: USAGE,
-      },
-      sprites,
-    ),
-  );
+  run(() => pixel.main(OPTIONS, sprites));
 }

@@ -287,12 +287,10 @@ async function preview(out: string): Promise<void> {
   writeFileSync(`${stem}.gif`, encodeGif({ loop: 0, durations }, frames));
 }
 
+export function build(): Promise<void> {
+  return pixel.build({ contacts: [KEY], hitboxes: HITBOX, once: ONCE }, [...sprites()]);
+}
+
 if (import.meta.main) {
-  run(() =>
-    commands({
-      usage: USAGE,
-      build: () => pixel.build({ contacts: [KEY], hitboxes: HITBOX, once: ONCE }, [...sprites()]),
-      preview,
-    }),
-  );
+  run(() => commands({ usage: USAGE, build, preview }));
 }

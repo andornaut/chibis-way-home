@@ -175,7 +175,7 @@ export function assets(): Record<string, readonly [image: RgbaImage, repeat: str
   };
 }
 
-function build(): void {
+export function build(): void {
   const entries = Object.entries(assets()).map(([key, [im, repeat]]) => {
     writeImage(`${BACKDROPS_DIR}/${key}.png`, backgroundTones.apply(key, im));
     return backdropEntry({ bottom: FLOOR_Y, repeat }, key, im);

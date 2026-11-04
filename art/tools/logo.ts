@@ -315,7 +315,7 @@ function save(path: string, bytes: Uint8Array): void {
   writeFileSync(path, bytes);
 }
 
-function build(): void {
+export function build(): void {
   const ims = images();
   for (const [key, im] of ims) {
     save(OUT[key], encodeRgbaPng(PNG, im));
