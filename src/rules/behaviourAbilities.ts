@@ -5,7 +5,12 @@ import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
 import type { BehaviourPerception } from "./behaviourPerception";
-import { AIR_CHASE, GROUND_CHASE, OVERHEAD_SWOOP } from "./behaviourPursuitAbilities";
+import {
+  AIR_CHASE,
+  ESCAPE_SETTLE,
+  GROUND_CHASE,
+  OVERHEAD_SWOOP,
+} from "./behaviourPursuitAbilities";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { trackReach, travelHeading } from "./behaviourTrack";
 import type { advanceTraversal } from "./behaviourTraversal";
@@ -23,6 +28,7 @@ export type BehaviourAbilityParams =
       readonly kind: "air-chase";
       readonly motion: Extract<Motion<"pursue">, { readonly mode: "fly" }>;
     }
+  | { readonly kind: "escape-settle"; readonly motion: Motion<"pursue"> }
   | {
       readonly kind: "ground-chase";
       readonly motion: Extract<Motion<"pursue">, { readonly mode: "ground" }>;
@@ -246,6 +252,7 @@ export const BEHAVIOUR_ABILITIES: AbilityTable<
   BehaviourMotionStep
 > = {
   "air-chase": AIR_CHASE,
+  "escape-settle": ESCAPE_SETTLE,
   "ground-chase": GROUND_CHASE,
   "overhead-swoop": OVERHEAD_SWOOP,
   "supported-landing": SUPPORTED_LANDING,

@@ -19,6 +19,7 @@ import {
 import { contactBox, pursuitTrack } from "./behaviourTrack";
 import { advanceTraversal } from "./behaviourTraversal";
 import { birdBox, EDGE } from "./bird";
+import { flyLandingRoute } from "./flyLanding";
 
 type PursuitAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
   BehaviourAbilityContext,
@@ -278,6 +279,30 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
       state: intentFacing(context, next),
       to: { x: endPoint.x, y: endPoint.y },
       traversal: advanced,
+    };
+  },
+};
+
+// After an escape, a pursuer flies towards its nearest proven supported landing at pursuit
+// speed before the graph settles it.
+export const ESCAPE_SETTLE: PursuitAbility<"escape-settle"> = {
+  act: ({ object, perception, slice }, { motion }, { at, state, to }) => {
+    const { world } = perception;
+    const target = flyLandingRoute(object, world, at)?.[0];
+    if (!target) {
+      return { slice, state, to };
+    }
+    const distance = Math.hypot(target.x - at.x, target.y - at.y);
+    const limited = Math.min(slice, distance / motion.speed);
+    const fraction = Math.min(1, (motion.speed * limited) / distance);
+    const x = flightAxis(object, world, at, "x", at.x + (target.x - at.x) * fraction);
+    return {
+      slice: limited,
+      state,
+      to: {
+        x,
+        y: flightAxis(object, world, { ...at, x }, "y", at.y + (target.y - at.y) * fraction),
+      },
     };
   },
 };

@@ -1,7 +1,6 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
 import { abilityFor } from "../ai/ability";
-import { scopedStreams } from "../ai/randomStreams";
 import type {
   BehaviourAction,
   BehaviourCondition,
@@ -13,7 +12,11 @@ import type {
   Point,
   Rect,
 } from "../data/types";
-import { BEHAVIOUR_ABILITIES, behaviourAbilityParams } from "./behaviourAbilities";
+import {
+  BEHAVIOUR_ABILITIES,
+  type BehaviourAbilityParams,
+  behaviourAbilityParams,
+} from "./behaviourAbilities";
 import { animateSegments, syncAnimation } from "./behaviourAnimation";
 import {
   advanceAttackClock,
@@ -25,15 +28,7 @@ import {
 } from "./behaviourAttack";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
 import type { FlightSelectionState } from "./behaviourFlightSelection";
-import {
-  advanceIdleRecovery,
-  advanceSupportedRecovery,
-  type BehaviourIdleState,
-  observeIdle,
-  planIdleRecovery,
-  planSupportedRecovery,
-  preferredGroundWalk,
-} from "./behaviourIdle";
+import { type BehaviourIdleState, observeIdle } from "./behaviourIdle";
 import {
   advancePursuitIntent,
   capturePursuitIntent,
@@ -44,13 +39,17 @@ import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPercepti
 import {
   type BehaviourGeometry,
   type BehaviourWorld,
-  flightAxis,
   flightContactApproach,
   overheadFlightGoal,
   overheadFlightGoalForRect,
   overheadFlightRoute,
   targetReachable,
 } from "./behaviourReach";
+import {
+  type BehaviourRecoveryContext,
+  idleReady,
+  recoveryStep,
+} from "./behaviourRecoveryAbilities";
 import { prepareSupport } from "./behaviourSupport";
 import { contactBox, nodeOf, pursuitTrack, trackEndpoint, travelHeading } from "./behaviourTrack";
 import {
@@ -62,7 +61,7 @@ import {
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
-import { flyLandingRoute, type FlyLandingState, supportedLanding } from "./flyLanding";
+import { type FlyLandingState, supportedLanding } from "./flyLanding";
 import { hopLift } from "./motion";
 import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 
@@ -1097,233 +1096,6 @@ function updatePursuit(
   };
 }
 
-function idleReady(
-  object: ObjectLayout,
-  world: BehaviourWorld,
-  at: Point,
-  state: BehaviourState,
-): boolean {
-  const watchdog = object.behaviour!.idleWatchdog,
-    idle = state.idleWatchdog;
-  if (!watchdog || !idle || idle.recovery) {
-    return false;
-  }
-  const node = nodeOf(object, state.stateKey);
-  const recovery = nodeOf(object, watchdog.resume).motion;
-  if (
-    state.pursuit?.phase === "engaged" &&
-    recovery.kind === "pursue" &&
-    recovery.mode === "fly" &&
-    recovery.overhead
-  ) {
-    return false;
-  }
-  const flyingHover =
-    recovery.kind === "pursue" &&
-    recovery.mode === "fly" &&
-    (node.motion.kind === "wait" || (node.motion.kind === "pursue" && node.motion.mode === "fly"));
-  return (
-    world.traversalFrame !== undefined &&
-    !attackProtected(node, state) &&
-    node.allowIdleReposition === true &&
-    node.motion.kind !== "hop" &&
-    node.motion.kind !== "fly" &&
-    !node.onEnter?.length &&
-    !state.hop &&
-    (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
-    (supportedLanding(object, world, at) || flyingHover) &&
-    idle.seconds >= watchdog.seconds &&
-    (idle.attemptedAt === undefined || idle.seconds - idle.attemptedAt >= watchdog.seconds)
-  );
-}
-
-function idleRecoveryStep(
-  perception: BehaviourPerception,
-  object: ObjectLayout,
-  seconds: number,
-  at: Point,
-  state: BehaviourState,
-): { readonly state: BehaviourState; readonly step?: BehaviourStep } {
-  const { world } = perception;
-  const watchdog = object.behaviour!.idleWatchdog,
-    idle = state.idleWatchdog;
-  if (!watchdog || !idle) {
-    return { state };
-  }
-  const motion = nodeOf(object, watchdog.resume).motion;
-  if (motion.kind !== "pursue") {
-    throw new Error("Idle recovery requires a pursuit profile");
-  }
-  if (state.pursuit?.phase === "engaged" && motion.mode === "fly" && motion.overhead) {
-    const pending = { ...idle };
-    delete (pending as { recovery?: BehaviourIdleState["recovery"] }).recovery;
-    return { state: { ...state, idleWatchdog: pending } };
-  }
-  const prepared = idleReady(object, world, at, state)
-    ? planIdleRecovery(world, object, motion, seconds, state.facing, idle, at)
-    : idle;
-  const active = { ...state, idleWatchdog: prepared };
-  if (!prepared.recovery) {
-    return { state: active };
-  }
-  delete (active as { traversal?: BehaviourTraversalState }).traversal;
-  const advanced = advanceIdleRecovery(world, object, motion, seconds, prepared, at);
-  const animated = animateSegments(
-    object,
-    seconds,
-    {
-      ...active,
-      ...(advanced.idle.recovery?.kind === "ground" && {
-        traversal: advanced.idle.recovery.traversal,
-      }),
-    },
-    advanced.segments,
-    world.traversalFrame?.timeSeconds,
-  );
-  let next = {
-    ...animated.state,
-    idleWatchdog: observeIdle(watchdog, seconds, advanced.segments, advanced.idle),
-    ...(advanced.idle.recovery?.kind === "ground" && {
-      traversal: advanced.idle.recovery.traversal,
-    }),
-  };
-  if (advanced.finished) {
-    next = {
-      ...enterState(perception, object, advanced.at, watchdog.resume, next),
-      idleWatchdog: next.idleWatchdog,
-      pendingEntry: false,
-    };
-  }
-  return {
-    state: next,
-    step: { actions: [], at: advanced.at, segments: animated.segments, state: next },
-  };
-}
-
-function groundRepositionStep(
-  perception: BehaviourPerception,
-  object: ObjectLayout,
-  seconds: number,
-  at: Point,
-  state: BehaviourState,
-): {
-  readonly state: BehaviourState;
-  readonly step?: BehaviourStep;
-  readonly deferToAttack?: boolean;
-} {
-  const { world } = perception;
-  const config = object.behaviour!.groundReposition!,
-    prior = state.groundReposition!;
-  const node = nodeOf(object, state.stateKey),
-    motion = nodeOf(object, config.resume).motion;
-  if (motion.kind !== "pursue" || motion.mode !== "ground") {
-    throw new Error("Periodic reposition requires ground pursuit physics");
-  }
-  const eligible =
-    state.pursuit?.phase === "engaged" &&
-    node.allowGroundReposition === true &&
-    !attackProtected(node, state) &&
-    !node.onEnter?.length &&
-    !state.hop &&
-    !state.idleWatchdog?.recovery &&
-    (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
-    supportedLanding(object, world, at);
-  const firstTransition =
-    !prior.recovery &&
-    eligible &&
-    prior.seconds >= config.intervalSeconds &&
-    node.transitions.find(
-      ({ to, when }) =>
-        canEnterAttack(nodeOf(object, to), state) &&
-        when.every((condition) => matches(perception, object, at, state, condition)),
-    );
-  const attackOpportunity =
-    firstTransition && nodeOf(object, firstTransition.to).attack?.phase === "tell";
-  if (attackOpportunity) {
-    return { deferToAttack: true, state };
-  }
-  const policy = {
-    distance: config.distance,
-    fullFrameGoal: true,
-    maxAttempts: config.maxAttempts,
-    minMovement: config.minDistance,
-  };
-  const selectionWorld = {
-    ...world,
-    ...(world.decisions && { decisions: scopedStreams("ground-periodic", world.decisions) }),
-  };
-  let prepared = prior;
-  if (
-    !prepared.recovery &&
-    eligible &&
-    !attackOpportunity &&
-    prepared.seconds >= config.intervalSeconds
-  ) {
-    // Periodic variation requires its per-object seed, never a deterministic-facing fallback.
-    prepared = { ...prepared, anchor: at };
-    prepared = world.decisions
-      ? planSupportedRecovery(
-          preferredGroundWalk,
-          policy,
-          selectionWorld,
-          object,
-          motion,
-          seconds,
-          state.facing,
-          prepared,
-          at,
-        )
-      : { ...prepared, status: "geometry-unavailable" };
-    if (!prepared.recovery) {
-      return { state: { ...state, groundReposition: { ...prepared, seconds: 0 } } };
-    }
-  }
-  if (!prepared.recovery) {
-    return { state };
-  }
-  const active = { ...state, groundReposition: prepared };
-  delete (active as { traversal?: BehaviourTraversalState }).traversal;
-  const advanced = advanceSupportedRecovery(policy, world, object, motion, seconds, prepared, at);
-  const animated = animateSegments(
-    object,
-    seconds,
-    {
-      ...active,
-      ...(advanced.idle.recovery?.kind === "ground" && {
-        traversal: advanced.idle.recovery.traversal,
-      }),
-    },
-    advanced.segments,
-    world.traversalFrame?.timeSeconds,
-  );
-  let next: BehaviourState = {
-    ...animated.state,
-    groundReposition: { ...advanced.idle, seconds: advanced.finished ? 0 : advanced.idle.seconds },
-    ...(advanced.idle.recovery?.kind === "ground" && {
-      traversal: advanced.idle.recovery.traversal,
-    }),
-    ...(object.behaviour!.idleWatchdog &&
-      state.idleWatchdog && {
-        idleWatchdog: observeIdle(
-          object.behaviour!.idleWatchdog,
-          seconds,
-          advanced.segments,
-          state.idleWatchdog,
-        ),
-      }),
-  };
-  if (advanced.finished) {
-    next = {
-      ...enterState(perception, object, advanced.at, config.resume, next),
-      pendingEntry: false,
-    };
-  }
-  return {
-    state: next,
-    step: { actions: [], at: advanced.at, segments: animated.segments, state: next },
-  };
-}
-
 // Fixtures and predictions that hold their own geometry perceive and advance in one call.
 export function stepBehaviour(
   tuning: BirdTuning,
@@ -1376,6 +1148,18 @@ export function advanceBehaviour(
     return { actions: [], at, segments, state: next };
   }
   const { target: bird, tuning, world } = perception;
+  const recovery: BehaviourRecoveryContext = {
+    enter: (point, key, current) => enterState(perception, object, point, key, current),
+    firstTransition: (point, current) =>
+      nodeOf(object, current.stateKey).transitions.find(
+        ({ to, when }) =>
+          canEnterAttack(nodeOf(object, to), current) &&
+          when.every((condition) => matches(perception, object, point, current, condition)),
+      )?.to,
+    object,
+    perception,
+    seconds,
+  };
   const actions: BehaviourEvent[] = [];
   const segments: BehaviourSegment[] = [];
   const instant = new Set<string>();
@@ -1400,7 +1184,7 @@ export function advanceBehaviour(
         ? prior
         : { ...prior, seconds: Math.min(periodic.intervalSeconds, prior.seconds + seconds) },
     };
-    const reposition = groundRepositionStep(perception, object, seconds, at, next);
+    const reposition = recoveryStep(recovery, { kind: "periodic-reposition" }, at, next);
     next = reposition.state;
     deferToAttack = reposition.deferToAttack === true;
     if (reposition.step) {
@@ -1416,7 +1200,7 @@ export function advanceBehaviour(
     next = { ...next, idleWatchdog: { anchor: at, seconds: 0 } };
   }
   if (watchdog && !deferToAttack) {
-    const initialRecovery = idleRecoveryStep(perception, object, seconds, at, next);
+    const initialRecovery = recoveryStep(recovery, { kind: "idle-recovery" }, at, next);
     next = initialRecovery.state;
     if (initialRecovery.step) {
       return {
@@ -1703,33 +1487,21 @@ export function advanceBehaviour(
     }
     const to = { ...current };
     let traversalSegments: readonly TraversalSafety[] | undefined;
-    if (settling && node.motion.kind === "pursue") {
-      const target = flyLandingRoute(object, world, current)?.[0];
-      if (target) {
-        const distance = Math.hypot(target.x - current.x, target.y - current.y);
-        slice = Math.min(slice, distance / node.motion.speed);
-        const fraction = Math.min(1, (node.motion.speed * slice) / distance);
-        to.x = flightAxis(
-          object,
-          world,
-          current,
-          "x",
-          current.x + (target.x - current.x) * fraction,
-        );
-        to.y = flightAxis(
-          object,
-          world,
-          { ...current, x: to.x },
-          "y",
-          current.y + (target.y - current.y) * fraction,
-        );
-      }
-    }
     let supportedDwell: boolean | undefined;
     let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
-    const params = behaviourAbilityParams(node.motion);
-    const ability = params && abilityFor(BEHAVIOUR_ABILITIES, params);
-    if (params && ability) {
+    // An escaped flier settles before its chase ability, which finishes any airborne leg.
+    const primary = behaviourAbilityParams(node.motion);
+    const chosen: BehaviourAbilityParams[] = [
+      ...(settling && node.motion.kind === "pursue"
+        ? [{ kind: "escape-settle" as const, motion: node.motion }]
+        : []),
+      ...(primary ? [primary] : []),
+    ];
+    for (const params of chosen) {
+      const ability = abilityFor(BEHAVIOUR_ABILITIES, params);
+      if (!ability) {
+        continue;
+      }
       const acted = ability.act(
         {
           arrives: (point, after, state) => {

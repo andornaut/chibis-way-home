@@ -117,7 +117,7 @@ function run(
   object: ObjectLayout,
   entry: string,
   covered: boolean,
-  start: "aligned" | "origin" | "pacing",
+  start: "aligned" | "escaped" | "origin" | "pacing",
   coverage: Coverage,
 ) {
   const recorder = traceRecorder({ retain: false });
@@ -147,7 +147,12 @@ function run(
     elapsed: 0,
     flightApproachDirection: 1,
     pendingEntry: true,
-    pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+    // An escaped start holds the flier airborne above Chibi, so it settles onto support.
+    pursuit: {
+      phase: start === "escaped" ? "escaped" : "engaged",
+      settled: false,
+      unreachableSeconds: 0,
+    },
     stateKey: entry,
   };
   for (let tick = 0; tick < TICKS; tick++) {
@@ -201,7 +206,7 @@ describe("behaviour ability traces", () => {
         for (const covered of [false, true]) {
           const starts =
             character === "pigeon-antagonist"
-              ? (["origin", "aligned", "pacing"] as const)
+              ? (["origin", "aligned", "escaped", "pacing"] as const)
               : (["origin"] as const);
           for (const start of starts) {
             const suffix = start === "origin" ? "" : ` ${start}`;
