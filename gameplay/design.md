@@ -334,11 +334,11 @@ Apartment continues in this floor order:
 
 ### Home city
 
-- **Appearance:** City outskirts and Familiar neighbourhood use the canonical peach theme through shared terrain, structure, prop and background skins
+- **Appearance:** City outskirts, Back streets and Familiar neighbourhood use the canonical peach theme through shared terrain, structure, prop and background skins
 - **Encounters:** stage two and stage three feature Kiwi through shared ground-charge and vertical climb-and-drop behaviours. Kiwi and earlier enemies use the shared detection, pursuit and frustration rules
-- **Layout:** each stage uses fixed openings and endings around shared randomized middle layouts within the zone's difficulty band. Guarded lower traversal connects to canopy lift climbs, upper red gates and a surface return through the common object and layout system. Grounded wildlife follows its actual shifted footing, while slower vertical decorative depth retains its authored reference
+- **Layout:** City outskirts, Back streets and Familiar neighbourhood each use fixed openings and endings around shared randomized middle layouts within the zone's difficulty band. The middle challenges sit on a lower route: ground challenges, terrace and ridge encounter yards, a climbing lane, vertical stacks, a vertical yard, compound lift, shuttle and high-return chunks, platform orbits and a vertical red gate. The climbing lane, vertical stacks, vertical yard and both encounter yards add low ceilings. Stairs guarded by moving red gates descend from the surface to the lower route, drop deeper below it and climb back; a lift ascent and an upper red-gate ascent rise from the lower route to the upper route, and a red-gate return descends to the surface
 - **Progression:** clearing Ravine opens City outskirts; clearing City outskirts opens Back streets, then Familiar neighbourhood. Unlocked stages remain replayable
-- **Rooms:** doors lead to skill gift rooms; there is no new plot, boss fight or combat. Water does not add hidden hazards
+- **Rooms:** each stage's door leads to its skill gift room: Dash in City outskirts, Double jump in Back streets and Speedy in Familiar neighbourhood
 
 ### Kiwi encounter
 
