@@ -8,7 +8,7 @@ import { airJumpStarted } from "./airJumpCue";
 
 type BirdTag = "dash" | "double-jump" | "flutter" | "idle" | "jump" | "land" | "walk";
 
-// The tag she shows, and how long she has shown it as of this step.
+// The tag he shows, and how long he has shown it as of this step.
 export interface BirdPose {
   readonly airJumpRemainingMs?: number;
   readonly ms: number;
@@ -17,9 +17,9 @@ export interface BirdPose {
 
 export const startPose: BirdPose = { ms: 0, tag: "flutter" };
 
-// Her pose after one step of stepMs from before to after. An active dash takes priority.
-// Rising, she jumps; falling, she
-// flutters; on the step she lands, land starts and plays for landMs; on the ground she walks
+// His pose after one step of stepMs from before to after. An active dash takes priority.
+// Rising, he jumps; falling, he
+// flutters; on the step he lands, land starts and plays for landMs; on the ground he walks
 // while moving and idles while still.
 export function stepPose(
   landMs: number,
@@ -60,7 +60,7 @@ export function stepPose(
   };
 }
 
-// The whole-pixel top-left of her frame (birdFrameRect).
+// The whole-pixel top-left of his frame (birdFrameRect).
 export function birdFrameAt(tuning: BirdTuning, frame: Size, bird: BirdState): Point {
   const { x, y } = birdFrameRect(tuning, frame, bird);
   return { x, y };

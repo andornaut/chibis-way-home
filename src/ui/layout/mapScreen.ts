@@ -54,7 +54,7 @@ export const MAP_PATH = {
 } as const;
 
 // Each look a path takes, in a palette colour: unbuilt, built but not yet opened (locked, dimmed a
-// step toward the paper), and opened by the zones she has completed (openMap).
+// step toward the paper), and opened by the zones he has completed (openMap).
 export const MAP_PATH_LOOKS = {
   built: { colour: "slate", stroke: { kind: "dashes", off: 4, on: 6, width: 2 } },
   open: { colour: "dslate", stroke: { kind: "solid", width: 4 } },

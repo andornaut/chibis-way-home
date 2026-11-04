@@ -56,7 +56,7 @@ interface IconButton {
 }
 
 // The screen the game opens on without saved progress, and that Back to title goes to: the Start
-// button, which opens the map (Continue, with her where she stands, once progress is saved),
+// button, which opens the map (Continue, with him where he stands, once progress is saved),
 // under a nav bar with Settings and Exit at its right end. Settings opens the settings card over
 // this screen, and Restart the restart card; the card that shows takes the keys and back until it
 // closes. Exit, and back with no card open, leave the browser game. Installed app windows keep

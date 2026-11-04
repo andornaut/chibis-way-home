@@ -6,7 +6,7 @@ import type { BirdState } from "./bird";
 // graph, pursuit, intent, attack and motion steps read only this, the object's own layout and
 // state, and the world's decision streams.
 export interface BehaviourPerception {
-  // Chibi's current state and the tuning that sizes her body.
+  // Chibi's current state and the tuning that sizes his body.
   readonly target: BirdState;
   readonly tuning: BirdTuning;
   // Present terrain, platforms, hazards and chunks, the camera view, the traversal frame with

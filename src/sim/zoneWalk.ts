@@ -81,10 +81,10 @@ function stepZone(
   return observeTransition(layout, zone, physicalStep(tuning, layout, seconds, input, zone));
 }
 
-// A top she can stand on in an area: a still span from left to right at height y, or a moving
+// A top he can stand on in an area: a still span from left to right at height y, or a moving
 // platform's top (mover: its object's index), placed where its track starts. Still spans are
 // the tops of terrain and still solid and ledge objects, joined where they meet at one height,
-// less where a solid or still hazard leaves her no room to stand.
+// less where a solid or still hazard leaves him no room to stand.
 export interface Surface {
   readonly area: string;
   readonly key: string;
@@ -94,16 +94,16 @@ export interface Surface {
   readonly y: number;
 }
 
-// Where the walk has her standing: a stretch of a surface, its bucket (BUCKET px wide, from the
-// surface's left), and her zone state when she first came to stand there.
+// Where the walk has him standing: a stretch of a surface, its bucket (BUCKET px wide, from the
+// surface's left), and his zone state when he first came to stand there.
 interface Spot {
   readonly bucket: number;
   readonly state: ZoneState;
   readonly surface: Surface;
 }
 
-// What the walk finds: every surface in the zone, the keys of those she came to stand on,
-// whether she cleared the zone, and how many zone steps it ran.
+// What the walk finds: every surface in the zone, the keys of those he came to stand on,
+// whether he cleared the zone, and how many zone steps it ran.
 export interface ZoneWalk {
   readonly cleared: boolean;
   readonly reached: ReadonlySet<string>;
@@ -115,15 +115,15 @@ const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 // The walk splits each surface into stretches this wide, so a jump along one surface (over a
 // hazard on it, say) counts as a move.
 const BUCKET = 96;
-// How far she runs up before a takeoff, and how far inside her surface her centre stays as she
-// gets into place, in px; how long a try may run after the takeoff, and how long she may take to
+// How far he runs up before a takeoff, and how far inside his surface his centre stays as he
+// gets into place, in px; how long a try may run after the takeoff, and how long he may take to
 // walk into place, in steps.
 const RUN_UP = 36;
 const FOOTING = 16;
 const AIR_STEPS = Math.round(5 / STEP_SECONDS);
 const WALK_STEPS = Math.round(8 / STEP_SECONDS);
-// Where she presses Jump before the edge she runs off, in px back along her run, besides every
-// TAKEOFF_STEP px along her surface; and the nearby buckets of her own surface she aims for.
+// Where he presses Jump before the edge he runs off, in px back along his run, besides every
+// TAKEOFF_STEP px along his surface; and the nearby buckets of his own surface he aims for.
 const EDGE_TAKEOFFS = [4, 12, 36, 72, 120];
 const TAKEOFF_STEP = 12;
 const OWN_BUCKETS = [-3, -2, -1, 1, 2, 3];
@@ -259,7 +259,7 @@ function areaSurfaces(tuning: BirdTuning, name: string, area: AreaLayout): Surfa
   }));
 }
 
-// Every surface she can stand on in the zone.
+// Every surface he can stand on in the zone.
 export function zoneSurfaces(tuning: BirdTuning, layout: ZoneLayout): Surface[] {
   return Object.entries(layout.areas).flatMap(([name, area]) => areaSurfaces(tuning, name, area));
 }
@@ -293,7 +293,7 @@ function placed(surface: Surface, zone: ZoneState, layout: ZoneLayout): Surface 
   return { ...surface, left: at.x, right: at.x + width, y: at.y };
 }
 
-// The surface she stands on, if any.
+// The surface he stands on, if any.
 function surfaceUnder(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -317,7 +317,7 @@ function surfaceUnder(
     });
 }
 
-// The spot she stands on, on surface: its bucket by where her centre is along it.
+// The spot he stands on, on surface: its bucket by where his centre is along it.
 function spotOf(surface: Surface, zone: ZoneState, layout: ZoneLayout, tuning: BirdTuning): Spot {
   const now = placed(surface, zone, layout);
   const centre = zone.bird.x + tuning.width / 2;
@@ -329,7 +329,7 @@ const spotKey = (spot: Pick<Spot, "bucket" | "surface">) => `${spot.surface.key}
 const pathSpotKey = (layout: ZoneLayout, spot: Spot) =>
   `${spotKey(spot)}:${WALK_WITNESSES.get(layout)?.profile(spot.state) ?? 0n}`;
 
-// A stretch she may aim for: a whole surface, or one bucket of one (key: the spot's key).
+// A stretch he may aim for: a whole surface, or one bucket of one (key: the spot's key).
 interface Target {
   readonly fixed?: boolean;
   readonly key: string;
@@ -338,12 +338,12 @@ interface Target {
   readonly surface: Surface;
 }
 
-// One try, as input for each step. dir: the way she runs. pre: where her trailing side goes
-// before she runs. takeoff: where her trailing side is when she presses Jump; or, with late, she
-// runs on until she leaves the ground and presses late steps after. hold: the steps she holds
-// Jump, 0 for none. rise: the steps after the press she goes straight up before she steers.
-// target: the stretch she steers to land on. pre and takeoff are from the left
-// of the surface she starts on, wherever a moving one has got to.
+// One try, as input for each step. dir: the way he runs. pre: where his trailing side goes
+// before he runs. takeoff: where his trailing side is when he presses Jump; or, with late, he
+// runs on until he leaves the ground and presses late steps after. hold: the steps he holds
+// Jump, 0 for none. rise: the steps after the press he goes straight up before he steers.
+// target: the stretch he steers to land on. pre and takeoff are from the left
+// of the surface he starts on, wherever a moving one has got to.
 interface Try {
   readonly continuous?: boolean;
   readonly dir: -1 | 1;
@@ -357,7 +357,7 @@ interface Try {
 
 const trailing = (tuning: BirdTuning, dir: -1 | 1, x: number) => (dir > 0 ? x : x + tuning.width);
 
-// Runs zone on one step at a time; step returns false once she restarts or turns back into the
+// Runs zone on one step at a time; step returns false once he restarts or turns back into the
 // area's first column, which would end the zone, so no try counts a spot past it.
 function runner(tuning: BirdTuning, layout: ZoneLayout, start: ZoneState) {
   return runWith((input, zone) => stepZone(tuning, layout, STEP_SECONDS, input, zone), start);
@@ -382,7 +382,7 @@ function runWith(step: WalkStep, start: ZoneState) {
   return run;
 }
 
-// The input that steers her centre into a stretch, wherever its surface is now.
+// The input that steers his centre into a stretch, wherever its surface is now.
 function steer(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -598,7 +598,7 @@ function recordLanding(
   return under;
 }
 
-// Brings her to a stop where she landed: the spot she stands still on, unless stopping takes her
+// Brings him to a stop where he landed: the spot he stands still on, unless stopping takes him
 // off it or into a hazard.
 function comeToRest(
   tuning: BirdTuning,
@@ -616,7 +616,7 @@ function comeToRest(
   return under && still?.key === under.key ? spotOf(still, run.zone, layout, tuning) : undefined;
 }
 
-// Walks along her surface into a stretch of it: where she stands there, if she gets there.
+// Walks along his surface into a stretch of it: where he stands there, if he gets there.
 function walkInto(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -647,7 +647,7 @@ function walkInto(
   };
 }
 
-// Walks right from start until she clears the zone at its area's last column: whether she does.
+// Walks right from start until he clears the zone at its area's last column: whether he does.
 function walkOff(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -666,7 +666,7 @@ function walkOff(
   };
 }
 
-// Steps her still until she stands somewhere, or gives up.
+// Steps him still until he stands somewhere, or gives up.
 function settle(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): ZoneState {
   let settled = zone;
   for (let i = 0; i < AIR_STEPS && !settled.bird.grounded && settled.death === undefined; i++) {
@@ -675,8 +675,8 @@ function settle(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneState): ZoneSt
   return settled;
 }
 
-// The zone after she stands still for each wait in turn (WAIT_STEP apart, count of them), up to
-// the first that restarts her.
+// The zone after he stands still for each wait in turn (WAIT_STEP apart, count of them), up to
+// the first that restarts him.
 function waitStates(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -700,10 +700,10 @@ function waitStates(
   return { entered: undefined, states, steps: run.steps };
 }
 
-// How far she might go in one move, in px: up to rise, and along x when the landing is drop
+// How far he might go in one move, in px: up to rise, and along x when the landing is drop
 // below the takeoff (negative for one above), carried by a platform at up to carry px/s. From a
-// full jump played on the rules: its height, and how long she is in the air coming back down to
-// where she took off; a lower landing adds the fall at the flutter speed, and the time to reach
+// full jump played on the rules: its height, and how long he is in the air coming back down to
+// where he took off; a lower landing adds the fall at the flutter speed, and the time to reach
 // it. MARGIN on each, for rounding.
 function moveBounds(tuning: BirdTuning, carry: number) {
   const ground = { height: 1, width: 1e6, x: -5e5, y: 0 };
@@ -779,14 +779,14 @@ function movingThings(tuning: BirdTuning, area: AreaLayout): MovingThings {
   return result;
 }
 
-// The tries from a spot toward a target: from each way she can run at it, pressing Jump at every
-// tile along her surface, just before the edge she runs off and in coyote time after it, each
+// The tries from a spot toward a target: from each way he can run at it, pressing Jump at every
+// tile along his surface, just before the edge he runs off and in coyote time after it, each
 // held and tapped, and off an edge with no press at all where the target is lower.
 function triesToward(tuning: BirdTuning, from: Spot, here: Surface, target: Target): Try[] {
   const { width } = tuning;
   const lo = here.left + from.bucket * BUCKET - BUCKET;
   const hi = here.left + (from.bucket + 2) * BUCKET;
-  // Where either surface moves, which way she must go depends on when she goes: both ways, then.
+  // Where either surface moves, which way he must go depends on when he goes: both ways, then.
   const moving = here.mover !== undefined || target.surface.mover !== undefined;
   const dirs: (-1 | 1)[] =
     !moving && target.left >= here.right
@@ -813,14 +813,14 @@ function triesToward(tuning: BirdTuning, from: Spot, here: Surface, target: Targ
       const leading = x + dir * width;
       return Math.max(x, leading) > lo && Math.min(x, leading) < hi;
     };
-    // Her run-up starts with her centre at least FOOTING px inside her surface, so stopping
-    // there never takes her off it; the middle, on a surface narrower than that.
+    // His run-up starts with his centre at least FOOTING px inside his surface, so stopping
+    // there never takes him off it; the middle, on a surface narrower than that.
     const half = dir > 0 ? width / 2 : -width / 2;
     const middle = (here.left + here.right) / 2;
     const minCentre = Math.min(here.left + FOOTING, middle);
     const maxCentre = Math.max(here.right - FOOTING, middle);
     const preFor = (x: number) => clamp(minCentre, maxCentre, x - dir * RUN_UP + half) - half;
-    // Along her surface, her centre every TAKEOFF_STEP px from its left.
+    // Along his surface, his centre every TAKEOFF_STEP px from its left.
     const first = Math.max(0, Math.floor((lo - here.left + half - width) / TAKEOFF_STEP));
     const last = Math.min(
       Math.floor((here.right - here.left) / TAKEOFF_STEP),
@@ -900,7 +900,7 @@ function targetsFrom(
   from: Spot,
   here: Surface,
 ): { others: Target[]; own: Target[] } {
-  // A moving surface can take her anywhere along its track before she goes.
+  // A moving surface can take him anywhere along its track before he goes.
   const own = sweptSpan(bounds, layout, from.surface);
   const lo = from.surface.mover === undefined ? here.left + (from.bucket - 1) * BUCKET : own.left;
   const hi = from.surface.mover === undefined ? here.left + (from.bucket + 2) * BUCKET : own.right;
@@ -988,11 +988,11 @@ function phaseCorridor(
   );
 }
 
-// Walks the zone from its start on the real rules. From each spot she comes to stand on, it
-// tries each stretch in range that she has not reached yet: a walk along her own surface, then
+// Walks the zone from its start on the real rules. From each spot he comes to stand on, it
+// tries each stretch in range that he has not reached yet: a walk along his own surface, then
 // every jump at it, at every wait where something moves near. From a spot near the area's last
-// column on a surface that runs into it, she walks right to clear the zone. It never presses
-// Use, so doors and their rooms play no part, and a try that takes her back into the first
+// column on a surface that runs into it, he walks right to clear the zone. It never presses
+// Use, so doors and their rooms play no part, and a try that takes him back into the first
 // column, which would end the zone, fails. It stops when no try finds a new spot.
 export interface WalkRouteTarget {
   readonly area: string;
@@ -1545,8 +1545,8 @@ function walkSearch(
   return { cleared, reached, steps, surfaces };
 }
 
-// Whether, standing on from, she can come to stand on to in one move: any try from any stretch
-// of from, at any wait, that first lands her on to.
+// Whether, standing on from, he can come to stand on to in one move: any try from any stretch
+// of from, at any wait, that first lands him on to.
 export function crosses(
   tuning: BirdTuning,
   layout: ZoneLayout,

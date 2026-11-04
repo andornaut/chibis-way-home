@@ -167,7 +167,7 @@ it("an absent support waits for every physical body to leave its volume before r
   };
   const occupied = stepZone(BIRD, f.layout, STEP_SECONDS, idle, overdue);
   expect(phase(occupied)).toEqual({ kind: "absent", restoreAfterSeconds: 0.5 });
-  // The absent ledge does not catch her; she falls through its volume.
+  // The absent ledge does not catch him; he falls through its volume.
   expect(occupied.bird.y).toBeGreaterThan(overdue.bird.y);
   const clear = stepZone(BIRD, f.layout, STEP_SECONDS, idle, {
     ...occupied,

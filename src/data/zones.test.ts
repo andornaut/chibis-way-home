@@ -175,7 +175,7 @@ describe("the real zones", () => {
   });
 });
 
-// Her collision box where a plan starts her: it must start clear of the first column, or she
+// His collision box where a plan starts him: it must start clear of the first column, or he
 // would turn back (rules/zone's turnedBack) on arrival.
 const startsClear = (plan: ZonePlan) => {
   const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
@@ -197,8 +197,8 @@ describe("every zone's start", () => {
   });
 });
 
-// Whether, held left with no jump from the plan's start, on art's real tiles and sprites, she
-// turns back within seconds: nothing in a zone's first column may stop her reaching it.
+// Whether, held left with no jump from the plan's start, on art's real tiles and sprites, he
+// turns back within seconds: nothing in a zone's first column may stop him reaching it.
 const turnsBackWithin = (seconds: number, plan: ZonePlan) => {
   const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
   let zone = startZone(BIRD, layout, 1);

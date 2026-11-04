@@ -255,7 +255,7 @@ const CONTROL_SPRITES: Readonly<Record<TouchControl, string>> = {
   jump: "ui-touch-jump",
   use: "ui-touch-use",
 };
-// Back to front: repeated backdrops, placed backdrops, the terrain, objects, her, and the touch
+// Back to front: repeated backdrops, placed backdrops, the terrain, objects, him, and the touch
 // controls. An area's art is added whenever it is drawn.
 const DEPTHS: Readonly<Record<ArtKind | "terrain", number>> = {
   backdrop: -3,
@@ -325,9 +325,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private readonly buttonTouches = new Set<number>();
   private landMs = 0;
   private layout!: ZoneLayout;
-  // The map node she plays, or undefined when played without the map.
+  // The map node he plays, or undefined when played without the map.
   private mapNode: string | undefined;
-  // The recipe ?zone=<key> plays on its own, assembled afresh each time she clears it unless
+  // The recipe ?zone=<key> plays on its own, assembled afresh each time he clears it unless
   // ?assembly=<n> fixes the seed.
   private trial: string | undefined;
   private areaArt!: GameObjects.Graphics;
@@ -343,7 +343,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private attemptShown = 0;
   // Why play holds still, if it does.
   private hold: PlayHold;
-  // The door she used, by its index among the area's objects, while it opens: when Use went down,
+  // The door he used, by its index among the area's objects, while it opens: when Use went down,
   // in ms, and how long its open tag runs (undefined without one). drawObjects leaves its tag
   // alone meanwhile.
   private opening:
@@ -573,7 +573,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.holdStill();
       return;
     }
-    // An assembled zone is assembled afresh each time she enters it, unless ?assembly=<n> fixes
+    // An assembled zone is assembled afresh each time he enters it, unless ?assembly=<n> fixes
     // the seed.
     if (node !== undefined) {
       this.loadPlan(zoneAt(seed, node));
@@ -625,7 +625,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       void flushStats();
     });
     // Paused under the pause card or a room: keys and time while it was open count for nothing.
-    // Back from a room, she stands at its door with nothing held, and the door shows closed.
+    // Back from a room, he stands at its door with nothing held, and the door shows closed.
     this.events.on("resume", () => {
       this.clock = startStepClock;
       this.heldKeys.clear();
@@ -691,7 +691,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.scene.resume();
   }
 
-  // The start screen's backdrop: zone 1's street as she starts it, without her or the touch
+  // The start screen's backdrop: zone 1's street as he starts it, without him or the touch
   // buttons, drawn once and paused as soon as it is created, so it never steps, animates or takes
   // input, and isActive("zone") stays false for the pause scene and the frame rate cap.
   private holdStill(): void {
@@ -886,7 +886,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.drawProgress();
   }
 
-  // Her tuning for the active skill, rebuilt only when the selection changes.
+  // His tuning for the active skill, rebuilt only when the selection changes.
   private movementTuning() {
     const skill = activeSkill();
     if (this.tuned?.skill !== skill) {
@@ -1267,7 +1267,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     camera.once("camerafadeoutcomplete", () => this.leave());
   }
 
-  // Plays the open tag of the door she used, where its art has one, play held still; the room
+  // Plays the open tag of the door he used, where its art has one, play held still; the room
   // shows once it has run (update), or at once without one.
   private openDoor(nowMs: number, index: number): void {
     this.hold = "door";
@@ -1298,7 +1298,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
   }
 
-  // Shows the room behind the door she used, the zone paused under it until she leaves.
+  // Shows the room behind the door he used, the zone paused under it until he leaves.
   private openRoom(): void {
     this.dashWind?.clear();
     const room = roomOf(this.layout, this.zone);
@@ -1418,7 +1418,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.drawArea();
   }
 
-  // Draws the area she is in, with the camera kept inside it: its terrain from its tileset, or
+  // Draws the area he is in, with the camera kept inside it: its terrain from its tileset, or
   // flat where it has none, and each object's art.
   private drawArea(): void {
     this.bossWarning?.clear();
@@ -2082,10 +2082,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // page count, the letterbox bars and safe-area margins beside the canvas included, except on
   // the nav bar or a link or button, on visible Pause or skill targets, or while a modal covers play. A
   // touch's role is read where it starts on the game's nearest edge pixel (clampInto), and a move
-  // touch's travel unclamped (pageToGame), so a drag within the bars still moves her. Both
+  // touch's travel unclamped (pageToGame), so a drag within the bars still moves him. Both
   // read through the page frame's turn (FRAME_TURN). Only a touch on the canvas can be on the
   // pause button: one in the bar beside it lands on the game's edge, inside the button's hit
-  // area, and moves her.
+  // area, and moves him.
   private watchTouches(): void {
     const unclamped = (event: PagePointerEvent) =>
       pageToGame(

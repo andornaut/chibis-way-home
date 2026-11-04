@@ -163,7 +163,7 @@ export interface TerrainRect extends TileRect {
   readonly look?: string;
 }
 
-// A spot she must never reach from another in one move (a jump, or a walk off an edge): each
+// A spot he must never reach from another in one move (a jump, or a walk off an edge): each
 // names a surface, given as an entry is.
 interface NoCross {
   readonly from: TilePoint;
@@ -171,11 +171,11 @@ interface NoCross {
 }
 
 // One area of a zone: cols x rows tiles (rows is 60, two screens). solids are the terrain.
-// entries are named points where she arrives: she stands on the top edge of row `row`, her
+// entries are named points where he arrives: he stands on the top edge of row `row`, his
 // collision box centred on the grid line at the left edge of column `col`. tileset: the art
 // tileset its terrain and tile objects are drawn from; without one, both are flat rectangles.
 // noCross and outOfReach name surfaces by a spot on each, given as an entry is: noCross pairs a
-// spot with one she must never reach from it in one move, and outOfReach marks surfaces she must
+// spot with one he must never reach from it in one move, and outOfReach marks surfaces he must
 // never reach from the start. An assembled zone's area also lists the chunks it is made of, left
 // to right, and its slots with what the seed put in each; a hand-built area has neither.
 export interface AreaPlan {
@@ -194,8 +194,8 @@ export interface AreaPlan {
   readonly tileset?: string;
 }
 
-// A zone: its areas by name, and where she starts, its only checkpoint: a fall or a hazard
-// puts her back there.
+// A zone: its areas by name, and where he starts, its only checkpoint: a fall or a hazard
+// puts him back there.
 export interface ZonePlan {
   readonly stageExit?: { readonly area: string; readonly rect: TileRect };
   readonly areaOrder?: readonly string[];
@@ -301,7 +301,7 @@ export type ChunkPool = readonly string[];
 // fixed start and finish chunks, and between them a seeded run of the theme's chunks. length:
 // the zone's whole width range in columns, start and finish chunks included. difficulty: the
 // inclusive band for every middle chunk, independent of position. Safe start and finish chunks
-// are exempt. spawnCol: her centre column within the opening chunk. events and doors: what the
+// are exempt. spawnCol: his centre column within the opening chunk. events and doors: what the
 // seed places in the chunks' slots, count of each.
 export interface ZoneRecipe {
   readonly rows?: number;
@@ -374,7 +374,7 @@ interface RoomShop {
 }
 
 // A room behind a door (ROOMS by key, in src/data/rooms.ts): a full-screen still scene that Use at
-// its door shows, play paused, until she leaves. Its name is TEXT.rooms[key].name. art: its
+// its door shows, play paused, until he leaves. Its name is TEXT.rooms[key].name. art: its
 // backdrop, the whole game view; without one, a plain placeholder. animations and cast: what is
 // drawn over it. enter selects its entry dialogue; grant names its permanent skill.
 export interface RoomPlan {
@@ -402,8 +402,8 @@ export interface FilledSlot extends ChunkSlot {
   readonly fill?: string;
 }
 
-// How far the bird can jump, in tiles, from the top of the ground she leaves to the top of the
-// ledge she lands on. hop: the height of a short hop; jump: the height of a full jump; gap: the
+// How far the bird can jump, in tiles, from the top of the ground he leaves to the top of the
+// ledge he lands on. hop: the height of a short hop; jump: the height of a full jump; gap: the
 // width of a gap, at the same height, that a running full jump crosses.
 export interface Reaches {
   readonly gap: number;
@@ -413,7 +413,7 @@ export interface Reaches {
 
 // A placed thing in base pixels, its instance, character and archetype resolved into one flat
 // object: its placed top-left corner, size, motion, reaction and interaction in pixels, and what
-// the view and dialogue need. hitbox: where a hazard touches her, from its top-left corner, when
+// the view and dialogue need. hitbox: where a hazard touches him, from its top-left corner, when
 // its art declares one; else its whole rectangle.
 export interface ObjectLayout {
   readonly crumbling?: CrumblingProfile;
@@ -457,7 +457,7 @@ export interface ObjectLayout {
 
 export type CrumblingSupportId = Rect | ObjectLayout;
 
-// An area in base pixels. Falling below its height restarts the zone, her collision box
+// An area in base pixels. Falling below its height restarts the zone, his collision box
 // reaching past exitX, the left edge of its last column, clears it, and reaching back past backX,
 // the right edge of its first column, ends it without clearing it. terrain and tileset are its
 // plan's, in tiles, for drawing. chunks: an assembled area's chunks, left to right, for the
@@ -481,7 +481,7 @@ export interface ZoneLayout {
   readonly stageExit?: { readonly area: string; readonly rect: Rect };
   readonly areaOrder?: readonly string[];
   readonly areas: Readonly<Record<string, AreaLayout>>;
-  // Her drawn frame's size, from art: Use reaches a door her drawn frame covers any of.
+  // His drawn frame's size, from art: Use reaches a door his drawn frame covers any of.
   readonly birdFrame: Size;
   readonly start: AreaLink;
 }

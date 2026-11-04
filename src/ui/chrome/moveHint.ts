@@ -10,14 +10,14 @@ interface MoveHintView {
 }
 
 // The knob's offset from the ring's centre for a drag dx across: the drag's way, left or right
-// only as she moves, at most reach pixels, in whole pixels.
+// only as he moves, at most reach pixels, in whole pixels.
 export function knobOffset(reach: number, dx: number): number {
   return Math.round(Math.max(-reach, Math.min(reach, dx)));
 }
 
-// The move hint for the held touches. At rest it sits on rest. While a touch moves her (the
+// The move hint for the held touches. At rest it sits on rest. While a touch moves him (the
 // latest move touch, as touchIntent reads), its ring is centred on where that drag began, held
-// left or right the way she moves, and its knob is offset left or right the way the drag goes
+// left or right the way he moves, and its knob is offset left or right the way the drag goes
 // (knobOffset).
 export function moveHintView(
   tuning: TouchTuning,

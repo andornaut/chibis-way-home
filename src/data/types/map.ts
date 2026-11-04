@@ -2,7 +2,7 @@
 
 import type { Point, TilePoint } from "./geometry";
 
-// A point on the map: a zone she plays, or a fork where paths split or join. at: where it is
+// A point on the map: a zone he plays, or a fork where paths split or join. at: where it is
 // drawn on the map screen, on its tile grid. zone: a zone node's key in RECIPES; a zone
 // not built yet has none.
 export interface MapNode {
@@ -12,7 +12,7 @@ export interface MapNode {
   readonly zone?: string;
 }
 
-// A path from one node to the next, in the direction she travels, never back. A path not built
+// A path from one node to the next, in the direction he travels, never back. A path not built
 // yet is drawn dotted and cannot be chosen.
 export interface MapEdge {
   readonly built: boolean;

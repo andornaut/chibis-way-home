@@ -33,7 +33,7 @@ export interface ArtManifest {
   readonly fonts: readonly { readonly fnt: string; readonly key: string; readonly png: string }[];
   readonly images: readonly ArtImage[];
   readonly sprites: readonly {
-    // Where the sprite touches her as a hazard, in frame pixels, when it declares one.
+    // Where the sprite touches him as a hazard, in frame pixels, when it declares one.
     readonly hitbox?: Rect;
     readonly contact?: "silhouette";
     readonly json: string;

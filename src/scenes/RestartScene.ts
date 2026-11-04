@@ -37,7 +37,7 @@ const TARGETS: readonly Target[] = ["cancel", "restart"];
 
 // The card that asks before Restart clears progress, over the scene that opened it: a question,
 // Cancel, and Restart, which confirms. Restart clears only the progress save and opens the map
-// with her on the first zone and nothing completed; Cancel, back, Escape, P and a tap outside
+// with him on the first zone and nothing completed; Cancel, back, Escape, P and a tap outside
 // the card close it. A
 // button acts when a press lands on it and lifts on it; Tab and the arrows move the keyboard's
 // focus, and Enter and Space press the focused one. The opener passes this scene its keys and

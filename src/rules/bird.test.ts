@@ -107,7 +107,7 @@ describe("resolved standing support", () => {
   });
 });
 
-// Steps her from a standing start on GROUND, with input(step) each step; returns every state.
+// Steps him from a standing start on GROUND, with input(step) each step; returns every state.
 function run(
   steps: number,
   input: (step: number) => BirdInput,
@@ -227,7 +227,7 @@ describe("stepBird", () => {
   // Jump held for a press's seconds from a standing start: every state.
   const press = (tuning: typeof BIRD, seconds: number) =>
     run(240, (step) => ({ jumpHeld: step * STEP < seconds, move: 0 }), [GROUND], tuning);
-  // How high she rises for a press.
+  // How high he rises for a press.
   const rise = (tuning: typeof BIRD, seconds: number) => startY - lowestY(press(tuning, seconds));
   const { gravity, jumpHopHeight, jumpReleaseBlendTime, jumpRiseTime, jumpSpeed, jumpTapWindow } =
     BIRD;
@@ -377,7 +377,7 @@ describe("stepBird", () => {
     expect(states.some((state) => state.vy < 0)).toBe(jumps);
   });
 
-  // A press kept in the buffer starts a jump on the step after she lands, so the buffer must
+  // A press kept in the buffer starts a jump on the step after he lands, so the buffer must
   // outlast the steps to landing plus one.
   it.each([
     ["within the buffer", Math.floor(BIRD.jumpBuffer / STEP) - 2, true],

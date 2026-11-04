@@ -96,7 +96,7 @@ export function stepForcedTransit(
 ): ForcedTransitState {
   const support = observation.grounded ? observation.support : undefined;
   const transit = support?.transit;
-  // Safe grounded contact ends the leg even while a ride still supports her; its banks become
+  // Safe grounded contact ends the leg even while a ride still supports him; its banks become
   // the boarding admissions.
   if (observation.grounded && (observation.safeGround || !transit)) {
     return snapshot("allowed", undefined, observation.bankAdmissions);

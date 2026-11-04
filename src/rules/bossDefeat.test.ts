@@ -99,7 +99,7 @@ it("a boss death is no escape, leaves the next encounter and returns on a retry"
     1,
   ).zone;
   const floor = f.area.entries.start!.y;
-  // Chibi meets the next encounter, which acquires her, then leaves beyond its escape distance.
+  // Chibi meets the next encounter, which acquires him, then leaves beyond its escape distance.
   const met = run(
     f,
     { ...dead, bird: startBird(ORDINARY, { x: f.area.width - 60, y: floor }) },

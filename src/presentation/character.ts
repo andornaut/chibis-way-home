@@ -2,7 +2,7 @@ import { type Random, randomPick } from "@andornaut/game-kit/random";
 
 import type { CharacterState, ObjectLayout, Point, Quirk } from "../data/types";
 
-// The state a character's animation shows: react while she is within its reaction's range,
+// The state a character's animation shows: react while he is within its reaction's range,
 // move while it moved this frame, else idle.
 export function characterState(
   object: ObjectLayout,

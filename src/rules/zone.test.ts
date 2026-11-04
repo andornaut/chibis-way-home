@@ -820,7 +820,7 @@ describe("moving platforms", () => {
 });
 
 describe("pushes", () => {
-  // A block 48 wide on the ground, level with her side; she starts at x 100 (her box 88 to 112).
+  // A block 48 wide on the ground, level with his side; he starts at x 100 (his box 88 to 112).
   const block = (x: number, direction?: Motion["direction"]) =>
     object({
       height: 24,
@@ -871,7 +871,7 @@ describe("pushes", () => {
 });
 
 describe("clearing", () => {
-  // Her box's right edge at x, standing on the ground.
+  // His box's right edge at x, standing on the ground.
   const at = (x: number) => {
     const start = startZone(BIRD, zone(area([])), SEED);
     return { ...start, bird: { ...start.bird, x: x - BIRD.width } };
@@ -901,7 +901,7 @@ describe("clearing", () => {
 });
 
 describe("turning back", () => {
-  // Her box's left edge at x, standing on the ground.
+  // His box's left edge at x, standing on the ground.
   const at = (x: number) => {
     const start = startZone(BIRD, zone(area([])), SEED);
     return { ...start, bird: { ...start.bird, x } };
@@ -931,7 +931,7 @@ describe("turning back", () => {
 });
 
 describe("doorAt", () => {
-  // She stands on the ground at x 100; her drawn frame is wider and taller than her box.
+  // He stands on the ground at x 100; his drawn frame is wider and taller than his box.
   const bird = startBird(BIRD, { x: 100, y: GROUND.y });
   const frame = birdFrameRect(BIRD, BIRD_FRAME, bird);
   const box = birdBox(BIRD, bird);
@@ -948,7 +948,7 @@ describe("doorAt", () => {
     ["just touching her frame's left edge", door(frame.x - 24, frame.y), undefined],
     ["overlapping 1 px above her frame's top", door(frame.x, frame.y - 48 + 1), 0],
     ["just touching her frame's top", door(frame.x, frame.y - 48), undefined],
-    // Past her collision box but under her drawn frame: the forgiving reach.
+    // Past his collision box but under his drawn frame: the forgiving reach.
     ["under her frame but clear of her box", door(box.x + box.width + 1, frame.y), 0],
   ])("opens a door %s: %s", (_, placed, index) => {
     expect(opened([placed])).toBe(index);
@@ -958,7 +958,7 @@ describe("doorAt", () => {
     expect(opened([{ ...door(frame.x, frame.y), collision: "solid" }])).toBeUndefined();
   });
 
-  // Two doors under her frame: the one whose centre is nearer hers.
+  // Two doors under his frame: the one whose centre is nearer his.
   it.each([
     [
       "the left one nearer",
@@ -1027,7 +1027,7 @@ describe("doors", () => {
 
 describe("objectStep", () => {
   const bird = startBird(BIRD, { x: 100, y: GROUND.y });
-  // A 24 px block whose path is at x 150 on the ground, 50 px right of her centre.
+  // A 24 px block whose path is at x 150 on the ground, 50 px right of his centre.
   const at = { x: 138, y: GROUND.y - 24 };
   const critter = (kind: "approach" | "avoid" | "none", range: number) =>
     object({ height: 24, origin: at, reaction: { kind, range, speed: 120 }, width: 24 });

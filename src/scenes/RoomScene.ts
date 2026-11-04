@@ -59,7 +59,7 @@ export interface RoomData {
 // The room behind a door, over the whole canvas in place of the zone, which ZoneScene pauses
 // while it shows: the room's backdrop (or a placeholder ink fill with a frame), its animations
 // and cast, its name, and Leave at the top right. Leave, back and Escape each close it and resume
-// the zone, which returns her to the door (ZoneScene). Tab and the arrows focus Leave, and Enter
+// the zone, which returns him to the door (ZoneScene). Tab and the arrows focus Leave, and Enter
 // and Space press it once focused.
 export class RoomScene extends Scene {
   private contentCamera!: Cameras.Scene2D.Camera;

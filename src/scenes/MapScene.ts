@@ -105,7 +105,7 @@ export class MapScene extends Scene implements StageSelectOpener {
     super("map");
   }
 
-  // Where she is comes from the saved progress: the map's start with nothing completed from the
+  // Where he is comes from the saved progress: the map's start with nothing completed from the
   // beginning.
   init(data: MapData = {}): void {
     const { completed, stand } = savedMap();

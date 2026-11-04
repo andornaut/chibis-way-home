@@ -52,9 +52,9 @@ export function groundLine(
   return groundOf(within);
 }
 
-// The camera's scroll (its view's top-left corner in the area) for her feet at feet: centred on
-// her along x; along y, her feet camera.groundSpot down the screen while she is on the ground line,
-// the view rising only once her feet climb above its middle, which then keeps them there. The
+// The camera's scroll (its view's top-left corner in the area) for his feet at feet: centred on
+// him along x; along y, his feet camera.groundSpot down the screen while he is on the ground line,
+// the view rising only once his feet climb above its middle, which then keeps them there. The
 // view stays inside the area and never shows below the bottom of its lowest solid. Whole pixels.
 export function cameraScroll(
   camera: CameraTuning,

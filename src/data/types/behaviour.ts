@@ -25,8 +25,8 @@ export interface Motion {
   readonly variance: number;
 }
 
-// Within range of her (centre to centre), an "avoid" object moves away from her and an
-// "approach" one toward her, along its motion's axis, at speed. Out of range, it goes back to its
+// Within range of him (centre to centre), an "avoid" object moves away from him and an
+// "approach" one toward him, along its motion's axis, at speed. Out of range, it goes back to its
 // path at that speed and follows it again. In tiles (pixels in a layout).
 export interface Reaction {
   readonly kind: ReactionKind;
@@ -240,8 +240,8 @@ export interface BehaviourPlan {
 
 type InteractionKind = "none" | "quip" | "talk";
 
-// How a character interacts with her, within range tiles of her (centre to centre). quip: says
-// one of its quips when she comes within range; talk: Use within range opens its dialogue.
+// How a character interacts with him, within range tiles of him (centre to centre). quip: says
+// one of its quips when he comes within range; talk: Use within range opens its dialogue.
 export interface Interaction {
   readonly kind: InteractionKind;
   readonly range: number;
@@ -255,7 +255,7 @@ export interface Tuning {
 }
 
 // A behaviour (ARCHETYPES by name, in src/data/archetypes.ts): its collision, fixed, and the
-// default motion, reaction and interaction its characters tune. collision: solid blocks her from
+// default motion, reaction and interaction its characters tune. collision: solid blocks him from
 // every side; ledge only from above; touching a hazard restarts the zone; Use in a use zone, a
 // door, opens its room; none is scenery.
 export interface Archetype {
@@ -265,7 +265,7 @@ export interface Archetype {
   readonly reaction: Reaction;
 }
 
-// The states an animation tag can play for. open: a door as she uses it, before its room shows.
+// The states an animation tag can play for. open: a door as he uses it, before its room shows.
 export type CharacterState = "idle" | "move" | "open" | "react" | "talk";
 
 // An idle tic: tag plays once every `every` seconds, give or take variance (0 to 1) of that,

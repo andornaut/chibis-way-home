@@ -25,11 +25,11 @@ const FAR_SIDE = 20;
 // The largest reach tried, in tiles, and how long a try may take before it counts as missed.
 const MAX_TILES = 60;
 const MAX_STEPS = Math.round(10 / STEP_SECONDS);
-// Steps she stands still first, so every try starts from her standing on the ground.
+// Steps he stands still first, so every try starts from him standing on the ground.
 const SETTLE_STEPS = 2;
 const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 
-// One try: the zone, the solid she must land on top of, and her input for each step given the
+// One try: the zone, the solid he must land on top of, and his input for each step given the
 // state so far.
 interface Course {
   readonly input: (zone: ZoneState) => ZoneInput;
@@ -39,8 +39,8 @@ interface Course {
 
 const ground = (cols: number) => ({ col: 0, cols, row: GROUND_ROW, rows: 2 });
 
-// One area of terrain, with nothing in it, where she starts at start (her box's bottom centre).
-// It never clears, so she runs on past its right edge until the measure ends.
+// One area of terrain, with nothing in it, where he starts at start (his box's bottom centre).
+// It never clears, so he runs on past its right edge until the measure ends.
 function courseLayout(tile: number, cols: number, solids: TileRect[], start: Point): ZoneLayout {
   const plan: ZonePlan = {
     areas: {
@@ -70,8 +70,8 @@ function courseLayout(tile: number, cols: number, solids: TileRect[], start: Poi
   };
 }
 
-// A ledge tiles high, just right of where she stands still. She walks right, holding Jump for
-// jumpSteps from the first step she moves.
+// A ledge tiles high, just right of where he stands still. He walks right, holding Jump for
+// jumpSteps from the first step he moves.
 function ledgeCourse(tuning: BirdTuning, tile: number, tiles: number, jumpSteps: number): Course {
   const ledge = { col: RUN_UP, cols: FAR_SIDE, row: GROUND_ROW - tiles, rows: tiles };
   const target = tileRect(tile, ledge);
@@ -88,9 +88,9 @@ function ledgeCourse(tuning: BirdTuning, tile: number, tiles: number, jumpSteps:
   };
 }
 
-// A gap tiles wide between two runs of ground at the same height. She runs right from a
-// standstill and presses Jump, holding it, press steps after the last step she stands on the
-// near edge (the step after which, without a jump, she would no longer stand on it): before it
+// A gap tiles wide between two runs of ground at the same height. He runs right from a
+// standstill and presses Jump, holding it, press steps after the last step he stands on the
+// near edge (the step after which, without a jump, he would no longer stand on it): before it
 // for a negative press, in coyote time for a positive one.
 function gapCourse(tuning: BirdTuning, tile: number, tiles: number, press: number): Course {
   const near = ground(RUN_UP);
@@ -118,7 +118,7 @@ function gapCourse(tuning: BirdTuning, tile: number, tiles: number, press: numbe
 // The press timings tried, in steps from the gap course's last step on the edge: from as many
 // steps before it as coyote time lasts, through a step past the end of coyote time. The press
 // that makes the farthest gap may come at any of them. A ledge's height does not depend on when
-// she presses, standing on the ground, so it has one timing.
+// he presses, standing on the ground, so it has one timing.
 function pressTimings(tuning: BirdTuning, reach: Reach): number[] {
   if (reach !== "gap") {
     return [0];
@@ -136,7 +136,7 @@ function course(
 ): Course {
   switch (reach) {
     case "hop":
-      // The shortest press: the smallest jump she can make.
+      // The shortest press: the smallest jump he can make.
       return ledgeCourse(tuning, tile, tiles, 1);
     case "jump":
       return ledgeCourse(tuning, tile, tiles, MAX_STEPS);
@@ -147,8 +147,8 @@ function course(
   }
 }
 
-// Whether she makes a reach of tiles with Jump pressed at the press timing given (see
-// pressTimings): she stands on top of the ledge or the far side before a restart or the time runs
+// Whether he makes a reach of tiles with Jump pressed at the press timing given (see
+// pressTimings): he stands on top of the ledge or the far side before a restart or the time runs
 // out.
 function makesWith(
   tuning: BirdTuning,
@@ -171,12 +171,12 @@ function makesWith(
   return false;
 }
 
-// Whether she makes a reach of tiles at any of its press timings.
+// Whether he makes a reach of tiles at any of its press timings.
 function makes(tuning: BirdTuning, tile: number, reach: Reach, tiles: number): boolean {
   return pressTimings(tuning, reach).some((press) => makesWith(tuning, tile, reach, tiles, press));
 }
 
-// The largest reach of each kind she makes, at any press timing, in tiles, or 0.
+// The largest reach of each kind he makes, at any press timing, in tiles, or 0.
 export function measureReaches(tuning: BirdTuning, tile: number): Reaches {
   const largest = (reach: Reach) => {
     let best = 0;

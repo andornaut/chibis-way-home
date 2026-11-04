@@ -3,10 +3,10 @@ import type { ZonePlan } from "../data/types";
 // Hand-built parkour zones for the zone and walk tests.
 //
 // Every zone is 60 rows, starts on the ground at the bottom left and clears at its right edge.
-// Each solid runs down to the bottom row, so every gap is a pit she falls out of. Rises and gaps
-// are in tiles, from the top of the ground she leaves to the top of the ledge she lands on: a tap
+// Each solid runs down to the bottom row, so every gap is a pit he falls out of. Rises and gaps
+// are in tiles, from the top of the ground he leaves to the top of the ledge he lands on: a tap
 // rises 3, a full jump 6, and a running jump crosses 19. Every mover's path is 2 tiles from every
-// solid and every other mover's path, so a mover never meets her box where she stands at an edge.
+// solid and every other mover's path, so a mover never meets his box where he stands at an edge.
 // The noCross pairs mark jumps that must remain impossible, accounting for the speed carried
 // from a mover on takeoff.
 export const TEST_ZONES: readonly ZonePlan[] = [
@@ -46,7 +46,7 @@ export const TEST_ZONES: readonly ZonePlan[] = [
       main: {
         cols: 211,
         entries: { start: { col: 3, row: 56 } },
-        // She can't jump past the narrow landing.
+        // He can't jump past the narrow landing.
         noCross: [{ from: { col: 98, row: 52 }, to: { col: 131, row: 52 } }],
         objects: [
           // Hazard strips on the ground under gaps of 8 and 16.
@@ -103,7 +103,7 @@ export const TEST_ZONES: readonly ZonePlan[] = [
           { from: { col: 80, row: 26 }, to: { col: 121, row: 26 } },
         ],
         objects: [
-          // A vertical mover lifts her 14, from the ground to a ledge.
+          // A vertical mover lifts him 14, from the ground to a ledge.
           {
             character: "test-mover",
             col: 14,
@@ -113,9 +113,9 @@ export const TEST_ZONES: readonly ZonePlan[] = [
             row: 56,
             rows: 1,
           },
-          // A horizontal mover 4 above the ledges across a gap of 28: she can jump up onto it only
-          // while it is near. The far ledge is 6 past its track's end: a mover running into her
-          // side while she stands still in the air puts her on its far side, and from there she
+          // A horizontal mover 4 above the ledges across a gap of 28: he can jump up onto it only
+          // while it is near. The far ledge is 6 past its track's end: a mover running into his
+          // side while he stands still in the air puts him on its far side, and from there he
           // must not reach the ledge.
           {
             character: "test-mover",
@@ -126,7 +126,7 @@ export const TEST_ZONES: readonly ZonePlan[] = [
             row: 38,
             rows: 1,
           },
-          // A vertical mover lifts her 16, into the upper screen.
+          // A vertical mover lifts him 16, into the upper screen.
           {
             character: "test-mover",
             col: 70,
@@ -137,7 +137,7 @@ export const TEST_ZONES: readonly ZonePlan[] = [
             rows: 1,
           },
           // A horizontal mover level with the ledges across a gap of 28, to the end. Its near end
-          // is 4 from the ledge, so she jumps on rather than walking off onto it.
+          // is 4 from the ledge, so he jumps on rather than walking off onto it.
           {
             character: "test-mover",
             col: 90,
@@ -162,7 +162,7 @@ export const TEST_ZONES: readonly ZonePlan[] = [
   },
   // Mover to mover transfers, with no solid ledge between them, easiest first. The movers in each
   // chain share a round trip (8 s for the lifts' chain, 5 s for the last pair), so each meeting
-  // comes round once a cycle, and she waits for it by riding.
+  // comes round once a cycle, and he waits for it by riding.
   {
     areas: {
       main: {
@@ -209,7 +209,7 @@ export const TEST_ZONES: readonly ZonePlan[] = [
             rows: 1,
           },
           // Vertical to vertical: a second lift 2 across, without pauses, moves opposite to the
-          // first, from 2 below the first's top to 4 below the ledge. She jumps up 4 from its top to
+          // first, from 2 below the first's top to 4 below the ledge. He jumps up 4 from its top to
           // the ledge.
           {
             character: "test-mover",
@@ -221,7 +221,7 @@ export const TEST_ZONES: readonly ZonePlan[] = [
             rows: 1,
           },
           // Horizontal to horizontal, opposite directions, fastest: the second, 4 higher and 2
-          // across, pauses at its near end as the first pauses at its far end, then carries her to
+          // across, pauses at its near end as the first pauses at its far end, then carries him to
           // the end ledge. Their round trip is 5 s. The ledge is 26 from the second's near end,
           // and the first's far end is 26 from the end ledge.
           {

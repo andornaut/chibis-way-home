@@ -26,7 +26,7 @@ export function keyIntent(held: ReadonlySet<string>): Intent {
   };
 }
 
-// What a touch does: hold the button it starts on, or else move her.
+// What a touch does: hold the button it starts on, or else move him.
 type TouchRole = TouchControl | "move";
 
 // The role a touch starting at point takes. It keeps that role until it lifts.
@@ -51,7 +51,7 @@ export interface HeldTouch {
   readonly x: number;
 }
 
-// Of two move touches, the later one moves her.
+// Of two move touches, the later one moves him.
 export function touchIntent(tuning: TouchTuning, touches: readonly HeldTouch[]): Intent {
   const mover = touches.filter((touch) => touch.role === "move").at(-1);
   return {

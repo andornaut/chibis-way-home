@@ -32,16 +32,16 @@ export interface BirdDashState {
 export interface BirdState {
   readonly airJumpUsed: boolean;
   readonly dash?: BirdDashState | undefined;
-  // Seconds a pressed jump still waits to start, should she land or still be in coyote time.
+  // Seconds a pressed jump still waits to start, should he land or still be in coyote time.
   readonly bufferLeft: number;
-  // Speed along x carried from a moving platform she left, kept until she lands or meets a wall.
+  // Speed along x carried from a moving platform he left, kept until he lands or meets a wall.
   readonly carryVx: number;
-  // Seconds after leaving the ground in which a jump still starts. 0 once she has jumped.
+  // Seconds after leaving the ground in which a jump still starts. 0 once he has jumped.
   readonly coyoteLeft: number;
   readonly facing: -1 | 1;
   readonly grounded: boolean;
   readonly jumpHeld: boolean;
-  // Seconds Jump has been held since it started her jump; 0 while it is up.
+  // Seconds Jump has been held since it started his jump; 0 while it is up.
   readonly jumpHeldFor: number;
   // Position at takeoff, used to preserve the minimum height on release.
   readonly jumpFromY: number;
@@ -50,7 +50,7 @@ export interface BirdState {
   readonly jumpRelease?: JumpReleaseCurve | undefined;
   readonly vx: number;
   readonly vy: number;
-  // Her collision box's top-left corner.
+  // His collision box's top-left corner.
   readonly x: number;
   readonly y: number;
 }
@@ -107,8 +107,8 @@ export function birdBox(tuning: BirdTuning, bird: BirdState): Rect {
   return { height: tuning.height, width: tuning.width, x: bird.x, y: bird.y };
 }
 
-// The whole-pixel rect her drawn frame, frame big, covers: its bottom edge on her collision
-// box's bottom edge and its horizontal centre on the box's, where the zone draws her sprite.
+// The whole-pixel rect his drawn frame, frame big, covers: its bottom edge on his collision
+// box's bottom edge and its horizontal centre on the box's, where the zone draws his sprite.
 export function birdFrameRect(tuning: BirdTuning, frame: Size, bird: BirdState): Rect {
   return {
     height: frame.height,
@@ -389,7 +389,7 @@ function onSupport(tuning: BirdTuning, surfaces: readonly Rect[], bird: BirdStat
 }
 
 // One fixed step of seconds: steer, jump, fall, then move along x and along y in turn, each
-// stopped at the first solid in the way. Ledges stop her only from above: falling onto one from
+// stopped at the first solid in the way. Ledges stop him only from above: falling onto one from
 // at or above its top, never rising or walking through it. Every fall flutters: it never passes
 // the flutter speed.
 export function stepBird(
@@ -488,7 +488,7 @@ function solveBird(
   let jumpRise = bird.jumpRise;
   let jumpFromY = bird.jumpFromY;
   let jumpRelease = bird.jumpRelease;
-  // Seconds Jump was held before this step, since it started her jump.
+  // Seconds Jump was held before this step, since it started his jump.
   let heldBefore = bird.jumpHeldFor;
   let airJumpUsed = bird.airJumpUsed;
   const supported =
@@ -581,8 +581,8 @@ function solveBird(
     dash = { ...dash, ordinaryVx: 0, remainingSeconds: 0 };
   }
 
-  // grounded is found afresh each step: standing on a solid, gravity carries her a fraction of a
-  // pixel into it, and the check below lands her again.
+  // grounded is found afresh each step: standing on a solid, gravity carries him a fraction of a
+  // pixel into it, and the check below lands him again.
   const verticalPush = input.push?.y ?? 0;
   const falling = (rise === undefined ? vy : -rise / seconds) + verticalPush;
   const intendedY = bird.y + (rise === undefined ? vy * seconds : -rise) + verticalPush * seconds;

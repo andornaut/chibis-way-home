@@ -15,17 +15,17 @@ export function pathsFrom(map: ZoneMap, at: string): { edge: MapEdge; node: MapN
     .map((edge) => ({ edge, node: nodeOf(map, edge.to) }));
 }
 
-// The map as far as she has opened it: the nodes she has reached (zones and forks), the zone
-// nodes among them she may stand on and play, in the map's node order, and the paths between
-// reached nodes that she has opened.
+// The map as far as he has opened it: the nodes he has reached (zones and forks), the zone
+// nodes among them he may stand on and play, in the map's node order, and the paths between
+// reached nodes that he has opened.
 export interface OpenMap {
   readonly edges: readonly MapEdge[];
   readonly reached: ReadonlySet<string>;
   readonly zones: readonly string[];
 }
 
-// What the zones she has completed open: from the map's start along built paths, through forks,
-// to each zone node with a zone to play; on past a zone node only once she has completed it.
+// What the zones he has completed open: from the map's start along built paths, through forks,
+// to each zone node with a zone to play; on past a zone node only once he has completed it.
 // Unbuilt paths, and zone nodes with no zone yet, stay closed. The finish leads nowhere.
 export function openMap(map: ZoneMap, completed: ReadonlySet<string>): OpenMap {
   const reached = new Set([map.start]);

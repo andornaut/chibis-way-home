@@ -138,7 +138,7 @@ function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance:
 }
 
 // Why a chunk's seam at the edge `side` breaks the seam rule, if it does: the terrain's top at
-// its row must run the footing in from the edge without a gap, no hazard or moving thing she
+// its row must run the footing in from the edge without a gap, no hazard or moving thing he
 // touches may come within the footing, at or above the seam, and no terrain, still solid or
 // ledge, or hazard may come within the headroom above it.
 function seamProblems(

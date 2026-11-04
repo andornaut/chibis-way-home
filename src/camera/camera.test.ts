@@ -5,7 +5,7 @@ import { cameraScroll, groundLine } from "./camera";
 
 const SCREEN = { height: 360, width: 720 };
 // Three screens tall and wide, its ground's top at 600 and 200 thick, room for the view to sit
-// her two thirds down.
+// him two thirds down.
 const AREA = { height: 1080, solids: [{ height: 200, width: 2160, x: 0, y: 600 }], width: 2160 };
 // The same with the ground only 48 thick, so the view's bottom stops at the ground's bottom.
 const THIN = { ...AREA, solids: [{ height: 48, width: 2160, x: 0, y: 600 }] };

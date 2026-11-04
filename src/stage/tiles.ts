@@ -2,7 +2,7 @@ import type { Rect } from "../data/types";
 
 // An art tileset's description (public/art/tilesets/<key>.json): tiles by name, as indices into
 // the sheet counted row by row, and pieces (multi-tile units) as rows of indices, top row first.
-// hitboxes: where a tile hurts her, in px within its cell, for the tiles that do not hurt across
+// hitboxes: where a tile hurts him, in px within its cell, for the tiles that do not hurt across
 // the whole cell.
 export interface Tileset {
   readonly columns: number;
@@ -61,7 +61,7 @@ export function namedTiles(
 }
 
 // Where an object drawn from a tile of tileset (as objectTiles draws it), cols x rows cells of
-// tile px, hurts her, from its top-left: the bounding rectangle of its tiles' hit boxes, a tile
+// tile px, hurts him, from its top-left: the bounding rectangle of its tiles' hit boxes, a tile
 // without one hurting across its whole cell. Undefined for art that is not a tile, or when none
 // of its tiles has a hit box, so the object hurts across its whole rectangle.
 export function tileHitbox(

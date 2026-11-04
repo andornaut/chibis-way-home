@@ -420,7 +420,7 @@ export function areaLayout(
 
 // A zone plan in base pixels, for the rules: each instance resolved against the catalogue, with
 // the hit boxes art declares by art key and in its tilesets by tile, and only the instances the
-// set flags place. birdFrame: her drawn frame's size, which Use reaches with.
+// set flags place. birdFrame: his drawn frame's size, which Use reaches with.
 export function zoneLayout(
   tile: number,
   birdFrame: Size,

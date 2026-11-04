@@ -16,7 +16,7 @@ export type RoomEvent =
       readonly up: "leave" | undefined;
     };
 
-// Whether Leave has the keyboard's focus, and whether she leaves.
+// Whether Leave has the keyboard's focus, and whether he leaves.
 export interface RoomOutcome {
   readonly focused: boolean;
   readonly leaves: boolean;

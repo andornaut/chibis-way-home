@@ -271,12 +271,12 @@ export interface ZoneInput extends BirdInput {
   readonly useHeld: boolean;
 }
 
-// area: the area she is in. attempt: 0, and one more after each restart; it reseeds the random
+// area: the area he is in. attempt: 0, and one more after each restart; it reseeds the random
 // motion, so a restart does not replay it. objects: each of the area's objects' top-left corner.
-// seconds: time since she entered the area, which places the objects on their tracks. door: the
-// index among the area's objects of the door she used, which holds the zone still while it
-// opens and its room shows, until leaveRoom. cleared: she reached the area's last column, and
-// turnedBack: she went back into its first column; either holds it still for good, cleared
+// seconds: time since he entered the area, which places the objects on their tracks. door: the
+// index among the area's objects of the door he used, which holds the zone still while it
+// opens and its room shows, until leaveRoom. cleared: he reached the area's last column, and
+// turnedBack: he went back into its first column; either holds it still for good, cleared
 // completing the zone and turnedBack leaving it as it was.
 export interface ZonePulse extends ForcePulse {
   readonly id: number;
@@ -346,7 +346,7 @@ function pathAt(object: ObjectLayout, track: Track, seconds: number): Point {
   return { x: object.origin.x + offset.x, y: object.origin.y + offset.y };
 }
 
-// She arrives at the entry `link` names, the area's objects at the start of their tracks. The
+// He arrives at the entry `link` names, the area's objects at the start of their tracks. The
 // tracks' random draws come from the seed and the attempt, so each attempt rolls them afresh.
 export function enterArea(
   tuning: BirdTuning,
@@ -413,12 +413,12 @@ export function enterArea(
     tracks,
     transients: [],
     turnedBack: false,
-    // Use must go down after she arrives, so a press held from before does not act.
+    // Use must go down after he arrives, so a press held from before does not act.
     useHeld: true,
   };
 }
 
-// She leaves the room she is in for its door, standing where she was, the zone going on from
+// He leaves the room he is in for its door, standing where he was, the zone going on from
 // where it held still. Use must go down again before it acts.
 export function leaveRoom(zone: ZoneState): ZoneState {
   return { ...zone, door: undefined, useHeld: true };
@@ -443,8 +443,8 @@ const centreOf = (rect: Rect): Point => ({
   y: rect.y + rect.height / 2,
 });
 
-// The door Use opens: of the doors (Use objects) whose drawn rect, placed at, her drawn frame
-// intersects at all, the one whose centre is nearest hers; undefined where none is. A door is
+// The door Use opens: of the doors (Use objects) whose drawn rect, placed at, his drawn frame
+// intersects at all, the one whose centre is nearest his; undefined where none is. A door is
 // drawn over its whole rect (art's door sprites, tiles and placeholders fill it), so its rect is
 // its drawn rect.
 export function doorAt(
@@ -475,7 +475,7 @@ export function doorAt(
   return nearest?.index;
 }
 
-// The room behind the door she used, if she used one.
+// The room behind the door he used, if he used one.
 export function roomOf(layout: ZoneLayout, zone: ZoneState): string | undefined {
   return zone.door === undefined ? undefined : areaOf(layout, zone.area).objects[zone.door]?.room;
 }
@@ -585,7 +585,7 @@ function transitObservation(
 }
 
 // Where an object goes this step. Without a reaction, it follows its track. Within its reaction's
-// range of her it moves along its motion's axis, away from her or toward her; out of range it
+// range of him it moves along its motion's axis, away from him or toward him; out of range it
 // heads back to its track, at the reaction's speed either way.
 export function objectStep(
   tuning: BirdTuning,
@@ -1310,12 +1310,12 @@ export function stepZoneBodies(
 
 // One fixed step of the zone. Pure, so the game and a headless simulator run the same rules.
 // Solid objects block like terrain and ledge objects only from above; standing on a moving one,
-// she moves with it, and leaving it by a jump or a walk off its edge she keeps its speed along x
-// until she lands. A solid one running into her side pushes her ahead of it. Touching a hazard,
+// he moves with it, and leaving it by a jump or a walk off its edge he keeps its speed along x
+// until he lands. A solid one running into his side pushes him ahead of it. Touching a hazard,
 // being pushed into a solid or falling out of the area freezes a death snapshot until an
-// explicit retry starts the next attempt. Her box reaching the last column clears the zone, and
+// explicit retry starts the next attempt. His box reaching the last column clears the zone, and
 // reaching back into its first column ends it uncleared (turnedBack).
-// Use with her drawn frame over a door sets `door` (doorAt), and the zone holds still until
+// Use with his drawn frame over a door sets `door` (doorAt), and the zone holds still until
 // leaveRoom.
 export function stepZone(
   tuning: BirdTuning,

@@ -17,7 +17,7 @@ interface PlatformBirdPreparation {
   readonly riding: PlatformBirdFrame | undefined;
 }
 
-// Whether her feet are on top of rect.
+// Whether his feet are on top of rect.
 export function standsOn(tuning: BirdTuning, bird: BirdState, rect: Rect): boolean {
   return (
     Math.abs(bird.y + tuning.height - rect.y) < EDGE &&
@@ -26,7 +26,7 @@ export function standsOn(tuning: BirdTuning, bird: BirdState, rect: Rect): boole
   );
 }
 
-// Moves her with the platform she rides, by (dx, dy), along each axis only as far as no solid
+// Moves him with the platform he rides, by (dx, dy), along each axis only as far as no solid
 // is in the way.
 function ride(
   tuning: BirdTuning,
@@ -44,9 +44,9 @@ function ride(
   return { ...bird, x, y };
 }
 
-// A solid moving along x into her side pushes her out of its way, to the side she was on before
-// it moved: its leading edge, as it runs into her. One that has not moved along x leaves her to
-// the bird's own collision, which stops her by her own motion.
+// A solid moving along x into his side pushes him out of its way, to the side he was on before
+// it moved: its leading edge, as it runs into him. One that has not moved along x leaves him to
+// the bird's own collision, which stops him by his own motion.
 function pushedAside(tuning: BirdTuning, before: Rect, after: Rect, bird: BirdState): BirdState {
   if (after.x === before.x || !rectsOverlap(birdBox(tuning, bird), after)) {
     return bird;

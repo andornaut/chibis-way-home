@@ -37,7 +37,7 @@ export interface ChunkLibrary {
   readonly themes: Readonly<Record<string, ThemePlan>>;
 }
 
-// An assembled zone's one area, and the entry she starts at.
+// An assembled zone's one area, and the entry he starts at.
 export const ASSEMBLED_AREA = "main";
 const START_ENTRY = "start";
 
@@ -432,7 +432,7 @@ const shiftInstance = (col: number, instance: Instance): Instance => ({
 // random. A filled door slot places the theme's door at its own size, centred across the slot
 // (half a tile in where the two widths differ by an odd number of tiles) and standing on its
 // floor, leading to its room.
-// She starts at spawnCol on the first chunk's entry row.
+// He starts at spawnCol on the first chunk's entry row.
 export function zonePlanOf(
   library: ChunkLibrary,
   random: Random,

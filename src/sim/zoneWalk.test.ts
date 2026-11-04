@@ -25,7 +25,7 @@ describe.each(ZONES)("zone %s", (_, plan) => {
   walkSuite(plan);
 });
 
-// Ground at row 40 from col 0 to 20, where she starts, and a ledge rise tiles higher from col
+// Ground at row 40 from col 0 to 20, where he starts, and a ledge rise tiles higher from col
 // 20 + gap on.
 function course(gap: number, rise: number): ZonePlan {
   return {
@@ -46,7 +46,7 @@ function course(gap: number, rise: number): ZonePlan {
 }
 
 describe("walkZone", () => {
-  // Flat ground 120 wide, with a door on it where she must pass, or none.
+  // Flat ground 120 wide, with a door on it where he must pass, or none.
   const street = (doors: number): ZonePlan => ({
     areas: {
       street: {

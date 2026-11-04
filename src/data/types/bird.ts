@@ -102,10 +102,10 @@ export interface BirdTuning {
   // Fastest fall: every fall flutters.
   readonly flutterFallSpeed: number;
   readonly gravity: number;
-  // Her collision box.
+  // His collision box.
   readonly height: number;
   readonly width: number;
-  // Seconds before landing in which a jump press is kept, to start as she lands.
+  // Seconds before landing in which a jump press is kept, to start as he lands.
   readonly jumpBuffer: number;
   // Height of the low hop, including releases during the tap window.
   readonly jumpHopHeight: number;
