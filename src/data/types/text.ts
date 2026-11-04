@@ -204,8 +204,6 @@ export interface ZoneEntryIntroduction {
 
 export interface ZoneDialoguePlan {
   readonly entry?: ZoneEntryIntroduction;
-  // CLEANUP (added 2026-11-04): remove once gameplay's commit drops the foreshadow plans.
-  readonly foreshadow?: string;
   readonly intro: string;
   readonly introStage?: string;
   readonly outro: string;
