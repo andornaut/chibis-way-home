@@ -42,7 +42,7 @@ Requires Node 24.21.0 or newer (`.nvmrc` pins 24.21.0).
 
 Run checks, tests and builds inside an isolated Node 24.21.0 container as the dedicated uid 19001 with the checkout's group (`--user 19001:19001 --group-add "$(stat -c %g .)" -e HOME=/tmp`), which owns nothing on the host. Mount every host path read-only and write outputs and caches only to container paths, tmpfs or named volumes.
 
-Art checks that export through Aseprite use `game-check:node24.21.0-aseprite1.2.30`, built on the Node-only `game-check:node24.21.0` image (`docker build -f scripts/check.Dockerfile -t game-check:node24.21.0 scripts`) from a licensed `Aseprite_1.2.30-1_amd64.deb` kept outside the repository: `docker build -f scripts/check-aseprite.Dockerfile --build-context aseprite-deb=<directory with the .deb> -t game-check:node24.21.0-aseprite1.2.30 scripts`.
+Checks run on the upstream `node:24.21.0` image. Art builds that export through Aseprite use `chibi-check:node24.21.0-aseprite1.2.30`, built on `node:24.21.0` from a licensed `Aseprite_1.2.30-1_amd64.deb` kept in `.claude/aseprite/`, outside version control: `docker build -f scripts/check-aseprite.Dockerfile --build-context aseprite-deb=.claude/aseprite -t chibi-check:node24.21.0-aseprite1.2.30 scripts`.
 
 The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html` is `/`, the home page, and `pages/play/index.html` is `/play/`, the game).
 

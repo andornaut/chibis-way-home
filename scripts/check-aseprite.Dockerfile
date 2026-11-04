@@ -1,11 +1,9 @@
-# Check image with headless Aseprite 1.2.30 for the art export checks.
-# The base is the local image built from scripts/check.Dockerfile, expected ID
-# sha256:2d7139b397eb55298abeea19882d9faa83533594e5ed45988e3d1071e9167388. BuildKit resolves a
-# FROM digest only against a registry, so the tag is pinned here and the ID is checked after the build.
+# Check image chibi-check:node24.21.0-aseprite1.2.30: upstream node:24.21.0 with headless Aseprite
+# 1.2.30 for the art export checks.
 # The licensed vendor .deb comes from the named build context aseprite-deb, outside the repository.
 # The binary links libGL, libXcursor and libXfixes, which the package does not declare; apt resolves
 # libGL through Mesa. Batch mode opens no display, so no X server is installed.
-FROM game-check:node24.21.0
+FROM node:24.21.0
 
 ARG SNAPSHOT=20261103T000000Z
 
@@ -29,4 +27,5 @@ RUN --mount=type=bind,from=aseprite-deb,target=/mnt/aseprite-deb \
     && rm -rf /var/lib/apt/lists/* \
     && if ldd /usr/bin/aseprite | grep 'not found'; then exit 1; fi \
     && dpkg-query -W -f '${Version}\n' aseprite | grep -qx 1.2.30-1 \
-    && aseprite -b --version
+    && aseprite -b --version \
+    && node --eval "if (process.versions.node !== '24.21.0') process.exit(1)"
