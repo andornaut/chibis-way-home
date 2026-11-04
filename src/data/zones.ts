@@ -21,16 +21,13 @@ import {
   woodlandVerticalId,
 } from "./chunks";
 import { CHUNK_COLS } from "./chunkTemplates";
-import type { ChunkPool, StageRecipe, ZonePlan } from "./types";
+import type { ChunkPool, StageRecipe } from "./types";
 import {
   APARTMENT_ROWS,
   APARTMENT_SPAWN_ROW,
   APARTMENT_STAGE_EXIT,
   apartmentChunkId,
 } from "./zone6";
-
-// The zones the map leads to, by key.
-export const ZONES: Readonly<Record<string, ZonePlan>> = {};
 
 // Zone profiles raise the minimum grade and favour compound challenges along the route.
 export const ZONE_DIFFICULTY = { max: 4, min: 3 } as const;
