@@ -704,8 +704,9 @@ export function stepZoneBodies(
   const geometry = kinds.perception
     ? { ...baseGeometry, view: currentScreen(tuning, area, zone.bird) }
     : baseGeometry;
-  const frames = new Map<number, ObjectFrame>();
-  const resolving = new Set<number>();
+  // Each object's frame this tick, and the objects whose frames are being resolved.
+  const frames: (ObjectFrame | undefined)[] = new Array(area.objects.length);
+  const resolving = new Uint8Array(area.objects.length);
   let supportFrames: readonly BehaviourPlatformFrame[] | undefined;
   let futureSupports:
     ((time: number, dt: number) => readonly BehaviourPlatformFrame[] | undefined) | undefined;
@@ -884,15 +885,15 @@ export function stepZoneBodies(
     };
   };
   const resolveFrame = (index: number): ObjectFrame => {
-    const prior = frames.get(index);
+    const prior = frames[index];
     if (prior) {
       return prior;
     }
     const object = area.objects[index];
-    if (!object || resolving.has(index)) {
+    if (!object || resolving[index]) {
       throw new Error("Invalid runtime orbit relationship");
     }
-    resolving.add(index);
+    resolving[index] = 1;
     const frame: ObjectFrame = (() => {
       if (object.orbit) {
         const host = area.objects[object.orbit.host]!;
@@ -954,8 +955,8 @@ export function stepZoneBodies(
       const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
       return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
     })();
-    resolving.delete(index);
-    frames.set(index, frame);
+    resolving[index] = 0;
+    frames[index] = frame;
     return frame;
   };
   const objects = area.objects.map((_, index) => resolveFrame(index));
