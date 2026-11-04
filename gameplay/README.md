@@ -67,19 +67,6 @@ The transfer-gate crossing, crumbling support and warned vent are implemented, e
 
 Qualify each family's complete approach, commitment, safe landing and recovery using actual contact and support. Include missed boarding or delayed departure where relevant. A renamed existing pattern, cosmetic variant or unobserved phase does not establish a new physical challenge or a passing implementation. These targets add neither combat nor underwater movement.
 
-### Crumbling support contract
-
-A terrain run or a stationary object opts in with a `crumbling` profile; behaviour, orbit and motion overrides are rejected. Warning (0.8 seconds) and absent (2 seconds) durations live in `CRUMBLING_SUPPORT_TUNING` in `src/data/obstacleTuning.ts`.
-
-- **Trigger:** a new solver-resolved grounded-support contact by an actor with traversal physics (Chibi, or a boss standing or landing on support) starts one warning. Ground movers without traversal physics, movers on fixed tracks, projectiles such as falling blocks, overlap, flybys, side contact and decorative objects never trigger it. The warning latches when the actor steps off; later contacts neither restart nor extend it, and simultaneous actors start one warning
-- **Warning and absence:** warning leaves normal collision and the full skin intact and draws cracks over the support's opaque face. At warning expiry the support, its skin and its lip are removed for the absent duration, counted from the removal boundary. The support itself is nonlethal and never becomes a red hazard
-- **Restoration:** after the absent deadline, the support waits until its full volume is free of Chibi, every behaviour-driven hazard body and every transient, including falling blocks. It never materializes through a body, restarts the absent clock or adds an effect while waiting. It restores intact and disarmed; restoration never triggers a warning, but a later genuine landing does
-- **Reset:** Retry and area entry restore every support intact with no recorded contacts
-- **Fixed ticks:** prior deadlines are processed at each fixed-tick start, before colliders are built. A deadline takes effect at the first boundary at or after its active-clock time, and pause freezes that clock. Warning expiry wins over a new contact at the same boundary. Collider state stays constant through the tick. Support contacts resolved during a tick take effect at the next boundary
-- **Occupancy:** from the absent deadline, the full volume is tested against current bodies once at each fixed-tick start until clear. Runtime occupancy is always known; a prediction whose occupancy is unknown is unknown, never safe
-- **Prediction:** runtime and boss prediction share the same clock, ordering, contacts and occupancy. Each support's presence is known only until its earliest possible change; later presence is unknown, never safe
-- **Route:** the crumbling support crossing places a 6-tile ledge over a red-floored pit between two fixed banks. An ordinary jump from the ledge reaches the far bank within the warning, without a required skill or altered physics. A Chibi who waits on the ledge falls into the pit
-
 ### Forced-transit attack deferral target
 
 This approved target awaits Pebble's data opt-in and authored-range qualification. The [rulebook](design.md#forced-transit) owns its rules. Scope the exit-offer proof to that rule, not an impossibility claim about every future controller.
