@@ -50,15 +50,21 @@ export const OUTDOOR_LIFT_ASCENT_TRANSIT = {
   leg: "forward",
   windows: [
     {
-      certification: "uncertified",
+      certification: "ordinary",
+      result: { bankId: "lower", kind: "egress" },
+      riderOnSupport: { col: [-2, 5], row: [-RIDER_ROWS, -RIDER_ROWS] },
+      supportOrigin: { col: [0, 0], row: [-2, 0] },
+    },
+    {
+      certification: "ordinary",
       result: { kind: "forced" },
-      riderOnSupport: { col: [0, 4], row: [-RIDER_ROWS, -RIDER_ROWS] },
+      riderOnSupport: { col: [-2, 5], row: [-RIDER_ROWS, -RIDER_ROWS] },
       supportOrigin: { col: [0, 0], row: [-7, 0] },
     },
     {
-      certification: "uncertified",
+      certification: "ordinary",
       result: { bankId: "upper", kind: "egress" },
-      riderOnSupport: { col: [2, 4], row: [-RIDER_ROWS, -RIDER_ROWS] },
+      riderOnSupport: { col: [0.5, 5], row: [-RIDER_ROWS, -RIDER_ROWS] },
       supportOrigin: { col: [0, 0], row: [-12, -10] },
     },
   ],
