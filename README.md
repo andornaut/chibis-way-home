@@ -40,7 +40,7 @@ Penthouse leads to the final celebration.
 
 Requires Node 24.21.0 or newer (`.nvmrc` pins 24.21.0).
 
-Run checks, tests and builds inside an isolated `node:24.21.0` container, as the dedicated uid 19001 with the checkout's group, which owns nothing on the host. Mount host paths read-only and only with `--mount` (`-v` creates a missing source as root), keep outputs and caches inside the container and copy results out with `docker cp`. From the checkout, with `NPM_CACHE` naming a populated npm cache the checkout's group can read:
+Run every command below inside an isolated `node:24.21.0` container, never on the host, as the dedicated uid 19001 with the checkout's group, which owns nothing on the host. Mount host paths read-only and only with `--mount` (`-v` creates a missing source as root), keep outputs and caches inside the container and copy results out with `docker cp`. From the checkout, with `NPM_CACHE` naming a populated npm cache the checkout's group can read:
 
 ```sh
 docker run --rm --network none --cpus=4 \
@@ -56,42 +56,38 @@ docker run --rm --network none --cpus=4 \
     && npm run check && npm run lint && npm test -- --maxWorkers=4'
 ```
 
-Replace the last line with any command below, including the art generators (`node art/tools/<tool>.ts <command>`), which need no extra tools.
+Replace the last line with any command in the table, or an art generator (`node art/tools/<tool>.ts <command>`), which needs no extra tools.
+
+To fill `NPM_CACHE`, install once in a networked container and copy its cache out:
+
+```sh
+docker run --name npm-fill --cpus=4 \
+  --user 19001:19001 --group-add "$(stat -c %g .)" -e HOME=/tmp \
+  --mount type=bind,src="$PWD",dst=/src,readonly \
+  node:24.21.0 sh -c 'cd /tmp && cp /src/package.json /src/package-lock.json . \
+    && npm ci --cache /tmp/npm-cache'
+docker cp npm-fill:/tmp/npm-cache "$NPM_CACHE" && docker rm npm-fill
+```
+
+Alternatively, skip the cache: start the container detached with the network, run `npm ci` in it, then `docker network disconnect bridge <container>` before running any check.
+
+| Command                      | Does                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| `npm run build`              | Build to `dist/`                                                                     |
+| `npm run check`              | Type check with tsc                                                                  |
+| `npm run clean`              | Remove the build and Wrangler state                                                  |
+| `npm run dev`                | Dev server                                                                           |
+| `npm run format`             | Rewrite files with Prettier and apply ESLint fixes                                   |
+| `npm run lint`               | Prettier, ESLint and markdownlint                                                    |
+| `npm run preview`            | Build, then serve it through `wrangler dev`                                          |
+| `npm run reaches`            | Print the bird's measured reaches beside gameplay's targets; exits 1 when one is off |
+| `npm run simulate -- --help` | Simulate runs ([src/README.md](src/README.md), Bounded simulations)                  |
+| `npm test`                   | Run the unit tests                                                                   |
+| `npm run test:game-kit`      | Run the game tests game-kit's release proof runs                                     |
 
 WORKAROUND: Parent-scoped development overrides pin [KaTeX](https://github.com/advisories/GHSA-238p-pmpm-9mq7) `0.18.2`, [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249) `11.0.3` and [re2js](https://github.com/advisories/GHSA-gg6h-894w-4m9c) `2.8.7`. ESLint loads the cycle and restricted-paths rules and the resolver through exported plugin subpaths because the full plugin imports an unused rule requiring the removed minimatch `makeRe` API. Keep cycle detection enabled. Remove each override when its parent range supports the patched version; restore the full plugin import when it supports minimatch 11.
 
 The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html` is `/`, the home page, and `pages/play/index.html` is `/play/`, the game).
-
-```bash
-npm install
-
-# Dev server
-npm run dev
-
-# Type check with tsc
-npm run check
-
-# Prettier check, ESLint and markdownlint
-npm run lint
-
-# Rewrite files with Prettier and apply ESLint fixes
-npm run format
-
-# Run the unit tests
-npm test
-
-# Print the bird's measured reaches beside gameplay's targets; exits 1 when one is off
-npm run reaches
-
-# Build to dist/
-npm run build
-
-# Build, then serve it through wrangler dev
-npm run preview
-
-# Remove build and Wrangler state
-npm run clean
-```
 
 ## Deploying
 
