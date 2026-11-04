@@ -13,7 +13,7 @@ import type {
 import { birdBox, type BirdState } from "./bird";
 import type { TimedHazardSampler } from "./timedHazard";
 
-export interface BehaviourPlatform {
+interface BehaviourPlatform {
   readonly collision: "ledge" | "solid";
   readonly owner: ObjectLayout;
   readonly rect: Rect;

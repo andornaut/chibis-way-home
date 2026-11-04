@@ -57,7 +57,7 @@ function sameGeometry(a: Geometry, world: BehaviourWorld): boolean {
 }
 
 // The full frame ascends above both endpoints before crossing and descending onto support.
-export function selectedFlightRoute(
+function selectedFlightRoute(
   world: BehaviourWorld,
   object: ObjectLayout,
   clearance: number,

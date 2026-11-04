@@ -6,7 +6,7 @@ import type { BirdTuning, Point, Size } from "../data/types";
 import { birdFrameRect, type BirdState } from "../rules/bird";
 import { airJumpStarted } from "./airJumpCue";
 
-export type BirdTag = "dash" | "double-jump" | "flutter" | "idle" | "jump" | "land" | "walk";
+type BirdTag = "dash" | "double-jump" | "flutter" | "idle" | "jump" | "land" | "walk";
 
 // The tag she shows, and how long she has shown it as of this step.
 export interface BirdPose {

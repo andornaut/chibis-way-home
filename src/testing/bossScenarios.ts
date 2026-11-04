@@ -149,7 +149,7 @@ const CRUMBLING_ARCHIE: BossScenario = {
   ticks: ENCOUNTER_TICKS,
 };
 
-export interface BossScenarioGroup {
+interface BossScenarioGroup {
   readonly boss: string;
   readonly covers: readonly BossCoverage[];
   readonly scenario: BossScenario;

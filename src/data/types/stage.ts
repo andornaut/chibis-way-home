@@ -31,7 +31,7 @@ export interface AreaLink {
 // no excluded one is. room: a door's room, a key of ROOMS (src/data/rooms.ts). A door is an
 // instance whose archetype is "door" (its collision "use"); every door has a room, and nothing
 // else has one.
-export interface ElementSkin {
+interface ElementSkin {
   readonly art: string;
   readonly tileset: string | null;
 }
@@ -55,15 +55,15 @@ export interface Orbit<Host = string> {
 }
 
 export type ForcedTransitInterval = readonly [minimum: number, maximum: number];
-export type ForcedTransitBankPurpose = "forward" | "refuge" | "retreat";
-export type ForcedTransitCertification = "uncertified" | "ordinary";
+type ForcedTransitBankPurpose = "forward" | "refuge" | "retreat";
+type ForcedTransitCertification = "uncertified" | "ordinary";
 export type TargetedAttackWindow = "allowed" | "deferred";
 
-export type ForcedTransitResult =
+type ForcedTransitResult =
   { readonly kind: "egress"; readonly bankId: string } | { readonly kind: "forced" };
 
 // Authored coordinates are tile offsets from the placed mover's nominal origin.
-export interface ForcedTransitTileBank {
+interface ForcedTransitTileBank {
   readonly col: number;
   readonly cols: number;
   readonly id: string;
@@ -76,7 +76,7 @@ export interface ForcedTransitTileOriginWindow {
   readonly row: ForcedTransitInterval;
 }
 
-export interface ForcedTransitTileWindow {
+interface ForcedTransitTileWindow {
   readonly certification: ForcedTransitCertification;
   readonly result: ForcedTransitResult;
   // Body-origin tile offsets from the actual physical support rectangle.
@@ -93,7 +93,7 @@ export interface ForcedTransit {
 }
 
 // Resolved coordinates are absolute layout pixels, independent of the mover's current pose.
-export interface ForcedTransitLayoutBank {
+interface ForcedTransitLayoutBank {
   readonly id: string;
   readonly purpose: ForcedTransitBankPurpose;
   readonly width: number;
@@ -165,7 +165,7 @@ export interface TerrainRect extends TileRect {
 
 // A spot she must never reach from another in one move (a jump, or a walk off an edge): each
 // names a surface, given as an entry is.
-export interface NoCross {
+interface NoCross {
   readonly from: TilePoint;
   readonly to: TilePoint;
 }
@@ -204,10 +204,10 @@ export interface ZonePlan {
 }
 
 // A chunk's difficulty, 1 to 5, as gameplay/design.md's Chunks section grades it.
-export type Difficulty = 1 | 2 | 3 | 4 | 5;
+type Difficulty = 1 | 2 | 3 | 4 | 5;
 
 // A row a chunk's entry or exit stands on: one of SEAM_ROWS (src/data/seams.ts).
-export type SeamRow = (typeof SEAM_ROWS)[number];
+type SeamRow = (typeof SEAM_ROWS)[number];
 
 // The ground at a chunk's left or right edge: its top is row `row`.
 export interface ChunkSeam {
@@ -218,7 +218,7 @@ export type SlotKind = "door" | "event";
 
 // A marked region of a chunk where the seed places an event or a door, in the chunk's tiles.
 // id: unique within its chunk.
-export interface ChunkSlot {
+interface ChunkSlot {
   readonly area: TileRect;
   readonly id: string;
   readonly kind: SlotKind;
@@ -326,7 +326,7 @@ export interface ZoneRecipe {
 }
 
 // Section lengths include their applicable global caps and one or more generated pool chunks.
-export interface ZoneSectionRecipe extends Pick<
+interface ZoneSectionRecipe extends Pick<
   ZoneRecipe,
   | "difficulty"
   | "difficultyWeights"
@@ -355,7 +355,7 @@ export interface OrderedZoneRecipe {
 export type StageRecipe = ZoneRecipe | OrderedZoneRecipe;
 
 // A sprite in a room playing one tag, looping, its frame's top-left at `at`, in base pixels.
-export interface RoomAnimation {
+interface RoomAnimation {
   readonly art: string;
   readonly at: Point;
   readonly tag: string;
@@ -363,13 +363,13 @@ export interface RoomAnimation {
 
 // A character standing in a room: its art playing its idle tag, its frame's top-left at `at`, in
 // base pixels.
-export interface RoomCast {
+interface RoomCast {
   readonly at: Point;
   readonly character: string;
 }
 
 // PLACEHOLDER: what a room sells, by item key, until gameplay decides the currency and items.
-export interface RoomShop {
+interface RoomShop {
   readonly items: readonly string[];
 }
 

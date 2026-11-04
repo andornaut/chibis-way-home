@@ -163,7 +163,7 @@ type BehaviourAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
 >;
 
 // Straight flight towards target at speed, clipped by solid terrain, facing its travel.
-export function flyToward(
+function flyToward(
   object: ObjectLayout,
   world: BehaviourWorld,
   slice: number,

@@ -1,4 +1,4 @@
-export interface HorizontalSpan {
+interface HorizontalSpan {
   readonly left: number;
   readonly right: number;
 }

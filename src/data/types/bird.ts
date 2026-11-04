@@ -2,7 +2,7 @@
 
 import type { Point, Rect } from "./geometry";
 
-export type DeathReason = "crush" | "fall" | "hazard";
+type DeathReason = "crush" | "fall" | "hazard";
 
 export type DeathContact =
   | { readonly contactCue?: "red-hazard"; readonly index: number; readonly kind: "object" }
@@ -45,7 +45,7 @@ export interface DeathTuning {
 }
 
 // A finite horizontal burst: speed in pixels/second, durations in active-play seconds.
-export interface BirdDashTuning {
+interface BirdDashTuning {
   readonly cooldownSeconds: number;
   readonly durationSeconds: number;
   readonly speed: number;
@@ -53,7 +53,7 @@ export interface BirdDashTuning {
 
 // The bird's movement, in base pixels and seconds.
 // Dash wind is visual only. Distances are full sprite-frame pixels; alpha is 0..1.
-export interface DashTrailLine {
+interface DashTrailLine {
   readonly alpha: number;
   // A named key in the art palette's colours map.
   readonly colour: string;
@@ -130,7 +130,7 @@ export interface SkillTuning {
   readonly speedyWalkMultiplier: number;
 }
 
-export interface SkillOwnership {
+interface SkillOwnership {
   readonly skills: readonly SkillId[];
 }
 

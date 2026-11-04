@@ -43,7 +43,7 @@ export function hitAround(art: Rect): Rect {
 // A circle, cut where awayFrom is given along the line midway between its centre and awayFrom:
 // it then takes in only the points nearer its own centre, so two circles cut toward each other
 // meet on that line and never overlap.
-export interface Circle {
+interface Circle {
   readonly awayFrom?: Point;
   readonly centre: Point;
   readonly radius: number;

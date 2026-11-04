@@ -35,7 +35,7 @@ export const BOSSES: Readonly<Record<string, string>> = {
   "raccoon-antagonist": "Kiwi",
 };
 
-export interface BossWorldSample {
+interface BossWorldSample {
   // Indices of the area's terrain rects that crumbling has removed at the end of the tick.
   readonly absentTerrain: readonly number[];
   readonly area: string;

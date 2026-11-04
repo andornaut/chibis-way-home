@@ -11,7 +11,7 @@ export const ACTION_HELP = {
   lineHeight: 40 + 2 * CARD_CONTENT.rowGap,
 } as const;
 
-export interface ActionHelpPlacement {
+interface ActionHelpPlacement {
   readonly part: ActionHelpPart;
   readonly rect: Rect;
 }

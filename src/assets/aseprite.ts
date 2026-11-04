@@ -9,7 +9,7 @@ export const ART_MANIFEST_FILE = "manifest.json";
 export const ART_MANIFEST_KEY = "manifest";
 
 // A backdrop piece: its bottom edge sits at world y, and repeat "x" tiles it across a run.
-export interface ArtBackdrop {
+interface ArtBackdrop {
   readonly height: number;
   readonly key: string;
   readonly png: string;
@@ -20,7 +20,7 @@ export interface ArtBackdrop {
 
 // A plain image the site's HTML pages show, such as the logo, at its size in pixels. It ships as
 // its own file under /art/, never on the game's atlas pages.
-export interface ArtImage {
+interface ArtImage {
   readonly height: number;
   readonly key: string;
   readonly png: string;

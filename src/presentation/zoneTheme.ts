@@ -1,7 +1,6 @@
 import type { ZoneMap } from "../data/types";
 import { destinationForStage } from "../progress";
 
-export const ZONE_THEMES_KEY = "zone-themes";
 export type ZoneThemes = Readonly<Record<string, { readonly primary: string }>>;
 
 // Debug stages outside the catalogue inherit the starting destination's theme. Role names

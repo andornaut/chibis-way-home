@@ -1,7 +1,8 @@
 import type { MapDestination, Point, Size, ZoneMap } from "../../data/types";
 import { destinationStages, nodeOf, type OpenMap } from "../../progress";
 import type { PathLook } from "../layout/mapScreen";
-import type { MarkerState } from "./mapMarks";
+
+type MarkerState = "current" | "locked" | "normal" | "unbuilt" | "visited";
 
 export function destinationCentre(tile: number, destination: MapDestination): Point {
   return { x: destination.at.col * tile + tile / 2, y: destination.at.row * tile + tile / 2 };

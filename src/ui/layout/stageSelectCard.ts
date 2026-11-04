@@ -27,7 +27,7 @@ export const STAGES_PER_PAGE = Math.max(
   1,
   Math.floor((SCREEN.width - 3 * CARD_CONTENT.padding) / (STAGE_FACE_WIDTH + CARD_CONTENT.padding)),
 );
-export interface StagePageLabels {
+interface StagePageLabels {
   readonly next: string;
   readonly page: string;
   readonly previous: string;

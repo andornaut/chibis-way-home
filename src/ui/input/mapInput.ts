@@ -1,7 +1,7 @@
 import { stepFocus } from "../focus";
 
 export type MapAction = "continue" | "home";
-export type MapKeyAction =
+type MapKeyAction =
   | { readonly kind: "activate"; readonly target: MapAction }
   | { readonly kind: "focus"; readonly target: MapAction | undefined }
   | { readonly kind: "step"; readonly by: -1 | 1 };

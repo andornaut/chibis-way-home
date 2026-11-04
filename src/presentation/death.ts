@@ -13,7 +13,7 @@ import type {
 } from "../data/types";
 import { destinationForStage } from "../progress";
 
-export type DeathPhase = "bounce" | "fall" | "impact" | "recoil" | "seated";
+type DeathPhase = "bounce" | "fall" | "impact" | "recoil" | "seated";
 export interface DeathPresentation {
   readonly elapsed: number;
   readonly facing: -1 | 1;

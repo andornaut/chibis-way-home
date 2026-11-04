@@ -15,12 +15,12 @@ export interface SimulationModel<State, Input, Tick> {
 // Chooses one tick's input. A controller that draws randomness owns its own seeded stream.
 export type SimulationController<State, Input> = (tick: number, state: State) => Input;
 
-export interface SimulationClock {
+interface SimulationClock {
   readonly maxTicks: number;
   readonly stepSeconds: number;
 }
 
-export interface SimulationRun<State, Tick> {
+interface SimulationRun<State, Tick> {
   // FNV-1a 64 over each tick's canonical form, with the tick count.
   readonly hash: string;
   readonly state: State;

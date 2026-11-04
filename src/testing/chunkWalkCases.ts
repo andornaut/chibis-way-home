@@ -8,7 +8,7 @@ import { zoneLayout } from "../rules/tiles";
 import { type ALL_CHUNKS, ALL_RECIPES } from "./chunks";
 import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
-export type ChunkWalkCase = (typeof ALL_CHUNKS)[number];
+type ChunkWalkCase = (typeof ALL_CHUNKS)[number];
 
 export function chunkWalkPlan(
   fills: Readonly<Record<SlotKind, readonly string[]>>,

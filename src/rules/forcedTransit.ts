@@ -1,12 +1,12 @@
 import { EDGE } from "../core";
 import type { ForcedTransitLayout, Point, Rect, TargetedAttackWindow } from "../data/types";
 
-export interface ForcedTransitBankContact {
+interface ForcedTransitBankContact {
   readonly group: string;
   readonly id: string;
 }
 
-export interface ForcedTransitEpisode {
+interface ForcedTransitEpisode {
   readonly boardingBank?: string;
   readonly group: string;
   readonly leg: string;

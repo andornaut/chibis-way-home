@@ -4,13 +4,13 @@ import { collisionCandidates, EDGE } from "../core";
 import type { BirdTuning, ObjectLayout, Rect } from "../data/types";
 import { birdBox, type BirdState } from "./bird";
 
-export interface PlatformBirdFrame {
+interface PlatformBirdFrame {
   readonly after: Rect;
   readonly before: Rect;
   readonly object: ObjectLayout;
 }
 
-export interface PlatformBirdPreparation {
+interface PlatformBirdPreparation {
   readonly bird: BirdState;
   readonly crushed: boolean;
   readonly dx: number;
@@ -28,7 +28,7 @@ export function standsOn(tuning: BirdTuning, bird: BirdState, rect: Rect): boole
 
 // Moves her with the platform she rides, by (dx, dy), along each axis only as far as no solid
 // is in the way.
-export function ride(
+function ride(
   tuning: BirdTuning,
   solids: readonly Rect[],
   dx: number,
@@ -47,12 +47,7 @@ export function ride(
 // A solid moving along x into her side pushes her out of its way, to the side she was on before
 // it moved: its leading edge, as it runs into her. One that has not moved along x leaves her to
 // the bird's own collision, which stops her by her own motion.
-export function pushedAside(
-  tuning: BirdTuning,
-  before: Rect,
-  after: Rect,
-  bird: BirdState,
-): BirdState {
+function pushedAside(tuning: BirdTuning, before: Rect, after: Rect, bird: BirdState): BirdState {
   if (after.x === before.x || !rectsOverlap(birdBox(tuning, bird), after)) {
     return bird;
   }

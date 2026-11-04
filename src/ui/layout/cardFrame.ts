@@ -17,8 +17,8 @@ export const CARD_CONTENT = {
 
 // Fixed frame geometry for the placeholder celebration. Ordinary modal cards measure their
 // contents through contentCardLayout.
-export const CARD_AT: Point = { x: 176, y: 88 };
-export const CARD_WIDTH = 368;
+const CARD_AT: Point = { x: 176, y: 88 };
+const CARD_WIDTH = 368;
 
 const CLOSE_ART: Rect = {
   height: CARD_CONTENT.closeSize,

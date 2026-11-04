@@ -33,7 +33,7 @@ export function destinationStages(
   });
 }
 
-export type DestinationSelection =
+type DestinationSelection =
   | { readonly kind: "unavailable" }
   | { readonly kind: "choose"; readonly latest: string; readonly stages: readonly string[] };
 

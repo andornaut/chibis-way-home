@@ -6,7 +6,7 @@ import type { BehaviourState, BehaviourStep } from "./behaviour";
 import { contactBox } from "./behaviourTrack";
 
 // A boss: a pursuing hazard. It dies as Chibi does, on a red hazard or below the level.
-export function isBoss(object: ObjectLayout): boolean {
+function isBoss(object: ObjectLayout): boolean {
   return object.collision === "hazard" && object.behaviour?.pursuit !== undefined;
 }
 

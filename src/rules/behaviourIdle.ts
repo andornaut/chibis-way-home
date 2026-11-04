@@ -55,7 +55,7 @@ export interface BehaviourIdleState {
   readonly status?: IdleStatus;
   readonly recovery?: Recovery;
 }
-export interface IdleSegment {
+interface IdleSegment {
   readonly start: number;
   readonly end: number;
   readonly from: Point;

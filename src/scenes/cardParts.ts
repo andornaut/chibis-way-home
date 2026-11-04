@@ -200,7 +200,7 @@ export function captureTab(scene: Scene, captured: boolean): void {
 // the primary, which a card leads with, dslate with a white label.
 export const BUTTON = { art: "ui-button", label: "ink" } as const;
 export const PRIMARY_BUTTON = { art: "ui-button-primary", label: "white" } as const;
-export type ButtonStyle = typeof BUTTON | typeof PRIMARY_BUTTON;
+type ButtonStyle = typeof BUTTON | typeof PRIMARY_BUTTON;
 
 // A labelled button in one of art's button styles (BUTTON by default) stretched over its rect: its
 // normal and pressed faces, and its label in the style's colour, led by the play mark when marked.

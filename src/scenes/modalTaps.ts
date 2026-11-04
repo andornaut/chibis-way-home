@@ -4,7 +4,7 @@ import { TOUCH } from "../data/touch";
 import type { Point, Rect } from "../data/types";
 import { modalInput, onScenePointer } from "./modalInput";
 
-export interface Modal {
+interface Modal {
   readonly close?: () => void;
   readonly covered: () => readonly Rect[] | undefined;
 }

@@ -2,11 +2,11 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import type { UiSnapshotResult } from "@andornaut/game-kit/view/phaser/uiCommands";
 import type { Game, Scene } from "phaser";
 
-export interface UiSnapshotHandle {
+interface UiSnapshotHandle {
   readonly ready: Promise<UiSnapshotResult>;
   destroy(): void;
 }
-export interface GameUiPresentation {
+interface GameUiPresentation {
   capture(
     scene: Scene,
     area: Rect,

@@ -27,7 +27,7 @@ interface Selection {
   readonly id: string;
   readonly mechanics: readonly string[];
 }
-export interface StageAssessment {
+interface StageAssessment {
   readonly areas: readonly {
     readonly cols: number;
     readonly id: string;

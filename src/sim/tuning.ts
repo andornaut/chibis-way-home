@@ -23,7 +23,7 @@ export interface SavedTuningCase {
     | "witness"
   >;
 }
-export interface TuningContext {
+interface TuningContext {
   readonly structural: PlayabilityReport;
   readonly expectedStages?: readonly string[];
 }
@@ -281,7 +281,7 @@ export function assessTuning(context: TuningContext, savedCases: readonly SavedT
     }),
   };
 }
-export type TuningReport = ReturnType<typeof assessTuning>;
+type TuningReport = ReturnType<typeof assessTuning>;
 const csv = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 const fraction = (ticks: number, total: number) => (total === 0 ? null : ticks / total);
 const bottlenecks = (stage: TuningReport["stages"][number]) =>

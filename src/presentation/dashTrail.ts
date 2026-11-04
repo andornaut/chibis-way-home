@@ -3,7 +3,7 @@ import { clamp01 } from "@andornaut/game-kit/numbers";
 import type { DashTrailTuning, Rect } from "../data/types";
 import type { BirdDashState } from "../rules/bird";
 
-export interface DashTrailPixel extends Rect {
+interface DashTrailPixel extends Rect {
   readonly alpha: number;
   readonly colour: string;
 }

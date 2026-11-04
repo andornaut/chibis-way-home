@@ -30,7 +30,7 @@ export const TUNING_GROUPS = {
   Touch: TOUCH,
 };
 
-export interface TuningRow {
+interface TuningRow {
   readonly group: string;
   readonly path: string;
   readonly value: string;

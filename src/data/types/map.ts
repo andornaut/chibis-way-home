@@ -22,7 +22,7 @@ export interface MapEdge {
 
 // A pen mark on the map's paper: its art key and its top-left, in base pixels, at least a tile
 // clear of every node, path and label.
-export interface MapDecoration {
+interface MapDecoration {
   readonly art: string;
   readonly at: Point;
 }

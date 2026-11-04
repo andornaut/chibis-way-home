@@ -63,12 +63,12 @@ function spriteFrames({ frames }: AsepriteExport): AtlasFrame[] {
   }));
 }
 
-export interface AtlasBuildDependencies {
+interface AtlasBuildDependencies {
   readonly encode: (image: RgbaImage) => Uint8Array | Promise<Uint8Array>;
   readonly readArt: (path: string) => Promise<Uint8Array>;
 }
 
-export interface AtlasBuild {
+interface AtlasBuild {
   readonly pages: readonly { readonly bytes: Uint8Array; readonly image: RgbaImage }[];
   // Each key's frames at their rects on its page.
   readonly textures: readonly AtlasTexture[];

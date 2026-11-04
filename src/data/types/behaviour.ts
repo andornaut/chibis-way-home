@@ -4,8 +4,8 @@ import type { Direction, Point, Rect } from "./geometry";
 import type { DialogueLine } from "./text";
 
 export type Collision = "hazard" | "ledge" | "none" | "solid" | "use";
-export type MotionAlgorithm = "ease" | "hop" | "linear" | "static" | "wander";
-export type ReactionKind = "approach" | "avoid" | "none";
+type MotionAlgorithm = "ease" | "hop" | "linear" | "static" | "wander";
+type ReactionKind = "approach" | "avoid" | "none";
 
 // How an object moves from where it is placed, in tiles and seconds (pixels in a layout). Its far
 // end is distance away in direction. linear: there at speed, pause, back, pause. ease: the same
@@ -67,7 +67,7 @@ export type BehaviourCondition =
 
 // Ground pursuit physics: authored gravity in tiles/second squared and speeds in tiles/second.
 // The resolver scales all three spatial values to pixels without changing time units.
-export interface BehaviourTraversal {
+interface BehaviourTraversal {
   readonly prepSeconds: number;
   readonly gravity: number;
   readonly jumpSpeed: number;
@@ -238,7 +238,7 @@ export interface BehaviourPlan {
   readonly states: Readonly<Record<string, BehaviourNode>>;
 }
 
-export type InteractionKind = "none" | "quip" | "talk";
+type InteractionKind = "none" | "quip" | "talk";
 
 // How a character interacts with her, within range tiles of her (centre to centre). quip: says
 // one of its quips when she comes within range; talk: Use within range opens its dialogue.

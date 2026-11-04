@@ -11,7 +11,7 @@ import {
   supportContact,
 } from "./flyLanding";
 
-export interface BehaviourSupport {
+interface BehaviourSupport {
   readonly state: BehaviourState;
   // Whether the body rests on certified support now.
   readonly supported: boolean;

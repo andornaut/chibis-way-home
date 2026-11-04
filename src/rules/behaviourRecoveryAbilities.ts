@@ -19,7 +19,7 @@ import { nodeOf } from "./behaviourTrack";
 import type { BehaviourTraversalState } from "./behaviourTraversal";
 import { landingSupport, supportContact } from "./flyLanding";
 
-export type BehaviourRecoveryParams =
+type BehaviourRecoveryParams =
   { readonly kind: "idle-recovery" } | { readonly kind: "periodic-reposition" };
 
 export interface BehaviourRecoveryContext {
@@ -32,7 +32,7 @@ export interface BehaviourRecoveryContext {
   readonly seconds: number;
 }
 
-export interface BehaviourRecoveryStep {
+interface BehaviourRecoveryStep {
   // Whether a periodic reposition yielded to a ready attack tell.
   readonly deferToAttack?: boolean;
   readonly state: BehaviourState;
@@ -293,7 +293,7 @@ const PERIODIC_REPOSITION: RecoveryAbility<"periodic-reposition"> = {
   },
 };
 
-export const BEHAVIOUR_RECOVERIES: AbilityTable<
+const BEHAVIOUR_RECOVERIES: AbilityTable<
   BehaviourRecoveryContext,
   BehaviourRecoveryParams,
   { readonly at: Point; readonly state: BehaviourState },

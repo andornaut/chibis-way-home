@@ -7,7 +7,7 @@ import { perceiveBehaviour } from "./behaviourPerception";
 import { startBird } from "./bird";
 import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision";
 
-export interface TimedHazardContact {
+interface TimedHazardContact {
   readonly startSeconds: number;
   readonly endSeconds: number;
   readonly rect: Rect;

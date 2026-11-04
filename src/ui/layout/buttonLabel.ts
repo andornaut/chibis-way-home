@@ -15,7 +15,7 @@ export const TEXT_BUTTON = {
 
 // A mark drawn just before a button's label, such as Resume's play triangle: its width, and the
 // gap from it to the label's ink.
-export interface LabelMark {
+interface LabelMark {
   readonly gap: number;
   readonly height: number;
   readonly width: number;

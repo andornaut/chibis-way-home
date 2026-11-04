@@ -1,11 +1,11 @@
 // Structured per-tick records of pursuing agents and their target, for simulations and checks.
 
-export interface TracePoint {
+interface TracePoint {
   readonly x: number;
   readonly y: number;
 }
 
-export interface TraceBody {
+interface TraceBody {
   readonly at: TracePoint;
   readonly height: number;
   readonly width: number;
@@ -34,7 +34,7 @@ export interface AgentSample extends TraceBody {
   readonly supported: boolean;
 }
 
-export interface TargetSample extends TraceBody {
+interface TargetSample extends TraceBody {
   readonly grounded: boolean;
   readonly velocity: TracePoint;
 }

@@ -8,7 +8,7 @@ interface Visible {
   setVisible(visible: boolean): unknown;
 }
 
-export interface CrumblingTarget {
+interface CrumblingTarget {
   readonly skins: Readonly<Record<CrumblingSkin, readonly Visible[]>>;
   readonly supportId: CrumblingSupportId;
 }

@@ -38,7 +38,7 @@ interface FailedChoice {
 export interface NavigationMemory {
   readonly deaths: readonly FailedChoice[];
 }
-export interface NavigationCandidateSummary {
+interface NavigationCandidateSummary {
   readonly executionSteps?: number;
   readonly executionProgress?: number;
   readonly followup?: { readonly inputLabel: string; readonly startTick: number };
@@ -119,7 +119,7 @@ export interface NavigationState {
       }
     | undefined;
 }
-export interface Navigator {
+interface Navigator {
   navigation?: NavigationState;
   navigationMemory?: NavigationMemory;
 }

@@ -2,7 +2,7 @@ import type { TouchChromeColours, TouchChromeLayer } from "./touchChrome";
 
 export const PAUSE_CHROME_FRAME = 35;
 export type PauseChromePose = "held" | "press" | "rest";
-export interface PauseChromeColours extends TouchChromeColours {
+interface PauseChromeColours extends TouchChromeColours {
   readonly dslate: number;
   readonly navy: number;
 }

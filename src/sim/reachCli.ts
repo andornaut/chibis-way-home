@@ -10,7 +10,7 @@ const HELP = `npm run reaches
 Prints the bird's measured reaches in tiles beside gameplay's targets.
 Exits 1 when a reach is off its target and 2 on a usage error.`;
 
-export function reachCli(args: readonly string[]): number {
+function reachCli(args: readonly string[]): number {
   if (parseOptions({}, args).help) {
     console.log(HELP);
     return 0;

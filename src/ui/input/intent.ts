@@ -27,7 +27,7 @@ export function keyIntent(held: ReadonlySet<string>): Intent {
 }
 
 // What a touch does: hold the button it starts on, or else move her.
-export type TouchRole = TouchControl | "move";
+type TouchRole = TouchControl | "move";
 
 // The role a touch starting at point takes. It keeps that role until it lifts.
 export function touchRoleAt(point: Point): TouchRole {

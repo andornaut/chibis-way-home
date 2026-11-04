@@ -22,16 +22,16 @@ export type UiFontResource = (typeof UI_FONT_RESOURCES)[number];
 export interface UiFontFace {
   load(): Promise<unknown>;
 }
-export interface UiFontPorts {
+interface UiFontPorts {
   createFace(resource: UiFontResource): UiFontFace;
   installFace(face: UiFontFace): void;
   removeFace(face: UiFontFace): void;
 }
-export interface UiFontSubject {
+interface UiFontSubject {
   readonly font: string;
   readonly sourceMetrics: { readonly baseline: number; readonly size: number };
 }
-export interface UiTextStyle {
+interface UiTextStyle {
   readonly baseline: number;
   readonly family: string;
   readonly role: UiFontResource["role"];

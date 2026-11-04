@@ -17,7 +17,7 @@ import {
 
 export const DEATH_PROGRESS_HEIGHT = 2;
 
-export interface DeathCardWords {
+interface DeathCardWords {
   readonly home: string;
   readonly progress: string;
   readonly retry: string;

@@ -6,11 +6,11 @@ import type { SpawnEvent } from "./transients";
 import type { ZonePulse } from "./zone";
 
 // What one entry action emits into the zone: a force pulse to number, or a transient to spawn.
-export type BehaviourEffect =
+type BehaviourEffect =
   | { readonly kind: "pulse"; readonly pulse: Omit<ZonePulse, "id"> }
   | { readonly kind: "spawn"; readonly spawn: SpawnEvent };
 
-export interface BehaviourEffectContext {
+interface BehaviourEffectContext {
   // The emitting object's index in its area.
   readonly emitter: number;
   readonly object: ObjectLayout;
@@ -51,7 +51,7 @@ const SPAWN: EffectAbility<"spawn"> = {
   },
 };
 
-export const BEHAVIOUR_EFFECTS: AbilityTable<
+const BEHAVIOUR_EFFECTS: AbilityTable<
   BehaviourEffectContext,
   BehaviourAction,
   BehaviourEvent,

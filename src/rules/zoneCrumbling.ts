@@ -16,7 +16,7 @@ import { effectiveHazardPhase } from "./effectiveCollision";
 import { type Transient, transientBox } from "./transients";
 
 // Chibi, behaviour-driven actors by layout identity and transients by their stable id.
-export type CrumblingActorId = "chibi" | ObjectLayout | `transient:${number}`;
+type CrumblingActorId = "chibi" | ObjectLayout | `transient:${number}`;
 export type ZoneCrumblingWorld = CrumblingWorld<CrumblingSupportId, CrumblingActorId>;
 
 // Moving physical actors; platforms are support colliders and timed hazards are stationary.
@@ -75,9 +75,7 @@ const FILTERED = new WeakMap<
   { readonly absent: readonly CrumblingSupportId[]; readonly rects: readonly Rect[] }
 >();
 
-export function absentSupports(
-  world: ZoneCrumblingWorld | undefined,
-): readonly CrumblingSupportId[] {
+function absentSupports(world: ZoneCrumblingWorld | undefined): readonly CrumblingSupportId[] {
   return (
     world?.supports.flatMap(({ phase, supportId }) =>
       phase.kind === "absent" ? [supportId] : [],

@@ -103,7 +103,7 @@ export function prepareSensors(layout: ZoneLayout): SensorIndex {
   };
 }
 
-export interface Bot {
+interface Bot {
   navigation?: NavigationState;
   navigationMemory?: NavigationMemory;
   readonly random: Random;

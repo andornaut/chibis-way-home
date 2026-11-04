@@ -7,7 +7,7 @@ import { ordinaryTransitControl } from "./forcedTransitProfile";
 import type { Track } from "./motion";
 import { finishPlatformBird, preparePlatformBird } from "./platformBird";
 
-export interface ForcedTransitCarrier {
+interface ForcedTransitCarrier {
   readonly index: number;
   readonly owner: ObjectLayout;
   readonly rect: Rect;
@@ -15,21 +15,21 @@ export interface ForcedTransitCarrier {
   readonly track: Track;
 }
 
-export interface ForcedTransitForecastContext {
+interface ForcedTransitForecastContext {
   readonly area: string;
   readonly attempt: number;
   readonly dtSeconds: number;
   readonly seconds: number;
 }
 
-export interface ForcedTransitRiderContext {
+interface ForcedTransitRiderContext {
   readonly bird: BirdState;
   readonly terrainSolids: readonly Rect[];
   readonly tuning: BirdTuning;
   readonly unknownPush: boolean;
 }
 
-export interface ForcedTransitTakeoffBody {
+interface ForcedTransitTakeoffBody {
   readonly airCarryVx: number;
   readonly prefix: "none" | "release";
   readonly releasedBody?: BirdState;

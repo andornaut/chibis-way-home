@@ -6,7 +6,7 @@ import type { Rect, Size } from "./geometry";
 // its object's rectangle along x and standing on its bottom edge.
 export type PixelRun = readonly [y: number, left: number, right: number];
 
-export interface SpriteSilhouette {
+interface SpriteSilhouette {
   readonly width: number;
   readonly height: number;
   readonly frames: Readonly<Record<string, readonly PixelRun[]>>;

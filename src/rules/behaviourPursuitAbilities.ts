@@ -29,7 +29,7 @@ type PursuitAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
   BehaviourMotionStep
 >;
 
-export interface PursuitAim {
+interface PursuitAim {
   // The tracked rect: a held sampled intent or traversal goal, else Chibi's live body.
   readonly hers: Rect;
   readonly dx: number;
@@ -39,7 +39,7 @@ export interface PursuitAim {
 }
 
 // Chases only while engaged or still finishing an airborne traversal leg.
-export function pursuing(state: BehaviourState): boolean {
+function pursuing(state: BehaviourState): boolean {
   return (
     state.pursuit?.phase === "engaged" ||
     (state.traversal !== undefined && !state.traversal.physical.grounded)
@@ -48,7 +48,7 @@ export function pursuing(state: BehaviourState): boolean {
 
 // The contact-centred chase target inside the pursuit leash, facing it unless a traversal
 // takeoff is preparing.
-export function pursuitAim(
+function pursuitAim(
   { intent, object, perception, slice }: BehaviourAbilityContext,
   speed: number,
   { at, state }: BehaviourActor,
@@ -89,10 +89,7 @@ export function pursuitAim(
 }
 
 // A held sampled intent keeps its own facing through the chase.
-export function intentFacing(
-  { intent }: BehaviourAbilityContext,
-  state: BehaviourState,
-): BehaviourState {
+function intentFacing({ intent }: BehaviourAbilityContext, state: BehaviourState): BehaviourState {
   return intent.sampled && state.intent ? { ...state, facing: state.intent.facing } : state;
 }
 

@@ -44,7 +44,7 @@ const isNames = (value: unknown): value is string[] =>
 // Why progress does not fit map and zones, or undefined when it does: each completed zone node,
 // and the node he stands on, is a zone node the completed zones open (openMap), whose zone is in
 // zones, named once.
-export function progressProblem(
+function progressProblem(
   map: ZoneMap,
   zones: Readonly<Record<string, unknown>>,
   completed: readonly string[],

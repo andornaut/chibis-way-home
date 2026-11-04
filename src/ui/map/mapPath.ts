@@ -3,7 +3,7 @@ import { clamp } from "@andornaut/game-kit/numbers";
 import type { Point, Rect } from "../../data/types";
 
 // A path on the map: a quadratic Bezier from one node's centre to the next.
-export interface Curve {
+interface Curve {
   readonly control: Point;
   readonly from: Point;
   readonly to: Point;
@@ -18,7 +18,7 @@ export type PathStroke =
   | { readonly kind: "solid"; readonly width: number };
 
 // A path's ends: each node's centre, and how far from it the path stops.
-export interface PathEnds {
+interface PathEnds {
   readonly from: Point;
   readonly fromTrim: number;
   readonly to: Point;

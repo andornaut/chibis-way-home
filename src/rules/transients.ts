@@ -32,7 +32,7 @@ export function transientBox(entity: Transient, at: Point = entity.at): Rect {
 }
 
 // The first positive interval of swept overlap, with edge contact alone excluded.
-export function contactTime(a: Rect, end: Point, b: Rect, bEnd: Point): number | undefined {
+function contactTime(a: Rect, end: Point, b: Rect, bEnd: Point): number | undefined {
   if (!sweptContact(a, end, b, bEnd)) {
     return undefined;
   }

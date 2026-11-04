@@ -140,7 +140,7 @@ export interface GameText {
 
 // A browser's install steps: the first beside its button's glyph, the second beside the install
 // glyph.
-export interface InstallSteps {
+interface InstallSteps {
   readonly first: string;
   readonly second: string;
 }
@@ -151,7 +151,7 @@ export interface DialogueLine {
   readonly speaker: string;
 }
 
-export interface StageBarkEvent {
+interface StageBarkEvent {
   readonly atProgress: number;
   readonly id: string;
   readonly line: DialogueLine;

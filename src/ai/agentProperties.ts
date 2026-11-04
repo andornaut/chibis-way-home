@@ -3,7 +3,7 @@ import { type AgentSample, type AgentTick, centre, type TraceAttack } from "./ag
 // Checks over a structured agent trace. Thresholds and selections arrive as parameters, so the
 // same checks serve any game's data.
 
-export interface Violation {
+interface Violation {
   readonly agent: string;
   readonly detail: string;
   readonly tick: number;
@@ -16,7 +16,7 @@ export interface Property<Tick> {
   readonly rule: string;
 }
 
-export interface PropertyResult {
+interface PropertyResult {
   readonly id: string;
   readonly violations: readonly Violation[];
 }

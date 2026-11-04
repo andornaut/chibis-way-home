@@ -69,7 +69,7 @@ const LOOK_ORDER: readonly PathLook[] = ["unbuilt", "built", "open"];
 // Footer actions, or an open zone node by its id.
 type Control = { readonly kind: MapAction } | { readonly kind: "node"; readonly id: string };
 
-export interface MapData {
+interface MapData {
   // A stage-node id, consumed once. Progress stays at the completed stage until arrival.
   readonly travelTo?: string;
 }

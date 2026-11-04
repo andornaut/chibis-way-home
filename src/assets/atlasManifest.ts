@@ -24,7 +24,7 @@ export interface AtlasTexture {
   readonly tags?: AsepriteSheet["meta"]["frameTags"];
 }
 
-export interface AtlasPage {
+interface AtlasPage {
   readonly height: number;
   // The page's URL in the build output.
   readonly url: string;

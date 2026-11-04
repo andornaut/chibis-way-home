@@ -4,7 +4,7 @@ export interface ZoneStory extends ZoneDialoguePlan {
   readonly zone: string;
 }
 export type ZoneDepartureTarget = Exclude<StageCompletion, { readonly kind: "next-stage" }>;
-export type ZoneExitFlow =
+type ZoneExitFlow =
   | { readonly kind: "next-stage"; readonly stage: string }
   | { readonly kind: "departure"; readonly scene: string; readonly target: ZoneDepartureTarget };
 

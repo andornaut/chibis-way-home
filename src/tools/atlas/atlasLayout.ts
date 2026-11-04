@@ -2,7 +2,7 @@ import { packAtlas } from "@andornaut/art-kit/atlasLayout";
 import type { Point } from "@andornaut/game-kit/rect";
 
 // Mobile GPUs guarantee textures up to 2048 pixels a side.
-export const ATLAS_MAX_SIZE = 2048;
+const ATLAS_MAX_SIZE = 2048;
 // Each image's edge pixels repeat this far outward, so a frame sampled just past its edge reads
 // its own colour rather than a neighbour's.
 export const EXTRUDE = 1;
@@ -16,17 +16,17 @@ export interface PackItem {
 }
 
 // Where an image's top-left sits, on which page.
-export interface Placement extends Point {
+interface Placement extends Point {
   readonly key: string;
   readonly page: number;
 }
 
-export interface PageSize {
+interface PageSize {
   readonly height: number;
   readonly width: number;
 }
 
-export interface AtlasLayout {
+interface AtlasLayout {
   readonly pages: readonly PageSize[];
   readonly placements: readonly Placement[];
 }

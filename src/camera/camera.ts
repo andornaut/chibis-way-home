@@ -4,7 +4,7 @@ import type { CameraTuning, Point, Rect, Size } from "../data/types";
 
 // What the camera reads of an area: its size, its terrain, and in an assembled area its chunks,
 // left to right (none in a hand-built one).
-export interface CameraArea {
+interface CameraArea {
   readonly chunks?: readonly { readonly width: number; readonly x: number }[];
   readonly height: number;
   readonly solids: readonly Rect[];

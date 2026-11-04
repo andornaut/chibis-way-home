@@ -17,8 +17,8 @@ export interface StatsMetricRow {
   readonly label: string;
   readonly value: string;
 }
-export type RunStatWords = Readonly<Record<(typeof RUN_STAT_KEYS)[number], string>>;
-export const STAGE_PREVIEW_SIZE = { height: 84, width: 168 } as const;
+type RunStatWords = Readonly<Record<(typeof RUN_STAT_KEYS)[number], string>>;
+const STAGE_PREVIEW_SIZE = { height: 84, width: 168 } as const;
 
 export interface StatsTotalsSnapshot {
   readonly stageSeconds: number;
@@ -42,10 +42,6 @@ export function statsTotalRows(
   }));
 }
 
-export function runStatLines(words: RunStatWords): readonly string[] {
-  return RUN_STAT_KEYS.map((key) => words[key]);
-}
-
 export function wrappedCardText(font: BitmapFont, width: number, text: string): string {
   const measure = bitmapMeasure(font);
   const fitted = fittingText(
@@ -60,7 +56,7 @@ export function wrappedCardText(font: BitmapFont, width: number, text: string): 
   return fitted.lines.join("\n");
 }
 
-export interface SummaryWords {
+interface SummaryWords {
   readonly progress: string;
   readonly stage: string;
   readonly statement?: Pick<DialogueParagraph, "colour" | "name" | "text"> | undefined;

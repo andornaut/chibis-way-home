@@ -14,7 +14,7 @@ export interface BirdInput {
   readonly push?: Point;
 }
 
-export interface JumpReleaseCurve {
+interface JumpReleaseCurve {
   readonly coefficients: readonly [number, number, number, number, number];
   readonly elapsed: number;
   readonly height: number;
@@ -66,7 +66,7 @@ export function startsDash(tuning: BirdTuning, input: BirdInput, bird: BirdState
   );
 }
 
-export function startsAirJump(tuning: BirdTuning, input: BirdInput, bird: BirdState): boolean {
+function startsAirJump(tuning: BirdTuning, input: BirdInput, bird: BirdState): boolean {
   const jumpPressed = input.jumpHeld && !bird.jumpHeld;
   const groundJump = jumpPressed && (bird.grounded || bird.coyoteLeft > 0);
   return (
@@ -340,7 +340,7 @@ function releasePoint(gravity: number, curve: JumpReleaseCurve, elapsed: number)
   };
 }
 
-export interface BirdStepResult {
+interface BirdStepResult {
   readonly bird: BirdState;
   readonly support: Rect | undefined;
 }

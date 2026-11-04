@@ -20,7 +20,7 @@ export function ordinaryTransitControl(tuning: BirdTuning, bird: BirdState): boo
   );
 }
 
-export function ordinaryTransitProfile(tuning: BirdTuning): BirdTuning | undefined {
+function ordinaryTransitProfile(tuning: BirdTuning): BirdTuning | undefined {
   // Inactive Dash and extra-jump eligibility do not affect a fresh ordinary ground Jump.
   const keys = [...new Set([...Object.keys(tuning), ...Object.keys(BIRD)])].filter(
     (key) => key !== "dash" && key !== "doubleJump",

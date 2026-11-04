@@ -13,10 +13,10 @@ import {
 
 export type { RunStatsSummary, WholeRunStatsSummary, ZoneStatsSummary } from "./runSummary";
 
-export interface StageRun extends RunCounters {
+interface StageRun extends RunCounters {
   readonly completed: boolean;
 }
-export interface StageStats {
+interface StageStats {
   readonly bestSeconds?: number;
   readonly run?: StageRun;
 }
@@ -28,7 +28,7 @@ interface TimeTotals {
   readonly stages: Readonly<Record<string, number>>;
   readonly zones: Readonly<Record<string, number>>;
 }
-export interface Stats {
+interface Stats {
   readonly totals?: TimeTotals;
   readonly wholeRun: WholeRunStatsSummary;
   readonly stages: Readonly<Record<string, StageStats>>;
@@ -141,7 +141,7 @@ export function statsFormat(
   };
 }
 
-export interface StageStatsStore {
+interface StageStatsStore {
   beginVisit(zone: string): void;
   beginRun(stage: string): void;
   completeStage(stage: string): RunStatsSummary;

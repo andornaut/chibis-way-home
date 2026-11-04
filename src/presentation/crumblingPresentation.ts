@@ -35,7 +35,7 @@ export function crumblingSkinTiles(
   return { intact: tiles(intact), warning: tiles(`${intact}-warn`) };
 }
 
-export interface CrumblingTerrainBatch {
+interface CrumblingTerrainBatch {
   readonly supportId: Rect;
   readonly tiles: readonly PlacedTile[];
   readonly volume: Rect;

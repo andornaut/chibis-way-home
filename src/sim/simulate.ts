@@ -64,7 +64,7 @@ export interface SimulationConfig {
   readonly seed: number;
   readonly skill: BotSkill;
 }
-export type RunStatus =
+type RunStatus =
   | "cleared"
   | "goal-reached"
   | "retry-budget"
@@ -705,7 +705,7 @@ function executeStage(
     : result;
 }
 
-export interface WitnessReplayResult {
+interface WitnessReplayResult {
   readonly status: "verified" | "mismatch";
   readonly reason?: string;
   readonly executedSteps: number;

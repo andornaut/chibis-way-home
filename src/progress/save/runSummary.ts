@@ -83,15 +83,3 @@ export function formatRunStats(words: StatsText, summary: RunStatsSummary) {
     runTotal: fillNames(words.runTotal, { time: timeText(summary.runSeconds) }),
   };
 }
-
-export function formatZoneStats(words: StatsText, summary: ZoneStatsSummary) {
-  return {
-    ...formatRunStats(words, summary),
-    partial: summary.partial
-      ? fillNames(words.partial, {
-          completed: String(summary.completed),
-          total: String(summary.total),
-        })
-      : undefined,
-  };
-}

@@ -2,7 +2,7 @@ import type { Point, TouchTuning } from "../../data/types";
 import { type HeldTouch, moveFromOffset } from "../input/intent";
 
 // How the move hint shows: the ring's centre and tag, and the knob's centre and tag.
-export interface MoveHintView {
+interface MoveHintView {
   readonly centre: Point;
   readonly knob: Point;
   readonly knobTag: "held" | "rest";

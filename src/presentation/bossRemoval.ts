@@ -3,7 +3,7 @@
 // Until that texture exists the boss sprite fades; every path takes the rules' removal time.
 export const BOSS_REMOVAL_ART = { key: "boss-removal", tag: "puff" } as const;
 
-export type BossRemovalView =
+type BossRemovalView =
   | { readonly kind: "fade"; readonly alpha: number }
   | { readonly kind: "puff"; readonly play: boolean }
   | { readonly kind: "removed" };

@@ -119,7 +119,7 @@ function gapCourse(tuning: BirdTuning, tile: number, tiles: number, press: numbe
 // steps before it as coyote time lasts, through a step past the end of coyote time. The press
 // that makes the farthest gap may come at any of them. A ledge's height does not depend on when
 // she presses, standing on the ground, so it has one timing.
-export function pressTimings(tuning: BirdTuning, reach: Reach): number[] {
+function pressTimings(tuning: BirdTuning, reach: Reach): number[] {
   if (reach !== "gap") {
     return [0];
   }
@@ -172,7 +172,7 @@ function makesWith(
 }
 
 // Whether she makes a reach of tiles at any of its press timings.
-export function makes(tuning: BirdTuning, tile: number, reach: Reach, tiles: number): boolean {
+function makes(tuning: BirdTuning, tile: number, reach: Reach, tiles: number): boolean {
   return pressTimings(tuning, reach).some((press) => makesWith(tuning, tile, reach, tiles, press));
 }
 

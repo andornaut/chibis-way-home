@@ -9,7 +9,7 @@ export interface SceneryPlaybackState {
   readonly status: "active" | "completed" | "waiting";
 }
 
-export interface SceneryPlaybackFrame {
+interface SceneryPlaybackFrame {
   readonly at: Point;
   readonly state: SceneryPlaybackState;
 }

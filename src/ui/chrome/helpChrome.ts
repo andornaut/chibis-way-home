@@ -7,7 +7,7 @@ import {
   touchChromeLayers,
 } from "./touchChrome";
 
-export interface HelpChromeColours extends TouchChromeColours {
+interface HelpChromeColours extends TouchChromeColours {
   readonly navy: number;
 }
 

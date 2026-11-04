@@ -68,7 +68,7 @@ import { axisOf, motionTrack, type Track } from "./motion";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
 import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird";
-export { pushedAside, standsOn } from "./platformBird";
+export { standsOn } from "./platformBird";
 import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
 import { timedHazardRect } from "./timedHazard";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
@@ -617,7 +617,7 @@ export function objectStep(
 // The physical part of one live zone step: object frames, with every behaviour object's perceive,
 // decide and act, crumbling, forced transit, Chibi's body, transients, contact and death.
 // stepZone adds spotting and escape barks, walk links and the stage exit to it.
-export interface ZoneBodyStep {
+interface ZoneBodyStep {
   // Escape lines of the objects whose pursuit ended this step, by object index.
   readonly escaped: readonly (readonly [number, DialogueLine])[];
   // The behaviour world the objects perceived at the start of the step.

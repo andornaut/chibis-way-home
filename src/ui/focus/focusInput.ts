@@ -2,7 +2,7 @@
 // settings and install steps cards): Tab and the arrows move the focus through its controls,
 // Shift+Tab, Up and Left back through them; Enter and Space press the focused one; Escape and P
 // close a card.
-export type FocusKeyAction = "close" | "next" | "press" | "previous";
+type FocusKeyAction = "close" | "next" | "press" | "previous";
 
 const KEY_ACTIONS: Readonly<Record<string, FocusKeyAction>> = {
   " ": "press",

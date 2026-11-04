@@ -16,19 +16,19 @@ export interface CardFonts {
 }
 
 export { CARD_CONTENT } from "./cardFrame";
-export type CardAxis = "row" | "stack";
+type CardAxis = "row" | "stack";
 
-export interface CardGroup extends Size {
+interface CardGroup extends Size {
   readonly hitOutset?: number;
   readonly key: string;
 }
 
-export interface CardHeader {
+interface CardHeader {
   readonly close: boolean;
   readonly titleWidth: number;
 }
 
-export interface ContentCardLayout {
+interface ContentCardLayout {
   readonly card: Rect;
   readonly close?: { readonly art: Rect; readonly at: Point; readonly hit: Rect };
   readonly groups: Readonly<Record<string, Rect>>;
@@ -189,16 +189,6 @@ export function contentCardLayout(
     groups: positions,
     ...(title && { title }),
   };
-}
-
-export function cardTextRows(font: BitmapFont, rect: Rect, texts: readonly string[]): Rect[] {
-  let y = rect.y;
-  return texts.map((text) => {
-    const size = cardTextSize(font, text);
-    const row = { height: size.height, width: rect.width, x: rect.x, y };
-    y += size.height + CARD_CONTENT.rowGap;
-    return row;
-  });
 }
 
 export function cardActions(

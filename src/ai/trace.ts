@@ -2,7 +2,7 @@
 // Equal hashes prove equal per-tick output; a retained trace locates the first divergent tick.
 
 // Names a shared reference (such as a layout object) instead of serializing it again.
-export type TraceReference = (value: object) => string | undefined;
+type TraceReference = (value: object) => string | undefined;
 
 const PLAIN = new Set([Object.prototype, null]);
 

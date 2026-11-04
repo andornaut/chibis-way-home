@@ -26,7 +26,7 @@ import { BOSSES, type BossTick } from "./bossSimulator";
 // zone's resolved behaviour data, or are the design's own bounds where data has none.
 
 const DESIGN = "gameplay/design.md";
-export const RULES = {
+const RULES = {
   attackCadence: `${DESIGN} Objects: Animals`,
   attackSequencing: `${DESIGN} Objects: Attack sequencing`,
   attackTells: `${DESIGN} Objects: Attack tells`,
@@ -41,7 +41,7 @@ export const RULES = {
 } as const;
 
 // Each boss character's resolved plan in the layout.
-export function bossPlans(layout: ZoneLayout): ReadonlyMap<string, BehaviourPlan> {
+function bossPlans(layout: ZoneLayout): ReadonlyMap<string, BehaviourPlan> {
   const plans = new Map<string, BehaviourPlan>();
   for (const area of Object.values(layout.areas)) {
     for (const object of area.objects) {
@@ -89,11 +89,11 @@ export function maximumTellSeconds(plan: BehaviourPlan, id: string): number {
 
 // Idle recovery: while engaged and more than two tiles from Chibi, a boss moves half a tile
 // horizontally (the watchdog's minimum movement) within every four seconds.
-export const STALL_BOUND = { distance: 2 * TILE, seconds: 4 } as const;
+const STALL_BOUND = { distance: 2 * TILE, seconds: 4 } as const;
 
 // Objects: each boss starts a charge or special tell within 10 s of eligible engaged time, and
 // its distinct special tell within 20 s.
-export const CADENCE_SECONDS = { any: 10, special: 20 } as const;
+const CADENCE_SECONDS = { any: 10, special: 20 } as const;
 
 // Each boss's charge or contact dive; its other attacks are its specials.
 export const CHARGE_ATTACKS: Readonly<Record<string, string>> = {
@@ -125,7 +125,7 @@ export function targetedAttacks(plan: BehaviourPlan): ReadonlySet<string> {
 }
 
 // The fastest authored travel: state speeds, ground traversal launch and fall, and hop rise.
-export function fastestSpeed(plan: BehaviourPlan): number {
+function fastestSpeed(plan: BehaviourPlan): number {
   return Math.max(
     ...Object.values(plan.states).flatMap(({ motion }) => [
       motion.kind === "wait" ? 0 : motion.speed,

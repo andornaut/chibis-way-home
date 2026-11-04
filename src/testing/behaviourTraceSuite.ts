@@ -31,7 +31,7 @@ import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 // Each scenario must be deterministic: fixed seeds, fixed inputs and no wall-clock budgets.
-export interface TraceScenario {
+interface TraceScenario {
   readonly name: string;
   readonly run: () => void;
 }
