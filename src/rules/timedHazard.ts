@@ -1,7 +1,8 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
-import { type BehaviourState, stepBehaviour } from "./behaviour";
+import { advanceBehaviour, type BehaviourState } from "./behaviour";
+import { perceiveBehaviour } from "./behaviourPerception";
 import { startBird } from "./bird";
 import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision";
 import { sweptContact } from "./sweptContact";
@@ -73,7 +74,7 @@ export function createTimedHazardSampler(
     }),
   );
   const checkpoints = new Map<number, BehaviourState>([[0, { ...state }]]);
-  const bird = startBird(tuning, at);
+  const perception = perceiveBehaviour(tuning, [], startBird(tuning, at));
   let remaining = MAX_TRANSITIONS;
   const advance = (seconds: number, prior: BehaviourState) => {
     const cost = Math.ceil(seconds / minimumDuration) + 1;
@@ -81,7 +82,7 @@ export function createTimedHazardSampler(
       return undefined;
     }
     remaining -= cost;
-    return stepBehaviour(tuning, object, [], seconds, bird, at, prior);
+    return advanceBehaviour(perception, object, seconds, at, prior);
   };
   const stateAt = (offset: number): BehaviourState | undefined => {
     const cached = checkpoints.get(offset);

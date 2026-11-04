@@ -17,13 +17,14 @@ import type {
   ZoneLayout,
 } from "../data/types";
 import {
+  advanceBehaviour,
   type BehaviourState,
   type BehaviourStep,
   contactBox,
   startBehaviour,
-  stepBehaviour,
   sweptContact,
 } from "./behaviour";
+import { perceiveBehaviour } from "./behaviourPerception";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import {
   birdBox,
@@ -792,7 +793,13 @@ export function stepZone(
               const state = states[slot];
               const behaviour =
                 object.behaviour && state
-                  ? stepBehaviour(tuning, object, futureGeometry, seconds, zone.bird, before, state)
+                  ? advanceBehaviour(
+                      perceiveBehaviour(tuning, futureGeometry, zone.bird),
+                      object,
+                      seconds,
+                      before,
+                      state,
+                    )
                   : undefined;
               nextStates.push(behaviour?.state);
               const after = rectAt(
@@ -924,25 +931,31 @@ export function stepZone(
       ) {
         return fixed;
       }
+      // Perceive once per object per tick; deciding and acting read only this snapshot.
       const behaviour = object.behaviour
-        ? stepBehaviour(
-            tuning,
+        ? advanceBehaviour(
+            perceiveBehaviour(
+              tuning,
+              {
+                ...(object.collision !== "solid" &&
+                object.collision !== "ledge" &&
+                Object.values(object.behaviour.states).some(
+                  ({ motion }) =>
+                    motion.kind === "pursue" &&
+                    (motion.mode === "fly" ||
+                      (motion.mode === "ground" && motion.traversal !== undefined)),
+                )
+                  ? traversalGeometry(object)
+                  : geometry),
+                decisions: namedStreams(
+                  zone.seed + zone.attempt,
+                  `idle-roam:${zone.area}:${index}`,
+                ),
+              },
+              zone.bird,
+            ),
             object,
-            {
-              ...(object.collision !== "solid" &&
-              object.collision !== "ledge" &&
-              Object.values(object.behaviour.states).some(
-                ({ motion }) =>
-                  motion.kind === "pursue" &&
-                  (motion.mode === "fly" ||
-                    (motion.mode === "ground" && motion.traversal !== undefined)),
-              )
-                ? traversalGeometry(object)
-                : geometry),
-              decisions: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
-            },
             seconds,
-            zone.bird,
             before,
             zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
           )

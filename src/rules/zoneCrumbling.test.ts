@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { BIRD_FRAME } from "../view/bird";
-import { stepBehaviour } from "./behaviour";
+import { advanceBehaviour } from "./behaviour";
 import { traversalContext } from "./behaviourTraversal";
 import { crumblingDefinitions } from "./crumbling";
 import { STEP_SECONDS } from "./step";
@@ -11,7 +11,7 @@ import { startZone, stepZone, type ZoneState } from "./zone";
 
 vi.mock("./behaviour", async (original) => {
   const actual = await original<typeof import("./behaviour")>();
-  return { ...actual, stepBehaviour: vi.fn(actual.stepBehaviour) };
+  return { ...actual, advanceBehaviour: vi.fn(actual.advanceBehaviour) };
 });
 
 const idle = { jumpHeld: false, move: 0, useHeld: false } as const;
@@ -127,12 +127,10 @@ it("a boss's solver-selected standing support starts the shared warning", () => 
 
 it("boss predictions keep current presence only until each support's earliest change", () => {
   const f = fixture({ height: 24, width: 48, x: 412, y: 176 });
-  vi.mocked(stepBehaviour).mockClear();
+  vi.mocked(advanceBehaviour).mockClear();
   const zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, startZone(BIRD, f.layout, 1));
-  const world = vi.mocked(stepBehaviour).mock.calls.find(([, owner]) => owner === f.actor)![2];
-  if (!("solids" in world)) {
-    throw new Error("Expected world geometry");
-  }
+  const world = vi.mocked(advanceBehaviour).mock.calls.find(([, owner]) => owner === f.actor)![0]
+    .world;
   const frame = world.traversalFrame!;
   const known = STEP_SECONDS + PROFILE.warningSeconds;
   expect(frame.crumbling!.unknown(0)).toEqual([]);

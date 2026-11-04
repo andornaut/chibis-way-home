@@ -4,13 +4,13 @@ import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BehaviourPlan, ObjectLayout, ZoneLayout } from "../data/types";
 import { BIRD_FRAME } from "../view/bird";
-import { stepBehaviour } from "./behaviour";
+import { advanceBehaviour } from "./behaviour";
 import { STEP_SECONDS } from "./step";
 import { startZone, stepZone } from "./zone";
 
 vi.mock("./behaviour", async (original) => {
   const actual = await original<typeof import("./behaviour")>();
-  return { ...actual, stepBehaviour: vi.fn(actual.stepBehaviour) };
+  return { ...actual, advanceBehaviour: vi.fn(actual.advanceBehaviour) };
 });
 
 function object(
@@ -56,7 +56,7 @@ function object(
 }
 
 it("supplies actual traversal context to flying pursuit for idle recovery", () => {
-  vi.mocked(stepBehaviour).mockClear();
+  vi.mocked(advanceBehaviour).mockClear();
   const actor = object(
     {
       axis: "x",
@@ -105,10 +105,8 @@ it("supplies actual traversal context to flying pursuit for idle recovery", () =
     { jumpHeld: false, move: 0, useHeld: false },
     startZone(BIRD, layout, 1),
   );
-  const world = vi.mocked(stepBehaviour).mock.calls.find(([, owner]) => owner === actor)![2];
-  if (!("solids" in world)) {
-    throw new Error("Expected world geometry");
-  }
+  const world = vi.mocked(advanceBehaviour).mock.calls.find(([, owner]) => owner === actor)![0]
+    .world;
   expect(world.solids).toContain(floor);
   expect(world.hazards?.[0]?.owner).toBe(actor);
   expect(world.hazards?.[0]?.boundsAt).toBeTypeOf("function");
@@ -129,7 +127,7 @@ it.each([
 ])(
   "shares exact support samples across queries, reversed=$reversed, turning=$turning",
   ({ reversed, turning }) => {
-    vi.mocked(stepBehaviour).mockClear();
+    vi.mocked(advanceBehaviour).mockClear();
     const mover = object(
       {
         axis: "x",
@@ -203,13 +201,10 @@ it.each([
     };
     const zone = { ...startZone(BIRD, layout, 1), seconds: 2 };
     stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld: false, move: 0, useHeld: false }, zone);
-    const calls = vi.mocked(stepBehaviour).mock.calls;
+    const calls = vi.mocked(advanceBehaviour).mock.calls;
     expect(calls.filter(([, owner]) => owner === mover)).toHaveLength(1);
-    const actorWorld = calls.find(([, owner]) => owner === actor)![2];
-    const moverWorld = calls.find(([, owner]) => owner === mover)![2];
-    if (!("solids" in actorWorld) || !("solids" in moverWorld)) {
-      throw new Error("Expected world geometry");
-    }
+    const actorWorld = calls.find(([, owner]) => owner === actor)![0].world;
+    const moverWorld = calls.find(([, owner]) => owner === mover)![0].world;
     expect(moverWorld.traversalFrame).toBeUndefined();
     const frame = actorWorld.traversalFrame!;
     expect(frame).toMatchObject({ dtSeconds: STEP_SECONDS, timeSeconds: 2 });
@@ -272,12 +267,9 @@ it.each([
       actual = next;
     }
     const latest = vi
-      .mocked(stepBehaviour)
+      .mocked(advanceBehaviour)
       .mock.calls.filter(([, owner]) => owner === actor)
-      .at(-1)![2];
-    if (!("solids" in latest)) {
-      throw new Error("Expected world geometry");
-    }
+      .at(-1)![0].world;
     const fresh = latest.traversalFrame!;
     expect(fresh.sample).not.toBe(frame.sample);
     expect(fresh.sample!(fresh.timeSeconds, STEP_SECONDS)).not.toBe(

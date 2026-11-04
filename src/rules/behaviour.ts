@@ -38,11 +38,11 @@ import {
   type PursuitIntentState,
   safeIntentHover,
 } from "./behaviourIntent";
+import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception";
 import {
   type BehaviourGeometry,
   type BehaviourTrack,
   type BehaviourWorld,
-  behaviourWorld,
   flightAxis,
   flightContactApproach,
   groundPursuitEnd,
@@ -573,13 +573,13 @@ function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
 }
 
 function enterState(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  bird: BirdState,
   at: Point,
   key: string,
   state: BehaviourState,
 ): BehaviourState {
+  const { target: bird, tuning } = perception;
   const node = nodeOf(object, key);
   const leavingPursuit =
     nodeOf(object, state.stateKey).motion.kind === "pursue" && node.motion.kind !== "pursue";
@@ -724,7 +724,7 @@ export function startBehaviour(
   if (!plan) {
     throw new Error(`No behaviour for ${object.character}`);
   }
-  return enterState(tuning, object, bird, object.origin, plan.initial, {
+  return enterState(perceiveBehaviour(tuning, [], bird), object, object.origin, plan.initial, {
     active: object.scene === undefined,
     elapsed: 0,
     facing: plan.distance < 0 ? -1 : 1,
@@ -802,12 +802,12 @@ function endpoint(object: ObjectLayout, direction: -1 | 1, state: BehaviourState
 }
 
 function flightDestination(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  bird: BirdState,
   at: Point,
   state: BehaviourState,
 ): Point | undefined {
+  const { target: bird, tuning } = perception;
   const motion = nodeOf(object, state.stateKey).motion;
   if (motion.kind !== "fly") {
     return undefined;
@@ -840,13 +840,12 @@ function flightDestination(
   };
 }
 function alignmentBlocked(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  world: BehaviourWorld,
-  bird: BirdState,
   at: Point,
   state: BehaviourState,
 ): boolean {
+  const { target: bird, tuning, world } = perception;
   const motion = nodeOf(object, state.stateKey).motion;
   if (motion.kind === "fly" && motion.to === "support" && motion.selection) {
     return state.flightSelection?.status === "pending";
@@ -867,7 +866,7 @@ function alignmentBlocked(
   if (motion.kind !== "fly" || motion.to !== "target-x") {
     return false;
   }
-  const target = flightDestination(tuning, object, bird, at, state);
+  const target = flightDestination(perception, object, at, state);
   if (!target) {
     return true;
   }
@@ -882,14 +881,13 @@ function alignmentBlocked(
 }
 
 function matches(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  world: BehaviourWorld,
-  bird: BirdState,
   at: Point,
   state: BehaviourState,
   condition: BehaviourCondition,
 ): boolean {
+  const { target: bird, tuning, world } = perception;
   if (condition.kind === "attack-ready") {
     return attackReady(state);
   }
@@ -915,7 +913,7 @@ function matches(
       : gap < condition.distance;
   }
   if (condition.kind === "alignment-blocked") {
-    return alignmentBlocked(tuning, object, world, bird, at, state);
+    return alignmentBlocked(perception, object, at, state);
   }
   if (condition.kind === "line-of-sight") {
     return targetVisible(
@@ -974,10 +972,10 @@ function matches(
     if (motion.to === "support") {
       return supportedLanding(object, world, at);
     }
-    if (motion.to === "target-x" && alignmentBlocked(tuning, object, world, bird, at, state)) {
+    if (motion.to === "target-x" && alignmentBlocked(perception, object, at, state)) {
       return false;
     }
-    const target = flightDestination(tuning, object, bird, at, state);
+    const target = flightDestination(perception, object, at, state);
     return (
       target !== undefined && Math.hypot(at.x - target.x, at.y - target.y) <= condition.tolerance
     );
@@ -989,7 +987,7 @@ function matches(
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
     const reachable =
       state.pursuit?.phase === "engaged"
-        ? pursuitReachable(tuning, object, world, at, state, bird)
+        ? pursuitReachable(perception, object, at, state)
         : targetReachable(
             tuning,
             object,
@@ -1135,13 +1133,12 @@ function pursuitKinds(plan: BehaviourPlan): PursuitKinds {
 }
 
 function pursuitReachable(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  world: BehaviourWorld,
   at: Point,
   state: BehaviourState,
-  bird: BirdState,
 ): boolean | undefined {
+  const { target: bird, tuning, world } = perception;
   const kinds = pursuitKinds(object.behaviour!);
   if (kinds.groundTraversal) {
     if (state.traversal?.status === "found" && !state.traversal.physical.grounded) {
@@ -1218,14 +1215,13 @@ function pursuitReachable(
 }
 
 function updatePursuit(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  world: BehaviourWorld,
   seconds: number,
-  bird: BirdState,
   at: Point,
   state: BehaviourState,
 ): BehaviourState {
+  const { target: bird, tuning, world } = perception;
   let currentState = state;
   const config = object.behaviour!.pursuit;
   if (!config) {
@@ -1242,7 +1238,7 @@ function updatePursuit(
         ) > config.escapeDistance;
   const timedOut = (unreachableSeconds: number) =>
     config.unreachableGraceSeconds !== null && unreachableSeconds >= config.unreachableGraceSeconds;
-  let reachable = pursuitReachable(tuning, object, world, at, currentState, bird);
+  let reachable = pursuitReachable(perception, object, at, currentState);
   const prior = currentState.pursuit;
   const observer = { ...at, height: object.height, width: object.width };
   const target = birdBox(tuning, bird);
@@ -1412,14 +1408,13 @@ function idleReady(
 }
 
 function idleRecoveryStep(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  world: BehaviourWorld,
   seconds: number,
-  bird: BirdState,
   at: Point,
   state: BehaviourState,
 ): { readonly state: BehaviourState; readonly step?: BehaviourStep } {
+  const { world } = perception;
   const watchdog = object.behaviour!.idleWatchdog,
     idle = state.idleWatchdog;
   if (!watchdog || !idle) {
@@ -1464,7 +1459,7 @@ function idleRecoveryStep(
   };
   if (advanced.finished) {
     next = {
-      ...enterState(tuning, object, bird, advanced.at, watchdog.resume, next),
+      ...enterState(perception, object, advanced.at, watchdog.resume, next),
       idleWatchdog: next.idleWatchdog,
       pendingEntry: false,
     };
@@ -1476,11 +1471,9 @@ function idleRecoveryStep(
 }
 
 function groundRepositionStep(
-  tuning: BirdTuning,
+  perception: BehaviourPerception,
   object: ObjectLayout,
-  world: BehaviourWorld,
   seconds: number,
-  bird: BirdState,
   at: Point,
   state: BehaviourState,
 ): {
@@ -1488,6 +1481,7 @@ function groundRepositionStep(
   readonly step?: BehaviourStep;
   readonly deferToAttack?: boolean;
 } {
+  const { world } = perception;
   const config = object.behaviour!.groundReposition!,
     prior = state.groundReposition!;
   const node = nodeOf(object, state.stateKey),
@@ -1511,7 +1505,7 @@ function groundRepositionStep(
     node.transitions.find(
       ({ to, when }) =>
         canEnterAttack(nodeOf(object, to), state) &&
-        when.every((condition) => matches(tuning, object, world, bird, at, state, condition)),
+        when.every((condition) => matches(perception, object, at, state, condition)),
     );
   const attackOpportunity =
     firstTransition && nodeOf(object, firstTransition.to).attack?.phase === "tell";
@@ -1590,7 +1584,7 @@ function groundRepositionStep(
   };
   if (advanced.finished) {
     next = {
-      ...enterState(tuning, object, bird, advanced.at, config.resume, next),
+      ...enterState(perception, object, advanced.at, config.resume, next),
       pendingEntry: false,
     };
   }
@@ -1600,12 +1594,24 @@ function groundRepositionStep(
   };
 }
 
+// Fixtures and predictions that hold their own geometry perceive and advance in one call.
 export function stepBehaviour(
   tuning: BirdTuning,
   object: ObjectLayout,
   geometry: BehaviourGeometry,
   seconds: number,
   bird: BirdState,
+  at: Point,
+  state: BehaviourState,
+): BehaviourStep {
+  return advanceBehaviour(perceiveBehaviour(tuning, geometry, bird), object, seconds, at, state);
+}
+
+// Decides and acts for one object over one step from its perception snapshot and own state.
+export function advanceBehaviour(
+  perception: BehaviourPerception,
+  object: ObjectLayout,
+  seconds: number,
   at: Point,
   state: BehaviourState,
 ): BehaviourStep {
@@ -1637,12 +1643,12 @@ export function stepBehaviour(
     }
     return { actions: [], at, segments, state: next };
   }
-  const world = behaviourWorld(geometry);
+  const { target: bird, tuning, world } = perception;
   const actions: BehaviourEvent[] = [];
   const segments: BehaviourSegment[] = [];
   const instant = new Set<string>();
   let current = at;
-  let next = updatePursuit(tuning, object, world, seconds, bird, at, state);
+  let next = updatePursuit(perception, object, seconds, at, state);
   const escaped =
     state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped"
       ? plan.pursuit?.escaped
@@ -1662,7 +1668,7 @@ export function stepBehaviour(
         ? prior
         : { ...prior, seconds: Math.min(periodic.intervalSeconds, prior.seconds + seconds) },
     };
-    const reposition = groundRepositionStep(tuning, object, world, seconds, bird, at, next);
+    const reposition = groundRepositionStep(perception, object, seconds, at, next);
     next = reposition.state;
     deferToAttack = reposition.deferToAttack === true;
     if (reposition.step) {
@@ -1678,7 +1684,7 @@ export function stepBehaviour(
     next = { ...next, idleWatchdog: { anchor: at, seconds: 0 } };
   }
   if (watchdog && !deferToAttack) {
-    const initialRecovery = idleRecoveryStep(tuning, object, world, seconds, bird, at, next);
+    const initialRecovery = idleRecoveryStep(perception, object, seconds, at, next);
     next = initialRecovery.state;
     if (initialRecovery.step) {
       return {
@@ -1699,6 +1705,7 @@ export function stepBehaviour(
       (node.motion.kind === "fly" && node.motion.to === "support") ||
       (node.motion.kind === "wait" && node.motion.support === "required");
     const supportWorld = supportMotion ? landingWorldAt(world, time) : undefined;
+    const supportPerception = supportWorld ? { ...perception, world: supportWorld } : perception;
     let supported =
       supportWorld !== undefined &&
       supportedLanding(object, supportWorld, current) &&
@@ -1774,7 +1781,7 @@ export function stepBehaviour(
       !next.hop &&
       !supportedLanding(object, world, current)
     ) {
-      next = enterState(tuning, object, bird, current, flyGateway, next);
+      next = enterState(perception, object, current, flyGateway, next);
       node = nodeOf(object, next.stateKey);
     }
     if (
@@ -1788,7 +1795,7 @@ export function stepBehaviour(
         node.motion.mode !== "fly" ||
         supportedLanding(object, world, current))
     ) {
-      next = enterState(tuning, object, bird, current, plan.initial, {
+      next = enterState(perception, object, current, plan.initial, {
         ...next,
         anchor: current,
         pursuit: { ...next.pursuit, settled: true },
@@ -1831,7 +1838,7 @@ export function stepBehaviour(
       !(supportMotion && next.landing?.status === "pending") &&
       !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
     ) {
-      const entered = enterState(tuning, object, bird, current, next.stateKey, next);
+      const entered = enterState(perception, object, current, next.stateKey, next);
       next = enterAttack(
         plan,
         node,
@@ -1892,7 +1899,7 @@ export function stepBehaviour(
               when.every((condition) =>
                 condition.kind === "arrived" && supportMotion
                   ? supported
-                  : matches(tuning, object, supportWorld ?? world, bird, current, next, condition),
+                  : matches(supportPerception, object, current, next, condition),
               ),
           );
     if (transition) {
@@ -1900,7 +1907,7 @@ export function stepBehaviour(
         throw new Error(`Instant behaviour transition cycle for ${object.character}`);
       }
       instant.add(next.stateKey);
-      next = enterState(tuning, object, bird, current, transition.to, next);
+      next = enterState(perception, object, current, transition.to, next);
       continue;
     }
     if (time >= seconds) {
@@ -1991,8 +1998,7 @@ export function stepBehaviour(
       if (
         when.every(
           (condition) =>
-            condition.kind === "elapsed" ||
-            matches(tuning, object, world, bird, current, next, condition),
+            condition.kind === "elapsed" || matches(perception, object, current, next, condition),
         )
       ) {
         const threshold = Math.max(
@@ -2071,7 +2077,7 @@ export function stepBehaviour(
                 when.some((condition) => condition.kind === "arrived") &&
                 canEnterAttack(nodeOf(object, to), future) &&
                 when.every((condition) =>
-                  matches(tuning, object, world, bird, atCrossing, future, condition),
+                  matches(perception, object, atCrossing, future, condition),
                 ),
             )
           ) {
@@ -2294,9 +2300,9 @@ export function stepBehaviour(
         ? landingTarget
         : node.motion.kind === "fly" &&
             node.motion.to === "target-x" &&
-            alignmentBlocked(tuning, object, world, bird, current, next)
+            alignmentBlocked(perception, object, current, next)
           ? current
-          : flightDestination(tuning, object, bird, current, next);
+          : flightDestination(perception, object, current, next);
       if (!target && !landing) {
         throw new Error("Target flight must capture its destination on entry");
       }
