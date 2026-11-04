@@ -48,6 +48,10 @@ export interface ForcedTransitForecast {
   readonly ordinaryBody?: ForcedTransitTakeoffBody;
 }
 
+function finiteRect(rect: Rect): boolean {
+  return [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite);
+}
+
 function predictable(carrier: ForcedTransitCarrier): boolean {
   const object = carrier.owner;
   if (!object.forcedTransit || object.orbit || object.reaction.kind !== "none") {
@@ -116,7 +120,7 @@ export function forecastForcedTransit(
     !second ||
     !sameRect(first.before, carrier.rect, EDGE) ||
     !sameRect(first.after, second.before, EDGE) ||
-    !sameRect(second.after, second.after, EDGE)
+    !finiteRect(second.after)
   ) {
     return undefined;
   }
