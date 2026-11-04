@@ -286,7 +286,7 @@ export function targetReachable(
     return false;
   }
   const baselineBox = { ...box, x: box.x - at.x, y: box.y - at.y + groundY };
-  const spans = groundSpans(object, world, floor, tolerance, plan, baselineBox);
+  const spans = groundSpans(object, world, floor, tolerance, plan, baselineBox, true);
   for (const [left, right] of spans) {
     const from = Math.max(low, left);
     const to = Math.min(high, right);
@@ -309,6 +309,7 @@ function groundSpans(
   tolerance: number,
   track: BehaviourTrack,
   baselineBox: Rect,
+  walls: boolean,
 ): readonly Span[] {
   const cached = staticCorridor(object, world, floor, tolerance, track, baselineBox);
   const floors: Span[] = [];
@@ -321,13 +322,36 @@ function groundSpans(
     if (Math.abs(rect.y - floor) <= tolerance + EDGE) {
       floors.push([rect.x, rect.x + rect.width]);
     }
-    if (platform.collision === "solid" && blocksAtFloor(rect, baselineBox)) {
+    if (walls && platform.collision === "solid" && blocksAtFloor(rect, baselineBox)) {
       cuts.push([rect.x - baselineBox.x - baselineBox.width, rect.x + rect.width - baselineBox.x]);
     }
+  }
+  if (!walls) {
+    return allowedOrigins(union([...cached.floors, ...floors]), [], baselineBox);
   }
   return floors.length === 0 && cuts.length === 0
     ? cached.allowed
     : allowedOrigins(union([...cached.floors, ...floors]), [...cached.cuts, ...cuts], baselineBox);
+}
+
+function spanEnd(
+  object: ObjectLayout,
+  spans: readonly Span[],
+  track: BehaviourTrack,
+  at: Point,
+  desired: number,
+): number {
+  const origin = track.origin ?? object.origin;
+  const low = Math.min(origin.x, origin.x + track.distance);
+  const high = Math.max(origin.x, origin.x + track.distance);
+  for (const [left, right] of spans) {
+    const from = Math.max(low, left);
+    const to = Math.min(high, right);
+    if (at.x >= from - EDGE && at.x <= to + EDGE) {
+      return Math.max(from, Math.min(to, desired));
+    }
+  }
+  return at.x;
 }
 
 // Stop at the edge of connected support; pursuit never adds jumping or falling physics.
@@ -340,18 +364,33 @@ export function groundPursuitEnd(
   desired: number,
 ): number {
   const baseline = { ...box, x: box.x - at.x };
-  const spans = groundSpans(object, world, at.y + object.height, EDGE, track, baseline);
-  const origin = track.origin ?? object.origin;
-  const low = Math.min(origin.x, origin.x + track.distance);
-  const high = Math.max(origin.x, origin.x + track.distance);
-  for (const [left, right] of spans) {
-    const from = Math.max(low, left);
-    const to = Math.min(high, right);
-    if (at.x >= from - EDGE && at.x <= to + EDGE) {
-      return Math.max(from, Math.min(to, desired));
-    }
-  }
-  return at.x;
+  return spanEnd(
+    object,
+    groundSpans(object, world, at.y + object.height, EDGE, track, baseline, true),
+    track,
+    at,
+    desired,
+  );
+}
+
+// Stop where the box would leave connected support, ignoring walls; without support under the
+// box it does not travel.
+export function groundSupportEnd(
+  object: ObjectLayout,
+  world: BehaviourWorld,
+  track: BehaviourTrack,
+  at: Point,
+  box: Rect,
+  desired: number,
+): number {
+  const baseline = { ...box, x: box.x - at.x };
+  return spanEnd(
+    object,
+    groundSpans(object, world, at.y + object.height, EDGE, track, baseline, false),
+    track,
+    at,
+    desired,
+  );
 }
 
 // Axis-separated swept clipping prevents flight from crossing solid cover.

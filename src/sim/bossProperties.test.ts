@@ -74,20 +74,17 @@ const KNOWN_FAILURES: readonly KnownFailure[] = [
     tick: 770,
   },
   {
-    cause: "Archie never stands on the crumbling ledge",
+    cause:
+      "Archie stops at the far bank's edge; his traversal search exhausts its budget on the " +
+      "12-tile jump to the crumbling ledge, so he never stands on it",
     property: "covers boss-on-crumbling",
     scenario: "crumbling archie far-bank still",
     tick: undefined,
   },
   {
     cause:
-      "Archie's committed rush carries him level off the far bank over the red pit, without support or a fall",
-    property: "ground-footing",
-    scenario: "crumbling archie far-bank still",
-    tick: 99,
-  },
-  {
-    cause: "Archie then holds without support over the pit in pursuit-pounce at x 348",
+      "Archie's rush stops at the far bank's edge (x 502), his frame 2 px past it; idle recovery " +
+      "and periodic reposition require the whole frame on support, so neither moves him",
     property: "no-stall",
     scenario: "crumbling archie far-bank still",
     tick: 159,
@@ -115,13 +112,6 @@ const KNOWN_FAILURES: readonly KnownFailure[] = [
     property: "no-stall",
     scenario: "encounter bounded-flyer-post loading-yards still",
     tick: 728,
-  },
-  {
-    cause:
-      "Bini's committed rush carries him level past the area's left edge (x -2), without support or a fall",
-    property: "ground-footing",
-    scenario: "encounter growl-cover-early deep-woods still",
-    tick: 630,
   },
 ];
 

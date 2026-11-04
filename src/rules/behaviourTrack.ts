@@ -1,6 +1,13 @@
-import type { BehaviourMotion, BehaviourNode, ObjectLayout, Point, Rect } from "../data/types";
+import type {
+  BehaviourMotion,
+  BehaviourNode,
+  BehaviourPlan,
+  ObjectLayout,
+  Point,
+  Rect,
+} from "../data/types";
 import type { BehaviourState } from "./behaviour";
-import type { BehaviourTrack, BehaviourWorld } from "./behaviourReach";
+import { type BehaviourTrack, type BehaviourWorld, groundSupportEnd } from "./behaviourReach";
 import { collisionCandidates } from "./collisionIndex";
 
 export function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
@@ -53,8 +60,29 @@ export function trackEndpoint(
     : Math.min(origin, origin + plan.distance);
 }
 
+const groundBosses = new WeakMap<BehaviourPlan, boolean>();
+
+// A ground boss: a pursuer that chases on the ground and never flies.
+export function groundBoss(object: ObjectLayout): boolean {
+  const plan = object.behaviour;
+  if (!plan?.pursuit) {
+    return false;
+  }
+  let ground = groundBosses.get(plan);
+  if (ground === undefined) {
+    const modes = Object.values(plan.states).flatMap(({ motion }) =>
+      motion.kind === "pursue" ? [motion.mode] : motion.kind === "fly" ? ["fly"] : [],
+    );
+    ground = modes.includes("ground") && !modes.includes("fly");
+    groundBosses.set(plan, ground);
+  }
+  return ground;
+}
+
 // How far along its track axis the contact box can travel towards desired before the track
-// end, solid terrain or another object's solid platform stops it.
+// end, solid terrain or another object's solid platform stops it. A ground boss's committed
+// horizontal move also stops at the edge of its connected support, and does not travel once
+// that support has gone.
 export function trackReach(
   object: ObjectLayout,
   world: BehaviourWorld,
@@ -93,6 +121,15 @@ export function trackReach(
     if (platform.owner !== object && platform.collision === "solid") {
       consider(platform.rect);
     }
+  }
+  const node = nodeOf(object, state.stateKey);
+  if (
+    axis === "x" &&
+    node.motion.kind === "move" &&
+    node.attack?.phase === "committed" &&
+    groundBoss(object)
+  ) {
+    to = groundSupportEnd(object, world, pursuitTrack(object), at, box, to);
   }
   return to;
 }
