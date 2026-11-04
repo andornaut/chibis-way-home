@@ -199,7 +199,10 @@ async function build(): Promise<void> {
   if (executable === undefined) {
     throw new Error("aseprite is not on PATH");
   }
-  for (const [key, tags] of sprites()) {
+  // One export at a time, each followed by its manifest update, so the shared manifest is read
+  // and written in sprite order.
+  await [...sprites()].reduce(async (previous, [key, tags]) => {
+    await previous;
     await exportAseprite(
       executable,
       pixel.PALETTE,
@@ -212,7 +215,7 @@ async function build(): Promise<void> {
     pixel.updateManifest("sprites", [
       { key, png: `sprites/${key}.png`, json: `sprites/${key}.json`, once: ONCE[key] },
     ]);
-  }
+  }, Promise.resolve());
   console.log("built", KEY);
 }
 

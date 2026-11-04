@@ -1327,17 +1327,20 @@ function lookup<T>(map: ReadonlyMap<string, T>, key: string): T {
 }
 
 export async function build(): Promise<void> {
-  const tilesets: pixel.ManifestEntry[] = [];
-  const backdrops: pixel.ManifestEntry[] = [];
-  for (const [key, fn] of TILESET_DEFS) {
-    const [tiles, pieces] = fn();
-    tilesets.push(
-      await pixel.writeTileset(
+  // One tileset at a time, in definition order.
+  const tilesets = await TILESET_DEFS.reduce<Promise<pixel.ManifestEntry[]>>(
+    async (previous, [key, fn]) => {
+      const written = await previous;
+      const [tiles, pieces] = fn();
+      const entry = await pixel.writeTileset(
         { key, pieces },
         tiles.map(([n, g]) => [n, renderFrame({ resolveRgb: rgb }, g.px)] as const),
-      ),
-    );
-  }
+      );
+      return [...written, entry];
+    },
+    Promise.resolve([]),
+  );
+  const backdrops: pixel.ManifestEntry[] = [];
   for (const [key, [fn, y, repeat]] of BACKDROP_DEFS) {
     const g = fn();
     const image = backgroundTones.apply(key, frameImage(g.px));

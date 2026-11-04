@@ -29,8 +29,8 @@
  * Frustration appends 4x120ms: a short headshake and low wing flaps, feet planted. Set-trap appends
  * 4x120ms: a groundward head and wing placement gesture; no trap type or object is depicted.
  * Anticipate-lift then skid follow. All motion tags except anticipate-lift loop. These are art
- * cycle defaults; gameplay owns state durations and all physical movement. The build writes art/antagonists/goose-antagonist.aseprite and its PNG/JSON
- * exports.
+ * cycle defaults; gameplay owns state durations and all physical movement. The build writes
+ * art/antagonists/goose-antagonist.aseprite and its PNG/JSON exports.
  *
  * goose-trap: 24x12, bottom-centre 12,12, fixed contact bounds 0,8,24,4. Warning loops 4x120ms
  * with an amber edge and moving 2px yellow tick over a 1px ink rim. Armed loops 1x400ms with the

@@ -157,7 +157,7 @@ export function bowTie(g: Grid, x: number, y: number, k = 1.0): void {
   const b = 3 * k;
   g.tri([x - a, y - b], [x, y], [x - a, y + b], BOW[0]);
   g.tri([x + a, y - b], [x, y], [x + a, y + b], BOW[0]);
-  rect(g, x - 1 * k, y - 1 * k, 3 * k, 3 * k, BOW[1]);
+  rect(g, x - k, y - k, 3 * k, 3 * k, BOW[1]);
 }
 
 interface FaceOptions {

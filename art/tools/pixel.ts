@@ -390,7 +390,9 @@ export async function build(
     throw new Error("aseprite is not on PATH");
   }
   const built = new Map<string, string[]>();
-  for (const [key, tags] of sprites) {
+  // One Aseprite export at a time, in sprite order.
+  await sprites.reduce(async (previous, [key, tags]) => {
+    await previous;
     const margins = slices[key];
     await exportAseprite(
       executable,
@@ -406,7 +408,7 @@ export async function build(
       key,
       tags.map(([tag]) => tag).filter((tag) => playOnce.includes(tag)),
     );
-  }
+  }, Promise.resolve());
   const manifest = readManifest();
   const entries = new Map<string, ManifestEntry>();
   for (const entry of (manifest.sprites as ManifestEntry[] | undefined) ?? []) {

@@ -20,26 +20,26 @@
  * right, and he stops 2px below its top. The raised wing overhangs up to 5px above (flutter 0);
  * the jump crouch and land squash push his tail out to 11 and 12px on the left.
  *
- * | Tag     | Frame | ms  | Pose                                                         | Lift | Body w x h | Shadow w |
- * | ------- | ----- | --- | ------------------------------------------------------------ | ---- | ---------- | -------- |
- * | idle    | 0     | 400 | rest                                                         | 0    | 33 x 26    | 34       |
- * | idle    | 1     | 400 | breath: body and head 1px up, feet planted                   | 1    | 33 x 26    | 34       |
- * | walk    | 0     | 130 | near foot forward and 2px up, far foot back                  | 0    | 33 x 26    | 34       |
- * | walk    | 1     | 130 | passing: feet together, body 1px up                          | 1    | 33 x 26    | 32       |
- * | walk    | 2     | 130 | far foot forward and 2px up (behind the body), near back     | 0    | 33 x 26    | 34       |
- * | walk    | 3     | 130 | passing                                                      | 1    | 33 x 26    | 32       |
- * | jump    | 0     | 80  | crouch: squash, wing lifting                                 | 0    | 38 x 22    | 38       |
- * | jump    | 1     | 100 | lift: stretch, 3px up, feet tucked, wing half raised         | 3    | 29 x 30    | 26       |
- * | flutter | 0     | 100 | wing up (the signature pose)                                 | 2    | 33 x 26    | 26       |
- * | flutter | 1     | 100 | wing back                                                    | 2    | 33 x 26    | 26       |
- * | flutter | 2     | 100 | wing level: the downstroke lifts the body 1px                | 3    | 33 x 26    | 26       |
- * | flutter | 3     | 100 | wing back                                                    | 2    | 33 x 26    | 26       |
- * | land    | 0     | 100 | contact: squash, feet planted wide                           | 0    | 39 x 22    | 40       |
- * | land    | 1     | 80  | recover: half squash                                         | 0    | 36 x 24    | 36       |
- * | death   | 0     | 100 | small recoil, closed eye, feet visible                       | 1    | 34 x 24    | 36       |
- * | death   | 1     | 120 | pronounced fall tilt, closed eye, visible tucked soles       | 1    | 34 x 24    | 33       |
- * | death   | 2     | 80  | brief impact squash, rounded belly, feet hidden              | -2   | 38 x 16    | 39       |
- * | death   | 3     | 400 | spring to round sitting rest, soft contact ends, feet hidden | -2   | 34 x 21    | 39       |
+ * | Tag     | Frame | ms  | Pose                                                         | Lift | Body    | Shadow w |
+ * | ------- | ----- | --- | ------------------------------------------------------------ | ---- | ------- | -------- |
+ * | idle    | 0     | 400 | rest                                                         | 0    | 33 x 26 | 34       |
+ * | idle    | 1     | 400 | breath: body and head 1px up, feet planted                   | 1    | 33 x 26 | 34       |
+ * | walk    | 0     | 130 | near foot forward and 2px up, far foot back                  | 0    | 33 x 26 | 34       |
+ * | walk    | 1     | 130 | passing: feet together, body 1px up                          | 1    | 33 x 26 | 32       |
+ * | walk    | 2     | 130 | far foot forward and 2px up (behind the body), near back     | 0    | 33 x 26 | 34       |
+ * | walk    | 3     | 130 | passing                                                      | 1    | 33 x 26 | 32       |
+ * | jump    | 0     | 80  | crouch: squash, wing lifting                                 | 0    | 38 x 22 | 38       |
+ * | jump    | 1     | 100 | lift: stretch, 3px up, feet tucked, wing half raised         | 3    | 29 x 30 | 26       |
+ * | flutter | 0     | 100 | wing up (the signature pose)                                 | 2    | 33 x 26 | 26       |
+ * | flutter | 1     | 100 | wing back                                                    | 2    | 33 x 26 | 26       |
+ * | flutter | 2     | 100 | wing level: the downstroke lifts the body 1px                | 3    | 33 x 26 | 26       |
+ * | flutter | 3     | 100 | wing back                                                    | 2    | 33 x 26 | 26       |
+ * | land    | 0     | 100 | contact: squash, feet planted wide                           | 0    | 39 x 22 | 40       |
+ * | land    | 1     | 80  | recover: half squash                                         | 0    | 36 x 24 | 36       |
+ * | death   | 0     | 100 | small recoil, closed eye, feet visible                       | 1    | 34 x 24 | 36       |
+ * | death   | 1     | 120 | pronounced fall tilt, closed eye, visible tucked soles       | 1    | 34 x 24 | 33       |
+ * | death   | 2     | 80  | brief impact squash, rounded belly, feet hidden              | -2   | 38 x 16 | 39       |
+ * | death   | 3     | 400 | spring to round sitting rest, soft contact ends, feet hidden | -2   | 34 x 21 | 39       |
  *
  * Dash appends frames 18 to 20 after death, with 60, 130 and 60ms durations. The wing lifts up and
  * back, then recovers, while the head, torso and feet retain the rest pose. Its rounded tip and

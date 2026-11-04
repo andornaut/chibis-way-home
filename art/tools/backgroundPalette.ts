@@ -216,14 +216,15 @@ export function colours(house: Palette): Record<string, string> {
 /** Follow the existing shade family until modal dimming decreases luminance. */
 function firstDarker(darker: Palette, target: string, colour: string): string {
   const seen = new Set<string>();
-  while (luminance(target) >= luminance(colour)) {
-    if (seen.has(target) || !Object.hasOwn(darker, target)) {
+  let shade = target;
+  while (luminance(shade) >= luminance(colour)) {
+    if (seen.has(shade) || !Object.hasOwn(darker, shade)) {
       throw new Error("The existing palette has no strictly darker shade");
     }
-    seen.add(target);
-    target = darker[target] as string;
+    seen.add(shade);
+    shade = darker[shade] as string;
   }
-  return target;
+  return shade;
 }
 
 export function ramps(darker: Palette, house: Palette): Record<string, string> {
