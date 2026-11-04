@@ -107,7 +107,7 @@ import {
   stepPose,
   terrainTiles,
 } from "../presentation";
-import { eligibleSkills, nodeOf, skillTuning, wholeRunSummary } from "../progress";
+import { eligibleSkills, nodeOf, skillTuning, stageExit, wholeRunSummary } from "../progress";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
@@ -1323,7 +1323,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         throw new Error(`Missing zone story for ${this.mapNode}`);
       }
       const completedBefore = new Set(savedMap().completed);
-      const flow = zoneExitFlow(ZONE_MAP, story, completedBefore, this.mapNode, turnedBack);
+      const flow = zoneExitFlow(
+        stageExit(ZONE_MAP, completedBefore, this.mapNode, turnedBack),
+        story,
+      );
       const runStats = {
         ...(turnedBack ? stageRunStats(this.mapNode) : completeStageRun(this.mapNode)),
       };

@@ -31,4 +31,4 @@ export {
   type SkillOverrides,
   skillTuning,
 } from "./skills";
-export { type StageCompletion, stageCompletion } from "./stageCompletion";
+export { type StageCompletion, stageCompletion, stageExit } from "./stageCompletion";

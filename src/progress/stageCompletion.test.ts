@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import type { ZoneMap } from "../data/types";
+import { zoneExitFlow, zoneStoryForStage } from "../rules/zoneFlow";
 import { DESTINATION_FIXTURE as MAP } from "../testing/mapDestinations";
-import { stageCompletion } from "./stageCompletion";
+import { stageCompletion, stageExit } from "./stageCompletion";
 
 describe("stage completion routing", () => {
   it.each([
@@ -64,4 +65,48 @@ describe("stage completion routing", () => {
     };
     expect(stageCompletion(branching, new Set(["one"]), "two")).toEqual({ kind: "map" });
   });
+});
+
+const ENTRY = {
+  character: "test-actor",
+  escapeTilesPerSecond: 12,
+  idleAnimation: "idle",
+  runAnimation: "walk",
+};
+const PAIRS = {
+  first: { entry: ENTRY, intro: "first-intro", outro: "first-outro" },
+  second: { entry: ENTRY, intro: "second-intro", outro: "second-outro" },
+};
+
+describe("stage exit flow", () => {
+  it.each([
+    { back: false, expected: { kind: "next-stage", stage: "two" }, stage: "one" },
+    {
+      back: true,
+      expected: { kind: "departure", scene: "first-outro", target: { kind: "map" } },
+      stage: "one",
+    },
+    {
+      back: false,
+      expected: {
+        kind: "departure",
+        scene: "first-outro",
+        target: { kind: "map", travelTo: "three" },
+      },
+      stage: "two",
+    },
+    {
+      back: false,
+      expected: { kind: "departure", scene: "second-outro", target: { kind: "celebration" } },
+      stage: "four",
+    },
+  ])(
+    "routes $stage exit without an outro between intermediate stages",
+    ({ back, expected, stage }) => {
+      const story = zoneStoryForStage(MAP, PAIRS, stage)!;
+      expect(
+        zoneExitFlow(stageExit(MAP, new Set(["one", "two", "three", "four"]), stage, back), story),
+      ).toEqual(expected);
+    },
+  );
 });

@@ -1,11 +1,8 @@
-import type { ZoneMap } from "../data/types";
+import type { StageCompletion, ZoneMap } from "../data/types";
 import { isLastZone, nodeOf, openMap, pathsFrom } from "./map";
 import { destinationForStage } from "./mapDestinations";
 
-export type StageCompletion =
-  | { readonly kind: "next-stage"; readonly stage: string }
-  | { readonly kind: "map"; readonly travelTo?: string }
-  | { readonly kind: "celebration" };
+export type { StageCompletion } from "../data/types";
 
 // Replays follow the same catalogue transition as a first clear. Future forks remain a choice
 // for a later route model, so automatic travel requires one direct built successor.
@@ -38,4 +35,14 @@ export function stageCompletion(
     open.zones.includes(travelTo)
     ? { kind: "map", travelTo }
     : { kind: "map" };
+}
+
+// A stage's exit: turning back returns to the map without completing it.
+export function stageExit(
+  map: ZoneMap,
+  completedBefore: ReadonlySet<string>,
+  stage: string,
+  turnedBack: boolean,
+): StageCompletion {
+  return turnedBack ? { kind: "map" } : stageCompletion(map, completedBefore, stage);
 }

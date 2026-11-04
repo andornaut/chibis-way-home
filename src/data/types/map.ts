@@ -46,3 +46,10 @@ export interface ZoneMap {
   readonly nodes: readonly MapNode[];
   readonly start: string;
 }
+
+// Where a stage's exit leads: the destination's next stage, the map (travelling on to the next
+// destination when one direct built path leads there) or the final celebration.
+export type StageCompletion =
+  | { readonly kind: "next-stage"; readonly stage: string }
+  | { readonly kind: "map"; readonly travelTo?: string }
+  | { readonly kind: "celebration" };

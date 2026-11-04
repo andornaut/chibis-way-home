@@ -1,5 +1,4 @@
-import type { ZoneDialoguePlan, ZoneMap } from "../data/types";
-import { type StageCompletion, stageCompletion } from "../progress";
+import type { StageCompletion, ZoneDialoguePlan, ZoneMap } from "../data/types";
 
 export interface ZoneStory extends ZoneDialoguePlan {
   readonly zone: string;
@@ -30,16 +29,8 @@ export function zoneStoryForStage(
   return { ...pair, zone: destination.id };
 }
 
-export function zoneExitFlow(
-  map: ZoneMap,
-  story: ZoneStory,
-  completed: ReadonlySet<string>,
-  stage: string,
-  turnedBack: boolean,
-): ZoneExitFlow {
-  const next: StageCompletion = turnedBack
-    ? { kind: "map" }
-    : stageCompletion(map, completed, stage);
+// The stage exit's flow: straight into the next stage, or through the destination's outro.
+export function zoneExitFlow(next: StageCompletion, story: ZoneStory): ZoneExitFlow {
   return next.kind === "next-stage"
     ? next
     : { kind: "departure", scene: story.outro, target: next };

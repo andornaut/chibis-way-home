@@ -8,7 +8,7 @@ import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues";
 import { ZONE_MAP } from "../data/map";
 import type { ZoneDialoguePlan } from "../data/types";
 import { DESTINATION_FIXTURE as map } from "../testing/mapDestinations";
-import { introductionForRun, zoneExitFlow, zoneStoryForStage } from "./zoneFlow";
+import { introductionForRun, zoneStoryForStage } from "./zoneFlow";
 
 const entry = {
   character: "test-actor",
@@ -111,34 +111,4 @@ describe("zone story routing", () => {
       "Missing entry introduction profile first",
     );
   });
-  it.each([
-    { back: false, expected: { kind: "next-stage", stage: "two" }, stage: "one" },
-    {
-      back: true,
-      expected: { kind: "departure", scene: "first-outro", target: { kind: "map" } },
-      stage: "one",
-    },
-    {
-      back: false,
-      expected: {
-        kind: "departure",
-        scene: "first-outro",
-        target: { kind: "map", travelTo: "three" },
-      },
-      stage: "two",
-    },
-    {
-      back: false,
-      expected: { kind: "departure", scene: "second-outro", target: { kind: "celebration" } },
-      stage: "four",
-    },
-  ])(
-    "routes $stage exit without an outro between intermediate stages",
-    ({ back, expected, stage }) => {
-      const story = zoneStoryForStage(map, pairs, stage)!;
-      expect(
-        zoneExitFlow(map, story, new Set(["one", "two", "three", "four"]), stage, back),
-      ).toEqual(expected);
-    },
-  );
 });
