@@ -24,7 +24,10 @@ const routing = vi.hoisted(() => ({ accepts: true }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../input/frameTurn", () => ({ FRAME_TURN: { turn: () => 0 } }));
 vi.mock("./modalInput", () => ({ modalInput: () => ({ accepts: () => routing.accepts }) }));
-vi.mock("../settings/touchControls", () => ({ touchSettingShown: () => true }));
+vi.mock("../settings/touchControls", () => ({
+  coarsePointer: (host: Window) => host.matchMedia("(pointer: coarse)").matches,
+  touchSettingShown: () => true,
+}));
 vi.mock("../dev/mode", () => ({
   developmentSkillOverrides: () => ({}),
   invulnerabilityEnabled: () => false,

@@ -15,9 +15,29 @@ export function skillOverridesFromSearch(search: string): SkillOverrides {
   );
 }
 
+// The page's developer parameters, parsed again only when its query string changes.
+let parsed:
+  | {
+      readonly flags: ReturnType<typeof developmentFlags>;
+      readonly search: string;
+      readonly skills: SkillOverrides;
+    }
+  | undefined;
+function pageParameters(host: Window) {
+  const { search } = host.location;
+  if (parsed?.search !== search) {
+    parsed = {
+      flags: developmentFlags(search),
+      search,
+      skills: Object.freeze(skillOverridesFromSearch(search)),
+    };
+  }
+  return parsed;
+}
+
 export function developmentSkillOverrides(): SkillOverrides {
   return typeof window !== "undefined" && regularBrowser(window)
-    ? skillOverridesFromSearch(window.location.search)
+    ? pageParameters(window).skills
     : {};
 }
 
@@ -45,8 +65,7 @@ export function developmentFlags(search: string) {
 }
 let sessionStarted = false;
 export function isDevelopmentSession(): boolean {
-  sessionStarted ||=
-    typeof window !== "undefined" && developmentFlags(window.location.search).session;
+  sessionStarted ||= typeof window !== "undefined" && pageParameters(window).flags.session;
   return sessionStarted;
 }
 const appQueries = new WeakMap<Window, MediaQueryList>();
@@ -66,7 +85,7 @@ export function invulnerabilityEnabled(): boolean {
   return (
     typeof window !== "undefined" &&
     regularBrowser(window) &&
-    developmentFlags(window.location.search).invulnerable
+    pageParameters(window).flags.invulnerable
   );
 }
 export function stageDevelopmentUrl(current: string, stage: string): string {

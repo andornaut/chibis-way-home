@@ -17,7 +17,12 @@ import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from 
 import { EDGE } from "../rules/bird";
 import { isSkillId, SKILL_IDS, skillEnabled } from "../rules/skills";
 import { activeSkill, savedSkills, selectActiveSkill } from "../save";
-import { setTouchSettingShown, type TouchSetting, touchSettings } from "../settings/touchControls";
+import {
+  coarsePointer,
+  setTouchSettingShown,
+  type TouchSetting,
+  touchSettings,
+} from "../settings/touchControls";
 import type { Palette } from "../view/dim";
 import {
   addCardText,
@@ -447,7 +452,7 @@ export class PauseScene extends Scene implements SettingsOpener {
       this.state === "closed" &&
         !this.playCovered() &&
         this.scene.isActive(ZONE) &&
-        window.matchMedia("(pointer: coarse)").matches,
+        coarsePointer(window),
     );
   }
 

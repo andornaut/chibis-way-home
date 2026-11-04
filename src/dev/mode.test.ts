@@ -4,6 +4,8 @@ import {
   changeInvulnerability,
   changeSkillOverride,
   developmentFlags,
+  developmentSkillOverrides,
+  invulnerabilityEnabled,
   isDevelopmentSession,
   regularBrowser,
   skillOverridesFromSearch,
@@ -83,4 +85,26 @@ describe("developer session routing", () => {
       expect(regularBrowser(page)).toBe(shown);
     },
   );
+  it("follows in-place URL changes to the page's developer parameters", () => {
+    const url = new URL("https://example.test/play/?seed=3");
+    const page = {
+      document: { fullscreenElement: null },
+      history: {
+        replaceState: (_state: unknown, _title: string, next: URL) => {
+          url.href = next.href;
+        },
+        state: null,
+      },
+      location: url,
+      matchMedia: () => ({ matches: false }),
+      navigator: {},
+    };
+    vi.stubGlobal("window", page);
+    expect([invulnerabilityEnabled(), developmentSkillOverrides().dash]).toEqual([false, false]);
+    changeInvulnerability(page as unknown as Window, true);
+    changeSkillOverride(page as unknown as Window, true, "dash");
+    expect([invulnerabilityEnabled(), developmentSkillOverrides().dash]).toEqual([true, true]);
+    changeInvulnerability(page as unknown as Window, false);
+    expect(invulnerabilityEnabled()).toBe(false);
+  });
 });

@@ -62,3 +62,15 @@ export function setTouchSettingShown(setting: TouchSetting, value: boolean): voi
     // Kept for this page only.
   }
 }
+
+// Whether the page's primary pointer is coarse (a touch screen): one query list per window,
+// whose matches follows the device.
+const coarseQueries = new WeakMap<Window, MediaQueryList>();
+export function coarsePointer(host: Window): boolean {
+  let query = coarseQueries.get(host);
+  if (!query) {
+    query = host.matchMedia("(pointer: coarse)");
+    coarseQueries.set(host, query);
+  }
+  return query.matches;
+}

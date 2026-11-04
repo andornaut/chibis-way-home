@@ -31,11 +31,13 @@ import { TOUCH } from "../data/touch";
 import type {
   AreaLayout,
   ArtHitbox,
+  BirdTuning,
   CharacterState,
   Collision,
   ObjectLayout,
   Point,
   Rect,
+  SkillId,
   SpriteSilhouettes,
   ZoneLayout,
   ZonePlan,
@@ -122,7 +124,12 @@ import {
   zoneVisitStats,
 } from "../save";
 import { wholeRunSummary } from "../save/runSummary";
-import { type TouchSetting, touchSettings, touchSettingShown } from "../settings/touchControls";
+import {
+  coarsePointer,
+  type TouchSetting,
+  touchSettings,
+  touchSettingShown,
+} from "../settings/touchControls";
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
 import { backdropBottomRect } from "../view/backdropBottom";
 import { backgroundGroundOffset, backgroundGroundReference } from "../view/backgroundGround";
@@ -347,6 +354,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private dialogueArea = "";
   private readonly heardDialogues = new Map<string, Set<number>>();
   private objectArt: ObjectArt[] = [];
+  private tuned: { readonly skill: SkillId | null; readonly tuning: BirdTuning } | undefined;
   private readonly chunkBackdrops: {
     readonly bounds: Rect;
     readonly item: GameObjects.TileSprite;
@@ -733,7 +741,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // Shows or hides the touch controls now as settings has them, for the pause card to show the
   // zone behind it as the settings change. They show only on a touch screen.
   showTouchControls(settings: Readonly<Record<TouchSetting, boolean>>): void {
-    const touch = !this.playCovered() && window.matchMedia("(pointer: coarse)").matches;
+    const touch = !this.playCovered() && coarsePointer(window);
     const buttons = settings.actionButtons && touch;
     for (const sprite of this.controls.values()) {
       sprite.setVisible(buttons);
@@ -754,7 +762,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const { knob, ring } = this.moveHint;
     const shown =
       !this.playCovered() &&
-      window.matchMedia("(pointer: coarse)").matches &&
+      coarsePointer(window) &&
       touchSettingShown("moveControls") &&
       (touches.some(({ role }) => role === "move") ||
         (touches.length === 0 && this.buttonTouches.size === 0));
@@ -863,8 +871,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.drawProgress();
   }
 
+  // Her tuning for the active skill, rebuilt only when the selection changes.
   private movementTuning() {
-    return skillTuning(SKILLS, activeSkill(), BIRD);
+    const skill = activeSkill();
+    if (this.tuned?.skill !== skill) {
+      this.tuned = { skill, tuning: skillTuning(SKILLS, skill, BIRD) };
+    }
+    return this.tuned.tuning;
   }
 
   skillState() {
@@ -2097,9 +2110,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // marks where a move touch started.
   private drawControls(nowMs: number, touches: readonly HeldTouch[]): void {
     const shown =
-      !this.playCovered() &&
-      window.matchMedia("(pointer: coarse)").matches &&
-      touchSettingShown("actionButtons");
+      !this.playCovered() && coarsePointer(window) && touchSettingShown("actionButtons");
     for (const [control, sprite] of this.controls) {
       sprite.setVisible(shown);
       const since = trackPress(nowMs, buttonHeld(control, touches), this.presses.get(control));
