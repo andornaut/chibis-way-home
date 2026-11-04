@@ -15,6 +15,3 @@ dist/
 AGENTS.md
 CLAUDE.md
 GEMINI.md
-
-# Isolated Python art dependencies.
-.venv-art/

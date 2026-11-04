@@ -1,11 +1,11 @@
 # Check image with headless Aseprite 1.2.30 for the art export checks.
 # The base is the local image built from scripts/check.Dockerfile, expected ID
-# sha256:25709b0553b835ace5e58289652b2d1e0806d473ba9a7b351af8ac9e7d7a679e. BuildKit resolves a
+# sha256:2d7139b397eb55298abeea19882d9faa83533594e5ed45988e3d1071e9167388. BuildKit resolves a
 # FROM digest only against a registry, so the tag is pinned here and the ID is checked after the build.
 # The licensed vendor .deb comes from the named build context aseprite-deb, outside the repository.
 # The binary links libGL, libXcursor and libXfixes, which the package does not declare; apt resolves
 # libGL through Mesa. Batch mode opens no display, so no X server is installed.
-FROM game-check:node24.21.0-python3.12
+FROM game-check:node24.21.0
 
 ARG SNAPSHOT=20261103T000000Z
 

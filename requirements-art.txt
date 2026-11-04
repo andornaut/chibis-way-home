@@ -1,2 +1,0 @@
-art-kit @ https://github.com/andornaut/art-kit/releases/download/v0.13.0/art_kit-0.13.0-py3-none-any.whl#sha256=37acf85ea6ae325c2259c1a3cfc92985da2341385575832770078fcbf9c3428d
-Pillow==13.0.0
