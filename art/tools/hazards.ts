@@ -1,6 +1,6 @@
 /**
  * Hazard sprites: the rolling traffic and the ferret's traps. The cellar hatch is tiles in
- * tiles-street (floor1.py).
+ * tiles-street (floor1.ts).
  *
  * Usage, from the repository root:
  *   node art/tools/hazards.ts build            write art/hazards/<key>.aseprite and

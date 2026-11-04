@@ -21,7 +21,7 @@ The public [Liberation Sans Regular TTF](../public/art/fonts/liberation/Liberati
 
 ## Icons
 
-Plain PNGs and one ICO from `art/tools/icons.py`, not manifest entries.
+Plain PNGs and one ICO from `art/tools/icons.ts`, not manifest entries.
 
 | Key               | Type                                        | Size    | Path                                 |
 | ----------------- | ------------------------------------------- | ------- | ------------------------------------ |
@@ -129,7 +129,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 ## Tilesets
 
-12x12 tiles in rows of 8, from `art/tools/floor1.py`. One-way ledges are named `one-way-*`; doorways (`door-*`, `exit-*`) and pits (`pit-*`) have no collision.
+12x12 tiles in rows of 8, from `art/tools/floor1.ts`. One-way ledges are named `one-way-*`; doorways (`door-*`, `exit-*`) and pits (`pit-*`) have no collision.
 
 | Key          | Type                                                                                                                                                       | Size            | Pieces      |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------- |
@@ -139,7 +139,7 @@ The [opening asset table](opening/README.md#assets) lists the three storybook ba
 
 ## Backdrops
 
-Pieces placed from stage data by their bottom-left corner at the bottom y given, from `art/tools/floor1.py` (Zone 1: New York street, 720px tall, sidewalk top y 600, row 50).
+Pieces placed from stage data by their bottom-left corner at the bottom y given, from `art/tools/floor1.ts` (Zone 1: New York street, 720px tall, sidewalk top y 600, row 50).
 
 | Key                     | Type                                                                 | Size    | Bottom y, repeat |
 | ----------------------- | -------------------------------------------------------------------- | ------- | ---------------- |
@@ -408,7 +408,7 @@ Opaque actual stage captures, 168x84, registered as manifest images. Keys follow
 
 ## Room entrance buildings
 
-Static outdoor facades from `art/tools/room_buildings.py`, with a transparent 60x84 opening at 60,96. Bottom-left anchor, default y 600, repeat none; no collision, animation or lights. Place on the door's world plane and local ground. Indoor entrances reuse themed wall skins.
+Static outdoor facades from `art/tools/roomBuildings.ts`, with a transparent 60x84 opening at 60,96. Bottom-left anchor, default y 600, repeat none; no collision, animation or lights. Place on the door's world plane and local ground. Indoor entrances reuse themed wall skins.
 
 | Key                          | Size    | Opening     |
 | ---------------------------- | ------- | ----------- |

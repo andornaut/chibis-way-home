@@ -150,7 +150,7 @@
  *   ring with a chevron each side). All are flat dslate; line icons use 2px strokes (5.83:1 on the
  *   card's lgrey).
  * - ui-resume, 160x44: a green button with the play mark, the map's Continue at 280,300 (the hit
- *   area; art/tools/map.py places its label). Tags normal, pressed (the face sinks 2px into its
+ *   area; art/tools/map.ts places its label). Tags normal, pressed (the face sinks 2px into its
  *   lip).
  */
 

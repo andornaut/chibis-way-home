@@ -63,7 +63,7 @@ export function image(style = "street"): RgbaImage {
 }
 
 export async function build(): Promise<void> {
-  // Loaded when building, as the Python build loads it: floor1.ts imports this module.
+  // Loaded when building: floor1.ts imports this module.
   const floor = await import("./floor1.ts");
   const wayfinding = await import("./apartmentWayfinding.ts");
   const [tiles, pieces] = floor.streetTilesCool();

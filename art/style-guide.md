@@ -28,7 +28,7 @@ The visual rules for Chibi's Way Home. [Art](README.md) owns the drawing pipelin
 
 Sky, distant skyline and middle-distance scenery are separate repeating images. Architecture that supports a ledge, and every attached door, railing or other prop, stays on the same plane as terrain. All physical surfaces move together, so the art never suggests that a landing slides away from its building.
 
-Every room entrance belongs to a larger building facade outdoors or an opaque themed wall and trim indoors. `art/tools/room_buildings.py` supplies five outdoor `room-building-*` skins, each 180x180, for the blue cityscape, industrial, countryside, woodland and home-city settings. Their local transparent opening at 60,96,60,84 aligns with the unchanged 60x84 door: place the facade at door col minus 5 and row minus 8. Keep it behind the entry on the same 1,1 world plane, with its visible base meeting the actual ground. Distant parallax buildings do not enclose an interactive door. These facades add no collision, safe lip, light or interaction; indoor entrances reuse the existing wall skins rather than an exterior building.
+Every room entrance belongs to a larger building facade outdoors or an opaque themed wall and trim indoors. `art/tools/roomBuildings.ts` supplies five outdoor `room-building-*` skins, each 180x180, for the blue cityscape, industrial, countryside, woodland and home-city settings. Their local transparent opening at 60,96,60,84 aligns with the unchanged 60x84 door: place the facade at door col minus 5 and row minus 8. Keep it behind the entry on the same 1,1 world plane, with its visible base meeting the actual ground. Distant parallax buildings do not enclose an interactive door. These facades add no collision, safe lip, light or interaction; indoor entrances reuse the existing wall skins rather than an exterior building.
 
 The design starts with horizontal camera factors of 0 for sky, 0.15 for the far skyline, 0.4 for middle scenery and 1 for play. Gameplay owns the runtime values; initial far and middle vertical factors are 0.05 and 0.15. Vertical movement should be weaker on distant layers to keep climbs legible. Windows between near buildings reveal the distant layers; do not fill every opening with foreground decoration. Repeating layers must cover camera travel without exposing an empty edge.
 
@@ -113,12 +113,12 @@ Include asset keys, frame sizes, animation tags and timings, anchors, hit boxes,
 - Every manifest sprite entry has `once`: the tags that play once and hold their last frame, `[]` when none. Every other tag loops. A script declares them in a `ONCE` dict beside its `sprites()`.
 - A sprite with a hit box carries `hitbox` in its manifest entry, `{"x", "y", "width", "height"}` in frame pixels for the facing it is drawn in. A script declares them in a `HITBOX` dict beside `ONCE`; only sprites that declare one have it, and a box outside the frame fails the build.
 - A nine-slice texture carries its margins as an Aseprite slice named after its key and as `slice` in its manifest entry.
-- `art/tools/fonts.py` rasterizes the bundled SIL OFL Liberation Sans Regular and Bold files in `art/fonts/liberation/` into white, tintable BMFonts in `public/art/fonts/`. Keep the `font-body` and `font-title` keys, native 16px size, base 15 and line height 20. The body PNG is 256x64 and the title PNG 256x128; each font covers printable ASCII and the middle dot (96 glyphs), with grayscale alpha, signed glyph bearings and rounded pair kerning. Retain `art/fonts/liberation/OFL.txt` with the font files.
+- `art/tools/fonts.ts` rasterises the bundled SIL OFL Liberation Sans Regular and Bold files in `art/fonts/liberation/` into white, tintable BMFonts in `public/art/fonts/`. Keep the `font-body` and `font-title` keys, native 16px size, base 15 and line height 20. The body PNG is 256x64 and the title PNG 256x128; each font covers printable ASCII and the middle dot (96 glyphs), with grayscale alpha, signed glyph bearings and rounded pair kerning. Retain `art/fonts/liberation/OFL.txt` with the font files.
 - Load font PNG/FNT pairs as dedicated bitmap-font textures and keep their raw files in offline precaching. Exclude fonts from shared sprite atlases. Apply linear filtering only to the dedicated font texture sources; artwork keeps nearest-neighbour filtering.
-- `art/tools/palette.py` writes `public/art/palette.json`, listed under `data` in the manifest: `colours` maps each palette name to `#rrggbb`, `darker` maps each colour one ramp step down, and `dim2` two steps down for ambient start-screen dimming. Actual modal backdrops apply three `palette.darker` steps through the shared painter. Keys are sorted.
-- `art/tools/icons.py` draws the favicon and app icons, the bird on a muted powder-blue sunburst disc (whole from 32px up, her head and back at 16px on flat zone-blue, where the rays do not hold), as plain PNGs, not sprites or manifest entries: `public/favicon.ico` (16 and 32), `public/art/favicon-16.png` and `public/art/favicon.png`, and in `public/icons/` the 180 apple-touch icon on a full-bleed sunburst square, the 192 and 512 icons on a sunburst disc with a transparent outside, and a 512 maskable icon with the subject inside the central 80%. The 16 and 32 are drawn natively; the larger icons are 64 and 90 drawings scaled by whole numbers.
+- `art/tools/palette.ts` writes `public/art/palette.json`, listed under `data` in the manifest: `colours` maps each palette name to `#rrggbb`, `darker` maps each colour one ramp step down, and `dim2` two steps down for ambient start-screen dimming. Actual modal backdrops apply three `palette.darker` steps through the shared painter. Keys are sorted.
+- `art/tools/icons.ts` draws the favicon and app icons, the bird on a muted powder-blue sunburst disc (whole from 32px up, her head and back at 16px on flat zone-blue, where the rays do not hold), as plain PNGs, not sprites or manifest entries: `public/favicon.ico` (16 and 32), `public/art/favicon-16.png` and `public/art/favicon.png`, and in `public/icons/` the 180 apple-touch icon on a full-bleed sunburst square, the 192 and 512 icons on a sunburst disc with a transparent outside, and a 512 maskable icon with the subject inside the central 80%. The 16 and 32 are drawn natively; the larger icons are 64 and 90 drawings scaled by whole numbers.
 - `art/inventory.md` lists every asset (key, type, size, tags).
-- `art/tools/floor<n>.py` draws one zone's tilesets and backdrop pieces as plain PNGs, not Aseprite sprites, so the game builds each zone from stage data instead of a fixed panorama (`floor1.py` draws Zone 1). A chunk theme has its own module, such as `art/tools/park.py`, with the same `build` and `preview OUT.png` commands; each tool merges its own keys into the manifest's `tilesets` and `backdrops` and keeps the others.
+- `art/tools/floor<n>.ts` draws one zone's tilesets and backdrop pieces as plain PNGs, not Aseprite sprites, so the game builds each zone from stage data instead of a fixed panorama (`floor1.ts` draws Zone 1). A chunk theme has its own module, such as `art/tools/park.ts`, with the same `build` and `preview OUT.png` commands; each tool merges its own keys into the manifest's `tilesets` and `backdrops` and keeps the others.
 - A tileset is `public/art/tilesets/<key>.png`, 12x12 tiles in rows of 8 with no spacing or margin, plus `<key>.json`: `{"tileSize": 12, "columns": 8, "tiles": {"<name>": <index>}, "pieces": {"<name>": [[<index>, ...], ...]}, "hitboxes": {"<name>": {"x", "y", "width", "height"}}}`. An index counts row by row. A piece is a multi-tile unit as rows of indices, top row first. `hitboxes` is optional and written only when a tile has one: a `hazard-*` tile's hit box in pixels within its 12x12 tile, the same shape as a sprite's `hitbox`. A tile without an entry hits its whole cell. `pixel.write_tileset` writes every tileset. A tile named `one-way-*` is a one-way ledge, which stops only a fall onto its top edge. A tile named `door-*` or `exit-*` is a doorway with no collision. A doorway leads only to a room: where the stage gives it one, the game puts a Use zone over its piece. A zone is cleared at its right edge, never through a doorway. A tile named `pit-*` is a pit with no collision, so she falls through it and out of the stage. A tile named `hazard-*` has no collision and is drawn for a hazard instance placed with a width: touching its hit box restarts her. Every other tile with art is solid. The manifest lists each under `tilesets` as `{"key", "png", "json"}`.
 - A backdrop piece is `public/art/backdrops/<key>.png`, drawn behind the play layer. The manifest lists each under `backdrops` as `{"key", "png", "width", "height", "anchor": "bottom-left", "y", "repeat"}`: its bottom edge sits at world `y`, at an x the stage data chooses, and `"repeat": "x"` tiles it across a run while `"none"` places it once.
 
@@ -126,18 +126,18 @@ Include asset keys, frame sizes, animation tags and timings, anchors, hit boxes,
 
 ### Palette
 
-- One fixed house palette, plus a few game-specific ramps that each end on a house colour. The house palette is [Endesga 32](https://lospec.com/palette-list/endesga-32); colour names are the `K` names in `art/tools/pixel.py`.
+- One fixed house palette, plus a few game-specific ramps that each end on a house colour. The house palette is [Endesga 32](https://lospec.com/palette-list/endesga-32); colour names are the `K` names in `art/tools/pixel.ts`.
 - Raster art pixels are fully opaque or fully transparent. Native font glyphs use grayscale alpha; procedural skill-button circles, live touch-control chrome and filled action-help illustrations use fractional coverage at their edges. Live Move, Use and Jump, including the movement knob, render at 85% opacity; Pause and help illustrations retain opaque painted interiors. Dedicated font, touch and help textures use local linear filtering; world art and shared atlases retain nearest-neighbour sampling.
-- Background paint in the six active zones uses `art/tools/background_palette.py` through `art/tools/background_tones.py`. Preserve the flat zone-primary skies. Far, middle and near use OKLab lightness centres 0.035, 0.070 and 0.105 below the sky, with detail half-widths 0.010, 0.014 and 0.018 and OKLCH chroma caps 0.022, 0.030 and 0.038. Retain continuous source lightness differences and source-material colour weights 0.25, 0.40 and 0.60. Apply caps after byte quantisation through the canonical art-kit gamut conversion; do not clip RGB channels.
+- Background paint in the six active zones uses `art/tools/backgroundPalette.ts` through `art/tools/backgroundTones.ts`. Preserve the flat zone-primary skies. Far, middle and near use OKLab lightness centres 0.035, 0.070 and 0.105 below the sky, with detail half-widths 0.010, 0.014 and 0.018 and OKLCH chroma caps 0.022, 0.030 and 0.038. Retain continuous source lightness differences and source-material colour weights 0.25, 0.40 and 0.60. Apply caps after byte quantisation through the canonical art-kit gamut conversion; do not clip RGB channels.
 - Preserve distinct wall panels, joints, window groups, wood, water and birch bark. Local decorative props use the near rank. Keep silhouettes, species, complete buildings, opaque indoor walls and transparent openings unchanged. Functional doors, stair markers, the walk signal and opened parcel retain their authored cues. The inactive Park prototype retains its existing publication policy and two-tone sky.
 - The reserved animated-fauna rank uses the zone hue and chroma capped at the smaller of 35% of the zone sky's chroma and 0.028. Choose the lightest quantised paint holding at least 2:1 relative-luminance contrast against every published near-background material, including source-colour residuals and named exceptions. Generators use `bg-<zone>-fauna` tokens. Draw world fauna after the nearest background and before terrain, retaining ordinary world-camera movement and binary alpha. Modal dimming follows existing house ramps to a strictly darker shade, independently of the depth ranks.
-- `python3 -I art/tools/background_tones.py build` refreshes background PNGs; individual generators apply the same policy. Room-entrance buildings use the named near ramps directly. Publish the regenerated palette with the approved background and fauna outputs. Foreground tiles, physical actors, portraits, UI and protected opening artwork retain their own paint.
+- `node art/tools/backgroundTones.ts build` refreshes background PNGs; individual generators apply the same policy. Room-entrance buildings use the named near ramps directly. Publish the regenerated palette with the approved background and fauna outputs. Foreground tiles, physical actors, portraits, UI and protected opening artwork retain their own paint.
 - Each colour has a one-step-darker mapping (its ramp). Shadows and dimming step each colour down its ramp, never blend with black.
 - Greys (lgrey, grey) may be used for environment scenery and characters. Disabled UI keeps its own treatment: greyed with the grey ramp and changed in shape, so it stays recognisable.
 
 ### Zone primary colours
 
-Each V1 destination has one muted primary, chosen for its materials and atmosphere. `art/tools/zone_themes.py` is the canonical assignment and ramp source. It generates `public/art/zone-themes.json`, registered as manifest data key `zone-themes`: each destination maps to `{ "primary": "palette-token" }`. Runtime code resolves the token through `palette.json`; it does not duplicate the hex values.
+Each V1 destination has one muted primary, chosen for its materials and atmosphere. `art/tools/zoneThemes.ts` is the canonical assignment and ramp source. It generates `public/art/zone-themes.json`, registered as manifest data key `zone-themes`: each destination maps to `{ "primary": "palette-token" }`. Runtime code resolves the token through `palette.json`; it does not duplicate the hex values.
 
 | Destination          | Primary token | Base    | Material and atmosphere                  |
 | -------------------- | ------------- | ------- | ---------------------------------------- |
@@ -150,7 +150,7 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 
 - Application: the primary dominates each map region's silhouette and backs its icon. Essential outlines and symbols remain ink or dslate, so the pastel fill is not responsible for contrast. Locked and unbuilt markers retain the coloured illustration around them.
 - Progress: loading fill uses the same primary on a dslate track. The in-play stage strip uses its separate yellow/amber palette. Standard primary buttons remain dslate with white text. Hazard red remains the existing saturated `red`; muted `zone-red` is the apartment interior colour and never signals lethal contact.
-- Ramps: every zone primary has one muted `-shade` colour, then joins a house ramp. The six bases and six shades extend the house palette without changing any existing colour. `palette.py` exports their darker and two-step dim mappings with every other palette colour.
+- Ramps: every zone primary has one muted `-shade` colour, then joins a house ramp. The six bases and six shades extend the house palette without changing any existing colour. `palette.ts` exports their darker and two-step dim mappings with every other palette colour.
 - Planned stage use: backgrounds follow the destination's primary family, with far silhouettes low in contrast and nearer layers using its shade. Quiet secondary colours provide restrained highlights. Far scenery scrolls more slowly than the gameplay plane; attached ledges, doors and props stay with terrain. This is an art plan for later themes, not a claim that those stages exist.
 
 ### Outlines
@@ -213,7 +213,7 @@ Keep the same role's size and weight consistent across screens. Wrap text, grow 
 
 ## Chibi
 
-Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing right and mirrored for left. `art/tools/bird.py` draws his; its docstring gives every frame's pose, timing and squash and stretch table.
+Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing right and mirrored for left. `art/tools/bird.ts` draws his; its header comment gives every frame's pose, timing and squash and stretch table.
 
 - Shape: a wide, round blob of a body with a small round head set into its top at the front, a square ink dot eye and a short, plain orange bill. His back dips at the nape, so his round head sits up above the back line, and ends in a short tail tip at the rear. No bow.
 - Colour: cream, with tan cel crescents and a white rim light. The wing is a flat tan patch, the feet tiny orange stubs. Dark-slate outline.
@@ -227,7 +227,7 @@ Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing r
 
 ## Logo
 
-The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Chibi's Way Home wordmark. `art/tools/logo.py` draws three transparent PNGs with declared canvases: `logo` (558x239) for the title screen, `logo-nav` (226x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
+The logo uses a full canonical cream bird standing on a simple platform above a flat dark-steel sign carrying the Chibi's Way Home wordmark. `art/tools/logo.ts` draws three transparent PNGs with declared canvases: `logo` (558x239) for the title screen, `logo-nav` (226x30) for the site's nav bar, and `logo-icon` (53x41) for the /play/ nav column. The nav mark has one line of lettering beside the bird; the icon shows the bird and platform without lettering.
 
 - The stacked title keeps `Chibi's` at 11px per glyph cell and enlarges `Way Home` to 9px, giving the lines comparable widths without distorting the font. The taller sign preserves clear spacing between lines.
 - The dominant lettering and platform colour is `zone-blue`. The flat dark-steel sign, quiet light edge and ink outline separate the wordmark on pale steel and dark navy. There is no extrusion, bright cyan highlight or drop shadow.
@@ -252,13 +252,13 @@ The runtime opening uses four single-shot beats on a plain `ink` field. Each sho
 
 <!-- CLEANUP (added 2026-10-31): Replace the neutral illustration when authored stage cutscenes are approved. -->
 
-`art/tools/cutscene.py` draws `stage-cutscene-placeholder`, a plain opaque 720x360 image registered under `images`. Its neutral palette and canonical bird add no plot, location or dialogue. Keep the bottom 80px quiet for the runtime's standard Continue button; the image contains no words or controls. Gameplay owns the transition and its text.
+`art/tools/cutscene.ts` draws `stage-cutscene-placeholder`, a plain opaque 720x360 image registered under `images`. Its neutral palette and canonical bird add no plot, location or dialogue. Keep the bottom 80px quiet for the runtime's standard Continue button; the image contains no words or controls. Gameplay owns the transition and its text.
 
 Map travel reuses the existing `bird` sprite's looping `walk` tag, four 130ms frames on the 48x42 canvas, with bottom-centre anchor 24,42. Direction uses horizontal mirroring, and a stopped bird can return to `idle`. No separate map character artwork is required.
 
 ## Furt
 
-Furt is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.py` draws it; its docstring gives every frame's pose and timing.
+Furt is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.ts` draws it; its header comment gives every frame's pose and timing.
 
 - Shape: modelled on a natural ferret rather than a chibi. A long, slinky body stood upright with a small forward arch (a Bezier spine from the low hip to the high neck, stamped as overlapping discs), a small wedge head held level, short dark legs, and a tapering tail touching the ground behind as a third contact point.
 - Fur: a champagne (skin1) coat with a skin2 shade crescent along the belly and a cream rim on the back; brown legs and tail with dark-brown far legs; a white face band, a skin2 mask round the eye and a pink nose.
@@ -277,7 +277,7 @@ All positions are in base pixels (x, y, w, h) of the 720x360 layout as drawn. Th
 
 ### Skills and room rewards
 
-`art/tools/skill_icons.py` exports three transparent 16x16 glyphs. Each has one static `ready` frame at index 0 and one `muted` frame at index 1, both 100ms and looping. The alpha geometry is identical; `ready` uses cream and `muted` uses grey. These assets have no contact box or baked background.
+`art/tools/skillIcons.ts` exports three transparent 16x16 glyphs. Each has one static `ready` frame at index 0 and one `muted` frame at index 1, both 100ms and looping. The alpha geometry is identical; `ready` uses cream and `muted` uses grey. These assets have no contact box or baked background.
 
 | Skill       | Art key                | 48x48 HUD target origin |
 | ----------- | ---------------------- | ----------------------- |
@@ -376,7 +376,7 @@ An accepted second-jump launch that survives its step in the same area emits two
 
 The game boots into the start screen; Start goes to the map. A nav bar runs across the top with icon buttons at its right, and Start sits below the logo.
 
-`start-background` is an opaque 720x360 static image at origin 0,0, drawn by `art/tools/start.py`: pale steel sky, seven low outer skyline silhouettes and one ground band. Its three existing palette colours leave the logo and actions clear. Use it directly without ambient dimming; it has no repeat, animation, collision or lights. The responsive homepage retains its separate composition.
+`start-background` is an opaque 720x360 static image at origin 0,0, drawn by `art/tools/start.ts`: pale steel sky, seven low outer skyline silhouettes and one ground band. Its three existing palette colours leave the logo and actions clear. Use it directly without ambient dimming; it has no repeat, animation, collision or lights. The responsive homepage retains its separate composition.
 
 - Nav bar `ui-nav-bar`, 0,0,720,48.
 - Icon buttons `ui-icon-button`, 36x36 at y 6, each with a 20x20 icon 8 in and 6 down (8 down while pressed). With Exit: Settings at x 632 and Exit at x 676, so Exit is at the far right. Supported Chromium app windows retain Exit when launched with single-entry history and a CloseWatcher. Other installed app windows hide Exit and retain Settings alone at x 676. Browser tabs retain Exit and return to the homepage.
@@ -415,7 +415,7 @@ The update notice is an ordinary modal offered only on the game's own Start scre
 
 ## Map
 
-The map presents the six V1 zone destinations on a cool pastel overview. `art/tools/map.py` draws the frame, zone markers, theme icons and small regional illustrations. Names, availability, stage choices and route positions belong to game data; the illustrations describe themes, not playable layouts.
+The map presents the six V1 zone destinations on a cool pastel overview. `art/tools/map.ts` draws the frame, zone markers, theme icons and small regional illustrations. Names, availability, stage choices and route positions belong to game data; the illustrations describe themes, not playable layouts.
 
 | Destination          | Grid centre (col,row) | Pixel centre | Icon and region suffix |
 | -------------------- | --------------------- | ------------ | ---------------------- |
@@ -470,7 +470,7 @@ The bird's 48x42 `death` tag is appended after `land`, leaving all earlier frame
 
 The six antagonist body sprites declare `contact: "silhouette"` in the manifest. Their drawn opaque pixels, including coloured outlines, define body contact; transparent space does not. Portraits, projectiles, traps and separate effects such as `bear-growl-wave` are excluded. Existing hit boxes retain their physical reach role; body contact uses the full rendered frame as its broad phase.
 
-Run `python3 -I art/tools/contact_silhouettes.py build` after changing body exports or contact registration. Each opted-in actor build also refreshes this shared export. `public/art/contact-silhouettes.json`, registered as the `contact-silhouettes` data key, contains version 1 and a `sprites` object keyed by art key. Each sprite contains `width`, `height` and `frames`; each exact Aseprite frame name maps to sorted `[y, left, rightExclusive]` runs in untrimmed frame coordinates. Adjacent occupied pixels merge into one run; an empty frame has an empty array. Alpha greater than zero is occupied, and partial alpha fails export. No animation tags or timings are duplicated.
+Run `node art/tools/contactSilhouettes.ts build` after changing body exports or contact registration. Each opted-in actor build also refreshes this shared export. `public/art/contact-silhouettes.json`, registered as the `contact-silhouettes` data key, contains version 1 and a `sprites` object keyed by art key. Each sprite contains `width`, `height` and `frames`; each exact Aseprite frame name maps to sorted `[y, left, rightExclusive]` runs in untrimmed frame coordinates. Adjacent occupied pixels merge into one run; an empty frame has an empty array. Alpha greater than zero is occupied, and partial alpha fails export. No animation tags or timings are duplicated.
 
 The runtime caches these runs and applies the sprite's current frame, facing, anchor and scale. This export changes no artwork, layout, motion or animation metadata.
 
@@ -502,7 +502,7 @@ The new frames follow every existing tag without changing their global frame ind
 
 ### Character states
 
-A placed thing combines an archetype (its behaviour), a character configuration (its canonical animations, hit box, dialogue and quip pools and quirks) and an instance (one placement). Its resolved skin supplies compatible artwork. A character's data names the tag that plays for each state, so every character sprite lists its tags by state (idle, move, react, talk, quirk) in its script docstring and in the table below. A state with no tag of its own says "none" or names the tag it falls back to. A state with more than one tag names each.
+A placed thing combines an archetype (its behaviour), a character configuration (its canonical animations, hit box, dialogue and quip pools and quirks) and an instance (one placement). Its resolved skin supplies compatible artwork. A character's data names the tag that plays for each state, so every character sprite lists its tags by state (idle, move, react, talk, quirk) in its script header comment and in the table below. A state with no tag of its own says "none" or names the tag it falls back to. A state with more than one tag names each.
 
 | Character          | idle   | move                                         | react                        | talk                       | quirk    |
 | ------------------ | ------ | -------------------------------------------- | ---------------------------- | -------------------------- | -------- |
@@ -541,11 +541,11 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 
 ## Hazards
 
-Hazard contact causes death; Try again returns to the stage checkpoint. Approved target for paired runtime integration: hazard contact also shakes the world while Chibi enters the existing death sequence. The render-only camera effect lasts 280ms with up to 5px diagonal offset, 5px overscan and a fixed HUD; elapsed time comes from the render loop, not physics. Restore the camera on completion, restart or shutdown. Reduced motion uses a static border cue without shaking. Retain Chibi’s 1px border keyline and 0.12 tint alpha. Actor motion does not itself trigger this effect; explicit retry behaviour is unchanged. `art/tools/hazards.py` draws the hazard sprites and `art/tools/floor1.py` the hazard tiles; their docstrings give every frame and tile.
+Hazard contact causes death; Try again returns to the stage checkpoint. Approved target for paired runtime integration: hazard contact also shakes the world while Chibi enters the existing death sequence. The render-only camera effect lasts 280ms with up to 5px diagonal offset, 5px overscan and a fixed HUD; elapsed time comes from the render loop, not physics. Restore the camera on completion, restart or shutdown. Reduced motion uses a static border cue without shaking. Retain Chibi’s 1px border keyline and 0.12 tint alpha. Actor motion does not itself trigger this effect; explicit retry behaviour is unchanged. `art/tools/hazards.ts` draws the hazard sprites and `art/tools/floor1.ts` the hazard tiles; their header comments give every frame and tile.
 
 - Every hazard sprite has an ink outline, so it holds 3:1 on every street ground, and is drawn at outdoor scale beside the bird.
 - Steel (the hatch and its leaves, the bike's wheels) uses the slate ramp (slate, dslate, navy), not grey: the leaves are slate because dslate does not separate from the dark facades in greyscale.
-- The ferret's calling card: every trap the ferret sets carries his badge, a 13x13 cream plate with his hat-and-bow mark (a plum stovepipe with a red band over a red bow tie). `badge()` in `hazards.py` draws it for every trap. A floor's own hazards (traffic, open hatches) never carry it.
+- The ferret's calling card: every trap the ferret sets carries his badge, a 13x13 cream plate with his hat-and-bow mark (a plum stovepipe with a red band over a red bow tie). `badge()` in `hazards.ts` draws it for every trap. A floor's own hazards (traffic, open hatches) never carry it.
 
 | Hazard           | Kind                                                          | Size                        | Collision                                    | Tags and timing                                                      |
 | ---------------- | ------------------------------------------------------------- | --------------------------- | -------------------------------------------- | -------------------------------------------------------------------- |
@@ -565,7 +565,7 @@ Friendly animals appear only as muted background flavour, never in the foregroun
 
 ## Street cast
 
-The character catalogue drawn by `art/tools/cast.py` is retained for room use and reference, without current world placements. Its docstring gives every frame. These assets have no portraits or hit boxes; they are not foreground friendly animals or pickups. Their existing brighter palettes must be muted before any future background flavour placement. Each faces right (mirrored for left) at outdoor scale beside the bird, with its feet on the frame's bottom rows and its body centre on the frame's centre line, so mirroring it does not move it. Outlines are coloured: two ramp steps darker, stepped further down until they hold 3:1 on the sidewalk.
+The character catalogue drawn by `art/tools/cast.ts` is retained for room use and reference, without current world placements. Its header comment gives every frame. These assets have no portraits or hit boxes; they are not foreground friendly animals or pickups. Their existing brighter palettes must be muted before any future background flavour placement. Each faces right (mirrored for left) at outdoor scale beside the bird, with its feet on the frame's bottom rows and its body centre on the frame's centre line, so mirroring it does not move it. Outlines are coloured: two ramp steps darker, stepped further down until they hold 3:1 on the sidewalk.
 
 | Key                | Character                                                        | Frame | Tags and timing                                                                               |
 | ------------------ | ---------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
@@ -603,7 +603,7 @@ The looping `pounce` tag appends four 100ms frames after frustration: crouched t
 
 ## Environment aesthetic
 
-Every environment theme (a zone's street, a chunk theme's park) follows these rules. The park theme (`art/tools/park.py`) is the reference; its values are given after each rule.
+Every environment theme (a zone's street, a chunk theme's park) follows these rules. The park theme (`art/tools/park.ts`) is the reference; its values are given after each rule.
 
 - One sky hue and a limited, tonal palette built around it. Every background layer is a step or two along that hue's ramp, and saturated colour is kept for the few things that matter. Park: a skin1 (`#e8b796`) sky, stepping to tan (`#e4a672`) from y 200 behind play.
 - Background layers read as atmosphere: the far city, the distant trees and the tall treetops sit close to the sky's value and saturation, low in contrast, and step down in value only slightly as they come nearer. Park: the city and the treetops' base skin2 (`#c28569`, 1.46:1 against the tan sky), shaded brown (`#b86f50`), lit tan; no windows in the far city.
@@ -613,13 +613,13 @@ Every environment theme (a zone's street, a chunk theme's park) follows these ru
 - Steps are soft: a step of 1 or 2 rows is a tap's walk-up, drawn as a rounded grass lip with a stone stair tread on about every other step; a taller terrace face is turf over soil, any height. Collision is the full tile, and there are no slopes. Park: steps 2 columns deep and 2 rows high; terrace faces run `soil-left` or `soil-right` down under the turf.
 - Saturation is spent where it matters: the walkable lips, the hazards, the accents that guide the eye (an awning, a lit door, a crown in the foreground). Props and backdrops otherwise stay within the palette's tones.
 - Hazard surfaces use the same flat red contact band in every zone, never spikes, a safe light lip or a pickup shape. The pond and thorn images remain in the asset catalogue for compatibility; new contact-edge obstacles use the shared strips.
-- Zone 1, the street, is the cool counterpart: a pale steel morning. Its sky is flat lgrey (`#c0cbdc`); separate window-free city silhouettes use grey (`#8b9bb4`) and slate (`#5a6988`); buildings and shopfronts are slate, dslate and grey with quiet dslate windows; the sidewalk is a white-lipped pale concrete band (lgrey slabs) over a slate face; every ledge pairs a navy edge with a white lip: white holds 2.82:1 against grey and 5.51:1 against slate; navy holds 8.48:1 against the pale sky; the warm accents are the ochre-and-cream awnings, the cream sign icons and the amber door and cab. `floor1.py` draws the pieces with warm ramp names and recolours them through its `COOL_*` maps.
+- Zone 1, the street, is the cool counterpart: a pale steel morning. Its sky is flat lgrey (`#c0cbdc`); separate window-free city silhouettes use grey (`#8b9bb4`) and slate (`#5a6988`); buildings and shopfronts are slate, dslate and grey with quiet dslate windows; the sidewalk is a white-lipped pale concrete band (lgrey slabs) over a slate face; every ledge pairs a navy edge with a white lip: white holds 2.82:1 against grey and 5.51:1 against slate; navy holds 8.48:1 against the pale sky; the warm accents are the ochre-and-cream awnings, the cream sign icons and the amber door and cab. `floor1.ts` draws the pieces with warm ramp names and recolours them through its `COOL_*` maps.
 - Repeating backdrops tile at widths that divide 720, so seams never show.
 - Every scene is checked in greyscale: each walkable top separates from what is behind it, the ground band reads over its fill, and the background stays behind play.
 
 ## Modular platforming tiles
 
-`art/tools/obstacles.py` builds `tiles-platforming`: 23 tiles, each 12x12, packed into a 96x36 PNG with eight columns. Solid blue blocks and one-way ledges assemble independently of scenery. A stage chooses the terrain look `platform`; individual characters can choose this tileset while their area uses a different theme.
+`art/tools/obstacles.ts` builds `tiles-platforming`: 23 tiles, each 12x12, packed into a 96x36 PNG with eight columns. Solid blue blocks and one-way ledges assemble independently of scenery. A stage chooses the terrain look `platform`; individual characters can choose this tileset while their area uses a different theme.
 
 - `crumbling-ledge-left`, `crumbling-ledge-middle`, `crumbling-ledge-right` and `crumbling-ledge-warn-left`, `crumbling-ledge-warn-middle`, `crumbling-ledge-warn-right`: crumbling ledges with exactly the one-way ledge cells and opaque mask. The intact tiles keep the white lip and add only a faint lip notch and a short dslate body seam, so they still read as safe ledges and differ only on close inspection. The warning tiles carry bold, branched navy cracks with grey tips through the lip and body, readable against pale skies and dark facades. Marks stay clear of the outer columns, so any width repeats seamlessly. `crumbling-ledge` and `crumbling-ledge-warn` alias the middle tiles.
 - `one-way-ledge-left`, `one-way-ledge-middle`, `one-way-ledge-right`: thin safe ledges, transparent underneath. Only falling onto the top lands on them.
@@ -642,12 +642,12 @@ Red strips never carry the bright safe lip. Red is a consistent danger cue acros
 
 ## Zone 1: parcel depot and New York street
 
-The first Blue cityscape stage has fixed start and finish sections with a seeded street middle. Its opening preserves the opened parcel, depot movement lessons and first dog introduction; the middle assembles reusable street chunks in randomized order. It is two screens tall: the sidewalk runs along the bottom and the buildings support climbs into the upper screen. `art/tools/depot.py` draws the depot modules and `art/tools/floor1.py` the street pieces. Their docstrings specify each reusable asset; gameplay data defines their arrangement.
+The first Blue cityscape stage has fixed start and finish sections with a seeded street middle. Its opening preserves the opened parcel, depot movement lessons and first dog introduction; the middle assembles reusable street chunks in randomized order. It is two screens tall: the sidewalk runs along the bottom and the buildings support climbs into the upper screen. `art/tools/depot.ts` draws the depot modules and `art/tools/floor1.ts` the street pieces. Their header comments specify each reusable asset; gameplay data defines their arrangement.
 
 - Depot: blue-grey ribbed wall modules, roller loading bays and cream parcel icons, with warm cardboard reserved for the opened parcel. No labels are baked into the art. The three modules are static backdrops with no collision, animation or interaction; gameplay places solid surfaces separately. All stay on the play plane, with parallax factors 1,1.
 - Outdoor scale: the street is drawn as if zoomed out 4x while the bird and the 12px tiles keep their size. A storey is 180px and an ordinary room door is 84px, twice Chibi's 42px frame height.
 - The street is 720px (60 tiles) tall: the sidewalk's top is y 600 (row 50), with sidewalk and road filling rows 50 to 59 below it so the camera can hold her feet two thirds down the screen. The ground storey runs from y 420 to the sidewalk, and storeys stack every 180px above: a two-storey roof is at y 240 (row 20) and a three-storey roof at y 60 (row 5), the tallest that fits. A water tower (its tank top 6 tiles above its roof) fits on a two-storey roof, not a three-storey one. Every street piece's bottom y below is in that frame.
-- Street tiles (`tiles-street`): a pale concrete sidewalk (tops alternating with a 2px joint every 24px, ends, a slate face), a pale stone kerb where it meets a cross street, the road one tile lower, an ochre-and-cream one-way shop awning, a dark-brown one-way canopy with a white lip, a 2-tile planter with a hedge top, the cellar hatch and its pit, and the ordinary room door as a 5x7 piece (60x84): a muted blue glazed leaf enclosed by complete grey jambs, with a small amber handle. `art/tools/room_doors.py` supplies the shared geometry. Existing non-door tile indices stay fixed; the added door cells follow the existing tiles.
+- Street tiles (`tiles-street`): a pale concrete sidewalk (tops alternating with a 2px joint every 24px, ends, a slate face), a pale stone kerb where it meets a cross street, the road one tile lower, an ochre-and-cream one-way shop awning, a dark-brown one-way canopy with a white lip, a 2-tile planter with a hedge top, the cellar hatch and its pit, and the ordinary room door as a 5x7 piece (60x84): a muted blue glazed leaf enclosed by complete grey jambs, with a small amber handle. `art/tools/roomDoors.ts` supplies the shared geometry. Existing non-door tile indices stay fixed; the added door cells follow the existing tiles.
 - Climbing tiles, appended so every earlier index holds: one-way fire-escape landings (black iron), window sills, a rooftop cornice and a water tower's flat top, each with left, middle and right tiles at any width. Every ledge's top carries the same 2px white lip under a 1px dark edge, so it reads against any facade in greyscale.
 - Climbing backdrops: upper storeys and rooflines stack as reusable facade pieces. Standable ledges and solid faces come from modular tiles, placed independently of the scenery. Existing fire-escape ladder images remain available for compatibility; new platforming layouts use ledges and cliffs instead.
 - Backdrops are modular: a sky and a far skyline of faded downtown skyscrapers in two layers that cover both screens and rise above the near roofs, one repeating facade per building type (one-storey, walk-up, brownstone, and a tall stone building), facade pieces, one storefront per shop, and street furniture placed singly (a cab, a hot-dog cart, a subway railing, a street tree, a walk signal, the doorman's podium, the canopy's poles). A cross street is a gap with no facade, where the skyline shows over the far avenue.
@@ -719,7 +719,7 @@ City boundary is Blue cityscape, Zone 1 Stage 2. It reuses the street's existing
 
 ## Apartment appearance pack
 
-`art/tools/apartment.py`, `art/tools/apartment_props.py` and `art/tools/apartment_wayfinding.py` provide reusable building blocks for the six Apartment floors: Lobby, Restaurant, Pool, Spa, Residential floors and Penthouse. The canonical dusty-rose `zone-red` ties together the entrance, restaurant, pool, spa, residential sections and exterior fire escapes. Wood, sage and muted blue are secondary accents. Saturated hazard red retains its separate meaning.
+`art/tools/apartment.ts`, `art/tools/apartmentProps.ts` and `art/tools/apartmentWayfinding.ts` provide reusable building blocks for the six Apartment floors: Lobby, Restaurant, Pool, Spa, Residential floors and Penthouse. The canonical dusty-rose `zone-red` ties together the entrance, restaurant, pool, spa, residential sections and exterior fire escapes. Wood, sage and muted blue are secondary accents. Saturated hazard red retains its separate meaning.
 
 The artwork separates geometry from appearance. `tiles-apartment` contains 42 cells of 12x12 in eight columns, exported as a 96x72 sheet. Its six families are `apartment-wood`, `apartment-tile`, `apartment-plaster`, `apartment-stone`, `apartment-brick` and `apartment-metal`. Each supplies the common `top`, `top-left`, `top-right`, `top-joint`, `face`, `face-left` and `face-right` suffixes. Data can mix these families across short floor sections while using the existing ground, raised, wall and ceiling structures. Standable tops retain the dark edge and white lip. Shared ledges, movers and red contact bands keep their existing geometry and skins.
 
@@ -769,11 +769,11 @@ Props are decorative, with no collision, continuous white safe lip or hazard ban
 
 ### Ferret obstacle skin
 
-`art/tools/ferret_antagonist.py` draws `ferret-antagonist`, a compact encounter skin for the familiar patrol and charge pattern. It retains the champagne coat, small wedge head, plum stovepipe hat, red band and bow tie, and warm brown legs and tail. The original 64x80 story sprite and dialogue portrait remain unchanged. Costume accents do not replace the shared red terrain hazard markings, and the enemy has no red outline.
+`art/tools/ferretAntagonist.ts` draws `ferret-antagonist`, a compact encounter skin for the familiar patrol and charge pattern. It retains the champagne coat, small wedge head, plum stovepipe hat, red band and bow tie, and warm brown legs and tail. The original 64x80 story sprite and dialogue portrait remain unchanged. Costume accents do not replace the shared red terrain hazard markings, and the enemy has no red outline.
 
 The frame is 48x48, bottom-centre anchor 24,48, with constant contact box x 2, y 2, width 44, height 46. All visible poses fit this box, including mirrored versions. Every state remains lethal; this is a regular obstacle using the existing generic behaviour graph. Gameplay owns movement, warning and recovery durations.
 
-The looping `throw` tag appends after existing frames. Its release paw is at local offset 39,26 in the right-facing frame. `art/tools/ferret_parcel.py` draws `ferret-parcel`: 24x24 canvas with a 16x16 parcel at x 4, y 8, bottom-centre anchor 12,24 and visible-shape hit box 4,8,16,16, one 400ms looping `idle` frame. An ink one-pixel edge surrounds a two-pixel red danger band and warm cardboard with cream tape. The runtime owns the thrown arc, spawn timing and lifetime; no travel or new collision behaviour is baked into the art.
+The looping `throw` tag appends after existing frames. Its release paw is at local offset 39,26 in the right-facing frame. `art/tools/ferretParcel.ts` draws `ferret-parcel`: 24x24 canvas with a 16x16 parcel at x 4, y 8, bottom-centre anchor 12,24 and visible-shape hit box 4,8,16,16, one 400ms looping `idle` frame. An ink one-pixel edge surrounds a two-pixel red danger band and warm cardboard with cream tape. The runtime owns the thrown arc, spawn timing and lifetime; no travel or new collision behaviour is baked into the art.
 
 | Tag    | Art cycle               | Pose                       |
 | ------ | ----------------------- | -------------------------- |
@@ -790,7 +790,7 @@ This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Countryside material pack
 
-Farmland and River crossing use the countryside destination's muted straw primary, `zone-yellow`. `art/tools/countryside.py` supplies appearance bindings for the same terrain roles and structures used by the other zones. It adds no collision rules or obstacle behaviours.
+Farmland and River crossing use the countryside destination's muted straw primary, `zone-yellow`. `art/tools/countryside.ts` supplies appearance bindings for the same terrain roles and structures used by the other zones. It adds no collision rules or obstacle behaviours.
 
 | Stage appearance | Logical ground look | Logical raised look |
 | ---------------- | ------------------- | ------------------- |
@@ -813,7 +813,7 @@ Backdrops use bottom-left anchors with default bottom y 600. Use sky factors 0,0
 
 ## Goose antagonist
 
-`art/tools/goose.py` draws Trixi as the countryside's `goose-antagonist`. A long neck, small head, pale body and oversized ink-rimmed glasses distinguish her from Chibi; a warm beak and feet keep her silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline. `art/tools/speaker_portraits.py` supplies `portrait-goose`: a transparent right-facing 64x64 portrait retaining the long cream neck, grey wing, orange bill and oversized glasses. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot.
+`art/tools/goose.ts` draws Trixi as the countryside's `goose-antagonist`. A long neck, small head, pale body and oversized ink-rimmed glasses distinguish her from Chibi; a warm beak and feet keep her silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. It has no red outline. `art/tools/speakerPortraits.ts` supplies `portrait-goose`: a transparent right-facing 64x64 portrait retaining the long cream neck, grey wing, orange bill and oversized glasses. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot.
 
 The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is x 2, y 2, width 44, height 46, containing every pose and its mirrored version. The skin uses the shared enemy state graph; gameplay owns warning, charge and recovery durations. Contact remains lethal in every state.
 
@@ -835,7 +835,7 @@ The appended `set-trap` tag contains four looping 120ms placement frames. Existi
 
 ## Bini bear
 
-`art/tools/bear.py` draws `bear-antagonist`: Bini, a dark-brown quadruped with high broad shoulders, a compact barrel body, short round ears, a broad short muzzle, a compact tail and four heavy plantigrade paws. His shorter body, taller shoulders and solid dark coat distinguish him from Archie. The world body has no held phone; the recoloured dialogue portrait retains the existing phone and its road-and-dog motif.
+`art/tools/bear.ts` draws `bear-antagonist`: Bini, a dark-brown quadruped with high broad shoulders, a compact barrel body, short round ears, a broad short muzzle, a compact tail and four heavy plantigrade paws. His shorter body, taller shoulders and solid dark coat distinguish him from Archie. The world body has no held phone; the recoloured dialogue portrait retains the existing phone and its road-and-dog motif.
 
 The frame remains 48x48, bottom-centre anchor 24,48, with fixed reach box x 2, y 2, width 44, height 46. Idle, preparation, growl, maul, rest, frustration and anticipation keep all four paws planted; walk and rush alternate diagonal contacts naturally. `anticipate-lift` uses grounded load, shoulder compression and a planted brace with its existing once-only 120/160/200ms cadence. Its frame indices and all other tags and art timings remain unchanged. The exact alpha silhouettes define contact independently of the reach box. Gameplay owns physical movement and state durations.
 
@@ -859,7 +859,7 @@ The earlier actor tags loop. `portrait-bear` is 64x64, authored facing right, wi
 
 This artwork is retained; Bini supplies the approved replacement woodland encounter.
 
-`art/tools/owl.py` draws `owl-antagonist`. A compact round head and broad wings distinguish the owl. Its preparation pose signals a descending swoop before it returns and rests. There is no red outline or dialogue portrait.
+`art/tools/owl.ts` draws `owl-antagonist`. A compact round head and broad wings distinguish the owl. Its preparation pose signals a descending swoop before it returns and rests. There is no red outline or dialogue portrait.
 
 The frame is 48x48 with bottom-centre anchor 24,48. Its fixed contact box is x 2, y 2, width 44, height 46, containing all visible poses and mirrored versions. All states remain lethal. The appearance uses the generic enemy state graph; gameplay owns physical movement and state durations.
 
@@ -877,7 +877,7 @@ This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Woodland material pack
 
-`art/tools/woodland.py` draws reusable skins for Forest paths and Ravine, using the destination's canonical `zone-green` primary. Appearance bindings retain the common terrain geometry, obstacle behaviours and collision profiles.
+`art/tools/woodland.ts` draws reusable skins for Forest paths and Ravine, using the destination's canonical `zone-green` primary. Appearance bindings retain the common terrain geometry, obstacle behaviours and collision profiles.
 
 | Stage appearance | Logical ground look | Logical raised look |
 | ---------------- | ------------------- | ------------------- |
@@ -900,7 +900,7 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 
 ## Rabbit antagonist
 
-`art/tools/rabbit.py` draws `rabbit-antagonist`. Upright ears and a small tail distinguish the rabbit. Its hop cycle and settled pauses accompany the shared bounded movement pattern. There is no red outline or dialogue portrait.
+`art/tools/rabbit.ts` draws `rabbit-antagonist`. Upright ears and a small tail distinguish the rabbit. Its hop cycle and settled pauses accompany the shared bounded movement pattern. There is no red outline or dialogue portrait.
 
 The frame is 48x48 with bottom-centre anchor 24,48. Its fixed contact box is x 2, y 2, width 44, height 46, containing all visible poses and mirrored versions. All states remain lethal. The appearance uses the generic enemy state graph; gameplay owns physical movement and state durations.
 
@@ -916,7 +916,7 @@ This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Home city material pack
 
-`art/tools/homecity.py` draws reusable skins for City outskirts and Familiar neighbourhood, using the destination's canonical `zone-peach` primary. Appearance bindings retain the common terrain geometry, obstacle behaviours and collision profiles.
+`art/tools/homecity.ts` draws reusable skins for City outskirts and Familiar neighbourhood, using the destination's canonical `zone-peach` primary. Appearance bindings retain the common terrain geometry, obstacle behaviours and collision profiles.
 
 | Stage appearance       | Logical ground look  | Logical raised look |
 | ---------------------- | -------------------- | ------------------- |
@@ -939,7 +939,7 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 
 ## Pebble pigeon
 
-`art/tools/pigeon_antagonist.py` draws Pebble as `pigeon-antagonist`, a cute grey and lilac pigeon with a cream chest. The 48x48 frame has bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, including mirrored poses. Existing generic posts provide perches; no special post artwork or collision is introduced.
+`art/tools/pigeonAntagonist.ts` draws Pebble as `pigeon-antagonist`, a cute grey and lilac pigeon with a cream chest. The 48x48 frame has bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, including mirrored poses. Existing generic posts provide perches; no special post artwork or collision is introduced.
 
 | Tag         | Art cycle               | Pose                         |
 | ----------- | ----------------------- | ---------------------------- |
@@ -956,7 +956,7 @@ The earlier motion tags loop. `prepare-air` appends after `swoop`, preserving th
 
 ## Industrial material pack
 
-Warehouse district and Freight terminal use the industrial destination's canonical smoky lavender, `zone-purple`. `art/tools/industrial.py` draws reusable material skins and scenery. The pack adds no obstacle types, collision rules or stage-specific physics; data may combine these skins with shared structures in any zone.
+Warehouse district and Freight terminal use the industrial destination's canonical smoky lavender, `zone-purple`. `art/tools/industrial.ts` draws reusable material skins and scenery. The pack adds no obstacle types, collision rules or stage-specific physics; data may combine these skins with shared structures in any zone.
 
 | Stage appearance | Logical ground look | Logical raised look |
 | ---------------- | ------------------- | ------------------- |
@@ -979,7 +979,7 @@ The repeated atmosphere layers have a default bottom of y 600. Use sky factors 0
 
 ## Raccoon antagonist
 
-`art/tools/raccoon.py` draws `raccoon-antagonist`, a separate enemy asset for the industrial stages. It retains a cute grey coat, cream face and belly, dark mask, rounded ears and banded tail. The existing room raccoon is unchanged. The frame is 48x48 with a bottom-centre anchor at 24,48, within a four-column by four-row placement. Its fixed contact box is x 2, y 2, width 44, height 46 in every pose, including mirrored poses. Contact remains lethal during preparation and rest; neither the sprite nor the runtime adds a red outline.
+`art/tools/raccoon.ts` draws `raccoon-antagonist`, a separate enemy asset for the industrial stages. It retains a cute grey coat, cream face and belly, dark mask, rounded ears and banded tail. The existing room raccoon is unchanged. The frame is 48x48 with a bottom-centre anchor at 24,48, within a four-column by four-row placement. Its fixed contact box is x 2, y 2, width 44, height 46 in every pose, including mirrored poses. Contact remains lethal during preparation and rest; neither the sprite nor the runtime adds a red outline.
 
 | Tag     | Art cycle               | Pose                                       |
 | ------- | ----------------------- | ------------------------------------------ |
@@ -993,7 +993,7 @@ The repeated atmosphere layers have a default bottom of y 600. Use sky factors 0
 
 The earlier motion tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. The body sprite supplies no new conversation.
 
-Kiwi, the female raccoon, reuses the existing identity without added gender accessories. `art/tools/speaker_portraits.py` supplies `portrait-raccoon`: a transparent right-facing 64x64 portrait with rounded ears, paired ink masks, grey fur and a cream muzzle. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
+Kiwi, the female raccoon, reuses the existing identity without added gender accessories. `art/tools/speakerPortraits.ts` supplies `portrait-raccoon`: a transparent right-facing 64x64 portrait with rounded ears, paired ink masks, grey fur and a cream muzzle. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
@@ -1020,7 +1020,7 @@ The lobby set is no longer in Zone 1. It is kept, unchanged, for a later indoor 
 
 ## Park theme
 
-The autumn park is a prototype chunk theme outside the V1 route. Its hand-built chunks are each a screen or two wide and assemble in a seeded order; a theme carries one tileset, its terrain and its repeated backdrops, drawn across the whole stage so seams never show, and chunks add their own props. `art/tools/park.py` draws it; its docstring lists every tile and piece.
+The autumn park is a prototype chunk theme outside the V1 route. Its hand-built chunks are each a screen or two wide and assemble in a seeded order; a theme carries one tileset, its terrain and its repeated backdrops, drawn across the whole stage so seams never show, and chunks add their own props. `art/tools/park.ts` draws it; its header comment lists every tile and piece.
 
 - Frame and scale as the street: outdoor scale, 12px tiles, zones 60 rows (720px) tall.
 - Chunk seams sit at ground rows 50, 40 and 30 (y 600, 480 and 360): a chunk's left and right edges meet the next chunk's at one of those heights. A step of 1 or 2 rows is a tap's walk-up; a taller terrace face is turf over soil (`soil-left` or `soil-right` running down the face), any height. There are no slopes.
@@ -1066,12 +1066,12 @@ Backdrops repeat in x at widths that divide 720, so chunk seams never show; prop
 
 ## Woodland species and background fauna
 
-`art/tools/large_wildlife.py` draws `background-deer-large` at 216x144 with bottom-centre anchor 108,144. Its four-frame `idle` uses 1000,180,180,1000ms; its eight-frame `graze` uses 350,300,300,650,650,350,300,350ms. Both tags loop. Export with the pinned art-kit release in six columns and two rows (1296x288), keeping the native frame dimensions. The naturalistic compact silhouette uses the flat `bg-woodland-fauna` paint, binary alpha and four fixed hoof patches. Use this large sprite for production ground fauna; retain the 32x24 deer as reference art rather than a default placement. Render at native dimensions with a fixed world origin and ordinary camera movement. It has no contact mask, hitbox, interaction, portrait or dialogue.
+`art/tools/largeWildlife.ts` draws `background-deer-large` at 216x144 with bottom-centre anchor 108,144. Its four-frame `idle` uses 1000,180,180,1000ms; its eight-frame `graze` uses 350,300,300,650,650,350,300,350ms. Both tags loop. Export with the pinned art-kit release in six columns and two rows (1296x288), keeping the native frame dimensions. The naturalistic compact silhouette uses the flat `bg-woodland-fauna` paint, binary alpha and four fixed hoof patches. Use this large sprite for production ground fauna; retain the 32x24 deer as reference art rather than a default placement. Render at native dimensions with a fixed world origin and ordinary camera movement. It has no contact mask, hitbox, interaction, portrait or dialogue.
 
 Woodland can mix broadleaf, conifer and birch depth layers between appropriate chunks. The existing broadleaf `woodland-far` and `forest-mid` remain the default. `woodland-far-conifers`, `forest-mid-conifers`, `woodland-far-birch` and `forest-mid-birch` retain 720x600, bottom-left y600 and repeat x. Far layers use the existing 0.15,0.05 parallax contract; middle layers use 0.4,0.15. Gameplay owns their chunk bindings and placement, including keeping exterior depth out of enclosed interiors.
 
-`art/tools/woodland_fauna.py` retains the reference `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and draws production `background-swallow` at 144x96, centre 72,48. Its `flight` uses four 120ms frames, loops and retains pointed wings, a streamlined body and forked tail. Production deer and swallows use `bg-woodland-fauna`; they have no contact mask, hitbox, interaction or dialogue. Ground fauna stay planted through idle and graze. The swallow follows a finite linear or hop traversal: its first viewport intersection starts an independent local active-world clock; it finishes without returning or ping-ponging, then its render object is disposed without changing stable object indices. Pause stops that clock; Retry and area entry reset playback. World fauna use ordinary 1,1 camera movement at depth -2.5, between placed backgrounds at -3 and terrain at -2. Gameplay owns supported ground fitting, chunk bindings, placement, motion and timing. Keep fauna subdued and separate from lethal enemies and points of interest.
+`art/tools/woodlandFauna.ts` retains the reference `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and draws production `background-swallow` at 144x96, centre 72,48. Its `flight` uses four 120ms frames, loops and retains pointed wings, a streamlined body and forked tail. Production deer and swallows use `bg-woodland-fauna`; they have no contact mask, hitbox, interaction or dialogue. Ground fauna stay planted through idle and graze. The swallow follows a finite linear or hop traversal: its first viewport intersection starts an independent local active-world clock; it finishes without returning or ping-ponging, then its render object is disposed without changing stable object indices. Pause stops that clock; Retry and area entry reset playback. World fauna use ordinary 1,1 camera movement at depth -2.5, between placed backgrounds at -3 and terrain at -2. Gameplay owns supported ground fitting, chunk bindings, placement, motion and timing. Keep fauna subdued and separate from lethal enemies and points of interest.
 
 ## Animated distant flora
 
-`art/tools/background_flora.py` draws `background-reeds`, a naturalistic 24x24 decorative sprite with bottom-centre anchor 12,24 and a four-frame 300ms looping `sway` tag. Its narrow seedheads and lanceolate leaves bend while the roots stay fixed. It has no hitbox, contact mask or interaction. Use the existing scenery animation contract, subdued background depth and a real supporting ground plane; parallax alone is not foliage animation.
+`art/tools/backgroundFlora.ts` draws `background-reeds`, a naturalistic 24x24 decorative sprite with bottom-centre anchor 12,24 and a four-frame 300ms looping `sway` tag. Its narrow seedheads and lanceolate leaves bend while the roots stay fixed. It has no hitbox, contact mask or interaction. Use the existing scenery animation contract, subdued background depth and a real supporting ground plane; parallax alone is not foliage animation.

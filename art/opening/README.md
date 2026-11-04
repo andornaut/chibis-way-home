@@ -8,7 +8,7 @@ acknowledgment retain their existing behaviour.
 
 The following asset contracts and motion recipes describe the retained painted storybook pack, not the
 current runtime data. Preserve this pack and its originals. Painted source images live in `source/`;
-`python3 art/tools/opening.py build`, run from the repository root, deterministically exports that pack's
+`node art/tools/opening.ts build`, run from the repository root, deterministically exports that pack's
 backgrounds and pose sheets.
 
 ## Assets
@@ -58,7 +58,7 @@ the recipe as runtime opening data. Packing and transit are consecutive shots of
 Each layer uses the pixel anchor `{ "x": 128, "y": 232 }`. Keyframe positions place that anchor in the
 720x360 viewport. Pose strings select the tags in `contract.json`; progress runs from zero to one per shot.
 Interpolate position, scale and angle linearly, and change pose and visibility at each keyframe boundary.
-Angles are clockwise degrees, opposite the Pillow preview's rotation convention. Curved preview motion
+Angles are clockwise degrees, opposite the preview's counter-clockwise rotation convention. Curved preview motion
 is sampled into linear segments; the recipe does not change the preview's illustrative cadence.
 
 Parcel and parcel-front keyframes are identical, including during transit. Draw parcel-front last.
@@ -67,7 +67,7 @@ The seated carton anchor remains fixed while Chibi's waking pose rises inside it
 
 ## Preview and integration
 
-`python3 art/tools/opening.py preview OUT.gif` renders a short motion study. `python3 art/tools/opening.py board OUT.png` renders five sampled shots.
+`node art/tools/opening.ts preview OUT.gif` renders a short motion study. `node art/tools/opening.ts board OUT.png` renders five sampled shots.
 The preview demonstrates actual pose changes and layer motion, not only pans over still illustrations.
 Its cadence is illustrative and does not prescribe runtime durations, controls, skipping, replay or saves.
 Gameplay owns those decisions and player text; tech owns scene integration.
