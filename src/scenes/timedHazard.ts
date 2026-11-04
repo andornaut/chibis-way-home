@@ -13,7 +13,10 @@ export function createTimedHazardArt(
     draw(phase: HazardPhase, rect: Rect) {
       item.clear().setPosition(rect.x, rect.y);
       item
-        .fillStyle(colour(phase === "active" ? HAZARD_PHASE_STYLE.active : HAZARD_PHASE_STYLE.inactive), 1)
+        .fillStyle(
+          colour(phase === "active" ? HAZARD_PHASE_STYLE.active : HAZARD_PHASE_STYLE.inactive),
+          1,
+        )
         .fillRect(0, 0, rect.width, rect.height);
       if (phase !== "warning") {
         return;

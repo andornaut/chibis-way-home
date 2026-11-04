@@ -66,9 +66,13 @@ it("paints neutral recovery, inset amber warning and the full active red contact
   painter.draw("warning", rect);
   const width = HAZARD_PHASE_STYLE.warningWidth;
   expect(art.pixel(width / 2, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
-  expect(art.pixel(rect.width - width / 2, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
+  expect(art.pixel(rect.width - width / 2, rect.height / 2)).toBe(
+    colour(HAZARD_PHASE_STYLE.warning),
+  );
   expect(art.pixel(rect.width / 2, width / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
-  expect(art.pixel(rect.width / 2, rect.height - width / 2)).toBe(colour(HAZARD_PHASE_STYLE.warning));
+  expect(art.pixel(rect.width / 2, rect.height - width / 2)).toBe(
+    colour(HAZARD_PHASE_STYLE.warning),
+  );
   expect(art.pixel(rect.width / 2, rect.height / 2)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
   expect(art.pixel(-0.5, 0)).toBeUndefined();
   for (const paint of art.painted) {
