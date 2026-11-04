@@ -10,9 +10,13 @@
  * - depot-loading-bay: 120x120, no repeat, bottom-left y 600. Raised roller shutter over a dark
  *   opening, with a cream parcel icon on a navy plaque. The opening is scenery, not a room door or
  *   a platform.
- * - parcel-open: 72x36, no repeat, bottom-left y 600. Warm cardboard with open side flaps, a dark
- *   interior and a brown front, behind the cream bird. Nonlethal scenery, with no light walkable
- *   lip.
+ * - parcel-open: 72x36, no repeat, bottom-left y 600. An opened cardboard box in three-quarter view
+ *   from above and in front, lit from the top left, behind the cream bird. Tan flaps with cream lit
+ *   edges: the back flap leans back, the side flaps splay out and the front flap folds down over
+ *   the brown front face, casting a dark-brown line. A tan rim encloses a dark-brown and plum
+ *   interior; the right side is dark brown. Cream tape, torn at the rim, and a cream label with two
+ *   marks. Ink outline and a flat bottom row. Nonlethal scenery, with no light walkable lip or red
+ *   band.
  *
  * All three share the gameplay plane's scroll factor (1, 1). Positions and terrain belong to game
  * data. The illustrative preview uses a 720px depot wall, one bay at x 360, the parcel at x 24 and
@@ -33,7 +37,6 @@ import {
   image,
   line,
   over,
-  polygon,
   readImage,
   rectangle,
   type RgbaImage,
@@ -103,68 +106,61 @@ function loadingBay(): RgbaImage {
   return im;
 }
 
+/** Fill each quadrilateral, its corners in order round its edge, with its colour on g. */
+function quads(
+  list: readonly (readonly [colour: string, corners: readonly [XY, XY, XY, XY]])[],
+  g: pixel.Grid,
+): void {
+  for (const [colour, [a, b, c, d]] of list) {
+    g.tri(a, b, c, colour);
+    g.tri(a, c, d, colour);
+  }
+}
+
+/** The opened box: front face x 12 to 49 over rows 18 to 34, the opening 8px deep behind it. */
 function parcel(): RgbaImage {
-  const im = image(72, 36);
-  polygon(
-    { colour: "dbrown" },
+  const g = new pixel.Grid(72, 36);
+  const [left, right, top, depth] = [12, 49, 18, 8];
+  const [back, width] = [top - depth, right - left + 1];
+  const backLeft: XY = [left + depth, back];
+  const backRight: XY = [right + depth, back];
+  // The back flap leans back from the back rim; the side flaps splay out from the side rims. Each
+  // has a lit top edge.
+  quads(
     [
-      [9, 12],
-      [17, 4],
-      [55, 4],
-      [63, 12],
-      [63, 34],
-      [9, 34],
+      ["tan", [backLeft, backRight, [right + depth + 3, back - 7], [left + depth + 3, back - 7]]],
+      ["tan", [[left, top], backLeft, [9, 2], [1, 10]]],
+      ["cream", [backLeft, [9, 2], [8, 4], [left + depth - 1, back + 2]]],
+      ["tan", [[right, top], backRight, [70, 6], [62, 14]]],
+      ["cream", [backRight, [70, 6], [69, 8], [right + depth - 1, back + 2]]],
     ],
-    im,
+    g,
   );
-  polygon(
-    { colour: "plum" },
-    [
-      [12, 12],
-      [18, 7],
-      [54, 7],
-      [60, 12],
-      [54, 19],
-      [18, 19],
-    ],
-    im,
-  );
-  polygon(
-    { colour: "tan", outline: "dbrown" },
-    [
-      [9, 12],
-      [0, 4],
-      [8, 1],
-      [25, 10],
-      [18, 19],
-    ],
-    im,
-  );
-  polygon(
-    { colour: "tan", outline: "dbrown" },
-    [
-      [63, 12],
-      [71, 3],
-      [62, 0],
-      [47, 10],
-      [54, 19],
-    ],
-    im,
-  );
-  polygon(
-    { colour: "brown", outline: "dbrown" },
-    [
-      [10, 20],
-      [35, 24],
-      [61, 20],
-      [61, 34],
-      [10, 34],
-    ],
-    im,
-  );
-  rectangle("tan", [32, 24, 36, 33], im);
-  rectangle("cream", [15, 24, 24, 28], im);
-  return im;
+  g.rect(left + depth + 3, back - 7, width, 1, "cream");
+  // Box: the front face, the shaded right side and the opening inside the rim.
+  g.rect(left, top, width, 35 - top, "brown");
+  for (let k = 1; k <= depth; k++) {
+    const y = top - k;
+    g.rect(right + k, y, 1, 35 - top, "dbrown");
+    g.rect(left + k, y, width, 1, k > depth / 2 ? "dbrown" : "plum");
+    g.p(left + k, y, "tan");
+    g.p(right + k, y, "tan");
+  }
+  g.rect(left + depth, back, width, 1, "tan");
+  // Front flap folded down over the face, its lit fold on the rim and its shadow below.
+  g.rect(left, top, width, 1, "cream");
+  g.rect(left, top + 1, width, 4, "tan");
+  g.rect(left, top + 5, width, 1, "dbrown");
+  // Packing tape down the centre, torn where the box was opened.
+  g.rect(29, top - 2, 2, 2, "cream");
+  g.rect(31, top - 1, 2, 1, "cream");
+  g.rect(29, top + 1, 4, 4, "cream");
+  g.rect(29, top + 6, 4, 6, "cream");
+  // Shipping label with two marks.
+  g.rect(37, 27, 9, 6, "cream");
+  g.rect(39, 28, 5, 1, "dbrown");
+  g.rect(39, 30, 3, 1, "dbrown");
+  return frameImage(g.outlined({ edge: () => pixel.hex("ink") }));
 }
 
 export function assets(): Record<string, readonly [image: RgbaImage, repeat: string]> {
