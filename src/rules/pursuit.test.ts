@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams";
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import {
   BEAR_BEHAVIOUR,
@@ -20,7 +21,6 @@ import type {
   Rect,
   ZoneLayout,
 } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
 import {
   type BehaviourState,
   contactBox,

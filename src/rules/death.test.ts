@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import type { Archetype } from "../data/types";
 import { walkZone } from "../sim/zoneWalk";
-import { BIRD_FRAME } from "../view/bird";
 import { attemptProgress, deathSupport } from "./death";
 import { zoneLayout } from "./tiles";
 import { startZone } from "./zone";

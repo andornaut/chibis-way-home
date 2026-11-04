@@ -3,13 +3,13 @@ import { EventEmitter } from "node:events";
 import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_MS } from "../core";
 import { BIRD } from "../data/bird";
 import { DEATH } from "../data/death";
 import { SCREEN } from "../data/screen";
 import type { ZoneDeath } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
-import * as deathPresentation from "../view/death";
+import * as deathPresentation from "../presentation";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));

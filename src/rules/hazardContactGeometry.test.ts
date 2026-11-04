@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import manifest from "../../public/art/manifest.json";
 import trapSheet from "../../public/art/sprites/goose-trap.json";
 import tileset from "../../public/art/tilesets/tiles-platforming.json";
+import { artHitboxes, type ArtManifest, sheetFrameSize } from "../assets";
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
-import { objectLayout } from "../rules/tiles";
-import { artHitboxes, type ArtManifest, sheetFrameSize } from "./aseprite";
+import { objectLayout } from "./tiles";
 
 const catalogue = { archetypes: ARCHETYPES, characters: CHARACTERS };
 

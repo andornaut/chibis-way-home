@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { chunkProblems } from "../rules/chunk";
@@ -9,7 +10,6 @@ import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { BIRD } from "./bird";
 import {
   BLUE_CONNECTORS,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { sweptContact } from "../core";
 import { BIRD } from "../data/bird";
 import type { Archetype, AreaPlan, Instance, ObjectLayout, Rect, ZoneLayout } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
 import { motionTrack } from "./motion";
 import {
   namespaceOrbitInstances,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
@@ -13,7 +14,6 @@ import type {
 } from "../data/types";
 import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
-import { BIRD_FRAME } from "../view/bird";
 import { birdBox, birdFrameRect, ordinaryJumpApexFeetY, startBird } from "./bird";
 import { crumblingDefinitions } from "./crumbling";
 import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast";

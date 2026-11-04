@@ -4,9 +4,8 @@ import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { itemAt } from "@andornaut/game-kit/arrays";
 import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 
-import { type AtlasFrame, type AtlasTexture, BASE_FRAME } from "../../assets/atlasManifest";
+import { type ArtManifest, type AtlasFrame, type AtlasTexture, BASE_FRAME } from "../../assets";
 import { TILE } from "../../data/screen";
-import type { ArtManifest } from "../../view/aseprite";
 import { EXTRUDE, layoutAtlas } from "./atlasLayout";
 
 // A PNG of art's, with its frames' rects in it and, for a sprite, its tags.

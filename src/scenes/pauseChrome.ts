@@ -6,7 +6,7 @@ import {
 } from "@andornaut/game-kit/art/aseprite";
 import type { Scene } from "phaser";
 
-import { ART_MANIFEST_KEY, type ArtManifest } from "../view/aseprite";
+import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
 import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "../view/pauseChrome";
 import type { TouchChromeLayer } from "../view/touchChrome";
 import { paletteColour } from "./cardParts";

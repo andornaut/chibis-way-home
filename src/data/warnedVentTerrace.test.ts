@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { zonePlanOf } from "../rules/assemble";
 import { effectiveCollision, effectiveHazardPhase } from "../rules/effectiveCollision";
@@ -8,7 +9,6 @@ import { timedHazardRect } from "../rules/timedHazard";
 import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { BIRD } from "./bird";
 import { CHUNKS } from "./chunks";
 import { WARNED_VENT_SECONDS } from "./obstacleBehaviours";

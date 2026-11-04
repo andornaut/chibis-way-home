@@ -5,7 +5,7 @@ import { expect, it, vi } from "vitest";
 import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS } from "../data/dialogues";
 import { TOUCH } from "../data/touch";
 import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
-import { barkOwnerOnscreen } from "../view/zoneDialogue";
+import { barkOwnerOnscreen } from "../presentation";
 
 vi.mock("phaser", () => ({
   Scene: class {

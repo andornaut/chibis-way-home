@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import type { ArtManifest } from "../assets";
 import type { ObjectLayout, Point } from "../data/types";
 import { sceneryParallax, type Tileset, worldScenery } from "../stage";
-import type { ArtManifest } from "./aseprite";
 import { type ArtKind, artKind, artScrollFactor } from "./objectArt";
 
 const MANIFEST = {

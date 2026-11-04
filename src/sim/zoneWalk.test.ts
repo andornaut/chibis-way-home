@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { REACH } from "../data/reach";
@@ -11,7 +12,6 @@ import { TEST_ZONES, ZONES as FIXED_ZONES } from "../data/zones";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
 import { crosses, type Surface, walkZone, zoneSurfaces } from "./zoneWalk";
 

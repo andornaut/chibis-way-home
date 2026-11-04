@@ -5,16 +5,15 @@ import { describe, expect, it } from "vitest";
 
 import artManifest from "../../public/art/manifest.json";
 import ferretSheet from "../../public/art/sprites/ferret-antagonist.json";
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
+import { artOffset, chunkBackdropSpan, chunkParallax } from "../presentation";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
-import { chunkBackdropSpan, chunkParallax } from "../view/chunkParallax";
-import { artOffset } from "../view/objectArt";
 import { BIRD } from "./bird";
 import { ZONE_MAP } from "./map";
 import { SCREEN, TILE } from "./screen";

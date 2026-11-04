@@ -1,5 +1,6 @@
 import { STEP_SECONDS } from "../core";
 import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
+import { proximityDialogue } from "../presentation";
 import { birdBox } from "../rules/bird";
 import { stageProgress } from "../rules/stageProgress";
 import {
@@ -11,7 +12,6 @@ import {
   type ZoneInput,
   type ZoneState,
 } from "../rules/zone";
-import { proximityDialogue } from "../view/zoneDialogue";
 import {
   botInput,
   type BotPolicy,

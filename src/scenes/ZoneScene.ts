@@ -19,6 +19,14 @@ import {
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
 import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
+import {
+  ART_MANIFEST_KEY,
+  artHitboxes,
+  type ArtManifest,
+  BIRD_FRAME,
+  CONTACT_SILHOUETTES,
+  spriteContacts,
+} from "../assets";
 import { contactFrameAt, spriteFrameOrigin, STEP_MS, STEP_SECONDS } from "../core";
 import { AIR_JUMP_CUE } from "../data/airJumpCue";
 import { ARCHETYPES } from "../data/archetypes";
@@ -72,6 +80,47 @@ import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
 import { stageProgressRect } from "../layout/stageProgress";
 import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
+import {
+  type ArtKind,
+  artKind,
+  artOffset,
+  artScrollFactor,
+  backdropBottomRect,
+  backgroundGroundOffset,
+  backgroundGroundReference,
+  barkOwnerOnscreen,
+  behaviourPose,
+  birdFrameAt,
+  type BirdPose,
+  characterState,
+  chunkBackdropSpan,
+  chunkParallax,
+  clearAirJumpPose,
+  type CrumblingSkin,
+  crumblingSkinTiles,
+  deathFrameIndex,
+  deathLabels,
+  type DeathPresentation,
+  deathPresentationTarget,
+  type DeathView,
+  doorPhase,
+  forceVisualPosition,
+  interiorBackdrop,
+  loadedTileset,
+  nextQuirkAt,
+  objectTiles,
+  type PlacedTile,
+  type PlayHold,
+  proximityDialogue,
+  scenerySpriteFrame,
+  STAGE_PROGRESS_STYLE,
+  startDeathPresentation,
+  startPose,
+  stepAction,
+  stepDeathPresentation,
+  stepPose,
+  terrainTiles,
+} from "../presentation";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
@@ -130,43 +179,9 @@ import {
   touchSettingShown,
 } from "../settings/touchControls";
 import { sceneryParallax, type Tileset, worldScenery } from "../stage";
-import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
-import { backdropBottomRect } from "../view/backdropBottom";
-import { backgroundGroundOffset, backgroundGroundReference } from "../view/backgroundGround";
-import { behaviourPose } from "../view/behaviour";
-import {
-  BIRD_FRAME,
-  birdFrameAt,
-  type BirdPose,
-  clearAirJumpPose,
-  startPose,
-  stepPose,
-} from "../view/bird";
-import { characterState, nextQuirkAt } from "../view/character";
-import { chunkBackdropSpan, chunkParallax } from "../view/chunkParallax";
-import { type CrumblingSkin, crumblingSkinTiles } from "../view/crumblingPresentation";
-import {
-  deathFrameIndex,
-  deathLabels,
-  type DeathPresentation,
-  deathPresentationTarget,
-  type DeathView,
-  startDeathPresentation,
-  stepDeathPresentation,
-} from "../view/death";
-import { doorPhase } from "../view/doorOpen";
-import { forceVisualPosition } from "../view/forceVisual";
-import { interiorBackdrop } from "../view/interiorBackdrop";
 import { moveHintView } from "../view/moveHint";
-import { type ArtKind, artKind, artOffset, artScrollFactor } from "../view/objectArt";
-import { type PlayHold, stepAction } from "../view/playHold";
-import { scenerySpriteFrame } from "../view/scenerySprite";
-import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
-import { STAGE_PROGRESS_STYLE } from "../view/stageProgress";
-import { loadedTileset, objectTiles, type PlacedTile, terrainTiles } from "../view/tiles";
 import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../view/touchChrome";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
-import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";
 import { mountAirJumpCue } from "./airJumpCue";
 import { backdropBottomFrame } from "./backdropBottomFrame";
 import { mountBossWarning } from "./bossWarning";

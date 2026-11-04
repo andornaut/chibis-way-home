@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import type { Archetype, Character, Instance, ZonePlan } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
 import { type Catalogue, isPlaced, objectLayout, tileRect, zoneLayout } from "./tiles";
 
 describe("tileRect", () => {

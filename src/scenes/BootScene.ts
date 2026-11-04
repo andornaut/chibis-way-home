@@ -7,11 +7,11 @@ import {
 import { Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json";
+import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
 import { TILE } from "../data/screen";
 import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
 import { loadProgress } from "../save";
-import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../view/aseprite";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
 import { filterFontArt, queueFontArt } from "./fontArt";
 

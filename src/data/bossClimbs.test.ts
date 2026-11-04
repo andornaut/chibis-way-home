@@ -2,6 +2,7 @@ import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { describe, expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams";
+import { BIRD_FRAME } from "../assets";
 import { EDGE, STEP_SECONDS } from "../core";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
@@ -15,7 +16,6 @@ import { standsOn, startZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { BIRD } from "./bird";
 import { CHUNKS } from "./chunks";
 import { TILE } from "./screen";

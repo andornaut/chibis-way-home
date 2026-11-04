@@ -2,15 +2,13 @@ import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite"
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
+import { type ArtManifest, BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
+import { artKind, lookTiles } from "../presentation";
 import { resolveNames, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { zonePlanFor } from "../rules/zonePlans";
 import { HITBOXES, TILESETS } from "../testing/walkSuite";
-import type { ArtManifest } from "../view/aseprite";
-import { BIRD_FRAME } from "../view/bird";
-import { artKind } from "../view/objectArt";
-import { lookTiles } from "../view/tiles";
 import { ARCHETYPES } from "./archetypes";
 import { BIRD } from "./bird";
 import { CHARACTERS } from "./characters";

@@ -1,10 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import type { ObjectLayout } from "../data/types";
 import { startBird } from "../rules/bird";
 import type { SceneryPlaybackState } from "../rules/sceneryPlayback";
-import { BIRD_FRAME } from "../view/bird";
 
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true) }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));

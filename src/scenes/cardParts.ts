@@ -5,6 +5,7 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import type { GameObjects, Scene } from "phaser";
 
+import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
 import type { Point, Rect } from "../data/types";
 import {
   buttonFace,
@@ -20,7 +21,6 @@ import { CARD_TEXT_SCALE } from "../layout/pauseCard";
 import type { LabelledButton } from "../layout/restartCard";
 import { focusRingAround } from "../layout/settingsCard";
 import { textInkBounds } from "../layout/textInk";
-import { ART_MANIFEST_KEY, type ArtManifest } from "../view/aseprite";
 import type { Palette } from "../view/dim";
 import { uiObject } from "./uiRoots";
 

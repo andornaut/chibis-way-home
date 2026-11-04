@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit";
 import { TILE } from "../data/screen";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { type ChunkLibrary, themesOf, zonePlanOf } from "./assemble";
 import { startBird } from "./bird";
 import { zoneLayout } from "./tiles";

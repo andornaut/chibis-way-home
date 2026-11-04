@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { DEATH } from "../data/death";
@@ -7,7 +8,6 @@ import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import type { Rect, ZoneDeath } from "../data/types";
-import { BIRD_FRAME } from "./bird";
 import {
   deathLabels,
   deathPresentationTarget,

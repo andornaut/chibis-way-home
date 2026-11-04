@@ -1,5 +1,6 @@
 import { assertNever } from "@andornaut/game-kit/assertNever";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import type {
   AreaLayout,
@@ -13,7 +14,6 @@ import type {
 } from "../data/types";
 import { tileRect, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
-import { BIRD_FRAME } from "../view/bird";
 
 export type Reach = keyof Reaches;
 

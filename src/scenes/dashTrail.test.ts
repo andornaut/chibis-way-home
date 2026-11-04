@@ -3,8 +3,8 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { DASH_TRAIL } from "../data/dashTrail";
-import { BIRD_FRAME } from "../view/bird";
 import { mountDashTrail } from "./dashTrail";
 
 it("clears on pause, draws only active dash time and ignores all calls after shutdown", () => {

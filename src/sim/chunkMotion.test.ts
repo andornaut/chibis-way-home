@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { CHUNKS } from "../data/chunks";
@@ -10,7 +11,6 @@ import { zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 
 const CASES = ["compound-lift-shuttle", "compound-return-shuttle"] as const;
 const ORDINARY_JUMP = { ...BIRD, doubleJump: false };

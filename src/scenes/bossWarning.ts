@@ -1,8 +1,8 @@
 import type { GameObjects, Scene } from "phaser";
 
 import type { SpriteContact } from "../data/types";
+import { bossWarning, type BossWarningTuning } from "../presentation";
 import type { BehaviourState } from "../rules/behaviour";
-import { bossWarning, type BossWarningTuning } from "../view/bossWarning";
 
 export function mountBossWarning(
   tuning: BossWarningTuning,

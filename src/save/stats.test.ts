@@ -2,12 +2,12 @@ import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { ZONE_MAP } from "../data/map";
 import { activeStepSeconds } from "../rules/death";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneState } from "../rules/zone";
-import { BIRD_FRAME } from "../view/bird";
 import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats";
 
 const STAGES = new Set(["park", "street"]);

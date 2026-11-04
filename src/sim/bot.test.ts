@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { orbitPosition } from "../rules/orbit";
 import type { Transient } from "../rules/transients";
 import { startZone } from "../rules/zone";
-import { BIRD_FRAME } from "../view/bird";
 import { emissionBounds } from "./behaviourBounds";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot";
 import { zoneSurfaces } from "./zoneWalk";

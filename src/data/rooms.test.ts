@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
-import type { ArtManifest } from "../view/aseprite";
+import type { ArtManifest } from "../assets";
 import { DIALOGUES, SPEAKERS } from "./dialogues";
 import { ZONE_MAP } from "./map";
 import { ROOMS } from "./rooms";

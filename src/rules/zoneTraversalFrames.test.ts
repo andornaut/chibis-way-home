@@ -1,10 +1,10 @@
 import { expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BehaviourPlan, ObjectLayout, ZoneLayout } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
 import { advanceBehaviour } from "./behaviour";
 import { startZone, stepZone } from "./zone";
 

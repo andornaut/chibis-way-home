@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { TILE } from "../data/screen";
 import { APARTMENT_SPAWN_ROW } from "../data/zone6";
 import { zoneLayout } from "../rules/tiles";
-import { BIRD_FRAME } from "../view/bird";
 import { ALL_CHUNKS } from "./chunks";
 import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases";
 import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";

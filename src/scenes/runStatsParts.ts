@@ -13,9 +13,9 @@ import {
   statsTotalRows,
   summaryTextOrigin,
 } from "../layout/runStats";
+import { deathLabels, deathSummary } from "../presentation";
 import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
 import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
-import { deathLabels, deathSummary } from "../view/death";
 import { addCardText, BODY_FONT, cardFonts, paletteColour, TITLE_FONT } from "./cardParts";
 
 export function addStageSummary(

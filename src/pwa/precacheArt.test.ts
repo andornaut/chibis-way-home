@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ART_PATH, type ArtManifest } from "../view/aseprite";
+import { ART_PATH, type ArtManifest } from "../assets";
 import { UI_FONT_RESOURCES } from "../view/uiFonts";
 import { ART_MANIFEST_URL, artUrls } from "./precacheArt";
 

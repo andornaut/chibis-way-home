@@ -2,13 +2,13 @@ import { createHash } from "node:crypto";
 
 import { expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Instance, TerrainRect, TilePoint, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput } from "../rules/zone";
 import { CATALOGUE } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
 import { surfaceAt, walkRequiredRoutes, walkZone } from "./zoneWalk";
 

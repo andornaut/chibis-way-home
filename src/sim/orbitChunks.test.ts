@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS, sweptContact } from "../core";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
@@ -13,7 +14,6 @@ import { orbitPosition } from "../rules/orbit";
 import { areaLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
 import { TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 
 const chunks = createOrbitHazardChunks("test");
 function layoutOf(id: string): ZoneLayout {

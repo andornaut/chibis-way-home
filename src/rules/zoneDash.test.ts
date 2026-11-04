@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BirdTuning, ObjectLayout, ZoneLayout } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
 import { leaveRoom, retryZone, startZone, stepZone } from "./zone";
 
 const tuning: BirdTuning = BIRD;

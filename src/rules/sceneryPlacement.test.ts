@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import type { Character, ChunkPlan, Instance, ZoneRecipe } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
 import { assembleZone, type ChunkLibrary } from "./assemble";
 import { chunkProblems } from "./chunk";
 import { zoneLayout } from "./tiles";

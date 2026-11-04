@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import type { Archetype, BackgroundSection, ChunkPlan, ThemePlan, ZoneRecipe } from "../data/types";
-import { BIRD_FRAME } from "../view/bird";
-import { chunkBackdropSpan } from "../view/chunkParallax";
+import { chunkBackdropSpan } from "../presentation";
 import { assembleZone, type ChunkLibrary } from "./assemble";
 import { withBackgroundSections } from "./backgroundSections";
 import { objectLayout, zoneLayout } from "./tiles";

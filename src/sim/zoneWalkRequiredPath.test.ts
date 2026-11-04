@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { AreaLayout, ZoneLayout } from "../data/types";
 import { startZone, stepZone } from "../rules/zone";
-import { BIRD_FRAME } from "../view/bird";
 import { walkRequiredRoutes } from "./zoneWalk";
 
 const tuning = { ...BIRD, doubleJump: false };

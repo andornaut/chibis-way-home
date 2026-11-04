@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { STATIC_MOTION } from "../data/archetypes";
 import { BIRD } from "../data/bird";
@@ -7,7 +8,6 @@ import { TILE } from "../data/screen";
 import type { BirdTuning, ObjectLayout, Rect, ZoneLayout } from "../data/types";
 import { orbitPosition } from "../rules/orbit";
 import { enterArea, retryZone, startZone, stepZone } from "../rules/zone";
-import { BIRD_FRAME } from "../view/bird";
 import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors } from "./bot";
 import capturedDock from "./fixtures/sharedDock.json";
 import {

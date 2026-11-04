@@ -1,6 +1,6 @@
 import { type Scene, Textures } from "phaser";
 
-import type { ArtManifest } from "../view/aseprite";
+import type { ArtManifest } from "../assets";
 
 // Fonts have dedicated sources so filtering never affects shared sprite atlas pages.
 export function queueFontArt(scene: Scene, { fonts }: Pick<ArtManifest, "fonts">): void {

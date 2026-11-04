@@ -6,9 +6,8 @@ import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { itemAt } from "@andornaut/game-kit/arrays";
 import { describe, expect, it } from "vitest";
 
-import { BASE_FRAME } from "../../assets/atlasManifest";
+import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest, BASE_FRAME } from "../../assets";
 import { TILE } from "../../data/screen";
-import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../../view/aseprite";
 import { buildAtlas } from "./atlasBuild";
 
 const ART_DIR = join(import.meta.dirname, "../../../public", ART_PATH);

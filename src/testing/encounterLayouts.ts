@@ -1,3 +1,4 @@
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit";
 import { TILE } from "../data/screen";
@@ -7,7 +8,6 @@ import { startBird } from "../rules/bird";
 import { zoneLayout } from "../rules/tiles";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { BIRD_FRAME } from "../view/bird";
 import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 // Chibi without skills.

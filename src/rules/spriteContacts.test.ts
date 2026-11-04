@@ -5,19 +5,18 @@ import maskJson from "../../public/art/contact-silhouettes.json";
 import manifestJson from "../../public/art/manifest.json";
 import bearSheet from "../../public/art/sprites/bear-antagonist.json";
 import { namedStreams } from "../ai/randomStreams";
+import { artHitboxes, type ArtManifest, sheetFrameSize, spriteContacts } from "../assets";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
 import type { SpriteSilhouettes, ZoneLayout } from "../data/types";
-import { contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
-import { startBird } from "../rules/bird";
-import { objectLayout } from "../rules/tiles";
-import { startZone, stepZone } from "../rules/zone";
-import { artHitboxes, type ArtManifest, sheetFrameSize } from "./aseprite";
-import { behaviourPose } from "./behaviour";
-import { spriteContacts } from "./spriteContacts";
+import { behaviourPose } from "../presentation";
+import { contactBox, startBehaviour, stepBehaviour } from "./behaviour";
+import { startBird } from "./bird";
+import { objectLayout } from "./tiles";
+import { startZone, stepZone } from "./zone";
 
 const manifest: ArtManifest = {
   backdrops: [],

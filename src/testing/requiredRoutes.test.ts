@@ -1,12 +1,12 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { CHUNKS } from "../data/chunks";
 import { TILE } from "../data/screen";
 import type { Instance } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk";
-import { BIRD_FRAME } from "../view/bird";
 import { ALL_CHUNKS } from "./chunks";
 import { chunkWalkPlan } from "./chunkWalkCases";
 import { REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";

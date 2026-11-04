@@ -1,4 +1,4 @@
-import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../view/aseprite";
+import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../assets";
 import { UI_FONT_RESOURCES } from "../view/uiFonts";
 
 export const ART_MANIFEST_URL = `${ART_PATH}${ART_MANIFEST_FILE}`;

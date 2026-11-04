@@ -5,8 +5,8 @@ import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { ZONE_MAP } from "../data/map";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
+import { deathLabels, deathSummary } from "../presentation";
 import { formatRunStats } from "../save/runSummary";
-import { deathLabels, deathSummary } from "../view/death";
 import { statsStatement } from "../view/statsStatement";
 import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./cutscene";
 import {

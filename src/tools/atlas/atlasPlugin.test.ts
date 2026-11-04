@@ -6,7 +6,7 @@ import { expect, it, vi } from "vitest";
 
 import art from "../../../public/art/manifest.json";
 import bird from "../../../public/art/sprites/bird.json";
-import type { AtlasManifest } from "../../assets/atlasManifest";
+import type { AtlasManifest } from "../../assets";
 import { ATLAS_MODULE, atlasPlugin } from "./atlasPlugin";
 import { atlasPageFileName } from "./hashedArt";
 

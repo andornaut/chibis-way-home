@@ -1,10 +1,10 @@
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { ObjectLayout, SlotKind, ZoneLayout } from "../data/types";
 import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble";
 import { applyStageGeometry } from "../rules/stageGeometry";
 import { zoneLayout } from "../rules/tiles";
-import { BIRD_FRAME } from "../view/bird";
 import { type ALL_CHUNKS, ALL_RECIPES } from "./chunks";
 import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 

@@ -6,7 +6,7 @@ import {
 } from "@andornaut/game-kit/art/aseprite";
 import { type GameObjects, type Scene, Textures } from "phaser";
 
-import { ART_MANIFEST_KEY, type ArtManifest } from "../view/aseprite";
+import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
 import {
   TOUCH_CHROME_FRAME,
   TOUCH_CHROME_SCALE,

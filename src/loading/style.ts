@@ -5,7 +5,7 @@ import themes from "../../public/art/zone-themes.json";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { DEATH_PROGRESS_HEIGHT } from "../layout/deathCard";
-import { zoneTheme } from "../view/zoneTheme";
+import { zoneTheme } from "../presentation";
 
 export const PROGRESS_RECT = { height: DEATH_PROGRESS_HEIGHT, width: SCREEN.width, x: 0, y: 0 };
 

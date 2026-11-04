@@ -6,6 +6,7 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { type GameObjects, type Input, Scene } from "phaser";
 
+import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
 import { MAP_TRAVEL, ZONE_MAP } from "../data/map";
 import { TILE } from "../data/screen";
 import { TEXT } from "../data/text";
@@ -34,7 +35,6 @@ import {
 } from "../rules/mapDestinations";
 import { stageCompletion } from "../rules/stageCompletion";
 import { savedMap, saveStand } from "../save";
-import { ART_MANIFEST_KEY, type ArtManifest } from "../view/aseprite";
 import {
   destinationAtTap,
   destinationCentre,

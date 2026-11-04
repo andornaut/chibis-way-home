@@ -1,4 +1,4 @@
-import { ART_PATH, type ArtManifest } from "../view/aseprite";
+import { ART_PATH, type ArtManifest } from "../assets";
 
 export function galleryCatalogue(manifest: ArtManifest) {
   return [

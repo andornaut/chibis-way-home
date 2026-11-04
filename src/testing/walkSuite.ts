@@ -2,6 +2,13 @@ import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 import { beforeAll, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
+import {
+  artHitboxes,
+  type ArtManifest,
+  BIRD_FRAME,
+  sheetFrameSize,
+  spriteContacts,
+} from "../assets";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
@@ -19,9 +26,6 @@ import {
   type ZoneWalk,
 } from "../sim/zoneWalk";
 import type { Tileset } from "../stage";
-import { artHitboxes, type ArtManifest, sheetFrameSize } from "../view/aseprite";
-import { BIRD_FRAME } from "../view/bird";
-import { spriteContacts } from "../view/spriteContacts";
 
 const SHEETS = import.meta.glob<
   AsepriteSheet & {

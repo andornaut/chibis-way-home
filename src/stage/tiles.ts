@@ -25,7 +25,7 @@ export function drawsFrom(tileset: Tileset, art: string): boolean {
 }
 
 // The tiles, by name, an object of art, cols x rows tiles, is drawn with when art names a tile.
-// objectTiles (src/view/tiles.ts) places them.
+// objectTiles (src/presentation/tiles.ts) places them.
 export function namedTiles(
   tileset: Tileset,
   art: string,

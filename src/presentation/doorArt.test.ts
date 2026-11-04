@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json";
+import { type ArtManifest, sheetFrameSize } from "../assets";
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
-import { type ArtManifest, sheetFrameSize } from "./aseprite";
 import { artOffset } from "./objectArt";
 
 const SHEETS = import.meta.glob<{

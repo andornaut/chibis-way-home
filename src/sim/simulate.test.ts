@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { STATIC_MOTION } from "../data/archetypes";
 import { BIRD } from "../data/bird";
@@ -7,7 +8,6 @@ import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types";
 import { stageProgress } from "../rules/stageProgress";
 import * as zoneRules from "../rules/zone";
 import { startZone, stepZone } from "../rules/zone";
-import { BIRD_FRAME } from "../view/bird";
 import * as botRules from "./bot";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_VALIDATION } from "./bot";
 import { traceEvent, VALIDATION_LIMITS } from "./diagnostics";

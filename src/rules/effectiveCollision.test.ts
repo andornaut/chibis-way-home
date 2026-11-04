@@ -3,8 +3,8 @@ import { expect, it } from "vitest";
 import { BIRD } from "../data/bird";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
 import type { Archetype, BehaviourNode, BehaviourPlan, ObjectLayout } from "../data/types";
+import { behaviourPose } from "../presentation";
 import { TEST_PURSUER, withAnticipationContact } from "../testing/behaviours";
-import { behaviourPose } from "../view/behaviour";
 import { startBehaviour, stepBehaviour } from "./behaviour";
 import { startBird } from "./bird";
 import {

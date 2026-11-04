@@ -3,6 +3,13 @@ import { readFileSync } from "node:fs";
 
 import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 
+import {
+  artHitboxes,
+  type ArtManifest,
+  CONTACT_SILHOUETTES,
+  sheetFrameSize,
+  spriteContacts,
+} from "../assets";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
@@ -12,8 +19,6 @@ import type { SpriteSilhouettes } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import { zonePlanFor } from "../rules/zonePlans";
 import type { Tileset } from "../stage";
-import { artHitboxes, type ArtManifest, sheetFrameSize } from "../view/aseprite";
-import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { type PreparedStage, prepareStage } from "./simulate";
 
 export function stageLoader(

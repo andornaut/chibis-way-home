@@ -8,9 +8,9 @@ import { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "../input/deathI
 import { deathCard } from "../layout/deathCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { RUN_STAT_KEYS, statsTotalRows, type StatsTotalsSnapshot } from "../layout/runStats";
+import { type DeathSummary, deathSummary } from "../presentation";
 import { formatRunStats } from "../save/runSummary";
 import type { RunStatsSummary } from "../save/stats";
-import { type DeathSummary, deathSummary } from "../view/death";
 import { statsStatement } from "../view/statsStatement";
 import {
   addCardTextIn,
