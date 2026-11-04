@@ -1,0 +1,187 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+
+import { describe, expect, it } from "vitest";
+
+import { namedStreams } from "../ai/randomStreams";
+import { canonicalTrace, traceRecorder } from "../ai/trace";
+import { BIRD } from "../data/bird";
+import { TILE } from "../data/screen";
+import type { ObjectLayout } from "../data/types";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
+import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour";
+import type { BehaviourWorld } from "./behaviourReach";
+import { startBird, stepBird } from "./bird";
+import { objectLayout } from "./tiles";
+
+// Every boss graph state, entered engaged against a Chibi who walks onto the boss's sampled
+// approach target. Each run's per-step output must hash to the value recorded before its
+// motion moved into an ability, which covers the swoop, burst, drop and pounce paths that the
+// zone scenarios do not reach. BEHAVIOUR_TRACE_UPDATE=1 re-records.
+const FIXTURE = new URL("./fixtures/behaviourAbilityTraces.json", import.meta.url);
+const UPDATE = process.env.BEHAVIOUR_TRACE_UPDATE === "1";
+const CHARACTERS = [
+  "bear-antagonist",
+  "dog-antagonist",
+  "ferret-antagonist",
+  "goose-antagonist",
+  "pigeon-antagonist",
+  "raccoon-antagonist",
+] as const;
+const TICKS = 720;
+const DT = 1 / 120;
+
+const floor = { height: 360, width: 1440, x: 0, y: 720 };
+const roof = { height: 12, width: 240, x: 600, y: 600 };
+const ledge = { height: 24, width: 144, x: 360, y: 600 };
+
+function world(covered: boolean, tick: number): BehaviourWorld {
+  return {
+    decisions: namedStreams(1, "ability-trace:0"),
+    solids: covered ? [floor, roof, ledge] : [floor],
+    traversalFrame: {
+      bounds: { height: 1080, width: 1440, x: 0, y: 0 },
+      dtSeconds: DT,
+      platforms: [],
+      timeSeconds: tick * DT,
+    },
+    view: { height: 720, width: 1440, x: 0, y: 360 },
+  };
+}
+
+function motionName(object: ObjectLayout, state: BehaviourState): string {
+  const motion = object.behaviour!.states[state.stateKey]!.motion;
+  if (motion.kind === "fly") {
+    return `fly:${typeof motion.to === "string" ? motion.to : "point"}`;
+  }
+  if (motion.kind === "pursue") {
+    return `pursue:${motion.mode}${motion.mode === "fly" && motion.overhead ? "-overhead" : ""}`;
+  }
+  return motion.kind;
+}
+
+interface Coverage {
+  readonly actions: Set<string>;
+  readonly motions: Set<string>;
+  readonly phases: Set<string>;
+}
+
+function run(
+  object: ObjectLayout,
+  entry: string,
+  covered: boolean,
+  aligned: boolean,
+  coverage: Coverage,
+) {
+  const recorder = traceRecorder({ retain: false });
+  let bird = startBird(BIRD, { x: object.origin.x + 240, y: floor.y - BIRD.height });
+  // Aligned starts hold the boss at its overhead approach goal above Chibi.
+  const overhead = Object.values(object.behaviour!.states)
+    .map(({ motion }) => motion)
+    .find((motion) => motion.kind === "pursue" && motion.mode === "fly" && motion.overhead);
+  let at =
+    aligned && overhead?.kind === "pursue" && overhead.mode === "fly" && overhead.overhead
+      ? {
+          x: bird.x + BIRD.width / 2 + overhead.overhead.ahead - object.width / 2,
+          y: bird.y - overhead.overhead.clearance - object.height,
+        }
+      : object.origin;
+  const attack = object.behaviour!.states[entry]!.attack;
+  // Entered as the graph would hold it: engaged, with a captured approach side and, past a
+  // tell, its committed attack.
+  let state: BehaviourState = {
+    ...startBehaviour(BIRD, object, bird),
+    ...(attack &&
+      attack.phase !== "tell" && { activeAttack: { id: attack.id, phase: "committed" as const } }),
+    anchor: at,
+    elapsed: 0,
+    flightApproachDirection: 1,
+    pendingEntry: true,
+    pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+    stateKey: entry,
+  };
+  for (let tick = 0; tick < TICKS; tick++) {
+    const physical = world(covered, tick);
+    const aim = state.intent?.target.x ?? state.flightTarget?.x;
+    const move = aim === undefined || Math.abs(aim - bird.x) < 4 ? 0 : aim < bird.x ? -1 : 1;
+    bird = stepBird(BIRD, physical.solids, [], DT, { jumpHeld: false, move }, bird);
+    let step: ReturnType<typeof stepBehaviour>;
+    try {
+      step = stepBehaviour(BIRD, object, physical, DT, bird, at, state);
+    } catch (error) {
+      recorder.record(`throws ${(error as Error).message}`);
+      break;
+    }
+    recorder.record(canonicalTrace(() => undefined, step));
+    for (const { action } of step.actions) {
+      coverage.actions.add(`${object.character}:${action.kind}`);
+    }
+    coverage.motions.add(`${object.character}:${motionName(object, step.state)}`);
+    if (step.state.activeAttack) {
+      coverage.phases.add(`${object.character}:${step.state.activeAttack.phase}`);
+    }
+    at = step.at;
+    state = step.state;
+  }
+  return recorder.hash();
+}
+
+describe("behaviour ability traces", () => {
+  const coverage: Coverage = { actions: new Set(), motions: new Set(), phases: new Set() };
+  const observed: Record<string, string> = {};
+  const baseline: Readonly<Record<string, string>> = existsSync(FIXTURE)
+    ? (JSON.parse(readFileSync(FIXTURE, "utf8")) as Record<string, string>)
+    : {};
+
+  it.each(CHARACTERS)(
+    "%s reproduces every entry state's recorded trace",
+    (character) => {
+      const object = objectLayout(
+        TILE,
+        CATALOGUE,
+        HITBOXES,
+        TILESETS["tiles-street"],
+        {},
+        { character, col: 10, row: 14 },
+      );
+      for (const entry of Object.keys(object.behaviour!.states).sort()) {
+        for (const covered of [false, true]) {
+          for (const aligned of character === "pigeon-antagonist" ? [false, true] : [false]) {
+            const name = `${character} ${entry} ${covered ? "covered" : "open"}${aligned ? " aligned" : ""}`;
+            observed[name] = run(object, entry, covered, aligned, coverage);
+            if (!UPDATE) {
+              expect(observed[name], name).toBe(baseline[name]);
+            }
+          }
+        }
+      }
+    },
+    600_000,
+  );
+
+  it("reaches the swoop, burst, drop, pounce and entry-effect paths", () => {
+    if (UPDATE) {
+      const sorted = Object.entries(observed).sort(([a], [b]) => (a < b ? -1 : 1));
+      writeFileSync(FIXTURE, `${JSON.stringify(Object.fromEntries(sorted), null, 2)}\n`);
+    } else {
+      expect(Object.keys(observed).sort()).toEqual(Object.keys(baseline).sort());
+    }
+    console.info(
+      "Ability trace coverage",
+      JSON.stringify({
+        actions: [...coverage.actions].sort(),
+        motions: [...coverage.motions].sort(),
+        phases: [...coverage.phases].sort(),
+      }),
+    );
+    for (const required of [
+      "pigeon-antagonist:fly:target",
+      "pigeon-antagonist:fly:target-x",
+      "pigeon-antagonist:fly:support",
+      "pigeon-antagonist:pursue:fly-overhead",
+    ]) {
+      expect(coverage.motions).toContain(required);
+    }
+    expect(coverage.phases).toContain("pigeon-antagonist:committed");
+    expect(coverage.actions).toContain("pigeon-antagonist:spawn");
+  });
+});
