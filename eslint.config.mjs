@@ -87,6 +87,8 @@ const CONTEXTS = {
     "core",
     "data",
     "presentation/index",
+    // CLEANUP (added 2026-11-04): remove once forcedTransitProfile's skill tuning is passed into
+    // stepZone, after the boss perf and step 4 branches merge.
     "progress/index",
     "sim/behaviourBounds",
     "sim/zoneWalk",
