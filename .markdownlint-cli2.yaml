@@ -6,7 +6,7 @@
 # checking a different set of files from the gate.
 
 # What CI sees is the checkout, which is the tracked files and nothing else: no
-# node_modules, no vendor/, no .venv, no build output. A working copy has all of
+# node_modules, no vendor/, no build output. A working copy has all of
 # them, so without this a local run reports hundreds of findings in third-party
 # Markdown that the gate will never look at, and `--fix` rewrites it in place.
 gitignore: true
