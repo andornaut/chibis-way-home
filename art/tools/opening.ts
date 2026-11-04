@@ -25,10 +25,10 @@
  * committed font-body bitmap font.
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 
 import { encodeGif } from "@andornaut/art-kit/gif";
-import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
+import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import { quantise } from "@andornaut/art-kit/quantise";
 import {
   composite,
@@ -42,7 +42,10 @@ import {
 import { opaqueRect, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { Canvas, ImageData } from "skia-canvas";
 
+import { commands, run } from "./cli.ts";
+import { cropBox, readImage } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
+import { drawLabel } from "./previewText.ts";
 
 const SOURCE = "art/opening/source";
 const AUTHORING = "art/opening";
@@ -72,14 +75,6 @@ const BINARY = IDENTITY.map((alpha) => (alpha >= 128 ? 255 : 0));
 /** Alpha of 128 and above becomes opaque, everything else clear; colours are kept. */
 function binaryAlpha(image: RgbaImage): RgbaImage {
   return mapChannels([IDENTITY, IDENTITY, IDENTITY, BINARY], image);
-}
-
-function readPng(path: string): RgbaImage {
-  return decodePng(readFileSync(path));
-}
-
-function cropBox([left, top, right, bottom]: Box, image: RgbaImage): RgbaImage {
-  return crop({ x: left, y: top, width: right - left, height: bottom - top }, image);
 }
 
 /** The box of every pixel with nonzero alpha, as left, top, right, bottom; undefined when clear. */
@@ -162,7 +157,7 @@ function sourceCells(kind: Kind, [width, height]: readonly [number, number]): Bo
 }
 
 function poseFrames(spec: PoseSpec, kind: Kind): RgbaImage[] {
-  const source = binaryAlpha(readPng(`${SOURCE}/${kind}-poses.png`));
+  const source = binaryAlpha(readImage(`${SOURCE}/${kind}-poses.png`));
   const crops = sourceCells(kind, [source.width, source.height]).map((cell) => {
     const pose = cropBox(cell, source);
     const bounds = alphaBox(pose);
@@ -245,7 +240,7 @@ export function build(): void {
   };
   for (const name of BACKGROUNDS) {
     const key = `opening-${name}-background`;
-    const picture = resizeSmooth(...VIEW, opaque(readPng(`${SOURCE}/${name}.png`)));
+    const picture = resizeSmooth(...VIEW, opaque(readImage(`${SOURCE}/${name}.png`)));
     writeRgbPng(`${images}/${key}.png`, picture);
     entries.images.push({ key, png: `images/${key}.png`, width: 720, height: 360 });
     contract.backgrounds[name] = key;
@@ -281,7 +276,7 @@ const sheets = new Map<string, RgbaImage>();
 function readCached(path: string): RgbaImage {
   let image = sheets.get(path);
   if (!image) {
-    image = readPng(path);
+    image = readImage(path);
     sheets.set(path, image);
   }
   return image;
@@ -386,76 +381,6 @@ export function preview(path: string): void {
   console.log(path);
 }
 
-interface BitmapChar {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  xoffset: number;
-  yoffset: number;
-  xadvance: number;
-}
-
-interface BitmapFont {
-  atlas: RgbaImage;
-  chars: Map<number, BitmapChar>;
-  kernings: Map<string, number>;
-}
-
-function attributes(text: string): Record<string, string> {
-  return Object.fromEntries([...text.matchAll(/(\w+)="([^"]*)"/g)].map((m) => [m[1], m[2]]));
-}
-
-/** The committed font-body BMFont: its atlas, glyph metrics and kernings. */
-function readFontBody(): BitmapFont {
-  const xml = readFileSync("public/art/fonts/font-body.fnt", "utf8");
-  const chars = new Map<number, BitmapChar>();
-  for (const m of xml.matchAll(/<char\s([^>]*)\/>/g)) {
-    const a = attributes(m[1] as string);
-    const n = (k: string) => Number(a[k]);
-    chars.set(n("id"), {
-      x: n("x"),
-      y: n("y"),
-      width: n("width"),
-      height: n("height"),
-      xoffset: n("xoffset"),
-      yoffset: n("yoffset"),
-      xadvance: n("xadvance"),
-    });
-  }
-  const kernings = new Map<string, number>();
-  for (const m of xml.matchAll(/<kerning\s([^>]*)\/>/g)) {
-    const a = attributes(m[1] as string);
-    kernings.set(`${a.first},${a.second}`, Number(a.amount));
-  }
-  return { atlas: readPng("public/art/fonts/font-body.png"), chars, kernings };
-}
-
-/** text in font, tinted rgb, with its line top-left at `at`. */
-function drawLabel(
-  font: BitmapFont,
-  rgb: readonly [number, number, number],
-  at: readonly [number, number],
-  text: string,
-  page: RgbaImage,
-): void {
-  let x = at[0];
-  let previous: number | undefined;
-  for (const char of text) {
-    const id = char.codePointAt(0) as number;
-    if (previous !== undefined) x += font.kernings.get(`${previous},${id}`) ?? 0;
-    const glyph = font.chars.get(id);
-    if (glyph?.width) {
-      const ink = crop(glyph, font.atlas);
-      const tinted = filledImage([...rgb, 255], ink.width, ink.height);
-      for (let i = 3; i < ink.data.length; i += 4) tinted.data[i] = ink.data[i] as number;
-      composite({ x: x + glyph.xoffset, y: at[1] + glyph.yoffset }, tinted, page);
-    }
-    x += glyph?.xadvance ?? 0;
-    previous = id;
-  }
-}
-
 export function board(path: string): void {
   const points: readonly (readonly [number, number, string])[] = [
     [0, 0.4, "Friendship"],
@@ -465,26 +390,13 @@ export function board(path: string): void {
     [4, 0.5, "Waking far from home"],
   ];
   const page = filledImage([...pixel.rgb("222034"), 255], 1440, 1176);
-  const font = readFontBody();
   points.forEach(([beat, phase, label], index) => {
     const [x, y] = [(index % 2) * 720, Math.floor(index / 2) * 392];
-    drawLabel(font, pixel.rgb("ead4aa"), [x + 12, y + 10], label, page);
+    drawLabel({ x: x + 12, y: y + 10, colour: "ead4aa" }, label, page);
     paste({ at: { x, y: y + 32 } }, studyFrame(beat, phase), page);
   });
   writeRgbPng(path, page);
   console.log(path);
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1 && argv[0] === "build") {
-    build();
-  } else if (argv.length === 2 && argv[0] === "preview") {
-    preview(argv[1] as string);
-  } else if (argv.length === 2 && argv[0] === "board") {
-    board(argv[1] as string);
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main) run(() => commands({ usage: USAGE, build, preview, more: { board } }));

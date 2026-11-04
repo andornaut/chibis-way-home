@@ -26,6 +26,7 @@ import { composite, crop, paste, resizeNearest, filledImage } from "@andornaut/a
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { Canvas, FontLibrary } from "skia-canvas";
 
+import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
 export const FONTS: Readonly<Record<string, readonly [face: string, path: string, size: number]>> =
@@ -156,11 +157,12 @@ export function rasterise(size: number, path: string): Rasterised {
   return { glyphs, ascent, descent, kernings };
 }
 
+// CLEANUP (added 2026-11-04): remove once @andornaut/art-kit 0.13.0 ships buildBitmapFontFromGlyphs layout "packed"
+
+type Places = ReadonlyMap<string, readonly [x: number, y: number]>;
+
 /** Insertion order, 1px spacing from the top-left and a power-of-two atlas height. */
-export function pack(
-  atlasWidth: number,
-  glyphs: ReadonlyMap<string, Glyph>,
-): { atlas: RgbaImage; places: Map<string, readonly [x: number, y: number]> } {
+function pack(glyphs: ReadonlyMap<string, Glyph>): { atlas: RgbaImage; places: Places } {
   let [x, y, rowHeight] = [0, 0, 0];
   const places = new Map<string, readonly [number, number]>();
   for (const [char, [image]] of glyphs) {
@@ -168,68 +170,50 @@ export function pack(
       places.set(char, [0, 0]);
       continue;
     }
-    if (image.width > atlasWidth)
-      throw new Error(
-        `Glyph ${JSON.stringify(char)} width ${image.width} exceeds atlas width ${atlasWidth}`,
-      );
-    if (x + image.width + 1 > atlasWidth) [x, y, rowHeight] = [0, y + rowHeight + 1, 0];
+    if (x + image.width + 1 > ATLAS_W) [x, y, rowHeight] = [0, y + rowHeight + 1, 0];
     places.set(char, [x, y]);
     x += image.width + 1;
     rowHeight = Math.max(rowHeight, image.height);
   }
   let height = 1;
   while (height < y + rowHeight + 1) height *= 2;
-  const atlas = filledImage([0, 0, 0, 0], atlasWidth, height);
+  const atlas = filledImage([0, 0, 0, 0], ATLAS_W, height);
   for (const [char, [image]] of glyphs) {
-    const at = places.get(char) as readonly [number, number];
-    if (image) paste({ at: { x: at[0], y: at[1] } }, image, atlas);
+    const [px, py] = places.get(char) as readonly [number, number];
+    if (image) paste({ at: { x: px, y: py } }, image, atlas);
   }
   return { atlas, places };
 }
 
-/** Python's xml.sax.saxutils.quoteattr. */
-function quoteattr(value: string): string {
-  let text = value.replaceAll("&", "&amp;").replaceAll(">", "&gt;").replaceAll("<", "&lt;");
-  text = text.replaceAll("\n", "&#10;").replaceAll("\r", "&#13;").replaceAll("\t", "&#9;");
-  if (!text.includes('"')) return `"${text}"`;
-  if (!text.includes("'")) return `'${text}'`;
-  return `"${text.replaceAll('"', "&quot;")}"`;
-}
-
-export interface FontInfo {
-  key: string;
-  face: string;
-  size: number;
-  lineHeight: number;
-  base: number;
-}
-
-/** BMFont XML with art-kit's Python field set and order. */
-export function bmfontXml(
-  { antialias = false, kernings = [] }: { antialias?: boolean; kernings?: readonly Kerning[] },
-  info: FontInfo,
-  atlas: RgbaImage,
-  places: ReadonlyMap<string, readonly [number, number]>,
-  glyphs: ReadonlyMap<string, Glyph>,
+/** Antialiased BMFont XML in art-kit's Python field set and order. */
+function bmfontXml(
+  {
+    base,
+    face,
+    key,
+    lineHeight,
+    size,
+  }: Record<"face" | "key", string> & Record<"base" | "lineHeight" | "size", number>,
+  { atlas, places }: { atlas: RgbaImage; places: Places },
+  { glyphs, kernings }: Pick<Rasterised, "glyphs" | "kernings">,
 ): string {
-  const aa = Number(antialias);
   const code = (char: string) => char.codePointAt(0) as number;
   const lines = [
     '<?xml version="1.0"?>',
     "<font>",
-    `  <info face=${quoteattr(info.face)} size="${info.size}" bold="0" italic="0" charset="" unicode="1" ` +
-      `stretchH="100" smooth="${aa}" aa="${aa}" padding="0,0,0,0" spacing="1,1"/>`,
-    `  <common lineHeight="${info.lineHeight}" base="${info.base}" scaleW="${atlas.width}" ` +
+    `  <info face="${face}" size="${size}" bold="0" italic="0" charset="" unicode="1" ` +
+      'stretchH="100" smooth="1" aa="1" padding="0,0,0,0" spacing="1,1"/>',
+    `  <common lineHeight="${lineHeight}" base="${base}" scaleW="${atlas.width}" ` +
       `scaleH="${atlas.height}" pages="1" packed="0"/>`,
-    `  <pages><page id="0" file=${quoteattr(`${info.key}.png`)}/></pages>`,
+    `  <pages><page id="0" file="${key}.png"/></pages>`,
     `  <chars count="${glyphs.size}">`,
   ];
   for (const [char, [image, ox, oy, advance]] of glyphs) {
     const [x, y] = places.get(char) as readonly [number, number];
-    const [w, h] = image ? [image.width, image.height] : [0, 0];
     lines.push(
-      `    <char id="${code(char)}" x="${x}" y="${y}" width="${w}" height="${h}" xoffset="${ox}" ` +
-        `yoffset="${oy}" xadvance="${advance}" page="0" chnl="15"/>`,
+      `    <char id="${code(char)}" x="${x}" y="${y}" width="${image?.width ?? 0}" ` +
+        `height="${image?.height ?? 0}" xoffset="${ox}" yoffset="${oy}" xadvance="${advance}" ` +
+        'page="0" chnl="15"/>',
     );
   }
   lines.push("  </chars>");
@@ -244,15 +228,12 @@ export function bmfontXml(
 }
 
 function buildFont(key: string, face: string, size: number, path: string): void {
-  const { ascent, descent, glyphs, kernings } = rasterise(size, path);
-  const { atlas, places } = pack(ATLAS_W, glyphs);
+  const font = rasterise(size, path);
+  const packed = pack(font.glyphs);
   mkdirSync(OUT, { recursive: true });
-  writeFileSync(`${OUT}/${key}.png`, encodeRgbaPng(PNG_OPTIONS, atlas));
-  const info = { key, face, size, lineHeight: ascent + descent + 1, base: ascent };
-  writeFileSync(
-    `${OUT}/${key}.fnt`,
-    bmfontXml({ antialias: true, kernings }, info, atlas, places, glyphs),
-  );
+  writeFileSync(`${OUT}/${key}.png`, encodeRgbaPng(PNG_OPTIONS, packed.atlas));
+  const info = { key, face, size, lineHeight: font.ascent + font.descent + 1, base: font.ascent };
+  writeFileSync(`${OUT}/${key}.fnt`, bmfontXml(info, packed, font));
 }
 
 export function build(): void {
@@ -310,14 +291,5 @@ export function preview(scale: number, out: string): void {
   writeFileSync(out, encodeRgbaPng(PNG_OPTIONS, scaled));
 }
 
-if (import.meta.main) {
-  const argv = process.argv.slice(2);
-  if (argv.length === 2 && argv[0] === "preview") {
-    preview(3, argv[1] as string);
-  } else if (argv.length === 1 && argv[0] === "build") {
-    build();
-  } else {
-    console.error(USAGE);
-    process.exit(1);
-  }
-}
+if (import.meta.main)
+  run(() => commands({ usage: USAGE, build, preview: (out) => preview(3, out) }));
