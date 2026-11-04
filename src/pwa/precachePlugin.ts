@@ -3,6 +3,7 @@ import type { Plugin } from "vite";
 
 import type { ArtManifest } from "../assets";
 import { CACHE_POLICY } from "./cachePolicy";
+import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded";
 import { ART_MANIFEST_URL, artUrls } from "./precacheArt";
 
 // The kit's precache plugin with the game's cache policy, building /sw.js from
@@ -26,7 +27,11 @@ export function precachePlugin(
         new TextDecoder().decode(await read(ART_MANIFEST_URL)),
       ) as ArtManifest;
       urls = artUrls(manifest);
-      const files = await Promise.all(urls.map(async (url) => [url, await read(url)] as const));
+      const files = await mapBounded(
+        FILE_READ_CONCURRENCY,
+        async (url) => [url, await read(url)] as const,
+        urls,
+      );
       for (const [url, source] of files) {
         this.emitFile({ fileName: url.slice(1), source, type: "asset" });
       }

@@ -6,6 +6,7 @@ import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 
 import { type ArtManifest, type AtlasFrame, type AtlasTexture, BASE_FRAME } from "../../assets";
 import { TILE } from "../../data/screen";
+import { FILE_READ_CONCURRENCY, mapBounded } from "../../pwa/mapBounded";
 import { EXTRUDE, layoutAtlas } from "./atlasLayout";
 
 // A PNG of art's, with its frames' rects in it and, for a sprite, its tags.
@@ -83,8 +84,8 @@ export async function buildAtlas(
   const readJson = async (path: string): Promise<unknown> =>
     JSON.parse(new TextDecoder().decode(await readArt(path)));
   const readPng = async (path: string) => decodePng(await readArt(path));
-  const sources: Source[] = await Promise.all([
-    ...manifest.sprites.map(async ({ json, key, png }) => {
+  const loads: (() => Promise<Source>)[] = [
+    ...manifest.sprites.map(({ json, key, png }) => async () => {
       const sheet = (await readJson(json)) as AsepriteExport;
       return {
         frames: spriteFrames(sheet),
@@ -94,15 +95,16 @@ export async function buildAtlas(
         tags: sheet.meta.frameTags,
       };
     }),
-    ...manifest.tilesets.map(async ({ key, png }) => {
+    ...manifest.tilesets.map(({ key, png }) => async () => {
       const image = await readPng(png);
       return { frames: tileFrames(image), image, key, png };
     }),
-    ...manifest.backdrops.map(async ({ key, png }) => {
+    ...manifest.backdrops.map(({ key, png }) => async () => {
       const image = await readPng(png);
       return { frames: [wholeFrame(image)], image, key, png };
     }),
-  ]);
+  ];
+  const sources = await mapBounded(FILE_READ_CONCURRENCY, async (load) => load(), loads);
   const layout = layoutAtlas(
     sources.map(({ image: { height, width }, key }) => ({ height, key, width })),
   );
