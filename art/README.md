@@ -23,6 +23,7 @@ Generators are TypeScript on [art-kit](https://github.com/andornaut/art-kit)'s p
 - art-kit provides drawing, outline, frame composition, sprite-sheet and font mechanisms. Local `art/tools/pixel.ts` and `fonts.ts` adapters retain the game palette and ramps, glyph selection, paths, manifest and contact metadata. `cli.ts` is the shared command-line entry, `imageArt.ts` the shared image helpers and `previewText.ts` draws preview labels in the committed body font.
 - A build writes each sprite directly as a PNG sheet plus Phaser json-hash data, with frame tags for animations and slices for nine-slice margins, to `public/art/sprites/<key>.png` and `.json`. Frame names are `<key> N.aseprite`, or `<key>.aseprite` for a single frame.
 - Change the generator, never its output: a build overwrites it.
+- `fonts.ts build` copies the Liberation TTFs and licence from `art/fonts/liberation/` to `public/art/fonts/liberation/`; replace them only in `art/`.
 - Each generator's header comment is its spec: every asset's size, tags, frame timings and placement.
 - Generators never import or read `src/`. Art writes the data files the game reads: `contact-silhouettes.json`, `palette.json` and `zone-themes.json`, registered under `data` in the manifest.
 - Keys are kebab-case, named after what the player sees. Internal names match displayed names.

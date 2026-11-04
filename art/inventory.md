@@ -17,7 +17,7 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 | font-body  | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 256x64 PNG  |      |
 | font-title | BMFont, Liberation Sans Bold    | 16px, base 15, line 20; 256x128 PNG |      |
 
-The public [Liberation Sans Regular TTF](../public/art/fonts/liberation/LiberationSans-Regular.ttf), [Bold TTF](../public/art/fonts/liberation/LiberationSans-Bold.ttf) and [SIL OFL 1.1 licence](../public/art/fonts/liberation/OFL.txt) are byte-identical copies of `art/fonts/liberation/`, loaded as the runtime UI fonts (`src/ui/chrome/uiFonts.ts`).
+The public [Liberation Sans Regular TTF](../public/art/fonts/liberation/LiberationSans-Regular.ttf), [Bold TTF](../public/art/fonts/liberation/LiberationSans-Bold.ttf) and [SIL OFL 1.1 licence](../public/art/fonts/liberation/OFL.txt) are byte-identical copies that `node art/tools/fonts.ts build` writes from `art/fonts/liberation/`, loaded as the runtime UI fonts (`src/ui/chrome/uiFonts.ts`).
 
 ## Icons
 

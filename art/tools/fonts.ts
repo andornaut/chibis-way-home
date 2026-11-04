@@ -14,11 +14,12 @@
  *
  * Usage, from the repository root:
  *   node art/tools/fonts.ts build             write public/art/fonts/<key>.png and XML .fnt,
- *                                             retaining the two keys, and list them in the manifest
+ *                                             retaining the two keys, list them in the manifest,
+ *                                             and copy art/fonts/liberation/ to fonts/liberation/
  *   node art/tools/fonts.ts preview OUT.png   every face with sample lines, 3x
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 
 import { buildBitmapFont } from "@andornaut/art-kit/fonts";
 import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/glyphAtlas";
@@ -35,6 +36,9 @@ const FONTS: Readonly<Record<string, readonly [face: string, path: string, size:
   "font-title": ["Liberation Sans Bold", "art/fonts/liberation/LiberationSans-Bold.ttf", 16],
 };
 const OUT = "public/art/fonts";
+// The Liberation TTFs and licence, served unchanged as the runtime UI fonts.
+const LIBERATION = "art/fonts/liberation";
+const SERVED_LIBERATION = `${OUT}/liberation`;
 const CHARS: readonly string[] = [
   ...Array.from({ length: 127 - 32 }, (_, i) => String.fromCharCode(32 + i)),
   "·",
@@ -194,10 +198,19 @@ function buildFont(key: string, face: string, size: number, path: string): void 
   writeFileSync(`${OUT}/${key}.fnt`, xml);
 }
 
+/** Copy every file in art/fonts/liberation/ byte for byte to public/art/fonts/liberation/. */
+function copyLiberation(): void {
+  mkdirSync(SERVED_LIBERATION, { recursive: true });
+  for (const name of readdirSync(LIBERATION).sort()) {
+    copyFileSync(`${LIBERATION}/${name}`, `${SERVED_LIBERATION}/${name}`);
+  }
+}
+
 export function build(): void {
   for (const [key, [face, path, size]] of Object.entries(FONTS)) {
     buildFont(key, face, size, path);
   }
+  copyLiberation();
   pixel.updateManifest(
     "fonts",
     Object.keys(FONTS).map((key) => ({ key, png: `fonts/${key}.png`, fnt: `fonts/${key}.fnt` })),
