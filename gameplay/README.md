@@ -64,7 +64,7 @@ The user reports that most stages take about 60 seconds and are faster with powe
 
 ## Active obstacle implementation targets
 
-The transfer-gate crossing, crumbling support and warned vent are implemented, each with bounded real-physics qualification of its approach, commitment, landing, failure and retry reset. None establishes a forced ride or whole-stage completion. The remaining target is the forced-transit attack deferral below. Preserve current stage lengths, movement, encounter quotas and ordinary routes without skills.
+The transfer-gate crossing is implemented, with bounded real-physics qualification of its approach, commitment, landing, failure and retry reset; it does not establish a forced ride or whole-stage completion. The remaining target is the forced-transit attack deferral below. Preserve current stage lengths, movement, encounter quotas and ordinary routes without skills.
 
 Qualify each family's complete approach, commitment, safe landing and recovery using actual contact and support. Include missed boarding or delayed departure where relevant. A renamed existing pattern, cosmetic variant or unobserved phase does not establish a new physical challenge or a passing implementation. These targets add neither combat nor underwater movement.
 
