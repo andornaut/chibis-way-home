@@ -1,6 +1,6 @@
 # Homeward journey: design notes
 
-These notes develop connective scenes and optional content. Established facts come from the [rulebook](../design.md#setting). Everything labelled **Proposal** is unapproved and unimplemented, including friendly characters, rooms, items, quests and rewards. The approved Apartment redesign has six floor stages; its source implementation is separate from these notes.
+These notes develop connective scenes and optional content. Established facts come from the [rulebook](../design.md#setting). Everything labelled **Proposal** is unapproved and unimplemented, including friendly characters, rooms, items, quests and rewards.
 
 ## Established direction
 

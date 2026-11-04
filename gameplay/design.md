@@ -28,7 +28,7 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 | Pebble | Pigeon                       | Industrial outskirts antagonist |
 | Trixi  | Goose with oversized glasses | Countryside antagonist          |
 
-The named cast uses shared data-driven behaviours. The encounter rules below are delivered with their matching runtime, values and artwork.
+The named cast uses shared data-driven behaviours.
 
 ## Core loop
 
@@ -59,7 +59,7 @@ The named cast uses shared data-driven behaviours. The encounter rules below are
 | Run                | One generated stage layout and its seed                         |
 | Attempt            | One try to complete the stage within a run                      |
 
-The V1 map has six themed destinations and twenty-one catalogued stages: three in each of the first five zones and six in Apartment. Completing the route’s implementation does not declare a V1 release.
+Completing the route does not declare a V1 release.
 
 ### Screen and controls
 
@@ -74,14 +74,13 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 
 ### Interface
 
-- **Stage progress:** a thin, full-width bar stays fixed at the bottom of the gameplay HUD and has no input target. It shows the current stage fraction, including vertical route and area weighting, rather than the furthest position reached. Backtracking updates the current fraction; Retry resets progress to the current stage’s beginning
-
 - **Consistent:** the same element looks and behaves the same on every screen: top bars, panels, close controls, buttons, headings
 - **Disabled controls:** pressing an ordinary disabled control refuses activation with shared shake and red-label feedback. A locked stage card applies the refusal across its face, screenshot and both labels; keyboard selection skips locked stages. Reduced motion uses steady red feedback without shaking or flashing. Refusal never selects an answer or dismisses a card, and respects modal blocking, fresh-release and cancellation guards
 - **Exact:** spacing sits on a fixed pixel grid: equal margins, aligned edges, and text clear of its box's edge by the same amount on both sides
 - **Minimal:** show only what the player needs. No heading that repeats a tab's name, no label the picture already gives, and no decoration that competes with play
 - **Options:** art mocks up visual options for the user to pick
 - **Press areas:** apart from Jump and Use, a button's press area is the drawn button plus a quarter of its shorter side on each side, between 6 and 16 px, and at least 48×48. Where press areas overlap, the nearer button wins
+- **Stage progress:** a thin, full-width bar stays fixed at the bottom of the gameplay HUD and has no input target. It shows the current stage fraction, including vertical route and area weighting, rather than the furthest position reached. Backtracking updates the current fraction; Retry resets progress to the current stage’s beginning
 
 ### Grid
 
@@ -98,7 +97,6 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 - **Jump height:** every jump has one uninterrupted decelerating ascent, with no timed lift, upward reboost or pause at the apex while Jump is held. Releases within the first 120 ms produce the minimum hop of 40 px, about 3 tiles; releasing later blends continuously toward a higher apex, up to the full height of about 6.5 tiles, without a velocity snap, upward reboost or apex pause. Chibi flutters on the fall. A buffered jump whose button was already released is the low hop. Low ceilings are placed so a short jump clears the obstacle without touching the overhead red edge; a full hold hits that edge. Jump tuning lives in `src/data/bird.ts`
 - **Jump timing:** a jump pressed just after he leaves a ledge still jumps (coyote time), and a jump pressed just before he lands jumps as he lands (jump buffering)
 - **Movement:** he walks left and right and jumps. He accelerates and brakes smoothly on the ground and in the air. His speeds, acceleration, braking, jump, flutter and timing values are in `src/data/bird.ts`, tuned to the reaches under Grid
-
 - **Skill controls:** eligible skills appear on the gameplay HUD. Owned or temporarily eligible skills stay visible; selection and resource state determine their appearance. Tapping an owned icon selects it; holding for the duration in `SKILL_GESTURE` opens details and pauses play. While Pause is open, pressing an eligible skill opens details instead of selecting it. Details replace the pause card, and closing them resumes gameplay instead of returning to Pause. Other modal and input owners remain respected
 - **Skill states:** glyph and disc sizes and hit geometry stay fixed across enabled normal, cooldown and disabled states; enabling a skill never enlarges it. Colour, muting and the selection indicator distinguish states. Enabled normal means the selected powerup is drawn normally; enabled cooldown means it remains selected but is temporarily spent and muted. Both enabled states retain a steady dark selected ring. Disabled means another selected powerup supersedes it: the icon is muted without a selected ring. Selected Double jump stays normal while its extra jump is unspent, including on the ground, during coyote time and while Jump is held; spending it mutes the icon until actual support resets it. Selected Dash is muted during its active burst, actual cooldown or a spent airborne charge; being grounded or holding an input alone does not mute it. Selected Speedy stays normal as a passive effect
 - **Speedy:** selecting Speedy multiplies normal horizontal running and airborne control speed by 1.2, without changing dash speed, jump height or acceleration. Repeated grants do not multiply it again
@@ -129,11 +127,10 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 - **Exit:** reaching a stage’s authored exit clears it; stages without one clear at the right end of their final area. Nonfinal stages show their image-backed statistics interstitials; a zone’s final stage shows its outgoing zone exchange and statistics before map travel, except for Fert's final exchange and statistics followed by celebration. An internal floor transition does not clear the stage
 - **Going back:** walking all the way back to the stage's left edge leaves it without completing it: the screen fades and the map shows with him on that stage's zone. No completion dialogue, end-stage statistics or stage chooser opens. Completion progress is unchanged; a fresh stage entry starts a new generated run without resetting accumulated totals. Every stage starts him clear of that edge and has no wall in front of it
 - **Kinds:** indoor, outdoor, or a hybrid with both
-- **Length:** target about 60 seconds of active play for a successful ordinary required-route clear in the first five zones with no powerup active. Apartment floors retain their longer target of about 90 seconds. These are tuning targets, not hard timers; full human calibration remains incomplete. Dash, Double jump and Speedy are never required for the ordinary route. Recipe data owns each stage’s filled length range, including its fixed caps; the debug park keeps its own recipe
+- **Length:** target about 60 seconds of active play for a successful ordinary required-route clear in the first five zones with no powerup active. Apartment floors retain their longer target of about 90 seconds. These are tuning targets, not hard timers. Dash, Double jump and Speedy are never required for the ordinary route. Recipe data owns each stage’s filled length range, including its fixed caps; the debug park keeps its own recipe
 - **Layout:** every built and future stage, including the first tutorial and final stage, has a randomized layout assembled from hand-designed chunks: a fixed start chunk, a seeded run of chunks whose entry and exit heights match, then a fixed finish chunk. Each Apartment floor is one continuous stage area with its own fixed caps. The rules for chunks are under Chunks
 - **Scale:** outdoors, the scenery is drawn at a quarter of indoor scale; Chibi, the tiles and the reaches stay the same everywhere
 - **Shape:** areas scroll sideways and up, with width defined by their recipes. All twenty-one catalogued stages use a four-screen vertical capacity (120 rows, 1440 px). Blue connects lower routes and upper challenges; Industrial connects underground descents and ascents; Countryside connects terraces and an upper ferry; Woodland connects guarded lower routes, canopy lifts and red gates; Home city connects lower climbing yards and upper routes. Apartment connects its lower zigzag ascent to the retained upper climbing route, window and automatic exit. Indoors, to a small bird the ceilings are high: a door is 15 tiles tall, half the screen
-
 - **Valleys:** every authored production valley has a physical floor with an explicit red lethal contact surface. The hazard is part of the terrain rather than an invisible fall threshold. Required crossings retain their safe banks, platforms and guarded middle ledges; off-world fall handling remains a safety fallback
 
 ### Runs and attempts
@@ -150,7 +147,7 @@ The V1 map has six themed destinations and twenty-one catalogued stages: three i
 - **Horizontal crossings:** use compact 22-tile horizontal ferry bank gaps that require platform assistance for an ordinary single jump. Dash and double-jump shortcuts are allowed, but neither ability is required to board, ride or reach the far bank. Fit horizontal tracks to the banks, retaining shared mover speeds and endpoint pauses, 60-column chunk widths and stage-length budgets. Vertical mover routes remain unchanged. The [shared crossings](../src/data/chunks.ts) and [orbital crossings](../src/data/orbitHazardChunks.ts) own track distances and docking geometry.
 - **Learning:** teach a demand clearly, vary it, then combine it with another demand. Introduce the response before requiring it under combined pressure
 - **Moving platforms:** author and validate the complete approach, boarding, cycle, transfer and recovery sequence, not only jump reach. Validate and clearly present the available recovery options after missed boarding or transfers
-- **Obstacle combinations:** combine moving platforms and hazards around visible observation positions and supported refuges, preserving ordinary no-skill approaches, landings and recovery. Approved new families remain [implementation targets](README.md#active-obstacle-implementation-targets) until their physical and visual contracts are implemented and qualified
+- **Obstacle combinations:** combine moving platforms and hazards around visible observation positions and supported refuges, preserving ordinary no-skill approaches, landings and recovery. The forced-transit attack deferral remains an [implementation target](README.md#active-obstacle-implementation-targets) until qualified
 - **Primary demand:** each challenge has a clear required action. Judge variety by the primary route, including required climbs rather than optional upper detours; decorative or bypassable obstacles do not establish a new demand
 - **Readability:** show the hazard, approach and safe response before commitment. Provide observation positions and usable refuges so success does not depend solely on reacting after a short attack tell
 - **Rhythm:** alternate pressure with recovery that permits observation and preparation for the next challenge. Preserve meaningful movement rather than filling stage duration with repeated waits
@@ -255,7 +252,7 @@ A forced-transit ride is a moving platform with an interval that offers no ordin
 
 ### V1 route
 
-The route spans six themed zones and twenty-one stages. The first five zones have three stages each, targeting about 60 seconds of successful active play without any powerup active. Apartment has six floor stages targeting about 90 seconds each, about nine minutes for the zone. Human pacing calibration remains incomplete; these targets are not hard timers. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
+The route spans six themed zones and twenty-one stages: three in each of the first five zones and six Apartment floors.
 
 | Zone                 | First stage                               | Second stage                    | Third stage                                       |
 | -------------------- | ----------------------------------------- | ------------------------------- | ------------------------------------------------- |
@@ -284,11 +281,9 @@ Apartment continues in this floor order:
 - **Rooms:** the street door leads to its assigned skill gift room
 - **Route:** the main path continues right toward the city boundary; all three Blue stages connect a lower open route to a lift climb, an upper red-hazard gate and a return to the surface, without requiring any skill. Fixed caps, doors, stage IDs, lengths and encounter cadence remain defined by the existing recipes. Streets is the second stage and unlocks when this tutorial is completed; City boundary is third
 
-The park is a randomized-stage prototype outside the V1 route. The identities of Fert's friends beyond Archie, Pebble, Trixi, Bini and Kiwi are undecided.
-
 ### City boundary
 
-- **Encounter:** the randomized middle contains three Archie encounters using the same behaviour and timing as Streets, with refuge ledges on either side of his patrol. His staged introduction occurs at the beginning of Parcel depot and follows the shared once-per-zone rule
+- **Encounter:** the randomized middle contains three Archie encounters using the same behaviour and timing as Streets, with refuge ledges on either side of his patrol
 - **Layout:** the third Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the existing street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, enemy yards, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
 - **Replay:** entering from the map draws a fresh assembly seed; retries keep that layout. Completing Streets unlocks this stage; unlocked stages remain available for replay
 - **Rooms:** one door in the fixed start leads to its assigned skill gift room
@@ -370,7 +365,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 - **Cycle:** patrol, crouch, rush, rest, then patrol again. Detection and pursuit use the shared enemy rules; the rush direction locks when crouching starts
 - **Dialogue:** the first introduction has three lines: Archie treats Chibi as a parcel Fert asked him to stop; Chibi insists on walking home; Archie resolves to stop him. The player-facing wording lives in the text data files, with Skip available
 - **Special:** Archie makes a leaping pounce as his distinct special attack, alongside periodic ground rushes for direct contact. Pounce preparation starts within its separately tuned engagement range; at the end of the full tell he rechecks that range and current line of sight. If either fails, he resumes pursuit without committing or starting attack cooldown
-- **Timing:** Archie uses the same timing across physical encounters in the first zone; their layouts vary. The first physical encounter occurs in the randomized middle of stage two
+- **Timing:** Archie uses the same timing across physical encounters in the first zone; their layouts vary
 
 ### Rooms
 
@@ -382,7 +377,7 @@ The park is a randomized-stage prototype outside the V1 route. The identities of
 
 ### Dialogue
 
-- **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's name tab and, when available, a 64 px portrait inside the panel. Pebble, Trixi and Kiwi currently have no portrait; missing portraits use neutral presentation. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
+- **Box:** a fixed box along the top, not a speech bubble, for a conversation between two characters, sometimes three. It shows one paragraph at a time, with the current speaker's name tab and, when available, a 64 px portrait inside the panel. Missing portraits use neutral presentation. Chibi's portrait is on the left; other speakers' portraits are on the right. Consecutive paragraphs from the same speaker keep the same alignment. Each paragraph has at most 3 lines. A paragraph that runs to a 4th line is reworded
 - **Forward:** every multi-exchange conversation pauses gameplay. Continue advances one paragraph; a tap or keypress also advances. Continue and Skip are visible controls. Exchanges never advance on a timer; there is no back or scrolling chat history
 - **Introductions:** at the beginning of each zone’s explicitly designated introduction stage, the antagonist enters from offscreen on the right and reaches about the midpoint of the current viewport before the paused manual exchange begins. The cinematic sprite is separate from world-stage objects and has no combat collision or attacks. The world and all underlying controls stay paused during its approach and the manually advanced Continue/Skip exchange. Completing or skipping the exchange marks the introduction seen. As soon as the antagonist turns right and starts running away, only the introduction-owned freeze and input cover are released, allowing Chibi to move immediately. Other pause or modal owners still block play. The separate cinematic actor remains noncolliding and outside the encounter quota while it runs offscreen, and is removed offscreen or on scene shutdown. Both approach and departure use its maximum charge or dash speed from shared behaviour data. This cinematic sequence is outside the combat encounter quota; it does not make enemy contact safe during normal play. The first five zones introduce their antagonist in stage one; Apartment introduces Fert in Spa, its fourth floor. Earlier Apartment floors do not mark that introduction seen. The introduction plays once per zone per playthrough. Its seen state is shared across all stages in the zone and survives death, retries and stage replay; a new game resets it
 - **Outgoing exchanges:** completing a zone's final stage shows its outgoing exchange over an actual image of the cleared stage's art, with Continue at the bottom right and Skip available. Completing or skipping the exchange proceeds to stage and cumulative zone statistics, then the map walk; Fert's final exchange and statistics proceed to the existing celebration instead

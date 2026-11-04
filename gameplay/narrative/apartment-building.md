@@ -1,8 +1,8 @@
 # Apartment building
 
-## Established and approved direction
+## Established direction
 
-Fert, a theatrical ferret, is Chibi's former best friend and apartment-mate. Chibi returns to reclaim his home. Their fight's cause and the friendship's outcome remain undecided. The approved redesign has six stages in this order: Lobby, Restaurant, Pool, Spa, Residential floors and Penthouse. This approval does not establish technical heights, room implementations or transition timing.
+Fert, a theatrical ferret, is Chibi's former best friend and apartment-mate. Chibi returns to reclaim his home. Their fight's cause and the friendship's outcome remain undecided. The building has six floor stages in this order: Lobby, Restaurant, Pool, Spa, Residential floors and Penthouse.
 
 ## Proposed dramatic and visual direction
 
@@ -21,7 +21,7 @@ Give the floors different narrative functions within one ascent:
 
 **Outgoing beat proposal:** hold on a shared domestic detail after Chibi returns, without deciding whether Fert stays, leaves or reconciles. The precise final image requires a separate story choice.
 
-Stairs and elevators belong to the main ascent, not an item-lock puzzle. Friendly rooms are optional side visits. This note does not prescribe an implementation for automatic transitions or replace the stage checkpoint rules.
+Stairs and elevators belong to the main ascent, not an item-lock puzzle. Friendly rooms are optional side visits.
 
 ## Proposed optional room and detour
 
