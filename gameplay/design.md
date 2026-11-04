@@ -307,7 +307,7 @@ Apartment continues in this floor order:
 - **Encounters:** stage two and stage three feature Trixi through shared behaviour primitives. Trixi, Archie and Pebble use the shared enemy detection, pursuit and frustration rules
 - **Layout:** Farmland, Country lanes and River crossing each use fixed openings and endings around shared randomized middle layouts within the zone's difficulty band. The required route descends to lower traversal, climbs through eight ordinary five-tile terraces, crosses an upper bank ferry and returns to the surface. The ferry retains the shared bank-gap, platform travel and red-bed challenge. No skill is required; caps, doors, stage IDs, lengths and encounter cadence retain their recipe contracts
 - **Progression:** clearing Freight terminal opens Farmland; clearing Farmland opens Country lanes, then River crossing. Unlocked stages remain replayable
-- **Rooms:** doors lead to skill gift rooms; these stages add no new plot or bosses
+- **Rooms:** doors lead to skill gift rooms; these stages add no new plot
 
 ### Trixi encounter
 
