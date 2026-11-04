@@ -1,6 +1,6 @@
 import type { BehaviourMotion, BehaviourNode, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
-import type { BehaviourWorld } from "./behaviourReach";
+import type { BehaviourTrack, BehaviourWorld } from "./behaviourReach";
 import { collisionCandidates } from "./collisionIndex";
 
 export function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
@@ -95,4 +95,14 @@ export function trackReach(
     }
   }
   return to;
+}
+
+// The pursuit leash as a horizontal track centred on the boss's origin.
+export function pursuitTrack(object: ObjectLayout): BehaviourTrack {
+  const distance = object.behaviour!.pursuit!.distance;
+  return {
+    axis: "x",
+    distance: distance * 2,
+    origin: { x: object.origin.x - distance, y: object.origin.y },
+  };
 }

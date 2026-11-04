@@ -27,17 +27,17 @@ const CHARACTERS = [
   "pigeon-antagonist",
   "raccoon-antagonist",
 ] as const;
-// Pebble's graph with plain direct flight in place of his overhead approach, with and without
-// sampled intent: no production boss flies a plain chase.
-const FLIGHT_VARIANTS = [
+// Archie's and Pebble's graphs with plain pursuit in place of planner traversal and the overhead
+// approach, with and without sampled intent: no production boss chases that way.
+const VARIANTS = [
+  "dog-antagonist plain-live",
+  "dog-antagonist plain-sampled",
   "pigeon-antagonist plain-sampled",
   "pigeon-antagonist plain-live",
 ] as const;
 const TICKS = 720;
 
-function variant(
-  name: (typeof CHARACTERS)[number] | (typeof FLIGHT_VARIANTS)[number],
-): ObjectLayout {
+function variant(name: (typeof CHARACTERS)[number] | (typeof VARIANTS)[number]): ObjectLayout {
   const [character, flight] = name.split(" ") as [(typeof CHARACTERS)[number], string?];
   const object = objectLayout(
     TILE,
@@ -54,19 +54,27 @@ function variant(
   const states = Object.fromEntries(
     Object.entries(plan.states).map(([key, node]) => {
       const motion = node.motion;
-      if (motion.kind !== "pursue" || motion.mode !== "fly") {
+      if (motion.kind !== "pursue") {
         return [key, node];
       }
       const plain = {
         kind: "pursue" as const,
-        mode: "fly" as const,
+        mode: motion.mode,
         speed: motion.speed,
         ...(flight === "plain-sampled" && motion.intent && { intent: motion.intent }),
       };
       return [key, { ...node, motion: plain }];
     }),
   );
-  return { ...object, behaviour: { ...plan, states } };
+  // Plain ground pursuit neither falls nor climbs, so it starts on the floor.
+  const grounded = Object.values(plan.states).some(
+    ({ motion }) => motion.kind === "pursue" && motion.mode === "ground",
+  );
+  return {
+    ...object,
+    behaviour: { ...plan, states },
+    ...(grounded && { origin: { x: object.origin.x, y: floor.y - object.height } }),
+  };
 }
 const DT = 1 / 120;
 
@@ -185,7 +193,7 @@ describe("behaviour ability traces", () => {
     ? (JSON.parse(readFileSync(FIXTURE, "utf8")) as Record<string, string>)
     : {};
 
-  it.each([...CHARACTERS, ...FLIGHT_VARIANTS])(
+  it.each([...CHARACTERS, ...VARIANTS])(
     "%s reproduces every entry state's recorded trace",
     (character) => {
       const object = variant(character);

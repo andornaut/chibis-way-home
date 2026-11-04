@@ -1,5 +1,5 @@
 import type { Ability } from "../ai/ability";
-import type { Rect } from "../data/types";
+import type { Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import type {
   BehaviourAbilityContext,
@@ -7,13 +7,17 @@ import type {
   BehaviourActor,
   BehaviourMotionStep,
 } from "./behaviourAbilities";
+import { syncAnimation } from "./behaviourAnimation";
+import { pauseGroundIntent } from "./behaviourIntent";
 import {
   flightAxis,
+  groundPursuitEnd,
   overheadFlightGoal,
   overheadFlightGoalForRect,
   overheadFlightRoute,
 } from "./behaviourReach";
-import { contactBox } from "./behaviourTrack";
+import { contactBox, pursuitTrack } from "./behaviourTrack";
+import { advanceTraversal } from "./behaviourTraversal";
 import { birdBox, EDGE } from "./bird";
 
 type PursuitAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
@@ -191,5 +195,89 @@ export const OVERHEAD_SWOOP: PursuitAbility<"overhead-swoop"> = {
       }
     }
     return { slice, state: intentFacing(context, next), to };
+  },
+};
+
+// Ground pursuit: a native planner traversal, planned once per step and sampled at this slice,
+// or bounded travel along the leash on the current floor. A sampled pause holds on support.
+export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
+  act: (context, { motion }, actor) => {
+    const { intent, object, perception, seconds, slice, time } = context;
+    if (!pursuing(actor.state)) {
+      return { slice, state: actor.state, to: actor.to };
+    }
+    const { world } = perception;
+    const { at } = actor;
+    const aim = pursuitAim(context, motion.speed, actor);
+    let next = aim.state;
+    if (!motion.traversal) {
+      const desired =
+        at.x +
+        (intent.sampled && intent.paused ? 0 : Math.max(-aim.travel, Math.min(aim.travel, aim.dx)));
+      const x = groundPursuitEnd(
+        object,
+        world,
+        pursuitTrack(object),
+        at,
+        contactBox(object, at, next.facing, "x"),
+        desired,
+      );
+      return { slice, state: intentFacing(context, next), to: { ...actor.to, x } };
+    }
+    const timed = {
+      ...world,
+      ...(world.traversalFrame && {
+        traversalFrame: {
+          ...world.traversalFrame,
+          timeSeconds: world.traversalFrame.timeSeconds + time,
+        },
+      }),
+    };
+    const advanced =
+      context.traversal ??
+      (intent.sampled && intent.paused
+        ? pauseGroundIntent(timed, object, motion, seconds - time, next.traversal, at)
+        : advanceTraversal(timed, object, motion, seconds - time, next.traversal, at, aim.hers));
+    const endSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time + slice;
+    const startSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time;
+    const pointAt = (atSeconds: number): Point => {
+      const leg = advanced.segments?.find(
+        (leg) => leg.endSeconds >= atSeconds && leg.endSeconds > leg.startSeconds,
+      );
+      if (!leg) {
+        return advanced.at;
+      }
+      const fraction = Math.max(
+        0,
+        Math.min(1, (atSeconds - leg.startSeconds) / (leg.endSeconds - leg.startSeconds)),
+      );
+      return {
+        x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
+        y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
+      };
+    };
+    const endPoint = pointAt(endSeconds);
+    const segments = advanced.segments
+      ?.filter((leg) => leg.endSeconds > startSeconds && leg.startSeconds < endSeconds)
+      .map((leg) => ({
+        ...leg,
+        endSeconds: Math.min(endSeconds, leg.endSeconds),
+        from: { ...leg.from, ...pointAt(Math.max(startSeconds, leg.startSeconds)) },
+        startSeconds: Math.max(startSeconds, leg.startSeconds),
+        to: { ...leg.to, ...pointAt(Math.min(endSeconds, leg.endSeconds)) },
+      }));
+    next = syncAnimation(
+      object,
+      { ...next, ...(advanced.traversal && { traversal: advanced.traversal }) },
+      (world.traversalFrame?.timeSeconds ?? 0) + time,
+    );
+    return {
+      resynced: true,
+      ...(segments && { segments }),
+      slice,
+      state: intentFacing(context, next),
+      to: { x: endPoint.x, y: endPoint.y },
+      traversal: advanced,
+    };
   },
 };

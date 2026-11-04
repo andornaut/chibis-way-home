@@ -14,6 +14,7 @@ import type {
   Rect,
 } from "../data/types";
 import { BEHAVIOUR_ABILITIES, behaviourAbilityParams } from "./behaviourAbilities";
+import { animateSegments, syncAnimation } from "./behaviourAnimation";
 import {
   advanceAttackClock,
   attackProtected,
@@ -36,25 +37,22 @@ import {
 import {
   advancePursuitIntent,
   capturePursuitIntent,
-  pauseGroundIntent,
   type PursuitIntentState,
   safeIntentHover,
 } from "./behaviourIntent";
 import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception";
 import {
   type BehaviourGeometry,
-  type BehaviourTrack,
   type BehaviourWorld,
   flightAxis,
   flightContactApproach,
-  groundPursuitEnd,
   overheadFlightGoal,
   overheadFlightGoalForRect,
   overheadFlightRoute,
   targetReachable,
 } from "./behaviourReach";
 import { prepareSupport } from "./behaviourSupport";
-import { contactBox, nodeOf, trackEndpoint, travelHeading } from "./behaviourTrack";
+import { contactBox, nodeOf, pursuitTrack, trackEndpoint, travelHeading } from "./behaviourTrack";
 import {
   advanceTraversal,
   type BehaviourRearmState,
@@ -667,42 +665,6 @@ function enterState(
   return animation;
 }
 
-function syncAnimation(
-  object: ObjectLayout,
-  state: BehaviourState,
-  timeSeconds?: number,
-): BehaviourState {
-  if (!object.contact) {
-    return state;
-  }
-  const key = state.idleWatchdog?.recovery
-    ? object.behaviour!.idleWatchdog!.resume
-    : state.stateKey;
-  const preparation = state.active && state.traversal?.preparation;
-  const takeoff = preparation && object.behaviour?.takeoffAnimation;
-  const tag = state.active
-    ? (takeoff ??
-      object.behaviour?.states[key]?.animation ??
-      state.animationTag ??
-      object.animations.idle)
-    : (object.behaviour?.inactiveAnimation ?? object.animations.idle);
-  if (!tag || !object.contact.tags[tag]) {
-    throw new Error(`Missing silhouette animation for ${object.art}`);
-  }
-  const seconds =
-    takeoff && timeSeconds !== undefined
-      ? Math.max(0, timeSeconds - preparation.startedAtSeconds)
-      : undefined;
-  if (state.animationTag === tag && state.animationSeconds !== undefined && seconds === undefined) {
-    return state;
-  }
-  return {
-    ...state,
-    animationSeconds: seconds ?? (state.animationTag === tag ? (state.animationSeconds ?? 0) : 0),
-    animationTag: tag,
-  };
-}
-
 export function startBehaviour(
   tuning: BirdTuning,
   object: ObjectLayout,
@@ -927,15 +889,6 @@ function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: n
   return to;
 }
 
-function pursuitTrack(object: ObjectLayout): BehaviourTrack {
-  const distance = object.behaviour!.pursuit!.distance;
-  return {
-    axis: "x",
-    distance: distance * 2,
-    origin: { x: object.origin.x - distance, y: object.origin.y },
-  };
-}
-
 interface PursuitKinds {
   readonly flight: boolean;
   readonly flyGateway: string | undefined;
@@ -1142,63 +1095,6 @@ function updatePursuit(
     ...currentState,
     pursuit: { phase: escaped ? "escaped" : "engaged", settled: false, unreachableSeconds },
   };
-}
-
-// Generic state graphs choose the motion, animation and transition order. The executor knows
-// only bounded move/wait/hop primitives and conditions; it has no character-specific cycle.
-function animateSegments(
-  object: ObjectLayout,
-  seconds: number,
-  state: BehaviourState,
-  legs: readonly {
-    readonly start: number;
-    readonly end: number;
-    readonly from: Point;
-    readonly to: Point;
-  }[],
-  timeSeconds?: number,
-  faceMovement = true,
-): { readonly segments: readonly BehaviourSegment[]; readonly state: BehaviourState } {
-  const segments: BehaviourSegment[] = [];
-  let next = syncAnimation(object, { ...state, axis: "x" }, timeSeconds);
-  for (const leg of legs) {
-    let time = leg.start;
-    const direction = leg.to.x - leg.from.x;
-    if (faceMovement && direction !== 0) {
-      next = { ...next, facing: direction < 0 ? -1 : 1 };
-    }
-    const point = (at: number) => {
-      const fraction = (at - leg.start) / (leg.end - leg.start);
-      return {
-        x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
-        y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
-      };
-    };
-    while (time < leg.end) {
-      const frame = object.contact
-        ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
-        : undefined;
-      const end = Math.min(leg.end, time + (frame?.remaining ?? Infinity));
-      segments.push({
-        axis: "x",
-        end,
-        facing: next.facing,
-        from: point(time),
-        start: time,
-        to: point(end),
-        ...(frame && { frame: frame.frame }),
-      });
-      if (object.contact) {
-        next = { ...next, animationSeconds: (next.animationSeconds ?? 0) + end - time };
-      }
-      time = end;
-    }
-  }
-  const duration = legs.reduce((sum, leg) => sum + leg.end - leg.start, 0);
-  if (object.contact && duration < seconds) {
-    next = { ...next, animationSeconds: (next.animationSeconds ?? 0) + seconds - duration };
-  }
-  return { segments, state: next };
 }
 
 function idleReady(
@@ -1442,6 +1338,8 @@ export function stepBehaviour(
 }
 
 // Decides and acts for one object over one step from its perception snapshot and own state.
+// Generic state graphs choose the motion, animation and transition order; registered abilities
+// act each motion without character-specific sequencing.
 export function advanceBehaviour(
   perception: BehaviourPerception,
   object: ObjectLayout,
@@ -1827,127 +1725,6 @@ export function advanceBehaviour(
         );
       }
     }
-    if (
-      node.motion.kind === "pursue" &&
-      node.motion.mode === "ground" &&
-      (next.pursuit?.phase === "engaged" || (next.traversal && !next.traversal.physical.grounded))
-    ) {
-      const hers =
-        sampledMotion && next.intent
-          ? next.intent.target
-          : sampledMotion && next.traversal
-            ? next.traversal.target
-            : birdBox(tuning, bird);
-      const contact = contactBox(object, current, next.facing, next.axis);
-      const targetX = Math.max(
-        object.origin.x - plan.pursuit!.distance,
-        Math.min(
-          object.origin.x + plan.pursuit!.distance,
-          hers.x + hers.width / 2 - contact.width / 2 - (contact.x - current.x),
-        ),
-      );
-      const travel = node.motion.speed * slice;
-      const dx = targetX - current.x;
-      next = {
-        ...next,
-        facing: next.traversal?.preparation
-          ? next.facing
-          : dx === 0
-            ? next.facing
-            : dx < 0
-              ? -1
-              : 1,
-      };
-      if (node.motion.mode === "ground" && node.motion.traversal) {
-        const advanced = (traversalStep ??=
-          sampledMotion && intentPause
-            ? pauseGroundIntent(
-                {
-                  ...world,
-                  ...(world.traversalFrame && {
-                    traversalFrame: {
-                      ...world.traversalFrame,
-                      timeSeconds: world.traversalFrame.timeSeconds + time,
-                    },
-                  }),
-                },
-                object,
-                node.motion,
-                seconds - time,
-                next.traversal,
-                current,
-              )
-            : advanceTraversal(
-                {
-                  ...world,
-                  ...(world.traversalFrame && {
-                    traversalFrame: {
-                      ...world.traversalFrame,
-                      timeSeconds: world.traversalFrame.timeSeconds + time,
-                    },
-                  }),
-                },
-                object,
-                node.motion,
-                seconds - time,
-                next.traversal,
-                current,
-                hers,
-              ));
-        const endSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time + slice;
-        const startSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time;
-        const pointAt = (atSeconds: number): Point => {
-          const leg = advanced.segments?.find(
-            (leg) => leg.endSeconds >= atSeconds && leg.endSeconds > leg.startSeconds,
-          );
-          if (!leg) {
-            return advanced.at;
-          }
-          const fraction = Math.max(
-            0,
-            Math.min(1, (atSeconds - leg.startSeconds) / (leg.endSeconds - leg.startSeconds)),
-          );
-          return {
-            x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
-            y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
-          };
-        };
-        const endPoint = pointAt(endSeconds);
-        to.x = endPoint.x;
-        to.y = endPoint.y;
-        traversalSegments = advanced.segments
-          ?.filter((leg) => leg.endSeconds > startSeconds && leg.startSeconds < endSeconds)
-          .map((leg) => ({
-            ...leg,
-            endSeconds: Math.min(endSeconds, leg.endSeconds),
-            from: { ...leg.from, ...pointAt(Math.max(startSeconds, leg.startSeconds)) },
-            startSeconds: Math.max(startSeconds, leg.startSeconds),
-            to: { ...leg.to, ...pointAt(Math.min(endSeconds, leg.endSeconds)) },
-          }));
-        next = syncAnimation(
-          object,
-          { ...next, ...(advanced.traversal && { traversal: advanced.traversal }) },
-          (world.traversalFrame?.timeSeconds ?? 0) + time,
-        );
-        frame = object.contact
-          ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
-          : undefined;
-      } else if (node.motion.mode === "ground") {
-        const desired =
-          current.x + (sampledMotion && intentPause ? 0 : Math.max(-travel, Math.min(travel, dx)));
-        to.x = groundPursuitEnd(
-          object,
-          world,
-          pursuitTrack(object),
-          current,
-          contactBox(object, current, next.facing, "x"),
-          desired,
-        );
-      }
-      if (sampledMotion && next.intent) {
-        next = { ...next, facing: next.intent.facing };
-      }
-    }
     let supportedDwell: boolean | undefined;
     let carryPoints: readonly { readonly at: Point; readonly seconds: number }[] | undefined;
     const params = behaviourAbilityParams(node.motion);
@@ -1973,10 +1750,12 @@ export function advanceBehaviour(
           intent: { paused: intentPause === true, sampled: sampledMotion },
           object,
           perception,
+          seconds,
           slice,
           support: { supported, target: landingTarget, world: supportWorld },
           time,
           track,
+          traversal: traversalStep,
         },
         params,
         { at: current, state: next, to: { ...to } },
@@ -1987,6 +1766,15 @@ export function advanceBehaviour(
       to.y = acted.to.y;
       carryPoints = acted.carry;
       supportedDwell = acted.dwell;
+      traversalStep = acted.traversal ?? traversalStep;
+      if (acted.segments) {
+        traversalSegments = acted.segments;
+      }
+      if (acted.resynced) {
+        frame = object.contact
+          ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
+          : undefined;
+      }
     }
     if (hop) {
       const elapsed = Math.min(hop.seconds, hop.elapsed + slice);

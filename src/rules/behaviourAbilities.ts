@@ -1,11 +1,14 @@
+import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
+
 import type { Ability, AbilityResult, AbilityTable } from "../ai/ability";
 import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
 import type { BehaviourPerception } from "./behaviourPerception";
-import { AIR_CHASE, OVERHEAD_SWOOP } from "./behaviourPursuitAbilities";
+import { AIR_CHASE, GROUND_CHASE, OVERHEAD_SWOOP } from "./behaviourPursuitAbilities";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { trackReach, travelHeading } from "./behaviourTrack";
+import type { advanceTraversal } from "./behaviourTraversal";
 import { EDGE } from "./bird";
 import { carryLandingSupport } from "./flyLanding";
 
@@ -19,6 +22,10 @@ export type BehaviourAbilityParams =
   | {
       readonly kind: "air-chase";
       readonly motion: Extract<Motion<"pursue">, { readonly mode: "fly" }>;
+    }
+  | {
+      readonly kind: "ground-chase";
+      readonly motion: Extract<Motion<"pursue">, { readonly mode: "ground" }>;
     }
   | {
       readonly kind: "overhead-swoop";
@@ -48,7 +55,7 @@ export function behaviourAbilityParams(
         : { kind: "target-flight", motion };
     case "pursue":
       return motion.mode === "ground"
-        ? undefined
+        ? { kind: "ground-chase", motion }
         : motion.overhead
           ? { kind: "overhead-swoop", motion }
           : { kind: "air-chase", motion };
@@ -67,6 +74,8 @@ export interface BehaviourAbilityContext {
   readonly intent: { readonly paused: boolean; readonly sampled: boolean };
   readonly object: ObjectLayout;
   readonly perception: BehaviourPerception;
+  // The whole step's length; a traversal plans the rest of the step from the slice start.
+  readonly seconds: number;
   // The slice decided so far; an ability may shorten it to its motion's next event.
   readonly slice: number;
   // Support evaluated for supported motions this slice: whether the body rests on it, the
@@ -79,7 +88,11 @@ export interface BehaviourAbilityContext {
   // Seconds into the step at the slice start.
   readonly time: number;
   readonly track: { readonly axis: "x" | "y" };
+  // This step's traversal advance, planned once at its first slice.
+  readonly traversal: TraversalAdvance | undefined;
 }
+
+export type TraversalAdvance = ReturnType<typeof advanceTraversal>;
 
 export interface BehaviourActor {
   readonly at: Point;
@@ -88,13 +101,17 @@ export interface BehaviourActor {
   readonly to: Point;
 }
 
-export interface BehaviourMotionStep extends AbilityResult<BehaviourState, never, never> {
+// Segments are clipped traversal legs for this slice, animated against the traversal clock.
+export interface BehaviourMotionStep extends AbilityResult<BehaviourState, TraversalSafety, never> {
   // Carried support waypoints, in seconds from the slice start.
   readonly carry?: readonly { readonly at: Point; readonly seconds: number }[];
   // Whether a supported dwell held this slice; undefined for motions without a dwell clock.
   readonly dwell?: boolean;
+  // Whether the state's animation was synchronised to a traversal pose.
+  readonly resynced?: boolean;
   readonly slice: number;
   readonly to: Point;
+  readonly traversal?: TraversalAdvance;
 }
 
 type BehaviourAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
@@ -229,6 +246,7 @@ export const BEHAVIOUR_ABILITIES: AbilityTable<
   BehaviourMotionStep
 > = {
   "air-chase": AIR_CHASE,
+  "ground-chase": GROUND_CHASE,
   "overhead-swoop": OVERHEAD_SWOOP,
   "supported-landing": SUPPORTED_LANDING,
   "target-flight": TARGET_FLIGHT,
