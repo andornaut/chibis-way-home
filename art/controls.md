@@ -144,7 +144,7 @@ The switch uses knob position and a glyph: right with a tick for on; left with a
 - On existing menus, Tab and arrows move focus; Enter and Space activate the focused action. A held key does not repeatedly activate an action.
 - Every actual modal dims its background by three `palette.darker` steps through the canonical shared-kit backdrop painter and receives input exclusively. There are no Chibi modal exceptions. This includes update notices, settings, pause, install, restart, death/retry, stage selection, stage clear, zone clear and modal dialogue or choices. Outside taps follow the modal’s dismissal rule and never activate controls underneath.
 - Draw exactly one canonical dim backdrop pass for the visible modal layer. Death/retry uses the normal painter on its ordinary frozen snapshot, without the `alreadyDimmed` bypass. The bypass is identity only for genuinely pre-dimmed images. Do not add an alpha overlay to the remapped image; retain the opaque ink fallback, control contrast and modal geometry. Ambient start-screen dimming remains a separate two-step treatment.
-- Live zone foreshadow dialogue is nonmodal: play and its controls remain interactive. Page headers and ordinary page content are not modal overlays.
+- Page headers and ordinary page content are not modal overlays.
 - Overlapping expanded press areas choose the nearest control centre. Keep drawn faces and labels visually separate even where their press areas meet.
 - Selection controls require visible labels; icon-only exceptions require an unambiguous action name. Exposing those names to assistive technology is a runtime requirement, not something a PNG supplies.
 
