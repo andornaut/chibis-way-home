@@ -29,9 +29,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    # Capped well under the six-hour default: nothing here runs longer than
-    # six minutes, so a job still going at fifteen has hung rather than failed.
-    timeout-minutes: 15
+    # A run takes 7 to 8 minutes on a hosted runner, so a job still going at
+    # 20 has hung. The cap ends it before delivery-kit stops watching CI at 30.
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
