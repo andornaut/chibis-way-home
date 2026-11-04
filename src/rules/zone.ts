@@ -26,7 +26,7 @@ import {
 } from "./behaviour";
 import { behaviourEffect } from "./behaviourEffects";
 import { perceiveBehaviour } from "./behaviourPerception";
-import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
+import type { BehaviourPlatformFrame, BehaviourWorld, CrumblingPrediction } from "./behaviourReach";
 import {
   birdBox,
   birdFrameRect,
@@ -89,6 +89,10 @@ interface AreaObjects {
   readonly crumblingObjects: readonly number[];
   readonly forcedTransit: readonly number[];
   readonly perception: boolean;
+  // Per object: whether its future platform frames can be sampled by re-stepping it, and
+  // whether its behaviour perceives the traversal frame.
+  readonly predictable: readonly boolean[];
+  readonly traversal: readonly boolean[];
   readonly spotted: readonly number[];
   readonly behaviours: readonly number[];
   readonly emptyBehaviours: readonly (BehaviourState | undefined)[];
@@ -186,8 +190,42 @@ function areaObjects(area: AreaLayout): AreaObjects {
       );
     }),
     platforms,
+    predictable: area.objects.map((object) => {
+      if (object.orbit || object.reaction.kind !== "none") {
+        return false;
+      }
+      if (!object.behaviour) {
+        return (
+          object.motion.variance === 0 &&
+          ["static", "linear", "ease"].includes(object.motion.algorithm)
+        );
+      }
+      return (
+        !object.behaviour.pursuit &&
+        Object.values(object.behaviour.states).every(
+          ({ motion, onEnter, transitions }) =>
+            !onEnter?.length &&
+            (motion.kind === "wait" ||
+              (motion.kind === "move" && typeof motion.direction === "number")) &&
+            transitions.every(({ when }) =>
+              when.every(({ kind }) => kind === "elapsed" || kind === "boundary"),
+            ),
+        )
+      );
+    }),
     solids,
     spotted: area.objects.flatMap((object, index) => (object.behaviour?.spotted ? [index] : [])),
+    traversal: area.objects.map(
+      (object) =>
+        object.behaviour !== undefined &&
+        object.collision !== "solid" &&
+        object.collision !== "ledge" &&
+        Object.values(object.behaviour.states).some(
+          ({ motion }) =>
+            motion.kind === "pursue" &&
+            (motion.mode === "fly" || (motion.mode === "ground" && motion.traversal !== undefined)),
+        ),
+    ),
   };
   AREA_OBJECTS.set(area, result);
   return result;
@@ -671,6 +709,9 @@ export function stepZoneBodies(
   let supportFrames: readonly BehaviourPlatformFrame[] | undefined;
   let futureSupports:
     ((time: number, dt: number) => readonly BehaviourPlatformFrame[] | undefined) | undefined;
+  // Every perceiver this tick shares the area bounds and the crumbling prediction.
+  let traversalShared:
+    { readonly bounds: Rect; readonly crumbling: CrumblingPrediction | undefined } | undefined;
   const traversalGeometry = (owner: ObjectLayout): BehaviourWorld => {
     supportFrames ??= presentPlatforms.map((index): BehaviourPlatformFrame => {
       const frame = resolveFrame(index);
@@ -692,30 +733,7 @@ export function stepZoneBodies(
     futureSupports ??= (() => {
       const samples = [supportFrames!];
       let states = presentPlatforms.map((index) => resolveFrame(index).behaviour?.state);
-      const predictable = presentPlatforms.every((index) => {
-        const object = area.objects[index]!;
-        if (object.orbit || object.reaction.kind !== "none") {
-          return false;
-        }
-        if (!object.behaviour) {
-          return (
-            object.motion.variance === 0 &&
-            ["static", "linear", "ease"].includes(object.motion.algorithm)
-          );
-        }
-        return (
-          !object.behaviour.pursuit &&
-          Object.values(object.behaviour.states).every(
-            ({ motion, onEnter, transitions }) =>
-              !onEnter?.length &&
-              (motion.kind === "wait" ||
-                (motion.kind === "move" && typeof motion.direction === "number")) &&
-              transitions.every(({ when }) =>
-                when.every(({ kind }) => kind === "elapsed" || kind === "boundary"),
-              ),
-          )
-        );
-      });
+      const predictable = presentPlatforms.every((index) => kinds.predictable[index]);
       const atTime = (frame: BehaviourPlatformFrame, at: number): Rect => {
         const legs = frame.segments;
         if (!legs?.length) {
@@ -849,11 +867,15 @@ export function stepZoneBodies(
         return result;
       };
     })();
+    traversalShared ??= {
+      bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+      crumbling: crumbling && crumblingPrediction(area, crumbling, time),
+    };
     return {
       ...geometry,
       traversalFrame: {
-        ...(crumbling && { crumbling: crumblingPrediction(area, crumbling, time) }),
-        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
+        ...(traversalShared.crumbling && { crumbling: traversalShared.crumbling }),
+        bounds: traversalShared.bounds,
         dtSeconds: seconds,
         platforms: supportFrames.filter((frame) => frame.owner !== owner),
         sample: futureSupports,
@@ -914,16 +936,7 @@ export function stepZoneBodies(
             perceiveBehaviour(
               tuning,
               {
-                ...(object.collision !== "solid" &&
-                object.collision !== "ledge" &&
-                Object.values(object.behaviour.states).some(
-                  ({ motion }) =>
-                    motion.kind === "pursue" &&
-                    (motion.mode === "fly" ||
-                      (motion.mode === "ground" && motion.traversal !== undefined)),
-                )
-                  ? traversalGeometry(object)
-                  : geometry),
+                ...(kinds.traversal[index] ? traversalGeometry(object) : geometry),
                 decisions: namedStreams(
                   zone.seed + zone.attempt,
                   `idle-roam:${zone.area}:${index}`,
