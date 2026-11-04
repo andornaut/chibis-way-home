@@ -244,7 +244,7 @@ Boss encounters are noncombat chase-and-escape platforming, not dedicated arenas
 
 A forced-transit ride is a moving platform with an interval that offers no ordinary safe exit. Only explicitly authored, certified mandatory-ride metadata makes a ride forced; moving support, velocity, an endpoint or unknown geometry does not, and no per-tick planning infers it. A ride without a certified forced interval follows the ordinary attack rules.
 
-- **Boarding:** boarding starts unprotected, with attacks allowed, until the ride's forced window is certified. A certified forced window starts the protected leg
+- **Boarding:** only boarding from a bank the ride's metadata lists can start a protected leg; any other boarding follows the ordinary attack rules. Boarding starts unprotected, with attacks allowed, until the ride's forced window is certified. A certified forced window starts the protected leg
 - **Deferral:** during a protected leg, Pebble starts no new targeted swoop or aimed poop burst. Every other attack and every untargeted hazard continues. Pebble may reposition safely overhead; an attack that becomes eligible again uses its normal full tell
 - **Deferral end:** deferral ends at the first safe forward exit or useful refuge offered. Retreating alone does not end it. After an exit has been offered, staying on the ride does not rearm it
 - **Disembark:** safely getting off onto any safe grounded surface, authored bank or not, ends the protected leg

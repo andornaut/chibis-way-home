@@ -103,7 +103,7 @@ A terrain run or a stationary object opts in with a `crumbling` profile; behavio
 
 This approved target awaits source, adapter and authored-range qualification. Only explicitly authored, certified mandatory-ride metadata may opt in; moving support, velocity or an endpoint alone is not a certificate, and unknown geometry does not create one. Do not add per-tick planning to infer forced transit. Existing ferries without a certified forced interval remain non-opt-in.
 
-- **Boarding:** boarding starts unprotected, with attacks allowed, until the ride's forced window is certified
+- **Boarding:** only boarding from a bank the ride's metadata lists can start a protected leg; other boardings follow the ordinary attack rules. Boarding starts unprotected, with attacks allowed, until the ride's forced window is certified
 - **Deferral:** defer only Pebble's new targeted swoops and aimed poop bursts until Chibi is offered the first safe forward exit or useful refuge. Other attacks and untargeted hazards continue. Retreat alone does not end the episode. Once a forward opportunity has been offered, camping does not rearm deferral. Pebble may reposition safely overhead while deferring; when an attack becomes eligible, use its normal full tell
 - **Disembark:** safely getting off onto any safe grounded surface, authored bank or not, ends the protected leg
 - **Existing danger:** committed attacks, existing projectiles, body contact and red hazards remain unchanged and lethal. Deferral is not invulnerability or a general moving-platform attack ban
