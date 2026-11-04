@@ -17,7 +17,7 @@ Chibi's Way Home artwork, drawing pipeline and remaining art work. The [style gu
 
 ## Pipeline
 
-Install Python 3.12 art dependencies with `python3.12 -m venv .venv-art` and `.venv-art/bin/python -m pip install -r requirements-art.txt`. Run entrypoints with `.venv-art/bin/python -I`, for example `.venv-art/bin/python -I art/tools/fonts.py preview OUT.png`, from the repository root. `requirements-art.txt` pins the published art-kit v0.10.0 GitHub release wheel by SHA256 and Pillow 13.0.0. Installed site packages supply art-kit in isolated mode; no registry, source-vendor or editable fallback is used. Asset and font licences remain unchanged.
+Install Python 3.12 art dependencies with `python3.12 -m venv .venv-art` and `.venv-art/bin/python -m pip install -r requirements-art.txt`. Run entrypoints with `.venv-art/bin/python -I`, for example `.venv-art/bin/python -I art/tools/fonts.py preview OUT.png`, from the repository root. `requirements-art.txt` pins the published art-kit v0.12.0 GitHub release wheel by SHA256 and Pillow 13.0.0. Installed site packages supply art-kit in isolated mode; no registry, source-vendor or editable fallback is used. Asset and font licences remain unchanged.
 
 Shared sprite previews require Node >=24.21 and installed project npm dependencies (art-kit 0.10 and Skia 4), while retaining the `.venv-art/bin/python -I art/tools/<generator>.py preview OUT.png` command.
 
