@@ -8,7 +8,6 @@ import type {
   BehaviourPursuitIntent,
   BehaviourTransition,
   DialogueLine,
-  Point,
 } from "./types";
 
 const BEAR_PURSUIT_SPEED = (1.4 * BIRD.walkSpeed) / TILE;
@@ -1050,16 +1049,11 @@ function pigeonDropBurst(side: "left" | "right"): BehaviourPlan["states"] {
   );
 }
 
-function pigeonFlight(next: string, failure: string, to: Point | "support"): BehaviourNode {
+function pigeonLanding(next: string): BehaviourNode {
   return {
     animation: "fly",
-    motion: { kind: "fly", speed: PIGEON_FLIGHT_SPEED, to },
-    transitions: [
-      { to: next, when: [{ kind: "arrived", tolerance: 0.1 }] },
-      ...(to === "support"
-        ? []
-        : [{ to: failure, when: [{ kind: "elapsed" as const, seconds: 2.4 }] }]),
-    ],
+    motion: { kind: "fly", speed: PIGEON_FLIGHT_SPEED, to: "support" },
+    transitions: [{ to: next, when: [{ kind: "arrived", tolerance: 0.1 }] }],
   };
 }
 
@@ -1091,9 +1085,7 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
     states: {
       ...pigeonDropBurst("left"),
       ...pigeonDropBurst("right"),
-      "ascend-left": pigeonFlight("fly-right", "frustration-left", { x: -12, y: -8 }),
-      "ascend-right": pigeonFlight("return-high", "frustration-right", { x: 12, y: -8 }),
-      "burst-land-perch": pigeonFlight("burst-recovery", "burst-return-high", "support"),
+      "burst-land-perch": pigeonLanding("burst-recovery"),
       "burst-recovery": {
         animation: "rest",
         motion: { kind: "wait", support: "required" },
@@ -1109,14 +1101,9 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         motion: { kind: "wait", support: "required" },
         transitions: [{ to: "pursuit-swoop-right", when: [{ kind: "elapsed", seconds: 0.35 }] }],
       },
-      "burst-return-high": pigeonFlight("burst-land-perch", "burst-return-high", "support"),
-      "fly-left": pigeonFlight("prepare-drop-left", "frustration-left", { x: -12, y: -8 }),
-      "fly-right": pigeonFlight("prepare-drop-right", "frustration-right", { x: 12, y: -8 }),
-      "frustration-left": frustrationNode("ascend-left"),
-      "frustration-perch": frustrationNode("land-perch"),
+      "burst-return-high": pigeonLanding("burst-land-perch"),
       "frustration-return": frustrationNode("return-high"),
-      "frustration-right": frustrationNode("ascend-right"),
-      "land-perch": pigeonFlight("rest", "frustration-perch", "support"),
+      "land-perch": pigeonLanding("rest"),
       "prepare-drop-left": {
         animation: "prepare-air",
         motion: pigeonOverhead(PIGEON_DROP_AHEAD),
@@ -1249,11 +1236,11 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
           { to: "relocate", when: [{ kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS }] },
         ],
       },
-      "return-high": pigeonFlight("land-perch", "frustration-return", "support"),
-      "return-swoop-left": pigeonFlight("burst-rest-left", "burst-return-high", "support"),
-      "return-swoop-right": pigeonFlight("burst-rest-right", "burst-return-high", "support"),
-      "swoop-land-left": pigeonFlight("swoop-rest-left", "swoop-return-left", "support"),
-      "swoop-land-right": pigeonFlight("swoop-rest-right", "swoop-return-right", "support"),
+      "return-high": pigeonLanding("land-perch"),
+      "return-swoop-left": pigeonLanding("burst-rest-left"),
+      "return-swoop-right": pigeonLanding("burst-rest-right"),
+      "swoop-land-left": pigeonLanding("swoop-rest-left"),
+      "swoop-land-right": pigeonLanding("swoop-rest-right"),
       "swoop-left": pigeonSwoop("swoop-return-left", -20),
       "swoop-rest-left": {
         animation: "rest",
@@ -1265,8 +1252,8 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         motion: { kind: "wait", support: "required" },
         transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
       },
-      "swoop-return-left": pigeonFlight("swoop-land-left", "swoop-return-left", "support"),
-      "swoop-return-right": pigeonFlight("swoop-land-right", "swoop-return-right", "support"),
+      "swoop-return-left": pigeonLanding("swoop-land-left"),
+      "swoop-return-right": pigeonLanding("swoop-land-right"),
       "swoop-right": pigeonSwoop("swoop-return-right", 4),
       watch: {
         allowIdleReposition: true,
