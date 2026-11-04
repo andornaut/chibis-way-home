@@ -17,7 +17,7 @@
     "lint": "prettier --check . && eslint --max-warnings 0 . && markdownlint-cli2",
     "format": "prettier --write . && eslint --fix .",
     "test": "vitest run",
-    "test:game-kit": "vitest run src/rules/behaviourTraversalGoals.test.ts",
+    "test:game-kit": "vitest run --configLoader runner src/rules/behaviourTraversalGoals.test.ts",
     "simulate": "tsx src/sim/cli.ts",
     "reaches": "tsx src/sim/reachCli.ts",
     "clean": "rm -rf dist .wrangler"
