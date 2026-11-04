@@ -7,7 +7,7 @@ const MAX_CELLS = 256;
 const MAX_QUERIES = 128;
 interface Index {
   readonly buckets: ReadonlyMap<number, readonly number[]>;
-  readonly queries: Map<string, readonly Rect[]>;
+  readonly queries: Map<number, readonly Rect[]>;
   readonly wide: readonly number[];
 }
 const INDICES = new WeakMap<readonly Rect[], Index>();
@@ -32,7 +32,7 @@ function indexOf(rects: readonly Rect[]): Index {
       buckets.set(cell, entries);
     }
   });
-  const result = { buckets, queries: new Map<string, readonly Rect[]>(), wide };
+  const result = { buckets, queries: new Map<number, readonly Rect[]>(), wide };
   INDICES.set(rects, result);
   return result;
 }
@@ -46,10 +46,13 @@ export function collisionCandidates(rects: readonly Rect[], bounds: Rect): reado
     return rects;
   }
   const index = indexOf(rects);
-  const key = `${first}:${last}`;
+  // Every rectangle is a candidate superset of the bucket selection, so wide or distant spans
+  // share one key and numeric keys stay exact.
+  const narrow = last - first <= MAX_CELLS && Math.abs(first) <= 2 ** 40;
+  const key = narrow ? first * (2 * MAX_CELLS) + (last - first) : Infinity;
   let candidates = index.queries.get(key);
   if (!candidates) {
-    if (last - first > MAX_CELLS) {
+    if (!narrow) {
       candidates = rects;
     } else {
       const selected = new Set(index.wide);
