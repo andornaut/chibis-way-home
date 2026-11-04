@@ -32,10 +32,11 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [KEY, [["neutral", [portrait()], 1000]]];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       { doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], srcDir: SRC },
       sprites,
     ),
   );
+}

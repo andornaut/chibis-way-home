@@ -125,10 +125,13 @@ export function cel(
   ks: number,
   kl: number,
 ): void {
-  for (let y = 0; y < g.h; y++)
-    for (let x = 0; x < g.w; x++)
-      if (inside(x, y))
+  for (let y = 0; y < g.h; y++) {
+    for (let x = 0; x < g.w; x++) {
+      if (inside(x, y)) {
         g.p(x, y, !inside(x + ks, y + ks) ? sh : li && !inside(x - kl, y - kl) ? li : base);
+      }
+    }
+  }
 }
 
 /** Inside test for an ellipse rotated by ang radians. */
@@ -166,8 +169,9 @@ export function inBody(
   return (x, y) => {
     const px = x + 0.5;
     let yy = y;
-    if (y + 0.5 < cy)
+    if (y + 0.5 < cy) {
       yy = y - drop * ease(px - napeX, rx * 0.55) - flat * ease(px - (cx - rx * 0.4), rx * 0.6);
+    }
     return (Math.abs(px - cx) / rx) ** POWER + (Math.abs(yy + 0.5 - cy) / ry) ** POWER <= 1;
   };
 }
@@ -178,7 +182,13 @@ function inBlob(cx: number, cy: number, rx: number, ry: number, power = POWER): 
 }
 
 export function flat(g: Grid, inside: Inside, c: Colour): void {
-  for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) if (inside(x, y)) g.p(x, y, c);
+  for (let y = 0; y < g.h; y++) {
+    for (let x = 0; x < g.w; x++) {
+      if (inside(x, y)) {
+        g.p(x, y, c);
+      }
+    }
+  }
 }
 
 type Wing =
@@ -234,12 +244,16 @@ export function draw({
   const headRy = HEAD_R * headSquash;
 
   const foot = (i: 0 | 1) => {
-    if (typeof feet === "string") return;
+    if (typeof feet === "string") {
+      return;
+    }
     const [dx, up] = feet[i];
     g.rect(Math.trunc(C + dx), H - 3 - up, 4, 2, "orange");
   };
 
-  if (feet !== "tucked" && feet !== "hidden") foot(0);
+  if (feet !== "tucked" && feet !== "hidden") {
+    foot(0);
+  }
   // a short tail tip at the lowered rear, its root under the body
   cel(g, inEll(C - bw + 1, bcy - 1, 4.4, 2.2, -0.45), BASE, SHADE, null, 1, 1);
   let body = inBody(C, bcy, bw, bh, hcx - HEAD_R * 0.7, NAPE_DROP, BACK_FLAT);
@@ -247,14 +261,18 @@ export function draw({
     const upper = body;
     const halfBase = 7.5;
     body = (x, y) => {
-      if (y + 0.5 < bcy) return upper(x, y);
+      if (y + 0.5 < bcy) {
+        return upper(x, y);
+      }
       const dx = Math.max(0, Math.abs(x + 0.5 - C) - halfBase);
       return (dx / (bw - halfBase)) ** 2 + ((y + 0.5 - bcy) / bh) ** 2 <= 1;
     };
   }
   cel(g, body, BASE, SHADE, LIGHT, 3, 1);
   if (feet === "tucked") {
-    for (const dx of [-5, 2]) g.rect(Math.trunc(C + dx), bottom, 4, 1, "orange");
+    for (const dx of [-5, 2]) {
+      g.rect(Math.trunc(C + dx), bottom, 4, 1, "orange");
+    }
   } else if (feet !== "hidden") {
     foot(1);
   }
@@ -295,10 +313,13 @@ export function draw({
       const dy = y + 0.5 - sy;
       const along = dx * Math.cos(a) + dy * Math.sin(a);
       const across = -dx * Math.sin(a) + dy * Math.cos(a);
-      if (along < 0) return (along / 3) ** 2 + (across / halfWidth) ** 2 <= 1;
+      if (along < 0) {
+        return (along / 3) ** 2 + (across / halfWidth) ** 2 <= 1;
+      }
       const taper = length - tipRadius;
-      if (along <= taper)
+      if (along <= taper) {
         return Math.abs(across) <= halfWidth - ((halfWidth - tipRadius) * along) / taper;
+      }
       return (along - taper) ** 2 + across ** 2 <= tipRadius ** 2;
     };
     cel(g, wingShape, WING, "brown", null, 1, 1);
@@ -316,7 +337,9 @@ export function draw({
     // Ink is already the darkest palette colour; wider diagonal tips strengthen the death mark.
     ["##.##", ".###.", "..#..", ".###.", "##.##"].forEach((row, y) => {
       [...row].forEach((mark, x) => {
-        if (mark === "#") g.p(Math.trunc(hcx) + x, ey + y, "ink");
+        if (mark === "#") {
+          g.p(Math.trunc(hcx) + x, ey + y, "ink");
+        }
       });
     });
   } else {
@@ -343,8 +366,9 @@ function rotated(
 ): pixel.Frame {
   const h = frame.length;
   const w = frame[0]?.length ?? 0;
-  if (!(Number.isInteger(2 * cx) && Number.isInteger(2 * cy) && 2 * cx >= w && 2 * cy >= h))
+  if (!(Number.isInteger(2 * cx) && Number.isInteger(2 * cy) && 2 * cx >= w && 2 * cy >= h)) {
     throw new RangeError(`centre ${cx},${cy} is not on or past the middle of a ${w}x${h} frame`);
+  }
   const padded = blankImage(2 * cx, 2 * cy);
   paste({ at: { x: 0, y: 0 } }, frameToRgba({ resolveRgb: pixel.rgb }, frame), padded);
   const image = crop({ height: h, width: w, x: 0, y: 0 }, rotateNearest(degrees, padded));
@@ -506,7 +530,9 @@ export function portrait(expr: string): pixel.Frame {
     g.rect(ex, ey, 7, 7, "ink");
     if (expr === "worried") {
       // brow slanting down to the back
-      for (let i = 0; i < 8; i++) g.rect(ex - 2 + i, ey - 5 + Math.floor((7 - i) / 3), 1, 2, "ink");
+      for (let i = 0; i < 8; i++) {
+        g.rect(ex - 2 + i, ey - 5 + Math.floor((7 - i) / 3), 1, 2, "ink");
+      }
     }
   }
   return g.outlined({ edge: () => pixel.hex("ink") });
@@ -524,4 +550,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 // Tags that play once and hold their last frame; every other tag loops.
 export const ONCE = { bird: ["jump", "land", "death", "dash", "double-jump"] };
 
-if (import.meta.main) run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+if (import.meta.main) {
+  run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+}

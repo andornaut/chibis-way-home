@@ -43,9 +43,13 @@ interface SpriteSheet {
 function sprite(key: string, tag: string): RgbaImage {
   const data = JSON.parse(readFileSync(`public/art/sprites/${key}.json`, "utf8")) as SpriteSheet;
   const found = data.meta.frameTags.find((t) => t.name === tag);
-  if (!found) throw new Error(`${key}: no tag ${tag}`);
+  if (!found) {
+    throw new Error(`${key}: no tag ${tag}`);
+  }
   const entry = Object.values(data.frames)[found.from];
-  if (!entry) throw new Error(`${key}: no frame ${found.from}`);
+  if (!entry) {
+    throw new Error(`${key}: no frame ${found.from}`);
+  }
   const { h, w, x, y } = entry.frame;
   const sheet = decodePng(new Uint8Array(readFileSync(`public/art/sprites/${key}.png`)));
   return crop({ x, y, width: w, height: h }, sheet);
@@ -59,13 +63,15 @@ function illustration(): RgbaImage {
     [58, 102, 156, 247],
     [560, 118, 656, 247],
     [624, 160, 719, 247],
-  ] as const)
+  ] as const) {
     roundedRectangle({ radius: 10, fill: rgba("grey") }, { x0, y0, x1, y1 }, im);
+  }
   for (const [x0, y0, x1, y1] of [
     [0, 218, 184, 247],
     [536, 218, 719, 247],
-  ] as const)
+  ] as const) {
     roundedRectangle({ radius: 6, fill: rgba("slate") }, { x0, y0, x1, y1 }, im);
+  }
   // Shared safe-edge grammar: one dark edge and two light pixels over the solid floor.
   rectangle({ fill: rgba("slate") }, { x0: 0, y0: 248, x1: 719, y1: 359 }, im);
   rectangle({ fill: rgba("navy") }, { x0: 0, y0: 248, x1: 719, y1: 248 }, im);
@@ -93,7 +99,7 @@ function button(im: RgbaImage, box: readonly [number, number, number, number]): 
   const dx = [x, x + 2, x + width - 2, x + width];
   const dy = [y, y + 4, y + height - 6, y + height];
   const at = (edges: readonly number[], i: number) => edges[i] as number;
-  for (let row = 0; row < 3; row++)
+  for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
       const piece = crop(
         {
@@ -111,12 +117,15 @@ function button(im: RgbaImage, box: readonly [number, number, number, number]): 
       );
       composite({ x: at(dx, col), y: at(dy, row) }, scaled, im);
     }
+  }
   // Preview-only existing action label, never exported in the backdrop.
   const { atlas, glyphs } = bitmapFont();
   const label = "Continue";
   const glyphOf = (c: string): Glyph => {
     const glyph = glyphs.get(c.charCodeAt(0));
-    if (!glyph) throw new Error(`font-body has no ${c}`);
+    if (!glyph) {
+      throw new Error(`font-body has no ${c}`);
+    }
     return glyph;
   };
   const labelWidth = [...label].reduce((sum, c) => sum + glyphOf(c).xadvance, 0) * 2 - 2;
@@ -139,4 +148,6 @@ function preview(out: string): void {
   save(`${stem}-phone.png`, resizeNearest(864, 432, im));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

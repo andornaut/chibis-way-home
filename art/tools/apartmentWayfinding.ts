@@ -66,8 +66,9 @@ export function stairwell(down = false): RgbaImage {
     [[8, 9, 40, 72], "dslate"],
     [[8, 10, 11, 72], "slate"],
     [[39, 10, 41, 72], "ink"],
-  ] as const)
+  ] as const) {
     rect(colour, box, im);
+  }
   // Quiet broad steps rise into the recess; they have no bright standable lip.
   if (down) {
     for (const [x, y] of [
@@ -102,8 +103,9 @@ export function stairwell(down = false): RgbaImage {
       [21, 3],
       [22, 2],
       [23, 1],
-    ] as const)
+    ] as const) {
       rect("white", [26 - half, y, 27 + half, y + 1], im);
+    }
   } else {
     for (const [y, half] of [
       [10, 1],
@@ -112,8 +114,9 @@ export function stairwell(down = false): RgbaImage {
       [13, 4],
       [14, 5],
       [15, 6],
-    ] as const)
+    ] as const) {
       rect("white", [26 - half, y, 27 + half, y + 1], im);
+    }
     rect("white", [24, 15, 29, 24], im);
   }
   return im;
@@ -141,8 +144,9 @@ export function stairwellDoor(): RgbaImage {
     [[18, 49, 30, 64], "skin1"],
     [[32, 43, 35, 50], "dbrown"],
     [[31, 44, 35, 47], "amber"],
-  ] as const)
+  ] as const) {
     rect(colour, box, im);
+  }
   return im;
 }
 
@@ -157,13 +161,16 @@ export function images(): Record<(typeof KEYS)[number], RgbaImage> {
 
 export function build(): void {
   mkdirSync(BACKDROPS, { recursive: true });
-  for (const [key, im] of Object.entries(images()))
+  for (const [key, im] of Object.entries(images())) {
     writeFileSync(`${BACKDROPS}/${key}.png`, encodeRgbaPng(PNG, im));
+  }
 }
 
 export function preview(out: string): void {
   const im = filledImage(rgba("zone-red"), 720, 360);
-  for (let x = 0; x < 720; x += 144) rect("zone-red-shade", [x, 48, x + 2, 252], im);
+  for (let x = 0; x < 720; x += 144) {
+    rect("zone-red-shade", [x, 48, x + 2, 252], im);
+  }
   rect("zone-red-shade", [0, 244, 720, 252], im);
   rect("dbrown", [0, 252, 720, 360], im);
   // The bright edge below belongs to actual floor terrain, never either backdrop.
@@ -190,4 +197,6 @@ export function preview(out: string): void {
   writeFileSync(`${stem}-3x.png`, encodeRgbaPng(PNG, resizeNearest(2160, 1080, im)));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

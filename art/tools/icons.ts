@@ -40,9 +40,9 @@ import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import { composite, filledImage, opaque, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import * as bird from "./bird.ts";
 import { commands, run } from "./cli.ts";
 import { frameImage } from "./imageArt.ts";
-import * as bird from "./bird.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
@@ -97,8 +97,9 @@ function birdPx(
   if (feet) {
     const fw = Math.max(2, pixel.round(4 * s));
     const fh = Math.max(1, pixel.round(2 * s));
-    for (const fx of [-5, 2])
+    for (const fx of [-5, 2]) {
       g.rect(Math.trunc(bx + fx * s), Math.trunc(by + bh), fw, fh, "orange");
+    }
   }
   bird.cel(
     g,
@@ -151,7 +152,9 @@ function icon(side: number, ground: Ground): pixel.Frame {
   }
 
   const groundAt = (x: number, y: number): string => {
-    if (side <= 16) return pixel.hex(FLAT);
+    if (side <= 16) {
+      return pixel.hex(FLAT);
+    }
     const a = Math.atan2(y + 0.5 - c * 0.95, x + 0.5 - c);
     const ray =
       Math.trunc(((a + Math.PI) / (2 * Math.PI)) * RAY_COUNT) % 2 === 0 ? RAYS[0] : RAYS[1];
@@ -198,7 +201,9 @@ function save(path: string, bytes: Uint8Array): void {
 
 function build(): void {
   const ims = images();
-  for (const [path, im] of ims) save(path, encodeRgbaPng(PNG, im));
+  for (const [path, im] of ims) {
+    save(path, encodeRgbaPng(PNG, im));
+  }
   const fav16 = ims.get("public/art/favicon-16.png") as RgbaImage;
   const fav32 = ims.get("public/art/favicon.png") as RgbaImage;
   save(ICO, encodeIco([fav16, fav32]));
@@ -248,4 +253,6 @@ function preview(out: string): void {
   save(out, encodeRgbPng(PNG, opaque(sheet)));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

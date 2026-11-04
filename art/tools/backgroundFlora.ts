@@ -56,7 +56,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [KEY, [["sway", [0, 1, 2, 3].map(draw), 300]]];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -68,3 +68,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

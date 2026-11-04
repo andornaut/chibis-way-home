@@ -24,8 +24,8 @@ import { opaque } from "@andornaut/art-kit/raster";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
-  BACKDROPS_DIR,
   backdropEntry,
+  BACKDROPS_DIR,
   canvasOf,
   cropBox,
   image,
@@ -70,13 +70,19 @@ function material(family: Family, suffix: string): RgbaImage {
     rect("slate", [0, 8, 12, 10], im);
     rect("slate", [4, 0, 6, 8], im);
   }
-  if (suffix.endsWith("left")) rect("dslate", [0, 0, 2, T], im);
-  if (suffix.endsWith("right")) rect("dslate", [10, 0, 12, T], im);
+  if (suffix.endsWith("left")) {
+    rect("dslate", [0, 0, 2, T], im);
+  }
+  if (suffix.endsWith("right")) {
+    rect("dslate", [10, 0, 12, T], im);
+  }
   if (suffix.startsWith("top")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
     rect(PRIMARY, [0, 3, 12, 5], im);
-    if (suffix === "top-joint") rect("dslate", [10, 3, 12, 7], im);
+    if (suffix === "top-joint") {
+      rect("dslate", [10, 3, 12, 7], im);
+    }
   }
   return im;
 }
@@ -101,7 +107,7 @@ function woodlandMass(
   colour: string,
   trunkWidth: number,
 ): void {
-  for (const shift of [-720, 0, 720])
+  for (const shift of [-720, 0, 720]) {
     nature.broadleaf(
       im,
       x + shift,
@@ -114,6 +120,7 @@ function woodlandMass(
       trunkWidth,
       mod(Math.trunc(x), 11),
     );
+  }
 }
 
 function far(): RgbaImage {
@@ -126,8 +133,9 @@ function far(): RgbaImage {
     [352, 18, 208, 264],
     [504, 46, 192, 242],
     [636, 12, 196, 268],
-  ] as const)
+  ] as const) {
     woodlandMass(im, mass, SHADE, 18);
+  }
   return im;
 }
 
@@ -139,8 +147,9 @@ function forestMid(): RgbaImage {
     [110, 108, 224, 254],
     [304, 164, 242, 230],
     [506, 126, 244, 252],
-  ] as const)
+  ] as const) {
     woodlandMass(im, mass, "forest", 30);
+  }
   return im;
 }
 
@@ -150,8 +159,9 @@ function ravineMid(): RgbaImage {
   for (const [x, top, width] of [
     [-62, 116, 236],
     [558, 132, 230],
-  ] as const)
+  ] as const) {
     woodlandMass(im, [x, top, width, 242], "forest", 26);
+  }
   polygon(
     { colour: SHADE },
     [
@@ -211,8 +221,9 @@ function conifers(middle = false): RgbaImage {
     [632, 62, 142],
   ] as const) {
     const top = middle ? sourceTop + 62 : sourceTop;
-    for (const shift of [-720, 0, 720])
+    for (const shift of [-720, 0, 720]) {
       nature.spruce(im, x + shift, top, width, 300, 600, colour, colour, mod(Math.trunc(x), 7));
+    }
   }
   return im;
 }
@@ -245,8 +256,9 @@ function birches(): RgbaImage {
         mod(Math.trunc(x), 11),
       );
       const centre = Math.trunc(left + width * 0.52);
-      for (let y = top + 160; y < 590; y += 46)
+      for (let y = top + 160; y < 590; y += 46) {
         rect("slate", [centre - 2, y, centre + 2, y + 2], im);
+      }
     }
   }
   return im;
@@ -260,13 +272,16 @@ function tree(): RgbaImage {
 
 function shrub(): RgbaImage {
   const im = image(48, 48);
-  for (const x of [8, 18, 31, 40]) nature.branch(im, SHADE, [24, 48], [x, 18 + (x % 7)], 3);
+  for (const x of [8, 18, 31, 40]) {
+    nature.branch(im, SHADE, [24, 48], [x, 18 + (x % 7)], 3);
+  }
   for (const [x, y, width, height, seed] of [
     [0, 18, 28, 24, 2],
     [17, 10, 29, 31, 5],
     [8, 28, 36, 20, 8],
-  ] as const)
+  ] as const) {
     nature.leaves(im, SHADE, [x, y, width, height], seed);
+  }
   nature.leaves(im, PRIMARY, [19, 12, 19, 18], 7);
   return im;
 }
@@ -349,18 +364,22 @@ function context(skin: "forest" | "ravine"): RgbaImage {
     skin === "forest" ? "forest-mid" : "ravine-mid",
   ]) {
     const p = readImage(`${BACKDROPS_DIR}/${key}.png`);
-    for (let x = 0; x < 720; x += p.width) over([x, BOTTOM - p.height], p, im);
+    for (let x = 0; x < 720; x += p.width) {
+      over([x, BOTTOM - p.height], p, im);
+    }
   }
   let ground: string;
   let raised: string;
   if (skin === "forest") {
     over([0, 384], readImage(`${BACKDROPS_DIR}/forest-tree.png`), im);
-    for (let x = 120; x < 240; x += 48)
+    for (let x = 120; x < 240; x += 48) {
       over([x, 552], readImage(`${BACKDROPS_DIR}/forest-shrub.png`), im);
+    }
     [ground, raised] = ["forest-ground", "root-stack"];
   } else {
-    for (let x = 432; x < 672; x += 48)
+    for (let x = 432; x < 672; x += 48) {
       over([x, 528], readImage(`${BACKDROPS_DIR}/ravine-rock.png`), im);
+    }
     [ground, raised] = ["ravine-ground", "stone-stack"];
   }
   skinForeground({ tiles: new Map(tiles()), ground, raised }, im);
@@ -382,4 +401,6 @@ async function preview(out: string): Promise<void> {
   writeRgbImage(out, sheet);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

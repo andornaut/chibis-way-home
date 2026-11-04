@@ -121,12 +121,15 @@ export function eye(g: Grid, x: number, y: number, state: EyeState, big = false)
     [x + n - 1, y],
     [x, y + n - 1],
     [x + n - 1, y + n - 1],
-  ] as const)
+  ] as const) {
     g.p(cx, cy, null);
+  }
   rect(g, x + 1, y + 1, 2, 2, "white");
   g.p(x + n - 2, y + n - 2, "cream");
   const lid = { open: 0, third: Math.floor(n / 3), half: Math.floor(n / 2) }[state];
-  if (lid) rect(g, x, y, n, lid, COAT.mask);
+  if (lid) {
+    rect(g, x, y, n, lid, COAT.mask);
+  }
   rect(g, x, y + lid - 1, n, 1, "brown"); // the lid line, soft
   g.p(x + n, y + lid, "brown"); // dipping at the outer corner
 }
@@ -192,7 +195,9 @@ export function face(
   eye(g, exx, eyy, eyeState, big);
   if (brow) {
     // dipped towards the snout
-    for (let i = 0; i <= n; i++) rect(g, exx - 1 + i, eyy - 3 + Math.floor(i / 3), 1, 2, "dbrown");
+    for (let i = 0; i <= n; i++) {
+      rect(g, exx - 1 + i, eyy - 3 + Math.floor(i / 3), 1, 2, "dbrown");
+    }
   }
   const s = big ? 2 : 1;
   rect(g, tip[0] - 2 * s, tip[1] - 2 * s, 3 * s, 2 * s, c.nose);
@@ -347,4 +352,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-ferret", portraitTags()];
 }
 
-if (import.meta.main) run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+if (import.meta.main) {
+  run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+}

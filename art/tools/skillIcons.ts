@@ -48,8 +48,9 @@ function glyph(colour: string, skill: string): pixel.Frame {
       [3, 3, 10],
       [1, 7, 14],
       [3, 11, 10],
-    ] as const)
+    ] as const) {
       g.rect(x, y, width, 2, colour);
+    }
   }
   return g.px;
 }
@@ -63,7 +64,8 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   }
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main({ doc: USAGE, grounds: [pixel.hex("navy")], once: ONCE, srcDir: SRC }, sprites),
   );
+}

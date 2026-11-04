@@ -130,7 +130,9 @@ const DEFAULT_GROUNDS = ["5a6988", "e4a672", "ead4aa"] as const;
 /** The hex value of a K name; an unknown name fails the build. */
 export function hex(name: string): string {
   const value = K[name];
-  if (value === undefined) throw new Error(`Unknown palette colour: ${name}`);
+  if (value === undefined) {
+    throw new Error(`Unknown palette colour: ${name}`);
+  }
   return value;
 }
 
@@ -147,7 +149,9 @@ export function rgb(c: string): [number, number, number] {
 export function darker(c: string, steps = 1): string {
   let colour = hexc(c);
   for (let i = 0; i < steps; i++) {
-    if (!Object.hasOwn(DARKER, colour)) throw new Error(`No darker ramp step for ${colour}`);
+    if (!Object.hasOwn(DARKER, colour)) {
+      throw new Error(`No darker ramp step for ${colour}`);
+    }
     colour = DARKER[colour] as string;
   }
   return colour;
@@ -178,7 +182,9 @@ export function mod(a: number, b: number): number {
 }
 
 function sortedKeys(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sortedKeys);
+  if (Array.isArray(value)) {
+    return value.map(sortedKeys);
+  }
   if (value !== null && typeof value === "object") {
     const entries = Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
     return Object.fromEntries(entries.map(([key, item]) => [key, sortedKeys(item)]));
@@ -193,9 +199,7 @@ function sortedKeys(value: unknown): unknown {
  */
 export function dumpJson({ sortKeys = false }: { sortKeys?: boolean }, value: unknown): string {
   const text = JSON.stringify(sortKeys ? sortedKeys(value) : value, null, 2);
-  return (
-    text.replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`) + "\n"
-  );
+  return `${text.replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`)}\n`;
 }
 
 /** Write dumpJson output, creating the parent directory. */
@@ -221,9 +225,12 @@ function sortedByKey<T extends { key: string }>(entries: Iterable<T>): T[] {
 export function updateManifest(section: string, entries: readonly ManifestEntry[]): void {
   const manifest = readManifest();
   const merged = new Map<string, ManifestEntry>();
-  for (const entry of (manifest[section] as ManifestEntry[] | undefined) ?? [])
+  for (const entry of (manifest[section] as ManifestEntry[] | undefined) ?? []) {
     merged.set(entry.key, entry);
-  for (const entry of entries) merged.set(entry.key, entry);
+  }
+  for (const entry of entries) {
+    merged.set(entry.key, entry);
+  }
   manifest[section] = sortedByKey(merged.values());
   writeJson({}, MANIFEST, manifest);
 }
@@ -262,7 +269,9 @@ export async function writeTileset(
     index[name] = i;
   });
   const indexOf = (name: string): number => {
-    if (!Object.hasOwn(index, name)) throw new Error(`${key}: piece names unknown tile ${name}`);
+    if (!Object.hasOwn(index, name)) {
+      throw new Error(`${key}: piece names unknown tile ${name}`);
+    }
     return index[name] as number;
   };
   const data: Record<string, unknown> = {
@@ -277,8 +286,9 @@ export async function writeTileset(
     const unknown = Object.keys(hitboxes)
       .filter((name) => !Object.hasOwn(index, name))
       .sort();
-    if (unknown.length)
+    if (unknown.length) {
       throw new Error(`${key}: hit boxes for tiles it does not have: ${unknown.join(", ")}`);
+    }
     data.hitboxes = hitboxes;
   }
   writeJson({ sortKeys: true }, `${TILESETS}/${key}.json`, data);
@@ -307,7 +317,9 @@ export async function preview(
 /** The first executable named command on PATH, or undefined. */
 export function which(command: string): string | undefined {
   for (const directory of (process.env.PATH ?? "").split(delimiter)) {
-    if (!directory) continue;
+    if (!directory) {
+      continue;
+    }
     const candidate = join(directory, command);
     try {
       accessSync(candidate, constants.X_OK);
@@ -343,34 +355,40 @@ export async function build(
 ): Promise<void> {
   const keys = new Set(sprites.map(([key]) => key));
   const unknownContacts = contacts.filter((key) => !keys.has(key)).sort();
-  if (unknownContacts.length)
+  if (unknownContacts.length) {
     throw new Error(`Unknown contact sprites: ${unknownContacts.join(", ")}`);
+  }
   for (const [key, tags] of sprites) {
     const tagNames = new Set(tags.map(([tag]) => tag));
     const unknown = (once[key] ?? []).filter((tag) => !tagNames.has(tag)).sort();
-    if (unknown.length)
+    if (unknown.length) {
       throw new Error(`${key}: once names tags it does not have: ${unknown.join(", ")}`);
+    }
     const box = hitboxes[key];
     if (box) {
       const [x, y, w, h] = box;
       const frame = tags[0]?.[1][0];
       const fh = frame?.length ?? 0;
       const fw = frame?.[0]?.length ?? 0;
-      if (!(w > 0 && h > 0 && x >= 0 && y >= 0 && x + w <= fw && y + h <= fh))
+      if (!(w > 0 && h > 0 && x >= 0 && y >= 0 && x + w <= fw && y + h <= fh)) {
         throw new Error(`${key}: hitbox ${box.join(", ")} is not inside its ${fw}x${fh} frame`);
+      }
     }
   }
   const unknownHitboxes = Object.keys(hitboxes)
     .filter((key) => !keys.has(key))
     .sort();
-  if (unknownHitboxes.length)
+  if (unknownHitboxes.length) {
     throw new Error(
       `hitboxes name sprites the script does not draw: ${unknownHitboxes.join(", ")}`,
     );
+  }
   mkdirSync(srcDir, { recursive: true });
   mkdirSync(SPRITES, { recursive: true });
   const executable = which("aseprite");
-  if (executable === undefined) throw new Error("aseprite is not on PATH");
+  if (executable === undefined) {
+    throw new Error("aseprite is not on PATH");
+  }
   const built = new Map<string, string[]>();
   for (const [key, tags] of sprites) {
     const margins = slices[key];
@@ -391,8 +409,9 @@ export async function build(
   }
   const manifest = readManifest();
   const entries = new Map<string, ManifestEntry>();
-  for (const entry of (manifest.sprites as ManifestEntry[] | undefined) ?? [])
+  for (const entry of (manifest.sprites as ManifestEntry[] | undefined) ?? []) {
     entries.set(entry.key, entry);
+  }
   for (const [key, onceTags] of built) {
     const entry: ManifestEntry = {
       key,
@@ -405,7 +424,9 @@ export async function build(
       const [left, top, right, bottom] = margins;
       entry.slice = { left, top, right, bottom };
     }
-    if (contacts.includes(key)) entry.contact = "silhouette";
+    if (contacts.includes(key)) {
+      entry.contact = "silhouette";
+    }
     const box = hitboxes[key];
     if (box) {
       const [x, y, width, height] = box;

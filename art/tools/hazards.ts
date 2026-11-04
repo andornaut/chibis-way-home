@@ -170,7 +170,9 @@ function frogCourier(f: number): pixel.Frame {
       [43, 10],
     ],
   ];
-  for (const [p0, p1] of bars) stroke(g, ...p0, ...p1, "orange", 2);
+  for (const [p0, p1] of bars) {
+    stroke(g, ...p0, ...p1, "orange", 2);
+  }
   g.rect(40, 9, 6, 2, INK); // handlebar
   g.rect(19, 15, 6, 2, INK); // saddle
   // the cube bag on his back
@@ -248,5 +250,6 @@ const HITBOX: Record<string, pixel.HitboxTuple> = {
   "ferret-trap-snap": [4, 14, 42, 12],
 };
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() => pixel.main({ doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC }, sprites));
+}

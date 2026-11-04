@@ -102,7 +102,9 @@ function dogImage(state: string, phase = 0): RgbaImage {
     by += 2;
     hy += 2;
   }
-  if (state === "frustration") hy = Math.max(5, hy + ([1, 0, 1, 2][phase] as number));
+  if (state === "frustration") {
+    hy = Math.max(5, hy + ([1, 0, 1, 2][phase] as number));
+  }
   // The bobtail attaches at the rump, above the hindlimb roots.
   d.polygon(
     [
@@ -166,7 +168,9 @@ function dogImage(state: string, phase = 0): RgbaImage {
   } else if (rush) {
     [rear, front, rearLift, frontLift] = RUSH[phase % 2] as Stride;
   }
-  if (state === "frustration" && (phase === 1 || phase === 2)) frontLift = -6;
+  if (state === "frustration" && (phase === 1 || phase === 2)) {
+    frontLift = -6;
+  }
   // Far legs remain visible in the belly gap and exchange support with the near pair.
   limb(
     [17, by + 9],
@@ -489,10 +493,11 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-dog", [["neutral", [pixels(portraitImage())], 1000]]];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       { contacts: ["dog-antagonist"], doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC },
       sprites,
     ),
   );
+}

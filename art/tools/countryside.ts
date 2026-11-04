@@ -25,8 +25,8 @@ import { opaque } from "@andornaut/art-kit/raster";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
-  BACKDROPS_DIR,
   backdropEntry,
+  BACKDROPS_DIR,
   canvasOf,
   cropBox,
   image,
@@ -71,13 +71,19 @@ function material(family: Family, suffix: string): RgbaImage {
   } else if (family === "country-ground") {
     rect("brown", [0, 8, 12, 10], im);
   }
-  if (suffix.endsWith("left")) rect("dslate", [0, 0, 2, T], im);
-  if (suffix.endsWith("right")) rect("dslate", [10, 0, 12, T], im);
+  if (suffix.endsWith("left")) {
+    rect("dslate", [0, 0, 2, T], im);
+  }
+  if (suffix.endsWith("right")) {
+    rect("dslate", [10, 0, 12, T], im);
+  }
   if (suffix.startsWith("top")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
     rect(family !== "riverbank" ? PRIMARY : "zone-green", [0, 3, 12, 5], im);
-    if (suffix === "top-joint") rect("dslate", [10, 3, 12, 7], im);
+    if (suffix === "top-joint") {
+      rect("dslate", [10, 3, 12, 7], im);
+    }
   }
   return im;
 }
@@ -238,8 +244,9 @@ function riverMid(): RgbaImage {
     [30, 564, 120],
     [276, 548, 136],
     [526, 576, 150],
-  ] as const)
+  ] as const) {
     rect("zone-blue", [x, y, x + w, y + 4], im);
+  }
   return im;
 }
 
@@ -379,18 +386,22 @@ function context(skin: "farmland" | "river"): RgbaImage {
     skin === "farmland" ? "farmland-mid" : "river-mid",
   ]) {
     const p = readImage(`${BACKDROPS_DIR}/${key}.png`);
-    for (let x = 0; x < 720; x += p.width) over([x, BOTTOM - p.height], p, im);
+    for (let x = 0; x < 720; x += p.width) {
+      over([x, BOTTOM - p.height], p, im);
+    }
   }
   let ground: string;
   let raised: string;
   if (skin === "farmland") {
     over([0, 456], readImage(`${BACKDROPS_DIR}/farmland-barn.png`), im);
-    for (let x = 120; x < 240; x += 48)
+    for (let x = 120; x < 240; x += 48) {
       over([x, 552], readImage(`${BACKDROPS_DIR}/farmland-fence.png`), im);
+    }
     [ground, raised] = ["country-ground", "hay-stack"];
   } else {
-    for (let x = 432; x < 672; x += 48)
+    for (let x = 432; x < 672; x += 48) {
       over([x, 528], readImage(`${BACKDROPS_DIR}/river-reeds.png`), im);
+    }
     [ground, raised] = ["riverbank", "timber-crossing"];
   }
   skinForeground({ tiles: new Map(tiles()), ground, raised }, im);
@@ -412,4 +423,6 @@ async function preview(out: string): Promise<void> {
   writeRgbImage(out, sheet);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

@@ -86,8 +86,12 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   const bodyY = 27 + compress - bob;
   const shoulderY = 25 + compress - bob;
   let headY = 19 + Math.min(compress, 1) - bob;
-  if (state === "growl") headY = 19;
-  if (state === "rest") headY += 1;
+  if (state === "growl") {
+    headY = 19;
+  }
+  if (state === "rest") {
+    headY += 1;
+  }
   const feet: Point[] = [];
   const roots: Point[] = [
     [12, bodyY + 4],
@@ -118,13 +122,16 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   g.rect(41 + headshift, headY, 3, 3, "ink");
   g.rect(35 + headshift, headY - 4, 3, 3, "ink");
   g.rect(35 + headshift, headY - 4, 2, 2, "white");
-  if (state === "rest") g.rect(35 + headshift, headY - 4, 3, 2, "dbrown");
+  if (state === "rest") {
+    g.rect(35 + headshift, headY - 4, 3, 2, "dbrown");
+  }
   if (state === "growl" || state === "maul") {
     g.ell(36 + headshift, headY + 3, 3, 2 + (phase % 2), "ink");
     g.rect(35 + headshift, headY + 4, 3, 1, "brown");
   }
-  if (state === "prepare" || state === "prepare-attack")
+  if (state === "prepare" || state === "prepare-attack") {
     g.rect(34 + headshift, headY - 6, 4, 1, "plum");
+  }
   feet.forEach(([x, y], i) => {
     const back = i === 1 || i === 2;
     g.blob(x, y, back ? 3 : 3.5, 3, back ? "plum" : "dbrown", "ink", "brown");
@@ -155,7 +162,9 @@ function wave(phase: number): pixel.Frame {
     for (let y = 3; y < 29; y++) {
       for (let x = 2; x < 46; x++) {
         const d = ((x + 10) ** 2 + ((y - 16) * 1.7) ** 2) ** 0.5;
-        if (radius - 2 <= d && d <= radius) g.p(x, y, phase % 2 === 0 ? "cream" : "lgrey");
+        if (radius - 2 <= d && d <= radius) {
+          g.p(x, y, phase % 2 === 0 ? "cream" : "lgrey");
+        }
       }
     }
   }
@@ -201,7 +210,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [WAVE, [["pulse", range(4).map(wave), 100]]];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -215,3 +224,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

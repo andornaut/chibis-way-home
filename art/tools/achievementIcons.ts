@@ -429,9 +429,13 @@ function partFrame(part: Part): pixel.Frame {
   const legend = { ...SHARED, ...part.legend };
   return part.rows.map((row) =>
     [...row].map((ch) => {
-      if (ch === ".") return null;
+      if (ch === ".") {
+        return null;
+      }
       const colour = legend[ch];
-      if (colour === undefined) throw new Error(`no colour for ${ch}`);
+      if (colour === undefined) {
+        throw new Error(`no colour for ${ch}`);
+      }
       return pixel.hexc(colour);
     }),
   );
@@ -448,21 +452,31 @@ function place(
 ): void {
   const at = (px: number, py: number): boolean =>
     Boolean(part[py - y]?.[px - x]) && px - x >= 0 && py - y >= 0;
-  if (knock)
-    for (let py = 0; py < SIDE; py++)
+  if (knock) {
+    for (let py = 0; py < SIDE; py++) {
       for (let px = 0; px < SIDE; px++) {
-        if (at(px, py)) continue;
+        if (at(px, py)) {
+          continue;
+        }
         let near = false;
-        for (let dy = -1; dy <= 1 && !near; dy++)
-          for (let dx = -1; dx <= 1 && !near; dx++) near = at(px + dx, py + dy);
-        if (near) (frame[py] as pixel.Frame[number])[px] = null;
+        for (let dy = -1; dy <= 1 && !near; dy++) {
+          for (let dx = -1; dx <= 1 && !near; dx++) {
+            near = at(px + dx, py + dy);
+          }
+        }
+        if (near) {
+          (frame[py] as pixel.Frame[number])[px] = null;
+        }
       }
+    }
+  }
   part.forEach((row, j) =>
     row.forEach((colour, i) => {
       const px = x + i;
       const py = y + j;
-      if (colour && px >= 0 && px < SIDE && py >= 0 && py < SIDE)
+      if (colour && px >= 0 && px < SIDE && py >= 0 && py < SIDE) {
         (frame[py] as pixel.Frame[number])[px] = colour;
+      }
     }),
   );
 }
@@ -493,14 +507,18 @@ function unlocked(art: Art): pixel.Frame {
     place({ knock: true, x: 0, y: 7 }, partFrame(LAUREL), f);
   } else if (art[0] === "clear" || art[0] === "no-death") {
     const e = partFrame(emblem(art[1]));
-    if (art[0] === "clear") place(centred(e, 15), e, f);
-    else {
+    if (art[0] === "clear") {
+      place(centred(e, 15), e, f);
+    } else {
       // The apartment fills the top with its cornice, so it sits three rows lower than the others
       // (its door and foot run off the frame) and its upper-left sparkle shrinks to the small one.
       const tall = art[1] === "apartment-building";
       place(centred(e, tall ? 19 : 16), e, f);
-      if (tall) place({ knock: true, x: 0, y: 0 }, partFrame(SMALL_SPARKLE), f);
-      else place({ knock: true, x: 0, y: 0 }, partFrame(SPARKLE), f);
+      if (tall) {
+        place({ knock: true, x: 0, y: 0 }, partFrame(SMALL_SPARKLE), f);
+      } else {
+        place({ knock: true, x: 0, y: 0 }, partFrame(SPARKLE), f);
+      }
       place({ knock: true, x: 11, y: 0 }, partFrame(SMALL_SPARKLE), f);
     }
   } else if (art[0] === "gift-rooms") {
@@ -561,7 +579,9 @@ function trophy(): pixel.Frame {
   const y0 = Math.floor((20 - TROPHY_20.length) / 2);
   TROPHY_20.forEach((row, y) =>
     [...row].forEach((ch, x) => {
-      if (ch !== ".") g.p(x0 + x, y0 + y, ch === "a" ? "cream" : "tan");
+      if (ch !== ".") {
+        g.p(x0 + x, y0 + y, ch === "a" ? "cream" : "tan");
+      }
     }),
   );
   return g.px;
@@ -620,7 +640,7 @@ function preview(out: string): void {
     resizeNearest(20 * ZOOM, 20 * ZOOM, nav),
     sheet,
   );
-  for (let column = 0; column < COLUMNS; column++)
+  for (let column = 0; column < COLUMNS; column++) {
     GROUNDS.forEach((ground, g) =>
       drawLabel(
         { colour: "cream", x: GAP + column * CELL_W + LABEL_W + g * GROUP_W, y: head },
@@ -628,6 +648,7 @@ function preview(out: string): void {
         sheet,
       ),
     );
+  }
   ACHIEVEMENTS.forEach(([id, , art], i) => {
     const x0 = GAP + Math.floor(i / rows) * CELL_W;
     const y0 = top + (i % rows) * CELL_H;
@@ -654,4 +675,6 @@ async function build(): Promise<void> {
   await pixel.build({ srcDir: SRC }, [...sprites()]);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

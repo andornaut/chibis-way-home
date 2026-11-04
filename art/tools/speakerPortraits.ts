@@ -67,10 +67,11 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-raccoon", [["neutral", [raccoon()], 1000]]];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       { doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], once: ONCE, srcDir: SRC },
       sprites,
     ),
   );
+}

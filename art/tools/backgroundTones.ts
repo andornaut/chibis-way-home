@@ -219,27 +219,34 @@ function depthColourMap(key: string): ColourMap {
   const [zone, profiled] = profile(key);
   const result: ColourMap = new Map();
   if (profiled === "sky") {
-    for (const colour of Object.values(pixel.K)) set(result, colour, colour);
+    for (const colour of Object.values(pixel.K)) {
+      set(result, colour, colour);
+    }
     return result;
   }
   const layer: Layer = profiled === "local" ? "near" : profiled;
   for (const [source, colour] of Object.entries(backgroundPalette.sourceColours(pixel.K))) {
     let target = backgroundPalette.detailName(zone, layer, source);
-    if (zone === "countryside" && layer === "far" && source === "zone-peach")
+    if (zone === "countryside" && layer === "far" && source === "zone-peach") {
       target = "bg-countryside-far-warm";
-    else if (zone === "woodland" && layer === "mid" && source === "white")
+    } else if (zone === "woodland" && layer === "mid" && source === "white") {
       target = "bg-woodland-mid-bark";
-    else if (zone === "woodland" && layer === "near" && source === "zone-peach-shade")
+    } else if (zone === "woodland" && layer === "near" && source === "zone-peach-shade") {
       target = "bg-woodland-near-wood";
+    }
     set(result, colour, target);
   }
-  for (const [source, target] of Object.entries(WALLS[key] ?? {})) set(result, source, target);
+  for (const [source, target] of Object.entries(WALLS[key] ?? {})) {
+    set(result, source, target);
+  }
   return result;
 }
 
 function colourMap(key: string): ColourMap {
   const [zone, layer] = profile(key);
-  if (zone !== "park") return depthColourMap(key);
+  if (zone !== "park") {
+    return depthColourMap(key);
+  }
   const primary = ZONES[zone] as string;
   const result: ColourMap = new Map();
   for (const [name, colour] of Object.entries(pixel.K)) {
@@ -255,20 +262,28 @@ function colourMap(key: string): ColourMap {
     }
     set(result, colour, tone);
   }
-  for (const [source, target] of Object.entries(WALL_PAINT[key] ?? {})) set(result, source, target);
+  for (const [source, target] of Object.entries(WALL_PAINT[key] ?? {})) {
+    set(result, source, target);
+  }
   return result;
 }
 
 /** image with every occupied pixel's colour mapped by its key's policy, alpha kept. */
 export function apply(key: string, image: RgbaImage): RgbaImage {
-  if (FUNCTIONAL.has(key) || SKIES.has(key)) return image;
+  if (FUNCTIONAL.has(key) || SKIES.has(key)) {
+    return image;
+  }
   const mapping = colourMap(key);
   const data = new Uint8Array(image.data);
   for (let i = 0; i < data.length; i += 4) {
-    if (!data[i + 3]) continue;
+    if (!data[i + 3]) {
+      continue;
+    }
     const colour = [data[i], data[i + 1], data[i + 2]].join(",");
     const target = mapping.get(colour);
-    if (!target) throw new Error(`${key}: no background tone for rgb ${colour}`);
+    if (!target) {
+      throw new Error(`${key}: no background tone for rgb ${colour}`);
+    }
     data.set(target, i);
   }
   return { data, height: image.height, width: image.width };
@@ -278,27 +293,43 @@ export function apply(key: string, image: RgbaImage): RgbaImage {
 async function* sourceImages(): AsyncGenerator<readonly [key: string, image: RgbaImage]> {
   // Loaded when building: every producer imports this module for its own build.
   const floor1 = await import("./floor1.ts");
-  for (const [key, [draw]] of floor1.BACKDROP_DEFS) yield [key, frameImage(draw().px)];
+  for (const [key, [draw]] of floor1.BACKDROP_DEFS) {
+    yield [key, frameImage(draw().px)];
+  }
   const depot = await import("./depot.ts");
-  for (const [key, [image]] of Object.entries(depot.assets())) yield [key, image];
+  for (const [key, [image]] of Object.entries(depot.assets())) {
+    yield [key, image];
+  }
   const park = await import("./park.ts");
-  for (const [key, [draw]] of park.BACKDROP_DEFS) yield [key, draw()];
+  for (const [key, [draw]] of park.BACKDROP_DEFS) {
+    yield [key, draw()];
+  }
   for (const producer of [
     await import("./industrial.ts"),
     await import("./countryside.ts"),
     await import("./woodland.ts"),
     await import("./homecity.ts"),
     await import("./apartment.ts"),
-  ])
-    for (const [key, [draw]] of Object.entries(producer.BACKDROPS)) yield [key, draw()];
+  ]) {
+    for (const [key, [draw]] of Object.entries(producer.BACKDROPS)) {
+      yield [key, draw()];
+    }
+  }
   const props = await import("./apartmentProps.ts");
-  for (const key of Object.keys(props.SIZES)) yield [`apartment-${key}`, props.draw(key)];
+  for (const key of Object.keys(props.SIZES)) {
+    yield [`apartment-${key}`, props.draw(key)];
+  }
 }
 
 async function build(): Promise<void> {
-  for await (const [key, image] of sourceImages())
-    if (!FUNCTIONAL.has(key)) writeImage(`${BACKDROPS_DIR}/${key}.png`, apply(key, image));
+  for await (const [key, image] of sourceImages()) {
+    if (!FUNCTIONAL.has(key)) {
+      writeImage(`${BACKDROPS_DIR}/${key}.png`, apply(key, image));
+    }
+  }
   console.log("built muted existing background paints");
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build }));
+}

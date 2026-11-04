@@ -133,15 +133,18 @@ export function spriteFrame(key: string): RgbaImage {
     frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
   };
   const first = Object.values(data.frames)[0];
-  if (!first) throw new Error(`${key}: sprite sheet has no frames`);
+  if (!first) {
+    throw new Error(`${key}: sprite sheet has no frames`);
+  }
   const { h, w, x, y } = first.frame;
   return cropBox([x, y, x + w, y + h], readImage(`${path}.png`));
 }
 
 /** Suffixes of a terrain block's tile at column x, row y of a width-wide block. */
 function terrainSuffix(x: number, y: number, width: number): string {
-  if (y === 0)
+  if (y === 0) {
     return x === 0 ? "top-left" : x === width - 1 ? "top-right" : x % 2 ? "top-joint" : "top";
+  }
   return x === 0 ? "face-left" : x === width - 1 ? "face-right" : "face";
 }
 
@@ -166,12 +169,15 @@ export function terrainBlock(
   },
   target: RgbaImage,
 ): void {
-  for (let y = 0; y < height; y++)
+  for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const tile = tiles.get(`${family}-${terrainSuffix(x, y, width)}`);
-      if (!tile) throw new Error(`no tile ${family}-${terrainSuffix(x, y, width)}`);
+      if (!tile) {
+        throw new Error(`no tile ${family}-${terrainSuffix(x, y, width)}`);
+      }
       over([(col + x) * size, (row + y) * size], tile, target);
     }
+  }
 }
 
 /**
@@ -192,8 +198,9 @@ export function skinForeground(
     [20, 46, 6, 4],
     [31, 42, 7, 8],
     [44, 38, 7, 12],
-  ] as const)
+  ] as const) {
     terrainBlock({ tiles, family: raised, col, row, width, height }, target);
+  }
   // Shared standable ledges and contact strips are loaded, not copied into the material pack.
   const shared = JSON.parse(readFileSync(`${pixel.TILESETS}/tiles-platforming.json`, "utf8")) as {
     tiles: Record<string, number>;
@@ -201,7 +208,9 @@ export function skinForeground(
   const sharedPng = readImage(`${pixel.TILESETS}/tiles-platforming.png`);
   const sharedTile = (name: string): RgbaImage => {
     const i = shared.tiles[name];
-    if (i === undefined) throw new Error(`tiles-platforming has no ${name}`);
+    if (i === undefined) {
+      throw new Error(`tiles-platforming has no ${name}`);
+    }
     const x = (i % 8) * T;
     const y = Math.floor(i / 8) * T;
     return cropBox([x, y, x + T, y + T], sharedPng);
@@ -211,8 +220,9 @@ export function skinForeground(
       c === 12 ? "one-way-ledge-left" : c === 17 ? "one-way-ledge-right" : "one-way-ledge-middle";
     over([c * T, 44 * T], sharedTile(name), target);
   }
-  for (let c = 31; c < 38; c++)
+  for (let c = 31; c < 38; c++) {
     over([38 * T, (42 + c - 31) * T], sharedTile("hazard-right"), target);
+  }
   over([72, 558], spriteFrame("bird"), target);
 }
 

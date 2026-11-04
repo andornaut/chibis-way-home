@@ -44,7 +44,9 @@ export function ramps(house: Readonly<Record<string, string>>): Record<string, s
   for (const theme of Object.values(THEMES)) {
     result[theme.colour] = theme.shade;
     const end = house[theme.end];
-    if (end === undefined) throw new Error(`Unknown ramp end: ${theme.end}`);
+    if (end === undefined) {
+      throw new Error(`Unknown ramp end: ${theme.end}`);
+    }
     result[theme.shade] = end;
   }
   return result;
@@ -64,4 +66,6 @@ export async function build(): Promise<void> {
   console.log("built zone themes");
 }
 
-if (import.meta.main) run(() => commands({ usage: "Usage: zoneThemes.ts build", build }));
+if (import.meta.main) {
+  run(() => commands({ usage: "Usage: zoneThemes.ts build", build }));
+}

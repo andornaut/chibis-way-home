@@ -52,8 +52,9 @@ type Point = readonly [number, number];
 function tail(g: Grid, lift = 0): void {
   for (let y = 34 - lift; y < 44 - lift; y++) {
     for (let x = 3; x < 21; x++) {
-      if (((x + 0.5 - 12) / 8.5) ** 2 + ((y + 0.5 - (39 - lift)) / 4.3) ** 2 <= 1)
+      if (((x + 0.5 - 12) / 8.5) ** 2 + ((y + 0.5 - (39 - lift)) / 4.3) ** 2 <= 1) {
         g.p(x, y, Math.floor((x - 3) / 3) % 2 === 0 ? "cream" : "ink");
+      }
     }
   }
 }
@@ -78,11 +79,19 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     (state === "idle" || state === "rest") && phase ? 1 : state === "climb" ? phase % 2 : 0;
   const moving = state === "walk" || state === "rush";
   const rushing = state === "rush";
-  if (moving) lift = phase % 2;
-  if (dropping) lift = 1 + phase;
+  if (moving) {
+    lift = phase % 2;
+  }
+  if (dropping) {
+    lift = 1 + phase;
+  }
   let headLift = dropping ? 1 : lift;
-  if (prepare) headLift = -3;
-  if (rushing) headLift -= 3;
+  if (prepare) {
+    headLift = -3;
+  }
+  if (rushing) {
+    headLift -= 3;
+  }
   tail(g, lift);
   // Far legs stand behind the round body; the near paw supplies the same ground anchor.
   let feet: readonly Point[] = [
@@ -132,7 +141,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     g.rect(x - 2, y - 1, 4, 2, "ink");
   });
   let [bodyY, bodyH] = prepare ? [38, 8] : [35 - lift, 10];
-  if (rushing) [bodyY, bodyH] = [37 - lift, 8];
+  if (rushing) {
+    [bodyY, bodyH] = [37 - lift, 8];
+  }
   g.blob(26, bodyY, 10.5, bodyH, "grey", "slate", "lgrey");
   g.ell(27, bodyY + 1, 5.5, bodyH - 2, "cream");
   // Rounded ears and a large head keep the proportions distinct from the long-bodied dog.
@@ -241,7 +252,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
 }
 
 function anticipateLift(phase: number): pixel.Frame {
-  if (phase !== 1) return draw("prepare");
+  if (phase !== 1) {
+    return draw("prepare");
+  }
   const frame = draw("idle");
   return [...frame.slice(2), ...Array.from({ length: 2 }, () => Array<null>(48).fill(null))];
 }
@@ -267,7 +280,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -281,3 +294,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

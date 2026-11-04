@@ -108,7 +108,9 @@ function save(path: string, image: RgbaImage): void {
 }
 
 function build(): void {
-  for (const style of Object.keys(STYLES)) save(`${OUT}/room-building-${style}.png`, draw(style));
+  for (const style of Object.keys(STYLES)) {
+    save(`${OUT}/room-building-${style}.png`, draw(style));
+  }
   pixel.updateManifest("backdrops", registry());
   console.log("built", Object.keys(STYLES).length, "room entrance buildings");
 }
@@ -129,4 +131,6 @@ function preview(out: string): void {
   save(`${stem}-3x.png`, resizeNearest(2880, 684, result));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

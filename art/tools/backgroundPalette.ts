@@ -58,7 +58,9 @@ const ROLE_NAMES = Object.keys(ROLES) as Role[];
 const RAD_TO_DEG = 180 / Math.PI;
 
 function lookup<T>(table: Readonly<Record<string, T>>, key: string): T {
-  if (!Object.hasOwn(table, key)) throw new Error(`Unknown key: ${key}`);
+  if (!Object.hasOwn(table, key)) {
+    throw new Error(`Unknown key: ${key}`);
+  }
   return table[key] as T;
 }
 
@@ -113,7 +115,9 @@ function encoded(chromaCap: number, colour: readonly [number, number, number]): 
   for (let i = 0; i < 16; i++) {
     const rgb = oklchToSrgb([lightness, Math.hypot(a, b), Math.atan2(b, a) * RAD_TO_DEG]);
     const [, actualChroma] = srgbToOklch(rgb);
-    if (actualChroma <= chromaCap) return hex(rgb);
+    if (actualChroma <= chromaCap) {
+      return hex(rgb);
+    }
     const scale = Math.min(0.99, (chromaCap - 0.0002) / actualChroma);
     a *= scale;
     b *= scale;
@@ -148,7 +152,7 @@ export function detail(zone: string, layer: Layer, colour: string): string {
 }
 
 export function name(zone: string, layer: Layer | "fauna", role: Role = "base"): string {
-  return `bg-${zone}-${layer}` + (role === "base" ? "" : `-${role}`);
+  return `bg-${zone}-${layer}${role === "base" ? "" : `-${role}`}`;
 }
 
 export function detailName(zone: string, layer: Layer, source: string): string {
@@ -182,15 +186,23 @@ export function fauna(zone: string, nearColours: readonly string[]): string {
 export function colours(house: Palette): Record<string, string> {
   const sources = sourceColours(house);
   const result: Record<string, string> = {};
-  for (const zone of Object.keys(ZONES))
-    for (const layer of LAYERS)
-      for (const role of ROLE_NAMES) result[name(zone, layer, role)] = paint(zone, layer, role);
-  for (const zone of Object.keys(ZONES))
-    for (const layer of LAYERS)
-      for (const [source, colour] of Object.entries(sources))
+  for (const zone of Object.keys(ZONES)) {
+    for (const layer of LAYERS) {
+      for (const role of ROLE_NAMES) {
+        result[name(zone, layer, role)] = paint(zone, layer, role);
+      }
+    }
+  }
+  for (const zone of Object.keys(ZONES)) {
+    for (const layer of LAYERS) {
+      for (const [source, colour] of Object.entries(sources)) {
         result[detailName(zone, layer, source)] = detail(zone, layer, colour);
-  for (const [key, [zone, layer, role, hue]] of Object.entries(MATERIALS))
+      }
+    }
+  }
+  for (const [key, [zone, layer, role, hue]] of Object.entries(MATERIALS)) {
     result[key] = paint(zone, layer, role, lookup(sources, hue));
+  }
   for (const zone of Object.keys(ZONES)) {
     const prefix = name(zone, "near");
     const near = Object.entries(result)
@@ -205,8 +217,9 @@ export function colours(house: Palette): Record<string, string> {
 function firstDarker(darker: Palette, target: string, colour: string): string {
   const seen = new Set<string>();
   while (luminance(target) >= luminance(colour)) {
-    if (seen.has(target) || !Object.hasOwn(darker, target))
+    if (seen.has(target) || !Object.hasOwn(darker, target)) {
       throw new Error("The existing palette has no strictly darker shade");
+    }
     seen.add(target);
     target = darker[target] as string;
   }
@@ -219,8 +232,11 @@ export function ramps(darker: Palette, house: Palette): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [zone, theme] of Object.entries(ZONES)) {
     const shade = lookup(house, `${lookup(THEMES, theme).primary}-shade`);
-    for (const [key, colour] of Object.entries(paints))
-      if (key.startsWith(`bg-${zone}-`)) result[colour] = shade;
+    for (const [key, colour] of Object.entries(paints)) {
+      if (key.startsWith(`bg-${zone}-`)) {
+        result[colour] = shade;
+      }
+    }
   }
   const materialShades: Record<string, string> = {
     "bg-apartment-near-blue": "zone-blue-shade",
@@ -236,8 +252,9 @@ export function ramps(darker: Palette, house: Palette): Record<string, string> {
       Object.entries(FAUNA_SHADES).map(([zone, shade]) => [name(zone, "fauna"), shade]),
     ),
   };
-  for (const [key, target] of Object.entries(materialShades))
+  for (const [key, target] of Object.entries(materialShades)) {
     result[lookup(paints, key)] = lookup(house, target);
+  }
   return Object.fromEntries(
     Object.entries(result)
       .filter(([colour]) => !Object.hasOwn(darker, colour))

@@ -153,8 +153,8 @@ import {
 } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
-import { commands, run } from "./cli.ts";
 import * as backgroundTones from "./backgroundTones.ts";
+import { commands, run } from "./cli.ts";
 import { frameImage, readImage, writeImage } from "./imageArt.ts";
 import * as nature from "./nature.ts";
 import * as pixel from "./pixel.ts";
@@ -178,7 +178,9 @@ const PNG_OPTIONS = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
 
 /** Fill rects [x, y, w, h, colour or null] on a Grid in order. */
 function rects(g: Grid, ...list: readonly Rect[]): Grid {
-  for (const [x, y, w, h, c] of list) g.rect(x, y, w, h, c);
+  for (const [x, y, w, h, c] of list) {
+    g.rect(x, y, w, h, c);
+  }
   return g;
 }
 
@@ -196,13 +198,21 @@ function ends(
 ): Grid {
   if (kind.includes("l")) {
     rects(g, [0, 0, 1, T, edge]);
-    if (lit) rects(g, [1, below, 2, T - below, lit]);
-    if (kind.includes("t")) g.p(0, 0, null);
+    if (lit) {
+      rects(g, [1, below, 2, T - below, lit]);
+    }
+    if (kind.includes("t")) {
+      g.p(0, 0, null);
+    }
   }
   if (kind.includes("r")) {
     rects(g, [T - 1, 0, 1, T, edge]);
-    if (shade) rects(g, [T - 3, below, 2, T - below, shade]);
-    if (kind.includes("t")) g.p(T - 1, 0, null);
+    if (shade) {
+      rects(g, [T - 3, below, 2, T - below, shade]);
+    }
+    if (kind.includes("t")) {
+      g.p(T - 1, 0, null);
+    }
   }
   return g;
 }
@@ -304,7 +314,9 @@ function sidewalk(kind: string, joint = false): Grid {
   const g = new Grid(T, T);
   if (kind.includes("t")) {
     surface(g, S.edge, S.lip, S.body, S.under);
-    if (joint) rects(g, [T - 2, 3, 2, 7, S.joint]);
+    if (joint) {
+      rects(g, [T - 2, 3, 2, 7, S.joint]);
+    }
     return ends(g, kind, S.edge, S.lip, S.under, 1);
   }
   rects(g, [0, 0, T, T, S.face]);
@@ -334,14 +346,18 @@ function kerb(side: string): Grid {
 
 function road(top: boolean): Grid {
   const g = rects(new Grid(T, T), [0, 0, T, T, S.road]);
-  if (top) rects(g, [0, 0, T, 1, "ink"], [0, 1, T, 2, S.roadLip]);
+  if (top) {
+    rects(g, [0, 0, T, 1, "ink"], [0, 1, T, 2, S.roadLip]);
+  }
   return g;
 }
 
 /** A canvas awning seen front-on: a light lip, 4px stripes, a scalloped hem; art in the top 11 rows. */
 function awning(kind: string, p: AwningStyle = AWNING): Grid {
   const g = rects(new Grid(T, T), [0, 0, T, 1, p.edge], [0, 1, T, 2, p.lip]);
-  for (let x = 0; x < T; x += 4) rects(g, [x, 3, 4, 5, Math.floor(x / 4) % 2 === 0 ? p.a : p.b]);
+  for (let x = 0; x < T; x += 4) {
+    rects(g, [x, 3, 4, 5, Math.floor(x / 4) % 2 === 0 ? p.a : p.b]);
+  }
   for (const x of [0, 6]) {
     rects(g, [x, 8, 6, 1, p.a], [x + 1, 9, 4, 1, p.a], [x + 2, 10, 2, 1, p.edge]);
     for (const [px, py] of [
@@ -349,8 +365,9 @@ function awning(kind: string, p: AwningStyle = AWNING): Grid {
       [x + 5, 9],
       [x + 1, 10],
       [x + 4, 10],
-    ] as const)
+    ] as const) {
       g.p(px, py, p.edge);
+    }
   }
   if (kind === "l") {
     rects(g, [0, 0, 1, 9, p.edge]);
@@ -445,7 +462,9 @@ function hatchLeaf(): Grid {
 /** The leaf as its top and bottom tiles, mirrored for the right edge. */
 function splitLeaf(side: string): [top: Grid, bottom: Grid] {
   const g = hatchLeaf();
-  if (side === "r") g.px = pixel.flipped(g.px);
+  if (side === "r") {
+    g.px = pixel.flipped(g.px);
+  }
   const top = new Grid(T, T);
   const bottom = new Grid(T, T);
   top.px = g.px.slice(0, T);
@@ -515,9 +534,15 @@ function streetTiles(): [Tile[], Pieces] {
 export function streetTilesCool(): [Tile[], Pieces] {
   const [tiles, pieces] = streetTiles();
   const m = (name: string): ColourMapping => {
-    if (name.startsWith("one-way-awning")) return COOL_AWNING;
-    if (name.startsWith("one-way-canopy")) return COOL_CANOPY;
-    if (name.startsWith("door-")) return {};
+    if (name.startsWith("one-way-awning")) {
+      return COOL_AWNING;
+    }
+    if (name.startsWith("one-way-canopy")) {
+      return COOL_CANOPY;
+    }
+    if (name.startsWith("door-")) {
+      return {};
+    }
     return COOL_TILES;
   };
   return [tiles.map(([n, g]) => [n, recolour(g, m(n))] as const), pieces];
@@ -550,12 +575,13 @@ function climbTiles(): Tile[] {
     ["sill", sill],
     ["cornice", cornice],
     ["tank", tankTop],
-  ] as const)
+  ] as const) {
     tiles.push(
       [`one-way-${name}-left`, fn("l")],
       [`one-way-${name}`, fn("m")],
       [`one-way-${name}-right`, fn("r")],
     );
+  }
   return tiles;
 }
 
@@ -584,7 +610,9 @@ function fireEscapeLanding(kind: string): Grid {
     [0, 3, T, 3, "ink"],
     [0, 6, T, 1, "navy"],
   );
-  for (const x of [2, 6, 10]) rects(g, [x, 4, 2, 1, "dslate"]); // the deck's slats, 2px
+  for (const x of [2, 6, 10]) {
+    rects(g, [x, 4, 2, 1, "dslate"]);
+  } // the deck's slats, 2px
   return ledgeEnds(g, kind, "ink", 7);
 }
 
@@ -618,7 +646,9 @@ function cornice(kind: string): Grid {
     [0, 7, T, 4, "dbrown"],
     [0, 11, T, 1, "plum"],
   );
-  for (const x of [2, 8]) rects(g, [x, 7, 2, 3, "tan"]); // dentils, 2px wide every 6px
+  for (const x of [2, 8]) {
+    rects(g, [x, 7, 2, 3, "tan"]);
+  } // dentils, 2px wide every 6px
   return ledgeEnds(g, kind, "dbrown", T);
 }
 
@@ -634,7 +664,9 @@ function tankTop(kind: string): Grid {
     [0, 3, T, 9, "brown"],
     [0, 7, T, 2, "dbrown"],
   );
-  for (const x of [3, 9]) rects(g, [x, 3, 1, 4, "dbrown"], [x, 9, 1, 3, "dbrown"]);
+  for (const x of [3, 9]) {
+    rects(g, [x, 3, 1, 4, "dbrown"], [x, 9, 1, 3, "dbrown"]);
+  }
   return ledgeEnds(g, kind, "dbrown", T);
 }
 
@@ -651,7 +683,9 @@ function floor(kind: string, joint = false): Grid {
   const g = new Grid(T, T);
   if (kind.includes("t")) {
     surface(g, LE, "cream", "brown", "dbrown");
-    if (joint) rects(g, [T - 2, 3, 2, 7, "dbrown"]);
+    if (joint) {
+      rects(g, [T - 2, 3, 2, 7, "dbrown"]);
+    }
     return ends(g, kind, LE, "cream", "dbrown", 1);
   }
   rects(g, [0, 0, T, T, "dbrown"]);
@@ -676,8 +710,12 @@ function ledge(style: string, kind: string): Grid {
     [0, 5, T, 1, face],
     [0, 6, T, 1, LE],
   );
-  if (kind === "l") rects(g, [0, 0, 1, 7, null], [1, 1, 1, 5, LE]);
-  if (kind === "r") rects(g, [T - 1, 0, 1, 7, null], [T - 2, 1, 1, 5, LE]);
+  if (kind === "l") {
+    rects(g, [0, 0, 1, 7, null], [1, 1, 1, 5, LE]);
+  }
+  if (kind === "r") {
+    rects(g, [T - 1, 0, 1, 7, null], [T - 2, 1, 1, 5, LE]);
+  }
   if (bracket && (kind === "l" || kind === "r")) {
     const bx = kind === "l" ? 4 : T - 6;
     rects(g, [bx, 7, 2, 4, bracket], [bx, 11, 2, 1, LE]);
@@ -689,14 +727,20 @@ function ledge(style: string, kind: string): Grid {
 function post(kind: string): Grid {
   const left = kind.endsWith("l");
   const g = rects(new Grid(T, T), [0, 0, T, T, "brown"]);
-  if (left) rects(g, [0, 0, 1, T, LE], [1, 0, 2, T, "tan"]);
-  else rects(g, [T - 3, 0, 2, T, "dbrown"], [T - 1, 0, 1, T, LE]);
-  if (kind.startsWith("cap"))
+  if (left) {
+    rects(g, [0, 0, 1, T, LE], [1, 0, 2, T, "tan"]);
+  } else {
+    rects(g, [T - 3, 0, 2, T, "dbrown"], [T - 1, 0, 1, T, LE]);
+  }
+  if (kind.startsWith("cap")) {
     rects(g, [0, 0, T, 1, LE], [0, 1, T, 2, "cream"], [0, 3, T, 3, "tan"], [0, 6, T, 1, LE]);
-  if (kind.startsWith("base"))
+  }
+  if (kind.startsWith("base")) {
     rects(g, [0, 4, T, 1, LE], [0, 5, T, 2, "cream"], [0, 7, T, 5, "tan"]);
-  if (kind.startsWith("cap") || kind.startsWith("base"))
+  }
+  if (kind.startsWith("cap") || kind.startsWith("base")) {
     rects(g, left ? [0, 0, 1, T, LE] : [T - 1, 0, 1, T, LE]);
+  }
   return g;
 }
 
@@ -716,7 +760,9 @@ function stairwell(): Grid {
     [10, 36, 64, 144, "ink"],
     [12, 38, 60, 142, "navy"],
   );
-  for (let k = 0; k < 6; k++) rects(g, [41 - k * 2, 11 + k * 2, 2 + k * 4, 2, "white"]);
+  for (let k = 0; k < 6; k++) {
+    rects(g, [41 - k * 2, 11 + k * 2, 2 + k * 4, 2, "white"]);
+  }
   rects(g, [39, 23, 6, 4, "white"]);
   for (let i = 0; i < 6; i++) {
     const sx = 12 + i * 10;
@@ -737,12 +783,13 @@ function lobbyTiles(): [Tile[], Pieces] {
     ["floor-face-left", floor("l")],
     ["floor-face-right", floor("r")],
   ];
-  for (const style of Object.keys(LEDGES))
+  for (const style of Object.keys(LEDGES)) {
     tiles.push(
       [`one-way-${style}-left`, ledge(style, "l")],
       [`one-way-${style}`, ledge(style, "m")],
       [`one-way-${style}-right`, ledge(style, "r")],
     );
+  }
   tiles.push(
     ["post-cap-left", post("cap-l")],
     ["post-cap-right", post("cap-r")],
@@ -887,7 +934,9 @@ const BUILDINGS: Readonly<Record<string, readonly [wall: string, line: string, t
 function icon(g: Grid, kind: string, x: number, y: number, c: string): void {
   (ICONS[kind] as readonly string[]).forEach((row, j) => {
     [...row].forEach((ch, i) => {
-      if (ch === "#") g.p(x + i, y + j, c);
+      if (ch === "#") {
+        g.p(x + i, y + j, c);
+      }
     });
   });
 }
@@ -997,7 +1046,7 @@ function streetSkyline(): Grid {
  */
 function facade(kind: string): Grid {
   const [wall, line, trim] = BUILDINGS[kind] as (typeof BUILDINGS)[string];
-  if (kind === "one-storey")
+  if (kind === "one-storey") {
     return rects(
       new Grid(48, 192),
       [0, 0, 48, 192, wall],
@@ -1005,6 +1054,7 @@ function facade(kind: string): Grid {
       [0, 6, 48, 4, line],
       [0, 86, 48, 4, line],
     );
+  }
   const g = rects(
     new Grid(48, FY),
     [0, 0, 48, FY, wall],
@@ -1019,7 +1069,9 @@ function facade(kind: string): Grid {
     [23, 53, 2, 52, line],
     [9, 108, 30, 4, trim],
   );
-  if (kind === "brownstone") rects(g, [9, 44, 30, 6, trim]); // a stone lintel over each window
+  if (kind === "brownstone") {
+    rects(g, [9, 44, 30, 6, trim]);
+  } // a stone lintel over each window
   return g;
 }
 
@@ -1063,7 +1115,9 @@ function hotDogCart(): Grid {
     [0, 44, 40, 18, "slate"],
     [0, 44, 40, 3, "white"],
   );
-  for (const wx of [4, 28]) g.ell(wx + 4, 64, 4, 4, "ink");
+  for (const wx of [4, 28]) {
+    g.ell(wx + 4, 64, 4, 4, "ink");
+  }
   return g;
 }
 
@@ -1075,8 +1129,12 @@ function subwayRailing(): Grid {
     [3, 40, 2, 22, "forest"],
     [67, 40, 2, 22, "forest"],
   );
-  for (let bx = 11; bx < 66; bx += 8) rects(g, [bx, 42, 2, 20, "forest"]);
-  for (const px of [3, 67]) rects(g, [px, 8, 2, 32, "forest"], [px - 3, 0, 8, 8, "dgreen"]);
+  for (let bx = 11; bx < 66; bx += 8) {
+    rects(g, [bx, 42, 2, 20, "forest"]);
+  }
+  for (const px of [3, 67]) {
+    rects(g, [px, 8, 2, 32, "forest"], [px - 3, 0, 8, 8, "dgreen"]);
+  }
   return g;
 }
 
@@ -1115,7 +1173,9 @@ function walkSignal(): Grid {
 /** 120x26: the far avenue seen down a cross street, navy with 2px lane dashes. */
 function crossStreet(): Grid {
   const g = rects(new Grid(120, 26), [0, 0, 120, 26, "navy"]);
-  for (let x = 8; x < 120; x += 24) rects(g, [x, 12, 8, 2, "dslate"]);
+  for (let x = 8; x < 120; x += 24) {
+    rects(g, [x, 12, 8, 2, "dslate"]);
+  }
   return g;
 }
 
@@ -1145,7 +1205,9 @@ function roofline(kind: string): Grid {
  */
 function fireEscapeRailing(): Grid {
   const g = rects(new Grid(48, 24), [0, 0, 48, 2, "ink"], [0, 10, 48, 2, "ink"]);
-  for (const x of [0, 12, 24, 36]) rects(g, [x, 0, 2, 24, "ink"]);
+  for (const x of [0, 12, 24, 36]) {
+    rects(g, [x, 0, 2, 24, "ink"]);
+  }
   return g;
 }
 
@@ -1163,7 +1225,9 @@ const LADDER_ROWS = [4, 5, 6, 7] as const;
 function fireEscapeLadder(rows = 8): Grid {
   const h = 12 * rows;
   const g = rects(new Grid(24, h), [4, 0, 2, h, "ink"], [18, 0, 2, h, "ink"]);
-  for (let y = 4; y < h; y += 8) rects(g, [4, y, 16, 2, "ink"]);
+  for (let y = 4; y < h; y += 8) {
+    rects(g, [4, y, 16, 2, "ink"]);
+  }
   return g;
 }
 
@@ -1180,10 +1244,16 @@ function waterTower(): Grid {
     [0, 44, 48, 2, "dbrown"],
     [0, 58, 48, 2, "dbrown"],
   );
-  for (const x of [11, 23, 35]) rects(g, [x, 12, 1, 46, "dbrown"]); // staves
+  for (const x of [11, 23, 35]) {
+    rects(g, [x, 12, 1, 46, "dbrown"]);
+  } // staves
   // The cone, stepping in 2px a row pair.
-  for (let k = 0; k < 4; k++) rects(g, [8 + 4 * k, 10 - 2 * k, 32 - 8 * k, 2, "plum"]);
-  for (const x of [4, 20, 26, 42]) rects(g, [x, 60, 2, 24, "dbrown"]); // legs
+  for (let k = 0; k < 4; k++) {
+    rects(g, [8 + 4 * k, 10 - 2 * k, 32 - 8 * k, 2, "plum"]);
+  }
+  for (const x of [4, 20, 26, 42]) {
+    rects(g, [x, 60, 2, 24, "dbrown"]);
+  } // legs
   rects(g, [4, 70, 40, 2, "dbrown"]); // a brace
   return g;
 }
@@ -1227,9 +1297,11 @@ const STREET_DEFS = new Map<string, BackdropDef>([
 // tree's trunk and the canopy's poles take grey, not lgrey.
 const NEAR_FOR = new Map<string, ColourMapping>([["street-tree", { ...COOL_NEAR, tan: "grey" }]]);
 // Quiet glass stays one value step below the architecture; shop icons keep their cream callout.
-for (const key of STREET_DEFS.keys())
-  if (key.startsWith("facade-") || key.startsWith("storefront-"))
+for (const key of STREET_DEFS.keys()) {
+  if (key.startsWith("facade-") || key.startsWith("storefront-")) {
     NEAR_FOR.set(key, { ...COOL_NEAR, navy: "dslate" });
+  }
+}
 const ATMOSPHERE_KEYS = new Set([
   "street-sky",
   "street-skyline",
@@ -1248,7 +1320,9 @@ export const BACKDROP_DEFS = new Map<string, BackdropDef>([
 
 function lookup<T>(map: ReadonlyMap<string, T>, key: string): T {
   const value = map.get(key);
-  if (value === undefined) throw new Error(`Unknown key ${key}`);
+  if (value === undefined) {
+    throw new Error(`Unknown key ${key}`);
+  }
   return value;
 }
 
@@ -1390,15 +1464,18 @@ function touchButtons(im: RgbaImage, tops: readonly number[]): void {
       frames: Record<string, { frame: { w: number; h: number } }>;
     };
     const first = Object.values(sheet.frames)[0];
-    if (!first) throw new Error(`${key}: no frames`);
+    if (!first) {
+      throw new Error(`${key}: no frames`);
+    }
     const fr = first.frame;
     const b = crop({ x: 0, y: 0, width: fr.w, height: fr.h }, readImage(`${SPRITES}/${key}.png`));
-    for (const top of tops)
+    for (const top of tops) {
       composite(
         { x: cx - Math.floor((fr.w - 1) / 2), y: top + cy - Math.floor((fr.h - 1) / 2) },
         b,
         im,
       );
+    }
   }
 }
 
@@ -1423,26 +1500,34 @@ function streetExample(chars = true, hud = true): RgbaImage {
   const im = inkImage(720, 720);
   compose(im, BACKDROP_DEFS, entries.runs, entries.pieces);
   const ground = Math.floor(STREET_FY / T);
-  for (let r = ground; r < 60; r++)
+  for (let r = ground; r < 60; r++) {
     for (let c = 0; c < 60; c++) {
       const name = r === ground ? (c % 2 ? "sidewalk-top-joint" : "sidewalk-top") : "sidewalk-face";
       composite({ x: c * T, y: r * T }, lookup(tiles, name), im);
     }
+  }
   const [p0, pw] = entries.planter;
   for (const [r, part] of [
     [ground - 2, "top"],
     [ground - 1, ""],
-  ] as const)
+  ] as const) {
     for (let c = p0; c < p0 + pw; c++) {
       const s = side(c, p0, pw);
       const name = part ? `planter-${part}${s}` : `planter${s}`;
       composite({ x: c * T, y: r * T }, lookup(tiles, name), im);
     }
-  for (const [kind, row, c0, w] of entries.ledges)
-    for (let c = c0; c < c0 + w; c++)
+  }
+  for (const [kind, row, c0, w] of entries.ledges) {
+    for (let c = c0; c < c0 + w; c++) {
       composite({ x: c * T, y: row * T }, lookup(tiles, `one-way-${kind}${side(c, c0, w)}`), im);
-  if (chars) composite({ x: 150 - 24, y: 28 * T - 42 }, birdFrame(), im);
-  if (hud) touchButtons(im, [0, 360]);
+    }
+  }
+  if (chars) {
+    composite({ x: 150 - 24, y: 28 * T - 42 }, birdFrame(), im);
+  }
+  if (hud) {
+    touchButtons(im, [0, 360]);
+  }
   return opaque(im);
 }
 
@@ -1474,4 +1559,6 @@ export function preview(out: string): void {
   writeFileSync(out, encodeRgbPng(PNG_OPTIONS, sheet));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

@@ -173,7 +173,9 @@ function poseFrames(spec: PoseSpec, kind: Kind): RgbaImage[] {
   const crops = sourceCells(kind, [source.width, source.height]).map((cell) => {
     const pose = cropBox(cell, source);
     const bounds = alphaBox(pose);
-    if (bounds === undefined) throw new Error(`Empty opening pose: ${kind}`);
+    if (bounds === undefined) {
+      throw new Error(`Empty opening pose: ${kind}`);
+    }
     return cropBox(bounds, pose);
   });
   const scale = Math.min(
@@ -269,7 +271,9 @@ export function build(): void {
         const [, top, , bottom] = alphaBox(pose) as Box;
         const edge = top + pixel.round((bottom - top) * (fractions[index] as number));
         const layer = { ...pose, data: pose.data.slice() };
-        if (edge > 0) fill({ rect: { x: 0, y: 0, width: 256, height: edge } }, [0, 0, 0, 0], layer);
+        if (edge > 0) {
+          fill({ rect: { x: 0, y: 0, width: 256, height: edge } }, [0, 0, 0, 0], layer);
+        }
         contract.parcelFrontEdges.push(edge);
         return layer;
       });
@@ -316,7 +320,9 @@ function actor(
   index: number,
 ): void {
   let pose = readPose(key, index);
-  if (angle) pose = rotateSmooth(angle, ANCHOR, pose);
+  if (angle) {
+    pose = rotateSmooth(angle, ANCHOR, pose);
+  }
   if (opacity < 1) {
     const alpha = IDENTITY.map((value) => pixel.round(value * opacity));
     pose = mapChannels([IDENTITY, IDENTITY, IDENTITY, alpha], pose);
@@ -344,9 +350,9 @@ function studyFrame(beat: number, phase: number): RgbaImage {
       image,
       [244, 270],
       "opening-chibi",
-      0.44 < phase && phase < 0.49 ? 1 : 0,
+      phase > 0.44 && phase < 0.49 ? 1 : 0,
     );
-    actor({}, image, [466, 270], "opening-ferret", 0.26 < phase && phase < 0.68 ? 1 : 0);
+    actor({}, image, [466, 270], "opening-ferret", phase > 0.26 && phase < 0.68 ? 1 : 0);
   } else if (beat === 1) {
     const chibiX = 244 - 16 * Math.sin(phase * Math.PI);
     actor({}, image, [chibiX, 270], "opening-chibi", phase > 0.7 ? 1 : 0);
@@ -386,8 +392,11 @@ function studyFrame(beat: number, phase: number): RgbaImage {
 export function preview(path: string): void {
   // Art study cadence only. Gameplay data supplies all actual scene durations and controls.
   const frames: RgbaImage[] = [];
-  for (let beat = 0; beat < 5; beat++)
-    for (let index = 0; index < 30; index++) frames.push(studyFrame(beat, index / 29));
+  for (let beat = 0; beat < 5; beat++) {
+    for (let index = 0; index < 30; index++) {
+      frames.push(studyFrame(beat, index / 29));
+    }
+  }
   const { frames: indexed } = quantise({ maxColours: 256 }, frames);
   writeFileSync(path, encodeGif({ loop: 0, durations: 100, disposal: 2 }, indexed));
   console.log(path);
@@ -411,4 +420,6 @@ export function board(path: string): void {
   console.log(path);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview, more: { board } }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview, more: { board } }));
+}

@@ -77,5 +77,6 @@ export async function preview({ cell = 24, gap = 4 }, out: string): Promise<void
   await scaled.toFile(out);
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() => commands({ usage: USAGE, build, preview: (out) => preview({}, out) }));
+}

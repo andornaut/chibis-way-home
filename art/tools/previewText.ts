@@ -8,8 +8,8 @@ import { readFileSync } from "node:fs";
 import { composite, crop } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
-import * as pixel from "./pixel.ts";
 import { readImage } from "./imageArt.ts";
+import * as pixel from "./pixel.ts";
 
 const FONT = "public/art/fonts/font-body";
 /** Pixels between preview text lines. */
@@ -40,7 +40,9 @@ function attributes(tag: string): Record<string, string> {
 
 /** font-body's metrics, kernings and atlas, parsed once. */
 export function bitmapFont(): BitmapFont {
-  if (font) return font;
+  if (font) {
+    return font;
+  }
   const xml = readFileSync(`${FONT}.fnt`, "utf8");
   const common = attributes(/<common\b[^>]*>/.exec(xml)?.[0] ?? "");
   const glyphs = new Map<number, Glyph>();
@@ -94,8 +96,12 @@ export function drawLabel(
     for (const character of line) {
       const code = character.codePointAt(0) as number;
       const glyph = glyphs.get(code) ?? glyphs.get(63);
-      if (!glyph) continue;
-      if (previous !== undefined) cursor += kernings.get(`${previous},${code}`) ?? 0;
+      if (!glyph) {
+        continue;
+      }
+      if (previous !== undefined) {
+        cursor += kernings.get(`${previous},${code}`) ?? 0;
+      }
       if (glyph.width && glyph.height) {
         const ink = crop(
           { x: glyph.x, y: glyph.y, width: glyph.width, height: glyph.height },

@@ -34,9 +34,9 @@ import {
 } from "@andornaut/art-kit/raster";
 import { blankImage, opaqueRect, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import * as birdArt from "./bird.ts";
 import { commands, run } from "./cli.ts";
 import { frameImage, rgba } from "./imageArt.ts";
-import * as birdArt from "./bird.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
@@ -105,12 +105,19 @@ function word({ b, fill, light }: WordStyle, text: string): RgbaImage {
   const height = 7 * b + 2;
   const mask = new Set<number>(); // y * width + x
   [...text].forEach((ch, i) => {
-    if (ch === " ") return;
+    if (ch === " ") {
+      return;
+    }
     (GLYPHS[ch] as readonly string[]).forEach((row, gy) => {
       [...row].forEach((c, gx) => {
-        if (c !== "#") return;
-        for (let y = 0; y < b; y++)
-          for (let x = 0; x < b; x++) mask.add((1 + gy * b + y) * width + 1 + i * cw + gx * b + x);
+        if (c !== "#") {
+          return;
+        }
+        for (let y = 0; y < b; y++) {
+          for (let x = 0; x < b; x++) {
+            mask.add((1 + gy * b + y) * width + 1 + i * cw + gx * b + x);
+          }
+        }
       });
     });
   });
@@ -167,7 +174,9 @@ function birdAt(s: number, pose: "rest" | "downstroke" = "rest"): RgbaImage {
   const hcy = bcy - birdArt.HEAD_UP * bh;
   const fw = pixel.round(4 * s);
   const fh = pixel.round(2 * s);
-  if (!air) g.rect(Math.trunc(centre - 5 * s), height - 1 - fh, fw, fh, "orange");
+  if (!air) {
+    g.rect(Math.trunc(centre - 5 * s), height - 1 - fh, fw, fh, "orange");
+  }
   birdArt.cel(
     g,
     birdArt.inEll(centre - bw + s, bcy - s, 4.4 * s, 2.2 * s, -0.45),
@@ -195,8 +204,9 @@ function birdAt(s: number, pose: "rest" | "downstroke" = "rest"): RgbaImage {
     1,
   );
   if (air) {
-    for (const dx of [-5, 2])
+    for (const dx of [-5, 2]) {
       g.rect(Math.trunc(centre + dx * s), Math.trunc(bottom), fw, pixel.round(s), "orange");
+    }
     const a = 172 * (Math.PI / 180);
     const ln = 15 * s;
     const sx = centre - 5 * s;
@@ -224,12 +234,13 @@ function birdAt(s: number, pose: "rest" | "downstroke" = "rest"): RgbaImage {
     pixel.round(3 * s),
     1,
   );
-  if (!air)
+  if (!air) {
     birdArt.flat(
       g,
       birdArt.inEll(centre - 2 * s, bcy + 2 * s, bw * 0.5, bh * 0.3, -0.3),
       birdArt.WING,
     );
+  }
   g.rect(
     Math.trunc(hcx + hr - 2 * s),
     Math.trunc(hcy),
@@ -250,7 +261,9 @@ function birdAt(s: number, pose: "rest" | "downstroke" = "rest"): RgbaImage {
 /** image cropped to the bounding box of its non-transparent pixels. */
 function trimmed(im: RgbaImage): RgbaImage {
   const box = opaqueRect({ x: 0, y: 0, width: im.width, height: im.height }, im);
-  if (!box) throw new Error("trimmed: the image is empty");
+  if (!box) {
+    throw new Error("trimmed: the image is empty");
+  }
   return crop(box, im);
 }
 
@@ -304,13 +317,17 @@ function save(path: string, bytes: Uint8Array): void {
 
 function build(): void {
   const ims = images();
-  for (const [key, im] of ims) save(OUT[key], encodeRgbaPng(PNG, im));
+  for (const [key, im] of ims) {
+    save(OUT[key], encodeRgbaPng(PNG, im));
+  }
   const manifest = pixel.readManifest();
   const entries = new Map<string, pixel.ManifestEntry>();
-  for (const entry of (manifest.images as pixel.ManifestEntry[] | undefined) ?? [])
+  for (const entry of (manifest.images as pixel.ManifestEntry[] | undefined) ?? []) {
     entries.set(entry.key, entry);
-  for (const [key, im] of ims)
+  }
+  for (const [key, im] of ims) {
     entries.set(key, { key, png: basename(OUT[key]), width: im.width, height: im.height });
+  }
   manifest.images = [...entries.values()].sort((a, b) =>
     a.key < b.key ? -1 : a.key > b.key ? 1 : 0,
   );
@@ -321,13 +338,15 @@ function build(): void {
 function preview(out: string): void {
   const ims = images();
   const tiles: RgbaImage[] = [];
-  for (const ground of ["lgrey", "navy"])
-    for (const z of [1, 3])
+  for (const ground of ["lgrey", "navy"]) {
+    for (const z of [1, 3]) {
       for (const im of ims.values()) {
         const t = filledImage(rgba(ground), im.width + 16, im.height + 16);
         composite({ x: 8, y: 8 }, im, t);
         tiles.push(resizeNearest(t.width * z, t.height * z, t));
       }
+    }
+  }
   const width = Math.max(...tiles.map((t) => t.width));
   const sheet = filledImage(
     rgba("ink"),
@@ -342,4 +361,6 @@ function preview(out: string): void {
   save(out, encodeRgbPng(PNG, sheet));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

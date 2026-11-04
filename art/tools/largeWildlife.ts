@@ -11,8 +11,8 @@
  * contact mask, hitbox, portrait, interaction or dialogue.
  */
 
-import { exportAseprite } from "@andornaut/art-kit/generate";
 import { polygon } from "@andornaut/art-kit/draw";
+import { exportAseprite } from "@andornaut/art-kit/generate";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
 import { commands, run } from "./cli.ts";
@@ -196,7 +196,9 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 async function build(): Promise<void> {
   const executable = pixel.which("aseprite");
-  if (executable === undefined) throw new Error("aseprite is not on PATH");
+  if (executable === undefined) {
+    throw new Error("aseprite is not on PATH");
+  }
   for (const [key, tags] of sprites()) {
     await exportAseprite(
       executable,
@@ -216,7 +218,7 @@ async function build(): Promise<void> {
 
 const GROUNDS = [pixel.hex("zone-green"), pixel.hex("forest")];
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     commands({
       usage: USAGE,
@@ -224,3 +226,4 @@ if (import.meta.main)
       preview: (out) => pixel.preview({ out, grounds: GROUNDS }, [...sprites()]),
     }),
   );
+}

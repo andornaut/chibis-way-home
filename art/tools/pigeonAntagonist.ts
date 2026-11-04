@@ -131,15 +131,25 @@ function prepareAir(phase: number): pixel.Frame {
 }
 
 function wingPose(state: string, phase: number): string {
-  if (state === "fly") return ["up", "half", "down", "half"][phase] as string;
-  if (state === "drop") return ["up", "half"][phase] as string;
-  if (state === "frustration" && phase % 2) return "half";
+  if (state === "fly") {
+    return ["up", "half", "down", "half"][phase] as string;
+  }
+  if (state === "drop") {
+    return ["up", "half"][phase] as string;
+  }
+  if (state === "frustration" && phase % 2) {
+    return "half";
+  }
   return "folded";
 }
 
 function draw(state = "idle", phase = 0): pixel.Frame {
-  if (state === "prepare-air") return prepareAir(phase);
-  if (state === "swoop") return swoop(phase);
+  if (state === "prepare-air") {
+    return prepareAir(phase);
+  }
+  if (state === "swoop") {
+    return swoop(phase);
+  }
   const g = new Grid(48, 48);
   const air = state === "fly" || state === "drop";
   const lift = air
@@ -158,7 +168,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
       g.rect(x - 2, 45, 6, 2, "pink");
     }
   } else {
-    for (const x of [24, 30]) g.rect(x, 39 - lift, 4, 2, "pink");
+    for (const x of [24, 30]) {
+      g.rect(x, 39 - lift, 4, 2, "pink");
+    }
   }
   g.blob(25, 33 - lift, 13, 11, "grey", "slate", "lgrey");
   g.ell(31, 33 - lift, 7, 10, "cream");
@@ -226,8 +238,9 @@ function context(bird: RgbaImage, state = "idle", phase = 0): RgbaImage {
     [170, 150, 130],
     [470, 95, 180],
     [650, 150, 70],
-  ] as const)
+  ] as const) {
     box(im, x, y, x + w, 260, "zone-purple-shade");
+  }
   box(im, 0, 260, 719, 359, "dslate");
   box(im, 0, 260, 719, 260, "navy");
   box(im, 0, 261, 719, 262, "white");
@@ -239,7 +252,9 @@ function context(bird: RgbaImage, state = "idle", phase = 0): RgbaImage {
   const py = px === 203 ? 172 : 120;
   composite({ x: px, y: py }, frameImage(draw(state, phase)), im);
   composite({ x: 440, y: 218 }, bird, im);
-  if (state === "drop") composite({ x: 319, y: 174 + phase * 10 }, frameImage(poop()), im);
+  if (state === "drop") {
+    composite({ x: 319, y: 174 + phase * 10 }, frameImage(poop()), im);
+  }
   return im;
 }
 
@@ -273,7 +288,7 @@ async function preview(out: string): Promise<void> {
   writeFileSync(`${stem}.gif`, encodeGif({ loop: 0, durations }, frames));
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     commands({
       usage: USAGE,
@@ -282,3 +297,4 @@ if (import.meta.main)
       preview,
     }),
   );
+}

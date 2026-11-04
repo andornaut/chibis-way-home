@@ -49,14 +49,18 @@ function legs(
 
 export function draw(kind: string): RgbaImage {
   const size = SIZES[kind];
-  if (!size) throw new Error(`unknown apartment prop ${kind}`);
+  if (!size) {
+    throw new Error(`unknown apartment prop ${kind}`);
+  }
   const [w, h] = size;
   const im = image(w, h);
   if (kind === "restaurant-counter") {
     rect("dbrown", [2, 10, 94, 48], im);
     rect("zone-peach-shade", [5, 15, 91, 44], im);
     rect("zone-red-shade", [8, 18, 88, 40], im);
-    for (const x of [32, 62]) rect("dbrown", [x, 18, x + 2, 40], im);
+    for (const x of [32, 62]) {
+      rect("dbrown", [x, 18, x + 2, 40], im);
+    }
     rect("brown", [0, 8, 96, 15], im);
     rect("zone-peach", [2, 9, 94, 12], im);
     ellipse("zone-peach", [12, 4, 34, 10], im);
@@ -91,20 +95,24 @@ export function draw(kind: string): RgbaImage {
       rect("dbrown", [x + 1, top, x + 23, bottom], im);
       rect("zone-peach-shade", [x + 3, top + 3, x + 21, bottom - 8], im);
       rect("zone-green", [x + 5, top + 5, x + 19, bottom - 11], im);
-      for (let y = top + 18; y < bottom - 10; y += 18)
+      for (let y = top + 18; y < bottom - 10; y += 18) {
         rect("zone-green-shade", [x + 5, y, x + 19, y + 2], im);
+      }
     }
   } else if (kind === "residential-shelf") {
     rect("dbrown", [4, 0, 68, 96], im);
     rect("zone-peach-shade", [8, 4, 64, 92], im);
-    for (const y of [26, 56, 86]) rect("brown", [8, y, 64, y + 4], im);
+    for (const y of [26, 56, 86]) {
+      rect("brown", [8, y, 64, y + 4], im);
+    }
     for (const [x, y, height, colour] of [
       [12, 7, 19, "zone-red"],
       [21, 12, 14, "zone-green"],
       [31, 6, 20, "zone-blue-shade"],
       [43, 38, 18, "zone-red-shade"],
-    ] as const)
+    ] as const) {
       rect(colour, [x, y, x + 7, y + height], im);
+    }
     ellipse("zone-peach", [13, 39, 32, 55], im);
     rect("zone-green-shade", [16, 70, 40, 86], im);
     rect("zone-green", [16, 70, 40, 74], im);
@@ -113,11 +121,12 @@ export function draw(kind: string): RgbaImage {
 }
 
 function build(): void {
-  for (const key of Object.keys(SIZES))
+  for (const key of Object.keys(SIZES)) {
     writeImage(
       `${BACKDROPS_DIR}/apartment-${key}.png`,
       backgroundTones.apply(`apartment-${key}`, draw(key)),
     );
+  }
 }
 
 function preview(out: string): void {
@@ -143,4 +152,6 @@ function preview(out: string): void {
   writeRgbImage(out, im);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

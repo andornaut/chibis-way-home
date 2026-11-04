@@ -52,8 +52,12 @@ const PNG = { deflateLevel: 9, deflateStrategy: 0, filterType: 0 };
 
 function solid(top = false, bottom = false, left = false, right = false): RgbaImage {
   const im = filledImage(rgba("slate"), T, T);
-  if (left) rect("dslate", [0, 0, 2, T], im);
-  if (right) rect("dslate", [10, 0, 12, T], im);
+  if (left) {
+    rect("dslate", [0, 0, 2, T], im);
+  }
+  if (right) {
+    rect("dslate", [10, 0, 12, T], im);
+  }
   if (bottom) {
     rect("dslate", [0, 9, T, 11], im);
     rect("navy", [0, 11, T, 12], im);
@@ -73,10 +77,15 @@ function ledge(side: string): RgbaImage {
     [1, 3, "white"],
     [3, 5, "lgrey"],
     [5, 6, "dslate"],
-  ] as const)
+  ] as const) {
     rect(colour, [0, y0, T, y1], im);
-  if (side === "left") rect("navy", [0, 3, 1, 6], im);
-  if (side === "right") rect("navy", [11, 3, 12, 6], im);
+  }
+  if (side === "left") {
+    rect("navy", [0, 3, 1, 6], im);
+  }
+  if (side === "right") {
+    rect("navy", [11, 3, 12, 6], im);
+  }
   return im;
 }
 
@@ -96,7 +105,9 @@ function crumblingLedge(state: string, side: string): RgbaImage {
   rows.forEach((row, i) => {
     const y = i + 1;
     [...(side === "right" ? [...row].reverse().join("") : row)].forEach((code, x) => {
-      if (code !== ".") im.data.set(rgba(MARK_COLOURS[code] as string), (y * im.width + x) * 4);
+      if (code !== ".") {
+        im.data.set(rgba(MARK_COLOURS[code] as string), (y * im.width + x) * 4);
+      }
     });
   });
   return im;
@@ -125,19 +136,24 @@ export function tiles(): [name: string, tile: RgbaImage][] {
   ] as const) {
     const [top, bottom, left, right] = flags.map(Boolean) as [boolean, boolean, boolean, boolean];
     const tile = solid(top, bottom, left, right);
-    if (name === "platform-top-joint") rect("dslate", [10, 5, 12, 7], tile);
+    if (name === "platform-top-joint") {
+      rect("dslate", [10, 5, 12, 7], tile);
+    }
     items.push([name, tile]);
   }
-  for (const side of ["left", "middle", "right"])
+  for (const side of ["left", "middle", "right"]) {
     items.push([`one-way-ledge-${side}`, ledge(side)]);
-  for (const side of ["top", "bottom", "left", "right"])
+  }
+  for (const side of ["top", "bottom", "left", "right"]) {
     items.push([`hazard-${side}`, hazard(side)]);
+  }
   for (const [state, prefix] of [
     ["intact", "crumbling-ledge"],
     ["warn", "crumbling-ledge-warn"],
   ] as const) {
-    for (const side of ["left", "middle", "right"])
+    for (const side of ["left", "middle", "right"]) {
       items.push([`${prefix}-${side}`, crumblingLedge(state, side)]);
+    }
   }
   return items;
 }
@@ -149,8 +165,9 @@ export async function build(): Promise<void> {
   );
   const path = `public/art/${String(entry.json)}`;
   const data = JSON.parse(readFileSync(path, "utf8")) as { tiles: Record<string, number> };
-  for (const alias of ["crumbling-ledge", "crumbling-ledge-warn", "one-way-ledge"])
+  for (const alias of ["crumbling-ledge", "crumbling-ledge-warn", "one-way-ledge"]) {
     data.tiles[alias] = data.tiles[`${alias}-middle`] as number;
+  }
   pixel.writeJson({ sortKeys: true }, path, data);
   pixel.updateManifest("tilesets", [entry]);
 }
@@ -177,8 +194,9 @@ export function preview(out: string): void {
     [22, 9, 10],
     [37, 3, 8],
     [50, 11, 10],
-  ] as const)
+  ] as const) {
     rect("grey", [c * T, r * T, (c + w) * T, 600], im);
+  }
   block(0, 50, 60, 10);
   block(5, 44, 8, 2);
   block(18, 39, 7, 3);
@@ -188,7 +206,9 @@ export function preview(out: string): void {
   // Low ceiling above the short route; strips project into free cells.
   block(5, 44, 8, 2);
   block(5, 38, 8, 2);
-  for (let c = 5; c < 13; c++) put("hazard-bottom", c, 40);
+  for (let c = 5; c < 13; c++) {
+    put("hazard-bottom", c, 40);
+  }
   for (let c = 26; c < 30; c++) {
     put("hazard-top", c, 49);
     put("platform-face", c, 50);
@@ -220,4 +240,6 @@ export function preview(out: string): void {
   writeFileSync(`${stem}-grey.png`, encodeRgbPng(PNG, greyscale(im)));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

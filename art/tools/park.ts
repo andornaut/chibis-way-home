@@ -127,7 +127,9 @@ function fill(im: RgbaImage, [x, y, w, h, c]: Fill): RgbaImage {
 }
 
 function rects(im: RgbaImage, ...list: readonly Fill[]): RgbaImage {
-  for (const item of list) fill(im, item);
+  for (const item of list) {
+    fill(im, item);
+  }
   return im;
 }
 
@@ -145,9 +147,10 @@ function grass(kind = ""): RgbaImage {
     [8, 6, 2, 1, body],
   );
   // A soft rounded lip on an exposed end.
-  if (kind.includes("l"))
+  if (kind.includes("l")) {
     rects(t, [0, 0, 2, 1, null], [0, 1, 1, 1, null], [1, 1, 1, 2, edge], [0, 3, 1, 9, edge]);
-  if (kind.includes("r"))
+  }
+  if (kind.includes("r")) {
     rects(
       t,
       [T - 2, 0, 2, 1, null],
@@ -155,15 +158,22 @@ function grass(kind = ""): RgbaImage {
       [T - 2, 1, 1, 2, edge],
       [T - 1, 3, 1, 9, edge],
     );
+  }
   return t;
 }
 
 function soil(kind = "", pebbles = false): RgbaImage {
   const [fillc, pebble, side] = SOIL;
   const t = rects(image(T, T), [0, 0, T, T, fillc]);
-  if (pebbles) rects(t, [2, 8, 2, 2, pebble], [8, 2, 2, 1, pebble]);
-  if (kind.includes("l")) rects(t, [0, 0, 3, T, pebble], [0, 0, 1, T, side]);
-  if (kind.includes("r")) rects(t, [T - 3, 0, 3, T, pebble], [T - 1, 0, 1, T, side]);
+  if (pebbles) {
+    rects(t, [2, 8, 2, 2, pebble], [8, 2, 2, 1, pebble]);
+  }
+  if (kind.includes("l")) {
+    rects(t, [0, 0, 3, T, pebble], [0, 0, 1, T, side]);
+  }
+  if (kind.includes("r")) {
+    rects(t, [T - 3, 0, 3, T, pebble], [T - 1, 0, 1, T, side]);
+  }
   return t;
 }
 
@@ -175,8 +185,12 @@ function turf(kind = ""): RgbaImage {
     [2, 7, 2, 2, "dgreen"],
     [8, 7, 2, 3, "dgreen"],
   );
-  if (kind.includes("l")) rects(t, [0, 0, 3, T, SOIL[1]], [0, 0, 1, T, SOIL[2]]);
-  if (kind.includes("r")) rects(t, [T - 3, 0, 3, T, SOIL[1]], [T - 1, 0, 1, T, SOIL[2]]);
+  if (kind.includes("l")) {
+    rects(t, [0, 0, 3, T, SOIL[1]], [0, 0, 1, T, SOIL[2]]);
+  }
+  if (kind.includes("r")) {
+    rects(t, [T - 3, 0, 3, T, SOIL[1]], [T - 1, 0, 1, T, SOIL[2]]);
+  }
   return t;
 }
 
@@ -192,7 +206,9 @@ function path(joint = false): RgbaImage {
     [3, 4, 2, 1, under],
     [8, 5, 2, 1, under],
   );
-  if (joint) rects(t, [T - 1, 3, 1, 4, under]);
+  if (joint) {
+    rects(t, [T - 1, 3, 1, 4, under]);
+  }
   return t;
 }
 
@@ -218,7 +234,9 @@ function bench(kind: string): RgbaImage {
     [0, 3, T, 3, wood],
     [0, 6, T, 1, edge],
   );
-  if (kind === "l" || kind === "r") rects(t, [kind === "l" ? 2 : T - 4, 7, 2, 5, edge]);
+  if (kind === "l" || kind === "r") {
+    rects(t, [kind === "l" ? 2 : T - 4, 7, 2, 5, edge]);
+  }
   return t;
 }
 
@@ -232,8 +250,12 @@ function branch(kind: string): RgbaImage {
     [0, 0, T, 1, "dbrown"],
     [0, 1, T, 1, "cream"],
   );
-  if (kind === "r") rects(t, [T - 4, 0, 4, 6, null], [T - 6, 6, 6, 4, leaf], [T - 5, 6, 3, 1, lit]);
-  if (kind === "l") rects(t, [0, 0, 2, 6, null]);
+  if (kind === "r") {
+    rects(t, [T - 4, 0, 4, 6, null], [T - 6, 6, 6, 4, leaf], [T - 5, 6, 3, 1, lit]);
+  }
+  if (kind === "l") {
+    rects(t, [0, 0, 2, 6, null]);
+  }
   return t;
 }
 
@@ -247,9 +269,15 @@ function roof(kind: string): RgbaImage {
     [0, 3, 4, 5, b],
     [8, 3, 4, 5, b],
   );
-  for (const x of [0, 6]) rects(t, [x + 1, 8, 4, 1, a], [x + 2, 9, 2, 1, edge]);
-  if (kind === "l") rects(t, [0, 0, 1, 9, edge]);
-  if (kind === "r") rects(t, [T - 1, 0, 1, 9, edge]);
+  for (const x of [0, 6]) {
+    rects(t, [x + 1, 8, 4, 1, a], [x + 2, 9, 2, 1, edge]);
+  }
+  if (kind === "l") {
+    rects(t, [0, 0, 1, 9, edge]);
+  }
+  if (kind === "r") {
+    rects(t, [T - 1, 0, 1, 9, edge]);
+  }
   return t;
 }
 
@@ -258,12 +286,20 @@ function pond(kind: string, bed: boolean): RgbaImage {
   const t = image(T, T);
   if (!bed) {
     rects(t, [0, 4, T, 8, w], [0, 4, T, 1, hi], [2, 7, 4, 1, "white"], [8, 9, 3, 1, hi]);
-    if (kind === "l") rects(t, [0, 0, 3, T, SOIL[1]], [3, 6, 2, 6, SOIL[1]]);
-    if (kind === "r") rects(t, [T - 3, 0, 3, T, SOIL[1]], [T - 5, 6, 2, 6, SOIL[1]]);
+    if (kind === "l") {
+      rects(t, [0, 0, 3, T, SOIL[1]], [3, 6, 2, 6, SOIL[1]]);
+    }
+    if (kind === "r") {
+      rects(t, [T - 3, 0, 3, T, SOIL[1]], [T - 5, 6, 2, 6, SOIL[1]]);
+    }
   } else {
     rects(t, [0, 0, T, 8, deep], [0, 8, T, 4, SOIL[1]]);
-    if (kind === "l") rects(t, [0, 0, 5, T, SOIL[1]]);
-    if (kind === "r") rects(t, [T - 5, 0, 5, T, SOIL[1]]);
+    if (kind === "l") {
+      rects(t, [0, 0, 5, T, SOIL[1]]);
+    }
+    if (kind === "r") {
+      rects(t, [T - 5, 0, 5, T, SOIL[1]]);
+    }
   }
   return t;
 }
@@ -271,9 +307,15 @@ function pond(kind: string, bed: boolean): RgbaImage {
 function thorn(kind: string): RgbaImage {
   const [dark, mid, th] = HEDGE;
   const t = rects(image(T, T), [0, 5, T, 7, dark], [1, 7, 4, 3, mid], [7, 8, 4, 3, mid]);
-  for (const x of [1, 5, 9]) rects(t, [x, 2, 2, 3, th], [x, 1, 1, 1, th], [x, 0, 1, 1, "dred"]);
-  if (kind === "l") rects(t, [0, 5, 1, 2, null], [0, 3, 2, 2, th]);
-  if (kind === "r") rects(t, [T - 1, 5, 1, 2, null], [T - 2, 3, 2, 2, th]);
+  for (const x of [1, 5, 9]) {
+    rects(t, [x, 2, 2, 3, th], [x, 1, 1, 1, th], [x, 0, 1, 1, "dred"]);
+  }
+  if (kind === "l") {
+    rects(t, [0, 5, 1, 2, null], [0, 3, 2, 2, th]);
+  }
+  if (kind === "r") {
+    rects(t, [T - 1, 5, 1, 2, null], [T - 2, 3, 2, 2, th]);
+  }
   return t;
 }
 
@@ -351,7 +393,9 @@ function clouds(): RgbaImage {
       ],
     ],
   ] as const) {
-    for (const [a, b, c, e] of parts) ellipse("cream", [x + a, y + b, x + c, y + e], im);
+    for (const [a, b, c, e] of parts) {
+      ellipse("cream", [x + a, y + b, x + c, y + e], im);
+    }
     fill(im, [x, y + 20, 74, 6, "cream"]);
   }
   return im;
@@ -383,19 +427,21 @@ function city(): RgbaImage {
     [240, 50, 40],
     [290, 40, 110],
     [330, 30, 70],
-  ] as const)
+  ] as const) {
     fill(im, [x, top, w, 200 - top, "skin2"]);
+  }
   // Water towers.
   for (const [tx, top] of [
     [10, 100],
     [190, 80],
-  ] as const)
+  ] as const) {
     rects(
       im,
       [tx, top - 20, 14, 14, "skin2"],
       [tx + 2, top - 6, 2, 6, "skin2"],
       [tx + 10, top - 6, 2, 6, "skin2"],
     );
+  }
   return im;
 }
 
@@ -441,8 +487,12 @@ function bandstand(): RgbaImage {
     [0, 72, 120, 2, "cream"],
     [4, 54, 112, 3, edge],
   );
-  for (const x of [6, 40, 76, 110]) fill(im, [x, 6, 4, 66, edge]);
-  for (let x = 10; x < 110; x += 8) fill(im, [x, 57, 2, 15, edge]);
+  for (const x of [6, 40, 76, 110]) {
+    fill(im, [x, 6, 4, 66, edge]);
+  }
+  for (let x = 10; x < 110; x += 8) {
+    fill(im, [x, 57, 2, 15, edge]);
+  }
   return im;
 }
 
@@ -488,20 +538,29 @@ function boat(frame = 0): pixel.Frame {
     const inset = 1 + Math.floor((y - 5) ** 2 / (frame ? 6 : 5));
     const x0 = inset;
     const x1 = 71 - inset;
-    if (x1 <= x0) break;
+    if (x1 <= x0) {
+      break;
+    }
     g.rect(x0, y, x1 - x0 + 1, 1, "rust");
     g.p(x0 - 1, y, "dbrown");
     g.p(x1 + 1, y, "dbrown");
-    if (y === 6) g.rect(x0, y, x1 - x0 + 1, 1, "ochre"); // lit along the top
+    if (y === 6) {
+      g.rect(x0, y, x1 - x0 + 1, 1, "ochre");
+    } // lit along the top
     // Shade underneath, lower right.
-    if (y >= keel - 3)
+    if (y >= keel - 3) {
       g.rect(x0 + Math.floor((x1 - x0) / 3), y, Math.floor(((x1 - x0) * 2) / 3) + 1, 1, "dbrown");
+    }
     last = [x0, x1, y];
   }
-  if (!last) throw new Error("park-boat has no hull rows");
+  if (!last) {
+    throw new Error("park-boat has no hull rows");
+  }
   const [x0, x1, y] = last;
   g.rect(x0, y + 1, x1 - x0 + 1, 1, "dbrown");
-  for (const x of [20, 50]) g.rect(x, 3, 2, 2, "dbrown"); // the oarlocks' rowlocks, 2px, on the gunwale
+  for (const x of [20, 50]) {
+    g.rect(x, 3, 2, 2, "dbrown");
+  } // the oarlocks' rowlocks, 2px, on the gunwale
   return g.px;
 }
 
@@ -542,7 +601,9 @@ function gate(openK = 0): pixel.Frame {
     }
     g.rect(x0, 20, half, 2, "ink");
     g.rect(x0, 48, half, 2, "ink");
-    for (let bx = x0; bx < x0 + half; bx += 4) g.rect(bx, 18, 2, 40, "ink");
+    for (let bx = x0; bx < x0 + half; bx += 4) {
+      g.rect(bx, 18, 2, 40, "ink");
+    }
     const cx = x0 + Math.floor(half / 2);
     g.rect(cx - 2, 32, 4, 2, "ink"); // a scroll with a leaf
     g.rect(cx - 1, 30, 2, 2, "forest");
@@ -619,12 +680,20 @@ function range(start: number, stop: number): number[] {
 
 function tops(): Map<number, Top> {
   const m = new Map<number, Top>();
-  for (const c of range(0, 30)) m.set(c, [50, c >= 8 && c <= 21 ? "path" : "grass"]);
+  for (const c of range(0, 30)) {
+    m.set(c, [50, c >= 8 && c <= 21 ? "path" : "grass"]);
+  }
   STEPS.forEach(([c, r], i) => {
-    for (const cc of [c, c + 1]) m.set(cc, [r, i % 2 ? "stair" : "grass"]);
+    for (const cc of [c, c + 1]) {
+      m.set(cc, [r, i % 2 ? "stair" : "grass"]);
+    }
   });
-  for (const c of [...range(40, 76), ...range(86, 94), ...range(112, 120)]) m.set(c, [40, "grass"]);
-  for (const c of range(104, 112)) m.set(c, [30, "grass"]);
+  for (const c of [...range(40, 76), ...range(86, 94), ...range(112, 120)]) {
+    m.set(c, [40, "grass"]);
+  }
+  for (const c of range(104, 112)) {
+    m.set(c, [30, "grass"]);
+  }
   return m;
 }
 
@@ -638,8 +707,11 @@ function example(chars = true): RgbaImage {
     const y = (BACKDROP_DEFS.get(key) as BackdropDef)[1] - 600 + groundRow * T + extra;
     over([x, y - p.height], p, im);
   };
-  for (const key of ["park-sky", "park-clouds", "park-treetops", "park-city", "park-far-trees"])
-    for (let x = 0; x < 1440; x += (art.get(key) as RgbaImage).width) put(key, x);
+  for (const key of ["park-sky", "park-clouds", "park-treetops", "park-city", "park-far-trees"]) {
+    for (let x = 0; x < 1440; x += (art.get(key) as RgbaImage).width) {
+      put(key, x);
+    }
+  }
   put("park-tree", 16 * T - 6);
   put("park-lamp", 4 * T);
   put("park-lamp", 88 * T, 40);
@@ -672,13 +744,16 @@ function example(chars = true): RgbaImage {
     const side = c === POND[0] ? "-left" : c === POND[1] ? "-right" : "";
     over([c * T, 40 * T], tile(`hazard-pond${side}`), im);
     over([c * T, 41 * T], tile(`hazard-pond-bed${side}`), im);
-    for (let r = 42; r < 60; r++) over([c * T, r * T], soil("", (c * 7 + r * 3) % 5 === 0), im);
+    for (let r = 42; r < 60; r++) {
+      over([c * T, r * T], soil("", (c * 7 + r * 3) % 5 === 0), im);
+    }
   }
-  for (const [name, row, c0, w] of LEDGES)
+  for (const [name, row, c0, w] of LEDGES) {
     for (let c = c0; c < c0 + w; c++) {
       const side = c === c0 ? "-left" : c === c0 + w - 1 ? "-right" : "";
       over([c * T, row * T], tile(`one-way-${name}${side}`), im);
     }
+  }
   const [t0, tw, trow] = THORNS;
   for (let c = t0; c < t0 + tw; c++) {
     const side = c === t0 ? "-left" : c === t0 + tw - 1 ? "-right" : "";
@@ -702,15 +777,20 @@ function walkableCheck(im: RgbaImage): readonly [ratio: number, at: string] {
     c * T + 6,
     top,
   ]);
-  for (const [, row, c0, w] of LEDGES)
-    for (let c = c0; c < c0 + w; c++) spots.push([c * T + 6, row]);
+  for (const [, row, c0, w] of LEDGES) {
+    for (let c = c0; c < c0 + w; c++) {
+      spots.push([c * T + 6, row]);
+    }
+  }
   const hex = (x: number, y: number) =>
     [...im.data.subarray((y * im.width + x) * 4, (y * im.width + x) * 4 + 3)]
       .map((v) => v.toString(16).padStart(2, "0"))
       .join("");
   for (const [x, row] of spots) {
     const r = pixel.contrast(hex(x, row * T + 1), hex(x, row * T - 1));
-    if (r < worst[0]) worst = [r, `(${Math.floor(x / T)}, ${row})`];
+    if (r < worst[0]) {
+      worst = [r, `(${Math.floor(x / T)}, ${row})`];
+    }
   }
   return worst;
 }
@@ -729,4 +809,6 @@ function preview(out: string): void {
   writeFileSync(out, encodeRgbPng(PNG, opaque(sheet)));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

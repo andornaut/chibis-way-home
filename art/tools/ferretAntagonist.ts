@@ -20,8 +20,8 @@
  * separate and unchanged.
  */
 
-import { run } from "./cli.ts";
 import * as bird from "./bird.ts";
+import { run } from "./cli.ts";
 import * as ferret from "./ferret.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
@@ -45,7 +45,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   const lift = moving || state === "idle" || state === "rest" ? phase % 2 : 0;
   let hx = low ? 33 : 29;
   const hy = low ? 27 - lift : 19 - lift;
-  if (state === "frustration") hx += [-2, 1, 2, -1][phase] as number;
+  if (state === "frustration") {
+    hx += [-2, 1, 2, -1][phase] as number;
+  }
   const hip = [20, 36 - lift] as const;
   // Tail and feet keep their ground reference as the slender spine bends forward.
   ferret.discLine(g, [17, 38], [10, 44], 2, "brown");
@@ -88,16 +90,24 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     ferret.discLine(g, [hx - 4, hy + 9], target, 1.8, "brown");
     g.ell(target[0], target[1], 2.5, 2, "brown");
     // A light palm separates the release gesture from the connected brown forearm.
-    for (let y = target[1] - 1; y < target[1] + 1; y++)
-      for (let x = target[0] - 1; x < target[0] + 1; x++)
-        if (g.px[y]?.[x] === pixel.K.brown) g.p(x, y, "tan");
+    for (let y = target[1] - 1; y < target[1] + 1; y++) {
+      for (let x = target[0] - 1; x < target[0] + 1; x++) {
+        if (g.px[y]?.[x] === pixel.K.brown) {
+          g.p(x, y, "tan");
+        }
+      }
+    }
   }
-  if (state === "rest") g.rect(hx + 1, hy, 3, 1, "skin2");
+  if (state === "rest") {
+    g.rect(hx + 1, hy, 3, 1, "skin2");
+  }
   return ferret.outline(g);
 }
 
 function anticipateLift(phase: number): pixel.Frame {
-  if (phase !== 1) return draw("crouch", phase === 0 ? 0 : 1);
+  if (phase !== 1) {
+    return draw("crouch", phase === 0 ? 0 : 1);
+  }
   const frame = draw("idle");
   return [...frame.slice(2), ...Array.from({ length: 2 }, () => Array(48).fill(null))];
 }
@@ -125,7 +135,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -139,3 +149,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

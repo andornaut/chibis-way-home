@@ -16,7 +16,7 @@ import { dirname, posix } from "node:path";
 
 import { rectangle } from "@andornaut/art-kit/draw";
 import { encodeRgbaPng } from "@andornaut/art-kit/png";
-import { filledImage, type Rgba, resizeNearest } from "@andornaut/art-kit/raster";
+import { filledImage, resizeNearest, type Rgba } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import { commands, run } from "./cli.ts";
@@ -45,12 +45,13 @@ function background(): RgbaImage {
     .colours;
   const colour = (name: string): Rgba => [...rgb((colours[name] as string).slice(1)), 255];
   const image = filledImage(colour("lgrey"), SIZE[0], SIZE[1]);
-  for (const [x, y, width] of SKYLINE)
+  for (const [x, y, width] of SKYLINE) {
     rectangle(
       { fill: colour("zone-blue") },
       { x0: x, y0: y, x1: x + width - 1, y1: GROUND_Y - 1 },
       image,
     );
+  }
   rectangle(
     { fill: colour("zone-blue-shade") },
     { x0: 0, y0: GROUND_Y, x1: SIZE[0] - 1, y1: SIZE[1] - 1 },
@@ -68,8 +69,9 @@ function build(): void {
   save(OUT, background());
   const manifest = JSON.parse(readFileSync(MANIFEST, "utf8")) as Record<string, unknown>;
   const entries = new Map<string, ManifestEntry>();
-  for (const entry of (manifest.images as ManifestEntry[] | undefined) ?? [])
+  for (const entry of (manifest.images as ManifestEntry[] | undefined) ?? []) {
     entries.set(entry.key, entry);
+  }
   entries.set(KEY, {
     key: KEY,
     png: posix.relative(posix.dirname(MANIFEST), OUT),
@@ -87,4 +89,6 @@ function preview(out: string): void {
   save(out, resizeNearest(SIZE[0] * 3, SIZE[1] * 3, background()));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

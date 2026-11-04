@@ -97,7 +97,9 @@ type RectSpec = readonly [x: number, y: number, w: number, h: number, c: string]
 /** Two ramp steps darker, then down the ramp until it holds 3:1 on the sidewalk. */
 function edge(c: string): string {
   let e = darker(c, 2);
-  while (contrast(e, SIDEWALK) < 3 && e !== K.ink) e = darker(e);
+  while (contrast(e, SIDEWALK) < 3 && e !== K.ink) {
+    e = darker(e);
+  }
   return e;
 }
 
@@ -105,27 +107,32 @@ function edge(c: string): string {
 function done(g: Grid, shift = 0): pixel.Frame {
   let px = g.outlined({ edge });
   if (shift > 0) {
-    if (!px.every((row) => row.slice(-shift).every((c) => c === null)))
+    if (!px.every((row) => row.slice(-shift).every((c) => c === null))) {
       throw new Error("the shift would clip the sprite");
+    }
     px = px.map((row) => [...Array<null>(shift).fill(null), ...row.slice(0, -shift)]);
   } else if (shift < 0) {
-    if (!px.every((row) => row.slice(0, -shift).every((c) => c === null)))
+    if (!px.every((row) => row.slice(0, -shift).every((c) => c === null))) {
       throw new Error("the shift would clip the sprite");
+    }
     px = px.map((row) => [...row.slice(-shift), ...Array<null>(-shift).fill(null)]);
   }
   return px;
 }
 
 function rects(g: Grid, x0: number, y0: number, specs: readonly RectSpec[]): void {
-  for (const [x, y, w, h, c] of specs) g.rect(x0 + x, y0 + y, w, h, c);
+  for (const [x, y, w, h, c] of specs) {
+    g.rect(x0 + x, y0 + y, w, h, c);
+  }
 }
 
 /** A line drawn with a square brush w px wide. */
 function stroke(g: Grid, x0: number, y0: number, x1: number, y1: number, c: string, w = 1): void {
   const round = pixel.round;
   const n = Math.max(Math.abs(round(x1) - round(x0)), Math.abs(round(y1) - round(y0)), 1);
-  for (let i = 0; i <= n; i++)
+  for (let i = 0; i <= n; i++) {
     g.rect(round(x0 + ((x1 - x0) * i) / n), round(y0 + ((y1 - y0) * i) / n), w, w, c);
+  }
 }
 
 // ---------------------------------------------------------------- pigeon
@@ -291,7 +298,9 @@ function pug({
   const gy = 30;
   const by = 19 - lift;
   const [bl, bf, fl, ff] = legs;
-  for (const x of [12 + bf, 27 + ff]) g.rect(x, by + 3, 4, gy - by - 2, dark.shade); // far legs
+  for (const x of [12 + bf, 27 + ff]) {
+    g.rect(x, by + 3, 4, gy - by - 2, dark.shade);
+  } // far legs
   g.ell(7, by - 6 - tail, 3.5, 3, dark.body); // curled tail
   g.ell(7.5, by - 6 - tail, 1.6, 1.3, dark.shade);
   g.blob(17, by, 11, 7, dark.body, dark.shade, dark.light);
@@ -437,7 +446,9 @@ function raccoonTail(g: Grid, lift: number, sway: number): void {
     const curl = (i === bands.length - 1 ? 1 : 0) + (i >= bands.length - 2 ? sway : 0);
     const top = 41 - lift - curl;
     g.rect(x, top, w, 5, c);
-    if (i === bands.length - 1) g.p(x, top, null);
+    if (i === bands.length - 1) {
+      g.p(x, top, null);
+    }
   });
 }
 
@@ -466,8 +477,9 @@ function raccoon(step = 0, lift = 0): pixel.Frame {
   for (const side of [-1, 1]) {
     // arms across the lower belly, paws together in front
     const dy = step * side;
-    for (let i = 0; i < 5; i++)
+    for (let i = 0; i < 5; i++) {
       g.rect(side < 0 ? 10 + i : 26 - i, 36 - light + dy + Math.floor(i / 3), 1, 2, palette.shade);
+    }
     g.rect(side < 0 ? 15 + fx : 20 + fx, 38 - light + dy, 2, 2, palette.dark);
   }
   const hy = 2 - light; // the head sits low and snug on the body
@@ -490,15 +502,18 @@ function raccoon(step = 0, lift = 0): pixel.Frame {
   }
   g.blob(18.5 + fx, 25 + hy, 6.5, 4, palette.cream); // a wide, round muzzle, jaw and cheeks
   g.rect(17 + fx, 21 + hy, 3, 2, palette.dark); // nose
-  for (const x of [13, 24]) g.rect(x + fx, 18 + hy, 2, 2, palette.glint);
+  for (const x of [13, 24]) {
+    g.rect(x + fx, 18 + hy, 2, 2, palette.glint);
+  }
   for (const [x, y] of [
     [16, 25],
     [17, 26],
     [18, 26],
     [19, 26],
     [20, 25],
-  ] as const)
-    g.p(x + fx, y + hy, palette.shade); // small smile
+  ] as const) {
+    g.p(x + fx, y + hy, palette.shade);
+  } // small smile
   return done(g);
 }
 
@@ -518,4 +533,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 const ONCE = { pigeon: ["flee"], "dog-pug": ["perk"] };
 
-if (import.meta.main) run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+if (import.meta.main) {
+  run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+}

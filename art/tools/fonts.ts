@@ -23,7 +23,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { buildBitmapFont } from "@andornaut/art-kit/fonts";
 import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/glyphAtlas";
 import { encodeRgbaPng } from "@andornaut/art-kit/png";
-import { composite, crop, resizeNearest, filledImage } from "@andornaut/art-kit/raster";
+import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { Canvas, FontLibrary } from "skia-canvas";
 
@@ -85,14 +85,16 @@ function inkBox(
   image: RgbaImage,
 ): { x: number; y: number; width: number; height: number } | undefined {
   let [left, top, right, bottom] = [Infinity, Infinity, -1, -1];
-  for (let y = 0; y < image.height; y++)
-    for (let x = 0; x < image.width; x++)
+  for (let y = 0; y < image.height; y++) {
+    for (let x = 0; x < image.width; x++) {
       if (image.data[(y * image.width + x) * 4 + 3]) {
         left = Math.min(left, x);
         right = Math.max(right, x);
         top = Math.min(top, y);
         bottom = Math.max(bottom, y);
       }
+    }
+  }
   return right < 0
     ? undefined
     : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
@@ -122,7 +124,9 @@ function rasterise(size: number, path: string): Rasterised {
   const glyphs = new Map<string, Glyph>();
   for (const char of CHARS) {
     const placed = font.metadata.glyphs.get(char);
-    if (!placed) throw new Error(`No glyph for ${JSON.stringify(char)}`);
+    if (!placed) {
+      throw new Error(`No glyph for ${JSON.stringify(char)}`);
+    }
     const cell = placed.width
       ? crop(
           {
@@ -141,7 +145,9 @@ function rasterise(size: number, path: string): Rasterised {
     }
     // White everywhere, coverage in alpha.
     const image = crop(box, cell);
-    for (let i = 0; i < image.data.length; i += 4) image.data.fill(255, i, i + 3);
+    for (let i = 0; i < image.data.length; i += 4) {
+      image.data.fill(255, i, i + 3);
+    }
     glyphs.set(char, [
       image,
       placed.xoffset - BLEED + box.x,
@@ -189,7 +195,9 @@ function buildFont(key: string, face: string, size: number, path: string): void 
 }
 
 export function build(): void {
-  for (const [key, [face, path, size]] of Object.entries(FONTS)) buildFont(key, face, size, path);
+  for (const [key, [face, path, size]] of Object.entries(FONTS)) {
+    buildFont(key, face, size, path);
+  }
   pixel.updateManifest(
     "fonts",
     Object.keys(FONTS).map((key) => ({ key, png: `fonts/${key}.png`, fnt: `fonts/${key}.fnt` })),
@@ -208,11 +216,15 @@ function drawLine(
   let x = startX;
   let previous: string | undefined;
   for (const char of text) {
-    if (previous !== undefined) x += pairs.get(`${previous}\u0000${char}`) ?? 0;
+    if (previous !== undefined) {
+      x += pairs.get(`${previous}\u0000${char}`) ?? 0;
+    }
     const [image, ox, oy, advance] = glyphs.get(char) as Glyph;
     if (image) {
       const tinted = filledImage([...cream, 255], image.width, image.height);
-      for (let i = 3; i < image.data.length; i += 4) tinted.data[i] = image.data[i] as number;
+      for (let i = 3; i < image.data.length; i += 4) {
+        tinted.data[i] = image.data[i] as number;
+      }
       composite({ x: x + ox, y: y + oy }, tinted, sheet);
     }
     x += advance;
@@ -243,5 +255,6 @@ export function preview(scale: number, out: string): void {
   writeFileSync(out, encodeRgbaPng(PNG_OPTIONS, scaled));
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() => commands({ usage: USAGE, build, preview: (out) => preview(3, out) }));
+}

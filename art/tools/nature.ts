@@ -88,15 +88,17 @@ export function broadleaf(
     [0.18, 0.48],
     [0.78, 0.34],
     [0.48, 0.18],
-  ] as const)
+  ] as const) {
     branch(im, wood, fork, [x + width * dx, top + height * dy], trunkWidth * 0.58);
+  }
   for (const [dx, dy, w, h, phase] of [
     [0.04, 0.22, 0.64, 0.57, 0],
     [0.38, 0.1, 0.6, 0.57, 3],
     [0.2, 0.0, 0.57, 0.53, 6],
     [0.2, 0.42, 0.62, 0.43, 9],
-  ] as const)
+  ] as const) {
     leaves(im, leaf, [x + width * dx, top + height * dy, width * w, height * h], seed + phase);
+  }
 }
 
 export function spruce(

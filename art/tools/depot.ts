@@ -23,11 +23,11 @@
 import { opaque, paste } from "@andornaut/art-kit/raster";
 
 import * as backgroundTones from "./backgroundTones.ts";
-import * as floor1 from "./floor1.ts";
 import { commands, run } from "./cli.ts";
+import * as floor1 from "./floor1.ts";
 import {
-  BACKDROPS_DIR,
   backdropEntry,
+  BACKDROPS_DIR,
   cropBox,
   frameImage,
   image,
@@ -68,7 +68,9 @@ function loadingBay(): RgbaImage {
   rectangle("dslate", [8, 32, 111, 119], im);
   rectangle("navy", [8, 100, 111, 119], im);
   rectangle("grey", [4, 24, 115, 49], im);
-  for (const y of [28, 36, 44]) rectangle("slate", [6, y, 113, y + 1], im);
+  for (const y of [28, 36, 44]) {
+    rectangle("slate", [6, y, 113, y + 1], im);
+  }
   rectangle("dslate", [0, 24, 5, 119], im);
   rectangle("dslate", [114, 24, 119, 119], im);
   rectangle("grey", [4, 112, 9, 119], im);
@@ -189,7 +191,9 @@ function streetRuns(
 ): void {
   for (const [key, x0, x1, y] of runs) {
     const def = floor1.BACKDROP_DEFS.get(key);
-    if (!def) throw new Error(`floor1 has no backdrop ${key}`);
+    if (!def) {
+      throw new Error(`floor1 has no backdrop ${key}`);
+    }
     const p = frameImage(def[0]().px);
     for (let x = x0; x < x1; x += p.width) {
       const q = cropBox([0, 0, Math.min(p.width, x1 - x), p.height], p);
@@ -209,16 +213,19 @@ function context(birdCentre = 60): RgbaImage {
   const wallIm = readImage(`${BACKDROPS_DIR}/depot-wall.png`);
   const bayIm = readImage(`${BACKDROPS_DIR}/depot-loading-bay.png`);
   const parcelIm = readImage(`${BACKDROPS_DIR}/parcel-open.png`);
-  for (let x = 0; x < 720; x += wallIm.width) over([x, FLOOR_Y - wallIm.height], wallIm, im);
+  for (let x = 0; x < 720; x += wallIm.width) {
+    over([x, FLOOR_Y - wallIm.height], wallIm, im);
+  }
   over([360, FLOOR_Y - bayIm.height], bayIm, im);
   const tiles = new Map(
     floor1.streetTilesCool()[0].map(([name, g]) => [name, frameImage(g.px)] as const),
   );
-  for (let row = 50; row < 60; row++)
+  for (let row = 50; row < 60; row++) {
     for (let col = 0; col < 60; col++) {
       const key = row === 50 ? (col % 2 ? "sidewalk-top-joint" : "sidewalk-top") : "sidewalk-face";
       over([col * 12, row * 12], tiles.get(key) as RgbaImage, im);
     }
+  }
   over([24, FLOOR_Y - parcelIm.height], parcelIm, im);
   const bird = spriteFrame("bird");
   const at: XY = [birdCentre - Math.floor(bird.width / 2), FLOOR_Y - bird.height];
@@ -241,4 +248,6 @@ function preview(out: string): void {
   writeRgbImage(out, sheet);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

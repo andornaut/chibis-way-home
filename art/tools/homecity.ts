@@ -36,8 +36,8 @@ import { opaque } from "@andornaut/art-kit/raster";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
-  BACKDROPS_DIR,
   backdropEntry,
+  BACKDROPS_DIR,
   canvasOf,
   cropBox,
   image,
@@ -84,13 +84,19 @@ function material(family: Family, suffix: string): RgbaImage {
     rect(PRIMARY, [0, 0, 12, 2], im);
     rect("zone-red-shade", [0, 10, 12, 12], im);
   }
-  if (suffix.endsWith("left")) rect("dslate", [0, 0, 2, 12], im);
-  if (suffix.endsWith("right")) rect("dslate", [10, 0, 12, 12], im);
+  if (suffix.endsWith("left")) {
+    rect("dslate", [0, 0, 2, 12], im);
+  }
+  if (suffix.endsWith("right")) {
+    rect("dslate", [10, 0, 12, 12], im);
+  }
   if (suffix.startsWith("top")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
     rect(PRIMARY, [0, 3, 12, 5], im);
-    if (suffix === "top-joint") rect("dslate", [10, 3, 12, 7], im);
+    if (suffix === "top-joint") {
+      rect("dslate", [10, 3, 12, 7], im);
+    }
   }
   return im;
 }
@@ -155,9 +161,11 @@ function house(
     im,
   );
   rect("zone-red-shade", [x + width - 20, top + 2, x + width - 12, top + 16], im);
-  if (windows)
-    for (const offset of [16, width - 28])
+  if (windows) {
+    for (const offset of [16, width - 28]) {
       rect(SHADE, [x + offset, top + 44, x + offset + 12, top + 64], im);
+    }
+  }
 }
 
 function outskirtsMid(): RgbaImage {
@@ -168,8 +176,9 @@ function outskirtsMid(): RgbaImage {
     [300, 430, 96],
     [462, 402, 108],
     [648, 426, 96],
-  ] as const)
+  ] as const) {
     house({ x, top, width, height: 600 - top }, im);
+  }
   return im;
 }
 
@@ -182,14 +191,15 @@ function neighbourhoodMid(): RgbaImage {
     [360, 390, 96],
     [492, 408, 84],
     [624, 414, 108],
-  ] as const)
+  ] as const) {
     house({ x, top, width, height: 600 - top }, im);
+  }
   // Natural branching garden trees remain entirely decorative behind play.
   for (const [x, top, width] of [
     [82, 510, 46],
     [336, 498, 54],
     [592, 514, 48],
-  ] as const)
+  ] as const) {
     nature.broadleaf(
       im,
       x - Math.floor(width / 2),
@@ -202,6 +212,7 @@ function neighbourhoodMid(): RgbaImage {
       4,
       x % 11,
     );
+  }
   return im;
 }
 
@@ -288,8 +299,9 @@ async function build(): Promise<void> {
     { key: TILESET },
     tiles().map(([name, tile]) => [name, canvasOf(tile)] as const),
   );
-  for (const [key, [draw]] of Object.entries(BACKDROPS))
+  for (const [key, [draw]] of Object.entries(BACKDROPS)) {
     writeImage(`${BACKDROPS_DIR}/${key}.png`, backgroundTones.apply(key, draw()));
+  }
   pixel.updateManifest("tilesets", [entry]);
   pixel.updateManifest("backdrops", registry());
 }
@@ -302,15 +314,21 @@ function context(kind: "outskirts" | "neighbourhood"): RgbaImage {
     kind === "outskirts" ? "outskirts-mid" : "neighbourhood-mid",
   ]) {
     const p = (BACKDROPS[key] as (typeof BACKDROPS)[string])[0]();
-    for (let x = 0; x < 720; x += p.width) over([x, 600 - p.height], p, im);
+    for (let x = 0; x < 720; x += p.width) {
+      over([x, 600 - p.height], p, im);
+    }
   }
   let ground: string;
   let raised: string;
   if (kind === "outskirts") {
-    for (let x = 0; x < 192; x += 48) over([x, 456], outskirtsWall(), im);
+    for (let x = 0; x < 192; x += 48) {
+      over([x, 456], outskirtsWall(), im);
+    }
     [ground, raised] = ["outskirts-ground", "brick-stack"];
   } else {
-    for (let x = 0; x < 192; x += 48) over([x, 420], neighbourhoodWall(), im);
+    for (let x = 0; x < 192; x += 48) {
+      over([x, 420], neighbourhoodWall(), im);
+    }
     over([240, 492], awning(), im);
     [ground, raised] = ["neighbourhood-ground", "stoop-stack"];
   }
@@ -320,8 +338,9 @@ function context(kind: "outskirts" | "neighbourhood"): RgbaImage {
     [20, 46, 6, 4, raised],
     [32, 42, 7, 8, raised],
     [45, 38, 6, 12, raised],
-  ] as const)
+  ] as const) {
     terrainBlock({ tiles: ts, family, col, row, width, height }, im);
+  }
   const bird = cropBox([0, 0, 48, 42], readImage(`${pixel.SPRITES}/bird.png`));
   over([72, 558], bird, im);
   return opaque(cropBox([0, 360, 720, 720], im));
@@ -336,4 +355,6 @@ async function preview(out: string): Promise<void> {
   writeRgbImage(out, board);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

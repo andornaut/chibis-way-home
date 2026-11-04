@@ -158,14 +158,18 @@ function bm(...rows: readonly string[]): Points {
   const points: Points = [];
   rows.forEach((row, y) => {
     [...row].forEach((ch, x) => {
-      if (ch === "#") points.push([x, y]);
+      if (ch === "#") {
+        points.push([x, y]);
+      }
     });
   });
   return points;
 }
 
 function stamp(g: Grid, pts: Points, x: number, y: number, c: Colour): void {
-  for (const [px, py] of pts) g.p(x + px, y + py, c);
+  for (const [px, py] of pts) {
+    g.p(x + px, y + py, c);
+  }
 }
 
 /**
@@ -190,8 +194,9 @@ function panel(
     [x + w - 1, y],
     [x, y + h - 1],
     [x + w - 1, y + h - 1],
-  ] as const)
+  ] as const) {
     g.p(cx, cy, null);
+  }
   g.rect(x + 1, y + 1, w - 2, h - 2, fill);
   if (rim) {
     const [lt, rb] = rim;
@@ -208,7 +213,9 @@ function panel(
 
 /** A right-pointing triangle h tall (even), stepping 1px per column: h/2 wide. */
 function triRight(g: Grid, x: number, y: number, h: number, c: string): void {
-  for (let i = 0; i < Math.floor(h / 2); i++) g.rect(x + i, y + i, 1, h - 2 * i, c);
+  for (let i = 0; i < Math.floor(h / 2); i++) {
+    g.rect(x + i, y + i, 1, h - 2 * i, c);
+  }
 }
 
 /** Distance from the origin; the squares here are exact, so one square root is correctly rounded. */
@@ -253,15 +260,28 @@ const BUTTON_R: Record<ButtonKey, number> = { use: 36, jump: 36, pause: 16 };
 const RING_W = { pause: 2 };
 // 21x11, 2px strokes.
 const CARET: Points = [];
-for (let y = 0; y < 11; y++) for (const x of [10 - y, 11 - y, 9 + y, 10 + y]) CARET.push([x, y]);
+for (let y = 0; y < 11; y++) {
+  for (const x of [10 - y, 11 - y, 9 + y, 10 + y]) {
+    CARET.push([x, y]);
+  }
+}
 const DOT = bm("..###..", ".#####.", "#######", "#######", "#######", ".#####.", "..###..");
 // 25x7.
 const DOTS: Points = [];
-for (let i = 0; i < 3; i++) for (const [x, y] of DOT) DOTS.push([x + i * 9, y]);
+for (let i = 0; i < 3; i++) {
+  for (const [x, y] of DOT) {
+    DOTS.push([x + i * 9, y]);
+  }
+}
 // 11x13, two pause bars.
 const BARS: Points = [];
-for (let i = 0; i < 2; i++)
-  for (let x = 0; x < 4; x++) for (let y = 0; y < 13; y++) BARS.push([x + i * 7, y]);
+for (let i = 0; i < 2; i++) {
+  for (let x = 0; x < 4; x++) {
+    for (let y = 0; y < 13; y++) {
+      BARS.push([x + i * 7, y]);
+    }
+  }
+}
 // Bitmap, top row relative to the centre.
 const ICON: Record<ButtonKey, readonly [Points, number]> = {
   use: [DOTS, -3],
@@ -270,8 +290,13 @@ const ICON: Record<ButtonKey, readonly [Points, number]> = {
 };
 
 function disc(g: Grid, cx: number, cy: number, r: number, c: string): void {
-  for (let y = 0; y < g.h; y++)
-    for (let x = 0; x < g.w; x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= (r + 0.5) ** 2) g.p(x, y, c);
+  for (let y = 0; y < g.h; y++) {
+    for (let x = 0; x < g.w; x++) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 <= (r + 0.5) ** 2) {
+        g.p(x, y, c);
+      }
+    }
+  }
 }
 
 /**
@@ -295,11 +320,14 @@ function touchButtonFrame(key: ButtonKey, frame?: number): pixel.Frame {
     stamp(g, pts, c - Math.floor(w / 2), c + top, band);
     return g.px;
   }
-  for (let y = 0; y < g.h; y++)
+  for (let y = 0; y < g.h; y++) {
     for (let x = 0; x < g.w; x++) {
       const d = hypot(x - c, y - c);
-      if (r - 3.5 < d && d <= r + 0.5) g.p(x, y, d > r - 0.5 || d <= r - 2.5 ? "ink" : band);
+      if (r - 3.5 < d && d <= r + 0.5) {
+        g.p(x, y, d > r - 0.5 || d <= r - 2.5 ? "ink" : band);
+      }
     }
+  }
   const marks = new Grid(g.w, g.h);
   stamp(marks, pts, c - Math.floor(w / 2), c + top, band);
   fringed(g, marks);
@@ -340,10 +368,18 @@ function resume(state: string): pixel.Frame {
 }
 
 const X: Points = [];
-for (let i = 0; i < 12; i++) X.push([i, i]);
-for (let i = 0; i < 11; i++) X.push([i + 1, i]);
-for (let i = 0; i < 12; i++) X.push([11 - i, i]);
-for (let i = 0; i < 11; i++) X.push([10 - i, i]);
+for (let i = 0; i < 12; i++) {
+  X.push([i, i]);
+}
+for (let i = 0; i < 11; i++) {
+  X.push([i + 1, i]);
+}
+for (let i = 0; i < 12; i++) {
+  X.push([11 - i, i]);
+}
+for (let i = 0; i < 11; i++) {
+  X.push([10 - i, i]);
+}
 
 /**
  * 16x28 nine-slice, the dog-walker-game button: no outline, cut corners, a face with a 1px
@@ -405,8 +441,9 @@ function toggle(on: boolean): pixel.Frame {
       [9, 7],
       [10, 6],
       [11, 5],
-    ] as const)
+    ] as const) {
       g.rect(x, y, 1, 2, "white");
+    }
   } else {
     for (let i = 0; i < 5; i++) {
       g.rect(19 + i, 5 + i, 1, 2, "white");
@@ -487,9 +524,9 @@ function fringed(g: Grid, marks: Grid): void {
   const nH = marks.px.length;
   const nW = (marks.px[0] as Colour[]).length;
   const at = (x: number, y: number): Colour => (marks.px[y] as Colour[])[x] ?? null;
-  for (let y = 0; y < nH; y++)
-    for (let x = 0; x < nW; x++)
-      if (at(x, y))
+  for (let y = 0; y < nH; y++) {
+    for (let x = 0; x < nW; x++) {
+      if (at(x, y)) {
         for (const [dx, dy] of [
           [1, 0],
           [-1, 0],
@@ -498,13 +535,21 @@ function fringed(g: Grid, marks: Grid): void {
         ] as const) {
           const xx = x + dx;
           const yy = y + dy;
-          if (xx >= 0 && xx < nW && yy >= 0 && yy < nH && !at(xx, yy)) g.p(xx, yy, "ink");
+          if (xx >= 0 && xx < nW && yy >= 0 && yy < nH && !at(xx, yy)) {
+            g.p(xx, yy, "ink");
+          }
         }
-  for (let y = 0; y < nH; y++)
+      }
+    }
+  }
+  for (let y = 0; y < nH; y++) {
     for (let x = 0; x < nW; x++) {
       const colour = at(x, y);
-      if (colour) g.p(x, y, colour);
+      if (colour) {
+        g.p(x, y, colour);
+      }
     }
+  }
 }
 
 /**
@@ -516,14 +561,16 @@ function moveHint(lit = 0): pixel.Frame {
   const n = 2 * (MOVE_R + 1) + 1;
   const c = Math.floor(n / 2);
   const g = new Grid(n, n);
-  for (let y = 0; y < n; y++)
+  for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       const d = hypot(x - c, y - c);
-      if (MOVE_R - 3.5 < d && d <= MOVE_R + 0.5)
+      if (MOVE_R - 3.5 < d && d <= MOVE_R + 0.5) {
         g.p(x, y, d > MOVE_R - 0.5 || d <= MOVE_R - 2.5 ? "ink" : "cream");
+      }
     }
+  }
   const marks = new Grid(n, n);
-  for (const side of [-1, 1])
+  for (const side of [-1, 1]) {
     CHEVRON_2X.forEach((row, y) => {
       [...row].forEach((ch, x) => {
         if (ch === "#") {
@@ -538,6 +585,7 @@ function moveHint(lit = 0): pixel.Frame {
         }
       });
     });
+  }
   fringed(g, marks);
   return g.px;
 }
@@ -553,11 +601,14 @@ function moveKnob(held: boolean): pixel.Frame {
 
 /** A round 2px ring centred on a 16x16 frame. */
 function smallRing(g: Grid): void {
-  for (let y = 0; y < 16; y++)
+  for (let y = 0; y < 16; y++) {
     for (let x = 0; x < 16; x++) {
       const d = hypot(x - 7.5, y - 7.5);
-      if (d >= 5.9 && d <= 7.9) g.p(x, y, ROW_ICON);
+      if (d >= 5.9 && d <= 7.9) {
+        g.p(x, y, ROW_ICON);
+      }
     }
+  }
 }
 
 /** icon-move-controls, 16x16: the move hint in small, a round 2px ring with a chevron each side. */
@@ -610,8 +661,9 @@ function focus(): pixel.Frame {
       [k + w - 1, k],
       [k, k + w - 1],
       [k + w - 1, k + w - 1],
-    ] as const)
+    ] as const) {
       g.p(cx, cy, k === 0 ? null : k === 1 ? "ink" : "yellow");
+    }
   }
   g.rect(4, 4, 8, 8, null);
   return g.px;
@@ -626,14 +678,17 @@ function focus(): pixel.Frame {
  */
 function cog20(): pixel.Frame {
   const g = new Grid(20, 20);
-  for (let y = 0; y < 20; y++)
+  for (let y = 0; y < 20; y++) {
     for (let x = 0; x < 20; x++) {
       const dx = Math.abs(x + 0.5 - 10);
       const dy = Math.abs(y + 0.5 - 10);
       const r = hypot(dx, dy);
       const diag = dx >= 5.5 && dx <= 7.5 && dy >= 5.5 && dy <= 7.5;
-      if (r > 3.6 && (r <= 7.2 || Math.min(dx, dy) <= 1.5 || diag)) g.p(x, y, "cream");
+      if (r > 3.6 && (r <= 7.2 || Math.min(dx, dy) <= 1.5 || diag)) {
+        g.p(x, y, "cream");
+      }
     }
+  }
   return g.px;
 }
 
@@ -646,7 +701,9 @@ function iconButton(state: string): pixel.Frame {
   const g = new Grid(36, 36);
   panel({ rim: null }, g, 0, top, 36, 36 - top, "navy");
   g.rect(1, top + 1, 34, 30, "dslate");
-  if (state === "normal") g.rect(2, 1, 32, 1, "slate");
+  if (state === "normal") {
+    g.rect(2, 1, 32, 1, "slate");
+  }
   return g.px;
 }
 
@@ -685,7 +742,9 @@ function quitIcon(state: string): pixel.Frame {
 
 function close(state: string): pixel.Frame {
   const g = new Grid(24, 24);
-  if (state === "pressed") panel({ border: "dslate", rim: null }, g, 0, 0, 24, 24, "dslate");
+  if (state === "pressed") {
+    panel({ border: "dslate", rim: null }, g, 0, 0, 24, 24, "dslate");
+  }
   stamp(g, X, 6, 6, state === "pressed" ? "white" : "ink");
   return g.px;
 }
@@ -714,7 +773,9 @@ const states = (names: readonly string[], frame: (state: string) => pixel.Frame)
 
 export function* sprites(): Generator<pixel.SpriteEntry> {
   const one = (frame: pixel.Frame, tag = "rest"): pixel.Tags => [[tag, [frame], 100]];
-  for (const key of Object.keys(ICONS).sort()) yield [key, one(icon(ICONS[key] as string[]))];
+  for (const key of Object.keys(ICONS).sort()) {
+    yield [key, one(icon(ICONS[key] as string[]))];
+  }
   yield ["icon-settings-nav", one(cog20())];
   yield ["icon-move-controls", one(moveControlsIcon())];
   yield ["icon-touch-controls", one(touchControlsIcon())];
@@ -759,5 +820,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["ui-touch-use", touchButton("use")];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() => pixel.main({ doc: USAGE, once: ONCE, slices: SLICES, srcDir: SRC }, sprites));
+}

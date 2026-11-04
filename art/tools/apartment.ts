@@ -21,8 +21,8 @@
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
-  BACKDROPS_DIR,
   backdropEntry,
+  BACKDROPS_DIR,
   canvasOf,
   cropBox,
   image,
@@ -70,13 +70,19 @@ function material(name: Name, suffix: string): RgbaImage {
   } else if (name === "metal") {
     rect("dslate", [0, 8, 12, 10], im);
   }
-  if (suffix.endsWith("left")) rect("navy", [0, 0, 2, 12], im);
-  if (suffix.endsWith("right")) rect("navy", [10, 0, 12, 12], im);
+  if (suffix.endsWith("left")) {
+    rect("navy", [0, 0, 2, 12], im);
+  }
+  if (suffix.endsWith("right")) {
+    rect("navy", [10, 0, 12, 12], im);
+  }
   if (suffix.startsWith("top")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
     rect(PRIMARY, [0, 3, 12, 5], im);
-    if (suffix === "top-joint") rect("dslate", [10, 3, 12, 7], im);
+    if (suffix === "top-joint") {
+      rect("dslate", [10, 3, 12, 7], im);
+    }
   }
   return im;
 }
@@ -121,9 +127,11 @@ function exteriorMid(): RgbaImage {
     rect(SHADE, [x, top, x + width, 720], im);
     rect("zone-peach-shade", [x, top, x + width, top + 8], im);
     rect("zone-peach", [x + 8, top + 8, x + 14, 720], im);
-    for (let y = top + 30; y < 690; y += 48)
-      for (let windowX = x + 22; windowX < x + width - 20; windowX += 28)
+    for (let y = top + 30; y < 690; y += 48) {
+      for (let windowX = x + 22; windowX < x + width - 20; windowX += 28) {
         rect(PRIMARY, [windowX, y, windowX + 12, y + 18], im);
+      }
+    }
   }
   return im;
 }
@@ -142,7 +150,9 @@ function wall(style: (typeof STYLES)[number]): RgbaImage {
     rect(PRIMARY, [4, 100, 44, 124], im);
   } else if (style === "pool") {
     rect("zone-blue", [0, 96, 48, 132], im);
-    for (const x of [0, 24]) rect("zone-blue-shade", [x, 96, x + 2, 132], im);
+    for (const x of [0, 24]) {
+      rect("zone-blue-shade", [x, 96, x + 2, 132], im);
+    }
     rect("zone-blue-shade", [0, 112, 48, 114], im);
   } else if (style === "spa") {
     rect("zone-green", [0, 102, 48, 132], im);
@@ -204,16 +214,20 @@ function context(): RgbaImage {
   STYLES.forEach((style, i) => {
     for (let x = i * 120; x < i * 120 + 120; x += 48) {
       const width = Math.min(48, (i + 1) * 120 - x);
-      for (const y of [-48, 96]) over([x, y], cropBox([0, 0, width, 144], wall(style)), im);
+      for (const y of [-48, 96]) {
+        over([x, y], cropBox([0, 0, width, 144], wall(style)), im);
+      }
     }
   });
   over([672, 60], facade(), im);
   const ts = new Map(tiles());
   const tile = (name: string): RgbaImage => ts.get(name) as RgbaImage;
   FAMILIES.forEach((family, i) => {
-    for (let y = 240; y < 360; y += 12)
-      for (let x = i * 120; x < (i + 1) * 120; x += 12)
+    for (let y = 240; y < 360; y += 12) {
+      for (let x = i * 120; x < (i + 1) * 120; x += 12) {
         over([x, y], tile(`${family}-${y === 240 ? "top" : "face"}`), im);
+      }
+    }
     for (let x = i * 120 + 48; x < i * 120 + 96; x += 12) {
       over([x, 216], tile(`${family}-top`), im);
       over([x, 228], tile(`${family}-face`), im);
@@ -228,4 +242,6 @@ async function preview(out: string): Promise<void> {
   writeRgbImage(out, context());
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

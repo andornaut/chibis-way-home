@@ -13,8 +13,8 @@
  * name or dialogue is included.
  */
 
-import { run } from "./cli.ts";
 import * as bird from "./bird.ts";
+import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
@@ -36,7 +36,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   const bh = squash ? 9 : 11;
   let hx = 31;
   let hy = squash ? 25 - lift : 22 - lift;
-  if (tuck) hy -= 2;
+  if (tuck) {
+    hy -= 2;
+  }
   if (state === "frustration") {
     by = 35;
     hx = 31 + (SHAKE[phase] as number);
@@ -71,7 +73,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   bird.cel(g, bird.inEll(36, hy + 3, 5, 3), "cream", "lgrey", null, 1, 1);
   g.rect(38, hy + 1, 3, 2, "brown");
   g.rect(33, hy - 2, 3, resting ? 1 : 3, "ink");
-  if (state === "frustration") g.ell(39, phase % 2 === 0 ? 33 : 37, 3, 3, "lgrey");
+  if (state === "frustration") {
+    g.ell(39, phase % 2 === 0 ? 33 : 37, 3, 3, "lgrey");
+  }
   return g.outlined({
     edge: (c) => (c === K.grey || c === K.dslate ? pixel.hex("navy") : pixel.hex("dslate")),
   });
@@ -94,7 +98,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -107,3 +111,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

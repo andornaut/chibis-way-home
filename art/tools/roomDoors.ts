@@ -53,8 +53,9 @@ export function door(style = "street"): pixel.Grid {
     [46, 44, 5, 13, "dslate"],
     [47, 45, 3, 9, "amber"],
     [4, 82, 52, 2, "slate"],
-  ] as const)
+  ] as const) {
     grid.rect(x, y, width, height, colour);
+  }
   return grid;
 }
 
@@ -112,4 +113,6 @@ export function preview(out: string): void {
   writeFileSync(`${stem}-3x.png`, encodeRgbaPng(PNG, resizeNearest(2160, 1080, result)));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

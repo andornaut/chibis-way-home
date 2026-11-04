@@ -28,10 +28,14 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   const g = new Grid(48, 48);
   const flying = state === "drop" || state === "return";
   let lift = flying ? 2 + (phase % 2) : state === "idle" || state === "rest" ? phase : -1 - phase;
-  if (state === "frustration") lift = 0;
+  if (state === "frustration") {
+    lift = 0;
+  }
   if (flying) {
     const up = state === "return" && phase % 2 === 0;
-    for (const x of [9, 39]) g.ell(x, up ? 20 : 32, 5, up ? 13 : 8, "grey", "slate", "lgrey");
+    for (const x of [9, 39]) {
+      g.ell(x, up ? 20 : 32, 5, up ? 13 : 8, "grey", "slate", "lgrey");
+    }
   }
   g.blob(24, 34 - lift, 11, 11, "zone-peach-shade", "brown", "grey");
   g.ell(24, 36 - lift, 7, 8, "cream", "zone-peach");
@@ -59,7 +63,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   }
   g.tri([21 + hx, hy + 5], [27 + hx, hy + 5], [24 + hx, hy + 10], "brown");
   // Feet stay visible without suggesting a perch or a standable wing edge.
-  for (const x of [19, 28]) g.rect(x, flying ? 42 : 44, 3, 3, "brown");
+  for (const x of [19, 28]) {
+    g.rect(x, flying ? 42 : 44, 3, 3, "brown");
+  }
   return g.outlined({ edge: () => pixel.hex("navy") });
 }
 
@@ -82,7 +88,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -95,3 +101,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

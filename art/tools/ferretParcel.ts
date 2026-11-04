@@ -30,7 +30,9 @@ function draw(): pixel.Frame {
   const padded = new Grid(24, 24);
   g.px.forEach((row, y) =>
     row.forEach((colour, x) => {
-      if (colour) padded.p(x + 4, y + 8, colour);
+      if (colour) {
+        padded.p(x + 4, y + 8, colour);
+      }
     }),
   );
   return padded.px;
@@ -40,7 +42,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield [KEY, [["idle", [draw()], 400]]];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -53,3 +55,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

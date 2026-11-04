@@ -55,20 +55,29 @@ function bm(...rows: readonly string[]): Points {
   const points: Points = [];
   rows.forEach((row, y) => {
     [...row].forEach((ch, x) => {
-      if (ch === "#") points.push([x, y]);
+      if (ch === "#") {
+        points.push([x, y]);
+      }
     });
   });
   return points;
 }
 
 function stamp(g: Grid, pts: Points, x: number, y: number, c: string): void {
-  for (const [px, py] of pts) g.p(x + px, y + py, c);
+  for (const [px, py] of pts) {
+    g.p(x + px, y + py, c);
+  }
 }
 
 /** A filled disc on a centre pixel, 2r+1 across. */
 function disc(g: Grid, cx: number, cy: number, r: number, c: string): void {
-  for (let y = -r; y <= r; y++)
-    for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + r * 0.6) g.p(cx + x, cy + y, c);
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (x * x + y * y <= r * r + r * 0.6) {
+        g.p(cx + x, cy + y, c);
+      }
+    }
+  }
 }
 
 /** A ring w px thick whose outer edge is radius r; broken leaves eight gaps, one every 45 degrees. */
@@ -81,15 +90,18 @@ function ring(
   w: number,
   c: string,
 ): void {
-  for (let y = -r - 1; y < r + 2; y++)
+  for (let y = -r - 1; y < r + 2; y++) {
     for (let x = -r - 1; x < r + 2; x++) {
       // Integer coordinates: the square root of the exact sum is correctly rounded, like math.hypot.
       const distance = Math.sqrt(x * x + y * y);
       if (r - w + 0.5 < distance && distance <= r + 0.5) {
-        if (broken && (Math.atan2(y, x) * (180 / Math.PI) + 360) % 45 > 30) continue;
+        if (broken && (Math.atan2(y, x) * (180 / Math.PI) + 360) % 45 > 30) {
+          continue;
+        }
         g.p(cx + x, cy + y, c);
       }
     }
+  }
 }
 
 // ---------------------------------------------------------------- paper
@@ -359,7 +371,9 @@ function zone(state: string): pixel.Frame {
     stamp(g, QMARK, c - 4, c - 4, "slate");
     return g.px;
   }
-  if (state === "current") ring({}, g, c, c, 17, 2, "dslate");
+  if (state === "current") {
+    ring({}, g, c, c, 17, 2, "dslate");
+  }
   if (state === "visited") {
     disc(g, c, c, 12, "navy");
     disc(g, 27, 26, 6, "cream");
@@ -369,7 +383,9 @@ function zone(state: string): pixel.Frame {
   }
   disc(g, c, c, 12, "cream");
   ring({}, g, c, c, 12, 2, "dslate");
-  if (state === "locked") stamp(g, LOCK, c - 5, c - 6, "dslate");
+  if (state === "locked") {
+    stamp(g, LOCK, c - 5, c - 6, "dslate");
+  }
   return g.px;
 }
 
@@ -410,15 +426,16 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
     ];
   }
   yield ["map-paper", one(paper())];
-  for (const key of Object.keys(zoneThemes.THEMES).sort())
+  for (const key of Object.keys(zoneThemes.THEMES).sort()) {
     yield [`map-region-${key}`, one(region(key))];
+  }
   yield [
     "map-zone",
     ["normal", "current", "visited", "locked", "unbuilt"].map((s) => [s, [zone(s)], 100] as const),
   ];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -431,3 +448,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

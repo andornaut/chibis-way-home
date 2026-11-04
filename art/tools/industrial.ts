@@ -42,8 +42,8 @@ import { opaque } from "@andornaut/art-kit/raster";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
-  BACKDROPS_DIR,
   backdropEntry,
+  BACKDROPS_DIR,
   canvasOf,
   cropBox,
   ellipse,
@@ -86,8 +86,12 @@ function material(family: Family, suffix: string): RgbaImage {
   } else if (family === "container-stack") {
     rect(SHADE, [0, 0, 2, 12], im);
   }
-  if (suffix.endsWith("left")) rect("dslate", [0, 0, 2, T], im);
-  if (suffix.endsWith("right")) rect("dslate", [10, 0, 12, T], im);
+  if (suffix.endsWith("left")) {
+    rect("dslate", [0, 0, 2, T], im);
+  }
+  if (suffix.endsWith("right")) {
+    rect("dslate", [10, 0, 12, T], im);
+  }
   if (suffix.startsWith("top")) {
     const top = {
       "industrial-floor": PRIMARY,
@@ -98,7 +102,9 @@ function material(family: Family, suffix: string): RgbaImage {
     rect("navy", [0, 0, T, 1], im);
     rect("white", [0, 1, T, 3], im);
     rect(top, [0, 3, T, 5], im);
-    if (suffix === "top-joint") rect("dslate", [10, 3, 12, 7], im);
+    if (suffix === "top-joint") {
+      rect("dslate", [10, 3, 12, 7], im);
+    }
   }
   return im;
 }
@@ -154,7 +160,7 @@ function warehouseMid(): RgbaImage {
     [468, 228, 466],
   ] as const) {
     rect("slate", [x, top, x + width, 600], im);
-    for (let start = x; start < x + width; start += 48)
+    for (let start = x; start < x + width; start += 48) {
       polygon(
         { colour: "slate" },
         [
@@ -164,6 +170,7 @@ function warehouseMid(): RgbaImage {
         ],
         im,
       );
+    }
     rect(SHADE, [x + 12, top + 26, x + width - 12, top + 38], im);
     rect("zone-purple-shade", [x + width - 24, top + 38, x + width - 12, 600], im);
   }
@@ -179,7 +186,9 @@ function freightMid(): RgbaImage {
   ] as const) {
     rect("slate", [x, top, x + width, 600], im);
     rect(SHADE, [x, top, x + width, top + 4], im);
-    for (let y = top + 42; y < 600; y += 42) rect(SHADE, [x, y, x + width, y + 2], im);
+    for (let y = top + 42; y < 600; y += 42) {
+      rect(SHADE, [x, y, x + width, y + 2], im);
+    }
   }
   for (const [x, top] of [
     [118, 388],
@@ -241,7 +250,7 @@ function gantry(): RgbaImage {
   rect(SHADE, [129, 20, 135, 186], im);
   rect("dslate", [0, 8, 144, 28], im);
   rect(PRIMARY, [4, 12, 140, 24], im);
-  for (let x = 14; x < 132; x += 24)
+  for (let x = 14; x < 132; x += 24) {
     polygon(
       { colour: "slate" },
       [
@@ -252,6 +261,7 @@ function gantry(): RgbaImage {
       ],
       im,
     );
+  }
   rect("dslate", [0, 184, 24, 192], im);
   rect("dslate", [120, 184, 144, 192], im);
   rect("slate", [60, 28, 84, 42], im);
@@ -295,13 +305,17 @@ function context(skin: "warehouse" | "freight"): RgbaImage {
     skin === "warehouse" ? "warehouse-mid" : "freight-mid",
   ]) {
     const p = readImage(`${BACKDROPS_DIR}/${key}.png`);
-    for (let x = 0; x < 720; x += p.width) over([x, BOTTOM - p.height], p, im);
+    for (let x = 0; x < 720; x += p.width) {
+      over([x, BOTTOM - p.height], p, im);
+    }
   }
   let ground: string;
   let raised: string;
   if (skin === "warehouse") {
     const wall = readImage(`${BACKDROPS_DIR}/warehouse-wall.png`);
-    for (let x = 0; x < 240; x += 48) over([x, BOTTOM - wall.height], wall, im);
+    for (let x = 0; x < 240; x += 48) {
+      over([x, BOTTOM - wall.height], wall, im);
+    }
     over([0, 456], readImage(`${BACKDROPS_DIR}/warehouse-loading-bay.png`), im);
     [ground, raised] = ["industrial-floor", "crate-stack"];
   } else {
@@ -327,4 +341,6 @@ async function preview(out: string): Promise<void> {
   writeRgbImage(out, sheet);
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build, preview }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build, preview }));
+}

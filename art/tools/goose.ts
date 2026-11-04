@@ -39,8 +39,8 @@
  * the fixed shape only.
  */
 
-import { run } from "./cli.ts";
 import * as bird from "./bird.ts";
+import { run } from "./cli.ts";
 import * as obstacles from "./obstacles.ts";
 import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
@@ -84,7 +84,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   // Feet remain the ground reference even while the torso rises on a passing pose.
   const stride = moving ? ([-2, 0, 2, 0][phase] as number) : 0;
   [17 + stride, 27 - stride].forEach((x, i) => {
-    if (skidding) return;
+    if (skidding) {
+      return;
+    }
     const up = moving && (phase === 0 || phase === 2) && i === Math.floor(phase / 2) ? 2 : 0;
     g.rect(x, 41 - lift, 2, 5 + lift - up, "orange");
     g.rect(x - 1, 45 - up, 5, 2, "orange");
@@ -102,7 +104,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   if (skidding) {
     // Both legs brace diagonally forward from the hips, toes planted ahead of the body.
     for (const x of [23, 29]) {
-      for (let s = 0; s < 4; s++) g.rect(x + s, 40 + s, 2, 2, "orange");
+      for (let s = 0; s < 4; s++) {
+        g.rect(x + s, 40 + s, 2, 2, "orange");
+      }
       g.rect(x + 3, 45, 5, 2, "orange");
     }
   }
@@ -189,7 +193,9 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     edge: (c) => (c === K.grey || c === K.dslate ? pixel.hex("navy") : pixel.hex("dslate")),
   });
   const framed = glasses({ resting }, px, hx, hy);
-  if (!skidding) return framed;
+  if (!skidding) {
+    return framed;
+  }
   // A 2px ground scuff ahead of the leading toes alternates between the skid frames.
   const scuff = new Grid(48, 48);
   scuff.px = framed;
@@ -278,7 +284,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   ];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -292,3 +298,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

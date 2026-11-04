@@ -27,12 +27,15 @@ export async function commands(
   { build, more = {}, preview, usage }: Commands,
   argv: readonly string[] = process.argv.slice(2),
 ): Promise<void> {
-  if (argv.length === 1 && HELP.has(argv[0] as string)) console.log(usage);
-  else if (build && argv.length === 1 && argv[0] === "build") await build();
-  else if (preview && argv.length === 2 && argv[0] === "preview") await preview(argv[1] as string);
-  else if (argv.length === 2 && Object.hasOwn(more, argv[0] as string))
+  if (argv.length === 1 && HELP.has(argv[0] as string)) {
+    console.log(usage);
+  } else if (build && argv.length === 1 && argv[0] === "build") {
+    await build();
+  } else if (preview && argv.length === 2 && argv[0] === "preview") {
+    await preview(argv[1] as string);
+  } else if (argv.length === 2 && Object.hasOwn(more, argv[0] as string)) {
     await (more[argv[0] as string] as (out: string) => unknown)(argv[1] as string);
-  else {
+  } else {
     console.error(usage);
     process.exit(2);
   }

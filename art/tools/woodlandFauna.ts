@@ -194,7 +194,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["background-swallow", [["flight", [0, 1, 2, 3].map(swallow), 120]]];
 }
 
-if (import.meta.main)
+if (import.meta.main) {
   run(() =>
     pixel.main(
       {
@@ -206,3 +206,4 @@ if (import.meta.main)
       sprites,
     ),
   );
+}

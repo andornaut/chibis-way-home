@@ -36,7 +36,9 @@ interface ExportFrame {
 }
 
 function check(condition: boolean, message = "Assertion failed"): void {
-  if (!condition) throw new Error(message);
+  if (!condition) {
+    throw new Error(message);
+  }
 }
 
 /** Full-frame rows, top to bottom; intervals are half open and merged left to right. */
@@ -110,7 +112,9 @@ function spriteMasks(entry: pixel.ManifestEntry): {
 }
 
 function sortedKeys(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sortedKeys);
+  if (Array.isArray(value)) {
+    return value.map(sortedKeys);
+  }
   if (value !== null && typeof value === "object") {
     const entries = Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
     return Object.fromEntries(entries.map(([key, item]) => [key, sortedKeys(item)]));
@@ -133,4 +137,6 @@ export function build(): void {
   console.log("built contact silhouettes:", Object.keys(sprites).sort().join(", "));
 }
 
-if (import.meta.main) run(() => commands({ usage: USAGE, build }));
+if (import.meta.main) {
+  run(() => commands({ usage: USAGE, build }));
+}
