@@ -224,6 +224,7 @@ Everything in a stage except its terrain is placed in data through archetypes, c
 - **Overrides:** flow one way: an instance overrides its character, which overrides its archetype. Everything resolves and is checked when the game loads
 - **Reaction:** none, avoiding Chibi, or approaching him, within a range
 - **Static art:** a behaviour state can use `animation: null` for static art, including a moving inanimate object. Motion and transitions still come from its reusable behaviour graph
+- **Warned vents:** a stationary 4 by 6 tile red-contact hazard repeats a fixed cycle: inactive for 2 seconds, warning for 0.8 seconds, active for 0.6 seconds, then recovery for 1.2 seconds before the next inactive phase. Durations live in `src/data/obstacleBehaviours.ts`. Contact is lethal only while active; inactive, warning and recovery contact is harmless, and the drawn phase always matches the contact phase. The contact rectangle is filled dark slate while harmless, gains an amber border during the warning and fills red while active; colours and border width live in `src/data/hazardPhaseStyle.ts`. The warned vent terrace places one vent on a middle deck with grounded refuge on both sides, where Chibi can observe a full cycle; the warning leaves time to retreat to the near refuge. Retry restarts the cycle from inactive
 
 ### Boss encounter principles
 
