@@ -11,8 +11,8 @@ const STAGE_BARK_LINES: Readonly<Record<string, string>> = {
   "freight-terminal": "fert-journey-freight-terminal",
   "loading-yards": "fert-journey-loading-yards",
   ravine: "fert-journey-ravine",
-  "residential-floors": "fert-journey-climb-to-apartment",
-  restaurant: "fert-journey-shared-floors",
+  "residential-floors": "fert-journey-residential-floors",
+  restaurant: "fert-journey-restaurant",
   "river-crossing": "fert-journey-river-crossing",
 };
 

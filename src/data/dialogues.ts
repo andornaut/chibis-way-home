@@ -21,6 +21,13 @@ export const BARK_DURATION_SECONDS = 5;
 
 // Linear conversations, with paragraph text in TEXT.lines.
 export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
+  "archie-intro": {
+    lines: [
+      { line: "archie-intro-1", speaker: "dog" },
+      { line: "archie-intro-2", speaker: "bird" },
+      { line: "archie-intro-3", speaker: "dog" },
+    ],
+  },
   "archie-outro": {
     lines: [
       { line: "archie-outro-1", speaker: "dog" },
@@ -43,27 +50,20 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
   "dash-gift": {
     lines: [{ line: "dash-gift", speaker: "room-helper" }],
   },
-  "depot-dog-intro": {
-    lines: [
-      { line: "depot-dog-intro-1", speaker: "dog" },
-      { line: "depot-dog-intro-2", speaker: "bird" },
-      { line: "depot-dog-intro-3", speaker: "dog" },
-    ],
-  },
   "double-jump-gift": {
     lines: [{ line: "double-jump-gift", speaker: "room-helper" }],
   },
-  "furt-intro": {
+  "fert-intro": {
     lines: [
-      { line: "furt-intro-1", speaker: "ferret" },
-      { line: "furt-intro-2", speaker: "bird" },
-      { line: "furt-intro-3", speaker: "ferret" },
+      { line: "fert-intro-1", speaker: "ferret" },
+      { line: "fert-intro-2", speaker: "bird" },
+      { line: "fert-intro-3", speaker: "ferret" },
     ],
   },
-  "furt-outro": {
+  "fert-outro": {
     lines: [
-      { line: "furt-outro-1", speaker: "ferret" },
-      { line: "furt-outro-2", speaker: "bird" },
+      { line: "fert-outro-1", speaker: "ferret" },
+      { line: "fert-outro-2", speaker: "bird" },
     ],
   },
   "kiwi-intro": {
@@ -130,9 +130,9 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "walk",
     },
-    intro: "furt-intro",
+    intro: "fert-intro",
     introStage: "spa",
-    outro: "furt-outro",
+    outro: "fert-outro",
   },
   "blue-cityscape": {
     entry: {
@@ -141,7 +141,7 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "walk",
     },
-    intro: "depot-dog-intro",
+    intro: "archie-intro",
     introStage: "street",
     outro: "archie-outro",
   },

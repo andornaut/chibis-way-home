@@ -500,8 +500,8 @@ const FERRET_ATTACK_PROFILE: BehaviourPlan = attackProfile(
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "patrol-left",
-    pursuit: persistentPursuit({ line: "furt-escaped", speaker: "ferret" }),
-    spotted: { line: "furt-spotted", speaker: "ferret" },
+    pursuit: persistentPursuit({ line: "fert-escaped", speaker: "ferret" }),
+    spotted: { line: "fert-spotted", speaker: "ferret" },
     states: {
       ...patrolChargeStates(GROUND_CHARGE),
       "prepare-throw": {
