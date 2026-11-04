@@ -58,6 +58,18 @@ it("loads standalone manifest images in development and atlas mode", () => {
   }
 });
 
+it("names the key and URL of an asset that fails to load", () => {
+  art.atlas = null;
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  const scene = new BootScene();
+  scene.preload();
+  scene.load.emit("loaderror", { key: "standalone-image", url: "art/images/standalone.png" });
+  expect(warn).toHaveBeenCalledExactlyOnceWith(
+    "Asset failed to load: standalone-image (art/images/standalone.png)",
+  );
+  warn.mockRestore();
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();

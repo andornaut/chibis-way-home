@@ -4,7 +4,7 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
-import { Scene } from "phaser";
+import { type Loader, Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json";
 import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
@@ -32,6 +32,9 @@ export class BootScene extends Scene {
   preload(): void {
     this.load.on("progress", (fraction: number) => startupLoading.progress(fraction));
     this.load.once("complete", () => startupLoading.progress(undefined));
+    this.load.on("loaderror", (file: Loader.File) => {
+      console.warn(`Asset failed to load: ${file.key} (${file.url})`);
+    });
     if (ATLAS !== null) {
       queueAtlasPages(this, ATLAS);
     }
