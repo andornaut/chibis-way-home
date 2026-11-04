@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { ARCHETYPES } from "../data/archetypes";
+import { FERRET_BEHAVIOUR } from "../data/behaviours";
+import { BIRD } from "../data/bird";
+import { CHARACTERS } from "../data/characters";
+import { TILE } from "../data/screen";
 import type { Archetype, BehaviourAction, ObjectLayout, Rect } from "../data/types";
+import { layoutBehaviour } from "./behaviour";
+import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 
@@ -164,4 +171,77 @@ it.each([
   const result = stepTransients(bounds, [solid], [], 1, target, target, [thrown], [], 0);
   expect(result.lethal).toBe(lethal);
   expect(result.entities).toEqual([]);
+});
+
+describe("Fert's parcel against solid cover", () => {
+  // Fert's resolved parcel throw, facing right from his top-left corner at the origin.
+  const action = Object.values(layoutBehaviour(TILE, FERRET_BEHAVIOUR).states)
+    .flatMap(({ onEnter }) => onEnter ?? [])
+    .find(
+      (entry): entry is Extract<BehaviourAction, { kind: "spawn" }> =>
+        entry.kind === "spawn" && entry.character === "ferret-parcel",
+    )!;
+  const parcel = objectLayout(
+    TILE,
+    { archetypes: ARCHETYPES, characters: CHARACTERS },
+    {},
+    undefined,
+    {},
+    { character: "ferret-parcel", col: 0, row: 0 },
+  );
+  // The parcel's top-left corner on its uncovered arc, t seconds after the throw.
+  const arc = (t: number) => ({
+    x: action.offset.x + action.velocity.x * t,
+    y: action.offset.y + action.velocity.y * t + (action.gravity * t * t) / 2,
+  });
+  // Chibi centred on the arc half a second after the throw.
+  const chibi: Rect = {
+    height: BIRD.height,
+    width: BIRD.width,
+    x: arc(0.5).x + (parcel.width - BIRD.width) / 2,
+    y: arc(0.5).y + (parcel.height - BIRD.height) / 2,
+  };
+  // A one-tile wall far taller than the arc, whose face the parcel reaches at t.
+  const wall = (t: number): Rect => ({
+    height: 40 * TILE,
+    width: TILE,
+    x: arc(t).x + parcel.width,
+    y: -20 * TILE,
+  });
+
+  it.each([
+    { lethal: false, side: "behind", wallAt: 0.15 },
+    { lethal: true, side: "in front of", wallAt: 0.7 },
+  ])("reaches Chibi $side the cover: $lethal", ({ lethal, wallAt }) => {
+    const thrown: SpawnEvent = { ...event, action, at: { x: 0, y: 0 }, template: parcel };
+    const area = { height: 80 * TILE, width: 80 * TILE, x: -40 * TILE, y: -40 * TILE };
+    // Fixed steps, as the zone advances parcels, until the parcel is gone.
+    let result = stepTransients(
+      area,
+      [wall(wallAt)],
+      [],
+      STEP_SECONDS,
+      chibi,
+      chibi,
+      [thrown],
+      [],
+      0,
+    );
+    let hit = result.lethal;
+    while (result.entities.length > 0) {
+      result = stepTransients(
+        area,
+        [wall(wallAt)],
+        [],
+        STEP_SECONDS,
+        chibi,
+        chibi,
+        [],
+        result.entities,
+        result.nextId,
+      );
+      hit ||= result.lethal;
+    }
+    expect(hit).toBe(lethal);
+  });
 });

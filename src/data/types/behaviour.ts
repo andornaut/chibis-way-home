@@ -43,6 +43,10 @@ export type BehaviourCondition =
   | { readonly kind: "alignment-blocked" }
   | { readonly kind: "flight-approach-direction"; readonly direction: -1 | 1 }
   | { readonly kind: "boundary" }
+  // The current track travel cannot advance toward its endpoint before reaching it.
+  | { readonly kind: "blocked" }
+  // The named track state's travel, entered from here, reaches its endpoint unobstructed.
+  | { readonly kind: "track-clear"; readonly state: string }
   | {
       readonly kind: "arrived";
       readonly target?: "live" | "intent";

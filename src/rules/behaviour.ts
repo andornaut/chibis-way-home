@@ -55,7 +55,14 @@ import {
   recoveryStep,
 } from "./behaviourRecoveryAbilities";
 import { prepareSupport } from "./behaviourSupport";
-import { contactBox, nodeOf, pursuitTrack, trackEndpoint, travelHeading } from "./behaviourTrack";
+import {
+  contactBox,
+  nodeOf,
+  pursuitTrack,
+  trackEndpoint,
+  trackReach,
+  travelHeading,
+} from "./behaviourTrack";
 import {
   type BehaviourRearmState,
   type BehaviourTraversalState,
@@ -403,6 +410,14 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             condition.kind === "alignment-blocked" ||
             condition.kind === "pursuit-ended"
           ) {
+            return condition;
+          }
+          if (condition.kind === "blocked" || condition.kind === "track-clear") {
+            const motion = (condition.kind === "blocked" ? node : plan.states[condition.state])
+              ?.motion.kind;
+            if (motion !== "move" && motion !== "hop") {
+              throw new Error(`Invalid track condition in ${key}`);
+            }
             return condition;
           }
           if (condition.kind === "flight-approach-direction") {
@@ -823,6 +838,21 @@ function matches(
       at[axis] ===
       trackEndpoint(object, travelHeading(nodeOf(object, state.stateKey).motion, state), state)
     );
+  }
+  if (condition.kind === "blocked") {
+    const axis = state.axis ?? object.behaviour?.axis ?? "x";
+    const heading = travelHeading(nodeOf(object, state.stateKey).motion, state);
+    const end = trackEndpoint(object, heading, state);
+    return (
+      at[axis] !== end &&
+      Math.abs(trackReach(object, world, at, state, heading, end) - at[axis]) <= EDGE
+    );
+  }
+  if (condition.kind === "track-clear") {
+    const entered = enterState(perception, object, at, condition.state, state);
+    const heading = travelHeading(nodeOf(object, condition.state).motion, entered);
+    const end = trackEndpoint(object, heading, entered);
+    return trackReach(object, world, at, entered, heading, end) === end;
   }
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
     const reachable =

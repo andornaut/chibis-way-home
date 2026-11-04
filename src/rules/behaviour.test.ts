@@ -665,3 +665,70 @@ it("validates the optional takeoff tag against its paired silhouette export", ()
     ),
   ).toThrow("Missing silhouette animation");
 });
+
+describe("track conditions", () => {
+  // A climb from the placed origin (y 280) towards its endpoint 60 above (y 220).
+  const CLIMB: BehaviourPlan = {
+    axis: "y",
+    distance: -60,
+    initial: "ground",
+    states: {
+      climb: {
+        animation: null,
+        motion: { direction: -1, kind: "move", speed: 30 },
+        transitions: [
+          { to: "stuck", when: [{ kind: "blocked" }] },
+          { to: "top", when: [{ kind: "boundary" }] },
+        ],
+      },
+      ground: {
+        animation: null,
+        motion: { kind: "wait" },
+        transitions: [{ to: "climb", when: [{ kind: "track-clear", state: "climb" }] }],
+      },
+      stuck: { animation: null, motion: { kind: "wait" }, transitions: [] },
+      top: { animation: null, motion: { kind: "wait" }, transitions: [] },
+    },
+  };
+  // Over the climb, with its bottom 50 above the object's top.
+  const CEILING: Rect = { height: 30, width: 40, x: 100, y: 200 };
+
+  it.each([
+    { ceiling: false, from: "ground", seconds: 0.1, state: "climb", y: 277 },
+    { ceiling: true, from: "ground", seconds: 0.1, state: "ground", y: 280 },
+    { ceiling: true, from: "climb", seconds: 1, state: "climb", y: 250 },
+    { ceiling: true, from: "climb", seconds: 3, state: "stuck", y: 230 },
+    { ceiling: false, from: "climb", seconds: 3, state: "top", y: 220 },
+  ])(
+    "from $from with ceiling=$ceiling over $seconds s ends in $state",
+    ({ ceiling, from, seconds, state, y }) => {
+      const object = resolve(CHARACTER, ACTOR, 1, { ...CLIMB, initial: from });
+      const result = stepBehaviour(
+        BIRD,
+        object,
+        ceiling ? [CEILING] : [],
+        seconds,
+        bird(),
+        object.origin,
+        initial(object),
+      );
+      expect(result.state.stateKey).toBe(state);
+      expect(result.at.y).toBeCloseTo(y);
+    },
+  );
+
+  it.each([
+    ["names a missing state", "ground", { kind: "track-clear", state: "absent" }],
+    ["names a state without track travel", "ground", { kind: "track-clear", state: "top" }],
+    ["is blocked without track travel", "ground", { kind: "blocked" }],
+  ] as const)("refuses a track condition that %s", (_, key, condition) => {
+    const plan = {
+      ...CLIMB,
+      states: {
+        ...CLIMB.states,
+        [key]: { ...CLIMB.states[key]!, transitions: [{ to: "climb", when: [condition] }] },
+      },
+    };
+    expect(() => layoutBehaviour(1, plan)).toThrow(`Invalid track condition in ${key}`);
+  });
+});
