@@ -15,8 +15,8 @@ import { paste } from "@andornaut/art-kit/raster";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
-  BACKDROPS_DIR,
   backdropEntry,
+  BACKDROPS_DIR,
   cropBox,
   ellipse,
   image,
