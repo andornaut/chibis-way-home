@@ -23,7 +23,15 @@ export interface BehaviourPlatformFrame {
   }[];
 }
 
+// Crumbling collider presence for predictions: a phase key for plan caches, and the support
+// volumes whose presence is unknown for a tick starting at timeSeconds.
+export interface CrumblingPrediction {
+  readonly key: string;
+  readonly unknown: (timeSeconds: number) => readonly Rect[];
+}
+
 export interface BehaviourTraversalFrame {
+  readonly crumbling?: CrumblingPrediction;
   readonly sample?: (
     timeSeconds: number,
     dtSeconds: number,

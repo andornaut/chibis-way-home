@@ -32,10 +32,12 @@ import {
   EDGE,
   startBird,
   startsDash,
-  stepBird,
+  stepBirdWithSupport,
 } from "./bird";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
+import { initialCrumblingWorld } from "./crumbling";
+import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
 import { deathSupport } from "./death";
 import { effectiveCollision, effectiveHazardPhase } from "./effectiveCollision";
 import { type ForcePulse, forcePulseVelocity } from "./force";
@@ -46,6 +48,14 @@ import { currentScreen, targetVisible } from "./perception";
 import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
 import { timedHazardRect } from "./timedHazard";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
+import {
+  crumblingActorIndices,
+  crumblingActors,
+  crumblingPrediction,
+  presentTerrain,
+  supportPresent,
+  type ZoneCrumblingWorld,
+} from "./zoneCrumbling";
 import { validateWalkEntries } from "./zoneLinks";
 
 interface ObjectFrame {
@@ -56,6 +66,8 @@ interface ObjectFrame {
   readonly object: ObjectLayout;
 }
 interface AreaObjects {
+  readonly crumblingActors: readonly number[];
+  readonly crumblingObjects: readonly number[];
   readonly perception: boolean;
   readonly spotted: readonly number[];
   readonly behaviours: readonly number[];
@@ -117,6 +129,10 @@ function areaObjects(area: AreaLayout): AreaObjects {
     : undefined;
   const result: AreaObjects = {
     behaviours: area.objects.flatMap((object, index) => (object.behaviour ? [index] : [])),
+    crumblingActors: area.crumbling ? crumblingActorIndices(area) : [],
+    crumblingObjects: area.objects.flatMap((object, index) =>
+      area.crumbling?.some(({ supportId }) => supportId === object) ? [index] : [],
+    ),
     emptyBehaviours: area.objects.map(() => undefined),
     fixed,
     fixedHazards: fixed.map((frame) =>
@@ -156,19 +172,25 @@ function areaObjects(area: AreaLayout): AreaObjects {
   return result;
 }
 
-function behaviourGeometry(area: AreaLayout, zone: ZoneState): BehaviourWorld {
+function behaviourGeometry(
+  area: AreaLayout,
+  terrain: readonly Rect[],
+  present: (index: number) => boolean,
+  zone: ZoneState,
+): BehaviourWorld {
   const cached = areaObjects(area);
   if (
     cached.geometry &&
+    terrain === area.solids &&
     cached.platforms.every((index) => {
       const at = zone.objects[index] ?? area.objects[index]!.origin;
       const origin = area.objects[index]!.origin;
-      return at.x === origin.x && at.y === origin.y;
+      return at.x === origin.x && at.y === origin.y && present(index);
     })
   ) {
     return cached.geometry;
   }
-  const platforms = cached.platforms.map((index) => {
+  const platforms = cached.platforms.filter(present).map((index) => {
     const object = area.objects[index]!;
     return {
       collision: object.collision as "solid" | "ledge",
@@ -176,7 +198,7 @@ function behaviourGeometry(area: AreaLayout, zone: ZoneState): BehaviourWorld {
       rect: rectAt(object, zone.objects[index] ?? object.origin),
     };
   });
-  return { platforms, solids: area.solids };
+  return { platforms, solids: terrain };
 }
 
 // What the player asks of the zone this step: the bird's input, and whether Use is held. Use
@@ -212,6 +234,8 @@ export interface ZoneBark extends DialogueLine {
 }
 
 export interface ZoneState {
+  // Crumbling support phases and contacts at the latest boundary; reset on area entry.
+  readonly crumbling?: ZoneCrumblingWorld | undefined;
   readonly sceneryPlayback?: readonly (SceneryPlaybackState | undefined)[] | undefined;
   readonly spotted: Readonly<Record<string, readonly number[]>>;
   readonly barks: readonly ZoneBark[];
@@ -304,6 +328,7 @@ export function enterArea(
       : [],
     bird,
     cleared: false,
+    crumbling: area.crumbling ? initialCrumblingWorld(area.crumbling) : undefined,
     death: undefined,
     door: undefined,
     nextPulseId: 0,
@@ -512,8 +537,34 @@ export function stepZone(
   const sceneryPlayback = playback?.map((frame) => frame?.state);
 
   const kinds = areaObjects(area);
+  // One shared phase commit at the boundary, before any collider is constructed this tick.
+  const prior =
+    zone.crumbling ?? (area.crumbling ? initialCrumblingWorld(area.crumbling) : undefined);
+  const crumbling =
+    prior &&
+    beginCrumblingFrame(
+      area.crumbling!,
+      {
+        ...crumblingActors(
+          tuning,
+          area,
+          kinds.crumblingActors,
+          undefined,
+          zone.objects,
+          zone.behaviours,
+          zone.transients,
+          zone.bird,
+        ),
+        timeSeconds: zone.seconds,
+      },
+      prior,
+    );
+  const present = (index: number) =>
+    !kinds.crumblingObjects.includes(index) || supportPresent(crumbling, area.objects[index]!);
+  const terrain = presentTerrain(crumbling, area.solids);
+  const presentPlatforms = kinds.platforms.filter(present);
   const baseGeometry = {
-    ...behaviourGeometry(area, zone),
+    ...behaviourGeometry(area, terrain, present, zone),
     chunks: area.chunks,
     hazards: kinds.hazards.map((index) => {
       const object = area.objects[index]!;
@@ -569,7 +620,7 @@ export function stepZone(
   let futureSupports:
     ((time: number, dt: number) => readonly BehaviourPlatformFrame[] | undefined) | undefined;
   const traversalGeometry = (owner: ObjectLayout): BehaviourWorld => {
-    supportFrames ??= kinds.platforms.map((index): BehaviourPlatformFrame => {
+    supportFrames ??= presentPlatforms.map((index): BehaviourPlatformFrame => {
       const frame = resolveFrame(index);
       return {
         after: frame.after,
@@ -588,8 +639,8 @@ export function stepZone(
     });
     futureSupports ??= (() => {
       const samples = [supportFrames!];
-      let states = kinds.platforms.map((index) => resolveFrame(index).behaviour?.state);
-      const predictable = kinds.platforms.every((index) => {
+      let states = presentPlatforms.map((index) => resolveFrame(index).behaviour?.state);
+      const predictable = presentPlatforms.every((index) => {
         const object = area.objects[index]!;
         if (object.orbit || object.reaction.kind !== "none") {
           return false;
@@ -661,7 +712,7 @@ export function stepZone(
           };
           const nextStates: (BehaviourState | undefined)[] = [];
           samples.push(
-            kinds.platforms.map((index, slot) => {
+            presentPlatforms.map((index, slot) => {
               const object = area.objects[index]!;
               const before = previous[slot]!.after;
               const state = states[slot];
@@ -743,6 +794,7 @@ export function stepZone(
     return {
       ...geometry,
       traversalFrame: {
+        ...(crumbling && { crumbling: crumblingPrediction(area, crumbling, time) }),
         bounds: { height: area.height, width: area.width, x: 0, y: 0 },
         dtSeconds: seconds,
         platforms: supportFrames.filter((frame) => frame.owner !== owner),
@@ -852,13 +904,13 @@ export function stepZone(
     }
     behaviours = next;
   }
-  const platforms = kinds.platforms.map((index) => objects[index]!);
+  const platforms = presentPlatforms.map((index) => objects[index]!);
   const riding = platforms.find(({ before }) => standsOn(tuning, zone.bird, before));
   let bird = zone.bird;
   let dx = 0;
   if (riding) {
     dx = riding.after.x - riding.before.x;
-    bird = ride(tuning, area.solids, dx, riding.after.y - riding.before.y, bird);
+    bird = ride(tuning, terrain, dx, riding.after.y - riding.before.y, bird);
   }
   // A platform rising into her from below lifts her onto it, rather than meeting her as a wall.
   for (const { after, before } of platforms) {
@@ -870,10 +922,12 @@ export function stepZone(
   // A solid platform running into her side pushes her ahead of it. Pushed into a solid, she is
   // crushed, which restarts the zone as a hazard does.
   const fixedSolids =
-    kinds.fixedSolids && kinds.solids.every((index) => objects[index] === kinds.fixed[index]);
+    terrain === area.solids &&
+    kinds.fixedSolids &&
+    kinds.solids.every((index) => objects[index] === kinds.fixed[index] && present(index));
   const solids = fixedSolids
     ? kinds.fixedSolids!
-    : [...area.solids, ...kinds.solids.map((index) => objects[index]!.after)];
+    : [...terrain, ...kinds.solids.filter(present).map((index) => objects[index]!.after)];
   let crushed = false;
   for (const { after, before, object } of platforms) {
     const pushed = object.collision === "solid" ? pushedAside(tuning, before, after, bird) : bird;
@@ -901,10 +955,11 @@ export function stepZone(
     );
   });
   const fixedLedges =
-    kinds.fixedLedges && kinds.ledges.every((index) => objects[index] === kinds.fixed[index]);
+    kinds.fixedLedges &&
+    kinds.ledges.every((index) => objects[index] === kinds.fixed[index] && present(index));
   const ledges = fixedLedges
     ? kinds.fixedLedges!
-    : kinds.ledges.map((index) => objects[index]!.after);
+    : kinds.ledges.filter(present).map((index) => objects[index]!.after);
   const pulses: ZonePulse[] = [...zone.pulses];
   let nextPulseId = zone.nextPulseId;
   const spawns: SpawnEvent[] = [];
@@ -940,7 +995,16 @@ export function stepZone(
   const playerInput = { ...input, dashPressed: usePressed && door === undefined, push };
   const dashing =
     (bird.dash?.remainingSeconds ?? 0) > EDGE || startsDash(tuning, playerInput, bird);
-  bird = stepBird(tuning, solids, ledges, seconds, playerInput, bird);
+  const stepped = stepBirdWithSupport(tuning, solids, ledges, seconds, playerInput, bird);
+  bird = stepped.bird;
+  // The solver's actual collider reference names its owner; equal geometry never does.
+  const birdSupport =
+    stepped.support &&
+    (area.crumbling?.some(({ supportId }) => supportId === stepped.support)
+      ? stepped.support
+      : area.objects[
+          kinds.crumblingObjects.find((index) => objects[index]!.after === stepped.support) ?? -1
+        ]);
   const remainingPulses = pulses.flatMap((pulse) => {
     const remaining = pulse.remaining - Math.max(0, seconds - pulse.start);
     return remaining > 0 ? [{ ...pulse, remaining, start: 0 }] : [];
@@ -959,6 +1023,25 @@ export function stepZone(
   if (riding && !bird.grounded) {
     bird = { ...bird, carryVx: dx / seconds };
   }
+  const crumblingAfter =
+    crumbling &&
+    endCrumblingFrame(
+      area.crumbling!,
+      {
+        ...crumblingActors(
+          tuning,
+          area,
+          kinds.crumblingActors,
+          birdSupport,
+          positions,
+          behaviours,
+          transientStep.entities,
+          bird,
+        ),
+        timeSeconds: time,
+      },
+      crumbling,
+    );
   const box = birdBox(tuning, bird);
   const beforeBox = birdBox(tuning, zone.bird);
   const birdAt = (time: number): Rect => ({
@@ -1077,6 +1160,7 @@ export function stepZone(
       barks,
       behaviours,
       bird,
+      crumbling: crumblingAfter,
       nextPulseId,
       nextTransientId: transientStep.nextId,
       objects: positions,
@@ -1136,6 +1220,7 @@ export function stepZone(
     behaviours,
     bird,
     cleared: layout.stageExit ? atStageExit : box.x + box.width > area.exitX,
+    crumbling: crumblingAfter,
     door: atStageExit ? undefined : door,
     nextPulseId,
     nextTransientId: transientStep.nextId,

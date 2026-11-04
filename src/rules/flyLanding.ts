@@ -243,7 +243,7 @@ function sampledPlatforms(
   }
   const start = frame.timeSeconds + offset;
   if (frame.sample && seconds > 0) {
-    return frame.sample(start, seconds);
+    return frame.crumbling?.unknown(start).length ? undefined : frame.sample(start, seconds);
   }
   // Zero-duration snapshots use resolved current-frame chords, not predictive intervals.
   if (seconds === 0 && (offset < 0 || offset > frame.dtSeconds)) {

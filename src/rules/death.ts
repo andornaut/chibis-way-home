@@ -3,6 +3,7 @@ import { clamp01 } from "@andornaut/game-kit/numbers";
 import type { BirdTuning, Point, Rect, ZoneLayout } from "../data/types";
 import { EDGE } from "./bird";
 import type { ZoneState } from "./zone";
+import { supportPresent } from "./zoneCrumbling";
 
 // The nearest top below a body at position in the frozen world. A void has no support; a
 // presentation may use its visible fallback without adding collision terrain.
@@ -17,10 +18,12 @@ export function deathSupport(
     throw new Error(`No area ${zone.area}`);
   }
   const supports = [
-    ...area.solids,
+    ...area.solids.filter((solid) => supportPresent(zone.crumbling, solid)),
     ...area.objects.flatMap((object, index) => {
       const at = zone.objects[index];
-      return at && (object.collision === "solid" || object.collision === "ledge")
+      return at &&
+        (object.collision === "solid" || object.collision === "ledge") &&
+        supportPresent(zone.crumbling, object)
         ? [{ ...at, height: object.height, width: object.width }]
         : [];
     }),

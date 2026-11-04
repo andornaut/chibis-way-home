@@ -173,9 +173,12 @@ export function traversalContext(
                 );
               })()),
       );
+      const unknownSupport = frame.crumbling
+        ?.unknown(time)
+        .some((volume) => intersects(volume, query));
       return {
         colliders,
-        complete: platforms !== undefined && !uncertainHazard,
+        complete: platforms !== undefined && !uncertainHazard && !unknownSupport,
       };
     },
   };
@@ -690,9 +693,10 @@ function advanceTraversalStep(
     };
   }
   let goal = prior?.inputs.length ? prior.target : resolveGoal();
-  const key = frame.platforms
-    .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
-    .join(";");
+  const key =
+    frame.platforms
+      .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
+      .join(";") + (frame.crumbling?.key ?? "");
   const move =
     target.x + target.width / 2 === at.x + object.width / 2
       ? 0
@@ -866,10 +870,11 @@ export function probeRearm(
         y: Math.min(at.y, goal.y),
       }
     : body;
-  const key = (frame?.platforms ?? [])
-    .filter(({ after, before }) => intersects(before, local) || intersects(after, local))
-    .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
-    .join(";");
+  const key =
+    (frame?.platforms ?? [])
+      .filter(({ after, before }) => intersects(before, local) || intersects(after, local))
+      .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
+      .join(";") + (frame?.crumbling?.key ?? "");
   const changed =
     !previous ||
     !previous.visible ||
