@@ -39,9 +39,11 @@ export interface BossWorldSample {
   // Indices of the area's terrain rects that crumbling has removed at the end of the tick.
   readonly absentTerrain: readonly number[];
   readonly area: string;
-  // Each crumbling support's phase, and the actors in standing or pending support contacts:
-  // chibi, agent ids or transients.
+  // Each crumbling support's phase, the actors in standing or pending support contacts (chibi,
+  // agent ids or transients), and the bosses whose contact box rests on a present crumbling
+  // support.
   readonly crumbling?: {
+    readonly bosses: readonly string[];
     readonly phases: readonly string[];
     readonly standing: readonly string[];
   };
@@ -84,6 +86,22 @@ function footing(world: ReturnType<typeof supportWorld>, box: Rect): boolean {
       box.x < rect.x + rect.width &&
       rect.x < box.x + box.width,
   );
+}
+
+// Whether a box's bottom rests on one of the area's present crumbling supports.
+function onCrumbling(
+  area: ReturnType<typeof areaOf>,
+  world: ReturnType<typeof supportWorld>,
+  box: Rect,
+): boolean {
+  const rects = (area.crumbling ?? []).flatMap(({ supportId }) =>
+    "character" in supportId
+      ? world.platforms.filter(({ owner }) => owner === supportId).map(({ rect }) => rect)
+      : world.solids.includes(supportId)
+        ? [supportId]
+        : [],
+  );
+  return footing({ platforms: [], solids: rects }, box);
 }
 
 // One tick of every boss in the current area and of Chibi, from the zone after the step.
@@ -142,6 +160,10 @@ export function bossSample(
       area: after.area,
       ...(after.crumbling && {
         crumbling: {
+          bosses: agents.flatMap(({ at, facing, id }) => {
+            const object = area.objects[Number(id.split(":")[1])]!;
+            return onCrumbling(area, world, contactBox(object, at, facing, "x")) ? [id] : [];
+          }),
           phases: after.crumbling.supports.map(({ phase }) => phase.kind),
           standing: [...after.crumbling.standingContacts, ...after.crumbling.pendingContacts].map(
             ({ actorId }) =>
@@ -255,7 +277,7 @@ export function observedCoverage(ticks: readonly BossTick[]): ReadonlySet<BossCo
       if (attack) {
         seen.add(attack.phase === "tell" ? "tell" : "attack");
       }
-      if (world.crumbling?.standing.includes(id)) {
+      if (world.crumbling?.bosses.includes(id)) {
         seen.add("boss-on-crumbling");
       }
     }

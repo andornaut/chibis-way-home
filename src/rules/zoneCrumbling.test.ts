@@ -109,7 +109,7 @@ function fixture(actorAt?: Rect) {
 
 const phase = (zone: ZoneState) => zone.crumbling!.supports[0]!.phase;
 
-it("a boss's solver-selected standing support starts the shared warning", () => {
+it("a boss standing on a crumbling support does not start its warning", () => {
   const f = fixture({ height: 24, width: 48, x: 412, y: 176 });
   let zone = startZone(BIRD, f.layout, 1);
   zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, zone);
@@ -117,22 +117,28 @@ it("a boss's solver-selected standing support starts the shared warning", () => 
     grounded: true,
     supportId: f.ledge,
   });
-  expect(zone.crumbling!.pendingContacts).toEqual([{ actorId: f.actor, supportId: f.ledge }]);
+  expect(zone.crumbling!.pendingContacts).toEqual([]);
   zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, zone);
-  expect(phase(zone)).toEqual({
-    kind: "warning",
-    removeAtSeconds: STEP_SECONDS + PROFILE.warningSeconds,
-  });
+  expect(phase(zone)).toEqual({ kind: "intact" });
 });
 
 it("boss predictions keep current presence only until each support's earliest change", () => {
   const f = fixture({ height: 24, width: 48, x: 412, y: 176 });
   vi.mocked(advanceBehaviour).mockClear();
-  const zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, startZone(BIRD, f.layout, 1));
+  const known = STEP_SECONDS + PROFILE.warningSeconds;
+  // The warning Chibi started under the boss.
+  const start = startZone(BIRD, f.layout, 1);
+  const warned: ZoneState = {
+    ...start,
+    crumbling: {
+      ...start.crumbling!,
+      supports: [{ phase: { kind: "warning", removeAtSeconds: known }, supportId: f.ledge }],
+    },
+  };
+  const zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, warned);
   const world = vi.mocked(advanceBehaviour).mock.calls.find(([, owner]) => owner === f.actor)![0]
     .world;
   const frame = world.traversalFrame!;
-  const known = STEP_SECONDS + PROFILE.warningSeconds;
   expect(frame.crumbling!.unknown(0)).toEqual([]);
   expect(frame.crumbling!.unknown(known - STEP_SECONDS)).toEqual([]);
   expect(frame.crumbling!.unknown(known)).toEqual([f.area.crumbling![0]!.volume]);
@@ -142,7 +148,7 @@ it("boss predictions keep current presence only until each support's earliest ch
   expect(context.sampleColliders(0, STEP_SECONDS, near).complete).toBe(true);
   expect(context.sampleColliders(known, STEP_SECONDS, near).complete).toBe(false);
   expect(context.sampleColliders(known, STEP_SECONDS, far).complete).toBe(true);
-  expect(zone.crumbling!.pendingContacts).toHaveLength(1);
+  expect(zone.crumbling!.pendingContacts).toEqual([]);
 });
 
 it("an absent support waits for every physical body to leave its volume before restoring", () => {

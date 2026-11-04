@@ -31,11 +31,11 @@ interface KnownFailure {
 const KNOWN_FAILURES: readonly KnownFailure[] = [
   {
     cause:
-      "the crumbling ledge drops Archie onto the pit floor, which the red hazard covers; idle " +
-      "recovery proves no safe route, so he holds against the left wall at x 142",
+      "after Chibi's landing cracks the ledge it drops Archie onto the pit floor, which the red " +
+      "hazard covers; idle recovery proves no safe route, so he holds at x 263",
     property: "no-stall",
-    scenario: "crumbling archie ledge still",
-    tick: 305,
+    scenario: "crumbling archie ledge chibi-trigger",
+    tick: 175,
   },
 ];
 

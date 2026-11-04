@@ -1,4 +1,6 @@
-import type { ZoneLayout } from "../data/types";
+import type { ObjectLayout, ZoneLayout } from "../data/types";
+import { startBird } from "../rules/bird";
+import { STEP_SECONDS } from "../rules/step";
 import type { ZoneInput } from "../rules/zone";
 import {
   type BossController,
@@ -15,6 +17,7 @@ import {
   ENCOUNTER_TICKS,
   liftLayout,
   liftLowerDockStart,
+  ORDINARY,
   withInstances,
 } from "./encounterLayouts";
 
@@ -83,21 +86,66 @@ function botEncounter(theme: string, ids: readonly string[], seed: number): Boss
   };
 }
 
-// Archie on the crumbling crossing's ledge over the red pit, with Chibi at the entry: both banks
-// are twelve tiles from the ledge, beyond a ground boss's jump, so he starts on it. A synthetic
-// placement.
+// Archie on the crumbling crossing's ledge over the red pit: both banks are twelve tiles from
+// the ledge, beyond a ground boss's jump. Only Chibi's landing cracks it, so Chibi drops onto
+// the ledge's left lip, clear of Archie, then jumps back to the left bank; the ledge then gives
+// way under Archie. A synthetic placement.
+const LIP = 24;
+const JUMP_TICKS = Math.ceil(ORDINARY.jumpRiseTime / STEP_SECONDS);
+
+// Waits to land on the lip, then jumps left and runs until it lands again; each new attempt
+// stands still.
+function lipLeap(): BossController {
+  let attempt = -1;
+  let launch: number | undefined;
+  let airborne = false;
+  let landed = false;
+  return (tick, zone) => {
+    if (zone.attempt !== attempt) {
+      attempt = zone.attempt;
+      launch = undefined;
+      airborne = false;
+      landed = false;
+    }
+    if (launch === undefined && attempt === 0 && zone.bird.grounded) {
+      launch = tick;
+    }
+    if (launch !== undefined && tick > launch) {
+      airborne ||= !zone.bird.grounded;
+      landed ||= airborne && zone.bird.grounded;
+    }
+    const leaping = launch !== undefined && !landed;
+    return {
+      jumpHeld: leaping && tick - launch! < JUMP_TICKS,
+      move: leaping ? -1 : 0,
+      useHeld: false,
+    };
+  };
+}
+
 const CRUMBLING_ARCHIE: BossScenario = {
-  controller: scripted("still"),
+  controller: () => lipLeap(),
   layout: () =>
     chunksLayout(
       "city-streets",
       ["crumbling-support-crossing"],
       withInstances("crumbling-support-crossing", [
-        { character: "dog-antagonist", col: 25, role: "antagonist", row: 44 },
+        { character: "dog-antagonist", col: 26, role: "antagonist", row: 44 },
       ]),
     ),
-  name: "crumbling archie ledge still",
+  name: "crumbling archie ledge chibi-trigger",
   seed: 1,
+  start: (layout, zone) => {
+    const ledge = layout.areas.main!.crumbling![0]!.supportId as ObjectLayout;
+    // Feet a lip's height above the ledge, so Chibi lands on it.
+    return {
+      ...zone,
+      bird: startBird(ORDINARY, {
+        x: ledge.origin.x + LIP - ORDINARY.width,
+        y: ledge.origin.y - LIP,
+      }),
+    };
+  },
   ticks: ENCOUNTER_TICKS,
 };
 
@@ -162,7 +210,7 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     boss: "Archie",
     covers: ["boss-on-crumbling"],
     scenario: CRUMBLING_ARCHIE,
-    subject: "crumbling support: Archie stands on the crumbling ledge until it gives way",
+    subject: "crumbling support: Chibi's landing cracks the ledge, which drops Archie",
   },
   {
     boss: "Pebble",

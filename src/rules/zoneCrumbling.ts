@@ -9,7 +9,6 @@ import type {
   Point,
   Rect,
 } from "../data/types";
-import type { BehaviourState } from "./behaviour";
 import type { CrumblingPrediction } from "./behaviourReach";
 import { birdBox, type BirdState } from "./bird";
 import { type CrumblingActor, crumblingSupportPresent } from "./crumbling";
@@ -31,33 +30,12 @@ export function crumblingActorIndices(area: AreaLayout): readonly number[] {
   );
 }
 
-// The solver-selected support of a behaviour actor at its resolved position, if it stands.
-export function behaviourStandingSupport(
-  at: Point,
-  state: BehaviourState | undefined,
-): CrumblingSupportId | undefined {
-  const physical = state?.traversal?.physical;
-  if (
-    physical?.grounded &&
-    physical.supportId !== undefined &&
-    physical.x === at.x &&
-    physical.y === at.y
-  ) {
-    return physical.supportId;
-  }
-  const landing = state?.landing;
-  return landing?.status === "supported" && landing.support
-    ? (landing.support.owner ?? landing.support.rect)
-    : undefined;
-}
-
 export function crumblingActors(
   tuning: BirdTuning,
   area: AreaLayout,
   actors: readonly number[],
   birdSupport: CrumblingSupportId | undefined,
   positions: readonly Point[],
-  behaviours: readonly (BehaviourState | undefined)[],
   transients: readonly Transient[],
   bird: BirdState,
 ): {
@@ -71,15 +49,15 @@ export function crumblingActors(
       standingSupportIds: birdSupport ? [birdSupport] : [],
     },
   ];
+  // Only Chibi's landing starts a warning; other actors are bodies that keep a support from
+  // restoring.
   for (const index of actors) {
     const object = area.objects[index]!;
-    const at = positions[index] ?? object.origin;
-    const support = behaviourStandingSupport(at, behaviours[index]);
     physical.push({
       actorId: object,
       // The whole layout rect bounds every pose and contact box.
-      body: rectAt(object, at),
-      standingSupportIds: support ? [support] : [],
+      body: rectAt(object, positions[index] ?? object.origin),
+      standingSupportIds: [],
     });
   }
   for (const entity of transients) {
