@@ -9,7 +9,8 @@
       { "name": "check", "run": "npm run check" },
       { "name": "lint", "run": "npm run lint" },
       { "name": "test", "run": "npm test -- --maxWorkers=4" },
-      { "name": "build", "run": "npm run build" }
+      { "name": "build", "run": "npm run build" },
+      { "name": "art", "run": "node art/tools/build.ts --check" }
     ]
   },
   "resources": { "cpus": 4, "loadLimit": 24 },
