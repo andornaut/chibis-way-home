@@ -619,8 +619,9 @@ Every environment theme (a zone's street, a chunk theme's park) follows these ru
 
 ## Modular platforming tiles
 
-`art/tools/obstacles.py` builds `tiles-platforming`: 17 tiles, each 12x12, packed into a 96x36 PNG with eight columns. Solid blue blocks and one-way ledges assemble independently of scenery. A stage chooses the terrain look `platform`; individual characters can choose this tileset while their area uses a different theme.
+`art/tools/obstacles.py` builds `tiles-platforming`: 23 tiles, each 12x12, packed into a 96x36 PNG with eight columns. Solid blue blocks and one-way ledges assemble independently of scenery. A stage chooses the terrain look `platform`; individual characters can choose this tileset while their area uses a different theme.
 
+- `crumbling-ledge-left`, `crumbling-ledge-middle`, `crumbling-ledge-right` and `crumbling-ledge-warn-left`, `crumbling-ledge-warn-middle`, `crumbling-ledge-warn-right`: crumbling ledges with exactly the one-way ledge cells and opaque mask. The intact tiles keep the white lip and add only a faint lip notch and a short dslate body seam, so they still read as safe ledges and differ only on close inspection. The warning tiles carry bold, branched navy cracks with grey tips through the lip and body, readable against pale skies and dark facades. Marks stay clear of the outer columns, so any width repeats seamlessly. `crumbling-ledge` and `crumbling-ledge-warn` alias the middle tiles.
 - `one-way-ledge-left`, `one-way-ledge-middle`, `one-way-ledge-right`: thin safe ledges, transparent underneath. Only falling onto the top lands on them.
 - `platform-bottom`, `platform-bottom-left`, `platform-bottom-right`: solid underside and lower corners for floating blocks and ceilings.
 - `platform-face`, `platform-face-left`, `platform-face-right`: solid fill and exposed cliff or wall edges, repeated to any height.

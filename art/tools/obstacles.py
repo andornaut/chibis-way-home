@@ -6,6 +6,12 @@ Run from the repository root. Build writes tiles-platforming.png/.json and merge
 Solid terrain is assembled from top, bottom, left, right, corner and fill tiles. The top has a white lip;
 wall and ceiling edges have no white lip. One-way ledges are thin slabs, transparent underneath.
 
+Crumbling ledges reuse the one-way ledge cells exactly (opaque rows 0..5, the same per-side mask) and add
+marks only inside that band, never touching columns 0 or 11, so any left/middle/right repeat stays seamless.
+The intact frames carry a faint lip notch and a short dslate body seam and still read as a safe white lip.
+The warn frames carry bold, branched navy cracks through the lip and body with grey tips. crumbling-ledge
+and crumbling-ledge-warn alias their middle tiles.
+
 Hazards are separate transparent overlay tiles: a solid 4px bright-red panel on the supporting surface
 or edge, never spikes. Every theme uses the same red. Place hazard-top in the cell ABOVE a solid: its band
 occupies rows 8..11. Place hazard-bottom BELOW a solid (rows 0..3), hazard-left LEFT of a solid (columns
@@ -66,6 +72,27 @@ def ledge(side):
     return im
 
 
+# Marks for ledge rows 1..5, one string per row, 12 columns: "." keeps the ledge pixel, other codes recolour it.
+# Right frames mirror the left ones.
+MARK_COLOURS = {"d": "dslate", "g": "grey", "l": "lgrey", "n": "navy"}
+CRUMBLING_MARKS = {
+    ("intact", "left"): ("............", "....l.......", ".......d....", ".......d....", "............"),
+    ("intact", "middle"): ("............", ".........l..", ".....d......", ".....d......", "............"),
+    ("warn", "left"): (".....n...n..", ".....n...n..", "...g..n.n.n.", "..g...n.n...", ".......n...."),
+    ("warn", "middle"): ("...n....n...", "...n....n...", "..g.n..n.n..", ".g..n..n..g.", ".....n.n...."),
+}
+
+
+def crumbling_ledge(state, side):
+    im = ledge(side)
+    rows = CRUMBLING_MARKS[(state, "left" if side == "right" else side)]
+    for y, row in enumerate(rows, start=1):
+        for x, code in enumerate(row[::-1] if side == "right" else row):
+            if code != ".":
+                im.putpixel((x, y), (*pixel.rgb(MARK_COLOURS[code]), 255))
+    return im
+
+
 def hazard(side):
     im = Image.new("RGBA", (T, T))
     x, y, w, h = (HITBOXES[f"hazard-{side}"][k] for k in ("x", "y", "width", "height"))
@@ -93,6 +120,8 @@ def tiles():
         items.append((name, tile))
     items.extend((f"one-way-ledge-{side}", ledge(side)) for side in ("left", "middle", "right"))
     items.extend((f"hazard-{side}", hazard(side)) for side in ("top", "bottom", "left", "right"))
+    for state, prefix in (("intact", "crumbling-ledge"), ("warn", "crumbling-ledge-warn")):
+        items.extend((f"{prefix}-{side}", crumbling_ledge(state, side)) for side in ("left", "middle", "right"))
     return items
 
 
@@ -101,7 +130,8 @@ def build():
     path = "public/art/" + entry["json"]
     with Path(path).open() as f:
         data = json.load(f)
-    data["tiles"]["one-way-ledge"] = data["tiles"]["one-way-ledge-middle"]
+    for alias in ("crumbling-ledge", "crumbling-ledge-warn", "one-way-ledge"):
+        data["tiles"][alias] = data["tiles"][f"{alias}-middle"]
     with Path(path).open("w") as f:
         json.dump(data, f, indent=2, sort_keys=True)
         f.write("\n")

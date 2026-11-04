@@ -207,9 +207,9 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given,
 
 ## Modular platforming
 
-| Key               | Type                               | Size  | Contents                                                                               |
-| ----------------- | ---------------------------------- | ----- | -------------------------------------------------------------------------------------- |
-| tiles-platforming | tileset, 12px cells, eight columns | 96x36 | 17 tiles: solid faces and corners, one-way ledges, four directional red contact strips |
+| Key               | Type                               | Size  | Contents                                                                                                                    |
+| ----------------- | ---------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------- |
+| tiles-platforming | tileset, 12px cells, eight columns | 96x36 | 23 tiles: solid faces and corners, one-way ledges, four directional red contact strips, intact and warning crumbling ledges |
 
 ## Street atmosphere layers
 
