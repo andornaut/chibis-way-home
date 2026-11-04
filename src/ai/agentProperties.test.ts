@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import {
+  attackCadence,
   cooldownHonoured,
   escapeAtDistance,
   noStall,
@@ -92,4 +93,23 @@ it("requires escape exactly beyond the distance at the start of the step", () =>
   const early = [agent(95), agent(95, undefined, { pursuit: "escaped" })];
   expect(ticksOf(property, trace(late, 20))).toEqual([1]);
   expect(ticksOf(property, trace(early))).toEqual([1]);
+});
+
+it.each([
+  ["regular tells", [4, 9], () => true, []],
+  ["no tell", [], () => true, [6]],
+  ["no tell with ineligible time paused", [], (tick: number) => tick % 2 === 0, [12]],
+] as const)("attack cadence: %s", (_, tells, eligible, flagged) => {
+  const property = attackCadence(
+    "cadence",
+    "rule",
+    STEP,
+    1.5,
+    () => true,
+    ({ tick }) => eligible(tick),
+  );
+  const samples = Array.from({ length: 14 }, (_, tick) =>
+    agent(0, (tells as readonly number[]).includes(tick) ? TELL : undefined),
+  );
+  expect(ticksOf(property, trace(samples))).toEqual(flagged);
 });

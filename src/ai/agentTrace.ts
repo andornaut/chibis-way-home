@@ -29,7 +29,8 @@ export interface AgentSample extends TraceBody {
   readonly motion: string;
   readonly pursuit?: "engaged" | "escaped";
   readonly state: string;
-  // The whole body rests on one present support at the end of the tick.
+  // Ordinary support contact at the end of the tick: a clear body whose feet rest on a present
+  // support under part of its hitbox.
   readonly supported: boolean;
 }
 

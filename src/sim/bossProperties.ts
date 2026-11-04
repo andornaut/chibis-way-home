@@ -1,6 +1,7 @@
 import { insetRect, rectsOverlap } from "@andornaut/game-kit/rect";
 
 import {
+  attackCadence,
   boundedStep,
   cancelledTellKeepsCooldown,
   cooldownHonoured,
@@ -15,16 +16,19 @@ import {
   tellStarts,
 } from "../ai/agentProperties";
 import type { AgentSample } from "../ai/agentTrace";
-import type { BehaviourPlan, ZoneLayout } from "../data/types";
+import { TILE } from "../data/screen";
+import type { BehaviourPlan, Rect, ZoneLayout } from "../data/types";
+import { contactBox } from "../rules/behaviourTrack";
 import { EDGE } from "../rules/bird";
 import { STEP_SECONDS } from "../rules/step";
 import { BOSSES, type BossTick } from "./bossSimulator";
 
 // Boss rules from gameplay/design.md as checks over a boss trace. Thresholds are read from the
-// zone's resolved behaviour data; the stall window and step bound state their multiples of it.
+// zone's resolved behaviour data, or are the design's own bounds where data has none.
 
 const DESIGN = "gameplay/design.md";
 export const RULES = {
+  attackCadence: `${DESIGN} Objects: Animals`,
   attackSequencing: `${DESIGN} Objects: Attack sequencing`,
   attackTells: `${DESIGN} Objects: Attack tells`,
   deferral: `${DESIGN} Forced transit: Deferral`,
@@ -83,6 +87,24 @@ export function maximumTellSeconds(plan: BehaviourPlan, id: string): number {
   return Math.max(...seconds);
 }
 
+// Idle recovery: while engaged and more than two tiles from Chibi, a boss moves half a tile
+// horizontally (the watchdog's minimum movement) within every four seconds.
+export const STALL_BOUND = { distance: 2 * TILE, seconds: 4 } as const;
+
+// Objects: each boss starts a charge or special tell within 10 s of eligible engaged time, and
+// its distinct special tell within 20 s.
+export const CADENCE_SECONDS = { any: 10, special: 20 } as const;
+
+// Each boss's charge or contact dive; its other attacks are its specials.
+export const CHARGE_ATTACKS: Readonly<Record<string, string>> = {
+  "bear-antagonist": "charge",
+  "dog-antagonist": "charge",
+  "ferret-antagonist": "charge",
+  "goose-antagonist": "charge",
+  "pigeon-antagonist": "swoop",
+  "raccoon-antagonist": "charge",
+};
+
 // The attacks forced-transit deferral holds back: Pebble's targeted swoop and aimed poop burst.
 export const DEFERRED_ATTACKS: Readonly<Record<string, readonly string[]>> = {
   "pigeon-antagonist": ["drop-burst", "swoop"],
@@ -120,19 +142,53 @@ const flies = (plan: BehaviourPlan) =>
     ({ motion }) => motion.kind === "fly" || (motion.kind === "pursue" && motion.mode === "fly"),
   );
 
+// Each tell id a plan can start.
+export function tellAttacks(plan: BehaviourPlan): ReadonlySet<string> {
+  return new Set(
+    Object.values(plan.states).flatMap(({ attack }) =>
+      attack?.phase === "tell" ? [attack.id] : [],
+    ),
+  );
+}
+
 export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
   const plans = bossPlans(layout);
   const plan = (agent: AgentSample) => plans.get(agent.kind)!;
   const watchdog = (agent: AgentSample) => plan(agent).idleWatchdog!;
-  const intentOffset = (agent: AgentSample) => {
-    const intent = Object.values(plan(agent).states).find(
-      ({ motion }) => motion.kind === "pursue" && motion.intent,
-    )?.motion;
-    return intent?.kind === "pursue" && intent.intent ? intent.intent.offset.max : 0;
+  const objectOf = (agent: AgentSample) => {
+    const [area, index] = agent.id.split(":");
+    return layout.areas[area!]!.objects[Number(index)]!;
   };
-  const watchdogSeconds = Math.max(
-    ...[...plans.values()].map((entry) => entry.idleWatchdog!.seconds),
-  );
+  const committedGroundMove = (agent: AgentSample) => {
+    const node = plan(agent).states[agent.state]!;
+    return !flies(plan(agent)) && node.motion.kind === "move" && node.attack?.phase === "committed";
+  };
+  // Whether a box's bottom rests on present terrain over part of its width.
+  const onTerrain = (tick: BossTick, box: Rect) =>
+    layout.areas[tick.world.area]!.solids.some(
+      (rect, index) =>
+        !tick.world.absentTerrain.includes(index) &&
+        Math.abs(rect.y - box.y - box.height) <= EDGE &&
+        box.x < rect.x + rect.width &&
+        rect.x < box.x + box.width,
+    );
+  // Engaged and ready, with an attack the targeted-attack window does not hold back.
+  const cadenceEligible =
+    (special: boolean) =>
+    (tick: BossTick, agent: AgentSample): boolean => {
+      if (
+        agent.pursuit !== "engaged" ||
+        agent.attack !== undefined ||
+        (agent.cooldownSeconds ?? 0) > 0
+      ) {
+        return false;
+      }
+      const deferred =
+        tick.world.targetedAttackWindow === "deferred" ? (DEFERRED_ATTACKS[agent.kind] ?? []) : [];
+      return [...tellAttacks(plan(agent))].some(
+        (id) => (!special || id !== CHARGE_ATTACKS[agent.kind]) && !deferred.includes(id),
+      );
+    };
   return [
     tellPrecedesCommit(RULES.attackTells, STEP_SECONDS, (agent, id) =>
       minimumTellSeconds(plan(agent), id),
@@ -147,23 +203,20 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       (agent) => plan(agent).attackCooldownSeconds!,
     ),
     cancelledTellKeepsCooldown(RULES.attackSequencing),
-    // The watchdog allows a recovery search after its period; a stall over two periods means
-    // no recovery or pursuit moved the boss. A boss within its pursuit intent offset of Chibi
-    // may hold position.
     noStall(
       RULES.idleRecovery,
       STEP_SECONDS,
-      2 * watchdogSeconds,
+      STALL_BOUND.seconds,
       (agent) => watchdog(agent).minMovement,
       ({ target }, agent) => {
-        if (agent.pursuit !== "engaged" || agent.attack) {
+        if (agent.pursuit !== "engaged") {
           return false;
         }
         const gap = Math.max(
           target.at.x - (agent.at.x + agent.width),
           agent.at.x - (target.at.x + target.width),
         );
-        return gap > intentOffset(agent);
+        return gap > STALL_BOUND.distance;
       },
     ),
     escapeAtDistance(RULES.enemyPursuit, (agent) => plan(agent).pursuit?.escapeDistance),
@@ -191,6 +244,39 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       Math.abs(agent.at.y - previous.at.y) <= EDGE
         ? `held at ${agent.at.x.toFixed(1)}, ${agent.at.y.toFixed(1)} without support, ${agent.state}`
         : undefined,
+    ),
+    // A committed ground rush stays inside the area and does not step off present support; it
+    // falls only when that support has gone.
+    everyTick("ledge-stop", RULES.enemyPursuit, (tick, agent, previous) => {
+      if (!committedGroundMove(agent)) {
+        return undefined;
+      }
+      const object = objectOf(agent);
+      const box = contactBox(object, agent.at, agent.facing, "x");
+      if (box.x < -EDGE || box.x + box.width > layout.areas[tick.world.area]!.width + EDGE) {
+        return `${agent.state} past the area edge at ${agent.at.x.toFixed(1)}`;
+      }
+      return previous?.footing &&
+        !agent.footing &&
+        onTerrain(tick, contactBox(object, previous.at, previous.facing, "x"))
+        ? `${agent.state} left present support at ${agent.at.x.toFixed(1)}, ${agent.at.y.toFixed(1)}`
+        : undefined;
+    }),
+    attackCadence(
+      "attack-cadence",
+      RULES.attackCadence,
+      STEP_SECONDS,
+      CADENCE_SECONDS.any,
+      () => true,
+      cadenceEligible(false),
+    ),
+    attackCadence(
+      "special-cadence",
+      RULES.attackCadence,
+      STEP_SECONDS,
+      CADENCE_SECONDS.special,
+      (agent, id) => id !== CHARGE_ATTACKS[agent.kind],
+      cadenceEligible(true),
     ),
     everyTick("supported-completion", RULES.pebbleCycle, (_, agent, previous) =>
       flies(plan(agent)) &&

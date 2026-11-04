@@ -309,6 +309,46 @@ export function noStall<World>(
   };
 }
 
+// Counting only eligible time, a tell of a counted attack starts within each window. Eligible
+// time pauses, and does not reset, while no counted attack may start.
+export function attackCadence<World>(
+  id: string,
+  rule: string,
+  stepSeconds: number,
+  windowSeconds: number,
+  counts: (agent: AgentSample, attack: string) => boolean,
+  eligible: (tick: AgentTick<World>, agent: AgentSample) => boolean,
+): Property<AgentTick<World>> {
+  return {
+    check: (ticks) => {
+      const found: Violation[] = [];
+      for (const run of agentRuns(ticks)) {
+        let waited = 0;
+        let reported = false;
+        run.forEach((step, index) => {
+          const previous = run[index - 1]?.agent;
+          if (tellStarts(previous, step.agent) && counts(step.agent, step.agent.attack!.id)) {
+            waited = 0;
+            reported = false;
+            return;
+          }
+          if (!eligible(step.tick, step.agent)) {
+            return;
+          }
+          waited += stepSeconds;
+          if (!reported && waited > windowSeconds + EPSILON) {
+            reported = true;
+            found.push(violation(step, `no counted tell in ${windowSeconds} s of eligible time`));
+          }
+        });
+      }
+      return found;
+    },
+    id,
+    rule,
+  };
+}
+
 // Pursuit ends exactly when the centre distance at the start of a step exceeds the escape distance.
 export function escapeAtDistance<World>(
   rule: string,

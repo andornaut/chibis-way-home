@@ -6,10 +6,12 @@ import { BOSS_SCENARIOS } from "../testing/bossScenarios";
 import { ORDINARY } from "../testing/encounterLayouts";
 import {
   bossProperties,
+  CHARGE_ATTACKS,
   DEFERRED_ATTACKS,
   maximumTellSeconds,
   minimumTellSeconds,
   targetedAttacks,
+  tellAttacks,
 } from "./bossProperties";
 import { BOSSES, observedCoverage, simulateBosses } from "./bossSimulator";
 
@@ -27,6 +29,14 @@ interface KnownFailure {
   readonly tick: number | undefined;
 }
 const KNOWN_FAILURES: readonly KnownFailure[] = [
+  {
+    cause:
+      "Pebble's drop-burst tell, burst, perch return and two-second rest before relocating keep " +
+      "him within half a tile of x 95 for over four seconds while Chibi stands still: data timing",
+    property: "no-stall",
+    scenario: "encounter flyer-shelter-early loading-yards still",
+    tick: 89,
+  },
   {
     cause:
       "Archie stops at the far bank's edge; his traversal search exhausts its budget on the " +
@@ -86,6 +96,14 @@ it("reads every boss's tells within the shared bounds from its data", () => {
       expect(minimumTellSeconds(plan, id)).toBeGreaterThanOrEqual(0.5);
       expect(maximumTellSeconds(plan, id)).toBeLessThanOrEqual(1);
     }
+  }
+});
+
+it("gives every boss a told charge and at least one distinct special", () => {
+  for (const [character, plan] of Object.entries(PLANS)) {
+    const tells = tellAttacks(plan);
+    expect(tells, character).toContain(CHARGE_ATTACKS[character]);
+    expect(tells.size, character).toBeGreaterThan(1);
   }
 });
 
