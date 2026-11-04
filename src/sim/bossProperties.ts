@@ -31,6 +31,7 @@ export const RULES = {
   attackCadence: `${DESIGN} Objects: Animals`,
   attackSequencing: `${DESIGN} Objects: Attack sequencing`,
   attackTells: `${DESIGN} Objects: Attack tells`,
+  bossDeath: `${DESIGN} Objects: Boss death`,
   deferral: `${DESIGN} Forced transit: Deferral`,
   enemyPursuit: `${DESIGN} Objects: Enemy pursuit`,
   flight: `${DESIGN} Boss encounter principles: Flight`,
@@ -278,6 +279,27 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       (agent, id) => id !== CHARGE_ATTACKS[agent.kind],
       cadenceEligible(true),
     ),
+    // A boss on a stationary red hazard or below the level is dead, so no live agent is there.
+    everyTick("boss-death", RULES.bossDeath, (tick, agent) => {
+      const area = layout.areas[tick.world.area]!;
+      const box = contactBox(objectOf(agent), agent.at, agent.facing, "x");
+      if (box.y > area.height) {
+        return `alive below the level at ${agent.at.x.toFixed(1)}, ${agent.at.y.toFixed(1)}`;
+      }
+      return area.objects.some(
+        (object) =>
+          object.collision === "hazard" &&
+          !object.behaviour &&
+          object.motion.algorithm === "static" &&
+          rectsOverlap(box, {
+            ...(object.hitbox ?? { height: object.height, width: object.width, x: 0, y: 0 }),
+            x: object.origin.x + (object.hitbox?.x ?? 0),
+            y: object.origin.y + (object.hitbox?.y ?? 0),
+          }),
+      )
+        ? `alive on a red hazard at ${agent.at.x.toFixed(1)}, ${agent.at.y.toFixed(1)}`
+        : undefined;
+    }),
     everyTick("supported-completion", RULES.pebbleCycle, (_, agent, previous) =>
       flies(plan(agent)) &&
       previous?.attack?.phase === "committed" &&

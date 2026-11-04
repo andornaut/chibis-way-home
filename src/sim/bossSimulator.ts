@@ -47,6 +47,8 @@ export interface BossWorldSample {
     readonly phases: readonly string[];
     readonly standing: readonly string[];
   };
+  // The dead bosses' agent ids.
+  readonly defeated: readonly string[];
   // The targeted-attack window the bosses perceived during the tick.
   readonly targetedAttackWindow: TargetedAttackWindow;
   readonly transients: number;
@@ -115,7 +117,8 @@ export function bossSample(
   const world = supportWorld(layout, after);
   const agents = area.objects.flatMap((object, index): AgentSample[] => {
     const state = after.behaviours[index];
-    if (!isBoss(object) || !state) {
+    // A dead boss leaves the agent checks.
+    if (!isBoss(object) || !state || state.defeat) {
       return [];
     }
     const at = after.objects[index] ?? object.origin;
@@ -158,6 +161,9 @@ export function bossSample(
         world.solids.includes(rect) ? [] : [index],
       ),
       area: after.area,
+      defeated: area.objects.flatMap((object, index) =>
+        isBoss(object) && after.behaviours[index]?.defeat ? [`${after.area}:${index}`] : [],
+      ),
       ...(after.crumbling && {
         crumbling: {
           bosses: agents.flatMap(({ at, facing, id }) => {
@@ -268,7 +274,8 @@ export function simulateBosses(tuning: BirdTuning, scenario: BossScenario) {
 }
 
 // What a scenario must exercise for its properties to mean anything.
-export type BossCoverage = "attack" | "boss-on-crumbling" | "deferred-window" | "tell";
+export type BossCoverage =
+  "attack" | "boss-death" | "boss-on-crumbling" | "deferred-window" | "tell";
 
 export function observedCoverage(ticks: readonly BossTick[]): ReadonlySet<BossCoverage> {
   const seen = new Set<BossCoverage>();
@@ -283,6 +290,9 @@ export function observedCoverage(ticks: readonly BossTick[]): ReadonlySet<BossCo
     }
     if (world.targetedAttackWindow === "deferred") {
       seen.add("deferred-window");
+    }
+    if (world.defeated.length > 0) {
+      seen.add("boss-death");
     }
   }
   return seen;

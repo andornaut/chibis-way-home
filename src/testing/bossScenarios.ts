@@ -89,7 +89,7 @@ function botEncounter(theme: string, ids: readonly string[], seed: number): Boss
 // Archie on the crumbling crossing's ledge over the red pit: both banks are twelve tiles from
 // the ledge, beyond a ground boss's jump. Only Chibi's landing cracks it, so Chibi drops onto
 // the ledge's left lip, clear of Archie, then jumps back to the left bank; the ledge then gives
-// way under Archie. A synthetic placement.
+// way and Archie dies in the red pit. A synthetic placement.
 const LIP = 24;
 const JUMP_TICKS = Math.ceil(ORDINARY.jumpRiseTime / STEP_SECONDS);
 
@@ -208,9 +208,9 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   },
   {
     boss: "Archie",
-    covers: ["boss-on-crumbling"],
+    covers: ["boss-death", "boss-on-crumbling"],
     scenario: CRUMBLING_ARCHIE,
-    subject: "crumbling support: Chibi's landing cracks the ledge, which drops Archie",
+    subject: "crumbling support: Chibi's landing cracks the ledge, dropping Archie to his death",
   },
   {
     boss: "Pebble",

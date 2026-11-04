@@ -5,6 +5,7 @@ export { backdropBottomRect } from "./backdropBottom";
 export { backgroundGroundOffset, backgroundGroundReference } from "./backgroundGround";
 export { behaviourPose } from "./behaviour";
 export { birdFrameAt, type BirdPose, clearAirJumpPose, startPose, stepPose } from "./bird";
+export { BOSS_REMOVAL_ART, type BossRemovalView, bossRemovalView } from "./bossRemoval";
 export { bossWarning, type BossWarningTuning } from "./bossWarning";
 export { characterState, nextQuirkAt } from "./character";
 export { chunkBackdropSpan, chunkParallax } from "./chunkParallax";

@@ -39,6 +39,7 @@ import {
   stepBirdWithSupport,
 } from "./bird";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
+import { bossDeath, defeatBoss, holdDefeated, removedBoss } from "./bossDefeat";
 import { collisionCandidates } from "./collisionIndex";
 import { initialCrumblingWorld } from "./crumbling";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
@@ -299,6 +300,9 @@ export interface ZoneState {
   readonly forcedTransitForecast?: ForcedTransitForecast | undefined;
   readonly sceneryPlayback?: readonly (SceneryPlaybackState | undefined)[] | undefined;
   readonly spotted: Readonly<Record<string, readonly number[]>>;
+  // Per area, the bosses that have died this attempt; area links keep them dead, and a retry
+  // restores them with the rest of the area.
+  readonly defeated?: Readonly<Record<string, readonly number[]>>;
   readonly barks: readonly ZoneBark[];
   readonly nextPulseId: number;
   readonly pulses: readonly ZonePulse[];
@@ -345,7 +349,7 @@ export function enterArea(
   layout: ZoneLayout,
   link: AreaLink,
   zone: Pick<ZoneState, "attempt" | "restarts" | "seed" | "steps"> &
-    Partial<Pick<ZoneState, "spotted">>,
+    Partial<Pick<ZoneState, "defeated" | "spotted">>,
 ): ZoneState {
   const area = areaOf(layout, link.area);
   const entry = area.entries[link.entry];
@@ -385,7 +389,10 @@ export function enterArea(
     area: link.area,
     barks: [],
     behaviours: area.objects.some((object) => object.behaviour)
-      ? area.objects.map((object) => object.behaviour && startBehaviour(tuning, object, bird))
+      ? area.objects.map((object, index) => {
+          const state = object.behaviour && startBehaviour(tuning, object, bird);
+          return state && zone.defeated?.[link.area]?.includes(index) ? removedBoss(state) : state;
+        })
       : [],
     bird,
     cleared: false,
@@ -642,6 +649,8 @@ export function stepZoneBodies(
   const sceneryPlayback = playback?.map((frame) => frame?.state);
 
   const kinds = areaObjects(area);
+  // A dead boss is no longer a body.
+  const bodies = kinds.crumblingActors.filter((index) => !zone.behaviours[index]?.defeat);
   // One shared phase commit at the boundary, before any collider is constructed this tick.
   const prior =
     zone.crumbling ?? (area.crumbling ? initialCrumblingWorld(area.crumbling) : undefined);
@@ -653,7 +662,7 @@ export function stepZoneBodies(
         ...crumblingActors(
           tuning,
           area,
-          kinds.crumblingActors,
+          bodies,
           undefined,
           zone.objects,
           zone.transients,
@@ -679,8 +688,11 @@ export function stepZoneBodies(
   const baseGeometry = {
     ...behaviourGeometry(area, terrain, present, zone),
     chunks: area.chunks,
-    hazards: kinds.hazards.map((index) => {
+    hazards: kinds.hazards.flatMap((index) => {
       const object = area.objects[index]!;
+      if (zone.behaviours[index]?.defeat) {
+        return [];
+      }
       const at = { ...(zone.objects[index] ?? object.origin) };
       const state = zone.behaviours[index];
       const rect = object.contact
@@ -691,12 +703,14 @@ export function stepZoneBodies(
         object.behaviour !== undefined ||
         object.motion.algorithm !== "static" ||
         object.reaction.kind !== "none";
-      return {
-        ...(dynamic
-          ? hazardOccupancy(tuning, area.objects, state, at, rect, zone.seconds, object)
-          : { rect }),
-        owner: object,
-      };
+      return [
+        {
+          ...(dynamic
+            ? hazardOccupancy(tuning, area.objects, state, at, rect, zone.seconds, object)
+            : { rect }),
+          owner: object,
+        },
+      ];
     }),
     targetedAttackWindow: forcedTransit?.attackWindow ?? "allowed",
   };
@@ -931,25 +945,28 @@ export function stepZoneBodies(
         return fixed;
       }
       // Perceive once per object per tick; deciding and acting read only this snapshot.
-      const behaviour = object.behaviour
-        ? advanceBehaviour(
-            perceiveBehaviour(
-              tuning,
-              {
-                ...(kinds.traversal[index] ? traversalGeometry(object) : geometry),
-                decisions: namedStreams(
-                  zone.seed + zone.attempt,
-                  `idle-roam:${zone.area}:${index}`,
-                ),
-              },
-              zone.bird,
-            ),
-            object,
-            seconds,
-            before,
-            zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
-          )
-        : undefined;
+      const prior = zone.behaviours[index];
+      const behaviour = prior?.defeat
+        ? holdDefeated(seconds, before, prior)
+        : object.behaviour
+          ? advanceBehaviour(
+              perceiveBehaviour(
+                tuning,
+                {
+                  ...(kinds.traversal[index] ? traversalGeometry(object) : geometry),
+                  decisions: namedStreams(
+                    zone.seed + zone.attempt,
+                    `idle-roam:${zone.area}:${index}`,
+                  ),
+                },
+                zone.bird,
+              ),
+              object,
+              seconds,
+              before,
+              zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
+            )
+          : undefined;
       const path = pathAt(object, zone.tracks[index] as Track, time);
       const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
       return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
@@ -959,7 +976,7 @@ export function stepZoneBodies(
     return frame;
   };
   const objects = area.objects.map((_, index) => resolveFrame(index));
-  const escaped = objects.flatMap((frame, index) =>
+  let escaped = objects.flatMap((frame, index) =>
     frame.behaviour?.escaped ? [[index, frame.behaviour.escaped] as const] : [],
   );
   const positions = objects.map((frame, index): Point =>
@@ -1002,6 +1019,29 @@ export function stepZoneBodies(
           : after)
     );
   });
+  // A boss on a red hazard or below the level dies as Chibi does; its pursuit ends without an
+  // escape, and it stays dead for the rest of the attempt.
+  const deaths = kinds.behaviours.filter((index) => {
+    const state = behaviours[index];
+    return (
+      state !== undefined &&
+      bossDeath(
+        area,
+        hazards.filter((_, at) => hazardIndices[at] !== index),
+        area.objects[index]!,
+        positions[index]!,
+        state,
+      ) !== undefined
+    );
+  });
+  let defeated = zone.defeated;
+  if (deaths.length > 0) {
+    behaviours = behaviours.map((state, index) =>
+      state && deaths.includes(index) ? defeatBoss(state) : state,
+    );
+    escaped = escaped.filter(([index]) => !deaths.includes(index));
+    defeated = { ...defeated, [zone.area]: [...(defeated?.[zone.area] ?? []), ...deaths] };
+  }
   const fixedLedges =
     kinds.fixedLedges &&
     kinds.ledges.every((index) => objects[index] === kinds.fixed[index] && present(index));
@@ -1063,7 +1103,7 @@ export function stepZoneBodies(
         ...crumblingActors(
           tuning,
           area,
-          kinds.crumblingActors,
+          bodies,
           birdSupport,
           positions,
           transientStep.entities,
@@ -1084,6 +1124,9 @@ export function stepZoneBodies(
     seconds > 0
       ? kinds.hazards.find((index) => {
           const { behaviour, object, orbitLegs } = objects[index]!;
+          if (behaviour?.state.defeat) {
+            return false;
+          }
           if (object.orbit && orbitLegs) {
             const host = area.objects[object.orbit.host]!;
             return orbitLegs.some((leg) =>
@@ -1139,7 +1182,7 @@ export function stepZoneBodies(
       : undefined;
   const bodyContact = kinds.hazards.find((index) => {
     const { after, behaviour, object } = objects[index]!;
-    if (!object.contact) {
+    if (!object.contact || behaviour?.state.defeat) {
       return false;
     }
     const state = behaviour?.state;
@@ -1188,6 +1231,7 @@ export function stepZoneBodies(
   ) {
     const frozen: ZoneState = {
       ...zone,
+      ...(defeated && { defeated }),
       ...(forcedTransit && { forcedTransit }),
       behaviours,
       bird,
@@ -1240,6 +1284,7 @@ export function stepZoneBodies(
     geometry,
     zone: {
       ...zone,
+      ...(defeated && { defeated }),
       ...(forcedTransit && { forcedTransit }),
       behaviours,
       bird,
@@ -1291,6 +1336,7 @@ export function stepZone(
     if (
       bark &&
       state?.active &&
+      !state.defeat &&
       !seen.has(index) &&
       targetVisible(
         geometry,
@@ -1329,6 +1375,7 @@ export function stepZone(
   if (link) {
     const arrival = enterArea(tuning, layout, link, {
       attempt: zone.attempt,
+      ...(body.zone.defeated && { defeated: body.zone.defeated }),
       restarts: zone.restarts,
       seed: zone.seed,
       spotted,

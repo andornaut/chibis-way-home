@@ -28,16 +28,7 @@ interface KnownFailure {
   readonly scenario: string;
   readonly tick: number | undefined;
 }
-const KNOWN_FAILURES: readonly KnownFailure[] = [
-  {
-    cause:
-      "after Chibi's landing cracks the ledge it drops Archie onto the pit floor, which the red " +
-      "hazard covers; idle recovery proves no safe route, so he holds at x 263",
-    property: "no-stall",
-    scenario: "crumbling archie ledge chibi-trigger",
-    tick: 175,
-  },
-];
+const KNOWN_FAILURES: readonly KnownFailure[] = [];
 
 const known = (scenario: string, property: string) =>
   KNOWN_FAILURES.find((entry) => entry.scenario === scenario && entry.property === property);

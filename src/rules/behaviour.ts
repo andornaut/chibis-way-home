@@ -76,6 +76,8 @@ import { hopLift } from "./motion";
 import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 
 export interface BehaviourState extends BehaviourAttackState {
+  // A dead boss's removal: the seconds since it died.
+  readonly defeat?: { readonly seconds: number };
   readonly idleWatchdog?: BehaviourIdleState;
   readonly groundReposition?: BehaviourIdleState;
   readonly rearm?: BehaviourRearmState;

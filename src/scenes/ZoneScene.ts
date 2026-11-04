@@ -78,6 +78,8 @@ import {
   behaviourPose,
   birdFrameAt,
   type BirdPose,
+  BOSS_REMOVAL_ART,
+  bossRemovalView,
   characterState,
   chunkBackdropSpan,
   chunkParallax,
@@ -109,6 +111,8 @@ import {
 } from "../presentation";
 import { eligibleSkills, nodeOf, skillTuning, stageExit, wholeRunSummary } from "../progress";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
+import type { BehaviourState } from "../rules/behaviour";
+import { removalProgress } from "../rules/bossDefeat";
 import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams";
@@ -373,6 +377,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     readonly parallax: Point;
   }[] = [];
   private readonly pulseArt = new Map<number, GameObjects.Sprite>();
+  // Each dead boss's removal puff, by object index.
+  private readonly removalArt = new Map<number, GameObjects.Sprite>();
   private readonly transientArt = new Map<number, ObjectArt>();
   private terrainMap: Tilemaps.Tilemap | undefined;
   // When each held button's press began.
@@ -407,6 +413,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.scenerySprites.length = 0;
     this.transientArt.clear();
     this.pulseArt.clear();
+    this.removalArt.clear();
     this.heldKeys.clear();
     this.heldTouches.clear();
     this.buttonTouches.clear();
@@ -1448,6 +1455,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       art.destroy();
     }
     this.pulseArt.clear();
+    for (const art of this.removalArt.values()) {
+      art.destroy();
+    }
+    this.removalArt.clear();
     this.objectArt = area.objects.map((object, index) => {
       const key = object.tileset === null ? undefined : (object.tileset ?? area.tileset);
       const source = loadedTileset(
@@ -1802,6 +1813,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (art.item.x !== position.x || art.item.y !== position.y) {
         art.item.setPosition(position.x, position.y);
       }
+      if (behaviour?.defeat) {
+        this.drawRemoval(index, art, behaviour);
+        return;
+      }
       if (art.sprite) {
         this.bossWarning?.draw(behaviour, art.sprite, object.contact);
       }
@@ -1809,6 +1824,37 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.crumblingArt?.draw(this.zone.crumbling);
     this.drawTransients();
     this.drawPulses();
+  }
+
+  // A dead boss's removal: the seam where Art's puff replaces the interim fade.
+  private drawRemoval(index: number, art: ObjectArt, behaviour: BehaviourState): void {
+    const view = bossRemovalView(
+      removalProgress(behaviour)!,
+      this.textures.exists(BOSS_REMOVAL_ART.key),
+    );
+    let puff = this.removalArt.get(index);
+    if (view.kind === "fade") {
+      art.sprite?.setAlpha(view.alpha);
+      return;
+    }
+    art.sprite?.setVisible(false);
+    if (view.kind === "removed") {
+      puff?.destroy();
+      this.removalArt.delete(index);
+      return;
+    }
+    if (!puff && art.sprite) {
+      puff = this.add
+        .sprite(
+          art.item.x + art.sprite.width / 2,
+          art.item.y + art.sprite.height / 2,
+          BOSS_REMOVAL_ART.key,
+        )
+        .setOrigin(0.5)
+        .setDepth(DEPTHS.sprite);
+      show(puff, BOSS_REMOVAL_ART.tag);
+      this.removalArt.set(index, puff);
+    }
   }
 
   private drawPulses(): void {

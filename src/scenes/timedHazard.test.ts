@@ -165,6 +165,7 @@ function fixture() {
     layout: { areas: { main: area } },
     objectArt: [],
     pulseArt: new Map(),
+    removalArt: new Map(),
     scenerySprites: [],
     transientArt: new Map(),
     zone,

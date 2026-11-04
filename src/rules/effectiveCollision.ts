@@ -78,10 +78,14 @@ export function effectiveHazardPhase(
   return node.hazardPhase;
 }
 
+// A dead boss has no collision.
 export function effectiveCollision(
   object: ObjectLayout,
-  state: Pick<BehaviourState, "stateKey"> | undefined,
+  state: Pick<BehaviourState, "defeat" | "stateKey"> | undefined,
 ): Collision {
+  if (state?.defeat) {
+    return "none";
+  }
   const phase = effectiveHazardPhase(object, state);
   return phase === undefined ? object.collision : phase === "active" ? "hazard" : "none";
 }
