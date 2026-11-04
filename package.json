@@ -1,7 +1,7 @@
 {
   "name": "chibis-way-home",
   "version": "0.0.1",
-  "description": "Help Chibi get home after Furt, his former best friend, mails him far away.",
+  "description": "Help Chibi get home after Fert, his former best friend, mails him far away.",
   "license": "UNLICENSED",
   "private": true,
   "type": "module",
@@ -12,15 +12,14 @@
     "prepare": "husky",
     "dev": "vite",
     "build": "vite build",
-    "build:deploy": "npm run check && npm test && npm run build",
     "preview": "npm run build && wrangler dev",
     "check": "tsc",
     "lint": "prettier --check . && eslint --max-warnings 0 . && markdownlint-cli2",
     "format": "prettier --write . && eslint --fix .",
     "test": "vitest run",
+    "test:game-kit": "vitest run src/rules/behaviourTraversalGoals.test.ts",
     "simulate": "tsx src/sim/cli.ts",
     "reaches": "tsx src/sim/reachCli.ts",
-    "deploy": "npm run build && wrangler deploy",
     "clean": "rm -rf dist .wrangler"
   },
   "dependencies": {
