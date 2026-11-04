@@ -47,7 +47,6 @@ import { frameImage, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/antagonists";
 const KEY = "pigeon-antagonist";
 const POOP = "pigeon-poop";
 const USAGE = "Usage: pigeonAntagonist.ts build | preview OUT.png";
@@ -292,8 +291,7 @@ if (import.meta.main) {
   run(() =>
     commands({
       usage: USAGE,
-      build: () =>
-        pixel.build({ contacts: [KEY], hitboxes: HITBOX, once: ONCE, srcDir: SRC }, [...sprites()]),
+      build: () => pixel.build({ contacts: [KEY], hitboxes: HITBOX, once: ONCE }, [...sprites()]),
       preview,
     }),
   );

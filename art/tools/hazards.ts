@@ -3,8 +3,7 @@
  * tiles-street (floor1.ts).
  *
  * Usage, from the repository root:
- *   node art/tools/hazards.ts build            write art/hazards/<key>.aseprite and
- *                                              public/art/sprites/<key>.png + .json
+ *   node art/tools/hazards.ts build            write public/art/sprites/<key>.png + .json
  *   node art/tools/hazards.ts preview OUT.png  contact sheet of every frame on slate, tan and cream
  *
  * Every hazard takes an ink outline, so it holds 3:1 on every street ground, and is drawn at
@@ -57,7 +56,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/hazards";
 const INK = "ink";
 const USAGE = "Usage: hazards.ts build | preview OUT.png";
 
@@ -251,5 +249,5 @@ const HITBOX: Record<string, pixel.HitboxTuple> = {
 };
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC }, sprites));
+  run(() => pixel.main({ doc: USAGE, hitboxes: HITBOX, once: ONCE }, sprites));
 }

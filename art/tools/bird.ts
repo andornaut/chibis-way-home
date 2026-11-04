@@ -2,8 +2,7 @@
  * Chibi the bird: the protagonist's sprite and his dialogue portrait.
  *
  * Usage, from the repository root:
- *   node art/tools/bird.ts build            write art/bird/<key>.aseprite and
- *                                           public/art/sprites/<key>.png + .json
+ *   node art/tools/bird.ts build            write public/art/sprites/<key>.png + .json
  *   node art/tools/bird.ts preview OUT.png  contact sheet of every frame on slate, tan and cream
  *
  * Design: a wide, round cream blob of a bird with a small round head set into the top of his body
@@ -86,7 +85,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/bird";
 const USAGE = "Usage: bird.ts build | preview OUT.png";
 export const W = 48;
 export const H = 42;
@@ -551,5 +549,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 export const ONCE = { bird: ["jump", "land", "death", "dash", "double-jump"] };
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+  run(() => pixel.main({ doc: USAGE, once: ONCE }, sprites));
 }

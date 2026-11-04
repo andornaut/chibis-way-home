@@ -12,7 +12,6 @@ import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
 const KEY = "portrait-pigeon";
-const SRC = "art/antagonists";
 const USAGE = "Usage: pigeonPortrait.ts build | preview OUT.png";
 
 function portrait(): pixel.Frame {
@@ -34,9 +33,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 if (import.meta.main) {
   run(() =>
-    pixel.main(
-      { doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], srcDir: SRC },
-      sprites,
-    ),
+    pixel.main({ doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")] }, sprites),
   );
 }

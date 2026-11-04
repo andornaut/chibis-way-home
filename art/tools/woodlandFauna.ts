@@ -20,7 +20,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/scenery";
 const USAGE = "Usage: woodlandFauna.ts build | preview OUT.png";
 const ONCE = { "background-deer": [], "background-swallow": [] };
 const ON = { fill: [255, 255, 255, 255] } as const;
@@ -201,7 +200,6 @@ if (import.meta.main) {
         doc: USAGE,
         grounds: [pixel.hex("zone-green"), pixel.hex("forest")],
         once: ONCE,
-        srcDir: SRC,
       },
       sprites,
     ),

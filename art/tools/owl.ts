@@ -18,7 +18,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/antagonists";
 const KEY = "owl-antagonist";
 const ONCE = { [KEY]: [] };
 const HITBOX: Record<string, pixel.HitboxTuple> = { [KEY]: [2, 2, 44, 46] };
@@ -96,7 +95,6 @@ if (import.meta.main) {
         grounds: [pixel.hex("zone-green"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
-        srcDir: SRC,
       },
       sprites,
     ),

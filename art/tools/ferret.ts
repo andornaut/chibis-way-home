@@ -2,8 +2,7 @@
  * Fert the ferret: the villain's sprite and its dialogue portrait.
  *
  * Usage, from the repository root:
- *   node art/tools/ferret.ts build            write art/ferret/<key>.aseprite and
- *                                             public/art/sprites/<key>.png + .json
+ *   node art/tools/ferret.ts build            write public/art/sprites/<key>.png + .json
  *   node art/tools/ferret.ts preview OUT.png  contact sheet of every frame on slate, tan and cream
  *
  * Design: a champagne ferret standing up on its hind legs, modelled on a natural ferret rather than
@@ -61,7 +60,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/ferret";
 const USAGE = "Usage: ferret.ts build | preview OUT.png";
 const W = 64;
 const H = 80;
@@ -353,5 +351,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+  run(() => pixel.main({ doc: USAGE, once: ONCE }, sprites));
 }

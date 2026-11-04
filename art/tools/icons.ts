@@ -6,7 +6,7 @@
  *   node art/tools/icons.ts preview OUT.png  every icon at 1x on light and dark ground, the 16 and
  *                                            32 at 8x
  *
- * Plain PNGs (and one ICO), not Aseprite sprites and not manifest entries. Every pixel is fully
+ * Plain PNGs (and one ICO), not sprite sheets and not manifest entries. Every pixel is fully
  * opaque or fully transparent. She is drawn from the sprite's shapes in art/tools/bird.ts at each
  * icon's own size, so each drawing is its own rasterization rather than a downscale: the round
  * cream head set into the body, the nape dip, the softened back, the tail tip, a flat tan wing, a

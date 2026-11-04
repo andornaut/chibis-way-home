@@ -14,7 +14,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/antagonists";
 const ONCE = { "portrait-goose": [], "portrait-raccoon": [] };
 const USAGE = "Usage: speakerPortraits.ts build | preview OUT.png";
 
@@ -70,7 +69,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 if (import.meta.main) {
   run(() =>
     pixel.main(
-      { doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], once: ONCE, srcDir: SRC },
+      { doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], once: ONCE },
       sprites,
     ),
   );

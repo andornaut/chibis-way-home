@@ -15,7 +15,6 @@
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
-const SRC = "art/ui";
 const KEYS = ["icon-skill-double-jump", "icon-skill-dash", "icon-skill-speedy"] as const;
 const ONCE = Object.fromEntries(KEYS.map((key) => [key, []]));
 const STATES = [
@@ -65,7 +64,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 if (import.meta.main) {
-  run(() =>
-    pixel.main({ doc: USAGE, grounds: [pixel.hex("navy")], once: ONCE, srcDir: SRC }, sprites),
-  );
+  run(() => pixel.main({ doc: USAGE, grounds: [pixel.hex("navy")], once: ONCE }, sprites));
 }

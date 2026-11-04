@@ -5,8 +5,7 @@
  * palette; friendly animals never appear in the foreground.
  *
  * Usage, from the repository root:
- *   node art/tools/cast.ts build            write art/cast/<key>.aseprite and
- *                                           public/art/sprites/<key>.png + .json
+ *   node art/tools/cast.ts build            write public/art/sprites/<key>.png + .json
  *   node art/tools/cast.ts preview OUT.png  contact sheet of every frame on slate, tan and cream
  *
  * Every sprite faces right (the game mirrors it for left), its feet on the frame's bottom rows and
@@ -87,7 +86,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { contrast, darker, Grid, K } from "./pixel.ts";
 
-const SRC = "art/cast";
 const USAGE = "Usage: cast.ts build | preview OUT.png";
 const SIDEWALK = pixel.hex("skin2");
 
@@ -534,5 +532,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 const ONCE = { pigeon: ["flee"], "dog-pug": ["perk"] };
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE, srcDir: SRC }, sprites));
+  run(() => pixel.main({ doc: USAGE, once: ONCE }, sprites));
 }

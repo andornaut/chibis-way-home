@@ -27,7 +27,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/antagonists";
 const KEY = "bear-antagonist";
 const PORTRAIT = "portrait-bear";
 const WAVE = "bear-growl-wave";
@@ -195,7 +194,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
     [
       ...STATES.map(
         ([state, count, ms]) =>
-          [state, range(count).map((i) => draw(state, i)), ms] as pixel.AsepriteTag,
+          [state, range(count).map((i) => draw(state, i)), ms] as pixel.SpriteSheetTag,
       ),
       ["anticipate-lift", range(3).map(anticipateLift), [120, 160, 200]],
     ],
@@ -219,7 +218,6 @@ if (import.meta.main) {
         grounds: [pixel.hex("zone-green"), pixel.hex("slate")],
         hitboxes: HITBOX,
         once: ONCE,
-        srcDir: SRC,
       },
       sprites,
     ),

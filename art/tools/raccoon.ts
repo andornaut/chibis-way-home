@@ -33,14 +33,13 @@
  *
  * All earlier motion tags loop. The generic behaviour state machine owns state timing and physical
  * movement; frame durations are art cycle defaults. Build writes
- * art/antagonists/raccoon-antagonist.aseprite and its PNG/JSON export.
+ * the raccoon-antagonist PNG and JSON sheet.
  */
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/antagonists";
 const KEY = "raccoon-antagonist";
 const ONCE = { [KEY]: ["anticipate-lift"] };
 const HITBOX: Record<string, pixel.HitboxTuple> = { [KEY]: [2, 2, 44, 46] };
@@ -289,7 +288,6 @@ if (import.meta.main) {
         grounds: [pixel.hex("zone-purple"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
-        srcDir: SRC,
       },
       sprites,
     ),

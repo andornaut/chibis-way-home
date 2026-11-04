@@ -101,7 +101,6 @@ export const ACHIEVEMENTS: readonly (readonly [id: string, earns: string, art: A
   ["home-without-skills", "Get home without ever selecting a skill", ["home-without-skills"]],
 ];
 
-const SRC = "art/ui";
 const ICON = "icon-achievement";
 const NAV = "icon-achievements";
 const SIDE = 16;
@@ -672,7 +671,7 @@ function preview(out: string): void {
 }
 
 async function build(): Promise<void> {
-  await pixel.build({ srcDir: SRC }, [...sprites()]);
+  await pixel.build({}, [...sprites()]);
 }
 
 if (import.meta.main) {

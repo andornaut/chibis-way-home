@@ -13,7 +13,6 @@ import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const SRC = "art/scenery";
 const KEY = "background-reeds";
 const ONCE = { [KEY]: [] };
 const USAGE = "Usage: backgroundFlora.ts build | preview OUT.png";
@@ -63,7 +62,6 @@ if (import.meta.main) {
         doc: USAGE,
         grounds: [pixel.hex("zone-green"), pixel.hex("forest")],
         once: ONCE,
-        srcDir: SRC,
       },
       sprites,
     ),

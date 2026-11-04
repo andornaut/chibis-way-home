@@ -3,19 +3,19 @@
  * repository root with Node's native type stripping: node art/tools/<tool>.ts build.
  */
 
-import { accessSync, constants, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { delimiter, dirname, join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 import {
-  type AsepriteTag,
   composeSheet,
   contrast as hexContrast,
-  exportAseprite,
   flipped as flipFrame,
   type Frame,
   Grid as SharedGrid,
   renderContactSheet,
   rgb as hexRgb,
+  type SpriteSheetTag,
+  writeSpriteSheet,
 } from "@andornaut/art-kit/generate";
 import type { Canvas } from "skia-canvas";
 
@@ -23,9 +23,9 @@ import * as backgroundPalette from "./backgroundPalette.ts";
 import { commands } from "./cli.ts";
 import * as zoneThemes from "./zoneThemes.ts";
 
-export type { AsepriteTag, Frame };
+export type { Frame, SpriteSheetTag };
 /** [tag, frames, milliseconds per frame or one duration per frame]. */
-export type Tags = readonly AsepriteTag[];
+export type Tags = readonly SpriteSheetTag[];
 /** [sprite key, tags]. */
 export type SpriteEntry = readonly [key: string, tags: Tags];
 export type Margins = readonly [left: number, top: number, right: number, bottom: number];
@@ -314,26 +314,8 @@ export async function preview(
   ).toFile(out);
 }
 
-/** The first executable named command on PATH, or undefined. */
-export function which(command: string): string | undefined {
-  for (const directory of (process.env.PATH ?? "").split(delimiter)) {
-    if (!directory) {
-      continue;
-    }
-    const candidate = join(directory, command);
-    try {
-      accessSync(candidate, constants.X_OK);
-      return candidate;
-    } catch {
-      // Not executable here.
-    }
-  }
-  return undefined;
-}
-
 interface BuildOptions {
-  srcDir: string;
-  /** Nine-slice margins by key, exported as an Aseprite slice named after the key. */
+  /** Nine-slice margins by key, exported as a sheet slice named after the key. */
   slices?: Readonly<Record<string, Margins>>;
   /** Tags that play once and hold their last frame, by key; every other tag loops. */
   once?: Readonly<Record<string, readonly string[]>>;
@@ -344,13 +326,13 @@ interface BuildOptions {
 }
 
 /**
- * Write <srcDir>/<key>.aseprite for every sprite, export it to public/art/sprites/<key>.png and
- * .json with its tags, and list it in the manifest. Every manifest entry carries "once" in tag
+ * Write every sprite's sheet to public/art/sprites/<key>.png and its json-hash data with tags to
+ * <key>.json, and list it in the manifest. Every manifest entry carries "once" in tag
  * order, [] when nothing plays once; "slice", "contact" and "hitbox" only when declared. A hit box
  * outside the frame fails the build.
  */
 export async function build(
-  { contacts = [], hitboxes = {}, once = {}, slices = {}, srcDir }: BuildOptions,
+  { contacts = [], hitboxes = {}, once = {}, slices = {} }: BuildOptions,
   sprites: readonly SpriteEntry[],
 ): Promise<void> {
   const keys = new Set(sprites.map(([key]) => key));
@@ -383,25 +365,15 @@ export async function build(
       `hitboxes name sprites the script does not draw: ${unknownHitboxes.join(", ")}`,
     );
   }
-  mkdirSync(srcDir, { recursive: true });
-  mkdirSync(SPRITES, { recursive: true });
-  const executable = which("aseprite");
-  if (executable === undefined) {
-    throw new Error("aseprite is not on PATH");
-  }
   const built = new Map<string, string[]>();
-  // One Aseprite export at a time, in sprite order.
+  // One sheet at a time, in sprite order.
   await sprites.reduce(async (previous, [key, tags]) => {
     await previous;
     const margins = slices[key];
-    await exportAseprite(
-      executable,
-      PALETTE,
-      tags,
-      `${srcDir}/${key}.aseprite`,
-      `${SPRITES}/${key}.png`,
-      `${SPRITES}/${key}.json`,
+    await writeSpriteSheet(
+      { sheet: `${SPRITES}/${key}.png`, data: `${SPRITES}/${key}.json` },
       margins ? { key, margins } : { key },
+      tags,
     );
     const playOnce = once[key] ?? [];
     built.set(
@@ -447,8 +419,7 @@ export async function build(
   console.log("built", [...built.keys()].join(", "));
 }
 
-interface MainOptions extends Omit<BuildOptions, "srcDir"> {
-  srcDir: string;
+interface MainOptions extends BuildOptions {
   /** The usage, printed for help and with a usage error. */
   doc: string;
   grounds?: readonly string[];

@@ -2,7 +2,7 @@
  * Export exact opaque sprite contact as sparse horizontal pixel runs from final PNG exports.
  *
  * Usage: node art/tools/contactSilhouettes.ts build, from the repository root.
- * Only manifest sprites explicitly marked contact='silhouette' participate. Each exact Aseprite
+ * Only manifest sprites explicitly marked contact='silhouette' participate. Each exact sheet
  * frame name maps to sorted [y,left,rightExclusive] runs in the full untrimmed frame. Adjacent
  * pixels form one run. Alpha greater than zero is occupied; partial alpha is rejected. Coloured
  * outlines are part of the body. Portraits, projectiles, traps and separate effects are excluded by
@@ -64,7 +64,7 @@ function occupiedRuns(im: RgbaImage): Run[] {
   return runs;
 }
 
-/** Read final exported frame rectangles, retaining exact Aseprite names and untrimmed coordinates. */
+/** Read final exported frame rectangles, retaining exact frame names and untrimmed coordinates. */
 function spriteMasks(entry: pixel.ManifestEntry): {
   width: number;
   height: number;

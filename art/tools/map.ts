@@ -2,7 +2,7 @@
  * Cool pastel route-map assets, with six themed destinations and standard modal controls.
  *
  * Usage, from the repository root:
- *   node art/tools/map.ts build            write Aseprite sources, PNG/JSON and manifest entries
+ *   node art/tools/map.ts build            write PNG/JSON sheets and manifest entries
  *   node art/tools/map.ts preview OUT.png  contact sheet on pale steel, cream and slate
  *
  * The map uses a 720x360 view and six 35x35 zone markers, centred on the 12px grid:
@@ -45,7 +45,6 @@ import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 import * as zoneThemes from "./zoneThemes.ts";
 
-const SRC = "art/map";
 const USAGE = "Usage: map.ts build | preview OUT.png";
 
 type Points = (readonly [number, number])[];
@@ -443,7 +442,6 @@ if (import.meta.main) {
         grounds: ["c0cbdc", "ead4aa", "5a6988"],
         once: ONCE,
         slices: SLICES,
-        srcDir: SRC,
       },
       sprites,
     ),

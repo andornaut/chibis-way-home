@@ -27,7 +27,6 @@ import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
 const KEY = "ferret-antagonist";
-const SRC = "art/antagonists";
 const ONCE = { [KEY]: ["anticipate-lift"] };
 const HITBOX: Record<string, pixel.HitboxTuple> = { [KEY]: [2, 2, 44, 46] };
 const USAGE = "Usage: ferretAntagonist.ts build | preview OUT.png";
@@ -144,7 +143,6 @@ if (import.meta.main) {
         grounds: [pixel.hex("zone-red"), pixel.hex("slate")],
         hitboxes: HITBOX,
         once: ONCE,
-        srcDir: SRC,
       },
       sprites,
     ),

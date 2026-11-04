@@ -3,9 +3,8 @@
  * resolution.
  *
  * Usage:
- *   node art/tools/ui.ts build             write art/ui/<key>.aseprite and
- *                                          public/art/sprites/<key>.png + .json, list them in the
- *                                          manifest
+ *   node art/tools/ui.ts build             write public/art/sprites/<key>.png + .json and list them in
+ *                                          the manifest
  *   node art/tools/ui.ts preview OUT.png   a contact sheet of every frame
  *
  * Run from the repository root. Text is never baked in: the game sets it with font-body or
@@ -13,7 +12,7 @@
  * advance width at 2x (the sum of xadvance, doubled). Positions are in base pixels, top-left of the
  * frame, matching art/layout.md.
  *
- * Nine-slice textures carry their margins (left, top, right, bottom) as an Aseprite slice named
+ * Nine-slice textures carry their margins (left, top, right, bottom) as a sheet slice named
  * after the key and as "slice" in the manifest entry. Single-state art has one tag, "rest", at
  * 100ms. The touch buttons' press tag plays once and holds its last frame (the manifest's "once")
  * until the game shows the held tag; every other tag loops.
@@ -145,7 +144,6 @@ import { darker, Grid } from "./pixel.ts";
 type Colour = string | null;
 type Points = [number, number][];
 
-const SRC = "art/ui";
 const USAGE = "Usage: ui.ts build | preview OUT.png";
 
 // Name tab fills, one tag each: hues the panels do not use. Ink text holds at least 6.6:1 on each,
@@ -821,5 +819,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE, slices: SLICES, srcDir: SRC }, sprites));
+  run(() => pixel.main({ doc: USAGE, once: ONCE, slices: SLICES }, sprites));
 }

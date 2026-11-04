@@ -38,7 +38,6 @@ import { run } from "./cli.ts";
 import { rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 
-const SRC = "art/antagonists";
 const USAGE = "Usage: antagonists.ts build | preview OUT.png";
 const ONCE = { "dog-antagonist": ["anticipate-lift"], "portrait-dog": [] };
 const HITBOX: Record<string, pixel.HitboxTuple> = { "dog-antagonist": [2, 2, 56, 38] };
@@ -495,9 +494,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 if (import.meta.main) {
   run(() =>
-    pixel.main(
-      { contacts: ["dog-antagonist"], doc: USAGE, hitboxes: HITBOX, once: ONCE, srcDir: SRC },
-      sprites,
-    ),
+    pixel.main({ contacts: ["dog-antagonist"], doc: USAGE, hitboxes: HITBOX, once: ONCE }, sprites),
   );
 }

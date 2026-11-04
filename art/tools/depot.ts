@@ -3,7 +3,7 @@
  *
  * Usage: node art/tools/depot.ts build | preview OUT.png, from the repository root. Build writes
  * three plain PNG backdrops and merges their manifest entries. These static backdrops have no
- * Aseprite sources, animation tags or collision.
+ * sprite sheets, animation tags or collision.
  *
  * - depot-wall: 48x180, repeat x, bottom-left y 600. Corrugated slate wall, subdued grey ribs and
  *   dark base.

@@ -12,13 +12,12 @@
  */
 
 import { polygon } from "@andornaut/art-kit/draw";
-import { exportAseprite } from "@andornaut/art-kit/generate";
+import { writeSpriteSheet } from "@andornaut/art-kit/generate";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
-const SRC = "art/scenery";
 const KEY = "background-deer-large";
 const USAGE = "Usage: largeWildlife.ts build | preview OUT.png";
 const [W, H] = [216, 144];
@@ -195,22 +194,14 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 async function build(): Promise<void> {
-  const executable = pixel.which("aseprite");
-  if (executable === undefined) {
-    throw new Error("aseprite is not on PATH");
-  }
   // One export at a time, each followed by its manifest update, so the shared manifest is read
   // and written in sprite order.
   await [...sprites()].reduce(async (previous, [key, tags]) => {
     await previous;
-    await exportAseprite(
-      executable,
-      pixel.PALETTE,
-      tags,
-      `${SRC}/${key}.aseprite`,
-      `${pixel.SPRITES}/${key}.png`,
-      `${pixel.SPRITES}/${key}.json`,
+    await writeSpriteSheet(
+      { sheet: `${pixel.SPRITES}/${key}.png`, data: `${pixel.SPRITES}/${key}.json` },
       { key, columns: 6 },
+      tags,
     );
     pixel.updateManifest("sprites", [
       { key, png: `sprites/${key}.png`, json: `sprites/${key}.json`, once: ONCE[key] },

@@ -19,7 +19,6 @@ import * as pixel from "./pixel.ts";
 import { Grid, K } from "./pixel.ts";
 
 const KEY = "rabbit-antagonist";
-const SRC = "art/antagonists";
 const ONCE = { [KEY]: [] };
 const HITBOX: Record<string, pixel.HitboxTuple> = { [KEY]: [2, 2, 44, 46] };
 const USAGE = "Usage: rabbit.ts build | preview OUT.png";
@@ -106,7 +105,6 @@ if (import.meta.main) {
         grounds: [pixel.hex("zone-peach"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
-        srcDir: SRC,
       },
       sprites,
     ),

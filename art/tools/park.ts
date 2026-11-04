@@ -56,7 +56,7 @@
  * - park-treetops 360x420 (y 600, x): branching muted peach treetops rising into the upper screen.
  * - park-city 360x200 (y 540, x): the city behind the trees, skin2, with two water towers.
  * - park-far-trees 240x120 (y 600, x): a low-contrast band of irregular distant peach crowns.
- * Sprites (Aseprite, public/art/sprites/<key>.png + .json, listed under the manifest's "sprites")
+ * Sprites (sheets, public/art/sprites/<key>.png + .json, listed under the manifest's "sprites")
  * - park-boat, 72x18, facing right: a rowing boat, the moving platform on a pond. Its collision is
  *   6x1 tiles (72x12) with its top on the frame's row 0, the deck line: a 1px dark-brown edge on
  *   row 0 and a 2px cream lip on rows 1 and 2, like every walkable top; nothing is drawn above it.
@@ -648,7 +648,7 @@ async function build(): Promise<void> {
   });
   pixel.updateManifest("tilesets", [tileset]);
   pixel.updateManifest("backdrops", backdrops);
-  await pixel.build({ once: ONCE, srcDir: "art/park" }, [...sprites()]);
+  await pixel.build({ once: ONCE }, [...sprites()]);
   console.log("built", TILESET, "and", backdrops.length, "backdrops");
 }
 
