@@ -4,12 +4,13 @@ Gameplay ownership, tuning targets, playtesting and current release work. Chibi'
 
 ## Docs
 
-| Doc                      | Owns                                                           |
-| ------------------------ | -------------------------------------------------------------- |
-| [`README.md`](README.md) | Gameplay scope, method, targets and playtesting                |
-| [`design.md`](design.md) | Current rules, player voice, story and stage content           |
-| [`ideas.md`](ideas.md)   | Undecided questions, proposals and rejected ideas              |
-| [`next.md`](next.md)     | Agreed future scope, unscheduled and outside the current build |
+| Doc                                 | Owns                                                                                |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| [`README.md`](README.md)            | Gameplay scope, method, targets and playtesting                                     |
+| [`design.md`](design.md)            | Current rules, player voice, story and stage content                                |
+| [`ideas.md`](ideas.md)              | Undecided questions, proposals and rejected ideas                                   |
+| [`narrative/`](narrative/README.md) | Homeward journey notes: connective scenes and unapproved optional-content proposals |
+| [`next.md`](next.md)                | Agreed future scope, unscheduled and outside the current build                      |
 
 Docs state current decisions; git keeps their history. An undecided proposal stays in `ideas.md`. Agreed current rules belong in `design.md`; agreed later work belongs in `next.md`. Chibi's story, cast and stage route remain in the rulebook because they define this game's content.
 
