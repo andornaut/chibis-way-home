@@ -66,7 +66,6 @@ export class SkillDetailScene extends Scene {
       this,
       paletteColour(this, "ink"),
       layout.groups.description!,
-      TEXT.buttons,
       layout.description,
     );
     drawSkillButton(this, layout.groups.icon!, this.detail.skill).ready(true);

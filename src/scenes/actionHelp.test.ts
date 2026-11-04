@@ -1,37 +1,38 @@
-import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
 import { TEXT } from "../data/text";
 import { CARD_FONTS } from "../testing/cardFonts";
-import { ACTION_HELP, actionHelpLayout, CARD_TEXT_SCALE, cardTextOrigin } from "../ui";
+import { actionHelpLayout } from "../ui";
 import { drawActionHelp } from "./actionHelp";
-import { addCardTextIn } from "./cardParts";
+import { addCardText } from "./cardParts";
 import { drawHelpChrome } from "./helpChrome";
 
 vi.mock("./cardParts", () => ({
   ACTION_FONT: "font-title",
   BODY_FONT: "font-body",
-  addCardTextIn: vi.fn(),
+  addCardText: vi.fn(),
 }));
 vi.mock("./helpChrome", () => ({ drawHelpChrome: vi.fn() }));
 
-it("draws separate filled icons after the actual label advance and gap without input targets", () => {
+it("draws each word at its laid-out pen and each icon in its laid-out square, offset together", () => {
   const scene = {} as Scene;
-  const font = CARD_FONTS.title;
   const at = { x: 20, y: 30 };
-  const layout = actionHelpLayout(CARD_FONTS, TEXT.buttons, 180, "{move} {jump} {use}");
-  drawActionHelp(scene, 0, at, TEXT.buttons, layout);
-  expect(drawHelpChrome).toHaveBeenCalledTimes(3);
-  expect(vi.mocked(addCardTextIn).mock.calls.every((args) => args[1] === "font-title")).toBe(true);
-  for (const [index, action] of (["move", "jump", "use"] as const).entries()) {
-    const call = vi.mocked(drawHelpChrome).mock.calls[index]!;
-    expect(call[0]).toBe(scene);
-    expect(call[2]).toBe(action);
-    const rect = vi.mocked(addCardTextIn).mock.calls[index]![2];
-    const origin = cardTextOrigin(font, rect, TEXT.buttons[action]);
-    expect(
-      origin.x + advanceWidth(font, CARD_TEXT_SCALE, TEXT.buttons[action]) + ACTION_HELP.gap,
-    ).toBeLessThanOrEqual(call[1].x);
-  }
+  const layout = actionHelpLayout(CARD_FONTS, TEXT.buttons, 180, "Press {move} {jump} {use}");
+  drawActionHelp(scene, 0, at, layout);
+  const texts = layout.placements.filter((placement) => placement.kind === "text");
+  const icons = layout.placements.filter((placement) => placement.kind === "icon");
+  expect(vi.mocked(addCardText).mock.calls.map((call) => call.slice(1, 4))).toEqual(
+    texts.map((text) => [
+      text.font === "body" ? "font-body" : "font-title",
+      { x: at.x + text.at.x, y: at.y + text.at.y },
+      text.text,
+    ]),
+  );
+  expect(vi.mocked(drawHelpChrome).mock.calls.map((call) => call.slice(1))).toEqual(
+    icons.map((icon) => [
+      { ...icon.rect, x: at.x + icon.rect.x, y: at.y + icon.rect.y },
+      icon.action,
+    ]),
+  );
 });

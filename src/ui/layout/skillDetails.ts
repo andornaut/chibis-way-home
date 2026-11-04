@@ -90,10 +90,10 @@ export function skillDetails(
     description,
     groups: {
       description: {
-        ...body,
         height: description.height,
         width: description.width,
         x: body.x + SKILL_BUTTON.target + CARD_CONTENT.gap,
+        y: body.y + Math.round((body.height - description.height) / 2),
       },
       icon: {
         height: SKILL_BUTTON.target,

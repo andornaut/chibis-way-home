@@ -123,13 +123,7 @@ export class RoomScene extends Scene {
       const layout = skillDetails(cardFonts(this), SKILL_ROOM.bounds, false, TEXT.buttons, words);
       addSlice(this, "ui-settings-card", layout.card);
       addCardTextIn(this, TITLE_FONT, layout.title!, words.title, this.colour("ink"));
-      drawActionHelp(
-        this,
-        this.colour("ink"),
-        layout.groups.description!,
-        TEXT.buttons,
-        layout.description,
-      );
+      drawActionHelp(this, this.colour("ink"), layout.groups.description!, layout.description);
       const icon = drawSkillButton(this, layout.groups.icon!, this.room.grant);
       icon.ready(true);
       const dialogue = this.room.enter === undefined ? undefined : DIALOGUES[this.room.enter];

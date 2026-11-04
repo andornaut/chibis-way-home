@@ -1,12 +1,12 @@
 import type { Scene } from "phaser";
 
-import type { ControlAction, Point } from "../data/types";
-import { ACTION_HELP, helpChromeLayers, TOUCH_CHROME_FRAME } from "../ui";
+import type { ControlAction, Rect } from "../data/types";
+import { helpChromeLayers, TOUCH_CHROME_FRAME } from "../ui";
 import { paletteColour } from "./cardParts";
 import { createChromeTexture } from "./touchChrome";
 
 // Three static game-lifetime help textures, separate from the transparent animated live controls.
-export function drawHelpChrome(scene: Scene, at: Point, action: ControlAction) {
+export function drawHelpChrome(scene: Scene, rect: Rect, action: ControlAction) {
   const key = `help-chrome-${action}`;
   if (!scene.textures.exists(key)) {
     const colours = {
@@ -23,7 +23,7 @@ export function drawHelpChrome(scene: Scene, at: Point, action: ControlAction) {
     );
   }
   return scene.add
-    .image(at.x, at.y, key, "rest")
+    .image(rect.x, rect.y, key, "rest")
     .setOrigin(0)
-    .setDisplaySize(ACTION_HELP.icon, ACTION_HELP.icon);
+    .setDisplaySize(rect.width, rect.height);
 }
