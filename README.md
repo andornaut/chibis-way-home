@@ -40,7 +40,7 @@ Penthouse leads to the final celebration.
 
 Requires Node 24.21.0 or newer (`.nvmrc` pins 24.21.0).
 
-Run checks, tests and builds inside an isolated Node 24.21.0 container. Mount only the checkout, scratch space and the project's npm cache writable.
+Run checks, tests and builds inside an isolated Node 24.21.0 container as the dedicated uid 19001 with the checkout's group (`--user 19001:19001 --group-add "$(stat -c %g .)" -e HOME=/tmp`), which owns nothing on the host. Mount every host path read-only and write outputs and caches only to container paths, tmpfs or named volumes.
 
 Art checks that export through Aseprite use `game-check:node24.21.0-python3.12-aseprite1.2.30`, built on the `scripts/check.Dockerfile` image from a licensed `Aseprite_1.2.30-1_amd64.deb` kept outside the repository: `docker build -f scripts/check-aseprite.Dockerfile --build-context aseprite-deb=<directory with the .deb> -t game-check:node24.21.0-python3.12-aseprite1.2.30 scripts`.
 
