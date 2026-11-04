@@ -42,6 +42,8 @@ Requires Node 24.21.0 or newer (`.nvmrc` pins 24.21.0).
 
 Run checks, tests and builds inside an isolated Node 24.21.0 container. Mount only the checkout, scratch space and the project's npm cache writable.
 
+Art checks that export through Aseprite use `game-check:node24.21.0-python3.12-aseprite1.2.30`, built on the `scripts/check.Dockerfile` image from a licensed `Aseprite_1.2.30-1_amd64.deb` kept outside the repository: `docker build -f scripts/check-aseprite.Dockerfile --build-context aseprite-deb=<directory with the .deb> -t game-check:node24.21.0-python3.12-aseprite1.2.30 scripts`.
+
 The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html` is `/`, the home page, and `pages/play/index.html` is `/play/`, the game).
 
 ```bash
