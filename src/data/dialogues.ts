@@ -21,24 +21,10 @@ export const BARK_DURATION_SECONDS = 5;
 
 // Linear conversations, with paragraph text in TEXT.lines.
 export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
-  "archie-foreshadow": {
-    lines: [
-      { line: "archie-foreshadow-1", speaker: "dog" },
-      { line: "archie-foreshadow-2", speaker: "bird" },
-      { line: "archie-foreshadow-3", speaker: "dog" },
-    ],
-  },
   "archie-outro": {
     lines: [
       { line: "archie-outro-1", speaker: "dog" },
       { line: "archie-outro-2", speaker: "bird" },
-    ],
-  },
-  "bini-foreshadow": {
-    lines: [
-      { line: "bini-foreshadow-1", speaker: "bear" },
-      { line: "bini-foreshadow-2", speaker: "bird" },
-      { line: "bini-foreshadow-3", speaker: "bear" },
     ],
   },
   "bini-intro": {
@@ -67,13 +53,6 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
   "double-jump-gift": {
     lines: [{ line: "double-jump-gift", speaker: "room-helper" }],
   },
-  "furt-foreshadow": {
-    lines: [
-      { line: "furt-foreshadow-1", speaker: "ferret" },
-      { line: "furt-foreshadow-2", speaker: "bird" },
-      { line: "furt-foreshadow-3", speaker: "ferret" },
-    ],
-  },
   "furt-intro": {
     lines: [
       { line: "furt-intro-1", speaker: "ferret" },
@@ -87,13 +66,6 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
       { line: "furt-outro-2", speaker: "bird" },
     ],
   },
-  "kiwi-foreshadow": {
-    lines: [
-      { line: "kiwi-foreshadow-1", speaker: "raccoon" },
-      { line: "kiwi-foreshadow-2", speaker: "bird" },
-      { line: "kiwi-foreshadow-3", speaker: "raccoon" },
-    ],
-  },
   "kiwi-intro": {
     lines: [
       { line: "kiwi-intro-1", speaker: "raccoon" },
@@ -105,13 +77,6 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
     lines: [
       { line: "kiwi-outro-1", speaker: "raccoon" },
       { line: "kiwi-outro-2", speaker: "bird" },
-    ],
-  },
-  "pebble-foreshadow": {
-    lines: [
-      { line: "pebble-foreshadow-1", speaker: "pigeon" },
-      { line: "pebble-foreshadow-2", speaker: "bird" },
-      { line: "pebble-foreshadow-3", speaker: "pigeon" },
     ],
   },
   "pebble-intro": {
@@ -129,13 +94,6 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
   },
   "speedy-gift": {
     lines: [{ line: "speedy-gift", speaker: "room-helper" }],
-  },
-  "trixi-foreshadow": {
-    lines: [
-      { line: "trixi-foreshadow-1", speaker: "goose" },
-      { line: "trixi-foreshadow-2", speaker: "bird" },
-      { line: "trixi-foreshadow-3", speaker: "goose" },
-    ],
   },
   "trixi-intro": {
     lines: [
@@ -172,7 +130,6 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "walk",
     },
-    foreshadow: "furt-foreshadow",
     intro: "furt-intro",
     introStage: "spa",
     outro: "furt-outro",
@@ -184,7 +141,6 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "walk",
     },
-    foreshadow: "archie-foreshadow",
     intro: "depot-dog-intro",
     introStage: "street",
     outro: "archie-outro",
@@ -196,7 +152,6 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "walk",
     },
-    foreshadow: "trixi-foreshadow",
     intro: "trixi-intro",
     introStage: "farmland",
     outro: "trixi-outro",
@@ -208,7 +163,6 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "walk",
     },
-    foreshadow: "kiwi-foreshadow",
     intro: "kiwi-intro",
     introStage: "city-outskirts",
     outro: "kiwi-outro",
@@ -220,7 +174,6 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "fly",
     },
-    foreshadow: "pebble-foreshadow",
     intro: "pebble-intro",
     introStage: "warehouse-district",
     outro: "pebble-outro",
@@ -232,7 +185,6 @@ export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {
       idleAnimation: "idle",
       runAnimation: "walk",
     },
-    foreshadow: "bini-foreshadow",
     intro: "bini-intro",
     introStage: "forest-paths",
     outro: "bini-outro",
