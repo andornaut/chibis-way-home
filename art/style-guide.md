@@ -547,6 +547,10 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 - An impact frame is an eight-point star in the event's colour with a white core.
 - Edge flashes pair a light ink with a dark fringe on the inward edge, so they hold 3:1 on light and dark grounds.
 
+### Boss removal
+
+`art/tools/bossRemoval.ts` draws `boss-removal`, the puff that replaces a boss leaving the stage: 64x64, one `puff` tag of five 100ms frames that plays once. The game places its frame centre on the boss frame's centre, hides the boss at frame 0 and removes the puff after the last frame. Frame 0 covers every boss frame in both facings; later frames break into four small clouds that drift outward and shrink to sparse specks. One symmetric sheet serves every boss and facing, with no flip, hit box or contact. It uses hazard `red` with `dred` crescents, `cream` highlights and an `ink` rim, never gold or orange, so it does not read as a pickup.
+
 ## Hazards
 
 Hazard contact causes death; Try again returns to the stage checkpoint. Hazard contact also shakes the world while Chibi enters the death sequence. The render-only camera effect lasts 280ms with up to 5px diagonal offset, 5px overscan and a fixed HUD; elapsed time comes from the render loop, not physics. Restore the camera on completion, restart or shutdown. Reduced motion uses a static border cue without shaking. Retain Chibi’s 1px border keyline and 0.12 tint alpha. Actor motion does not itself trigger this effect. `art/tools/hazards.ts` draws the hazard sprites, `art/tools/obstacles.ts` the shared red contact tiles, `art/tools/floor1.ts` the cellar hatch and pit tiles and `art/tools/park.ts` the pond and thorn tiles; their header comments give every frame and tile.
