@@ -1232,6 +1232,7 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
       },
       "relocation-rest": {
+        allowIdleReposition: true,
         animation: "rest",
         motion: { kind: "wait", support: "required" },
         transitions: [
@@ -1251,6 +1252,7 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
       },
       rest: {
+        allowIdleReposition: true,
         animation: "rest",
         motion: { kind: "wait", support: "required" },
         transitions: [
