@@ -135,6 +135,20 @@ function writeRgbPng(path: string, image: RgbaImage): void {
   writeFileSync(path, encodeRgbPng(PNG_OPTIONS, opaque(image)));
 }
 
+/**
+ * JSON in the repository's Prettier layout: two-space indentation, with an array of numbers or
+ * strings on one line when it fits the 100-column print width.
+ */
+function formattedJson(value: unknown): string {
+  return pixel
+    .dumpJson({}, value)
+    .replace(/^( *)(.*)\[\n([^[\]{}]*?)\n *\](,?)$/gm, (block, indent, head, body, comma) => {
+      const items = (body as string).split(",\n").map((item) => item.trim());
+      const line = `${indent}${head}[${items.join(", ")}]${comma}`;
+      return line.length <= 100 ? line : block;
+    });
+}
+
 function sourceCells(kind: Kind, [width, height]: readonly [number, number]): Box[] {
   const middle = Math.floor(height / 2);
   if (kind === "parcel") {
@@ -266,8 +280,8 @@ export function build(): void {
       contract.poses[frontKey] = poses;
     }
   }
-  pixel.writeJson({}, `${AUTHORING}/contract.json`, contract);
-  pixel.writeJson({}, `${AUTHORING}/manifest-entries.json`, entries);
+  writeFileSync(`${AUTHORING}/contract.json`, formattedJson(contract));
+  writeFileSync(`${AUTHORING}/manifest-entries.json`, formattedJson(entries));
   console.log("Exported three opening backgrounds and four pose sheets");
 }
 

@@ -70,7 +70,7 @@ function hex(colour: readonly number[]): string {
   return colour.map((channel) => channel.toString(16).padStart(2, "0")).join("");
 }
 
-/** Python 3.12 float sum(): Neumaier compensated summation. */
+/** The float sum by Neumaier compensated summation. */
 function sum(values: readonly number[]): number {
   let total = 0;
   let compensation = 0;

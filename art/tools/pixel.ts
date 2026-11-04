@@ -160,12 +160,12 @@ export class Grid extends SharedGrid {
 
 export const flipped = (frame: Frame): Frame => flipFrame(frame);
 
-/** The nearest integer, ties to even, like Python's round(value). */
+/** The nearest integer, with ties rounded to the even neighbour. */
 export function round(value: number): number {
   return Math.abs(value % 1) === 0.5 ? 2 * Math.round(value / 2) : Math.round(value);
 }
 
-/** The remainder with the divisor's sign, like Python's a % b. */
+/** The floor-modulo remainder: it takes the divisor's sign. */
 export function mod(a: number, b: number): number {
   return ((a % b) + b) % b;
 }
@@ -180,9 +180,9 @@ function sortedKeys(value: unknown): unknown {
 }
 
 /**
- * The bytes of Python's json.dump(value, indent=2[, sort_keys=True]) plus a final newline:
+ * value as two-space indented JSON, keys sorted when sortKeys is set, plus a final newline:
  * non-ASCII characters escape as lower-case \uXXXX. Integer-like object keys enumerate first in
- * JavaScript, so key order differs from Python for them.
+ * JavaScript, ahead of the other keys.
  */
 export function dumpJson({ sortKeys = false }: { sortKeys?: boolean }, value: unknown): string {
   const text = JSON.stringify(sortKeys ? sortedKeys(value) : value, null, 2);
@@ -307,7 +307,7 @@ export function lua(
   return asepriteLuaSource(PALETTE, tags, out, options);
 }
 
-/** The first executable named command on PATH, like Python's shutil.which. */
+/** The first executable named command on PATH, or undefined. */
 export function which(command: string): string | undefined {
   for (const directory of (process.env.PATH ?? "").split(delimiter)) {
     if (!directory) continue;

@@ -63,7 +63,7 @@ const USAGE = "Usage: hazards.ts build | preview OUT.png";
 
 type Point = readonly [number, number];
 
-// Python's math.radians multiplies by a precomputed pi / 180.
+// Degrees to radians by one multiplication with the precomputed pi / 180.
 const radians = (degrees: number): number => degrees * (Math.PI / 180);
 
 function inkOutline(g: Grid): pixel.Frame {

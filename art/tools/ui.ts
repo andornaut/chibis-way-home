@@ -227,7 +227,7 @@ function triRight(g: Grid, x: number, y: number, h: number, c: string): void {
   for (let i = 0; i < Math.floor(h / 2); i++) g.rect(x + i, y + i, 1, h - 2 * i, c);
 }
 
-/** Distance from the origin; the squares here are exact, so the root matches Python's hypot. */
+/** Distance from the origin; the squares here are exact, so one square root is correctly rounded. */
 function hypot(dx: number, dy: number): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
