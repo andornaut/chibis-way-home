@@ -1,5 +1,5 @@
 import type { ChunkPlan, ChunkSeam, Instance, StageRecipe, TileRect } from "../data/types";
-import { sceneryParallax, worldScenery } from "../view/objectArt";
+import { sceneryParallax, worldScenery } from "../stage";
 import {
   type ChunkLibrary,
   chunkPoolProblems,

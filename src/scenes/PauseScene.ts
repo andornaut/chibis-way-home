@@ -12,7 +12,6 @@ import { PAUSE_BUTTON, pauseCard } from "../layout/pauseCard";
 import { shifted, topShift } from "../layout/playView";
 import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
 import { type CardAction, cardBackAction, cardKeyAction, cardTurnAction } from "../pause/cardInput";
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
 import { EDGE } from "../rules/bird";
 import { isSkillId, SKILL_IDS, skillEnabled } from "../rules/skills";
@@ -23,6 +22,7 @@ import {
   type TouchSetting,
   touchSettings,
 } from "../settings/touchControls";
+import { focusKeyAction, stepFocus } from "../ui";
 import type { Palette } from "../view/dim";
 import {
   addCardText,

@@ -3,7 +3,7 @@ import { bitmapMeasure, fitsRoom, fittingText } from "@andornaut/game-kit/text/t
 
 import type { DialogueChoice, DialoguePlan, DialogueSpeaker, GameText, Point } from "../data/types";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
+import { focusKeyAction, stepFocus } from "../ui";
 
 export interface DialogueParagraph {
   readonly colour: DialogueSpeaker["colour"];

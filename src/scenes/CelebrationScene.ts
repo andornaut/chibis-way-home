@@ -4,8 +4,8 @@ import { type GameObjects, type Input, Scene } from "phaser";
 import { TEXT } from "../data/text";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { CELEBRATION } from "../layout/restartCard";
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { PHONE_EVENTS } from "../pwa";
+import { focusKeyAction, stepFocus } from "../ui";
 import {
   addButtonLabel,
   addCardText,

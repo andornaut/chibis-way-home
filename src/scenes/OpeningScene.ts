@@ -7,9 +7,9 @@ import { TOUCH } from "../data/touch";
 import type { Point } from "../data/types";
 import { pressedArea } from "../layout/hitAreas";
 import { openingLayout } from "../layout/opening";
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { createOpeningPlayback } from "../rules/opening";
 import { saveOpeningSeen } from "../save";
+import { focusKeyAction, stepFocus } from "../ui";
 import {
   addCardText,
   addTextButton,

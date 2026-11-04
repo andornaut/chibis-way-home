@@ -1,7 +1,7 @@
+import { cameraScroll } from "../camera";
 import { CAMERA } from "../data/camera";
 import { SCREEN } from "../data/screen";
 import type { AreaLayout, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
-import { cameraScroll } from "../view/camera";
 import type { BehaviourWorld } from "./behaviourReach";
 import type { BirdState } from "./bird";
 

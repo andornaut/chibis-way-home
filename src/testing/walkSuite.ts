@@ -18,10 +18,10 @@ import {
   walkZone,
   type ZoneWalk,
 } from "../sim/zoneWalk";
+import type { Tileset } from "../stage";
 import { artHitboxes, type ArtManifest, sheetFrameSize } from "../view/aseprite";
 import { BIRD_FRAME } from "../view/bird";
 import { spriteContacts } from "../view/spriteContacts";
-import type { Tileset } from "../view/tiles";
 
 const SHEETS = import.meta.glob<
   AsepriteSheet & {

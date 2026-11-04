@@ -1,5 +1,5 @@
+import { cameraScroll, groundLine } from "../camera";
 import type { AreaLayout, CameraTuning, ObjectLayout, Size } from "../data/types";
-import { cameraScroll, groundLine } from "./camera";
 
 interface BackgroundGroundContext {
   readonly area: Pick<AreaLayout, "chunks" | "entries" | "height" | "solids" | "width">;

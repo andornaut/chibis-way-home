@@ -18,8 +18,7 @@ import type {
   ZoneLayout,
   ZonePlan,
 } from "../data/types";
-import { worldScenery } from "../view/objectArt";
-import { drawsFrom, tileHitbox, type Tileset } from "../view/tiles";
+import { drawsFrom, tileHitbox, type Tileset, worldScenery } from "../stage";
 import { layoutBehaviour } from "./behaviour";
 import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling";
 import { validateHazardPhases } from "./effectiveCollision";

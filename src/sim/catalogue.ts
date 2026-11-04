@@ -11,9 +11,9 @@ import { TILE } from "../data/screen";
 import type { SpriteSilhouettes } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import { zonePlanFor } from "../rules/zonePlans";
+import type { Tileset } from "../stage";
 import { artHitboxes, type ArtManifest, sheetFrameSize } from "../view/aseprite";
 import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
-import type { Tileset } from "../view/tiles";
 import { type PreparedStage, prepareStage } from "./simulate";
 
 export function stageLoader(

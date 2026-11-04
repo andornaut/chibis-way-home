@@ -1,4 +1,4 @@
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
+import { focusKeyAction, stepFocus } from "../ui";
 
 // Highlighting the latest stage does not activate it. A new navigation press must focus an
 // action before Enter/Space can choose; the key that opened the modal cannot choose a stage.

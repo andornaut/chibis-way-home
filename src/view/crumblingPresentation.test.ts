@@ -3,13 +3,14 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import type { AreaLayout, Rect } from "../data/types";
+import type { Tileset } from "../stage";
 import {
   CRUMBLING_SKINS,
   crumblingAppearance,
   crumblingSkinTiles,
   crumblingTerrainBatches,
 } from "./crumblingPresentation";
-import { terrainTiles, type Tileset } from "./tiles";
+import { terrainTiles } from "./tiles";
 
 const tileset: Tileset = {
   columns: 6,

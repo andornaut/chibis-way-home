@@ -36,14 +36,15 @@ const BOUNDARIES = [
 
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
 // Each context imports only contexts below it, bottom first: data; platform, ai, assets and
-// settings; rules; save; dialogue; layout; input; view; pause; loading; pwa; the side pages
-// (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim, tools).
-// "folder/module" allows one module of a folder: each is an import that a later move removes,
-// by moving the module into a context or the importer out of one. The boundaries above govern
-// src/testing/.
+// settings; camera, stage and ui; rules; save; dialogue; layout; input; view; pause; loading;
+// pwa; the side pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling
+// (dev, sim, tools). "folder/module" allows one module of a folder ("folder/index" its index):
+// each is an import that a later move removes, by moving the module into a context or the
+// importer out of one. The boundaries above govern src/testing/.
 const CONTEXTS = {
   ai: [],
   assets: [],
+  camera: ["data"],
   crash: ["data", "platform"],
   data: [
     "ai/randomStreams",
@@ -67,6 +68,7 @@ const CONTEXTS = {
     "rules/zonePlans",
     "sim/catalogue",
     "sim/zoneWalk",
+    "stage/index",
     "view/aseprite",
     "view/backgroundGround",
     "view/bird",
@@ -76,11 +78,11 @@ const CONTEXTS = {
     "view/tiles",
   ],
   dev: ["data", "platform", "rules"],
-  dialogue: ["data", "layout/dialogueScreen", "layout/hitAreas", "pause/focusInput"],
+  dialogue: ["data", "layout/dialogueScreen", "layout/hitAreas", "ui"],
   gallery: ["view"],
   headers: ["platform"],
   homePage: ["data", "layout", "platform", "rules", "view"],
-  input: ["data", "layout", "pause/focusInput", "platform"],
+  input: ["data", "layout", "platform", "ui"],
   layout: [
     "data",
     "dialogue",
@@ -96,22 +98,21 @@ const CONTEXTS = {
     "view/statsStatement",
   ],
   loading: ["data", "layout", "platform", "view"],
-  pause: [],
+  pause: ["ui"],
   platform: [],
   pwa: ["loading", "platform", "view"],
   rules: [
     "ai",
+    "camera",
     "data",
     "dialogue/conversation",
     "save/progress",
     "sim/behaviourBounds",
     "sim/zoneWalk",
+    "stage",
     "view/behaviour",
     "view/bird",
-    "view/camera",
     "view/chunkParallax",
-    "view/objectArt",
-    "view/tiles",
   ],
   save: ["data", "dev/mode", "platform", "rules", "view/bird"],
   scenes: [
@@ -129,13 +130,17 @@ const CONTEXTS = {
     "rules",
     "save",
     "settings",
+    "stage",
+    "ui",
     "view",
   ],
   settings: [],
-  sim: ["data", "rules", "view"],
+  sim: ["data", "rules", "stage", "view"],
+  stage: ["data"],
   tools: ["assets", "data", "headers", "homePage", "loading", "platform", "pwa", "view"],
   tuningPage: ["data", "gallery"],
-  view: ["ai", "data", "dialogue", "input", "layout", "rules"],
+  ui: [],
+  view: ["ai", "camera", "data", "dialogue", "input", "layout", "rules", "stage"],
 };
 
 // CLEANUP (added 2026-11-04): the boss behaviour and timed hazard modules import each other's
@@ -150,11 +155,11 @@ function folders(path) {
     .map((entry) => entry.name);
 }
 
-// An import names a folder only by its path, so `./view/x` inside src/rules/ reads the same as
-// `../view/x` from elsewhere: a context's own subfolders are never forbidden to it. The pattern
-// matches only a relative path that climbs straight into a forbidden folder, so a subfolder of
-// an allowed folder (`../platform/view/x`) or a package subpath (`@andornaut/game-kit/save/x`)
-// that shares a forbidden folder's name stays allowed.
+// An import names a folder only by its path, so the pattern matches only a relative path that
+// climbs straight into a forbidden folder (`../view/x`). A module beside the importer
+// (`./camera`), a subfolder of an allowed folder (`../platform/view/x`) and a package subpath
+// (`@andornaut/game-kit/save/x`) that share a forbidden folder's name stay allowed, and a
+// context's own subfolders are never forbidden to it.
 function contextBoundary(context) {
   const allowed = CONTEXTS[context];
   const own = [context, ...folders(`src/${context}`)];
@@ -166,7 +171,8 @@ function contextBoundary(context) {
       .filter((entry) => entry.startsWith(`${folder}/`))
       .map((entry) => escapeRegex(entry.slice(folder.length + 1)));
     const rest = exceptions.length === 0 ? "" : `(?!(?:${exceptions.join("|")})$)`;
-    return `${escapeRegex(folder)}(?:/${rest}|$)`;
+    const index = exceptions.includes("index") ? "" : "|$";
+    return `${escapeRegex(folder)}(?:/${rest}${index})`;
   });
   return {
     files: [`src/${context}/**/*.ts`],
@@ -175,7 +181,7 @@ function contextBoundary(context) {
         allowed.length === 0
           ? `src/${context}/ may import nothing from src/.`
           : `src/${context}/ may import only ${allowed.join(", ")} from src/.`,
-      regex: `^(?:\\.\\.?/)+(?:${forbidden.join("|")})`,
+      regex: `^(?:\\.\\./)+(?:${forbidden.join("|")})`,
     },
   };
 }

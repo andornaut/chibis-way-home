@@ -5,11 +5,11 @@ import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import { focusRingAround, settingsCard, stepsCard } from "../layout/settingsCard";
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { BUILD_LABEL } from "../platform/build/buildLabel";
 import { type MenuInstallBrowser, offersInstall } from "../platform/pwa/installState";
 import { installOffer } from "../pwa/installOffer";
 import { TOUCH_SETTINGS, type TouchSetting, touchSettingShown } from "../settings/touchControls";
+import { focusKeyAction, stepFocus } from "../ui";
 import {
   addButtonLabel,
   addCardTextIn,

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
 import type { Archetype, Character, Rect, ZonePlan } from "../data/types";
+import type { Tileset } from "../stage";
 import { BIRD_FRAME } from "../view/bird";
-import type { Tileset } from "../view/tiles";
 import { type Catalogue, zoneLayout } from "./tiles";
 import { startZone, stepZone } from "./zone";
 

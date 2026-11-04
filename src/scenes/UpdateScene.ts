@@ -11,8 +11,8 @@ import {
   contentCardLayout,
 } from "../layout/contentCard";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { stepFocus } from "../pause/focusInput";
 import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa";
+import { stepFocus } from "../ui";
 import {
   addCardTextIn,
   addSlice,

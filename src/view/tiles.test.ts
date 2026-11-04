@@ -1,16 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { TerrainRect } from "../data/types";
-import {
-  drawsFrom,
-  loadedTileset,
-  lookTiles,
-  objectTiles,
-  type PlacedTile,
-  terrainTiles,
-  tileHitbox,
-  type Tileset,
-} from "./tiles";
+import { drawsFrom, tileHitbox, type Tileset } from "../stage";
+import { loadedTileset, lookTiles, objectTiles, type PlacedTile, terrainTiles } from "./tiles";
 
 const NAMES = [
   ...lookTiles("sidewalk"),

@@ -1,4 +1,4 @@
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
+import { focusKeyAction, stepFocus } from "../ui";
 
 export type DeathAction = "home" | "retry";
 export const DEATH_ACTIONS: readonly DeathAction[] = ["retry", "home"];

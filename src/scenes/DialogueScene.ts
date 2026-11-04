@@ -30,7 +30,7 @@ import {
 } from "../layout/dialogueScreen";
 import { type PressArea, pressedArea } from "../layout/hitAreas";
 import type { LabelledButton } from "../layout/restartCard";
-import { stepFocus } from "../pause/focusInput";
+import { stepFocus } from "../ui";
 import {
   addTextButton,
   BODY_FONT,

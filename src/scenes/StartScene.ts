@@ -10,7 +10,6 @@ import {
   startScreenLayout,
 } from "../layout/startScreen";
 import { startBackAction } from "../pause/cardInput";
-import { focusKeyAction, stepFocus } from "../pause/focusInput";
 import { browserExitPage, exitApp } from "../platform/pwa/exitApp";
 import {
   beginStartUpdateVisit,
@@ -22,6 +21,7 @@ import {
 import { openingDestination } from "../rules/opening";
 import { savedProgress } from "../save";
 import { setTouchSettingShown, type TouchSetting } from "../settings/touchControls";
+import { focusKeyAction, stepFocus } from "../ui";
 import {
   addSlice,
   addTextButton,

@@ -6,9 +6,9 @@ import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point, Rect } from "../data/types";
 import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "../layout/cutscene";
-import { focusKeyAction } from "../pause/focusInput";
 import type { WholeRunDisplaySummary } from "../save/runSummary";
 import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
+import { focusKeyAction } from "../ui";
 import { statsStatement } from "../view/statsStatement";
 import {
   addTextButton,

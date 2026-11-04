@@ -5,7 +5,7 @@ import { expect, it, vi } from "vitest";
 import type { AreaLayout, ObjectLayout } from "../data/types";
 import { initialCrumblingWorld } from "../rules/crumbling";
 import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling";
-import type { Tileset } from "../view/tiles";
+import type { Tileset } from "../stage";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));

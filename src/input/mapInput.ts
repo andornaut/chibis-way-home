@@ -1,4 +1,4 @@
-import { stepFocus } from "../pause/focusInput";
+import { stepFocus } from "../ui";
 
 export type MapAction = "continue" | "home";
 export type MapKeyAction =

@@ -130,6 +130,7 @@ import {
   touchSettings,
   touchSettingShown,
 } from "../settings/touchControls";
+import { sceneryParallax, type Tileset, worldScenery } from "../stage";
 import { ART_MANIFEST_KEY, artHitboxes, type ArtManifest } from "../view/aseprite";
 import { backdropBottomRect } from "../view/backdropBottom";
 import { backgroundGroundOffset, backgroundGroundReference } from "../view/backgroundGround";
@@ -158,25 +159,12 @@ import { doorPhase } from "../view/doorOpen";
 import { forceVisualPosition } from "../view/forceVisual";
 import { interiorBackdrop } from "../view/interiorBackdrop";
 import { moveHintView } from "../view/moveHint";
-import {
-  type ArtKind,
-  artKind,
-  artOffset,
-  artScrollFactor,
-  sceneryParallax,
-  worldScenery,
-} from "../view/objectArt";
+import { type ArtKind, artKind, artOffset, artScrollFactor } from "../view/objectArt";
 import { type PlayHold, stepAction } from "../view/playHold";
 import { scenerySpriteFrame } from "../view/scenerySprite";
 import { CONTACT_SILHOUETTES, spriteContacts } from "../view/spriteContacts";
 import { STAGE_PROGRESS_STYLE } from "../view/stageProgress";
-import {
-  loadedTileset,
-  objectTiles,
-  type PlacedTile,
-  terrainTiles,
-  type Tileset,
-} from "../view/tiles";
+import { loadedTileset, objectTiles, type PlacedTile, terrainTiles } from "../view/tiles";
 import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../view/touchChrome";
 import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
 import { barkOwnerOnscreen, proximityDialogue } from "../view/zoneDialogue";

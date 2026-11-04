@@ -13,8 +13,8 @@ import { orbitBounds } from "../rules/orbit";
 import { STEP_SECONDS } from "../rules/step";
 import { areaLayout, objectLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
+import type { Tileset } from "../stage";
 import { BIRD_FRAME } from "../view/bird";
-import type { Tileset } from "../view/tiles";
 import {
   behaviourCycleSeconds,
   hasDynamicBehaviour,
