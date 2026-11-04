@@ -531,18 +531,14 @@ describe("persistent pursuit", () => {
     ({ boundary, graph, raised }) => {
       const resolved = layoutBehaviour(TILE, graph);
       const object = actor(resolved);
-      const approachMotion = Object.values(resolved.states).find(
-        ({ motion, transitions }) =>
-          motion.kind === "fly" &&
-          typeof motion.to !== "string" &&
-          transitions.some(({ to }) => to === boundary),
-      )?.motion;
+      // A raised overhead tell starts at its clearance above the anchor.
+      const tell = resolved.states[boundary]!.motion;
       const offset = !raised
         ? 0
         : resolved.axis === "y"
           ? resolved.distance
-          : approachMotion?.kind === "fly" && typeof approachMotion.to !== "string"
-            ? approachMotion.to.y
+          : tell.kind === "pursue" && tell.mode === "fly" && tell.overhead
+            ? -tell.overhead.clearance
             : 0;
       if (raised) {
         expect(offset).toBeLessThan(0);
