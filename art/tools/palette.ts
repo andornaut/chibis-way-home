@@ -5,12 +5,10 @@
  *
  *   {
  *     "colours": {"amber": "#feae34", ...},   every palette colour by its K name in pixel.ts
- *     "darker": {"#181425": "#181425", ...},  each colour one ramp step down
- *     "dim2": {"#181425": "#181425", ...}     each colour two ramp steps down
+ *     "darker": {"#181425": "#181425", ...}   each colour one ramp step down
  *   }
  *
- * "dim2" spares a reader chaining two "darker" lookups. Ink is the bottom of every ramp and maps to
- * itself.
+ * Ink is the bottom of every ramp and maps to itself.
  *
  * The manifest lists it under "data" as {"key": "palette", "json": "palette.json"}.
  *
@@ -38,7 +36,6 @@ export function data(): Record<string, Record<string, string>> {
   return {
     colours: Object.fromEntries(Object.entries(pixel.K).map(([name, c]) => [name, h(c)])),
     darker: table(1),
-    dim2: table(2),
   };
 }
 

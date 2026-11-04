@@ -7,7 +7,7 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 | Key                 | Type                             | Size                        | Tags |
 | ------------------- | -------------------------------- | --------------------------- | ---- |
 | contact-silhouettes | JSON: per-frame opaque body runs | six antagonist body sprites |      |
-| palette             | JSON: colours, darker, dim2      | house and zone ramps        |      |
+| palette             | JSON: colours, darker            | house and zone ramps        |      |
 | zone-themes         | JSON: destination primary tokens | six destinations            |      |
 
 ## Fonts
