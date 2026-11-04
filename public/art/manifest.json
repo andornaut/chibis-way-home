@@ -199,24 +199,6 @@
       "once": []
     },
     {
-      "key": "icon-exit",
-      "png": "sprites/icon-exit.png",
-      "json": "sprites/icon-exit.json",
-      "once": []
-    },
-    {
-      "key": "icon-home",
-      "png": "sprites/icon-home.png",
-      "json": "sprites/icon-home.json",
-      "once": []
-    },
-    {
-      "key": "icon-home-nav",
-      "png": "sprites/icon-home-nav.png",
-      "json": "sprites/icon-home-nav.json",
-      "once": []
-    },
-    {
       "key": "icon-install",
       "png": "sprites/icon-install.png",
       "json": "sprites/icon-install.json",
@@ -232,12 +214,6 @@
       "key": "icon-move-controls",
       "png": "sprites/icon-move-controls.png",
       "json": "sprites/icon-move-controls.json",
-      "once": []
-    },
-    {
-      "key": "icon-settings",
-      "png": "sprites/icon-settings.png",
-      "json": "sprites/icon-settings.json",
       "once": []
     },
     {
@@ -277,24 +253,6 @@
       "once": []
     },
     {
-      "key": "map-compass",
-      "png": "sprites/map-compass.png",
-      "json": "sprites/map-compass.json",
-      "once": []
-    },
-    {
-      "key": "map-fork",
-      "png": "sprites/map-fork.png",
-      "json": "sprites/map-fork.json",
-      "once": []
-    },
-    {
-      "key": "map-hill",
-      "png": "sprites/map-hill.png",
-      "json": "sprites/map-hill.json",
-      "once": []
-    },
-    {
       "key": "map-icon-apartment",
       "png": "sprites/map-icon-apartment.png",
       "json": "sprites/map-icon-apartment.json",
@@ -322,12 +280,6 @@
       "key": "map-icon-industrial",
       "png": "sprites/map-icon-industrial.png",
       "json": "sprites/map-icon-industrial.json",
-      "once": []
-    },
-    {
-      "key": "map-icon-street",
-      "png": "sprites/map-icon-street.png",
-      "json": "sprites/map-icon-street.json",
       "once": []
     },
     {
@@ -388,12 +340,6 @@
       "key": "map-region-woodland",
       "png": "sprites/map-region-woodland.png",
       "json": "sprites/map-region-woodland.json",
-      "once": []
-    },
-    {
-      "key": "map-wave",
-      "png": "sprites/map-wave.png",
-      "json": "sprites/map-wave.json",
       "once": []
     },
     {
@@ -569,12 +515,6 @@
       }
     },
     {
-      "key": "ui-answer",
-      "png": "sprites/ui-answer.png",
-      "json": "sprites/ui-answer.json",
-      "once": []
-    },
-    {
       "key": "ui-button",
       "png": "sprites/ui-button.png",
       "json": "sprites/ui-button.json",
@@ -621,12 +561,6 @@
         "right": 4,
         "bottom": 4
       }
-    },
-    {
-      "key": "ui-forward-mark",
-      "png": "sprites/ui-forward-mark.png",
-      "json": "sprites/ui-forward-mark.json",
-      "once": []
     },
     {
       "key": "ui-icon-button",
@@ -725,18 +659,6 @@
         "right": 2,
         "bottom": 2
       }
-    },
-    {
-      "key": "ui-skip",
-      "png": "sprites/ui-skip.png",
-      "json": "sprites/ui-skip.json",
-      "once": []
-    },
-    {
-      "key": "ui-start",
-      "png": "sprites/ui-start.png",
-      "json": "sprites/ui-start.json",
-      "once": []
     },
     {
       "key": "ui-switch",
@@ -851,37 +773,10 @@
       "repeat": "x"
     },
     {
-      "key": "apartment-lobby-desk",
-      "png": "backdrops/apartment-lobby-desk.png",
-      "width": 96,
-      "height": 48,
-      "anchor": "bottom-left",
-      "y": 720,
-      "repeat": "none"
-    },
-    {
-      "key": "apartment-lobby-plant",
-      "png": "backdrops/apartment-lobby-plant.png",
-      "width": 36,
-      "height": 60,
-      "anchor": "bottom-left",
-      "y": 720,
-      "repeat": "none"
-    },
-    {
       "key": "apartment-lobby-sofa",
       "png": "backdrops/apartment-lobby-sofa.png",
       "width": 96,
       "height": 48,
-      "anchor": "bottom-left",
-      "y": 720,
-      "repeat": "none"
-    },
-    {
-      "key": "apartment-pool-bench",
-      "png": "backdrops/apartment-pool-bench.png",
-      "width": 72,
-      "height": 36,
       "anchor": "bottom-left",
       "y": 720,
       "repeat": "none"
@@ -900,15 +795,6 @@
       "png": "backdrops/apartment-residential-shelf.png",
       "width": 72,
       "height": 96,
-      "anchor": "bottom-left",
-      "y": 720,
-      "repeat": "none"
-    },
-    {
-      "key": "apartment-restaurant-booth",
-      "png": "backdrops/apartment-restaurant-booth.png",
-      "width": 72,
-      "height": 48,
       "anchor": "bottom-left",
       "y": 720,
       "repeat": "none"
@@ -939,15 +825,6 @@
       "anchor": "bottom-left",
       "y": 720,
       "repeat": "x"
-    },
-    {
-      "key": "apartment-spa-bench",
-      "png": "backdrops/apartment-spa-bench.png",
-      "width": 72,
-      "height": 36,
-      "anchor": "bottom-left",
-      "y": 720,
-      "repeat": "none"
     },
     {
       "key": "apartment-spa-screen",
@@ -1031,24 +908,6 @@
       "repeat": "x"
     },
     {
-      "key": "cab",
-      "png": "backdrops/cab.png",
-      "width": 96,
-      "height": 40,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "canopy-poles",
-      "png": "backdrops/canopy-poles.png",
-      "width": 60,
-      "height": 60,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
       "key": "countryside-far",
       "png": "backdrops/countryside-far.png",
       "width": 720,
@@ -1094,48 +953,12 @@
       "repeat": "x"
     },
     {
-      "key": "doorman-podium",
-      "png": "backdrops/doorman-podium.png",
-      "width": 18,
-      "height": 24,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
       "key": "facade-brownstone",
       "png": "backdrops/facade-brownstone.png",
       "width": 48,
       "height": 312,
       "anchor": "bottom-left",
       "y": 600,
-      "repeat": "x"
-    },
-    {
-      "key": "facade-brownstone-upper",
-      "png": "backdrops/facade-brownstone-upper.png",
-      "width": 48,
-      "height": 180,
-      "anchor": "bottom-left",
-      "y": 288,
-      "repeat": "x"
-    },
-    {
-      "key": "facade-hotel",
-      "png": "backdrops/facade-hotel.png",
-      "width": 48,
-      "height": 312,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "x"
-    },
-    {
-      "key": "facade-hotel-upper",
-      "png": "backdrops/facade-hotel-upper.png",
-      "width": 48,
-      "height": 180,
-      "anchor": "bottom-left",
-      "y": 288,
       "repeat": "x"
     },
     {
@@ -1191,15 +1014,6 @@
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "x"
-    },
-    {
-      "key": "fire-escape",
-      "png": "backdrops/fire-escape.png",
-      "width": 196,
-      "height": 185,
-      "anchor": "bottom-left",
-      "y": 473,
-      "repeat": "none"
     },
     {
       "key": "fire-escape-ladder",
@@ -1355,24 +1169,6 @@
       "repeat": "none"
     },
     {
-      "key": "hotel-crest",
-      "png": "backdrops/hotel-crest.png",
-      "width": 98,
-      "height": 44,
-      "anchor": "bottom-left",
-      "y": 478,
-      "repeat": "none"
-    },
-    {
-      "key": "hotel-window",
-      "png": "backdrops/hotel-window.png",
-      "width": 32,
-      "height": 152,
-      "anchor": "bottom-left",
-      "y": 592,
-      "repeat": "none"
-    },
-    {
       "key": "industrial-far",
       "png": "backdrops/industrial-far.png",
       "width": 720,
@@ -1389,87 +1185,6 @@
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "x"
-    },
-    {
-      "key": "lobby-balustrade",
-      "png": "backdrops/lobby-balustrade.png",
-      "width": 48,
-      "height": 36,
-      "anchor": "bottom-left",
-      "y": 288,
-      "repeat": "x"
-    },
-    {
-      "key": "lobby-bookcase",
-      "png": "backdrops/lobby-bookcase.png",
-      "width": 84,
-      "height": 384,
-      "anchor": "bottom-left",
-      "y": 672,
-      "repeat": "none"
-    },
-    {
-      "key": "lobby-desk",
-      "png": "backdrops/lobby-desk.png",
-      "width": 120,
-      "height": 96,
-      "anchor": "bottom-left",
-      "y": 672,
-      "repeat": "none"
-    },
-    {
-      "key": "lobby-front-door",
-      "png": "backdrops/lobby-front-door.png",
-      "width": 156,
-      "height": 180,
-      "anchor": "bottom-left",
-      "y": 672,
-      "repeat": "none"
-    },
-    {
-      "key": "lobby-lamp",
-      "png": "backdrops/lobby-lamp.png",
-      "width": 48,
-      "height": 192,
-      "anchor": "bottom-left",
-      "y": 220,
-      "repeat": "none"
-    },
-    {
-      "key": "lobby-plant",
-      "png": "backdrops/lobby-plant.png",
-      "width": 48,
-      "height": 120,
-      "anchor": "bottom-left",
-      "y": 672,
-      "repeat": "none"
-    },
-    {
-      "key": "lobby-sofa",
-      "png": "backdrops/lobby-sofa.png",
-      "width": 120,
-      "height": 72,
-      "anchor": "bottom-left",
-      "y": 672,
-      "repeat": "none"
-    },
-    {
-      "key": "lobby-wall",
-      "png": "backdrops/lobby-wall.png",
-      "width": 48,
-      "height": 720,
-      "anchor": "bottom-left",
-      "y": 720,
-      "repeat": "x"
-    },
-    {
-      "key": "lobby-window",
-      "png": "backdrops/lobby-window.png",
-      "width": 96,
-      "height": 240,
-      "anchor": "bottom-left",
-      "y": 552,
-      "repeat": "none"
     },
     {
       "key": "neighbourhood-mid",
@@ -1535,15 +1250,6 @@
       "repeat": "none"
     },
     {
-      "key": "park-bin",
-      "png": "backdrops/park-bin.png",
-      "width": 16,
-      "height": 24,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
       "key": "park-city",
       "png": "backdrops/park-city.png",
       "width": 360,
@@ -1571,55 +1277,10 @@
       "repeat": "x"
     },
     {
-      "key": "park-flower-bed",
-      "png": "backdrops/park-flower-bed.png",
-      "width": 72,
-      "height": 16,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "park-fountain",
-      "png": "backdrops/park-fountain.png",
-      "width": 96,
-      "height": 48,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
       "key": "park-lamp",
       "png": "backdrops/park-lamp.png",
       "width": 16,
       "height": 84,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "park-lily-pad",
-      "png": "backdrops/park-lily-pad.png",
-      "width": 14,
-      "height": 4,
-      "anchor": "bottom-left",
-      "y": 608,
-      "repeat": "none"
-    },
-    {
-      "key": "park-reeds",
-      "png": "backdrops/park-reeds.png",
-      "width": 24,
-      "height": 30,
-      "anchor": "bottom-left",
-      "y": 610,
-      "repeat": "none"
-    },
-    {
-      "key": "park-sign",
-      "png": "backdrops/park-sign.png",
-      "width": 24,
-      "height": 40,
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "none"
@@ -1690,15 +1351,6 @@
     {
       "key": "roofline-brownstone",
       "png": "backdrops/roofline-brownstone.png",
-      "width": 48,
-      "height": 48,
-      "anchor": "bottom-left",
-      "y": 108,
-      "repeat": "x"
-    },
-    {
-      "key": "roofline-hotel",
-      "png": "backdrops/roofline-hotel.png",
       "width": 48,
       "height": 48,
       "anchor": "bottom-left",
@@ -1933,15 +1585,6 @@
     {
       "key": "woodland-far",
       "png": "backdrops/woodland-far.png",
-      "width": 720,
-      "height": 600,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "x"
-    },
-    {
-      "key": "woodland-far-birch",
-      "png": "backdrops/woodland-far-birch.png",
       "width": 720,
       "height": 600,
       "anchor": "bottom-left",

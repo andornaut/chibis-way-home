@@ -74,9 +74,7 @@
  *   planes; its one-way-branch row is 6 rows up.
  * - park-bench 36x24 (y 600): the bench's legs and seat under its one-way-bench row, 2 rows up.
  * - park-bandstand 120x84 (y 600): posts, rail and base under its one-way-bandstand row, 6 rows up.
- * - park-lamp 16x84, park-fountain 96x48, park-flower-bed 72x16, park-bin 16x24, park-sign 24x40
- *   (a tree icon, no text), all y 600.
- * - park-reeds 24x30 (y 610) and park-lily-pad 14x4 (y 608): at a pond's edges and on its surface.
+ * - park-lamp 16x84 (y 600).
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -458,91 +456,6 @@ function lamp(): RgbaImage {
   );
 }
 
-function fountain(): RgbaImage {
-  const [w, hi] = WATER;
-  const im = rects(
-    image(96, 48),
-    [0, 30, 96, 18, STONE[2]],
-    [0, 30, 96, 3, "cream"],
-    [4, 34, 88, 6, w],
-    [42, 10, 12, 22, STONE[2]],
-    [36, 8, 24, 4, "cream"],
-  );
-  for (const [x, h] of [
-    [44, 8],
-    [48, 12],
-    [52, 8],
-  ] as const)
-    fill(im, [x, 8 - Math.floor(h / 2), 2, Math.floor(h / 2), hi]);
-  return im;
-}
-
-function flowerBed(): RgbaImage {
-  const im = rects(image(72, 16), [0, 8, 72, 8, SOIL[0]], [0, 6, 72, 4, "green"]);
-  const colours = ["mauve", "purple", "pink"] as const;
-  for (let i = 0, x = 2; x < 70; i++, x += 6)
-    fill(im, [x, 2 + (i % 2) * 2, 4, 4, colours[i % 3] as string]);
-  return im;
-}
-
-function bin(): RgbaImage {
-  const im = rects(
-    image(16, 24),
-    [2, 4, 12, 20, "forest"],
-    [2, 4, 12, 2, "dgreen"],
-    [0, 2, 16, 3, "ink"],
-  );
-  for (const x of [5, 9]) fill(im, [x, 8, 2, 14, "teal"]);
-  return im;
-}
-
-function sign(): RgbaImage {
-  const im = rects(
-    image(24, 40),
-    [11, 16, 2, 24, "dbrown"],
-    [0, 0, 24, 16, "forest"],
-    [1, 1, 22, 14, "dgreen"],
-  );
-  // A tree icon.
-  for (const [x, y, w] of [
-    [11, 3, 2],
-    [9, 5, 6],
-    [7, 7, 10],
-    [11, 9, 2],
-    [11, 11, 2],
-  ] as const)
-    fill(im, [x, y, w, 2, "cream"]);
-  return im;
-}
-
-function reeds(): RgbaImage {
-  const im = image(24, 30);
-  for (const [x, top] of [
-    [2, 6],
-    [6, 0],
-    [10, 8],
-    [15, 2],
-    [19, 10],
-  ] as const)
-    fill(im, [x, top, 2, 30 - top, "dgreen"]);
-  for (const [x, top] of [
-    [6, 2],
-    [15, 4],
-  ] as const)
-    fill(im, [x, top, 2, 6, "dbrown"]);
-  return im;
-}
-
-function lilyPad(): RgbaImage {
-  return rects(
-    image(14, 4),
-    [1, 0, 12, 4, "dgreen"],
-    [0, 1, 14, 2, "dgreen"],
-    [6, 0, 2, 2, WATER[0]],
-    [2, 1, 4, 1, "green"],
-  );
-}
-
 type BackdropDef = readonly [draw: () => RgbaImage, y: number, repeat: string];
 
 export const BACKDROP_DEFS: ReadonlyMap<string, BackdropDef> = new Map<string, BackdropDef>([
@@ -555,12 +468,6 @@ export const BACKDROP_DEFS: ReadonlyMap<string, BackdropDef> = new Map<string, B
   ["park-bench", [benchLegs, 600, "none"]],
   ["park-bandstand", [bandstand, 600, "none"]],
   ["park-lamp", [lamp, 600, "none"]],
-  ["park-fountain", [fountain, 600, "none"]],
-  ["park-flower-bed", [flowerBed, 600, "none"]],
-  ["park-bin", [bin, 600, "none"]],
-  ["park-sign", [sign, 600, "none"]],
-  ["park-reeds", [reeds, 610, "none"]],
-  ["park-lily-pad", [lilyPad, 608, "none"]],
 ]);
 
 // ---------------------------------------------------------------- sprites
@@ -687,7 +594,7 @@ async function build(): Promise<void> {
 // ---------------------------------------------------------------- preview: two example chunks
 
 // Chunk 1 (cols 0-59): grass at row 50 with a path, a bench, a tree with its branch, then five
-// 2-row steps up to row 40 at the seam. Chunk 2 (cols 60-119): row 40 with a fountain, a pond,
+// 2-row steps up to row 40 at the seam. Chunk 2 (cols 60-119): row 40 with a pond,
 // five 2-row steps up to a terrace at row 30 with the bandstand, a drop back to row 40 and a thorn
 // hedge before the right edge.
 const STEPS: readonly (readonly [col: number, row: number])[] = [
@@ -736,14 +643,8 @@ function example(chars = true): RgbaImage {
   put("park-tree", 16 * T - 6);
   put("park-lamp", 4 * T);
   put("park-lamp", 88 * T, 40);
-  put("park-flower-bed", 23 * T);
   put("park-bench", 10 * T);
-  put("park-bin", 44 * T, 40);
-  put("park-sign", 56 * T, 40);
-  put("park-fountain", 63 * T, 40);
   put("park-bandstand", 104 * T - 12, 30);
-  put("park-reeds", POND[0] * T - 14, 40);
-  put("park-reeds", (POND[1] + 1) * T - 6, 40);
   const m = tops();
   const exposed = (c: number, row: number) =>
     (!m.has(c - 1) || (m.get(c - 1) as Top)[0] > row ? "l" : "") +
@@ -773,8 +674,6 @@ function example(chars = true): RgbaImage {
     over([c * T, 41 * T], tile(`hazard-pond-bed${side}`), im);
     for (let r = 42; r < 60; r++) over([c * T, r * T], soil("", (c * 7 + r * 3) % 5 === 0), im);
   }
-  put("park-lily-pad", 78 * T + 3, 40);
-  put("park-lily-pad", 82 * T + 6, 40);
   for (const [name, row, c0, w] of LEDGES)
     for (let c = c0; c < c0 + w; c++) {
       const side = c === c0 ? "-left" : c === c0 + w - 1 ? "-right" : "";

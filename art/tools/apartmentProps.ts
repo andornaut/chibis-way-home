@@ -2,7 +2,7 @@
  * Reusable decorative apartment furnishings at the canonical bird scale.
  *
  * Usage: node art/tools/apartmentProps.ts build | preview OUT.png, from the repository root. Plain
- * PNG exports. Ten bottom-left backdrops default to world y 720. Only pool-water repeats x; its
+ * PNG exports. Five bottom-left backdrops default to world y 720. Only pool-water repeats x; its
  * horizontal edges match. All props are decorative with no collision, white walkable lip, hazard
  * paint, characters or text. Physical platforms and doors remain separately placed objects. Pool
  * water has no lethal behaviour. Zone-red rose ties the rooms together with quiet wood, sage and
@@ -19,8 +19,6 @@ import {
   cropBox,
   ellipse,
   image,
-  line,
-  polygon,
   readImage,
   rect,
   type RgbaImage,
@@ -32,15 +30,10 @@ import { drawLabel, labelHeight } from "./previewText.ts";
 
 export const SIZES: Readonly<Record<string, readonly [width: number, height: number]>> = {
   "restaurant-counter": [96, 48],
-  "restaurant-booth": [72, 48],
   "pool-water": [96, 24],
-  "pool-bench": [72, 36],
   "spa-screen": [72, 96],
-  "spa-bench": [72, 36],
   "residential-shelf": [72, 96],
-  "lobby-desk": [96, 48],
   "lobby-sofa": [96, 48],
-  "lobby-plant": [36, 60],
 };
 const USAGE = "Usage: apartmentProps.ts build | preview OUT.png";
 
@@ -59,22 +52,17 @@ export function draw(kind: string): RgbaImage {
   if (!size) throw new Error(`unknown apartment prop ${kind}`);
   const [w, h] = size;
   const im = image(w, h);
-  if (kind === "restaurant-counter" || kind === "lobby-desk") {
+  if (kind === "restaurant-counter") {
     rect("dbrown", [2, 10, 94, 48], im);
     rect("zone-peach-shade", [5, 15, 91, 44], im);
     rect("zone-red-shade", [8, 18, 88, 40], im);
     for (const x of [32, 62]) rect("dbrown", [x, 18, x + 2, 40], im);
     rect("brown", [0, 8, 96, 15], im);
     rect("zone-peach", [2, 9, 94, 12], im);
-    if (kind === "restaurant-counter") {
-      ellipse("zone-peach", [12, 4, 34, 10], im);
-      ellipse("zone-peach-shade", [16, 6, 30, 9], im);
-      rect("zone-green-shade", [70, 1, 78, 8], im);
-    } else {
-      rect("zone-blue-shade", [64, 1, 82, 8], im);
-      rect("dslate", [62, 6, 84, 9], im);
-    }
-  } else if (kind === "restaurant-booth" || kind === "lobby-sofa") {
+    ellipse("zone-peach", [12, 4, 34, 10], im);
+    ellipse("zone-peach-shade", [16, 6, 30, 9], im);
+    rect("zone-green-shade", [70, 1, 78, 8], im);
+  } else if (kind === "lobby-sofa") {
     legs({ xs: [8, w - 12], top: 39, bottom: 48 }, im);
     rect("dbrown", [3, 2, w - 3, 38], im);
     rect("zone-red-shade", [5, 4, w - 5, 34], im);
@@ -82,11 +70,10 @@ export function draw(kind: string): RgbaImage {
     rect("zone-red", [4, 29, w - 4, 38], im);
     rect("zone-red-shade", [4, 38, w - 4, 42], im);
     rect("zone-red-shade", [Math.floor(w / 2) - 1, 6, Math.floor(w / 2) + 1, 24], im);
-    if (kind === "lobby-sofa")
-      for (const x of [1, w - 13]) {
-        rect("dbrown", [x, 19, x + 12, 41], im);
-        rect("zone-red-shade", [x + 2, 20, x + 10, 38], im);
-      }
+    for (const x of [1, w - 13]) {
+      rect("dbrown", [x, 19, x + 12, 41], im);
+      rect("zone-red-shade", [x + 2, 20, x + 10, 38], im);
+    }
   } else if (kind === "pool-water") {
     rect("zone-blue-shade", [0, 0, 96, 24], im);
     rect("zone-blue", [0, 3, 96, 21], im);
@@ -94,19 +81,6 @@ export function draw(kind: string): RgbaImage {
     for (const x of [8, 40, 72]) {
       rect("zone-blue-shade", [x, 6, x + 16, 8], im);
       rect("zone-blue-shade", [x + 8, 17, x + 22, 19], im);
-    }
-  } else if (kind === "pool-bench" || kind === "spa-bench") {
-    legs({ xs: [7, 61], top: 22, bottom: 36 }, im);
-    const wood = kind === "spa-bench" ? "zone-peach" : "zone-green";
-    const shade = `${wood}-shade`;
-    rect("dbrown", [2, 8, 70, 25], im);
-    for (const y of [10, 17]) {
-      rect(shade, [4, y, 68, y + 5], im);
-      rect(wood, [5, y, 67, y + 2], im);
-    }
-    if (kind === "spa-bench") {
-      rect("zone-green-shade", [45, 3, 64, 9], im);
-      rect("zone-green", [46, 3, 63, 6], im);
     }
   } else if (kind === "spa-screen") {
     for (const [x, top, bottom] of [
@@ -134,76 +108,8 @@ export function draw(kind: string): RgbaImage {
     ellipse("zone-peach", [13, 39, 32, 55], im);
     rect("zone-green-shade", [16, 70, 40, 86], im);
     rect("zone-green", [16, 70, 40, 74], im);
-  } else if (kind === "lobby-plant") {
-    for (const [[x, y], side] of [
-      [[5, 8], -1],
-      [[29, 3], 1],
-      [[3, 24], -1],
-      [[32, 26], 1],
-    ] as const) {
-      line(
-        { colour: "zone-green-shade", width: 2 },
-        [
-          [18, 42],
-          [x, y],
-        ],
-        im,
-      );
-      polygon(
-        { colour: "zone-green-shade" },
-        [
-          [x, y],
-          [x + side * 3, y + 8],
-          [18, y + 16],
-          [x - side * 3, y + 4],
-        ],
-        im,
-      );
-      polygon(
-        { colour: "zone-green" },
-        [
-          [x, y + 2],
-          [x - side * 2, y + 5],
-          [17, y + 14],
-        ],
-        im,
-      );
-    }
-    polygon(
-      { colour: "dbrown" },
-      [
-        [5, 40],
-        [31, 40],
-        [27, 59],
-        [9, 59],
-      ],
-      im,
-    );
-    polygon(
-      { colour: "zone-red-shade" },
-      [
-        [7, 42],
-        [29, 42],
-        [25, 57],
-        [11, 57],
-      ],
-      im,
-    );
-    rect("zone-red", [4, 39, 32, 44], im);
   }
   return im;
-}
-
-export function registry(): pixel.ManifestEntry[] {
-  return Object.entries(SIZES).map(([key, [width, height]]) => ({
-    key: `apartment-${key}`,
-    png: `backdrops/apartment-${key}.png`,
-    width,
-    height,
-    anchor: "bottom-left",
-    y: 720,
-    repeat: key === "pool-water" ? "x" : "none",
-  }));
 }
 
 function build(): void {

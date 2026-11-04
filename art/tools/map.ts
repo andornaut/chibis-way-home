@@ -18,7 +18,7 @@
  *
  * map-icon-<destination> is 14x14, centred over normal/current/visited nodes. Both tags use a muted
  * primary backing, an ink landmark and a dslate edge; the visited marker supplies its completion
- * tick. Locked/unbuilt nodes show no icon. The street and generic zone icons remain available.
+ * tick. Locked/unbuilt nodes show no icon. map-icon-zone is the generic icon.
  * map-region-<destination> is a 120x60 static illustration placed at cx-60, cy-36, behind paths and
  * markers. These decorative buildings, fields and trees keep destination identity visible while its
  * marker is locked or unbuilt. No region depicts a playable layout.
@@ -30,8 +30,7 @@
  * Back to title is ui-button at 164,300,192,48; Continue is ui-button-primary at 364,300,192,48.
  *
  * map-bird remains 26x22 with idle 2x400ms, centred on the current node and standing on its top
- * ring. Legacy map-fork and pen marks remain available but the six-zone V1 route needs no fork
- * markers.
+ * ring. The six-zone V1 route has no fork markers.
  *
  * The stage picker reuses the content-fitted ui-settings-card, with a zone heading and standard
  * 24x24 close X included in the measured content union. Add 16px outer padding on all four sides.
@@ -93,11 +92,6 @@ function ring(
     }
 }
 
-function diamond(g: Grid, cx: number, cy: number, r: number, c: string): void {
-  for (let y = -r; y <= r; y++)
-    for (let x = -r; x <= r; x++) if (Math.abs(x) + Math.abs(y) <= r) g.p(cx + x, cy + y, c);
-}
-
 // ---------------------------------------------------------------- paper
 
 /** 32x32 nine-slice: pale steel, a 2px slate rule 6px in and a 2px grey rule 11px in. */
@@ -118,63 +112,9 @@ function paper(): pixel.Frame {
   return g.px;
 }
 
-/** 20x11: a hill's outline, a 2px stroke stepping 2px per 2px. */
-function hill(): pixel.Frame {
-  const g = new Grid(20, 11);
-  for (let i = 0; i < 10; i++) g.rect(i * 2, Math.trunc(Math.abs(i - 4.5) * 2), 2, 2, "tan");
-  return g.px;
-}
-
-/** 22x4: three 2px humps. */
-function wave(): pixel.Frame {
-  const g = new Grid(22, 4);
-  [2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0].forEach((dy, i) => g.rect(i * 2, dy, 2, 2, "tan"));
-  return g.px;
-}
-
-/** 25x33: an N over a four-point star, arms tapering from 3px to 1px. */
-function compass(): pixel.Frame {
-  const g = new Grid(25, 33);
-  stamp(g, bm("##..##", "###.##", "######", "##.###", "##..##"), 9, 0, "tan");
-  const cx = 12;
-  const cy = 20;
-  for (let k = 0; k < 13; k++) {
-    const w = k < 4 ? 3 : k < 9 ? 2 : 1;
-    for (const [dx, dy] of [
-      [0, -1],
-      [0, 1],
-      [-1, 0],
-      [1, 0],
-    ] as const) {
-      const x = cx + dx * k;
-      const y = cy + dy * k;
-      if (dx === 0) g.rect(x - Math.floor(w / 2), y, w, 1, "tan");
-      else g.rect(x, y - Math.floor(w / 2), 1, w, "tan");
-    }
-  }
-  diamond(g, cx, cy, 3, "tan");
-  return g.px;
-}
-
 // ---------------------------------------------------------------- icons, 14x14, 2px strokes
 
 const ICONS: Record<string, readonly string[]> = {
-  street: [
-    "##############",
-    "##############",
-    "##..........##",
-    "##..##..##..##",
-    "##..##..##..##",
-    "##..........##",
-    "##..##..##..##",
-    "##..##..##..##",
-    "##..........##",
-    "##...####...##",
-    "##...####...##",
-    "##...####...##",
-    "##############",
-    "##############",
-  ],
   // a map pin: a ring on a point
   zone: [
     "....######....",
@@ -433,25 +373,6 @@ function zone(state: string): pixel.Frame {
   return g.px;
 }
 
-function fork(state: string): pixel.Frame {
-  const g = new Grid(29, 29);
-  const c = 14;
-  if (state === "unbuilt") {
-    for (const [dx, dy] of [
-      [0, -7],
-      [0, 7],
-      [-7, 0],
-      [7, 0],
-    ] as const)
-      diamond(g, c + dx, c + dy, 2, "slate");
-    return g.px;
-  }
-  if (state === "current") ring({}, g, c, c, 14, 2, "dslate");
-  diamond(g, c, c, 8, "navy");
-  if (state !== "visited") diamond(g, c, c, 5, "cream");
-  return g.px;
-}
-
 /** 26x22, facing right; frame 1 lifts everything but the feet 1px. */
 function bird(frame: number): pixel.Frame {
   const up = frame;
@@ -474,13 +395,7 @@ const ONCE: Record<string, readonly string[]> = {};
 
 export function* sprites(): Generator<pixel.SpriteEntry> {
   const one = (frame: pixel.Frame, tag = "rest"): pixel.Tags => [[tag, [frame], 100]];
-  yield ["map-compass", one(compass())];
   yield ["map-bird", [["idle", [bird(0), bird(1)], 400]]];
-  yield [
-    "map-fork",
-    ["normal", "current", "visited", "unbuilt"].map((s) => [s, [fork(s)], 100] as const),
-  ];
-  yield ["map-hill", one(hill())];
   for (const key of Object.keys(ICONS).sort()) {
     const primary = Object.hasOwn(zoneThemes.THEMES, key)
       ? (zoneThemes.THEMES[key] as zoneThemes.Theme).primary
@@ -497,7 +412,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["map-paper", one(paper())];
   for (const key of Object.keys(zoneThemes.THEMES).sort())
     yield [`map-region-${key}`, one(region(key))];
-  yield ["map-wave", one(wave())];
   yield [
     "map-zone",
     ["normal", "current", "visited", "locked", "unbuilt"].map((s) => [s, [zone(s)], 100] as const),

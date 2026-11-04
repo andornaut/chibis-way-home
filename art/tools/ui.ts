@@ -1,6 +1,6 @@
 /**
- * UI art: the dialogue box, choices, quip strip, touch buttons, start screen and cards, at the
- * 720x360 base resolution.
+ * UI art: the dialogue box, quip strip, touch buttons, start screen and cards, at the 720x360 base
+ * resolution.
  *
  * Usage:
  *   node art/tools/ui.ts build             write art/ui/<key>.aseprite and
@@ -25,15 +25,6 @@
  * - ui-name-tab, nine-slice 12x20, margins 2,2,2,2; tags amber, green, pink, tan (the fill; one per
  *   speaker). Drawn A+12 wide at 124,237, so its bottom row lies on the box's top border. Name ink,
  *   origin x+6, y 234.
- * - ui-forward-mark, 10x14, at 653,323 (centred in the 636,308,44,44 hit area). Tag idle: the
- *   triangle steps right 0, 2, 3, 2px over 1800, 80, 160, 80ms. Reduced motion shows frame 0.
- * - ui-skip, 78x20, at 634,8 (hit 634,8,78,44). Tags normal, pressed (dslate, rim inverted),
- *   disabled (flat, no rim, the double chevron becomes a bar). Label SKIP origin 643,5: cream, or
- *   grey when disabled.
- * - ui-answer, 208x36, hit 208x44 from row top y 192, so the art sits at y 196, 8 apart. Three at
- *   x 40, 256, 472 (spanning the box); two at x 148, 364. Tags normal (dslate), selected (cream
- *   with an ink cursor), pressed (tan with the cursor). Text origin x+19, y 205, at most 166 wide:
- *   cream when normal, ink otherwise.
  *
  * Quip
  * - ui-quip-strip, nine-slice 12x24, margins 2,2,2,2. Drawn An+Ab+24 wide (An the name, Ab the
@@ -91,12 +82,8 @@
  *   + (8,6), or (8,8) pressed. With Exit: Settings at 632,6 (hit 628,2,44,44, icon 640,12) and Exit
  *   at 676,6 (hit 672,2,44,44, icon 684,12). Without Exit (Firefox for Android's installed app):
  *   Settings at 676,6 (hit 672,2,44,44, icon 684,12).
- * - Nav icons, 20x20: icon-settings-nav (the cog), ui-quit's normal frame (Exit: the doorway and
- *   arrow) and icon-home-nav (the house).
- * - ui-start, 192x52, tags normal and pressed: Resume's green button, larger. With the logo
- *   (public/art/logo.png at 180,60) Start sits at 264,268; without it at 264,178. Label origin y =
- *   Start's y + 15, ui-play-mark's top y + 19: "Start" puts the triangle at x 338 and the label at
- *   349.
+ * - Nav icons, 20x20: icon-settings-nav (the cog) and ui-quit's normal frame (Exit: the doorway
+ *   and arrow).
  *
  * Pause card, settings card and install steps card (each over the game dimmed two ramp steps, one
  * at a time)
@@ -125,8 +112,8 @@
  *   step 2's glyph (icon-install) at 198,197, text origin 228,196.
  * - ui-focus, nine-slice 16x16, margins 4,4,4,4: the keyboard focus ring, a 2px yellow band between
  *   1px ink lines with cut corners. Draw it at (x-4, y-4, w+8, h+8) round the focused element's hit
- *   area or face: a row (360x56, the Install row included), Resume (168x52), Start (200x60), an
- *   answer (216x44), a nav button (44x44) or the close X's 24x24 mark (32x32). One tag, rest.
+ *   area or face: a row (360x56, the Install row included), Resume (168x52), a nav button (44x44)
+ *   or the close X's 24x24 mark (32x32). One tag, rest.
  * - ui-switch, 32x16, dog-walker-game's switch: an ink-rimmed track with a white knob, at the right
  *   with a white tick on dgreen when on, at the left with a white cross on slate when off, so the
  *   state reads by knob side and glyph as well as colour. Tags on, off.
@@ -141,10 +128,7 @@
  *   geometry, tags and press in dark steel: a dslate face, a slate highlight and a navy lip. Label
  *   white (9.55:1 on dslate). Its appended disabled tag matches ui-button's flat lgrey face; runtime
  *   disabled labels use dslate.
- * - 16x16 row icons, one tag, rest: icon-settings (a cog: four 4x2 teeth on the axes and four 2x2
- *   on the diagonals round a ring with a round hole), icon-home (dog-walker's solid house: a 1:1
- *   pitched roof, a chimney on the right slope and a door gap, filled dslate), icon-exit (ui-quit's
- *   doorway and arrow, 12 rows tall), icon-touch-controls (a round touch button with the Jump
+ * - 16x16 row icons, one tag, rest: icon-touch-controls (a round touch button with the Jump
  *   caret), icon-install (an arrow down into a tray), icon-ios-share (Safari's Share button),
  *   icon-browser-menu (three stacked dots) and icon-move-controls (the move hint in small: a round
  *   ring with a chevron each side). All are flat dslate; line icons use 2px strokes (5.83:1 on the
@@ -250,50 +234,6 @@ function portraitFrame(): pixel.Frame {
 function nameTab(fill: string): pixel.Frame {
   const g = new Grid(12, 20);
   panel({ rim: [null, darker(fill)] }, g, 0, 0, 12, 20, fill);
-  return g.px;
-}
-
-/** [x offset, ms]. */
-const FORWARD_STEPS = [
-  [0, 1800],
-  [2, 80],
-  [3, 160],
-  [2, 80],
-] as const;
-
-function forwardMark(): pixel.Frame[] {
-  return FORWARD_STEPS.map(([dx]) => {
-    const g = new Grid(10, 14);
-    triRight(g, dx, 0, 14, "cream");
-    return g.px;
-  });
-}
-
-/** 78x20. Label glyphs at 11..48, the double chevron at 55..66. */
-function skip(state: string): pixel.Frame {
-  const g = new Grid(78, 20);
-  if (state === "disabled") {
-    panel({ rim: null }, g, 0, 0, 78, 20, "navy");
-    g.rect(55, 9, 12, 2, "grey");
-  } else {
-    const rim = state === "normal" ? ["slate", "dslate"] : ["ink", "slate"];
-    panel({ rim }, g, 0, 0, 78, 20, state === "normal" ? "navy" : "dslate");
-    for (const x of [55, 62]) triRight(g, x, 5, 10, "cream");
-  }
-  return g.px;
-}
-
-/** 208x36. Text from x 19; the cursor at 7..13. */
-function answer(state: string): pixel.Frame {
-  const g = new Grid(208, 36);
-  if (state === "normal") {
-    panel({ rim: ["slate", "navy"] }, g, 0, 0, 208, 36, "dslate");
-  } else {
-    const fill = state === "selected" ? "cream" : "tan";
-    const rim = state === "selected" ? ["white", "tan"] : ["brown", "cream"];
-    panel({ rim }, g, 0, 0, 208, 36, fill);
-    triRight(g, 7, 11, 14, "ink");
-  }
   return g.px;
 }
 
@@ -489,25 +429,6 @@ function icon(rows: readonly string[]): pixel.Frame {
 const DOT4 = [".##.", "####", "####", ".##."];
 const dots = DOT4.map((r) => `......${r}......`);
 const ICONS: Record<string, readonly string[]> = {
-  // a cog: a ring round a hole, four 4x2 teeth on the axes and four 2x2 on the diagonals
-  "icon-settings": [
-    "......####......",
-    "......####......",
-    "..##..####..##..",
-    "..############..",
-    "...##########...",
-    "...####..####...",
-    "######....######",
-    "#####......#####",
-    "#####......#####",
-    "######....######",
-    "...####..####...",
-    "...##########...",
-    "..############..",
-    "..##..####..##..",
-    "......####......",
-    "......####......",
-  ],
   // a down arrow into a tray
   "icon-install": [
     ".......##.......",
@@ -696,78 +617,8 @@ function focus(): pixel.Frame {
   return g.px;
 }
 
-// The nav and row icons share their shapes with dog-walker-game's: the cog (icon-settings), the
-// doorway with an arrow leaving it (ui-quit, and icon-exit at 16), and a solid house with a
-// chimney on the right slope and a door gap (dog-walker's home_icon()), cream with tan on its
-// lower-right edges.
-
-const EXIT_16 = [
-  ".#########......",
-  ".#########......",
-  ".##.....##..#...",
-  ".##.....##..##..",
-  ".##.........###.",
-  ".##...##########",
-  ".##...##########",
-  ".##.........###.",
-  ".##.....##..##..",
-  ".##.....##..#...",
-  ".#########......",
-  ".#########......",
-];
-// a is fill, o the shade on the lower-right edges
-const HOME_16 = [
-  ".....aa.ao..",
-  "....aaaaao..",
-  "...aaaaaao..",
-  "..aaaaaaao..",
-  ".aaaaaaaaao.",
-  "aaaaaaaaaaao",
-  "..aaaaaaao..",
-  "..aaa..aao..",
-  "..aaa..aao..",
-  "..ooo..ooo..",
-];
-const HOME_20 = [
-  "......aa.ao...",
-  ".....aaaaao...",
-  "....aaaaaao...",
-  "...aaaaaaao...",
-  "..aaaaaaaaao..",
-  ".aaaaaaaaaaao.",
-  "aaaaaaaaaaaaao",
-  "..aaaaaaaaao..",
-  "..aaaaaaaaao..",
-  "..aaaa..aaao..",
-  "..aaaa..aaao..",
-  "..aaaa..aaao..",
-  "..oooo..oooo..",
-];
-
-/**
- * A solid house, centred: a 1:1 pitched roof with a chimney on the right slope and a door gap at
- * the foot, dslate on pale cards, cream/tan on dark navigation. 12x10 in a 16x16 frame, 14x13 in a
- * 20x20 one.
- */
-function home(n: number): pixel.Frame {
-  const rows = n === 16 ? HOME_16 : HOME_20;
-  const g = new Grid(n, n);
-  const x0 = Math.floor((n - (rows[0] as string).length) / 2);
-  const y0 = Math.floor((n - rows.length) / 2);
-  rows.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      if (ch !== ".") g.p(x0 + x, y0 + y, n === 16 ? ROW_ICON : ch === "a" ? "cream" : "tan");
-    });
-  });
-  return g.px;
-}
-
-/** icon-exit, ui-quit's doorway and arrow at 16x16: 2px strokes, 12 rows tall, centred. */
-function exit16(): pixel.Frame {
-  const g = new Grid(16, 16);
-  stamp(g, bm(...EXIT_16), 0, 2, ROW_ICON);
-  return g.px;
-}
+// The nav icons share their shapes with dog-walker-game's: the cog (icon-settings-nav) and the
+// doorway with an arrow leaving it (ui-quit).
 
 /**
  * icon-settings-nav, the cog at 20x20: a 4px-wide tooth on each axis, a 3x3 tooth on each
@@ -805,18 +656,6 @@ function navBar(): pixel.Frame {
   g.rect(0, 0, 12, 46, "navy");
   g.rect(0, 46, 12, 1, "slate");
   g.rect(0, 47, 12, 1, "ink");
-  return g.px;
-}
-
-/**
- * 192x52: Resume's green button at the start screen's size, with no triangle or label drawn in:
- * the game draws ui-play-mark and the label, centred as one group.
- */
-function start(state: string): pixel.Frame {
-  const top = state === "normal" ? 0 : 2;
-  const g = new Grid(192, 52);
-  panel({ rim: null }, g, 0, top, 192, 52 - top, "dgreen");
-  g.rect(1, top + 1, 190, 46, "green");
   return g.px;
 }
 
@@ -876,13 +715,9 @@ const states = (names: readonly string[], frame: (state: string) => pixel.Frame)
 export function* sprites(): Generator<pixel.SpriteEntry> {
   const one = (frame: pixel.Frame, tag = "rest"): pixel.Tags => [[tag, [frame], 100]];
   for (const key of Object.keys(ICONS).sort()) yield [key, one(icon(ICONS[key] as string[]))];
-  yield ["icon-exit", one(exit16())];
-  yield ["icon-home", one(home(16))];
-  yield ["icon-home-nav", one(home(20))];
   yield ["icon-settings-nav", one(cog20())];
   yield ["icon-move-controls", one(moveControlsIcon())];
   yield ["icon-touch-controls", one(touchControlsIcon())];
-  yield ["ui-answer", states(["normal", "selected", "pressed"], answer)];
   yield ["ui-button", states(["normal", "pressed", "disabled"], button)];
   yield ["ui-button-primary", states(["normal", "pressed", "disabled"], buttonPrimary)];
   yield ["ui-switch", states(["on", "off"], (state) => toggle(state === "on"))];
@@ -890,7 +725,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["ui-dialogue-box", one(dialogueBox())];
   yield ["ui-focus", one(focus())];
   yield ["ui-icon-button", states(["normal", "pressed"], iconButton)];
-  yield ["ui-forward-mark", [["idle", forwardMark(), FORWARD_STEPS.map(([, ms]) => ms)]]];
   yield [
     "ui-move-hint",
     [
@@ -921,8 +755,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["ui-quip-strip", one(quipStrip())];
   yield ["ui-resume", states(["normal", "pressed"], resume)];
   yield ["ui-settings-card", one(settingsCard())];
-  yield ["ui-start", states(["normal", "pressed"], start)];
-  yield ["ui-skip", states(["normal", "pressed", "disabled"], skip)];
   yield ["ui-touch-jump", touchButton("jump")];
   yield ["ui-touch-use", touchButton("use")];
 }

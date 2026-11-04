@@ -14,9 +14,9 @@
  * collision, white safe lips or red hazard marking. Natural decor uses tonal fills without dark
  * contour bands. Keep silhouettes clear of required routes. Distant ravine water is decorative
  * only. Large overlapping far and middle canopies span the upper texture bands; trunks extend to
- * the base. Birch and conifer far/middle variants retain 720x600/repeat x/bottom 600 and the same
- * parallax contracts. No actors or natural hidden lethality. Context uses identical illustrative
- * geometry, not validated stages.
+ * the base. The birch middle and conifer far/middle variants keep 720x600/repeat x/bottom 600 and
+ * the same parallax contracts. No actors or natural hidden lethality. Context uses identical
+ * illustrative geometry, not validated stages.
  */
 
 import { opaque } from "@andornaut/art-kit/raster";
@@ -217,10 +217,9 @@ function conifers(middle = false): RgbaImage {
   return im;
 }
 
-/** High irregular leafy crowns above slender pale, forked and sparsely marked birch trunks. */
-function birches(middle = false): RgbaImage {
+/** Middle-distance birches: leafy crowns above slender pale, sparsely marked trunks. */
+function birches(): RgbaImage {
   const im = image(720, 600);
-  const crown = middle ? "forest" : SHADE;
   for (const [x, sourceTop, sourceWidth] of [
     [-38, 18, 158],
     [104, 52, 146],
@@ -229,12 +228,8 @@ function birches(middle = false): RgbaImage {
     [510, 16, 160],
     [652, 54, 140],
   ] as const) {
-    let top = sourceTop;
-    let width: number = sourceWidth;
-    if (middle) {
-      top += 20;
-      width = Math.trunc(width * 0.76);
-    }
+    const top = sourceTop + 20;
+    const width = Math.trunc(sourceWidth * 0.76);
     for (const shift of [-720, 0, 720]) {
       const left = x + shift;
       nature.broadleaf(
@@ -242,18 +237,16 @@ function birches(middle = false): RgbaImage {
         left,
         top,
         width,
-        middle ? 150 : 208,
+        150,
         600,
-        crown,
-        middle ? "lgrey" : SHADE,
+        "forest",
+        "lgrey",
         9,
         mod(Math.trunc(x), 11),
       );
-      if (middle) {
-        const centre = Math.trunc(left + width * 0.52);
-        for (let y = top + 160; y < 590; y += 46)
-          rect("slate", [centre - 2, y, centre + 2, y + 2], im);
-      }
+      const centre = Math.trunc(left + width * 0.52);
+      for (let y = top + 160; y < 590; y += 46)
+        rect("slate", [centre - 2, y, centre + 2, y + 2], im);
     }
   }
   return im;
@@ -321,14 +314,13 @@ function rock(): RgbaImage {
 export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage, repeat: string]>> =
   {
     "forest-mid": [forestMid, "x"],
-    "forest-mid-birch": [() => birches(true), "x"],
+    "forest-mid-birch": [birches, "x"],
     "forest-mid-conifers": [() => conifers(true), "x"],
     "forest-shrub": [shrub, "x"],
     "forest-tree": [tree, "none"],
     "ravine-mid": [ravineMid, "x"],
     "ravine-rock": [rock, "none"],
     "woodland-far": [far, "x"],
-    "woodland-far-birch": [() => birches(), "x"],
     "woodland-far-conifers": [() => conifers(), "x"],
     "woodland-sky": [sky, "x"],
   };

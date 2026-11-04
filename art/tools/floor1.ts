@@ -1,16 +1,15 @@
 /**
  * Zone 1 art: a New York street (downtown on a pale steel morning, two screens tall, climbed into
- * its upper screen), and the boutique lobby kept for a later indoor zone, as 12px tilesets and
- * modular backdrop pieces that the game places from level data. Nothing here is a fixed panorama.
+ * its upper screen) as a 12px tileset and modular backdrop pieces that the game places from level
+ * data, plus the boutique lobby tileset. Nothing here is a fixed panorama.
  *
  * Usage, from the repository root:
  *   node art/tools/floor1.ts build            write public/art/tilesets/<key>.png + .json and
  *                                             public/art/backdrops/<key>.png, and list them in the
  *                                             manifest under "tilesets" and "backdrops"
- *   node art/tools/floor1.ts preview OUT.png  an example street column and an example lobby, each
- *                                             720x720 (two screens tall), beside both tilesets at
- *                                             4x, composed from the pieces with the bird and the
- *                                             touch buttons
+ *   node art/tools/floor1.ts preview OUT.png  an example street column, 720x720 (two screens
+ *                                             tall), beside both tilesets at 4x, composed from the
+ *                                             pieces with the bird and the touch buttons
  *
  * Scale
  * - Outdoors the world is drawn as if zoomed out 4x while the bird and the 12px tiles keep their
@@ -84,8 +83,7 @@
  *   along a roofline's top edge), one-way-tank-* (a water tower's flat top, 4 wide on the
  *   water-tower piece's second tile row, 6 tiles above its roof).
  *
- * tiles-lobby (the boutique lobby: wood, books and plants, at indoor scale; kept for a later indoor
- * zone)
+ * tiles-lobby (the boutique lobby at indoor scale; no current stage)
  * - Every walkable top, the floor and each one-way ledge, has the same 2px cream lip under a 1px
  *   plum edge, so the standable edges are the brightest lines in the room, in colour and in
  *   greyscale.
@@ -111,24 +109,21 @@
  *   chooses. "repeat": "x" tiles it horizontally across a run; "none" places it once. Street y
  *   values are in the two-screen frame (the sidewalk's top at y 600, row 50); the sidewalk and road
  *   tiles fill rows 50 to 59 below it. Draw order, back to front: sky, skyline, facades and their
- *   upper storeys and rooflines, facade pieces, storefronts, street furniture, then the play layer.
+ *   upper storeys and rooflines, storefronts, street furniture, then the play layer.
  * - Sky and city (repeat x): street-sky 48x600 (y 600), flat zone-blue. street-city-far and
  *   street-city-mid are each 720x600 (y 600), window-free zone-blue-shade and slate silhouettes.
  *   street-skyline 336x600 is their combined fallback.
  * - Facades (repeat x, one per building type; a run per building): facade-one-storey 48x192 (y 600,
- *   a parapet 192 up), facade-walkup 48x312, facade-brownstone 48x312, facade-hotel 48x312 (y 600
- *   each). Each shows the 180px ground storey with a band over the shopfronts and the next storey's
- *   windows above, up to y 288.
- * - Upper storeys and rooflines (repeat x): facade-walkup-upper, facade-brownstone-upper,
- *   facade-hotel-upper, each 48x180, stack above the facade piece every 180px (bottoms at y 288,
- *   then 108) with no seam; roofline-walkup, roofline-brownstone, roofline-hotel, each 48x48, cap
- *   the topmost piece (bottom at its top), so the roof is 48px above it (y 240, row 20, on a facade
- *   piece; y 60, row 5, on one upper storey, the tallest that fits). Lay one-way-cornice along it.
+ *   a parapet 192 up), facade-walkup 48x312, facade-brownstone 48x312 (y 600 each). Each shows the
+ *   180px ground storey with a band over the shopfronts and the next storey's windows above, up
+ *   to y 288.
+ * - Upper storeys and rooflines (repeat x): facade-walkup-upper, 48x180, stacks above the walk-up
+ *   facade every 180px (bottoms at y 288, then 108) with no seam; roofline-walkup and
+ *   roofline-brownstone, each 48x48, cap the topmost piece (bottom at its top), so the roof is 48px
+ *   above it (y 240, row 20, on a facade piece; y 60, row 5, on one upper storey, the tallest that
+ *   fits). Lay one-way-cornice along it.
  *   A water tower (its tank top 6 tiles above its roof) fits on a two-storey roof (tank top row 14),
  *   not on a three-storey one.
- * - Facade pieces (none): fire-escape 196x185 (y 473, on a walk-up), hotel-crest 98x44 (y 478, over
- *   the door: two banners and the crest), hotel-window 32x152 (y 592, a tall window). The tall dark
- *   stone building and these pieces are generic until the exit is decided.
  * - Climbing (backdrop, no collision): fire-escape-railing 48x24 (repeat x, its bottom on a
  *   landing's top), fire-escape-ladder 24x96 (none, 2x8 tiles) and fire-escape-ladder-4, -5, -6, -7
  *   (24x48 to 24x84, 2x4 to 2x7 tiles): one per landing spacing in rows; place the one matching the
@@ -139,18 +134,9 @@
  *   text), a tall display window and a 46px door: storefront-cafe 84, storefront-florist 84,
  *   storefront-gift-shop 96, storefront-makeup-store 96, storefront-pet-shop 108, storefront-diner
  *   108, storefront-noodle-bar 120.
- * - Street furniture (none, y 600): cab 96x40, hot-dog-cart 40x70, subway-railing 72x62,
- *   street-tree 64x136, walk-signal 12x82, doorman-podium 18x24, canopy-poles 60x60 (under the
- *   canopy's end tiles), cross-street 120x26 (the far avenue between two kerbs; place no facade
- *   over a cross street so the skyline shows).
- * - Lobby (kept for a later indoor zone; indoor scale, the floor line is y 672): lobby-wall 48x720
- *   (y 720, x: wood panelling, cornice, wainscot), lobby-balustrade 48x36 (y at the balcony's floor
- *   line, x), lobby-bookcase 84x384 (y 672; boards 8, 16, 24 and 32 tiles up, under one-way-shelf
- *   rows 7 wide), lobby-sofa 120x72 (y 672; cushions 3 and 6 tiles up, under one-way-cushion rows 8
- *   wide from x+12), lobby-desk 120x96 (y 672; its top 8 tiles up, under one-way-desk 10 wide),
- *   lobby-plant 48x120 (y 672), lobby-lamp 48x192 (y 220, hung from the ceiling), lobby-window
- *   96x240 (y 552), lobby-front-door 156x180 (y 672: the inside of the front door, where she
- *   arrives; never a way back).
+ * - Street furniture (none, y 600): hot-dog-cart 40x70, subway-railing 72x62, street-tree 64x136,
+ *   walk-signal 12x82, cross-street 120x26 (the far avenue between two kerbs; place no facade over
+ *   a cross street so the skyline shows).
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -236,7 +222,7 @@ function surface(g: Grid, edge: string, lip: string, body: string, under: string
 // Zone 1 is a pale steel morning downtown. Its pieces are drawn with the warm ramp names in the
 // functions below and recoloured at export through these maps, so their shapes, sizes and indices
 // never depend on the palette. Colours a map does not name keep their own (the warm accents: cream
-// sign icons, the amber door and cab, red, pink).
+// sign icons, the amber door, red, pink).
 type ColourMapping = Readonly<Record<string, string>>;
 // Buildings, shopfronts and street furniture: muted blue-grey and slate.
 const COOL_NEAR: ColourMapping = {
@@ -659,8 +645,6 @@ function tankTop(kind: string): Grid {
 // greyscale the standable edges are the brightest lines in the room. Indoor scale: a door is 180px
 // (15 tiles).
 const LE = "plum";
-const LOBBY_H = 720; // a level is 2 screens (60 tiles) tall
-const LOBBY_FY = 672; // the lobby floor line (tile row 56)
 
 /** Wood floor: a cream lip, brown boards with a 2px dark-brown board end every 24px, a dark-brown face. */
 function floor(kind: string, joint = false): Grid {
@@ -880,19 +864,6 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
     "...#####...",
     "..#######..",
   ],
-  hotel: [
-    "....#.#....",
-    "...#####...",
-    "..#.###.#..",
-    ".#########.",
-    "###########",
-    "#.#.#.#.#.#",
-    "#.#.#.#.#.#",
-    "#.#.#.#.#.#",
-    "#.#.#.#.#.#",
-    "###########",
-    "###########",
-  ],
 };
 
 // kind: width (whole tiles), frame colour. Frames are dim so the shops stay behind the play layer.
@@ -911,7 +882,6 @@ const BUILDINGS: Readonly<Record<string, readonly [wall: string, line: string, t
   "one-storey": ["dbrown", "plum", "brown"],
   walkup: ["dbrown", "plum", "brown"],
   brownstone: ["plum", "ink", "dbrown"],
-  hotel: ["dslate", "navy", "tan"],
 };
 
 function icon(g: Grid, kind: string, x: number, y: number, c: string): void {
@@ -1054,50 +1024,6 @@ function facade(kind: string): Grid {
 }
 
 /**
- * 196x185, bottom at y 473: an ink platform and railing under the second-storey windows, a stair up
- * out of the screen and a drop ladder hanging towards the sidewalk.
- */
-function fireEscape(): Grid {
-  const g = new Grid(196, 185);
-  rects(g, [0, 112, 196, 3, "ink"], [0, 92, 196, 2, "ink"]);
-  for (let px = 0; px < 196; px += 18) rects(g, [px, 92, 2, 22, "ink"]);
-  for (let k = 0; k < 46; k++) rects(g, [20 + k, 92 - 2 * k, 2, 2, "ink"]); // the stair, 2px diagonal
-  rects(g, [136, 115, 2, 70, "ink"], [148, 115, 2, 70, "ink"]);
-  for (let ry = 121; ry < 185; ry += 8) rects(g, [136, ry, 14, 2, "ink"]);
-  return g;
-}
-
-/** 98x44, bottom at y 478: two banners on short poles either side of a navy plaque with the crest. */
-function hotelCrest(): Grid {
-  const g = new Grid(98, 44);
-  for (const [x, c] of [
-    [4, "navy"],
-    [82, "dgreen"],
-  ] as const)
-    rects(
-      g,
-      [x - 4, 0, 20, 2, "ink"],
-      [x, 2, 12, 34, c],
-      [x + 2, 36, 8, 4, c],
-      [x, 2, 12, 2, "cream"],
-    );
-  rects(g, [32, 4, 32, 26, "ink"], [33, 5, 30, 24, "navy"], [24, 42, 48, 2, "tan"]);
-  icon(g, "hotel", 43, 11, "cream");
-  return g;
-}
-
-/** 32x152, bottom at y 592: a tall ground-storey window. */
-function hotelWindow(): Grid {
-  return rects(
-    new Grid(32, 152),
-    [0, 0, 32, 152, "navy"],
-    [3, 3, 26, 146, "ink"],
-    [3, 48, 26, 2, "navy"],
-    [6, 8, 4, 30, "dslate"],
-  );
-}
-
-/**
  * A shopfront, w x 120 (y 192 to 312): a frame in the shop's colour, a navy sign board with its
  * icon, a tall display window under a transom, and a 46px door under its own transom. An awning
  * (one-way, row 20) fits across it below the sign.
@@ -1121,21 +1047,6 @@ function storefront(kind: string): Grid {
     [w - 23, 78, 14, 18, "dslate"],
   );
   icon(g, kind, Math.floor(w / 2) - 5, 6, "cream");
-  return g;
-}
-
-/** 96x40: a yellow cab side-on, for the far avenue down a cross street. */
-function cab(): Grid {
-  const g = rects(
-    new Grid(96, 40),
-    [16, 6, 52, 12, "amber"],
-    [20, 8, 20, 8, "navy"],
-    [44, 8, 20, 8, "navy"],
-    [36, 0, 12, 6, "cream"],
-    [0, 18, 96, 14, "amber"],
-    [0, 28, 96, 4, "orange"],
-  );
-  for (const wx of [12, 70]) rects(g, [wx, 30, 14, 10, "ink"], [wx + 4, 34, 6, 2, "dslate"]);
   return g;
 }
 
@@ -1199,15 +1110,6 @@ function walkSignal(): Grid {
     [3, 8, 1, 3, "white"],
     [6, 8, 1, 3, "white"],
   );
-}
-
-function doormanPodium(): Grid {
-  return rects(new Grid(18, 24), [2, 2, 14, 22, "dbrown"], [0, 0, 18, 4, "tan"]);
-}
-
-/** 60x60: the two tan poles holding up the hotel canopy, set under its end tiles. */
-function canopyPoles(): Grid {
-  return rects(new Grid(60, 60), [2, 0, 2, 60, "tan"], [56, 0, 2, 60, "tan"]);
 }
 
 /** 120x26: the far avenue seen down a cross street, navy with 2px lane dashes. */
@@ -1286,170 +1188,11 @@ function waterTower(): Grid {
   return g;
 }
 
-/**
- * 48x720, repeat x, bottom at y 720: dark-brown wood panelling with 2px plum grooves every 24px, a
- * plum and ink ceiling cornice, a plum wainscot from y 588 under a 2px brown rail. Below the floor
- * line it is covered by the floor tiles.
- */
-function lobbyWall(): Grid {
-  const g = rects(
-    new Grid(48, LOBBY_H),
-    [0, 0, 48, LOBBY_H, "dbrown"],
-    [0, 0, 48, 20, "plum"],
-    [0, 20, 48, 4, "ink"],
-  );
-  for (const x of [10, 34]) rects(g, [x, 24, 2, 564, "plum"]);
-  rects(g, [0, 588, 48, 84, "plum"], [0, 586, 48, 2, "brown"]);
-  return g;
-}
-
-const BOOK_HEIGHTS = [34, 40, 28, 44, 36, 30, 42, 26, 38, 32, 44];
-const BOOK_COLOURS = ["teal", "dbrown", "forest", "navy", "purple", "dbrown"];
-
-/**
- * 84x384 (7x32 tiles), bottom at y 672: a tall bookcase, a brown frame round a plum back, one step
- * from the wall. Its boards sit 8, 16, 24 and 32 tiles above the floor, where one-way-shelf tiles
- * go (7 wide); muted books stand on each board.
- */
-function lobbyBookcase(): Grid {
-  const g = rects(new Grid(84, 384), [0, 0, 84, 384, "brown"], [4, 4, 76, 380, "plum"]);
-  for (let k = 0; k < 4; k++) rects(g, [0, 384 - 96 * (k + 1), 84, 7, "brown"]); // the boards
-  // Books standing on the floor and each lower board: 4px spines, stepped heights, muted colours.
-  [384, 288, 192, 96].forEach((base, k) => {
-    for (let i = 0, bx = 8; bx < 76; i++, bx += 6) {
-      const hgt = BOOK_HEIGHTS[i % 11] as number;
-      const c = BOOK_COLOURS[(i + k) % 6] as string;
-      rects(g, [bx, base - hgt, 4, hgt, c]);
-    }
-  });
-  return g;
-}
-
-/**
- * 120x72 (10x6 tiles), bottom at y 672: a purple sofa. Its seat top is 3 tiles up (a hop) and its
- * back 6; lay one-way-cushion tiles on both, 8 wide over the cushions (x 12 to 108), inside the
- * 1-tile arms.
- */
-function lobbySofa(): Grid {
-  return rects(
-    new Grid(120, 72),
-    [12, 0, 96, 64, "purple"],
-    [59, 6, 2, 30, "plum"],
-    [12, 36, 96, 2, "plum"],
-    [12, 60, 96, 4, "plum"],
-    [0, 24, 12, 40, "purple"],
-    [108, 24, 12, 40, "purple"],
-    [0, 24, 12, 4, "mauve"],
-    [108, 24, 12, 4, "mauve"],
-    [10, 24, 2, 40, "plum"],
-    [108, 24, 2, 40, "plum"],
-    [12, 64, 8, 8, "plum"],
-    [100, 64, 8, 8, "plum"],
-  );
-}
-
-/** 48x120, bottom at y672: branching indoor foliage with pointed leaves in a dark pot. */
-function lobbyPlant(): Grid {
-  const g = rects(new Grid(48, 120), [8, 84, 32, 36, "plum"], [6, 80, 36, 6, "dbrown"]);
-  g.line(24, 79, 22, 10, "zone-green-shade");
-  g.line(25, 79, 23, 10, "zone-green-shade");
-  for (const [x, y, joint] of [
-    [4, 14, 36],
-    [39, 2, 26],
-    [2, 40, 57],
-    [45, 30, 53],
-    [8, 61, 74],
-    [42, 55, 75],
-  ] as const) {
-    const side = x < 24 ? -1 : 1;
-    g.line(24, joint, x, y, "zone-green-shade");
-    g.tri([x, y], [x - side * 8, y + 18], [24, joint], "forest");
-    g.tri([x, y], [x + side * 4, y + 11], [24, joint], "zone-green-shade");
-  }
-  return g;
-}
-
-/**
- * 48x192, bottom at y 220: a pendant lamp on a cord from the ceiling, a tan drum shade with its bulb
- * lit (white core, cream ring). No glow is baked in: lights are data.
- */
-function lobbyLamp(): Grid {
-  return rects(
-    new Grid(48, 192),
-    [23, 0, 2, 166, "ink"],
-    [4, 166, 40, 20, "tan"],
-    [4, 166, 40, 2, "cream"],
-    [4, 184, 40, 2, "brown"],
-    [18, 186, 12, 6, "cream"],
-    [20, 186, 8, 4, "white"],
-  );
-}
-
-/** 96x240, bottom at y 552: a tall window onto the bright day, plum frame and bars. */
-function lobbyWindow(): Grid {
-  return rects(
-    new Grid(96, 240),
-    [0, 0, 96, 240, "plum"],
-    [4, 4, 88, 232, "blue"],
-    [46, 4, 4, 232, "plum"],
-    [4, 118, 88, 4, "plum"],
-    [10, 10, 6, 60, "sky"],
-    [56, 10, 6, 40, "sky"],
-  );
-}
-
-/**
- * 120x96 (10x8 tiles), bottom at y 672: the reception desk, dark-brown with plum panels. Its top is
- * 8 tiles up, a full jump; lay one-way-desk tiles (10 wide) on it.
- */
-function lobbyDesk(): Grid {
-  const g = rects(new Grid(120, 96), [0, 0, 120, 96, "dbrown"], [0, 90, 120, 6, "plum"]);
-  for (const x of [8, 46, 84]) rects(g, [x, 12, 28, 70, "plum"]);
-  return g;
-}
-
-/**
- * 156x180, bottom at y 672: the inside of the hotel's front door, where she arrives from the
- * street. Not a way back (a level is never revisited): a tan frame, a transom, two glass doors onto
- * the bright street.
- */
-function lobbyFrontDoor(): Grid {
-  const g = rects(
-    new Grid(156, 180),
-    [0, 0, 156, 180, LE],
-    [2, 2, 152, 178, "brown"],
-    [2, 2, 152, 4, "tan"],
-    [12, 12, 132, 168, "ink"],
-    [14, 14, 128, 34, "blue"],
-    [76, 14, 4, 34, "brown"],
-    [12, 48, 132, 4, "brown"],
-    [76, 52, 4, 128, "brown"],
-    [12, 166, 132, 14, "plum"],
-  );
-  for (const x of [14, 80])
-    rects(
-      g,
-      [x, 54, 62, 112, "blue"],
-      [x + 6, 60, 8, 70, "sky"],
-      [x + 18, 60, 4, 40, "sky"],
-      [x, 54, 62, 3, "brown"],
-      [x + (x === 14 ? 52 : 4), 110, 6, 22, "dbrown"],
-    );
-  return g;
-}
-
-/** 48x36, repeat x, bottom at the mezzanine's floor line: brown balusters every 12px under a rail. */
-function lobbyBalustrade(): Grid {
-  const g = rects(new Grid(48, 36), [0, 0, 48, 4, "brown"]);
-  for (const x of [4, 16, 28, 40]) rects(g, [x, 4, 4, 32, "brown"]);
-  return g;
-}
-
 type Repeat = "x" | "none";
 /** [draw, anchor y, repeat]. */
 type BackdropDef = readonly [draw: () => Grid, y: number, repeat: Repeat];
 
-const UPPER_KINDS = ["walkup", "brownstone", "hotel"] as const;
+const ROOF_KINDS = ["walkup", "brownstone"] as const;
 const STREET_DEFS = new Map<string, BackdropDef>([
   ["street-sky", [streetSky, STREET_FY, "x"]],
   ["street-skyline", [streetSkyline, STREET_FY, "x"]],
@@ -1460,29 +1203,17 @@ const STREET_DEFS = new Map<string, BackdropDef>([
     `facade-${k}`,
     [() => facade(k), STREET_FY, "x"],
   ]),
-  ["fire-escape", [fireEscape, 473, "none"]],
-  ["hotel-crest", [hotelCrest, 478, "none"]],
-  ["hotel-window", [hotelWindow, 592, "none"]],
   ...Object.keys(SHOPS).map((k): [string, BackdropDef] => [
     `storefront-${k}`,
     [() => storefront(k), STREET_FY, "none"],
   ]),
-  ["cab", [cab, STREET_FY, "none"]],
   ["hot-dog-cart", [hotDogCart, STREET_FY, "none"]],
   ["subway-railing", [subwayRailing, STREET_FY, "none"]],
   ["street-tree", [streetTree, STREET_FY, "none"]],
   ["walk-signal", [walkSignal, STREET_FY, "none"]],
-  ["doorman-podium", [doormanPodium, STREET_FY, "none"]],
-  ["canopy-poles", [canopyPoles, STREET_FY, "none"]],
   ["cross-street", [crossStreet, STREET_FY, "none"]],
-  ...UPPER_KINDS.map((k): [string, BackdropDef] => [
-    `facade-${k}-upper`,
-    [() => facadeUpper(k), 288, "x"],
-  ]),
-  ...UPPER_KINDS.map((k): [string, BackdropDef] => [
-    `roofline-${k}`,
-    [() => roofline(k), 108, "x"],
-  ]),
+  ["facade-walkup-upper", [() => facadeUpper("walkup"), 288, "x"]],
+  ...ROOF_KINDS.map((k): [string, BackdropDef] => [`roofline-${k}`, [() => roofline(k), 108, "x"]]),
   ["fire-escape-railing", [fireEscapeRailing, 432, "x"]],
   ["fire-escape-ladder", [() => fireEscapeLadder(), 432, "none"]],
   ...LADDER_ROWS.map((n): [string, BackdropDef] => [
@@ -1494,10 +1225,7 @@ const STREET_DEFS = new Map<string, BackdropDef>([
 // The street's pieces in the cool palette; the sky and skyline are drawn in it already. Pieces
 // standing on the sidewalk keep the line just above it darker than the sidewalk's white lip: the
 // tree's trunk and the canopy's poles take grey, not lgrey.
-const NEAR_FOR = new Map<string, ColourMapping>([
-  ["street-tree", { ...COOL_NEAR, tan: "grey" }],
-  ["canopy-poles", { ...COOL_NEAR, tan: "grey" }],
-]);
+const NEAR_FOR = new Map<string, ColourMapping>([["street-tree", { ...COOL_NEAR, tan: "grey" }]]);
 // Quiet glass stays one value step below the architecture; shop icons keep their cream callout.
 for (const key of STREET_DEFS.keys())
   if (key.startsWith("facade-") || key.startsWith("storefront-"))
@@ -1514,15 +1242,6 @@ export const BACKDROP_DEFS = new Map<string, BackdropDef>([
     k,
     [ATMOSPHERE_KEYS.has(k) ? fn : cool(fn, NEAR_FOR.get(k) ?? COOL_NEAR), y, rep],
   ]),
-  ["lobby-wall", [lobbyWall, LOBBY_H, "x"]],
-  ["lobby-balustrade", [lobbyBalustrade, 288, "x"]],
-  ["lobby-bookcase", [lobbyBookcase, LOBBY_FY, "none"]],
-  ["lobby-sofa", [lobbySofa, LOBBY_FY, "none"]],
-  ["lobby-desk", [lobbyDesk, LOBBY_FY, "none"]],
-  ["lobby-plant", [lobbyPlant, LOBBY_FY, "none"]],
-  ["lobby-lamp", [lobbyLamp, 220, "none"]],
-  ["lobby-window", [lobbyWindow, 552, "none"]],
-  ["lobby-front-door", [lobbyFrontDoor, LOBBY_FY, "none"]],
 ]);
 
 // ---------------------------------------------------------------- export
@@ -1660,8 +1379,8 @@ function compose(
 
 // The touch buttons as the README's touch controls place them: [sprite, centre].
 const BUTTONS = [
-  ["ui-touch-use", [592, 210]],
-  ["ui-touch-jump", [667, 307]],
+  ["ui-touch-use", [598, 203]],
+  ["ui-touch-jump", [675, 303]],
 ] as const;
 
 /** Draw the Use and Jump buttons' rest frame on each screen whose top is in tops. */
@@ -1727,94 +1446,6 @@ function streetExample(chars = true, hud = true): RgbaImage {
   return opaque(im);
 }
 
-// One example lobby for the preview only, 720x720 (60x60 tiles, two screens tall), built to the
-// reaches: a hop rises 3 tiles, a full jump 8, a flutter crosses a gap of 20. One-way rows: [style,
-// row, first col, width].
-const LOBBY_EXAMPLE: {
-  ledges: readonly LedgeRow[];
-  exit: readonly [c: number, r: number];
-  post: number;
-  runs: readonly (readonly [key: string, x0: number, x1: number])[];
-  pieces: readonly (readonly [key: string, x: number])[];
-  ys: Readonly<Record<string, number>>;
-} = {
-  ledges: [
-    ["cushion", 53, 15, 8],
-    ["cushion", 50, 15, 8],
-    ["desk", 48, 26, 10],
-    ["shelf", 48, 40, 7],
-    ["shelf", 40, 40, 7],
-    ["shelf", 32, 40, 7],
-    ["shelf", 24, 40, 7],
-    ["balcony", 24, 0, 20],
-  ],
-  exit: [4, 9],
-  post: 58,
-  runs: [
-    ["lobby-wall", 0, 720],
-    ["lobby-balustrade", 0, 240],
-  ],
-  pieces: [
-    ["lobby-front-door", 12],
-    ["lobby-sofa", 168],
-    ["lobby-desk", 312],
-    ["lobby-bookcase", 480],
-    ["lobby-window", 576],
-    ["lobby-plant", 640],
-    ["lobby-lamp", 288],
-    ["lobby-lamp", 384],
-  ],
-  ys: { "lobby-balustrade": 288 },
-};
-
-function lobbyExample(chars = true, hud = true): RgbaImage {
-  const entries = LOBBY_EXAMPLE;
-  const tiles = tileImages(lobbyTiles()[0]);
-  const pieces = new Map(
-    [...BACKDROP_DEFS]
-      .filter(([k]) => k.startsWith("lobby-"))
-      .map(([k, [fn]]) => [k, frameImage(fn().px)]),
-  );
-  const ys = new Map([...BACKDROP_DEFS].map(([k, [, y]]) => [k, entries.ys[k] ?? y]));
-  const im = inkImage(720, LOBBY_H);
-  for (const [key, x0, x1] of entries.runs) {
-    const p = lookup(pieces, key);
-    for (let x = x0; x < x1; x += p.width) {
-      const q = crop({ x: 0, y: 0, width: Math.min(p.width, x1 - x), height: p.height }, p);
-      composite({ x, y: lookup(ys, key) - q.height }, q, im);
-    }
-  }
-  for (const [key, x] of entries.pieces) {
-    const p = lookup(pieces, key);
-    composite({ x, y: lookup(ys, key) - p.height }, p, im);
-  }
-  const ground = Math.floor(LOBBY_FY / T);
-  for (let r = ground; r < Math.floor(LOBBY_H / T); r++)
-    for (let c = 0; c < 60; c++) {
-      const name = r === ground ? (c % 2 ? "floor-top-joint" : "floor-top") : "floor-face";
-      composite({ x: c * T, y: r * T }, lookup(tiles, name), im);
-    }
-  for (const [style, row, c0, w] of entries.ledges)
-    for (let c = c0; c < c0 + w; c++)
-      composite({ x: c * T, y: row * T }, lookup(tiles, `one-way-${style}${side(c, c0, w)}`), im);
-  const pc = entries.post;
-  for (let r = 0; r < ground; r++)
-    for (const [c, s] of [
-      [pc, "left"],
-      [pc + 1, "right"],
-    ] as const) {
-      const name = `post-${r === ground - 1 ? "base-" : ""}${s}`;
-      composite({ x: c * T, y: r * T }, lookup(tiles, name), im);
-    }
-  const [ec, er] = entries.exit;
-  for (let j = 0; j < 15; j++)
-    for (let i = 0; i < 7; i++)
-      composite({ x: (ec + i) * T, y: (er + j) * T }, lookup(tiles, `exit-${j * 7 + i}`), im);
-  if (chars) composite({ x: 150 - 24, y: LOBBY_FY - 42 }, birdFrame(), im);
-  if (hud) touchButtons(im, [0, 360]);
-  return opaque(im);
-}
-
 export function preview(out: string): void {
   const strip = streetExample();
   const sheets: RgbaImage[] = [];
@@ -1825,9 +1456,8 @@ export function preview(out: string): void {
     composite({ x: 0, y: 0 }, ts, bg);
     sheets.push(resizeNearest(ts.width * 4, ts.height * 4, opaque(bg)));
   }
-  const lobby = lobbyExample();
   const gap = 16;
-  const x0 = strip.width + gap + lobby.width + gap;
+  const x0 = strip.width + gap;
   const sheet = inkImage(
     x0 + Math.max(...sheets.map((s) => s.width)),
     Math.max(
@@ -1836,7 +1466,6 @@ export function preview(out: string): void {
     ),
   );
   paste({ at: { x: 0, y: 0 } }, strip, sheet);
-  paste({ at: { x: strip.width + gap, y: 0 } }, lobby, sheet);
   let y = 0;
   for (const s of sheets) {
     paste({ at: { x: x0, y } }, s, sheet);

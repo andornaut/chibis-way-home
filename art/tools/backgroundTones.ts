@@ -29,7 +29,6 @@ const FUNCTIONAL: ReadonlySet<string> = new Set([
   "apartment-room-door",
   "apartment-stairwell",
   "apartment-stairwell-down",
-  "lobby-front-door",
   "parcel-open",
   "walk-signal",
 ]);
@@ -52,7 +51,6 @@ const FAR: ReadonlySet<string> = new Set([
   "street-city-far",
   "street-skyline",
   "woodland-far",
-  "woodland-far-birch",
   "woodland-far-conifers",
 ]);
 const MID: ReadonlySet<string> = new Set([
@@ -80,9 +78,6 @@ const NEAR: ReadonlySet<string> = new Set([
   "apartment-wall-spa",
   "depot-wall",
   "facade-brownstone",
-  "facade-brownstone-upper",
-  "facade-hotel",
-  "facade-hotel-upper",
   "facade-one-storey",
   "facade-walkup",
   "facade-walkup-upper",
@@ -93,7 +88,6 @@ const NEAR: ReadonlySet<string> = new Set([
   "outskirts-wall",
   "ravine-rock",
   "roofline-brownstone",
-  "roofline-hotel",
   "roofline-walkup",
   "storefront-cafe",
   "storefront-diner",
@@ -114,7 +108,7 @@ export const ZONES: Readonly<Record<string, string>> = {
   woodland: "zone-green",
 };
 const GROUPS: readonly (readonly [zone: string, prefixes: readonly string[]])[] = [
-  ["apartment", ["apartment-", "lobby-"]],
+  ["apartment", ["apartment-"]],
   ["countryside", ["countryside-", "farmland-", "river-"]],
   ["homecity", ["homecity-", "neighbourhood-", "outskirts-"]],
   ["industrial", ["freight-", "industrial-", "warehouse-"]],
@@ -149,7 +143,6 @@ const WALL_PAINT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     "zone-green": "zone-green",
     "zone-green-shade": "zone-green-shade",
   },
-  "lobby-wall": { dbrown: "zone-red", plum: "grey", ink: "slate", brown: "zone-peach" },
 };
 
 // Authored plaster, panels and joints keep separate material roles at the same near depth.

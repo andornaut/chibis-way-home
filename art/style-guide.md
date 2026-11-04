@@ -390,7 +390,7 @@ The game boots into the start screen; Start goes to the map. A nav bar runs acro
 - Nav bar `ui-nav-bar`, 0,0,720,48.
 - Icon buttons `ui-icon-button`, 36x36 at y 6, each with a 20x20 icon 8 in and 6 down (8 down while pressed). With Exit: Settings at x 632 and Exit at x 676, so Exit is at the far right. Supported Chromium app windows retain Exit when launched with single-entry history and a CloseWatcher. Other installed app windows hide Exit and retain Settings alone at x 676. Browser tabs retain Exit and return to the homepage.
 - Logo (`logo`, intrinsic 558x239) is proportionally contained in the available horizontal and vertical space above the action row. Its top remains y 60; derive its display size from the texture ratio and available space. At the default 720x360 view it displays about 450.6x193, centred horizontally, leaving 15px to the drawn actions and 3px to their expanded hit areas. Start (`ui-button-primary`, 192x48, dslate with a white label) remains at 264,268. With saved progress, Restart uses the secondary `ui-button` (grey with an ink label) at 164,268 on the left, and Continue the primary style at 364,268 on the right: both 192x48, with an 8px gap, centred under the logo. Continue remains the default action for keyboard activation. Nav and icon controls keep their separate styles.
-- Icons share their shapes with Archie's: the cog (8 square teeth round a ring with a round hole), the exit (a doorway in 2px strokes, open on the right, with a solid arrow leaving it) and the home (a solid house with a 1:1 pitched roof, a chimney on the right slope and a door gap). Each comes as a 20x20 nav icon (`icon-settings-nav`, `ui-quit`, `icon-home-nav`) and a 16x16 row icon (`icon-settings`, `icon-exit`, `icon-home`).
+- Icons share their shapes with Archie's: the cog (8 square teeth round a ring with a round hole) and the exit (a doorway in 2px strokes, open on the right, with a solid arrow leaving it). Both are 20x20 nav icons: `icon-settings-nav` and `ui-quit`.
 - Button labels centre horizontally and vertically by their actual visible ink, including font bearings, within each state's drawn face. Use the shared [button measurements](controls.md#sizing-and-spacing), press handling and focus handling. Start and Continue on this screen omit the play mark. The map uses the same standard primary and secondary button styles.
 
 ### Pause, settings and install cards
@@ -439,11 +439,10 @@ The map presents the six V1 zone destinations on a cool pastel overview. `art/to
 - Regions: `map-region-<suffix>`, 120x60, tag `rest`, at cx-60,cy-36 behind paths and markers. The destination's muted primary dominates its building, field or tree silhouettes. The central opening leaves each marker clear. These illustrations remain visible for locked and unbuilt destinations.
 - Route: one linear path follows the table's order, left to right across the top row, then right to left across the bottom row. There are no fork markers on the V1 route. Runtime paths use 4px solid dslate for open paths, 2px slate dashes (6 on, 4 off) for built paths still locked, and 2x2 slate dots every 6px for unbuilt paths. State is carried by the pattern as well as colour.
 - Zone marker: `map-zone`, 35x35 centred on the node. `normal` is a cream disc with a dslate ring; `current` adds a second dslate ring; `visited` is navy with a cream tick badge. `locked` replaces the zone icon with a dslate padlock. `unbuilt` uses a broken slate ring and a question mark. Tags retain their existing order and frame indices.
-- Zone icons: `map-icon-<suffix>`, 14x14, centred on normal, current and visited markers. Both tags use a muted primary backing with an ink landmark and a dslate outer edge. The visited marker's navy disc and tick carry completion. Locked and unbuilt markers show no icon. `map-icon-street` and `map-icon-zone` remain available for other maps and unspecified icons.
+- Zone icons: `map-icon-<suffix>`, 14x14, centred on normal, current and visited markers. Both tags use a muted primary backing with an ink landmark and a dslate outer edge. The visited marker's navy disc and tick carry completion. Locked and unbuilt markers show no icon. `map-icon-zone` is the generic icon for a destination without a themed one.
 - Bird: `map-bird`, 26x22, tag `idle`, two frames at 400ms. He stands above the current node's ring, top-left cx-13,cy-39. The current marker's double ring also carries selection when the bird is not visible.
 - Labels: names use native 16px `font-title` at 1x, ink, centred below the markers. The 212x16 lgrey knock-out begins at cx-106,cy+17 and leaves at least 16px between adjacent 228px-spaced centres. Centre actual visible ink within it, correcting for signed bearings and kerning rather than subtracting a fixed amount from the advance width. Optional availability text, when supplied, uses native `font-body`, dslate, with strings and placement supplied by gameplay.
 - Footer: Back to title uses secondary `ui-button` at 164,300,192,48, with an ink label; Continue uses `ui-button-primary` at 364,300,192,48, with a white label. Neither uses a play mark. Continue is the default keyboard action; a tap on an open zone marker selects that destination.
-- Legacy assets: `map-fork`, `map-hill`, `map-wave` and `map-compass` remain available. The six-destination layout does not require fork or pen-mark decorations.
 
 ### Stage picker
 
@@ -658,10 +657,9 @@ The first Blue cityscape stage has fixed start and finish sections with a seeded
 - The street is 720px (60 tiles) tall: the sidewalk's top is y 600 (row 50), with sidewalk and road filling rows 50 to 59 below it so the camera can hold his feet two thirds down the screen. The ground storey runs from y 420 to the sidewalk, and storeys stack every 180px above: a two-storey roof is at y 240 (row 20) and a three-storey roof at y 60 (row 5), the tallest that fits. A water tower (its tank top 6 tiles above its roof) fits on a two-storey roof, not a three-storey one. Every street piece's bottom y below is in that frame.
 - Street tiles (`tiles-street`): a pale concrete sidewalk (tops alternating with a 2px joint every 24px, ends, a slate face), a pale stone kerb where it meets a cross street, the road one tile lower, an ochre-and-cream one-way shop awning, a dark-brown one-way canopy with a white lip, a 2-tile planter with a hedge top, the cellar hatch and its pit, and the ordinary room door as a 5x7 piece (60x84): a muted blue glazed leaf enclosed by complete grey jambs, with a small amber handle. `art/tools/roomDoors.ts` supplies the shared geometry. Existing non-door tile indices stay fixed; the added door cells follow the existing tiles.
 - Climbing tiles, appended so every earlier index holds: one-way fire-escape landings (black iron), window sills, a rooftop cornice and a water tower's flat top, each with left, middle and right tiles at any width. Every ledge's top carries the same 2px white lip under a 1px dark edge, so it reads against any facade in greyscale.
-- Climbing backdrops: upper storeys and rooflines stack as reusable facade pieces. Standable ledges and solid faces come from modular tiles, placed independently of the scenery. Existing fire-escape ladder images remain available for compatibility; new platforming layouts use ledges and cliffs instead.
-- Backdrops are modular: a sky and a far skyline of faded downtown skyscrapers in two layers that cover both screens and rise above the near roofs, one repeating facade per building type (one-storey, walk-up, brownstone, and a tall stone building), facade pieces, one storefront per shop, and street furniture placed singly (a cab, a hot-dog cart, a subway railing, a street tree, a walk signal, the doorman's podium, the canopy's poles). A cross street is a gap with no facade, where the skyline shows over the far avenue.
-- The door, the canopy, `facade-hotel`, `hotel-crest`, `hotel-window` and the doorman's podium are generic building pieces, kept from the hotel this street used to belong to.
-- Signs are icons, never text: a cup, a flower, a gift box, a lipstick, a paw, a fork and knife, a noodle bowl, and a crest.
+- Climbing backdrops: upper storeys and rooflines stack as reusable facade pieces. Standable ledges and solid faces come from modular tiles, placed independently of the scenery. Platforming layouts use ledges and cliffs; the fire-escape ladder images are decorative.
+- Backdrops are modular: a sky and a far skyline of faded downtown skyscrapers in two layers that cover both screens and rise above the near roofs, one repeating facade per building type (one-storey, walk-up and brownstone), one storefront per shop, and street furniture placed singly (a hot-dog cart, a subway railing, a street tree and a walk signal). A cross street is a gap with no facade, where the skyline shows over the far avenue.
+- Signs are icons, never text: a cup, a flower, a gift box, a lipstick, a paw, a fork and knife and a noodle bowl.
 
 | Backdrop                | Size    | Bottom y | Repeat |
 | ----------------------- | ------- | -------- | ------ |
@@ -672,12 +670,7 @@ The first Blue cityscape stage has fixed start and finish sections with a seeded
 | facade-walkup-upper     | 48x180  | 288      | x      |
 | roofline-walkup         | 48x48   | 108      | x      |
 | facade-brownstone       | 48x312  | 600      | x      |
-| facade-brownstone-upper | 48x180  | 288      | x      |
 | roofline-brownstone     | 48x48   | 108      | x      |
-| facade-hotel            | 48x312  | 600      | x      |
-| facade-hotel-upper      | 48x180  | 288      | x      |
-| roofline-hotel          | 48x48   | 108      | x      |
-| fire-escape             | 196x185 | 473      | none   |
 | fire-escape-railing     | 48x24   | 432      | x      |
 | fire-escape-ladder      | 24x96   | 432      | none   |
 | fire-escape-ladder-4    | 24x48   | 432      | none   |
@@ -685,8 +678,6 @@ The first Blue cityscape stage has fixed start and finish sections with a seeded
 | fire-escape-ladder-6    | 24x72   | 432      | none   |
 | fire-escape-ladder-7    | 24x84   | 432      | none   |
 | water-tower             | 48x84   | 240      | none   |
-| hotel-crest             | 98x44   | 478      | none   |
-| hotel-window            | 32x152  | 592      | none   |
 | storefront-cafe         | 84x120  | 600      | none   |
 | storefront-florist      | 84x120  | 600      | none   |
 | storefront-gift-shop    | 96x120  | 600      | none   |
@@ -694,13 +685,10 @@ The first Blue cityscape stage has fixed start and finish sections with a seeded
 | storefront-pet-shop     | 108x120 | 600      | none   |
 | storefront-diner        | 108x120 | 600      | none   |
 | storefront-noodle-bar   | 120x120 | 600      | none   |
-| cab                     | 96x40   | 600      | none   |
 | hot-dog-cart            | 40x70   | 600      | none   |
 | subway-railing          | 72x62   | 600      | none   |
 | street-tree             | 64x136  | 600      | none   |
 | walk-signal             | 12x82   | 600      | none   |
-| doorman-podium          | 18x24   | 600      | none   |
-| canopy-poles            | 60x60   | 600      | none   |
 | cross-street            | 120x26  | 600      | none   |
 
 Below the sidewalk's top, the sidewalk and road tiles fill rows 50 to 59.
@@ -757,16 +745,11 @@ Short wall pieces belong to each section, rather than repeating one indoor wall 
 
 | Prop                         | Size  | Repeat |
 | ---------------------------- | ----- | ------ |
-| apartment-lobby-desk         | 96x48 | none   |
-| apartment-lobby-plant        | 36x60 | none   |
 | apartment-lobby-sofa         | 96x48 | none   |
-| apartment-pool-bench         | 72x36 | none   |
 | apartment-pool-water         | 96x24 | x      |
 | apartment-residential-shelf  | 72x96 | none   |
-| apartment-restaurant-booth   | 72x48 | none   |
 | apartment-restaurant-counter | 96x48 | none   |
 | apartment-room-door          | 60x84 | none   |
-| apartment-spa-bench          | 72x36 | none   |
 | apartment-spa-screen         | 72x96 | none   |
 | apartment-stairwell          | 48x72 | none   |
 | apartment-stairwell-door     | 48x72 | none   |
@@ -1006,26 +989,13 @@ Kiwi, the female raccoon, reuses the existing identity without added gender acce
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
-## Kept for a later indoor zone: the boutique lobby
+## Boutique lobby tileset
 
-The lobby set is no longer in Zone 1. It is kept, unchanged, for a later indoor zone.
+`art/tools/floor1.ts` also draws `tiles-lobby`, an indoor tileset with no current stage.
 
-- The lobby is a boutique at indoor scale: wood-panelled walls, a sofa, a reception desk, a tall bookcase, plants, pendant lamps and a tall window. A door is 180px (15 tiles) and the zone is 720px (60 tiles) tall, so the camera scrolls up through it; the floor line is y 672 (row 56).
-- Contrast: the walls are dark wood, and every walkable top (the floor and each one-way ledge) carries the same 2px cream lip under a 1px plum edge, so the standable edges are the brightest lines in the room in greyscale, and the cream bird stays the focal point.
-- Lobby tiles (`tiles-lobby`): a wood floor (tops with a 2px board end every 24px, ends, face), one-way balcony, shelf, cushion and desk ledges, a solid wood post 2 tiles wide, and the stairwell as a 7x15 doorway piece (84x180) with a white up-arrow on a green sign. The inside of the front door is a backdrop.
-- Lobby pieces line up with the reaches: the sofa's seat and back are 3 and 6 tiles up, the desk top 8, and the bookcase boards 8, 16, 24 and 32.
-
-| Backdrop         | Size    | Bottom y           | Repeat |
-| ---------------- | ------- | ------------------ | ------ |
-| lobby-wall       | 48x720  | 720                | x      |
-| lobby-balustrade | 48x36   | balcony floor line | x      |
-| lobby-bookcase   | 84x384  | 672                | none   |
-| lobby-sofa       | 120x72  | 672                | none   |
-| lobby-desk       | 120x96  | 672                | none   |
-| lobby-plant      | 48x120  | 672                | none   |
-| lobby-lamp       | 48x192  | 220                | none   |
-| lobby-window     | 96x240  | 552                | none   |
-| lobby-front-door | 156x180 | 672                | none   |
+- The lobby is at indoor scale: a door is 180px (15 tiles) and the zone is 720px (60 tiles) tall, so the camera scrolls up through it; the floor line is y 672 (row 56).
+- Contrast: every walkable top (the floor and each one-way ledge) carries the same 2px cream lip under a 1px plum edge, so the standable edges are the brightest lines in greyscale, and the cream bird stays the focal point.
+- Lobby tiles (`tiles-lobby`): a wood floor (tops with a 2px board end every 24px, ends, face), one-way balcony, shelf, cushion and desk ledges, a solid wood post 2 tiles wide, and the stairwell as a 7x15 doorway piece (84x180) with a white up-arrow on a green sign.
 
 ## Park theme
 
@@ -1055,29 +1025,23 @@ Sprites, in the manifest's `sprites`:
 
 Backdrops repeat in x at widths that divide 720, so chunk seams never show; props stand on the ground (their bottom y is given for row 50; subtract 120 per seam row up).
 
-| Backdrop        | Size    | Bottom y | Repeat |
-| --------------- | ------- | -------- | ------ |
-| park-sky        | 48x600  | 600      | x      |
-| park-clouds     | 360x160 | 200      | x      |
-| park-treetops   | 360x420 | 600      | x      |
-| park-city       | 360x200 | 540      | x      |
-| park-far-trees  | 240x120 | 600      | x      |
-| park-tree       | 96x150  | 600      | none   |
-| park-bench      | 36x24   | 600      | none   |
-| park-bandstand  | 120x84  | 600      | none   |
-| park-lamp       | 16x84   | 600      | none   |
-| park-fountain   | 96x48   | 600      | none   |
-| park-flower-bed | 72x16   | 600      | none   |
-| park-bin        | 16x24   | 600      | none   |
-| park-sign       | 24x40   | 600      | none   |
-| park-reeds      | 24x30   | 610      | none   |
-| park-lily-pad   | 14x4    | 608      | none   |
+| Backdrop       | Size    | Bottom y | Repeat |
+| -------------- | ------- | -------- | ------ |
+| park-sky       | 48x600  | 600      | x      |
+| park-clouds    | 360x160 | 200      | x      |
+| park-treetops  | 360x420 | 600      | x      |
+| park-city      | 360x200 | 540      | x      |
+| park-far-trees | 240x120 | 600      | x      |
+| park-tree      | 96x150  | 600      | none   |
+| park-bench     | 36x24   | 600      | none   |
+| park-bandstand | 120x84  | 600      | none   |
+| park-lamp      | 16x84   | 600      | none   |
 
 ## Woodland species and background fauna
 
 `art/tools/largeWildlife.ts` draws `background-deer-large` at 216x144 with bottom-centre anchor 108,144. Its four-frame `idle` uses 1000,180,180,1000ms; its eight-frame `graze` uses 350,300,300,650,650,350,300,350ms. Both tags loop. Export with the pinned art-kit release in six columns and two rows (1296x288), keeping the native frame dimensions. The naturalistic compact silhouette uses the flat `bg-woodland-fauna` paint, binary alpha and four fixed hoof patches. Use this large sprite for production ground fauna; retain the 32x24 deer as reference art rather than a default placement. Render at native dimensions with a fixed world origin and ordinary camera movement. It has no contact mask, hitbox, interaction, portrait or dialogue.
 
-Woodland can mix broadleaf, conifer and birch depth layers between appropriate chunks. The existing broadleaf `woodland-far` and `forest-mid` remain the default. `woodland-far-conifers`, `forest-mid-conifers`, `woodland-far-birch` and `forest-mid-birch` retain 720x600, bottom-left y600 and repeat x. Far layers use the existing 0.15,0.05 parallax contract; middle layers use 0.4,0.15. Gameplay owns their chunk bindings and placement, including keeping exterior depth out of enclosed interiors.
+Woodland can mix broadleaf, conifer and birch depth layers between appropriate chunks. The existing broadleaf `woodland-far` and `forest-mid` remain the default. `woodland-far-conifers`, `forest-mid-conifers` and `forest-mid-birch` keep 720x600, bottom-left y600 and repeat x. Far layers use the existing 0.15,0.05 parallax contract; middle layers use 0.4,0.15. Gameplay owns their chunk bindings and placement, including keeping exterior depth out of enclosed interiors.
 
 `art/tools/woodlandFauna.ts` retains the reference `background-deer` (32x24, bottom-centre 16,24; `idle` two 900ms frames, `graze` four 300ms frames) and draws production `background-swallow` at 144x96, centre 72,48. Its `flight` uses four 120ms frames, loops and retains pointed wings, a streamlined body and forked tail. Production deer and swallows use `bg-woodland-fauna`; they have no contact mask, hitbox, interaction or dialogue. Ground fauna stay planted through idle and graze. The swallow follows a finite linear or hop traversal: its first viewport intersection starts an independent local active-world clock; it finishes without returning or ping-ponging, then its render object is disposed without changing stable object indices. Pause stops that clock; Retry and area entry reset playback. World fauna use ordinary 1,1 camera movement at depth -2.5, between placed backgrounds at -3 and terrain at -2. Gameplay owns supported ground fitting, chunk bindings, placement, motion and timing. Keep fauna subdued and separate from lethal enemies and points of interest.
 
