@@ -105,9 +105,9 @@ This approved target awaits source, adapter and authored-range qualification. On
 
 - **Boarding:** only boarding from a bank the ride's metadata lists can start a protected leg; other boardings follow the ordinary attack rules. Boarding starts unprotected, with attacks allowed, until the ride's forced window is certified
 - **Deferral:** defer only Pebble's new targeted swoops and aimed poop bursts until Chibi is offered the first safe forward exit or useful refuge. Other attacks and untargeted hazards continue. Retreat alone does not end the episode. Once a forward opportunity has been offered, camping does not rearm deferral. Pebble may reposition safely overhead while deferring; when an attack becomes eligible, use its normal full tell
-- **Disembark:** safely getting off onto any safe grounded surface, authored bank or not, ends the protected leg
+- **Disembark:** any safe grounded contact, authored bank or not, ends the protected leg, even while a ride still supports Chibi
 - **Existing danger:** committed attacks, existing projectiles, body contact and red hazards remain unchanged and lethal. Deferral is not invulnerability or a general moving-platform attack ban
-- **New leg:** after safely getting off at a middle bank listed for a second ride, boarding any ride that lists that bank starts a fresh protected leg. Hopping directly between rides never re-arms protection
+- **New leg:** after safely getting off at a middle bank listed for a second ride, boarding any ride that lists that bank starts a fresh protected leg. Hopping directly between rides never re-arms protection. A hop from a still-deferring leg directly onto another ride keeps deferral until Chibi reaches safe ground; the second ride's exits never end the first leg
 - **Qualification:** certify that an ordinary Jump, any release from tap to full hold, can begin on the next valid input, allowing one fixed-step release prefix if Jump is held. Preserve actual carry, steering, coyote time and collision. Do not count intentional grounded dwell, a run-up or waiting for a future dock as immediate availability. Scope the proof to this criterion, not an impossibility claim about every future controller
 - **Unknown state:** while the ride state is unknown, attacks follow the last certified state. Unknown never certifies a forced window or proves an exit unavailable
 

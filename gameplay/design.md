@@ -247,10 +247,10 @@ A forced-transit ride is a moving platform with an interval that offers no ordin
 - **Boarding:** only boarding from a bank the ride's metadata lists can start a protected leg; any other boarding follows the ordinary attack rules. Boarding starts unprotected, with attacks allowed, until the ride's forced window is certified. A certified forced window starts the protected leg
 - **Deferral:** during a protected leg, Pebble starts no new targeted swoop or aimed poop burst. Every other attack and every untargeted hazard continues. Pebble may reposition safely overhead; an attack that becomes eligible again uses its normal full tell
 - **Deferral end:** deferral ends at the first safe forward exit or useful refuge offered. Retreating alone does not end it. After an exit has been offered, staying on the ride does not rearm it
-- **Disembark:** safely getting off onto any safe grounded surface, authored bank or not, ends the protected leg
+- **Disembark:** any safe grounded contact, authored bank or not, ends the protected leg, even while a ride still supports Chibi
 - **Existing danger:** committed attacks, existing projectiles, body contact and red hazards remain lethal. Deferral is not invulnerability or a general moving-platform attack ban
 - **Exit offer:** an exit is offered when an ordinary Jump, any release from tap to full hold, can begin on the next valid input, allowing one fixed-step release prefix while Jump is held, with actual carry, steering, coyote time and collision. Intentional grounded dwell, a run-up or waiting for a future dock is not an offered exit
-- **New leg:** after safely getting off at a middle bank listed for a second ride, boarding any ride that lists that bank starts a fresh protected leg. Hopping directly between rides never re-arms protection
+- **New leg:** after safely getting off at a middle bank listed for a second ride, boarding any ride that lists that bank starts a fresh protected leg. Hopping directly between rides never re-arms protection. A hop from a still-deferring leg directly onto another ride keeps deferral until Chibi reaches safe ground; the second ride's exits never end the first leg
 - **Unknown state:** while the ride state is unknown, attacks follow the last certified state. Unknown never certifies a forced window or proves an exit unavailable
 
 ### V1 route
