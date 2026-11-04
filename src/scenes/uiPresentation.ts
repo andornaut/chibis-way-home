@@ -3,6 +3,7 @@ import { remapRgb } from "@andornaut/game-kit/rgba";
 import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import {
   presentUi,
+  releaseUiTintCache,
   type Size,
   type UiFrame,
   type UiSnapshotResult,
@@ -278,6 +279,8 @@ export function mountUiPresentation(game: Game): () => void {
       captures.clear();
       roots.clear();
       recorder.destroy();
+      // presentUi retains tinted surfaces made through this canvas's ports across frames.
+      releaseUiTintCache({ releaseSurface });
       fonts.destroy();
       canvas.remove();
     };

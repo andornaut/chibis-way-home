@@ -24,7 +24,7 @@
     "clean": "rm -rf dist .wrangler"
   },
   "dependencies": {
-    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.7.0/game-kit-0.7.0.tgz",
+    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.8.0/game-kit-0.8.0.tgz",
     "phaser": "^4.2.1"
   },
   "devDependencies": {

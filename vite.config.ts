@@ -48,5 +48,7 @@ export default gameViteConfig<typeof ConfigModules>({
     ...config.test,
     include: ["src/**/*.test.ts"],
     maxWorkers: 4,
+    // game-kit's Phaser adapters import phaser at runtime; inlining them lets a test's phaser mock apply.
+    server: { deps: { inline: ["@andornaut/game-kit"] } },
   },
 }));
