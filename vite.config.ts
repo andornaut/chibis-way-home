@@ -39,7 +39,7 @@ export default gameViteConfig<typeof ConfigModules>({
       securityHeadersPlugin(),
     ];
   },
-  previewHost: "duck-preview",
+  previewHost: "chibi-preview",
   repoRoot: import.meta.dirname,
   // Preserve Vitest's existing Node per-test default.
   testTimeout: 5_000,

@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "duck-platformer",
+  "name": "chibis-way-home",
   // Pinned so a deploy cannot land in another account wrangler is logged in to.
   "account_id": "90f23a78b62eb9571a3fd6c296d15f30",
   "compatibility_date": "2026-10-01",

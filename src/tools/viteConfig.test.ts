@@ -41,8 +41,8 @@ it("passes the game's page entries, preview host and existing limits to its loca
     tuning: resolve(repoRoot, "pages/tuning/index.html"),
   });
   expect([config.preview?.allowedHosts, config.server?.allowedHosts]).toEqual([
-    ["duck-preview"],
-    ["duck-preview"],
+    ["chibi-preview"],
+    ["chibi-preview"],
   ]);
   expect(config.build?.chunkSizeWarningLimit).toBe(1100);
   expect(config.test?.testTimeout).toBe(5_000);
