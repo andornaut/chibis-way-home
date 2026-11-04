@@ -240,6 +240,19 @@ Boss encounters are noncombat chase-and-escape platforming, not dedicated arenas
 - **Spacing:** separate boss encounters have at least three intervening chunks with no encounter. Count actual placed chunks, including caps and across ordered areas of the same stage; reset the count for a newly loaded stage. A pursuing actor crossing a chunk seam remains the same encounter and is not stopped by this spacing rule
 - **Traversal and variety:** place bosses on real support, with body-sized clearance and physical routes across relevant blocks, ledges and gaps. Vary supported spawn positions and encounter geometry through seeded authored choices, while Retry preserves its layout and seed. More entries with equivalent geometry do not establish more distinct challenges. Test ordinary player traversal separately from boss traversal, including approaches and departures across chunk seams
 
+### Forced transit
+
+A forced-transit ride is a moving platform with an interval that offers no ordinary safe exit. Only explicitly authored, certified mandatory-ride metadata makes a ride forced; moving support, velocity, an endpoint or unknown geometry does not, and no per-tick planning infers it. A ride without a certified forced interval follows the ordinary attack rules.
+
+- **Boarding:** boarding starts unprotected, with attacks allowed, until the ride's forced window is certified. A certified forced window starts the protected leg
+- **Deferral:** during a protected leg, Pebble starts no new targeted swoop or aimed poop burst. Every other attack and every untargeted hazard continues. Pebble may reposition safely overhead; an attack that becomes eligible again uses its normal full tell
+- **Deferral end:** deferral ends at the first safe forward exit or useful refuge offered. Retreating alone does not end it. After an exit has been offered, staying on the ride does not rearm it
+- **Disembark:** safely getting off onto any safe grounded surface, authored bank or not, ends the protected leg
+- **Existing danger:** committed attacks, existing projectiles, body contact and red hazards remain lethal. Deferral is not invulnerability or a general moving-platform attack ban
+- **Exit offer:** an exit is offered when an ordinary Jump, any release from tap to full hold, can begin on the next valid input, allowing one fixed-step release prefix while Jump is held, with actual carry, steering, coyote time and collision. Intentional grounded dwell, a run-up or waiting for a future dock is not an offered exit
+- **New leg:** after safely getting off at a middle bank listed for a second ride, boarding any ride that lists that bank starts a fresh protected leg. Hopping directly between rides never re-arms protection
+- **Unknown state:** while the ride state is unknown, attacks follow the last certified state. Unknown never certifies a forced window or proves an exit unavailable
+
 ### V1 route
 
 The route spans six themed zones and twenty-one stages. The first five zones have three stages each, targeting about 60 seconds of successful active play without any powerup active. Apartment has six floor stages targeting about 90 seconds each, about nine minutes for the zone. Human pacing calibration remains incomplete; these targets are not hard timers. Recipe data owns lengths. The six-zone map preserves unlocked stages for replay. Every stage has a fixed opening and ending with a randomized middle.
