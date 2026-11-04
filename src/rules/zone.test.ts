@@ -775,7 +775,7 @@ describe("ledges", () => {
   it.each([
     ["jumps up through from below and lands on top", true, ledge.origin.y],
     ["stands on the ground while never jumping", false, GROUND.y],
-  ])("she %s", (_, jumps, top) => {
+  ])("he %s", (_, jumps, top) => {
     const states = run(zone(area([ledge])), 2, (step) => ({
       ...STILL,
       jumpHeld: jumps && step < 30,
@@ -798,14 +798,14 @@ describe("moving platforms", () => {
       }),
     );
 
-  it.each(["right", "up"] as const)("carries her %s while she stands on it", (direction) => {
+  it.each(["right", "up"] as const)("carries him %s while he stands on it", (direction) => {
     const states = run(onPlatform(platform(direction)), 1.5, STILL);
     const last = states.at(-1);
     const at = last?.objects[0];
     expect(last && at && standsOn(BIRD, last.bird, { ...at, height: 12, width: 96 })).toBe(true);
   });
 
-  it("keeps its speed along x when she jumps off, until she lands", () => {
+  it("keeps its speed along x when he jumps off, until he lands", () => {
     const states = run(onPlatform(platform("right")), 3, (step) => ({
       ...STILL,
       jumpHeld: step >= 60 && step < 64,
@@ -853,7 +853,7 @@ describe("pushes", () => {
       (state: ZoneState) => state.bird.x + BIRD.width - leftEdge(state),
     ],
     [
-      "running right into a block moving left toward her, at its side",
+      "running right into a block moving left toward him, at its side",
       block(200, "left"),
       RIGHT,
       (state: ZoneState) => state.bird.x + BIRD.width - leftEdge(state),
@@ -864,7 +864,7 @@ describe("pushes", () => {
     expect(gap(states.at(-1) as ZoneState)).toBeCloseTo(0, 9);
   });
 
-  it("ends the attempt when a block pushes her into a wall", () => {
+  it("ends the attempt when a block pushes him into a wall", () => {
     const layout = zone(area([block(140, "left")], { solids: [GROUND, wall] }));
     expect(run(layout, 3, STILL).some((state) => state.death !== undefined)).toBe(true);
   });
@@ -878,8 +878,8 @@ describe("clearing", () => {
   };
   const exitX = GROUND.width - 12;
   it.each([
-    ["her box reaching past the last column's left edge", exitX + 1, true],
-    ["her box ending at the last column's left edge", exitX, false],
+    ["his box reaching past the last column's left edge", exitX + 1, true],
+    ["his box ending at the last column's left edge", exitX, false],
   ])("standing still with %s: cleared %s", (_, right, cleared) => {
     const layout = zone(area([]));
     expect(stepZone(BIRD, layout, STEP, STILL, at(right)).cleared).toBe(cleared);
@@ -908,8 +908,8 @@ describe("turning back", () => {
   };
   const backX = 12;
   it.each([
-    ["her box reaching back past the first column's right edge", backX - 1, true],
-    ["her box starting at the first column's right edge", backX, false],
+    ["his box reaching back past the first column's right edge", backX - 1, true],
+    ["his box starting at the first column's right edge", backX, false],
   ])("standing still with %s: turned back %s", (_, left, turnedBack) => {
     const next = stepZone(BIRD, zone(area([])), STEP, STILL, at(left));
     expect({ cleared: next.cleared, turnedBack: next.turnedBack }).toEqual({
@@ -942,19 +942,19 @@ describe("doorAt", () => {
     doorAt(BIRD, BIRD_FRAME, objects, at(objects), bird);
 
   it.each([
-    ["overlapping 1 px past her frame's right edge", door(frame.x + frame.width - 1, frame.y), 0],
-    ["just touching her frame's right edge", door(frame.x + frame.width, frame.y), undefined],
-    ["overlapping 1 px past her frame's left edge", door(frame.x - 24 + 1, frame.y), 0],
-    ["just touching her frame's left edge", door(frame.x - 24, frame.y), undefined],
-    ["overlapping 1 px above her frame's top", door(frame.x, frame.y - 48 + 1), 0],
-    ["just touching her frame's top", door(frame.x, frame.y - 48), undefined],
+    ["overlapping 1 px past his frame's right edge", door(frame.x + frame.width - 1, frame.y), 0],
+    ["just touching his frame's right edge", door(frame.x + frame.width, frame.y), undefined],
+    ["overlapping 1 px past his frame's left edge", door(frame.x - 24 + 1, frame.y), 0],
+    ["just touching his frame's left edge", door(frame.x - 24, frame.y), undefined],
+    ["overlapping 1 px above his frame's top", door(frame.x, frame.y - 48 + 1), 0],
+    ["just touching his frame's top", door(frame.x, frame.y - 48), undefined],
     // Past his collision box but under his drawn frame: the forgiving reach.
-    ["under her frame but clear of her box", door(box.x + box.width + 1, frame.y), 0],
+    ["under his frame but clear of his box", door(box.x + box.width + 1, frame.y), 0],
   ])("opens a door %s: %s", (_, placed, index) => {
     expect(opened([placed])).toBe(index);
   });
 
-  it("opens no door for anything but a door under her frame", () => {
+  it("opens no door for anything but a door under his frame", () => {
     expect(opened([{ ...door(frame.x, frame.y), collision: "solid" }])).toBeUndefined();
   });
 
@@ -994,7 +994,7 @@ describe("doors", () => {
       undefined,
     ],
     [
-      "Use held since before she arrived does nothing",
+      "Use held since before he arrived does nothing",
       [door],
       () => ({ ...STILL, useHeld: true }),
       undefined,
@@ -1010,7 +1010,7 @@ describe("doors", () => {
     expect(states.at(-1)).toBe(states[opened]);
   });
 
-  it("leaves the room with her where she was, and steps on from there", () => {
+  it("leaves the room with him where he was, and steps on from there", () => {
     const layout = zone(area([door]));
     const inside = run(layout, 0.5, press).at(-1) as ZoneState;
     const back = leaveRoom(inside);
@@ -1038,9 +1038,9 @@ describe("objectStep", () => {
       { x: 200, y: at.y },
       { x: 200, y: at.y },
     ],
-    ["avoiding her in range, moves away", critter("avoid", 80), at, { x: at.x + 1, y: at.y }],
+    ["avoiding him in range, moves away", critter("avoid", 80), at, { x: at.x + 1, y: at.y }],
     [
-      "approaching her in range, moves toward her",
+      "approaching him in range, moves toward him",
       critter("approach", 80),
       at,
       { x: at.x - 1, y: at.y },

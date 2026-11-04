@@ -153,7 +153,7 @@ it("ends the protected leg on any safe grounded surface, authored bank or not", 
   );
 });
 
-it("ends the protected leg on safe ground straddled while the ride still supports her", () => {
+it("ends the protected leg on safe ground straddled while the ride still supports him", () => {
   const bank = [{ group: transit.group, id: "near" }];
   expect(aboard(transit, 1, forced(), { bankAdmissions: bank, safeGround: true })).toEqual({
     attackWindow: "allowed",

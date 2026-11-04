@@ -66,7 +66,7 @@ describe("walkZone", () => {
   });
 
   it(
-    "ignores doors: a door on her way changes nothing it finds",
+    "ignores doors: a door on his way changes nothing it finds",
     () => {
       const walk = (doors: number) => {
         const { cleared, reached } = walkZone(
@@ -86,7 +86,7 @@ describe("crosses", () => {
     ["a gap", REACH.gap, 0, REACH.gap + 1, 0],
     ["a rise", 0, REACH.jump, 0, REACH.jump + 1],
   ])(
-    "makes %s at her reach in one move, and never one tile more",
+    "makes %s at his reach in one move, and never one tile more",
     (_, gap, rise, gapOver, riseOver) => {
       const makes = (plan: ZonePlan) => {
         const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), plan);

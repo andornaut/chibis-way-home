@@ -102,7 +102,7 @@ export function walkSuite(plan: ZonePlan): void {
   });
 
   if (marks.length > 0) {
-    it("marks out of reach only surfaces she never reaches", () => {
+    it("marks out of reach only surfaces he never reaches", () => {
       const wrong = marks.filter(({ area, spot }) => {
         const surface = surfaceAt(TILE, walk.surfaces, area, spot);
         return surface === undefined || walk.reached.has(surface.key);

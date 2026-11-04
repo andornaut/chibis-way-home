@@ -218,7 +218,7 @@ describe("going back from a zone's start", () => {
   it.each([
     ...TEST_ZONES.map((plan, index): [string, ZonePlan] => [`test zone ${index + 1}`, plan]),
     ...RECIPE_PLANS.map(([key, plan]): [string, ZonePlan] => [`recipe ${key}`, plan]),
-  ])("held left from %s's start, she turns back", (_, plan) => {
+  ])("held left from %s's start, he turns back", (_, plan) => {
     expect(turnsBackWithin(3, plan)).toBe(true);
   });
 });

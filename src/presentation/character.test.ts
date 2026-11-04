@@ -10,8 +10,8 @@ const at = { x: 0, y: 0 };
 
 describe("characterState", () => {
   it.each([
-    ["a reacting character with her in range", avoider, false, { x: 30, y: 40 }, "react"],
-    ["a reacting character with her out of range", avoider, true, { x: 60, y: 0 }, "move"],
+    ["a reacting character with him in range", avoider, false, { x: 30, y: 40 }, "react"],
+    ["a reacting character with him out of range", avoider, true, { x: 60, y: 0 }, "move"],
     ["a character that moved", calm, true, { x: 10, y: 0 }, "move"],
     ["a character standing still", calm, false, { x: 10, y: 0 }, "idle"],
   ] as const)("shows %s as %s", (_, object, moved, hers, state) => {

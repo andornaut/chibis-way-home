@@ -369,7 +369,7 @@ describe("stepBird", () => {
   it.each([
     ["within the buffer", Math.floor(BIRD.jumpBuffer / STEP) - 2, true],
     ["before the buffer", Math.ceil(BIRD.jumpBuffer / STEP) + 1, false],
-  ])("jumps as she lands when pressed %s", (_name, before, jumps) => {
+  ])("jumps as he lands when pressed %s", (_name, before, jumps) => {
     const land = hop(undefined, SINGLE_JUMP).findIndex((state, i) => i > 2 && state.grounded);
     const states = hop(land - 1 - before, SINGLE_JUMP);
     expect(states.slice(land).some((state) => state.vy < 0)).toBe(jumps);

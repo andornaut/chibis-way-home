@@ -75,7 +75,7 @@ describe("cameraScroll", () => {
       { x: 640, y: rest(600) },
     ],
     [
-      "above the middle, the view risen to keep her there",
+      "above the middle, the view risen to keep him there",
       AREA,
       { x: 1000, y: 300 },
       { x: 640, y: 120 },
@@ -111,7 +111,7 @@ describe("cameraScroll", () => {
       { x: 1440, y: 480 },
       { x: 1080, y: rest(540) },
     ],
-  ])("puts her %s", (_, area, feet, scroll) => {
+  ])("puts him %s", (_, area, feet, scroll) => {
     expect(cameraScroll(CAMERA, SCREEN, area, feet)).toEqual(scroll);
   });
 
