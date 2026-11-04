@@ -17,7 +17,14 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 | font-body  | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 256x64 PNG  |      |
 | font-title | BMFont, Liberation Sans Bold    | 16px, base 15, line 20; 256x128 PNG |      |
 
-The public [Liberation Sans Regular TTF](../public/art/fonts/liberation/LiberationSans-Regular.ttf), [Bold TTF](../public/art/fonts/liberation/LiberationSans-Bold.ttf) and [SIL OFL 1.1 licence](../public/art/fonts/liberation/OFL.txt) are byte-identical copies that `node art/tools/fonts.ts build` writes from `art/fonts/liberation/`, loaded as the runtime UI fonts (`src/ui/chrome/uiFonts.ts`).
+Runtime TTFs, each served beside its SIL OFL 1.1 `OFL.txt`. `node art/tools/fonts.ts build` writes the Liberation files as byte-identical copies of `art/fonts/liberation/`; Vite bundles the crash-page fonts from `art/fonts/`.
+
+| Font                    | Use                                      | Served file                                                                                                         |
+| ----------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Liberation Sans Bold    | UI font (`src/ui/chrome/uiFonts.ts`)     | [public/art/fonts/liberation/LiberationSans-Bold.ttf](../public/art/fonts/liberation/LiberationSans-Bold.ttf)       |
+| Liberation Sans Regular | UI font (`src/ui/chrome/uiFonts.ts`)     | [public/art/fonts/liberation/LiberationSans-Regular.ttf](../public/art/fonts/liberation/LiberationSans-Regular.ttf) |
+| Silkscreen Regular      | crash-page title (`src/crash/theme.css`) | [art/fonts/silkscreen/Silkscreen-Regular.ttf](fonts/silkscreen/Silkscreen-Regular.ttf)                              |
+| Tiny5                   | crash-page body (`src/crash/theme.css`)  | [art/fonts/tiny5/Tiny5.ttf](fonts/tiny5/Tiny5.ttf)                                                                  |
 
 ## Icons
 
@@ -329,41 +336,48 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Stage scenery previews
 
-Opaque actual stage captures, 168x84, registered as manifest images. Keys follow `stage-preview-zone-N-stage-M`; the first table identifies stages 1, 2 and 3 for Zones 1 through 5. Apartment uses the six floor keys listed below.
+Opaque 168x84 PNGs of the actual stages in `public/art/images/`, registered as manifest images. They are hand captures, not generator output.
 
-| Zone | Stage 1            | Stage 2       | Stage 3                |
-| ---- | ------------------ | ------------- | ---------------------- |
-| 1    | street             | city-streets  | city-boundary          |
-| 2    | warehouse-district | loading-yards | freight-terminal       |
-| 3    | farmland           | country-lanes | river-crossing         |
-| 4    | forest-paths       | deep-woods    | ravine                 |
-| 5    | city-outskirts     | back-streets  | familiar-neighbourhood |
-
-| Apartment stage | Stage ID           |
-| --------------- | ------------------ |
-| 1               | lobby              |
-| 2               | restaurant         |
-| 3               | pool               |
-| 4               | spa                |
-| 5               | residential-floors |
-| 6               | penthouse          |
+| Key                          | Stage                  |
+| ---------------------------- | ---------------------- |
+| stage-preview-zone-1-stage-1 | street                 |
+| stage-preview-zone-1-stage-2 | city-streets           |
+| stage-preview-zone-1-stage-3 | city-boundary          |
+| stage-preview-zone-2-stage-1 | warehouse-district     |
+| stage-preview-zone-2-stage-2 | loading-yards          |
+| stage-preview-zone-2-stage-3 | freight-terminal       |
+| stage-preview-zone-3-stage-1 | farmland               |
+| stage-preview-zone-3-stage-2 | country-lanes          |
+| stage-preview-zone-3-stage-3 | river-crossing         |
+| stage-preview-zone-4-stage-1 | forest-paths           |
+| stage-preview-zone-4-stage-2 | deep-woods             |
+| stage-preview-zone-4-stage-3 | ravine                 |
+| stage-preview-zone-5-stage-1 | city-outskirts         |
+| stage-preview-zone-5-stage-2 | back-streets           |
+| stage-preview-zone-5-stage-3 | familiar-neighbourhood |
+| stage-preview-zone-6-stage-1 | lobby                  |
+| stage-preview-zone-6-stage-2 | restaurant             |
+| stage-preview-zone-6-stage-3 | pool                   |
+| stage-preview-zone-6-stage-4 | spa                    |
+| stage-preview-zone-6-stage-5 | residential-floors     |
+| stage-preview-zone-6-stage-6 | penthouse              |
 
 ## Woodland species and fauna
 
-| Key                   | Type               | Size    | Contract                                                               |
-| --------------------- | ------------------ | ------- | ---------------------------------------------------------------------- |
-| background-deer       | retained reference | 32x24   | idle 2x900ms, graze 4x300ms; loop, no hitbox                           |
-| background-deer-large | decorative sprite  | 216x144 | flat zone-fauna paint; idle 4 frames, graze 8; planted feet, no hitbox |
-| background-swallow    | decorative sprite  | 144x96  | centre 72,48; flat zone-fauna paint; flight 4x120ms loop, no hitbox    |
-| forest-mid-birch      | repeating backdrop | 720x600 | bottom-left y600, repeat x                                             |
-| forest-mid-conifers   | repeating backdrop | 720x600 | bottom-left y600, repeat x                                             |
-| woodland-far-conifers | repeating backdrop | 720x600 | bottom-left y600, repeat x                                             |
+| Key                   | Type                                                     | Size    | Contract                                       |
+| --------------------- | -------------------------------------------------------- | ------- | ---------------------------------------------- |
+| background-deer       | retained reference; idle 2x900ms, graze 4x300ms, looping | 32x24   | no hitbox                                      |
+| background-deer-large | decorative sprite; idle 4 frames, graze 8                | 216x144 | flat zone-fauna paint; planted feet, no hitbox |
+| background-swallow    | decorative sprite; flight 4x120ms, looping               | 144x96  | centre 72,48; flat zone-fauna paint; no hitbox |
+| forest-mid-birch      | repeating backdrop                                       | 720x600 | bottom-left y600, repeat x                     |
+| forest-mid-conifers   | repeating backdrop                                       | 720x600 | bottom-left y600, repeat x                     |
+| woodland-far-conifers | repeating backdrop                                       | 720x600 | bottom-left y600, repeat x                     |
 
 ## Animated background flora
 
-| Key              | Type              | Size  | Contract                      |
-| ---------------- | ----------------- | ----- | ----------------------------- |
-| background-reeds | decorative sprite | 24x24 | sway 4x300ms; loop, no hitbox |
+| Key              | Type                                     | Size  | Contract  |
+| ---------------- | ---------------------------------------- | ----- | --------- |
+| background-reeds | decorative sprite; sway 4x300ms, looping | 24x24 | no hitbox |
 
 ## Room entrance buildings
 
