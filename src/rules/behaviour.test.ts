@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourPlan, Character, ObjectLayout, Rect } from "../data/types";
+import type {
+  Archetype,
+  BehaviourCondition,
+  BehaviourPlan,
+  Character,
+  ObjectLayout,
+  Rect,
+} from "../data/types";
 import { TEST_PURSUER, TEST_SHUTTLE, withAnticipationContact } from "../testing/behaviours";
 import { behaviourPose } from "../view/behaviour";
 import {
@@ -717,7 +724,50 @@ describe("track conditions", () => {
     },
   );
 
+  const CLEAR: BehaviourCondition = { kind: "track-clear", state: "climb" };
+  const NOT_CLEAR: BehaviourCondition = { condition: CLEAR, kind: "not" };
   it.each([
+    { ceiling: true, condition: NOT_CLEAR, name: "not(track-clear)", state: "climb" },
+    { ceiling: false, condition: NOT_CLEAR, name: "not(track-clear)", state: "ground" },
+    {
+      ceiling: true,
+      condition: { condition: NOT_CLEAR, kind: "not" } as const,
+      name: "not(not(track-clear))",
+      state: "ground",
+    },
+    {
+      ceiling: false,
+      condition: { condition: NOT_CLEAR, kind: "not" } as const,
+      name: "not(not(track-clear))",
+      state: "climb",
+    },
+  ])("$name with ceiling=$ceiling ends in $state", ({ ceiling, condition, state }) => {
+    const plan: BehaviourPlan = {
+      ...CLIMB,
+      states: {
+        ...CLIMB.states,
+        ground: { ...CLIMB.states.ground!, transitions: [{ to: "climb", when: [condition] }] },
+      },
+    };
+    const object = resolve(CHARACTER, ACTOR, 1, plan);
+    const result = stepBehaviour(
+      BIRD,
+      object,
+      ceiling ? [CEILING] : [],
+      0.1,
+      bird(),
+      object.origin,
+      initial(object),
+    );
+    expect(result.state.stateKey).toBe(state);
+  });
+
+  it.each([
+    [
+      "is negated blocked without track travel",
+      "ground",
+      { condition: { kind: "blocked" }, kind: "not" },
+    ],
     ["names a missing state", "ground", { kind: "track-clear", state: "absent" }],
     ["names a state without track travel", "ground", { kind: "track-clear", state: "top" }],
     ["is blocked without track travel", "ground", { kind: "blocked" }],

@@ -94,43 +94,30 @@ it("replays a bot scenario to the same trace hash", () => {
 
 describe("Kiwi under a low ceiling", () => {
   const CHUNK = "vertical-stack-early";
-  const CLEAR: BehaviourCondition = { kind: "track-clear", state: "climb" };
-  type Edit = (plan: BehaviourPlan) => BehaviourPlan["states"];
-  // The proposed counter edits on a test copy of Kiwi's plan.
-  const blockedExit: Edit = ({ states }) => ({
-    ...states,
-    climb: {
-      ...states.climb!,
-      transitions: [{ to: "pursuit", when: [{ kind: "blocked" }] }, ...states.climb!.transitions],
-    },
-  });
-  const guarded: Edit = (plan) => {
-    const states = blockedExit(plan);
-    return {
-      ...states,
-      "pursuit-drop": {
-        ...states["pursuit-drop"]!,
-        transitions: states["pursuit-drop"]!.transitions.flatMap((transition) =>
-          transition.to === "return-ground-staging"
-            ? [
-                { ...transition, when: [...transition.when, CLEAR] },
-                { ...transition, to: "pursuit" },
-              ]
-            : [transition],
-        ),
-      },
-      "return-ground-staging": {
-        ...states["return-ground-staging"]!,
-        transitions: [
-          { to: "climb", when: [{ kind: "boundary" }, CLEAR] },
-          { to: "pursuit", when: [{ kind: "boundary" }] },
-        ],
-      },
-    };
-  };
+  type Kind = BehaviourCondition["kind"];
+  // Kiwi's plan without the named counter conditions, negated or not; a transition left with
+  // no conditions is dropped.
+  const without = (...kinds: readonly Kind[]): BehaviourPlan["states"] =>
+    Object.fromEntries(
+      Object.entries(RACCOON_BEHAVIOUR.states).map(([key, node]) => [
+        key,
+        {
+          ...node,
+          transitions: node.transitions.flatMap((transition) => {
+            const when = transition.when.filter(
+              (condition) =>
+                !kinds.includes(
+                  condition.kind === "not" ? condition.condition.kind : condition.kind,
+                ),
+            );
+            return when.length > 0 ? [{ ...transition, when }] : [];
+          }),
+        },
+      ]),
+    );
   // Kiwi's yard with a one-tile slab two tiles above her head. Each attempt starts in
   // pursuit-drop, so her first decision is whether to climb.
-  function layout(edit?: Edit): ZoneLayout {
+  function layout(states: BehaviourPlan["states"]): ZoneLayout {
     const kiwi = CHUNK_LIBRARY.chunks[CHUNK]!.objects.find(
       ({ character }) => character === "raccoon-antagonist",
     )!;
@@ -142,8 +129,11 @@ describe("Kiwi under a low ceiling", () => {
       rows: 1,
     };
     const base = chunkLayout("city-outskirts", CHUNK, withInstances(CHUNK, [ceiling]));
-    const plan = { ...RACCOON_BEHAVIOUR, initial: "pursuit-drop" };
-    const behaviour = layoutBehaviour(TILE, { ...plan, states: edit?.(plan) ?? plan.states });
+    const behaviour = layoutBehaviour(TILE, {
+      ...RACCOON_BEHAVIOUR,
+      initial: "pursuit-drop",
+      states,
+    });
     const main = base.areas.main!;
     const objects = main.objects.map((object) =>
       object.character === "raccoon-antagonist" ? { ...object, behaviour } : object,
@@ -151,14 +141,27 @@ describe("Kiwi under a low ceiling", () => {
     return { ...base, areas: { ...base.areas, main: { ...main, objects } } };
   }
 
+  // Chibi stands at the entry, out of line with Kiwi, so the alignment guard alone would keep
+  // her from climbing; the variants without it exercise the ceiling.
   it.each([
-    { climbs: true, edit: undefined, name: "current graph", stalls: true },
-    { climbs: true, edit: blockedExit, name: "blocked exit", stalls: false },
-    { climbs: false, edit: guarded, name: "guarded graph", stalls: false },
-  ])("$name: climbs=$climbs, stalls=$stalls", ({ climbs, edit, stalls }) => {
+    {
+      climbs: true,
+      name: "without alignment, the climb guard or the blocked exit",
+      stalls: true,
+      states: without("horizontal-gap", "track-clear", "blocked"),
+    },
+    {
+      climbs: true,
+      name: "without alignment or the climb guard",
+      stalls: false,
+      states: without("horizontal-gap", "track-clear"),
+    },
+    { climbs: false, name: "without alignment", stalls: false, states: without("horizontal-gap") },
+    { climbs: false, name: "data graph", stalls: false, states: RACCOON_BEHAVIOUR.states },
+  ])("$name: climbs=$climbs, stalls=$stalls", ({ climbs, stalls, states }) => {
     const { ticks } = simulateBosses(ORDINARY, {
       controller: () => scriptedChibi(ENCOUNTER_SCRIPTS.still!),
-      layout: () => layout(edit),
+      layout: () => layout(states),
       name: "kiwi low ceiling",
       seed: 1,
       ticks: ENCOUNTER_TICKS,

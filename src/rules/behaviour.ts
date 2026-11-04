@@ -400,7 +400,10 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         if (!plan.states[transition.to] || transition.when.length === 0) {
           throw new Error(`Invalid behaviour transition in ${key}`);
         }
-        const when = transition.when.map((condition): BehaviourCondition => {
+        const resolve = (condition: BehaviourCondition): BehaviourCondition => {
+          if (condition.kind === "not") {
+            return { ...condition, condition: resolve(condition.condition) };
+          }
           if (
             condition.kind === "attack-ready" ||
             condition.kind === "targeted-attack-allowed" ||
@@ -464,8 +467,8 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             : condition.kind !== "elapsed"
               ? { ...condition, tolerance: condition.tolerance * tile }
               : condition;
-        });
-        return { ...transition, when };
+        };
+        return { ...transition, when: transition.when.map(resolve) };
       });
       return [
         key,
@@ -838,6 +841,9 @@ function matches(
       at[axis] ===
       trackEndpoint(object, travelHeading(nodeOf(object, state.stateKey).motion, state), state)
     );
+  }
+  if (condition.kind === "not") {
+    return !matches(perception, object, at, state, condition.condition);
   }
   if (condition.kind === "blocked") {
     const axis = state.axis ?? object.behaviour?.axis ?? "x";

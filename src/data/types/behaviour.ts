@@ -47,6 +47,8 @@ export type BehaviourCondition =
   | { readonly kind: "blocked" }
   // The named track state's travel, entered from here, reaches its endpoint unobstructed.
   | { readonly kind: "track-clear"; readonly state: string }
+  // The inner condition does not hold; its placement rules still apply.
+  | { readonly kind: "not"; readonly condition: BehaviourCondition }
   | {
       readonly kind: "arrived";
       readonly target?: "live" | "intent";
