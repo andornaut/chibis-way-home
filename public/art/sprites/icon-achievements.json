@@ -1,0 +1,22 @@
+{ "frames": {
+   "icon-achievements.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 20, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 20, "h": 20 },
+    "sourceSize": { "w": 20, "h": 20 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.30-x64",
+  "image": "icon-achievements.png",
+  "format": "RGBA8888",
+  "size": { "w": 20, "h": 20 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "rest", "from": 0, "to": 0, "direction": "forward" }
+  ]
+ }
+}

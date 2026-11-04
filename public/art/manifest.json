@@ -181,6 +181,18 @@
       }
     },
     {
+      "key": "icon-achievement",
+      "png": "sprites/icon-achievement.png",
+      "json": "sprites/icon-achievement.json",
+      "once": []
+    },
+    {
+      "key": "icon-achievements",
+      "png": "sprites/icon-achievements.png",
+      "json": "sprites/icon-achievements.json",
+      "once": []
+    },
+    {
       "key": "icon-browser-menu",
       "png": "sprites/icon-browser-menu.png",
       "json": "sprites/icon-browser-menu.json",
