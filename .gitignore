@@ -4,6 +4,7 @@ dist/
 
 # Agent worktrees: full copies of the repository, local only.
 .claude/
+.worktrees/
 
 # Local secrets. None are needed yet; listed so one cannot be committed by accident.
 .dev.vars
