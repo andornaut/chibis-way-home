@@ -506,6 +506,8 @@ export function overheadFlightGoalForRect(
 }
 
 // Prove ascent before lateral travel with the same full-body swept clipping used by flight.
+// The cruise is at the goal's height or, when terrain between blocks it, at the lowest higher
+// altitude that clears that terrain, before descending onto the goal.
 export function overheadFlightRoute(
   world: BehaviourWorld,
   object: ObjectLayout,
@@ -525,28 +527,53 @@ export function overheadFlightRoute(
   ) {
     return undefined;
   }
+  const clear = (points: readonly Point[]) =>
+    points.every((to, index) => {
+      if (index === 0) {
+        return true;
+      }
+      const from = points[index - 1]!;
+      const axis = from.x === to.x ? "y" : "x";
+      const sweep = {
+        height: object.height + Math.abs(to.y - from.y),
+        width: object.width + Math.abs(to.x - from.x),
+        x: Math.min(from.x, to.x),
+        y: Math.min(from.y, to.y),
+      };
+      return (
+        Math.abs(flightAxis(object, world, from, axis, to[axis]) - to[axis]) <= EDGE &&
+        !(world.hazards ?? []).some(
+          ({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect),
+        )
+      );
+    });
   const above = { x: at.x, y: target.y };
-  if (
-    Math.abs(flightAxis(object, world, at, "y", above.y) - above.y) > EDGE ||
-    Math.abs(flightAxis(object, world, above, "x", target.x) - target.x) > EDGE
-  ) {
-    return undefined;
+  if (clear([at, above, target])) {
+    return [above, target];
   }
-  const points = [at, above, target];
-  for (let index = 1; index < points.length; index++) {
-    const from = points[index - 1]!,
-      to = points[index]!;
-    const sweep = {
-      height: object.height + Math.abs(to.y - from.y),
-      width: object.width + Math.abs(to.x - from.x),
-      x: Math.min(from.x, to.x),
-      y: Math.min(from.y, to.y),
-    };
-    if (
-      (world.hazards ?? []).some(({ owner, rect }) => owner !== object && rectsOverlap(sweep, rect))
-    ) {
-      return undefined;
+  const left = Math.min(at.x, target.x);
+  const span = {
+    height: target.y + object.height - bounds.y,
+    width: Math.abs(target.x - at.x) + object.width,
+    x: left,
+    y: bounds.y,
+  };
+  const tops = [
+    ...collisionCandidates(world.solids, span),
+    ...(world.platforms ?? [])
+      .filter(({ collision, owner }) => collision === "solid" && owner !== object)
+      .map(({ rect }) => rect),
+  ]
+    .filter((rect) => rectsOverlap(span, rect))
+    .map((rect) => rect.y - object.height);
+  const altitudes = [...new Set([at.y, ...tops])]
+    .filter((y) => y < target.y - EDGE && y >= bounds.y - EDGE)
+    .sort((a, b) => b - a);
+  for (const y of altitudes) {
+    const route = [{ x: at.x, y }, { x: target.x, y }, target];
+    if (clear([at, ...route])) {
+      return route;
     }
   }
-  return [above, target];
+  return undefined;
 }

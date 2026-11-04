@@ -28,41 +28,11 @@ interface KnownFailure {
 }
 const KNOWN_FAILURES: readonly KnownFailure[] = [
   {
-    cause: "Pebble starts no drop or swoop tell in 1500 ticks of engaged pursuit",
-    property: "covers tell",
-    scenario: "encounter flyer-shelter-early loading-yards still",
-    tick: undefined,
-  },
-  {
-    cause: "Pebble commits no attack in 1500 ticks of engaged pursuit",
-    property: "covers attack",
-    scenario: "encounter flyer-shelter-early loading-yards still",
-    tick: undefined,
-  },
-  {
     cause:
       "Archie stops at the far bank's edge; his traversal search exhausts its budget on the " +
       "12-tile jump to the crumbling ledge, so he never stands on it",
     property: "covers boss-on-crumbling",
     scenario: "crumbling archie far-bank still",
-    tick: undefined,
-  },
-  {
-    cause: "Pebble hovers without support in relocate at (109, 360) after resting",
-    property: "no-stall",
-    scenario: "lift pebble lower-dock board",
-    tick: 415,
-  },
-  {
-    cause: "Pebble starts no drop or swoop tell in 1500 ticks of engaged pursuit",
-    property: "covers tell",
-    scenario: "encounter bounded-flyer-post loading-yards still",
-    tick: undefined,
-  },
-  {
-    cause: "Pebble commits no attack in 1500 ticks of engaged pursuit",
-    property: "covers attack",
-    scenario: "encounter bounded-flyer-post loading-yards still",
     tick: undefined,
   },
 ];
