@@ -45,10 +45,10 @@ if (import.meta.main) {
   run(() =>
     pixel.main(
       {
-        doc: USAGE,
         grounds: [pixel.hex("zone-red"), pixel.hex("slate")],
         hitboxes: HITBOX,
         once: ONCE,
+        usage: USAGE,
       },
       sprites,
     ),

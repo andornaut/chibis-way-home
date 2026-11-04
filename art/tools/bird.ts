@@ -549,5 +549,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 export const ONCE = { bird: ["jump", "land", "death", "dash", "double-jump"] };
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE }, sprites));
+  run(() => pixel.main({ once: ONCE, usage: USAGE }, sprites));
 }

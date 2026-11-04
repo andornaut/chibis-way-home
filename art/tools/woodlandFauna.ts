@@ -197,9 +197,9 @@ if (import.meta.main) {
   run(() =>
     pixel.main(
       {
-        doc: USAGE,
         grounds: [pixel.hex("zone-green"), pixel.hex("forest")],
         once: ONCE,
+        usage: USAGE,
       },
       sprites,
     ),

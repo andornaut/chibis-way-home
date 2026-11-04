@@ -101,10 +101,10 @@ if (import.meta.main) {
   run(() =>
     pixel.main(
       {
-        doc: USAGE,
         grounds: [pixel.hex("zone-peach"), pixel.hex("slate"), pixel.hex("cream")],
         hitboxes: HITBOX,
         once: ONCE,
+        usage: USAGE,
       },
       sprites,
     ),

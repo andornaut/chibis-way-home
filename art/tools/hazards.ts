@@ -249,5 +249,5 @@ const HITBOX: Record<string, pixel.HitboxTuple> = {
 };
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, hitboxes: HITBOX, once: ONCE }, sprites));
+  run(() => pixel.main({ hitboxes: HITBOX, once: ONCE, usage: USAGE }, sprites));
 }

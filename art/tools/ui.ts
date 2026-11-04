@@ -819,5 +819,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE, slices: SLICES }, sprites));
+  run(() => pixel.main({ once: ONCE, slices: SLICES, usage: USAGE }, sprites));
 }

@@ -421,7 +421,7 @@ export async function build(
 
 interface MainOptions extends BuildOptions {
   /** The usage, printed for help and with a usage error. */
-  doc: string;
+  usage: string;
   grounds?: readonly string[];
 }
 
@@ -430,13 +430,13 @@ interface MainOptions extends BuildOptions {
  * Node executable and script, as process.argv.slice(2).
  */
 export async function main(
-  { doc, grounds = DEFAULT_GROUNDS, ...buildOptions }: MainOptions,
+  { grounds = DEFAULT_GROUNDS, usage, ...buildOptions }: MainOptions,
   sprites: () => Iterable<SpriteEntry>,
   argv: readonly string[] = process.argv.slice(2),
 ): Promise<void> {
   await commands(
     {
-      usage: doc,
+      usage,
       build: () => build(buildOptions, [...sprites()]),
       preview: (out) => preview({ out, grounds }, [...sprites()]),
     },

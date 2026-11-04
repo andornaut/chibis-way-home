@@ -351,5 +351,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 }
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE }, sprites));
+  run(() => pixel.main({ once: ONCE, usage: USAGE }, sprites));
 }

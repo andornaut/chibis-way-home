@@ -494,6 +494,9 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 if (import.meta.main) {
   run(() =>
-    pixel.main({ contacts: ["dog-antagonist"], doc: USAGE, hitboxes: HITBOX, once: ONCE }, sprites),
+    pixel.main(
+      { contacts: ["dog-antagonist"], hitboxes: HITBOX, once: ONCE, usage: USAGE },
+      sprites,
+    ),
   );
 }

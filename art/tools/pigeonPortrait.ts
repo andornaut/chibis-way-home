@@ -33,6 +33,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 
 if (import.meta.main) {
   run(() =>
-    pixel.main({ doc: USAGE, grounds: [pixel.hex("dslate"), pixel.hex("lgrey")] }, sprites),
+    pixel.main({ grounds: [pixel.hex("dslate"), pixel.hex("lgrey")], usage: USAGE }, sprites),
   );
 }

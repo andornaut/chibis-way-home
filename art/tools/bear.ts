@@ -214,10 +214,10 @@ if (import.meta.main) {
     pixel.main(
       {
         contacts: [KEY],
-        doc: USAGE,
         grounds: [pixel.hex("zone-green"), pixel.hex("slate")],
         hitboxes: HITBOX,
         once: ONCE,
+        usage: USAGE,
       },
       sprites,
     ),

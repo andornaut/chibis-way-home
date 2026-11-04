@@ -532,5 +532,5 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
 const ONCE = { pigeon: ["flee"], "dog-pug": ["perk"] };
 
 if (import.meta.main) {
-  run(() => pixel.main({ doc: USAGE, once: ONCE }, sprites));
+  run(() => pixel.main({ once: ONCE, usage: USAGE }, sprites));
 }

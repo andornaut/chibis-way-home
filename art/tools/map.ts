@@ -438,10 +438,10 @@ if (import.meta.main) {
   run(() =>
     pixel.main(
       {
-        doc: USAGE,
         grounds: ["c0cbdc", "ead4aa", "5a6988"],
         once: ONCE,
         slices: SLICES,
+        usage: USAGE,
       },
       sprites,
     ),
