@@ -60,7 +60,7 @@ Report observed outcomes separately from unobserved specials, incomplete recover
 | Blue cityscape       | City boundary      | 0:58                |
 | Industrial outskirts | Warehouse district | 1:06                |
 
-The user reports that most stages take about 60 seconds and are faster with powerups. The four recorded clears above total 4:28 and average 1:07; their layout seeds, retry counts, active powerups and timer basis were not recorded. These observations do not establish calibrated successful-attempt active times for all twenty-one stages. Recipe data owns current filled lengths.
+The user reports that most stages take about 60 seconds and are faster with powerups. The four recorded clears above total 4:28 and average 1:07; their layout seeds, retry counts, active powerups and timer basis were not recorded. These observations do not establish calibrated successful-attempt active times for every [route](design.md#v1-route) stage. Recipe data owns current filled lengths.
 
 ## Active obstacle implementation targets
 
