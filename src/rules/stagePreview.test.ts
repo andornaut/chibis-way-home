@@ -18,11 +18,15 @@ describe("deterministic screenshot requests", () => {
   });
   it.each([
     request.replace("&assembly=0", ""),
-    request.replace("seed=42", "seed=-1"),
     request.replace("previewX=800", "previewX=NaN"),
     request.replace("stagePreview=street", "stagePreview=missing"),
   ])("rejects incomplete or invalid screenshot requests: %s", (search) => {
     expect(() => askedStagePreview(keys, search)).toThrow("Invalid stage preview request");
+  });
+  it("reports an out-of-range seed by name", () => {
+    expect(() => askedStagePreview(keys, request.replace("seed=42", "seed=-1"))).toThrow(
+      "Invalid ?seed=-1",
+    );
   });
   it.each([
     {

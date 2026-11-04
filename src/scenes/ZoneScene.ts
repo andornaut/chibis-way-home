@@ -390,7 +390,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   // data.node: the map node to play; without one, the recipe ?zone=<key> names, or else the
-  // opening stage. data.backdrop: the start screen's backdrop instead (holdStill).
+  // opening stage. An unknown ?zone= key or a malformed ?assembly= or ?seed= throws to the crash
+  // screen. data.backdrop: the start screen's backdrop instead (holdStill).
   init(data: ZoneData): void {
     const { search } = window.location;
     this.preview = askedStagePreview(
@@ -407,6 +408,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.mapNode = data.node;
     this.continueVisit = data.continueVisit === true;
     this.trial = askedRecipe(Object.keys(RECIPES), search);
+    // Report a malformed seed now rather than at the first assembly or motion draw.
+    askedSeed("assembly", search);
+    askedSeed("seed", search);
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objectArt = [];
     this.chunkBackdrops.length = 0;
