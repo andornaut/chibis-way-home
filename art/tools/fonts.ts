@@ -19,7 +19,7 @@
  *   node art/tools/fonts.ts preview OUT.png   every face with sample lines, 3x
  */
 
-import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 
 import { rasteriseGlyphs } from "@andornaut/art-kit/fonts";
 import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/glyphAtlas";
@@ -62,6 +62,75 @@ interface Rasterised {
   kernings: Kerning[];
 }
 
+// CLEANUP (added 2026-11-04): replace with art-kit's font coverage API once released, and remove
+// once fonts.ts uses it.
+/**
+ * The code points the font file maps to a glyph other than .notdef, from its Unicode cmap
+ * subtable (format 12, else format 4). Skia substitutes a system font for any other code point.
+ */
+function mappedCodePoints(path: string): Set<number> {
+  const bytes = readFileSync(path);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const u16 = (at: number): number => view.getUint16(at);
+  const u32 = (at: number): number => view.getUint32(at);
+  let cmap = -1;
+  for (let i = 0, record = 12; i < u16(4); i++, record += 16) {
+    if (bytes.toString("latin1", record, record + 4) === "cmap") {
+      cmap = u32(record + 8);
+    }
+  }
+  if (cmap < 0) {
+    throw new Error(`${path} has no cmap table`);
+  }
+  const subtables = Array.from({ length: u16(cmap + 2) }, (_, i) => cmap + 4 + 8 * i).map(
+    (record) => ({ id: `${u16(record)}.${u16(record + 2)}`, at: cmap + u32(record + 4) }),
+  );
+  const find = (format: number, ids: readonly string[]) =>
+    subtables.find(({ at, id }) => ids.includes(id) && u16(at) === format)?.at;
+  const mapped = new Set<number>();
+  const format12 = find(12, ["0.4", "0.6", "3.10"]);
+  if (format12 !== undefined) {
+    for (let i = 0, group = format12 + 16; i < u32(format12 + 12); i++, group += 12) {
+      for (let c = u32(group); c <= u32(group + 4); c++) {
+        if (u32(group + 8) + c - u32(group)) {
+          mapped.add(c);
+        }
+      }
+    }
+    return mapped;
+  }
+  const format4 = find(4, ["0.3", "0.4", "3.1"]);
+  if (format4 === undefined) {
+    throw new Error(`${path} has no Unicode cmap subtable in format 4 or 12`);
+  }
+  const segments = u16(format4 + 6) / 2;
+  const ends = format4 + 14;
+  const starts = ends + 2 * segments + 2;
+  const deltas = starts + 2 * segments;
+  const rangeOffsets = deltas + 2 * segments;
+  for (let s = 0; s < segments; s++) {
+    const [start, end, delta] = [u16(starts + 2 * s), u16(ends + 2 * s), u16(deltas + 2 * s)];
+    const rangeOffset = u16(rangeOffsets + 2 * s);
+    for (let c = start; c <= end && c !== 0xffff; c++) {
+      const index = rangeOffset ? u16(rangeOffsets + 2 * s + rangeOffset + 2 * (c - start)) : c;
+      if (index && (index + delta) & 0xffff) {
+        mapped.add(c);
+      }
+    }
+  }
+  return mapped;
+}
+
+/** Throw unless every CHARS entry was drawn, and from the font file rather than a fallback font. */
+function checkCoverage(path: string, glyphs: ReadonlyMap<string, unknown>): void {
+  const mapped = mappedCodePoints(path);
+  for (const char of CHARS) {
+    if (!glyphs.has(char) || !mapped.has(char.codePointAt(0) as number)) {
+      throw new Error(`No glyph for ${JSON.stringify(char)} in ${path}`);
+    }
+  }
+}
+
 /** Antialiased glyphs, line metrics and every nonzero pair kerning, in CHARS order. */
 function rasterise(size: number, path: string): Rasterised {
   const rasterised = rasteriseGlyphs({
@@ -72,6 +141,7 @@ function rasterise(size: number, path: string): Rasterised {
     path,
     size,
   });
+  checkCoverage(path, rasterised.glyphs);
   const glyphs = new Map<string, Glyph>();
   for (const [char, { image, xadvance, xoffset, yoffset }] of rasterised.glyphs) {
     if (!image) {
