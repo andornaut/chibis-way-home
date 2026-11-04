@@ -28,34 +28,6 @@ interface KnownFailure {
 }
 const KNOWN_FAILURES: readonly KnownFailure[] = [
   {
-    cause:
-      "Trixi holds at the base of the jumpable wall (x 166) in pursuit-trap while Chibi stands at the entry",
-    property: "no-stall",
-    scenario: "encounter city-boundary-climb-yard farmland still",
-    tick: 480,
-  },
-  {
-    cause:
-      "Trixi holds at the base of the jumpable wall (x 166) in pursuit-trap while Chibi stands at the entry",
-    property: "no-stall",
-    scenario: "encounter blue-vertical-city-boundary-climb-yard farmland still",
-    tick: 480,
-  },
-  {
-    cause:
-      "Trixi holds at the base of the jumpable wall (x 166) in pursuit-trap while the bot climbs past",
-    property: "no-stall",
-    scenario: "bot city-boundary-climb-yard farmland seed 5",
-    tick: 496,
-  },
-  {
-    cause:
-      "Fert holds at the base of the underpass wall (x 166) in pursuit-throw while Chibi stands at the entry",
-    property: "no-stall",
-    scenario: "encounter apartment-tall-city-boundary-climb-yard apartment-lobby still",
-    tick: 482,
-  },
-  {
     cause: "Pebble starts no drop or swoop tell in 1500 ticks of engaged pursuit",
     property: "covers tell",
     scenario: "encounter flyer-shelter-early loading-yards still",
@@ -80,14 +52,6 @@ const KNOWN_FAILURES: readonly KnownFailure[] = [
     property: "covers boss-on-crumbling",
     scenario: "crumbling archie far-bank still",
     tick: undefined,
-  },
-  {
-    cause:
-      "Archie's rush stops at the far bank's edge (x 502), his frame 2 px past it; idle recovery " +
-      "and periodic reposition require the whole frame on support, so neither moves him",
-    property: "no-stall",
-    scenario: "crumbling archie far-bank still",
-    tick: 159,
   },
   {
     cause: "Pebble hovers without support in relocate at (109, 360) after resting",

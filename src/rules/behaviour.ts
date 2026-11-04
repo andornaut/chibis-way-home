@@ -63,7 +63,7 @@ import {
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
-import { type FlyLandingState, supportedLanding } from "./flyLanding";
+import { type FlyLandingState, supportContact } from "./flyLanding";
 import { hopLift } from "./motion";
 import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 
@@ -806,7 +806,7 @@ function matches(
       return false;
     }
     if (motion.to === "support") {
-      return supportedLanding(object, world, at);
+      return supportContact(object, world, at);
     }
     if (motion.to === "target-x" && alignmentBlocked(perception, object, at, state)) {
       return false;
@@ -1186,7 +1186,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     node.motion.kind === "wait" &&
     flyGateway &&
     !next.hop &&
-    !supportedLanding(object, world, current)
+    !supportContact(object, world, current)
   ) {
     next = enterState(perception, object, current, flyGateway, next);
     node = nodeOf(object, next.stateKey);
@@ -1200,7 +1200,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     (!next.traversal || next.traversal.physical.grounded) &&
     (node.motion.kind !== "pursue" ||
       node.motion.mode !== "fly" ||
-      supportedLanding(object, world, current))
+      supportContact(object, world, current))
   ) {
     next = enterState(perception, object, current, plan.initial, {
       ...next,
@@ -1390,7 +1390,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       intentPause =
         (next.intent?.pauseRemainingSeconds ?? 0) > 0 &&
         (node.motion.mode === "ground"
-          ? supportedLanding(object, world, current) &&
+          ? supportContact(object, world, current) &&
             !next.traversal?.preparation &&
             (!next.traversal || next.traversal.physical.grounded)
           : safeIntentHover(world, seconds - time, object, current));

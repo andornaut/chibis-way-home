@@ -11,7 +11,7 @@ import type {
 } from "../data/types";
 import { contactBox, nodeOf } from "../rules/behaviourTrack";
 import { birdBox, EDGE } from "../rules/bird";
-import { supportedLanding } from "../rules/flyLanding";
+import { supportContact } from "../rules/flyLanding";
 import { STEP_SECONDS } from "../rules/step";
 import {
   activateBehaviour,
@@ -117,7 +117,7 @@ export function bossSample(
         motion: motion.kind === "pursue" ? `pursue-${motion.mode}` : motion.kind,
         ...(state.pursuit && { pursuit: state.pursuit.phase }),
         state: state.stateKey,
-        supported: supportedLanding(object, world, at),
+        supported: supportContact(object, world, at),
         width: object.width,
       },
     ];

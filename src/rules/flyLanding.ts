@@ -24,6 +24,64 @@ function obstacles(object: ObjectLayout, world: BehaviourWorld, body: Rect): rea
   return [...collisionCandidates(world.solids, body), ...movingObstacles(object, world)];
 }
 
+// The hitbox's horizontal span for either facing, relative to the frame origin.
+function feet(object: ObjectLayout): readonly [number, number] {
+  const box = object.hitbox;
+  if (!box) {
+    return [0, object.width];
+  }
+  return [
+    Math.max(box.x, object.width - box.x - box.width),
+    Math.min(box.x + box.width, object.width - box.x),
+  ];
+}
+
+function contacts(object: ObjectLayout, at: Point, rect: Rect): number {
+  const [left, right] = feet(object);
+  return Math.abs(at.y + object.height - rect.y) <= EDGE
+    ? Math.min(at.x + right, rect.x + rect.width) - Math.max(at.x + left, rect.x)
+    : 0;
+}
+
+// Whether the body overlaps terrain, another object's solid platform or a hazard.
+function blocked(object: ObjectLayout, world: BehaviourWorld, body: Rect): boolean {
+  for (const rect of collisionCandidates(world.solids, body)) {
+    if (rectsOverlap(body, rect)) {
+      return true;
+    }
+  }
+  for (const { collision, owner, rect } of world.platforms ?? []) {
+    if (collision === "solid" && owner !== object && rectsOverlap(body, rect)) {
+      return true;
+    }
+  }
+  for (const { owner, rect } of world.hazards ?? []) {
+    if (owner !== object && rectsOverlap(body, rect)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Ordinary support contact: a clear body whose feet rest on a support top under part of its
+// hitbox. Destinations use supportedLanding, which needs the whole frame on one support.
+export function supportContact(object: ObjectLayout, world: BehaviourWorld, at: Point): boolean {
+  if (blocked(object, world, { ...at, height: object.height, width: object.width })) {
+    return false;
+  }
+  for (const rect of world.solids) {
+    if (contacts(object, at, rect) > EDGE) {
+      return true;
+    }
+  }
+  for (const { owner, rect } of world.platforms ?? []) {
+    if (owner !== object && contacts(object, at, rect) > EDGE) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function fitsOn(object: ObjectLayout, at: Point, rect: Rect): boolean {
   return (
     Math.abs(at.y + object.height - rect.y) <= EDGE &&
@@ -35,29 +93,15 @@ function fitsOn(object: ObjectLayout, at: Point, rect: Rect): boolean {
 // The body is clear of terrain, other objects' solid platforms and hazards, and rests on
 // terrain or another object's platform.
 export function supportedLanding(object: ObjectLayout, world: BehaviourWorld, at: Point): boolean {
-  const body = { ...at, height: object.height, width: object.width };
-  for (const rect of collisionCandidates(world.solids, body)) {
-    if (rectsOverlap(body, rect)) {
-      return false;
-    }
-  }
-  const platforms = world.platforms ?? [];
-  for (const { collision, owner, rect } of platforms) {
-    if (collision === "solid" && owner !== object && rectsOverlap(body, rect)) {
-      return false;
-    }
-  }
-  for (const { owner, rect } of world.hazards ?? []) {
-    if (owner !== object && rectsOverlap(body, rect)) {
-      return false;
-    }
+  if (blocked(object, world, { ...at, height: object.height, width: object.width })) {
+    return false;
   }
   for (const rect of world.solids) {
     if (fitsOn(object, at, rect)) {
       return true;
     }
   }
-  for (const { owner, rect } of platforms) {
+  for (const { owner, rect } of world.platforms ?? []) {
     if (owner !== object && fitsOn(object, at, rect)) {
       return true;
     }
@@ -213,7 +257,7 @@ export function proveFlyLanding(
   at: Point,
   state: FlyLandingState,
 ): { readonly points?: readonly Point[]; readonly state: FlyLandingState } {
-  if (supportedLanding(object, world, at)) {
+  if (supportContact(object, world, at)) {
     return { state: { speed: state.speed, status: "supported" } };
   }
   const pending = state.pending;
@@ -351,17 +395,28 @@ export function landingSupport(
   world: BehaviourWorld,
   at: Point,
 ): FlyLandingState["support"] {
-  if (!supportedLanding(object, world, at)) {
+  if (!supportContact(object, world, at)) {
     return undefined;
   }
-  const fits = (rect: Rect) =>
-    Math.abs(at.y + object.height - rect.y) <= EDGE &&
-    at.x >= rect.x - EDGE &&
-    at.x + object.width <= rect.x + rect.width + EDGE;
-  const platform = world.platforms?.find(({ owner, rect }) => owner !== object && fits(rect));
-  const rect = platform?.rect ?? world.solids.find(fits);
-  return rect
-    ? { ...(platform && { owner: platform.owner }), localX: at.x - rect.x, rect }
+  // The support under most of the hitbox carries the body; a platform wins a tie.
+  let best: { owner?: ObjectLayout; rect: Rect } | undefined;
+  let most = EDGE;
+  for (const { owner, rect } of (world.platforms ?? []).filter(({ owner }) => owner !== object)) {
+    const contact = contacts(object, at, rect);
+    if (contact > most) {
+      best = { owner, rect };
+      most = contact;
+    }
+  }
+  for (const rect of world.solids) {
+    const contact = contacts(object, at, rect);
+    if (contact > most) {
+      best = { rect };
+      most = contact;
+    }
+  }
+  return best
+    ? { ...(best.owner && { owner: best.owner }), localX: at.x - best.rect.x, rect: best.rect }
     : undefined;
 }
 
@@ -384,7 +439,7 @@ export function carryLandingSupport(
   const platforms = sampledPlatforms(world, offset, seconds);
   const beforeWorld = landingWorldAt(world, offset);
   const failure = { at, points: [], supported: false } as const;
-  if (!beforeWorld || !supportedLanding(object, beforeWorld, at)) {
+  if (!beforeWorld || !supportContact(object, beforeWorld, at)) {
     return failure;
   }
   if (!support.owner) {
@@ -433,7 +488,7 @@ export function carryLandingSupport(
     };
     if (
       obstacles(object, withoutCarrier, sweep).some((rect) => rectsOverlap(sweep, rect)) ||
-      !supportedLanding(object, snapshot, target)
+      !supportContact(object, snapshot, target)
     ) {
       return { at: current, points, supported: false };
     }

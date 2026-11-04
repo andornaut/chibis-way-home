@@ -24,7 +24,7 @@ import {
   type TraversalSupport,
 } from "./behaviourTraversal";
 import { EDGE } from "./bird";
-import { flyLandingPath, flyLandingRoute, supportedLanding } from "./flyLanding";
+import { flyLandingPath, flyLandingRoute, supportContact, supportedLanding } from "./flyLanding";
 
 type PursuitMotion = Extract<BehaviourMotion, { kind: "pursue" }>;
 type IdleStatus = TraversalResult<TraversalSupport>["status"] | "invalidated";
@@ -319,7 +319,7 @@ export function advanceSupportedRecovery(
     let target = recovery.target;
     let path = flyLandingPath(object, world, at, target);
     if (!path) {
-      if (supportedLanding(object, world, at)) {
+      if (supportContact(object, world, at)) {
         return {
           at,
           finished: true,
@@ -368,9 +368,9 @@ export function advanceSupportedRecovery(
     }
     return {
       at: current,
-      finished: finished && supportedLanding(object, world, current),
+      finished: finished && supportContact(object, world, current),
       idle:
-        finished && supportedLanding(object, world, current)
+        finished && supportContact(object, world, current)
           ? clear(
               Math.abs(current.x - recovery.origin.x) >= config.minMovement
                 ? "found"
@@ -419,7 +419,7 @@ export function advanceSupportedRecovery(
     box.y >= goal.y - EDGE &&
     box.y + box.height <= goal.y + goal.height + EDGE;
   const exhausted = traversal.inputs.length === 0 && physical.grounded && !traversal.preparation;
-  const finished = (reached || exhausted) && supportedLanding(object, world, physical);
+  const finished = (reached || exhausted) && supportContact(object, world, physical);
   const status = reached
     ? "found"
     : traversal.status === "found"

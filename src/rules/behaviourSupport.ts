@@ -8,7 +8,7 @@ import {
   landingSupport,
   landingWorldAt,
   proveFlyLanding,
-  supportedLanding,
+  supportContact,
 } from "./flyLanding";
 
 export interface BehaviourSupport {
@@ -39,7 +39,7 @@ export function prepareSupport(
   let next = state;
   let supported =
     supportWorld !== undefined &&
-    supportedLanding(object, supportWorld, current) &&
+    supportContact(object, supportWorld, current) &&
     (motion.kind !== "wait" || next.landing !== undefined);
   let landingTarget: Point | undefined;
   if (motion.kind === "fly" && motion.to === "support" && motion.selection) {

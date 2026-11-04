@@ -17,7 +17,7 @@ import type { BehaviourPerception } from "./behaviourPerception";
 import type { BehaviourWorld } from "./behaviourReach";
 import { nodeOf } from "./behaviourTrack";
 import type { BehaviourTraversalState } from "./behaviourTraversal";
-import { supportedLanding } from "./flyLanding";
+import { supportContact } from "./flyLanding";
 
 export type BehaviourRecoveryParams =
   { readonly kind: "idle-recovery" } | { readonly kind: "periodic-reposition" };
@@ -81,7 +81,7 @@ export function idleReady(
     !node.onEnter?.length &&
     !state.hop &&
     (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
-    (supportedLanding(object, world, at) || flyingHover) &&
+    (supportContact(object, world, at) || flyingHover) &&
     idle.seconds >= watchdog.seconds &&
     (idle.attemptedAt === undefined || idle.seconds - idle.attemptedAt >= watchdog.seconds)
   );
@@ -168,7 +168,7 @@ const PERIODIC_REPOSITION: RecoveryAbility<"periodic-reposition"> = {
       !state.hop &&
       !state.idleWatchdog?.recovery &&
       (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
-      supportedLanding(object, world, at);
+      supportContact(object, world, at);
     const firstTransition =
       !prior.recovery &&
       eligible &&
