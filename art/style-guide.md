@@ -256,7 +256,7 @@ The runtime opening uses four single-shot beats on a plain `ink` field. Each sho
 
 Map travel reuses the existing `bird` sprite's looping `walk` tag, four 130ms frames on the 48x42 canvas, with bottom-centre anchor 24,42. Direction uses horizontal mirroring, and a stopped bird can return to `idle`. No separate map character artwork is required.
 
-## Furt
+## Fert
 
 Furt is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.ts` draws it; its header comment gives every frame's pose and timing.
 
