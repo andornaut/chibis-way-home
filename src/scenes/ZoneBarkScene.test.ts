@@ -1,9 +1,12 @@
 import { EventEmitter } from "node:events";
 
-import { expect, it, vi } from "vitest";
+import { expect, it, onTestFinished, vi } from "vitest";
 
-import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS } from "../data/dialogues";
+import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
+import { STAGE_BARKS } from "../data/stageBarks";
+import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
+import type { DialogueLine } from "../data/types";
 import { barkOwnerOnscreen } from "../presentation";
 import { DIALOGUE_SCREEN, dialogueParagraphs } from "../ui";
 
@@ -266,24 +269,35 @@ it("marks a deferred scheduled line heard only when its actual owner can be pres
   expect(offer).toHaveBeenCalledOnce();
 });
 
-it("leaves unowned scheduled voice unheard instead of inventing a speaking actor", () => {
+it("shows an ownerless journey bark as Fert's offscreen voice and marks it heard", async () => {
+  const { dialogueParagraphs: paragraphs } = await vi.importActual<
+    typeof import("../ui/dialogue/conversation")
+  >("../ui/dialogue/conversation");
+  vi.mocked(dialogueParagraphs).mockImplementation(paragraphs);
+  onTestFinished(() => {
+    vi.mocked(dialogueParagraphs).mockReset();
+  });
   const scene = new ZoneBarkScene();
-  scene.init({ canPresent: () => true, ownerVisible: () => true });
+  scene.init({ canPresent: () => true, ownerVisible: () => false });
   scene.create();
-  const line = { line: "voice", speaker: "speaker" };
-  const run = createStageBarks({ stage: [{ atProgress: 0.5, id: "voice", line }] }, "stage");
+  const [stage] = Object.keys(STAGE_BARKS);
+  const run = createStageBarks(STAGE_BARKS, stage!);
   const started = vi.fn();
-  const offer = vi.fn((onStart: () => void, entry: typeof line) =>
+  const offer = (onStart: () => void, line: DialogueLine) =>
     scene.offer(() => {
       started();
       onStart();
-    }, entry),
-  );
-  expect(run.offer(offer, 0.5)).toBe(false);
-  scene.update(0, BARK_DURATION_SECONDS * 2000);
-  expect(run.offer(offer, 0.5)).toBe(false);
-  expect(offer).toHaveBeenCalledTimes(2);
-  expect(started).not.toHaveBeenCalled();
+    }, line);
+  expect(run.offer(offer, 1)).toBe(true);
+  scene.update(0, 0);
+  expect(started).toHaveBeenCalledOnce();
+  expect(vi.mocked(drawDialogueParagraph).mock.lastCall?.[1]).toMatchObject({
+    name: TEXT.dialogue.speakers.ferret,
+    portrait: SPEAKERS.ferret!.portrait,
+  });
+  scene.events.emit("prerender");
+  expect(scene.idle()).toBe(false);
+  scene.update(0, BARK_DURATION_SECONDS * 1000);
   expect(scene.idle()).toBe(true);
 });
 

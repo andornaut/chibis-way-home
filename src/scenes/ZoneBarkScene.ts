@@ -20,11 +20,12 @@ import { fitPlayCamera, playPoint } from "./playCamera";
 interface Bark {
   readonly line: DialogueLine;
   readonly onStart?: () => void;
-  readonly owner: ZoneBark["owner"];
+  readonly owner?: ZoneBark["owner"] | undefined;
   readonly scheduled: boolean;
 }
 
 // Notices stay below every modal; only the current panel consumes a fresh dismissal tap.
+// A bark without an owner is an offscreen voice: no world actor gates or dismisses it.
 export class ZoneBarkScene extends Scene {
   private queue: Bark[] = [];
   private canPresent = () => false;
@@ -75,8 +76,12 @@ export class ZoneBarkScene extends Scene {
     this.clearCurrent();
   }
 
+  private presentable(bark: Bark): boolean {
+    return bark.owner === undefined || this.ownerVisible(bark.owner);
+  }
+
   private validateOwner(): void {
-    if (this.current && !this.ownerVisible(this.current.owner)) {
+    if (this.current && !this.presentable(this.current)) {
       this.clearCurrent();
     }
   }
@@ -99,7 +104,7 @@ export class ZoneBarkScene extends Scene {
         this.press ||
         !this.art.length ||
         !this.current ||
-        !this.ownerVisible(this.current.owner) ||
+        !this.presentable(this.current) ||
         !this.canPresent() ||
         !containsPoint(DIALOGUE_SCREEN.box, at.x, at.y)
       ) {
@@ -125,7 +130,7 @@ export class ZoneBarkScene extends Scene {
         !outside &&
         this.canPresent() &&
         this.current !== undefined &&
-        this.ownerVisible(this.current.owner) &&
+        this.presentable(this.current) &&
         dialogueTapAction(controls, TOUCH.tapMaxDistance, press, {
           ...playPoint(this, pointer),
           id: pointer.id,
@@ -153,16 +158,16 @@ export class ZoneBarkScene extends Scene {
   }
 
   offer(onStart: () => void, line: DialogueLine, owner?: ZoneBark["owner"]): boolean {
+    const bark = { line, onStart, owner, scheduled: true };
     if (
-      !owner ||
       this.art.length > 0 ||
-      this.queue.some((bark) => this.ownerVisible(bark.owner)) ||
+      this.queue.some((queued) => this.presentable(queued)) ||
       !this.canPresent() ||
-      !this.ownerVisible(owner)
+      !this.presentable(bark)
     ) {
       return false;
     }
-    this.queue.push({ line, onStart, owner, scheduled: true });
+    this.queue.push(bark);
     return true;
   }
 
@@ -178,7 +183,7 @@ export class ZoneBarkScene extends Scene {
       }
       this.clearCurrent();
     }
-    const index = this.queue.findIndex((bark) => this.ownerVisible(bark.owner));
+    const index = this.queue.findIndex((bark) => this.presentable(bark));
     if (index < 0) {
       return;
     }
