@@ -19,6 +19,13 @@ Chibi's Way Home artwork, drawing pipeline and remaining art work. The [style gu
 
 Generators are TypeScript on [art-kit](https://github.com/andornaut/art-kit)'s public API and run with Node's native type stripping, from the repository root: `node art/tools/<tool>.ts <command>`, for example `node art/tools/palette.ts build` or `node art/tools/fonts.ts preview OUT.png`. Run them in the plain `node:24.21.0` isolated container described in [Developing](../README.md#developing). Asset and font licences remain unchanged.
 
+To bring generator output back to the checkout, run that container from the repository root with every earlier step's stdout sent to stderr (`>&2`), end its command with the archive below, which leaves the protected `art/opening/source/` out, and pipe it into `tar -xf -` on the host:
+
+```sh
+  && node art/tools/<tool>.ts build >&2 \
+  && tar -C /tmp/work --exclude=art/opening/source -cf - public/art art/opening' | tar -xf -
+```
+
 - Author raster assets through generators: `art/tools/<set>.ts`, each with `build` and `preview OUT.png` commands.
 - art-kit provides drawing, outline, frame composition, sprite-sheet and font mechanisms. Local `art/tools/pixel.ts` and `fonts.ts` adapters retain the game palette and ramps, glyph selection, paths, manifest and contact metadata. `cli.ts` is the shared command-line entry, `imageArt.ts` the shared image helpers and `previewText.ts` draws preview labels in the committed body font.
 - A build writes each sprite directly as a PNG sheet plus Phaser json-hash data, with frame tags for animations and slices for nine-slice margins, to `public/art/sprites/<key>.png` and `.json`. Frame names are `<key> N.aseprite`, or `<key>.aseprite` for a single frame.
