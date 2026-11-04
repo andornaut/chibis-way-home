@@ -24,6 +24,7 @@ import {
   startBehaviour,
   sweptContact,
 } from "./behaviour";
+import { behaviourEffect } from "./behaviourEffects";
 import { perceiveBehaviour } from "./behaviourPerception";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import {
@@ -1028,25 +1029,11 @@ export function stepZone(
   const spawns: SpawnEvent[] = [];
   objects.forEach(({ behaviour, object }, emitter) => {
     for (const event of behaviour?.actions ?? []) {
-      const action = event.action;
-      if (action.kind === "force-pulse") {
-        pulses.push({
-          id: nextPulseId++,
-          ...(action.visual && { visual: { ...action.visual, actor: object, at: event.at } }),
-          facing: event.facing,
-          height: action.height,
-          range: action.range,
-          remaining: action.seconds,
-          source: contactBox(object, event.at, event.facing, event.axis),
-          start: event.time,
-          velocity: action.velocity,
-        });
+      const effect = behaviourEffect({ emitter, object }, event);
+      if (effect.kind === "pulse") {
+        pulses.push({ id: nextPulseId++, ...effect.pulse });
       } else {
-        const template = object.spawnTemplates?.[action.character];
-        if (!template) {
-          throw new Error(`No spawn template ${action.character}`);
-        }
-        spawns.push({ ...event, emitter, emitterWidth: object.width, template });
+        spawns.push(effect.spawn);
       }
     }
   });
