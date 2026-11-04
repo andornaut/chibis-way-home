@@ -20,7 +20,9 @@
  * - zone-<zone>: the zone's emblem (EMBLEMS) in its zone primary and shade, outlined ink, with ink
  *   and dslate details. Fence gaps and apartment windows are transparent, so they hold when locked.
  * - spotless-<zone>: the same emblem, one row lower, with a 7x7 yellow sparkle at the upper left
- *   and a 5x5 one at the upper right.
+ *   and a 5x5 one at the upper right. The apartment, whose cornice fills the top, sits four rows
+ *   lower than its zone icon (its door and foot run off the frame) and takes the 5x5 sparkle at both
+ *   corners, so the cornice stays whole.
  * - all-gifts: a red gift box with a yellow ribbon and bow.
  * - just-a-bird: Chibi, cream with an orange bill, facing a small zone-peach house.
  * An overlaid part (arrow, laurel, sparkle, house) knocks a 1px transparent gap out of what it
@@ -493,8 +495,12 @@ function unlocked(art: Art): pixel.Frame {
     const e = partFrame(emblem(art[1]));
     if (art[0] === "zone") place(centred(e, 15), e, f);
     else {
-      place(centred(e, 16), e, f);
-      place({ knock: true, x: 0, y: 0 }, partFrame(SPARKLE), f);
+      // The apartment fills the top with its cornice, so it sits three rows lower than the others
+      // (its door and foot run off the frame) and its upper-left sparkle shrinks to the small one.
+      const tall = art[1] === "apartment-building";
+      place(centred(e, tall ? 19 : 16), e, f);
+      if (tall) place({ knock: true, x: 0, y: 0 }, partFrame(SMALL_SPARKLE), f);
+      else place({ knock: true, x: 0, y: 0 }, partFrame(SPARKLE), f);
       place({ knock: true, x: 11, y: 0 }, partFrame(SMALL_SPARKLE), f);
     }
   } else if (art[0] === "all-gifts") {
