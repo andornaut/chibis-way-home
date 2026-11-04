@@ -8,7 +8,7 @@ import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling";
 import type { Tileset } from "../stage";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 
 import { ZoneScene } from "./ZoneScene";
 

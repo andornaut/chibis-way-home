@@ -9,19 +9,20 @@ import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
 import { RECIPES, ZONES } from "../data/zones";
-import { stagePickerKey } from "../input/stageSelectInput";
-import { cardTextOrigin } from "../layout/contentCard";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import {
-  STAGE_NUMBER_SCALE,
-  stagePageOf,
-  STAGES_PER_PAGE,
-  stageSelectPages,
-} from "../layout/stageSelectCard";
-import { textInkBounds } from "../layout/textInk";
 import { openMap } from "../rules/map";
 import { destinationOf, destinationSelection } from "../rules/mapDestinations";
 import { savedMap } from "../save";
+import {
+  cardTextOrigin,
+  type PressArea,
+  pressedArea,
+  STAGE_NUMBER_SCALE,
+  stagePageOf,
+  stagePickerKey,
+  STAGES_PER_PAGE,
+  stageSelectPages,
+  textInkBounds,
+} from "../ui";
 import {
   addCardText,
   addCardTextIn,

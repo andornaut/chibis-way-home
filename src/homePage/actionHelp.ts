@@ -1,8 +1,6 @@
 import palette from "../../public/art/palette.json";
 import type { ControlAction } from "../data/types";
-import { ACTION_HELP } from "../layout/actionHelp";
-import { actionHelpParts } from "../view/actionHelp";
-import { helpChromeSvg } from "../view/helpChrome";
+import { ACTION_HELP, actionHelpParts, helpChromeSvg } from "../ui";
 
 export const escaped = (value: string) =>
   value

@@ -4,13 +4,6 @@ import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
 import type { Rect } from "../data/types";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import {
-  type IconButtonLayout,
-  type StartScreenLayout,
-  startScreenLayout,
-} from "../layout/startScreen";
-import { startBackAction } from "../pause/cardInput";
 import {
   beginStartUpdateVisit,
   coverZone,
@@ -20,8 +13,18 @@ import {
 } from "../pwa";
 import { openingDestination } from "../rules/opening";
 import { savedProgress } from "../save";
-import { setTouchSettingShown, type TouchSetting } from "../settings/touchControls";
-import { focusKeyAction, stepFocus } from "../ui";
+import {
+  focusKeyAction,
+  type IconButtonLayout,
+  type PressArea,
+  pressedArea,
+  setTouchSettingShown,
+  startBackAction,
+  type StartScreenLayout,
+  startScreenLayout,
+  stepFocus,
+  type TouchSetting,
+} from "../ui";
 import {
   addSlice,
   addTextButton,

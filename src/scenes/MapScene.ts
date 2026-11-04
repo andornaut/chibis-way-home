@@ -12,18 +12,6 @@ import { TILE } from "../data/screen";
 import { TEXT } from "../data/text";
 import type { MapDestination, Point, Rect } from "../data/types";
 import { RECIPES, ZONES } from "../data/zones";
-import { MAP_ACTIONS, type MapAction, mapKeyAction } from "../input/mapInput";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import {
-  MAP_LABEL_PADDING,
-  MAP_LABEL_WIDTH,
-  MAP_PATH,
-  MAP_PATH_LOOKS,
-  MAP_SCREEN,
-  mapLabel,
-  type PathLook,
-} from "../layout/mapScreen";
-import { textInkBounds } from "../layout/textInk";
 import { PHONE_EVENTS } from "../pwa";
 import { type OpenMap, openMap } from "../rules/map";
 import {
@@ -36,12 +24,27 @@ import {
 import { stageCompletion } from "../rules/stageCompletion";
 import { savedMap, saveStand } from "../save";
 import {
+  bentCurve,
+  curveWalk,
   destinationAtTap,
   destinationCentre,
   destinationPathLook,
   destinationState,
-} from "../view/mapDestinations";
-import { bentCurve, curveWalk, pathRects } from "../view/mapPath";
+  MAP_ACTIONS,
+  MAP_LABEL_PADDING,
+  MAP_LABEL_WIDTH,
+  MAP_PATH,
+  MAP_PATH_LOOKS,
+  MAP_SCREEN,
+  type MapAction,
+  mapKeyAction,
+  mapLabel,
+  type PathLook,
+  pathRects,
+  type PressArea,
+  pressedArea,
+  textInkBounds,
+} from "../ui";
 import {
   addTextButton,
   captureTab,

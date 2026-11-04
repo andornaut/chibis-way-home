@@ -6,8 +6,13 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import type { GameObjects, Scene } from "phaser";
 
-import { dialogueLines, type DialogueParagraph } from "../dialogue/conversation";
-import { DIALOGUE_SCREEN, dialogueNameTab, dialogueSpeakerLayout } from "../layout/dialogueScreen";
+import {
+  DIALOGUE_SCREEN,
+  dialogueLines,
+  dialogueNameTab,
+  type DialogueParagraph,
+  dialogueSpeakerLayout,
+} from "../ui";
 import {
   addCardText,
   addCardTextIn,

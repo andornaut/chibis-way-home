@@ -1,7 +1,7 @@
 import { mountModalBackdrop } from "@andornaut/game-kit/view/phaser/modalBackdrop";
 import { type GameObjects, type Scene, Scenes } from "phaser";
 
-import { modalColour } from "../view/modalDim";
+import { modalColour } from "../ui";
 import { palette, paletteColour } from "./cardParts";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera } from "./playCamera";

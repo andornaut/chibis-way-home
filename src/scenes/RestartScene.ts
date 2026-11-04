@@ -1,10 +1,8 @@
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { restartCard } from "../layout/restartCard";
 import { clearProgress, resetWholeRunStats } from "../save";
-import { focusKeyAction, stepFocus } from "../ui";
+import { focusKeyAction, type PressArea, pressedArea, restartCard, stepFocus } from "../ui";
 import {
   addCardTextIn,
   addSlice,

@@ -4,14 +4,21 @@ import { type GameObjects, type Input, Scene } from "phaser";
 import { SCREEN } from "../data/screen";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
-import { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "../input/deathInput";
-import { deathCard } from "../layout/deathCard";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { RUN_STAT_KEYS, statsTotalRows, type StatsTotalsSnapshot } from "../layout/runStats";
 import { type DeathSummary, deathSummary } from "../presentation";
 import { formatRunStats } from "../save/runSummary";
 import type { RunStatsSummary } from "../save/stats";
-import { statsStatement } from "../view/statsStatement";
+import {
+  DEATH_ACTIONS,
+  type DeathAction,
+  deathCard,
+  deathKeyAction,
+  type PressArea,
+  pressedArea,
+  RUN_STAT_KEYS,
+  statsStatement,
+  statsTotalRows,
+  type StatsTotalsSnapshot,
+} from "../ui";
 import {
   addCardTextIn,
   addSlice,

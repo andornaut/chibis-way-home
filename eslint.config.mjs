@@ -75,40 +75,24 @@ const CONTEXTS = {
     "stage/index",
   ],
   dev: ["data", "rules"],
-  dialogue: ["data", "layout/dialogueScreen", "layout/hitAreas", "ui"],
   gallery: ["assets"],
   headers: [],
-  homePage: ["data", "layout", "rules", "view"],
-  input: ["data", "layout", "ui"],
-  layout: [
-    "data",
-    "dialogue",
-    "input/intent",
-    "input/mapInput",
-    "rules",
-    "save",
-    "presentation/index",
-    "view/actionHelp",
-    "view/mapDestinations",
-    "view/mapPath",
-    "view/statsStatement",
-  ],
-  loading: ["data", "layout", "presentation"],
-  pause: ["ui"],
+  homePage: ["data", "rules", "ui"],
+  loading: ["data", "presentation", "ui"],
   presentation: ["assets", "camera", "core", "data", "rules", "stage"],
-  pwa: ["assets", "loading", "view"],
+  pwa: ["assets", "loading", "ui"],
   rules: [
     "ai",
     "assets/index",
     "camera",
     "core",
     "data",
-    "dialogue/conversation",
     "presentation/index",
     "save/progress",
     "sim/behaviourBounds",
     "sim/zoneWalk",
     "stage",
+    "ui/index",
     "view/behaviour",
     "view/bird",
   ],
@@ -119,32 +103,33 @@ const CONTEXTS = {
     "data",
     "dev/mode",
     "dev/step",
-    "dialogue",
-    "input",
-    "layout",
     "loading",
-    "pause",
     "presentation",
     "pwa",
     "rules",
     "save",
-    "settings",
     "stage",
     "ui",
-    "view",
   ],
-  settings: [],
   sim: ["ai", "assets", "core", "data", "presentation", "rules", "stage"],
   stage: ["data"],
   tools: ["assets", "data", "headers", "homePage", "loading", "pwa"],
   tuningPage: ["data", "gallery"],
-  ui: [],
-  view: ["assets", "data", "dialogue", "input", "layout", "presentation", "rules"],
+  ui: ["data", "presentation/index", "rules", "save"],
+  view: ["assets", "presentation"],
 };
 
 // The components whose files outside them may import only their index.ts, so the index is the
-// component's whole contract.
-const INDEXED = ["assets", "camera", "core", "presentation", "stage", "ui"];
+// component's whole contract, and the modules besides it that each also exposes.
+const INDEXED = {
+  assets: [],
+  camera: [],
+  core: [],
+  presentation: [],
+  stage: [],
+  // The page's frame watcher starts on load, so importing the index has no side effects.
+  ui: ["./input/frameTurn.ts"],
+};
 
 // CLEANUP (added 2026-11-04): the boss behaviour and timed hazard modules import each other's
 // values. Remove this exemption once the timedHazard/behaviour cycle is broken.
@@ -279,8 +264,8 @@ export default defineConfig(
       "import-x/no-restricted-paths": [
         "error",
         {
-          zones: INDEXED.map((component) => ({
-            except: ["./index.ts"],
+          zones: Object.entries(INDEXED).map(([component, exposed]) => ({
+            except: ["./index.ts", ...exposed],
             from: `./src/${component}`,
             message: `Import src/${component}/ through its index.ts.`,
             target: ["./src/*.ts", `./src/!(${component})/**`],

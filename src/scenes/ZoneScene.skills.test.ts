@@ -10,21 +10,27 @@ import { SCREEN } from "../data/screen";
 import { SKILLS } from "../data/skills";
 import { TOUCH } from "../data/touch";
 import type { SkillId } from "../data/types";
-import { type HeldTouch, keyIntent, touchIntent } from "../input/intent";
-import { PAUSE_BUTTON } from "../layout/pauseCard";
-import { bottomShift, shifted, topShift } from "../layout/playView";
-import { SKILL_HUD } from "../layout/skillHud";
-import { TOUCH_CONTROLS } from "../layout/touchControls";
 import { startBird } from "../rules/bird";
 import { SKILL_IDS } from "../rules/skills";
 import * as engine from "../rules/zone";
+import {
+  bottomShift,
+  type HeldTouch,
+  keyIntent,
+  PAUSE_BUTTON,
+  shifted,
+  SKILL_HUD,
+  topShift,
+  TOUCH_CONTROLS,
+  touchIntent,
+} from "../ui";
 
 const saved = vi.hoisted(() => ({ active: null as SkillId | null, owned: [] as SkillId[] }));
 const routing = vi.hoisted(() => ({ accepts: true }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: { turn: () => 0 } }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: { turn: () => 0 } }));
 vi.mock("./modalInput", () => ({ modalInput: () => ({ accepts: () => routing.accepts }) }));
-vi.mock("../settings/touchControls", () => ({
+vi.mock("../ui/settings/touchControls", () => ({
   coarsePointer: (host: Window) => host.matchMedia("(pointer: coarse)").matches,
   touchSettingShown: () => true,
 }));

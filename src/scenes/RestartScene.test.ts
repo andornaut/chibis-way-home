@@ -13,8 +13,8 @@ vi.mock("../save", () => ({
 }));
 vi.mock("./modalInput", () => ({ modalInput: () => gate }));
 
-import { startScreenLayout } from "../layout/startScreen";
 import { clearProgress, resetWholeRunStats } from "../save";
+import { startScreenLayout } from "../ui";
 import { CelebrationScene } from "./CelebrationScene";
 import { RestartScene } from "./RestartScene";
 import { StartScene } from "./StartScene";

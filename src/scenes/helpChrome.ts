@@ -1,9 +1,7 @@
 import type { Scene } from "phaser";
 
 import type { ControlAction, Point } from "../data/types";
-import { ACTION_HELP } from "../layout/actionHelp";
-import { helpChromeLayers } from "../view/helpChrome";
-import { TOUCH_CHROME_FRAME } from "../view/touchChrome";
+import { ACTION_HELP, helpChromeLayers, TOUCH_CHROME_FRAME } from "../ui";
 import { paletteColour } from "./cardParts";
 import { createChromeTexture } from "./touchChrome";
 

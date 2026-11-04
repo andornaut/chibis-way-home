@@ -4,15 +4,16 @@ import { type Cameras, type Game, type GameObjects, type Input, Scene } from "ph
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
+import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa";
 import {
   cardActions,
   cardActionsSize,
   cardTextSize,
   contentCardLayout,
-} from "../layout/contentCard";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa";
-import { stepFocus } from "../ui";
+  type PressArea,
+  pressedArea,
+  stepFocus,
+} from "../ui";
 import {
   addCardTextIn,
   addSlice,

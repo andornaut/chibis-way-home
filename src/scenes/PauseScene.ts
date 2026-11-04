@@ -7,23 +7,31 @@ import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Rect, SkillId } from "../data/types";
 import { developmentSkillOverrides } from "../dev/mode";
-import { FRAME_TURN } from "../input/frameTurn";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { PAUSE_BUTTON, pauseCard } from "../layout/pauseCard";
-import { shifted, topShift } from "../layout/playView";
-import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
-import { type CardAction, cardBackAction, cardKeyAction, cardTurnAction } from "../pause/cardInput";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
 import { isSkillId, SKILL_IDS, skillEnabled } from "../rules/skills";
 import { activeSkill, savedSkills, selectActiveSkill } from "../save";
 import {
+  type CardAction,
+  cardBackAction,
+  cardKeyAction,
+  cardTurnAction,
   coarsePointer,
+  focusKeyAction,
+  type Palette,
+  PAUSE_BUTTON,
+  pauseCard,
+  type PressArea,
+  pressedArea,
   setTouchSettingShown,
+  shifted,
+  SKILL_BUTTON,
+  SKILL_HUD,
+  stepFocus,
+  topShift,
   type TouchSetting,
   touchSettings,
-} from "../settings/touchControls";
-import { focusKeyAction, stepFocus } from "../ui";
-import type { Palette } from "../view/dim";
+} from "../ui";
+import { FRAME_TURN } from "../ui/input/frameTurn";
 import {
   addCardText,
   addCardTextIn,

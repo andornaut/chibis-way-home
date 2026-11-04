@@ -15,8 +15,7 @@ import { Core, type Game, type Scene, Scenes } from "phaser";
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
-import { FONT_ROLES } from "../layout/fontRoles";
-import { mountUiFonts } from "../view/uiFonts";
+import { FONT_ROLES, mountUiFonts } from "../ui";
 import { bindGameUiPresentation } from "./uiPresentationPort";
 import { createUiRootManager } from "./uiRootManager";
 import { sceneUiRoots } from "./uiRoots";

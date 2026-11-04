@@ -5,7 +5,7 @@ import { ZONE_MAP } from "../data/map";
 import { STAGE_BARKS } from "../data/stageBarks";
 import { TEXT } from "../data/text";
 import type { StageBarkSchedule } from "../data/types";
-import { dialogueParagraphs } from "../dialogue/conversation";
+import { dialogueParagraphs } from "../ui";
 import { createStageBarks } from "./stageBarks";
 
 const first = { line: "first", speaker: "speaker" };

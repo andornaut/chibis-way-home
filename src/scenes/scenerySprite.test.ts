@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import type { ObjectLayout } from "../data/types";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 
 import { ZoneScene } from "./ZoneScene";
 

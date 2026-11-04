@@ -4,8 +4,8 @@ import { expect, it, vi } from "vitest";
 
 import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS } from "../data/dialogues";
 import { TOUCH } from "../data/touch";
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
 import { barkOwnerOnscreen } from "../presentation";
+import { DIALOGUE_SCREEN, dialogueParagraphs } from "../ui";
 
 vi.mock("phaser", () => ({
   Scene: class {
@@ -28,12 +28,11 @@ vi.mock("./playCamera", () => ({
   fitPlayCamera: vi.fn(),
   playPoint: (_scene: unknown, point: unknown) => point,
 }));
-vi.mock("../dialogue/conversation", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../dialogue/conversation")>()),
+vi.mock("../ui/dialogue/conversation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../ui")>()),
   dialogueParagraphs: vi.fn(() => [{}]),
 }));
 
-import { dialogueParagraphs } from "../dialogue/conversation";
 import { createStageBarks } from "../rules/stageBarks";
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput } from "./modalInput";

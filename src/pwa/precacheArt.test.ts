@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ART_PATH, type ArtManifest } from "../assets";
-import { UI_FONT_RESOURCES } from "../view/uiFonts";
+import { UI_FONT_RESOURCES } from "../ui";
 import { ART_MANIFEST_URL, artUrls } from "./precacheArt";
 
 const EMPTY: ArtManifest = {

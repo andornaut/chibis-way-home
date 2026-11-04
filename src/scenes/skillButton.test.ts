@@ -8,9 +8,8 @@ import { expect, it, vi } from "vitest";
 import palette from "../../public/art/palette.json";
 import pauseSheet from "../../public/art/sprites/ui-pause.json";
 import type { SkillId } from "../data/types";
-import { PAUSE_VISIBLE_DIAMETER } from "../layout/controlChrome";
-import { SKILL_ART, SKILL_BUTTON } from "../layout/skillHud";
 import { SKILL_IDS } from "../rules/skills";
+import { PAUSE_VISIBLE_DIAMETER, SKILL_ART, SKILL_BUTTON } from "../ui";
 
 vi.mock("phaser", () => ({ Textures: { FilterMode: { LINEAR: 1 } }, TintModes: { FILL: 1 } }));
 vi.mock("./cardParts", () => ({

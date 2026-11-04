@@ -6,10 +6,11 @@ import type { DialogueChoice } from "../data/types";
 import {
   dialogueChoice,
   dialogueChoiceKey,
+  dialogueChoiceLayout,
+  type PressArea,
+  pressedArea,
   type ResolvedDialogueChoice,
-} from "../dialogue/conversation";
-import { dialogueChoiceLayout } from "../layout/dialogueChoice";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
+} from "../ui";
 import {
   addCardTextIn,
   addSlice,

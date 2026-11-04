@@ -3,7 +3,7 @@ import { clamp01 } from "@andornaut/game-kit/numbers";
 import { type GameObjects, type Scene, Textures, TintModes } from "phaser";
 
 import type { Point, SkillId } from "../data/types";
-import { SKILL_ART, SKILL_BUTTON, skillButton } from "../layout/skillHud";
+import { SKILL_ART, SKILL_BUTTON, skillButton } from "../ui";
 import { paletteColour } from "./cardParts";
 
 const CHROME_SCALE = 4;

@@ -12,16 +12,17 @@ import {
   type ButtonFaceState,
   type ButtonLabelPlacement,
   buttonLabelPlacement,
+  CARD_TEXT_SCALE,
+  type CardFonts,
+  cardTextOrigin,
+  cardTitleAt,
+  focusRingAround,
+  FONT_ROLES,
+  type LabelledButton,
+  type Palette,
   PLAY_MARK,
-} from "../layout/buttonLabel";
-import { cardTitleAt } from "../layout/cardFrame";
-import { type CardFonts, cardTextOrigin } from "../layout/contentCard";
-import { FONT_ROLES } from "../layout/fontRoles";
-import { CARD_TEXT_SCALE } from "../layout/pauseCard";
-import type { LabelledButton } from "../layout/restartCard";
-import { focusRingAround } from "../layout/settingsCard";
-import { textInkBounds } from "../layout/textInk";
-import type { Palette } from "../view/dim";
+  textInkBounds,
+} from "../ui";
 import { uiObject } from "./uiRoots";
 
 // What the pause, settings, install steps and restart cards draw with: art's 9-slices, card text,

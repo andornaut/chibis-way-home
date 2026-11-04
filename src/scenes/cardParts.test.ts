@@ -10,9 +10,7 @@ import button from "../../public/art/sprites/ui-button.json";
 import primary from "../../public/art/sprites/ui-button-primary.json";
 import playMarkJson from "../../public/art/sprites/ui-play-mark.json";
 import { ART_MANIFEST_KEY } from "../assets";
-import { CARD_TEXT_SCALE } from "../layout/cardFrame";
-import { labelledButton } from "../layout/labelledButton";
-import { textInkBounds } from "../layout/textInk";
+import { CARD_TEXT_SCALE, labelledButton, textInkBounds } from "../ui";
 import {
   addButtonLabel,
   addTextButton,

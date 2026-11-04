@@ -4,18 +4,18 @@ import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
 import type { Rect } from "../data/types";
-import type { DialogueParagraph } from "../dialogue/conversation";
-import { FONT_SCALE } from "../layout/fontRoles";
+import { deathLabels, deathSummary } from "../presentation";
+import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
+import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
 import {
+  type DialogueParagraph,
+  FONT_SCALE,
   RUN_STAT_KEYS,
   runStatLabels,
   stageSummaryLayout,
   statsTotalRows,
   summaryTextOrigin,
-} from "../layout/runStats";
-import { deathLabels, deathSummary } from "../presentation";
-import { formatRunStats, type WholeRunDisplaySummary } from "../save/runSummary";
-import type { RunStatsSummary, ZoneStatsSummary } from "../save/stats";
+} from "../ui";
 import { addCardText, BODY_FONT, cardFonts, paletteColour, TITLE_FONT } from "./cardParts";
 
 export function addStageSummary(

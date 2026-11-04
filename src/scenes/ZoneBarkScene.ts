@@ -5,14 +5,14 @@ import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS, SPEAKERS } from "../data/
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { DialogueLine } from "../data/types";
+import type { ZoneBark } from "../rules/zone";
 import {
+  DIALOGUE_SCREEN,
   dialogueParagraphs,
   type DialoguePress,
   dialogueTapAction,
   moveDialoguePress,
-} from "../dialogue/conversation";
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
-import type { ZoneBark } from "../rules/zone";
+} from "../ui";
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";

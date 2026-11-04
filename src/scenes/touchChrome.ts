@@ -16,7 +16,7 @@ import {
   touchChromeLayers,
   touchChromePixel,
   type TouchChromePose,
-} from "../view/touchChrome";
+} from "../ui";
 import { paletteColour } from "./cardParts";
 
 const SOURCE: Readonly<Record<TouchChromeKind, string>> = {

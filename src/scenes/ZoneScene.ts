@@ -65,20 +65,6 @@ import {
   isDevelopmentSession,
 } from "../dev/mode";
 import { developmentStep } from "../dev/step";
-import { FRAME_TURN } from "../input/frameTurn";
-import {
-  combineIntents,
-  type HeldTouch,
-  keyIntent,
-  touchIntent,
-  touchRoleAt,
-} from "../input/intent";
-import { isMouseMovementKey, listenMouseMovement } from "../input/mouseMovement";
-import { PAUSE_BUTTON } from "../layout/pauseCard";
-import { bottomShift, shifted, topShift } from "../layout/playView";
-import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
-import { stageProgressRect } from "../layout/stageProgress";
-import { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "../layout/touchControls";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
 import {
   type ArtKind,
@@ -172,16 +158,38 @@ import {
   zoneVisitStats,
 } from "../save";
 import { wholeRunSummary } from "../save/runSummary";
+import { sceneryParallax, type Tileset, worldScenery } from "../stage";
 import {
+  bottomShift,
+  buttonHeld,
+  centredAt,
   coarsePointer,
+  combineIntents,
+  controlTag,
+  type HeldTouch,
+  isMouseMovementKey,
+  keyIntent,
+  listenMouseMovement,
+  MOVE_HINT,
+  moveHintView,
+  PAUSE_BUTTON,
+  shifted,
+  SKILL_BUTTON,
+  SKILL_HUD,
+  stageProgressRect,
+  topShift,
+  TOUCH_CHROME_FRAME,
+  TOUCH_CONTROLS,
+  TOUCH_KNOB_FRAME,
+  type TouchControl,
+  touchIntent,
+  touchRoleAt,
   type TouchSetting,
   touchSettings,
   touchSettingShown,
-} from "../settings/touchControls";
-import { sceneryParallax, type Tileset, worldScenery } from "../stage";
-import { moveHintView } from "../view/moveHint";
-import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../view/touchChrome";
-import { buttonHeld, centredAt, controlTag, trackPress } from "../view/touchControls";
+  trackPress,
+} from "../ui";
+import { FRAME_TURN } from "../ui/input/frameTurn";
 import { mountAirJumpCue } from "./airJumpCue";
 import { backdropBottomFrame } from "./backdropBottomFrame";
 import { mountBossWarning } from "./bossWarning";

@@ -13,7 +13,6 @@ import { Game, Scale, WEBGL } from "phaser";
 import { CRASH_SCREEN } from "./crash/install";
 import { SCREEN } from "./data/screen";
 import { mountDeveloperPanel } from "./dev/panel";
-import { FRAME_TURN } from "./input/frameTurn";
 import { setupPhoneApp } from "./pwa";
 import { installOffer } from "./pwa/installOffer";
 import { BootScene } from "./scenes/BootScene";
@@ -37,6 +36,7 @@ import { ZoneBarkScene } from "./scenes/ZoneBarkScene";
 import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene";
 import { ZoneIntroductionScene } from "./scenes/ZoneIntroductionScene";
 import { ZoneScene } from "./scenes/ZoneScene";
+import { FRAME_TURN } from "./ui/input/frameTurn";
 
 // The page's ink background (public/site.css), which the canvas's bars match.
 const INK = "#181425";

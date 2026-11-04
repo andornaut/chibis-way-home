@@ -1,7 +1,6 @@
 import type { Scene } from "phaser";
 
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
-import { statsStatement } from "../view/statsStatement";
+import { DIALOGUE_SCREEN, statsStatement } from "../ui";
 import { drawDialogueParagraph } from "./dialogueParagraph";
 
 export function drawStatsStatement(scene: Scene, kind: "clear" | "retry", stage: string): void {

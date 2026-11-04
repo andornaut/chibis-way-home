@@ -21,7 +21,7 @@ vi.mock("./cardParts", () => ({
 }));
 vi.mock("./playCamera", () => ({ fitPlayCamera: vi.fn() }));
 
-import { startScreenLayout } from "../layout/startScreen";
+import { startScreenLayout } from "../ui";
 import { addSlice } from "./cardParts";
 import { StartScene } from "./StartScene";
 

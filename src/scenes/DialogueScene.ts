@@ -11,7 +11,10 @@ import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { DialogueChoice, Point } from "../data/types";
 import {
+  departureDialogueButtons,
+  DIALOGUE_SCREEN,
   type DialogueAction,
+  dialogueButtons,
   type DialogueControl,
   dialogueKeyAction,
   type DialogueParagraph,
@@ -19,18 +22,14 @@ import {
   type DialoguePress,
   dialogueProgress,
   dialogueTapAction,
+  type LabelledButton,
+  liveDialogueContains,
   liveDialogueKeyAction,
   moveDialoguePress,
-} from "../dialogue/conversation";
-import {
-  departureDialogueButtons,
-  DIALOGUE_SCREEN,
-  dialogueButtons,
-  liveDialogueContains,
-} from "../layout/dialogueScreen";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import type { LabelledButton } from "../layout/restartCard";
-import { stepFocus } from "../ui";
+  type PressArea,
+  pressedArea,
+  stepFocus,
+} from "../ui";
 import {
   addTextButton,
   BODY_FONT,

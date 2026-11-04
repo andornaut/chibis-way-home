@@ -5,8 +5,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { OPENING } from "../data/opening";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
-import { openingLayout } from "../layout/opening";
 import { CARD_FONTS } from "../testing/cardFonts";
+import { openingLayout } from "../ui";
 
 const backgroundFixture = vi.hoisted(() => ({ value: undefined as string | null | undefined }));
 vi.mock("../data/opening", async (original) => {

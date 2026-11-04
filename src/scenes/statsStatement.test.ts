@@ -5,7 +5,7 @@ import { SPEAKERS } from "../data/dialogues";
 import { ZONE_MAP } from "../data/map";
 import { STATS_BARKS } from "../data/statsBarks";
 import { TEXT } from "../data/text";
-import { dialogueParagraphs } from "../dialogue/conversation";
+import { dialogueParagraphs } from "../ui";
 vi.mock("./dialogueParagraph", () => ({ drawDialogueParagraph: vi.fn() }));
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { drawStatsStatement } from "./statsStatement";

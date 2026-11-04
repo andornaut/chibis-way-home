@@ -10,7 +10,7 @@ vi.mock("phaser", () => ({
   Scenes: { Events: { PRE_RENDER: "prerender" } },
 }));
 
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 
 import { ZoneScene } from "./ZoneScene";
 

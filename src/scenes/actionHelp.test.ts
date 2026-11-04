@@ -3,10 +3,8 @@ import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
 import { TEXT } from "../data/text";
-import { ACTION_HELP, actionHelpLayout } from "../layout/actionHelp";
-import { CARD_TEXT_SCALE } from "../layout/cardFrame";
-import { cardTextOrigin } from "../layout/contentCard";
 import { CARD_FONTS } from "../testing/cardFonts";
+import { ACTION_HELP, actionHelpLayout, CARD_TEXT_SCALE, cardTextOrigin } from "../ui";
 import { drawActionHelp } from "./actionHelp";
 import { addCardTextIn } from "./cardParts";
 import { drawHelpChrome } from "./helpChrome";

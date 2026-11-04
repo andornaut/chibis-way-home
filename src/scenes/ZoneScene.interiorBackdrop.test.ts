@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import type { ObjectLayout } from "../data/types";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 import { ZoneScene } from "./ZoneScene";
 
 it("creates a native repeating two-axis clip behind props and keeps its world rectangle across camera changes", () => {

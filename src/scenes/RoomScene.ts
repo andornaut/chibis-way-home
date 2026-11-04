@@ -10,16 +10,22 @@ import { DIALOGUES, SPEAKERS } from "../data/dialogues";
 import { ROOMS } from "../data/rooms";
 import { TEXT } from "../data/text";
 import type { RoomPlan } from "../data/types";
-import { dialogueParagraphs } from "../dialogue/conversation";
-import { DIALOGUE_SCREEN, dialogueSpeakerLayout } from "../layout/dialogueScreen";
-import { pressedArea } from "../layout/hitAreas";
-import { CARD_TEXT_SCALE } from "../layout/pauseCard";
-import { ROOM_SCREEN } from "../layout/roomScreen";
-import { SKILL_ROOM, skillDetails, skillRoomContinue } from "../layout/skillDetails";
-import { textInkBounds } from "../layout/textInk";
-import { type RoomEvent, roomEvent } from "../pause/roomInput";
 import { coverZone, PHONE_EVENTS } from "../pwa";
 import { grantSkill } from "../save";
+import {
+  CARD_TEXT_SCALE,
+  DIALOGUE_SCREEN,
+  dialogueParagraphs,
+  dialogueSpeakerLayout,
+  pressedArea,
+  ROOM_SCREEN,
+  type RoomEvent,
+  roomEvent,
+  SKILL_ROOM,
+  skillDetails,
+  skillRoomContinue,
+  textInkBounds,
+} from "../ui";
 import { drawActionHelp } from "./actionHelp";
 import {
   addButtonLabel,

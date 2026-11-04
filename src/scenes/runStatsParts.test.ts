@@ -8,9 +8,7 @@ import { ZONE_MAP } from "../data/map";
 import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
 import type { Point } from "../data/types";
-import { STAGE_SUMMARY_BOUNDS } from "../layout/cutscene";
-import { textInkBounds } from "../layout/textInk";
-import { statsStatement } from "../view/statsStatement";
+import { STAGE_SUMMARY_BOUNDS, statsStatement, textInkBounds } from "../ui";
 
 vi.mock("./cardParts", () => ({
   BODY_FONT: "font-body",

@@ -1,5 +1,5 @@
 import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../assets";
-import { UI_FONT_RESOURCES } from "../view/uiFonts";
+import { UI_FONT_RESOURCES } from "../ui";
 
 export const ART_MANIFEST_URL = `${ART_PATH}${ART_MANIFEST_FILE}`;
 

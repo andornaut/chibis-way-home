@@ -10,8 +10,8 @@ import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import button from "../../public/art/sprites/ui-button.json";
 import primary from "../../public/art/sprites/ui-button-primary.json";
 import { TEXT } from "../data/text";
-import type { RoomEvent } from "../pause/roomInput";
 import { grantSkill } from "../save";
+import type { RoomEvent } from "../ui";
 import { addButtonLabel, addSlice, BUTTON, paletteColour, PRIMARY_BUTTON } from "./cardParts";
 import { RoomScene } from "./RoomScene";
 

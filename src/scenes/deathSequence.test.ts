@@ -12,7 +12,7 @@ import type { ZoneDeath } from "../data/types";
 import * as deathPresentation from "../presentation";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("../pwa", () => ({ coverZone: vi.fn(), startWakeLock: vi.fn(), stopWakeLock: vi.fn() }));
 vi.mock("../save", () => ({
   activeStageTime: () => 0,
@@ -21,7 +21,7 @@ vi.mock("../save", () => ({
   wholeRunStats: () => ({ activeSeconds: 47, deaths: 2 }),
   zoneVisitStats: () => ({ runSeconds: 29 }),
 }));
-vi.mock("../settings/touchControls", () => ({ touchSettings: () => ({}) }));
+vi.mock("../ui/settings/touchControls", () => ({ touchSettings: () => ({}) }));
 vi.mock("./contactFeedback", () => ({
   cancelContactFeedback: vi.fn(),
   playContactFeedback: vi.fn(),

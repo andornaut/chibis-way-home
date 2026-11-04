@@ -14,7 +14,7 @@ const save = vi.hoisted(() => ({
   zoneVisitStats: vi.fn(() => ({})),
 }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("../dev/mode", () => ({ isDevelopmentSession: () => false }));
 vi.mock("../save", () => save);
 vi.mock("../save/runSummary", () => ({ wholeRunSummary: () => ({}) }));

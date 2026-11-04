@@ -2,8 +2,7 @@ import { EventEmitter } from "node:events";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { CUTSCENE_CONTINUE } from "../layout/cutscene";
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
+import { CUTSCENE_CONTINUE, DIALOGUE_SCREEN, statsStatement } from "../ui";
 
 vi.mock("phaser", () => ({
   Scene: class {
@@ -18,7 +17,7 @@ vi.mock("phaser", () => ({
   },
 }));
 const statementRect = vi.hoisted(() => ({ height: 14, width: 480, x: 120, y: 260 }));
-vi.mock("../view/statsStatement", () => ({
+vi.mock("../ui/dialogue/statsStatement", () => ({
   statsStatement: vi.fn(() => ({
     colour: "tan",
     name: "Speaker",
@@ -44,7 +43,6 @@ vi.mock("./playCamera", () => ({
   playPoint: (_scene: unknown, pointer: { x: number; y: number }) => pointer,
 }));
 
-import { statsStatement } from "../view/statsStatement";
 import { CutsceneScene } from "./CutsceneScene";
 import { addStageSummary } from "./runStatsParts";
 import { ZoneDepartureScene } from "./ZoneDepartureScene";

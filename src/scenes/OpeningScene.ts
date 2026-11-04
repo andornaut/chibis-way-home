@@ -5,11 +5,9 @@ import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point } from "../data/types";
-import { pressedArea } from "../layout/hitAreas";
-import { openingLayout } from "../layout/opening";
 import { createOpeningPlayback } from "../rules/opening";
 import { saveOpeningSeen } from "../save";
-import { focusKeyAction, stepFocus } from "../ui";
+import { focusKeyAction, openingLayout, pressedArea, stepFocus } from "../ui";
 import {
   addCardText,
   addTextButton,

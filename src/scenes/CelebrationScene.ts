@@ -2,10 +2,8 @@ import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
-import { CELEBRATION } from "../layout/restartCard";
 import { PHONE_EVENTS } from "../pwa";
-import { focusKeyAction, stepFocus } from "../ui";
+import { CELEBRATION, focusKeyAction, type PressArea, pressedArea, stepFocus } from "../ui";
 import {
   addButtonLabel,
   addCardText,

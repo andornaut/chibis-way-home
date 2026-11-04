@@ -8,7 +8,7 @@ import type { SceneryPlaybackState } from "../rules/sceneryPlayback";
 
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true) }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("./modalInput", () => ({ modalInput: () => gate }));
 
 import { ZoneScene } from "./ZoneScene";

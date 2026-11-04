@@ -7,8 +7,12 @@ import {
 import type { Scene } from "phaser";
 
 import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
-import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "../view/pauseChrome";
-import type { TouchChromeLayer } from "../view/touchChrome";
+import {
+  PAUSE_CHROME_FRAME,
+  pauseChromeLayers,
+  type PauseChromePose,
+  type TouchChromeLayer,
+} from "../ui";
 import { paletteColour } from "./cardParts";
 import { createChromeTexture } from "./touchChrome";
 

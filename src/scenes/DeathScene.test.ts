@@ -16,10 +16,10 @@ vi.mock("phaser", () => ({
     readonly scene = { get: vi.fn(), stop: vi.fn() };
   },
 }));
-vi.mock("../view/statsStatement", () => ({
+vi.mock("../ui/dialogue/statsStatement", () => ({
   statsStatement: vi.fn(() => ({ name: "Speaker", text: "One statement" })),
 }));
-vi.mock("../layout/deathCard", () => ({
+vi.mock("../ui/layout/deathCard", () => ({
   deathCard: vi.fn(() => ({
     card: { height: 252, width: 360, x: 180, y: 54 },
     home: { button: { ...face, x: 220 }, hit: { ...face, x: 220 } },
@@ -53,8 +53,7 @@ vi.mock("./playCamera", () => ({
   playPoint: (_scene: unknown, point: unknown) => point,
 }));
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
-import { deathCard } from "../layout/deathCard";
-import { statsStatement } from "../view/statsStatement";
+import { deathCard, statsStatement } from "../ui";
 import { DeathScene } from "./DeathScene";
 
 it("selects the retry statement once per entry and keeps retry an explicit action", () => {

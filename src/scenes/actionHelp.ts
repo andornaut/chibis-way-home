@@ -1,8 +1,7 @@
 import type { Scene } from "phaser";
 
 import type { ControlAction, Point } from "../data/types";
-import { ACTION_HELP, type ActionHelpLayout } from "../layout/actionHelp";
-import { CARD_CONTENT } from "../layout/cardFrame";
+import { ACTION_HELP, type ActionHelpLayout, CARD_CONTENT } from "../ui";
 import { ACTION_FONT, addCardTextIn, BODY_FONT } from "./cardParts";
 import { drawHelpChrome } from "./helpChrome";
 

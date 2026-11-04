@@ -6,8 +6,8 @@ import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point, SkillId } from "../data/types";
-import { skillDetails } from "../layout/skillDetails";
 import { PHONE_EVENTS } from "../pwa";
+import { skillDetails } from "../ui";
 import { drawActionHelp } from "./actionHelp";
 import {
   addCardTextIn,

@@ -14,7 +14,7 @@ import { timedHazardRect } from "../rules/timedHazard";
 import { createTimedHazardArt } from "./timedHazard";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 
 import { ZoneScene } from "./ZoneScene";
 

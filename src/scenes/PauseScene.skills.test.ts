@@ -9,7 +9,7 @@ const selection = vi.hoisted(() => ({
 }));
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), close: vi.fn(), open: vi.fn() }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("../pwa", () => ({ coverZone: vi.fn(), startWakeLock: vi.fn(), stopWakeLock: vi.fn() }));
 vi.mock("../save", () => ({
   activeSkill: () => selection.active,
@@ -29,9 +29,9 @@ import { BIRD } from "../data/bird";
 import { SCREEN } from "../data/screen";
 import { SKILL_GESTURE } from "../data/skills";
 import type { SkillId } from "../data/types";
-import { SKILL_BUTTON, SKILL_HUD } from "../layout/skillHud";
 import { type BirdState, startBird } from "../rules/bird";
 import { SKILL_IDS } from "../rules/skills";
+import { SKILL_BUTTON, SKILL_HUD } from "../ui";
 import { PauseScene } from "./PauseScene";
 import type { SkillDetailData } from "./SkillDetailScene";
 

@@ -7,7 +7,7 @@ import { startBird, stepBird } from "../rules/bird";
 import * as engine from "../rules/zone";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
 vi.mock("../dev/mode", () => ({
   developmentSkillOverrides: () => ({}),
   invulnerabilityEnabled: () => false,

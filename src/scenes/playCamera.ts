@@ -1,7 +1,7 @@
 import { type Cameras, type Input, Scale, type Scene } from "phaser";
 
 import type { Point, Rect, Size } from "../data/types";
-import { playView } from "../layout/playView";
+import { playView } from "../ui";
 
 // The whole canvas, in base pixels.
 export function canvasRect(scene: Scene): Rect {
