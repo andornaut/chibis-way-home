@@ -9,7 +9,7 @@ import { DIALOGUES, SPEAKERS } from "../data/dialogues";
 import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
-import type { DialogueChoice, Point } from "../data/types";
+import type { DialogueChoice } from "../data/types";
 import {
   departureDialogueButtons,
   DIALOGUE_SCREEN,
@@ -23,8 +23,6 @@ import {
   dialogueProgress,
   dialogueTapAction,
   type LabelledButton,
-  liveDialogueContains,
-  liveDialogueKeyAction,
   moveDialoguePress,
   type PressArea,
   pressedArea,
@@ -56,10 +54,6 @@ export interface DialogueOpener {
   dialogueClosed(selection?: string): void;
 }
 
-export interface ForeshadowOpener {
-  foreshadowClosed(): void;
-}
-
 export interface DialogueChoiceOpener {
   choiceSelected(selection: string): void;
 }
@@ -86,7 +80,6 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   constructor(
     key = "dialogue",
     private readonly departure = false,
-    private readonly live = false,
   ) {
     super(key);
   }
@@ -97,7 +90,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (!plan) {
       throw new Error(`No dialogue ${scene}`);
     }
-    if ((this.live || this.departure || linear) && plan.choice) {
+    if ((this.departure || linear) && plan.choice) {
       throw new Error("Zone exchanges must remain skippable linear conversations");
     }
     this.paragraphs = dialogueParagraphs(SPEAKERS, TEXT, plan);
@@ -124,20 +117,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       this.press = undefined;
       this.renderFooter();
     });
-    if (this.live) {
-      this.events.on("pause", () => {
-        this.press = undefined;
-        this.renderFooter();
-      });
-      this.events.on("resume", () => {
-        this.press = undefined;
-        captureTab(this, true);
-        this.renderFooter();
-      });
-    }
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
-    if (!this.live && !this.departure) {
+    if (!this.departure) {
       showModalBackdrop(this);
     }
   }
@@ -204,11 +186,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     }
     this.finished = true;
     this.scene.stop();
-    if (this.live) {
-      (this.scene.get("zone") as unknown as ForeshadowOpener).foreshadowClosed();
-    } else {
-      (this.scene.get(this.opener) as unknown as DialogueOpener).dialogueClosed(selection);
-    }
+    (this.scene.get(this.opener) as unknown as DialogueOpener).dialogueClosed(selection);
   }
 
   private act(action: DialogueAction | undefined): void {
@@ -248,33 +226,18 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     ];
   }
 
-  blocksPoint(point: Point): boolean {
-    return liveDialogueContains(this.layouts ? this.pressAreas() : [], point);
-  }
-
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
       if (!modalInput(this).accepts(event)) {
         return;
       }
-      if (this.live && !["Tab", "Enter"].includes(event.key)) {
-        return;
-      }
-      if (this.live) {
-        event.preventDefault();
-      }
       event.stopPropagation();
-      this.act((this.live ? liveDialogueKeyAction : dialogueKeyAction)(this.focus, event));
+      this.act(dialogueKeyAction(this.focus, event));
     });
     this.input.keyboard?.on("keyup", (event: KeyboardEvent) => {
-      if (!this.live || ["Tab", "Enter"].includes(event.key)) {
-        event.stopPropagation();
-      }
+      event.stopPropagation();
     });
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      if (this.live && !this.blocksPoint(playPoint(this, pointer))) {
-        return;
-      }
       this.input.stopPropagation();
       if (this.press !== undefined || this.finished || this.choosing) {
         return;
@@ -290,9 +253,6 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       this.renderFooter();
     });
     onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      if (this.live && this.press?.id !== pointer.id) {
-        return;
-      }
       this.input.stopPropagation();
       if (this.press?.id === pointer.id) {
         this.press = moveDialoguePress(TOUCH.tapMaxDistance, playPoint(this, pointer), this.press);
@@ -300,9 +260,6 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       }
     });
     const up = (pointer: Input.Pointer, outside: boolean) => {
-      if (this.live && this.press?.id !== pointer.id) {
-        return;
-      }
       this.input.stopPropagation();
       const action = outside
         ? undefined

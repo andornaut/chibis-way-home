@@ -77,14 +77,6 @@ export function dialogueKeyAction(
   return focus === "skip" && ["Enter", " "].includes(key) ? "skip" : "advance";
 }
 
-// Movement, jump and use keys remain owned by the active world under live dialogue.
-export function liveDialogueKeyAction(
-  focus: DialogueControl | undefined,
-  event: Pick<KeyboardEvent, "key" | "repeat" | "shiftKey">,
-): DialogueAction | undefined {
-  return ["Tab", "Enter"].includes(event.key) ? dialogueKeyAction(focus, event) : undefined;
-}
-
 export interface DialoguePress {
   readonly at: Point;
   readonly cancelled: boolean;

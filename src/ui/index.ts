@@ -31,7 +31,6 @@ export {
   type DialoguePress,
   dialogueProgress,
   dialogueTapAction,
-  liveDialogueKeyAction,
   moveDialoguePress,
   type ResolvedDialogueChoice,
 } from "./dialogue/conversation";
@@ -81,7 +80,6 @@ export {
   dialogueButtons,
   dialogueNameTab,
   dialogueSpeakerLayout,
-  liveDialogueContains,
 } from "./layout/dialogueScreen";
 export { FONT_ROLES, FONT_SCALE } from "./layout/fontRoles";
 export { type PressArea, pressedArea } from "./layout/hitAreas";

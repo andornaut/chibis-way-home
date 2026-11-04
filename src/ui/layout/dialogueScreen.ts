@@ -1,11 +1,8 @@
-import { containsPoint } from "@andornaut/game-kit/rect";
-
 import { SCREEN } from "../../data/screen";
 import type { DialogueSpeaker, Point, Rect } from "../../data/types";
 import type { DialogueControl } from "../dialogue/conversation";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { FONT_SCALE } from "./fontRoles";
-import { type PressArea, pressedArea } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./restartCard";
 
 const BUTTON_WIDTH = 192;
@@ -69,14 +66,4 @@ function placedDialogueButtons(
     continue: button(right - width),
     skip: button(right - groupWidth),
   };
-}
-
-export function liveDialogueContains(
-  controls: readonly PressArea<DialogueControl>[],
-  point: Point,
-): boolean {
-  return (
-    containsPoint(DIALOGUE_SCREEN.box, point.x, point.y) ||
-    pressedArea(controls, point) !== undefined
-  );
 }

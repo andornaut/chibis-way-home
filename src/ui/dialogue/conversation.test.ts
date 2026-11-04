@@ -14,7 +14,6 @@ import {
   type DialoguePress,
   dialogueProgress,
   dialogueTapAction,
-  liveDialogueKeyAction,
   moveDialoguePress,
 } from "./conversation";
 
@@ -227,36 +226,4 @@ describe("terminal dialogue choices", () => {
       ).toEqual({ focus: to, selection });
     },
   );
-});
-
-it.each(["ArrowLeft", "ArrowRight", "ArrowUp", " ", "e"])(
-  "leaves world movement/jump/use key %j active under live dialogue",
-  (key) => {
-    expect(
-      liveDialogueKeyAction(undefined, { key, repeat: false, shiftKey: false }),
-    ).toBeUndefined();
-  },
-);
-
-it.each<
-  [string, Parameters<typeof liveDialogueKeyAction>, ReturnType<typeof liveDialogueKeyAction>]
->([
-  [
-    "Enter with no focus advances",
-    [undefined, { key: "Enter", repeat: false, shiftKey: false }],
-    "advance",
-  ],
-  [
-    "Enter on a focused Skip skips",
-    ["skip", { key: "Enter", repeat: false, shiftKey: false }],
-    "skip",
-  ],
-  ["Tab moves focus", [undefined, { key: "Tab", repeat: false, shiftKey: false }], "nextFocus"],
-  [
-    "a repeated Enter does nothing",
-    [undefined, { key: "Enter", repeat: true, shiftKey: false }],
-    undefined,
-  ],
-])("keeps explicit live dialogue keyboard controls usable: %s", (_, args, action) => {
-  expect(liveDialogueKeyAction(...args)).toBe(action);
 });

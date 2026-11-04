@@ -15,7 +15,6 @@ import {
   dialogueButtons,
   dialogueNameTab,
   dialogueSpeakerLayout,
-  liveDialogueContains,
 } from "./dialogueScreen";
 import { textInkBounds } from "./textInk";
 
@@ -79,27 +78,6 @@ describe("dialogue layout", () => {
       buttons.continue.button.x,
     );
     expect(buttons.skip.button.height).toBe(TEXT_BUTTON.height);
-  });
-
-  it("captures only live dialogue panel and footer hits, leaving world touch controls active", () => {
-    const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
-    const areas = (["continue", "skip"] as const).map((key) => ({
-      art: buttons[key].button,
-      hit: buttons[key].hit,
-      key,
-    }));
-    expect(
-      liveDialogueContains(areas, { x: DIALOGUE_SCREEN.box.x + 1, y: DIALOGUE_SCREEN.box.y + 1 }),
-    ).toBe(true);
-    expect(
-      liveDialogueContains(areas, {
-        x: buttons.continue.button.x + 1,
-        y: buttons.continue.button.y + 1,
-      }),
-    ).toBe(true);
-    expect(liveDialogueContains(areas, { x: SCREEN.width - 20, y: SCREEN.height - 20 })).toBe(
-      false,
-    );
   });
 });
 

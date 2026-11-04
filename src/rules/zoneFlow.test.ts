@@ -17,8 +17,8 @@ const entry = {
   runAnimation: "walk",
 };
 const pairs = {
-  first: { entry, foreshadow: "first-foreshadow", intro: "first-intro", outro: "first-outro" },
-  second: { entry, foreshadow: "second-foreshadow", intro: "second-intro", outro: "second-outro" },
+  first: { entry, intro: "first-intro", outro: "first-outro" },
+  second: { entry, intro: "second-intro", outro: "second-outro" },
 };
 
 describe("zone story routing", () => {
@@ -46,11 +46,10 @@ describe("zone story routing", () => {
       expect(DIALOGUES[story.intro]?.choice, destination.id).toBeUndefined();
     }
   });
-  it("shares the physical introduction identity across destination stages, separate from foreshadow", () => {
+  it("shares the physical introduction identity across destination stages", () => {
     const first = zoneStoryForStage(map, pairs, "one");
     const second = zoneStoryForStage(map, pairs, "two");
     expect(first).toEqual(second);
-    expect(first?.intro).not.toBe(first?.foreshadow);
     expect(zoneStoryForStage(map, pairs, "debug")).toBeUndefined();
   });
   it("opens the physical introduction only on an unseen opening stage", () => {
@@ -102,7 +101,6 @@ describe("zone story routing", () => {
   );
   it("still requires an entry profile on an explicitly selected later stage", () => {
     const story = {
-      foreshadow: "before",
       intro: "entry",
       introStage: "two",
       outro: "after",
