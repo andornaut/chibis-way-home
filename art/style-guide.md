@@ -301,6 +301,15 @@ The world HUD is hidden and blocked beneath dialogue and all modals except Pause
 
 Secret-room entry grants a permanent skill; repeated grants do not stack. The first gift becomes selected automatically, while later gifts keep the current selection. The room reuses the top dialogue rectangle at 40,8,640,96 with the harmless `dog-pug` idle image at native 44x32, centred in the existing 68x68 portrait frame. Supportive text, descriptions and grant placement belong to gameplay data. The separate in-room details card is nonmodal: reuse native card and icon artwork without a close X, modal dim or additional pause behaviour. [Its measured layout](../src/layout/skillDetails.ts) fits between the dialogue and the bottom-right primary Continue action, retaining the existing fonts and complete press-target clearances. Continue uses `ui-button-primary`, dslate with a white label and no play mark, at the standard 48px height with a content-fitted width and 16px bottom and right insets. Ordinary rooms retain their secondary Leave control at 640,10,72,28. Room lifecycle remains source-owned; do not hardcode the illustrative mock's card dimensions.
 
+### Achievements
+
+`art/tools/achievementIcons.ts` draws the achievement art and holds the achievement ID table, in tag order.
+
+- `icon-achievements` is the 20x20 nav icon: a trophy cup with two handles, a stem and a stepped foot, cream with tan on its lower-right edges and no outline, like the other nav icons. It goes in `ui-icon-button` as they do.
+- `icon-achievement` is one transparent 16x16 sprite with one tag per achievement ID. Each tag has frame 0 `unlocked` and frame 1 `locked`, 100ms each. The consumer shows the frame for the state; it does not play the tag. No contact box, hit box or slice.
+- Unlocked glyphs are full colour with one ink outline per part. Locked glyphs keep the identical alpha geometry in flat `grey`, the muted skill glyphs' colour, authored rather than tinted at runtime. Each glyph must read by silhouette alone, so overlaid parts knock a 1px transparent gap out of what they cover, and fence gaps and apartment windows are transparent.
+- Families: an escape is the boss's head (read from head shape and markings, as in the portraits) with an amber exit arrow at the lower right. A clean finale is the same head over a green laurel wreath open at the top. A zone is its emblem in the [zone primary](#zone-primary-colours) and shade: a three-tower skyline, a sawtooth factory with a smoking chimney, a picket fence, a conifer, a pitched-roof house and an apartment block. Spotless is the same emblem with a yellow sparkle at each upper corner. `all-gifts` is a red gift box with a yellow ribbon; `just-a-bird` is Chibi facing a small house.
+
 ### Dialogue box
 
 - The dialogue panel is at the top, 40,8,640,96. One paragraph of at most three lines shows at a time; advancing replaces that paragraph rather than adding a chat history. Play is frozen and touch controls hide while the conversation is open.
