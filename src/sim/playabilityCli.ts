@@ -1,50 +1,43 @@
 import { createHash } from "node:crypto";
 import { existsSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
 import { ZONE_MAP } from "../data/map";
 import { RECIPES, ZONES } from "../data/zones";
 import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans";
+import { choiceOption, parseOptions, runMain, UsageError } from "./command";
 import { assessPlayability, formatPlayabilityMarkdown } from "./playability";
 const HELP = `npx tsx src/sim/playabilityCli.ts --seeds 1,7 --source COMMIT [--format json|markdown] [--out FILE]
 Structural catalogue assessment only. No physics, bots, playthrough or reachability search.
 Seeds are explicit, distinct unsigned 32-bit integers; maximum 16. All map stages are included.
 Source identifies the checked checkout; data is SHA-256 of the loaded structural inputs.
+--out refuses an existing file. Exits 2 on a usage error.
 Run inside the project container. JSON retains full counts/order; Markdown is a concise summary.`;
-export function playabilityCli(args: readonly string[]): void {
-  if (args.includes("--help")) {
+const OPTIONS = {
+  format: { type: "string" },
+  out: { type: "string" },
+  seeds: { type: "string" },
+  source: { type: "string" },
+} as const;
+const FORMATS = ["json", "markdown"] as const;
+export function playabilityCli(args: readonly string[]): number {
+  const values = parseOptions(OPTIONS, args);
+  if (values.help) {
     console.log(HELP);
-    return;
+    return 0;
   }
-  const options: Record<string, string> = {};
-  for (let index = 0; index < args.length; index += 2) {
-    const flag = args[index],
-      value = args[index + 1];
-    if (
-      !flag ||
-      !["--seeds", "--source", "--format", "--out"].includes(flag) ||
-      !value ||
-      Object.hasOwn(options, flag)
-    ) {
-      throw new Error(`Invalid or repeated option ${flag}`);
-    }
-    options[flag] = value;
+  const { out, seeds, source } = values;
+  if (seeds === undefined || source === undefined) {
+    throw new UsageError("--seeds and --source are required");
   }
-  if (!options["--seeds"] || !options["--source"]) {
-    throw new Error("--seeds and --source are required");
+  if (!/^\d+(,\d+)*$/.test(seeds)) {
+    throw new UsageError(`--seeds takes comma-separated whole numbers, not ${seeds}`);
   }
-  if (!/^\d+(,\d+)*$/.test(options["--seeds"])) {
-    throw new Error("--seeds must be comma-separated integers");
-  }
-  const format = options["--format"] ?? "json";
-  if (format !== "json" && format !== "markdown") {
-    throw new Error("--format must be json or markdown");
-  }
-  if (options["--out"] && existsSync(options["--out"])) {
-    throw new Error(`Output already exists: ${options["--out"]}`);
+  const format =
+    values.format === undefined ? "json" : choiceOption("format", FORMATS, values.format);
+  if (out !== undefined && existsSync(out)) {
+    throw new Error(`Output already exists: ${out}`);
   }
   const catalogue = ZONE_MAP.destinations;
   const data = `sha256:${createHash("sha256")
@@ -65,19 +58,18 @@ export function playabilityCli(args: readonly string[]): void {
       catalogue,
       library: { ...CHUNK_LIBRARY, characters: CHARACTERS },
       load: zonePlanFor,
-      provenance: { data, source: options["--source"] },
+      provenance: { data, source },
       recipes: RECIPES,
     },
-    options["--seeds"].split(",").map(Number),
+    seeds.split(",").map(Number),
   );
   const output =
     format === "json" ? `${JSON.stringify(report, null, 2)}\n` : formatPlayabilityMarkdown(report);
-  if (options["--out"]) {
-    writeFileSync(options["--out"], output, { flag: "wx" });
-  } else {
+  if (out === undefined) {
     process.stdout.write(output);
+  } else {
+    writeFileSync(out, output, { flag: "wx" });
   }
+  return 0;
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  playabilityCli(process.argv.slice(2));
-}
+runMain(import.meta.url, HELP, playabilityCli);

@@ -1,7 +1,5 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { BIRD } from "../data/bird";
 import { ZONE_MAP } from "../data/map";
@@ -14,6 +12,7 @@ import {
   type NavigationConfig,
 } from "./bot";
 import { stageLoader } from "./catalogue";
+import { choiceOption, numberOption, parseOptions, runMain, UsageError } from "./command";
 import { VALIDATION_LIMITS } from "./diagnostics";
 import { simulateBatch } from "./report";
 import { type SimulationConfig, type SimulationSeeds, validateSimulation } from "./simulate";
@@ -23,225 +22,186 @@ const HELP = `npm run simulate -- [--stage ID] [--seed N] [--runs N] [--max-step
   [--layout-seed N] [--motion-seed N] [--bot-seed N]
   [--area ID --entry ID | --area ID --start-x PX --start-y PX] [--goal-x PX]
   [--trace-cap N] [--trace-every N] [--stall-ticks N]
-  [--adaptive-jump true|false] [--min-hold-ticks N] [--wait-for-movers true|false]
+  [--[no-]adaptive-jump] [--min-hold-ticks N] [--[no-]wait-for-movers]
   [--max-wait-ticks N] [--build-id ID] [--data-id ID]
   [--max-wall-ms N] [--batch-wall-ms N] [--stall-limit N]
   [--profile quick|validation]
-  [--witness-segments N] [--require-full-pass true|false]
+  [--witness-segments N] [--[no-]require-full-pass]
   [--plan-horizon N] [--plan-candidates N] [--plan-replan N] [--plan-steps N]
-  [--error-rate 0..1] [--jump reactive|continuous|never|planned] [--move -1|0|1] [--out FILE]
+  [--error-rate 0..1] [--jump reactive|continuous|never|planned] [--move=-1|0|1] [--out FILE]
 
 Defaults: first map stage, seed 1, one run, 3600 total ticks/run, zero retries.
 Bot defaults are mechanical diagnostic settings, not calibrated human skills.
 Consecutive seeds select layout/motion/bot unless explicitly overridden by component flags.
 Section coordinates are collision-box top-left pixels. --goal-x requires --area and nonzero move.
 Omitting a goal runs the whole stage from the selected cold start. Tracing is off by default.
+A value starting with a dash is passed as --flag=VALUE. --out refuses an existing file.
 Output is JSON with per-run and aggregate metrics. Runtime includes no rendering.
+Exits 1 when --require-full-pass is not met and 2 on a usage error.
 Only run bounded batches in the project container; coordinate larger batches with gameplay.`;
 
-export function simulationCli(args: readonly string[]): void {
-  if (args.includes("--help") || args.includes("-h")) {
+const OPTIONS = {
+  "adaptive-jump": { type: "boolean" },
+  area: { type: "string" },
+  "batch-wall-ms": { type: "string" },
+  "bot-seed": { type: "string" },
+  "build-id": { type: "string" },
+  "data-id": { type: "string" },
+  entry: { type: "string" },
+  "error-rate": { type: "string" },
+  "goal-x": { type: "string" },
+  "hold-ticks": { type: "string" },
+  jump: { type: "string" },
+  "layout-seed": { type: "string" },
+  "look-ahead": { type: "string" },
+  "max-retries": { type: "string" },
+  "max-steps": { type: "string" },
+  "max-wait-ticks": { type: "string" },
+  "max-wall-ms": { type: "string" },
+  "min-hold-ticks": { type: "string" },
+  "motion-seed": { type: "string" },
+  move: { type: "string" },
+  out: { type: "string" },
+  "plan-candidates": { type: "string" },
+  "plan-horizon": { type: "string" },
+  "plan-replan": { type: "string" },
+  "plan-steps": { type: "string" },
+  profile: { type: "string" },
+  "reaction-ticks": { type: "string" },
+  "require-full-pass": { type: "boolean" },
+  runs: { type: "string" },
+  seed: { type: "string" },
+  stage: { type: "string" },
+  "stall-limit": { type: "string" },
+  "stall-ticks": { type: "string" },
+  "start-x": { type: "string" },
+  "start-y": { type: "string" },
+  "trace-cap": { type: "string" },
+  "trace-every": { type: "string" },
+  "wait-for-movers": { type: "boolean" },
+  "witness-segments": { type: "string" },
+} as const;
+type Option = keyof typeof OPTIONS;
+
+const JUMP_POLICIES: readonly JumpPolicy[] = ["reactive", "continuous", "never", "planned"];
+const MOVES = ["-1", "0", "1"] as const;
+const PROFILES = ["quick", "validation"] as const;
+
+// Runs the batch args describe and prints its report; returns 1 when a required full pass fails.
+export function simulationCli(args: readonly string[]): number {
+  const values = parseOptions(OPTIONS, args);
+  if (values.help) {
     console.log(HELP);
-    return;
+    return 0;
   }
-  let profile: "quick" | "validation" = "quick";
-  const explicit = new Set<string>();
-  let stage = ZONE_MAP.start;
-  let seed = 1;
-  let runs = 1;
-  let maxSteps = 3600;
-  let maxRetries = 0;
-  let witnessSegments: number | undefined;
-  let requireFullPass = false;
-  let maxWallTimeMs: number | undefined;
-  let batchWallTimeMs: number | undefined;
-  let stopAfterStallTicks: number | undefined;
+  const explicit = (name: Option) => values[name] !== undefined;
+  const number = (name: Option) => {
+    const value = values[name];
+    return typeof value === "string" ? numberOption(name, value) : undefined;
+  };
+  const profile =
+    values.profile === undefined
+      ? "quick"
+      : choiceOption("simulation profile", PROFILES, values.profile);
+  const stage = values.stage ?? ZONE_MAP.start;
+  const seed = number("seed") ?? 1;
+  const runs = number("runs") ?? 1;
+  let maxSteps = number("max-steps") ?? 3600;
+  let maxRetries = number("max-retries") ?? 0;
+  let witnessSegments = number("witness-segments");
+  let requireFullPass = values["require-full-pass"] ?? false;
+  let maxWallTimeMs = number("max-wall-ms");
+  let batchWallTimeMs = number("batch-wall-ms");
+  let stopAfterStallTicks = number("stall-limit");
   const navigation: { -readonly [Key in keyof NavigationConfig]?: NavigationConfig[Key] } = {};
-  let navigationSpecified = false;
-  let out: string | undefined;
+  const planning = [
+    ["plan-horizon", "horizonTicks"],
+    ["plan-candidates", "maxCandidates"],
+    ["plan-replan", "replanTicks"],
+    ["plan-steps", "maxPhysicsSteps"],
+  ] as const;
+  for (const [name, key] of planning) {
+    const value = number(name);
+    if (value !== undefined) {
+      navigation[key] = value;
+    }
+  }
+  const navigationSpecified = planning.some(([name]) => explicit(name));
+  const out = values.out;
   const seeds: Partial<{ -readonly [Key in keyof SimulationSeeds]: SimulationSeeds[Key] }> = {};
-  let area: string | undefined;
-  let entry: string | undefined;
-  let startX: number | undefined;
-  let startY: number | undefined;
-  let goalX: number | undefined;
-  let traceCap: number | undefined;
-  let traceEvery: number | undefined;
-  let stallTicks = 120;
-  let build: string | undefined;
-  let data: string | undefined;
+  for (const [name, key] of [
+    ["layout-seed", "layout"],
+    ["motion-seed", "motion"],
+    ["bot-seed", "bot"],
+  ] as const) {
+    const value = number(name);
+    if (value !== undefined) {
+      seeds[key] = value;
+    }
+  }
+  const { area, entry } = values;
+  const startX = number("start-x");
+  const startY = number("start-y");
+  const goalX = number("goal-x");
+  const traceCap =
+    number("trace-cap") ?? (explicit("trace-every") || explicit("stall-ticks") ? 128 : undefined);
+  const traceEvery = number("trace-every");
+  const stallTicks = number("stall-ticks") ?? 120;
+  let build = values["build-id"];
+  const data = values["data-id"];
   const skill = { ...DIAGNOSTIC_SKILL };
+  for (const [name, key] of [
+    ["error-rate", "errorRate"],
+    ["hold-ticks", "jumpHoldTicks"],
+    ["look-ahead", "lookAheadPx"],
+    ["max-wait-ticks", "maxWaitTicks"],
+    ["min-hold-ticks", "minJumpHoldTicks"],
+    ["reaction-ticks", "reactionTicks"],
+  ] as const) {
+    const value = number(name);
+    if (value !== undefined) {
+      skill[key] = value;
+    }
+  }
+  if (values["adaptive-jump"] !== undefined) {
+    skill.adaptiveJump = values["adaptive-jump"];
+  }
+  if (values["wait-for-movers"] !== undefined) {
+    skill.waitForMovers = values["wait-for-movers"];
+  }
   const policy = { ...FORWARD_POLICY };
-  for (let at = 0; at < args.length; at += 2) {
-    const flag = args[at];
-    const value = args[at + 1];
-    if (flag === undefined || value === undefined || value.trim() === "") {
-      throw new Error(`${flag} needs a value`);
-    }
-    const boolean = () => {
-      if (value !== "true" && value !== "false") {
-        throw new Error(`${flag} takes true or false`);
-      }
-      return value === "true";
-    };
-    explicit.add(flag);
-    switch (flag) {
-      case "--profile":
-        if (value !== "quick" && value !== "validation") {
-          throw new Error("Unknown simulation profile");
-        }
-        profile = value;
-        break;
-      case "--witness-segments":
-        witnessSegments = Number(value);
-        break;
-      case "--require-full-pass":
-        requireFullPass = boolean();
-        break;
-      case "--max-wall-ms":
-        maxWallTimeMs = Number(value);
-        break;
-      case "--batch-wall-ms":
-        batchWallTimeMs = Number(value);
-        break;
-      case "--stall-limit":
-        stopAfterStallTicks = Number(value);
-        break;
-      case "--plan-horizon":
-        navigation.horizonTicks = Number(value);
-        navigationSpecified = true;
-        break;
-      case "--plan-candidates":
-        navigation.maxCandidates = Number(value);
-        navigationSpecified = true;
-        break;
-      case "--plan-replan":
-        navigation.replanTicks = Number(value);
-        navigationSpecified = true;
-        break;
-      case "--plan-steps":
-        navigation.maxPhysicsSteps = Number(value);
-        navigationSpecified = true;
-        break;
-      case "--layout-seed":
-        seeds.layout = Number(value);
-        break;
-      case "--motion-seed":
-        seeds.motion = Number(value);
-        break;
-      case "--bot-seed":
-        seeds.bot = Number(value);
-        break;
-      case "--area":
-        area = value;
-        break;
-      case "--entry":
-        entry = value;
-        break;
-      case "--start-x":
-        startX = Number(value);
-        break;
-      case "--start-y":
-        startY = Number(value);
-        break;
-      case "--goal-x":
-        goalX = Number(value);
-        break;
-      case "--trace-cap":
-        traceCap = Number(value);
-        break;
-      case "--trace-every":
-        traceEvery = Number(value);
-        traceCap ??= 128;
-        break;
-      case "--stall-ticks":
-        stallTicks = Number(value);
-        traceCap ??= 128;
-        break;
-      case "--adaptive-jump":
-        skill.adaptiveJump = boolean();
-        break;
-      case "--wait-for-movers":
-        skill.waitForMovers = boolean();
-        break;
-      case "--min-hold-ticks":
-        skill.minJumpHoldTicks = Number(value);
-        break;
-      case "--max-wait-ticks":
-        skill.maxWaitTicks = Number(value);
-        break;
-      case "--build-id":
-        build = value;
-        break;
-      case "--data-id":
-        data = value;
-        break;
-      case "--stage":
-        stage = value;
-        break;
-      case "--seed":
-        seed = Number(value);
-        break;
-      case "--runs":
-        runs = Number(value);
-        break;
-      case "--max-steps":
-        maxSteps = Number(value);
-        break;
-      case "--max-retries":
-        maxRetries = Number(value);
-        break;
-      case "--reaction-ticks":
-        skill.reactionTicks = Number(value);
-        break;
-      case "--look-ahead":
-        skill.lookAheadPx = Number(value);
-        break;
-      case "--hold-ticks":
-        skill.jumpHoldTicks = Number(value);
-        break;
-      case "--error-rate":
-        skill.errorRate = Number(value);
-        break;
-      case "--jump":
-        policy.jump = value as JumpPolicy;
-        break;
-      case "--move":
-        policy.move = Number(value) as -1 | 0 | 1;
-        break;
-      case "--out":
-        out = value;
-        break;
-      default:
-        throw new Error(`Unknown option ${flag}`);
-    }
+  if (values.jump !== undefined) {
+    policy.jump = choiceOption("jump policy", JUMP_POLICIES, values.jump);
+  }
+  if (values.move !== undefined) {
+    policy.move = Number(choiceOption("move direction", MOVES, values.move)) as -1 | 0 | 1;
   }
   if (out !== undefined && existsSync(out)) {
     throw new Error(`Output already exists: ${out}`);
   }
   if (profile === "validation") {
-    if (!explicit.has("--max-steps")) {
+    if (!explicit("max-steps")) {
       maxSteps = VALIDATION_LIMITS.maxSteps;
     }
-    if (!explicit.has("--max-retries")) {
+    if (!explicit("max-retries")) {
       maxRetries = VALIDATION_LIMITS.maxRetries;
     }
-    if (!explicit.has("--max-wall-ms")) {
+    if (!explicit("max-wall-ms")) {
       maxWallTimeMs = VALIDATION_LIMITS.maxWallTimeMs;
     }
-    if (!explicit.has("--batch-wall-ms")) {
+    if (!explicit("batch-wall-ms")) {
       batchWallTimeMs = VALIDATION_LIMITS.batchWallTimeMs;
     }
-    if (!explicit.has("--stall-limit")) {
+    if (!explicit("stall-limit")) {
       stopAfterStallTicks = VALIDATION_LIMITS.stopAfterStallTicks;
     }
-    if (!explicit.has("--jump")) {
+    if (!explicit("jump")) {
       policy.jump = "planned";
     }
-    if (!explicit.has("--witness-segments")) {
+    if (!explicit("witness-segments")) {
       witnessSegments = maxSteps;
     }
-    if (!explicit.has("--require-full-pass")) {
+    if (!explicit("require-full-pass")) {
       requireFullPass = true;
     }
   }
@@ -250,7 +210,9 @@ export function simulationCli(args: readonly string[]): void {
     ...navigation,
   };
   if (!Number.isSafeInteger(runs) || runs < 1 || runs > 10000 || seed + runs - 1 > 0xffffffff) {
-    throw new Error("Invalid runs or seed range");
+    throw new UsageError(
+      `Invalid --runs ${runs} or --seed ${seed}: runs must be 1 to 10000 and seed + runs - 1 at most 4294967295`,
+    );
   }
   const hasPoint = startX !== undefined || startY !== undefined;
   if (
@@ -259,7 +221,9 @@ export function simulationCli(args: readonly string[]): void {
     ((hasPoint || entry !== undefined || goalX !== undefined) && area === undefined) ||
     (area !== undefined && !hasPoint && entry === undefined && goalX === undefined)
   ) {
-    throw new Error("Provide an explicit area and either entry or both start coordinates");
+    throw new UsageError(
+      "Provide --area with either --entry or both --start-x and --start-y, or with --goal-x",
+    );
   }
   if (build === undefined) {
     try {
@@ -273,7 +237,7 @@ export function simulationCli(args: readonly string[]): void {
     }
   }
   if (requireFullPass && witnessSegments === undefined) {
-    throw new Error("Full-pass validation requires an explicit witness segment budget");
+    throw new UsageError("--require-full-pass requires --witness-segments");
   }
   if (requireFullPass && !build) {
     throw new Error("Full-pass validation requires a source build identifier");
@@ -335,19 +299,10 @@ export function simulationCli(args: readonly string[]): void {
   };
   const json = `${JSON.stringify(report, null, 2)}\n`;
   console.log(json.trimEnd());
-  if (requireFullPass && !result.validation.fullPass) {
-    process.exitCode = 1;
-  }
   if (out !== undefined) {
     writeFileSync(out, json, { flag: "wx" });
   }
+  return requireFullPass && !result.validation.fullPass ? 1 : 0;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    simulationCli(process.argv.slice(2));
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  }
-}
+runMain(import.meta.url, HELP, simulationCli);

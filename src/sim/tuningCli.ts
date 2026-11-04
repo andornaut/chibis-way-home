@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { dirname, resolve } from "node:path";
 
+import { parseOptions, runMain, UsageError } from "./command";
 import type { PlayabilityReport } from "./playability";
 import {
   assessTuning,
@@ -36,25 +37,30 @@ export function writeTuningOutputs(prefix: string, report: ReturnType<typeof ass
   }
 }
 const openExclusive = (path: string) => openSync(path, "wx");
-export function tuningCli(args: readonly string[]): void {
-  const options = new Map<string, string>();
-  for (let index = 0; index < args.length; index += 2) {
-    const key = args[index],
-      value = args[index + 1];
-    if (
-      !key ||
-      !value ||
-      !["--cases", "--structural", "--out-prefix"].includes(key) ||
-      options.has(key)
-    ) {
-      throw new Error("Expected --cases MANIFEST --structural JSON --out-prefix PATH");
-    }
-    options.set(key, value);
+const HELP = `npx tsx src/sim/tuningCli.ts --cases MANIFEST --structural JSON --out-prefix PATH
+Post-processes saved case artifacts and a saved structural playability report into
+PATH.json, PATH.csv and PATH.md. No physics, navigation or replay.
+The manifest is a JSON array of {stage, path} entries, each path relative to the manifest.
+Refuses any existing output. Exits 2 on a usage error.`;
+const OPTIONS = {
+  cases: { type: "string" },
+  "out-prefix": { type: "string" },
+  structural: { type: "string" },
+} as const;
+export function tuningCli(args: readonly string[]): number {
+  const values = parseOptions(OPTIONS, args);
+  if (values.help) {
+    console.log(HELP);
+    return 0;
   }
-  if (options.size !== 3) {
-    throw new Error("All three options are required");
+  const { cases: casesPath, "out-prefix": prefix, structural: structuralPath } = values;
+  if (casesPath === undefined || prefix === undefined || structuralPath === undefined) {
+    const missing = Object.keys(OPTIONS).filter(
+      (name) => values[name as keyof typeof OPTIONS] === undefined,
+    );
+    throw new UsageError(`Missing ${missing.map((name) => `--${name}`).join(", ")}`);
   }
-  const manifest = resolve(options.get("--cases")!);
+  const manifest = resolve(casesPath);
   const paths: { stage: string; path: string }[] = JSON.parse(readFileSync(manifest, "utf8"));
   if (
     !Array.isArray(paths) ||
@@ -71,11 +77,8 @@ export function tuningCli(args: readonly string[]): void {
         stage,
       }) as SavedTuningCase,
   );
-  const structural = JSON.parse(
-    readFileSync(options.get("--structural")!, "utf8"),
-  ) as PlayabilityReport;
-  writeTuningOutputs(options.get("--out-prefix")!, assessTuning({ structural }, cases));
+  const structural = JSON.parse(readFileSync(structuralPath, "utf8")) as PlayabilityReport;
+  writeTuningOutputs(prefix, assessTuning({ structural }, cases));
+  return 0;
 }
-if (process.argv[1]?.endsWith("tuningCli.ts")) {
-  tuningCli(process.argv.slice(2));
-}
+runMain(import.meta.url, HELP, tuningCli);

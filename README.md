@@ -64,7 +64,7 @@ npm run format
 # Run the unit tests
 npm test
 
-# Print the bird's measured reaches beside gameplay's targets
+# Print the bird's measured reaches beside gameplay's targets; exits 1 when one is off
 npm run reaches
 
 # Build to dist/
