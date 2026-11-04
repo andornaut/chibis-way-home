@@ -1,10 +1,10 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
+import { abilityFor } from "../ai/ability";
 import { scopedStreams } from "../ai/randomStreams";
 import type {
   BehaviourAction,
   BehaviourCondition,
-  BehaviourNode,
   BehaviourPlan,
   BirdTuning,
   DialogueLine,
@@ -13,6 +13,7 @@ import type {
   Point,
   Rect,
 } from "../data/types";
+import { BEHAVIOUR_ABILITIES } from "./behaviourAbilities";
 import {
   advanceAttackClock,
   attackProtected,
@@ -51,6 +52,7 @@ import {
   overheadFlightRoute,
   targetReachable,
 } from "./behaviourReach";
+import { contactBox, nodeOf, trackEndpoint, travelHeading } from "./behaviourTrack";
 import {
   advanceTraversal,
   type BehaviourRearmState,
@@ -564,14 +566,6 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   };
 }
 
-function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
-  const node = object.behaviour?.states[key];
-  if (!node) {
-    throw new Error(`No behaviour state ${key} for ${object.character}`);
-  }
-  return node;
-}
-
 function enterState(
   perception: BehaviourPerception,
   object: ObjectLayout,
@@ -732,22 +726,6 @@ export function startBehaviour(
   });
 }
 
-// Collision uses the object's contact box. Vertical movers do not flip their
-// horizontal art merely because they reverse vertical travel.
-export function contactBox(
-  object: ObjectLayout,
-  at: Point,
-  facing: -1 | 1,
-  axis = object.behaviour?.axis,
-): Rect {
-  const box = object.hitbox ?? { height: object.height, width: object.width, x: 0, y: 0 };
-  return {
-    ...box,
-    x: at.x + (facing === 1 || axis === "y" ? box.x : object.width - box.x - box.width),
-    y: at.y + box.y,
-  };
-}
-
 function horizontalBodyBounds(object: ObjectLayout, at: Point, state: BehaviourState): Rect {
   const contact = object.contact;
   if (!contact) {
@@ -779,26 +757,6 @@ function horizontalBodyBounds(object: ObjectLayout, at: Point, state: BehaviourS
     x: origin.x + (flipped ? contact.frame.width - right : left),
     y: origin.y + top,
   };
-}
-
-function heading(node: BehaviourNode, state: BehaviourState): -1 | 1 {
-  return node.motion.kind !== "wait" &&
-    node.motion.kind !== "fly" &&
-    node.motion.kind !== "pursue" &&
-    typeof node.motion.direction === "number"
-    ? node.motion.direction
-    : state.facing;
-}
-
-function endpoint(object: ObjectLayout, direction: -1 | 1, state: BehaviourState): number {
-  const plan = nodeOf(object, state.stateKey).track ?? object.behaviour;
-  if (!plan) {
-    throw new Error(`No behaviour for ${object.character}`);
-  }
-  const origin = (state.anchor ?? object.origin)[plan.axis];
-  return direction === 1
-    ? Math.max(origin, origin + plan.distance)
-    : Math.min(origin, origin + plan.distance);
 }
 
 function flightDestination(
@@ -982,7 +940,10 @@ function matches(
   }
   if (condition.kind === "boundary") {
     const axis = state.axis ?? object.behaviour?.axis ?? "x";
-    return at[axis] === endpoint(object, heading(nodeOf(object, state.stateKey), state), state);
+    return (
+      at[axis] ===
+      trackEndpoint(object, travelHeading(nodeOf(object, state.stateKey).motion, state), state)
+    );
   }
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
     const reachable =
@@ -1019,48 +980,6 @@ function matches(
       hers.y + hers.height / 2 - at.y - object.height / 2,
     ) <= condition.range
   );
-}
-
-function reachable(
-  object: ObjectLayout,
-  world: BehaviourWorld,
-  at: Point,
-  state: BehaviourState,
-  direction: -1 | 1,
-  desired: number,
-): number {
-  const axis = state.axis ?? object.behaviour?.axis ?? "x";
-  const edge = endpoint(object, direction, state);
-  let to = direction === 1 ? Math.min(edge, desired) : Math.max(edge, desired);
-  const box = contactBox(object, at, state.facing, state.axis);
-  const across = axis === "x" ? "y" : "x";
-  const depth = axis === "x" ? "height" : "width";
-  const length = axis === "x" ? "width" : "height";
-  const consider = (solid: Rect) => {
-    if (box[across] >= solid[across] + solid[depth] || solid[across] >= box[across] + box[depth]) {
-      return;
-    }
-    if (direction === 1 && box[axis] + box[length] <= solid[axis]) {
-      to = Math.min(to, at[axis] + solid[axis] - box[axis] - box[length]);
-    } else if (direction === -1 && box[axis] >= solid[axis] + solid[length]) {
-      to = Math.max(to, at[axis] + solid[axis] + solid[length] - box[axis]);
-    }
-  };
-  const delta = to - at[axis];
-  const sweep = {
-    ...box,
-    [axis]: Math.min(box[axis], box[axis] + delta),
-    [length]: box[length] + Math.abs(delta),
-  };
-  for (const solid of collisionCandidates(world.solids, sweep)) {
-    consider(solid);
-  }
-  for (const platform of world.platforms ?? []) {
-    if (platform.owner !== object && platform.collision === "solid") {
-      consider(platform.rect);
-    }
-  }
-  return to;
 }
 
 function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: number): number {
@@ -2329,26 +2248,15 @@ export function advanceBehaviour(
         }
       }
     }
-    if (
-      node.motion.kind !== "wait" &&
-      node.motion.kind !== "fly" &&
-      node.motion.kind !== "pursue" &&
-      node.motion.speed > 0
-    ) {
-      const direction = heading(node, next);
-      let desired = current[track.axis] + direction * node.motion.speed * slice;
-      if (node.motion.direction === "target") {
-        const target =
-          bird[track.axis] +
-          (track.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
-        desired = direction === 1 ? Math.min(desired, target) : Math.max(desired, target);
-      }
-      const end = reachable(object, world, current, next, direction, desired);
-      const moving = Math.abs(end - current[track.axis]) / node.motion.speed;
-      if (moving > 0) {
-        slice = Math.min(slice, moving);
-        to[track.axis] = end;
-      }
+    const ability = abilityFor(BEHAVIOUR_ABILITIES, node.motion);
+    if (ability) {
+      const acted = ability.act({ object, perception, slice, track }, node.motion, {
+        at: current,
+        state: next,
+      });
+      slice = acted.slice;
+      to.x = acted.to.x;
+      to.y = acted.to.y;
     }
     if (hop) {
       const elapsed = Math.min(hop.seconds, hop.elapsed + slice);
@@ -2456,4 +2364,5 @@ export function advanceBehaviour(
   return { actions, at: current, segments, state: next, ...(escaped && { escaped }) };
 }
 
+export { contactBox } from "./behaviourTrack";
 export { sweptContact } from "./sweptContact";
