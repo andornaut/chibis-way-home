@@ -674,6 +674,8 @@ export const RABBIT_BEHAVIOUR: BehaviourPlan = {
   },
 };
 
+const KIWI_DROP_ALIGNMENT = 1;
+const RACCOON_CLIMB_CLEAR = { kind: "track-clear", state: "climb" } as const;
 const RACCOON_GROUND_TRACK = { axis: "x", distance: -12 } as const;
 
 const RACCOON_VERTICAL_STATES = verticalDropStates({
@@ -701,6 +703,13 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         motion: { kind: "wait" },
         track: RACCOON_GROUND_TRACK,
         transitions: [{ to: "return-ground", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+      },
+      climb: {
+        ...RACCOON_VERTICAL_STATES.climb!,
+        transitions: [
+          { to: "pursuit", when: [{ kind: "blocked" }] },
+          ...RACCOON_VERTICAL_STATES.climb!.transitions,
+        ],
       },
       "drop-abort-return": {
         ...RACCOON_VERTICAL_STATES.drop!,
@@ -740,7 +749,16 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         track: RACCOON_GROUND_TRACK,
         transitions: [
           { to: "frustration-ground", when: LOST_TARGET },
-          { to: "return-ground-staging", when: [...DETECTION, { kind: "attack-ready" }] },
+          {
+            to: "return-ground-staging",
+            when: [
+              ...DETECTION,
+              { kind: "attack-ready" },
+              { comparison: "below", distance: KIWI_DROP_ALIGNMENT, kind: "horizontal-gap" },
+              RACCOON_CLIMB_CLEAR,
+            ],
+          },
+          { to: "pursuit", when: [...DETECTION, { kind: "attack-ready" }] },
         ],
       },
       rest: {
@@ -763,7 +781,10 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         animation: "climb",
         motion: { direction: 1, kind: "move", speed: RACCOON_RETURN_SPEED },
         track: RACCOON_GROUND_TRACK,
-        transitions: [{ to: "climb", when: [{ kind: "boundary" }] }],
+        transitions: [
+          { to: "climb", when: [{ kind: "boundary" }, RACCOON_CLIMB_CLEAR] },
+          { to: "pursuit", when: [{ kind: "boundary" }] },
+        ],
       },
       rush: {
         animation: "rush",
