@@ -946,8 +946,13 @@ function advanceTraversalStep(
   let result = planned
     ? stepTraversal(context, { ...planned, timeSeconds: frame.timeSeconds }, physical)
     : direct;
+  // An airborne body that cannot take a chosen step still falls; hazards do not veto gravity.
   if (result.status !== "ok" && !physical.grounded) {
-    const falling = stepTraversal(context, { ...input, move: 0 }, physical);
+    const falling = stepTraversal(
+      { ...context, safe: () => true },
+      { ...input, move: 0 },
+      physical,
+    );
     if (falling.status === "ok") {
       result = falling;
     }
