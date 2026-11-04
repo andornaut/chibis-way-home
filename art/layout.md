@@ -14,7 +14,7 @@ Use a shared token for repeated spacing, rather than unrelated coordinates that 
 
 | Token             | Value                   | Unit       | Scope                                                             | Status or source                                                                                   |
 | ----------------- | ----------------------- | ---------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Row gap           | 4                       | logical px | Related text rows                                                 | Verified `CARD_CONTENT.rowGap`, [card geometry](../src/layout/cardFrame.ts)                        |
+| Row gap           | 4                       | logical px | Related text rows                                                 | Verified `CARD_CONTENT.rowGap`, [card geometry](../src/ui/layout/cardFrame.ts)                     |
 | Related-group gap | 8                       | logical px | Heading to metrics, label to value, grouped actions               | Verified `CARD_CONTENT.gap` and `TEXT_BUTTON.gap`                                                  |
 | Page inset        | 16                      | logical px | Ordinary full-page content and footer alignment                   | Approved shared layout target; consumers derive their available bounds                             |
 | Panel padding     | 16                      | logical px | Ordinary modal bodies                                             | Verified modal `CARD_CONTENT.padding`; retry statistics retain their documented inset              |
@@ -37,15 +37,15 @@ The [full-page stage summary](style-guide.md#stage-and-zone-summaries) centres i
 
 Drawn faces, content padding, texture nine-slice margins and expanded press targets are distinct measurements. Preserve the complete target when placing adjacent content.
 
-| Token                   | Value       | Unit       | Scope                           | Status or source                                                      |
-| ----------------------- | ----------- | ---------- | ------------------------------- | --------------------------------------------------------------------- |
-| Standard action height  | 48          | logical px | Ordinary menu and modal actions | Verified [button geometry](../src/layout/buttonLabel.ts)              |
-| Minimum press target    | 48x48       | logical px | Ordinary discrete game controls | Verified `HIT_RULE.minTarget`, [hit areas](../src/layout/hitAreas.ts) |
-| Horizontal action inset | 16 per side | logical px | Ordinary action labels          | Verified `TEXT_BUTTON.inset`                                          |
-| Settings icon           | 16x16       | logical px | Ordinary settings-row icons     | Verified [settings layout](../src/layout/settingsCard.ts)             |
-| Compact Install face    | 28 high     | logical px | Explicit settings-row exception | Existing exception; retain the whole 48px row target                  |
+| Token                   | Value       | Unit       | Scope                           | Status or source                                                         |
+| ----------------------- | ----------- | ---------- | ------------------------------- | ------------------------------------------------------------------------ |
+| Standard action height  | 48          | logical px | Ordinary menu and modal actions | Verified [button geometry](../src/ui/layout/buttonLabel.ts)              |
+| Minimum press target    | 48x48       | logical px | Ordinary discrete game controls | Verified `HIT_RULE.minTarget`, [hit areas](../src/ui/layout/hitAreas.ts) |
+| Horizontal action inset | 16 per side | logical px | Ordinary action labels          | Verified `TEXT_BUTTON.inset`                                             |
+| Settings icon           | 16x16       | logical px | Ordinary settings-row icons     | Verified [settings layout](../src/ui/layout/settingsCard.ts)             |
+| Compact Install face    | 28 high     | logical px | Explicit settings-row exception | Existing exception; retain the whole 48px row target                     |
 
-Centre each button label's actual visible ink within its current drawn face, including its font bearings and kerning, rather than centring its baseline, advance width or press target. The shared [button geometry](../src/layout/buttonLabel.ts) excludes the 4px lower lip from normal and pressed faces, shifts the pressed face down 2px exactly once and uses the full flat rectangle for disabled faces. Optional marks and labels centre horizontally as one group, with the native 5x10 mark and 6px gap; each centres vertically within that state's face. Label origins derive from these measured bounds, with no fixed vertical label offset. These bitmap-font measurements apply to in-game controls; responsive HTML controls retain their CSS font metrics.
+Centre each button label's actual visible ink within its current drawn face, including its font bearings and kerning, rather than centring its baseline, advance width or press target. The shared [button geometry](../src/ui/layout/buttonLabel.ts) excludes the 4px lower lip from normal and pressed faces, shifts the pressed face down 2px exactly once and uses the full flat rectangle for disabled faces. Optional marks and labels centre horizontally as one group, with the native 5x10 mark and 6px gap; each centres vertically within that state's face. Label origins derive from these measured bounds, with no fixed vertical label offset. These bitmap-font measurements apply to in-game controls; responsive HTML controls retain their CSS font metrics.
 
 Equalize face widths within an action group using its widest actual label and padding. Keep the normal 8px action gap. Expanded targets may meet; use the existing nearest-centre overlap handling. Navigation icons and continuous touch controls retain their specific geometry.
 
@@ -69,7 +69,7 @@ All actual modals retain canonical dimming and exclusive input. Page headers, li
 
 Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint and pause control are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid.
 
-The top zone-dialogue panel keeps its 40px horizontal screen inset, portrait regions and footer reservation, as defined in [dialogue geometry](../src/layout/dialogueScreen.ts). Reserve its actual bounds before arranging content below it. Live barks remain distinct from paused dialogue and modal overlays.
+The top zone-dialogue panel keeps its 40px horizontal screen inset, portrait regions and footer reservation, as defined in [dialogue geometry](../src/ui/layout/dialogueScreen.ts). Reserve its actual bounds before arranging content below it. Live barks remain distinct from paused dialogue and modal overlays.
 
 ## Exceptions and verification
 
