@@ -32,7 +32,7 @@ Gameplay owns the rulebook and the values and content in the data value files (e
 
 ## Current scope
 
-The linear route has six themed zones and twenty-one stages, all built. The [rulebook](design.md#v1-route) owns their names, IDs and rules, and recipe data owns lengths. The park remains a debug prototype outside V1; later scope is listed in [`next.md`](next.md). Completing the route does not declare a V1 release.
+Every zone and stage on the [V1 route](design.md#v1-route) is built. The rulebook owns their counts, names, IDs and rules, and recipe data owns lengths. The park remains a debug prototype outside V1; later scope is listed in [`next.md`](next.md). Completing the route does not declare a V1 release.
 
 ## Targets
 
