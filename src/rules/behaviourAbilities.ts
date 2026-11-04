@@ -16,6 +16,10 @@ type Motion<Kind extends BehaviourMotion["kind"]> = Extract<
 // Which ability acts a motion: the graph decides the motion; the ability moves the body.
 export type BehaviourAbilityParams =
   | {
+      readonly kind: "supported-landing";
+      readonly motion: Extract<Motion<"fly">, { readonly to: "support" }>;
+    }
+  | {
       readonly kind: "target-flight";
       readonly motion: Exclude<Motion<"fly">, { readonly to: "support" }>;
     }
@@ -30,7 +34,9 @@ export function behaviourAbilityParams(
     case "move":
       return { kind: "track-travel", motion };
     case "fly":
-      return motion.to === "support" ? undefined : { kind: "target-flight", motion };
+      return motion.to === "support"
+        ? { kind: "supported-landing", motion }
+        : { kind: "target-flight", motion };
     case "wait":
       return { kind: "wait", motion };
     default:
@@ -117,6 +123,19 @@ const TARGET_FLIGHT: BehaviourAbility<"target-flight"> = {
   },
 };
 
+// Flight to the next proven landing waypoint of a varied perch or nearest support.
+const SUPPORTED_LANDING: BehaviourAbility<"supported-landing"> = {
+  act: ({ object, perception, slice, support }, { motion }, actor) =>
+    flyToward(
+      object,
+      support.world ?? perception.world,
+      slice,
+      motion.speed,
+      support.target,
+      actor,
+    ),
+};
+
 // Bounded travel along the state's track at the motion's speed, stopping at the track end,
 // solid terrain and other solid platforms. Target-relative travel stops level with Chibi.
 const TRACK_TRAVEL: BehaviourAbility<"track-travel"> = {
@@ -188,4 +207,9 @@ export const BEHAVIOUR_ABILITIES: AbilityTable<
   BehaviourAbilityParams,
   BehaviourActor,
   BehaviourMotionStep
-> = { "target-flight": TARGET_FLIGHT, "track-travel": TRACK_TRAVEL, wait: WAIT };
+> = {
+  "supported-landing": SUPPORTED_LANDING,
+  "target-flight": TARGET_FLIGHT,
+  "track-travel": TRACK_TRAVEL,
+  wait: WAIT,
+};

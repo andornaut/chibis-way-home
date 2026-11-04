@@ -23,7 +23,7 @@ import {
   enterAttack,
 } from "./behaviourAttack";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
-import { type FlightSelectionState, selectSupportedFlight } from "./behaviourFlightSelection";
+import type { FlightSelectionState } from "./behaviourFlightSelection";
 import {
   advanceIdleRecovery,
   advanceSupportedRecovery,
@@ -53,6 +53,7 @@ import {
   overheadFlightRoute,
   targetReachable,
 } from "./behaviourReach";
+import { prepareSupport } from "./behaviourSupport";
 import { contactBox, nodeOf, trackEndpoint, travelHeading } from "./behaviourTrack";
 import {
   advanceTraversal,
@@ -63,14 +64,7 @@ import {
 import { birdBox, type BirdState, EDGE } from "./bird";
 import { contactFrameAt, spriteFrameOrigin } from "./bodyContact";
 import { collisionCandidates } from "./collisionIndex";
-import {
-  flyLandingRoute,
-  type FlyLandingState,
-  landingSupport,
-  landingWorldAt,
-  proveFlyLanding,
-  supportedLanding,
-} from "./flyLanding";
+import { flyLandingRoute, type FlyLandingState, supportedLanding } from "./flyLanding";
 import { hopLift } from "./motion";
 import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 
@@ -1544,73 +1538,12 @@ export function advanceBehaviour(
     const supportMotion =
       (node.motion.kind === "fly" && node.motion.to === "support") ||
       (node.motion.kind === "wait" && node.motion.support === "required");
-    const supportWorld = supportMotion ? landingWorldAt(world, time) : undefined;
+    const support = prepareSupport(perception, object, node.motion, time, current, next);
+    next = support.state;
+    const supportWorld = support.world;
     const supportPerception = supportWorld ? { ...perception, world: supportWorld } : perception;
-    let supported =
-      supportWorld !== undefined &&
-      supportedLanding(object, supportWorld, current) &&
-      (node.motion.kind !== "wait" || next.landing !== undefined);
-    let landingTarget: Point | undefined;
-    if (node.motion.kind === "fly" && node.motion.to === "support" && node.motion.selection) {
-      const proof =
-        supportWorld &&
-        selectSupportedFlight(
-          supportWorld,
-          object,
-          node.motion,
-          next.facing,
-          next.flightDecision ?? 0,
-          current,
-          next.flightSelection,
-        );
-      const selection = proof?.state ?? {
-        entry: next.flightSelection?.entry ?? current,
-        status: "pending" as const,
-      };
-      supported = selection.status === "supported";
-      landingTarget = proof?.points?.[0];
-      const support = supported && supportWorld && landingSupport(object, supportWorld, current);
-      next = {
-        ...next,
-        flightDecision: proof?.decision ?? next.flightDecision ?? 0,
-        flightSelection: selection,
-        landing: {
-          speed: node.motion.speed,
-          status: selection.status,
-          ...(support && { support }),
-        },
-      };
-    } else if (supportMotion) {
-      const speed = node.motion.kind === "fly" ? node.motion.speed : next.landing?.speed;
-      const support = supportWorld && landingSupport(object, supportWorld, current);
-      const previous = next.landing?.support;
-      const changed =
-        previous &&
-        support &&
-        (previous.owner !== support.owner || (!support.owner && previous.rect !== support.rect));
-      if (speed !== undefined) {
-        next = {
-          ...next,
-          landing: {
-            ...next.landing,
-            speed,
-            status: supported ? "supported" : "pending",
-            ...(support && { support }),
-          },
-        };
-      }
-      if (next.landing && !supported) {
-        const withoutSupport = { ...next.landing };
-        delete (withoutSupport as { support?: FlyLandingState["support"] }).support;
-        const proof =
-          supportWorld && proveFlyLanding(object, supportWorld, current, withoutSupport);
-        next = { ...next, landing: proof?.state ?? { ...withoutSupport, status: "pending" } };
-        landingTarget = proof?.points?.[0];
-      }
-      if (node.motion.kind === "wait" && (!supported || changed)) {
-        next = { ...next, elapsed: 0 };
-      }
-    }
+    const supported = support.supported;
+    const landingTarget = support.target;
     if (
       next.pursuit?.phase === "escaped" &&
       !next.pursuit.settled &&
@@ -2107,32 +2040,6 @@ export function advanceBehaviour(
       }
       if (sampledMotion && next.intent) {
         next = { ...next, facing: next.intent.facing };
-      }
-    }
-    if (node.motion.kind === "fly" && node.motion.to === "support") {
-      const target = landingTarget;
-      const speed = node.motion.speed;
-      const distance = target ? Math.hypot(target.x - current.x, target.y - current.y) : 0;
-      if (target && speed !== undefined && distance > EDGE) {
-        slice = Math.min(slice, distance / speed);
-        const fraction = Math.min(1, (speed * slice) / distance);
-        to.x = flightAxis(
-          object,
-          supportWorld ?? world,
-          current,
-          "x",
-          current.x + (target.x - current.x) * fraction,
-        );
-        to.y = flightAxis(
-          object,
-          supportWorld ?? world,
-          { ...current, x: to.x },
-          "y",
-          current.y + (target.y - current.y) * fraction,
-        );
-        if (to.x !== current.x) {
-          next = { ...next, facing: to.x < current.x ? -1 : 1 };
-        }
       }
     }
     let supportedDwell: boolean | undefined;
