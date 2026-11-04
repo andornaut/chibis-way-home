@@ -1602,12 +1602,6 @@
       "height": 30
     },
     {
-      "key": "stage-cutscene-placeholder",
-      "png": "images/stage-cutscene-placeholder.png",
-      "width": 720,
-      "height": 360
-    },
-    {
       "key": "stage-preview-zone-1-stage-1",
       "png": "images/stage-preview-zone-1-stage-1.png",
       "width": 168,
