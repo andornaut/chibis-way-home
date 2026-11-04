@@ -7,15 +7,16 @@ import {
 } from "@andornaut/game-kit/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
+import { contactFrameAt, STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import { blueVerticalId } from "../data/chunks";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
+import { behaviourPose } from "../presentation";
 import { withAnticipationContact } from "../testing/behaviours";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { behaviourPose } from "../view/behaviour";
-import { BIRD_FRAME } from "../view/bird";
 import { zonePlanOf } from "./assemble";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
@@ -29,8 +30,6 @@ import {
   traversalGoal,
 } from "./behaviourTraversal";
 import { startBird } from "./bird";
-import { contactFrameAt } from "./bodyContact";
-import { STEP_SECONDS } from "./step";
 import { objectLayout, zoneLayout } from "./tiles";
 import { activateBehaviour, startZone, stepZone } from "./zone";
 import { CHUNK_LIBRARY } from "./zonePlans";

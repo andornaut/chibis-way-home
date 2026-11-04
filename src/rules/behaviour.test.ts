@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { contactFrameAt, sweptContact } from "../core";
 import { BIRD } from "../data/bird";
 import type {
   Archetype,
@@ -9,17 +10,10 @@ import type {
   ObjectLayout,
   Rect,
 } from "../data/types";
+import { behaviourPose } from "../presentation";
 import { TEST_PURSUER, TEST_SHUTTLE, withAnticipationContact } from "../testing/behaviours";
-import { behaviourPose } from "../view/behaviour";
-import {
-  contactBox,
-  layoutBehaviour,
-  startBehaviour,
-  stepBehaviour,
-  sweptContact,
-} from "./behaviour";
+import { contactBox, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import { birdBox, startBird } from "./bird";
-import { contactFrameAt } from "./bodyContact";
 import { objectLayout } from "./tiles";
 
 const ACTOR: Archetype = {

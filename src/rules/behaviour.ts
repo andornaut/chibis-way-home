@@ -1,6 +1,7 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
 import { abilityFor } from "../ai/ability";
+import { collisionCandidates, contactFrameAt, EDGE, spriteFrameOrigin } from "../core";
 import type {
   BehaviourAction,
   BehaviourCondition,
@@ -68,9 +69,7 @@ import {
   type BehaviourTraversalState,
   probeRearm,
 } from "./behaviourTraversal";
-import { birdBox, type BirdState, EDGE } from "./bird";
-import { contactFrameAt, spriteFrameOrigin } from "./bodyContact";
-import { collisionCandidates } from "./collisionIndex";
+import { birdBox, type BirdState } from "./bird";
 import { type FlyLandingState, supportContact } from "./flyLanding";
 import { hopLift } from "./motion";
 import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
@@ -1830,4 +1829,3 @@ export function advanceBehaviour(
 }
 
 export { contactBox } from "./behaviourTrack";
-export { sweptContact } from "./sweptContact";

@@ -1,5 +1,6 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 
+import { EDGE, STEP_SECONDS } from "../core";
 import type {
   AreaLayout,
   BirdTuning,
@@ -9,9 +10,8 @@ import type {
   TilePoint,
   ZoneLayout,
 } from "../data/types";
-import { EDGE, startBird, stepBird } from "../rules/bird";
+import { startBird, stepBird } from "../rules/bird";
 import { orbitBounds } from "../rules/orbit";
-import { STEP_SECONDS } from "../rules/step";
 import {
   activateBehaviour,
   areaOf,

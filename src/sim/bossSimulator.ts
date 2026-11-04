@@ -2,6 +2,7 @@ import { rectsOverlap } from "@andornaut/game-kit/rect";
 
 import type { AgentSample, AgentTick } from "../ai/agentTrace";
 import { simulate, type SimulationController, type SimulationModel } from "../ai/simulation";
+import { EDGE, STEP_SECONDS } from "../core";
 import type {
   BirdTuning,
   ObjectLayout,
@@ -10,9 +11,8 @@ import type {
   ZoneLayout,
 } from "../data/types";
 import { contactBox, nodeOf } from "../rules/behaviourTrack";
-import { birdBox, EDGE } from "../rules/bird";
+import { birdBox } from "../rules/bird";
 import { supportContact } from "../rules/flyLanding";
-import { STEP_SECONDS } from "../rules/step";
 import {
   activateBehaviour,
   areaOf,

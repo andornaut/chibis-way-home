@@ -1,3 +1,4 @@
+import { collisionCandidates } from "../core";
 import type {
   BehaviourMotion,
   BehaviourNode,
@@ -8,7 +9,6 @@ import type {
 } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import { type BehaviourTrack, type BehaviourWorld, groundSupportEnd } from "./behaviourReach";
-import { collisionCandidates } from "./collisionIndex";
 
 export function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
   const node = object.behaviour?.states[key];

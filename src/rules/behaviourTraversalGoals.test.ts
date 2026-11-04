@@ -1,14 +1,14 @@
 import { expect, it } from "vitest";
 
+import { BIRD_FRAME } from "../assets";
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { countrysideVerticalId } from "../data/chunks";
 import { TILE } from "../data/screen";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { zonePlanOf } from "./assemble";
 import { contactBox } from "./behaviour";
 import { advanceTraversal, type BehaviourTraversalState } from "./behaviourTraversal";
-import { STEP_SECONDS } from "./step";
 import { objectLayout, zoneLayout } from "./tiles";
 import { CHUNK_LIBRARY } from "./zonePlans";
 

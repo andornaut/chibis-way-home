@@ -1,11 +1,11 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { TILE } from "../data/screen";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import type { BehaviourWorld } from "./behaviourReach";
 import { flyLandingRoute } from "./flyLanding";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 
 const place = (character: string, col: number, row: number) =>

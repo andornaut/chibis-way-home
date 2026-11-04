@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan } from "../data/types";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import { startBird } from "./bird";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 
 const archetype: Archetype = {

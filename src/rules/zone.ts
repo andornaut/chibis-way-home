@@ -2,6 +2,15 @@ import { randomStream } from "@andornaut/game-kit/random";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
 import { namedStreams } from "../ai/randomStreams";
+import {
+  collisionCandidates,
+  contactFrameAt,
+  EDGE,
+  silhouetteContact,
+  spriteFrameOrigin,
+  STEP_SECONDS,
+  sweptContact,
+} from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import type {
   AreaLayout,
@@ -22,7 +31,6 @@ import {
   type BehaviourStep,
   contactBox,
   startBehaviour,
-  sweptContact,
 } from "./behaviour";
 import { behaviourEffect } from "./behaviourEffects";
 import { perceiveBehaviour } from "./behaviourPerception";
@@ -32,15 +40,12 @@ import {
   birdFrameRect,
   type BirdInput,
   type BirdState,
-  EDGE,
   ordinaryJumpApexFeetY,
   startBird,
   startsDash,
   stepBirdWithSupport,
 } from "./bird";
-import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "./bodyContact";
 import { bossDeath, defeatBoss, holdDefeated, removedBoss } from "./bossDefeat";
-import { collisionCandidates } from "./collisionIndex";
 import { initialCrumblingWorld } from "./crumbling";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
 import { deathSupport } from "./death";
@@ -65,7 +70,6 @@ import { currentScreen, targetVisible } from "./perception";
 import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird";
 export { pushedAside, standsOn } from "./platformBird";
 import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
-import { STEP_SECONDS } from "./step";
 import { timedHazardRect } from "./timedHazard";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import {

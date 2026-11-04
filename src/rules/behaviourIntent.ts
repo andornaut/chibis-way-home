@@ -1,6 +1,7 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { stepTraversal, type TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
+import { collisionCandidates } from "../core";
 import type {
   BehaviourMotion,
   BehaviourPursuitIntent,
@@ -12,7 +13,6 @@ import type {
 import type { BehaviourWorld } from "./behaviourReach";
 import { type BehaviourTraversalState, traversalContext } from "./behaviourTraversal";
 import { birdBox, type BirdState } from "./bird";
-import { collisionCandidates } from "./collisionIndex";
 
 export interface PursuitIntentState {
   readonly target: Rect;

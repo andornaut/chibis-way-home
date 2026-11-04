@@ -16,11 +16,10 @@ import {
   tellStarts,
 } from "../ai/agentProperties";
 import type { AgentSample } from "../ai/agentTrace";
+import { EDGE, STEP_SECONDS } from "../core";
 import { TILE } from "../data/screen";
 import type { BehaviourPlan, Rect, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviourTrack";
-import { EDGE } from "../rules/bird";
-import { STEP_SECONDS } from "../rules/step";
 import { BOSSES, type BossTick } from "./bossSimulator";
 
 // Boss rules from gameplay/design.md as checks over a boss trace. Thresholds are read from the

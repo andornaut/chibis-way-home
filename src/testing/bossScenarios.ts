@@ -1,6 +1,6 @@
+import { STEP_SECONDS } from "../core";
 import type { ObjectLayout, ZoneLayout } from "../data/types";
 import { startBird } from "../rules/bird";
-import { STEP_SECONDS } from "../rules/step";
 import type { ZoneInput } from "../rules/zone";
 import {
   type BossController,

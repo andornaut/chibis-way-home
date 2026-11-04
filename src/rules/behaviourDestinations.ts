@@ -1,8 +1,8 @@
 import { type Random, shuffled } from "@andornaut/game-kit/random";
 
+import { EDGE } from "../core";
 import type { ObjectLayout, Point } from "../data/types";
 import type { BehaviourWorld } from "./behaviourReach";
-import { EDGE } from "./bird";
 
 export function supportedDestinations(
   supported: (target: Point) => boolean,

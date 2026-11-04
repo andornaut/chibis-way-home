@@ -1,7 +1,7 @@
+import { STEP_SECONDS } from "../core";
 import { SCREEN, TILE } from "../data/screen";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviour";
-import { STEP_SECONDS } from "../rules/step";
 import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 export interface NavigationConfig {
   readonly profile: "quick" | "validation";

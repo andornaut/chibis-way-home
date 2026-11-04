@@ -3,13 +3,13 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import { canonicalTrace, traceRecorder } from "../ai/trace";
+import { BIRD_FRAME } from "../assets";
+import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD_FRAME } from "../view/bird";
 import { zonePlanOf } from "./assemble";
 import { startBird } from "./bird";
-import { STEP_SECONDS } from "./step";
 import { zoneLayout } from "./tiles";
 import { activateBehaviour, startZone, stepZone } from "./zone";
 import { CHUNK_LIBRARY } from "./zonePlans";

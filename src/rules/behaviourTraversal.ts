@@ -13,12 +13,10 @@ import {
   type TraversalStepResult,
 } from "@andornaut/game-kit/terrain/traversal";
 
+import { collisionCandidates, EDGE, STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
-import { EDGE } from "./bird";
-import { collisionCandidates } from "./collisionIndex";
-import { STEP_SECONDS } from "./step";
 import { timedHazardSafe } from "./timedHazard";
 
 export type TraversalSupport = ObjectLayout | Rect;

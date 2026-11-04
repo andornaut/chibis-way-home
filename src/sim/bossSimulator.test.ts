@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { traceRecorder } from "../ai/trace";
+import { STEP_SECONDS } from "../core";
 import { RACCOON_BEHAVIOUR } from "../data/behaviours";
 import { TILE } from "../data/screen";
 import type { BehaviourCondition, BehaviourPlan, ZoneLayout } from "../data/types";
 import { layoutBehaviour } from "../rules/behaviour";
-import { STEP_SECONDS } from "../rules/step";
 import { retryZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import { zoneTraceLine } from "../testing/behaviourTraceHook";

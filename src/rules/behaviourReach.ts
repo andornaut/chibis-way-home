@@ -1,6 +1,7 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
 import type { RandomStreams } from "../ai/randomStreams";
+import { collisionCandidates, EDGE } from "../core";
 import type {
   AreaLayout,
   BirdTuning,
@@ -9,8 +10,7 @@ import type {
   Rect,
   TargetedAttackWindow,
 } from "../data/types";
-import { birdBox, type BirdState, EDGE } from "./bird";
-import { collisionCandidates } from "./collisionIndex";
+import { birdBox, type BirdState } from "./bird";
 import type { TimedHazardSampler } from "./timedHazard";
 
 export interface BehaviourPlatform {

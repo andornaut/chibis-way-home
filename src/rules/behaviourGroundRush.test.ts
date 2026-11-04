@@ -1,14 +1,14 @@
 import { expect, it } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams";
+import { EDGE, STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Rect } from "../data/types";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourWorld } from "./behaviourReach";
-import { EDGE, startBird } from "./bird";
-import { STEP_SECONDS } from "./step";
+import { startBird } from "./bird";
 import { objectLayout } from "./tiles";
 
 // Archie's committed charge from a bank whose left edge is at x 240, with Chibi far left.

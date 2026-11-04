@@ -1,6 +1,7 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
 import type { Ability, AbilityResult, AbilityTable } from "../ai/ability";
+import { EDGE } from "../core";
 import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
@@ -14,7 +15,6 @@ import {
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
 import { groundBoss, nodeOf, trackReach, travelHeading } from "./behaviourTrack";
 import { type advanceTraversal, supportFall } from "./behaviourTraversal";
-import { EDGE } from "./bird";
 import { carryLandingSupport } from "./flyLanding";
 
 type Motion<Kind extends BehaviourMotion["kind"]> = Extract<

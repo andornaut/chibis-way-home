@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { BOSS_REMOVAL_SECONDS } from "../data/behaviours";
 import type { ZoneLayout } from "../data/types";
 import { chunksLayout, ORDINARY, withInstances } from "../testing/encounterLayouts";
 import { startBird } from "./bird";
-import { STEP_SECONDS } from "./step";
 import {
   activateBehaviour,
   retryZone,

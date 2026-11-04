@@ -1,7 +1,7 @@
+import { EDGE } from "../core";
 import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types";
 import { supportedDestinations } from "./behaviourDestinations";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
-import { EDGE } from "./bird";
 import { supportedLanding } from "./flyLanding";
 
 type Motion = Extract<BehaviourMotion, { to: "support" }>;

@@ -1,5 +1,6 @@
+import { sweptContact } from "../core";
 import type { DeathContact, ObjectLayout, Point, Rect } from "../data/types";
-import { type BehaviourEvent, sweptContact } from "./behaviour";
+import type { BehaviourEvent } from "./behaviour";
 
 export interface Transient {
   readonly id: number;

@@ -4,9 +4,6 @@ import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { EDGE, STEP_SECONDS } from "../core";
 import type { BirdTuning, Point, Rect, Size } from "../data/types";
 
-// CLEANUP (added 2026-11-04): remove when the boss files import core directly.
-export { EDGE } from "../core";
-
 // What the player asks of the bird this step. jumpHeld is the button's state; a jump starts on
 // the step it goes down.
 export interface BirdInput {

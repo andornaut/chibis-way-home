@@ -7,6 +7,7 @@ import {
   type TraversalSafety,
 } from "@andornaut/game-kit/terrain/traversal";
 
+import { EDGE } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import type {
   BehaviourIdleWatchdog,
@@ -23,7 +24,6 @@ import {
   traversalContext,
   type TraversalSupport,
 } from "./behaviourTraversal";
-import { EDGE } from "./bird";
 import {
   flyLandingPath,
   flyLandingRoute,

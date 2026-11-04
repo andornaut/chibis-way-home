@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { ARCHETYPES } from "../data/archetypes";
 import { FERRET_BEHAVIOUR } from "../data/behaviours";
 import { BIRD } from "../data/bird";
@@ -7,7 +8,6 @@ import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourAction, ObjectLayout, Rect } from "../data/types";
 import { layoutBehaviour } from "./behaviour";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 

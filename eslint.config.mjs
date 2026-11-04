@@ -38,7 +38,7 @@ const BOUNDARIES = [
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
 // Tests are exempt, so a test may build its fixtures from any context.
 // Each context imports only contexts below it, bottom first: data; core; ai and
-// assets; camera and stage; rules; progress; presentation and ui; view; loading; pwa; the side
+// assets; camera and stage; rules; progress; presentation and ui; loading; pwa; the side
 // pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
 // tools). "folder/module" allows one module of a folder ("folder/index" its index):
 // each is an import that a later move removes, by moving the module into a context or the
@@ -87,7 +87,6 @@ const CONTEXTS = {
   tools: ["assets", "data", "headers", "homePage", "loading", "pwa"],
   tuningPage: ["data", "gallery"],
   ui: ["data", "progress", "rules"],
-  view: ["assets", "presentation"],
 };
 
 // The components whose files outside them may import only their index.ts, so the index is the
@@ -124,8 +123,8 @@ function folders(path) {
 }
 
 // An import names a folder only by its path, so the pattern matches only a relative path that
-// climbs straight into a forbidden folder (`../view/x`). A module beside the importer
-// (`./camera`), a subfolder of an allowed folder (`../data/view/x`) and a package subpath
+// climbs straight into a forbidden folder (`../scenes/x`). A module beside the importer
+// (`./camera`), a subfolder of an allowed folder (`../data/scenes/x`) and a package subpath
 // (`@andornaut/game-kit/save/x`) that share a forbidden folder's name stay allowed, and a
 // context's own subfolders are never forbidden to it.
 function contextBoundary(context) {

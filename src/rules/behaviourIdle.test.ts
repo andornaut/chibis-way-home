@@ -2,6 +2,8 @@ import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams";
+import { BIRD_FRAME } from "../assets";
+import { STEP_SECONDS } from "../core";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -13,15 +15,13 @@ import {
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect, ZoneLayout } from "../data/types";
+import { behaviourPose } from "../presentation";
 import { withAnticipationContact } from "../testing/behaviours";
-import { behaviourPose } from "../view/behaviour";
-import { BIRD_FRAME } from "../view/bird";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle";
 import type { BehaviourWorld } from "./behaviourReach";
 import { startBird } from "./bird";
 import { supportedLanding } from "./flyLanding";
-import { STEP_SECONDS } from "./step";
 import { objectLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
 

@@ -1,4 +1,5 @@
 import type { Ability } from "../ai/ability";
+import { EDGE } from "../core";
 import type { Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import type {
@@ -18,7 +19,7 @@ import {
 } from "./behaviourReach";
 import { contactBox, pursuitTrack } from "./behaviourTrack";
 import { advanceTraversal } from "./behaviourTraversal";
-import { birdBox, EDGE } from "./bird";
+import { birdBox } from "./bird";
 import { flyLandingRoute } from "./flyLanding";
 
 type PursuitAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
