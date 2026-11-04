@@ -6,16 +6,18 @@
 // without a hand edit. Named sets rebuild those sets and every set downstream of them over the
 // committed manifest.
 //
-// --check then fails when a path under TREES (art/ and every path the builds write) differs from the
-// index or holds an untracked file, and lists those paths. Builds are deterministic, so on a clean
-// checkout every difference is a generator change.
+// --check hashes every file under TREES (art/ and every path the builds write) before the rebuild,
+// then fails when a file changed, disappeared or appeared, and lists those paths. It needs no git, so
+// it runs in a copy of the checkout without .git. Builds are deterministic, so on a clean checkout
+// every difference is a generator change.
 //
-// Run from the repository root in the node:24.21.0 check container. It spawns only node and git,
-// and reaches no network.
+// Run from the repository root in the node:24.21.0 check container. It spawns only node and reaches
+// no network.
 //
 // CLEANUP (added 2026-11-04): replace with art-kit's shared build runner once released.
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 
 import { run as runMain } from "./cli.ts";
 import * as pixel from "./pixel.ts";
@@ -23,9 +25,9 @@ import * as pixel from "./pixel.ts";
 const USAGE = `Usage:
   node art/tools/build.ts [--check] [SET...]   rebuild every set, or each SET and the sets that read
                                                its exports, in dependency order; --check then fails
-                                               on any changed or untracked file under art/ or
-                                               the paths the builds write (public/art/,
-                                               public/favicon.ico, public/icons/)`;
+                                               on any file the rebuild changed, removed or added
+                                               under art/ or the paths the builds write
+                                               (public/art/, public/favicon.ico, public/icons/)`;
 
 // Every set with a build command, in build order: the sets that need no other set (alphabetical),
 // then the sets that do (alphabetical, which meets every entry in NEEDS).
@@ -188,22 +190,50 @@ function spawn(command: string, args: readonly string[]): number {
   return result.status ?? 1;
 }
 
-// The changed and untracked paths under TREES, printed; true when there are none.
-function unchanged(): boolean {
-  const diff = spawn("git", ["diff", "--exit-code", "--name-status", "--", ...TREES]);
-  const others = spawnSync(
-    "git",
-    ["ls-files", "--others", "--exclude-standard", "-z", "--", ...TREES],
-    { encoding: "utf8" },
-  );
-  if (others.status !== 0) {
-    fail(`git ls-files: ${others.stderr || others.error?.message}`);
+// The sha256 of every file under TREES, by path; a missing tree adds nothing.
+function snapshot(): Map<string, string> {
+  const files = new Map<string, string>();
+  const visit = (path: string): void => {
+    if (!existsSync(path)) {
+      return;
+    }
+    if (statSync(path).isDirectory()) {
+      for (const name of readdirSync(path).sort()) {
+        visit(`${path}/${name}`);
+      }
+      return;
+    }
+    files.set(path, createHash("sha256").update(readFileSync(path)).digest("hex"));
+  };
+  for (const tree of TREES) {
+    visit(tree);
   }
-  const untracked = others.stdout.split("\0").filter(Boolean);
-  for (const path of untracked) {
-    console.log(`?\t${path}`);
+  return files;
+}
+
+// The paths under TREES that changed (M), disappeared (D) or appeared (A) since before, printed; true
+// when there are none.
+function unchanged(before: ReadonlyMap<string, string>): boolean {
+  const after = snapshot();
+  const changes: [string, string][] = [];
+  for (const [path, hash] of before) {
+    const now = after.get(path);
+    if (now === undefined) {
+      changes.push(["D", path]);
+    } else if (now !== hash) {
+      changes.push(["M", path]);
+    }
   }
-  return diff === 0 && !untracked.length;
+  for (const path of after.keys()) {
+    if (!before.has(path)) {
+      changes.push(["A", path]);
+    }
+  }
+  changes.sort(([, a], [, b]) => (a < b ? -1 : 1));
+  for (const [kind, path] of changes) {
+    console.log(`${kind}\t${path}`);
+  }
+  return !changes.length;
 }
 
 // Rebuild the named sets and those downstream, or every set from a reset manifest, then check the
@@ -218,6 +248,7 @@ function rebuild(check: boolean, named: readonly string[]): void {
   if (found.length) {
     fail(found.join("\n"));
   }
+  const before = check ? snapshot() : new Map<string, string>();
   const started = performance.now();
   if (!named.length) {
     pixel.writeJson({}, pixel.MANIFEST, handRegistered());
@@ -230,8 +261,8 @@ function rebuild(check: boolean, named: readonly string[]): void {
     }
   }
   console.log(`built in ${((performance.now() - started) / 1000).toFixed(0)}s`);
-  if (check && !unchanged()) {
-    fail(`the rebuild differs from the committed ${TREES.join(", ")}`);
+  if (check && !unchanged(before)) {
+    fail(`the rebuild changed ${TREES.join(", ")}`);
   }
 }
 
