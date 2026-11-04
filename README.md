@@ -95,25 +95,6 @@ npm run clean
 
 ## Deploying
 
-Tech owns implementation, integration and release approval. Each handoff to the
-monitor includes the reviewed exact branch, commit SHA, base, approval and checks
-completed or deferred. The monitor owns queue admission and mutation after Tech
-approval, scheduled gate and CI/deployment tracking, retries, reporting and
-operational resource accounting. Implementation fixes return to Tech for review
-and approval.
+[delivery-kit](https://github.com/andornaut/delivery-kit) ships local `main` on the schedule in [`delivery-kit.json`](delivery-kit.json). Each departure runs the type check, lint, tests and build on the `main` HEAD in an isolated container, pushes that exact commit, waits for its CI and then deploys the gated build with Wrangler to the account pinned by `account_id` in [`wrangler.jsonc`](wrangler.jsonc). Pushes and deployments are not made by hand.
 
-Releases use the existing scheduled integration queue at :10 each hour
-(America/Toronto). Each nonempty batch runs the type check, lint, tests and build
-in an isolated container. A failed check stops the release without automatic
-test retries. After a passing gate, the existing runner pushes the exact commit
-and deploys its gated assets with Wrangler to the account pinned by `account_id`
-in `wrangler.jsonc`. GitHub CI and deployment must both succeed before the release
-is complete. Scheduled deployment retries reuse the exact gated assets. Manual
-pushes and deployments are not part of this workflow.
-
-The shared monitor checks both active games at :20 and :50 each hour
-(America/Toronto); Archie releases remain at :00 and Chibi releases at :10.
-`delivery-kit` owns reusable delivery source and publication; art and game kits
-retain their own source.
-
-To serve a custom domain, add a `routes` entry to `wrangler.jsonc`.
+The `routes` entry in `wrangler.jsonc` serves the custom domain.
