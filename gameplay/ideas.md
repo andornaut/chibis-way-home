@@ -9,6 +9,12 @@ Format: `- [status] **Idea**: short description · notes`. Statuses: **floated**
 - [floated] **Humans**: people Chibi meets along the way · focus on animals for now
 - [floated] **Owner at home**: his owner waits for him at home, or calls · a possible ending
 
+## Rule proposals
+
+- [exploring] **Calling card**: every trap Fert sets carries a badge of his stovepipe hat and bow tie · Fert sets no traps; his special throws parcels
+- [exploring] **Dialogue choices**: a conversation can end in a required choice shown in a modal, and Skip opens that modal without choosing. A choice changes where Chibi goes, what he does and what he sees; V1 has no route forks · the modal exists, but no dialogue has a choice and carried choices set no flags. Effects on later zones or the ending are undecided
+- [exploring] **Room shops and quests**: rooms offer items to buy or sell, quests to take, rewards, threats and talk that advances the story, with friendly animals inside · current rooms hold an entry dialogue and a skill gift
+
 ## Open questions
 
 These are unresolved, not current implementation requirements.
