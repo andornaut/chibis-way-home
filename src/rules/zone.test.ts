@@ -13,7 +13,7 @@ import type {
 import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
 import { BIRD_FRAME } from "../view/bird";
-import { birdBox, birdFrameRect, startBird } from "./bird";
+import { birdBox, birdFrameRect, ordinaryJumpApexFeetY, startBird } from "./bird";
 import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
 import { skillTuning } from "./skills";
 import { STEP_SECONDS } from "./step";
@@ -450,6 +450,61 @@ describe("mandatory ride admission", () => {
     expect(jumped.bird.vy).toBeLessThan(0);
     expect(jumped.bird.airJumpUsed).toBe(false);
     expect(jumped.death).toBeUndefined();
+  });
+
+  it("starts every native release from tap to full hold at the forecast carried takeoff", () => {
+    const layout = zone(
+      area(
+        [
+          object({
+            forcedTransit: transit,
+            motion: { ...STATIC, algorithm: "linear", direction: "up", distance: 60, speed: 20 },
+            origin: { x: 100, y: 200 },
+            width: 72,
+          }),
+        ],
+        { entries: { start: { x: 124, y: 200 } } },
+      ),
+    );
+    let state = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    for (let tick = 0; tick < 10; tick++) {
+      state = stepZone(BIRD, layout, STEP, STILL, state);
+    }
+    const forecast = state.forcedTransitForecast!;
+    const body = forcedTransitTakeoffBody(
+      { area: state.area, attempt: state.attempt, dtSeconds: STEP, seconds: state.seconds },
+      {
+        bird: state.bird,
+        terrainSolids: layout.areas.main!.solids,
+        tuning: BIRD,
+        unknownPush: false,
+      },
+      forecast.carrier,
+      forecast,
+    )!;
+    expect(body.prefix).toBe("none");
+    expect(body.takeoff.y).not.toBe(state.bird.y);
+    const fullHold = Math.ceil(BIRD.jumpRiseTime / STEP) + 1;
+    const peaks = [1, Math.ceil(fullHold / 2), fullHold].map((release) => {
+      let jumped = state;
+      let peak = Infinity;
+      for (let tick = 0; tick < 60; tick++) {
+        jumped = stepZone(BIRD, layout, STEP, { ...STILL, jumpHeld: tick < release }, jumped);
+        if (tick === 0) {
+          expect(jumped.bird.jumpFromY).toBe(body.takeoff.y);
+          expect(jumped.bird.vy).toBeLessThan(0);
+        }
+        peak = Math.min(peak, bottomOf(jumped));
+      }
+      expect(jumped.death).toBeUndefined();
+      return peak;
+    });
+    const bound = ordinaryJumpApexFeetY(BIRD, body.takeoff.y);
+    expect(peaks[0]).toBeGreaterThan(peaks[1]!);
+    expect(peaks[1]).toBeGreaterThan(peaks[2]!);
+    // The release family can peak above full hold between fixed steps.
+    expect(bound).toBeLessThanOrEqual(peaks[2]!);
+    expect(peaks[2]! - bound).toBeLessThan(0.01);
   });
 
   it("shares native wall clamping with a held release on the right overhang", () => {

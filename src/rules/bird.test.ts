@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { BIRD } from "../data/bird";
+import { SKILLS } from "../data/skills";
 import type { Rect } from "../data/types";
 import {
   type BirdInput,
@@ -13,6 +14,7 @@ import {
   stepBird,
   stepBirdWithSupport,
 } from "./bird";
+import { SKILL_IDS, skillTuning } from "./skills";
 import { STEP_SECONDS } from "./step";
 
 const STEP = STEP_SECONDS;
@@ -169,27 +171,44 @@ it("exposes the actual full-jump ascent through the first native apex crossing",
   expect(() => ordinaryJumpAscent(BIRD, (count + 1) * STEP)).toThrow(RangeError);
 });
 
-it("bounds the actual sampled apex feet conservatively after a vertical layout translation", () => {
-  for (const offset of [0, 480]) {
-    const ground = { ...GROUND, y: GROUND.y + offset };
-    const initial = stepBird(
-      BIRD,
-      [ground],
-      [],
-      STEP,
-      IDLE,
-      startBird(BIRD, { x: 0, y: ground.y }),
-    );
-    const states = [initial];
-    for (let tick = 0; tick < Math.ceil(BIRD.jumpRiseTime / STEP); tick++) {
-      states.push(stepBird(BIRD, [ground], [], STEP, { jumpHeld: true, move: 0 }, states.at(-1)!));
+it.each([null, ...SKILL_IDS])(
+  "bounds every native release from tap to full hold under the %s profile",
+  (selected) => {
+    const tuning = skillTuning(SKILLS, selected, BIRD);
+    const fullHold = Math.ceil(tuning.jumpRiseTime / STEP) + 1;
+    for (const offset of [0, 480]) {
+      const ground = { ...GROUND, y: GROUND.y + offset };
+      const jump = (release: number) => {
+        let bird = stepBird(
+          tuning,
+          [ground],
+          [],
+          STEP,
+          IDLE,
+          startBird(tuning, { x: 0, y: ground.y }),
+        );
+        const takeoffY = bird.y;
+        let peak = Infinity;
+        for (let tick = 0; tick < 120; tick++) {
+          bird = stepBird(tuning, [ground], [], STEP, { jumpHeld: tick < release, move: 0 }, bird);
+          if (tick === 0) {
+            expect(bird.jumpFromY).toBe(takeoffY);
+            expect(bird.vy).toBeLessThan(0);
+          }
+          peak = Math.min(peak, bird.y + tuning.height);
+        }
+        return { peak, takeoffY };
+      };
+      const releases = Array.from({ length: fullHold }, (_, index) => jump(index + 1));
+      const highest = Math.min(...releases.map(({ peak }) => peak));
+      const bound = ordinaryJumpApexFeetY(tuning, releases[0]!.takeoffY);
+      expect(bound).toBeGreaterThanOrEqual(highest);
+      expect(bound - highest).toBeLessThan(1e-6);
+      expect(bound).toBeLessThanOrEqual(releases.at(-1)!.peak);
+      expect(releases[0]!.peak).toBeGreaterThan(highest);
     }
-    const bound = ordinaryJumpApexFeetY(BIRD, initial.y);
-    const actual = Math.min(...states.map(({ y }) => y + BIRD.height));
-    expect(bound).toBeGreaterThanOrEqual(actual);
-    expect(bound - actual).toBeLessThan(1e-6);
-  }
-});
+  },
+);
 const lowestY = (states: BirdState[]) => Math.min(...states.map((state) => state.y));
 const startY = GROUND.y - BIRD.height;
 

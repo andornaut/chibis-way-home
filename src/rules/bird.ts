@@ -250,22 +250,49 @@ export function ordinaryJumpAscent(
   };
 }
 
-// A conservative feet bound for the native sampled ascent, before terrain contact.
-export function ordinaryJumpApexFeetY(tuning: BirdTuning, takeoffBodyY: number): number {
-  const curve = ascentCurve(tuning);
-  let peak = SAMPLED_ASCENT_PEAKS.get(tuning);
-  if (!peak) {
-    let elapsed = 0;
-    let rise = 0;
-    let frames = 0;
-    while (elapsed < curve.seconds) {
-      elapsed += STEP_SECONDS;
-      rise = Math.max(rise, ascentPoint(tuning, curve, elapsed).rise);
-      frames++;
-    }
-    peak = { frames, rise };
-    SAMPLED_ASCENT_PEAKS.set(tuning, peak);
+// The highest native fixed-step rise over every ordinary release, from tap to full hold.
+function releaseFamilyPeak(tuning: BirdTuning): { readonly frames: number; readonly rise: number } {
+  const cached = SAMPLED_ASCENT_PEAKS.get(tuning);
+  if (cached) {
+    return cached;
   }
+  const ground = { height: tuning.height, width: 4 * tuning.width, x: -2 * tuning.width, y: 0 };
+  const standing = stepBird(
+    tuning,
+    [ground],
+    [],
+    STEP_SECONDS,
+    { jumpHeld: false, move: 0 },
+    startBird(tuning, { x: 0, y: 0 }),
+  );
+  let frames = 0;
+  let rise = 0;
+  const fullHold = Math.ceil(ascentCurve(tuning).seconds / STEP_SECONDS) + 1;
+  for (let release = 1; release <= fullHold; release++) {
+    let bird = standing;
+    for (let tick = 0; tick === 0 || bird.vy < 0; tick++) {
+      bird = stepBird(
+        tuning,
+        [ground],
+        [],
+        STEP_SECONDS,
+        { jumpHeld: tick < release, move: 0 },
+        bird,
+      );
+      if (standing.y - bird.y > rise) {
+        rise = standing.y - bird.y;
+      }
+      frames = Math.max(frames, tick + 1);
+    }
+  }
+  const peak = { frames, rise };
+  SAMPLED_ASCENT_PEAKS.set(tuning, peak);
+  return peak;
+}
+
+// A conservative feet bound for the native ordinary release family, before terrain contact.
+export function ordinaryJumpApexFeetY(tuning: BirdTuning, takeoffBodyY: number): number {
+  const peak = releaseFamilyPeak(tuning);
   const magnitude = Math.max(1, Math.abs(takeoffBodyY) + tuning.height + peak.rise);
   const roundoff = (4 * peak.frames + 4) * Number.EPSILON * magnitude;
   return takeoffBodyY + tuning.height - peak.rise + roundoff;
