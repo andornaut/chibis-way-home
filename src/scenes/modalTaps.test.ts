@@ -52,29 +52,67 @@ function tap(open: boolean, closes: boolean, down: Point, up: Point = down) {
 const onCanvas = (view: Point): Point => ({ x: view.x + VIEW.x, y: view.y + VIEW.y });
 
 describe("catchModalTaps", () => {
-  it.each([
-    ["beside the card closes it and reaches nothing under", BESIDE, true, true],
-    ["on the card is the card's own", onCanvas(ON_CARD), false, true],
-    [
-      "at the screen's top right, where the start screen's nav sits, closes it too",
-      TOP_RIGHT,
-      true,
-      true,
-    ],
-  ])("on a card that can close, a tap %s", (_, at, closed, stopped) => {
-    expect(tap(true, true, at)).toEqual({ closed, stopped });
-  });
-
-  it("closes on no drag past the tap distance, which still reaches nothing under", () => {
-    const far = { x: BESIDE.x, y: BESIDE.y - TOUCH.tapMaxDistance - 1 };
-    expect(tap(true, true, BESIDE, far)).toEqual({ closed: false, stopped: true });
-  });
-
-  it("leaves a card with no close open on a tap beside it, and nothing under responds", () => {
-    expect(tap(true, false, BESIDE)).toEqual({ closed: false, stopped: true });
-  });
-
-  it("leaves every press alone while no card shows", () => {
-    expect(tap(false, true, BESIDE)).toEqual({ closed: false, stopped: false });
+  it.each<{
+    closed: boolean;
+    closes: boolean;
+    down: Point;
+    name: string;
+    open: boolean;
+    stopped: boolean;
+    up?: Point;
+  }>([
+    {
+      closed: true,
+      closes: true,
+      down: BESIDE,
+      name: "on a card that can close, a tap beside the card closes it and reaches nothing under",
+      open: true,
+      stopped: true,
+    },
+    {
+      closed: false,
+      closes: true,
+      down: onCanvas(ON_CARD),
+      name: "on a card that can close, a tap on the card is the card's own",
+      open: true,
+      stopped: true,
+    },
+    {
+      closed: true,
+      closes: true,
+      down: TOP_RIGHT,
+      name:
+        "on a card that can close, a tap at the screen's top right, where the start screen's " +
+        "nav sits, closes it too",
+      open: true,
+      stopped: true,
+    },
+    {
+      closed: false,
+      closes: true,
+      down: BESIDE,
+      name: "closes on no drag past the tap distance, which still reaches nothing under",
+      open: true,
+      stopped: true,
+      up: { x: BESIDE.x, y: BESIDE.y - TOUCH.tapMaxDistance - 1 },
+    },
+    {
+      closed: false,
+      closes: false,
+      down: BESIDE,
+      name: "leaves a card with no close open on a tap beside it, and nothing under responds",
+      open: true,
+      stopped: true,
+    },
+    {
+      closed: false,
+      closes: true,
+      down: BESIDE,
+      name: "leaves every press alone while no card shows",
+      open: false,
+      stopped: false,
+    },
+  ])("$name", ({ closed, closes, down, open, stopped, up }) => {
+    expect(tap(open, closes, down, up)).toEqual({ closed, stopped });
   });
 });
