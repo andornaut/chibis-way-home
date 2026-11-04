@@ -1,10 +1,16 @@
 import type { SkillId } from "../data/types";
 import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode";
-import * as pageSave from "../progress";
+import type {
+  Progress,
+  RunStatsSummary,
+  WholeRunStatsSummary,
+  ZoneStatsSummary,
+} from "../progress";
+import * as pageSave from "../progress/save/pageSave";
 import { activeStepSeconds } from "../rules/death";
 import type { ZoneState } from "../rules/zone";
 
-export type { Progress } from "../progress";
+export type { Progress };
 
 // The page's save calls with this page's developer session bound, so scenes call them without
 // a session. The session is asked at each call, as developer activation can start mid-page.
@@ -25,13 +31,13 @@ export function beginStageRun(stage: string): void {
 export function retryStageRun(stage: string): void {
   pageSave.retryStageRun(SESSION, stage);
 }
-export function completeStageRun(stage: string): pageSave.RunStatsSummary {
+export function completeStageRun(stage: string): RunStatsSummary {
   return pageSave.completeStageRun(SESSION, stage);
 }
-export function stageRunStats(stage: string): pageSave.RunStatsSummary {
+export function stageRunStats(stage: string): RunStatsSummary {
   return pageSave.stageRunStats(SESSION, stage);
 }
-export function zoneVisitStats(zone: string): pageSave.ZoneStatsSummary {
+export function zoneVisitStats(zone: string): ZoneStatsSummary {
   return pageSave.zoneVisitStats(SESSION, zone);
 }
 export function activeStageTime(stage: string): number {
@@ -56,7 +62,7 @@ export function clearStageTime(stage: string): void {
 export function flushStats(): Promise<void> {
   return pageSave.flushStats(SESSION);
 }
-export function wholeRunStats(): pageSave.WholeRunStatsSummary {
+export function wholeRunStats(): WholeRunStatsSummary {
   return pageSave.wholeRunStats(SESSION);
 }
 export function resetWholeRunStats(): void {
@@ -74,7 +80,7 @@ export function selectActiveSkill(skill: SkillId): boolean {
 export function grantSkill(skill: SkillId): boolean {
   return pageSave.grantSkill(SESSION, skill);
 }
-export function savedProgress(): pageSave.Progress {
+export function savedProgress(): Progress {
   return pageSave.savedProgress();
 }
 export function savedMap(): ReturnType<typeof pageSave.savedMap> {

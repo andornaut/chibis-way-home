@@ -4,8 +4,8 @@ import palette from "../../public/art/palette.json";
 import themes from "../../public/art/zone-themes.json";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
-import { zoneTheme } from "../presentation";
-import { DEATH_PROGRESS_HEIGHT } from "../ui";
+import { zoneTheme } from "../presentation/zoneTheme";
+import { DEATH_PROGRESS_HEIGHT } from "../ui/layout/deathCard";
 
 export const PROGRESS_RECT = { height: DEATH_PROGRESS_HEIGHT, width: SCREEN.width, x: 0, y: 0 };
 

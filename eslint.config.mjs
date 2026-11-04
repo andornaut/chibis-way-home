@@ -118,16 +118,18 @@ const CONTEXTS = {
 };
 
 // The components whose files outside them may import only their index.ts, so the index is the
-// component's whole contract, and the modules besides it that each also exposes.
+// component's whole contract. Each lists the further modules that outside folders may import
+// directly ("*" for every folder). Modules that start page state on load stay out of the
+// indexes, so importing an index has no side effects, and the loading entry imports only what
+// the loading strip draws, which keeps that entry small.
 const INDEXED = {
-  assets: [],
-  camera: [],
-  core: [],
-  presentation: [],
-  progress: [],
-  stage: [],
-  // The page's frame watcher starts on load, so importing the index has no side effects.
-  ui: ["./input/frameTurn.ts"],
+  assets: {},
+  camera: {},
+  core: {},
+  presentation: { loading: ["./zoneTheme.ts"] },
+  progress: { scenes: ["./save/pageSave.ts"] },
+  stage: {},
+  ui: { "*": ["./input/frameTurn.ts"], loading: ["./layout/deathCard.ts"] },
 };
 
 // CLEANUP (added 2026-11-04): the boss behaviour and timed hazard modules import each other's
@@ -263,12 +265,21 @@ export default defineConfig(
       "import-x/no-restricted-paths": [
         "error",
         {
-          zones: Object.entries(INDEXED).map(([component, exposed]) => ({
-            except: ["./index.ts", ...exposed],
-            from: `./src/${component}`,
-            message: `Import src/${component}/ through its index.ts.`,
-            target: ["./src/*.ts", `./src/!(${component})/**`],
-          })),
+          zones: Object.entries(INDEXED).flatMap(([component, { "*": all = [], ...byFolder }]) => {
+            const zone = (target, exposed) => ({
+              except: ["./index.ts", ...all, ...exposed],
+              from: `./src/${component}`,
+              message: `Import src/${component}/ through its index.ts.`,
+              target,
+            });
+            const others = [component, ...Object.keys(byFolder)].join("|");
+            return [
+              zone(["./src/*.ts", `./src/!(${others})/**`], []),
+              ...Object.entries(byFolder).map(([folder, exposed]) =>
+                zone(`./src/${folder}/**`, exposed),
+              ),
+            ];
+          }),
         },
       ],
     },
