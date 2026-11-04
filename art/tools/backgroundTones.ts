@@ -9,14 +9,18 @@
  * near rank. Functional wayfinding, flat zone skies and the inactive Park prototype retain their
  * existing publication policy.
  *
- * The policy only; background_tones.py keeps the re-export command line until its producers are
- * ported.
+ * Usage: node art/tools/backgroundTones.ts build, from the repository root. This exports existing
+ * backdrop keys only.
  */
 
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import * as backgroundPalette from "./backgroundPalette.ts";
+import { commands, run } from "./cli.ts";
+import { BACKDROPS_DIR, frameImage, writeImage } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
+
+const USAGE = "Usage: backgroundTones.ts build";
 
 type Layer = "far" | "mid" | "near";
 type Rgb = readonly [number, number, number];
@@ -279,3 +283,32 @@ export function apply(key: string, image: RgbaImage): RgbaImage {
   }
   return { data, height: image.height, width: image.width };
 }
+
+/** Every producer's backdrop as drawn, before this policy, in the producers' order. */
+async function* sourceImages(): AsyncGenerator<readonly [key: string, image: RgbaImage]> {
+  // Loaded when building: every producer imports this module for its own build.
+  const floor1 = await import("./floor1.ts");
+  for (const [key, [draw]] of floor1.BACKDROP_DEFS) yield [key, frameImage(draw().px)];
+  const depot = await import("./depot.ts");
+  for (const [key, [image]] of Object.entries(depot.assets())) yield [key, image];
+  const park = await import("./park.ts");
+  for (const [key, [draw]] of park.BACKDROP_DEFS) yield [key, draw()];
+  for (const producer of [
+    await import("./industrial.ts"),
+    await import("./countryside.ts"),
+    await import("./woodland.ts"),
+    await import("./homecity.ts"),
+    await import("./apartment.ts"),
+  ])
+    for (const [key, [draw]] of Object.entries(producer.BACKDROPS)) yield [key, draw()];
+  const props = await import("./apartmentProps.ts");
+  for (const key of Object.keys(props.SIZES)) yield [`apartment-${key}`, props.draw(key)];
+}
+
+async function build(): Promise<void> {
+  for await (const [key, image] of sourceImages())
+    if (!FUNCTIONAL.has(key)) writeImage(`${BACKDROPS_DIR}/${key}.png`, apply(key, image));
+  console.log("built muted existing background paints");
+}
+
+if (import.meta.main) run(() => commands({ usage: USAGE, build }));
