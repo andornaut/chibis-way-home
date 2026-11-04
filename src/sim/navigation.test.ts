@@ -256,44 +256,42 @@ describe("bounded real-rule navigation", () => {
       JSON.stringify({ bird: result.zone.bird, navigation: result.bot.navigation }),
     ).toBe(true);
   });
-  it("waits for a late lift then boards and transfers to a higher landing", () => {
-    const base = fixture([
-      { height: 60, width: 120, x: 0, y: 240 },
-      { height: 204, width: 160, x: 240, y: 96 },
-    ]);
-    const lift = {
-      ...movingObject("ledge", { x: 132, y: 96 }),
-      motion: { ...movingObject("ledge", { x: 132, y: 96 }).motion, pause: 8 },
-    };
-    const layout: ZoneLayout = {
-      ...base,
-      areas: { main: { ...base.areas.main!, objects: [lift] } },
-    };
-    const result = traverse(layout, 1800);
-    expect(result.zone.death).toBeUndefined();
-    expect(
-      result.zone.cleared,
-      JSON.stringify({ bird: result.zone.bird, navigation: result.bot.navigation }),
-    ).toBe(true);
-  });
-  it("uses real hazard timing to wait for a blocked corridor to open", () => {
-    const base = fixture([{ height: 60, width: 400, x: 0, y: 240 }]);
-    const hazard: ObjectLayout = {
-      ...movingObject("hazard", { x: 156, y: 120 }),
-      height: 120,
-      motion: {
-        ...movingObject("hazard", { x: 156, y: 120 }).motion,
-        direction: "up",
-        distance: 180,
-        pause: 1,
+  it.each<{ maxTicks: number; name: string; object: ObjectLayout; solids: Rect[] }>([
+    {
+      maxTicks: 1800,
+      name: "waits for a late lift then boards and transfers to a higher landing",
+      object: {
+        ...movingObject("ledge", { x: 132, y: 96 }),
+        motion: { ...movingObject("ledge", { x: 132, y: 96 }).motion, pause: 8 },
       },
-      width: 24,
-    };
+      solids: [
+        { height: 60, width: 120, x: 0, y: 240 },
+        { height: 204, width: 160, x: 240, y: 96 },
+      ],
+    },
+    {
+      maxTicks: 450,
+      name: "uses real hazard timing to wait for a blocked corridor to open",
+      object: {
+        ...movingObject("hazard", { x: 156, y: 120 }),
+        height: 120,
+        motion: {
+          ...movingObject("hazard", { x: 156, y: 120 }).motion,
+          direction: "up",
+          distance: 180,
+          pause: 1,
+        },
+        width: 24,
+      },
+      solids: [{ height: 60, width: 400, x: 0, y: 240 }],
+    },
+  ])("$name", ({ maxTicks, object, solids }) => {
+    const base = fixture(solids);
     const layout: ZoneLayout = {
       ...base,
-      areas: { main: { ...base.areas.main!, objects: [hazard] } },
+      areas: { main: { ...base.areas.main!, objects: [object] } },
     };
-    const result = traverse(layout, 450);
+    const result = traverse(layout, maxTicks);
     expect(result.zone.death).toBeUndefined();
     expect(
       result.zone.cleared,

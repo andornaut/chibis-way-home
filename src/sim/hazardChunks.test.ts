@@ -96,11 +96,6 @@ describe("directional hazard layouts", () => {
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared).toBe(true);
   });
-  it("attributes a mistimed gate crossing to its moving red face", () => {
-    expect(face(run("vertical-red-gate", { col: 27, row: 50 }, () => input(1)))).toBe(
-      "red-edge-left",
-    );
-  });
 
   it("keeps challenge families inside ordinary chunk and seam contracts", () => {
     for (const chunk of Object.values(chunks)) {
@@ -121,10 +116,23 @@ describe("directional hazard layouts", () => {
     expect(result.zone.death).toBeUndefined();
     expect(result.zone.cleared).toBe(true);
   });
-  it("attributes a full-hold overjump to the actual ceiling underside", () => {
-    expect(face(run("overjump-low-roof", { col: 16, row: 50 }, () => input(1, true)))).toBe(
-      "red-edge-bottom",
-    );
+  it.each([
+    {
+      chunk: "vertical-red-gate",
+      face: "red-edge-left",
+      from: { col: 27, row: 50 },
+      jumpHeld: false,
+      name: "a mistimed gate crossing to its moving red face",
+    },
+    {
+      chunk: "overjump-low-roof",
+      face: "red-edge-bottom",
+      from: { col: 16, row: 50 },
+      jumpHeld: true,
+      name: "a full-hold overjump to the actual ceiling underside",
+    },
+  ])("attributes $name", ({ chunk, face: expected, from, jumpHeld }) => {
+    expect(face(run(chunk, from, () => input(1, jumpHeld)))).toBe(expected);
   });
   it.each([20, 38])("lands a missed crossing at column %s on its physical red floor", (col) => {
     const result = run("guarded-valley", { col, row: 45 }, () => input(0));

@@ -80,17 +80,23 @@ async function modifiedRoutes(changes: Partial<Instance>, lethal = true) {
   }
   return (await import("./requiredRoutes")).REQUIRED_CHUNK_ROUTES["compound-vertical-yard"];
 }
-it("retains a safe target when a static red edge covers only part of its terrain top", async () => {
-  const targets = await modifiedRoutes({ cols: 1 });
-  expect(targets).toContainEqual({ at: { col: floor.col + floor.cols / 2, row: floor.row } });
-});
-it("retains terrain targets under moving red edges", async () => {
-  const targets = await modifiedRoutes({
-    overrides: { motion: { algorithm: "linear", distance: 1, speed: 1 } },
-  });
-  expect(targets).toContainEqual({ at: { col: floor.col + floor.cols / 2, row: floor.row } });
-});
-it("retains terrain targets when an edge-top role does not resolve to a lethal collider", async () => {
-  const targets = await modifiedRoutes({}, false);
+it.each<{ changes: Partial<Instance>; lethal: boolean; name: string }>([
+  {
+    changes: { cols: 1 },
+    lethal: true,
+    name: "a static red edge covers only part of its terrain top",
+  },
+  {
+    changes: { overrides: { motion: { algorithm: "linear", distance: 1, speed: 1 } } },
+    lethal: true,
+    name: "a red edge moves",
+  },
+  {
+    changes: {},
+    lethal: false,
+    name: "an edge-top role does not resolve to a lethal collider",
+  },
+])("retains the safe terrain target when $name", async ({ changes, lethal }) => {
+  const targets = await modifiedRoutes(changes, lethal);
   expect(targets).toContainEqual({ at: { col: floor.col + floor.cols / 2, row: floor.row } });
 });

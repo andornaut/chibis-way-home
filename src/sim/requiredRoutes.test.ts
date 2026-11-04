@@ -4,7 +4,7 @@ import { expect, it, vi } from "vitest";
 
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
-import type { Instance, TerrainRect, ZonePlan } from "../data/types";
+import type { Instance, TerrainRect, TilePoint, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput } from "../rules/zone";
 import { CATALOGUE } from "../testing/walkSuite";
@@ -75,30 +75,31 @@ it.each([
   },
 );
 
-it("does not count an isolated far exit bank as a connected route", () => {
-  const layout = layoutOf([
-    { ...floor, cols: 10 },
-    { ...floor, col: 40, cols: 20 },
-  ]);
+it.each<{ cleared: boolean; name: string; solids: TerrainRect[]; target: TilePoint }>([
+  {
+    cleared: false,
+    name: "an isolated far exit bank that is not a connected route",
+    solids: [
+      { ...floor, cols: 10 },
+      { ...floor, col: 40, cols: 20 },
+    ],
+    target: { col: 45, row: 50 },
+  },
+  {
+    cleared: true,
+    name: "an explicitly required surface that is unreachable despite a clear exit",
+    solids: [floor, { ...ledge, row: 30 }],
+    target: { col: 22, row: 30 },
+  },
+])("refuses success for $name", ({ cleared, solids, target }) => {
   const result = walkRequiredRoutes(
     BIRD,
-    { targets: [{ area: "course", at: { col: 45, row: 50 } }], tile: TILE },
-    layout,
+    { targets: [{ area: "course", at: target }], tile: TILE },
+    layoutOf(solids),
   );
-  const far = surfaceAt(TILE, result.surfaces, "course", { col: 45, row: 50 })!;
-  expect(result.cleared).toBe(false);
-  expect(result.reached.has(far.key)).toBe(false);
-  expect(result.complete).toBe(false);
-});
-
-it("refuses success when an explicitly required surface is unreachable despite a clear exit", () => {
-  const layout = layoutOf([floor, { ...ledge, row: 30 }]);
-  const result = walkRequiredRoutes(
-    BIRD,
-    { targets: [{ area: "course", at: { col: 22, row: 30 } }], tile: TILE },
-    layout,
-  );
-  expect(result.cleared).toBe(true);
+  const required = surfaceAt(TILE, result.surfaces, "course", target)!;
+  expect(result.cleared).toBe(cleared);
+  expect(result.reached.has(required.key)).toBe(false);
   expect(result.complete).toBe(false);
 });
 
