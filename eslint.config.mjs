@@ -63,8 +63,8 @@ const CONTEXTS = {
     "camera",
     "core",
     "data",
-    // CLEANUP (added 2026-11-04): remove once forcedTransitProfile's skill tuning is passed into
-    // stepZone, after the boss perf and step 4 branches merge.
+    // CLEANUP (added 2026-11-04): remove when src/rules/forcedTransitProfile.ts stops importing
+    // ../progress.
     "progress/index",
     "stage",
   ],
