@@ -16,15 +16,15 @@
  *
  * Families, each with a silhouette that survives the flat locked fill:
  * - escape-<boss>: the boss's head (HEADS) with an amber exit arrow at the lower right.
- * - clean-<boss>: the same head over a gold (yellow and amber) laurel wreath open at the top.
- * - zone-<zone>: the zone's emblem (EMBLEMS) in its zone primary and shade, outlined ink, with ink
+ * - first-try-<boss>: the same head over a gold (yellow and amber) laurel wreath open at the top.
+ * - clear-<zone>: the zone's emblem (EMBLEMS) in its zone primary and shade, outlined ink, with ink
  *   and dslate details. Fence gaps and apartment windows are transparent, so they hold when locked.
- * - spotless-<zone>: the same emblem, one row lower, with a 7x7 yellow sparkle at the upper left
+ * - no-death-<zone>: the same emblem, one row lower, with a 7x7 yellow sparkle at the upper left
  *   and a 5x5 one at the upper right. The apartment, whose cornice fills the top, sits four rows
- *   lower than its zone icon (its door and foot run off the frame) and takes the 5x5 sparkle at both
+ *   lower than its clear icon (its door and foot run off the frame) and takes the 5x5 sparkle at both
  *   corners, so the cornice stays whole.
- * - all-gifts: a red gift box with a yellow ribbon and bow.
- * - just-a-bird: Chibi, cream with an orange bill, facing a small zone-peach house.
+ * - gift-rooms: a red gift box with a yellow ribbon and bow.
+ * - home-without-skills: Chibi, cream with an orange bill, facing a small zone-peach house.
  * An overlaid part (arrow, laurel, sparkle, house) knocks a 1px transparent gap out of what it
  * covers, so the parts stay separate shapes when locked. Every pixel that meets the background is
  * ink (11.0:1 on lgrey), so no pale fill touches the card face.
@@ -47,9 +47,9 @@ type Zone =
   | "industrial-outskirts"
   | "woodland";
 type Art =
-  | readonly ["escape" | "clean", Boss]
-  | readonly ["zone" | "spotless", Zone]
-  | readonly ["all-gifts" | "just-a-bird"];
+  | readonly ["escape" | "first-try", Boss]
+  | readonly ["clear" | "no-death", Zone]
+  | readonly ["gift-rooms" | "home-without-skills"];
 
 /** Achievement ID, what earns it and its art, in tag order. */
 export const ACHIEVEMENTS: readonly (readonly [id: string, earns: string, art: Art])[] = [
@@ -59,46 +59,46 @@ export const ACHIEVEMENTS: readonly (readonly [id: string, earns: string, art: A
   ["escape-bini", "First escape from Bini the bear", ["escape", "bini"]],
   ["escape-kiwi", "First escape from Kiwi the raccoon", ["escape", "kiwi"]],
   ["escape-fert", "First escape from Fert the ferret", ["escape", "fert"]],
-  ["clean-archie", "Archie's third stage cleared without dying", ["clean", "archie"]],
-  ["clean-pebble", "Pebble's third stage cleared without dying", ["clean", "pebble"]],
-  ["clean-trixi", "Trixi's third stage cleared without dying", ["clean", "trixi"]],
-  ["clean-bini", "Bini's third stage cleared without dying", ["clean", "bini"]],
-  ["clean-kiwi", "Kiwi's third stage cleared without dying", ["clean", "kiwi"]],
-  ["clean-fert", "Fert's third stage cleared without dying", ["clean", "fert"]],
-  ["zone-blue-cityscape", "Blue cityscape cleared", ["zone", "blue-cityscape"]],
-  ["zone-industrial-outskirts", "Industrial outskirts cleared", ["zone", "industrial-outskirts"]],
-  ["zone-countryside", "Countryside cleared", ["zone", "countryside"]],
-  ["zone-woodland", "Woodland cleared", ["zone", "woodland"]],
-  ["zone-home-city", "Home city cleared", ["zone", "home-city"]],
-  ["zone-apartment-building", "Apartment building cleared", ["zone", "apartment-building"]],
-  ["all-gifts", "Own Dash, Double jump and Speedy", ["all-gifts"]],
+  ["clear-blue-cityscape", "Blue cityscape cleared", ["clear", "blue-cityscape"]],
+  ["clear-industrial", "Industrial outskirts cleared", ["clear", "industrial-outskirts"]],
+  ["clear-countryside", "Countryside cleared", ["clear", "countryside"]],
+  ["clear-woodland", "Woodland cleared", ["clear", "woodland"]],
+  ["clear-home-city", "Home city cleared", ["clear", "home-city"]],
+  ["clear-apartment", "Apartment building cleared", ["clear", "apartment-building"]],
+  ["gift-rooms", "Own Dash, Double jump and Speedy", ["gift-rooms"]],
+  ["first-try-archie", "Archie's third stage cleared without dying", ["first-try", "archie"]],
+  ["first-try-pebble", "Pebble's third stage cleared without dying", ["first-try", "pebble"]],
+  ["first-try-trixi", "Trixi's third stage cleared without dying", ["first-try", "trixi"]],
   [
-    "spotless-blue-cityscape",
+    "no-death-blue-cityscape",
     "Every Blue cityscape stage in one run with no deaths",
-    ["spotless", "blue-cityscape"],
+    ["no-death", "blue-cityscape"],
   ],
   [
-    "spotless-industrial-outskirts",
+    "no-death-industrial",
     "Every Industrial outskirts stage in one run with no deaths",
-    ["spotless", "industrial-outskirts"],
+    ["no-death", "industrial-outskirts"],
   ],
+  ["first-try-bini", "Bini's third stage cleared without dying", ["first-try", "bini"]],
+  ["first-try-kiwi", "Kiwi's third stage cleared without dying", ["first-try", "kiwi"]],
+  ["first-try-fert", "Fert's third stage cleared without dying", ["first-try", "fert"]],
   [
-    "spotless-countryside",
+    "no-death-countryside",
     "Every Countryside stage in one run with no deaths",
-    ["spotless", "countryside"],
+    ["no-death", "countryside"],
   ],
-  ["spotless-woodland", "Every Woodland stage in one run with no deaths", ["spotless", "woodland"]],
+  ["no-death-woodland", "Every Woodland stage in one run with no deaths", ["no-death", "woodland"]],
   [
-    "spotless-home-city",
+    "no-death-home-city",
     "Every Home city stage in one run with no deaths",
-    ["spotless", "home-city"],
+    ["no-death", "home-city"],
   ],
   [
-    "spotless-apartment-building",
+    "no-death-apartment",
     "Every Apartment stage in one run with no deaths",
-    ["spotless", "apartment-building"],
+    ["no-death", "apartment-building"],
   ],
-  ["just-a-bird", "Get home without ever selecting a skill", ["just-a-bird"]],
+  ["home-without-skills", "Get home without ever selecting a skill", ["home-without-skills"]],
 ];
 
 const SRC = "art/ui";
@@ -487,13 +487,13 @@ function unlocked(art: Art): pixel.Frame {
   if (art[0] === "escape") {
     place({ x: 0, y: 0 }, partFrame(HEADS[art[1]]), f);
     place({ knock: true, x: 10, y: 9 }, partFrame(ARROW), f);
-  } else if (art[0] === "clean") {
+  } else if (art[0] === "first-try") {
     const head = partFrame(HEADS[art[1]]);
     place(centred(head, 13), head, f);
     place({ knock: true, x: 0, y: 7 }, partFrame(LAUREL), f);
-  } else if (art[0] === "zone" || art[0] === "spotless") {
+  } else if (art[0] === "clear" || art[0] === "no-death") {
     const e = partFrame(emblem(art[1]));
-    if (art[0] === "zone") place(centred(e, 15), e, f);
+    if (art[0] === "clear") place(centred(e, 15), e, f);
     else {
       // The apartment fills the top with its cornice, so it sits three rows lower than the others
       // (its door and foot run off the frame) and its upper-left sparkle shrinks to the small one.
@@ -503,7 +503,7 @@ function unlocked(art: Art): pixel.Frame {
       else place({ knock: true, x: 0, y: 0 }, partFrame(SPARKLE), f);
       place({ knock: true, x: 11, y: 0 }, partFrame(SMALL_SPARKLE), f);
     }
-  } else if (art[0] === "all-gifts") {
+  } else if (art[0] === "gift-rooms") {
     const gift = partFrame(GIFT);
     place(centred(gift, 14), gift, f);
   } else {
