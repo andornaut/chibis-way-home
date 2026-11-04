@@ -67,16 +67,20 @@ describe("developer session routing", () => {
       expect(developmentFlags(url.search).session).toBe(true);
     },
   );
-  it("hides the controls in installed and fullscreen contexts", () => {
-    const page = (installed: boolean, standalone: boolean, fullscreen: boolean) =>
-      ({
+  it.each([
+    ["a regular browser tab", false, false, false, true],
+    ["an installed display mode", true, false, false, false],
+    ["an iOS standalone page", false, true, false, false],
+    ["a fullscreen page", false, false, true, false],
+  ])(
+    "hides the controls in installed and fullscreen contexts: %s shows them %s",
+    (_, installed, standalone, fullscreen, shown) => {
+      const page = {
         document: { fullscreenElement: fullscreen ? {} : null },
         matchMedia: () => ({ matches: installed }),
         navigator: { standalone },
-      }) as unknown as Window;
-    expect(regularBrowser(page(false, false, false))).toBe(true);
-    expect(regularBrowser(page(true, false, false))).toBe(false);
-    expect(regularBrowser(page(false, true, false))).toBe(false);
-    expect(regularBrowser(page(false, false, true))).toBe(false);
-  });
+      } as unknown as Window;
+      expect(regularBrowser(page)).toBe(shown);
+    },
+  );
 });
