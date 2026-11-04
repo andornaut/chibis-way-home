@@ -44,6 +44,43 @@ function intersects(a: Rect, b: Rect): boolean {
   );
 }
 
+interface PlatformProjection {
+  readonly bounds: Rect;
+  readonly collider: TraversalCollider<TraversalSupport>;
+  readonly points: readonly Rect[];
+}
+
+// The platform's collider, every chord endpoint and their bounding box.
+function projectPlatform({
+  after,
+  before,
+  collision,
+  owner,
+  segments,
+}: BehaviourPlatformFrame): PlatformProjection {
+  const points = [before, after];
+  if (segments) {
+    for (const { from, to } of segments) {
+      points.push(from, to);
+    }
+  }
+  let left = Infinity;
+  let right = -Infinity;
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const rect of points) {
+    left = Math.min(left, rect.x);
+    right = Math.max(right, rect.x + rect.width);
+    top = Math.min(top, rect.y);
+    bottom = Math.max(bottom, rect.y + rect.height);
+  }
+  return {
+    bounds: { height: bottom - top, width: right - left, x: left, y: top },
+    collider: { after, before, kind: collision, supportId: owner, ...(segments && { segments }) },
+    points,
+  };
+}
+
 export function traversalContext(
   world: BehaviourWorld,
   seconds: number,
@@ -55,29 +92,7 @@ export function traversalContext(
     return undefined;
   }
   const project = (platforms: readonly BehaviourPlatformFrame[]) =>
-    platforms
-      .filter(({ owner }) => owner !== object)
-      .map(({ after, before, collision, owner, segments }) => {
-        const points = [before, after, ...(segments?.flatMap(({ from, to }) => [from, to]) ?? [])];
-        return {
-          bounds: {
-            height:
-              Math.max(...points.map((r) => r.y + r.height)) - Math.min(...points.map((r) => r.y)),
-            width:
-              Math.max(...points.map((r) => r.x + r.width)) - Math.min(...points.map((r) => r.x)),
-            x: Math.min(...points.map((r) => r.x)),
-            y: Math.min(...points.map((r) => r.y)),
-          },
-          collider: {
-            after,
-            before,
-            kind: collision,
-            supportId: owner,
-            ...(segments && { segments }),
-          },
-          points,
-        };
-      });
+    platforms.filter(({ owner }) => owner !== object).map(projectPlatform);
   // Sampled platform arrays are immutable snapshots; query filtering stays outside the memo.
   const projections = new WeakMap<readonly BehaviourPlatformFrame[], ReturnType<typeof project>>();
   // Wrappers retain the original rectangle references, including any in-place coordinate changes.
@@ -139,7 +154,7 @@ export function traversalContext(
       }
       if (projected) {
         for (const { bounds, collider, points } of projected) {
-          if (points.some((rect) => intersects(rect, query)) || intersects(bounds, query)) {
+          if (intersects(bounds, query) || points.some((rect) => intersects(rect, query))) {
             colliders.push(collider);
           }
         }
