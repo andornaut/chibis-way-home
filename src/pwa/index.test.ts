@@ -3,9 +3,13 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const offline = vi.hoisted(() => {
   const play = {
     bootable: Promise.resolve(),
-    flow: { accept: vi.fn(), beginOfferVisit: vi.fn(), dismissOffer: vi.fn() },
-    setOfferVisible: vi.fn(),
-    setRegistrationReady: vi.fn(),
+    flow: {
+      accept: vi.fn(),
+      beginOfferVisit: vi.fn(),
+      dismissOffer: vi.fn(),
+      setOfferVisible: vi.fn(),
+    },
+    registrationReady: vi.fn(),
   };
   return {
     play,
@@ -64,14 +68,14 @@ it("wires manual updates to prepared registration and explicit Start visits", as
   expect(options.activationPolicy).toBe("manual");
   pwa.coverZone("loading", true);
   pwa.zoneShown();
-  expect(offline.play.setRegistrationReady).not.toHaveBeenCalled();
+  expect(offline.play.registrationReady).not.toHaveBeenCalled();
   pwa.coverZone("loading", false);
-  expect(offline.play.setRegistrationReady).toHaveBeenCalledExactlyOnceWith(true);
-  expect(offline.play.setOfferVisible).not.toHaveBeenCalled();
+  expect(offline.play.registrationReady).toHaveBeenCalledOnce();
+  expect(offline.play.flow.setOfferVisible).not.toHaveBeenCalled();
   pwa.beginStartUpdateVisit();
   pwa.startScreenShown(true);
   expect(offline.play.flow.beginOfferVisit).toHaveBeenCalledOnce();
-  expect(offline.play.setOfferVisible).toHaveBeenLastCalledWith(true);
+  expect(offline.play.flow.setOfferVisible).toHaveBeenLastCalledWith(true);
   pwa.coverZone("startCard", true);
   pwa.coverZone("startCard", false);
   pwa.startScreenShown(false);

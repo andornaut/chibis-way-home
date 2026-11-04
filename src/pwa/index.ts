@@ -52,7 +52,7 @@ let screenWakeLock: ScreenWakeLock | undefined;
 // The production build only: the dev server has no sw.js, and a worker would serve stale
 // modules over hot reloads. A page a version controls registers now, so its update check runs
 // while the game loads; a first visit registers once the zone shows, so the precache does not
-// compete with the game's own downloads (setRegistrationReady).
+// compete with the game's own downloads (registrationReady).
 function setupOfflinePlay(): void {
   const page = import.meta.env.PROD ? browserOfflinePage() : undefined;
   if (page === undefined) {
@@ -69,7 +69,7 @@ function setupOfflinePlay(): void {
     page,
   );
   offlinePlay = play;
-  home = trackHomeScreen(play.setOfferVisible, () => play.setRegistrationReady(true));
+  home = trackHomeScreen(play.flow.setOfferVisible, () => play.registrationReady());
   ready = play.bootable;
 }
 
