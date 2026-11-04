@@ -153,10 +153,10 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   farmland: outdoorRecipe("countryside", "first", "farmland"),
   "forest-paths": outdoorRecipe("woodland", "first", "forest-paths"),
   "freight-terminal": outdoorRecipe("industrial", "third", "freight-terminal"),
-  // The debug park retains its prototype length and difficulty band.
-  // No events exist yet.
   "loading-yards": outdoorRecipe("industrial", "second", "loading-yards"),
   lobby: apartmentRecipe("dash-gift", "apartment-lobby", 0),
+  // The debug park retains its prototype length and difficulty band.
+  // No events exist yet.
   park: {
     difficulty: { max: 4, min: 2 },
     doors: [{ count: 1, room: "test" }],

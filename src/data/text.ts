@@ -169,7 +169,6 @@ export const TEXT: GameText = {
     title: "Paused",
   },
   quips: {},
-  // PLACEHOLDER: until gameplay writes the question.
   restart: {
     cancel: "Cancel",
     question: "Start again from the first zone?",
