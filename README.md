@@ -44,6 +44,8 @@ Run checks, tests and builds inside an isolated Node 24.21.0 container as the de
 
 Checks run on the upstream `node:24.21.0` image. Art builds that export through Aseprite use `chibi-check:node24.21.0-aseprite1.2.30`, built on `node:24.21.0` from a licensed `Aseprite_1.2.30-1_amd64.deb` kept in the sibling `game-dev` checkout's `var/vendor/aseprite/`, outside version control: `docker build -f scripts/check-aseprite.Dockerfile --build-context aseprite-deb=../game-dev/var/vendor/aseprite -t chibi-check:node24.21.0-aseprite1.2.30 scripts`.
 
+WORKAROUND: Parent-scoped development overrides pin [KaTeX](https://github.com/advisories/GHSA-238p-pmpm-9mq7) `0.18.2`, [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249) `11.0.3` and [re2js](https://github.com/advisories/GHSA-gg6h-894w-4m9c) `2.8.7`. ESLint loads the cycle and restricted-paths rules and the resolver through exported plugin subpaths because the full plugin imports an unused rule requiring the removed minimatch `makeRe` API. Keep cycle detection enabled. Remove each override when its parent range supports the patched version; restore the full plugin import when it supports minimatch 11.
+
 The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html` is `/`, the home page, and `pages/play/index.html` is `/play/`, the game).
 
 ```bash
