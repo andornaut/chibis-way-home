@@ -446,32 +446,40 @@ export function retryZone(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneStat
       });
 }
 
+// Observes only this tick's present supports: terrain and platforms that crumbling has not removed.
 function transitObservation(
   tuning: BirdTuning,
   area: AreaLayout,
   kinds: AreaObjects,
   seconds: number,
+  terrain: readonly Rect[],
+  presentPlatforms: readonly number[],
   zone: ZoneState,
 ): ForcedTransitState | undefined {
   if (kinds.forcedTransit.length === 0 && !zone.forcedTransit) {
     return undefined;
   }
-  const supports = kinds.platforms.map((index) => ({
+  const supports = presentPlatforms.map((index) => ({
     index,
     object: area.objects[index]!,
     rect: rectAt(area.objects[index]!, zone.objects[index] ?? area.objects[index]!.origin),
   }));
   const support = supports.find(({ rect }) => standsOn(tuning, zone.bird, rect));
   const box = birdBox(tuning, zone.bird);
-  const bankAdmissions = zone.bird.grounded
+  const terrainContact =
+    zone.bird.grounded &&
+    collisionCandidates(terrain, box).some((rect) => standsOn(tuning, zone.bird, rect));
+  // Grounded only on a present support; a removed support's former top is not ground.
+  const grounded = terrainContact || (zone.bird.grounded && support !== undefined);
+  const bankAdmissions = grounded
     ? forcedTransitBankAdmissions(
         kinds.forcedTransit.map((index) => area.objects[index]!.forcedTransit!),
         box,
       )
     : [];
   const safeGround =
-    zone.bird.grounded &&
-    (collisionCandidates(area.solids, box).some((rect) => standsOn(tuning, zone.bird, rect)) ||
+    grounded &&
+    (terrainContact ||
       supports.some(
         ({ object, rect }) => !object.forcedTransit && standsOn(tuning, zone.bird, rect),
       ));
@@ -492,7 +500,7 @@ function transitObservation(
     support &&
     forcedTransitTakeoffBody(
       { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: zone.seconds },
-      { bird: zone.bird, terrainSolids: area.solids, tuning, unknownPush: zone.pulses.length > 0 },
+      { bird: zone.bird, terrainSolids: terrain, tuning, unknownPush: zone.pulses.length > 0 },
       {
         ...support,
         owner: support.object,
@@ -504,7 +512,7 @@ function transitObservation(
   return stepForcedTransit(
     {
       bankAdmissions,
-      grounded: zone.bird.grounded,
+      grounded,
       ordinaryControl: ordinaryTransitControl(tuning, zone.bird),
       riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
       safeGround,
@@ -618,7 +626,15 @@ export function stepZone(
     !kinds.crumblingObjects.includes(index) || supportPresent(crumbling, area.objects[index]!);
   const terrain = presentTerrain(crumbling, area.solids);
   const presentPlatforms = kinds.platforms.filter(present);
-  const forcedTransit = transitObservation(tuning, area, kinds, seconds, zone);
+  const forcedTransit = transitObservation(
+    tuning,
+    area,
+    kinds,
+    seconds,
+    terrain,
+    presentPlatforms,
+    zone,
+  );
   const baseGeometry = {
     ...behaviourGeometry(area, terrain, present, zone),
     chunks: area.chunks,
@@ -1219,14 +1235,14 @@ export function stepZone(
     };
   }
   const carrier = bird.grounded
-    ? kinds.platforms.find((index) => standsOn(tuning, bird, objects[index]!.after))
+    ? presentPlatforms.find((index) => standsOn(tuning, bird, objects[index]!.after))
     : undefined;
   const forcedTransitForecast =
     carrier !== undefined && area.objects[carrier]!.forcedTransit && seconds === STEP_SECONDS
       ? forecastForcedTransit(
           { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: time },
           traversalGeometry(area.objects[carrier]!).traversalFrame?.sample,
-          { bird, terrainSolids: area.solids, tuning, unknownPush: remainingPulses.length > 0 },
+          { bird, terrainSolids: terrain, tuning, unknownPush: remainingPulses.length > 0 },
           {
             index: carrier,
             owner: area.objects[carrier]!,

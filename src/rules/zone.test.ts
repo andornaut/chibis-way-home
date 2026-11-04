@@ -14,6 +14,7 @@ import { zoneSurfaces } from "../sim/zoneWalk";
 import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
 import { BIRD_FRAME } from "../view/bird";
 import { birdBox, birdFrameRect, ordinaryJumpApexFeetY, startBird } from "./bird";
+import { crumblingDefinitions } from "./crumbling";
 import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
 import { skillTuning } from "./skills";
 import { STEP_SECONDS } from "./step";
@@ -232,6 +233,49 @@ describe("mandatory ride admission", () => {
     });
     expect(next.forcedTransit?.attackWindow).toBe(safe ? "allowed" : "deferred");
     expect(next.forcedTransit?.episode).toEqual(safe ? undefined : { ...episode, phase: "forced" });
+  });
+
+  it.each([
+    ["absent", false],
+    ["restored", true],
+  ])("treats an %s crumbling bank as safe ground only while present", (_, present) => {
+    const bankTransit = {
+      ...transit,
+      banks: [{ id: "near", purpose: "retreat" as const, width: 72, x: 400, y: 200 }],
+    };
+    const carrier = object({ forcedTransit: bankTransit, origin: { x: 80, y: 200 } });
+    const ledge = object({
+      collision: "ledge",
+      crumbling: { absentSeconds: 100, warningSeconds: 100 },
+      origin: { x: 400, y: 200 },
+      width: 72,
+    });
+    const base = area([carrier, ledge], { entries: { start: { x: 410, y: 200 } } });
+    const layout = zone({ ...base, crumbling: crumblingDefinitions(base) });
+    const initial = stepZone(BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    expect(initial.bird.grounded).toBe(true);
+    expect(standsOn(BIRD, initial.bird, { height: 12, width: 72, x: 400, y: 200 })).toBe(true);
+    const forced = { ...episode, phase: "forced" as const };
+    const next = stepZone(BIRD, layout, STEP, STILL, {
+      ...initial,
+      crumbling: {
+        ...initial.crumbling!,
+        pendingContacts: [],
+        standingContacts: [],
+        supports: [
+          {
+            phase: present ? { kind: "intact" } : { kind: "absent", restoreAfterSeconds: 100 },
+            supportId: ledge,
+          },
+        ],
+      },
+      forcedTransit: { attackWindow: "deferred", episode: forced, evidence: "certified" },
+    });
+    expect(next.forcedTransit?.episode).toEqual(present ? undefined : forced);
+    expect(next.forcedTransit?.attackWindow).toBe(present ? "allowed" : "deferred");
+    expect(next.forcedTransit?.boardingAdmissions).toEqual(
+      present ? [{ group: transit.group, id: "near" }] : undefined,
+    );
   });
 
   it("keeps the last certified state on an uncertified opt-in ride", () => {
