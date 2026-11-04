@@ -160,6 +160,16 @@ export class Grid extends SharedGrid {
 
 export const flipped = (frame: Frame): Frame => flipFrame(frame);
 
+/** The nearest integer, ties to even, like Python's round(value). */
+export function round(value: number): number {
+  return Math.abs(value % 1) === 0.5 ? 2 * Math.round(value / 2) : Math.round(value);
+}
+
+/** The remainder with the divisor's sign, like Python's a % b. */
+export function mod(a: number, b: number): number {
+  return ((a % b) + b) % b;
+}
+
 function sortedKeys(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sortedKeys);
   if (value !== null && typeof value === "object") {
