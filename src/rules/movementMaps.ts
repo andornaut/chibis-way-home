@@ -180,6 +180,78 @@ function touches(a: Rect, b: Rect): boolean {
   );
 }
 
+// A uniform grid of at most 64 by 64 cells over the finite rects. Queries widen by twice EDGE and
+// visit every rect whose cells meet them; a missing or non-finite rect meets every query, so the
+// exact tests see a superset of the matches and `filter` keeps the original order.
+const GRID_CELLS = 64;
+
+interface RectGrid {
+  readonly filter: (query: Rect, test: (index: number) => boolean) => readonly number[];
+  readonly some: (query: Rect, test: (index: number) => boolean) => boolean;
+}
+
+function rectGrid(rects: readonly (Rect | undefined)[]): RectGrid {
+  const finite = (rect: Rect | undefined): rect is Rect =>
+    rect !== undefined && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite);
+  const all = rects.map((_, i) => i);
+  const always = all.filter((i) => !finite(rects[i]));
+  const placed = rects.filter(finite);
+  const left = Math.min(...placed.map(({ x }) => x));
+  const top = Math.min(...placed.map(({ y }) => y));
+  const right = Math.max(...placed.map(({ width, x }) => x + width));
+  const bottom = Math.max(...placed.map(({ height, y }) => y + height));
+  const size = Math.max((right - left) / GRID_CELLS, (bottom - top) / GRID_CELLS, TILE);
+  const columns = placed.length ? Math.floor((right - left) / size) + 1 : 0;
+  const rows = placed.length ? Math.floor((bottom - top) / size) + 1 : 0;
+  const column = (x: number) => Math.floor((x - left) / size);
+  const row = (y: number) => Math.floor((y - top) / size);
+  const cells: number[][] = Array.from({ length: columns * rows }, () => []);
+  rects.forEach((rect, i) => {
+    if (finite(rect)) {
+      for (let cx = column(rect.x); cx <= column(rect.x + rect.width); cx++) {
+        for (let cy = row(rect.y); cy <= row(rect.y + rect.height); cy++) {
+          cells[cx * rows + cy]!.push(i);
+        }
+      }
+    }
+  });
+  const margin = 2 * EDGE;
+  // Calls the visitor for each candidate until it returns true, with repeats across cells.
+  const visit = (query: Rect, visitor: (index: number) => boolean): boolean => {
+    if (always.some(visitor)) {
+      return true;
+    }
+    const x0 = column(query.x - margin);
+    const x1 = column(query.x + query.width + margin);
+    const y0 = row(query.y - margin);
+    const y1 = row(query.y + query.height + margin);
+    if (![x0, x1, y0, y1].every(Number.isFinite)) {
+      return all.some(visitor);
+    }
+    for (let cx = Math.max(0, x0); cx <= Math.min(columns - 1, x1); cx++) {
+      for (let cy = Math.max(0, y0); cy <= Math.min(rows - 1, y1); cy++) {
+        if (cells[cx * rows + cy]!.some(visitor)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  return {
+    filter: (query, test) => {
+      const found: number[] = [];
+      visit(query, (i) => {
+        if (!found.includes(i) && test(i)) {
+          found.push(i);
+        }
+        return false;
+      });
+      return found.length > 1 ? found.sort((a, b) => a - b) : found;
+    },
+    some: visit,
+  };
+}
+
 function fixed(object: ObjectLayout): boolean {
   return (
     object.motion.algorithm === "static" &&
@@ -308,15 +380,20 @@ export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTer
       timeSeconds: 0,
     },
   };
+  const nearHazards = rectGrid(hazards.map(({ rect }) => rect));
+  const nearDependencies = rectGrid(dependencies.map(({ footprint }) => footprint));
   return {
     area: {
-      blocked: (sweep) => hazards.some(({ rect }) => overlaps(sweep, rect)),
+      blocked: (sweep) => nearHazards.some(sweep, (i) => overlaps(sweep, hazards[i]!.rect)),
       bounds,
       colliders,
       deps: (sweep) =>
-        dependencies
-          .filter(({ footprint }) => !footprint || touches(sweep, footprint))
-          .map(({ id }) => id),
+        nearDependencies
+          .filter(sweep, (i) => {
+            const { footprint } = dependencies[i]!;
+            return !footprint || touches(sweep, footprint);
+          })
+          .map((i) => dependencies[i]!.id),
       kind: (supportId) => (crumbling.has(supportId) ? "crumbling" : "static"),
     },
     bounds,
@@ -381,8 +458,9 @@ export function airArea(terrain: MapTerrain, object: ObjectLayout): AirArea<MapS
     ...platforms.filter(({ collision }) => collision === "solid").map(({ rect }) => rect),
     ...terrain.hazards.map(({ rect }) => rect),
   ];
+  const near = rectGrid(blockers);
   return {
-    blocked: (rect) => blockers.some((blocker) => overlaps(rect, blocker)),
+    blocked: (rect) => near.some(rect, (i) => overlaps(rect, blockers[i]!)),
     bounds: terrain.bounds,
     deps: terrain.area.deps,
     perches: flightPerches(terrain, object),
