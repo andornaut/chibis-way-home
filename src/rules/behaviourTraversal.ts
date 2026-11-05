@@ -377,6 +377,53 @@ export function preferredDescentInputs(
     : undefined;
 }
 
+const fixedOwner = (owner: ObjectLayout) =>
+  owner.motion.algorithm === "static" &&
+  !owner.behaviour &&
+  !owner.orbit &&
+  owner.reaction.kind === "none";
+
+// The highest face of the nearest wall ahead that one jump can clear: touching the body, or
+// beyond a fixed hazard strip along its floor within one jump's horizontal reach.
+function wallAhead(
+  world: BehaviourWorld,
+  context: TraversalContext<TraversalSupport>,
+  start: TraversalState<TraversalSupport>,
+  move: -1 | 1,
+): Rect | undefined {
+  const { body, epsilon, profile } = context;
+  const left = start.x + body.offset.x;
+  const right = left + body.width;
+  const top = start.y + body.offset.y;
+  const foot = top + body.height;
+  const maximumRise = (profile.jumpSpeed * profile.jumpSpeed) / (2 * profile.gravity);
+  const reach = (profile.walkSpeed * 2 * profile.jumpSpeed) / profile.gravity;
+  const gap = (rect: Rect) => (move === 1 ? rect.x - right : left - rect.x - rect.width);
+  // Whether a fixed hazard lies on the floor between the body and the face.
+  const hazardStrip = (rect: Rect) => {
+    const strip = {
+      height: 2 * epsilon,
+      width: gap(rect),
+      x: move === 1 ? right : rect.x + rect.width,
+      y: foot - epsilon,
+    };
+    return (world.hazards ?? []).some(
+      ({ owner, rect: hazard, timedContacts }) =>
+        !timedContacts && fixedOwner(owner) && intersects(hazard, strip),
+    );
+  };
+  const faces = world.solids.filter(
+    (rect) =>
+      gap(rect) >= -epsilon &&
+      (gap(rect) <= epsilon || (gap(rect) <= reach && hazardStrip(rect))) &&
+      rect.y < foot - epsilon &&
+      rect.y + rect.height > top + epsilon,
+  );
+  const nearest = Math.min(...faces.map(gap));
+  const wall = faces.filter((rect) => gap(rect) <= nearest + epsilon).sort((a, b) => a.y - b.y)[0];
+  return wall && foot - wall.y <= maximumRise ? wall : undefined;
+}
+
 // A touching wall can require an ascent before the final landing corridor gets nearer.
 // These commands are suggestions; the native search charges and validates every step.
 export function preferredAscentInputs(
@@ -410,16 +457,7 @@ export function preferredAscentInputs(
   if (intercepted) {
     return undefined;
   }
-  const wall = world.solids.some((rect) => {
-    const rise = foot - rect.y;
-    return (
-      Math.abs(move === 1 ? rect.x - right : rect.x + rect.width - left) <= epsilon &&
-      rect.y + rect.height > top + epsilon &&
-      rise > epsilon &&
-      rise <= maximumRise
-    );
-  });
-  if (wall) {
+  if (wallAhead(world, context, request.start, move)) {
     return Array.from({ length: request.horizonSteps }, (_, index) => ({
       jump: index === 0,
       move,
@@ -538,24 +576,15 @@ function ascentWaypoint(
   if (!start.grounded) {
     return undefined;
   }
-  const { body, epsilon, profile } = context;
+  const { body, epsilon } = context;
   const left = start.x + body.offset.x;
   const right = left + body.width;
-  const top = start.y + body.offset.y;
-  const foot = top + body.height;
   const move = goal.x >= right - epsilon ? 1 : goal.x + goal.width <= left + epsilon ? -1 : 0;
   if (move === 0) {
     return undefined;
   }
-  const touching = world.solids.filter(
-    (rect) =>
-      Math.abs(move === 1 ? rect.x - right : rect.x + rect.width - left) <= epsilon &&
-      rect.y < foot - epsilon &&
-      rect.y + rect.height > top + epsilon,
-  );
-  const wall = touching.sort((a, b) => a.y - b.y)[0];
-  const maximumRise = (profile.jumpSpeed * profile.jumpSpeed) / (2 * profile.gravity);
-  if (!wall || foot - wall.y > maximumRise) {
+  const wall = wallAhead(world, context, start, move);
+  if (!wall) {
     return undefined;
   }
   const span = supportedSpan(world, wall);
@@ -998,12 +1027,6 @@ function goalMove(
   }
   return goal.x + goal.width / 2 < left + body.width / 2 ? -1 : 1;
 }
-
-const fixedOwner = (owner: ObjectLayout) =>
-  owner.motion.algorithm === "static" &&
-  !owner.behaviour &&
-  !owner.orbit &&
-  owner.reaction.kind === "none";
 
 // The present geometry as every future step's, when nothing in it can move, crumble or time
 // its contact: later legs then start from future states without frame predictions. Undefined
