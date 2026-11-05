@@ -33,6 +33,7 @@ import type {
 } from "../data/types";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import { contactBox } from "./behaviourTrack";
+import { clockedSupport } from "./effectiveCollision";
 import { supportedLanding } from "./flyLanding";
 import { hazardBoundsAt } from "./hazardOccupancy";
 import { timedHazardRect } from "./timedHazard";
@@ -276,7 +277,7 @@ const FOOTPRINT_SECONDS = 3600;
 export interface MapTerrain {
   readonly area: MapArea<MapSupport>;
   readonly bounds: Rect;
-  // Every crumbling support's id.
+  // Every support whose presence can change: crumbling and clocked supports' ids.
   readonly crumbling: ReadonlySet<MapSupport>;
   readonly depKey: (id: MapSupport) => string;
   readonly hazards: readonly { readonly owner: ObjectLayout; readonly rect: Rect }[];
@@ -292,7 +293,8 @@ interface MapTerrainOptions {
 }
 
 // The area's static terrain at its layout positions. Moving platforms (lifts, shuttles, boats,
-// behaviour platforms) are left out; crumbling supports are built intact and carried as deps.
+// behaviour platforms) are left out; crumbling and clocked supports are built present and carried
+// as deps of kind crumbling, so a mask decides their presence.
 export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTerrain {
   const bounds = options.bounds ?? { height: area.height, width: area.width, x: 0, y: 0 };
   const pads = options.pads ?? [];
@@ -308,11 +310,18 @@ export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTer
     height: object.height,
     width: object.width,
   });
+  // Clocked supports collide in the map but stay out of the world, so they are never perches.
+  const clocked = area.objects.filter(
+    (object) => object.collision === "ledge" && clockedSupport(object),
+  );
   const solids = [...area.solids, ...pads];
   const hazards: { owner: ObjectLayout; rect: Rect }[] = [];
   const dependencies: { id: MapSupport; footprint: Rect | undefined }[] = [];
   for (const definition of area.crumbling ?? []) {
     dependencies.push({ footprint: definition.volume, id: definition.supportId });
+  }
+  for (const object of clocked) {
+    dependencies.push({ footprint: platformRect(object), id: object });
   }
   for (const object of area.objects) {
     if (object.collision !== "hazard" || object.behaviour?.pursuit) {
@@ -338,7 +347,10 @@ export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTer
       dependencies.push({ footprint: reach, id: object });
     }
   }
-  const crumbling = new Set((area.crumbling ?? []).map(({ supportId }) => supportId));
+  const crumbling = new Set<MapSupport>([
+    ...(area.crumbling ?? []).map(({ supportId }) => supportId),
+    ...clocked,
+  ]);
   const colliders = [
     ...solids.map((rect) => ({
       after: rect,
@@ -346,7 +358,7 @@ export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTer
       kind: "solid" as const,
       supportId: rect,
     })),
-    ...platforms.map((object) => {
+    ...[...platforms, ...clocked].map((object) => {
       const rect = platformRect(object);
       return {
         after: rect,

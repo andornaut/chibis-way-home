@@ -18,6 +18,7 @@ import { collisionCandidates, EDGE } from "../core";
 import { TILE } from "../data/screen";
 import type { ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourWorld } from "./behaviourReach";
+import { clockedSupport } from "./effectiveCollision";
 import type { MapSupport, PursuitGroundMap } from "./movementMaps";
 import { timedHazardSafe } from "./timedHazard";
 
@@ -88,9 +89,10 @@ function nodeGoal(
   };
 }
 
+// A support that never moves: static, or a stationary clocked support.
 const fixedOwner = (owner: ObjectLayout) =>
   owner.motion.algorithm === "static" &&
-  !owner.behaviour &&
+  (!owner.behaviour || clockedSupport(owner)) &&
   !owner.orbit &&
   owner.reaction.kind === "none";
 
