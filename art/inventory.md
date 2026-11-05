@@ -57,6 +57,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | ------------------------- | ---------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------- |
 | bird                      | character                                                  | 48x42  | idle, walk, jump (once), flutter, land (once), death (once), dash (once), double-jump (once) |
 | boss-removal              | effect, boss removal puff, centre anchor, no contact       | 64x64  | puff (once)                                                                                  |
+| crosswalk-signal          | street scenery, no contact                                 | 12x84  | walk, warning, stop                                                                          |
 | dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                                                                |
 | ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                                                                           |
 | icon-achievement          | achievement glyph, no contact                              | 16x16  | one per achievement ID (frames unlocked, locked)                                             |
@@ -118,11 +119,11 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 
 12x12 tiles in rows of 8: `tiles-lobby` and `tiles-street` from `art/tools/floor1.ts`, `tiles-park` from `art/tools/park.ts`. One-way ledges are named `one-way-*`; doorways (`door-*`, `exit-*`) and pits (`pit-*`) have no collision.
 
-| Key          | Type                                                                                                                                                       | Size            | Pieces      |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------- |
-| tiles-lobby  | tileset (indoor, no current stage): wood floor, one-way balcony, shelf, cushion and desk, wood post, stairwell exit                                        | 130 tiles, 12px | exit (7x15) |
-| tiles-street | tileset: sidewalk, kerb, road, one-way awning, one-way canopy, planter, door, cellar hatch, one-way fire-escape landing, sill, cornice and water-tower top | 77 tiles, 12px  | door (5x7)  |
-| tiles-park   | tileset (park theme): grass, turf, soil, path, stone stairs, one-way bench, branch and bandstand, pond and thorn hazards                                   | 32 tiles, 12px  |             |
+| Key          | Type                                                                                                                                                                                            | Size            | Pieces      |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------- |
+| tiles-lobby  | tileset (indoor, no current stage): wood floor, one-way balcony, shelf, cushion and desk, wood post, stairwell exit                                                                             | 130 tiles, 12px | exit (7x15) |
+| tiles-street | tileset: sidewalk, kerb, road, one-way awning, one-way canopy, planter, door, cellar hatch, one-way fire-escape landing, sill, cornice and water-tower top, crosswalk walk, warning and traffic | 86 tiles, 12px  | door (5x7)  |
+| tiles-park   | tileset (park theme): grass, turf, soil, path, stone stairs, one-way bench, branch and bandstand, pond and thorn hazards                                                                        | 32 tiles, 12px  |             |
 
 ## Backdrops
 

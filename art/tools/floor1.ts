@@ -78,6 +78,23 @@
  *   fire-escape-railing on it), one-way-sill-* (a stone window sill, 2 or 3 wide, art in the top 7 rows, its top
  *   on a window's sill line), one-way-cornice-* (a rooftop cornice with dentils, the full tile,
  *   along a roofline's top edge), one-way-tank-* (a water tower's flat top rim).
+ * - Crosswalk, tiles 77 to 85, after the climbing tiles and the door's later cells, so every
+ *   earlier index holds. Drawn in their own colours, outside the cool tile map. A strip of
+ *   crosswalk-<phase>-left, one crosswalk-<phase>-middle per inner cell and crosswalk-<phase>-right
+ *   fills the row above the road top between two kerbs, its ends meeting the kerbs; the game swaps
+ *   the strip's phase. crosswalk-walk-*: a dslate band with 6px lgrey zebra bars every 12px, rows
+ *   2 to 9, inset 3px from each tile edge, so any width repeats; no lip. crosswalk-warning-*: the
+ *   walk tile with a 4px amber border on the strip's outer edges (top and bottom on every tile, the
+ *   left side on -left, the right side on -right). crosswalk-traffic-*: the whole cell bright red
+ *   (#e43b44), no ink and no lip, the same fill as the procedural vent's active phase. They are
+ *   the crosswalk timed hazard's phase skins, never placed as terrain; contact is the hazard's.
+ *
+ * crosswalk-signal (sprite, 12x84, bottom-centre on a 1x7 footprint standing on the kerb top; no
+ * collision or hit box): an ink-outlined dslate signal head (rows 0 to 25) with a hand lens over a
+ * walker lens, on a slate pole with an ink edge and a dslate foot. Tags, all looping (once []):
+ * walk 1 frame (the white walking figure lit, the hand dark), warning 2 x 250ms (the amber hand lit,
+ * then dark; the walker dark), stop 1 frame (the amber hand steady). Dark lenses show the unlit
+ * glyph in navy on ink. Amber appears only on the hand.
  *
  * tiles-lobby (the boutique lobby at indoor scale; no current stage)
  * - Every walkable top, the floor and each one-way ledge, has the same 2px cream lip under a 1px
@@ -502,6 +519,7 @@ function streetTiles(): [Tile[], Pieces] {
       ...hatchTiles(),
       ...climbTiles(),
       ...door.slice(12),
+      ...crosswalkTiles(),
     ],
     { door: doorRows },
   ];
@@ -509,7 +527,7 @@ function streetTiles(): [Tile[], Pieces] {
 
 /**
  * The street's tiles in the cool palette: the awnings and the canopy keep their own accent maps,
- * the door its frame map, every other tile the play map.
+ * the door and the crosswalk their own colours, every other tile the play map.
  */
 export function streetTilesCool(): [Tile[], Pieces] {
   const [tiles, pieces] = streetTiles();
@@ -520,7 +538,7 @@ export function streetTilesCool(): [Tile[], Pieces] {
     if (name.startsWith("one-way-canopy")) {
       return COOL_CANOPY;
     }
-    if (name.startsWith("door-")) {
+    if (name.startsWith("door-") || name.startsWith("crosswalk-")) {
       return {};
     }
     return COOL_TILES;
@@ -794,6 +812,109 @@ function tilesetImage(tiles: readonly Tile[]): RgbaImage {
     composite({ x: (i % COLUMNS) * T, y: Math.floor(i / COLUMNS) * T }, frameImage(g.px), im),
   );
   return im;
+}
+
+// ---------------------------------------------------------------- crosswalk
+
+const CROSSWALK_PHASES = ["walk", "warning", "traffic"] as const;
+const CROSSWALK_ENDS = [
+  ["left", "l"],
+  ["middle", "m"],
+  ["right", "r"],
+] as const;
+const WARNING_BORDER = 4;
+
+/** One crosswalk cell: kind is l, m or r, the strip's left end, an inner cell or its right end. */
+function crosswalk(phase: (typeof CROSSWALK_PHASES)[number], kind: string): Grid {
+  const g = new Grid(T, T);
+  if (phase === "traffic") {
+    return rects(g, [0, 0, T, T, "red"]);
+  }
+  rects(g, [0, 0, T, T, "dslate"], [3, 2, 6, 8, "lgrey"]);
+  if (phase === "warning") {
+    const b = WARNING_BORDER;
+    rects(g, [0, 0, T, b, "amber"], [0, T - b, T, b, "amber"]);
+    if (kind === "l") {
+      rects(g, [0, 0, b, T, "amber"]);
+    }
+    if (kind === "r") {
+      rects(g, [T - b, 0, b, T, "amber"]);
+    }
+  }
+  return g;
+}
+
+/** Appended after every earlier tile so its index holds. */
+function crosswalkTiles(): Tile[] {
+  return CROSSWALK_PHASES.flatMap((phase) =>
+    CROSSWALK_ENDS.map(([end, kind]): Tile => [
+      `crosswalk-${phase}-${end}`,
+      crosswalk(phase, kind),
+    ]),
+  );
+}
+
+// Signal glyphs, one row per string: x is the glyph's colour, . is clear.
+const SIGNAL_HAND = [
+  ".x.x.x..",
+  ".x.x.x..",
+  ".x.x.x.x",
+  ".xxxxxxx",
+  ".xxxxxx.",
+  "..xxxxx.",
+  "..xxxx..",
+] as const;
+const SIGNAL_WALKER = [
+  "...xx...",
+  "...xx...",
+  "..xxx...",
+  ".x.xxx..",
+  ".x.xx.x.",
+  "...xx...",
+  "..x..x..",
+  "..x...x.",
+  ".x....x.",
+] as const;
+
+function glyph(g: Grid, x: number, y: number, rows: readonly string[], c: string): void {
+  rows.forEach((row, j) => {
+    [...row].forEach((cell, i) => {
+      if (cell === "x") {
+        g.p(x + i, y + j, c);
+      }
+    });
+  });
+}
+
+/** 12x84: the pedestrian signal, its hand lit amber or dark and its walker lit white or dark. */
+function crosswalkSignal(hand: boolean, walker: boolean): pixel.Frame {
+  const g = rects(
+    new Grid(12, 84),
+    [0, 0, 12, 26, "ink"],
+    [1, 1, 10, 24, "dslate"],
+    [2, 2, 8, 10, "ink"],
+    [2, 14, 8, 11, "ink"],
+    [4, 26, 4, 54, "ink"],
+    [5, 26, 2, 54, "slate"],
+    [2, 79, 8, 5, "ink"],
+    [3, 80, 6, 3, "dslate"],
+  );
+  glyph(g, 2, 3, SIGNAL_HAND, hand ? "amber" : "navy");
+  glyph(g, 2, 15, SIGNAL_WALKER, walker ? "white" : "navy");
+  return g.px;
+}
+
+const SIGNAL_ONCE = { "crosswalk-signal": [] };
+
+export function* sprites(): Generator<pixel.SpriteEntry> {
+  yield [
+    "crosswalk-signal",
+    [
+      ["walk", [crosswalkSignal(false, true)], 1000],
+      ["warning", [crosswalkSignal(true, false), crosswalkSignal(false, false)], 250],
+      ["stop", [crosswalkSignal(true, false)], 1000],
+    ],
+  ];
 }
 
 // ---------------------------------------------------------------- backdrops
@@ -1111,6 +1232,7 @@ export async function build(): Promise<void> {
   // hand.
   pixel.updateManifest("tilesets", tilesets);
   pixel.updateManifest("backdrops", backdrops);
+  await pixel.build({ once: SIGNAL_ONCE }, [...sprites()]);
   console.log(
     "built",
     TILESET_DEFS.map(([k]) => k).join(", "),
