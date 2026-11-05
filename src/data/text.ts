@@ -1,79 +1,84 @@
 import type { GameText, StatsScopeText } from "./types";
 
 export const TEXT: GameText = {
-  // PLACEHOLDER: achievement titles and descriptions until gameplay words them.
   achievements: {
     cardTitle: "Achievements",
     entries: {
-      "clear-apartment": { description: "Clear the Apartment building.", title: "Top floor" },
+      "clear-apartment": {
+        description: "Clear every stage in Apartment building.",
+        title: "Top floor",
+      },
       "clear-blue-cityscape": {
-        description: "Clear the Blue cityscape.",
+        description: "Clear every stage in Blue cityscape.",
         title: "Out of the depot",
       },
-      "clear-countryside": { description: "Clear the Countryside.", title: "Across the fields" },
-      "clear-home-city": { description: "Clear the Home city.", title: "Nearly home" },
+      "clear-countryside": {
+        description: "Clear every stage in Countryside.",
+        title: "Across the fields",
+      },
+      "clear-home-city": { description: "Clear every stage in Home city.", title: "Nearly home" },
       "clear-industrial": {
-        description: "Clear the Industrial outskirts.",
+        description: "Clear every stage in Industrial outskirts.",
         title: "Past the freight",
       },
-      "clear-woodland": { description: "Clear the Woodland.", title: "Out of the woods" },
-      "escape-archie": { description: "Escape Archie's chase.", title: "Archie outrun" },
-      "escape-bini": { description: "Escape Bini's chase.", title: "Bini outrun" },
-      "escape-fert": { description: "Escape Fert's chase.", title: "Fert outrun" },
-      "escape-kiwi": { description: "Escape Kiwi's chase.", title: "Kiwi outrun" },
-      "escape-pebble": { description: "Escape Pebble's chase.", title: "Pebble outrun" },
-      "escape-trixi": { description: "Escape Trixi's chase.", title: "Trixi outrun" },
+      "clear-woodland": {
+        description: "Clear every stage in Woodland.",
+        title: "Out of the woods",
+      },
+      "escape-archie": { description: "Get away from Archie's chase.", title: "Shook off Archie" },
+      "escape-bini": { description: "Get away from Bini's chase.", title: "Shook off Bini" },
+      "escape-fert": { description: "Get away from Fert's chase.", title: "Shook off Fert" },
+      "escape-kiwi": { description: "Get away from Kiwi's chase.", title: "Shook off Kiwi" },
+      "escape-pebble": { description: "Get away from Pebble's chase.", title: "Shook off Pebble" },
+      "escape-trixi": { description: "Get away from Trixi's chase.", title: "Shook off Trixi" },
       "first-try-archie": {
-        description: "Clear City boundary on its first attempt.",
-        title: "Archie, first try",
+        description: "Clear City boundary without dying.",
+        title: "Clean past Archie",
       },
-      "first-try-bini": {
-        description: "Clear Ravine on its first attempt.",
-        title: "Bini, first try",
-      },
-      "first-try-fert": {
-        description: "Clear Penthouse on its first attempt.",
-        title: "Fert, first try",
-      },
+      "first-try-bini": { description: "Clear Ravine without dying.", title: "Clean past Bini" },
+      "first-try-fert": { description: "Clear Penthouse without dying.", title: "Clean past Fert" },
       "first-try-kiwi": {
-        description: "Clear Familiar neighbourhood on its first attempt.",
-        title: "Kiwi, first try",
+        description: "Clear Familiar neighbourhood without dying.",
+        title: "Clean past Kiwi",
       },
       "first-try-pebble": {
-        description: "Clear Freight terminal on its first attempt.",
-        title: "Pebble, first try",
+        description: "Clear Freight terminal without dying.",
+        title: "Clean past Pebble",
       },
       "first-try-trixi": {
-        description: "Clear River crossing on its first attempt.",
-        title: "Trixi, first try",
+        description: "Clear River crossing without dying.",
+        title: "Clean past Trixi",
       },
-      "gift-rooms": { description: "Own Dash, Double jump and Speedy.", title: "All gift rooms" },
+      "gift-rooms": {
+        description: "Collect every gift: Dash, Double jump and Speedy.",
+        title: "All gift rooms",
+      },
       "home-without-skills": {
-        description: "Finish the journey without dashing, double jumping or selecting Speedy.",
-        title: "Home with no skills",
+        description: "Get home without dashing, double jumping or selecting Speedy.",
+        title: "Just a bird",
       },
       "no-death-apartment": {
-        description: "Clear every Apartment building stage first try, in one visit.",
+        description: "Clear every Apartment building stage without dying, in one go.",
         title: "Spotless apartment",
       },
       "no-death-blue-cityscape": {
-        description: "Clear every Blue cityscape stage first try, in one visit.",
+        description: "Clear every Blue cityscape stage without dying, in one go.",
         title: "Spotless cityscape",
       },
       "no-death-countryside": {
-        description: "Clear every Countryside stage first try, in one visit.",
+        description: "Clear every Countryside stage without dying, in one go.",
         title: "Spotless countryside",
       },
       "no-death-home-city": {
-        description: "Clear every Home city stage first try, in one visit.",
+        description: "Clear every Home city stage without dying, in one go.",
         title: "Spotless home city",
       },
       "no-death-industrial": {
-        description: "Clear every Industrial outskirts stage first try, in one visit.",
+        description: "Clear every Industrial outskirts stage without dying, in one go.",
         title: "Spotless outskirts",
       },
       "no-death-woodland": {
-        description: "Clear every Woodland stage first try, in one visit.",
+        description: "Clear every Woodland stage without dying, in one go.",
         title: "Spotless woodland",
       },
     },
