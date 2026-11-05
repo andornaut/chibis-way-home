@@ -29,6 +29,7 @@ import type {
   ObjectLayout,
   Point,
   Rect,
+  ZoneLayout,
 } from "../data/types";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import { contactBox } from "./behaviourTrack";
@@ -540,11 +541,14 @@ function groundPursuitMotion(object: ObjectLayout) {
 }
 
 // A ground pursuer's route map: its pursuit physics without climbing, which pursuit never uses,
-// clipped to the columns its leash allows (the whole area when the leash covers it). Built on
-// first use and cached per area, profile and window, so every boss sharing them shares one map.
+// clipped to the columns its leash allows (the whole area when the leash covers it). Cached per
+// area, profile and window, so every boss sharing them shares one map. With `build` false it
+// only reads the cache. A map is a pure function of the area, profile and window, so when it is
+// built never changes its content.
 export function pursuitGroundMap(
   area: AreaLayout,
   object: ObjectLayout,
+  build = true,
 ): PursuitGroundMap | undefined {
   const motion = groundPursuitMotion(object);
   const leash = object.behaviour?.pursuit?.distance;
@@ -572,7 +576,7 @@ export function pursuitGroundMap(
       : { height: area.height, width: right - left, x: left, y: 0 };
   const key = `${groundKey(profile)} ${window ? `${left},${right}` : "-"}`;
   let entry = cached.maps.get(key);
-  if (!entry) {
+  if (!entry && build) {
     entry = {
       map: groundMap(
         { jumps: BOSS_JUMP_SCRIPTS, ...(window && { window }) },
@@ -584,6 +588,16 @@ export function pursuitGroundMap(
     cached.maps.set(key, entry);
   }
   return entry;
+}
+
+// Builds every ground pursuer's map in every area of a zone, at zone start, so play steps only
+// read the cache.
+export function preparePursuitMaps(layout: ZoneLayout): void {
+  for (const area of Object.values(layout.areas)) {
+    for (const object of area.objects) {
+      pursuitGroundMap(area, object);
+    }
+  }
 }
 
 export interface DependencyMaskOptions {

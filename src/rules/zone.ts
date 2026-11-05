@@ -65,7 +65,7 @@ import {
 import { ordinaryTransitControl } from "./forcedTransitProfile";
 import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
-import { pursuitGroundMap } from "./movementMaps";
+import { preparePursuitMaps, pursuitGroundMap } from "./movementMaps";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
 import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird";
@@ -496,8 +496,10 @@ export function roomOf(layout: ZoneLayout, zone: ZoneState): string | undefined 
   return zone.door === undefined ? undefined : areaOf(layout, zone.area).objects[zone.door]?.room;
 }
 
+// Zone start builds every area's pursuit maps, so no play step builds one.
 export function startZone(tuning: BirdTuning, layout: ZoneLayout, seed: number): ZoneState {
   validateWalkEntries(tuning, layout);
+  preparePursuitMaps(layout);
   return enterArea(tuning, layout, layout.start, { attempt: 0, restarts: 0, seed, steps: 0 });
 }
 
@@ -984,7 +986,7 @@ export function stepZoneBodies(
                 {
                   ...(kinds.traversal[index] ? traversalGeometry(object) : geometry),
                   ...(object.behaviour.pursuit && {
-                    groundMap: () => pursuitGroundMap(area, object),
+                    groundMap: () => pursuitGroundMap(area, object, false),
                   }),
                   decisions: namedStreams(
                     zone.seed + zone.attempt,
