@@ -1,8 +1,11 @@
 import { shuttleStates } from "./behaviours";
-import { OBSTACLE_MOVER_PAUSE, OBSTACLE_MOVER_SPEED } from "./obstacleTuning";
+import { GUST_PULSE, OBSTACLE_MOVER_PAUSE, OBSTACLE_MOVER_SPEED } from "./obstacleTuning";
 import type {
+  BehaviourAction,
   BehaviourNode,
   BehaviourPlan,
+  GustCycleSeconds,
+  GustPhase,
   HazardPhase,
   SupportCycleSeconds,
   SupportPhase,
@@ -22,6 +25,13 @@ export const AWNING_SECONDS = {
   out: 1.6,
   retracted: 1.2,
   warning: 0.6,
+} as const;
+
+// The ravine gust's calm, warning (leaf stream) and gust seconds.
+export const GUST_SECONDS = {
+  calm: 1.6,
+  gust: 1,
+  warning: 0.8,
 } as const;
 
 // The crosswalk's walk (inactive), warning, traffic (active) and recovery seconds.
@@ -103,3 +113,39 @@ export const GANTRY_BEHAVIOUR: BehaviourPlan = {
   initial: "wait-near",
   states: shuttleStates(OBSTACLE_MOVER_SPEED, OBSTACLE_MOVER_PAUSE, "idle"),
 };
+
+// A stationary gust emitter's fixed cycle, each state playing the tag of its name: calm, warning,
+// then gust, which enters with pulse for the gust's seconds. facing is the side it blows toward;
+// initial offsets neighbouring placements.
+export function gustCycle(
+  seconds: GustCycleSeconds,
+  pulse: Omit<Extract<BehaviourAction, { kind: "force-pulse" }>, "kind" | "seconds">,
+  facing: -1 | 1,
+  initial: GustPhase = "calm",
+): BehaviourPlan {
+  const state = (
+    phase: GustPhase,
+    to: GustPhase,
+    onEnter?: readonly BehaviourAction[],
+  ): BehaviourNode => ({
+    animation: phase,
+    gustPhase: phase,
+    motion: { kind: "wait" },
+    ...(onEnter && { onEnter }),
+    transitions: [{ to, when: [{ kind: "elapsed", seconds: seconds[phase] }] }],
+  });
+  return {
+    axis: "x",
+    distance: 0,
+    facing,
+    initial,
+    states: {
+      calm: state("calm", "warning"),
+      gust: state("gust", "calm", [{ ...pulse, kind: "force-pulse", seconds: seconds.gust }]),
+      warning: state("warning", "gust"),
+    },
+  };
+}
+
+// Ravine gusts blow against the route, which runs left to right, so the emitter faces left.
+export const GUST_BEHAVIOUR: BehaviourPlan = gustCycle(GUST_SECONDS, GUST_PULSE, -1);
