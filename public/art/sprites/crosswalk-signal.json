@@ -1,0 +1,48 @@
+{ "frames": {
+   "crosswalk-signal 0.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 12, "h": 84 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 12, "h": 84 },
+    "sourceSize": { "w": 12, "h": 84 },
+    "duration": 1000
+   },
+   "crosswalk-signal 1.aseprite": {
+    "frame": { "x": 12, "y": 0, "w": 12, "h": 84 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 12, "h": 84 },
+    "sourceSize": { "w": 12, "h": 84 },
+    "duration": 250
+   },
+   "crosswalk-signal 2.aseprite": {
+    "frame": { "x": 24, "y": 0, "w": 12, "h": 84 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 12, "h": 84 },
+    "sourceSize": { "w": 12, "h": 84 },
+    "duration": 250
+   },
+   "crosswalk-signal 3.aseprite": {
+    "frame": { "x": 36, "y": 0, "w": 12, "h": 84 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 12, "h": 84 },
+    "sourceSize": { "w": 12, "h": 84 },
+    "duration": 1000
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.30-x64",
+  "image": "crosswalk-signal.png",
+  "format": "RGBA8888",
+  "size": { "w": 48, "h": 84 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "walk", "from": 0, "to": 0, "direction": "forward" },
+   { "name": "warning", "from": 1, "to": 2, "direction": "forward" },
+   { "name": "stop", "from": 3, "to": 3, "direction": "forward" }
+  ]
+ }
+}

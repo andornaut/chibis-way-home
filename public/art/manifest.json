@@ -80,6 +80,12 @@
       ]
     },
     {
+      "key": "crosswalk-signal",
+      "png": "sprites/crosswalk-signal.png",
+      "json": "sprites/crosswalk-signal.json",
+      "once": []
+    },
+    {
       "key": "dog-antagonist",
       "png": "sprites/dog-antagonist.png",
       "json": "sprites/dog-antagonist.json",
