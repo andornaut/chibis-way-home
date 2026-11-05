@@ -619,6 +619,18 @@
       ]
     },
     {
+      "key": "windmill-sail-ledge",
+      "png": "sprites/windmill-sail-ledge.png",
+      "json": "sprites/windmill-sail-ledge.json",
+      "once": []
+    },
+    {
+      "key": "windmill-spoke",
+      "png": "sprites/windmill-spoke.png",
+      "json": "sprites/windmill-spoke.json",
+      "once": []
+    },
+    {
       "key": "woodland-gust-emitter",
       "png": "sprites/woodland-gust-emitter.png",
       "json": "sprites/woodland-gust-emitter.json",
@@ -872,6 +884,15 @@
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "x"
+    },
+    {
+      "key": "countryside-windmill",
+      "png": "backdrops/countryside-windmill.png",
+      "width": 144,
+      "height": 240,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "none"
     },
     {
       "key": "depot-loading-bay",
