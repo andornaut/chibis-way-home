@@ -1,4 +1,5 @@
 import { sameRect } from "../core";
+import { REACH } from "../data/reach";
 import type {
   Archetype,
   AreaLayout,
@@ -22,9 +23,10 @@ import type {
 import { drawsFrom, tileHitbox, type Tileset, worldScenery } from "../stage";
 import { layoutBehaviour } from "./behaviour";
 import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling";
-import { validateHazardPhases } from "./effectiveCollision";
+import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision";
 import { resolveForcedTransit, validateForcedTransitGroups } from "./forcedTransitLayout";
 import { resolveOrbits, validateOrbitReferences } from "./orbit";
+import { resolvePhaseSources } from "./phaseSource";
 import { validateZoneLinks } from "./zoneLinks";
 
 export function tileRect(tile: number, rect: TileRect): Rect {
@@ -309,6 +311,8 @@ export function objectLayout(
       forcedTransit: resolveForcedTransit(tile, tilePoint(tile, instance), instance.forcedTransit),
     }),
     origin: tilePoint(tile, instance),
+    ...(character.phaseAnimations && { phaseAnimations: character.phaseAnimations }),
+    ...(character.phaseTiles && { phaseTiles: character.phaseTiles }),
     ...(parallax && { parallax }),
     ...(instance.backdropSpan !== undefined && { backdropSpan: instance.backdropSpan }),
     ...(instance.backdropExtendBottom !== undefined && {
@@ -325,6 +329,14 @@ export function objectLayout(
     width,
   };
   validateHazardPhases(object);
+  if (object.phaseTiles && effectiveHazardPhase(object, undefined) === undefined) {
+    throw new Error(`Phase tiles on ${instance.character} require a timed hazard`);
+  }
+  if (character.noJumpOver && width / tile <= REACH.gap) {
+    throw new Error(
+      `${instance.character} is ${width / tile} cols, within a running jump's ${REACH.gap}`,
+    );
+  }
   return object;
 }
 
@@ -408,7 +420,7 @@ export function areaLayout(
     ),
     exitX: (area.cols - 1) * tile,
     height: area.rows * tile,
-    objects: resolveOrbits(tile, instances, objects),
+    objects: resolvePhaseSources(instances, resolveOrbits(tile, instances, objects)),
     solids: area.solids.map((rect) => tileRect(tile, rect)),
     terrain: area.solids,
     tileset: area.tileset,

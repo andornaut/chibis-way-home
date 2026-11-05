@@ -8,8 +8,10 @@ import type {
   BehaviourPlan,
   CharacterState,
   Collision,
+  HazardPhase,
   Interaction,
   Motion,
+  PhaseTiles,
   Quirk,
   Reaction,
   Tuning,
@@ -127,6 +129,9 @@ export interface Instance {
   readonly forcedTransit?: ForcedTransit;
   readonly id?: string;
   readonly orbit?: Orbit;
+  // The id of a timed hazard in the same chunk whose current state picks this instance's
+  // animation (its character's phaseAnimations); it keeps no clock of its own.
+  readonly phaseSource?: string;
   readonly behaviour?: BehaviourPlan;
   readonly character: string;
   readonly col: number;
@@ -448,6 +453,10 @@ export interface ObjectLayout {
   readonly scenerySource?: "chunk";
   readonly contactCue?: "red-hazard";
   readonly orbit?: Orbit<number>;
+  // A follower's source, as an index into its area's objects, and its tag per source state.
+  readonly phaseSource?: number;
+  readonly phaseAnimations?: Readonly<Record<string, string>>;
+  readonly phaseTiles?: Readonly<Record<HazardPhase, PhaseTiles>>;
   readonly contact?: SpriteContact;
   readonly spawnTemplates?: Readonly<Record<string, ObjectLayout>>;
   readonly behaviour?: BehaviourPlan;

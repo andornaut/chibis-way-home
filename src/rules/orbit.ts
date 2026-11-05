@@ -51,6 +51,7 @@ export function validateOrbitReferences(
   return ids;
 }
 
+// Scopes instance ids and the orbit hosts and phase sources that name them to one chunk.
 export function namespaceOrbitInstances(
   scope: string,
   instances: readonly Instance[],
@@ -61,6 +62,9 @@ export function namespaceOrbitInstances(
     ...(instance.id !== undefined && { id: `${scope}/${instance.id}` }),
     ...(instance.orbit && {
       orbit: { ...instance.orbit, host: `${scope}/${instance.orbit.host}` },
+    }),
+    ...(instance.phaseSource !== undefined && {
+      phaseSource: `${scope}/${instance.phaseSource}`,
     }),
   }));
 }

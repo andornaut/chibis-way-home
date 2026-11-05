@@ -71,6 +71,7 @@ describe("the characters", () => {
           ? []
           : [character.behaviour.inactiveAnimation]),
         ...(character.quirks ?? []).map(({ tag }) => tag),
+        ...Object.values(character.phaseAnimations ?? {}),
       ];
       const known = tagsOf(character.art);
       expect(

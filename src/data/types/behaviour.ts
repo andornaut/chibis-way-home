@@ -201,6 +201,15 @@ export interface BehaviourGroundReposition {
 
 export type HazardPhase = "inactive" | "warning" | "active";
 
+// Seconds in each state of a warned cycle: inactive, warning, active, then recovery (inactive)
+// back to inactive.
+export interface WarnedCycleSeconds {
+  readonly active: number;
+  readonly inactive: number;
+  readonly recovery: number;
+  readonly warning: number;
+}
+
 export interface BehaviourNode {
   // Stationary timed hazards label every state; recovery uses inactive.
   readonly hazardPhase?: HazardPhase;
@@ -299,8 +308,22 @@ export interface Quirk {
 // plays; a state left out plays idle's, except open, which plays the tag named "open". Its hit
 // box comes from art's manifest. lines and quips are keys into TEXT.lines and TEXT.quips; a prop
 // has none.
+// A timed hazard's tiles for one phase, by name in its tileset: the leftmost, inner and rightmost
+// cells of each row.
+export interface PhaseTiles {
+  readonly left: string;
+  readonly middle: string;
+  readonly right: string;
+}
+
 export interface Character {
   readonly contactCue?: "red-hazard";
+  // Each placement is wider than a running jump's reach (REACH.gap), so it cannot be jumped.
+  readonly noJumpOver?: true;
+  // A follower's animation tag for each behaviour state of its instance's phaseSource.
+  readonly phaseAnimations?: Readonly<Record<string, string>>;
+  // A timed hazard's tiles per phase; drawn procedurally until its tileset has every one.
+  readonly phaseTiles?: Readonly<Record<HazardPhase, PhaseTiles>>;
   readonly behaviour?: BehaviourPlan;
   // A shared tileset for this character's art, otherwise its area's tileset.
   readonly tileset?: string;
