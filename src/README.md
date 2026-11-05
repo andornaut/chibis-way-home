@@ -133,7 +133,7 @@ Player-facing rules live in the [gameplay design](../gameplay/design.md); this s
 
 ## Save data
 
-Version-10 [progress](progress/save/progress.ts) uses the kit’s versioned save in `localStorage` under `chibis-way-home.save`. It stores the opening acknowledgement, completed stage-node ids, selected stage, seen destination introductions, owned skill ids and one active skill id (or null). Boot loads it after startup readiness. Invalid or older incompatible progress is backed up under `chibis-way-home.save-backup` and resets; a future version is left alone. Cold launch opens Start; saved Continue opens the map. Confirmed Restart clears progress once, including skill ownership and selection.
+Version-11 [progress](progress/save/progress.ts) uses the kit’s versioned save in `localStorage` under `chibis-way-home.save`. It stores the opening acknowledgement, completed stage-node ids, selected stage, seen destination introductions, owned skill ids and one active skill id (or null). Boot loads it after startup readiness. Invalid or older incompatible progress is backed up under `chibis-way-home.save-backup` and resets; a future version is left alone. Cold launch opens Start; saved Continue opens the map. Confirmed Restart clears progress once, including skill ownership and selection.
 
 The separate version-7 [statistics store](progress/save/stats.ts), `chibis-way-home.stats`, retains historical stage/complete-visit bests, whole-playthrough deaths, whether a skill was used since the last confirmed Restart (an absent flag counts as unused) and the active-time ledger:
 

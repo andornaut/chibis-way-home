@@ -442,7 +442,7 @@
               "inactiveAnimation": "idle",
               "initial": "patrol-left",
               "spotted": {
-                "line": "furt-spotted",
+                "line": "fert-spotted",
                 "speaker": "ferret"
               },
               "states": {

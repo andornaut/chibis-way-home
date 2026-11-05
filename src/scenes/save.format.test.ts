@@ -9,7 +9,7 @@ import type { ZoneState } from "../rules/zone";
 const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
-    ['{"activeSkill":null,"at":"beginning","openingSeen":true,"skills":[],"version":10', "}"].join(
+    ['{"activeSkill":null,"at":"beginning","openingSeen":true,"skills":[],"version":11', "}"].join(
       "",
     ),
   ],
@@ -17,28 +17,28 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
     "chibis-way-home.save",
     [
       '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntros',
-      '":[],"skills":[],"stand":"street","version":10}',
+      '":[],"skills":[],"stand":"street","version":11}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
       '{"activeSkill":"dash","at":"map","completed":[],"openingSeen":true,"seenZoneIntr',
-      'os":[],"skills":["dash"],"stand":"street","version":10}',
+      'os":[],"skills":["dash"],"stand":"street","version":11}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
       '{"activeSkill":"dash","at":"map","completed":[],"openingSeen":true,"seenZoneIntr',
-      'os":[],"skills":["dash","speedy"],"stand":"street","version":10}',
+      'os":[],"skills":["dash","speedy"],"stand":"street","version":11}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
       '{"activeSkill":"speedy","at":"map","completed":[],"openingSeen":true,"seenZoneIn',
-      'tros":[],"skills":["dash","speedy"],"stand":"street","version":10}',
+      'tros":[],"skills":["dash","speedy"],"stand":"street","version":11}',
     ].join(""),
   ],
   [
@@ -46,7 +46,7 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
     [
       '{"activeSkill":"speedy","at":"map","completed":[],"stand":"street","openingSeen"',
       ':true,"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"version":1',
-      "0}",
+      "1}",
     ].join(""),
   ],
   [
@@ -64,7 +64,7 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
     [
       '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
       'enZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand":"street","ve',
-      'rsion":10}',
+      'rsion":11}',
     ].join(""),
   ],
   [
@@ -72,7 +72,7 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
     [
       '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
       'enZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand":"city-street',
-      's","version":10}',
+      's","version":11}',
     ].join(""),
   ],
 ];
@@ -82,7 +82,7 @@ const REOPEN_WRITES: readonly (readonly [string, string])[] = [
     [
       '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
       'enZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand":"city-street',
-      's","version":10}',
+      's","version":11}',
     ].join(""),
   ],
   [
