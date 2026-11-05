@@ -16,33 +16,33 @@
       "grade": 4,
       "id": "apartment-tall-city-boundary-climb-yard",
       "kind": "single",
-      "layout": "a1aa4f0c2e992808",
+      "layout": "6df579c82e695f91",
       "route": "6a9a37f382e88cba",
       "slots": { "door": 0, "event": 0 },
-      "trace": "1c4398823fca2fee:9154",
-      "work": 9154
+      "trace": "222efcd04eb7ba4b:10905",
+      "work": 10905
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "apartment-tall-city-boundary-dog-high",
       "kind": "single",
-      "layout": "0685c06372675911",
+      "layout": "98408353ae42ca45",
       "route": "2bd1b36b743fdcf6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "263f06ddd22107e3:3356",
-      "work": 3356
+      "trace": "02fa823f96c65a91:4665",
+      "work": 4665
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "apartment-tall-city-boundary-dog-terrace",
       "kind": "single",
-      "layout": "535ec69372b53f0f",
+      "layout": "b98513b681104467",
       "route": "6bb16cfc89bff4c5",
       "slots": { "door": 0, "event": 0 },
-      "trace": "5a100892436a04cb:3356",
-      "work": 3356
+      "trace": "4de6022f72427dab:4665",
+      "work": 4665
     },
     {
       "encounters": 0,
@@ -137,11 +137,11 @@
       "grade": 5,
       "id": "apartment-tall-compound-patrol-lift",
       "kind": "single",
-      "layout": "9164e2728f7fc529",
+      "layout": "d44308c0c1dae5ec",
       "route": "c7fffccc521321ff",
       "slots": { "door": 0, "event": 0 },
-      "trace": "36314333c39fcad9:2964",
-      "work": 2964
+      "trace": "817cf7a7ddc72074:4508",
+      "work": 4508
     },
     {
       "encounters": 0,
@@ -203,55 +203,55 @@
       "grade": 4,
       "id": "apartment-tall-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "c205e8bd594edc8b",
+      "layout": "9aecf86c9e19caaf",
       "route": "f8d21ff435cf5b05",
       "slots": { "door": 0, "event": 0 },
-      "trace": "2f38c7795dca78ff:15497",
-      "work": 15497
+      "trace": "cea7bf6dc76a0fb7:29523",
+      "work": 29523
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "apartment-tall-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "a7a93acafc5e6087",
+      "layout": "08fe8595188f4b6b",
       "route": "56085b504330c865",
       "slots": { "door": 0, "event": 0 },
-      "trace": "9f3f280b39c36b8c:1971",
-      "work": 1971
+      "trace": "ef0dd1296486fc2e:2311",
+      "work": 2311
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "apartment-tall-patrol-cover-early",
       "kind": "single",
-      "layout": "cdc2a2fd0609d674",
+      "layout": "33e488e438f71051",
       "route": "4a53eb35b860a333",
       "slots": { "door": 0, "event": 0 },
-      "trace": "dcd0f43eaf2629b7:3229",
-      "work": 3229
+      "trace": "1f19d707ea4dafae:4008",
+      "work": 4008
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "apartment-tall-patrol-cover-late",
       "kind": "single",
-      "layout": "77bf4fb7ed01277e",
+      "layout": "9c1b929e3f9e4ac3",
       "route": "d9b6925abb85b11c",
       "slots": { "door": 0, "event": 0 },
-      "trace": "3cd6d95e74ee6e76:2744",
-      "work": 2744
+      "trace": "3a4e67c36ce4dbf6:4279",
+      "work": 4279
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "apartment-tall-patrol-cover-middle",
       "kind": "single",
-      "layout": "72d060cc5aa00c56",
+      "layout": "c25f0e4e1be13905",
       "route": "26b126631dbb496f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "a3e65fd00dee7da8:2820",
-      "work": 2820
+      "trace": "ff275b81eb880ee1:3001",
+      "work": 3001
     },
     {
       "encounters": 0,
@@ -265,7 +265,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "73d0deeb9e46ada8", "proofs": "a45aa0fe6b85ca47" },
+  "inputs": { "data": "fbd48a0c9871f357", "proofs": "0dc814cdf5a13845" },
   "version": 1,
   "zone": "apartment"
 }
