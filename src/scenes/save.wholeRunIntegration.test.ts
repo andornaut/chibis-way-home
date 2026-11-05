@@ -45,3 +45,38 @@ it("counts active death edges and retains whole-run totals across stage entry an
   save.resetWholeRunStats();
   expect(save.wholeRunStats()).toEqual({ activeSeconds: 0, deaths: 0 });
 });
+
+it("shows one attempt's active time in all six statistics for a single entry after Restart", async () => {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  const save = await import("./save");
+  await save.loadProgress();
+  const stage = ZONE_MAP.start;
+  const zone = ZONE_MAP.destinations[0]!.id;
+  const step = (steps: number) =>
+    ({ cleared: false, death: undefined, door: undefined, steps, turnedBack: false }) as ZoneState;
+  save.beginZoneVisit(zone);
+  save.beginStageRun(stage);
+  save.recordActiveStageStep(stage, 0.5, step(0), step(1));
+  save.clearProgress();
+  save.resetWholeRunStats();
+  save.beginZoneVisit(zone);
+  save.beginStageRun(stage);
+  for (let at = 0; at < 3; at++) {
+    save.recordActiveStageStep(stage, 0.25, step(at), step(at + 1));
+  }
+  const run = save.completeStageRun(stage);
+  const { cumulativeSeconds: zoneSeconds } = save.zoneVisitStats(zone);
+  const seconds = run.attemptSeconds;
+  expect(seconds).toBe(0.75);
+  expect({
+    attempts: run.attempts,
+    best: run.bestSeconds,
+    run: save.wholeRunStats().activeSeconds,
+    stage: run.cumulativeSeconds,
+    zone: zoneSeconds,
+  }).toEqual({ attempts: 1, best: seconds, run: seconds, stage: seconds, zone: seconds });
+});
