@@ -1,9 +1,12 @@
 // Movement map build cost per boss profile per stage area: kernel steps (deterministic) and
 // wall time. Run in the check container: npx tsx src/sim/mapBench.ts [--seeds 3] [--repeats 5]
-// [--window leash|<tiles>].
+// [--window leash|<tiles>] [--decisions].
+import { EDGE } from "../core";
+import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { ObjectLayout, Rect } from "../data/types";
 import { RECIPES } from "../data/zones";
+import { planMapLeg } from "../rules/behaviourMapPursuit";
 import {
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
@@ -11,19 +14,124 @@ import {
   groundMap,
   type MapTerrain,
   mapTerrain,
+  pursuitGroundMap,
 } from "../rules/movementMaps";
 import { stageLoader } from "./catalogue";
 import { parseOptions, runMain, UsageError } from "./command";
 
 const HELP = `Usage: npx tsx src/sim/mapBench.ts [--seeds <n>] [--repeats <n>] [--window <w>]
+       npx tsx src/sim/mapBench.ts --decisions [--seeds <n>]
 
 Builds every boss's movement or air map for every stage area that places it, for layout seeds
 1 to n (default 3), each build repeated (default 5), and prints work and wall time per profile.
 --window clips each build to the area's full height and, horizontally, either the boss's pursuit
-leash around its spawn (leash) or a width in tiles centred on its spawn.`;
+leash around its spawn (leash) or a width in tiles centred on its spawn.
 
-// Contract target: a build per profile per area at or under this at the 95th percentile.
+--decisions builds each ground boss's runtime pursuit map once (pursuitGroundMap, as an
+encounter does on first use) and times it, then times one pursuit decision from every map node
+to Chibi standing on every map node: choosing a new route, then keeping it on the next tick.`;
+
+// Contract targets: a build per profile per area at or under this at the 95th percentile, and
+// one decision per boss.
 const TARGET_MS = 25;
+const DECISION_TARGET_MS = 0.3;
+
+// Each ground boss's runtime pursuit map build and its decisions over node pairs.
+function decisionBench(seeds: number): number {
+  interface Row {
+    readonly builds: number[];
+    readonly fresh: number[];
+    readonly kept: number[];
+  }
+  const all: Row = { builds: [], fresh: [], kept: [] };
+  const scripts = new Map<string, number>();
+  const perBoss = new Map<string, Row>();
+  const time = (run: () => unknown): number => {
+    const begin = performance.now();
+    run();
+    return performance.now() - begin;
+  };
+  for (const stage of Object.keys(RECIPES).sort()) {
+    const load = stageLoader(stage);
+    for (let seed = 1; seed <= seeds; seed++) {
+      for (const area of Object.values(load(seed).layout.areas)) {
+        for (const object of area.objects) {
+          let entry: ReturnType<typeof pursuitGroundMap>;
+          const built = time(() => (entry = pursuitGroundMap(area, object)));
+          const pace = object.behaviour?.pursuit?.pace;
+          if (!entry || !pace) {
+            continue;
+          }
+          const found = entry;
+          const row = perBoss.get(object.character) ?? { builds: [], fresh: [], kept: [] };
+          perBoss.set(object.character, row);
+          row.builds.push(built);
+          all.builds.push(built);
+          const { map, terrain } = found;
+          scripts.set(object.character, map.options.jumps.length);
+          const world = { ...terrain.world, groundMap: () => found };
+          const { body } = map.profile;
+          for (const from of map.nodes) {
+            const at = { x: from.left - body.offset.x, y: from.y - body.height - body.offset.y };
+            for (const to of map.nodes) {
+              const hers = {
+                height: BIRD.height,
+                width: BIRD.width,
+                x: (to.left + to.right + body.width) / 2 - BIRD.width / 2,
+                y: to.y - BIRD.height - EDGE / 2,
+              };
+              let plan: ReturnType<typeof planMapLeg>;
+              const fresh = time(
+                () => (plan = planMapLeg(world, object, found, pace, 1, undefined, at, hers)),
+              );
+              const kept = time(() =>
+                planMapLeg(world, object, found, pace, 1, plan?.state, at, hers),
+              );
+              row.fresh.push(fresh);
+              row.kept.push(kept);
+              all.fresh.push(fresh);
+              all.kept.push(kept);
+            }
+          }
+        }
+      }
+    }
+  }
+  const most = (values: readonly number[]) => values.reduce((a, b) => Math.max(a, b), 0);
+  console.log(
+    `jump scripts per profile: ${[...scripts]
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([boss, count]) => `${boss} ${count}`)
+      .join(", ")}`,
+  );
+  console.log(
+    "boss                 builds  build p50  build p95  decisions  new p50  new p95  new max" +
+      "  kept p50  kept p95",
+  );
+  const rows = [...perBoss].sort(([a], [b]) => (a < b ? -1 : 1));
+  for (const [boss, row] of [...rows, ["all", all] as const]) {
+    console.log(
+      [
+        boss.padEnd(20),
+        String(row.builds.length).padStart(6),
+        percentile(0.5, row.builds).toFixed(2).padStart(10),
+        percentile(0.95, row.builds).toFixed(2).padStart(10),
+        String(row.fresh.length).padStart(10),
+        percentile(0.5, row.fresh).toFixed(3).padStart(8),
+        percentile(0.95, row.fresh).toFixed(3).padStart(8),
+        most(row.fresh).toFixed(3).padStart(8),
+        percentile(0.5, row.kept).toFixed(3).padStart(9),
+        percentile(0.95, row.kept).toFixed(3).padStart(9),
+      ].join(" "),
+    );
+  }
+  console.log(
+    `new-route decision p95 ${percentile(0.95, all.fresh).toFixed(3)} ms, kept-route p95 ` +
+      `${percentile(0.95, all.kept).toFixed(3)} ms, against the ${DECISION_TARGET_MS} ms ` +
+      `target; build p95 ${percentile(0.95, all.builds).toFixed(2)} ms`,
+  );
+  return 0;
+}
 
 interface Sample {
   readonly boss: string;
@@ -70,7 +178,12 @@ function windowOf(option: WindowOption, terrain: MapTerrain, object: ObjectLayou
 
 function mapBench(args: readonly string[]): number {
   const options = parseOptions(
-    { repeats: { type: "string" }, seeds: { type: "string" }, window: { type: "string" } },
+    {
+      decisions: { type: "boolean" },
+      repeats: { type: "string" },
+      seeds: { type: "string" },
+      window: { type: "string" },
+    },
     args,
   );
   if (options.help) {
@@ -78,6 +191,9 @@ function mapBench(args: readonly string[]): number {
     return 0;
   }
   const seeds = count("seeds", options.seeds, 3);
+  if (options.decisions) {
+    return decisionBench(seeds);
+  }
   const repeats = count("repeats", options.repeats, 5);
   const window = windowOption(options.window);
   const samples: Sample[] = [];
