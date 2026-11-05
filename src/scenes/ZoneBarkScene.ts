@@ -1,7 +1,7 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
 import { type GameObjects, type Input, Scene, Scenes } from "phaser";
 
-import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
+import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { DialogueLine } from "../data/types";
@@ -13,6 +13,7 @@ import {
   dialogueTapAction,
   moveDialoguePress,
 } from "../ui";
+import { drawDialoguePanel } from "./dialoguePanel";
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
@@ -191,10 +192,7 @@ export class ZoneBarkScene extends Scene {
     this.current = bark;
     const paragraph = dialogueParagraphs(SPEAKERS, TEXT, { lines: [bark.line] })[0]!;
     this.art = [
-      this.add
-        .image(DIALOGUE_SCREEN.box.x, DIALOGUE_SCREEN.box.y, "ui-dialogue-box")
-        .setOrigin(0)
-        .setAlpha(BARK_BACKGROUND_ALPHA),
+      drawDialoguePanel(this),
       ...drawDialogueParagraph(this, paragraph),
     ];
     this.remaining = BARK_DURATION_SECONDS * 1000;

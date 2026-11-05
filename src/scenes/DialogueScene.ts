@@ -39,6 +39,7 @@ import {
   type TextButton,
 } from "./cardParts";
 import type { DialogueChoiceData } from "./DialogueChoiceScene";
+import { drawDialoguePanel } from "./dialoguePanel";
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
@@ -109,7 +110,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (this.departure) {
       this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, 0x000000).setOrigin(0);
     }
-    this.add.image(DIALOGUE_SCREEN.box.x, DIALOGUE_SCREEN.box.y, "ui-dialogue-box").setOrigin(0);
+    drawDialoguePanel(this);
     this.drawFooter();
     this.drawParagraph();
     this.watchInput();

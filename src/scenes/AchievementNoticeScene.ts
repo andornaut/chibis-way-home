@@ -4,7 +4,6 @@ import { containsPoint } from "@andornaut/game-kit/rect";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { ACHIEVEMENT_NOTICE_SECONDS } from "../data/achievements";
-import { BARK_BACKGROUND_ALPHA } from "../data/dialogues";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { AchievementId } from "../data/types";
@@ -17,6 +16,7 @@ import {
 } from "../ui";
 import { ACHIEVEMENT_NOTICE, noticeBlocked } from "./achievementNotice";
 import { addCardText, cardFonts, paletteColour, TITLE_FONT } from "./cardParts";
+import { drawDialoguePanel } from "./dialoguePanel";
 import { onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import { nextAchievementNotice } from "./save";
@@ -38,7 +38,7 @@ export function achievementIconFrame(
   return frame;
 }
 
-// Unlock notices, one at a time in the bark panel's style for ACHIEVEMENT_NOTICE_SECONDS, with no
+// Unlock notices, one at a time in the shared dialogue panel for ACHIEVEMENT_NOTICE_SECONDS, with no
 // buttons and no modal input scope. Launched once at boot, it runs above play and below every
 // modal card. A notice starts only while nothing defers it (noticeBlocked); while one shows, barks
 // wait. Something that defers notices hides the one showing and holds its time until it ends. A
@@ -94,10 +94,7 @@ export class AchievementNoticeScene extends Scene {
     const panel = DIALOGUE_SCREEN.box;
     const layout = achievementNoticeLayout(panel, cardFonts(this), text);
     this.art = [
-      this.add
-        .image(panel.x, panel.y, "ui-dialogue-box")
-        .setOrigin(0)
-        .setAlpha(BARK_BACKGROUND_ALPHA),
+      drawDialoguePanel(this),
       this.add
         .image(layout.icon.x, layout.icon.y, ICON, achievementIconFrame(this, true, id))
         .setOrigin(0)

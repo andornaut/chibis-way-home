@@ -15,7 +15,6 @@ import type { RoomPlan } from "../data/types";
 import { coverZone, PHONE_EVENTS } from "../pwa";
 import {
   CARD_TEXT_SCALE,
-  DIALOGUE_SCREEN,
   dialogueParagraphs,
   dialogueSpeakerLayout,
   pressedArea,
@@ -43,6 +42,7 @@ import {
   ringFocus,
   TITLE_FONT,
 } from "./cardParts";
+import { drawDialoguePanel } from "./dialoguePanel";
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
@@ -145,9 +145,7 @@ export class RoomScene extends Scene {
       }
       {
         const paragraph = dialogueParagraphs(SPEAKERS, TEXT, dialogue)[0]!;
-        this.add
-          .image(DIALOGUE_SCREEN.box.x, DIALOGUE_SCREEN.box.y, "ui-dialogue-box")
-          .setOrigin(0);
+        drawDialoguePanel(this);
         drawDialogueParagraph(this, { ...paragraph, portrait: null });
         if (paragraph.portrait !== null) {
           const at = dialogueSpeakerLayout(paragraph.side).portrait;

@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 
 import { expect, it, onTestFinished, vi } from "vitest";
 
-import { BARK_BACKGROUND_ALPHA, BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
+import { BARK_DURATION_SECONDS, DIALOGUE_PANEL_ALPHA, SPEAKERS } from "../data/dialogues";
 import { STAGE_BARKS } from "../data/stageBarks";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
@@ -309,8 +309,32 @@ it("applies live background opacity without changing portrait or text opacity", 
   >);
   const { images } = showingBark();
   expect(images.mock.results[0]!.value.setAlpha).toHaveBeenCalledExactlyOnceWith(
-    BARK_BACKGROUND_ALPHA,
+    DIALOGUE_PANEL_ALPHA,
   );
   expect(portrait.setAlpha).not.toHaveBeenCalled();
   expect(text.setAlpha).not.toHaveBeenCalled();
+});
+
+it("draws every speaker's owned and offscreen bark over the shared translucent panel", () => {
+  const speakers = Object.keys(SPEAKERS);
+  expect(speakers).toContain("ferret");
+  for (const speaker of speakers) {
+    for (const owned of [true, false]) {
+      const scene = new ZoneBarkScene();
+      scene.init({ canPresent: () => true, ownerVisible: () => true });
+      scene.create();
+      const images = vi.spyOn(scene.add, "image");
+      const line = { line: "spotted", speaker };
+      if (owned) {
+        scene.enqueue(line, OWNER);
+      } else {
+        expect(scene.offer(vi.fn(), line)).toBe(true);
+      }
+      scene.update(0, 0);
+      expect(images.mock.calls[0]?.[2], speaker).toBe("ui-dialogue-box");
+      expect(images.mock.results[0]!.value.setAlpha, speaker).toHaveBeenCalledExactlyOnceWith(
+        DIALOGUE_PANEL_ALPHA,
+      );
+    }
+  }
 });
