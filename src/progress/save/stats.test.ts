@@ -227,7 +227,7 @@ describe("the Restart-scoped skill ledger and the visit's first tries", () => {
   const DESTINATIONS = [{ id: "town", stages: ["park", "street"] as [string, ...string[]] }];
 
   it("reads an absent skill flag as unused, keeps a use across reopen and clears it on Restart", async () => {
-    const storage = memoryStorage();
+    const storage = storageFixture();
     const raw = {
       stages: {},
       version: STATS_VERSION,
@@ -253,7 +253,7 @@ describe("the Restart-scoped skill ledger and the visit's first tries", () => {
   });
 
   it("resets version 6 statistics, historical bests included", async () => {
-    const storage = memoryStorage();
+    const storage = storageFixture();
     const old = {
       stages: { street: { bestSeconds: 4 } },
       version: 6,
@@ -277,7 +277,7 @@ describe("the Restart-scoped skill ledger and the visit's first tries", () => {
   });
 
   it("counts first-try clears in the current visit, none once a stage took a retry", async () => {
-    const store = stageStatsStore(memoryStorage(), STAGES, DESTINATIONS);
+    const store = stageStatsStore(storageFixture(), STAGES, DESTINATIONS);
     await store.load();
     const before = store.currentVisit();
     store.beginVisit("town");
