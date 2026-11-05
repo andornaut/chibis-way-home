@@ -33,6 +33,13 @@ export { type ArtKind, artKind, artOffset, artScrollFactor } from "./objectArt";
 export { type PlayHold, stepAction } from "./playHold";
 export { scenerySpriteFrame } from "./scenerySprite";
 export { STAGE_PROGRESS_STYLE } from "./stageProgress";
-export { loadedTileset, lookTiles, objectTiles, type PlacedTile, terrainTiles } from "./tiles";
+export {
+  loadedTileset,
+  lookTiles,
+  objectTiles,
+  phaseSkinTiles,
+  type PlacedTile,
+  terrainTiles,
+} from "./tiles";
 export { barkOwnerOnscreen, proximityDialogue } from "./zoneDialogue";
 export { zoneTheme } from "./zoneTheme";

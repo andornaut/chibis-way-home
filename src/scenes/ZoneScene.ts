@@ -97,6 +97,7 @@ import {
   loadedTileset,
   nextQuirkAt,
   objectTiles,
+  phaseSkinTiles,
   type PlacedTile,
   type PlayHold,
   proximityDialogue,
@@ -125,6 +126,7 @@ import { deathSupport } from "../rules/death";
 import { effectiveHazardPhase } from "../rules/effectiveCollision";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams";
 import { currentScreen } from "../rules/perception";
+import { phaseFollowerTag } from "../rules/phaseSource";
 import { createStageBarks } from "../rules/stageBarks";
 import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
 import { stageProgress } from "../rules/stageProgress";
@@ -218,7 +220,7 @@ import {
   wholeRunStats,
   zoneVisitStats,
 } from "./save";
-import { createTimedHazardArt } from "./timedHazard";
+import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard";
 import { createTouchChrome } from "./touchChrome";
 import { bindZoneBarks } from "./zoneBarks";
 import type { ZoneBarkScene } from "./ZoneBarkScene";
@@ -1566,6 +1568,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       return { crumbling, item, offset: { x: 0, y: 0 }, sprite: undefined };
     }
     if (effectiveHazardPhase(object, undefined) !== undefined) {
+      const skin = key && tileset ? phaseSkinTiles(tileset, object) : undefined;
+      if (key && skin) {
+        const { draw, item } = createPhaseTileArt(DEPTHS.tiles, key, skin, this);
+        return { item, offset: { x: 0, y: 0 }, sprite: undefined, timedHazard: draw };
+      }
       const { draw, item } = createTimedHazardArt(
         DEPTHS.sprite,
         (name) => paletteColour(this, name),
@@ -1816,7 +1823,15 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         art.timedHazard(phase, timedHazardRect(object, at));
         return;
       }
-      if (behaviour) {
+      if (object.phaseSource !== undefined) {
+        if (art.sprite) {
+          const source = area.objects[object.phaseSource]!;
+          show(
+            art.sprite,
+            phaseFollowerTag(source, this.zone.behaviours[object.phaseSource], object),
+          );
+        }
+      } else if (behaviour) {
         if (art.sprite) {
           const pose = behaviourPose(object, behaviour);
           if (art.sprite.flipX !== pose.flipX) {

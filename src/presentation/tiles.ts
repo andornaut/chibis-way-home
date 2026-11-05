@@ -1,4 +1,4 @@
-import type { TerrainRect } from "../data/types";
+import type { HazardPhase, PhaseTiles, TerrainRect } from "../data/types";
 import { namedTiles, type Tileset } from "../stage";
 
 // The tileset key names, as lookup finds what loaded: undefined for an area without one, or one
@@ -178,4 +178,38 @@ export function objectTiles(
     index: indexOf(tileset, name),
     row,
   }));
+}
+
+// A timed hazard's tiles for each phase, cols x rows cells of each phase's left, middle and right
+// tiles, or undefined until the tileset has every one of them, so the hazard draws procedurally.
+export function phaseSkinTiles(
+  tileset: Tileset,
+  object: {
+    readonly height: number;
+    readonly phaseTiles?: Readonly<Record<HazardPhase, PhaseTiles>>;
+    readonly width: number;
+  },
+): Readonly<Record<HazardPhase, readonly PlacedTile[]>> | undefined {
+  const skin = object.phaseTiles;
+  if (
+    !skin ||
+    !Object.values(skin).every((names) =>
+      Object.values(names).every((name) => name in tileset.tiles),
+    )
+  ) {
+    return undefined;
+  }
+  const cols = object.width / tileset.tileSize;
+  const rows = object.height / tileset.tileSize;
+  const cells = (names: PhaseTiles) =>
+    Array.from({ length: rows * cols }, (_, cell) => {
+      const col = cell % cols;
+      const name = col === 0 ? names.left : col === cols - 1 ? names.right : names.middle;
+      return { col, index: indexOf(tileset, name), row: Math.floor(cell / cols) };
+    });
+  return {
+    active: cells(skin.active),
+    inactive: cells(skin.inactive),
+    warning: cells(skin.warning),
+  };
 }

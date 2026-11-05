@@ -11,7 +11,7 @@ import { startBird } from "../rules/bird";
 import { effectiveCollision } from "../rules/effectiveCollision";
 import { objectLayout } from "../rules/tiles";
 import { timedHazardRect } from "../rules/timedHazard";
-import { createTimedHazardArt } from "./timedHazard";
+import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
@@ -218,4 +218,47 @@ it("replaces the timed object painter through the existing area and retry lifecy
   scene.drawObjects();
   expect(replacement.pixel(0, 0)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
   expect(art.item.destroy).toHaveBeenCalledOnce();
+});
+
+it("shows only the current phase's tiles of a tile-skinned timed hazard", () => {
+  const image = (key: string, index: number) => {
+    const made = { index, key, visible: true, x: 0, y: 0 } as Record<string, unknown>;
+    made.setOrigin = () => made;
+    made.setVisible = (visible: boolean) => {
+      made.visible = visible;
+      return made;
+    };
+    return made;
+  };
+  const container = {
+    setDepth: vi.fn().mockReturnThis(),
+    setPosition: vi.fn().mockReturnThis(),
+    setScrollFactor: vi.fn().mockReturnThis(),
+  };
+  const scene = {
+    add: {
+      container: vi.fn(() => container),
+      image: vi.fn((_x: number, _y: number, key: string, index: number) => image(key, index)),
+    },
+  } as unknown as Scene;
+  const at = (index: number) => [{ col: 0, index, row: 0 }];
+  const painter = createPhaseTileArt(
+    3,
+    "tiles-street",
+    { active: at(2), inactive: at(0), warning: at(1) },
+    scene,
+  );
+  const images = vi
+    .mocked(scene.add.image)
+    .mock.results.map(({ value }) => value as { index: number; visible: boolean });
+  for (const [phase, index] of [
+    ["inactive", 0],
+    ["warning", 1],
+    ["active", 2],
+  ] as const) {
+    painter.draw(phase, { height: 12, width: 12, x: 5, y: 7 });
+    expect(images.filter(({ visible }) => visible).map(({ index: i }) => i)).toEqual([index]);
+  }
+  expect(container.setPosition).toHaveBeenLastCalledWith(5, 7);
+  expect(container.setDepth).toHaveBeenCalledWith(3);
 });

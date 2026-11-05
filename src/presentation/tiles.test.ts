@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
 
+import { CROSSWALK_PHASE_TILES } from "../data/obstacleCharacters";
 import type { TerrainRect } from "../data/types";
 import { drawsFrom, tileHitbox, type Tileset } from "../stage";
-import { loadedTileset, lookTiles, objectTiles, type PlacedTile, terrainTiles } from "./tiles";
+import {
+  loadedTileset,
+  lookTiles,
+  objectTiles,
+  phaseSkinTiles,
+  type PlacedTile,
+  terrainTiles,
+} from "./tiles";
 
 const NAMES = [
   ...lookTiles("sidewalk"),
@@ -268,5 +276,39 @@ describe("tileHitbox", () => {
       x: 0,
       y: 4,
     });
+  });
+});
+
+describe("phase skin tiles", () => {
+  const object = { height: 12, phaseTiles: CROSSWALK_PHASE_TILES, width: 48 };
+  const names = Object.values(CROSSWALK_PHASE_TILES).flatMap((tiles) => Object.values(tiles));
+  const sheet = (present: readonly string[]): Tileset => ({
+    columns: 16,
+    pieces: {},
+    tileSize: 12,
+    tiles: Object.fromEntries(present.map((name, index) => [name, index])),
+  });
+
+  it("draws procedurally until the tileset has every phase tile", () => {
+    expect(phaseSkinTiles(sheet(names.slice(1)), object)).toBeUndefined();
+    expect(phaseSkinTiles(sheet(names), { height: 12, width: 48 })).toBeUndefined();
+  });
+
+  it("switches to each phase's left, middle and right tiles once they exist", () => {
+    const tileset = sheet(names);
+    const skin = phaseSkinTiles(tileset, object)!;
+    const index = (name: string) => tileset.tiles[name];
+    expect(skin.active).toEqual([
+      { col: 0, index: index("crosswalk-traffic-left"), row: 0 },
+      { col: 1, index: index("crosswalk-traffic-middle"), row: 0 },
+      { col: 2, index: index("crosswalk-traffic-middle"), row: 0 },
+      { col: 3, index: index("crosswalk-traffic-right"), row: 0 },
+    ]);
+    expect(skin.inactive.map(({ index: i }) => i)).toEqual(
+      ["left", "middle", "middle", "right"].map((end) => index(`crosswalk-walk-${end}`)),
+    );
+    expect(skin.warning.map(({ index: i }) => i)).toEqual(
+      ["left", "middle", "middle", "right"].map((end) => index(`crosswalk-warning-${end}`)),
+    );
   });
 });
