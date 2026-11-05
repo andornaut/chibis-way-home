@@ -17,8 +17,9 @@ export {
   steppedDestination,
 } from "./mapDestinations";
 export { createOpeningPlayback, openingDestination } from "./opening";
+export { middleChunkIds, recentMiddleChunks, withRecentMiddleChunks } from "./recentChunks";
 export { ACHIEVEMENTS_VERSION } from "./save/achievements";
-export { type Progress, PROGRESS_VERSION } from "./save/progress";
+export { type Progress, PROGRESS_VERSION, type RecentChunks } from "./save/progress";
 export {
   formatRunStats,
   timeText,

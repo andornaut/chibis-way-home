@@ -41,7 +41,7 @@ const MAP: ZoneMap = {
   start: "start",
 };
 const ZONE_KEYS = { built: {}, start: {}, unbuilt: {} };
-const FORMAT = progressFormat(MAP, ZONE_KEYS);
+const FORMAT = progressFormat(MAP, ZONE_KEYS, new Set());
 
 const stored = (fields: object, version = PROGRESS_VERSION) =>
   JSON.stringify({
@@ -157,13 +157,15 @@ describe("progressFormat", () => {
   });
 
   it("takes the game's map start, nothing completed, as a place to stand", () => {
-    expect(encodeSave(progressFormat(ZONE_MAP, RECIPES), at(ZONE_MAP.start)).ok).toBe(true);
+    expect(encodeSave(progressFormat(ZONE_MAP, RECIPES, new Set()), at(ZONE_MAP.start)).ok).toBe(
+      true,
+    );
   });
 });
 
 describe("built cityscape progress", () => {
   const plans = RECIPES;
-  const format = progressFormat(ZONE_MAP, plans);
+  const format = progressFormat(ZONE_MAP, plans, new Set());
 
   const stages = ZONE_MAP.destinations[0]!.stages;
   it.each([

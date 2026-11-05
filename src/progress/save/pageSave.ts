@@ -4,6 +4,7 @@ import { loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
 
 import { BOSS_CHARACTERS } from "../../data/achievements";
+import { CHUNKS } from "../../data/chunks";
 import { ZONE_MAP } from "../../data/map";
 import type { AchievementId, BossId, SkillId } from "../../data/types";
 import { RECIPES } from "../../data/zones";
@@ -16,9 +17,16 @@ import {
   earnedAt,
   zoneEndingAt,
 } from "../achievements";
+import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks";
 import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills";
 import { achievementsStore } from "./achievements";
-import { BEGINNING, mapProgress, type Progress, progressFormat } from "./progress";
+import {
+  BEGINNING,
+  mapProgress,
+  type Progress,
+  progressFormat,
+  type RecentChunks,
+} from "./progress";
 import {
   type RunStatsSummary,
   stageStatsStore,
@@ -39,7 +47,7 @@ export interface SaveSession {
 const KEYS = { backup: "chibis-way-home.save-backup", save: "chibis-way-home.save" } as const;
 
 const storage = localSaveStorage();
-const format = progressFormat(ZONE_MAP, RECIPES);
+const format = progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS)));
 const store = saveStore(storage, KEYS, format);
 let progress: Progress = BEGINNING;
 let developmentOwned: readonly SkillId[] | undefined;
@@ -307,6 +315,30 @@ export function saveOpeningSeen(session: SaveSession): void {
   write(session, { ...progress, openingSeen: true });
 }
 
+// The saved recent middle chunks, as a field to keep in the next map progress.
+function savedRecent(): { readonly recent?: RecentChunks } {
+  return progress.at === "map" && progress.recent !== undefined ? { recent: progress.recent } : {};
+}
+
+// The middle chunk ids of the zone's latest stage entries (recentMiddleChunks).
+export function savedRecentMiddleChunks(zone: string): readonly string[] {
+  return recentMiddleChunks(progress, zone);
+}
+
+// A fresh entry of a catalogued stage, after assembly, with its plan's middle chunk ids: the
+// stage's destination remembers them as its newest entry. Developer sessions write nothing.
+export function recordStageChunks(
+  session: SaveSession,
+  stage: string,
+  middle: readonly string[],
+): void {
+  const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
+  if (session.development() || zone === undefined || progress.at !== "map") {
+    return;
+  }
+  write(session, withRecentMiddleChunks(zone, middle, progress));
+}
+
 export function seenZoneIntros(): readonly string[] {
   return progress.at === "map" ? progress.seenZoneIntros : [];
 }
@@ -321,6 +353,7 @@ export function saveZoneIntro(session: SaveSession, zone: string): void {
     at: "map",
     ...savedMap(),
     openingSeen: progress.openingSeen,
+    ...savedRecent(),
     seenZoneIntros: [...seen, zone],
     skills: progress.skills,
   });
@@ -343,6 +376,7 @@ function writeStand(session: SaveSession, stand: string): void {
     at: "map",
     completed: savedMap().completed,
     openingSeen: progress.openingSeen,
+    ...savedRecent(),
     seenZoneIntros: seenZoneIntros(),
     skills: progress.skills,
     stand,
@@ -357,6 +391,7 @@ export function saveCompleted(session: SaveSession, node: string): void {
     at: "map",
     completed: completed.includes(node) ? completed : [...completed, node],
     openingSeen: progress.openingSeen,
+    ...savedRecent(),
     seenZoneIntros: seenZoneIntros(),
     skills: progress.skills,
     stand: node,

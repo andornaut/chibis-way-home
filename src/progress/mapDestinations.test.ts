@@ -55,7 +55,7 @@ describe("destination selection", () => {
       skills: [],
       stand: "one",
     };
-    const format = progressFormat(MAP, PLANS);
+    const format = progressFormat(MAP, PLANS, new Set());
     const encoded = encodeSave(format, progress);
     expect(encoded.ok).toBe(true);
     if (!encoded.ok) {

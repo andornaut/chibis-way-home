@@ -111,6 +111,7 @@ import {
 } from "../presentation";
 import {
   eligibleSkills,
+  middleChunkIds,
   nodeOf,
   SKILL_PROFILES,
   skillTuning,
@@ -204,6 +205,7 @@ import {
   completeStageRun,
   flushStats,
   recordActiveStageStep,
+  recordStageChunks,
   recordStepAchievements,
   retryStageRun,
   saveCompleted,
@@ -585,7 +587,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     // An assembled zone is assembled afresh each time he enters it, unless ?assembly=<n> fixes
     // the seed.
     if (node !== undefined) {
-      this.loadPlan(zoneAt(seed, node));
+      const plan = zoneAt(seed, node);
+      this.loadPlan(plan);
+      recordStageChunks(node, middleChunkIds(plan));
     } else if (this.trial !== undefined) {
       this.loadPlan(zonePlanFor(seed, this.trial));
     } else {

@@ -72,6 +72,12 @@ export function recordStepAchievements(
     skillUsed,
   });
 }
+export function recordStageChunks(stage: string, middle: readonly string[]): void {
+  pageSave.recordStageChunks(SESSION, stage, middle);
+}
+export function savedRecentMiddleChunks(zone: string): readonly string[] {
+  return pageSave.savedRecentMiddleChunks(zone);
+}
 export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
   return pageSave.nextAchievementNotice(SESSION, blocked);
 }

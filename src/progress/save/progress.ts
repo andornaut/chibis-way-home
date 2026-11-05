@@ -1,16 +1,23 @@
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
+import { RECENT_STAGES } from "../../data/stageProgress";
 import type { SkillSelection, ZoneMap } from "../../data/types";
 import { openMap } from "../map";
 import { isSkillId } from "../skills";
 
+// Middle chunk ids of each map destination's latest stage entries, newest first: at most
+// RECENT_STAGES entries per destination. Absent means none.
+export type RecentChunks = Readonly<Partial<Record<string, readonly (readonly string[])[]>>>;
+
 // The player's progress: the beginning (no progress saved, the start screen offers Start), or
-// the map, with the zone nodes he has completed and the zone node he stands on.
+// the map, with the zone nodes he has completed, the zone node he stands on and the recent
+// middle chunks.
 export type Progress = SkillSelection & { readonly openingSeen: boolean } & (
     | { readonly at: "beginning" }
     | {
         readonly at: "map";
         readonly completed: readonly string[];
+        readonly recent?: RecentChunks;
         readonly seenZoneIntros: readonly string[];
         readonly stand: string;
       }
@@ -24,7 +31,8 @@ export const BEGINNING: Progress = {
 };
 
 // The save format's version. Before the first release, a change to the format or a map node or
-// zone renamed bumps it, and older saves reset to the beginning.
+// zone renamed bumps it, and older saves reset to the beginning. Chunk ids are advisory: an
+// unknown one is dropped on load, so renaming a chunk needs no bump.
 export const PROGRESS_VERSION = 11;
 
 // Where he is on the map for progress: the beginning stands him on the map's start with
@@ -65,11 +73,38 @@ function progressProblem(
   return open.includes(stand) ? undefined : `he stands on ${stand}, not an open zone`;
 }
 
-// The progress save's format on map and zones: a save that no longer fits them (a renamed node, a
-// path not built, a zone removed) is refused, and the player starts from the beginning.
+// stored as recent chunks for map, keeping only the ids in chunks: undefined when it is not a
+// record of destination ids to at most RECENT_STAGES lists of strings.
+function recentChunks(
+  map: ZoneMap,
+  chunks: ReadonlySet<string>,
+  stored: unknown,
+): RecentChunks | undefined {
+  if (stored === null || typeof stored !== "object" || Array.isArray(stored)) {
+    return undefined;
+  }
+  const kept: Record<string, (readonly string[])[]> = {};
+  for (const [zone, entries] of Object.entries(stored)) {
+    if (
+      !map.destinations.some(({ id }) => id === zone) ||
+      !Array.isArray(entries) ||
+      entries.length > RECENT_STAGES ||
+      !entries.every(isNames)
+    ) {
+      return undefined;
+    }
+    kept[zone] = entries.map((ids: string[]) => ids.filter((id) => chunks.has(id)));
+  }
+  return kept;
+}
+
+// The progress save's format on map, zones and the chunk ids: a save that no longer fits the map
+// or zones (a renamed node, a path not built, a zone removed) is refused, and the player starts
+// from the beginning; unknown recent chunk ids are dropped.
 export function progressFormat(
   map: ZoneMap,
   zones: Readonly<Record<string, unknown>>,
+  chunks: ReadonlySet<string>,
 ): SaveFormat<Progress> {
   const checked = (progress: Progress): Checked<Progress> => {
     if (
@@ -99,6 +134,9 @@ export function progressFormat(
     ) {
       return { ok: false, reason: "the save names invalid zone introductions" };
     }
+    if (progress.recent !== undefined && recentChunks(map, chunks, progress.recent) === undefined) {
+      return { ok: false, reason: "the save's recent chunks are not lists of chunk ids" };
+    }
     const problem = progressProblem(map, zones, progress.completed, progress.stand);
     return problem === undefined ? { ok: true, value: progress } : { ok: false, reason: problem };
   };
@@ -108,6 +146,7 @@ export function progressFormat(
       at,
       completed,
       openingSeen,
+      recent,
       seenZoneIntros,
       skills,
       stand,
@@ -136,7 +175,20 @@ export function progressFormat(
       if (!isNames(seenZoneIntros)) {
         return { ok: false, reason: "the save has no zone introduction list" };
       }
-      return checked({ activeSkill, at, completed, openingSeen, seenZoneIntros, skills, stand });
+      const kept = recent === undefined ? {} : recentChunks(map, chunks, recent);
+      if (kept === undefined) {
+        return { ok: false, reason: "the save's recent chunks are not lists of chunk ids" };
+      }
+      return checked({
+        activeSkill,
+        at,
+        completed,
+        openingSeen,
+        ...(Object.keys(kept).length > 0 && { recent: kept }),
+        seenZoneIntros,
+        skills,
+        stand,
+      });
     },
     encode: (progress: Progress): Checked<StoredObject> => {
       const valid = checked(progress);
