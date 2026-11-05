@@ -310,7 +310,7 @@ Apartment continues in this floor order:
 ### Industrial outskirts
 
 - **Appearance:** purple industrial scenery uses floor, crate and container art, shared moving platforms and red-edged inanimate hazards
-- **Encounters:** stage two and stage three feature Pebble through the shared data-driven behaviour system. Archie and Pebble use the shared enemy detection, pursuit and frustration rules
+- **Encounters:** stage two and stage three feature Pebble through the shared data-driven behaviour system. Archie uses the shared enemy detection, pursuit and pacing rules, and Pebble the shared detection, pursuit and frustration rules
 - **Layout:** Warehouse district, Loading yards and Freight terminal each have fixed openings and endings with randomized middle chunks, inside the zone's difficulty band. Connected descent and ascent chunks link surface and underground traversal inside the four-screen vertical capacity. Required climbs, moving ledges and red-edged hazards use shared layouts and primitives, with no required powerup. Stage lengths, IDs, encounter cadence and doors remain defined by the existing recipes
 - **Progression:** clearing City boundary opens Warehouse district; clearing Warehouse district opens Loading yards, then Freight terminal. Unlocked stages remain replayable
 - **Rooms:** doors lead to skill gift rooms; these stages add no new plot

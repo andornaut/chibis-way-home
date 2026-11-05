@@ -30,7 +30,7 @@ import {
 } from "./zone6";
 
 // Zone profiles raise the minimum grade and favour compound challenges along the route.
-export const ZONE_DIFFICULTY = { max: 4, min: 3 } as const;
+const ZONE_DIFFICULTY = { max: 4, min: 3 } as const;
 const DIFFICULTY_PROFILES = {
   apartment: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 8 } },
   blue: { difficulty: ZONE_DIFFICULTY, difficultyWeights: { 3: 1, 4: 1 } },
