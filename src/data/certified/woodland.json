@@ -148,44 +148,44 @@
       "grade": 4,
       "id": "woodland-vertical-growl-clearing",
       "kind": "single",
-      "layout": "676e08fee3233c1c",
+      "layout": "9fc0975789f7ca38",
       "route": "b08a7d276fc463b6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "35fd32bc54b51235:1895",
-      "work": 1895
+      "trace": "ad51d6df3f676107:2662",
+      "work": 2662
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "woodland-vertical-growl-cover-early",
       "kind": "single",
-      "layout": "1d99a638e31041e9",
+      "layout": "daf7697e1a2ce892",
       "route": "a30293dd32a8168f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "6515cc6c100a6f99:2913",
-      "work": 2913
+      "trace": "ca94917883201d7b:2878",
+      "work": 2878
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "woodland-vertical-growl-cover-late",
       "kind": "single",
-      "layout": "c6fa2cbcb511bf2e",
+      "layout": "0eda449e46085318",
       "route": "4863105c7ad0c172",
       "slots": { "door": 0, "event": 0 },
-      "trace": "ef73e72b98900774:1139",
-      "work": 1139
+      "trace": "8c2f210bafe0d69b:868",
+      "work": 868
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "woodland-vertical-growl-cover-middle",
       "kind": "single",
-      "layout": "4194ee7a30e4ae6e",
+      "layout": "26f8cd97439593f1",
       "route": "5eb6467e8dcfbfe6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "c0a57e2976406163:4863",
-      "work": 4863
+      "trace": "2694b0b41f36a166:4852",
+      "work": 4852
     },
     {
       "encounters": 0,
@@ -214,22 +214,22 @@
       "grade": 4,
       "id": "woodland-vertical-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "9c7cd6d2b42e3679",
+      "layout": "e08e22e67b4fcff1",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
-      "trace": "233943e4a2b6d229:3912",
-      "work": 3912
+      "trace": "f4e9e6c0e59babd0:4030",
+      "work": 4030
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "woodland-vertical-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "38df0ef2572f30c3",
+      "layout": "b30525d8b69ab6ef",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "9936aa6ef6270542:3809",
-      "work": 3809
+      "trace": "5790958edc6681c8:3184",
+      "work": 3184
     },
     {
       "encounters": 0,
@@ -265,7 +265,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "87fec4f824e7ed67", "proofs": "23ed1a25a17a8270" },
+  "inputs": { "data": "6d9adc62f4ff6e47", "proofs": "a45aa0fe6b85ca47" },
   "version": 1,
   "zone": "woodland"
 }

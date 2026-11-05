@@ -5,11 +5,11 @@
       "grade": 4,
       "id": "blue-archie-lane--city-ferry",
       "kind": "pair",
-      "layout": "e679fcedc621b86f",
+      "layout": "d903ff9cf526a7d3",
       "modules": ["archie-lane", "city-ferry"],
       "route": "b20e3f8bf0c391c3",
       "slots": { "door": 0, "event": 0 },
-      "trace": "1338a68d44960069:2719",
+      "trace": "c7ace345f101c6bb:2719",
       "work": 2719
     },
     {
@@ -17,11 +17,11 @@
       "grade": 4,
       "id": "blue-archie-lane--city-gap",
       "kind": "pair",
-      "layout": "6531b3bfa0b2af23",
+      "layout": "4ca4a9ecd39da61e",
       "modules": ["archie-lane", "city-gap"],
       "route": "34ff01285b2a4864",
       "slots": { "door": 0, "event": 0 },
-      "trace": "07828a2a1cd47885:2658",
+      "trace": "0119d6e5cd2105c2:2658",
       "work": 2658
     },
     {
@@ -29,11 +29,11 @@
       "grade": 4,
       "id": "blue-archie-lane--city-gap-climb",
       "kind": "pair",
-      "layout": "36cf75293f837f2a",
+      "layout": "0c834802fad70cfb",
       "modules": ["archie-lane", "city-gap-climb"],
       "route": "2671dfb3b9ab0528",
       "slots": { "door": 0, "event": 0 },
-      "trace": "221491fc71c8fb60:2703",
+      "trace": "464cd7af26d3d298:2703",
       "work": 2703
     },
     {
@@ -41,11 +41,11 @@
       "grade": 4,
       "id": "blue-archie-lane--city-ledge-climb",
       "kind": "pair",
-      "layout": "fe70dcc07d0577be",
+      "layout": "0500a8a977a656bb",
       "modules": ["archie-lane", "city-ledge-climb"],
       "route": "c247d0072bb61935",
       "slots": { "door": 0, "event": 0 },
-      "trace": "56826b2b59896efa:2715",
+      "trace": "279c4f460ec5eeb2:2715",
       "work": 2715
     },
     {
@@ -53,35 +53,35 @@
       "grade": 4,
       "id": "blue-archie-lane--city-ledge-pit",
       "kind": "pair",
-      "layout": "11e83201e1fb1221",
+      "layout": "358da01630599c89",
       "modules": ["archie-lane", "city-ledge-pit"],
       "route": "31a8c37615d5a527",
       "slots": { "door": 0, "event": 0 },
-      "trace": "6132cb4c8f472674:2770",
-      "work": 2770
+      "trace": "5b586bc7247040e6:2969",
+      "work": 2969
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane--city-lift-climb",
       "kind": "pair",
-      "layout": "0035980db22de2af",
+      "layout": "4ce3b6b9e150db10",
       "modules": ["archie-lane", "city-lift-climb"],
       "route": "6b969980feb048b9",
       "slots": { "door": 0, "event": 0 },
-      "trace": "f24ab801f91801ee:4816",
-      "work": 4816
+      "trace": "325169e26a387771:3655",
+      "work": 3655
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane--city-red-face-climb",
       "kind": "pair",
-      "layout": "3571819ffd462e19",
+      "layout": "7eb4cb7c82a70c20",
       "modules": ["archie-lane", "city-red-face-climb"],
       "route": "a6c4330069a716ab",
       "slots": { "door": 0, "event": 0 },
-      "trace": "d98007245f2c7839:2703",
+      "trace": "41c5756240f811f8:2703",
       "work": 2703
     },
     {
@@ -89,11 +89,11 @@
       "grade": 4,
       "id": "blue-archie-lane--city-tap-strip",
       "kind": "pair",
-      "layout": "be16763d58eb7c19",
+      "layout": "3d0d4d0e455ef2e3",
       "modules": ["archie-lane", "city-tap-strip"],
       "route": "32f9b97e65ac67d4",
       "slots": { "door": 1, "event": 0 },
-      "trace": "810933306820938b:7074",
+      "trace": "312e7af75b03d3e5:7074",
       "work": 7074
     },
     {
@@ -101,119 +101,119 @@
       "grade": 4,
       "id": "blue-archie-lane-climb--city-drop-gap",
       "kind": "pair",
-      "layout": "573e32232293d02a",
+      "layout": "11b4e10f7f794031",
       "modules": ["archie-lane-climb", "city-drop-gap"],
       "route": "d0bf25732c09288f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "7bceae7ebca1c98d:4641",
-      "work": 4641
+      "trace": "411e1029f9154e82:4624",
+      "work": 4624
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-climb--city-ferry-high",
       "kind": "pair",
-      "layout": "44ea9da367f5d543",
+      "layout": "bc984bc3d9fac984",
       "modules": ["archie-lane-climb", "city-ferry-high"],
       "route": "ac219033e60cf02b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "c543fa52936c5e16:3259",
-      "work": 3259
+      "trace": "dfc194a3fe5ef366:3058",
+      "work": 3058
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-climb--city-gap-high",
       "kind": "pair",
-      "layout": "88a8ed3a52b5981a",
+      "layout": "c1790edd8ba87a02",
       "modules": ["archie-lane-climb", "city-gap-high"],
       "route": "d9798aeb7d120dc0",
       "slots": { "door": 0, "event": 0 },
-      "trace": "79dfa6a1cf47e73b:3038",
-      "work": 3038
+      "trace": "3a54c26ac989be5e:3021",
+      "work": 3021
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-climb--city-ledge-descent",
       "kind": "pair",
-      "layout": "64dc90a55b5c25d6",
+      "layout": "8538b0f05fa6590f",
       "modules": ["archie-lane-climb", "city-ledge-descent"],
       "route": "ba081b73fb3a68f4",
       "slots": { "door": 1, "event": 0 },
-      "trace": "ac73dc0ce8cb6f79:5874",
-      "work": 5874
+      "trace": "31904370a0fcc537:5552",
+      "work": 5552
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-climb--city-lift-descent",
       "kind": "pair",
-      "layout": "23e00dcf2f917eff",
+      "layout": "2cd314cc86c143ce",
       "modules": ["archie-lane-climb", "city-lift-descent"],
       "route": "ad3e95e957b82b14",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4ed18c591fc23d97:4717",
-      "work": 4717
+      "trace": "f7a26089f5b7dcbc:4700",
+      "work": 4700
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-climb--city-low-descent",
       "kind": "pair",
-      "layout": "8a8340b01345be45",
+      "layout": "b685de081fd7f86f",
       "modules": ["archie-lane-climb", "city-low-descent"],
       "route": "7028be0a7a693284",
       "slots": { "door": 0, "event": 0 },
-      "trace": "7a4a554eee2f299b:445167",
-      "work": 445167
+      "trace": "cbe46e07404c3b13:238424",
+      "work": 238424
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-climb--city-tap-strip-high",
       "kind": "pair",
-      "layout": "542375ceb14f8e61",
+      "layout": "0d56cc637965bdee",
       "modules": ["archie-lane-climb", "city-tap-strip-high"],
       "route": "0be48ffa94e4632e",
       "slots": { "door": 0, "event": 0 },
-      "trace": "67756b5b6f48e806:2697",
-      "work": 2697
+      "trace": "f6cb5eb8cdff5eec:2680",
+      "work": 2680
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-descent--city-ferry",
       "kind": "pair",
-      "layout": "a82b4e328d65257a",
+      "layout": "fbaa932e3baf1a5b",
       "modules": ["archie-lane-descent", "city-ferry"],
       "route": "beb06efb89640054",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b1498c50fc16b638:2807",
-      "work": 2807
+      "trace": "9b179891cd6b48eb:2977",
+      "work": 2977
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-descent--city-gap",
       "kind": "pair",
-      "layout": "6c5ba38f0f4f7317",
+      "layout": "4b9563b7839b2c32",
       "modules": ["archie-lane-descent", "city-gap"],
       "route": "25916bc08a4cc7bd",
       "slots": { "door": 0, "event": 0 },
-      "trace": "cedc2c4fe1d6f130:2657",
-      "work": 2657
+      "trace": "5e62f9df521c19ad:2710",
+      "work": 2710
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-descent--city-gap-climb",
       "kind": "pair",
-      "layout": "a1a7423848a38277",
+      "layout": "5256b6d095121104",
       "modules": ["archie-lane-descent", "city-gap-climb"],
       "route": "429a92c4a49caadf",
       "slots": { "door": 0, "event": 0 },
-      "trace": "0c3e26f73911075f:2486",
+      "trace": "39196c9b14131615:2486",
       "work": 2486
     },
     {
@@ -221,11 +221,11 @@
       "grade": 4,
       "id": "blue-archie-lane-descent--city-ledge-climb",
       "kind": "pair",
-      "layout": "92c66f832373d4ce",
+      "layout": "c9c262d3663dd6f5",
       "modules": ["archie-lane-descent", "city-ledge-climb"],
       "route": "78e834abbba15c21",
       "slots": { "door": 0, "event": 0 },
-      "trace": "192962fadd1cc173:2498",
+      "trace": "8c27d2ba2c31e420:2498",
       "work": 2498
     },
     {
@@ -233,35 +233,35 @@
       "grade": 4,
       "id": "blue-archie-lane-descent--city-ledge-pit",
       "kind": "pair",
-      "layout": "99d04926a44da3df",
+      "layout": "a0e8e359964fa9af",
       "modules": ["archie-lane-descent", "city-ledge-pit"],
       "route": "980805d01110c33a",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4fb29e64544cccb9:4632",
-      "work": 4632
+      "trace": "bfc6ac454d74a92d:2851",
+      "work": 2851
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-descent--city-lift-climb",
       "kind": "pair",
-      "layout": "e0ae19b20291b878",
+      "layout": "71e3f37b89b8f1ef",
       "modules": ["archie-lane-descent", "city-lift-climb"],
       "route": "9cda5588f4870d27",
       "slots": { "door": 0, "event": 0 },
-      "trace": "0628f55a17e12c57:3105",
-      "work": 3105
+      "trace": "0d152b4cf1521127:4987",
+      "work": 4987
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-descent--city-red-face-climb",
       "kind": "pair",
-      "layout": "b306a60ddd28b111",
+      "layout": "1e841269b961b303",
       "modules": ["archie-lane-descent", "city-red-face-climb"],
       "route": "60680e6e64dd55fa",
       "slots": { "door": 0, "event": 0 },
-      "trace": "d314163ff8208955:2486",
+      "trace": "73a14f2afa9df369:2486",
       "work": 2486
     },
     {
@@ -269,23 +269,23 @@
       "grade": 4,
       "id": "blue-archie-lane-descent--city-tap-strip",
       "kind": "pair",
-      "layout": "f9730858c84cc07d",
+      "layout": "e4d6edddd3452949",
       "modules": ["archie-lane-descent", "city-tap-strip"],
       "route": "ae41cf3cf952476a",
       "slots": { "door": 1, "event": 0 },
-      "trace": "8d03807ff6572ef1:807604",
-      "work": 807604
+      "trace": "d9e0f1bb49722243:802574",
+      "work": 802574
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-high--city-drop-gap",
       "kind": "pair",
-      "layout": "476702ad6dec2eff",
+      "layout": "ec253b608a5554ba",
       "modules": ["archie-lane-high", "city-drop-gap"],
       "route": "2cd749837046575b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "c679c3facee26a57:4702",
+      "trace": "0e84170e3475f557:4702",
       "work": 4702
     },
     {
@@ -293,11 +293,11 @@
       "grade": 4,
       "id": "blue-archie-lane-high--city-ferry-high",
       "kind": "pair",
-      "layout": "a2dc5855d0899d6e",
+      "layout": "994acb7db33dd208",
       "modules": ["archie-lane-high", "city-ferry-high"],
       "route": "9d354c4b23237357",
       "slots": { "door": 0, "event": 0 },
-      "trace": "81f1a74cdc375000:2719",
+      "trace": "65d5e4a12e2a47b6:2719",
       "work": 2719
     },
     {
@@ -305,35 +305,35 @@
       "grade": 4,
       "id": "blue-archie-lane-high--city-gap-high",
       "kind": "pair",
-      "layout": "581a34b5c9ce17c1",
+      "layout": "f3269f6b01b926db",
       "modules": ["archie-lane-high", "city-gap-high"],
       "route": "db4f3ab8a89d3fd4",
       "slots": { "door": 0, "event": 0 },
-      "trace": "3f8cdbc61c121097:2745",
-      "work": 2745
+      "trace": "f029af13e45f9d10:2848",
+      "work": 2848
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-high--city-ledge-descent",
       "kind": "pair",
-      "layout": "a2bd3c6522d63207",
+      "layout": "ddc2ab9d9c3a5600",
       "modules": ["archie-lane-high", "city-ledge-descent"],
       "route": "5db189e3dc7dc994",
       "slots": { "door": 1, "event": 0 },
-      "trace": "4fa0253cda9a5f7d:7760",
-      "work": 7760
+      "trace": "d9ea31c59fe166f9:7684",
+      "work": 7684
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-high--city-lift-descent",
       "kind": "pair",
-      "layout": "8aa5e204e6828d86",
+      "layout": "4f9f5b62a4f55249",
       "modules": ["archie-lane-high", "city-lift-descent"],
       "route": "add3e566824f3c7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "77c3e091c9674be7:9174",
+      "trace": "9e8c6151c5ee8b30:9174",
       "work": 9174
     },
     {
@@ -341,23 +341,23 @@
       "grade": 4,
       "id": "blue-archie-lane-high--city-low-descent",
       "kind": "pair",
-      "layout": "42cdbe187789436d",
+      "layout": "91b8697d6093c06d",
       "modules": ["archie-lane-high", "city-low-descent"],
       "route": "ae5660dc0531dfaa",
       "slots": { "door": 0, "event": 0 },
-      "trace": "18b518ee00eb51ba:11689",
-      "work": 11689
+      "trace": "97c9e3d740b3e416:11539",
+      "work": 11539
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-high--city-tap-strip-high",
       "kind": "pair",
-      "layout": "4827417ac3ed60aa",
+      "layout": "3c65094f90d75a9c",
       "modules": ["archie-lane-high", "city-tap-strip-high"],
       "route": "db4f3ab8a89d3fd4",
       "slots": { "door": 0, "event": 0 },
-      "trace": "5102931f5511806c:6870",
+      "trace": "aa5ab724a1096c33:6870",
       "work": 6870
     },
     {
@@ -365,23 +365,23 @@
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-ferry",
       "kind": "pair",
-      "layout": "0a30ddf69a66c763",
+      "layout": "3d13199d0d28b747",
       "modules": ["archie-lane-ledges", "city-ferry"],
       "route": "5d26339143cf4034",
       "slots": { "door": 0, "event": 0 },
-      "trace": "3a7c47ae37602bf2:3696",
-      "work": 3696
+      "trace": "620d15434c497d0b:3684",
+      "work": 3684
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-gap",
       "kind": "pair",
-      "layout": "3133d09f74000218",
+      "layout": "9c44f865017d37c3",
       "modules": ["archie-lane-ledges", "city-gap"],
       "route": "43a3a80ea64dce65",
       "slots": { "door": 0, "event": 0 },
-      "trace": "e446e3ce029564b2:3686",
+      "trace": "51d233049d751ec2:3686",
       "work": 3686
     },
     {
@@ -389,11 +389,11 @@
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-gap-climb",
       "kind": "pair",
-      "layout": "0005cf50371835fc",
+      "layout": "304166b72f3a584b",
       "modules": ["archie-lane-ledges", "city-gap-climb"],
       "route": "cd16c1c62afba2da",
       "slots": { "door": 0, "event": 0 },
-      "trace": "bbd7da95d83bb352:2840",
+      "trace": "3a320c241be48640:2840",
       "work": 2840
     },
     {
@@ -401,11 +401,11 @@
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-ledge-climb",
       "kind": "pair",
-      "layout": "9a67274b33ad82c0",
+      "layout": "289bcfcb83aa2426",
       "modules": ["archie-lane-ledges", "city-ledge-climb"],
       "route": "126ed90c6f7bef8a",
       "slots": { "door": 0, "event": 0 },
-      "trace": "e007aea440253e13:3433",
+      "trace": "8e24e7fb8947588b:3433",
       "work": 3433
     },
     {
@@ -413,23 +413,23 @@
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-ledge-pit",
       "kind": "pair",
-      "layout": "6939969600729cf5",
+      "layout": "7f7800246f433190",
       "modules": ["archie-lane-ledges", "city-ledge-pit"],
       "route": "48767ca04a165cdf",
       "slots": { "door": 0, "event": 0 },
-      "trace": "863a90e4d35081cb:2989",
-      "work": 2989
+      "trace": "11e17d2844e24bff:3247",
+      "work": 3247
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-lift-climb",
       "kind": "pair",
-      "layout": "8c2c8c29808e72bd",
+      "layout": "2a4cbc59a3a180af",
       "modules": ["archie-lane-ledges", "city-lift-climb"],
       "route": "e060de21c45c090a",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b9e2f9c042d6c6de:4384",
+      "trace": "7f34954f48a60bb5:4384",
       "work": 4384
     },
     {
@@ -437,11 +437,11 @@
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-red-face-climb",
       "kind": "pair",
-      "layout": "abdab8284b77b9f3",
+      "layout": "c69152a586769c92",
       "modules": ["archie-lane-ledges", "city-red-face-climb"],
       "route": "f9b6f58734c2eaed",
       "slots": { "door": 0, "event": 0 },
-      "trace": "9111a2692b72f897:2932",
+      "trace": "e4d108d810790896:2932",
       "work": 2932
     },
     {
@@ -449,12 +449,12 @@
       "grade": 4,
       "id": "blue-archie-lane-ledges--city-tap-strip",
       "kind": "pair",
-      "layout": "4d8db86ee0b2ce0b",
+      "layout": "78aaa47168dda8cc",
       "modules": ["archie-lane-ledges", "city-tap-strip"],
       "route": "44dde73afa1c80a4",
       "slots": { "door": 1, "event": 0 },
-      "trace": "c997879f66210ed1:20998",
-      "work": 20998
+      "trace": "fc7bbb1820c1ad5f:21006",
+      "work": 21006
     },
     {
       "encounters": 0,
@@ -737,12 +737,12 @@
       "grade": 4,
       "id": "blue-city-drop-gap--archie-yard",
       "kind": "pair",
-      "layout": "4431272a9449409f",
+      "layout": "009bd2e30e98014e",
       "modules": ["city-drop-gap", "archie-yard"],
       "route": "5eb567b66218dc9d",
       "slots": { "door": 0, "event": 0 },
-      "trace": "8e4cbe9cb1ad5fa0:10383",
-      "work": 10383
+      "trace": "6109ef0ad35e4334:13171",
+      "work": 13171
     },
     {
       "encounters": 0,
@@ -1181,11 +1181,11 @@
       "grade": 4,
       "id": "blue-city-gap--archie-yard",
       "kind": "pair",
-      "layout": "25df0b610bf4604f",
+      "layout": "9dd2c99875bff59d",
       "modules": ["city-gap", "archie-yard"],
       "route": "6ebc36db49053aaa",
       "slots": { "door": 0, "event": 0 },
-      "trace": "8bd0235c12def193:13560",
+      "trace": "4b43f3a137256660:13560",
       "work": 13560
     },
     {
@@ -1349,11 +1349,11 @@
       "grade": 4,
       "id": "blue-city-gap-climb--archie-yard-descent",
       "kind": "pair",
-      "layout": "4427b749a3d232a7",
+      "layout": "cfd39811baab77fc",
       "modules": ["city-gap-climb", "archie-yard-descent"],
       "route": "627ed8a2a9da9dbc",
       "slots": { "door": 0, "event": 0 },
-      "trace": "f273723b57b8f972:3037",
+      "trace": "aff144e62b897162:3037",
       "work": 3037
     },
     {
@@ -1361,12 +1361,12 @@
       "grade": 4,
       "id": "blue-city-gap-climb--archie-yard-high",
       "kind": "pair",
-      "layout": "dcf144727cbef875",
+      "layout": "9ebcb707bf7b8cfd",
       "modules": ["city-gap-climb", "archie-yard-high"],
       "route": "43843d49f419da4e",
       "slots": { "door": 0, "event": 0 },
-      "trace": "916b5795cb61f269:14681",
-      "work": 14681
+      "trace": "957a9a8a858d8301:14589",
+      "work": 14589
     },
     {
       "encounters": 0,
@@ -1493,23 +1493,23 @@
       "grade": 4,
       "id": "blue-city-gap-high--archie-yard-descent",
       "kind": "pair",
-      "layout": "bafa7c1478eeca90",
+      "layout": "f88265830ac4723f",
       "modules": ["city-gap-high", "archie-yard-descent"],
       "route": "1015caeca3c67a3c",
       "slots": { "door": 0, "event": 0 },
-      "trace": "00832a9d9dba29c4:1942",
-      "work": 1942
+      "trace": "831fc116f4de358d:4048",
+      "work": 4048
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-city-gap-high--archie-yard-high",
       "kind": "pair",
-      "layout": "729127f974936d71",
+      "layout": "eb39f7c2947b176b",
       "modules": ["city-gap-high", "archie-yard-high"],
       "route": "8cb072ab7a4f6420",
       "slots": { "door": 0, "event": 0 },
-      "trace": "6bd29e31a0178605:10711",
+      "trace": "f16dd8a979b00f04:10711",
       "work": 10711
     },
     {
@@ -1829,24 +1829,24 @@
       "grade": 4,
       "id": "blue-city-ledge-climb--archie-yard-descent",
       "kind": "pair",
-      "layout": "62cc4c612e1d7dd3",
+      "layout": "51b462c9d4bd2295",
       "modules": ["city-ledge-climb", "archie-yard-descent"],
       "route": "f54d8da4adf140d5",
       "slots": { "door": 0, "event": 0 },
-      "trace": "35edcb83ae9a8db2:1992",
-      "work": 1992
+      "trace": "c2b7b5b04a7af854:1738",
+      "work": 1738
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-city-ledge-climb--archie-yard-high",
       "kind": "pair",
-      "layout": "36c9f8e00cf05850",
+      "layout": "61c7cc396da36fac",
       "modules": ["city-ledge-climb", "archie-yard-high"],
       "route": "be0bd4f0665c1e68",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b18143b22c176b3d:6013",
-      "work": 6013
+      "trace": "567aad44eb8a6a3c:4851",
+      "work": 4851
     },
     {
       "encounters": 0,
@@ -1973,11 +1973,11 @@
       "grade": 4,
       "id": "blue-city-ledge-descent--archie-yard",
       "kind": "pair",
-      "layout": "951a82e35e768dfc",
+      "layout": "af9cdcde0389aabd",
       "modules": ["city-ledge-descent", "archie-yard"],
       "route": "1dedc10e2aa392c8",
       "slots": { "door": 1, "event": 0 },
-      "trace": "6bee5bbe123fedcf:12406",
+      "trace": "0287838f00981f6b:12406",
       "work": 12406
     },
     {
@@ -2141,11 +2141,11 @@
       "grade": 4,
       "id": "blue-city-ledge-pit--archie-yard",
       "kind": "pair",
-      "layout": "48db637998c41cfc",
+      "layout": "ec252d29523fc7ff",
       "modules": ["city-ledge-pit", "archie-yard"],
       "route": "1eaa06287e21cf8f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "0bcc2ca503162c4f:4752",
+      "trace": "36721c1ada783b0c:4752",
       "work": 4752
     },
     {
@@ -2309,23 +2309,23 @@
       "grade": 4,
       "id": "blue-city-lift-climb--archie-yard-descent",
       "kind": "pair",
-      "layout": "b9325a91feae44a8",
+      "layout": "430f5cfd75b3a2af",
       "modules": ["city-lift-climb", "archie-yard-descent"],
       "route": "f61bd7a380e4f61e",
       "slots": { "door": 0, "event": 0 },
-      "trace": "e966cbfbbfcb03e2:3149",
-      "work": 3149
+      "trace": "8a875e39cc6e8a19:3244",
+      "work": 3244
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-city-lift-climb--archie-yard-high",
       "kind": "pair",
-      "layout": "3bcca3f2ec4384f5",
+      "layout": "fc44144506712973",
       "modules": ["city-lift-climb", "archie-yard-high"],
       "route": "ad45f2d23ed0a374",
       "slots": { "door": 0, "event": 0 },
-      "trace": "84f79ccb1b023769:13394",
+      "trace": "20da4efcbbdd8f27:13394",
       "work": 13394
     },
     {
@@ -2453,12 +2453,12 @@
       "grade": 4,
       "id": "blue-city-lift-descent--archie-yard",
       "kind": "pair",
-      "layout": "56044e024aa6b18c",
+      "layout": "3b67c6ab6842295b",
       "modules": ["city-lift-descent", "archie-yard"],
       "route": "7ce11d6e993f5b90",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b04138136916a221:11327",
-      "work": 11327
+      "trace": "c801de1a66905a8c:11285",
+      "work": 11285
     },
     {
       "encounters": 0,
@@ -2621,12 +2621,12 @@
       "grade": 4,
       "id": "blue-city-low-descent--archie-yard",
       "kind": "pair",
-      "layout": "23e61645433497aa",
+      "layout": "335708a07d46d094",
       "modules": ["city-low-descent", "archie-yard"],
       "route": "dbb94f6b57eecda1",
       "slots": { "door": 0, "event": 0 },
-      "trace": "2b6e3af0369e5194:178163",
-      "work": 178163
+      "trace": "ce59a0da4942efc1:190294",
+      "work": 190294
     },
     {
       "encounters": 0,
@@ -2789,24 +2789,24 @@
       "grade": 4,
       "id": "blue-city-red-face-climb--archie-yard-descent",
       "kind": "pair",
-      "layout": "70128822e8d3e9f8",
+      "layout": "89168ba0e288470e",
       "modules": ["city-red-face-climb", "archie-yard-descent"],
       "route": "923a8ac10867a54b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "095bfbc1b73dc8d7:1733",
-      "work": 1733
+      "trace": "aa6bf1fa723b3148:1736",
+      "work": 1736
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-city-red-face-climb--archie-yard-high",
       "kind": "pair",
-      "layout": "dfc57e2a0edb34c6",
+      "layout": "ddd7d1aff0457e74",
       "modules": ["city-red-face-climb", "archie-yard-high"],
       "route": "3d41cd5ed7c38cc7",
       "slots": { "door": 0, "event": 0 },
-      "trace": "3bbaaf5d8529e540:4100",
-      "work": 4100
+      "trace": "eca3a616236f1348:4205",
+      "work": 4205
     },
     {
       "encounters": 0,
@@ -2933,12 +2933,12 @@
       "grade": 4,
       "id": "blue-city-tap-strip--archie-yard",
       "kind": "pair",
-      "layout": "c0b1ba96718883f7",
+      "layout": "eff7ad9c1215773c",
       "modules": ["city-tap-strip", "archie-yard"],
       "route": "fa711638a1a94f10",
       "slots": { "door": 1, "event": 0 },
-      "trace": "4629297a5519fcd9:21774",
-      "work": 21774
+      "trace": "dd29e21c38010685:12602",
+      "work": 12602
     },
     {
       "encounters": 0,
@@ -3101,23 +3101,23 @@
       "grade": 4,
       "id": "blue-city-tap-strip-high--archie-yard-descent",
       "kind": "pair",
-      "layout": "1ae2b830cc8b516d",
+      "layout": "bd861158f03f54b9",
       "modules": ["city-tap-strip-high", "archie-yard-descent"],
       "route": "ce54702148e26d8f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "7bcc3236f26a9ea2:24644",
-      "work": 24644
+      "trace": "25575c23bf0005dc:2991",
+      "work": 2991
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-city-tap-strip-high--archie-yard-high",
       "kind": "pair",
-      "layout": "4176fe318e307d2a",
+      "layout": "c0f149ac70b76ed0",
       "modules": ["city-tap-strip-high", "archie-yard-high"],
       "route": "8cb072ab7a4f6420",
       "slots": { "door": 0, "event": 0 },
-      "trace": "d92fb203ae3d7f4c:16684",
+      "trace": "bf249898c15b1b8b:16684",
       "work": 16684
     },
     {
@@ -3520,33 +3520,33 @@
       "grade": 4,
       "id": "blue-vertical-city-boundary-climb-yard",
       "kind": "single",
-      "layout": "0864411413117d7a",
+      "layout": "76a7e39506ee3f25",
       "route": "d043e3432753ab2f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "87b5a56b845334ba:22819",
-      "work": 22819
+      "trace": "69d380ea28a09111:14316",
+      "work": 14316
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-city-boundary-dog-high",
       "kind": "single",
-      "layout": "e4b909a213882ecd",
+      "layout": "dbe23991e2beb2c5",
       "route": "ed56da9df815e5f4",
       "slots": { "door": 0, "event": 0 },
-      "trace": "bf7106c040c95ab3:4055",
-      "work": 4055
+      "trace": "d014b501ee902398:3274",
+      "work": 3274
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-city-boundary-dog-terrace",
       "kind": "single",
-      "layout": "90e37e477d11f8de",
+      "layout": "0871f1c645c423d2",
       "route": "56e4d63149836485",
       "slots": { "door": 0, "event": 0 },
-      "trace": "fbfbfecf3c204f12:4055",
-      "work": 4055
+      "trace": "95cd86e4e5a1a0fe:3274",
+      "work": 3274
     },
     {
       "encounters": 0,
@@ -3773,22 +3773,22 @@
       "grade": 4,
       "id": "blue-vertical-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "791b84fc951954e3",
+      "layout": "458172da83677e3a",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
-      "trace": "66c9e38ef8b53b8e:14814",
-      "work": 14814
+      "trace": "c4b53e7dcc2be597:14808",
+      "work": 14808
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "f61e34a1d4513865",
+      "layout": "31f42823767e70bf",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "c3c66b7b1ef76922:9106",
-      "work": 9106
+      "trace": "085ceca3d95332e4:9069",
+      "work": 9069
     },
     {
       "encounters": 0,
@@ -3806,33 +3806,33 @@
       "grade": 4,
       "id": "blue-vertical-patrol-cover-early",
       "kind": "single",
-      "layout": "0bdc0ca859278525",
+      "layout": "b86ea650d13d99da",
       "route": "a30293dd32a8168f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "607e5bb9359e5c39:3449",
-      "work": 3449
+      "trace": "e3107e44f6ffb48b:3872",
+      "work": 3872
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-patrol-cover-late",
       "kind": "single",
-      "layout": "15e3c98ed8763210",
+      "layout": "ff6319de95b27ece",
       "route": "4863105c7ad0c172",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4faccd1d77847453:1234",
-      "work": 1234
+      "trace": "96f1d888d15ee3a9:1272",
+      "work": 1272
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-patrol-cover-middle",
       "kind": "single",
-      "layout": "6f91437ad1fffe87",
+      "layout": "d56ebb267ad9d010",
       "route": "5eb6467e8dcfbfe6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "162ea1dc08626a52:1738",
-      "work": 1738
+      "trace": "b9ae587dac0817bc:1830",
+      "work": 1830
     },
     {
       "encounters": 0,
@@ -3868,7 +3868,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "75ddf27340ea5f29", "proofs": "23ed1a25a17a8270" },
+  "inputs": { "data": "69cca1b363d9b829", "proofs": "a45aa0fe6b85ca47" },
   "version": 1,
   "zone": "blue"
 }
