@@ -1,6 +1,271 @@
 {
-  "entries": [],
-  "inputs": { "data": "", "proofs": "" },
+  "entries": [
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-broad-mesa",
+      "kind": "single",
+      "layout": "8aca0cfd9ccce7ad",
+      "route": "f434b5571cb4a5b1",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4e447182d4332d25:397",
+      "work": 397
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-city-boundary-ground-hazard",
+      "kind": "single",
+      "layout": "07be1b9f3284b199",
+      "route": "af4545c70468f99e",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "1e1959f25f0725ea:7818",
+      "work": 7818
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-compound-ascent",
+      "kind": "single",
+      "layout": "a5019fe6b8787806",
+      "route": "4983ef1b0aac85a4",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "c7c76560fd8e3fb6:828",
+      "work": 828
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-compound-compact-ascent",
+      "kind": "single",
+      "layout": "5c8ace3baceef771",
+      "route": "52f9d009b49c3a54",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4be176cf83d0a6eb:1953",
+      "work": 1953
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-compound-compact-climb",
+      "kind": "single",
+      "layout": "d43f94de0793f009",
+      "route": "64215e6caac35714",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4db6abade691ef28:1953",
+      "work": 1953
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-vertical-compound-double-lift",
+      "kind": "single",
+      "layout": "8522a9f4830f885d",
+      "route": "8f6651cefccbf1dc",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "3520b3197c0bfc79:55876",
+      "work": 55876
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-compound-low-ceiling-hazard",
+      "kind": "single",
+      "layout": "10ab9acf55a9a2d3",
+      "route": "2df588c36705864d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "20d377bc98ef4e4f:6206",
+      "work": 6206
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-vertical-compound-low-ceiling-shuttle",
+      "kind": "single",
+      "layout": "ae66a1c2849db6cc",
+      "route": "7cb42d932b2ca0cf",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "f3e8565a1ea57b00:2229",
+      "work": 2229
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-vertical-compound-return-high",
+      "kind": "single",
+      "layout": "e1de7ada55d46743",
+      "route": "287fe2989300df32",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "bdc84295078f77f8:4015",
+      "work": 4015
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-compound-return-shuttle",
+      "kind": "single",
+      "layout": "824471f440d55ab4",
+      "route": "38f1e27c06abf92f",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "089f4c6d5b3ef829:1355",
+      "work": 1355
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-compound-return-terrace",
+      "kind": "single",
+      "layout": "874bd38fdd187351",
+      "route": "73d00a4d0dcdd653",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "29f441c8f2c64311:2421",
+      "work": 2421
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-vertical-compound-transfer-gate",
+      "kind": "single",
+      "layout": "e62f985974a7cdba",
+      "route": "c8e5aa2a242aa97c",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "1fbde13e0e517aa4:3288",
+      "work": 3288
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-crumbling-support-crossing",
+      "kind": "single",
+      "layout": "a945b813c3d3b12f",
+      "route": "8806e0a22f1b946c",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "ac88d9a92d657dc5:854",
+      "work": 854
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "woodland-vertical-growl-clearing",
+      "kind": "single",
+      "layout": "ef3c901f56f72caf",
+      "route": "b08a7d276fc463b6",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "2a1543663d0e91d4:2017",
+      "work": 2017
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "woodland-vertical-growl-cover-early",
+      "kind": "single",
+      "layout": "ea373c99820b92bf",
+      "route": "a30293dd32a8168f",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "92cd991eb878cf2a:2865",
+      "work": 2865
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "woodland-vertical-growl-cover-late",
+      "kind": "single",
+      "layout": "2d3911e369a0e775",
+      "route": "4863105c7ad0c172",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "45b5dab5c87a5e1c:1130",
+      "work": 1130
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "woodland-vertical-growl-cover-middle",
+      "kind": "single",
+      "layout": "ea7fa381448b30ec",
+      "route": "5eb6467e8dcfbfe6",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "6e00894371fe6bd0:4856",
+      "work": 4856
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-horizontal-platform-orbit",
+      "kind": "single",
+      "layout": "6c4c3eb6d4267be1",
+      "route": "958768cb40249c89",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "7afcc25da9b884f5:2408",
+      "work": 2408
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-low-central-crossing",
+      "kind": "single",
+      "layout": "3449d53cf37fe92a",
+      "route": "c47d3abeebc21987",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "42116efeff1c2905:46490",
+      "work": 46490
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "woodland-vertical-offset-two-level-terrace-encounter",
+      "kind": "single",
+      "layout": "2dc46bc3922dbb80",
+      "route": "8b4c2696d887f590",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "d4b72d517af9301f:3915",
+      "work": 3915
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "woodland-vertical-open-stepped-ridge-encounter",
+      "kind": "single",
+      "layout": "210f07a33ee1ef47",
+      "route": "15732073e277fb7b",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "f84b96500d67f40e:3807",
+      "work": 3807
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-vertical-platform-orbit",
+      "kind": "single",
+      "layout": "6166fc795ebb0f8f",
+      "route": "3963365bd514dd1d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b95c3b0bbaecdcc9:161179",
+      "work": 161179
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-vertical-red-gate",
+      "kind": "single",
+      "layout": "8a3723e1b5d9633e",
+      "route": "4983ef1b0aac85a4",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "abd363cfd04d97d3:342",
+      "work": 342
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-vertical-warned-vent-terrace",
+      "kind": "single",
+      "layout": "50ed3f11edad23a8",
+      "route": "409ead945ddc16dd",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "e67536bdfdb4a44e:408",
+      "work": 408
+    }
+  ],
+  "inputs": { "data": "9c2e9894d5238151", "proofs": "a737e5c41eab37c7" },
   "version": 1,
   "zone": "woodland"
 }

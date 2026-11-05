@@ -1,6 +1,271 @@
 {
-  "entries": [],
-  "inputs": { "data": "", "proofs": "" },
+  "entries": [
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-broad-mesa",
+      "kind": "single",
+      "layout": "8aca0cfd9ccce7ad",
+      "route": "f434b5571cb4a5b1",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4e447182d4332d25:397",
+      "work": 397
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-city-boundary-ground-hazard",
+      "kind": "single",
+      "layout": "e5382e2ce5e770b0",
+      "route": "af4545c70468f99e",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "8fcecebe8f853c69:7818",
+      "work": 7818
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "home-vertical-climbing-enemy-lane",
+      "kind": "single",
+      "layout": "e2357508833592c8",
+      "route": "c9803dd28f01de54",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "fa01e6980ab3ca49:50498",
+      "work": 50498
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-compound-ascent",
+      "kind": "single",
+      "layout": "a5019fe6b8787806",
+      "route": "4983ef1b0aac85a4",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "c7c76560fd8e3fb6:828",
+      "work": 828
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-compound-compact-ascent",
+      "kind": "single",
+      "layout": "5c8ace3baceef771",
+      "route": "52f9d009b49c3a54",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4be176cf83d0a6eb:1953",
+      "work": 1953
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-compound-compact-climb",
+      "kind": "single",
+      "layout": "d43f94de0793f009",
+      "route": "64215e6caac35714",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4db6abade691ef28:1953",
+      "work": 1953
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "home-vertical-compound-double-lift",
+      "kind": "single",
+      "layout": "8522a9f4830f885d",
+      "route": "8f6651cefccbf1dc",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "3520b3197c0bfc79:55876",
+      "work": 55876
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-compound-low-ceiling-hazard",
+      "kind": "single",
+      "layout": "d74b7327155e0e9b",
+      "route": "2df588c36705864d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "e74c7995161e8302:6206",
+      "work": 6206
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "home-vertical-compound-low-ceiling-shuttle",
+      "kind": "single",
+      "layout": "ff5cb3496a873daa",
+      "route": "7cb42d932b2ca0cf",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "d7b54c0dafca15c0:2229",
+      "work": 2229
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "home-vertical-compound-return-high",
+      "kind": "single",
+      "layout": "72af2d00310d91e6",
+      "route": "287fe2989300df32",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "aeb3a04db510904f:4015",
+      "work": 4015
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-compound-return-terrace",
+      "kind": "single",
+      "layout": "1e79436be82a4f0b",
+      "route": "73d00a4d0dcdd653",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "96ecc1c4c5010643:2421",
+      "work": 2421
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "home-vertical-compound-transfer-gate",
+      "kind": "single",
+      "layout": "b00f3fbc49349f7b",
+      "route": "c8e5aa2a242aa97c",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "6df806dff806647d:3288",
+      "work": 3288
+    },
+    {
+      "encounters": 1,
+      "grade": 5,
+      "id": "home-vertical-compound-vertical-yard",
+      "kind": "single",
+      "layout": "fa50e001a2e81092",
+      "route": "28ad64beb757dbe6",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "d25e86a9a1a560e5:160228",
+      "work": 160228
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-crumbling-support-crossing",
+      "kind": "single",
+      "layout": "b7fab5a4d18bcea4",
+      "route": "8806e0a22f1b946c",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "9fd5ba805ef26f22:854",
+      "work": 854
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-horizontal-platform-orbit",
+      "kind": "single",
+      "layout": "520c1825df54a697",
+      "route": "958768cb40249c89",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4ba78cb5e8da38d8:2408",
+      "work": 2408
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-low-central-crossing",
+      "kind": "single",
+      "layout": "3449d53cf37fe92a",
+      "route": "c47d3abeebc21987",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "42116efeff1c2905:46490",
+      "work": 46490
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "home-vertical-offset-two-level-terrace-encounter",
+      "kind": "single",
+      "layout": "9f3a325f9fd4aec3",
+      "route": "8b4c2696d887f590",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "be220505c8898395:15022",
+      "work": 15022
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "home-vertical-open-stepped-ridge-encounter",
+      "kind": "single",
+      "layout": "409ea41aed2bdeff",
+      "route": "15732073e277fb7b",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "e48f383248083c5d:9744",
+      "work": 9744
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-vertical-platform-orbit",
+      "kind": "single",
+      "layout": "6166fc795ebb0f8f",
+      "route": "3963365bd514dd1d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b95c3b0bbaecdcc9:161179",
+      "work": 161179
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-vertical-red-gate",
+      "kind": "single",
+      "layout": "ce56bb8013edb4e0",
+      "route": "4983ef1b0aac85a4",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "20cbd7be7a1ee181:342",
+      "work": 342
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "home-vertical-vertical-stack-early",
+      "kind": "single",
+      "layout": "2e6b8b9f0feef5c6",
+      "route": "2534d81b7bb57c57",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "a753871d36caa833:4555",
+      "work": 4555
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "home-vertical-vertical-stack-late",
+      "kind": "single",
+      "layout": "a883d462b8e66646",
+      "route": "ab6b141179740f3d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "bbb17caf420800d1:5271",
+      "work": 5271
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "home-vertical-vertical-stack-middle",
+      "kind": "single",
+      "layout": "76bc00342a3e84ab",
+      "route": "4ef0964161df0061",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "de61b5afbe6608e5:4470",
+      "work": 4470
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-vertical-warned-vent-terrace",
+      "kind": "single",
+      "layout": "b50a62a8a8d0b247",
+      "route": "409ead945ddc16dd",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "0aabef2ca19c03bc:408",
+      "work": 408
+    }
+  ],
+  "inputs": { "data": "3665b866acfb2627", "proofs": "a737e5c41eab37c7" },
   "version": 1,
   "zone": "home"
 }
