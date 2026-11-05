@@ -14,10 +14,7 @@
 //
 // Run from the repository root in the node:24.21.0 check container. It spawns only node and reaches
 // no network.
-import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
-
-import { buildCommand, buildOrder, type BuildSets } from "@andornaut/art-kit/build";
+import { buildCommand, buildOrder, type BuildSets, nodeBuild } from "@andornaut/art-kit/build";
 
 import * as pixel from "./pixel.ts";
 
@@ -28,7 +25,8 @@ const USAGE = `Usage:
                                                under art/ or the paths the builds write
                                                (public/art/, public/favicon.ico, public/icons/)`;
 
-// Every set with a build command. Declaration order breaks ties in the build order.
+// Every set with a build command, each declared after the sets it needs. Declaration order breaks
+// ties in the build order.
 const SETS = [
   "achievementIcons",
   "antagonists",
@@ -106,7 +104,7 @@ const NEEDS: Readonly<Partial<Record<ArtSet, readonly ArtSet[]>>> = {
 };
 
 // The modules in art/tools/ that are not sets: shared drawing code, the command line and this file.
-const NOT_SETS = new Set([
+const NOT_SETS = [
   "backgroundPalette",
   "build",
   "cli",
@@ -114,23 +112,21 @@ const NOT_SETS = new Set([
   "nature",
   "pixel",
   "previewText",
-]);
+];
+
+// art/, which no build writes, and every path a build writes.
+const CHECK_PATHS = ["art", "public/art", "public/favicon.ico", "public/icons"];
+
+const TOOLS = { directory: "art/tools" };
+
+const BUILD_SETS: BuildSets = Object.fromEntries(
+  SETS.map((set) => [set, { build: nodeBuild(TOOLS, set), needs: NEEDS[set] ?? [] }]),
+);
 
 // The manifest's sections, in their served order.
 const SECTIONS = ["fonts", "sprites", "data", "tilesets", "backdrops", "images"] as const;
 // Image entries registered by hand, which no set writes: the hand-captured stage previews.
 const HAND_IMAGES = /^stage-preview-zone-\d+-stage-\d+$/;
-
-// art/, which no build writes, and every path a build writes.
-const CHECK_PATHS = ["art", "public/art", "public/favicon.ico", "public/icons"];
-
-// The modules in dir that are neither a set nor listed in NOT_SETS.
-function unlisted(dir: string): string[] {
-  const known = new Set<string>([...SETS, ...NOT_SETS]);
-  return readdirSync(dir)
-    .filter((name) => name.endsWith(".ts") && !known.has(name.replace(/\.ts$/, "")))
-    .map((name) => `${name} is not in SETS or NOT_SETS`);
-}
 
 // Reset the manifest to the committed manifest's hand-registered entries, every section present
 // and in order.
@@ -150,55 +146,36 @@ function resetManifest(): void {
   );
 }
 
-// Run the set's generator build in its own node process; a nonzero exit fails the set.
-function spawnBuild(set: ArtSet): void {
-  const result = spawnSync(process.execPath, [`art/tools/${set}.ts`, "build"], {
-    stdio: "inherit",
-  });
-  if (result.error) {
-    throw result.error;
-  }
-  if (result.status !== 0) {
-    throw new Error(`${set} build failed (exit ${result.status ?? result.signal})`);
-  }
-}
-
-// Every set, with the manifest reset ahead of the first set's build when full is set.
-function sets(full: boolean): BuildSets {
-  const all: BuildSets = Object.fromEntries(
-    SETS.map((set) => [set, { build: () => spawnBuild(set), needs: NEEDS[set] ?? [] }]),
-  );
-  if (!full) {
-    return all;
-  }
-  const first = buildOrder(all)[0] as ArtSet;
+// The sets with the manifest reset ahead of the first set's build, for a full rebuild.
+function withManifestReset(sets: BuildSets): BuildSets {
+  const first = buildOrder(sets)[0] as ArtSet;
+  const build = nodeBuild(TOOLS, first);
   return {
-    ...all,
+    ...sets,
     [first]: {
-      ...all[first],
+      ...sets[first],
       build: () => {
         resetManifest();
-        spawnBuild(first);
+        build();
       },
     },
   };
 }
 
-// `--help`, `-h` or `help` prints the usage; otherwise art-kit parses `[--check] [SET...]` and returns
-// the exit status: 0, 1 for a failing build, check differences or a module missing from SETS and
-// NOT_SETS, or 2 for a usage error.
-async function main(argv: readonly string[]): Promise<number> {
-  if (argv.length === 1 && ["--help", "-h", "help"].includes(argv[0] as string)) {
-    console.log(USAGE);
-    return 0;
-  }
-  const problems = unlisted("art/tools");
-  if (problems.length) {
-    console.error(problems.join("\n"));
-    return 1;
-  }
+// art-kit checks every module in art/tools/ is a set or in NOT_SETS and that SETS meets NEEDS,
+// then parses `[--check] [SET...]` (or prints USAGE for --help or -h) and returns the exit status.
+// A run with no SET is a full rebuild.
+if (import.meta.main) {
+  const argv = process.argv.slice(2);
   const full = argv.every((arg) => arg === "--check");
-  return buildCommand({ sets: sets(full), check: { paths: CHECK_PATHS }, usage: USAGE }, argv);
+  process.exitCode = await buildCommand(
+    {
+      check: { paths: CHECK_PATHS },
+      modules: { ...TOOLS, nonSets: NOT_SETS },
+      sets: full ? withManifestReset(BUILD_SETS) : BUILD_SETS,
+      strictOrder: true,
+      usage: USAGE,
+    },
+    argv,
+  );
 }
-
-process.exitCode = await main(process.argv.slice(2));
