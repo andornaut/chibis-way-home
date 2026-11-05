@@ -50,7 +50,6 @@ export { stagePickerKey } from "./input/stageSelectInput";
 export {
   ACHIEVEMENT_ICON_SIZE,
   type AchievementEntryLayout,
-  achievementNoticeLayout,
   achievementsCardLayout,
   achievementsPerPage,
   type AchievementWords,

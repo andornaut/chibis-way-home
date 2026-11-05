@@ -10,7 +10,8 @@ const SOURCES = import.meta.glob<string>(["../**/*.ts", "!../**/*.test.ts"], {
   query: "?raw",
 });
 
-// Every scene that shows a dialogue, bark or notice panel.
+// Every scene that shows a dialogue, bark, gift-room helper or achievement notice panel; each
+// draws its background and its portrait and text through the shared renderers.
 const PANEL_SCENES = [
   "../scenes/AchievementNoticeScene.ts",
   "../scenes/DialogueScene.ts",
@@ -45,5 +46,6 @@ it("draws every dialogue panel background only through the shared renderer", () 
   }
   for (const path of PANEL_SCENES) {
     expect(SOURCES[path], path).toContain("drawDialoguePanel(this)");
+    expect(SOURCES[path], path).toContain("drawDialogueParagraph(this");
   }
 });

@@ -3,20 +3,19 @@ import { fillNames } from "@andornaut/game-kit/lines";
 import { containsPoint } from "@andornaut/game-kit/rect";
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { ACHIEVEMENT_NOTICE_SECONDS } from "../data/achievements";
+import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { AchievementId } from "../data/types";
 import {
-  achievementNoticeLayout,
   DIALOGUE_SCREEN,
   type DialoguePress,
   dialogueTapAction,
   moveDialoguePress,
 } from "../ui";
 import { ACHIEVEMENT_NOTICE, noticeBlocked } from "./achievementNotice";
-import { addCardText, cardFonts, paletteColour, TITLE_FONT } from "./cardParts";
 import { drawDialoguePanel } from "./dialoguePanel";
+import { drawDialogueParagraph, type PanelParagraph } from "./dialogueParagraph";
 import { onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import { nextAchievementNotice } from "./save";
@@ -36,6 +35,20 @@ export function achievementIconFrame(
     throw new Error(`No ${earned ? "unlocked" : "locked"} ${ICON} frame for ${id}`);
   }
   return frame;
+}
+
+// The notice as a dialogue paragraph without a name tab: the unlocked icon in the portrait frame,
+// the filled notice line as a bold first line and the achievement's description below it.
+export function achievementNoticeParagraph(scene: Scene, id: AchievementId): PanelParagraph {
+  const entry = TEXT.achievements.entries[id];
+  return {
+    heading: fillNames(TEXT.achievements.notice, { title: entry.title }),
+    name: null,
+    portrait: ICON,
+    portraitFrame: achievementIconFrame(scene, true, id),
+    side: ACHIEVEMENT_NOTICE_SIDE,
+    text: entry.description,
+  };
 }
 
 // Unlock notices, one at a time in the shared dialogue panel for ACHIEVEMENT_NOTICE_SECONDS, with no
@@ -88,18 +101,9 @@ export class AchievementNoticeScene extends Scene {
   }
 
   private show(id: AchievementId): void {
-    const text = fillNames(TEXT.achievements.notice, {
-      title: TEXT.achievements.entries[id].title,
-    });
-    const panel = DIALOGUE_SCREEN.box;
-    const layout = achievementNoticeLayout(panel, cardFonts(this), text);
     this.art = [
       drawDialoguePanel(this),
-      this.add
-        .image(layout.icon.x, layout.icon.y, ICON, achievementIconFrame(this, true, id))
-        .setOrigin(0)
-        .setScale(layout.iconScale),
-      addCardText(this, TITLE_FONT, layout.text, text, paletteColour(this, "cream")),
+      ...drawDialogueParagraph(this, achievementNoticeParagraph(this, id)),
     ];
     this.remaining = ACHIEVEMENT_NOTICE_SECONDS * 1000;
   }

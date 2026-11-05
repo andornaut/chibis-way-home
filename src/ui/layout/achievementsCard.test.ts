@@ -8,10 +8,10 @@ import { ACHIEVEMENT_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import {
   ACHIEVEMENT_ICON_SIZE,
-  achievementNoticeLayout,
   achievementsCardLayout,
   achievementsPerPage,
 } from "./achievementsCard";
+import { dialogueLines } from "../dialogue/conversation";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { CARD_CONTENT } from "./contentCard";
 import { DIALOGUE_SCREEN } from "./dialogueScreen";
@@ -122,23 +122,16 @@ describe("the Achievements card", () => {
     expect(() => achievementsCardLayout(CARD_FONTS, WORDS, [long])).toThrow(/2 lines/);
   });
 
-  it("centres the unlock notice's icon and line in the bark panel", () => {
-    const text = TEXT.achievements.notice.replace(
-      "{title}",
-      TEXT.achievements.entries["home-without-skills"].title,
-    );
-    const notice = achievementNoticeLayout(DIALOGUE_SCREEN.box, CARD_FONTS, text);
-    const box = DIALOGUE_SCREEN.box;
-    const left = notice.icon.x - box.x;
-    const rightGap = right(box) - (notice.text.x + notice.text.width);
-    expect({
-      balanced: Math.abs(left - rightGap) < 1,
-      iconInside: within(box, {
-        height: ACHIEVEMENT_ICON_SIZE * notice.iconScale,
-        width: ACHIEVEMENT_ICON_SIZE * notice.iconScale,
-        ...notice.icon,
-      }),
-      textInside: within(box, notice.text),
-    }).toEqual({ balanced: true, iconInside: true, textInside: true });
+  it("fits every unlock notice's bold line and description in the dialogue panel's text", () => {
+    const text = DIALOGUE_SCREEN.text;
+    for (const id of ACHIEVEMENT_IDS) {
+      const { description, title } = TEXT.achievements.entries[id];
+      const heading = TEXT.achievements.notice.replace("{title}", title);
+      expect(inkWidth(CARD_FONTS.title, text.scale, heading), id).toBeLessThanOrEqual(text.width);
+      expect(
+        dialogueLines(CARD_FONTS.body, { ...text, lines: text.lines - 1 }, text.width, description),
+        id,
+      ).not.toHaveLength(0);
+    }
   });
 });

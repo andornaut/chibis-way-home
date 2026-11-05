@@ -1,4 +1,4 @@
-import type { AchievementTier, BossId, ChibiAchievement } from "./types";
+import type { AchievementTier, BossId, ChibiAchievement, DialogueSpeaker } from "./types";
 
 // The tiers in card order.
 export const ACHIEVEMENT_TIERS: readonly AchievementTier[] = ["easy", "medium", "hard"];
@@ -25,6 +25,9 @@ export const BOSS_ZONES: Readonly<Record<BossId, string>> = {
 
 // Seconds an unlock notice shows.
 export const ACHIEVEMENT_NOTICE_SECONDS = 3;
+
+// The unlock notice's icon side in the shared dialogue panel.
+export const ACHIEVEMENT_NOTICE_SIDE: DialogueSpeaker["side"] = "right";
 
 // The catalogue, in its rules order. The card sorts it by tier, keeping this order within each.
 export const ACHIEVEMENTS: readonly ChibiAchievement[] = [

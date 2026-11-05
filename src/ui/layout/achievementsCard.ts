@@ -192,24 +192,3 @@ export function achievementsCardLayout(
     title: layout.title!,
   };
 }
-
-// The unlock notice in the bark panel: the icon at twice its size and the notice's line, centred
-// down the panel together.
-export function achievementNoticeLayout(panel: Rect, fonts: CardFonts, text: string) {
-  const icon = 2 * ACHIEVEMENT_ICON_SIZE;
-  const size = cardTextSize(fonts.title, text);
-  const width = icon + ICON_GAP + size.width;
-  if (width > panel.width - 2 * CARD_CONTENT.padding) {
-    throw new Error(`The achievement notice does not fit: ${text}`);
-  }
-  const x = panel.x + (panel.width - width) / 2;
-  return {
-    icon: { x, y: panel.y + (panel.height - icon) / 2 },
-    iconScale: 2,
-    text: {
-      ...size,
-      x: x + icon + ICON_GAP,
-      y: panel.y + (panel.height - size.height) / 2,
-    },
-  };
-}

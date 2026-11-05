@@ -22,19 +22,90 @@ import {
   TITLE_FONT,
 } from "./cardParts";
 
+const PORTRAIT_SIZE = 64;
+
+// A panel paragraph: the portrait may name one frame of its texture, drawn scaled to fill the
+// portrait; a null name draws no name tab; a heading is a bold first text line above the body.
+export type PanelParagraph = Omit<DialogueParagraph, "colour" | "name"> & {
+  readonly heading?: string;
+  readonly portraitFrame?: string | number;
+} & (Pick<DialogueParagraph, "colour" | "name"> | { readonly name: null });
+
+// The speaker's portrait, name tab and text, drawn above the shared panel from drawDialoguePanel.
 export function drawDialogueParagraph(
   scene: Scene,
-  paragraph: DialogueParagraph,
+  paragraph: PanelParagraph,
 ): GameObjects.GameObject[] {
   if (paragraph.portrait !== null && !scene.textures.exists(paragraph.portrait)) {
     throw new Error(`Missing dialogue portrait ${paragraph.portrait}`);
   }
   const layout = dialogueSpeakerLayout(paragraph.side);
   const text = DIALOGUE_SCREEN.text;
-  const nameFont = phaserBitmapFont(scene.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
-  const tab = dialogueNameTab(paragraph.side, inkWidth(nameFont, text.scale, paragraph.name));
+  const titleFont = phaserBitmapFont(scene.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
+  const heading = paragraph.heading;
+  if (heading !== undefined && inkWidth(titleFont, text.scale, heading) > text.width) {
+    throw new Error(`Dialogue heading does not fit: ${heading}`);
+  }
+  const bodyY = heading === undefined ? text.y : text.y + text.pitch;
+  const body = dialogueLines(
+    phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData),
+    { ...text, lines: heading === undefined ? text.lines : text.lines - 1 },
+    text.width,
+    paragraph.text,
+  );
+  return [
+    scene.add
+      .image(layout.portraitFrame.x, layout.portraitFrame.y, "ui-portrait-frame")
+      .setOrigin(0),
+    paragraph.portrait === null
+      ? scene.add
+          .rectangle(
+            layout.portrait.x,
+            layout.portrait.y,
+            PORTRAIT_SIZE,
+            PORTRAIT_SIZE,
+            paletteColour(scene, "dslate"),
+          )
+          .setOrigin(0)
+      : scene.add
+          .image(layout.portrait.x, layout.portrait.y, paragraph.portrait, paragraph.portraitFrame)
+          .setOrigin(0)
+          .setDisplaySize(PORTRAIT_SIZE, PORTRAIT_SIZE),
+    ...(paragraph.name === null ? [] : drawNameTab(scene, titleFont, paragraph)),
+    ...(heading === undefined
+      ? []
+      : [
+          addCardText(
+            scene,
+            TITLE_FONT,
+            { x: layout.textX, y: text.y },
+            heading,
+            paletteColour(scene, "cream"),
+          ),
+        ]),
+    ...body.map((line, index) =>
+      addCardText(
+        scene,
+        BODY_FONT,
+        { x: layout.textX, y: bodyY + index * text.pitch },
+        line,
+        paletteColour(scene, "cream"),
+      ),
+    ),
+  ];
+}
+
+function drawNameTab(
+  scene: Scene,
+  font: ReturnType<typeof phaserBitmapFont>,
+  paragraph: Pick<DialogueParagraph, "colour" | "name" | "side">,
+): GameObjects.GameObject[] {
+  const { name } = paragraph;
+  const layout = dialogueSpeakerLayout(paragraph.side);
+  const text = DIALOGUE_SCREEN.text;
+  const tab = dialogueNameTab(paragraph.side, inkWidth(font, text.scale, name));
   if (tab.x + tab.width > layout.textX + text.width) {
-    throw new Error(`Dialogue speaker name does not fit: ${paragraph.name}`);
+    throw new Error(`Dialogue speaker name does not fit: ${name}`);
   }
   const frame = sheetTags(scene.cache.json.get("ui-name-tab") as AsepriteSheet).get(
     paragraph.colour,
@@ -43,35 +114,13 @@ export function drawDialogueParagraph(
     throw new Error(`Missing dialogue name-tab colour ${paragraph.colour}`);
   }
   return [
-    scene.add
-      .image(layout.portraitFrame.x, layout.portraitFrame.y, "ui-portrait-frame")
-      .setOrigin(0),
-    paragraph.portrait === null
-      ? scene.add
-          .rectangle(layout.portrait.x, layout.portrait.y, 64, 64, paletteColour(scene, "dslate"))
-          .setOrigin(0)
-      : scene.add.image(layout.portrait.x, layout.portrait.y, paragraph.portrait).setOrigin(0),
     addSlice(scene, "ui-name-tab", tab, frame),
     addCardTextIn(
       scene,
       TITLE_FONT,
       { ...tab, width: tab.width - 12, x: tab.x + 6 },
-      paragraph.name,
+      name,
       paletteColour(scene, "ink"),
-    ),
-    ...dialogueLines(
-      phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData),
-      text,
-      text.width,
-      paragraph.text,
-    ).map((line, index) =>
-      addCardText(
-        scene,
-        BODY_FONT,
-        { x: layout.textX, y: text.y + index * text.pitch },
-        line,
-        paletteColour(scene, "cream"),
-      ),
     ),
   ];
 }
