@@ -15,6 +15,7 @@ const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
 const DOG_PATROL_PAUSE = 0.14;
 const DOG_PATROL_SPEED = 4.6875;
+const FERRET_THROW_PAUSE_SECONDS = 1;
 const FRUSTRATION_SECONDS = 0.55;
 const GOOSE_PATROL_SPEED = 3.125;
 const GROUND_PURSUIT_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
@@ -26,6 +27,8 @@ const RACCOON_RETURN_SPEED = 4.6875;
 
 export const ATTACK_ANTICIPATION_SECONDS = 0.6;
 const ATTACK_COOLDOWN_SECONDS = 2.5;
+// After the second consecutive cancelled tell, pursuit continues with no new tell for 1.5 s.
+const TELL_CANCEL_PAUSE = { cancels: 2, seconds: 1.5 } as const;
 // Every boss's removal after its death.
 export const BOSS_REMOVAL_SECONDS = 0.5;
 const GROWL_TELL_SECONDS = 1;
@@ -117,7 +120,28 @@ interface AttackSequence {
   readonly committed: readonly string[];
   readonly finished: readonly { readonly from: string; readonly to: string }[];
   readonly id: string;
+  // Continuing tells inside the committed sequence, entered without attack-ready.
+  readonly retells?: Readonly<Record<string, number>>;
   readonly tells: Readonly<Record<string, number>>;
+}
+
+function tellNode(
+  attack: NonNullable<BehaviourNode["attack"]>,
+  node: BehaviourNode,
+  seconds: number,
+): BehaviourNode {
+  return {
+    ...node,
+    allowIdleReposition: false,
+    animation: ANTICIPATION_ANIMATION,
+    attack,
+    transitions: node.transitions.map((transition) => ({
+      ...transition,
+      when: transition.when.map((condition) =>
+        condition.kind === "elapsed" ? { ...condition, seconds } : condition,
+      ),
+    })),
+  };
 }
 
 const ANTICIPATION_ANIMATION = "anticipate-lift";
@@ -127,19 +151,14 @@ function attackProfile(plan: BehaviourPlan, sequences: readonly AttackSequence[]
   const tells = new Set(sequences.flatMap(({ tells }) => Object.keys(tells)));
   for (const sequence of sequences) {
     for (const [key, seconds] of Object.entries(sequence.tells)) {
-      const node = states[key]!;
-      states[key] = {
-        ...node,
-        allowIdleReposition: false,
-        animation: ANTICIPATION_ANIMATION,
-        attack: { id: sequence.id, phase: "tell" },
-        transitions: node.transitions.map((transition) => ({
-          ...transition,
-          when: transition.when.map((condition) =>
-            condition.kind === "elapsed" ? { ...condition, seconds } : condition,
-          ),
-        })),
-      };
+      states[key] = tellNode({ id: sequence.id, phase: "tell" }, states[key]!, seconds);
+    }
+    for (const [key, seconds] of Object.entries(sequence.retells ?? {})) {
+      states[key] = tellNode(
+        { continues: true, id: sequence.id, phase: "tell" },
+        states[key]!,
+        seconds,
+      );
     }
     for (const key of sequence.committed) {
       states[key] = {
@@ -176,7 +195,12 @@ function attackProfile(plan: BehaviourPlan, sequences: readonly AttackSequence[]
       ),
     };
   }
-  return { ...plan, attackCooldownSeconds: ATTACK_COOLDOWN_SECONDS, states };
+  return {
+    ...plan,
+    attackCooldownSeconds: ATTACK_COOLDOWN_SECONDS,
+    states,
+    tellCancelPause: TELL_CANCEL_PAUSE,
+  };
 }
 
 function escapeTransition(to: string): BehaviourTransition {
@@ -537,10 +561,13 @@ const FERRET_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
         transitions: [{ to: "throw-rest", when: [{ kind: "elapsed", seconds: 0.14 }] }],
       },
+      // Fert stands still after each throw, inside the committed throw; cooldown follows.
       "throw-rest": {
         animation: "rest",
         motion: { kind: "wait" },
-        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.3 }] }],
+        transitions: [
+          { to: "pursuit", when: [{ kind: "elapsed", seconds: FERRET_THROW_PAUSE_SECONDS }] },
+        ],
       },
     },
     takeoffAnimation: ANTICIPATION_ANIMATION,
@@ -642,8 +669,31 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
 export const GOOSE_BEHAVIOUR = withPursuitIntent(GOOSE_ATTACK_PROFILE, ["pursuit", "pursuit-trap"]);
 
 const KIWI_DROP_ALIGNMENT = 1;
+// The re-aimed tell before Kiwi's second charge: the minimum reaction time.
+const KIWI_RETELL_SECONDS = 0.6;
+// She skips the second charge with less ground than this ahead toward Chibi.
+const KIWI_SECOND_CHARGE_ROOM = 3;
+const RACCOON_RUSH = { seconds: 0.48, speed: 25 } as const;
 const RACCOON_CLIMB_CLEAR = { kind: "track-clear", state: "climb" } as const;
 const RACCOON_GROUND_TRACK = { axis: "x", distance: -12 } as const;
+
+// A rush that ends in rest, or first in a re-tell when there is room for a second rush.
+function raccoonRush(rest: string, retell?: string): BehaviourNode {
+  const room = { distance: KIWI_SECOND_CHARGE_ROOM, kind: "track-room" } as const;
+  const ends = [
+    [{ kind: "boundary" }],
+    [{ kind: "elapsed", seconds: RACCOON_RUSH.seconds }],
+  ] as const;
+  return {
+    animation: "rush",
+    motion: { direction: "facing", kind: "move", speed: RACCOON_RUSH.speed },
+    track: RACCOON_GROUND_TRACK,
+    transitions: ends.flatMap((end) => [
+      ...(retell ? [{ to: retell, when: [...end, room] }] : []),
+      { to: rest, when: [...end] },
+    ]),
+  };
+}
 
 const RACCOON_VERTICAL_STATES = verticalDropStates({
   dropSpeed: 18.75,
@@ -735,6 +785,21 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
           },
         ],
       },
+      // Kiwi charges twice: the second rush follows its own re-aimed tell.
+      recharge: {
+        animation: "prepare",
+        enter: "face-target",
+        motion: { kind: "wait" },
+        track: RACCOON_GROUND_TRACK,
+        transitions: [
+          escapeTransition("pursuit"),
+          {
+            to: "frustration-ground",
+            when: [{ kind: "elapsed", seconds: KIWI_RETELL_SECONDS }, ...LOST_TARGET],
+          },
+          { to: "rush-second", when: [{ kind: "elapsed", seconds: KIWI_RETELL_SECONDS }] },
+        ],
+      },
       rest: {
         animation: "rest",
         motion: { kind: "wait" },
@@ -760,15 +825,8 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
           { to: "pursuit", when: [{ kind: "boundary" }] },
         ],
       },
-      rush: {
-        animation: "rush",
-        motion: { direction: "facing", kind: "move", speed: 25 },
-        track: RACCOON_GROUND_TRACK,
-        transitions: [
-          { to: "charge-rest", when: [{ kind: "boundary" }] },
-          { to: "charge-rest", when: [{ kind: "elapsed", seconds: 0.48 }] },
-        ],
-      },
+      rush: raccoonRush("charge-rest", "recharge"),
+      "rush-second": raccoonRush("charge-rest"),
       watch: {
         allowIdleReposition: true,
         animation: "idle",
@@ -781,12 +839,15 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   },
   [
     {
-      committed: ["rush", "charge-rest", "return-ground", "frustration-return"],
+      committed: ["rush", "rush-second", "charge-rest", "return-ground", "frustration-return"],
       finished: [
         { from: "return-ground", to: "pursuit-drop" },
         { from: "return-ground", to: "pursuit" },
+        { from: "recharge", to: "pursuit" },
+        { from: "recharge", to: "frustration-ground" },
       ],
       id: "charge",
+      retells: { recharge: KIWI_RETELL_SECONDS },
       tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
     },
     {

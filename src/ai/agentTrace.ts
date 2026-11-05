@@ -11,8 +11,10 @@ interface TraceBody {
   readonly width: number;
 }
 
-// One attack sequence: its warning tell, then its committed action and recovery.
+// One attack sequence: its warning tell, then its committed action and recovery. A continuing
+// tell re-tells inside the committed sequence.
 export interface TraceAttack {
+  readonly continues?: true;
   readonly id: string;
   readonly phase: "committed" | "tell";
 }
@@ -32,6 +34,8 @@ export interface AgentSample extends TraceBody {
   // Ordinary support contact at the end of the tick: a clear body whose feet rest on a present
   // support under part of its hitbox.
   readonly supported: boolean;
+  // The pause after consecutive cancelled tells, while no tell may start.
+  readonly tellPauseSeconds?: number;
 }
 
 interface TargetSample extends TraceBody {

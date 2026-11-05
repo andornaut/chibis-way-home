@@ -12,7 +12,9 @@ import {
   type Property,
   singleCommittedAttack,
   tellBounded,
+  tellCancelPause,
   tellPrecedesCommit,
+  tellResolves,
   tellStarts,
   travelBounded,
 } from "../ai/agentProperties";
@@ -67,14 +69,14 @@ const elapsedSeconds = (plan: BehaviourPlan, from: string, to: (key: string) => 
       : [],
   );
 
-// The shortest authored tell before an attack's committed state.
-export function minimumTellSeconds(plan: BehaviourPlan, id: string): number {
+// The shortest authored tell, or continuing tell, before an attack's committed state.
+export function minimumTellSeconds(plan: BehaviourPlan, id: string, continues = false): number {
   const committed = new Set(attackStates(plan, id, "committed").map(([key]) => key));
-  const seconds = attackStates(plan, id, "tell").flatMap(([key]) =>
-    elapsedSeconds(plan, key, (to) => committed.has(to)),
-  );
+  const seconds = attackStates(plan, id, "tell")
+    .filter(([, node]) => (node.attack!.continues === true) === continues)
+    .flatMap(([key]) => elapsedSeconds(plan, key, (to) => committed.has(to)));
   if (seconds.length === 0) {
-    throw new Error(`No authored tell before ${id}`);
+    throw new Error(`No authored ${continues ? "continuing " : ""}tell before ${id}`);
   }
   return Math.min(...seconds);
 }
@@ -207,6 +209,179 @@ export function crossesAfterSettle(
   };
 }
 
+// Every hold of an agent kind in a committed state: it stays in place for at least seconds as
+// part of its committed attack, and its cooldown starts when it leaves. A scenario-specific check;
+// the scenario must complete at least one hold.
+export function committedHold(
+  kind: string,
+  state: string,
+  seconds: number,
+  cooldownSeconds: number,
+): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const found: { agent: string; detail: string; tick: number }[] = [];
+      let completed = 0;
+      const starts = new Map<string, { at: AgentSample["at"]; episode: number; tick: number }>();
+      let previous = new Map<string, AgentSample>();
+      for (const tick of ticks) {
+        const current = new Map<string, AgentSample>();
+        for (const agent of tick.agents) {
+          current.set(agent.id, agent);
+          if (agent.kind !== kind) {
+            continue;
+          }
+          const before = previous.get(agent.id);
+          const start = starts.get(agent.id);
+          if (agent.state === state) {
+            if (before?.state !== state || start?.episode !== tick.episode) {
+              starts.set(agent.id, { at: agent.at, episode: tick.episode, tick: tick.tick });
+              continue;
+            }
+            const moved = Math.hypot(agent.at.x - start.at.x, agent.at.y - start.at.y);
+            if (moved > EDGE || agent.attack?.phase !== "committed") {
+              found.push({
+                agent: agent.id,
+                detail: `${state} moved ${moved.toFixed(1)} or left its attack`,
+                tick: tick.tick,
+              });
+              starts.delete(agent.id);
+            }
+            continue;
+          }
+          if (!start || before?.state !== state || start.episode !== tick.episode) {
+            continue;
+          }
+          starts.delete(agent.id);
+          completed++;
+          const longest = (tick.tick - start.tick + 1) * STEP_SECONDS;
+          if (longest + 1e-6 < seconds) {
+            found.push({
+              agent: agent.id,
+              detail: `${state} held at most ${longest.toFixed(3)} s < ${seconds} s`,
+              tick: tick.tick,
+            });
+          }
+          if (
+            agent.attack ||
+            (agent.cooldownSeconds ?? 0) + STEP_SECONDS + 1e-6 < cooldownSeconds
+          ) {
+            found.push({
+              agent: agent.id,
+              detail: `cooldown did not start when ${state} ended`,
+              tick: tick.tick,
+            });
+          }
+        }
+        previous = current;
+      }
+      const last = ticks.at(-1);
+      return completed === 0 && last
+        ? [...found, { agent: kind, detail: `no completed ${state} hold`, tick: last.tick }]
+        : found;
+    },
+    id: `committed-hold ${state}`,
+    rule: `${DESIGN} Apartment building: Encounters`,
+  };
+}
+
+// Every completed stay of an agent kind in a state moves it at least distance pixels
+// horizontally. A scenario-specific check; the scenario must complete at least one stay.
+export function movesAtLeast(kind: string, state: string, distance: number): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const found: { agent: string; detail: string; tick: number }[] = [];
+      let completed = 0;
+      const stays = new Map<string, { episode: number; x: number }>();
+      const before = new Map<string, AgentSample>();
+      for (const tick of ticks) {
+        for (const agent of tick.agents) {
+          if (agent.kind !== kind) {
+            continue;
+          }
+          const previous = before.get(agent.id);
+          before.set(agent.id, agent);
+          const stay = stays.get(agent.id);
+          if (agent.state === state) {
+            if (previous?.state !== state || stay?.episode !== tick.episode) {
+              // Entered during this tick: the previous sample is where the stay began.
+              stays.set(agent.id, { episode: tick.episode, x: (previous ?? agent).at.x });
+            }
+            continue;
+          }
+          if (!stay || previous?.state !== state || stay.episode !== tick.episode) {
+            continue;
+          }
+          stays.delete(agent.id);
+          completed++;
+          const moved = Math.abs(previous.at.x - stay.x);
+          if (moved + EDGE < distance) {
+            found.push({
+              agent: agent.id,
+              detail: `${state} moved ${(moved / TILE).toFixed(2)} tiles`,
+              tick: tick.tick,
+            });
+          }
+        }
+      }
+      const last = ticks.at(-1);
+      return completed === 0 && last
+        ? [...found, { agent: kind, detail: `no completed ${state}`, tick: last.tick }]
+        : found;
+    },
+    id: `moves-at-least ${state}`,
+    rule: `${DESIGN} Kiwi encounter: Cycle`,
+  };
+}
+
+// Every completed tell pause in the trace lasts its seconds, to within a tick. A scenario-specific
+// check; the scenario must complete at least one pause. The tell-cancel-pause property checks
+// that no tell starts inside it.
+export function tellPauseLasts(seconds: number): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const found: { agent: string; detail: string; tick: number }[] = [];
+      let completed = 0;
+      const runs = new Map<string, { episode: number; samples: number }>();
+      for (const tick of ticks) {
+        for (const agent of tick.agents) {
+          const run = runs.get(agent.id);
+          if (agent.tellPauseSeconds !== undefined) {
+            if (run?.episode === tick.episode) {
+              run.samples++;
+            } else {
+              runs.set(agent.id, { episode: tick.episode, samples: 1 });
+            }
+            continue;
+          }
+          if (!run) {
+            continue;
+          }
+          runs.delete(agent.id);
+          if (run.episode !== tick.episode || agent.pursuit === "escaped") {
+            continue;
+          }
+          completed++;
+          const lasted = run.samples * STEP_SECONDS;
+          if (Math.abs(lasted - seconds) > STEP_SECONDS + 1e-6) {
+            found.push({
+              agent: agent.id,
+              detail: `tell pause lasted ${lasted.toFixed(3)} s, not ${seconds} s`,
+              tick: tick.tick,
+            });
+          }
+        }
+      }
+      const last = ticks.at(-1);
+      return completed === 0 && last
+        ? [...found, { agent: "", detail: "no completed tell pause", tick: last.tick }]
+        : found;
+    },
+    id: "tell-pause-lasts",
+    rule: RULES.attackSequencing,
+  };
+}
+
 export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
   const plans = bossPlans(layout);
   const plan = (agent: AgentSample) => plans.get(agent.kind)!;
@@ -228,14 +403,16 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
         box.x < rect.x + rect.width &&
         rect.x < box.x + box.width,
     );
-  // Engaged and ready, with an attack the targeted-attack window does not hold back.
+  // Engaged and ready outside the tell pause, with an attack the targeted-attack window does not
+  // hold back.
   const cadenceEligible =
     (special: boolean) =>
     (tick: BossTick, agent: AgentSample): boolean => {
       if (
         agent.pursuit !== "engaged" ||
         agent.attack !== undefined ||
-        (agent.cooldownSeconds ?? 0) > 0
+        (agent.cooldownSeconds ?? 0) > 0 ||
+        (agent.tellPauseSeconds ?? 0) > 0
       ) {
         return false;
       }
@@ -246,8 +423,8 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       );
     };
   return [
-    tellPrecedesCommit(RULES.attackTells, STEP_SECONDS, (agent, id) =>
-      minimumTellSeconds(plan(agent), id),
+    tellPrecedesCommit(RULES.attackTells, STEP_SECONDS, (agent, id, continues) =>
+      minimumTellSeconds(plan(agent), id, continues),
     ),
     tellBounded(RULES.attackTells, STEP_SECONDS, (agent, id) =>
       maximumTellSeconds(plan(agent), id),
@@ -259,6 +436,8 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       (agent) => plan(agent).attackCooldownSeconds!,
     ),
     cancelledTellKeepsCooldown(RULES.attackSequencing),
+    tellResolves(RULES.attackSequencing),
+    tellCancelPause(RULES.attackSequencing, STEP_SECONDS, (agent) => plan(agent).tellCancelPause),
     noStall(
       RULES.idleRecovery,
       STEP_SECONDS,

@@ -90,7 +90,7 @@ const violation = (step: Step<unknown>, detail: string): Violation => ({
 export function tellPrecedesCommit<World>(
   rule: string,
   stepSeconds: number,
-  minimumSeconds: (agent: AgentSample, attack: string) => number,
+  minimumSeconds: (agent: AgentSample, attack: string, continues: boolean) => number,
 ): Property<AgentTick<World>> {
   return {
     check: (ticks) => {
@@ -118,7 +118,7 @@ export function tellPrecedesCommit<World>(
             return;
           }
           const longest = (index - tellStart + 1) * stepSeconds;
-          const minimum = minimumSeconds(step.agent, attack.id);
+          const minimum = minimumSeconds(step.agent, attack.id, previous.attack.continues === true);
           if (longest + EPSILON < minimum) {
             found.push(
               violation(step, `${attack.id} tell at most ${longest.toFixed(3)} s < ${minimum} s`),
@@ -172,7 +172,8 @@ export function tellBounded<World>(
   };
 }
 
-// While an attack is committed no other attack starts, and it ends only at its completion.
+// While an attack is committed no other attack starts, and it ends only at its completion. Its
+// own continuing tell stays inside it.
 export function singleCommittedAttack<World>(rule: string): Property<AgentTick<World>> {
   return {
     check: (ticks) => {
@@ -180,7 +181,8 @@ export function singleCommittedAttack<World>(rule: string): Property<AgentTick<W
       eachPair(ticks, (previous, current) => {
         const held = previous.agent.attack;
         const next = current.agent.attack;
-        if (held?.phase === "committed" && next && !sameAttack(held, next)) {
+        const retell = next?.continues === true && next.id === held?.id;
+        if (held?.phase === "committed" && next && !sameAttack(held, next) && !retell) {
           found.push(violation(current, `${next.id} ${next.phase} during committed ${held.id}`));
         }
       });
@@ -205,7 +207,10 @@ export function cooldownHonoured<World>(
         run.forEach((step, index) => {
           const previous = run[index - 1]?.agent;
           const cooldown = cooldownSeconds(step.agent);
-          if (previous?.attack?.phase === "committed" && !step.agent.attack) {
+          if (
+            (previous?.attack?.phase === "committed" || previous?.attack?.continues) &&
+            !step.agent.attack
+          ) {
             completed = index;
             if ((step.agent.cooldownSeconds ?? 0) + stepSeconds + EPSILON < cooldown) {
               found.push(
@@ -234,7 +239,8 @@ export function cooldownHonoured<World>(
   };
 }
 
-// A tell cancelled before commitment does not restart the cooldown.
+// A tell cancelled before commitment does not restart the cooldown. A continuing tell is inside
+// its committed attack, so it never cancels.
 export function cancelledTellKeepsCooldown<World>(rule: string): Property<AgentTick<World>> {
   return {
     check: (ticks) => {
@@ -246,7 +252,12 @@ export function cancelledTellKeepsCooldown<World>(rule: string): Property<AgentT
           if (tellStarts(previous, step.agent)) {
             before = previous?.cooldownSeconds ?? 0;
           }
-          if (previous?.attack?.phase === "tell" && !step.agent.attack && before !== undefined) {
+          if (
+            previous?.attack?.phase === "tell" &&
+            !previous.attack.continues &&
+            !step.agent.attack &&
+            before !== undefined
+          ) {
             const after = step.agent.cooldownSeconds ?? 0;
             if (after > before + EPSILON) {
               found.push(
@@ -259,6 +270,93 @@ export function cancelledTellKeepsCooldown<World>(rule: string): Property<AgentT
       return found;
     },
     id: "cancelled-tell-keeps-cooldown",
+    rule,
+  };
+}
+
+// A tell ends in its own committed attack, its own continued tell or a cancel, never in another
+// attack's action: there are no feints. A cancel and a new tell can share a tick.
+export function tellResolves<World>(rule: string): Property<AgentTick<World>> {
+  return {
+    check: (ticks) => {
+      const found: Violation[] = [];
+      eachPair(ticks, (previous, current) => {
+        const tell = previous.agent.attack;
+        const next = current.agent.attack;
+        if (
+          tell?.phase === "tell" &&
+          next &&
+          next.id !== tell.id &&
+          (next.phase === "committed" || next.continues)
+        ) {
+          found.push(violation(current, `${tell.id} tell became ${next.id} ${next.phase}`));
+        }
+      });
+      return found;
+    },
+    id: "tell-resolves",
+    rule,
+  };
+}
+
+// After `cancels` consecutive cancelled tells, no tell starts for `seconds`. A cancel is a tell
+// that ends, without a new cooldown, in no attack or in another attack's tell. A commit or an
+// escape resets the count, and so does the pause.
+export function tellCancelPause<World>(
+  rule: string,
+  stepSeconds: number,
+  pause: (agent: AgentSample) => { readonly cancels: number; readonly seconds: number } | undefined,
+): Property<AgentTick<World>> {
+  return {
+    check: (ticks) => {
+      const found: Violation[] = [];
+      for (const run of agentRuns(ticks)) {
+        let cancels = 0;
+        let paused: number | undefined;
+        run.forEach((step, index) => {
+          const limits = pause(step.agent);
+          const previous = run[index - 1]?.agent;
+          const { agent } = step;
+          if (!limits) {
+            return;
+          }
+          // The longest the pause can have run by the end of this tick.
+          const longest = (from: number) => (index - from + 1) * stepSeconds;
+          if (paused !== undefined && longest(paused) >= limits.seconds - EPSILON) {
+            paused = undefined;
+          }
+          if (agent.pursuit === "escaped") {
+            cancels = 0;
+            paused = undefined;
+            return;
+          }
+          if (agent.attack?.phase === "committed") {
+            cancels = 0;
+          }
+          const tell = previous?.attack?.phase === "tell" ? previous.attack : undefined;
+          const cancelled =
+            tell !== undefined &&
+            !tell.continues &&
+            (!agent.attack || (agent.attack.phase === "tell" && agent.attack.id !== tell.id)) &&
+            (agent.cooldownSeconds ?? 0) <= (previous!.cooldownSeconds ?? 0) + EPSILON;
+          if (cancelled && ++cancels >= limits.cancels) {
+            cancels = 0;
+            paused = index;
+          }
+          if (tellStarts(previous, agent) && !agent.attack!.continues && paused !== undefined) {
+            found.push(
+              violation(
+                step,
+                `${agent.attack!.id} tell at most ${longest(paused).toFixed(3)} s into the pause`,
+              ),
+            );
+            paused = undefined;
+          }
+        });
+      }
+      return found;
+    },
+    id: "tell-cancel-pause",
     rule,
   };
 }

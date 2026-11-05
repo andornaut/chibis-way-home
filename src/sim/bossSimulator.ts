@@ -139,6 +139,9 @@ export function bossSample(
         ...(state.pursuit && { pursuit: state.pursuit.phase }),
         state: state.stateKey,
         supported: supportContact(object, world, at),
+        ...(state.tellPauseRemainingSeconds !== undefined && {
+          tellPauseSeconds: state.tellPauseRemainingSeconds,
+        }),
         width: object.width,
       },
     ];
@@ -305,7 +308,14 @@ export function simulateBosses(tuning: BirdTuning, scenario: BossScenario) {
 // What a scenario must exercise for its properties to mean anything.
 // limited-move: a state whose move has a distance, such as Trixi's slide.
 export type BossCoverage =
-  "attack" | "boss-death" | "boss-on-crumbling" | "deferred-window" | "limited-move" | "tell";
+  | "attack"
+  | "boss-death"
+  | "boss-on-crumbling"
+  | "deferred-window"
+  | "limited-move"
+  | "retell"
+  | "tell"
+  | "tell-pause";
 
 export function observedCoverage(
   layout: ZoneLayout,
@@ -313,9 +323,15 @@ export function observedCoverage(
 ): ReadonlySet<BossCoverage> {
   const seen = new Set<BossCoverage>();
   for (const { agents, world } of ticks) {
-    for (const { attack, id, state } of agents) {
+    for (const { attack, id, state, tellPauseSeconds } of agents) {
       if (attack) {
         seen.add(attack.phase === "tell" ? "tell" : "attack");
+      }
+      if (attack?.continues) {
+        seen.add("retell");
+      }
+      if (tellPauseSeconds !== undefined) {
+        seen.add("tell-pause");
       }
       const [area, index] = id.split(":");
       const { motion } = nodeOf(layout.areas[area!]!.objects[Number(index)]!, state);

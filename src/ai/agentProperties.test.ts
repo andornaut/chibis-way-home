@@ -6,7 +6,10 @@ import {
   escapeAtDistance,
   noStall,
   type Property,
+  singleCommittedAttack,
+  tellCancelPause,
   tellPrecedesCommit,
+  tellResolves,
   travelBounded,
 } from "./agentProperties";
 import type { AgentSample, AgentTick, TraceAttack } from "./agentTrace";
@@ -127,4 +130,59 @@ it.each([
     ...xs.map((x) => agent(x, undefined, { facing, state: "slide" })),
   ];
   expect(ticksOf(property, trace(samples)).map((tick) => tick - 1)).toEqual(flagged);
+});
+
+const OTHER_TELL: TraceAttack = { id: "pounce", phase: "tell" };
+const RETELL: TraceAttack = { continues: true, id: "charge", phase: "tell" };
+type Sample = TraceAttack | "escaped" | "cooldown" | undefined;
+const samplesOf = (attacks: readonly Sample[]) =>
+  attacks.map((attack) =>
+    attack === "escaped"
+      ? agent(0, undefined, { pursuit: "escaped" })
+      : attack === "cooldown"
+        ? agent(0, undefined, { cooldownSeconds: 2.5 })
+        : agent(0, attack),
+  );
+
+it.each([
+  [
+    "a tell after the pause",
+    [undefined, TELL, undefined, TELL, undefined, undefined, undefined, TELL],
+    [],
+  ],
+  ["a tell inside the pause", [undefined, TELL, undefined, TELL, undefined, undefined, TELL], [6]],
+  [
+    "a commit between cancels",
+    [undefined, TELL, undefined, TELL, COMMITTED, "cooldown", TELL, undefined, TELL],
+    [],
+  ],
+  [
+    "an escape between cancels",
+    [undefined, TELL, undefined, "escaped", undefined, TELL, undefined, TELL],
+    [],
+  ],
+  ["a cancel into another tell", [undefined, TELL, undefined, TELL, OTHER_TELL], [4]],
+  [
+    "a continuing tell that ends",
+    [undefined, TELL, COMMITTED, RETELL, undefined, TELL, undefined, TELL],
+    [],
+  ],
+] as const)("tell cancel pause: %s", (_, attacks, flagged) => {
+  const property = tellCancelPause("rule", STEP, () => ({ cancels: 2, seconds: 1 }));
+  expect(ticksOf(property, trace(samplesOf(attacks)))).toEqual(flagged);
+});
+
+it.each([
+  ["its own commit", [TELL, COMMITTED], []],
+  ["a cancel and another tell in one tick", [TELL, OTHER_TELL], []],
+  ["another attack's action", [TELL, { id: "pounce", phase: "committed" }], [1]],
+] as const)("tell resolves: %s", (_, attacks, flagged) => {
+  expect(ticksOf(tellResolves("rule"), trace(samplesOf(attacks)))).toEqual(flagged);
+});
+
+it.each([
+  ["its own continuing tell", [TELL, COMMITTED, RETELL, COMMITTED], []],
+  ["a fresh tell", [TELL, COMMITTED, TELL], [2]],
+] as const)("single committed attack through %s", (_, attacks, flagged) => {
+  expect(ticksOf(singleCommittedAttack("rule"), trace(samplesOf(attacks)))).toEqual(flagged);
 });

@@ -29,6 +29,7 @@ import {
   attackReady,
   type BehaviourAttackState,
   canEnterAttack,
+  clearTellCancels,
   enterAttack,
 } from "./behaviourAttack";
 import { alignmentBlocked, flightDestination } from "./behaviourFlight";
@@ -162,6 +163,16 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   if (plan.attackCooldownSeconds !== undefined && !valid(plan.attackCooldownSeconds)) {
     throw new Error("Invalid attack cooldown");
   }
+  const tellPause = plan.tellCancelPause;
+  if (
+    tellPause &&
+    (plan.attackCooldownSeconds === undefined ||
+      !Number.isSafeInteger(tellPause.cancels) ||
+      tellPause.cancels <= 0 ||
+      !valid(tellPause.seconds))
+  ) {
+    throw new Error("Invalid tell cancel pause");
+  }
   const watchdog = plan.idleWatchdog;
   if (
     watchdog &&
@@ -217,17 +228,42 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         node.attack &&
         (plan.attackCooldownSeconds === undefined ||
           !node.attack.id ||
-          !["tell", "committed", "completed"].includes(node.attack.phase))
+          !["tell", "committed", "completed"].includes(node.attack.phase) ||
+          (node.attack.continues && node.attack.phase !== "tell"))
       ) {
         throw new Error(`Invalid attack phase in ${key}`);
       }
       for (const transition of node.transitions) {
         const target = plan.states[transition.to]?.attack;
+        const sameAttack = target !== undefined && target.id === node.attack?.id;
         if (
           node.attack?.phase === "committed" &&
-          (!target || target.id !== node.attack.id || target.phase === "tell")
+          (!sameAttack || (target.phase === "tell" && !target.continues))
         ) {
           throw new Error(`Committed attack requires a completed boundary in ${key}`);
+        }
+        // No feints: a tell commits its own attack or cancels.
+        if (
+          node.attack?.phase === "tell" &&
+          !node.attack.continues &&
+          target &&
+          (!sameAttack || target.phase === "completed" || target.continues)
+        ) {
+          throw new Error(`Tell must commit its attack or cancel in ${key}`);
+        }
+        if (
+          node.attack?.continues &&
+          (!sameAttack || (target.phase === "tell" && !target.continues))
+        ) {
+          throw new Error(`Continuing tell requires its committed attack or completion in ${key}`);
+        }
+        if (
+          target?.continues &&
+          (!sameAttack ||
+            node.attack!.phase === "completed" ||
+            (node.attack!.phase === "tell" && !node.attack!.continues))
+        ) {
+          throw new Error(`Continuing tell requires its committed attack in ${key}`);
         }
         if (
           target?.phase === "committed" &&
@@ -436,6 +472,15 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
               throw new Error(`Invalid flight approach direction in ${key}`);
             }
             return condition;
+          }
+          if (condition.kind === "track-room") {
+            if (
+              (node.motion.kind !== "move" && node.motion.kind !== "hop") ||
+              !valid(condition.distance)
+            ) {
+              throw new Error(`Invalid track room in ${key}`);
+            }
+            return { ...condition, distance: condition.distance * tile };
           }
           if (condition.kind === "horizontal-gap") {
             if (
@@ -775,6 +820,19 @@ function matches(
   }
   if (condition.kind === "flight-approach-direction") {
     return state.flightApproachDirection === condition.direction;
+  }
+  if (condition.kind === "track-room") {
+    const axis = state.axis ?? object.behaviour?.axis ?? "x";
+    const size = axis === "x" ? "width" : "height";
+    const mine = at[axis] + object[size] / 2;
+    const theirs = bird[axis] + tuning[size] / 2;
+    const heading = theirs < mine ? -1 : 1;
+    const turned: BehaviourState = { ...state, facing: heading };
+    const end = trackEndpoint(object, heading, turned);
+    return (
+      Math.abs(trackReach(object, world, at, turned, heading, end) - at[axis]) >=
+      condition.distance - EDGE
+    );
   }
   if (condition.kind === "horizontal-gap") {
     const body = horizontalBodyBounds(object, at, state);
@@ -1466,6 +1524,9 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
   if ((next.attackCooldownRemainingSeconds ?? 0) > 0) {
     slice = Math.min(slice, next.attackCooldownRemainingSeconds!);
   }
+  if ((next.tellPauseRemainingSeconds ?? 0) > 0) {
+    slice = Math.min(slice, next.tellPauseRemainingSeconds!);
+  }
   for (const { when } of settling ? [] : node.transitions) {
     if (
       when.every(
@@ -1772,10 +1833,11 @@ export function advanceBehaviour(
   const instant = new Set<string>();
   const current = at;
   let next = updatePursuit(perception, object, seconds, at, state);
-  const escaped =
-    state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped"
-      ? plan.pursuit?.escaped
-      : undefined;
+  const escapedNow = state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped";
+  const escaped = escapedNow ? plan.pursuit?.escaped : undefined;
+  if (escapedNow) {
+    next = clearTellCancels(next);
+  }
   if (next.traversal?.preparation && next.pursuit?.phase !== "engaged") {
     const withoutPreparation = { ...next };
     delete (withoutPreparation as { traversal?: BehaviourTraversalState }).traversal;

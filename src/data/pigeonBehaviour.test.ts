@@ -234,7 +234,11 @@ it.each([
         expect(Math.max(...durations)).toBeLessThanOrEqual(1);
       }
       for (const transition of node.transitions) {
-        if (plan.states[transition.to]!.attack?.phase === "tell") {
+        const target = plan.states[transition.to]!.attack;
+        // A continuing tell is entered only from its own committed attack, never as a fresh tell.
+        if (target?.phase === "tell" && target.continues) {
+          expect(node.attack).toEqual({ id: target.id, phase: "committed" });
+        } else if (target?.phase === "tell") {
           expect(transition.when).toContainEqual({ kind: "attack-ready" });
         }
       }

@@ -1,10 +1,17 @@
 import type { Property } from "../ai/agentProperties";
 import { STEP_SECONDS } from "../core";
+import { DOG_BEHAVIOUR } from "../data/behaviours";
+import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
 import type { ObjectLayout, ZoneLayout } from "../data/types";
 import { startBird } from "../rules/bird";
 import type { ZoneInput } from "../rules/zone";
-import { crossesAfterSettle } from "../sim/bossProperties";
+import {
+  committedHold,
+  crossesAfterSettle,
+  movesAtLeast,
+  tellPauseLasts,
+} from "../sim/bossProperties";
 import {
   type BossController,
   type BossCoverage,
@@ -154,6 +161,80 @@ const CRUMBLING_ARCHIE: BossScenario = {
   ticks: ENCOUNTER_TICKS,
 };
 
+// Tell cap: Archie starts in his pounce chase on the open floor behind Chibi. Chibi stands until
+// Archie tells, then runs on, hopping the floor steps, until that tell and any tell pause end.
+// Every pounce tell ends with Chibi beyond the pounce range, so it cancels, and the second cancel
+// starts the pause. A synthetic placement.
+const DODGE_CHUNKS = ["low-central-crossing", "broad-mesa"];
+
+function pounceDodger(layout: ZoneLayout): BossController {
+  const index = layout.areas.main!.objects.findIndex(
+    ({ character }) => character === "dog-antagonist",
+  );
+  const archie = layout.areas.main!.objects[index]!;
+  return (tick, zone) => {
+    const state = zone.behaviours[index];
+    const at = zone.objects[index] ?? archie.origin;
+    const gap = zone.bird.x + ORDINARY.width / 2 - (at.x + archie.width / 2);
+    const run =
+      state?.activeAttack?.phase === "tell" || (state?.tellPauseRemainingSeconds ?? 0) > 0;
+    return {
+      jumpHeld: run && tick % 60 < 30,
+      move: run ? (gap < 0 ? -1 : 1) : 0,
+      useHeld: false,
+    };
+  };
+}
+
+const TELL_CAP_ARCHIE: BossScenario = {
+  controller: (_, layout) => pounceDodger(layout),
+  layout: () =>
+    chunksLayout(
+      "city-streets",
+      DODGE_CHUNKS,
+      withInstances("low-central-crossing", [
+        {
+          behaviour: { ...DOG_BEHAVIOUR, initial: "pursuit-pounce" },
+          character: "dog-antagonist",
+          col: 38,
+          role: "antagonist",
+          row: 46,
+        },
+      ]),
+    ),
+  name: "tell cap archie pounce dodge",
+  seed: 1,
+  start: (_, zone) => ({
+    ...zone,
+    bird: startBird(ORDINARY, { x: 54 * TILE, y: 50 * TILE - ORDINARY.height }),
+  }),
+  ticks: 720,
+};
+
+// Kiwi's second charge: Chibi steps behind Kiwi during her first rush and back to the entry
+// during the re-aimed tell, so she turns with her whole track ahead and rushes again. Placements
+// stand Chibi on Kiwi's floor. A synthetic placement.
+const KIWI_BEHIND = { back: 150, behind: 110, col: 22 } as const;
+
+function kiwiBehind(): BossScenario {
+  const base = encounter("vertical-stack-early", "city-outskirts", "still");
+  const kiwi = base
+    .layout()
+    .areas.main!.objects.find(({ character }) => character === "raccoon-antagonist")!;
+  const top = kiwi.origin.y + kiwi.height - ORDINARY.height;
+  return {
+    ...base,
+    name: "kiwi second charge behind her",
+    place: (tick) =>
+      tick === KIWI_BEHIND.behind
+        ? { x: KIWI_BEHIND.col * TILE, y: top }
+        : tick === KIWI_BEHIND.back
+          ? { x: 3 * TILE, y: top }
+          : undefined,
+    ticks: 600,
+  };
+}
+
 // Give-up, return and rearm: Chibi engages a boss beside cover it can jump, is placed at col 140
 // (beyond the escape distance) so the boss gives up where it is, and is then placed past the
 // cover. Both cover blocks in the patrol and growl yards rise six rows, within every ground
@@ -206,6 +287,24 @@ const rearmChecks = (edgeCol: number) => (): readonly Property<BossTick>[] => [
   crossesAfterSettle(edgeCol * TILE, REARM_SECONDS, REARM_STAND_TICK),
 ];
 
+// Apartment building: after each parcel throw Fert stands still for 1 s inside the committed
+// throw, and the attack cooldown begins after the pause.
+const FERT_THROW_PAUSE_SECONDS = 1;
+const fertChecks = (): readonly Property<BossTick>[] => [
+  committedHold(
+    "ferret-antagonist",
+    "throw-rest",
+    FERT_THROW_PAUSE_SECONDS,
+    CHARACTERS["ferret-antagonist"]!.behaviour!.attackCooldownSeconds!,
+  ),
+];
+
+// Kiwi encounter: a re-told second charge has at least 3 tiles of ground ahead, so it moves.
+const KIWI_SECOND_CHARGE_TILES = 3;
+const kiwiChecks = (): readonly Property<BossTick>[] => [
+  movesAtLeast("raccoon-antagonist", "rush-second", KIWI_SECOND_CHARGE_TILES * TILE),
+];
+
 interface BossScenarioGroup {
   readonly boss: string;
   // Scenario-specific checks beyond the boss properties.
@@ -249,6 +348,7 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   },
   {
     boss: "Fert",
+    checks: fertChecks,
     covers: ["tell", "attack"],
     scenario: encounter("city-boundary-climb-yard", "apartment-lobby", "forward"),
     subject: "Fert underpass: crossing forward",
@@ -294,6 +394,21 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     covers: ["tell", "attack"],
     scenario: encounter("vertical-stack-early", "city-outskirts", "still"),
     subject: "Kiwi vertical yard",
+  },
+  {
+    boss: "Archie",
+    // Objects: Attack sequencing: after a second consecutive cancelled tell, 1.5 s with no tell.
+    checks: () => [tellPauseLasts(1.5)],
+    covers: ["tell", "tell-pause"],
+    scenario: TELL_CAP_ARCHIE,
+    subject: "tell cap: two cancelled pounce tells start the no-tell pause",
+  },
+  {
+    boss: "Kiwi",
+    checks: kiwiChecks,
+    covers: ["tell", "attack", "retell"],
+    scenario: kiwiBehind(),
+    subject: "Kiwi's second charge: re-aimed toward Chibi behind her, with room to rush",
   },
   {
     boss: "Bini",

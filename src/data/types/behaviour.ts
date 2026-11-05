@@ -47,6 +47,9 @@ export type BehaviourCondition =
   | { readonly kind: "blocked" }
   // The named track state's travel, entered from here, reaches its endpoint unobstructed.
   | { readonly kind: "track-clear"; readonly state: string }
+  // The current track travel, turned toward Chibi, can advance at least distance tiles before
+  // its end, terrain or the edge of its support stops it.
+  | { readonly kind: "track-room"; readonly distance: number }
   // The inner condition does not hold; its placement rules still apply.
   | { readonly kind: "not"; readonly condition: BehaviourCondition }
   | {
@@ -201,7 +204,9 @@ export interface BehaviourNode {
   // Stationary timed hazards label every state; recovery uses inactive.
   readonly hazardPhase?: HazardPhase;
   // Tell starts one attack; committed includes its recovery; completed begins the actor cooldown.
+  // A continuing tell re-tells inside its committed attack, before a further committed action.
   readonly attack?: {
+    readonly continues?: true;
     readonly id: string;
     readonly phase: "tell" | "committed" | "completed";
   };
@@ -223,6 +228,9 @@ export interface BehaviourNode {
 export interface BehaviourPlan {
   // Seconds between complete attacks, independent of graph-state changes.
   readonly attackCooldownSeconds?: number;
+  // After `cancels` consecutive cancelled tells, no tell starts for `seconds`; this is not
+  // cooldown, and pursuit continues.
+  readonly tellCancelPause?: { readonly cancels: number; readonly seconds: number };
   readonly idleWatchdog?: BehaviourIdleWatchdog;
   readonly groundReposition?: BehaviourGroundReposition;
   readonly pursuit?: {

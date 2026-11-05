@@ -3,7 +3,14 @@ import { expect, it } from "vitest";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourNode, BehaviourPlan } from "../data/types";
 import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import { attackReady, type BehaviourAttackState, enterAttack } from "./behaviourAttack";
+import {
+  advanceAttackClock,
+  attackReady,
+  type BehaviourAttackState,
+  canEnterAttack,
+  clearTellCancels,
+  enterAttack,
+} from "./behaviourAttack";
 import { startBird } from "./bird";
 import { objectLayout } from "./tiles";
 
@@ -188,3 +195,195 @@ it.each(["tell", "return"] as const)(
     expect(result.state.activeAttack?.phase).toBe(state.activeAttack.phase);
   },
 );
+
+const PAUSE = { cancels: 2, seconds: 1.5 } as const;
+const paused = { ...plan, tellCancelPause: PAUSE };
+const tell = { attack: phase("tell") };
+type PursuedState = BehaviourAttackState & { readonly pursuit?: { readonly phase: string } };
+const engaged: PursuedState = { pursuit: { phase: "engaged" } };
+type Move = "cancel" | "commit" | "escape-cancel" | "escape";
+const apply = (state: PursuedState, move: Move): PursuedState => {
+  if (move === "escape") {
+    return clearTellCancels(state);
+  }
+  const told = enterAttack(paused, tell, state);
+  if (move === "commit") {
+    return enterAttack(paused, { attack: phase("committed") }, told);
+  }
+  return enterAttack(
+    paused,
+    {},
+    move === "escape-cancel" ? { ...told, pursuit: { phase: "escaped" } } : told,
+  );
+};
+
+it.each([
+  ["one cancel counts", ["cancel"], { cancelledTells: 1 }],
+  ["a second cancel starts the pause and resets the count", ["cancel", "cancel"], { pause: 1.5 }],
+  ["a commit resets the count", ["cancel", "commit"], {}],
+  ["an escape resets the count and the pause", ["cancel", "cancel", "escape"], {}],
+  ["a cancel caused by escape does not count", ["escape-cancel"], {}],
+] as const)("tell cancel pause: %s", (_, moves, expected) => {
+  let state = engaged;
+  for (const move of moves) {
+    state = apply(state, move);
+  }
+  expect(state.cancelledTells).toBe(
+    "cancelledTells" in expected ? expected.cancelledTells : undefined,
+  );
+  expect(state.tellPauseRemainingSeconds).toBe("pause" in expected ? expected.pause : undefined);
+  expect(state.attackCooldownRemainingSeconds).toBeUndefined();
+});
+
+it("holds tells and not pursuit for the pause, which is not cooldown", () => {
+  const state = apply(apply(engaged, "cancel"), "cancel");
+  expect(attackReady(state)).toBe(false);
+  expect(canEnterAttack(tell, state)).toBe(false);
+  expect(canEnterAttack({}, state)).toBe(true);
+  expect(attackReady(advanceAttackClock(1.25, state))).toBe(false);
+  const ended = advanceAttackClock(0.25, advanceAttackClock(1.25, state));
+  expect(ended.tellPauseRemainingSeconds).toBeUndefined();
+  expect(attackReady(ended)).toBe(true);
+  // The count restarts after the pause: one more cancel does not pause again.
+  expect(apply(ended, "cancel")).toMatchObject({ cancelledTells: 1 });
+});
+
+it("pursues through the pause and tells again when it ends", () => {
+  const { object, target } = fixture({
+    ...paused,
+    states: {
+      ...plan.states,
+      tell: {
+        ...plan.states.tell!,
+        transitions: [{ to: "chase", when: [{ kind: "elapsed", seconds: 0.5 }] }],
+      },
+    },
+  });
+  let state = startBehaviour(BIRD, object, target);
+  let at = object.origin;
+  const telling: boolean[] = [];
+  for (let step = 0; step < 10; step++) {
+    ({ at, state } = stepBehaviour(BIRD, object, [], 0.25, target, at, state));
+    telling.push(state.activeAttack?.phase === "tell");
+    if (step === 3) {
+      // Tells cancel at 0.5 s and 1 s; the second starts the pause.
+      expect(state.tellPauseRemainingSeconds).toBe(1.5);
+      expect(state.stateKey).toBe("chase");
+    }
+  }
+  // No tell from 1 s until the pause ends at 2.5 s, when the next tell starts.
+  expect(telling).toEqual([true, true, true, false, false, false, false, false, false, true]);
+  expect(at.x).toBeGreaterThan(object.origin.x);
+});
+
+const retell = (to: string): BehaviourNode => ({
+  animation: null,
+  attack: { continues: true, id: "burst", phase: "tell" },
+  motion: wait,
+  transitions: [{ to, when: [{ kind: "elapsed", seconds: 0.3 }] }],
+});
+const withStates = (states: Record<string, BehaviourNode>) => ({
+  ...plan,
+  states: { ...plan.states, ...states },
+});
+
+it.each([
+  [
+    "committed to its continuing tell to committed",
+    { again: retell("second"), first: shot("again") },
+    undefined,
+  ],
+  [
+    "a continuing tell to completion",
+    { again: retell("completed"), first: shot("again") },
+    undefined,
+  ],
+  ["committed to a fresh tell", { first: shot("tell") }, /completed boundary/],
+  [
+    "a continuing tell to no attack",
+    { again: retell("chase"), first: shot("again") },
+    /continuing tell requires its committed attack or completion/i,
+  ],
+  [
+    "a fresh tell into a continuing tell",
+    {
+      again: retell("second"),
+      tell: { ...plan.states.tell!, transitions: [{ to: "again", when: [] }] },
+    },
+    /must commit its attack or cancel/,
+  ],
+  [
+    "a tell to another attack",
+    {
+      other: { ...shot("completed"), attack: { id: "other", phase: "committed" } },
+      tell: { ...plan.states.tell!, transitions: [{ to: "other", when: [] }] },
+    },
+    /must commit its attack or cancel|requires a tell/,
+  ],
+  [
+    "a tell to completion",
+    { tell: { ...plan.states.tell!, transitions: [{ to: "completed", when: [] }] } },
+    /must commit its attack or cancel/,
+  ],
+] as const)("attack graph: %s", (_, states, error) => {
+  const layout = () => layoutBehaviour(1, withStates(states as Record<string, BehaviourNode>));
+  if (error) {
+    expect(layout).toThrow(error);
+  } else {
+    expect(layout).not.toThrow();
+  }
+});
+
+it.each([
+  [{ cancels: 0, seconds: 1 }],
+  [{ cancels: 1.5, seconds: 1 }],
+  [{ cancels: 2, seconds: -1 }],
+])("rejects tell cancel pause %j", (tellCancelPause) => {
+  expect(() => layoutBehaviour(1, { ...plan, tellCancelPause })).toThrow(/tell cancel pause/);
+});
+
+it("keeps its attack through a continuing tell, then completes into cooldown", () => {
+  const start: BehaviourAttackState = {};
+  const committed = enterAttack(
+    plan,
+    { attack: phase("committed") },
+    enterAttack(plan, tell, start),
+  );
+  const continuing = { attack: { continues: true as const, id: "burst", phase: "tell" as const } };
+  expect(canEnterAttack(continuing, start)).toBe(false);
+  expect(canEnterAttack(continuing, committed)).toBe(true);
+  const retold = enterAttack(plan, continuing, committed);
+  expect(retold.activeAttack).toEqual({ continues: true, id: "burst", phase: "tell" });
+  expect(enterAttack(plan, { attack: phase("committed") }, retold).activeAttack?.phase).toBe(
+    "committed",
+  );
+  expect(enterAttack(plan, { attack: phase("completed") }, retold)).toEqual({
+    attackCooldownRemainingSeconds: 0.5,
+  });
+  expect(() => enterAttack(plan, {}, retold)).toThrow(/continuing tell/i);
+});
+
+it.each([
+  ["a move state", "return", undefined],
+  ["a wait state", "tell", /track room/],
+] as const)("track room: accepted only on %s", (_, key, error) => {
+  const node = plan.states[key]!;
+  const layout = () =>
+    layoutBehaviour(
+      1,
+      withStates({
+        [key]: {
+          ...node,
+          transitions: [
+            { to: node.transitions[0]!.to, when: [{ distance: 3, kind: "track-room" }] },
+            ...node.transitions,
+          ],
+        },
+      }),
+    );
+  if (error) {
+    expect(layout).toThrow(error);
+  } else {
+    expect(layout).not.toThrow();
+  }
+});

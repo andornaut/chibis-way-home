@@ -93,6 +93,12 @@ it("reads every boss's tells within the shared bounds from its data", () => {
       expect(minimumTellSeconds(plan, id)).toBeGreaterThanOrEqual(0.5);
       expect(maximumTellSeconds(plan, id)).toBeLessThanOrEqual(1);
     }
+    const retold = Object.values(plan.states).flatMap(({ attack }) =>
+      attack?.continues ? [attack.id] : [],
+    );
+    for (const id of retold) {
+      expect(minimumTellSeconds(plan, id, true)).toBeGreaterThanOrEqual(0.5);
+    }
   }
 });
 
