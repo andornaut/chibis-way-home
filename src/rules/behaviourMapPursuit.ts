@@ -7,9 +7,8 @@ import {
   type MapMask,
   type MapNode,
   type MovementMap,
-  nearestReachable,
-  type NodeId,
   type NodeRef,
+  pathOrNearest,
   pathTo,
 } from "@andornaut/game-kit/terrain/movementMap";
 import type { TraversalCommand } from "@andornaut/game-kit/terrain/traversal";
@@ -408,8 +407,13 @@ function chooseRoute(
   view: MapGoalView,
   key: string,
 ): NonNullable<BehaviourMapPursuitState["route"]> {
-  const { map } = entry;
-  const path = pathTo(map, view.mask, view.from, { predicate: view.predicate });
+  const { fallback, path } = pathOrNearest(
+    entry.map,
+    view.mask,
+    view.from,
+    { predicate: view.predicate },
+    view.toward,
+  );
   if (path) {
     return {
       key,
@@ -417,12 +421,9 @@ function chooseRoute(
       reachable: true,
     };
   }
-  const near = nearestReachable(map, view.mask, view.from, view.toward)!;
-  const edge =
-    near.node === view.from.node
-      ? undefined
-      : pathTo(map, view.mask, view.from, { node: near.node as NodeId })?.edges[0];
-  return { key, next: edge === undefined ? { pace: near.x } : { edge }, reachable: false };
+  const { path: towards, target } = fallback!;
+  const edge = towards.edges[0];
+  return { key, next: edge === undefined ? { pace: target.x } : { edge }, reachable: false };
 }
 
 // An idle ground recovery's goal: the map position nearest Chibi when it lies at least
@@ -443,9 +444,16 @@ export function mapRecoveryGoal(
     return undefined;
   }
   const { from } = view;
-  const near = nearestReachable(map, view.mask, from, view.toward)!;
+  // No node is a goal, so the search reports the reachable position nearest Chibi.
+  const { path: towards, target: near } = pathOrNearest(
+    map,
+    view.mask,
+    from,
+    { predicate: () => false },
+    view.toward,
+  ).fallback!;
   if (near.node !== from.node) {
-    const edge = pathTo(map, view.mask, from, { node: near.node as NodeId })?.edges[0];
+    const edge = towards.edges[0];
     return edge === undefined ? undefined : nodeGoal(map, map.nodes[map.edges[edge]!.to]!);
   }
   const node = map.nodes[from.node]!;
