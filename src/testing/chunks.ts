@@ -15,7 +15,7 @@ import {
   gustCycle,
 } from "../data/obstacleBehaviours";
 import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
-import { GUST_PULSE } from "../data/obstacleTuning";
+import { GUST_PULSE, WINDMILL_SAILS, windmillSailOrbit } from "../data/obstacleTuning";
 import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
 import { SEAM_ROWS } from "../data/seams";
@@ -463,6 +463,85 @@ export const GUST_FIXTURE_LIBRARY: ChunkLibrary = {
         },
       ],
       solids: [ground(0, 60, GUST_FIXTURE.row)],
+      theme: "test",
+    },
+  },
+};
+
+// The windmill engine's fixture, outside the shared fixture pool until its characters reach
+// CHARACTERS with their art: an approach run (row 50) to the first module's join, then a wheel of
+// four sails turning against the clock over a trough (row 55) and an exit bank 10 rows up (row
+// 40). The hub sits half a row below the exit bank's top, so the sail stopped on the rising side
+// stands level and flush with it, and the sail stopped at the bottom 3 rows above the approach.
+// The hub's footprint centres on the art's hub pixel (72, 72 in its 144x240 backdrop): 12 cols
+// and 28 rows, the backdrop standing on its bottom edge.
+export const WINDMILL_FIXTURE_CHARACTERS: Readonly<Record<string, Character>> = {
+  "test-windmill": {
+    archetype: "scenery",
+    art: "countryside-windmill",
+    cols: 12,
+    rows: 28,
+  },
+  "test-windmill-sail": {
+    archetype: "ledge",
+    art: "windmill-sail-ledge",
+    cols: 5,
+    rows: 1,
+  },
+};
+
+export const WINDMILL_FIXTURE_CATALOGUE = {
+  archetypes: ARCHETYPES,
+  characters: { ...CHARACTERS, ...WINDMILL_FIXTURE_CHARACTERS },
+};
+
+export const WINDMILL_FIXTURE = {
+  approach: { col: 0, cols: 36, row: 50 },
+  exit: { col: 55, cols: 5, row: 40 },
+  hub: { col: 45.5, row: 40.5 },
+  trough: { col: 36, cols: 19, row: 55 },
+} as const;
+
+const hub = WINDMILL_FIXTURE_CHARACTERS["test-windmill"]!;
+const sail = WINDMILL_FIXTURE_CHARACTERS["test-windmill-sail"]!;
+
+export const WINDMILL_FIXTURE_LIBRARY: ChunkLibrary = {
+  ...FIXTURE_LIBRARY,
+  characters: WINDMILL_FIXTURE_CATALOGUE.characters,
+  chunks: {
+    "test-windmill": {
+      cols: 60,
+      difficulty: 5,
+      encounters: 0,
+      entry: { row: WINDMILL_FIXTURE.approach.row },
+      exit: { row: WINDMILL_FIXTURE.exit.row },
+      noCross: [
+        {
+          from: { col: WINDMILL_FIXTURE.approach.cols - 2, row: WINDMILL_FIXTURE.approach.row },
+          to: { col: WINDMILL_FIXTURE.exit.col + 2, row: WINDMILL_FIXTURE.exit.row },
+        },
+      ],
+      objects: [
+        {
+          character: "test-windmill",
+          col: WINDMILL_FIXTURE.hub.col - hub.cols / 2,
+          id: "hub",
+          row: WINDMILL_FIXTURE.hub.row - hub.rows / 2,
+        },
+        ...Array.from({ length: WINDMILL_SAILS.count }, (_, index): Instance => {
+          const orbit = windmillSailOrbit("hub", index);
+          return {
+            character: "test-windmill-sail",
+            col: WINDMILL_FIXTURE.hub.col + orbit.radius * Math.cos(orbit.phase) - sail.cols / 2,
+            orbit,
+            row: WINDMILL_FIXTURE.hub.row + orbit.radius * Math.sin(orbit.phase) - sail.rows / 2,
+            tether: { art: "windmill-spoke" },
+          };
+        }),
+      ],
+      solids: [WINDMILL_FIXTURE.approach, WINDMILL_FIXTURE.trough, WINDMILL_FIXTURE.exit].map(
+        ({ col, cols, row }) => ground(col, cols, row),
+      ),
       theme: "test",
     },
   },
