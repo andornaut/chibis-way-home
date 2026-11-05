@@ -99,7 +99,14 @@ const escapeBarks = (zone: ZoneState) => zone.barks.filter(({ line }) => line ==
 
 // The boss engaged, with Chibi on the refuge in front of the door.
 function engaged(): ZoneState {
-  const zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, startZone(BIRD, layout, 1));
+  const zone = stepZone(
+    SKILL_PROFILES,
+    BIRD,
+    layout,
+    STEP_SECONDS,
+    still,
+    startZone(BIRD, layout, 1),
+  );
   expect(zone.behaviours[BOSS]?.pursuit?.phase).toBe("engaged");
   return zone;
 }
@@ -112,7 +119,14 @@ const fled = (zone: ZoneState, falls: boolean): ZoneState => ({
 
 describe("zone escapes", () => {
   it("reports a distance escape with its bark", () => {
-    const zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, fled(engaged(), false));
+    const zone = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      still,
+      fled(engaged(), false),
+    );
     expect(zone.death).toBeUndefined();
     expect(zone.escapes).toEqual([{ cause: "distance", owner: owner() }]);
     expect(escapeBarks(zone)).toHaveLength(1);
@@ -126,7 +140,14 @@ describe("zone escapes", () => {
   });
 
   it("ends pursuit as an escape when Chibi enters a room door, without an escape bark", () => {
-    const entered = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, { ...still, useHeld: true }, engaged());
+    const entered = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { ...still, useHeld: true },
+      engaged(),
+    );
     expect(entered.door).toBe(2);
     expect(entered.behaviours[BOSS]?.pursuit).toMatchObject({ phase: "escaped", settled: false });
     expect(entered.escapes).toEqual([{ cause: "door", owner: owner() }]);
@@ -147,7 +168,14 @@ describe("zone escapes", () => {
         index === BOSS && state ? defeatBoss(state) : state,
       ),
     };
-    const entered = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, { ...still, useHeld: true }, dead);
+    const entered = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { ...still, useHeld: true },
+      dead,
+    );
     expect(entered.door).toBe(2);
     expect(entered.escapes).toEqual([]);
   });
