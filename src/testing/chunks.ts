@@ -15,7 +15,13 @@ import {
   gustCycle,
 } from "../data/obstacleBehaviours";
 import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
-import { GUST_PULSE, WINDMILL_SAILS, windmillSailOrbit } from "../data/obstacleTuning";
+import {
+  CHANDELIER_SWING,
+  chandelierOrbit,
+  GUST_PULSE,
+  WINDMILL_SAILS,
+  windmillSailOrbit,
+} from "../data/obstacleTuning";
 import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
 import { SEAM_ROWS } from "../data/seams";
@@ -29,6 +35,7 @@ import type {
   ZoneRecipe,
 } from "../data/types";
 import type { ChunkLibrary } from "../rules/assemble";
+import { pendulumAngle } from "../rules/orbit";
 import { CHUNK_LIBRARY, STAGE_RECIPES } from "../rules/zonePlans";
 
 // Ground from col, cols wide, its top at row, down to the bottom row.
@@ -542,6 +549,96 @@ export const WINDMILL_FIXTURE_LIBRARY: ChunkLibrary = {
       solids: [WINDMILL_FIXTURE.approach, WINDMILL_FIXTURE.trough, WINDMILL_FIXTURE.exit].map(
         ({ col, cols, row }) => ground(col, cols, row),
       ),
+      theme: "test",
+    },
+  },
+};
+
+// The chandelier engine's fixture, outside the shared fixture pool until its characters reach
+// CHARACTERS with their art: an observation module and near bank (row 50), then a chandelier
+// swinging across a 22-col gap to a 4-col far bank on the same row. The mount's pivot sits 5 rows
+// above the banks, so the rim holding at either end stands level and flush with that bank. Under
+// the arc a floor 6 rows down (a jump) beneath the near half climbs back to the near bank, and one
+// 2 rows lower (a hop) beneath the far half lies beyond a jump of the far bank, so the ride is
+// required. The chandelier starts swinging back toward the near end, which it reaches in time for
+// Chibi walking from the chunk's entry.
+export const CHANDELIER_FIXTURE_CHARACTERS: Readonly<Record<string, Character>> = {
+  "test-chandelier": {
+    archetype: "ledge",
+    art: "apartment-chandelier",
+    cols: 6,
+    rows: 2,
+  },
+  "test-chandelier-mount": {
+    archetype: "scenery",
+    art: "apartment-chandelier-mount",
+    cols: 2,
+    rows: 1,
+  },
+};
+
+export const CHANDELIER_FIXTURE_CATALOGUE = {
+  archetypes: ARCHETYPES,
+  characters: { ...CHARACTERS, ...CHANDELIER_FIXTURE_CHARACTERS },
+};
+
+export const CHANDELIER_FIXTURE = {
+  far: { col: 56, cols: 4, row: 50 },
+  farFloor: { col: 45, cols: 11, row: 58 },
+  near: { col: 0, cols: 34, row: 50 },
+  nearFloor: { col: 34, cols: 11, row: 56 },
+  phase: 0.875,
+  pivot: { col: 45, row: 45 },
+} as const;
+
+const chandelier = CHANDELIER_FIXTURE_CHARACTERS["test-chandelier"]!;
+const mount = CHANDELIER_FIXTURE_CHARACTERS["test-chandelier-mount"]!;
+const chandelierPath = chandelierOrbit("mount", CHANDELIER_FIXTURE.phase);
+const chandelierStart = pendulumAngle(0, chandelierPath);
+
+export const CHANDELIER_FIXTURE_LIBRARY: ChunkLibrary = {
+  ...FIXTURE_LIBRARY,
+  characters: CHANDELIER_FIXTURE_CATALOGUE.characters,
+  chunks: {
+    "test-chandelier": {
+      cols: 60,
+      difficulty: 5,
+      encounters: 0,
+      entry: { row: CHANDELIER_FIXTURE.near.row },
+      exit: { row: CHANDELIER_FIXTURE.far.row },
+      noCross: [
+        {
+          from: { col: CHANDELIER_FIXTURE.near.cols - 2, row: CHANDELIER_FIXTURE.near.row },
+          to: { col: CHANDELIER_FIXTURE.far.col + 2, row: CHANDELIER_FIXTURE.far.row },
+        },
+      ],
+      objects: [
+        {
+          character: "test-chandelier-mount",
+          col: CHANDELIER_FIXTURE.pivot.col - mount.cols / 2,
+          id: "mount",
+          row: CHANDELIER_FIXTURE.pivot.row - mount.rows / 2,
+        },
+        {
+          character: "test-chandelier",
+          col:
+            CHANDELIER_FIXTURE.pivot.col +
+            CHANDELIER_SWING.length * Math.sin(chandelierStart) -
+            chandelier.cols / 2,
+          orbit: chandelierPath,
+          row:
+            CHANDELIER_FIXTURE.pivot.row +
+            CHANDELIER_SWING.length * Math.cos(chandelierStart) -
+            chandelier.rows / 2,
+          tether: { art: "apartment-chandelier-chain" },
+        },
+      ],
+      solids: [
+        CHANDELIER_FIXTURE.near,
+        CHANDELIER_FIXTURE.nearFloor,
+        CHANDELIER_FIXTURE.farFloor,
+        CHANDELIER_FIXTURE.far,
+      ].map(({ col, cols, row }) => ground(col, cols, row)),
       theme: "test",
     },
   },
