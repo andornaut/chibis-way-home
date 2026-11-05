@@ -145,6 +145,7 @@ export function bossSample(
         ...(state.tellPauseRemainingSeconds !== undefined && {
           tellPauseSeconds: state.tellPauseRemainingSeconds,
         }),
+        ...(state.mapPursuit?.route?.reachable === false && { unreachable: true }),
         width: object.width,
       },
     ];

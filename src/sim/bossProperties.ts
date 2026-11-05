@@ -19,8 +19,10 @@ import {
   tellStarts,
   travelBounded,
 } from "../ai/agentProperties";
-import type { AgentSample } from "../ai/agentTrace";
+import { type AgentSample, type AgentTick, centre } from "../ai/agentTrace";
 import { EDGE, STEP_SECONDS } from "../core";
+import { ATTACK_ENGAGEMENT_RANGE } from "../data/behaviours";
+import { BOSS_FAIRNESS } from "../data/bossFairness";
 import { TILE } from "../data/screen";
 import type { BehaviourPlan, Rect, ZoneLayout } from "../data/types";
 import { contactBox } from "../rules/behaviourTrack";
@@ -92,18 +94,86 @@ export function maximumTellSeconds(plan: BehaviourPlan, id: string): number {
   return Math.max(...seconds);
 }
 
+// The fastest committed travel of an attack, in the plan's units per second: its states'
+// speeds and the velocities of what they spawn or push.
+function committedSpeed(plan: BehaviourPlan, id: string): number {
+  return Math.max(
+    0,
+    ...attackStates(plan, id, "committed").flatMap(([, { motion, onEnter }]) => [
+      motion.kind === "wait" ? 0 : motion.speed,
+      ...(onEnter ?? []).flatMap((action) =>
+        action.kind === "spawn" || action.kind === "force-pulse"
+          ? [Math.hypot(action.velocity.x, action.velocity.y)]
+          : [],
+      ),
+    ]),
+  );
+}
+
+// The smallest horizontal gap at which a transition into one of the attack's tells can fire:
+// its gap gates and the lower ends of its scored horizontal-gap curves. A transition without
+// either can fire in contact.
+function minimumTellGap(plan: BehaviourPlan, id: string): number {
+  const tells = new Set(attackStates(plan, id, "tell").map(([key]) => key));
+  const gaps = Object.values(plan.states).flatMap(({ transitions }) =>
+    transitions
+      .filter(({ to }) => tells.has(to))
+      .map(({ score, when }) =>
+        Math.max(
+          0,
+          ...when.flatMap((condition) =>
+            condition.kind === "horizontal-gap" && condition.comparison === "at-least"
+              ? [condition.distance]
+              : [],
+          ),
+          ...(score?.considerations ?? []).flatMap(({ curve, input }) =>
+            input === "horizontalGap" && curve.kind !== "inverse" ? [curve.from] : [],
+          ),
+        ),
+      ),
+  );
+  return gaps.length > 0 ? Math.min(...gaps) : 0;
+}
+
+// Attack fairness: the shortest time from an attack's tell start to its earliest contact, the
+// shortest tell plus its smallest gated gap at its fastest committed speed. A committed attack
+// with no travel is taken to reach Chibi when its tell ends.
+export function reactionSeconds(plan: BehaviourPlan, id: string): number {
+  const speed = committedSpeed(plan, id);
+  const tells = [false, true].flatMap((continues) =>
+    attackStates(plan, id, "tell").some(
+      ([, node]) => (node.attack!.continues === true) === continues,
+    )
+      ? [minimumTellSeconds(plan, id, continues)]
+      : [],
+  );
+  return Math.min(...tells) + (speed > 0 ? minimumTellGap(plan, id) / speed : 0);
+}
+
 // Idle recovery: while engaged and more than two tiles from Chibi, a boss moves half a tile
 // horizontally (the watchdog's minimum movement) within every four seconds.
 const STALL_BOUND = { distance: 2 * TILE, seconds: 4 } as const;
 
 // Allowed stillness for an engaged ground boss more than two tiles from Chibi: tells and other
-// attack phases, takeoff preparation (0.6 s, at most once per 2 s) and post-attack rest (0.4 s).
-// Anything else stands still at most the grace, which absorbs one-tick turns and leg handoffs.
+// attack phases, takeoff preparation (0.6 s, at most once per 2 s) and post-attack rest (the
+// fairness recovery bound). Anything else stands still at most the grace, which absorbs one-tick
+// turns and leg handoffs.
 const STILLNESS = {
   graceSeconds: 3 * STEP_SECONDS,
   preparation: { everySeconds: 2, kind: "takeoff-preparation", maxSeconds: 0.6 },
-  recovery: { kind: "post-attack-recovery", maxSeconds: 0.4 },
 } as const;
+
+// The authored seconds of a committed rest state, or undefined for any other state.
+function committedRestSeconds(plan: BehaviourPlan, state: string): number | undefined {
+  const node = plan.states[state]!;
+  if (node.animation !== "rest" || node.attack?.phase !== "committed") {
+    return undefined;
+  }
+  const authored = node.transitions.flatMap(({ when }) =>
+    when.flatMap((condition) => (condition.kind === "elapsed" ? [condition.seconds] : [])),
+  );
+  return authored.length > 0 ? Math.max(...authored) : 0;
+}
 
 // Objects: each boss starts a charge or special tell within 10 s of eligible engaged time, and
 // its distinct special tell within 20 s.
@@ -183,6 +253,43 @@ export function risesToRow(y: number, seconds: number): Property<BossTick> {
       );
     },
     id: "rises-to-row",
+    rule: RULES.enemyPursuit,
+  };
+}
+
+// Pacing where Chibi is out of reach: from the first tick a boss has no movement-map path to him,
+// within seconds its centre comes within distance pixels of his horizontally (the reachable spot
+// nearest him). A scenario-specific check; the scenario must leave him out of reach.
+export function pacesNearest(seconds: number, distance: number): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const first = new Map<string, number>();
+      const near = new Set<string>();
+      for (const { agents, target, tick } of ticks) {
+        for (const agent of agents) {
+          if (agent.unreachable && !first.has(agent.id)) {
+            first.set(agent.id, tick);
+          }
+          const start = first.get(agent.id);
+          if (
+            start !== undefined &&
+            tick - start <= Math.round(seconds / STEP_SECONDS) &&
+            Math.abs(centre(agent).x - centre(target).x) <= distance
+          ) {
+            near.add(agent.id);
+          }
+        }
+      }
+      const last = ticks.at(-1)?.tick ?? 0;
+      return first.size === 0
+        ? [{ agent: "", detail: "Chibi never out of reach", tick: last }]
+        : [...first].flatMap(([agent, tick]) =>
+            near.has(agent)
+              ? []
+              : [{ agent, detail: `not within ${distance} px of Chibi in ${seconds} s`, tick }],
+          );
+    },
+    id: "pace-unreachable",
     rule: RULES.enemyPursuit,
   };
 }
@@ -437,6 +544,117 @@ export function tellPauseLasts(seconds: number): Property<BossTick> {
   };
 }
 
+const horizontalGap = (target: AgentTick["target"], agent: AgentSample) =>
+  Math.max(target.at.x - (agent.at.x + agent.width), agent.at.x - (target.at.x + target.width));
+
+// Attack fairness: engaged, ready to attack, within the attack engagement range horizontally and
+// with a movement path to Chibi, a boss threatens him (starts a tell, or brings its body within
+// the threat radius) within every maximum gap. Time out of eligibility pauses the gap without
+// resetting it.
+function threatGap(eligible: (tick: BossTick, agent: AgentSample) => boolean): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const found: { agent: string; detail: string; tick: number }[] = [];
+      const waits = new Map<string, { episode: number; reported: boolean; seconds: number }>();
+      const before = new Map<string, AgentSample>();
+      for (const tick of ticks) {
+        for (const agent of tick.agents) {
+          const fairness = BOSS_FAIRNESS[agent.kind]!;
+          const previous = before.get(agent.id);
+          before.set(agent.id, agent);
+          let wait = waits.get(agent.id);
+          if (wait?.episode !== tick.episode) {
+            wait = { episode: tick.episode, reported: false, seconds: 0 };
+            waits.set(agent.id, wait);
+          }
+          if (
+            tellStarts(previous, agent) ||
+            horizontalGap(tick.target, agent) <= fairness.threatRadius * TILE
+          ) {
+            wait.seconds = 0;
+            wait.reported = false;
+            continue;
+          }
+          if (!eligible(tick, agent)) {
+            continue;
+          }
+          wait.seconds += STEP_SECONDS;
+          if (!wait.reported && wait.seconds > fairness.maxThreatGapSeconds + 1e-6) {
+            wait.reported = true;
+            found.push({
+              agent: agent.id,
+              detail: `no threat in ${fairness.maxThreatGapSeconds} s of eligible time, ${agent.state}`,
+              tick: tick.tick,
+            });
+          }
+        }
+      }
+      return found;
+    },
+    id: "threat-gap",
+    rule: RULES.attackCadence,
+  };
+}
+
+// Attack fairness: an engaged ground boss more than two tiles from Chibi that stands still in a
+// committed rest moves again, or starts a takeoff preparation, within the recovery bound (or its
+// authored rest's seconds when longer) plus the grace.
+function recoveryBound(plan: (agent: AgentSample) => BehaviourPlan): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const found: { agent: string; detail: string; tick: number }[] = [];
+      const rests = new Map<string, { allowed: number; episode: number; ticks: number }>();
+      const before = new Map<string, AgentSample>();
+      for (const tick of ticks) {
+        for (const agent of tick.agents) {
+          const previous = before.get(agent.id);
+          before.set(agent.id, agent);
+          const still =
+            previous !== undefined &&
+            agent.pursuit === "engaged" &&
+            !flies(plan(agent)) &&
+            !agent.preparing &&
+            horizontalGap(tick.target, agent) > STALL_BOUND.distance &&
+            Math.abs(agent.at.x - previous.at.x) <= 1e-6 &&
+            Math.abs(agent.at.y - previous.at.y) <= 1e-6;
+          let rest = rests.get(agent.id);
+          if (!still || rest?.episode !== tick.episode) {
+            rests.delete(agent.id);
+            rest = undefined;
+          }
+          if (!still) {
+            continue;
+          }
+          if (!rest) {
+            const authored = committedRestSeconds(plan(agent), agent.state);
+            if (authored === undefined) {
+              continue;
+            }
+            rest = {
+              allowed: Math.max(BOSS_FAIRNESS[agent.kind]!.recoveryMaxSeconds, authored),
+              episode: tick.episode,
+              ticks: 0,
+            };
+            rests.set(agent.id, rest);
+          }
+          rest.ticks++;
+          if (rest.ticks * STEP_SECONDS > rest.allowed + STILLNESS.graceSeconds + 1e-6) {
+            found.push({
+              agent: agent.id,
+              detail: `still ${(rest.ticks * STEP_SECONDS).toFixed(3)} s after a committed attack, ${agent.state}`,
+              tick: tick.tick,
+            });
+            rest.ticks = -Infinity;
+          }
+        }
+      }
+      return found;
+    },
+    id: "recovery-bound",
+    rule: RULES.idleRecovery,
+  };
+}
+
 export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
   const plans = bossPlans(layout);
   const plan = (agent: AgentSample) => plans.get(agent.kind)!;
@@ -524,15 +742,11 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       // A committed rest holds for its authored seconds, such as Fert's throw pause, and any
       // other rest for the recovery bound.
       if (node.animation === "rest") {
-        const authored = node.transitions.flatMap(({ when }) =>
-          when.flatMap((condition) => (condition.kind === "elapsed" ? [condition.seconds] : [])),
-        );
-        return node.attack?.phase === "committed" && authored.length > 0
-          ? {
-              ...STILLNESS.recovery,
-              maxSeconds: Math.max(STILLNESS.recovery.maxSeconds, ...authored),
-            }
-          : STILLNESS.recovery;
+        const recovery = BOSS_FAIRNESS[agent.kind]!.recoveryMaxSeconds;
+        return {
+          kind: "post-attack-recovery",
+          maxSeconds: Math.max(recovery, committedRestSeconds(plan(agent), agent.state) ?? 0),
+        };
       }
       if (agent.attack) {
         return { kind: `attack-${agent.attack.phase}`, maxSeconds: Infinity };
@@ -605,6 +819,13 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       (agent, id) => id !== CHARGE_ATTACKS[agent.kind],
       cadenceEligible(true),
     ),
+    threatGap(
+      (tick, agent) =>
+        cadenceEligible(false)(tick, agent) &&
+        !agent.unreachable &&
+        horizontalGap(tick.target, agent) <= ATTACK_ENGAGEMENT_RANGE * TILE,
+    ),
+    recoveryBound(plan),
     // A boss on a stationary red hazard or below the level is dead, so no live agent is there.
     everyTick("boss-death", RULES.bossDeath, (tick, agent) => {
       const area = layout.areas[tick.world.area]!;
