@@ -251,16 +251,17 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Home city materials
 
-| Key                | Type                               | Size    | Contract                                         |
-| ------------------ | ---------------------------------- | ------- | ------------------------------------------------ |
-| homecity-awning    | decorative backdrop                | 96x36   | Bottom-left, y 600, repeat none                  |
-| homecity-far       | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                     |
-| homecity-sky       | decorative backdrop                | 48x600  | Bottom-left, y 600, repeat x                     |
-| neighbourhood-mid  | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                     |
-| neighbourhood-wall | decorative backdrop                | 48x180  | Bottom-left, y 600, repeat x                     |
-| outskirts-mid      | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                     |
-| outskirts-wall     | decorative backdrop                | 48x144  | Bottom-left, y 600, repeat x                     |
-| tiles-homecity     | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
+| Key                   | Type                               | Size    | Contract                                                      |
+| --------------------- | ---------------------------------- | ------- | ------------------------------------------------------------- |
+| homecity-awning       | decorative backdrop                | 96x36   | Bottom-left, y 600, repeat none                               |
+| homecity-awning-ledge | sprite, retracting awning ledge    | 96x36   | Bottom-centre, 8x3; out, warning, retracted, extending (once) |
+| homecity-far          | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                                  |
+| homecity-sky          | decorative backdrop                | 48x600  | Bottom-left, y 600, repeat x                                  |
+| neighbourhood-mid     | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                                  |
+| neighbourhood-wall    | decorative backdrop                | 48x180  | Bottom-left, y 600, repeat x                                  |
+| outskirts-mid         | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                                  |
+| outskirts-wall        | decorative backdrop                | 48x144  | Bottom-left, y 600, repeat x                                  |
+| tiles-homecity        | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each              |
 
 ## Pebble pigeon
 

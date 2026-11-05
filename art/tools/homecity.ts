@@ -26,6 +26,18 @@
  *   shopfront.
  * - homecity-awning: 96x36, no repeat, factor 1,1; plain muted fabric without stripes or text.
  *
+ * Sprite homecity-awning-ledge, 96x36, bottom-centre on an 8x3 footprint with the wall on the left:
+ * a retracting awning striped in cream and zone-red-shade with a dbrown hem and outline, on a slate
+ * wall plate with a dslate folding arm. Its standable top is row 0: a navy edge over a 2px white lip
+ * across the full width, drawn only in out and warning; retracted and extending have no lip or
+ * navy edge. No hazard red. Tags (once: extending):
+ * - out: 1 frame, fully extended, a scalloped hem under the stripes.
+ * - warning: 3 x 100ms, looping: about a quarter rolled up, the hem wound into a tube that shudders
+ *   1px; rows 0 to 3 stay identical to out, so the standable edge never moves.
+ * - retracted: 1 frame, a rolled tube at the wall and the arm folded down the wall.
+ * - extending: 3 x 130ms, once: the canvas unrolling from the wall to 30, 54 and 78px, its top a
+ *   dbrown edge.
+ *
  * Physical ledges and room doors are placed separately by gameplay. The comparison preview uses
  * identical illustrative geometry, not a validated stage or reachability claim. A theme changes
  * appearance only.
@@ -271,6 +283,134 @@ function awning(): RgbaImage {
   return im;
 }
 
+const AWNING_LEDGE = "homecity-awning-ledge";
+const AWNING_W = 96;
+const AWNING_H = 36;
+const STRIPE = 8;
+const SHOULDER = [3, 30] as const;
+// Cream and zone-red-shade stripes separate from the zone-peach walls behind; dbrown, one ramp
+// step below zone-red-shade, outlines them.
+const LEDGE_LIGHT = "cream";
+const LEDGE_DARK = "zone-red-shade";
+const LEDGE_EDGE = "dbrown";
+
+type Canvas = pixel.Grid;
+
+function stripes(
+  { bottom, length, top }: { length: number; top: number; bottom: number },
+  g: Canvas,
+): void {
+  for (let x = 0; x < length; x += STRIPE) {
+    g.rect(
+      x,
+      top,
+      Math.min(STRIPE, length - x),
+      bottom - top,
+      (x / STRIPE) % 2 ? LEDGE_DARK : LEDGE_LIGHT,
+    );
+  }
+}
+
+/** Scalloped hem tabs under the stripes, one per stripe, rows top to top + 3, edged dbrown. */
+function hem({ length, top }: { length: number; top: number }, g: Canvas): void {
+  for (let x = 0; x + STRIPE <= length; x += STRIPE) {
+    const c = (x / STRIPE) % 2 ? LEDGE_DARK : LEDGE_LIGHT;
+    g.rect(x, top, STRIPE, 1, c);
+    g.rect(x + 1, top + 1, STRIPE - 2, 1, c);
+    g.p(x, top + 1, LEDGE_EDGE);
+    g.p(x + STRIPE - 1, top + 1, LEDGE_EDGE);
+    g.p(x + 1, top + 2, LEDGE_EDGE);
+    g.p(x + STRIPE - 2, top + 2, LEDGE_EDGE);
+    g.rect(x + 2, top + 2, STRIPE - 4, 1, c);
+    g.rect(x + 2, top + 3, STRIPE - 4, 1, LEDGE_EDGE);
+  }
+}
+
+/** A horizontal rolled-fabric tube, rows top to top + 3, from x0 to x1. */
+function tube({ top, x0, x1 }: { top: number; x0: number; x1: number }, g: Canvas): void {
+  g.rect(x0, top, x1 - x0, 4, LEDGE_EDGE);
+  g.rect(x0 + 1, top + 1, x1 - x0 - 2, 2, LEDGE_DARK);
+  g.rect(x0 + 1, top + 1, x1 - x0 - 2, 1, LEDGE_LIGHT);
+}
+
+/** The wall plate and a 2px dslate arm from the shoulder to end. */
+function mount(end: readonly [number, number] | null, g: Canvas): void {
+  if (end) {
+    const [sx, sy] = SHOULDER;
+    g.line(sx, sy, end[0], end[1], "dslate");
+    g.line(sx, sy + 1, end[0], end[1] + 1, "dslate");
+  } else {
+    g.rect(2, 12, 2, 20, "dslate");
+  }
+  g.rect(0, 24, 4, 10, "dslate");
+  g.rect(0, 25, 3, 8, "slate");
+}
+
+/** The standable top: a navy edge over a 2px white lip and a dbrown underside row. */
+function lip(g: Canvas): void {
+  g.rect(0, 0, AWNING_W, 1, "navy");
+  g.rect(0, 1, AWNING_W, 2, "white");
+  g.rect(0, 3, AWNING_W, 1, LEDGE_EDGE);
+}
+
+function awningOut(): pixel.Frame {
+  const g = new pixel.Grid(AWNING_W, AWNING_H);
+  mount([64, 16], g);
+  lip(g);
+  stripes({ length: AWNING_W, top: 4, bottom: 13 }, g);
+  g.rect(AWNING_W - 1, 3, 1, 10, LEDGE_EDGE);
+  hem({ length: AWNING_W, top: 13 }, g);
+  return g.px;
+}
+
+/** A quarter rolled up: shorter stripes over a tube that bobs by dy and shifts by dx. */
+function awningWarning(dx: number, dy: number): pixel.Frame {
+  const g = new pixel.Grid(AWNING_W, AWNING_H);
+  mount([64 + dx, 14 + dy], g);
+  lip(g);
+  stripes({ length: AWNING_W, top: 4, bottom: 10 + dy }, g);
+  g.rect(AWNING_W - 1, 3, 1, 7 + dy, LEDGE_EDGE);
+  tube({ top: 10 + dy, x0: Math.max(0, dx), x1: AWNING_W + Math.min(0, dx) }, g);
+  return g.px;
+}
+
+function awningRetracted(): pixel.Frame {
+  const g = new pixel.Grid(AWNING_W, AWNING_H);
+  mount(null, g);
+  g.rect(1, 0, 10, 12, LEDGE_EDGE);
+  g.rect(0, 1, 12, 10, LEDGE_EDGE);
+  g.rect(2, 2, 8, 8, LEDGE_DARK);
+  g.rect(3, 3, 4, 2, LEDGE_LIGHT);
+  return g.px;
+}
+
+/** Unrolling from the wall to length, with no lip: a dbrown top edge. */
+function awningExtending(length: number): pixel.Frame {
+  const g = new pixel.Grid(AWNING_W, AWNING_H);
+  mount([Math.round(length * 0.66), 16], g);
+  g.rect(0, 0, length, 1, LEDGE_EDGE);
+  stripes({ length, top: 1, bottom: 13 }, g);
+  g.rect(length - 1, 0, 1, 13, LEDGE_EDGE);
+  hem({ length, top: 13 }, g);
+  g.rect(0, 0, 6, 8, LEDGE_EDGE);
+  g.rect(1, 1, 4, 6, LEDGE_DARK);
+  return g.px;
+}
+
+export function* sprites(): Generator<pixel.SpriteEntry> {
+  yield [
+    AWNING_LEDGE,
+    [
+      ["out", [awningOut()], 1000],
+      ["warning", [awningWarning(0, 0), awningWarning(1, 1), awningWarning(-1, 0)], 100],
+      ["retracted", [awningRetracted()], 1000],
+      ["extending", [30, 54, 78].map(awningExtending), 130],
+    ],
+  ];
+}
+
+const ONCE = { [AWNING_LEDGE]: ["extending"] };
+
 /** Key to drawing, repeat and suggested scroll factor. */
 export const BACKDROPS: Readonly<
   Record<
@@ -300,6 +440,7 @@ export async function build(): Promise<void> {
   }
   pixel.updateManifest("tilesets", [entry]);
   pixel.updateManifest("backdrops", registry());
+  await pixel.build({ once: ONCE }, [...sprites()]);
 }
 
 function context(kind: "outskirts" | "neighbourhood"): RgbaImage {

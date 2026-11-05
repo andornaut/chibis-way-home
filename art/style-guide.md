@@ -856,6 +856,17 @@ All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 
 
 All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 0,0; far factors 0.15,0.05; middle factors 0.4,0.15. Select the appropriate stage middle layer. Near props use factors 1,1 and placement data aligns them to the local floor. Decorative silhouettes carry no white safe lips or red contact bands and must not imply usable platforms. Scenery adds no collision, hidden hazard or movement rules. Room entrances may reuse the existing street-door artwork.
 
+`homecity-awning-ledge` is the retracting awning, a 96x36 sprite, bottom-centre on an 8x3 footprint with the wall on the left. It keeps `homecity-awning`'s zone-red-shade with cream in place of zone-peach, so the stripes hold against the peach walls, and a dbrown hem and outline; a slate wall plate carries a dslate folding arm. No hazard red. Only `out` and `warning` carry the standable top: a navy edge over a 2px white lip across the full width. `retracted` and `extending` show no lip anywhere.
+
+| Tag       | Art cycle                    | Pose                                                                                      |
+| --------- | ---------------------------- | ----------------------------------------------------------------------------------------- |
+| extending | Three frames, 130ms, once    | Canvas unrolling from the wall to 30, 54 and 78px, a dbrown top edge                      |
+| out       | One frame                    | Fully extended, a scalloped hem                                                           |
+| retracted | One frame                    | A rolled tube at the wall, the arm folded down                                            |
+| warning   | Three frames, 100ms, looping | About a quarter rolled up, the hem wound into a tube that shudders 1px; rows 0 to 3 fixed |
+
+The shudder is visual only: rows 0 to 3 match `out` in every warning frame, so the standable edge never moves.
+
 ## Pebble pigeon
 
 `art/tools/pigeonAntagonist.ts` draws Pebble as `pigeon-antagonist`, a cute grey and lilac pigeon with a cream chest. The 48x48 frame has bottom-centre anchor 24,48 and fixed contact box x 2, y 2, width 44, height 46, including mirrored poses. Existing generic posts provide perches; no special post artwork or collision is introduced.
