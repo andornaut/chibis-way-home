@@ -22,6 +22,8 @@ type CardAxis = "row" | "stack";
 
 interface CardGroup extends Size {
   readonly hitOutset?: number;
+  // The distance from the group's top to its first visible content: text ink, or a drawn face.
+  readonly inkTop?: number;
   readonly key: string;
 }
 
@@ -32,8 +34,10 @@ export const CARD_HEADING = {
   scale: FONT_METRICS.mainHeading.size / FONT_NATIVE_SIZE,
 } as const;
 
-// A title wrapped at the heading size: its lines joined by newlines, and its measured box.
+// A title wrapped at the heading size: its lines joined by newlines, its measured box, and the
+// bottom of its ink centred in that box.
 export interface CardTitle extends Size {
+  readonly inkBottom: number;
   readonly text: string;
 }
 
@@ -68,16 +72,23 @@ export function cardTitleReserve(close: boolean): number {
     : CARD_CONTENT.padding;
 }
 
-// The header's height below the top padding: the title's lines, or the close target's clearance
-// for the first group's expanded press area, whichever is taller.
-export function cardHeaderHeight(
-  options: { readonly close: boolean; readonly hitOutset?: number },
-  titleHeight: number,
+// Where the first group starts below the card's top. With a header, its first visible content
+// sits the title ink gap below the title's ink. The group's box also stays a gap below the title
+// line, and its expanded press area a gap below the close target. Whole pixels, never closer.
+export function cardBodyTop(
+  close: boolean,
+  first: Pick<CardGroup, "hitOutset" | "inkTop"> | undefined,
+  title: CardTitle | undefined,
 ): number {
+  const { gap, padding, titleInkGap } = CARD_CONTENT;
+  if (!title && !close) {
+    return padding;
+  }
   return Math.max(
-    titleHeight,
-    options.close
-      ? CLOSE_HIT.y + CLOSE_HIT.height - CARD_CONTENT.padding + (options.hitOutset ?? 0)
+    title ? padding + title.height + gap : 0,
+    close ? CLOSE_HIT.y + CLOSE_HIT.height + gap + (first?.hitOutset ?? 0) : 0,
+    title && first?.inkTop !== undefined
+      ? Math.ceil(padding + title.inkBottom + titleInkGap - first.inkTop)
       : 0,
   );
 }
@@ -91,30 +102,35 @@ export function cardTitleText(font: BitmapFont, width: number, text: string): Ca
   if (lines.some((line) => measure(line) > width)) {
     throw new Error(`Title cannot fit ${width}px: ${text}`);
   }
+  const wrapped = lines.join("\n");
+  const height =
+    (lines.length - 1) * lineHeight +
+    Math.max(
+      lineHeight,
+      ...lines.map((line) => textInkBounds(font, scale, lineHeight, line).height),
+    );
+  const ink = textInkBounds(font, scale, lineHeight, wrapped);
   return {
-    height:
-      (lines.length - 1) * lineHeight +
-      Math.max(
-        lineHeight,
-        ...lines.map((line) => textInkBounds(font, scale, lineHeight, line).height),
-      ),
-    text: lines.join("\n"),
+    height,
+    inkBottom: (height - ink.height) / 2 + ink.height,
+    text: wrapped,
     width: Math.max(0, ...lines.map(measure)),
   };
 }
 
-export function cardTextSize(font: BitmapFont, text: string): Size {
+// Text's measured box, and the top of its ink as cardTextOrigin centres it in that box.
+export function cardTextSize(font: BitmapFont, text: string): Size & { readonly inkTop: number } {
   const lines = text.split("\n");
+  const pitch = font.lineHeight * CARD_TEXT_SCALE;
+  const height =
+    (lines.length - 1) * pitch +
+    Math.max(
+      CARD_CONTENT.lineHeight,
+      ...lines.map((line) => textInkBounds(font, CARD_TEXT_SCALE, pitch, line).height),
+    );
   return {
-    height:
-      (lines.length - 1) * font.lineHeight * CARD_TEXT_SCALE +
-      Math.max(
-        CARD_CONTENT.lineHeight,
-        ...lines.map(
-          (line) =>
-            textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, line).height,
-        ),
-      ),
+    height,
+    inkTop: (height - textInkBounds(font, CARD_TEXT_SCALE, pitch, text).height) / 2,
     width: Math.max(0, ...lines.map((line) => inkWidth(font, CARD_TEXT_SCALE, line))),
   };
 }
@@ -123,7 +139,7 @@ export function cardActionsSize(
   font: BitmapFont,
   axis: CardAxis,
   labels: readonly string[],
-): Size & { readonly hitOutset?: number } {
+): Size & { readonly hitOutset?: number; readonly inkTop?: number } {
   if (labels.length === 0) {
     return { height: 0, width: 0 };
   }
@@ -134,11 +150,13 @@ export function cardActionsSize(
     ? {
         height: TEXT_BUTTON.height,
         hitOutset,
+        inkTop: 0,
         width: labels.length * width + (labels.length - 1) * CARD_CONTENT.gap,
       }
     : {
         height: labels.length * TEXT_BUTTON.height + (labels.length - 1) * CARD_CONTENT.rowGap,
         hitOutset,
+        inkTop: 0,
         width,
       };
 }
@@ -166,22 +184,19 @@ export function contentCardLayout(
       ? cardTitleText(header.font, bounds.width - 2 * titleReserve, header.title)
       : undefined;
   const hasHeader = titleText !== undefined || close;
-  const headerHeight = hasHeader
-    ? cardHeaderHeight({ close, hitOutset: present[0]?.hitOutset ?? 0 }, titleText?.height ?? 0)
-    : 0;
+  const bodyTop = cardBodyTop(close, present[0], titleText);
   const headerWidth = titleText ? titleText.width + 2 * (titleReserve - CARD_CONTENT.padding) : 0;
   const contentWidth = Math.max(headerWidth, 0, ...present.map(({ width }) => width));
-  const count = present.length + (hasHeader ? 1 : 0);
   const width = modalWidth(
     { availableWidth: bounds.width, viewportWidth: SCREEN.width },
     contentWidth,
   );
   const innerWidth = width - 2 * CARD_CONTENT.padding;
   const height =
-    headerHeight +
+    (present.length > 0 || !hasHeader ? bodyTop : bodyTop - CARD_CONTENT.gap) +
     present.reduce((sum, group) => sum + group.height, 0) +
-    Math.max(0, count - 1) * CARD_CONTENT.gap +
-    2 * CARD_CONTENT.padding;
+    Math.max(0, present.length - 1) * CARD_CONTENT.gap +
+    CARD_CONTENT.padding;
   if (innerWidth < contentWidth || height > bounds.height) {
     throw new Error("Card content exceeds the view");
   }
@@ -215,8 +230,8 @@ export function contentCardLayout(
       };
       closeLayout = { art, at: { x: art.x, y: art.y }, hit: hitAround(art) };
     }
-    y += headerHeight + (present.length > 0 ? CARD_CONTENT.gap : 0);
   }
+  y = card.y + bodyTop;
   present.forEach((group, index) => {
     if (group.key in positions) {
       throw new Error(`Duplicate card group ${group.key}`);

@@ -13,6 +13,9 @@ export const CARD_CONTENT = {
   lineHeight: 16,
   padding: MODAL_CONTENT.padding,
   rowGap: 4,
+  // The visible gap from a modal title's ink to the first body content: text ink, or a drawn face.
+  // It matches Settings' title over its first row label.
+  titleInkGap: 28.75,
 } as const;
 
 // Fixed frame geometry for the placeholder celebration. Ordinary modal cards measure their

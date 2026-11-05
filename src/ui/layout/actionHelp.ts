@@ -4,6 +4,7 @@ import type { ControlAction, Point, Rect, Size } from "../../data/types";
 import { type ActionHelpPart, actionHelpParts } from "../chrome/actionHelp";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
 import type { CardFonts } from "./contentCard";
+import { textInkBounds } from "./textInk";
 
 // The label-to-icon gap shared by every action help, and the home page's HTML icon and line box.
 export const ACTION_HELP = {
@@ -158,4 +159,21 @@ export function actionHelpLayout(
     placements,
     width: Math.max(0, ...lines.map((row) => row.width)),
   };
+}
+
+// The top of the layout's highest visible content: a word's ink, or a control icon.
+export function actionHelpInkTop(fonts: CardFonts, layout: ActionHelpLayout): number {
+  return Math.min(
+    ...layout.placements.map((placement) =>
+      placement.kind === "icon"
+        ? placement.rect.y
+        : placement.at.y +
+          textInkBounds(
+            fonts[placement.font],
+            CARD_TEXT_SCALE,
+            fonts[placement.font].lineHeight * CARD_TEXT_SCALE,
+            placement.text,
+          ).y,
+    ),
+  );
 }

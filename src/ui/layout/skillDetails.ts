@@ -1,6 +1,6 @@
 import { SCREEN } from "../../data/screen";
 import type { ControlAction, Rect, SkillText } from "../../data/types";
-import { actionHelpLayout } from "./actionHelp";
+import { actionHelpInkTop, actionHelpLayout } from "./actionHelp";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT } from "./cardFrame";
 import { cardActions, cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard";
@@ -64,11 +64,18 @@ export function skillDetails(
     ),
     words.description,
   );
+  const bodyHeight = Math.max(SKILL_BUTTON.target, description.height);
   const layout = contentCardLayout(
     bounds,
     [
       {
-        height: Math.max(SKILL_BUTTON.target, description.height),
+        height: bodyHeight,
+        // The higher of the skill button's drawn disc and the description's ink.
+        inkTop: Math.min(
+          Math.round((bodyHeight - SKILL_BUTTON.target) / 2) +
+            (SKILL_BUTTON.target - SKILL_BUTTON.disc) / 2,
+          Math.round((bodyHeight - description.height) / 2) + actionHelpInkTop(fonts, description),
+        ),
         key: "body",
         width: SKILL_BUTTON.target + CARD_CONTENT.gap + description.width,
       },

@@ -8,14 +8,15 @@ import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
   CARD_CONTENT,
   cardActionsSize,
+  cardBodyTop,
   type CardFonts,
-  cardHeaderHeight,
   cardTextSize,
   cardTitleReserve,
   cardTitleText,
   contentCardLayout,
 } from "./contentCard";
 import { labelledButton } from "./labelledButton";
+import { textInkBounds } from "./textInk";
 
 // art's icon-achievement frame, drawn at its own size.
 export const ACHIEVEMENT_ICON_SIZE = 16;
@@ -57,16 +58,30 @@ export interface AchievementEntryLayout {
 const pitch = (fonts: CardFonts) => fonts.body.lineHeight * CARD_TEXT_SCALE;
 const entryHeight = (fonts: CardFonts) => pitch(fonts) * (1 + DESCRIPTION_LINES);
 
+// Entry titles are drawn from the slot's top: the highest title ink across every entry, so every
+// page shares one list position.
+function listInkTop(fonts: CardFonts, entries: readonly AchievementWords[]): number {
+  return Math.min(
+    ...entries.map(
+      ({ title }) => textInkBounds(fonts.title, CARD_TEXT_SCALE, pitch(fonts), title).y,
+    ),
+  );
+}
+
 // How many entries one page holds: two columns of as many rows as fit the view beside the
 // card's title and pager.
-export function achievementsPerPage(fonts: CardFonts, words: CardWords): number {
+export function achievementsPerPage(
+  fonts: CardFonts,
+  words: CardWords,
+  entries: readonly AchievementWords[],
+): number {
   const pager = cardActionsSize(fonts.title, "row", [words.previous, words.next]);
   const title = cardTitleText(fonts.title, SCREEN.width - 2 * cardTitleReserve(true), words.title);
   const fixed =
-    2 * CARD_CONTENT.padding +
-    cardHeaderHeight({ close: true }, title.height) +
-    2 * CARD_CONTENT.gap +
-    pager.height;
+    cardBodyTop(true, { inkTop: listInkTop(fonts, entries) }, title) +
+    CARD_CONTENT.gap +
+    pager.height +
+    CARD_CONTENT.padding;
   const rows = Math.floor(
     (SCREEN.height - fixed + CARD_CONTENT.gap) / (entryHeight(fonts) + CARD_CONTENT.gap),
   );
@@ -87,7 +102,7 @@ export function achievementsCardLayout(
   if (entries.length === 0) {
     throw new Error("The Achievements card needs at least one entry");
   }
-  const perPage = achievementsPerPage(fonts, words);
+  const perPage = achievementsPerPage(fonts, words, entries);
   const pages = Math.ceil(entries.length / perPage);
   const shownRows = Math.ceil(Math.min(perPage, entries.length) / COLUMNS);
   const rowHeight = entryHeight(fonts);
@@ -101,6 +116,7 @@ export function achievementsCardLayout(
     [
       {
         height: shownRows * rowHeight + (shownRows - 1) * CARD_CONTENT.gap,
+        inkTop: listInkTop(fonts, entries),
         key: "list",
         width: COLUMNS * COLUMN_WIDTH + (COLUMNS - 1) * COLUMN_GAP,
       },

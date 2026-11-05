@@ -69,6 +69,7 @@ export function stageSelectPages(
       {
         height: stageFace.height,
         hitOutset: hitMargin({ ...stageFace, x: 0, y: 0 }),
+        inkTop: 0,
         key: "stages",
         width: visible * stageFace.width + (visible - 1) * CARD_CONTENT.padding,
       },
@@ -93,11 +94,6 @@ export function stageSelectPages(
     { close: true, font: fonts.title, title },
   );
   const group = layout.groups.stages!;
-  const titleRect = layout.title;
-  const centredTitle = titleRect && {
-    ...titleRect,
-    y: (titleRect.y + group.y - CARD_CONTENT.gap - titleRect.height) / 2,
-  };
   const pagerGroup = layout.groups.pager;
   const pager = pagerGroup &&
     pagerSize && {
@@ -157,6 +153,6 @@ export function stageSelectPages(
     close: layout.close!,
     pager: pagerLayout,
     pages,
-    title: centredTitle!,
+    title: layout.title!,
   };
 }

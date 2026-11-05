@@ -40,6 +40,10 @@ export function settingsCard(
     [
       {
         height: rows * ROW_HEIGHT + (rows - 1) * CARD_CONTENT.rowGap,
+        // The first row's label ink, centred in its line slot in the middle of the row.
+        inkTop:
+          (ROW_HEIGHT - CARD_CONTENT.lineHeight) / 2 +
+          cardTextSize(fonts.body, words.moveControls).inkTop,
         key: "rows",
         width: rowWidth,
       },
@@ -96,6 +100,7 @@ export function stepsCard(fonts: CardFonts, title: string, texts: readonly strin
     { ...SCREEN, x: 0, y: 0 },
     sizes.map((size, index) => ({
       height: Math.max(ICON, size.height),
+      inkTop: (Math.max(ICON, size.height) - size.height) / 2 + size.inkTop,
       key: String(index),
       width: ICON + CARD_CONTENT.gap + size.width,
     })),

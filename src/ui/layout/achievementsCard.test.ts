@@ -36,7 +36,7 @@ const overlap = (a: Rect, b: Rect) =>
 
 describe("the Achievements card", () => {
   it("pages all 26 entries, six to a page, in full pages before the last", () => {
-    const perPage = achievementsPerPage(CARD_FONTS, WORDS);
+    const perPage = achievementsPerPage(CARD_FONTS, WORDS, ENTRIES);
     const pages = LAYOUT.entries.map((_, index) => Math.floor(index / perPage));
     expect({ lastPage: pages.at(-1), pages: LAYOUT.pages, perPage }).toEqual({
       lastPage: 4,
@@ -67,12 +67,11 @@ describe("the Achievements card", () => {
     });
   });
 
-  it("sets the title at the main heading and starts the list a gap below it and the close target", () => {
+  it("sets the title at the main heading and keeps the list below it and the close target", () => {
     const first = LAYOUT.entries[0]!.slot;
-    const closeClearance = bottom(LAYOUT.close.hit) + CARD_CONTENT.gap;
     expect(LAYOUT.title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
-    expect(first.y).toBe(Math.max(bottom(LAYOUT.title) + CARD_CONTENT.gap, closeClearance));
-    expect(first.y).toBeGreaterThanOrEqual(closeClearance);
+    expect(first.y).toBeGreaterThanOrEqual(bottom(LAYOUT.title) + CARD_CONTENT.gap);
+    expect(first.y).toBeGreaterThanOrEqual(bottom(LAYOUT.close.hit) + CARD_CONTENT.gap);
   });
 
   it("fits the card in the view, centred, with Previous left and Next right of the count", () => {

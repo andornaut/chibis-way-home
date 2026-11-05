@@ -6,19 +6,30 @@ import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
+import { ACHIEVEMENT_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
+import { achievementsCardLayout } from "./achievementsCard";
+import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
   CARD_CONTENT,
+  CARD_HEADING,
   cardActions,
   cardActionsSize,
+  cardTextOrigin,
   cardTextSize,
+  type CardTitleLayout,
+  cardTitleOrigin,
   contentCardLayout,
 } from "./contentCard";
 import { FONT_METRICS } from "./fontRoles";
 import { pressedArea } from "./hitAreas";
 import { pauseCard } from "./pauseCard";
+import { restartCard } from "./restartCard";
 import { settingsCard, stepsCard } from "./settingsCard";
+import { SKILL_ROOM, skillDetails } from "./skillDetails";
+import { SKILL_BUTTON } from "./skillHud";
 import { stageSelectPages } from "./stageSelectCard";
+import { textInkBounds } from "./textInk";
 
 const BUILD_LABEL = buildLabel(__APP_VERSION__, __COMMIT__);
 const pause = pauseCard(CARD_FONTS, TEXT.pause);
@@ -71,6 +82,95 @@ it.each([
     expect(title.width).toBeGreaterThan(0);
     expect(title.x + title.width + CARD_CONTENT.gap).toBeLessThanOrEqual(close.hit.x);
     expect(first.y).toBeGreaterThanOrEqual(close.hit.y + close.hit.height + CARD_CONTENT.gap);
+  },
+);
+
+// Visible ink tops and bottoms, measured as the scenes draw them.
+const titleInkBottom = (title: CardTitleLayout) => {
+  const ink = textInkBounds(
+    CARD_FONTS.title,
+    CARD_HEADING.scale,
+    CARD_HEADING.lineHeight,
+    title.text,
+  );
+  return cardTitleOrigin(CARD_FONTS.title, title, title.text).y + ink.y + ink.height;
+};
+const textInkTop = (font: typeof CARD_FONTS.body, at: { readonly y: number }, text: string) =>
+  at.y + textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text).y;
+const centredInkTop = (rect: Rect, text: string) =>
+  textInkTop(CARD_FONTS.body, cardTextOrigin(CARD_FONTS.body, rect, text), text);
+const skillInkTop = (layout: ReturnType<typeof skillDetails>) => {
+  const { description, icon } = layout.groups;
+  return Math.min(
+    icon.y + (SKILL_BUTTON.target - SKILL_BUTTON.disc) / 2,
+    ...layout.description.placements.map((placement) =>
+      placement.kind === "icon"
+        ? description.y + placement.rect.y
+        : textInkTop(
+            CARD_FONTS[placement.font],
+            { y: description.y + placement.at.y },
+            placement.text,
+          ),
+    ),
+  );
+};
+const achievementWords = ACHIEVEMENT_IDS.map((id) => TEXT.achievements.entries[id]);
+const achievements = achievementsCardLayout(
+  CARD_FONTS,
+  { ...TEXT.achievements.pages, title: TEXT.achievements.cardTitle },
+  achievementWords,
+);
+const restart = restartCard(CARD_FONTS, TEXT.restart);
+const skills = (["dash", "doubleJump", "speedy"] as const).flatMap((skill) => [
+  skillDetails(CARD_FONTS, { ...SCREEN, x: 0, y: 0 }, true, TEXT.buttons, TEXT.skills[skill]),
+  skillDetails(CARD_FONTS, SKILL_ROOM.bounds, false, TEXT.buttons, TEXT.skills[skill]),
+]);
+
+it.each([
+  {
+    content: centredInkTop(variants[0]!.moveControls.label, TEXT.settings.moveControls),
+    name: "settings",
+    title: variants[0]!.title,
+  },
+  {
+    content: Math.min(
+      ...achievements.entries
+        .slice(0, 2)
+        .map(({ title }, index) =>
+          textInkTop(CARD_FONTS.title, title, achievementWords[index]!.title),
+        ),
+    ),
+    name: "achievements",
+    title: achievements.title,
+  },
+  { content: pause.resume.button.y, name: "pause", title: pause.title },
+  ...installs.map((layout, index) => ({
+    content: centredInkTop(
+      layout.steps[0]!.text,
+      TEXT.settings.installSteps[index === 0 ? "firefoxAndroid" : "ios"].first,
+    ),
+    name: "install",
+    title: layout.title,
+  })),
+  {
+    content: centredInkTop(restart.question, TEXT.restart.question),
+    name: "restart",
+    title: restart.title,
+  },
+  { content: stageSelect.buttons[0]!.button.y, name: "stage selection", title: stageSelect.title },
+  { content: updateButton.button.y, name: "update", title: update.title! },
+  ...skills.map((layout) => ({
+    content: skillInkTop(layout),
+    name: "skill",
+    title: layout.title!,
+  })),
+])(
+  "keeps the shared visible gap from the $name title ink to its first content",
+  ({ content, title }) => {
+    const gap = content - titleInkBottom(title);
+    // Whole-pixel group positions round the gap up by less than a pixel.
+    expect(gap).toBeGreaterThanOrEqual(CARD_CONTENT.titleInkGap);
+    expect(gap).toBeLessThan(CARD_CONTENT.titleInkGap + 1);
   },
 );
 

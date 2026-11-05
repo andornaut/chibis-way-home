@@ -5,7 +5,7 @@ import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { CARD_FONTS } from "../../testing/cardFonts";
-import { CARD_CONTENT, CARD_HEADING, cardTitleOrigin } from "./contentCard";
+import { CARD_CONTENT } from "./contentCard";
 import { FONT_METRICS } from "./fontRoles";
 import { type PressArea, pressedArea } from "./hitAreas";
 import { CARD_TEXT_SCALE } from "./pauseCard";
@@ -72,17 +72,8 @@ describe("stage picker layout", () => {
     expect(card.x).toBe(CARD_CONTENT.padding);
     expect(card.x + card.width / 2).toBe(SCREEN.width / 2);
     expect(card.y + card.height / 2).toBe(SCREEN.height / 2);
-    // The noninteractive title line may share the stages' outer press margin; its ink may not.
-    const heading = TEXT.map.zones[ZONE_MAP.destinations[0]!.id]!;
-    const ink = textInkBounds(
-      CARD_FONTS.title,
-      CARD_HEADING.scale,
-      CARD_HEADING.lineHeight,
-      heading,
-    );
-    expect(cardTitleOrigin(CARD_FONTS.title, title, heading).y + ink.y + ink.height).toBeLessThan(
-      buttons[0]!.hit.y,
-    );
+    expect(title.y - card.y).toBe(CARD_CONTENT.padding);
+    expect(title.y + title.height + CARD_CONTENT.gap).toBeLessThanOrEqual(buttons[0]!.hit.y);
     expect(title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
     expect(title.x + title.width / 2).toBe(card.x + card.width / 2);
     expect(close.art.y - card.y).toBe(CARD_CONTENT.closeInset);
@@ -99,7 +90,7 @@ describe("stage picker layout", () => {
         ).height,
       ).toBeLessThanOrEqual(stage.name.height);
       expect(stage.preview.y - stage.number.y - stage.number.height).toBe(CARD_CONTENT.rowGap);
-      expect(stage.hit.y - close.hit.y - close.hit.height).toBe(CARD_CONTENT.gap);
+      expect(stage.hit.y - close.hit.y - close.hit.height).toBeGreaterThanOrEqual(CARD_CONTENT.gap);
     }
   });
   it("lays out any nonempty catalogue count that fits without changing face geometry", () => {
