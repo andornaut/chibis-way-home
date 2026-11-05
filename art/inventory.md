@@ -59,8 +59,6 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | boss-removal              | effect, boss removal puff, centre anchor, no contact       | 64x64  | puff (once)                                                                                  |
 | dog-pug                   | street cast                                                | 44x32  | idle, walk, perk (once), talk                                                                |
 | ferret                    | character, upright champagne ferret                        | 64x80  | idle, scheme, talk                                                                           |
-| ferret-trap-snap          | hazard, hit box 4,14,42,12                                 | 50x26  | set, snap (once)                                                                             |
-| frog-courier              | hazard, hit box 6,6,48,30                                  | 60x36  | ride, idle                                                                                   |
 | icon-achievement          | achievement glyph, no contact                              | 16x16  | one per achievement ID (frames unlocked, locked)                                             |
 | icon-achievements         | sprite                                                     | 20x20  | rest                                                                                         |
 | icon-browser-menu         | sprite                                                     | 16x16  | rest                                                                                         |

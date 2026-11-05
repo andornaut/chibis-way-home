@@ -46,7 +46,6 @@ const SETS = [
   "floor1",
   "fonts",
   "goose",
-  "hazards",
   "homecity",
   "icons",
   "industrial",

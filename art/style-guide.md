@@ -506,13 +506,10 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 | ------------------ | ------ | -------------------------------------------- | ---------------------------- | -------------------------- | -------- |
 | bird               | `idle` | `walk`; in the air `jump`, `flutter`, `land` | none, falls back to `land`   | none, falls back to `idle` | none     |
 | ferret             | `idle` | none, falls back to `idle`                   | none, falls back to `scheme` | `talk`                     | `scheme` |
-| frog-courier       | `idle` | `ride`                                       | none, falls back to `idle`   | none, falls back to `idle` | none     |
 | pigeon             | `idle` | `fly`                                        | `flee`, then `fly`           | none, falls back to `idle` | none     |
 | dog-pug            | `idle` | `walk`                                       | `perk`                       | `talk`                     | none     |
 | pedestrian-cat     | `idle` | `walk`                                       | none, falls back to `idle`   | none, falls back to `idle` | none     |
 | pedestrian-raccoon | `idle` | `walk`                                       | none, falls back to `idle`   | none, falls back to `idle` | none     |
-
-- ferret-trap-snap is a hazard, not a character: it has no character states, only `set` and `snap`.
 
 ### Reduced motion
 
@@ -543,21 +540,16 @@ A placed thing combines an archetype (its behaviour), a character configuration 
 
 ## Hazards
 
-Hazard contact causes death; Try again returns to the stage checkpoint. Hazard contact also shakes the world while Chibi enters the death sequence. The render-only camera effect lasts 280ms with up to 5px diagonal offset, 5px overscan and a fixed HUD; elapsed time comes from the render loop, not physics. Restore the camera on completion, restart or shutdown. Reduced motion uses a static border cue without shaking. Retain Chibi’s 1px border keyline and 0.12 tint alpha. Actor motion does not itself trigger this effect. `art/tools/hazards.ts` draws the hazard sprites, `art/tools/obstacles.ts` the shared red contact tiles, `art/tools/floor1.ts` the cellar hatch and pit tiles and `art/tools/park.ts` the pond and thorn tiles; their header comments give every frame and tile.
+Hazard contact causes death; Try again returns to the stage checkpoint. Hazard contact also shakes the world while Chibi enters the death sequence. The render-only camera effect lasts 280ms with up to 5px diagonal offset, 5px overscan and a fixed HUD; elapsed time comes from the render loop, not physics. Restore the camera on completion, restart or shutdown. Reduced motion uses a static border cue without shaking. Retain Chibi’s 1px border keyline and 0.12 tint alpha. Actor motion does not itself trigger this effect. `art/tools/obstacles.ts` draws the shared red contact tiles, `art/tools/floor1.ts` the cellar hatch and pit tiles and `art/tools/park.ts` the pond and thorn tiles; their header comments give every frame and tile.
 
 - Every hazard sprite has an ink outline, so it holds 3:1 on every street ground, and is drawn at outdoor scale beside the bird.
-- Steel (the hatch and its leaves, the bike's wheels) uses the slate ramp (slate, dslate, navy), not grey: the leaves are slate because dslate does not separate from the dark facades in greyscale.
-- The ferret's calling card: every trap the ferret sets carries his badge, a 13x13 cream plate with his hat-and-bow mark (a plum stovepipe with a red band over a red bow tie). `badge()` in `hazards.ts` draws it for every trap. A floor's own hazards (traffic, open hatches) never carry it.
+- Steel (the hatch and its leaves) uses the slate ramp (slate, dslate, navy), not grey: the leaves are slate because dslate does not separate from the dark facades in greyscale.
 
-| Hazard           | Kind                                                          | Size                        | Collision                                      | Tags and timing                                                      |
-| ---------------- | ------------------------------------------------------------- | --------------------------- | ---------------------------------------------- | -------------------------------------------------------------------- |
-| Cellar hatch     | tiles in `tiles-street`: `hatch-left`, `pit-*`, `hatch-right` | any width; leaves 2 rows up | edges solid; `pit-*` none, Chibi falls through | none                                                                 |
-| frog-courier     | sprite, a frog on a delivery bike, facing right               | 60x36 (5x3 tiles)           | hit box 6,6,48,30                              | `ride` 4 x 100ms, `idle` frame 0 at 400ms                            |
-| ferret-trap-snap | sprite, the ferret's giant spring mousetrap with his badge    | 50x26 (about 4x2 tiles)     | hit box 4,14,42,12                             | `set` 1 x 400ms, `snap` 60, 60, 80, 80ms, plays once and ends closed |
+| Hazard       | Kind                                                          | Size                        | Collision                                      | Tags and timing |
+| ------------ | ------------------------------------------------------------- | --------------------------- | ---------------------------------------------- | --------------- |
+| Cellar hatch | tiles in `tiles-street`: `hatch-left`, `pit-*`, `hatch-right` | any width; leaves 2 rows up | edges solid; `pit-*` none, Chibi falls through | none            |
 
 - Cellar hatch: on the sidewalk row `hatch-left`, one `pit-opening` per opening tile, `hatch-right`; `pit-opening` down every row below the opening; `pit-leaf-left-top` over `pit-leaf-left` above `hatch-left`, and the right leaf above `hatch-right`. It reads as a hole from several tiles away: two steel leaves standing up over a dark gap in the sidewalk line.
-- frog-courier rolls back and forth along the sidewalk and is mirrored for left. Its wheels roll without slipping at 51 px/s; the hit box leaves out his eye bump, the bag's top and 2px of each tyre.
-- ferret-trap-snap waits on `set` and plays `snap` once when the bird touches its hit box.
 
 ## Animal placement
 
