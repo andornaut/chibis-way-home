@@ -345,18 +345,6 @@
       ]
     },
     {
-      "key": "pedestrian-cat",
-      "png": "sprites/pedestrian-cat.png",
-      "json": "sprites/pedestrian-cat.json",
-      "once": []
-    },
-    {
-      "key": "pedestrian-raccoon",
-      "png": "sprites/pedestrian-raccoon.png",
-      "json": "sprites/pedestrian-raccoon.json",
-      "once": []
-    },
-    {
       "key": "pigeon",
       "png": "sprites/pigeon.png",
       "json": "sprites/pigeon.json",
