@@ -1,5 +1,7 @@
 // How objects move, react and behave, and the characters and archetypes that carry them.
 
+import type { Consideration, Hysteresis } from "@andornaut/game-kit/ai/utility";
+
 import type { Direction, Point, Rect } from "./geometry";
 import type { DialogueLine } from "./text";
 
@@ -83,19 +85,11 @@ interface BehaviourTraversal {
   readonly speed: number;
 }
 
-export interface BehaviourPursuitIntent {
-  // Active seconds per decision.
-  readonly decisionSeconds: { readonly min: number; readonly max: number };
-  // Signed horizontal world-X offset: tiles in authored data, pixels in a resolved plan.
-  readonly offset: { readonly min: number; readonly max: number };
-}
-
 export type BehaviourMotion =
   | { readonly kind: "wait"; readonly support?: "required" }
   | {
       readonly kind: "pursue";
       readonly mode: "fly";
-      readonly intent?: BehaviourPursuitIntent;
       // Tiles: frame-bottom clearance above the target top, and lead along its captured travel side.
       readonly overhead?: { readonly ahead: number; readonly clearance: number };
       readonly speed: number;
@@ -103,7 +97,6 @@ export type BehaviourMotion =
   | {
       readonly kind: "pursue";
       readonly mode: "ground";
-      readonly intent?: BehaviourPursuitIntent;
       readonly speed: number;
       readonly traversal?: BehaviourTraversal;
     }
@@ -153,9 +146,81 @@ export type BehaviourMotion =
     };
 
 export interface BehaviourTransition {
+  // A scored attack of the plan's engaged state: `when` is its gate and the scorer, not order,
+  // chooses it.
+  readonly score?: BossScoredAttack;
   readonly to: string;
-  // Conditions in one transition must all hold; the first matching transition wins.
+  // Conditions in one transition must all hold; the first matching unscored transition wins.
   readonly when: readonly BehaviourCondition[];
+}
+
+// What the boss scorer reads, from the perception snapshot and the boss's own state. Spatial
+// inputs (and the curve ranges that read them) are tiles in data and pixels in a layout:
+// distance (centre to centre), horizontalGap (opaque body to Chibi's box, ignoring Y), heightGap
+// (absolute feet-to-feet height), heightDelta (Chibi's feet above the boss's feet, positive when
+// he is higher). lineOfSight is 0 or 1. targetSpeed is Chibi's horizontal speed per second.
+// threatSeconds and specialDueSeconds are engaged seconds outside attacks since the scorer last
+// chose any attack and a special (from `due.openingSpecialSeconds`).
+export type BossScorerInput =
+  | "distance"
+  | "heightDelta"
+  | "heightGap"
+  | "horizontalGap"
+  | "lineOfSight"
+  | "specialDueSeconds"
+  | "targetSpeed"
+  | "threatSeconds";
+
+interface BossScoredAction {
+  readonly base: number;
+  readonly considerations: readonly Consideration<BossScorerInput>[];
+}
+
+// Special attacks count against the special cadence; the rest against the any-attack cadence.
+export interface BossScoredAttack extends BossScoredAction {
+  readonly special: boolean;
+}
+
+// Where an engaged move aims, as an offset from Chibi's box (tiles in data, pixels in a layout):
+// chase aims at him, cut-off at his position after leadSeconds of his current velocity (at most
+// maxLead), ahead `distance` along his travel direction, and standoff `distance` out on the
+// boss's own side.
+export type BossMove =
+  | { readonly kind: "chase" }
+  | { readonly kind: "cut-off"; readonly leadSeconds: number; readonly maxLead: number }
+  | { readonly kind: "ahead"; readonly distance: number }
+  | { readonly kind: "standoff"; readonly distance: number };
+
+export interface BossScoredMove extends BossScoredAction {
+  readonly id: string;
+  readonly move: BossMove;
+}
+
+// The engaged state's utility scorer. Each decision scores the scored transitions whose gate
+// holds and the moves; the best wins (game-kit ai/utility). Moves are decided at a seeded
+// interval; a gated attack is scored as soon as its gate holds, against the held move.
+// Pressure ramps attacks and every move but standoff up over threatSeconds:
+// p = clamp((threatSeconds - graceSeconds) / rampSeconds, 0, 1), multiplier 1 + weight * p.
+// Attacks also gain 1 + due.weight * clamp(due / cadence), where due is threatSeconds against
+// anySeconds, or specialDueSeconds against specialSeconds for a special.
+export interface BossScorer {
+  readonly decisionSeconds: { readonly max: number; readonly min: number };
+  readonly due: {
+    readonly anySeconds: number;
+    // specialDueSeconds when the scorer first runs.
+    readonly openingSpecialSeconds: number;
+    readonly specialSeconds: number;
+    readonly weight: number;
+  };
+  // The state key the scorer runs in.
+  readonly engaged: string;
+  readonly hysteresis: Hysteresis;
+  readonly moves: readonly BossScoredMove[];
+  readonly pressure: {
+    readonly graceSeconds: number;
+    readonly rampSeconds: number;
+    readonly weight: number;
+  };
 }
 
 // Entry actions use tiles in authored data and pixels in a resolved layout.
@@ -194,15 +259,6 @@ export interface BehaviourIdleWatchdog {
   readonly minMovement: number;
   readonly resume: string;
   readonly seconds: number;
-}
-
-export interface BehaviourGroundReposition {
-  readonly intervalSeconds: number;
-  // Maximum two-dimensional displacement radius and minimum horizontal displacement, in tiles.
-  readonly distance: number;
-  readonly minDistance: number;
-  readonly maxAttempts: number;
-  readonly resume: string;
 }
 
 export type HazardPhase = "inactive" | "warning" | "active";
@@ -255,8 +311,6 @@ export interface BehaviourNode {
   };
   // Only these uncommitted states may yield to a verified idle reposition.
   readonly allowIdleReposition?: boolean;
-  // Periodic variation is permitted only in explicitly eligible uncommitted ground states.
-  readonly allowGroundReposition?: boolean;
   // Override this state's axis and signed placed-origin extent.
   readonly track?: { readonly axis: "x" | "y"; readonly distance: number };
   readonly onEnter?: readonly BehaviourAction[];
@@ -275,7 +329,8 @@ export interface BehaviourPlan {
   // cooldown, and pursuit continues.
   readonly tellCancelPause?: { readonly cancels: number; readonly seconds: number };
   readonly idleWatchdog?: BehaviourIdleWatchdog;
-  readonly groundReposition?: BehaviourGroundReposition;
+  // Scored decisions in the engaged state.
+  readonly scorer?: BossScorer;
   readonly pursuit?: {
     readonly distance: number;
     // Null disables elapsed-time giveup; unknown planner results never establish unreachability.
