@@ -64,7 +64,8 @@ const CASES = pooledEncounters();
 // changes.
 const KNOWN_PROBLEMS: Readonly<Record<string, readonly string[]>> = {};
 
-describe("movement map path out", () => {
+// Each case builds its chunk's movement maps, which takes over 5 s on a CI runner.
+describe("movement map path out", { timeout: 20_000 }, () => {
   it("covers every pooled encounter chunk", () => {
     expect(CASES.length).toBeGreaterThan(0);
     for (const key of Object.keys(KNOWN_PROBLEMS)) {
