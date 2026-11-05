@@ -71,23 +71,16 @@
  *   iron; pit-opening is the dark drop (ink); the leaves are slate plates with dslate studs, 20px
  *   tall, leaning outwards, with no collision. Steel is the slate ramp (slate, dslate, navy), no
  *   grey. Tiles 35 to 41, after the door, so every earlier index holds.
- * - Climbing, tiles 42 to 53, after the hatch, so every earlier index holds. One-way ledges, each
- *   with left, middle and right tiles, laid any width at the reaches (a hop rises 3 tiles, a full
- *   jump 8); every top has a 2px white lip under a 1px dark edge, so it reads against any facade in
- *   greyscale: one-way-fire-escape-* (a black iron landing, art in the top 7 rows; stand
- *   fire-escape-railing on it), one-way-sill-* (a stone window sill, 2 or 3 wide, art in the top 7 rows, its top
- *   on a window's sill line), one-way-cornice-* (a rooftop cornice with dentils, the full tile,
- *   along a roofline's top edge), one-way-tank-* (a water tower's flat top rim).
- * - Crosswalk, tiles 77 to 85, after the climbing tiles and the door's later cells, so every
- *   earlier index holds. Drawn in their own colours, outside the cool tile map. A strip of
- *   crosswalk-<phase>-left, one crosswalk-<phase>-middle per inner cell and crosswalk-<phase>-right
- *   fills the row above the road top between two kerbs, its ends meeting the kerbs; the game swaps
- *   the strip's phase. crosswalk-walk-*: a dslate band with 6px lgrey zebra bars every 12px, rows
- *   2 to 9, inset 3px from each tile edge, so any width repeats; no lip. crosswalk-warning-*: the
- *   walk tile with a 4px amber border on the strip's outer edges (top and bottom on every tile, the
- *   left side on -left, the right side on -right). crosswalk-traffic-*: the whole cell bright red
- *   (#e43b44), no ink and no lip, the same fill as the procedural vent's active phase. They are
- *   the crosswalk timed hazard's phase skins, never placed as terrain; contact is the hazard's.
+ * - Crosswalk, tiles 65 to 73, after the door's later cells; the game looks tiles up by name. Drawn
+ *   in their own colours, outside the cool tile map. A strip of crosswalk-<phase>-left, one
+ *   crosswalk-<phase>-middle per inner cell and crosswalk-<phase>-right fills the row above the
+ *   road top between two kerbs, its ends meeting the kerbs; the game swaps the strip's phase.
+ *   crosswalk-walk-*: a dslate band with 6px lgrey zebra bars every 12px, rows 2 to 9, inset 3px
+ *   from each tile edge, so any width repeats; no lip. crosswalk-warning-*: the walk tile with a
+ *   4px amber border on the strip's outer edges (top and bottom on every tile, the left side on
+ *   -left, the right side on -right). crosswalk-traffic-*: the whole cell bright red (#e43b44), no
+ *   ink and no lip, the same fill as the procedural vent's active phase. They are the crosswalk
+ *   timed hazard's phase skins, never placed as terrain; contact is the hazard's.
  *
  * crosswalk-signal (sprite, 12x84, bottom-centre on a 1x7 footprint standing on the kerb top; no
  * collision or hit box): an ink-outlined dslate signal head (rows 0 to 25) with a hand lens over a
@@ -129,9 +122,9 @@
  *   a parapet 192 up), facade-brownstone 48x312 (y 600). The brownstone shows the 180px ground
  *   storey with a band over the shopfronts and the next storey's windows above, up to y 288.
  * - Roofline (repeat x): roofline-brownstone, 48x48, caps the brownstone facade (bottom at its top,
- *   y 288), so the roof is at y 240, row 20. Lay one-way-cornice along it.
+ *   y 288), so the roof is at y 240, row 20.
  * - Climbing (backdrop, no collision): fire-escape-railing 48x24 (repeat x, its bottom on a
- *   landing's top).
+ *   ledge's top).
  * - Storefronts (none), each 120 tall (y 600), a whole number of tiles wide, with a sign icon (never
  *   text), a tall display window and a 46px door: storefront-cafe 84, storefront-noodle-bar 120.
  * - Street furniture (none, y 600): walk-signal 12x82.
@@ -517,7 +510,6 @@ function streetTiles(): [Tile[], Pieces] {
       ["planter-right", planter("r")],
       ...door.slice(0, 12),
       ...hatchTiles(),
-      ...climbTiles(),
       ...door.slice(12),
       ...crosswalkTiles(),
     ],
@@ -559,113 +551,6 @@ function hatchTiles(): Tile[] {
     ["pit-leaf-right-top", rt],
     ["pit-leaf-right", rb],
   ];
-}
-
-/**
- * The climb up the street's buildings, appended after the hatch so every earlier index holds. Every
- * top carries the same 2px cream lip under a 1px dark edge, so each ledge's top reads against any
- * facade in greyscale.
- */
-function climbTiles(): Tile[] {
-  const tiles: Tile[] = [];
-  for (const [name, fn] of [
-    ["fire-escape", fireEscapeLanding],
-    ["sill", sill],
-    ["cornice", cornice],
-    ["tank", tankTop],
-  ] as const) {
-    tiles.push(
-      [`one-way-${name}-left`, fn("l")],
-      [`one-way-${name}`, fn("m")],
-      [`one-way-${name}-right`, fn("r")],
-    );
-  }
-  return tiles;
-}
-
-/** Round a one-way ledge's exposed end: a 1px edge down its side over rows, the top corner cut. */
-function ledgeEnds(g: Grid, kind: string, edge: string, rows: number): Grid {
-  if (kind === "l") {
-    rects(g, [0, 0, 1, rows, edge]);
-    g.p(0, 0, null);
-  }
-  if (kind === "r") {
-    rects(g, [T - 1, 0, 1, rows, edge]);
-    g.p(T - 1, 0, null);
-  }
-  return g;
-}
-
-/**
- * A fire-escape landing: black iron with a sunlit cream lip, a 3px slatted deck and a navy
- * underside; art in the top 7 rows.
- */
-function fireEscapeLanding(kind: string): Grid {
-  const g = rects(
-    new Grid(T, T),
-    [0, 0, T, 1, "ink"],
-    [0, 1, T, 2, "cream"],
-    [0, 3, T, 3, "ink"],
-    [0, 6, T, 1, "navy"],
-  );
-  for (const x of [2, 6, 10]) {
-    rects(g, [x, 4, 2, 1, "dslate"]);
-  } // the deck's slats, 2px
-  return ledgeEnds(g, kind, "ink", 7);
-}
-
-/**
- * A stone window sill: a cream lip, tan stone, a brown face and a dark-brown underside; art in the
- * top 7 rows. Lay 2 or 3 wide under a window.
- */
-function sill(kind: string): Grid {
-  const g = rects(
-    new Grid(T, T),
-    [0, 0, T, 1, "dbrown"],
-    [0, 1, T, 2, "cream"],
-    [0, 3, T, 2, "tan"],
-    [0, 5, T, 1, "brown"],
-    [0, 6, T, 1, "dbrown"],
-  );
-  return ledgeEnds(g, kind, "dbrown", 7);
-}
-
-/**
- * A rooftop cornice: a cream lip, tan stone, a brown band and 2px tan dentils every 6px under it,
- * the full tile tall.
- */
-function cornice(kind: string): Grid {
-  const g = rects(
-    new Grid(T, T),
-    [0, 0, T, 1, "dbrown"],
-    [0, 1, T, 2, "cream"],
-    [0, 3, T, 3, "tan"],
-    [0, 6, T, 1, "brown"],
-    [0, 7, T, 4, "dbrown"],
-    [0, 11, T, 1, "plum"],
-  );
-  for (const x of [2, 8]) {
-    rects(g, [x, 7, 2, 3, "tan"]);
-  } // dentils, 2px wide every 6px
-  return ledgeEnds(g, kind, "dbrown", T);
-}
-
-/**
- * The water tower's flat top rim: a cream lip over brown staves with a dark-brown hoop, the full
- * tile tall.
- */
-function tankTop(kind: string): Grid {
-  const g = rects(
-    new Grid(T, T),
-    [0, 0, T, 1, "dbrown"],
-    [0, 1, T, 2, "cream"],
-    [0, 3, T, 9, "brown"],
-    [0, 7, T, 2, "dbrown"],
-  );
-  for (const x of [3, 9]) {
-    rects(g, [x, 3, 1, 4, "dbrown"], [x, 9, 1, 3, "dbrown"]);
-  }
-  return ledgeEnds(g, kind, "dbrown", T);
 }
 
 // ---------------------------------------------------------------- lobby tiles
@@ -1128,7 +1013,7 @@ function walkSignal(): Grid {
 
 /**
  * The top of a building, 48x48, repeat x: plain wall under a 4px trim band at the top, placed on
- * the topmost facade piece; one-way-cornice tiles go along its top edge, where the roof is.
+ * the topmost facade piece, where the roof is.
  */
 function roofline(kind: string): Grid {
   const [wall, line, trim] = BUILDINGS[kind] as (typeof BUILDINGS)[string];
@@ -1136,8 +1021,8 @@ function roofline(kind: string): Grid {
 }
 
 /**
- * 48x24, repeat x: a fire-escape landing's ink railing, a top rail and 2px balusters every 12px,
- * standing on the landing (its bottom at the landing tiles' top edge).
+ * 48x24, repeat x: a fire-escape's ink railing, a top rail and 2px balusters every 12px, standing
+ * on a ledge (its bottom at the ledge tiles' top edge).
  */
 function fireEscapeRailing(): Grid {
   const g = rects(new Grid(48, 24), [0, 0, 48, 2, "ink"], [0, 10, 48, 2, "ink"]);
@@ -1274,11 +1159,8 @@ const STREET_EXAMPLE: {
   ],
   ledges: [
     ["awning", 44, 24, 6],
-    ["fire-escape", 36, 6, 12],
-    ["fire-escape", 28, 6, 12],
-    ["sill", 33, 29, 3],
-    ["sill", 33, 37, 3],
-    ["cornice", 20, 0, 44],
+    ["canopy", 36, 6, 12],
+    ["canopy", 28, 6, 12],
   ],
   planter: [20, 3],
 };
