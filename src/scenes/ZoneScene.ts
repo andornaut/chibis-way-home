@@ -221,6 +221,7 @@ import {
   wholeRunStats,
   zoneVisitStats,
 } from "./save";
+import { createTetherArt } from "./tetherArt";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard";
 import { createTouchChrome } from "./touchChrome";
 import { bindZoneBarks } from "./zoneBarks";
@@ -306,6 +307,7 @@ interface ObjectArt {
   // When its next quirk plays, and the draws that time it.
   readonly quirk?: { at: number; readonly random: Random };
   readonly sprite: GameObjects.Sprite | undefined;
+  readonly tether?: ReturnType<typeof createTetherArt>;
 }
 
 // Starts a sprite's tag, unless it already shows it, playing or finished on its last frame.
@@ -1498,6 +1500,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (!art.disposed) {
         art.item.destroy();
       }
+      art.tether?.destroy();
     }
     for (const art of this.transientArt.values()) {
       art.item.destroy();
@@ -1518,7 +1521,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         (name) => this.cache.json.get(name) as Tileset | undefined,
         key,
       );
-      return this.drawObject(key, source, object, index);
+      const art = this.drawObject(key, source, object, index);
+      return object.tether ? { ...art, tether: this.drawTether(object.tether.art) } : art;
     });
     this.crumblingArt = area.crumbling && this.drawCrumbling(area);
   }
@@ -1552,6 +1556,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       layer.putTileAt(index, col, row);
     }
     return map;
+  }
+
+  // A tether one depth behind the objects: its sprite once art has it, else a placeholder line.
+  private drawTether(art: string): ReturnType<typeof createTetherArt> {
+    const sprite = this.manifest.sprites.some(({ key }) => key === art)
+      ? { key: art, size: this.textures.getFrame(art).height }
+      : undefined;
+    return createTetherArt(DEPTHS.sprite - 1, sprite, OBJECT_COLOURS.ledge, this);
   }
 
   private drawObject(
@@ -1881,6 +1893,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         : { x, y };
       if (art.item.x !== position.x || art.item.y !== position.y) {
         art.item.setPosition(position.x, position.y);
+      }
+      if (art.tether && object.tether) {
+        art.tether.draw(object.tether.y, { x: at.x + object.width / 2, y: at.y });
       }
       if (behaviour?.defeat) {
         this.drawRemoval(index, art, behaviour);
