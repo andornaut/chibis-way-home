@@ -65,7 +65,7 @@ const ANIMAL_IDLE_WATCHDOG: NonNullable<BehaviourPlan["idleWatchdog"]> = {
   seconds: 2,
 };
 
-const ATTACK_ENGAGEMENT_RANGE = 12;
+export const ATTACK_ENGAGEMENT_RANGE = 12;
 // Ground chase: the grounded walk toward Chibi, and the horizontal speed of jumps and map legs.
 interface GroundChase {
   readonly speed: number;
@@ -245,6 +245,8 @@ export function shuttleStates(
 }
 
 interface PatrolChargeTuning {
+  // The tell a patrol enters on spotting Chibi; the charge's preparation by default.
+  readonly opening?: string;
   // The engaged state's specials, scored beside the charge.
   readonly specials: readonly BehaviourTransition[];
   // Tiles the committed charge covers.
@@ -263,6 +265,7 @@ interface PatrolChargeTuning {
 
 function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"] {
   const afterRush = tuning.slide ? "slide" : "rest";
+  const opening = tuning.opening ?? tuning.preparation;
   return {
     [tuning.preparation]: {
       animation: tuning.preparation,
@@ -278,7 +281,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "walk",
       motion: { direction: -1, kind: "move", speed: tuning.patrolSpeed },
       transitions: [
-        { to: tuning.preparation, when: DETECTION },
+        { to: opening, when: DETECTION },
         { to: "wait-left", when: [{ kind: "boundary" }] },
       ],
     },
@@ -287,7 +290,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "walk",
       motion: { direction: 1, kind: "move", speed: tuning.patrolSpeed },
       transitions: [
-        { to: tuning.preparation, when: DETECTION },
+        { to: opening, when: DETECTION },
         { to: "wait-right", when: [{ kind: "boundary" }] },
       ],
     },
@@ -330,7 +333,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "idle",
       motion: { kind: "wait" },
       transitions: [
-        { to: tuning.preparation, when: DETECTION },
+        { to: opening, when: DETECTION },
         { to: "patrol-right", when: [{ kind: "elapsed", seconds: tuning.patrolPause }] },
       ],
     },
@@ -339,7 +342,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "idle",
       motion: { kind: "wait" },
       transitions: [
-        { to: tuning.preparation, when: DETECTION },
+        { to: opening, when: DETECTION },
         { to: "patrol-left", when: [{ kind: "elapsed", seconds: tuning.patrolPause }] },
       ],
     },
@@ -506,8 +509,10 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
     scorer: FERT_SCORER,
     spotted: { line: "fert-spotted", speaker: "ferret" },
     states: {
+      // Fert opens with a throw on spotting Chibi, so his first pause comes before any chase.
       ...patrolChargeStates({
         ...GROUND_CHARGE,
+        opening: "prepare-throw",
         specials: [scored("prepare-throw", PARCEL_SCORE, [ENGAGEMENT])],
       }),
       "prepare-throw": {
