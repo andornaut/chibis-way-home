@@ -108,6 +108,8 @@ const half = (difficulty: Difficulty, id: string, spec: Half): ChunkModule => {
     zones: ["blue"],
   };
 };
+// A door slot whose room building (15 cols, its door 5.5 cols in) stays inside the half on full floor:
+// `col` from 6 to 20, with floor under cols `col - 5.5` to `col + 9.5`.
 const door = (col: number, floorRow: number): NonNullable<ChunkModule["slots"]>[number] => ({
   area: { col, cols: 4, row: floorRow - 5, rows: 5 },
   id: "door",
@@ -192,7 +194,7 @@ const MODULE_LIST: readonly ChunkModule[] = [
   // Grade 3: gaps near the reach, single moving platforms, single tap spots.
   half(3, "city-gap", gap(80, 6, 15)),
   half(3, "city-gap-high", gap(70, 7, 16)),
-  half(3, "city-tap-strip", { ...tapStrip(80, 13), slots: [door(22, 80)] }),
+  half(3, "city-tap-strip", { ...tapStrip(80, 9), slots: [door(20, 80)] }),
   half(3, "city-tap-strip-high", tapStrip(70, 12)),
   half(3, "city-ferry", ferry(80)),
   half(3, "city-ferry-high", ferry(70)),
@@ -248,9 +250,9 @@ const MODULE_LIST: readonly ChunkModule[] = [
   half(3, "city-ledge-descent", {
     entry: 70,
     exit: 80,
-    objects: [ledge(12, 5, 74), ledge(19, 5, 78), ...red(10, 15, 86)],
-    slots: [door(5, 70)],
-    solids: [floor(0, 10, 70), floor(25, 5, 80)],
+    objects: [ledge(17, 7, 75), ...red(16, 9, 86)],
+    slots: [door(6, 70)],
+    solids: [floor(0, 16, 70), floor(25, 5, 80)],
   }),
   // Grade 4: timed supports, warned vents and moving hazards on the required path.
   half(4, "city-vent-deck", ventDeck(80)),
