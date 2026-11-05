@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { checkProperties } from "../ai/agentProperties";
+import { BOSS_FAIRNESS } from "../data/bossFairness";
 import { CHARACTERS } from "../data/characters";
 import { BOSS_SCENARIOS } from "../testing/bossScenarios";
+import { DODGES } from "../testing/dodges";
 import { ORDINARY } from "../testing/encounterLayouts";
 import {
   bossProperties,
@@ -10,6 +12,7 @@ import {
   DEFERRED_ATTACKS,
   maximumTellSeconds,
   minimumTellSeconds,
+  reactionSeconds,
   targetedAttacks,
   tellAttacks,
 } from "./bossProperties";
@@ -28,16 +31,7 @@ interface KnownFailure {
   readonly scenario: string;
   readonly tick: number | undefined;
 }
-const KNOWN_FAILURES: readonly KnownFailure[] = [
-  {
-    cause:
-      "Fert charges or reaches Chibi by contact on every attempt before a parcel throw, so this " +
-      "run never throws; the throw hold is pinned by the fert throw perch scenario",
-    property: "committed-hold throw-rest",
-    scenario: "encounter city-boundary-climb-yard apartment-lobby forward",
-    tick: 1499,
-  },
-];
+const KNOWN_FAILURES: readonly KnownFailure[] = [];
 
 const known = (scenario: string, property: string) =>
   KNOWN_FAILURES.find((entry) => entry.scenario === scenario && entry.property === property);
@@ -113,5 +107,29 @@ it("gives every boss a told charge and at least one distinct special", () => {
 it("gates the deferred attacks on the targeted-attack window in data", () => {
   for (const [character, attacks] of Object.entries(DEFERRED_ATTACKS)) {
     expect([...targetedAttacks(PLANS[character]!)].sort()).toEqual([...attacks].sort());
+  }
+});
+
+it("gives Chibi the minimum reaction time from every tell start to contact", () => {
+  for (const [character, plan] of Object.entries(PLANS)) {
+    const { minReactionSeconds } = BOSS_FAIRNESS[character]!;
+    for (const id of tellAttacks(plan)) {
+      expect(reactionSeconds(plan, id), `${character} ${id}`).toBeGreaterThanOrEqual(
+        minReactionSeconds,
+      );
+    }
+  }
+});
+
+it("names a scripted dodge for every told attack", () => {
+  for (const [character, plan] of Object.entries(PLANS)) {
+    const { dodges } = BOSS_FAIRNESS[character]!;
+    expect(Object.keys(dodges).sort(), character).toEqual([...tellAttacks(plan)].sort());
+    for (const names of Object.values(dodges)) {
+      expect(names.length).toBeGreaterThan(0);
+      for (const name of names) {
+        expect(DODGES[name], name).toBeTypeOf("function");
+      }
+    }
   }
 });

@@ -11,6 +11,7 @@ import {
   crossesAfterSettle,
   movesAtLeast,
   movesWhileEngaged,
+  pacesNearest,
   risesToRow,
   tellPauseLasts,
 } from "../sim/bossProperties";
@@ -343,6 +344,32 @@ const FERT_THROW: BossScenario = {
   ticks: ENCOUNTER_TICKS,
 };
 
+// Pacing out of reach: Chibi stands on Fert's perch above the late patrol yard, out of reach of
+// any of Archie's jumps or his pounce, so Archie walks to the reachable spot nearest him and
+// paces there. A synthetic placement.
+const PACE_PERCH: BossScenario = {
+  ...FERT_THROW,
+  layout: () =>
+    chunksLayout(
+      "city-streets",
+      ["patrol-cover-late", ...REARM_CHUNKS],
+      withInstances("patrol-cover-late", [
+        {
+          character: "platform-ledge",
+          col: FERT_PERCH.col,
+          cols: FERT_PERCH.cols,
+          role: "ledge",
+          row: FERT_PERCH.row,
+        },
+      ]),
+    ),
+  name: "pace perch patrol-cover-late city-streets seed 1",
+};
+// One decision (at most 0.9 s) plus the walk there, and the pace's 3 tiles beside Archie's
+// half width.
+const PACE_SECONDS = 3;
+const PACE_TILES = 6;
+
 // Kiwi encounter: a re-told second charge has at least 3 tiles of ground ahead, so it moves.
 const KIWI_SECOND_CHARGE_TILES = 3;
 const kiwiChecks = (): readonly Property<BossTick>[] => [
@@ -585,6 +612,13 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     subject:
       "rearm: Trixi gives up on the late yard floor and rearms over the right block, sliding " +
       "after a rush",
+  },
+  {
+    boss: "Archie",
+    checks: () => [pacesNearest(PACE_SECONDS, PACE_TILES * TILE), movesWhileEngaged(2, TILE / 2)],
+    covers: [],
+    scenario: PACE_PERCH,
+    subject: "pace: Archie paces at the reachable spot nearest a Chibi out of reach",
   },
   {
     boss: "Fert",

@@ -96,6 +96,28 @@ it("raises attack scores with pressure and with their cadence coming due", () =>
   }
 });
 
+it("never lowers the chase or an attack's score as threatSeconds rises alone", () => {
+  const threats = [0, 1, 2, 3, 4, 6, 10, 20];
+  for (const scorer of [GROUND_BOSS_SCORER, FERT_SCORER]) {
+    const scores = threats.map((threatSeconds) => {
+      const { decision } = decideScored(
+        scorer,
+        never,
+        true,
+        INITIAL_SCORER_STATE,
+        { ...LEVEL, threatSeconds },
+        [attack("tell")],
+      );
+      const of = (action: string) => decision.scores.find((entry) => entry.action === action)!;
+      return [of("attack:tell").score, of("move:chase").score] as const;
+    });
+    for (const column of [0, 1]) {
+      const series = scores.map((row) => row[column]!);
+      expect(series).toEqual([...series].sort((a, b) => a - b));
+    }
+  }
+});
+
 it("keeps the held move when an attack's considerations veto it between decisions", () => {
   const held = { ...INITIAL_SCORER_STATE, heldSeconds: 0.1, move: "chase" };
   const vetoed: BehaviourTransition = {
