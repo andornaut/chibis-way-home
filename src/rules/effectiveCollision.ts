@@ -1,18 +1,28 @@
-import type { Collision, HazardPhase, ObjectLayout } from "../data/types";
+import type {
+  BehaviourNode,
+  Collision,
+  HazardPhase,
+  ObjectLayout,
+  SupportPhase,
+} from "../data/types";
 import type { BehaviourState } from "./behaviour";
 
-// Only a fully labelled stationary clock may change lethal contact. Actor and support
-// lifecycles remain outside this contract.
-export function validateHazardPhases(object: ObjectLayout): void {
-  const plan = object.behaviour;
-  if (!plan || !Object.values(plan.states).some((node) => node.hazardPhase !== undefined)) {
-    return;
-  }
+// A stationary clock: no reaction, contact, orbit, scene or actor lifecycle, and every state a
+// wait with one elapsed transition, the states one ring from the initial state. label names the
+// phase field every state must carry one of values for.
+function validateClockCycle(
+  clock: {
+    readonly label: string;
+    readonly phaseOf: (node: BehaviourNode) => string | undefined;
+    readonly values: readonly string[];
+  },
+  object: ObjectLayout,
+): void {
+  const plan = object.behaviour!;
   const invalid = () => {
-    throw new Error(`Hazard phases require a stationary elapsed-only cycle: ${object.character}`);
+    throw new Error(`${clock.label} require a stationary elapsed-only cycle: ${object.character}`);
   };
   if (
-    object.collision !== "hazard" ||
     object.contact ||
     object.orbit ||
     object.scene !== undefined ||
@@ -30,7 +40,7 @@ export function validateHazardPhases(object: ObjectLayout): void {
   for (const node of Object.values(plan.states)) {
     const condition = node.transitions[0]?.when[0];
     if (
-      !["inactive", "warning", "active"].includes(node.hazardPhase ?? "") ||
+      !clock.values.includes(clock.phaseOf(node) ?? "") ||
       node.motion.kind !== "wait" ||
       node.motion.support !== undefined ||
       node.track ||
@@ -63,6 +73,49 @@ export function validateHazardPhases(object: ObjectLayout): void {
   }
 }
 
+// Only a fully labelled stationary clock may change lethal contact. Actor and support
+// lifecycles remain outside this contract.
+export function validateHazardPhases(object: ObjectLayout): void {
+  const plan = object.behaviour;
+  if (!plan || !Object.values(plan.states).some((node) => node.hazardPhase !== undefined)) {
+    return;
+  }
+  if (object.collision !== "hazard") {
+    throw new Error(`Hazard phases require a stationary elapsed-only cycle: ${object.character}`);
+  }
+  validateClockCycle(
+    {
+      label: "Hazard phases",
+      phaseOf: (node) => node.hazardPhase,
+      values: ["inactive", "warning", "active"],
+    },
+    object,
+  );
+}
+
+// Only a one-way ledge on a fully labelled stationary clock may come and go, so a support that
+// appears inside a body never pushes or crushes it; it is never lethal.
+export function validateSupportPhases(object: ObjectLayout): void {
+  const plan = object.behaviour;
+  if (!plan || !Object.values(plan.states).some((node) => node.supportPhase !== undefined)) {
+    return;
+  }
+  if (
+    object.collision !== "ledge" ||
+    Object.values(plan.states).some((node) => node.hazardPhase !== undefined)
+  ) {
+    throw new Error(`Support phases require a stationary one-way ledge: ${object.character}`);
+  }
+  validateClockCycle(
+    {
+      label: "Support phases",
+      phaseOf: (node) => node.supportPhase,
+      values: ["present", "warning", "absent"],
+    },
+    object,
+  );
+}
+
 export function effectiveHazardPhase(
   object: ObjectLayout,
   state: Pick<BehaviourState, "stateKey"> | undefined,
@@ -78,12 +131,56 @@ export function effectiveHazardPhase(
   return node.hazardPhase;
 }
 
-// A dead boss has no collision.
+// A clocked support's presence in a state, its initial state's before its behaviour starts.
+export function effectiveSupportPhase(
+  object: ObjectLayout,
+  state: Pick<BehaviourState, "stateKey"> | undefined,
+): SupportPhase | undefined {
+  const plan = object.behaviour;
+  if (!plan) {
+    return undefined;
+  }
+  const node = plan.states[state?.stateKey ?? plan.initial];
+  if (!node) {
+    throw new Error(`Missing behaviour state for ${object.character}`);
+  }
+  return node.supportPhase;
+}
+
+const CLOCKED = new WeakMap<ObjectLayout, boolean>();
+
+// Whether an object is a clocked support: a ledge whose every behaviour state carries a
+// supportPhase.
+export function clockedSupport(object: ObjectLayout): boolean {
+  let clocked = CLOCKED.get(object);
+  if (clocked === undefined) {
+    clocked = Object.values(object.behaviour?.states ?? {}).some(
+      (node) => node.supportPhase !== undefined,
+    );
+    CLOCKED.set(object, clocked);
+  }
+  return clocked;
+}
+
+// Whether a support collides in a behaviour state: a clocked support only while present or
+// warning, every other support always.
+export function clockPresent(
+  object: ObjectLayout,
+  state: Pick<BehaviourState, "stateKey"> | undefined,
+): boolean {
+  return !clockedSupport(object) || effectiveSupportPhase(object, state) !== "absent";
+}
+
+// A dead boss has no collision; a timed hazard collides only while active, and a clocked support
+// only while present or warning.
 export function effectiveCollision(
   object: ObjectLayout,
   state: Pick<BehaviourState, "defeat" | "stateKey"> | undefined,
 ): Collision {
   if (state?.defeat) {
+    return "none";
+  }
+  if (effectiveSupportPhase(object, state) === "absent") {
     return "none";
   }
   const phase = effectiveHazardPhase(object, state);

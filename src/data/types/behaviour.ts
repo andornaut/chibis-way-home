@@ -210,9 +210,23 @@ export interface WarnedCycleSeconds {
   readonly warning: number;
 }
 
+// A clocked support's presence: it collides while present or warning and not while absent.
+export type SupportPhase = "present" | "warning" | "absent";
+
+// Seconds in each state of a clocked support's cycle: out (present), warning, retracted (absent),
+// then extending (absent) back to out.
+export interface SupportCycleSeconds {
+  readonly extending: number;
+  readonly out: number;
+  readonly retracted: number;
+  readonly warning: number;
+}
+
 export interface BehaviourNode {
   // Stationary timed hazards label every state; recovery uses inactive.
   readonly hazardPhase?: HazardPhase;
+  // Stationary clocked one-way supports label every state.
+  readonly supportPhase?: SupportPhase;
   // Tell starts one attack; committed includes its recovery; completed begins the actor cooldown.
   // A continuing tell re-tells inside its committed attack, before a further committed action.
   readonly attack?: {

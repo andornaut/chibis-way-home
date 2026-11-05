@@ -880,9 +880,11 @@ function matches(
     );
   }
   if (condition.kind === "elapsed") {
-    // Timed hazard boundaries tolerate arithmetic rounding, without extending legacy clocks.
+    // Timed hazard and clocked support boundaries tolerate arithmetic rounding, without
+    // extending legacy clocks.
+    const node = object.behaviour?.states[state.stateKey];
     const rounding =
-      object.behaviour?.states[state.stateKey]?.hazardPhase === undefined
+      node?.hazardPhase === undefined && node?.supportPhase === undefined
         ? 0
         : Number.EPSILON * Math.max(1, state.elapsed, condition.seconds) * 4;
     return state.elapsed + rounding >= condition.seconds;

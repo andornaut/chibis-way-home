@@ -23,7 +23,11 @@ import type {
 import { drawsFrom, tileHitbox, type Tileset, worldScenery } from "../stage";
 import { layoutBehaviour } from "./behaviour";
 import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling";
-import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision";
+import {
+  effectiveHazardPhase,
+  validateHazardPhases,
+  validateSupportPhases,
+} from "./effectiveCollision";
 import { resolveForcedTransit, validateForcedTransitGroups } from "./forcedTransitLayout";
 import { resolveOrbits, validateOrbitReferences } from "./orbit";
 import { resolvePhaseSources } from "./phaseSource";
@@ -329,6 +333,7 @@ export function objectLayout(
     width,
   };
   validateHazardPhases(object);
+  validateSupportPhases(object);
   if (object.phaseTiles && effectiveHazardPhase(object, undefined) === undefined) {
     throw new Error(`Phase tiles on ${instance.character} require a timed hazard`);
   }
