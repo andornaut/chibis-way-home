@@ -1,6 +1,12 @@
 // Path out of every pooled encounter: no boss can be left where it cannot leave, map edges are
 // moves pursuit's kernel makes, and every spot Chibi can stand on has a skill-free way out.
-import { type AirMap, locateAir, reachableAir } from "@andornaut/game-kit/terrain/airMap";
+import {
+  type AirMap,
+  type AirNodeId,
+  locateAir,
+  reachableAir,
+  sinksAir,
+} from "@andornaut/game-kit/terrain/airMap";
 import {
   locate,
   type MapEdge,
@@ -321,20 +327,30 @@ function airProblems(
   const mask = airMask({ allowed: ALLOW, key: "all" }, map);
   const reachable = reachableAir(map, mask, spawn);
   const problems: string[] = [];
-  // Every link has its reverse, so reaching an exit from the spawn proves every reachable cell
-  // and perch reaches both the exit and the spawn.
-  const links = new Set(map.edges.map(({ from, to }) => `${from}>${to}`));
-  for (const edge of map.edges) {
-    if (reachable.has(edge.from) && !links.has(`${edge.to}>${edge.from}`)) {
-      problems.push(`${name} air ${edge.kind} ${edge.from}>${edge.to} has no return`);
-    }
-  }
   const exits = [...reachable].filter((id) => {
     const { body } = map.nodes[id]!;
     return body.x + body.width <= terrain.bounds.x + PAD || body.x >= area.width;
   });
   if (exits.length === 0) {
     problems.push(`${name} reaches no exit cell`);
+  }
+  for (const id of sinksAir(map, mask, spawn, exits)) {
+    problems.push(`${name} air ${map.nodes[id]!.kind} ${id} is a sink`);
+  }
+  // The mask allows every edge at every time, so a reverse search from the spawn finds every
+  // node that reaches it.
+  const incoming = map.nodes.map((): AirNodeId[] => []);
+  for (const { from, to } of map.edges) {
+    incoming[to]!.push(from);
+  }
+  const returns = new Set([spawn]);
+  for (const id of returns) {
+    for (const from of incoming[id]!) {
+      returns.add(from);
+    }
+  }
+  for (const id of [...reachable].filter((node) => !returns.has(node)).sort((a, b) => a - b)) {
+    problems.push(`${name} air ${map.nodes[id]!.kind} ${id} has no path to the spawn`);
   }
   if (![...reachable].some((id) => map.nodes[id]!.kind === "perch")) {
     problems.push(`${name} reaches no perch`);
