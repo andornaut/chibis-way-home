@@ -32,21 +32,27 @@ export const TEXT: GameText = {
       "escape-pebble": { description: "Get away from Pebble's chase.", title: "Shook off Pebble" },
       "escape-trixi": { description: "Get away from Trixi's chase.", title: "Shook off Trixi" },
       "first-try-archie": {
-        description: "Clear City boundary without dying.",
+        description: "Clear City boundary on the first try.",
         title: "Clean past Archie",
       },
-      "first-try-bini": { description: "Clear Ravine without dying.", title: "Clean past Bini" },
-      "first-try-fert": { description: "Clear Penthouse without dying.", title: "Clean past Fert" },
+      "first-try-bini": {
+        description: "Clear Ravine on the first try.",
+        title: "Clean past Bini",
+      },
+      "first-try-fert": {
+        description: "Clear Penthouse on the first try.",
+        title: "Clean past Fert",
+      },
       "first-try-kiwi": {
-        description: "Clear Familiar neighbourhood without dying.",
+        description: "Clear Familiar neighbourhood on the first try.",
         title: "Clean past Kiwi",
       },
       "first-try-pebble": {
-        description: "Clear Freight terminal without dying.",
+        description: "Clear Freight terminal on the first try.",
         title: "Clean past Pebble",
       },
       "first-try-trixi": {
-        description: "Clear River crossing without dying.",
+        description: "Clear River crossing on the first try.",
         title: "Clean past Trixi",
       },
       "gift-rooms": {
@@ -58,27 +64,27 @@ export const TEXT: GameText = {
         title: "Just a bird",
       },
       "no-death-apartment": {
-        description: "Clear every Apartment building stage without dying, in one go.",
+        description: "Clear every Apartment building stage on the first try, in one go.",
         title: "Spotless apartment",
       },
       "no-death-blue-cityscape": {
-        description: "Clear every Blue cityscape stage without dying, in one go.",
+        description: "Clear every Blue cityscape stage on the first try, in one go.",
         title: "Spotless cityscape",
       },
       "no-death-countryside": {
-        description: "Clear every Countryside stage without dying, in one go.",
+        description: "Clear every Countryside stage on the first try, in one go.",
         title: "Spotless countryside",
       },
       "no-death-home-city": {
-        description: "Clear every Home city stage without dying, in one go.",
+        description: "Clear every Home city stage on the first try, in one go.",
         title: "Spotless home city",
       },
       "no-death-industrial": {
-        description: "Clear every Industrial outskirts stage without dying, in one go.",
+        description: "Clear every Industrial outskirts stage on the first try, in one go.",
         title: "Spotless outskirts",
       },
       "no-death-woodland": {
-        description: "Clear every Woodland stage without dying, in one go.",
+        description: "Clear every Woodland stage on the first try, in one go.",
         title: "Spotless woodland",
       },
     },
