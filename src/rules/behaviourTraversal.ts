@@ -972,6 +972,7 @@ function advanceTraversalStep(
 }
 
 export interface BehaviourRearmState {
+  readonly searchedAt?: Point;
   readonly visible: boolean;
   readonly stateKey: string;
   readonly supports: readonly TraversalSupport[];
@@ -981,7 +982,201 @@ export interface BehaviourRearmState {
   readonly status: TraversalResult<TraversalSupport>["status"];
 }
 
-// Retry a jump-only reach proof on scene/graph/support events, never each patrol position.
+// A rearm proof's legs: the direct walk and each staged search, as pursuit plans them.
+const REARM_LEGS = 3;
+
+// Horizontal heading towards a goal envelope, or none once the body is inside it.
+function goalMove(
+  context: TraversalContext<TraversalSupport>,
+  state: TraversalState<TraversalSupport>,
+  goal: Rect,
+): -1 | 0 | 1 {
+  const { body, epsilon } = context;
+  const left = state.x + body.offset.x;
+  if (left >= goal.x - epsilon && left + body.width <= goal.x + goal.width + epsilon) {
+    return 0;
+  }
+  return goal.x + goal.width / 2 < left + body.width / 2 ? -1 : 1;
+}
+
+const fixedOwner = (owner: ObjectLayout) =>
+  owner.motion.algorithm === "static" &&
+  !owner.behaviour &&
+  !owner.orbit &&
+  owner.reaction.kind === "none";
+
+// The present geometry as every future step's, when nothing in it can move, crumble or time
+// its contact: later legs then start from future states without frame predictions. Undefined
+// otherwise, so those routes stay unknown.
+function stationaryContext(
+  world: BehaviourWorld,
+  context: TraversalContext<TraversalSupport>,
+  object: ObjectLayout,
+): TraversalContext<TraversalSupport> | undefined {
+  const frame = world.traversalFrame;
+  if (
+    !frame ||
+    frame.crumbling ||
+    context.dtSeconds !== frame.dtSeconds ||
+    frame.platforms.some(
+      ({ after, before, owner }) =>
+        after.x !== before.x || after.y !== before.y || !fixedOwner(owner),
+    ) ||
+    (world.hazards ?? []).some(
+      ({ owner, timedContacts }) => owner !== object && (timedContacts || !fixedOwner(owner)),
+    )
+  ) {
+    return undefined;
+  }
+  // Stationary chords carry no timing, so the same colliders validate at any step.
+  return {
+    ...context,
+    sampleColliders: (_, dt, query) => {
+      const geometry = context.sampleColliders(frame.timeSeconds, dt, query);
+      return {
+        ...geometry,
+        colliders: geometry.colliders.map(({ after, before, kind, supportId }) => ({
+          after,
+          before,
+          kind,
+          supportId,
+        })),
+      };
+    },
+  };
+}
+
+// Walks off a support edge and falls until the body lands, within one native horizon; each step
+// keeps the native collision and hazard checks.
+function dropLeg(
+  context: TraversalContext<TraversalSupport>,
+  timeSeconds: number,
+  start: TraversalState<TraversalSupport>,
+  move: -1 | 0 | 1,
+):
+  | { readonly inputs: readonly TraversalInput[]; readonly state: TraversalState<TraversalSupport> }
+  | undefined {
+  const inputs: TraversalInput[] = [];
+  let state = start;
+  for (let step = 0; step < BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps; step++) {
+    const input = {
+      jump: false,
+      move,
+      timeSeconds: timeSeconds + step * context.dtSeconds,
+    };
+    const next = stepTraversal(context, input, state);
+    if (next.status !== "ok") {
+      return undefined;
+    }
+    inputs.push(input);
+    state = next.state;
+    if (state.grounded) {
+      return { inputs, state };
+    }
+  }
+  return undefined;
+}
+
+// Plans a rearm route in the legs ordinary pursuit takes: a direct walk while it keeps
+// grounded progress, then the same search event, with its supported landing, descent or ascent
+// preference and the staged wall-top climb. Each search keeps the shared budget.
+function stagedRearm(
+  world: BehaviourWorld,
+  context: TraversalContext<TraversalSupport>,
+  timeSeconds: number,
+  start: TraversalState<TraversalSupport>,
+  goal: Rect,
+): {
+  readonly inputs: readonly TraversalInput[];
+  readonly status: TraversalResult<TraversalSupport>["status"];
+} {
+  const { horizonSteps } = BEHAVIOUR_TRAVERSAL_SEARCH.budget;
+  const inputs: TraversalInput[] = [];
+  // Times count whole steps from the probe, as the native search does.
+  const time = () => timeSeconds + inputs.length * context.dtSeconds;
+  let state = start;
+  for (let leg = 0; leg < REARM_LEGS; leg++) {
+    let direct: TraversalStepResult<TraversalSupport> | undefined;
+    let progress = false;
+    let walked = 0;
+    for (; walked < horizonSteps; walked++) {
+      const input = { jump: false, move: goalMove(context, state, goal), timeSeconds: time() };
+      direct = stepTraversal(context, input, state);
+      progress = direct.status === "ok" && Math.abs(direct.state.x - state.x) > EDGE;
+      if (
+        direct.status !== "ok" ||
+        input.move === 0 ||
+        (state.grounded && !(direct.state.grounded && progress))
+      ) {
+        break;
+      }
+      inputs.push(input);
+      state = direct.state;
+    }
+    if (!direct || walked === horizonSteps) {
+      continue;
+    }
+    const request: TraversalRequest<TraversalSupport> = {
+      ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
+      goal,
+      start: state,
+      timeSeconds: time(),
+    };
+    const waypoint = supportedWaypoint(world, context, direct, state, goal);
+    const staged = waypoint ? { ...request, goal: waypoint.goal } : request;
+    const move = goalMove(context, state, goal);
+    const preferredInputs = waypoint
+      ? waypointInputs(context, staged, move === -1 ? -1 : 1, waypoint.jump)
+      : (preferredDescentInputs(world, context, request, direct) ??
+        (!progress ? preferredAscentInputs(world, context, request) : undefined));
+    let legGoal = staged.goal;
+    let result = findTraversal(context, {
+      ...staged,
+      ...(preferredInputs && { preferredInputs }),
+    });
+    const ascent =
+      result.status === "budget-exhausted" &&
+      !waypoint &&
+      !progress &&
+      ascentWaypoint(world, context, state, goal);
+    if (ascent) {
+      const climbRequest = { ...request, goal: ascent };
+      const climbInputs = preferredAscentInputs(world, context, climbRequest);
+      const climb = findTraversal(context, {
+        ...climbRequest,
+        ...(climbInputs && { preferredInputs: climbInputs }),
+      });
+      if (climb.status === "found") {
+        legGoal = ascent;
+        result = climb;
+      }
+    }
+    if (result.status !== "found") {
+      // Stepping off the support's edge towards the goal is a leg of its own: the fall lands
+      // on lower support from which the next leg searches.
+      const landed =
+        !waypoint && state.grounded && direct.status === "ok" && !direct.state.grounded
+          ? dropLeg(context, time(), state, move)
+          : undefined;
+      if (!landed) {
+        return { inputs: [], status: result.status };
+      }
+      inputs.push(...landed.inputs);
+      state = landed.state;
+      continue;
+    }
+    inputs.push(...result.inputs);
+    if (legGoal === goal) {
+      return { inputs, status: "found" };
+    }
+    state = result.state;
+  }
+  return { inputs: [], status: "budget-exhausted" };
+}
+
+// Retry a jump-only reach proof on scene/graph/support events, never each patrol position. An
+// exhausted proof is unknown, not unreachable: it retries once the body has moved a body width
+// from where it last searched.
 export function probeRearm(
   world: BehaviourWorld,
   seconds: number,
@@ -1021,7 +1216,12 @@ export function probeRearm(
       .filter(({ after, before }) => intersects(before, local) || intersects(after, local))
       .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
       .join(";") + (frame?.crumbling?.key ?? "");
+  const retry =
+    previous?.status === "budget-exhausted" &&
+    previous.searchedAt !== undefined &&
+    Math.hypot(at.x - previous.searchedAt.x, at.y - previous.searchedAt.y) >= object.width;
   const changed =
+    retry ||
     !previous ||
     !previous.visible ||
     previous.stateKey !== stateKey ||
@@ -1033,19 +1233,28 @@ export function probeRearm(
     (["x", "y", "width", "height"] as const).some((axis) => goal[axis] !== previous.goal![axis]);
   let inputs = previous?.inputs ?? [];
   let status = previous?.status ?? "geometry-unavailable";
+  let searchedAt = previous?.searchedAt;
   if (changed) {
     status = "geometry-unavailable";
     inputs = [];
   }
   if (visible && changed && context && frame && goal && geometry?.complete) {
+    const start = { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 };
     const result = findTraversal(context, {
       ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
       goal,
-      start: { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 },
+      start,
       timeSeconds: frame.timeSeconds,
     });
-    inputs = result.status === "found" ? result.inputs : [];
-    status = result.status;
+    const stationary =
+      result.status === "budget-exhausted" ? stationaryContext(world, context, object) : undefined;
+    const planned = stationary
+      ? stagedRearm(world, stationary, frame.timeSeconds, start, goal)
+      : undefined;
+    inputs =
+      planned?.status === "found" ? planned.inputs : result.status === "found" ? result.inputs : [];
+    status = planned?.status === "found" ? "found" : result.status;
+    searchedAt = at;
   }
   let reachable: boolean | undefined;
   if (visible && status === "found" && context && frame && goal && geometry?.complete) {
@@ -1066,7 +1275,16 @@ export function probeRearm(
     reachable = false;
   }
   return {
-    rearm: { geometry: key, ...(goal && { goal }), inputs, stateKey, status, supports, visible },
+    rearm: {
+      geometry: key,
+      ...(goal && { goal }),
+      inputs,
+      ...(searchedAt && { searchedAt }),
+      stateKey,
+      status,
+      supports,
+      visible,
+    },
     ...(reachable !== undefined && { reachable }),
   };
 }

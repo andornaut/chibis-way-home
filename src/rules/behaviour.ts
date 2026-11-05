@@ -58,6 +58,7 @@ import {
 import { prepareSupport } from "./behaviourSupport";
 import {
   contactBox,
+  groundBoss,
   nodeOf,
   pursuitTrack,
   trackEndpoint,
@@ -838,9 +839,16 @@ function matches(
   }
   if (condition.kind === "boundary") {
     const axis = state.axis ?? object.behaviour?.axis ?? "x";
+    const heading = travelHeading(nodeOf(object, state.stateKey).motion, state);
+    const end = trackEndpoint(object, heading, state);
+    // After an escape, a ground boss's track can outrun its support; the edge or wall that
+    // stops it bounds the track there.
     return (
-      at[axis] ===
-      trackEndpoint(object, travelHeading(nodeOf(object, state.stateKey).motion, state), state)
+      at[axis] === end ||
+      (state.pursuit?.phase === "escaped" &&
+        axis === "x" &&
+        groundBoss(object) &&
+        Math.abs(trackReach(object, world, at, state, heading, end) - at[axis]) <= EDGE)
     );
   }
   if (condition.kind === "not") {

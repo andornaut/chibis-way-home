@@ -73,8 +73,9 @@ export function behaviourAbilityParams(
   }
 }
 
-// A ground boss's committed move or recovery wait falls once its support has gone; a hop still
-// in the air keeps its own arc.
+// A ground boss's committed move or recovery wait falls once its support has gone, as does any
+// move or wait after an escape, so it never patrols over air; a hop still in the air keeps its
+// own arc.
 export function groundFallParams(
   object: ObjectLayout,
   state: BehaviourState,
@@ -83,7 +84,7 @@ export function groundFallParams(
   const { motion } = node;
   return (motion.kind === "move" || motion.kind === "wait") &&
     !state.hop &&
-    node.attack?.phase === "committed" &&
+    (node.attack?.phase === "committed" || state.pursuit?.phase === "escaped") &&
     (state.axis ?? object.behaviour?.axis ?? "x") === "x" &&
     groundBoss(object)
     ? { kind: "ground-fall", motion }

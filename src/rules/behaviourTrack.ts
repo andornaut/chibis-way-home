@@ -81,8 +81,8 @@ export function groundBoss(object: ObjectLayout): boolean {
 
 // How far along its track axis the contact box can travel towards desired before the track
 // end, solid terrain or another object's solid platform stops it. A ground boss's committed
-// horizontal move also stops at the edge of its connected support, and does not travel once
-// that support has gone.
+// horizontal move, and any move after an escape, also stops at the edge of its connected
+// support, and does not travel once that support has gone.
 export function trackReach(
   object: ObjectLayout,
   world: BehaviourWorld,
@@ -126,7 +126,7 @@ export function trackReach(
   if (
     axis === "x" &&
     node.motion.kind === "move" &&
-    node.attack?.phase === "committed" &&
+    (node.attack?.phase === "committed" || state.pursuit?.phase === "escaped") &&
     groundBoss(object)
   ) {
     to = groundSupportEnd(object, world, pursuitTrack(object), at, box, to);
