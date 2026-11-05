@@ -4,6 +4,7 @@ import {
   CITY_LIFT_BEHAVIOUR,
   CITY_SHUTTLE_BEHAVIOUR,
 } from "./behaviours";
+import { BIRD } from "./bird";
 import {
   BOUNDARY_START,
   CHUNK_COLS,
@@ -18,6 +19,7 @@ import { CRUMBLING_SUPPORT_TUNING } from "./obstacleTuning";
 import { createOrbitHazardChunks } from "./orbitHazardChunks";
 import { SCREEN, TILE, ZONE_ROWS } from "./screen";
 import type {
+  ChunkEscape,
   ChunkPlan,
   ChunkPool,
   ChunkRules,
@@ -662,6 +664,8 @@ const FLYER_ASCENT = moduleChunk(
     ledge(38, 6, 35),
   ],
 );
+// Kiwi's lanes: the escape is an arch on the lower floor, between the entry and her ledge.
+const KIWI_ARCH = { col: 14, cols: 4, floorRow: 40, top: 34, toward: -1 } as const;
 const VERTICAL_ASCENT = moduleChunk(
   ["back-streets", "city-outskirts", "familiar-neighbourhood"],
   4,
@@ -747,7 +751,78 @@ function raisedBlock(
   );
 }
 
+// Low passages, the encounter chunks' escape points: rows of Chibi's height above the floor at
+// `floorRow`, under raised terrain across `cols` columns from `col`. Every boss is taller, so none
+// fits and each must go over. `toward` is the side Chibi flees to, -1 for left.
+const PASSAGE_ROWS = Math.ceil(BIRD.height / TILE);
+interface Passage {
+  readonly col: number;
+  readonly cols: number;
+  readonly floorRow: number;
+  readonly toward: -1 | 1;
+}
+function passageEscape({ col, cols, floorRow, toward }: Passage): ChunkEscape {
+  return {
+    area: { col, cols, row: floorRow - PASSAGE_ROWS, rows: PASSAGE_ROWS },
+    from: { col: toward === 1 ? col - 1 : col + cols + 1, row: floorRow },
+    id: "low-passage",
+    kind: "low-passage",
+    to: { col: toward === 1 ? col + cols + 1 : col - 1, row: floorRow },
+  };
+}
+// The passage through the foot of the raised blocks across it: each keeps its top.
+function withPassage<T extends Pick<ChunkPlan, "escapes" | "solids">>(
+  passage: Passage,
+  chunk: T,
+): T {
+  const { col, cols, floorRow } = passage;
+  const inside = (solid: TerrainRect) => solid.col >= col && solid.col + solid.cols <= col + cols;
+  const blocks = chunk.solids.filter(inside);
+  if (
+    blocks.reduce((sum, block) => sum + block.cols, 0) !== cols ||
+    blocks.some(({ row, rows }) => row >= floorRow - PASSAGE_ROWS || row + rows < floorRow)
+  ) {
+    throw new Error(`No raised blocks across cols ${col}+${cols} above row ${floorRow}`);
+  }
+  return {
+    ...chunk,
+    escapes: [...(chunk.escapes ?? []), passageEscape(passage)],
+    solids: chunk.solids.flatMap((solid) =>
+      inside(solid)
+        ? [
+            { ...solid, rows: floorRow - PASSAGE_ROWS - solid.row },
+            floor(solid.col, solid.cols, floorRow),
+          ]
+        : [solid],
+    ),
+  };
+}
+// The passage under a new raised block from `top`, standing on the floor across it.
+function withArch<T extends Pick<ChunkPlan, "escapes" | "solids">>(
+  arch: Passage & { readonly top: number },
+  chunk: T,
+): T {
+  const { col, cols, floorRow, top } = arch;
+  if (
+    !chunk.solids.some(
+      (solid) => solid.row === floorRow && solid.col <= col && col + cols <= solid.col + solid.cols,
+    )
+  ) {
+    throw new Error(`No floor at row ${floorRow} under cols ${col}+${cols}`);
+  }
+  return {
+    ...chunk,
+    escapes: [...(chunk.escapes ?? []), passageEscape(arch)],
+    solids: [
+      ...chunk.solids,
+      { col, cols, look: "raised", row: top, rows: floorRow - PASSAGE_ROWS - top },
+    ],
+  };
+}
+
 // Every horizontal module occupies one screen. Moving tracks and lethal strips stay between seam footings.
+// Its escape is a low passage through a raised block: the right one, past the boss, except in
+// Bini's yards, whose red strip lies at that block's foot, so his is the left one.
 function horizontalYard(bear: boolean, origin: number, climb: boolean): ChunkPlan {
   const left = origin - 22;
   const right = origin + 6;
@@ -758,23 +833,26 @@ function horizontalYard(bear: boolean, origin: number, climb: boolean): ChunkPla
     floor(right, 4, 44),
     floor(right + 4, CHUNK_COLS - right - 4, 50),
   ];
-  return moduleChunk(
-    bear ? ["deep-woods", "forest-paths", "ravine"] : PATROL_THEMES,
-    4,
-    50,
-    50,
-    climb ? raisedBlock(origin - 10, 4, 4, solids) : solids,
-    [
-      {
-        character: bear ? "bear-antagonist" : "dog-antagonist",
-        col: origin,
-        role: "antagonist",
-        row: 46,
-      },
-      ledge(left + 4, 6, 44),
-      ledge(right - 6, 6, 44),
-      ...(bear ? red(right - 2, 2, 50) : []),
-    ],
+  return withPassage(
+    { col: bear ? left : right, cols: 4, floorRow: 50, toward: bear ? -1 : 1 },
+    moduleChunk(
+      bear ? ["deep-woods", "forest-paths", "ravine"] : PATROL_THEMES,
+      4,
+      50,
+      50,
+      climb ? raisedBlock(origin - 10, 4, 4, solids) : solids,
+      [
+        {
+          character: bear ? "bear-antagonist" : "dog-antagonist",
+          col: origin,
+          role: "antagonist",
+          row: 46,
+        },
+        ledge(left + 4, 6, 44),
+        ledge(right - 6, 6, 44),
+        ...(bear ? red(right - 2, 2, 50) : []),
+      ],
+    ),
   );
 }
 const MESA_TERRAIN = [
@@ -883,42 +961,48 @@ function flyerYard(origin: number, climb: boolean): ChunkPlan {
     floor(48, 4, 47),
     floor(52, 8, 50),
   ];
-  return moduleChunk(
-    ["freight-terminal", "loading-yards", "warehouse-district"],
-    4,
-    50,
-    50,
-    climb ? raisedBlock(origin + 14, 4, 5, solids) : solids,
-    [
-      { character: "pigeon-antagonist", col: origin, role: "antagonist", row: 36 },
-      {
-        character: "red-edge-support",
-        col: origin - 12,
-        cols: 6,
-        role: "support",
-        row: 44,
-        rows: 1,
-      },
-      ledge(origin + 6, 6, 45),
-    ],
+  return withPassage(
+    { col: origin, cols: 4, floorRow: 50, toward: 1 },
+    moduleChunk(
+      ["freight-terminal", "loading-yards", "warehouse-district"],
+      4,
+      50,
+      50,
+      climb ? raisedBlock(origin + 14, 4, 5, solids) : solids,
+      [
+        { character: "pigeon-antagonist", col: origin, role: "antagonist", row: 36 },
+        {
+          character: "red-edge-support",
+          col: origin - 12,
+          cols: 6,
+          role: "support",
+          row: 44,
+          rows: 1,
+        },
+        ledge(origin + 6, 6, 45),
+      ],
+    ),
   );
 }
 function verticalYard(origin: number): ChunkPlan {
-  return moduleChunk(
-    ["back-streets", "city-outskirts", "familiar-neighbourhood"],
-    4,
-    50,
-    50,
-    [
-      floor(0, origin + 4, 50),
-      floor(origin + 4, 8, 40),
-      floor(origin + 12, 6, 45),
-      floor(origin + 18, CHUNK_COLS - origin - 18, 50),
-    ],
-    [
-      ledge(origin - 6, 6, 45),
-      { character: "raccoon-antagonist", col: origin, role: "antagonist", row: 46 },
-    ],
+  return withPassage(
+    { col: origin + 4, cols: 14, floorRow: 50, toward: 1 },
+    moduleChunk(
+      ["back-streets", "city-outskirts", "familiar-neighbourhood"],
+      4,
+      50,
+      50,
+      [
+        floor(0, origin + 4, 50),
+        floor(origin + 4, 8, 40),
+        floor(origin + 12, 6, 45),
+        floor(origin + 18, CHUNK_COLS - origin - 18, 50),
+      ],
+      [
+        ledge(origin - 6, 6, 45),
+        { character: "raccoon-antagonist", col: origin, role: "antagonist", row: 46 },
+      ],
+    ),
   );
 }
 const ENCOUNTER_YARDS: Readonly<Record<string, ChunkPlan>> = Object.fromEntries(
@@ -944,35 +1028,40 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...createOrbitHazardChunks(MECHANICAL_THEMES),
   ...ENCOUNTER_YARDS,
   ...CONNECTED_TERRAIN_CHUNKS,
-  "bounded-flyer-post": FLYER_ASCENT,
-  "city-boundary-climb-yard": moduleChunk(
-    PATROL_THEMES,
-    4,
-    50,
-    40,
-    [
-      floor(0, 8, 50),
-      floor(8, 4, 45),
-      floor(12, 8, 40),
-      floor(20, 4, 34),
-      floor(24, 10, 40),
-      floor(34, 6, 36),
-      floor(40, 8, 40),
-      floor(48, 4, 34),
-      floor(52, 8, 40),
-    ],
-    [
-      ledge(14, 6, 34),
-      { character: "dog-antagonist", col: 42, role: "antagonist", row: 36 },
-      ledge(52, 4, 34),
-    ],
+  "bounded-flyer-post": withPassage({ col: 24, cols: 4, floorRow: 40, toward: 1 }, FLYER_ASCENT),
+  "city-boundary-climb-yard": withPassage(
+    { col: 48, cols: 4, floorRow: 40, toward: 1 },
+    moduleChunk(
+      PATROL_THEMES,
+      4,
+      50,
+      40,
+      [
+        floor(0, 8, 50),
+        floor(8, 4, 45),
+        floor(12, 8, 40),
+        floor(20, 4, 34),
+        floor(24, 10, 40),
+        floor(34, 6, 36),
+        floor(40, 8, 40),
+        floor(48, 4, 34),
+        floor(52, 8, 40),
+      ],
+      [
+        ledge(14, 6, 34),
+        { character: "dog-antagonist", col: 42, role: "antagonist", row: 36 },
+        ledge(52, 4, 34),
+      ],
+    ),
   ),
-  "city-boundary-dog-high": { ...shifted(-20, CLIMBING_PATROL), theme: PATROL_THEMES, weight: 2 },
-  "city-boundary-dog-terrace": {
-    ...shifted(-10, CLIMBING_PATROL),
-    theme: PATROL_THEMES,
-    weight: 2,
-  },
+  "city-boundary-dog-high": withPassage(
+    { col: 48, cols: 4, floorRow: 30, toward: 1 },
+    { ...shifted(-20, CLIMBING_PATROL), theme: PATROL_THEMES, weight: 2 },
+  ),
+  "city-boundary-dog-terrace": withPassage(
+    { col: 48, cols: 4, floorRow: 40, toward: 1 },
+    { ...shifted(-10, CLIMBING_PATROL), theme: PATROL_THEMES, weight: 2 },
+  ),
   "city-boundary-edge-yard": moduleChunk(
     MECHANICAL_THEMES,
     3,
@@ -1103,7 +1192,7 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     [],
   ),
-  "climbing-enemy-lane": VERTICAL_ASCENT,
+  "climbing-enemy-lane": withArch(KIWI_ARCH, VERTICAL_ASCENT),
   "compound-ascent": moduleChunk(
     MECHANICAL_THEMES,
     4,
@@ -1162,20 +1251,23 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     ],
     [...redCeiling(5, 12, 40), shuttle(18, 47, 16), ...red(18, 22, 57)],
   ),
-  "compound-patrol-lift": PATROL_LIFT,
-  "compound-perch-yard": {
-    ...FLYER_ASCENT,
-    difficulty: 5,
-    objects: [...FLYER_ASCENT.objects, ...red(32, 4, 40)],
-    solids: [
-      floor(0, 24, 40),
-      floor(24, 4, 30),
-      floor(28, 4, 40),
-      floor(36, 8, 40),
-      floor(44, 6, 35),
-      floor(50, 10, 30),
-    ],
-  },
+  "compound-patrol-lift": withPassage({ col: 4, cols: 4, floorRow: 50, toward: -1 }, PATROL_LIFT),
+  "compound-perch-yard": withPassage(
+    { col: 24, cols: 4, floorRow: 40, toward: 1 },
+    {
+      ...FLYER_ASCENT,
+      difficulty: 5,
+      objects: [...FLYER_ASCENT.objects, ...red(32, 4, 40)],
+      solids: [
+        floor(0, 24, 40),
+        floor(24, 4, 30),
+        floor(28, 4, 40),
+        floor(36, 8, 40),
+        floor(44, 6, 35),
+        floor(50, 10, 30),
+      ],
+    },
+  ),
   "compound-return-high": moduleChunk(
     MECHANICAL_THEMES,
     5,
@@ -1230,12 +1322,12 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       ...red(32, 20, 58),
     ],
   ),
-  "compound-vertical-yard": {
+  "compound-vertical-yard": withArch(KIWI_ARCH, {
     ...VERTICAL_ASCENT,
     difficulty: 5,
     objects: [...VERTICAL_ASCENT.objects, ...red(44, 4, 30), ...redCeiling(40, 12, 22)],
     solids: [floor(0, 28, 40), floor(28, 16, 30), floor(48, 12, 30)],
-  },
+  }),
   "crumbling-support-crossing": moduleChunk(
     MECHANICAL_THEMES,
     4,
@@ -1254,10 +1346,10 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     theme: ["deep-woods", "forest-paths", "ravine"],
     weight: 2,
   },
-  "growl-lift-clearing": {
-    ...shifted(-10, PATROL_LIFT),
-    theme: ["deep-woods", "forest-paths", "ravine"],
-  },
+  "growl-lift-clearing": withPassage(
+    { col: 4, cols: 4, floorRow: 40, toward: -1 },
+    { ...shifted(-10, PATROL_LIFT), theme: ["deep-woods", "forest-paths", "ravine"] },
+  ),
   "park-bandstand": moduleChunk(
     "park",
     2,
