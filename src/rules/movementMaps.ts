@@ -50,7 +50,7 @@ export const BOSS_JUMP_SCRIPTS: readonly MapJumpScript[] = [-1, 0, 1].flatMap((m
 
 // Ground maps step at the fixed simulation step with the runtime search's per-leg horizon, so a
 // map leg fits one pursuit search.
-export const MAP_BUILD_OPTIONS: Omit<MapBuildOptions<MapSupport>, "jumps"> = {
+const MAP_BUILD_OPTIONS: Omit<MapBuildOptions<MapSupport>, "jumps"> = {
   dtSeconds: STEP_SECONDS,
   epsilon: EDGE,
   horizonSteps: BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps,
@@ -60,9 +60,9 @@ export const MAP_BUILD_OPTIONS: Omit<MapBuildOptions<MapSupport>, "jumps"> = {
 
 // Flyer cells are one tile; each change between horizontal and vertical legs costs this much,
 // so routes keep the ascend, cruise and descend legs that flight proofs require.
-export const AIR_BUILD_OPTIONS: AirBuildOptions = { axisChangeSeconds: 0.25, tileSize: TILE };
+const AIR_BUILD_OPTIONS: AirBuildOptions = { axisChangeSeconds: 0.25, tileSize: TILE };
 
-export type BossMovementProfile =
+type BossMovementProfile =
   | { readonly key: string; readonly kind: "ground"; readonly profile: MovementProfile }
   | { readonly key: string; readonly kind: "air"; readonly profile: FlightProfile };
 
@@ -285,7 +285,7 @@ export interface MapTerrain {
   readonly world: BehaviourWorld;
 }
 
-export interface MapTerrainOptions {
+interface MapTerrainOptions {
   // Extends the area: padding columns and their ground, as supports and bounds.
   readonly bounds?: Rect;
   readonly pads?: readonly Rect[];
@@ -417,7 +417,7 @@ export function groundMap(
 
 // Perches: every tile-spaced landing on a static support top that the supported-landing rule
 // accepts for this flyer, plus each support's right-most landing.
-export function flightPerches(terrain: MapTerrain, object: ObjectLayout): readonly Rect[] {
+function flightPerches(terrain: MapTerrain, object: ObjectLayout): readonly Rect[] {
   const { platforms = [], solids } = terrain.world;
   const tops = [
     ...solids,
@@ -453,7 +453,7 @@ export function flightPerches(terrain: MapTerrain, object: ObjectLayout): readon
   return perches;
 }
 
-export function airArea(terrain: MapTerrain, object: ObjectLayout): AirArea<MapSupport> {
+function airArea(terrain: MapTerrain, object: ObjectLayout): AirArea<MapSupport> {
   const { platforms = [], solids } = terrain.world;
   const blockers = [
     ...solids,
@@ -476,48 +476,6 @@ export function flightMap(
   profile: FlightProfile,
 ): AirMap<MapSupport> {
   return buildAirMap({ ...AIR_BUILD_OPTIONS, ...options }, profile, airArea(terrain, object));
-}
-
-export type BossMap =
-  | { readonly key: string; readonly kind: "ground"; readonly map: MovementMap<MapSupport> }
-  | { readonly key: string; readonly kind: "air"; readonly map: AirMap<MapSupport> };
-
-const AREA_MAPS = new WeakMap<
-  AreaLayout,
-  { readonly maps: Map<string, BossMap>; readonly terrain: MapTerrain }
->();
-
-// Every pursuer's maps for one area, built once per profile and reused on retry and re-entry.
-// The layout is immutable. Flight maps depend on the flyer's frame through its perches, which the
-// profile key already carries.
-export function areaMovementMaps(area: AreaLayout): ReadonlyMap<string, BossMap> {
-  let cached = AREA_MAPS.get(area);
-  if (!cached) {
-    cached = { maps: new Map(), terrain: mapTerrain({}, area) };
-    AREA_MAPS.set(area, cached);
-  }
-  for (const object of area.objects) {
-    for (const entry of bossMovementProfiles(object)) {
-      if (cached.maps.has(entry.key)) {
-        continue;
-      }
-      cached.maps.set(
-        entry.key,
-        entry.kind === "ground"
-          ? {
-              key: entry.key,
-              kind: "ground",
-              map: groundMap({ jumps: BOSS_JUMP_SCRIPTS }, cached.terrain, entry.profile),
-            }
-          : {
-              key: entry.key,
-              kind: "air",
-              map: flightMap({}, cached.terrain, object, entry.profile),
-            },
-      );
-    }
-  }
-  return cached.maps;
 }
 
 const PURSUIT_MAPS = new WeakMap<
@@ -557,7 +515,7 @@ export function pursuitGroundMap(
   }
   let cached = PURSUIT_MAPS.get(area);
   if (!cached) {
-    cached = { maps: new Map(), terrain: AREA_MAPS.get(area)?.terrain ?? mapTerrain({}, area) };
+    cached = { maps: new Map(), terrain: mapTerrain({}, area) };
     PURSUIT_MAPS.set(area, cached);
   }
   const { gravity, jumpSpeed, maxFallSpeed } = motion.traversal;
@@ -600,7 +558,7 @@ export function preparePursuitMaps(layout: ZoneLayout): void {
   }
 }
 
-export interface DependencyMaskOptions {
+interface DependencyMaskOptions {
   // Whether climb edges are enabled: only for the climbing special, never for pursuit routes.
   readonly climb: boolean;
   // Whether a dependency (crumbling support, timed or moving hazard) allows travel that departs

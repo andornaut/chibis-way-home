@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import type { AreaLayout, ObjectLayout } from "../data/types";
 import { chunkLayout, ORDINARY } from "../testing/encounterLayouts";
 import {
-  areaMovementMaps,
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
   chibiJumpScripts,
@@ -12,6 +11,7 @@ import {
   groundMap,
   groundMask,
   mapTerrain,
+  pursuitGroundMap,
 } from "./movementMaps";
 
 function areaOf(theme: string, id: string): AreaLayout {
@@ -124,15 +124,14 @@ describe("map terrain", () => {
 });
 
 describe("area movement maps", () => {
-  it("builds each pursuer's profile once per area", () => {
+  it("builds each pursuer's map once per area and reads it from the cache", () => {
     const area = areaOf("city-streets", "patrol-cover-late");
-    const first = areaMovementMaps(area);
     const archie = boss(area, "dog-antagonist");
-    expect([...first.keys()]).toEqual(bossMovementProfiles(archie).map(({ key }) => key));
-    const again = areaMovementMaps(area);
-    for (const [key, map] of first) {
-      expect(again.get(key)).toBe(map);
-    }
+    expect(pursuitGroundMap(area, archie, false)).toBeUndefined();
+    const first = pursuitGroundMap(area, archie);
+    expect(first).toBeDefined();
+    expect(pursuitGroundMap(area, archie)).toBe(first);
+    expect(pursuitGroundMap(area, archie, false)).toBe(first);
   });
 
   it("hashes identical builds identically", () => {
