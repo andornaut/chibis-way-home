@@ -184,7 +184,7 @@ describe.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
         }
         cols += area.chunks.reduce((sum, chunk) => sum + chunk.width / TILE, 0);
         for (const chunkId of prepared.source!.chunkIds![areaId]!) {
-          encounters += CHUNKS[chunkId]!.encounters;
+          encounters += CHUNK_LIBRARY.chunks[chunkId]!.encounters;
         }
       }
       const lengths =
