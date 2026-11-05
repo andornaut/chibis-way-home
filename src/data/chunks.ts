@@ -862,6 +862,8 @@ const MESA_TERRAIN = [
   floor(40, 10, 46),
   floor(50, 10, 50),
 ];
+// The hills' escape: a passage under a narrow first step, from a hollow before the second.
+const HILL_ENTRY_PASSAGE = { col: 7, cols: 3, floorRow: 50, toward: -1 } as const;
 const CENTRAL_CROSSING_TERRAIN = [floor(0, 24, 50), floor(24, 12, 46), floor(36, 24, 50)];
 const CENTRAL_CROSSING_REFUGES = [ledge(10, 12, 42), ledge(38, 12, 42)];
 const CONNECTED_TERRAIN_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
@@ -899,33 +901,38 @@ const CONNECTED_TERRAIN_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     CENTRAL_CROSSING_TERRAIN,
     CENTRAL_CROSSING_REFUGES,
   ),
-  "offset-two-level-terrace-encounter": moduleChunk(
-    [
-      ...PATROL_THEMES,
-      "back-streets",
-      "city-outskirts",
-      "deep-woods",
-      "familiar-neighbourhood",
-      "forest-paths",
-      "ravine",
-    ],
-    4,
-    50,
-    50,
-    [
-      floor(0, 12, 50),
-      floor(12, 8, 46),
-      floor(20, 8, 42),
-      floor(28, 12, 58),
-      floor(40, 8, 42),
-      floor(48, 6, 46),
-      floor(54, 6, 50),
-    ],
-    [
-      { character: "dog-antagonist", col: 22, role: "antagonist", row: 38 },
-      ledge(28, 12, 38),
-      ...red(28, 12, 58),
-    ],
+  "offset-two-level-terrace-encounter": withPassage(
+    HILL_ENTRY_PASSAGE,
+    moduleChunk(
+      [
+        ...PATROL_THEMES,
+        "back-streets",
+        "city-outskirts",
+        "deep-woods",
+        "familiar-neighbourhood",
+        "forest-paths",
+        "ravine",
+      ],
+      4,
+      50,
+      50,
+      [
+        floor(0, 7, 50),
+        floor(7, 3, 46),
+        floor(10, 2, 50),
+        floor(12, 8, 46),
+        floor(20, 8, 42),
+        floor(28, 12, 58),
+        floor(40, 8, 42),
+        floor(48, 6, 46),
+        floor(54, 6, 50),
+      ],
+      [
+        { character: "dog-antagonist", col: 22, role: "antagonist", row: 38 },
+        ledge(28, 12, 38),
+        ...red(28, 12, 58),
+      ],
+    ),
   ),
   "open-stepped-ridge-encounter": moduleChunk(
     [
