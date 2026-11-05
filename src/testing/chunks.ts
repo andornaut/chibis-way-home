@@ -10,8 +10,12 @@ import {
   awningCycle,
   CROSSWALK_BEHAVIOUR,
   GANTRY_BEHAVIOUR,
+  GUST_BEHAVIOUR,
+  GUST_SECONDS,
+  gustCycle,
 } from "../data/obstacleBehaviours";
 import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
+import { GUST_PULSE } from "../data/obstacleTuning";
 import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
 import { SEAM_ROWS } from "../data/seams";
@@ -393,6 +397,72 @@ export const CRANE_FIXTURE_LIBRARY: ChunkLibrary = {
         ground(0, CRANE_FIXTURE.pit.col, CRANE_FIXTURE.row),
         ground(CRANE_FIXTURE.far.col, CRANE_FIXTURE.far.cols, CRANE_FIXTURE.row),
       ],
+      theme: "test",
+    },
+  },
+};
+
+// The ravine gust engine's fixture, outside the shared fixture pool until its character reaches
+// CHARACTERS with its art: a flat run (row 50) with a gust emitter against the far side of a
+// 24-col band (cols 20 to 44, rows 46 to 50), blowing left against the route. It starts at its
+// warning, so its first gust meets Chibi's arrival at the band from chunk entry. A second chunk
+// mirrors the emitter to blow right from the near side.
+export const GUST_FIXTURE_CHARACTERS: Readonly<Record<string, Character>> = {
+  "test-gust-emitter": {
+    archetype: "scenery",
+    art: "woodland-gust-emitter",
+    behaviour: GUST_BEHAVIOUR,
+    cols: 1,
+    rows: 4,
+  },
+};
+
+export const GUST_FIXTURE_CATALOGUE = {
+  archetypes: ARCHETYPES,
+  characters: { ...CHARACTERS, ...GUST_FIXTURE_CHARACTERS },
+};
+
+export const GUST_FIXTURE = {
+  band: { col: 20, cols: GUST_PULSE.range, row: 50 - GUST_PULSE.height, rows: GUST_PULSE.height },
+  emitter: { col: 44, row: 46 },
+  mirrored: { col: 15, row: 46 },
+  row: 50,
+} as const;
+
+export const GUST_FIXTURE_LIBRARY: ChunkLibrary = {
+  ...FIXTURE_LIBRARY,
+  characters: GUST_FIXTURE_CATALOGUE.characters,
+  chunks: {
+    "test-gust": {
+      cols: 60,
+      difficulty: 4,
+      encounters: 0,
+      entry: { row: GUST_FIXTURE.row },
+      exit: { row: GUST_FIXTURE.row },
+      objects: [
+        {
+          behaviour: { ...GUST_BEHAVIOUR, initial: "warning" },
+          character: "test-gust-emitter",
+          ...GUST_FIXTURE.emitter,
+        },
+      ],
+      solids: [ground(0, 60, GUST_FIXTURE.row)],
+      theme: "test",
+    },
+    "test-gust-right": {
+      cols: 60,
+      difficulty: 4,
+      encounters: 0,
+      entry: { row: GUST_FIXTURE.row },
+      exit: { row: GUST_FIXTURE.row },
+      objects: [
+        {
+          behaviour: gustCycle(GUST_SECONDS, GUST_PULSE, 1, "warning"),
+          character: "test-gust-emitter",
+          ...GUST_FIXTURE.mirrored,
+        },
+      ],
+      solids: [ground(0, 60, GUST_FIXTURE.row)],
       theme: "test",
     },
   },
