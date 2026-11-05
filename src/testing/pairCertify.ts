@@ -28,6 +28,7 @@ import { RECIPES } from "../data/zones";
 import { assembleZone, type ChunkLibrary, recipeChunkPool, themesOf } from "../rules/assemble";
 import { chunkProblems } from "../rules/chunk";
 import { composePair, ENCOUNTER_ROLES, moduleProblems, pairProblems } from "../rules/modules";
+import { withRoomBuildings } from "../rules/roomBuildings";
 import { zoneLayout } from "../rules/tiles";
 import { CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans";
 import { escapeProblems, NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut";
@@ -286,14 +287,25 @@ function layoutFor(plan: ReturnType<typeof chunkThemePlan>): ZoneLayout {
   return zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
 }
 
-// Steps 4 and 5 in each walked theme: every required route walked with slots empty and filled,
-// no no-cross pair crossed, the behaviour trace of every walk step hashed; then, for an
-// encounter, every boss's path out on the movement map and every escape point's lead.
+// Steps 4 and 5: in every theme of the chunk, its filled doors' room buildings placed by the
+// assembly pass itself; then in each walked theme, every required route walked with slots empty
+// and filled, no no-cross pair crossed, the behaviour trace of every walk step hashed; then, for
+// an encounter, every boss's path out on the movement map and every escape point's lead.
 export function prove(candidate: Candidate, themes: readonly string[]): Proof {
   const library = libraryWith(candidate.id, candidate.chunk);
   const recorder = traceRecorder({ retain: false });
   const problems: string[] = [];
   let work = 0;
+  if (candidate.fills && candidate.fills.door.length > 0) {
+    for (const theme of themesOf(candidate.chunk)) {
+      const plan = chunkThemePlan({ fills: candidate.fills, theme }, library, candidate.chunk);
+      try {
+        withRoomBuildings(library, { [plan.start.area]: theme }, plan);
+      } catch (error) {
+        problems.push(`${theme}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
   for (const theme of themes) {
     for (const [profile, fills] of [
       ["empty", EMPTY],
