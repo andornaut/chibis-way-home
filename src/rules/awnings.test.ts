@@ -395,6 +395,56 @@ describe("awning boss maps", () => {
     expect(mask(true, AWNING_SECONDS.out).node(node.id)).toBe(false);
   });
 
+  it("gives a pursuit mask's verdicts by argument alone, in any call order", () => {
+    const f = fixture("test-awnings");
+    const terrain = mapTerrain({}, f.area);
+    const map = groundMap(
+      { jumps: chibiJumpScripts(ordinary) },
+      terrain,
+      chibiMovementProfile(ordinary),
+    );
+    const prediction = clockedSupportPrediction(f.area, f.awnings, [], 0);
+    const platforms = f.awnings.map((index) => {
+      const owner = f.area.objects[index]!;
+      const rect = { ...owner.origin, height: owner.height, width: owner.width };
+      return { collision: "ledge" as const, owner, rect };
+    });
+    const mask = () =>
+      pursuitMapMask(
+        {
+          platforms,
+          solids: f.area.solids,
+          traversalFrame: {
+            bounds: terrain.bounds,
+            crumbling: prediction,
+            dtSeconds: STEP_SECONDS,
+            platforms: [],
+            timeSeconds: 0.5,
+          },
+        },
+        { map, terrain },
+        [],
+      );
+    const departs = [0, 0.5, AWNING_SECONDS.out, CYCLE_SECONDS];
+    const calls = map.edges.flatMap(({ id }) => departs.map((depart) => [id, depart] as const));
+    const fresh = calls.map(([id, depart]) => mask().edge(id, depart));
+    // Some awning edge is open at one departure and closed at a later one.
+    expect(
+      map.edges.some(({ id }) => {
+        const verdicts = departs.map((depart) => mask().edge(id, depart));
+        return verdicts.includes(true) && verdicts.includes(false);
+      }),
+    ).toBe(true);
+    const shared = mask();
+    const forwards = calls.map(([id, depart]) => shared.edge(id, depart));
+    const backwards = [...calls].reverse().map(([id, depart]) => shared.edge(id, depart));
+    expect(forwards).toEqual(fresh);
+    expect(backwards.reverse()).toEqual(fresh);
+    const nodes = map.nodes.map(({ id }) => mask().node(id));
+    expect(map.nodes.map(({ id }) => shared.node(id))).toEqual(nodes);
+    expect(map.nodes.map(({ id }) => shared.node(id))).toEqual(nodes);
+  });
+
   it("knows presence until the current state ends and nothing after", () => {
     const f = fixture("test-awnings");
     let zone = startZone(ordinary, f.layout, 1);

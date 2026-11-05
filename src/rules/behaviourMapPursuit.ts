@@ -131,9 +131,19 @@ function targetSupport(
   return best ?? { mapped: true, y: feet };
 }
 
+type BehaviourHazard = NonNullable<BehaviourWorld["hazards"]>[number];
+
+// One dependency check of an edge that depends on departure time.
+type EdgeCheck =
+  | { readonly kind: "bounds"; readonly boundsAt: BehaviourHazard["boundsAt"] }
+  | { readonly kind: "crumbling"; readonly rect: Rect }
+  | { readonly kind: "timed"; readonly sampler: NonNullable<BehaviourHazard["timedContacts"]> };
+
 // Disables track and climb edges (pursuit never climbs), edges that failed their leg proof, and
 // any node or edge whose dynamic terrain is absent, of unknown future presence, or not clear of
-// a timed or moving hazard over the edge's travel.
+// a timed or moving hazard over the edge's travel. The mask is pure: it snapshots the world's
+// supports and hazards when built, and memoizes per node and, per edge, the checks that do not
+// depend on departure time.
 export function pursuitMapMask(
   world: BehaviourWorld,
   entry: PursuitGroundMap,
@@ -142,10 +152,16 @@ export function pursuitMapMask(
   const { map, terrain } = entry;
   const frame = world.traversalFrame;
   const now = frame?.timeSeconds ?? 0;
+  const platformOwners = new Set((world.platforms ?? []).map(({ owner }) => owner));
+  const solids = new Set(world.solids);
+  const hazards = new Map<ObjectLayout, BehaviourHazard>();
+  for (const hazard of world.hazards ?? []) {
+    if (!hazards.has(hazard.owner)) {
+      hazards.set(hazard.owner, hazard);
+    }
+  }
   const present = (dep: MapSupport) =>
-    "character" in dep
-      ? (world.platforms ?? []).some(({ owner }) => owner === dep)
-      : world.solids.includes(dep);
+    "character" in dep ? platformOwners.has(dep) : solids.has(dep);
   const supportRect = (dep: MapSupport): Rect =>
     "character" in dep ? { ...dep.origin, height: dep.height, width: dep.width } : dep;
   const overlaps = (a: Rect, b: Rect) =>
@@ -153,32 +169,56 @@ export function pursuitMapMask(
     b.x < a.x + a.width - EDGE &&
     a.y < b.y + b.height - EDGE &&
     b.y < a.y + a.height - EDGE;
-  const crumblingKnown = (dep: MapSupport, until: number) => {
-    const rect = supportRect(dep);
-    return (
-      present(dep) &&
-      !(frame?.crumbling?.unknown(until) ?? []).some((volume) => overlaps(volume, rect))
-    );
-  };
+  const known = (rect: Rect, until: number) =>
+    !(frame?.crumbling?.unknown(until) ?? []).some((volume) => overlaps(volume, rect));
   const disabled = new Set(failed);
+  // Per edge: false when no departure can take it, else its time-dependent checks in dep order.
+  const edgeChecks: (readonly EdgeCheck[] | false | undefined)[] = [];
+  const checksOf = (id: EdgeId): readonly EdgeCheck[] | false => {
+    const edge = map.edges[id]!;
+    if (edge.kind === "climb" || edge.kind === "track-climb" || disabled.has(id)) {
+      return false;
+    }
+    const checks: EdgeCheck[] = [];
+    for (const dep of edge.deps) {
+      if (terrain.crumbling.has(dep)) {
+        if (!present(dep)) {
+          return false;
+        }
+        checks.push({ kind: "crumbling", rect: supportRect(dep) });
+        continue;
+      }
+      const hazard = hazards.get(dep as ObjectLayout);
+      if (hazard?.timedContacts) {
+        checks.push({ kind: "timed", sampler: hazard.timedContacts });
+      } else if (hazard) {
+        checks.push({ boundsAt: hazard.boundsAt, kind: "bounds" });
+      }
+    }
+    return checks;
+  };
+  const nodeVerdicts: (boolean | undefined)[] = [];
   return {
     edge: (id, departSeconds) => {
-      const edge = map.edges[id]!;
-      if (edge.kind === "climb" || edge.kind === "track-climb" || disabled.has(id)) {
+      let checks = edgeChecks[id];
+      if (checks === undefined) {
+        checks = edgeChecks[id] = checksOf(id);
+      }
+      if (checks === false) {
         return false;
       }
+      if (!checks.length) {
+        return true;
+      }
+      const edge = map.edges[id]!;
       const start = now + departSeconds;
       const end = start + edge.seconds;
-      return edge.deps.every((dep) => {
-        if (terrain.crumbling.has(dep)) {
-          return crumblingKnown(dep, end);
+      return checks.every((check) => {
+        if (check.kind === "crumbling") {
+          return known(check.rect, end);
         }
-        const hazard = (world.hazards ?? []).find(({ owner }) => owner === dep);
-        if (!hazard) {
-          return true;
-        }
-        if (hazard.timedContacts) {
-          return timedHazardSafe(hazard.timedContacts, {
+        if (check.kind === "timed") {
+          return timedHazardSafe(check.sampler, {
             endSeconds: end,
             from: edge.sweep,
             phase: "sweep",
@@ -186,7 +226,7 @@ export function pursuitMapMask(
             to: edge.sweep,
           });
         }
-        const bounds = hazard.boundsAt?.(end);
+        const bounds = check.boundsAt?.(end);
         return (
           bounds !== undefined &&
           [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite) &&
@@ -195,8 +235,15 @@ export function pursuitMapMask(
       });
     },
     key: `${frame?.crumbling?.key ?? ""}|${failed.join(",")}`,
-    node: (id) =>
-      map.nodes[id]!.deps.every((dep) => !terrain.crumbling.has(dep) || crumblingKnown(dep, now)),
+    node: (id) => {
+      let verdict = nodeVerdicts[id];
+      if (verdict === undefined) {
+        verdict = nodeVerdicts[id] = map.nodes[id]!.deps.every(
+          (dep) => !terrain.crumbling.has(dep) || (present(dep) && known(supportRect(dep), now)),
+        );
+      }
+      return verdict;
+    },
   };
 }
 
