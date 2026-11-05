@@ -59,6 +59,7 @@ Alternatively, skip the cache: start the container detached with the network, ru
 | `npm run dev`                | Dev server                                                                           |
 | `npm run format`             | Rewrite files with Prettier and apply ESLint fixes                                   |
 | `npm run lint`               | Prettier, ESLint and markdownlint                                                    |
+| `npm run pairs -- --help`    | Certify, verify and report the certified chunk lists                                 |
 | `npm run preview`            | Build, then serve it through `wrangler dev`                                          |
 | `npm run reaches`            | Print the bird's measured reaches beside gameplay's targets; exits 1 when one is off |
 | `npm run simulate -- --help` | Simulate runs ([src/README.md](src/README.md), Bounded simulations)                  |
@@ -71,6 +72,6 @@ The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html
 
 ## Deploying
 
-[delivery-kit](https://github.com/andornaut/delivery-kit) ships local `main` on the schedule in [`delivery-kit.json`](delivery-kit.json). Each departure runs the type check, lint, tests and build on the `main` HEAD in an isolated container, pushes that exact commit, waits for its CI and then deploys the gated build with Wrangler to the account pinned by `account_id` in [`wrangler.jsonc`](wrangler.jsonc). Pushes and deployments are not made by hand.
+[delivery-kit](https://github.com/andornaut/delivery-kit) ships local `main` on the schedule in [`delivery-kit.json`](delivery-kit.json). Each departure runs the gate steps that file lists (type check, lint, tests, build, a `npm run pairs -- verify` sample of the certified chunk lists and the art build check) on the `main` HEAD in an isolated container, pushes that exact commit, waits for its CI and then deploys the gated build with Wrangler to the account pinned by `account_id` in [`wrangler.jsonc`](wrangler.jsonc). Pushes and deployments are not made by hand.
 
 The `routes` entry in `wrangler.jsonc` serves the custom domain.
