@@ -421,6 +421,42 @@ export function boundedStep<World>(
   };
 }
 
+// Within one stay in a state with a travel limit, the agent moves horizontally only along the
+// heading of the stay's first sample and at most the limit from it. Reported once per stay.
+export function travelBounded<World>(
+  rule: string,
+  limit: (agent: AgentSample) => number | undefined,
+): Property<AgentTick<World>> {
+  return {
+    check: (ticks) => {
+      const found: Violation[] = [];
+      for (const run of agentRuns(ticks)) {
+        let first: AgentSample | undefined;
+        let reported = false;
+        for (const step of run) {
+          const { agent } = step;
+          if (!first || agent.state !== first.state) {
+            first = agent;
+            reported = false;
+          }
+          const maximum = limit(agent);
+          if (maximum === undefined || reported) {
+            continue;
+          }
+          const travelled = (agent.at.x - first.at.x) * first.facing;
+          if (travelled < -EPSILON || travelled > maximum + EPSILON) {
+            found.push(violation(step, `${agent.state} travelled ${travelled.toFixed(1)}`));
+            reported = true;
+          }
+        }
+      }
+      return found;
+    },
+    id: "travel-bounded",
+    rule,
+  };
+}
+
 // A per-tick predicate over one agent, reported once per contiguous failing run.
 export function everyTick<World>(
   id: string,

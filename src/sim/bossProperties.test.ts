@@ -47,7 +47,7 @@ describe.each(BOSS_SCENARIOS.map((group) => [group.scenario.name, group] as cons
   (name, { checks, covers, scenario }) => {
     const run = simulateBosses(ORDINARY, scenario);
     const layout = scenario.layout();
-    const seen = observedCoverage(run.ticks);
+    const seen = observedCoverage(layout, run.ticks);
 
     it.each(covers.map((coverage) => [coverage] as const))("covers %s", (coverage) => {
       const entry = known(name, `covers ${coverage}`);

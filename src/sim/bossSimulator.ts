@@ -305,15 +305,24 @@ export function simulateBosses(tuning: BirdTuning, scenario: BossScenario) {
 }
 
 // What a scenario must exercise for its properties to mean anything.
+// limited-move: a state whose move has a distance, such as Trixi's slide.
 export type BossCoverage =
-  "attack" | "boss-death" | "boss-on-crumbling" | "deferred-window" | "tell";
+  "attack" | "boss-death" | "boss-on-crumbling" | "deferred-window" | "limited-move" | "tell";
 
-export function observedCoverage(ticks: readonly BossTick[]): ReadonlySet<BossCoverage> {
+export function observedCoverage(
+  layout: ZoneLayout,
+  ticks: readonly BossTick[],
+): ReadonlySet<BossCoverage> {
   const seen = new Set<BossCoverage>();
   for (const { agents, world } of ticks) {
-    for (const { attack, id } of agents) {
+    for (const { attack, id, state } of agents) {
       if (attack) {
         seen.add(attack.phase === "tell" ? "tell" : "attack");
+      }
+      const [area, index] = id.split(":");
+      const { motion } = nodeOf(layout.areas[area!]!.objects[Number(index)]!, state);
+      if (motion.kind === "move" && motion.distance !== undefined) {
+        seen.add("limited-move");
       }
       if (world.crumbling?.bosses.includes(id)) {
         seen.add("boss-on-crumbling");

@@ -128,13 +128,17 @@ export type BehaviourMotion =
       readonly leadSeconds: number;
       readonly maxLead: number;
     }
+  // Distance bounds travel from the state's entry point along its heading: tiles in authored
+  // data, pixels in a resolved plan.
   | {
       readonly direction: -1 | 1 | "facing" | "target";
+      readonly distance?: number;
       readonly kind: "move";
       readonly speed: number;
     }
   | {
       readonly direction: -1 | 1 | "facing" | "target";
+      readonly distance?: number;
       readonly hopHeight: number;
       readonly hopSeconds: number;
       readonly kind: "hop";

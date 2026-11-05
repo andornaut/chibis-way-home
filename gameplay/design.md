@@ -313,7 +313,7 @@ Apartment continues in this floor order:
 
 - **Appearance:** Trixi wears oversized glasses
 - **Contact:** Trixi is always lethal on contact, including while placing traps, without a permanent red contact outline
-- **Rush:** Trixi periodically rushes along the ground to make contact with Chibi
+- **Rush:** Trixi periodically rushes along the ground to make contact with Chibi. A committed rush overshoots by a 3-tile slide, leaving space behind her
 - **Traps:** Trixi's special attack places red-edged floor traps. A visible arming delay precedes their lethal contact state; trap timing and placement values live in data
 
 ### Woodland

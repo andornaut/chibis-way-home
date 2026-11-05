@@ -64,6 +64,7 @@ import {
   trackEndpoint,
   trackReach,
   travelHeading,
+  travelLimit,
 } from "./behaviourTrack";
 import {
   type BehaviourRearmState,
@@ -109,6 +110,8 @@ export interface BehaviourState extends BehaviourAttackState {
     readonly seconds: number;
   };
   readonly stateKey: string;
+  // The axis position captured on entry to a move or hop with a distance.
+  readonly travelFrom?: number;
 }
 
 export interface BehaviourSegment {
@@ -246,6 +249,9 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           (!valid(node.motion.speed) ||
             ![-1, 1, "facing", "target"].includes(node.motion.direction))) ||
         (node.motion.kind === "move" && (node.motion.speed === 0 || track.distance === 0)) ||
+        ((node.motion.kind === "move" || node.motion.kind === "hop") &&
+          node.motion.distance !== undefined &&
+          (!valid(node.motion.distance) || node.motion.distance === 0)) ||
         (node.motion.kind === "hop" &&
           (track.axis !== "x" ||
             !valid(node.motion.hopHeight) ||
@@ -544,6 +550,10 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                   ...(node.motion.kind === "hop"
                     ? { hopHeight: node.motion.hopHeight * tile }
                     : {}),
+                  ...((node.motion.kind === "move" || node.motion.kind === "hop") &&
+                  node.motion.distance !== undefined
+                    ? { distance: node.motion.distance * tile }
+                    : {}),
                 },
           transitions,
         },
@@ -627,6 +637,11 @@ function enterState(
   };
   delete (next as { flightTarget?: Point }).flightTarget;
   delete (next as { intent?: PursuitIntentState }).intent;
+  if ((node.motion.kind === "move" || node.motion.kind === "hop") && node.motion.distance) {
+    (next as { travelFrom: number }).travelFrom = at[next.axis!];
+  } else {
+    delete (next as { travelFrom?: number }).travelFrom;
+  }
   if (
     key !== state.stateKey ||
     !(node.motion.kind === "fly" && node.motion.to === "support" && node.motion.selection)
@@ -839,12 +854,14 @@ function matches(
   }
   if (condition.kind === "boundary") {
     const axis = state.axis ?? object.behaviour?.axis ?? "x";
-    const heading = travelHeading(nodeOf(object, state.stateKey).motion, state);
+    const { motion } = nodeOf(object, state.stateKey);
+    const heading = travelHeading(motion, state);
     const end = trackEndpoint(object, heading, state);
     // After an escape, a ground boss's track can outrun its support; the edge or wall that
     // stops it bounds the track there.
     return (
       at[axis] === end ||
+      at[axis] === travelLimit(motion, state, heading) ||
       (state.pursuit?.phase === "escaped" &&
         axis === "x" &&
         groundBoss(object) &&

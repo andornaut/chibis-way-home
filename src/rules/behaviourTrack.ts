@@ -44,6 +44,20 @@ export function travelHeading(motion: BehaviourMotion, state: BehaviourState): -
     : state.facing;
 }
 
+// Where a move or hop with a distance stops along its heading: that distance from the axis
+// position captured when the state was entered. Undefined for unlimited travel.
+export function travelLimit(
+  motion: BehaviourMotion,
+  state: BehaviourState,
+  direction: -1 | 1,
+): number | undefined {
+  return (motion.kind === "move" || motion.kind === "hop") &&
+    motion.distance !== undefined &&
+    state.travelFrom !== undefined
+    ? state.travelFrom + direction * motion.distance
+    : undefined;
+}
+
 // The current state's track end in a direction, measured from its anchor.
 export function trackEndpoint(
   object: ObjectLayout,

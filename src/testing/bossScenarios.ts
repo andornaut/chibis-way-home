@@ -354,12 +354,14 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   {
     boss: "Trixi",
     checks: rearmChecks(48),
-    covers: [],
+    covers: ["limited-move"],
     scenario: rearmPlaced("country-lanes", "patrol-cover-late", 1, {
       first: { col: 30 },
       stand: 54,
     }),
-    subject: "rearm: Trixi gives up on the late yard floor and rearms over the right block",
+    subject:
+      "rearm: Trixi gives up on the late yard floor and rearms over the right block, sliding " +
+      "after a rush",
   },
   {
     boss: "Fert",

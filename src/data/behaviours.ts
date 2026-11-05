@@ -229,9 +229,13 @@ interface PatrolChargeTuning {
   readonly restSeconds: number;
   readonly rushSeconds: number;
   readonly rushSpeed: number;
+  // A committed overshoot after every rush: tiles past the rush's end, its speed in tiles per
+  // second and the seconds it may take. A wall or ledge that stops it ends it there.
+  readonly slide?: { readonly distance: number; readonly seconds: number; readonly speed: number };
 }
 
 function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"] {
+  const afterRush = tuning.slide ? "slide" : "rest";
   return {
     [tuning.preparation]: {
       animation: tuning.preparation,
@@ -278,11 +282,27 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       animation: "rush",
       motion: { direction: "facing", kind: "move", speed: tuning.rushSpeed },
       transitions: [
-        { to: "rest", when: LOST_TARGET },
-        { to: "rest", when: [{ kind: "boundary" }] },
-        { to: "rest", when: [{ kind: "elapsed", seconds: tuning.rushSeconds }] },
+        { to: afterRush, when: LOST_TARGET },
+        { to: afterRush, when: [{ kind: "boundary" }] },
+        { to: afterRush, when: [{ kind: "elapsed", seconds: tuning.rushSeconds }] },
       ],
     },
+    ...(tuning.slide && {
+      slide: {
+        animation: "skid",
+        motion: {
+          direction: "facing",
+          distance: tuning.slide.distance,
+          kind: "move",
+          speed: tuning.slide.speed,
+        },
+        transitions: [
+          { to: "rest", when: [{ kind: "boundary" }] },
+          { to: "rest", when: [{ kind: "blocked" }] },
+          { to: "rest", when: [{ kind: "elapsed", seconds: tuning.slide.seconds }] },
+        ],
+      },
+    }),
     "wait-left": {
       allowIdleReposition: true,
       animation: "idle",
@@ -566,6 +586,7 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         restSeconds: 0.35,
         rushSeconds: 0.36,
         rushSpeed: 21.875,
+        slide: { distance: 3, seconds: 0.4, speed: 10.9375 },
       }),
       "pursuit-trap": chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "set-trap"),
       "release-trap": {
@@ -604,7 +625,7 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   },
   [
     {
-      committed: ["rush", "rest"],
+      committed: ["rush", "slide", "rest"],
       finished: [{ from: "rest", to: "pursuit-trap" }],
       id: "charge",
       tells: { warn: ATTACK_ANTICIPATION_SECONDS },

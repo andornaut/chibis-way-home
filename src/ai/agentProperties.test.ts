@@ -7,6 +7,7 @@ import {
   noStall,
   type Property,
   tellPrecedesCommit,
+  travelBounded,
 } from "./agentProperties";
 import type { AgentSample, AgentTick, TraceAttack } from "./agentTrace";
 
@@ -112,4 +113,18 @@ it.each([
     agent(0, (tells as readonly number[]).includes(tick) ? TELL : undefined),
   );
   expect(ticksOf(property, trace(samples))).toEqual(flagged);
+});
+
+it.each([
+  ["within the limit", [0, 1, 2, 3, 3], 1, []],
+  ["past the limit", [0, 1, 2, 3, 4, 5], 1, [4]],
+  ["against its heading", [0, -1], 1, [1]],
+  ["leftwards within the limit", [0, -1, -3], -1, []],
+] as const)("travel bound: a stay %s", (_, xs, facing, flagged) => {
+  const property = travelBounded("rule", ({ state }) => (state === "slide" ? 3 : undefined));
+  const samples = [
+    agent(-50, undefined, { state: "rush" }),
+    ...xs.map((x) => agent(x, undefined, { facing, state: "slide" })),
+  ];
+  expect(ticksOf(property, trace(samples)).map((tick) => tick - 1)).toEqual(flagged);
 });

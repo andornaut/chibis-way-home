@@ -13,7 +13,7 @@ import {
   OVERHEAD_SWOOP,
 } from "./behaviourPursuitAbilities";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
-import { groundBoss, nodeOf, trackReach, travelHeading } from "./behaviourTrack";
+import { groundBoss, nodeOf, trackReach, travelHeading, travelLimit } from "./behaviourTrack";
 import { type advanceTraversal, supportFall } from "./behaviourTraversal";
 import { carryLandingSupport } from "./flyLanding";
 
@@ -250,7 +250,8 @@ const SUPPORTED_LANDING: BehaviourAbility<"supported-landing"> = {
 };
 
 // Bounded travel along the state's track at the motion's speed, stopping at the track end,
-// solid terrain and other solid platforms. Target-relative travel stops level with Chibi.
+// solid terrain and other solid platforms. Target-relative travel stops level with Chibi, and
+// travel with a distance stops that far from where the state was entered.
 const TRACK_TRAVEL: BehaviourAbility<"track-travel"> = {
   act: ({ object, perception, slice, track }, { motion }, { at, state, to }) => {
     if (motion.speed <= 0) {
@@ -264,6 +265,10 @@ const TRACK_TRAVEL: BehaviourAbility<"track-travel"> = {
         bird[track.axis] +
         (track.axis === "x" ? tuning.width - object.width : tuning.height - object.height) / 2;
       desired = direction === 1 ? Math.min(desired, target) : Math.max(desired, target);
+    }
+    const limit = travelLimit(motion, state, direction);
+    if (limit !== undefined) {
+      desired = direction === 1 ? Math.min(desired, limit) : Math.max(desired, limit);
     }
     const end = trackReach(object, perception.world, at, state, direction, desired);
     const moving = Math.abs(end - at[track.axis]) / motion.speed;

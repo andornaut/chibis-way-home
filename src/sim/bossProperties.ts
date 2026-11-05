@@ -14,6 +14,7 @@ import {
   tellBounded,
   tellPrecedesCommit,
   tellStarts,
+  travelBounded,
 } from "../ai/agentProperties";
 import type { AgentSample } from "../ai/agentTrace";
 import { EDGE, STEP_SECONDS } from "../core";
@@ -38,6 +39,7 @@ const RULES = {
   pebbleCycle: `${DESIGN} Pebble encounter: Cycle`,
   recovery: `${DESIGN} Boss encounter principles: Recovery`,
   traversal: `${DESIGN} Boss encounter principles: Traversal and variety`,
+  trixiRush: `${DESIGN} Trixi encounter: Rush`,
 } as const;
 
 // Each boss character's resolved plan in the layout.
@@ -275,6 +277,13 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
     ),
     escapeAtDistance(RULES.enemyPursuit, (agent) => plan(agent).pursuit?.escapeDistance),
     noAttackWhileEscaped(RULES.enemyPursuit),
+    // A limited move, such as Trixi's slide, overshoots no farther than its authored distance.
+    travelBounded(RULES.trixiRush, (agent) => {
+      const { motion } = plan(agent).states[agent.state]!;
+      return motion.kind === "move" && motion.distance !== undefined
+        ? motion.distance + EDGE
+        : undefined;
+    }),
     // Twice the fastest authored speed leaves room for carrying support.
     boundedStep(RULES.enemyPursuit, (agent) => 2 * fastestSpeed(plan(agent)) * STEP_SECONDS),
     everyTick("flight-clearance", RULES.flight, (tick, agent) => {
