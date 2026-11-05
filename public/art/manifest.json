@@ -142,6 +142,18 @@
       }
     },
     {
+      "key": "freight-crane-cable",
+      "png": "sprites/freight-crane-cable.png",
+      "json": "sprites/freight-crane-cable.json",
+      "once": []
+    },
+    {
+      "key": "freight-crane-container",
+      "png": "sprites/freight-crane-container.png",
+      "json": "sprites/freight-crane-container.json",
+      "once": []
+    },
+    {
       "key": "goose-antagonist",
       "png": "sprites/goose-antagonist.png",
       "json": "sprites/goose-antagonist.json",
@@ -169,6 +181,14 @@
       }
     },
     {
+      "key": "homecity-awning-ledge",
+      "png": "sprites/homecity-awning-ledge.png",
+      "json": "sprites/homecity-awning-ledge.json",
+      "once": [
+        "extending"
+      ]
+    },
+    {
       "key": "icon-achievement",
       "png": "sprites/icon-achievement.png",
       "json": "sprites/icon-achievement.json",
@@ -179,14 +199,6 @@
       "png": "sprites/icon-achievements.png",
       "json": "sprites/icon-achievements.json",
       "once": []
-    },
-    {
-      "key": "homecity-awning-ledge",
-      "png": "sprites/homecity-awning-ledge.png",
-      "json": "sprites/homecity-awning-ledge.json",
-      "once": [
-        "extending"
-      ]
     },
     {
       "key": "icon-browser-menu",
@@ -974,6 +986,15 @@
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "none"
+    },
+    {
+      "key": "freight-gantry-rail",
+      "png": "backdrops/freight-gantry-rail.png",
+      "width": 48,
+      "height": 24,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "x"
     },
     {
       "key": "freight-mid",
