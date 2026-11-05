@@ -1,6 +1,6 @@
 import type { CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { BehaviourAction, Orbit } from "./types";
+import type { BehaviourAction, CircleOrbit } from "./types";
 
 export const CRUMBLING_SUPPORT_TUNING = {
   absentSeconds: 2,
@@ -19,7 +19,7 @@ export const WINDMILL_SAILS = { count: 4, radius: 7 } as const;
 // Sail number sail's path about the hub with id host: the wheel turns against the clock, rising on
 // the right (the route side), its sail centres at the obstacle mover speed, and stops for the
 // mover pause at each quarter turn, sail 0 starting at the bottom.
-export function windmillSailOrbit(host: string, sail: number): Orbit {
+export function windmillSailOrbit(host: string, sail: number): CircleOrbit {
   return {
     angularSpeed: -OBSTACLE_MOVER_SPEED / WINDMILL_SAILS.radius,
     host,

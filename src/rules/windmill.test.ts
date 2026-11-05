@@ -331,6 +331,7 @@ describe("windmill layout", () => {
     row: 30.5,
     tether: { art: "windmill-spoke" },
   };
+  const turning = windmillSailOrbit("hub", 0);
 
   it("accepts a sail about a static hub", () => {
     expect(() => area([hub, sail])).not.toThrow();
@@ -347,22 +348,22 @@ describe("windmill layout", () => {
     ],
     [
       "no stop seconds",
-      [hub, { ...sail, orbit: { ...sail.orbit!, stops: { count: 4, seconds: 0 } } }],
+      [hub, { ...sail, orbit: { ...turning, stops: { count: 4, seconds: 0 } } }],
       /Invalid orbit configuration/,
     ],
     [
       "a fractional stop count",
-      [hub, { ...sail, orbit: { ...sail.orbit!, stops: { count: 1.5, seconds: 1 } } }],
+      [hub, { ...sail, orbit: { ...turning, stops: { count: 1.5, seconds: 1 } } }],
       /Invalid orbit configuration/,
     ],
     [
       "stops without turning",
-      [hub, { ...sail, orbit: { ...sail.orbit!, angularSpeed: 0 } }],
+      [hub, { ...sail, orbit: { ...turning, angularSpeed: 0 } }],
       /Invalid orbit configuration/,
     ],
     [
       "an unknown kind",
-      [hub, { ...sail, orbit: { ...sail.orbit!, kind: "spiral" as "circle" } }],
+      [hub, { ...sail, orbit: { ...turning, kind: "spiral" as "circle" } }],
       /Invalid orbit configuration/,
     ],
     [

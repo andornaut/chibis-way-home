@@ -1,4 +1,5 @@
 import type { BehaviourMotion, BehaviourPlan, ObjectLayout, Point, Rect } from "../data/types";
+import { pendulumCycleSeconds } from "../rules/orbit";
 
 export function hasDynamicBehaviour(pattern: BehaviourPlan): boolean {
   return Object.values(pattern.states).some(
@@ -25,11 +26,13 @@ export function objectCycleSeconds(objects: readonly ObjectLayout[], object: Obj
     if (object.orbit.angularSpeed === 0) {
       return host;
     }
-    // A whole turn, with each of its stops.
-    const stops = object.orbit.stops;
+    // A whole turn, with each of its stops, or a whole swing there and back with both holds.
+    const orbit = object.orbit;
+    const stops = orbit.kind === "circle" ? orbit.stops : undefined;
     const spin =
-      (2 * Math.PI) / Math.abs(object.orbit.angularSpeed) +
-      (stops ? stops.count * stops.seconds : 0);
+      orbit.kind === "pendulum"
+        ? pendulumCycleSeconds(orbit)
+        : (2 * Math.PI) / Math.abs(orbit.angularSpeed) + (stops ? stops.count * stops.seconds : 0);
     if (host === 0) {
       return spin;
     }

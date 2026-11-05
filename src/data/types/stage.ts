@@ -68,7 +68,23 @@ export interface CircleOrbit<Host = string> {
   readonly stops?: OrbitStops;
 }
 
-export type Orbit<Host = string> = CircleOrbit<Host>;
+// A child's swing below its host's centre, the pivot: its centre length tiles from the pivot at
+// an angle from straight below (screen axes, so the centre is pivot + length * (sin, cos) and a
+// positive angle is to the right). It swings between -amplitude and amplitude radians at
+// angularSpeed, holding still for pause seconds at each end: a positive speed holds first at
+// -amplitude, a negative one at amplitude. phase: the fraction of a whole cycle (both holds and
+// both swings) already run at area entry, from 0 up to 1.
+export interface PendulumOrbit<Host = string> {
+  readonly amplitude: number;
+  readonly angularSpeed: number;
+  readonly host: Host;
+  readonly kind: "pendulum";
+  readonly length: number;
+  readonly pause: number;
+  readonly phase: number;
+}
+
+export type Orbit<Host = string> = CircleOrbit<Host> | PendulumOrbit<Host>;
 
 export type ForcedTransitInterval = readonly [minimum: number, maximum: number];
 type ForcedTransitBankPurpose = "forward" | "refuge" | "retreat";

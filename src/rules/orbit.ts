@@ -1,6 +1,55 @@
 import { EDGE, rectAt } from "../core";
-import type { Instance, ObjectLayout, Orbit, Point, Rect, Size } from "../data/types";
+import type {
+  CircleOrbit,
+  Instance,
+  ObjectLayout,
+  Orbit,
+  PendulumOrbit,
+  Point,
+  Rect,
+  Size,
+} from "../data/types";
 import { axisOf, type Track } from "./motion";
+
+// Whether an orbit's own fields are well formed for its kind: a circle's radius, speed, phase and
+// any stops; a pendulum's length, amplitude short of a quarter turn so the child stays below its
+// pivot, a nonzero speed, its pause and a phase within one cycle.
+function orbitFieldsValid(orbit: Orbit): boolean {
+  switch (orbit.kind) {
+    case "circle": {
+      const stops = orbit.stops;
+      return (
+        Number.isFinite(orbit.radius) &&
+        orbit.radius > 0 &&
+        Number.isFinite(orbit.angularSpeed) &&
+        Number.isFinite(orbit.phase) &&
+        (stops === undefined ||
+          (Number.isInteger(stops.count) &&
+            stops.count >= 1 &&
+            Number.isFinite(stops.seconds) &&
+            stops.seconds > 0 &&
+            orbit.angularSpeed !== 0))
+      );
+    }
+    case "pendulum":
+      return (
+        Number.isFinite(orbit.length) &&
+        orbit.length > 0 &&
+        Number.isFinite(orbit.amplitude) &&
+        orbit.amplitude > 0 &&
+        orbit.amplitude < Math.PI / 2 &&
+        Number.isFinite(orbit.angularSpeed) &&
+        orbit.angularSpeed !== 0 &&
+        Number.isFinite(orbit.pause) &&
+        orbit.pause >= 0 &&
+        Number.isFinite(orbit.phase) &&
+        orbit.phase >= 0 &&
+        orbit.phase < 1
+      );
+    default:
+      return false;
+  }
+}
 
 export function validateOrbitReferences(
   instances: readonly Instance[],
@@ -26,21 +75,7 @@ export function validateOrbitReferences(
     visiting.add(index);
     const orbit = instances[index]!.orbit;
     if (orbit) {
-      const stops = orbit.stops;
-      if (
-        orbit.kind !== "circle" ||
-        !orbit.host.trim() ||
-        !Number.isFinite(orbit.radius) ||
-        orbit.radius <= 0 ||
-        !Number.isFinite(orbit.angularSpeed) ||
-        !Number.isFinite(orbit.phase) ||
-        (stops !== undefined &&
-          (!Number.isInteger(stops.count) ||
-            stops.count < 1 ||
-            !Number.isFinite(stops.seconds) ||
-            stops.seconds <= 0 ||
-            orbit.angularSpeed === 0))
-      ) {
+      if (!orbit.host.trim() || !orbitFieldsValid(orbit)) {
         throw new Error("Invalid orbit configuration");
       }
       const host = ids.get(orbit.host);
@@ -85,7 +120,7 @@ export function namespaceOrbitInstances(
 
 // The orbit's angle seconds after area entry. With stops it holds still for each stop's seconds,
 // then turns at angularSpeed to the next stop, a 1 / count turn on.
-export function orbitAngle(seconds: number, orbit: Orbit<number>): number {
+export function orbitAngle(seconds: number, orbit: CircleOrbit<number>): number {
   const stops = orbit.stops;
   if (!stops) {
     return orbit.phase + orbit.angularSpeed * seconds;
@@ -98,16 +133,48 @@ export function orbitAngle(seconds: number, orbit: Orbit<number>): number {
   return orbit.phase + Math.sign(orbit.angularSpeed) * step * done + orbit.angularSpeed * turning;
 }
 
+// A pendulum's whole cycle in seconds: a hold and a swing at each end.
+export function pendulumCycleSeconds(orbit: PendulumOrbit<unknown>): number {
+  return 2 * (orbit.pause + (2 * orbit.amplitude) / Math.abs(orbit.angularSpeed));
+}
+
+// A pendulum's angle from straight below seconds after area entry: holding for its pause at the
+// end its speed starts from, swinging to the other end at angularSpeed, holding there, and
+// swinging back, phase of a cycle in.
+export function pendulumAngle(seconds: number, orbit: PendulumOrbit<unknown>): number {
+  const cycle = pendulumCycleSeconds(orbit);
+  const half = cycle / 2;
+  const at = (((seconds + orbit.phase * cycle) % cycle) + cycle) % cycle;
+  const back = at >= half;
+  const start = (back ? 1 : -1) * Math.sign(orbit.angularSpeed) * orbit.amplitude;
+  const swung = Math.max(0, at - (back ? half : 0) - orbit.pause) * Math.abs(orbit.angularSpeed);
+  return start - Math.sign(start) * Math.min(2 * orbit.amplitude, swung);
+}
+
+// The child's top-left corner seconds after area entry on its path about the host's centre: on
+// its circle or below its pendulum's pivot.
 export function orbitPosition(
   seconds: number,
   host: Rect,
   orbit: Orbit<number>,
   child: Size,
 ): Point {
-  const angle = orbitAngle(seconds, orbit);
+  let along: Point;
+  switch (orbit.kind) {
+    case "circle": {
+      const angle = orbitAngle(seconds, orbit);
+      along = { x: orbit.radius * Math.cos(angle), y: orbit.radius * Math.sin(angle) };
+      break;
+    }
+    case "pendulum": {
+      const angle = pendulumAngle(seconds, orbit);
+      along = { x: orbit.length * Math.sin(angle), y: orbit.length * Math.cos(angle) };
+      break;
+    }
+  }
   return {
-    x: host.x + host.width / 2 + orbit.radius * Math.cos(angle) - child.width / 2,
-    y: host.y + host.height / 2 + orbit.radius * Math.sin(angle) - child.height / 2,
+    x: host.x + host.width / 2 + along.x - child.width / 2,
+    y: host.y + host.height / 2 + along.y - child.height / 2,
   };
 }
 
@@ -124,7 +191,10 @@ export function resolveOrbits(
     }
     const hostIndex = ids.get(authored.host)!;
     const host = objects[hostIndex]!;
-    if (object.collision !== "ledge" && authored.stops !== undefined) {
+    if (object.collision !== "ledge" && authored.kind === "pendulum") {
+      throw new Error("A pendulum orbit requires a ledge");
+    }
+    if (object.collision !== "ledge" && authored.kind === "circle" && authored.stops) {
       throw new Error("Orbit stops require a ledge");
     }
     if (object.collision === "ledge") {
@@ -155,7 +225,10 @@ export function resolveOrbits(
     ) {
       throw new Error("Orbit requires an inert non-silhouette hazard or ledge");
     }
-    const orbit = { ...authored, host: hostIndex, radius: authored.radius * tile };
+    const orbit: Orbit<number> =
+      authored.kind === "circle"
+        ? { ...authored, host: hostIndex, radius: authored.radius * tile }
+        : { ...authored, host: hostIndex, length: authored.length * tile };
     const expected = orbitPosition(0, rectAt(host, host.origin), orbit, object);
     if (
       Math.abs(expected.x - object.origin.x) > EDGE ||
@@ -203,12 +276,24 @@ export function pathLedge(object: ObjectLayout): boolean {
   return object.orbit !== undefined && object.collision === "ledge";
 }
 
+// The rect a child's path sweeps: its circle about its host's track, or its pendulum's arc below
+// a static pivot, highest at both ends.
 export function orbitBounds(objects: readonly ObjectLayout[], object: ObjectLayout): Rect {
   const orbit = object.orbit!;
   const host = objects[orbit.host]!;
-  const axis = axisOf(host.motion.direction);
   const x = host.origin.x + host.width / 2;
   const y = host.origin.y + host.height / 2;
+  if (orbit.kind === "pendulum") {
+    const half = orbit.length * Math.sin(orbit.amplitude);
+    const top = y + orbit.length * Math.cos(orbit.amplitude) - object.height / 2;
+    return {
+      height: y + orbit.length + object.height / 2 - top,
+      width: 2 * half + object.width,
+      x: x - half - object.width / 2,
+      y: top,
+    };
+  }
+  const axis = axisOf(host.motion.direction);
   return {
     height: Math.abs(axis.y * host.motion.distance) + 2 * orbit.radius + object.height,
     width: Math.abs(axis.x * host.motion.distance) + 2 * orbit.radius + object.width,
@@ -278,6 +363,9 @@ export function orbitSweptContact(
   birdEnd: Rect,
 ): boolean {
   const orbit = object.orbit!;
+  if (orbit.kind !== "circle") {
+    throw new Error("Swept orbit contact requires a circle");
+  }
   const duration = leg.end - leg.start;
   if (duration <= 0) {
     return false;
