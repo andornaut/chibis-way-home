@@ -65,6 +65,7 @@ import {
 import { ordinaryTransitControl } from "./forcedTransitProfile";
 import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
+import { pursuitGroundMap } from "./movementMaps";
 import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
 import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird";
@@ -982,6 +983,9 @@ export function stepZoneBodies(
                 tuning,
                 {
                   ...(kinds.traversal[index] ? traversalGeometry(object) : geometry),
+                  ...(object.behaviour.pursuit && {
+                    groundMap: () => pursuitGroundMap(area, object),
+                  }),
                   decisions: namedStreams(
                     zone.seed + zone.attempt,
                     `idle-roam:${zone.area}:${index}`,

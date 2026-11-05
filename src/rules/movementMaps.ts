@@ -1,6 +1,6 @@
 // Chibi's adapters onto game-kit's movement and air maps: profiles derived from each boss's own
 // movement data, the static terrain of one area, and the masks that disable dynamic terrain per
-// query. Nothing at runtime reads these maps yet.
+// query. Ground pursuit reads `pursuitGroundMap`.
 import {
   type AirArea,
   type AirBuildOptions,
@@ -519,6 +519,73 @@ export function areaMovementMaps(area: AreaLayout): ReadonlyMap<string, BossMap>
   return cached.maps;
 }
 
+const PURSUIT_MAPS = new WeakMap<
+  AreaLayout,
+  { readonly maps: Map<string, PursuitGroundMap>; readonly terrain: MapTerrain }
+>();
+
+export interface PursuitGroundMap {
+  readonly map: MovementMap<MapSupport>;
+  readonly terrain: MapTerrain;
+}
+
+// The first ground pursuit with traversal physics in state order, as pursuit reads it.
+function groundPursuitMotion(object: ObjectLayout) {
+  for (const { motion } of Object.values(object.behaviour?.states ?? {})) {
+    if (motion.kind === "pursue" && motion.mode === "ground" && motion.traversal) {
+      return { ...motion, traversal: motion.traversal };
+    }
+  }
+  return undefined;
+}
+
+// A ground pursuer's route map: its pursuit physics without climbing, which pursuit never uses,
+// clipped to the columns its leash allows (the whole area when the leash covers it). Built on
+// first use and cached per area, profile and window, so every boss sharing them shares one map.
+export function pursuitGroundMap(
+  area: AreaLayout,
+  object: ObjectLayout,
+): PursuitGroundMap | undefined {
+  const motion = groundPursuitMotion(object);
+  const leash = object.behaviour?.pursuit?.distance;
+  if (!motion || leash === undefined) {
+    return undefined;
+  }
+  let cached = PURSUIT_MAPS.get(area);
+  if (!cached) {
+    cached = { maps: new Map(), terrain: AREA_MAPS.get(area)?.terrain ?? mapTerrain({}, area) };
+    PURSUIT_MAPS.set(area, cached);
+  }
+  const { gravity, jumpSpeed, maxFallSpeed } = motion.traversal;
+  const profile: MovementProfile = {
+    body: bodyOf(object),
+    gravity,
+    jumpSpeed,
+    maxFallSpeed,
+    walkSpeed: motion.speed,
+  };
+  const left = Math.max(0, object.origin.x - leash);
+  const right = Math.min(area.width, object.origin.x + object.width + leash);
+  const window =
+    left <= 0 && right >= area.width
+      ? undefined
+      : { height: area.height, width: right - left, x: left, y: 0 };
+  const key = `${groundKey(profile)} ${window ? `${left},${right}` : "-"}`;
+  let entry = cached.maps.get(key);
+  if (!entry) {
+    entry = {
+      map: groundMap(
+        { jumps: BOSS_JUMP_SCRIPTS, ...(window && { window }) },
+        cached.terrain,
+        profile,
+      ),
+      terrain: cached.terrain,
+    };
+    cached.maps.set(key, entry);
+  }
+  return entry;
+}
+
 export interface DependencyMaskOptions {
   // Whether climb edges are enabled: only for the climbing special, never for pursuit routes.
   readonly climb: boolean;
@@ -533,7 +600,7 @@ export function groundMask(options: DependencyMaskOptions, map: MovementMap<MapS
     edge: (id, departSeconds) => {
       const edge = map.edges[id]!;
       return (
-        (options.climb || edge.kind !== "climb") &&
+        (options.climb || (edge.kind !== "climb" && edge.kind !== "track-climb")) &&
         edge.deps.every((dep) => options.allowed(dep, departSeconds))
       );
     },

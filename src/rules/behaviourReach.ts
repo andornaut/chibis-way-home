@@ -11,6 +11,7 @@ import type {
   TargetedAttackWindow,
 } from "../data/types";
 import { birdBox, type BirdState } from "./bird";
+import type { PursuitGroundMap } from "./movementMaps";
 import type { TimedHazardSampler } from "./timedHazard";
 
 interface BehaviourPlatform {
@@ -66,6 +67,8 @@ export interface BehaviourWorld {
   readonly view?: Rect;
   readonly platforms?: readonly BehaviourPlatform[];
   readonly solids: readonly Rect[];
+  // The object's ground pursuit map over the area's static terrain, built on first use.
+  readonly groundMap?: () => PursuitGroundMap | undefined;
 }
 export type BehaviourGeometry = readonly Rect[] | BehaviourWorld;
 export function behaviourWorld(geometry: BehaviourGeometry): BehaviourWorld {
