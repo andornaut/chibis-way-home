@@ -405,18 +405,8 @@ function pathOut(options: PathOutOptions, subject: PathOutCase) {
 const CASES = pooledEncounters();
 
 // Layout problems for gameplay, by case: each must keep failing exactly so until its layout
-// changes. The Kiwi ceiling over cols 50 to 54 caps the jump from the row 77 step back toward
-// the ridge, so Kiwi cannot return to its spawn from the lower right.
-const KNOWN_PROBLEMS: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
-  ["back-streets", "city-outskirts", "familiar-neighbourhood"].map((theme) => [
-    `home-vertical-open-stepped-ridge-encounter ${theme}`,
-    [
-      "raccoon-antagonist node 5 row 77.0 cols 47.0..50.3 has no pursuit path to the spawn",
-      "raccoon-antagonist node 8 row 80.0 cols 54.0..60.0 has no pursuit path to the spawn",
-      "raccoon-antagonist node 9 row 80.0 cols 60.0..68.3 has no pursuit path to the spawn",
-    ],
-  ]),
-);
+// changes.
+const KNOWN_PROBLEMS: Readonly<Record<string, readonly string[]>> = {};
 
 describe("movement map path out", () => {
   it("covers every pooled encounter chunk", () => {
