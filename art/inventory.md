@@ -256,12 +256,6 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | bear-growl-wave | Noncolliding directional effect              | 48x32 | pulse (once)                                                                                      |
 | portrait-bear   | Right-facing dialogue portrait               | 64x64 | neutral, annoyed                                                                                  |
 
-## Owl antagonist
-
-| Key            | Type                         | Size  | Tags                                           |
-| -------------- | ---------------------------- | ----- | ---------------------------------------------- |
-| owl-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, prepare, drop, return, rest, frustration |
-
 ## Woodland materials
 
 | Key            | Type                               | Size    | Contract                                         |
@@ -274,12 +268,6 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | tiles-woodland | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
 | woodland-far   | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                     |
 | woodland-sky   | decorative backdrop                | 48x600  | Bottom-left, y 600, repeat x                     |
-
-## Rabbit antagonist
-
-| Key               | Type                         | Size  | Tags                         |
-| ----------------- | ---------------------------- | ----- | ---------------------------- |
-| rabbit-antagonist | character; hit box 2,2,44,46 | 48x48 | idle, hop, rest, frustration |
 
 ## Home city materials
 

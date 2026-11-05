@@ -833,26 +833,6 @@ The earlier actor tags loop. `portrait-bear` is 64x64, authored facing right, wi
 
 `bear-growl-wave` is a noncolliding 48x32 directional effect. Its `pulse` tag has four 100ms frames, plays once and requires runtime removal when finished. Place its left-centre anchor 0,16 at the bear's mouth, frame-local 36,22; the unmirrored image origin is therefore actor origin plus 36,6. Mirror this attachment for left-facing use. The effect does not define reach or force. Gameplay supplies the height-limited push volume and solid cover checks, with high ground as the primary avoidance route. Keep the drawn pulse within that configured band.
 
-## Owl antagonist
-
-This artwork is retained; Bini supplies the approved replacement woodland encounter.
-
-`art/tools/owl.ts` draws `owl-antagonist`. A compact round head and broad wings distinguish the owl. Its preparation pose signals a descending swoop before it returns and rests. There is no red outline or dialogue portrait.
-
-The frame is 48x48 with bottom-centre anchor 24,48. Its fixed contact box is x 2, y 2, width 44, height 46, containing all visible poses and mirrored versions. All states remain lethal. The appearance uses the generic enemy state graph; gameplay owns physical movement and state durations.
-
-| Tag     | Art cycle               | Pose                      |
-| ------- | ----------------------- | ------------------------- |
-| drop    | Two frames, 100ms each  | Descending swoop          |
-| idle    | Two frames, 400ms each  | Perched breathing         |
-| prepare | Two frames, 160ms each  | Readable wing preparation |
-| rest    | Two frames, 400ms each  | Settled recovery          |
-| return  | Four frames, 120ms each | Wingbeat on the return    |
-
-Every tag loops. These frame timings are art cycle defaults, not the runtime motion or warning durations.
-
-This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
-
 ## Woodland material pack
 
 `art/tools/woodland.ts` draws reusable skins for Forest paths and Ravine, using the destination's canonical `zone-green` primary. Appearance bindings retain the common terrain geometry, obstacle behaviours and collision profiles.
@@ -875,22 +855,6 @@ This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 | woodland-sky | 48x600  | x      | Fixed sky            |
 
 All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 0,0; far factors 0.15,0.05; middle factors 0.4,0.15. Select the appropriate stage middle layer. Near props use factors 1,1 and placement data aligns them to the local floor. Decorative silhouettes carry no white safe lips or red contact bands and must not imply usable platforms. Scenery adds no collision, hidden hazard or movement rules. Room entrances may reuse the existing street-door artwork.
-
-## Rabbit antagonist
-
-`art/tools/rabbit.ts` draws `rabbit-antagonist`. Upright ears and a small tail distinguish the rabbit. Its hop cycle and settled pauses accompany the shared bounded movement pattern. There is no red outline or dialogue portrait.
-
-The frame is 48x48 with bottom-centre anchor 24,48. Its fixed contact box is x 2, y 2, width 44, height 46, containing all visible poses and mirrored versions. All states remain lethal. The appearance uses the generic enemy state graph; gameplay owns physical movement and state durations.
-
-| Tag  | Art cycle               | Pose                       |
-| ---- | ----------------------- | -------------------------- |
-| hop  | Four frames, 100ms each | Hop cycle                  |
-| idle | Two frames, 400ms each  | Quiet standing             |
-| rest | Two frames, 400ms each  | Predictable recovery pause |
-
-Every tag loops. These frame timings are art cycle defaults, not the runtime motion or warning durations.
-
-This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
 ## Home city material pack
 
