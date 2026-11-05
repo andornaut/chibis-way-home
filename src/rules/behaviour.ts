@@ -152,6 +152,9 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
   if (!Number.isFinite(plan.distance) || !plan.states[plan.initial]) {
     throw new Error("Invalid behaviour extent or initial state");
   }
+  if (plan.facing !== undefined && plan.facing !== -1 && plan.facing !== 1) {
+    throw new Error("Invalid behaviour facing");
+  }
   if (
     plan.pursuit &&
     (!valid(plan.pursuit.distance) ||
@@ -774,7 +777,7 @@ export function startBehaviour(
   return enterState(perceiveBehaviour(tuning, [], bird), object, object.origin, plan.initial, {
     active: object.scene === undefined,
     elapsed: 0,
-    facing: plan.distance < 0 ? -1 : 1,
+    facing: plan.facing ?? (plan.distance < 0 ? -1 : 1),
     stateKey: plan.initial,
   });
 }
@@ -880,11 +883,13 @@ function matches(
     );
   }
   if (condition.kind === "elapsed") {
-    // Timed hazard and clocked support boundaries tolerate arithmetic rounding, without
-    // extending legacy clocks.
+    // Timed hazard, clocked support and gust emitter boundaries tolerate arithmetic rounding,
+    // without extending legacy clocks.
     const node = object.behaviour?.states[state.stateKey];
     const rounding =
-      node?.hazardPhase === undefined && node?.supportPhase === undefined
+      node?.hazardPhase === undefined &&
+      node?.supportPhase === undefined &&
+      node?.gustPhase === undefined
         ? 0
         : Number.EPSILON * Math.max(1, state.elapsed, condition.seconds) * 4;
     return state.elapsed + rounding >= condition.seconds;

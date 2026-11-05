@@ -171,10 +171,13 @@ export type BehaviourAction =
     }
   | {
       readonly kind: "force-pulse";
+      // offset places one visual from the actor's frame; span repeats it across the push volume
+      // instead, each bottom on the volume's bottom, and ignores offset.
       readonly visual?: {
         readonly art: string;
         readonly animation: string;
         readonly offset: Point;
+        readonly span?: true;
       };
       readonly range: number;
       readonly height: number;
@@ -222,7 +225,20 @@ export interface SupportCycleSeconds {
   readonly warning: number;
 }
 
+// A gust emitter's phase: calm, warning (the leaf stream starts), then gust, the one state that
+// emits its force pulse.
+export type GustPhase = "calm" | "warning" | "gust";
+
+// Seconds in each state of a gust emitter's cycle: calm, warning, then gust back to calm.
+export interface GustCycleSeconds {
+  readonly calm: number;
+  readonly gust: number;
+  readonly warning: number;
+}
+
 export interface BehaviourNode {
+  // Stationary gust emitters label every state.
+  readonly gustPhase?: GustPhase;
   // Stationary timed hazards label every state; recovery uses inactive.
   readonly hazardPhase?: HazardPhase;
   // Stationary clocked one-way supports label every state.
@@ -272,6 +288,8 @@ export interface BehaviourPlan {
   readonly spotted?: DialogueLine;
   readonly axis: "x" | "y";
   readonly distance: number;
+  // Initial facing; omitted, a negative distance faces left and any other faces right.
+  readonly facing?: -1 | 1;
   readonly inactiveAnimation?: string;
   readonly takeoffAnimation?: string;
   readonly initial: string;

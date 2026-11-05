@@ -1,6 +1,7 @@
 import type {
   BehaviourNode,
   Collision,
+  GustPhase,
   HazardPhase,
   ObjectLayout,
   SupportPhase,
@@ -9,9 +10,12 @@ import type { BehaviourState } from "./behaviour";
 
 // A stationary clock: no reaction, contact, orbit, scene or actor lifecycle, and every state a
 // wait with one elapsed transition, the states one ring from the initial state. label names the
-// phase field every state must carry one of values for.
+// phase field every state must carry one of values for. With emits, exactly one state, the one
+// labelled emits, enters with exactly one force pulse lasting that state's seconds, so its
+// pulses neither overlap nor leave a gap; no other state has entry actions.
 function validateClockCycle(
   clock: {
+    readonly emits?: string;
     readonly label: string;
     readonly phaseOf: (node: BehaviourNode) => string | undefined;
     readonly values: readonly string[];
@@ -37,8 +41,22 @@ function validateClockCycle(
   ) {
     invalid();
   }
+  let emitters = 0;
   for (const node of Object.values(plan.states)) {
     const condition = node.transitions[0]?.when[0];
+    const emits = clock.emits !== undefined && clock.phaseOf(node) === clock.emits;
+    if (emits) {
+      emitters++;
+      const pulse = node.onEnter?.[0];
+      if (
+        node.onEnter?.length !== 1 ||
+        pulse?.kind !== "force-pulse" ||
+        condition?.kind !== "elapsed" ||
+        pulse.seconds !== condition.seconds
+      ) {
+        invalid();
+      }
+    }
     if (
       !clock.values.includes(clock.phaseOf(node) ?? "") ||
       node.motion.kind !== "wait" ||
@@ -46,7 +64,7 @@ function validateClockCycle(
       node.track ||
       node.enter ||
       node.attack ||
-      (node.onEnter?.length ?? 0) > 0 ||
+      (!emits && (node.onEnter?.length ?? 0) > 0) ||
       node.allowIdleReposition ||
       node.allowGroundReposition ||
       node.transitions.length !== 1 ||
@@ -68,7 +86,11 @@ function validateClockCycle(
     }
     key = node!.transitions[0]!.to;
   }
-  if (key !== plan.initial || visited.size !== Object.keys(plan.states).length) {
+  if (
+    key !== plan.initial ||
+    visited.size !== Object.keys(plan.states).length ||
+    (clock.emits !== undefined && emitters !== 1)
+  ) {
     invalid();
   }
 }
@@ -114,6 +136,48 @@ export function validateSupportPhases(object: ObjectLayout): void {
     },
     object,
   );
+}
+
+// Only scenery on a fully labelled stationary clock may emit gusts: one force pulse per cycle,
+// pushing Chibi alone; it never collides and is never lethal.
+export function validateGustPhases(object: ObjectLayout): void {
+  const plan = object.behaviour;
+  if (!plan || !Object.values(plan.states).some((node) => node.gustPhase !== undefined)) {
+    return;
+  }
+  if (
+    object.collision !== "none" ||
+    Object.values(plan.states).some(
+      (node) => node.hazardPhase !== undefined || node.supportPhase !== undefined,
+    )
+  ) {
+    throw new Error(`Gust phases require stationary scenery: ${object.character}`);
+  }
+  validateClockCycle(
+    {
+      emits: "gust",
+      label: "Gust phases",
+      phaseOf: (node) => node.gustPhase,
+      values: ["calm", "warning", "gust"],
+    },
+    object,
+  );
+}
+
+// A gust emitter's phase in a state, its initial state's before its behaviour starts.
+export function effectiveGustPhase(
+  object: ObjectLayout,
+  state: Pick<BehaviourState, "stateKey"> | undefined,
+): GustPhase | undefined {
+  const plan = object.behaviour;
+  if (!plan) {
+    return undefined;
+  }
+  const node = plan.states[state?.stateKey ?? plan.initial];
+  if (!node) {
+    throw new Error(`Missing behaviour state for ${object.character}`);
+  }
+  return node.gustPhase;
 }
 
 export function effectiveHazardPhase(

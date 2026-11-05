@@ -25,6 +25,7 @@ import { layoutBehaviour } from "./behaviour";
 import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling";
 import {
   effectiveHazardPhase,
+  validateGustPhases,
   validateHazardPhases,
   validateSupportPhases,
 } from "./effectiveCollision";
@@ -341,6 +342,7 @@ export function objectLayout(
     }),
     width,
   };
+  validateGustPhases(object);
   validateHazardPhases(object);
   validateSupportPhases(object);
   if (object.phaseTiles && effectiveHazardPhase(object, undefined) === undefined) {
