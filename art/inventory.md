@@ -128,44 +128,25 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 
 Pieces placed from stage data by their bottom-left corner at the bottom y given: `park-*` from `art/tools/park.ts`, the rest from `art/tools/floor1.ts` (Zone 1: New York street, 720px tall, sidewalk top y 600, row 50).
 
-| Key                     | Type                                                       | Size    | Bottom y, repeat |
-| ----------------------- | ---------------------------------------------------------- | ------- | ---------------- |
-| cross-street            | far avenue down a cross street                             | 120x26  | 600, none        |
-| facade-brownstone       | building facade, brownstone                                | 48x312  | 600, x           |
-| facade-one-storey       | building facade, one-storey brick                          | 48x192  | 600, x           |
-| facade-walkup           | building facade, brick walk-up                             | 48x312  | 600, x           |
-| facade-walkup-upper     | building facade, a walk-up's upper storey                  | 48x180  | 288, x           |
-| fire-escape-ladder      | climbing, fire-escape ladder between landings 8 rows apart | 24x96   | 432, none        |
-| fire-escape-ladder-4    | climbing, fire-escape ladder between landings 4 rows apart | 24x48   | 432, none        |
-| fire-escape-ladder-5    | climbing, fire-escape ladder between landings 5 rows apart | 24x60   | 432, none        |
-| fire-escape-ladder-6    | climbing, fire-escape ladder between landings 6 rows apart | 24x72   | 432, none        |
-| fire-escape-ladder-7    | climbing, fire-escape ladder between landings 7 rows apart | 24x84   | 432, none        |
-| fire-escape-railing     | climbing, fire-escape railing on a landing                 | 48x24   | 432, x           |
-| hot-dog-cart            | street furniture                                           | 40x70   | 600, none        |
-| park-bandstand          | park prop, bandstand under its one-way roof                | 120x84  | 600, none        |
-| park-bench              | park prop, bench under its one-way top                     | 36x24   | 600, none        |
-| park-city               | park, the city behind                                      | 360x200 | 540, x           |
-| park-clouds             | park, cream clouds                                         | 360x160 | 200, x           |
-| park-far-trees          | park, distant crowns                                       | 240x120 | 600, x           |
-| park-lamp               | park prop, lamp                                            | 16x84   | 600, none        |
-| park-sky                | park, peach sky                                            | 48x600  | 600, x           |
-| park-tree               | park prop, autumn tree                                     | 96x150  | 600, none        |
-| park-treetops           | park, tall autumn treetops                                 | 360x420 | 600, x           |
-| roofline-brownstone     | roofline, brownstone                                       | 48x48   | 108, x           |
-| roofline-walkup         | roofline, walk-up                                          | 48x48   | 108, x           |
-| storefront-cafe         | storefront, cup sign                                       | 84x120  | 600, none        |
-| storefront-diner        | storefront, fork-and-knife sign                            | 108x120 | 600, none        |
-| storefront-florist      | storefront, flower sign                                    | 84x120  | 600, none        |
-| storefront-gift-shop    | storefront, gift sign                                      | 96x120  | 600, none        |
-| storefront-makeup-store | storefront, lipstick sign                                  | 96x120  | 600, none        |
-| storefront-noodle-bar   | storefront, noodle-bowl sign                               | 120x120 | 600, none        |
-| storefront-pet-shop     | storefront, paw sign                                       | 108x120 | 600, none        |
-| street-sky              | day sky, both screens                                      | 48x600  | 600, x           |
-| street-skyline          | far skyline, water towers, two towers                      | 336x600 | 600, x           |
-| street-tree             | street furniture                                           | 64x136  | 600, none        |
-| subway-railing          | street furniture                                           | 72x62   | 600, none        |
-| walk-signal             | street furniture                                           | 12x82   | 600, none        |
-| water-tower             | climbing, water tower (top one-way tiles)                  | 48x84   | 240, none        |
+| Key                   | Type                                        | Size    | Bottom y, repeat |
+| --------------------- | ------------------------------------------- | ------- | ---------------- |
+| facade-brownstone     | building facade, brownstone                 | 48x312  | 600, x           |
+| facade-one-storey     | building facade, one-storey brick           | 48x192  | 600, x           |
+| fire-escape-railing   | climbing, fire-escape railing on a landing  | 48x24   | 432, x           |
+| park-bandstand        | park prop, bandstand under its one-way roof | 120x84  | 600, none        |
+| park-bench            | park prop, bench under its one-way top      | 36x24   | 600, none        |
+| park-city             | park, the city behind                       | 360x200 | 540, x           |
+| park-clouds           | park, cream clouds                          | 360x160 | 200, x           |
+| park-far-trees        | park, distant crowns                        | 240x120 | 600, x           |
+| park-lamp             | park prop, lamp                             | 16x84   | 600, none        |
+| park-sky              | park, peach sky                             | 48x600  | 600, x           |
+| park-tree             | park prop, autumn tree                      | 96x150  | 600, none        |
+| park-treetops         | park, tall autumn treetops                  | 360x420 | 600, x           |
+| roofline-brownstone   | roofline, brownstone                        | 48x48   | 108, x           |
+| storefront-cafe       | storefront, cup sign                        | 84x120  | 600, none        |
+| storefront-noodle-bar | storefront, noodle-bowl sign                | 120x120 | 600, none        |
+| street-sky            | day sky, both screens                       | 48x600  | 600, x           |
+| walk-signal           | street furniture                            | 12x82   | 600, none        |
 
 ## Modular platforming
 

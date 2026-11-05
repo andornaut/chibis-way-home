@@ -634,42 +634,23 @@ The first Blue cityscape stage has fixed start and finish sections with a seeded
 
 - Depot: blue-grey ribbed wall modules, roller loading bays and cream parcel icons, with warm cardboard reserved for the opened parcel. No labels are baked into the art. The three modules are static backdrops with no collision, animation or interaction; gameplay places solid surfaces separately. All stay on the play plane, with parallax factors 1,1.
 - Outdoor scale: the street is drawn as if zoomed out 4x while the bird and the 12px tiles keep their size. A storey is 180px and an ordinary room door is 84px, twice Chibi's 42px frame height.
-- The street is 720px (60 tiles) tall: the sidewalk's top is y 600 (row 50), with sidewalk and road filling rows 50 to 59 below it so the camera can hold his feet two thirds down the screen. The ground storey runs from y 420 to the sidewalk, and storeys stack every 180px above: a two-storey roof is at y 240 (row 20) and a three-storey roof at y 60 (row 5), the tallest that fits. A water tower (its tank top 6 tiles above its roof) fits on a two-storey roof, not a three-storey one. Every street piece's bottom y below is in that frame.
+- The street is 720px (60 tiles) tall: the sidewalk's top is y 600 (row 50), with sidewalk and road filling rows 50 to 59 below it so the camera can hold his feet two thirds down the screen. The ground storey runs from y 420 to the sidewalk, and storeys stack every 180px above: a two-storey roof is at y 240 (row 20) and a three-storey roof at y 60 (row 5), the tallest that fits. Every street piece's bottom y below is in that frame.
 - Street tiles (`tiles-street`): a pale concrete sidewalk (tops alternating with a 2px joint every 24px, ends, a slate face), a pale stone kerb where it meets a cross street, the road one tile lower, an ochre-and-cream one-way shop awning, a dark-brown one-way canopy with a white lip, a 2-tile planter with a hedge top, the cellar hatch and its pit, and the ordinary room door as a 5x7 piece (60x84): a muted blue glazed leaf enclosed by complete grey jambs, with a small amber handle. `art/tools/roomDoors.ts` supplies the shared geometry. Existing non-door tile indices stay fixed; the added door cells follow the existing tiles.
 - Climbing tiles, appended so every earlier index holds: one-way fire-escape landings (black iron), window sills, a rooftop cornice and a water tower's flat top, each with left, middle and right tiles at any width. Every ledge's top carries the same 2px white lip under a 1px dark edge, so it reads against any facade in greyscale.
-- Climbing backdrops: upper storeys and rooflines stack as reusable facade pieces. Standable ledges and solid faces come from modular tiles, placed independently of the scenery. Platforming layouts use ledges and cliffs; the fire-escape ladder images are decorative.
-- Backdrops are modular: a sky and a far skyline of faded downtown skyscrapers in two layers that cover both screens and rise above the near roofs, one repeating facade per building type (one-storey, walk-up and brownstone), one storefront per shop, and street furniture placed singly (a hot-dog cart, a subway railing, a street tree and a walk signal). A cross street is a gap with no facade, where the skyline shows over the far avenue.
-- Signs are icons, never text: a cup, a flower, a gift box, a lipstick, a paw, a fork and knife and a noodle bowl.
+- Climbing backdrops: rooflines and fire-escape railings are reusable facade pieces. Standable ledges and solid faces come from modular tiles, placed independently of the scenery. Platforming layouts use ledges and cliffs.
+- Backdrops are modular: a sky and a far skyline of faded downtown skyscrapers in two layers that cover both screens and rise above the near roofs, one repeating facade per building type (one-storey and brownstone), one storefront per shop, and a walk signal placed singly.
+- Signs are icons, never text: a cup and a noodle bowl.
 
-| Backdrop                | Size    | Bottom y | Repeat |
-| ----------------------- | ------- | -------- | ------ |
-| street-sky              | 48x600  | 600      | x      |
-| street-skyline          | 336x600 | 600      | x      |
-| facade-one-storey       | 48x192  | 600      | x      |
-| facade-walkup           | 48x312  | 600      | x      |
-| facade-walkup-upper     | 48x180  | 288      | x      |
-| roofline-walkup         | 48x48   | 108      | x      |
-| facade-brownstone       | 48x312  | 600      | x      |
-| roofline-brownstone     | 48x48   | 108      | x      |
-| fire-escape-railing     | 48x24   | 432      | x      |
-| fire-escape-ladder      | 24x96   | 432      | none   |
-| fire-escape-ladder-4    | 24x48   | 432      | none   |
-| fire-escape-ladder-5    | 24x60   | 432      | none   |
-| fire-escape-ladder-6    | 24x72   | 432      | none   |
-| fire-escape-ladder-7    | 24x84   | 432      | none   |
-| water-tower             | 48x84   | 240      | none   |
-| storefront-cafe         | 84x120  | 600      | none   |
-| storefront-florist      | 84x120  | 600      | none   |
-| storefront-gift-shop    | 96x120  | 600      | none   |
-| storefront-makeup-store | 96x120  | 600      | none   |
-| storefront-pet-shop     | 108x120 | 600      | none   |
-| storefront-diner        | 108x120 | 600      | none   |
-| storefront-noodle-bar   | 120x120 | 600      | none   |
-| hot-dog-cart            | 40x70   | 600      | none   |
-| subway-railing          | 72x62   | 600      | none   |
-| street-tree             | 64x136  | 600      | none   |
-| walk-signal             | 12x82   | 600      | none   |
-| cross-street            | 120x26  | 600      | none   |
+| Backdrop              | Size    | Bottom y | Repeat |
+| --------------------- | ------- | -------- | ------ |
+| street-sky            | 48x600  | 600      | x      |
+| facade-one-storey     | 48x192  | 600      | x      |
+| facade-brownstone     | 48x312  | 600      | x      |
+| roofline-brownstone   | 48x48   | 108      | x      |
+| fire-escape-railing   | 48x24   | 432      | x      |
+| storefront-cafe       | 84x120  | 600      | none   |
+| storefront-noodle-bar | 120x120 | 600      | none   |
+| walk-signal           | 12x82   | 600      | none   |
 
 Below the sidewalk's top, the sidewalk and road tiles fill rows 50 to 59.
 
@@ -683,7 +664,7 @@ Below the sidewalk's top, the sidewalk and road tiles fill rows 50 to 59.
 
 The opened parcel is scenery, without the bright safe ledge lip or a red danger strip. It marks the starting location without blocking movement. The depot wall can repeat to any run width; loading bays and parcels are independently placed pieces. No panorama or scene-specific bird drawing is exported.
 
-The separate atmosphere layers `street-city-far` and `street-city-mid` are each 720x600, bottom-left anchored at y 600 and repeating in x. Place them with the flat `street-sky`, back to front in that order. The legacy `street-skyline` is a composite compatibility asset: do not place it alongside the two separate layers. Physical facades, doors and attached ledges remain on the play plane.
+The separate atmosphere layers `street-city-far` and `street-city-mid` are each 720x600, bottom-left anchored at y 600 and repeating in x. Place them with the flat `street-sky`, back to front in that order. Physical facades, doors and attached ledges remain on the play plane.
 
 ### City boundary
 

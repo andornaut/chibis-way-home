@@ -16,7 +16,7 @@
  *   size: a storey is 180px and an ordinary room entrance is 84px, twice the bird's 42px frame
  *   height. The street is 720px (60 tiles) tall: the sidewalk's top is y 600 (row 50) with 10 rows
  *   of sidewalk and road below it, the ground storey runs from y 420 to it, and storeys stack every
- *   180px above (a three-storey walk-up's roof is at y 60, row 5). Indoors (the lobby) is a
+ *   180px above (a two-storey brownstone's roof is at y 240, row 20). Indoors (the lobby) is a
  *   separate scene at full scale, also 720px tall, its floor at y 672.
  *
  * Palette (the street; the lobby keeps its own)
@@ -28,8 +28,6 @@
  * - street-city-mid: 720x600, bottom y 600, repeat x; suggested horizontal scroll factor 0.4.
  * - street-sky stays fixed; near facades, storefronts, doors, ledges and attached props share
  *   gameplay motion.
- * - street-skyline remains a 336x600 combined fallback. Use it or the separate city layers, never
- *   both.
  *
  * Tilesets
  * - A tileset is one PNG of 12x12 tiles in rows of COLUMNS (8), no spacing or margin, transparent
@@ -77,11 +75,9 @@
  *   with left, middle and right tiles, laid any width at the reaches (a hop rises 3 tiles, a full
  *   jump 8); every top has a 2px white lip under a 1px dark edge, so it reads against any facade in
  *   greyscale: one-way-fire-escape-* (a black iron landing, art in the top 7 rows; stand
- *   fire-escape-railing on it and run fire-escape-ladder up to the next landing, a few tiles and at
- *   most 8 above), one-way-sill-* (a stone window sill, 2 or 3 wide, art in the top 7 rows, its top
+ *   fire-escape-railing on it), one-way-sill-* (a stone window sill, 2 or 3 wide, art in the top 7 rows, its top
  *   on a window's sill line), one-way-cornice-* (a rooftop cornice with dentils, the full tile,
- *   along a roofline's top edge), one-way-tank-* (a water tower's flat top, 4 wide on the
- *   water-tower piece's second tile row, 6 tiles above its roof).
+ *   along a roofline's top edge), one-way-tank-* (a water tower's flat top rim).
  *
  * tiles-lobby (the boutique lobby at indoor scale; no current stage)
  * - Every walkable top, the floor and each one-way ledge, has the same 2px cream lip under a 1px
@@ -108,35 +104,20 @@
  *   The piece's bottom-left corner sits at world y (its bottom edge), at an x the level data
  *   chooses. "repeat": "x" tiles it horizontally across a run; "none" places it once. Street y
  *   values are in the two-screen frame (the sidewalk's top at y 600, row 50); the sidewalk and road
- *   tiles fill rows 50 to 59 below it. Draw order, back to front: sky, skyline, facades and their
- *   upper storeys and rooflines, storefronts, street furniture, then the play layer.
+ *   tiles fill rows 50 to 59 below it. Draw order, back to front: sky, city layers, facades and
+ *   their rooflines, storefronts, street furniture, then the play layer.
  * - Sky and city (repeat x): street-sky 48x600 (y 600), flat zone-blue. street-city-far and
  *   street-city-mid are each 720x600 (y 600), window-free zone-blue-shade and slate silhouettes.
- *   street-skyline 336x600 is their combined fallback.
  * - Facades (repeat x, one per building type; a run per building): facade-one-storey 48x192 (y 600,
- *   a parapet 192 up), facade-walkup 48x312, facade-brownstone 48x312 (y 600 each). Each shows the
- *   180px ground storey with a band over the shopfronts and the next storey's windows above, up
- *   to y 288.
- * - Upper storeys and rooflines (repeat x): facade-walkup-upper, 48x180, stacks above the walk-up
- *   facade every 180px (bottoms at y 288, then 108) with no seam; roofline-walkup and
- *   roofline-brownstone, each 48x48, cap the topmost piece (bottom at its top), so the roof is 48px
- *   above it (y 240, row 20, on a facade piece; y 60, row 5, on one upper storey, the tallest that
- *   fits). Lay one-way-cornice along it.
- *   A water tower (its tank top 6 tiles above its roof) fits on a two-storey roof (tank top row 14),
- *   not on a three-storey one.
+ *   a parapet 192 up), facade-brownstone 48x312 (y 600). The brownstone shows the 180px ground
+ *   storey with a band over the shopfronts and the next storey's windows above, up to y 288.
+ * - Roofline (repeat x): roofline-brownstone, 48x48, caps the brownstone facade (bottom at its top,
+ *   y 288), so the roof is at y 240, row 20. Lay one-way-cornice along it.
  * - Climbing (backdrop, no collision): fire-escape-railing 48x24 (repeat x, its bottom on a
- *   landing's top), fire-escape-ladder 24x96 (none, 2x8 tiles) and fire-escape-ladder-4, -5, -6, -7
- *   (24x48 to 24x84, 2x4 to 2x7 tiles): one per landing spacing in rows; place the one matching the
- *   spacing with its bottom on the lower landing's top (y = lower row * 12), so its top meets the
- *   upper landing; water-tower 48x84 (none, 4x7 tiles, its bottom on a roof; one-way-tank tiles on
- *   its second tile row).
+ *   landing's top).
  * - Storefronts (none), each 120 tall (y 600), a whole number of tiles wide, with a sign icon (never
- *   text), a tall display window and a 46px door: storefront-cafe 84, storefront-florist 84,
- *   storefront-gift-shop 96, storefront-makeup-store 96, storefront-pet-shop 108, storefront-diner
- *   108, storefront-noodle-bar 120.
- * - Street furniture (none, y 600): hot-dog-cart 40x70, subway-railing 72x62, street-tree 64x136,
- *   walk-signal 12x82, cross-street 120x26 (the far avenue between two kerbs; place no facade over
- *   a cross street so the skyline shows).
+ *   text), a tall display window and a 46px door: storefront-cafe 84, storefront-noodle-bar 120.
+ * - Street furniture (none, y 600): walk-signal 12x82.
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -156,7 +137,6 @@ import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import { frameImage, readImage, writeImage } from "./imageArt.ts";
-import * as nature from "./nature.ts";
 import * as pixel from "./pixel.ts";
 import { darker, Grid, rgb } from "./pixel.ts";
 import * as roomDoors from "./roomDoors.ts";
@@ -654,7 +634,7 @@ function cornice(kind: string): Grid {
 
 /**
  * The water tower's flat top rim: a cream lip over brown staves with a dark-brown hoop, the full
- * tile tall, so it joins the tank in the water-tower backdrop below it.
+ * tile tall.
  */
 function tankTop(kind: string): Grid {
   const g = rects(
@@ -833,71 +813,6 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
     "..#####....",
     "###########",
   ],
-  florist: [
-    "...##.##...",
-    "..########.",
-    "..###..###.",
-    "...##.##...",
-    ".....#.....",
-    ".##..#..##.",
-    "..##.#.##..",
-    "....###....",
-    ".....#.....",
-    "..#######..",
-    "...#####...",
-  ],
-  "gift-shop": [
-    "..##...##..",
-    "...##.##...",
-    "....###....",
-    "###########",
-    "#....#....#",
-    "###########",
-    ".#...#...#.",
-    ".#...#...#.",
-    ".#...#...#.",
-    ".#...#...#.",
-    ".#########.",
-  ],
-  "makeup-store": [
-    "....###....",
-    "...####....",
-    "...#####...",
-    "...#####...",
-    "...#####...",
-    "..#######..",
-    "..#.....#..",
-    "..#######..",
-    "..#.....#..",
-    "..#.....#..",
-    "..#######..",
-  ],
-  "pet-shop": [
-    "...........",
-    "..##...##..",
-    "..##...##..",
-    "##.......##",
-    "##.......##",
-    "....###....",
-    "...#####...",
-    "..#######..",
-    "..#######..",
-    "...##.##...",
-    "...........",
-  ],
-  diner: [
-    "#.#.#...##.",
-    "#.#.#...###",
-    "#.#.#...###",
-    "#####...###",
-    ".###....###",
-    "..#.....##.",
-    "..#......#.",
-    "..#......#.",
-    "..#......#.",
-    "..#......#.",
-    "..#......#.",
-  ],
   "noodle-bar": [
     ".........#.",
     "........#..",
@@ -916,18 +831,12 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
 // kind: width (whole tiles), frame colour. Frames are dim so the shops stay behind the play layer.
 const SHOPS: Readonly<Record<string, readonly [width: number, frame: string]>> = {
   cafe: [84, "forest"],
-  florist: [84, "plum"],
-  "gift-shop": [96, "teal"],
-  "makeup-store": [96, "purple"],
-  "pet-shop": [108, "navy"],
-  diner: [108, "plum"],
   "noodle-bar": [120, "teal"],
 };
 
 // Building facades: wall, line (storey lines, frames, mortar), trim (sills, parapet).
 const BUILDINGS: Readonly<Record<string, readonly [wall: string, line: string, trim: string]>> = {
   "one-storey": ["dbrown", "plum", "brown"],
-  walkup: ["dbrown", "plum", "brown"],
   brownstone: ["plum", "ink", "dbrown"],
 };
 
@@ -1023,23 +932,6 @@ function streetBoundaryMid(): Grid {
 }
 
 /**
- * 336x600 legacy composite for callers without separate far and middle layers. Do not place with
- * both street-city-far and street-city-mid: those two keys replace this combined backdrop.
- */
-function streetSkyline(): Grid {
-  const far = streetCityFar();
-  const middle = streetCityMid();
-  const g = new Grid(336, STREET_FY);
-  g.px = Array.from({ length: g.h }, (_, y) =>
-    Array.from(
-      { length: g.w },
-      (_, x) => (middle.px[y] as Colour[])[x] || (far.px[y] as Colour[])[x] || null,
-    ),
-  );
-  return g;
-}
-
-/**
  * One repeating 48px slice of a building front from the top of the screen to the sidewalk line:
  * the ground storey is 180px (y 132 to 312) with a band at y 206 over the shopfronts; above it the
  * next storey's windows. The one-storey building stops at a parapet at y 120.
@@ -1069,9 +961,7 @@ function facade(kind: string): Grid {
     [23, 53, 2, 52, line],
     [9, 108, 30, 4, trim],
   );
-  if (kind === "brownstone") {
-    rects(g, [9, 44, 30, 6, trim]);
-  } // a stone lintel over each window
+  rects(g, [9, 44, 30, 6, trim]); // a stone lintel over each window
   return g;
 }
 
@@ -1102,61 +992,6 @@ function storefront(kind: string): Grid {
   return g;
 }
 
-/** 40x70: a steel cart on two wheels under a blue-and-cream umbrella. */
-function hotDogCart(): Grid {
-  const g = new Grid(40, 70);
-  g.ell(20, 12, 20, 12, "blue");
-  rects(
-    g,
-    [0, 12, 40, 12, null],
-    [8, 4, 6, 8, "cream"],
-    [24, 4, 6, 8, "cream"],
-    [18, 12, 2, 34, "ink"],
-    [0, 44, 40, 18, "slate"],
-    [0, 44, 40, 3, "white"],
-  );
-  for (const wx of [4, 28]) {
-    g.ell(wx + 4, 64, 4, 4, "ink");
-  }
-  return g;
-}
-
-/** 72x62: a green railing round the stairs down, with a green lamp on a post at each end. */
-function subwayRailing(): Grid {
-  const g = rects(
-    new Grid(72, 62),
-    [3, 40, 66, 2, "forest"],
-    [3, 40, 2, 22, "forest"],
-    [67, 40, 2, 22, "forest"],
-  );
-  for (let bx = 11; bx < 66; bx += 8) {
-    rects(g, [bx, 42, 2, 20, "forest"]);
-  }
-  for (const px of [3, 67]) {
-    rects(g, [px, 8, 2, 32, "forest"], [px - 3, 0, 8, 8, "dgreen"]);
-  }
-  return g;
-}
-
-const hex2 = (value: number): string => value.toString(16).padStart(2, "0");
-
-/** 64x136: branching street tree with an irregular sage crown, without a dark contour. */
-function streetTree(): Grid {
-  const im = filledImage([0, 0, 0, 0], 64, 136);
-  nature.broadleaf(im, 0, 0, 64, 84, 136, "zone-green-shade", "zone-peach-shade", 7, 5);
-  const g = new Grid(64, 136);
-  g.px = Array.from({ length: 136 }, (_, y) =>
-    Array.from({ length: 64 }, (_, x) => {
-      const i = (y * 64 + x) * 4;
-      const d = im.data;
-      return d[i + 3]
-        ? `${hex2(d[i] as number)}${hex2(d[i + 1] as number)}${hex2(d[i + 2] as number)}`
-        : null;
-    }),
-  );
-  return g;
-}
-
 /** 12x82: a pole with the signal box at the top showing the white walking figure. */
 function walkSignal(): Grid {
   return rects(
@@ -1168,26 +1003,6 @@ function walkSignal(): Grid {
     [3, 8, 1, 3, "white"],
     [6, 8, 1, 3, "white"],
   );
-}
-
-/** 120x26: the far avenue seen down a cross street, navy with 2px lane dashes. */
-function crossStreet(): Grid {
-  const g = rects(new Grid(120, 26), [0, 0, 120, 26, "navy"]);
-  for (let x = 8; x < 120; x += 24) {
-    rects(g, [x, 12, 8, 2, "dslate"]);
-  }
-  return g;
-}
-
-/**
- * One upper storey of a building front, 48x180, repeat x: the same windows, sills and storey line
- * as the top of the building's facade piece, so it stacks above it every 180px with no seam.
- */
-function facadeUpper(kind: string): Grid {
-  const base = facade(kind);
-  const g = new Grid(48, 180);
-  g.px = base.px.slice(0, 180).map((row) => row.slice());
-  return g;
 }
 
 /**
@@ -1211,61 +1026,12 @@ function fireEscapeRailing(): Grid {
   return g;
 }
 
-// Fire-escape ladders, one per landing spacing in rows: fire-escape-ladder is 8 rows,
-// fire-escape-ladder-<n> n rows.
-const LADDER_ROWS = [4, 5, 6, 7] as const;
-
-/**
- * 24 x 12*rows (2 x rows tiles): an ink ladder between two landings rows apart, 2px rails and 2px
- * rungs every 8px; backdrop, so it does not collide. Place the one whose rows match the spacing
- * with its bottom at the lower landing's top edge (y = lower row * 12) and its left edge on the
- * landing's ladder column; its top then meets the upper landing's top edge, where the landing tile
- * covers it.
- */
-function fireEscapeLadder(rows = 8): Grid {
-  const h = 12 * rows;
-  const g = rects(new Grid(24, h), [4, 0, 2, h, "ink"], [18, 0, 2, h, "ink"]);
-  for (let y = 4; y < h; y += 8) {
-    rects(g, [4, y, 16, 2, "ink"]);
-  }
-  return g;
-}
-
-/**
- * 48x84 (4x7 tiles), bottom on a roof: a shallow cone roof (the top tile row), a wooden tank with
- * two hoops and dark-brown legs. Lay one-way-tank tiles (4 wide) on its second tile row, the tank's
- * flat top, 6 tiles above the roof.
- */
-function waterTower(): Grid {
-  const g = rects(
-    new Grid(48, 84),
-    [0, 12, 48, 48, "brown"],
-    [0, 26, 48, 2, "dbrown"],
-    [0, 44, 48, 2, "dbrown"],
-    [0, 58, 48, 2, "dbrown"],
-  );
-  for (const x of [11, 23, 35]) {
-    rects(g, [x, 12, 1, 46, "dbrown"]);
-  } // staves
-  // The cone, stepping in 2px a row pair.
-  for (let k = 0; k < 4; k++) {
-    rects(g, [8 + 4 * k, 10 - 2 * k, 32 - 8 * k, 2, "plum"]);
-  }
-  for (const x of [4, 20, 26, 42]) {
-    rects(g, [x, 60, 2, 24, "dbrown"]);
-  } // legs
-  rects(g, [4, 70, 40, 2, "dbrown"]); // a brace
-  return g;
-}
-
 type Repeat = "x" | "none";
 /** [draw, anchor y, repeat]. */
 type BackdropDef = readonly [draw: () => Grid, y: number, repeat: Repeat];
 
-const ROOF_KINDS = ["walkup", "brownstone"] as const;
 const STREET_DEFS = new Map<string, BackdropDef>([
   ["street-sky", [streetSky, STREET_FY, "x"]],
-  ["street-skyline", [streetSkyline, STREET_FY, "x"]],
   ["street-city-far", [streetCityFar, STREET_FY, "x"]],
   ["street-city-mid", [streetCityMid, STREET_FY, "x"]],
   ["street-boundary-mid", [streetBoundaryMid, STREET_FY, "x"]],
@@ -1277,25 +1043,12 @@ const STREET_DEFS = new Map<string, BackdropDef>([
     `storefront-${k}`,
     [() => storefront(k), STREET_FY, "none"],
   ]),
-  ["hot-dog-cart", [hotDogCart, STREET_FY, "none"]],
-  ["subway-railing", [subwayRailing, STREET_FY, "none"]],
-  ["street-tree", [streetTree, STREET_FY, "none"]],
   ["walk-signal", [walkSignal, STREET_FY, "none"]],
-  ["cross-street", [crossStreet, STREET_FY, "none"]],
-  ["facade-walkup-upper", [() => facadeUpper("walkup"), 288, "x"]],
-  ...ROOF_KINDS.map((k): [string, BackdropDef] => [`roofline-${k}`, [() => roofline(k), 108, "x"]]),
+  ["roofline-brownstone", [() => roofline("brownstone"), 108, "x"]],
   ["fire-escape-railing", [fireEscapeRailing, 432, "x"]],
-  ["fire-escape-ladder", [() => fireEscapeLadder(), 432, "none"]],
-  ...LADDER_ROWS.map((n): [string, BackdropDef] => [
-    `fire-escape-ladder-${n}`,
-    [() => fireEscapeLadder(n), 432, "none"],
-  ]),
-  ["water-tower", [waterTower, 240, "none"]],
 ]);
-// The street's pieces in the cool palette; the sky and skyline are drawn in it already. Pieces
-// standing on the sidewalk keep the line just above it darker than the sidewalk's white lip: the
-// tree's trunk and the canopy's poles take grey, not lgrey.
-const NEAR_FOR = new Map<string, ColourMapping>([["street-tree", { ...COOL_NEAR, tan: "grey" }]]);
+// The street's pieces in the cool palette; the sky and city layers are drawn in it already.
+const NEAR_FOR = new Map<string, ColourMapping>();
 // Quiet glass stays one value step below the architecture; shop icons keep their cream callout.
 for (const key of STREET_DEFS.keys()) {
   if (key.startsWith("facade-") || key.startsWith("storefront-")) {
@@ -1304,7 +1057,6 @@ for (const key of STREET_DEFS.keys()) {
 }
 const ATMOSPHERE_KEYS = new Set([
   "street-sky",
-  "street-skyline",
   "street-city-far",
   "street-city-mid",
   "street-boundary-mid",
@@ -1388,40 +1140,23 @@ const STREET_EXAMPLE: {
     ["street-sky", 0, 720, STREET_FY],
     ["street-city-far", 0, 720, STREET_FY],
     ["street-city-mid", 0, 720, STREET_FY],
-    ["facade-walkup", 0, 288, STREET_FY],
-    ["facade-walkup-upper", 0, 288, 288],
-    ["roofline-walkup", 0, 288, 108],
-    ["facade-brownstone", 288, 528, STREET_FY],
-    ["roofline-brownstone", 288, 528, 288],
+    ["facade-brownstone", 0, 528, STREET_FY],
+    ["roofline-brownstone", 0, 528, 288],
     ["facade-one-storey", 528, 720, STREET_FY],
     ["fire-escape-railing", 72, 216, 432],
     ["fire-escape-railing", 72, 216, 336],
-    ["fire-escape-railing", 72, 216, 240],
-    ["fire-escape-railing", 72, 216, 156],
   ],
   pieces: [
-    ["storefront-pet-shop", 12, STREET_FY],
-    ["storefront-makeup-store", 156, STREET_FY],
-    ["storefront-gift-shop", 300, STREET_FY],
-    ["storefront-diner", 408, STREET_FY],
+    ["storefront-noodle-bar", 288, STREET_FY],
     ["storefront-cafe", 588, STREET_FY],
-    ["fire-escape-ladder", 192, 432],
-    ["fire-escape-ladder", 192, 336],
-    ["fire-escape-ladder", 192, 240],
-    ["water-tower", 456, 240],
-    ["street-tree", 456, STREET_FY],
   ],
   ledges: [
     ["awning", 44, 24, 6],
     ["fire-escape", 36, 6, 12],
     ["fire-escape", 28, 6, 12],
-    ["fire-escape", 20, 6, 12],
-    ["fire-escape", 13, 6, 12],
-    ["cornice", 5, 0, 24],
-    ["tank", 14, 38, 4],
     ["sill", 33, 29, 3],
     ["sill", 33, 37, 3],
-    ["cornice", 20, 24, 20],
+    ["cornice", 20, 0, 44],
   ],
   planter: [20, 3],
 };
@@ -1454,7 +1189,7 @@ function compose(
   }
 }
 
-// The touch buttons as the README's touch controls place them: [sprite, centre].
+// The touch buttons as the style guide's touch controls place them: [sprite, centre].
 const BUTTONS = [
   ["ui-touch-use", [598, 203]],
   ["ui-touch-jump", [675, 303]],

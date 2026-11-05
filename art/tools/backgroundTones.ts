@@ -49,7 +49,6 @@ const FAR: ReadonlySet<string> = new Set([
   "park-clouds",
   "park-far-trees",
   "street-city-far",
-  "street-skyline",
   "woodland-far",
   "woodland-far-conifers",
 ]);
@@ -79,8 +78,6 @@ const NEAR: ReadonlySet<string> = new Set([
   "depot-wall",
   "facade-brownstone",
   "facade-one-storey",
-  "facade-walkup",
-  "facade-walkup-upper",
   "farmland-fence",
   "forest-shrub",
   "forest-tree",
@@ -88,14 +85,8 @@ const NEAR: ReadonlySet<string> = new Set([
   "outskirts-wall",
   "ravine-rock",
   "roofline-brownstone",
-  "roofline-walkup",
   "storefront-cafe",
-  "storefront-diner",
-  "storefront-florist",
-  "storefront-gift-shop",
-  "storefront-makeup-store",
   "storefront-noodle-bar",
-  "storefront-pet-shop",
   "warehouse-wall",
 ]);
 export const ZONES: Readonly<Record<string, string>> = {
