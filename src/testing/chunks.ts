@@ -3,11 +3,13 @@
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
 import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
+import { GANTRY_RIDE_TRANSIT } from "../data/forcedTransit";
 import {
   AWNING_BEHAVIOUR,
   AWNING_SECONDS,
   awningCycle,
   CROSSWALK_BEHAVIOUR,
+  GANTRY_BEHAVIOUR,
 } from "../data/obstacleBehaviours";
 import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
 import { REACH } from "../data/reach";
@@ -16,6 +18,7 @@ import { SEAM_ROWS } from "../data/seams";
 import type {
   Character,
   ChunkPlan,
+  Instance,
   StageRecipe,
   TerrainRect,
   ThemePlan,
@@ -312,6 +315,83 @@ export const AWNING_FIXTURE_LIBRARY: ChunkLibrary = {
         ground(15, 32, 58),
         { col: 45, cols: 2, row: 54, rows: 4 },
         ground(47, 13, 50),
+      ],
+      theme: "test",
+    },
+  },
+};
+
+// The gantry crane engine's fixture, outside the shared fixture pool until its characters reach
+// CHARACTERS with their art: a flat observation half (row 50), then the crane module's near bank,
+// a 22-col pit floored with red terrain (row 58) and the far bank. The container docks flush with
+// the near bank, its lid level with both bank tops, under a rail 8 rows up. Its first dock pause
+// runs 2 s (wait-far's pause at the near dock, then wait-near's) so it meets Chibi's arrival from
+// chunk entry.
+export const CRANE_FIXTURE_CHARACTERS: Readonly<Record<string, Character>> = {
+  "test-crane-container": {
+    archetype: "ledge",
+    art: "freight-crane-container",
+    behaviour: GANTRY_BEHAVIOUR,
+    cols: 6,
+    rows: 3,
+  },
+  "test-gantry-rail": {
+    archetype: "scenery",
+    art: "freight-gantry-rail",
+    cols: 22,
+    rows: 2,
+  },
+};
+
+export const CRANE_FIXTURE_CATALOGUE = {
+  archetypes: ARCHETYPES,
+  characters: { ...CHARACTERS, ...CRANE_FIXTURE_CHARACTERS },
+};
+
+export const CRANE_FIXTURE = {
+  dock: { col: 30, cols: 4 },
+  far: { col: 56, cols: 4 },
+  floor: 58,
+  pit: { col: 34, cols: 22 },
+  rail: -8,
+  row: 50,
+} as const;
+
+const red = (col: number, cols: number, row: number): readonly Instance[] => [
+  { character: "red-edge-top", col, cols, row: row - 1 },
+  { character: "red-edge-support", col, cols, row, rows: ZONE_ROWS - row },
+];
+
+export const CRANE_FIXTURE_LIBRARY: ChunkLibrary = {
+  ...FIXTURE_LIBRARY,
+  characters: CRANE_FIXTURE_CATALOGUE.characters,
+  chunks: {
+    "test-crane": {
+      cols: 60,
+      difficulty: 4,
+      encounters: 0,
+      entry: { row: CRANE_FIXTURE.row },
+      exit: { row: CRANE_FIXTURE.row },
+      objects: [
+        {
+          backdropSpan: true,
+          character: "test-gantry-rail",
+          col: CRANE_FIXTURE.pit.col,
+          row: CRANE_FIXTURE.row + CRANE_FIXTURE.rail - 2,
+        },
+        {
+          behaviour: { ...GANTRY_BEHAVIOUR, initial: "wait-far" },
+          character: "test-crane-container",
+          col: CRANE_FIXTURE.pit.col,
+          forcedTransit: GANTRY_RIDE_TRANSIT,
+          row: CRANE_FIXTURE.row,
+          tether: { art: "freight-crane-cable", row: CRANE_FIXTURE.rail },
+        },
+        ...red(CRANE_FIXTURE.pit.col, CRANE_FIXTURE.pit.cols, CRANE_FIXTURE.floor),
+      ],
+      solids: [
+        ground(0, CRANE_FIXTURE.pit.col, CRANE_FIXTURE.row),
+        ground(CRANE_FIXTURE.far.col, CRANE_FIXTURE.far.cols, CRANE_FIXTURE.row),
       ],
       theme: "test",
     },
