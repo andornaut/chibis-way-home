@@ -8,6 +8,7 @@ import { dirname } from "node:path";
 
 import { contrast as hexContrast, rgb as hexRgb } from "@andornaut/art-kit/colour";
 import { flipped as flipFrame, type Frame, Grid as SharedGrid } from "@andornaut/art-kit/grid";
+import { encodeIndexedPng } from "@andornaut/art-kit/indexedPng";
 import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
 import {
   composeContactSheet,
@@ -250,7 +251,8 @@ interface TilesetOptions {
  *    "tiles": {"<name>": <index>},                 index = row * columns + column
  *    "pieces": {"<name>": [[<index>, ...], ...]},  multi-tile pieces, rows of indices
  *    "hitboxes": {"<name>": {"x", "y", "width", "height"}}}  only when some tile has one
- * items lists [name, size x size image]. Returns the manifest entry.
+ * items lists [name, size x size image]. The PNG is indexed when the sheet fits a palette, else
+ * RGBA. Returns the manifest entry.
  */
 export async function writeTileset(
   { columns = 8, hitboxes, key, pieces = {}, size = 12 }: TilesetOptions,
@@ -261,7 +263,10 @@ export async function writeTileset(
     { columns, cellWidth: size, cellHeight: size },
     items.map(([, tile]) => tile),
   );
-  writeFileSync(`${TILESETS}/${key}.png`, encodeRgbaPng(SHEET_PNG, sheet));
+  writeFileSync(
+    `${TILESETS}/${key}.png`,
+    encodeIndexedPng(TILESET_INDEXED_PNG, sheet) ?? encodeRgbaPng(TILESET_RGBA_PNG, sheet),
+  );
   const index: Record<string, number> = {};
   items.forEach(([name], i) => {
     index[name] = i;
@@ -294,6 +299,8 @@ export async function writeTileset(
 }
 
 const SHEET_PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
+const TILESET_INDEXED_PNG = { level: 9, memLevel: 9 };
+const TILESET_RGBA_PNG = { deflateLevel: 9, deflateStrategy: 0, filterType: 0 };
 
 interface PreviewOptions {
   out: string;
