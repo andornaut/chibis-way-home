@@ -33,9 +33,11 @@ const USAGE = `Usage:
       prove every candidate of each zone (all zones by default) and write its certified list;
       entries whose layout and route are unchanged keep their proofs unless --all or the proofs
       hash changed
-  npm run pairs -- verify [--zone ZONE]... [--changed-since REF] [--sample-ms N]
-      check every list's hashes and structure, fully prove entries that differ from REF's lists,
-      then prove a deterministic sample within N ms (default 20000)
+  npm run pairs -- verify [--zone ZONE]... [--changed-since REF] [--sample-ms N] [--seed S]
+      check every list's input hashes and structure against the tree, fully prove entries that
+      differ from REF's lists (needs git), then prove a sample ordered by S (the lists' input
+      hashes by default), starting only proofs whose recorded work fits within N ms of the start
+      (default 20000)
   npm run pairs -- report --out PATH
       write rejections, grade and encounter counts and distinct layouts per zone; refuses an
       existing PATH`;
@@ -65,31 +67,48 @@ function candidateOf(zone: ZoneKey, id: string): Candidate {
   return candidate;
 }
 
-// Runs every job on up to MAX_WORKERS threads, the costliest first, or, given a deadline, in
-// order until it passes; results by job index, undefined for a job never started.
+// Recorded walk steps a worker proves per millisecond, a conservative start for the estimate a
+// deadline uses; the observed rate replaces it as proofs finish.
+const WORK_PER_MS = 4;
+
+// Runs every job on up to MAX_WORKERS threads, the costliest first. Given a deadline, jobs run in
+// order and a worker starts only one whose estimated time (its cost over the observed rate) ends
+// before the deadline, skipping the rest; results by job index, undefined for a job not started.
 async function proveAll(
   jobs: readonly Job[],
   costs: readonly number[],
   deadline = Infinity,
 ): Promise<(Proof | undefined)[]> {
+  const bounded = deadline !== Infinity;
   const order = jobs
     .map((_, index) => index)
-    .sort((a, b) => (deadline === Infinity ? costs[b]! - costs[a]! : 0) || a - b);
+    .sort((a, b) => (bounded ? 0 : costs[b]! - costs[a]!) || a - b);
   const results = new Array<Proof | undefined>(jobs.length);
   const count = Math.min(MAX_WORKERS, availableParallelism(), order.length);
   let next = 0;
   let done = 0;
+  let work = 0;
+  let spent = 0;
+  const fits = (index: number) =>
+    !bounded ||
+    performance.now() + costs[index]! / (spent > 0 ? work / spent : WORK_PER_MS) <= deadline;
   const take = async (worker: Worker): Promise<void> => {
-    if (next >= order.length || performance.now() > deadline) {
+    while (next < order.length && !fits(order[next]!)) {
+      next++;
+    }
+    if (next >= order.length) {
       return undefined;
     }
     const index = order[next++]!;
+    const started = performance.now();
     results[index] = await new Promise<Proof>((resolve, reject) => {
       worker.once("message", resolve);
       worker.once("error", reject);
       worker.postMessage(jobs[index]);
     });
     worker.removeAllListeners("error");
+    work += results[index].work;
+    spent += performance.now() - started;
     done++;
     if (done % 20 === 0 || done === order.length) {
       console.error(`proved ${done} of ${order.length}`);
@@ -204,32 +223,40 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
   return lists.includes(undefined) ? 1 : 0;
 }
 
+// REF's list for the zone: undefined when REF has none, and an error when git cannot read REF.
 function baseList(ref: string, zone: ZoneKey): CertifiedChunks | undefined {
+  const git = (args: readonly string[]) =>
+    execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
   try {
-    return JSON.parse(
-      execFileSync("git", ["show", `${ref}:src/data/certified/${zone}.json`], {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-      }),
-    ) as CertifiedChunks;
+    git(["rev-parse", "--verify", `${ref}^{commit}`]);
+  } catch {
+    throw new Error(`git cannot read --changed-since ${ref}`);
+  }
+  try {
+    return JSON.parse(git(["show", `${ref}:src/data/certified/${zone}.json`])) as CertifiedChunks;
   } catch {
     return undefined;
   }
 }
 
-// A deterministic order seeded by the list's data hash: entries sorted by their hash with it.
-const sampleOrder = (list: CertifiedChunks) =>
+// A deterministic order for a sample seed: entries sorted by their hash with it.
+const sampleOrder = (seed: string, list: CertifiedChunks) =>
   [...list.entries].sort((a, b) => {
-    const ka = hashOf([list.inputs.data, a.id]);
-    const kb = hashOf([list.inputs.data, b.id]);
+    const ka = hashOf([seed, a.id]);
+    const kb = hashOf([seed, b.id]);
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
 
-async function verify(
-  zones: readonly ZoneKey[],
-  changedSince: string | undefined,
-  sampleMs: number,
-): Promise<number> {
+interface VerifyOptions {
+  readonly changedSince: string | undefined;
+  readonly sampleMs: number;
+  // Seeds the sample's order; the lists' input hashes by default, so it rotates as they change.
+  readonly seed: string | undefined;
+}
+
+async function verify(options: VerifyOptions, zones: readonly ZoneKey[]): Promise<number> {
+  const { changedSince, sampleMs } = options;
+  const started = performance.now();
   const problems: string[] = [];
   const lists = zones.flatMap((zone) => {
     const list = readList(zone);
@@ -277,15 +304,16 @@ async function verify(
   }
   if (problems.length === 0 && sampleMs > 0) {
     // Zones interleaved, so a short budget spans every zone.
+    const seed = options.seed ?? hashOf(lists.map(({ inputs }) => inputs));
     const orders = lists.map((list) =>
-      sampleOrder(list).map((entry) => ({ entry, zone: list.zone })),
+      sampleOrder(seed, list).map((entry) => ({ entry, zone: list.zone })),
     );
     const longest = Math.max(0, ...orders.map((order) => order.length));
     const queue = Array.from({ length: longest }, (_, index) =>
       orders.flatMap((order) => order.slice(index, index + 1)),
     ).flat();
-    const proved = await check(queue, performance.now() + sampleMs);
-    console.error(`sampled ${proved} of ${queue.length} entries`);
+    const proved = await check(queue, started + sampleMs);
+    console.error(`sampled ${proved} of ${queue.length} entries with seed ${seed}`);
   }
   for (const problem of problems) {
     console.log(problem);
@@ -348,6 +376,7 @@ async function main(args: readonly string[]): Promise<number> {
         help: { short: "h", type: "boolean" },
         out: { type: "string" },
         "sample-ms": { type: "string" },
+        seed: { type: "string" },
         zone: { multiple: true, type: "string" },
       },
       strict: true,
@@ -377,7 +406,15 @@ async function main(args: readonly string[]): Promise<number> {
         console.error(`Invalid --sample-ms ${values["sample-ms"]}\n${USAGE}`);
         return 2;
       }
-      return verify(zones, values["changed-since"], sampleMs);
+      try {
+        return await verify(
+          { changedSince: values["changed-since"], sampleMs, seed: values.seed },
+          zones,
+        );
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+        return 2;
+      }
     }
     case "report":
       if (values.out === undefined) {
