@@ -617,6 +617,18 @@
       "once": [
         "press"
       ]
+    },
+    {
+      "key": "woodland-gust-emitter",
+      "png": "sprites/woodland-gust-emitter.png",
+      "json": "sprites/woodland-gust-emitter.json",
+      "once": []
+    },
+    {
+      "key": "woodland-gust-stream",
+      "png": "sprites/woodland-gust-stream.png",
+      "json": "sprites/woodland-gust-stream.json",
+      "once": []
     }
   ],
   "data": [
