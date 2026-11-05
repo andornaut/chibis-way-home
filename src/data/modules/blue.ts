@@ -192,8 +192,8 @@ const archieLane = (entry: number, exit: number, left: boolean): Half => {
 
 const MODULE_LIST: readonly ChunkModule[] = [
   // Grade 3: gaps near the reach, single moving platforms, single tap spots.
-  half(3, "city-gap", gap(80, 6, 15)),
-  half(3, "city-gap-high", gap(70, 7, 16)),
+  half(3, "city-gap", gap(80, 6, 13)),
+  half(3, "city-gap-high", gap(70, 7, 13)),
   half(3, "city-tap-strip", { ...tapStrip(80, 9), slots: [door(20, 80)] }),
   half(3, "city-tap-strip-high", tapStrip(70, 12)),
   half(3, "city-ferry", ferry(80)),
@@ -208,12 +208,12 @@ const MODULE_LIST: readonly ChunkModule[] = [
     entry: 80,
     exit: 70,
     objects: red(12, 6, 85),
-    solids: [floor(0, 8, 80), floor(8, 4, 75), floor(18, 12, 70)],
+    solids: [floor(0, 6, 80), floor(6, 6, 75), floor(18, 12, 70)],
   }),
   half(3, "city-lift-climb", {
     entry: 80,
     exit: 70,
-    objects: [lift(10, 80), ...red(8, 12, 88)],
+    objects: [lift(8, 80), ledge(14, 6, 75), ...red(8, 12, 88)],
     solids: [floor(0, 8, 80), floor(20, 10, 70)],
   }),
   half(3, "city-ledge-climb", {
@@ -225,14 +225,14 @@ const MODULE_LIST: readonly ChunkModule[] = [
   half(3, "city-red-face-climb", {
     entry: 80,
     exit: 70,
-    objects: [redFace(17, 70, 5)],
+    objects: [redFace(17, 72, 3)],
     route: { profile: "recovery", targets: [{ at: { col: 13, row: 75 } }] },
     solids: [floor(0, 10, 80), floor(10, 8, 75), floor(18, 12, 70)],
   }),
   half(3, "city-drop-gap", {
     entry: 70,
     exit: 80,
-    objects: red(8, 14, 90),
+    objects: [ledge(13, 6, 75), ...red(8, 14, 90)],
     solids: [floor(0, 8, 70), floor(22, 8, 80)],
   }),
   half(3, "city-low-descent", {
@@ -244,8 +244,8 @@ const MODULE_LIST: readonly ChunkModule[] = [
   half(3, "city-lift-descent", {
     entry: 70,
     exit: 80,
-    objects: [lift(10, 80), ...red(8, 16, 90)],
-    solids: [floor(0, 8, 70), floor(24, 6, 80)],
+    objects: [lift(11, 80), ledge(17, 6, 75), ...red(11, 13, 90)],
+    solids: [floor(0, 11, 70), floor(24, 6, 80)],
   }),
   half(3, "city-ledge-descent", {
     entry: 70,
