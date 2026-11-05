@@ -15,11 +15,17 @@ import {
   type MapBuildOptions,
   type MapJumpScript,
   type MapMask,
+  type MapStep,
   type MovementMap,
   type MovementProfile,
 } from "@andornaut/game-kit/terrain/movementMap";
+import {
+  stepTraversal,
+  type TraversalCollider,
+  type TraversalContext,
+} from "@andornaut/game-kit/terrain/traversal";
 
-import { EDGE, spriteFrameOrigin, STEP_SECONDS } from "../core";
+import { collisionCandidates, EDGE, spriteFrameOrigin, STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { TILE } from "../data/screen";
 import type {
@@ -208,6 +214,9 @@ export interface MapTerrain {
   readonly depKey: (id: MapSupport) => string;
   readonly hazards: readonly { readonly owner: ObjectLayout; readonly rect: Rect }[];
   readonly pads: readonly Rect[];
+  // The kernel step every witness runs through, sampling colliders from the terrain index as
+  // pursuit does instead of the whole area.
+  readonly step: MapStep<MapSupport>;
   // The terrain as a stationary behaviour world, for supported-landing rules and kernel proofs.
   readonly world: BehaviourWorld;
 }
@@ -308,6 +317,28 @@ export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTer
       timeSeconds: 0,
     },
   };
+  const solidColliders = new Map(colliders.slice(0, solids.length).map((c) => [c.supportId, c]));
+  const platformColliders = colliders.slice(solids.length);
+  const sampled = new WeakMap<readonly Rect[], TraversalCollider<MapSupport>[]>();
+  const sample = (query: Rect) => {
+    const candidates = collisionCandidates(solids, query);
+    let near = sampled.get(candidates);
+    if (!near) {
+      near = candidates.map((rect) => solidColliders.get(rect)!);
+      sampled.set(candidates, near);
+    }
+    const platformsNear = platformColliders.filter(({ before }) => touches(before, query));
+    return { colliders: platformsNear.length ? [...near, ...platformsNear] : near, complete: true };
+  };
+  const contexts = new WeakMap<TraversalContext<MapSupport>, TraversalContext<MapSupport>>();
+  const step: MapStep<MapSupport> = (context, input, state) => {
+    let indexed = contexts.get(context);
+    if (!indexed) {
+      indexed = { ...context, sampleColliders: (_, __, query) => sample(query) };
+      contexts.set(context, indexed);
+    }
+    return stepTraversal(indexed, input, state);
+  };
   return {
     area: {
       blocked: (sweep) => hazards.some(({ rect }) => overlaps(sweep, rect)),
@@ -324,6 +355,7 @@ export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTer
     depKey: (id) => keys.get(id) ?? "unknown",
     hazards,
     pads,
+    step,
     world,
   };
 }
@@ -333,7 +365,11 @@ export function groundMap(
   terrain: MapTerrain,
   profile: MovementProfile,
 ): MovementMap<MapSupport> {
-  return buildMovementMap({ ...MAP_BUILD_OPTIONS, ...options }, profile, terrain.area);
+  return buildMovementMap(
+    { ...MAP_BUILD_OPTIONS, step: terrain.step, ...options },
+    profile,
+    terrain.area,
+  );
 }
 
 // Perches: every tile-spaced landing on a static support top that the supported-landing rule
