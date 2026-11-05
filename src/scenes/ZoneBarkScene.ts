@@ -191,10 +191,7 @@ export class ZoneBarkScene extends Scene {
     const bark = this.queue.splice(index, 1)[0]!;
     this.current = bark;
     const paragraph = dialogueParagraphs(SPEAKERS, TEXT, { lines: [bark.line] })[0]!;
-    this.art = [
-      drawDialoguePanel(this),
-      ...drawDialogueParagraph(this, paragraph),
-    ];
+    this.art = [drawDialoguePanel(this), ...drawDialogueParagraph(this, paragraph)];
     this.remaining = BARK_DURATION_SECONDS * 1000;
     bark.onStart?.();
   }

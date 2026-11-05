@@ -7,12 +7,7 @@ import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/ach
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { AchievementId } from "../data/types";
-import {
-  DIALOGUE_SCREEN,
-  type DialoguePress,
-  dialogueTapAction,
-  moveDialoguePress,
-} from "../ui";
+import { DIALOGUE_SCREEN, type DialoguePress, dialogueTapAction, moveDialoguePress } from "../ui";
 import { ACHIEVEMENT_NOTICE, noticeBlocked } from "./achievementNotice";
 import { drawDialoguePanel } from "./dialoguePanel";
 import { drawDialogueParagraph, type PanelParagraph } from "./dialogueParagraph";

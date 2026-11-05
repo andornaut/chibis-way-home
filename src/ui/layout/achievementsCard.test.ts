@@ -6,12 +6,12 @@ import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
 import { ACHIEVEMENT_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
+import { dialogueLines } from "../dialogue/conversation";
 import {
   ACHIEVEMENT_ICON_SIZE,
   achievementsCardLayout,
   achievementsPerPage,
 } from "./achievementsCard";
-import { dialogueLines } from "../dialogue/conversation";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { CARD_CONTENT } from "./contentCard";
 import { DIALOGUE_SCREEN } from "./dialogueScreen";
