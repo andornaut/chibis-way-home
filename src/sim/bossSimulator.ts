@@ -6,12 +6,13 @@ import { EDGE, STEP_SECONDS } from "../core";
 import type {
   BirdTuning,
   ObjectLayout,
+  Point,
   Rect,
   TargetedAttackWindow,
   ZoneLayout,
 } from "../data/types";
 import { contactBox, nodeOf } from "../rules/behaviourTrack";
-import { birdBox } from "../rules/bird";
+import { birdBox, startBird } from "../rules/bird";
 import { supportContact } from "../rules/flyLanding";
 import {
   activateBehaviour,
@@ -211,19 +212,41 @@ export function areaExit(
   return box.x + box.width > area.exitX && area.walkLinks?.right ? "cleared" : undefined;
 }
 
+// Where a scripted setup places Chibi's feet centre at the start of a tick, if anywhere.
+export type ChibiPlacement = (tick: number) => Point | undefined;
+
+export function placeChibi(
+  tuning: BirdTuning,
+  place: ChibiPlacement | undefined,
+  tick: number,
+  zone: ZoneState,
+): ZoneState {
+  const at = place?.(tick);
+  return at ? { ...zone, bird: startBird(tuning, at) } : zone;
+}
+
 // The boss pipeline and the physics it perceives: object frames with every behaviour object's
 // perceive, decide and act, crumbling, forced transit and Chibi's body, contact and death.
 // Barks, doors, walk links and the stage exit are left out; leaving the area ends the run,
-// and a death retries with every behaviour active.
+// and a death retries with every behaviour active. A placement for the next tick applies at
+// the end of each step, so the step's sample records where the bosses next perceive Chibi.
 export function bossModel(
   tuning: BirdTuning,
   layout: ZoneLayout,
+  place?: ChibiPlacement,
 ): SimulationModel<ZoneState, ZoneInput, BossTick> {
+  let stepped = 0;
   return {
     begin: (zone) => (zone.death ? activateAll(retryZone(tuning, layout, zone)) : zone),
     finished: (zone) => areaExit(tuning, layout, zone) !== undefined,
     sample: (tick, _, after) => bossSample(tuning, layout, tick, after),
-    step: (seconds, input, zone) => stepZoneBodies(tuning, layout, seconds, input, zone).zone,
+    step: (seconds, input, zone) =>
+      placeChibi(
+        tuning,
+        place,
+        ++stepped,
+        stepZoneBodies(tuning, layout, seconds, input, zone).zone,
+      ),
   };
 }
 
@@ -252,6 +275,8 @@ export interface BossScenario {
   readonly controller: (tuning: BirdTuning, layout: ZoneLayout) => BossController;
   readonly layout: () => ZoneLayout;
   readonly name: string;
+  // Chibi's scripted placements, for setups a walk cannot reach deterministically.
+  readonly place?: ChibiPlacement;
   // The zone seed: object tracks and boss decisions draw from it.
   readonly seed: number;
   readonly start?: (layout: ZoneLayout, zone: ZoneState) => ZoneState;
@@ -260,14 +285,19 @@ export interface BossScenario {
 
 export function bossStart(tuning: BirdTuning, layout: ZoneLayout, scenario: BossScenario) {
   const zone = activateAll(startZone(tuning, layout, scenario.seed));
-  return scenario.start ? scenario.start(layout, zone) : zone;
+  return placeChibi(
+    tuning,
+    scenario.place,
+    0,
+    scenario.start ? scenario.start(layout, zone) : zone,
+  );
 }
 
 export function simulateBosses(tuning: BirdTuning, scenario: BossScenario) {
   const layout = scenario.layout();
   return simulate(
     { maxTicks: scenario.ticks, stepSeconds: STEP_SECONDS },
-    bossModel(tuning, layout),
+    bossModel(tuning, layout, scenario.place),
     scenario.controller(tuning, layout),
     bossStart(tuning, layout, scenario),
   );

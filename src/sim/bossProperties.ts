@@ -151,6 +151,60 @@ export function tellAttacks(plan: BehaviourPlan): ReadonlySet<string> {
   );
 }
 
+// Rearming after escape: from the tick Chibi settles past cover, each boss present then crosses
+// edge (a pixel x on the cover between them) with its body centre on his side within seconds.
+// Without a settling tick, he settles where he stands still on the ground for the rest of the
+// run. A scenario-specific check: the edge names cover the boss can clear.
+export function crossesAfterSettle(
+  edge: number,
+  seconds: number,
+  settledTick?: number,
+): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const last = ticks.at(-1);
+      if (!last) {
+        return [];
+      }
+      const still = (tick: BossTick) =>
+        tick.episode === last.episode &&
+        tick.target.grounded &&
+        tick.target.at.x === last.target.at.x &&
+        tick.target.at.y === last.target.at.y;
+      let settled = ticks.findIndex(({ tick }) => tick === settledTick);
+      if (settled < 0) {
+        settled = ticks.length - 1;
+        while (settled > 0 && still(ticks[settled - 1]!)) {
+          settled--;
+        }
+      }
+      const from = ticks[settled]!;
+      const deadline = from.tick + Math.round(seconds / STEP_SECONDS);
+      const side = Math.sign(from.target.at.x + from.target.width / 2 - edge);
+      const across = (agent: AgentSample) =>
+        Math.sign(agent.at.x + agent.width / 2 - edge) === side;
+      return from.agents.flatMap(({ id }) =>
+        ticks
+          .slice(settled)
+          .some(
+            ({ agents, tick }) =>
+              tick <= deadline && agents.some((agent) => agent.id === id && across(agent)),
+          )
+          ? []
+          : [
+              {
+                agent: id,
+                detail: `not across x ${edge} within ${seconds} s of Chibi settling at tick ${from.tick}`,
+                tick: Math.min(deadline, last.tick),
+              },
+            ],
+      );
+    },
+    id: "rearm-crossing",
+    rule: RULES.enemyPursuit,
+  };
+}
+
 export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
   const plans = bossPlans(layout);
   const plan = (agent: AgentSample) => plans.get(agent.kind)!;

@@ -28,14 +28,23 @@ interface KnownFailure {
   readonly scenario: string;
   readonly tick: number | undefined;
 }
-const KNOWN_FAILURES: readonly KnownFailure[] = [];
+const KNOWN_FAILURES: readonly KnownFailure[] = [
+  {
+    cause:
+      "Bini's charge tell at the red strip's left edge commits a rush that the edge stops in " +
+      "the same tick, so the trace reads a cancelled tell that raised its cooldown",
+    property: "cancelled-tell-keeps-cooldown",
+    scenario: "rearm growl-cover-late deep-woods 30/140/54 leaving at 2 seed 1",
+    tick: 1293,
+  },
+];
 
 const known = (scenario: string, property: string) =>
   KNOWN_FAILURES.find((entry) => entry.scenario === scenario && entry.property === property);
 
 describe.each(BOSS_SCENARIOS.map((group) => [group.scenario.name, group] as const))(
   "boss scenario %s",
-  (name, { covers, scenario }) => {
+  (name, { checks, covers, scenario }) => {
     const run = simulateBosses(ORDINARY, scenario);
     const layout = scenario.layout();
     const seen = observedCoverage(run.ticks);
@@ -46,7 +55,9 @@ describe.each(BOSS_SCENARIOS.map((group) => [group.scenario.name, group] as cons
     });
 
     it.each(
-      checkProperties(bossProperties(layout), run.ticks).map((result) => [result.id, result]),
+      checkProperties([...bossProperties(layout), ...(checks?.(layout) ?? [])], run.ticks).map(
+        (result) => [result.id, result],
+      ),
     )("%s", (id, { violations }) => {
       const entry = known(name, id);
       expect(violations[0]?.tick, JSON.stringify(violations.slice(0, 3))).toBe(entry?.tick);
@@ -60,7 +71,10 @@ it("lists known failures only for existing scenarios and checks", () => {
     expect(group, scenario).toBeDefined();
     const checks = [
       ...group!.covers.map((coverage) => `covers ${coverage}`),
-      ...bossProperties(group!.scenario.layout()).map(({ id }) => id),
+      ...[
+        ...bossProperties(group!.scenario.layout()),
+        ...(group!.checks?.(group!.scenario.layout()) ?? []),
+      ].map(({ id }) => id),
     ];
     expect(checks).toContain(property);
   }

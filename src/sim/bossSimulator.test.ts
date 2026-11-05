@@ -27,6 +27,7 @@ import {
   type BossScenario,
   bossStart,
   type BossTick,
+  placeChibi,
   scriptedChibi,
   simulateBosses,
 } from "./bossSimulator";
@@ -44,7 +45,12 @@ function zoneRun(scenario: BossScenario): BossTick[] {
   let zone = bossStart(ORDINARY, layout, scenario);
   for (let tick = 0; tick < scenario.ticks && !zone.cleared; tick++) {
     zone = zone.death ? activateAll(retryZone(ORDINARY, layout, zone)) : zone;
-    const next = stepZone(ORDINARY, layout, STEP_SECONDS, controller(tick, zone), zone);
+    const next = placeChibi(
+      ORDINARY,
+      scenario.place,
+      tick + 1,
+      stepZone(ORDINARY, layout, STEP_SECONDS, controller(tick, zone), zone),
+    );
     if (next !== zone) {
       ticks.push(bossSample(ORDINARY, layout, tick, next));
     }
@@ -68,7 +74,7 @@ it.each(
   ),
 )("the boss simulator reproduces the recorded zone trace of %s", (name, scenario) => {
   const layout = scenario.layout();
-  const model = bossModel(ORDINARY, layout);
+  const model = bossModel(ORDINARY, layout, scenario.place);
   const controller = scenario.controller(ORDINARY, layout);
   const recorder = traceRecorder({ retain: false });
   let zone = bossStart(ORDINARY, layout, scenario);

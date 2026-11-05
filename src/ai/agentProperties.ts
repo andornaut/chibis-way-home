@@ -380,13 +380,13 @@ export function escapeAtDistance<World>(
   };
 }
 
-// An escaped agent starts no new attack.
+// An escaped agent starts no new attack. A tell in the tick that rearms it is engaged.
 export function noAttackWhileEscaped<World>(rule: string): Property<AgentTick<World>> {
   return {
     check: (ticks) => {
       const found: Violation[] = [];
       eachPair(ticks, (previous, current) => {
-        if (previous.agent.pursuit === "escaped" && tellStarts(previous.agent, current.agent)) {
+        if (current.agent.pursuit === "escaped" && tellStarts(previous.agent, current.agent)) {
           found.push(violation(current, `${current.agent.attack!.id} tell while escaped`));
         }
       });

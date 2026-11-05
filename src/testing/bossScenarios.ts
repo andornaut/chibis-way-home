@@ -1,11 +1,16 @@
+import type { Property } from "../ai/agentProperties";
 import { STEP_SECONDS } from "../core";
+import { TILE } from "../data/screen";
 import type { ObjectLayout, ZoneLayout } from "../data/types";
 import { startBird } from "../rules/bird";
 import type { ZoneInput } from "../rules/zone";
+import { crossesAfterSettle } from "../sim/bossProperties";
 import {
   type BossController,
   type BossCoverage,
+  BOSSES,
   type BossScenario,
+  type BossTick,
   botChibi,
   scriptedChibi,
 } from "../sim/bossSimulator";
@@ -149,8 +154,62 @@ const CRUMBLING_ARCHIE: BossScenario = {
   ticks: ENCOUNTER_TICKS,
 };
 
+// Give-up, return and rearm: Chibi engages a boss beside cover it can jump, is placed at col 140
+// (beyond the escape distance) so the boss gives up where it is, and is then placed past the
+// cover. Both cover blocks in the patrol and growl yards rise six rows, within every ground
+// boss's jump. Each yard leads into two boss-free chunks, so col 140 is on the far chunk's
+// floor.
+const REARM_CHUNKS = ["broad-mesa", "low-central-crossing"] as const;
+// Chibi's placement past the cover.
+const REARM_STAND_TICK = 900;
+// The bound after Chibi's placement past the cover: up to two seconds for the next rearm probe
+// (awareness returning, or a body width of patrol after an exhausted search), then the four
+// seconds the idle recovery rule allows an engaged boss without horizontal progress.
+const REARM_SECONDS = 6;
+
+interface RearmPlacement {
+  // Chibi's first column and feet row (the boss's floor by default), and the tick he leaves.
+  readonly first: { readonly col: number; readonly row?: number };
+  readonly leave?: number;
+  readonly stand: number;
+}
+
+// Places Chibi's feet at each column from its tick on, standing still otherwise. Each run ends
+// when the rearm bound does.
+function rearmPlaced(
+  theme: string,
+  id: string,
+  seed: number,
+  { first, leave = 2, stand }: RearmPlacement,
+): BossScenario {
+  const layout = () => chunksLayout(theme, [id, ...REARM_CHUNKS]);
+  const boss = layout().areas.main!.objects.find(({ character }) => character in BOSSES)!;
+  const floor = boss.origin.y + boss.height;
+  return {
+    controller: () => () => STILL,
+    layout,
+    name: `rearm ${id} ${theme} ${first.col}/140/${stand} leaving at ${leave} seed ${seed}`,
+    place: (tick) =>
+      tick < leave
+        ? { x: first.col * TILE, y: first.row === undefined ? floor : first.row * TILE }
+        : tick === leave
+          ? { x: 140 * TILE, y: floor }
+          : tick === REARM_STAND_TICK
+            ? { x: stand * TILE, y: floor }
+            : undefined,
+    seed,
+    ticks: REARM_STAND_TICK + Math.round(REARM_SECONDS / STEP_SECONDS) + 1,
+  };
+}
+
+const rearmChecks = (edgeCol: number) => (): readonly Property<BossTick>[] => [
+  crossesAfterSettle(edgeCol * TILE, REARM_SECONDS, REARM_STAND_TICK),
+];
+
 interface BossScenarioGroup {
   readonly boss: string;
+  // Scenario-specific checks beyond the boss properties.
+  readonly checks?: (layout: ZoneLayout) => readonly Property<BossTick>[];
   readonly covers: readonly BossCoverage[];
   readonly scenario: BossScenario;
   // What the scenario regresses or covers.
@@ -241,5 +300,93 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     covers: ["tell", "attack"],
     scenario: encounter("growl-cover-early", "deep-woods", "still"),
     subject: "Bini growl yard",
+  },
+  {
+    boss: "Archie",
+    checks: rearmChecks(48),
+    covers: [],
+    scenario: rearmPlaced("city-streets", "patrol-cover-late", 1, {
+      first: { col: 30 },
+      stand: 54,
+    }),
+    subject: "rearm: Archie gives up on the late yard floor and rearms over the right block",
+  },
+  {
+    boss: "Archie",
+    checks: rearmChecks(24),
+    covers: [],
+    scenario: rearmPlaced("city-streets", "patrol-cover-late", 1, {
+      first: { col: 30 },
+      stand: 14,
+    }),
+    subject: "rearm: Archie gives up on the late yard floor and rearms over the left block",
+  },
+  {
+    boss: "Archie",
+    checks: rearmChecks(32),
+    covers: [],
+    scenario: rearmPlaced("city-streets", "patrol-cover-early", 1, {
+      first: { col: 24 },
+      stand: 38,
+    }),
+    subject: "rearm: Archie pinned against the early yard's low block rearms over the right block",
+  },
+  {
+    boss: "Archie",
+    checks: rearmChecks(40),
+    covers: [],
+    scenario: rearmPlaced("city-streets", "patrol-cover-middle", 1, {
+      first: { col: 30 },
+      stand: 46,
+    }),
+    subject: "rearm: Archie pinned against the middle yard's low block rearms over the right block",
+  },
+  {
+    boss: "Archie",
+    checks: rearmChecks(48),
+    covers: [],
+    scenario: rearmPlaced("city-streets", "city-boundary-dog-terrace", 1, {
+      first: { col: 42 },
+      stand: 54,
+    }),
+    subject: "rearm: Archie on the dog terrace rearms over the right block",
+  },
+  {
+    boss: "Trixi",
+    checks: rearmChecks(48),
+    covers: [],
+    scenario: rearmPlaced("country-lanes", "patrol-cover-late", 1, {
+      first: { col: 30 },
+      stand: 54,
+    }),
+    subject: "rearm: Trixi gives up on the late yard floor and rearms over the right block",
+  },
+  {
+    boss: "Fert",
+    checks: rearmChecks(48),
+    covers: [],
+    scenario: rearmPlaced("apartment-lobby", "patrol-cover-late", 1, {
+      first: { col: 30 },
+      stand: 54,
+    }),
+    subject: "rearm: Fert gives up on the late yard floor and rearms over the right block",
+  },
+  {
+    boss: "Fert",
+    covers: [],
+    scenario: rearmPlaced("apartment-lobby", "patrol-cover-late", 1, {
+      first: { col: 50, row: 44 },
+      leave: 230,
+      stand: 14,
+    }),
+    subject:
+      "give-up in the air: Fert gives up mid-climb onto the right block and lands before patrolling",
+  },
+  {
+    boss: "Bini",
+    checks: rearmChecks(48),
+    covers: [],
+    scenario: rearmPlaced("deep-woods", "growl-cover-late", 1, { first: { col: 30 }, stand: 54 }),
+    subject: "rearm: Bini gives up on the late growl yard floor and rearms over the right block",
   },
 ];
