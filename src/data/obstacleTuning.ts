@@ -1,6 +1,6 @@
 import type { CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { BehaviourAction, CircleOrbit } from "./types";
+import type { BehaviourAction, CircleOrbit, PendulumOrbit } from "./types";
 
 export const CRUMBLING_SUPPORT_TUNING = {
   absentSeconds: 2,
@@ -27,6 +27,26 @@ export function windmillSailOrbit(host: string, sail: number): CircleOrbit {
     phase: Math.PI / 2 + (2 * Math.PI * sail) / WINDMILL_SAILS.count,
     radius: WINDMILL_SAILS.radius,
     stops: { count: WINDMILL_SAILS.count, seconds: OBSTACLE_MOVER_PAUSE },
+  };
+}
+
+// The chandelier's swing: its rim's centre length tiles below the mount's pivot, swinging
+// amplitude radians either side of straight below, so its ends lie 8 tiles either side of the
+// pivot and 4 rows above the arc's lowest point.
+export const CHANDELIER_SWING = { amplitude: Math.asin(0.8), length: 10 } as const;
+
+// The chandelier's swing below the mount with id host: its rim at the obstacle mover speed along
+// the arc, holding for the mover pause at each end, first at the left (near) end, phase of a whole
+// cycle in at area entry.
+export function chandelierOrbit(host: string, phase: number): PendulumOrbit {
+  return {
+    amplitude: CHANDELIER_SWING.amplitude,
+    angularSpeed: OBSTACLE_MOVER_SPEED / CHANDELIER_SWING.length,
+    host,
+    kind: "pendulum",
+    length: CHANDELIER_SWING.length,
+    pause: OBSTACLE_MOVER_PAUSE,
+    phase,
   };
 }
 
