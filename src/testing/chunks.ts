@@ -6,9 +6,8 @@ import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
 import { SEAM_ROWS } from "../data/seams";
 import type { ChunkPlan, StageRecipe, TerrainRect, ThemePlan, ZoneRecipe } from "../data/types";
-import { RECIPES } from "../data/zones";
 import type { ChunkLibrary } from "../rules/assemble";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
+import { CHUNK_LIBRARY, STAGE_RECIPES } from "../rules/zonePlans";
 
 // Ground from col, cols wide, its top at row, down to the bottom row.
 const ground = (col: number, cols: number, row: number): TerrainRect => ({
@@ -216,5 +215,5 @@ export const ALL_THEMES: readonly (readonly [string, ThemePlan])[] = [
 // Every recipe, by zone key, with its library.
 export const ALL_RECIPES: readonly (readonly [string, ChunkLibrary, StageRecipe])[] = [
   ["fixture", FIXTURE_LIBRARY, FIXTURE_RECIPE],
-  ...Object.entries(RECIPES).map(([key, recipe]) => [key, CHUNK_LIBRARY, recipe] as const),
+  ...Object.entries(STAGE_RECIPES).map(([key, recipe]) => [key, CHUNK_LIBRARY, recipe] as const),
 ];

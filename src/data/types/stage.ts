@@ -165,7 +165,7 @@ export interface TerrainRect extends TileRect {
 
 // A spot he must never reach from another in one move (a jump, or a walk off an edge): each
 // names a surface, given as an entry is.
-interface NoCross {
+export interface NoCross {
   readonly from: TilePoint;
   readonly to: TilePoint;
 }
@@ -206,10 +206,10 @@ export interface ZonePlan {
 }
 
 // A chunk's difficulty, 1 to 5, as gameplay/design.md's Chunks section grades it.
-type Difficulty = 1 | 2 | 3 | 4 | 5;
+export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
 // A row a chunk's entry or exit stands on: one of SEAM_ROWS (src/data/seams.ts).
-type SeamRow = (typeof SEAM_ROWS)[number];
+export type SeamRow = (typeof SEAM_ROWS)[number];
 
 // The ground at a chunk's left or right edge: its top is row `row`.
 export interface ChunkSeam {
@@ -220,7 +220,7 @@ export type SlotKind = "door" | "event";
 
 // A marked region of a chunk where the seed places an event or a door, in the chunk's tiles.
 // id: unique within its chunk.
-interface ChunkSlot {
+export interface ChunkSlot {
   readonly area: TileRect;
   readonly id: string;
   readonly kind: SlotKind;

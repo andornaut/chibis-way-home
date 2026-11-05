@@ -7,7 +7,7 @@ export const APARTMENT_ROWS = (4 * SCREEN.height) / TILE;
 export const APARTMENT_SPAWN_ROW = APARTMENT_ROWS - 10;
 export const APARTMENT_WINDOW = { col: 12, cols: 36, row: 4, rows: 24 } as const;
 export const APARTMENT_STAGE_EXIT = { col: 54, cols: 4, row: 4, rows: 6 } as const;
-const APARTMENT_THEMES = [
+export const APARTMENT_THEMES = [
   "apartment-lobby",
   "apartment-penthouse",
   "apartment-pool",
@@ -28,7 +28,7 @@ export const APARTMENT_LOWER_SHELVES: readonly TerrainRect[] = [105, 100, 95, 90
   (row, index) => shelf(index % 2 === 0 ? 6 : 0, 4, row),
 );
 
-function apartmentWallBands(col: number, cols: number, fromRow = 0): readonly Instance[] {
+export function apartmentWallBands(col: number, cols: number, fromRow = 0): readonly Instance[] {
   const rows = CHARACTERS["apartment-wall-panel"]!.rows;
   return Array.from({ length: Math.ceil((APARTMENT_ROWS - fromRow) / rows) }, (_, index) => ({
     character: "apartment-wall-panel",
@@ -41,7 +41,7 @@ function apartmentWallBands(col: number, cols: number, fromRow = 0): readonly In
   }));
 }
 
-function interiorPlanes(backdrops: readonly Instance[]): readonly Instance[] {
+export function interiorPlanes(backdrops: readonly Instance[]): readonly Instance[] {
   return backdrops
     .filter(({ role }) => role === "wall")
     .map((band) => ({

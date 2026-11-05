@@ -161,7 +161,7 @@ const INDUSTRIAL_BINDINGS: Readonly<Record<string, ElementBinding>> = {
 
 const COMMON_BACKDROPS: ThemePlan["backdrops"] = CITY_THEME.backdrops;
 
-function localDepth(row: number): readonly Instance[] {
+export function localDepth(row: number): readonly Instance[] {
   return [
     {
       character: "street-sky",
@@ -1760,8 +1760,8 @@ export const HOME_CHALLENGES: ChunkPool = [
 export const FOUR_SCREEN_ROWS = (4 * SCREEN.height) / TILE;
 export const INDUSTRIAL_ROWS = FOUR_SCREEN_ROWS;
 const LOWER_ROUTE_OFFSET = 30;
-const INDUSTRIAL_ROOF_ROW = 35;
-const INDUSTRIAL_THEMES = ["freight-terminal", "loading-yards", "warehouse-district"];
+export const INDUSTRIAL_ROOF_ROW = 35;
+export const INDUSTRIAL_THEMES = ["freight-terminal", "loading-yards", "warehouse-district"];
 export const industrialCapId = (id: string): string => `industrial-tall-${id}`;
 export const industrialTunnelId = (id: string): string => `industrial-tunnel-${id}`;
 export const INDUSTRIAL_CONNECTORS = [
@@ -1771,7 +1771,7 @@ export const INDUSTRIAL_CONNECTORS = [
   "industrial-deep-ascent",
 ] as const;
 
-function tunnelWalls(): readonly Instance[] {
+export function tunnelWalls(): readonly Instance[] {
   const bandRows = 20;
   const top = 50;
   return Array.from({ length: Math.ceil((INDUSTRIAL_ROWS - top) / bandRows) }, (_, index) => ({
@@ -1887,10 +1887,10 @@ const INDUSTRIAL_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "industrial-descent": industrialStairs([50, 45, 50, 55, 60, 65, 70, 75, 80]),
 };
 
-const BLUE_THEMES = ["street", "city-streets", "city-boundary"];
-const COUNTRYSIDE_THEMES = ["country-lanes", "farmland", "river-crossing"];
-const WOODLAND_ROUTE_THEMES = ["deep-woods", "forest-paths", "ravine"];
-const HOME_ROUTE_THEMES = ["back-streets", "city-outskirts", "familiar-neighbourhood"];
+export const BLUE_THEMES = ["street", "city-streets", "city-boundary"];
+export const COUNTRYSIDE_THEMES = ["country-lanes", "farmland", "river-crossing"];
+export const WOODLAND_ROUTE_THEMES = ["deep-woods", "forest-paths", "ravine"];
+export const HOME_ROUTE_THEMES = ["back-streets", "city-outskirts", "familiar-neighbourhood"];
 const LIFT_GATE_THEMES = [...BLUE_THEMES, ...WOODLAND_ROUTE_THEMES, ...HOME_ROUTE_THEMES];
 const OPEN_ROUTE_THEMES = [...BLUE_THEMES, ...COUNTRYSIDE_THEMES];
 export const blueVerticalId = (id: string): string => `blue-vertical-${id}`;

@@ -1,4 +1,4 @@
-import type { ChunkPlan, ChunkSeam, Instance, StageRecipe, TileRect } from "../data/types";
+import type { ChunkPlan, ChunkRules, Instance, StageRecipe, TileRect } from "../data/types";
 import { sceneryParallax, worldScenery } from "../stage";
 import {
   type ChunkLibrary,
@@ -45,7 +45,7 @@ function physicalObjects(catalogue: Catalogue, instances: readonly Instance[]) {
   });
   return resolveOrbits(1, instances, objects);
 }
-function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance: Instance) {
+export function thingOf(catalogue: Catalogue, instances: readonly Instance[], instance: Instance) {
   // Chunk checks use canonical geometry; visual metadata is validated during area resolution.
   const physical = { ...instance };
   delete physical.skin;
@@ -169,14 +169,17 @@ export const escapeMissing = (chunk: ChunkPlan): boolean =>
 // its row must run the footing in from the edge without a gap, no hazard or moving thing he
 // touches may come within the footing, at or above the seam, and no terrain, still solid or
 // ledge, or hazard may come within the headroom above it.
-function seamProblems(
-  library: ChunkLibrary,
-  catalogue: Catalogue,
+export function seamRuleProblems(
+  context: {
+    readonly catalogue: Catalogue;
+    readonly rules: Pick<ChunkRules, "footing" | "headroom">;
+  },
   chunk: ChunkPlan,
   side: "entry" | "exit",
-  seam: ChunkSeam,
+  seam: { readonly row: number },
 ): string[] {
-  const { footing, headroom } = library.rules;
+  const { catalogue, rules } = context;
+  const { footing, headroom } = rules;
   const left = side === "entry" ? 0 : chunk.cols - footing;
   const right = left + footing;
   const { row } = seam;
@@ -362,9 +365,10 @@ export function chunkProblems(
             problems.push("Orbit sweep is outside the chunk");
           }
         }
+        const seamContext = { catalogue, rules: library.rules };
         problems.push(
-          ...seamProblems(library, catalogue, variant, "entry", chunk.entry),
-          ...seamProblems(library, catalogue, variant, "exit", chunk.exit),
+          ...seamRuleProblems(seamContext, variant, "entry", chunk.entry),
+          ...seamRuleProblems(seamContext, variant, "exit", chunk.exit),
         );
         for (const problem of escapeSurfaceProblems(catalogue, variant)) {
           if (!problems.includes(problem)) {

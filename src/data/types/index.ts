@@ -6,6 +6,7 @@ export type * from "./behaviour";
 export type * from "./bird";
 export type * from "./geometry";
 export type * from "./map";
+export type * from "./module";
 export type * from "./stage";
 export type * from "./text";
 export type * from "./ui";
