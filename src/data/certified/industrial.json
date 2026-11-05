@@ -324,7 +324,7 @@
       "grade": 4,
       "id": "industrial-tunnel-horizontal-platform-orbit",
       "kind": "single",
-      "layout": "46850c43bbff9952",
+      "layout": "03895a0517d3c316",
       "route": "958768cb40249c89",
       "slots": { "door": 0, "event": 0 },
       "trace": "4ba78cb5e8da38d8:2408",
@@ -357,7 +357,7 @@
       "grade": 4,
       "id": "industrial-tunnel-vertical-platform-orbit",
       "kind": "single",
-      "layout": "04c47c16cf9e41bb",
+      "layout": "ac7f0ded98e4f900",
       "route": "3963365bd514dd1d",
       "slots": { "door": 0, "event": 0 },
       "trace": "b95c3b0bbaecdcc9:161179",
@@ -386,7 +386,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "1ed7aef8a54979fa", "proofs": "27c3d8e97c668fa7" },
+  "inputs": { "data": "937c0d1178d20937", "proofs": "27c3d8e97c668fa7" },
   "version": 1,
   "zone": "industrial"
 }

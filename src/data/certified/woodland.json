@@ -192,7 +192,7 @@
       "grade": 4,
       "id": "woodland-vertical-horizontal-platform-orbit",
       "kind": "single",
-      "layout": "6c4c3eb6d4267be1",
+      "layout": "4ba7267bd74dcd9a",
       "route": "958768cb40249c89",
       "slots": { "door": 0, "event": 0 },
       "trace": "7afcc25da9b884f5:2408",
@@ -236,7 +236,7 @@
       "grade": 4,
       "id": "woodland-vertical-vertical-platform-orbit",
       "kind": "single",
-      "layout": "6166fc795ebb0f8f",
+      "layout": "180085161a77f315",
       "route": "3963365bd514dd1d",
       "slots": { "door": 0, "event": 0 },
       "trace": "b95c3b0bbaecdcc9:161179",
@@ -265,7 +265,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "228c5528452daaaf", "proofs": "27c3d8e97c668fa7" },
+  "inputs": { "data": "87fec4f824e7ed67", "proofs": "27c3d8e97c668fa7" },
   "version": 1,
   "zone": "woodland"
 }
