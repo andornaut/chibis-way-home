@@ -1,7 +1,15 @@
 // Half-chunk modules, the zone frames that draw composed pairs, and the certified chunk lists.
 
 import type { TilePoint } from "./geometry";
-import type { ChunkPlan, ChunkSlot, Difficulty, Instance, NoCross, TerrainRect } from "./stage";
+import type {
+  ChunkEscape,
+  ChunkPlan,
+  ChunkSlot,
+  Difficulty,
+  Instance,
+  NoCross,
+  TerrainRect,
+} from "./stage";
 
 export type ZoneKey = "apartment" | "blue" | "countryside" | "home" | "industrial" | "woodland";
 export type ModuleSide = "left" | "right";
@@ -23,10 +31,6 @@ export interface ModuleRouteTarget {
 // landing; encounter: recovery plus raised refuges and cover over the whole composed pair.
 export type ModuleRouteProfile = "encounter" | "primary" | "recovery";
 
-// CLEANUP (added 2026-11-04): replace with the ChunkEscape shape once agent-boss-escape-points
-// lands on main; until then a module declares no escape points.
-export type ModuleEscape = never;
-
 // Half a chunk: MODULE_RULES.cols wide and as tall as a zone, its contents in its own tiles from
 // its top-left. A pair of a left and a right module composes one certified chunk per zone.
 export interface ChunkModule {
@@ -38,7 +42,8 @@ export interface ChunkModule {
   // The count of its antagonist-role objects: 0 or 1.
   readonly encounters: 0 | 1;
   readonly entry: ModuleEdge;
-  readonly escapes?: readonly ModuleEscape[];
+  // Designed escape points in module tiles; a module with an encounter has at least one.
+  readonly escapes?: readonly ChunkEscape[];
   readonly exit: ModuleEdge;
   readonly noCross?: readonly NoCross[];
   readonly objects: readonly Instance[];
