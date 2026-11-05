@@ -88,7 +88,7 @@ export const TEXT: GameText = {
         title: "Spotless woodland",
       },
     },
-    notice: "Achievement: {title}",
+    notice: "{title}",
     pages: { next: "Next", page: "Page {page} of {pages}", previous: "Previous" },
     progress: "{have}/{need}",
   },
