@@ -8,6 +8,7 @@ import {
   startBehaviour,
   stepBehaviour,
 } from "../rules/behaviour";
+import { INITIAL_SCORER_STATE } from "../rules/behaviourScorer";
 import { birdBox, startBird, stepBird } from "../rules/bird";
 import { supportedLanding } from "../rules/flyLanding";
 import { targetVisible } from "../rules/perception";
@@ -22,6 +23,7 @@ import {
   RACCOON_BEHAVIOUR,
 } from "./behaviours";
 import { BIRD } from "./bird";
+import { PEBBLE_SCORER } from "./bossScorers";
 import { TILE } from "./screen";
 const make = () =>
   objectLayout(
@@ -52,7 +54,7 @@ const world = (covered = false) => ({
   view: { height: 360, width: 720, x: 0, y: 0 },
 });
 function alignedPosition(object: ReturnType<typeof make>, bird: ReturnType<typeof target>) {
-  const motion = object.behaviour!.states["prepare-drop-left"]!.motion;
+  const motion = object.behaviour!.states["prepare-drop"]!.motion;
   if (motion.kind !== "pursue" || motion.mode !== "fly" || !motion.overhead) {
     throw Error("Expected overhead approach");
   }
@@ -70,33 +72,46 @@ function initial(object: ReturnType<typeof make>, bird: ReturnType<typeof target
     flightApproachDirection: 1,
     pendingEntry: true,
     pursuit: { phase: "engaged" as const, settled: false, unreachableSeconds: 0 },
-    stateKey: "align-drop-left",
+    stateKey: "align-drop",
   };
 }
 function initialTellTicks(object: ReturnType<typeof make>, entry: string): number {
   const node = object.behaviour!.states[entry]!;
-  if (node.motion.kind !== "pursue" || !node.motion.intent) {
-    throw Error("Expected sampled approach");
-  }
   const approach = Math.max(
     ...node.transitions.flatMap(({ when }) =>
       when.flatMap((condition) => (condition.kind === "elapsed" ? [condition.seconds] : [])),
     ),
   );
-  return Math.ceil((node.motion.intent.decisionSeconds.max + approach) * 120);
+  return Math.ceil((PEBBLE_SCORER.decisionSeconds.max + approach) * 120);
+}
+// The engaged approach with its special due (the scorer flies the drop approach) or just used
+// (the swoop setup approach).
+function engaged(
+  object: ReturnType<typeof make>,
+  bird: ReturnType<typeof target>,
+  special: "due" | "used",
+): BehaviourState {
+  const component = { ...object, behaviour: { ...object.behaviour!, initial: "pursuit" } };
+  return {
+    ...startBehaviour(BIRD, component, bird),
+    scorer: {
+      ...INITIAL_SCORER_STATE,
+      specialDueSeconds: special === "due" ? PEBBLE_SCORER.due.specialSeconds : 0,
+    },
+  };
 }
 
 it.each([0, BIRD.walkSpeed / 2])(
   "actual Pebble burst follows current target vx=%s and releases three straight-down shots",
   (vx) => {
     const object = make();
-    const align = object.behaviour!.states["align-drop-left"]!;
+    const align = object.behaviour!.states["align-drop"]!;
     const motion = align.motion;
     const arrival = align.transitions
-      .find(({ to }) => to === "drop-left")!
+      .find(({ to }) => to === "drop")!
       .when.find((condition) => condition.kind === "arrived")!;
     const interval = object
-      .behaviour!.states["drop-left"]!.transitions.flatMap(({ when }) => when)
+      .behaviour!.states.drop!.transitions.flatMap(({ when }) => when)
       .find((condition) => condition.kind === "elapsed")!;
     if (
       motion.kind !== "fly" ||
@@ -247,72 +262,63 @@ it.each([
 );
 
 it.each([
-  ["prepare-drop-left", "drop-burst", "burst-rest-left"],
-  ["prepare-drop-right", "drop-burst", "burst-rest-right"],
-  ["prepare-swoop-left", "swoop", "swoop-rest-left"],
-  ["prepare-swoop-right", "swoop", "swoop-rest-right"],
-] as const)("physically completes %s only after supported recovery", (entry, attack, rest) => {
-  const object = make();
-  const bird = {
-    ...target(),
-    facing: entry.endsWith("left") ? (1 as const) : (-1 as const),
-    y: 132,
-  };
-  const physical = { ...world(), solids: [{ height: 552, width: 720, x: 0, y: 168 }] };
-  const approach = entry.includes("swoop")
-    ? "pursuit-swoop-left"
-    : entry.endsWith("left")
-      ? "pursuit"
-      : "pursuit-burst-right";
-  const component = { ...object, behaviour: { ...object.behaviour!, initial: approach } };
-  let at = object.origin;
-  let state = startBehaviour(BIRD, component, bird);
-  let rested = 0;
-  let committed = false;
-  let completed = false;
-  let told = false;
-  for (let tick = 0; tick < 2400; tick++) {
-    const before = { at, state };
-    const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
-    at = step.at;
-    state = step.state;
-    if (state.stateKey === entry) {
-      told = true;
-    }
-    if (state.activeAttack?.phase === "committed") {
-      expect(told).toBe(true);
-      committed = true;
-      expect(state.activeAttack.id).toBe(attack);
-    }
-    if (state.stateKey === rest) {
-      expect(supportedLanding(object, physical, at)).toBe(true);
-      rested++;
-    }
-    if ((state.attackCooldownRemainingSeconds ?? 0) > 0) {
-      expect(committed).toBe(true);
-      expect(rested).toBeGreaterThanOrEqual(40);
-      expect(before.state.stateKey).toBe(rest);
-      expect(supportedLanding(object, physical, before.at)).toBe(true);
-      completed = true;
-      break;
-    }
-  }
-  expect(completed, `Incomplete ${entry}: ${state.stateKey}`).toBe(true);
-});
-
-it.each([
-  ["pursuit", "prepare-drop-left", { x: 650, y: 324 }],
-  ["pursuit-swoop-left", "prepare-swoop-left", { x: 264, y: 5 }],
+  ["prepare-drop", "drop-burst", "burst-recovery", "due"],
+  ["prepare-swoop-left", "swoop", "swoop-rest", "used"],
 ] as const)(
-  "actual %s aborts an invalid tell, lands, and starts a fresh tell when Chibi walks onto its held course",
-  (entry, tell, invalid) => {
+  "physically completes %s only after supported recovery",
+  (entry, attack, rest, special) => {
+    const object = make();
+    const bird = { ...target(), y: 132 };
+    const physical = { ...world(), solids: [{ height: 552, width: 720, x: 0, y: 168 }] };
+    let at = object.origin;
+    let state = engaged(object, bird, special);
+    let rested = 0;
+    let committed = false;
+    let completed = false;
+    let told = false;
+    for (let tick = 0; tick < 2400; tick++) {
+      const before = { at, state };
+      const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
+      at = step.at;
+      state = step.state;
+      if (state.stateKey === entry) {
+        told = true;
+      }
+      if (state.activeAttack?.phase === "committed") {
+        expect(told).toBe(true);
+        committed = true;
+        expect(state.activeAttack.id).toBe(attack);
+      }
+      if (state.stateKey === rest) {
+        expect(supportedLanding(object, physical, at)).toBe(true);
+        rested++;
+      }
+      if ((state.attackCooldownRemainingSeconds ?? 0) > 0) {
+        expect(committed).toBe(true);
+        expect(rested).toBeGreaterThanOrEqual(40);
+        expect(before.state.stateKey).toBe(rest);
+        expect(supportedLanding(object, physical, before.at)).toBe(true);
+        completed = true;
+        break;
+      }
+    }
+    expect(completed, `Incomplete ${entry}: ${state.stateKey}`).toBe(true);
+  },
+);
+
+it.each([["prepare-drop", { x: 650, y: 324 }]] as const)(
+  "actual %s aborts an invalid tell, lands, and starts a fresh tell when Chibi walks onto the held course",
+  (tell, invalid) => {
     const object = make(),
       bird = target(),
       physical = world();
-    const component = { ...object, behaviour: { ...object.behaviour!, initial: entry } };
     let at = object.origin,
-      state = startBehaviour(BIRD, component, bird);
-    for (let tick = 0; tick < initialTellTicks(object, entry) && state.stateKey !== tell; tick++) {
+      state = engaged(object, bird, "due");
+    for (
+      let tick = 0;
+      tick < initialTellTicks(object, "pursuit") && state.stateKey !== tell;
+      tick++
+    ) {
       const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
       at = step.at;
       state = step.state;
@@ -342,7 +348,12 @@ it.each([
     if (arrival?.kind !== "arrived") {
       throw Error("Expected live arrival gate");
     }
-    for (let tick = 0; tick < 1200 && state.stateKey !== "prepare-drop-left"; tick++) {
+    // The special due again, the scorer flies the drop approach over the walking Chibi.
+    state = {
+      ...state,
+      scorer: { ...state.scorer!, specialDueSeconds: PEBBLE_SCORER.due.specialSeconds },
+    };
+    for (let tick = 0; tick < 1200 && state.stateKey !== tell; tick++) {
       const error = state.intent ? state.intent.target.x - liveBird.x : 0;
       const move = Math.abs(error) <= arrival.tolerance ? 0 : error < 0 ? -1 : 1;
       liveBird = stepBird(BIRD, physical.solids, [], 1 / 120, { jumpHeld: false, move }, liveBird);
@@ -353,7 +364,7 @@ it.each([
       state = step.state;
     }
     expect(approached).toBe(true);
-    expect(state.stateKey).toBe("prepare-drop-left");
+    expect(state.stateKey).toBe(tell);
     expect(state.elapsed).toBeLessThan(1 / 120);
     expect(state.activeAttack?.phase).toBe("tell");
   },
@@ -363,12 +374,8 @@ it("actual close swoop tell retreats to overhead range and restarts its full tel
   const object = make(),
     physical = world();
   let bird = target();
-  const component = {
-    ...object,
-    behaviour: { ...object.behaviour!, initial: "pursuit-swoop-left" },
-  };
   let at = object.origin,
-    state = startBehaviour(BIRD, component, bird);
+    state = engaged(object, bird, "used");
   for (let tick = 0; tick < 1200 && state.stateKey !== "prepare-swoop-left"; tick++) {
     const step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
     at = step.at;
@@ -377,7 +384,7 @@ it("actual close swoop tell retreats to overhead range and restarts its full tel
   expect(state.stateKey).toBe("prepare-swoop-left");
   bird = { ...bird, x: at.x };
   let step = stepBehaviour(BIRD, object, physical, 1 / 120, bird, at, state);
-  expect(step.state.stateKey).toBe("pursuit-swoop-left");
+  expect(step.state.stateKey).toBe("pursuit");
   expect(step.state.activeAttack).toBeUndefined();
   expect(step.state.attackCooldownRemainingSeconds ?? 0).toBe(0);
   at = step.at;
@@ -412,37 +419,36 @@ it("actual close swoop tell retreats to overhead range and restarts its full tel
 it("actual Pebble cancels a blocked-sight tell on time and returns to support without cooldown", () => {
   const object = make(),
     bird = target();
-  const component = { ...object, behaviour: { ...object.behaviour!, initial: "pursuit" } };
   let at = object.origin,
-    state = startBehaviour(BIRD, component, bird);
+    state = engaged(object, bird, "due");
   for (
     let tick = 0;
-    tick < initialTellTicks(object, "pursuit") && state.stateKey !== "prepare-drop-left";
+    tick < initialTellTicks(object, "pursuit") && state.stateKey !== "prepare-drop";
     tick++
   ) {
     const step = stepBehaviour(BIRD, object, world(), 1 / 120, bird, at, state);
     at = step.at;
     state = step.state;
   }
-  expect(state.stateKey).toBe("prepare-drop-left");
+  expect(state.stateKey).toBe("prepare-drop");
   const covered = world(true);
   expect(
     targetVisible(covered, object, contactBox(object, at, state.facing), birdBox(BIRD, bird)),
   ).toBe(false);
   const duration = object
-    .behaviour!.states["prepare-drop-left"]!.transitions.flatMap(({ when }) => when)
+    .behaviour!.states["prepare-drop"]!.transitions.flatMap(({ when }) => when)
     .find((condition) => condition.kind === "elapsed");
   if (duration?.kind !== "elapsed") {
     throw Error("Expected bounded tell");
   }
   let step = stepBehaviour(BIRD, object, covered, 1 / 120, bird, at, state);
   // The sight blocker leaves the overhead flight route valid, so this is not an immediate route abort.
-  expect(step.state.stateKey).toBe("prepare-drop-left");
+  expect(step.state.stateKey).toBe("prepare-drop");
   at = step.at;
   state = step.state;
   for (
     let tick = 1;
-    tick <= Math.ceil(duration.seconds * 120) + 1 && state.stateKey === "prepare-drop-left";
+    tick <= Math.ceil(duration.seconds * 120) + 1 && state.stateKey === "prepare-drop";
     tick++
   ) {
     step = stepBehaviour(BIRD, object, covered, 1 / 120, bird, at, state);

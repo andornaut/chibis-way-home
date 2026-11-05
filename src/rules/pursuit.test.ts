@@ -525,7 +525,7 @@ describe("persistent pursuit", () => {
     { boundary: "prepare-growl", graph: BEAR_BEHAVIOUR, raised: false },
     { boundary: "prepare-throw", graph: FERRET_BEHAVIOUR, raised: false },
     { boundary: "prepare", graph: RACCOON_BEHAVIOUR, raised: true },
-    { boundary: "prepare-drop-right", graph: PIGEON_BEHAVIOUR, raised: true },
+    { boundary: "prepare-drop", graph: PIGEON_BEHAVIOUR, raised: true },
     { boundary: "set-trap", graph: GOOSE_BEHAVIOUR, raised: false },
   ])(
     "completes the actual $graph.spotted.line winddown without a new attack",

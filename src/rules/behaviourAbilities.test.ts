@@ -28,13 +28,8 @@ const CHARACTERS = [
   "raccoon-antagonist",
 ] as const;
 // Archie's and Pebble's graphs with plain pursuit in place of planner traversal and the overhead
-// approach, with and without sampled intent: no production boss chases that way.
-const VARIANTS = [
-  "dog-antagonist plain-live",
-  "dog-antagonist plain-sampled",
-  "pigeon-antagonist plain-sampled",
-  "pigeon-antagonist plain-live",
-] as const;
+// approach: no production boss chases that way.
+const VARIANTS = ["dog-antagonist plain", "pigeon-antagonist plain"] as const;
 const TICKS = 720;
 
 function variant(name: (typeof CHARACTERS)[number] | (typeof VARIANTS)[number]): ObjectLayout {
@@ -61,7 +56,6 @@ function variant(name: (typeof CHARACTERS)[number] | (typeof VARIANTS)[number]):
         kind: "pursue" as const,
         mode: motion.mode,
         speed: motion.speed,
-        ...(flight === "plain-sampled" && motion.intent && { intent: motion.intent }),
       };
       return [key, { ...node, motion: plain }];
     }),

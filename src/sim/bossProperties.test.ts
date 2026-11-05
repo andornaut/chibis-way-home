@@ -31,8 +31,8 @@ interface KnownFailure {
 const KNOWN_FAILURES: readonly KnownFailure[] = [
   {
     cause:
-      "Map pursuit reaches Chibi by contact on every attempt before the parcel tell is ready, " +
-      "so this run never throws; the throw hold needs a scenario where Fert throws",
+      "Fert charges or reaches Chibi by contact on every attempt before a parcel throw, so this " +
+      "run never throws; the throw hold is pinned by the fert throw perch scenario",
     property: "committed-hold throw-rest",
     scenario: "encounter city-boundary-climb-yard apartment-lobby forward",
     tick: 1499,

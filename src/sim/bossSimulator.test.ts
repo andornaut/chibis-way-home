@@ -122,8 +122,8 @@ describe("Kiwi under a low ceiling", () => {
         },
       ]),
     );
-  // Kiwi's yard with a one-tile slab two tiles above her head. Each attempt starts in
-  // pursuit-drop, so her first decision is whether to climb.
+  // Kiwi's yard with a one-tile slab two tiles above her head. Each attempt starts engaged with
+  // the climb as her only attack, so her first attack decision is whether to climb.
   function layout(states: BehaviourPlan["states"]): ZoneLayout {
     const kiwi = CHUNK_LIBRARY.chunks[CHUNK]!.objects.find(
       ({ character }) => character === "raccoon-antagonist",
@@ -136,10 +136,18 @@ describe("Kiwi under a low ceiling", () => {
       rows: 1,
     };
     const base = chunkLayout("city-outskirts", CHUNK, withInstances(CHUNK, [ceiling]));
+    // Without her charge, the climb is her only attack.
+    const pursuit = states.pursuit!;
     const behaviour = layoutBehaviour(TILE, {
       ...RACCOON_BEHAVIOUR,
-      initial: "pursuit-drop",
-      states,
+      initial: "pursuit",
+      states: {
+        ...states,
+        pursuit: {
+          ...pursuit,
+          transitions: pursuit.transitions.filter(({ to }) => to !== "prepare-charge"),
+        },
+      },
     });
     const main = base.areas.main!;
     const objects = main.objects.map((object) =>
@@ -148,8 +156,8 @@ describe("Kiwi under a low ceiling", () => {
     return { ...base, areas: { ...base.areas, main: { ...main, objects } } };
   }
 
-  // Chibi stands at the entry, out of line with Kiwi, so the alignment guard alone would keep
-  // her from climbing; the variants without it exercise the ceiling.
+  // Chibi stands at the entry, away from the slab: Kiwi chases to line up with him, and the
+  // variants without the guards exercise the slab.
   it.each([
     {
       climbs: true,
@@ -163,8 +171,9 @@ describe("Kiwi under a low ceiling", () => {
       stalls: false,
       states: without("horizontal-gap", "track-clear"),
     },
-    { climbs: false, name: "without alignment", stalls: false, states: without("horizontal-gap") },
-    { climbs: false, name: "data graph", stalls: false, states: RACCOON_BEHAVIOUR.states },
+    // With the climb guard she climbs only once she has chased clear of the slab.
+    { climbs: true, name: "without alignment", stalls: false, states: without("horizontal-gap") },
+    { climbs: true, name: "data graph", stalls: false, states: RACCOON_BEHAVIOUR.states },
   ])("$name: climbs=$climbs, stalls=$stalls", ({ climbs, stalls, states }) => {
     const { ticks } = simulateBosses(ORDINARY, {
       controller: () => scriptedChibi(ENCOUNTER_SCRIPTS.still!),

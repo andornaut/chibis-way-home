@@ -14,7 +14,8 @@ import { TILE } from "../data/screen";
 import type { SpriteSilhouettes, ZoneLayout } from "../data/types";
 import { behaviourPose } from "../presentation";
 import { SKILL_PROFILES } from "../progress";
-import { contactBox, startBehaviour, stepBehaviour } from "./behaviour";
+import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "./behaviour";
+import { INITIAL_SCORER_STATE } from "./behaviourScorer";
 import { startBird } from "./bird";
 import { objectLayout } from "./tiles";
 import { startZone, stepZone } from "./zone";
@@ -333,8 +334,14 @@ it.each([
       },
       view: { height: 720, width: 1440, x: 0, y: 0 },
     };
+    // With the special due, an overhead approach flies the drop approach to its first tell.
     let at = object.origin,
-      start = startBehaviour(BIRD, object, bird);
+      start: BehaviourState = {
+        ...startBehaviour(BIRD, object, bird),
+        ...(overhead && {
+          scorer: { ...INITIAL_SCORER_STATE, specialDueSeconds: Number.MAX_SAFE_INTEGER },
+        }),
+      };
     for (let tick = 0; tick < 120 && start.stateKey !== tell[0]; tick++) {
       const approach = stepBehaviour(BIRD, object, world, 1 / 120, bird, at, start);
       expect(approach.actions).toEqual([]);

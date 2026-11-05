@@ -188,6 +188,21 @@ function pounceDodger(layout: ZoneLayout): BossController {
   };
 }
 
+// Archie with the pounce as his only attack, so the dodger's cancels reach the tell pause.
+const POUNCE_ONLY_ARCHIE = {
+  ...DOG_BEHAVIOUR,
+  initial: "pursuit",
+  states: {
+    ...DOG_BEHAVIOUR.states,
+    pursuit: {
+      ...DOG_BEHAVIOUR.states.pursuit!,
+      transitions: DOG_BEHAVIOUR.states.pursuit!.transitions.filter(
+        ({ to }) => to === "prepare-pounce",
+      ),
+    },
+  },
+};
+
 const TELL_CAP_ARCHIE: BossScenario = {
   controller: (_, layout) => pounceDodger(layout),
   layout: () =>
@@ -196,7 +211,7 @@ const TELL_CAP_ARCHIE: BossScenario = {
       DODGE_CHUNKS,
       withInstances("low-central-crossing", [
         {
-          behaviour: { ...DOG_BEHAVIOUR, initial: "pursuit-pounce" },
+          behaviour: POUNCE_ONLY_ARCHIE,
           character: "dog-antagonist",
           col: 38,
           role: "antagonist",
