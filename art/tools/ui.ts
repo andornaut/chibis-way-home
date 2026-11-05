@@ -17,12 +17,13 @@
  * until the game shows the held tag; every other tag loops.
  *
  * Dialogue
- * - ui-dialogue-box, 640x96, at 40,256. Navy, ink border with cut corners, slate rim top-left,
- *   dslate bottom-right. Body text cream, origin 128,268, 504 wide, lines every 20.
- * - ui-portrait-frame, 68x68, at 48,270. Recessed dslate well; the 64px portrait goes at 50,272.
+ * - ui-dialogue-box, 640x96. Navy, ink border with cut corners, slate rim top-left, dslate
+ *   bottom-right. Body text cream, lines every 20.
+ * - ui-portrait-frame, 68x68. Recessed dslate well round the 64px portrait, 2px in.
  * - ui-name-tab, nine-slice 12x20, margins 2,2,2,2; tags amber, green, pink, tan (the fill; one per
- *   speaker). Drawn A+12 wide at 124,237, so its bottom row lies on the box's top border. Name ink,
- *   origin x+6, y 234.
+ *   speaker). Drawn A+12 wide inside the box. Name ink, origin x+6.
+ * Placement belongs to the runtime layout (src/ui/layout/dialogueScreen.ts) and the style guide's
+ * dialogue box table.
  *
  * Touch controls (two round buttons for the right thumb, a pause button at the top left and the
  * move hint at the left)

@@ -311,10 +311,12 @@ Secret-room entry grants a permanent skill; repeated grants do not stack. The fi
 - Continue is the primary `ui-button-primary`, 488,112,192,48, with a white label. Skip is the secondary `ui-button`, 288,112,192,48, with an ink label. Both remain visible below the panel, separated by 8px; labels centre by visible ink within each state’s drawn face, using the shared [button measurements](controls.md#sizing-and-spacing). Primary actions omit the dark play mark.
 - Continue advances the current conversation. Skip skips its remaining paragraphs but opens any required terminal choice without selecting an answer. A required choice uses a modal card with ordinary form buttons; while it shows, Continue and Skip underneath cannot activate. No live conversation currently configures a choice.
 
-| Speaker | Portrait frame | Portrait origin | Name origin | Paragraph origin and width |
-| ------- | -------------- | --------------- | ----------- | -------------------------- |
-| Bird    | 48,22,68,68    | 50,24           | 124,13      | 128,42, width 504          |
-| Other   | 604,22,68,68   | 606,24          | 84,13       | 88,42, width 504           |
+| Speaker | Portrait frame | Portrait origin | Name tab  | Paragraph x and width |
+| ------- | -------------- | --------------- | --------- | --------------------- |
+| Bird    | 48,22,68,68    | 50,24           | x124, y16 | x124, width 548       |
+| Other   | 604,22,68,68   | 606,24          | x48, y16  | x48, width 548        |
+
+Clear space is 8px from the panel edge to the portrait frame, from the frame to the text and from the text to the far edge; the name tab's top and the last line's ink sit 8px inside the panel. The achievement unlock notice uses the same panel without a name tab: the unlocked `icon-achievement` frame fills the left portrait frame, a bold notice line comes first and the description follows.
 
 Both paragraph regions use the [body role and line height](#typography-scale). Labels, portraits and text move as layout elements; their textures keep their authored orientation and scale.
 
@@ -340,7 +342,7 @@ Approved target for paired runtime integration. The rulebook owns failure behavi
 
 ### Live barks
 
-Live antagonist barks use `ui-dialogue-box` at 0.65 alpha; text and portraits remain opaque. Present a bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner. Ordinary paused dialogue retains its existing presentation.
+Every dialogue, bark, gift-room helper and achievement notice panel uses `ui-dialogue-box` at 0.65 alpha; text, name tabs, portraits and icons remain opaque. Present a live antagonist bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner.
 
 ### Touch controls
 
