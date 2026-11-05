@@ -1,17 +1,8 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
-import { stepTraversal, type TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
 import { collisionCandidates } from "../core";
-import type {
-  BehaviourMotion,
-  BehaviourPursuitIntent,
-  BirdTuning,
-  ObjectLayout,
-  Point,
-  Rect,
-} from "../data/types";
+import type { BehaviourPursuitIntent, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourWorld } from "./behaviourReach";
-import { type BehaviourTraversalState, traversalContext } from "./behaviourTraversal";
 import { birdBox, type BirdState } from "./bird";
 
 export interface PursuitIntentState {
@@ -20,7 +11,6 @@ export interface PursuitIntentState {
   readonly facing: -1 | 1;
   readonly offset: number;
   readonly remainingSeconds: number;
-  readonly pauseRemainingSeconds: number;
 }
 export function capturePursuitIntent(
   world: BehaviourWorld,
@@ -40,14 +30,11 @@ export function capturePursuitIntent(
     min + random() * (max - min);
   const remainingSeconds = between(config.decisionSeconds);
   const offset = between(config.offset);
-  const pause = random() < config.pauseChance;
-  const duration = between(config.pauseSeconds);
   const target = { ...birdBox(tuning, bird), x: bird.x + offset };
   const dx = target.x + target.width / 2 - at.x - object.width / 2;
   return {
     facing: dx === 0 ? facing : dx < 0 ? -1 : 1,
     offset,
-    pauseRemainingSeconds: pause ? Math.min(duration, remainingSeconds) : 0,
     remainingSeconds,
     target,
     travelDirection: bird.vx === 0 ? bird.facing : bird.vx < 0 ? -1 : 1,
@@ -59,7 +46,6 @@ export function advancePursuitIntent(
 ): PursuitIntentState {
   return {
     ...state,
-    pauseRemainingSeconds: Math.max(0, state.pauseRemainingSeconds - seconds),
     remainingSeconds: Math.max(0, state.remainingSeconds - seconds),
   };
 }
@@ -115,60 +101,4 @@ export function safeIntentHover(
     const future = dynamic ? boundsAt?.(frame.timeSeconds + seconds) : rect;
     return !future || !Object.values(future).every(Number.isFinite) || rectsOverlap(body, future);
   });
-}
-
-// A supported pause still uses native gravity, support identity, mover carry and swept collision.
-export function pauseGroundIntent(
-  world: BehaviourWorld,
-  object: ObjectLayout,
-  motion: Extract<BehaviourMotion, { mode: "ground" }>,
-  seconds: number,
-  prior: BehaviourTraversalState | undefined,
-  at: Point,
-): {
-  readonly at: Point;
-  readonly segments?: readonly TraversalSafety[];
-  readonly traversal?: BehaviourTraversalState;
-} {
-  const context = traversalContext(world, seconds, object, motion),
-    frame = world.traversalFrame;
-  if (!context || !frame) {
-    return { at };
-  }
-  const physical =
-    prior?.physical.x === at.x && prior.physical.y === at.y
-      ? prior.physical
-      : { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 };
-  const result = stepTraversal(
-    context,
-    { jump: false, move: 0, timeSeconds: frame.timeSeconds },
-    physical,
-  );
-  const next = result.status === "ok" ? result.state : physical;
-  const rect = (body: Rect): Rect => ({
-    height: object.height,
-    width: object.width,
-    x: body.x - context.body.offset.x,
-    y: body.y - context.body.offset.y,
-  });
-  return {
-    at: result.status === "ok" ? next : at,
-    ...(result.status === "ok" && {
-      segments: result.segments.map((segment) => ({
-        ...segment,
-        from: rect(segment.from),
-        to: rect(segment.to),
-      })),
-    }),
-    traversal: {
-      geometry: prior?.geometry ?? "",
-      inputs: [],
-      physical: next,
-      status:
-        result.status === "geometry-unavailable"
-          ? "geometry-unavailable"
-          : (prior?.status ?? "geometry-unavailable"),
-      target: prior?.target ?? { ...at, height: object.height, width: object.width },
-    },
-  };
 }

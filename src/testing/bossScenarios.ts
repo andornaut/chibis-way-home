@@ -10,6 +10,8 @@ import {
   committedHold,
   crossesAfterSettle,
   movesAtLeast,
+  movesWhileEngaged,
+  risesToRow,
   tellPauseLasts,
 } from "../sim/bossProperties";
 import {
@@ -305,6 +307,35 @@ const kiwiChecks = (): readonly Property<BossTick>[] => [
   movesAtLeast("raccoon-antagonist", "rush-second", KIWI_SECOND_CHARGE_TILES * TILE),
 ];
 
+// Chibi stands still on the late patrol yard's right block, four tiles wide and narrower than
+// Archie's body, beside the ledge that meets its top: the movement map's node over ledge and
+// block top is his, so Archie climbs to it.
+const BLOCK_TOP: BossScenario = {
+  controller: () => () => STILL,
+  layout: () => chunksLayout("city-streets", ["patrol-cover-late", ...REARM_CHUNKS]),
+  name: "block top patrol-cover-late city-streets 49/44 seed 1",
+  place: (tick) => (tick === 0 ? { x: 49 * TILE, y: 44 * TILE } : undefined),
+  seed: 1,
+  ticks: Math.round(4 / STEP_SECONDS),
+};
+
+// Chibi stands at the early patrol yard's entry, beyond the low block Archie used to hold
+// against without a route for more than four seconds.
+const EARLY_YARD_STILL: BossScenario = {
+  controller: scripted("still"),
+  layout: () => chunksLayout("city-streets", ["patrol-cover-early", ...REARM_CHUNKS]),
+  name: "still patrol-cover-early city-streets seed 1",
+  seed: 1,
+  ticks: ENCOUNTER_TICKS,
+};
+
+// Chibi paces at the early patrol yard's entry and dies, so the boss chases again after a retry.
+const EARLY_YARD_RETRY: BossScenario = {
+  ...EARLY_YARD_STILL,
+  controller: scripted("pace"),
+  name: "pace patrol-cover-early city-streets seed 1",
+};
+
 interface BossScenarioGroup {
   readonly boss: string;
   // Scenario-specific checks beyond the boss properties.
@@ -336,9 +367,10 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   },
   {
     boss: "Trixi",
+    checks: () => [movesWhileEngaged(2, TILE / 2)],
     covers: ["tell", "attack"],
     scenario: botEncounter("farmland", ["city-boundary-climb-yard"], 5),
-    subject: "goose wall: the reactive bot climbing past Trixi",
+    subject: "goose wall: the reactive bot climbing past Trixi, who routes up rather than hops",
   },
   {
     boss: "Fert",
@@ -385,6 +417,12 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   },
   {
     boss: "Pebble",
+    covers: ["tell"],
+    scenario: encounter("flyer-shelter-middle", "loading-yards", "forward"),
+    subject: "Pebble middle shelter: attack cadence while Chibi runs forward",
+  },
+  {
+    boss: "Pebble",
     covers: ["tell", "attack"],
     scenario: encounter("bounded-flyer-post", "loading-yards", "still"),
     subject: "Pebble bounded post",
@@ -415,6 +453,27 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     covers: ["tell", "attack"],
     scenario: encounter("growl-cover-early", "deep-woods", "still"),
     subject: "Bini growl yard",
+  },
+  {
+    boss: "Archie",
+    checks: () => [risesToRow(44 * TILE, 3)],
+    covers: [],
+    scenario: BLOCK_TOP,
+    subject: "goal selection: Archie climbs beside Chibi on a block top narrower than his body",
+  },
+  {
+    boss: "Archie",
+    checks: () => [movesWhileEngaged(2, TILE / 2)],
+    covers: [],
+    scenario: EARLY_YARD_STILL,
+    subject: "early yard: Archie routes over the low block instead of holding against it",
+  },
+  {
+    boss: "Archie",
+    checks: () => [movesWhileEngaged(2, TILE / 2)],
+    covers: [],
+    scenario: EARLY_YARD_RETRY,
+    subject: "early yard after a retry: Archie routes or paces instead of holding",
   },
   {
     boss: "Archie",

@@ -11,6 +11,7 @@ import {
   noStall,
   type Property,
   singleCommittedAttack,
+  stillness,
   tellBounded,
   tellCancelPause,
   tellPrecedesCommit,
@@ -95,6 +96,15 @@ export function maximumTellSeconds(plan: BehaviourPlan, id: string): number {
 // horizontally (the watchdog's minimum movement) within every four seconds.
 const STALL_BOUND = { distance: 2 * TILE, seconds: 4 } as const;
 
+// Allowed stillness for an engaged ground boss more than two tiles from Chibi: tells and other
+// attack phases, takeoff preparation (0.6 s, at most once per 2 s) and post-attack rest (0.4 s).
+// Anything else stands still at most the grace, which absorbs one-tick turns and leg handoffs.
+const STILLNESS = {
+  graceSeconds: 3 * STEP_SECONDS,
+  preparation: { everySeconds: 2, kind: "takeoff-preparation", maxSeconds: 0.6 },
+  recovery: { kind: "post-attack-recovery", maxSeconds: 0.4 },
+} as const;
+
 // Objects: each boss starts a charge or special tell within 10 s of eligible engaged time, and
 // its distinct special tell within 20 s.
 const CADENCE_SECONDS = { any: 10, special: 20 } as const;
@@ -153,6 +163,51 @@ export function tellAttacks(plan: BehaviourPlan): ReadonlySet<string> {
       attack?.phase === "tell" ? [attack.id] : [],
     ),
   );
+}
+
+// Within seconds of the start, each boss's feet rise to the support top at y (pixels): pursuit
+// follows the map up to the surface Chibi stands on. A scenario-specific check.
+export function risesToRow(y: number, seconds: number): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const deadline = Math.round(seconds / STEP_SECONDS);
+      const ids = new Set(ticks.flatMap(({ agents }) => agents.map(({ id }) => id)));
+      return [...ids].flatMap((id) =>
+        ticks.some(
+          ({ agents, tick }) =>
+            tick <= deadline &&
+            agents.some((agent) => agent.id === id && agent.at.y + agent.height <= y + EDGE),
+        )
+          ? []
+          : [{ agent: id, detail: `feet not up to y ${y} within ${seconds} s`, tick: deadline }],
+      );
+    },
+    id: "rises-to-row",
+    rule: RULES.enemyPursuit,
+  };
+}
+
+// While engaged more than two tiles from Chibi and outside attack phases, each boss moves the
+// watchdog's minimum horizontally within every window: it routes or paces, never hops in place.
+export function movesWhileEngaged(windowSeconds: number, minimum: number): Property<BossTick> {
+  return {
+    ...noStall(
+      RULES.enemyPursuit,
+      STEP_SECONDS,
+      windowSeconds,
+      () => minimum,
+      ({ target }, agent) => {
+        const gap = Math.max(
+          target.at.x - (agent.at.x + agent.width),
+          agent.at.x - (target.at.x + target.width),
+        );
+        return (
+          agent.pursuit === "engaged" && agent.attack === undefined && gap > STALL_BOUND.distance
+        );
+      },
+    ),
+    id: "moves-while-engaged",
+  };
 }
 
 // Rearming after escape: from the tick Chibi settles past cover, each boss present then crosses
@@ -454,6 +509,26 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
         return gap > STALL_BOUND.distance;
       },
     ),
+    stillness(RULES.enemyPursuit, STEP_SECONDS, STILLNESS.graceSeconds, ({ target }, agent) => {
+      if (agent.pursuit !== "engaged" || flies(plan(agent))) {
+        return undefined;
+      }
+      const gap = Math.max(
+        target.at.x - (agent.at.x + agent.width),
+        agent.at.x - (target.at.x + target.width),
+      );
+      if (gap <= STALL_BOUND.distance) {
+        return undefined;
+      }
+      const node = plan(agent).states[agent.state]!;
+      if (node.animation === "rest") {
+        return STILLNESS.recovery;
+      }
+      if (agent.attack) {
+        return { kind: `attack-${agent.attack.phase}`, maxSeconds: Infinity };
+      }
+      return agent.preparing ? STILLNESS.preparation : { kind: "move", maxSeconds: 0 };
+    }),
     escapeAtDistance(RULES.enemyPursuit, (agent) => plan(agent).pursuit?.escapeDistance),
     noAttackWhileEscaped(RULES.enemyPursuit),
     // A limited move, such as Trixi's slide, overshoots no farther than its authored distance.

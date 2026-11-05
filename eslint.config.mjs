@@ -96,13 +96,14 @@ const INDEXED = {
 };
 
 // CLEANUP (added 2026-11-04): the files of the one value import cycle, where timedHazard imports
-// behaviour and behaviourTraversal imports timedHazardSafe from timedHazard. Remove this
-// exemption once the cycle is broken.
+// behaviour and behaviourTraversal and behaviourMapPursuit import timedHazardSafe from
+// timedHazard. Remove this exemption once the cycle is broken.
 const CYCLE_EXEMPT_FILES = [
   "src/rules/behaviour.ts",
   "src/rules/behaviourAbilities.ts",
   "src/rules/behaviourIdle.ts",
   "src/rules/behaviourIntent.ts",
+  "src/rules/behaviourMapPursuit.ts",
   "src/rules/behaviourPursuitAbilities.ts",
   "src/rules/behaviourRecoveryAbilities.ts",
   "src/rules/behaviourTraversal.ts",

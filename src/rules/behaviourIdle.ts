@@ -17,6 +17,7 @@ import type {
   Rect,
 } from "../data/types";
 import { supportedDestinations } from "./behaviourDestinations";
+import { mapRecoveryGoal } from "./behaviourMapPursuit";
 import type { BehaviourWorld } from "./behaviourReach";
 import {
   advanceTraversalTo,
@@ -131,8 +132,11 @@ function groundGoal(
   };
 }
 
+// A mapped ground pursuer recovers towards the map position nearest Chibi (or a pace end
+// there); other actors choose among seeded supported destinations.
 export function planIdleRecovery(
   world: BehaviourWorld,
+  hers: Rect,
   object: ObjectLayout,
   motion: PursuitMotion,
   seconds: number,
@@ -140,9 +144,22 @@ export function planIdleRecovery(
   prior: BehaviourIdleState,
   at: Point,
 ): BehaviourIdleState {
+  const watchdog = object.behaviour!.idleWatchdog!;
+  const pace = object.behaviour!.pursuit?.pace;
+  const entry = motion.mode === "ground" && pace ? world.groundMap?.() : undefined;
+  const goal =
+    entry &&
+    mapRecoveryGoal(
+      world,
+      object,
+      entry,
+      { distance: pace!.distance, minMovement: watchdog.minMovement },
+      at,
+      hers,
+    );
   return planSupportedRecovery(
     undefined,
-    object.behaviour!.idleWatchdog!,
+    watchdog,
     world,
     object,
     motion,
@@ -150,6 +167,7 @@ export function planIdleRecovery(
     facing,
     prior,
     at,
+    goal,
   );
 }
 
@@ -191,6 +209,8 @@ export function planSupportedRecovery(
   facing: -1 | 1,
   prior: BehaviourIdleState,
   at: Point,
+  // A ground goal envelope chosen by the caller, tried once in place of seeded destinations.
+  chosenGoal?: Rect,
 ): BehaviourIdleState {
   const attempted = { ...prior, attemptedAt: prior.seconds };
   if (!world.traversalFrame) {
@@ -199,16 +219,18 @@ export function planSupportedRecovery(
   const decision = prior.decision ?? 0;
   const random = world.decisions?.(`${decision}`);
   const chosen = { ...attempted, decision: decision + 1 };
-  const targets = supportedDestinations(
-    (target) => supportedLanding(object, world, target),
-    config,
-    object,
-    world,
-    facing,
-    motion.mode,
-    random,
-    at,
-  );
+  const targets = chosenGoal
+    ? [at]
+    : supportedDestinations(
+        (target) => supportedLanding(object, world, target),
+        config,
+        object,
+        world,
+        facing,
+        motion.mode,
+        random,
+        at,
+      );
   const uncertain =
     world.traversalFrame.platforms.length > 0 ||
     (world.hazards ?? []).some(
@@ -249,9 +271,10 @@ export function planSupportedRecovery(
       return { ...chosen, status: "geometry-unavailable" };
     }
     const start = { ...at, fallFromY: at.y + object.height, grounded: true, vy: 0 };
-    const frameGoal = groundGoal(config, motion.speed * seconds, object, world, at, target);
+    const frameGoal =
+      chosenGoal ?? groundGoal(config, motion.speed * seconds, object, world, at, target);
     // Convert the frame-origin landing interval into the native body's coordinate envelope.
-    const footprint = config.fullFrameGoal ? context.body : undefined;
+    const footprint = config.fullFrameGoal && !chosenGoal ? context.body : undefined;
     const goal = footprint
       ? {
           height: frameGoal.height - object.height + footprint.height,

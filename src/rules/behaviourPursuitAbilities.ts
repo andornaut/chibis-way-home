@@ -1,5 +1,5 @@
 import type { Ability } from "../ai/ability";
-import { EDGE } from "../core";
+import { EDGE, STEP_SECONDS } from "../core";
 import type { Point, Rect } from "../data/types";
 import type { BehaviourState } from "./behaviour";
 import type {
@@ -9,8 +9,15 @@ import type {
   BehaviourMotionStep,
 } from "./behaviourAbilities";
 import { syncAnimation } from "./behaviourAnimation";
-import { pauseGroundIntent } from "./behaviourIntent";
 import {
+  advanceMapEdge,
+  blockMapChase,
+  failMapEdge,
+  type MapPlan,
+  planMapLeg,
+} from "./behaviourMapPursuit";
+import {
+  type BehaviourWorld,
   flightAxis,
   groundPursuitEnd,
   overheadFlightGoal,
@@ -18,7 +25,7 @@ import {
   overheadFlightRoute,
 } from "./behaviourReach";
 import { contactBox, pursuitTrack } from "./behaviourTrack";
-import { advanceTraversal } from "./behaviourTraversal";
+import { advanceTraversal, advanceTraversalLeg } from "./behaviourTraversal";
 import { birdBox } from "./bird";
 import { flyLandingRoute } from "./flyLanding";
 
@@ -93,7 +100,7 @@ function intentFacing({ intent }: BehaviourAbilityContext, state: BehaviourState
   return intent.sampled && state.intent ? { ...state, facing: state.intent.facing } : state;
 }
 
-// Direct flight towards the chase target, clipped by solid terrain; a sampled pause hovers.
+// Direct flight towards the chase target, clipped by solid terrain.
 export const AIR_CHASE: PursuitAbility<"air-chase"> = {
   act: (context, { motion }, actor) => {
     const { slice } = context;
@@ -101,15 +108,12 @@ export const AIR_CHASE: PursuitAbility<"air-chase"> = {
       return { slice, state: actor.state, to: actor.to };
     }
     const aim = pursuitAim(context, motion.speed, actor);
-    let to = actor.to;
-    if (!(context.intent.sampled && context.intent.paused)) {
-      const { at } = actor;
-      const { world } = context.perception;
-      const dy = aim.targetY - at.y;
-      const fraction = Math.min(1, aim.travel / (Math.hypot(aim.dx, dy) || 1));
-      const x = flightAxis(context.object, world, at, "x", at.x + aim.dx * fraction);
-      to = { x, y: flightAxis(context.object, world, { ...at, x }, "y", at.y + dy * fraction) };
-    }
+    const { at } = actor;
+    const { world } = context.perception;
+    const dy = aim.targetY - at.y;
+    const fraction = Math.min(1, aim.travel / (Math.hypot(aim.dx, dy) || 1));
+    const x = flightAxis(context.object, world, at, "x", at.x + aim.dx * fraction);
+    const to = { x, y: flightAxis(context.object, world, { ...at, x }, "y", at.y + dy * fraction) };
     return { slice, state: intentFacing(context, aim.state), to };
   },
 };
@@ -136,7 +140,7 @@ export const OVERHEAD_SWOOP: PursuitAbility<"overhead-swoop"> = {
       const route = overheadFlightRoute(perception.world, object, at, target);
       if (vertical > EDGE && route) {
         slice = Math.min(slice, vertical / motion.speed);
-      } else if (intent.sampled && state.intent && !intent.paused && route && vertical <= EDGE) {
+      } else if (intent.sampled && state.intent && route && vertical <= EDGE) {
         const live = overheadFlightGoal(
           perception.tuning,
           overhead,
@@ -163,45 +167,80 @@ export const OVERHEAD_SWOOP: PursuitAbility<"overhead-swoop"> = {
     const aim = pursuitAim({ ...context, slice }, motion.speed, actor);
     let next = aim.state;
     let to = actor.to;
-    if (!(intent.sampled && intent.paused)) {
-      if (next.flightApproachDirection === undefined) {
-        throw new Error("Overhead pursuit requires a committed approach direction");
-      }
-      const goal = overheadFlightGoalForRect(
-        overhead,
-        next.flightApproachDirection,
-        aim.hers,
-        object,
-      );
-      const route = overheadFlightRoute(perception.world, object, at, goal);
-      if (route) {
-        let remaining = aim.travel;
-        let position = at;
-        for (const waypoint of route) {
-          const distance = Math.hypot(waypoint.x - position.x, waypoint.y - position.y);
-          const fraction = Math.min(1, remaining / (distance || 1));
-          position = {
-            x: position.x + (waypoint.x - position.x) * fraction,
-            y: position.y + (waypoint.y - position.y) * fraction,
-          };
-          remaining -= distance * fraction;
-          if (fraction < 1) {
-            break;
-          }
+    if (next.flightApproachDirection === undefined) {
+      throw new Error("Overhead pursuit requires a committed approach direction");
+    }
+    const goal = overheadFlightGoalForRect(
+      overhead,
+      next.flightApproachDirection,
+      aim.hers,
+      object,
+    );
+    const route = overheadFlightRoute(perception.world, object, at, goal);
+    if (route) {
+      let remaining = aim.travel;
+      let position = at;
+      for (const waypoint of route) {
+        const distance = Math.hypot(waypoint.x - position.x, waypoint.y - position.y);
+        const fraction = Math.min(1, remaining / (distance || 1));
+        position = {
+          x: position.x + (waypoint.x - position.x) * fraction,
+          y: position.y + (waypoint.y - position.y) * fraction,
+        };
+        remaining -= distance * fraction;
+        if (fraction < 1) {
+          break;
         }
-        to = { x: position.x, y: position.y };
-        next = { ...next, facing: to.x === at.x ? next.facing : to.x < at.x ? -1 : 1 };
       }
+      to = { x: position.x, y: position.y };
+      next = { ...next, facing: to.x === at.x ? next.facing : to.x < at.x ? -1 : 1 };
     }
     return { slice, state: intentFacing(context, next), to };
   },
 };
 
+// The first movement-map leg toward Chibi for an engaged ground pursuer standing on its map,
+// with its plan state; undefined when the on-demand planner chases instead.
+function mapLeg(
+  { object, perception, seconds, time }: BehaviourAbilityContext,
+  motion: Extract<BehaviourAbilityParams, { readonly kind: "ground-chase" }>["motion"],
+  hers: Rect,
+  world: BehaviourWorld,
+  { at, state }: BehaviourActor,
+): MapPlan | undefined {
+  const traversal = state.traversal;
+  const pace = object.behaviour!.pursuit!.pace;
+  const entry = perception.world.groundMap?.();
+  if (
+    !entry ||
+    !pace ||
+    state.pursuit?.phase !== "engaged" ||
+    (traversal &&
+      (traversal.inputs.length > 0 ||
+        (traversal.physical.x === at.x &&
+          traversal.physical.y === at.y &&
+          !traversal.physical.grounded)))
+  ) {
+    return undefined;
+  }
+  return planMapLeg(
+    world,
+    object,
+    entry,
+    pace,
+    motion.speed * pace.speedScale * Math.max(seconds - time, 0),
+    state.mapPursuit,
+    at,
+    hers,
+  );
+}
+
 // Ground pursuit: a native planner traversal, planned once per step and sampled at this slice,
-// or bounded travel along the leash on the current floor. A sampled pause holds on support.
+// or bounded travel along the leash on the current floor. On its movement map, an engaged
+// pursuer takes the map's next leg or paces where no path reaches Chibi.
 export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
   act: (context, { motion }, actor) => {
-    const { intent, object, perception, seconds, slice, time } = context;
+    const { object, perception, seconds, slice, time } = context;
     if (!pursuing(actor.state)) {
       return { slice, state: actor.state, to: actor.to };
     }
@@ -210,9 +249,7 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
     const aim = pursuitAim(context, motion.speed, actor);
     let next = aim.state;
     if (!motion.traversal) {
-      const desired =
-        at.x +
-        (intent.sampled && intent.paused ? 0 : Math.max(-aim.travel, Math.min(aim.travel, aim.dx)));
+      const desired = at.x + Math.max(-aim.travel, Math.min(aim.travel, aim.dx));
       const x = groundPursuitEnd(
         object,
         world,
@@ -232,11 +269,63 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
         },
       }),
     };
+    const plan = context.traversal ? undefined : mapLeg(context, motion, aim.hers, timed, actor);
+    const leg = plan?.leg;
+    // A takeoff within the preparation interval of the last preparation launches without one.
+    const now = timed.traversalFrame?.timeSeconds ?? 0;
+    const interval = motion.traversal.prepIntervalSeconds;
+    const physics =
+      interval !== undefined &&
+      next.takeoffPreparedAt !== undefined &&
+      !next.traversal?.preparation &&
+      now - next.takeoffPreparedAt < interval - EDGE
+        ? { ...motion, traversal: { ...motion.traversal, prepSeconds: 0 } }
+        : motion;
     const advanced =
       context.traversal ??
-      (intent.sampled && intent.paused
-        ? pauseGroundIntent(timed, object, motion, seconds - time, next.traversal, at)
-        : advanceTraversal(timed, object, motion, seconds - time, next.traversal, at, aim.hers));
+      (leg?.kind === "edge"
+        ? advanceTraversalLeg(timed, object, physics, seconds - time, next.traversal, leg, at)
+        : leg?.kind === "pace"
+          ? advanceTraversalLeg(
+              timed,
+              object,
+              { ...motion, speed: motion.speed * object.behaviour!.pursuit!.pace!.speedScale },
+              seconds - time,
+              next.traversal,
+              { commands: [], goal: leg.goal, walk: true },
+              at,
+            )
+          : advanceTraversal(timed, object, physics, seconds - time, next.traversal, at, aim.hers));
+    const started = advanced.traversal?.preparation?.startedAtSeconds;
+    if (started !== undefined && started !== next.traversal?.preparation?.startedAtSeconds) {
+      next = { ...next, takeoffPreparedAt: started };
+    }
+    if (plan) {
+      const result = advanced as { readonly consumed?: number; readonly failed?: boolean };
+      next = {
+        ...next,
+        mapPursuit:
+          leg?.kind === "chase"
+            ? seconds - time + EDGE >= STEP_SECONDS &&
+              advanced.at.x === at.x &&
+              !advanced.traversal?.preparation &&
+              !advanced.traversal?.inputs.length
+              ? blockMapChase(
+                  object.behaviour!.pursuit!.pace!,
+                  at.x + (object.hitbox?.x ?? 0),
+                  aim.hers.x + aim.hers.width / 2 - (object.hitbox?.width ?? object.width) / 2,
+                  plan.state,
+                )
+              : plan.state
+            : leg?.kind !== "edge"
+              ? plan.state
+              : result.failed
+                ? failMapEdge(leg.edge, plan.state)
+                : result.consumed !== undefined || advanced.traversal?.inputs.length
+                  ? advanceMapEdge(leg, result.consumed, plan.state)
+                  : plan.state,
+      };
+    }
     const endSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time + slice;
     const startSeconds = (world.traversalFrame?.timeSeconds ?? 0) + time;
     const pointAt = (atSeconds: number): Point => {
@@ -270,11 +359,18 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
       { ...next, ...(advanced.traversal && { traversal: advanced.traversal }) },
       (world.traversalFrame?.timeSeconds ?? 0) + time,
     );
+    // A map leg faces its travel; chasing faces Chibi or the held intent.
+    const facing =
+      leg && leg.kind !== "chase" && !next.traversal?.preparation && endPoint.x !== at.x
+        ? endPoint.x < at.x
+          ? -1
+          : 1
+        : undefined;
     return {
       resynced: true,
       ...(segments && { segments }),
       slice,
-      state: intentFacing(context, next),
+      state: facing ? { ...next, facing } : intentFacing(context, next),
       to: { x: endPoint.x, y: endPoint.y },
       traversal: advanced,
     };

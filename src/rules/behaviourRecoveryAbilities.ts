@@ -17,6 +17,7 @@ import type { BehaviourPerception } from "./behaviourPerception";
 import type { BehaviourWorld } from "./behaviourReach";
 import { nodeOf } from "./behaviourTrack";
 import type { BehaviourTraversalState } from "./behaviourTraversal";
+import { birdBox } from "./bird";
 import { landingSupport, supportContact } from "./flyLanding";
 
 type BehaviourRecoveryParams =
@@ -125,7 +126,16 @@ const IDLE_RECOVERY: RecoveryAbility<"idle-recovery"> = {
       return { state: { ...state, idleWatchdog: pending } };
     }
     const prepared = idleReady(object, world, at, state)
-      ? planIdleRecovery(world, object, motion, seconds, state.facing, idle, at)
+      ? planIdleRecovery(
+          world,
+          birdBox(perception.tuning, perception.target),
+          object,
+          motion,
+          seconds,
+          state.facing,
+          idle,
+          at,
+        )
       : idle;
     const active = { ...state, idleWatchdog: prepared };
     if (!prepared.recovery) {

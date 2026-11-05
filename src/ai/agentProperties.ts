@@ -407,6 +407,78 @@ export function noStall<World>(
   };
 }
 
+// Where an eligible agent stands still, the class that allows it: a still run (no movement in
+// either axis between ticks) lasts at most `maxSeconds` plus `graceSeconds`, and a class with
+// `everySeconds` starts at most once per that many seconds of the run. An agent the classifier
+// leaves undefined is ineligible, which ends any still run.
+export interface StillClass {
+  readonly everySeconds?: number;
+  readonly kind: string;
+  readonly maxSeconds: number;
+}
+
+export function stillness<World>(
+  rule: string,
+  stepSeconds: number,
+  graceSeconds: number,
+  classify: (tick: AgentTick<World>, agent: AgentSample) => StillClass | undefined,
+): Property<AgentTick<World>> {
+  return {
+    check: (ticks) => {
+      const found: Violation[] = [];
+      for (const run of agentRuns(ticks)) {
+        let still: { kind: string; start: number; reported: boolean } | undefined;
+        const starts = new Map<string, number>();
+        run.forEach((step, index) => {
+          const kind = classify(step.tick, step.agent);
+          const previous = run[index - 1]?.agent;
+          const resting =
+            kind !== undefined &&
+            previous !== undefined &&
+            Math.abs(step.agent.at.x - previous.at.x) <= EPSILON &&
+            Math.abs(step.agent.at.y - previous.at.y) <= EPSILON;
+          if (!resting) {
+            still = undefined;
+            return;
+          }
+          if (still?.kind !== kind.kind) {
+            const last = starts.get(kind.kind);
+            if (
+              kind.everySeconds !== undefined &&
+              last !== undefined &&
+              (index - last) * stepSeconds < kind.everySeconds - EPSILON
+            ) {
+              found.push(
+                violation(
+                  step,
+                  `${kind.kind} again ${((index - last) * stepSeconds).toFixed(3)} s after the ` +
+                    `last, under ${kind.everySeconds} s, ${step.agent.state}`,
+                ),
+              );
+            }
+            starts.set(kind.kind, index);
+            still = { kind: kind.kind, reported: false, start: index - 1 };
+          }
+          const seconds = (index - still.start) * stepSeconds;
+          if (!still.reported && seconds > kind.maxSeconds + graceSeconds + EPSILON) {
+            still.reported = true;
+            found.push(
+              violation(
+                run[still.start]!,
+                `${kind.kind} still over ${kind.maxSeconds} s at x ` +
+                  `${step.agent.at.x.toFixed(1)}, ${step.agent.state}`,
+              ),
+            );
+          }
+        });
+      }
+      return found;
+    },
+    id: "stillness",
+    rule,
+  };
+}
+
 // Counting only eligible time, a tell of a counted attack starts within each window. Eligible
 // time pauses, and does not reset, while no counted attack may start.
 export function attackCadence<World>(

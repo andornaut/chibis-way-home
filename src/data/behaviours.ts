@@ -61,8 +61,6 @@ const GROUND_BOSS_REPOSITION: BehaviourGroundReposition = {
 const BOSS_PURSUIT_INTENT: BehaviourPursuitIntent = {
   decisionSeconds: { max: 1.2, min: 0.8 },
   offset: { max: 2, min: -2 },
-  pauseChance: 0.2,
-  pauseSeconds: { max: 0.3, min: 0.1 },
 };
 
 function withPursuitIntent(plan: BehaviourPlan, eligible: readonly string[]): BehaviourPlan {
@@ -82,15 +80,20 @@ const GROUND_TRAVERSAL = {
   gravity: BIRD.gravity / TILE,
   jumpSpeed: BIRD.jumpSpeed / TILE,
   maxFallSpeed: BIRD.flutterFallSpeed / TILE,
+  prepIntervalSeconds: 2,
   prepSeconds: 0.6,
 };
 
 const DETECTION = [{ kind: "visible" }] as const;
 const LOST_TARGET = [{ kind: "lost-target", tolerance: 1 }] as const;
 
+// A ground boss with no path to Chibi paces at the reachable spot nearest him.
+const BOSS_PACE = { distance: 3, speedScale: 0.6 };
+
 const PURSUIT_LIMITS = {
   distance: (6 * SCREEN.width) / TILE,
   escapeDistance: SCREEN.width / TILE,
+  pace: BOSS_PACE,
   unreachableGraceSeconds: null,
 };
 function persistentPursuit(escaped: DialogueLine): NonNullable<BehaviourPlan["pursuit"]> {

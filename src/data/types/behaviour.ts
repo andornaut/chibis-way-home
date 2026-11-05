@@ -72,16 +72,17 @@ export type BehaviourCondition =
 // The resolver scales all three spatial values to pixels without changing time units.
 interface BehaviourTraversal {
   readonly prepSeconds: number;
+  // A pursuit takeoff preparation starts at most once per this many seconds; a takeoff sooner
+  // launches without one.
+  readonly prepIntervalSeconds?: number;
   readonly gravity: number;
   readonly jumpSpeed: number;
   readonly maxFallSpeed: number;
 }
 
 export interface BehaviourPursuitIntent {
-  // Active seconds per decision, including its optional safe pause.
+  // Active seconds per decision.
   readonly decisionSeconds: { readonly min: number; readonly max: number };
-  readonly pauseChance: number;
-  readonly pauseSeconds: { readonly min: number; readonly max: number };
   // Signed horizontal world-X offset: tiles in authored data, pixels in a resolved plan.
   readonly offset: { readonly min: number; readonly max: number };
 }
@@ -240,6 +241,10 @@ export interface BehaviourPlan {
     // Current physical body-centre separation in both axes: tiles in data, pixels in layouts.
     readonly escapeDistance?: number;
     readonly escaped: DialogueLine;
+    // A mapped ground pursuer with no movement-map path to Chibi walks to the reachable spot
+    // nearest him and paces there: distance in tiles in data, pixels in layouts, and its speed as
+    // a fraction of chase speed.
+    readonly pace?: { readonly distance: number; readonly speedScale: number };
   };
   readonly spotted?: DialogueLine;
   readonly axis: "x" | "y";

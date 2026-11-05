@@ -14,8 +14,6 @@ import { objectLayout } from "./tiles";
 const intent: BehaviourPursuitIntent = {
   decisionSeconds: { max: 0.2, min: 0.2 },
   offset: { max: 0, min: 0 },
-  pauseChance: 0,
-  pauseSeconds: { max: 0.1, min: 0.1 },
 };
 const plan: BehaviourPlan = {
   attackCooldownSeconds: 2.5,
@@ -121,11 +119,7 @@ it("resolves only signed offset distance and rejects intent on marked or actionf
   expect(layoutBehaviour(12, profile).states.pursuit!.motion).toMatchObject({
     intent: { ...intent, offset: { max: 24, min: -24 } },
   });
-  for (const patch of [
-    { pauseChance: 2 },
-    { decisionSeconds: { max: 0, min: 0 } },
-    { offset: { max: -1, min: 1 } },
-  ]) {
+  for (const patch of [{ decisionSeconds: { max: 0, min: 0 } }, { offset: { max: -1, min: 1 } }]) {
     expect(() =>
       layoutBehaviour(1, {
         ...profile,
@@ -188,40 +182,6 @@ it("uses live position for attack entry and escape while a movement snapshot is 
   const escaped = stepBehaviour(BIRD, object, physical, 0.1, bird(5000), first.at, first.state);
   expect(escaped.state.pursuit?.phase).toBe("escaped");
   expect(escaped.escaped).toEqual(plan.pursuit!.escaped);
-});
-it("uses native support carry during a sampled grounded pause", () => {
-  const motion = plan.states.pursuit!.motion;
-  if (motion.kind !== "pursue") {
-    throw Error("Expected pursuit");
-  }
-  const profile = {
-    ...plan,
-    states: {
-      ...plan.states,
-      pursuit: {
-        ...plan.states.pursuit!,
-        motion: { ...motion, intent: { ...intent, pauseChance: 1 } },
-      },
-    },
-  };
-  const object = actor(profile),
-    owner = { ...object, collision: "ledge" as const },
-    before = { height: 10, width: 100, x: 90, y: 500 },
-    after = { ...before, x: 95 };
-  const physical: BehaviourWorld = {
-    ...world(),
-    platforms: [{ collision: "ledge", owner, rect: before }],
-    solids: [],
-    traversalFrame: {
-      ...world().traversalFrame!,
-      platforms: [{ after, before, collision: "ledge", owner }],
-    },
-  };
-  const step = stepBehaviour(BIRD, object, physical, 0.1, bird(), object.origin, initial(object));
-  expect(step.at.x).toBeCloseTo(object.origin.x + 5);
-  expect(step.at.y).toBe(object.origin.y);
-  expect(step.state.traversal?.physical.supportId).toBe(owner);
-  expect(step.state.intent?.remainingSeconds).toBeCloseTo(0.1);
 });
 it("does not resample an expired intent during a native airborne leg", () => {
   const object = actor(),
@@ -310,7 +270,7 @@ it("defers overhead resampling until the safe ascent boundary, then captures the
   expect(corrected.state.facing).toBe(-1);
   expect(corrected.state.intent?.travelDirection).toBe(-1);
 });
-it("rejects an unsafe flying pause and preserves the actual collision-checked ascent", () => {
+it("rejects an unsafe flying hover and preserves the actual collision-checked ascent", () => {
   const profile: BehaviourPlan = {
     ...plan,
     states: {
@@ -318,7 +278,7 @@ it("rejects an unsafe flying pause and preserves the actual collision-checked as
       pursuit: {
         animation: null,
         motion: {
-          intent: { ...intent, pauseChance: 1 },
+          intent,
           kind: "pursue",
           mode: "fly",
           overhead: { ahead: 20, clearance: 10 },

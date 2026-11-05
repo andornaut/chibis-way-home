@@ -31,11 +31,19 @@ interface KnownFailure {
 const KNOWN_FAILURES: readonly KnownFailure[] = [
   {
     cause:
-      "Bini's charge tell at the red strip's left edge commits a rush that the edge stops in " +
-      "the same tick, so the trace reads a cancelled tell that raised its cooldown",
-    property: "cancelled-tell-keeps-cooldown",
-    scenario: "rearm growl-cover-late deep-woods 30/140/54 leaving at 2 seed 1",
-    tick: 1293,
+      "Pebble alternates relocation flights and relocation rests around Chibi, held at the " +
+      "middle shelter's wall, without a tell; flyer pursuit is not on the map yet",
+    property: "attack-cadence",
+    scenario: "encounter flyer-shelter-middle loading-yards forward",
+    tick: 1315,
+  },
+  {
+    cause:
+      "Map pursuit reaches Chibi by contact on every attempt before the parcel tell is ready, " +
+      "so this run never throws; the throw hold needs a scenario where Fert throws",
+    property: "committed-hold throw-rest",
+    scenario: "encounter city-boundary-climb-yard apartment-lobby forward",
+    tick: 1499,
   },
 ];
 

@@ -713,6 +713,88 @@ export function advanceTraversalTo(
   return advanceTraversalStep(world, object, motion, seconds, prior, () => goal, at, goal);
 }
 
+// A movement-map leg: walk to `launch` (hitbox-left x) when given, then reach `goal` (a hitbox
+// envelope), proving the takeoff with the edge's witness `commands` first. Walk legs keep
+// walking; other legs search from the launch point.
+export interface TraversalLeg {
+  readonly commands: readonly TraversalCommand[];
+  readonly goal: Rect;
+  readonly launch?: number;
+  readonly walk: boolean;
+}
+
+// The witness up to its first landing, within one search horizon, and that landing's tight
+// envelope as the goal; the whole witness and the leg's goal when it lands only at its end.
+function legPrefix(
+  context: TraversalContext<TraversalSupport>,
+  timeSeconds: number,
+  start: TraversalState<TraversalSupport>,
+  leg: TraversalLeg,
+): {
+  readonly commands: readonly TraversalCommand[];
+  readonly consumed: number;
+  readonly goal: Rect;
+} {
+  const { horizonSteps } = BEHAVIOUR_TRAVERSAL_SEARCH.budget;
+  const { body, epsilon } = context;
+  let state = start;
+  let airborne = false;
+  for (let index = 0; index < Math.min(horizonSteps, leg.commands.length); index++) {
+    const result = stepTraversal(
+      context,
+      { ...leg.commands[index]!, timeSeconds: timeSeconds + index * context.dtSeconds },
+      state,
+    );
+    if (result.status !== "ok") {
+      break;
+    }
+    state = result.state;
+    airborne ||= !state.grounded;
+    if (airborne && state.grounded && index + 1 < leg.commands.length) {
+      return {
+        commands: leg.commands.slice(0, index + 1),
+        consumed: index + 1,
+        goal: {
+          height: body.height + 2 * epsilon,
+          width: body.width + 2 * epsilon,
+          x: state.x + body.offset.x - epsilon,
+          y: state.y + body.offset.y - epsilon,
+        },
+      };
+    }
+  }
+  return {
+    commands: leg.commands.slice(0, horizonSteps),
+    consumed: leg.commands.length,
+    goal: leg.goal,
+  };
+}
+
+// `failed` reports that this step's proof of the leg (its search or its re-proof after takeoff
+// preparation) found no route. `consumed` counts the witness commands the found takeoff covers
+// when it lands before the witness ends, so the rest continues as the next leg.
+export function advanceTraversalLeg(
+  world: BehaviourWorld,
+  object: ObjectLayout,
+  motion: GroundMotion,
+  seconds: number,
+  prior: BehaviourTraversalState | undefined,
+  leg: TraversalLeg,
+  at: Point,
+) {
+  return advanceTraversalStep(
+    world,
+    object,
+    motion,
+    seconds,
+    prior,
+    () => leg.goal,
+    at,
+    leg.goal,
+    leg,
+  );
+}
+
 function advanceTraversalStep(
   world: BehaviourWorld,
   object: ObjectLayout,
@@ -722,8 +804,11 @@ function advanceTraversalStep(
   resolveGoal: () => Rect | undefined,
   at: Point,
   target: Rect,
+  leg?: TraversalLeg,
 ): {
   readonly at: Point;
+  readonly consumed?: number;
+  readonly failed?: boolean;
   readonly segments?: readonly TraversalSafety[];
   readonly traversal?: BehaviourTraversalState;
 } {
@@ -779,24 +864,32 @@ function advanceTraversalStep(
     }
     // The tell's wait invalidates timed mover predictions; prove the prepared takeoff again now.
     const searchContext = { ...context, dtSeconds: STEP_SECONDS };
+    const prefix = leg?.commands.length
+      ? legPrefix(searchContext, frame.timeSeconds, physical, leg)
+      : undefined;
     const request: TraversalRequest<TraversalSupport> = {
       ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
       goal: prior.target,
       start: physical,
       timeSeconds: frame.timeSeconds,
     };
-    const preferredInputs = preferredAscentInputs(world, searchContext, request);
+    const preferredInputs = prefix
+      ? prefix.commands
+      : preferredAscentInputs(world, searchContext, request);
     const proof = findTraversal(searchContext, {
       ...request,
       ...(preferredInputs && { preferredInputs }),
     });
     const launch = proof.status === "found" ? proof.inputs[0] : undefined;
     if (!launch?.jump || launch.move !== preparation.move) {
-      return hold({
-        ...previous,
-        inputs: proof.status === "found" ? proof.inputs : [],
-        status: proof.status,
-      });
+      return {
+        ...hold({
+          ...previous,
+          inputs: proof.status === "found" ? proof.inputs : [],
+          status: proof.status,
+        }),
+        failed: true,
+      };
     }
     const advanced = stepTraversal(
       context,
@@ -813,6 +906,7 @@ function advanceTraversalStep(
     }
     return {
       at: advanced.state,
+      ...(prefix && prefix.consumed < leg!.commands.length && { consumed: prefix.consumed }),
       segments: originSegments(object, context.body.offset, advanced.segments),
       traversal: {
         ...previous,
@@ -827,13 +921,18 @@ function advanceTraversalStep(
     frame.platforms
       .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
       .join(";") + (frame.crumbling?.key ?? "");
-  const move =
-    target.x + target.width / 2 === at.x + object.width / 2
-      ? 0
-      : target.x + target.width / 2 < at.x + object.width / 2
-        ? -1
-        : 1;
+  // A map leg heads for its launch point, then for its goal's centre.
+  const left = physical.x + context.body.offset.x;
+  const toLaunch = leg?.launch === undefined ? 0 : leg.launch - left;
+  const launched = Math.abs(toLaunch) <= context.profile.walkSpeed * seconds + EDGE;
+  const centre = leg
+    ? leg.goal.x + leg.goal.width / 2 - left - context.body.width / 2
+    : target.x + target.width / 2 - at.x - object.width / 2;
+  const heading = leg && !launched ? toLaunch : centre;
+  const move = heading === 0 ? 0 : heading < 0 ? -1 : 1;
   let searchedAt = prior?.searchedAt;
+  let consumed: number | undefined;
+  let failed = false;
   let inputs = prior?.inputs ?? [];
   let status = prior?.status ?? "geometry-unavailable";
   const input = { jump: false, move, timeSeconds: frame.timeSeconds } as const;
@@ -860,7 +959,7 @@ function advanceTraversalStep(
   }
   const progress = direct.status === "ok" && Math.abs(direct.state.x - physical.x) > EDGE;
   const waypoint =
-    !inputs.length && goal && supportedWaypoint(world, context, direct, physical, goal);
+    !leg && !inputs.length && goal && supportedWaypoint(world, context, direct, physical, goal);
   if (waypoint) {
     goal = waypoint.goal;
   }
@@ -871,8 +970,10 @@ function advanceTraversalStep(
     ["x", "y", "width", "height"].every(
       (axis) => resolved[axis as keyof Rect] === prior.target[axis as keyof Rect],
     );
+  const takeoff = leg !== undefined && launched && !leg.walk && physical.grounded;
   if (
     !inputs.length &&
+    !takeoff &&
     direct.status === "ok" &&
     (!physical.grounded || (direct.state.grounded && progress))
   ) {
@@ -902,23 +1003,34 @@ function advanceTraversalStep(
       prior.status === "found")
   ) {
     const searchContext = { ...context, dtSeconds: STEP_SECONDS };
+    const prefix =
+      takeoff && leg.commands.length
+        ? legPrefix(searchContext, frame.timeSeconds, physical, leg)
+        : undefined;
+    if (prefix) {
+      goal = prefix.goal;
+    }
     const request: TraversalRequest<TraversalSupport> = {
       ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
       goal,
       start: physical,
       timeSeconds: frame.timeSeconds,
     };
-    const preferredInputs = waypoint
-      ? waypointInputs(searchContext, request, move === -1 ? -1 : 1, waypoint.jump)
-      : (preferredDescentInputs(world, searchContext, request, direct) ??
-        (!progress ? preferredAscentInputs(world, searchContext, request) : undefined));
+    const preferredInputs = prefix
+      ? prefix.commands
+      : waypoint
+        ? waypointInputs(searchContext, request, move === -1 ? -1 : 1, waypoint.jump)
+        : (preferredDescentInputs(world, searchContext, request, direct) ??
+          (!progress ? preferredAscentInputs(world, searchContext, request) : undefined));
     let result = findTraversal(searchContext, {
       ...request,
-      ...(preferredInputs && { preferredInputs }),
+      ...(preferredInputs?.length && { preferredInputs }),
     });
     // An exhausted climb retries toward the blocking wall's top in this search event,
-    // so the unchanged position, goal and geometry cannot leave it without a staged leg.
+    // so the unchanged position, goal and geometry cannot leave it without a staged leg. Map
+    // legs stage walls as their own edges.
     const ascent =
+      !leg &&
       result.status === "budget-exhausted" &&
       !waypoint &&
       !progress &&
@@ -938,6 +1050,13 @@ function advanceTraversalStep(
     searchedAt = at;
     status = result.status;
     inputs = result.status === "found" ? result.inputs : [];
+    failed = result.status !== "found";
+    if (prefix && !failed && prefix.consumed < leg!.commands.length) {
+      consumed = prefix.consumed;
+    }
+  } else if (takeoff && !inputs.length && seconds + EDGE >= STEP_SECONDS) {
+    // The same takeoff already failed its search from here.
+    failed = true;
   }
   const planned = inputs[0];
   if (planned?.jump && physical.grounded && motion.traversal!.prepSeconds > 0) {
@@ -988,6 +1107,8 @@ function advanceTraversalStep(
     result.status === "ok" && (planned || !physical.grounded || result.state.grounded);
   return {
     at: accepted ? result.state : at,
+    ...(consumed !== undefined && { consumed }),
+    ...(failed && { failed }),
     ...(accepted && { segments: originSegments(object, context.body.offset, result.segments) }),
     traversal: {
       geometry: key,
@@ -1011,195 +1132,9 @@ export interface BehaviourRearmState {
   readonly status: TraversalResult<TraversalSupport>["status"];
 }
 
-// A rearm proof's legs: the direct walk and each staged search, as pursuit plans them.
-const REARM_LEGS = 3;
-
-// Horizontal heading towards a goal envelope, or none once the body is inside it.
-function goalMove(
-  context: TraversalContext<TraversalSupport>,
-  state: TraversalState<TraversalSupport>,
-  goal: Rect,
-): -1 | 0 | 1 {
-  const { body, epsilon } = context;
-  const left = state.x + body.offset.x;
-  if (left >= goal.x - epsilon && left + body.width <= goal.x + goal.width + epsilon) {
-    return 0;
-  }
-  return goal.x + goal.width / 2 < left + body.width / 2 ? -1 : 1;
-}
-
-// The present geometry as every future step's, when nothing in it can move, crumble or time
-// its contact: later legs then start from future states without frame predictions. Undefined
-// otherwise, so those routes stay unknown.
-function stationaryContext(
-  world: BehaviourWorld,
-  context: TraversalContext<TraversalSupport>,
-  object: ObjectLayout,
-): TraversalContext<TraversalSupport> | undefined {
-  const frame = world.traversalFrame;
-  if (
-    !frame ||
-    frame.crumbling ||
-    context.dtSeconds !== frame.dtSeconds ||
-    frame.platforms.some(
-      ({ after, before, owner }) =>
-        after.x !== before.x || after.y !== before.y || !fixedOwner(owner),
-    ) ||
-    (world.hazards ?? []).some(
-      ({ owner, timedContacts }) => owner !== object && (timedContacts || !fixedOwner(owner)),
-    )
-  ) {
-    return undefined;
-  }
-  // Stationary chords carry no timing, so the same colliders validate at any step.
-  return {
-    ...context,
-    sampleColliders: (_, dt, query) => {
-      const geometry = context.sampleColliders(frame.timeSeconds, dt, query);
-      return {
-        ...geometry,
-        colliders: geometry.colliders.map(({ after, before, kind, supportId }) => ({
-          after,
-          before,
-          kind,
-          supportId,
-        })),
-      };
-    },
-  };
-}
-
-// Walks off a support edge and falls until the body lands, within one native horizon; each step
-// keeps the native collision and hazard checks.
-function dropLeg(
-  context: TraversalContext<TraversalSupport>,
-  timeSeconds: number,
-  start: TraversalState<TraversalSupport>,
-  move: -1 | 0 | 1,
-):
-  | { readonly inputs: readonly TraversalInput[]; readonly state: TraversalState<TraversalSupport> }
-  | undefined {
-  const inputs: TraversalInput[] = [];
-  let state = start;
-  for (let step = 0; step < BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps; step++) {
-    const input = {
-      jump: false,
-      move,
-      timeSeconds: timeSeconds + step * context.dtSeconds,
-    };
-    const next = stepTraversal(context, input, state);
-    if (next.status !== "ok") {
-      return undefined;
-    }
-    inputs.push(input);
-    state = next.state;
-    if (state.grounded) {
-      return { inputs, state };
-    }
-  }
-  return undefined;
-}
-
-// Plans a rearm route in the legs ordinary pursuit takes: a direct walk while it keeps
-// grounded progress, then the same search event, with its supported landing, descent or ascent
-// preference and the staged wall-top climb. Each search keeps the shared budget.
-function stagedRearm(
-  world: BehaviourWorld,
-  context: TraversalContext<TraversalSupport>,
-  timeSeconds: number,
-  start: TraversalState<TraversalSupport>,
-  goal: Rect,
-): {
-  readonly inputs: readonly TraversalInput[];
-  readonly status: TraversalResult<TraversalSupport>["status"];
-} {
-  const { horizonSteps } = BEHAVIOUR_TRAVERSAL_SEARCH.budget;
-  const inputs: TraversalInput[] = [];
-  // Times count whole steps from the probe, as the native search does.
-  const time = () => timeSeconds + inputs.length * context.dtSeconds;
-  let state = start;
-  for (let leg = 0; leg < REARM_LEGS; leg++) {
-    let direct: TraversalStepResult<TraversalSupport> | undefined;
-    let progress = false;
-    let walked = 0;
-    for (; walked < horizonSteps; walked++) {
-      const input = { jump: false, move: goalMove(context, state, goal), timeSeconds: time() };
-      direct = stepTraversal(context, input, state);
-      progress = direct.status === "ok" && Math.abs(direct.state.x - state.x) > EDGE;
-      if (
-        direct.status !== "ok" ||
-        input.move === 0 ||
-        (state.grounded && !(direct.state.grounded && progress))
-      ) {
-        break;
-      }
-      inputs.push(input);
-      state = direct.state;
-    }
-    if (!direct || walked === horizonSteps) {
-      continue;
-    }
-    const request: TraversalRequest<TraversalSupport> = {
-      ...BEHAVIOUR_TRAVERSAL_SEARCH.budget,
-      goal,
-      start: state,
-      timeSeconds: time(),
-    };
-    const waypoint = supportedWaypoint(world, context, direct, state, goal);
-    const staged = waypoint ? { ...request, goal: waypoint.goal } : request;
-    const move = goalMove(context, state, goal);
-    const preferredInputs = waypoint
-      ? waypointInputs(context, staged, move === -1 ? -1 : 1, waypoint.jump)
-      : (preferredDescentInputs(world, context, request, direct) ??
-        (!progress ? preferredAscentInputs(world, context, request) : undefined));
-    let legGoal = staged.goal;
-    let result = findTraversal(context, {
-      ...staged,
-      ...(preferredInputs && { preferredInputs }),
-    });
-    const ascent =
-      result.status === "budget-exhausted" &&
-      !waypoint &&
-      !progress &&
-      ascentWaypoint(world, context, state, goal);
-    if (ascent) {
-      const climbRequest = { ...request, goal: ascent };
-      const climbInputs = preferredAscentInputs(world, context, climbRequest);
-      const climb = findTraversal(context, {
-        ...climbRequest,
-        ...(climbInputs && { preferredInputs: climbInputs }),
-      });
-      if (climb.status === "found") {
-        legGoal = ascent;
-        result = climb;
-      }
-    }
-    if (result.status !== "found") {
-      // Stepping off the support's edge towards the goal is a leg of its own: the fall lands
-      // on lower support from which the next leg searches.
-      const landed =
-        !waypoint && state.grounded && direct.status === "ok" && !direct.state.grounded
-          ? dropLeg(context, time(), state, move)
-          : undefined;
-      if (!landed) {
-        return { inputs: [], status: result.status };
-      }
-      inputs.push(...landed.inputs);
-      state = landed.state;
-      continue;
-    }
-    inputs.push(...result.inputs);
-    if (legGoal === goal) {
-      return { inputs, status: "found" };
-    }
-    state = result.state;
-  }
-  return { inputs: [], status: "budget-exhausted" };
-}
-
 // Retry a jump-only reach proof on scene/graph/support events, never each patrol position. An
-// exhausted proof is unknown, not unreachable: it retries once the body has moved a body width
-// from where it last searched.
+// exhausted proof is unknown, not unreachable. Pursuers with a movement map rearm from its path
+// instead; this direct search serves fixtures and predictions without one.
 export function probeRearm(
   world: BehaviourWorld,
   seconds: number,
@@ -1239,12 +1174,7 @@ export function probeRearm(
       .filter(({ after, before }) => intersects(before, local) || intersects(after, local))
       .map(({ after, before }) => [before.x, before.y, after.x, after.y].join(":"))
       .join(";") + (frame?.crumbling?.key ?? "");
-  const retry =
-    previous?.status === "budget-exhausted" &&
-    previous.searchedAt !== undefined &&
-    Math.hypot(at.x - previous.searchedAt.x, at.y - previous.searchedAt.y) >= object.width;
   const changed =
-    retry ||
     !previous ||
     !previous.visible ||
     previous.stateKey !== stateKey ||
@@ -1269,14 +1199,8 @@ export function probeRearm(
       start,
       timeSeconds: frame.timeSeconds,
     });
-    const stationary =
-      result.status === "budget-exhausted" ? stationaryContext(world, context, object) : undefined;
-    const planned = stationary
-      ? stagedRearm(world, stationary, frame.timeSeconds, start, goal)
-      : undefined;
-    inputs =
-      planned?.status === "found" ? planned.inputs : result.status === "found" ? result.inputs : [];
-    status = planned?.status === "found" ? "found" : result.status;
+    inputs = result.status === "found" ? result.inputs : [];
+    status = result.status;
     searchedAt = at;
   }
   let reachable: boolean | undefined;

@@ -112,8 +112,8 @@ export interface BehaviourAbilityContext {
   // Whether the graph would take an arrival transition with the body at a point after that
   // many more seconds of this state.
   readonly arrives: (at: Point, seconds: number, state: BehaviourState) => boolean;
-  // Whether the motion follows a sampled pursuit intent this slice, and whether it pauses.
-  readonly intent: { readonly paused: boolean; readonly sampled: boolean };
+  // Whether the motion follows a sampled pursuit intent this slice.
+  readonly intent: { readonly sampled: boolean };
   readonly object: ObjectLayout;
   readonly perception: BehaviourPerception;
   // The whole step's length; a traversal plans the rest of the step from the slice start.

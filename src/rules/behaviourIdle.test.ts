@@ -21,7 +21,7 @@ import { withAnticipationContact } from "../testing/behaviours";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle";
 import type { BehaviourWorld } from "./behaviourReach";
-import { startBird } from "./bird";
+import { birdBox, startBird } from "./bird";
 import { supportedLanding } from "./flyLanding";
 import { objectLayout } from "./tiles";
 import { retryZone, startZone, stepZone } from "./zone";
@@ -594,7 +594,17 @@ it("replays namespaced choices while varying eligible decisions independently of
   const choose = (
     context: BehaviourWorld,
     decision: import("./behaviourIdle").BehaviourIdleState = prior,
-  ) => planIdleRecovery(context, object, motion, dt, 1, decision, object.origin);
+  ) =>
+    planIdleRecovery(
+      context,
+      birdBox(BIRD, target),
+      object,
+      motion,
+      dt,
+      1,
+      decision,
+      object.origin,
+    );
   const first = choose(geometry);
   expect(first).toEqual(
     choose({ ...geometry, traversalFrame: { ...geometry.traversalFrame!, timeSeconds: 50 } }),
@@ -637,6 +647,7 @@ function idleJumpFixture(contact = false) {
   }
   const idle = planIdleRecovery(
     world(solids),
+    birdBox(BIRD, target),
     object,
     motion,
     STEP_SECONDS,

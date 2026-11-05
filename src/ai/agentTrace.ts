@@ -29,6 +29,8 @@ export interface AgentSample extends TraceBody {
   // What the agent is, such as its character; properties select their data by it.
   readonly kind: string;
   readonly motion: string;
+  // A takeoff preparation holds the agent at the end of the tick.
+  readonly preparing?: boolean;
   readonly pursuit?: "engaged" | "escaped";
   readonly state: string;
   // Ordinary support contact at the end of the tick: a clear body whose feet rest on a present

@@ -41,6 +41,7 @@ import {
   type PursuitIntentState,
   safeIntentHover,
 } from "./behaviourIntent";
+import { type BehaviourMapPursuitState, mapCovers, mapReachable } from "./behaviourMapPursuit";
 import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception";
 import {
   type BehaviourGeometry,
@@ -82,6 +83,9 @@ export interface BehaviourState extends BehaviourAttackState {
   readonly defeat?: { readonly seconds: number };
   readonly idleWatchdog?: BehaviourIdleState;
   readonly groundReposition?: BehaviourIdleState;
+  readonly mapPursuit?: BehaviourMapPursuitState;
+  // Zone seconds at which the last pursuit takeoff preparation started.
+  readonly takeoffPreparedAt?: number;
   readonly rearm?: BehaviourRearmState;
   readonly traversal?: BehaviourTraversalState;
   readonly anchor?: Point;
@@ -155,6 +159,10 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
       (plan.pursuit.unreachableGraceSeconds !== null &&
         !valid(plan.pursuit.unreachableGraceSeconds)) ||
       (plan.pursuit.escapeDistance !== undefined && !valid(plan.pursuit.escapeDistance)) ||
+      (plan.pursuit.pace &&
+        ![plan.pursuit.pace.distance, plan.pursuit.pace.speedScale].every(
+          (value) => Number.isFinite(value) && value > 0,
+        )) ||
       !plan.pursuit.escaped.line ||
       !plan.pursuit.escaped.speaker)
   ) {
@@ -315,12 +323,8 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           node.attack ||
           node.onEnter?.length ||
           (node.motion.mode === "ground" && !node.motion.traversal) ||
-          ![intent.decisionSeconds, intent.pauseSeconds, intent.offset].every(range) ||
-          intent.decisionSeconds.min <= 0 ||
-          intent.pauseSeconds.min < 0 ||
-          !Number.isFinite(intent.pauseChance) ||
-          intent.pauseChance < 0 ||
-          intent.pauseChance > 1
+          ![intent.decisionSeconds, intent.offset].every(range) ||
+          intent.decisionSeconds.min <= 0
         ) {
           throw new Error(`Invalid sampled pursuit intent in ${key}`);
         }
@@ -378,7 +382,12 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           node.motion.traversal.maxFallSpeed,
         ].every((value) => Number.isFinite(value) && value > 0) ||
           !Number.isFinite(node.motion.traversal.prepSeconds) ||
-          node.motion.traversal.prepSeconds < 0)
+          node.motion.traversal.prepSeconds < 0 ||
+          (node.motion.traversal.prepIntervalSeconds !== undefined &&
+            !(
+              node.motion.traversal.prepIntervalSeconds >= 0 &&
+              Number.isFinite(node.motion.traversal.prepIntervalSeconds)
+            )))
       ) {
         throw new Error(`Invalid ground traversal in ${key}`);
       }
@@ -553,6 +562,9 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                         jumpSpeed: node.motion.traversal.jumpSpeed * tile,
                         maxFallSpeed: node.motion.traversal.maxFallSpeed * tile,
                         prepSeconds: node.motion.traversal.prepSeconds,
+                        ...(node.motion.traversal.prepIntervalSeconds !== undefined && {
+                          prepIntervalSeconds: node.motion.traversal.prepIntervalSeconds,
+                        }),
                       },
                     }),
                   ...(node.motion.kind === "pursue" &&
@@ -627,6 +639,9 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         distance: plan.pursuit.distance * tile,
         ...(plan.pursuit.escapeDistance !== undefined && {
           escapeDistance: plan.pursuit.escapeDistance * tile,
+        }),
+        ...(plan.pursuit.pace && {
+          pace: { ...plan.pursuit.pace, distance: plan.pursuit.pace.distance * tile },
         }),
       },
     }),
@@ -945,6 +960,17 @@ function matches(
     return trackReach(object, world, at, entered, heading, end) === end;
   }
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
+    // A mapped ground pursuer paces where no path reaches Chibi instead of losing him.
+    const entry = state.pursuit?.phase === "engaged" ? world.groundMap?.() : undefined;
+    if (
+      condition.kind === "lost-target" &&
+      entry &&
+      object.behaviour!.pursuit?.pace &&
+      pursuitKinds(object.behaviour!).groundTraversal &&
+      mapCovers(world, object, entry, at, birdBox(tuning, bird))
+    ) {
+      return false;
+    }
     const reachable =
       state.pursuit?.phase === "engaged"
         ? pursuitReachable(perception, object, at, state)
@@ -1082,6 +1108,14 @@ function pursuitReachable(
     if (state.pursuit?.phase === "escaped") {
       return undefined;
     }
+    // Engaged on the map, the route pursuit chose last says whether a path reaches Chibi.
+    const entry = world.groundMap?.();
+    const route = state.mapPursuit?.route;
+    if (entry && mapCovers(world, object, entry, at, birdBox(tuning, bird))) {
+      return route
+        ? route.reachable
+        : mapReachable(world, object, entry, at, birdBox(tuning, bird));
+    }
     const previous = state.traversal;
     const hers = birdBox(tuning, bird);
     const sameTarget =
@@ -1163,7 +1197,11 @@ function updatePursuit(
   const target = birdBox(tuning, bird);
   const aware =
     targetInSameChunk(world, observer, target) || targetInCurrentView(world, observer, target);
-  if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true) {
+  const entry = pursuitKinds(object.behaviour!).groundTraversal ? world.groundMap?.() : undefined;
+  if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true && entry) {
+    // The map path that pursuit would follow is the rearm verdict.
+    reachable = aware ? mapReachable(world, object, entry, at, target) : undefined;
+  } else if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true) {
     const motion = pursuitKinds(object.behaviour!).groundTraversalMotion;
     if (motion?.kind === "pursue" && motion.mode === "ground") {
       const probed = probeRearm(
@@ -1233,7 +1271,6 @@ interface BehaviourRun {
   capturedIntent: boolean;
   current: Point;
   readonly instant: Set<string>;
-  intentPause: boolean | undefined;
   next: BehaviourState;
   readonly segments: BehaviourSegment[];
   time: number;
@@ -1283,10 +1320,9 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
   const { target: bird, tuning, world } = perception;
   const plan = object.behaviour!;
   const { actions, current, instant, segments, time, traversalStep } = run;
-  let { capturedIntent, intentPause, next } = run;
+  let { capturedIntent, next } = run;
   const save = () => {
     run.capturedIntent = capturedIntent;
-    run.intentPause = intentPause;
     run.next = next;
   };
   let node = nodeOf(object, next.stateKey);
@@ -1505,16 +1541,6 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
         next = { ...next, traversal: fresh };
       }
       capturedIntent = true;
-      intentPause = undefined;
-    }
-    if (intentPause === undefined) {
-      intentPause =
-        (next.intent?.pauseRemainingSeconds ?? 0) > 0 &&
-        (node.motion.mode === "ground"
-          ? supportContact(object, world, current) &&
-            !next.traversal?.preparation &&
-            (!next.traversal || next.traversal.physical.grounded)
-          : safeIntentHover(world, seconds - time, object, current));
     }
   }
   const frame = object.contact
@@ -1584,7 +1610,7 @@ function actSlice(context: BehaviourRunContext, decision: SliceDecision, run: Be
   const { node, settling, supportMotion, track } = decision;
   const { supported, target: landingTarget, world: supportWorld } = decision.support;
   const sampledMotion = decision.sampled;
-  const { instant, intentPause, segments } = run;
+  const { instant, segments } = run;
   let { current, next, time, traversalStep } = run;
   let { frame, slice } = decision;
   if (node.motion.kind === "hop" && !next.hop) {
@@ -1628,7 +1654,7 @@ function actSlice(context: BehaviourRunContext, decision: SliceDecision, run: Be
     const acted = ability.act(
       {
         arrives: decision.arrives,
-        intent: { paused: intentPause === true, sampled: sampledMotion },
+        intent: { sampled: sampledMotion },
         object,
         perception,
         seconds,
@@ -1894,7 +1920,6 @@ export function advanceBehaviour(
     capturedIntent: false,
     current,
     instant,
-    intentPause: undefined,
     next,
     segments,
     time: 0,

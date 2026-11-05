@@ -136,6 +136,7 @@ export function bossSample(
         id: `${after.area}:${index}`,
         kind: object.character,
         motion: motion.kind === "pursue" ? `pursue-${motion.mode}` : motion.kind,
+        ...(state.traversal?.preparation && { preparing: true }),
         ...(state.pursuit && { pursuit: state.pursuit.phase }),
         state: state.stateKey,
         supported: supportContact(object, world, at),
