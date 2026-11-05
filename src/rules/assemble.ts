@@ -1050,3 +1050,36 @@ export function assembleZone(
     ),
   );
 }
+
+// assembleZone, first with the avoided chunk ids left out of every middle pool, then, when no
+// assembly fits without them, with every pool whole. Deterministic in (seed, avoid). Recency
+// across stages passes the ids of the zone's recent stages; an empty list assembles as
+// assembleZone.
+export function assembleZoneAvoiding(
+  library: ChunkLibrary,
+  avoid: readonly string[],
+  seed: number,
+  key: string,
+  recipe: StageRecipe,
+): ZonePlan {
+  if (avoid.length > 0) {
+    const avoided = new Set(avoid);
+    const keep = (pool: ChunkPool) => pool.filter((id) => !avoided.has(id));
+    const narrowed: StageRecipe =
+      "sections" in recipe
+        ? {
+            ...recipe,
+            sections: recipe.sections.map((section) => ({
+              ...section,
+              chunks: keep(section.chunks),
+            })),
+          }
+        : { ...recipe, chunks: keep(recipeChunkPool(library, recipe)) };
+    try {
+      return assembleZone(library, seed, key, narrowed);
+    } catch {
+      // No assembly fits without the avoided chunks; fall back to the whole pools.
+    }
+  }
+  return assembleZone(library, seed, key, recipe);
+}

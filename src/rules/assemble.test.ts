@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { AreaPlan, ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../data/types";
-import { ASSEMBLED_AREA, assembleZone, type ChunkLibrary } from "./assemble";
+import { FIXTURE_LIBRARY, FIXTURE_RECIPE } from "../testing/chunks";
+import { ASSEMBLED_AREA, assembleZone, assembleZoneAvoiding, type ChunkLibrary } from "./assemble";
 import { recipeProblems } from "./chunk";
 
 const ROWS = 60;
@@ -837,5 +838,29 @@ describe("ordered section assembly", () => {
     ).toThrow("no chunk");
     const badCap = { ...lib, chunks: { ...lib.chunks, finish: chunk(30, 30) } };
     expect(() => assembleZone(badCap, 42, "stage", ordered)).toThrow("No ordered assembly");
+  });
+});
+
+describe("assembleZoneAvoiding", () => {
+  const middles = (plan: ReturnType<typeof assembleZone>) =>
+    plan.areas[ASSEMBLED_AREA]!.chunks!.slice(1, -1).map(({ chunk }) => chunk);
+
+  it("assembles as assembleZone with nothing to avoid", () => {
+    expect(assembleZoneAvoiding(FIXTURE_LIBRARY, [], 7, "fixture", FIXTURE_RECIPE)).toEqual(
+      assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
+    );
+  });
+
+  it("leaves avoided chunks out while a run fits without them", () => {
+    const avoid = middles(assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE)).slice(0, 1);
+    const plan = assembleZoneAvoiding(FIXTURE_LIBRARY, avoid, 7, "fixture", FIXTURE_RECIPE);
+    expect(middles(plan).filter((id) => avoid.includes(id))).toEqual([]);
+  });
+
+  it("falls back to the whole pool when nothing fits without the avoided chunks", () => {
+    const avoid = Object.keys(FIXTURE_LIBRARY.chunks);
+    expect(assembleZoneAvoiding(FIXTURE_LIBRARY, avoid, 7, "fixture", FIXTURE_RECIPE)).toEqual(
+      assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
+    );
   });
 });
