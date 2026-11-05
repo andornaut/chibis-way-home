@@ -1,5 +1,5 @@
 /**
- * The climbing raccoon antagonist, separate from the retained pedestrian/room cast.
+ * The climbing raccoon antagonist, separate from the retained room cast.
  *
  * Anticipate-lift appends load 120ms, lift 160ms and return-brace 200ms, playing once and holding
  * its final prepared pose. The visual lift stays inside the existing frame and reach envelope;

@@ -174,15 +174,14 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 - Feet sit on the frame's bottom rows.
 - Size classes step evenly. Draw each to a target inked area, not just a frame size, so small and large read as distinct steps.
 
-| Sprite          | Frame                        |
-| --------------- | ---------------------------- |
-| Bird            | 48x42                        |
-| Bird portrait   | 64x64                        |
-| Ferret          | 64x80                        |
-| Ferret portrait | 64x64                        |
-| Pigeon          | 22x22                        |
-| Pug             | 44x32                        |
-| Pedestrian      | 34x50 (cat), 36x50 (raccoon) |
+| Sprite          | Frame |
+| --------------- | ----- |
+| Bird            | 48x42 |
+| Bird portrait   | 64x64 |
+| Ferret          | 64x80 |
+| Ferret portrait | 64x64 |
+| Pigeon          | 22x22 |
+| Pug             | 44x32 |
 
 ### Text
 
@@ -502,14 +501,12 @@ The new frames follow every existing tag without changing their global frame ind
 
 A placed thing combines an archetype (its behaviour), a character configuration (its canonical animations, hit box, dialogue and quip pools and quirks) and an instance (one placement). Its resolved skin supplies compatible artwork. A character's data names the tag that plays for each state, so every character sprite lists its tags by state (idle, move, react, talk, quirk) in its script header comment and in the table below. A state with no tag of its own says "none" or names the tag it falls back to. A state with more than one tag names each.
 
-| Character          | idle   | move                                         | react                        | talk                       | quirk    |
-| ------------------ | ------ | -------------------------------------------- | ---------------------------- | -------------------------- | -------- |
-| bird               | `idle` | `walk`; in the air `jump`, `flutter`, `land` | none, falls back to `land`   | none, falls back to `idle` | none     |
-| ferret             | `idle` | none, falls back to `idle`                   | none, falls back to `scheme` | `talk`                     | `scheme` |
-| pigeon             | `idle` | `fly`                                        | `flee`, then `fly`           | none, falls back to `idle` | none     |
-| dog-pug            | `idle` | `walk`                                       | `perk`                       | `talk`                     | none     |
-| pedestrian-cat     | `idle` | `walk`                                       | none, falls back to `idle`   | none, falls back to `idle` | none     |
-| pedestrian-raccoon | `idle` | `walk`                                       | none, falls back to `idle`   | none, falls back to `idle` | none     |
+| Character | idle   | move                                         | react                        | talk                       | quirk    |
+| --------- | ------ | -------------------------------------------- | ---------------------------- | -------------------------- | -------- |
+| bird      | `idle` | `walk`; in the air `jump`, `flutter`, `land` | none, falls back to `land`   | none, falls back to `idle` | none     |
+| ferret    | `idle` | none, falls back to `idle`                   | none, falls back to `scheme` | `talk`                     | `scheme` |
+| pigeon    | `idle` | `fly`                                        | `flee`, then `fly`           | none, falls back to `idle` | none     |
+| dog-pug   | `idle` | `walk`                                       | `perk`                       | `talk`                     | none     |
 
 ### Reduced motion
 
@@ -561,15 +558,12 @@ Friendly animals appear only as muted background flavour, never in the foregroun
 
 The character catalogue drawn by `art/tools/cast.ts` has no current world placements. Its header comment gives every frame. The room helper's dialogue uses the `dog-pug` sprite as its portrait. These assets have no separate portraits or hit boxes; they are not foreground friendly animals or pickups. Their existing brighter palettes must be muted before any future background flavour placement. Each faces right (mirrored for left) at outdoor scale beside the bird, with its feet on the frame's bottom rows and its body centre on the frame's centre line, so mirroring it does not move it. Outlines are coloured: two ramp steps darker, stepped further down until they hold 3:1 on the sidewalk.
 
-| Key                | Character                                                        | Frame | Tags and timing                                                                               |
-| ------------------ | ---------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
-| pigeon             | a small pigeon at true street scale, placed in groups            | 22x22 | `idle` 600, 140, 140, 140ms (stand, peck, stand, peck); `flee` 2 x 80ms, once; `fly` 2 x 90ms |
-| dog-pug            | a fawn pug with a black mask and a sky-blue collar               | 44x32 | `idle` 2 x 400ms; `walk` 4 x 120ms; `perk` 2 x 80ms, once; `talk` 2 x 150ms                   |
-| pedestrian-cat     | an orange tabby in a mauve coat with a cream tote bag            | 34x50 | `walk` 4 x 140ms; `idle` 2 x 400ms                                                            |
-| pedestrian-raccoon | a knitted-style raccoon: cream face band, ink masks, banded tail | 36x50 | `walk` 4 x 140ms; `idle` 2 x 400ms                                                            |
+| Key     | Character                                             | Frame | Tags and timing                                                                               |
+| ------- | ----------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
+| pigeon  | a small pigeon at true street scale, placed in groups | 22x22 | `idle` 600, 140, 140, 140ms (stand, peck, stand, peck); `flee` 2 x 80ms, once; `fly` 2 x 90ms |
+| dog-pug | a fawn pug with a black mask and a sky-blue collar    | 44x32 | `idle` 2 x 400ms; `walk` 4 x 120ms; `perk` 2 x 80ms, once; `talk` 2 x 150ms                   |
 
 - The pigeon flees in two steps: `flee` plays once (crouch, leap) and the game then loops `fly` while it moves the pigeon up and away. It reads at 1x by its grey body, lgrey rim light, bold green-and-mauve neck sheen and pink feet.
-- The cat has the coat body: a big round head over an A-line coat and two stub legs. The raccoon has its own front-on body after a knitted raccoon: a cream face band over ink masks, a wide round muzzle and belly, its head low on a round body, and a banded tail. Both walk the two-leg cycle: a foot lifted 2px, passing (body 1px up), the other foot lifted, passing.
 
 ## Dog antagonist
 

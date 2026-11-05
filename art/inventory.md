@@ -88,8 +88,6 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | map-zone                  | map zone marker                                            | 35x35  | normal, current, visited, locked, unbuilt                                                    |
 | park-boat                 | park, moving platform: deck line on row 0, collision 72x12 | 72x18  | idle                                                                                         |
 | park-gate                 | park room door, a Use zone, no collision                   | 36x60  | idle, open (once)                                                                            |
-| pedestrian-cat            | street cast                                                | 34x50  | walk, idle                                                                                   |
-| pedestrian-raccoon        | street cast                                                | 36x50  | walk, idle                                                                                   |
 | pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                                                                       |
 | portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                                                                      |
 | portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                                                                       |
