@@ -331,18 +331,6 @@
       "once": []
     },
     {
-      "key": "owl-antagonist",
-      "png": "sprites/owl-antagonist.png",
-      "json": "sprites/owl-antagonist.json",
-      "once": [],
-      "hitbox": {
-        "x": 2,
-        "y": 2,
-        "width": 44,
-        "height": 46
-      }
-    },
-    {
       "key": "park-boat",
       "png": "sprites/park-boat.png",
       "json": "sprites/park-boat.json",
@@ -444,18 +432,6 @@
       "png": "sprites/portrait-raccoon.png",
       "json": "sprites/portrait-raccoon.json",
       "once": []
-    },
-    {
-      "key": "rabbit-antagonist",
-      "png": "sprites/rabbit-antagonist.png",
-      "json": "sprites/rabbit-antagonist.json",
-      "once": [],
-      "hitbox": {
-        "x": 2,
-        "y": 2,
-        "width": 44,
-        "height": 46
-      }
     },
     {
       "key": "raccoon-antagonist",
