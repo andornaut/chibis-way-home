@@ -753,17 +753,24 @@ Farmland and River crossing use the countryside destination's muted straw primar
 
 `tiles-countryside` contains 28 cells of 12x12 in eight columns, exported as a 96x48 sheet. Every family supplies `top`, `top-left`, `top-right`, `top-joint`, `face`, `face-left` and `face-right`. Safe tops retain the dark edge and white lip. One-way ledges, moving elements and red contact strips reuse the shared skins and geometry.
 
-| Backdrop        | Size    | Repeat | Plane                |
-| --------------- | ------- | ------ | -------------------- |
-| countryside-far | 720x600 | x      | Far distance         |
-| countryside-sky | 48x600  | x      | Fixed sky            |
-| farmland-barn   | 120x144 | none   | Gameplay, decorative |
-| farmland-fence  | 48x48   | x      | Gameplay, decorative |
-| farmland-mid    | 720x600 | x      | Middle distance      |
-| river-mid       | 720x600 | x      | Middle distance      |
-| river-reeds     | 48x72   | x      | Gameplay, decorative |
+| Backdrop             | Size    | Repeat | Plane                |
+| -------------------- | ------- | ------ | -------------------- |
+| countryside-far      | 720x600 | x      | Far distance         |
+| countryside-sky      | 48x600  | x      | Fixed sky            |
+| countryside-windmill | 144x240 | none   | Gameplay, decorative |
+| farmland-barn        | 120x144 | none   | Gameplay, decorative |
+| farmland-fence       | 48x48   | x      | Gameplay, decorative |
+| farmland-mid         | 720x600 | x      | Middle distance      |
+| river-mid            | 720x600 | x      | Middle distance      |
+| river-reeds          | 48x72   | x      | Gameplay, decorative |
 
 Backdrops use bottom-left anchors with default bottom y 600. Use sky factors 0,0; far factors 0.15,0.05; middle factors 0.4,0.15. Select the stage's middle-distance layer. Near props use factors 1,1 and align to the local floor through placement data. Decorative river scenery does not define water collision or danger. Barns, fences and reeds have no safe lip or contact band; keep their silhouettes clear of usable surfaces. Existing street-door artwork may supply room entrances.
+
+The windmill sails use `countryside-windmill` and two sprites in the countryside timber ramp (zone-peach, zone-peach-shade, brown and dbrown). None carries red, amber or a round pickup shape.
+
+- `countryside-windmill`: bottom-left on the module floor. A grey stone plinth with a door, a tapering boarded smock tower with one window, a dbrown curb and a domed cap. The windshaft boss, a clipped dbrown square, is centred on pixel 72,72: the hub the sails orbit. It draws no sails and has no lip or collision.
+- `windmill-sail-ledge`: 60x12, bottom-centre on a 5x1 footprint, tag `idle`. Rows 0 to 2 are the standable top, a navy edge over a 2px white lip with nothing above row 0. Below, a zone-peach and zone-peach-shade timber deck with brown plank joints, a dbrown outline and a small centre clamp. No sail cloth.
+- `windmill-spoke`: 8x8, tag `idle`. A clipped-corner lattice node, a dbrown frame around a zone-peach-shade cell crossed by a brown brace, with a 1px clear margin. Placed unrotated along the tether from the hub centre to the ledge's top centre, the nodes read as a dotted, stepped spar at any angle.
 
 ## Goose antagonist
 

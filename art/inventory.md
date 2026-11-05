@@ -210,16 +210,19 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Countryside materials
 
-| Key               | Type                               | Size    | Contract                                         |
-| ----------------- | ---------------------------------- | ------- | ------------------------------------------------ |
-| countryside-far   | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| countryside-sky   | repeating backdrop                 | 48x600  | Bottom-left, y 600, repeat x                     |
-| farmland-barn     | decorative backdrop                | 120x144 | Bottom-left, y 600, no repeat                    |
-| farmland-fence    | repeating backdrop                 | 48x48   | Bottom-left, y 600, repeat x                     |
-| farmland-mid      | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| river-mid         | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| river-reeds       | repeating backdrop                 | 48x72   | Bottom-left, y 600, repeat x                     |
-| tiles-countryside | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
+| Key                  | Type                                 | Size    | Contract                                         |
+| -------------------- | ------------------------------------ | ------- | ------------------------------------------------ |
+| countryside-far      | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                     |
+| countryside-sky      | repeating backdrop                   | 48x600  | Bottom-left, y 600, repeat x                     |
+| countryside-windmill | decorative backdrop, windmill tower  | 144x240 | Bottom-left, module floor, no repeat; hub 72,72  |
+| farmland-barn        | decorative backdrop                  | 120x144 | Bottom-left, y 600, no repeat                    |
+| farmland-fence       | repeating backdrop                   | 48x48   | Bottom-left, y 600, repeat x                     |
+| farmland-mid         | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                     |
+| river-mid            | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                     |
+| river-reeds          | repeating backdrop                   | 48x72   | Bottom-left, y 600, repeat x                     |
+| tiles-countryside    | tileset, 12px cells, eight columns   | 96x48   | Four material families, seven terrain tiles each |
+| windmill-sail-ledge  | sprite, windmill sail tip ledge      | 60x12   | Bottom-centre, 5x1; idle                         |
+| windmill-spoke       | sprite, windmill sail tether segment | 8x8     | Centred on the tether; idle                      |
 
 ## Goose antagonist
 

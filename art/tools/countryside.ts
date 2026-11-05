@@ -18,6 +18,23 @@
  * repeat x factor 1,1. Near decor aligns with local floor, has no collision, white safe lip or red
  * hazard marking. Keep near silhouettes clear of the route. Tonal silhouettes have no dark contour
  * bands. No new actors, doors or mechanics. Preview geometry is illustrative only.
+ *
+ * The windmill sails use countryside-windmill and two sprites in the countryside timber ramp
+ * (zone-peach, zone-peach-shade, brown, dbrown):
+ * - countryside-windmill: 144x240, no repeat, bottom-left on the module floor, gameplay plane at
+ *   1,1. A grey stone plinth with a door, a tapering boarded smock tower with one window, a curb
+ *   and a domed cap. The windshaft boss is centred on pixel 72,72, the hub the sails orbit. No
+ *   sails, lip or collision.
+ * Sprites (once: none):
+ * - windmill-sail-ledge: 60x12, bottom-centre on a 5x1 footprint, tag idle (1 frame). Rows 0 to 2
+ *   are the standable top: a navy edge over a 2px white lip, nothing above row 0. Below, a
+ *   zone-peach and zone-peach-shade timber deck with brown plank joints, a dbrown outline and a
+ *   small centre clamp. No sail cloth.
+ * - windmill-spoke: 8x8, tag idle (1 frame). A clipped-corner lattice node: dbrown frame, a
+ *   zone-peach-shade cell crossed by a brown brace, a 1px clear margin. Placed unrotated every
+ *   segment from the hub centre to the ledge's top centre, it reads as a dotted, stepped spar in
+ *   any direction.
+ * No red, amber or round pickup shapes.
  */
 
 import { opaque } from "@andornaut/art-kit/raster";
@@ -29,6 +46,7 @@ import {
   BACKDROPS_DIR,
   cropBox,
   image,
+  line,
   over,
   polygon,
   readImage,
@@ -350,10 +368,165 @@ function reeds(): RgbaImage {
   return im;
 }
 
+/** The hub the sails orbit, in windmill pixels. */
+export const WINDMILL_HUB = [72, 72] as const;
+
+function windmill(): RgbaImage {
+  const im = image(144, 240);
+  // Boarded smock tower, lit from the top-left: a shaded right flank and converging board seams.
+  polygon(
+    { colour: "zone-peach-shade" },
+    [
+      [32, 216],
+      [52, 92],
+      [92, 92],
+      [112, 216],
+    ],
+    im,
+  );
+  polygon(
+    { colour: "brown" },
+    [
+      [88, 216],
+      [80, 92],
+      [92, 92],
+      [112, 216],
+    ],
+    im,
+  );
+  for (const [bottom, top] of [
+    [52, 61],
+    [72, 72],
+  ] as const) {
+    line(
+      { colour: "brown" },
+      [
+        [bottom, 215],
+        [top, 93],
+      ],
+      im,
+    );
+  }
+  line(
+    { colour: "dbrown" },
+    [
+      [100, 215],
+      [86, 93],
+    ],
+    im,
+  );
+  rect("dbrown", [64, 140, 80, 158], im);
+  rect("dslate", [67, 143, 77, 155], im);
+  // Stone plinth and door.
+  rect("slate", [26, 212, 118, 240], im);
+  rect("grey", [28, 214, 116, 238], im);
+  for (const [x, y] of [
+    [40, 220],
+    [94, 222],
+    [34, 230],
+    [104, 230],
+  ] as const) {
+    rect("slate", [x, y, x + 8, y + 2], im);
+  }
+  rect("dbrown", [60, 196, 84, 240], im);
+  rect("brown", [63, 199, 81, 240], im);
+  rect("dbrown", [71, 199, 73, 240], im);
+  // Curb and domed cap.
+  rect("dbrown", [44, 88, 100, 94], im);
+  polygon(
+    { colour: "brown" },
+    [
+      [42, 88],
+      [44, 70],
+      [52, 56],
+      [64, 48],
+      [80, 48],
+      [92, 56],
+      [100, 70],
+      [102, 88],
+    ],
+    im,
+  );
+  polygon(
+    { colour: "zone-peach-shade" },
+    [
+      [48, 84],
+      [50, 70],
+      [56, 60],
+      [66, 53],
+      [74, 53],
+      [62, 62],
+      [56, 74],
+      [54, 84],
+    ],
+    im,
+  );
+  polygon(
+    { colour: "dbrown" },
+    [
+      [90, 88],
+      [94, 72],
+      [90, 60],
+      [96, 64],
+      [101, 76],
+      [102, 88],
+    ],
+    im,
+  );
+  // Windshaft boss: a clipped dbrown square, never a round blob, centred on the hub.
+  const [hx, hy] = WINDMILL_HUB;
+  rect("plum", [hx - 7, hy - 5, hx + 8, hy + 6], im);
+  rect("plum", [hx - 5, hy - 7, hx + 6, hy + 8], im);
+  rect("dbrown", [hx - 5, hy - 5, hx + 6, hy + 6], im);
+  rect("brown", [hx - 4, hy - 4, hx + 1, hy - 2], im);
+  rect("plum", [hx - 1, hy - 1, hx + 2, hy + 2], im);
+  return im;
+}
+
+const SAIL_LEDGE = "windmill-sail-ledge";
+const SPOKE = "windmill-spoke";
+
+function sailLedge(): pixel.Frame {
+  const g = new pixel.Grid(60, 12);
+  g.rect(0, 3, 60, 7, "dbrown");
+  g.rect(1, 3, 58, 2, "zone-peach");
+  g.rect(1, 5, 58, 3, "zone-peach-shade");
+  g.rect(1, 8, 58, 1, "brown");
+  for (const x of [12, 24, 35, 47]) {
+    g.rect(x, 5, 1, 3, "brown");
+  }
+  // Centre clamp where the spar meets the deck.
+  g.rect(25, 10, 10, 2, "dbrown");
+  g.rect(27, 10, 6, 1, "brown");
+  g.rect(0, 0, 60, 1, "navy");
+  g.rect(0, 1, 60, 2, "white");
+  return g.px;
+}
+
+function spoke(): pixel.Frame {
+  const g = new pixel.Grid(8, 8);
+  g.rect(2, 1, 4, 6, "dbrown");
+  g.rect(1, 2, 6, 4, "dbrown");
+  g.rect(2, 2, 4, 4, "zone-peach-shade");
+  for (let i = 0; i < 4; i++) {
+    g.p(2 + i, 5 - i, "brown");
+  }
+  g.p(2, 2, "zone-peach");
+  return g.px;
+}
+
+export function* sprites(): Generator<pixel.SpriteEntry> {
+  yield [SAIL_LEDGE, [["idle", [sailLedge()], 1000]]];
+  yield [SPOKE, [["idle", [spoke()], 1000]]];
+}
+
+const ONCE = { [SAIL_LEDGE]: [], [SPOKE]: [] };
+
 export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage, repeat: string]>> =
   {
     "countryside-far": [far, "x"],
     "countryside-sky": [sky, "x"],
+    "countryside-windmill": [windmill, "none"],
     "farmland-barn": [barn, "none"],
     "farmland-fence": [fence, "x"],
     "farmland-mid": [farmlandMid, "x"],
@@ -370,6 +543,7 @@ export async function build(): Promise<void> {
     return backdropEntry({ bottom: BOTTOM, repeat }, key, im);
   });
   pixel.updateManifest("backdrops", entries);
+  await pixel.build({ once: ONCE }, [...sprites()]);
   console.log("built", TILESET, "and", entries.length, "backdrops");
 }
 
