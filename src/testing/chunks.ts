@@ -1,11 +1,21 @@
 // Small chunks, a theme and a recipe for the chunk tests, which run on these as well as on
 // gameplay's chunks and recipes.
+import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
 import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
+import { CROSSWALK_BEHAVIOUR } from "../data/obstacleBehaviours";
+import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
 import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
 import { SEAM_ROWS } from "../data/seams";
-import type { ChunkPlan, StageRecipe, TerrainRect, ThemePlan, ZoneRecipe } from "../data/types";
+import type {
+  Character,
+  ChunkPlan,
+  StageRecipe,
+  TerrainRect,
+  ThemePlan,
+  ZoneRecipe,
+} from "../data/types";
 import type { ChunkLibrary } from "../rules/assemble";
 import { CHUNK_LIBRARY, STAGE_RECIPES } from "../rules/zonePlans";
 
@@ -181,6 +191,56 @@ export const FIXTURE_LIBRARY: ChunkLibrary = {
       door: "door",
       looks: { ground: "floor" },
       tileset: "tiles-lobby",
+    },
+  },
+};
+
+// The crosswalk engine's fixture, outside the shared fixture pool until its characters reach
+// CHARACTERS with their art: a strip on the road top between flat kerbs on row 50, with a signal on
+// the near kerb that follows the strip's state.
+export const CROSSWALK_FIXTURE_CHARACTERS: Readonly<Record<string, Character>> = {
+  "test-crosswalk-signal": {
+    archetype: "scenery",
+    art: "crosswalk-signal",
+    cols: 1,
+    phaseAnimations: CROSSWALK_SIGNAL_ANIMATIONS,
+    rows: 7,
+  },
+  "test-crosswalk-strip": {
+    archetype: "hazard",
+    art: "placeholder-hazard",
+    behaviour: CROSSWALK_BEHAVIOUR,
+    cols: 20,
+    contactCue: "red-hazard",
+    noJumpOver: true,
+    phaseTiles: CROSSWALK_PHASE_TILES,
+    rows: 1,
+  },
+};
+
+export const CROSSWALK_FIXTURE_CATALOGUE = {
+  archetypes: ARCHETYPES,
+  characters: { ...CHARACTERS, ...CROSSWALK_FIXTURE_CHARACTERS },
+};
+
+export const CROSSWALK_FIXTURE_STRIP = { col: 20, cols: 20, row: 49 } as const;
+
+export const CROSSWALK_FIXTURE_LIBRARY: ChunkLibrary = {
+  ...FIXTURE_LIBRARY,
+  characters: CROSSWALK_FIXTURE_CATALOGUE.characters,
+  chunks: {
+    "test-crosswalk": {
+      cols: 60,
+      difficulty: 4,
+      encounters: 0,
+      entry: { row: 50 },
+      exit: { row: 50 },
+      objects: [
+        { character: "test-crosswalk-strip", id: "strip", ...CROSSWALK_FIXTURE_STRIP },
+        { character: "test-crosswalk-signal", col: 18, phaseSource: "strip", row: 43 },
+      ],
+      solids: [ground(0, 60, 50)],
+      theme: "test",
     },
   },
 };
