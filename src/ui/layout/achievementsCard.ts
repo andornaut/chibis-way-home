@@ -8,8 +8,8 @@ import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
   CARD_CONTENT,
   cardActionsSize,
-  cardBodyTop,
   type CardFonts,
+  cardHeaderLayout,
   cardTextSize,
   cardTitleReserve,
   cardTitleText,
@@ -78,7 +78,7 @@ export function achievementsPerPage(
   const pager = cardActionsSize(fonts.title, "row", [words.previous, words.next]);
   const title = cardTitleText(fonts.title, SCREEN.width - 2 * cardTitleReserve(true), words.title);
   const fixed =
-    cardBodyTop(true, { inkTop: listInkTop(fonts, entries) }, title) +
+    cardHeaderLayout(true, { inkTop: listInkTop(fonts, entries) }, title).bodyTop +
     CARD_CONTENT.gap +
     pager.height +
     CARD_CONTENT.padding;

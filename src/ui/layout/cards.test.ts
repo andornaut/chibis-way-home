@@ -2,10 +2,12 @@ import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { buildLabel } from "@andornaut/game-kit/web/build/buildLabel";
 import { expect, it } from "vitest";
 
+import manifest from "../../../public/art/manifest.json";
 import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
+import { deathLabels, deathSummary } from "../../presentation";
 import { ACHIEVEMENT_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import { achievementsCardLayout } from "./achievementsCard";
@@ -21,10 +23,12 @@ import {
   cardTitleOrigin,
   contentCardLayout,
 } from "./contentCard";
+import { deathCard } from "./deathCard";
 import { FONT_METRICS } from "./fontRoles";
 import { pressedArea } from "./hitAreas";
 import { pauseCard } from "./pauseCard";
 import { restartCard } from "./restartCard";
+import { RUN_STAT_KEYS, runStatLabels } from "./runStats";
 import { settingsCard, stepsCard } from "./settingsCard";
 import { SKILL_ROOM, skillDetails } from "./skillDetails";
 import { SKILL_BUTTON } from "./skillHud";
@@ -86,14 +90,15 @@ it.each([
 );
 
 // Visible ink tops and bottoms, measured as the scenes draw them.
-const titleInkBottom = (title: CardTitleLayout) => {
+const titleInk = (title: CardTitleLayout) => {
   const ink = textInkBounds(
     CARD_FONTS.title,
     CARD_HEADING.scale,
     CARD_HEADING.lineHeight,
     title.text,
   );
-  return cardTitleOrigin(CARD_FONTS.title, title, title.text).y + ink.y + ink.height;
+  const top = cardTitleOrigin(CARD_FONTS.title, title, title.text).y + ink.y;
+  return { bottom: top + ink.height, top };
 };
 const textInkTop = (font: typeof CARD_FONTS.body, at: { readonly y: number }, text: string) =>
   at.y + textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text).y;
@@ -121,6 +126,22 @@ const achievements = achievementsCardLayout(
   achievementWords,
 );
 const restart = restartCard(CARD_FONTS, TEXT.restart);
+const deathWords = deathSummary(TEXT.death, {
+  activeSeconds: 65,
+  ...deathLabels(ZONE_MAP, TEXT.map, "1", ZONE_MAP.destinations[0]!.stages[0]!),
+  percent: 0.25,
+});
+const death = deathCard(
+  CARD_FONTS,
+  { ...SCREEN, x: 0, y: 0 },
+  {
+    ...deathWords,
+    home: TEXT.pause.home,
+    retry: TEXT.death.retry,
+    stats: RUN_STAT_KEYS.map((key) => ({ label: runStatLabels(TEXT.stats)[key], value: "1:05" })),
+    totals: RUN_STAT_KEYS.map((key) => ({ label: runStatLabels(TEXT.stats)[key], value: "1:05" })),
+  },
+);
 const skills = (["dash", "doubleJump", "speedy"] as const).flatMap((skill) => [
   skillDetails(CARD_FONTS, { ...SCREEN, x: 0, y: 0 }, true, TEXT.buttons, TEXT.skills[skill]),
   skillDetails(CARD_FONTS, SKILL_ROOM.bounds, false, TEXT.buttons, TEXT.skills[skill]),
@@ -129,8 +150,8 @@ const skills = (["dash", "doubleJump", "speedy"] as const).flatMap((skill) => [
 it.each([
   {
     content: centredInkTop(variants[0]!.moveControls.label, TEXT.settings.moveControls),
+    layout: variants[0]!,
     name: "settings",
-    title: variants[0]!.title,
   },
   {
     content: Math.min(
@@ -140,39 +161,50 @@ it.each([
           textInkTop(CARD_FONTS.title, title, achievementWords[index]!.title),
         ),
     ),
+    layout: achievements,
     name: "achievements",
-    title: achievements.title,
   },
-  { content: pause.resume.button.y, name: "pause", title: pause.title },
+  { content: pause.resume.button.y, layout: pause, name: "pause" },
   ...installs.map((layout, index) => ({
     content: centredInkTop(
       layout.steps[0]!.text,
       TEXT.settings.installSteps[index === 0 ? "firefoxAndroid" : "ios"].first,
     ),
+    layout,
     name: "install",
-    title: layout.title,
   })),
   {
     content: centredInkTop(restart.question, TEXT.restart.question),
+    layout: restart,
     name: "restart",
-    title: restart.title,
   },
-  { content: stageSelect.buttons[0]!.button.y, name: "stage selection", title: stageSelect.title },
-  { content: updateButton.button.y, name: "update", title: update.title! },
+  { content: stageSelect.buttons[0]!.button.y, layout: stageSelect, name: "stage selection" },
+  { content: updateButton.button.y, layout: { ...update, title: update.title! }, name: "update" },
   ...skills.map((layout) => ({
     content: skillInkTop(layout),
+    layout: { ...layout, title: layout.title! },
     name: "skill",
-    title: layout.title!,
   })),
+  {
+    content: centredInkTop(death.stage, death.stageText),
+    layout: death,
+    name: "death",
+  },
 ])(
-  "keeps the shared visible gap from the $name title ink to its first content",
-  ({ content, title }) => {
-    const gap = content - titleInkBottom(title);
-    // Whole-pixel group positions round the gap up by less than a pixel.
-    expect(gap).toBeGreaterThanOrEqual(CARD_CONTENT.titleInkGap);
-    expect(gap).toBeLessThan(CARD_CONTENT.titleInkGap + 1);
+  "balances the $name title: frame to title ink equals title ink to first content",
+  ({ content, layout: { card, title } }) => {
+    const ink = titleInk(title);
+    const above = ink.top - (card.y + CARD_CONTENT.frameBorder);
+    const below = content - ink.bottom;
+    expect(Math.abs(below - above)).toBeLessThanOrEqual(1);
+    expect(title.y - card.y).toBeGreaterThanOrEqual(CARD_CONTENT.padding);
   },
 );
+
+it("measures title balance inside the card frame's 9-slice top edge", () => {
+  const frame = manifest.sprites.find(({ key }) => key === "ui-settings-card");
+  expect(frame?.slice?.top).toBe(CARD_CONTENT.frameBorder);
+});
 
 it("fills pause actions with equal panel insets and preserves distinct hit selection", () => {
   const actions = (["resume", "settings", "home"] as const).map((key) => ({
@@ -205,7 +237,7 @@ it("fills pause actions with equal panel insets and preserves distinct hit selec
       CARD_CONTENT.gap,
     );
   }
-  expect(pause.title.y - pause.card.y).toBe(CARD_CONTENT.padding);
+  expect(pause.title.y - pause.card.y).toBeGreaterThanOrEqual(CARD_CONTENT.padding);
   expect(
     pause.card.y + pause.card.height - actions.at(-1)!.art.y - actions.at(-1)!.art.height,
   ).toBe(CARD_CONTENT.padding);
@@ -225,19 +257,17 @@ it.each([false, true])(
       expect(row.label.x + row.label.width + CARD_CONTENT.gap).toBeLessThanOrEqual(row.toggle.x);
       expect(inside(layout.card, row.row)).toBe(true);
     }
-    // Rows are their own 48px targets: the first starts a gap below the taller of the
-    // main-heading line and the close target's clearance (42 + 8).
+    // Rows are their own 48px targets: the first starts at the close target's clearance
+    // (42 + 8), and the title moves down to balance its ink between the frame and the first label.
     const rows = [
       layout.moveControls,
       layout.actionButtons,
       ...(hasInstall ? [layout.install] : []),
     ];
     const closeClearance = layout.close.hit.y + layout.close.hit.height + CARD_CONTENT.gap;
-    expect(layout.title.y - layout.card.y).toBe(CARD_CONTENT.padding);
+    expect(layout.title.y - layout.card.y).toBeGreaterThan(CARD_CONTENT.padding);
     expect(layout.title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
-    expect(rows[0]!.row.y).toBe(
-      Math.max(layout.title.y + layout.title.height + CARD_CONTENT.gap, closeClearance),
-    );
+    expect(rows[0]!.row.y).toBe(closeClearance);
     expect(rows[0]!.row.y).toBeGreaterThanOrEqual(closeClearance);
     rows.forEach(({ hit, row }, index) => {
       expect(hit).toEqual(row);

@@ -6,7 +6,6 @@ import {
   type CardFonts,
   cardTextSize,
   cardTitleReserve,
-  cardTitleText,
   contentCardLayout,
 } from "./contentCard";
 import {
@@ -44,14 +43,11 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
   // The title keeps the closeable cards' mirrored reservation so every modal title centres alike.
   const titleReserve = cardTitleReserve(true);
   const innerWidth = bounds.width - 2 * statsInset;
-  const title = cardTitleText(fonts.title, bounds.width - 2 * titleReserve, words.title);
-  const texts = [
-    title.text,
-    ...[words.stage, words.progress].map((text) =>
-      wrappedCardText(fonts.body, bounds.width - 2 * CARD_CONTENT.padding, text),
-    ),
-  ];
-  const rows = [title, ...texts.slice(1).map((text) => cardTextSize(fonts.body, text))];
+  const header = { close: false, font: fonts.title, reserve: titleReserve, title: words.title };
+  const texts = [words.stage, words.progress].map((text) =>
+    wrappedCardText(fonts.body, bounds.width - 2 * CARD_CONTENT.padding, text),
+  );
+  const rows = texts.map((text) => cardTextSize(fonts.body, text));
   const columnLimit = (innerWidth - STATS_DIVIDER_HEIGHT - 2 * dividerGap) / 2;
   const columns = [stageMetrics, words.totals].map((metrics) => {
     const valueWidth = Math.min(
@@ -88,12 +84,9 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     {
       height:
         rows.reduce((sum, row) => sum + row.height, 0) + (rows.length - 1) * CARD_CONTENT.rowGap,
+      inkTop: rows[0]!.inkTop,
       key: "rows",
-      width: Math.max(
-        ...rows.map(
-          (row, index) => row.width + (index === 0 ? 2 * (titleReserve - CARD_CONTENT.padding) : 0),
-        ),
-      ),
+      width: Math.max(...rows.map((row) => row.width)),
     },
     {
       height: Math.max(...columns.map((column) => column.height)) + 2 * sectionPadding,
@@ -102,7 +95,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     },
     { key: "actions", ...cardActionsSize(fonts.title, "row", labels) },
   ];
-  const base = contentCardLayout(bounds, groups);
+  const base = contentCardLayout(bounds, groups, header);
   const statementCardWidth =
     words.statement === undefined
       ? base.card.width
@@ -125,10 +118,9 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     });
   }
   const layout = {
-    ...contentCardLayout(bounds, groups),
+    ...contentCardLayout(bounds, groups, header),
     rows,
     texts,
-    titleReserve,
   };
   const rowGroup = layout.groups.rows;
   const actionGroup = layout.groups.actions;
@@ -143,7 +135,7 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     return row;
   });
   const [home, retry] = cardActions(fonts.title, "row", actionGroup, labels);
-  if (!home || !retry || !positions[0] || !positions[1] || !positions[2]) {
+  if (!home || !retry || !positions[0] || !positions[1] || !layout.title) {
     throw new Error("Missing death card rows or actions");
   }
   const divider: Rect = {
@@ -182,20 +174,15 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     card: layout.card,
     divider,
     home,
-    progress: positions[2],
+    progress: positions[1],
     retry,
-    stage: positions[1],
-    stageText: layout.texts[1] as string,
+    stage: positions[0],
+    stageText: layout.texts[0] as string,
     statement:
       statement !== undefined && layout.groups.statement
         ? { rect: layout.groups.statement, text: statement }
         : undefined,
     stats: placedStats,
-    title: {
-      ...positions[0],
-      text: title.text,
-      width: layout.card.width - 2 * layout.titleReserve,
-      x: layout.card.x + layout.titleReserve,
-    },
+    title: layout.title,
   };
 }

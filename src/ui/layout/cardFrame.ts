@@ -9,13 +9,13 @@ export const CARD_TEXT_SCALE = FONT_SCALE;
 export const CARD_CONTENT = {
   closeInset: 6,
   closeSize: 24,
+  // ui-settings-card's 9-slice top edge: its ink line and highlight, inside which a title's top
+  // gap is measured.
+  frameBorder: 2,
   gap: 8,
   lineHeight: 16,
   padding: MODAL_CONTENT.padding,
   rowGap: 4,
-  // The visible gap from a modal title's ink to the first body content: text ink, or a drawn face.
-  // It matches Settings' title over its first row label.
-  titleInkGap: 28.75,
 } as const;
 
 // Fixed frame geometry for the placeholder celebration. Ordinary modal cards measure their

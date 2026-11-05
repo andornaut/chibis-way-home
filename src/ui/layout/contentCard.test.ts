@@ -88,23 +88,26 @@ describe("measured content cards", () => {
     expect(result.card.width).toBeLessThanOrEqual(SCREEN.width);
   });
 
-  it.each([0, 12])(
-    "makes the header the taller of the title line and the close clearance (outset %s)",
+  it.each([0, 12, 40])(
+    "keeps the first press area (outset %s) below the close clearance, lowering the title to balance",
     (hitOutset) => {
-      const layout = contentCardLayout(VIEW, [{ height: 48, hitOutset, key: "rows", width: 200 }], {
-        close: true,
-        font: TITLE,
-        title: TEXT.settings.title,
-      });
-      const title = layout.title!;
-      const close = layout.close!.hit;
-      expect(title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
-      expect(layout.groups.rows!.y).toBe(
-        Math.max(title.y + title.height, close.y + close.height + hitOutset) + CARD_CONTENT.gap,
+      const layout = contentCardLayout(
+        VIEW,
+        [{ height: 48, hitOutset, inkTop: 0, key: "rows", width: 200 }],
+        { close: true, font: TITLE, title: TEXT.settings.title },
       );
-      expect(layout.groups.rows!.y - hitOutset).toBeGreaterThanOrEqual(
+      const { card, groups, title } = layout;
+      const close = layout.close!.hit;
+      expect(title!.height).toBe(FONT_METRICS.mainHeading.lineHeight);
+      expect(title!.y - card.y).toBeGreaterThanOrEqual(CARD_CONTENT.padding);
+      expect(groups.rows!.y - hitOutset).toBeGreaterThanOrEqual(
         close.y + close.height + CARD_CONTENT.gap,
       );
+      const at = cardTitleOrigin(TITLE, title!, title!.text);
+      const ink = textInkBounds(TITLE, CARD_HEADING.scale, CARD_HEADING.lineHeight, title!.text);
+      const above = at.y + ink.y - card.y - CARD_CONTENT.frameBorder;
+      const below = groups.rows!.y - (at.y + ink.y + ink.height);
+      expect(below).toBeCloseTo(above, 6);
     },
   );
 

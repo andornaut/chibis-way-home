@@ -72,8 +72,8 @@ describe("stage picker layout", () => {
     expect(card.x).toBe(CARD_CONTENT.padding);
     expect(card.x + card.width / 2).toBe(SCREEN.width / 2);
     expect(card.y + card.height / 2).toBe(SCREEN.height / 2);
-    expect(title.y - card.y).toBe(CARD_CONTENT.padding);
-    expect(title.y + title.height + CARD_CONTENT.gap).toBeLessThanOrEqual(buttons[0]!.hit.y);
+    expect(title.y - card.y).toBeGreaterThanOrEqual(CARD_CONTENT.padding);
+    expect(title.y + title.height).toBeLessThanOrEqual(buttons[0]!.button.y);
     expect(title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
     expect(title.x + title.width / 2).toBe(card.x + card.width / 2);
     expect(close.art.y - card.y).toBe(CARD_CONTENT.closeInset);

@@ -204,11 +204,7 @@ it("fits all six actual retry statements and grouped totals within the centred s
       expect(result.home.button.y - result.divider.y - result.divider.height).toBe(
         2 * CARD_CONTENT.gap,
       );
-      // The main-heading line replaces a 16px single-line slot.
       expect(result.title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
-      expect(result.card.height).toBe(
-        248 - CARD_CONTENT.lineHeight + FONT_METRICS.mainHeading.lineHeight,
-      );
       expect(result.home.button.height).toBe(TEXT_BUTTON.height);
       expect(result.retry.button.height).toBe(TEXT_BUTTON.height);
       expect(result.title.x - result.card.x).toBe(50);

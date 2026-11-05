@@ -34,10 +34,8 @@ export const CARD_HEADING = {
   scale: FONT_METRICS.mainHeading.size / FONT_NATIVE_SIZE,
 } as const;
 
-// A title wrapped at the heading size: its lines joined by newlines, its measured box, and the
-// bottom of its ink centred in that box.
+// A title wrapped at the heading size: its lines joined by newlines, and its measured box.
 export interface CardTitle extends Size {
-  readonly inkBottom: number;
   readonly text: string;
 }
 
@@ -46,6 +44,8 @@ export type CardTitleLayout = Rect & { readonly text: string };
 interface CardHeader {
   readonly close: boolean;
   readonly font: BitmapFont;
+  // The title's horizontal clearance on each side, when it differs from cardTitleReserve(close).
+  readonly reserve?: number;
   readonly title: string;
 }
 
@@ -72,25 +72,41 @@ export function cardTitleReserve(close: boolean): number {
     : CARD_CONTENT.padding;
 }
 
-// Where the first group starts below the card's top. With a header, its first visible content
-// sits the title ink gap below the title's ink. The group's box also stays a gap below the title
-// line, and its expanded press area a gap below the close target. Whole pixels, never closer.
-export function cardBodyTop(
+// Where the title and the first group start below the card's top. The visible gap from the
+// title's ink to the first group's visible content equals the gap from the frame's inner top edge
+// to the title's ink. The title starts at the top padding unless the close target's clearance
+// pushes the first group lower; then the title moves down to keep both gaps equal. The first group
+// starts on a whole pixel.
+export function cardHeaderLayout(
   close: boolean,
   first: Pick<CardGroup, "hitOutset" | "inkTop"> | undefined,
   title: CardTitle | undefined,
-): number {
-  const { gap, padding, titleInkGap } = CARD_CONTENT;
-  if (!title && !close) {
-    return padding;
+): { readonly bodyTop: number; readonly titleTop: number } {
+  const { frameBorder, gap, padding } = CARD_CONTENT;
+  const closeClearance = close ? CLOSE_HIT.y + CLOSE_HIT.height + gap : 0;
+  if (!title) {
+    return {
+      bodyTop: close ? closeClearance + (first?.hitOutset ?? 0) : padding,
+      titleTop: padding,
+    };
   }
-  return Math.max(
-    title ? padding + title.height + gap : 0,
-    close ? CLOSE_HIT.y + CLOSE_HIT.height + gap + (first?.hitOutset ?? 0) : 0,
-    title && first?.inkTop !== undefined
-      ? Math.ceil(padding + title.inkBottom + titleInkGap - first.inkTop)
-      : 0,
+  if (!first) {
+    return {
+      bodyTop: Math.max(padding + title.height, closeClearance - gap) + gap,
+      titleTop: padding,
+    };
+  }
+  const inkTop = first.inkTop ?? 0;
+  // Balanced at the top padding: content ink sits as far below the title ink as the title ink sits
+  // below the frame.
+  const balanced = 2 * padding - frameBorder + title.height - inkTop;
+  const bodyTop = Math.ceil(
+    Math.max(balanced, close ? closeClearance + (first.hitOutset ?? 0) : 0),
   );
+  return {
+    bodyTop,
+    titleTop: (bodyTop + inkTop + frameBorder - title.height) / 2,
+  };
 }
 
 // Wrap a title at the heading size within width. Text never shrinks: a word wider than width
@@ -109,10 +125,8 @@ export function cardTitleText(font: BitmapFont, width: number, text: string): Ca
       lineHeight,
       ...lines.map((line) => textInkBounds(font, scale, lineHeight, line).height),
     );
-  const ink = textInkBounds(font, scale, lineHeight, wrapped);
   return {
     height,
-    inkBottom: (height - ink.height) / 2 + ink.height,
     text: wrapped,
     width: Math.max(0, ...lines.map(measure)),
   };
@@ -178,13 +192,13 @@ export function contentCardLayout(
   }
   const present = groups.filter(({ height }) => height > 0);
   const close = header?.close === true;
-  const titleReserve = cardTitleReserve(close);
+  const titleReserve = header?.reserve ?? cardTitleReserve(close);
   const titleText =
     header && header.title.length > 0
       ? cardTitleText(header.font, bounds.width - 2 * titleReserve, header.title)
       : undefined;
   const hasHeader = titleText !== undefined || close;
-  const bodyTop = cardBodyTop(close, present[0], titleText);
+  const { bodyTop, titleTop } = cardHeaderLayout(close, present[0], titleText);
   const headerWidth = titleText ? titleText.width + 2 * (titleReserve - CARD_CONTENT.padding) : 0;
   const contentWidth = Math.max(headerWidth, 0, ...present.map(({ width }) => width));
   const width = modalWidth(
@@ -206,9 +220,8 @@ export function contentCardLayout(
     x: bounds.x + (bounds.width - width) / 2,
     y: bounds.y + (bounds.height - height) / 2,
   };
-  const inner = insetRect(CARD_CONTENT.padding, card);
-  const innerX = inner.x;
-  let y = inner.y;
+  const innerX = insetRect(CARD_CONTENT.padding, card).x;
+  let y: number;
   const positions: Record<string, Rect> = {};
   let title: CardTitleLayout | undefined;
   let closeLayout: ContentCardLayout["close"];
@@ -219,7 +232,7 @@ export function contentCardLayout(
         text: titleText.text,
         width: width - 2 * titleReserve,
         x: card.x + titleReserve,
-        y,
+        y: card.y + titleTop,
       };
     }
     if (close) {
