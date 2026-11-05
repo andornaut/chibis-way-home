@@ -131,7 +131,7 @@ const FLOORS: Readonly<
   >
 > = {
   apartment: { grades: { 4: 18, 5: 6 }, total: 24 },
-  blue: { grades: { 3: 11, 4: 22 }, total: 33 },
+  blue: "target",
   countryside: { grades: { 3: 10, 4: 22, 5: 3 }, total: 35 },
   home: { grades: { 4: 19, 5: 5 }, total: 24 },
   industrial: { grades: { 3: 11, 4: 18, 5: 6 }, total: 35 },
