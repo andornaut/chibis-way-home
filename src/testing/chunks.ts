@@ -3,7 +3,12 @@
 import { ARCHETYPES } from "../data/archetypes";
 import { CHARACTERS } from "../data/characters";
 import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
-import { CROSSWALK_BEHAVIOUR } from "../data/obstacleBehaviours";
+import {
+  AWNING_BEHAVIOUR,
+  AWNING_SECONDS,
+  awningCycle,
+  CROSSWALK_BEHAVIOUR,
+} from "../data/obstacleBehaviours";
 import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
 import { REACH } from "../data/reach";
 import { ZONE_ROWS } from "../data/screen";
@@ -240,6 +245,74 @@ export const CROSSWALK_FIXTURE_LIBRARY: ChunkLibrary = {
         { character: "test-crosswalk-signal", col: 18, phaseSource: "strip", row: 43 },
       ],
       solids: [ground(0, 60, 50)],
+      theme: "test",
+    },
+  },
+};
+
+// The awning engine's fixture, outside the shared fixture pool until its character reaches
+// CHARACTERS with its art: three wall-left awnings across a drop from the entry run (row 50) to the
+// exit run, over a lower street (row 58) whose step rejoins the exit. The first starts out and the
+// others retracted, so each reads out while Chibi stands on the one before. A second chunk hangs
+// one awning at standing height over flat ground.
+export const AWNING_FIXTURE_CHARACTERS: Readonly<Record<string, Character>> = {
+  "test-awning": {
+    archetype: "ledge",
+    art: "homecity-awning-ledge",
+    behaviour: AWNING_BEHAVIOUR,
+    cols: 8,
+    rows: 3,
+  },
+};
+
+export const AWNING_FIXTURE_CATALOGUE = {
+  archetypes: ARCHETYPES,
+  characters: { ...CHARACTERS, ...AWNING_FIXTURE_CHARACTERS },
+};
+
+const RETRACTED_AWNING = awningCycle(AWNING_SECONDS, "retracted");
+
+export const AWNING_FIXTURE_COLS = [17, 27, 37] as const;
+
+export const AWNING_FIXTURE_LIBRARY: ChunkLibrary = {
+  ...FIXTURE_LIBRARY,
+  characters: AWNING_FIXTURE_CATALOGUE.characters,
+  chunks: {
+    "test-awning-overhead": {
+      cols: 60,
+      difficulty: 3,
+      encounters: 0,
+      entry: { row: 50 },
+      exit: { row: 50 },
+      objects: [
+        {
+          behaviour: RETRACTED_AWNING,
+          character: "test-awning",
+          col: 20,
+          row: 47,
+        },
+      ],
+      solids: [ground(0, 60, 50)],
+      theme: "test",
+    },
+    "test-awnings": {
+      cols: 60,
+      difficulty: 4,
+      encounters: 0,
+      entry: { row: 50 },
+      exit: { row: 50 },
+      objects: AWNING_FIXTURE_COLS.map((col, index) => ({
+        ...(index > 0 && { behaviour: RETRACTED_AWNING }),
+        character: "test-awning",
+        col,
+        row: 50,
+      })),
+      solids: [
+        ground(0, 15, 50),
+        ground(15, 32, 58),
+        { col: 45, cols: 2, row: 54, rows: 4 },
+        ground(47, 13, 50),
+      ],
       theme: "test",
     },
   },
