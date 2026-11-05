@@ -172,7 +172,7 @@ describe("structural playability assessment", () => {
                     {
                       character: "enemy",
                       col: 9.5,
-                      orbit: { angularSpeed, host: "host", phase: 0, radius: 2 },
+                      orbit: { angularSpeed, host: "host", kind: "circle", phase: 0, radius: 2 },
                       row: 40,
                     },
                   ],

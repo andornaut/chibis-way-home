@@ -224,7 +224,7 @@ describe("composePair", () => {
         {
           character: "platform-ledge",
           col: 8,
-          orbit: { angularSpeed: 1, host: "host", phase: 0, radius: 4 },
+          orbit: { angularSpeed: 1, host: "host", kind: "circle", phase: 0, radius: 4 },
           row: 60,
         },
       ],

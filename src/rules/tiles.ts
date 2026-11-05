@@ -202,9 +202,14 @@ export function objectLayout(
   ) {
     throw new Error("Forced transit requires a physical support");
   }
+  const tether = instance.tether;
+  if (tether && instance.orbit && (!tether.art || tether.row !== undefined)) {
+    throw new Error(`Tether on orbiting ${instance.character} requires art and no rail row`);
+  }
   if (
-    instance.tether &&
-    (!instance.tether.art || !Number.isInteger(instance.tether.row) || instance.tether.row >= 0)
+    tether &&
+    !instance.orbit &&
+    (!tether.art || !Number.isInteger(tether.row) || tether.row! >= 0)
   ) {
     throw new Error(`Tether on ${instance.character} requires art and a rail row above it`);
   }
@@ -337,8 +342,10 @@ export function objectLayout(
     reaction: { ...reaction, range: reaction.range * tile, speed: reaction.speed * tile },
     room: instance.room,
     scene: instance.scene,
-    ...(instance.tether && {
-      tether: { art: instance.tether.art, y: (instance.row + instance.tether.row) * tile },
+    ...(tether && {
+      tether: instance.orbit
+        ? { art: tether.art, kind: "pivot" as const }
+        : { art: tether.art, kind: "rail" as const, y: (instance.row + tether.row!) * tile },
     }),
     width,
   };

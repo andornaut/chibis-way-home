@@ -50,7 +50,7 @@ const child: Instance = {
   character: "hazard",
   col: 26.5,
   id: "edge",
-  orbit: { angularSpeed: 1, host: "lift", phase: 0, radius: 6 },
+  orbit: { angularSpeed: 1, host: "lift", kind: "circle", phase: 0, radius: 6 },
   row: 40,
 };
 const plan = (objects: readonly Instance[] = [host, child]): AreaPlan => ({
@@ -77,7 +77,13 @@ function pair(): readonly [ObjectLayout, ObjectLayout] {
 describe("instance-local orbit relationships", () => {
   it("resolves references after filtering and validates the nominal authored reference pose", () => {
     const area = resolve([{ ...host, phase: 0.5 }, child]);
-    expect(area.objects[1]!.orbit).toEqual({ angularSpeed: 1, host: 0, phase: 0, radius: 72 });
+    expect(area.objects[1]!.orbit).toEqual({
+      angularSpeed: 1,
+      host: 0,
+      kind: "circle",
+      phase: 0,
+      radius: 72,
+    });
     expect(() => resolve([host, { ...child, col: child.col + 1 }])).toThrow("reference pose");
     const stage = layout([{ ...host, phase: 0.5 }, child]);
     const zone = startZone(BIRD, stage, 1);

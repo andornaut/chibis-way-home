@@ -49,12 +49,26 @@ export interface ElementBinding {
   readonly skin?: ElementSkin;
 }
 
-export interface Orbit<Host = string> {
+// A stop pattern for a turning orbit: count stops evenly spaced around each turn, seconds each,
+// the first at its authored pose from area entry.
+export interface OrbitStops {
+  readonly count: number;
+  readonly seconds: number;
+}
+
+// A child's path about its host's centre, keeping the child's centre radius tiles from it at
+// phase + angularSpeed * seconds radians (screen axes, so pi / 2 is straight below and a negative
+// speed turns against the clock). stops: turning between stops at angularSpeed instead.
+export interface CircleOrbit<Host = string> {
   readonly angularSpeed: number;
   readonly host: Host;
+  readonly kind: "circle";
   readonly phase: number;
   readonly radius: number;
+  readonly stops?: OrbitStops;
 }
+
+export type Orbit<Host = string> = CircleOrbit<Host>;
 
 export type ForcedTransitInterval = readonly [minimum: number, maximum: number];
 type ForcedTransitBankPurpose = "forward" | "refuge" | "retreat";
@@ -124,13 +138,14 @@ export interface ForcedTransitLayout {
   readonly windows: readonly ForcedTransitLayoutWindow[];
 }
 
-// A presentation-only line of repeated segments from the object's top centre straight up to its
-// rail. art: a sprite whose cable tag repeats along the line and whose hook tag is the bottom
-// segment. row: the rail's row as a tile offset from the placed object's nominal origin (negative
-// is above).
+// A presentation-only line of repeated segments from the object's top centre: straight up to its
+// rail, or for an orbiting object to its host's centre. art: a sprite whose cable tag repeats along
+// a rail's line and whose hook tag is its bottom segment, or whose idle tag repeats along the line
+// to the host. row: the rail's row as a tile offset from the placed object's nominal origin
+// (negative is above); an orbiting object has none.
 export interface Tether {
   readonly art: string;
-  readonly row: number;
+  readonly row?: number;
 }
 
 export interface Instance {
@@ -497,8 +512,11 @@ export interface ObjectLayout {
   readonly reaction: Reaction;
   readonly room: string | undefined;
   readonly scene: string | undefined;
-  // The tether's segment art and its rail's y in layout pixels, fixed in the world.
-  readonly tether?: { readonly art: string; readonly y: number };
+  // The tether's segment art and either its rail's y in layout pixels, fixed in the world, or its
+  // orbit host's centre.
+  readonly tether?:
+    | { readonly art: string; readonly kind: "rail"; readonly y: number }
+    | { readonly art: string; readonly kind: "pivot" };
   readonly width: number;
 }
 

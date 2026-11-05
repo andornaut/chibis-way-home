@@ -1,16 +1,16 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import type { GameObjects, Scene } from "phaser";
 
-import type { Point } from "../data/types";
-import { tetherSegments } from "../presentation";
+import { spokeSegments, type TetherLine, tetherSegments } from "../presentation";
 
 // The placeholder line's width in pixels while the tether has no sprite.
 const PLACEHOLDER_WIDTH = 2;
 // The hook draws over the cable it overlaps, still behind the object at depth + 1.
 const HOOK_DEPTH = 0.5;
 
-// A tether from its rail down to its anchor, at depth (one behind its object): its sprite's cable
-// and hook tags, size square, once the sprite exists, else a flat line in colour.
+// A tether along its line, at depth (one behind its object): its sprite's segments, size square,
+// once the sprite exists (cable and hook tags down from a rail, the idle tag along a spoke), else
+// a flat line in colour.
 export function createTetherArt(
   depth: number,
   art: { readonly key: string; readonly size: number } | undefined,
@@ -28,16 +28,32 @@ export function createTetherArt(
         sprite.destroy();
       }
     },
-    draw(railY: number, anchor: Point) {
+    draw(tether: TetherLine) {
+      const { anchor } = tether;
       if (line) {
-        const height = Math.max(0, Math.round(anchor.y - railY));
+        if (tether.kind === "rail") {
+          const height = Math.max(0, Math.round(anchor.y - tether.railY));
+          line
+            .setPosition(Math.round(anchor.x - PLACEHOLDER_WIDTH / 2), Math.round(tether.railY))
+            .setSize(PLACEHOLDER_WIDTH, height)
+            .setVisible(height > 0);
+          return;
+        }
+        // Along the spoke from the pivot, PLACEHOLDER_WIDTH thick about the line.
+        const { pivot } = tether;
+        const length = Math.round(Math.hypot(anchor.x - pivot.x, anchor.y - pivot.y));
         line
-          .setPosition(Math.round(anchor.x - PLACEHOLDER_WIDTH / 2), Math.round(railY))
-          .setSize(PLACEHOLDER_WIDTH, height)
-          .setVisible(height > 0);
+          .setOrigin(0, 0.5)
+          .setPosition(Math.round(pivot.x), Math.round(pivot.y))
+          .setRotation(Math.atan2(anchor.y - pivot.y, anchor.x - pivot.x))
+          .setSize(length, PLACEHOLDER_WIDTH)
+          .setVisible(length > 0);
         return;
       }
-      const segments = tetherSegments(art!.size, railY, anchor);
+      const segments =
+        tether.kind === "rail"
+          ? tetherSegments(art!.size, tether.railY, anchor)
+          : spokeSegments(art!.size, tether.pivot, anchor);
       segments.forEach(({ tag, x, y }, index) => {
         let sprite = sprites[index];
         if (!sprite) {

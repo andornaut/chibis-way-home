@@ -94,7 +94,13 @@ describe("local bot decisions", () => {
       motion: { ...platform.motion, algorithm: "linear" as const, distance: 24, speed: 24 },
       origin: { x: 600, y: 84 },
     };
-    const orbit = { angularSpeed: Math.PI, host: 0, phase: Math.PI / 2, radius: 24 };
+    const orbit = {
+      angularSpeed: Math.PI,
+      host: 0,
+      kind: "circle" as const,
+      phase: Math.PI / 2,
+      radius: 24,
+    };
     const child: ObjectLayout = {
       ...platform,
       collision: "hazard",

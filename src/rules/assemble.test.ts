@@ -532,7 +532,7 @@ describe("flat recipe chunk pools", () => {
         character: "hazard",
         col: 26.5,
         id: "hazard",
-        orbit: { angularSpeed: 1, host: "lift", phase: 0, radius: 6 },
+        orbit: { angularSpeed: 1, host: "lift", kind: "circle" as const, phase: 0, radius: 6 },
         row: 40,
       },
     ];

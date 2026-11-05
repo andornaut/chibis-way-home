@@ -71,7 +71,7 @@ import { ordinaryTransitControl } from "./forcedTransitProfile";
 import { hazardOccupancy } from "./hazardOccupancy";
 import { axisOf, motionTrack, type Track } from "./motion";
 import { preparePursuitMaps, pursuitGroundMap } from "./movementMaps";
-import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact } from "./orbit";
+import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact, pathLedge } from "./orbit";
 import { currentScreen, targetVisible } from "./perception";
 import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird";
 export { standsOn } from "./platformBird";
@@ -118,6 +118,8 @@ interface AreaObjects {
   readonly geometry: BehaviourWorld | undefined;
   readonly hazards: readonly number[];
   readonly ledges: readonly number[];
+  // Ledges on an orbit's path about a static host.
+  readonly pathLedges: readonly number[];
   readonly platforms: readonly number[];
   readonly solids: readonly number[];
 }
@@ -193,6 +195,7 @@ function areaObjects(area: AreaLayout): AreaObjects {
     geometry,
     hazards: indices("hazard"),
     ledges,
+    pathLedges: ledges.filter((index) => pathLedge(area.objects[index]!)),
     perception: area.objects.some((object) => {
       const plan = object.behaviour;
       return (
@@ -963,6 +966,10 @@ export function stepZoneBodies(
         const resolved = resolveFrame(object.orbit.host);
         const before = rectAt(object, zone.objects[index] ?? object.origin);
         const after = rectAt(object, orbitPosition(time, resolved.after, object.orbit, object));
+        if (object.collision === "ledge") {
+          // A path ledge's static host gives it no legs; it carries by its before and after.
+          return { after, before, behaviour: undefined, object };
+        }
         const orbitLegs = orbitHostLegs(
           zone.seconds,
           time,
@@ -1139,7 +1146,12 @@ export function stepZoneBodies(
   const transientStep = stepTransients(
     { height: area.height, width: area.width, x: 0, y: 0 },
     solids,
-    ledges,
+    // Transients pass through path ledges and never come to rest on one.
+    kinds.pathLedges.length > 0
+      ? kinds.ledges
+          .filter((index) => present(index) && !kinds.pathLedges.includes(index))
+          .map((index) => objects[index]!.after)
+      : ledges,
     seconds,
     birdBox(tuning, zone.bird),
     birdBox(tuning, bird),

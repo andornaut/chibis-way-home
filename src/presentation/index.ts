@@ -33,7 +33,13 @@ export { type ArtKind, artKind, artOffset, artScrollFactor } from "./objectArt";
 export { type PlayHold, stepAction } from "./playHold";
 export { scenerySpriteFrame } from "./scenerySprite";
 export { STAGE_PROGRESS_STYLE } from "./stageProgress";
-export { type TetherSegment, tetherSegments } from "./tether";
+export {
+  spokeSegments,
+  type TetherLine,
+  tetherLine,
+  type TetherSegment,
+  tetherSegments,
+} from "./tether";
 export {
   loadedTileset,
   lookTiles,

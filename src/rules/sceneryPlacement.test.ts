@@ -112,7 +112,10 @@ describe("append-only chunk scenery", () => {
     { instance: { ...placement, col: 60 }, name: "out-of-bounds placement" },
     { instance: { ...placement, role: "missing" }, name: "missing role binding" },
     {
-      instance: { ...placement, orbit: { angularSpeed: 1, host: "host", phase: 0, radius: 2 } },
+      instance: {
+        ...placement,
+        orbit: { angularSpeed: 1, host: "host", kind: "circle" as const, phase: 0, radius: 2 },
+      },
       name: "orbit relationship",
     },
     {

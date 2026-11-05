@@ -26,12 +26,20 @@ export function validateOrbitReferences(
     visiting.add(index);
     const orbit = instances[index]!.orbit;
     if (orbit) {
+      const stops = orbit.stops;
       if (
+        orbit.kind !== "circle" ||
         !orbit.host.trim() ||
         !Number.isFinite(orbit.radius) ||
         orbit.radius <= 0 ||
         !Number.isFinite(orbit.angularSpeed) ||
-        !Number.isFinite(orbit.phase)
+        !Number.isFinite(orbit.phase) ||
+        (stops !== undefined &&
+          (!Number.isInteger(stops.count) ||
+            stops.count < 1 ||
+            !Number.isFinite(stops.seconds) ||
+            stops.seconds <= 0 ||
+            orbit.angularSpeed === 0))
       ) {
         throw new Error("Invalid orbit configuration");
       }
@@ -75,13 +83,28 @@ export function namespaceOrbitInstances(
   return prefixInstanceIds(`${scope}/`, instances);
 }
 
+// The orbit's angle seconds after area entry. With stops it holds still for each stop's seconds,
+// then turns at angularSpeed to the next stop, a 1 / count turn on.
+export function orbitAngle(seconds: number, orbit: Orbit<number>): number {
+  const stops = orbit.stops;
+  if (!stops) {
+    return orbit.phase + orbit.angularSpeed * seconds;
+  }
+  const step = (2 * Math.PI) / stops.count;
+  const travel = step / Math.abs(orbit.angularSpeed);
+  const span = stops.seconds + travel;
+  const done = Math.floor(seconds / span);
+  const turning = Math.max(0, seconds - done * span - stops.seconds);
+  return orbit.phase + Math.sign(orbit.angularSpeed) * step * done + orbit.angularSpeed * turning;
+}
+
 export function orbitPosition(
   seconds: number,
   host: Rect,
   orbit: Orbit<number>,
   child: Size,
 ): Point {
-  const angle = orbit.phase + orbit.angularSpeed * seconds;
+  const angle = orbitAngle(seconds, orbit);
   return {
     x: host.x + host.width / 2 + orbit.radius * Math.cos(angle) - child.width / 2,
     y: host.y + host.height / 2 + orbit.radius * Math.sin(angle) - child.height / 2,
@@ -101,7 +124,12 @@ export function resolveOrbits(
     }
     const hostIndex = ids.get(authored.host)!;
     const host = objects[hostIndex]!;
-    if (
+    if (object.collision !== "ledge" && authored.stops !== undefined) {
+      throw new Error("Orbit stops require a ledge");
+    }
+    if (object.collision === "ledge") {
+      validatePathLedge(instances[hostIndex]!, host, authored, object);
+    } else if (
       !["solid", "ledge"].includes(host.collision) ||
       host.behaviour ||
       host.reaction.kind !== "none" ||
@@ -117,8 +145,7 @@ export function resolveOrbits(
       host.motion.pause < 0
     ) {
       throw new Error(`Unsupported orbit host ${authored.host}`);
-    }
-    if (
+    } else if (
       object.collision !== "hazard" ||
       object.behaviour ||
       object.contact ||
@@ -126,7 +153,7 @@ export function resolveOrbits(
       object.reaction.kind !== "none" ||
       object.phase !== 0
     ) {
-      throw new Error("Orbit requires an inert non-silhouette hazard");
+      throw new Error("Orbit requires an inert non-silhouette hazard or ledge");
     }
     const orbit = { ...authored, host: hostIndex, radius: authored.radius * tile };
     const expected = orbitPosition(0, rectAt(host, host.origin), orbit, object);
@@ -138,6 +165,42 @@ export function resolveOrbits(
     }
     return { ...object, orbit };
   });
+}
+
+// A ledge on a path about a host that never moves, whose centre is the path's pivot: the host has
+// no motion, behaviour, reaction or orbit of its own, and the ledge is inert, so the path alone
+// places it. The ledge translates only, staying level.
+function validatePathLedge(
+  hostInstance: Instance,
+  host: ObjectLayout,
+  orbit: Orbit,
+  object: ObjectLayout,
+): void {
+  if (
+    host.behaviour ||
+    host.reaction.kind !== "none" ||
+    host.orbit ||
+    hostInstance.orbit ||
+    host.motion.algorithm !== "static" ||
+    host.phase !== 0
+  ) {
+    throw new Error(`Unsupported orbit host ${orbit.host}: a ledge orbits a static host`);
+  }
+  if (
+    object.behaviour ||
+    object.crumbling ||
+    object.forcedTransit ||
+    object.motion.algorithm !== "static" ||
+    object.reaction.kind !== "none" ||
+    object.phase !== 0
+  ) {
+    throw new Error("Orbit requires an inert non-silhouette hazard or ledge");
+  }
+}
+
+// Whether an object is a ledge on a path about a static host.
+export function pathLedge(object: ObjectLayout): boolean {
+  return object.orbit !== undefined && object.collision === "ledge";
 }
 
 export function orbitBounds(objects: readonly ObjectLayout[], object: ObjectLayout): Rect {

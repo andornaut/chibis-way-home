@@ -25,7 +25,11 @@ export function objectCycleSeconds(objects: readonly ObjectLayout[], object: Obj
     if (object.orbit.angularSpeed === 0) {
       return host;
     }
-    const spin = (2 * Math.PI) / Math.abs(object.orbit.angularSpeed);
+    // A whole turn, with each of its stops.
+    const stops = object.orbit.stops;
+    const spin =
+      (2 * Math.PI) / Math.abs(object.orbit.angularSpeed) +
+      (stops ? stops.count * stops.seconds : 0);
     if (host === 0) {
       return spin;
     }

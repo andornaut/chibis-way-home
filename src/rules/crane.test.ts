@@ -168,12 +168,10 @@ describe("gantry crane layout", () => {
     const { area, crane } = fixture();
     const object = area.objects[crane]!;
     expect(effectiveCollision(object, undefined)).toBe("ledge");
-    expect(object.tether).toEqual({
-      art: "freight-crane-cable",
-      y: (CRANE_FIXTURE.row + CRANE_FIXTURE.rail) * TILE,
-    });
+    const y = (CRANE_FIXTURE.row + CRANE_FIXTURE.rail) * TILE;
+    expect(object.tether).toEqual({ art: "freight-crane-cable", kind: "rail", y });
     const rail = area.objects.find(({ character }) => character === "test-gantry-rail")!;
-    expect(rail.origin.y + rail.height).toBe(object.tether!.y);
+    expect(rail.origin.y + rail.height).toBe(y);
   });
 
   it.each([0, 1])("refuses a tether rail at row offset %i", (row) => {
@@ -200,7 +198,7 @@ describe("gantry crane tether", () => {
   it("draws the cable from the rail to a hook resting on the lid's centre at every pose", () => {
     const f = fixture();
     const object = f.area.objects[f.crane]!;
-    const rail = object.tether!.y;
+    const rail = (CRANE_FIXTURE.row + CRANE_FIXTURE.rail) * TILE;
     const size = 8;
     let zone = startZone(ordinary, f.layout, 1);
     const seen = new Set<number>();

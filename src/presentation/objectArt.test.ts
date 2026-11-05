@@ -95,6 +95,7 @@ describe("scenery sprite eligibility", () => {
     const orbit: NonNullable<ObjectLayout["orbit"]> = {
       angularSpeed: 1,
       host: 0,
+      kind: "circle",
       phase: 0,
       radius: 24,
     };

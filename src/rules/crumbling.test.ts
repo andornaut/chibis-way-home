@@ -118,7 +118,7 @@ describe("crumbling authoring boundary", () => {
     const patches = [
       { overrides: { motion: { algorithm: "static" as const } } },
       { overrides: { reaction: { kind: "none" as const } } },
-      { orbit: { angularSpeed: 1, host: "host", phase: 0, radius: 2 } },
+      { orbit: { angularSpeed: 1, host: "host", kind: "circle" as const, phase: 0, radius: 2 } },
       {
         behaviour: {
           axis: "x" as const,

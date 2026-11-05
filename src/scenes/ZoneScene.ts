@@ -110,6 +110,7 @@ import {
   stepDeathPresentation,
   stepPose,
   terrainTiles,
+  tetherLine,
 } from "../presentation";
 import {
   eligibleSkills,
@@ -1917,8 +1918,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (art.item.x !== position.x || art.item.y !== position.y) {
         art.item.setPosition(position.x, position.y);
       }
-      if (art.tether && object.tether) {
-        art.tether.draw(object.tether.y, { x: at.x + object.width / 2, y: at.y });
+      const tether = art.tether && tetherLine(area.objects, this.zone.objects, object, at);
+      if (tether) {
+        art.tether!.draw(tether);
       }
       if (behaviour?.defeat) {
         this.drawRemoval(index, art, behaviour);

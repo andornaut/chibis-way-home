@@ -2032,7 +2032,7 @@ describe("bounded real-rule navigation", () => {
       ...movingObject("ledge", { x: 600, y: 180 }),
       motion: { ...STATIC_MOTION, algorithm: "linear" as const, distance: 24, speed: 24 },
     };
-    const orbit = { angularSpeed: Math.PI, host: 0, phase: 0, radius: 36 };
+    const orbit = { angularSpeed: Math.PI, host: 0, kind: "circle" as const, phase: 0, radius: 36 };
     const child: ObjectLayout = {
       ...movingObject("hazard", { x: 0, y: 0 }),
       height: 4,

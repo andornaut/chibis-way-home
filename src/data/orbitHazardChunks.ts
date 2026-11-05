@@ -37,7 +37,13 @@ function orbitingPlatform(
     {
       character: "red-edge-top",
       col: col + HOST_COLS / 2 + ORBIT_RADIUS * Math.cos(ORBIT_PHASE) - 0.5,
-      orbit: { angularSpeed: Math.PI / 2, host: "host", phase: ORBIT_PHASE, radius: ORBIT_RADIUS },
+      orbit: {
+        angularSpeed: Math.PI / 2,
+        host: "host",
+        kind: "circle",
+        phase: ORBIT_PHASE,
+        radius: ORBIT_RADIUS,
+      },
       role: "edge-top",
       row: row + HOST_ROWS / 2 + ORBIT_RADIUS * Math.sin(ORBIT_PHASE) - 0.5,
     },
