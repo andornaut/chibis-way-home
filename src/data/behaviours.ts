@@ -10,7 +10,7 @@ import type {
   DialogueLine,
 } from "./types";
 
-const BEAR_PURSUIT_SPEED = (1.4 * BIRD.walkSpeed) / TILE;
+const BEAR_PURSUIT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
 const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
 const DOG_PATROL_PAUSE = 0.14;
@@ -18,7 +18,7 @@ const DOG_PATROL_SPEED = 4.6875;
 const FERRET_THROW_PAUSE_SECONDS = 1;
 const FRUSTRATION_SECONDS = 0.55;
 const GOOSE_PATROL_SPEED = 3.125;
-const GROUND_PURSUIT_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
+const GROUND_PURSUIT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
 const PIGEON_FLIGHT_SPEED = (1.6 * BIRD.walkSpeed) / TILE;
 const PIGEON_PURSUIT_SPEED = PIGEON_FLIGHT_SPEED;
 const PIGEON_SWOOP_SPEED = 20;
