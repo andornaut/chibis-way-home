@@ -301,6 +301,33 @@ const fertChecks = (): readonly Property<BossTick>[] => [
   ),
 ];
 
+// Fert throws: Chibi stands on a ledge eight rows above the late patrol yard's right ledge, out
+// of reach of any of Fert's jumps and inside his throw engagement range, so map pursuit paces
+// below him without contact and Fert tells and throws. A synthetic placement.
+const FERT_PERCH = { col: 43, cols: 4, row: 36 } as const;
+const FERT_THROW: BossScenario = {
+  controller: () => () => STILL,
+  layout: () =>
+    chunksLayout(
+      "apartment-lobby",
+      ["patrol-cover-late", ...REARM_CHUNKS],
+      withInstances("patrol-cover-late", [
+        {
+          character: "platform-ledge",
+          col: FERT_PERCH.col,
+          cols: FERT_PERCH.cols,
+          role: "ledge",
+          row: FERT_PERCH.row,
+        },
+      ]),
+    ),
+  name: "fert throw perch patrol-cover-late apartment-lobby seed 1",
+  place: (tick) =>
+    tick === 0 ? { x: (FERT_PERCH.col + 1) * TILE, y: FERT_PERCH.row * TILE } : undefined,
+  seed: 1,
+  ticks: ENCOUNTER_TICKS,
+};
+
 // Kiwi encounter: a re-told second charge has at least 3 tiles of ground ahead, so it moves.
 const KIWI_SECOND_CHARGE_TILES = 3;
 const kiwiChecks = (): readonly Property<BossTick>[] => [
@@ -384,6 +411,13 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     covers: ["tell", "attack"],
     scenario: encounter("city-boundary-climb-yard", "apartment-lobby", "forward"),
     subject: "Fert underpass: crossing forward",
+  },
+  {
+    boss: "Fert",
+    checks: fertChecks,
+    covers: ["tell", "attack"],
+    scenario: FERT_THROW,
+    subject: "Fert throw: map pursuit paces below an unreachable perch, so Fert throws and rests",
   },
   {
     boss: "Pebble",
