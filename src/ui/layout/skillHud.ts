@@ -5,19 +5,25 @@ import { PAUSE_VISIBLE_DIAMETER } from "./controlChrome";
 import { CONTROL_EDGE } from "./playView";
 
 export const SKILL_BUTTON = { disc: PAUSE_VISIBLE_DIAMETER, glyph: 16, target: 48 } as const;
-export const SKILL_HUD: Readonly<Record<SkillId, Point>> = Object.fromEntries(
-  SKILL_IDS.map((skill, index) => [
-    skill,
-    {
-      x:
-        SCREEN.width -
-        CONTROL_EDGE -
-        SKILL_BUTTON.target -
-        (SKILL_IDS.length - 1 - index) * (SKILL_BUTTON.target + CONTROL_EDGE),
-      y: CONTROL_EDGE,
-    },
-  ]),
-) as Readonly<Record<SkillId, Point>>;
+// Where each shown skill's button sits in the base view: one row along the view's top, packed
+// against its right edge in SKILL_IDS order, CONTROL_EDGE in from the top and right and apart.
+// Skills not shown take no slot. Like the pause button, the row moves with the view (topShift).
+export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point> {
+  const row = SKILL_IDS.filter((skill) => shown.includes(skill));
+  return new Map(
+    row.map((skill, index) => [
+      skill,
+      {
+        x:
+          SCREEN.width -
+          CONTROL_EDGE -
+          SKILL_BUTTON.target -
+          (row.length - 1 - index) * (SKILL_BUTTON.target + CONTROL_EDGE),
+        y: CONTROL_EDGE,
+      },
+    ]),
+  );
+}
 export const SKILL_ART: Readonly<Record<SkillId, string>> = {
   dash: "icon-skill-dash",
   doubleJump: "icon-skill-double-jump",

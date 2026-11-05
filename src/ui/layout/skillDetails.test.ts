@@ -6,6 +6,7 @@ import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
+import type { SkillId } from "../../data/types";
 import { SKILL_IDS } from "../../progress";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT, cardTextSize } from "./contentCard";
@@ -14,7 +15,7 @@ import { PAUSE_BUTTON } from "./pauseCard";
 import { CONTROL_EDGE, playView, shifted, topShift } from "./playView";
 import { ROOM_SCREEN } from "./roomScreen";
 import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails";
-import { SKILL_BUTTON, SKILL_HUD, skillButton } from "./skillHud";
+import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
 const inside = (
@@ -59,29 +60,40 @@ describe("native skill presentation", () => {
       expect(inside(modal.card, modal.groups.description!)).toBe(true);
     },
   );
-  it("keeps one top row of native skill targets right-aligned, disjoint and clear of Pause", () => {
-    const canvas = {
-      height: SCREEN.height + SKILL_BUTTON.target,
-      width: SCREEN.width + SKILL_BUTTON.target,
-    };
-    const view = playView(canvas);
-    const shift = topShift(canvas);
-    const hits = SKILL_IDS.map((skill) => skillButton(shifted(shift, SKILL_HUD[skill])).hit);
-    const pause = { ...PAUSE_BUTTON.hit, ...shifted(shift, PAUSE_BUTTON.hit) };
-    hits.forEach((hit, index) => {
-      expect(inside(view, hit)).toBe(true);
-      expect(hit.y).toBe(view.y + CONTROL_EDGE);
-      expect(hit.width).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
-      expect(hit.height).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
-      expect(rectsOverlap(hit, pause)).toBe(false);
-      hits.slice(index + 1).forEach((other) => expect(rectsOverlap(hit, other)).toBe(false));
-      const next = hits[index + 1];
-      if (next) {
-        expect(next.x - hit.x - hit.width).toBe(CONTROL_EDGE);
-      }
-    });
-    const last = hits.at(-1)!;
-    expect(last.x + last.width).toBe(view.x + view.width - CONTROL_EDGE);
+  it.each([
+    { shown: ["doubleJump"] },
+    { shown: ["speedy", "dash"] },
+    { shown: ["dash", "doubleJump"] },
+    { shown: [...SKILL_IDS] },
+  ] satisfies { shown: SkillId[] }[])(
+    "packs $shown into one gapless top row at the view's right, clear of Pause",
+    ({ shown }) => {
+      [SCREEN, { height: SCREEN.height + 120, width: SCREEN.width + 300 }].forEach((canvas) => {
+        const view = playView(canvas);
+        const shift = topShift(canvas);
+        const row = skillHud(shown);
+        expect([...row.keys()]).toEqual(SKILL_IDS.filter((skill) => shown.includes(skill)));
+        const hits = [...row.values()].map((at) => skillButton(shifted(shift, at)).hit);
+        const pause = { ...PAUSE_BUTTON.hit, ...shifted(shift, PAUSE_BUTTON.hit) };
+        hits.forEach((hit, index) => {
+          expect(inside(view, hit)).toBe(true);
+          expect(hit.y).toBe(view.y + CONTROL_EDGE);
+          expect(hit.width).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
+          expect(hit.height).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
+          expect(rectsOverlap(hit, pause)).toBe(false);
+          const next = hits[index + 1];
+          if (next) {
+            expect(next.x - hit.x - hit.width).toBe(CONTROL_EDGE);
+          }
+        });
+        const last = hits.at(-1)!;
+        expect(last.x + last.width).toBe(view.x + view.width - CONTROL_EDGE);
+      });
+    },
+  );
+  it("gives hidden skills no slot", () => {
+    expect(skillHud([]).size).toBe(0);
+    expect(skillHud(["dash"]).has("speedy")).toBe(false);
     expect(SKILL_BUTTON.target).toBeGreaterThanOrEqual(SKILL_BUTTON.disc);
     expect(SKILL_BUTTON.disc).toBeGreaterThan(SKILL_BUTTON.glyph);
   });

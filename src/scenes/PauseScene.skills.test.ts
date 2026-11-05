@@ -31,7 +31,7 @@ import { SKILL_GESTURE } from "../data/skills";
 import type { SkillId } from "../data/types";
 import { SKILL_IDS } from "../progress";
 import { type BirdState, startBird } from "../rules/bird";
-import { SKILL_BUTTON, SKILL_HUD } from "../ui";
+import { SKILL_BUTTON, skillHud } from "../ui";
 import { PauseScene } from "./PauseScene";
 import type { SkillDetailData } from "./SkillDetailScene";
 
@@ -189,7 +189,7 @@ it("opens paused HUD details without selecting and covers their targets against 
   const hit = { height: 48, width: 48, x: 0, y: 100 };
   const zone = { playCovered: () => false };
   const scene = Object.assign(new PauseScene(), {
-    enabledSkills: () => ["speedy"],
+    enabledSkills: () => ["dash"],
     layout: { card: hit, close: { hit }, home: { hit }, resume: { hit }, settings: { hit } },
     scene: { get: () => zone, isPaused: () => true },
     state: "open",
@@ -200,9 +200,9 @@ it("opens paused HUD details without selecting and covers their targets against 
   };
   expect(scene.skillHudVisible()).toBe(true);
   expect(scene.coveredCard()).toContainEqual({
-    ...SKILL_HUD.speedy,
     height: SKILL_BUTTON.target,
     width: SKILL_BUTTON.target,
+    ...skillHud(SKILL_IDS).get("speedy"),
   });
   gate.accepts.mockReturnValue(false);
   expect(scene.skillHudVisible()).toBe(false);

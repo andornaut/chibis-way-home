@@ -24,7 +24,7 @@ import {
   setTouchSettingShown,
   shifted,
   SKILL_BUTTON,
-  SKILL_HUD,
+  skillHud,
   stepFocus,
   topShift,
   type TouchSetting,
@@ -135,7 +135,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.cardCamera.ignore(this.pauseButton);
     this.hud = new Map(
       SKILL_IDS.map((skill) => {
-        const icon = drawSkillButton(this, SKILL_HUD[skill], skill);
+        const icon = drawSkillButton(this, { x: 0, y: 0 }, skill);
         icon.visible(false);
         this.cardCamera.ignore(icon.objects);
         return [skill, icon];
@@ -373,19 +373,22 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   private hudAreas(): { readonly art: Rect; readonly hit: Rect; readonly key: SkillId }[] {
-    return this.enabledSkills().map((skill) => ({
-      art: { ...SKILL_HUD[skill], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-      hit: { ...SKILL_HUD[skill], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
+    return [...skillHud(this.enabledSkills())].map(([skill, at]) => ({
+      art: { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
+      hit: { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
       key: skill,
     }));
   }
 
   private showSkillHud(): void {
-    const enabled = this.enabledSkills();
+    const row = skillHud(this.enabledSkills());
     const selected = activeSkill();
     this.hud.forEach((icon, skill) => {
-      icon.place(shifted(topShift(this.scale.gameSize), SKILL_HUD[skill]));
-      icon.visible(this.skillHudVisible() && enabled.includes(skill));
+      const at = row.get(skill);
+      if (at) {
+        icon.place(shifted(topShift(this.scale.gameSize), at));
+      }
+      icon.visible(this.skillHudVisible() && at !== undefined);
       icon.ready(skill === selected && this.skillReady(skill));
       icon.selected(skill === selected);
     });
@@ -441,14 +444,15 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.focusRing = ringFocus(this, this.focusRing, rect);
   }
 
-  // What the focus ring surrounds: a button, or the close X itself.
-  private focusedRect(control: CardControl): Rect {
+  // What the focus ring surrounds: a button, the close X itself, or a shown skill's target.
+  private focusedRect(control: CardControl): Rect | undefined {
     if (control === "close") {
       const { at } = this.layout.close;
       return { height: this.closeX.height, width: this.closeX.width, ...at };
     }
     if (isSkillId(control)) {
-      return { ...SKILL_HUD[control], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target };
+      const at = skillHud(this.enabledSkills()).get(control);
+      return at && { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target };
     }
     return this.layout[control].button;
   }

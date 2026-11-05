@@ -19,7 +19,7 @@ import {
   keyIntent,
   PAUSE_BUTTON,
   shifted,
-  SKILL_HUD,
+  skillHud,
   topShift,
   TOUCH_CONTROLS,
   touchIntent,
@@ -206,7 +206,10 @@ it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])
         ? shifted(bottomShift(f.size), TOUCH_CONTROLS[control].centre)
         : control === "pause"
           ? shifted(topShift(f.size), PAUSE_BUTTON.at)
-          : shifted(topShift(f.size), SKILL_HUD[control as SkillId] ?? { x: 100, y: 100 });
+          : shifted(
+              topShift(f.size),
+              skillHud(SKILL_IDS).get(control as SkillId) ?? { x: 100, y: 100 },
+            );
     const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
     f.mouse("mousedown", 0, 1, point, target);
     f.mouse("mousemove", 0, 1, { x: 250, y: 180 });
@@ -265,7 +268,10 @@ it.each([
       ? shifted(bottomShift(f.size), TOUCH_CONTROLS[control].centre)
       : control === "pause"
         ? shifted(topShift(f.size), PAUSE_BUTTON.at)
-        : shifted(topShift(f.size), SKILL_HUD[control as SkillId] ?? { x: 100, y: 100 });
+        : shifted(
+            topShift(f.size),
+            skillHud(SKILL_IDS).get(control as SkillId) ?? { x: 100, y: 100 },
+          );
   const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
   expect(f.draw()).toBe(true);
   f.send("pointerdown", 1, point, target);
@@ -285,7 +291,7 @@ it.each([
 it("retains the movement finger's joystick while another finger holds or releases buttons", () => {
   const f = touchFixture();
   const start = { x: 200, y: 180 };
-  const hud = shifted(topShift(f.size), SKILL_HUD.doubleJump);
+  const hud = shifted(topShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
   const use = shifted(bottomShift(f.size), TOUCH_CONTROLS.use.centre);
   f.send("pointerdown", 1, start);
   f.send("pointermove", 1, { ...start, x: start.x + TOUCH.moveDeadZone + 1 });
@@ -309,7 +315,7 @@ it("retains the movement finger's joystick while another finger holds or release
 });
 it("does not reserve hidden or unowned skill targets", () => {
   const f = touchFixture();
-  const point = shifted(topShift(f.size), SKILL_HUD.doubleJump);
+  const point = shifted(topShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
   f.state.hudShown = false;
   f.send("pointerdown", 1, point);
   expect(f.scene.heldTouches.get(1)?.role).toBe("move");
@@ -317,6 +323,20 @@ it("does not reserve hidden or unowned skill targets", () => {
   f.state.hudShown = true;
   saved.owned = [];
   f.send("pointerdown", 2, point);
+  expect(f.scene.heldTouches.get(2)?.role).toBe("move");
+  f.events.emit("shutdown");
+});
+it("reserves an owned skill's packed slot at the top right and frees its full-row slot", () => {
+  const f = touchFixture();
+  saved.owned = ["dash"];
+  const packed = shifted(topShift(f.size), skillHud(["dash"]).get("dash")!);
+  const fullRow = shifted(topShift(f.size), skillHud(SKILL_IDS).get("dash")!);
+  expect(packed).toEqual(shifted(topShift(f.size), skillHud(SKILL_IDS).get("speedy")!));
+  f.send("pointerdown", 1, packed);
+  expect(f.scene.heldTouches.has(1)).toBe(false);
+  expect(f.scene.buttonTouches.has(1)).toBe(true);
+  f.send("pointerup", 1, packed);
+  f.send("pointerdown", 2, fullRow);
   expect(f.scene.heldTouches.get(2)?.role).toBe("move");
   f.events.emit("shutdown");
 });

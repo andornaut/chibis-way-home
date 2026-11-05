@@ -108,7 +108,7 @@ export {
 } from "./layout/runStats";
 export { focusRingAround, settingsCard, stepsCard } from "./layout/settingsCard";
 export { SKILL_ROOM, skillDetails, skillRoomContinue } from "./layout/skillDetails";
-export { SKILL_ART, SKILL_BUTTON, SKILL_HUD, skillButton } from "./layout/skillHud";
+export { SKILL_ART, SKILL_BUTTON, skillButton, skillHud } from "./layout/skillHud";
 export { stageProgressRect } from "./layout/stageProgress";
 export {
   STAGE_NUMBER_SCALE,

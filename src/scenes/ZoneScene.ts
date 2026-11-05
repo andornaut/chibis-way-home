@@ -159,7 +159,7 @@ import {
   PAUSE_BUTTON,
   shifted,
   SKILL_BUTTON,
-  SKILL_HUD,
+  skillHud,
   stageProgressRect,
   topShift,
   TOUCH_CHROME_FRAME,
@@ -2013,12 +2013,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         if (
           containsPoint(PAUSE_BUTTON.hit, top.x, top.y) ||
           (this.skillState()?.shown &&
-            eligibleSkills(developmentSkillOverrides(), savedSkills()).some((key) =>
-              containsPoint(
-                { ...SKILL_HUD[key], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-                top.x,
-                top.y,
-              ),
+            [...skillHud(eligibleSkills(developmentSkillOverrides(), savedSkills())).values()].some(
+              (at) =>
+                containsPoint(
+                  { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
+                  top.x,
+                  top.y,
+                ),
             ))
         ) {
           return false;
@@ -2115,12 +2116,13 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       const skill =
         this.skillState()?.shown &&
-        eligibleSkills(developmentSkillOverrides(), savedSkills()).some((key) =>
-          containsPoint(
-            { ...SKILL_HUD[key], height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-            point.x,
-            point.y,
-          ),
+        [...skillHud(eligibleSkills(developmentSkillOverrides(), savedSkills())).values()].some(
+          (at) =>
+            containsPoint(
+              { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
+              point.x,
+              point.y,
+            ),
         );
       return !containsPoint(PAUSE_BUTTON.hit, point.x, point.y) && !skill;
     };
