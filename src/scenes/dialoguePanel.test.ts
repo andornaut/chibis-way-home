@@ -13,10 +13,10 @@ const SOURCES = import.meta.glob<string>(["../**/*.ts", "!../**/*.test.ts"], {
 // Every scene that shows a dialogue, bark, gift-room helper or achievement notice panel; each
 // draws its background and its portrait and text through the shared renderers.
 const PANEL_SCENES = [
-  "../scenes/AchievementNoticeScene.ts",
-  "../scenes/DialogueScene.ts",
-  "../scenes/RoomScene.ts",
-  "../scenes/ZoneBarkScene.ts",
+  "./AchievementNoticeScene.ts",
+  "./DialogueScene.ts",
+  "./RoomScene.ts",
+  "./ZoneBarkScene.ts",
 ];
 
 it("draws the dialogue box at the shared translucent alpha", () => {
@@ -34,7 +34,7 @@ it("draws the dialogue box at the shared translucent alpha", () => {
 });
 
 it("draws every dialogue panel background only through the shared renderer", () => {
-  const owner = "../scenes/dialoguePanel.ts";
+  const owner = "./dialoguePanel.ts";
   const others = Object.entries(SOURCES).filter(([path]) => path !== owner);
   expect(others.length).toBeGreaterThan(PANEL_SCENES.length);
   for (const [path, source] of others) {
