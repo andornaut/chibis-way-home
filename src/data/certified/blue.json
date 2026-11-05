@@ -87,6 +87,18 @@
     {
       "encounters": 1,
       "grade": 4,
+      "id": "blue-archie-lane--city-tap-strip",
+      "kind": "pair",
+      "layout": "be16763d58eb7c19",
+      "modules": ["archie-lane", "city-tap-strip"],
+      "route": "32f9b97e65ac67d4",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "810933306820938b:7074",
+      "work": 7074
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
       "id": "blue-archie-lane-climb--city-ferry-high",
       "kind": "pair",
       "layout": "44ea9da367f5d543",
@@ -107,6 +119,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "9c076221164df7fe:3117",
       "work": 3117
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "blue-archie-lane-climb--city-ledge-descent",
+      "kind": "pair",
+      "layout": "64dc90a55b5c25d6",
+      "modules": ["archie-lane-climb", "city-ledge-descent"],
+      "route": "ba081b73fb3a68f4",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "ac73dc0ce8cb6f79:5874",
+      "work": 5874
     },
     {
       "encounters": 1,
@@ -219,6 +243,18 @@
     {
       "encounters": 1,
       "grade": 4,
+      "id": "blue-archie-lane-descent--city-tap-strip",
+      "kind": "pair",
+      "layout": "f9730858c84cc07d",
+      "modules": ["archie-lane-descent", "city-tap-strip"],
+      "route": "ae41cf3cf952476a",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "8d03807ff6572ef1:807604",
+      "work": 807604
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
       "id": "blue-archie-lane-high--city-ferry-high",
       "kind": "pair",
       "layout": "a2dc5855d0899d6e",
@@ -239,6 +275,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "afaa73276f0a6c7c:6626",
       "work": 6626
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "blue-archie-lane-high--city-ledge-descent",
+      "kind": "pair",
+      "layout": "a2bd3c6522d63207",
+      "modules": ["archie-lane-high", "city-ledge-descent"],
+      "route": "5db189e3dc7dc994",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "4fa0253cda9a5f7d:7760",
+      "work": 7760
     },
     {
       "encounters": 1,
@@ -349,6 +397,18 @@
       "work": 3649
     },
     {
+      "encounters": 1,
+      "grade": 4,
+      "id": "blue-archie-lane-ledges--city-tap-strip",
+      "kind": "pair",
+      "layout": "4d8db86ee0b2ce0b",
+      "modules": ["archie-lane-ledges", "city-tap-strip"],
+      "route": "44dde73afa1c80a4",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "c997879f66210ed1:20998",
+      "work": 20998
+    },
+    {
       "encounters": 0,
       "grade": 4,
       "id": "blue-city-crumbling-climb--city-drop-gap",
@@ -383,6 +443,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "9fde24b412db1818:3638",
       "work": 3638
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-crumbling-climb--city-ledge-descent",
+      "kind": "pair",
+      "layout": "bdc93d3b840e65f6",
+      "modules": ["city-crumbling-climb", "city-ledge-descent"],
+      "route": "74b6e85ca2cb7075",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "dc1854638c154fd5:1086",
+      "work": 1086
     },
     {
       "encounters": 0,
@@ -507,6 +579,18 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "blue-city-crumbling-descent--city-tap-strip",
+      "kind": "pair",
+      "layout": "4064d6a37d619c5a",
+      "modules": ["city-crumbling-descent", "city-tap-strip"],
+      "route": "87e5f98cf0a84531",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "2fc185f1e6264385:2622",
+      "work": 2622
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "blue-city-crumbling-pit--city-ferry",
       "kind": "pair",
       "layout": "3ab55cbecb6d23e6",
@@ -587,6 +671,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "faae2c38f161ca7f:354",
       "work": 354
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-crumbling-pit--city-tap-strip",
+      "kind": "pair",
+      "layout": "d4d5d3aa9ba1af03",
+      "modules": ["city-crumbling-pit", "city-tap-strip"],
+      "route": "f00456bc98ed561d",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "b6bf344556f172ef:2256",
+      "work": 2256
     },
     {
       "encounters": 1,
@@ -719,6 +815,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "d8f912ae3271438c:409",
       "work": 409
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-drop-gap--city-tap-strip",
+      "kind": "pair",
+      "layout": "f0f4f430023113a0",
+      "modules": ["city-drop-gap", "city-tap-strip"],
+      "route": "8d0ca6905115ad78",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "158941c1cd27ff09:2686",
+      "work": 2686
     },
     {
       "encounters": 0,
@@ -866,6 +974,18 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ferry--city-tap-strip",
+      "kind": "pair",
+      "layout": "eb597bfd78528064",
+      "modules": ["city-ferry", "city-tap-strip"],
+      "route": "8a33b07adcc6044a",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "cf00a98c5f5748d5:8274",
+      "work": 8274
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "blue-city-ferry--city-vent-climb",
       "kind": "pair",
@@ -947,6 +1067,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "347112160aa9791d:1474",
       "work": 1474
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ferry-high--city-ledge-descent",
+      "kind": "pair",
+      "layout": "b19f180f34bdd762",
+      "modules": ["city-ferry-high", "city-ledge-descent"],
+      "route": "804bb65ee6273480",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "0b9b639a5a5cd5ff:3892",
+      "work": 3892
     },
     {
       "encounters": 0,
@@ -1118,6 +1250,18 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-gap--city-tap-strip",
+      "kind": "pair",
+      "layout": "cd67e83275699ea7",
+      "modules": ["city-gap", "city-tap-strip"],
+      "route": "8d0ca6905115ad78",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "900cd9bbc983078f:2478",
+      "work": 2478
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "blue-city-gap--city-vent-climb",
       "kind": "pair",
@@ -1199,6 +1343,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "6c21f354777c4867:9066",
       "work": 9066
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-gap-climb--city-ledge-descent",
+      "kind": "pair",
+      "layout": "283b2bc8a607dae3",
+      "modules": ["city-gap-climb", "city-ledge-descent"],
+      "route": "46000278f15e41a5",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "6249c2d729052c41:1086",
+      "work": 1086
     },
     {
       "encounters": 0,
@@ -1307,6 +1463,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "61c2b8d1d7d749dc:10104",
       "work": 10104
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-gap-high--city-ledge-descent",
+      "kind": "pair",
+      "layout": "b2947c61ded025bd",
+      "modules": ["city-gap-high", "city-ledge-descent"],
+      "route": "46000278f15e41a5",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "46f34e225718dab5:1700",
+      "work": 1700
     },
     {
       "encounters": 0,
@@ -1443,6 +1611,18 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "blue-city-ground-hazard--city-tap-strip",
+      "kind": "pair",
+      "layout": "35ca4f54e2171129",
+      "modules": ["city-ground-hazard", "city-tap-strip"],
+      "route": "7554c848d2c5fddb",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "68ae19ccac683d31:3364",
+      "work": 3364
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "blue-city-hazard-descent--city-ferry",
       "kind": "pair",
       "layout": "b64b0e63700a72c8",
@@ -1523,6 +1703,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "4576fd2a3aad5ad9:1215",
       "work": 1215
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-hazard-descent--city-tap-strip",
+      "kind": "pair",
+      "layout": "d7eb1fdf61ab4c83",
+      "modules": ["city-hazard-descent", "city-tap-strip"],
+      "route": "8d0ca6905115ad78",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "3fd5e8e80edc6175:3680",
+      "work": 3680
     },
     {
       "encounters": 1,
@@ -1611,6 +1803,18 @@
     {
       "encounters": 0,
       "grade": 3,
+      "id": "blue-city-ledge-climb--city-ledge-descent",
+      "kind": "pair",
+      "layout": "798d4d77d8fa48ae",
+      "modules": ["city-ledge-climb", "city-ledge-descent"],
+      "route": "b1ddb8fbdfee931c",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "e58ead27a7ca56e7:1086",
+      "work": 1086
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
       "id": "blue-city-ledge-climb--city-lift-descent",
       "kind": "pair",
       "layout": "cd232e573997a0a0",
@@ -1655,6 +1859,174 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "a84ac69b8d6dd0f0:752",
       "work": 752
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "blue-city-ledge-descent--archie-yard",
+      "kind": "pair",
+      "layout": "951a82e35e768dfc",
+      "modules": ["city-ledge-descent", "archie-yard"],
+      "route": "1dedc10e2aa392c8",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "6bee5bbe123fedcf:12406",
+      "work": 12406
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-ledge-descent--city-crumbling-climb",
+      "kind": "pair",
+      "layout": "22c5e9e32ddc2594",
+      "modules": ["city-ledge-descent", "city-crumbling-climb"],
+      "route": "5220280cb1599211",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "a6b5d1630858d03d:1940",
+      "work": 1940
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-ledge-descent--city-crumbling-pit",
+      "kind": "pair",
+      "layout": "05293e1457795e53",
+      "modules": ["city-ledge-descent", "city-crumbling-pit"],
+      "route": "477be2e841a9d546",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "c3596680923ecf79:1564",
+      "work": 1564
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-ferry",
+      "kind": "pair",
+      "layout": "3fef994f600747ba",
+      "modules": ["city-ledge-descent", "city-ferry"],
+      "route": "b52bd4da3011b50e",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "4d4cd7f61738c3dd:2354",
+      "work": 2354
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-gap",
+      "kind": "pair",
+      "layout": "c2b9615aad17537d",
+      "modules": ["city-ledge-descent", "city-gap"],
+      "route": "d254cf222a1beb76",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "aaee5dc50c0551a3:954",
+      "work": 954
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-gap-climb",
+      "kind": "pair",
+      "layout": "cbcd7a93c5ccebdd",
+      "modules": ["city-ledge-descent", "city-gap-climb"],
+      "route": "26dd3d97a0e88cac",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "1d11dd182f5e3e9d:882",
+      "work": 882
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-ledge-descent--city-ground-hazard",
+      "kind": "pair",
+      "layout": "3465eb38f940c724",
+      "modules": ["city-ledge-descent", "city-ground-hazard"],
+      "route": "8c4ac4ed92a09b78",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "f2de71dae0aac1b5:3238",
+      "work": 3238
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-ledge-climb",
+      "kind": "pair",
+      "layout": "7e1bb4c5581ea97e",
+      "modules": ["city-ledge-descent", "city-ledge-climb"],
+      "route": "3c9a7285235de447",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "13cd47358849f0e5:906",
+      "work": 906
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-ledge-pit",
+      "kind": "pair",
+      "layout": "a807bdb5b99bd93c",
+      "modules": ["city-ledge-descent", "city-ledge-pit"],
+      "route": "477be2e841a9d546",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "1db235daf7855a47:1618",
+      "work": 1618
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-lift-climb",
+      "kind": "pair",
+      "layout": "6ce577fc513547c0",
+      "modules": ["city-ledge-descent", "city-lift-climb"],
+      "route": "1c9234033c406b7e",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "9326238971ec5629:74016",
+      "work": 74016
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-red-face-climb",
+      "kind": "pair",
+      "layout": "65e3de1ef4bf7bef",
+      "modules": ["city-ledge-descent", "city-red-face-climb"],
+      "route": "22bf6637a37ebf0c",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "6eeeebbaa15baeb1:2456",
+      "work": 2456
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-descent--city-tap-strip",
+      "kind": "pair",
+      "layout": "02aa274e389e2cfc",
+      "modules": ["city-ledge-descent", "city-tap-strip"],
+      "route": "87be8d8e2ea8511d",
+      "slots": { "door": 2, "event": 0 },
+      "trace": "9a7634b02a870349:3806",
+      "work": 3806
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-ledge-descent--city-vent-climb",
+      "kind": "pair",
+      "layout": "589ba832ed99cc67",
+      "modules": ["city-ledge-descent", "city-vent-climb"],
+      "route": "26dd3d97a0e88cac",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "9ce85304b78ce03d:12472",
+      "work": 12472
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-ledge-descent--city-vent-deck",
+      "kind": "pair",
+      "layout": "e05e6cafaa4fe6ac",
+      "modules": ["city-ledge-descent", "city-vent-deck"],
+      "route": "d254cf222a1beb76",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "caf728e2a8b1dc85:5758",
+      "work": 5758
     },
     {
       "encounters": 1,
@@ -1790,6 +2162,18 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-ledge-pit--city-tap-strip",
+      "kind": "pair",
+      "layout": "bcac128756a0a445",
+      "modules": ["city-ledge-pit", "city-tap-strip"],
+      "route": "f00456bc98ed561d",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "82621d9020ac231b:1002",
+      "work": 1002
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "blue-city-ledge-pit--city-vent-climb",
       "kind": "pair",
@@ -1871,6 +2255,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "4b4e141ac283ed44:11704",
       "work": 11704
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-lift-climb--city-ledge-descent",
+      "kind": "pair",
+      "layout": "84b7ecef8f6d7861",
+      "modules": ["city-lift-climb", "city-ledge-descent"],
+      "route": "a9198e99c03bca43",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "1f3ec926c579b781:5614",
+      "work": 5614
     },
     {
       "encounters": 0,
@@ -2054,6 +2450,18 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-lift-descent--city-tap-strip",
+      "kind": "pair",
+      "layout": "b878d4a22d83e45e",
+      "modules": ["city-lift-descent", "city-tap-strip"],
+      "route": "0088300fc966f6bc",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "d1c7c04cc1a6bb85:39642",
+      "work": 39642
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "blue-city-lift-descent--city-vent-climb",
       "kind": "pair",
@@ -2210,6 +2618,18 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-low-descent--city-tap-strip",
+      "kind": "pair",
+      "layout": "0cd7924591643f87",
+      "modules": ["city-low-descent", "city-tap-strip"],
+      "route": "8d0ca6905115ad78",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "e71167154b8b052d:11534",
+      "work": 11534
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "blue-city-low-descent--city-vent-climb",
       "kind": "pair",
@@ -2295,6 +2715,18 @@
     {
       "encounters": 0,
       "grade": 3,
+      "id": "blue-city-red-face-climb--city-ledge-descent",
+      "kind": "pair",
+      "layout": "3762610ca9d5e249",
+      "modules": ["city-red-face-climb", "city-ledge-descent"],
+      "route": "1789350fa0feb121",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "dc1854638c154fd5:1086",
+      "work": 1086
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
       "id": "blue-city-red-face-climb--city-lift-descent",
       "kind": "pair",
       "layout": "a4a63e5abb535bd1",
@@ -2339,6 +2771,174 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "c09d526bd519fe08:752",
       "work": 752
+    },
+    {
+      "encounters": 1,
+      "grade": 4,
+      "id": "blue-city-tap-strip--archie-yard",
+      "kind": "pair",
+      "layout": "c0b1ba96718883f7",
+      "modules": ["city-tap-strip", "archie-yard"],
+      "route": "fa711638a1a94f10",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "4629297a5519fcd9:21774",
+      "work": 21774
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-tap-strip--city-crumbling-climb",
+      "kind": "pair",
+      "layout": "5e7ec6a36c8ebcaa",
+      "modules": ["city-tap-strip", "city-crumbling-climb"],
+      "route": "82531f2a16e52c0f",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "cbf5697536f82d4d:1238",
+      "work": 1238
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-tap-strip--city-crumbling-pit",
+      "kind": "pair",
+      "layout": "6fdcf35ef5be9438",
+      "modules": ["city-tap-strip", "city-crumbling-pit"],
+      "route": "7e32bec608bb9335",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "bbaa36f6d62d3d01:1274",
+      "work": 1274
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-ferry",
+      "kind": "pair",
+      "layout": "b75404b76a395231",
+      "modules": ["city-tap-strip", "city-ferry"],
+      "route": "ce3ddb183d843e31",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "30221a5d27648afd:2738",
+      "work": 2738
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-gap",
+      "kind": "pair",
+      "layout": "0c45aefb61f73f5a",
+      "modules": ["city-tap-strip", "city-gap"],
+      "route": "599f9e876d692910",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "666f33ff3139c1f5:4586",
+      "work": 4586
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-gap-climb",
+      "kind": "pair",
+      "layout": "2e9698bcc0c2920b",
+      "modules": ["city-tap-strip", "city-gap-climb"],
+      "route": "8bd130e8f5b83ace",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "23e251212b715e03:1612",
+      "work": 1612
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-tap-strip--city-ground-hazard",
+      "kind": "pair",
+      "layout": "dbcdede0ffe73595",
+      "modules": ["city-tap-strip", "city-ground-hazard"],
+      "route": "778d276872642e1c",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "356931a19bb72d79:3624",
+      "work": 3624
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-ledge-climb",
+      "kind": "pair",
+      "layout": "c509ae6b00c8c840",
+      "modules": ["city-tap-strip", "city-ledge-climb"],
+      "route": "188f86d43e4c451a",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "ac8a567274cfd245:1292",
+      "work": 1292
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-ledge-pit",
+      "kind": "pair",
+      "layout": "43f95e4c0ae34cfa",
+      "modules": ["city-tap-strip", "city-ledge-pit"],
+      "route": "7e32bec608bb9335",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "03449bbfa929cdb7:1286",
+      "work": 1286
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-lift-climb",
+      "kind": "pair",
+      "layout": "72683c56b35c710c",
+      "modules": ["city-tap-strip", "city-lift-climb"],
+      "route": "30122df48a5e1a04",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "d22e9c43e1dd46e3:239044",
+      "work": 239044
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-red-face-climb",
+      "kind": "pair",
+      "layout": "01f3ed1866414269",
+      "modules": ["city-tap-strip", "city-red-face-climb"],
+      "route": "8c86d8bb2d4d1d47",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "719b5f2a995bbd57:1268",
+      "work": 1268
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-tap-strip--city-tap-strip",
+      "kind": "pair",
+      "layout": "bdc4416d6e914ede",
+      "modules": ["city-tap-strip", "city-tap-strip"],
+      "route": "2c83250b039edcde",
+      "slots": { "door": 2, "event": 0 },
+      "trace": "f9024c91f78473db:2810",
+      "work": 2810
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-tap-strip--city-vent-climb",
+      "kind": "pair",
+      "layout": "8bef6f729d50618f",
+      "modules": ["city-tap-strip", "city-vent-climb"],
+      "route": "8bd130e8f5b83ace",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "e1ecfe7b2bf2ff39:5178",
+      "work": 5178
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-tap-strip--city-vent-deck",
+      "kind": "pair",
+      "layout": "2525831473b86a3d",
+      "modules": ["city-tap-strip", "city-vent-deck"],
+      "route": "599f9e876d692910",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "95849fc2fed9b4e9:1808",
+      "work": 1808
     },
     {
       "encounters": 1,
@@ -2427,6 +3027,18 @@
     {
       "encounters": 0,
       "grade": 3,
+      "id": "blue-city-tap-strip-high--city-ledge-descent",
+      "kind": "pair",
+      "layout": "f6362e1cedcf43a6",
+      "modules": ["city-tap-strip-high", "city-ledge-descent"],
+      "route": "46000278f15e41a5",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "85e2c8660f98c8e7:1428",
+      "work": 1428
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
       "id": "blue-city-tap-strip-high--city-lift-descent",
       "kind": "pair",
       "layout": "332baf1b67b79f84",
@@ -2507,6 +3119,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "20e7b4bde1d617cd:1142",
       "work": 1142
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-vent-climb--city-ledge-descent",
+      "kind": "pair",
+      "layout": "d32ddafd2b31d6ca",
+      "modules": ["city-vent-climb", "city-ledge-descent"],
+      "route": "46000278f15e41a5",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "60993ad516de43b1:1086",
+      "work": 1086
     },
     {
       "encounters": 0,
@@ -2631,6 +3255,18 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "blue-city-vent-deck--city-tap-strip",
+      "kind": "pair",
+      "layout": "ed2274ef01efa0ab",
+      "modules": ["city-vent-deck", "city-tap-strip"],
+      "route": "8d0ca6905115ad78",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "81b2496b83d7b593:1212",
+      "work": 1212
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "blue-city-vent-deck-high--city-drop-gap",
       "kind": "pair",
       "layout": "2e0d275670e6403a",
@@ -2663,6 +3299,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "460b077f4aab24fb:562",
       "work": 562
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-vent-deck-high--city-ledge-descent",
+      "kind": "pair",
+      "layout": "282c559f037aa2a4",
+      "modules": ["city-vent-deck-high", "city-ledge-descent"],
+      "route": "46000278f15e41a5",
+      "slots": { "door": 1, "event": 0 },
+      "trace": "c3285f1f30abd6a3:1010",
+      "work": 1010
     },
     {
       "encounters": 0,
@@ -3064,7 +3712,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "96e535bd94fcb696", "proofs": "1c2e7b644e83afc7" },
+  "inputs": { "data": "9602e87a89ff6ed3", "proofs": "1c2e7b644e83afc7" },
   "version": 1,
   "zone": "blue"
 }
