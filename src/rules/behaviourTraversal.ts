@@ -716,7 +716,7 @@ export function advanceTraversalTo(
 // A movement-map leg: walk to `launch` (hitbox-left x) when given, then reach `goal` (a hitbox
 // envelope), proving the takeoff with the edge's witness `commands` first. Walk legs keep
 // walking; other legs search from the launch point.
-export interface TraversalLeg {
+interface TraversalLeg {
   readonly commands: readonly TraversalCommand[];
   readonly goal: Rect;
   readonly launch?: number;

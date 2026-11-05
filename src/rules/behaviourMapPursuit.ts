@@ -42,7 +42,7 @@ export interface BehaviourMapPursuitState {
 // One leg towards the goal. `chase`: the boss shares Chibi's node and chases him directly.
 // `edge`: walk to the launch point (hitbox-left x), then take the edge to its target node.
 // `pace`: walk to a pace end on the current node at pace speed.
-export type MapLeg =
+type MapLeg =
   | { readonly kind: "chase" }
   | {
       readonly commands: readonly TraversalCommand[];

@@ -27,7 +27,7 @@ interface ActionHelpIcon {
   readonly line: number;
   readonly rect: Rect;
 }
-export type ActionHelpPlacement = ActionHelpIcon | ActionHelpText;
+type ActionHelpPlacement = ActionHelpIcon | ActionHelpText;
 export interface ActionHelpLayout extends Size {
   // The y of each line's baseline, in layout coordinates.
   readonly baselines: readonly number[];

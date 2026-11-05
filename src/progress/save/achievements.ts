@@ -19,7 +19,7 @@ const KEYS = {
   save: "chibis-way-home.achievements",
 } as const;
 
-export const ACHIEVEMENTS_FORMAT: SaveFormat<EarnedRecord<AchievementId>> = earnedFormat(
+const ACHIEVEMENTS_FORMAT: SaveFormat<EarnedRecord<AchievementId>> = earnedFormat(
   ACHIEVEMENTS_VERSION,
   ACHIEVEMENT_IDS,
 );

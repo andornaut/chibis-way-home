@@ -16,7 +16,7 @@ export type ModuleSide = "left" | "right";
 
 // The terrain top at a module edge. An outer edge (a chunk's entry or exit) stands on a seam row;
 // a joint edge (between the two halves) may stand on any row, both halves equal.
-export interface ModuleEdge {
+interface ModuleEdge {
   readonly row: number;
 }
 

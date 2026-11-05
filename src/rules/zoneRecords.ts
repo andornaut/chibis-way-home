@@ -5,7 +5,7 @@ import type { ZoneState } from "./zone";
 // whose pursuit went from engaged to escaped, and whether he started a dash or used his air
 // jump. An escape on a step that ends in his death, or that changes area, does not count; a
 // boss's death ends its pursuit without an escape.
-export interface ZoneStepRecord {
+interface ZoneStepRecord {
   readonly escaped: readonly number[];
   readonly skillUsed: boolean;
 }

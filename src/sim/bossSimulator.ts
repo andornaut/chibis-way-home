@@ -216,7 +216,7 @@ export function areaExit(
 }
 
 // Where a scripted setup places Chibi's feet centre at the start of a tick, if anywhere.
-export type ChibiPlacement = (tick: number) => Point | undefined;
+type ChibiPlacement = (tick: number) => Point | undefined;
 
 export function placeChibi(
   tuning: BirdTuning,

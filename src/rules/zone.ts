@@ -300,11 +300,11 @@ export interface ZoneBark extends DialogueLine {
 
 // Why a boss's pursuit ended as an escape: Chibi got beyond its escape distance (or past an
 // authored unreachable grace), or he entered a room door.
-export type ZoneEscapeCause = "distance" | "door";
+type ZoneEscapeCause = "distance" | "door";
 
 // A boss's pursuit ending as an escape on one step. A death step reports none, and a boss's own
 // death is never one.
-export interface ZoneEscape {
+interface ZoneEscape {
   readonly cause: ZoneEscapeCause;
   readonly owner: ZoneBark["owner"];
 }

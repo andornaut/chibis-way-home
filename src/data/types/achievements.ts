@@ -52,7 +52,7 @@ export type AchievementCondition =
 
 export type ChibiAchievement = AchievementDef<AchievementId, AchievementCondition, AchievementTier>;
 
-export interface AchievementText {
+interface AchievementText {
   readonly description: string;
   readonly title: string;
 }

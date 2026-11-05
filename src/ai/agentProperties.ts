@@ -411,7 +411,7 @@ export function noStall<World>(
 // either axis between ticks) lasts at most `maxSeconds` plus `graceSeconds`, and a class with
 // `everySeconds` starts at most once per that many seconds of the run. An agent the classifier
 // leaves undefined is ineligible, which ends any still run.
-export interface StillClass {
+interface StillClass {
   readonly everySeconds?: number;
   readonly kind: string;
   readonly maxSeconds: number;

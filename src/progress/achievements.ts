@@ -59,7 +59,7 @@ const firstTries = (facts: AchievementFacts, zone: string): number =>
   facts.visit?.zone === zone ? facts.visit.firstTries : 0;
 
 // The evaluators for map's stages and destinations.
-export function achievementKinds(
+function achievementKinds(
   map: ZoneMap,
 ): ConditionKinds<AchievementCondition, AchievementScope, AchievementFacts> {
   return {
@@ -91,8 +91,9 @@ export function achievementKinds(
   };
 }
 
-export const ACHIEVEMENT_JUDGE: Judge<AchievementCondition, AchievementScope, AchievementFacts> =
-  judge(achievementKinds(ZONE_MAP));
+const ACHIEVEMENT_JUDGE: Judge<AchievementCondition, AchievementScope, AchievementFacts> = judge(
+  achievementKinds(ZONE_MAP),
+);
 
 // The catalogue in card order: by tier, in catalogue order within each.
 export const ORDERED_ACHIEVEMENTS: readonly ChibiAchievement[] = orderByTier(

@@ -60,7 +60,7 @@ type GroundMotion = Extract<BehaviourMotion, { mode: "ground" }>;
 
 // Seam ground beyond each chunk edge, wider than any body, holds the exit spans.
 const PAD = 12 * TILE;
-export interface Encounter {
+interface Encounter {
   readonly area: AreaLayout;
   readonly bosses: readonly ObjectLayout[];
   readonly terrain: MapTerrain;

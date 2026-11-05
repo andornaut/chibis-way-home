@@ -22,8 +22,8 @@ export const ENCOUNTER_ROLES: ReadonlySet<string> = new Set(["antagonist", "anta
 const MODULE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 // The zone-independent id of a pair, keying grade overrides.
-export const pairKey = (left: string, right: string): string => `${left}--${right}`;
-export const pairId = (zone: ZoneKey, left: string, right: string): string =>
+const pairKey = (left: string, right: string): string => `${left}--${right}`;
+const pairId = (zone: ZoneKey, left: string, right: string): string =>
   `${zone}-${pairKey(left, right)}`;
 
 // A pair's grade: the harder half, one harder when both halves are grade 4 or 5, at most 5.
@@ -224,7 +224,7 @@ export function moduleProblems(context: ModuleContext, module: ChunkModule): str
 }
 
 // A composed pair: its chunk, id and required-route contract in chunk tiles.
-export interface ComposedPair {
+interface ComposedPair {
   readonly chunk: ChunkPlan;
   readonly id: string;
   readonly route: {

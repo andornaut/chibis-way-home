@@ -209,7 +209,7 @@ export interface ZonePlan {
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
 // A row a chunk's entry or exit stands on: one of SEAM_ROWS (src/data/seams.ts).
-export type SeamRow = (typeof SEAM_ROWS)[number];
+type SeamRow = (typeof SEAM_ROWS)[number];
 
 // The ground at a chunk's left or right edge: its top is row `row`.
 export interface ChunkSeam {
@@ -246,7 +246,7 @@ export interface ChunkRules {
 // events and doors; it must play with every slot empty.
 // What makes an escape point one the boss cannot follow, or crosses at no more than half its
 // chase speed: a room door, a gap Chibi flutters across, or a passage too low for the boss.
-export type EscapeKind = "door" | "flutter-gap" | "low-passage";
+type EscapeKind = "door" | "flutter-gap" | "low-passage";
 
 // A designed ordinary escape point in a chunk, in chunk tiles: the doorway, gap or passage, and
 // a surface spot before and past it, each given as an entry is.
@@ -419,7 +419,7 @@ export interface PlacedChunk {
 // chunks), its id there, and what the seed put in it, the event's id or the door's room; empty
 // when the recipe asked for fewer.
 // A chunk's escape point in an assembled area: area tiles, and the index of its chunk.
-export interface AreaEscape extends ChunkEscape {
+interface AreaEscape extends ChunkEscape {
   readonly chunk: number;
 }
 

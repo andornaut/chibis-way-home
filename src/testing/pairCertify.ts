@@ -39,7 +39,7 @@ import { ORDINARY } from "./encounterLayouts";
 import { moduleRouteTargets, REQUIRED_CHUNK_ROUTES, slotFills } from "./requiredRoutes";
 
 // Bump when a certification step changes what it proves, forcing a full recertification.
-export const CERTIFY_VERSION = 1;
+const CERTIFY_VERSION = 1;
 export const ZONES: readonly ZoneKey[] = [
   "apartment",
   "blue",
@@ -51,14 +51,14 @@ export const ZONES: readonly ZoneKey[] = [
 // Distinct layouts every zone's certified list reaches, split across grades by its shares.
 export const POOL_TARGET = 125;
 // Seeds of the stage assembly feasibility check.
-export const FEASIBILITY_SEEDS = 64;
+const FEASIBILITY_SEEDS = 64;
 
 type Target = Omit<WalkRouteTarget, "area">;
 type SlotFills = ReturnType<typeof slotFills>;
 const EMPTY: SlotFills = { door: [], event: [] };
 
 // The modules and grade overrides certification composes, the game's unless a test supplies its own.
-export interface CertifyContext {
+interface CertifyContext {
   readonly grades: Readonly<Record<string, Difficulty>>;
   readonly modules: Readonly<Record<string, ChunkModule>>;
 }
@@ -76,7 +76,7 @@ export interface Candidate {
 
 // Keys sorted, undefined members omitted, non-JSON numbers and functions tagged, so equal data
 // always hashes equally.
-export function canonicalJson(value: unknown): string {
+function canonicalJson(value: unknown): string {
   if (value === null || typeof value === "boolean" || typeof value === "string") {
     return JSON.stringify(value);
   }
@@ -119,7 +119,7 @@ const inBand = (recipe: ZoneRecipe, grade: Difficulty) =>
   (recipe.difficultyWeights?.[grade] ?? 1) > 0;
 
 // The zone's authored middle chunks: every chunk its recipes may draw, connectors and caps aside.
-export function zoneSingles(zone: ZoneKey): readonly string[] {
+function zoneSingles(zone: ZoneKey): readonly string[] {
   const { connectors } = ZONE_FRAMES[zone];
   const ids = new Set<string>();
   for (const [, recipe] of zoneRecipes(zone)) {
@@ -144,7 +144,7 @@ function moduleContext() {
   };
 }
 
-export interface ZoneCandidates {
+interface ZoneCandidates {
   readonly candidates: readonly Candidate[];
   // Modules authored for the zone that break the module rules, with why.
   readonly rejected: readonly { readonly id: string; readonly problems: readonly string[] }[];
@@ -502,7 +502,7 @@ export function verifyStructure(context: CertifyContext, list: CertifiedChunks):
 }
 
 // Grade shares over the band, normalized to 1.
-export function gradeShares(recipe: ZoneRecipe): ReadonlyMap<Difficulty, number> {
+function gradeShares(recipe: ZoneRecipe): ReadonlyMap<Difficulty, number> {
   const grades: Difficulty[] = [];
   for (let grade = recipe.difficulty.min; grade <= recipe.difficulty.max; grade++) {
     if (inBand(recipe, grade)) {
