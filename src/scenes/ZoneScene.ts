@@ -181,6 +181,7 @@ import {
   trackPress,
 } from "../ui";
 import { FRAME_TURN } from "../ui/input/frameTurn";
+import { achievementNoticeShowing } from "./achievementNotice";
 import { mountAirJumpCue } from "./airJumpCue";
 import { backdropBottomFrame } from "./backdropBottomFrame";
 import { mountBossWarning } from "./bossWarning";
@@ -203,6 +204,7 @@ import {
   completeStageRun,
   flushStats,
   recordActiveStageStep,
+  recordStepAchievements,
   retryStageRun,
   saveCompleted,
   savedMap,
@@ -848,6 +850,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.barks?.enqueue(this.zone.barks);
       }
       recordActiveStageStep(this.stageKey(), STEP_SECONDS, beforeZone, this.zone);
+      if (!this.preview && !this.backdrop) {
+        recordStepAchievements(this.layout, this.stageKey(), beforeZone, this.zone);
+      }
       if (this.zone.area !== beforeZone.area) {
         this.clearControls();
         touches = [];
@@ -930,6 +935,23 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     return this.loading || this.dialogueOpen() || this.zone?.death !== undefined;
   }
 
+  // Unlock notices wait while play is covered, a door or room is open, an introduction plays, the
+  // zone is ending, or the zone is only a preview or backdrop.
+  noticeBlocked(): boolean {
+    return (
+      this.preview !== undefined ||
+      this.backdrop ||
+      this.playCovered() ||
+      this.opening !== undefined ||
+      this.inRoom ||
+      this.introductionActive ||
+      this.zone === undefined ||
+      this.zone.cleared ||
+      this.zone.turnedBack ||
+      this.zone.door !== undefined
+    );
+  }
+
   private barkOwnerOnscreen(owner: ZoneBark["owner"]): boolean {
     const camera = this.cameras.main;
     return barkOwnerOnscreen(
@@ -963,6 +985,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       !this.zone.cleared &&
       !this.zone.turnedBack &&
       this.zone.door === undefined &&
+      !achievementNoticeShowing(this) &&
       this.scene.isActive() &&
       modalInput(this).accepts()
     );

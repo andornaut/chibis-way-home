@@ -1,5 +1,6 @@
 // The words the player reads, dialogue and the opening.
 
+import type { AchievementsText } from "./achievements";
 import type { SkillId } from "./bird";
 import type { Point } from "./geometry";
 
@@ -33,6 +34,7 @@ export interface SkillText {
 
 // The words the player reads.
 export interface GameText {
+  readonly achievements: AchievementsText;
   readonly skills: Readonly<Record<SkillId, SkillText>>;
   readonly stats: StatsText;
   readonly update: {
@@ -112,8 +114,9 @@ export interface GameText {
     readonly title: string;
   };
   // The start screen: Start without saved progress, or Continue and Restart with it, and the nav
-  // bar's Settings and Exit buttons.
+  // bar's Achievements, Settings and Exit buttons.
   readonly start: {
+    readonly achievements: string;
     readonly continue: string;
     readonly exit: string;
     readonly restart: string;

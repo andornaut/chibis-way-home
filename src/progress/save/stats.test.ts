@@ -230,3 +230,77 @@ it("resets version-two level clocks without migrating them", () => {
   const raw = JSON.stringify({ levels: { street: { activeSeconds: 65 } }, version: 2 });
   expect(loadSave(FORMAT, raw)).toMatchObject({ save: FORMAT.fresh(), status: "corrupt" });
 });
+
+describe("the Restart-scoped skill ledger and the visit's first tries", () => {
+  const DESTINATIONS = [{ id: "town", stages: ["park", "street"] as [string, ...string[]] }];
+
+  it("reads an absent skill flag as unused, keeps a use across reopen and clears it on Restart", async () => {
+    const storage = memoryStorage();
+    const raw = {
+      stages: {},
+      version: STATS_VERSION,
+      wholeRun: { activeSeconds: 1, deaths: 0 },
+      zones: {},
+    };
+    await storage.write("chibis-way-home.stats", JSON.stringify(raw));
+    const store = stageStatsStore(storage, STAGES);
+    await store.load();
+    const absent = store.skillUsed();
+    store.useSkill();
+    await store.flush();
+    const reopened = stageStatsStore(storage, STAGES);
+    await reopened.load();
+    const kept = reopened.skillUsed();
+    reopened.resetWholeRun();
+    expect({ absent, cleared: reopened.skillUsed(), kept, totals: reopened.wholeRun() }).toEqual({
+      absent: false,
+      cleared: false,
+      kept: true,
+      totals: { activeSeconds: 0, deaths: 0 },
+    });
+  });
+
+  it("resets version 6 statistics, historical bests included", async () => {
+    const storage = memoryStorage();
+    const old = {
+      stages: { street: { bestSeconds: 4 } },
+      version: 6,
+      wholeRun: { activeSeconds: 9, deaths: 2 },
+      zones: {},
+    };
+    await storage.write("chibis-way-home.stats", JSON.stringify(old));
+    const store = stageStatsStore(storage, STAGES);
+    await store.load();
+    expect({
+      best: store.summary("street").bestSeconds,
+      skillUsed: store.skillUsed(),
+      version: STATS_VERSION,
+      wholeRun: store.wholeRun(),
+    }).toEqual({
+      best: undefined,
+      skillUsed: false,
+      version: 7,
+      wholeRun: { activeSeconds: 0, deaths: 0 },
+    });
+  });
+
+  it("counts first-try clears in the current visit, none once a stage took a retry", async () => {
+    const store = stageStatsStore(memoryStorage(), STAGES, DESTINATIONS);
+    await store.load();
+    const before = store.currentVisit();
+    store.beginVisit("town");
+    store.beginRun("park");
+    store.completeStage("park");
+    store.beginRun("street");
+    const midway = store.currentVisit();
+    store.retryStage("street");
+    const retried = store.currentVisit();
+    store.beginVisit("town");
+    expect({ before, fresh: store.currentVisit(), midway, retried }).toEqual({
+      before: undefined,
+      fresh: { firstTries: 0, zone: "town" },
+      midway: { firstTries: 1, zone: "town" },
+      retried: { firstTries: 0, zone: "town" },
+    });
+  });
+});

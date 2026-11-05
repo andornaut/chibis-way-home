@@ -15,6 +15,8 @@ import { SCREEN } from "./data/screen";
 import { mountDeveloperPanel } from "./dev/panel";
 import { setupPhoneApp } from "./pwa";
 import { installOffer } from "./pwa/installOffer";
+import { AchievementNoticeScene } from "./scenes/AchievementNoticeScene";
+import { AchievementsScene } from "./scenes/AchievementsScene";
 import { BootScene } from "./scenes/BootScene";
 import { CelebrationScene } from "./scenes/CelebrationScene";
 import { CutsceneScene } from "./scenes/CutsceneScene";
@@ -61,7 +63,8 @@ function startGame(): void {
     render: { antialias: false, desynchronized: true, powerPreference: "high-performance" },
     scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.EXPAND },
     // Later scenes draw over earlier ones: the pause card over the zone, the settings card over
-    // the pause card's dim, the restart card over the start screen or the celebration.
+    // the pause card's dim, the restart card over the start screen or the celebration, and unlock
+    // notices over play and under every card.
     scene: [
       BootScene,
       StartScene,
@@ -69,6 +72,7 @@ function startGame(): void {
       MapScene,
       ZoneScene,
       ZoneBarkScene,
+      AchievementNoticeScene,
       CelebrationScene,
       CutsceneScene,
       PauseScene,
@@ -76,6 +80,7 @@ function startGame(): void {
       SettingsScene,
       SkillDetailScene,
       RestartScene,
+      AchievementsScene,
       DialogueScene,
       ZoneDepartureScene,
       ZoneIntroductionScene,

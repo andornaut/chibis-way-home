@@ -34,6 +34,7 @@ describe.each([
       : [["restart", layout.restart] as [string, LabelledButton]]),
   ];
   const buttons: [string, IconButtonLayout][] = [
+    ["achievements", layout.achievements],
     ["settings", layout.settings],
     ...(layout.exit === undefined ? [] : [["exit", layout.exit] as [string, IconButtonLayout]]),
   ];
@@ -60,6 +61,19 @@ describe.each([
         layout.exit === undefined || right(layout.settings.art) <= layout.exit.art.x,
       x: last.at.x,
     }).toEqual({ lastIsExit: exitShown, settingsBeforeExit: true, x: withExit?.at.x });
+  });
+
+  it("shows Achievements immediately left of Settings, one nav slot apart", () => {
+    const slot = startScreenLayout(SCREEN, true, saved);
+    expect({
+      gap: layout.settings.art.x - right(layout.achievements.art),
+      sameRow: layout.achievements.art.y === layout.settings.art.y,
+      slot: layout.settings.at.x - layout.achievements.at.x,
+    }).toEqual({
+      gap: slot.exit!.art.x - right(slot.settings.art),
+      sameRow: true,
+      slot: slot.exit!.at.x - slot.settings.at.x,
+    });
   });
 
   it.each(texts)(

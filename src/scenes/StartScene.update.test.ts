@@ -76,7 +76,7 @@ it("begins one offer visit per Start create, retains it on resume, and covers it
 });
 
 it.each([false, true])(
-  "retains the Start header and Settings when Exit is shown=%s",
+  "retains the Start header, Achievements and Settings when Exit is shown=%s",
   (exitShown) => {
     const node = { setDisplaySize: vi.fn().mockReturnThis(), setOrigin: vi.fn().mockReturnThis() };
     const image = vi.fn<(x: number, y: number, key: string) => typeof node>(() => node);
@@ -101,8 +101,9 @@ it.each([false, true])(
       y: 0,
     });
     expect(image).toHaveBeenCalledWith(expect.any(Number), 12, "icon-settings-nav");
+    expect(image).toHaveBeenCalledWith(expect.any(Number), 12, "icon-achievements");
     expect(image.mock.calls.some(([, , key]) => key === "ui-quit")).toBe(exitShown);
-    expect(sprite).toHaveBeenCalledTimes(exitShown ? 2 : 1);
+    expect(sprite).toHaveBeenCalledTimes(exitShown ? 3 : 2);
     expect(launch).not.toHaveBeenCalled();
     expect(snapshotArea).not.toHaveBeenCalled();
   },

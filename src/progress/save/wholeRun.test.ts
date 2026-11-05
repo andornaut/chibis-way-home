@@ -3,7 +3,7 @@ import { encodeSave } from "@andornaut/game-kit/save/versionedSave";
 import { expect, it, vi } from "vitest";
 
 import { wholeRunSummary } from "./runSummary";
-import { stageStatsStore, statsFormat } from "./stats";
+import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats";
 
 const stageIds = ["first", "second"] as const;
 const stages = new Set<string>(stageIds);
@@ -107,7 +107,10 @@ it("initializes missing cumulative maps once while preserving every saved counte
     zones: { zone: 5 },
   };
   const storage = memoryStorage();
-  await storage.write("chibis-way-home.stats", JSON.stringify({ ...legacy, version: 6 }));
+  await storage.write(
+    "chibis-way-home.stats",
+    JSON.stringify({ ...legacy, version: STATS_VERSION }),
+  );
   const writes = vi.spyOn(storage, "write");
   const clock = stageStatsStore(storage, stages, destinations);
   await clock.load();
@@ -124,7 +127,7 @@ it("initializes missing cumulative maps once while preserving every saved counte
   expect(JSON.parse((await storage.read("chibis-way-home.stats"))!)).toMatchObject({
     ...legacy,
     totals: { stages: {}, zones: {} },
-    version: 6,
+    version: STATS_VERSION,
   });
   clock.addActiveTime("first", 3);
   await clock.flush();

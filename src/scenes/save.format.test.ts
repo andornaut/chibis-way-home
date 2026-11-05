@@ -54,9 +54,9 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
     [
       '{"stages":{"street":{"run":{"attemptSeconds":1.5,"attempts":2,"completed":true,"',
       'runSeconds":2.25},"bestSeconds":1.5}},"totals":{"stages":{"street":2.25},"zones"',
-      ':{"blue-cityscape":2.25}},"wholeRun":{"activeSeconds":2.25,"deaths":1},"zones":{',
-      '},"visit":{"stages":{"street":{"attemptSeconds":1.5,"attempts":2,"completed":tru',
-      'e,"runSeconds":2.25}},"zone":"blue-cityscape"},"version":6}',
+      ':{"blue-cityscape":2.25}},"wholeRun":{"activeSeconds":2.25,"deaths":1,"skillUsed',
+      '":true},"zones":{},"visit":{"stages":{"street":{"attemptSeconds":1.5,"attempts":',
+      '2,"completed":true,"runSeconds":2.25}},"zone":"blue-cityscape"},"version":7}',
     ].join(""),
   ],
   [
@@ -90,9 +90,9 @@ const REOPEN_WRITES: readonly (readonly [string, string])[] = [
     [
       '{"stages":{"street":{"bestSeconds":1.5,"run":{"attemptSeconds":2,"attempts":2,"c',
       'ompleted":true,"runSeconds":2.75}}},"totals":{"stages":{"street":2.75},"zones":{',
-      '"blue-cityscape":2.75}},"wholeRun":{"activeSeconds":2.75,"deaths":1},"zones":{},',
-      '"visit":{"stages":{"street":{"attemptSeconds":2,"attempts":2,"completed":true,"r',
-      'unSeconds":2.75}},"zone":"blue-cityscape"},"version":6}',
+      '"blue-cityscape":2.75}},"wholeRun":{"activeSeconds":2.75,"deaths":1,"skillUsed":',
+      'true},"zones":{},"visit":{"stages":{"street":{"attemptSeconds":2,"attempts":2,"c',
+      'ompleted":true,"runSeconds":2.75}},"zone":"blue-cityscape"},"version":7}',
     ].join(""),
   ],
 ];

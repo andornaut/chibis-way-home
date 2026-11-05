@@ -105,7 +105,10 @@ it.each([
   await new Promise<void>((resolve) => {
     setImmediate(resolve);
   });
-  expect(scene.scene.launch).toHaveBeenCalledExactlyOnceWith("pause");
+  expect((scene.scene.launch as ReturnType<typeof vi.fn>).mock.calls).toEqual([
+    ["pause"],
+    ["achievementNotice"],
+  ]);
   expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith(target);
 });
 

@@ -2,6 +2,8 @@ import type { GameObjects, Scene } from "phaser";
 
 const mixedRoots = new WeakMap<Scene, Set<GameObjects.GameObject>>();
 const uiScenes = new Set([
+  "achievementNotice",
+  "achievements",
   "celebration",
   "cutscene",
   "death",

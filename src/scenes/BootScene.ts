@@ -11,6 +11,7 @@ import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
 import { TILE } from "../data/screen";
 import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
+import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
 import { filterFontArt, queueFontArt } from "./fontArt";
 import { loadProgress } from "./save";
@@ -98,6 +99,7 @@ export class BootScene extends Scene {
         };
         this.game.events.once("postrender", rendered);
         this.scene.launch("pause");
+        this.scene.launch(ACHIEVEMENT_NOTICE);
         if (new URLSearchParams(window.location.search).has("zone")) {
           this.scene.start("zone");
         } else {

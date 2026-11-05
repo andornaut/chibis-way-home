@@ -1,6 +1,7 @@
-import type { SkillId } from "../data/types";
+import type { AchievementId, SkillId, ZoneLayout } from "../data/types";
 import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode";
 import type {
+  AchievementEntry,
   Progress,
   RunStatsSummary,
   WholeRunStatsSummary,
@@ -8,7 +9,8 @@ import type {
 } from "../progress";
 import * as pageSave from "../progress/save/pageSave";
 import { activeStepSeconds } from "../rules/death";
-import type { ZoneState } from "../rules/zone";
+import { areaOf, type ZoneState } from "../rules/zone";
+import { zoneStepRecord } from "../rules/zoneRecords";
 
 export type { Progress };
 
@@ -55,6 +57,26 @@ export function recordActiveStageStep(
     () => activeStepSeconds(seconds, before, after),
     before.death === undefined && after.death !== undefined,
   );
+}
+// The escapes and skill use of one live step in layout, for the achievements.
+export function recordStepAchievements(
+  layout: ZoneLayout,
+  stage: string,
+  before: ZoneState,
+  after: ZoneState,
+): void {
+  const { escaped, skillUsed } = zoneStepRecord(before, after);
+  const objects = areaOf(layout, before.area).objects;
+  pageSave.recordStageStepAchievements(SESSION, stage, {
+    escaped: escaped.map((index) => objects[index]!.character),
+    skillUsed,
+  });
+}
+export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
+  return pageSave.nextAchievementNotice(SESSION, blocked);
+}
+export function achievementCard(): AchievementEntry[] {
+  return pageSave.achievementCard(SESSION);
 }
 export function clearStageTime(stage: string): void {
   pageSave.clearStageTime(SESSION, stage);

@@ -42,6 +42,7 @@ vi.mock("../dev/mode", () => ({
 vi.mock("./save", () => ({
   activeSkill: () => saved.active,
   recordActiveStageStep: vi.fn(),
+  recordStepAchievements: vi.fn(),
   savedSkills: () => saved.owned,
 }));
 

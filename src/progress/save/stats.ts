@@ -3,6 +3,7 @@ import type { SaveStorage } from "@andornaut/game-kit/save/storage";
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
 import type { MapDestination } from "../../data/types";
+import type { VisitFirstTries } from "../achievements";
 import {
   type RunCounters,
   type RunStatsSummary,
@@ -28,22 +29,27 @@ interface TimeTotals {
   readonly stages: Readonly<Record<string, number>>;
   readonly zones: Readonly<Record<string, number>>;
 }
+// The whole-playthrough ledger, which only confirmed Restart clears. skillUsed: whether he dashed,
+// double jumped or had Speedy selected since then; absent counts as unused.
+interface WholeRunLedger extends WholeRunStatsSummary {
+  readonly skillUsed?: boolean;
+}
 interface Stats {
   readonly totals?: TimeTotals;
-  readonly wholeRun: WholeRunStatsSummary;
+  readonly wholeRun: WholeRunLedger;
   readonly stages: Readonly<Record<string, StageStats>>;
   readonly visit?: ZoneVisit;
   readonly zones: Readonly<Record<string, number>>;
 }
 
-export const STATS_VERSION = 6;
+export const STATS_VERSION = 7;
 const KEYS = {
   backup: "chibis-way-home.stats-backup",
   save: "chibis-way-home.stats",
 } as const;
 // A dirty clock is checkpointed at most once per second between lifecycle flushes.
 const CHECKPOINT_MS = 1000;
-const emptyWholeRun = (): WholeRunStatsSummary => ({ activeSeconds: 0, deaths: 0 });
+const emptyWholeRun = (): WholeRunLedger => ({ activeSeconds: 0, deaths: 0, skillUsed: false });
 const emptyTotals = (): TimeTotals => ({ stages: {}, zones: {} });
 const fresh = (): Stats => ({
   stages: {},
@@ -78,7 +84,8 @@ export function statsFormat(
       !record(value.wholeRun) ||
       !duration(value.wholeRun.activeSeconds) ||
       !Number.isSafeInteger(value.wholeRun.deaths) ||
-      (value.wholeRun.deaths as number) < 0
+      (value.wholeRun.deaths as number) < 0 ||
+      (value.wholeRun.skillUsed !== undefined && typeof value.wholeRun.skillUsed !== "boolean")
     ) {
       return { ok: false, reason: "stats contain invalid whole-run totals" };
     }
@@ -145,6 +152,8 @@ interface StageStatsStore {
   beginVisit(zone: string): void;
   beginRun(stage: string): void;
   completeStage(stage: string): RunStatsSummary;
+  // The current zone visit's first-try clears, or undefined before any visit.
+  currentVisit(): VisitFirstTries | undefined;
   retryStage(stage: string): void;
   recordDeath(stage: string): void;
   resetWholeRun(): void;
@@ -156,6 +165,10 @@ interface StageStatsStore {
   flush(): Promise<void>;
   load(): Promise<void>;
   seconds(stage: string): number;
+  // Whether a skill was used since the last confirmed Restart.
+  skillUsed(): boolean;
+  // Records that a skill was used.
+  useSkill(): void;
 }
 
 // A separate store keeps unfinished stage clocks independent of progress restarts. Mutations
@@ -319,6 +332,19 @@ export function stageStatsStore(
       void flush();
       return summary(stage);
     },
+    currentVisit() {
+      const visit = stats.visit;
+      if (visit === undefined) {
+        return undefined;
+      }
+      const runs = Object.values(visit.stages);
+      return {
+        firstTries: runs.some(({ attempts }) => attempts > 1)
+          ? 0
+          : runs.filter(({ completed }) => completed).length,
+        zone: visit.zone,
+      };
+    },
     flush,
     async load() {
       stats = (await store.load()).save;
@@ -349,8 +375,18 @@ export function stageStatsStore(
       update(stage, { ...run, attemptSeconds: 0, attempts: run.attempts + 1, completed: false });
     },
     seconds: (stage) => stats.stages[stage]?.run?.runSeconds ?? 0,
+    skillUsed: () => stats.wholeRun.skillUsed === true,
     summary,
+    useSkill() {
+      if (stats.wholeRun.skillUsed !== true) {
+        stats = { ...stats, wholeRun: { ...stats.wholeRun, skillUsed: true } };
+        changed();
+      }
+    },
     visitSummary,
-    wholeRun: () => ({ ...stats.wholeRun }),
+    wholeRun: () => ({
+      activeSeconds: stats.wholeRun.activeSeconds,
+      deaths: stats.wholeRun.deaths,
+    }),
   };
 }

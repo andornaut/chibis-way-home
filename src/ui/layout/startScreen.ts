@@ -33,6 +33,8 @@ export interface IconButtonLayout {
 }
 
 export interface StartScreenLayout {
+  // Always present, immediately left of Settings.
+  readonly achievements: IconButtonLayout;
   // Present where the start screen offers to leave the game (exitShown in src/pwa).
   readonly exit?: IconButtonLayout;
   readonly logo: Rect;
@@ -58,9 +60,9 @@ function iconButton(slot: number): IconButtonLayout {
   };
 }
 
-// The start screen with Settings then Exit at the nav's right end, or Settings alone there where
-// Exit is hidden; Start alone, or with saved progress, Restart then Continue. The natural logo
-// frame fits above the unchanged actions at its original aspect ratio.
+// The start screen with Achievements, Settings then Exit at the nav's right end, or Achievements
+// then Settings there where Exit is hidden; Start alone, or with saved progress, Restart then
+// Continue. The natural logo frame fits above the unchanged actions at its original aspect ratio.
 export function startScreenLayout(
   logoSize: Size,
   exitShown: boolean,
@@ -76,7 +78,9 @@ export function startScreenLayout(
     (y - LOGO_ACTION_GAP - logoY) / logoSize.height,
   );
   const logoWidth = logoSize.width * scale;
+  const settingsSlot = exitShown ? 1 : 0;
   return {
+    achievements: iconButton(settingsSlot + 1),
     ...(exitShown ? { exit: iconButton(0) } : {}),
     logo: {
       height: logoSize.height * scale,
@@ -86,7 +90,7 @@ export function startScreenLayout(
     },
     nav: { height: NAV_HEIGHT, width: SCREEN.width, x: 0, y: 0 },
     ...(saved ? { restart: labelledButton({ height, width, x: left, y }) } : {}),
-    settings: iconButton(exitShown ? 1 : 0),
+    settings: iconButton(settingsSlot),
     start: labelledButton({ height, width, x: saved ? middle + ROW_GAP / 2 : x, y }),
   };
 }

@@ -47,6 +47,14 @@ export {
 export { MAP_ACTIONS, type MapAction, mapKeyAction } from "./input/mapInput";
 export { isMouseMovementKey, listenMouseMovement } from "./input/mouseMovement";
 export { stagePickerKey } from "./input/stageSelectInput";
+export {
+  ACHIEVEMENT_ICON_SIZE,
+  type AchievementEntryLayout,
+  achievementNoticeLayout,
+  achievementsCardLayout,
+  achievementsPerPage,
+  type AchievementWords,
+} from "./layout/achievementsCard";
 export { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./layout/actionHelp";
 export {
   buttonFace,

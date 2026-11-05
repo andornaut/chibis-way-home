@@ -3,6 +3,7 @@ import { rectsOverlap } from "@andornaut/game-kit/rect";
 import type { AgentSample, AgentTick } from "../ai/agentTrace";
 import { simulate, type SimulationController, type SimulationModel } from "../ai/simulation";
 import { EDGE, STEP_SECONDS } from "../core";
+import { BOSS_CHARACTERS } from "../data/achievements";
 import type {
   BirdTuning,
   ObjectLayout,
@@ -27,15 +28,12 @@ import {
 import { presentTerrain, supportPresent } from "../rules/zoneCrumbling";
 import { botInput, type BotPolicy, type BotSkill, newBot, prepareSensors } from "./bot";
 
-// The six bosses by character, with the names gameplay uses for them.
-export const BOSSES: Readonly<Record<string, string>> = {
-  "bear-antagonist": "Bini",
-  "dog-antagonist": "Archie",
-  "ferret-antagonist": "Fert",
-  "goose-antagonist": "Trixi",
-  "pigeon-antagonist": "Pebble",
-  "raccoon-antagonist": "Kiwi",
-};
+// The six bosses by character, in character order, with the names gameplay uses for them.
+export const BOSSES: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(BOSS_CHARACTERS)
+    .map(([boss, character]) => [character, boss.charAt(0).toUpperCase() + boss.slice(1)])
+    .sort(([a], [b]) => a!.localeCompare(b!)),
+);
 
 interface BossWorldSample {
   // Indices of the area's terrain rects that crumbling has removed at the end of the tick.

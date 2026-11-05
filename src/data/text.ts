@@ -1,6 +1,86 @@
 import type { GameText, StatsScopeText } from "./types";
 
 export const TEXT: GameText = {
+  // PLACEHOLDER: achievement titles and descriptions until gameplay words them.
+  achievements: {
+    cardTitle: "Achievements",
+    entries: {
+      "clear-apartment": { description: "Clear the Apartment building.", title: "Top floor" },
+      "clear-blue-cityscape": {
+        description: "Clear the Blue cityscape.",
+        title: "Out of the depot",
+      },
+      "clear-countryside": { description: "Clear the Countryside.", title: "Across the fields" },
+      "clear-home-city": { description: "Clear the Home city.", title: "Nearly home" },
+      "clear-industrial": {
+        description: "Clear the Industrial outskirts.",
+        title: "Past the freight",
+      },
+      "clear-woodland": { description: "Clear the Woodland.", title: "Out of the woods" },
+      "escape-archie": { description: "Escape Archie's chase.", title: "Archie outrun" },
+      "escape-bini": { description: "Escape Bini's chase.", title: "Bini outrun" },
+      "escape-fert": { description: "Escape Fert's chase.", title: "Fert outrun" },
+      "escape-kiwi": { description: "Escape Kiwi's chase.", title: "Kiwi outrun" },
+      "escape-pebble": { description: "Escape Pebble's chase.", title: "Pebble outrun" },
+      "escape-trixi": { description: "Escape Trixi's chase.", title: "Trixi outrun" },
+      "first-try-archie": {
+        description: "Clear City boundary on its first attempt.",
+        title: "Archie, first try",
+      },
+      "first-try-bini": {
+        description: "Clear Ravine on its first attempt.",
+        title: "Bini, first try",
+      },
+      "first-try-fert": {
+        description: "Clear Penthouse on its first attempt.",
+        title: "Fert, first try",
+      },
+      "first-try-kiwi": {
+        description: "Clear Familiar neighbourhood on its first attempt.",
+        title: "Kiwi, first try",
+      },
+      "first-try-pebble": {
+        description: "Clear Freight terminal on its first attempt.",
+        title: "Pebble, first try",
+      },
+      "first-try-trixi": {
+        description: "Clear River crossing on its first attempt.",
+        title: "Trixi, first try",
+      },
+      "gift-rooms": { description: "Own Dash, Double jump and Speedy.", title: "All gift rooms" },
+      "home-without-skills": {
+        description: "Finish the journey without dashing, double jumping or selecting Speedy.",
+        title: "Home with no skills",
+      },
+      "no-death-apartment": {
+        description: "Clear every Apartment building stage first try, in one visit.",
+        title: "Spotless apartment",
+      },
+      "no-death-blue-cityscape": {
+        description: "Clear every Blue cityscape stage first try, in one visit.",
+        title: "Spotless cityscape",
+      },
+      "no-death-countryside": {
+        description: "Clear every Countryside stage first try, in one visit.",
+        title: "Spotless countryside",
+      },
+      "no-death-home-city": {
+        description: "Clear every Home city stage first try, in one visit.",
+        title: "Spotless home city",
+      },
+      "no-death-industrial": {
+        description: "Clear every Industrial outskirts stage first try, in one visit.",
+        title: "Spotless outskirts",
+      },
+      "no-death-woodland": {
+        description: "Clear every Woodland stage first try, in one visit.",
+        title: "Spotless woodland",
+      },
+    },
+    notice: "Achievement: {title}",
+    pages: { next: "Next", page: "Page {page} of {pages}", previous: "Previous" },
+    progress: "{have}/{need}",
+  },
   buttons: {
     jump: "Jump",
     move: "Move",
@@ -211,6 +291,7 @@ export const TEXT: GameText = {
     },
   },
   start: {
+    achievements: "Achievements",
     continue: "Continue",
     exit: "Exit",
     restart: "Restart",

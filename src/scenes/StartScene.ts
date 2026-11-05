@@ -24,6 +24,7 @@ import {
   stepFocus,
   type TouchSetting,
 } from "../ui";
+import type { AchievementsData, AchievementsOpener, AchievementsScene } from "./AchievementsScene";
 import {
   addSlice,
   addTextButton,
@@ -40,14 +41,16 @@ import type { RestartData, RestartOpener, RestartScene } from "./RestartScene";
 import { savedProgress } from "./save";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
 
+const ACHIEVEMENTS = "achievements";
 const BACKGROUND = "start-background";
 const LOGO = "logo";
 const RESTART = "restart";
 const SETTINGS = "settings";
 
-type Control = "exit" | "restart" | "settings" | "start";
+type Control = "achievements" | "exit" | "restart" | "settings" | "start";
+type NavControl = "achievements" | "exit" | "settings";
 // The card over the start screen, if one shows.
-type Card = "restart" | "settings";
+type Card = "achievements" | "restart" | "settings";
 
 interface IconButton {
   readonly face: GameObjects.Sprite;
@@ -57,15 +60,15 @@ interface IconButton {
 
 // The screen the game opens on without saved progress, and that Back to title goes to: the Start
 // button, which opens the map (Continue, with him where he stands, once progress is saved),
-// under a nav bar with Settings and Exit at its right end. Settings opens the settings card over
-// this screen, and Restart the restart card; the card that shows takes the keys and back until it
-// closes. Exit, and back with no card open, leave the browser game. Installed app windows keep
-// Settings without Exit when closing is unsupported (exitShown), and back there is the browser's
-// own. A control acts when a
-// press lands on it and lifts on it.
-export class StartScene extends Scene implements RestartOpener, SettingsOpener {
-  // The nav's icon buttons: Settings and, where the game can exit, Exit.
-  private buttons = new Map<"exit" | "settings", IconButton>();
+// under a nav bar with Achievements, Settings and Exit at its right end. Achievements opens the
+// Achievements card over this screen, Settings the settings card, and Restart the restart card;
+// the card that shows takes the keys and back until it closes. Exit, and back with no card open,
+// leave the browser game. Installed app windows keep Settings without Exit when closing is
+// unsupported (exitShown), and back there is the browser's own. A control acts when a press lands
+// on it and lifts on it.
+export class StartScene extends Scene implements AchievementsOpener, RestartOpener, SettingsOpener {
+  // The nav's icon buttons: Achievements, Settings and, where the game can exit, Exit.
+  private buttons = new Map<NavControl, IconButton>();
   private layout!: StartScreenLayout;
   // The control a press landed on, which acts if the press lifts on it too.
   private pressed: Control | undefined;
@@ -139,14 +142,21 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     this.drawFocus();
   }
 
+  achievementsClosed(): void {
+    this.card = undefined;
+    coverZone("startCard", false);
+    this.drawFocus();
+  }
+
   // The static logical-view background stays behind the logo, nav and actions.
   private draw(): void {
-    const { exit, logo, nav, restart, settings, start } = this.layout;
+    const { achievements, exit, logo, nav, restart, settings, start } = this.layout;
     this.cameras.main.setBackgroundColor(this.colour("ink"));
     this.add.image(0, 0, BACKGROUND).setOrigin(0);
     addSlice(this, "ui-nav-bar", nav);
     this.add.image(logo.x, logo.y, LOGO).setOrigin(0).setDisplaySize(logo.width, logo.height);
     this.buttons = new Map([
+      ["achievements", this.iconButton(achievements, "icon-achievements")],
       ["settings", this.iconButton(settings, "icon-settings-nav")],
       ...(exit === undefined ? [] : [["exit", this.iconButton(exit, "ui-quit")] as const]),
     ]);
@@ -185,8 +195,9 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   }
 
   private controlAt(pointer: Input.Pointer): Control | undefined {
-    const { exit, restart, settings, start } = this.layout;
+    const { achievements, exit, restart, settings, start } = this.layout;
     const areas: PressArea<Control>[] = [
+      { art: achievements.art, hit: achievements.hit, key: "achievements" },
       ...(exit === undefined ? [] : [{ art: exit.art, hit: exit.hit, key: "exit" as const }]),
       ...(restart === undefined
         ? []
@@ -211,7 +222,7 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     });
   }
 
-  // Tab and the arrows move the keyboard's focus through Start and the nav's buttons; Enter and
+  // Tab and the arrows move the keyboard's focus through Start, Restart and the nav's buttons; Enter and
   // Space press the focused one, or Start with nothing focused.
   private key(event: KeyboardEvent): void {
     if (this.card !== undefined) {
@@ -235,6 +246,7 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
     return [
       "start",
       ...(this.layout.restart === undefined ? [] : ["restart" as const]),
+      "achievements",
       "settings",
       ...(this.layout.exit === undefined ? [] : ["exit" as const]),
     ];
@@ -264,6 +276,11 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
       this.starting = true;
       // Unseen new games show the opening; Continue returns directly to the map.
       this.scene.start(openingDestination(savedProgress()));
+    } else if (control === "achievements") {
+      this.card = "achievements";
+      coverZone("startCard", true);
+      this.drawFocus();
+      this.scene.launch(ACHIEVEMENTS, { opener: this.scene.key } satisfies AchievementsData);
     } else if (control === "settings") {
       this.card = "settings";
       coverZone("startCard", true);
@@ -280,9 +297,11 @@ export class StartScene extends Scene implements RestartOpener, SettingsOpener {
   }
 
   // The card that shows, which takes the keys and back.
-  private cardScene(): RestartScene | SettingsScene {
-    return this.scene.get(this.card === "restart" ? RESTART : SETTINGS) as
-      RestartScene | SettingsScene;
+  private cardScene(): AchievementsScene | RestartScene | SettingsScene {
+    const key = { achievements: ACHIEVEMENTS, restart: RESTART, settings: SETTINGS }[
+      this.card ?? "settings"
+    ];
+    return this.scene.get(key) as AchievementsScene | RestartScene | SettingsScene;
   }
 
   private colour(name: string): number {

@@ -1,11 +1,23 @@
+import { CelebrationQueue } from "@andornaut/game-kit/achievements";
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
 import { loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
 
+import { BOSS_CHARACTERS } from "../../data/achievements";
 import { ZONE_MAP } from "../../data/map";
-import type { SkillId } from "../../data/types";
+import type { AchievementId, BossId, SkillId } from "../../data/types";
 import { RECIPES } from "../../data/zones";
+import {
+  ACHIEVEMENT_IDS,
+  achievementEntries,
+  type AchievementEntry,
+  type AchievementFacts,
+  type AchievementScope,
+  earnedAt,
+  zoneEndingAt,
+} from "../achievements";
 import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills";
+import { achievementsStore } from "./achievements";
 import { BEGINNING, mapProgress, type Progress, progressFormat } from "./progress";
 import {
   type RunStatsSummary,
@@ -36,6 +48,15 @@ let temporarySelection: SkillId | null | undefined;
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
 const stats = stageStatsStore(localSaveStorage(), STAGES, ZONE_MAP.destinations);
 let statsLifecycleInstalled = false;
+const achievements = achievementsStore(localSaveStorage());
+// Unlock notices not shown yet: the stored unannounced ones, then each award.
+const notices = new CelebrationQueue<AchievementId>();
+// The earned ids, including awards whose write is still queued, so a later call in the same
+// frame does not award or announce them again.
+let earnedIds: readonly AchievementId[] = [];
+const BOSSES_BY_CHARACTER: ReadonlyMap<string, BossId> = new Map(
+  Object.entries(BOSS_CHARACTERS).map(([boss, character]) => [character, boss as BossId]),
+);
 
 function installStatsLifecycle(session: SaveSession): void {
   if (statsLifecycleInstalled || typeof window === "undefined" || typeof document === "undefined") {
@@ -65,9 +86,75 @@ export async function loadProgress(session: SaveSession): Promise<void> {
     }
     return;
   }
-  const [loaded] = await Promise.all([store.load(), stats.load()]);
+  const [loaded, , earned] = await Promise.all([store.load(), stats.load(), achievements.load()]);
   progress = loaded.save;
+  if (progress.activeSkill === "speedy") {
+    stats.useSkill();
+  }
+  earnedIds = earned.save.earned;
+  notices.push(earned.save.unannounced);
   installStatsLifecycle(session);
+}
+
+// Judges each scope with its facts beside the shared profile, and stores and queues what they
+// earn, in card order. Callers have already left developer sessions out.
+function judgeAchievements(
+  scopes: readonly (readonly [AchievementScope, Partial<AchievementFacts>])[],
+): void {
+  const profile = { skillUsed: stats.skillUsed(), skills: progress.skills };
+  const found = new Set(
+    scopes.flatMap(([scope, facts]) => earnedAt(earnedIds, scope, { ...profile, ...facts })),
+  );
+  const fresh = ACHIEVEMENT_IDS.filter((id) => found.has(id));
+  if (fresh.length > 0) {
+    earnedIds = [...earnedIds, ...fresh];
+    notices.push(fresh);
+    void achievements.award(fresh);
+  }
+}
+
+// What a live step did for the records: the characters whose pursuit it ended in an escape, and
+// whether it used a skill (zoneStepRecord).
+export function recordStageStepAchievements(
+  session: SaveSession,
+  stage: string,
+  step: { readonly escaped: readonly string[]; readonly skillUsed: boolean },
+): void {
+  if (session.development() || !STAGES.has(stage)) {
+    return;
+  }
+  if (step.skillUsed) {
+    stats.useSkill();
+  }
+  const bosses = [
+    ...new Set(step.escaped.flatMap((character) => BOSSES_BY_CHARACTER.get(character) ?? [])),
+  ];
+  judgeAchievements(bosses.map((boss) => ["escape", { escaped: boss }] as const));
+}
+
+// The next unlock notice to show unless blocked, marked announced as it starts.
+export function nextAchievementNotice(
+  session: SaveSession,
+  blocked: () => boolean,
+): AchievementId | undefined {
+  const id = notices.takeWhen(blocked);
+  if (id !== undefined && !session.development()) {
+    void achievements.announced(id);
+  }
+  return id;
+}
+
+// Every achievement for the card, in card order, with each locked entry's progress.
+export function achievementCard(session: SaveSession): AchievementEntry[] {
+  if (session.development()) {
+    return achievementEntries([], { skillUsed: false, skills: [] });
+  }
+  const visit = stats.currentVisit();
+  return achievementEntries(earnedIds, {
+    skillUsed: stats.skillUsed(),
+    skills: progress.skills,
+    ...(visit && { visit }),
+  });
 }
 
 export function beginZoneVisit(session: SaveSession, zone: string): void {
@@ -99,7 +186,14 @@ export function completeStageRun(session: SaveSession, stage: string): RunStatsS
   if (session.development()) {
     return stats.summary("");
   }
-  return stats.completeStage(stage);
+  const summary = stats.completeStage(stage);
+  const zone = zoneEndingAt(ZONE_MAP, stage);
+  const visit = stats.currentVisit();
+  judgeAchievements([
+    ["stage-clear", { stage: { attempts: summary.attempts, id: stage } }],
+    ...(zone === undefined ? [] : [["zone-clear", { zone, ...(visit && { visit }) }] as const]),
+  ]);
+  return summary;
 }
 export function stageRunStats(session: SaveSession, stage: string): RunStatsSummary {
   return stats.summary(session.development() ? "" : stage);
@@ -194,6 +288,7 @@ export function grantSkill(session: SaveSession, skill: SkillId): boolean {
     activeSkill: progress.activeSkill ?? skill,
     skills: [...progress.skills, skill],
   });
+  judgeAchievements([["skill", {}]]);
   return true;
 }
 
@@ -273,6 +368,9 @@ function write(session: SaveSession, next: Progress): void {
     return;
   }
   progress = next;
+  if (next.activeSkill === "speedy") {
+    stats.useSkill();
+  }
   void store.save(next);
 }
 
