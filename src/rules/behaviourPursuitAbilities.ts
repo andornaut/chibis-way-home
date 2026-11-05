@@ -37,7 +37,7 @@ type PursuitAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
 >;
 
 interface PursuitAim {
-  // The tracked rect: a held sampled intent or traversal goal, else Chibi's live body.
+  // The tracked rect: the scorer's held move or a traversal goal, else Chibi's live body.
   readonly hers: Rect;
   readonly dx: number;
   readonly state: BehaviourState;
@@ -95,7 +95,7 @@ function pursuitAim(
   };
 }
 
-// A held sampled intent keeps its own facing through the chase.
+// The scorer's held move keeps its own facing through the chase.
 function intentFacing({ intent }: BehaviourAbilityContext, state: BehaviourState): BehaviourState {
   return intent.sampled && state.intent ? { ...state, facing: state.intent.facing } : state;
 }
@@ -119,7 +119,7 @@ export const AIR_CHASE: PursuitAbility<"air-chase"> = {
 };
 
 // Ascends above Chibi, then follows the collision-checked overhead route to the approach goal
-// along the captured travel side. The slice ends at the ascent's top, or where a sampled
+// along the captured travel side. The slice ends at the ascent's top, or where a scored
 // approach crosses Chibi's live goal and the graph would arrive, so live guards observe it.
 export const OVERHEAD_SWOOP: PursuitAbility<"overhead-swoop"> = {
   act: (context, { motion }, actor) => {

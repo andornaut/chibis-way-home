@@ -35,7 +35,6 @@ function validateClockCycle(
     plan.distance !== 0 ||
     plan.pursuit ||
     plan.idleWatchdog ||
-    plan.groundReposition ||
     plan.spotted ||
     plan.attackCooldownSeconds !== undefined
   ) {
@@ -66,7 +65,6 @@ function validateClockCycle(
       node.attack ||
       (!emits && (node.onEnter?.length ?? 0) > 0) ||
       node.allowIdleReposition ||
-      node.allowGroundReposition ||
       node.transitions.length !== 1 ||
       node.transitions[0]!.when.length !== 1 ||
       condition?.kind !== "elapsed" ||

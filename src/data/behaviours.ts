@@ -1,12 +1,26 @@
 import { BIRD } from "./bird";
+import {
+  chargeScore,
+  DROP_BURST_SCORE,
+  FERT_SCORER,
+  GROUND_BOSS_SCORER,
+  GROWL_SCORE,
+  KIWI_DROP_SCORE,
+  MAUL_SCORE,
+  PARCEL_SCORE,
+  PEBBLE_SCORER,
+  POUNCE_SCORE,
+  SWOOP_SCORE,
+  TRAP_SCORE,
+} from "./bossScorers";
 import { SCREEN, TILE } from "./screen";
 import type {
   BehaviourAction,
-  BehaviourGroundReposition,
+  BehaviourCondition,
   BehaviourNode,
   BehaviourPlan,
-  BehaviourPursuitIntent,
   BehaviourTransition,
+  BossScoredAttack,
   DialogueLine,
 } from "./types";
 
@@ -17,7 +31,6 @@ const CROSSING_SPEED = 6;
 const DOG_PATROL_PAUSE = 0.14;
 const DOG_PATROL_SPEED = 4.6875;
 const FERRET_THROW_PAUSE_SECONDS = 1;
-const FRUSTRATION_SECONDS = 0.55;
 const GOOSE_PATROL_SPEED = 3.125;
 const GROUND_PURSUIT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
 const GROUND_TRAVERSAL_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
@@ -51,31 +64,6 @@ const ANIMAL_IDLE_WATCHDOG: NonNullable<BehaviourPlan["idleWatchdog"]> = {
   resume: "pursuit",
   seconds: 2,
 };
-
-const GROUND_BOSS_REPOSITION: BehaviourGroundReposition = {
-  distance: 12,
-  intervalSeconds: 2,
-  maxAttempts: 2,
-  minDistance: 4,
-  resume: "pursuit",
-};
-
-const BOSS_PURSUIT_INTENT: BehaviourPursuitIntent = {
-  decisionSeconds: { max: 1.2, min: 0.8 },
-  offset: { max: 2, min: -2 },
-};
-
-function withPursuitIntent(plan: BehaviourPlan, eligible: readonly string[]): BehaviourPlan {
-  const states = { ...plan.states };
-  for (const key of eligible) {
-    const node = states[key];
-    if (!node || node.motion.kind !== "pursue" || node.attack || node.onEnter?.length) {
-      throw new Error(`Invalid pursuit intent state ${key}`);
-    }
-    states[key] = { ...node, motion: { ...node.motion, intent: BOSS_PURSUIT_INTENT } };
-  }
-  return { ...plan, states };
-}
 
 const ATTACK_ENGAGEMENT_RANGE = 12;
 // Ground chase: the grounded walk toward Chibi, and the horizontal speed of jumps and map legs.
@@ -111,7 +99,18 @@ const PURSUIT_LIMITS = {
 function persistentPursuit(escaped: DialogueLine): NonNullable<BehaviourPlan["pursuit"]> {
   return { ...PURSUIT_LIMITS, escaped };
 }
-function chaseNode(chase: GroundChase, failure: string, next: string): BehaviourNode {
+// A scored attack of the engaged state: `when` gates it and the scorer chooses it.
+function scored(
+  to: string,
+  score: BossScoredAttack,
+  when: readonly BehaviourCondition[],
+): BehaviourTransition {
+  return { score, to, when };
+}
+const ENGAGEMENT = { kind: "nearby", range: ATTACK_ENGAGEMENT_RANGE } as const;
+
+// The engaged ground state: the scorer chooses among its attacks and moves.
+function chaseNode(chase: GroundChase, attacks: readonly BehaviourTransition[]): BehaviourNode {
   return {
     allowIdleReposition: true,
     animation: "walk",
@@ -121,10 +120,7 @@ function chaseNode(chase: GroundChase, failure: string, next: string): Behaviour
       speed: chase.speed,
       traversal: { ...GROUND_TRAVERSAL, speed: chase.traversalSpeed },
     },
-    transitions: [
-      { to: failure, when: LOST_TARGET },
-      { to: next, when: [{ kind: "nearby", range: ATTACK_ENGAGEMENT_RANGE }] },
-    ],
+    transitions: attacks,
   };
 }
 
@@ -219,14 +215,6 @@ function escapeTransition(to: string): BehaviourTransition {
   return { to, when: [{ kind: "pursuit-ended" }] };
 }
 
-function frustrationNode(to: string): BehaviourNode {
-  return {
-    animation: "frustration",
-    motion: { kind: "wait" },
-    transitions: [{ to, when: [{ kind: "elapsed", seconds: FRUSTRATION_SECONDS }] }],
-  };
-}
-
 export function shuttleStates(
   speed: number,
   pause: number,
@@ -257,7 +245,10 @@ export function shuttleStates(
 }
 
 interface PatrolChargeTuning {
-  readonly attackRange: number;
+  // The engaged state's specials, scored beside the charge.
+  readonly specials: readonly BehaviourTransition[];
+  // Tiles the committed charge covers.
+  readonly reach: number;
   readonly patrolPause: number;
   readonly patrolSpeed: number;
   readonly preparation: "crouch" | "warn";
@@ -279,14 +270,9 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       motion: { kind: "wait" },
       transitions: [
         escapeTransition("pursuit"),
-        {
-          to: "frustration",
-          when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }, ...LOST_TARGET],
-        },
         { to: "rush", when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }] },
       ],
     },
-    frustration: frustrationNode("pursuit"),
     "patrol-left": {
       allowIdleReposition: true,
       animation: "walk",
@@ -305,10 +291,10 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
         { to: "wait-right", when: [{ kind: "boundary" }] },
       ],
     },
-    pursuit: {
-      ...chaseNode(GROUND_CHASE, "frustration", tuning.preparation),
-      allowGroundReposition: true,
-    },
+    pursuit: chaseNode(GROUND_CHASE, [
+      scored(tuning.preparation, chargeScore(tuning.reach), [ENGAGEMENT]),
+      ...tuning.specials,
+    ]),
     rest: {
       animation: "rest",
       motion: { kind: "wait" },
@@ -380,15 +366,10 @@ function verticalDropStates(tuning: VerticalDropTuning): BehaviourPlan["states"]
       motion: { direction: 1, kind: "move", speed: tuning.dropSpeed },
       transitions: [{ to: "rest", when: [{ kind: "boundary" }] }],
     },
-    frustration: frustrationNode("prepare"),
     prepare: {
       animation: "prepare",
       motion: { kind: "wait" },
       transitions: [
-        {
-          to: "frustration",
-          when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }, ...LOST_TARGET],
-        },
         { to: "drop", when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }] },
       ],
     },
@@ -435,29 +416,39 @@ export const CITY_SHUTTLE_BEHAVIOUR: BehaviourPlan = {
   states: shuttleStates(CROSSING_SPEED, CROSSING_PAUSE, null),
 };
 
-const GROUND_CHARGE: PatrolChargeTuning = {
-  attackRange: ANIMAL_DETECTION_RANGE,
+const GROUND_CHARGE = {
   patrolPause: DOG_PATROL_PAUSE,
   patrolSpeed: DOG_PATROL_SPEED,
   preparation: "crouch",
   preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
+  reach: 15,
   restSeconds: 0.25,
   rushSeconds: 0.48,
   rushSpeed: 31.25,
-};
+} as const;
 
-const DOG_ATTACK_PROFILE: BehaviourPlan = attackProfile(
+const DOG_BEHAVIOUR_STATES = patrolChargeStates({
+  ...GROUND_CHARGE,
+  specials: [
+    scored("prepare-pounce", POUNCE_SCORE, [
+      { kind: "nearby", range: POUNCE_ENGAGEMENT_RANGE },
+      { kind: "line-of-sight" },
+    ]),
+  ],
+});
+
+export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
-    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "patrol-left",
     pursuit: persistentPursuit({ line: "archie-escaped", speaker: "dog" }),
+    scorer: GROUND_BOSS_SCORER,
     spotted: { line: "archie-spotted", speaker: "dog" },
     states: {
-      ...patrolChargeStates(GROUND_CHARGE),
+      ...DOG_BEHAVIOUR_STATES,
       pounce: {
         animation: "pounce",
         motion: { direction: "facing", hopHeight: 3, hopSeconds: 0.48, kind: "hop", speed: 12.5 },
@@ -473,11 +464,7 @@ const DOG_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         enter: "face-target",
         motion: { kind: "wait" },
         transitions: [
-          escapeTransition("pursuit-pounce"),
-          {
-            to: "frustration",
-            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
-          },
+          escapeTransition("pursuit"),
           {
             to: "pounce",
             when: [
@@ -486,26 +473,8 @@ const DOG_ATTACK_PROFILE: BehaviourPlan = attackProfile(
               { kind: "line-of-sight" },
             ],
           },
-          {
-            to: "pursuit-pounce",
-            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }],
-          },
+          { to: "pursuit", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
-      },
-      "pursuit-pounce": {
-        ...chaseNode(GROUND_CHASE, "frustration", "prepare-pounce"),
-        transitions: [
-          { to: "frustration", when: LOST_TARGET },
-          {
-            to: "prepare-pounce",
-            when: [{ kind: "nearby", range: POUNCE_ENGAGEMENT_RANGE }, { kind: "line-of-sight" }],
-          },
-        ],
-      },
-      rest: {
-        animation: "rest",
-        motion: { kind: "wait" },
-        transitions: [{ to: "pursuit-pounce", when: [{ kind: "elapsed", seconds: 0.25 }] }],
       },
     },
     takeoffAnimation: ANTICIPATION_ANIMATION,
@@ -513,7 +482,7 @@ const DOG_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   [
     {
       committed: ["rush", "rest"],
-      finished: [{ from: "rest", to: "pursuit-pounce" }],
+      finished: [{ from: "rest", to: "pursuit" }],
       id: "charge",
       tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -526,34 +495,29 @@ const DOG_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   ],
 );
 
-export const DOG_BEHAVIOUR = withPursuitIntent(DOG_ATTACK_PROFILE, ["pursuit", "pursuit-pounce"]);
-
-const FERRET_ATTACK_PROFILE: BehaviourPlan = attackProfile(
+export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
-    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "patrol-left",
     pursuit: persistentPursuit({ line: "fert-escaped", speaker: "ferret" }),
+    scorer: FERT_SCORER,
     spotted: { line: "fert-spotted", speaker: "ferret" },
     states: {
-      ...patrolChargeStates(GROUND_CHARGE),
+      ...patrolChargeStates({
+        ...GROUND_CHARGE,
+        specials: [scored("prepare-throw", PARCEL_SCORE, [ENGAGEMENT])],
+      }),
       "prepare-throw": {
         animation: "crouch",
         enter: "face-target",
         motion: { kind: "wait" },
         transitions: [
-          escapeTransition("pursuit-throw"),
+          escapeTransition("pursuit"),
           { to: "throw", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
-      },
-      "pursuit-throw": chaseNode(GROUND_CHASE, "frustration", "prepare-throw"),
-      rest: {
-        animation: "rest",
-        motion: { kind: "wait" },
-        transitions: [{ to: "pursuit-throw", when: [{ kind: "elapsed", seconds: 0.25 }] }],
       },
       throw: {
         animation: "throw",
@@ -587,7 +551,7 @@ const FERRET_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   [
     {
       committed: ["rush", "rest"],
-      finished: [{ from: "rest", to: "pursuit-throw" }],
+      finished: [{ from: "rest", to: "pursuit" }],
       id: "charge",
       tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -600,34 +564,29 @@ const FERRET_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   ],
 );
 
-export const FERRET_BEHAVIOUR = withPursuitIntent(FERRET_ATTACK_PROFILE, [
-  "pursuit",
-  "pursuit-throw",
-]);
-
-const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
+export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -12,
-    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "patrol-left",
     pursuit: persistentPursuit({ line: "trixi-escaped", speaker: "goose" }),
+    scorer: GROUND_BOSS_SCORER,
     spotted: { line: "trixi-spotted", speaker: "goose" },
     states: {
       ...patrolChargeStates({
-        attackRange: ANIMAL_DETECTION_RANGE,
         patrolPause: 0.25,
         patrolSpeed: GOOSE_PATROL_SPEED,
         preparation: "warn",
         preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
+        reach: 10,
         restSeconds: 0.35,
         rushSeconds: 0.36,
         rushSpeed: 21.875,
         slide: { distance: 3, seconds: 0.4, speed: 10.9375 },
+        specials: [scored("set-trap", TRAP_SCORE, [ENGAGEMENT])],
       }),
-      "pursuit-trap": chaseNode(GROUND_CHASE, "frustration", "set-trap"),
       "release-trap": {
         animation: "set-trap",
         motion: { kind: "wait" },
@@ -646,16 +605,11 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
         transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.14 }] }],
       },
-      rest: {
-        animation: "rest",
-        motion: { kind: "wait" },
-        transitions: [{ to: "pursuit-trap", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-      },
       "set-trap": {
         animation: "warn",
         motion: { kind: "wait" },
         transitions: [
-          escapeTransition("pursuit-trap"),
+          escapeTransition("pursuit"),
           { to: "release-trap", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
       },
@@ -665,7 +619,7 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   [
     {
       committed: ["rush", "slide", "rest"],
-      finished: [{ from: "rest", to: "pursuit-trap" }],
+      finished: [{ from: "rest", to: "pursuit" }],
       id: "charge",
       tells: { warn: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -677,8 +631,6 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
     },
   ],
 );
-
-export const GOOSE_BEHAVIOUR = withPursuitIntent(GOOSE_ATTACK_PROFILE, ["pursuit", "pursuit-trap"]);
 
 const KIWI_DROP_ALIGNMENT = 1;
 // The re-aimed tell before Kiwi's second charge: the minimum reaction time.
@@ -715,15 +667,15 @@ const RACCOON_VERTICAL_STATES = verticalDropStates({
   returnState: "climb",
 });
 
-const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
+export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "y",
     distance: -15,
-    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "watch",
     pursuit: persistentPursuit({ line: "kiwi-escaped", speaker: "raccoon" }),
+    scorer: GROUND_BOSS_SCORER,
     spotted: { line: "kiwi-spotted", speaker: "raccoon" },
     states: {
       ...RACCOON_VERTICAL_STATES,
@@ -744,8 +696,6 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ...RACCOON_VERTICAL_STATES.drop!,
         transitions: [{ to: "pursuit", when: [{ kind: "boundary" }] }],
       },
-      "frustration-ground": { ...frustrationNode("pursuit"), track: RACCOON_GROUND_TRACK },
-      "frustration-return": { ...frustrationNode("return-ground"), track: RACCOON_GROUND_TRACK },
       prepare: {
         ...RACCOON_VERTICAL_STATES.prepare!,
         transitions: [
@@ -760,42 +710,23 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         track: RACCOON_GROUND_TRACK,
         transitions: [
           escapeTransition("pursuit"),
-          {
-            to: "frustration-ground",
-            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
-          },
           { to: "rush", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
       },
+      // Kiwi climbs only for her drop: it starts with the walk to her climb's foot once she is
+      // lined up under Chibi with a clear climb.
       pursuit: {
-        ...chaseNode(GROUND_CHASE, "frustration-ground", "prepare-charge"),
-        allowGroundReposition: true,
+        ...chaseNode(GROUND_CHASE, [
+          scored("prepare-charge", chargeScore(12), [ENGAGEMENT]),
+          scored("return-ground-staging", KIWI_DROP_SCORE, [
+            ...DETECTION,
+            { kind: "attack-ready" },
+            { comparison: "below", distance: KIWI_DROP_ALIGNMENT, kind: "horizontal-gap" },
+            RACCOON_CLIMB_CLEAR,
+          ]),
+        ]),
         animation: "climb",
         track: RACCOON_GROUND_TRACK,
-      },
-      "pursuit-drop": {
-        ...chaseNode(GROUND_CHASE, "frustration-ground", "climb"),
-        track: RACCOON_GROUND_TRACK,
-        transitions: [
-          { to: "frustration-ground", when: LOST_TARGET },
-          {
-            to: "return-ground-staging",
-            when: [
-              ...DETECTION,
-              { kind: "attack-ready" },
-              { comparison: "below", distance: KIWI_DROP_ALIGNMENT, kind: "horizontal-gap" },
-              RACCOON_CLIMB_CLEAR,
-            ],
-          },
-          {
-            to: "pursuit",
-            when: [
-              ...DETECTION,
-              { kind: "attack-ready" },
-              { condition: RACCOON_CLIMB_CLEAR, kind: "not" },
-            ],
-          },
-        ],
       },
       // Kiwi charges twice: the second rush follows its own re-aimed tell.
       recharge: {
@@ -805,10 +736,6 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         track: RACCOON_GROUND_TRACK,
         transitions: [
           escapeTransition("pursuit"),
-          {
-            to: "frustration-ground",
-            when: [{ kind: "elapsed", seconds: KIWI_RETELL_SECONDS }, ...LOST_TARGET],
-          },
           { to: "rush-second", when: [{ kind: "elapsed", seconds: KIWI_RETELL_SECONDS }] },
         ],
       },
@@ -823,9 +750,8 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         motion: { direction: 1, kind: "move", speed: RACCOON_RETURN_SPEED },
         track: RACCOON_GROUND_TRACK,
         transitions: [
-          { to: "pursuit", when: [{ kind: "boundary" }, { kind: "pursuit-ended" }] },
-          { to: "pursuit-drop", when: [{ kind: "boundary" }] },
-          { to: "frustration-return", when: [{ kind: "elapsed", seconds: 3.2 }] },
+          { to: "pursuit", when: [{ kind: "boundary" }] },
+          { to: "pursuit", when: [{ kind: "elapsed", seconds: 3.2 }] },
         ],
       },
       "return-ground-staging": {
@@ -851,12 +777,10 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   },
   [
     {
-      committed: ["rush", "rush-second", "charge-rest", "return-ground", "frustration-return"],
+      committed: ["rush", "rush-second", "charge-rest", "return-ground"],
       finished: [
-        { from: "return-ground", to: "pursuit-drop" },
         { from: "return-ground", to: "pursuit" },
         { from: "recharge", to: "pursuit" },
-        { from: "recharge", to: "frustration-ground" },
       ],
       id: "charge",
       retells: { recharge: KIWI_RETELL_SECONDS },
@@ -871,23 +795,17 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   ],
 );
 
-export const RACCOON_BEHAVIOUR = withPursuitIntent(RACCOON_ATTACK_PROFILE, [
-  "pursuit",
-  "pursuit-drop",
-]);
-
-const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
+export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: -18,
-    groundReposition: GROUND_BOSS_REPOSITION,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
     initial: "watch",
     pursuit: persistentPursuit({ line: "bini-escaped", speaker: "bear" }),
+    scorer: GROUND_BOSS_SCORER,
     spotted: { line: "bini-spotted", speaker: "bear" },
     states: {
-      frustration: frustrationNode("pursuit-growl"),
       growl: {
         animation: "growl",
         motion: { kind: "wait" },
@@ -914,10 +832,6 @@ const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         motion: { kind: "wait" },
         transitions: [
           escapeTransition("pursuit"),
-          {
-            to: "frustration",
-            when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }, ...LOST_TARGET],
-          },
           { to: "rush", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
       },
@@ -926,7 +840,7 @@ const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         enter: "face-target",
         motion: { kind: "wait" },
         transitions: [
-          escapeTransition("pursuit-growl"),
+          escapeTransition("pursuit"),
           { to: "growl", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
       },
@@ -935,27 +849,26 @@ const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         enter: "face-target",
         motion: { kind: "wait" },
         transitions: [
-          escapeTransition("pursuit-maul"),
+          escapeTransition("pursuit"),
           { to: "maul", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
       },
-      pursuit: {
-        ...chaseNode(BEAR_CHASE, "frustration", "prepare-charge"),
-        allowGroundReposition: true,
-      },
-      "pursuit-growl": chaseNode(BEAR_CHASE, "frustration", "prepare-growl"),
-      "pursuit-maul": chaseNode(BEAR_CHASE, "frustration", "prepare-maul"),
+      pursuit: chaseNode(BEAR_CHASE, [
+        scored("prepare-charge", chargeScore(13), [ENGAGEMENT]),
+        scored("prepare-maul", MAUL_SCORE, [ENGAGEMENT]),
+        scored("prepare-growl", GROWL_SCORE, [ENGAGEMENT]),
+      ]),
       rest: {
         animation: "rest",
         motion: { kind: "wait" },
-        transitions: [{ to: "pursuit-growl", when: [{ kind: "elapsed", seconds: 0.35 }] }],
+        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
       },
       rush: {
         animation: "rush",
         motion: { direction: "facing", kind: "move", speed: 31.25 },
         transitions: [
-          { to: "pursuit-maul", when: [{ kind: "boundary" }] },
-          { to: "pursuit-maul", when: [{ kind: "elapsed", seconds: 0.44 }] },
+          { to: "pursuit", when: [{ kind: "boundary" }] },
+          { to: "pursuit", when: [{ kind: "elapsed", seconds: 0.44 }] },
         ],
       },
       watch: {
@@ -970,13 +883,13 @@ const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   [
     {
       committed: ["rush"],
-      finished: [{ from: "rush", to: "pursuit-maul" }],
+      finished: [{ from: "rush", to: "pursuit" }],
       id: "charge",
       tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
     },
     {
       committed: ["maul", "rest"],
-      finished: [{ from: "rest", to: "pursuit-growl" }],
+      finished: [{ from: "rest", to: "pursuit" }],
       id: "maul",
       tells: { "prepare-maul": SPECIAL_TELL_SECONDS },
     },
@@ -988,12 +901,6 @@ const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
     },
   ],
 );
-
-export const BEAR_BEHAVIOUR = withPursuitIntent(BEAR_ATTACK_PROFILE, [
-  "pursuit",
-  "pursuit-growl",
-  "pursuit-maul",
-]);
 
 const PIGEON_POOP: BehaviourAction = {
   armSeconds: 0,
@@ -1008,9 +915,13 @@ const PIGEON_POOP: BehaviourAction = {
 
 const PIGEON_DROP_AHEAD = 8;
 const PIGEON_OVERHEAD_CLEARANCE = 6;
+// The swoop's approach: the drop approach's lead plus the swoop setup move's 10 tiles.
 const PIGEON_SWOOP_AHEAD = 18;
 const PIGEON_SWOOP_MIN_GAP = 12;
 const PIGEON_RELOCATION_SECONDS = 2;
+// An engaged approach that opens no attack within this relocates, sooner out of sight.
+const PIGEON_APPROACH_SECONDS = 1.5;
+const PIGEON_HIDDEN_RELOCATION_SECONDS = 1;
 const PIGEON_RELOCATION_SELECTION = {
   clearance: PIGEON_OVERHEAD_CLEARANCE,
   distance: SCREEN.width / TILE,
@@ -1028,35 +939,38 @@ function pigeonOverhead(ahead: number): BehaviourNode["motion"] {
   };
 }
 
-function pigeonApproach(swoop: boolean, next: string): BehaviourNode {
+// The engaged flight: the scorer's move sets the approach goal, and arriving there opens the
+// drop or, far enough out along the approach side, the swoop.
+function pigeonApproach(): BehaviourNode {
   const ready = [
     { kind: "arrived", target: "intent", tolerance: 0.1 },
-    { kind: "attack-ready" },
     { kind: "line-of-sight" },
     { kind: "targeted-attack-allowed" },
   ] as const;
   return {
     allowIdleReposition: true,
     animation: "fly",
-    motion: pigeonOverhead(swoop ? PIGEON_SWOOP_AHEAD : PIGEON_DROP_AHEAD),
+    motion: pigeonOverhead(PIGEON_DROP_AHEAD),
     transitions: [
       { to: "return-high", when: [{ kind: "alignment-blocked" }] },
-      { to: "frustration-return", when: LOST_TARGET },
-      ...(swoop
-        ? ([1, -1] as const).map((direction) => ({
-            to: direction === 1 ? "prepare-swoop-left" : "prepare-swoop-right",
-            when: [
-              ...ready,
-              { direction, kind: "flight-approach-direction" as const },
-              {
-                comparison: "at-least" as const,
-                distance: PIGEON_SWOOP_MIN_GAP,
-                kind: "horizontal-gap" as const,
-              },
-            ],
-          }))
-        : [{ to: next, when: ready }]),
-      { to: "relocate", when: [{ kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS }] },
+      { to: "return-high", when: LOST_TARGET },
+      scored("prepare-drop", DROP_BURST_SCORE, ready),
+      ...([1, -1] as const).map((direction) =>
+        scored(direction === 1 ? "prepare-swoop-left" : "prepare-swoop-right", SWOOP_SCORE, [
+          ...ready,
+          { direction, kind: "flight-approach-direction" },
+          { comparison: "at-least", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" },
+        ]),
+      ),
+      // Out of sight, Pebble looks for a line sooner.
+      {
+        to: "relocate",
+        when: [
+          { kind: "elapsed", seconds: PIGEON_HIDDEN_RELOCATION_SECONDS },
+          { condition: { kind: "line-of-sight" }, kind: "not" },
+        ],
+      },
+      { to: "relocate", when: [{ kind: "elapsed", seconds: PIGEON_APPROACH_SECONDS }] },
     ],
   };
 }
@@ -1073,12 +987,14 @@ function pigeonAlignmentMotion(): BehaviourNode["motion"] {
     to: "target-x",
   };
 }
-function pigeonDropBurst(side: "left" | "right"): BehaviourPlan["states"] {
+
+// Three aligned drops, then the landing every completed or abandoned burst shares.
+function pigeonDropBurst(): BehaviourPlan["states"] {
   return Object.fromEntries(
     ["", "-2", "-3"].flatMap((suffix, index) => {
-      const align = `align-drop-${side}${suffix}`;
-      const drop = `drop-${side}${suffix}`;
-      const next = index === 2 ? `return-swoop-${side}` : `align-drop-${side}-${index + 2}`;
+      const align = `align-drop${suffix}`;
+      const drop = `drop${suffix}`;
+      const next = index === 2 ? "burst-return-high" : `align-drop-${index + 2}`;
       return [
         [
           align,
@@ -1125,7 +1041,7 @@ function pigeonLanding(next: string): BehaviourNode {
   };
 }
 
-function pigeonSwoop(failure: string, x: number): BehaviourNode {
+function pigeonSwoop(x: number): BehaviourNode {
   return {
     animation: "swoop",
     motion: {
@@ -1135,13 +1051,45 @@ function pigeonSwoop(failure: string, x: number): BehaviourNode {
       to: "target",
     },
     transitions: [
-      { to: failure, when: [{ kind: "arrived", tolerance: 0.6 }] },
-      { to: failure, when: [{ kind: "elapsed", seconds: 1.2 }] },
+      { to: "swoop-return", when: [{ kind: "arrived", tolerance: 0.6 }] },
+      { to: "swoop-return", when: [{ kind: "elapsed", seconds: 1.2 }] },
     ],
   };
 }
 
-const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
+function pigeonSwoopTell(swoop: string): BehaviourNode {
+  return {
+    animation: "prepare-air",
+    motion: pigeonOverhead(PIGEON_SWOOP_AHEAD),
+    transitions: [
+      { to: "return-high", when: [{ kind: "alignment-blocked" }] },
+      escapeTransition("return-high"),
+      {
+        to: "pursuit",
+        when: [{ comparison: "below", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" }],
+      },
+      {
+        to: swoop,
+        when: [
+          { kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS },
+          { kind: "arrived", tolerance: 0.1 },
+          { comparison: "at-least", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" },
+          { kind: "line-of-sight" },
+          { kind: "targeted-attack-allowed" },
+        ],
+      },
+      { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
+    ],
+  };
+}
+
+const supportedRest = (to: string): BehaviourNode => ({
+  animation: "rest",
+  motion: { kind: "wait", support: "required" },
+  transitions: [{ to, when: [{ kind: "elapsed", seconds: 0.35 }] }],
+});
+
+export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
     axis: "x",
     distance: 24,
@@ -1149,37 +1097,22 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
     inactiveAnimation: "idle",
     initial: "watch",
     pursuit: persistentPursuit({ line: "pebble-escaped", speaker: "pigeon" }),
+    scorer: PEBBLE_SCORER,
     spotted: { line: "pebble-spotted", speaker: "pigeon" },
     states: {
-      ...pigeonDropBurst("left"),
-      ...pigeonDropBurst("right"),
+      ...pigeonDropBurst(),
       "burst-land-perch": pigeonLanding("burst-recovery"),
-      "burst-recovery": {
-        animation: "rest",
-        motion: { kind: "wait", support: "required" },
-        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-      },
-      "burst-rest-left": {
-        animation: "rest",
-        motion: { kind: "wait", support: "required" },
-        transitions: [{ to: "pursuit-swoop-left", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-      },
-      "burst-rest-right": {
-        animation: "rest",
-        motion: { kind: "wait", support: "required" },
-        transitions: [{ to: "pursuit-swoop-right", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-      },
+      "burst-recovery": supportedRest("pursuit"),
       "burst-return-high": pigeonLanding("burst-land-perch"),
-      "frustration-return": frustrationNode("return-high"),
       "land-perch": pigeonLanding("rest"),
-      "prepare-drop-left": {
+      "prepare-drop": {
         animation: "prepare-air",
         motion: pigeonOverhead(PIGEON_DROP_AHEAD),
         transitions: [
           { to: "return-high", when: [{ kind: "alignment-blocked" }] },
           escapeTransition("return-high"),
           {
-            to: "align-drop-left",
+            to: "align-drop",
             when: [
               { kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS },
               { kind: "arrived", tolerance: 0.1 },
@@ -1190,74 +1123,9 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
           { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
         ],
       },
-      "prepare-drop-right": {
-        animation: "prepare-air",
-        motion: pigeonOverhead(PIGEON_DROP_AHEAD),
-        transitions: [
-          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
-          escapeTransition("return-high"),
-          {
-            to: "align-drop-right",
-            when: [
-              { kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS },
-              { kind: "arrived", tolerance: 0.1 },
-              { kind: "line-of-sight" },
-              { kind: "targeted-attack-allowed" },
-            ],
-          },
-          { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
-        ],
-      },
-      "prepare-swoop-left": {
-        animation: "prepare-air",
-        motion: pigeonOverhead(PIGEON_SWOOP_AHEAD),
-        transitions: [
-          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
-          escapeTransition("return-high"),
-          {
-            to: "pursuit-swoop-left",
-            when: [{ comparison: "below", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" }],
-          },
-          {
-            to: "swoop-left",
-            when: [
-              { kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS },
-              { kind: "arrived", tolerance: 0.1 },
-              { comparison: "at-least", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" },
-              { kind: "line-of-sight" },
-              { kind: "targeted-attack-allowed" },
-            ],
-          },
-          { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
-        ],
-      },
-      "prepare-swoop-right": {
-        animation: "prepare-air",
-        motion: pigeonOverhead(PIGEON_SWOOP_AHEAD),
-        transitions: [
-          { to: "return-high", when: [{ kind: "alignment-blocked" }] },
-          escapeTransition("return-high"),
-          {
-            to: "pursuit-swoop-right",
-            when: [{ comparison: "below", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" }],
-          },
-          {
-            to: "swoop-right",
-            when: [
-              { kind: "elapsed", seconds: PIGEON_SWOOP_PREPARATION_SECONDS },
-              { kind: "arrived", tolerance: 0.1 },
-              { comparison: "at-least", distance: PIGEON_SWOOP_MIN_GAP, kind: "horizontal-gap" },
-              { kind: "line-of-sight" },
-              { kind: "targeted-attack-allowed" },
-            ],
-          },
-          { to: "return-high", when: [{ kind: "elapsed", seconds: SPECIAL_TELL_SECONDS }] },
-        ],
-      },
-      pursuit: pigeonApproach(false, "prepare-drop-left"),
-      "pursuit-burst-right": pigeonApproach(false, "prepare-drop-right"),
-      "pursuit-swoop-left": pigeonApproach(true, "prepare-swoop-left"),
-      "pursuit-swoop-right": pigeonApproach(true, "prepare-swoop-right"),
+      "prepare-swoop-left": pigeonSwoopTell("swoop-left"),
+      "prepare-swoop-right": pigeonSwoopTell("swoop-right"),
+      pursuit: pigeonApproach(),
       relocate: {
         animation: "fly",
         motion: {
@@ -1307,24 +1175,11 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
       },
       "return-high": pigeonLanding("land-perch"),
-      "return-swoop-left": pigeonLanding("burst-rest-left"),
-      "return-swoop-right": pigeonLanding("burst-rest-right"),
-      "swoop-land-left": pigeonLanding("swoop-rest-left"),
-      "swoop-land-right": pigeonLanding("swoop-rest-right"),
-      "swoop-left": pigeonSwoop("swoop-return-left", -20),
-      "swoop-rest-left": {
-        animation: "rest",
-        motion: { kind: "wait", support: "required" },
-        transitions: [{ to: "pursuit-burst-right", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-      },
-      "swoop-rest-right": {
-        animation: "rest",
-        motion: { kind: "wait", support: "required" },
-        transitions: [{ to: "pursuit", when: [{ kind: "elapsed", seconds: 0.35 }] }],
-      },
-      "swoop-return-left": pigeonLanding("swoop-land-left"),
-      "swoop-return-right": pigeonLanding("swoop-land-right"),
-      "swoop-right": pigeonSwoop("swoop-return-right", 4),
+      "swoop-land": pigeonLanding("swoop-rest"),
+      "swoop-left": pigeonSwoop(-20),
+      "swoop-rest": supportedRest("pursuit"),
+      "swoop-return": pigeonLanding("swoop-land"),
+      "swoop-right": pigeonSwoop(4),
       watch: {
         allowIdleReposition: true,
         animation: "idle",
@@ -1336,52 +1191,23 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
   [
     {
       committed: [
-        "align-drop-left",
-        "drop-left",
-        "align-drop-left-2",
-        "drop-left-2",
-        "align-drop-left-3",
-        "drop-left-3",
-        "align-drop-right",
-        "drop-right",
-        "align-drop-right-2",
-        "drop-right-2",
-        "align-drop-right-3",
-        "drop-right-3",
-        "return-swoop-left",
-        "burst-rest-left",
-        "return-swoop-right",
-        "burst-rest-right",
+        "align-drop",
+        "drop",
+        "align-drop-2",
+        "drop-2",
+        "align-drop-3",
+        "drop-3",
         "burst-return-high",
         "burst-land-perch",
         "burst-recovery",
       ],
-      finished: [
-        { from: "burst-rest-left", to: "pursuit-swoop-left" },
-        { from: "burst-rest-right", to: "pursuit-swoop-right" },
-        { from: "burst-recovery", to: "pursuit" },
-      ],
+      finished: [{ from: "burst-recovery", to: "pursuit" }],
       id: "drop-burst",
-      tells: {
-        "prepare-drop-left": SPECIAL_TELL_SECONDS,
-        "prepare-drop-right": SPECIAL_TELL_SECONDS,
-      },
+      tells: { "prepare-drop": SPECIAL_TELL_SECONDS },
     },
     {
-      committed: [
-        "swoop-left",
-        "swoop-right",
-        "swoop-return-left",
-        "swoop-return-right",
-        "swoop-land-left",
-        "swoop-land-right",
-        "swoop-rest-left",
-        "swoop-rest-right",
-      ],
-      finished: [
-        { from: "swoop-rest-left", to: "pursuit-burst-right" },
-        { from: "swoop-rest-right", to: "pursuit" },
-      ],
+      committed: ["swoop-left", "swoop-right", "swoop-return", "swoop-land", "swoop-rest"],
+      finished: [{ from: "swoop-rest", to: "pursuit" }],
       id: "swoop",
       tells: {
         "prepare-swoop-left": SPECIAL_TELL_SECONDS,
@@ -1390,10 +1216,3 @@ const PIGEON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
     },
   ],
 );
-
-export const PIGEON_BEHAVIOUR = withPursuitIntent(PIGEON_ATTACK_PROFILE, [
-  "pursuit",
-  "pursuit-burst-right",
-  "pursuit-swoop-left",
-  "pursuit-swoop-right",
-]);

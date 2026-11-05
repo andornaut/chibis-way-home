@@ -1,17 +1,13 @@
 import { type Ability, abilityFor, type AbilityTable } from "../ai/ability";
-import { scopedStreams } from "../ai/randomStreams";
 import type { ObjectLayout, Point } from "../data/types";
 import type { BehaviourState, BehaviourStep } from "./behaviour";
 import { animateSegments } from "./behaviourAnimation";
 import { attackProtected } from "./behaviourAttack";
 import {
   advanceIdleRecovery,
-  advanceSupportedRecovery,
   type BehaviourIdleState,
   observeIdle,
   planIdleRecovery,
-  planSupportedRecovery,
-  preferredGroundWalk,
 } from "./behaviourIdle";
 import type { BehaviourPerception } from "./behaviourPerception";
 import type { BehaviourWorld } from "./behaviourReach";
@@ -20,22 +16,17 @@ import type { BehaviourTraversalState } from "./behaviourTraversal";
 import { birdBox } from "./bird";
 import { landingSupport, supportContact } from "./flyLanding";
 
-type BehaviourRecoveryParams =
-  { readonly kind: "idle-recovery" } | { readonly kind: "periodic-reposition" };
+type BehaviourRecoveryParams = { readonly kind: "idle-recovery" };
 
 export interface BehaviourRecoveryContext {
   // Enters a graph state at a point, as a transition would.
   readonly enter: (at: Point, key: string, state: BehaviourState) => BehaviourState;
-  // The target of the first transition the graph would take now, if any.
-  readonly firstTransition: (at: Point, state: BehaviourState) => string | undefined;
   readonly object: ObjectLayout;
   readonly perception: BehaviourPerception;
   readonly seconds: number;
 }
 
 interface BehaviourRecoveryStep {
-  // Whether a periodic reposition yielded to a ready attack tell.
-  readonly deferToAttack?: boolean;
   readonly state: BehaviourState;
   // The whole step, when recovery moved the body instead of the graph.
   readonly step?: BehaviourStep;
@@ -186,129 +177,12 @@ const IDLE_RECOVERY: RecoveryAbility<"idle-recovery"> = {
   },
 };
 
-// A seeded supported ground walk every interval while engaged, deferring to a ready tell.
-const PERIODIC_REPOSITION: RecoveryAbility<"periodic-reposition"> = {
-  act: (context, _, { at, state }) => {
-    const { object, perception, seconds } = context;
-    const { world } = perception;
-    const config = object.behaviour!.groundReposition!,
-      prior = state.groundReposition!;
-    const node = nodeOf(object, state.stateKey),
-      motion = nodeOf(object, config.resume).motion;
-    if (motion.kind !== "pursue" || motion.mode !== "ground") {
-      throw new Error("Periodic reposition requires ground pursuit physics");
-    }
-    const eligible =
-      state.pursuit?.phase === "engaged" &&
-      node.allowGroundReposition === true &&
-      !attackProtected(node, state) &&
-      !node.onEnter?.length &&
-      !state.hop &&
-      !state.idleWatchdog?.recovery &&
-      (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
-      supportContact(object, world, at);
-    const firstTransition =
-      !prior.recovery &&
-      eligible &&
-      prior.seconds >= config.intervalSeconds &&
-      context.firstTransition(at, state);
-    const attackOpportunity =
-      firstTransition && nodeOf(object, firstTransition).attack?.phase === "tell";
-    if (attackOpportunity) {
-      return { deferToAttack: true, state };
-    }
-    const policy = {
-      distance: config.distance,
-      fullFrameGoal: true,
-      maxAttempts: config.maxAttempts,
-      minMovement: config.minDistance,
-    };
-    const selectionWorld = {
-      ...world,
-      ...(world.decisions && { decisions: scopedStreams("ground-periodic", world.decisions) }),
-    };
-    let prepared = prior;
-    if (
-      !prepared.recovery &&
-      eligible &&
-      !attackOpportunity &&
-      prepared.seconds >= config.intervalSeconds
-    ) {
-      // Periodic variation requires its per-object seed, never a deterministic-facing fallback.
-      prepared = { ...prepared, anchor: at };
-      prepared = world.decisions
-        ? planSupportedRecovery(
-            preferredGroundWalk,
-            policy,
-            selectionWorld,
-            object,
-            motion,
-            seconds,
-            state.facing,
-            prepared,
-            at,
-          )
-        : { ...prepared, status: "geometry-unavailable" };
-      if (!prepared.recovery) {
-        return { state: { ...state, groundReposition: { ...prepared, seconds: 0 } } };
-      }
-    }
-    if (!prepared.recovery) {
-      return { state };
-    }
-    const active = { ...state, groundReposition: prepared };
-    delete (active as { traversal?: BehaviourTraversalState }).traversal;
-    const advanced = advanceSupportedRecovery(policy, world, object, motion, seconds, prepared, at);
-    const animated = animateSegments(
-      object,
-      seconds,
-      {
-        ...active,
-        ...(advanced.idle.recovery?.kind === "ground" && {
-          traversal: advanced.idle.recovery.traversal,
-        }),
-      },
-      advanced.segments,
-      world.traversalFrame?.timeSeconds,
-    );
-    let next: BehaviourState = {
-      ...animated.state,
-      groundReposition: {
-        ...advanced.idle,
-        seconds: advanced.finished ? 0 : advanced.idle.seconds,
-      },
-      ...(advanced.idle.recovery?.kind === "ground" && {
-        traversal: advanced.idle.recovery.traversal,
-      }),
-      ...(object.behaviour!.idleWatchdog &&
-        state.idleWatchdog && {
-          idleWatchdog: observeIdle(
-            object.behaviour!.idleWatchdog,
-            seconds,
-            advanced.segments,
-            state.idleWatchdog,
-          ),
-        }),
-    };
-    if (advanced.finished) {
-      next = {
-        ...context.enter(advanced.at, config.resume, next),
-        pendingEntry: false,
-      };
-    }
-    return {
-      state: next,
-      step: { actions: [], at: advanced.at, segments: animated.segments, state: next },
-    };
-  },
-};
-
 const BEHAVIOUR_RECOVERIES: AbilityTable<
   BehaviourRecoveryContext,
   BehaviourRecoveryParams,
   { readonly at: Point; readonly state: BehaviourState },
   BehaviourRecoveryStep
-> = { "idle-recovery": IDLE_RECOVERY, "periodic-reposition": PERIODIC_REPOSITION };
+> = { "idle-recovery": IDLE_RECOVERY };
 
 export function recoveryStep(
   context: BehaviourRecoveryContext,

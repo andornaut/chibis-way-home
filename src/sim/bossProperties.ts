@@ -521,8 +521,18 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
         return undefined;
       }
       const node = plan(agent).states[agent.state]!;
+      // A committed rest holds for its authored seconds, such as Fert's throw pause, and any
+      // other rest for the recovery bound.
       if (node.animation === "rest") {
-        return STILLNESS.recovery;
+        const authored = node.transitions.flatMap(({ when }) =>
+          when.flatMap((condition) => (condition.kind === "elapsed" ? [condition.seconds] : [])),
+        );
+        return node.attack?.phase === "committed" && authored.length > 0
+          ? {
+              ...STILLNESS.recovery,
+              maxSeconds: Math.max(STILLNESS.recovery.maxSeconds, ...authored),
+            }
+          : STILLNESS.recovery;
       }
       if (agent.attack) {
         return { kind: `attack-${agent.attack.phase}`, maxSeconds: Infinity };

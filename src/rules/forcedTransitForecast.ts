@@ -63,7 +63,6 @@ function predictable(carrier: ForcedTransitCarrier): boolean {
   if (
     state &&
     (state.activeAttack ||
-      state.groundReposition ||
       state.hop ||
       state.idleWatchdog ||
       state.landing ||
@@ -81,13 +80,11 @@ function predictable(carrier: ForcedTransitCarrier): boolean {
   return (
     !plan.pursuit &&
     !plan.idleWatchdog &&
-    !plan.groundReposition &&
     Object.values(plan.states).every(
       (node) =>
         !node.attack &&
         !node.enter &&
         !node.onEnter?.length &&
-        !node.allowGroundReposition &&
         !node.allowIdleReposition &&
         ((node.motion.kind === "wait" && !node.motion.support) ||
           (node.motion.kind === "move" && typeof node.motion.direction === "number")) &&

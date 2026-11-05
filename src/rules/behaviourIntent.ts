@@ -1,9 +1,8 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
 import { collisionCandidates } from "../core";
-import type { BehaviourPursuitIntent, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
+import type { ObjectLayout, Point, Rect } from "../data/types";
 import type { BehaviourWorld } from "./behaviourReach";
-import { birdBox, type BirdState } from "./bird";
 
 export interface PursuitIntentState {
   readonly target: Rect;
@@ -11,34 +10,6 @@ export interface PursuitIntentState {
   readonly facing: -1 | 1;
   readonly offset: number;
   readonly remainingSeconds: number;
-}
-export function capturePursuitIntent(
-  world: BehaviourWorld,
-  config: BehaviourPursuitIntent,
-  tuning: BirdTuning,
-  bird: BirdState,
-  decision: number,
-  facing: -1 | 1,
-  object: ObjectLayout,
-  at: Point,
-): PursuitIntentState {
-  if (!world.decisions) {
-    throw new Error("Sampled pursuit requires an object-local decision context");
-  }
-  const random = world.decisions(`pursuit-intent:${decision}`);
-  const between = ({ max, min }: { readonly min: number; readonly max: number }) =>
-    min + random() * (max - min);
-  const remainingSeconds = between(config.decisionSeconds);
-  const offset = between(config.offset);
-  const target = { ...birdBox(tuning, bird), x: bird.x + offset };
-  const dx = target.x + target.width / 2 - at.x - object.width / 2;
-  return {
-    facing: dx === 0 ? facing : dx < 0 ? -1 : 1,
-    offset,
-    remainingSeconds,
-    target,
-    travelDirection: bird.vx === 0 ? bird.facing : bird.vx < 0 ? -1 : 1,
-  };
 }
 export function advancePursuitIntent(
   seconds: number,
