@@ -149,7 +149,7 @@ it("initializes missing cumulative maps once while preserving every saved counte
   reopened.addActiveTime("first", 2);
   expect(reopened.summary("first")).toMatchObject({
     attemptSeconds: 2,
-    attempts: 1,
+    attempts: 3,
     cumulativeSeconds: 5,
   });
   expect(reopened.visitSummary("zone").cumulativeSeconds).toBe(5);

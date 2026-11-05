@@ -285,8 +285,16 @@ export function stageStatsStore(
         };
       }
     },
+    // Coming back to a stage left uncleared starts its next attempt, as a retry does; a cleared
+    // or absent run starts afresh at one attempt.
     beginRun(stage) {
-      update(stage, emptyRun());
+      const run = stats.stages[stage]?.run;
+      update(
+        stage,
+        run && !run.completed
+          ? { ...run, attemptSeconds: 0, attempts: run.attempts + 1 }
+          : emptyRun(),
+      );
     },
     beginVisit(zone) {
       if (!destinations.some(({ id }) => id === zone)) {
@@ -363,8 +371,16 @@ export function stageStatsStore(
       stats = { ...stats, wholeRun: { ...stats.wholeRun, deaths: stats.wholeRun.deaths + 1 } };
       changed();
     },
+    // Restart also ends every unfinished stage run, so its next entry starts at one attempt;
+    // historical bests stay.
     resetWholeRun() {
-      stats = { ...stats, totals: emptyTotals(), wholeRun: emptyWholeRun() };
+      const bests = Object.fromEntries(
+        Object.entries(stats.stages).map(([stage, { bestSeconds }]) => [
+          stage,
+          bestSeconds === undefined ? {} : { bestSeconds },
+        ]),
+      );
+      stats = { ...stats, stages: bests, totals: emptyTotals(), wholeRun: emptyWholeRun() };
       changed();
     },
     retryStage(stage) {

@@ -151,12 +151,12 @@ The separate version-7 [statistics store](progress/save/stats.ts), `chibis-way-h
 | ------------- | --------------------------------------------- |
 | Last time     | The attempt that just ended                   |
 | Best time     | The fastest successful attempt for that stage |
-| Attempts      | The current generated run, including retries  |
+| Attempts      | Since the last clear or confirmed Restart     |
 | Stage total   | Cumulative active time for the stage ID       |
 | Zone total    | Cumulative active time for the zone ID        |
 | Run total     | Whole-playthrough active time                 |
 
-Only confirmed Restart clears the three cumulative totals. Start, Continue, fresh map entry, retries and revisits preserve them. Missing stage/zone ledgers initialize once at zero while preserving other saved fields and the known Run total; future active play accumulates normally. New generated runs start with attempt count one; Retry resets only the attempt clock and increments the count. Visit-local summaries remain separate: a zone best requires every catalogue stage in that visit and sums its successful attempt times; incomplete visits cannot set a zone best.
+Only confirmed Restart clears the three cumulative totals. Start, Continue, fresh map entry, retries and revisits preserve them. Missing stage/zone ledgers initialize once at zero while preserving other saved fields and the known Run total; future active play accumulates normally. A stage's first entry after its clear or a confirmed Restart starts with attempt count one; Retry and coming back to the stage uncleared reset only the attempt clock and increment the count. Confirmed Restart ends every unfinished stage run. Visit-local summaries remain separate: a zone best requires every catalogue stage in that visit and sums its successful attempt times; incomplete visits cannot set a zone best.
 
 Version-1 [earned achievements](progress/save/achievements.ts), `chibis-way-home.achievements`, use the kit's `earnedFormat` and `earnedStore`: the earned ids and those not yet announced, both in award order, written one call at a time. Loading drops unknown ids instead of resetting. Restart keeps the record, and developer sessions neither read nor write it.
 

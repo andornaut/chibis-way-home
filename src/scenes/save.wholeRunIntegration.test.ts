@@ -80,3 +80,36 @@ it("shows one attempt's active time in all six statistics for a single entry aft
     zone: zoneSeconds,
   }).toEqual({ attempts: 1, best: seconds, run: seconds, stage: seconds, zone: seconds });
 });
+
+it("counts leaving a stage uncleared and coming back as another attempt", async () => {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  const save = await import("./save");
+  await save.loadProgress();
+  const stage = ZONE_MAP.start;
+  const zone = ZONE_MAP.destinations[0]!.id;
+  const step = (steps: number) =>
+    ({ cleared: false, death: undefined, door: undefined, steps, turnedBack: false }) as ZoneState;
+  save.resetWholeRunStats();
+  save.beginZoneVisit(zone);
+  save.beginStageRun(stage);
+  save.recordActiveStageStep(stage, 4, step(0), step(1));
+  save.beginZoneVisit(zone);
+  save.beginStageRun(stage);
+  save.recordActiveStageStep(stage, 72, step(0), step(1));
+  const run = save.completeStageRun(stage);
+  expect({
+    attempts: run.attempts,
+    best: run.bestSeconds,
+    last: run.attemptSeconds,
+    run: save.wholeRunStats().activeSeconds,
+    stage: run.cumulativeSeconds,
+    zone: save.zoneVisitStats(zone).cumulativeSeconds,
+  }).toEqual({ attempts: 2, best: 72, last: 72, run: 76, stage: 76, zone: 76 });
+  save.beginZoneVisit(zone);
+  save.beginStageRun(stage);
+  expect(save.stageRunStats(stage).attempts).toBe(1);
+});
