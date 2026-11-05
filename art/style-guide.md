@@ -832,6 +832,11 @@ The earlier actor tags loop. `portrait-bear` is 64x64, authored facing right, wi
 
 All backdrops use bottom-left anchors and default bottom y 600. Sky factors are 0,0; far factors 0.15,0.05; middle factors 0.4,0.15. Select the appropriate stage middle layer. Near props use factors 1,1 and placement data aligns them to the local floor. Decorative silhouettes carry no white safe lips or red contact bands and must not imply usable platforms. Scenery adds no collision, hidden hazard or movement rules. Room entrances may reuse the existing street-door artwork.
 
+The ravine gusts use two sprites drawn from green leaves (green over dgreen), tan leaves (tan over brown) and short pale streaks (a white head on a 2px lgrey tail). They are mostly transparent with binary alpha, and carry no red, amber, round pickup shape or long horizontal pale band, so nothing in them reads as a ledge or a pickup.
+
+- `woodland-gust-emitter`: 12x48, bottom-centre on a 1x4 footprint against the ravine wall, drawn facing right and mirrored for left. A dslate and navy draft fissure runs down the left edge with an ivy stem and five leaf clusters. `calm` (2 x 400ms) hangs and sways the leaves; `warning` (4 x 120ms) bends them right while the first leaves and streaks leave the wall; `gust` (4 x 80ms) lays them flat, pours short streaks from the fissure and runs the stream field beyond it.
+- `woodland-gust-stream`: 48x48, `pulse` (4 x 80ms, loop). Eleven fluttering leaves and eight streaks move 12px right per frame and wrap at 48px, so the pulse tiles seamlessly left to right and loops without a jump. The renderer repeats it across the band, bottom on the band bottom.
+
 ## Home city material pack
 
 `art/tools/homecity.ts` draws reusable skins for City outskirts and Familiar neighbourhood, using the destination's canonical `zone-peach` primary. Appearance bindings retain the common terrain geometry, obstacle behaviours and collision profiles.

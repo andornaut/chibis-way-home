@@ -238,16 +238,18 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Woodland materials
 
-| Key            | Type                               | Size    | Contract                                         |
-| -------------- | ---------------------------------- | ------- | ------------------------------------------------ |
-| forest-mid     | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                     |
-| forest-shrub   | decorative backdrop                | 48x48   | Bottom-left, y 600, repeat x                     |
-| forest-tree    | decorative backdrop                | 96x216  | Bottom-left, y 600, repeat none                  |
-| ravine-mid     | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                     |
-| ravine-rock    | decorative backdrop                | 72x72   | Bottom-left, y 600, repeat none                  |
-| tiles-woodland | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
-| woodland-far   | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                     |
-| woodland-sky   | decorative backdrop                | 48x600  | Bottom-left, y 600, repeat x                     |
+| Key                   | Type                                   | Size    | Contract                                              |
+| --------------------- | -------------------------------------- | ------- | ----------------------------------------------------- |
+| forest-mid            | decorative backdrop                    | 720x600 | Bottom-left, y 600, repeat x                          |
+| forest-shrub          | decorative backdrop                    | 48x48   | Bottom-left, y 600, repeat x                          |
+| forest-tree           | decorative backdrop                    | 96x216  | Bottom-left, y 600, repeat none                       |
+| ravine-mid            | decorative backdrop                    | 720x600 | Bottom-left, y 600, repeat x                          |
+| ravine-rock           | decorative backdrop                    | 72x72   | Bottom-left, y 600, repeat none                       |
+| tiles-woodland        | tileset, 12px cells, eight columns     | 96x48   | Four material families, seven terrain tiles each      |
+| woodland-far          | decorative backdrop                    | 720x600 | Bottom-left, y 600, repeat x                          |
+| woodland-gust-emitter | sprite, gust source at the ravine wall | 12x48   | Bottom-centre, 1x4, facing right; calm, warning, gust |
+| woodland-gust-stream  | sprite, repeated gust pulse            | 48x48   | Band bottom, repeats x; pulse                         |
+| woodland-sky          | decorative backdrop                    | 48x600  | Bottom-left, y 600, repeat x                          |
 
 ## Home city materials
 

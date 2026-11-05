@@ -17,6 +17,18 @@
  * the base. The birch middle and conifer far/middle variants keep 720x600/repeat x/bottom 600 and
  * the same parallax contracts. No actors or natural hidden lethality. Context uses identical
  * illustrative geometry, not validated stages.
+ *
+ * Sprites, for the ravine gusts (once: none). Green leaves (green, dgreen), tan leaves (tan,
+ * brown) and short pale streaks (white heads, lgrey tails), all binary alpha and mostly clear. No
+ * red, amber, round pickup shapes or long horizontal pale bands, so nothing reads as a ledge.
+ * - woodland-gust-emitter: 12x48, bottom-centre on a 1x4 footprint at the ravine wall, facing right
+ *   (mirrored for left). A dslate and navy draft fissure down the left edge with a brown ivy stem
+ *   and five leaf clusters. calm (2 x 400ms): the leaves hang and sway. warning (4 x 120ms): the
+ *   leaves bend right and the first leaves and streaks leave the wall. gust (4 x 80ms): the leaves
+ *   lie flat, short streaks pour from the fissure and the stream field runs beyond it.
+ * - woodland-gust-stream: 48x48, tag pulse (4 x 80ms, loop). Eleven leaves and eight streaks that
+ *   move 12px right per frame and wrap at 48px, so the pulse tiles seamlessly left to right and
+ *   loops. The renderer repeats it across the band, bottom on the band bottom.
  */
 
 import { opaque } from "@andornaut/art-kit/raster";
@@ -325,6 +337,248 @@ function rock(): RgbaImage {
   return im;
 }
 
+const EMITTER = "woodland-gust-emitter";
+const STREAM = "woodland-gust-stream";
+const STREAM_SIZE = 48;
+const STREAM_STEP = STREAM_SIZE / 4;
+
+type Leaf = "green" | "tan";
+
+const LEAF_COLOURS: Readonly<Record<Leaf, readonly [light: string, shade: string]>> = {
+  green: ["green", "dgreen"],
+  tan: ["tan", "brown"],
+};
+
+// Four flutter poses, as [dx, dy, shade] cells: flat, tipped up, edge-on and tipped down.
+const LEAF_POSES: readonly (readonly (readonly [number, number, boolean])[])[] = [
+  [
+    [1, 0, false],
+    [2, 0, false],
+    [0, 1, false],
+    [1, 1, true],
+    [2, 1, true],
+    [3, 1, true],
+  ],
+  [
+    [2, 0, false],
+    [3, 0, false],
+    [1, 1, false],
+    [2, 1, true],
+    [0, 2, true],
+    [1, 2, true],
+  ],
+  [
+    [0, 0, false],
+    [1, 0, false],
+    [2, 0, true],
+    [3, 0, true],
+  ],
+  [
+    [0, 0, false],
+    [1, 0, false],
+    [1, 1, true],
+    [2, 1, false],
+    [2, 2, true],
+    [3, 2, true],
+  ],
+];
+const BOB = [0, 1, 0, -1];
+
+/** A leaf in a flutter pose, wrapped at wrap px when given. */
+function leaf(
+  g: pixel.Grid,
+  [x, y]: readonly [number, number],
+  kind: Leaf,
+  pose: number,
+  wrap = 0,
+): void {
+  const [light, shade] = LEAF_COLOURS[kind];
+  for (const [dx, dy, dark] of LEAF_POSES[mod(pose, 4)] as (readonly [number, number, boolean])[]) {
+    g.p(wrap ? mod(x + dx, wrap) : x + dx, y + dy, dark ? shade : light);
+  }
+}
+
+/** A pale streak heading right: a 2px lgrey tail behind a white head of length px. */
+function streak(g: pixel.Grid, [x, y]: readonly [number, number], length: number, wrap = 0): void {
+  for (let i = 0; i < length + 2; i++) {
+    g.p(wrap ? mod(x + i, wrap) : x + i, y, i < 2 ? "lgrey" : "white");
+  }
+}
+
+// The stream's field at frame 0: [x, y, kind, pose] leaves and [x, y] streaks, staggered so no
+// streaks line up into a band.
+const FIELD_LEAVES: readonly (readonly [number, number, Leaf, number])[] = [
+  [3, 6, "green", 0],
+  [20, 2, "tan", 3],
+  [34, 9, "green", 2],
+  [27, 15, "green", 1],
+  [9, 18, "tan", 0],
+  [42, 21, "green", 3],
+  [15, 26, "green", 2],
+  [39, 30, "tan", 3],
+  [24, 35, "green", 0],
+  [6, 38, "tan", 2],
+  [32, 42, "green", 1],
+];
+const FIELD_STREAKS: readonly (readonly [number, number])[] = [
+  [30, 5],
+  [10, 11],
+  [33, 18],
+  [0, 24],
+  [19, 30],
+  [44, 34],
+  [12, 43],
+  [20, 46],
+];
+const STREAK_LENGTH = 5;
+
+/** The moving field at frame f, shifted right 12px per frame; wrap 48 tiles it seamlessly. */
+function field(g: pixel.Grid, f: number, { minX = 0, wrap = 0 } = {}): void {
+  const at = (x: number): number => mod(x + f * STREAM_STEP, STREAM_SIZE);
+  for (const [x, y] of FIELD_STREAKS) {
+    if (at(x) >= minX) {
+      streak(g, [at(x), y], STREAK_LENGTH, wrap);
+    }
+  }
+  for (const [x, y, kind, pose] of FIELD_LEAVES) {
+    if (at(x) >= minX) {
+      leaf(g, [at(x), y + (BOB[mod(pose + f, 4)] as number)], kind, pose + f, wrap);
+    }
+  }
+}
+
+function stream(f: number): pixel.Frame {
+  const g = new pixel.Grid(STREAM_SIZE, STREAM_SIZE);
+  field(g, f, { wrap: STREAM_SIZE });
+  return g.px;
+}
+
+// Ivy clusters on the emitter stem: [y, kind].
+const IVY: readonly (readonly [number, Leaf])[] = [
+  [3, "green"],
+  [12, "tan"],
+  [21, "green"],
+  [30, "green"],
+  [39, "tan"],
+];
+// Each cluster's three leaves as [dx, dy, pose], hanging, leaning and flat.
+const CLUSTERS: readonly (readonly (readonly [number, number, number])[])[] = [
+  [
+    [5, 1, 3],
+    [4, 5, 1],
+    [7, 3, 3],
+  ],
+  [
+    [6, 0, 0],
+    [5, 4, 0],
+    [8, 2, 1],
+  ],
+  [
+    [6, 0, 2],
+    [5, 4, 2],
+    [8, 2, 2],
+  ],
+];
+
+/** The draft fissure and ivy stem, unchanged in every frame. */
+function wall(): pixel.Grid {
+  const g = new pixel.Grid(12, 48);
+  g.rect(0, 0, 4, 48, "dslate");
+  for (const [y, h] of [
+    [0, 9],
+    [12, 14],
+    [29, 8],
+    [40, 8],
+  ] as const) {
+    g.rect(0, y, 3, h, "navy");
+  }
+  for (let y = 1; y < 48; y++) {
+    g.p(mod(Math.floor(y / 6), 2) ? 4 : 5, y, "brown");
+  }
+  return g;
+}
+
+/** The ivy bent by bend (0 hang, 1 lean, 2 flat), each cluster nudged right by sway. */
+function ivy(g: pixel.Grid, bend: number, sway: number): void {
+  for (const [y, kind] of IVY) {
+    for (const [dx, dy, pose] of CLUSTERS[bend] as (readonly [number, number, number])[]) {
+      leaf(g, [dx + (dy ? 0 : sway), y + dy], kind, pose);
+    }
+  }
+}
+
+/** Calm or warning frame, with loose leaves and short streaks leaving the wall. */
+function emitter(
+  bend: number,
+  sway: number,
+  loose: readonly (readonly [x: number, y: number, kind: Leaf, pose: number])[] = [],
+  streaks: readonly (readonly [x: number, y: number, length: number])[] = [],
+): pixel.Frame {
+  const g = wall();
+  for (const [x, y, length] of streaks) {
+    streak(g, [x, y], length);
+  }
+  ivy(g, bend, sway);
+  for (const [x, y, kind, pose] of loose) {
+    leaf(g, [x, y], kind, pose);
+  }
+  return g.px;
+}
+
+/** Gust frame: flat ivy, streaks pouring from the fissure and the stream's field beyond it. */
+function gust(f: number): pixel.Frame {
+  const g = wall();
+  IVY.forEach(([y], i) => {
+    streak(g, [4 + mod(f * 3 + i * 2, 6), y + 7], 3);
+  });
+  ivy(g, 2, mod(f, 2));
+  field(g, f, { minX: 6 });
+  return g.px;
+}
+
+export function* sprites(): Generator<pixel.SpriteEntry> {
+  yield [
+    EMITTER,
+    [
+      ["calm", [emitter(0, 0), emitter(0, 1)], 400],
+      [
+        "warning",
+        [
+          emitter(1, 0, [[9, 10, "green", 0]]),
+          emitter(1, 1, [[10, 9, "green", 1]], [[7, 27, 2]]),
+          emitter(
+            1,
+            0,
+            [
+              [10, 10, "green", 2],
+              [9, 28, "tan", 0],
+            ],
+            [[7, 19, 3]],
+          ),
+          emitter(
+            1,
+            1,
+            [
+              [9, 19, "tan", 3],
+              [10, 28, "tan", 1],
+              [10, 37, "green", 0],
+            ],
+            [
+              [7, 36, 3],
+              [7, 10, 3],
+            ],
+          ),
+        ],
+        120,
+      ],
+      ["gust", [0, 1, 2, 3].map(gust), 80],
+    ],
+  ];
+  yield [STREAM, [["pulse", [0, 1, 2, 3].map(stream), 80]]];
+}
+
+const ONCE = { [EMITTER]: [], [STREAM]: [] };
+
 export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage, repeat: string]>> =
   {
     "forest-mid": [forestMid, "x"],
@@ -348,6 +602,7 @@ export async function build(): Promise<void> {
     return backdropEntry({ bottom: BOTTOM, repeat }, key, im);
   });
   pixel.updateManifest("backdrops", entries);
+  await pixel.build({ once: ONCE }, [...sprites()]);
   console.log("built", TILESET, "and", entries.length, "backdrops");
 }
 
