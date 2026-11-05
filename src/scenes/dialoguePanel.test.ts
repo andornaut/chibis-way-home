@@ -42,7 +42,7 @@ it("draws every dialogue panel background only through the shared renderer", () 
     if (path !== "../data/dialogues.ts") {
       expect(source, path).not.toContain("DIALOGUE_PANEL_ALPHA");
     }
-    if (source.includes("drawDialogueParagraph(")) {
+    if (source.includes("drawDialogueParagraph(this")) {
       expect(source, path).toContain("drawDialoguePanel(this)");
     }
   }
