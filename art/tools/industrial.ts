@@ -28,9 +28,24 @@
  * - warehouse-wall: 48x240, repeat x; broad panels and quiet transom windows, factor 1,1.
  * - warehouse-loading-bay: 120x144, no repeat; closed roller door, factor 1,1.
  * - freight-gantry: 144x192, no repeat; posts and an overhead service beam, factor 1,1.
+ * - freight-gantry-rail: 48x24, repeat x; a lattice girder (the freight-gantry beam's dslate frame,
+ *   zone-purple web and slate lattice) with a lit slate trolley rail hung on brackets 2px below it,
+ *   factor 1,1. Place its bottom on the crane tether's top row; no lip or collision.
  * Near pieces align to the local floor. They have no collision or white safe lips; place their beam
  * and post silhouettes clear of the route. Existing street-door art supplies room entrances
  * independently.
+ *
+ * Sprites, for the gantry crane ride (once: none):
+ * - freight-crane-container: 72x36, bottom-centre on a 6x3 footprint, tag idle (1 frame). Rows 0 to
+ *   2 are the standable lid: a navy edge over a 2px white lip, nothing above row 0. Below, a dslate
+ *   top rail, a zone-purple-shade corrugated body with 2px zone-purple ridges every 6px, dslate
+ *   corner posts in the outer 6px carrying the two slate lifting lugs (and two lower castings), a
+ *   dslate bottom rail and an ink outline on the sides and bottom.
+ * - freight-crane-cable: 8x8, centred on the tether line. cable (1 frame): a 4px steel rope, ink
+ *   sides over slate and dslate strands that swap every 4 rows, so it repeats end to end. hook
+ *   (1 frame): the rope's last 2 rows into a slate hook block on two ink feet, its bottom row
+ *   resting on the lid's centre.
+ * No red, amber or round pickup shapes.
  *
  * The preview compares Warehouse and Freight terminal on identical illustrative geometry at
  * 720x360, with the native tileset exported separately. This is not a validated stage or
@@ -269,9 +284,102 @@ function gantry(): RgbaImage {
   return im;
 }
 
+function gantryRail(): RgbaImage {
+  const im = image(48, 24);
+  rect("dslate", [0, 0, 48, 19], im);
+  rect(PRIMARY, [0, 4, 48, 15], im);
+  for (const x of [2, 26]) {
+    polygon(
+      { colour: "slate" },
+      [
+        [x, 4],
+        [x + 10, 14],
+        [x + 16, 14],
+        [x + 6, 4],
+      ],
+      im,
+    );
+  }
+  // The trolley rail hangs 2px below the girder on brackets every 24px.
+  for (const x of [10, 34]) {
+    rect("dslate", [x, 19, x + 4, 21], im);
+  }
+  rect(PRIMARY, [0, 21, 48, 22], im);
+  rect("slate", [0, 22, 48, 24], im);
+  return im;
+}
+
+const CONTAINER = "freight-crane-container";
+const CABLE = "freight-crane-cable";
+
+function container(): pixel.Frame {
+  const g = new pixel.Grid(72, 36);
+  g.rect(0, 3, 72, 33, "ink");
+  g.rect(1, 3, 70, 32, "zone-purple-shade");
+  for (let x = 8; x < 64; x += 6) {
+    g.rect(x, 5, 2, 27, "zone-purple");
+  }
+  g.rect(1, 3, 70, 2, "dslate");
+  g.rect(1, 32, 70, 3, "dslate");
+  for (const x of [1, 66]) {
+    g.rect(x, 3, 5, 32, "dslate");
+    for (const y of [5, 27]) {
+      g.rect(x, y, 5, 5, "slate");
+      g.rect(x + 2, y + 1, 2, 3, "ink");
+    }
+  }
+  g.rect(0, 0, 72, 1, "navy");
+  g.rect(0, 1, 72, 2, "white");
+  return g.px;
+}
+
+/** Rows y to y + n of the rope: ink sides, slate and dslate strands swapping every 4 rows. */
+function rope(g: pixel.Grid, y: number, n: number): void {
+  for (let j = y; j < y + n; j++) {
+    const twist = Math.floor(j / 4) % 2 === 0;
+    g.p(2, j, "ink");
+    g.p(3, j, twist ? "slate" : "dslate");
+    g.p(4, j, twist ? "dslate" : "slate");
+    g.p(5, j, "ink");
+  }
+}
+
+function cable(): pixel.Frame {
+  const g = new pixel.Grid(8, 8);
+  rope(g, 0, 8);
+  return g.px;
+}
+
+function hook(): pixel.Frame {
+  const g = new pixel.Grid(8, 8);
+  rope(g, 0, 2);
+  g.rect(1, 2, 6, 4, "ink");
+  g.rect(2, 3, 4, 1, "slate");
+  g.rect(2, 4, 4, 1, "dslate");
+  g.rect(1, 6, 2, 1, "ink");
+  g.rect(5, 6, 2, 1, "ink");
+  g.rect(0, 7, 3, 1, "ink");
+  g.rect(5, 7, 3, 1, "ink");
+  return g.px;
+}
+
+export function* sprites(): Generator<pixel.SpriteEntry> {
+  yield [CONTAINER, [["idle", [container()], 1000]]];
+  yield [
+    CABLE,
+    [
+      ["cable", [cable()], 1000],
+      ["hook", [hook()], 1000],
+    ],
+  ];
+}
+
+const ONCE = { [CONTAINER]: [], [CABLE]: [] };
+
 export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage, repeat: string]>> =
   {
     "freight-gantry": [gantry, "none"],
+    "freight-gantry-rail": [gantryRail, "x"],
     "freight-mid": [freightMid, "x"],
     "industrial-far": [far, "x"],
     "industrial-sky": [sky, "x"],
@@ -289,6 +397,7 @@ export async function build(): Promise<void> {
     return backdropEntry({ bottom: BOTTOM, repeat }, key, im);
   });
   pixel.updateManifest("backdrops", entries);
+  await pixel.build({ once: ONCE }, [...sprites()]);
   console.log("built", TILESET, "and", entries.length, "backdrops");
 }
 

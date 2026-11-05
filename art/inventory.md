@@ -272,16 +272,19 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Industrial materials
 
-| Key                   | Type                               | Size    | Contract                                         |
-| --------------------- | ---------------------------------- | ------- | ------------------------------------------------ |
-| freight-gantry        | decorative backdrop                | 144x192 | Bottom-left, y 600, no repeat                    |
-| freight-mid           | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| industrial-far        | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| industrial-sky        | repeating backdrop                 | 48x600  | Bottom-left, y 600, repeat x                     |
-| tiles-industrial      | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
-| warehouse-loading-bay | decorative closed loading bay      | 120x144 | Bottom-left, y 600, no repeat                    |
-| warehouse-mid         | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| warehouse-wall        | repeating backdrop                 | 48x240  | Bottom-left, y 600, repeat x                     |
+| Key                     | Type                               | Size    | Contract                                         |
+| ----------------------- | ---------------------------------- | ------- | ------------------------------------------------ |
+| freight-crane-cable     | sprite, crane tether segment       | 8x8     | Centred on the tether; cable, hook               |
+| freight-crane-container | sprite, crane container ledge      | 72x36   | Bottom-centre, 6x3; idle                         |
+| freight-gantry          | decorative backdrop                | 144x192 | Bottom-left, y 600, no repeat                    |
+| freight-gantry-rail     | decorative backdrop                | 48x24   | Bottom-left, y 600, repeat x                     |
+| freight-mid             | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
+| industrial-far          | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
+| industrial-sky          | repeating backdrop                 | 48x600  | Bottom-left, y 600, repeat x                     |
+| tiles-industrial        | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
+| warehouse-loading-bay   | decorative closed loading bay      | 120x144 | Bottom-left, y 600, no repeat                    |
+| warehouse-mid           | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
+| warehouse-wall          | repeating backdrop                 | 48x240  | Bottom-left, y 600, repeat x                     |
 
 ## Raccoon antagonist
 

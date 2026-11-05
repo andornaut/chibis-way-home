@@ -898,6 +898,7 @@ Warehouse district and Freight terminal use the industrial destination's canonic
 | Backdrop              | Size    | Repeat | Plane                |
 | --------------------- | ------- | ------ | -------------------- |
 | freight-gantry        | 144x192 | none   | Gameplay, decorative |
+| freight-gantry-rail   | 48x24   | x      | Gameplay, decorative |
 | freight-mid           | 720x600 | x      | Middle distance      |
 | industrial-far        | 720x600 | x      | Far distance         |
 | industrial-sky        | 48x600  | x      | Fixed sky            |
@@ -906,6 +907,13 @@ Warehouse district and Freight terminal use the industrial destination's canonic
 | warehouse-wall        | 48x240  | x      | Gameplay, decorative |
 
 The repeated atmosphere layers have a default bottom of y 600. Use sky factors 0,0; far factors 0.15,0.05; middle factors 0.4,0.15. Select the middle layer for the chosen appearance, rather than stacking both. Near pieces use factors 1,1 and align to the local floor: their top row is the floor row minus their height in tiles. Placement data supplies the character size and row; the manifest's default bottom is not a placement instruction. Decorative beams and the closed loading bay have no collision, white safe lip or red contact band. Keep them clear of routes where their shapes would imply a usable surface. Room doors may reuse the existing street-door art.
+
+The gantry crane ride uses `freight-gantry-rail` and two sprites. The rail is a lattice girder with a trolley rail along its bottom in the `freight-gantry` beam's materials, repeating every 48px; place its bottom on the tether's top row, with a `freight-gantry` leg at each end. It has no lip or collision.
+
+- `freight-crane-container`: 72x36, bottom-centre on a 6x3 footprint, tag `idle`. Rows 0 to 2 are the standable lid, a navy edge over a 2px white lip with nothing above row 0. Below it, a zone-purple-shade corrugated body with 2px zone-purple ridges every 6px, dslate rails and corner posts, two slate lifting lugs inside the outer 6px and an ink outline on the sides and bottom.
+- `freight-crane-cable`: 8x8, centred on the tether line. `cable` is a 4px steel rope, ink sides over slate and dslate strands that swap every 4 rows, so it repeats end to end. `hook` ends the rope in a slate hook block on two ink feet, its bottom row resting on the lid's centre.
+
+Neither sprite carries red, amber or a round pickup shape.
 
 ## Raccoon antagonist
 
