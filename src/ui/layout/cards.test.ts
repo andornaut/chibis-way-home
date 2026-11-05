@@ -124,7 +124,24 @@ it.each([false, true])(
       expect(row.label.x + row.label.width + CARD_CONTENT.gap).toBeLessThanOrEqual(row.toggle.x);
       expect(inside(layout.card, row.row)).toBe(true);
     }
-    const last = hasInstall ? layout.install.row : layout.actionButtons.row;
+    // Rows are their own 48px targets: the first starts at the y50 close clearance (42 + 8).
+    const rows = [
+      layout.moveControls,
+      layout.actionButtons,
+      ...(hasInstall ? [layout.install] : []),
+    ];
+    expect(layout.title.y - layout.card.y).toBe(CARD_CONTENT.padding);
+    expect(rows[0]!.row.y - layout.card.y).toBe(50);
+    expect(rows[0]!.row.y).toBe(layout.close.hit.y + layout.close.hit.height + CARD_CONTENT.gap);
+    rows.forEach(({ hit, row }, index) => {
+      expect(hit).toEqual(row);
+      expect(row.height).toBe(48);
+      if (index > 0) {
+        const above = rows[index - 1]!.row;
+        expect(row.y - above.y - above.height).toBe(CARD_CONTENT.rowGap);
+      }
+    });
+    const last = rows.at(-1)!.row;
     expect(layout.buildLabel.y - last.y - last.height).toBe(CARD_CONTENT.gap);
     expect(layout.buildLabel.y + layout.buildLabel.height + CARD_CONTENT.padding).toBe(
       layout.card.y + layout.card.height,

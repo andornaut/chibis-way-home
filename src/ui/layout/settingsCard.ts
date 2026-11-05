@@ -7,12 +7,14 @@ import {
   cardTextSize,
   contentCardLayout,
 } from "./contentCard";
-import { hitAround, hitMargin } from "./hitAreas";
+import { HIT_RULE } from "./hitAreas";
 import { labelledButton } from "./labelledButton";
 
 const ICON = 16;
 const SWITCH = { height: 16, width: 32 };
-const ROW_HEIGHT = 48;
+// Each row is its own press target, already the minimum target height, so it gains no margin and
+// the first row starts directly below the close target's clearance.
+const ROW_HEIGHT = HIT_RULE.minTarget;
 
 export function settingsCard(
   fonts: CardFonts,
@@ -37,7 +39,6 @@ export function settingsCard(
     [
       {
         height: rows * ROW_HEIGHT + (rows - 1) * CARD_CONTENT.rowGap,
-        hitOutset: hitMargin({ height: ROW_HEIGHT, width: rowWidth, x: 0, y: 0 }),
         key: "rows",
         width: rowWidth,
       },
@@ -54,7 +55,7 @@ export function settingsCard(
       y: group.y + index * (ROW_HEIGHT + CARD_CONTENT.rowGap),
     };
     return {
-      hit: hitAround(rect),
+      hit: rect,
       icon: { x: rect.x, y: rect.y + (ROW_HEIGHT - ICON) / 2 },
       label: {
         height: CARD_CONTENT.lineHeight,
