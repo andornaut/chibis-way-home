@@ -126,22 +126,39 @@ const slotCount = (chunk: ChunkPlan, kind: SlotKind) =>
 const wanted = (entries: readonly { readonly count: number }[]) =>
   entries.reduce((sum, { count }) => sum + count, 0);
 
+// Each pool chunk's draw weight: its own weight times its grade's share (difficultyWeights,
+// default 1), divided by the total weight of the pool's chunks of that grade, so each grade is
+// drawn in proportion to its share however many chunks it holds.
+function drawWeights(
+  library: ChunkLibrary,
+  shares: ZoneRecipe["difficultyWeights"],
+  pool: readonly string[],
+): ReadonlyMap<string, number> {
+  const totals = new Map<number, number>();
+  for (const id of pool) {
+    const chunk = chunkOf(library, id);
+    totals.set(chunk.difficulty, (totals.get(chunk.difficulty) ?? 0) + (chunk.weight ?? 1));
+  }
+  return new Map(
+    pool.map((id) => {
+      const chunk = chunkOf(library, id);
+      return [
+        id,
+        ((chunk.weight ?? 1) * (shares?.[chunk.difficulty] ?? 1)) / totals.get(chunk.difficulty)!,
+      ];
+    }),
+  );
+}
+
 // The chunks in an order drawn from random, each placed ahead of another as likely as its
-// weight is to the other's (weighted sampling without replacement).
+// draw weight is to the other's (weighted sampling without replacement).
 function weightedOrder(
   random: Random,
-  library: ChunkLibrary,
-  weights: ZoneRecipe["difficultyWeights"],
+  weights: ReadonlyMap<string, number>,
   ids: readonly string[],
 ): string[] {
   return ids
-    .map((id) => ({
-      id,
-      key:
-        random() **
-        (1 /
-          ((chunkOf(library, id).weight ?? 1) * (weights?.[chunkOf(library, id).difficulty] ?? 1))),
-    }))
+    .map((id) => ({ id, key: random() ** (1 / weights.get(id)!) }))
     .sort((a, b) => b.key - a.key)
     .map(({ id }) => id);
 }
@@ -247,7 +264,7 @@ interface PoolChunk {
   readonly events: number;
   readonly exitRow: number;
   readonly id: string;
-  // The exponent of its weighted-order key: 1 / (weight * difficulty weight).
+  // The exponent of its weighted-order key: 1 / its draw weight.
   readonly keyPower: number;
   // Its slot in the counts array, or -1 when it has no maxPerZone.
   readonly limit: number;
@@ -283,7 +300,7 @@ function searchRun(
   const target = randomInt(random, min, max + 1);
   const needEvents = wanted(recipe.events);
   const needDoors = wanted(recipe.doors);
-  const weights = recipe.difficultyWeights;
+  const weights = drawWeights(library, recipe.difficultyWeights, pool);
   let limits = 0;
   const chunks: readonly PoolChunk[] = pool.map((id) => {
     const chunk = chunkOf(library, id);
@@ -295,7 +312,7 @@ function searchRun(
       events: slotCount(chunk, "event"),
       exitRow: chunk.exit.row,
       id,
-      keyPower: 1 / ((chunk.weight ?? 1) * (weights?.[chunk.difficulty] ?? 1)),
+      keyPower: 1 / weights.get(id)!,
       limit: chunk.maxPerZone === undefined ? -1 : limits++,
       maxPerZone: chunk.maxPerZone ?? Infinity,
     };
@@ -743,6 +760,9 @@ function assembleOrdered(
     throw new Error("Stage caps exceed maxPerZone");
   }
   const pools = recipe.sections.map((section) => eligibleChunks(library, section, section.chunks));
+  const weights = recipe.sections.map((section, index) =>
+    drawWeights(library, section.difficultyWeights, pools[index]!),
+  );
   const quota = encounterQuota(library, recipe.encounters, [
     recipe.start,
     recipe.finish,
@@ -843,7 +863,7 @@ function assembleOrdered(
           (ids.length > 0 || cap !== undefined || section.spawnCol < chunk.cols)
         );
       });
-      for (const id of weightedOrder(randoms[index]!, library, section.difficultyWeights, next)) {
+      for (const id of weightedOrder(randoms[index]!, weights[index]!, next)) {
         const chunk = chunkOf(library, id);
         const count = counts.get(id) ?? 0;
         counts.set(id, count + 1);

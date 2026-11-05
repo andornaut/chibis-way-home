@@ -334,6 +334,8 @@ export interface ZoneRecipe {
   // Minimum intervening chunks with encounters === 0; zero adds no constraint.
   readonly minEncounterGap?: number;
   readonly difficulty: { readonly max: Difficulty; readonly min: Difficulty };
+  // Grade shares: each grade in the band is drawn in proportion to its share (default 1) however
+  // many pool chunks it holds; zero excludes the grade.
   readonly difficultyWeights?: Readonly<Partial<Record<Difficulty, number>>>;
   readonly doors: readonly { readonly count: number; readonly room: string }[];
   readonly events: readonly { readonly count: number; readonly id: string }[];
