@@ -201,6 +201,12 @@ export function objectLayout(
   ) {
     throw new Error("Forced transit requires a physical support");
   }
+  if (
+    instance.tether &&
+    (!instance.tether.art || !Number.isInteger(instance.tether.row) || instance.tether.row >= 0)
+  ) {
+    throw new Error(`Tether on ${instance.character} requires art and a rail row above it`);
+  }
   const width = (instance.cols ?? character.cols) * tile;
   const height = (instance.rows ?? character.rows) * tile;
   const art = hitboxes[character.art];
@@ -330,6 +336,9 @@ export function objectLayout(
     reaction: { ...reaction, range: reaction.range * tile, speed: reaction.speed * tile },
     room: instance.room,
     scene: instance.scene,
+    ...(instance.tether && {
+      tether: { art: instance.tether.art, y: (instance.row + instance.tether.row) * tile },
+    }),
     width,
   };
   validateHazardPhases(object);

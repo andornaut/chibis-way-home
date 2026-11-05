@@ -124,6 +124,15 @@ export interface ForcedTransitLayout {
   readonly windows: readonly ForcedTransitLayoutWindow[];
 }
 
+// A presentation-only line of repeated segments from the object's top centre straight up to its
+// rail. art: a sprite whose cable tag repeats along the line and whose hook tag is the bottom
+// segment. row: the rail's row as a tile offset from the placed object's nominal origin (negative
+// is above).
+export interface Tether {
+  readonly art: string;
+  readonly row: number;
+}
+
 export interface Instance {
   readonly crumbling?: CrumblingProfile;
   readonly forcedTransit?: ForcedTransit;
@@ -132,6 +141,7 @@ export interface Instance {
   // The id of a timed hazard in the same chunk whose current state picks this instance's
   // animation (its character's phaseAnimations); it keeps no clock of its own.
   readonly phaseSource?: string;
+  readonly tether?: Tether;
   readonly behaviour?: BehaviourPlan;
   readonly character: string;
   readonly col: number;
@@ -487,6 +497,8 @@ export interface ObjectLayout {
   readonly reaction: Reaction;
   readonly room: string | undefined;
   readonly scene: string | undefined;
+  // The tether's segment art and its rail's y in layout pixels, fixed in the world.
+  readonly tether?: { readonly art: string; readonly y: number };
   readonly width: number;
 }
 
