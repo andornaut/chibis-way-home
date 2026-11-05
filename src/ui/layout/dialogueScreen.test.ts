@@ -23,18 +23,20 @@ import {
   dialogueButtons,
   dialogueNameTab,
   dialogueSpeakerLayout,
+  dialogueTextRows,
 } from "./dialogueScreen";
 import { textInkBounds } from "./textInk";
 
 const font = CARD_FONTS.title;
 const width = (name: string) => inkWidth(font, DIALOGUE_SCREEN.text.scale, name);
+const TAB_Y = dialogueTextRows(CARD_FONTS, "name-tab").tabY!;
 
 describe("dialogue layout", () => {
   it.each(["left", "right"] as const)(
     "keeps the %s speaker's portrait and name inside the panel",
     (side) => {
       const layout = dialogueSpeakerLayout(side);
-      const tab = dialogueNameTab(side, width("Dog"));
+      const tab = dialogueNameTab(side, TAB_Y, width("Dog"));
       const box = DIALOGUE_SCREEN.box;
       const frame = Object.values(portrait.frames)[0]!.frame;
       expect(containsPoint(box, tab.x, tab.y)).toBe(true);
@@ -63,6 +65,44 @@ describe("dialogue layout", () => {
       );
     },
   );
+
+  // Dialogue and barks use a name tab over three body lines; the achievement notice a bold
+  // heading over two. Ink is measured over every glyph each font draws.
+  it.each([
+    ["left", "name-tab"],
+    ["right", "name-tab"],
+    ["left", "heading"],
+    ["right", "heading"],
+  ] as const)("pads the %s portrait and %s text column evenly", (side, header) => {
+    const { box, padding, text } = DIALOGUE_SCREEN;
+    const layout = dialogueSpeakerLayout(side);
+    const rows = dialogueTextRows(CARD_FONTS, header);
+    const frame = layout.portraitFrame;
+    const column = { right: layout.textX + text.width, x: layout.textX };
+    const ink = (which: keyof typeof CARD_FONTS) =>
+      textInkBounds(
+        CARD_FONTS[which],
+        text.scale,
+        text.pitch,
+        [...CARD_FONTS[which].glyphs.keys()].join(""),
+      );
+    const top = header === "name-tab" ? rows.tabY! : rows.headingY! + ink("title").y;
+    const bottom =
+      rows.bodyY + (rows.bodyLines - 1) * text.pitch + ink("body").y + ink("body").height;
+    const [near, far] =
+      side === "left"
+        ? [frame.x - box.x, box.x + box.width - column.right]
+        : [box.x + box.width - frame.x - frame.width, column.x - box.x];
+    const gap = side === "left" ? column.x - frame.x - frame.width : frame.x - column.right;
+    expect({ far, gap, near }).toEqual({ far: padding, gap: padding, near: padding });
+    expect(frame.y - box.y).toBe(box.y + box.height - frame.y - frame.height);
+    expect(Math.abs(top - box.y - (box.y + box.height - bottom))).toBeLessThanOrEqual(1);
+    expect(Math.min(top - box.y, box.y + box.height - bottom)).toBeGreaterThanOrEqual(padding);
+    if (header === "name-tab") {
+      expect([top - box.y, box.y + box.height - bottom]).toEqual([padding, padding]);
+      expect(rows.bodyY + ink("body").y).toBeGreaterThanOrEqual(rows.tabY! + 20);
+    }
+  });
 
   it("places equal-height Skip left and Continue right below the panel", () => {
     const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
@@ -109,16 +149,17 @@ function barkLines(...sources: readonly unknown[]): readonly DialogueLine[] {
 
 function expectFits(paragraph: DialogueParagraph): void {
   const style = DIALOGUE_SCREEN.text;
+  const rows = dialogueTextRows(CARD_FONTS, "name-tab");
   const lines = dialogueLines(CARD_FONTS.body, style, style.width, paragraph.text);
   expect(lines.length, paragraph.text).toBeLessThanOrEqual(style.lines);
   for (const [index, line] of lines.entries()) {
     const ink = textInkBounds(CARD_FONTS.body, style.scale, style.pitch, line);
     expect(ink.width, line).toBeLessThanOrEqual(style.width);
-    expect(style.y + index * style.pitch + ink.y + ink.height, line).toBeLessThanOrEqual(
+    expect(rows.bodyY + index * style.pitch + ink.y + ink.height, line).toBeLessThanOrEqual(
       DIALOGUE_SCREEN.box.y + DIALOGUE_SCREEN.box.height,
     );
   }
-  const tab = dialogueNameTab(paragraph.side, width(paragraph.name));
+  const tab = dialogueNameTab(paragraph.side, TAB_Y, width(paragraph.name));
   expect(tab.x + tab.width, paragraph.name).toBeLessThanOrEqual(
     dialogueSpeakerLayout(paragraph.side).textX + style.width,
   );

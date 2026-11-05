@@ -12,6 +12,7 @@ import {
   dialogueNameTab,
   type DialogueParagraph,
   dialogueSpeakerLayout,
+  dialogueTextRows,
 } from "../ui";
 import {
   addCardText,
@@ -41,15 +42,18 @@ export function drawDialogueParagraph(
   }
   const layout = dialogueSpeakerLayout(paragraph.side);
   const text = DIALOGUE_SCREEN.text;
-  const titleFont = phaserBitmapFont(scene.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
+  const fonts = {
+    body: phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData),
+    title: phaserBitmapFont(scene.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData),
+  };
   const heading = paragraph.heading;
-  if (heading !== undefined && inkWidth(titleFont, text.scale, heading) > text.width) {
+  if (heading !== undefined && inkWidth(fonts.title, text.scale, heading) > text.width) {
     throw new Error(`Dialogue heading does not fit: ${heading}`);
   }
-  const bodyY = heading === undefined ? text.y : text.y + text.pitch;
+  const rows = dialogueTextRows(fonts, heading === undefined ? "name-tab" : "heading");
   const body = dialogueLines(
-    phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData),
-    { ...text, lines: heading === undefined ? text.lines : text.lines - 1 },
+    fonts.body,
+    { ...text, lines: rows.bodyLines },
     text.width,
     paragraph.text,
   );
@@ -71,14 +75,16 @@ export function drawDialogueParagraph(
           .image(layout.portrait.x, layout.portrait.y, paragraph.portrait, paragraph.portraitFrame)
           .setOrigin(0)
           .setDisplaySize(PORTRAIT_SIZE, PORTRAIT_SIZE),
-    ...(paragraph.name === null ? [] : drawNameTab(scene, titleFont, paragraph)),
-    ...(heading === undefined
+    ...(paragraph.name === null || rows.tabY === undefined
+      ? []
+      : drawNameTab(scene, fonts.title, rows.tabY, paragraph)),
+    ...(heading === undefined || rows.headingY === undefined
       ? []
       : [
           addCardText(
             scene,
             TITLE_FONT,
-            { x: layout.textX, y: text.y },
+            { x: layout.textX, y: rows.headingY },
             heading,
             paletteColour(scene, "cream"),
           ),
@@ -87,7 +93,7 @@ export function drawDialogueParagraph(
       addCardText(
         scene,
         BODY_FONT,
-        { x: layout.textX, y: bodyY + index * text.pitch },
+        { x: layout.textX, y: rows.bodyY + index * text.pitch },
         line,
         paletteColour(scene, "cream"),
       ),
@@ -98,12 +104,13 @@ export function drawDialogueParagraph(
 function drawNameTab(
   scene: Scene,
   font: ReturnType<typeof phaserBitmapFont>,
+  tabY: number,
   paragraph: Pick<DialogueParagraph, "colour" | "name" | "side">,
 ): GameObjects.GameObject[] {
   const { name } = paragraph;
   const layout = dialogueSpeakerLayout(paragraph.side);
   const text = DIALOGUE_SCREEN.text;
-  const tab = dialogueNameTab(paragraph.side, inkWidth(font, text.scale, name));
+  const tab = dialogueNameTab(paragraph.side, tabY, inkWidth(font, text.scale, name));
   if (tab.x + tab.width > layout.textX + text.width) {
     throw new Error(`Dialogue speaker name does not fit: ${name}`);
   }

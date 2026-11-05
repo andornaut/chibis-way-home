@@ -90,6 +90,7 @@ export {
   dialogueButtons,
   dialogueNameTab,
   dialogueSpeakerLayout,
+  dialogueTextRows,
 } from "./layout/dialogueScreen";
 export { FONT_ROLES, FONT_SCALE } from "./layout/fontRoles";
 export { type PressArea, pressedArea } from "./layout/hitAreas";

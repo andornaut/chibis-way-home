@@ -27,7 +27,7 @@ export const BOSS_ZONES: Readonly<Record<BossId, string>> = {
 export const ACHIEVEMENT_NOTICE_SECONDS = 3;
 
 // The unlock notice's icon side in the shared dialogue panel.
-export const ACHIEVEMENT_NOTICE_SIDE: DialogueSpeaker["side"] = "right";
+export const ACHIEVEMENT_NOTICE_SIDE: DialogueSpeaker["side"] = "left";
 
 // The catalogue, in its rules order. The card sorts it by tier, keeping this order within each.
 export const ACHIEVEMENTS: readonly ChibiAchievement[] = [
