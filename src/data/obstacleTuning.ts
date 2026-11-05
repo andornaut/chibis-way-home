@@ -1,6 +1,6 @@
 import type { CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { BehaviourAction } from "./types";
+import type { BehaviourAction, Orbit } from "./types";
 
 export const CRUMBLING_SUPPORT_TUNING = {
   absentSeconds: 2,
@@ -11,6 +11,24 @@ export const CRUMBLING_SUPPORT_TUNING = {
 // many tiles per second and pause this many seconds at each end.
 export const OBSTACLE_MOVER_SPEED = 4;
 export const OBSTACLE_MOVER_PAUSE = 1;
+
+// The windmill's sail ledges: count of them evenly spaced around the hub, each centre radius tiles
+// from it.
+export const WINDMILL_SAILS = { count: 4, radius: 7 } as const;
+
+// Sail number sail's path about the hub with id host: the wheel turns against the clock, rising on
+// the right (the route side), its sail centres at the obstacle mover speed, and stops for the
+// mover pause at each quarter turn, sail 0 starting at the bottom.
+export function windmillSailOrbit(host: string, sail: number): Orbit {
+  return {
+    angularSpeed: -OBSTACLE_MOVER_SPEED / WINDMILL_SAILS.radius,
+    host,
+    kind: "circle",
+    phase: Math.PI / 2 + (2 * Math.PI * sail) / WINDMILL_SAILS.count,
+    radius: WINDMILL_SAILS.radius,
+    stops: { count: WINDMILL_SAILS.count, seconds: OBSTACLE_MOVER_PAUSE },
+  };
+}
 
 // A ravine gust's push volume from its emitter's source edge: range tiles long and height rows tall
 // from the emitter's bottom, pushing Chibi velocity tiles per second away from the emitter (14
