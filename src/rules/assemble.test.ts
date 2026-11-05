@@ -323,6 +323,47 @@ describe("assembleZone", () => {
     );
   });
 
+  // Three hundred single-use chunks, as a zone's certified pairs are: nine seam shapes, each
+  // shape's first chunks holding an encounter.
+  const singleUse = (keep: (plan: ChunkPlan) => boolean) => {
+    const seams = [30, 40, 50] as const;
+    const chunks = Array.from({ length: 300 }, (_, index) => {
+      const encounters = Math.floor(index / 9) % 3 === 0 ? 1 : 0;
+      const plan = chunk(seams[index % 3]!, seams[Math.floor(index / 3) % 3]!, {
+        encounters,
+        maxPerZone: 1,
+      });
+      return [`m${index}`, plan] as const;
+    });
+    return library(Object.fromEntries(chunks.filter(([, plan]) => keep(plan))));
+  };
+  const spaced = recipe(14, { encounters: 3, minEncounterGap: 3 });
+
+  it("assembles a large single-use pool, each chunk once, the same for the same seed", () => {
+    const lib = singleUse(() => true);
+    for (const seed of [0, 1, 2]) {
+      const ids = middleIds(areaOf(assembleZone(lib, seed, "single-use", spaced)));
+      expect(ids).toHaveLength(14);
+      expect(new Set(ids).size).toBe(14);
+      expect(ids.filter((id) => lib.chunks[id]!.encounters > 0)).toHaveLength(3);
+    }
+    expect(assembleZone(lib, 5, "single-use", spaced)).toEqual(
+      assembleZone(lib, 5, "single-use", spaced),
+    );
+  });
+
+  it.each([
+    ["no encounter chunks", (plan: ChunkPlan) => plan.encounters === 0],
+    ["too few quiet chunks", (plan: ChunkPlan) => plan.encounters > 0],
+    // No chunk leaves the lower seams for the finish's row 50 once a run has left it.
+    ["no way back to the finish's seam", (plan: ChunkPlan) => plan.exit.row < 50],
+  ])("fails a large single-use pool with %s without exhausting the search", (_, keep) => {
+    const lib = singleUse(keep);
+    for (const seed of [0, 1]) {
+      expect(() => assembleZone(lib, seed, "single-use", spaced)).toThrow(/^No assembly/);
+    }
+  });
+
   it("preserves theme and placed backdrop parallax across chunk assembly", () => {
     const lib = library({
       a: chunk(50, 50, {

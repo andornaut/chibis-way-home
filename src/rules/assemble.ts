@@ -257,6 +257,8 @@ function encounterFits(
 
 // A pool chunk with the facts the search reads at every node.
 interface PoolChunk {
+  // Its equivalence class: chunks alike in every fact the search tests share one.
+  readonly class: number;
   readonly cols: number;
   readonly doors: number;
   readonly encounters: number;
@@ -271,17 +273,39 @@ interface PoolChunk {
   readonly maxPerZone: number;
 }
 
+// The exact search's bounds: the most limited chunks in its pool and the most nodes it visits
+// before it gives way to the class search. Its key holds every limited chunk's uses, so its
+// states grow with their number. Then the nodes the class search visits before it fails loudly
+// rather than exhaust memory.
+export const EXACT_LIMITED_CHUNKS = 32;
+export const EXACT_NODE_LIMIT = 1_000_000;
+export const SEARCH_NODE_LIMIT = 2_000_000;
+
+// The exact search's answer when its pool or its nodes exceed its bounds.
+const EXCEEDED = "exceeded";
+
 // The ids of the chunks between the recipe's start and finish, left to right: a seeded run
 // whose seams join, never the same chunk twice in a row, each chunk at most its maxPerZone
 // times, within the difficulty band, with slots enough for the recipe's events and doors,
 // and the whole zone within the recipe's length. It aims for a length drawn from the seed, tries
 // the chunks in a seeded weighted order (as weightedOrder), and backtracks when stuck. Undefined
 // when none exists.
+//
+// The exact search remembers a failed state by its last chunk and every limited chunk's uses,
+// and gives up with EXCEEDED on a pool of more than EXACT_LIMITED_CHUNKS limited chunks or after
+// EXACT_NODE_LIMIT nodes. The class search remembers it by
+// feasibility alone: chunks alike in columns, slots, encounters, seam rows and maxPerZone form a
+// class, and any unused member of a class finishes a run exactly as another does, so its key
+// holds the class of the last chunk, its uses, and each class's histogram of member uses. It
+// also cuts states that no length, slot or encounter bound can complete before drawing their
+// candidates, and throws after SEARCH_NODE_LIMIT nodes. Both draw in the same order at a node;
+// they differ in the failed states they skip, and so in the draws they consume.
 function searchRun(
   library: ChunkLibrary,
   random: Random,
   recipe: ZoneRecipe,
-): readonly string[] | undefined {
+  exact: boolean,
+): readonly string[] | typeof EXCEEDED | undefined {
   const start = chunkOf(library, recipe.start);
   const finish = chunkOf(library, recipe.finish);
   const pool = eligibleChunks(library, recipe, recipeChunkPool(library, recipe));
@@ -301,33 +325,179 @@ function searchRun(
   const needEvents = wanted(recipe.events);
   const needDoors = wanted(recipe.doors);
   const weights = drawWeights(library, recipe.difficultyWeights, pool);
+  const classIds = new Map<string, number>();
+  // Each class's maxPerZone (Infinity when unlimited) and its member count.
+  const classCaps: number[] = [];
+  const classSizes: number[] = [];
   let limits = 0;
   const chunks: readonly PoolChunk[] = pool.map((id) => {
     const chunk = chunkOf(library, id);
-    return {
+    const facts = {
       cols: chunk.cols,
       doors: slotCount(chunk, "door"),
       encounters: chunk.encounters,
       entryRow: chunk.entry.row,
       events: slotCount(chunk, "event"),
       exitRow: chunk.exit.row,
+      maxPerZone: chunk.maxPerZone ?? Infinity,
+    };
+    // The finish is its own class: a run never ends on two finishes in a row.
+    const signature =
+      id === recipe.finish
+        ? `finish:${id}`
+        : `${facts.cols}|${facts.doors}|${facts.encounters}|${facts.entryRow}|` +
+          `${facts.events}|${facts.exitRow}|${facts.maxPerZone}`;
+    let classId = classIds.get(signature);
+    if (classId === undefined) {
+      classId = classCaps.length;
+      classIds.set(signature, classId);
+      classCaps.push(facts.maxPerZone);
+      classSizes.push(0);
+    }
+    classSizes[classId]!++;
+    return {
+      ...facts,
+      class: classId,
       id,
       keyPower: 1 / weights.get(id)!,
       limit: chunk.maxPerZone === undefined ? -1 : limits++,
-      maxPerZone: chunk.maxPerZone ?? Infinity,
     };
   });
+  if (exact && limits > EXACT_LIMITED_CHUNKS) {
+    return EXCEEDED;
+  }
   // The run so far: pool indexes after the start, and the uses of each maxPerZone chunk.
   const ids: number[] = [];
   const counts = new Int32Array(limits);
+  // Per limited class, how many of its members have each use count from 1 to its maxPerZone,
+  // flattened: histogramAt[class] + uses - 1.
+  const histogramAt = classCaps.map(() => -1);
+  let histogramSize = 0;
+  for (const [classId, cap] of classCaps.entries()) {
+    if (Number.isFinite(cap)) {
+      histogramAt[classId] = histogramSize;
+      histogramSize += cap;
+    }
+  }
+  const histogram = new Int32Array(histogramSize);
+  // Per class, its members used at least once.
+  const usedMembers = new Int32Array(classCaps.length);
+  const limitedClasses = classCaps.flatMap((cap, classId) =>
+    Number.isFinite(cap) ? [classId] : [],
+  );
+  // A class's key when it holds unused members enough for every chunk a run can still place.
+  const SATURATED = 0xffff;
   // Weighted-order keys by pool index, read only while sorting one node's candidates.
   const keys = new Float64Array(chunks.length);
   const failed = new Set<string>();
   const finishCols = finish.cols;
   const finishDoors = slotCount(finish, "door");
   const finishEvents = slotCount(finish, "event");
+  let nodes = 0;
+  // Thrown to unwind the exact search when it reaches EXACT_NODE_LIMIT.
+  const exceeded = new Error(EXCEEDED);
 
-  // The failed-state key: the last chunk (-1 for the start) determines its encounters.
+  // Bounds on what the unused chunks can still add, for the cuts.
+  const minCols = Math.min(...chunks.map(({ cols }) => cols));
+  const maxCols = Math.max(...chunks.map(({ cols }) => cols));
+  const maxEvents = Math.max(0, ...chunks.map(({ events }) => events));
+  const maxDoors = Math.max(0, ...chunks.map(({ doors }) => doors));
+  const maxEncounters = Math.max(0, ...chunks.map(({ encounters }) => encounters));
+  // The fewest pool chunks that join a seam row to the finish's entry row, by row.
+  const toFinish = new Map<number, number>([[finish.entry.row, 0]]);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const { entryRow, exitRow } of chunks) {
+      const through = (toFinish.get(exitRow) ?? Infinity) + 1;
+      if (through < (toFinish.get(entryRow) ?? Infinity)) {
+        toFinish.set(entryRow, through);
+        changed = true;
+      }
+    }
+  }
+  // Uses left: of quiet chunks, of encounter chunks, and of encounters those chunks hold.
+  let quietLeft = 0;
+  let encounterChunksLeft = 0;
+  let encountersLeft = 0;
+  for (const chunk of chunks) {
+    if (chunk.encounters === 0) {
+      quietLeft += chunk.maxPerZone;
+    } else {
+      encounterChunksLeft += chunk.maxPerZone;
+      encountersLeft += chunk.maxPerZone * chunk.encounters;
+    }
+  }
+  const use = (chunk: PoolChunk, step: 1 | -1) => {
+    if (chunk.limit < 0) {
+      return;
+    }
+    const at = histogramAt[chunk.class]!;
+    const before = counts[chunk.limit]!;
+    if (before === 0 || before + step === 0) {
+      usedMembers[chunk.class]! += step;
+    }
+    if (before > 0) {
+      histogram[at + before - 1]!--;
+    }
+    counts[chunk.limit] = before + step;
+    if (before + step > 0) {
+      histogram[at + before + step - 1]!++;
+    }
+    if (chunk.encounters === 0) {
+      quietLeft -= step;
+    } else {
+      encounterChunksLeft -= step;
+      encountersLeft -= step * chunk.encounters;
+    }
+  };
+
+  // Whether no run of the unused chunks can finish from this state: too few columns to reach the
+  // finish's seam row, too few slots, encounters or chunks left, or the encounters cannot be
+  // spaced within the columns left.
+  const hopeless = (
+    width: number,
+    events: number,
+    doors: number,
+    remaining: number | undefined,
+    quietChunks: number,
+    prevEncounters: number,
+    exitRow: number,
+  ) => {
+    const room = max - width - finishCols;
+    const most = Math.floor(room / minCols);
+    const least = Math.max(0, Math.ceil((min - width - finishCols) / maxCols));
+    if (
+      (toFinish.get(exitRow) ?? Infinity) > most ||
+      needEvents - events - finishEvents > most * maxEvents ||
+      needDoors - doors - finishDoors > most * maxDoors
+    ) {
+      return true;
+    }
+    if (remaining === undefined) {
+      return least > quietLeft + encounterChunksLeft;
+    }
+    if (least > quietLeft + Math.min(remaining, encounterChunksLeft)) {
+      return true;
+    }
+    if (remaining === 0) {
+      return false;
+    }
+    if (remaining > encountersLeft) {
+      return true;
+    }
+    // Encounter chunks never touch under a quota, and stand minimumGap quiet chunks apart.
+    const placed = Math.ceil(remaining / maxEncounters);
+    const apart = Math.max(minimumGap, 1);
+    const quiet =
+      Math.max(minimumGap - quietChunks, prevEncounters > 0 ? 1 : 0) +
+      (placed - 1) * apart +
+      (finish.encounters > 0 ? apart : 0);
+    return quiet > quietLeft || placed + quiet > most;
+  };
+
+  // The failed-state key. Exact: the last chunk (-1 for the start) and each limited chunk's
+  // uses. Class: the last chunk's class (-1 for the start) and its uses, and each limited
+  // class's use histogram unless the class is saturated.
   const keyOf = (
     width: number,
     last: number,
@@ -336,17 +506,38 @@ function searchRun(
     remaining: number | undefined,
     quietChunks: number,
   ) => {
-    let key = `${width}|${last}|${Math.min(events, needEvents)}|${Math.min(doors, needDoors)}`;
+    const lastChunk = last < 0 ? undefined : chunks[last]!;
+    let key = exact
+      ? `${width}|${last}`
+      : `${width}|${lastChunk ? lastChunk.class : -1}|` +
+        `${lastChunk && lastChunk.limit >= 0 ? counts[lastChunk.limit] : 0}`;
+    key += `|${Math.min(events, needEvents)}|${Math.min(doors, needDoors)}`;
     if (remaining !== undefined) {
       key += `|${remaining}`;
     }
     if (minimumGap > 0) {
       key += `|${quietChunks}`;
     }
-    for (let index = 0; index < limits; index++) {
-      key += `|${counts[index]}`;
+    if (exact) {
+      // A fixed-length tail of one character per count.
+      return `${key}|${String.fromCharCode(...counts)}`;
     }
-    return key;
+    // Per limited class, its histogram, or SATURATED when its unused members alone can fill
+    // every chunk a run can still place: no future run then exhausts it, and any run maps onto
+    // its unused members, so its uses do not change whether the state can finish.
+    const most = Math.floor((max - width - finishCols) / minCols);
+    const tail: number[] = [];
+    for (const classId of limitedClasses) {
+      if (classSizes[classId]! - usedMembers[classId]! >= most) {
+        tail.push(SATURATED);
+      } else {
+        const at = histogramAt[classId]!;
+        for (let uses = 0; uses < classCaps[classId]!; uses++) {
+          tail.push(histogram[at + uses]!);
+        }
+      }
+    }
+    return `${key}|${String.fromCharCode(...tail)}`;
   };
 
   const search = (
@@ -356,6 +547,14 @@ function searchRun(
     remaining: number | undefined,
     quietChunks: number,
   ): boolean => {
+    if (++nodes > (exact ? EXACT_NODE_LIMIT : SEARCH_NODE_LIMIT)) {
+      if (exact) {
+        throw exceeded;
+      }
+      throw new Error(
+        `Assembly search of ${recipe.start} to ${recipe.finish} exceeded ${SEARCH_NODE_LIMIT} nodes`,
+      );
+    }
     const last = ids.length === 0 ? -1 : ids[ids.length - 1]!;
     const key = keyOf(width, last, events, doors, remaining, quietChunks);
     if (failed.has(key)) {
@@ -364,6 +563,10 @@ function searchRun(
     const prev = last < 0 ? undefined : chunks[last]!;
     const exitRow = prev ? prev.exitRow : start.exit.row;
     const prevEncounters = prev ? prev.encounters : start.encounters;
+    if (!exact && hopeless(width, events, doors, remaining, quietChunks, prevEncounters, exitRow)) {
+      failed.add(key);
+      return false;
+    }
     const order: number[] = [];
     for (let index = 0; index < chunks.length; index++) {
       const chunk = chunks[index]!;
@@ -398,9 +601,7 @@ function searchRun(
     for (const index of order) {
       const chunk = chunks[index]!;
       ids.push(index);
-      if (chunk.limit >= 0) {
-        counts[chunk.limit]!++;
-      }
+      use(chunk, 1);
       const found = search(
         width + chunk.cols,
         events + chunk.events,
@@ -412,9 +613,7 @@ function searchRun(
         return true;
       }
       ids.pop();
-      if (chunk.limit >= 0) {
-        counts[chunk.limit]!--;
-      }
+      use(chunk, -1);
     }
     if (!finishFirst && finishes()) {
       return true;
@@ -423,15 +622,38 @@ function searchRun(
     return false;
   };
 
-  return search(
-    start.cols,
-    slotCount(start, "event"),
-    slotCount(start, "door"),
-    initialRemaining,
-    start.encounters > 0 ? 0 : minimumGap,
-  )
-    ? ids.map((index) => chunks[index]!.id)
-    : undefined;
+  try {
+    return search(
+      start.cols,
+      slotCount(start, "event"),
+      slotCount(start, "door"),
+      initialRemaining,
+      start.encounters > 0 ? 0 : minimumGap,
+    )
+      ? ids.map((index) => chunks[index]!.id)
+      : undefined;
+  } catch (error) {
+    if (error === exceeded) {
+      return EXCEEDED;
+    }
+    throw error;
+  }
+}
+
+// The zone key's run for a seed: the exact search's, or when that exceeds its bounds, the class
+// search's from a fresh stream of the same seed.
+function seededRun(
+  library: ChunkLibrary,
+  seed: number,
+  key: string,
+  recipe: ZoneRecipe,
+): readonly string[] | undefined {
+  const run = searchRun(library, randomStream(seed, `assemble:${key}`), recipe, true);
+  if (run !== EXCEEDED) {
+    return run;
+  }
+  const fallback = searchRun(library, randomStream(seed, `assemble:${key}`), recipe, false);
+  return fallback === EXCEEDED ? undefined : fallback;
 }
 
 const shiftPoint = (col: number, point: TilePoint): TilePoint => ({
@@ -1018,7 +1240,7 @@ export function assembleZone(
   ) {
     throw new Error("Recipe height must match its authored caps");
   }
-  const run = searchRun(library, randomStream(seed, `assemble:${key}`), recipe);
+  const run = seededRun(library, seed, key, recipe);
   if (!run) {
     throw new Error(
       `No assembly of zone ${key} fits its recipe: its theme's chunks never join from ` +
