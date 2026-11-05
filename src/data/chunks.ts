@@ -1352,16 +1352,23 @@ const AUTHORED_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     [floor(0, 12, 50), floor(12, 30, 58), floor(42, 18, 50)],
     [{ ...ledge(24, 6, 48), crumbling: CRUMBLING_SUPPORT_TUNING }, ...red(12, 30, 58)],
   ),
-  "growl-clearing": {
-    ...shifted(-10, CLIMBING_GROWL),
-    encounters: 1,
-    objects: [
-      ...shifted(-10, GROWL_FINISH).objects,
-      { character: "bear-antagonist", col: 38, role: "antagonist", row: 36 },
-    ],
-    theme: ["deep-woods", "forest-paths", "ravine"],
-    weight: 2,
-  },
+  // The escape is an arch on the exit floor, past a narrowed right block.
+  "growl-clearing": withArch(
+    { col: 52, cols: 4, floorRow: 40, top: 34, toward: 1 },
+    {
+      ...shifted(-10, CLIMBING_GROWL),
+      encounters: 1,
+      objects: [
+        ...shifted(-10, GROWL_FINISH).objects,
+        { character: "bear-antagonist", col: 38, role: "antagonist", row: 36 },
+      ],
+      solids: shifted(-10, CLIMBING_GROWL).solids.map((solid) =>
+        solid.col === 44 ? { ...solid, cols: 5 } : solid.col === 50 ? floor(49, 11, 40) : solid,
+      ),
+      theme: ["deep-woods", "forest-paths", "ravine"],
+      weight: 2,
+    },
+  ),
   "growl-lift-clearing": withPassage(
     { col: 4, cols: 4, floorRow: 40, toward: -1 },
     { ...shifted(-10, PATROL_LIFT), theme: ["deep-woods", "forest-paths", "ravine"] },
