@@ -181,6 +181,14 @@
       "once": []
     },
     {
+      "key": "homecity-awning-ledge",
+      "png": "sprites/homecity-awning-ledge.png",
+      "json": "sprites/homecity-awning-ledge.json",
+      "once": [
+        "extending"
+      ]
+    },
+    {
       "key": "icon-browser-menu",
       "png": "sprites/icon-browser-menu.png",
       "json": "sprites/icon-browser-menu.json",
