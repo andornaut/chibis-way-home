@@ -295,6 +295,7 @@ export interface ZonePulse extends ForcePulse {
     readonly art: string;
     readonly animation: string;
     readonly offset: Point;
+    readonly span?: true;
     readonly at: Point;
     readonly actor: ObjectLayout;
   };

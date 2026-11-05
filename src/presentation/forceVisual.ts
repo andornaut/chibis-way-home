@@ -24,10 +24,7 @@ export function forceVisualSpan(volume: Rect, wave: Size, facing: -1 | 1): reado
   const step = count === 1 ? 0 : (volume.width - wave.width) / (count - 1);
   const y = volume.y + volume.height - wave.height;
   return Array.from({ length: count }, (_, index) => ({
-    x:
-      facing === 1
-        ? volume.x + index * step
-        : volume.x + volume.width - wave.width - index * step,
+    x: facing === 1 ? volume.x + index * step : volume.x + volume.width - wave.width - index * step,
     y,
   }));
 }

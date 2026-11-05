@@ -204,6 +204,7 @@ import type { DeathData, DeathOpener } from "./DeathScene";
 import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
 import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
+import { createPulseSpanArt } from "./pulseSpanArt";
 import type { RoomData } from "./RoomScene";
 import {
   activeSkill,
@@ -226,7 +227,6 @@ import {
   wholeRunStats,
   zoneVisitStats,
 } from "./save";
-import { createPulseSpanArt } from "./pulseSpanArt";
 import { createTetherArt } from "./tetherArt";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard";
 import { createTouchChrome } from "./touchChrome";
