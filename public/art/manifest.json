@@ -13,6 +13,24 @@
   ],
   "sprites": [
     {
+      "key": "apartment-chandelier",
+      "png": "sprites/apartment-chandelier.png",
+      "json": "sprites/apartment-chandelier.json",
+      "once": []
+    },
+    {
+      "key": "apartment-chandelier-chain",
+      "png": "sprites/apartment-chandelier-chain.png",
+      "json": "sprites/apartment-chandelier-chain.json",
+      "once": []
+    },
+    {
+      "key": "apartment-chandelier-mount",
+      "png": "sprites/apartment-chandelier-mount.png",
+      "json": "sprites/apartment-chandelier-mount.json",
+      "once": []
+    },
+    {
       "key": "background-deer",
       "png": "sprites/background-deer.png",
       "json": "sprites/background-deer.json",

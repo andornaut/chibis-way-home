@@ -1,0 +1,30 @@
+{ "frames": {
+   "apartment-chandelier 0.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 72, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 72, "h": 24 },
+    "sourceSize": { "w": 72, "h": 24 },
+    "duration": 300
+   },
+   "apartment-chandelier 1.aseprite": {
+    "frame": { "x": 72, "y": 0, "w": 72, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 72, "h": 24 },
+    "sourceSize": { "w": 72, "h": 24 },
+    "duration": 300
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.30-x64",
+  "image": "apartment-chandelier.png",
+  "format": "RGBA8888",
+  "size": { "w": 144, "h": 24 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "idle", "from": 0, "to": 1, "direction": "forward" }
+  ]
+ }
+}
