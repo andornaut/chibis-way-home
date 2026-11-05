@@ -207,91 +207,7 @@ it("supports ordinary room doors without intersecting terrain or platforms", () 
   expect(checked).toBeGreaterThan(0);
 });
 
-// CLEANUP (added 2026-11-04): the encounter chunks still without a designed escape point. Remove
-// this set, and require an escape of every encounter chunk, once gameplay authors their values.
-const ESCAPES_MISSING = new Set<string>([
-  "apartment-tall-city-boundary-climb-yard",
-  "apartment-tall-city-boundary-dog-high",
-  "apartment-tall-city-boundary-dog-terrace",
-  "apartment-tall-compound-patrol-lift",
-  "apartment-tall-offset-two-level-terrace-encounter",
-  "apartment-tall-open-stepped-ridge-encounter",
-  "apartment-tall-patrol-cover-early",
-  "apartment-tall-patrol-cover-late",
-  "apartment-tall-patrol-cover-middle",
-  "blue-vertical-city-boundary-climb-yard",
-  "blue-vertical-city-boundary-dog-high",
-  "blue-vertical-city-boundary-dog-terrace",
-  "blue-vertical-offset-two-level-terrace-encounter",
-  "blue-vertical-open-stepped-ridge-encounter",
-  "blue-vertical-patrol-cover-early",
-  "blue-vertical-patrol-cover-late",
-  "blue-vertical-patrol-cover-middle",
-  "bounded-flyer-post",
-  "city-boundary-climb-yard",
-  "city-boundary-dog-high",
-  "city-boundary-dog-terrace",
-  "city-boundary-dog-terrace-exterior",
-  "climbing-enemy-lane",
-  "compound-patrol-lift",
-  "compound-perch-yard",
-  "compound-vertical-yard",
-  "countryside-vertical-city-boundary-climb-yard",
-  "countryside-vertical-city-boundary-dog-high",
-  "countryside-vertical-city-boundary-dog-terrace",
-  "countryside-vertical-offset-two-level-terrace-encounter",
-  "countryside-vertical-open-stepped-ridge-encounter",
-  "countryside-vertical-patrol-cover-early",
-  "countryside-vertical-patrol-cover-late",
-  "countryside-vertical-patrol-cover-middle",
-  "dry-underground-gallery-encounter",
-  "flyer-shelter-early",
-  "flyer-shelter-late",
-  "flyer-shelter-middle",
-  "growl-clearing",
-  "growl-clearing-woodland-depth",
-  "growl-cover-early",
-  "growl-cover-early-woodland-depth",
-  "growl-cover-late",
-  "growl-cover-late-woodland-depth",
-  "growl-cover-middle",
-  "growl-cover-middle-woodland-depth",
-  "growl-lift-clearing",
-  "home-vertical-climbing-enemy-lane",
-  "home-vertical-compound-vertical-yard",
-  "home-vertical-offset-two-level-terrace-encounter",
-  "home-vertical-open-stepped-ridge-encounter",
-  "home-vertical-vertical-stack-early",
-  "home-vertical-vertical-stack-late",
-  "home-vertical-vertical-stack-middle",
-  "industrial-tunnel-bounded-flyer-post",
-  "industrial-tunnel-compound-perch-yard",
-  "industrial-tunnel-dry-underground-gallery-encounter",
-  "industrial-tunnel-flyer-shelter-early",
-  "industrial-tunnel-flyer-shelter-late",
-  "industrial-tunnel-flyer-shelter-middle",
-  "offset-two-level-terrace-encounter",
-  "offset-two-level-terrace-encounter-woodland-depth",
-  "open-stepped-ridge-encounter",
-  "open-stepped-ridge-encounter-woodland-depth",
-  "patrol-cover-early",
-  "patrol-cover-early-exterior",
-  "patrol-cover-late",
-  "patrol-cover-late-exterior",
-  "patrol-cover-middle",
-  "patrol-cover-middle-exterior",
-  "vertical-stack-early",
-  "vertical-stack-late",
-  "vertical-stack-middle",
-  "woodland-vertical-growl-clearing",
-  "woodland-vertical-growl-cover-early",
-  "woodland-vertical-growl-cover-late",
-  "woodland-vertical-growl-cover-middle",
-  "woodland-vertical-offset-two-level-terrace-encounter",
-  "woodland-vertical-open-stepped-ridge-encounter",
-]);
-
-it("gives every encounter chunk a designed escape point, apart from the known missing ones", () => {
+it("gives every encounter chunk a designed escape point", () => {
   const missing = [
     ...new Set(
       ALL_CHUNKS.filter(
@@ -299,7 +215,7 @@ it("gives every encounter chunk a designed escape point, apart from the known mi
       ).map(([id]) => id),
     ),
   ].sort();
-  expect(missing).toEqual([...ESCAPES_MISSING].sort());
+  expect(missing).toEqual([]);
 });
 
 describe("escape points", () => {

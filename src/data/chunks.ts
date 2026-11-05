@@ -1801,6 +1801,14 @@ function fourScreenChunk(
     ...chunk,
     backdrops: (chunk.backdrops ?? []).map(point),
     entry: { row: (chunk.entry.row + offset) as ChunkPlan["entry"]["row"] },
+    ...(chunk.escapes && {
+      escapes: chunk.escapes.map((escape) => ({
+        ...escape,
+        area: point(escape.area),
+        from: point(escape.from),
+        to: point(escape.to),
+      })),
+    }),
     exit: { row: (chunk.exit.row + offset) as ChunkPlan["exit"]["row"] },
     ...(chunk.noCross && {
       noCross: chunk.noCross.map(({ from, to }) => ({ from: point(from), to: point(to) })),
