@@ -5,6 +5,7 @@ import manifestJson from "../../public/art/manifest.json";
 import { type ArtManifest, BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { artKind, lookTiles } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { resolveNames, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { zonePlanFor } from "../rules/zonePlans";
@@ -204,6 +205,7 @@ const turnsBackWithin = (seconds: number, plan: ZonePlan) => {
   let zone = startZone(BIRD, layout, 1);
   for (let step = 0; step < Math.round(seconds / STEP_SECONDS) && !zone.turnedBack; step++) {
     zone = stepZone(
+      SKILL_PROFILES,
       BIRD,
       layout,
       STEP_SECONDS,

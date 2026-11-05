@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { namedStreams } from "../ai/randomStreams";
 import { BIRD_FRAME } from "../assets";
 import { EDGE, STEP_SECONDS } from "../core";
+import { SKILL_PROFILES } from "../progress";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
 import type { BehaviourWorld } from "../rules/behaviourReach";
@@ -69,16 +70,31 @@ describe.each(cases)("ordinary climb $id", ({ col, floor, id, theme }) => {
       },
     };
     const start = () =>
-      stepZone(ordinary, layout, STEP_SECONDS, idle, startZone(ordinary, layout, 1));
+      stepZone(
+        SKILL_PROFILES,
+        ordinary,
+        layout,
+        STEP_SECONDS,
+        idle,
+        startZone(ordinary, layout, 1),
+      );
     let walking = start();
     for (let tick = 0; tick < 120; tick++) {
-      walking = stepZone(ordinary, layout, STEP_SECONDS, { ...idle, move: 1 }, walking);
+      walking = stepZone(
+        SKILL_PROFILES,
+        ordinary,
+        layout,
+        STEP_SECONDS,
+        { ...idle, move: 1 },
+        walking,
+      );
     }
     expect(walking.death).toBeUndefined();
     expect(walking.bird.x + ordinary.width).toBeLessThanOrEqual(col * TILE + 1e-6);
     let zone = start();
     for (let tick = 0; tick < 360; tick++) {
       zone = stepZone(
+        SKILL_PROFILES,
         ordinary,
         layout,
         STEP_SECONDS,
@@ -343,7 +359,14 @@ it.each(connectedRoutes)(
           }
         }
       }
-      zone = stepZone(ordinary, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
+      zone = stepZone(
+        SKILL_PROFILES,
+        ordinary,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld, move, useHeld: false },
+        zone,
+      );
       expect(zone.bird.airJumpUsed).toBe(false);
       expect(zone.bird.dash).toBeUndefined();
     }
@@ -428,6 +451,7 @@ it.each(
       held = 44;
     }
     zone = stepZone(
+      SKILL_PROFILES,
       ordinary,
       layout,
       STEP_SECONDS,
@@ -629,7 +653,7 @@ it("transfer gate completes both ferry tracks and the perpendicular gate cycle",
   const ranges = indices.map(() => ({ max: -Infinity, min: Infinity, states: new Set<string>() }));
   let zone = startZone(ordinary, layout, 1);
   for (let tick = 0; tick < 960; tick++) {
-    zone = stepZone(ordinary, layout, STEP_SECONDS, idle, zone);
+    zone = stepZone(SKILL_PROFILES, ordinary, layout, STEP_SECONDS, idle, zone);
     expect(zone.death).toBeUndefined();
     indices.forEach((index, cursor) => {
       const coordinate = index === gate ? zone.objects[index]!.y : zone.objects[index]!.x;
@@ -740,7 +764,14 @@ it("ordinary transfer gate route boards, observes, crosses the gate and rides th
             ? tick - boardSecond < 8
             : false;
     const previous = zone.bird.x;
-    zone = stepZone(ordinary, layout, STEP_SECONDS, { ...idle, jumpHeld, move }, zone);
+    zone = stepZone(
+      SKILL_PROFILES,
+      ordinary,
+      layout,
+      STEP_SECONDS,
+      { ...idle, jumpHeld, move },
+      zone,
+    );
     expect(zone.death, phase).toBeUndefined();
     on.forEach((standing, index) => {
       if (standing) {
@@ -790,6 +821,7 @@ it("transfer gate missed near boarding recovers on a ledge and reboards normally
           ? 1
           : -1;
     zone = stepZone(
+      SKILL_PROFILES,
       ordinary,
       layout,
       STEP_SECONDS,

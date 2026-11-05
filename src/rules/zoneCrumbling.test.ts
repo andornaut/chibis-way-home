@@ -4,6 +4,7 @@ import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { advanceBehaviour } from "./behaviour";
 import { traversalContext } from "./behaviourTraversal";
 import { crumblingDefinitions } from "./crumbling";
@@ -112,13 +113,13 @@ const phase = (zone: ZoneState) => zone.crumbling!.supports[0]!.phase;
 it("a boss standing on a crumbling support does not start its warning", () => {
   const f = fixture({ height: 24, width: 48, x: 412, y: 176 });
   let zone = startZone(BIRD, f.layout, 1);
-  zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, zone);
+  zone = stepZone(SKILL_PROFILES, BIRD, f.layout, STEP_SECONDS, idle, zone);
   expect(zone.behaviours[1]!.traversal!.physical).toMatchObject({
     grounded: true,
     supportId: f.ledge,
   });
   expect(zone.crumbling!.pendingContacts).toEqual([]);
-  zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, zone);
+  zone = stepZone(SKILL_PROFILES, BIRD, f.layout, STEP_SECONDS, idle, zone);
   expect(phase(zone)).toEqual({ kind: "intact" });
 });
 
@@ -135,7 +136,7 @@ it("boss predictions keep current presence only until each support's earliest ch
       supports: [{ phase: { kind: "warning", removeAtSeconds: known }, supportId: f.ledge }],
     },
   };
-  const zone = stepZone(BIRD, f.layout, STEP_SECONDS, idle, warned);
+  const zone = stepZone(SKILL_PROFILES, BIRD, f.layout, STEP_SECONDS, idle, warned);
   const world = vi.mocked(advanceBehaviour).mock.calls.find(([, owner]) => owner === f.actor)![0]
     .world;
   const frame = world.traversalFrame!;
@@ -165,11 +166,11 @@ it("an absent support waits for every physical body to leave its volume before r
     },
     seconds: 0.5,
   };
-  const occupied = stepZone(BIRD, f.layout, STEP_SECONDS, idle, overdue);
+  const occupied = stepZone(SKILL_PROFILES, BIRD, f.layout, STEP_SECONDS, idle, overdue);
   expect(phase(occupied)).toEqual({ kind: "absent", restoreAfterSeconds: 0.5 });
   // The absent ledge does not catch him; he falls through its volume.
   expect(occupied.bird.y).toBeGreaterThan(overdue.bird.y);
-  const clear = stepZone(BIRD, f.layout, STEP_SECONDS, idle, {
+  const clear = stepZone(SKILL_PROFILES, BIRD, f.layout, STEP_SECONDS, idle, {
     ...occupied,
     bird: { ...occupied.bird, y: 260 },
   });

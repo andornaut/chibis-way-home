@@ -4,6 +4,7 @@ import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import type { Archetype, BackgroundSection, ChunkPlan, ThemePlan, ZoneRecipe } from "../data/types";
 import { chunkBackdropSpan } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { assembleZone, type ChunkLibrary } from "./assemble";
 import { withBackgroundSections } from "./backgroundSections";
 import { objectLayout, zoneLayout } from "./tiles";
@@ -396,8 +397,22 @@ it.each(["linear", "hop"] as const)(
     left = { ...left, bird: { ...left.bird, x: 200 } };
     right = { ...right, bird: { ...right.bird, x: 200 } };
     for (let tick = 0; tick < 3; tick++) {
-      left = stepZone(BIRD, layout, 1 / 120, { jumpHeld: false, move: -1, useHeld: false }, left);
-      right = stepZone(BIRD, layout, 1 / 120, { jumpHeld: false, move: 1, useHeld: false }, right);
+      left = stepZone(
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        1 / 120,
+        { jumpHeld: false, move: -1, useHeld: false },
+        left,
+      );
+      right = stepZone(
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        1 / 120,
+        { jumpHeld: false, move: 1, useHeld: false },
+        right,
+      );
     }
     expect(left.seconds).toBe(right.seconds);
     expect(left.bird.x).not.toBe(right.bird.x);
@@ -440,6 +455,7 @@ it("activates finite fauna only on actual view, freezes under room covers and re
   );
   const initial = startZone(BIRD, layout, 1);
   const unseen = stepZone(
+    SKILL_PROFILES,
     BIRD,
     layout,
     1 / 120,
@@ -449,6 +465,7 @@ it("activates finite fauna only on actual view, freezes under room covers and re
   expect(unseen.sceneryPlayback![index]).toEqual({ elapsedSeconds: 0, status: "waiting" });
   expect(unseen.objects[index]).toEqual(initial.objects[index]);
   const visible = stepZone(
+    SKILL_PROFILES,
     BIRD,
     layout,
     1 / 120,
@@ -458,9 +475,16 @@ it("activates finite fauna only on actual view, freezes under room covers and re
   expect(visible.sceneryPlayback![index]!.status).toBe("active");
   expect(visible.objects[index]).not.toEqual(initial.objects[index]);
   const covered = { ...visible, door: 0 };
-  expect(stepZone(BIRD, layout, 1, { jumpHeld: false, move: 0, useHeld: false }, covered)).toBe(
-    covered,
-  );
+  expect(
+    stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      1,
+      { jumpHeld: false, move: 0, useHeld: false },
+      covered,
+    ),
+  ).toBe(covered);
   expect(enterArea(BIRD, layout, layout.start, visible).sceneryPlayback).toBeUndefined();
   const failed = {
     ...visible,

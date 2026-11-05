@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { SKILLS } from "../data/skills";
-import { skillTuning } from "../progress";
+import { SKILL_PROFILES, skillTuning } from "../progress";
 import { startBird, stepBird } from "./bird";
 import { ordinaryTransitControl } from "./forcedTransitProfile";
 
@@ -26,11 +26,11 @@ it("admits the actual Speedy velocity while ordinary input changes back to the b
     bird = stepBird(speedy, [ground], [], STEP_SECONDS, right, bird);
   }
   expect(bird.vx).toBe(speedy.walkSpeed);
-  expect(ordinaryTransitControl(speedy, bird)).toBe(true);
-  expect(ordinaryTransitControl(base, bird)).toBe(true);
+  expect(ordinaryTransitControl(SKILL_PROFILES, speedy, bird)).toBe(true);
+  expect(ordinaryTransitControl(SKILL_PROFILES, base, bird)).toBe(true);
   bird = stepBird(base, [ground], [], STEP_SECONDS, right, bird);
   expect(bird.vx).toBeGreaterThan(base.walkSpeed);
-  expect(ordinaryTransitControl(base, bird)).toBe(true);
+  expect(ordinaryTransitControl(SKILL_PROFILES, base, bird)).toBe(true);
 });
 
 it("rejects tuning outside the certified ordinary profile domain even at rest", () => {
@@ -43,7 +43,11 @@ it("rejects tuning outside the certified ordinary profile domain even at rest", 
     idle,
     startBird(base, { x: 0, y: ground.y }),
   );
-  expect(ordinaryTransitControl(base, bird)).toBe(true);
-  expect(ordinaryTransitControl({ ...base, walkSpeed: base.walkSpeed + 1 }, bird)).toBe(false);
-  expect(ordinaryTransitControl({ ...base, gravity: base.gravity + 1 }, bird)).toBe(false);
+  expect(ordinaryTransitControl(SKILL_PROFILES, base, bird)).toBe(true);
+  expect(
+    ordinaryTransitControl(SKILL_PROFILES, { ...base, walkSpeed: base.walkSpeed + 1 }, bird),
+  ).toBe(false);
+  expect(ordinaryTransitControl(SKILL_PROFILES, { ...base, gravity: base.gravity + 1 }, bird)).toBe(
+    false,
+  );
 });

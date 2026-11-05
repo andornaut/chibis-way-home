@@ -16,6 +16,7 @@ import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect, ZoneLayout } from "../data/types";
 import { behaviourPose } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { withAnticipationContact } from "../testing/behaviours";
 import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle";
@@ -366,6 +367,7 @@ it("clears the active watchdog and verified route on a real death retry", () => 
   };
   const initial = startZone(BIRD, layout, 1);
   const dead = stepZone(
+    SKILL_PROFILES,
     BIRD,
     layout,
     dt,

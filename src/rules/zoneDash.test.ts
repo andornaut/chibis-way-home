@@ -4,6 +4,7 @@ import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BirdTuning, ObjectLayout, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { leaveRoom, retryZone, startZone, stepZone } from "./zone";
 
 const tuning: BirdTuning = BIRD;
@@ -67,13 +68,13 @@ describe("fresh Use arbitration", () => {
   it("keeps drawn-frame door priority over dash and freezes its cooldown under a room cover", () => {
     const plan = layout(area([object("use", 114)]));
     let zone = startZone(tuning, plan, 1);
-    zone = stepZone(tuning, plan, STEP_SECONDS, idle, zone);
-    zone = stepZone(tuning, plan, STEP_SECONDS, use, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, idle, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, use, zone);
     expect(zone.door).toBe(0);
     expect(zone.bird.dash!.remainingSeconds).toBe(0);
     expect(zone.bird.x).toBe(88);
-    expect(stepZone(tuning, plan, 1, use, zone)).toBe(zone);
-    zone = stepZone(tuning, plan, STEP_SECONDS, use, leaveRoom(zone));
+    expect(stepZone(SKILL_PROFILES, tuning, plan, 1, use, zone)).toBe(zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, use, leaveRoom(zone));
     expect(zone.door).toBeUndefined();
     expect(zone.bird.dash!.remainingSeconds).toBe(0);
   });
@@ -81,16 +82,16 @@ describe("fresh Use arbitration", () => {
   it("ignores inherited and held presses, then requires release before a second dash", () => {
     const plan = layout();
     let zone = startZone(tuning, plan, 1);
-    zone = stepZone(tuning, plan, STEP_SECONDS, use, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, use, zone);
     expect(zone.bird.dash!.remainingSeconds).toBe(0);
-    zone = stepZone(tuning, plan, STEP_SECONDS, idle, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, idle, zone);
     const start = zone.bird.x;
     for (let tick = 0; tick < 120; tick++) {
-      zone = stepZone(tuning, plan, STEP_SECONDS, use, zone);
+      zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, use, zone);
     }
     expect(zone.bird.x - start).toBeCloseTo(tuning.dash!.speed * tuning.dash!.durationSeconds);
-    zone = stepZone(tuning, plan, STEP_SECONDS, idle, zone);
-    zone = stepZone(tuning, plan, STEP_SECONDS, use, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, idle, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, STEP_SECONDS, use, zone);
     expect(zone.bird.dash!.remainingSeconds).toBeGreaterThan(0);
   });
 
@@ -101,8 +102,15 @@ describe("fresh Use arbitration", () => {
       hitbox: { height: 3, width: 3, x: 0, y: 45 },
     };
     const plan = layout(area([red]));
-    let zone = stepZone(tuning, plan, STEP_SECONDS, idle, startZone(tuning, plan, 1));
-    zone = stepZone(tuning, plan, tuning.dash!.durationSeconds, use, zone);
+    let zone = stepZone(
+      SKILL_PROFILES,
+      tuning,
+      plan,
+      STEP_SECONDS,
+      idle,
+      startZone(tuning, plan, 1),
+    );
+    zone = stepZone(SKILL_PROFILES, tuning, plan, tuning.dash!.durationSeconds, use, zone);
     expect(zone.death).toMatchObject({
       contact: { contactCue: "red-hazard", index: 0, kind: "object" },
       reason: "hazard",
@@ -112,9 +120,16 @@ describe("fresh Use arbitration", () => {
   it("preserves active dash state across linked areas and resets it on retry", () => {
     const main = { ...area(), exitX: 160, walkLinks: { right: { area: "next", entry: "start" } } };
     const plan = { ...layout(main), areas: { main, next: area() } };
-    let zone = stepZone(tuning, plan, STEP_SECONDS, idle, startZone(tuning, plan, 1));
+    let zone = stepZone(
+      SKILL_PROFILES,
+      tuning,
+      plan,
+      STEP_SECONDS,
+      idle,
+      startZone(tuning, plan, 1),
+    );
     const elapsed = tuning.dash!.durationSeconds / 2;
-    zone = stepZone(tuning, plan, elapsed, use, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, plan, elapsed, use, zone);
     expect(zone.area).toBe("next");
     expect(zone.bird.dash!.remainingSeconds).toBeCloseTo(tuning.dash!.durationSeconds - elapsed);
     expect(zone.bird.dash!.cooldownRemainingSeconds).toBeCloseTo(
@@ -145,7 +160,7 @@ describe("fresh Use arbitration", () => {
       bird: { ...zone.bird, airJumpUsed: true, grounded: false, y: 100 },
       useHeld: false,
     };
-    zone = stepZone(profile, plan, profile.dash!.durationSeconds / 2, use, zone);
+    zone = stepZone(SKILL_PROFILES, profile, plan, profile.dash!.durationSeconds / 2, use, zone);
     expect(zone.area).toBe("next");
     expect(zone.bird.airJumpUsed).toBe(true);
     const retry = retryZone(profile, plan, {

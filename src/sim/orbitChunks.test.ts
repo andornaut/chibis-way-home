@@ -8,6 +8,7 @@ import { CHARACTERS } from "../data/characters";
 import { createOrbitHazardChunks } from "../data/orbitHazardChunks";
 import { TILE, ZONE_ROWS } from "../data/screen";
 import type { ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { contactBox } from "../rules/behaviour";
 import { birdBox } from "../rules/bird";
 import { orbitPosition } from "../rules/orbit";
@@ -59,7 +60,7 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
       farPause = 0;
     const far = host.origin[axis] + (axis === "y" ? -host.motion.distance : host.motion.distance);
     for (let tick = 0; tick <= ticks; tick++) {
-      zone = stepZone(BIRD, layout, STEP_SECONDS, idle, zone);
+      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, idle, zone);
       expect(zone.death).toBeUndefined();
       const at = zone.objects[0]!,
         value = at[axis];
@@ -160,6 +161,7 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
       }
       const before = zone.bird;
       zone = stepZone(
+        SKILL_PROFILES,
         BIRD,
         layout,
         STEP_SECONDS,
@@ -211,7 +213,7 @@ it("attributes a four-pixel orbital arc contact that the endpoint chord misses",
   };
   const initial = startZone(BIRD, layout, 1),
     child = layout.areas.main!.objects[1]!;
-  const caught = stepZone(BIRD, layout, 0.5, idle, initial);
+  const caught = stepZone(SKILL_PROFILES, BIRD, layout, 0.5, idle, initial);
   expect(
     sweptContact(
       birdBox(BIRD, initial.bird),

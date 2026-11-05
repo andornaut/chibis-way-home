@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 
 import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
+import { SKILL_PROFILES } from "../progress";
 import { zonePlanOf } from "../rules/assemble";
 import { effectiveCollision, effectiveHazardPhase } from "../rules/effectiveCollision";
 import { zoneLayout } from "../rules/tiles";
@@ -111,7 +112,14 @@ it("warned vent terrace approach observes from a refuge, crosses an inactive win
         : stage === "cross"
           ? rightGoal
           : exitGoal;
-    zone = stepZone(ordinary, f.layout, STEP_SECONDS, input(f, zone, goal, jump, tick), zone);
+    zone = stepZone(
+      SKILL_PROFILES,
+      ordinary,
+      f.layout,
+      STEP_SECONDS,
+      input(f, zone, goal, jump, tick),
+      zone,
+    );
     expect(zone.death, stage).toBeUndefined();
     if (stage === "cross" && overlapsVent(f, zone)) {
       expect(phaseOf(f, zone)).not.toBe("active");
@@ -136,7 +144,14 @@ it("warned vent kills a crossing that meets its active phase and retries from th
     sheltered ||= onDeck(f, zone, f.refuges.left);
     // Stand inside the vent from the warning onward instead of returning to refuge.
     const goal = sheltered && phaseOf(f, zone) !== "inactive" ? f.rect.x : f.refuges.left.min;
-    zone = stepZone(ordinary, f.layout, STEP_SECONDS, input(f, zone, goal, jump, tick), zone);
+    zone = stepZone(
+      SKILL_PROFILES,
+      ordinary,
+      f.layout,
+      STEP_SECONDS,
+      input(f, zone, goal, jump, tick),
+      zone,
+    );
     if (zone.death === undefined) {
       expect(phaseOf(f, zone) === "active" && overlapsVent(f, zone)).toBe(false);
     }
@@ -176,7 +191,14 @@ it("warned vent warning leaves time to retreat to the near refuge and cross the 
     }
     const goal =
       stage === "commit" ? f.rect.x + f.rect.width / 2 : stage === "cross" ? rightGoal : leftGoal;
-    zone = stepZone(ordinary, f.layout, STEP_SECONDS, input(f, zone, goal, jump, tick), zone);
+    zone = stepZone(
+      SKILL_PROFILES,
+      ordinary,
+      f.layout,
+      STEP_SECONDS,
+      input(f, zone, goal, jump, tick),
+      zone,
+    );
     expect(zone.death, stage).toBeUndefined();
     enteredVent ||= stage === "commit" && overlapsVent(f, zone);
     if (stage === "cross" && onDeck(f, zone, f.refuges.right)) {

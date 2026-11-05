@@ -1,6 +1,7 @@
 import { STEP_SECONDS } from "../core";
 import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
 import { proximityDialogue } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { birdBox } from "../rules/bird";
 import { stageProgress } from "../rules/stageProgress";
 import {
@@ -467,7 +468,7 @@ function executeStage(
     lastInput = input;
     lastMove = input.move;
     const before = zone;
-    zone = stepZone(tuning, layout, STEP_SECONDS, input, zone);
+    zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
     steps++;
     onStep?.(steps);
     attemptTick++;

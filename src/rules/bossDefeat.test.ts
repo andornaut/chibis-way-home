@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { STEP_SECONDS } from "../core";
 import { BOSS_REMOVAL_SECONDS } from "../data/behaviours";
 import type { ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { chunksLayout, ORDINARY, withInstances } from "../testing/encounterLayouts";
 import { startBird } from "./bird";
 import {
@@ -46,7 +47,7 @@ function run(f: Fixture, start: ZoneState, ticks: number) {
   const barks: ZoneState["barks"][number][] = [];
   let zone = start;
   for (let tick = 0; tick < ticks && !zone.death; tick++) {
-    zone = stepZone(ORDINARY, f.layout, STEP_SECONDS, STILL, zone);
+    zone = stepZone(SKILL_PROFILES, ORDINARY, f.layout, STEP_SECONDS, STILL, zone);
     barks.push(...zone.barks);
   }
   return { barks, zone };

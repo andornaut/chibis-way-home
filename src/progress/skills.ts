@@ -1,3 +1,5 @@
+import { BIRD } from "../data/bird";
+import { SKILLS } from "../data/skills";
 import type { BirdTuning, SkillId, SkillTuning } from "../data/types";
 
 export const SKILL_IDS: readonly SkillId[] = ["dash", "doubleJump", "speedy"];
@@ -45,3 +47,8 @@ export function skillTuning(
     walkSpeed: bird.walkSpeed * (selected === "speedy" ? tuning.speedyWalkMultiplier : 1),
   };
 }
+
+// The bird tuning under each skill selection, no skill first, then SKILL_IDS order.
+export const SKILL_PROFILES: readonly BirdTuning[] = [null, ...SKILL_IDS].map((selected) =>
+  skillTuning(SKILLS, selected, BIRD),
+);

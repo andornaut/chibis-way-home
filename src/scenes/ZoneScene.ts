@@ -109,7 +109,14 @@ import {
   stepPose,
   terrainTiles,
 } from "../presentation";
-import { eligibleSkills, nodeOf, skillTuning, stageExit, wholeRunSummary } from "../progress";
+import {
+  eligibleSkills,
+  nodeOf,
+  SKILL_PROFILES,
+  skillTuning,
+  stageExit,
+  wholeRunSummary,
+} from "../progress";
 import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import type { BehaviourState } from "../rules/behaviour";
 import { removalProgress } from "../rules/bossDefeat";
@@ -829,6 +836,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.zone = developmentStep(
         invulnerabilityEnabled(),
         stepZone(
+          SKILL_PROFILES,
           this.movementTuning(),
           this.layout,
           STEP_SECONDS,

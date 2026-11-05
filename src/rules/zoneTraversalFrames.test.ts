@@ -5,6 +5,7 @@ import { STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, BehaviourPlan, ObjectLayout, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { advanceBehaviour } from "./behaviour";
 import { startZone, stepZone } from "./zone";
 
@@ -99,6 +100,7 @@ it("supplies actual traversal context to flying pursuit for idle recovery", () =
     start: { area: "main", entry: "start" },
   };
   stepZone(
+    SKILL_PROFILES,
     BIRD,
     layout,
     STEP_SECONDS,
@@ -200,7 +202,14 @@ it.each([
       start: { area: "main", entry: "start" },
     };
     const zone = { ...startZone(BIRD, layout, 1), seconds: 2 };
-    stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld: false, move: 0, useHeld: false }, zone);
+    stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: false, move: 0, useHeld: false },
+      zone,
+    );
     const calls = vi.mocked(advanceBehaviour).mock.calls;
     expect(calls.filter(([, owner]) => owner === mover)).toHaveLength(1);
     const actorWorld = calls.find(([, owner]) => owner === actor)![0].world;
@@ -248,8 +257,8 @@ it.each([
     }
     const predicted = frame.sample!(zone.seconds + STEP_SECONDS, STEP_SECONDS)![0]!;
     const input = { jumpHeld: false, move: 0, useHeld: false } as const;
-    const stepped = stepZone(BIRD, layout, STEP_SECONDS, input, zone);
-    const following = stepZone(BIRD, layout, STEP_SECONDS, input, stepped);
+    const stepped = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+    const following = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, stepped);
     const moverIndex = area.objects.indexOf(mover);
     expect(predicted.owner).toBe(mover);
     expect(predicted.before.x).toBeCloseTo(stepped.objects[moverIndex]!.x);
@@ -261,7 +270,7 @@ it.each([
       const start = zone.seconds + tick * STEP_SECONDS;
       const sample = frame.sample!(start, STEP_SECONDS)!;
       expect(frame.sample!(start, STEP_SECONDS)).toBe(sample);
-      const next = stepZone(BIRD, layout, STEP_SECONDS, input, actual);
+      const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, actual);
       expect(sample[0]!.before.x).toBeCloseTo(actual.objects[moverIndex]!.x);
       expect(sample[0]!.after.x).toBeCloseTo(next.objects[moverIndex]!.x);
       actual = next;

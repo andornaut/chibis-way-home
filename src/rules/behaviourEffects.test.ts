@@ -7,6 +7,7 @@ import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
+import { SKILL_PROFILES } from "../progress";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { zonePlanOf } from "./assemble";
 import { startBird } from "./bird";
@@ -46,7 +47,7 @@ function run(id: string, theme: string, offset: number) {
   const recorder = traceRecorder({ retain: false });
   let effects = 0;
   for (let tick = 0; tick < 900 && !zone.death; tick++) {
-    zone = stepZone(BIRD, layout, STEP_SECONDS, STILL, zone);
+    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, zone);
     effects += zone.pulses.length + zone.transients.length;
     recorder.record(
       canonicalTrace(

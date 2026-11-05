@@ -6,6 +6,7 @@ import { BIRD } from "../data/bird";
 import { createHazardChunks } from "../data/hazardChunks";
 import { TILE } from "../data/screen";
 import type { TilePoint } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { zonePlanOf } from "../rules/assemble";
 import { chunkProblems } from "../rules/chunk";
 import { zoneLayout } from "../rules/tiles";
@@ -42,7 +43,7 @@ function run(
     },
   };
   for (let tick = 0; tick < 600 && !zone.death && !zone.turnedBack && !finished(zone); tick++) {
-    zone = stepZone(ordinary, layout, STEP_SECONDS, control(zone, tick), zone);
+    zone = stepZone(SKILL_PROFILES, ordinary, layout, STEP_SECONDS, control(zone, tick), zone);
   }
   return { layout, zone };
 }

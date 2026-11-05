@@ -4,6 +4,7 @@ import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit";
 import { TILE } from "../data/screen";
+import { SKILL_PROFILES } from "../progress";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { type ChunkLibrary, themesOf, zonePlanOf } from "./assemble";
 import { startBird } from "./bird";
@@ -50,7 +51,7 @@ it("protects a lower-dock boarding through the lift's forced window until safe g
   state = { ...state, bird: startBird(BIRD, { x: lower.x + 24, y: lower.y }) };
   const until = (input: ZoneInput, done: (state: ZoneState) => boolean, check = () => {}) => {
     for (let tick = 0; tick < 2000 && !done(state); tick++) {
-      state = stepZone(BIRD, layout, 1 / 120, input, state);
+      state = stepZone(SKILL_PROFILES, BIRD, layout, 1 / 120, input, state);
       check();
     }
     expect(done(state)).toBe(true);
@@ -91,7 +92,7 @@ it("protects a lower-dock boarding through the lift's forced window until safe g
   );
   expect(state.bird.y + BIRD.height).toBe(lower.y);
   // Observation reads the state the step starts from.
-  state = stepZone(BIRD, layout, 1 / 120, STILL, state);
+  state = stepZone(SKILL_PROFILES, BIRD, layout, 1 / 120, STILL, state);
   expect(state.forcedTransit).toEqual({
     attackWindow: "allowed",
     boardingAdmissions: [{ group, id: "lower" }],

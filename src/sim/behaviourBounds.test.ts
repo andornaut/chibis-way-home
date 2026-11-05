@@ -9,6 +9,7 @@ import { CHARACTERS } from "../data/characters";
 import { createOrbitHazardChunks } from "../data/orbitHazardChunks";
 import { TILE } from "../data/screen";
 import type { BehaviourMotion, BehaviourPlan } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { startBehaviour, stepBehaviour } from "../rules/behaviour";
 import { startBird } from "../rules/bird";
 import { orbitBounds } from "../rules/orbit";
@@ -260,6 +261,7 @@ describe("orbital motion envelopes", () => {
         expect(at.y).toBeGreaterThanOrEqual(bounds.y - 1e-8);
         expect(at.y + child.height).toBeLessThanOrEqual(bounds.y + bounds.height + 1e-8);
         zone = stepZone(
+          SKILL_PROFILES,
           BIRD,
           layout,
           STEP_SECONDS,

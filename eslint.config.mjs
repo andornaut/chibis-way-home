@@ -58,16 +58,7 @@ const CONTEXTS = {
   presentation: ["assets", "camera", "core", "data", "progress", "rules", "stage"],
   progress: ["data"],
   pwa: ["assets", "loading", "ui"],
-  rules: [
-    "ai",
-    "camera",
-    "core",
-    "data",
-    // CLEANUP (added 2026-11-04): remove when src/rules/forcedTransitProfile.ts stops importing
-    // ../progress.
-    "progress/index",
-    "stage",
-  ],
+  rules: ["ai", "camera", "core", "data", "stage"],
   scenes: [
     "assets",
     "core",
@@ -82,7 +73,7 @@ const CONTEXTS = {
     "stage",
     "ui",
   ],
-  sim: ["ai", "assets", "core", "data", "presentation", "rules", "stage"],
+  sim: ["ai", "assets", "core", "data", "presentation", "progress", "rules", "stage"],
   stage: ["data"],
   tools: ["assets", "data", "headers", "homePage", "loading", "pwa"],
   tuningPage: ["data", "gallery"],

@@ -8,6 +8,7 @@ import ferretSheet from "../../public/art/sprites/ferret-antagonist.json";
 import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { artOffset, chunkBackdropSpan, chunkParallax } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { zoneLayout } from "../rules/tiles";
@@ -52,7 +53,7 @@ function stepUntil(
     };
   }
   for (let tick = 0; tick < 600 && !zone.death && !zone.turnedBack && !done(zone); tick++) {
-    zone = stepZone(BIRD, layout, STEP_SECONDS, control(zone, tick), zone);
+    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, control(zone, tick), zone);
   }
   return zone;
 }

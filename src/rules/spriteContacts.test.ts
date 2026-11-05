@@ -13,6 +13,7 @@ import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
 import type { SpriteSilhouettes, ZoneLayout } from "../data/types";
 import { behaviourPose } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { contactBox, startBehaviour, stepBehaviour } from "./behaviour";
 import { startBird } from "./bird";
 import { objectLayout } from "./tiles";
@@ -239,6 +240,7 @@ it.each(["walk", "rush"] as const)(
           },
         };
         const next = stepZone(
+          SKILL_PROFILES,
           BIRD,
           layout,
           1 / 120,

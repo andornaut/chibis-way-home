@@ -500,6 +500,7 @@ export function retryZone(tuning: BirdTuning, layout: ZoneLayout, zone: ZoneStat
 
 // Observes only this tick's present supports: terrain and platforms that crumbling has not removed.
 function transitObservation(
+  skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   area: AreaLayout,
   kinds: AreaObjects,
@@ -552,7 +553,13 @@ function transitObservation(
     support &&
     forcedTransitTakeoffBody(
       { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: zone.seconds },
-      { bird: zone.bird, terrainSolids: terrain, tuning, unknownPush: zone.pulses.length > 0 },
+      {
+        bird: zone.bird,
+        skillProfiles,
+        terrainSolids: terrain,
+        tuning,
+        unknownPush: zone.pulses.length > 0,
+      },
       {
         ...support,
         owner: support.object,
@@ -565,7 +572,7 @@ function transitObservation(
     {
       bankAdmissions,
       grounded,
-      ordinaryControl: ordinaryTransitControl(tuning, zone.bird),
+      ordinaryControl: ordinaryTransitControl(skillProfiles, tuning, zone.bird),
       riderBodyOrigin: { x: zone.bird.x, y: zone.bird.y },
       safeGround,
       ...(support && {
@@ -628,6 +635,7 @@ interface ZoneBodyStep {
 
 // Requires a live zone: no death, door, clear or turn back.
 export function stepZoneBodies(
+  skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   layout: ZoneLayout,
   seconds: number,
@@ -681,6 +689,7 @@ export function stepZoneBodies(
   const terrain = presentTerrain(crumbling, area.solids);
   const presentPlatforms = kinds.platforms.filter(present);
   const forcedTransit = transitObservation(
+    skillProfiles,
     tuning,
     area,
     kinds,
@@ -1273,7 +1282,13 @@ export function stepZoneBodies(
       ? forecastForcedTransit(
           { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: time },
           traversalGeometry(area.objects[carrier]!).traversalFrame?.sample,
-          { bird, terrainSolids: terrain, tuning, unknownPush: remainingPulses.length > 0 },
+          {
+            bird,
+            skillProfiles,
+            terrainSolids: terrain,
+            tuning,
+            unknownPush: remainingPulses.length > 0,
+          },
           {
             index: carrier,
             owner: area.objects[carrier]!,
@@ -1317,7 +1332,10 @@ export function stepZoneBodies(
 // reaching back into its first column ends it uncleared (turnedBack).
 // Use with his drawn frame over a door sets `door` (doorAt), and the zone holds still until
 // leaveRoom.
+// skillProfiles holds the bird tuning under each skill selection (SKILL_PROFILES in progress);
+// only a tuning among them admits ordinary forced-transit control.
 export function stepZone(
+  skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   layout: ZoneLayout,
   seconds: number,
@@ -1329,7 +1347,7 @@ export function stepZone(
   }
   const area = areaOf(layout, zone.area);
   const kinds = areaObjects(area);
-  const body = stepZoneBodies(tuning, layout, seconds, input, zone);
+  const body = stepZoneBodies(skillProfiles, tuning, layout, seconds, input, zone);
   const { geometry } = body;
   const barks: ZoneBark[] = [];
   const seen = new Set(zone.spotted[zone.area] ?? []);

@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { ZONE_MAP } from "../data/map";
-import { STATS_VERSION } from "../progress";
+import { SKILL_PROFILES, STATS_VERSION } from "../progress";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 
@@ -21,7 +21,7 @@ const LAYOUT = zoneLayout(12, BIRD_FRAME, { archetypes: {}, characters: {} }, {}
 });
 const INPUT = { jumpHeld: false, move: 0 as const, useHeld: false };
 const INITIAL = startZone(BIRD, LAYOUT, 1);
-const ACTIVE = stepZone(BIRD, LAYOUT, 0.1, INPUT, INITIAL);
+const ACTIVE = stepZone(SKILL_PROFILES, BIRD, LAYOUT, 0.1, INPUT, INITIAL);
 
 afterEach(() => {
   vi.unstubAllGlobals();

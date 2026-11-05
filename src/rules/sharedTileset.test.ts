@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import type { Archetype, Character, Rect, ZonePlan } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import type { Tileset } from "../stage";
 import { type Catalogue, zoneLayout } from "./tiles";
 import { startZone, stepZone } from "./zone";
@@ -99,7 +100,14 @@ describe.each(EDGES)("shared $art", ({ art, box, cols, rows }) => {
             ? { x: x - BIRD.width + overlap, y: y + hitbox.height - 1 }
             : { x: x + hitbox.width - overlap, y: y + hitbox.height - 1 };
     const state = { ...start, bird: { ...start.bird, ...at } };
-    const next = stepZone(BIRD, layout, 0, { jumpHeld: false, move: 0, useHeld: false }, state);
+    const next = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      0,
+      { jumpHeld: false, move: 0, useHeld: false },
+      state,
+    );
     expect(next.death !== undefined).toBe(touches);
     if (touches) {
       expect(next.bird).toEqual(state.bird);

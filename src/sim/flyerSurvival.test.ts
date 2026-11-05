@@ -12,7 +12,7 @@ vi.mock("../rules/zone", async (original) => {
   return {
     ...actual,
     stepZone: (...args: Parameters<typeof actual.stepZone>) => {
-      const [, layout, , , before] = args;
+      const [, , layout, , , before] = args;
       const after = actual.stepZone(...args);
       const area = (layout as ZoneLayout).areas[after.area]!;
       after.behaviours.forEach((state, index) => {

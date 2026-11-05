@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, SpriteContact, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { startBehaviour, stepBehaviour } from "./behaviour";
 import { startBird } from "./bird";
 import { objectLayout } from "./tiles";
@@ -214,6 +215,7 @@ it.each([
   };
   const initial = startZone(BIRD, layout, 1);
   const next = stepZone(
+    SKILL_PROFILES,
     BIRD,
     layout,
     1 / 120,

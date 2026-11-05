@@ -8,6 +8,7 @@ import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { zoneLayout } from "../rules/tiles";
 import { activateBehaviour, retryZone, startZone, stepZone, type ZoneState } from "../rules/zone";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bot";
@@ -52,7 +53,7 @@ function runEncounter(
   zone = start ? start(zone) : zone;
   for (let tick = 0; tick < ENCOUNTER_TICKS && !zone.cleared; tick++) {
     zone = zone.death ? activate(retryZone(ORDINARY, layout, zone)) : zone;
-    zone = stepZone(ORDINARY, layout, STEP_SECONDS, script(tick), zone);
+    zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, script(tick), zone);
   }
 }
 

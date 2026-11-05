@@ -63,7 +63,7 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
     } as engine.ZoneState;
     const step = vi
       .spyOn(engine, "stepZone")
-      .mockImplementation((_tuning, _layout, _seconds, _input, state) => ({
+      .mockImplementation((_skillProfiles, _tuning, _layout, _seconds, _input, state) => ({
         ...state,
         death: {
           position: { x: 0, y: 0 },
@@ -87,7 +87,7 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
     }) as unknown as { update(time: number): void };
     scene.update(STEP_MS * 2);
     expect(step).toHaveBeenCalledOnce();
-    const profile = step.mock.calls[0]![0];
+    const profile = step.mock.calls[0]![1];
     expect(profile.doubleJump).toBe(selected === "doubleJump");
     expect(profile.dash).toEqual(selected === "dash" ? BIRD.dash : undefined);
     expect(profile.walkSpeed).toBe(

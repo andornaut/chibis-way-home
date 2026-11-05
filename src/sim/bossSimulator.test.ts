@@ -7,6 +7,7 @@ import { STEP_SECONDS } from "../core";
 import { RACCOON_BEHAVIOUR } from "../data/behaviours";
 import { TILE } from "../data/screen";
 import type { BehaviourCondition, BehaviourPlan, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { layoutBehaviour } from "../rules/behaviour";
 import { retryZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
@@ -49,7 +50,7 @@ function zoneRun(scenario: BossScenario): BossTick[] {
       ORDINARY,
       scenario.place,
       tick + 1,
-      stepZone(ORDINARY, layout, STEP_SECONDS, controller(tick, zone), zone),
+      stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, controller(tick, zone), zone),
     );
     if (next !== zone) {
       ticks.push(bossSample(ORDINARY, layout, tick, next));

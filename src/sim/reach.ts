@@ -12,6 +12,7 @@ import type {
   ZoneLayout,
   ZonePlan,
 } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { tileRect, zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 
@@ -104,9 +105,10 @@ function gapCourse(tuning: BirdTuning, tile: number, tiles: number, press: numbe
   let last = startZone(tuning, layout, 1);
   while (
     last.death === undefined &&
-    (last.steps < SETTLE_STEPS || stepZone(tuning, layout, STEP_SECONDS, run, last).bird.grounded)
+    (last.steps < SETTLE_STEPS ||
+      stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, run, last).bird.grounded)
   ) {
-    last = stepZone(tuning, layout, STEP_SECONDS, runOn(last), last);
+    last = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, runOn(last), last);
   }
   return {
     input: (zone) => (zone.steps < last.steps + press ? runOn(zone) : { ...run, jumpHeld: true }),
@@ -160,7 +162,7 @@ function makesWith(
   const { input, layout, target: solid } = course(tuning, tile, reach, tiles, press);
   let zone = startZone(tuning, layout, 1);
   while (zone.steps < MAX_STEPS && zone.restarts === 0 && zone.death === undefined) {
-    zone = stepZone(tuning, layout, STEP_SECONDS, input(zone), zone);
+    zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input(zone), zone);
     const { bird } = zone;
     const onTop = Math.abs(bird.y + tuning.height - solid.y) < 1e-6;
     const over = bird.x + tuning.width > solid.x && bird.x < solid.x + solid.width;

@@ -5,6 +5,7 @@ import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { AreaLayout, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { startZone, stepZone } from "../rules/zone";
 import { walkRequiredRoutes } from "./zoneWalk";
 
@@ -46,6 +47,7 @@ function playedAreas(layout: ZoneLayout, direction: -1 | 1): string[] {
   const visited = new Set([zone.area]);
   for (let ticks = 0; ticks < 400 && !zone.cleared; ticks++) {
     zone = stepZone(
+      SKILL_PROFILES,
       tuning,
       layout,
       STEP_SECONDS,

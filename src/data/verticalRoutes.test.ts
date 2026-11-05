@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 
 import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
+import { SKILL_PROFILES } from "../progress";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { chunkProblems } from "../rules/chunk";
 import { zoneLayout } from "../rules/tiles";
@@ -137,7 +138,7 @@ it.each([...INDUSTRIAL_CONNECTORS, "outdoor-terrace-ascent"] as const)(
           };
         }
       }
-      zone = stepZone(BIRD, layout, STEP_SECONDS, control, zone);
+      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, control, zone);
       highest = Math.min(highest, zone.bird.y);
     }
     expect(zone.death).toBeUndefined();
@@ -290,7 +291,14 @@ it.each(["outdoor-lift-ascent", "outdoor-upper-ascent"])(
         }
         held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
       }
-      zone = stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld: held, move, useHeld: false }, zone);
+      zone = stepZone(
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: held, move, useHeld: false },
+        zone,
+      );
       if (phase === 0 && index === 3 && zone.bird.grounded && zone.bird.vx === 0) {
         const bank = chunk.solids[3]!;
         const hold = (bank.col + bank.cols) * TILE - BIRD.width - TILE;
@@ -402,7 +410,14 @@ it("boards, rides and leaves the upper bank ferry from the actual approach phase
       }
       held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
     }
-    zone = stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld: held, move, useHeld: false }, zone);
+    zone = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: held, move, useHeld: false },
+      zone,
+    );
     if (phase === 0 && index === 1 && zone.bird.grounded && zone.bird.vx === 0) {
       expect(
         standsOn(BIRD, zone.bird, {
@@ -554,7 +569,14 @@ it.each(["woodland-timed-descent", "woodland-deep-ascent"])(
           move = 1;
         }
       }
-      zone = stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld: held, move, useHeld: false }, zone);
+      zone = stepZone(
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: held, move, useHeld: false },
+        zone,
+      );
     }
     expect(
       zone.death,
@@ -662,7 +684,14 @@ it("climbs the four-screen Apartment opening with continuous ordinary phase carr
       const dx = goal.col * TILE - zone.bird.x;
       const brake = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * BIRD.brakeAccel);
       const move: -1 | 0 | 1 = Math.abs(dx - brake) < 1 ? 0 : dx - brake > 0 ? 1 : -1;
-      zone = stepZone(BIRD, layout, STEP_SECONDS, { jumpHeld: held, move, useHeld: false }, zone);
+      zone = stepZone(
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: held, move, useHeld: false },
+        zone,
+      );
       previousHeld = held;
     }
     counts.push(zone.steps - startSteps);
@@ -746,7 +775,14 @@ it.each(["city-boundary-steps", "outdoor-surface-return"])(
         }
       }
       const before = zone;
-      zone = stepZone(ordinary, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
+      zone = stepZone(
+        SKILL_PROFILES,
+        ordinary,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld, move, useHeld: false },
+        zone,
+      );
       if (before.bird.grounded && !zone.bird.grounded && zone.bird.vy < 0) {
         takeoffs.push(before.bird.y + ordinary.height);
       }

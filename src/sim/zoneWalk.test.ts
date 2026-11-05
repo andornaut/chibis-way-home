@@ -8,6 +8,7 @@ import { BIRD } from "../data/bird";
 import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
@@ -142,9 +143,9 @@ describe("walk transition prerequisites", () => {
     const state = frozen(startZone(BIRD, layout, 42));
     const input = frozen({ jumpHeld: true, move: 1 as const, useHeld: false });
     const original = JSON.stringify(state);
-    const first = stepZone(BIRD, layout, STEP_SECONDS, input, state);
+    const first = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state);
     state.tracks[0]!.at(20);
-    expect(stepZone(BIRD, layout, STEP_SECONDS, input, state)).toEqual(first);
+    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state)).toEqual(first);
     expect(JSON.stringify(state)).toBe(original);
     expect(first).not.toBe(state);
     expect(first.objects[0]).not.toEqual(state.objects[0]);
@@ -157,7 +158,7 @@ describe("walk transition cache", () => {
       zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), transitionCourse()),
     );
     const step = vi.fn<WalkStep>((input, state) =>
-      stepZone(BIRD, layout, STEP_SECONDS, input, state),
+      stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state),
     );
     const advance = memoizeTransitions(step);
     const input = frozen({ jumpHeld: false, move: 1 as const, useHeld: false });

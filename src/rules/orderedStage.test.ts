@@ -4,6 +4,7 @@ import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { AreaLayout, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { stageProgress } from "./stageProgress";
 import { enterArea, retryZone, startZone, stepZone } from "./zone";
 import { validateZoneLinks } from "./zoneLinks";
@@ -59,6 +60,7 @@ describe("ordered stage core", () => {
       }
       const x = side === "left" ? source.backX - 1 : source.exitX - BIRD.width + 1;
       const next = stepZone(
+        SKILL_PROFILES,
         BIRD,
         layout,
         STEP_SECONDS,
@@ -78,7 +80,7 @@ describe("ordered stage core", () => {
         expect(next.seconds).toBe(0);
         expect(next.bird.jumpHeld).toBe(true);
         expect(next.useHeld).toBe(true);
-        expect(stepZone(BIRD, layout, STEP_SECONDS, STILL, next).area).toBe(target);
+        expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, next).area).toBe(target);
       }
     },
   );

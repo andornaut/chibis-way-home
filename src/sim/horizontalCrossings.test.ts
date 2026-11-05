@@ -5,6 +5,7 @@ import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Rect } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { zonePlanOf } from "../rules/assemble";
 import { zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone, type ZoneState } from "../rules/zone";
@@ -69,7 +70,14 @@ function noOrdinaryBypass(id: string): void {
   for (let tick = 0; tick < 600 && !zone.death && !zone.cleared; tick++) {
     jumped ||=
       !zone.bird.grounded && zone.bird.coyoteLeft > 0 && zone.bird.coyoteLeft <= 2 * STEP_SECONDS;
-    zone = stepZone(BIRD, banks, STEP_SECONDS, { jumpHeld: jumped, move: 1, useHeld: false }, zone);
+    zone = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      banks,
+      STEP_SECONDS,
+      { jumpHeld: jumped, move: 1, useHeld: false },
+      zone,
+    );
     if (zone.bird.y + BIRD.height <= far.y) {
       furthest = Math.max(furthest, zone.bird.x + BIRD.width);
     }
@@ -114,6 +122,7 @@ describe.each(ids)("short horizontal crossing %s", (id) => {
           : BIRD.jumpRiseTime;
       const before = zone.bird.x;
       zone = stepZone(
+        SKILL_PROFILES,
         BIRD,
         layout,
         STEP_SECONDS,
@@ -163,7 +172,7 @@ describe.each(ids)("short horizontal crossing %s", (id) => {
       pausedFar = false;
     let previous = zone.objects[index]!.x;
     for (let tick = 0; tick < ticks; tick++) {
-      zone = stepZone(BIRD, layout, STEP_SECONDS, idle, zone);
+      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, idle, zone);
       expect(zone.death).toBeUndefined();
       const x = zone.objects[index]!.x;
       xs.push(x);

@@ -5,6 +5,7 @@ import { expect, it } from "vitest";
 import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { crumblingAppearance, crumblingSkinTiles } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { zonePlanOf } from "../rules/assemble";
 import { zoneLayout } from "../rules/tiles";
 import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
@@ -87,6 +88,7 @@ it("crumbling support warns on landing, gives an ordinary jump to the far bank, 
     // Chibi waits on the far bank through removal and restoration before leaving.
     const waiting = banked !== undefined && restoredAt === undefined;
     zone = stepZone(
+      SKILL_PROFILES,
       ordinary,
       f.layout,
       STEP_SECONDS,
@@ -160,6 +162,7 @@ it("crumbling support drops a waiting Chibi into the pit and Retry restores it i
   for (let tick = 0; tick < TICK_LIMIT && zone.death === undefined; tick++) {
     const waiting = onLedge(f, zone);
     zone = stepZone(
+      SKILL_PROFILES,
       ordinary,
       f.layout,
       STEP_SECONDS,

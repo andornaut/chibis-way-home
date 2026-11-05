@@ -11,6 +11,7 @@ import type {
   TargetedAttackWindow,
   ZoneLayout,
 } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { contactBox, nodeOf } from "../rules/behaviourTrack";
 import { birdBox, startBird } from "../rules/bird";
 import { supportContact } from "../rules/flyLanding";
@@ -245,7 +246,7 @@ export function bossModel(
         tuning,
         place,
         ++stepped,
-        stepZoneBodies(tuning, layout, seconds, input, zone).zone,
+        stepZoneBodies(SKILL_PROFILES, tuning, layout, seconds, input, zone).zone,
       ),
   };
 }

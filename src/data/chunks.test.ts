@@ -6,6 +6,7 @@ import manifestJson from "../../public/art/manifest.json";
 import { type ArtManifest, BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { lookTiles } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble";
 import { contactBox } from "../rules/behaviour";
 import { chunkProblems, recipeProblems } from "../rules/chunk";
@@ -406,6 +407,7 @@ it("bounds the wide reachable fixture with an ordinary running jump", () => {
       jumped ||=
         !zone.bird.grounded && zone.bird.coyoteLeft > 0 && zone.bird.coyoteLeft <= 2 * STEP_SECONDS;
       zone = stepZone(
+        SKILL_PROFILES,
         BIRD,
         layout,
         STEP_SECONDS,
@@ -524,7 +526,14 @@ it.each([
         jumpStart = tick;
       }
       const jumpHeld = (tick - jumpStart) * STEP_SECONDS < BIRD.jumpRiseTime;
-      zone = stepZone(ordinary, layout, STEP_SECONDS, { jumpHeld, move, useHeld: false }, zone);
+      zone = stepZone(
+        SKILL_PROFILES,
+        ordinary,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld, move, useHeld: false },
+        zone,
+      );
       previousJump = jumpHeld;
       if (tick % 60 === 0) {
         trace.push({

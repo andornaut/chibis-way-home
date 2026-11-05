@@ -12,6 +12,7 @@ import {
 } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { layoutBehaviour } from "./behaviour";
 import { currentScreen, targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
 import { objectLayout } from "./tiles";
@@ -95,32 +96,46 @@ describe("screen and solid line-of-sight acquisition", () => {
       x: 0,
       y: 60,
     });
-    const seen = stepZone(BIRD, stage, STEP_SECONDS, STILL, start);
+    const seen = stepZone(SKILL_PROFILES, BIRD, stage, STEP_SECONDS, STILL, start);
     expect(seen.behaviours[0]?.stateKey).toBe("seen");
     expect(seen.barks).toEqual([
       { ...plan.spotted, owner: { area: "main", attempt: 0, objectIndex: 0 } },
     ]);
     const blocked = layout([{ height: 200, width: 24, x: 180, y: 100 }]);
-    const hidden = stepZone(BIRD, blocked, STEP_SECONDS, STILL, startZone(BIRD, blocked, 1));
+    const hidden = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      blocked,
+      STEP_SECONDS,
+      STILL,
+      startZone(BIRD, blocked, 1),
+    );
     expect(hidden.behaviours[0]?.stateKey).toBe("watch");
     expect(hidden.barks).toEqual([]);
   });
   it("keeps an offscreen hostile idle until the shared current camera includes it", () => {
     const stage = layout([], { ...actor, origin: { x: 900, y: 120 } });
     const start = startZone(BIRD, stage, 1);
-    const unseen = stepZone(BIRD, stage, STEP_SECONDS, STILL, start);
+    const unseen = stepZone(SKILL_PROFILES, BIRD, stage, STEP_SECONDS, STILL, start);
     expect(unseen.behaviours[0]?.stateKey).toBe("watch");
     const moved = { ...unseen, bird: { ...unseen.bird, x: 588 } };
-    const seen = stepZone(BIRD, stage, STEP_SECONDS, STILL, moved);
+    const seen = stepZone(SKILL_PROFILES, BIRD, stage, STEP_SECONDS, STILL, moved);
     expect(currentScreen(BIRD, stage.areas.main!, moved.bird).x).toBe(240);
     expect(seen.behaviours[0]?.stateKey).toBe("seen");
   });
   it("emits once across area re-entry and emits again only after an actual attempt reset", () => {
     const stage = layout();
-    const seen = stepZone(BIRD, stage, STEP_SECONDS, STILL, startZone(BIRD, stage, 1));
-    expect(stepZone(BIRD, stage, STEP_SECONDS, STILL, seen).barks).toEqual([]);
+    const seen = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      stage,
+      STEP_SECONDS,
+      STILL,
+      startZone(BIRD, stage, 1),
+    );
+    expect(stepZone(SKILL_PROFILES, BIRD, stage, STEP_SECONDS, STILL, seen).barks).toEqual([]);
     const reentered = enterArea(BIRD, stage, stage.start, seen);
-    expect(stepZone(BIRD, stage, STEP_SECONDS, STILL, reentered).barks).toEqual([]);
+    expect(stepZone(SKILL_PROFILES, BIRD, stage, STEP_SECONDS, STILL, reentered).barks).toEqual([]);
     const retry = retryZone(BIRD, stage, {
       ...seen,
       death: {
@@ -130,7 +145,7 @@ describe("screen and solid line-of-sight acquisition", () => {
         velocity: { x: 0, y: 0 },
       },
     });
-    expect(stepZone(BIRD, stage, STEP_SECONDS, STILL, retry).barks).toEqual([
+    expect(stepZone(SKILL_PROFILES, BIRD, stage, STEP_SECONDS, STILL, retry).barks).toEqual([
       { ...plan.spotted, owner: { area: "main", attempt: 1, objectIndex: 0 } },
     ]);
   });
@@ -259,10 +274,10 @@ describe("current-chunk or current-viewport pursuit awareness", () => {
         },
       };
       let zone = startZone(BIRD, chunked, 1);
-      const offscreen = stepZone(BIRD, chunked, STEP_SECONDS, STILL, zone);
+      const offscreen = stepZone(SKILL_PROFILES, BIRD, chunked, STEP_SECONDS, STILL, zone);
       expect(offscreen.behaviours[0]?.pursuit).toBeUndefined();
       zone = { ...zone, bird: { ...zone.bird, x: 696 - BIRD.width / 2 } };
-      const adjacent = stepZone(BIRD, chunked, STEP_SECONDS, STILL, zone);
+      const adjacent = stepZone(SKILL_PROFILES, BIRD, chunked, STEP_SECONDS, STILL, zone);
       expect(adjacent.behaviours[0]?.pursuit?.phase).toBe("engaged");
       expect(adjacent.barks).toEqual([]);
       expect(adjacent.spotted.main ?? []).toEqual([]);
@@ -270,7 +285,7 @@ describe("current-chunk or current-viewport pursuit awareness", () => {
         ...adjacent,
         bird: { ...adjacent.bird, x: 720 - BIRD.width / 2 },
       };
-      const acquired = stepZone(BIRD, chunked, STEP_SECONDS, STILL, entered);
+      const acquired = stepZone(SKILL_PROFILES, BIRD, chunked, STEP_SECONDS, STILL, entered);
       expect(acquired.behaviours[0]?.pursuit?.phase).toBe("engaged");
       expect(acquired.barks).toEqual([]);
       expect(acquired.spotted.main ?? []).toEqual([]);
@@ -297,7 +312,7 @@ describe("current-chunk or current-viewport pursuit awareness", () => {
     };
     const started = startZone(BIRD, chunked, 1);
     expect(currentScreen(BIRD, chunked.areas.main, started.bird).y).toBe(360);
-    const next = stepZone(BIRD, chunked, STEP_SECONDS, STILL, started);
+    const next = stepZone(SKILL_PROFILES, BIRD, chunked, STEP_SECONDS, STILL, started);
     expect(next.behaviours[0]?.pursuit?.phase).toBe("engaged");
     expect(next.barks).toEqual([]);
     expect(next.spotted.main ?? []).toEqual([]);
@@ -322,7 +337,14 @@ describe("current-chunk or current-viewport pursuit awareness", () => {
         },
       },
     };
-    const next = stepZone(BIRD, tall, STEP_SECONDS, STILL, startZone(BIRD, tall, 1));
+    const next = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      tall,
+      STEP_SECONDS,
+      STILL,
+      startZone(BIRD, tall, 1),
+    );
     expect(next.behaviours[0]?.pursuit?.phase).toBe("escaped");
     expect(next.barks).toEqual([
       { ...DOG_BEHAVIOUR.pursuit!.escaped, owner: { area: "main", attempt: 0, objectIndex: 0 } },

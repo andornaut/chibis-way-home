@@ -5,6 +5,7 @@ import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
 import type { Archetype, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { stepBehaviour } from "./behaviour";
 import { effectiveHazardPhase } from "./effectiveCollision";
 import { objectLayout } from "./tiles";
@@ -105,7 +106,7 @@ it.each([
     start.behaviours[0]!,
   ).state;
   const state = { ...start, behaviours: [clock], seconds };
-  const next = stepZone(BIRD, layout, STEP_SECONDS, still, state);
+  const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, state);
   expect(next.death !== undefined).toBe(lethal);
   if (lethal) {
     expect(next.death?.contact).toEqual({ index: 0, kind: "object" });
@@ -121,11 +122,11 @@ it("retries the same layout with its nonlethal initial clock and freezes a dead 
     ...start,
     behaviours: [{ ...start.behaviours[0]!, elapsed: 0, stateKey: "active" }],
   };
-  const dead = stepZone(BIRD, layout, STEP_SECONDS, still, active);
+  const dead = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, active);
   expect(dead.death).toBeDefined();
-  expect(stepZone(BIRD, layout, STEP_SECONDS, still, dead)).toBe(dead);
+  expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, dead)).toBe(dead);
   const retry = retryZone(BIRD, layout, dead);
   expect(effectiveHazardPhase(vent, retry.behaviours[0])).toBe("inactive");
   expect(retry.behaviours[0]?.elapsed).toBe(0);
-  expect(stepZone(BIRD, layout, STEP_SECONDS, still, retry).death).toBeUndefined();
+  expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, retry).death).toBeUndefined();
 });

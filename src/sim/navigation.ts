@@ -1,6 +1,7 @@
 import { STEP_SECONDS } from "../core";
 import { SCREEN, TILE } from "../data/screen";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { contactBox } from "../rules/behaviour";
 import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
 export interface NavigationConfig {
@@ -1100,7 +1101,7 @@ export function plannedInput(
             : IDLE;
       inputs.push(input);
       states.push(predicted);
-      predicted = stepZone(tuning, layout, STEP_SECONDS, input, predicted);
+      predicted = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, predicted);
       navigation.counters.physicsSteps++;
       jumped ||= input.jumpHeld && predicted.bird.vy < 0;
       if (predicted.death || predicted.turnedBack) {

@@ -24,6 +24,7 @@ interface ForcedTransitForecastContext {
 
 interface ForcedTransitRiderContext {
   readonly bird: BirdState;
+  readonly skillProfiles: readonly BirdTuning[];
   readonly terrainSolids: readonly Rect[];
   readonly tuning: BirdTuning;
   readonly unknownPush: boolean;
@@ -142,7 +143,7 @@ function projectOrdinaryBody(
   first: NonNullable<ReturnType<NonNullable<BehaviourTraversalFrame["sample"]>>>,
   second: NonNullable<ReturnType<NonNullable<BehaviourTraversalFrame["sample"]>>>,
 ): ForcedTransitTakeoffBody | undefined {
-  if (rider.unknownPush || !ordinaryTransitControl(rider.tuning, rider.bird)) {
+  if (rider.unknownPush || !ordinaryTransitControl(rider.skillProfiles, rider.tuning, rider.bird)) {
     return undefined;
   }
   const objects = (frames: typeof first) =>
@@ -214,7 +215,7 @@ export function forcedTransitTakeoffBody(
     !body ||
     !forcedTransitTakeoffOrigin(context, rider.bird, carrier, forecast) ||
     rider.unknownPush ||
-    !ordinaryTransitControl(rider.tuning, rider.bird) ||
+    !ordinaryTransitControl(rider.skillProfiles, rider.tuning, rider.bird) ||
     rider.terrainSolids !== body.rider.terrainSolids
   ) {
     return undefined;

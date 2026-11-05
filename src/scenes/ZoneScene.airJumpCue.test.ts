@@ -30,7 +30,7 @@ it.each(["accepted", "death", "area"])(
     const after = stepBird(BIRD, [], [], STEP_SECONDS, { jumpHeld: true, move: 0 }, before);
     const world = { area: "main", attempt: 0, bird: before, steps: 0 } as engine.ZoneState;
     vi.spyOn(engine, "stepZone").mockImplementation(
-      (_tuning, _layout, _seconds, _input, state) => ({
+      (_skillProfiles, _tuning, _layout, _seconds, _input, state) => ({
         ...state,
         area: outcome === "area" ? "next" : "main",
         bird: after,

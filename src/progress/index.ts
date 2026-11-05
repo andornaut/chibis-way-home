@@ -27,6 +27,7 @@ export {
   eligibleSkills,
   isSkillId,
   SKILL_IDS,
+  SKILL_PROFILES,
   skillEnabled,
   type SkillOverrides,
   skillTuning,

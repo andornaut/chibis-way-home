@@ -6,6 +6,7 @@ import { BIRD } from "../data/bird";
 import { CHUNKS } from "../data/chunks";
 import { TILE } from "../data/screen";
 import type { ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { themesOf, zonePlanOf } from "../rules/assemble";
 import { zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
@@ -34,6 +35,7 @@ describe.each(CASES)("authored mover track %s", (id) => {
     const directions = new Set<string>();
     for (let tick = 0; tick < 1800; tick++) {
       zone = stepZone(
+        SKILL_PROFILES,
         BIRD,
         layout,
         STEP_SECONDS,
@@ -117,6 +119,7 @@ describe.each(CASES)("authored mover track %s", (id) => {
         : !boarded && boardAt !== undefined && (tick - boardAt) * STEP_SECONDS < boardHoldSeconds;
       previousHostX = at.x;
       zone = stepZone(
+        SKILL_PROFILES,
         ORDINARY_JUMP,
         layout,
         STEP_SECONDS,

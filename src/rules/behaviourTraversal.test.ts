@@ -15,6 +15,7 @@ import { blueVerticalId } from "../data/chunks";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
 import { behaviourPose } from "../presentation";
+import { SKILL_PROFILES } from "../progress";
 import { withAnticipationContact } from "../testing/behaviours";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { zonePlanOf } from "./assemble";
@@ -1436,6 +1437,7 @@ it("executes a prepared production early-yard escape toward the supported far ba
   vi.mocked(findTraversal).mockClear();
   for (let tick = 0; tick < 600; tick++) {
     zone = stepZone(
+      SKILL_PROFILES,
       ordinary,
       layout,
       STEP_SECONDS,

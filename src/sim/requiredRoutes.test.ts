@@ -6,6 +6,7 @@ import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
 import type { Instance, TerrainRect, TilePoint, ZonePlan } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone, type ZoneInput } from "../rules/zone";
 import { CATALOGUE } from "../testing/walkSuite";
@@ -266,7 +267,14 @@ it("records an alive airborne engine exit before landing without inventing requi
   };
   let actual = startZone(BIRD, layout, 1);
   for (let tick = 0; tick < 120 && !actual.cleared && !actual.death; tick++) {
-    actual = stepZone(BIRD, layout, 1 / 60, { jumpHeld: false, move: 1, useHeld: false }, actual);
+    actual = stepZone(
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      1 / 60,
+      { jumpHeld: false, move: 1, useHeld: false },
+      actual,
+    );
   }
   expect(actual.cleared).toBe(true);
   expect(actual.death).toBeUndefined();

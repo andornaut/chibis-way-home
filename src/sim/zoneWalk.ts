@@ -10,6 +10,7 @@ import type {
   TilePoint,
   ZoneLayout,
 } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { startBird, stepBird } from "../rules/bird";
 import { orbitBounds } from "../rules/orbit";
 import {
@@ -61,7 +62,7 @@ function physicalStep(
     BEHAVIOUR_INDICES.set(area, indices);
   }
   const active = indices.reduce((state, index) => activateBehaviour(index, state), zone);
-  return stepActualZone(tuning, layout, seconds, input, active);
+  return stepActualZone(SKILL_PROFILES, tuning, layout, seconds, input, active);
 }
 
 function observeTransition(layout: ZoneLayout, before: ZoneState, next: ZoneState): ZoneState {

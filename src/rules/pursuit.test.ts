@@ -21,6 +21,7 @@ import type {
   Rect,
   ZoneLayout,
 } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import {
   type BehaviourState,
   contactBox,
@@ -337,15 +338,15 @@ describe("persistent pursuit", () => {
     };
     const input = { jumpHeld: false, move: 0, useHeld: false } as const;
     const start = startZone(BIRD, layout, 1);
-    const seen = stepZone(BIRD, layout, STEP_SECONDS, input, start);
+    const seen = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, start);
     expect(seen.barks).toEqual([
       { ...object.behaviour!.spotted, owner: { area: "main", attempt: 0, objectIndex: 1 } },
     ]);
-    const fled = stepZone(BIRD, layout, STEP_SECONDS, input, seen);
+    const fled = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, seen);
     expect(fled.barks).toEqual([
       { ...escaped, owner: { area: "main", attempt: 0, objectIndex: 1 } },
     ]);
-    expect(stepZone(BIRD, layout, STEP_SECONDS, input, fled).barks).toEqual([]);
+    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, fled).barks).toEqual([]);
     const retry = retryZone(BIRD, layout, {
       ...fled,
       death: {
@@ -356,7 +357,7 @@ describe("persistent pursuit", () => {
       },
     });
     expect(retry.behaviours[1]?.pursuit).toBeUndefined();
-    expect(stepZone(BIRD, layout, STEP_SECONDS, input, retry).barks).toEqual([
+    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, retry).barks).toEqual([
       { ...object.behaviour!.spotted, owner: { area: "main", attempt: 1, objectIndex: 1 } },
     ]);
   });
