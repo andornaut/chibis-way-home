@@ -124,7 +124,12 @@ import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import type { BehaviourState } from "../rules/behaviour";
 import { removalProgress } from "../rules/bossDefeat";
 import { deathSupport } from "../rules/death";
-import { effectiveHazardPhase, effectiveSupportPhase } from "../rules/effectiveCollision";
+import {
+  effectiveGustPhase,
+  effectiveHazardPhase,
+  effectiveSupportPhase,
+} from "../rules/effectiveCollision";
+import { forcePulseVolume } from "../rules/force";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams";
 import { currentScreen } from "../rules/perception";
 import { phaseFollowerTag } from "../rules/phaseSource";
@@ -221,6 +226,7 @@ import {
   wholeRunStats,
   zoneVisitStats,
 } from "./save";
+import { createPulseSpanArt } from "./pulseSpanArt";
 import { createTetherArt } from "./tetherArt";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard";
 import { createTouchChrome } from "./touchChrome";
@@ -263,6 +269,9 @@ const OBJECT_COLOURS: Readonly<Record<Collision, number>> = {
   solid: 0xe4a672,
   use: 0x63c74d,
 };
+// A gust emitter's and its leaf stream's placeholder colour until their sprites exist: green, never
+// the red or amber of danger.
+const GUST_PLACEHOLDER = 0x9ad48c;
 // A clocked support's placeholder opacity per phase, until its sprite exists.
 const SUPPORT_PLACEHOLDER_ALPHA: Readonly<Record<SupportPhase, number>> = {
   absent: 0.2,
@@ -403,6 +412,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     readonly parallax: Point;
   }[] = [];
   private readonly pulseArt = new Map<number, GameObjects.Sprite>();
+  // Each spanning pulse visual, by pulse id.
+  private readonly pulseSpans = new Map<number, ReturnType<typeof createPulseSpanArt>>();
   // Each dead boss's removal puff, by object index.
   private readonly removalArt = new Map<number, GameObjects.Sprite>();
   private readonly transientArt = new Map<number, ObjectArt>();
@@ -443,6 +454,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.scenerySprites.length = 0;
     this.transientArt.clear();
     this.pulseArt.clear();
+    this.pulseSpans.clear();
     this.removalArt.clear();
     this.heldKeys.clear();
     this.heldTouches.clear();
@@ -1058,6 +1070,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     for (const art of this.pulseArt.values()) {
       art.anims.pause();
     }
+    for (const art of this.pulseSpans.values()) {
+      art.pause();
+    }
     this.bird.anims.stop();
     this.showTouchControls(touchSettings());
     coverZone("death", true);
@@ -1510,6 +1525,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       art.destroy();
     }
     this.pulseArt.clear();
+    for (const art of this.pulseSpans.values()) {
+      art.destroy();
+    }
+    this.pulseSpans.clear();
     for (const art of this.removalArt.values()) {
       art.destroy();
     }
@@ -1760,8 +1779,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         };
       }
       default: {
+        const colour =
+          effectiveGustPhase(object, undefined) === undefined
+            ? OBJECT_COLOURS[object.collision]
+            : GUST_PLACEHOLDER;
         const item = this.add
-          .rectangle(0, 0, rect.width, rect.height, OBJECT_COLOURS[object.collision])
+          .rectangle(0, 0, rect.width, rect.height, colour)
           .setOrigin(0)
           .setDepth(DEPTHS.placeholder);
         return { item, offset: { x: 0, y: 0 }, placeholder: item, sprite: undefined };
@@ -1959,9 +1982,32 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.pulseArt.delete(id);
       }
     }
+    for (const [id, art] of this.pulseSpans) {
+      if (!alive.has(id)) {
+        art.destroy();
+        this.pulseSpans.delete(id);
+      }
+    }
     for (const pulse of this.zone.pulses) {
       const visual = pulse.visual;
       if (!visual) {
+        continue;
+      }
+      if (visual.span) {
+        let span = this.pulseSpans.get(pulse.id);
+        if (!span) {
+          const frame = this.manifest.sprites.some(({ key }) => key === visual.art)
+            ? this.textures.getFrame(visual.art)
+            : undefined;
+          span = createPulseSpanArt(
+            DEPTHS.sprite,
+            frame && { height: frame.realHeight, key: visual.art, width: frame.realWidth },
+            GUST_PLACEHOLDER,
+            this,
+          );
+          this.pulseSpans.set(pulse.id, span);
+        }
+        span.draw(forcePulseVolume(pulse), pulse.facing, visual.animation);
         continue;
       }
       let sprite = this.pulseArt.get(pulse.id);

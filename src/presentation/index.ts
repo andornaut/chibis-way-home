@@ -27,7 +27,7 @@ export {
   stepDeathPresentation,
 } from "./death";
 export { doorPhase } from "./doorOpen";
-export { forceVisualPosition } from "./forceVisual";
+export { forceVisualPosition, forceVisualSpan } from "./forceVisual";
 export { interiorBackdrop } from "./interiorBackdrop";
 export { type ArtKind, artKind, artOffset, artScrollFactor } from "./objectArt";
 export { type PlayHold, stepAction } from "./playHold";
