@@ -1,3 +1,5 @@
+import { shuttleStates } from "./behaviours";
+import { OBSTACLE_MOVER_PAUSE, OBSTACLE_MOVER_SPEED } from "./obstacleTuning";
 import type {
   BehaviourNode,
   BehaviourPlan,
@@ -88,3 +90,16 @@ export function awningCycle(
 }
 
 export const AWNING_BEHAVIOUR: BehaviourPlan = awningCycle(AWNING_SECONDS);
+
+// The gantry crane container's travel in tiles, near dock to far dock: its 22-col pit less its own
+// 6 cols.
+export const GANTRY_DISTANCE = 16;
+
+// The gantry crane container shuttles between its docks at the obstacle mover speed, pausing at
+// each, starting with the near dock's pause.
+export const GANTRY_BEHAVIOUR: BehaviourPlan = {
+  axis: "x",
+  distance: GANTRY_DISTANCE,
+  initial: "wait-near",
+  states: shuttleStates(OBSTACLE_MOVER_SPEED, OBSTACLE_MOVER_PAUSE, "idle"),
+};

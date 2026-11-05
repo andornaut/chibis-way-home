@@ -218,7 +218,7 @@ function frustrationNode(to: string): BehaviourNode {
   };
 }
 
-function shuttleStates(
+export function shuttleStates(
   speed: number,
   pause: number,
   animation: BehaviourNode["animation"],
