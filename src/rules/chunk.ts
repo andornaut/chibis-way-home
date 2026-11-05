@@ -37,7 +37,7 @@ const inside = (rows: number, cols: number, rect: TileRect) =>
 
 // A placed thing in tiles: its collision, whether it moves, and the span it can be in over its
 // track (its rectangle swept along its motion's axis, its reaction's range and its hops).
-function physicalObjects(catalogue: Catalogue, instances: readonly Instance[]) {
+export function physicalObjects(catalogue: Catalogue, instances: readonly Instance[]) {
   const objects = instances.map((instance) => {
     const physical = { ...instance };
     delete physical.skin;
