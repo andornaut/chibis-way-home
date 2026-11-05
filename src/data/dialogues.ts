@@ -14,7 +14,7 @@ function maximumMovementSpeed(plan: BehaviourPlan): number {
   );
 }
 
-export const BARK_BACKGROUND_ALPHA = 0.75;
+export const BARK_BACKGROUND_ALPHA = 0.65;
 
 // Default for transient barks; conversations advance only through player input.
 export const BARK_DURATION_SECONDS = 5;
