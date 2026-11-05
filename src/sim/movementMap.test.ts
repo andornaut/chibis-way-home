@@ -410,7 +410,7 @@ function pathOut(options: PathOutOptions, subject: PathOutCase) {
         problems.push(...report.problems);
       } else {
         problems.push(
-          ...airProblems(found, object, flightMap(found.terrain, object, entry.profile)),
+          ...airProblems(found, object, flightMap({}, found.terrain, object, entry.profile)),
         );
       }
     }

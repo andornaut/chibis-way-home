@@ -1,20 +1,26 @@
 // Movement map build cost per boss profile per stage area: kernel steps (deterministic) and
-// wall time. Run in the check container: npx tsx src/sim/mapBench.ts [--seeds 3] [--repeats 5].
+// wall time. Run in the check container: npx tsx src/sim/mapBench.ts [--seeds 3] [--repeats 5]
+// [--window leash|<tiles>].
+import { TILE } from "../data/screen";
+import type { ObjectLayout, Rect } from "../data/types";
 import { RECIPES } from "../data/zones";
 import {
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
   flightMap,
   groundMap,
+  type MapTerrain,
   mapTerrain,
 } from "../rules/movementMaps";
 import { stageLoader } from "./catalogue";
 import { parseOptions, runMain, UsageError } from "./command";
 
-const HELP = `Usage: npx tsx src/sim/mapBench.ts [--seeds <n>] [--repeats <n>]
+const HELP = `Usage: npx tsx src/sim/mapBench.ts [--seeds <n>] [--repeats <n>] [--window <w>]
 
 Builds every boss's movement or air map for every stage area that places it, for layout seeds
-1 to n (default 3), each build repeated (default 5), and prints work and wall time per profile.`;
+1 to n (default 3), each build repeated (default 5), and prints work and wall time per profile.
+--window clips each build to the area's full height and, horizontally, either the boss's pursuit
+leash around its spawn (leash) or a width in tiles centred on its spawn.`;
 
 // Contract target: a build per profile per area at or under this at the 95th percentile.
 const TARGET_MS = 25;
@@ -42,14 +48,38 @@ function count(name: string, value: string | undefined, fallback: number): numbe
   return parsed;
 }
 
+type WindowOption = "leash" | number;
+
+function windowOption(value: string | undefined): WindowOption | undefined {
+  return value === undefined || value === "leash" ? value : count("window", value, 1);
+}
+
+// The horizontal range clipped to the area bounds, at the area's full height.
+function windowOf(option: WindowOption, terrain: MapTerrain, object: ObjectLayout): Rect {
+  const { bounds } = terrain;
+  const leash = object.behaviour!.pursuit!.distance;
+  const centre = object.origin.x + object.width / 2;
+  const [low, high] =
+    option === "leash"
+      ? [object.origin.x - leash, object.origin.x + object.width + leash]
+      : [centre - (option * TILE) / 2, centre + (option * TILE) / 2];
+  const x = Math.max(bounds.x, low);
+  const width = Math.min(bounds.x + bounds.width, high) - x;
+  return { height: bounds.height, width, x, y: bounds.y };
+}
+
 function mapBench(args: readonly string[]): number {
-  const options = parseOptions({ repeats: { type: "string" }, seeds: { type: "string" } }, args);
+  const options = parseOptions(
+    { repeats: { type: "string" }, seeds: { type: "string" }, window: { type: "string" } },
+    args,
+  );
   if (options.help) {
     console.log(HELP);
     return 0;
   }
   const seeds = count("seeds", options.seeds, 3);
   const repeats = count("repeats", options.repeats, 5);
+  const window = windowOption(options.window);
   const samples: Sample[] = [];
   for (const stage of Object.keys(RECIPES).sort()) {
     const load = stageLoader(stage);
@@ -65,10 +95,12 @@ function mapBench(args: readonly string[]): number {
             for (let repeat = 0; repeat < repeats; repeat++) {
               const start = performance.now();
               const terrain = mapTerrain({}, area);
+              const clip =
+                window === undefined ? {} : { window: windowOf(window, terrain, object) };
               const map =
                 entry.kind === "ground"
-                  ? groundMap({ jumps: BOSS_JUMP_SCRIPTS }, terrain, entry.profile)
-                  : flightMap(terrain, object, entry.profile);
+                  ? groundMap({ jumps: BOSS_JUMP_SCRIPTS, ...clip }, terrain, entry.profile)
+                  : flightMap(clip, terrain, object, entry.profile);
               const ms = performance.now() - start;
               samples.push({
                 boss: object.character,

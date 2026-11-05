@@ -405,8 +405,9 @@ export function mapTerrain(options: MapTerrainOptions, area: AreaLayout): MapTer
   };
 }
 
+// A window clips the map to one boss's reach; without one the map covers the area.
 export function groundMap(
-  options: Pick<MapBuildOptions<MapSupport>, "jumps">,
+  options: Pick<MapBuildOptions<MapSupport>, "jumps" | "window">,
   terrain: MapTerrain,
   profile: MovementProfile,
 ): MovementMap<MapSupport> {
@@ -468,11 +469,12 @@ export function airArea(terrain: MapTerrain, object: ObjectLayout): AirArea<MapS
 }
 
 export function flightMap(
+  options: Pick<AirBuildOptions, "window">,
   terrain: MapTerrain,
   object: ObjectLayout,
   profile: FlightProfile,
 ): AirMap<MapSupport> {
-  return buildAirMap(AIR_BUILD_OPTIONS, profile, airArea(terrain, object));
+  return buildAirMap({ ...AIR_BUILD_OPTIONS, ...options }, profile, airArea(terrain, object));
 }
 
 export type BossMap =
@@ -509,7 +511,7 @@ export function areaMovementMaps(area: AreaLayout): ReadonlyMap<string, BossMap>
           : {
               key: entry.key,
               kind: "air",
-              map: flightMap(cached.terrain, object, entry.profile),
+              map: flightMap({}, cached.terrain, object, entry.profile),
             },
       );
     }
