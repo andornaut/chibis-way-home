@@ -69,7 +69,9 @@ export type BehaviourCondition =
   | { readonly kind: "reachable" | "lost-target"; readonly tolerance: number };
 
 // Ground pursuit physics: authored gravity in tiles/second squared and speeds in tiles/second.
-// The resolver scales all three spatial values to pixels without changing time units.
+// The resolver scales all four spatial values to pixels without changing time units. `speed` is
+// the horizontal speed of searched and planned traversal (takeoffs, air, map legs and movement
+// maps); the pursuit's own `speed` is its grounded walk without planned inputs.
 interface BehaviourTraversal {
   readonly prepSeconds: number;
   // A pursuit takeoff preparation starts at most once per this many seconds; a takeoff sooner
@@ -78,6 +80,7 @@ interface BehaviourTraversal {
   readonly gravity: number;
   readonly jumpSpeed: number;
   readonly maxFallSpeed: number;
+  readonly speed: number;
 }
 
 export interface BehaviourPursuitIntent {

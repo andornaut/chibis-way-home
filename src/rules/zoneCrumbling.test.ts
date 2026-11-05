@@ -21,7 +21,7 @@ const GROUND = {
   kind: "pursue",
   mode: "ground",
   speed: 60,
-  traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0 },
+  traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0, speed: 60 },
 } as const;
 
 function object(

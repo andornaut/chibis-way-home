@@ -92,9 +92,10 @@ it.each([-1, 1] as const)(
       row: 34,
     });
     const motion = object.behaviour!.states.pursuit!.motion;
-    if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
       throw new Error("Expected production ground pursuit");
     }
+    const fastest = Math.max(motion.speed, motion.traversal.speed);
     const terrain = [
       [0, 8, 50],
       [8, 9, 46],
@@ -142,7 +143,7 @@ it.each([-1, 1] as const)(
       if (next.traversal?.physical.grounded && !prior?.physical.grounded) {
         landings++;
       }
-      expect(Math.abs(next.at.x - at.x)).toBeLessThanOrEqual(motion.speed * STEP_SECONDS + 1e-6);
+      expect(Math.abs(next.at.x - at.x)).toBeLessThanOrEqual(fastest * STEP_SECONDS + 1e-6);
       at = next.at;
       prior = next.traversal;
       if (prior?.physical.grounded && at.y + object.height === bank.y) {

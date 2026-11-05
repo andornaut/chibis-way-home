@@ -199,11 +199,26 @@ export const OVERHEAD_SWOOP: PursuitAbility<"overhead-swoop"> = {
   },
 };
 
+type GroundChaseMotion = Extract<
+  BehaviourAbilityParams,
+  { readonly kind: "ground-chase" }
+>["motion"];
+
+// A pace walks its whole leg at the scaled pursuit speed, searched or not.
+function paceMotion(scale: number, motion: GroundChaseMotion): GroundChaseMotion {
+  const speed = motion.speed * scale;
+  return {
+    ...motion,
+    speed,
+    ...(motion.traversal && { traversal: { ...motion.traversal, speed } }),
+  };
+}
+
 // The first movement-map leg toward Chibi for an engaged ground pursuer standing on its map,
 // with its plan state; undefined when the on-demand planner chases instead.
 function mapLeg(
   { object, perception, seconds, time }: BehaviourAbilityContext,
-  motion: Extract<BehaviourAbilityParams, { readonly kind: "ground-chase" }>["motion"],
+  motion: GroundChaseMotion,
   hers: Rect,
   world: BehaviourWorld,
   { at, state }: BehaviourActor,
@@ -289,7 +304,7 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
           ? advanceTraversalLeg(
               timed,
               object,
-              { ...motion, speed: motion.speed * object.behaviour!.pursuit!.pace!.speedScale },
+              paceMotion(object.behaviour!.pursuit!.pace!.speedScale, motion),
               seconds - time,
               next.traversal,
               { commands: [], goal: leg.goal, walk: true },

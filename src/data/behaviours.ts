@@ -11,6 +11,7 @@ import type {
 } from "./types";
 
 const BEAR_PURSUIT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
+const BEAR_TRAVERSAL_SPEED = (1.4 * BIRD.walkSpeed) / TILE;
 const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
 const DOG_PATROL_PAUSE = 0.14;
@@ -19,6 +20,7 @@ const FERRET_THROW_PAUSE_SECONDS = 1;
 const FRUSTRATION_SECONDS = 0.55;
 const GOOSE_PATROL_SPEED = 3.125;
 const GROUND_PURSUIT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
+const GROUND_TRAVERSAL_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
 const PIGEON_FLIGHT_SPEED = (1.6 * BIRD.walkSpeed) / TILE;
 const PIGEON_PURSUIT_SPEED = PIGEON_FLIGHT_SPEED;
 const PIGEON_SWOOP_SPEED = 20;
@@ -76,6 +78,16 @@ function withPursuitIntent(plan: BehaviourPlan, eligible: readonly string[]): Be
 }
 
 const ATTACK_ENGAGEMENT_RANGE = 12;
+// Ground chase: the grounded walk toward Chibi, and the horizontal speed of jumps and map legs.
+interface GroundChase {
+  readonly speed: number;
+  readonly traversalSpeed: number;
+}
+const BEAR_CHASE: GroundChase = { speed: BEAR_PURSUIT_SPEED, traversalSpeed: BEAR_TRAVERSAL_SPEED };
+const GROUND_CHASE: GroundChase = {
+  speed: GROUND_PURSUIT_SPEED,
+  traversalSpeed: GROUND_TRAVERSAL_SPEED,
+};
 const GROUND_TRAVERSAL = {
   gravity: BIRD.gravity / TILE,
   jumpSpeed: BIRD.jumpSpeed / TILE,
@@ -99,19 +111,16 @@ const PURSUIT_LIMITS = {
 function persistentPursuit(escaped: DialogueLine): NonNullable<BehaviourPlan["pursuit"]> {
   return { ...PURSUIT_LIMITS, escaped };
 }
-function chaseNode(
-  mode: "ground" | "fly",
-  speed: number,
-  failure: string,
-  next: string,
-): BehaviourNode {
+function chaseNode(chase: GroundChase, failure: string, next: string): BehaviourNode {
   return {
     allowIdleReposition: true,
-    animation: mode === "fly" ? "fly" : "walk",
-    motion:
-      mode === "ground"
-        ? { kind: "pursue", mode, speed, traversal: GROUND_TRAVERSAL }
-        : { kind: "pursue", mode, speed },
+    animation: "walk",
+    motion: {
+      kind: "pursue",
+      mode: "ground",
+      speed: chase.speed,
+      traversal: { ...GROUND_TRAVERSAL, speed: chase.traversalSpeed },
+    },
     transitions: [
       { to: failure, when: LOST_TARGET },
       { to: next, when: [{ kind: "nearby", range: ATTACK_ENGAGEMENT_RANGE }] },
@@ -297,7 +306,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       ],
     },
     pursuit: {
-      ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", tuning.preparation),
+      ...chaseNode(GROUND_CHASE, "frustration", tuning.preparation),
       allowGroundReposition: true,
     },
     rest: {
@@ -484,7 +493,7 @@ const DOG_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
       },
       "pursuit-pounce": {
-        ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "prepare-pounce"),
+        ...chaseNode(GROUND_CHASE, "frustration", "prepare-pounce"),
         transitions: [
           { to: "frustration", when: LOST_TARGET },
           {
@@ -540,7 +549,7 @@ const FERRET_ATTACK_PROFILE: BehaviourPlan = attackProfile(
           { to: "throw", when: [{ kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS }] },
         ],
       },
-      "pursuit-throw": chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "prepare-throw"),
+      "pursuit-throw": chaseNode(GROUND_CHASE, "frustration", "prepare-throw"),
       rest: {
         animation: "rest",
         motion: { kind: "wait" },
@@ -618,7 +627,7 @@ const GOOSE_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         rushSpeed: 21.875,
         slide: { distance: 3, seconds: 0.4, speed: 10.9375 },
       }),
-      "pursuit-trap": chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration", "set-trap"),
+      "pursuit-trap": chaseNode(GROUND_CHASE, "frustration", "set-trap"),
       "release-trap": {
         animation: "set-trap",
         motion: { kind: "wait" },
@@ -759,13 +768,13 @@ const RACCOON_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
       },
       pursuit: {
-        ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration-ground", "prepare-charge"),
+        ...chaseNode(GROUND_CHASE, "frustration-ground", "prepare-charge"),
         allowGroundReposition: true,
         animation: "climb",
         track: RACCOON_GROUND_TRACK,
       },
       "pursuit-drop": {
-        ...chaseNode("ground", GROUND_PURSUIT_SPEED, "frustration-ground", "climb"),
+        ...chaseNode(GROUND_CHASE, "frustration-ground", "climb"),
         track: RACCOON_GROUND_TRACK,
         transitions: [
           { to: "frustration-ground", when: LOST_TARGET },
@@ -931,11 +940,11 @@ const BEAR_ATTACK_PROFILE: BehaviourPlan = attackProfile(
         ],
       },
       pursuit: {
-        ...chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-charge"),
+        ...chaseNode(BEAR_CHASE, "frustration", "prepare-charge"),
         allowGroundReposition: true,
       },
-      "pursuit-growl": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-growl"),
-      "pursuit-maul": chaseNode("ground", BEAR_PURSUIT_SPEED, "frustration", "prepare-maul"),
+      "pursuit-growl": chaseNode(BEAR_CHASE, "frustration", "prepare-growl"),
+      "pursuit-maul": chaseNode(BEAR_CHASE, "frustration", "prepare-maul"),
       rest: {
         animation: "rest",
         motion: { kind: "wait" },

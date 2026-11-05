@@ -112,7 +112,12 @@ export function traversalContext(
     epsilon: EDGE,
     maxCollisionSteps: BEHAVIOUR_TRAVERSAL_SEARCH.maxCollisionSteps,
     maxDrop: frame.bounds.height,
-    profile: { ...motion.traversal, walkSpeed: motion.speed },
+    profile: {
+      gravity: motion.traversal.gravity,
+      jumpSpeed: motion.traversal.jumpSpeed,
+      maxFallSpeed: motion.traversal.maxFallSpeed,
+      walkSpeed: motion.traversal.speed,
+    },
     safe: (request) => {
       const { from, to } = request;
       const sweep = {
@@ -924,7 +929,7 @@ function advanceTraversalStep(
   // A map leg heads for its launch point, then for its goal's centre.
   const left = physical.x + context.body.offset.x;
   const toLaunch = leg?.launch === undefined ? 0 : leg.launch - left;
-  const launched = Math.abs(toLaunch) <= context.profile.walkSpeed * seconds + EDGE;
+  const launched = Math.abs(toLaunch) <= motion.speed * seconds + EDGE;
   const centre = leg
     ? leg.goal.x + leg.goal.width / 2 - left - context.body.width / 2
     : target.x + target.width / 2 - at.x - object.width / 2;
@@ -936,7 +941,12 @@ function advanceTraversalStep(
   let inputs = prior?.inputs ?? [];
   let status = prior?.status ?? "geometry-unavailable";
   const input = { jump: false, move, timeSeconds: frame.timeSeconds } as const;
-  const direct = stepTraversal(context, input, physical);
+  // A grounded step without planned inputs walks at the pursuit speed; planned inputs and air
+  // steps use the traversal speed their search proved.
+  const walk = physical.grounded
+    ? { ...context, profile: { ...context.profile, walkSpeed: motion.speed } }
+    : context;
+  const direct = stepTraversal(walk, input, physical);
   // Without planned inputs, a grounded body whose support has gone falls instead of holding
   // its place.
   if (

@@ -60,7 +60,7 @@ const plan: BehaviourPlan = {
         kind: "pursue",
         mode: "ground",
         speed: 40,
-        traversal: { gravity: 100, jumpSpeed: 40, maxFallSpeed: 100, prepSeconds: 0.2 },
+        traversal: { gravity: 100, jumpSpeed: 40, maxFallSpeed: 100, prepSeconds: 0.2, speed: 40 },
       },
       transitions: [],
     },

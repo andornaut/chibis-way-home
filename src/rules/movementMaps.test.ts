@@ -39,7 +39,7 @@ describe("boss movement profiles", () => {
       profile: {
         gravity: pursuit.traversal.gravity,
         jumpSpeed: pursuit.traversal.jumpSpeed,
-        walkSpeed: pursuit.speed,
+        walkSpeed: pursuit.traversal.speed,
       },
     });
     expect(entry?.kind === "ground" ? entry.profile.climb : "air").toBeUndefined();

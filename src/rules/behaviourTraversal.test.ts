@@ -90,7 +90,7 @@ const plan: BehaviourPlan = {
         kind: "pursue",
         mode: "ground",
         speed: 120,
-        traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0 },
+        traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0, speed: 120 },
       },
       transitions: [],
     },
@@ -267,7 +267,11 @@ function descentActorFixture(move: -1 | 1 = 1) {
     kind: "pursue",
     mode: "ground",
     speed: fixture.context.profile.walkSpeed,
-    traversal: { ...fixture.context.profile, prepSeconds: 0.6 },
+    traversal: {
+      ...fixture.context.profile,
+      prepSeconds: 0.6,
+      speed: fixture.context.profile.walkSpeed,
+    },
   } as const;
   const object = {
     ...actor(),
@@ -585,8 +589,67 @@ it("scales only authored spatial traversal units", () => {
   const resolved = layoutBehaviour(12, plan).states.chase!.motion;
   expect(resolved).toMatchObject({
     speed: 1440,
-    traversal: { gravity: 12000, jumpSpeed: 3600, maxFallSpeed: 6000, prepSeconds: 0 },
+    traversal: { gravity: 12000, jumpSpeed: 3600, maxFallSpeed: 6000, prepSeconds: 0, speed: 1440 },
   });
+});
+it("walks grounded at the pursuit speed and jumps at the traversal speed", () => {
+  const chase = plan.states.chase!;
+  if (chase.motion.kind !== "pursue" || chase.motion.mode !== "ground") {
+    throw new Error("Expected ground pursuit");
+  }
+  const split: BehaviourPlan = {
+    ...plan,
+    states: {
+      chase: {
+        ...chase,
+        motion: { ...chase.motion, traversal: { ...chase.motion.traversal!, speed: 240 } },
+      },
+    },
+  };
+  const object = objectLayout(
+    1,
+    {
+      archetypes: { actor: archetype },
+      characters: {
+        actor: { archetype: "actor", art: "actor", behaviour: split, cols: 24, rows: 24 },
+      },
+    },
+    {},
+    undefined,
+    {},
+    { character: "actor", col: 30, row: 276 },
+  );
+  const target = { ...startBird(BIRD, { x: 250, y: 264 }), grounded: true };
+  const solids = [
+    { height: 60, width: 110, x: 0, y: 300 },
+    { height: 96, width: 610, x: 110, y: 264 },
+  ];
+  let at = object.origin;
+  let state = {
+    ...startBehaviour(BIRD, object, target),
+    pursuit: { phase: "engaged" as const, settled: false, unreachableSeconds: 0 },
+  };
+  const grounded: number[] = [];
+  const air: number[] = [];
+  for (let tick = 0; tick < 480 && at.y + object.height !== 264; tick++) {
+    const next = stepBehaviour(
+      BIRD,
+      object,
+      world(solids, tick * STEP_SECONDS),
+      STEP_SECONDS,
+      target,
+      at,
+      state,
+    );
+    const dx = Math.abs(next.at.x - at.x) / STEP_SECONDS;
+    (next.at.y === at.y && at.y + object.height === 300 ? grounded : air).push(dx);
+    at = next.at;
+    state = next.state as typeof state;
+  }
+  expect(at.y + object.height).toBe(264);
+  expect(Math.max(...grounded)).toBeCloseTo(120, 6);
+  expect(Math.max(...air)).toBeGreaterThan(120 + 1e-6);
+  expect(Math.max(...air)).toBeLessThanOrEqual(240 + 1e-6);
 });
 it.each([
   { rise: 0, states: undefined },

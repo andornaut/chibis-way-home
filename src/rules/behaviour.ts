@@ -383,6 +383,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           node.motion.traversal.gravity,
           node.motion.traversal.jumpSpeed,
           node.motion.traversal.maxFallSpeed,
+          node.motion.traversal.speed,
         ].every((value) => Number.isFinite(value) && value > 0) ||
           !Number.isFinite(node.motion.traversal.prepSeconds) ||
           node.motion.traversal.prepSeconds < 0 ||
@@ -568,6 +569,7 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                         ...(node.motion.traversal.prepIntervalSeconds !== undefined && {
                           prepIntervalSeconds: node.motion.traversal.prepIntervalSeconds,
                         }),
+                        speed: node.motion.traversal.speed * tile,
                       },
                     }),
                   ...(node.motion.kind === "pursue" &&

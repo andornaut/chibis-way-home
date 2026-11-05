@@ -144,7 +144,7 @@ function fastestSpeed(plan: BehaviourPlan): number {
     ...Object.values(plan.states).flatMap(({ motion }) => [
       motion.kind === "wait" ? 0 : motion.speed,
       ...(motion.kind === "pursue" && motion.mode === "ground" && motion.traversal
-        ? [motion.traversal.jumpSpeed, motion.traversal.maxFallSpeed]
+        ? [motion.traversal.jumpSpeed, motion.traversal.maxFallSpeed, motion.traversal.speed]
         : []),
       ...(motion.kind === "hop" ? [(4 * motion.hopHeight) / motion.hopSeconds] : []),
     ]),

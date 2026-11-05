@@ -100,7 +100,7 @@ function airKey(profile: FlightProfile): string {
 }
 
 // One profile per distinct pursuit movement in a pursuer's resolved plan: ground pursuit from its
-// speed and traversal physics, with a climb when a state moves up its own vertical track, and
+// traversal speed and physics, with a climb when a state moves up its own vertical track, and
 // flight from its pursuit speed with the whole frame as the body, as flight landings use.
 export function bossMovementProfiles(object: ObjectLayout): readonly BossMovementProfile[] {
   const plan = object.behaviour;
@@ -120,13 +120,13 @@ export function bossMovementProfiles(object: ObjectLayout): readonly BossMovemen
       continue;
     }
     if (motion.mode === "ground" && motion.traversal) {
-      const { gravity, jumpSpeed, maxFallSpeed } = motion.traversal;
+      const { gravity, jumpSpeed, maxFallSpeed, speed } = motion.traversal;
       const profile: MovementProfile = {
         body: bodyOf(object),
         gravity,
         jumpSpeed,
         maxFallSpeed,
-        walkSpeed: motion.speed,
+        walkSpeed: speed,
         ...(climb && { climb }),
       };
       profiles.set(groundKey(profile), { key: groundKey(profile), kind: "ground", profile });
@@ -530,13 +530,13 @@ export function pursuitGroundMap(
     cached = { maps: new Map(), terrain: mapTerrain({}, area) };
     PURSUIT_MAPS.set(area, cached);
   }
-  const { gravity, jumpSpeed, maxFallSpeed } = motion.traversal;
+  const { gravity, jumpSpeed, maxFallSpeed, speed } = motion.traversal;
   const profile: MovementProfile = {
     body: bodyOf(object),
     gravity,
     jumpSpeed,
     maxFallSpeed,
-    walkSpeed: motion.speed,
+    walkSpeed: speed,
   };
   const left = Math.max(0, object.origin.x - leash);
   const right = Math.min(area.width, object.origin.x + object.width + leash);

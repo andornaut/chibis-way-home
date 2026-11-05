@@ -104,7 +104,7 @@ function pursuitMotion(object: ObjectLayout, walkSpeed: number): GroundMotion {
         motion.kind === "pursue" &&
         motion.mode === "ground" &&
         motion.traversal !== undefined &&
-        motion.speed === walkSpeed,
+        motion.traversal.speed === walkSpeed,
     );
   if (!motion) {
     throw new Error(`No ground pursuit motion for ${object.character}`);

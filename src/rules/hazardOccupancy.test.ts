@@ -15,7 +15,7 @@ const chase = {
   kind: "pursue",
   mode: "ground",
   speed: 100,
-  traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0 },
+  traversal: { gravity: 1000, jumpSpeed: 300, maxFallSpeed: 500, prepSeconds: 0, speed: 100 },
 } as const;
 const pursuit = {
   distance: 10000,

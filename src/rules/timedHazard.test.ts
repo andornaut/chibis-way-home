@@ -99,7 +99,7 @@ const motion: Extract<BehaviourMotion, { mode: "ground" }> = {
   kind: "pursue",
   mode: "ground",
   speed: 10,
-  traversal: { gravity: 100, jumpSpeed: 30, maxFallSpeed: 100, prepSeconds: 0 },
+  traversal: { gravity: 100, jumpSpeed: 30, maxFallSpeed: 100, prepSeconds: 0, speed: 10 },
 };
 const plan: BehaviourPlan = {
   axis: "x",
