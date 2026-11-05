@@ -16,21 +16,21 @@
       "grade": 4,
       "id": "blue-vertical-city-boundary-climb-yard",
       "kind": "single",
-      "layout": "e03f47a59a4e3bed",
+      "layout": "0864411413117d7a",
       "route": "d043e3432753ab2f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "2abd1700f35aa34e:12715",
-      "work": 12715
+      "trace": "87b5a56b845334ba:22819",
+      "work": 22819
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-city-boundary-dog-high",
       "kind": "single",
-      "layout": "cb8a0fa4f9f97884",
+      "layout": "e4b909a213882ecd",
       "route": "ed56da9df815e5f4",
       "slots": { "door": 0, "event": 0 },
-      "trace": "fa853645a461c4f1:4055",
+      "trace": "bf7106c040c95ab3:4055",
       "work": 4055
     },
     {
@@ -38,10 +38,10 @@
       "grade": 4,
       "id": "blue-vertical-city-boundary-dog-terrace",
       "kind": "single",
-      "layout": "2564e5edeeec7700",
+      "layout": "90e37e477d11f8de",
       "route": "56e4d63149836485",
       "slots": { "door": 0, "event": 0 },
-      "trace": "76a86e397b5aa510:4055",
+      "trace": "fbfbfecf3c204f12:4055",
       "work": 4055
     },
     {
@@ -269,22 +269,22 @@
       "grade": 4,
       "id": "blue-vertical-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "8d824a7e065f2b04",
+      "layout": "791b84fc951954e3",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
-      "trace": "061753c9c194be89:14720",
-      "work": 14720
+      "trace": "66c9e38ef8b53b8e:14814",
+      "work": 14814
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "95fc9e8feaf148a4",
+      "layout": "f61e34a1d4513865",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "165af28d78d5bcf7:8930",
-      "work": 8930
+      "trace": "c3c66b7b1ef76922:9106",
+      "work": 9106
     },
     {
       "encounters": 0,
@@ -302,33 +302,33 @@
       "grade": 4,
       "id": "blue-vertical-patrol-cover-early",
       "kind": "single",
-      "layout": "0c40a89dcf57e89b",
+      "layout": "0bdc0ca859278525",
       "route": "a30293dd32a8168f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "265141e836d9fd93:4536",
-      "work": 4536
+      "trace": "607e5bb9359e5c39:3449",
+      "work": 3449
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-patrol-cover-late",
       "kind": "single",
-      "layout": "940646947c1d1275",
+      "layout": "15e3c98ed8763210",
       "route": "4863105c7ad0c172",
       "slots": { "door": 0, "event": 0 },
-      "trace": "d241fa78b413d9df:1237",
-      "work": 1237
+      "trace": "4faccd1d77847453:1234",
+      "work": 1234
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "blue-vertical-patrol-cover-middle",
       "kind": "single",
-      "layout": "3da224f561690190",
+      "layout": "6f91437ad1fffe87",
       "route": "5eb6467e8dcfbfe6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "7b3a326dec18d90f:1721",
-      "work": 1721
+      "trace": "162ea1dc08626a52:1738",
+      "work": 1738
     },
     {
       "encounters": 0,
@@ -364,7 +364,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "07a8382551364c3a", "proofs": "a737e5c41eab37c7" },
+  "inputs": { "data": "6deaa403e6c48f43", "proofs": "27c3d8e97c668fa7" },
   "version": 1,
   "zone": "blue"
 }
