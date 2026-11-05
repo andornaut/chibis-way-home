@@ -836,15 +836,6 @@
       "repeat": "x"
     },
     {
-      "key": "cross-street",
-      "png": "backdrops/cross-street.png",
-      "width": 120,
-      "height": 26,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
       "key": "depot-loading-bay",
       "png": "backdrops/depot-loading-bay.png",
       "width": 120,
@@ -881,24 +872,6 @@
       "repeat": "x"
     },
     {
-      "key": "facade-walkup",
-      "png": "backdrops/facade-walkup.png",
-      "width": 48,
-      "height": 312,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "x"
-    },
-    {
-      "key": "facade-walkup-upper",
-      "png": "backdrops/facade-walkup-upper.png",
-      "width": 48,
-      "height": 180,
-      "anchor": "bottom-left",
-      "y": 288,
-      "repeat": "x"
-    },
-    {
       "key": "farmland-barn",
       "png": "backdrops/farmland-barn.png",
       "width": 120,
@@ -924,51 +897,6 @@
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "x"
-    },
-    {
-      "key": "fire-escape-ladder",
-      "png": "backdrops/fire-escape-ladder.png",
-      "width": 24,
-      "height": 96,
-      "anchor": "bottom-left",
-      "y": 432,
-      "repeat": "none"
-    },
-    {
-      "key": "fire-escape-ladder-4",
-      "png": "backdrops/fire-escape-ladder-4.png",
-      "width": 24,
-      "height": 48,
-      "anchor": "bottom-left",
-      "y": 432,
-      "repeat": "none"
-    },
-    {
-      "key": "fire-escape-ladder-5",
-      "png": "backdrops/fire-escape-ladder-5.png",
-      "width": 24,
-      "height": 60,
-      "anchor": "bottom-left",
-      "y": 432,
-      "repeat": "none"
-    },
-    {
-      "key": "fire-escape-ladder-6",
-      "png": "backdrops/fire-escape-ladder-6.png",
-      "width": 24,
-      "height": 72,
-      "anchor": "bottom-left",
-      "y": 432,
-      "repeat": "none"
-    },
-    {
-      "key": "fire-escape-ladder-7",
-      "png": "backdrops/fire-escape-ladder-7.png",
-      "width": 24,
-      "height": 84,
-      "anchor": "bottom-left",
-      "y": 432,
-      "repeat": "none"
     },
     {
       "key": "fire-escape-railing",
@@ -1068,15 +996,6 @@
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "x"
-    },
-    {
-      "key": "hot-dog-cart",
-      "png": "backdrops/hot-dog-cart.png",
-      "width": 40,
-      "height": 70,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
     },
     {
       "key": "industrial-far",
@@ -1268,15 +1187,6 @@
       "repeat": "x"
     },
     {
-      "key": "roofline-walkup",
-      "png": "backdrops/roofline-walkup.png",
-      "width": 48,
-      "height": 48,
-      "anchor": "bottom-left",
-      "y": 108,
-      "repeat": "x"
-    },
-    {
       "key": "room-building-blue-cityscape",
       "png": "backdrops/room-building-blue-cityscape.png",
       "width": 180,
@@ -1331,54 +1241,9 @@
       "repeat": "none"
     },
     {
-      "key": "storefront-diner",
-      "png": "backdrops/storefront-diner.png",
-      "width": 108,
-      "height": 120,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "storefront-florist",
-      "png": "backdrops/storefront-florist.png",
-      "width": 84,
-      "height": 120,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "storefront-gift-shop",
-      "png": "backdrops/storefront-gift-shop.png",
-      "width": 96,
-      "height": 120,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "storefront-makeup-store",
-      "png": "backdrops/storefront-makeup-store.png",
-      "width": 96,
-      "height": 120,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
       "key": "storefront-noodle-bar",
       "png": "backdrops/storefront-noodle-bar.png",
       "width": 120,
-      "height": 120,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "storefront-pet-shop",
-      "png": "backdrops/storefront-pet-shop.png",
-      "width": 108,
       "height": 120,
       "anchor": "bottom-left",
       "y": 600,
@@ -1421,33 +1286,6 @@
       "repeat": "x"
     },
     {
-      "key": "street-skyline",
-      "png": "backdrops/street-skyline.png",
-      "width": 336,
-      "height": 600,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "x"
-    },
-    {
-      "key": "street-tree",
-      "png": "backdrops/street-tree.png",
-      "width": 64,
-      "height": 136,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
-      "key": "subway-railing",
-      "png": "backdrops/subway-railing.png",
-      "width": 72,
-      "height": 62,
-      "anchor": "bottom-left",
-      "y": 600,
-      "repeat": "none"
-    },
-    {
       "key": "walk-signal",
       "png": "backdrops/walk-signal.png",
       "width": 12,
@@ -1482,15 +1320,6 @@
       "anchor": "bottom-left",
       "y": 600,
       "repeat": "x"
-    },
-    {
-      "key": "water-tower",
-      "png": "backdrops/water-tower.png",
-      "width": 48,
-      "height": 84,
-      "anchor": "bottom-left",
-      "y": 240,
-      "repeat": "none"
     },
     {
       "key": "woodland-far",
