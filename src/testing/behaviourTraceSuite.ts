@@ -15,6 +15,7 @@ import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bo
 import { stageLoader } from "../sim/catalogue";
 import { simulateStage } from "../sim/simulate";
 import { walkRequiredRoutes, walkZone } from "../sim/zoneWalk";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 import { TRACE } from "./behaviourTraceHook";
 import { ALL_CHUNKS } from "./chunks";
 import { chunkWalkPlan } from "./chunkWalkCases";
@@ -29,7 +30,6 @@ import {
   ORDINARY,
 } from "./encounterLayouts";
 import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";
-import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 // Each scenario must be deterministic: fixed seeds, fixed inputs and no wall-clock budgets.
 interface TraceScenario {

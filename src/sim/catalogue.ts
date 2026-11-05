@@ -21,10 +21,8 @@ import { zonePlanFor } from "../rules/zonePlans";
 import type { Tileset } from "../stage";
 import { type PreparedStage, prepareStage } from "./simulate";
 
-export function stageLoader(
-  stage: string,
-  artRoot = new URL("../../public/art/", import.meta.url),
-) {
+// Art's frames, hitboxes and tilesets, read from the built art without a bundler.
+export function nodeArt(artRoot = new URL("../../public/art/", import.meta.url)) {
   const read = <T>(path: string): T =>
     JSON.parse(readFileSync(new URL(path, artRoot), "utf8")) as T;
   const manifest = read<ArtManifest>("manifest.json");
@@ -50,9 +48,17 @@ export function stageLoader(
   );
   const hitboxes = artHitboxes(frame, manifest, contacts);
   const birdFrame = frame("bird");
-  const tilesets = Object.fromEntries(
+  const tilesets: Readonly<Record<string, Tileset>> = Object.fromEntries(
     manifest.tilesets.map(({ json, key }) => [key, read<Tileset>(json)]),
   );
+  return { birdFrame, hitboxes, tilesets };
+}
+
+export function stageLoader(
+  stage: string,
+  artRoot = new URL("../../public/art/", import.meta.url),
+) {
+  const { birdFrame, hitboxes, tilesets } = nodeArt(artRoot);
   const node = ZONE_MAP.nodes.find(({ id }) => id === stage);
   const key = node?.kind === "zone" ? node.zone : stage;
   if (!key) {

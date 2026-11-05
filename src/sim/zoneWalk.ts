@@ -38,6 +38,7 @@ const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
 const WALK_TERMINALS = new WeakMap<ZoneLayout, (zone: ZoneState, support: Surface) => void>();
 const WALK_WITNESSES = new WeakMap<ZoneLayout, WalkWitnesses>();
 const WALK_OBSERVERS = new WeakMap<ZoneLayout, (before: ZoneState, next: ZoneState) => void>();
+const WALK_STEP_HOOKS = new WeakMap<ZoneLayout, NonNullable<WalkRouteQuery["onStep"]>>();
 const WALK_SPANS = new WeakMap<
   ZoneLayout,
   WeakMap<
@@ -62,7 +63,11 @@ function physicalStep(
     BEHAVIOUR_INDICES.set(area, indices);
   }
   const active = indices.reduce((state, index) => activateBehaviour(index, state), zone);
-  return stepActualZone(SKILL_PROFILES, tuning, layout, seconds, input, active);
+  const next = stepActualZone(SKILL_PROFILES, tuning, layout, seconds, input, active);
+  if (next !== active) {
+    WALK_STEP_HOOKS.get(layout)?.(layout, seconds, active, next);
+  }
+  return next;
 }
 
 function observeTransition(layout: ZoneLayout, before: ZoneState, next: ZoneState): ZoneState {
@@ -1003,6 +1008,14 @@ export interface WalkRouteTarget {
 }
 
 export interface WalkRouteQuery {
+  // Called after every real zone step the walk takes that changes the state, speculative ones
+  // included, as the behaviour trace records them.
+  readonly onStep?: (
+    layout: ZoneLayout,
+    seconds: number,
+    before: ZoneState,
+    after: ZoneState,
+  ) => void;
   readonly targets: readonly WalkRouteTarget[];
   readonly tile: number;
 }
@@ -1107,6 +1120,9 @@ export function walkRequiredRoutes(
     });
   });
   const observedLayout = { ...layout };
+  if (query.onStep) {
+    WALK_STEP_HOOKS.set(observedLayout, query.onStep);
+  }
   if (required.intervals.length > 0) {
     WALK_OBSERVERS.set(observedLayout, (_before, zone) => {
       if (zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
@@ -1136,6 +1152,7 @@ export function walkRequiredRoutes(
     return { ...result, complete: result.cleared && requiredComplete(required) };
   } finally {
     WALK_OBSERVERS.delete(observedLayout);
+    WALK_STEP_HOOKS.delete(observedLayout);
   }
 }
 
@@ -1153,6 +1170,10 @@ function walk(
   // Fixed full-track bounds depend only on this layout, exact bounds object and surface.
   WALK_SPANS.set(observedLayout, new WeakMap());
   const observe = WALK_OBSERVERS.get(layout);
+  const onStep = WALK_STEP_HOOKS.get(layout);
+  if (onStep) {
+    WALK_STEP_HOOKS.set(observedLayout, onStep);
+  }
   if (required) {
     WALK_WITNESSES.set(observedLayout, required.witnesses);
   }
@@ -1180,6 +1201,7 @@ function walk(
     WALK_SPANS.delete(observedLayout);
     WALK_WITNESSES.delete(observedLayout);
     WALK_TERMINALS.delete(observedLayout);
+    WALK_STEP_HOOKS.delete(observedLayout);
   }
 }
 

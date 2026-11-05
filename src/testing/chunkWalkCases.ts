@@ -1,21 +1,33 @@
 import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
-import type { ObjectLayout, SlotKind, ZoneLayout } from "../data/types";
+import type { ChunkPlan, ObjectLayout, SlotKind, ZoneLayout, ZonePlan } from "../data/types";
 import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble";
 import { applyStageGeometry } from "../rules/stageGeometry";
 import { zoneLayout } from "../rules/tiles";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 import { type ALL_CHUNKS, ALL_RECIPES } from "./chunks";
-import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 type ChunkWalkCase = (typeof ALL_CHUNKS)[number];
+
+// The chunk alone in one of its themes, spawning at column 2.
+export function chunkThemePlan(
+  context: {
+    readonly fills: Readonly<Record<SlotKind, readonly string[]>>;
+    readonly theme: string;
+  },
+  library: ChunkLibrary,
+  chunk: ChunkPlan,
+) {
+  const only: ChunkLibrary = { ...library, chunks: { chunk } };
+  return zonePlanOf(only, () => 0, context.fills, context.theme, 2, ["chunk"]);
+}
 
 export function chunkWalkPlan(
   fills: Readonly<Record<SlotKind, readonly string[]>>,
   [, library, chunk]: ChunkWalkCase,
 ) {
-  const only: ChunkLibrary = { ...library, chunks: { chunk } };
-  const plan = zonePlanOf(only, () => 0, fills, themesOf(chunk)[0] ?? "", 2, ["chunk"]);
+  const plan = chunkThemePlan({ fills, theme: themesOf(chunk)[0] ?? "" }, library, chunk);
   const spawnRows = new Set(
     ALL_RECIPES.flatMap(([, source, recipe]) =>
       source === library && !("sections" in recipe) && source.chunks[recipe.start] === chunk
@@ -47,6 +59,12 @@ function physicalObject(object: ObjectLayout): ObjectLayout | null {
 }
 
 export function chunkWalkPhysics(subject: ChunkWalkCase): unknown {
+  return planPhysics(chunkWalkPlan({ door: [], event: [] }, subject));
+}
+
+// The physical content of a plan's layout: terrain, tuning and every object that moves, collides,
+// interacts or reacts, with the no-cross and out-of-reach marks.
+export function planPhysics(plan: ZonePlan): unknown {
   const layout: ZoneLayout = zoneLayout(
     TILE,
     BIRD_FRAME,
@@ -54,7 +72,7 @@ export function chunkWalkPhysics(subject: ChunkWalkCase): unknown {
     HITBOXES,
     TILESETS,
     new Set(),
-    chunkWalkPlan({ door: [], event: [] }, subject),
+    plan,
   );
   return {
     tuning: BIRD,
@@ -74,7 +92,7 @@ export function chunkWalkPhysics(subject: ChunkWalkCase): unknown {
       }),
     ),
     marks: Object.fromEntries(
-      Object.entries(chunkWalkPlan({ door: [], event: [] }, subject).areas).map(([key, area]) => [
+      Object.entries(plan.areas).map(([key, area]) => [
         key,
         { noCross: area.noCross ?? [], outOfReach: area.outOfReach ?? [] },
       ]),

@@ -27,7 +27,8 @@ const BOUNDARIES = [
     },
   },
   {
-    except: TEST_FILES,
+    // The certification CLI runs the required-route proofs the tests define.
+    except: [...TEST_FILES, "src/tools/chunkPairs.ts"],
     forbid: {
       group: ["**/testing", "**/testing/*"],
       message: "Only tests may import src/testing/.",

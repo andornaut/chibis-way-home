@@ -2,14 +2,14 @@ import { BIRD } from "../data/bird";
 import { CHUNKS, EXTERIOR_DEPTH_ALIASES, WOODLAND_DEPTH_ALIASES } from "../data/chunks";
 import { ROOMS } from "../data/rooms";
 import { TILE } from "../data/screen";
-import type { ChunkPlan } from "../data/types";
+import type { ChunkPlan, ModuleRouteProfile } from "../data/types";
 import { type ChunkLibrary, themesOf } from "../rules/assemble";
 import { bindElement } from "../rules/elementBinding";
 import { objectLayout } from "../rules/tiles";
 import { hasDynamicMotion } from "../sim/behaviourBounds";
 import type { WalkRouteTarget } from "../sim/zoneWalk";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 import { ALL_CHUNKS, FIXTURE_RECIPE } from "./chunks";
-import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
 
 const ROOM_FILL = "test";
 if (!(ROOM_FILL in ROOMS)) {
@@ -17,15 +17,20 @@ if (!(ROOM_FILL in ROOMS)) {
 }
 const EVENT_FILL = FIXTURE_RECIPE.events[0]!.id;
 
-export const FILLED_CHUNK_SLOTS: Readonly<
-  Record<string, { readonly door: readonly string[]; readonly event: readonly string[] }>
-> = Object.fromEntries(
+type SlotFills = { readonly door: readonly string[]; readonly event: readonly string[] };
+
+// Every slot of the chunk filled: doors with the test room, events with the fixture event.
+export function slotFills(chunk: ChunkPlan): SlotFills {
+  return {
+    door: (chunk.slots ?? []).filter(({ kind }) => kind === "door").map(() => ROOM_FILL),
+    event: (chunk.slots ?? []).filter(({ kind }) => kind === "event").map(() => EVENT_FILL),
+  };
+}
+
+export const FILLED_CHUNK_SLOTS: Readonly<Record<string, SlotFills>> = Object.fromEntries(
   ALL_CHUNKS.filter(([, , chunk]) => (chunk.slots?.length ?? 0) > 0).map(([name, , chunk]) => [
     name,
-    {
-      door: chunk.slots!.filter(({ kind }) => kind === "door").map(() => ROOM_FILL),
-      event: chunk.slots!.filter(({ kind }) => kind === "event").map(() => EVENT_FILL),
-    },
+    slotFills(chunk),
   ]),
 );
 
@@ -330,6 +335,18 @@ function filledApproaches(library: ChunkLibrary, chunk: ChunkPlan): Target[] {
       xRange: { max: col + cols - bodyCols, min: col },
     };
   });
+}
+
+// A module pair's targets: its declared profile's over the whole composed chunk, its declared
+// targets, then its slot approaches.
+export function moduleRouteTargets(
+  library: ChunkLibrary,
+  route: { readonly profile: ModuleRouteProfile; readonly targets: readonly Target[] },
+  chunk: ChunkPlan,
+): readonly Target[] {
+  const profile =
+    route.profile === "encounter" ? encounter : route.profile === "recovery" ? recovery : () => [];
+  return [...profile(library, chunk), ...route.targets, ...filledApproaches(library, chunk)];
 }
 
 // Synthetic fixtures retain exhaustive traversal; their secondary lists do not change that mode.

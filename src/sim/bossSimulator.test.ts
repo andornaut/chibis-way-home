@@ -11,7 +11,6 @@ import { SKILL_PROFILES } from "../progress";
 import { layoutBehaviour } from "../rules/behaviour";
 import { retryZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { zoneTraceLine } from "../testing/behaviourTraceHook";
 import { BOSS_SCENARIOS } from "../testing/bossScenarios";
 import {
   chunkLayout,
@@ -32,6 +31,7 @@ import {
   scriptedChibi,
   simulateBosses,
 } from "./bossSimulator";
+import { zoneTraceLine } from "./zoneTrace";
 
 const RECORDED: Readonly<Record<string, string>> = JSON.parse(
   readFileSync(new URL("fixtures/behaviourTraces/encounters.json", import.meta.url), "utf8"),

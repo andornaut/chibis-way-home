@@ -8,7 +8,7 @@ import { startBird } from "../rules/bird";
 import { zoneLayout } from "../rules/tiles";
 import type { ZoneInput, ZoneState } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 
 // Chibi without skills.
 export const ORDINARY: BirdTuning = (() => {

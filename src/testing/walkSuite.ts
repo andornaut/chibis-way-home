@@ -1,19 +1,9 @@
-import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 import { beforeAll, expect, it } from "vitest";
 
-import manifestJson from "../../public/art/manifest.json";
-import {
-  artHitboxes,
-  type ArtManifest,
-  BIRD_FRAME,
-  sheetFrameSize,
-  spriteContacts,
-} from "../assets";
-import { ARCHETYPES } from "../data/archetypes";
+import { BIRD_FRAME } from "../assets";
 import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
-import type { SpriteSilhouettes, TilePoint, ZoneLayout, ZonePlan } from "../data/types";
+import type { TilePoint, ZoneLayout, ZonePlan } from "../data/types";
 import { zoneLayout } from "../rules/tiles";
 import {
   crosses,
@@ -25,45 +15,9 @@ import {
   walkZone,
   type ZoneWalk,
 } from "../sim/zoneWalk";
-import type { Tileset } from "../stage";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 
-const SHEETS = import.meta.glob<
-  AsepriteSheet & {
-    readonly frames: Readonly<Record<string, { readonly sourceSize: { w: number; h: number } }>>;
-  }
->("../../public/art/sprites/*.json", { eager: true, import: "default" });
-const frame = (key: string) =>
-  sheetFrameSize(SHEETS[`../../public/art/sprites/${key}.json`] ?? { frames: {} });
-const contactData = import.meta.glob<SpriteSilhouettes>(
-  "../../public/art/contact-silhouettes.json",
-  { eager: true, import: "default" },
-);
-export const HITBOXES = artHitboxes(
-  frame,
-  manifestJson as ArtManifest,
-  spriteContacts(
-    manifestJson as ArtManifest,
-    (key) => {
-      const sheet = SHEETS[`../../public/art/sprites/${key}.json`];
-      if (!sheet) {
-        throw new Error(`Missing contact sheet ${key}`);
-      }
-      return sheet;
-    },
-    frame,
-    contactData["../../public/art/contact-silhouettes.json"],
-  ),
-);
-export const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
-// Art's tilesets by key.
-export const TILESETS: Readonly<Record<string, Tileset>> = Object.fromEntries(
-  Object.entries(
-    import.meta.glob<Tileset>("../../public/art/tilesets/*.json", {
-      eager: true,
-      import: "default",
-    }),
-  ).map(([path, tileset]) => [path.replace(/^.*\/(.*)\.json$/, "$1"), tileset]),
-);
+export { CATALOGUE, HITBOXES, TILESETS };
 // The walk takes seconds on a large zone.
 export const WALK_MS = 120_000;
 
