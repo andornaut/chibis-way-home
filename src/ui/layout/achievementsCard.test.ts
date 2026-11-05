@@ -13,7 +13,9 @@ import {
   achievementsPerPage,
 } from "./achievementsCard";
 import { CARD_TEXT_SCALE } from "./cardFrame";
+import { CARD_CONTENT } from "./contentCard";
 import { DIALOGUE_SCREEN } from "./dialogueScreen";
+import { FONT_METRICS } from "./fontRoles";
 import { type PressArea, pressedArea } from "./hitAreas";
 
 const WORDS = { ...TEXT.achievements.pages, title: TEXT.achievements.cardTitle };
@@ -63,6 +65,14 @@ describe("the Achievements card", () => {
       sameSlotsEachPage: true,
       underTitle: true,
     });
+  });
+
+  it("sets the title at the main heading and starts the list a gap below it and the close target", () => {
+    const first = LAYOUT.entries[0]!.slot;
+    const closeClearance = bottom(LAYOUT.close.hit) + CARD_CONTENT.gap;
+    expect(LAYOUT.title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
+    expect(first.y).toBe(Math.max(bottom(LAYOUT.title) + CARD_CONTENT.gap, closeClearance));
+    expect(first.y).toBeGreaterThanOrEqual(closeClearance);
   });
 
   it("fits the card in the view, centred, with Previous left and Next right of the count", () => {

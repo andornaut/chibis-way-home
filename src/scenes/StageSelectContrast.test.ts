@@ -10,6 +10,7 @@ vi.mock("@andornaut/game-kit/text/phaser/phaserBitmapFont", () => ({
 }));
 vi.mock("./cardParts", async (original) => ({
   ...(await original<typeof import("./cardParts")>()),
+  addCardHeading: () => drawable(),
   addCardText: (_scene: unknown, _font: string, _at: unknown, text: string, colour: string) =>
     label(text, colour),
   addCardTextIn: (_scene: unknown, _font: string, _at: unknown, text: string, colour: string) =>

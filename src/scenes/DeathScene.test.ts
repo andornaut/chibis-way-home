@@ -29,14 +29,14 @@ vi.mock("../ui/layout/deathCard", () => ({
     stageText: "Stage",
     statement: { rect: {}, text: "One statement" },
     stats: [],
-    title: {},
-    titleText: "Zone",
+    title: { text: "Zone" },
   })),
 }));
 vi.mock("./cardParts", () => ({
   BODY_FONT: "body",
   PRIMARY_BUTTON: {},
   TITLE_FONT: "title",
+  addCardHeading: vi.fn(),
   addCardTextIn: vi.fn(() => ({ setLeftAlign: vi.fn(), setRightAlign: vi.fn() })),
   addSlice: vi.fn(),
   addTextButton: vi.fn(),

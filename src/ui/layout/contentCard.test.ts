@@ -8,12 +8,16 @@ import { TEXT } from "../../data/text";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
   CARD_CONTENT,
+  CARD_HEADING,
   cardActions,
   cardActionsSize,
   cardTextOrigin,
   cardTextSize,
+  cardTitleOrigin,
+  cardTitleText,
   contentCardLayout,
 } from "./contentCard";
+import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
 import { textInkBounds } from "./textInk";
 
 const BODY = parseBitmapFont(fontBody);
@@ -55,12 +59,64 @@ describe("measured content cards", () => {
   it.each([false, true])(
     "includes the optional close control without shrinking the title (close=%s)",
     (close) => {
-      const titleWidth = 180;
-      const result = contentCardLayout(VIEW, [], { close, titleWidth });
-      expect(result.title?.width).toBeGreaterThanOrEqual(titleWidth);
+      const result = contentCardLayout(VIEW, [], {
+        close,
+        font: TITLE,
+        title: TEXT.settings.title,
+      });
+      expect(result.title?.width).toBeGreaterThanOrEqual(
+        inkWidth(TITLE, CARD_HEADING.scale, TEXT.settings.title),
+      );
       expect(result.close === undefined).toBe(!close);
     },
   );
+
+  it("sets titles at the main-heading size and line height, wrapping instead of shrinking", () => {
+    const { lineHeight, size } = FONT_METRICS.mainHeading;
+    expect(CARD_HEADING).toEqual({ lineHeight, scale: size / FONT_NATIVE_SIZE });
+    const single = cardTitleText(TITLE, SCREEN.width, TEXT.settings.title);
+    expect(single.height).toBe(lineHeight);
+    expect(single.width).toBe(inkWidth(TITLE, size / FONT_NATIVE_SIZE, TEXT.settings.title));
+    const long = `${TEXT.settings.title} `.repeat(12).trim();
+    const result = contentCardLayout(VIEW, [], { close: true, font: TITLE, title: long });
+    const lines = result.title!.text.split("\n");
+    expect(lines.length).toBeGreaterThan(1);
+    expect(result.title!.height).toBe(lines.length * lineHeight);
+    for (const line of lines) {
+      expect(inkWidth(TITLE, CARD_HEADING.scale, line)).toBeLessThanOrEqual(result.title!.width);
+    }
+    expect(result.card.width).toBeLessThanOrEqual(SCREEN.width);
+  });
+
+  it.each([0, 12])(
+    "makes the header the taller of the title line and the close clearance (outset %s)",
+    (hitOutset) => {
+      const layout = contentCardLayout(VIEW, [{ height: 48, hitOutset, key: "rows", width: 200 }], {
+        close: true,
+        font: TITLE,
+        title: TEXT.settings.title,
+      });
+      const title = layout.title!;
+      const close = layout.close!.hit;
+      expect(title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
+      expect(layout.groups.rows!.y).toBe(
+        Math.max(title.y + title.height, close.y + close.height + hitOutset) + CARD_CONTENT.gap,
+      );
+      expect(layout.groups.rows!.y - hitOutset).toBeGreaterThanOrEqual(
+        close.y + close.height + CARD_CONTENT.gap,
+      );
+    },
+  );
+
+  it("centres heading ink at the display size", () => {
+    const font = TITLE;
+    const text = TEXT.settings.title;
+    const rect = { height: 28, width: 280, x: 40, y: 16 };
+    const at = cardTitleOrigin(font, rect, text);
+    const ink = textInkBounds(font, CARD_HEADING.scale, CARD_HEADING.lineHeight, text);
+    expect(at.x + ink.x + ink.width / 2).toBe(rect.x + rect.width / 2);
+    expect(at.y + ink.y + ink.height / 2).toBe(rect.y + rect.height / 2);
+  });
 
   it("expands for long content instead of forcing a standard width", () => {
     const narrow = contentCardLayout(VIEW, [{ height: 16, key: "label", width: 80 }]);

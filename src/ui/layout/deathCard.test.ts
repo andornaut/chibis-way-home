@@ -11,8 +11,9 @@ import { formatRunStats } from "../../progress";
 import { statsStatement } from "../dialogue/statsStatement";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { CARD_CONTENT } from "./contentCard";
+import { CARD_CONTENT, CARD_HEADING } from "./contentCard";
 import { deathCard } from "./deathCard";
+import { FONT_METRICS } from "./fontRoles";
 import { RUN_STAT_KEYS, runStatLabels, statsTotalRows } from "./runStats";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
@@ -129,19 +130,19 @@ describe("death card", () => {
       expect(layout.card.y + layout.card.height).toBeLessThanOrEqual(
         SCREEN.height - CARD_CONTENT.padding,
       );
-      for (const name of ["title", "stage", "progress"] as const) {
+      expect(
+        Math.max(
+          ...layout.title.text
+            .split("\n")
+            .map((line) => inkWidth(fonts.title, CARD_HEADING.scale, line)),
+        ),
+      ).toBeLessThanOrEqual(layout.title.width);
+      for (const name of ["stage", "progress"] as const) {
         expect(
           Math.max(
-            ...(name === "title"
-              ? layout.titleText
-              : name === "stage"
-                ? layout.stageText
-                : summary[name]
-            )
+            ...(name === "stage" ? layout.stageText : summary[name])
               .split("\n")
-              .map((line) =>
-                inkWidth(name === "title" ? fonts.title : fonts.body, CARD_TEXT_SCALE, line),
-              ),
+              .map((line) => inkWidth(fonts.body, CARD_TEXT_SCALE, line)),
           ),
         ).toBeLessThanOrEqual(layout[name].width);
       }
@@ -203,7 +204,11 @@ it("fits all six actual retry statements and grouped totals within the centred s
       expect(result.home.button.y - result.divider.y - result.divider.height).toBe(
         2 * CARD_CONTENT.gap,
       );
-      expect(result.card.height).toBe(248);
+      // The main-heading line replaces a 16px single-line slot.
+      expect(result.title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
+      expect(result.card.height).toBe(
+        248 - CARD_CONTENT.lineHeight + FONT_METRICS.mainHeading.lineHeight,
+      );
       expect(result.home.button.height).toBe(TEXT_BUTTON.height);
       expect(result.retry.button.height).toBe(TEXT_BUTTON.height);
       expect(result.title.x - result.card.x).toBe(50);

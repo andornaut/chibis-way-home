@@ -32,8 +32,8 @@ import {
 } from "../ui";
 import { FRAME_TURN } from "../ui/input/frameTurn";
 import {
+  addCardHeading,
   addCardText,
-  addCardTextIn,
   addSlice,
   addTextButton,
   captureTab,
@@ -44,7 +44,6 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-  TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
@@ -492,7 +491,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     const words = TEXT.pause;
     const objects: GameObjects.GameObject[] = [
       this.slice("ui-settings-card", card),
-      addCardTextIn(this, TITLE_FONT, this.layout.title, words.title, paletteColour(this, "ink")),
+      addCardHeading(this, this.layout.title),
     ];
     this.closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);
     this.buttons = {

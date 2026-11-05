@@ -19,7 +19,7 @@ export function restartCard(fonts: CardFonts, words: GameText["restart"]) {
       { key: "question", ...cardTextSize(fonts.body, words.question) },
       { key: "actions", ...cardActionsSize(fonts.title, "row", labels) },
     ],
-    { close: false, titleWidth: cardTextSize(fonts.title, words.title).width },
+    { close: false, font: fonts.title, title: words.title },
   );
   const [cancel, restart] = cardActions(fonts.title, "row", layout.groups.actions!, labels);
   return {

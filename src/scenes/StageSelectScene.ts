@@ -22,6 +22,7 @@ import {
   textInkBounds,
 } from "../ui";
 import {
+  addCardHeading,
   addCardText,
   addCardTextIn,
   addSlice,
@@ -129,7 +130,7 @@ export class StageSelectScene extends Scene {
       this.stages.map((id) => TEXT.map.stages[id]!),
     );
     addSlice(this, "ui-settings-card", this.layout.card);
-    addCardTextIn(this, TITLE_FONT, this.layout.title, title, paletteColour(this, "ink"));
+    addCardHeading(this, this.layout.title);
     const font = phaserBitmapFont(this.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
     this.stages.forEach((id, index) => {
       const layout = this.layout.buttons[index]!;

@@ -8,24 +8,21 @@ import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa";
 import {
   cardActions,
   cardActionsSize,
-  cardTextSize,
   contentCardLayout,
   type PressArea,
   pressedArea,
   stepFocus,
 } from "../ui";
 import {
-  addCardTextIn,
+  addCardHeading,
   addSlice,
   addTextButton,
   captureTab,
   cardFonts,
-  paletteColour,
   pressTextButton,
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-  TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
@@ -96,7 +93,7 @@ export class UpdateScene extends Scene {
     this.layout = contentCardLayout(
       { ...SCREEN, x: 0, y: 0 },
       [{ key: "actions", ...cardActionsSize(fonts.title, "row", labels) }],
-      { close: true, titleWidth: cardTextSize(fonts.title, TEXT.update.title).width },
+      { close: true, font: fonts.title, title: TEXT.update.title },
     );
     const group = this.layout.groups.actions;
     const title = this.layout.title;
@@ -110,7 +107,7 @@ export class UpdateScene extends Scene {
     }
     this.actions = { accept, cancel };
     addSlice(this, "ui-settings-card", this.layout.card);
-    addCardTextIn(this, TITLE_FONT, title, TEXT.update.title, paletteColour(this, "ink"));
+    addCardHeading(this, title);
     this.closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);
     this.closeX.play(animationKey("ui-close", "normal"));
     this.buttons = {

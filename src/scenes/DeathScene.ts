@@ -19,6 +19,7 @@ import {
   type StatsTotalsSnapshot,
 } from "../ui";
 import {
+  addCardHeading,
   addCardTextIn,
   addSlice,
   addTextButton,
@@ -30,7 +31,6 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-  TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
@@ -107,16 +107,13 @@ export class DeathScene extends Scene {
       },
     );
     addSlice(this, "ui-settings-card", this.layout.card);
-    for (const name of ["title", "stage", "progress"] as const) {
+    addCardHeading(this, this.layout.title);
+    for (const name of ["stage", "progress"] as const) {
       addCardTextIn(
         this,
-        name === "title" ? TITLE_FONT : BODY_FONT,
+        BODY_FONT,
         this.layout[name],
-        name === "title"
-          ? this.layout.titleText
-          : name === "stage"
-            ? this.layout.stageText
-            : words[name],
+        name === "stage" ? this.layout.stageText : words[name],
         paletteColour(this, "ink"),
       );
     }

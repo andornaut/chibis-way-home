@@ -3,13 +3,7 @@ import type { ControlAction, Rect, SkillText } from "../../data/types";
 import { actionHelpLayout } from "./actionHelp";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT } from "./cardFrame";
-import {
-  cardActions,
-  cardActionsSize,
-  type CardFonts,
-  cardTextSize,
-  contentCardLayout,
-} from "./contentCard";
+import { cardActions, cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard";
 import { DIALOGUE_SCREEN } from "./dialogueScreen";
 import { hitAround } from "./hitAreas";
 import { SKILL_BUTTON } from "./skillHud";
@@ -79,7 +73,7 @@ export function skillDetails(
         width: SKILL_BUTTON.target + CARD_CONTENT.gap + description.width,
       },
     ],
-    { close, titleWidth: cardTextSize(fonts.title, words.title).width },
+    { close, font: fonts.title, title: words.title },
   );
   if (layout.card.height > bounds.height) {
     throw new Error("Skill details do not fit at the standard font size");

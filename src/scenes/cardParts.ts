@@ -12,10 +12,13 @@ import {
   type ButtonFaceState,
   type ButtonLabelPlacement,
   buttonLabelPlacement,
+  CARD_HEADING,
   CARD_TEXT_SCALE,
   type CardFonts,
   cardTextOrigin,
   cardTitleAt,
+  type CardTitleLayout,
+  cardTitleOrigin,
   focusRingAround,
   FONT_ROLES,
   type LabelledButton,
@@ -100,6 +103,21 @@ export function addCardTextIn(
 ): GameObjects.BitmapText {
   const font = phaserBitmapFont(scene.cache.bitmapFont.get(fontKey).data as PhaserFontData);
   return addCardText(scene, fontKey, cardTextOrigin(font, rect, text), text, colour);
+}
+
+// A measured card title in ink at the main-heading size, its ink centred in its rect, its lines
+// the role's line height apart.
+export function addCardHeading(scene: Scene, title: CardTitleLayout): GameObjects.BitmapText {
+  const font = phaserBitmapFont(scene.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
+  return addCardText(
+    scene,
+    TITLE_FONT,
+    cardTitleOrigin(font, title, title.text),
+    title.text,
+    paletteColour(scene, "ink"),
+  )
+    .setScale(CARD_HEADING.scale)
+    .setLineSpacing(CARD_HEADING.lineHeight / CARD_HEADING.scale - font.lineHeight);
 }
 
 // A card's title in ink, centred across card near its top, as every card's frame places it

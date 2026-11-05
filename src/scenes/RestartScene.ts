@@ -3,6 +3,7 @@ import { type GameObjects, type Input, Scene } from "phaser";
 import { TEXT } from "../data/text";
 import { focusKeyAction, type PressArea, pressedArea, restartCard, stepFocus } from "../ui";
 import {
+  addCardHeading,
   addCardTextIn,
   addSlice,
   addTextButton,
@@ -12,7 +13,6 @@ import {
   pressTextButton,
   ringFocus,
   type TextButton,
-  TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
@@ -70,7 +70,7 @@ export class RestartScene extends Scene {
     const { card, question } = this.layout;
     const words = TEXT.restart;
     addSlice(this, "ui-settings-card", card);
-    addCardTextIn(this, TITLE_FONT, this.layout.title, words.title, paletteColour(this, "ink"));
+    addCardHeading(this, this.layout.title);
     addCardTextIn(this, BODY_FONT, question, words.question, paletteColour(this, "ink"));
     this.buttons = {
       cancel: addTextButton(this, this.layout.cancel, words.cancel),

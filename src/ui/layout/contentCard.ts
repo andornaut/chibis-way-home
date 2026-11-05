@@ -1,3 +1,4 @@
+import { wrapWords } from "@andornaut/game-kit/lines";
 import { modalWidth } from "@andornaut/game-kit/modalLayout";
 import { insetRect } from "@andornaut/game-kit/rect";
 import { type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
@@ -6,6 +7,7 @@ import { SCREEN } from "../../data/screen";
 import type { Point, Rect, Size } from "../../data/types";
 import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
+import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
 import { hitAround, hitMargin } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./labelledButton";
 import { textInkBounds } from "./textInk";
@@ -23,16 +25,82 @@ interface CardGroup extends Size {
   readonly key: string;
 }
 
+// Modal titles use the main-heading role: measured at its display size, with its declared line
+// height rather than the scaled atlas pitch.
+export const CARD_HEADING = {
+  lineHeight: FONT_METRICS.mainHeading.lineHeight,
+  scale: FONT_METRICS.mainHeading.size / FONT_NATIVE_SIZE,
+} as const;
+
+// A title wrapped at the heading size: its lines joined by newlines, and its measured box.
+export interface CardTitle extends Size {
+  readonly text: string;
+}
+
+export type CardTitleLayout = Rect & { readonly text: string };
+
 interface CardHeader {
   readonly close: boolean;
-  readonly titleWidth: number;
+  readonly font: BitmapFont;
+  readonly title: string;
 }
 
 interface ContentCardLayout {
   readonly card: Rect;
   readonly close?: { readonly art: Rect; readonly at: Point; readonly hit: Rect };
   readonly groups: Readonly<Record<string, Rect>>;
-  readonly title?: Rect;
+  readonly title?: CardTitleLayout;
+}
+
+const CLOSE_ART: Rect = {
+  height: CARD_CONTENT.closeSize,
+  width: CARD_CONTENT.closeSize,
+  x: CARD_CONTENT.closeInset,
+  y: CARD_CONTENT.closeInset,
+};
+const CLOSE_HIT = hitAround(CLOSE_ART);
+
+// The horizontal clearance on each side of a centred title: the full positioned close target plus
+// the gap, mirrored, or the ordinary padding without a close control.
+export function cardTitleReserve(close: boolean): number {
+  return close
+    ? Math.max(CARD_CONTENT.padding, CLOSE_HIT.x + CLOSE_HIT.width + CARD_CONTENT.gap)
+    : CARD_CONTENT.padding;
+}
+
+// The header's height below the top padding: the title's lines, or the close target's clearance
+// for the first group's expanded press area, whichever is taller.
+export function cardHeaderHeight(
+  options: { readonly close: boolean; readonly hitOutset?: number },
+  titleHeight: number,
+): number {
+  return Math.max(
+    titleHeight,
+    options.close
+      ? CLOSE_HIT.y + CLOSE_HIT.height - CARD_CONTENT.padding + (options.hitOutset ?? 0)
+      : 0,
+  );
+}
+
+// Wrap a title at the heading size within width. Text never shrinks: a word wider than width
+// throws.
+export function cardTitleText(font: BitmapFont, width: number, text: string): CardTitle {
+  const { lineHeight, scale } = CARD_HEADING;
+  const measure = (line: string) => inkWidth(font, scale, line);
+  const lines = text.split("\n").flatMap((paragraph) => wrapWords(measure, width, paragraph));
+  if (lines.some((line) => measure(line) > width)) {
+    throw new Error(`Title cannot fit ${width}px: ${text}`);
+  }
+  return {
+    height:
+      (lines.length - 1) * lineHeight +
+      Math.max(
+        lineHeight,
+        ...lines.map((line) => textInkBounds(font, scale, lineHeight, line).height),
+      ),
+    text: lines.join("\n"),
+    width: Math.max(0, ...lines.map(measure)),
+  };
 }
 
 export function cardTextSize(font: BitmapFont, text: string): Size {
@@ -92,29 +160,16 @@ export function contentCardLayout(
   }
   const present = groups.filter(({ height }) => height > 0);
   const close = header?.close === true;
-  const hasTitle = header !== undefined && header.titleWidth > 0;
-  const hasHeader = hasTitle || close;
-  const closeArt = {
-    height: CARD_CONTENT.closeSize,
-    width: CARD_CONTENT.closeSize,
-    x: CARD_CONTENT.closeInset,
-    y: CARD_CONTENT.closeInset,
-  };
-  const closeHit = hitAround(closeArt);
-  const closeRight = closeHit.x + closeHit.width;
-  const closeBottom = closeHit.y + closeHit.height;
-  const titleReserve = close
-    ? Math.max(CARD_CONTENT.padding, closeRight + CARD_CONTENT.gap)
-    : CARD_CONTENT.padding;
+  const titleReserve = cardTitleReserve(close);
+  const titleText =
+    header && header.title.length > 0
+      ? cardTitleText(header.font, bounds.width - 2 * titleReserve, header.title)
+      : undefined;
+  const hasHeader = titleText !== undefined || close;
   const headerHeight = hasHeader
-    ? Math.max(
-        hasTitle ? CARD_CONTENT.lineHeight : 0,
-        close ? closeBottom - CARD_CONTENT.padding + (present[0]?.hitOutset ?? 0) : 0,
-      )
+    ? cardHeaderHeight({ close, hitOutset: present[0]?.hitOutset ?? 0 }, titleText?.height ?? 0)
     : 0;
-  const headerWidth = hasTitle
-    ? (header?.titleWidth ?? 0) + 2 * (titleReserve - CARD_CONTENT.padding)
-    : 0;
+  const headerWidth = titleText ? titleText.width + 2 * (titleReserve - CARD_CONTENT.padding) : 0;
   const contentWidth = Math.max(headerWidth, 0, ...present.map(({ width }) => width));
   const count = present.length + (hasHeader ? 1 : 0);
   const width = modalWidth(
@@ -140,12 +195,13 @@ export function contentCardLayout(
   const innerX = inner.x;
   let y = inner.y;
   const positions: Record<string, Rect> = {};
-  let title: Rect | undefined;
+  let title: CardTitleLayout | undefined;
   let closeLayout: ContentCardLayout["close"];
   if (hasHeader) {
-    if (hasTitle) {
+    if (titleText) {
       title = {
-        height: CARD_CONTENT.lineHeight,
+        height: titleText.height,
+        text: titleText.text,
         width: width - 2 * titleReserve,
         x: card.x + titleReserve,
         y,
@@ -153,9 +209,9 @@ export function contentCardLayout(
     }
     if (close) {
       const art = {
-        ...closeArt,
-        x: card.x + card.width - closeArt.x - closeArt.width,
-        y: card.y + closeArt.y,
+        ...CLOSE_ART,
+        x: card.x + card.width - CLOSE_ART.x - CLOSE_ART.width,
+        y: card.y + CLOSE_ART.y,
       };
       closeLayout = { art, at: { x: art.x, y: art.y }, hit: hitAround(art) };
     }
@@ -205,7 +261,22 @@ export function cardActions(
 
 // Centre visible ink instead of the font's advance, side bearings or line-height padding.
 export function cardTextOrigin(font: BitmapFont, rect: Rect, text: string): Point {
-  const ink = textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text);
+  return inkOrigin(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, rect, text);
+}
+
+// The same centring for a title at the heading size and line height.
+export function cardTitleOrigin(font: BitmapFont, rect: Rect, text: string): Point {
+  return inkOrigin(font, CARD_HEADING.scale, CARD_HEADING.lineHeight, rect, text);
+}
+
+function inkOrigin(
+  font: BitmapFont,
+  scale: number,
+  linePitch: number,
+  rect: Rect,
+  text: string,
+): Point {
+  const ink = textInkBounds(font, scale, linePitch, text);
   return {
     x: rect.x + (rect.width - ink.width) / 2 - ink.x,
     y: rect.y + (rect.height - ink.height) / 2 - ink.y,

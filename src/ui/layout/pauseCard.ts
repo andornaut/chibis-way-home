@@ -1,13 +1,7 @@
 import { SCREEN } from "../../data/screen";
 import type { GameText, Point, Rect } from "../../data/types";
 import { TEXT_BUTTON } from "./buttonLabel";
-import {
-  CARD_CONTENT,
-  cardActionsSize,
-  type CardFonts,
-  cardTextSize,
-  contentCardLayout,
-} from "./contentCard";
+import { CARD_CONTENT, cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard";
 import { hitAround, hitMargin } from "./hitAreas";
 import { labelledButton } from "./labelledButton";
 import { CONTROL_EDGE } from "./playView";
@@ -20,7 +14,7 @@ export function pauseCard(fonts: CardFonts, words: GameText["pause"]) {
     height: labels.length * TEXT_BUTTON.height + (labels.length - 1) * CARD_CONTENT.gap,
   };
   const bounds = { ...SCREEN, x: 0, y: 0 };
-  const header = { close: true, titleWidth: cardTextSize(fonts.title, words.title).width };
+  const header = { close: true, font: fonts.title, title: words.title };
   const measured = contentCardLayout(bounds, [{ ...actions, key: "actions" }], header);
   const width = measured.card.width - 2 * CARD_CONTENT.padding;
   // Reserve the expanded hit area of the actual filled-width actions below the close target.

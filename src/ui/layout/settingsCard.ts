@@ -13,7 +13,8 @@ import { labelledButton } from "./labelledButton";
 const ICON = 16;
 const SWITCH = { height: 16, width: 32 };
 // Each row is its own press target, already the minimum target height, so it gains no margin and
-// the first row starts directly below the close target's clearance.
+// the first row starts a gap below the header: the taller of the title line and the close
+// target's clearance.
 const ROW_HEIGHT = HIT_RULE.minTarget;
 
 export function settingsCard(
@@ -44,7 +45,7 @@ export function settingsCard(
       },
       { key: "build", ...cardTextSize(fonts.body, build) },
     ],
-    { close: true, titleWidth: cardTextSize(fonts.title, words.title).width },
+    { close: true, font: fonts.title, title: words.title },
   );
   const group = layout.groups.rows!;
   const row = (index: number, text: string) => {
@@ -98,7 +99,7 @@ export function stepsCard(fonts: CardFonts, title: string, texts: readonly strin
       key: String(index),
       width: ICON + CARD_CONTENT.gap + size.width,
     })),
-    { close: true, titleWidth: cardTextSize(fonts.title, title).width },
+    { close: true, font: fonts.title, title },
   );
   return {
     card: layout.card,

@@ -90,7 +90,7 @@ export function stageSelectPages(
           ]
         : []),
     ],
-    { close: true, titleWidth: cardTextSize(fonts.title, title).width },
+    { close: true, font: fonts.title, title },
   );
   const group = layout.groups.stages!;
   const titleRect = layout.title;

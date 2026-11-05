@@ -5,9 +5,10 @@ import {
   cardActionsSize,
   type CardFonts,
   cardTextSize,
+  cardTitleReserve,
+  cardTitleText,
   contentCardLayout,
 } from "./contentCard";
-import { hitAround } from "./hitAreas";
 import {
   RUN_STAT_KEYS,
   STATS_DIVIDER_HEIGHT,
@@ -40,27 +41,17 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
   const statsPadding = statsInset - CARD_CONTENT.padding;
   const dividerGap = 2 * CARD_CONTENT.gap;
   const sectionPadding = CARD_CONTENT.gap;
-  const closeHit = hitAround({
-    height: CARD_CONTENT.closeSize,
-    width: CARD_CONTENT.closeSize,
-    x: CARD_CONTENT.closeInset,
-    y: CARD_CONTENT.closeInset,
-  });
-  const titleReserve = Math.max(
-    CARD_CONTENT.padding,
-    closeHit.x + closeHit.width + CARD_CONTENT.gap,
-  );
+  // The title keeps the closeable cards' mirrored reservation so every modal title centres alike.
+  const titleReserve = cardTitleReserve(true);
   const innerWidth = bounds.width - 2 * statsInset;
-  const texts = [words.title, words.stage, words.progress].map((text, index) =>
-    wrappedCardText(
-      index === 0 ? fonts.title : fonts.body,
-      bounds.width - 2 * (index === 0 ? titleReserve : CARD_CONTENT.padding),
-      text,
+  const title = cardTitleText(fonts.title, bounds.width - 2 * titleReserve, words.title);
+  const texts = [
+    title.text,
+    ...[words.stage, words.progress].map((text) =>
+      wrappedCardText(fonts.body, bounds.width - 2 * CARD_CONTENT.padding, text),
     ),
-  );
-  const rows = texts.map((text, index) =>
-    cardTextSize(index === 0 ? fonts.title : fonts.body, text),
-  );
+  ];
+  const rows = [title, ...texts.slice(1).map((text) => cardTextSize(fonts.body, text))];
   const columnLimit = (innerWidth - STATS_DIVIDER_HEIGHT - 2 * dividerGap) / 2;
   const columns = [stageMetrics, words.totals].map((metrics) => {
     const valueWidth = Math.min(
@@ -202,9 +193,9 @@ export function deathCard(fonts: CardFonts, bounds: Rect, words: DeathCardWords)
     stats: placedStats,
     title: {
       ...positions[0],
+      text: title.text,
       width: layout.card.width - 2 * layout.titleReserve,
       x: layout.card.x + layout.titleReserve,
     },
-    titleText: layout.texts[0] as string,
   };
 }

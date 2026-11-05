@@ -28,8 +28,8 @@ import {
 import { drawActionHelp } from "./actionHelp";
 import {
   addButtonLabel,
+  addCardHeading,
   addCardText,
-  addCardTextIn,
   addSlice,
   BUTTON,
   type ButtonLabel,
@@ -122,7 +122,7 @@ export class RoomScene extends Scene {
       const words = TEXT.skills[this.room.grant];
       const layout = skillDetails(cardFonts(this), SKILL_ROOM.bounds, false, TEXT.buttons, words);
       addSlice(this, "ui-settings-card", layout.card);
-      addCardTextIn(this, TITLE_FONT, layout.title!, words.title, this.colour("ink"));
+      addCardHeading(this, layout.title!);
       drawActionHelp(this, this.colour("ink"), layout.groups.description!, layout.description);
       const icon = drawSkillButton(this, layout.groups.icon!, this.room.grant);
       icon.ready(true);

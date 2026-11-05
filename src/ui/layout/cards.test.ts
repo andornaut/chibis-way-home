@@ -14,6 +14,7 @@ import {
   cardTextSize,
   contentCardLayout,
 } from "./contentCard";
+import { FONT_METRICS } from "./fontRoles";
 import { pressedArea } from "./hitAreas";
 import { pauseCard } from "./pauseCard";
 import { settingsCard, stepsCard } from "./settingsCard";
@@ -47,7 +48,7 @@ const updateActions = cardActionsSize(CARD_FONTS.title, "row", [TEXT.update.acce
 const update = contentCardLayout(
   { ...SCREEN, x: 0, y: 0 },
   [{ key: "actions", ...updateActions }],
-  { close: true, titleWidth: cardTextSize(CARD_FONTS.title, TEXT.update.title).width },
+  { close: true, font: CARD_FONTS.title, title: TEXT.update.title },
 );
 const updateButton = cardActions(CARD_FONTS.title, "row", update.groups.actions!, [
   TEXT.update.accept,
@@ -124,15 +125,20 @@ it.each([false, true])(
       expect(row.label.x + row.label.width + CARD_CONTENT.gap).toBeLessThanOrEqual(row.toggle.x);
       expect(inside(layout.card, row.row)).toBe(true);
     }
-    // Rows are their own 48px targets: the first starts at the y50 close clearance (42 + 8).
+    // Rows are their own 48px targets: the first starts a gap below the taller of the
+    // main-heading line and the close target's clearance (42 + 8).
     const rows = [
       layout.moveControls,
       layout.actionButtons,
       ...(hasInstall ? [layout.install] : []),
     ];
+    const closeClearance = layout.close.hit.y + layout.close.hit.height + CARD_CONTENT.gap;
     expect(layout.title.y - layout.card.y).toBe(CARD_CONTENT.padding);
-    expect(rows[0]!.row.y - layout.card.y).toBe(50);
-    expect(rows[0]!.row.y).toBe(layout.close.hit.y + layout.close.hit.height + CARD_CONTENT.gap);
+    expect(layout.title.height).toBe(FONT_METRICS.mainHeading.lineHeight);
+    expect(rows[0]!.row.y).toBe(
+      Math.max(layout.title.y + layout.title.height + CARD_CONTENT.gap, closeClearance),
+    );
+    expect(rows[0]!.row.y).toBeGreaterThanOrEqual(closeClearance);
     rows.forEach(({ hit, row }, index) => {
       expect(hit).toEqual(row);
       expect(row.height).toBe(48);

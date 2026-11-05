@@ -10,13 +10,12 @@ import { PHONE_EVENTS } from "../pwa";
 import { skillDetails } from "../ui";
 import { drawActionHelp } from "./actionHelp";
 import {
-  addCardTextIn,
+  addCardHeading,
   addSlice,
   captureTab,
   cardFonts,
   paletteColour,
   ringFocus,
-  TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
@@ -61,7 +60,7 @@ export class SkillDetailScene extends Scene {
     );
     const close = layout.close!;
     addSlice(this, "ui-settings-card", layout.card);
-    addCardTextIn(this, TITLE_FONT, layout.title!, words.title, paletteColour(this, "ink"));
+    addCardHeading(this, layout.title!);
     drawActionHelp(
       this,
       paletteColour(this, "ink"),

@@ -9,7 +9,10 @@ import {
   CARD_CONTENT,
   cardActionsSize,
   type CardFonts,
+  cardHeaderHeight,
   cardTextSize,
+  cardTitleReserve,
+  cardTitleText,
   contentCardLayout,
 } from "./contentCard";
 import { labelledButton } from "./labelledButton";
@@ -58,8 +61,12 @@ const entryHeight = (fonts: CardFonts) => pitch(fonts) * (1 + DESCRIPTION_LINES)
 // card's title and pager.
 export function achievementsPerPage(fonts: CardFonts, words: CardWords): number {
   const pager = cardActionsSize(fonts.title, "row", [words.previous, words.next]);
+  const title = cardTitleText(fonts.title, SCREEN.width - 2 * cardTitleReserve(true), words.title);
   const fixed =
-    2 * CARD_CONTENT.padding + CARD_CONTENT.lineHeight + 2 * CARD_CONTENT.gap + pager.height;
+    2 * CARD_CONTENT.padding +
+    cardHeaderHeight({ close: true }, title.height) +
+    2 * CARD_CONTENT.gap +
+    pager.height;
   const rows = Math.floor(
     (SCREEN.height - fixed + CARD_CONTENT.gap) / (entryHeight(fonts) + CARD_CONTENT.gap),
   );
@@ -103,7 +110,7 @@ export function achievementsCardLayout(
         width: pagerSize.width + countSize.width + 2 * CARD_CONTENT.gap,
       },
     ],
-    { close: true, titleWidth: cardTextSize(fonts.title, words.title).width },
+    { close: true, font: fonts.title, title: words.title },
   );
   const list = layout.groups.list!;
   const pager = layout.groups.pager!;

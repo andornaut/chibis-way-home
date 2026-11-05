@@ -20,6 +20,7 @@ import {
 } from "../ui";
 import {
   addButtonLabel,
+  addCardHeading,
   addCardTextIn,
   addSlice,
   BODY_FONT,
@@ -28,7 +29,6 @@ import {
   cardFonts,
   paletteColour,
   placeButtonLabel,
-  TITLE_FONT,
 } from "./cardParts";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
@@ -244,7 +244,7 @@ export class SettingsScene extends Scene {
     ]);
     this.steps = this.add.container(0, 0, [
       addSlice(this, "ui-settings-card", this.stepsLayout.card),
-      addCardTextIn(this, TITLE_FONT, this.stepsLayout.title, words.title, ink),
+      addCardHeading(this, this.stepsLayout.title),
       this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0),
       ...stepObjects,
     ]);
@@ -271,7 +271,7 @@ export class SettingsScene extends Scene {
     const frame = card;
     const objects: GameObjects.GameObject[] = [
       addSlice(this, "ui-settings-card", frame),
-      addCardTextIn(this, TITLE_FONT, this.layout.title, words.title, ink),
+      addCardHeading(this, this.layout.title),
     ];
     this.settingRows = new Map();
     for (const setting of TOUCH_SETTINGS) {

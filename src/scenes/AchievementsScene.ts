@@ -13,6 +13,7 @@ import {
 } from "../ui";
 import { achievementIconFrame } from "./AchievementNoticeScene";
 import {
+  addCardHeading,
   addCardText,
   addCardTextIn,
   addSlice,
@@ -99,7 +100,7 @@ export class AchievementsScene extends Scene {
     const ink = paletteColour(this, "ink");
     const grey = paletteColour(this, "grey");
     addSlice(this, "ui-settings-card", card);
-    addCardTextIn(this, TITLE_FONT, title, words.cardTitle, ink);
+    addCardHeading(this, title);
     this.entries.forEach((entry, index) => {
       const at = this.layout.entries[index]!;
       const text = shown[index]!;

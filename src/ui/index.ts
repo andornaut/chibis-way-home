@@ -71,11 +71,14 @@ export {
   contactWorldOffset,
 } from "./layout/contactFeedback";
 export {
+  CARD_HEADING,
   cardActions,
   cardActionsSize,
   type CardFonts,
   cardTextOrigin,
   cardTextSize,
+  type CardTitleLayout,
+  cardTitleOrigin,
   contentCardLayout,
 } from "./layout/contentCard";
 export { PAUSE_VISIBLE_DIAMETER } from "./layout/controlChrome";
