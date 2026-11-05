@@ -136,32 +136,6 @@
       }
     },
     {
-      "key": "ferret-trap-snap",
-      "png": "sprites/ferret-trap-snap.png",
-      "json": "sprites/ferret-trap-snap.json",
-      "once": [
-        "snap"
-      ],
-      "hitbox": {
-        "x": 4,
-        "y": 14,
-        "width": 42,
-        "height": 12
-      }
-    },
-    {
-      "key": "frog-courier",
-      "png": "sprites/frog-courier.png",
-      "json": "sprites/frog-courier.json",
-      "once": [],
-      "hitbox": {
-        "x": 6,
-        "y": 6,
-        "width": 48,
-        "height": 30
-      }
-    },
-    {
       "key": "goose-antagonist",
       "png": "sprites/goose-antagonist.png",
       "json": "sprites/goose-antagonist.json",
