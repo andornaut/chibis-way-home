@@ -27,7 +27,13 @@ import {
   CONTACT_SILHOUETTES,
   spriteContacts,
 } from "../assets";
-import { contactFrameAt, spriteFrameOrigin, STEP_MS, STEP_SECONDS } from "../core";
+import {
+  contactFrameAt,
+  PLAY_STEP_LIMITS,
+  spriteFrameOrigin,
+  STEP_MS,
+  STEP_SECONDS,
+} from "../core";
 import { AIR_JUMP_CUE } from "../data/airJumpCue";
 import { ARCHETYPES } from "../data/archetypes";
 import { BIRD } from "../data/bird";
@@ -254,9 +260,6 @@ function zoneAt(seed: number, node: string, avoid: readonly string[] = []): Zone
 
 // What every zone's instances are resolved against.
 const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
-
-// After a stall, run at most this much time at once rather than lurching ahead.
-const MAX_FRAME_MS = 250;
 
 // PLACEHOLDER: flat colours where an area or object has no art: the ground, the terrain, and
 // each object by its collision. An area drawn from a tileset shows ink below its terrain.
@@ -846,7 +849,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.updateDeath(time);
       return;
     }
-    const frame = frameSteps({ maxFrameMs: MAX_FRAME_MS, stepMs: STEP_MS }, time, this.clock);
+    const frame = frameSteps(PLAY_STEP_LIMITS, time, this.clock);
     this.clock = frame.clock;
     let touches = [...this.heldTouches.values()];
     const intent = combineIntents(keyIntent(this.heldKeys), touchIntent(TOUCH, touches));
@@ -1118,7 +1121,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (view === undefined || this.dying === undefined) {
       return;
     }
-    const frame = frameSteps({ maxFrameMs: MAX_FRAME_MS, stepMs: STEP_MS }, time, this.clock);
+    const frame = frameSteps(PLAY_STEP_LIMITS, time, this.clock);
     this.clock = frame.clock;
     for (let step = 0; step < frame.steps; step++) {
       this.dying = stepDeathPresentation(DEATH, view, STEP_SECONDS, this.dying);
@@ -1374,7 +1377,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       return;
     }
     this.inRoom = true;
-    this.scene.launch("room", { room } satisfies RoomData);
+    this.scene.launch("room", { room, stage: this.stageKey() } satisfies RoomData);
     this.scene.pause();
   }
 

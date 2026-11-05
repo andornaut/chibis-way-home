@@ -58,6 +58,10 @@ export function recordActiveStageStep(
     before.death === undefined && after.death !== undefined,
   );
 }
+// Active seconds spent in a room behind one of stage's doors, on the same clock as live steps.
+export function recordRoomTime(stage: string, seconds: number): void {
+  pageSave.recordActiveStageStep(SESSION, stage, () => seconds, false);
+}
 // The escapes and skill use of one live step in layout, for the achievements.
 export function recordStepAchievements(
   layout: ZoneLayout,

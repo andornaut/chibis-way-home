@@ -8,5 +8,5 @@ export {
 } from "./bodyContact";
 export { collisionCandidates } from "./collisionIndex";
 export { EDGE, rectAt, sameRect } from "./geometry";
-export { STEP_MS, STEP_SECONDS } from "./step";
+export { PLAY_STEP_LIMITS, STEP_MS, STEP_SECONDS } from "./step";
 export { sweptContact } from "./sweptContact";

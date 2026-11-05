@@ -31,9 +31,9 @@ afterEach(() => vi.clearAllMocks());
 
 it("grants the configured room reward on entry without granting anything for an ordinary room", () => {
   const scene = new RoomScene();
-  scene.init({ room: "ordinary" });
+  scene.init({ room: "ordinary", stage: "street" });
   expect(grantSkill).not.toHaveBeenCalled();
-  scene.init({ room: "gift" });
+  scene.init({ room: "gift", stage: "street" });
   expect(grantSkill).toHaveBeenCalledExactlyOnceWith("dash");
 });
 

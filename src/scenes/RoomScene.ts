@@ -1,10 +1,12 @@
 import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { frameSteps, startStepClock, type StepClock } from "@andornaut/game-kit/clock/fixedStep";
 import {
   phaserBitmapFont,
   type PhaserFontData,
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { type Cameras, type GameObjects, type Input, Scene, Scenes } from "phaser";
 
+import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core";
 import { CHARACTERS } from "../data/characters";
 import { DIALOGUES, SPEAKERS } from "../data/dialogues";
 import { ROOMS } from "../data/rooms";
@@ -44,23 +46,25 @@ import {
 import { drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
-import { grantSkill } from "./save";
+import { grantSkill, recordRoomTime } from "./save";
 import { drawSkillButton } from "./skillButton";
 
 const ZONE = "zone";
 // The placeholder frame's line, in base pixels.
 const FRAME_LINE = 2;
 
-// What a room opens with: its key in ROOMS.
+// What a room opens with: its key in ROOMS, and the stage whose door leads to it.
 export interface RoomData {
   readonly room: string;
+  readonly stage: string;
 }
 
 // The room behind a door, over the whole canvas in place of the zone, which ZoneScene pauses
 // while it shows: the room's backdrop (or a placeholder ink fill with a frame), its animations
 // and cast, its name, and Leave at the top right. Leave, back and Escape each close it and resume
 // the zone, which returns him to the door (ZoneScene). Tab and the arrows focus Leave, and Enter
-// and Space press it once focused.
+// and Space press it once focused. Time in the room is active play: it counts toward the stage's
+// attempt and totals on the zone's step clock, and time while the room is paused does not.
 export class RoomScene extends Scene {
   private contentCamera!: Cameras.Scene2D.Camera;
   private focused = false;
@@ -71,6 +75,8 @@ export class RoomScene extends Scene {
   private pressed: "leave" | undefined;
   private room!: RoomPlan;
   private roomKey = "";
+  private stage = "";
+  private clock: StepClock = startStepClock;
 
   constructor() {
     super("room");
@@ -83,6 +89,8 @@ export class RoomScene extends Scene {
     }
     this.room = room;
     this.roomKey = data.room;
+    this.stage = data.stage;
+    this.clock = startStepClock;
     this.focused = false;
     this.focusRing = undefined;
     this.leaving = false;
@@ -104,6 +112,11 @@ export class RoomScene extends Scene {
     this.events.on(Scenes.Events.ADDED_TO_SCENE, toContent);
     this.events.once("shutdown", () => this.events.off(Scenes.Events.ADDED_TO_SCENE, toContent));
     this.scene.setVisible(false, ZONE);
+    const restartClock = () => {
+      this.clock = startStepClock;
+    };
+    this.events.on("resume", restartClock);
+    this.events.once("shutdown", () => this.events.off("resume", restartClock));
     coverZone("room", true);
     captureTab(this, true);
 
@@ -272,6 +285,17 @@ export class RoomScene extends Scene {
     }
     if (outcome.leaves) {
       this.leave();
+    }
+  }
+
+  override update(time: number): void {
+    if (this.leaving) {
+      return;
+    }
+    const frame = frameSteps(PLAY_STEP_LIMITS, time, this.clock);
+    this.clock = frame.clock;
+    if (frame.steps > 0) {
+      recordRoomTime(this.stage, frame.steps * STEP_SECONDS);
     }
   }
 
