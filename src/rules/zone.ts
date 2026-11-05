@@ -49,7 +49,12 @@ import { bossDeath, defeatBoss, holdDefeated, removedBoss } from "./bossDefeat";
 import { initialCrumblingWorld } from "./crumbling";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
 import { deathSupport } from "./death";
-import { effectiveCollision, effectiveHazardPhase } from "./effectiveCollision";
+import {
+  clockedSupport,
+  clockPresent,
+  effectiveCollision,
+  effectiveHazardPhase,
+} from "./effectiveCollision";
 import { type ForcePulse, forcePulseVelocity } from "./force";
 import {
   forcedTransitBankAdmissions,
@@ -74,9 +79,11 @@ import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlaybac
 import { timedHazardRect } from "./timedHazard";
 import { type SpawnEvent, stepTransients, type Transient } from "./transients";
 import {
+  clockedSupportPrediction,
   crumblingActorIndices,
   crumblingActors,
   crumblingPrediction,
+  joinedPrediction,
   presentTerrain,
   supportPresent,
   type ZoneCrumblingWorld,
@@ -91,6 +98,8 @@ interface ObjectFrame {
   readonly object: ObjectLayout;
 }
 interface AreaObjects {
+  // Supports whose behaviour clock decides their presence.
+  readonly clockedSupports: readonly number[];
   readonly crumblingActors: readonly number[];
   readonly crumblingObjects: readonly number[];
   readonly forcedTransit: readonly number[];
@@ -159,6 +168,7 @@ function areaObjects(area: AreaLayout): AreaObjects {
     : undefined;
   const result: AreaObjects = {
     behaviours: area.objects.flatMap((object, index) => (object.behaviour ? [index] : [])),
+    clockedSupports: platforms.filter((index) => clockedSupport(area.objects[index]!)),
     crumblingActors: area.crumbling ? crumblingActorIndices(area) : [],
     crumblingObjects: area.objects.flatMap((object, index) =>
       area.crumbling?.some(({ supportId }) => supportId === object) ? [index] : [],
@@ -702,8 +712,11 @@ export function stepZoneBodies(
       },
       prior,
     );
+  // Clocked supports collide by their state at the start of the step.
   const present = (index: number) =>
-    !kinds.crumblingObjects.includes(index) || supportPresent(crumbling, area.objects[index]!);
+    (!kinds.crumblingObjects.includes(index) || supportPresent(crumbling, area.objects[index]!)) &&
+    (!kinds.clockedSupports.includes(index) ||
+      clockPresent(area.objects[index]!, zone.behaviours[index]));
   const terrain = presentTerrain(crumbling, area.solids);
   const presentPlatforms = kinds.platforms.filter(present);
   const forcedTransit = transitObservation(
@@ -914,7 +927,12 @@ export function stepZoneBodies(
     })();
     traversalShared ??= {
       bounds: { height: area.height, width: area.width, x: 0, y: 0 },
-      crumbling: crumbling && crumblingPrediction(area, crumbling, time),
+      crumbling: joinedPrediction(
+        crumbling && crumblingPrediction(area, crumbling, time),
+        kinds.clockedSupports.length > 0
+          ? clockedSupportPrediction(area, kinds.clockedSupports, zone.behaviours, zone.seconds)
+          : undefined,
+      ),
     };
     return {
       ...geometry,

@@ -9,6 +9,7 @@ import type {
   Point,
   Rect,
 } from "../data/types";
+import type { BehaviourState } from "./behaviour";
 import type { CrumblingPrediction } from "./behaviourReach";
 import { birdBox, type BirdState } from "./bird";
 import { type CrumblingActor, crumblingSupportPresent } from "./crumbling";
@@ -107,6 +108,48 @@ export function supportPresent(
   supportId: CrumblingSupportId,
 ): boolean {
   return !world || crumblingSupportPresent(world, supportId);
+}
+
+// Clocked support presence stays as now until each support's current state ends; later presence
+// is unknown, as crumbling presence is, though the clock is deterministic.
+export function clockedSupportPrediction(
+  area: AreaLayout,
+  supports: readonly number[],
+  behaviours: readonly (BehaviourState | undefined)[],
+  timeSeconds: number,
+): CrumblingPrediction {
+  const changes = supports.map((index) => {
+    const object = area.objects[index]!;
+    const plan = object.behaviour!;
+    const state = behaviours[index];
+    const key = state?.stateKey ?? plan.initial;
+    const condition = plan.states[key]!.transitions[0]!.when[0]!;
+    const seconds = condition.kind === "elapsed" ? condition.seconds : 0;
+    return {
+      key,
+      until: timeSeconds + Math.max(0, seconds - (state?.elapsed ?? 0)),
+      volume: rectAt(object, object.origin),
+    };
+  });
+  return {
+    key: JSON.stringify(changes.map(({ key, until }) => [key, Math.round(until * 1e6)])),
+    unknown: (time) =>
+      changes.flatMap(({ until, volume }) => (time + EDGE >= until ? [volume] : [])),
+  };
+}
+
+// One prediction from crumbling and clocked supports' predictions.
+export function joinedPrediction(
+  first: CrumblingPrediction | undefined,
+  second: CrumblingPrediction | undefined,
+): CrumblingPrediction | undefined {
+  if (!first || !second) {
+    return first ?? second;
+  }
+  return {
+    key: `${first.key}|${second.key}`,
+    unknown: (time) => [...first.unknown(time), ...second.unknown(time)],
+  };
 }
 
 // Collider presence stays as now until each support's earliest possible change; later

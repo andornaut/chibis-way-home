@@ -15,6 +15,7 @@ import type {
 import { SKILL_PROFILES } from "../progress";
 import { contactBox, nodeOf } from "../rules/behaviourTrack";
 import { birdBox, startBird } from "../rules/bird";
+import { clockPresent } from "../rules/effectiveCollision";
 import { supportContact } from "../rules/flyLanding";
 import {
   activateBehaviour,
@@ -63,7 +64,8 @@ function supportWorld(layout: ZoneLayout, zone: ZoneState) {
   const area = areaOf(layout, zone.area);
   const platforms = area.objects.flatMap((object, index) =>
     (object.collision === "solid" || object.collision === "ledge") &&
-    supportPresent(zone.crumbling, object)
+    supportPresent(zone.crumbling, object) &&
+    clockPresent(object, zone.behaviours[index])
       ? [
           {
             collision: object.collision,
