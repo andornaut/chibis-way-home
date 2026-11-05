@@ -4,6 +4,7 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
+import { sceneStub } from "@andornaut/game-kit/testing/phaser/sceneStub";
 import { type Scene, Textures } from "phaser";
 import { expect, it, vi } from "vitest";
 
@@ -29,7 +30,6 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
     "ui-touch-jump": jump,
     "ui-touch-use": use,
   };
-  const cached = new Map<string, unknown>();
   const filters: ReturnType<typeof vi.fn>[] = [];
   const add = vi.fn();
   const createCanvas = vi.fn((key: string) => {
@@ -46,7 +46,7 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
       refresh: vi.fn(),
       setFilter,
     };
-    cached.set(key, texture);
+    Object.assign(stub.textures.list, { [key]: texture });
     return texture;
   });
   const sprite = vi.fn(() => ({
@@ -54,13 +54,12 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
     setDisplaySize: vi.fn().mockReturnThis(),
     setOrigin: vi.fn().mockReturnThis(),
   }));
-  const animations = vi.fn();
-  const scene = {
-    add: { sprite },
-    anims: { create: animations },
-    cache: { json: { get: (key: string) => data[key] } },
-    textures: { createCanvas, exists: (key: string) => cached.has(key) },
-  } as unknown as Scene;
+  const stub = sceneStub(vi.fn, { add: { sprite } });
+  for (const [key, sheet] of Object.entries(data)) {
+    stub.cache.json.add(key, sheet);
+  }
+  Object.assign(stub.textures, { createCanvas });
+  const scene = stub as unknown as Scene;
   for (const kind of ["jump", "use", "move", "knob"] as const) {
     const source =
       kind === "move" ? "ui-move-hint" : kind === "knob" ? "ui-move-knob" : `ui-touch-${kind}`;
@@ -72,7 +71,7 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
       kind === "knob" ? 11 : 75,
     );
     for (const [tag, frames] of sheetTags(data[source] as AsepriteSheet)) {
-      expect(animations).toHaveBeenCalledWith({
+      expect(stub.anims.create).toHaveBeenCalledWith({
         frames: frames.map(({ duration, frame }) => ({
           duration,
           frame,

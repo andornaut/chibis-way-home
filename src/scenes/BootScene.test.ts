@@ -1,5 +1,3 @@
-import { EventEmitter } from "node:events";
-
 import { afterEach, expect, it, vi } from "vitest";
 
 const startup = vi.hoisted(() => ({ load: vi.fn(), ready: vi.fn() }));
@@ -13,21 +11,16 @@ const manifest = vi.hoisted(() => ({
   tilesets: [],
 }));
 vi.mock("../../public/art/manifest.json", () => ({ default: manifest }));
-vi.mock("phaser", () => ({
-  Scene: class {
-    readonly anims = { create: vi.fn() };
-    readonly scene = { launch: vi.fn(), start: vi.fn() };
-    readonly game = { canvas: { style: { visibility: "" } }, events: new EventEmitter() };
-    readonly cache = { json: { add: vi.fn(), get: vi.fn() } };
-    readonly textures = { get: vi.fn(() => ({ source: [] })) };
-    readonly load = Object.assign(new EventEmitter(), {
-      bitmapFont: vi.fn(),
-      image: vi.fn(),
-      json: vi.fn(),
-      setPath: vi.fn(),
-    });
-  },
-}));
+vi.mock("phaser", async () => {
+  const { sceneStub } = await import("@andornaut/game-kit/testing/phaser/sceneStub");
+  return {
+    Scene: class {
+      constructor() {
+        Object.assign(this, sceneStub(vi.fn));
+      }
+    },
+  };
+});
 vi.mock("../pwa", () => ({ launchReady: startup.ready }));
 vi.mock("./save", () => ({ loadProgress: startup.load }));
 vi.mock("./atlasArt", () => ({

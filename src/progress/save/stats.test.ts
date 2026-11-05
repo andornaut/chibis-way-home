@@ -1,5 +1,5 @@
-import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
+import { memoryStorage } from "@andornaut/game-kit/testing/memoryStorage";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BIRD_FRAME } from "../../assets";
@@ -157,15 +157,7 @@ describe("persistent active stage clocks", () => {
   });
 
   it("keeps memory clocks when storage is unavailable", async () => {
-    const unavailable = {
-      read: async () => {
-        throw new Error("blocked");
-      },
-      write: async () => {
-        throw new Error("blocked");
-      },
-    };
-    const clock = stageStatsStore(unavailable, STAGES);
+    const clock = stageStatsStore(memoryStorage({ unavailable: true }), STAGES);
     await clock.load();
     clock.addActiveTime("street", 1);
     await clock.flush();

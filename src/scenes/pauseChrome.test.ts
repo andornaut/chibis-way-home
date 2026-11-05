@@ -4,6 +4,7 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
+import { sceneStub } from "@andornaut/game-kit/testing/phaser/sceneStub";
 import { type Scene, Textures } from "phaser";
 import { expect, it, vi } from "vitest";
 
@@ -18,12 +19,10 @@ vi.mock("./cardParts", () => ({
     parseInt(palette.colours[name].slice(1), 16),
 }));
 it("caches one opaque35px Pause sprite and copies the authored rest, press and held timeline", () => {
-  const cached = new Set<string>();
   const setFilter = vi.fn();
   const add = vi.fn();
   const createCanvas = vi.fn((key: string) => {
-    cached.add(key);
-    return {
+    const texture = {
       add,
       getContext: () => ({
         createImageData: (width: number, height: number) => ({
@@ -34,20 +33,18 @@ it("caches one opaque35px Pause sprite and copies the authored rest, press and h
       refresh: vi.fn(),
       setFilter,
     };
+    Object.assign(stub.textures.list, { [key]: texture });
+    return texture;
   });
   const sprite = vi.fn(() => ({
     setAlpha: vi.fn().mockReturnThis(),
     setDisplaySize: vi.fn().mockReturnThis(),
     setOrigin: vi.fn().mockReturnThis(),
   }));
-  const animations = vi.fn();
-  const data: Record<string, unknown> = { manifest, "ui-pause": pause };
-  const scene = {
-    add: { sprite },
-    anims: { create: animations },
-    cache: { json: { get: (key: string) => data[key] } },
-    textures: { createCanvas, exists: (key: string) => cached.has(key) },
-  } as unknown as Scene;
+  const stub = sceneStub(vi.fn, { add: { sprite } });
+  stub.cache.json.add("manifest", manifest).add("ui-pause", pause);
+  Object.assign(stub.textures, { createCanvas });
+  const scene = stub as unknown as Scene;
   createPauseChrome(scene);
   createPauseChrome(scene);
   expect(createCanvas).toHaveBeenCalledTimes(1);
@@ -57,7 +54,7 @@ it("caches one opaque35px Pause sprite and copies the authored rest, press and h
   expect(add.mock.calls.every((call) => call[4] === 140 && call[5] === 140)).toBe(true);
   const tags = sheetTags(pause as AsepriteSheet);
   for (const [tag, frames] of tags) {
-    expect(animations).toHaveBeenCalledWith({
+    expect(stub.anims.create).toHaveBeenCalledWith({
       frames: frames.map(({ duration, frame }) => ({ duration, frame, key: PAUSE_CHROME_KEY })),
       key: animationKey(PAUSE_CHROME_KEY, tag),
       repeat: tagRepeat(manifest.sprites.find((entry) => entry.key === "ui-pause")!.once, tag),
