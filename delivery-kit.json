@@ -10,6 +10,7 @@
       { "name": "lint", "run": "npm run lint" },
       { "name": "test", "run": "npm test -- --maxWorkers=4" },
       { "name": "build", "run": "npm run build" },
+      { "name": "pairs", "run": "npm run pairs -- verify --sample-ms 20000" },
       { "name": "art", "run": "node art/tools/build.ts --check" }
     ]
   },
