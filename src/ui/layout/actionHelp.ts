@@ -32,16 +32,15 @@ type ActionHelpPlacement = ActionHelpIcon | ActionHelpText;
 export interface ActionHelpLayout extends Size {
   // The y of each line's baseline, in layout coordinates.
   readonly baselines: readonly number[];
-  // The control icon's side: a little under one line pitch, so an icon never changes the line
-  // spacing.
+  // The control icon's side: one line pitch.
   readonly icon: number;
   // The distance between consecutive baselines: the body font's line height.
   readonly linePitch: number;
   readonly placements: readonly ActionHelpPlacement[];
 }
 
-// How much smaller than one line pitch an inline control icon is drawn.
-const ICON_INSET = 4;
+// Text with inline control icons wraps to at most this many lines, with every icon on the first.
+export const ACTION_HELP_MAX_LINES = 2;
 
 // The baseline's offset below a font's line top, at card scale: the capitals' bottom row.
 function baselineOffset(font: BitmapFont): number {
@@ -50,8 +49,10 @@ function baselineOffset(font: BitmapFont): number {
 }
 
 // Text and inline control icons laid out like a paragraph: every word on a line sits on that
-// line's baseline, lines are one body-font line height apart, and each icon is centred on its
-// line's capital height, a little smaller than one line pitch, so it never changes the line spacing.
+// line's baseline and lines are one body-font line height apart. Each icon is one line pitch square
+// with its bottom on the first line's baseline; it rises above that line's box, and the layout's
+// top clearance covers the overhang. Text with an icon wraps to at most two lines and every icon
+// falls on the first, since an icon on a later line would cover the descenders above it.
 export function actionHelpLayout(
   fonts: CardFonts,
   actions: Readonly<Record<ControlAction, string>>,
@@ -59,10 +60,9 @@ export function actionHelpLayout(
   text: string,
 ): ActionHelpLayout {
   const linePitch = fonts.body.lineHeight * CARD_TEXT_SCALE;
-  const icon = linePitch - ICON_INSET;
+  const icon = linePitch;
   const baseline = baselineOffset(fonts.body);
-  const capHeight = fontMetrics(fonts.body).capHeight * CARD_TEXT_SCALE;
-  const iconTop = Math.round(baseline - capHeight / 2 - icon / 2);
+  const iconTop = baseline - icon;
   type Piece =
     | { readonly font: keyof CardFonts; readonly kind: "text"; readonly text: string }
     | { readonly action: ControlAction; readonly kind: "icon" };
@@ -125,12 +125,15 @@ export function actionHelpLayout(
   const iconLines = lines.flatMap((row, index) =>
     row.items.some((item) => item.kind === "icon") ? [index] : [],
   );
-  // Lift every line when an icon on the first line reaches above it.
-  const top = Math.max(0, ...iconLines.map((index) => -(index * linePitch + iconTop)));
-  const bottom = Math.max(
-    lines.length * linePitch,
-    ...iconLines.map((index) => index * linePitch + iconTop + icon),
-  );
+  if (iconLines.length && lines.length > ACTION_HELP_MAX_LINES) {
+    throw new Error("Action help with an icon wraps past two lines");
+  }
+  if (iconLines.some((index) => index > 0)) {
+    throw new Error("Action help icon falls below the first line");
+  }
+  // Lift every line by the first-line icon's overhang above the line box.
+  const top = iconLines.length ? Math.max(0, -iconTop) : 0;
+  const bottom = lines.length * linePitch;
   const placements = lines.flatMap((row, index) => {
     const lineTop = top + index * linePitch;
     return row.items.map((item): ActionHelpPlacement => {

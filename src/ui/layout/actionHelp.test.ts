@@ -6,16 +6,20 @@ import { TEXT } from "../../data/text";
 import { SKILL_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import { actionHelpParts } from "../chrome/actionHelp";
-import { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./actionHelp";
+import {
+  ACTION_HELP,
+  ACTION_HELP_MAX_LINES,
+  type ActionHelpLayout,
+  actionHelpLayout,
+} from "./actionHelp";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { skillDetails } from "./skillDetails";
 
-// Reference metrics read from the .fnt files: the declared baseline, line height and the
-// capital H's height.
+// Reference metrics read from the .fnt files: the declared baseline and line height.
 const lineHeight = CARD_FONTS.body.lineHeight * CARD_TEXT_SCALE;
 const fontBaseline = (font: keyof typeof CARD_FONTS) =>
   CARD_FONTS[font].baseline! * CARD_TEXT_SCALE;
-const capHeight = CARD_FONTS.body.glyphs.get("H")!.height * CARD_TEXT_SCALE;
+const ACTION_TOKEN = /\{(?:jump|move|use)\}/u;
 
 function lineBaselines(layout: ActionHelpLayout) {
   const lines = new Map<number, Set<number>>();
@@ -29,7 +33,20 @@ function lineBaselines(layout: ActionHelpLayout) {
   return [...lines.entries()].sort(([a], [b]) => a - b).map(([, set]) => [...set]);
 }
 
-const skillLayouts = SKILL_IDS.filter((skill) => TEXT.skills[skill].description.includes("{")).map(
+// Every player string with an action token, by its path in TEXT.
+function tokenStrings(value: unknown, path: string): (readonly [string, string])[] {
+  if (typeof value === "string") {
+    return ACTION_TOKEN.test(value) ? [[path, value]] : [];
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, entry]) => tokenStrings(entry, `${path}.${key}`));
+  }
+  return [];
+}
+
+const skillLayouts = SKILL_IDS.filter((skill) =>
+  ACTION_TOKEN.test(TEXT.skills[skill].description),
+).map(
   (skill) =>
     [
       skill,
@@ -49,20 +66,35 @@ it("expands only explicit action tokens and refuses unsupported tokens", () => {
   expect(() => actionHelpParts("Press {dash}.")).toThrow("Unknown action help token dash");
 });
 
+it("draws card text with action icons only in skill descriptions", () => {
+  // The home page's instructions are HTML lines, not card text.
+  const cards = tokenStrings(TEXT, "TEXT").filter(([path]) => !path.startsWith("TEXT.homePage."));
+  expect(cards.map(([path]) => path).sort()).toEqual(
+    skillLayouts.map(([skill]) => `TEXT.skills.${skill}.description`).sort(),
+  );
+});
+
 describe.each(skillLayouts)("the %s card description", (_skill, layout) => {
+  it("wraps to at most two lines with every icon on the first", () => {
+    expect(layout.baselines.length).toBeLessThanOrEqual(ACTION_HELP_MAX_LINES);
+    for (const placement of layout.placements) {
+      if (placement.kind === "icon") {
+        expect(placement.line).toBe(0);
+      }
+    }
+  });
   it("puts every word and label on a line on that line's one baseline", () => {
     const baselines = lineBaselines(layout);
     expect(baselines.length).toBe(layout.baselines.length);
     baselines.forEach((ys, line) => expect(ys).toEqual([layout.baselines[line]]));
   });
-  it("centres each icon on its line's capitals, smaller than one line pitch", () => {
+  it("draws each icon one line pitch square with its bottom on its line's baseline", () => {
     const icons = layout.placements.filter((placement) => placement.kind === "icon");
     expect(icons.length).toBeGreaterThan(0);
     for (const { line, rect } of icons) {
-      expect(rect.height).toBeLessThan(lineHeight);
-      expect(
-        Math.abs(rect.y + rect.height / 2 - (layout.baselines[line]! - capHeight / 2)),
-      ).toBeLessThanOrEqual(0.5);
+      expect(rect.width).toBe(lineHeight);
+      expect(rect.height).toBe(lineHeight);
+      expect(rect.y + rect.height).toBe(layout.baselines[line]);
     }
   });
   it("keeps every placement inside the measured box", () => {
@@ -82,25 +114,45 @@ describe.each(skillLayouts)("the %s card description", (_skill, layout) => {
   });
 });
 
-it("spaces baselines by the font's line height alone, with or without an icon", () => {
-  const plain = actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, "Press\nPress\nPress");
-  const iconed = actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, "Press\nPress {jump}\nPress");
+it("spaces baselines by the line height and lifts them by the first-line icon's overhang", () => {
+  const plain = actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, "Press\nPress");
+  const iconed = actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, "Press {jump}\nPress");
+  const overhang = lineHeight - fontBaseline("body");
   for (const layout of [plain, iconed]) {
     const drawn = lineBaselines(layout).map((ys) => ys[0]!);
     expect(drawn).toEqual(layout.baselines);
-    expect(drawn).toHaveLength(3);
-    drawn.slice(1).forEach((y, index) => expect(y - drawn[index]!).toBe(lineHeight));
+    expect(drawn).toHaveLength(2);
+    expect(drawn[1]! - drawn[0]!).toBe(lineHeight);
   }
-  expect(iconed.baselines).toEqual(plain.baselines);
-  expect(iconed.height).toBe(plain.height);
+  expect(iconed.baselines).toEqual(plain.baselines.map((y) => y + overhang));
+  expect(iconed.height).toBe(plain.height + overhang);
+  const icon = iconed.placements.find((placement) => placement.kind === "icon");
+  expect(icon?.kind === "icon" && icon.rect.y).toBe(0);
+});
+
+it("refuses icon text past two lines or with an icon below the first", () => {
+  expect(() => actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, "{jump}\nPress\nPress")).toThrow(
+    "past two lines",
+  );
+  expect(() => actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, "Press\n{jump}")).toThrow(
+    "below the first line",
+  );
+  expect(
+    actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, "Press\nPress\nPress").baselines,
+  ).toHaveLength(3);
 });
 
 it("wraps whole action units and refuses one wider than the text", () => {
-  const width = 180;
-  const layout = actionHelpLayout(CARD_FONTS, TEXT.buttons, width, "{move} then {jump} and {use}.");
+  const text = "{move} then {jump} and {use}";
+  const single = actionHelpLayout(CARD_FONTS, TEXT.buttons, 400, text);
+  const width = single.width;
+  const layout = actionHelpLayout(CARD_FONTS, TEXT.buttons, width, text);
   const icons = layout.placements.filter((placement) => placement.kind === "icon");
   expect(icons).toHaveLength(3);
-  expect(new Set(icons.map(({ line }) => line)).size).toBeGreaterThan(1);
+  expect(layout.baselines).toHaveLength(1);
+  expect(() => actionHelpLayout(CARD_FONTS, TEXT.buttons, width - 1, text)).toThrow(
+    "below the first line",
+  );
   for (const { action, line, rect } of icons) {
     const label = layout.placements.find(
       (placement) =>
