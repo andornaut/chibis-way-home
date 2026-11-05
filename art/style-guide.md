@@ -341,7 +341,7 @@ Approved target for paired runtime integration. The rulebook owns failure behavi
 
 ### Live barks
 
-Live antagonist barks use `ui-dialogue-box` at 0.75 alpha; text and portraits remain opaque. Present a bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner. Ordinary paused dialogue retains its existing presentation.
+Live antagonist barks use `ui-dialogue-box` at 0.65 alpha; text and portraits remain opaque. Present a bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner. Ordinary paused dialogue retains its existing presentation.
 
 ### Touch controls
 
