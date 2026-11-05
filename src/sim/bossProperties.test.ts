@@ -31,14 +31,6 @@ interface KnownFailure {
 const KNOWN_FAILURES: readonly KnownFailure[] = [
   {
     cause:
-      "Pebble alternates relocation flights and relocation rests around Chibi, held at the " +
-      "middle shelter's wall, without a tell; flyer pursuit is not on the map yet",
-    property: "attack-cadence",
-    scenario: "encounter flyer-shelter-middle loading-yards forward",
-    tick: 1315,
-  },
-  {
-    cause:
       "Map pursuit reaches Chibi by contact on every attempt before the parcel tell is ready, " +
       "so this run never throws; the throw hold needs a scenario where Fert throws",
     property: "committed-hold throw-rest",

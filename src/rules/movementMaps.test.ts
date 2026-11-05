@@ -149,7 +149,7 @@ describe("area movement maps", () => {
       );
     };
     expect(build()).toBe(build());
-    expect(build()).toMatchInlineSnapshot(`"027b7982fe8d723b"`);
+    expect(build()).toMatchInlineSnapshot(`"678a9ce62bb25914"`);
   });
 
   it("disables climb edges for pursuit only", () => {
