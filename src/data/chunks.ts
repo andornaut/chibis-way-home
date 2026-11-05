@@ -1454,7 +1454,7 @@ const KIWI_CEILINGS: Readonly<Record<string, readonly Instance[]>> = {
   "climbing-enemy-lane": [ceiling(4, 6, 34)],
   "compound-vertical-yard": [ceiling(4, 6, 34)],
   "offset-two-level-terrace-encounter": [ceiling(51, 3, 40)],
-  "open-stepped-ridge-encounter": [ceiling(50, 4, 41)],
+  "open-stepped-ridge-encounter": [ceiling(51, 3, 41)],
   "vertical-stack-early": [ceiling(4, 6, 44)],
   "vertical-stack-late": [ceiling(4, 6, 44)],
   "vertical-stack-middle": [ceiling(4, 6, 44)],
