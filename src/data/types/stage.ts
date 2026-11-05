@@ -177,7 +177,8 @@ interface NoCross {
 // noCross and outOfReach name surfaces by a spot on each, given as an entry is: noCross pairs a
 // spot with one he must never reach from it in one move, and outOfReach marks surfaces he must
 // never reach from the start. An assembled zone's area also lists the chunks it is made of, left
-// to right, and its slots with what the seed put in each; a hand-built area has neither.
+// to right, its slots with what the seed put in each, and its chunks' escape points; a hand-built
+// area has none of them.
 export interface AreaPlan {
   // Assembly-only source indices from ChunkPlan.scenery, before carried-choice filtering.
   readonly sceneryIndices?: readonly number[];
@@ -185,6 +186,7 @@ export interface AreaPlan {
   readonly chunks?: readonly PlacedChunk[];
   readonly cols: number;
   readonly entries: Readonly<Record<string, TilePoint>>;
+  readonly escapes?: readonly AreaEscape[];
   readonly noCross?: readonly NoCross[];
   readonly objects: readonly Instance[];
   readonly outOfReach?: readonly TilePoint[];
@@ -242,6 +244,21 @@ export interface ChunkRules {
 // left and right edges, where it joins the chunks either side. backdrops: its own placed
 // scenery, drawn in front of the theme's repeated backdrops. slots: where the seed may place
 // events and doors; it must play with every slot empty.
+// What makes an escape point one the boss cannot follow, or crosses at no more than half its
+// chase speed: a room door, a gap Chibi flutters across, or a passage too low for the boss.
+export type EscapeKind = "door" | "flutter-gap" | "low-passage";
+
+// A designed ordinary escape point in a chunk, in chunk tiles: the doorway, gap or passage, and
+// a surface spot before and past it, each given as an entry is.
+export interface ChunkEscape {
+  readonly area: TileRect;
+  readonly from: TilePoint;
+  // Unique within the chunk.
+  readonly id: string;
+  readonly kind: EscapeKind;
+  readonly to: TilePoint;
+}
+
 export interface ChunkPlan {
   readonly rows?: number;
   readonly encounters: number;
@@ -249,6 +266,8 @@ export interface ChunkPlan {
   readonly cols: number;
   readonly difficulty: Difficulty;
   readonly entry: ChunkSeam;
+  // Every chunk with encounters has at least one.
+  readonly escapes?: readonly ChunkEscape[];
   readonly exit: ChunkSeam;
   readonly maxPerZone?: number;
   readonly noCross?: readonly NoCross[];
@@ -397,6 +416,11 @@ export interface PlacedChunk {
 // A slot in an assembled zone, in zone tiles: the chunk it is in (an index into the area's
 // chunks), its id there, and what the seed put in it, the event's id or the door's room; empty
 // when the recipe asked for fewer.
+// A chunk's escape point in an assembled area: area tiles, and the index of its chunk.
+export interface AreaEscape extends ChunkEscape {
+  readonly chunk: number;
+}
+
 export interface FilledSlot extends ChunkSlot {
   readonly chunk: number;
   readonly fill?: string;

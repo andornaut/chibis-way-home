@@ -297,6 +297,17 @@ export interface ZoneBark extends DialogueLine {
   };
 }
 
+// Why a boss's pursuit ended as an escape: Chibi got beyond its escape distance (or past an
+// authored unreachable grace), or he entered a room door.
+export type ZoneEscapeCause = "distance" | "door";
+
+// A boss's pursuit ending as an escape on one step. A death step reports none, and a boss's own
+// death is never one.
+export interface ZoneEscape {
+  readonly cause: ZoneEscapeCause;
+  readonly owner: ZoneBark["owner"];
+}
+
 export interface ZoneState {
   // Crumbling support phases and contacts at the latest boundary; reset on area entry.
   readonly crumbling?: ZoneCrumblingWorld | undefined;
@@ -308,6 +319,9 @@ export interface ZoneState {
   // restores them with the rest of the area.
   readonly defeated?: Readonly<Record<string, readonly number[]>>;
   readonly barks: readonly ZoneBark[];
+  // The escapes of the step that produced this state. A held zone returns itself unchanged, so
+  // read them when `steps` advances, as barks are.
+  readonly escapes: readonly ZoneEscape[];
   readonly nextPulseId: number;
   readonly pulses: readonly ZonePulse[];
   readonly transients: readonly Transient[];
@@ -403,6 +417,7 @@ export function enterArea(
     crumbling: area.crumbling ? initialCrumblingWorld(area.crumbling) : undefined,
     death: undefined,
     door: undefined,
+    escapes: [],
     nextPulseId: 0,
     nextTransientId: 0,
     objects,
@@ -625,8 +640,8 @@ export function objectStep(
 // decide and act, crumbling, forced transit, Chibi's body, transients, contact and death.
 // stepZone adds spotting and escape barks, walk links and the stage exit to it.
 interface ZoneBodyStep {
-  // Escape lines of the objects whose pursuit ended this step, by object index.
-  readonly escaped: readonly (readonly [number, DialogueLine])[];
+  // The objects whose pursuit ended this step by distance, each with its escape bark.
+  readonly escapes: readonly { readonly bark: DialogueLine; readonly index: number }[];
   // The behaviour world the objects perceived at the start of the step.
   readonly geometry: BehaviourWorld;
   // The zone after the step, without its barks, walk link or exit; a death freezes it.
@@ -989,8 +1004,8 @@ export function stepZoneBodies(
     return frame;
   };
   const objects = area.objects.map((_, index) => resolveFrame(index));
-  let escaped = objects.flatMap((frame, index) =>
-    frame.behaviour?.escaped ? [[index, frame.behaviour.escaped] as const] : [],
+  let escapes = objects.flatMap((frame, index) =>
+    frame.behaviour?.escaped ? [{ bark: frame.behaviour.escaped, index }] : [],
   );
   const positions = objects.map((frame, index): Point =>
     frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
@@ -1052,7 +1067,7 @@ export function stepZoneBodies(
     behaviours = behaviours.map((state, index) =>
       state && deaths.includes(index) ? defeatBoss(state) : state,
     );
-    escaped = escaped.filter(([index]) => !deaths.includes(index));
+    escapes = escapes.filter(({ index }) => !deaths.includes(index));
     defeated = { ...defeated, [zone.area]: [...(defeated?.[zone.area] ?? []), ...deaths] };
   }
   const fixedLedges =
@@ -1260,7 +1275,7 @@ export function stepZoneBodies(
       useHeld: input.useHeld,
     };
     return {
-      escaped,
+      escapes,
       geometry,
       zone: {
         ...frozen,
@@ -1299,7 +1314,7 @@ export function stepZoneBodies(
         )
       : undefined;
   return {
-    escaped,
+    escapes,
     geometry,
     zone: {
       ...zone,
@@ -1375,12 +1390,22 @@ export function stepZone(
     }
   });
   const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
-  for (const [index, line] of body.escaped) {
-    barks.push({ ...line, owner: { area: zone.area, attempt: zone.attempt, objectIndex: index } });
+  const ownerOf = (objectIndex: number) => ({
+    area: zone.area,
+    attempt: zone.attempt,
+    objectIndex,
+  });
+  for (const { bark, index } of body.escapes) {
+    barks.push({ ...bark, owner: ownerOf(index) });
   }
+  // An escape on a death step does not count.
   if (body.zone.death) {
-    return { ...body.zone, barks, spotted };
+    return { ...body.zone, barks, escapes: [], spotted };
   }
+  const escapes: ZoneEscape[] = body.escapes.map(({ index }) => ({
+    cause: "distance",
+    owner: ownerOf(index),
+  }));
   const { bird, steps } = body.zone;
   const box = birdBox(tuning, bird);
   const atStageExit =
@@ -1413,13 +1438,31 @@ export function stepZone(
         facing: bird.facing,
         jumpHeld: input.jumpHeld,
       },
+      escapes,
     };
   }
+  const door = atStageExit ? undefined : body.zone.door;
+  // Entering a room door ends every engaged pursuit in the area as an escape, without a bark.
+  const behaviours =
+    door === undefined
+      ? body.zone.behaviours
+      : body.zone.behaviours.map((state, index) => {
+          if (state?.pursuit?.phase !== "engaged") {
+            return state;
+          }
+          escapes.push({ cause: "door", owner: ownerOf(index) });
+          return {
+            ...state,
+            pursuit: { ...state.pursuit, phase: "escaped" as const, settled: false },
+          };
+        });
   return {
     ...body.zone,
     barks,
+    behaviours,
     cleared: layout.stageExit ? atStageExit : box.x + box.width > area.exitX,
-    door: atStageExit ? undefined : body.zone.door,
+    door,
+    escapes,
     spotted,
     turnedBack: !atStageExit && box.x < area.backX,
   };

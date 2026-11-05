@@ -397,6 +397,15 @@ describe("assembleZone", () => {
     const lib = library({
       a: chunk(50, 50, {
         backdrops: [{ character: "tree", col: 3, row: 20 }],
+        escapes: [
+          {
+            area: { col: 20, cols: 4, row: 44, rows: 6 },
+            from: { col: 18, row: 50 },
+            id: "gap",
+            kind: "flutter-gap",
+            to: { col: 26, row: 50 },
+          },
+        ],
         noCross: [{ from: { col: 1, row: 50 }, to: { col: 9, row: 50 } }],
         objects: [{ character: "bench", col: 5, row: 48 }],
         outOfReach: [{ col: 2, row: 10 }],
@@ -412,6 +421,16 @@ describe("assembleZone", () => {
       ],
       cols: 180,
       entries: { start: { col: 2, row: 50 } },
+      escapes: [
+        {
+          area: { col: 80, cols: 4, row: 44, rows: 6 },
+          chunk: 1,
+          from: { col: 78, row: 50 },
+          id: "gap",
+          kind: "flutter-gap",
+          to: { col: 86, row: 50 },
+        },
+      ],
       noCross: [{ from: { col: 61, row: 50 }, to: { col: 69, row: 50 } }],
       objects: [
         { character: "sky", col: 0, cols: 180, row: 0 },
