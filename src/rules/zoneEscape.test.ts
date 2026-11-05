@@ -4,6 +4,7 @@ import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
 import type { Archetype, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
+import { SKILL_PROFILES } from "../progress";
 import { defeatBoss } from "./bossDefeat";
 import { objectLayout } from "./tiles";
 import { leaveRoom, startZone, stepZone, type ZoneState } from "./zone";
@@ -98,7 +99,7 @@ const escapeBarks = (zone: ZoneState) => zone.barks.filter(({ line }) => line ==
 
 // The boss engaged, with Chibi on the refuge in front of the door.
 function engaged(): ZoneState {
-  const zone = stepZone(BIRD, layout, STEP_SECONDS, still, startZone(BIRD, layout, 1));
+  const zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, startZone(BIRD, layout, 1));
   expect(zone.behaviours[BOSS]?.pursuit?.phase).toBe("engaged");
   return zone;
 }
@@ -111,28 +112,28 @@ const fled = (zone: ZoneState, falls: boolean): ZoneState => ({
 
 describe("zone escapes", () => {
   it("reports a distance escape with its bark", () => {
-    const zone = stepZone(BIRD, layout, STEP_SECONDS, still, fled(engaged(), false));
+    const zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, fled(engaged(), false));
     expect(zone.death).toBeUndefined();
     expect(zone.escapes).toEqual([{ cause: "distance", owner: owner() }]);
     expect(escapeBarks(zone)).toHaveLength(1);
   });
 
   it("credits no escape on a death step", () => {
-    const zone = stepZone(BIRD, layout, STEP_SECONDS, still, fled(engaged(), true));
+    const zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, fled(engaged(), true));
     expect(zone.death?.reason).toBe("fall");
     expect(zone.behaviours[BOSS]?.pursuit?.phase).toBe("escaped");
     expect(zone.escapes).toEqual([]);
   });
 
   it("ends pursuit as an escape when Chibi enters a room door, without an escape bark", () => {
-    const entered = stepZone(BIRD, layout, STEP_SECONDS, { ...still, useHeld: true }, engaged());
+    const entered = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, { ...still, useHeld: true }, engaged());
     expect(entered.door).toBe(2);
     expect(entered.behaviours[BOSS]?.pursuit).toMatchObject({ phase: "escaped", settled: false });
     expect(entered.escapes).toEqual([{ cause: "door", owner: owner() }]);
     expect(escapeBarks(entered)).toEqual([]);
     let zone = leaveRoom(entered);
     for (let step = 0; step < 30; step++) {
-      zone = stepZone(BIRD, layout, STEP_SECONDS, still, zone);
+      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, zone);
       expect(escapeBarks(zone)).toEqual([]);
       expect(zone.escapes.filter(({ cause }) => cause === "door")).toEqual([]);
     }
@@ -146,7 +147,7 @@ describe("zone escapes", () => {
         index === BOSS && state ? defeatBoss(state) : state,
       ),
     };
-    const entered = stepZone(BIRD, layout, STEP_SECONDS, { ...still, useHeld: true }, dead);
+    const entered = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, { ...still, useHeld: true }, dead);
     expect(entered.door).toBe(2);
     expect(entered.escapes).toEqual([]);
   });
