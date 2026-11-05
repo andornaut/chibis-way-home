@@ -223,6 +223,28 @@ export interface BossScorer {
   };
 }
 
+// How Chibi gets clear of a told attack, with ordinary skills; each has a script in
+// src/testing/dodges.ts.
+export type DodgeName = "jump-over" | "retreat" | "under";
+
+// Fairness bounds on one boss's attacks, checked over its data and simulated traces; the runtime
+// does not read them. Seconds are active seconds.
+export interface BossFairness {
+  // Each told attack's dodges, by attack id: from every tell start, at least one of them begun
+  // reactionDelaySeconds later keeps Chibi alive through the attack and its recovery.
+  readonly dodges: Readonly<Record<string, readonly DodgeName[]>>;
+  // Engaged, ready to attack and with a movement-map path to Chibi: the longest time between
+  // threats (a tell start, or the boss's body within threatRadius of him).
+  readonly maxThreatGapSeconds: number;
+  // Tell start to the earliest contact of the committed attack.
+  readonly minReactionSeconds: number;
+  readonly reactionDelaySeconds: number;
+  // Stillness after a committed attack; an authored committed rest holds for its own seconds.
+  readonly recoveryMaxSeconds: number;
+  // Tiles between the boss's body and Chibi's box that count as a threat.
+  readonly threatRadius: number;
+}
+
 // Entry actions use tiles in authored data and pixels in a resolved layout.
 export type BehaviourAction =
   | {

@@ -38,6 +38,8 @@ export interface AgentSample extends TraceBody {
   readonly supported: boolean;
   // The pause after consecutive cancelled tells, while no tell may start.
   readonly tellPauseSeconds?: number;
+  // No movement path reaches the target, so the agent paces where it can.
+  readonly unreachable?: true;
 }
 
 interface TargetSample extends TraceBody {
