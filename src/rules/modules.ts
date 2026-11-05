@@ -15,6 +15,7 @@ import type {
 } from "../data/types";
 import { seamRuleProblems, thingOf } from "./chunk";
 import { bindElement } from "./elementBinding";
+import { prefixInstanceIds } from "./orbit";
 import type { Catalogue } from "./tiles";
 
 // The roles whose objects are encounters; a module's encounters count them.
@@ -244,7 +245,9 @@ interface PairContext {
 
 // The chunk two compatible modules make in a zone: the left half as authored and the right half
 // shifted one module right; objects left, right, then each half's zone additions, so motion
-// stream indices are fixed; slots and escape points prefixed by half; the zone's themes and frame; one maxPerZone.
+// stream indices are fixed; instance ids with the orbit hosts and phase sources that name them,
+// slots and escape points prefixed by half, so halves may reuse ids; the zone's themes and frame;
+// one maxPerZone.
 export function composePair(
   context: PairContext,
   left: ChunkModule,
@@ -255,10 +258,12 @@ export function composePair(
     throw new Error(`${pairKey(left.id, right.id)}: ${problems.join("; ")}`);
   }
   const offset = context.rules.cols;
+  const scoped = (side: ModuleSide, values: readonly Instance[] | undefined): Instance[] =>
+    prefixInstanceIds(`${side}:`, values ?? []);
   const point = <T extends TilePoint>(value: T): T => ({ ...value, col: value.col + offset });
   const shifted = <T extends { readonly col: number }>(values: readonly T[] | undefined): T[] =>
     (values ?? []).map((value) => ({ ...value, col: value.col + offset }));
-  const zoneObjects = (module: ChunkModule) => module.zoneObjects?.[context.zone] ?? [];
+  const zoneObjects = (module: ChunkModule) => module.zoneObjects?.[context.zone];
   const key = pairKey(left.id, right.id);
   const slots = [
     ...(left.slots ?? []).map((slot) => ({ ...slot, id: `left:${slot.id}` })),
@@ -283,8 +288,11 @@ export function composePair(
     })),
   ];
   const outOfReach = [...(left.outOfReach ?? []), ...(right.outOfReach ?? []).map(point)];
-  const backdrops = [...(left.backdrops ?? []), ...shifted(right.backdrops)];
-  const scenery = [...(left.scenery ?? []), ...shifted(right.scenery)];
+  const backdrops = [
+    ...scoped("left", left.backdrops),
+    ...shifted(scoped("right", right.backdrops)),
+  ];
+  const scenery = [...scoped("left", left.scenery), ...shifted(scoped("right", right.scenery))];
   const chunk = context.frame.frame({
     ...(backdrops.length > 0 && { backdrops }),
     cols: 2 * offset,
@@ -296,10 +304,10 @@ export function composePair(
     maxPerZone: 1,
     ...(noCross.length > 0 && { noCross }),
     objects: [
-      ...left.objects,
-      ...shifted(right.objects),
-      ...zoneObjects(left),
-      ...shifted(zoneObjects(right)),
+      ...scoped("left", left.objects),
+      ...shifted(scoped("right", right.objects)),
+      ...scoped("left", zoneObjects(left)),
+      ...shifted(scoped("right", zoneObjects(right))),
     ],
     ...(outOfReach.length > 0 && { outOfReach }),
     rows: context.rules.rows,

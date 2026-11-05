@@ -51,22 +51,28 @@ export function validateOrbitReferences(
   return ids;
 }
 
+// Prefixes instance ids and the orbit hosts and phase sources that name them, so placements that
+// reuse an id keep their references inside their own scope.
+export function prefixInstanceIds(prefix: string, instances: readonly Instance[]): Instance[] {
+  return instances.map((instance) => ({
+    ...instance,
+    ...(instance.id !== undefined && { id: `${prefix}${instance.id}` }),
+    ...(instance.orbit && {
+      orbit: { ...instance.orbit, host: `${prefix}${instance.orbit.host}` },
+    }),
+    ...(instance.phaseSource !== undefined && {
+      phaseSource: `${prefix}${instance.phaseSource}`,
+    }),
+  }));
+}
+
 // Scopes instance ids and the orbit hosts and phase sources that name them to one chunk.
 export function namespaceOrbitInstances(
   scope: string,
   instances: readonly Instance[],
 ): readonly Instance[] {
   validateOrbitReferences(instances);
-  return instances.map((instance) => ({
-    ...instance,
-    ...(instance.id !== undefined && { id: `${scope}/${instance.id}` }),
-    ...(instance.orbit && {
-      orbit: { ...instance.orbit, host: `${scope}/${instance.orbit.host}` },
-    }),
-    ...(instance.phaseSource !== undefined && {
-      phaseSource: `${scope}/${instance.phaseSource}`,
-    }),
-  }));
+  return prefixInstanceIds(`${scope}/`, instances);
 }
 
 export function orbitPosition(

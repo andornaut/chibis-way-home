@@ -7,8 +7,11 @@ import { MODULE_RULES } from "../data/modules";
 import { SEAM_ROWS } from "../data/seams";
 import type { ChunkModule, Difficulty, ZoneKey } from "../data/types";
 import { ZONE_FRAMES } from "../data/zoneFrames";
+import { CROSSWALK_FIXTURE_CATALOGUE } from "../testing/chunks";
 import { FIXTURE_MODULES } from "../testing/modules";
 import { composePair, moduleProblems, pairGrade, pairProblems } from "./modules";
+import { validateOrbitReferences } from "./orbit";
+import { areaLayout } from "./tiles";
 
 const {
   "fixture-patrol": patrol,
@@ -208,6 +211,51 @@ describe("composePair", () => {
         kind: "door",
         to: { col: 39, row: 80 },
       },
+    ]);
+  });
+
+  it("scopes each half's instance ids and the references that name them", () => {
+    const shared: ChunkModule = {
+      ...step,
+      objects: [
+        { character: "test-crosswalk-strip", col: 5, id: "strip", row: 79 },
+        { character: "test-crosswalk-signal", col: 3, phaseSource: "strip", row: 73 },
+        { character: "platform-ledge", col: 8, id: "host", row: 60 },
+        {
+          character: "platform-ledge",
+          col: 8,
+          orbit: { angularSpeed: 1, host: "host", phase: 0, radius: 4 },
+          row: 60,
+        },
+      ],
+    };
+    const { chunk } = pair("blue", shared, shared);
+    expect(
+      chunk.objects.map(({ id, orbit, phaseSource }) => [id, phaseSource, orbit?.host]),
+    ).toEqual([
+      ["left:strip", undefined, undefined],
+      [undefined, "left:strip", undefined],
+      ["left:host", undefined, undefined],
+      [undefined, undefined, "left:host"],
+      ["right:strip", undefined, undefined],
+      [undefined, "right:strip", undefined],
+      ["right:host", undefined, undefined],
+      [undefined, undefined, "right:host"],
+    ]);
+    const ids = validateOrbitReferences(chunk.objects);
+    expect([ids.get("left:host"), ids.get("right:host")]).toEqual([2, 6]);
+    const area = areaLayout(1, CROSSWALK_FIXTURE_CATALOGUE, {}, {}, new Set(), {
+      cols: 2 * MODULE_RULES.cols,
+      entries: { start: { col: 2, row: 80 } },
+      objects: chunk.objects.filter(({ character }) => character.startsWith("test-crosswalk")),
+      rows: MODULE_RULES.rows,
+      solids: chunk.solids,
+    });
+    expect(area.objects.map(({ phaseSource }) => phaseSource)).toEqual([
+      undefined,
+      0,
+      undefined,
+      2,
     ]);
   });
 
