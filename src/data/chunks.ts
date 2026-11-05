@@ -934,29 +934,34 @@ const CONNECTED_TERRAIN_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       ],
     ),
   ),
-  "open-stepped-ridge-encounter": moduleChunk(
-    [
-      ...PATROL_THEMES,
-      "back-streets",
-      "city-outskirts",
-      "deep-woods",
-      "familiar-neighbourhood",
-      "forest-paths",
-      "ravine",
-    ],
-    4,
-    50,
-    50,
-    [
-      floor(0, 8, 50),
-      floor(8, 9, 46),
-      floor(17, 12, 42),
-      floor(29, 10, 38),
-      floor(39, 8, 43),
-      floor(47, 7, 47),
-      floor(54, 6, 50),
-    ],
-    [{ character: "dog-antagonist", col: 32, role: "antagonist", row: 34 }],
+  "open-stepped-ridge-encounter": withPassage(
+    HILL_ENTRY_PASSAGE,
+    moduleChunk(
+      [
+        ...PATROL_THEMES,
+        "back-streets",
+        "city-outskirts",
+        "deep-woods",
+        "familiar-neighbourhood",
+        "forest-paths",
+        "ravine",
+      ],
+      4,
+      50,
+      50,
+      [
+        floor(0, 7, 50),
+        floor(7, 3, 46),
+        floor(10, 2, 50),
+        floor(12, 8, 46),
+        floor(20, 9, 42),
+        floor(29, 10, 38),
+        floor(39, 8, 43),
+        floor(47, 7, 47),
+        floor(54, 6, 50),
+      ],
+      [{ character: "dog-antagonist", col: 32, role: "antagonist", row: 34 }],
+    ),
   ),
 };
 
@@ -1562,7 +1567,7 @@ const KIWI_CEILINGS: Readonly<Record<string, readonly Instance[]>> = {
 // pool already have terrain cover at least that tall.
 const FERT_COVER: Readonly<Record<string, readonly Instance[]>> = {
   "offset-two-level-terrace-encounter": [post(44, 42, 4)],
-  "open-stepped-ridge-encounter": [post(23, 42, 4)],
+  "open-stepped-ridge-encounter": [post(26, 42, 4)],
 };
 function withObjects(
   extra: Readonly<Record<string, readonly Instance[]>>,
