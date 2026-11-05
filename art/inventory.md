@@ -179,27 +179,30 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Apartment building blocks
 
-| Key                          | Type                               | Size    | Contract                                        |
-| ---------------------------- | ---------------------------------- | ------- | ----------------------------------------------- |
-| apartment-exterior-mid       | decorative backdrop                | 720x720 | Bottom-left, y 720, repeat x                    |
-| apartment-facade             | decorative backdrop                | 48x180  | Bottom-left, y 720, repeat x                    |
-| apartment-far                | decorative backdrop                | 720x720 | Bottom-left, y 720, repeat x                    |
-| apartment-lobby-sofa         | decorative backdrop                | 96x48   | Bottom-left, y 720, repeat none                 |
-| apartment-pool-water         | decorative backdrop                | 96x24   | Bottom-left, y 720, repeat x                    |
-| apartment-residential-shelf  | decorative backdrop                | 72x96   | Bottom-left, y 720, repeat none                 |
-| apartment-restaurant-counter | decorative backdrop                | 96x48   | Bottom-left, y 720, repeat none                 |
-| apartment-room-door          | decorative backdrop                | 60x84   | Bottom-left, y 720, repeat none                 |
-| apartment-sky                | decorative backdrop                | 48x720  | Bottom-left, y 720, repeat x                    |
-| apartment-spa-screen         | decorative backdrop                | 72x96   | Bottom-left, y 720, repeat none                 |
-| apartment-stairwell          | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                 |
-| apartment-stairwell-door     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                 |
-| apartment-stairwell-down     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                 |
-| apartment-wall-lobby         | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                    |
-| apartment-wall-pool          | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                    |
-| apartment-wall-residential   | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                    |
-| apartment-wall-restaurant    | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                    |
-| apartment-wall-spa           | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                    |
-| tiles-apartment              | tileset, 12px cells, eight columns | 96x72   | Six material families, seven terrain tiles each |
+| Key                          | Type                               | Size    | Contract                                           |
+| ---------------------------- | ---------------------------------- | ------- | -------------------------------------------------- |
+| apartment-chandelier         | sprite, swinging chandelier ledge  | 72x24   | Bottom-centre, 6x2; idle                           |
+| apartment-chandelier-chain   | sprite, chandelier tether segment  | 6x6     | Centred on the tether; idle                        |
+| apartment-chandelier-mount   | sprite, chandelier ceiling rose    | 24x12   | Bottom-centre, 2x1, pivot at the centre 12,6; idle |
+| apartment-exterior-mid       | decorative backdrop                | 720x720 | Bottom-left, y 720, repeat x                       |
+| apartment-facade             | decorative backdrop                | 48x180  | Bottom-left, y 720, repeat x                       |
+| apartment-far                | decorative backdrop                | 720x720 | Bottom-left, y 720, repeat x                       |
+| apartment-lobby-sofa         | decorative backdrop                | 96x48   | Bottom-left, y 720, repeat none                    |
+| apartment-pool-water         | decorative backdrop                | 96x24   | Bottom-left, y 720, repeat x                       |
+| apartment-residential-shelf  | decorative backdrop                | 72x96   | Bottom-left, y 720, repeat none                    |
+| apartment-restaurant-counter | decorative backdrop                | 96x48   | Bottom-left, y 720, repeat none                    |
+| apartment-room-door          | decorative backdrop                | 60x84   | Bottom-left, y 720, repeat none                    |
+| apartment-sky                | decorative backdrop                | 48x720  | Bottom-left, y 720, repeat x                       |
+| apartment-spa-screen         | decorative backdrop                | 72x96   | Bottom-left, y 720, repeat none                    |
+| apartment-stairwell          | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                    |
+| apartment-stairwell-door     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                    |
+| apartment-stairwell-down     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                    |
+| apartment-wall-lobby         | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
+| apartment-wall-pool          | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
+| apartment-wall-residential   | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
+| apartment-wall-restaurant    | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
+| apartment-wall-spa           | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
+| tiles-apartment              | tileset, 12px cells, eight columns | 96x72   | Six material families, seven terrain tiles each    |
 
 ## Ferret obstacle skin
 

@@ -721,6 +721,12 @@ The marked stairwells retain their 48x72 canvases. Their ascending or descending
 
 Props are decorative, with no collision, continuous white safe lip or hazard band. Place actual platforms independently using the common structures. Pool water does not imply lethal contact; only an explicitly marked red hazard does. Room scenery contains no foreground friendly animals, people or new story details. The existing ferret story sprite and portrait remain available; his obstacle skin does not decide the friendship's outcome.
 
+The swinging chandelier uses three brass sprites: a tan face, brown and dbrown shade, cream glass and white candles. They carry no yellow, gold, orange, hazard red or round blob that reads as a coin.
+
+- `apartment-chandelier`: 72x24, bottom-centre on a 6x2 footprint, tag `idle` (2 x 300ms). Rows 0 to 2 are the standable rim top, a navy edge over a 2px white lip across the full width, with nothing above row 0. Below, the tan and brown rim with a dbrown edge, five dbrown-framed cream glass candle cups, an elongated cream drop under each cup and four short drops between them. The second frame moves only cream and white pixels inside the cups.
+- `apartment-chandelier-chain`: 6x6, tag `idle`. A dbrown link, tan lit top-left and brown in shade, around a clear 2x2 eye. Placed unrotated from the mount centre to the rim's top centre.
+- `apartment-chandelier-mount`: 24x12, bottom-centre on a 2x1 footprint, tag `idle`. A ceiling rose: a dbrown plate, a stepped tan and brown dome and a dbrown pivot boss on the sprite centre, 12,6, over a hook ring.
+
 ### Ferret obstacle skin
 
 `art/tools/ferretAntagonist.ts` draws `ferret-antagonist`, a compact encounter skin for the familiar patrol and charge pattern. It retains the champagne coat, small wedge head, plum stovepipe hat, red band and bow tie, and warm brown legs and tail. The original 64x80 story sprite and dialogue portrait remain unchanged. Costume accents do not replace the shared red terrain hazard markings, and the enemy has no red outline.
