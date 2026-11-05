@@ -8,7 +8,7 @@ import { SEAM_ROWS } from "../data/seams";
 import type { StageRecipe, ZoneKey, ZonePlan } from "../data/types";
 import { ZONE_FRAMES } from "../data/zoneFrames";
 import { RECIPES } from "../data/zones";
-import { assembleZone, type ChunkLibrary } from "./assemble";
+import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble";
 import { certifiedChunks } from "./modules";
 
 const CERTIFIED = certifiedChunks(
@@ -52,9 +52,15 @@ export const STAGE_RECIPES: Readonly<Record<string, StageRecipe>> = Object.fromE
 // The zone key names, assembled from its recipe in STAGE_RECIPES for seed, the same for the same
 // seed.
 export function zonePlanFor(seed: number, key: string): ZonePlan {
+  return zonePlanAvoiding([], seed, key);
+}
+
+// zonePlanFor without the avoided middle chunks while an assembly fits without them
+// (assembleZoneAvoiding), the same for the same seed and avoided chunks.
+export function zonePlanAvoiding(avoid: readonly string[], seed: number, key: string): ZonePlan {
   const recipe = STAGE_RECIPES[key];
   if (!recipe) {
     throw new Error(`No recipe ${key}`);
   }
-  return assembleZone(CHUNK_LIBRARY, seed, key, recipe);
+  return assembleZoneAvoiding(CHUNK_LIBRARY, avoid, seed, key, recipe);
 }

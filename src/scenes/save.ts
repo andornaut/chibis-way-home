@@ -75,6 +75,9 @@ export function recordStepAchievements(
 export function recordStageChunks(stage: string, middle: readonly string[]): void {
   pageSave.recordStageChunks(SESSION, stage, middle);
 }
+export function recentStageChunks(stage: string): readonly string[] {
+  return pageSave.recentStageChunks(SESSION, stage);
+}
 export function savedRecentMiddleChunks(zone: string): readonly string[] {
   return pageSave.savedRecentMiddleChunks(zone);
 }

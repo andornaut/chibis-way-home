@@ -325,6 +325,13 @@ export function savedRecentMiddleChunks(zone: string): readonly string[] {
   return recentMiddleChunks(progress, zone);
 }
 
+// The middle chunk ids a fresh entry of a catalogued stage avoids: its destination's recent ones.
+// Developer sessions avoid none, so a fixed assembly seed always gives the same stage.
+export function recentStageChunks(session: SaveSession, stage: string): readonly string[] {
+  const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
+  return session.development() || zone === undefined ? [] : recentMiddleChunks(progress, zone);
+}
+
 // A fresh entry of a catalogued stage, after assembly, with its plan's middle chunk ids: the
 // stage's destination remembers them as its newest entry. Developer sessions write nothing.
 export function recordStageChunks(

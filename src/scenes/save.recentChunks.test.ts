@@ -8,7 +8,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
-it("records a stage entry's middle chunks for its zone, keeps them on reopen and clears them on Restart", async () => {
+it("records a stage entry's middle chunks, avoids them in its zone and clears them on Restart", async () => {
   const values = new Map<string, string>();
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => values.get(key) ?? null,
@@ -27,8 +27,10 @@ it("records a stage entry's middle chunks for its zone, keeps them on reopen and
   const reopened = await import("./save");
   await reopened.loadProgress();
   const kept = reopened.savedRecentMiddleChunks(zone.id);
+  const avoided = zone.stages.map((stage) => reopened.recentStageChunks(stage));
   reopened.clearProgress();
-  expect({ cleared: reopened.savedRecentMiddleChunks(zone.id), kept }).toEqual({
+  expect({ avoided, cleared: reopened.savedRecentMiddleChunks(zone.id), kept }).toEqual({
+    avoided: zone.stages.map(() => [known]),
     cleared: [],
     kept: [known],
   });

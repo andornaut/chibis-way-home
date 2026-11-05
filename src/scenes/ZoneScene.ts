@@ -149,7 +149,7 @@ import {
   type ZoneStory,
   zoneStoryForStage,
 } from "../rules/zoneFlow";
-import { zonePlanFor } from "../rules/zonePlans";
+import { zonePlanAvoiding, zonePlanFor } from "../rules/zonePlans";
 import { sceneryParallax, type Tileset, worldScenery } from "../stage";
 import {
   bottomShift,
@@ -204,6 +204,7 @@ import {
   beginZoneVisit,
   completeStageRun,
   flushStats,
+  recentStageChunks,
   recordActiveStageStep,
   recordStageChunks,
   recordStepAchievements,
@@ -230,13 +231,14 @@ function newSeed(): number {
   return Math.floor(Math.random() * SEED_LIMIT);
 }
 
-// The zone a map node plays, assembled for seed where it is a recipe.
-function zoneAt(seed: number, node: string): ZonePlan {
+// The zone a map node plays, assembled for seed where it is a recipe, without the avoided middle
+// chunks while an assembly fits without them.
+function zoneAt(seed: number, node: string, avoid: readonly string[] = []): ZonePlan {
   const key = nodeOf(ZONE_MAP, node).zone;
   if (key === undefined) {
     throw new Error(`Map node ${node} has no zone to play`);
   }
-  return zonePlanFor(seed, key);
+  return zonePlanAvoiding(avoid, seed, key);
 }
 
 // What every zone's instances are resolved against.
@@ -587,7 +589,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     // An assembled zone is assembled afresh each time he enters it, unless ?assembly=<n> fixes
     // the seed.
     if (node !== undefined) {
-      const plan = zoneAt(seed, node);
+      const plan = zoneAt(seed, node, recentStageChunks(node));
       this.loadPlan(plan);
       recordStageChunks(node, middleChunkIds(plan));
     } else if (this.trial !== undefined) {
