@@ -868,31 +868,35 @@ const CENTRAL_CROSSING_TERRAIN = [floor(0, 24, 50), floor(24, 12, 46), floor(36,
 const CENTRAL_CROSSING_REFUGES = [ledge(10, 12, 42), ledge(38, 12, 42)];
 const CONNECTED_TERRAIN_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "broad-mesa": moduleChunk(MECHANICAL_THEMES, 4, 50, 50, MESA_TERRAIN),
-  "dry-underground-gallery-encounter": {
-    ...moduleChunk(
-      ["freight-terminal", "loading-yards", "warehouse-district"],
-      4,
-      50,
-      50,
-      [
-        floor(0, 8, 50),
-        floor(8, 10, 47),
-        floor(18, 10, 43),
-        floor(28, 10, 40),
-        floor(38, 10, 44),
-        floor(48, 6, 47),
-        floor(54, 6, 50),
-        { col: 8, cols: 44, look: "raised", row: 24, rows: 2 },
-      ],
-      [
-        { character: "pigeon-antagonist", col: 25, role: "antagonist", row: 33 },
-        ledge(10, 6, 41),
-        ledge(24, 6, 37),
-        ledge(40, 6, 38),
-      ],
-    ),
-    outOfReach: [{ col: 30, row: 24 }],
-  },
+  // The escape is an arch on the hilltop, under the roof.
+  "dry-underground-gallery-encounter": withArch(
+    { col: 32, cols: 3, floorRow: 40, top: 34, toward: 1 },
+    {
+      ...moduleChunk(
+        ["freight-terminal", "loading-yards", "warehouse-district"],
+        4,
+        50,
+        50,
+        [
+          floor(0, 8, 50),
+          floor(8, 10, 47),
+          floor(18, 10, 43),
+          floor(28, 10, 40),
+          floor(38, 10, 44),
+          floor(48, 6, 47),
+          floor(54, 6, 50),
+          { col: 8, cols: 44, look: "raised", row: 24, rows: 2 },
+        ],
+        [
+          { character: "pigeon-antagonist", col: 25, role: "antagonist", row: 33 },
+          ledge(10, 6, 41),
+          ledge(24, 6, 37),
+          ledge(40, 6, 38),
+        ],
+      ),
+      outOfReach: [{ col: 30, row: 24 }],
+    },
+  ),
   "low-central-crossing": moduleChunk(
     MECHANICAL_THEMES,
     4,
