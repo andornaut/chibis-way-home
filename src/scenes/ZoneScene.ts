@@ -55,6 +55,7 @@ import type {
   Rect,
   SkillId,
   SpriteSilhouettes,
+  SupportPhase,
   ZoneLayout,
   ZonePlan,
 } from "../data/types";
@@ -123,7 +124,7 @@ import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
 import type { BehaviourState } from "../rules/behaviour";
 import { removalProgress } from "../rules/bossDefeat";
 import { deathSupport } from "../rules/death";
-import { effectiveHazardPhase } from "../rules/effectiveCollision";
+import { effectiveHazardPhase, effectiveSupportPhase } from "../rules/effectiveCollision";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams";
 import { currentScreen } from "../rules/perception";
 import { phaseFollowerTag } from "../rules/phaseSource";
@@ -261,6 +262,12 @@ const OBJECT_COLOURS: Readonly<Record<Collision, number>> = {
   solid: 0xe4a672,
   use: 0x63c74d,
 };
+// A clocked support's placeholder opacity per phase, until its sprite exists.
+const SUPPORT_PLACEHOLDER_ALPHA: Readonly<Record<SupportPhase, number>> = {
+  absent: 0.2,
+  present: 1,
+  warning: 0.6,
+};
 // Leaving an ended zone fades to black, and where the next zone plays in this scene, back, each
 // way this long, with play held still.
 const FADE_MS = 250;
@@ -292,6 +299,8 @@ interface ObjectArt {
   disposed?: boolean;
   readonly item: GameObjects.Components.Transform & GameObjects.GameObject;
   readonly offset: Point;
+  // The flat rectangle drawn where the object has no art.
+  readonly placeholder?: GameObjects.Rectangle;
   readonly scenery?: boolean;
   readonly timedHazard?: ReturnType<typeof createTimedHazardArt>["draw"];
   // When its next quirk plays, and the draws that time it.
@@ -1743,7 +1752,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           .rectangle(0, 0, rect.width, rect.height, OBJECT_COLOURS[object.collision])
           .setOrigin(0)
           .setDepth(DEPTHS.placeholder);
-        return { item, offset: { x: 0, y: 0 }, sprite: undefined };
+        return { item, offset: { x: 0, y: 0 }, placeholder: item, sprite: undefined };
       }
     }
   }
@@ -1822,6 +1831,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         }
         art.timedHazard(phase, timedHazardRect(object, at));
         return;
+      }
+      const support = art.placeholder && effectiveSupportPhase(object, behaviour);
+      if (support !== undefined) {
+        art.placeholder!.setAlpha(SUPPORT_PLACEHOLDER_ALPHA[support]);
       }
       if (object.phaseSource !== undefined) {
         if (art.sprite) {
