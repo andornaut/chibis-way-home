@@ -1,5 +1,5 @@
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
-import { memoryStorage } from "@andornaut/game-kit/testing/memoryStorage";
+import { storageFixture } from "@andornaut/game-kit/testing/storageFixture";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BIRD_FRAME } from "../../assets";
@@ -16,7 +16,7 @@ const FORMAT = statsFormat(STAGES);
 describe("persistent active stage clocks", () => {
   it("coalesces active steps into one checkpoint and makes explicit flush idempotent", async () => {
     vi.useFakeTimers();
-    const storage = memoryStorage();
+    const storage = storageFixture();
     const writes = vi.spyOn(storage, "write");
     const clock = stageStatsStore(storage, STAGES);
     await clock.load();
@@ -38,7 +38,7 @@ describe("persistent active stage clocks", () => {
     expect(reopened.seconds("street")).toBeCloseTo(6);
   });
   it("retains independent unfinished clocks across reopen and resets each clear", async () => {
-    const storage = memoryStorage();
+    const storage = storageFixture();
     const first = stageStatsStore(storage, STAGES);
     await first.load();
     first.addActiveTime("street", 1.5);
@@ -89,7 +89,7 @@ describe("persistent active stage clocks", () => {
   });
 
   it("keeps retries in one run and isolates each actual zone visit", async () => {
-    const storage = memoryStorage();
+    const storage = storageFixture();
     const destinations = [{ id: "first", stages: ["street", "park"] as const }];
     const clock = stageStatsStore(storage, STAGES, destinations);
     await clock.load();
@@ -157,7 +157,7 @@ describe("persistent active stage clocks", () => {
   });
 
   it("keeps memory clocks when storage is unavailable", async () => {
-    const clock = stageStatsStore(memoryStorage({ unavailable: true }), STAGES);
+    const clock = stageStatsStore(storageFixture({ unavailable: true }), STAGES);
     await clock.load();
     clock.addActiveTime("street", 1);
     await clock.flush();
