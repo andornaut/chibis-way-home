@@ -123,12 +123,12 @@ const gap = (row: number, near: number, width: number): Half => ({
   objects: red(near, width, row + 10),
   solids: [floor(0, near, row), floor(near + width, 30 - near - width, row)],
 });
-// A red strip under a low red ceiling: only a short press crosses it.
+// A 2-tile red strip under a low red ceiling: only a short press crosses it.
 const tapStrip = (row: number, col: number): Half => ({
   entry: row,
   exit: row,
-  objects: [...redCeiling(col - 4, 12, row - 8), ...red(col, 4, row)],
-  solids: [floor(0, col, row), floor(col + 4, 26 - col, row)],
+  objects: [...redCeiling(col - 4, 12, row - 8), ...red(col + 1, 2, row)],
+  solids: [floor(0, col + 1, row), floor(col + 3, 27 - col, row)],
 });
 // A shuttle across a pit too wide to jump.
 const ferry = (row: number): Half => ({
@@ -238,8 +238,8 @@ const MODULE_LIST: readonly ChunkModule[] = [
   half(3, "city-low-descent", {
     entry: 70,
     exit: 80,
-    objects: [...redCeiling(18, 8, 72), ...red(20, 4, 80)],
-    solids: [floor(0, 8, 70), floor(8, 6, 75), floor(14, 6, 80), floor(24, 6, 80)],
+    objects: [...redCeiling(18, 8, 72), ...red(21, 2, 80)],
+    solids: [floor(0, 8, 70), floor(8, 6, 75), floor(14, 7, 80), floor(23, 7, 80)],
   }),
   half(3, "city-lift-descent", {
     entry: 70,
