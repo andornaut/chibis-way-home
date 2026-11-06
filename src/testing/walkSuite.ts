@@ -103,7 +103,9 @@ export function requiredWalkSuite(query: WalkRouteQuery, plan: ZonePlan): void {
   beforeAll(() => {
     layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
     walk = walkRequiredRoutes(BIRD, query, layout);
-  }, 180_000);
+    // The longest required-route walk takes up to 3 minutes on a hosted runner, which a busy
+    // runner slows by up to 1.8x.
+  }, 360_000);
   it("clears from entry through every declared required route target", () => {
     expect(walk.complete, JSON.stringify({ cleared: walk.cleared, targets: query.targets })).toBe(
       true,

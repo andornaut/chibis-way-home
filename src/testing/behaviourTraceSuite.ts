@@ -210,7 +210,9 @@ export function registerTraceSuite(group: string, scenarios: readonly TraceScena
           );
         }
       },
-      600_000,
+      // The longest walk takes about 8 minutes on a hosted runner, and a busy runner is up to
+      // 1.8x slower.
+      1_200_000,
     );
   });
 }
