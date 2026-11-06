@@ -51,6 +51,9 @@
  *   (a pale stone kerb where the sidewalk meets a cross street, one tile above the road),
  *   sidewalk-face, sidewalk-face-left, sidewalk-face-right: pale concrete (white lip, lgrey slabs)
  *   over a slate face.
+ * - sidewalk-bottom-left, sidewalk-bottom, sidewalk-bottom-right: the face closed underneath by a
+ *   2px shade band over a 1px edge row, as face-right closes its side, for the underside of a
+ *   raised or floating block. The last three tiles, after the crosswalk.
  * - road-top, road: asphalt, one tile below the sidewalk.
  * - one-way-awning-left, one-way-awning, one-way-awning-right: an ochre-and-cream shop awning seen
  *   front-on, 4px stripes and a scalloped hem, art in the top 11 rows. Lay them on row 20 (y 240),
@@ -95,8 +98,9 @@
  *   greyscale.
  * - floor-top, floor-top-joint (a 2px board end at the right edge; alternate them, 24px rhythm),
  *   floor-top-left, floor-top-right, floor-face, floor-face-left, floor-face-right: brown boards
- *   over a dark-brown face. The lobby floor line is y 672 (row 56) in a level 720px (60 tiles)
- *   tall.
+ *   over a dark-brown face. floor-bottom-left, floor-bottom, floor-bottom-right close the face
+ *   underneath with a 2px plum band over a plum edge row; the last three tiles, after the exit.
+ *   The lobby floor line is y 672 (row 56) in a level 720px (60 tiles) tall.
  * - One-way ledges, each a 7px slab (left, middle, right): one-way-balcony-* (the mezzanine's front
  *   edge), one-way-shelf-* (bookcase boards, with brackets on the end tiles), one-way-cushion-* (the
  *   sofa's seat and back), one-way-desk-* (the reception desk's top).
@@ -207,6 +211,24 @@ function ends(
   return g;
 }
 
+/**
+ * Close a face tile's underside when kind has "b": a 2px shade band over a 1px edge row, the
+ * treatment of a right end, with the side edges redrawn so the outline runs round the corner.
+ */
+function underside(g: Grid, kind: string, edge: string, shade: string): Grid {
+  if (!kind.includes("b")) {
+    return g;
+  }
+  rects(g, [0, T - 3, T, 2, shade], [0, T - 1, T, 1, edge]);
+  if (kind.includes("l")) {
+    rects(g, [0, 0, 1, T, edge]);
+  }
+  if (kind.includes("r")) {
+    rects(g, [T - 1, 0, 1, T, edge]);
+  }
+  return g;
+}
+
 function surface(g: Grid, edge: string, lip: string, body: string, under: string): Grid {
   return rects(
     g,
@@ -310,7 +332,7 @@ function sidewalk(kind: string, joint = false): Grid {
     return ends(g, kind, S.edge, S.lip, S.under, 1);
   }
   rects(g, [0, 0, T, T, S.face]);
-  return ends(g, kind, S.edge, S.faceLit, S.faceSh);
+  return underside(ends(g, kind, S.edge, S.faceLit, S.faceSh), kind, S.edge, S.faceSh);
 }
 
 function kerb(side: string): Grid {
@@ -512,6 +534,9 @@ function streetTiles(): [Tile[], Pieces] {
       ...hatchTiles(),
       ...door.slice(12),
       ...crosswalkTiles(),
+      ["sidewalk-bottom-left", sidewalk("bl")],
+      ["sidewalk-bottom", sidewalk("b")],
+      ["sidewalk-bottom-right", sidewalk("br")],
     ],
     { door: doorRows },
   ];
@@ -572,7 +597,7 @@ function floor(kind: string, joint = false): Grid {
     return ends(g, kind, LE, "cream", "dbrown", 1);
   }
   rects(g, [0, 0, T, T, "dbrown"]);
-  return ends(g, kind, LE, "brown", "plum");
+  return underside(ends(g, kind, LE, "brown", "plum"), kind, LE, "plum");
 }
 
 // One-way ledge styles: lip, top, face, bracket (null: no brackets).
@@ -682,7 +707,12 @@ function lobbyTiles(): [Tile[], Pieces] {
     ["post-base-right", post("base-r")],
   );
   const [exitTiles, exitRows] = cut(stairwell(), "exit");
-  return [[...tiles, ...exitTiles], { exit: exitRows }];
+  const bottoms: Tile[] = [
+    ["floor-bottom-left", floor("bl")],
+    ["floor-bottom", floor("b")],
+    ["floor-bottom-right", floor("br")],
+  ];
+  return [[...tiles, ...exitTiles, ...bottoms], { exit: exitRows }];
 }
 
 const TILESET_DEFS: readonly (readonly [key: string, fn: () => [Tile[], Pieces]])[] = [

@@ -3,8 +3,10 @@
  *
  * Usage: node art/tools/woodland.ts build | preview OUT.png, from the repository root. Plain PNG,
  * no animations. Canonical woodland zone-green and shade, existing house palette only.
- * tiles-woodland: 12px, eight columns, 28 cells in 96x48. Families forest-ground/root-stack/
- * ravine-ground/stone-stack each use top/top-left/top-right/top-joint/face/face-left/face-right.
+ * tiles-woodland: 12px, eight columns, 40 cells in 96x60. Families forest-ground/root-stack/
+ * ravine-ground/stone-stack each use top/top-left/top-right/top-joint/face/face-left/face-right,
+ * then, after all four, bottom-left/bottom/bottom-right: the face closed by a 2px dslate band along
+ * its bottom, as the side tiles close their open side.
  * Generic geometry unchanged. Only top tiles have dark edge and white lip. Shared ledges, hazards
  * and movers retain tiles-platforming.
  *
@@ -62,6 +64,8 @@ const PRIMARY = (THEMES.woodland as { primary: string }).primary;
 const SHADE = `${PRIMARY}-shade`;
 const FAMILIES = ["forest-ground", "root-stack", "ravine-ground", "stone-stack"] as const;
 const SUFFIXES = ["top", "top-left", "top-right", "top-joint", "face", "face-left", "face-right"];
+// Appended after every family's SUFFIXES, so the earlier indices hold.
+const BOTTOM_SUFFIXES = ["bottom-left", "bottom", "bottom-right"];
 const USAGE = "Usage: woodland.ts build | preview OUT.png";
 
 type Family = (typeof FAMILIES)[number];
@@ -87,6 +91,9 @@ function material(family: Family, suffix: string): RgbaImage {
   if (suffix.endsWith("right")) {
     rect("dslate", [10, 0, 12, T], im);
   }
+  if (suffix.startsWith("bottom")) {
+    rect("dslate", [0, 10, 12, 12], im);
+  }
   if (suffix.startsWith("top")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
@@ -99,11 +106,13 @@ function material(family: Family, suffix: string): RgbaImage {
 }
 
 export function tiles(): [string, RgbaImage][] {
-  return FAMILIES.flatMap((family) =>
-    SUFFIXES.map((suffix): [string, RgbaImage] => [
-      `${family}-${suffix}`,
-      material(family, suffix),
-    ]),
+  return [SUFFIXES, BOTTOM_SUFFIXES].flatMap((suffixes) =>
+    FAMILIES.flatMap((family) =>
+      suffixes.map((suffix): [string, RgbaImage] => [
+        `${family}-${suffix}`,
+        material(family, suffix),
+      ]),
+    ),
   );
 }
 

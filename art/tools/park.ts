@@ -28,6 +28,9 @@
  *   soil.
  * - soil, soil-pebbles, soil-left, soil-right: the fill below, solid; use soil-pebbles on about
  *   one tile in five; the side tiles show a brown band where the ground is exposed.
+ * - grass-bottom-left, grass-bottom, grass-bottom-right: the soil closed off underneath, solid: the
+ *   side tiles' dark-brown band and plum edge along the bottom, for the underside of a raised or
+ *   floating block. After the thorn hedge, so every earlier index holds.
  * - path-top, path-top-joint: a gravel path top, solid; alternate them.
  * - step-stair, step-stair-left: a stone stair tread inset in a step's grass top, solid, with a
  *   white lip so it holds 2:1 against the tan treetops. Lay steps 2 columns deep and 1 or 2 rows
@@ -172,6 +175,16 @@ function soil(kind = "", pebbles = false): RgbaImage {
   }
   if (kind.includes("r")) {
     rects(t, [T - 3, 0, 3, T, pebble], [T - 1, 0, 1, T, side]);
+  }
+  // A closed underside: the side band and edge along the bottom, the side edges redrawn over it.
+  if (kind.includes("b")) {
+    rects(t, [0, T - 3, T, 3, pebble], [0, T - 1, T, 1, side]);
+    if (kind.includes("l")) {
+      rects(t, [0, 0, 1, T, side]);
+    }
+    if (kind.includes("r")) {
+      rects(t, [T - 1, 0, 1, T, side]);
+    }
   }
   return t;
 }
@@ -361,6 +374,9 @@ function tiles(): Tile[] {
     ...three("hazard-pond", (k) => pond(k, false)),
     ...three("hazard-pond-bed", (k) => pond(k, true)),
     ...three("hazard-thorn", thorn),
+    ["grass-bottom-left", soil("bl")],
+    ["grass-bottom", soil("b")],
+    ["grass-bottom-right", soil("br")],
   ];
 }
 

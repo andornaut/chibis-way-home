@@ -6,11 +6,12 @@
  * windows and foliage. No new palette, animals, doors, story text or mechanics. Near scenery has no
  * collision or safe white lip.
  *
- * tiles-homecity: 12px tiles, eight columns, 28 cells, 96x48. Families outskirts-ground,
+ * tiles-homecity: 12px tiles, eight columns, 40 cells, 96x60. Families outskirts-ground,
  * brick-stack, neighbourhood-ground and stoop-stack use top/top-left/top-right/top-joint/face/
- * face-left/face-right. Only terrain tops carry the navy edge and two white safe rows. Shared
- * ledges, movers and red hazards retain tiles-platforming. All material families use the existing
- * generic terrain-renderer geometry.
+ * face-left/face-right, then, after all four, bottom-left/bottom/bottom-right: the face closed by
+ * a 2px dslate band along its bottom, as the side tiles close their open side. Only terrain tops
+ * carry the navy edge and two white safe rows. Shared ledges, movers and red hazards retain
+ * tiles-platforming. All material families use the existing generic terrain-renderer geometry.
  *
  * Backdrops, bottom-left anchored at default world y 600:
  * - homecity-sky: 48x600, repeat x, factor 0,0.
@@ -78,6 +79,8 @@ const FAMILIES = [
   "stoop-stack",
 ] as const;
 const SUFFIXES = ["top", "top-left", "top-right", "top-joint", "face", "face-left", "face-right"];
+// Appended after every family's SUFFIXES, so the earlier indices hold.
+const BOTTOM_SUFFIXES = ["bottom-left", "bottom", "bottom-right"];
 const USAGE = "Usage: homecity.ts build | preview OUT.png";
 
 type Family = (typeof FAMILIES)[number];
@@ -101,6 +104,9 @@ function material(family: Family, suffix: string): RgbaImage {
   if (suffix.endsWith("right")) {
     rect("dslate", [10, 0, 12, 12], im);
   }
+  if (suffix.startsWith("bottom")) {
+    rect("dslate", [0, 10, 12, 12], im);
+  }
   if (suffix.startsWith("top")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
@@ -113,11 +119,13 @@ function material(family: Family, suffix: string): RgbaImage {
 }
 
 export function tiles(): [string, RgbaImage][] {
-  return FAMILIES.flatMap((family) =>
-    SUFFIXES.map((suffix): [string, RgbaImage] => [
-      `${family}-${suffix}`,
-      material(family, suffix),
-    ]),
+  return [SUFFIXES, BOTTOM_SUFFIXES].flatMap((suffixes) =>
+    FAMILIES.flatMap((family) =>
+      suffixes.map((suffix): [string, RgbaImage] => [
+        `${family}-${suffix}`,
+        material(family, suffix),
+      ]),
+    ),
   );
 }
 

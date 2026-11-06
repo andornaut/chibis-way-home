@@ -121,9 +121,9 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 
 | Key          | Type                                                                                                                            | Size            | Pieces      |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------- |
-| tiles-lobby  | tileset (indoor, no current stage): wood floor, one-way balcony, shelf, cushion and desk, wood post, stairwell exit             | 130 tiles, 12px | exit (7x15) |
-| tiles-street | tileset: sidewalk, kerb, road, one-way awning, one-way canopy, planter, door, cellar hatch, crosswalk walk, warning and traffic | 74 tiles, 12px  | door (5x7)  |
-| tiles-park   | tileset (park theme): grass, turf, soil, path, stone stairs, one-way bench, branch and bandstand, pond and thorn hazards        | 32 tiles, 12px  |             |
+| tiles-lobby  | tileset (indoor, no current stage): wood floor, one-way balcony, shelf, cushion and desk, wood post, stairwell exit             | 133 tiles, 12px | exit (7x15) |
+| tiles-street | tileset: sidewalk, kerb, road, one-way awning, one-way canopy, planter, door, cellar hatch, crosswalk walk, warning and traffic | 77 tiles, 12px  | door (5x7)  |
+| tiles-park   | tileset (park theme): grass, turf, soil, path, stone stairs, one-way bench, branch and bandstand, pond and thorn hazards        | 35 tiles, 12px  |             |
 
 ## Backdrops
 
@@ -202,7 +202,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | apartment-wall-residential   | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
 | apartment-wall-restaurant    | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
 | apartment-wall-spa           | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
-| tiles-apartment              | tileset, 12px cells, eight columns | 96x72   | Six material families, seven terrain tiles each    |
+| tiles-apartment              | tileset, 12px cells, eight columns | 96x96   | Six material families, ten terrain tiles each      |
 
 ## Ferret obstacle skin
 
@@ -213,19 +213,19 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Countryside materials
 
-| Key                  | Type                                 | Size    | Contract                                         |
-| -------------------- | ------------------------------------ | ------- | ------------------------------------------------ |
-| countryside-far      | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                     |
-| countryside-sky      | repeating backdrop                   | 48x600  | Bottom-left, y 600, repeat x                     |
-| countryside-windmill | decorative backdrop, windmill tower  | 144x240 | Bottom-left, module floor, no repeat; hub 72,72  |
-| farmland-barn        | decorative backdrop                  | 120x144 | Bottom-left, y 600, no repeat                    |
-| farmland-fence       | repeating backdrop                   | 48x48   | Bottom-left, y 600, repeat x                     |
-| farmland-mid         | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                     |
-| river-mid            | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                     |
-| river-reeds          | repeating backdrop                   | 48x72   | Bottom-left, y 600, repeat x                     |
-| tiles-countryside    | tileset, 12px cells, eight columns   | 96x48   | Four material families, seven terrain tiles each |
-| windmill-sail-ledge  | sprite, windmill sail tip ledge      | 60x12   | Bottom-centre, 5x1; idle                         |
-| windmill-spoke       | sprite, windmill sail tether segment | 8x8     | Centred on the tether; idle                      |
+| Key                  | Type                                 | Size    | Contract                                        |
+| -------------------- | ------------------------------------ | ------- | ----------------------------------------------- |
+| countryside-far      | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                    |
+| countryside-sky      | repeating backdrop                   | 48x600  | Bottom-left, y 600, repeat x                    |
+| countryside-windmill | decorative backdrop, windmill tower  | 144x240 | Bottom-left, module floor, no repeat; hub 72,72 |
+| farmland-barn        | decorative backdrop                  | 120x144 | Bottom-left, y 600, no repeat                   |
+| farmland-fence       | repeating backdrop                   | 48x48   | Bottom-left, y 600, repeat x                    |
+| farmland-mid         | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                    |
+| river-mid            | repeating backdrop                   | 720x600 | Bottom-left, y 600, repeat x                    |
+| river-reeds          | repeating backdrop                   | 48x72   | Bottom-left, y 600, repeat x                    |
+| tiles-countryside    | tileset, 12px cells, eight columns   | 96x60   | Four material families, ten terrain tiles each  |
+| windmill-sail-ledge  | sprite, windmill sail tip ledge      | 60x12   | Bottom-centre, 5x1; idle                        |
+| windmill-spoke       | sprite, windmill sail tether segment | 8x8     | Centred on the tether; idle                     |
 
 ## Goose antagonist
 
@@ -251,7 +251,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | forest-tree           | decorative backdrop                    | 96x216  | Bottom-left, y 600, repeat none                       |
 | ravine-mid            | decorative backdrop                    | 720x600 | Bottom-left, y 600, repeat x                          |
 | ravine-rock           | decorative backdrop                    | 72x72   | Bottom-left, y 600, repeat none                       |
-| tiles-woodland        | tileset, 12px cells, eight columns     | 96x48   | Four material families, seven terrain tiles each      |
+| tiles-woodland        | tileset, 12px cells, eight columns     | 96x60   | Four material families, ten terrain tiles each        |
 | woodland-far          | decorative backdrop                    | 720x600 | Bottom-left, y 600, repeat x                          |
 | woodland-gust-emitter | sprite, gust source at the ravine wall | 12x48   | Bottom-centre, 1x4, facing right; calm, warning, gust |
 | woodland-gust-stream  | sprite, repeated gust pulse            | 48x48   | Band bottom, repeats x; pulse                         |
@@ -269,7 +269,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | neighbourhood-wall    | decorative backdrop                | 48x180  | Bottom-left, y 600, repeat x                                  |
 | outskirts-mid         | decorative backdrop                | 720x600 | Bottom-left, y 600, repeat x                                  |
 | outskirts-wall        | decorative backdrop                | 48x144  | Bottom-left, y 600, repeat x                                  |
-| tiles-homecity        | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each              |
+| tiles-homecity        | tileset, 12px cells, eight columns | 96x60   | Four material families, ten terrain tiles each                |
 
 ## Pebble pigeon
 
@@ -280,19 +280,19 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Industrial materials
 
-| Key                     | Type                               | Size    | Contract                                         |
-| ----------------------- | ---------------------------------- | ------- | ------------------------------------------------ |
-| freight-crane-cable     | sprite, crane tether segment       | 8x8     | Centred on the tether; cable, hook               |
-| freight-crane-container | sprite, crane container ledge      | 72x36   | Bottom-centre, 6x3; idle                         |
-| freight-gantry          | decorative backdrop                | 144x192 | Bottom-left, y 600, no repeat                    |
-| freight-gantry-rail     | decorative backdrop                | 48x24   | Bottom-left, y 600, repeat x                     |
-| freight-mid             | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| industrial-far          | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| industrial-sky          | repeating backdrop                 | 48x600  | Bottom-left, y 600, repeat x                     |
-| tiles-industrial        | tileset, 12px cells, eight columns | 96x48   | Four material families, seven terrain tiles each |
-| warehouse-loading-bay   | decorative closed loading bay      | 120x144 | Bottom-left, y 600, no repeat                    |
-| warehouse-mid           | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                     |
-| warehouse-wall          | repeating backdrop                 | 48x240  | Bottom-left, y 600, repeat x                     |
+| Key                     | Type                               | Size    | Contract                                       |
+| ----------------------- | ---------------------------------- | ------- | ---------------------------------------------- |
+| freight-crane-cable     | sprite, crane tether segment       | 8x8     | Centred on the tether; cable, hook             |
+| freight-crane-container | sprite, crane container ledge      | 72x36   | Bottom-centre, 6x3; idle                       |
+| freight-gantry          | decorative backdrop                | 144x192 | Bottom-left, y 600, no repeat                  |
+| freight-gantry-rail     | decorative backdrop                | 48x24   | Bottom-left, y 600, repeat x                   |
+| freight-mid             | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                   |
+| industrial-far          | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                   |
+| industrial-sky          | repeating backdrop                 | 48x600  | Bottom-left, y 600, repeat x                   |
+| tiles-industrial        | tileset, 12px cells, eight columns | 96x60   | Four material families, ten terrain tiles each |
+| warehouse-loading-bay   | decorative closed loading bay      | 120x144 | Bottom-left, y 600, no repeat                  |
+| warehouse-mid           | repeating backdrop                 | 720x600 | Bottom-left, y 600, repeat x                   |
+| warehouse-wall          | repeating backdrop                 | 48x240  | Bottom-left, y 600, repeat x                   |
 
 ## Raccoon antagonist
 
