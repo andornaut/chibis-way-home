@@ -11,7 +11,7 @@ const HASHES: Readonly<Record<string, string>> = {
   "arena-bear-sample": "b8ed4366d62ec680",
   "arena-dog-sample": "8024f4eeb9494f4e",
   "arena-ferret-sample": "d1e6cce85c385453",
-  "arena-goose-sample": "f4dc8322f9c6b06d",
+  "arena-goose-sample": "df328f818c6d8896",
   "arena-pigeon-sample": "e95662c1acd44593",
   "arena-raccoon-sample": "38bb769e74b8d91c",
 };
