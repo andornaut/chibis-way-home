@@ -81,11 +81,18 @@ function run(ahead: (state: BehaviourState) => number, seconds: number) {
 
 const seconds = (tick: number) => (tick + 1) * STEP_SECONDS;
 
-it("gives up a reachable chase by the certain limit with the escape bark, then walks home", () => {
-  const ticks = run(() => 20, relief.giveUp.certainSeconds + 2);
+it("gives up a reachable chase at the first pause after its drawn time, with the escape bark, then walks home", () => {
+  const { giveUp, pause } = relief;
+  // The latest give-up: the longest draw, then a full chase span and pause before the next pause.
+  const latest = giveUp.seconds.max + pause.afterSeconds.max + pause.seconds.max;
+  const ticks = run(() => 20, latest + 2);
   const ended = ticks.findIndex(({ step }) => step.escaped !== undefined);
   expect(ended).toBeGreaterThan(0);
-  expect(seconds(ended)).toBeLessThanOrEqual(relief.giveUp.certainSeconds + 2 * STEP_SECONDS);
+  const drawn = ticks[ended - 1]!.step.state.pursuit!.giveUpSeconds!;
+  expect(drawn).toBeGreaterThanOrEqual(giveUp.seconds.min);
+  expect(drawn).toBeLessThanOrEqual(giveUp.seconds.max);
+  expect(seconds(ended)).toBeGreaterThanOrEqual(drawn);
+  expect(seconds(ended)).toBeLessThanOrEqual(latest + 2 * STEP_SECONDS);
   expect(ticks[ended]!.step.escaped).toEqual(DOG_BEHAVIOUR.pursuit!.escaped);
   expect(ticks[ended]!.step.state.pursuit?.giveUp).toBe(true);
   expect(ticks.slice(0, ended).some(({ step }) => step.state.chasePause)).toBe(true);
@@ -134,7 +141,7 @@ it("waits the rearm cooldown after an ended chase before engaging again", () => 
 });
 
 it("pauses facing Chibi, never within the tell clearance of a tell", () => {
-  const ticks = run(() => 6, relief.giveUp.fromSeconds + 5);
+  const ticks = run(() => 6, relief.giveUp.seconds.min);
   const engaged = ticks.filter(({ step }) => step.state.pursuit?.phase === "engaged");
   const telling = engaged.flatMap(({ step }, index) =>
     step.state.activeAttack?.phase === "tell" ? [index] : [],

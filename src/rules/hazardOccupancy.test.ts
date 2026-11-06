@@ -208,29 +208,16 @@ it("contains whole-pixel silhouette frames when a fractional endpoint rounds out
   expect(bounds.x + bounds.width).toBeGreaterThanOrEqual(future.x + contact.frame.width);
   expect(bounds.y + bounds.height).toBeGreaterThanOrEqual(future.y + contact.frame.height);
 });
-it("certifies only the waiting prefix of the actual bear graph, including pulse range", () => {
+it("certifies nothing for the actual bear graph, whose wander moves", () => {
   const object = actor(layoutBehaviour(12, BEAR_BEHAVIOUR), 8424);
-  const bounds = hazardBoundsAt(
-    [object],
+  for (const snapshot of [
     { ...startBehaviour(BIRD, object, target), elapsed: 20 },
-    object.origin,
-    body(object),
-    10,
-    object,
-  );
-  expect(bounds(11)).toEqual({ height: 1056, width: 1056, x: 7920, y: -404 });
-  expect(bounds(11.34)).toBeDefined();
-  expect(bounds(11.35)).toBeUndefined();
-  expect(
-    hazardBoundsAt(
-      [object],
-      { ...startBehaviour(BIRD, object, target), stateKey: "prepare-growl" },
-      object.origin,
-      body(object),
-      10,
-      object,
-    )(10.1),
-  ).toBeUndefined();
+    { ...startBehaviour(BIRD, object, target), stateKey: "prepare-growl" },
+  ]) {
+    expect(
+      hazardBoundsAt([object], snapshot, object.origin, body(object), 10, object)(10.1),
+    ).toBeUndefined();
+  }
 });
 it("explores movement after an escape reset and earliest reacquisition within the horizon", () => {
   const object = actor({

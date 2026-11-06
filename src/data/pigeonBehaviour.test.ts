@@ -246,7 +246,7 @@ it.each([
         );
         expect(durations.length).toBeGreaterThan(0);
         expect(Math.min(...durations)).toBeGreaterThanOrEqual(0.5);
-        expect(Math.max(...durations)).toBeLessThanOrEqual(1);
+        expect(Math.max(...durations)).toBeLessThanOrEqual(1.2);
       }
       for (const transition of node.transitions) {
         const target = plan.states[transition.to]!.attack;

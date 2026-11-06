@@ -31,6 +31,10 @@ export interface AgentSample extends TraceBody {
   // What the agent is, such as its character; properties select their data by it.
   readonly kind: string;
   readonly motion: string;
+  // The chase ended and the agent is still settling, walking home or inside its rearm cooldown.
+  readonly cooling?: true;
+  // Not yet activated, so the agent holds its placement.
+  readonly inactive?: true;
   // A takeoff preparation holds the agent at the end of the tick.
   readonly preparing?: boolean;
   readonly pursuit?: "engaged" | "escaped";

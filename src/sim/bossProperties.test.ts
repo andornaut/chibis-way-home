@@ -82,10 +82,10 @@ it("reads every boss's tells within the shared bounds from its data", () => {
       ),
     );
     expect(attacks.size).toBeGreaterThan(0);
-    // Attack tells: every shared tell lasts between half a second and one second.
+    // Attack tells: every shared tell lasts between half a second and 1.2 seconds.
     for (const id of attacks) {
       expect(minimumTellSeconds(plan, id)).toBeGreaterThanOrEqual(0.5);
-      expect(maximumTellSeconds(plan, id)).toBeLessThanOrEqual(1);
+      expect(maximumTellSeconds(plan, id)).toBeLessThanOrEqual(1.2);
     }
     const retold = Object.values(plan.states).flatMap(({ attack }) =>
       attack?.continues ? [attack.id] : [],

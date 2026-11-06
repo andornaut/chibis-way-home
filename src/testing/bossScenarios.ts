@@ -9,6 +9,7 @@ import type { ZoneInput } from "../rules/zone";
 import {
   committedHold,
   crossesAfterSettle,
+  leavesSpawn,
   movesAtLeast,
   movesWhileEngaged,
   pacesNearest,
@@ -232,7 +233,7 @@ const TELL_CAP_ARCHIE: BossScenario = {
 // Kiwi's second charge: Chibi steps behind Kiwi during her first rush and back to the entry
 // during the re-aimed tell, so she turns with her whole track ahead and rushes again. Placements
 // stand Chibi on Kiwi's floor. A synthetic placement.
-const KIWI_BEHIND = { back: 150, behind: 110, col: 22 } as const;
+const KIWI_BEHIND = { back: 186, behind: 146, col: 22 } as const;
 
 function kiwiBehind(): BossScenario {
   const base = encounter("vertical-stack-early", "city-outskirts", "still");
@@ -298,6 +299,22 @@ function rearmPlaced(
             : undefined,
     seed,
     ticks: REARM_STAND_TICK + Math.round(REARM_SECONDS / STEP_SECONDS) + 1,
+  };
+}
+
+// Wander: Chibi stands two chunks past the encounter from the start, beyond the boss's awareness,
+// for twice the wander bound.
+const WANDER_SECONDS = 10;
+function unengaged(theme: string, id: string): BossScenario {
+  const layout = () => chunksLayout(theme, [id, ...REARM_CHUNKS]);
+  const boss = layout().areas.main!.objects.find(({ character }) => character in BOSSES)!;
+  return {
+    controller: () => () => STILL,
+    layout,
+    name: `wander ${id} ${theme} seed 1`,
+    place: (tick) => (tick === 0 ? { x: 140 * TILE, y: boss.origin.y + boss.height } : undefined),
+    seed: 1,
+    ticks: Math.round(WANDER_SECONDS / STEP_SECONDS),
   };
 }
 
@@ -415,7 +432,23 @@ interface BossScenarioGroup {
   readonly subject: string;
 }
 
+const WANDER_ENCOUNTERS = [
+  { boss: "Archie", id: "city-boundary-climb-yard", theme: "city-streets" },
+  { boss: "Bini", id: "growl-cover-early", theme: "deep-woods" },
+  { boss: "Fert", id: "city-boundary-climb-yard", theme: "apartment-lobby" },
+  { boss: "Kiwi", id: "vertical-stack-early", theme: "city-outskirts" },
+  { boss: "Pebble", id: "flyer-shelter-early", theme: "loading-yards" },
+  { boss: "Trixi", id: "city-boundary-climb-yard", theme: "farmland" },
+] as const;
+
 export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
+  ...WANDER_ENCOUNTERS.map(({ boss, id, theme }): BossScenarioGroup => ({
+    boss,
+    checks: () => [leavesSpawn()],
+    covers: [],
+    scenario: unengaged(theme, id),
+    subject: `wander: unengaged, ${boss} leaves the spawn and keeps moving`,
+  })),
   {
     boss: "Trixi",
     covers: ["tell", "attack"],

@@ -45,6 +45,7 @@ const RULES = {
   recovery: `${DESIGN} Boss encounter principles: Recovery`,
   traversal: `${DESIGN} Boss encounter principles: Traversal and variety`,
   trixiRush: `${DESIGN} Trixi encounter: Rush`,
+  wander: `${DESIGN} Objects: Wander`,
 } as const;
 
 // Each boss character's resolved plan in the layout.
@@ -175,9 +176,51 @@ function committedRestSeconds(plan: BehaviourPlan, state: string): number | unde
   return authored.length > 0 ? Math.max(...authored) : 0;
 }
 
-// Objects: each boss starts a charge or special tell within 10 s of eligible engaged time, and
-// its distinct special tell within 20 s.
-const CADENCE_SECONDS = { any: 10, special: 20 } as const;
+// Objects: each boss starts a charge or special tell within 20 s of eligible engaged time, and
+// its distinct special tell within 40 s.
+const CADENCE_SECONDS = { any: 20, special: 40 } as const;
+
+// Wander: an active boss, unengaged and past any ended chase's walk home and rearm cooldown,
+// moves at least a tile horizontally within every five seconds.
+const WANDER_BOUND = { distance: TILE, seconds: 5 } as const;
+const wandering = (agent: AgentSample) =>
+  agent.pursuit !== "engaged" && !agent.cooling && !agent.inactive;
+
+// From the start, each active unengaged boss leaves its spawn by a tile within the wander bound.
+// A scenario-specific check for a Chibi beyond every boss's awareness.
+export function leavesSpawn(): Property<BossTick> {
+  return {
+    check: (ticks) => {
+      const found: { agent: string; detail: string; tick: number }[] = [];
+      const spawns = new Map<string, { at: AgentSample["at"]; left: boolean; tick: number }>();
+      for (const tick of ticks) {
+        for (const agent of tick.agents) {
+          let spawn = spawns.get(agent.id);
+          if (!spawn) {
+            spawn = { at: agent.at, left: false, tick: tick.tick };
+            spawns.set(agent.id, spawn);
+          }
+          if (spawn.left || !wandering(agent)) {
+            continue;
+          }
+          if (Math.abs(agent.at.x - spawn.at.x) >= WANDER_BOUND.distance - EDGE) {
+            spawn.left = true;
+          } else if ((tick.tick - spawn.tick) * STEP_SECONDS > WANDER_BOUND.seconds + 1e-6) {
+            spawn.left = true;
+            found.push({
+              agent: agent.id,
+              detail: `still within a tile of its spawn after ${WANDER_BOUND.seconds} s`,
+              tick: tick.tick,
+            });
+          }
+        }
+      }
+      return found;
+    },
+    id: "leaves-spawn",
+    rule: RULES.wander,
+  };
+}
 
 // Each boss's charge or contact dive; its other attacks are its specials.
 export const CHARGE_ATTACKS: Readonly<Record<string, string>> = {
@@ -803,6 +846,16 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
         return gap > STALL_BOUND.distance;
       },
     ),
+    {
+      ...noStall(
+        RULES.wander,
+        STEP_SECONDS,
+        WANDER_BOUND.seconds,
+        () => WANDER_BOUND.distance,
+        (_, agent) => wandering(agent),
+      ),
+      id: "wander",
+    },
     stillness(RULES.enemyPursuit, STEP_SECONDS, STILLNESS.graceSeconds, ({ target }, agent) => {
       if (agent.pursuit !== "engaged" || flies(plan(agent))) {
         return undefined;

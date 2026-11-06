@@ -125,6 +125,12 @@ export function bossSample(
     }
     const at = after.objects[index] ?? object.origin;
     const { motion } = nodeOf(object, state.stateKey);
+    const pursuit = state.pursuit;
+    const cooling =
+      pursuit?.phase === "escaped" &&
+      (!pursuit.settled ||
+        pursuit.home === true ||
+        (pursuit.endedSeconds ?? 0) < (object.behaviour!.pursuit?.rearmSeconds ?? 0) - EDGE);
     return [
       {
         at,
@@ -132,8 +138,10 @@ export function bossSample(
         ...(state.attackCooldownRemainingSeconds !== undefined && {
           cooldownSeconds: state.attackCooldownRemainingSeconds,
         }),
+        ...(cooling && { cooling: true as const }),
         facing: state.facing,
         footing: footing(world, contactBox(object, at, state.facing, state.axis)),
+        ...(!state.active && { inactive: true as const }),
         ...(state.pursuit?.phase === "escaped" &&
           state.pursuit.giveUp && { gaveUp: true as const }),
         height: object.height,
