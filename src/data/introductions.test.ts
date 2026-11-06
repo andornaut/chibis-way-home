@@ -7,7 +7,7 @@ import { RECIPES } from "./zones";
 
 describe.each(ZONE_MAP.destinations)("boss schedule $id", (destination) => {
   it("assigns the approved whole-stage encounter quotas", () => {
-    const expected = destination.id === "apartment" ? [0, 0, 0, 0, 2, 3] : [0, 2, 3];
+    const expected = destination.id === "apartment" ? [0, 0, 0, 0, 1, 1] : [0, 0, 1];
     expect(destination.stages.map((stage) => RECIPES[stage]!.encounters)).toEqual(expected);
   });
 
