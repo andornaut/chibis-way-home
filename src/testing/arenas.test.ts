@@ -80,13 +80,35 @@ describe("arena coverage", () => {
     }
   });
 
+  // One encounter, so one arena, on each zone's last stage and on Residential floors and
+  // Penthouse.
+  it("has the seven arena stages", () => {
+    expect(encounterStages(RECIPES)).toEqual([
+      "city-boundary",
+      "familiar-neighbourhood",
+      "freight-terminal",
+      "penthouse",
+      "ravine",
+      "residential-floors",
+      "river-crossing",
+    ]);
+  });
+
   it("fails every encounter stage without exactly one arena once nothing is pending", () => {
-    const [sample] = ARENA_SAMPLES;
-    const { problems } = arenaCoverage({ pending: [], recipes: RECIPES }, [sample!, sample!]);
-    expect(problems).toContain("city-streets has 2 arenas, not 1");
-    for (const stage of encounterStages(RECIPES).filter((stage) => stage !== "city-streets")) {
+    const ferret = ARENA_SAMPLES.find(({ stage }) => stage === "residential-floors")!;
+    const { problems } = arenaCoverage({ pending: [], recipes: RECIPES }, [ferret, ferret]);
+    expect(problems).toContain("residential-floors has 2 arenas, not 1");
+    for (const stage of encounterStages(RECIPES).filter(
+      (stage) => stage !== "residential-floors",
+    )) {
       expect(problems).toContain(`${stage} has 0 arenas, not 1`);
     }
+  });
+
+  it("fails an arena on a stage without an encounter", () => {
+    const dog = ARENA_SAMPLES.find(({ stage }) => stage === "city-streets")!;
+    const { problems } = arenaCoverage({ pending: [], recipes: RECIPES }, [dog]);
+    expect(problems).toContain("city-streets holds an arena but is no encounter stage");
   });
 
   it("fails an arena stage whose recipe holds more than one encounter", () => {
