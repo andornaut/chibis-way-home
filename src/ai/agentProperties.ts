@@ -519,7 +519,8 @@ export function attackCadence<World>(
   };
 }
 
-// Pursuit ends exactly when the centre distance at the start of a step exceeds the escape distance.
+// Pursuit ends when the centre distance at the start of a step exceeds the escape distance, and
+// within it only by giving up.
 export function escapeAtDistance<World>(
   rule: string,
   escapeDistance: (agent: AgentSample) => number | undefined,
@@ -539,7 +540,7 @@ export function escapeAtDistance<World>(
         if (distance > limit + EPSILON && !escaped) {
           found.push(violation(current, `still engaged at ${distance.toFixed(1)} > ${limit}`));
         }
-        if (escaped && distance <= limit - EPSILON) {
+        if (escaped && !current.agent.gaveUp && distance <= limit - EPSILON) {
           found.push(violation(current, `escaped at ${distance.toFixed(1)} <= ${limit}`));
         }
       });

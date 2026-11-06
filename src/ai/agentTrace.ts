@@ -25,6 +25,8 @@ export interface AgentSample extends TraceBody {
   readonly facing: -1 | 1;
   // The contact box's bottom rests on a present support top over part of its width.
   readonly footing: boolean;
+  // The chase ended by giving up rather than by distance or a door.
+  readonly gaveUp?: true;
   readonly id: string;
   // What the agent is, such as its character; properties select their data by it.
   readonly kind: string;
@@ -32,13 +34,17 @@ export interface AgentSample extends TraceBody {
   // A takeoff preparation holds the agent at the end of the tick.
   readonly preparing?: boolean;
   readonly pursuit?: "engaged" | "escaped";
+  // A seeded hold facing the target: a chase pause, or a pause at a pace's start or turn.
+  readonly relief?: "pace" | "pause";
   readonly state: string;
   // Ordinary support contact at the end of the tick: a clear body whose feet rest on a present
   // support under part of its hitbox.
   readonly supported: boolean;
   // The pause after consecutive cancelled tells, while no tell may start.
   readonly tellPauseSeconds?: number;
-  // No movement path reaches the target, so the agent paces where it can.
+  // No movement path reaches the target, so the agent paces where it can; pacing marks its
+  // pace legs at the reachable spot nearest the target.
+  readonly pacing?: true;
   readonly unreachable?: true;
 }
 

@@ -155,9 +155,9 @@ export function reactionSeconds(plan: BehaviourPlan, id: string): number {
 const STALL_BOUND = { distance: 2 * TILE, seconds: 4 } as const;
 
 // Allowed stillness for an engaged ground boss more than two tiles from Chibi: tells and other
-// attack phases, takeoff preparation (0.6 s, at most once per 2 s) and post-attack rest (the
-// fairness recovery bound). Anything else stands still at most the grace, which absorbs one-tick
-// turns and leg handoffs.
+// attack phases, takeoff preparation (0.6 s, at most once per 2 s), post-attack rest (the
+// fairness recovery bound), a chase pause and a pace pause (their data maximums). Anything else
+// stands still at most the grace, which absorbs one-tick turns and leg handoffs.
 const STILLNESS = {
   graceSeconds: 3 * STEP_SECONDS,
   preparation: { everySeconds: 2, kind: "takeoff-preparation", maxSeconds: 0.6 },
@@ -259,39 +259,114 @@ export function risesToRow(y: number, seconds: number): Property<BossTick> {
 
 // Pacing where Chibi is out of reach: from the first tick a boss has no movement-map path to him,
 // within seconds its centre comes within distance pixels of his horizontally (the reachable spot
-// nearest him). A scenario-specific check; the scenario must leave him out of reach.
-export function pacesNearest(seconds: number, distance: number): Property<BossTick> {
+// nearest him). Its pace legs walk no faster than the pace speed, never reverse sooner than the
+// shortest pace pause after the previous reversal, and the boss gives up within the
+// unreachable grace. A scenario-specific check; the scenario must leave him out of reach.
+export function pacesNearest(
+  layout: ZoneLayout,
+  seconds: number,
+  distance: number,
+): Property<BossTick> {
+  const plans = bossPlans(layout);
   return {
     check: (ticks) => {
       const first = new Map<string, number>();
       const near = new Set<string>();
+      const gaveUp = new Set<string>();
+      const found: { agent: string; detail: string; tick: number }[] = [];
+      const before = new Map<string, { agent: AgentSample; tick: number }>();
+      const reversals = new Map<string, { heading: number; tick: number | undefined }>();
       for (const { agents, target, tick } of ticks) {
         for (const agent of agents) {
+          const pursuit = plans.get(agent.kind)!.pursuit!;
+          const pace = pursuit.pace!;
+          const previous = before.get(agent.id);
+          before.set(agent.id, { agent, tick });
           if (agent.unreachable && !first.has(agent.id)) {
             first.set(agent.id, tick);
           }
           const start = first.get(agent.id);
+          if (start === undefined) {
+            continue;
+          }
+          if (agent.pursuit === "escaped" && agent.gaveUp) {
+            gaveUp.add(agent.id);
+          }
           if (
-            start !== undefined &&
             tick - start <= Math.round(seconds / STEP_SECONDS) &&
             Math.abs(centre(agent).x - centre(target).x) <= distance
           ) {
             near.add(agent.id);
           }
+          const pacing =
+            agent.pursuit === "engaged" &&
+            agent.unreachable &&
+            agent.pacing &&
+            agent.attack === undefined &&
+            previous?.tick === tick - 1 &&
+            previous.agent.pacing;
+          if (!pacing) {
+            continue;
+          }
+          const dx = agent.at.x - previous.agent.at.x;
+          if (Math.abs(dx) > pace.speed * STEP_SECONDS + EDGE) {
+            found.push({
+              agent: agent.id,
+              detail: `paced ${(Math.abs(dx) / STEP_SECONDS).toFixed(1)} px/s, over ${pace.speed.toFixed(1)}`,
+              tick,
+            });
+          }
+          if (Math.abs(dx) <= EDGE) {
+            continue;
+          }
+          const heading = Math.sign(dx);
+          const last = reversals.get(agent.id);
+          if (last && last.heading !== heading) {
+            if (
+              last.tick !== undefined &&
+              (tick - last.tick) * STEP_SECONDS < pace.pauseSeconds.min - EDGE
+            ) {
+              found.push({
+                agent: agent.id,
+                detail: `reversed ${((tick - last.tick) * STEP_SECONDS).toFixed(2)} s after the last`,
+                tick,
+              });
+            }
+            reversals.set(agent.id, { heading, tick });
+          } else if (!last) {
+            reversals.set(agent.id, { heading, tick: undefined });
+          }
         }
       }
       const last = ticks.at(-1)?.tick ?? 0;
-      return first.size === 0
-        ? [{ agent: "", detail: "Chibi never out of reach", tick: last }]
-        : [...first].flatMap(([agent, tick]) =>
-            near.has(agent)
-              ? []
-              : [{ agent, detail: `not within ${distance} px of Chibi in ${seconds} s`, tick }],
-          );
+      if (first.size === 0) {
+        return [{ agent: "", detail: "Chibi never out of reach", tick: last }];
+      }
+      for (const [agent, tick] of first) {
+        if (!near.has(agent)) {
+          found.push({ agent, detail: `not within ${distance} px of Chibi in ${seconds} s`, tick });
+        }
+        const grace = plans.get(kindOf(ticks, agent))!.pursuit!.unreachableGraceSeconds!;
+        if (!gaveUp.has(agent) && last - tick > Math.round((grace + 1) / STEP_SECONDS)) {
+          found.push({ agent, detail: `no give-up within ${grace} s unreachable`, tick });
+        }
+      }
+      return found;
     },
     id: "pace-unreachable",
     rule: RULES.enemyPursuit,
   };
+}
+
+// The kind of the agent with an id in a trace.
+function kindOf(ticks: readonly BossTick[], id: string): string {
+  for (const { agents } of ticks) {
+    const agent = agents.find((entry) => entry.id === id);
+    if (agent) {
+      return agent.kind;
+    }
+  }
+  return "";
 }
 
 // While engaged more than two tiles from Chibi and outside attack phases, each boss moves the
@@ -547,10 +622,10 @@ export function tellPauseLasts(seconds: number): Property<BossTick> {
 const horizontalGap = (target: AgentTick["target"], agent: AgentSample) =>
   Math.max(target.at.x - (agent.at.x + agent.width), agent.at.x - (target.at.x + target.width));
 
-// Attack fairness: engaged, ready to attack, within the attack engagement range horizontally and
-// with a movement path to Chibi, a boss threatens him (starts a tell, or brings its body within
-// the threat radius) within every maximum gap. Time out of eligibility pauses the gap without
-// resetting it.
+// Attack fairness: engaged, ready to attack, outside chase relief, within the attack engagement
+// range horizontally and with a movement path to Chibi, a boss threatens him (starts a tell, or
+// brings its body within the threat radius) within every maximum gap. Time out of eligibility,
+// such as a pause, an unreachable stretch or a given-up chase, pauses the gap without resetting it.
 function threatGap(eligible: (tick: BossTick, agent: AgentSample) => boolean): Property<BossTick> {
   return {
     check: (ticks) => {
@@ -676,14 +751,15 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
         box.x < rect.x + rect.width &&
         rect.x < box.x + box.width,
     );
-  // Engaged and ready outside the tell pause, with an attack the targeted-attack window does not
-  // hold back.
+  // Engaged and ready outside the tell pause and chase relief, with an attack the targeted-attack
+  // window does not hold back.
   const cadenceEligible =
     (special: boolean) =>
     (tick: BossTick, agent: AgentSample): boolean => {
       if (
         agent.pursuit !== "engaged" ||
         agent.attack !== undefined ||
+        agent.relief !== undefined ||
         (agent.cooldownSeconds ?? 0) > 0 ||
         (agent.tellPauseSeconds ?? 0) > 0
       ) {
@@ -750,6 +826,13 @@ export function bossProperties(layout: ZoneLayout): Property<BossTick>[] {
       }
       if (agent.attack) {
         return { kind: `attack-${agent.attack.phase}`, maxSeconds: Infinity };
+      }
+      const pursuit = plan(agent).pursuit!;
+      if (agent.relief === "pause" && pursuit.relief) {
+        return { kind: "chase-pause", maxSeconds: pursuit.relief.pause.seconds.max };
+      }
+      if (agent.relief === "pace" && pursuit.pace) {
+        return { kind: "pace-pause", maxSeconds: pursuit.pace.pauseSeconds.max };
       }
       return agent.preparing ? STILLNESS.preparation : { kind: "move", maxSeconds: 0 };
     }),

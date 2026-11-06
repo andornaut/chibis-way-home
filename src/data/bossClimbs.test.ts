@@ -599,12 +599,13 @@ it("actual Pebble flies beneath the dry gallery roof and returns to supported re
     const next = stepBehaviour(ordinary, object, world, STEP_SECONDS, target, at, state);
     at = next.at;
     state = next.state;
+    // Overlap beyond the shared collision tolerance, as the flight-clearance check measures it.
     for (const solid of area.solids) {
       expect(
-        at.x < solid.x + solid.width &&
-          at.x + object.width > solid.x &&
-          at.y < solid.y + solid.height &&
-          at.y + object.height > solid.y,
+        at.x + EDGE < solid.x + solid.width &&
+          at.x + object.width - EDGE > solid.x &&
+          at.y + EDGE < solid.y + solid.height &&
+          at.y + object.height - EDGE > solid.y,
       ).toBe(false);
     }
     if (state.stateKey.startsWith("prepare-drop")) {

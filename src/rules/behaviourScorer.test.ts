@@ -84,9 +84,14 @@ it("backs Fert off from a close Chibi under any pressure, and closes in from far
 
 it("raises attack scores with pressure and with their cadence coming due", () => {
   const scoreAt = (values: Partial<BossScorerValues>, special: boolean) =>
-    decideScored(GROUND_BOSS_SCORER, never, false, INITIAL_SCORER_STATE, { ...LEVEL, ...values }, [
-      attack("tell", special),
-    ]).decision.scores[0]!.score;
+    decideScored(
+      GROUND_BOSS_SCORER,
+      never,
+      false,
+      { ...INITIAL_SCORER_STATE, pressureSeconds: values.threatSeconds ?? 0 },
+      { ...LEVEL, ...values },
+      [attack("tell", special)],
+    ).decision.scores[0]!.score;
   for (const special of [false, true]) {
     const scores = [0, 2, 4, 8, 20].map((seconds) =>
       scoreAt({ specialDueSeconds: seconds, threatSeconds: seconds }, special),

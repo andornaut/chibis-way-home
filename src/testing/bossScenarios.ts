@@ -365,8 +365,8 @@ const PACE_PERCH: BossScenario = {
     ),
   name: "pace perch patrol-cover-late city-streets seed 1",
 };
-// One decision (at most 0.9 s) plus the walk there, and the pace's 3 tiles beside Archie's
-// half width.
+// One decision (at most 0.9 s) plus the walk there, and the pace's 2 tiles each side beside
+// Archie's half width and the spot's offset from Chibi.
 const PACE_SECONDS = 3;
 const PACE_TILES = 6;
 
@@ -615,10 +615,14 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   },
   {
     boss: "Archie",
-    checks: () => [pacesNearest(PACE_SECONDS, PACE_TILES * TILE), movesWhileEngaged(2, TILE / 2)],
+    checks: (layout) => [
+      pacesNearest(layout, PACE_SECONDS, PACE_TILES * TILE),
+      movesWhileEngaged(2, TILE / 2),
+    ],
     covers: [],
     scenario: PACE_PERCH,
-    subject: "pace: Archie paces at the reachable spot nearest a Chibi out of reach",
+    subject:
+      "pace: Archie paces slowly at the reachable spot nearest a Chibi out of reach, then gives up",
   },
   {
     boss: "Fert",

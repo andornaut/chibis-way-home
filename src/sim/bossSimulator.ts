@@ -134,12 +134,19 @@ export function bossSample(
         }),
         facing: state.facing,
         footing: footing(world, contactBox(object, at, state.facing, state.axis)),
+        ...(state.pursuit?.phase === "escaped" &&
+          state.pursuit.giveUp && { gaveUp: true as const }),
         height: object.height,
         id: `${after.area}:${index}`,
         kind: object.character,
         motion: motion.kind === "pursue" ? `pursue-${motion.mode}` : motion.kind,
         ...(state.traversal?.preparation && { preparing: true }),
+        ...(state.mapPursuit?.route &&
+          "pace" in state.mapPursuit.route.next && { pacing: true as const }),
         ...(state.pursuit && { pursuit: state.pursuit.phase }),
+        ...(state.chasePause
+          ? { relief: "pause" as const }
+          : (state.mapPursuit?.paceHoldSeconds ?? 0) > 0 && { relief: "pace" as const }),
         state: state.stateKey,
         supported: supportContact(object, world, at),
         ...(state.tellPauseRemainingSeconds !== undefined && {
