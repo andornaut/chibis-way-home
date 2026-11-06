@@ -1,11 +1,12 @@
 {
+  "arenas": [],
   "entries": [
     {
       "encounters": 1,
       "grade": 4,
       "id": "industrial-tunnel-bounded-flyer-post",
       "kind": "single",
-      "layout": "4a308d876b7dd57f",
+      "layout": "961292224545b330",
       "route": "1b46632117612101",
       "slots": { "door": 0, "event": 0 },
       "trace": "15cbc13af1666b76:5835",
@@ -214,7 +215,7 @@
       "grade": 5,
       "id": "industrial-tunnel-compound-perch-yard",
       "kind": "single",
-      "layout": "ac127ef075a0abc0",
+      "layout": "7293bff7841cd3b7",
       "route": "1b46632117612101",
       "slots": { "door": 0, "event": 0 },
       "trace": "b18f19fab11aad92:6031",
@@ -269,18 +270,18 @@
       "grade": 4,
       "id": "industrial-tunnel-dry-underground-gallery-encounter",
       "kind": "single",
-      "layout": "ad204644138aeecc",
+      "layout": "6f4cfd17a5604f97",
       "route": "9f43b6eb9910892a",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b2e846d4cf10b95d:13300",
-      "work": 13300
+      "trace": "d450b35cc65877d7:13609",
+      "work": 13609
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "industrial-tunnel-flyer-shelter-early",
       "kind": "single",
-      "layout": "9d11ca4b8eec7e05",
+      "layout": "cac7393067be83d7",
       "route": "338a919952aeab01",
       "slots": { "door": 0, "event": 0 },
       "trace": "f9b72d20ba211a10:4716",
@@ -291,18 +292,18 @@
       "grade": 4,
       "id": "industrial-tunnel-flyer-shelter-late",
       "kind": "single",
-      "layout": "2a6d3c3431796698",
+      "layout": "1843fba9de6fe138",
       "route": "0712e1353919d9b1",
       "slots": { "door": 0, "event": 0 },
-      "trace": "7bd527983117dd39:6991",
-      "work": 6991
+      "trace": "b5b4625672c4387d:7527",
+      "work": 7527
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "industrial-tunnel-flyer-shelter-middle",
       "kind": "single",
-      "layout": "72f603c3748a7e05",
+      "layout": "e605d04ea63891c8",
       "route": "71a79ea11b967f9c",
       "slots": { "door": 0, "event": 0 },
       "trace": "94aa80f290457e96:4529",
@@ -386,7 +387,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "5c96a7fe9c6e624c", "proofs": "e3238dfe720204b3" },
+  "inputs": { "data": "021f259dd965bf80", "proofs": "d666455d8d0d4469" },
   "version": 1,
   "zone": "industrial"
 }

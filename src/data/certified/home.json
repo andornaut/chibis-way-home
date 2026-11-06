@@ -1,4 +1,5 @@
 {
+  "arenas": [],
   "entries": [
     {
       "encounters": 0,
@@ -27,7 +28,7 @@
       "grade": 4,
       "id": "home-vertical-climbing-enemy-lane",
       "kind": "single",
-      "layout": "1f529fc7cb1c4cb1",
+      "layout": "1f2a0445d0853c17",
       "route": "c9803dd28f01de54",
       "slots": { "door": 0, "event": 0 },
       "trace": "47a0c908f1069d95:6355",
@@ -137,7 +138,7 @@
       "grade": 5,
       "id": "home-vertical-compound-vertical-yard",
       "kind": "single",
-      "layout": "5cd481ae6050b913",
+      "layout": "965f4cf113009864",
       "route": "28ad64beb757dbe6",
       "slots": { "door": 0, "event": 0 },
       "trace": "f622b489756cd3b2:108864",
@@ -181,7 +182,7 @@
       "grade": 4,
       "id": "home-vertical-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "e5f2376f25f6ccb0",
+      "layout": "1368af2238e2981d",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
       "trace": "d9914950b471287d:19848",
@@ -192,7 +193,7 @@
       "grade": 4,
       "id": "home-vertical-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "4e0b9a818688c83b",
+      "layout": "f218a96d687d327e",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
       "trace": "341d647b1687c228:9762",
@@ -225,7 +226,7 @@
       "grade": 4,
       "id": "home-vertical-vertical-stack-early",
       "kind": "single",
-      "layout": "e39799243d993275",
+      "layout": "89c9602d715154be",
       "route": "2534d81b7bb57c57",
       "slots": { "door": 0, "event": 0 },
       "trace": "f0e75d29b0c53b28:4520",
@@ -236,7 +237,7 @@
       "grade": 4,
       "id": "home-vertical-vertical-stack-late",
       "kind": "single",
-      "layout": "75a8f5ab0ee8f94b",
+      "layout": "6f7955c7d01e99df",
       "route": "ab6b141179740f3d",
       "slots": { "door": 0, "event": 0 },
       "trace": "d565f0222fd36db6:7747",
@@ -247,7 +248,7 @@
       "grade": 4,
       "id": "home-vertical-vertical-stack-middle",
       "kind": "single",
-      "layout": "bac8c2b782c03268",
+      "layout": "f0c8fecbfa7ae31f",
       "route": "4ef0964161df0061",
       "slots": { "door": 0, "event": 0 },
       "trace": "2d7c0e56fd100aa2:4408",
@@ -265,7 +266,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "4730896ff2d0de2e", "proofs": "e3238dfe720204b3" },
+  "inputs": { "data": "4980e864825ff025", "proofs": "d666455d8d0d4469" },
   "version": 1,
   "zone": "home"
 }

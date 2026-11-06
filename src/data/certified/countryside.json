@@ -1,4 +1,5 @@
 {
+  "arenas": [],
   "entries": [
     {
       "encounters": 0,
@@ -16,10 +17,10 @@
       "grade": 4,
       "id": "countryside-vertical-city-boundary-climb-yard",
       "kind": "single",
-      "layout": "aab3cf5251a17f95",
+      "layout": "c8c1ed17dc1f0da0",
       "route": "d043e3432753ab2f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "35fe042fca416527:10545",
+      "trace": "011b556a66d04c6e:10545",
       "work": 10545
     },
     {
@@ -27,10 +28,10 @@
       "grade": 4,
       "id": "countryside-vertical-city-boundary-dog-high",
       "kind": "single",
-      "layout": "f9949a1c4354d51d",
+      "layout": "22a4a268f4914e10",
       "route": "ed56da9df815e5f4",
       "slots": { "door": 0, "event": 0 },
-      "trace": "1e68d640f527e6b0:4981",
+      "trace": "796ce808af0b2f72:4981",
       "work": 4981
     },
     {
@@ -38,10 +39,10 @@
       "grade": 4,
       "id": "countryside-vertical-city-boundary-dog-terrace",
       "kind": "single",
-      "layout": "116ceb969648b7a6",
+      "layout": "d7c971bc1a71ecb9",
       "route": "56e4d63149836485",
       "slots": { "door": 0, "event": 0 },
-      "trace": "2168777ed384c445:4981",
+      "trace": "6382a966c69bf931:4981",
       "work": 4981
     },
     {
@@ -291,7 +292,7 @@
       "grade": 4,
       "id": "countryside-vertical-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "bd2637cf70a8e596",
+      "layout": "9407474415072d9b",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
       "trace": "9f547bcd28ff5cb4:8474",
@@ -302,7 +303,7 @@
       "grade": 4,
       "id": "countryside-vertical-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "cbfb54833d2eb3d6",
+      "layout": "a5908f1c3fe966a7",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
       "trace": "618222d467b89c14:4074",
@@ -324,10 +325,10 @@
       "grade": 4,
       "id": "countryside-vertical-patrol-cover-early",
       "kind": "single",
-      "layout": "1d65cc558f3692db",
+      "layout": "5fbf1c67cdfb5f43",
       "route": "a30293dd32a8168f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "8d4c91e5d1dc49aa:3330",
+      "trace": "20e560d6b1bee0b3:3330",
       "work": 3330
     },
     {
@@ -335,7 +336,7 @@
       "grade": 4,
       "id": "countryside-vertical-patrol-cover-late",
       "kind": "single",
-      "layout": "355d8fa153dacea6",
+      "layout": "10d8ad5bca3112ff",
       "route": "4863105c7ad0c172",
       "slots": { "door": 0, "event": 0 },
       "trace": "97bf6b3577cea5af:2905",
@@ -346,7 +347,7 @@
       "grade": 4,
       "id": "countryside-vertical-patrol-cover-middle",
       "kind": "single",
-      "layout": "e06d188798e09e73",
+      "layout": "497866b1b505773e",
       "route": "5eb6467e8dcfbfe6",
       "slots": { "door": 0, "event": 0 },
       "trace": "503d1ae1c4460ed1:2987",
@@ -386,7 +387,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "2891b1744e40cba0", "proofs": "e3238dfe720204b3" },
+  "inputs": { "data": "589a6600dca148a0", "proofs": "d666455d8d0d4469" },
   "version": 1,
   "zone": "countryside"
 }

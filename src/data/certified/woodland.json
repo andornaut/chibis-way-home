@@ -1,4 +1,5 @@
 {
+  "arenas": [],
   "entries": [
     {
       "encounters": 0,
@@ -148,21 +149,21 @@
       "grade": 4,
       "id": "woodland-vertical-growl-clearing",
       "kind": "single",
-      "layout": "98c0b04972214bb9",
+      "layout": "e9bc3fa6f2374cee",
       "route": "b08a7d276fc463b6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "ee1e5701ed4da7d0:1712721",
-      "work": 1712721
+      "trace": "d0aa05f97526bc9c:1711673",
+      "work": 1711673
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "woodland-vertical-growl-cover-early",
       "kind": "single",
-      "layout": "23546658945e1cff",
+      "layout": "baad1f86ce950d22",
       "route": "a30293dd32a8168f",
       "slots": { "door": 0, "event": 0 },
-      "trace": "f4a33825b730fed3:2892",
+      "trace": "e7e4cdcdcb33fe99:2892",
       "work": 2892
     },
     {
@@ -170,7 +171,7 @@
       "grade": 4,
       "id": "woodland-vertical-growl-cover-late",
       "kind": "single",
-      "layout": "250193b7bf704698",
+      "layout": "d70dc8d5bcc81c89",
       "route": "4863105c7ad0c172",
       "slots": { "door": 0, "event": 0 },
       "trace": "3184701b2946b5b2:881",
@@ -181,7 +182,7 @@
       "grade": 4,
       "id": "woodland-vertical-growl-cover-middle",
       "kind": "single",
-      "layout": "8de73c905200e633",
+      "layout": "f8f0614dcf89fb84",
       "route": "5eb6467e8dcfbfe6",
       "slots": { "door": 0, "event": 0 },
       "trace": "889094120e0fc209:3747",
@@ -214,7 +215,7 @@
       "grade": 4,
       "id": "woodland-vertical-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "5be0249e2d3069d4",
+      "layout": "4581538a4eb2d9aa",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
       "trace": "47ea7e15d511c896:3763",
@@ -225,7 +226,7 @@
       "grade": 4,
       "id": "woodland-vertical-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "2db463c3d7970915",
+      "layout": "4af43a813edab203",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
       "trace": "62cba7fd275cdeae:3183",
@@ -265,7 +266,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "c1a1fb07fbbf30cd", "proofs": "e3238dfe720204b3" },
+  "inputs": { "data": "b53ccdef61a28a75", "proofs": "d666455d8d0d4469" },
   "version": 1,
   "zone": "woodland"
 }
