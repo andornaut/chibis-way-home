@@ -41,6 +41,9 @@
   "pieces": {},
   "tileSize": 12,
   "tiles": {
+    "grass-bottom": 33,
+    "grass-bottom-left": 32,
+    "grass-bottom-right": 34,
     "grass-top": 0,
     "grass-top-left": 1,
     "grass-top-right": 2,
