@@ -342,6 +342,29 @@ export interface BehaviourNode {
   readonly transitions: readonly BehaviourTransition[];
 }
 
+// Inclusive bounds of a seeded duration.
+export interface SecondsRange {
+  readonly max: number;
+  readonly min: number;
+}
+
+// Chase relief for a scored pursuer. After a seeded span of engaged chase outside attacks, the
+// boss holds a seeded pause facing Chibi, never within tellClearanceSeconds of a tell, and its
+// pressure restarts. From giveUp.fromSeconds of engagement each pause gives up with
+// giveUp.chance, and at giveUp.certainSeconds the boss gives up outright.
+export interface ChaseRelief {
+  readonly giveUp: {
+    readonly certainSeconds: number;
+    readonly chance: number;
+    readonly fromSeconds: number;
+  };
+  readonly pause: {
+    readonly afterSeconds: SecondsRange;
+    readonly seconds: SecondsRange;
+    readonly tellClearanceSeconds: number;
+  };
+}
+
 // A reusable bounded movement graph. Distance is signed from its placed origin, in tiles in
 // data and pixels in a layout. Spatial conditions and speeds use the same units.
 export interface BehaviourPlan {
@@ -355,15 +378,24 @@ export interface BehaviourPlan {
   readonly scorer?: BossScorer;
   readonly pursuit?: {
     readonly distance: number;
-    // Null disables elapsed-time giveup; unknown planner results never establish unreachability.
+    // Seconds without a movement path before the boss gives up; null disables it. Unknown
+    // planner results never establish unreachability.
     readonly unreachableGraceSeconds: number | null;
     // Current physical body-centre separation in both axes: tiles in data, pixels in layouts.
     readonly escapeDistance?: number;
     readonly escaped: DialogueLine;
     // A mapped ground pursuer with no movement-map path to Chibi walks to the reachable spot
-    // nearest him and paces there: distance in tiles in data, pixels in layouts, and its speed as
-    // a fraction of chase speed.
-    readonly pace?: { readonly distance: number; readonly speedScale: number };
+    // nearest him and paces there. distance is the whole pace span and speed its walk: tiles in
+    // data, pixels in layouts. The pace starts, and every turn holds, for a seeded pause facing
+    // Chibi.
+    readonly pace?: {
+      readonly distance: number;
+      readonly pauseSeconds: SecondsRange;
+      readonly speed: number;
+    };
+    // Seconds after any ended chase before awareness can engage again.
+    readonly rearmSeconds?: number;
+    readonly relief?: ChaseRelief;
   };
   readonly spotted?: DialogueLine;
   readonly axis: "x" | "y";
