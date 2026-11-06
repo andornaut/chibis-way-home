@@ -1,10 +1,12 @@
-// The evade playtest: a skill-free Chibi controller that survives an arena's boss by its routes
-// and refuges until the chase ends, then walks out. It moves with run, jump and flutter only (no
-// Dash or double jump), decides every DECIDE_SECONDS from what Chibi sees, and sees the boss
-// BOSS_FAIRNESS's reaction delay late: its body, facing, pursuit and visible tell, never its
-// scorer, plan, timers or seed. The boss's distance to a spot is its own movement map's path
-// distance there, unbounded where its body does not fit or its map has no path. Policy, first
-// match wins:
+// The evade playtest: a skill-free Chibi controller that gets through an arena past its boss by
+// its routes and refuges, and walks out once the boss is behind him or the chase ends. It moves
+// with run, jump and flutter only (no Dash or double jump), decides every DECIDE_SECONDS from
+// what Chibi sees, and sees the boss BOSS_FAIRNESS's reaction delay late: its body, facing,
+// pursuit and visible tell, never its scorer, plan, timers or seed. The boss's distance to a spot
+// is its own movement map's path distance there, unbounded where its body does not fit or its
+// map has no path. Policy, first match wins:
+// 0. The boss behind him (its body centre left of his feet by a tile) and beyond THREAT_TILES,
+//    with a path to the exit on his map clear of the boss: head for the exit.
 // 1. At a countering refuge the engaged boss cannot reach: hold.
 // 2. A visible tell: one of the attack's named dodges (BOSS_FAIRNESS). A retreat, beyond
 //    THREAT_TILES where the attack names one and the loop leads away from the boss, follows the
@@ -66,10 +68,11 @@ export const EVADE_SEEDS: readonly number[] = [0, 1, 2, 3];
 // waypoint nearest the middle column beyond the threat distance of the boss's spawn.
 export type EvadeStart = "entry" | "mid";
 export const EVADE_STARTS: readonly EvadeStart[] = ["entry", "mid"];
-// The chase must end within this long: the certain give-up plus margin.
-export const EVADE_LIMIT_SECONDS = 40;
-// After the chase ends, the exit within this many ticks.
-export const EVADE_EXIT_TICKS = 600;
+// From the boss first acquiring him, he reaches the exit alive within this long.
+export const EVADE_LIMIT_SECONDS = 60;
+// In at least `runs` of an arena's runs, the exit comes `seconds` or more later than the
+// boss-free walk: the same controller from the same start and seed with the boss removed.
+export const EVADE_SLOWED = { runs: 6, seconds: 3 } as const;
 const DECIDE_SECONDS = 0.1;
 const THREAT_TILES = 6;
 // A dodge that has not seen its attack end stops after this long.
@@ -81,9 +84,13 @@ const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 const ticksOf = (seconds: number) => Math.round(seconds / STEP_SECONDS);
 
 export interface EvadeRun {
+  // Seconds from the start to the boss first acquiring him, and from then to the exit.
+  readonly acquired?: number;
   readonly death?: string;
   readonly ended?: { readonly cause: string; readonly seconds: number };
-  readonly exitTicks?: number;
+  readonly exit?: number;
+  // The boss-free walk's seconds from the start to the exit.
+  readonly free?: number;
   readonly problems: readonly string[];
   readonly seed: number;
   readonly start: EvadeStart;
@@ -190,13 +197,81 @@ const bottomCentre = (box: { x: number; y: number; width: number; height: number
   y: box.y + box.height,
 });
 
-// One evade run of the arena from a start and zone seed.
-export function evadeRun(
-  context: { readonly found: ArenaCase; readonly layout: ZoneLayout; readonly maps: ArenaMaps },
+interface EvadeContext {
+  readonly found: ArenaCase;
+  readonly layout: ZoneLayout;
+  readonly maps: ArenaMaps;
+}
+
+// The layout with every boss removed, for the boss-free walk.
+function bossFree(context: EvadeContext): ZoneLayout {
+  const { layout, maps } = context;
+  const bosses = new Set(maps.encounter.bosses);
+  const area = layout.areas[layout.start.area]!;
+  return {
+    ...layout,
+    areas: {
+      ...layout.areas,
+      [layout.start.area]: {
+        ...area,
+        objects: area.objects.filter((object) => !bosses.has(object)),
+      },
+    },
+  };
+}
+
+// Whether Chibi's body anywhere in rect could touch the boss's body padded by pad: the rects
+// overlap, and no solid lies between the boss's body and rect across their whole overlap, as a
+// roof between a boss above and a span below it, or a wall between them side by side.
+export function touchesBoss(solids: readonly Rect[], pad: number, boss: Rect, rect: Rect): boolean {
+  const near = {
+    height: boss.height + 2 * pad,
+    width: boss.width + 2 * pad,
+    x: boss.x - pad,
+    y: boss.y - pad,
+  };
+  if (!rectsOverlap(rect, near)) {
+    return false;
+  }
+  const left = Math.max(rect.x, near.x);
+  const right = Math.min(rect.x + rect.width, near.x + near.width);
+  const top = Math.max(rect.y, near.y);
+  const bottom = Math.min(rect.y + rect.height, near.y + near.height);
+  const between = (low: number, high: number, from: number, to: number) =>
+    from >= low - EDGE && to <= high + EDGE;
+  return !solids.some((solid) => {
+    const spansX = solid.x <= left + EDGE && solid.x + solid.width >= right - EDGE;
+    const spansY = solid.y <= top + EDGE && solid.y + solid.height >= bottom - EDGE;
+    return (
+      (spansX &&
+        (between(boss.y + boss.height, rect.y, solid.y, solid.y + solid.height) ||
+          between(rect.y + rect.height, boss.y, solid.y, solid.y + solid.height))) ||
+      (spansY &&
+        (between(boss.x + boss.width, rect.x, solid.x, solid.x + solid.width) ||
+          between(rect.x + rect.width, boss.x, solid.x, solid.x + solid.width)))
+    );
+  });
+}
+
+// One evade run of the arena from a start and zone seed, with its boss-free walk.
+export function evadeRun(context: EvadeContext, start: EvadeStart, seed: number): EvadeRun {
+  const free = evadeWalk(context, bossFree(context), start, seed);
+  const run = evadeWalk(context, context.layout, start, seed);
+  return {
+    ...run,
+    ...(free.cleared !== undefined && { free: free.cleared }),
+    problems: [...run.problems, ...free.problems.map((problem) => `boss-free walk: ${problem}`)],
+    work: run.work + free.work,
+  };
+}
+
+function evadeWalk(
+  context: EvadeContext,
+  layout: ZoneLayout,
   start: EvadeStart,
   seed: number,
-): EvadeRun {
-  const { found, layout, maps } = context;
+): EvadeRun & { readonly cleared?: number } {
+  const { found, maps } = context;
   const { arena } = found;
   const chibi: MovementMap<MapSupport> = maps.chibi;
   const area = layout.areas[layout.start.area]!;
@@ -253,18 +328,20 @@ export function evadeRun(
     target = next;
   };
   let hold = false;
+  let exiting = false;
   let dodge: Dodge | undefined;
   let lastDodgeEnd = -1;
   let leg: { edge: MapEdge<MapSupport>; step: number } | undefined;
   let ended: { cause: string; tick: number } | undefined;
   const problems: string[] = [];
   let death: string | undefined;
-  let exitTicks: number | undefined;
+  let acquired: number | undefined;
+  let cleared: number | undefined;
   let work = 0;
 
   const box = () => birdBox(ORDINARY, zone.bird);
-  // Chibi's map without the spans and legs within AVOID_TILES of the boss's body as he last saw
-  // it, his own span aside.
+  // Chibi's map without the spans and legs from which his body could touch the boss's body as he
+  // last saw it, padded by AVOID_TILES except through solid terrain, his own span aside.
   let avoiding: MapMask = maps.mask;
   const avoid = (boss: AgentSample | undefined) => {
     if (!boss) {
@@ -272,19 +349,15 @@ export function evadeRun(
       return;
     }
     const pad = AVOID_TILES * TILE;
-    const near = {
-      height: boss.height + 2 * pad,
-      width: boss.width + 2 * pad,
-      x: boss.at.x - pad,
-      y: boss.at.y - pad,
-    };
+    const body = { height: boss.height, width: boss.width, ...boss.at };
     const own = here()?.node;
     const width = chibi.profile.body.width;
     const height = chibi.profile.body.height;
+    const terrain = maps.encounter.terrain.world.solids;
     avoiding = {
       edge: (id, seconds) =>
-        !rectsOverlap(chibi.edges[id]!.sweep, near) && maps.mask.edge(id, seconds),
-      key: `avoid:${Math.round(near.x / TILE)}:${Math.round(near.y / TILE)}:${own ?? -1}`,
+        !touchesBoss(terrain, pad, body, chibi.edges[id]!.sweep) && maps.mask.edge(id, seconds),
+      key: `avoid:${Math.round(body.x / TILE)}:${Math.round(body.y / TILE)}:${own ?? -1}`,
       node: (id) => {
         const node = chibi.nodes[id]!;
         const span = {
@@ -293,7 +366,7 @@ export function evadeRun(
           x: node.left,
           y: node.y - height,
         };
-        return maps.mask.node(id) && (id === own || !rectsOverlap(span, near));
+        return maps.mask.node(id) && (id === own || !touchesBoss(terrain, pad, body, span));
       },
     };
   };
@@ -495,12 +568,36 @@ export function evadeRun(
     );
   };
 
+  // 0. The boss behind him beyond THREAT_TILES and a path to the exit seam on his map clear of it.
+  const exitSeam: Point = { x: area.width - 2 * TILE, y: arena.exit.row * TILE };
+  const exitPoint: Point = { x: area.width + 4 * TILE, y: arena.exit.row * TILE };
+  const exitClear = (boss: AgentSample | undefined) => {
+    const feet = bottomCentre(box());
+    const seen = boss && centre(boss);
+    if (
+      seen &&
+      (seen.x > feet.x - TILE ||
+        Math.hypot(seen.x - feet.x, seen.y - (feet.y - ORDINARY.height / 2)) <= THREAT_TILES * TILE)
+    ) {
+      return false;
+    }
+    const ref = here();
+    // Airborne, off his map's spans, he keeps the last verdict.
+    if (!ref) {
+      return exiting;
+    }
+    return pathTo(chibi, avoiding, ref, { point: exitSeam, radius: TILE }) !== undefined;
+  };
+  // He follows his map to the exit seam, then walks out past it.
+  const toExit = () => follow(bottomCentre(box()).x >= exitSeam.x - TILE ? exitPoint : exitSeam);
+
   const choose = (tick: number) => {
     const observed = history[Math.max(0, history.length - 1 - delay)];
     const before = history[Math.max(0, history.length - 1 - delay - decide)];
     const boss = observed?.agents[0];
     avoid(boss);
-    if (!boss) {
+    exiting = exitClear(boss);
+    if (exiting || !boss) {
       hold = false;
       return;
     }
@@ -568,8 +665,8 @@ export function evadeRun(
     }
   };
 
-  const exitPoint: Point = { x: area.width + 4 * TILE, y: arena.exit.row * TILE };
   const limit = ticksOf(EVADE_LIMIT_SECONDS);
+  const free = maps.encounter.bosses.every((object) => !area.objects.includes(object));
   for (let tick = 0; ; tick++) {
     if (zone.death) {
       death = `${zone.death.reason} at ${(tick * STEP_SECONDS).toFixed(2)} s`;
@@ -577,13 +674,9 @@ export function evadeRun(
       break;
     }
     if (zone.cleared) {
-      if (ended) {
-        exitTicks = tick - ended.tick;
-        if (exitTicks > EVADE_EXIT_TICKS) {
-          problems.push(`exit ${exitTicks} ticks after the chase ended`);
-        }
-      } else {
-        problems.push("left the arena before the chase ended");
+      cleared = tick * STEP_SECONDS;
+      if (!free && acquired === undefined) {
+        problems.push("left the arena before the boss acquired him");
       }
       break;
     }
@@ -591,12 +684,12 @@ export function evadeRun(
       problems.push("turned back out of the entry");
       break;
     }
-    if (!ended && tick >= limit) {
-      problems.push(`the chase is still running at ${EVADE_LIMIT_SECONDS} s`);
-      break;
-    }
-    if (ended && tick - ended.tick > EVADE_EXIT_TICKS) {
-      problems.push(`no exit within ${EVADE_EXIT_TICKS} ticks of the chase ending`);
+    if (tick - (acquired ?? 0) >= limit) {
+      problems.push(
+        free || acquired !== undefined
+          ? `no exit within ${EVADE_LIMIT_SECONDS} s`
+          : `the boss never acquired him in ${EVADE_LIMIT_SECONDS} s`,
+      );
       break;
     }
     let input: ZoneInput;
@@ -621,10 +714,7 @@ export function evadeRun(
               history[Math.max(0, history.length - 1 - delay - decide)],
             ) > ORDINARY.walkSpeed);
       }
-      input =
-        waiting || (history.at(-1)?.world.transients ?? 0) > 0
-          ? follow(undefined)
-          : follow(exitPoint);
+      input = waiting || (history.at(-1)?.world.transients ?? 0) > 0 ? follow(undefined) : toExit();
     } else {
       if (!dodge && tick % decide === 0) {
         choose(tick);
@@ -642,18 +732,19 @@ export function evadeRun(
               target: history.at(-1)!.target,
             })
           : STILL;
+      } else if (exiting) {
+        input = toExit();
       } else if (hold) {
         input = follow(undefined);
       } else {
         input = follow(waypointPixel(target));
       }
     }
-    // Until the chase ends he stays inside the arena, a body's width from either edge.
+    // He never turns back out of the entry, and leaves by the exit only on his way out.
     const body = box();
     if (
-      !ended &&
-      ((input.move === 1 && body.x + 2 * body.width > area.exitX) ||
-        (input.move === -1 && body.x - body.width < area.backX))
+      (input.move === -1 && body.x - body.width < area.backX) ||
+      (input.move === 1 && !ended && !exiting && body.x + 2 * body.width > area.exitX)
     ) {
       input = { ...input, move: 0 };
     }
@@ -662,6 +753,9 @@ export function evadeRun(
     recorder.record(zoneTraceLine(layout, STEP_SECONDS, before, zone));
     work++;
     const sample = bossSample(ORDINARY, layout, tick, zone);
+    if (acquired === undefined && sample.agents.some(({ pursuit }) => pursuit === "engaged")) {
+      acquired = tick;
+    }
     history.push(sample);
     if (history.length > 2 * (delay + decide) + 2) {
       history.shift();
@@ -686,13 +780,16 @@ export function evadeRun(
       leg = undefined;
     }
   }
-  if (!death && switches === 0) {
+  if (!free && !death && switches === 0) {
     problems.push("no route switch");
   }
   return {
+    ...(acquired !== undefined && { acquired: acquired * STEP_SECONDS }),
+    ...(cleared !== undefined && { cleared }),
     ...(death && { death }),
     ...(ended && { ended: { cause: ended.cause, seconds: ended.tick * STEP_SECONDS } }),
-    ...(exitTicks !== undefined && { exitTicks }),
+    ...(cleared !== undefined &&
+      acquired !== undefined && { exit: cleared - acquired * STEP_SECONDS }),
     problems,
     seed,
     start,
@@ -703,10 +800,6 @@ export function evadeRun(
 }
 
 // Every evade run of the arena: each start for each seed.
-export function evadeRuns(context: {
-  readonly found: ArenaCase;
-  readonly layout: ZoneLayout;
-  readonly maps: ArenaMaps;
-}): EvadeRun[] {
+export function evadeRuns(context: EvadeContext): EvadeRun[] {
   return EVADE_STARTS.flatMap((start) => EVADE_SEEDS.map((seed) => evadeRun(context, start, seed)));
 }

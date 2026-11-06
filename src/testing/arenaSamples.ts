@@ -3,11 +3,12 @@
 // enter: a two-row step whose roof, a solid stretch of the deck, lies three rows above it,
 // Chibi's height. A boss on either side of the nook crosses over it on the deck. The nook is high
 // ground against charges, cover against parcels and droppings, and a low ceiling against Kiwi.
+// Each boss spawns where it slows Chibi on his way to the exit without blocking him.
 import type { AntagonistKind, ChunkArena, RefugeKind, SeamRow, TerrainRect } from "../data/types";
 
 const ROWS = 120;
 // The deck: one-way either side of the nook's solid roof, a sample's `gap` columns clear of the
-// nook's ends (3 by default; Bini's growl favours 1).
+// nook's ends (3 by default, 2 for Archie and Bini).
 const DECK = { col: 20, cols: 34, rise: 6 } as const;
 // The nook's step, and its roof, which leaves `open` columns of the step clear at each end to
 // climb in.
@@ -37,13 +38,15 @@ const ledge = (col: number, cols: number, row: number) => ({
 
 interface Sample {
   readonly boss: AntagonistKind;
+  // The boss's spawn column, on the floor or on the deck.
+  readonly spawn: { readonly col: number; readonly on: "deck" | "floor" };
   readonly gap?: number;
   readonly kind: RefugeKind;
   readonly row: SeamRow;
   readonly stage: string;
 }
 
-function sample({ boss, gap = 3, kind, row, stage }: Sample): ChunkArena {
+function sample({ boss, gap = 3, kind, row, spawn, stage }: Sample): ChunkArena {
   const deck = row - DECK.rise;
   const left = DECK.col + 2;
   const right = DECK.col + DECK.cols - 2;
@@ -60,7 +63,12 @@ function sample({ boss, gap = 3, kind, row, stage }: Sample): ChunkArena {
     objects: [
       ledge(DECK.col, NOOK.col - DECK.col - gap, deck),
       ledge(NOOK.col + NOOK.cols + gap, DECK.col + DECK.cols - NOOK.col - NOOK.cols - gap, deck),
-      { character: boss, col: right - 4, role: "antagonist", row: deck - 4 },
+      {
+        character: boss,
+        col: spawn.col,
+        role: "antagonist",
+        row: (spawn.on === "deck" ? deck : row) - 4,
+      },
     ],
     refuges: [{ at: { col: inside, row: step }, kind, width: roof.cols - 3 }],
     route: {},
@@ -102,10 +110,48 @@ function sample({ boss, gap = 3, kind, row, stage }: Sample): ChunkArena {
 }
 
 export const ARENA_SAMPLES: readonly ChunkArena[] = [
-  sample({ boss: "dog-antagonist", kind: "high-ground", row: 80, stage: "city-streets" }),
-  sample({ boss: "goose-antagonist", kind: "high-ground", row: 80, stage: "country-lanes" }),
-  sample({ boss: "bear-antagonist", gap: 1, kind: "high-ground", row: 80, stage: "deep-woods" }),
-  sample({ boss: "raccoon-antagonist", kind: "low-ceiling", row: 80, stage: "back-streets" }),
-  sample({ boss: "pigeon-antagonist", kind: "cover", row: 80, stage: "loading-yards" }),
-  sample({ boss: "ferret-antagonist", kind: "cover", row: 50, stage: "residential-floors" }),
+  sample({
+    boss: "dog-antagonist",
+    gap: 2,
+    kind: "high-ground",
+    row: 80,
+    spawn: { col: 44, on: "deck" },
+    stage: "city-streets",
+  }),
+  sample({
+    boss: "goose-antagonist",
+    kind: "high-ground",
+    row: 80,
+    spawn: { col: 52, on: "floor" },
+    stage: "country-lanes",
+  }),
+  sample({
+    boss: "bear-antagonist",
+    gap: 2,
+    kind: "high-ground",
+    row: 80,
+    spawn: { col: 42, on: "deck" },
+    stage: "deep-woods",
+  }),
+  sample({
+    boss: "raccoon-antagonist",
+    kind: "low-ceiling",
+    row: 80,
+    spawn: { col: 48, on: "floor" },
+    stage: "back-streets",
+  }),
+  sample({
+    boss: "pigeon-antagonist",
+    kind: "cover",
+    row: 80,
+    spawn: { col: 40, on: "floor" },
+    stage: "loading-yards",
+  }),
+  sample({
+    boss: "ferret-antagonist",
+    kind: "cover",
+    row: 50,
+    spawn: { col: 48, on: "floor" },
+    stage: "residential-floors",
+  }),
 ];

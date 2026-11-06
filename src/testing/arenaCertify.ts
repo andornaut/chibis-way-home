@@ -24,7 +24,7 @@ import {
 } from "./arenas";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 import { ORDINARY } from "./encounterLayouts";
-import { evadeRuns } from "./evade";
+import { EVADE_SLOWED, evadeRuns } from "./evade";
 import { hashOf } from "./pairCertify";
 import { moduleRouteTargets, slotFills } from "./requiredRoutes";
 
@@ -123,6 +123,17 @@ export function proveArena(found: ArenaCase): ArenaProof {
     work += run.work;
     problems.push(
       ...run.problems.map((problem) => `evade ${run.start} seed ${run.seed}: ${problem}`),
+    );
+  }
+  // The boss slows him: enough runs exit well behind their boss-free walk.
+  const slowed = runs.filter(
+    ({ exit, free }) =>
+      exit !== undefined && free !== undefined && exit - free >= EVADE_SLOWED.seconds - 1e-6,
+  ).length;
+  if (slowed < EVADE_SLOWED.runs) {
+    problems.push(
+      `evade: slowed by ${EVADE_SLOWED.seconds} s in ${slowed} of ${runs.length} runs, ` +
+        `fewer than ${EVADE_SLOWED.runs}`,
     );
   }
   // The mid start must test a state the entry start does not reach.
