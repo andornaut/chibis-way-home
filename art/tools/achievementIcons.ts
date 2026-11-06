@@ -167,16 +167,16 @@ const HEADS: Readonly<Record<Boss, Part>> = {
       "..kkkkkkk...",
     ],
   },
-  // cream feathers, the oversized round glasses, an orange bill and the long neck
+  // cream feathers, one round lens over a visible eye, an orange bill and the long neck
   trixi: {
     legend: { c: "cream", l: "lgrey", o: "orange", h: "ochre", w: "white" },
     rows: [
       "..kkkkkk.....",
       ".kcccccck....",
-      "kckkcckkck...",
-      "kkwlkkwlkkkk.",
-      "kklkkklkkoook",
-      "kckkcckkkhhk.",
+      "kccckkkcck...",
+      "kkkkwklkck...",
+      "kccklklkcoook",
+      "kccckkkcchhk.",
       ".kcccccckk...",
       "..kccclk.....",
       "..kccclk.....",

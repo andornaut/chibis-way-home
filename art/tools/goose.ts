@@ -1,6 +1,6 @@
 /**
- * Trixi, the countryside goose antagonist with oversized glasses: a long-necked cream-and-grey
- * bird, distinct from the round bird.
+ * Trixi, the countryside goose antagonist in round ink glasses: a long-necked cream-and-grey bird,
+ * distinct from the round bird.
  *
  * Anticipate-lift appends load 120ms, lift 160ms and return-brace 200ms, playing once and holding
  * its final prepared pose. The visual lift stays inside the existing frame and reach envelope;
@@ -18,10 +18,12 @@
  * goose-antagonist: 48x48, facing right and mirrored for left, bottom centre (24,48). Standing
  * feet occupy rows 45..46 with their outline on 47. All visible pixels remain inside the fixed
  * hitbox (2,2,44,46), also when mirrored. No red outline, portrait or story details are baked into
- * this asset; oversized ink glasses are the costume cue.
+ * this asset; the glasses are the costume cue.
  *
- * A narrow upright neck, small round head, cream feather mass with pale grey shade, grey wing and
- * warm orange bill/feet distinguish the goose from the bird. Warn raises a broad wing and the
+ * The head (crown, cheek and jaw) is wider and taller than the glasses: one round ink lens sits
+ * inside the head over a white eye with an ink pupil, its temple running back to the crown, and a
+ * tapered orange bill projects ahead of it. A narrow upright neck, cream feather mass with pale
+ * grey shade, grey wing and warm orange bill/feet distinguish the goose from the bird. Warn raises a broad wing and the
  * neck. Rush lowers the neck forward into a short committed charge; rest is still lethal, never a
  * safe state. No teeth or scary snarl.
  *
@@ -168,11 +170,12 @@ function draw(state = "idle", phase = 0): pixel.Frame {
     points[points.length - 1] = [hx, hy + 1];
   }
   bird.cel(g, neckShape(points), "cream", "lgrey", "white", 2, 1);
-  bird.cel(g, bird.inEll(hx, hy, 5.5, 5), "cream", "lgrey", "white", 2, 1);
-  // A short bill and high dot eye retain a soft expression while keeping the neck unmistakable.
-  g.rect(Math.trunc(hx + 4), Math.trunc(hy), 4, 3, "orange");
-  g.rect(Math.trunc(hx + 4), Math.trunc(hy) + 2, 4, 1, "ochre");
-  g.rect(Math.trunc(hx + 1), Math.trunc(hy - 2), 3, resting ? 1 : 3, "ink");
+  // The head reaches back past the neck so crown, cheek and jaw frame the glasses.
+  bird.cel(g, bird.inEll(hx - 0.5, hy, 6, 5), "cream", "lgrey", "white", 2, 1);
+  // A tapered bill with a raised base and ochre lower edge.
+  g.rect(hx + 4, hy - 1, 2, 1, "orange");
+  g.rect(hx + 4, hy, 4, 2, "orange");
+  g.rect(hx + 4, hy + 2, 3, 1, "ochre");
   if (skidding) {
     // The wing half-flares, its tip raised back and up for balance.
     const wing = bird.inEll(15, 30 - phase, 9.5, 4, phase === 0 ? 0.45 : 0.55);
@@ -202,7 +205,7 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   return scuff.px;
 }
 
-/** Oversized paired ink rims, a short bridge and temple, contained inside the shared contact box. */
+/** One round ink lens over a visible eye, its temple running back to the crown. */
 function glasses(
   { resting = false }: { resting?: boolean },
   px: pixel.Frame,
@@ -211,13 +214,18 @@ function glasses(
 ): pixel.Frame {
   const g = new Grid(48, 48);
   g.px = px.map((row) => [...row]);
-  g.rect(hx - 9, hy - 2, 5, 2, "ink");
-  for (const x of [hx - 4, hx + 3]) {
-    g.ell(x, hy - 1, 4, 4, "ink");
-    g.ell(x, hy - 1, 2.6, 2.6, "lgrey");
+  g.rect(hx - 4, hy - 2, 3, 1, "ink");
+  g.rect(hx - 1, hy - 4, 3, 1, "ink");
+  g.rect(hx - 1, hy, 3, 1, "ink");
+  g.rect(hx - 2, hy - 3, 1, 3, "ink");
+  g.rect(hx + 2, hy - 3, 1, 3, "ink");
+  g.rect(hx - 1, hy - 3, 3, 3, "white");
+  g.rect(hx + 3, hy - 2, 1, 1, "ink");
+  if (resting) {
+    g.rect(hx - 1, hy - 2, 3, 1, "ink");
+  } else {
+    g.rect(hx + 1, hy - 3, 1, 2, "ink");
   }
-  g.rect(hx - 1, hy - 2, 3, 2, "ink");
-  g.rect(hx + 3, hy - 1, 2, resting ? 1 : 2, "ink");
   return g.px;
 }
 

@@ -6,8 +6,9 @@
  * the bottom and one ink outer contour. Each has one neutral 1000ms looping frame, once []. Use the
  * standard unmirrored dialogue portrait slot with its top-left origin. Neither portrait declares a
  * hitbox, contact mask or slice. Trixi retains cream feathers, a long neck, grey wing, orange bill
- * and oversized ink-rimmed glasses. Kiwi retains rounded ears, grey/slate fur, paired ink masks, a
- * cream face band and muzzle, and white eye glints, without accessories.
+ * and round ink-rimmed glasses: one lens over a white eye and ink pupil, sized within the head.
+ * Kiwi retains rounded ears, grey/slate fur, paired ink masks, a cream face band and muzzle, and
+ * white eye glints, without accessories.
  */
 
 import { run } from "./cli.ts";
@@ -23,17 +24,18 @@ function goose(): pixel.Frame {
   g.ell(14, 65, 16, 14, "grey", "dslate", "lgrey");
   g.ell(28, 52, 10, 22, "cream", "lgrey", "white");
   g.ell(34, 35, 8, 17, "cream", "lgrey", "white");
-  g.blob(39, 22, 14, 12, "cream", "lgrey", "white");
-  g.tri([49, 23], [61, 29], [48, 33], "orange");
-  g.rect(49, 30, 9, 2, "ochre");
-  g.rect(23, 19, 11, 2, "ink");
-  for (const x of [33, 48]) {
-    g.ell(x, 21, 8, 7, "ink");
-    g.ell(x, 21, 6, 5, "lgrey");
-    g.rect(x, 19, 3, 4, "ink");
-    g.rect(x - 3, 18, 2, 2, "white");
-  }
-  g.rect(40, 19, 3, 2, "ink");
+  g.blob(37, 23, 15, 13, "cream", "lgrey", "white");
+  // A tapered bill with a raised base, a nostril and an ochre lower edge.
+  g.tri([48, 20], [62, 28], [47, 32], "orange");
+  g.rect(48, 29, 12, 3, "ochre");
+  g.rect(53, 24, 2, 1, "ochre");
+  // One round lens inside the head over a visible eye; a short bridge and the temple to the crown.
+  g.rect(24, 19, 11, 2, "ink");
+  g.ell(40, 20, 6, 6, "ink");
+  g.ell(40, 20, 4, 4, "white");
+  g.rect(41, 18, 3, 4, "ink");
+  g.rect(37, 17, 2, 2, "lgrey");
+  g.rect(45, 18, 4, 2, "ink");
   return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
