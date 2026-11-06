@@ -6,7 +6,8 @@ import type { BehaviourWorld } from "./behaviourReach";
 
 export function supportedDestinations(
   supported: (target: Point) => boolean,
-  config: { readonly distance: number; readonly minMovement: number },
+  // home: a horizontal leash around the placed origin tighter than the pursuit distance.
+  config: { readonly distance: number; readonly home?: number; readonly minMovement: number },
   object: ObjectLayout,
   world: BehaviourWorld,
   facing: -1 | 1,
@@ -15,7 +16,7 @@ export function supportedDestinations(
   at: Point,
 ): readonly Point[] {
   const bounds = world.traversalFrame!.bounds;
-  const leash = object.behaviour!.pursuit!.distance;
+  const leash = Math.min(object.behaviour!.pursuit!.distance, config.home ?? Infinity);
   const positions: Point[] = [];
   for (const support of [
     ...world.solids,

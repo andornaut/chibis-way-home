@@ -103,14 +103,21 @@ export interface BehaviourState extends BehaviourAttackState {
     // Seconds since this engagement began, and since the chase ended.
     readonly engagedSeconds?: number;
     readonly endedSeconds?: number;
-    // Engaged, a chase pause rolled a give-up and the next update ends pursuit; escaped, the
-    // chase ended by giving up.
+    // Engagements so far, this one included; each draws its give-up time from its own stream.
+    readonly engagements?: number;
+    // The engaged seconds this engagement's chase relief gives up at, at a chase pause.
+    readonly giveUpSeconds?: number;
+    // Engaged, a chase pause reached the give-up time and the next update ends pursuit; escaped,
+    // the chase ended by giving up.
     readonly giveUp?: true;
     // A ground boss whose chase ended walks back toward its encounter position once settled.
     readonly home?: true;
   };
   // A chase pause: the boss holds facing Chibi for the remaining seconds.
   readonly chasePause?: { readonly remainingSeconds: number };
+  // The wander: moves so far, then either the walk's goal x and heading, or the hold left before
+  // the next move. A flyer's hop records its zone start time and the hold to follow its landing.
+  readonly wander?: BehaviourWanderState;
   readonly animationTag?: string;
   readonly animationSeconds?: number;
   readonly axis?: "x" | "y";
@@ -134,6 +141,14 @@ export interface BehaviourState extends BehaviourAttackState {
   readonly stateKey: string;
   // The axis position captured on entry to a move or hop with a distance.
   readonly travelFrom?: number;
+}
+
+export interface BehaviourWanderState {
+  readonly goal?: number;
+  readonly heading?: -1 | 1;
+  readonly holdSeconds: number;
+  readonly hop?: { readonly every: number; readonly hold: number; readonly startedAt: number };
+  readonly moves: number;
 }
 
 export interface BehaviourSegment {
@@ -191,13 +206,30 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           !validRange(plan.pursuit.relief.pause.afterSeconds) ||
           !validRange(plan.pursuit.relief.pause.seconds) ||
           !valid(plan.pursuit.relief.pause.tellClearanceSeconds) ||
-          !valid(plan.pursuit.relief.giveUp.fromSeconds) ||
-          plan.pursuit.relief.giveUp.certainSeconds < plan.pursuit.relief.giveUp.fromSeconds ||
-          !(plan.pursuit.relief.giveUp.chance >= 0 && plan.pursuit.relief.giveUp.chance <= 1))) ||
+          !validRange(plan.pursuit.relief.giveUp.seconds))) ||
       !plan.pursuit.escaped.line ||
       !plan.pursuit.escaped.speaker)
   ) {
     throw new Error("Invalid pursuit configuration");
+  }
+  const wander = plan.wander;
+  if (
+    wander &&
+    (!validRange(wander.everySeconds) ||
+      !validRange(wander.holdSeconds) ||
+      !(wander.range > 0) ||
+      (wander.walk === undefined) === (wander.hop === undefined) ||
+      (wander.walk &&
+        (!validRange(wander.walk.distance) ||
+          !(wander.walk.distance.min > 0) ||
+          !(wander.walk.speed > 0))) ||
+      (wander.hop !== undefined &&
+        (plan.states[wander.hop]?.motion.kind !== "fly" ||
+          !plan.states[wander.hop]!.transitions.some(
+            ({ to }) => plan.states[to]?.motion.kind === "wait",
+          ))))
+  ) {
+    throw new Error("Invalid wander");
   }
   if (plan.attackCooldownSeconds !== undefined && !valid(plan.attackCooldownSeconds)) {
     throw new Error("Invalid attack cooldown");
@@ -640,6 +672,9 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
                               ...node.motion.selection,
                               clearance: node.motion.selection.clearance * tile,
                               distance: node.motion.selection.distance * tile,
+                              ...(node.motion.selection.home !== undefined && {
+                                home: node.motion.selection.home * tile,
+                              }),
                               minDistance: node.motion.selection.minDistance * tile,
                             },
                           }
@@ -710,6 +745,21 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             ...plan.pursuit.pace,
             distance: plan.pursuit.pace.distance * tile,
             speed: plan.pursuit.pace.speed * tile,
+          },
+        }),
+      },
+    }),
+    ...(wander && {
+      wander: {
+        ...wander,
+        range: wander.range * tile,
+        ...(wander.walk && {
+          walk: {
+            distance: {
+              max: wander.walk.distance.max * tile,
+              min: wander.walk.distance.min * tile,
+            },
+            speed: wander.walk.speed * tile,
           },
         }),
       },
@@ -1361,10 +1411,15 @@ function updatePursuit(
     !prior || (prior.phase === "escaped" && prior.settled && cooled && inside && reachable);
   if (canAcquire && aware) {
     const unreachableSeconds = reachable === false ? seconds : 0;
+    const engagements = (prior?.engagements ?? 0) + 1;
     const acquired: BehaviourState = {
       ...currentState,
       pursuit: {
         engagedSeconds: 0,
+        engagements,
+        ...(config.relief && {
+          giveUpSeconds: giveUpDraw(world, config.relief, engagements),
+        }),
         phase:
           outsideEscape || (reachable === false && timedOut(unreachableSeconds))
             ? "escaped"
@@ -1373,6 +1428,10 @@ function updatePursuit(
         unreachableSeconds,
       },
       ...(currentState.scorer && { scorer: { ...currentState.scorer, chaseSeconds: 0 } }),
+      // A wander resumes after the chase with a fresh move.
+      ...(currentState.wander && {
+        wander: { holdSeconds: 0, moves: currentState.wander.moves },
+      }),
     };
     delete (acquired as { chasePause?: unknown }).chasePause;
     return acquired;
@@ -1387,15 +1446,19 @@ function updatePursuit(
         ? prior.unreachableSeconds + seconds
         : prior.unreachableSeconds;
   const engagedSeconds = (prior.engagedSeconds ?? 0) + seconds;
-  // Giving up: no movement path for the grace, a chase pause's roll, or the certain limit.
+  // Giving up: no movement path for the grace, or a chase pause at or past the give-up time.
   const gaveUp =
     (reachable === false && timedOut(unreachableSeconds)) ||
     prior.giveUp === true ||
-    (config.relief !== undefined && engagedSeconds >= config.relief.giveUp.certainSeconds - EDGE);
+    (currentState.chasePause !== undefined &&
+      prior.giveUpSeconds !== undefined &&
+      engagedSeconds >= prior.giveUpSeconds - EDGE);
   const escaped = outsideEscape || gaveUp;
   const next: BehaviourState = {
     ...currentState,
     pursuit: {
+      ...(prior.engagements !== undefined && { engagements: prior.engagements }),
+      ...(prior.giveUpSeconds !== undefined && { giveUpSeconds: prior.giveUpSeconds }),
       engagedSeconds,
       phase: escaped ? "escaped" : "engaged",
       settled: false,
@@ -1456,9 +1519,18 @@ type SliceOutcome =
   | { readonly kind: "end" }
   | { readonly kind: "hold"; readonly step: BehaviourStep };
 
+// An engagement's seeded give-up time, from its own stream.
+function giveUpDraw(world: BehaviourWorld, relief: ChaseRelief, engagements: number): number {
+  const { max, min } = relief.giveUp.seconds;
+  if (!world.decisions) {
+    throw new Error("Chase relief requires an object-local decision context");
+  }
+  return min + world.decisions(`give-up:${engagements}`)() * (max - min);
+}
+
 // Starts a chase pause when its seeded chase time has passed, at least the clearance after the
-// last tell or committed attack, with the boss on the ground (Pebble in a safe hover) and a movement path to Chibi.
-// Past the give-up start, the pause's seeded roll may give up.
+// last tell or committed attack, with the boss on the ground (Pebble in a safe hover) and a
+// movement path to Chibi. A pause at or past the engagement's give-up time gives up.
 function startChasePause(
   context: BehaviourRunContext,
   relief: ChaseRelief,
@@ -1492,8 +1564,8 @@ function startChasePause(
     return state;
   }
   const giveUp =
-    (state.pursuit.engagedSeconds ?? 0) >= relief.giveUp.fromSeconds - EDGE &&
-    draw.roll < relief.giveUp.chance;
+    state.pursuit.giveUpSeconds !== undefined &&
+    (state.pursuit.engagedSeconds ?? 0) >= state.pursuit.giveUpSeconds - EDGE;
   const next: BehaviourState = {
     ...state,
     chasePause: { remainingSeconds: draw.seconds },
@@ -1608,6 +1680,204 @@ function homeWalk(
       state: advanceAttackClock(remaining, animated.state),
       ...(escaped && { escaped }),
     },
+  };
+}
+
+// Holds the rest of the step in place, facing the given way, with the attack clock running.
+function holdStep(
+  context: BehaviourRunContext,
+  current: Point,
+  state: BehaviourState,
+  time: number,
+  actions: readonly BehaviourEvent[],
+  segments: readonly BehaviourSegment[],
+  to: Point = current,
+): BehaviourStep {
+  const { escaped, object, seconds } = context;
+  const remaining = seconds - time;
+  const legs = [{ end: remaining, from: current, start: 0, to }];
+  const animated = animateSegments(object, remaining, state, legs, undefined, to.x !== current.x);
+  return {
+    actions,
+    at: to,
+    segments: [
+      ...segments,
+      ...animated.segments.map((segment) => ({
+        ...segment,
+        end: segment.end + time,
+        start: segment.start + time,
+      })),
+    ],
+    state: advanceAttackClock(remaining, animated.state),
+    ...(escaped && { escaped }),
+  };
+}
+
+// Where a wander walk from current toward x stops: at a wall or support edge, and never past the
+// last position with ordinary support contact.
+function wanderEnd(object: ObjectLayout, world: BehaviourWorld, current: Point, x: number): number {
+  const heading = x < current.x ? -1 : 1;
+  const end = groundPursuitEnd(
+    object,
+    world,
+    pursuitTrack(object),
+    current,
+    contactBox(object, current, heading, "x"),
+    x,
+  );
+  if (supportContact(object, world, { x: end, y: current.y })) {
+    return end;
+  }
+  let low = current.x;
+  let high = end;
+  for (let step = 0; step < 12; step++) {
+    const middle = (low + high) / 2;
+    if (supportContact(object, world, { x: middle, y: current.y })) {
+      low = middle;
+    } else {
+      high = middle;
+    }
+  }
+  return low;
+}
+
+// The plan's wander in a wander wait, outside any rearm cooldown. A move starts when the hold
+// ends: a ground boss walks a seeded distance to a seeded side, the other side when that one
+// leaves the range around its encounter position or its horizontal track, or gives less than
+// half the shortest walk, stopping at walls and support edges; a flyer enters its hop state. The
+// hold after a move lasts at least its seeded hold, and the rest of its seeded interval, facing
+// the move's direction.
+// Without an object-local decision context the boss holds.
+function wanderStep(
+  context: BehaviourRunContext,
+  current: Point,
+  state: BehaviourState,
+  time: number,
+  actions: readonly BehaviourEvent[],
+  segments: readonly BehaviourSegment[],
+):
+  | { readonly kind: "again"; readonly state: BehaviourState }
+  | { readonly kind: "hold"; readonly step: BehaviourStep }
+  | undefined {
+  const { object, perception, seconds } = context;
+  const { world } = perception;
+  const plan = object.behaviour!;
+  const wander = plan.wander;
+  const node = nodeOf(object, state.stateKey);
+  const pursuit = state.pursuit;
+  const cooling =
+    pursuit?.phase === "escaped" &&
+    (!pursuit.settled ||
+      pursuit.home === true ||
+      (pursuit.endedSeconds ?? 0) < (plan.pursuit?.rearmSeconds ?? 0) - EDGE);
+  if (
+    !wander ||
+    node.motion.kind !== "wait" ||
+    !node.motion.wander ||
+    cooling ||
+    !world.decisions ||
+    state.hop ||
+    (wander.walk && !supportContact(object, world, current))
+  ) {
+    return undefined;
+  }
+  const remaining = seconds - time;
+  const now = (world.traversalFrame?.timeSeconds ?? 0) + time;
+  const between = (random: () => number, { max, min }: { max: number; min: number }) =>
+    min + random() * (max - min);
+  let record: BehaviourWanderState = state.wander ?? {
+    holdSeconds: between(world.decisions("wander:0"), wander.everySeconds),
+    moves: 0,
+  };
+  if (record.hop) {
+    // Landed from a hop: hold the seeded hold, and the rest of the interval.
+    const flown = now - record.hop.startedAt;
+    record = {
+      holdSeconds: Math.max(record.hop.hold, record.hop.every - flown),
+      moves: record.moves,
+    };
+  }
+  if (record.goal === undefined && record.holdSeconds <= EDGE) {
+    const moves = record.moves + 1;
+    const random = world.decisions(`wander:${moves}`);
+    const every = between(random, wander.everySeconds);
+    const hold = between(random, wander.holdSeconds);
+    const side: -1 | 1 = random() < 0.5 ? -1 : 1;
+    if (wander.hop !== undefined) {
+      return {
+        kind: "again",
+        state: enterState(perception, object, current, wander.hop, {
+          ...state,
+          wander: { holdSeconds: 0, hop: { every, hold, startedAt: now }, moves },
+        }),
+      };
+    }
+    const walk = wander.walk!;
+    const distance = between(random, walk.distance);
+    // Within the range and the wander state's horizontal track, so later track moves start
+    // inside it.
+    const track = node.track ?? plan;
+    const extent = track.axis === "x" ? track.distance : 0;
+    const low = object.origin.x + Math.max(-wander.range, Math.min(0, extent));
+    const high = object.origin.x + Math.min(wander.range, Math.max(0, extent));
+    const reach = (heading: -1 | 1) =>
+      wanderEnd(
+        object,
+        world,
+        current,
+        Math.min(high, Math.max(low, current.x + heading * distance)),
+      );
+    const enough = walk.distance.min / 2;
+    const first = reach(side);
+    const chosen =
+      Math.abs(first - current.x) >= enough
+        ? { goal: first, heading: side }
+        : (() => {
+            const other = reach(-side as -1 | 1);
+            return Math.abs(other - current.x) >= enough
+              ? { goal: other, heading: -side as -1 | 1 }
+              : undefined;
+          })();
+    record = chosen
+      ? {
+          ...chosen,
+          holdSeconds: Math.max(hold, every - Math.abs(chosen.goal - current.x) / walk.speed),
+          moves,
+        }
+      : { holdSeconds: every, moves };
+  }
+  if (record.goal === undefined) {
+    const held: BehaviourState = {
+      ...state,
+      facing: record.heading ?? state.facing,
+      wander: { ...record, holdSeconds: record.holdSeconds - remaining },
+    };
+    return {
+      kind: "hold",
+      step: holdStep(context, current, syncAnimation(object, held), time, actions, segments),
+    };
+  }
+  const walk = wander.walk!;
+  const heading = record.heading!;
+  const gap = record.goal - current.x;
+  const x = wanderEnd(
+    object,
+    world,
+    current,
+    current.x + Math.sign(gap) * Math.min(Math.abs(gap), walk.speed * remaining),
+  );
+  const arrived = Math.abs(record.goal - x) <= EDGE || Math.abs(x - current.x) <= EDGE;
+  const walked: BehaviourState = {
+    ...state,
+    facing: heading,
+    wander: arrived ? { heading, holdSeconds: record.holdSeconds, moves: record.moves } : record,
+  };
+  return {
+    kind: "hold",
+    step: holdStep(context, current, syncAnimation(object, walked), time, actions, segments, {
+      x,
+      y: current.y,
+    }),
   };
 }
 
@@ -1794,6 +2064,19 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     next = enterState(perception, object, current, transition.to, next);
     save();
     return { kind: "again" };
+  }
+  if (time < seconds && !graphHeld) {
+    const wandered = wanderStep(context, current, next, time, actions, segments);
+    if (wandered?.kind === "again") {
+      next = wandered.state;
+      save();
+      return { kind: "again" };
+    }
+    if (wandered) {
+      save();
+      run.next = wandered.step.state;
+      return wandered;
+    }
   }
   const scorer = plan.scorer;
   const sampledMotion =
@@ -2198,7 +2481,18 @@ export function advanceBehaviour(
   at: Point,
   state: BehaviourState,
 ): BehaviourStep {
-  return keptClear(perception, object, at, advanceUnclear(perception, object, seconds, at, state));
+  return preparedAt(
+    keptClear(perception, object, at, advanceUnclear(perception, object, seconds, at, state)),
+  );
+}
+
+// Each takeoff preparation records its start once, whichever ability began it.
+function preparedAt(step: BehaviourStep): BehaviourStep {
+  const started = step.state.traversal?.preparation?.startedAtSeconds;
+  const last = step.state.takeoffPreparedAt;
+  return started !== undefined && (last === undefined || last < started - EDGE)
+    ? { ...step, state: { ...step.state, takeoffPreparedAt: started } }
+    : step;
 }
 
 // After an ended chase, until its rearm cooldown ends, a boss whose pursuit keeps clear never

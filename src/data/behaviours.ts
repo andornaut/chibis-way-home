@@ -21,19 +21,17 @@ import type {
   BehaviourPlan,
   BehaviourTransition,
   BossScoredAttack,
+  BossWander,
   ChaseRelief,
   DialogueLine,
 } from "./types";
 
-const BEAR_PURSUIT_SPEED = (0.85 * BIRD.walkSpeed) / TILE;
+const BEAR_PURSUIT_SPEED = (0.95 * BIRD.walkSpeed) / TILE;
 const BEAR_TRAVERSAL_SPEED = (1.4 * BIRD.walkSpeed) / TILE;
 const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
-const DOG_PATROL_PAUSE = 0.14;
-const DOG_PATROL_SPEED = 4.6875;
 const FERRET_THROW_PAUSE_SECONDS = 1;
-const GOOSE_PATROL_SPEED = 3.125;
-const GROUND_PURSUIT_SPEED = (0.9 * BIRD.walkSpeed) / TILE;
+const GROUND_PURSUIT_SPEED = BIRD.walkSpeed / TILE;
 const GROUND_TRAVERSAL_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
 // Pebble's ordinary flight (landings and returns to support) is 1.2x Chibi's walk; his overhead
 // attack approach (drop approach, swoop setup and their tells), drop alignment and relocation legs
@@ -44,14 +42,15 @@ const PIGEON_SWOOP_SPEED = 20;
 const POUNCE_ENGAGEMENT_RANGE = 8;
 const RACCOON_RETURN_SPEED = 4.6875;
 
-export const ATTACK_ANTICIPATION_SECONDS = 0.6;
-const ATTACK_COOLDOWN_SECONDS = 2.5;
+// Tells: the charge's 0.9 s, the specials' 1 s and Bini's growl's 1.2 s.
+export const ATTACK_ANTICIPATION_SECONDS = 0.9;
+const ATTACK_COOLDOWN_SECONDS = 5;
 // After the second consecutive cancelled tell, pursuit continues with no new tell for 1.5 s.
 const TELL_CANCEL_PAUSE = { cancels: 2, seconds: 1.5 } as const;
 // Every boss's removal after its death.
 export const BOSS_REMOVAL_SECONDS = 0.5;
-const GROWL_TELL_SECONDS = 1;
-const SPECIAL_TELL_SECONDS = 0.8;
+const GROWL_TELL_SECONDS = 1.2;
+const SPECIAL_TELL_SECONDS = 1;
 const PIGEON_SWOOP_PREPARATION_SECONDS = SPECIAL_TELL_SECONDS;
 export const BEHAVIOUR_TRAVERSAL_SEARCH = {
   budget: { horizonSteps: 120, maxStates: 256, maxSteps: 4096 },
@@ -100,9 +99,9 @@ const BOSS_PACE = {
 };
 
 // Every scored pursuer pauses after 5 to 8 s of chase, for 0.8 to 1.4 s, at least 1 s from any
-// tell. From 15 s of engagement each pause gives up with a 35% chance; at 30 s it gives up.
+// tell. Each engagement draws a give-up time in 30 to 60 s, taken at the first pause after it.
 const CHASE_RELIEF: ChaseRelief = {
-  giveUp: { certainSeconds: 30, chance: 0.35, fromSeconds: 15 },
+  giveUp: { seconds: { max: 60, min: 30 } },
   pause: {
     afterSeconds: { max: 8, min: 5 },
     seconds: { max: 1.4, min: 0.8 },
@@ -121,6 +120,33 @@ const PURSUIT_LIMITS = {
   relief: CHASE_RELIEF,
   unreachableGraceSeconds: 6,
 };
+// Unengaged, a ground boss walks 2 to 4 tiles at half Chibi's walk every 2 to 4 s within 8 tiles
+// of its encounter position, holding 1 to 2 s facing its walk; Pebble hops to a supported spot
+// within 8 tiles every 3 to 5 s and perches 1.5 to 3 s.
+const WANDER_RANGE = 8;
+const GROUND_WANDER: BossWander = {
+  everySeconds: { max: 4, min: 2 },
+  holdSeconds: { max: 2, min: 1 },
+  range: WANDER_RANGE,
+  walk: { distance: { max: 4, min: 2 }, speed: (0.5 * BIRD.walkSpeed) / TILE },
+};
+const PIGEON_WANDER: BossWander = {
+  everySeconds: { max: 5, min: 3 },
+  holdSeconds: { max: 3, min: 1.5 },
+  hop: "wander-hop",
+  range: WANDER_RANGE,
+};
+const WANDER_STATE = "wander";
+// The unengaged wander state: it opens its first move on sight of Chibi.
+function wanderNode(opening: string): BehaviourNode {
+  return {
+    allowIdleReposition: true,
+    animation: "idle",
+    motion: { kind: "wait", wander: true },
+    transitions: [{ to: opening, when: DETECTION }],
+  };
+}
+
 function persistentPursuit(escaped: DialogueLine): NonNullable<BehaviourPlan["pursuit"]> {
   return { ...PURSUIT_LIMITS, escaped };
 }
@@ -269,15 +295,13 @@ export function shuttleStates(
   };
 }
 
-interface PatrolChargeTuning {
-  // The tell a patrol enters on spotting Chibi; the charge's preparation by default.
+interface WanderChargeTuning {
+  // The tell the wander enters on spotting Chibi; the charge's preparation by default.
   readonly opening?: string;
   // The engaged state's specials, scored beside the charge.
   readonly specials: readonly BehaviourTransition[];
   // Tiles the committed charge covers.
   readonly reach: number;
-  readonly patrolPause: number;
-  readonly patrolSpeed: number;
   readonly preparation: "crouch" | "warn";
   readonly preparationSeconds: number;
   readonly restSeconds: number;
@@ -288,7 +312,7 @@ interface PatrolChargeTuning {
   readonly slide?: { readonly distance: number; readonly seconds: number; readonly speed: number };
 }
 
-function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"] {
+function wanderChargeStates(tuning: WanderChargeTuning): BehaviourPlan["states"] {
   const afterRush = tuning.slide ? "slide" : "rest";
   const opening = tuning.opening ?? tuning.preparation;
   return {
@@ -299,24 +323,6 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
       transitions: [
         escapeTransition("pursuit"),
         { to: "rush", when: [{ kind: "elapsed", seconds: tuning.preparationSeconds }] },
-      ],
-    },
-    "patrol-left": {
-      allowIdleReposition: true,
-      animation: "walk",
-      motion: { direction: -1, kind: "move", speed: tuning.patrolSpeed },
-      transitions: [
-        { to: opening, when: DETECTION },
-        { to: "wait-left", when: [{ kind: "boundary" }] },
-      ],
-    },
-    "patrol-right": {
-      allowIdleReposition: true,
-      animation: "walk",
-      motion: { direction: 1, kind: "move", speed: tuning.patrolSpeed },
-      transitions: [
-        { to: opening, when: DETECTION },
-        { to: "wait-right", when: [{ kind: "boundary" }] },
       ],
     },
     pursuit: chaseNode(GROUND_CHASE, [
@@ -353,24 +359,7 @@ function patrolChargeStates(tuning: PatrolChargeTuning): BehaviourPlan["states"]
         ],
       },
     }),
-    "wait-left": {
-      allowIdleReposition: true,
-      animation: "idle",
-      motion: { kind: "wait" },
-      transitions: [
-        { to: opening, when: DETECTION },
-        { to: "patrol-right", when: [{ kind: "elapsed", seconds: tuning.patrolPause }] },
-      ],
-    },
-    "wait-right": {
-      allowIdleReposition: true,
-      animation: "idle",
-      motion: { kind: "wait" },
-      transitions: [
-        { to: opening, when: DETECTION },
-        { to: "patrol-left", when: [{ kind: "elapsed", seconds: tuning.patrolPause }] },
-      ],
-    },
+    wander: wanderNode(opening),
   };
 }
 
@@ -408,11 +397,6 @@ function verticalDropStates(tuning: VerticalDropTuning): BehaviourPlan["states"]
         { to: tuning.returnState, when: [{ kind: "elapsed", seconds: tuning.restSeconds }] },
       ],
     },
-    watch: {
-      animation: "idle",
-      motion: { kind: "wait" },
-      transitions: [{ to: tuning.returnState, when: DETECTION }],
-    },
   };
 }
 
@@ -445,8 +429,6 @@ export const CITY_SHUTTLE_BEHAVIOUR: BehaviourPlan = {
 };
 
 const GROUND_CHARGE = {
-  patrolPause: DOG_PATROL_PAUSE,
-  patrolSpeed: DOG_PATROL_SPEED,
   preparation: "crouch",
   preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
   reach: 15,
@@ -455,7 +437,7 @@ const GROUND_CHARGE = {
   rushSpeed: 31.25,
 } as const;
 
-const DOG_BEHAVIOUR_STATES = patrolChargeStates({
+const DOG_BEHAVIOUR_STATES = wanderChargeStates({
   ...GROUND_CHARGE,
   specials: [
     scored("prepare-pounce", POUNCE_SCORE, [
@@ -471,7 +453,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
     distance: -18,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
-    initial: "patrol-left",
+    initial: WANDER_STATE,
     pursuit: persistentPursuit({ line: "archie-escaped", speaker: "dog" }),
     scorer: GROUND_BOSS_SCORER,
     spotted: { line: "archie-spotted", speaker: "dog" },
@@ -506,6 +488,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
       },
     },
     takeoffAnimation: ANTICIPATION_ANIMATION,
+    wander: GROUND_WANDER,
   },
   [
     {
@@ -529,13 +512,13 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
     distance: -18,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
-    initial: "patrol-left",
+    initial: WANDER_STATE,
     pursuit: persistentPursuit({ line: "fert-escaped", speaker: "ferret" }),
     scorer: FERT_SCORER,
     spotted: { line: "fert-spotted", speaker: "ferret" },
     states: {
       // Fert opens with a throw on spotting Chibi, so his first pause comes before any chase.
-      ...patrolChargeStates({
+      ...wanderChargeStates({
         ...GROUND_CHARGE,
         opening: "prepare-throw",
         specials: [scored("prepare-throw", PARCEL_SCORE, [ENGAGEMENT])],
@@ -577,6 +560,7 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
       },
     },
     takeoffAnimation: ANTICIPATION_ANIMATION,
+    wander: GROUND_WANDER,
   },
   [
     {
@@ -600,14 +584,12 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
     distance: -12,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
-    initial: "patrol-left",
+    initial: WANDER_STATE,
     pursuit: persistentPursuit({ line: "trixi-escaped", speaker: "goose" }),
     scorer: GROUND_BOSS_SCORER,
     spotted: { line: "trixi-spotted", speaker: "goose" },
     states: {
-      ...patrolChargeStates({
-        patrolPause: 0.25,
-        patrolSpeed: GOOSE_PATROL_SPEED,
+      ...wanderChargeStates({
         preparation: "warn",
         preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
         reach: 10,
@@ -645,6 +627,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
       },
     },
     takeoffAnimation: ANTICIPATION_ANIMATION,
+    wander: GROUND_WANDER,
   },
   [
     {
@@ -703,7 +686,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
     distance: -15,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
-    initial: "watch",
+    initial: WANDER_STATE,
     pursuit: persistentPursuit({ line: "kiwi-escaped", speaker: "raccoon" }),
     scorer: GROUND_BOSS_SCORER,
     spotted: { line: "kiwi-spotted", speaker: "raccoon" },
@@ -795,15 +778,10 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
       },
       rush: raccoonRush("charge-rest", "recharge"),
       "rush-second": raccoonRush("charge-rest"),
-      watch: {
-        allowIdleReposition: true,
-        animation: "idle",
-        motion: { kind: "wait" },
-        track: RACCOON_GROUND_TRACK,
-        transitions: [{ to: "prepare-charge", when: DETECTION }],
-      },
+      wander: { ...wanderNode("prepare-charge"), track: RACCOON_GROUND_TRACK },
     },
     takeoffAnimation: ANTICIPATION_ANIMATION,
+    wander: GROUND_WANDER,
   },
   [
     {
@@ -831,7 +809,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
     distance: -18,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
-    initial: "watch",
+    initial: WANDER_STATE,
     pursuit: persistentPursuit({ line: "bini-escaped", speaker: "bear" }),
     scorer: GROUND_BOSS_SCORER,
     spotted: { line: "bini-spotted", speaker: "bear" },
@@ -901,14 +879,10 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
           { to: "pursuit", when: [{ kind: "elapsed", seconds: 0.44 }] },
         ],
       },
-      watch: {
-        allowIdleReposition: true,
-        animation: "idle",
-        motion: { kind: "wait" },
-        transitions: [{ to: "prepare-growl", when: DETECTION }],
-      },
+      wander: wanderNode("prepare-growl"),
     },
     takeoffAnimation: ANTICIPATION_ANIMATION,
+    wander: GROUND_WANDER,
   },
   [
     {
@@ -952,6 +926,15 @@ const PIGEON_RELOCATION_SECONDS = 2;
 // An engaged approach that opens no attack within this relocates, sooner out of sight.
 const PIGEON_APPROACH_SECONDS = 1.5;
 const PIGEON_HIDDEN_RELOCATION_SECONDS = 1;
+// A wander hop lands on a supported spot 2 to 8 tiles away, within 8 tiles of his perch.
+const PIGEON_WANDER_SELECTION = {
+  clearance: 2,
+  distance: WANDER_RANGE,
+  home: WANDER_RANGE,
+  kind: "varied",
+  maxAttempts: 4,
+  minDistance: 2,
+} as const;
 const PIGEON_RELOCATION_SELECTION = {
   clearance: PIGEON_OVERHEAD_CLEARANCE,
   distance: SCREEN.width / TILE,
@@ -1125,7 +1108,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
     distance: 24,
     idleWatchdog: ANIMAL_IDLE_WATCHDOG,
     inactiveAnimation: "idle",
-    initial: "watch",
+    initial: WANDER_STATE,
     pursuit: persistentPursuit({ line: "pebble-escaped", speaker: "pigeon" }),
     scorer: PEBBLE_SCORER,
     spotted: { line: "pebble-spotted", speaker: "pigeon" },
@@ -1175,7 +1158,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
         motion: { kind: "wait", support: "required" },
         transitions: [
           {
-            to: "watch",
+            to: WANDER_STATE,
             when: [{ kind: "elapsed", seconds: 0.35 }, { kind: "pursuit-ended" }],
           },
           {
@@ -1195,7 +1178,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
         motion: { kind: "wait", support: "required" },
         transitions: [
           {
-            to: "watch",
+            to: WANDER_STATE,
             when: [
               { kind: "elapsed", seconds: PIGEON_RELOCATION_SECONDS },
               { kind: "pursuit-ended" },
@@ -1210,13 +1193,24 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
       "swoop-rest": supportedRest("pursuit"),
       "swoop-return": pigeonLanding("swoop-land"),
       "swoop-right": pigeonSwoop(4),
-      watch: {
-        allowIdleReposition: true,
-        animation: "idle",
-        motion: { kind: "wait" },
-        transitions: [{ to: "pursuit", when: DETECTION }],
+      wander: wanderNode("pursuit"),
+      "wander-hop": {
+        animation: "fly",
+        motion: {
+          kind: "fly",
+          selection: PIGEON_WANDER_SELECTION,
+          speed: PIGEON_FLIGHT_SPEED,
+          to: "support",
+        },
+        transitions: [
+          { to: "pursuit", when: DETECTION },
+          { to: "wander-land", when: [{ kind: "alignment-blocked" }] },
+          { to: WANDER_STATE, when: [{ kind: "arrived", tolerance: 0.1 }] },
+        ],
       },
+      "wander-land": pigeonLanding(WANDER_STATE),
     },
+    wander: PIGEON_WANDER,
   },
   [
     {

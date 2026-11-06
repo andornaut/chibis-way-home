@@ -157,7 +157,11 @@ export function selectSupportedFlight(
   const random = world.decisions(`supported-flight:${decision}`);
   const targets = supportedDestinations(
     (point) => supportedLanding(object, world, point),
-    { distance: policy.distance, minMovement: policy.minDistance },
+    {
+      distance: policy.distance,
+      ...(policy.home !== undefined && { home: policy.home }),
+      minMovement: policy.minDistance,
+    },
     object,
     world,
     facing,

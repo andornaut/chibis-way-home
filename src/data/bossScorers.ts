@@ -6,15 +6,15 @@ import type { BossScoredAttack, BossScoredMove, BossScorer } from "./types";
 
 // Every boss scorer's shared cadence, pressure and hysteresis. A move holds for 0.6 to 0.9 s, so
 // Chibi can read a heading and turn it; attacks are scored as soon as their gate holds. Pressure
-// starts 1 s after the last attack and is full 3 s later. Attacks gain up to double as their 10 s
-// (any) or 20 s (special) cadence comes due; an engagement opens with its special half due, so
-// Pebble opens with the drop approach.
+// starts 2 s after the last attack and is full 6 s later, at a quarter weight. Attacks gain up to
+// double as their 20 s (any) or 40 s (special) cadence comes due; an engagement opens with its
+// special half due, so Pebble opens with the drop approach.
 const SHARED = {
   decisionSeconds: { max: 0.9, min: 0.6 },
-  due: { anySeconds: 10, openingSpecialSeconds: 10, specialSeconds: 20, weight: 1 },
+  due: { anySeconds: 20, openingSpecialSeconds: 20, specialSeconds: 40, weight: 1 },
   engaged: "pursuit",
   hysteresis: { bonus: 0.05, epsilon: 0.05, minHoldSeconds: 0 },
-  pressure: { graceSeconds: 1, rampSeconds: 3, weight: 0.5 },
+  pressure: { graceSeconds: 2, rampSeconds: 6, weight: 0.25 },
 } as const;
 
 // Run straight at Chibi along the movement map.

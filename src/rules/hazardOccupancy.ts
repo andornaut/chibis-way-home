@@ -108,6 +108,7 @@ export function hazardBoundsAt(
         !snapshot ||
         snapshot.stateKey !== plan.initial ||
         initial?.motion.kind !== "wait" ||
+        initial.motion.wander ||
         initial.transitions.some(
           ({ when }) => !when.some(({ kind }) => kind === "visible" || kind === "pursuit-ended"),
         ) ||
@@ -177,7 +178,8 @@ export function hazardBoundsAt(
         const node = plan.states[key];
         if (
           !node ||
-          (node.motion.kind === "wait" && node.motion.support === "required") ||
+          (node.motion.kind === "wait" &&
+            (node.motion.support === "required" || node.motion.wander)) ||
           (node.motion.kind !== "wait" &&
             !(node.motion.kind === "pursue" && node.motion.mode === "ground"))
         ) {
@@ -230,7 +232,8 @@ export function hazardBoundsAt(
       const node = plan.states[key];
       if (
         !node ||
-        (node.motion.kind === "wait" && node.motion.support === "required") ||
+        (node.motion.kind === "wait" &&
+          (node.motion.support === "required" || node.motion.wander)) ||
         (node.motion.kind !== "wait" && (plan.pursuit || node.motion.kind !== "move"))
       ) {
         return undefined;

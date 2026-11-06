@@ -217,11 +217,11 @@ export function advanceScorer(
 export function chasePauseDraw(
   random: Random,
   relief: ChaseRelief,
-): { readonly afterSeconds: number; readonly roll: number; readonly seconds: number } {
+): { readonly afterSeconds: number; readonly seconds: number } {
   const between = ({ max, min }: SecondsRange) => min + random() * (max - min);
   const afterSeconds = between(relief.pause.afterSeconds);
   const seconds = between(relief.pause.seconds);
-  return { afterSeconds, roll: random(), seconds };
+  return { afterSeconds, seconds };
 }
 
 // The scorer state after choosing an attack: the held move ends and the chosen cadence restarts.
