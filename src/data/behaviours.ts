@@ -35,8 +35,11 @@ const FERRET_THROW_PAUSE_SECONDS = 1;
 const GOOSE_PATROL_SPEED = 3.125;
 const GROUND_PURSUIT_SPEED = (0.9 * BIRD.walkSpeed) / TILE;
 const GROUND_TRAVERSAL_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
+// Pebble's ordinary flight (landings and returns to support) is 1.2x Chibi's walk; his overhead
+// attack approach (drop approach, swoop setup and their tells), drop alignment and relocation legs
+// stay at 1.6x.
 const PIGEON_FLIGHT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
-const PIGEON_PURSUIT_SPEED = PIGEON_FLIGHT_SPEED;
+const PIGEON_APPROACH_SPEED = (1.6 * BIRD.walkSpeed) / TILE;
 const PIGEON_SWOOP_SPEED = 20;
 const POUNCE_ENGAGEMENT_RANGE = 8;
 const RACCOON_RETURN_SPEED = 4.6875;
@@ -961,7 +964,7 @@ function pigeonOverhead(ahead: number): BehaviourNode["motion"] {
     kind: "pursue",
     mode: "fly",
     overhead: { ahead, clearance: PIGEON_OVERHEAD_CLEARANCE },
-    speed: PIGEON_PURSUIT_SPEED,
+    speed: PIGEON_APPROACH_SPEED,
   };
 }
 
@@ -1009,7 +1012,7 @@ function pigeonAlignmentMotion(): BehaviourNode["motion"] {
     kind: "fly",
     leadSeconds: 0.1,
     maxLead: 2,
-    speed: PIGEON_FLIGHT_SPEED,
+    speed: PIGEON_APPROACH_SPEED,
     to: "target-x",
   };
 }
@@ -1157,7 +1160,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
         motion: {
           kind: "fly",
           selection: PIGEON_RELOCATION_SELECTION,
-          speed: PIGEON_FLIGHT_SPEED,
+          speed: PIGEON_APPROACH_SPEED,
           to: "support",
         },
         transitions: [

@@ -1490,7 +1490,12 @@ export function stepZone(
           escapes.push({ cause: "door", owner: ownerOf(index) });
           return {
             ...state,
-            pursuit: { ...state.pursuit, phase: "escaped" as const, settled: false },
+            pursuit: {
+              ...state.pursuit,
+              home: true as const,
+              phase: "escaped" as const,
+              settled: false,
+            },
           };
         });
   return {

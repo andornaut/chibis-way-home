@@ -106,7 +106,7 @@ export interface BehaviourState extends BehaviourAttackState {
     // Engaged, a chase pause rolled a give-up and the next update ends pursuit; escaped, the
     // chase ended by giving up.
     readonly giveUp?: true;
-    // A ground boss that gave up walks back toward its encounter position once settled.
+    // A ground boss whose chase ended walks back toward its encounter position once settled.
     readonly home?: true;
   };
   // A chase pause: the boss holds facing Chibi for the remaining seconds.
@@ -1400,7 +1400,8 @@ function updatePursuit(
       phase: escaped ? "escaped" : "engaged",
       settled: false,
       unreachableSeconds,
-      ...(gaveUp && !outsideEscape && { giveUp: true as const, home: true as const }),
+      ...(escaped && { home: true as const }),
+      ...(gaveUp && !outsideEscape && { giveUp: true as const }),
     },
   };
   if (escaped) {
@@ -1548,7 +1549,7 @@ function chasePauseHold(
   };
 }
 
-// After giving up, a settled ground boss walks at chase speed toward its encounter position,
+// After any ended chase, a settled ground boss walks at chase speed toward its encounter position,
 // stopping at walls and support edges, then resumes its initial behaviour anchored there.
 function homeWalk(
   context: BehaviourRunContext,
