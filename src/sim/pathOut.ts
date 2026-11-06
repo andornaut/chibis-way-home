@@ -60,7 +60,7 @@ type GroundMotion = Extract<BehaviourMotion, { mode: "ground" }>;
 
 // Seam ground beyond each chunk edge, wider than any body, holds the exit spans.
 const PAD = 12 * TILE;
-interface Encounter {
+export interface Encounter {
   readonly area: AreaLayout;
   readonly bosses: readonly ObjectLayout[];
   readonly terrain: MapTerrain;
@@ -365,7 +365,7 @@ function chibiProblems(
   );
 }
 
-function chibiMap(chibi: BirdTuning, terrain: MapTerrain): MovementMap<MapSupport> {
+export function chibiMap(chibi: BirdTuning, terrain: MapTerrain): MovementMap<MapSupport> {
   return groundMap({ jumps: chibiJumpScripts(chibi) }, terrain, chibiMovementProfile(chibi));
 }
 
@@ -407,7 +407,7 @@ const ESCAPE_LEAD = 2;
 const ESCAPE_REACH = 2 * TILE;
 
 // The standing position nearest a spot, by hitbox bottom-centre distance, if one is within reach.
-function standingAt(map: MovementMap<MapSupport>, point: Point): NodeRef | undefined {
+export function standingAt(map: MovementMap<MapSupport>, point: Point): NodeRef | undefined {
   const half = map.profile.body.width / 2;
   let best: { distance: number; ref: NodeRef } | undefined;
   for (const { id, left, right, y } of map.nodes) {

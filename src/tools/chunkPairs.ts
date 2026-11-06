@@ -1,4 +1,5 @@
-// Certify, verify and report each zone's middle chunks (src/data/certified/<zone>.json). Run in
+// Certify, verify and report each zone's middle chunks and arenas (src/data/certified/<zone>.json),
+// every arena proved on every certify and sampled by verify. Run in
 // the check container with no network: `npm run pairs -- <command>`. Proofs run on at most four
 // worker threads, longest recorded work first; output is sorted and holds no timings, so it is
 // identical for any worker count or machine.
@@ -8,7 +9,16 @@ import { availableParallelism } from "node:os";
 import { parseArgs } from "node:util";
 import { isMainThread, parentPort, Worker } from "node:worker_threads";
 
-import type { CertifiedChunks, CertifiedEntry, ZoneKey } from "../data/types";
+import { ARENAS } from "../data/arenas";
+import type { CertifiedArena, CertifiedChunks, CertifiedEntry, ZoneKey } from "../data/types";
+import {
+  ARENA_COST,
+  certifiedArena,
+  gameArenaOf,
+  proveArena,
+  verifyArenas,
+  zoneArenas,
+} from "../testing/arenaCertify";
 import {
   type Candidate,
   dataHash,
@@ -32,7 +42,8 @@ const USAGE = `Usage:
   npm run pairs -- certify [--zone ZONE]... [--all]
       prove every candidate of each zone (all zones by default) and write its certified list;
       entries whose layout and route are unchanged keep their proofs unless --all or the proofs
-      hash changed
+      hash changed; every arena of the zone is proved: its static checks, required route, path
+      out and evade playtest
   npm run pairs -- verify [--zone ZONE]... [--changed-since REF] [--sample-ms N] [--seed S]
       check every list's input hashes and structure against the tree, fully prove entries that
       differ from REF's lists (needs git), then prove a sample ordered by S (the lists' input
@@ -42,10 +53,18 @@ const USAGE = `Usage:
       write rejections, grade and encounter counts and distinct layouts per zone; refuses an
       existing PATH`;
 const MAX_WORKERS = 4;
+
+// An entry verify proves: a pair or single, or an arena.
+type Target =
+  | { readonly entry: CertifiedEntry; readonly zone: ZoneKey }
+  | { readonly entry: CertifiedArena; readonly zone: ZoneKey };
+type ArenaResult = ReturnType<typeof proveArena>;
 const listUrl = (zone: ZoneKey) => new URL(`../data/certified/${zone}.json`, import.meta.url);
 
-// themes: the themes to walk, computed by the worker when left out.
+// themes: the themes to walk, computed by the worker when left out. arena: the job proves an
+// arena rather than a pair or single.
 interface Job {
+  readonly arena?: true;
   readonly id: string;
   readonly themes?: readonly string[];
   readonly zone: ZoneKey;
@@ -181,15 +200,22 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
       });
     }
     console.error(`${zone}: ${entries.length} reused, ${pending.length} to prove`);
-    return { candidates, entries, failed, pending, zone };
+    const arenas = zoneArenas(ARENAS, zone);
+    return { arenas, candidates, entries, failed, pending, zone };
   });
   const queued = plans.flatMap(({ pending }) => pending);
+  const arenaJobs = plans.flatMap(({ arenas, zone }) =>
+    arenas.map((found) => ({ found, job: { arena: true as const, id: found.arena.id, zone } })),
+  );
   const results = await proveAll(
-    queued.map(({ job }) => job),
-    queued.map(({ cost }) => cost),
+    [...queued.map(({ job }) => job), ...arenaJobs.map(({ job }) => job)],
+    [...queued.map(({ cost }) => cost), ...arenaJobs.map(() => ARENA_COST)],
   );
   const proven = new Map(queued.map((item, index) => [item, results[index]!]));
-  const lists = plans.flatMap(({ candidates, entries, failed, pending, zone }) => {
+  const arenaProofs = new Map(
+    arenaJobs.map(({ found }, index) => [found, results[queued.length + index] as ArenaResult]),
+  );
+  const lists = plans.flatMap(({ arenas, candidates, entries, failed, pending, zone }) => {
     let singleFailed = failed;
     for (const item of pending) {
       const proof = proven.get(item)!;
@@ -209,9 +235,19 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
       console.log(`${zone}: not written; a single failed or a recipe cannot assemble`);
       return [undefined];
     }
-    console.log(`${zone}: ${entries.length} certified`);
+    const admitted: CertifiedArena[] = [];
+    for (const found of arenas) {
+      const proof = arenaProofs.get(found)!;
+      if (proof.problems.length > 0) {
+        console.log(`${zone} ${found.arena.id} rejected: ${proof.problems.join("; ")}`);
+      } else {
+        admitted.push(certifiedArena(found, proof));
+      }
+    }
+    console.log(`${zone}: ${entries.length} certified, ${admitted.length} arenas`);
     return [
       {
+        arenas: admitted,
         entries,
         inputs: { data: dataHash(GAME_CONTEXT, zone, candidates), proofs },
         version: 1 as const,
@@ -264,21 +300,35 @@ async function verify(options: VerifyOptions, zones: readonly ZoneKey[]): Promis
       problems.push(`${zone}: no certified list`);
       return [];
     }
-    problems.push(...verifyStructure(GAME_CONTEXT, list));
+    problems.push(...verifyStructure(GAME_CONTEXT, list), ...verifyArenas(list));
     return [list];
   });
-  const check = async (
-    targets: readonly { entry: CertifiedEntry; zone: ZoneKey }[],
-    deadline = Infinity,
-  ): Promise<number> => {
-    const jobs = targets.map(({ entry, zone }) => ({ id: entry.id, zone }));
+  const check = async (targets: readonly Target[], deadline = Infinity): Promise<number> => {
+    const jobs = targets.map((target) =>
+      "hash" in target.entry
+        ? { arena: true as const, id: target.entry.id, zone: target.zone }
+        : { id: target.entry.id, zone: target.zone },
+    );
     const results = await proveAll(
       jobs,
-      targets.map(({ entry }) => entry.work),
+      targets.map(({ entry }) => ("hash" in entry ? ARENA_COST : entry.work)),
       deadline,
     );
     results.forEach((proof, index) => {
-      const { entry, zone } = targets[index]!;
+      const target = targets[index]!;
+      if ("hash" in target.entry) {
+        const arena = proof as ArenaResult | undefined;
+        if (arena && (arena.problems.length > 0 || arena.hash !== target.entry.hash)) {
+          problems.push(
+            `${target.zone} ${target.entry.id}: arena proof differs: ${JSON.stringify({
+              ...arena,
+              recorded: target.entry.hash,
+            })}`,
+          );
+        }
+        return;
+      }
+      const { entry, zone } = target as { entry: CertifiedEntry; zone: ZoneKey };
       if (
         proof &&
         (proof.problems.length > 0 || proof.trace !== entry.trace || proof.work !== entry.work)
@@ -291,13 +341,18 @@ async function verify(options: VerifyOptions, zones: readonly ZoneKey[]): Promis
     return results.filter((proof) => proof !== undefined).length;
   };
   if (problems.length === 0 && changedSince !== undefined) {
-    const changed = lists.flatMap((list) => {
-      const base = new Map(
-        (baseList(changedSince, list.zone)?.entries ?? []).map((entry) => [entry.id, entry]),
-      );
-      return list.entries
-        .filter((entry) => JSON.stringify(base.get(entry.id)) !== JSON.stringify(entry))
-        .map((entry) => ({ entry, zone: list.zone }));
+    const changed = lists.flatMap((list): Target[] => {
+      const old = baseList(changedSince, list.zone);
+      const base = new Map((old?.entries ?? []).map((entry) => [entry.id, entry]));
+      const arenas = new Map((old?.arenas ?? []).map((entry) => [entry.id, entry]));
+      return [
+        ...(list.arenas ?? [])
+          .filter((entry) => JSON.stringify(arenas.get(entry.id)) !== JSON.stringify(entry))
+          .map((entry) => ({ entry, zone: list.zone })),
+        ...list.entries
+          .filter((entry) => JSON.stringify(base.get(entry.id)) !== JSON.stringify(entry))
+          .map((entry) => ({ entry, zone: list.zone })),
+      ];
     });
     console.error(`proving ${changed.length} entries changed since ${changedSince}`);
     await check(changed);
@@ -305,9 +360,10 @@ async function verify(options: VerifyOptions, zones: readonly ZoneKey[]): Promis
   if (problems.length === 0 && sampleMs > 0) {
     // Zones interleaved, so a short budget spans every zone.
     const seed = options.seed ?? hashOf(lists.map(({ inputs }) => inputs));
-    const orders = lists.map((list) =>
-      sampleOrder(seed, list).map((entry) => ({ entry, zone: list.zone })),
-    );
+    const orders = lists.map((list): Target[] => [
+      ...(list.arenas ?? []).map((entry) => ({ entry, zone: list.zone })),
+      ...sampleOrder(seed, list).map((entry) => ({ entry, zone: list.zone })),
+    ]);
     const longest = Math.max(0, ...orders.map((order) => order.length));
     const queue = Array.from({ length: longest }, (_, index) =>
       orders.flatMap((order) => order.slice(index, index + 1)),
@@ -431,6 +487,10 @@ async function main(args: readonly string[]): Promise<number> {
 // A worker proves the jobs it is sent; the main thread runs the command.
 if (!isMainThread) {
   parentPort!.on("message", (job: Job) => {
+    if (job.arena) {
+      parentPort!.postMessage(proveArena(gameArenaOf(job.id)));
+      return;
+    }
     const candidate = candidateOf(job.zone, job.id);
     parentPort!.postMessage(prove(candidate, job.themes ?? layoutOf(job.zone, candidate).themes));
   });

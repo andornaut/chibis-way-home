@@ -7,6 +7,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { traceRecorder } from "../ai/trace";
 import { BIRD_FRAME } from "../assets";
 import { ARCHETYPES } from "../data/archetypes";
+import { ARENAS } from "../data/arenas";
 import { BIRD } from "../data/bird";
 import { CHARACTERS } from "../data/characters";
 import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
@@ -394,6 +395,10 @@ export function dataHash(
   const frame = ZONE_FRAMES[zone];
   return hashOf({
     archetypes: ARCHETYPES,
+    arenas: ARENAS.filter(({ stage }) => {
+      const recipe = RECIPES[stage];
+      return recipe && !("sections" in recipe) && zoneOfTheme(recipe.theme) === zone;
+    }),
     bird: BIRD,
     candidates: candidates.map((candidate) => ({
       chunk: candidate.chunk,
