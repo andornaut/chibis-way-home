@@ -1,5 +1,6 @@
 // Half-chunk modules, the zone frames that draw composed pairs, and the certified chunk lists.
 
+import type { CertifiedArena } from "./arena";
 import type { TilePoint } from "./geometry";
 import type {
   ChunkEscape,
@@ -102,6 +103,8 @@ export interface CertifiedEntry {
 // proofs read; inputs.proofs hashes the behaviour trace fixtures, the game-kit version and the
 // certification tool's version.
 export interface CertifiedChunks {
+  // The zone's arenas that pass the arena step, sorted by id.
+  readonly arenas: readonly CertifiedArena[];
   readonly entries: readonly CertifiedEntry[];
   readonly inputs: { readonly data: string; readonly proofs: string };
   readonly version: 1;

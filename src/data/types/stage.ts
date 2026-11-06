@@ -255,7 +255,7 @@ export interface ZonePlan {
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
 // A row a chunk's entry or exit stands on: one of SEAM_ROWS (src/data/seams.ts).
-type SeamRow = (typeof SEAM_ROWS)[number];
+export type SeamRow = (typeof SEAM_ROWS)[number];
 
 // The ground at a chunk's left or right edge: its top is row `row`.
 export interface ChunkSeam {
