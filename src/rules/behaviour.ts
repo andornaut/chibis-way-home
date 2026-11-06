@@ -2189,8 +2189,66 @@ export function stepBehaviour(
 
 // Decides and acts for one object over one step from its perception snapshot and own state.
 // Generic state graphs choose the motion, animation and transition order; registered abilities
-// act each motion without character-specific sequencing.
+// act each motion without character-specific sequencing. A pursuit that keeps clear then holds
+// the step clear of Chibi (keptClear).
 export function advanceBehaviour(
+  perception: BehaviourPerception,
+  object: ObjectLayout,
+  seconds: number,
+  at: Point,
+  state: BehaviourState,
+): BehaviourStep {
+  return keptClear(perception, object, at, advanceUnclear(perception, object, seconds, at, state));
+}
+
+// After an ended chase, until its rearm cooldown ends, a boss whose pursuit keeps clear never
+// moves toward Chibi: the step's horizontal movement toward his centre is cancelled, and for a
+// flyer its vertical movement toward him too, its traversal dropped so it replans from there.
+function keptClear(
+  perception: BehaviourPerception,
+  object: ObjectLayout,
+  before: Point,
+  step: BehaviourStep,
+): BehaviourStep {
+  const config = object.behaviour?.pursuit;
+  const pursuit = step.state.pursuit;
+  if (
+    !config?.keepClear ||
+    pursuit?.phase !== "escaped" ||
+    (pursuit.endedSeconds ?? 0) >= (config.rearmSeconds ?? 0) - EDGE
+  ) {
+    return step;
+  }
+  const target = birdBox(perception.tuning, perception.target);
+  const aim = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+  const toward = (from: number, to: number, goal: number) =>
+    Math.abs(to - goal) < Math.abs(from - goal) - EDGE;
+  const holdX = toward(before.x + object.width / 2, step.at.x + object.width / 2, aim.x);
+  const holdY =
+    pursuitKinds(object.behaviour!).flight &&
+    toward(before.y + object.height / 2, step.at.y + object.height / 2, aim.y);
+  if (!holdX && !holdY) {
+    return step;
+  }
+  const clear = (point: Point): Point => ({
+    x: holdX ? before.x : point.x,
+    y: holdY ? before.y : point.y,
+  });
+  const state = { ...step.state };
+  delete (state as { traversal?: BehaviourTraversalState }).traversal;
+  return {
+    ...step,
+    at: clear(step.at),
+    segments: step.segments.map((segment) => ({
+      ...segment,
+      from: clear(segment.from),
+      to: clear(segment.to),
+    })),
+    state,
+  };
+}
+
+function advanceUnclear(
   perception: BehaviourPerception,
   object: ObjectLayout,
   seconds: number,

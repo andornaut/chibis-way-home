@@ -111,10 +111,11 @@ const CHASE_RELIEF: ChaseRelief = {
 };
 
 // Pursuit ends past one screen width, after 6 s with no movement path, or by giving up; awareness
-// engages again 5 s after any ended chase.
+// engages again 5 s after any ended chase, and until then the boss keeps clear of Chibi.
 const PURSUIT_LIMITS = {
   distance: (6 * SCREEN.width) / TILE,
   escapeDistance: SCREEN.width / TILE,
+  keepClear: true,
   pace: BOSS_PACE,
   rearmSeconds: 5,
   relief: CHASE_RELIEF,

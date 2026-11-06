@@ -395,6 +395,8 @@ export interface BehaviourPlan {
     };
     // Seconds after any ended chase before awareness can engage again.
     readonly rearmSeconds?: number;
+    // Until the rearm cooldown ends, the boss never moves toward Chibi.
+    readonly keepClear?: boolean;
     readonly relief?: ChaseRelief;
   };
   readonly spotted?: DialogueLine;

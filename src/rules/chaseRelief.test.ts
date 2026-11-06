@@ -5,7 +5,7 @@ import { EDGE, STEP_SECONDS } from "../core";
 import { DOG_BEHAVIOUR } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
-import type { Point, Rect } from "../data/types";
+import type { BehaviourPlan, Point, Rect } from "../data/types";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import {
   type BehaviourState,
@@ -151,4 +151,41 @@ it("pauses facing Chibi, never within the tell clearance of a tell", () => {
     expect(step.state.facing).toBe(target > at.x ? 1 : -1);
     expect(step.at).toEqual(engaged[pause - 1]!.at);
   }
+});
+
+it("keeps clear of Chibi after an ended chase until the rearm cooldown ends", () => {
+  const cooldown = DOG_BEHAVIOUR.pursuit!.rearmSeconds!;
+  // Archie just escaped 20 tiles right of his encounter position, Chibi beyond it on the left,
+  // so the walk home heads toward him.
+  const walkHome = (plan: BehaviourPlan) => {
+    const object = { ...archie, behaviour: plan };
+    const target = chibi(archie.origin.x - 8 * TILE);
+    let at = { ...archie.origin, x: archie.origin.x + 20 * TILE };
+    let state: BehaviourState = {
+      ...startBehaviour(BIRD, object, target),
+      active: true,
+      pursuit: {
+        endedSeconds: 0,
+        home: true,
+        phase: "escaped",
+        settled: false,
+        unreachableSeconds: 0,
+      },
+    };
+    const xs: number[] = [];
+    for (let tick = 0; tick < Math.round((cooldown - 0.5) / STEP_SECONDS); tick++) {
+      const step = stepBehaviour(BIRD, object, world(tick, at), STEP_SECONDS, target, at, state);
+      at = step.at;
+      state = step.state;
+      xs.push(at.x);
+    }
+    return xs;
+  };
+  const kept = walkHome(archie.behaviour!);
+  expect(kept.every((x, index) => index === 0 || x >= kept[index - 1]! - EDGE)).toBe(true);
+  const unkept = walkHome({
+    ...archie.behaviour!,
+    pursuit: { ...archie.behaviour!.pursuit!, keepClear: false },
+  });
+  expect(unkept.at(-1)!).toBeLessThan(unkept[0]! - 4 * TILE);
 });
