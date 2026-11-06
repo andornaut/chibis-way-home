@@ -71,11 +71,16 @@ export function proveArena(found: ArenaCase): ArenaProof {
   if (problems.length > 0) {
     return { hash: "", problems, trace: recorder.hash(), work };
   }
+  // The encounter profile's targets, less any on terrain the zone frame marks out of reach (the
+  // Industrial roof).
+  const unreachable = new Set(
+    (found.chunk.outOfReach ?? []).map(({ col, row }) => `${col},${row}`),
+  );
   const targets = moduleRouteTargets(
     found.library,
     { profile: "encounter", targets: found.arena.route.targets ?? [] },
     found.chunk,
-  );
+  ).filter(({ at }) => !unreachable.has(`${at.col},${at.row}`));
   const fills = (found.chunk.slots?.length ?? 0) > 0 ? slotFills(found.chunk) : undefined;
   for (const [profile, fill] of [
     ["empty", { door: [], event: [] }],
