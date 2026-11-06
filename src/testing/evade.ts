@@ -22,6 +22,11 @@
 // thrown is in flight or the boss ahead threatens him as in rule 3.
 // A run needs a switch: a move to another route or refuge, or a change of level on the loop (he
 // lands at one loop waypoint row after standing at another while following the loop).
+// He aims for a waypoint where he can stand nearest it on its row, and scores the boss there by
+// its least distance to that point and the points either side where its body would touch his.
+// He moves only by his map: a
+// jump leg replays its edge's proven commands, held as a full jump where the proof's apex is one;
+// a landing ends the leg early; and a walk without an edge stays on his span.
 import { type Rect, rectsOverlap } from "@andornaut/game-kit/rect";
 import {
   type AirMap,
@@ -45,7 +50,14 @@ import { EDGE, STEP_SECONDS } from "../core";
 import { ARENA_COUNTERS } from "../data/arenas";
 import { BOSS_FAIRNESS } from "../data/bossFairness";
 import { TILE } from "../data/screen";
-import type { AntagonistKind, ArenaRoute, ObjectLayout, Point, ZoneLayout } from "../data/types";
+import type {
+  AntagonistKind,
+  ArenaRoute,
+  ObjectLayout,
+  Point,
+  TilePoint,
+  ZoneLayout,
+} from "../data/types";
 import { SKILL_PROFILES } from "../progress";
 import { birdBox, startBird } from "../rules/bird";
 import {
@@ -196,6 +208,50 @@ function landing(map: MovementMap<MapSupport>, hitbox: Rect): NodeRef | undefine
   return best;
 }
 
+// Whether a jump edge's proof is a full jump rather than a hop. The map's jumps are fixed
+// impulses and an edge does not name its script, so the proof's apex above the launch tells
+// them apart: above the midpoint of a hop's and a full jump's heights. He reaches a full jump's
+// height by holding Jump through the rise, and a hop's by a tap.
+export function fullJump(
+  hopHeight: number,
+  map: MovementMap<MapSupport>,
+  edge: MapEdge<MapSupport>,
+) {
+  const { body, gravity, jumpSpeed } = map.profile;
+  const apex = map.nodes[edge.from]!.y - body.height - edge.sweep.y;
+  return (
+    edge.commands.some(({ jump }) => jump) &&
+    apex > (hopHeight + jumpSpeed ** 2 / (2 * gravity)) / 2
+  );
+}
+
+// The hitbox-left x a walk without a map edge heads for: the goal's, kept within his span unless
+// the goal lies past the area's exit edge. He leaves a span only by an edge, whose proof keeps
+// clear of static hazards.
+export function spanGoal(
+  areaWidth: number,
+  span: { readonly left: number; readonly right: number } | undefined,
+  x: number,
+): number {
+  return span && x < areaWidth ? Math.min(span.right, Math.max(span.left, x)) : x;
+}
+
+// Where he stands for a surface point: the feet point nearest it on a span at its height, so a
+// waypoint against a post or cabinet is one he can reach and stop at.
+export function standingPoint(map: MovementMap<MapSupport>, point: Point): Point {
+  const half = map.profile.body.width / 2;
+  let best: { dx: number; x: number } | undefined;
+  for (const { left, right, y } of map.nodes) {
+    if (Math.abs(y - point.y) <= EDGE) {
+      const x = Math.min(right + half, Math.max(left + half, point.x));
+      if (!best || Math.abs(x - point.x) < best.dx) {
+        best = { dx: Math.abs(x - point.x), x };
+      }
+    }
+  }
+  return best ? { x: best.x, y: point.y } : point;
+}
+
 const bottomCentre = (box: { x: number; y: number; width: number; height: number }): Point => ({
   x: box.x + box.width / 2,
   y: box.y + box.height,
@@ -338,7 +394,7 @@ function evadeWalk(
   let exiting = false;
   let dodge: Dodge | undefined;
   let lastDodgeEnd = -1;
-  let leg: { edge: MapEdge<MapSupport>; step: number } | undefined;
+  let leg: { airborne: boolean; edge: MapEdge<MapSupport>; step: number } | undefined;
   let ended: { cause: string; tick: number } | undefined;
   const problems: string[] = [];
   let death: string | undefined;
@@ -426,7 +482,23 @@ function evadeWalk(
     const path = airPath(own.map, own.mask, from, goal);
     return path ? path.seconds * own.speed : Infinity;
   };
-  const waypointPixel = ({ index, route }: Target) => pixelOf(route.waypoints[index]!);
+  const stands = new Map<string, Point>();
+  const standOf = (point: TilePoint): Point => {
+    const key = `${point.col},${point.row}`;
+    const found = stands.get(key) ?? standingPoint(chibi, pixelOf(point));
+    stands.set(key, found);
+    return found;
+  };
+  const waypointPixel = ({ index, route }: Target) => standOf(route.waypoints[index]!);
+  // The boss's distance to touching him at a feet point: the least of its distances to that point
+  // and to the points either side where its body would just overlap his, so a post beside him
+  // does not hide him from a boss standing on his side of it.
+  const bossReach = (boss: AgentSample, point: Point): number => {
+    const half = (boss.width + ORDINARY.width) / 2 - EDGE;
+    return Math.min(
+      ...[-half, 0, half].map((dx) => bossDistance(boss, { x: point.x + dx, y: point.y })),
+    );
+  };
   // Waypoints of a loop, its closing repeat left out.
   const loopLength = (route: ArenaRoute) => route.waypoints.length - (isLoop(route) ? 1 : 0);
   const step = (route: ArenaRoute, index: number, by: 1 | -1) => {
@@ -438,17 +510,19 @@ function evadeWalk(
   };
 
   // Moves along Chibi's map toward a feet point: an edge's witness commands once he stands in
-  // its launch range, otherwise a walk toward the range.
+  // its launch range, otherwise a walk toward the range that never leaves his span except by an
+  // edge, whose proof keeps clear of static hazards.
   const follow = (goal: Point | undefined): ZoneInput => {
     if (leg) {
+      leg.airborne ||= !zone.bird.grounded;
       const command = leg.edge.commands[leg.step++];
-      if (command) {
-        // The map's jumps are fixed impulses; he reaches a full jump's height by holding Jump
-        // through the rise, and a hop's by a tap.
-        const rise = chibi.nodes[leg.edge.from]!.y - chibi.nodes[leg.edge.to]!.y;
-        const full = leg.edge.kind === "jump" && rise > ORDINARY.jumpHopHeight;
+      // The witness ends as it lands, so a landing before its last command ends the leg.
+      if (command && !(leg.airborne && zone.bird.grounded)) {
         return {
-          jumpHeld: command.jump || (full && leg.step * STEP_SECONDS < ORDINARY.jumpRiseTime),
+          jumpHeld:
+            command.jump ||
+            (fullJump(ORDINARY.jumpHopHeight, chibi, leg.edge) &&
+              leg.step * STEP_SECONDS < ORDINARY.jumpRiseTime),
           move: command.move,
           useHeld: false,
         };
@@ -471,7 +545,10 @@ function evadeWalk(
     const path = ref && pathTo(chibi, avoiding, ref, { point: goal, radius: TILE });
     const edge = path?.edges[0] === undefined ? undefined : chibi.edges[path.edges[0]];
     if (!edge) {
-      return Math.abs(feet.x - goal.x) <= TILE / 2 ? STILL : toward(goal.x - body.width / 2);
+      if (Math.abs(feet.x - goal.x) <= TILE / 2) {
+        return STILL;
+      }
+      return toward(spanGoal(area.width, ref && chibi.nodes[ref.node], goal.x - body.width / 2));
     }
     if (edge.kind === "walk") {
       return toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2)));
@@ -479,7 +556,7 @@ function evadeWalk(
     // Within one tick's walk of the launch range, so a walk at speed never steps over it.
     const reach = ORDINARY.walkSpeed * STEP_SECONDS;
     if (body.x >= edge.launch.left - reach && body.x <= edge.launch.right + reach) {
-      leg = { edge, step: 0 };
+      leg = { airborne: false, edge, step: 0 };
       return follow(goal);
     }
     return toward(Math.min(edge.launch.right, Math.max(edge.launch.left, body.x)));
@@ -495,7 +572,7 @@ function evadeWalk(
     if (among.includes(target.route)) {
       const goal = waypointPixel(target);
       const mine = chibiDistance(goal);
-      if (mine >= 2 * TILE && mine < bossDistance(boss, goal)) {
+      if (mine >= 2 * TILE && mine < bossReach(boss, goal)) {
         return target;
       }
     }
@@ -503,14 +580,14 @@ function evadeWalk(
     for (const route of among) {
       const count = loopLength(route);
       const mine = Array.from({ length: count }, (_, index) =>
-        chibiDistance(pixelOf(route.waypoints[index]!)),
+        chibiDistance(standOf(route.waypoints[index]!)),
       );
       const nearest = mine.indexOf(Math.min(...mine));
       if (mine[nearest] === Infinity) {
         continue;
       }
       for (const index of new Set([nearest, step(route, nearest, 1), step(route, nearest, -1)])) {
-        const theirs = bossDistance(boss, pixelOf(route.waypoints[index]!));
+        const theirs = bossReach(boss, standOf(route.waypoints[index]!));
         // A route's open end leads nowhere but back past the boss, so it is a target only
         // where the boss cannot reach it.
         const end = !isLoop(route) && (index === 0 || index === count - 1);
@@ -629,7 +706,7 @@ function evadeWalk(
       const away = escapeTarget([loop], boss);
       const leads =
         away !== undefined &&
-        bossDistance(boss, waypointPixel(away)) > chibiDistance(waypointPixel(away));
+        bossReach(boss, waypointPixel(away)) > chibiDistance(waypointPixel(away));
       const scripted = dodges.find((name) => name !== "retreat");
       if (dodges.includes("retreat") && (!scripted || (gap > THREAT_TILES * TILE && leads))) {
         if (away) {
