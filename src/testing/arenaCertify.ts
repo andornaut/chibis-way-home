@@ -125,6 +125,13 @@ export function proveArena(found: ArenaCase): ArenaProof {
       ...run.problems.map((problem) => `evade ${run.start} seed ${run.seed}: ${problem}`),
     );
   }
+  // The mid start must test a state the entry start does not reach.
+  for (const run of runs.filter(({ start }) => start === "mid")) {
+    const entry = runs.find(({ seed, start }) => start === "entry" && seed === run.seed);
+    if (entry?.trace === run.trace) {
+      problems.push(`evade mid seed ${run.seed}: repeats the entry run`);
+    }
+  }
   const trace = recorder.hash();
   return {
     hash: hashOf({
