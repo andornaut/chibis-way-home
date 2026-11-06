@@ -18,15 +18,15 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 
 ## Cast
 
-| Name   | Identity                     | Role                            |
-| ------ | ---------------------------- | ------------------------------- |
-| Archie | Dog                          | Blue cityscape antagonist       |
-| Bini   | Bear                         | Woodland antagonist             |
-| Chibi  | Bird                         | Player character                |
-| Fert   | Ferret                       | Apartment building antagonist   |
-| Kiwi   | Female raccoon               | Home city antagonist            |
-| Pebble | Pigeon                       | Industrial outskirts antagonist |
-| Trixi  | Goose with round glasses     | Countryside antagonist          |
+| Name   | Identity                 | Role                            |
+| ------ | ------------------------ | ------------------------------- |
+| Archie | Dog                      | Blue cityscape antagonist       |
+| Bini   | Bear                     | Woodland antagonist             |
+| Chibi  | Bird                     | Player character                |
+| Fert   | Ferret                   | Apartment building antagonist   |
+| Kiwi   | Female raccoon           | Home city antagonist            |
+| Pebble | Pigeon                   | Industrial outskirts antagonist |
+| Trixi  | Goose with round glasses | Countryside antagonist          |
 
 The named cast uses shared data-driven behaviours.
 
