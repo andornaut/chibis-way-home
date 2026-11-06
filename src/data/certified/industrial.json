@@ -5,11 +5,11 @@
       "grade": 4,
       "id": "industrial-tunnel-bounded-flyer-post",
       "kind": "single",
-      "layout": "a105063372bbbda3",
+      "layout": "1a4c5959ba0b06f6",
       "route": "1b46632117612101",
       "slots": { "door": 0, "event": 0 },
-      "trace": "262cdb8bfd1c0bf4:5807",
-      "work": 5807
+      "trace": "af147f93d31f8ecd:7257",
+      "work": 7257
     },
     {
       "encounters": 0,
@@ -214,11 +214,11 @@
       "grade": 5,
       "id": "industrial-tunnel-compound-perch-yard",
       "kind": "single",
-      "layout": "3c7530513726a080",
+      "layout": "8aa58eb027d7f102",
       "route": "1b46632117612101",
       "slots": { "door": 0, "event": 0 },
-      "trace": "6f2c41df2f5d9173:6008",
-      "work": 6008
+      "trace": "0fcbc5056db39814:6764",
+      "work": 6764
     },
     {
       "encounters": 0,
@@ -269,44 +269,44 @@
       "grade": 4,
       "id": "industrial-tunnel-dry-underground-gallery-encounter",
       "kind": "single",
-      "layout": "b519d043e7f1a00d",
+      "layout": "577b4e88e49c9492",
       "route": "9f43b6eb9910892a",
       "slots": { "door": 0, "event": 0 },
-      "trace": "c3b3f0842a127181:12525",
-      "work": 12525
+      "trace": "fe4684858e6054d8:12772",
+      "work": 12772
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "industrial-tunnel-flyer-shelter-early",
       "kind": "single",
-      "layout": "aa943a3307e74694",
+      "layout": "f99646e70a3e95ac",
       "route": "338a919952aeab01",
       "slots": { "door": 0, "event": 0 },
-      "trace": "ba8b486fac55016a:4707",
-      "work": 4707
+      "trace": "e33ad3c5dca5f8fc:4794",
+      "work": 4794
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "industrial-tunnel-flyer-shelter-late",
       "kind": "single",
-      "layout": "25fac6241e4b9efd",
+      "layout": "a65dec14f0db54a0",
       "route": "0712e1353919d9b1",
       "slots": { "door": 0, "event": 0 },
-      "trace": "81e8de80c8596939:6657",
-      "work": 6657
+      "trace": "3492aaf14a276d40:14041",
+      "work": 14041
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "industrial-tunnel-flyer-shelter-middle",
       "kind": "single",
-      "layout": "299dbd875822e4a3",
+      "layout": "306285c4fbb92bc4",
       "route": "71a79ea11b967f9c",
       "slots": { "door": 0, "event": 0 },
-      "trace": "7ba88a2e8c988932:4166",
-      "work": 4166
+      "trace": "d97a269db919c304:6322",
+      "work": 6322
     },
     {
       "encounters": 0,
@@ -386,7 +386,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "68fb92936710fe71", "proofs": "0dc814cdf5a13845" },
+  "inputs": { "data": "1fd9f2581d608be5", "proofs": "369083ac95a34838" },
   "version": 1,
   "zone": "industrial"
 }

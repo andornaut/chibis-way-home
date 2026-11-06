@@ -27,11 +27,11 @@
       "grade": 4,
       "id": "home-vertical-climbing-enemy-lane",
       "kind": "single",
-      "layout": "0eac41f15854fc83",
+      "layout": "1f529fc7cb1c4cb1",
       "route": "c9803dd28f01de54",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b034890215f0e574:9043",
-      "work": 9043
+      "trace": "47a0c908f1069d95:6355",
+      "work": 6355
     },
     {
       "encounters": 0,
@@ -137,11 +137,11 @@
       "grade": 5,
       "id": "home-vertical-compound-vertical-yard",
       "kind": "single",
-      "layout": "06c152780e620a68",
+      "layout": "5cd481ae6050b913",
       "route": "28ad64beb757dbe6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "6f1f8f712818baa4:137781",
-      "work": 137781
+      "trace": "f622b489756cd3b2:108864",
+      "work": 108864
     },
     {
       "encounters": 0,
@@ -181,22 +181,22 @@
       "grade": 4,
       "id": "home-vertical-offset-two-level-terrace-encounter",
       "kind": "single",
-      "layout": "e73c0dbce7903b20",
+      "layout": "e5f2376f25f6ccb0",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4d2e8ded162704cf:19670",
-      "work": 19670
+      "trace": "d9914950b471287d:19848",
+      "work": 19848
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "home-vertical-open-stepped-ridge-encounter",
       "kind": "single",
-      "layout": "e408890d0958ed12",
+      "layout": "4e0b9a818688c83b",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "6a3275ab1380f8bd:9740",
-      "work": 9740
+      "trace": "341d647b1687c228:9762",
+      "work": 9762
     },
     {
       "encounters": 0,
@@ -225,33 +225,33 @@
       "grade": 4,
       "id": "home-vertical-vertical-stack-early",
       "kind": "single",
-      "layout": "e30ba4b416f3307e",
+      "layout": "e39799243d993275",
       "route": "2534d81b7bb57c57",
       "slots": { "door": 0, "event": 0 },
-      "trace": "c855364de79e35d2:4754",
-      "work": 4754
+      "trace": "f0e75d29b0c53b28:4520",
+      "work": 4520
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "home-vertical-vertical-stack-late",
       "kind": "single",
-      "layout": "8090654723ce37c8",
+      "layout": "75a8f5ab0ee8f94b",
       "route": "ab6b141179740f3d",
       "slots": { "door": 0, "event": 0 },
-      "trace": "9c5c05f7378d2995:5342",
-      "work": 5342
+      "trace": "d565f0222fd36db6:7747",
+      "work": 7747
     },
     {
       "encounters": 1,
       "grade": 4,
       "id": "home-vertical-vertical-stack-middle",
       "kind": "single",
-      "layout": "99782f221345887e",
+      "layout": "bac8c2b782c03268",
       "route": "4ef0964161df0061",
       "slots": { "door": 0, "event": 0 },
-      "trace": "564ca2457922111e:4659",
-      "work": 4659
+      "trace": "2d7c0e56fd100aa2:4408",
+      "work": 4408
     },
     {
       "encounters": 0,
@@ -265,7 +265,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "acd2e17069ad33b7", "proofs": "0dc814cdf5a13845" },
+  "inputs": { "data": "0ec86a2a4b6a5edb", "proofs": "369083ac95a34838" },
   "version": 1,
   "zone": "home"
 }
