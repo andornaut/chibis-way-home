@@ -4,7 +4,8 @@
 // BOSS_FAIRNESS's reaction delay late: its body, facing, pursuit and visible tell, never its
 // scorer, plan, timers or seed. Policy, first match wins:
 // 1. A visible tell: one of the attack's named dodges (BOSS_FAIRNESS), by the shared dodge
-//    scripts: a retreat beyond THREAT_TILES where it names one, otherwise its first.
+//    scripts: a retreat beyond THREAT_TILES with as much room behind him where it names one,
+//    otherwise its first.
 // 2. The engaged boss within THREAT_TILES of Chibi, or closing faster than his walk: head for the
 //    waypoint, on any route, that maximizes the boss's map distance minus his, ties by route id.
 // 3. At a refuge that counters the boss while it is engaged: hold.
@@ -417,12 +418,16 @@ export function evadeRun(
     const feet = bottomCentre(box());
     const now = centre(boss);
     const gap = Math.hypot(now.x - feet.x, now.y - (feet.y - ORDINARY.height / 2));
-    // 1. A visible tell, first seen after any dodge ended: beyond the threat distance a retreat
-    // where the attack names one, otherwise its first named dodge.
+    // 1. A visible tell, first seen after any dodge ended: beyond the threat distance, with as
+    // much room behind him, a retreat where the attack names one, otherwise its first named dodge.
     const attack = boss.attack;
     const dodges = attack?.phase === "tell" ? fairness.dodges[attack.id] : undefined;
     if (dodges && dodges.length > 0 && observed!.tick > lastDodgeEnd) {
-      const name = gap > THREAT_TILES * TILE && dodges.includes("retreat") ? "retreat" : dodges[0]!;
+      const away = feet.x < now.x ? feet.x - area.backX : area.exitX - feet.x;
+      const name =
+        gap > THREAT_TILES * TILE && away > THREAT_TILES * TILE && dodges.includes("retreat")
+          ? "retreat"
+          : dodges[0]!;
       dodge = { attack: attack!.id, boss: boss.id, script: DODGES[name](), started: tick };
       leg = undefined;
       return;
