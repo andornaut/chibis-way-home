@@ -2,7 +2,7 @@
 
 ## Established foundation
 
-Farmland, Country lanes and River crossing use yellow countryside scenery, soil, hay, banks and timber. Trixi is a goose with oversized glasses who invents convenient rules while helping Fert. Decorative water is not an implicit lethal surface.
+Farmland, Country lanes and River crossing use yellow countryside scenery, soil, hay, banks and timber. Trixi is a goose with round glasses who invents convenient rules while helping Fert. Decorative water is not an implicit lethal surface.
 
 ## Proposed dramatic and visual direction
 

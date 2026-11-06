@@ -26,7 +26,7 @@ A landscape platformer: Chibi travels back to the apartment he shared with his f
 | Fert   | Ferret                       | Apartment building antagonist   |
 | Kiwi   | Female raccoon               | Home city antagonist            |
 | Pebble | Pigeon                       | Industrial outskirts antagonist |
-| Trixi  | Goose with oversized glasses | Countryside antagonist          |
+| Trixi  | Goose with round glasses     | Countryside antagonist          |
 
 The named cast uses shared data-driven behaviours.
 
@@ -335,7 +335,7 @@ Apartment continues in this floor order:
 
 ### Trixi encounter
 
-- **Appearance:** Trixi wears oversized glasses
+- **Appearance:** Trixi wears round glasses: in profile, one round lens over a visible eye
 - **Contact:** Trixi is always lethal on contact, including while placing traps, without a permanent red contact outline
 - **Rush:** Trixi periodically rushes along the ground to make contact with Chibi. A committed rush, however it ends, overshoots by a 3-tile slide, leaving space behind her; the slide ends early at a wall or ledge
 - **Traps:** Trixi's special attack places red-edged floor traps. A visible arming delay precedes their lethal contact state; trap timing and placement values live in data
