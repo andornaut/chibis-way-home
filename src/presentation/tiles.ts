@@ -69,6 +69,9 @@ export function lookTiles(look: string): string[] {
     default:
       return [
         ...new Set(layersOf(look).flatMap(({ left, middle, right }) => [left, ...middle, right])),
+        ...["bottom", "slab"].flatMap((part) =>
+          ["-left", "", "-right"].map((side) => `${look}-${part}${side}`),
+        ),
       ];
   }
 }
@@ -82,7 +85,8 @@ function indexOf(tileset: Tileset, name: string): number {
 }
 
 // The tiles an area's terrain is drawn with, picked by each cell's look and its neighbours: a
-// top row where nothing is above, ends where nothing is beside, kerbs where the sidewalk meets a
+// top row where nothing is above, a closed bottom row where nothing is below (a slab where
+// nothing is above or below), ends where nothing is beside, kerbs where the sidewalk meets a
 // road below it, and a post's cap, shaft and base by its rect.
 export function terrainTiles(
   tileset: Tileset,
@@ -141,6 +145,11 @@ function tileName(
   }
   if (top && openRight && at(col + 1, row + 1) === "road") {
     return "kerb-right";
+  }
+  // Open below: a closed bottom, or a slab when also open above. It takes priority over layers.
+  if (at(col, row + 1) === undefined) {
+    const part = `${look}-${top ? "slab" : "bottom"}`;
+    return openLeft ? `${part}-left` : openRight ? `${part}-right` : part;
   }
   // Its layer: how far below the open cell above it is, down to the look's last layer.
   const layers = layersOf(look);

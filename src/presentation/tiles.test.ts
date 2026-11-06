@@ -84,12 +84,29 @@ describe("terrainTiles", () => {
         "1,0 kerb-right",
         "4,0 kerb-left",
         "5,0 sidewalk-top-joint",
-        "0,1 sidewalk-face",
-        "1,1 sidewalk-face",
+        "0,1 sidewalk-bottom",
+        "1,1 sidewalk-bottom",
         "2,1 road-top",
         "3,1 road-top",
-        "4,1 sidewalk-face",
-        "5,1 sidewalk-face",
+        "4,1 sidewalk-bottom",
+        "5,1 sidewalk-bottom",
+      ],
+    ],
+    [
+      "a raised block closed along its open bottom, and a one-row slab",
+      [
+        { col: 0, cols: 3, look: "sidewalk", row: 0, rows: 2 },
+        { col: 4, cols: 2, look: "sidewalk", row: 1, rows: 1 },
+      ],
+      [
+        "0,0 sidewalk-top",
+        "1,0 sidewalk-top-joint",
+        "2,0 sidewalk-top-right",
+        "0,1 sidewalk-bottom",
+        "1,1 sidewalk-bottom",
+        "2,1 sidewalk-bottom-right",
+        "4,1 sidewalk-slab-left",
+        "5,1 sidewalk-slab",
       ],
     ],
     [
@@ -128,6 +145,18 @@ describe("terrainTiles", () => {
       "2,4 soil-pebbles",
       "3,4 soil",
       "4,4 soil-right",
+    ]);
+  });
+
+  it("closes a raised grass block's bottom over its turf", () => {
+    const solids = [{ col: 1, cols: 3, look: "grass", row: 0, rows: 2 }];
+    expect(named(terrainTiles(TILESET, 6, 3, solids))).toEqual([
+      "1,0 grass-top-left",
+      "2,0 grass-top",
+      "3,0 grass-top-right",
+      "1,1 grass-bottom-left",
+      "2,1 grass-bottom",
+      "3,1 grass-bottom-right",
     ]);
   });
 
