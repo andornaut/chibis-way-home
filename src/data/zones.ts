@@ -40,7 +40,7 @@ const DIFFICULTY_PROFILES = {
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
 const MIN_ENCOUNTER_GAP = 3;
-const STAGE_ENCOUNTERS = { first: 0, second: 2, third: 3 } as const;
+const STAGE_ENCOUNTERS = { first: 0, second: 1, third: 1 } as const;
 const STAGE_LENGTH = { max: 16 * CHUNK_COLS, min: 14 * CHUNK_COLS } as const;
 
 const STAGE_CHUNK_POOLS = {
@@ -164,10 +164,10 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "park-start",
     theme: "park",
   },
-  penthouse: apartmentRecipe("speedy-gift", "apartment-penthouse", 3),
+  penthouse: apartmentRecipe("speedy-gift", "apartment-penthouse", 1),
   pool: apartmentRecipe("speedy-gift", "apartment-pool", 0),
   ravine: outdoorRecipe("woodland", "third", "ravine"),
-  "residential-floors": apartmentRecipe("double-jump-gift", "apartment-residential", 2),
+  "residential-floors": apartmentRecipe("double-jump-gift", "apartment-residential", 1),
   restaurant: apartmentRecipe("double-jump-gift", "apartment-restaurant", 0),
   "river-crossing": outdoorRecipe("countryside", "third", "river-crossing"),
   spa: apartmentRecipe("dash-gift", "apartment-spa", 0),

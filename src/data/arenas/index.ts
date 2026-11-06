@@ -19,7 +19,6 @@ export const ARENA_PENDING_STAGES: readonly StageKey[] = [
   "ravine",
   "residential-floors",
   "river-crossing",
-  "spa",
 ];
 
 // The refuge kinds that counter each boss: high ground against charges, cover against Fert's
