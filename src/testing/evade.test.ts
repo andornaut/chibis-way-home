@@ -1,9 +1,12 @@
 import { expect, it } from "vitest";
 
+import { TILE } from "../data/screen";
+import type { Instance, TerrainRect } from "../data/types";
 import { proveArena } from "./arenaCertify";
-import { gameArenaCase } from "./arenas";
+import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas";
 import { ARENA_SAMPLES } from "./arenaSamples";
-import { touchesBoss } from "./evade";
+import { ORDINARY } from "./encounterLayouts";
+import { fullJump, spanGoal, standingPoint, touchesBoss } from "./evade";
 
 // Each sample's arena proof: static checks, required route, path out and every evade run, with
 // its hash over the evade trace hashes.
@@ -36,4 +39,82 @@ it("masks only spans Chibi could touch the boss from, not through a roof", () =>
   expect(touchesBoss([roof], 2 * tile, boss, nook)).toBe(false);
   expect(touchesBoss([], 2 * tile, boss, nook)).toBe(true);
   expect(touchesBoss([roof], 2 * tile, boss, beside)).toBe(true);
+});
+
+const FLOOR = 80;
+const rect = (col: number, cols: number, row: number, rows: number): TerrainRect => ({
+  col,
+  cols,
+  look: "raised",
+  row,
+  rows,
+});
+const ground = (col: number, cols: number) => rect(col, cols, FLOOR, 120 - FLOOR);
+
+// Chibi's map of the dog sample's frame with the given terrain and Archie on the far floor.
+function chibiOf(solids: readonly TerrainRect[], objects: readonly Instance[] = []) {
+  const found = gameArenaCase({
+    ...ARENA_SAMPLES.find(({ boss }) => boss === "dog-antagonist")!,
+    objects: [
+      ...objects,
+      { character: "dog-antagonist", col: 56, role: "antagonist", row: FLOOR - 4 },
+    ],
+    solids,
+  });
+  return arenaMaps(found, arenaLayout(found)).chibi;
+}
+const nodeAt = (map: ReturnType<typeof chibiOf>, col: number, row: number) =>
+  map.nodes.find(
+    ({ left, right, y }) => y === row * TILE && left <= col * TILE && right >= col * TILE,
+  )!;
+
+// A red pit beside the exit: his path over it is a full jump, and a walk without an edge stops
+// at his span's end rather than stepping into the pit.
+it("jumps a pit beside the exit in full and never walks off his span into it", () => {
+  const pit: Instance[] = [
+    { character: "red-edge-top", col: 46, cols: 3, role: "edge-top", row: FLOOR + 3 },
+    { character: "red-edge-support", col: 46, cols: 3, role: "support", row: FLOOR + 4, rows: 36 },
+  ];
+  const map = chibiOf([ground(0, 46), ground(49, 11)], pit);
+  const from = nodeAt(map, 40, FLOOR);
+  const beyond = nodeAt(map, 52, FLOOR);
+  const over = map.edges.filter(({ from: start, to }) => start === from.id && to === beyond.id);
+  const apex = (edge: (typeof over)[number]) => FLOOR * TILE - ORDINARY.height - edge.sweep.y;
+  // A crossing that does not rise is still a full jump where its proof is one.
+  const full = over.filter((edge) => fullJump(ORDINARY.jumpHopHeight, map, edge));
+  expect(full.length).toBeGreaterThan(0);
+  expect(full.every((edge) => apex(edge) > ORDINARY.jumpHopHeight + 1)).toBe(true);
+  expect(
+    over
+      .filter((edge) => !full.includes(edge))
+      .every((edge) => apex(edge) <= ORDINARY.jumpHopHeight + 1),
+  ).toBe(true);
+  expect(spanGoal(60 * TILE, from, 50 * TILE)).toBe(from.right);
+  expect(spanGoal(60 * TILE, from, 64 * TILE)).toBe(64 * TILE);
+});
+
+// From a five-column slot between a deck end and a four-row post, the jump over the post to the
+// floor beyond does not rise, yet its proof is a full jump, so he holds Jump rather than tapping.
+it("takes a full jump over a post when the proof does, although the landing does not rise", () => {
+  const map = chibiOf([ground(0, 60), rect(4, 10, FLOOR - 7, 1), rect(19, 1, FLOOR - 4, 4)]);
+  const slot = nodeAt(map, 16, FLOOR);
+  const over = map.edges.filter(
+    ({ from, kind, to }) =>
+      kind === "jump" &&
+      from === slot.id &&
+      map.nodes[to]!.y === FLOOR * TILE &&
+      map.nodes[to]!.left > 19 * TILE,
+  );
+  expect(over.length).toBeGreaterThan(0);
+  expect(over.every((edge) => fullJump(ORDINARY.jumpHopHeight, map, edge))).toBe(true);
+});
+
+// A waypoint in a one-column post's column beside an overhang is reached where he stands against
+// the post, so he stops there instead of pressing into the post.
+it("stands for a waypoint against a post at the end of his span", () => {
+  const map = chibiOf([ground(0, 60), rect(14, 6, FLOOR - 6, 1), rect(24, 1, FLOOR - 4, 4)]);
+  const at = standingPoint(map, { x: 24 * TILE, y: FLOOR * TILE });
+  const span = nodeAt(map, 22, FLOOR);
+  expect(at).toEqual({ x: span.right + ORDINARY.width / 2, y: FLOOR * TILE });
+  expect(at.x + ORDINARY.width / 2).toBeLessThanOrEqual(24 * TILE + 1e-6);
 });
