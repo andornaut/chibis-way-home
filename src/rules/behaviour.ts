@@ -2202,8 +2202,9 @@ export function advanceBehaviour(
 }
 
 // After an ended chase, until its rearm cooldown ends, a boss whose pursuit keeps clear never
-// moves toward Chibi: the step's horizontal movement toward his centre is cancelled, and for a
-// flyer its vertical movement toward him too, its traversal dropped so it replans from there.
+// moves toward Chibi while he is within its escape distance: the step's horizontal movement
+// toward his centre is cancelled, and for a flyer its vertical movement toward him too, its
+// traversal dropped so it replans from there.
 function keptClear(
   perception: BehaviourPerception,
   object: ObjectLayout,
@@ -2221,6 +2222,13 @@ function keptClear(
   }
   const target = birdBox(perception.tuning, perception.target);
   const aim = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+  const separation = Math.hypot(
+    before.x + object.width / 2 - aim.x,
+    before.y + object.height / 2 - aim.y,
+  );
+  if (config.escapeDistance !== undefined && separation > config.escapeDistance) {
+    return step;
+  }
   const toward = (from: number, to: number, goal: number) =>
     Math.abs(to - goal) < Math.abs(from - goal) - EDGE;
   const holdX = toward(before.x + object.width / 2, step.at.x + object.width / 2, aim.x);
