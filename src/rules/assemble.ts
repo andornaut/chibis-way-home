@@ -27,7 +27,9 @@ import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry";
 
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
 // a zone's height in rows, and the characters by key, for the size of each theme's door.
+// arenas: the chunk id of each stage's arena, by stage key.
 export interface ChunkLibrary {
+  readonly arenas?: Readonly<Record<string, string>>;
   readonly backgrounds?: Readonly<Record<string, BackgroundSection>>;
   readonly characters: Readonly<Record<string, Pick<Character, "cols" | "rows">>>;
   readonly chunks: Readonly<Record<string, ChunkPlan>>;
@@ -55,7 +57,9 @@ function chunkOf(library: ChunkLibrary, id: string): ChunkPlan {
 }
 
 // Authored pools retain their order; implicit flat pools retain the legacy sorted theme order.
+// An implicit pool never holds an arena.
 export function recipeChunkPool(library: ChunkLibrary, recipe: ZoneRecipe): ChunkPool {
+  const arenas = new Set(Object.values(library.arenas ?? {}));
   return (
     recipe.chunks ??
     Object.keys(library.chunks)
@@ -63,6 +67,7 @@ export function recipeChunkPool(library: ChunkLibrary, recipe: ZoneRecipe): Chun
         (id) =>
           id !== recipe.start &&
           id !== recipe.finish &&
+          !arenas.has(id) &&
           themesOf(chunkOf(library, id)).includes(recipe.theme),
       )
       .sort()
@@ -284,6 +289,12 @@ export const SEARCH_NODE_LIMIT = 2_000_000;
 // The exact search's answer when its pool or its nodes exceed its bounds.
 const EXCEEDED = "exceeded";
 
+// A chunk a run must hold at one middle index.
+interface Pinned {
+  readonly at: number;
+  readonly chunk: string;
+}
+
 // The ids of the chunks between the recipe's start and finish, left to right: a seeded run
 // whose seams join, never the same chunk twice in a row, each chunk at most its maxPerZone
 // times, within the difficulty band, with slots enough for the recipe's events and doors,
@@ -300,9 +311,13 @@ const EXCEEDED = "exceeded";
 // also cuts states that no length, slot or encounter bound can complete before drawing their
 // candidates, and throws after SEARCH_NODE_LIMIT nodes. Both draw in the same order at a node;
 // they differ in the failed states they skip, and so in the draws they consume.
+//
+// With a pinned chunk, the run holds it once, as its middle chunk at index `at`, which lies in
+// the run's second half (floor(n / 2) to n - 1 of n middle chunks); the pool never holds it.
 function searchRun(
   library: ChunkLibrary,
   random: Random,
+  pinned: Pinned | undefined,
   recipe: ZoneRecipe,
   exact: boolean,
 ): readonly string[] | typeof EXCEEDED | undefined {
@@ -330,7 +345,7 @@ function searchRun(
   const classCaps: number[] = [];
   const classSizes: number[] = [];
   let limits = 0;
-  const chunks: readonly PoolChunk[] = pool.map((id) => {
+  const chunks: readonly PoolChunk[] = [...pool, ...(pinned ? [pinned.chunk] : [])].map((id) => {
     const chunk = chunkOf(library, id);
     const facts = {
       cols: chunk.cols,
@@ -343,8 +358,8 @@ function searchRun(
     };
     // The finish is its own class: a run never ends on two finishes in a row.
     const signature =
-      id === recipe.finish
-        ? `finish:${id}`
+      id === recipe.finish || id === pinned?.chunk
+        ? `${id === pinned?.chunk ? "pinned" : "finish"}:${id}`
         : `${facts.cols}|${facts.doors}|${facts.encounters}|${facts.entryRow}|` +
           `${facts.events}|${facts.exitRow}|${facts.maxPerZone}`;
     let classId = classIds.get(signature);
@@ -359,7 +374,7 @@ function searchRun(
       ...facts,
       class: classId,
       id,
-      keyPower: 1 / weights.get(id)!,
+      keyPower: id === pinned?.chunk ? 1 : 1 / weights.get(id)!,
       limit: chunk.maxPerZone === undefined ? -1 : limits++,
     };
   });
@@ -518,6 +533,9 @@ function searchRun(
     if (minimumGap > 0) {
       key += `|${quietChunks}`;
     }
+    if (pinned) {
+      key += `|${Math.min(ids.length, 2 * pinned.at + 2)}`;
+    }
     if (exact) {
       // A fixed-length tail of one character per count.
       return `${key}|${String.fromCharCode(...counts)}`;
@@ -572,6 +590,7 @@ function searchRun(
       const chunk = chunks[index]!;
       if (
         index !== last &&
+        (pinned === undefined || (chunk.id === pinned.chunk) === (ids.length === pinned.at)) &&
         (remaining === undefined ||
           (chunk.encounters <= remaining && (chunk.encounters === 0 || prevEncounters === 0))) &&
         (chunk.encounters === 0 || quietChunks >= minimumGap) &&
@@ -594,7 +613,8 @@ function searchRun(
       (remaining === undefined ||
         (remaining === 0 && (finish.encounters === 0 || prevEncounters === 0))) &&
       events + finishEvents >= needEvents &&
-      doors + finishDoors >= needDoors;
+      doors + finishDoors >= needDoors &&
+      (pinned === undefined || (ids.length > pinned.at && Math.floor(ids.length / 2) <= pinned.at));
     if (finishFirst && finishes()) {
       return true;
     }
@@ -646,14 +666,60 @@ function seededRun(
   library: ChunkLibrary,
   seed: number,
   key: string,
+  pinned: Pinned | undefined,
   recipe: ZoneRecipe,
 ): readonly string[] | undefined {
-  const run = searchRun(library, randomStream(seed, `assemble:${key}`), recipe, true);
+  const run = searchRun(library, randomStream(seed, `assemble:${key}`), pinned, recipe, true);
   if (run !== EXCEEDED) {
     return run;
   }
-  const fallback = searchRun(library, randomStream(seed, `assemble:${key}`), recipe, false);
+  const fallback = searchRun(library, randomStream(seed, `assemble:${key}`), pinned, recipe, false);
   return fallback === EXCEEDED ? undefined : fallback;
+}
+
+// The run of a stage with an arena: the arena once, among its pool's chunks without encounters.
+// A run of those chunks with the arena's columns set aside gives the middle count n; the arena's
+// index is drawn from the stage seed in floor(n / 2) to n - 1, and the run is searched with the
+// arena pinned there, then at each later index of that half, wrapping, until one joins. The
+// arena is the stage's one encounter beyond its caps', so the recipe's quota and gap give way.
+function arenaRun(
+  library: ChunkLibrary,
+  seed: number,
+  key: string,
+  arenaId: string,
+  recipe: ZoneRecipe,
+): readonly string[] | undefined {
+  const arena = chunkOf(library, arenaId);
+  const caps =
+    chunkOf(library, recipe.start).encounters + chunkOf(library, recipe.finish).encounters;
+  const quiet: ZoneRecipe = {
+    ...recipe,
+    chunks: recipeChunkPool(library, recipe).filter(
+      (id) => id !== arenaId && chunkOf(library, id).encounters === 0,
+    ),
+    encounters: caps + arena.encounters,
+    minEncounterGap: 0,
+  };
+  const sized = seededRun(library, seed, key, undefined, {
+    ...quiet,
+    encounters: caps,
+    length: { max: recipe.length.max - arena.cols, min: recipe.length.min - arena.cols },
+  });
+  if (!sized) {
+    return undefined;
+  }
+  const count = sized.length + 1;
+  const low = Math.floor(count / 2);
+  const span = count - low;
+  const first = randomInt(randomStream(seed, `arena:${key}`), 0, span);
+  for (let offset = 0; offset < span; offset++) {
+    const at = low + ((first + offset) % span);
+    const run = seededRun(library, seed, key, { at, chunk: arenaId }, quiet);
+    if (run) {
+      return run;
+    }
+  }
+  return undefined;
 }
 
 const shiftPoint = (col: number, point: TilePoint): TilePoint => ({
@@ -1240,7 +1306,11 @@ export function assembleZone(
   ) {
     throw new Error("Recipe height must match its authored caps");
   }
-  const run = seededRun(library, seed, key, recipe);
+  const arenaId = library.arenas?.[key];
+  const run =
+    arenaId === undefined
+      ? seededRun(library, seed, key, undefined, recipe)
+      : arenaRun(library, seed, key, arenaId, recipe);
   if (!run) {
     throw new Error(
       `No assembly of zone ${key} fits its recipe: its theme's chunks never join from ` +

@@ -1,3 +1,4 @@
+import { ARENAS } from "../data/arenas";
 import { BACKGROUND_SECTIONS } from "../data/backgrounds";
 import { CERTIFIED_LISTS } from "../data/certified";
 import { CHARACTERS } from "../data/characters";
@@ -5,9 +6,10 @@ import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
 import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules";
 import { ZONE_ROWS } from "../data/screen";
 import { SEAM_ROWS } from "../data/seams";
-import type { StageRecipe, ZoneKey, ZonePlan } from "../data/types";
+import type { ChunkArena, ChunkPlan, StageRecipe, ZoneKey, ZonePlan } from "../data/types";
 import { ZONE_FRAMES } from "../data/zoneFrames";
 import { RECIPES } from "../data/zones";
+import { arenaChunk } from "./arenas";
 import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble";
 import { certifiedChunks } from "./modules";
 
@@ -16,23 +18,57 @@ const CERTIFIED = certifiedChunks(
   CERTIFIED_LISTS,
 );
 
-// The game's chunks, certified pairs included, and themes.
-export const CHUNK_LIBRARY: ChunkLibrary = {
-  backgrounds: BACKGROUND_SECTIONS,
-  characters: CHARACTERS,
-  chunks: { ...CHUNKS, ...CERTIFIED.chunks },
-  rows: ZONE_ROWS,
-  rules: CHUNK_RULES,
-  seams: SEAM_ROWS,
-  themes: THEMES,
-};
-
 // The zone whose frame draws a stage theme, if any.
 export function zoneOfTheme(theme: string): ZoneKey | undefined {
   return (Object.keys(ZONE_FRAMES) as ZoneKey[]).find((zone) =>
     ZONE_FRAMES[zone].themes.includes(theme),
   );
 }
+
+// Each arena's chunk by id, in its stage's theme, height and zone frame, and each stage's arena
+// chunk id. Throws on an arena whose stage is no flat zone stage, or a second arena for a stage.
+export function arenaChunks(arenas: readonly ChunkArena[]): {
+  readonly chunks: Readonly<Record<string, ChunkPlan>>;
+  readonly stages: Readonly<Record<string, string>>;
+} {
+  const chunks: Record<string, ChunkPlan> = {};
+  const stages: Record<string, string> = {};
+  for (const arena of arenas) {
+    const recipe = RECIPES[arena.stage];
+    const zone = recipe && !("sections" in recipe) ? zoneOfTheme(recipe.theme) : undefined;
+    if (!recipe || "sections" in recipe || !zone) {
+      throw new Error(`Arena ${arena.id} names no zone stage ${arena.stage}`);
+    }
+    if (arena.stage in stages || arena.id in chunks) {
+      throw new Error(`Arena ${arena.id} repeats a stage or id`);
+    }
+    chunks[arena.id] = arenaChunk(
+      { frame: ZONE_FRAMES[zone], rows: recipe.rows ?? ZONE_ROWS, theme: recipe.theme },
+      arena,
+    );
+    stages[arena.stage] = arena.id;
+  }
+  return { chunks, stages };
+}
+
+// The admitted arenas: those the certified lists name.
+const ADMITTED = arenaChunks(
+  ARENAS.filter(({ id }) =>
+    CERTIFIED_LISTS.some((list) => (list.arenas ?? []).some((entry) => entry.id === id)),
+  ),
+);
+
+// The game's chunks, certified pairs and admitted arenas included, and themes.
+export const CHUNK_LIBRARY: ChunkLibrary = {
+  arenas: ADMITTED.stages,
+  backgrounds: BACKGROUND_SECTIONS,
+  characters: CHARACTERS,
+  chunks: { ...CHUNKS, ...CERTIFIED.chunks, ...ADMITTED.chunks },
+  rows: ZONE_ROWS,
+  rules: CHUNK_RULES,
+  seams: SEAM_ROWS,
+  themes: THEMES,
+};
 
 // A recipe with its zone's certified pairs after its authored pool.
 function withCertifiedPairs(recipe: StageRecipe): StageRecipe {
