@@ -20,6 +20,8 @@
 // kept while the boss is farther from it than he is. Ties go to the nearer waypoint, then the
 // route id. Once the chase ends he walks to the exit on his movement map, waiting while anything
 // thrown is in flight or the boss ahead threatens him as in rule 3.
+// A run needs a switch: a move to another route or refuge, or a change of level on the loop (he
+// lands at one loop waypoint row after standing at another while following the loop).
 import { type Rect, rectsOverlap } from "@andornaut/game-kit/rect";
 import {
   type AirMap,
@@ -91,6 +93,8 @@ export interface EvadeRun {
   readonly exit?: number;
   // The boss-free walk's seconds from the start to the exit.
   readonly free?: number;
+  // Changes of level while following the loop.
+  readonly levels: number;
   readonly problems: readonly string[];
   readonly seed: number;
   readonly start: EvadeStart;
@@ -319,6 +323,9 @@ function evadeWalk(
       : [],
   );
   let switches = 0;
+  let levels = 0;
+  const loopRows = new Set(loop.waypoints.map(({ row }) => row));
+  let level: number | undefined;
   let waiting = false;
   let target: Target = { index: 0, route: loop };
   const aim = (next: Target) => {
@@ -774,14 +781,24 @@ function evadeWalk(
         leg = undefined;
       }
     }
+    // A change of level on the loop: grounded at a loop waypoint row other than the last one.
+    if (!ended && !exiting && target.route === loop && zone.bird.grounded) {
+      const row = Math.round(bottomCentre(box()).y / TILE);
+      if (loopRows.has(row) && Math.abs(bottomCentre(box()).y - row * TILE) <= EDGE) {
+        if (level !== undefined && row !== level) {
+          levels++;
+        }
+        level = row;
+      }
+    }
     if (!ended && zone.escapes.length > 0) {
       const gaveUp = sample.agents.some(({ gaveUp }) => gaveUp);
       ended = { cause: gaveUp ? "give-up" : zone.escapes[0]!.cause, tick };
       leg = undefined;
     }
   }
-  if (!free && !death && switches === 0) {
-    problems.push("no route switch");
+  if (!free && !death && switches === 0 && levels === 0) {
+    problems.push("no route switch or loop level change");
   }
   return {
     ...(acquired !== undefined && { acquired: acquired * STEP_SECONDS }),
@@ -790,6 +807,7 @@ function evadeWalk(
     ...(ended && { ended: { cause: ended.cause, seconds: ended.tick * STEP_SECONDS } }),
     ...(cleared !== undefined &&
       acquired !== undefined && { exit: cleared - acquired * STEP_SECONDS }),
+    levels,
     problems,
     seed,
     start,
