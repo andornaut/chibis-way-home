@@ -204,9 +204,8 @@ type GroundChaseMotion = Extract<
   { readonly kind: "ground-chase" }
 >["motion"];
 
-// A pace walks its whole leg at the scaled pursuit speed, searched or not.
-function paceMotion(scale: number, motion: GroundChaseMotion): GroundChaseMotion {
-  const speed = motion.speed * scale;
+// A pace walks its whole leg at the pace speed, searched or not.
+function paceMotion(speed: number, motion: GroundChaseMotion): GroundChaseMotion {
   return {
     ...motion,
     speed,
@@ -243,7 +242,7 @@ function mapLeg(
     object,
     entry,
     pace,
-    motion.speed * pace.speedScale * Math.max(seconds - time, 0),
+    pace.speed * Math.max(seconds - time, 0),
     state.mapPursuit,
     at,
     hers,
@@ -284,8 +283,38 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
         },
       }),
     };
-    const plan = context.traversal ? undefined : mapLeg(context, motion, aim.hers, timed, actor);
-    const leg = plan?.leg;
+    const planned = context.traversal ? undefined : mapLeg(context, motion, aim.hers, timed, actor);
+    const leg = planned?.leg;
+    // The pace starts, and every turn holds, for a seeded pause facing Chibi, except within the
+    // chase pause's clearance after an attack, where it walks on.
+    const prior = next.mapPursuit;
+    const turned = leg?.kind === "pace" && prior?.paceDirection !== planned!.state.paceDirection;
+    const paceTurns = (prior?.paceTurns ?? 0) + (turned ? 1 : 0);
+    const plan = planned && { ...planned, state: { ...planned.state, paceTurns } };
+    if (leg?.kind === "pace") {
+      const clearance = object.behaviour!.pursuit!.relief?.pause.tellClearanceSeconds ?? 0;
+      const since = next.scorer?.sinceAttackSeconds;
+      let holdSeconds = prior?.paceHoldSeconds ?? 0;
+      if (since !== undefined && since < clearance - EDGE) {
+        holdSeconds = 0;
+      } else if (turned) {
+        if (!world.decisions) {
+          throw new Error("Pace pauses require an object-local decision context");
+        }
+        const { max, min } = object.behaviour!.pursuit!.pace!.pauseSeconds;
+        holdSeconds = min + world.decisions(`pace:${paceTurns - 1}`)() * (max - min);
+      }
+      if (holdSeconds > EDGE) {
+        const mine = at.x + object.width / 2;
+        const theirs = aim.hers.x + aim.hers.width / 2;
+        const held: BehaviourState = {
+          ...next,
+          facing: theirs === mine ? next.facing : theirs < mine ? -1 : 1,
+          mapPursuit: { ...plan!.state, paceHoldSeconds: Math.max(0, holdSeconds - slice) },
+        };
+        return { slice, state: syncAnimation(object, held), to: { ...actor.to } };
+      }
+    }
     // A takeoff within the preparation interval of the last preparation launches without one.
     const now = timed.traversalFrame?.timeSeconds ?? 0;
     const interval = motion.traversal.prepIntervalSeconds;
@@ -304,7 +333,7 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
           ? advanceTraversalLeg(
               timed,
               object,
-              paceMotion(object.behaviour!.pursuit!.pace!.speedScale, motion),
+              paceMotion(object.behaviour!.pursuit!.pace!.speed, motion),
               seconds - time,
               next.traversal,
               { commands: [], goal: leg.goal, walk: true },

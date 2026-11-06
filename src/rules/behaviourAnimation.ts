@@ -10,13 +10,18 @@ export function syncAnimation(
   if (!object.contact) {
     return state;
   }
+  // A walk home plays the engaged chase's pose; a chase or pace pause plays idle.
   const key = state.idleWatchdog?.recovery
     ? object.behaviour!.idleWatchdog!.resume
-    : state.stateKey;
+    : state.pursuit?.home && state.pursuit.settled && object.behaviour?.scorer
+      ? object.behaviour.scorer.engaged
+      : state.stateKey;
   const preparation = state.active && state.traversal?.preparation;
   const takeoff = preparation && object.behaviour?.takeoffAnimation;
+  const resting = state.chasePause !== undefined || (state.mapPursuit?.paceHoldSeconds ?? 0) > 0;
   const tag = state.active
     ? (takeoff ??
+      (resting ? object.animations.idle : undefined) ??
       object.behaviour?.states[key]?.animation ??
       state.animationTag ??
       object.animations.idle)

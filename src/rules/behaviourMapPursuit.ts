@@ -30,6 +30,10 @@ export interface BehaviourMapPursuitState {
   readonly failed: readonly EdgeId[];
   readonly key: string;
   readonly paceDirection?: -1 | 1;
+  // The remaining pause at the current pace end, and the pace pauses taken so far: the next
+  // pause's stream key.
+  readonly paceHoldSeconds?: number;
+  readonly paceTurns?: number;
   // The route chosen for `key`, reused until it changes: the next edge, a chase on Chibi's node,
   // or a pace around the hitbox-left x nearest him; and whether a path reaches him.
   readonly route?: {

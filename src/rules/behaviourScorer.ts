@@ -13,19 +13,31 @@ import type {
   BossScoredMove,
   BossScorer,
   BossScorerInput,
+  ChaseRelief,
   ObjectLayout,
   Point,
+  SecondsRange,
 } from "../data/types";
 import type { PursuitIntentState } from "./behaviourIntent";
 import { birdBox, type BirdState } from "./bird";
 
 // The scorer's own clocks and held move. threatSeconds and specialDueSeconds count engaged
-// seconds outside attacks since the scorer last chose any attack and a special.
+// seconds outside attacks since the scorer last chose any attack and a special; pressureSeconds
+// also restarts after a chase pause, and chaseSeconds counts them since the last pause or the
+// engagement's start.
 export interface BehaviourScorerState {
+  readonly chaseSeconds: number;
   // Decisions drawn so far: the next decision's stream key.
   readonly decision: number;
   readonly heldSeconds: number;
   readonly move?: string;
+  // Chase pauses taken so far: the next pause's stream key.
+  readonly pauses: number;
+  readonly pressureSeconds: number;
+  // Seconds since the last chase pause ended and since the last tell or committed attack, once
+  // there was one.
+  readonly sincePauseSeconds?: number;
+  readonly sinceAttackSeconds?: number;
   readonly specialDueSeconds: number;
   readonly threatSeconds: number;
 }
@@ -33,8 +45,11 @@ export interface BehaviourScorerState {
 export type BossScorerValues = Readonly<Record<BossScorerInput, number>>;
 
 export const INITIAL_SCORER_STATE: BehaviourScorerState = {
+  chaseSeconds: 0,
   decision: 0,
   heldSeconds: 0,
+  pauses: 0,
+  pressureSeconds: 0,
   specialDueSeconds: 0,
   threatSeconds: 0,
 };
@@ -47,13 +62,13 @@ export function openingScorerState(scorer: BossScorer): BehaviourScorerState {
 const attackAction = (transition: BehaviourTransition) => `attack:${transition.to}`;
 const moveAction = (move: BossScoredMove) => `move:${move.id}`;
 
-// The pressure share in [0, 1]: 0 within the grace after the last attack, rising to 1 over the
-// ramp.
-export function scorerPressure(scorer: BossScorer, threatSeconds: number): number {
+// The pressure share in [0, 1]: 0 within the grace after the last attack or chase pause, rising
+// to 1 over the ramp.
+export function scorerPressure(scorer: BossScorer, pressureSeconds: number): number {
   const { graceSeconds, rampSeconds } = scorer.pressure;
   return rampSeconds > 0
-    ? clamp01((threatSeconds - graceSeconds) / rampSeconds)
-    : threatSeconds >= graceSeconds
+    ? clamp01((pressureSeconds - graceSeconds) / rampSeconds)
+    : pressureSeconds >= graceSeconds
       ? 1
       : 0;
 }
@@ -61,10 +76,11 @@ export function scorerPressure(scorer: BossScorer, threatSeconds: number): numbe
 // The caller's multiplier for an attack: pressure, then how due its cadence is.
 function attackMultiplier(
   scorer: BossScorer,
+  pressureSeconds: number,
   values: BossScorerValues,
   transition: BehaviourTransition,
 ): number {
-  const pressure = 1 + scorer.pressure.weight * scorerPressure(scorer, values.threatSeconds);
+  const pressure = 1 + scorer.pressure.weight * scorerPressure(scorer, pressureSeconds);
   const due = transition.score!.special
     ? values.specialDueSeconds / scorer.due.specialSeconds
     : values.threatSeconds / scorer.due.anySeconds;
@@ -73,10 +89,10 @@ function attackMultiplier(
 
 // Pressure raises every move that closes on Chibi; a standoff, which sets up a ranged attack,
 // keeps its score.
-function moveMultiplier(scorer: BossScorer, values: BossScorerValues, move: BossMove): number {
+function moveMultiplier(scorer: BossScorer, pressureSeconds: number, move: BossMove): number {
   return move.kind === "standoff"
     ? 1
-    : 1 + scorer.pressure.weight * scorerPressure(scorer, values.threatSeconds);
+    : 1 + scorer.pressure.weight * scorerPressure(scorer, pressureSeconds);
 }
 
 export type BossScorerChoice =
@@ -102,7 +118,7 @@ export function decideScored(
       base: transition.score!.base,
       considerations: transition.score!.considerations,
       gate: true,
-      multiplier: attackMultiplier(scorer, values, transition),
+      multiplier: attackMultiplier(scorer, state.pressureSeconds, values, transition),
       values,
     })),
     ...competing.map((move) => ({
@@ -110,7 +126,7 @@ export function decideScored(
       base: move.base,
       considerations: move.considerations,
       gate: true,
-      multiplier: moveMultiplier(scorer, values, move.move),
+      multiplier: moveMultiplier(scorer, state.pressureSeconds, move.move),
       values,
     })),
   ];
@@ -165,20 +181,47 @@ export function moveIntent(
 }
 
 // Advances the scorer's clocks by one slice: engaged time outside an attack counts toward
-// pressure and cadence, and a held move ages.
+// pressure, cadence and the next chase pause, and a held move ages. A slice in an attack
+// restarts the time since an attack.
 export function advanceScorer(
   engaged: boolean,
+  attacking: boolean,
   seconds: number,
   state: BehaviourScorerState,
 ): BehaviourScorerState {
-  return engaged
+  const next = engaged
     ? {
         ...state,
+        chaseSeconds: state.chaseSeconds + seconds,
         heldSeconds: state.heldSeconds + seconds,
+        pressureSeconds: state.pressureSeconds + seconds,
         specialDueSeconds: state.specialDueSeconds + seconds,
         threatSeconds: state.threatSeconds + seconds,
       }
     : state;
+  return {
+    ...next,
+    ...(next.sincePauseSeconds !== undefined && {
+      sincePauseSeconds: next.sincePauseSeconds + seconds,
+    }),
+    ...(attacking
+      ? { sinceAttackSeconds: 0 }
+      : next.sinceAttackSeconds !== undefined && {
+          sinceAttackSeconds: next.sinceAttackSeconds + seconds,
+        }),
+  };
+}
+
+// The seeded chase pause after `pauses` earlier ones: the chase seconds before it, its length
+// and the give-up roll in [0, 1).
+export function chasePauseDraw(
+  random: Random,
+  relief: ChaseRelief,
+): { readonly afterSeconds: number; readonly roll: number; readonly seconds: number } {
+  const between = ({ max, min }: SecondsRange) => min + random() * (max - min);
+  const afterSeconds = between(relief.pause.afterSeconds);
+  const seconds = between(relief.pause.seconds);
+  return { afterSeconds, roll: random(), seconds };
 }
 
 // The scorer state after choosing an attack: the held move ends and the chosen cadence restarts.
@@ -189,6 +232,7 @@ export function scorerAttacked(
   const next: BehaviourScorerState = {
     ...state,
     heldSeconds: 0,
+    pressureSeconds: 0,
     threatSeconds: 0,
     ...(transition.score!.special && { specialDueSeconds: 0 }),
   };

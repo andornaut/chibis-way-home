@@ -21,10 +21,11 @@ import type {
   BehaviourPlan,
   BehaviourTransition,
   BossScoredAttack,
+  ChaseRelief,
   DialogueLine,
 } from "./types";
 
-const BEAR_PURSUIT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
+const BEAR_PURSUIT_SPEED = (0.85 * BIRD.walkSpeed) / TILE;
 const BEAR_TRAVERSAL_SPEED = (1.4 * BIRD.walkSpeed) / TILE;
 const CROSSING_PAUSE = 1;
 const CROSSING_SPEED = 6;
@@ -32,9 +33,9 @@ const DOG_PATROL_PAUSE = 0.14;
 const DOG_PATROL_SPEED = 4.6875;
 const FERRET_THROW_PAUSE_SECONDS = 1;
 const GOOSE_PATROL_SPEED = 3.125;
-const GROUND_PURSUIT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
+const GROUND_PURSUIT_SPEED = (0.9 * BIRD.walkSpeed) / TILE;
 const GROUND_TRAVERSAL_SPEED = (1.5 * BIRD.walkSpeed) / TILE;
-const PIGEON_FLIGHT_SPEED = (1.6 * BIRD.walkSpeed) / TILE;
+const PIGEON_FLIGHT_SPEED = (1.2 * BIRD.walkSpeed) / TILE;
 const PIGEON_PURSUIT_SPEED = PIGEON_FLIGHT_SPEED;
 const PIGEON_SWOOP_SPEED = 20;
 const POUNCE_ENGAGEMENT_RANGE = 8;
@@ -87,14 +88,34 @@ const GROUND_TRAVERSAL = {
 const DETECTION = [{ kind: "visible" }] as const;
 const LOST_TARGET = [{ kind: "lost-target", tolerance: 1 }] as const;
 
-// A ground boss with no path to Chibi paces at the reachable spot nearest him.
-const BOSS_PACE = { distance: 3, speedScale: 0.6 };
+// A ground boss with no path to Chibi paces 2 tiles each side of the reachable spot nearest him,
+// at 0.35 of Chibi's walk, pausing facing him at the start and at every turn.
+const BOSS_PACE = {
+  distance: 4,
+  pauseSeconds: { max: 1.5, min: 0.8 },
+  speed: (0.35 * BIRD.walkSpeed) / TILE,
+};
 
+// Every scored pursuer pauses after 5 to 8 s of chase, for 0.8 to 1.4 s, at least 1 s from any
+// tell. From 15 s of engagement each pause gives up with a 35% chance; at 30 s it gives up.
+const CHASE_RELIEF: ChaseRelief = {
+  giveUp: { certainSeconds: 30, chance: 0.35, fromSeconds: 15 },
+  pause: {
+    afterSeconds: { max: 8, min: 5 },
+    seconds: { max: 1.4, min: 0.8 },
+    tellClearanceSeconds: 1,
+  },
+};
+
+// Pursuit ends past one screen width, after 6 s with no movement path, or by giving up; awareness
+// engages again 5 s after any ended chase.
 const PURSUIT_LIMITS = {
   distance: (6 * SCREEN.width) / TILE,
   escapeDistance: SCREEN.width / TILE,
   pace: BOSS_PACE,
-  unreachableGraceSeconds: null,
+  rearmSeconds: 5,
+  relief: CHASE_RELIEF,
+  unreachableGraceSeconds: 6,
 };
 function persistentPursuit(escaped: DialogueLine): NonNullable<BehaviourPlan["pursuit"]> {
   return { ...PURSUIT_LIMITS, escaped };

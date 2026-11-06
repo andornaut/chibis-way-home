@@ -9,11 +9,13 @@ import type {
   BehaviourNode,
   BehaviourPlan,
   BirdTuning,
+  ChaseRelief,
   DialogueLine,
   HazardPhase,
   ObjectLayout,
   Point,
   Rect,
+  SecondsRange,
 } from "../data/types";
 import {
   BEHAVIOUR_ABILITIES,
@@ -42,6 +44,7 @@ import {
   type BehaviourGeometry,
   type BehaviourWorld,
   flightContactApproach,
+  groundPursuitEnd,
   overheadFlightGoal,
   overheadFlightGoalForRect,
   overheadFlightRoute,
@@ -56,6 +59,7 @@ import {
   advanceScorer,
   type BehaviourScorerState,
   type BossScorerValues,
+  chasePauseDraw,
   decideScored,
   moveIntent,
   openingScorerState,
@@ -96,7 +100,17 @@ export interface BehaviourState extends BehaviourAttackState {
     readonly phase: "engaged" | "escaped";
     readonly unreachableSeconds: number;
     readonly settled: boolean;
+    // Seconds since this engagement began, and since the chase ended.
+    readonly engagedSeconds?: number;
+    readonly endedSeconds?: number;
+    // Engaged, a chase pause rolled a give-up and the next update ends pursuit; escaped, the
+    // chase ended by giving up.
+    readonly giveUp?: true;
+    // A ground boss that gave up walks back toward its encounter position once settled.
+    readonly home?: true;
   };
+  // A chase pause: the boss holds facing Chibi for the remaining seconds.
+  readonly chasePause?: { readonly remainingSeconds: number };
   readonly animationTag?: string;
   readonly animationSeconds?: number;
   readonly axis?: "x" | "y";
@@ -152,6 +166,7 @@ export interface BehaviourStep {
 // Resolve a complete graph once; malformed transitions fail before a stage starts.
 export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPlan {
   const valid = (value: number) => Number.isFinite(value) && value >= 0;
+  const validRange = ({ max, min }: SecondsRange) => valid(min) && valid(max) && min <= max;
   if (!Number.isFinite(plan.distance) || !plan.states[plan.initial]) {
     throw new Error("Invalid behaviour extent or initial state");
   }
@@ -166,9 +181,19 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         !valid(plan.pursuit.unreachableGraceSeconds)) ||
       (plan.pursuit.escapeDistance !== undefined && !valid(plan.pursuit.escapeDistance)) ||
       (plan.pursuit.pace &&
-        ![plan.pursuit.pace.distance, plan.pursuit.pace.speedScale].every(
+        (![plan.pursuit.pace.distance, plan.pursuit.pace.speed].every(
           (value) => Number.isFinite(value) && value > 0,
-        )) ||
+        ) ||
+          !validRange(plan.pursuit.pace.pauseSeconds))) ||
+      (plan.pursuit.rearmSeconds !== undefined && !valid(plan.pursuit.rearmSeconds)) ||
+      (plan.pursuit.relief &&
+        (!plan.scorer ||
+          !validRange(plan.pursuit.relief.pause.afterSeconds) ||
+          !validRange(plan.pursuit.relief.pause.seconds) ||
+          !valid(plan.pursuit.relief.pause.tellClearanceSeconds) ||
+          !valid(plan.pursuit.relief.giveUp.fromSeconds) ||
+          plan.pursuit.relief.giveUp.certainSeconds < plan.pursuit.relief.giveUp.fromSeconds ||
+          !(plan.pursuit.relief.giveUp.chance >= 0 && plan.pursuit.relief.giveUp.chance <= 1))) ||
       !plan.pursuit.escaped.line ||
       !plan.pursuit.escaped.speaker)
   ) {
@@ -681,7 +706,11 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
           escapeDistance: plan.pursuit.escapeDistance * tile,
         }),
         ...(plan.pursuit.pace && {
-          pace: { ...plan.pursuit.pace, distance: plan.pursuit.pace.distance * tile },
+          pace: {
+            ...plan.pursuit.pace,
+            distance: plan.pursuit.pace.distance * tile,
+            speed: plan.pursuit.pace.speed * tile,
+          },
         }),
       },
     }),
@@ -1263,16 +1292,39 @@ function updatePursuit(
   const timedOut = (unreachableSeconds: number) =>
     config.unreachableGraceSeconds !== null && unreachableSeconds >= config.unreachableGraceSeconds;
   let reachable = pursuitReachable(perception, object, at, currentState);
-  const prior = currentState.pursuit;
+  const ended = currentState.pursuit;
+  // An ended chase counts toward its rearm cooldown, during which awareness never engages.
+  const prior =
+    ended?.phase === "escaped"
+      ? { ...ended, endedSeconds: (ended.endedSeconds ?? 0) + seconds }
+      : ended;
+  if (prior && prior !== ended) {
+    currentState = { ...currentState, pursuit: prior };
+  }
+  const cooled =
+    prior?.phase !== "escaped" || prior.endedSeconds! >= (config.rearmSeconds ?? 0) - EDGE;
   const observer = { ...at, height: object.height, width: object.width };
   const target = birdBox(tuning, bird);
   const aware =
     targetInSameChunk(world, observer, target) || targetInCurrentView(world, observer, target);
   const entry = pursuitKinds(object.behaviour!).groundTraversal ? world.groundMap?.() : undefined;
-  if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true && entry) {
+  if (
+    prior?.phase === "escaped" &&
+    prior.settled &&
+    cooled &&
+    inside &&
+    reachable !== true &&
+    entry
+  ) {
     // The map path that pursuit would follow is the rearm verdict.
     reachable = aware ? mapReachable(world, object, entry, at, target) : undefined;
-  } else if (prior?.phase === "escaped" && prior.settled && inside && reachable !== true) {
+  } else if (
+    prior?.phase === "escaped" &&
+    prior.settled &&
+    cooled &&
+    inside &&
+    reachable !== true
+  ) {
     const motion = pursuitKinds(object.behaviour!).groundTraversalMotion;
     if (motion?.kind === "pursue" && motion.mode === "ground") {
       const probed = probeRearm(
@@ -1305,12 +1357,14 @@ function updatePursuit(
       reachable = probed.reachable;
     }
   }
-  const canAcquire = !prior || (prior.phase === "escaped" && prior.settled && inside && reachable);
+  const canAcquire =
+    !prior || (prior.phase === "escaped" && prior.settled && cooled && inside && reachable);
   if (canAcquire && aware) {
     const unreachableSeconds = reachable === false ? seconds : 0;
-    return {
+    const acquired: BehaviourState = {
       ...currentState,
       pursuit: {
+        engagedSeconds: 0,
         phase:
           outsideEscape || (reachable === false && timedOut(unreachableSeconds))
             ? "escaped"
@@ -1318,7 +1372,10 @@ function updatePursuit(
         settled: false,
         unreachableSeconds,
       },
+      ...(currentState.scorer && { scorer: { ...currentState.scorer, chaseSeconds: 0 } }),
     };
+    delete (acquired as { chasePause?: unknown }).chasePause;
+    return acquired;
   }
   if (prior?.phase !== "engaged") {
     return currentState;
@@ -1329,11 +1386,27 @@ function updatePursuit(
       : reachable === false
         ? prior.unreachableSeconds + seconds
         : prior.unreachableSeconds;
-  const escaped = outsideEscape || (reachable === false && timedOut(unreachableSeconds));
-  return {
+  const engagedSeconds = (prior.engagedSeconds ?? 0) + seconds;
+  // Giving up: no movement path for the grace, a chase pause's roll, or the certain limit.
+  const gaveUp =
+    (reachable === false && timedOut(unreachableSeconds)) ||
+    prior.giveUp === true ||
+    (config.relief !== undefined && engagedSeconds >= config.relief.giveUp.certainSeconds - EDGE);
+  const escaped = outsideEscape || gaveUp;
+  const next: BehaviourState = {
     ...currentState,
-    pursuit: { phase: escaped ? "escaped" : "engaged", settled: false, unreachableSeconds },
+    pursuit: {
+      engagedSeconds,
+      phase: escaped ? "escaped" : "engaged",
+      settled: false,
+      unreachableSeconds,
+      ...(gaveUp && !outsideEscape && { giveUp: true as const, home: true as const }),
+    },
   };
+  if (escaped) {
+    delete (next as { chasePause?: unknown }).chasePause;
+  }
+  return next;
 }
 
 // One advance's loop-carried state across its slices.
@@ -1381,6 +1454,161 @@ type SliceOutcome =
   | { readonly kind: "again" }
   | { readonly kind: "end" }
   | { readonly kind: "hold"; readonly step: BehaviourStep };
+
+// Starts a chase pause when its seeded chase time has passed, at least the clearance after the
+// last tell or committed attack, with the boss on the ground (Pebble in a safe hover) and a movement path to Chibi.
+// Past the give-up start, the pause's seeded roll may give up.
+function startChasePause(
+  context: BehaviourRunContext,
+  relief: ChaseRelief,
+  current: Point,
+  state: BehaviourState,
+  time: number,
+): BehaviourState {
+  const { object, perception, seconds } = context;
+  const { world } = perception;
+  const scorer = state.scorer ?? openingScorerState(object.behaviour!.scorer!);
+  const { motion } = nodeOf(object, state.stateKey);
+  if (
+    state.chasePause ||
+    state.pursuit?.phase !== "engaged" ||
+    state.activeAttack ||
+    state.hop ||
+    state.mapPursuit?.route?.reachable === false ||
+    (scorer.sinceAttackSeconds !== undefined &&
+      scorer.sinceAttackSeconds < relief.pause.tellClearanceSeconds - EDGE) ||
+    (motion.kind === "pursue" && motion.mode === "fly"
+      ? !safeIntentHover(world, seconds - time, object, current)
+      : state.traversal !== undefined && !state.traversal.physical.grounded)
+  ) {
+    return state;
+  }
+  if (!world.decisions) {
+    throw new Error("Chase relief requires an object-local decision context");
+  }
+  const draw = chasePauseDraw(world.decisions(`relief:${scorer.pauses}`), relief);
+  if (scorer.chaseSeconds < draw.afterSeconds) {
+    return state;
+  }
+  const giveUp =
+    (state.pursuit.engagedSeconds ?? 0) >= relief.giveUp.fromSeconds - EDGE &&
+    draw.roll < relief.giveUp.chance;
+  const next: BehaviourState = {
+    ...state,
+    chasePause: { remainingSeconds: draw.seconds },
+    ...(giveUp && { pursuit: { ...state.pursuit, giveUp: true as const } }),
+    scorer: { ...scorer, chaseSeconds: 0, pauses: scorer.pauses + 1 },
+  };
+  delete (next as { intent?: unknown }).intent;
+  return next;
+}
+
+// Holds a chase pause for the rest of the step, facing Chibi in the idle pose. Its end restarts
+// pressure and the tell clearance.
+function chasePauseHold(
+  context: BehaviourRunContext,
+  current: Point,
+  state: BehaviourState,
+  time: number,
+  actions: readonly BehaviourEvent[],
+  segments: readonly BehaviourSegment[],
+): BehaviourStep {
+  const { escaped, object, perception, seconds } = context;
+  const { target: bird, tuning } = perception;
+  const remaining = seconds - time;
+  const mine = current.x + object.width / 2;
+  const theirs = bird.x + tuning.width / 2;
+  const facing = theirs === mine ? state.facing : theirs < mine ? -1 : 1;
+  const hold = [{ end: remaining, from: current, start: 0, to: current }];
+  const animated = animateSegments(object, remaining, { ...state, facing }, hold, undefined, false);
+  const left = state.chasePause!.remainingSeconds - remaining;
+  let next = advanceAttackClock(remaining, animated.state);
+  if (left > EDGE) {
+    next = { ...next, chasePause: { remainingSeconds: left } };
+  } else {
+    delete (next as { chasePause?: unknown }).chasePause;
+    next = syncAnimation(object, {
+      ...next,
+      scorer: { ...next.scorer!, pressureSeconds: 0, sincePauseSeconds: 0 },
+    });
+  }
+  return {
+    actions,
+    at: current,
+    segments: [
+      ...segments,
+      ...animated.segments.map((segment) => ({
+        ...segment,
+        end: segment.end + time,
+        start: segment.start + time,
+      })),
+    ],
+    state: next,
+    ...(escaped && { escaped }),
+  };
+}
+
+// After giving up, a settled ground boss walks at chase speed toward its encounter position,
+// stopping at walls and support edges, then resumes its initial behaviour anchored there.
+function homeWalk(
+  context: BehaviourRunContext,
+  current: Point,
+  state: BehaviourState,
+  time: number,
+  actions: readonly BehaviourEvent[],
+  segments: readonly BehaviourSegment[],
+):
+  | { readonly kind: "hold"; readonly step: BehaviourStep }
+  | { readonly kind: "done"; readonly state: BehaviourState } {
+  const { escaped, object, perception, seconds } = context;
+  const { world } = perception;
+  const motion = pursuitKinds(object.behaviour!).groundTraversalMotion;
+  // Off support, ordinary gravity acts first.
+  if (!supportContact(object, world, current)) {
+    return { kind: "done", state };
+  }
+  const remaining = seconds - time;
+  const gap = object.origin.x - current.x;
+  const heading = gap < 0 ? -1 : 1;
+  const x =
+    motion?.kind !== "pursue" || !groundBoss(object)
+      ? current.x
+      : groundPursuitEnd(
+          object,
+          world,
+          pursuitTrack(object),
+          current,
+          contactBox(object, current, heading, "x"),
+          current.x + heading * Math.min(Math.abs(gap), motion.speed * remaining),
+        );
+  if (Math.abs(x - current.x) <= EDGE) {
+    const pursuit = { ...state.pursuit! };
+    delete (pursuit as { home?: true }).home;
+    return { kind: "done", state: syncAnimation(object, { ...state, anchor: current, pursuit }) };
+  }
+  const to = { x, y: current.y };
+  const walking = { ...state, facing: heading } as BehaviourState;
+  const animated = animateSegments(object, remaining, walking, [
+    { end: remaining, from: current, start: 0, to },
+  ]);
+  return {
+    kind: "hold",
+    step: {
+      actions,
+      at: to,
+      segments: [
+        ...segments,
+        ...animated.segments.map((segment) => ({
+          ...segment,
+          end: segment.end + time,
+          start: segment.start + time,
+        })),
+      ],
+      state: advanceAttackClock(remaining, animated.state),
+      ...(escaped && { escaped }),
+    },
+  };
+}
 
 // Decides one slice from the snapshot and the object's own state: support, escape settling,
 // entry and its effects, the first matching unscored transition, then in the engaged state the
@@ -1435,6 +1663,24 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       anchor: current,
       pursuit: { ...next.pursuit, settled: true },
     });
+    node = nodeOf(object, next.stateKey);
+  }
+  if (
+    time < seconds &&
+    next.pursuit?.phase === "escaped" &&
+    next.pursuit.settled &&
+    next.pursuit.home &&
+    !attackProtected(node, next) &&
+    !next.hop &&
+    (!next.traversal || next.traversal.physical.grounded)
+  ) {
+    const walked = homeWalk(context, current, next, time, actions, segments);
+    if (walked.kind === "hold") {
+      save();
+      run.next = walked.step.state;
+      return walked;
+    }
+    next = walked.state;
     node = nodeOf(object, next.stateKey);
   }
   if (watchdog && idleReady(object, world, current, next)) {
@@ -1556,6 +1802,15 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     !attackProtected(node, next) &&
     !settling &&
     next.pursuit?.phase === "engaged";
+  const relief = plan.pursuit?.relief;
+  if (time < seconds && sampledMotion && relief && !graphHeld && node.motion.kind === "pursue") {
+    next = startChasePause(context, relief, current, next, time);
+    if (next.chasePause) {
+      const held = chasePauseHold(context, current, next, time, actions, segments);
+      run.next = held.state;
+      return { kind: "hold", step: held };
+    }
+  }
   // Attacks are scored at every slice boundary, including the step's end; moves only within it.
   if (sampledMotion && !graphHeld && node.motion.kind === "pursue") {
     const previous = next.intent;
@@ -1580,10 +1835,13 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     }
     // Attacks are scored only at a slice that did not arrive here through instant transitions,
     // so a scored attack never closes an instant cycle.
+    const clearance = relief?.pause.tellClearanceSeconds ?? 0;
+    const sincePause = next.scorer?.sincePauseSeconds;
     const gated = node.transitions.filter(
       ({ score, to, when }) =>
         score &&
         instant.size === 0 &&
+        (sincePause === undefined || sincePause >= clearance - EDGE) &&
         canEnterAttack(nodeOf(object, to), next) &&
         when.every((condition) => matches(supportPerception, object, current, next, condition)),
     );
@@ -1891,6 +2149,7 @@ function actSlice(context: BehaviourRunContext, decision: SliceDecision, run: Be
     ...(object.behaviour!.scorer && {
       scorer: advanceScorer(
         next.pursuit?.phase === "engaged" && !next.activeAttack,
+        next.activeAttack !== undefined,
         slice,
         next.scorer ?? openingScorerState(object.behaviour!.scorer!),
       ),
