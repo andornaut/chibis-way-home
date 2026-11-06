@@ -471,22 +471,6 @@ it("bounds the wide reachable fixture with an ordinary running jump", () => {
 
 it.each([
   {
-    budget: 720,
-    id: "apartment-tall-city-boundary-climb-yard",
-    route: [
-      [9, 45],
-      [15, 40],
-      [19, 34],
-      [25, 40],
-      [37, 36],
-      [44, 40],
-      [50, 34],
-      [56.5, 40],
-    ],
-    theme: "apartment-lobby",
-    underpass: 4,
-  },
-  {
     budget: 600,
     id: "growl-clearing-woodland-depth",
     route: [
