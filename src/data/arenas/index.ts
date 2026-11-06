@@ -7,14 +7,9 @@ export const ARENAS: readonly ChunkArena[] = [];
 // Remove each stage as its arena lands; the check fails once the list is empty and any encounter
 // stage lacks exactly one arena.
 export const ARENA_PENDING_STAGES: readonly StageKey[] = [
-  "back-streets",
   "city-boundary",
-  "city-streets",
-  "country-lanes",
-  "deep-woods",
   "familiar-neighbourhood",
   "freight-terminal",
-  "loading-yards",
   "penthouse",
   "ravine",
   "residential-floors",

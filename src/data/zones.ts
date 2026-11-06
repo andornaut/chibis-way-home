@@ -40,7 +40,7 @@ const DIFFICULTY_PROFILES = {
   woodland: { difficulty: { max: 5, min: 4 }, difficultyWeights: { 4: 1, 5: 3 } },
 } as const;
 const MIN_ENCOUNTER_GAP = 3;
-const STAGE_ENCOUNTERS = { first: 0, second: 1, third: 1 } as const;
+const STAGE_ENCOUNTERS = { first: 0, second: 0, third: 1 } as const;
 const STAGE_LENGTH = { max: 16 * CHUNK_COLS, min: 14 * CHUNK_COLS } as const;
 
 const STAGE_CHUNK_POOLS = {
