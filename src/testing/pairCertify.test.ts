@@ -97,6 +97,7 @@ describe("certifiedChunks", () => {
   it("composes only listed pairs, so an unlisted pair is never drawn", () => {
     const { chunks, pools } = certifiedChunks(context, [
       {
+        arenas: [],
         entries: [entry("fixture-step", "fixture-red-strip")],
         inputs: { data: "", proofs: "" },
         version: 1,
@@ -111,6 +112,7 @@ describe("certifiedChunks", () => {
     expect(() =>
       certifiedChunks(context, [
         {
+          arenas: [],
           entries: [entry("fixture-step", "fixture-gone")],
           inputs: { data: "", proofs: "" },
           version: 1,
