@@ -86,7 +86,9 @@ interface BehaviourTraversal {
 }
 
 export type BehaviourMotion =
-  | { readonly kind: "wait"; readonly support?: "required" }
+  // A wander wait moves by the plan's wander while unengaged after any rearm cooldown, and holds
+  // still otherwise.
+  | { readonly kind: "wait"; readonly support?: "required"; readonly wander?: true }
   | {
       readonly kind: "pursue";
       readonly mode: "fly";
@@ -112,6 +114,8 @@ export type BehaviourMotion =
         readonly minDistance: number;
         // Tiles above both endpoints for the ascent, cruise and supported descent.
         readonly clearance: number;
+        // Horizontal leash around the placed origin; omitted, the pursuit distance.
+        readonly home?: number;
         readonly maxAttempts: number;
       };
     }
@@ -350,19 +354,32 @@ export interface SecondsRange {
 
 // Chase relief for a scored pursuer. After a seeded span of engaged chase outside attacks, the
 // boss holds a seeded pause facing Chibi, never within tellClearanceSeconds of a tell, and its
-// pressure restarts. From giveUp.fromSeconds of engagement each pause gives up with
-// giveUp.chance, and at giveUp.certainSeconds the boss gives up outright.
+// pressure restarts. Each engagement draws a give-up time in giveUp.seconds; the first pause at or
+// after it gives up, as does a pause still running when it passes.
 export interface ChaseRelief {
-  readonly giveUp: {
-    readonly certainSeconds: number;
-    readonly chance: number;
-    readonly fromSeconds: number;
-  };
+  readonly giveUp: { readonly seconds: SecondsRange };
   readonly pause: {
     readonly afterSeconds: SecondsRange;
     readonly seconds: SecondsRange;
     readonly tellClearanceSeconds: number;
   };
+}
+
+// A boss's wander while unengaged, outside any rearm cooldown, in a wander wait state. A move
+// starts every seeded everySeconds and is followed by a hold of at least a seeded holdSeconds,
+// facing the move's direction. A ground boss walks a seeded distance at speed along supported
+// floor within range of its placed origin; a flyer enters its hop state, a supported flight that
+// returns to the wander state on landing. Distances and speeds are tiles in data, pixels in a
+// layout.
+export interface BossWander {
+  readonly everySeconds: SecondsRange;
+  readonly holdSeconds: SecondsRange;
+  readonly range: number;
+  readonly walk?: {
+    readonly distance: { readonly max: number; readonly min: number };
+    readonly speed: number;
+  };
+  readonly hop?: string;
 }
 
 // A reusable bounded movement graph. Distance is signed from its placed origin, in tiles in
@@ -400,6 +417,7 @@ export interface BehaviourPlan {
     readonly relief?: ChaseRelief;
   };
   readonly spotted?: DialogueLine;
+  readonly wander?: BossWander;
   readonly axis: "x" | "y";
   readonly distance: number;
   // Initial facing; omitted, a negative distance faces left and any other faces right.
