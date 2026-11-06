@@ -8,10 +8,11 @@
  * colours supply steel outlines, muted wood and safe white lips. No palette values or existing art
  * are changed.
  *
- * Tiles: tiles-industrial, 12px, eight columns, 40 cells in a 96x60 PNG. Each material has ten
+ * Tiles: tiles-industrial, 12px, eight columns, 52 cells in a 96x84 PNG. Each material has 13
  * keys: top, top-left, top-right, top-joint, face, face-left and face-right, then, after all four
  * families, bottom-left, bottom and bottom-right: the face closed by a 2px dslate band along its
- * bottom, as the side tiles close their open side. Families, in export order:
+ * bottom, as the side tiles close their open side; then slab-left, slab and slab-right: a one-row
+ * block, the top's edge and lip over the bottom's closing band. Families, in export order:
  * - industrial-floor: concrete; warehouse ground look.
  * - crate-stack: muted wooden packing cases; warehouse raised look.
  * - terminal-floor: steel/concrete apron; freight ground look.
@@ -83,8 +84,9 @@ const PRIMARY = (THEMES.industrial as { primary: string }).primary;
 const SHADE = `${PRIMARY}-shade`;
 const FAMILIES = ["industrial-floor", "crate-stack", "terminal-floor", "container-stack"] as const;
 const SUFFIXES = ["top", "top-left", "top-right", "top-joint", "face", "face-left", "face-right"];
-// Appended after every family's SUFFIXES, so the earlier indices hold.
+// Appended after every family's SUFFIXES, bottoms then slabs, so the earlier indices hold.
 const BOTTOM_SUFFIXES = ["bottom-left", "bottom", "bottom-right"];
+const SLAB_SUFFIXES = ["slab-left", "slab", "slab-right"];
 const USAGE = "Usage: industrial.ts build | preview OUT.png";
 
 type Family = (typeof FAMILIES)[number];
@@ -109,10 +111,10 @@ function material(family: Family, suffix: string): RgbaImage {
   if (suffix.endsWith("right")) {
     rect("dslate", [10, 0, 12, T], im);
   }
-  if (suffix.startsWith("bottom")) {
+  if (suffix.startsWith("bottom") || suffix.startsWith("slab")) {
     rect("dslate", [0, 10, 12, 12], im);
   }
-  if (suffix.startsWith("top")) {
+  if (suffix.startsWith("top") || suffix.startsWith("slab")) {
     const top = {
       "industrial-floor": PRIMARY,
       "crate-stack": "zone-peach",
@@ -130,7 +132,7 @@ function material(family: Family, suffix: string): RgbaImage {
 }
 
 export function tiles(): [string, RgbaImage][] {
-  return [SUFFIXES, BOTTOM_SUFFIXES].flatMap((suffixes) =>
+  return [SUFFIXES, BOTTOM_SUFFIXES, SLAB_SUFFIXES].flatMap((suffixes) =>
     FAMILIES.flatMap((family) =>
       suffixes.map((suffix): [string, RgbaImage] => [
         `${family}-${suffix}`,

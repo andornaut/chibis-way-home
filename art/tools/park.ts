@@ -31,6 +31,8 @@
  * - grass-bottom-left, grass-bottom, grass-bottom-right: the soil closed off underneath, solid: the
  *   side tiles' dark-brown band and plum edge along the bottom, for the underside of a raised or
  *   floating block. After the thorn hedge, so every earlier index holds.
+ * - grass-slab-left, grass-slab, grass-slab-right: a one-row block, solid: the grass top over the
+ *   same closed underside. After the bottoms.
  * - path-top, path-top-joint: a gravel path top, solid; alternate them.
  * - step-stair, step-stair-left: a stone stair tread inset in a step's grass top, solid, with a
  *   white lip so it holds 2:1 against the tan treetops. Lay steps 2 columns deep and 1 or 2 rows
@@ -160,6 +162,16 @@ function grass(kind = ""): RgbaImage {
       [T - 2, 1, 1, 2, edge],
       [T - 1, 3, 1, 9, edge],
     );
+  }
+  // A slab, a one-row block: the soil's closed underside below the top, the side edges over it.
+  if (kind.includes("b")) {
+    rects(t, [0, T - 3, T, 3, SOIL[1]], [0, T - 1, T, 1, SOIL[2]]);
+    if (kind.includes("l")) {
+      rects(t, [0, T - 3, 1, 3, edge]);
+    }
+    if (kind.includes("r")) {
+      rects(t, [T - 1, T - 3, 1, 3, edge]);
+    }
   }
   return t;
 }
@@ -377,6 +389,9 @@ function tiles(): Tile[] {
     ["grass-bottom-left", soil("bl")],
     ["grass-bottom", soil("b")],
     ["grass-bottom-right", soil("br")],
+    ["grass-slab-left", grass("bl")],
+    ["grass-slab", grass("b")],
+    ["grass-slab-right", grass("br")],
   ];
 }
 

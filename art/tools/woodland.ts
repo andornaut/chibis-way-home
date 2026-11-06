@@ -3,10 +3,11 @@
  *
  * Usage: node art/tools/woodland.ts build | preview OUT.png, from the repository root. Plain PNG,
  * no animations. Canonical woodland zone-green and shade, existing house palette only.
- * tiles-woodland: 12px, eight columns, 40 cells in 96x60. Families forest-ground/root-stack/
+ * tiles-woodland: 12px, eight columns, 52 cells in 96x84. Families forest-ground/root-stack/
  * ravine-ground/stone-stack each use top/top-left/top-right/top-joint/face/face-left/face-right,
  * then, after all four, bottom-left/bottom/bottom-right: the face closed by a 2px dslate band along
- * its bottom, as the side tiles close their open side.
+ * its bottom, as the side tiles close their open side; then slab-left/slab/slab-right: a one-row
+ * block, the top's edge and lip over the bottom's closing band.
  * Generic geometry unchanged. Only top tiles have dark edge and white lip. Shared ledges, hazards
  * and movers retain tiles-platforming.
  *
@@ -64,8 +65,9 @@ const PRIMARY = (THEMES.woodland as { primary: string }).primary;
 const SHADE = `${PRIMARY}-shade`;
 const FAMILIES = ["forest-ground", "root-stack", "ravine-ground", "stone-stack"] as const;
 const SUFFIXES = ["top", "top-left", "top-right", "top-joint", "face", "face-left", "face-right"];
-// Appended after every family's SUFFIXES, so the earlier indices hold.
+// Appended after every family's SUFFIXES, bottoms then slabs, so the earlier indices hold.
 const BOTTOM_SUFFIXES = ["bottom-left", "bottom", "bottom-right"];
+const SLAB_SUFFIXES = ["slab-left", "slab", "slab-right"];
 const USAGE = "Usage: woodland.ts build | preview OUT.png";
 
 type Family = (typeof FAMILIES)[number];
@@ -91,10 +93,10 @@ function material(family: Family, suffix: string): RgbaImage {
   if (suffix.endsWith("right")) {
     rect("dslate", [10, 0, 12, T], im);
   }
-  if (suffix.startsWith("bottom")) {
+  if (suffix.startsWith("bottom") || suffix.startsWith("slab")) {
     rect("dslate", [0, 10, 12, 12], im);
   }
-  if (suffix.startsWith("top")) {
+  if (suffix.startsWith("top") || suffix.startsWith("slab")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
     rect(PRIMARY, [0, 3, 12, 5], im);
@@ -106,7 +108,7 @@ function material(family: Family, suffix: string): RgbaImage {
 }
 
 export function tiles(): [string, RgbaImage][] {
-  return [SUFFIXES, BOTTOM_SUFFIXES].flatMap((suffixes) =>
+  return [SUFFIXES, BOTTOM_SUFFIXES, SLAB_SUFFIXES].flatMap((suffixes) =>
     FAMILIES.flatMap((family) =>
       suffixes.map((suffix): [string, RgbaImage] => [
         `${family}-${suffix}`,

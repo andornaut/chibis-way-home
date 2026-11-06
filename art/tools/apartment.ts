@@ -6,8 +6,9 @@
  * sage and blue accents only. tiles-apartment: six families apartment-wood/tile/plaster/stone/
  * brick/metal, each seven standard suffixes: top/top-left/top-right/top-joint/face/face-left/
  * face-right, then, after all six, bottom-left/bottom/bottom-right: the face closed by a 2px navy
- * band along its bottom, as the side tiles close their open side. 60 cells, 12px, 8 columns,
- * 96x96. Only safe top cells carry the dark edge and two-pixel white lip. Shared ledges, hazards
+ * band along its bottom, as the side tiles close their open side, then slab-left/slab/slab-right:
+ * a one-row block, the top's edge and lip over the bottom's closing band. 78 cells, 12px, 8
+ * columns, 96x120. Only safe top cells carry the dark edge and two-pixel white lip. Shared ledges, hazards
  * and movers retain tiles-platforming.
  *
  * Backdrops: apartment-sky 48x720, apartment-far 720x720, apartment-exterior-mid 720x720, all
@@ -59,8 +60,9 @@ const SHADE = `${PRIMARY}-shade`;
 const NAMES = ["wood", "tile", "plaster", "stone", "brick", "metal"] as const;
 const FAMILIES = NAMES.map((name) => `apartment-${name}`);
 const SUFFIXES = ["top", "top-left", "top-right", "top-joint", "face", "face-left", "face-right"];
-// Appended after every family's SUFFIXES, so the earlier indices hold.
+// Appended after every family's SUFFIXES, bottoms then slabs, so the earlier indices hold.
 const BOTTOM_SUFFIXES = ["bottom-left", "bottom", "bottom-right"];
+const SLAB_SUFFIXES = ["slab-left", "slab", "slab-right"];
 const STYLES = ["lobby", "restaurant", "pool", "spa", "residential"] as const;
 const USAGE = "Usage: apartment.ts build | preview OUT.png";
 
@@ -92,10 +94,10 @@ function material(name: Name, suffix: string): RgbaImage {
   if (suffix.endsWith("right")) {
     rect("navy", [10, 0, 12, 12], im);
   }
-  if (suffix.startsWith("bottom")) {
+  if (suffix.startsWith("bottom") || suffix.startsWith("slab")) {
     rect("navy", [0, 10, 12, 12], im);
   }
-  if (suffix.startsWith("top")) {
+  if (suffix.startsWith("top") || suffix.startsWith("slab")) {
     rect("navy", [0, 0, 12, 1], im);
     rect("white", [0, 1, 12, 3], im);
     rect(PRIMARY, [0, 3, 12, 5], im);
@@ -107,7 +109,7 @@ function material(name: Name, suffix: string): RgbaImage {
 }
 
 export function tiles(): [string, RgbaImage][] {
-  return [SUFFIXES, BOTTOM_SUFFIXES].flatMap((suffixes) =>
+  return [SUFFIXES, BOTTOM_SUFFIXES, SLAB_SUFFIXES].flatMap((suffixes) =>
     NAMES.flatMap((name) =>
       suffixes.map((suffix): [string, RgbaImage] => [
         `apartment-${name}-${suffix}`,

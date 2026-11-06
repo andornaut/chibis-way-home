@@ -53,7 +53,9 @@
  *   over a slate face.
  * - sidewalk-bottom-left, sidewalk-bottom, sidewalk-bottom-right: the face closed underneath by a
  *   2px shade band over a 1px edge row, as face-right closes its side, for the underside of a
- *   raised or floating block. The last three tiles, after the crosswalk.
+ *   raised or floating block. Then sidewalk-slab-left, sidewalk-slab, sidewalk-slab-right: a
+ *   one-row block, the top's edge and lip over the same closing band. The last six tiles, after the
+ *   crosswalk.
  * - road-top, road: asphalt, one tile below the sidewalk.
  * - one-way-awning-left, one-way-awning, one-way-awning-right: an ochre-and-cream shop awning seen
  *   front-on, 4px stripes and a scalloped hem, art in the top 11 rows. Lay them on row 20 (y 240),
@@ -99,7 +101,8 @@
  * - floor-top, floor-top-joint (a 2px board end at the right edge; alternate them, 24px rhythm),
  *   floor-top-left, floor-top-right, floor-face, floor-face-left, floor-face-right: brown boards
  *   over a dark-brown face. floor-bottom-left, floor-bottom, floor-bottom-right close the face
- *   underneath with a 2px plum band over a plum edge row; the last three tiles, after the exit.
+ *   underneath with a 2px plum band over a plum edge row; floor-slab-left, floor-slab and
+ *   floor-slab-right are one-row blocks, the top over that band; the last six tiles, after the exit.
  *   The lobby floor line is y 672 (row 56) in a level 720px (60 tiles) tall.
  * - One-way ledges, each a 7px slab (left, middle, right): one-way-balcony-* (the mezzanine's front
  *   edge), one-way-shelf-* (bookcase boards, with brackets on the end tiles), one-way-cushion-* (the
@@ -212,8 +215,9 @@ function ends(
 }
 
 /**
- * Close a face tile's underside when kind has "b": a 2px shade band over a 1px edge row, the
- * treatment of a right end, with the side edges redrawn so the outline runs round the corner.
+ * Close a tile's underside when kind has "b": a 2px shade band over a 1px edge row, the treatment
+ * of a right end, with the side edges redrawn so the outline runs round the corner. A top kind
+ * with "b" is a slab, a one-row block.
  */
 function underside(g: Grid, kind: string, edge: string, shade: string): Grid {
   if (!kind.includes("b")) {
@@ -221,10 +225,10 @@ function underside(g: Grid, kind: string, edge: string, shade: string): Grid {
   }
   rects(g, [0, T - 3, T, 2, shade], [0, T - 1, T, 1, edge]);
   if (kind.includes("l")) {
-    rects(g, [0, 0, 1, T, edge]);
+    rects(g, [0, T - 3, 1, 3, edge]);
   }
   if (kind.includes("r")) {
-    rects(g, [T - 1, 0, 1, T, edge]);
+    rects(g, [T - 1, T - 3, 1, 3, edge]);
   }
   return g;
 }
@@ -329,7 +333,7 @@ function sidewalk(kind: string, joint = false): Grid {
     if (joint) {
       rects(g, [T - 2, 3, 2, 7, S.joint]);
     }
-    return ends(g, kind, S.edge, S.lip, S.under, 1);
+    return underside(ends(g, kind, S.edge, S.lip, S.under, 1), kind, S.edge, S.faceSh);
   }
   rects(g, [0, 0, T, T, S.face]);
   return underside(ends(g, kind, S.edge, S.faceLit, S.faceSh), kind, S.edge, S.faceSh);
@@ -537,6 +541,9 @@ function streetTiles(): [Tile[], Pieces] {
       ["sidewalk-bottom-left", sidewalk("bl")],
       ["sidewalk-bottom", sidewalk("b")],
       ["sidewalk-bottom-right", sidewalk("br")],
+      ["sidewalk-slab-left", sidewalk("tbl")],
+      ["sidewalk-slab", sidewalk("tb")],
+      ["sidewalk-slab-right", sidewalk("tbr")],
     ],
     { door: doorRows },
   ];
@@ -594,7 +601,7 @@ function floor(kind: string, joint = false): Grid {
     if (joint) {
       rects(g, [T - 2, 3, 2, 7, "dbrown"]);
     }
-    return ends(g, kind, LE, "cream", "dbrown", 1);
+    return underside(ends(g, kind, LE, "cream", "dbrown", 1), kind, LE, "plum");
   }
   rects(g, [0, 0, T, T, "dbrown"]);
   return underside(ends(g, kind, LE, "brown", "plum"), kind, LE, "plum");
@@ -711,6 +718,9 @@ function lobbyTiles(): [Tile[], Pieces] {
     ["floor-bottom-left", floor("bl")],
     ["floor-bottom", floor("b")],
     ["floor-bottom-right", floor("br")],
+    ["floor-slab-left", floor("tbl")],
+    ["floor-slab", floor("tb")],
+    ["floor-slab-right", floor("tbr")],
   ];
   return [[...tiles, ...exitTiles, ...bottoms], { exit: exitRows }];
 }

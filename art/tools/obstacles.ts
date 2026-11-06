@@ -5,9 +5,10 @@
  * Run from the repository root. Build writes tiles-platforming.png/.json and merges its manifest
  * entry.
  *
- * Solid terrain is assembled from top, bottom, left, right, corner and fill tiles. The top has a
- * white lip; wall and ceiling edges have no white lip. One-way ledges are thin slabs, transparent
- * underneath.
+ * Solid terrain is assembled from top, bottom, left, right, corner and fill tiles, and
+ * platform-slab-left, platform-slab and platform-slab-right (after the crumbling ledges) for a
+ * one-row block, the top over the bottom's closing band. The top has a white lip; wall and ceiling
+ * edges have no white lip. One-way ledges are thin slabs, transparent underneath.
  *
  * Crumbling ledges reuse the one-way ledge cells exactly (opaque rows 0..5, the same per-side
  * mask) and add marks only inside that band, never touching columns 0 or 11, so any
@@ -155,6 +156,12 @@ export function tiles(): [name: string, tile: RgbaImage][] {
       items.push([`${prefix}-${side}`, crumblingLedge(state, side)]);
     }
   }
+  // Appended so the earlier indices hold.
+  items.push(
+    ["platform-slab-left", solid(true, true, true, false)],
+    ["platform-slab", solid(true, true, false, false)],
+    ["platform-slab-right", solid(true, true, false, true)],
+  );
   return items;
 }
 
