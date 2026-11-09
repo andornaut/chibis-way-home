@@ -13,12 +13,12 @@ import { fullJump, prepareLaunch, spanGoal, standingPoint, touchesBoss } from ".
 // Each sample's arena proof: static checks, required route, path out and every evade run, with
 // its hash over the evade trace hashes.
 const HASHES: Readonly<Record<string, string>> = {
-  "arena-bear-sample": "b8ed4366d62ec680",
-  "arena-dog-sample": "8024f4eeb9494f4e",
-  "arena-ferret-sample": "d1e6cce85c385453",
-  "arena-goose-sample": "df328f818c6d8896",
-  "arena-pigeon-sample": "e95662c1acd44593",
-  "arena-raccoon-sample": "38bb769e74b8d91c",
+  "arena-bear-sample": "29ebd6c4230607f2",
+  "arena-dog-sample": "7484ff49e2af42ca",
+  "arena-ferret-sample": "119418e03fcc8106",
+  "arena-goose-sample": "1bc30ba0ff52f83d",
+  "arena-pigeon-sample": "211c49005bc820ca",
+  "arena-raccoon-sample": "f80cad6ac3ec0234",
 };
 
 it.each(ARENA_SAMPLES.map((arena) => [arena.id, arena] as const))(
