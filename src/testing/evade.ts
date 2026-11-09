@@ -242,31 +242,77 @@ export function prepareLaunch(
   bird: { readonly vx: number; readonly x: number },
 ): LaunchPreparation {
   const speed = move * tuning.walkSpeed;
-  let { vx, x } = bird;
-  const ready = () =>
+  const ready = ({ vx, x }: typeof bird) =>
     Math.abs(vx - speed) <= EDGE && x >= launch.left - EDGE && x <= launch.right + EDGE;
-  if (ready()) {
+  if (ready(bird)) {
     return { kind: "ready" };
   }
-  const input = { jumpHeld: false, move, useHeld: false };
   const limit =
     Math.ceil(
       (2 * tuning.walkSpeed) / (Math.min(tuning.groundAccel, tuning.brakeAccel) * seconds),
     ) +
     Math.ceil((span.right - span.left) / (tuning.walkSpeed * seconds)) +
     2;
-  for (let tick = 0; tick < limit; tick++) {
-    vx = ordinaryHorizontalVelocity(tuning, seconds, move, true, vx);
-    x += vx * seconds;
-    if (x < span.left - EDGE || x > span.right + EDGE) {
-      return { kind: "unknown" };
+  const advance = (state: typeof bird, command: -1 | 0 | 1) => {
+    const vx = ordinaryHorizontalVelocity(tuning, seconds, command, true, state.vx);
+    const x = state.x + vx * seconds;
+    return x < span.left - EDGE || x > span.right + EDGE ? undefined : { vx, x };
+  };
+  const forward = (initial: typeof bird, commands: (-1 | 0 | 1)[]) => {
+    let state = initial;
+    for (let tick = 0; tick < limit; tick++) {
+      const next = advance(state, move);
+      if (!next) {
+        return undefined;
+      }
+      state = next;
+      commands.push(move);
+      if (ready(state)) {
+        return commands;
+      }
+      if (state.vx === 0 && move === 0) {
+        break;
+      }
     }
-    if (ready()) {
-      return { input, kind: "prepare" };
+    return undefined;
+  };
+  let best = forward(bird, []);
+  if (!best && move !== 0) {
+    const opposite = move === 1 ? -1 : 1;
+    let back = bird;
+    const prefix: (-1 | 0 | 1)[] = [];
+    for (let ticks = 0; ticks < limit; ticks++) {
+      for (const brake of [false, true]) {
+        let state = back;
+        const commands = [...prefix];
+        if (brake) {
+          while (state.vx !== 0 && commands.length < 2 * limit) {
+            const next = advance(state, 0);
+            if (!next) {
+              break;
+            }
+            state = next;
+            commands.push(0);
+          }
+          if (state.vx !== 0) {
+            continue;
+          }
+        }
+        const candidate = forward(state, commands);
+        if (candidate && (!best || candidate.length < best.length)) {
+          best = candidate;
+        }
+      }
+      const next = advance(back, opposite);
+      if (!next) {
+        break;
+      }
+      back = next;
+      prefix.push(opposite);
     }
-    if (vx === 0 && move === 0) {
-      break;
-    }
+  }
+  if (best) {
+    return { input: { jumpHeld: false, move: best[0]!, useHeld: false }, kind: "prepare" };
   }
   return { kind: "unknown" };
 }
@@ -441,6 +487,7 @@ function evadeWalk(
   let dodge: Dodge | undefined;
   let lastDodgeEnd = -1;
   let leg: { airborne: boolean; edge: MapEdge<MapSupport>; step: number } | undefined;
+  let preparing: MapEdge<MapSupport> | undefined;
   let ended: { cause: string; tick: number } | undefined;
   const problems: string[] = [];
   let launchProblem: string | undefined;
@@ -577,6 +624,7 @@ function evadeWalk(
       leg = undefined;
     }
     if (!goal) {
+      preparing = undefined;
       return STILL;
     }
     const body = box();
@@ -586,11 +634,15 @@ function evadeWalk(
     };
     const feet = bottomCentre(body);
     if (!zone.bird.grounded) {
+      preparing = undefined;
       return toward(goal.x - body.width / 2);
     }
     const ref = here();
     const path = ref && pathTo(chibi, avoiding, ref, { point: goal, radius: TILE });
     const edge = path?.edges[0] === undefined ? undefined : chibi.edges[path.edges[0]];
+    if (edge !== preparing) {
+      preparing = undefined;
+    }
     if (!edge) {
       if (Math.abs(feet.x - goal.x) <= TILE / 2) {
         return STILL;
@@ -601,7 +653,10 @@ function evadeWalk(
       return toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2)));
     }
     const reach = edge.kind === "jump" ? EDGE : ORDINARY.walkSpeed * STEP_SECONDS;
-    if (body.x >= edge.launch.left - reach && body.x <= edge.launch.right + reach) {
+    if (
+      preparing === edge ||
+      (body.x >= edge.launch.left - reach && body.x <= edge.launch.right + reach)
+    ) {
       if (edge.kind === "jump") {
         const preparation = prepareLaunch(
           ORDINARY,
@@ -616,9 +671,11 @@ function evadeWalk(
           return STILL;
         }
         if (preparation.kind === "prepare") {
+          preparing = edge;
           return preparation.input;
         }
       }
+      preparing = undefined;
       leg = { airborne: false, edge, step: 0 };
       return follow(goal);
     }
@@ -871,6 +928,7 @@ function evadeWalk(
       if (dodge?.retreat) {
         input = follow(waypointPixel(target));
       } else if (dodge?.script) {
+        preparing = undefined;
         const latest = history.at(-1)?.agents.find(({ id }) => id === dodge!.boss);
         input = latest
           ? dodge.script!({

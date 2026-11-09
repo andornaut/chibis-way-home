@@ -199,3 +199,78 @@ it("prepares a reversed full-jump launch before replaying its landing witness", 
     prepareLaunch(ORDINARY, STEP_SECONDS, { left: 72, right: 84 }, edge.launch, 1, initial).kind,
   ).toBe("unknown");
 });
+
+it("backs off and brakes on the same support to prepare an exact endpoint launch", () => {
+  const span = { left: 0, right: 24 };
+  const launch = { left: 24, right: 24 };
+  const solids = [
+    { height: 480, width: 48, x: 0, y: FLOOR * TILE },
+    { height: 480, width: 200, x: 194, y: FLOOR * TILE },
+  ];
+  const initial: BirdState = {
+    ...startBird(ORDINARY, { x: 24 + ORDINARY.width / 2, y: FLOOR * TILE }),
+    grounded: true,
+  };
+  // Forward alone leaves the proved support before reaching witness speed.
+  const forward = stepBird(
+    ORDINARY,
+    solids,
+    [],
+    STEP_SECONDS,
+    { jumpHeld: false, move: 1 },
+    initial,
+  );
+  expect(forward.x).toBeGreaterThan(span.right);
+  expect(forward.vx).toBeLessThan(ORDINARY.walkSpeed);
+  let prepared = initial;
+  const commands: number[] = [];
+  for (let tick = 0; tick < 60; tick++) {
+    const preparation = prepareLaunch(ORDINARY, STEP_SECONDS, span, launch, 1, prepared);
+    expect(preparation.kind).not.toBe("unknown");
+    if (preparation.kind === "ready") {
+      break;
+    }
+    if (preparation.kind === "prepare") {
+      commands.push(preparation.input.move);
+      prepared = stepBird(ORDINARY, solids, [], STEP_SECONDS, preparation.input, prepared);
+      expect(prepared.x).toBeGreaterThanOrEqual(span.left);
+      expect(prepared.x).toBeLessThanOrEqual(span.right);
+      expect(prepared.grounded).toBe(true);
+      expect(prepared.jumpHeldFor).toBe(0);
+    }
+  }
+  expect(commands).toEqual([...Array(10).fill(-1), ...Array(5).fill(0), ...Array(12).fill(1)]);
+  expect(prepared.x).toBe(launch.left);
+  expect(prepared.vx).toBe(ORDINARY.walkSpeed);
+  expect(prepareLaunch(ORDINARY, STEP_SECONDS, span, launch, 1, prepared)).toEqual({
+    kind: "ready",
+  });
+  expect(
+    prepareLaunch(ORDINARY, STEP_SECONDS, { left: 23, right: 24 }, launch, 1, initial).kind,
+  ).toBe("unknown");
+  const land = (start: BirdState) => {
+    let bird = start;
+    for (let tick = 0; tick < 180; tick++) {
+      bird = stepBird(
+        ORDINARY,
+        solids,
+        [],
+        STEP_SECONDS,
+        {
+          jumpHeld: tick * STEP_SECONDS < ORDINARY.jumpRiseTime,
+          move: 1,
+        },
+        bird,
+      );
+      if (tick > 0 && bird.grounded) {
+        return bird;
+      }
+    }
+    throw new Error("jump did not land");
+  };
+  expect(land(initial).x).toBeLessThan(solids[1]!.x);
+  const landed = land(prepared);
+  expect(landed.x).toBeGreaterThanOrEqual(solids[1]!.x);
+  expect(landed.x + ORDINARY.width).toBeLessThanOrEqual(solids[1]!.x + solids[1]!.width);
+  expect(landed.y + ORDINARY.height).toBe(solids[1]!.y);
+});
