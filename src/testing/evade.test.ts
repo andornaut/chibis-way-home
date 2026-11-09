@@ -2,13 +2,21 @@ import { expect, it } from "vitest";
 
 import { STEP_SECONDS } from "../core";
 import { TILE } from "../data/screen";
-import type { Instance, TerrainRect } from "../data/types";
+import type { Instance, Rect, TerrainRect } from "../data/types";
 import { type BirdState, startBird, stepBird } from "../rules/bird";
 import { proveArena } from "./arenaCertify";
 import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas";
 import { ARENA_SAMPLES } from "./arenaSamples";
 import { ORDINARY } from "./encounterLayouts";
-import { fullJump, prepareLaunch, spanGoal, standingPoint, touchesBoss } from "./evade";
+import {
+  createLaunchPreparation,
+  fullJump,
+  launchStepSafe,
+  prepareLaunch,
+  spanGoal,
+  standingPoint,
+  touchesBoss,
+} from "./evade";
 
 // Each sample's arena proof: static checks, required route, path out and every evade run, with
 // its hash over the evade trace hashes.
@@ -149,9 +157,19 @@ it("prepares a reversed full-jump launch before replaying its landing witness", 
     vx: -ORDINARY.walkSpeed,
   };
   let prepared = initial;
+  const safe = (from: number, to: number) =>
+    launchStepSafe(
+      solids,
+      [],
+      0,
+      undefined,
+      { height: ORDINARY.height, width: ORDINARY.width, x: prepared.x, y: prepared.y },
+      from,
+      to,
+    );
   let ticks = 0;
   for (; ticks < 60; ticks++) {
-    const preparation = prepareLaunch(ORDINARY, STEP_SECONDS, span, edge.launch, 1, prepared);
+    const preparation = prepareLaunch(safe, ORDINARY, STEP_SECONDS, span, edge.launch, 1, prepared);
     expect(preparation.kind).not.toBe("unknown");
     if (preparation.kind === "ready") {
       break;
@@ -196,7 +214,8 @@ it("prepares a reversed full-jump launch before replaying its landing witness", 
   expect(landed.x).toBeGreaterThanOrEqual(landing.left);
   expect(landed.x).toBeLessThanOrEqual(landing.right);
   expect(
-    prepareLaunch(ORDINARY, STEP_SECONDS, { left: 72, right: 84 }, edge.launch, 1, initial).kind,
+    prepareLaunch(safe, ORDINARY, STEP_SECONDS, { left: 72, right: 84 }, edge.launch, 1, initial)
+      .kind,
   ).toBe("unknown");
 });
 
@@ -223,10 +242,31 @@ it("backs off and brakes on the same support to prepare an exact endpoint launch
   expect(forward.x).toBeGreaterThan(span.right);
   expect(forward.vx).toBeLessThan(ORDINARY.walkSpeed);
   let prepared = initial;
+  const edge = { commands: [{ jump: true, move: 1 as const }], kind: "jump" as const, launch };
+  const controller = createLaunchPreparation(ORDINARY, STEP_SECONDS);
+  const context = (bird = prepared) => ({
+    bird,
+    edge,
+    grounded: bird.grounded,
+    hasGoal: true,
+    scripted: false,
+    span,
+  });
+  const safe = (from: number, to: number) =>
+    launchStepSafe(
+      solids,
+      [],
+      0,
+      undefined,
+      { height: ORDINARY.height, width: ORDINARY.width, x: prepared.x, y: prepared.y },
+      from,
+      to,
+    );
   const commands: number[] = [];
   for (let tick = 0; tick < 60; tick++) {
-    const preparation = prepareLaunch(ORDINARY, STEP_SECONDS, span, launch, 1, prepared);
+    const preparation = controller(safe, context());
     expect(preparation.kind).not.toBe("unknown");
+    expect(preparation.kind).not.toBe("approach");
     if (preparation.kind === "ready") {
       break;
     }
@@ -242,11 +282,11 @@ it("backs off and brakes on the same support to prepare an exact endpoint launch
   expect(commands).toEqual([...Array(10).fill(-1), ...Array(5).fill(0), ...Array(12).fill(1)]);
   expect(prepared.x).toBe(launch.left);
   expect(prepared.vx).toBe(ORDINARY.walkSpeed);
-  expect(prepareLaunch(ORDINARY, STEP_SECONDS, span, launch, 1, prepared)).toEqual({
+  expect(controller(safe, context())).toEqual({
     kind: "ready",
   });
   expect(
-    prepareLaunch(ORDINARY, STEP_SECONDS, { left: 23, right: 24 }, launch, 1, initial).kind,
+    prepareLaunch(safe, ORDINARY, STEP_SECONDS, { left: 23, right: 24 }, launch, 1, initial).kind,
   ).toBe("unknown");
   const land = (start: BirdState) => {
     let bird = start;
@@ -273,4 +313,73 @@ it("backs off and brakes on the same support to prepare an exact endpoint launch
   expect(landed.x).toBeGreaterThanOrEqual(solids[1]!.x);
   expect(landed.x + ORDINARY.width).toBeLessThanOrEqual(solids[1]!.x + solids[1]!.width);
   expect(landed.y + ORDINARY.height).toBe(solids[1]!.y);
+});
+
+it("abandons launch preparation when the selected edge or actual input branch changes", () => {
+  const span = { left: 0, right: 24 };
+  const edge = {
+    commands: [{ jump: true, move: 1 as const }],
+    kind: "jump" as const,
+    launch: { left: 24, right: 24 },
+  };
+  const floor = { height: 480, width: 48, x: 0, y: 960 };
+  const initial = { ...startBird(ORDINARY, { x: 36, y: 960 }), grounded: true };
+  const safe = (from: number, to: number) =>
+    launchStepSafe(
+      [floor],
+      [],
+      0,
+      undefined,
+      { height: ORDINARY.height, width: ORDINARY.width, x: from, y: 924 },
+      from,
+      to,
+    );
+  const context = { bird: initial, edge, grounded: true, hasGoal: true, scripted: false, span };
+  const first = createLaunchPreparation(ORDINARY, STEP_SECONDS)(safe, context);
+  expect(first.kind).toBe("prepare");
+  if (first.kind !== "prepare") {
+    throw new Error("expected grounded preparation");
+  }
+  const bird = stepBird(ORDINARY, [floor], [], STEP_SECONDS, first.input, initial);
+  expect(bird.x).toBeLessThan(edge.launch.left);
+  for (const change of [
+    { edge: { ...edge } },
+    { edge: undefined },
+    { grounded: false },
+    { hasGoal: false },
+    { scripted: true },
+  ]) {
+    const controller = createLaunchPreparation(ORDINARY, STEP_SECONDS);
+    expect(controller(safe, context).kind).toBe("prepare");
+    controller(safe, { ...context, bird, ...change });
+    expect(controller(safe, { ...context, bird }).kind).toBe("approach");
+  }
+});
+
+it("rejects a runup whose body sweep reaches observed danger behind the launch", () => {
+  const span = { left: 0, right: 24 };
+  const launch = { left: 24, right: 24 };
+  const body = { height: ORDINARY.height, width: ORDINARY.width, x: 24, y: 924 };
+  const floor = { height: 480, width: 48, x: 0, y: 960 };
+  const behind = { height: 36, width: 12, x: 0, y: 924 };
+  const bird = { vx: 0, x: 24 };
+  const safe =
+    (solids: readonly Rect[], hazards: readonly Rect[], boss?: Rect) =>
+    (from: number, to: number) =>
+      launchStepSafe(solids, hazards, 0, boss, body, from, to);
+  expect(
+    prepareLaunch(safe([floor], [], behind), ORDINARY, STEP_SECONDS, span, launch, 1, bird).kind,
+  ).toBe("unknown");
+  expect(
+    prepareLaunch(safe([floor, behind], []), ORDINARY, STEP_SECONDS, span, launch, 1, bird).kind,
+  ).toBe("unknown");
+  expect(
+    prepareLaunch(safe([floor], [behind]), ORDINARY, STEP_SECONDS, span, launch, 1, bird).kind,
+  ).toBe("unknown");
+  expect(
+    prepareLaunch(safe([floor], [], behind), ORDINARY, STEP_SECONDS, span, launch, 1, {
+      ...bird,
+      vx: ORDINARY.walkSpeed,
+    }).kind,
+  ).toBe("ready");
 });

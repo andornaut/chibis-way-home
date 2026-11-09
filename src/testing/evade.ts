@@ -234,6 +234,7 @@ type LaunchPreparation =
 // A map witness applies its horizontal command immediately. Prepare that velocity with ordinary
 // ground inputs, proving the run-up stays on this support before starting the jump clock.
 export function prepareLaunch(
+  safeStep: (from: number, to: number) => boolean,
   tuning: BirdTuning,
   seconds: number,
   span: { readonly left: number; readonly right: number },
@@ -241,6 +242,9 @@ export function prepareLaunch(
   move: -1 | 0 | 1,
   bird: { readonly vx: number; readonly x: number },
 ): LaunchPreparation {
+  if (!safeStep(bird.x, bird.x)) {
+    return { kind: "unknown" };
+  }
   const speed = move * tuning.walkSpeed;
   const ready = ({ vx, x }: typeof bird) =>
     Math.abs(vx - speed) <= EDGE && x >= launch.left - EDGE && x <= launch.right + EDGE;
@@ -256,7 +260,9 @@ export function prepareLaunch(
   const advance = (state: typeof bird, command: -1 | 0 | 1) => {
     const vx = ordinaryHorizontalVelocity(tuning, seconds, command, true, state.vx);
     const x = state.x + vx * seconds;
-    return x < span.left - EDGE || x > span.right + EDGE ? undefined : { vx, x };
+    return x < span.left - EDGE || x > span.right + EDGE || !safeStep(state.x, x)
+      ? undefined
+      : { vx, x };
   };
   const forward = (initial: typeof bird, commands: (-1 | 0 | 1)[]) => {
     let state = initial;
@@ -276,6 +282,7 @@ export function prepareLaunch(
     }
     return undefined;
   };
+  // Preserve feasible forward preparation; otherwise choose the shortest safe grounded prefix.
   let best = forward(bird, []);
   if (!best && move !== 0) {
     const opposite = move === 1 ? -1 : 1;
@@ -315,6 +322,64 @@ export function prepareLaunch(
     return { input: { jumpHeld: false, move: best[0]!, useHeld: false }, kind: "prepare" };
   }
   return { kind: "unknown" };
+}
+
+type LaunchEdge = Pick<MapEdge<MapSupport>, "commands" | "kind" | "launch">;
+interface LaunchContext {
+  readonly bird: { readonly vx: number; readonly x: number };
+  readonly edge?: LaunchEdge | undefined;
+  readonly grounded: boolean;
+  readonly hasGoal: boolean;
+  readonly scripted: boolean;
+  readonly span?: { readonly left: number; readonly right: number } | undefined;
+}
+
+export function launchStepSafe(
+  solids: readonly Rect[],
+  hazards: readonly Rect[],
+  pad: number,
+  boss: Rect | undefined,
+  body: Rect,
+  from: number,
+  to: number,
+) {
+  const sweep = { ...body, width: body.width + Math.abs(to - from), x: Math.min(from, to) };
+  return (
+    !solids.some((solid) => rectsOverlap(solid, sweep)) &&
+    !hazards.some((hazard) => rectsOverlap(hazard, sweep)) &&
+    (!boss || !touchesBoss(solids, pad, boss, sweep))
+  );
+}
+
+export function createLaunchPreparation(tuning: BirdTuning, seconds: number) {
+  let pending: LaunchEdge | undefined;
+  return (safeStep: (from: number, to: number) => boolean, context: LaunchContext) => {
+    const { bird, edge, grounded, hasGoal, scripted, span } = context;
+    if (!grounded || !hasGoal || scripted || !span || edge?.kind !== "jump") {
+      pending = undefined;
+      return { kind: "approach" } as const;
+    }
+    if (pending !== edge) {
+      pending = undefined;
+    }
+    if (
+      pending !== edge &&
+      (bird.x < edge.launch.left - EDGE || bird.x > edge.launch.right + EDGE)
+    ) {
+      return { kind: "approach" } as const;
+    }
+    const preparation = prepareLaunch(
+      safeStep,
+      tuning,
+      seconds,
+      span,
+      edge.launch,
+      edge.commands[0]!.move,
+      bird,
+    );
+    pending = preparation.kind === "prepare" ? edge : undefined;
+    return preparation;
+  };
 }
 
 // The hitbox-left x a walk without a map edge heads for: the goal's, kept within his span unless
@@ -487,7 +552,7 @@ function evadeWalk(
   let dodge: Dodge | undefined;
   let lastDodgeEnd = -1;
   let leg: { airborne: boolean; edge: MapEdge<MapSupport>; step: number } | undefined;
-  let preparing: MapEdge<MapSupport> | undefined;
+  const launchPreparation = createLaunchPreparation(ORDINARY, STEP_SECONDS);
   let ended: { cause: string; tick: number } | undefined;
   const problems: string[] = [];
   let launchProblem: string | undefined;
@@ -500,7 +565,9 @@ function evadeWalk(
   // Chibi's map without the spans and legs from which his body could touch the boss's body as he
   // last saw it, padded by AVOID_TILES except through solid terrain, his own span aside.
   let avoiding: MapMask = maps.mask;
+  let observedBody: Rect | undefined;
   const avoid = (boss: AgentSample | undefined) => {
+    observedBody = boss && { height: boss.height, width: boss.width, ...boss.at };
     if (!boss) {
       avoiding = maps.mask;
       return;
@@ -533,6 +600,23 @@ function evadeWalk(
     return ref ? mapDistance(chibi, avoiding, ref, point) : Infinity;
   };
   const solids = maps.encounter.terrain.world.solids;
+  const preparationHazards = maps.encounter.terrain.hazards.map(({ rect }) => rect);
+  const safePreparationStep = (from: number, to: number) =>
+    launchStepSafe(solids, preparationHazards, AVOID_TILES * TILE, observedBody, box(), from, to);
+  const prepare = (
+    edge: MapEdge<MapSupport> | undefined,
+    span: MovementMap<MapSupport>["nodes"][number] | undefined,
+    hasGoal = true,
+    scripted = false,
+  ) =>
+    launchPreparation(safePreparationStep, {
+      bird: { vx: zone.bird.vx, x: box().x },
+      edge,
+      grounded: zone.bird.grounded,
+      hasGoal,
+      scripted,
+      span,
+    });
   const objectOf = (boss: AgentSample) => area.objects[Number(boss.id.split(":")[1])]!;
   // Where each boss was last located on its map, for while it is airborne off its nodes.
   const groundRefs = new Map<string, NodeRef>();
@@ -624,7 +708,7 @@ function evadeWalk(
       leg = undefined;
     }
     if (!goal) {
-      preparing = undefined;
+      prepare(undefined, undefined, false);
       return STILL;
     }
     const body = box();
@@ -634,15 +718,13 @@ function evadeWalk(
     };
     const feet = bottomCentre(body);
     if (!zone.bird.grounded) {
-      preparing = undefined;
+      prepare(undefined, undefined);
       return toward(goal.x - body.width / 2);
     }
     const ref = here();
     const path = ref && pathTo(chibi, avoiding, ref, { point: goal, radius: TILE });
     const edge = path?.edges[0] === undefined ? undefined : chibi.edges[path.edges[0]];
-    if (edge !== preparing) {
-      preparing = undefined;
-    }
+    const preparation = prepare(edge, ref && chibi.nodes[ref.node]);
     if (!edge) {
       if (Math.abs(feet.x - goal.x) <= TILE / 2) {
         return STILL;
@@ -654,28 +736,18 @@ function evadeWalk(
     }
     const reach = edge.kind === "jump" ? EDGE : ORDINARY.walkSpeed * STEP_SECONDS;
     if (
-      preparing === edge ||
+      (edge.kind === "jump" && preparation.kind !== "approach") ||
       (body.x >= edge.launch.left - reach && body.x <= edge.launch.right + reach)
     ) {
       if (edge.kind === "jump") {
-        const preparation = prepareLaunch(
-          ORDINARY,
-          STEP_SECONDS,
-          chibi.nodes[ref!.node]!,
-          edge.launch,
-          edge.commands[0]!.move,
-          { vx: zone.bird.vx, x: body.x },
-        );
         if (preparation.kind === "unknown") {
           launchProblem = "cannot establish a velocity-matched jump launch on its support";
           return STILL;
         }
         if (preparation.kind === "prepare") {
-          preparing = edge;
           return preparation.input;
         }
       }
-      preparing = undefined;
       leg = { airborne: false, edge, step: 0 };
       return follow(goal);
     }
@@ -928,7 +1000,7 @@ function evadeWalk(
       if (dodge?.retreat) {
         input = follow(waypointPixel(target));
       } else if (dodge?.script) {
-        preparing = undefined;
+        prepare(undefined, undefined, false, true);
         const latest = history.at(-1)?.agents.find(({ id }) => id === dodge!.boss);
         input = latest
           ? dodge.script!({
