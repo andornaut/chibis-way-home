@@ -53,13 +53,14 @@ import { TILE } from "../data/screen";
 import type {
   AntagonistKind,
   ArenaRoute,
+  BirdTuning,
   ObjectLayout,
   Point,
   TilePoint,
   ZoneLayout,
 } from "../data/types";
 import { SKILL_PROFILES } from "../progress";
-import { birdBox, startBird } from "../rules/bird";
+import { birdBox, ordinaryHorizontalVelocity, startBird } from "../rules/bird";
 import {
   airMask,
   BOSS_JUMP_SCRIPTS,
@@ -223,6 +224,51 @@ export function fullJump(
     edge.commands.some(({ jump }) => jump) &&
     apex > (hopHeight + jumpSpeed ** 2 / (2 * gravity)) / 2
   );
+}
+
+type LaunchPreparation =
+  | { readonly kind: "ready" }
+  | { readonly input: ZoneInput; readonly kind: "prepare" }
+  | { readonly kind: "unknown" };
+
+// A map witness applies its horizontal command immediately. Prepare that velocity with ordinary
+// ground inputs, proving the run-up stays on this support before starting the jump clock.
+export function prepareLaunch(
+  tuning: BirdTuning,
+  seconds: number,
+  span: { readonly left: number; readonly right: number },
+  launch: { readonly left: number; readonly right: number },
+  move: -1 | 0 | 1,
+  bird: { readonly vx: number; readonly x: number },
+): LaunchPreparation {
+  const speed = move * tuning.walkSpeed;
+  let { vx, x } = bird;
+  const ready = () =>
+    Math.abs(vx - speed) <= EDGE && x >= launch.left - EDGE && x <= launch.right + EDGE;
+  if (ready()) {
+    return { kind: "ready" };
+  }
+  const input = { jumpHeld: false, move, useHeld: false };
+  const limit =
+    Math.ceil(
+      (2 * tuning.walkSpeed) / (Math.min(tuning.groundAccel, tuning.brakeAccel) * seconds),
+    ) +
+    Math.ceil((span.right - span.left) / (tuning.walkSpeed * seconds)) +
+    2;
+  for (let tick = 0; tick < limit; tick++) {
+    vx = ordinaryHorizontalVelocity(tuning, seconds, move, true, vx);
+    x += vx * seconds;
+    if (x < span.left - EDGE || x > span.right + EDGE) {
+      return { kind: "unknown" };
+    }
+    if (ready()) {
+      return { input, kind: "prepare" };
+    }
+    if (vx === 0 && move === 0) {
+      break;
+    }
+  }
+  return { kind: "unknown" };
 }
 
 // The hitbox-left x a walk without a map edge heads for: the goal's, kept within his span unless
@@ -397,6 +443,7 @@ function evadeWalk(
   let leg: { airborne: boolean; edge: MapEdge<MapSupport>; step: number } | undefined;
   let ended: { cause: string; tick: number } | undefined;
   const problems: string[] = [];
+  let launchProblem: string | undefined;
   let death: string | undefined;
   let acquired: number | undefined;
   let cleared: number | undefined;
@@ -553,9 +600,25 @@ function evadeWalk(
     if (edge.kind === "walk") {
       return toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2)));
     }
-    // Within one tick's walk of the launch range, so a walk at speed never steps over it.
-    const reach = ORDINARY.walkSpeed * STEP_SECONDS;
+    const reach = edge.kind === "jump" ? EDGE : ORDINARY.walkSpeed * STEP_SECONDS;
     if (body.x >= edge.launch.left - reach && body.x <= edge.launch.right + reach) {
+      if (edge.kind === "jump") {
+        const preparation = prepareLaunch(
+          ORDINARY,
+          STEP_SECONDS,
+          chibi.nodes[ref!.node]!,
+          edge.launch,
+          edge.commands[0]!.move,
+          { vx: zone.bird.vx, x: body.x },
+        );
+        if (preparation.kind === "unknown") {
+          launchProblem = "cannot establish a velocity-matched jump launch on its support";
+          return STILL;
+        }
+        if (preparation.kind === "prepare") {
+          return preparation.input;
+        }
+      }
       leg = { airborne: false, edge, step: 0 };
       return follow(goal);
     }
@@ -831,6 +894,10 @@ function evadeWalk(
       (input.move === 1 && !ended && !exiting && body.x + 2 * body.width > area.exitX)
     ) {
       input = { ...input, move: 0 };
+    }
+    if (launchProblem) {
+      problems.push(launchProblem);
+      break;
     }
     const before = zone;
     zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, before);

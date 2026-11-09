@@ -1,12 +1,14 @@
 import { expect, it } from "vitest";
 
+import { STEP_SECONDS } from "../core";
 import { TILE } from "../data/screen";
 import type { Instance, TerrainRect } from "../data/types";
+import { type BirdState, startBird, stepBird } from "../rules/bird";
 import { proveArena } from "./arenaCertify";
 import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas";
 import { ARENA_SAMPLES } from "./arenaSamples";
 import { ORDINARY } from "./encounterLayouts";
-import { fullJump, spanGoal, standingPoint, touchesBoss } from "./evade";
+import { fullJump, prepareLaunch, spanGoal, standingPoint, touchesBoss } from "./evade";
 
 // Each sample's arena proof: static checks, required route, path out and every evade run, with
 // its hash over the evade trace hashes.
@@ -117,4 +119,83 @@ it("stands for a waypoint against a post at the end of his span", () => {
   const span = nodeAt(map, 22, FLOOR);
   expect(at).toEqual({ x: span.right + ORDINARY.width / 2, y: FLOOR * TILE });
   expect(at.x + ORDINARY.width / 2).toBeLessThanOrEqual(24 * TILE + 1e-6);
+});
+
+it("prepares a reversed full-jump launch before replaying its landing witness", () => {
+  const solids = [
+    { height: 480, width: 720, x: 0, y: FLOOR * TILE },
+    { height: 36, width: 60, x: 4 * TILE, y: (FLOOR - 3) * TILE },
+  ];
+  const ledge = { height: TILE, width: 30 * TILE, x: 14 * TILE, y: (FLOOR - 7) * TILE };
+  const map = chibiOf(
+    [ground(0, 60), rect(4, 5, FLOOR - 3, 3)],
+    [{ character: "platform-ledge", col: 14, cols: 30, role: "ledge", row: FLOOR - 7 }],
+  );
+  const span = nodeAt(map, 6, FLOOR - 3);
+  const edge = map.edges.find(
+    (candidate) =>
+      candidate.kind === "jump" &&
+      candidate.from === span.id &&
+      map.nodes[candidate.to]!.y === ledge.y &&
+      candidate.launch.left <= 73 &&
+      candidate.launch.right >= 73 &&
+      candidate.commands.every(({ move }) => move === 1) &&
+      fullJump(ORDINARY.jumpHopHeight, map, candidate),
+  )!;
+  expect(edge).toBeDefined();
+  const initial: BirdState = {
+    ...startBird(ORDINARY, { x: 73 + ORDINARY.width / 2, y: span.y }),
+    grounded: true,
+    vx: -ORDINARY.walkSpeed,
+  };
+  let prepared = initial;
+  let ticks = 0;
+  for (; ticks < 60; ticks++) {
+    const preparation = prepareLaunch(ORDINARY, STEP_SECONDS, span, edge.launch, 1, prepared);
+    expect(preparation.kind).not.toBe("unknown");
+    if (preparation.kind === "ready") {
+      break;
+    }
+    if (preparation.kind === "prepare") {
+      prepared = stepBird(ORDINARY, solids, [ledge], STEP_SECONDS, preparation.input, prepared);
+      expect(prepared.grounded).toBe(true);
+      expect(prepared.jumpHeldFor).toBe(0);
+    }
+  }
+  expect(ticks).toBeGreaterThan(0);
+  expect(ticks).toBeLessThan(60);
+  expect(prepared.vx).toBe(ORDINARY.walkSpeed);
+  const land = (start: BirdState) => {
+    let bird = start;
+    for (let tick = 0; tick < 180; tick++) {
+      const command = edge.commands[tick];
+      bird = stepBird(
+        ORDINARY,
+        solids,
+        [ledge],
+        STEP_SECONDS,
+        {
+          jumpHeld:
+            command !== undefined &&
+            (command.jump || (tick + 1) * STEP_SECONDS < ORDINARY.jumpRiseTime),
+          move: command?.move ?? 1,
+        },
+        bird,
+      );
+      if (tick > 0 && bird.grounded) {
+        return bird;
+      }
+    }
+    throw new Error("jump did not land");
+  };
+  const landing = map.nodes[edge.to]!;
+  const unprepared = land(initial);
+  expect(unprepared.x).toBeLessThan(landing.left);
+  const landed = land(prepared);
+  expect(landed.y + ORDINARY.height).toBe(ledge.y);
+  expect(landed.x).toBeGreaterThanOrEqual(landing.left);
+  expect(landed.x).toBeLessThanOrEqual(landing.right);
+  expect(
+    prepareLaunch(ORDINARY, STEP_SECONDS, { left: 72, right: 84 }, edge.launch, 1, initial).kind,
+  ).toBe("unknown");
 });
