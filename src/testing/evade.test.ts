@@ -9,6 +9,7 @@ import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas";
 import { ARENA_SAMPLES } from "./arenaSamples";
 import { ORDINARY } from "./encounterLayouts";
 import {
+  boundaryInput,
   createLaunchPreparation,
   fullJump,
   launchStepSafe,
@@ -381,5 +382,62 @@ it("rejects a runup whose body sweep reaches observed danger behind the launch",
       ...bird,
       vx: ORDINARY.walkSpeed,
     }).kind,
+  ).toBe("ready");
+});
+
+it("rejects preparation that final dispatch would clamp at an arena boundary", () => {
+  const span = { left: 0, right: 24 };
+  const edge = {
+    commands: [{ jump: true, move: 1 as const }],
+    kind: "jump" as const,
+    launch: { left: 24, right: 24 },
+  };
+  const floor = { height: 480, width: 48, x: 0, y: 960 };
+  const bounds = { backX: 12, canExit: false, exitX: 720 };
+  const initial = { ...startBird(ORDINARY, { x: 36, y: 960 }), grounded: true };
+  const context = (bird: BirdState) => ({
+    bird,
+    edge,
+    grounded: bird.grounded,
+    hasGoal: true,
+    scripted: false,
+    span,
+  });
+  const body = (x: number) => ({ height: ORDINARY.height, width: ORDINARY.width, x, y: initial.y });
+  const clear = (from: number, to: number) =>
+    launchStepSafe([floor], [], 0, undefined, body(from), from, to);
+  const oldController = createLaunchPreparation(ORDINARY, STEP_SECONDS);
+  let bird = initial;
+  for (let tick = 0; tick < 3; tick++) {
+    const preparation = oldController(clear, context(bird));
+    expect(preparation.kind).toBe("prepare");
+    if (preparation.kind !== "prepare") {
+      throw new Error("expected unguarded preparation");
+    }
+    expect(preparation.input.move).toBe(-1);
+    const actual = boundaryInput(bounds, body(bird.x), preparation.input);
+    expect(actual.move).toBe(0);
+    bird = stepBird(ORDINARY, [floor], [], STEP_SECONDS, actual, bird);
+    expect(bird.x).toBe(24);
+    expect(bird.vx).toBe(0);
+  }
+  const safe = (from: number, to: number, move: -1 | 0 | 1) =>
+    boundaryInput(bounds, body(from), { jumpHeld: false, move, useHeld: false }).move === move &&
+    clear(from, to);
+  expect(createLaunchPreparation(ORDINARY, STEP_SECONDS)(safe, context(initial)).kind).toBe(
+    "unknown",
+  );
+  const rightBoundary = (canExit: boolean) => (from: number, to: number, move: -1 | 0 | 1) =>
+    boundaryInput({ ...bounds, canExit, exitX: 71 }, body(from), {
+      jumpHeld: false,
+      move,
+      useHeld: false,
+    }).move === move && clear(from, to);
+  const ready = { ...initial, vx: ORDINARY.walkSpeed };
+  expect(
+    createLaunchPreparation(ORDINARY, STEP_SECONDS)(rightBoundary(false), context(ready)).kind,
+  ).toBe("unknown");
+  expect(
+    createLaunchPreparation(ORDINARY, STEP_SECONDS)(rightBoundary(true), context(ready)).kind,
   ).toBe("ready");
 });

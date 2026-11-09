@@ -234,7 +234,7 @@ type LaunchPreparation =
 // A map witness applies its horizontal command immediately. Prepare that velocity with ordinary
 // ground inputs, proving the run-up stays on this support before starting the jump clock.
 export function prepareLaunch(
-  safeStep: (from: number, to: number) => boolean,
+  safeStep: (from: number, to: number, move: -1 | 0 | 1) => boolean,
   tuning: BirdTuning,
   seconds: number,
   span: { readonly left: number; readonly right: number },
@@ -242,12 +242,15 @@ export function prepareLaunch(
   move: -1 | 0 | 1,
   bird: { readonly vx: number; readonly x: number },
 ): LaunchPreparation {
-  if (!safeStep(bird.x, bird.x)) {
+  if (!safeStep(bird.x, bird.x, 0)) {
     return { kind: "unknown" };
   }
   const speed = move * tuning.walkSpeed;
   const ready = ({ vx, x }: typeof bird) =>
-    Math.abs(vx - speed) <= EDGE && x >= launch.left - EDGE && x <= launch.right + EDGE;
+    Math.abs(vx - speed) <= EDGE &&
+    x >= launch.left - EDGE &&
+    x <= launch.right + EDGE &&
+    safeStep(x, x, move);
   if (ready(bird)) {
     return { kind: "ready" };
   }
@@ -260,7 +263,7 @@ export function prepareLaunch(
   const advance = (state: typeof bird, command: -1 | 0 | 1) => {
     const vx = ordinaryHorizontalVelocity(tuning, seconds, command, true, state.vx);
     const x = state.x + vx * seconds;
-    return x < span.left - EDGE || x > span.right + EDGE || !safeStep(state.x, x)
+    return x < span.left - EDGE || x > span.right + EDGE || !safeStep(state.x, x, command)
       ? undefined
       : { vx, x };
   };
@@ -334,6 +337,20 @@ interface LaunchContext {
   readonly span?: { readonly left: number; readonly right: number } | undefined;
 }
 
+export function boundaryInput(
+  bounds: { readonly backX: number; readonly canExit: boolean; readonly exitX: number },
+  body: Rect,
+  input: ZoneInput,
+): ZoneInput {
+  if (
+    (input.move === -1 && body.x - body.width < bounds.backX) ||
+    (input.move === 1 && !bounds.canExit && body.x + 2 * body.width > bounds.exitX)
+  ) {
+    return { ...input, move: 0 };
+  }
+  return input;
+}
+
 export function launchStepSafe(
   solids: readonly Rect[],
   hazards: readonly Rect[],
@@ -353,7 +370,10 @@ export function launchStepSafe(
 
 export function createLaunchPreparation(tuning: BirdTuning, seconds: number) {
   let pending: LaunchEdge | undefined;
-  return (safeStep: (from: number, to: number) => boolean, context: LaunchContext) => {
+  return (
+    safeStep: (from: number, to: number, move: -1 | 0 | 1) => boolean,
+    context: LaunchContext,
+  ) => {
     const { bird, edge, grounded, hasGoal, scripted, span } = context;
     if (!grounded || !hasGoal || scripted || !span || edge?.kind !== "jump") {
       pending = undefined;
@@ -601,8 +621,18 @@ function evadeWalk(
   };
   const solids = maps.encounter.terrain.world.solids;
   const preparationHazards = maps.encounter.terrain.hazards.map(({ rect }) => rect);
-  const safePreparationStep = (from: number, to: number) =>
-    launchStepSafe(solids, preparationHazards, AVOID_TILES * TILE, observedBody, box(), from, to);
+  const safePreparationStep = (from: number, to: number, move: -1 | 0 | 1) => {
+    const body = { ...box(), x: from };
+    const input = { jumpHeld: false, move, useHeld: false };
+    return (
+      boundaryInput(
+        { backX: area.backX, canExit: Boolean(ended) || exiting, exitX: area.exitX },
+        body,
+        input,
+      ).move === move &&
+      launchStepSafe(solids, preparationHazards, AVOID_TILES * TILE, observedBody, body, from, to)
+    );
+  };
   const prepare = (
     edge: MapEdge<MapSupport> | undefined,
     span: MovementMap<MapSupport>["nodes"][number] | undefined,
@@ -1018,13 +1048,11 @@ function evadeWalk(
       }
     }
     // He never turns back out of the entry, and leaves by the exit only on his way out.
-    const body = box();
-    if (
-      (input.move === -1 && body.x - body.width < area.backX) ||
-      (input.move === 1 && !ended && !exiting && body.x + 2 * body.width > area.exitX)
-    ) {
-      input = { ...input, move: 0 };
-    }
+    input = boundaryInput(
+      { backX: area.backX, canExit: Boolean(ended) || exiting, exitX: area.exitX },
+      box(),
+      input,
+    );
     if (launchProblem) {
       problems.push(launchProblem);
       break;
