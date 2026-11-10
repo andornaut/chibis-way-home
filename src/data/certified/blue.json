@@ -70,7 +70,7 @@
       "modules": ["archie-lane", "city-lift-climb"],
       "route": "6b969980feb048b9",
       "slots": { "door": 0, "event": 0 },
-      "trace": "f23ea46d4f63124f:5071",
+      "trace": "6dc63c253b50cebc:5071",
       "work": 5071
     },
     {
@@ -166,7 +166,7 @@
       "modules": ["archie-lane-climb", "city-low-descent"],
       "route": "7028be0a7a693284",
       "slots": { "door": 0, "event": 0 },
-      "trace": "3b0f0cbc0021a029:299510",
+      "trace": "50a7746d6f3b423b:299510",
       "work": 299510
     },
     {
@@ -250,7 +250,7 @@
       "modules": ["archie-lane-descent", "city-lift-climb"],
       "route": "9cda5588f4870d27",
       "slots": { "door": 0, "event": 0 },
-      "trace": "3a2122039c4f15a3:4861",
+      "trace": "4f48a2900edda7d1:4861",
       "work": 4861
     },
     {
@@ -274,8 +274,8 @@
       "modules": ["archie-lane-descent", "city-tap-strip"],
       "route": "ae41cf3cf952476a",
       "slots": { "door": 1, "event": 0 },
-      "trace": "f045dd2c2f9c3689:193130",
-      "work": 193130
+      "trace": "2d2eaf3dc627f227:192904",
+      "work": 192904
     },
     {
       "encounters": 1,
@@ -334,7 +334,7 @@
       "modules": ["archie-lane-high", "city-lift-descent"],
       "route": "add3e566824f3c7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "1303d2533be7e991:9250",
+      "trace": "75817ae8e2bbbc44:9250",
       "work": 9250
     },
     {
@@ -1366,7 +1366,7 @@
       "modules": ["city-gap-climb", "archie-yard-high"],
       "route": "43843d49f419da4e",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4bb7e2ab14e42828:16887",
+      "trace": "439ddf013d478c20:16887",
       "work": 16887
     },
     {
@@ -2626,7 +2626,7 @@
       "modules": ["city-low-descent", "archie-yard"],
       "route": "dbb94f6b57eecda1",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b7bc43fcd1c22618:217406",
+      "trace": "1876011d79d7f9a3:217406",
       "work": 217406
     },
     {
@@ -2938,7 +2938,7 @@
       "modules": ["city-tap-strip", "archie-yard"],
       "route": "fa711638a1a94f10",
       "slots": { "door": 1, "event": 0 },
-      "trace": "ea323dd1b62becad:18436",
+      "trace": "2b5c83f1011a4bb5:18436",
       "work": 18436
     },
     {
@@ -3106,7 +3106,7 @@
       "modules": ["city-tap-strip-high", "archie-yard-descent"],
       "route": "4615849f455b426d",
       "slots": { "door": 0, "event": 0 },
-      "trace": "0264b578974543a0:3434",
+      "trace": "3f607134d6d82af2:3434",
       "work": 3434
     },
     {
@@ -3118,7 +3118,7 @@
       "modules": ["city-tap-strip-high", "archie-yard-high"],
       "route": "8cb072ab7a4f6420",
       "slots": { "door": 0, "event": 0 },
-      "trace": "6ab9768b682bb8db:19831",
+      "trace": "b568c3c3054dfcbb:19831",
       "work": 19831
     },
     {
@@ -3788,7 +3788,7 @@
       "layout": "344661fa279e19f3",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "675da42b6eb3b41a:13115",
+      "trace": "8cc4c420008d9b6d:13115",
       "work": 13115
     },
     {
@@ -3869,7 +3869,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "f917c75284ef5892", "proofs": "78ffbdcfb2a17b79" },
+  "inputs": { "data": "f917c75284ef5892", "proofs": "0987b80cb9d3f6b2" },
   "version": 1,
   "zone": "blue"
 }

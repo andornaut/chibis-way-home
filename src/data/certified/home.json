@@ -141,8 +141,8 @@
       "layout": "b57fc121a6aa5b6c",
       "route": "28ad64beb757dbe6",
       "slots": { "door": 0, "event": 0 },
-      "trace": "248c4ffa4433d78e:155092",
-      "work": 155092
+      "trace": "4d0a4b95b1e1f063:155273",
+      "work": 155273
     },
     {
       "encounters": 0,
@@ -266,7 +266,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "706fe4d4d7726e75", "proofs": "78ffbdcfb2a17b79" },
+  "inputs": { "data": "706fe4d4d7726e75", "proofs": "0987b80cb9d3f6b2" },
   "version": 1,
   "zone": "home"
 }
