@@ -1,6 +1,10 @@
 {
   "schema": 1,
-  "git": { "main": "main", "remote": "origin", "github": "andornaut/chibis-way-home" },
+  "git": {
+    "main": "main",
+    "remote": "origin",
+    "github": "andornaut/chibis-way-home"
+  },
   "schedule": { "departures": ["20"], "timezone": "America/Toronto" },
   "gate": {
     "image": "node:24.21.0",
@@ -8,9 +12,15 @@
     "steps": [
       { "name": "check", "run": "./node_modules/.bin/tsc" },
       { "name": "lint", "run": "tests/container/check lint" },
-      { "name": "test", "run": "./node_modules/.bin/vitest run --maxWorkers=4" },
+      {
+        "name": "test",
+        "run": "./node_modules/.bin/vitest run --maxWorkers=4"
+      },
       { "name": "build", "run": "./node_modules/.bin/vite build" },
-      { "name": "pairs", "run": "./node_modules/.bin/tsx src/tools/chunkPairs.ts verify --sample-ms 20000" },
+      {
+        "name": "pairs",
+        "run": "./node_modules/.bin/tsx src/tools/chunkPairs.ts verify --sample-ms 20000"
+      },
       { "name": "art", "run": "node art/tools/build.ts --check" }
     ]
   },
