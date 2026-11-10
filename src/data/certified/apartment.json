@@ -218,7 +218,7 @@
       "layout": "fa7d5b8b0316a4c7",
       "route": "56085b504330c865",
       "slots": { "door": 0, "event": 0 },
-      "trace": "cea5886a9c574288:6987",
+      "trace": "739ed9c0d6b05806:6987",
       "work": 6987
     },
     {
@@ -229,7 +229,7 @@
       "layout": "76685101bfa351bb",
       "route": "4a53eb35b860a333",
       "slots": { "door": 0, "event": 0 },
-      "trace": "d5f6a7a9aa87f92e:3455",
+      "trace": "c06684c195bb934d:3455",
       "work": 3455
     },
     {
@@ -266,7 +266,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "b4a157dee4a126cb", "proofs": "0987b80cb9d3f6b2" },
+  "inputs": { "data": "b4a157dee4a126cb", "proofs": "fd4bd020731e6f0b" },
   "version": 1,
   "zone": "apartment"
 }
