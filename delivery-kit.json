@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "git": { "main": "main", "remote": "origin", "github": "andornaut/chibis-way-home" },
-  "schedule": { "departures": ["10"], "timezone": "America/Toronto" },
+  "schedule": { "departures": ["20"], "timezone": "America/Toronto" },
   "gate": {
     "image": "node:24.21.0",
     "install": "npm ci",
