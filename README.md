@@ -30,7 +30,7 @@ Requires Docker and Make. The image uses Node 24.21.0 from `.nvmrc` and installs
 | `make test TEST_ARGS='src/rules/bird.test.ts'`   | Select Vitest cases while retaining type and certified-list checks                                  |
 | `make exec COMMAND='node art/tools/ui.ts build'` | Run an explicit command with the checkout writable                                                  |
 
-`npm run check`, `npm test`, `npm run lint` and `npm run build` are Make aliases. Use `TEST_ARGS` for focused tests. Each check category admits work only when the one-minute load is below 20, with four CPUs per container. The [shared launcher](https://github.com/andornaut/ai-maintainer/blob/6a2d882bf5a8200b97319afd8076e8f00c9707ee/tests/container/run) owns source snapshots, isolation and artifact export; the project dispatcher invokes tools directly without nested Make or Docker calls.
+`npm run check`, `npm test`, `npm run lint` and `npm run build` are Make aliases. Use `TEST_ARGS` for focused tests. Each check category admits work only when the one-minute load is below 20, with four CPUs per container. The [shared launcher](https://github.com/andornaut/ai-maintainer/blob/5409c8e35a42e5658f2af46edc5ede237cb9bc7a/tests/container/run) owns source snapshots, isolation and artifact export; the project dispatcher invokes tools directly without nested Make or Docker calls.
 
 Native tools remain available after `npm ci`: `npm run dev`, `npm run format`, `npm run pairs -- --help`, `npm run preview`, `npm run reaches`, `npm run simulate -- --help` and `npm run test:game-kit`. Runtime documentation is in [src/README.md](src/README.md).
 
