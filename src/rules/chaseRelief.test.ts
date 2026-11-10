@@ -5,7 +5,7 @@ import { EDGE, STEP_SECONDS } from "../core";
 import { DOG_BEHAVIOUR } from "../data/behaviours";
 import { BIRD } from "../data/bird";
 import { TILE } from "../data/screen";
-import type { BehaviourPlan, Point, Rect } from "../data/types";
+import type { AreaLayout, BehaviourPlan, Point, Rect } from "../data/types";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import {
   type BehaviourState,
@@ -14,11 +14,12 @@ import {
   stepBehaviour,
 } from "./behaviour";
 import type { BehaviourWorld } from "./behaviourReach";
-import { startBird } from "./bird";
+import { openingScorerState } from "./behaviourScorer";
+import { birdBox, startBird } from "./bird";
+import { type PursuitGroundMap, pursuitGroundMap } from "./movementMaps";
 import { objectLayout } from "./tiles";
 
-// Archie on an unbounded flat floor, with Chibi held a fixed number of tiles to his right, so
-// pursuit never ends by distance and every chase pause, tell and give-up comes from the plan.
+// Archie on a wide flat floor, with targets inside the escape distance for chase-relief checks.
 const archie = objectLayout(
   TILE,
   CATALOGUE,
@@ -56,17 +57,25 @@ interface Tick {
   readonly target: number;
 }
 
-// Steps Archie for `seconds` with Chibi `ahead(state)` tiles right of his body.
-function run(ahead: (state: BehaviourState) => number, seconds: number) {
+// Targets use tile offsets from Archie's right edge.
+function run({
+  ahead,
+  groundMap,
+  seconds,
+}: {
+  readonly ahead: (state: BehaviourState, at: Point) => number;
+  readonly groundMap?: PursuitGroundMap;
+  readonly seconds: number;
+}) {
   let at = archie.origin;
   let state: BehaviourState = { ...startBehaviour(BIRD, archie, chibi(0)), active: true };
   const ticks: Tick[] = [];
   for (let tick = 0; tick < Math.round(seconds / STEP_SECONDS); tick++) {
-    const target = at.x + archie.width + ahead(state) * TILE;
+    const target = at.x + archie.width + ahead(state, at) * TILE;
     const step = stepBehaviour(
       BIRD,
       archie,
-      world(tick, at),
+      { ...world(tick, at), ...(groundMap && { groundMap: () => groundMap }) },
       STEP_SECONDS,
       chibi(target),
       at,
@@ -81,11 +90,117 @@ function run(ahead: (state: BehaviourState) => number, seconds: number) {
 
 const seconds = (tick: number) => (tick + 1) * STEP_SECONDS;
 
+function duePause(reachable: boolean | undefined) {
+  const at = archie.origin;
+  const target = {
+    ...chibi(at.x + archie.width + 12 * TILE),
+    y: floor.y - 6 * TILE - BIRD.height,
+  };
+  const state: BehaviourState = {
+    ...startBehaviour(BIRD, archie, target),
+    active: true,
+    mapPursuit: {
+      failed: [],
+      key: "previous-support",
+      route: { key: "previous-target", next: { pace: at.x }, reachable: reachable !== true },
+    },
+    pendingEntry: false,
+    pursuit: {
+      engagedSeconds: relief.giveUp.seconds.max + 1,
+      giveUpSeconds: relief.giveUp.seconds.max,
+      phase: "engaged",
+      settled: false,
+      unreachableSeconds: 1,
+    },
+    scorer: {
+      ...openingScorerState(DOG_BEHAVIOUR.scorer!),
+      chaseSeconds: relief.pause.afterSeconds.max + 1,
+      sinceAttackSeconds: relief.pause.tellClearanceSeconds + 1,
+    },
+    stateKey: DOG_BEHAVIOUR.scorer!.engaged,
+    traversal: {
+      geometry: "current-support",
+      inputs: [],
+      physical: { ...at, fallFromY: floor.y, grounded: true, vy: 0 },
+      status:
+        reachable === true ? "found" : reachable === false ? "unreachable" : "budget-exhausted",
+      target: birdBox(BIRD, target),
+    },
+  };
+  const sampled = world(0, at);
+  const current: BehaviourWorld = {
+    ...sampled,
+    solids: [floor, { height: 12, width: 120, x: target.x - 24, y: target.y + BIRD.height }],
+  };
+  return { at, current, state, target };
+}
+
+it("uses the current fallback path for a due pause despite an older unreachable map route", () => {
+  const { at, current, state, target } = duePause(true);
+  const paused = stepBehaviour(BIRD, archie, current, STEP_SECONDS, target, at, state);
+  expect(paused.state.chasePause).toBeDefined();
+  expect(paused.state.pursuit).toMatchObject({
+    giveUp: true,
+    phase: "engaged",
+    unreachableSeconds: 0,
+  });
+  const ended = stepBehaviour(BIRD, archie, current, STEP_SECONDS, target, paused.at, paused.state);
+  expect(ended.state.pursuit?.phase).toBe("escaped");
+  expect(ended.escaped).toEqual(DOG_BEHAVIOUR.pursuit!.escaped);
+});
+
+it("does not turn current unknown or unreachable paths into a due chase pause", () => {
+  for (const reachable of [undefined, false]) {
+    const { at, current, state, target } = duePause(reachable);
+    const step = stepBehaviour(BIRD, archie, current, STEP_SECONDS, target, at, state);
+    expect(step.state.chasePause).toBeUndefined();
+    expect(step.state.pursuit?.phase).toBe("engaged");
+    expect(step.state.pursuit?.giveUp).toBeUndefined();
+    expect(step.state.pursuit?.unreachableSeconds).toBe(
+      1 + (reachable === false ? STEP_SECONDS : 0),
+    );
+    expect(step.escaped).toBeUndefined();
+  }
+});
+
 it("gives up a reachable chase at the first pause after its drawn time, with the escape bark, then walks home", () => {
   const { giveUp, pause } = relief;
   // The latest give-up: the longest draw, then a full chase span and pause before the next pause.
   const latest = giveUp.seconds.max + pause.afterSeconds.max + pause.seconds.max;
-  const ticks = run(() => 20, latest + 2);
+  const width = floor.x + floor.width;
+  const area: AreaLayout = {
+    backX: 0,
+    chunks: [{ width, x: 0 }],
+    entries: {},
+    exitX: width,
+    height: floor.y + floor.height,
+    objects: [],
+    solids: [floor],
+    terrain: [],
+    tileset: undefined,
+    width,
+  };
+  const groundMap = pursuitGroundMap(area, archie)!;
+  expect(groundMap).toBeDefined();
+  const gap = 20;
+  const leash = archie.behaviour!.pursuit!.distance;
+  const low = archie.origin.x + leash / 4;
+  const high = archie.origin.x + leash / 2;
+  let direction = 1;
+  const ticks = run({
+    ahead: (_state, at) => {
+      // Keep the target beyond attack range and inside the canonical pursuit leash.
+      if (at.x >= high) {
+        direction = -1;
+      }
+      if (at.x <= low) {
+        direction = 1;
+      }
+      return direction === 1 ? gap : -gap - (archie.width + BIRD.width) / TILE;
+    },
+    groundMap,
+    seconds: latest + 2,
+  });
   const ended = ticks.findIndex(({ step }) => step.escaped !== undefined);
   expect(ended).toBeGreaterThan(0);
   const drawn = ticks[ended - 1]!.step.state.pursuit!.giveUpSeconds!;
@@ -141,7 +256,7 @@ it("waits the rearm cooldown after an ended chase before engaging again", () => 
 });
 
 it("pauses facing Chibi, never within the tell clearance of a tell", () => {
-  const ticks = run(() => 6, relief.giveUp.seconds.min);
+  const ticks = run({ ahead: () => 6, seconds: relief.giveUp.seconds.min });
   const engaged = ticks.filter(({ step }) => step.state.pursuit?.phase === "engaged");
   const telling = engaged.flatMap(({ step }, index) =>
     step.state.activeAttack?.phase === "tell" ? [index] : [],

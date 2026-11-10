@@ -1323,12 +1323,12 @@ function updatePursuit(
   seconds: number,
   at: Point,
   state: BehaviourState,
-): BehaviourState {
+): { readonly reachable: boolean | undefined; readonly state: BehaviourState } {
   const { target: bird, tuning, world } = perception;
   let currentState = state;
   const config = object.behaviour!.pursuit;
   if (!config) {
-    return currentState;
+    return { reachable: undefined, state: currentState };
   }
   const inside =
     Math.abs(bird.x + tuning.width / 2 - object.origin.x - object.width / 2) <= config.distance;
@@ -1434,10 +1434,10 @@ function updatePursuit(
       }),
     };
     delete (acquired as { chasePause?: unknown }).chasePause;
-    return acquired;
+    return { reachable, state: acquired };
   }
   if (prior?.phase !== "engaged") {
-    return currentState;
+    return { reachable, state: currentState };
   }
   const unreachableSeconds =
     reachable === true
@@ -1470,7 +1470,7 @@ function updatePursuit(
   if (escaped) {
     delete (next as { chasePause?: unknown }).chasePause;
   }
-  return next;
+  return { reachable, state: next };
 }
 
 // One advance's loop-carried state across its slices.
@@ -1490,6 +1490,7 @@ interface BehaviourRunContext {
   readonly flyGateway: string | undefined;
   readonly object: ObjectLayout;
   readonly perception: BehaviourPerception;
+  readonly pursuitReachable: boolean | undefined;
   readonly seconds: number;
   readonly watchdog: BehaviourPlan["idleWatchdog"];
 }
@@ -1547,7 +1548,7 @@ function startChasePause(
     state.pursuit?.phase !== "engaged" ||
     state.activeAttack ||
     state.hop ||
-    state.mapPursuit?.route?.reachable === false ||
+    context.pursuitReachable !== true ||
     (scorer.sinceAttackSeconds !== undefined &&
       scorer.sinceAttackSeconds < relief.pause.tellClearanceSeconds - EDGE) ||
     (motion.kind === "pursue" && motion.mode === "fly"
@@ -2595,7 +2596,8 @@ function advanceUnclear(
   const segments: BehaviourSegment[] = [];
   const instant = new Set<string>();
   const current = at;
-  let next = updatePursuit(perception, object, seconds, at, state);
+  const pursuit = updatePursuit(perception, object, seconds, at, state);
+  let next = pursuit.state;
   const escapedNow = state.pursuit?.phase !== "escaped" && next.pursuit?.phase === "escaped";
   const escaped = escapedNow ? plan.pursuit?.escaped : undefined;
   if (escapedNow) {
@@ -2627,6 +2629,7 @@ function advanceUnclear(
     flyGateway,
     object,
     perception,
+    pursuitReachable: pursuit.reachable,
     seconds,
     watchdog,
   };
