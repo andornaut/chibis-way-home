@@ -24,7 +24,7 @@ import {
 } from "./arenas";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 import { ORDINARY } from "./encounterLayouts";
-import { EVADE_SLOWED, evadeRuns } from "./evade";
+import { EVADE_SLOWED, type EvadeRun, evadeRuns } from "./evade";
 import { hashOf } from "./pairCertify";
 import { moduleRouteTargets, slotFills } from "./requiredRoutes";
 
@@ -32,10 +32,105 @@ import { moduleRouteTargets, slotFills } from "./requiredRoutes";
 export const ARENA_COST = 60_000;
 
 export interface ArenaProof {
+  readonly evidence: ArenaEvidence;
   readonly hash: string;
   readonly problems: readonly string[];
   readonly trace: string;
   readonly work: number;
+}
+
+type EvidenceStatus = "failed" | "not_evaluated" | "passed";
+type EvaluatedEvidence<T> =
+  { readonly status: "not_evaluated" } | (T & { readonly status: "failed" | "passed" });
+interface ProblemEvidence {
+  readonly problems: readonly string[];
+}
+export interface ArenaEvidence {
+  readonly static: ProblemEvidence & { readonly status: EvidenceStatus };
+  readonly functional: {
+    readonly requiredRoutes: EvaluatedEvidence<ProblemEvidence & { readonly profiles: number }>;
+    readonly pathOut: EvaluatedEvidence<ProblemEvidence>;
+    readonly evade: EvaluatedEvidence<{
+      readonly runs: number;
+      readonly aliveExits: number;
+      readonly deaths: number;
+      readonly runsWithProblems: number;
+      readonly work: number;
+      readonly searchUnknown: "not_recorded";
+      readonly repeatedStarts: readonly string[];
+    }>;
+  };
+  readonly challenge: EvaluatedEvidence<{
+    readonly slowedRuns: number;
+    readonly requiredRuns: number;
+    readonly seconds: number;
+  }>;
+  readonly humanPlayability: { readonly status: "not_evaluated" };
+}
+interface ArenaEvidenceInput {
+  readonly staticProblems: readonly string[];
+  readonly requiredRoutes?: ProblemEvidence & { readonly profiles: number };
+  readonly pathOut?: ProblemEvidence;
+  readonly evade?: {
+    readonly runs: readonly EvadeRun[];
+    readonly repeatedStarts: readonly string[];
+    readonly slowedRuns: number;
+  };
+}
+
+// Describes already executed proofs. It does not certify additional behaviour or run physics.
+export function summariseArenaEvidence(
+  challenge: { readonly runs: number; readonly seconds: number },
+  input: ArenaEvidenceInput,
+): ArenaEvidence {
+  const status = (problems: readonly string[]): "failed" | "passed" =>
+    problems.length > 0 ? "failed" : "passed";
+  const notEvaluated = { status: "not_evaluated" } as const;
+  const evaluated = input.staticProblems.length === 0;
+  const routes = evaluated ? input.requiredRoutes : undefined;
+  const path = evaluated ? input.pathOut : undefined;
+  const evade = evaluated ? input.evade : undefined;
+  return {
+    challenge: evade
+      ? {
+          requiredRuns: challenge.runs,
+          seconds: challenge.seconds,
+          slowedRuns: evade.slowedRuns,
+          status: evade.slowedRuns >= challenge.runs ? "passed" : "failed",
+        }
+      : notEvaluated,
+    functional: {
+      evade: evade
+        ? {
+            aliveExits: evade.runs.filter(
+              (run) => run.exit !== undefined && run.death === undefined,
+            ).length,
+            deaths: evade.runs.filter((run) => run.death !== undefined).length,
+            repeatedStarts: [...evade.repeatedStarts],
+            runs: evade.runs.length,
+            runsWithProblems: evade.runs.filter((run) => run.problems.length > 0).length,
+            searchUnknown: "not_recorded",
+            status:
+              evade.runs.some((run) => run.problems.length > 0) || evade.repeatedStarts.length > 0
+                ? "failed"
+                : "passed",
+            work: evade.runs.reduce((total, run) => total + run.work, 0),
+          }
+        : notEvaluated,
+      pathOut: path
+        ? { problems: [...path.problems], status: status(path.problems) }
+        : notEvaluated,
+      requiredRoutes: routes
+        ? {
+            problems: [...routes.problems],
+            profiles: routes.profiles,
+            status: status(routes.problems),
+          }
+        : notEvaluated,
+    },
+    humanPlayability: notEvaluated,
+    static: { problems: [...input.staticProblems], status: status(input.staticProblems) },
+  };
 }
 
 // The game's arenas whose stage lies in the zone, sorted by id.
@@ -69,7 +164,13 @@ export function proveArena(found: ArenaCase): ArenaProof {
   const recorder = traceRecorder({ retain: false });
   let work = 0;
   if (problems.length > 0) {
-    return { hash: "", problems, trace: recorder.hash(), work };
+    return {
+      evidence: summariseArenaEvidence(EVADE_SLOWED, { staticProblems: problems }),
+      hash: "",
+      problems,
+      trace: recorder.hash(),
+      work,
+    };
   }
   // The encounter profile's targets, less any on terrain the zone frame marks out of reach (the
   // Industrial roof).
@@ -82,10 +183,12 @@ export function proveArena(found: ArenaCase): ArenaProof {
     found.chunk,
   ).filter(({ at }) => !unreachable.has(`${at.col},${at.row}`));
   const fills = (found.chunk.slots?.length ?? 0) > 0 ? slotFills(found.chunk) : undefined;
+  let profiles = 0;
   for (const [profile, fill] of [
     ["empty", { door: [], event: [] }],
     ...(fills ? [["filled", fills] as const] : []),
   ] as const) {
+    profiles++;
     const plan = arenaPlan(fill, found);
     const walked = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
     const area = plan.start.area;
@@ -112,12 +215,14 @@ export function proveArena(found: ArenaCase): ArenaProof {
       }
     }
   }
+  const requiredRouteProblems = [...problems];
   const maps = arenaMaps(found, layout);
   const out = pathOut({ chibi: ORDINARY, disabled: NO_DISABLED_EDGES }, maps.encounter);
   if (out.bosses === 0) {
     problems.push("no pursuing boss");
   }
   problems.push(...out.problems.map((problem) => `path out: ${problem}`));
+  const pathOutProblems = problems.slice(requiredRouteProblems.length);
   const runs = evadeRuns({ found, layout, maps });
   for (const run of runs) {
     work += run.work;
@@ -136,15 +241,24 @@ export function proveArena(found: ArenaCase): ArenaProof {
         `fewer than ${EVADE_SLOWED.runs}`,
     );
   }
+  const repeatedStarts: string[] = [];
   // The mid start must test a state the entry start does not reach.
   for (const run of runs.filter(({ start }) => start === "mid")) {
     const entry = runs.find(({ seed, start }) => start === "entry" && seed === run.seed);
     if (entry?.trace === run.trace) {
-      problems.push(`evade mid seed ${run.seed}: repeats the entry run`);
+      const problem = `evade mid seed ${run.seed}: repeats the entry run`;
+      problems.push(problem);
+      repeatedStarts.push(problem);
     }
   }
   const trace = recorder.hash();
   return {
+    evidence: summariseArenaEvidence(EVADE_SLOWED, {
+      evade: { repeatedStarts, runs, slowedRuns: slowed },
+      pathOut: { problems: pathOutProblems },
+      requiredRoutes: { problems: requiredRouteProblems, profiles },
+      staticProblems: [],
+    }),
     hash: hashOf({
       arena: found.arena,
       chunk: found.chunk,

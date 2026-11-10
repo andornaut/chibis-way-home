@@ -238,6 +238,7 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
     const admitted: CertifiedArena[] = [];
     for (const found of arenas) {
       const proof = arenaProofs.get(found)!;
+      console.error(JSON.stringify({ arena: found.arena.id, evidence: proof.evidence }));
       if (proof.problems.length > 0) {
         console.log(`${zone} ${found.arena.id} rejected: ${proof.problems.join("; ")}`);
       } else {
@@ -318,6 +319,9 @@ async function verify(options: VerifyOptions, zones: readonly ZoneKey[]): Promis
       const target = targets[index]!;
       if ("hash" in target.entry) {
         const arena = proof as ArenaResult | undefined;
+        if (arena) {
+          console.error(JSON.stringify({ arena: target.entry.id, evidence: arena.evidence }));
+        }
         if (arena && (arena.problems.length > 0 || arena.hash !== target.entry.hash)) {
           problems.push(
             `${target.zone} ${target.entry.id}: arena proof differs: ${JSON.stringify({
