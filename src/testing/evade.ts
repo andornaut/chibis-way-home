@@ -25,8 +25,8 @@
 // He aims for a waypoint where he can stand nearest it on its row, and scores the boss there by
 // its least distance to that point and the points either side where its body would touch his.
 // He moves only by his map: a
-// jump leg replays its edge's proven commands, held as a full jump where the proof's apex is one;
-// a landing ends the leg early; and a walk without an edge stays on his span.
+// jump leg holds its actual full-jump profile, then replans from physical support if a landing
+// interrupts its witness. A walk without an edge stays on its span.
 import { type Rect, rectsOverlap } from "@andornaut/game-kit/rect";
 import {
   type AirMap,
@@ -60,7 +60,13 @@ import type {
   ZoneLayout,
 } from "../data/types";
 import { SKILL_PROFILES } from "../progress";
-import { birdBox, ordinaryHorizontalVelocity, startBird } from "../rules/bird";
+import {
+  birdBox,
+  type BirdState,
+  ordinaryHorizontalVelocity,
+  startBird,
+  stepBird,
+} from "../rules/bird";
 import {
   airMask,
   BOSS_JUMP_SCRIPTS,
@@ -69,20 +75,48 @@ import {
   groundMap,
   groundMask,
   type MapSupport,
+  type MapTerrain,
 } from "../rules/movementMaps";
-import { startZone, stepZone, type ZoneInput } from "../rules/zone";
-import { activateAll, bossSample, type BossTick } from "../sim/bossSimulator";
+import { currentScreen } from "../rules/perception";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
+import { activateAll, bossSample, type BossTick, supportWorld } from "../sim/bossSimulator";
 import { ALLOW, hitboxAt, standingAt } from "../sim/pathOut";
 import { zoneTraceLine } from "../sim/zoneTrace";
 import { type ArenaCase, type ArenaMaps, isLoop, pixelOf } from "./arenas";
 import { DODGES, type DodgeView } from "./dodges";
 import { ORDINARY } from "./encounterLayouts";
+import { createProjectileAvoidance, type ProjectileFrame } from "./evadeProjectileAvoidance";
+import {
+  observeProjectiles,
+  type ProjectileGravityByEmitter,
+  projectileGravityModels,
+} from "./evadeProjectiles";
 
 export const EVADE_SEEDS: readonly number[] = [0, 1, 2, 3];
 // entry: the boss acquires Chibi as he enters; mid: as he stands mid-arena on the loop, at its
 // waypoint nearest the middle column beyond the threat distance of the boss's spawn.
 export type EvadeStart = "entry" | "mid";
 export const EVADE_STARTS: readonly EvadeStart[] = ["entry", "mid"];
+
+export function observeProjectileFrame(
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  gravityByEmitter: ProjectileGravityByEmitter,
+  zone: ZoneState,
+): ProjectileFrame {
+  const area = layout.areas[zone.area]!;
+  return {
+    observation: observeProjectiles(
+      {
+        gravityByEmitter,
+        observer: birdBox(tuning, zone.bird),
+        world: { ...supportWorld(layout, zone), view: currentScreen(tuning, area, zone.bird) },
+      },
+      zone.transients,
+    ),
+    tick: zone.steps,
+  };
+}
 // From the boss first acquiring him, he reaches the exit alive within this long.
 export const EVADE_LIMIT_SECONDS = 60;
 // In at least `runs` of an arena's runs, the exit comes `seconds` or more later than the
@@ -226,15 +260,35 @@ export function fullJump(
   );
 }
 
+type LaunchMove = -1 | 0 | 1;
+type LaunchState = { readonly vx: number; readonly x: number };
+type LaunchSafety = (from: number, to: number, move: LaunchMove) => boolean;
+interface LaunchPlan {
+  readonly commands: readonly LaunchMove[];
+  readonly states: readonly LaunchState[];
+}
+interface LaunchSearchWork {
+  readonly expansions: number;
+  readonly states: number;
+  readonly transitions: number;
+}
 type LaunchPreparation =
   | { readonly kind: "ready" }
-  | { readonly input: ZoneInput; readonly kind: "prepare" }
-  | { readonly kind: "unknown" };
+  | {
+      readonly input: ZoneInput;
+      readonly kind: "prepare";
+      readonly plan: LaunchPlan;
+      readonly search?: LaunchSearchWork;
+    }
+  | {
+      readonly kind: "unknown";
+      readonly search?: LaunchSearchWork;
+    };
 
 // A map witness applies its horizontal command immediately. Prepare that velocity with ordinary
 // ground inputs, proving the run-up stays on this support before starting the jump clock.
 export function prepareLaunch(
-  safeStep: (from: number, to: number, move: -1 | 0 | 1) => boolean,
+  safeStep: LaunchSafety,
   tuning: BirdTuning,
   seconds: number,
   span: { readonly left: number; readonly right: number },
@@ -242,6 +296,36 @@ export function prepareLaunch(
   move: -1 | 0 | 1,
   bird: { readonly vx: number; readonly x: number },
 ): LaunchPreparation {
+  if (
+    ![seconds, tuning.walkSpeed, tuning.groundAccel, tuning.brakeAccel].every(
+      (value) => Number.isFinite(value) && value > 0,
+    ) ||
+    ![bird.x, bird.vx, span.left, span.right, launch.left, launch.right].every(Number.isFinite) ||
+    span.left > span.right ||
+    launch.left > launch.right ||
+    bird.x < span.left - EDGE ||
+    bird.x > span.right + EDGE
+  ) {
+    return { kind: "unknown" };
+  }
+  const acceleration = Math.min(tuning.groundAccel, tuning.brakeAccel);
+  const limit =
+    Math.ceil((2 * tuning.walkSpeed) / (acceleration * seconds)) +
+    Math.ceil((span.right - span.left) / (tuning.walkSpeed * seconds)) +
+    2;
+  const horizon = 3 * limit;
+  const budget = horizon * (Math.ceil((2 * tuning.walkSpeed) / (acceleration * seconds)) + 1);
+  const transitionLimit = 3 * budget;
+  const stepDistance = Math.max(tuning.walkSpeed, Math.abs(bird.vx)) * seconds;
+  const velocityStep = Math.max(tuning.groundAccel, tuning.brakeAccel) * seconds;
+  if (
+    ![limit, horizon, budget, transitionLimit].every(
+      (value) => Number.isSafeInteger(value) && value > 0,
+    ) ||
+    ![stepDistance, velocityStep].every((value) => Number.isFinite(value) && value > 0)
+  ) {
+    return { kind: "unknown" };
+  }
   if (!safeStep(bird.x, bird.x, 0)) {
     return { kind: "unknown" };
   }
@@ -254,13 +338,15 @@ export function prepareLaunch(
   if (ready(bird)) {
     return { kind: "ready" };
   }
-  const limit =
-    Math.ceil(
-      (2 * tuning.walkSpeed) / (Math.min(tuning.groundAccel, tuning.brakeAccel) * seconds),
-    ) +
-    Math.ceil((span.right - span.left) / (tuning.walkSpeed * seconds)) +
-    2;
+  const search = { expansions: 0, states: 0, transitions: 0 };
+  let exhausted = false;
+  const unknown = () => ({ kind: "unknown", search: { ...search } }) as const;
   const advance = (state: typeof bird, command: -1 | 0 | 1) => {
+    if (search.transitions === transitionLimit) {
+      exhausted = true;
+      return undefined;
+    }
+    search.transitions++;
     const vx = ordinaryHorizontalVelocity(tuning, seconds, command, true, state.vx);
     const x = state.x + vx * seconds;
     return x < span.left - EDGE || x > span.right + EDGE || !safeStep(state.x, x, command)
@@ -321,10 +407,164 @@ export function prepareLaunch(
       prefix.push(opposite);
     }
   }
-  if (best) {
-    return { input: { jumpHeld: false, move: best[0]!, useHeld: false }, kind: "prepare" };
+  if (exhausted) {
+    return unknown();
   }
-  return { kind: "unknown" };
+  if (!best) {
+    const toward = bird.x < launch.left ? 1 : bird.x > launch.right ? -1 : 0;
+    const moves: readonly LaunchMove[] =
+      move === 0
+        ? toward === 0
+          ? [0, -1, 1]
+          : [toward, 0, toward === 1 ? -1 : 1]
+        : [move, 0, move === 1 ? -1 : 1];
+    const heuristic = (state: LaunchState) =>
+      Math.max(
+        Math.ceil(
+          Math.max(0, launch.left - state.x - EDGE, state.x - launch.right - EDGE) / stepDistance,
+        ),
+        Math.ceil(Math.max(0, Math.abs(state.vx - speed) - EDGE) / velocityStep),
+      );
+    const records: {
+      command: LaunchMove;
+      depth: number;
+      heap: number;
+      lower: number;
+      order: number;
+      parent: number;
+      state: LaunchState;
+    }[] = [
+      { command: 0, depth: 0, heap: -1, lower: heuristic(bird), order: 0, parent: -1, state: bird },
+    ];
+    const visited = new Map<number, Map<number, number>>([[bird.x, new Map([[bird.vx, 0]])]]);
+    const heap: number[] = [];
+    let order = 0;
+    const earlier = (left: number, right: number) => {
+      const a = records[left]!;
+      const b = records[right]!;
+      return (
+        a.depth + a.lower < b.depth + b.lower ||
+        (a.depth + a.lower === b.depth + b.lower && a.order < b.order)
+      );
+    };
+    const swap = (left: number, right: number) => {
+      [heap[left], heap[right]] = [heap[right]!, heap[left]!];
+      records[heap[left]!]!.heap = left;
+      records[heap[right]!]!.heap = right;
+    };
+    const enqueue = (index: number) => {
+      const record = records[index]!;
+      if (record.heap === -1) {
+        record.heap = heap.length;
+        record.order = order++;
+        heap.push(index);
+      }
+      let at = record.heap;
+      while (at > 0) {
+        const parent = Math.floor((at - 1) / 2);
+        if (!earlier(heap[at]!, heap[parent]!)) {
+          break;
+        }
+        swap(at, parent);
+        at = parent;
+      }
+    };
+    const pop = () => {
+      const index = heap[0]!;
+      const last = heap.pop()!;
+      records[index]!.heap = -1;
+      if (heap.length > 0) {
+        heap[0] = last;
+        records[last]!.heap = 0;
+        let at = 0;
+        while (2 * at + 1 < heap.length) {
+          let child = 2 * at + 1;
+          if (child + 1 < heap.length && earlier(heap[child + 1]!, heap[child]!)) {
+            child++;
+          }
+          if (!earlier(heap[child]!, heap[at]!)) {
+            break;
+          }
+          swap(at, child);
+          at = child;
+        }
+      }
+      return index;
+    };
+    enqueue(0);
+    search.states = 1;
+    while (heap.length > 0) {
+      if (search.expansions === budget) {
+        return unknown();
+      }
+      const index = pop();
+      const record = records[index]!;
+      search.expansions++;
+      if (ready(record.state)) {
+        best = [];
+        for (let at = index; records[at]!.parent !== -1; at = records[at]!.parent) {
+          best.push(records[at]!.command);
+        }
+        best.reverse();
+        break;
+      }
+      if (record.depth === horizon) {
+        continue;
+      }
+      for (const command of moves) {
+        if (command === 0 && record.state.vx === 0) {
+          continue;
+        }
+        const next = advance(record.state, command);
+        if (exhausted) {
+          return unknown();
+        }
+        if (!next) {
+          continue;
+        }
+        const depth = record.depth + 1;
+        const lower = heuristic(next);
+        if (depth + lower > horizon) {
+          continue;
+        }
+        const previous = visited.get(next.x)?.get(next.vx);
+        if (previous !== undefined) {
+          if (records[previous]!.depth <= depth) {
+            continue;
+          }
+          Object.assign(records[previous]!, { command, depth, parent: index });
+          enqueue(previous);
+          continue;
+        }
+        if (records.length === budget) {
+          return unknown();
+        }
+        const velocities = visited.get(next.x) ?? new Map<number, number>();
+        velocities.set(next.vx, records.length);
+        visited.set(next.x, velocities);
+        records.push({ command, depth, heap: -1, lower, order: 0, parent: index, state: next });
+        enqueue(records.length - 1);
+        search.states = records.length;
+      }
+    }
+    if (!best) {
+      return unknown();
+    }
+  }
+  const states: LaunchState[] = [bird];
+  for (const command of best) {
+    const next = advance(states.at(-1)!, command);
+    if (!next) {
+      return unknown();
+    }
+    states.push(next);
+  }
+  return {
+    input: { jumpHeld: false, move: best[0]!, useHeld: false },
+    kind: "prepare",
+    plan: { commands: best, states },
+    search: { ...search },
+  };
 }
 
 type LaunchEdge = Pick<MapEdge<MapSupport>, "commands" | "kind" | "launch">;
@@ -332,9 +572,14 @@ interface LaunchContext {
   readonly bird: { readonly vx: number; readonly x: number };
   readonly edge?: LaunchEdge | undefined;
   readonly grounded: boolean;
+  readonly goal?: Point | undefined;
   readonly hasGoal: boolean;
   readonly scripted: boolean;
   readonly span?: { readonly left: number; readonly right: number } | undefined;
+}
+
+export function startsJump(edge: LaunchEdge | undefined) {
+  return Boolean(edge?.commands[0]?.jump);
 }
 
 export function boundaryInput(
@@ -369,24 +614,54 @@ export function launchStepSafe(
 }
 
 export function createLaunchPreparation(tuning: BirdTuning, seconds: number) {
-  let pending: LaunchEdge | undefined;
-  return (
-    safeStep: (from: number, to: number, move: -1 | 0 | 1) => boolean,
-    context: LaunchContext,
-  ) => {
-    const { bird, edge, grounded, hasGoal, scripted, span } = context;
-    if (!grounded || !hasGoal || scripted || !span || edge?.kind !== "jump") {
+  let pending:
+    | {
+        cursor: number;
+        edge: LaunchEdge;
+        goal?: Point | undefined;
+        plan: LaunchPlan;
+        span: { readonly left: number; readonly right: number };
+      }
+    | undefined;
+  const step = (safeStep: LaunchSafety, context: LaunchContext) => {
+    const { bird, edge, goal, grounded, hasGoal, scripted, span } = context;
+    if (!grounded || !hasGoal || scripted || !span || !edge || !startsJump(edge)) {
       pending = undefined;
       return { kind: "approach" } as const;
-    }
-    if (pending !== edge) {
-      pending = undefined;
     }
     if (
-      pending !== edge &&
-      (bird.x < edge.launch.left - EDGE || bird.x > edge.launch.right + EDGE)
+      pending &&
+      (pending.edge !== edge ||
+        pending.span.left !== span.left ||
+        pending.span.right !== span.right ||
+        pending.goal?.x !== goal?.x ||
+        pending.goal?.y !== goal?.y)
     ) {
-      return { kind: "approach" } as const;
+      pending = undefined;
+    }
+    if (pending) {
+      const expected = pending.plan.states[pending.cursor]!;
+      const safe =
+        expected.x === bird.x &&
+        expected.vx === bird.vx &&
+        pending.plan.commands.slice(pending.cursor).every((command, index) => {
+          const from = pending!.plan.states[pending!.cursor + index]!;
+          const to = pending!.plan.states[pending!.cursor + index + 1]!;
+          return safeStep(from.x, to.x, command);
+        }) &&
+        safeStep(
+          pending.plan.states.at(-1)!.x,
+          pending.plan.states.at(-1)!.x,
+          edge.commands[0]!.move,
+        );
+      if (safe && pending.cursor < pending.plan.commands.length) {
+        const command = pending.plan.commands[pending.cursor++]!;
+        return {
+          input: { jumpHeld: false, move: command, useHeld: false },
+          kind: "prepare",
+        } as const;
+      }
+      pending = undefined;
     }
     const preparation = prepareLaunch(
       safeStep,
@@ -397,9 +672,236 @@ export function createLaunchPreparation(tuning: BirdTuning, seconds: number) {
       edge.commands[0]!.move,
       bird,
     );
-    pending = preparation.kind === "prepare" ? edge : undefined;
+    if (preparation.kind === "prepare") {
+      pending = {
+        cursor: 1,
+        edge,
+        goal,
+        plan: preparation.plan,
+        span: { left: span.left, right: span.right },
+      };
+    }
     return preparation;
   };
+  return Object.assign(step, {
+    reset: () => {
+      pending = undefined;
+    },
+  });
+}
+
+export interface RouteFollowEvent {
+  readonly cause?: string;
+  readonly edge: number;
+  readonly kind: "abandoned" | "completed";
+}
+export interface RouteFollowResult {
+  readonly events: readonly RouteFollowEvent[];
+  readonly input: ZoneInput;
+  readonly problem?: string;
+}
+export interface RouteFollowContext {
+  readonly areaWidth: number;
+  readonly bird: BirdState;
+  readonly goal?: Point | undefined;
+  readonly mask: MapMask;
+}
+
+export function createRouteFollower(
+  tuning: BirdTuning,
+  seconds: number,
+  map: MovementMap<MapSupport>,
+  terrain: MapTerrain,
+) {
+  const preparation = createLaunchPreparation(tuning, seconds);
+  const solids = terrain.world.solids;
+  const staticColliders = terrain.area.colliders.filter(
+    ({ after, before }) =>
+      before.x === after.x &&
+      before.y === after.y &&
+      before.width === after.width &&
+      before.height === after.height,
+  );
+  const ledges = staticColliders.filter(({ kind }) => kind === "ledge").map(({ before }) => before);
+  let leg: { airborne: boolean; edge: MapEdge<MapSupport>; goal: Point; step: number } | undefined;
+  let holdingFull = false;
+  const reset = () => {
+    leg = undefined;
+    preparation.reset();
+  };
+  const step = (safeStep: LaunchSafety, context: RouteFollowContext): RouteFollowResult => {
+    const { areaWidth, bird, goal, mask } = context;
+    const events: RouteFollowEvent[] = [];
+    const body = birdBox(tuning, bird);
+    const ref = bird.grounded ? locate(map, body) : undefined;
+    if (bird.grounded) {
+      holdingFull = false;
+    }
+    const finish = (input: ZoneInput, problem?: string): RouteFollowResult => ({
+      events,
+      input:
+        holdingFull && !bird.grounded && bird.jumpHeld && bird.jumpHeldFor < tuning.jumpRiseTime
+          ? { ...input, jumpHeld: true }
+          : input,
+      ...(problem && { problem }),
+    });
+    const abandon = (cause: string) => {
+      if (leg) {
+        events.push({ cause, edge: leg.edge.id, kind: "abandoned" });
+      }
+      leg = undefined;
+      preparation.reset();
+    };
+    const toward = (x: number): ZoneInput => ({
+      jumpHeld: false,
+      move: x > body.x + EDGE ? 1 : x < body.x - EDGE ? -1 : 0,
+      useHeld: false,
+    });
+    if (!goal) {
+      abandon("no-goal");
+      preparation.reset();
+      return finish(STILL);
+    }
+    if (leg && (leg.goal.x !== goal.x || leg.goal.y !== goal.y)) {
+      abandon("goal-changed");
+    }
+    if (leg) {
+      leg.airborne ||= !bird.grounded;
+      if (leg.airborne && bird.grounded) {
+        if (
+          ref?.node === leg.edge.to &&
+          body.x >= leg.edge.land.left - EDGE &&
+          body.x <= leg.edge.land.right + EDGE
+        ) {
+          events.push({ edge: leg.edge.id, kind: "completed" });
+          leg = undefined;
+        } else {
+          abandon("interrupted-landing");
+        }
+      } else {
+        const command = leg.edge.commands[leg.step];
+        if (!command) {
+          abandon("witness-ended");
+        } else if (command.jump) {
+          abandon("unprepared-sublaunch");
+        } else {
+          leg.step++;
+          if (command.jump) {
+            holdingFull = fullJump(tuning.jumpHopHeight, map, leg.edge);
+          }
+          return finish({ jumpHeld: command.jump, move: command.move, useHeld: false });
+        }
+      }
+    }
+    if (!bird.grounded) {
+      preparation.reset();
+      return finish(toward(goal.x - body.width / 2));
+    }
+    if (!ref) {
+      preparation.reset();
+      const feet = body.y + body.height;
+      const candidates = map.nodes
+        .flatMap((node) => {
+          if (
+            node.kind !== "static" ||
+            node.deps.length > 0 ||
+            !mask.node(node.id) ||
+            Math.abs(node.y - feet) > EDGE
+          ) {
+            return [];
+          }
+          const support = staticColliders.find(
+            (collider) =>
+              collider.supportId === node.supportId &&
+              Math.abs(collider.before.y - feet) <= EDGE &&
+              collider.before.x < body.x + body.width &&
+              collider.before.x + collider.before.width > body.x,
+          );
+          return support ? [{ node, support: support.before }] : [];
+        })
+        .sort(
+          (a, b) =>
+            Math.abs(Math.min(a.node.right, Math.max(a.node.left, body.x)) - body.x) -
+              Math.abs(Math.min(b.node.right, Math.max(b.node.left, body.x)) - body.x) ||
+            a.node.id - b.node.id,
+        );
+      const candidate = candidates[0];
+      if (!candidate) {
+        return finish(STILL, "cannot recover full-foot support from actual contact");
+      }
+      const { node, support } = candidate;
+      const contact = (x: number) => support.x < x + body.width && support.x + support.width > x;
+      const safe = (from: number, to: number, move: LaunchMove) =>
+        contact(from) && contact(to) && safeStep(from, to, move);
+      const recovered = prepareLaunch(
+        safe,
+        tuning,
+        seconds,
+        {
+          left: Math.max(0, support.x - body.width),
+          right: Math.min(areaWidth - body.width, support.x + support.width),
+        },
+        node,
+        0,
+        bird,
+      );
+      if (recovered.kind !== "prepare") {
+        return finish(STILL, "cannot establish full-foot support with ordinary input");
+      }
+      const predicted = stepBird(tuning, solids, ledges, seconds, recovered.input, bird);
+      if (!predicted.grounded || Math.abs(predicted.y - bird.y) > EDGE || !contact(predicted.x)) {
+        return finish(STILL, "ordinary support recovery leaves actual contact");
+      }
+      return finish(recovered.input);
+    }
+    const path = pathTo(map, mask, ref, { point: goal, radius: TILE });
+    const edge = path?.edges[0] === undefined ? undefined : map.edges[path.edges[0]];
+    const prepared = preparation(safeStep, {
+      bird,
+      edge,
+      goal,
+      grounded: true,
+      hasGoal: true,
+      scripted: false,
+      span: map.nodes[ref.node],
+    });
+    if (!edge) {
+      const feet = bottomCentre(body);
+      if (Math.abs(feet.x - goal.x) <= TILE / 2) {
+        return finish(STILL);
+      }
+      return finish(toward(spanGoal(areaWidth, map.nodes[ref.node], goal.x - body.width / 2)));
+    }
+    const jump = startsJump(edge);
+    if (edge.kind === "walk" && !jump) {
+      return finish(
+        toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2))),
+      );
+    }
+    if (jump && prepared.kind === "unknown") {
+      return finish(STILL, "cannot establish a velocity-matched jump launch on its support");
+    }
+    if (jump && prepared.kind === "prepare") {
+      return finish(prepared.input);
+    }
+    const reach = jump ? EDGE : tuning.walkSpeed * seconds;
+    if (
+      (jump && prepared.kind === "ready") ||
+      (body.x >= edge.launch.left - reach && body.x <= edge.launch.right + reach)
+    ) {
+      const command = edge.commands[0];
+      if (!command) {
+        return finish(STILL, "selected edge has no witness commands");
+      }
+      leg = { airborne: false, edge, goal: { ...goal }, step: 1 };
+      if (command.jump) {
+        holdingFull = fullJump(tuning.jumpHopHeight, map, edge);
+      }
+      return finish({ jumpHeld: command.jump, move: command.move, useHeld: false });
+    }
+    return finish(toward(Math.min(edge.launch.right, Math.max(edge.launch.left, body.x))));
+  };
+  return { reset, step };
 }
 
 // The hitbox-left x a walk without a map edge heads for: the goal's, kept within his span unless
@@ -548,6 +1050,8 @@ function evadeWalk(
   }
 
   const history: BossTick[] = [];
+  const projectileHistory: ProjectileFrame[] = [];
+  const gravityByEmitter = projectileGravityModels(area.objects);
   // Each countering refuge as a one-waypoint route at its middle; a move between routes or
   // refuges is a switch. He starts on the loop.
   const refuges: ArenaRoute[] = arena.refuges.flatMap(({ at, kind, width }, index) =>
@@ -571,8 +1075,7 @@ function evadeWalk(
   let exiting = false;
   let dodge: Dodge | undefined;
   let lastDodgeEnd = -1;
-  let leg: { airborne: boolean; edge: MapEdge<MapSupport>; step: number } | undefined;
-  const launchPreparation = createLaunchPreparation(ORDINARY, STEP_SECONDS);
+  const follower = createRouteFollower(ORDINARY, STEP_SECONDS, chibi, maps.encounter.terrain);
   let ended: { cause: string; tick: number } | undefined;
   const problems: string[] = [];
   let launchProblem: string | undefined;
@@ -620,6 +1123,12 @@ function evadeWalk(
     return ref ? mapDistance(chibi, avoiding, ref, point) : Infinity;
   };
   const solids = maps.encounter.terrain.world.solids;
+  const projectileAvoidance = createProjectileAvoidance(ORDINARY, STEP_SECONDS, decide, delay, {
+    ledges: maps.encounter.terrain.area.colliders
+      .filter(({ kind }) => kind === "ledge")
+      .map(({ before }) => before),
+    solids,
+  });
   const preparationHazards = maps.encounter.terrain.hazards.map(({ rect }) => rect);
   const safePreparationStep = (from: number, to: number, move: -1 | 0 | 1) => {
     const body = { ...box(), x: from };
@@ -633,20 +1142,6 @@ function evadeWalk(
       launchStepSafe(solids, preparationHazards, AVOID_TILES * TILE, observedBody, body, from, to)
     );
   };
-  const prepare = (
-    edge: MapEdge<MapSupport> | undefined,
-    span: MovementMap<MapSupport>["nodes"][number] | undefined,
-    hasGoal = true,
-    scripted = false,
-  ) =>
-    launchPreparation(safePreparationStep, {
-      bird: { vx: zone.bird.vx, x: box().x },
-      edge,
-      grounded: zone.bird.grounded,
-      hasGoal,
-      scripted,
-      span,
-    });
   const objectOf = (boss: AgentSample) => area.objects[Number(boss.id.split(":")[1])]!;
   // Where each boss was last located on its map, for while it is airborne off its nodes.
   const groundRefs = new Map<string, NodeRef>();
@@ -721,67 +1216,14 @@ function evadeWalk(
   // its launch range, otherwise a walk toward the range that never leaves his span except by an
   // edge, whose proof keeps clear of static hazards.
   const follow = (goal: Point | undefined): ZoneInput => {
-    if (leg) {
-      leg.airborne ||= !zone.bird.grounded;
-      const command = leg.edge.commands[leg.step++];
-      // The witness ends as it lands, so a landing before its last command ends the leg.
-      if (command && !(leg.airborne && zone.bird.grounded)) {
-        return {
-          jumpHeld:
-            command.jump ||
-            (fullJump(ORDINARY.jumpHopHeight, chibi, leg.edge) &&
-              leg.step * STEP_SECONDS < ORDINARY.jumpRiseTime),
-          move: command.move,
-          useHeld: false,
-        };
-      }
-      leg = undefined;
-    }
-    if (!goal) {
-      prepare(undefined, undefined, false);
-      return STILL;
-    }
-    const body = box();
-    const toward = (x: number): ZoneInput => {
-      const dx = x - body.x;
-      return { jumpHeld: false, move: dx > EDGE ? 1 : dx < -EDGE ? -1 : 0, useHeld: false };
-    };
-    const feet = bottomCentre(body);
-    if (!zone.bird.grounded) {
-      prepare(undefined, undefined);
-      return toward(goal.x - body.width / 2);
-    }
-    const ref = here();
-    const path = ref && pathTo(chibi, avoiding, ref, { point: goal, radius: TILE });
-    const edge = path?.edges[0] === undefined ? undefined : chibi.edges[path.edges[0]];
-    const preparation = prepare(edge, ref && chibi.nodes[ref.node]);
-    if (!edge) {
-      if (Math.abs(feet.x - goal.x) <= TILE / 2) {
-        return STILL;
-      }
-      return toward(spanGoal(area.width, ref && chibi.nodes[ref.node], goal.x - body.width / 2));
-    }
-    if (edge.kind === "walk") {
-      return toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2)));
-    }
-    const reach = edge.kind === "jump" ? EDGE : ORDINARY.walkSpeed * STEP_SECONDS;
-    if (
-      (edge.kind === "jump" && preparation.kind !== "approach") ||
-      (body.x >= edge.launch.left - reach && body.x <= edge.launch.right + reach)
-    ) {
-      if (edge.kind === "jump") {
-        if (preparation.kind === "unknown") {
-          launchProblem = "cannot establish a velocity-matched jump launch on its support";
-          return STILL;
-        }
-        if (preparation.kind === "prepare") {
-          return preparation.input;
-        }
-      }
-      leg = { airborne: false, edge, step: 0 };
-      return follow(goal);
-    }
-    return toward(Math.min(edge.launch.right, Math.max(edge.launch.left, body.x)));
+    const result = follower.step(safePreparationStep, {
+      areaWidth: area.width,
+      bird: zone.bird,
+      goal,
+      mask: avoiding,
+    });
+    launchProblem = result.problem;
+    return result.input;
   };
 
   // Each route's next waypoints: those either side of its waypoint nearest Chibi on his map, and
@@ -937,7 +1379,7 @@ function evadeWalk(
         dodge = { attack: attack!.id, boss: boss.id, retreat: true, started: tick };
       } else {
         dodge = { attack: attack!.id, boss: boss.id, script: DODGES[scripted!](), started: tick };
-        leg = undefined;
+        follower.reset();
       }
       return;
     }
@@ -998,10 +1440,18 @@ function evadeWalk(
       );
       break;
     }
+    const projectileFrame = projectileAvoidance.observe(
+      zone.steps,
+      projectileHistory[Math.max(0, projectileHistory.length - 1 - delay)],
+    );
+    const observedProjectiles = projectileFrame?.observation;
+    const observedProjectilePresence =
+      observedProjectiles !== undefined &&
+      (observedProjectiles.kind === "unknown" || observedProjectiles.projectiles.length > 0);
     let input: ZoneInput;
     if (ended) {
       dodge = undefined;
-      // He sets out once nothing the boss threw or dropped is still in flight.
+      // He sets out once his delayed visible-projectile observation is clear.
       // He waits while the boss, as he saw it, lies ahead within THREAT_TILES or closes faster
       // than his walk.
       const observed = history[Math.max(0, history.length - 1 - delay)];
@@ -1020,7 +1470,7 @@ function evadeWalk(
               history[Math.max(0, history.length - 1 - delay - decide)],
             ) > ORDINARY.walkSpeed);
       }
-      input = waiting || (history.at(-1)?.world.transients ?? 0) > 0 ? follow(undefined) : toExit();
+      input = waiting || observedProjectilePresence ? follow(undefined) : toExit();
     } else {
       if (!dodge && tick % decide === 0) {
         choose(tick);
@@ -1030,7 +1480,7 @@ function evadeWalk(
       if (dodge?.retreat) {
         input = follow(waypointPixel(target));
       } else if (dodge?.script) {
-        prepare(undefined, undefined, false, true);
+        follower.reset();
         const latest = history.at(-1)?.agents.find(({ id }) => id === dodge!.boss);
         input = latest
           ? dodge.script!({
@@ -1047,6 +1497,36 @@ function evadeWalk(
         input = follow(waypointPixel(target));
       }
     }
+    const projectileInput = projectileAvoidance(
+      safePreparationStep,
+      {
+        bird: zone.bird,
+        frame: projectileFrame,
+        guard: (body, requested) =>
+          boundaryInput(
+            { backX: area.backX, canExit: Boolean(ended) || exiting, exitX: area.exitX },
+            body,
+            requested,
+          ),
+        support: () => {
+          const ref = here();
+          const node = ref && chibi.nodes[ref.node];
+          return node?.kind === "static" && node.deps.length === 0 ? node : undefined;
+        },
+        tick: zone.steps,
+      },
+      input,
+    );
+    if (observedProjectiles?.kind === "unknown") {
+      launchProblem = observedProjectiles.problem;
+    }
+    if (projectileInput.problem) {
+      launchProblem = projectileInput.problem;
+    }
+    if (projectileInput.override) {
+      follower.reset();
+    }
+    input = projectileInput.input;
     // He never turns back out of the entry, and leaves by the exit only on his way out.
     input = boundaryInput(
       { backX: area.backX, canExit: Boolean(ended) || exiting, exitX: area.exitX },
@@ -1066,8 +1546,10 @@ function evadeWalk(
       acquired = tick;
     }
     history.push(sample);
+    projectileHistory.push(observeProjectileFrame(ORDINARY, layout, gravityByEmitter, zone));
     if (history.length > 2 * (delay + decide) + 2) {
       history.shift();
+      projectileHistory.shift();
     }
     if (dodge) {
       const latest = sample.agents.find(({ id }) => id === dodge!.boss);
@@ -1080,7 +1562,7 @@ function evadeWalk(
       if (dodge.ended !== undefined || tick - dodge.started >= ticksOf(DODGE_LIMIT_SECONDS)) {
         dodge = undefined;
         lastDodgeEnd = tick;
-        leg = undefined;
+        follower.reset();
       }
     }
     // A change of level on the loop: grounded at a loop waypoint row other than the last one.
@@ -1096,7 +1578,7 @@ function evadeWalk(
     if (!ended && zone.escapes.length > 0) {
       const gaveUp = sample.agents.some(({ gaveUp }) => gaveUp);
       ended = { cause: gaveUp ? "give-up" : zone.escapes[0]!.cause, tick };
-      leg = undefined;
+      follower.reset();
     }
   }
   if (!free && !death && switches === 0 && levels === 0) {
