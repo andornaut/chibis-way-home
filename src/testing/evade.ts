@@ -39,6 +39,7 @@ import {
   locate,
   type MapEdge,
   type MapMask,
+  type MapNode,
   type MovementMap,
   type NodeRef,
   pathTo,
@@ -60,6 +61,7 @@ import type {
   ZoneLayout,
 } from "../data/types";
 import { SKILL_PROFILES } from "../progress";
+import type { BehaviourObserver } from "../rules/behaviourObserver";
 import {
   birdBox,
   type BirdState,
@@ -78,7 +80,13 @@ import {
   type MapTerrain,
 } from "../rules/movementMaps";
 import { currentScreen } from "../rules/perception";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
+import {
+  startZone,
+  stepZone,
+  stepZoneObserved,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone";
 import { activateAll, bossSample, type BossTick, supportWorld } from "../sim/bossSimulator";
 import { ALLOW, hitboxAt, standingAt } from "../sim/pathOut";
 import { zoneTraceLine } from "../sim/zoneTrace";
@@ -132,7 +140,13 @@ const AVOID_TILES = 1;
 const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 const ticksOf = (seconds: number) => Math.round(seconds / STEP_SECONDS);
 
+export interface EvadeControllerFailure {
+  readonly kind: "unknown" | "unsafe" | "unsupported";
+  readonly problem: string;
+}
+
 export interface EvadeRun {
+  readonly controllerFailure?: EvadeControllerFailure;
   // Seconds from the start to the boss first acquiring him, and from then to the exit.
   readonly acquired?: number;
   readonly death?: string;
@@ -762,11 +776,16 @@ export interface RouteFollowEvent {
   readonly edge: number;
   readonly kind: "abandoned" | "completed";
 }
-export interface RouteFollowResult {
+type RouteFollowOutcome =
+  | {
+      readonly kind: "completed" | "following" | "idle";
+      readonly problem?: never;
+    }
+  | EvadeControllerFailure;
+export type RouteFollowResult = RouteFollowOutcome & {
   readonly events: readonly RouteFollowEvent[];
   readonly input: ZoneInput;
-  readonly problem?: string;
-}
+};
 export interface RouteFollowContext {
   readonly areaWidth: number;
   readonly bird: BirdState;
@@ -806,13 +825,16 @@ export function createRouteFollower(
     if (bird.grounded) {
       holdingFull = false;
     }
-    const finish = (input: ZoneInput, problem?: string): RouteFollowResult => ({
+    const finish = (
+      input: ZoneInput,
+      outcome: RouteFollowOutcome = { kind: "following" },
+    ): RouteFollowResult => ({
       events,
       input:
         holdingFull && !bird.grounded && bird.jumpHeld && bird.jumpHeldFor < tuning.jumpRiseTime
           ? { ...input, jumpHeld: true }
           : input,
-      ...(problem && { problem }),
+      ...outcome,
     });
     const abandon = (cause: string) => {
       if (leg) {
@@ -830,7 +852,7 @@ export function createRouteFollower(
     if (!goal) {
       abandon("no-goal");
       preparation.reset();
-      return finish(STILL);
+      return finish(STILL, { kind: "idle" });
     }
     if (leg && (leg.goal.x !== goal.x || leg.goal.y !== goal.y)) {
       abandon("goal-changed");
@@ -971,7 +993,10 @@ export function createRouteFollower(
         );
       const candidate = candidates[0];
       if (!candidate) {
-        return finish(STILL, "cannot recover full-foot support from actual contact");
+        return finish(STILL, {
+          kind: "unsupported",
+          problem: "cannot recover full-foot support from actual contact",
+        });
       }
       const { node, support } = candidate;
       const contact = (x: number) => support.x < x + body.width && support.x + support.width > x;
@@ -990,11 +1015,17 @@ export function createRouteFollower(
         bird,
       );
       if (recovered.kind !== "prepare") {
-        return finish(STILL, "cannot establish full-foot support with ordinary input");
+        return finish(STILL, {
+          kind: recovered.kind === "unknown" ? "unknown" : "unsupported",
+          problem: "cannot establish full-foot support with ordinary input",
+        });
       }
       const predicted = stepBird(tuning, solids, ledges, seconds, recovered.input, bird);
       if (!predicted.grounded || Math.abs(predicted.y - bird.y) > EDGE || !contact(predicted.x)) {
-        return finish(STILL, "ordinary support recovery leaves actual contact");
+        return finish(STILL, {
+          kind: "unsafe",
+          problem: "ordinary support recovery leaves actual contact",
+        });
       }
       return finish(recovered.input);
     }
@@ -1004,7 +1035,10 @@ export function createRouteFollower(
       const path = pathTo(map, compatible.mask, ref, { point: goal, radius: TILE });
       if (!path && compatible.blocked.length > 0) {
         preparation.reset();
-        return finish(STILL, "no path with a compatible first grounded launch");
+        return finish(STILL, {
+          kind: "unknown",
+          problem: "no path with a compatible first grounded launch",
+        });
       }
       edge = path?.edges[0] === undefined ? undefined : map.edges[path.edges[0]];
       const selected: number[] = [];
@@ -1038,7 +1072,10 @@ export function createRouteFollower(
     if (!edge) {
       const feet = bottomCentre(body);
       if (Math.abs(feet.x - goal.x) <= TILE / 2) {
-        return finish(STILL);
+        return finish(STILL, {
+          kind:
+            supported(ref.node) && Math.abs(feet.y - goal.y) <= EDGE ? "completed" : "following",
+        });
       }
       return finish(toward(spanGoal(areaWidth, map.nodes[ref.node], goal.x - body.width / 2)));
     }
@@ -1047,12 +1084,18 @@ export function createRouteFollower(
       if (prefix && !walkSafe(edge)) {
         prefix = undefined;
         preparation.reset();
-        return finish(STILL, "selected walk has no safe ordinary step");
+        return finish(STILL, {
+          kind: "unsafe",
+          problem: "selected walk has no safe ordinary step",
+        });
       }
       return finish(walkInput(edge));
     }
     if (jump && prepared.kind === "unknown") {
-      return finish(STILL, "cannot establish a velocity-matched jump launch on its support");
+      return finish(STILL, {
+        kind: "unknown",
+        problem: "cannot establish a velocity-matched jump launch on its support",
+      });
     }
     if (jump && prepared.kind === "prepare") {
       return finish(prepared.input);
@@ -1064,7 +1107,10 @@ export function createRouteFollower(
     ) {
       const command = edge.commands[0];
       if (!command) {
-        return finish(STILL, "selected edge has no witness commands");
+        return finish(STILL, {
+          kind: "unsupported",
+          problem: "selected edge has no witness commands",
+        });
       }
       leg = { airborne: false, edge, goal: { ...goal }, step: 1 };
       prefix = undefined;
@@ -1110,10 +1156,182 @@ const bottomCentre = (box: { x: number; y: number; width: number; height: number
   y: box.y + box.height,
 });
 
-interface EvadeContext {
+export interface RouteProgressGoal {
+  readonly point: Readonly<Point>;
+  readonly support: MapSupport;
+}
+
+type RouteSelectionContext = "ordinary" | "reaction";
+type RouteProgressIntent = "exit" | "ordinary" | "reaction" | "shelter";
+
+export function createRouteProgress(physicalGoals: readonly RouteProgressGoal[]) {
+  const goals = physicalGoals.map(({ point, support }) => ({ point: { ...point }, support }));
+  const completed = new Map<MapSupport, Set<string>>();
+  let intent: RouteProgressIntent | undefined;
+  const key = ({ point }: RouteProgressGoal) => `${point.x},${point.y}`;
+  const visited = (goal: RouteProgressGoal) => completed.get(goal.support)?.has(key(goal)) === true;
+  const arrived = (actual: RouteProgressGoal | undefined, goal: RouteProgressGoal) =>
+    actual !== undefined &&
+    actual.support === goal.support &&
+    Math.abs(actual.point.x - goal.point.x) <= TILE / 2 &&
+    Math.abs(actual.point.y - goal.point.y) <= EDGE;
+  const reset = () => completed.clear();
+  return {
+    arrived,
+    enter(next: RouteProgressIntent) {
+      if (intent !== next) {
+        reset();
+        intent = next;
+      }
+    },
+    observe(actual: RouteProgressGoal | undefined) {
+      const reached = goals.filter((goal) => arrived(actual, goal));
+      const mark = () => {
+        for (const goal of reached) {
+          const keys = completed.get(goal.support) ?? new Set<string>();
+          keys.add(key(goal));
+          completed.set(goal.support, keys);
+        }
+      };
+      mark();
+      if (goals.length > 0 && goals.every(visited)) {
+        reset();
+        mark();
+      }
+    },
+    reset,
+    select<T>(
+      context: RouteSelectionContext,
+      ranked: readonly { readonly goal: RouteProgressGoal | undefined; readonly value: T }[],
+    ) {
+      return (
+        context === "ordinary"
+          ? (ranked.find(({ goal }) => goal !== undefined && !visited(goal)) ?? ranked[0])
+          : ranked[0]
+      )?.value;
+    },
+  };
+}
+
+export function dispatchRoute<T>(
+  actions: {
+    readonly exit: () => T;
+    readonly follow: () => T;
+    readonly hold: () => T;
+    readonly shelter: () => T;
+    readonly unknown: () => T;
+  },
+  context: {
+    readonly arrived: boolean;
+    readonly exiting: boolean;
+    readonly onward: boolean;
+    readonly sheltered: boolean;
+    readonly threatened: boolean;
+  },
+): T {
+  if (context.exiting) {
+    return actions.exit();
+  }
+  if (context.sheltered) {
+    return actions.shelter();
+  }
+  if (context.onward) {
+    return actions.follow();
+  }
+  if (!context.threatened && context.arrived) {
+    return actions.hold();
+  }
+  return actions.unknown();
+}
+
+export function completedGoalHold(
+  tuning: BirdTuning,
+  seconds: number,
+  terrain: MapTerrain,
+  safeStep: (from: number, to: number, move: LaunchMove) => boolean,
+  context: {
+    readonly bird: BirdState;
+    readonly bounds: { readonly backX: number; readonly exitX: number };
+    readonly goal: RouteProgressGoal;
+    readonly maskValid: boolean;
+    readonly node: MapNode<MapSupport>;
+    readonly projectilesKnown: boolean;
+  },
+): { readonly input: ZoneInput; readonly kind: "hold" } | EvadeControllerFailure {
+  const { bird, goal, maskValid, node, projectilesKnown } = context;
+  if (!projectilesKnown) {
+    return { kind: "unknown", problem: "completed-goal hold lacks a known projectile observation" };
+  }
+  const body = birdBox(tuning, bird);
+  const supported = (actual: BirdState) => {
+    const box = birdBox(tuning, actual);
+    return (
+      actual.grounded &&
+      goal.support === node.supportId &&
+      box.x >= node.left - EDGE &&
+      box.x <= node.right + EDGE &&
+      Math.abs(box.y + box.height - node.y) <= EDGE &&
+      terrain.area.colliders.some(
+        ({ after, before, supportId }) =>
+          supportId === node.supportId &&
+          before.x === after.x &&
+          before.y === after.y &&
+          before.width === after.width &&
+          before.height === after.height &&
+          Math.abs(box.y + box.height - before.y) <= EDGE &&
+          box.x >= before.x - EDGE &&
+          box.x + box.width <= before.x + before.width + EDGE,
+      )
+    );
+  };
+  if (
+    !maskValid ||
+    !supported(bird) ||
+    Math.abs(body.x + body.width / 2 - goal.point.x) > TILE / 2 ||
+    Math.abs(body.y + body.height - goal.point.y) > EDGE
+  ) {
+    return { kind: "unsafe", problem: "completed-goal hold no longer has valid arrived support" };
+  }
+  const predicted = stepBird(
+    tuning,
+    terrain.world.solids,
+    terrain.area.colliders.filter(({ kind }) => kind === "ledge").map(({ before }) => before),
+    seconds,
+    STILL,
+    bird,
+  );
+  const predictedBody = birdBox(tuning, predicted);
+  if (
+    predictedBody.x < context.bounds.backX ||
+    predictedBody.x + predictedBody.width > context.bounds.exitX
+  ) {
+    return { kind: "unsafe", problem: "completed-goal braking step crosses the area boundary" };
+  }
+  if (!supported(predicted) || !safeStep(body.x, predictedBody.x, 0)) {
+    return { kind: "unsafe", problem: "completed-goal braking step leaves safe support" };
+  }
+  return { input: STILL, kind: "hold" };
+}
+
+export interface EvadeContext {
   readonly found: ArenaCase;
   readonly layout: ZoneLayout;
   readonly maps: ArenaMaps;
+  readonly observers?: {
+    readonly boss?: BehaviourObserver;
+    readonly free?: BehaviourObserver;
+  };
+}
+
+export function stepEvade(
+  observer: BehaviourObserver | undefined,
+  layout: ZoneLayout,
+  input: ZoneInput,
+  zone: ZoneState,
+): ZoneState {
+  return observer
+    ? stepZoneObserved(observer, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone)
+    : stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
 }
 
 // The layout with every boss removed, for the boss-free walk.
@@ -1168,8 +1386,8 @@ export function touchesBoss(solids: readonly Rect[], pad: number, boss: Rect, re
 
 // One evade run of the arena from a start and zone seed, with its boss-free walk.
 export function evadeRun(context: EvadeContext, start: EvadeStart, seed: number): EvadeRun {
-  const free = evadeWalk(context, bossFree(context), start, seed);
-  const run = evadeWalk(context, context.layout, start, seed);
+  const free = evadeWalk(context.observers?.free, context, bossFree(context), start, seed);
+  const run = evadeWalk(context.observers?.boss, context, context.layout, start, seed);
   return {
     ...run,
     ...(free.cleared !== undefined && { free: free.cleared }),
@@ -1179,6 +1397,7 @@ export function evadeRun(context: EvadeContext, start: EvadeStart, seed: number)
 }
 
 function evadeWalk(
+  observer: BehaviourObserver | undefined,
   context: EvadeContext,
   layout: ZoneLayout,
   start: EvadeStart,
@@ -1246,6 +1465,7 @@ function evadeWalk(
     target = next;
   };
   let hold = false;
+  let routeSelection: { readonly arrived: boolean; readonly threatened: boolean } | undefined;
   let exiting = false;
   let dodge: Dodge | undefined;
   let lastDodgeEnd = -1;
@@ -1253,6 +1473,7 @@ function evadeWalk(
   let ended: { cause: string; tick: number } | undefined;
   const problems: string[] = [];
   let launchProblem: string | undefined;
+  let controllerFailure: EvadeControllerFailure | undefined;
   let death: string | undefined;
   let acquired: number | undefined;
   let cleared: number | undefined;
@@ -1390,6 +1611,9 @@ function evadeWalk(
   // its launch range, otherwise a walk toward the range that never leaves his span except by an
   // edge, whose proof keeps clear of static hazards.
   const follow = (goal: Point | undefined): ZoneInput => {
+    if (controllerFailure) {
+      return STILL;
+    }
     const result = follower.step(safePreparationStep, {
       areaWidth: area.width,
       bird: zone.bird,
@@ -1397,24 +1621,86 @@ function evadeWalk(
       mask: avoiding,
     });
     launchProblem = result.problem;
+    if (result.kind === "unknown" || result.kind === "unsafe" || result.kind === "unsupported") {
+      controllerFailure = { kind: result.kind, problem: result.problem };
+    }
     return result.input;
+  };
+
+  const progressGoal = (point: Point): RouteProgressGoal | undefined => {
+    const half = chibi.profile.body.width / 2;
+    const node = chibi.nodes.find(
+      (node) =>
+        point.x - half >= node.left - EDGE &&
+        point.x - half <= node.right + EDGE &&
+        Math.abs(point.y - node.y) <= EDGE,
+    );
+    return node && { point, support: node.supportId };
+  };
+  const goalsByRoute = new Map(
+    [...routes, ...refuges].map((route) => [
+      route,
+      route.waypoints.map((point) => progressGoal(standOf(point))),
+    ]),
+  );
+  const progress = createRouteProgress(
+    [...goalsByRoute.values()].flatMap((goals) => goals.flatMap((goal) => (goal ? [goal] : []))),
+  );
+  const waypointGoal = ({ index, route }: Target) => goalsByRoute.get(route)?.[index];
+  const actualProgress = (ref: NodeRef | undefined): RouteProgressGoal | undefined => {
+    const body = box();
+    const node = ref && chibi.nodes[ref.node];
+    const fullSupport =
+      node &&
+      zone.bird.grounded &&
+      maps.encounter.terrain.area.colliders.some(
+        ({ after, before, supportId }) =>
+          before.x === after.x &&
+          before.y === after.y &&
+          before.width === after.width &&
+          before.height === after.height &&
+          supportId === node.supportId &&
+          Math.abs(body.y + body.height - before.y) <= EDGE &&
+          body.x >= before.x - EDGE &&
+          body.x + body.width <= before.x + before.width + EDGE,
+      );
+    return fullSupport ? { point: bottomCentre(body), support: node.supportId } : undefined;
   };
 
   // Each route's next waypoints: those either side of its waypoint nearest Chibi on his map, and
   // that one unless he stands at it. The one maximizing the boss's distance minus his wins, ties
   // by his distance then route id; a waypoint he stands at counts only when the boss cannot reach
   // it.
-  const escapeTarget = (among: readonly ArenaRoute[], boss: AgentSample): Target | undefined => {
+  const escapeTarget = (
+    context: RouteSelectionContext,
+    origin: NodeRef | undefined,
+    among: readonly ArenaRoute[],
+    boss: AgentSample,
+  ): Target | undefined => {
+    const actual = context === "ordinary" ? actualProgress(origin) : undefined;
+    if (context === "ordinary") {
+      progress.observe(actual);
+    }
     // He keeps an unreached target while the boss stays farther from it than he is, so a leg
     // that starts by walking away from it, such as to a jump's launch, is not abandoned.
     if (among.includes(target.route)) {
       const goal = waypointPixel(target);
       const mine = chibiDistance(goal);
-      if (mine >= 2 * TILE && mine < bossReach(boss, goal)) {
-        return target;
+      if (context === "reaction") {
+        if (mine >= 2 * TILE && mine < bossReach(boss, goal)) {
+          return target;
+        }
+      } else {
+        const physical = waypointGoal(target);
+        if (mine < Infinity && physical !== undefined && !progress.arrived(actual, physical)) {
+          if (mine < bossReach(boss, goal)) {
+            return target;
+          }
+          progress.reset();
+        }
       }
     }
-    let best: { chibi: number; score: number; target: Target } | undefined;
+    const candidates: { chibi: number; score: number; target: Target }[] = [];
     for (const route of among) {
       const count = loopLength(route);
       const mine = Array.from({ length: count }, (_, index) =>
@@ -1438,12 +1724,19 @@ function evadeWalk(
         // The current target keeps a margin, so near-equal scores do not flip him back and forth.
         const kept = target.route === route && target.index === index ? KEEP_TILES * TILE : 0;
         const score = theirs - mine[index]! + kept;
-        if (!best || score > best.score || (score === best.score && mine[index]! < best.chibi)) {
-          best = { chibi: mine[index]!, score, target: { index, route } };
-        }
+        candidates.push({ chibi: mine[index]!, score, target: { index, route } });
       }
     }
-    return best?.target;
+    candidates.sort((a, b) => (a.score > b.score ? -1 : a.score < b.score ? 1 : a.chibi - b.chibi));
+    return context === "reaction"
+      ? candidates[0]?.target
+      : progress.select(
+          context,
+          candidates.map(({ target }) => ({
+            goal: waypointGoal(target),
+            value: target,
+          })),
+        );
   };
 
   // The countering refuge he stands in, if the boss cannot reach him there.
@@ -1514,12 +1807,14 @@ function evadeWalk(
   const toExit = () => follow(bottomCentre(box()).x >= exitSeam.x - TILE ? exitPoint : exitSeam);
 
   const choose = (tick: number) => {
+    routeSelection = undefined;
     const observed = history[Math.max(0, history.length - 1 - delay)];
     const before = history[Math.max(0, history.length - 1 - delay - decide)];
     const boss = observed?.agents[0];
     avoid(boss);
     exiting = exitClear(boss);
     if (exiting || !boss) {
+      progress.enter("exit");
       hold = false;
       return;
     }
@@ -1527,6 +1822,7 @@ function evadeWalk(
     // 1. Sheltered from the engaged boss.
     const refuge = engaged ? shelter(boss) : undefined;
     if (refuge) {
+      progress.enter("shelter");
       aim({ index: 0, route: refuge });
       hold = true;
       return;
@@ -1541,7 +1837,8 @@ function evadeWalk(
     const attack = boss.attack;
     const dodges = attack?.phase === "tell" ? fairness.dodges[attack.id] : undefined;
     if (dodges && dodges.length > 0 && observed!.tick > lastDodgeEnd) {
-      const away = escapeTarget([loop], boss);
+      progress.enter("reaction");
+      const away = escapeTarget("reaction", undefined, [loop], boss);
       const leads =
         away !== undefined &&
         bossReach(boss, waypointPixel(away)) > chibiDistance(waypointPixel(away));
@@ -1557,10 +1854,18 @@ function evadeWalk(
       }
       return;
     }
+    // Ordinary target selection is not evaluated in flight or without a map origin.
+    // The follower still executes its witness or recovers actual partial contact.
+    const origin = zone.bird.grounded ? here() : undefined;
+    if (!origin) {
+      return;
+    }
     const closing = closingSpeed(boss, observed!, before);
     // 3. Threatened: the best waypoint anywhere.
-    if (engaged && (gap <= THREAT_TILES * TILE || closing > ORDINARY.walkSpeed)) {
-      const next = escapeTarget([...routes, ...refuges], boss);
+    const threatened = engaged && (gap <= THREAT_TILES * TILE || closing > ORDINARY.walkSpeed);
+    progress.enter("ordinary");
+    if (threatened) {
+      const next = escapeTarget("ordinary", origin, [...routes, ...refuges], boss);
       if (next) {
         aim(next);
         return;
@@ -1568,9 +1873,15 @@ function evadeWalk(
     }
     // 4. Keep moving round the loop away from the boss, or toward a countering refuge: the next
     // waypoint by the same score.
-    const next = escapeTarget([loop, ...refuges], boss);
+    const next = escapeTarget("ordinary", origin, [loop, ...refuges], boss);
     if (next) {
       aim(next);
+    } else {
+      const physical = waypointGoal(target);
+      routeSelection = {
+        arrived: physical !== undefined && progress.arrived(actualProgress(origin), physical),
+        threatened,
+      };
     }
   };
 
@@ -1580,11 +1891,43 @@ function evadeWalk(
     const boss = observed?.agents.find(({ id }) => id === dodge!.boss);
     if (boss) {
       avoid(boss);
-      const away = escapeTarget([loop], boss);
+      const away = escapeTarget("reaction", undefined, [loop], boss);
       if (away) {
         aim(away);
       }
     }
+  };
+
+  const holdInput = (projectilesKnown: boolean): ZoneInput => {
+    const ref = here();
+    const goal = waypointGoal(target);
+    const node = ref && chibi.nodes[ref.node];
+    const goalNode =
+      goal &&
+      chibi.nodes.find(
+        (node) =>
+          node.supportId === goal.support &&
+          Math.abs(node.y - goal.point.y) <= EDGE &&
+          goal.point.x - ORDINARY.width / 2 >= node.left - EDGE &&
+          goal.point.x - ORDINARY.width / 2 <= node.right + EDGE,
+      );
+    const result =
+      node && goal
+        ? completedGoalHold(ORDINARY, STEP_SECONDS, maps.encounter.terrain, safePreparationStep, {
+            bird: zone.bird,
+            bounds: { backX: area.backX, exitX: area.exitX },
+            goal,
+            maskValid: goalNode !== undefined && avoiding.node(goalNode.id),
+            node,
+            projectilesKnown,
+          })
+        : { kind: "unsafe" as const, problem: "completed-goal hold lost its actual support" };
+    if (result.kind === "hold") {
+      return result.input;
+    }
+    controllerFailure = result;
+    launchProblem = result.problem;
+    return STILL;
   };
 
   const limit = ticksOf(EVADE_LIMIT_SECONDS);
@@ -1663,12 +2006,33 @@ function evadeWalk(
               target: history.at(-1)!.target,
             })
           : STILL;
-      } else if (exiting) {
-        input = toExit();
-      } else if (hold) {
-        input = follow(undefined);
       } else {
-        input = follow(waypointPixel(target));
+        input = dispatchRoute(
+          {
+            exit: () => {
+              routeSelection = undefined;
+              return toExit();
+            },
+            follow: () => follow(waypointPixel(target)),
+            hold: () => holdInput(observedProjectiles?.kind === "known"),
+            shelter: () => follow(undefined),
+            unknown: () => {
+              controllerFailure = {
+                kind: "unknown",
+                problem: "no eligible observed escape target",
+              };
+              launchProblem = controllerFailure.problem;
+              return STILL;
+            },
+          },
+          {
+            arrived: routeSelection?.arrived ?? false,
+            exiting,
+            onward: routeSelection === undefined,
+            sheltered: hold,
+            threatened: routeSelection?.threatened ?? false,
+          },
+        );
       }
     }
     const projectileInput = projectileAvoidance(
@@ -1692,12 +2056,16 @@ function evadeWalk(
       input,
     );
     if (observedProjectiles?.kind === "unknown") {
+      controllerFailure = observedProjectiles;
       launchProblem = observedProjectiles.problem;
     }
     if (projectileInput.problem) {
+      controllerFailure = projectileInput.controllerFailure;
       launchProblem = projectileInput.problem;
     }
     if (projectileInput.override) {
+      routeSelection = undefined;
+      progress.reset();
       follower.reset();
     }
     input = projectileInput.input;
@@ -1712,7 +2080,7 @@ function evadeWalk(
       break;
     }
     const before = zone;
-    zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, before);
+    zone = stepEvade(observer, layout, input, before);
     recorder.record(zoneTraceLine(layout, STEP_SECONDS, before, zone));
     work++;
     const sample = bossSample(ORDINARY, layout, tick, zone);
@@ -1759,6 +2127,7 @@ function evadeWalk(
     problems.push("no route switch or loop level change");
   }
   return {
+    ...(controllerFailure && { controllerFailure }),
     ...(acquired !== undefined && { acquired: acquired * STEP_SECONDS }),
     ...(cleared !== undefined && { cleared }),
     ...(death && { death }),

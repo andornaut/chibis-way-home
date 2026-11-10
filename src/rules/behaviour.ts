@@ -39,6 +39,7 @@ import type { FlightSelectionState } from "./behaviourFlightSelection";
 import { type BehaviourIdleState, observeIdle } from "./behaviourIdle";
 import { advancePursuitIntent, type PursuitIntentState, safeIntentHover } from "./behaviourIntent";
 import { type BehaviourMapPursuitState, mapCovers, mapReachable } from "./behaviourMapPursuit";
+import { recordBehaviourWork } from "./behaviourObserver";
 import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception";
 import {
   type BehaviourGeometry,
@@ -881,6 +882,21 @@ function enterState(
   return animation;
 }
 
+// Only applied entries count; track-clear previews and initial construction use enterState.
+function transitionState(
+  perception: BehaviourPerception,
+  object: ObjectLayout,
+  at: Point,
+  key: string,
+  state: BehaviourState,
+): BehaviourState {
+  const next = enterState(perception, object, at, key, state);
+  if (next.stateKey !== state.stateKey) {
+    recordBehaviourWork(perception.world.observation, "transitions", 1);
+  }
+  return next;
+}
+
 export function startBehaviour(
   tuning: BirdTuning,
   object: ObjectLayout,
@@ -1317,6 +1333,72 @@ function pursuitReachable(
   );
 }
 
+function observePursuit(
+  perception: BehaviourPerception,
+  reachable: boolean | undefined,
+  evaluated: boolean,
+  before: BehaviourState,
+  at: Point,
+  after: BehaviourState,
+): void {
+  const observation = perception.world.observation;
+  if (!observation) {
+    return;
+  }
+  observation.observer.record({
+    at,
+    from: before.stateKey,
+    grace: after.pursuit
+      ? {
+          status: "captured",
+          value: {
+            reachable: !evaluated
+              ? { status: "not_evaluated" }
+              : reachable === undefined
+                ? { status: "unknown" }
+                : { status: "captured", value: reachable },
+            unreachableSeconds: after.pursuit.unreachableSeconds,
+          },
+        }
+      : { status: "not_evaluated" },
+    kind: "pursuit",
+    ...(observation.metadata && { metadata: observation.metadata }),
+    scorer: after.scorer
+      ? {
+          status: "captured",
+          value: {
+            chaseSeconds: after.scorer.chaseSeconds,
+            heldSeconds: after.scorer.heldSeconds,
+            ...(after.scorer.move !== undefined && { move: after.scorer.move }),
+            pressureSeconds: after.scorer.pressureSeconds,
+            ...(after.scorer.sinceAttackSeconds !== undefined && {
+              sinceAttackSeconds: after.scorer.sinceAttackSeconds,
+            }),
+            ...(after.scorer.sincePauseSeconds !== undefined && {
+              sincePauseSeconds: after.scorer.sincePauseSeconds,
+            }),
+            specialDueSeconds: after.scorer.specialDueSeconds,
+            threatSeconds: after.scorer.threatSeconds,
+          },
+        }
+      : { status: "not_evaluated" },
+    target: after.intent
+      ? { status: "captured", value: after.intent.target }
+      : { status: "not_evaluated" },
+    to: after.stateKey,
+    traversal: after.traversal
+      ? {
+          status: "captured",
+          value: {
+            preparing: after.traversal.preparation !== undefined,
+            status: after.traversal.status,
+            target: after.traversal.target,
+          },
+        }
+      : { status: "not_evaluated" },
+  });
+}
+
 function updatePursuit(
   perception: BehaviourPerception,
   object: ObjectLayout,
@@ -1328,6 +1410,7 @@ function updatePursuit(
   let currentState = state;
   const config = object.behaviour!.pursuit;
   if (!config) {
+    observePursuit(perception, undefined, false, state, at, currentState);
     return { reachable: undefined, state: currentState };
   }
   const inside =
@@ -1342,6 +1425,7 @@ function updatePursuit(
   const timedOut = (unreachableSeconds: number) =>
     config.unreachableGraceSeconds !== null && unreachableSeconds >= config.unreachableGraceSeconds;
   let reachable = pursuitReachable(perception, object, at, currentState);
+  let reachableEvaluated = true;
   const ended = currentState.pursuit;
   // An ended chase counts toward its rearm cooldown, during which awareness never engages.
   const prior =
@@ -1367,6 +1451,7 @@ function updatePursuit(
     entry
   ) {
     // The map path that pursuit would follow is the rearm verdict.
+    reachableEvaluated = aware;
     reachable = aware ? mapReachable(world, object, entry, at, target) : undefined;
   } else if (
     prior?.phase === "escaped" &&
@@ -1377,6 +1462,7 @@ function updatePursuit(
   ) {
     const motion = pursuitKinds(object.behaviour!).groundTraversalMotion;
     if (motion?.kind === "pursue" && motion.mode === "ground") {
+      reachableEvaluated = aware;
       const probed = probeRearm(
         world,
         seconds,
@@ -1434,9 +1520,11 @@ function updatePursuit(
       }),
     };
     delete (acquired as { chasePause?: unknown }).chasePause;
+    observePursuit(perception, reachable, reachableEvaluated, state, at, acquired);
     return { reachable, state: acquired };
   }
   if (prior?.phase !== "engaged") {
+    observePursuit(perception, reachable, reachableEvaluated, state, at, currentState);
     return { reachable, state: currentState };
   }
   const unreachableSeconds =
@@ -1470,6 +1558,7 @@ function updatePursuit(
   if (escaped) {
     delete (next as { chasePause?: unknown }).chasePause;
   }
+  observePursuit(perception, reachable, reachableEvaluated, state, at, next);
   return { reachable, state: next };
 }
 
@@ -1807,7 +1896,7 @@ function wanderStep(
     if (wander.hop !== undefined) {
       return {
         kind: "again",
-        state: enterState(perception, object, current, wander.hop, {
+        state: transitionState(perception, object, current, wander.hop, {
           ...state,
           wander: { holdSeconds: 0, hop: { every, hold, startedAt: now }, moves },
         }),
@@ -1916,7 +2005,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     !next.hop &&
     !supportContact(object, world, current)
   ) {
-    next = enterState(perception, object, current, flyGateway, next);
+    next = transitionState(perception, object, current, flyGateway, next);
     node = nodeOf(object, next.stateKey);
   }
   if (
@@ -1930,7 +2019,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       node.motion.mode !== "fly" ||
       supportContact(object, world, current))
   ) {
-    next = enterState(perception, object, current, plan.initial, {
+    next = transitionState(perception, object, current, plan.initial, {
       ...next,
       anchor: current,
       pursuit: { ...next.pursuit, settled: true },
@@ -1995,7 +2084,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     !(supportMotion && next.landing?.status === "pending") &&
     !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
   ) {
-    const entered = enterState(perception, object, current, next.stateKey, next);
+    const entered = transitionState(perception, object, current, next.stateKey, next);
     next = enterAttack(plan, node, supportMotion ? { ...entered, elapsed: next.elapsed } : entered);
     for (const action of node.onEnter ?? []) {
       actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
@@ -2022,6 +2111,27 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     node.attack?.phase !== "committed" &&
     node.attack?.phase !== "completed" &&
     next.activeAttack?.phase !== "committed";
+  const fallback = next.traversal;
+  const refreshableGroundFallback =
+    time < seconds &&
+    traversalStep === undefined &&
+    node.motion.kind === "pursue" &&
+    node.motion.mode === "ground" &&
+    plan.scorer?.engaged === next.stateKey &&
+    next.pursuit?.phase === "engaged" &&
+    !next.activeAttack &&
+    !attackProtected(node, next) &&
+    !next.hop &&
+    fallback?.status === "geometry-unavailable" &&
+    fallback.inputs.length === 0 &&
+    !fallback.preparation &&
+    !fallback.physical.grounded &&
+    fallback.physical.x === current.x &&
+    fallback.physical.y === current.y &&
+    Number.isFinite(fallback.physical.vy) &&
+    Math.abs(fallback.physical.vy) <= EDGE &&
+    (!next.intent || next.intent.remainingSeconds <= 0) &&
+    supportContact(object, world, current);
   const graphHeld =
     traversalStep !== undefined ||
     next.traversal?.preparation !== undefined ||
@@ -2031,7 +2141,10 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       !supported &&
       !selectionFallback) ||
     (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
-    (node.motion.kind === "pursue" && next.traversal && !next.traversal.physical.grounded);
+    (node.motion.kind === "pursue" &&
+      next.traversal &&
+      !next.traversal.physical.grounded &&
+      !refreshableGroundFallback);
   const transition = graphHeld
     ? undefined
     : node.transitions.find(
@@ -2062,7 +2175,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       throw new Error(`Instant behaviour transition cycle for ${object.character}`);
     }
     instant.add(next.stateKey);
-    next = enterState(perception, object, current, transition.to, next);
+    next = transitionState(perception, object, current, transition.to, next);
     save();
     return { kind: "again" };
   }
@@ -2104,7 +2217,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       (!previous || previous.remainingSeconds <= 0) &&
       !capturedIntent &&
       !next.traversal?.preparation &&
-      (!next.traversal || next.traversal.physical.grounded);
+      (!next.traversal || next.traversal.physical.grounded || refreshableGroundFallback);
     if (capture && node.motion.mode === "fly" && previous) {
       const target =
         node.motion.overhead &&
@@ -2146,13 +2259,29 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
         scorerValues(perception, object, current, next),
         gated,
       );
+      const observation = world.observation;
+      if (observation) {
+        const action =
+          choice.kind === "attack"
+            ? choice.transition.to
+            : choice.kind === "move"
+              ? choice.move.id
+              : prior.move;
+        observation.observer.record({
+          ...(action !== undefined && { action }),
+          choice: choice.kind,
+          kind: "choice",
+          ...(observation.metadata && { metadata: observation.metadata }),
+          state: next.stateKey,
+        });
+      }
       const counted = { ...prior, decision: prior.decision + 1 };
       if (choice.kind === "attack") {
         if (instant.has(next.stateKey)) {
           throw new Error(`Instant behaviour transition cycle for ${object.character}`);
         }
         instant.add(next.stateKey);
-        next = enterState(perception, object, current, choice.transition.to, {
+        next = transitionState(perception, object, current, choice.transition.to, {
           ...next,
           scorer: scorerAttacked(choice.transition, counted),
         });
@@ -2587,7 +2716,7 @@ function advanceUnclear(
     return { actions: [], at, segments, state: next };
   }
   const recovery: BehaviourRecoveryContext = {
-    enter: (point, key, current) => enterState(perception, object, point, key, current),
+    enter: (point, key, current) => transitionState(perception, object, point, key, current),
     object,
     perception,
     seconds,

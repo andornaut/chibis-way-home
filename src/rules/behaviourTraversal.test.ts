@@ -7,6 +7,7 @@ import {
 } from "@andornaut/game-kit/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
+import { namedStreams } from "../ai/randomStreams";
 import { BIRD_FRAME } from "../assets";
 import { contactFrameAt, STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
@@ -19,8 +20,9 @@ import { SKILL_PROFILES } from "../progress";
 import { withAnticipationContact } from "../testing/behaviours";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { zonePlanOf } from "./assemble";
-import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
+import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
+import { moveIntent, openingScorerState } from "./behaviourScorer";
 import {
   advanceTraversal,
   type BehaviourTraversalState,
@@ -30,7 +32,8 @@ import {
   traversalContext,
   traversalGoal,
 } from "./behaviourTraversal";
-import { startBird } from "./bird";
+import { birdBox, startBird } from "./bird";
+import { supportContact } from "./flyLanding";
 import { objectLayout, zoneLayout } from "./tiles";
 import { activateBehaviour, startZone, stepZone } from "./zone";
 import { CHUNK_LIBRARY } from "./zonePlans";
@@ -125,6 +128,136 @@ function world(solids: readonly Rect[], timeSeconds: number): BehaviourWorld {
   };
 }
 
+function partialFallback() {
+  const object = objectLayout(
+    TILE,
+    CATALOGUE,
+    HITBOXES,
+    TILESETS["tiles-street"],
+    {},
+    { character: "ferret-antagonist", col: 44, row: 46 },
+  );
+  const at = { x: 311, y: 504 };
+  const floor: Rect = { height: 240, width: 720, x: 0, y: 600 };
+  const solids = [
+    floor,
+    { height: 48, width: 12, x: 312, y: 552 },
+    { height: 12, width: 120, x: 192, y: 384 },
+    { height: 12, width: 72, x: 168, y: 528 },
+  ];
+  const target = { ...startBird(BIRD, { x: 215, y: 384 }), grounded: true };
+  const stale = startBird(BIRD, { x: 332.4, y: 384 });
+  const scorer = object.behaviour!.scorer!;
+  const chase = scorer.moves.find(({ move }) => move.kind === "chase")!.move;
+  const relief = object.behaviour!.pursuit!.relief!;
+  const state: BehaviourState = {
+    ...startBehaviour(BIRD, object, target),
+    active: true,
+    intent: {
+      ...moveIntent(BIRD, stale, chase, scorer.decisionSeconds.min, -1, object, at),
+      remainingSeconds: 0,
+    },
+    pendingEntry: false,
+    pursuit: {
+      engagedSeconds: relief.giveUp.seconds.max + 1,
+      giveUpSeconds: relief.giveUp.seconds.max,
+      phase: "engaged",
+      settled: false,
+      unreachableSeconds: 0,
+    },
+    scorer: {
+      ...openingScorerState(scorer),
+      chaseSeconds: relief.pause.afterSeconds.max + 1,
+      sinceAttackSeconds: relief.pause.tellClearanceSeconds + 1,
+    },
+    stateKey: scorer.engaged,
+    traversal: {
+      geometry: "",
+      inputs: [],
+      physical: { ...at, fallFromY: 552, grounded: false, vy: 0 },
+      status: "geometry-unavailable",
+      target: birdBox(BIRD, stale),
+    },
+  };
+  const decisions = namedStreams(1, "partial-fallback:main:0");
+  const geometry = (time: number): BehaviourWorld => {
+    const base = world(solids, time);
+    return {
+      ...base,
+      decisions,
+      traversalFrame: { ...base.traversalFrame!, bounds: { height: 840, width: 720, x: 0, y: 0 } },
+      view: { height: 840, width: 720, x: 0, y: 0 },
+    };
+  };
+  return { at, floor, geometry, object, state, target };
+}
+
+it("refreshes an expired unproved chase from real partial contact without changing support physics", () => {
+  const fixture = partialFallback();
+  expect(supportContact(fixture.object, fixture.geometry(0), fixture.at)).toBe(true);
+  let at = fixture.at;
+  let state = fixture.state;
+  const trace: number[] = [];
+  let first: BehaviourState | undefined;
+  let landed = false;
+  for (let tick = 0; tick < 120; tick++) {
+    const next = stepBehaviour(
+      BIRD,
+      fixture.object,
+      fixture.geometry(tick * STEP_SECONDS),
+      STEP_SECONDS,
+      fixture.target,
+      at,
+      state,
+    );
+    trace.push(next.at.x);
+    first ??= next.state;
+    at = next.at;
+    state = next.state;
+    if (
+      state.traversal?.physical.grounded &&
+      state.traversal.physical.supportId === fixture.floor
+    ) {
+      landed = true;
+      break;
+    }
+  }
+  expect(landed, JSON.stringify({ at, trace: trace.slice(0, 8), traversal: state.traversal })).toBe(
+    true,
+  );
+  expect(first!.intent!.target).toEqual(birdBox(BIRD, fixture.target));
+  expect(first!.traversal?.physical.grounded).toBe(false);
+  expect(first!.traversal?.status).toBe("geometry-unavailable");
+  expect(first!.pursuit).toMatchObject({ phase: "engaged", unreachableSeconds: 0 });
+  expect(first!.pursuit?.giveUp).toBeUndefined();
+  expect(first!.chasePause).toBeUndefined();
+});
+
+it("keeps an unproved unsupported fall on its protected intent", () => {
+  const fixture = partialFallback();
+  const at = { ...fixture.at, y: 480 };
+  const state = {
+    ...fixture.state,
+    traversal: {
+      ...fixture.state.traversal!,
+      physical: { ...fixture.state.traversal!.physical, ...at },
+    },
+  };
+  expect(supportContact(fixture.object, fixture.geometry(0), at)).toBe(false);
+  const next = stepBehaviour(
+    BIRD,
+    fixture.object,
+    fixture.geometry(0),
+    STEP_SECONDS,
+    fixture.target,
+    at,
+    state,
+  );
+  expect(next.state.intent).toEqual(expect.objectContaining({ target: state.intent!.target }));
+  expect(next.state.scorer?.decision).toBe(state.scorer?.decision);
+  expect(next.at.y).toBeGreaterThan(at.y);
+});
+
 function descentFixture(move: -1 | 1 = 1, offset = { x: 2, y: 2 }) {
   const mirror = (rect: Rect): Rect =>
     move === 1 ? rect : { ...rect, x: 6000 - rect.x - rect.width };
@@ -178,6 +311,91 @@ function descentFixture(move: -1 | 1 = 1, offset = { x: 2, y: 2 }) {
   };
   return { context, direct, goal, landing, request, start, support, world: world(solids, 0) };
 }
+
+it("preserves a real in-flight descent witness despite expired intent and partial contact", () => {
+  const base = descentFixture();
+  const fixture = partialFallback();
+  const object = fixture.object;
+  const motion = object.behaviour!.states[object.behaviour!.scorer!.engaged]!.motion;
+  if (motion.kind !== "pursue" || motion.mode !== "ground") {
+    throw new Error("Expected ground pursuit");
+  }
+  const geometry: BehaviourWorld = {
+    ...base.world,
+    decisions: namedStreams(1, "descent-control:main:0"),
+    traversalFrame: {
+      ...base.world.traversalFrame!,
+      bounds: base.context.bounds,
+      timeSeconds: base.request.timeSeconds,
+    },
+    view: { height: 720, width: 720, x: base.start.x - 360, y: 600 },
+  };
+  const context = traversalContext(geometry, STEP_SECONDS, object, motion)!;
+  const direct = stepTraversal(
+    context,
+    { jump: false, move: 1, timeSeconds: base.request.timeSeconds },
+    base.start,
+  );
+  const preferredInputs = preferredDescentInputs(geometry, context, base.request, direct);
+  const proof = findTraversal(context, {
+    ...base.request,
+    ...(preferredInputs && { preferredInputs }),
+  });
+  expect(proof.status).toBe("found");
+  if (proof.status !== "found") {
+    throw new Error("Expected a real descent witness");
+  }
+  let physical: BehaviourTraversalState["physical"] = base.start;
+  let consumed = 0;
+  while (consumed < proof.inputs.length) {
+    const advanced = stepTraversal(context, proof.inputs[consumed]!, physical);
+    expect(advanced.status).toBe("ok");
+    physical = advanced.state;
+    consumed++;
+    if (!physical.grounded && physical.vy === 0 && supportContact(object, geometry, physical)) {
+      break;
+    }
+  }
+  expect(physical.grounded).toBe(false);
+  expect(physical.vy).toBe(0);
+  expect(supportContact(object, geometry, physical)).toBe(true);
+  const inputs = proof.inputs.slice(consumed);
+  expect(inputs.length).toBeGreaterThan(0);
+  const oldTarget = { ...startBird(BIRD, { x: 2812, y: 960 }), grounded: true };
+  const current = startBird(BIRD, { x: physical.x - 144, y: 888 });
+  const chase = object.behaviour!.scorer!.moves.find(({ move }) => move.kind === "chase")!.move;
+  const state: BehaviourState = {
+    ...fixture.state,
+    intent: {
+      ...moveIntent(
+        BIRD,
+        oldTarget,
+        chase,
+        object.behaviour!.scorer!.decisionSeconds.min,
+        1,
+        object,
+        physical,
+      ),
+      remainingSeconds: 0,
+    },
+    traversal: { geometry: "", inputs, physical, status: "found", target: base.goal },
+  };
+  const timeSeconds = base.request.timeSeconds + consumed * STEP_SECONDS;
+  const live: BehaviourWorld = {
+    ...geometry,
+    traversalFrame: { ...geometry.traversalFrame!, timeSeconds },
+  };
+  const expected = stepTraversal(
+    traversalContext(live, STEP_SECONDS, object, motion)!,
+    inputs[0]!,
+    physical,
+  );
+  expect(expected.status).toBe("ok");
+  const next = stepBehaviour(BIRD, object, live, STEP_SECONDS, current, physical, state);
+  expect(next.state.intent!.target).toEqual(state.intent!.target);
+  expect(next.state.scorer?.decision).toBe(state.scorer?.decision);
+  expect(next.state.traversal?.physical).toEqual(expected.state);
+});
 
 it.each([
   { move: 1 as const, offset: { x: 2, y: 2 } },

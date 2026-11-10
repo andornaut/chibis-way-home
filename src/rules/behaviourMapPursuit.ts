@@ -16,6 +16,7 @@ import type { TraversalCommand } from "@andornaut/game-kit/terrain/traversal";
 import { collisionCandidates, EDGE } from "../core";
 import { TILE } from "../data/screen";
 import type { ObjectLayout, Point, Rect } from "../data/types";
+import { type BehaviourObservationContext, recordBehaviourWork } from "./behaviourObserver";
 import type { BehaviourWorld } from "./behaviourReach";
 import { clockedSupport } from "./effectiveCollision";
 import type { MapSupport, PursuitGroundMap } from "./movementMaps";
@@ -310,9 +311,11 @@ export function mapReachable(
   hers: Rect,
 ): boolean | undefined {
   const view = goalView(world, object, entry, [], at, hers);
-  return (
-    view && pathTo(entry.map, view.mask, view.from, { predicate: view.predicate }) !== undefined
-  );
+  if (!view) {
+    return undefined;
+  }
+  recordBehaviourWork(world.observation, "map_search_calls", 1);
+  return pathTo(entry.map, view.mask, view.from, { predicate: view.predicate }) !== undefined;
 }
 
 const clamp = (low: number, high: number, value: number) => Math.max(low, Math.min(high, value));
@@ -374,7 +377,9 @@ export function planMapLeg(
   // The route is replanned when the node, Chibi's support, the mask or his position to within
   // ROUTE_BUCKET tiles changes.
   const routeKey = `${key}|${failed.join(",")}|${Math.floor(view.toward.x / (ROUTE_BUCKET * TILE))}`;
-  const route = prior?.route?.key === routeKey ? prior.route : chooseRoute(entry, view, routeKey);
+  const cached = prior?.route?.key === routeKey;
+  recordBehaviourWork(world.observation, "route_cache_hits", cached ? 1 : 0);
+  const route = cached ? prior!.route! : chooseRoute(world.observation, entry, view, routeKey);
   const state = { failed, key, route };
   const { next } = route;
   if ("edge" in next) {
@@ -407,10 +412,12 @@ const ROUTE_BUCKET = 4;
 // The first edge of the fastest path to Chibi's node, a chase when the boss is on it, else the
 // first edge towards the reachable spot nearest him, else a pace there.
 function chooseRoute(
+  observation: BehaviourObservationContext | undefined,
   entry: PursuitGroundMap,
   view: MapGoalView,
   key: string,
 ): NonNullable<BehaviourMapPursuitState["route"]> {
+  recordBehaviourWork(observation, "map_search_calls", 1);
   const { fallback, path } = pathOrNearest(
     entry.map,
     view.mask,
@@ -449,6 +456,7 @@ export function mapRecoveryGoal(
   }
   const { from } = view;
   // No node is a goal, so the search reports the reachable position nearest Chibi.
+  recordBehaviourWork(world.observation, "map_search_calls", 1);
   const { path: towards, target: near } = pathOrNearest(
     map,
     view.mask,

@@ -33,6 +33,7 @@ import {
   startBehaviour,
 } from "./behaviour";
 import { behaviourEffect } from "./behaviourEffects";
+import { type BehaviourObserver, recordBehaviourWork } from "./behaviourObserver";
 import { perceiveBehaviour } from "./behaviourPerception";
 import type { BehaviourPlatformFrame, BehaviourWorld, CrumblingPrediction } from "./behaviourReach";
 import {
@@ -674,6 +675,18 @@ export function stepZoneBodies(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneBodyStep {
+  return stepZoneBodiesInternal(undefined, skillProfiles, tuning, layout, seconds, input, zone);
+}
+
+function stepZoneBodiesInternal(
+  observer: BehaviourObserver | undefined,
+  skillProfiles: readonly BirdTuning[],
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  seconds: number,
+  input: ZoneInput,
+  zone: ZoneState,
+): ZoneBodyStep {
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
   const playbackView = area.objects.some((object) => object.motion.playback === "once-visible")
@@ -1018,6 +1031,17 @@ export function stepZoneBodies(
                     zone.seed + zone.attempt,
                     `idle-roam:${zone.area}:${index}`,
                   ),
+                  ...(observer && {
+                    observation: {
+                      metadata: {
+                        area: zone.area,
+                        attempt: zone.attempt,
+                        objectIndex: index,
+                        tick: zone.steps,
+                      },
+                      observer,
+                    },
+                  }),
                 },
                 zone.bird,
               ),
@@ -1286,6 +1310,13 @@ export function stepZoneBodies(
               ? objectContact(hazardIndices[overlap]!)
               : undefined));
   const steps = zone.steps + 1;
+  if (observer) {
+    recordBehaviourWork(
+      { metadata: { area: zone.area, attempt: zone.attempt, tick: zone.steps }, observer },
+      "simulation_ticks",
+      1,
+    );
+  }
   if (
     bodyContact !== undefined ||
     transientStep.lethal ||
@@ -1394,12 +1425,45 @@ export function stepZone(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneState {
+  return stepZoneInternal(undefined, skillProfiles, tuning, layout, seconds, input, zone);
+}
+
+// Diagnostic callers observe the same step without adding observers to saved or input state.
+export function stepZoneObserved(
+  observer: BehaviourObserver,
+  skillProfiles: readonly BirdTuning[],
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  seconds: number,
+  input: ZoneInput,
+  zone: ZoneState,
+): ZoneState {
+  return stepZoneInternal(observer, skillProfiles, tuning, layout, seconds, input, zone);
+}
+
+function stepZoneInternal(
+  observer: BehaviourObserver | undefined,
+  skillProfiles: readonly BirdTuning[],
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  seconds: number,
+  input: ZoneInput,
+  zone: ZoneState,
+): ZoneState {
   if (zone.death !== undefined || zone.cleared || zone.turnedBack || zone.door !== undefined) {
     return zone;
   }
   const area = areaOf(layout, zone.area);
   const kinds = areaObjects(area);
-  const body = stepZoneBodies(skillProfiles, tuning, layout, seconds, input, zone);
+  const body = stepZoneBodiesInternal(
+    observer,
+    skillProfiles,
+    tuning,
+    layout,
+    seconds,
+    input,
+    zone,
+  );
   const { geometry } = body;
   const barks: ZoneBark[] = [];
   const seen = new Set(zone.spotted[zone.area] ?? []);

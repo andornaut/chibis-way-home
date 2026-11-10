@@ -270,9 +270,13 @@ it("reports unknown motion and unsupported threats instead of silently omitting 
     observation: { kind: "unknown", problem: "ambiguous public projectile motion" },
     tick: 294,
   };
-  expect(
-    policy(safe, { bird, frame: unknown, guard, support: standing, tick: 324 }, nominal).problem,
-  ).toBe(unknown.observation.kind === "unknown" ? unknown.observation.problem : "");
+  const result = policy(
+    safe,
+    { bird, frame: unknown, guard, support: standing, tick: 324 },
+    nominal,
+  );
+  expect(result.problem).toBe("ambiguous public projectile motion");
+  expect(result.controllerFailure).toEqual({ kind: "unknown", problem: result.problem });
   expect(
     policy(safe, { bird, frame, guard, support: () => undefined, tick: 324 }, nominal).problem,
   ).toBeDefined();

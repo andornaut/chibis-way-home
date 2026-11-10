@@ -26,10 +26,10 @@ import {
 const HASHES: Readonly<Record<string, string>> = {
   "arena-bear-sample": "481101b7d10f27e2",
   "arena-dog-sample": "40bef4ed639d6aad",
-  "arena-ferret-sample": "f383831fdaf68e92",
+  "arena-ferret-sample": "4fc7d0c9a0e1ab2b",
   "arena-goose-sample": "a48a53202391360e",
-  "arena-pigeon-sample": "90f8704bf901326c",
-  "arena-raccoon-sample": "d78fa950c3093d03",
+  "arena-pigeon-sample": "0657a823a43f3049",
+  "arena-raccoon-sample": "37c029cbcdb4f740",
 };
 
 it.each(ARENA_SAMPLES.map((arena) => [arena.id, arena] as const))(

@@ -10,6 +10,7 @@ import type {
   Rect,
   TargetedAttackWindow,
 } from "../data/types";
+import type { BehaviourObservationContext } from "./behaviourObserver";
 import { birdBox, type BirdState } from "./bird";
 import type { PursuitGroundMap } from "./movementMaps";
 import type { TimedHazardSampler } from "./timedHazard";
@@ -52,6 +53,7 @@ export interface BehaviourTraversalFrame {
 }
 
 export interface BehaviourWorld {
+  readonly observation?: BehaviourObservationContext;
   readonly targetedAttackWindow?: TargetedAttackWindow;
   // Object-local decision streams; equal keys replay equal draws.
   readonly decisions?: RandomStreams;

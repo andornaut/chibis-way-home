@@ -16,6 +16,7 @@ import {
 import { collisionCandidates, EDGE, STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types";
+import { recordBehaviourWork } from "./behaviourObserver";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
 import { timedHazardSafe } from "./timedHazard";
 
@@ -35,6 +36,18 @@ export interface BehaviourTraversalState {
   readonly status: TraversalResult<TraversalSupport>["status"];
 }
 type GroundMotion = Extract<BehaviourMotion, { mode: "ground" }>;
+
+function observeTraversalWork(
+  world: BehaviourWorld,
+  result: TraversalResult<TraversalSupport>,
+): void {
+  const observation = world.observation;
+  if (observation) {
+    recordBehaviourWork(observation, "traversal_search_calls", 1);
+    recordBehaviourWork(observation, "traversal_states", result.work.states);
+    recordBehaviourWork(observation, "traversal_steps", result.work.steps);
+  }
+}
 
 function intersects(a: Rect, b: Rect): boolean {
   return (
@@ -885,6 +898,7 @@ function advanceTraversalStep(
       ...request,
       ...(preferredInputs && { preferredInputs }),
     });
+    observeTraversalWork(world, proof);
     const launch = proof.status === "found" ? proof.inputs[0] : undefined;
     if (!launch?.jump || launch.move !== preparation.move) {
       return {
@@ -1036,6 +1050,7 @@ function advanceTraversalStep(
       ...request,
       ...(preferredInputs?.length && { preferredInputs }),
     });
+    observeTraversalWork(world, result);
     // An exhausted climb retries toward the blocking wall's top in this search event,
     // so the unchanged position, goal and geometry cannot leave it without a staged leg. Map
     // legs stage walls as their own edges.
@@ -1052,6 +1067,7 @@ function advanceTraversalStep(
         ...staged,
         ...(climbInputs && { preferredInputs: climbInputs }),
       });
+      observeTraversalWork(world, climb);
       if (climb.status === "found") {
         goal = ascent;
         result = climb;
@@ -1209,6 +1225,7 @@ export function probeRearm(
       start,
       timeSeconds: frame.timeSeconds,
     });
+    observeTraversalWork(world, result);
     inputs = result.status === "found" ? result.inputs : [];
     status = result.status;
     searchedAt = at;

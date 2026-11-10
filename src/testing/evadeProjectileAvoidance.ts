@@ -22,6 +22,7 @@ export interface ProjectileAvoidanceContext {
   readonly tick: number;
 }
 export interface ProjectileAvoidanceResult {
+  readonly controllerFailure?: { readonly kind: "unknown"; readonly problem: string };
   readonly input: ZoneInput;
   readonly override: boolean;
   readonly problem?: string;
@@ -108,7 +109,12 @@ export function createProjectileAvoidance(
     const unchanged = (): ProjectileAvoidanceResult => ({ input: nominal, override: false });
     const unknown = (problem: string): ProjectileAvoidanceResult => {
       cached = undefined;
-      return { input: nominal, override: false, problem };
+      return {
+        controllerFailure: { kind: "unknown", problem },
+        input: nominal,
+        override: false,
+        problem,
+      };
     };
     if (
       !Number.isSafeInteger(tick) ||
