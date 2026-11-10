@@ -1,0 +1,57 @@
+#!/bin/sh
+set -eu
+
+category=${1:-check}
+if [ "$#" -gt 0 ]; then shift; fi
+
+# Existing gate installs take precedence; isolated copies use image-pinned dependencies.
+if [ ! -e node_modules ] && [ ! -L node_modules ]; then
+    cp -R /opt/check/node_modules node_modules
+fi
+if [ -n "${CHECK_REVISION:-}" ]; then
+    export WORKERS_CI_COMMIT_SHA="${CHECK_REVISION}"
+fi
+
+run_lint() {
+    ./node_modules/.bin/prettier --check .
+    ./node_modules/.bin/eslint --max-warnings 0 .
+    ./node_modules/.bin/markdownlint-cli2
+}
+
+run_test() {
+    ./node_modules/.bin/tsc
+    ./node_modules/.bin/vitest run "$@" --maxWorkers=4
+    ./node_modules/.bin/tsx src/tools/chunkPairs.ts verify --sample-ms 20000
+}
+
+run_build() {
+    ./node_modules/.bin/vite build
+    node art/tools/build.ts --check
+}
+
+case "${category}" in
+    exec)
+        if [ "$#" -gt 0 ]; then exec "$@"; fi
+        exec sh -ec "${COMMAND:?COMMAND is required}"
+        ;;
+    test)
+        run_test "$@"
+        ;;
+    check|lint|build)
+        if [ "$#" -gt 0 ]; then
+            printf '%s does not accept additional arguments.\n' "${category}" >&2
+            exit 2
+        fi
+        if [ "${category}" = check ]; then
+            run_lint
+            run_test
+            run_build
+        else
+            "run_${category}"
+        fi
+        ;;
+    *)
+        printf 'Unknown check category: %s\n' "${category}" >&2
+        exit 2
+        ;;
+esac

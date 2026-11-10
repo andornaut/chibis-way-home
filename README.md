@@ -18,53 +18,21 @@ The [gameplay design](gameplay/design.md) holds the rules, and the [gameplay REA
 
 ## Developing
 
-Requires Node 24.21.0 or newer (`.nvmrc` pins 24.21.0).
+Requires Docker and Make. The image uses Node 24.21.0 from `.nvmrc` and installs the exact npm lockfile. Host Node and npm are needed only for the native development tools below.
 
-Run every command below inside an isolated `node:24.21.0` container, never on the host, as the dedicated uid 19001 with the checkout's group, which owns nothing on the host. Mount host paths read-only and only with `--mount` (`-v` creates a missing source as root), keep outputs and caches inside the container and copy results out with `docker cp`. From the checkout, with `NPM_CACHE` naming a populated npm cache the checkout's group can read:
+| Command                                          | Does                                                                                                |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `make check`                                     | Run lint, test and build in isolated copies, without exporting generated files                      |
+| `make check-info`                                | Print the version 1 JSON check contract without starting Docker                                     |
+| `make lint`                                      | Check Prettier, ESLint and Markdownlint                                                             |
+| `make test`                                      | Type-check, run Vitest with four workers and verify certified chunk lists with the 20-second sample |
+| `make build`                                     | Build with Vite, check art reproduction and export `dist/`                                          |
+| `make test TEST_ARGS='src/rules/bird.test.ts'`   | Select Vitest cases while retaining type and certified-list checks                                  |
+| `make exec COMMAND='node art/tools/ui.ts build'` | Run an explicit command with the checkout writable                                                  |
 
-```sh
-docker run --rm --network none --cpus=4 \
-  --user 19001:19001 --group-add "$(stat -c %g .)" --group-add "$(stat -c %g "$NPM_CACHE")" \
-  -e HOME=/tmp \
-  --mount type=bind,src="$PWD",dst=/src,readonly \
-  --mount type=bind,src="$NPM_CACHE",dst=/npm-cache,readonly \
-  node:24.21.0 sh -c 'mkdir /tmp/work \
-    && tar -C /src --exclude=./.claude --exclude=./.worktrees --exclude=./node_modules -cf - . \
-    | tar -C /tmp/work -xf - \
-    && cp -r /npm-cache /tmp/npm-cache && cd /tmp/work \
-    && npm ci --offline --cache /tmp/npm-cache \
-    && npm run check && npm run lint && npm test -- --maxWorkers=4'
-```
+`npm run check`, `npm test`, `npm run lint` and `npm run build` are Make aliases. Use `TEST_ARGS` for focused tests. Each check category admits work only when the one-minute load is below 20, with four CPUs per container. The [shared launcher](https://github.com/andornaut/ai-maintainer/blob/6a2d882bf5a8200b97319afd8076e8f00c9707ee/tests/container/run) owns source snapshots, isolation and artifact export; the project dispatcher invokes tools directly without nested Make or Docker calls.
 
-Replace the last line with any command in the table, or an art generator (`node art/tools/<tool>.ts <command>`), which needs no extra tools.
-
-To fill `NPM_CACHE`, install once in a networked container and copy its cache out:
-
-```sh
-docker run --name npm-fill --cpus=4 \
-  --user 19001:19001 --group-add "$(stat -c %g .)" -e HOME=/tmp \
-  --mount type=bind,src="$PWD",dst=/src,readonly \
-  node:24.21.0 sh -c 'cd /tmp && cp /src/package.json /src/package-lock.json . \
-    && npm ci --cache /tmp/npm-cache'
-docker cp npm-fill:/tmp/npm-cache "$NPM_CACHE" && docker rm npm-fill
-```
-
-Alternatively, skip the cache: start the container detached with the network, run `npm ci` in it, then `docker network disconnect bridge <container>` before running any check.
-
-| Command                      | Does                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------ |
-| `npm run build`              | Build to `dist/`                                                                     |
-| `npm run check`              | Type check with tsc                                                                  |
-| `npm run clean`              | Remove the build and Wrangler state                                                  |
-| `npm run dev`                | Dev server                                                                           |
-| `npm run format`             | Rewrite files with Prettier and apply ESLint fixes                                   |
-| `npm run lint`               | Prettier, ESLint and markdownlint                                                    |
-| `npm run pairs -- --help`    | Certify, verify and report the certified chunk lists                                 |
-| `npm run preview`            | Build, then serve it through `wrangler dev`                                          |
-| `npm run reaches`            | Print the bird's measured reaches beside gameplay's targets; exits 1 when one is off |
-| `npm run simulate -- --help` | Simulate runs ([src/README.md](src/README.md), Bounded simulations)                  |
-| `npm test`                   | Run the unit tests                                                                   |
-| `npm run test:game-kit`      | Run the game tests game-kit's release proof runs                                     |
+Native tools remain available after `npm ci`: `npm run dev`, `npm run format`, `npm run pairs -- --help`, `npm run preview`, `npm run reaches`, `npm run simulate -- --help` and `npm run test:game-kit`. Runtime documentation is in [src/README.md](src/README.md).
 
 WORKAROUND: Parent-scoped development overrides pin [KaTeX](https://github.com/advisories/GHSA-238p-pmpm-9mq7) `0.18.2`, [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249) `11.0.3` and [re2js](https://github.com/advisories/GHSA-gg6h-894w-4m9c) `2.8.7`. ESLint loads the cycle and restricted-paths rules and the resolver through exported plugin subpaths because the full plugin imports an unused rule requiring the removed minimatch `makeRe` API. Keep cycle detection enabled. Remove each override when its parent range supports the patched version; restore the full plugin import when it supports minimatch 11.
 
@@ -72,6 +40,6 @@ The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html
 
 ## Deploying
 
-[delivery-kit](https://github.com/andornaut/delivery-kit) ships local `main` on the schedule in [`delivery-kit.json`](delivery-kit.json). Each departure runs the gate steps that file lists (type check, lint, tests, build, a `npm run pairs -- verify` sample of the certified chunk lists and the art build check) on the `main` HEAD in an isolated container, pushes that exact commit, waits for its CI and then deploys the gated build with Wrangler to the account pinned by `account_id` in [`wrangler.jsonc`](wrangler.jsonc). Pushes and deployments are not made by hand.
+[delivery-kit](https://github.com/andornaut/delivery-kit) ships local `main` on the schedule in [`delivery-kit.json`](delivery-kit.json). Each departure runs the gate steps that file lists (type check, lint, tests, build, a certified chunk-list verification sample and the art build check) on the `main` HEAD in an isolated container, pushes that exact commit, waits for its CI and then deploys the gated build with Wrangler to the account pinned by `account_id` in [`wrangler.jsonc`](wrangler.jsonc). Pushes and deployments are not made by hand.
 
 The `routes` entry in `wrangler.jsonc` serves the custom domain.
