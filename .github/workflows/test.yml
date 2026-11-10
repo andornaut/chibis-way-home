@@ -30,8 +30,8 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     # A run takes 6 to 12 minutes on a hosted runner, and a busy runner is up to
-    # 1.8x slower, so a job still going at 28 has hung. The cap ends it before
-    # delivery-kit stops watching CI at 30.
+    # 1.8x slower, so a job still going at 28 has hung rather than merely
+    # running slowly. The cap ends it before delivery-kit stops watching CI at 30.
     timeout-minutes: 28
 
     steps:
@@ -64,6 +64,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    # Lint normally takes a few minutes. A job still running at 15 minutes
+    # has hung rather than merely running slowly.
     timeout-minutes: 15
 
     steps:
