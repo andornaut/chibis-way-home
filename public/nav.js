@@ -1,4 +1,4 @@
-// The site navigation bar: art's logo, linking home, then Gallery, Home, Play and Tuning. A page loads it with
+// The site navigation bar: art's logo, linking home, then Home, Gallery, Play and Tuning. A page loads it with
 // <link rel="stylesheet" href="/nav.css"> and <script src="/nav.js" defer></script> in its head
 // and adds nothing else. The page links the stylesheet, rather than this script injecting it, so
 // the bar's style blocks the first paint. On /play/ the bar is a narrow column on the left, so the
@@ -46,8 +46,8 @@
   li.append(a);
   ul.append(li);
   ul.append(
-    item("Gallery", "/art/"),
     item("Home", "/"),
+    item("Gallery", "/art/"),
     item("Play", "/play/"),
     item("Tuning", "/tuning/"),
   );
