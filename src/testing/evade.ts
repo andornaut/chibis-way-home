@@ -582,6 +582,73 @@ export function startsJump(edge: LaunchEdge | undefined) {
   return Boolean(edge?.commands[0]?.jump);
 }
 
+// A nonzero grounded prefix must reach the launch from a previous position on this span.
+// Exclude only edges whose final ordinary step cannot do that, never an exhausted search.
+export function firstEdgeMask(
+  tuning: BirdTuning,
+  seconds: number,
+  map: MovementMap<MapSupport>,
+  base: MapMask,
+  ref: NodeRef,
+  bird: BirdState,
+): { readonly blocked: readonly number[]; readonly mask: MapMask } {
+  const span = map.nodes[ref.node];
+  const blocked: number[] = [];
+  if (
+    !span ||
+    span.kind !== "static" ||
+    span.deps.length > 0 ||
+    !bird.grounded ||
+    bird.carryVx !== 0 ||
+    ![seconds, tuning.walkSpeed].every((value) => Number.isFinite(value) && value > 0) ||
+    !Number.isFinite(seconds * tuning.walkSpeed) ||
+    ![span.left, span.right, span.y, bird.x, bird.y, bird.vx].every(Number.isFinite) ||
+    bird.x < span.left - EDGE ||
+    bird.x > span.right + EDGE ||
+    Math.abs(birdBox(tuning, bird).y + tuning.height - span.y) > EDGE
+  ) {
+    return { blocked, mask: base };
+  }
+  for (const id of map.outgoing[ref.node] ?? []) {
+    const edge = map.edges[id]!;
+    if (!startsJump(edge) || edge.deps.length > 0) {
+      continue;
+    }
+    const velocity = edge.commands[0]!.move * tuning.walkSpeed;
+    if (
+      bird.x >= edge.launch.left - EDGE &&
+      bird.x <= edge.launch.right + EDGE &&
+      Math.abs(bird.vx - velocity) <= EDGE
+    ) {
+      continue;
+    }
+    const left = Math.max(span.left - EDGE, edge.launch.left - EDGE);
+    const right = Math.min(span.right + EDGE, edge.launch.right + EDGE);
+    const previousLeft = left - (velocity + EDGE) * seconds;
+    const previousRight = right - (velocity - EDGE) * seconds;
+    if (left > right || previousRight < span.left - EDGE || previousLeft > span.right + EDGE) {
+      blocked.push(id);
+    }
+  }
+  if (blocked.length === 0) {
+    return { blocked, mask: base };
+  }
+  blocked.sort((a, b) => a - b);
+  const excluded = new Set(blocked);
+  return {
+    blocked,
+    mask: {
+      ...base,
+      edge: (id, departSeconds) => base.edge(id, departSeconds) && !excluded.has(id),
+      ...(base.key === undefined
+        ? {}
+        : {
+            key: `${base.key}:launch:${ref.node}:${blocked.join(",")}`,
+          }),
+    },
+  };
+}
+
 export function boundaryInput(
   bounds: { readonly backX: number; readonly canExit: boolean; readonly exitX: number },
   body: Rect,
@@ -724,16 +791,18 @@ export function createRouteFollower(
   );
   const ledges = staticColliders.filter(({ kind }) => kind === "ledge").map(({ before }) => before);
   let leg: { airborne: boolean; edge: MapEdge<MapSupport>; goal: Point; step: number } | undefined;
+  let prefix: { edges: number[]; cursor: number; goal: Point } | undefined;
   let holdingFull = false;
   const reset = () => {
     leg = undefined;
+    prefix = undefined;
     preparation.reset();
   };
   const step = (safeStep: LaunchSafety, context: RouteFollowContext): RouteFollowResult => {
     const { areaWidth, bird, goal, mask } = context;
     const events: RouteFollowEvent[] = [];
     const body = birdBox(tuning, bird);
-    const ref = bird.grounded ? locate(map, body) : undefined;
+    let ref = bird.grounded ? locate(map, body) : undefined;
     if (bird.grounded) {
       holdingFull = false;
     }
@@ -750,6 +819,7 @@ export function createRouteFollower(
         events.push({ cause, edge: leg.edge.id, kind: "abandoned" });
       }
       leg = undefined;
+      prefix = undefined;
       preparation.reset();
     };
     const toward = (x: number): ZoneInput => ({
@@ -794,10 +864,84 @@ export function createRouteFollower(
       }
     }
     if (!bird.grounded) {
+      prefix = undefined;
       preparation.reset();
       return finish(toward(goal.x - body.width / 2));
     }
+    const supported = (id: number) => {
+      const node = map.nodes[id];
+      return Boolean(
+        node &&
+        bird.grounded &&
+        body.x >= node.left - EDGE &&
+        body.x <= node.right + EDGE &&
+        Math.abs(body.y + body.height - node.y) <= EDGE &&
+        staticColliders.some(
+          ({ before, supportId }) =>
+            supportId === node.supportId &&
+            Math.abs(before.y - node.y) <= EDGE &&
+            body.x >= before.x - EDGE &&
+            body.x + body.width <= before.x + before.width + EDGE,
+        ),
+      );
+    };
+    const walkInput = (edge: MapEdge<MapSupport>) =>
+      toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2)));
+    const walkSafe = (edge: MapEdge<MapSupport>) => {
+      const input = walkInput(edge);
+      const vx = ordinaryHorizontalVelocity(tuning, seconds, input.move, true, bird.vx);
+      return safeStep(body.x, body.x + vx * seconds, input.move);
+    };
+    let retained: MapEdge<MapSupport> | undefined;
+    if (prefix) {
+      let valid = prefix.goal.x === goal.x && prefix.goal.y === goal.y;
+      if (valid) {
+        while (prefix.cursor < prefix.edges.length) {
+          const edge = map.edges[prefix.edges[prefix.cursor]!]!;
+          if (edge.kind !== "walk" || startsJump(edge) || !supported(edge.to)) {
+            break;
+          }
+          const move = edge.commands[0]?.move;
+          if (!(
+            (move === 1 && body.x >= edge.land.left - EDGE) ||
+            (move === -1 && body.x <= edge.land.right + EDGE)
+          )) {
+            break;
+          }
+          // Ground connection progress does not complete a jump witness.
+          prefix.cursor++;
+        }
+      }
+      let depart = 0;
+      for (let i = prefix.cursor; valid && i < prefix.edges.length; i++) {
+        const edge = map.edges[prefix.edges[i]!]!;
+        valid = mask.node(edge.from) && mask.node(edge.to) && mask.edge(edge.id, depart);
+        depart += edge.seconds;
+      }
+      const edge = map.edges[prefix.edges[prefix.cursor]!];
+      valid &&= Boolean(
+        edge &&
+        (supported(edge.from) || (edge.kind === "walk" && !startsJump(edge) && supported(edge.to))),
+      );
+      if (valid && edge) {
+        const node = supported(edge.from) ? edge.from : edge.to;
+        const actual = { node, x: body.x };
+        valid = !firstEdgeMask(tuning, seconds, map, mask, actual, bird).blocked.includes(edge.id);
+        if (valid && edge.kind === "walk" && !startsJump(edge)) {
+          valid = walkSafe(edge);
+        }
+        if (valid) {
+          ref = actual;
+          retained = edge;
+        }
+      }
+      if (!valid) {
+        prefix = undefined;
+        preparation.reset();
+      }
+    }
     if (!ref) {
+      prefix = undefined;
       preparation.reset();
       const feet = body.y + body.height;
       const candidates = map.nodes
@@ -854,8 +998,34 @@ export function createRouteFollower(
       }
       return finish(recovered.input);
     }
-    const path = pathTo(map, mask, ref, { point: goal, radius: TILE });
-    const edge = path?.edges[0] === undefined ? undefined : map.edges[path.edges[0]];
+    let edge = retained;
+    if (!edge) {
+      const compatible = firstEdgeMask(tuning, seconds, map, mask, ref, bird);
+      const path = pathTo(map, compatible.mask, ref, { point: goal, radius: TILE });
+      if (!path && compatible.blocked.length > 0) {
+        preparation.reset();
+        return finish(STILL, "no path with a compatible first grounded launch");
+      }
+      edge = path?.edges[0] === undefined ? undefined : map.edges[path.edges[0]];
+      const selected: number[] = [];
+      for (const id of path?.edges ?? []) {
+        const candidate = map.edges[id]!;
+        if (
+          candidate.deps.length > 0 ||
+          [candidate.from, candidate.to].some(
+            (node) => map.nodes[node]!.kind !== "static" || map.nodes[node]!.deps.length > 0,
+          ) ||
+          (candidate.kind !== "walk" && !startsJump(candidate))
+        ) {
+          break;
+        }
+        selected.push(id);
+        if (startsJump(candidate)) {
+          prefix = { cursor: 0, edges: selected, goal: { ...goal } };
+          break;
+        }
+      }
+    }
     const prepared = preparation(safeStep, {
       bird,
       edge,
@@ -874,9 +1044,12 @@ export function createRouteFollower(
     }
     const jump = startsJump(edge);
     if (edge.kind === "walk" && !jump) {
-      return finish(
-        toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2))),
-      );
+      if (prefix && !walkSafe(edge)) {
+        prefix = undefined;
+        preparation.reset();
+        return finish(STILL, "selected walk has no safe ordinary step");
+      }
+      return finish(walkInput(edge));
     }
     if (jump && prepared.kind === "unknown") {
       return finish(STILL, "cannot establish a velocity-matched jump launch on its support");
@@ -894,6 +1067,7 @@ export function createRouteFollower(
         return finish(STILL, "selected edge has no witness commands");
       }
       leg = { airborne: false, edge, goal: { ...goal }, step: 1 };
+      prefix = undefined;
       if (command.jump) {
         holdingFull = fullJump(tuning.jumpHopHeight, map, edge);
       }

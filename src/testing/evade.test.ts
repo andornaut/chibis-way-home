@@ -24,11 +24,11 @@ import {
 // Each sample's arena proof: static checks, required route, path out and every evade run, with
 // its hash over the evade trace hashes.
 const HASHES: Readonly<Record<string, string>> = {
-  "arena-bear-sample": "7c3d20ef1415885c",
-  "arena-dog-sample": "a8171607ea6b7179",
+  "arena-bear-sample": "d931724369967316",
+  "arena-dog-sample": "70b2cdf7ef88bc5c",
   "arena-ferret-sample": "f383831fdaf68e92",
-  "arena-goose-sample": "d6cc5cba1a674cbc",
-  "arena-pigeon-sample": "cc3925e5ae41a0a1",
+  "arena-goose-sample": "46a591caa217b15d",
+  "arena-pigeon-sample": "90f8704bf901326c",
   "arena-raccoon-sample": "d78fa950c3093d03",
 };
 
