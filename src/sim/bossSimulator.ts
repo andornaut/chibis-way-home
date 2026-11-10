@@ -60,7 +60,7 @@ export type BossTick = AgentTick<BossWorldSample>;
 const isBoss = (object: ObjectLayout) => object.character in BOSSES;
 
 // Present terrain and supports at the end of a tick, as the support check reads them.
-function supportWorld(layout: ZoneLayout, zone: ZoneState) {
+export function supportWorld(layout: ZoneLayout, zone: ZoneState) {
   const area = areaOf(layout, zone.area);
   const platforms = area.objects.flatMap((object, index) =>
     (object.collision === "solid" || object.collision === "ledge") &&
