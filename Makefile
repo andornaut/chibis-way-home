@@ -5,6 +5,7 @@ BUILD_OUTPUTS := dist
 TEST_OUTPUTS :=
 CONTAINER_BUILD_ARGS := NODE_VERSION=$(patsubst v%,%,$(shell cat .nvmrc))
 CHECK_ADMISSION := tests/container/admit
+CHECK_MEMORY := 8g
 
 override COMMAND := $(value COMMAND)
 override TEST_ARGS := $(value TEST_ARGS)
