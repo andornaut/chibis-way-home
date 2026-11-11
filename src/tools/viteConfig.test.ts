@@ -50,9 +50,23 @@ it("passes the game's page entries, preview host and existing limits to its loca
   expect(config.test?.maxWorkers).toBe(4);
 });
 
-it("discovers only game-owned tests while retaining the resolved Node test options", async () => {
+it("discovers only game-owned tests, the happy-dom ones in their own project, on Node options", async () => {
   const config = await configPromise;
-  expect(config.test?.include).toEqual(["src/**/*.test.ts"]);
+  type Project = { readonly test: Readonly<Record<string, unknown>> & { readonly name: string } };
+  const projects = (config.test?.projects ?? []) as readonly Project[];
+  const project = (name: string) => projects.find(({ test }) => test.name === name)?.test;
+  const dom = project("dom")?.include;
+  expect({
+    dom,
+    domEnvironment: project("dom")?.environment,
+    node: project("node")?.include,
+    nodeExcludes: project("node")?.exclude,
+  }).toEqual({
+    dom: expect.arrayContaining(["src/scenes/RestartScene.test.ts", "src/ui/dom/layer.test.ts"]),
+    domEnvironment: "happy-dom",
+    node: ["src/**/*.test.ts"],
+    nodeExcludes: dom,
+  });
   expect(config.test).toMatchObject({
     environment: "node",
     root: resolve(import.meta.dirname, "../.."),
