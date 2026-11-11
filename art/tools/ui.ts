@@ -31,7 +31,7 @@
  *   and its press area in the game's 2:1 view, anchored to its top-left, ui-pause at the view's top
  *   and Use, Jump and the move hint at its bottom, and sizes their press areas
  *   (src/ui/layout/hitAreas.ts). Each drawn edge sits at least 8px from the edge it is placed
- *   against, and the pause disc 8px in from the top and left. Use, Jump and move hint
+ *   against, and the pause disc 12px in from the top and left. Use, Jump and move hint
  *   placement belongs to the runtime layout
  *   (src/data/layout.ts) and the style guide's touch controls table.
  * - ui-touch-use, 75x75, centre pixel 37,37.
@@ -43,7 +43,7 @@
  *   its top 5px above. No label. Tags rest (100ms); press, once (frame 0 the band and icon turn
  *   white and the ring swells 1px; frame 1 the same at rest size; 60ms each); held (as press frame
  *   1, 100ms).
- * - ui-pause, 35x35, centre pixel 17,17: top-left 7,7 for the centre 24,24, its disc 8px in from
+ * - ui-pause, 35x35, centre pixel 17,17: top-left 11,11 for the centre 28,28, its disc 12px in from
  *   the top and left. A disc 33px across: an ink edge, a 2px cream ring (3px pressed) and a navy
  *   face (dslate pressed), with two pause bars (11x13, each 4 wide, 3 apart) centred on the centre;
  *   no label. Tags as for Use and Jump: rest; press, once (2 frames at 60ms, frame 0 swells 1px);
