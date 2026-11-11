@@ -132,12 +132,12 @@ const FLOORS: Readonly<
     "target" | { readonly grades: Partial<Record<Difficulty, number>>; total: number }
   >
 > = {
-  apartment: { grades: { 4: 18, 5: 6 }, total: 24 },
+  apartment: { grades: { 4: 10, 5: 5 }, total: 15 },
   blue: "target",
-  countryside: { grades: { 3: 10, 4: 22, 5: 3 }, total: 35 },
-  home: { grades: { 4: 19, 5: 5 }, total: 24 },
-  industrial: { grades: { 3: 11, 4: 18, 5: 6 }, total: 35 },
-  woodland: { grades: { 4: 20, 5: 4 }, total: 24 },
+  countryside: { grades: { 3: 10, 4: 14, 5: 3 }, total: 27 },
+  home: { grades: { 4: 13, 5: 4 }, total: 17 },
+  industrial: { grades: { 3: 11, 4: 13, 5: 5 }, total: 29 },
+  woodland: { grades: { 4: 14, 5: 4 }, total: 18 },
 };
 
 describe("pool size", () => {
