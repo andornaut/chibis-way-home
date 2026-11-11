@@ -99,6 +99,7 @@ const INDEXED = {
       "./dom/actionHelp.css",
       "./dom/death.css",
       "./dom/runStats.css",
+      "./dom/settings.css",
       "./dom/skillDetails.css",
       "./dom/skillDisc.css",
       "./dom/stageSelect.css",
