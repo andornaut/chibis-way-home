@@ -22,7 +22,7 @@
  * - ui-portrait-frame, 68x68. Recessed dslate well round the 64px portrait, 2px in.
  * - ui-name-tab, nine-slice 12x20, margins 2,2,2,2; tags amber, green, pink, tan (the fill; one per
  *   speaker). Drawn A+12 wide inside the box. Name ink, origin x+6.
- * Placement belongs to the runtime layout (src/ui/layout/dialogueScreen.ts) and the style guide's
+ * Placement belongs to the runtime layout (DIALOGUE_LAYOUT in src/data/layout.ts) and the style guide's
  * dialogue box table.
  *
  * Touch controls (two round buttons for the right thumb, a pause button at the top left and the
@@ -32,7 +32,7 @@
  *   the screen's bottom, and sizes their press areas (src/ui/layout/hitAreas.ts). Each drawn edge sits
  *   at least 8px from the edge it is placed against, and the pause disc 8px in from the top and
  *   left. Use, Jump and move hint placement belongs to the runtime layout
- *   (src/ui/layout/playView.ts) and the style guide's touch controls table.
+ *   (src/data/layout.ts) and the style guide's touch controls table.
  * - ui-touch-use, 75x75, centre pixel 37,37.
  * - ui-touch-jump, 75x75, centre pixel 37,37, towards the bottom-right corner, with Use above and
  *   to its left.
