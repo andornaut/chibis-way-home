@@ -1,6 +1,5 @@
 import { CelebrationQueue } from "@andornaut/game-kit/achievements";
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
-import { loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
 
 import { BOSS_CHARACTERS } from "../../data/achievements";
@@ -51,8 +50,6 @@ const storage = localSaveStorage();
 const format = progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS)));
 const store = saveStore(storage, PROGRESS_KEYS, format);
 let progress: Progress = BEGINNING;
-let developmentOwned: readonly SkillId[] | undefined;
-let developmentSavedSelection: SkillId | null | undefined;
 let temporarySelection: SkillId | null | undefined;
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
 const stats = stageStatsStore(localSaveStorage(), STAGES, ZONE_MAP.destinations);
@@ -71,46 +68,35 @@ const BOSSES_BY_CHARACTER: ReadonlyMap<string, BossId> = new Map(
   Object.entries(BOSS_CHARACTERS).map(([boss, character]) => [character, boss as BossId]),
 );
 
-function installStatsLifecycle(session: SaveSession): void {
+function installStatsLifecycle(): void {
   if (statsLifecycleInstalled || typeof window === "undefined" || typeof document === "undefined") {
     return;
   }
   statsLifecycleInstalled = true;
   window.addEventListener("pagehide", () => {
-    void flushStats(session);
+    void flushStats();
   });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
-      void flushStats(session);
+      void flushStats();
     }
   });
 }
 
 // Reads the stored progress into savedProgress.
 export async function loadProgress(session: SaveSession): Promise<void> {
-  if (session.development()) {
-    try {
-      const loaded = loadSave(format, await storage.read(PROGRESS_KEYS.save));
-      developmentOwned = loaded.status === "loaded" ? loaded.save.skills : [];
-      developmentSavedSelection = loaded.status === "loaded" ? loaded.save.activeSkill : null;
-    } catch {
-      developmentOwned = [];
-      developmentSavedSelection = null;
-    }
-    return;
-  }
   const [loaded, , earned] = await Promise.all([store.load(), stats.load(), achievements.load()]);
   progress = loaded.save;
-  if (progress.activeSkill === "speedy") {
+  if (activeSkill(session) === "speedy") {
     stats.useSkill();
   }
   earnedIds = earned.save.earned;
   notices.push(earned.save.unannounced);
-  installStatsLifecycle(session);
+  installStatsLifecycle();
 }
 
 // Judges each scope with its facts beside the shared profile, and stores and queues what they
-// earn, in card order. Callers have already left developer sessions out.
+// earn, in card order.
 function judgeAchievements(
   scopes: readonly (readonly [AchievementScope, Partial<AchievementFacts>])[],
 ): void {
@@ -136,10 +122,10 @@ export function recordStageStepAchievements(
   stage: string,
   step: { readonly escaped: readonly string[]; readonly skillUsed: boolean },
 ): void {
-  if (session.development() || !STAGES.has(stage)) {
+  if (!STAGES.has(stage)) {
     return;
   }
-  if (step.skillUsed) {
+  if (step.skillUsed || activeSkill(session) === "speedy") {
     stats.useSkill();
   }
   const bosses = [
@@ -157,7 +143,7 @@ export function nextAchievementNotice(
   if (id !== undefined) {
     deliveredNotices.add(id);
   }
-  if (id !== undefined && !session.development()) {
+  if (id !== undefined) {
     achievementWrites++;
     void achievements.announced(id).finally(() => {
       achievementWrites--;
@@ -167,10 +153,7 @@ export function nextAchievementNotice(
 }
 
 // Every achievement for the card, in card order, with each locked entry's progress.
-export function achievementCard(session: SaveSession): AchievementEntry[] {
-  if (session.development()) {
-    return achievementEntries([], { skillUsed: false, skills: [] });
-  }
+export function achievementCard(): AchievementEntry[] {
   const visit = stats.currentVisit();
   return achievementEntries(earnedIds, {
     skillUsed: stats.skillUsed(),
@@ -180,15 +163,9 @@ export function achievementCard(session: SaveSession): AchievementEntry[] {
 }
 
 export function beginZoneVisit(session: SaveSession, zone: string): void {
-  if (session.development()) {
-    return;
-  }
   stats.beginVisit(zone);
 }
 export function beginStageRun(session: SaveSession, stage: string): void {
-  if (session.development()) {
-    return;
-  }
   if (STAGES.has(stage)) {
     if (progress.at === "beginning") {
       writeStand(session, stage);
@@ -197,17 +174,11 @@ export function beginStageRun(session: SaveSession, stage: string): void {
   }
 }
 export function retryStageRun(session: SaveSession, stage: string): void {
-  if (session.development()) {
-    return;
-  }
   if (STAGES.has(stage)) {
     stats.retryStage(stage);
   }
 }
 export function completeStageRun(session: SaveSession, stage: string): RunStatsSummary {
-  if (session.development()) {
-    return stats.summary("");
-  }
   const summary = stats.completeStage(stage);
   const zone = zoneEndingAt(ZONE_MAP, stage);
   const visit = stats.currentVisit();
@@ -218,25 +189,24 @@ export function completeStageRun(session: SaveSession, stage: string): RunStatsS
   return summary;
 }
 export function stageRunStats(session: SaveSession, stage: string): RunStatsSummary {
-  return stats.summary(session.development() ? "" : stage);
+  return stats.summary(stage);
 }
 export function zoneVisitStats(session: SaveSession, zone: string): ZoneStatsSummary {
-  return stats.visitSummary(session.development() ? "" : zone);
+  return stats.visitSummary(zone);
 }
 
 export function activeStageTime(session: SaveSession, stage: string): number {
-  return stats.seconds(session.development() ? "" : stage);
+  return stats.seconds(stage);
 }
 
-// A step's active seconds, and whether he died on it. Developer test chains have no persistent
-// stage identity and do not write real-stage stats.
+// A step's active seconds, and whether he died on it. Only catalogued stages have records.
 export function recordActiveStageStep(
   session: SaveSession,
   stage: string,
   active: () => number,
   died: boolean,
 ): void {
-  if (!session.development() && STAGES.has(stage)) {
+  if (STAGES.has(stage)) {
     const seconds = active();
     stats.addActiveTime(stage, seconds);
     if (seconds > 0 && died) {
@@ -246,32 +216,26 @@ export function recordActiveStageStep(
 }
 
 export function clearStageTime(session: SaveSession, stage: string): void {
-  if (session.development()) {
-    return;
-  }
   if (STAGES.has(stage)) {
     stats.clearStage(stage);
   }
 }
 
-export function flushStats(session: SaveSession): Promise<void> {
-  return session.development() ? Promise.resolve() : stats.flush();
+export function flushStats(): Promise<void> {
+  return stats.flush();
 }
 
-export function wholeRunStats(session: SaveSession): WholeRunStatsSummary {
-  return session.development() ? { activeSeconds: 0, deaths: 0 } : stats.wholeRun();
+export function wholeRunStats(): WholeRunStatsSummary {
+  return stats.wholeRun();
 }
 
-export function resetWholeRunStats(session: SaveSession): void {
-  if (session.development()) {
-    return;
-  }
+export function resetWholeRunStats(): void {
   stats.resetWholeRun();
   void stats.flush();
 }
 
 export function savedSkills(): readonly SkillId[] {
-  return developmentOwned ?? progress.skills;
+  return progress.skills;
 }
 
 export function activeSkill(session: SaveSession): SkillId | null {
@@ -279,11 +243,9 @@ export function activeSkill(session: SaveSession): SkillId | null {
   if (!session.development()) {
     return resolveActiveSkill(eligible, progress.activeSkill);
   }
-  const saved =
-    developmentSavedSelection === undefined ? progress.activeSkill : developmentSavedSelection;
   temporarySelection = resolveActiveSkill(
     eligible,
-    temporarySelection === undefined ? saved : temporarySelection,
+    temporarySelection === undefined ? progress.activeSkill : temporarySelection,
   );
   return temporarySelection;
 }
@@ -293,18 +255,19 @@ export function selectActiveSkill(session: SaveSession, skill: SkillId): boolean
   if (!eligible.includes(skill) || activeSkill(session) === skill) {
     return false;
   }
-  if (session.development()) {
+  if (!progress.skills.includes(skill)) {
     temporarySelection = skill;
+    if (skill === "speedy") {
+      stats.useSkill();
+    }
   } else {
+    temporarySelection = undefined;
     write(session, { ...progress, activeSkill: skill });
   }
   return true;
 }
 
 export function grantSkill(session: SaveSession, skill: SkillId): boolean {
-  if (session.development()) {
-    return false;
-  }
   const next = withGrantedSkill(progress, skill);
   if (next === progress) {
     return false;
@@ -350,8 +313,6 @@ export async function grantSavedSkills(context: {
         available,
         committed: (snapshot) => {
           progress = snapshot.progress;
-          developmentOwned = snapshot.progress.skills;
-          developmentSavedSelection = snapshot.progress.activeSkill;
           stats.acceptSavedSkillUse(snapshot.stats.wholeRun.skillUsed === true);
           earnedIds = snapshot.achievements.earned;
           notices.push(snapshot.achievements.unannounced.filter((id) => !deliveredNotices.has(id)));
@@ -390,21 +351,20 @@ export function savedRecentMiddleChunks(zone: string): readonly string[] {
 }
 
 // The middle chunk ids a fresh entry of a catalogued stage avoids: its destination's recent ones.
-// Developer sessions avoid none, so a fixed assembly seed always gives the same stage.
 export function recentStageChunks(session: SaveSession, stage: string): readonly string[] {
   const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
-  return session.development() || zone === undefined ? [] : recentMiddleChunks(progress, zone);
+  return zone === undefined ? [] : recentMiddleChunks(progress, zone);
 }
 
 // A fresh entry of a catalogued stage, after assembly, with its plan's middle chunk ids: the
-// stage's destination remembers them as its newest entry. Developer sessions write nothing.
+// stage's destination remembers them as its newest entry.
 export function recordStageChunks(
   session: SaveSession,
   stage: string,
   middle: readonly string[],
 ): void {
   const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
-  if (session.development() || zone === undefined || progress.at !== "map") {
+  if (zone === undefined || progress.at !== "map") {
     return;
   }
   write(session, withRecentMiddleChunks(zone, middle, progress));
@@ -432,10 +392,7 @@ export function saveZoneIntro(session: SaveSession, zone: string): void {
 
 // Map browsing updates an existing game; only actual stage entry starts a new one.
 export function saveStand(session: SaveSession, stand: string): void {
-  if (session.development()) {
-    return;
-  }
-  void flushStats(session);
+  void flushStats();
   if (progress.at !== "beginning") {
     writeStand(session, stand);
   }
@@ -470,11 +427,8 @@ export function saveCompleted(session: SaveSession, node: string): void {
 }
 
 function write(session: SaveSession, next: Progress): void {
-  if (session.development()) {
-    return;
-  }
   progress = next;
-  if (next.activeSkill === "speedy") {
+  if (activeSkill(session) === "speedy") {
     stats.useSkill();
   }
   progressWrites++;
@@ -486,9 +440,6 @@ function write(session: SaveSession, next: Progress): void {
 // Restart: progress goes back to the beginning, and the map opens on the first zone with nothing
 // completed. Only progress is cleared.
 export function clearProgress(session: SaveSession): void {
-  if (session.development()) {
-    return;
-  }
-  void flushStats(session);
+  void flushStats();
   write(session, BEGINNING);
 }

@@ -15,7 +15,7 @@ const save = vi.hoisted(() => ({
 }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
-vi.mock("../dev/mode", () => ({ isDevelopmentSession: () => false }));
+vi.mock("../dev/mode", () => ({ isDevelopmentSession: () => true }));
 vi.mock("./save", () => save);
 vi.mock("../progress/save/runSummary", () => ({ wholeRunSummary: () => ({}) }));
 
@@ -62,7 +62,7 @@ it("finishes the exit fade before returning left directly to Map without complet
   expect(route.start).toHaveBeenCalledOnce();
 });
 
-it("retains completion and the departure summary when the final stage exits right", () => {
+it("retains completion and the departure summary with run-only cheats active", () => {
   const destination = ZONE_MAP.destinations[0]!;
   const stage = destination.stages.at(-1)!;
   const route = { launch: vi.fn(), pause: vi.fn(), start: vi.fn() };

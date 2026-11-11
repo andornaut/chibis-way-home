@@ -90,19 +90,19 @@ export function nextAchievementNotice(blocked: () => boolean): AchievementId | u
   return pageSave.nextAchievementNotice(SESSION, blocked);
 }
 export function achievementCard(): AchievementEntry[] {
-  return pageSave.achievementCard(SESSION);
+  return pageSave.achievementCard();
 }
 export function clearStageTime(stage: string): void {
   pageSave.clearStageTime(SESSION, stage);
 }
 export function flushStats(): Promise<void> {
-  return pageSave.flushStats(SESSION);
+  return pageSave.flushStats();
 }
 export function wholeRunStats(): WholeRunStatsSummary {
-  return pageSave.wholeRunStats(SESSION);
+  return pageSave.wholeRunStats();
 }
 export function resetWholeRunStats(): void {
-  pageSave.resetWholeRunStats(SESSION);
+  pageSave.resetWholeRunStats();
 }
 export function savedSkills(): readonly SkillId[] {
   return pageSave.savedSkills();

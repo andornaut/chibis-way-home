@@ -187,10 +187,15 @@ describe("tracking achievements through the page save", () => {
     expect(earned(values)).toEqual(["clear-apartment", "home-without-skills"]);
   });
 
-  it("writes no achievements in a developer session", async () => {
+  it("persists genuine achievements with run-only cheats active", async () => {
     const values = storage();
     const window = new EventTarget() as EventTarget & { location: URL };
     window.location = new URL("https://example.test/play/?devSession=1");
+    Object.assign(window, {
+      document: { fullscreenElement: null },
+      matchMedia: () => ({ matches: false }),
+      navigator: {},
+    });
     vi.stubGlobal("window", window);
     const save = await import("./save");
     await save.loadProgress();
@@ -210,6 +215,6 @@ describe("tracking achievements through the page save", () => {
       card: save.achievementCard().some(({ earned: held }) => held),
       notice: save.nextAchievementNotice(() => false),
       stored: values.has(ACHIEVEMENTS_KEY),
-    }).toEqual({ card: false, notice: undefined, stored: false });
+    }).toEqual({ card: true, notice: expect.any(String), stored: true });
   });
 });

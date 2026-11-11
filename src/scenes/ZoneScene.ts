@@ -1385,7 +1385,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // debug and trial runs keep their existing replay route.
   private leave(): void {
     const { turnedBack } = this.zone;
-    if (this.mapNode !== undefined && !isDevelopmentSession()) {
+    if (this.mapNode !== undefined) {
       if (turnedBack) {
         this.clearControls();
         void flushStats();

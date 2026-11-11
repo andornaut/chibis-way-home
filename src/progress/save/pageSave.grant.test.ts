@@ -11,7 +11,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.resetModules();
 });
-it("grants stored ownership during practice without lifting its progress guard", async () => {
+it("grants stored ownership independently while run-only cheats preserve normal saves", async () => {
   const profile = {
     ...BEGINNING,
     activeSkill: "doubleJump" as const,
@@ -41,7 +41,7 @@ it("grants stored ownership during practice without lifting its progress guard",
   const save = await import("../../scenes/save");
   const page = await import("./pageSave");
   await save.loadProgress();
-  expect(save.savedProgress().at).toBe("beginning");
+  expect(save.savedProgress().at).toBe("map");
   expect(await page.grantSavedSkills({ available: () => true })).toMatchObject({ status: "saved" });
   expect(save.savedProgress()).toMatchObject({
     ...profile,
@@ -49,17 +49,17 @@ it("grants stored ownership during practice without lifting its progress guard",
   });
   expect(new Set(save.savedSkills())).toEqual(new Set(SKILL_IDS));
   expect(save.activeSkill()).toBe("doubleJump");
-  const stored = [...values];
-  const count = setItem.mock.calls.length;
   expect(save.grantSkill("dash")).toBe(false);
-  save.clearProgress();
-  save.saveCompleted(ZONE_MAP.start);
   save.beginStageRun(ZONE_MAP.start);
+  save.saveCompleted(ZONE_MAP.start);
   await save.flushStats();
+  await save.loadProgress();
+  expect(save.savedMap().completed).toContain(ZONE_MAP.start);
   expect(save.selectActiveSkill("speedy")).toBe(true);
+  await save.loadProgress();
   expect(save.activeSkill()).toBe("speedy");
-  expect([...values]).toEqual(stored);
-  expect(setItem).toHaveBeenCalledTimes(count);
+  expect(JSON.parse(values.get(PROGRESS_KEYS.save)!).activeSkill).toBe("speedy");
+  expect(JSON.parse(values.get(PROGRESS_KEYS.save)!).skills).toHaveLength(3);
 });
 
 it("blocks explicit saved grants while a normal progress write is outstanding", async () => {

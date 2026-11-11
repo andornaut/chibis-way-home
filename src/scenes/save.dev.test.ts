@@ -8,46 +8,43 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.resetModules();
 });
-it("keeps browser progress normal until developer activation, then blocks mutation and lifecycle writes", async () => {
+it("persists catalogue progress, time and deaths with run-only cheats active", async () => {
   const values = new Map<string, string>();
-  const write = vi.fn((key: string, value: string) => values.set(key, value));
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => values.get(key) ?? null,
-    setItem: write,
+    setItem: (key: string, value: string) => values.set(key, value),
   });
-  const window = new EventTarget() as EventTarget & { location: URL };
-  window.location = new URL("https://example.test/play/");
+  const window = Object.assign(new EventTarget(), {
+    document: { fullscreenElement: null },
+    location: new URL("https://example.test/play/?devSession=1&invulnerable=1&skillDoubleJump=1"),
+    matchMedia: () => ({ matches: false }),
+    navigator: {},
+  });
   vi.stubGlobal("window", window);
-  const document = Object.assign(new EventTarget(), { visibilityState: "hidden" });
-  vi.stubGlobal("document", document);
+  vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "hidden" }));
   const save = await import("./save");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
+  save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
   save.beginStageRun(stage);
-  await save.flushStats();
-  expect(save.savedProgress().at).toBe("map");
-  const before = JSON.stringify(save.savedProgress());
-  const writes = write.mock.calls.length;
-  window.location.search = "?devSession=1";
-  save.beginZoneVisit("woodland");
-  save.beginStageRun(stage);
-  save.retryStageRun(stage);
-  save.recordActiveStageStep(stage, 1, {} as ZoneState, {} as ZoneState);
-  save.completeStageRun(stage);
-  save.clearStageTime(stage);
+  save.recordActiveStageStep(
+    stage,
+    2,
+    { steps: 0 } as ZoneState,
+    { death: {}, steps: 1 } as ZoneState,
+  );
+  expect(save.grantSkill("dash")).toBe(true);
   save.saveCompleted(stage);
-  save.saveStand(stage);
-  save.saveZoneIntro("woodland");
-  expect(save.grantSkill("speedy")).toBe(false);
-  save.clearProgress();
-  save.resetWholeRunStats();
-  expect(save.wholeRunStats()).toEqual({ activeSeconds: 0, deaths: 0 });
   window.dispatchEvent(new Event("pagehide"));
   document.dispatchEvent(new Event("visibilitychange"));
   await save.flushStats();
   await save.loadProgress();
-  expect(write).toHaveBeenCalledTimes(writes);
-  expect(JSON.stringify(save.savedProgress())).toBe(before);
+  expect(save.savedMap().completed).toContain(stage);
+  expect(save.savedSkills()).toEqual(["dash"]);
+  expect(save.wholeRunStats()).toEqual({ activeSeconds: 2, deaths: 1 });
+  expect(save.activeStageTime(stage)).toBe(2);
+  expect(JSON.parse(values.get("chibis-way-home.save")!).completed).toContain(stage);
+  expect(JSON.parse(values.get("chibis-way-home.stats")!).wholeRun.activeSeconds).toBe(2);
 });
 it.each([
   {
@@ -77,24 +74,22 @@ it.each([
     name: "old",
     raw: { activeSkill: null, at: "beginning", openingSeen: true, version: PROGRESS_VERSION - 1 },
   },
-])(
-  "reads only validated $name skill ownership for direct Dev entry without restoring progress or writing",
-  async ({ expected, raw }) => {
-    vi.stubGlobal("window", { location: new URL("https://example.test/play/?devSession=1") });
-    const read = vi.fn(() => JSON.stringify(raw)),
-      write = vi.fn();
-    vi.stubGlobal("localStorage", { getItem: read, setItem: write });
-    const save = await import("./save");
-    await save.loadProgress();
-    expect(read).toHaveBeenCalledExactlyOnceWith("chibis-way-home.save");
-    expect(save.savedSkills()).toEqual(expected);
-    expect(save.savedProgress()).toEqual({
-      activeSkill: null,
-      at: "beginning",
-      openingSeen: false,
-      skills: [],
-    });
-    expect(save.grantSkill("speedy")).toBe(false);
-    expect(write).not.toHaveBeenCalled();
-  },
-);
+])("loads ordinary validated $name progress for direct cheat entry", async ({ expected, raw }) => {
+  vi.stubGlobal("window", {
+    document: { fullscreenElement: null },
+    location: new URL("https://example.test/play/?devSession=1"),
+    matchMedia: () => ({ matches: false }),
+    navigator: {},
+  });
+  const values = new Map<string, string>([["chibis-way-home.save", JSON.stringify(raw)]]);
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  const save = await import("./save");
+  await save.loadProgress();
+  expect(save.savedSkills()).toEqual(expected);
+  expect(save.savedProgress().at).toBe("beginning");
+  expect(save.savedProgress().activeSkill).toBe(expected[0] ?? null);
+  expect(save.grantSkill("speedy")).toBe(true);
+});

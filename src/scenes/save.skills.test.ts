@@ -64,8 +64,12 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
     skills: ["dash"],
     version: PROGRESS_VERSION,
   });
-  const write = vi.fn();
-  vi.stubGlobal("localStorage", { getItem: () => raw, setItem: write });
+  const values = new Map<string, string>([["chibis-way-home.save", raw]]);
+  const write = vi.fn((key: string, value: string) => values.set(key, value));
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: write,
+  });
   const url = new URL("https://example.test/play/?devSession=1&skillSpeedy=1");
   const host = {
     document: { fullscreenElement: null },
@@ -89,8 +93,13 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
   changeSkillOverride(host as unknown as Window, false, "speedy");
   expect(save.activeSkill()).toBe("dash");
   expect(save.selectActiveSkill("dash")).toBe(false);
-  expect(save.savedProgress().activeSkill).toBeNull();
-  expect(write).not.toHaveBeenCalled();
+  expect(save.savedProgress().activeSkill).toBe("dash");
+  expect(values.get("chibis-way-home.save")).toBe(raw);
+  expect(save.grantSkill("doubleJump")).toBe(true);
+  expect(save.selectActiveSkill("doubleJump")).toBe(true);
+  await save.loadProgress();
+  expect(save.savedProgress().activeSkill).toBe("doubleJump");
+  expect(JSON.parse(values.get("chibis-way-home.save")!).activeSkill).toBe("doubleJump");
 });
 
 it("restores every permanent grant and the sole selection after a fresh page module loads", async () => {
