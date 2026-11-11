@@ -3,6 +3,7 @@ import type { BehaviourState } from "./behaviour";
 import { selectSupportedFlight } from "./behaviourFlightSelection";
 import type { BehaviourPerception } from "./behaviourPerception";
 import type { BehaviourWorld } from "./behaviourReach";
+import { insideScreen, type ScreenBand, screenBand, screenReach } from "./behaviourScreen";
 import {
   type FlyLandingState,
   landingSupport,
@@ -21,11 +22,25 @@ interface BehaviourSupport {
   readonly world: BehaviourWorld | undefined;
 }
 
+// Where a fresh varied flight may land: inside Chibi's screen, or from outside it no farther out,
+// except an unengaged wander hop outside it, which keeps only its range.
+function flightScreen(
+  object: ObjectLayout,
+  band: ScreenBand | undefined,
+  state: BehaviourState,
+  at: Point,
+): ScreenBand | undefined {
+  const outside = band !== undefined && !insideScreen(band, at.x);
+  const wandering =
+    state.stateKey === object.behaviour?.wander?.hop && state.pursuit?.phase !== "engaged";
+  return outside && wandering ? undefined : screenReach(band, at.x);
+}
+
 // Evaluates support for a supported motion at a slice start: a varied perch selection, the
 // nearest proven landing, or the carried support of a dwell, which restarts when it is lost
 // or changes.
 export function prepareSupport(
-  { world }: BehaviourPerception,
+  { target, tuning, world }: BehaviourPerception,
   object: ObjectLayout,
   motion: BehaviourMotion,
   time: number,
@@ -47,6 +62,7 @@ export function prepareSupport(
       supportWorld &&
       selectSupportedFlight(
         supportWorld,
+        flightScreen(object, screenBand(tuning, target, object), next, current),
         object,
         motion,
         next.facing,

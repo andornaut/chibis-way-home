@@ -2,6 +2,7 @@ import { EDGE } from "../core";
 import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types";
 import { supportedDestinations } from "./behaviourDestinations";
 import { type BehaviourWorld, flightAxis } from "./behaviourReach";
+import type { ScreenBand } from "./behaviourScreen";
 import { supportedLanding } from "./flyLanding";
 
 type Motion = Extract<BehaviourMotion, { to: "support" }>;
@@ -117,8 +118,11 @@ function selectedFlightRoute(
   return route;
 }
 
+// A fresh selection lands within `screen`, the body left x range Chibi's screen allows at
+// decision time; the chosen target is kept for the leg.
 export function selectSupportedFlight(
   world: BehaviourWorld,
+  screen: ScreenBand | undefined,
   object: ObjectLayout,
   motion: Motion,
   facing: -1 | 1,
@@ -161,6 +165,7 @@ export function selectSupportedFlight(
       distance: policy.distance,
       ...(policy.home !== undefined && { home: policy.home }),
       minMovement: policy.minDistance,
+      ...(screen && { screen }),
     },
     object,
     world,

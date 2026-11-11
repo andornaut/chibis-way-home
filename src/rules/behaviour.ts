@@ -66,6 +66,7 @@ import {
   openingScorerState,
   scorerAttacked,
 } from "./behaviourScorer";
+import { insideScreen, screenBand, screenClamp } from "./behaviourScreen";
 import { prepareSupport } from "./behaviourSupport";
 import {
   contactBox,
@@ -145,6 +146,8 @@ export interface BehaviourState extends BehaviourAttackState {
 }
 
 export interface BehaviourWanderState {
+  // Where the last walk began.
+  readonly from?: number;
   readonly goal?: number;
   readonly heading?: -1 | 1;
   readonly holdSeconds: number;
@@ -202,6 +205,9 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         ) ||
           !validRange(plan.pursuit.pace.pauseSeconds))) ||
       (plan.pursuit.rearmSeconds !== undefined && !valid(plan.pursuit.rearmSeconds)) ||
+      (plan.pursuit.screen &&
+        (!valid(plan.pursuit.screen.margin) ||
+          !(plan.pursuit.screen.width > 2 * plan.pursuit.screen.margin))) ||
       (plan.pursuit.relief &&
         (!plan.scorer ||
           !validRange(plan.pursuit.relief.pause.afterSeconds) ||
@@ -740,6 +746,12 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
         distance: plan.pursuit.distance * tile,
         ...(plan.pursuit.escapeDistance !== undefined && {
           escapeDistance: plan.pursuit.escapeDistance * tile,
+        }),
+        ...(plan.pursuit.screen && {
+          screen: {
+            margin: plan.pursuit.screen.margin * tile,
+            width: plan.pursuit.screen.width * tile,
+          },
         }),
         ...(plan.pursuit.pace && {
           pace: {
@@ -1712,7 +1724,8 @@ function chasePauseHold(
 }
 
 // After any ended chase, a settled ground boss walks at chase speed toward its encounter position,
-// stopping at walls and support edges, then resumes its initial behaviour anchored there.
+// stopping at walls, support edges and the edge of Chibi's screen (or, outside it, where home lies
+// farther from him), then resumes its initial behaviour anchored there.
 function homeWalk(
   context: BehaviourRunContext,
   current: Point,
@@ -1731,7 +1744,13 @@ function homeWalk(
     return { kind: "done", state };
   }
   const remaining = seconds - time;
-  const gap = object.origin.x - current.x;
+  // Toward the encounter position, but never out of Chibi's screen or farther from it.
+  const home = screenClamp(
+    screenBand(perception.tuning, perception.target, object),
+    current.x,
+    object.origin.x,
+  );
+  const gap = home - current.x;
   const heading = gap < 0 ? -1 : 1;
   const x =
     motion?.kind !== "pursue" || !groundBoss(object)
@@ -1833,10 +1852,11 @@ function wanderEnd(object: ObjectLayout, world: BehaviourWorld, current: Point, 
 
 // The plan's wander in a wander wait, outside any rearm cooldown. A move starts when the hold
 // ends: a ground boss walks a seeded distance to a seeded side, the other side when that one
-// leaves the range around its encounter position or its horizontal track, or gives less than
-// half the shortest walk, stopping at walls and support edges; a flyer enters its hop state. The
-// hold after a move lasts at least its seeded hold, and the rest of its seeded interval, facing
-// the move's direction.
+// leaves the range around its encounter position, its horizontal track or Chibi's screen, or
+// ends within the shortest walk of here, stopping at walls and support edges; a walk that turns
+// back is at least as long as the last walk. A flyer enters its hop state. The hold after a move
+// lasts at least its seeded hold, and the rest of its seeded interval, facing the move's
+// direction.
 // Without an object-local decision context the boss holds.
 function wanderStep(
   context: BehaviourRunContext,
@@ -1908,8 +1928,17 @@ function wanderStep(
     // inside it.
     const track = node.track ?? plan;
     const extent = track.axis === "x" ? track.distance : 0;
-    const low = object.origin.x + Math.max(-wander.range, Math.min(0, extent));
-    const high = object.origin.x + Math.min(wander.range, Math.max(0, extent));
+    // Inside Chibi's screen the walk also stays inside it; outside, only the range bounds it.
+    const band = screenBand(perception.tuning, perception.target, object);
+    const screen = band && insideScreen(band, current.x) ? band : undefined;
+    const low = Math.max(
+      object.origin.x + Math.max(-wander.range, Math.min(0, extent)),
+      screen?.low ?? -Infinity,
+    );
+    const high = Math.min(
+      object.origin.x + Math.min(wander.range, Math.max(0, extent)),
+      screen?.high ?? Infinity,
+    );
     const reach = (heading: -1 | 1) =>
       wanderEnd(
         object,
@@ -1917,24 +1946,36 @@ function wanderStep(
         current,
         Math.min(high, Math.max(low, current.x + heading * distance)),
       );
-    const enough = walk.distance.min / 2;
-    const first = reach(side);
-    const chosen =
-      Math.abs(first - current.x) >= enough
-        ? { goal: first, heading: side }
-        : (() => {
-            const other = reach(-side as -1 | 1);
-            return Math.abs(other - current.x) >= enough
-              ? { goal: other, heading: -side as -1 | 1 }
-              : undefined;
-          })();
+    // A walk covers at least the shortest walk. It keeps the last walk's heading when that walk
+    // allows, and a walk that turns back is at least as long as the last walk, so consecutive
+    // walks never cancel out.
+    const previous = record.from;
+    const last = previous === undefined ? 0 : Math.abs(current.x - previous);
+    const turns = (heading: -1 | 1) =>
+      previous !== undefined && Math.sign(current.x - previous) === -heading;
+    const walks =
+      low > high + EDGE
+        ? []
+        : ([side, -side as -1 | 1] as const).map((heading) => ({
+            goal: turns(heading)
+              ? wanderEnd(
+                  object,
+                  world,
+                  current,
+                  Math.min(high, Math.max(low, current.x + heading * Math.max(distance, last))),
+                )
+              : reach(heading),
+            heading,
+          }));
+    const chosen = walks.find(({ goal }) => Math.abs(goal - current.x) >= walk.distance.min - EDGE);
     record = chosen
       ? {
           ...chosen,
+          from: current.x,
           holdSeconds: Math.max(hold, every - Math.abs(chosen.goal - current.x) / walk.speed),
           moves,
         }
-      : { holdSeconds: every, moves };
+      : { ...(previous !== undefined && { from: previous }), holdSeconds: every, moves };
   }
   if (record.goal === undefined) {
     const held: BehaviourState = {
@@ -1960,7 +2001,9 @@ function wanderStep(
   const walked: BehaviourState = {
     ...state,
     facing: heading,
-    wander: arrived ? { heading, holdSeconds: record.holdSeconds, moves: record.moves } : record,
+    wander: arrived
+      ? { from: record.from!, heading, holdSeconds: record.holdSeconds, moves: record.moves }
+      : record,
   };
   return {
     kind: "hold",

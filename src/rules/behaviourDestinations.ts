@@ -6,8 +6,14 @@ import type { BehaviourWorld } from "./behaviourReach";
 
 export function supportedDestinations(
   supported: (target: Point) => boolean,
-  // home: a horizontal leash around the placed origin tighter than the pursuit distance.
-  config: { readonly distance: number; readonly home?: number; readonly minMovement: number },
+  // home: a horizontal leash around the placed origin tighter than the pursuit distance; screen:
+  // the body left x range a destination must lie in.
+  config: {
+    readonly distance: number;
+    readonly home?: number;
+    readonly minMovement: number;
+    readonly screen?: { readonly high: number; readonly low: number };
+  },
   object: ObjectLayout,
   world: BehaviourWorld,
   facing: -1 | 1,
@@ -33,12 +39,19 @@ export function supportedDestinations(
     }
     const radius =
       mode === "fly" ? config.distance : Math.sqrt(Math.max(0, config.distance ** 2 - dy ** 2));
-    const low = Math.max(support.x, bounds.x, object.origin.x - leash, at.x - radius);
+    const low = Math.max(
+      support.x,
+      bounds.x,
+      object.origin.x - leash,
+      at.x - radius,
+      config.screen?.low ?? -Infinity,
+    );
     const high = Math.min(
       support.x + support.width - object.width,
       bounds.x + bounds.width - object.width,
       object.origin.x + leash,
       at.x + radius,
+      config.screen?.high ?? Infinity,
     );
     if (low > high) {
       continue;

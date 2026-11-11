@@ -724,8 +724,10 @@ describe("varied supported flight destination", () => {
   it("replays object-local choices and flies above the same floor to a different landing point", () => {
     const object = actor(),
       physical = world();
-    const first = selectSupportedFlight(physical, object, motion, 1, 0, object.origin);
-    expect(first).toEqual(selectSupportedFlight(physical, object, motion, 1, 0, object.origin));
+    const first = selectSupportedFlight(physical, undefined, object, motion, 1, 0, object.origin);
+    expect(first).toEqual(
+      selectSupportedFlight(physical, undefined, object, motion, 1, 0, object.origin),
+    );
     expect(first.state.status).toBe("moving");
     expect(Math.abs(first.state.target!.x - object.origin.x)).toBeGreaterThanOrEqual(
       motion.selection.minDistance,
@@ -737,6 +739,7 @@ describe("varied supported flight destination", () => {
     expect(supportedLanding(object, physical, first.points![2]!)).toBe(true);
     const moving = selectSupportedFlight(
       physical,
+      undefined,
       object,
       motion,
       1,
@@ -748,6 +751,7 @@ describe("varied supported flight destination", () => {
     expect(moving.state.target).toEqual(first.state.target);
     const arrived = selectSupportedFlight(
       physical,
+      undefined,
       object,
       motion,
       1,
@@ -757,8 +761,15 @@ describe("varied supported flight destination", () => {
     );
     expect(arrived.state.status).toBe("supported");
     expect(
-      selectSupportedFlight(physical, object, motion, 1, arrived.decision, first.state.target!)
-        .state.target,
+      selectSupportedFlight(
+        physical,
+        undefined,
+        object,
+        motion,
+        1,
+        arrived.decision,
+        first.state.target!,
+      ).state.target,
     ).not.toEqual(first.state.target);
   });
   it("retains a blocked decision until actual geometry changes instead of rerolling each tick", () => {
@@ -766,11 +777,12 @@ describe("varied supported flight destination", () => {
       open = world(),
       roof = { height: 10, width: 1000, x: 0, y: 450 };
     const blocked = { ...open, solids: [floor, roof] };
-    const first = selectSupportedFlight(blocked, object, motion, 1, 0, object.origin);
+    const first = selectSupportedFlight(blocked, undefined, object, motion, 1, 0, object.origin);
     expect(first.state.status).toBe("pending");
     expect(first.state.target).toBeUndefined();
     const repeat = selectSupportedFlight(
       blocked,
+      undefined,
       object,
       motion,
       1,
@@ -782,6 +794,7 @@ describe("varied supported flight destination", () => {
     expect(repeat.state).toBe(first.state);
     const repaired = selectSupportedFlight(
       open,
+      undefined,
       object,
       motion,
       1,
@@ -795,13 +808,14 @@ describe("varied supported flight destination", () => {
   it("rejects lethal landing surfaces and revalidates a selected target before every physical leg", () => {
     const object = actor(),
       physical = world();
-    const first = selectSupportedFlight(physical, object, motion, 1, 0, object.origin);
+    const first = selectSupportedFlight(physical, undefined, object, motion, 1, 0, object.origin);
     const red = {
       ...physical,
       hazards: [{ owner: { ...object }, rect: { height: 20, width: 1000, x: 0, y: 480 } }],
     };
     const invalid = selectSupportedFlight(
       red,
+      undefined,
       object,
       motion,
       1,
@@ -811,8 +825,8 @@ describe("varied supported flight destination", () => {
     );
     expect(invalid.state.status).toBe("pending");
     expect(invalid.points).toBeUndefined();
-    expect(selectSupportedFlight(red, object, motion, 1, 0, object.origin).state.status).toBe(
-      "pending",
-    );
+    expect(
+      selectSupportedFlight(red, undefined, object, motion, 1, 0, object.origin).state.status,
+    ).toBe("pending");
   });
 });
