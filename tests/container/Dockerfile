@@ -1,7 +1,9 @@
 ARG NODE_VERSION=24.21.0
-FROM node:${NODE_VERSION}
+FROM node:${NODE_VERSION} AS tools
 
 COPY --from=koalaman/shellcheck:v0.11.0 /bin/shellcheck /usr/local/bin/shellcheck
+
+FROM tools
 
 ENV HUSKY=0
 WORKDIR /opt/check

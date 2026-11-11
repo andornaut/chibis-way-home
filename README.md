@@ -18,16 +18,16 @@ The [gameplay design](gameplay/design.md) holds the rules, and the [gameplay REA
 
 ## Developing
 
-Native development commands use Node 24.21.0 from `.nvmrc` and dependencies installed with `npm ci`. npm scripts run their native tools directly on the host. Make wraps isolated checks in the custom dependency image used by CI.
+Native development commands use Node 24.21.0 from `.nvmrc`, dependencies installed with `npm ci` and ShellCheck 0.11.0 on `PATH`. npm scripts run their native tools directly on the host. Make wraps isolated checks in the custom dependency image used by CI.
 
 | Command                                     | Does                                                                                                                                                                 |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `make check`                                | Type-check, lint, run Vitest with four workers, build, verify certified lists with the 20-second sample and check art reproduction without exporting generated files |
-| `make lint`                                 | Run ShellCheck 0.11.0 and the native lint checks in the custom image                                                                                                 |
+| `make lint`                                 | Run `npm run lint` in the custom image                                                                                                                               |
 | `make test`                                 | Type-check, run Vitest with four workers and verify certified lists with the 20-second sample in the custom image                                                    |
 | `make build`                                | Run Vite and art reproduction checks in the custom image                                                                                                             |
 | `npm run check`                             | Type-check with TypeScript                                                                                                                                           |
-| `npm run lint`                              | Check Prettier, ESLint and Markdownlint                                                                                                                              |
+| `npm run lint`                              | Check ShellCheck 0.11.0, Prettier, ESLint and Markdownlint                                                                                                           |
 | `npm test -- --maxWorkers=4`                | Run Vitest with four workers                                                                                                                                         |
 | `npm run build`                             | Build with Vite                                                                                                                                                      |
 | `npm run pairs -- verify --sample-ms 20000` | Verify certified chunk lists with the 20-second sample                                                                                                               |
