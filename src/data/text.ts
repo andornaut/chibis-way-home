@@ -60,31 +60,31 @@ export const TEXT: GameText = {
         title: "All gift rooms",
       },
       "home-without-skills": {
-        description: "Get home without dashing, double jumping or selecting Speedy.",
+        description: "Get home without using Dash, Double jump or Speedy.",
         title: "Just a bird",
       },
       "no-death-apartment": {
-        description: "Clear every Apartment building stage on the first try, in one go.",
+        description: "Clear every Apartment building stage first try, in one go.",
         title: "Spotless apartment",
       },
       "no-death-blue-cityscape": {
-        description: "Clear every Blue cityscape stage on the first try, in one go.",
+        description: "Clear every Blue cityscape stage first try, in one go.",
         title: "Spotless cityscape",
       },
       "no-death-countryside": {
-        description: "Clear every Countryside stage on the first try, in one go.",
+        description: "Clear every Countryside stage first try, in one go.",
         title: "Spotless countryside",
       },
       "no-death-home-city": {
-        description: "Clear every Home city stage on the first try, in one go.",
+        description: "Clear every Home city stage first try, in one go.",
         title: "Spotless home city",
       },
       "no-death-industrial": {
-        description: "Clear every Industrial outskirts stage on the first try, in one go.",
+        description: "Clear every Industrial outskirts stage first try, in one go.",
         title: "Spotless outskirts",
       },
       "no-death-woodland": {
-        description: "Clear every Woodland stage on the first try, in one go.",
+        description: "Clear every Woodland stage first try, in one go.",
         title: "Spotless woodland",
       },
     },
