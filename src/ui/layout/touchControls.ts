@@ -71,9 +71,13 @@ export const TOUCH_PRESS_AREAS: readonly PressArea<TouchControl>[] = (
 // Art's move hint, a drawing with no press area of its own (movement is the floating drag
 // everywhere off the buttons): a ring in a frame the buttons' size, centred at rest on centre,
 // and a knob that moves from the ring's centre at most knobReach pixels left or right the way
-// the drag goes. At rest it sits level with Jump, as far in from the view's left as Use is from
-// its right.
-const MOVE_HINT_CENTRE: Point = { x: SCREEN.width - 1 - USE_CENTRE.x, y: JUMP_CENTRE.y };
+// the drag goes. At rest its ring sits MOVE_HINT_INSET in from the view's left and the same
+// distance above the canvas's bottom.
+export const MOVE_HINT_INSET = 12;
+const MOVE_HINT_CENTRE: Point = {
+  x: MOVE_HINT_INSET + DRAWN_HALF,
+  y: SCREEN.height - 1 - MOVE_HINT_INSET - DRAWN_HALF,
+};
 export const MOVE_HINT = {
   art: buttonArt(MOVE_HINT_CENTRE),
   centre: MOVE_HINT_CENTRE,
