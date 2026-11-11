@@ -1,10 +1,10 @@
+import { CARD_CONTENT, CONTROL_EDGE, CONTROL_FRAME_INSET, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { GameText, Point, Rect } from "../../data/types";
-import { TEXT_BUTTON } from "./buttonLabel";
-import { CARD_CONTENT, cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard";
+import { PAUSE_CHROME_FRAME } from "../chrome/pauseChrome";
+import { cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard";
 import { hitAround, hitMargin } from "./hitAreas";
 import { labelledButton } from "./labelledButton";
-import { CONTROL_EDGE } from "./playView";
 
 // Pause actions fill the panel body with equal side padding and standard action gaps.
 export function pauseCard(fonts: CardFonts, words: GameText["pause"]) {
@@ -50,9 +50,15 @@ export function pauseCard(fonts: CardFonts, words: GameText["pause"]) {
 }
 
 // Art's pause button in the game's top-left corner: where its frame is drawn, and the area a
-// press must land in, its frame grown by hitAreas.ts's rule. Art draws the disc 1px inside its
-// frame, so the disc's edge sits CONTROL_EDGE in from the view's top and left.
-const PAUSE_ART: Rect = { height: 35, width: 35, x: CONTROL_EDGE - 1, y: CONTROL_EDGE - 1 };
+// press must land in, its frame grown by hitAreas.ts's rule. Art draws the disc
+// CONTROL_FRAME_INSET inside its frame, so the disc's edge sits CONTROL_EDGE in from the view's
+// top and left.
+const PAUSE_ART: Rect = {
+  height: PAUSE_CHROME_FRAME,
+  width: PAUSE_CHROME_FRAME,
+  x: CONTROL_EDGE - CONTROL_FRAME_INSET,
+  y: CONTROL_EDGE - CONTROL_FRAME_INSET,
+};
 
 export const PAUSE_BUTTON = {
   art: PAUSE_ART,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { TOUCH_CIRCLE_RADIUS } from "../../data/layout";
 import { TOUCH } from "../../data/touch";
-import { TOUCH_CIRCLE_RADIUS } from "../layout/hitAreas";
 import { MOVE_HINT, TOUCH_CONTROLS } from "../layout/touchControls";
 import {
   combineIntents,

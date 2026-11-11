@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { HIT_RULE } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Rect } from "../../data/types";
-import { HIT_RULE, hitAround, hitMargin, type PressArea, pressedArea } from "./hitAreas";
+import { hitAround, hitMargin, type PressArea, pressedArea } from "./hitAreas";
 import { PAUSE_BUTTON } from "./pauseCard";
 import { startScreenLayout } from "./startScreen";
 import { TOUCH_CONTROLS } from "./touchControls";

@@ -4,15 +4,14 @@ import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
+import { CARD_CONTENT, CONTROL_EDGE, HIT_RULE, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { SkillId } from "../../data/types";
 import { SKILL_IDS } from "../../progress";
-import { TEXT_BUTTON } from "./buttonLabel";
-import { CARD_CONTENT, cardTextSize } from "./contentCard";
-import { HIT_RULE } from "./hitAreas";
+import { cardTextSize } from "./contentCard";
 import { PAUSE_BUTTON } from "./pauseCard";
-import { CONTROL_EDGE, playView, shifted, topShift } from "./playView";
+import { playView, shifted, topShift } from "./playView";
 import { ROOM_SCREEN } from "./roomScreen";
 import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails";
 import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud";

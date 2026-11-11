@@ -1,18 +1,12 @@
+import { CARD_CONTENT, FOCUS_RING, HIT_RULE, SETTINGS_CARD } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { GameText, Point, Rect } from "../../data/types";
-import {
-  CARD_CONTENT,
-  cardActionsSize,
-  type CardFonts,
-  cardTextSize,
-  contentCardLayout,
-} from "./contentCard";
-import { HIT_RULE } from "./hitAreas";
+import { cardActionsSize, type CardFonts, cardTextSize, contentCardLayout } from "./contentCard";
 import { labelledButton } from "./labelledButton";
 import { wrappedCardText } from "./runStats";
 
-const ICON = 16;
-const SWITCH = { height: 16, width: 32 };
+const ICON = SETTINGS_CARD.icon;
+const SWITCH = SETTINGS_CARD.switch;
 // Each row is its own press target, already the minimum target height, so it gains no margin and
 // the first row starts a gap below the header: the taller of the title line and the close
 // target's clearance.
@@ -95,7 +89,7 @@ export function settingsCard(
 }
 
 // Install steps wrap within this width beside their glyph, and the card grows to fit them.
-const STEPS_TEXT_WIDTH = 320;
+const STEPS_TEXT_WIDTH = SETTINGS_CARD.stepsTextWidth;
 
 // The install steps card: the kind's title, and its steps beside their glyph or, for a kind
 // without one, across the glyph's width as well.
@@ -139,7 +133,7 @@ export function stepsCard(fonts: CardFonts, hasGlyph: boolean, title: string, st
 
 // Art's keyboard focus ring, a 9-slice drawn this far outside the focused row, button or close X
 // on every side.
-const FOCUS_OUTSET = 4;
+const FOCUS_OUTSET = FOCUS_RING.outset;
 
 export function focusRingAround({ height, width, x, y }: Rect): Rect {
   return {

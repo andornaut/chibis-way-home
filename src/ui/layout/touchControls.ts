@@ -1,13 +1,20 @@
+import {
+  CONTROL_BOTTOM,
+  CONTROL_FRAME_INSET,
+  CONTROL_SIDE,
+  TOUCH_CIRCLE_RADIUS,
+  TOUCH_LAYOUT,
+} from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect } from "../../data/types";
-import { type PressArea, type PressShape, TOUCH_CIRCLE_RADIUS } from "./hitAreas";
-import { CONTROL_BOTTOM, CONTROL_SIDE } from "./playView";
+import { TOUCH_CHROME_FRAME } from "../chrome/touchChrome";
+import type { PressArea, PressShape } from "./hitAreas";
 
 export type TouchControl = "jump" | "use";
 
-// Art's touch buttons are discs drawn in frames this many base pixels square, each frame's
-// centre pixel on its button's centre.
-const BUTTON_FRAME = 75;
+// Art's touch buttons are discs drawn in TOUCH_CHROME_FRAME squares, each frame's centre pixel
+// on its button's centre.
+const BUTTON_FRAME = TOUCH_CHROME_FRAME;
 
 // Where a button is drawn: its frame, its centre pixel on centre.
 function buttonArt(centre: Point): Rect {
@@ -15,20 +22,19 @@ function buttonArt(centre: Point): Rect {
   return { height: BUTTON_FRAME, width: BUTTON_FRAME, x: centre.x - half, y: centre.y - half };
 }
 
-// Art draws each control 1px inside its frame, so a frame's centre pixel is this far from the
-// drawn edge on each side.
-const DRAWN_HALF = (BUTTON_FRAME - 1) / 2 - 1;
+// Art draws each control CONTROL_FRAME_INSET inside its frame, so a frame's centre pixel is this
+// far from the drawn edge on each side.
+const DRAWN_HALF = (BUTTON_FRAME - 1) / 2 - CONTROL_FRAME_INSET;
 
 // Jump CONTROL_SIDE in from the view's right and CONTROL_BOTTOM above the bottom; Use's centre
-// USE_FROM_JUMP from Jump's, so it moves with Jump.
+// TOUCH_LAYOUT.useFromJump from Jump's, so it moves with Jump.
 const JUMP_CENTRE = {
   x: SCREEN.width - 1 - CONTROL_SIDE - DRAWN_HALF,
   y: SCREEN.height - 1 - CONTROL_BOTTOM - DRAWN_HALF,
 };
-const USE_FROM_JUMP = { x: -77, y: -100 } as const;
 const USE_CENTRE = {
-  x: JUMP_CENTRE.x + USE_FROM_JUMP.x,
-  y: JUMP_CENTRE.y + USE_FROM_JUMP.y,
+  x: JUMP_CENTRE.x + TOUCH_LAYOUT.useFromJump.x,
+  y: JUMP_CENTRE.y + TOUCH_LAYOUT.useFromJump.y,
 };
 const USE_ART = buttonArt(USE_CENTRE);
 const JUMP_ART = buttonArt(JUMP_CENTRE);
@@ -70,10 +76,11 @@ export const TOUCH_PRESS_AREAS: readonly PressArea<TouchControl>[] = (
 // Art's move hint, a drawing with no press area of its own (movement is the floating drag
 // everywhere off the buttons): a ring in a frame the buttons' size, centred at rest on centre,
 // and a knob that moves from the ring's centre at most knobReach pixels left or right the way
-// the drag goes. At rest it mirrors Jump: CONTROL_SIDE in from the view's left, level with Jump.
+// the drag goes (TOUCH_LAYOUT). At rest it mirrors Jump: CONTROL_SIDE in from the view's left,
+// level with Jump.
 const MOVE_HINT_CENTRE: Point = { x: CONTROL_SIDE + DRAWN_HALF, y: JUMP_CENTRE.y };
 export const MOVE_HINT = {
   art: buttonArt(MOVE_HINT_CENTRE),
   centre: MOVE_HINT_CENTRE,
-  knobReach: 12,
+  knobReach: TOUCH_LAYOUT.knobReach,
 } as const;

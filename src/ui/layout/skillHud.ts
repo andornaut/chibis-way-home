@@ -1,13 +1,19 @@
+import { SKILL_HUD } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect, SkillId } from "../../data/types";
 import { SKILL_IDS } from "../../progress";
 import { PAUSE_VISIBLE_DIAMETER } from "./controlChrome";
-import { CONTROL_EDGE } from "./playView";
 
-export const SKILL_BUTTON = { disc: PAUSE_VISIBLE_DIAMETER, glyph: 16, target: 48 } as const;
+// A skill button's drawn disc, glyph and square target sides.
+export const SKILL_BUTTON = {
+  disc: PAUSE_VISIBLE_DIAMETER,
+  glyph: SKILL_HUD.glyph,
+  target: SKILL_HUD.target,
+} as const;
 // Where each shown skill's button sits in the base view: one row along the view's top, packed
-// against its right edge in SKILL_IDS order, CONTROL_EDGE in from the top and right and apart.
-// Skills not shown take no slot. Like the pause button, the row moves with the view (topShift).
+// against its right edge in SKILL_IDS order, SKILL_HUD.inset in from the top and right and
+// SKILL_HUD.gap apart. Skills not shown take no slot. Like the pause button, the row moves with
+// the view (topShift).
 export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point> {
   const row = SKILL_IDS.filter((skill) => shown.includes(skill));
   return new Map(
@@ -16,10 +22,10 @@ export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point>
       {
         x:
           SCREEN.width -
-          CONTROL_EDGE -
+          SKILL_HUD.inset -
           SKILL_BUTTON.target -
-          (row.length - 1 - index) * (SKILL_BUTTON.target + CONTROL_EDGE),
-        y: CONTROL_EDGE,
+          (row.length - 1 - index) * (SKILL_BUTTON.target + SKILL_HUD.gap),
+        y: SKILL_HUD.inset,
       },
     ]),
   );

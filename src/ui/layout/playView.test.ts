@@ -1,18 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTROL_BOTTOM, CONTROL_EDGE, CONTROL_SIDE } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point } from "../../data/types";
 import { touchRoleAt } from "../input/intent";
 import { PAUSE_BUTTON } from "./pauseCard";
-import {
-  bottomShift,
-  CONTROL_BOTTOM,
-  CONTROL_EDGE,
-  CONTROL_SIDE,
-  playView,
-  shifted,
-  topShift,
-} from "./playView";
+import { bottomShift, playView, shifted, topShift } from "./playView";
 import { stageProgressRect } from "./stageProgress";
 import { MOVE_HINT, TOUCH_CONTROLS } from "./touchControls";
 

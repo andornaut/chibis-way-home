@@ -1,24 +1,13 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 import { containsPoint } from "@andornaut/game-kit/rect";
 
+import { HIT_RULE } from "../../data/layout";
 import type { Point, Rect } from "../../data/types";
 
-// Every button's press area reaches past its drawn button on every side by marginShare of the
-// button's shorter side, but never less than leastMargin or more than mostMargin, in base
-// pixels, and is at least minTarget on each side, grown evenly about the button's centre where
-// it would be smaller. Jump's reaches on to the screen's right and bottom edges as well
+// Every button's press area reaches past its drawn button on every side by HIT_RULE's margin,
+// and is at least its minTarget on each side, grown evenly about the button's centre where it
+// would be smaller. Jump's reaches on to the screen's right and bottom edges as well
 // (touchControls.ts).
-export const HIT_RULE = {
-  leastMargin: 6,
-  marginShare: 0.25,
-  minTarget: 48,
-  mostMargin: 16,
-} as const;
-
-// The circle about each of the touch buttons Use and Jump that the move hint never reaches into:
-// each presses within this plus the hint's radius of its centre, so a drag starts only where
-// the hint, drawn on the drag's start, stays clear of it (touchControls.ts).
-export const TOUCH_CIRCLE_RADIUS = 63;
 
 // How far a drawn button's press area reaches past it on every side.
 export function hitMargin(art: Rect): number {
