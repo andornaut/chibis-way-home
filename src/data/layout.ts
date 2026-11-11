@@ -133,6 +133,9 @@ export const DIALOGUE_CHOICE = { promptLines: 3 } as const;
 export const SETTINGS_CARD = {
   // art: each row's leading icon side, and the install steps glyph's.
   icon: 16,
+  // art: the compact Install face, centred in its full-height row, and its label's least
+  // clearance from the face's left and right edges.
+  install: { height: 28, inset: 8, width: 72 },
   // Install steps wrap within this width beside their glyph.
   stepsTextWidth: 320,
   // art: the toggle switch's size.
@@ -145,8 +148,6 @@ export const SKILL_DETAILS = { descriptionWidth: 512 } as const;
 export const STAGE_SELECT = {
   // A stage's name wraps to at most this many lines.
   labelLines: 2,
-  // How far a pressed stage's number, screenshot and name sink.
-  pressedSink: 1,
 } as const;
 
 // art: a stage preview image's size.

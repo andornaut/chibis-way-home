@@ -1,5 +1,4 @@
 import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
-import { slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SELECT } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
@@ -54,6 +53,5 @@ export const STAGE_SELECT_LAYOUT: LayoutValues = {
   "--stage-preview-height": STAGE_PREVIEW.height,
   "--stage-preview-top": PREVIEW_TOP,
   "--stage-preview-width": STAGE_PREVIEW.width,
-  "--stage-sink": slice(STAGE_SELECT.pressedSink),
   "--stage-title-top": HEADER.titleTop,
 };

@@ -107,7 +107,7 @@
 
 .stage-select-stage[data-pressed]
   :is(.stage-select-number, .stage-select-preview, .stage-select-name) {
-  translate: 0 var(--stage-sink);
+  translate: 0 var(--button-sink);
 }
 
 /* The stage's number, right-aligned in its row above the screenshot. */

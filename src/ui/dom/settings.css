@@ -80,9 +80,15 @@
   background-image: var(--ui-switch-on-image);
 }
 
-/* The Install button's face, the row's height, pressed with the row. */
+/* The compact Install face, centred in the row's height, its label clear of its sides by the
+   compact inset, pressed with the row. The whole row stays its press area. */
 .settings-install .ui-text-button-face {
   flex: none;
+  width: calc(var(--ui-unit) * var(--settings-install-width) * 1px);
+  height: calc(var(--ui-unit) * var(--settings-install-height) * 1px);
+  padding-inline: calc(
+    var(--ui-unit) * (var(--settings-install-inset) - var(--ui-button-left)) * 1px
+  );
 }
 
 .settings-install[data-pressed] .ui-text-button-face {

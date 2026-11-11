@@ -5,11 +5,14 @@ import type { Rect } from "../../data/types";
 
 // The settings card's and the install steps card's geometry in base px (src/ui/dom/settings.css
 // lays them out): each row is its own press target, already the minimum target height, so it
-// gains no margin; its icon, label and switch or Install button sit in it, the switches and the
-// button at the widest row's right end. Install steps wrap within the steps width beside their
+// gains no margin; its icon, label and switch or compact Install face sit in it, the switches and
+// the face at the widest row's right end. Install steps wrap within the steps width beside their
 // glyph, or across the glyph's width as well for a browser without one.
 export const SETTINGS_LAYOUT: LayoutValues = {
   "--settings-icon": SETTINGS_CARD.icon,
+  "--settings-install-height": SETTINGS_CARD.install.height,
+  "--settings-install-inset": SETTINGS_CARD.install.inset,
+  "--settings-install-width": SETTINGS_CARD.install.width,
   "--settings-row-gap": CARD_CONTENT.rowGap,
   "--settings-row-height": HIT_RULE.minTarget,
   "--settings-steps-width": SETTINGS_CARD.stepsTextWidth,
