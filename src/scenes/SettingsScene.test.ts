@@ -8,6 +8,7 @@ const gate = vi.hoisted(() => ({
   accepts: vi.fn(() => true),
   capture: vi.fn(),
   invalidate: vi.fn(),
+  open: vi.fn(),
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 const offer = vi.hoisted(() => ({
@@ -144,7 +145,7 @@ it("toggles and saves Reduced motion on a press, never through the opener", asyn
   }).toEqual({ checked: String(!motion), motion: !motion, saved: motion ? "off" : "on", touch: 0 });
 });
 
-it("passes each touch setting's change to the opener, which saves it and updates its dim", async () => {
+it("takes its own scope over the pause card, and passes each touch setting's change to it", async () => {
   const { control, key, owner } = await openCard("pause");
   control(WORDS.actionButtons).focus();
   key("Enter");
@@ -153,7 +154,11 @@ it("passes each touch setting's change to the opener, which saves it and updates
     "actionButtons",
     !touchSettingShown("actionButtons"),
   );
-  expect(backdrop).not.toHaveBeenCalled();
+  // Over the pause card's dim it opens its own scope over the pause card's.
+  expect({ backdrop: backdrop.mock.calls.length, scopes: gate.open.mock.calls.length }).toEqual({
+    backdrop: 0,
+    scopes: 1,
+  });
 });
 
 it("keeps the gate's refusals: no toggle or close while the gate refuses", async () => {

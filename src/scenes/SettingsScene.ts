@@ -130,8 +130,14 @@ export class SettingsScene extends Scene {
       ),
     ).catch((error: unknown) => console.warn("The settings icons failed to load", error));
     const input = modalInput(this);
-    // The pause card's dim is already under the card.
-    const backdrop = this.opener === "pause" ? Promise.resolve() : showModalBackdrop(this).ready;
+    // The pause card's dim is already under the card, which takes its own scope over the pause
+    // card's; the start screen's comes with the scope from the card's own dim.
+    let backdrop = Promise.resolve();
+    if (this.opener === "pause") {
+      input.open();
+    } else {
+      backdrop = showModalBackdrop(this).ready;
+    }
     const guard = { gate: input };
     const stops = [
       guardClicks(guard, card.root),
