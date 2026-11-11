@@ -1,7 +1,20 @@
 import type { AntagonistKind, ChunkArena, RefugeKind, StageKey } from "../types";
+import { ARCHIE_ARENAS } from "./archie";
+import { BINI_ARENAS } from "./bini";
+import { FERT_ARENAS } from "./fert";
+import { KIWI_ARENAS } from "./kiwi";
+import { PEBBLE_ARENAS } from "./pebble";
+import { TRIXI_ARENAS } from "./trixi";
 
 // Every admitted arena, one per encounter stage. Bosses add theirs here as they land.
-export const ARENAS: readonly ChunkArena[] = [];
+export const ARENAS: readonly ChunkArena[] = [
+  ...ARCHIE_ARENAS,
+  ...BINI_ARENAS,
+  ...FERT_ARENAS,
+  ...KIWI_ARENAS,
+  ...PEBBLE_ARENAS,
+  ...TRIXI_ARENAS,
+];
 
 // Encounter stages still without an arena: the coverage check reports them without failing.
 // Remove each stage as its arena lands; the check fails once the list is empty and any encounter
