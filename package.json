@@ -24,7 +24,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.22.0/game-kit-0.22.0.tgz",
+    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.24.0/game-kit-0.24.0.tgz",
     "phaser": "^4.2.1"
   },
   "devDependencies": {
@@ -39,6 +39,7 @@
     "eslint-plugin-simple-import-sort": "^14.0.0",
     "eslint-plugin-sort-destructure-keys": "^3.0.0",
     "globals": "^17.13.0",
+    "happy-dom": "21.0.4",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "markdownlint-cli2": "0.24.0",
