@@ -26,6 +26,7 @@ export {
   type WholeRunDisplaySummary,
   wholeRunSummary,
 } from "./save/runSummary";
+export type { SavedSkillGrantResult } from "./save/savedSkillGrant";
 export {
   type RunStatsSummary,
   STATS_VERSION,

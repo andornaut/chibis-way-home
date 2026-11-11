@@ -24,9 +24,12 @@ import {
   BEGINNING,
   mapProgress,
   type Progress,
+  PROGRESS_KEYS,
   progressFormat,
   type RecentChunks,
 } from "./progress";
+import { grantStoredSkills, type SavedSkillGrantResult } from "./savedSkillGrant";
+import { skillGrantEffects, withGrantedSkill } from "./skillGrant";
 import {
   type RunStatsSummary,
   stageStatsStore,
@@ -44,11 +47,9 @@ export interface SaveSession {
   readonly skillOverrides: () => SkillOverrides;
 }
 
-const KEYS = { backup: "chibis-way-home.save-backup", save: "chibis-way-home.save" } as const;
-
 const storage = localSaveStorage();
 const format = progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS)));
-const store = saveStore(storage, KEYS, format);
+const store = saveStore(storage, PROGRESS_KEYS, format);
 let progress: Progress = BEGINNING;
 let developmentOwned: readonly SkillId[] | undefined;
 let developmentSavedSelection: SkillId | null | undefined;
@@ -56,7 +57,10 @@ let temporarySelection: SkillId | null | undefined;
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
 const stats = stageStatsStore(localSaveStorage(), STAGES, ZONE_MAP.destinations);
 let statsLifecycleInstalled = false;
-const achievements = achievementsStore(localSaveStorage());
+let achievements = achievementsStore(localSaveStorage());
+let achievementWrites = 0;
+let progressWrites = 0;
+const savedGrants = new Set<symbol>();
 // Unlock notices not shown yet: the stored unannounced ones, then each award.
 const notices = new CelebrationQueue<AchievementId>();
 // The earned ids, including awards whose write is still queued, so a later call in the same
@@ -85,7 +89,7 @@ function installStatsLifecycle(session: SaveSession): void {
 export async function loadProgress(session: SaveSession): Promise<void> {
   if (session.development()) {
     try {
-      const loaded = loadSave(format, await storage.read(KEYS.save));
+      const loaded = loadSave(format, await storage.read(PROGRESS_KEYS.save));
       developmentOwned = loaded.status === "loaded" ? loaded.save.skills : [];
       developmentSavedSelection = loaded.status === "loaded" ? loaded.save.activeSkill : null;
     } catch {
@@ -117,7 +121,10 @@ function judgeAchievements(
   if (fresh.length > 0) {
     earnedIds = [...earnedIds, ...fresh];
     notices.push(fresh);
-    void achievements.award(fresh);
+    achievementWrites++;
+    void achievements.award(fresh).finally(() => {
+      achievementWrites--;
+    });
   }
 }
 
@@ -147,7 +154,10 @@ export function nextAchievementNotice(
 ): AchievementId | undefined {
   const id = notices.takeWhen(blocked);
   if (id !== undefined && !session.development()) {
-    void achievements.announced(id);
+    achievementWrites++;
+    void achievements.announced(id).finally(() => {
+      achievementWrites--;
+    });
   }
   return id;
 }
@@ -288,18 +298,68 @@ export function selectActiveSkill(session: SaveSession, skill: SkillId): boolean
 }
 
 export function grantSkill(session: SaveSession, skill: SkillId): boolean {
-  if (session.development() || progress.skills.includes(skill)) {
+  if (session.development()) {
     return false;
   }
-  write(session, {
-    ...progress,
-    activeSkill: progress.activeSkill ?? skill,
-    skills: [...progress.skills, skill],
-  });
-  judgeAchievements([["skill", {}]]);
+  const next = withGrantedSkill(progress, skill);
+  if (next === progress) {
+    return false;
+  }
+  const effects = skillGrantEffects(earnedIds, stats.skillUsed(), next);
+  write(session, next);
+  if (effects.awarded.length > 0) {
+    earnedIds = [...earnedIds, ...effects.awarded];
+    notices.push(effects.awarded);
+    achievementWrites++;
+    void achievements.award(effects.awarded).finally(() => {
+      achievementWrites--;
+    });
+  }
   return true;
 }
-
+export async function grantSavedSkills(context: {
+  readonly available: () => boolean;
+}): Promise<SavedSkillGrantResult> {
+  if (
+    savedGrants.size > 0 ||
+    stats.pendingChanges() ||
+    achievementWrites > 0 ||
+    progressWrites > 0
+  ) {
+    return { reason: "pending_progress_writes", status: "blocked", writes: [], written: [] };
+  }
+  const expected = progress;
+  const available = () =>
+    context.available() &&
+    progress === expected &&
+    !stats.pendingChanges() &&
+    achievementWrites === 0 &&
+    progressWrites === 0;
+  if (!available()) {
+    return { reason: "action_unavailable", status: "blocked", writes: [], written: [] };
+  }
+  const token = Symbol("saved-skill-grant");
+  savedGrants.add(token);
+  try {
+    return await grantStoredSkills(
+      {
+        available,
+        committed: (snapshot) => {
+          progress = snapshot.progress;
+          developmentOwned = snapshot.progress.skills;
+          developmentSavedSelection = snapshot.progress.activeSkill;
+          stats.acceptSavedSkillUse(snapshot.stats.wholeRun.skillUsed === true);
+          earnedIds = snapshot.achievements.earned;
+          notices.push(snapshot.awarded);
+          achievements = achievementsStore(localSaveStorage());
+        },
+      },
+      storage,
+    );
+  } finally {
+    savedGrants.delete(token);
+  }
+}
 // The saved progress, or the beginning.
 export function savedProgress(): Progress {
   return progress;
@@ -413,7 +473,10 @@ function write(session: SaveSession, next: Progress): void {
   if (next.activeSkill === "speedy") {
     stats.useSkill();
   }
-  void store.save(next);
+  progressWrites++;
+  void store.save(next).finally(() => {
+    progressWrites--;
+  });
 }
 
 // Restart: progress goes back to the beginning, and the map opens on the first zone with nothing

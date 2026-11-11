@@ -34,6 +34,10 @@ export const BEGINNING: Progress = {
 // zone renamed bumps it, and older saves reset to the beginning. Chunk ids are advisory: an
 // unknown one is dropped on load, so renaming a chunk needs no bump.
 export const PROGRESS_VERSION = 11;
+export const PROGRESS_KEYS = {
+  backup: "chibis-way-home.save-backup",
+  save: "chibis-way-home.save",
+} as const;
 
 // Where he is on the map for progress: the beginning stands him on the map's start with
 // nothing completed.

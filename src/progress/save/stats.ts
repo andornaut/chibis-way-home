@@ -43,7 +43,7 @@ interface Stats {
 }
 
 export const STATS_VERSION = 7;
-const KEYS = {
+export const STATS_KEYS = {
   backup: "chibis-way-home.stats-backup",
   save: "chibis-way-home.stats",
 } as const;
@@ -169,6 +169,8 @@ interface StageStatsStore {
   skillUsed(): boolean;
   // Records that a skill was used.
   useSkill(): void;
+  pendingChanges(): boolean;
+  acceptSavedSkillUse(used: boolean): void;
 }
 
 // A separate store keeps unfinished stage clocks independent of progress restarts. Mutations
@@ -178,11 +180,12 @@ export function stageStatsStore(
   stages: ReadonlySet<string>,
   destinations: Destinations = [],
 ): StageStatsStore {
-  const store = saveStore(storage, KEYS, statsFormat(stages, destinations));
+  const store = saveStore(storage, STATS_KEYS, statsFormat(stages, destinations));
   let stats = fresh();
   let pending: Promise<unknown> = Promise.resolve();
   let checkpoint: ReturnType<typeof setTimeout> | undefined;
   let dirty = false;
+  let writing = 0;
   const flush = async () => {
     if (checkpoint !== undefined) {
       clearTimeout(checkpoint);
@@ -190,7 +193,10 @@ export function stageStatsStore(
     }
     if (dirty) {
       dirty = false;
-      pending = store.save(stats);
+      writing++;
+      pending = store.save(stats).finally(() => {
+        writing--;
+      });
     }
     await pending;
   };
@@ -257,6 +263,11 @@ export function stageStatsStore(
     };
   };
   return {
+    acceptSavedSkillUse(used) {
+      if (used) {
+        stats = { ...stats, wholeRun: { ...stats.wholeRun, skillUsed: true } };
+      }
+    },
     addActiveTime(stage, seconds) {
       if (!Number.isFinite(seconds) || seconds < 0) {
         throw new Error("Invalid active play duration");
@@ -362,6 +373,7 @@ export function stageStatsStore(
         await flush();
       }
     },
+    pendingChanges: () => dirty || writing > 0,
     recordDeath(stage) {
       knownStage(stage);
       const run = stats.stages[stage]?.run;

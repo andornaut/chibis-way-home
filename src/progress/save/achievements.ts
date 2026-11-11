@@ -14,16 +14,16 @@ import { ACHIEVEMENT_IDS } from "../achievements";
 // drops unknown ids instead of resetting.
 export const ACHIEVEMENTS_VERSION = 1;
 
-const KEYS = {
+export const ACHIEVEMENT_KEYS = {
   backup: "chibis-way-home.achievements-backup",
   save: "chibis-way-home.achievements",
 } as const;
 
-const ACHIEVEMENTS_FORMAT: SaveFormat<EarnedRecord<AchievementId>> = earnedFormat(
+export const ACHIEVEMENTS_FORMAT: SaveFormat<EarnedRecord<AchievementId>> = earnedFormat(
   ACHIEVEMENTS_VERSION,
   ACHIEVEMENT_IDS,
 );
 
 export function achievementsStore(storage: SaveStorage): EarnedStore<AchievementId> {
-  return earnedStore(storage, KEYS, ACHIEVEMENTS_FORMAT);
+  return earnedStore(storage, ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT);
 }
