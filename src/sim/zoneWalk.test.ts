@@ -10,9 +10,11 @@ import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
 import { SKILL_PROFILES } from "../progress";
+import { zonePlanOf } from "../rules/assemble";
 import { zoneLayout } from "../rules/tiles";
 import { startZone, stepZone } from "../rules/zone";
-import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
+import { WINDMILL_FIXTURE_CATALOGUE, WINDMILL_FIXTURE_LIBRARY } from "../testing/chunks";
+import { CATALOGUE, HITBOXES, TILESETS, WALK_MS, walkSuite } from "../testing/walkSuite";
 import { TEST_ZONES } from "../testing/zones";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
 import {
@@ -132,6 +134,47 @@ describe("walkRequiredRoutes", () => {
         distinct: true,
       });
       expect(walk.reached).toContain(far?.key);
+    },
+    WALK_MS,
+  );
+
+  it(
+    "proves the windmill fixture within a bounded search",
+    () => {
+      const plan = zonePlanOf(
+        WINDMILL_FIXTURE_LIBRARY,
+        () => 0,
+        { door: [], event: [] },
+        "test",
+        2,
+        ["test-windmill"],
+      );
+      const layout = zoneLayout(
+        TILE,
+        BIRD_FRAME,
+        WINDMILL_FIXTURE_CATALOGUE,
+        HITBOXES,
+        TILESETS,
+        new Set(),
+        plan,
+      );
+      // About 11,000 zone steps; an unbounded search runs past a million.
+      const bound = 20_000;
+      let work = 0;
+      const walk = walkRequiredRoutes(
+        BIRD,
+        {
+          onStep: () => {
+            if (++work > bound) {
+              throw new Error(`The windmill walk ran past ${bound} zone steps`);
+            }
+          },
+          targets: [],
+          tile: TILE,
+        },
+        layout,
+      );
+      expect(walk.complete).toBe(true);
     },
     WALK_MS,
   );

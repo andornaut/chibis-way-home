@@ -760,7 +760,8 @@ function waitStates(
 // below the takeoff (negative for one above), carried by a platform at up to carry px/s. From a
 // full jump played on the rules: its height, and how long he is in the air coming back down to
 // where he took off; a lower landing adds the fall at the flutter speed, and the time to reach
-// it. MARGIN on each, for rounding.
+// it. MARGIN on each, for rounding. jumpRise is that height alone: nothing lifts him higher
+// from a still surface with no force pulse, since the walk never presses Jump again in the air.
 function moveBounds(tuning: BirdTuning, carry: number) {
   const ground = { height: 1, width: 1e6, x: -5e5, y: 0 };
   let bird = startBird(tuning, { x: 0, y: 0 });
@@ -780,7 +781,13 @@ function moveBounds(tuning: BirdTuning, carry: number) {
       (air + coyoteTime + Math.max(0, drop) / flutterFallSpeed + flutterFallSpeed / gravity) +
     MARGIN;
   const maximumRise = rise + MARGIN;
-  return { across, maximumRise, rise: maximumRise, targetHeight: tuning.height };
+  return {
+    across,
+    jumpRise: rise + EDGE,
+    maximumRise,
+    rise: maximumRise,
+    targetHeight: tuning.height,
+  };
 }
 
 // The steps a moving thing takes to go round its track once, at most MAX_CYCLE.
@@ -789,10 +796,11 @@ function cycleSteps(objects: readonly ObjectLayout[], object: ObjectLayout): num
 }
 
 // Moving colliders retain their own cycle lengths; only supports contribute carry speed. Timed
-// hazards keep their cycle for a walk across them.
+// hazards keep their cycle for a walk across them; pulses: whether anything emits a force pulse.
 interface MovingThings {
   readonly carry: number;
   readonly moving: readonly PhaseMover[];
+  readonly pulses: boolean;
   readonly timed: readonly PhaseMover[];
 }
 
@@ -832,6 +840,11 @@ function movingThings(tuning: BirdTuning, area: AreaLayout): MovingThings {
         },
       ];
     }),
+    pulses: area.objects.some((object) =>
+      Object.values(object.behaviour?.states ?? {}).some((node) =>
+        (node.onEnter ?? []).some((action) => action.kind === "force-pulse"),
+      ),
+    ),
     timed: area.objects.flatMap((object, index) =>
       isTimedHazard(object)
         ? [
@@ -967,6 +980,7 @@ function targetsFrom(
   layout: ZoneLayout,
   surfaces: readonly Surface[],
   bounds: ReturnType<typeof moveBounds>,
+  rise: number,
   from: Spot,
   here: Surface,
 ): { others: Target[]; own: Target[] } {
@@ -979,7 +993,7 @@ function targetsFrom(
     .filter((surface) => {
       const span = sweptSpan(bounds, layout, surface);
       const dx = Math.max(0, span.left - hi, lo - span.right);
-      return own.top - span.bottom <= bounds.rise && dx <= bounds.across(span.bottom - own.top);
+      return own.top - span.bottom <= rise && dx <= bounds.across(span.bottom - own.top);
     })
     .flatMap((surface) => {
       const target = { key: surface.key, left: surface.left, right: surface.right, surface };
@@ -1367,7 +1381,7 @@ function walkSearch(
     try {
       const area = areaOf(layout, from.surface.area);
       const here = placed(from.surface, from.state, layout);
-      const { carry, moving, timed } = movingThings(tuning, area);
+      const { carry, moving, pulses, timed } = movingThings(tuning, area);
       let bounds = areaBounds.get(area);
       if (!bounds) {
         bounds = moveBounds(tuning, carry);
@@ -1421,7 +1435,9 @@ function walkSearch(
       if (complete()) {
         return;
       }
-      const { others, own } = targetsFrom(tuning, layout, surfaces, bounds, from, here);
+      // From a still surface with no force pulse about, a full jump's own height bounds the rise.
+      const rise = from.surface.mover === undefined && !pulses ? bounds.jumpRise : bounds.rise;
+      const { others, own } = targetsFrom(tuning, layout, surfaces, bounds, rise, from, here);
       const intervals =
         required?.intervals.filter(
           (interval) =>
