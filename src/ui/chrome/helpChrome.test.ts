@@ -16,18 +16,23 @@ it.each<ControlAction>(["move", "use", "jump"])(
   "fills %s help on navy without filling the live control",
   (action) => {
     const face = { x: 37.5, y: 51 };
-    const pixel = touchChromePixel(helpChromeLayers(colours, action), face);
+    const pixel = touchChromePixel(4, helpChromeLayers(colours, action), face);
     expect(pixel).toEqual([
       (colours.navy >> 16) & 255,
       (colours.navy >> 8) & 255,
       colours.navy & 255,
       255,
     ]);
-    expect(touchChromePixel(touchChromeLayers(colours, action, "rest", false), face)[3]).toBe(0);
-    const edge = touchChromePixel(helpChromeLayers(colours, action), { x: 63.375, y: 63.375 })[3];
+    expect(touchChromePixel(4, touchChromeLayers(colours, action, "rest", false), face)[3]).toBe(0);
+    const edge = touchChromePixel(4, helpChromeLayers(colours, action), {
+      x: 63.375,
+      y: 63.375,
+    })[3];
     expect(edge).toBeGreaterThan(0);
     expect(edge).toBeLessThan(255);
-    expect(touchChromePixel(helpChromeLayers(colours, action), { x: 0.125, y: 0.125 })[3]).toBe(0);
+    expect(touchChromePixel(4, helpChromeLayers(colours, action), { x: 0.125, y: 0.125 })[3]).toBe(
+      0,
+    );
     const svg = helpChromeSvg(colours, ACTION_HELP.icon, action);
     expect(svg).toContain('viewBox="0 0 75 75"');
     expect(svg).toContain(`width="${ACTION_HELP.icon}" height="${ACTION_HELP.icon}"`);

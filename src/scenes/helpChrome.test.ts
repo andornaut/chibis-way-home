@@ -2,31 +2,25 @@ import { type Scene, Textures } from "phaser";
 import { expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
+import { chromeCanvasTexture } from "../testing/chromeTexture";
 import { drawHelpChrome } from "./helpChrome";
 
-vi.mock("phaser", () => ({ Textures: { FilterMode: { LINEAR: 1 } } }));
+vi.mock("phaser", () => ({
+  Core: { Events: { POST_STEP: "poststep" } },
+  Textures: { FilterMode: { NEAREST: 0 } },
+}));
 vi.mock("./cardParts", () => ({
   paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
     parseInt(palette.colours[name].slice(1), 16),
 }));
 it("keeps help textures separate and bounded while displaying their logical frame at the given size", () => {
   const cached = new Set<string>();
-  const filters: ReturnType<typeof vi.fn>[] = [];
-  const createCanvas = vi.fn((key: string) => {
+  const textures: ReturnType<typeof chromeCanvasTexture>[] = [];
+  const createCanvas = vi.fn((key: string, width: number, height: number) => {
     cached.add(key);
-    const setFilter = vi.fn();
-    filters.push(setFilter);
-    return {
-      add: vi.fn(),
-      getContext: () => ({
-        createImageData: (width: number, height: number) => ({
-          data: new Uint8ClampedArray(width * height * 4),
-        }),
-        putImageData: vi.fn(),
-      }),
-      refresh: vi.fn(),
-      setFilter,
-    };
+    const texture = chromeCanvasTexture(key, width, height);
+    textures.push(texture);
+    return texture;
   });
   const setDisplaySize = vi.fn().mockReturnThis();
   const image = vi.fn((...args: unknown[]) => ({
@@ -36,6 +30,8 @@ it("keeps help textures separate and bounded while displaying their logical fram
   }));
   const scene = {
     add: { image },
+    game: { events: { on: vi.fn() } },
+    scale: { displaySize: { width: 720 }, gameSize: { width: 720 } },
     textures: { createCanvas, exists: (key: string) => cached.has(key) },
   } as unknown as Scene;
   for (const action of ["move", "use", "jump"] as const) {
@@ -49,7 +45,7 @@ it("keeps help textures separate and bounded while displaying their logical fram
     ),
   ).toBe(true);
   expect(setDisplaySize).toHaveBeenCalledWith(20, 20);
-  for (const filter of filters) {
-    expect(filter).toHaveBeenCalledExactlyOnceWith(Textures.FilterMode.LINEAR);
+  for (const texture of textures) {
+    expect(texture.setFilter).toHaveBeenCalledExactlyOnceWith(Textures.FilterMode.NEAREST);
   }
 });

@@ -8,8 +8,8 @@ export { modalColour } from "./chrome/modalDim";
 export { moveHintView } from "./chrome/moveHint";
 export { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./chrome/pauseChrome";
 export {
+  chromeTexels,
   TOUCH_CHROME_FRAME,
-  TOUCH_CHROME_SCALE,
   TOUCH_KNOB_FRAME,
   type TouchChromeKind,
   type TouchChromeLayer,

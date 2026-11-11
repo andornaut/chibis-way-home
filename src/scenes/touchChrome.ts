@@ -4,12 +4,12 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
-import { type GameObjects, type Scene, Textures } from "phaser";
+import { Core, type GameObjects, type Scene, Textures } from "phaser";
 
 import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
 import {
+  chromeTexels,
   TOUCH_CHROME_FRAME,
-  TOUCH_CHROME_SCALE,
   TOUCH_KNOB_FRAME,
   type TouchChromeKind,
   type TouchChromeLayer,
@@ -28,8 +28,105 @@ const SOURCE: Readonly<Record<TouchChromeKind, string>> = {
 
 import { uiObject } from "./uiRoots";
 
+interface ChromeSheet {
+  readonly frames: ReadonlyMap<string, readonly TouchChromeLayer[]>;
+  readonly logical: number;
+  texels: number;
+}
+type ChromeScene = Pick<Scene, "game" | "scale" | "textures">;
+type ChromeObject = GameObjects.GameObject &
+  Partial<Pick<GameObjects.Sprite, "scaleX" | "scaleY" | "setScale" | "setSizeToFrame">> & {
+    readonly list?: unknown;
+    readonly texture?: unknown;
+  };
+
+const gameSheets = new WeakMap<object, Map<string, ChromeSheet>>();
+
+// Screen pixels per base pixel: the canvas's CSS pixels per game pixel times the device pixel
+// ratio.
+export function chromeDensity(scene: Pick<Scene, "scale">): number {
+  const { displaySize, gameSize } = scene.scale;
+  return (displaySize.width / gameSize.width) * (globalThis.devicePixelRatio || 1);
+}
+
+function paintSheet(texture: Textures.CanvasTexture, sheet: ChromeSheet): void {
+  const { frames, logical, texels } = sheet;
+  const scale = texels / logical;
+  const stride = texels + 2;
+  texture.setSize(stride * frames.size, stride);
+  const context = texture.getContext();
+  context.clearRect(0, 0, stride * frames.size, stride);
+  let column = 0;
+  for (const [frame, layers] of frames) {
+    const image = context.createImageData(texels, texels);
+    for (let y = 0; y < texels; y++) {
+      for (let x = 0; x < texels; x++) {
+        image.data.set(
+          touchChromePixel(scale, layers, { x: (x + 0.5) / scale, y: (y + 0.5) / scale }),
+          4 * (y * texels + x),
+        );
+      }
+    }
+    const left = column * stride + 1;
+    context.putImageData(image, left, 1);
+    if (texture.has(frame)) {
+      texture.get(frame).setSize(texels, texels, left, 1);
+    } else {
+      texture.add(frame, 0, left, 1, texels, texels);
+    }
+    column++;
+  }
+  texture.refresh();
+}
+
+// Keeps each object drawn from texture at its display size across a repaint from `from` to `to`
+// texels per frame.
+function rescaleUsers(
+  objects: readonly unknown[],
+  texture: Textures.CanvasTexture,
+  from: number,
+  to: number,
+): void {
+  for (const object of objects as readonly ChromeObject[]) {
+    if (Array.isArray(object.list)) {
+      rescaleUsers(object.list, texture, from, to);
+    }
+    if (object.texture === texture && object.setScale) {
+      object.setScale((object.scaleX! * from) / to, (object.scaleY! * from) / to);
+      object.setSizeToFrame?.();
+    }
+  }
+}
+
+// Repaints every chrome sheet whose texel size no longer matches the screen, so each texel stays
+// one screen pixel across resizes, rotations, zoom and device pixel ratio changes.
+export function sharpenChrome(scene: ChromeScene): void {
+  const sheets = gameSheets.get(scene.game);
+  if (!sheets) {
+    return;
+  }
+  const density = chromeDensity(scene);
+  for (const [key, sheet] of sheets) {
+    const texels = chromeTexels(density, sheet.logical);
+    if (texels === sheet.texels) {
+      continue;
+    }
+    const texture = scene.textures.get(key) as Textures.CanvasTexture;
+    const from = sheet.texels;
+    sheet.texels = texels;
+    paintSheet(texture, sheet);
+    for (const owner of scene.game.scene.scenes) {
+      rescaleUsers(owner.children.list, texture, from, texels);
+    }
+  }
+}
+
+// A game-lifetime sheet of frames painted from vector layers at one texel per screen pixel, and
+// repainted before any frame that renders after the screen density changes. The edges' coverage
+// is painted in, so nearest sampling at that one-to-one scale keeps them sharp where linear
+// sampling at a fractional screen position would blur them across two pixels.
 export function createChromeTexture(
-  scene: Scene,
+  scene: ChromeScene,
   key: string,
   logical: number,
   frames: ReadonlyMap<string, readonly TouchChromeLayer[]>,
@@ -37,33 +134,25 @@ export function createChromeTexture(
   if (scene.textures.exists(key)) {
     return key;
   }
-  const size = logical * TOUCH_CHROME_SCALE;
-  const stride = size + 2;
-  const texture = scene.textures.createCanvas(key, stride * frames.size, stride);
+  const sheet = { frames, logical, texels: chromeTexels(chromeDensity(scene), logical) };
+  const texture = scene.textures.createCanvas(
+    key,
+    (sheet.texels + 2) * frames.size,
+    sheet.texels + 2,
+  );
   if (!texture) {
     throw new Error(`Cannot create ${key}`);
   }
-  const context = texture.getContext();
-  let column = 0;
-  for (const [frame, layers] of frames) {
-    const image = context.createImageData(size, size);
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        image.data.set(
-          touchChromePixel(layers, {
-            x: (x + 0.5) / TOUCH_CHROME_SCALE,
-            y: (y + 0.5) / TOUCH_CHROME_SCALE,
-          }),
-          4 * (y * size + x),
-        );
-      }
-    }
-    context.putImageData(image, column * stride + 1, 1);
-    texture.add(frame, 0, column * stride + 1, 1, size, size);
-    column++;
+  paintSheet(texture, sheet);
+  texture.setFilter(Textures.FilterMode.NEAREST);
+  let sheets = gameSheets.get(scene.game);
+  if (!sheets) {
+    sheets = new Map();
+    gameSheets.set(scene.game, sheets);
+    const view = { game: scene.game, scale: scene.scale, textures: scene.textures };
+    scene.game.events.on(Core.Events.POST_STEP, () => sharpenChrome(view));
   }
-  texture.refresh();
-  texture.setFilter(Textures.FilterMode.LINEAR);
+  sheets.set(key, sheet);
   return key;
 }
 

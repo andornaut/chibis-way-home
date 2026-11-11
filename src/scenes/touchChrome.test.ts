@@ -14,15 +14,19 @@ import move from "../../public/art/sprites/ui-move-hint.json";
 import knob from "../../public/art/sprites/ui-move-knob.json";
 import jump from "../../public/art/sprites/ui-touch-jump.json";
 import use from "../../public/art/sprites/ui-touch-use.json";
+import { chromeCanvasTexture } from "../testing/chromeTexture";
 import { createTouchChrome } from "./touchChrome";
 
-vi.mock("phaser", () => ({ Textures: { FilterMode: { LINEAR: 1 } } }));
+vi.mock("phaser", () => ({
+  Core: { Events: { POST_STEP: "poststep" } },
+  Textures: { FilterMode: { NEAREST: 0 } },
+}));
 vi.mock("./cardParts", () => ({
   paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
     parseInt(palette.colours[name].slice(1), 16),
 }));
 
-it("caches four isolated filtered sheets and retains authored frame order, durations and repeat flags", () => {
+it("caches four isolated nearest-sampled sheets and retains authored frame order, durations and repeat flags", () => {
   const data: Record<string, unknown> = {
     manifest,
     "ui-move-hint": move,
@@ -30,22 +34,10 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
     "ui-touch-jump": jump,
     "ui-touch-use": use,
   };
-  const filters: ReturnType<typeof vi.fn>[] = [];
-  const add = vi.fn();
-  const createCanvas = vi.fn((key: string) => {
-    const setFilter = vi.fn();
-    filters.push(setFilter);
-    const texture = {
-      add,
-      getContext: () => ({
-        createImageData: (width: number, height: number) => ({
-          data: new Uint8ClampedArray(width * height * 4),
-        }),
-        putImageData: vi.fn(),
-      }),
-      refresh: vi.fn(),
-      setFilter,
-    };
+  const textures: ReturnType<typeof chromeCanvasTexture>[] = [];
+  const createCanvas = vi.fn((key: string, width: number, height: number) => {
+    const texture = chromeCanvasTexture(key, width, height);
+    textures.push(texture);
     Object.assign(stub.textures.list, { [key]: texture });
     return texture;
   });
@@ -54,7 +46,8 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
     setDisplaySize: vi.fn().mockReturnThis(),
     setOrigin: vi.fn().mockReturnThis(),
   }));
-  const stub = sceneStub(vi.fn, { add: { sprite } });
+  // Four screen pixels per base pixel.
+  const stub = sceneStub(vi.fn, { add: { sprite }, scale: { displaySize: { width: 4096 } } });
   for (const [key, sheet] of Object.entries(data)) {
     stub.cache.json.add(key, sheet);
   }
@@ -83,10 +76,65 @@ it("caches four isolated filtered sheets and retains authored frame order, durat
     }
   }
   expect(createCanvas).toHaveBeenCalledTimes(4);
-  for (const filter of filters) {
-    expect(filter).toHaveBeenCalledExactlyOnceWith(Textures.FilterMode.LINEAR);
+  for (const texture of textures) {
+    expect(texture.setFilter).toHaveBeenCalledExactlyOnceWith(Textures.FilterMode.NEAREST);
+    expect(
+      texture.add.mock.calls.every((call) => call[4] === call[5] && [300, 44].includes(call[4])),
+    ).toBe(true);
   }
-  expect(add.mock.calls.every((call) => call[4] === call[5] && [300, 44].includes(call[4]))).toBe(
-    true,
-  );
+});
+
+it("paints one texel per screen pixel and repaints when the display scale or pixel ratio changes", () => {
+  vi.stubGlobal("devicePixelRatio", 3);
+  const textures: ReturnType<typeof chromeCanvasTexture>[] = [];
+  const createCanvas = vi.fn((key: string, width: number, height: number) => {
+    const texture = chromeCanvasTexture(key, width, height);
+    textures.push(texture);
+    Object.assign(stub.textures.list, { [key]: texture });
+    return texture;
+  });
+  const sprite = vi.fn(() => {
+    const object = {
+      scaleX: 0,
+      scaleY: 0,
+      setAlpha: vi.fn().mockReturnThis(),
+      setDisplaySize: vi.fn((width: number, height: number) =>
+        Object.assign(object, { scaleX: width / 1000, scaleY: height / 1000 }),
+      ),
+      setOrigin: vi.fn().mockReturnThis(),
+      setScale: vi.fn((x: number, y: number) => Object.assign(object, { scaleX: x, scaleY: y })),
+      setSizeToFrame: vi.fn(),
+      texture: undefined as unknown,
+    };
+    return object;
+  });
+  // The 1024px stub game shown 1110px wide: 844x390 landscape's 1.08 display scale.
+  const stub = sceneStub(vi.fn, { add: { sprite }, scale: { displaySize: { width: 1110 } } });
+  stub.cache.json.add("manifest", manifest).add("ui-touch-jump", jump);
+  Object.assign(stub.textures, { createCanvas });
+  Object.assign(stub.game, { scene: { scenes: [stub] } });
+  const scene = stub as unknown as Scene;
+  const control = createTouchChrome(scene, "jump") as unknown as ReturnType<typeof sprite>;
+  const [texture] = textures;
+  control.texture = texture;
+  stub.children.list.push(control as never);
+  const frames = [...texture!.frames.values()];
+  // 75 base pixels at 1110 / 1024 * 3 screen pixels each.
+  expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 244));
+  stub.game.events.emit("poststep");
+  expect(texture!.setSize).toHaveBeenCalledTimes(1);
+
+  vi.stubGlobal("devicePixelRatio", 1);
+  stub.game.events.emit("poststep");
+  expect(texture!.setSize).toHaveBeenLastCalledWith(83 * frames.length, 83);
+  expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 81));
+  expect(control.scaleX).toBeCloseTo((0.075 * 244) / 81);
+
+  Object.assign(stub.scale.displaySize, { width: 2048 });
+  stub.game.events.emit("poststep");
+  expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 150));
+  expect(control.scaleX * 150).toBeCloseTo(0.075 * 244);
+  expect(control.setSizeToFrame).toHaveBeenCalledTimes(2);
+  expect(texture!.refresh).toHaveBeenCalledTimes(3);
+  vi.unstubAllGlobals();
 });

@@ -9,7 +9,6 @@ export interface TouchChromeColours {
   readonly ink: number;
   readonly white: number;
 }
-export const TOUCH_CHROME_SCALE = 4;
 export const TOUCH_CHROME_FRAME = 75;
 export const TOUCH_KNOB_FRAME = 11;
 
@@ -96,12 +95,22 @@ function segmentDistance(point: Point, from: Point, to: Point): number {
   return Math.hypot(point.x - from.x - t * dx, point.y - from.y - t * dy);
 }
 
-// Coverage changes only within one high-resolution texel of each geometric boundary.
-function coverage(distance: number): number {
-  return clamp01(0.5 - distance * TOUCH_CHROME_SCALE);
+// The texels across a logical-pixel chrome frame that one texel per screen pixel needs at
+// density, the screen pixels per base pixel (the game's display scale times the device pixel
+// ratio).
+export function chromeTexels(density: number, logical: number): number {
+  return Math.max(1, Math.round(logical * density));
 }
 
+// Coverage changes only within one texel of each geometric boundary, at scale texels per base
+// pixel.
+function coverage(scale: number, distance: number): number {
+  return clamp01(0.5 - distance * scale);
+}
+
+// The texel at point, in base pixels, for a texture painted at scale texels per base pixel.
 export function touchChromePixel(
+  scale: number,
   layers: readonly TouchChromeLayer[],
   point: Point,
 ): readonly [number, number, number, number] {
@@ -114,8 +123,8 @@ export function touchChromePixel(
     if (layer.kind === "rect") {
       const { rect } = layer;
       amount =
-        coverage(Math.max(rect.x - point.x, point.x - rect.x - rect.width)) *
-        coverage(Math.max(rect.y - point.y, point.y - rect.y - rect.height));
+        coverage(scale, Math.max(rect.x - point.x, point.x - rect.x - rect.width)) *
+        coverage(scale, Math.max(rect.y - point.y, point.y - rect.y - rect.height));
     } else if (layer.kind === "stroke") {
       let distance = Infinity;
       for (let index = 1; index < layer.path.length; index++) {
@@ -124,13 +133,13 @@ export function touchChromePixel(
           segmentDistance(point, layer.path[index - 1]!, layer.path[index]!),
         );
       }
-      amount = coverage(distance - layer.width / 2);
+      amount = coverage(scale, distance - layer.width / 2);
     } else {
       const distance = Math.hypot(point.x - layer.centre.x, point.y - layer.centre.y);
       amount =
         layer.kind === "disc"
-          ? coverage(distance - layer.radius)
-          : coverage(distance - layer.outer) - coverage(distance - layer.inner);
+          ? coverage(scale, distance - layer.radius)
+          : coverage(scale, distance - layer.outer) - coverage(scale, distance - layer.inner);
     }
     const remaining = 1 - amount;
     red = ((layer.colour >> 16) & 255) * amount + red * remaining;

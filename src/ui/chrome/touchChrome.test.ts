@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json";
 import {
+  chromeTexels,
   type TouchChromeKind,
   touchChromeLayers,
   touchChromePixel,
@@ -20,7 +21,10 @@ function sample(
   y: number,
   expanded = false,
 ) {
-  const [r, g, b, a] = touchChromePixel(touchChromeLayers(colours, kind, pose, expanded), { x, y });
+  const [r, g, b, a] = touchChromePixel(4, touchChromeLayers(colours, kind, pose, expanded), {
+    x,
+    y,
+  });
   return { alpha: a, colour: (r << 16) | (g << 8) | b };
 }
 it.each<TouchChromeKind>(["use", "jump", "move"])(
@@ -51,4 +55,11 @@ it.each<[string, keyof typeof colours, TouchChromeKind, TouchChromePose, number,
   ["held knob", "white", "knob", "held", 5.5, 5.5],
 ])("lights only the dragged Move chevron: paints the %s %s", (_, colour, kind, pose, x, y) => {
   expect(sample(kind, pose, x, y).colour).toBe(colours[colour]);
+});
+
+it("sizes a chrome frame to one texel per screen pixel", () => {
+  expect(chromeTexels((1110 / 1024) * 3, 35)).toBe(114);
+  expect(chromeTexels(1280 / 720, 35)).toBe(62);
+  expect(chromeTexels(1920 / 720, 75)).toBe(200);
+  expect(chromeTexels(0.001, 35)).toBe(1);
 });
