@@ -344,7 +344,6 @@ export const TEXT: GameText = {
   update: {
     accept: "Update now",
     cancel: "Cancel",
-    // CLEANUP (added 2026-11-11): placeholder until Gameplay supplies the close X's accessible name.
     close: "Close",
     title: "Update available",
   },
