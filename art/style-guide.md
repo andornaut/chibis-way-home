@@ -222,7 +222,7 @@ Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing r
 - Frame 48x42, feet on rows 39 and 40 and the outline on row 41.
 - Collision body 24x36 (2x3 tiles), anchored bottom-centre: the frame's bottom edge sits on the body's bottom edge, and his body-centre x, 24 (the frame's centre line, between columns 23 and 24), sits on the body's centre, so mirroring him does not move it.
 - Overhang of the 24x36 body at rest: his back and tail 8px on the left, his head and bill 10px on the right, and 2px of the body's height above his head left empty. The raised wing reaches 5px above the body, and the jump crouch and land squash push his tail out to 12px on the left.
-- Portrait: 48x48, his head set into the top of his body, facing right, cut off by the bottom edge, with one ink outer line on a transparent ground. The dialogue box's 68x68 frame supplies the backing.
+- Portrait: 48x48, his head set into the top of his body, facing right, cut off by the bottom edge, with one ink outer line on a transparent ground. The dialogue box's 52x52 frame supplies the backing.
 
 ## Logo
 
