@@ -151,6 +151,8 @@ it("uses completed-step production observations without leaking the legacy sampl
   const emitter = area.objects.findIndex(({ character }) => character === sample.boss);
   const object = area.objects[emitter]!;
   const template = Object.values(object.spawnTemplates!)[0]!;
+  // `rise` moves this file's floor-level points onto the sample's entry row.
+  const rise = floor.y - area.entries[layout.start.entry]!.y;
   const action = Object.values(object.behaviour!.states)
     .flatMap(({ onEnter }) => onEnter ?? [])
     .find((entry) => entry.kind === "spawn" && entry.character === template.character)!;
@@ -159,14 +161,14 @@ it("uses completed-step production observations without leaking the legacy sampl
   }
   const zone = {
     ...startZone(ORDINARY, layout, 0),
-    bird: initial(),
+    bird: { ...initial(), y: initial().y - rise },
     seconds: 331 * STEP_SECONDS,
     steps: 331,
     transients: [
       {
         age: action.armSeconds + STEP_SECONDS,
         armSeconds: action.armSeconds,
-        at: { x: 300, y: 924 },
+        at: { x: 300, y: 924 - rise },
         emitter,
         gravity: action.gravity,
         id: 1,
