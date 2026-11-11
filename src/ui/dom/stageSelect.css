@@ -159,8 +159,13 @@
   color: var(--colour-white);
 }
 
-/* A locked stage: dark slate labels, as on a disabled text button, and the screenshot multiplied
-   by grey and faded. */
+/* A locked stage: its content centred on the whole lipless face, half the lip lower, and dark
+   slate labels, as on a disabled text button, with the screenshot multiplied by grey and faded. */
+.stage-select-stage[data-look="locked"]
+  :is(.stage-select-number, .stage-select-preview, .stage-select-name) {
+  translate: 0 calc(var(--ui-unit) * var(--button-lip) / 2 * 1px);
+}
+
 .stage-select-stage[data-look="locked"] [data-ui-refusal-label] {
   color: var(--colour-dslate);
 }
