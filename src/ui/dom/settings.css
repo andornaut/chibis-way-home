@@ -39,12 +39,10 @@
   outline: none;
 }
 
-/* Art's ui-focus ring round the focused row, as on a text button's face. */
+/* Art's ui-focus ring round the focused row. The row is clear but for its icon, label and
+   control, so, as the close X, it takes no ink background. */
 .settings-row:focus-visible {
-  box-shadow:
-    0 0 0 var(--focus-ink) var(--colour-ink),
-    0 0 0 var(--focus-band) var(--colour-yellow),
-    0 0 0 var(--focus-outset) var(--colour-ink);
+  box-shadow: var(--focus-ring);
 }
 
 .settings-icon {
