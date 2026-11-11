@@ -176,3 +176,103 @@
     0 0 0 var(--focus-band) var(--colour-yellow),
     0 0 0 var(--focus-outset) var(--colour-ink);
 }
+
+/* Art's ui-button-primary face, with a white label. */
+.ui-text-button-primary .ui-text-button-face {
+  --ui-frame-image: var(--ui-button-primary-image);
+  --ui-frame-slice: var(--ui-button-primary-slice);
+  --ui-frame-width: var(--ui-button-primary-border);
+
+  color: var(--colour-white);
+}
+
+.ui-text-button-primary[data-pressed] .ui-text-button-face {
+  --ui-frame-image: var(--ui-button-primary-pressed-image);
+  --ui-frame-slice: var(--ui-button-primary-pressed-slice);
+}
+
+/* A disabled text button: art's flat disabled ui-button face, which has no lip, with a dark slate
+   label centred on the whole button. It takes no press, so it never shows pressed or focused. */
+.ui-text-button:disabled {
+  cursor: default;
+}
+
+.ui-text-button:disabled .ui-text-button-face {
+  --ui-frame-image: var(--ui-button-disabled-image);
+  --ui-frame-slice: var(--ui-button-disabled-slice);
+
+  padding-top: calc(var(--ui-unit) * (var(--ui-button-bottom) - var(--ui-button-top)) * 1px);
+  padding-bottom: 0;
+  color: var(--colour-dslate);
+}
+
+/* A card with a close X holds the X in its top-right corner and its title in a header that
+   starts at the frame. */
+.ui-card-closeable {
+  position: relative;
+  padding-top: 0;
+}
+
+/* The header reaches down to where the body's press areas clear the X's press area by the gap,
+   or further for a taller title, and centres the title's ink in it: the frame to the title's ink
+   equals the title's ink to the first button's face. The title keeps clear of the X's press area
+   on both sides, so it stays centred. */
+.ui-card-header {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  min-height: calc(
+    var(--ui-unit) * (var(--close-clear) + var(--button-hit) - var(--card-frame)) * 1px
+  );
+  margin-bottom: calc(-1 * var(--ui-unit) * var(--card-gap) * 1px);
+  padding: var(--card-inside)
+    calc(var(--ui-unit) * (var(--close-reserve) - var(--card-padding)) * 1px);
+}
+
+.ui-card-header .ui-card-title {
+  margin-bottom: 0;
+}
+
+/* The X's box is its press area, reaching --close-hit past art's ui-close on every side, with the
+   art its inset in from the card's outer top and right edges. */
+.ui-close-button {
+  --at: calc(var(--ui-unit) * (var(--close-inset) - var(--close-hit)) * 1px - var(--card-edge));
+
+  position: absolute;
+  top: var(--at);
+  right: var(--at);
+  margin: 0;
+  padding: calc(var(--ui-unit) * var(--close-hit) * 1px);
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ui-close-button:focus {
+  outline: none;
+}
+
+.ui-close-face {
+  display: block;
+  width: calc(var(--ui-unit) * var(--close-size) * 1px);
+  height: calc(var(--ui-unit) * var(--close-size) * 1px);
+  background-image: var(--ui-close-image);
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+
+.ui-close-button[data-pressed] .ui-close-face {
+  background-image: var(--ui-close-pressed-image);
+}
+
+/* Art's ui-focus ring, outside the focused X, as on a text button. */
+.ui-close-button:focus-visible .ui-close-face {
+  box-shadow:
+    0 0 0 var(--focus-ink) var(--colour-ink),
+    0 0 0 var(--focus-band) var(--colour-yellow),
+    0 0 0 var(--focus-outset) var(--colour-ink);
+}

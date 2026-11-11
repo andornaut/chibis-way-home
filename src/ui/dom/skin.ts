@@ -22,6 +22,7 @@ export interface UiFrame {
 
 export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-button", name: "ui-button", tag: "normal" },
+  { art: "ui-button", name: "ui-button-disabled", tag: "disabled" },
   { art: "ui-button", name: "ui-button-pressed", tag: "pressed" },
   { art: "ui-button-primary", name: "ui-button-primary", tag: "normal" },
   { art: "ui-button-primary", name: "ui-button-primary-pressed", tag: "pressed" },
@@ -31,7 +32,7 @@ export const UI_FRAMES: readonly UiFrame[] = [
 ];
 
 // The palette colours the HTML UI's CSS reads, as --colour-<name>.
-export const UI_COLOURS = ["ink", "white", "yellow"] as const;
+export const UI_COLOURS = ["dslate", "grey", "ink", "white", "yellow"] as const;
 
 export interface SkinFrame {
   readonly name: string;

@@ -1,40 +1,24 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { focusTargets } from "@andornaut/game-kit/web/ui/dom/modalLayer";
+import { Scene } from "phaser";
 
 import { TEXT } from "../data/text";
-import type { AchievementEntry } from "../progress";
+import { TOUCH } from "../data/touch";
 import {
-  achievementsCardLayout,
-  cardTextOrigin,
-  focusKeyAction,
-  type PressArea,
-  pressedArea,
-  stepFocus,
+  type AchievementsCardView,
+  achievementsPerPage,
+  createAchievementsCard,
+  showAchievementsPage,
+  showPresses,
 } from "../ui";
 import { achievementIconFrame } from "./AchievementNoticeScene";
-import {
-  addCardHeading,
-  addCardText,
-  addCardTextIn,
-  addSlice,
-  addTextButton,
-  BODY_FONT,
-  cardFonts,
-  paletteColour,
-  pressTextButton,
-  ringFocus,
-  setTextButtonEnabled,
-  type TextButton,
-  TITLE_FONT,
-} from "./cardParts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
 import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onScenePointer } from "./modalInput";
-import { catchModalTaps } from "./modalTaps";
-import { fitPlayCamera, playPoint } from "./playCamera";
+import { modalInput } from "./modalInput";
 import { achievementCard } from "./save";
 
-// The scene that opens the Achievements card: it passes the card its keys and back while the card
-// shows, and hears when the card closes.
+// The scene that opens the Achievements card: it passes the card back while the card shows, and
+// hears when the card closes.
 export interface AchievementsOpener {
   achievementsClosed(): void;
 }
@@ -44,26 +28,27 @@ export interface AchievementsData {
 }
 
 type Target = "close" | "next" | "previous";
+const TARGETS: readonly Target[] = ["close", "next", "previous"];
+const ICON = "icon-achievement";
 
 // The Achievements card over the scene that opened it: every achievement in tier order, none
 // hidden, a page at a time with Previous, the page count and Next. An earned entry shows its
 // unlocked icon frame and an ink title and description; a locked one its locked frame and both in
 // grey, a no-death zone's current sequence beside its title. The close X, back, Escape, P and a
-// tap outside close it. Tab and the arrows move the keyboard's focus through Previous, Next and
-// the close X, and Enter and Space press the focused one.
+// tap outside close it. The card is HTML in the UI layer (src/ui/dom/achievements.ts), shown once
+// the dim of the scenes under it and the entries' icons are ready: a control acts when a press
+// lands on it and lifts on it; Tab and the arrows move the keyboard's focus, which starts on the
+// card itself, through the enabled pager buttons and the close X, and Enter and Space press the
+// focused one (the kit's modalLayer). Changing pages invalidates held presses, and moves the
+// focus off a pager button the change disables to the first enabled control. The opener passes
+// this scene back.
 export class AchievementsScene extends Scene {
-  private layout!: ReturnType<typeof achievementsCardLayout>;
-  private entries: readonly AchievementEntry[] = [];
-  private pageObjects: GameObjects.GameObject[][] = [];
-  private pager!: Readonly<Record<"next" | "previous", TextButton>>;
-  private pageCount!: GameObjects.BitmapText;
-  private closeX!: GameObjects.Sprite;
   private opener = "";
   private page = 0;
+  private perPage = 1;
   private closed = false;
-  private focus: Target | undefined;
-  private ring: GameObjects.NineSlice | undefined;
-  private pressed: Target | undefined;
+  private card: AchievementsCardView | undefined;
+  private closeModal: (() => void) | undefined;
 
   constructor() {
     super("achievements");
@@ -73,91 +58,65 @@ export class AchievementsScene extends Scene {
     this.opener = data.opener;
     this.page = 0;
     this.closed = false;
-    this.focus = undefined;
-    this.ring = undefined;
-    this.pressed = undefined;
-    this.pageObjects = [];
+    this.card = undefined;
+    this.closeModal = undefined;
   }
 
   create(): void {
-    fitPlayCamera(this);
     const words = TEXT.achievements;
-    this.entries = achievementCard();
-    const shown = this.entries.map(({ id, progress }) => ({
-      ...words.entries[id],
-      ...(progress && {
-        progress: words.progress
-          .replace("{have}", String(progress.have))
-          .replace("{need}", String(progress.need)),
-      }),
-    }));
-    this.layout = achievementsCardLayout(
-      cardFonts(this),
-      { ...words.pages, title: words.cardTitle },
-      shown,
+    const entries = achievementCard();
+    this.perPage = achievementsPerPage();
+    const card = createAchievementsCard(
+      document,
+      "achievements-card",
+      { ...words, ...words.pages, title: words.cardTitle },
+      entries.map(({ earned, id, progress }) => ({
+        ...words.entries[id],
+        earned,
+        ...(progress && {
+          progress: words.progress
+            .replace("{have}", String(progress.have))
+            .replace("{need}", String(progress.need)),
+        }),
+      })),
     );
-    const { card, close, pager, title } = this.layout;
-    const ink = paletteColour(this, "ink");
-    const grey = paletteColour(this, "grey");
-    addSlice(this, "ui-settings-card", card);
-    addCardHeading(this, title);
-    this.entries.forEach((entry, index) => {
-      const at = this.layout.entries[index]!;
-      const text = shown[index]!;
-      const colour = entry.earned ? ink : grey;
-      const page = Math.floor(index / this.layout.perPage);
-      const objects = [
-        this.add
-          .image(
-            at.icon.x,
-            at.icon.y,
-            "icon-achievement",
-            achievementIconFrame(this, entry.earned, entry.id),
-          )
-          .setOrigin(0),
-        addCardText(this, TITLE_FONT, at.title, text.title, colour),
-        ...at.description.map((line) => addCardText(this, BODY_FONT, line.at, line.text, colour)),
-        ...(at.progress && text.progress !== undefined
-          ? [addCardText(this, BODY_FONT, at.progress, text.progress, grey)]
-          : []),
-      ];
-      (this.pageObjects[page] ??= []).push(...objects);
-    });
-    this.pager = {
-      next: addTextButton(this, pager.next, words.pages.next),
-      previous: addTextButton(this, pager.previous, words.pages.previous),
-    };
-    this.pageCount = addCardTextIn(this, BODY_FONT, pager.count, this.pageText(), ink);
-    this.closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);
+    this.card = card;
+    card.root.hidden = true;
+    for (const target of TARGETS) {
+      card.buttons[target].addEventListener("click", () => this.act(target));
+    }
     this.render();
-    catchModalTaps(this, this.cameras.main, {
-      close: () => this.back(),
-      covered: () => [card, close.hit, pager.next.hit, pager.previous.hit],
+    const icons = Promise.all(
+      entries.map(async ({ earned, id }, index) => {
+        card.entries[index]!.icon.src = await artFrameUrl(
+          this,
+          ICON,
+          achievementIconFrame(this, earned, id),
+        );
+      }),
+    ).catch((error: unknown) => console.warn("The achievement icons failed to load", error));
+    const input = modalInput(this);
+    const backdrop = showModalBackdrop(this);
+    const guard = { gate: input };
+    const stops = [
+      guardClicks(guard, card.root),
+      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.back(), card.backdrop),
+      showPresses(() => input.accepts(), card.root),
+    ];
+    let shown = true;
+    this.events.once("shutdown", () => {
+      shown = false;
+      this.closeModal?.();
+      this.closeModal = undefined;
+      stops.forEach((stop) => stop());
     });
-    this.watchInput();
-    modalInput(this).subscribe(() => {
-      this.pressed = undefined;
-      this.render();
-    });
-    showModalBackdrop(this);
-  }
-
-  // A key the opener passes on while the card shows.
-  key(event: KeyboardEvent): void {
-    if (this.closed || !this.sys.isActive() || !modalInput(this).accepts(event)) {
-      return;
-    }
-    const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
-    if (action === "close") {
-      this.back();
-    } else if (action === "press") {
-      if (this.focus !== undefined) {
-        this.act(this.focus);
+    mountSceneView(this, card.root);
+    void Promise.all([backdrop.ready, icons]).then(() => {
+      if (shown && !this.closed) {
+        card.root.hidden = false;
+        this.closeModal = sceneDomUi(this)?.modals.open({ close: () => this.back() }, card.dialog);
       }
-    } else if (action !== undefined) {
-      this.focus = stepFocus(this.targets(), this.focus, action);
-      this.render();
-    }
+    });
   }
 
   // Back, Escape, P, the close X and a tap outside the card close it.
@@ -166,21 +125,14 @@ export class AchievementsScene extends Scene {
       return;
     }
     this.closed = true;
+    this.closeModal?.();
+    this.closeModal = undefined;
     this.scene.stop();
     (this.scene.get(this.opener) as Scene & AchievementsOpener).achievementsClosed();
   }
 
-  // The enabled controls, in focus order.
-  private targets(): Target[] {
-    return [
-      ...(this.page > 0 ? ["previous" as const] : []),
-      ...(this.page + 1 < this.layout.pages ? ["next" as const] : []),
-      "close",
-    ];
-  }
-
   private act(target: Target): void {
-    if (this.closed || !modalInput(this).accepts()) {
+    if (this.closed || !this.sys.isActive() || !modalInput(this).accepts()) {
       return;
     }
     if (target === "close") {
@@ -188,77 +140,34 @@ export class AchievementsScene extends Scene {
       return;
     }
     const page = this.page + (target === "next" ? 1 : -1);
-    if (page < 0 || page >= this.layout.pages) {
+    if (page < 0 || page * this.perPage >= (this.card?.entries.length ?? 0)) {
       return;
     }
     this.page = page;
-    this.pressed = undefined;
-    if (this.focus !== undefined && !this.targets().includes(this.focus)) {
-      this.focus = this.targets()[0];
-    }
     modalInput(this).invalidate();
     this.render();
   }
 
-  private targetAt(pointer: Input.Pointer): Target | undefined {
-    const { close, pager } = this.layout;
-    const areas: PressArea<Target>[] = [
-      { art: close.art, hit: close.hit, key: "close" },
-      ...(["next", "previous"] as const)
-        .filter((key) => this.targets().includes(key))
-        .map((key) => ({ art: pager[key].button, hit: pager[key].hit, key })),
-    ];
-    return pressedArea(areas, playPoint(this, pointer));
-  }
-
-  private watchInput(): void {
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.pressed = this.targetAt(pointer);
-      this.render();
-    });
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
-      const target = this.pressed;
-      this.pressed = undefined;
-      this.render();
-      if (!pointer.wasCanceled && target !== undefined && target === this.targetAt(pointer)) {
-        this.act(target);
-      }
-    });
-  }
-
-  private pageText(): string {
-    return TEXT.achievements.pages.page
-      .replace("{page}", String(this.page + 1))
-      .replace("{pages}", String(this.layout.pages));
-  }
-
-  // The current page's entries, the pager as the page leaves it, and the focus ring.
+  // The current page, its count and the pager as the page leaves it.
   private render(): void {
-    this.pageObjects.forEach((objects, page) => {
-      for (const object of objects) {
-        (object as GameObjects.Components.Visible & GameObjects.GameObject).setVisible(
-          page === this.page,
-        );
-      }
-    });
-    for (const key of ["next", "previous"] as const) {
-      const button = this.pager[key];
-      setTextButtonEnabled(this, this.targets().includes(key), button);
-      pressTextButton(button, this.pressed === key);
+    const card = this.card;
+    if (card === undefined) {
+      return;
     }
-    const text = this.pageText();
-    const origin = cardTextOrigin(cardFonts(this).body, this.layout.pager.count, text);
-    this.pageCount.setText(text).setPosition(origin.x, origin.y);
-    this.closeX.play(animationKey("ui-close", this.pressed === "close" ? "pressed" : "normal"));
-    const { close, pager } = this.layout;
-    this.ring = ringFocus(
-      this,
-      this.ring,
-      this.focus === undefined
-        ? undefined
-        : this.focus === "close"
-          ? close.art
-          : pager[this.focus].button,
+    const focused = card.root.ownerDocument.activeElement;
+    const pages = Math.ceil(card.entries.length / this.perPage);
+    showAchievementsPage(
+      {
+        countText: TEXT.achievements.pages.page
+          .replace("{page}", String(this.page + 1))
+          .replace("{pages}", String(pages)),
+        page: this.page,
+        perPage: this.perPage,
+      },
+      card,
     );
+    if (focused instanceof HTMLButtonElement && focused.disabled) {
+      focusTargets(card.dialog)[0]?.focus();
+    }
   }
 }

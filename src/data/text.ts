@@ -3,6 +3,7 @@ import type { GameText, StatsScopeText } from "./types";
 export const TEXT: GameText = {
   achievements: {
     cardTitle: "Achievements",
+    close: "Close",
     entries: {
       "clear-apartment": {
         description: "Clear every stage in Apartment building.",
@@ -88,9 +89,11 @@ export const TEXT: GameText = {
         title: "Spotless woodland",
       },
     },
+    locked: "Locked",
     notice: "{title}",
     pages: { next: "Next", page: "Page {page} of {pages}", previous: "Previous" },
     progress: "{have}/{need}",
+    unlocked: "Unlocked",
   },
   buttons: {
     jump: "Jump",

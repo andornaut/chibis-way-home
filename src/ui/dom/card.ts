@@ -1,7 +1,7 @@
 // A modal card in the HTML UI (ui.css .ui-card): a scene's view holding a full-area backdrop
 // that takes outside taps, and the card on the play view, in art's ui-settings-card frame, with
 // its title, an optional line of text and a row of equal text buttons in art's ui-button (or
-// ui-button-primary), and an optional close X in its top-right corner (update.css).
+// ui-button-primary), and an optional close X in its top-right corner.
 
 export interface CardWords<Key extends string> {
   // Each button's key and label, in the order the keyboard's focus moves through them, and
@@ -31,7 +31,7 @@ export interface CardView<Key extends string> {
 
 // A text button: the button is its press area (ui.css .ui-text-button), and its face is art's
 // frame with the label, which the focus ring wraps.
-function textButton(document: Document, label: string, primary = false): HTMLButtonElement {
+export function textButton(document: Document, label: string, primary = false): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
   button.className = primary ? "ui-text-button ui-text-button-primary" : "ui-text-button";
@@ -45,9 +45,9 @@ function textButton(document: Document, label: string, primary = false): HTMLBut
   return button;
 }
 
-// The close X: the button is its press area (update.css .ui-close-button), and its face is art's
+// The close X: the button is its press area (ui.css .ui-close-button), and its face is art's
 // ui-close, which the focus ring wraps. Its name is the accessible one; it shows no text.
-function closeButton(document: Document, name: string): HTMLButtonElement {
+export function closeButton(document: Document, name: string): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "ui-close-button";
@@ -110,10 +110,10 @@ export function createCard<Key extends string>(
   return { backdrop, buttons, ...(close && { close }), dialog, root };
 }
 
-// Shows each text button and close X under root pressed (data-pressed) from a pointer's press on it, while
-// accepts holds, until that pointer lifts or cancels anywhere. A touch press is released from
-// the implicit capture of the control it lands on, so a press that lifts off its button never
-// clicks it, as with a mouse. Returns its removal.
+// Shows each enabled text button and close X under root pressed (data-pressed) from a pointer's
+// press on it, while accepts holds, until that pointer lifts or cancels anywhere. A touch press
+// is released from the implicit capture of the control it lands on, so a press that lifts off its
+// button never clicks it, as with a mouse. Returns its removal.
 export function showPresses(accepts: () => boolean, root: HTMLElement): () => void {
   const document = root.ownerDocument;
   const pressed = new Map<number, HTMLElement>();
@@ -123,7 +123,12 @@ export function showPresses(accepts: () => boolean, root: HTMLElement): () => vo
       target.releasePointerCapture(pointerId);
     }
     const button = (event.target as Element | null)?.closest?.(".ui-text-button, .ui-close-button");
-    if (button instanceof HTMLElement && root.contains(button) && accepts()) {
+    if (
+      button instanceof HTMLButtonElement &&
+      !button.disabled &&
+      root.contains(button) &&
+      accepts()
+    ) {
       pressed.set(event.pointerId, button);
       button.dataset.pressed = "";
     }

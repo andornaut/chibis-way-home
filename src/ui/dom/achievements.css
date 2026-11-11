@@ -1,0 +1,115 @@
+/* The Achievements card (achievements.ts), on ui.css's .ui-card: lengths are base px times
+   --ui-unit, from the layout properties achievementsCardProperties writes on the card's view. */
+
+/* From the frame's inner top edge to the first entry title's cap top, with the title's cap height
+   midway, clear of the close X's press area on each side. */
+.achievements-header {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  height: calc(var(--ui-unit) * var(--achievements-header) * 1px);
+  margin-bottom: calc(var(--ui-unit) * -1 * (var(--card-gap) + var(--achievements-cap-top)) * 1px);
+  padding: 0 calc(var(--ui-unit) * (var(--close-reserve) - var(--card-padding)) * 1px);
+}
+
+.achievements-header .ui-card-title {
+  margin-bottom: 0;
+}
+
+/* The page's entries filled down each column then across, in as many rows as the first page
+   fills, so every page keeps the card's size. */
+.achievements-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(
+    var(--achievements-columns),
+    calc(var(--ui-unit) * var(--achievements-column-width) * 1px)
+  );
+  grid-template-rows: repeat(
+    var(--achievements-rows),
+    calc(var(--ui-unit) * var(--achievements-entry-height) * 1px)
+  );
+  gap: calc(var(--ui-unit) * var(--achievements-row-gap) * 1px)
+    calc(var(--ui-unit) * var(--achievements-column-gap) * 1px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: start;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+}
+
+/* The icon centred on the title's line, the text beside it; an earned entry in ink, a locked one
+   in grey. */
+.achievements-entry {
+  display: grid;
+  grid-template-columns: calc(var(--ui-unit) * var(--achievements-icon) * 1px) 1fr;
+  align-items: start;
+  column-gap: calc(var(--ui-unit) * var(--achievements-icon-gap) * 1px);
+  min-width: 0;
+  color: var(--colour-grey);
+}
+
+.achievements-entry[data-earned] {
+  color: var(--colour-ink);
+}
+
+.achievements-entry[hidden] {
+  display: none;
+}
+
+.achievements-icon {
+  display: block;
+  width: calc(var(--ui-unit) * var(--achievements-icon) * 1px);
+  height: calc(var(--ui-unit) * var(--achievements-icon) * 1px);
+  margin-top: calc(var(--ui-unit) * (var(--text-line) - var(--achievements-icon)) / 2 * 1px);
+  image-rendering: pixelated;
+}
+
+.achievements-text {
+  min-width: 0;
+}
+
+/* The title, with a locked no-death zone's count in grey at the line's right end. */
+.achievements-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.achievements-title {
+  font-weight: 700;
+}
+
+.achievements-progress {
+  color: var(--colour-grey);
+}
+
+.achievements-description {
+  margin: 0;
+}
+
+/* Previous and Next as equal text buttons with the page count between them, a gap from each face,
+   their press areas reaching --button-hit past their faces. */
+.achievements-pager {
+  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
+  --half-gap: calc(var(--ui-unit) * var(--button-gap) / 2 * 1px);
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: var(--half-gap);
+  margin: calc(-1 * var(--hit));
+}
+
+.achievements-page {
+  margin: 0;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

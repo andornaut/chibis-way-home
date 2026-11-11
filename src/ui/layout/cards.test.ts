@@ -9,9 +9,7 @@ import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
 import { deathLabels, deathSummary } from "../../presentation";
-import { ACHIEVEMENT_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
-import { achievementsCardLayout } from "./achievementsCard";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
   CARD_HEADING,
@@ -104,12 +102,6 @@ const skillInkTop = (layout: ReturnType<typeof skillDetails>) => {
     ),
   );
 };
-const achievementWords = ACHIEVEMENT_IDS.map((id) => TEXT.achievements.entries[id]);
-const achievements = achievementsCardLayout(
-  CARD_FONTS,
-  { ...TEXT.achievements.pages, title: TEXT.achievements.cardTitle },
-  achievementWords,
-);
 const deathWords = deathSummary(TEXT.death, {
   activeSeconds: 65,
   ...deathLabels(ZONE_MAP, TEXT.map, "1", ZONE_MAP.destinations[0]!.stages[0]!),
@@ -136,17 +128,6 @@ it.each([
     content: centredInkTop(variants[0]!.moveControls.label, TEXT.settings.moveControls),
     layout: variants[0]!,
     name: "settings",
-  },
-  {
-    content: Math.min(
-      ...achievements.entries
-        .slice(0, 2)
-        .map(({ title }, index) =>
-          textInkTop(CARD_FONTS.title, title, achievementWords[index]!.title),
-        ),
-    ),
-    layout: achievements,
-    name: "achievements",
   },
   { content: pause.resume.button.y, layout: pause, name: "pause" },
   ...installs.map((layout) => ({

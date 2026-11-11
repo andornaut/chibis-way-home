@@ -93,7 +93,7 @@ const INDEXED = {
   presentation: { loading: ["./zoneTheme.ts"] },
   progress: { scenes: ["./save/pageSave.ts"] },
   stage: {},
-  ui: { "*": ["./dom/ui.css", "./dom/update.css", "./input/frameTurn.ts"] },
+  ui: { "*": ["./dom/achievements.css", "./dom/ui.css", "./input/frameTurn.ts"] },
 };
 
 // CLEANUP (added 2026-11-04): the files of the one value import cycle, where timedHazard imports

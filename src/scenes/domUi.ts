@@ -1,4 +1,5 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { cutFrame } from "@andornaut/game-kit/web/ui/dom/sheetFrames";
 import { Core, type Game, Scale, type Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json";
@@ -20,6 +21,8 @@ import { sceneFit } from "./playCamera";
 
 const MANIFEST = manifestJson as ArtManifest;
 const layers = new WeakMap<Game, UiLayer>();
+// Each game's cut art frames' blob: URLs, by art key and frame name.
+const frameUrls = new WeakMap<Game, Map<string, Promise<string>>>();
 
 // Each UI frame's nine-slice edges, from art's manifest.
 function frameSlice(art: string): NonNullable<SkinFrame["slice"]> {
@@ -104,4 +107,30 @@ export function mountSceneView(scene: Scene, view: HTMLElement): () => void {
     (() => view.remove());
   scene.events.once("shutdown", unmount);
   return unmount;
+}
+
+// A blob: URL of art's frameName (its sheet's first where none) for an <img>, cut once per game
+// from the image the scene's loader has. A failed cut is tried again on the next call.
+export function artFrameUrl(
+  scene: Scene,
+  art: string,
+  frameName?: number | string,
+): Promise<string> {
+  const urls = frameUrls.get(scene.game) ?? new Map<string, Promise<string>>();
+  frameUrls.set(scene.game, urls);
+  const key = `${art}:${String(frameName ?? "")}`;
+  const cached = urls.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const frame = scene.textures.getFrame(art, frameName);
+  const url = cutFrame(document, frame.source.image as CanvasImageSource, {
+    height: frame.cutHeight,
+    width: frame.cutWidth,
+    x: frame.cutX,
+    y: frame.cutY,
+  });
+  urls.set(key, url);
+  url.catch(() => urls.delete(key));
+  return url;
 }

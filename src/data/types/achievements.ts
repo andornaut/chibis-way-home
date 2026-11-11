@@ -61,8 +61,12 @@ interface AchievementText {
 export interface AchievementsText {
   // The Achievements card's title.
   readonly cardTitle: string;
+  // The card's close X's accessible name.
+  readonly close: string;
   // Each achievement's title and description.
   readonly entries: Readonly<Record<AchievementId, AchievementText>>;
+  // A locked entry's state, its icon's text alternative.
+  readonly locked: string;
   // The unlock notice: {title} is the achievement's title.
   readonly notice: string;
   // The card's pager, as the stage chooser's.
@@ -73,4 +77,6 @@ export interface AchievementsText {
   };
   // A locked no-death zone's current sequence, as {have}/{need}.
   readonly progress: string;
+  // An earned entry's state, its icon's text alternative.
+  readonly unlocked: string;
 }

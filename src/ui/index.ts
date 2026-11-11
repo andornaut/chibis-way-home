@@ -35,6 +35,11 @@ export {
   type ResolvedDialogueChoice,
 } from "./dialogue/conversation";
 export { statsStatement } from "./dialogue/statsStatement";
+export {
+  type AchievementsCardView,
+  createAchievementsCard,
+  showAchievementsPage,
+} from "./dom/achievements";
 export { type CardView, createCard, showPresses } from "./dom/card";
 export { createUiLayer, loadUiFonts, UI_LAYOUT, type UiLayer } from "./dom/layer";
 export { applySkin, type SkinFrame, UI_FRAMES } from "./dom/skin";
@@ -51,10 +56,9 @@ export { MAP_ACTIONS, type MapAction, mapKeyAction } from "./input/mapInput";
 export { isMouseMovementKey, listenMouseMovement } from "./input/mouseMovement";
 export { stagePickerKey } from "./input/stageSelectInput";
 export {
-  type AchievementEntryLayout,
-  achievementsCardLayout,
+  achievementsCardProperties,
+  achievementsListTop,
   achievementsPerPage,
-  type AchievementWords,
 } from "./layout/achievementsCard";
 export { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./layout/actionHelp";
 export {
