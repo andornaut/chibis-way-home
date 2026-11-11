@@ -30,11 +30,12 @@
  * - Positions here are the base 720x360 layout as drawn. At runtime the game keeps every control
  *   inside the game's view across, ui-pause at the view's top and Use, Jump and the move hint at
  *   the screen's bottom, and sizes their press areas (src/ui/layout/hitAreas.ts). Each drawn edge sits
- *   at least 8px from the edge it is placed against. Jump's ring is 8px in from the right and 20px
- *   up from the bottom, and the pause disc 8px in from the top and left.
- * - ui-touch-use, 75x75, centre pixel 37,37: top-left 561,166 for the centre 598,203.
- * - ui-touch-jump, 75x75, centre pixel 37,37: top-left 638,266 for the centre 675,303, towards the
- *   bottom-right corner, with Use above and to its left.
+ *   at least 8px from the edge it is placed against, and the pause disc 8px in from the top and
+ *   left. Use, Jump and move hint placement belongs to the runtime layout
+ *   (src/ui/layout/playView.ts) and the style guide's touch controls table.
+ * - ui-touch-use, 75x75, centre pixel 37,37.
+ * - ui-touch-jump, 75x75, centre pixel 37,37, towards the bottom-right corner, with Use above and
+ *   to its left.
  * - Each is the move hint's open ring, 73px across with no face: a 2px cream band between 1px ink
  *   lines, with its icon centred in 2px strokes and fringed in ink, so it reads on any ground:
  *   three round dots (25x7) on Use, their top 3px above the centre, and a caret (21x11) on Jump,
@@ -49,8 +50,7 @@
  * - ui-move-hint, 75x75, centre pixel 37,37: a drawing only, with no press area. An open ring 73px
  *   across with no face, a 2px cream band between 1px ink lines, and a 2x chevron (8x10) each side,
  *   22px from the centre, fringed in ink, so it reads on any ground, sky, character or prop. At
- *   rest its centre is level with Jump's and its ring as far in from the view's left as Use's is
- *   from its right: centre 121,303 (top-left 84,266) at 720 wide. While a touch moves her, the game
+ *   rest it mirrors Jump at the bottom-left. While a touch moves her, the game
  *   draws it centred on that touch's neutral point (where the drag began), anywhere on screen, and
  *   puts it back on release. Tags rest; held-left and held-right (the dragged side's chevron
  *   white); one frame each.
