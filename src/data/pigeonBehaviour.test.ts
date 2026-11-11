@@ -20,6 +20,7 @@ import {
   FERRET_BEHAVIOUR,
   GOOSE_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
+  PIGEON_DROP_COMMIT_TOLERANCE,
   RACCOON_BEHAVIOUR,
 } from "./behaviours";
 import { BIRD } from "./bird";
@@ -414,6 +415,74 @@ it("actual close swoop tell retreats to overhead range and restarts its full tel
   }
   expect(state.activeAttack?.phase).toBe("committed");
   expect(elapsed).toBeGreaterThanOrEqual(duration.seconds - 1e-6);
+});
+
+// Chibi runs along the approach side through the drop tell, so Pebble trails the moving goal.
+// The drop commits within its tolerance; held to the approach's own arrival, the tell lapses.
+it.each([
+  ["commits within its drop tolerance", PIGEON_DROP_COMMIT_TOLERANCE],
+  ["lapses at the approach's arrival tolerance", undefined],
+] as const)("actual Pebble's drop tell %s while Chibi runs", (_, tiles) => {
+  const object = make();
+  const tell = object.behaviour!.states["prepare-drop"]!;
+  const approach = object
+    .behaviour!.states.pursuit!.transitions.flatMap(({ when }) => when)
+    .find((condition) => condition.kind === "arrived");
+  if (approach?.kind !== "arrived") {
+    throw Error("Expected approach arrival");
+  }
+  const tolerance = tiles === undefined ? approach.tolerance : tiles * TILE;
+  const tightened = {
+    ...object,
+    behaviour: {
+      ...object.behaviour!,
+      states: {
+        ...object.behaviour!.states,
+        "prepare-drop": {
+          ...tell,
+          transitions: tell.transitions.map((transition) =>
+            transition.to === "align-drop"
+              ? {
+                  ...transition,
+                  when: transition.when.map((condition) =>
+                    condition.kind === "arrived" ? { ...condition, tolerance } : condition,
+                  ),
+                }
+              : transition,
+          ),
+        },
+      },
+    },
+  };
+  const physical = world();
+  let bird = target();
+  let at = object.origin,
+    state = engaged(tightened, bird, "due");
+  for (
+    let tick = 0;
+    tick < initialTellTicks(tightened, "pursuit") && state.stateKey !== "prepare-drop";
+    tick++
+  ) {
+    const step = stepBehaviour(BIRD, tightened, physical, 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+  }
+  expect(state.stateKey).toBe("prepare-drop");
+  const move = state.flightApproachDirection!;
+  for (let tick = 0; tick < 240 && state.stateKey === "prepare-drop"; tick++) {
+    bird = stepBird(BIRD, physical.solids, [], 1 / 120, { jumpHeld: false, move }, bird);
+    const step = stepBehaviour(BIRD, tightened, physical, 1 / 120, bird, at, state);
+    at = step.at;
+    state = step.state;
+  }
+  expect(Math.sign(bird.vx)).toBe(move);
+  if (tiles !== undefined) {
+    expect(state.stateKey).toBe("align-drop");
+    expect(state.activeAttack).toEqual({ id: "drop-burst", phase: "committed" });
+  } else {
+    expect(state.stateKey).toBe("return-high");
+    expect(state.activeAttack).toBeUndefined();
+  }
 });
 
 it("actual Pebble cancels a blocked-sight tell on time and returns to support without cooldown", () => {
