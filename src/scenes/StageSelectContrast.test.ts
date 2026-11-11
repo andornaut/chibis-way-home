@@ -7,7 +7,8 @@ import { createStageSelect, STAGES_PER_PAGE } from "../ui";
 
 const destination = ZONE_MAP.destinations.find(({ stages }) => stages.length === 6)!;
 
-// Each look's colours and fades are stageSelect.css's, checked in the browser.
+// Each look's colours and fades are stageSelect.css's; contrast.test.ts holds a locked stage's
+// labels at 4.5:1.
 it("keeps every unlocked stage in a legible look on both Apartment pages, dimming only locked ones", () => {
   const latest = destination.stages[3]!;
   const unlocked = destination.stages.slice(0, 4);

@@ -67,8 +67,8 @@
 }
 
 /* Art's frame under the face's content: ui-button, ui-button-primary for the latest stage, and
-   ui-button multiplied by lgrey for a locked one, which never shows pressed (card.ts
-   showPresses). */
+   the flat disabled ui-button, which has no lip, for a locked one, which never shows pressed
+   (card.ts showPresses). */
 .stage-select-frame {
   --ui-frame-image: var(--ui-button-image);
   --ui-frame-slice: var(--ui-button-slice);
@@ -95,8 +95,8 @@
 }
 
 .stage-select-stage[data-look="locked"] .stage-select-frame {
-  --ui-frame-image: var(--ui-button-locked-image);
-  --ui-frame-slice: var(--ui-button-locked-slice);
+  --ui-frame-image: var(--ui-button-disabled-image);
+  --ui-frame-slice: var(--ui-button-disabled-slice);
 }
 
 .stage-select-number,
@@ -159,18 +159,10 @@
   color: var(--colour-white);
 }
 
-/* A locked stage: grey labels, the name and number faded, and the screenshot multiplied by grey
-   and faded further. */
+/* A locked stage: dark slate labels, as on a disabled text button, and the screenshot multiplied
+   by grey and faded. */
 .stage-select-stage[data-look="locked"] [data-ui-refusal-label] {
-  color: var(--colour-grey);
-}
-
-.stage-select-stage[data-look="locked"] .stage-select-name {
-  opacity: 0.7;
-}
-
-.stage-select-stage[data-look="locked"] .stage-select-number {
-  opacity: 0.5;
+  color: var(--colour-dslate);
 }
 
 .stage-select-stage[data-look="locked"] .stage-select-preview {

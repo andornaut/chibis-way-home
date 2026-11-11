@@ -84,8 +84,7 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
   }
   const document = layer.element.ownerDocument;
   const skin = async () => {
-    const { colours } = palette(scene);
-    const frames = UI_FRAMES.map(({ art, name, tag, tint, whole }): SkinFrame => {
+    const frames = UI_FRAMES.map(({ art, name, tag, whole }): SkinFrame => {
       const frameName =
         tag === undefined
           ? undefined
@@ -99,7 +98,6 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
         rect: { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY },
         ...(whole === undefined && { slice: frameSlice(art) }),
         source: frame.source.image as CanvasImageSource,
-        ...(tint !== undefined && { tint: paletteHex(colours, tint) }),
       };
     });
     await applySkin(document, palette(scene), frames, layer.element);
