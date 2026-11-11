@@ -1,5 +1,7 @@
 // The words the player reads, dialogue and the opening.
 
+import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
+
 import type { AchievementsText } from "./achievements";
 import type { SkillId } from "./bird";
 import type { Point } from "./geometry";
@@ -124,27 +126,22 @@ export interface GameText {
     readonly start: string;
   };
   // The settings card: its title, the Move controls and Action buttons rows, the Install row and
-  // its button, and the install steps card: its title and, for each browser that installs only
-  // from its own menu, its two steps.
+  // its button, and the install steps for each kind of browser, shown on the settings card's
+  // steps card and in the home page's steps dialog where the browser holds no install prompt.
   readonly settings: {
     readonly actionButtons: string;
     readonly install: string;
     readonly installButton: string;
-    readonly installSteps: {
-      readonly firefoxAndroid: InstallSteps;
-      readonly ios: InstallSteps;
-      readonly title: string;
-    };
+    readonly installSteps: Readonly<Record<InstallStepsKind, InstallSteps>>;
     readonly moveControls: string;
     readonly title: string;
   };
 }
 
-// A browser's install steps: the first beside its button's glyph, the second beside the install
-// glyph.
+// A browser's install steps: the card or dialog title, and the steps as one paragraph.
 interface InstallSteps {
-  readonly first: string;
-  readonly second: string;
+  readonly steps: string;
+  readonly title: string;
 }
 
 // One paragraph in a linear conversation: speaker names a SPEAKERS entry, line a TEXT.lines key.

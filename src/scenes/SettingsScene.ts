@@ -1,6 +1,6 @@
 import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { buildLabel as formatBuildLabel } from "@andornaut/game-kit/web/build/buildLabel";
-import { type MenuInstallBrowser, offersInstall } from "@andornaut/game-kit/web/pwa/installState";
+import { type InstallStepsKind, offersInstall } from "@andornaut/game-kit/web/pwa/installState";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text";
@@ -66,19 +66,25 @@ interface SettingRow {
   readonly toggle: GameObjects.Sprite;
 }
 
-// The glyph of the button each browser's install steps start from.
-const STEPS_GLYPHS: Readonly<Record<MenuInstallBrowser, string>> = {
+// The glyph beside each kind of browser's install steps: the control they start from, Share or
+// the browser menu, or the install glyph where they start from the address bar or install nothing.
+const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string>> = {
+  chromiumAndroid: "icon-browser-menu",
+  chromiumDesktop: "icon-install",
   firefoxAndroid: "icon-browser-menu",
+  firefoxDesktop: "icon-install",
   ios: "icon-ios-share",
+  other: "icon-browser-menu",
+  safariMac: "icon-browser-menu",
+  samsungInternet: "icon-browser-menu",
 };
 
 // The settings card, which the pause card opens in its place over the same dim, or the start
-// screen over itself: the Move controls and Action buttons rows, the Install row while the game
-// can be installed,
-// and the build label. A row acts when a press lands on it and lifts on it; the close X, back,
-// Escape and P close the card, back to the scene that opened it. Install shows the browser's
-// install prompt or, for a browser that installs only from its own menu, the install steps card
-// in the settings card's place, which the same controls close. Up and Down move the keyboard's
+// screen over itself: the Move controls and Action buttons rows, the Install row until the game
+// is installed, and the build label. A row acts when a press lands on it and lifts on it; the
+// close X, back, Escape and P close the card, back to the scene that opened it. Install shows the
+// browser's install prompt where it holds one, otherwise the install steps card for the browser's
+// own install steps in the settings card's place, which the same controls close. Up and Down move the keyboard's
 // focus through the controls; Enter and Space press the focused one. The opener passes this
 // scene its keys and back.
 export class SettingsScene extends Scene {
@@ -215,38 +221,28 @@ export class SettingsScene extends Scene {
     }
   }
 
-  // The browser's install prompt, or the install steps card where the browser installs only
-  // from its own menu.
+  // The browser's install prompt where it holds one, otherwise the install steps card for the
+  // browser's own install steps.
   private install(): void {
     const flow = installOffer();
     void flow.install().then((outcome) => {
-      if (outcome === "menuSteps" && flow.menuBrowser !== undefined && this.scene.isActive()) {
-        this.openSteps(flow.menuBrowser);
+      if (outcome === "steps" && this.scene.isActive()) {
+        this.openSteps(flow.stepsKind);
       }
     });
   }
 
-  private openSteps(browser: MenuInstallBrowser): void {
+  private openSteps(kind: InstallStepsKind): void {
     modalInput(this).invalidate();
-    const words = TEXT.settings.installSteps;
-    this.stepsLayout = stepsCard(cardFonts(this), words.title, [
-      words[browser].first,
-      words[browser].second,
-    ]);
+    const words = TEXT.settings.installSteps[kind];
+    this.stepsLayout = stepsCard(cardFonts(this), words.title, words.steps);
     const { close, steps } = this.stepsLayout;
-    const ink = this.colour("ink");
-    const texts = [words[browser].first, words[browser].second];
-    const stepObjects = steps.flatMap(({ glyph, text }, index) => [
-      this.add
-        .image(glyph.x, glyph.y, index === 0 ? STEPS_GLYPHS[browser] : "icon-install")
-        .setOrigin(0),
-      addCardTextIn(this, BODY_FONT, text, texts[index]!, ink),
-    ]);
     this.steps = this.add.container(0, 0, [
       addSlice(this, "ui-settings-card", this.stepsLayout.card),
       addCardHeading(this, this.stepsLayout.title),
       this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0),
-      ...stepObjects,
+      this.add.image(steps.glyph.x, steps.glyph.y, STEPS_GLYPHS[kind]).setOrigin(0),
+      addCardTextIn(this, BODY_FONT, steps.text, steps.lines, this.colour("ink")),
     ]);
     this.card.setVisible(false);
     // A keyboard that pressed Install keeps its focus, on the steps card's close X.

@@ -6,6 +6,20 @@ import { TEXT } from "../data/text";
 import type { GameText } from "../data/types";
 import { actionHelpCss, actionHelpHtml, escaped } from "./actionHelp";
 
+// The steps dialog's sections, one per kind of browser in kind order, each marked data-steps with
+// its kind and titled by its h2, hidden until the install button shows the browser's own.
+export function installStepsHtml(steps: GameText["settings"]["installSteps"]): string {
+  return Object.entries(steps)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(
+      ([kind, { steps: paragraph, title }]) =>
+        `<div data-steps="${kind}" hidden>` +
+        `<h2 id="install-steps-${kind}">${escaped(title)}</h2>` +
+        `<p>${escaped(paragraph)}</p></div>`,
+    )
+    .join("\n");
+}
+
 // The same escaped description fills both the visible pitch and its metadata.
 export function homePageHtml(text: GameText, html: string): string {
   const copy: Readonly<Record<string, string>> = {
@@ -21,6 +35,9 @@ export function homePageHtml(text: GameText, html: string): string {
         return text.homePage.instructions
           .map((line) => `<li>${actionHelpHtml(text.buttons, line)}</li>`)
           .join("\n");
+      }
+      if (key === "INSTALL_STEPS") {
+        return installStepsHtml(text.settings.installSteps);
       }
       const value = copy[key];
       if (value === undefined) {

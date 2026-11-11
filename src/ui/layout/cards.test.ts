@@ -40,11 +40,9 @@ const pause = pauseCard(CARD_FONTS, TEXT.pause);
 const variants = [false, true].map((install) =>
   settingsCard(CARD_FONTS, TEXT.settings, BUILD_LABEL, install),
 );
-const installs = (["firefoxAndroid", "ios"] as const).map((browser) =>
-  stepsCard(CARD_FONTS, TEXT.settings.installSteps.title, [
-    TEXT.settings.installSteps[browser].first,
-    TEXT.settings.installSteps[browser].second,
-  ]),
+// Every kind's install steps, the longest included, wrapped within the steps card.
+const installs = Object.values(TEXT.settings.installSteps).map(({ steps, title }) =>
+  stepsCard(CARD_FONTS, title, steps),
 );
 const inside = (outer: Rect, inner: Rect) =>
   inner.x >= outer.x &&
@@ -72,7 +70,7 @@ const updateButton = cardActions(CARD_FONTS.title, "row", update.groups.actions!
 it.each([
   { first: pause.resume.hit, layout: pause },
   ...variants.map((layout) => ({ first: layout.moveControls.hit, layout })),
-  ...installs.map((layout) => ({ first: layout.steps[0]!.text, layout })),
+  ...installs.map((layout) => ({ first: layout.steps.text, layout })),
   { first: stageSelect.buttons[0]!.hit, layout: stageSelect },
   { first: updateButton.hit, layout: { ...update, close: update.close!, title: update.title! } },
 ])(
@@ -165,11 +163,8 @@ it.each([
     name: "achievements",
   },
   { content: pause.resume.button.y, layout: pause, name: "pause" },
-  ...installs.map((layout, index) => ({
-    content: centredInkTop(
-      layout.steps[0]!.text,
-      TEXT.settings.installSteps[index === 0 ? "firefoxAndroid" : "ios"].first,
-    ),
+  ...installs.map((layout) => ({
+    content: centredInkTop(layout.steps.text, layout.steps.lines),
     layout,
     name: "install",
   })),

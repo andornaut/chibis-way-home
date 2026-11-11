@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 
-import { describe, expect, it } from "vitest";
+import { wireInstallButton } from "@andornaut/game-kit/web/pwa/dom/installButton";
+import { watchInstall } from "@andornaut/game-kit/web/pwa/dom/installFlow";
+import { describe, expect, it, vi } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
 import palette from "../../public/art/palette.json";
@@ -8,6 +10,7 @@ import { CHUNKS } from "../data/chunks";
 import { TEXT } from "../data/text";
 import { RECIPES } from "../data/zones";
 import { themesOf } from "../rules/assemble";
+import { escaped } from "./actionHelp";
 import { homePageHtml, webManifestJson } from "./html";
 
 // The home page and the nav bar are static files, so what they state is checked against the
@@ -109,4 +112,71 @@ describe("the home page's zone 1", () => {
       }).toEqual({ placed: true, stated: true });
     },
   );
+});
+
+describe("the home page's install offer", () => {
+  const CHROME_DESKTOP =
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
+  const KINDS = Object.keys(TEXT.settings.installSteps);
+
+  it("renders a titled data-steps section for every kind from the data", async () => {
+    const dialog = /<dialog [^>]*id="install-steps"[^>]*>(.*?)<\/dialog>/u.exec(
+      await pageText(),
+    )![1]!;
+    const pattern =
+      /<div data-steps="(\w+)" hidden><h2 id="install-steps-\1">(.*?)<\/h2><p>(.*?)<\/p><\/div>/gu;
+    const sections = [...dialog.matchAll(pattern)].map(([, kind, title, steps]) => [
+      kind,
+      { steps, title },
+    ]);
+    expect(sections.map(([kind]) => kind)).toEqual([...KINDS].sort());
+    expect(Object.fromEntries(sections)).toEqual(
+      Object.fromEntries(
+        Object.entries(TEXT.settings.installSteps).map(([kind, { steps, title }]) => [
+          kind,
+          { steps: escaped(steps), title: escaped(title) },
+        ]),
+      ),
+    );
+    expect(dialog).not.toContain("data-browser");
+  });
+
+  it("shows Install in Chrome without a held prompt and opens the Chrome steps", async () => {
+    const host = Object.assign(new EventTarget(), {
+      matchMedia: () => ({ matches: false }),
+      navigator: { maxTouchPoints: 0, userAgent: CHROME_DESKTOP },
+    });
+    const sections = KINDS.map((kind) => ({ dataset: { steps: kind }, hidden: true }));
+    const dialog = Object.assign(new EventTarget(), {
+      close: vi.fn(),
+      querySelector: (selector: string) => {
+        const kind = /^\[data-steps="(\w+)"\]( h2)?$/u.exec(selector);
+        const section = sections.find(({ dataset }) => dataset.steps === kind?.[1]);
+        return section === undefined
+          ? null
+          : kind?.[2]
+            ? { id: `install-steps-${kind[1]}` }
+            : section;
+      },
+      querySelectorAll: () => sections,
+      setAttribute: vi.fn(),
+      showModal: vi.fn(),
+    });
+    const button = Object.assign(new EventTarget(), { hidden: true });
+    wireInstallButton(
+      watchInstall(host),
+      button as unknown as HTMLElement,
+      dialog as unknown as HTMLDialogElement,
+    );
+    expect(button.hidden).toBe(false);
+    button.dispatchEvent(new Event("click"));
+    await vi.waitFor(() => expect(dialog.showModal).toHaveBeenCalledOnce());
+    expect(sections.filter(({ hidden }) => !hidden).map(({ dataset }) => dataset.steps)).toEqual([
+      "chromiumDesktop",
+    ]);
+    expect(dialog.setAttribute).toHaveBeenCalledWith(
+      "aria-labelledby",
+      "install-steps-chromiumDesktop",
+    );
+  });
 });

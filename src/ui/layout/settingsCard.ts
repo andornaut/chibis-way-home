@@ -9,6 +9,7 @@ import {
 } from "./contentCard";
 import { HIT_RULE } from "./hitAreas";
 import { labelledButton } from "./labelledButton";
+import { wrappedCardText } from "./runStats";
 
 const ICON = 16;
 const SWITCH = { height: 16, width: 32 };
@@ -93,34 +94,40 @@ export function settingsCard(
   };
 }
 
-export function stepsCard(fonts: CardFonts, title: string, texts: readonly string[]) {
-  const widths = texts.map((text) => cardTextSize(fonts.body, text).width);
-  const sizes = texts.map((text) => cardTextSize(fonts.body, text));
+// Install steps wrap within this width beside their glyph, and the card grows to fit them.
+const STEPS_TEXT_WIDTH = 320;
+
+// The install steps card: the kind's title, and its steps beside their glyph.
+export function stepsCard(fonts: CardFonts, title: string, steps: string) {
+  const lines = wrappedCardText(fonts.body, STEPS_TEXT_WIDTH, steps);
+  const size = cardTextSize(fonts.body, lines);
+  const height = Math.max(ICON, size.height);
   const layout = contentCardLayout(
     { ...SCREEN, x: 0, y: 0 },
-    sizes.map((size, index) => ({
-      height: Math.max(ICON, size.height),
-      inkTop: (Math.max(ICON, size.height) - size.height) / 2 + size.inkTop,
-      key: String(index),
-      width: ICON + CARD_CONTENT.gap + size.width,
-    })),
+    [
+      {
+        height,
+        inkTop: (height - size.height) / 2 + size.inkTop,
+        key: "steps",
+        width: ICON + CARD_CONTENT.gap + size.width,
+      },
+    ],
     { close: true, font: fonts.title, title },
   );
+  const rect = layout.groups.steps!;
   return {
     card: layout.card,
     close: layout.close!,
-    steps: texts.map((_, index) => {
-      const rect = layout.groups[String(index)]!;
-      return {
-        glyph: { x: rect.x, y: rect.y + (rect.height - ICON) / 2 } satisfies Point,
-        text: {
-          height: rect.height,
-          width: widths[index]!,
-          x: rect.x + ICON + CARD_CONTENT.gap,
-          y: rect.y,
-        } satisfies Rect,
-      };
-    }),
+    steps: {
+      glyph: { x: rect.x, y: rect.y + (rect.height - ICON) / 2 } satisfies Point,
+      lines,
+      text: {
+        height: rect.height,
+        width: size.width,
+        x: rect.x + ICON + CARD_CONTENT.gap,
+        y: rect.y,
+      } satisfies Rect,
+    },
     title: layout.title!,
   };
 }
