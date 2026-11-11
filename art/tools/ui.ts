@@ -29,9 +29,10 @@
  * move hint at the left)
  * - Positions here are the base 720x360 layout as drawn. At runtime the game keeps every control
  *   and its press area in the game's 2:1 view, anchored to its top-left, ui-pause at the view's top
- *   and Use, Jump and the move hint at its bottom, and sizes their press areas (src/ui/layout/hitAreas.ts). Each drawn edge sits
- *   at least 8px from the edge it is placed against, and the pause disc 8px in from the top and
- *   left. Use, Jump and move hint placement belongs to the runtime layout
+ *   and Use, Jump and the move hint at its bottom, and sizes their press areas
+ *   (src/ui/layout/hitAreas.ts). Each drawn edge sits at least 8px from the edge it is placed
+ *   against, and the pause disc 8px in from the top and left. Use, Jump and move hint
+ *   placement belongs to the runtime layout
  *   (src/data/layout.ts) and the style guide's touch controls table.
  * - ui-touch-use, 75x75, centre pixel 37,37.
  * - ui-touch-jump, 75x75, centre pixel 37,37, towards the bottom-right corner, with Use above and
