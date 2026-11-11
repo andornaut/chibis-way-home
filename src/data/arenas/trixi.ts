@@ -24,7 +24,8 @@ const timber = (col: number, cols: number, row: number, rows: number): TerrainRe
 // one-way bridge rise to its near end in two-row steps, each wide enough for Trixi to stand on.
 // She starts on the far bank beyond the step, rushes and sets traps along the bank
 // and the deck. Both actors can jump onto the ledges from below. The loop runs under the deck
-// and back over it.
+// and back over it. The high ground is the timber step by the entry, off her deck: Chibi falls back
+// there while she crosses the deck, then drops to the bank and passes under her.
 const RIVER_CROSSING: ChunkArena = {
   boss: "goose-antagonist",
   difficulty: 5,
@@ -36,7 +37,7 @@ const RIVER_CROSSING: ChunkArena = {
     { character: "platform-ledge", col: 14, cols: 30, role: "ledge", row: 73 },
     { character: "platform-ledge", col: 11, cols: 5, role: "ledge", row: 75 },
   ],
-  refuges: [{ at: { col: 18, row: 73 }, kind: "high-ground", width: 20 }],
+  refuges: [{ at: { col: 6, row: 77 }, kind: "high-ground", width: 4 }],
   route: {},
   routes: [
     {
