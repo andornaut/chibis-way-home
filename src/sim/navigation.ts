@@ -1030,7 +1030,11 @@ export function plannedInput(
     let followup: Candidate | undefined;
     let followupStart = 0;
     let jumped = false;
-    let endTick = limits.horizonTicks * (limits.profile === "validation" ? 2 : 1);
+    // A quick search extends airborne rollouts only after a search found no safe candidate, so a
+    // jump that lands past the horizon is still found instead of idling on a failing support.
+    let endTick =
+      limits.horizonTicks *
+      (limits.profile === "validation" || navigation.status === "no-safe-candidate" ? 2 : 1);
     const inputs: ZoneInput[] = [];
     const states: ZoneState[] = [];
     for (let tick = 0; tick < endTick; tick++) {
