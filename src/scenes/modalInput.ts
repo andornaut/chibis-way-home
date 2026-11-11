@@ -9,7 +9,7 @@ const gates = new WeakMap<object, ModalInputGate>();
 const owners = new WeakMap<object, object>();
 const inputs = new WeakMap<object, SceneInput>();
 
-interface SceneInput {
+export interface SceneInput {
   accepts(event?: object): boolean;
   capture(): () => boolean;
   close(): void;
@@ -85,15 +85,29 @@ export function modalInput(scene: Scene): SceneInput {
   return input;
 }
 
+type PointerEvent = "pointerdown" | "pointermove" | "pointerup" | "pointerupoutside";
+
 // A release can complete only a fresh press from the same unchanged modal stack.
 export function onScenePointer(
   scene: Scene,
-  event: "pointerdown" | "pointermove" | "pointerup" | "pointerupoutside",
+  event: PointerEvent,
   listener: (pointer: Input.Pointer) => void,
 ): void {
   const input = modalInput(scene);
+  onGatedPointer(scene, () => input, event, listener);
+}
+
+// onScenePointer, gated by the modal input gate names at each event: the scene's own, or another
+// scene's whose scope the press answers to.
+export function onGatedPointer(
+  scene: Scene,
+  gate: () => SceneInput,
+  event: PointerEvent,
+  listener: (pointer: Input.Pointer) => void,
+): void {
   const presses = pointerPresses(scene);
   scene.input.on(event, (pointer: Input.Pointer) => {
+    const input = gate();
     if (!input.accepts()) {
       return;
     }

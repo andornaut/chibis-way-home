@@ -47,7 +47,7 @@ import {
 } from "./cardParts";
 import type { DialogueScene } from "./DialogueScene";
 import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onScenePointer } from "./modalInput";
+import { modalInput, onGatedPointer, type SceneInput } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { createPauseChrome, PAUSE_CHROME_KEY } from "./pauseChrome";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
@@ -602,9 +602,21 @@ export class PauseScene extends Scene implements SettingsOpener {
     return pressedArea(areas, point);
   }
 
+  // The modal input a press here answers to: the card's own, or, while the card is closed over a
+  // conversation that holds the input, the conversation's, so the pause button takes its press.
+  private pointerInput(): SceneInput {
+    return this.state === "closed" && this.conversationPausable()
+      ? modalInput(this.scene.get(DIALOGUE))
+      : modalInput(this);
+  }
+
   // A control acts when a press lands on it and lifts on it.
   private watchPresses(): void {
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
+    const onPointer = (
+      event: Parameters<typeof onGatedPointer>[2],
+      listener: (pointer: Input.Pointer) => void,
+    ) => onGatedPointer(this, () => this.pointerInput(), event, listener);
+    onPointer("pointerdown", (pointer: Input.Pointer) => {
       if (this.pressStart) {
         return;
       }
@@ -623,7 +635,7 @@ export class PauseScene extends Scene implements SettingsOpener {
       };
       this.setPressed(control);
     });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
+    onPointer("pointermove", (pointer: Input.Pointer) => {
       if (this.pressStart?.id === pointer.id) {
         this.input.stopPropagation();
         this.pressStart.cancelled ||=
@@ -663,8 +675,8 @@ export class PauseScene extends Scene implements SettingsOpener {
         }
       }
     };
-    onScenePointer(this, "pointerup", (pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer) => up(pointer, true));
+    onPointer("pointerup", (pointer) => up(pointer, false));
+    onPointer("pointerupoutside", (pointer) => up(pointer, true));
   }
 
   private press(control: Control): void {
