@@ -96,8 +96,9 @@
  *   (ui-button-primary) at y 136, Settings at y 188 and Back to title at y 240 (ui-button). Labels
  *   centred, origin y = button y + 13.
  * - Settings card, title "Settings": 368x236 with the Install row, 368x184 without it. Rows: "Move
- *   controls" at y 136 (icon-move-controls) and "Action buttons" at y 188 (icon-touch-controls),
- *   each with ui-switch, both on by default; Install at y 240, only while the app is installable
+ *   controls" at y 136 (icon-move-controls), "Action buttons" at y 188 (icon-touch-controls) and
+ *   "Reduced motion" (icon-reduced-motion), each with ui-switch, the first two on by default;
+ *   Install last, only while the app is installable
  *   (icon-install; ui-button drawn 72x28 at 452,250, centred on x 488, label ink, origin y 253;
  *   room 56). The build label, dslate in font-body (5.83:1 on lgrey), for example "v0.0.1 · dev",
  *   is centred on x 360 with its origin 28 above the card's foot: y 296, or 244 without Install.
@@ -125,8 +126,9 @@
  *   disabled labels use dslate.
  * - 16x16 row icons, one tag, rest: icon-touch-controls (a round touch button with the Jump
  *   caret), icon-install (an arrow down into a tray), icon-ios-share (Safari's Share button),
- *   icon-browser-menu (three stacked dots) and icon-move-controls (the move hint in small: a round
- *   ring with a chevron each side). All are flat dslate; line icons use 2px strokes (5.83:1 on the
+ *   icon-browser-menu (three stacked dots), icon-move-controls (the move hint in small: a round
+ *   ring with a chevron each side) and icon-reduced-motion (a ball with three speed lines). All are
+ *   flat dslate; line icons use 2px strokes (5.83:1 on the
  *   card's lgrey).
  * - ui-resume, 160x44: a green button with the play mark, the map's Continue at 280,300 (the hit
  *   area; art/tools/map.ts places its label). Tags normal, pressed (the face sinks 2px into its
@@ -491,6 +493,25 @@ const ICONS: Record<string, readonly string[]> = {
     "..##........##..",
     "..############..",
     "..############..",
+  ],
+  // a ball moving right with three speed lines behind it
+  "icon-reduced-motion": [
+    "................",
+    "................",
+    "................",
+    "................",
+    "..#####...####..",
+    "..#####..######.",
+    "........########",
+    "######..########",
+    "######..########",
+    "........########",
+    "..#####..######.",
+    "..#####...####..",
+    "................",
+    "................",
+    "................",
+    "................",
   ],
   // the browser menu button: three round dots stacked on the centre line
   "icon-browser-menu": [

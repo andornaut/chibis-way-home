@@ -394,14 +394,14 @@ Every ordinary modal uses the [shared content-fitting rule](controls.md#modal-co
 
 - Pause button: a smooth procedural disc, rendered at screen resolution into one cached sheet, sampled nearest-neighbour, at full opacity. Keep its 35x35 logical frame and existing placement. The resting disc is 33px across (an ink edge, a 2px cream ring and a navy face, the ring white and 1px thicker and the face a step lighter while pressed), with two 4x13 rectangular pause bars separated by 3px and no label, centred at 28,28 as drawn (35x35 frame, top-left 11,11), its edge 12px in from the game view's top and left. Every control is placed in the view, anchored to its top-left (`viewShift`): Jump's ring 24px in from the view's right and the move hint's 24px in from its left, both 20px up from the view's bottom, and Use at a fixed -77,-100 from Jump, centre to centre. It is a touch control: hidden on desktop and while a dialogue box is open. Its press area remains the existing 52.5x52.5 rectangle, derived from the 35px frame by the shared press-area rule. Preserve the canvas-camera routing and top-shift anchor. Press plays the existing two 60ms frames once, swelling to 35px across only in the first frame, then holds at rest size until release.
 
-| Card     | Title    | Contents                                                                        |
-| -------- | -------- | ------------------------------------------------------------------------------- |
-| Pause    | Paused   | Resume, Settings and Back to title buttons                                      |
-| Settings | Settings | Move controls and Action buttons rows; Install only when available; build label |
-| Steps    | Browser  | The browser's own steps paragraph beside its glyph                              |
+| Card     | Title    | Contents                                                                                        |
+| -------- | -------- | ----------------------------------------------------------------------------------------------- |
+| Pause    | Paused   | Resume, Settings and Back to title buttons                                                      |
+| Settings | Settings | Move controls, Action buttons and Reduced motion rows; Install only when available; build label |
+| Steps    | Browser  | The browser's own steps paragraph beside its glyph                                              |
 
 - Buttons: `ui-button-primary` has a dslate face on a navy lip with a white label; `ui-button` has a grey face on a slate lip with an ink label. Both keep their 16x28 nine-slice shape and margins 2,4,2,6. Labels sink 2px while pressed. Equal actions share a width measured from their content, with the standard padding and gaps.
-- Settings rows: `icon-move-controls` and `icon-touch-controls` remain 16x16; `ui-switch` remains 32x16. Its knob is right with a tick on green when on, left with a cross on slate when off. Rows align their icon, label and switch within the fitted content column. Hiding a control hides only its drawing.
+- Settings rows: `icon-move-controls`, `icon-touch-controls` and `icon-reduced-motion` (a ball with three speed lines) remain 16x16; `ui-switch` remains 32x16. Its knob is right with a tick on green when on, left with a cross on slate when off. Rows align their icon, label and switch within the fitted content column. Hiding a control hides only its drawing.
 - Install row: its 16x16 icon and compact secondary action form one full-height interactive row. Removing Install also removes its row and gap before the build label; no blank slot remains.
 - Build label: dslate in `font-body`, centred within the fitted card and included in its measured content.
 - Keyboard focus: `ui-focus`, with nine-slice margins 4, stays 4px outside the focused element on every side. Its 2px yellow band between ink lines remains visible on the card, rows, buttons and dim. Focus follows each fitted row, button or close control.
