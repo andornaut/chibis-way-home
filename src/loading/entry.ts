@@ -1,3 +1,4 @@
+import "@andornaut/game-kit/web/progress/dom/progressBar.css";
 import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
 import "../main.css";
 

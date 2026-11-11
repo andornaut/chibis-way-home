@@ -1,16 +1,25 @@
 import { createHash } from "node:crypto";
 
 import { progressBarLayout } from "@andornaut/game-kit/progress";
+import {
+  PROGRESS_BAR_BAND_CLASS,
+  PROGRESS_BAR_CLASS,
+} from "@andornaut/game-kit/web/progress/dom/progressBar";
 import type { Plugin } from "vite";
 
 import { PROGRESS_RECT, stageProgressStyle } from "./style";
 
 const style = stageProgressStyle();
-const layout = progressBarLayout(style, PROGRESS_RECT, undefined);
+// The bands span the track while pending; their segments travel by the kit's progressBar.css.
+const layout = progressBarLayout(style, PROGRESS_RECT, 1);
 const colour = (value: number) => `#${value.toString(16).padStart(6, "0")}`;
-const fill = layout.fills[0]!;
+const px = ({ height, width, x, y }: { height: number; width: number; x: number; y: number }) =>
+  `left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;`;
 
-// A separate stylesheet preserves the page's self-only style policy before modules load.
+// A separate stylesheet preserves the page's self-only style policy before modules load. The
+// markup is the kit's DOM progress bar, pending; the bands clip their segments here, since the
+// kit's adapter sets their overflow only from script. The track is the bar's first child, so
+// band n is child n + 2.
 export const LOADING_CSS = `
 #game { position: relative; }
 #game-loading {
@@ -19,29 +28,45 @@ export const LOADING_CSS = `
   transform: translateX(-50%) scale(var(--loading-scale,1)); transform-origin: top center;
 }
 #game[data-modal-open] canvas { position: relative; z-index: 2; }
-#game-loading > .initial-loading {
-  position: absolute; width: ${PROGRESS_RECT.width}px; height: ${PROGRESS_RECT.height}px;
-  background: ${colour(style.track)};
+#game-loading > .${PROGRESS_BAR_CLASS} {
+  position: absolute; ${px(layout.frame)} background: ${colour(style.frame)};
 }
-#game-loading > .initial-loading > div {
-  position: absolute; left: ${fill.x}px; width: ${fill.width}px; height: ${fill.height}px;
-  background: ${colour(style.fills[0]!)};
+#game-loading > .${PROGRESS_BAR_CLASS} > div { position: absolute; }
+#game-loading > .${PROGRESS_BAR_CLASS} > :first-child {
+  ${px(layout.track)} background: ${colour(style.track)};
 }
+#game-loading .${PROGRESS_BAR_BAND_CLASS} { overflow: hidden; }
+#game-loading .${PROGRESS_BAR_BAND_CLASS} > * { height: 100%; }
+${layout.fills
+  .map(
+    (fill, index) => `#game-loading > .${PROGRESS_BAR_CLASS} > :nth-child(${index + 2}) {
+  ${px(fill)}
+}
+#game-loading > .${PROGRESS_BAR_CLASS} > :nth-child(${index + 2}) > * {
+  background: ${colour(style.fills[index]!)};
+}`,
+  )
+  .join("\n")}
 `;
 const CSS_FILE = `assets/loading-${createHash("sha256").update(LOADING_CSS).digest("hex").slice(0, 8)}.css`;
 
-// Initial HTML uses the same geometry as the DOM and Phaser adapters, with no script or style inline.
+// Initial HTML is the kit's pending bar at the same geometry as the DOM adapter, with no script
+// or style inline.
 export function loadingHtml(html: string): string {
   if (!html.includes("%GAME_LOADING%")) {
     return html;
   }
+  const bands = layout.fills
+    .map(() => `<div class="${PROGRESS_BAR_BAND_CLASS}"><div></div></div>`)
+    .join("");
   return html
     .replace("</head>", `<link rel="stylesheet" href="/${CSS_FILE}" /></head>`)
     .replace(
       "%GAME_LOADING%",
       [
-        '<div id="game-loading"><div class="initial-loading" role="progressbar"',
-        'aria-labelledby="game" aria-valuemin="0" aria-valuemax="1"><div></div></div></div>',
+        `<div id="game-loading"><div class="${PROGRESS_BAR_CLASS}" data-state="pending"`,
+        'role="progressbar" aria-labelledby="game" aria-valuemin="0"',
+        `aria-valuemax="1"><div></div>${bands}</div></div>`,
       ].join(" "),
     );
 }

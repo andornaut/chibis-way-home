@@ -1,8 +1,10 @@
+import { progressBarLayout } from "@andornaut/game-kit/progress";
 import { describe, expect, it, vi } from "vitest";
 
 import { LOADING_CSS, loadingHtml } from "./html";
 import { afterLoadingPaint, installProgress, loadingProgress } from "./progress";
 import { offlineActivity } from "./serviceWorker";
+import { PROGRESS_RECT, stageProgressStyle } from "./style";
 
 describe("loading lifecycle", () => {
   it("does not run synchronous preparation until the pending frame can paint, and cancels shutdown work", () => {
@@ -39,9 +41,19 @@ describe("loading lifecycle", () => {
     off();
     offForeground();
   });
-  it("renders a pending accessible strip in the initial HTML without a percentage", () => {
+  it("renders the kit's pending bar before any script, its bands spanning the track and clipped", () => {
     const html = loadingHtml('<head></head><div id="game">%GAME_LOADING%</div>');
-    expect(html).toContain('role="progressbar"');
+    const { fills } = progressBarLayout(stageProgressStyle(), PROGRESS_RECT, 1);
+    expect(html).toMatch(/<div class="progress-bar" data-state="pending" role="progressbar"/u);
+    expect(html.match(/<div class="progress-bar-band"><div><\/div><\/div>/gu)).toHaveLength(
+      fills.length,
+    );
+    expect(LOADING_CSS).toContain("#game-loading .progress-bar-band { overflow: hidden; }");
+    fills.forEach(({ height, width, x, y }, index) => {
+      const box = `left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;`;
+      expect(LOADING_CSS).toContain(`> :nth-child(${index + 2}) {\n  ${box}`);
+      expect(width).toBe(PROGRESS_RECT.width);
+    });
     expect(LOADING_CSS).toContain("height: 2px");
     expect(LOADING_CSS).toContain("pointer-events: none; z-index: 1;");
     expect(LOADING_CSS).toContain(

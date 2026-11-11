@@ -29,10 +29,10 @@ export function mountLoading(parent: HTMLElement): () => void {
   let bar = createDomProgressBar(host, stageProgressStyle(), PROGRESS_RECT);
   let foreground: ProgressSnapshot = { active: false, value: undefined };
   let background = foreground;
+  // The bar follows the foreground load, or the background install while none runs: a measured
+  // finish fills to full and then hides, and an unknown one hides at once.
   const show = () => {
-    const state = foreground.active ? foreground : background;
-    host.hidden = !state.active;
-    bar.update(state.value);
+    bar.report(foreground.active ? foreground : background);
     const name = parent.getAttribute("aria-label");
     if (name) {
       bar.element.setAttribute("aria-label", name);
