@@ -12,6 +12,7 @@ import { ORDINARY } from "./encounterLayouts";
 import {
   boundaryInput,
   createLaunchPreparation,
+  evadeRun,
   fullJump,
   launchStepSafe,
   prepareLaunch,
@@ -26,10 +27,10 @@ import {
 const HASHES: Readonly<Record<string, string>> = {
   "arena-bear-sample": "481101b7d10f27e2",
   "arena-dog-sample": "40bef4ed639d6aad",
-  "arena-ferret-sample": "4fc7d0c9a0e1ab2b",
+  "arena-ferret-sample": "e4cfda1d5cb72309",
   "arena-goose-sample": "a48a53202391360e",
-  "arena-pigeon-sample": "0657a823a43f3049",
-  "arena-raccoon-sample": "37c029cbcdb4f740",
+  "arena-pigeon-sample": "d3a599713d01e660",
+  "arena-raccoon-sample": "06d265ae6a6340c8",
 };
 
 it.each(ARENA_SAMPLES.map((arena) => [arena.id, arena] as const))(
@@ -687,4 +688,52 @@ it("rejects preparation that final dispatch would clamp at an arena boundary", (
   expect(
     createLaunchPreparation(ORDINARY, STEP_SECONDS)(rightBoundary(true), context(ready)).kind,
   ).toBe("ready");
+});
+
+// A street under a footbridge with a fire escape at each end and Kiwi on the far floor. From the
+// mid start Chibi heads down the near fire escape by a leg through the street; when Kiwi closes in
+// faster than his walk he turns back up to the bridge, a waypoint he has already visited, instead
+// of keeping that leg.
+it("switches off a kept leg when the boss closes faster than his walk", () => {
+  const bridge = FLOOR - 18;
+  const landing = (col: number, row: number) => rect(col, 6, row, 1);
+  const found = gameArenaCase({
+    ...ARENA_SAMPLES.find(({ boss }) => boss === "raccoon-antagonist")!,
+    objects: [{ character: "raccoon-antagonist", col: 48, role: "antagonist", row: FLOOR - 4 }],
+    refuges: [
+      { at: { col: 14, row: FLOOR - 6 }, kind: "low-ceiling", width: 4 },
+      { at: { col: 25, row: FLOOR }, kind: "low-ceiling", width: 4 },
+      { at: { col: 40, row: FLOOR - 6 }, kind: "low-ceiling", width: 4 },
+    ],
+    routes: [
+      {
+        id: "loop",
+        waypoints: [
+          ...[17, 24, 30, 36, 43].map((col) => ({ col, row: FLOOR })),
+          { col: 43, row: FLOOR - 6 },
+          { col: 49, row: FLOOR - 12 },
+          ...[43, 36, 30, 24, 17].map((col) => ({ col, row: bridge })),
+          { col: 11, row: FLOOR - 12 },
+          { col: 17, row: FLOOR - 6 },
+          { col: 17, row: FLOOR },
+        ],
+      },
+      { id: "bridge", waypoints: [20, 27, 33, 40].map((col) => ({ col, row: bridge })) },
+      { id: "street", waypoints: [4, 56].map((col) => ({ col, row: FLOOR })) },
+    ],
+    solids: [
+      ground(0, 60),
+      rect(14, 32, bridge, 1),
+      landing(14, FLOOR - 6),
+      landing(8, FLOOR - 12),
+      landing(40, FLOOR - 6),
+      landing(46, FLOOR - 12),
+      rect(24, 12, bridge, 10),
+    ],
+  });
+  const layout = arenaLayout(found);
+  const run = evadeRun({ found, layout, maps: arenaMaps(found, layout) }, "mid", 1);
+  expect(run.death).toBeUndefined();
+  expect(run.exit).toBeLessThan(60);
+  expect(run.switches).toBeGreaterThan(0);
 });

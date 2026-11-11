@@ -1161,7 +1161,7 @@ export interface RouteProgressGoal {
   readonly support: MapSupport;
 }
 
-type RouteSelectionContext = "ordinary" | "reaction";
+type RouteSelectionContext = "ordinary" | "reaction" | "threat";
 type RouteProgressIntent = "exit" | "ordinary" | "reaction" | "shelter";
 
 export function createRouteProgress(physicalGoals: readonly RouteProgressGoal[]) {
@@ -1670,20 +1670,21 @@ function evadeWalk(
   // Each route's next waypoints: those either side of its waypoint nearest Chibi on his map, and
   // that one unless he stands at it. The one maximizing the boss's distance minus his wins, ties
   // by his distance then route id; a waypoint he stands at counts only when the boss cannot reach
-  // it.
+  // it. Under threat the best wins outright: he neither keeps an unreached target nor passes over
+  // a waypoint already visited, so he can turn back; the kept margin alone holds his target.
   const escapeTarget = (
     context: RouteSelectionContext,
     origin: NodeRef | undefined,
     among: readonly ArenaRoute[],
     boss: AgentSample,
   ): Target | undefined => {
-    const actual = context === "ordinary" ? actualProgress(origin) : undefined;
-    if (context === "ordinary") {
+    const actual = context === "reaction" ? undefined : actualProgress(origin);
+    if (context !== "reaction") {
       progress.observe(actual);
     }
     // He keeps an unreached target while the boss stays farther from it than he is, so a leg
     // that starts by walking away from it, such as to a jump's launch, is not abandoned.
-    if (among.includes(target.route)) {
+    if (context !== "threat" && among.includes(target.route)) {
       const goal = waypointPixel(target);
       const mine = chibiDistance(goal);
       if (context === "reaction") {
@@ -1728,7 +1729,7 @@ function evadeWalk(
       }
     }
     candidates.sort((a, b) => (a.score > b.score ? -1 : a.score < b.score ? 1 : a.chibi - b.chibi));
-    return context === "reaction"
+    return context !== "ordinary"
       ? candidates[0]?.target
       : progress.select(
           context,
@@ -1865,7 +1866,7 @@ function evadeWalk(
     const threatened = engaged && (gap <= THREAT_TILES * TILE || closing > ORDINARY.walkSpeed);
     progress.enter("ordinary");
     if (threatened) {
-      const next = escapeTarget("ordinary", origin, [...routes, ...refuges], boss);
+      const next = escapeTarget("threat", origin, [...routes, ...refuges], boss);
       if (next) {
         aim(next);
         return;
