@@ -1,10 +1,12 @@
 import { mountModalBackdrop } from "@andornaut/game-kit/view/phaser/modalBackdrop";
+import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { type GameObjects, type Scene, Scenes } from "phaser";
 
-import { modalColour } from "../ui";
+import { SCREEN } from "../data/screen";
+import { canvasSize, modalColour, viewShift } from "../ui";
 import { palette, paletteColour } from "./cardParts";
 import { modalInput } from "./modalInput";
-import { canvasRect, fitCanvasCamera } from "./playCamera";
+import { canvasRect, fitCanvasCamera, sceneFit } from "./playCamera";
 import { mountUiModalBackdrop } from "./uiModalBackdrop";
 
 // Capture only the underlying scenes, and draw the owned backdrop before the card cameras.
@@ -26,9 +28,21 @@ export function showModalBackdrop(
   backdropCamera.setVisible(false);
   let disposed = false;
   let image: GameObjects.Image | GameObjects.Rectangle | undefined;
+  // A fallback fill covers the whole canvas. A captured image is the whole backing at capture,
+  // in device pixels, so it keeps that canvas's size in base pixels and moves with the view
+  // (viewShift): its frozen view stays over the live one, unstretched, when a refit changes the
+  // canvas's shape.
   const fit = () => {
-    const { height, width } = canvasRect(scene);
-    image?.setDisplaySize(width, height);
+    if (image?.type !== "Image") {
+      const { height, width } = canvasRect(scene);
+      image?.setPosition(0, 0).setDisplaySize(width, height);
+      return;
+    }
+    const captured = renderFit(SCREEN, 1, { height: image.height, width: image.width });
+    const { height, width } = canvasSize(captured);
+    const from = viewShift(captured);
+    const to = viewShift(sceneFit(scene));
+    image.setPosition(to.x - from.x, to.y - from.y).setDisplaySize(width, height);
   };
   const toBackdrop = (object: GameObjects.GameObject) => {
     cameras.forEach(({ camera }) => camera.ignore(object));

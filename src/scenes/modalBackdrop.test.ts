@@ -14,16 +14,18 @@ vi.mock("./cardParts", () => ({
   palette: () => paletteData,
   paletteColour: () => 0x181425,
 }));
-// The whole canvas, 900x500 base pixels at two device pixels each.
-const CANVAS = { height: 500, width: 900, x: 0, y: 0 };
-const BACKING = { height: 1000, width: 1800, x: 0, y: 0 };
-vi.mock("./playCamera", () => ({
-  canvasRect: () => CANVAS,
+// The backing at two device pixels per CSS pixel: an 844x358 play area.
+const BACKING = { height: 716, width: 1688, x: 0, y: 0 };
+vi.mock("./playCamera", async (original) => ({
+  ...(await original<typeof import("./playCamera")>()),
   fitCanvasCamera: vi.fn(),
 }));
 
+import type { Size } from "../data/types";
+import { canvasSize, viewShift } from "../ui";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput } from "./modalInput";
+import { canvasRect, sceneFit } from "./playCamera";
 
 function fixture() {
   const camera = () => ({
@@ -51,6 +53,7 @@ function fixture() {
     game: {},
     scale: Object.assign(new EventEmitter(), {
       gameSize: { height: BACKING.height, width: BACKING.width },
+      zoom: 1 / 2,
     }),
   } as unknown as Scene;
   let resolve!: (value: boolean) => void;
@@ -62,6 +65,29 @@ function fixture() {
     }),
   });
   return { background, card, destroy, resolve, scene };
+}
+
+// A backdrop object that records where it is placed, frame the size of its texture in pixels.
+function placed(type: string, frame: Size) {
+  const object = {
+    ...frame,
+    displayHeight: frame.height,
+    displayWidth: frame.width,
+    setDisplaySize: vi.fn((width: number, height: number) => {
+      object.displayWidth = width;
+      object.displayHeight = height;
+      return object;
+    }),
+    setPosition: vi.fn((x: number, y: number) => {
+      object.x = x;
+      object.y = y;
+      return object;
+    }),
+    type,
+    x: 0,
+    y: 0,
+  };
+  return object;
 }
 
 describe("Duck modal backdrop adapter", () => {
@@ -76,10 +102,11 @@ describe("Duck modal backdrop adapter", () => {
     expect(modalInput(scene).accepts()).toBe(false);
     expect(scene.cameras.cameras[0]).toBe(background);
     expect(capture.mount.mock.calls.at(-1)?.[1]).toEqual(BACKING);
-    const image = { setDisplaySize: vi.fn() };
-    scene.events.emit("addedtoscene", image);
-    expect(card.ignore).toHaveBeenCalledWith(image);
-    expect(image.setDisplaySize).toHaveBeenCalledWith(CANVAS.width, CANVAS.height);
+    const fill = placed("Rectangle", { height: 1, width: 1 });
+    scene.events.emit("addedtoscene", fill);
+    expect(card.ignore).toHaveBeenCalledWith(fill);
+    const canvas = canvasRect(scene);
+    expect(fill.setDisplaySize).toHaveBeenCalledWith(canvas.width, canvas.height);
     resolve(false);
     await modal.ready;
     expect(card.visible).toBe(true);
@@ -100,5 +127,31 @@ describe("Duck modal backdrop adapter", () => {
     await modal.ready;
     expect(card.visible).toBe(false);
     expect(destroy).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a capture's shape and its view over the live view when a refit reshapes the canvas", () => {
+    const { scene } = fixture();
+    showModalBackdrop(scene);
+    const captured = { height: BACKING.height, width: BACKING.width };
+    const before = viewShift(sceneFit(scene));
+    const size = canvasSize(sceneFit(scene));
+    const image = placed("Image", captured);
+    scene.events.emit("addedtoscene", image);
+    expect([image.x, image.y, image.displayWidth, image.displayHeight]).toEqual([
+      0,
+      0,
+      size.width,
+      size.height,
+    ]);
+    // The play area narrows to 750x358 CSS pixels: the canvas is a different shape.
+    Object.assign(scene.scale.gameSize, { height: 716, width: 1500 });
+    scene.scale.emit("resize");
+    expect(image.displayWidth / captured.width).toBeCloseTo(
+      image.displayHeight / captured.height,
+      9,
+    );
+    const after = viewShift(sceneFit(scene));
+    expect(image.x + before.x).toBeCloseTo(after.x, 9);
+    expect(image.y + before.y).toBeCloseTo(after.y, 9);
   });
 });
