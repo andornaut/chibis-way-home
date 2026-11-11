@@ -7,6 +7,7 @@ import {
   dialogueChoice,
   dialogueChoiceKey,
   dialogueChoiceLayout,
+  pauseKey,
   type PressArea,
   pressedArea,
   type ResolvedDialogueChoice,
@@ -92,6 +93,11 @@ export class DialogueChoiceScene extends Scene {
     showModalBackdrop(this);
   }
 
+  // Whether the pause card may open over this choice: no answer has been selected.
+  pausable(): boolean {
+    return !this.finished;
+  }
+
   private render(): void {
     for (const [id, button] of this.buttons) {
       pressTextButton(button, this.press?.target === id && !this.press.cancelled);
@@ -119,7 +125,8 @@ export class DialogueChoiceScene extends Scene {
 
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (!modalInput(this).accepts(event)) {
+      // P and Escape pass on to PauseScene, which opens its card over the choice as in play.
+      if (pauseKey(event.key) || !modalInput(this).accepts(event)) {
         return;
       }
       event.stopPropagation();

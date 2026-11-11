@@ -45,7 +45,6 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts";
-import type { DialogueScene } from "./DialogueScene";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onGatedPointer, type SceneInput } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
@@ -57,7 +56,10 @@ import { drawSkillButton } from "./skillButton";
 import type { SkillDetailData } from "./SkillDetailScene";
 import type { ZoneScene } from "./ZoneScene";
 
-const DIALOGUE = "dialogue";
+// The scenes that show a conversation over the paused zone, each holding its modal input in turn:
+// a line, the line's required choice, and the departure.
+const CONVERSATIONS = ["dialogue", "dialogueChoice", "zoneDeparture"] as const;
+type Conversation = (typeof CONVERSATIONS)[number];
 const ZONE = "zone";
 const SETTINGS = "settings";
 const START = "start";
@@ -72,6 +74,11 @@ function dimTexture({ actionButtons, moveControls }: Readonly<Record<TouchSettin
   return `pause-dim-move-${String(moveControls)}-action-${String(actionButtons)}`;
 }
 
+// A conversation scene says whether it still waits for the player, so the card may open over it.
+interface PausableConversation {
+  pausable(): boolean;
+}
+
 type Control = "close" | "home" | "pauseButton" | "resume" | "settings" | SkillId;
 type CardControl = Exclude<Control, "pauseButton">;
 
@@ -84,11 +91,12 @@ const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
 // The pause card over the dimmed zone, and the pause button that opens it, which shows on a
 // touch screen while a zone plays or a conversation covers it, never on the map. It runs beside
 // the zone from the start. The button, P, Escape, back and a frame turn open the card in play
-// and over a conversation showing a line; opening it pauses the zone, or the conversation over
-// the paused zone, which keeps its line, and lets the screen sleep. Resume (the primary button,
-// at the top), the close X, back, Escape, P and a tap outside the card (closeOnOutsideTap) close
-// it. The skill buttons show over such a conversation too, taking no presses, so a tap on one
-// reaches the conversation and advances it as any other tap does.
+// and over a conversation's line, required choice or departure; opening it pauses the zone, or
+// the conversation scene over the paused zone, which keeps its line or choice and its focus, and
+// lets the screen sleep. Resume (the primary button, at the top), the close X, back, Escape, P
+// and a tap outside the card (closeOnOutsideTap) close it. The skill buttons show over such a
+// conversation too, taking no presses, so a tap on one reaches the conversation as any other tap
+// does.
 // Settings opens SettingsScene's card over the same dim in the pause card's place, and passes it
 // the keys and back until it closes; Back to title ends the zone for the start screen.
 export class PauseScene extends Scene implements SettingsOpener {
@@ -117,8 +125,8 @@ export class PauseScene extends Scene implements SettingsOpener {
     | undefined;
   private buttons!: Readonly<Record<CardButton, TextButton>>;
   private state: "closed" | "open" | "opening" | "settings" | "skill" = "closed";
-  // Whether the card opened over a conversation, which it paused in the zone's place.
-  private overConversation = false;
+  // The conversation scene the card opened over, which it paused in the zone's place.
+  private overConversation: Conversation | undefined;
 
   constructor() {
     super("pause");
@@ -215,8 +223,8 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   // Cache a shared-kit backdrop for each touch setting mix before showing the pause card.
   private async open(): Promise<void> {
-    const conversation = this.conversationPausable();
-    if (this.state !== "closed" || !(this.zonePlaying() || conversation)) {
+    const conversation = this.pausableConversation();
+    if (this.state !== "closed" || !(this.zonePlaying() || conversation !== undefined)) {
       return;
     }
     this.redrawCard();
@@ -256,14 +264,14 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.showCard(false);
     captureTab(this, false);
     this.scene.resume(this.held());
-    this.overConversation = false;
+    this.overConversation = undefined;
     startWakeLock();
     coverZone("pauseCard", false);
   }
 
-  // The scene the card holds: the conversation it opened over, or else the zone.
+  // The scene the card holds: the conversation scene it opened over, or else the zone.
   private held(): string {
-    return this.overConversation ? DIALOGUE : ZONE;
+    return this.overConversation ?? ZONE;
   }
 
   private redrawCard(): void {
@@ -275,7 +283,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   // Ends the zone and shows the start screen, this scene staying beside it for the next zone.
   private returnHome(): void {
     this.state = "closed";
-    this.overConversation = false;
+    this.overConversation = undefined;
     modalInput(this).close();
     this.dims.forEach((dim) => dim.destroy());
     this.dims.clear();
@@ -389,7 +397,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   // The skill buttons show while they take presses, and over a conversation the card may open
   // over, where they take none.
   private skillHudShown(): boolean {
-    return this.skillHudLive() || this.conversationOpenable();
+    return this.skillHudLive() || this.openableConversation() !== undefined;
   }
 
   // Whether the skill buttons take presses: in play, and under the open pause card.
@@ -494,7 +502,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   private showPauseButton(): void {
     this.pauseButton.setVisible(
       this.state === "closed" &&
-        (this.zonePlaying() || this.conversationPausable()) &&
+        (this.zonePlaying() || this.pausableConversation() !== undefined) &&
         coarsePointer(window),
     );
   }
@@ -505,34 +513,36 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   // Whether something other than this card's own conversation covers play.
   private covered(): boolean {
-    return this.playCovered() && !this.overConversation;
+    return this.playCovered() && this.overConversation === undefined;
   }
 
-  // Whether the card is closed over a conversation it may open over.
-  private conversationOpenable(): boolean {
-    return this.state === "closed" && this.conversationPausable();
+  // The conversation scene the closed card may open over.
+  private openableConversation(): Conversation | undefined {
+    return this.state === "closed" ? this.pausableConversation() : undefined;
   }
 
   // Whether something the card may not open over covers play.
   private blocked(): boolean {
-    return this.covered() && !this.conversationOpenable();
+    return this.covered() && this.openableConversation() === undefined;
   }
 
   private zonePlaying(): boolean {
     return this.scene.isActive(ZONE) && !this.playCovered();
   }
 
-  // A conversation over the paused zone that holds the modal input and shows a line.
-  private conversationPausable(): boolean {
-    if (
-      !this.scene.isPaused(ZONE) ||
-      !(this.scene.get(ZONE) as ZoneScene).conversationCovers() ||
-      !this.scene.isActive(DIALOGUE)
-    ) {
-      return false;
+  // The conversation scene over the paused zone that holds the modal input and still waits for
+  // the player: a line, its required choice or the departure.
+  private pausableConversation(): Conversation | undefined {
+    if (!this.scene.isPaused(ZONE) || !(this.scene.get(ZONE) as ZoneScene).conversationCovers()) {
+      return undefined;
     }
-    const dialogue = this.scene.get(DIALOGUE) as DialogueScene;
-    return dialogue.pausable() && modalInput(dialogue).accepts();
+    return CONVERSATIONS.find((key) => {
+      if (!this.scene.isActive(key)) {
+        return false;
+      }
+      const scene = this.scene.get(key);
+      return (scene as unknown as PausableConversation).pausable() && modalInput(scene).accepts();
+    });
   }
 
   override update(): void {
@@ -628,10 +638,11 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   // The modal input a press, key, back or frame turn here answers to: the card's own, or, while
-  // the card is closed over a conversation that holds the input, the conversation's, so they
+  // the card is closed over a conversation scene that holds the input, that scene's, so they
   // open the card over it.
   private cardInput(): SceneInput {
-    return this.conversationOpenable() ? modalInput(this.scene.get(DIALOGUE)) : modalInput(this);
+    const conversation = this.openableConversation();
+    return modalInput(conversation === undefined ? this : this.scene.get(conversation));
   }
 
   // A control acts when a press lands on it and lifts on it.

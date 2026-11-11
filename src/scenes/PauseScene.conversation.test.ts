@@ -19,7 +19,6 @@ import { DialogueScene } from "./DialogueScene";
 import { PauseScene } from "./PauseScene";
 
 interface DialogueState {
-  choosing: boolean;
   focus: string | undefined;
   paragraph: number;
   drawParagraph(): void;
@@ -91,16 +90,6 @@ it("shows the pause button and takes its press while a conversation covers play"
       y: PAUSE_BUTTON.art.y + PAUSE_BUTTON.art.height / 2,
     }),
   ).toBe("pauseButton");
-});
-
-it("hides the pause button under the conversation's required choice", async () => {
-  const { lines, pause, scenes } = conversation();
-  lines.choosing = true;
-  pause.showPauseButton();
-  expect(pause.pauseButton.setVisible).toHaveBeenLastCalledWith(false);
-  await pause.open();
-  expect(pause.state).toBe("closed");
-  expect(scenes.pause).not.toHaveBeenCalled();
 });
 
 it("opens over the conversation and resumes it on the same line, the zone still paused", async () => {

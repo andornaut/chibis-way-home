@@ -6,7 +6,13 @@ import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { Point, Rect } from "../data/types";
 import type { RunStatsSummary, WholeRunDisplaySummary, ZoneStatsSummary } from "../progress";
-import { CUTSCENE_CONTINUE, focusKeyAction, STAGE_SUMMARY_BOUNDS, statsStatement } from "../ui";
+import {
+  CUTSCENE_CONTINUE,
+  focusKeyAction,
+  pauseKey,
+  STAGE_SUMMARY_BOUNDS,
+  statsStatement,
+} from "../ui";
 import {
   addTextButton,
   captureTab,
@@ -73,20 +79,7 @@ export class CutsceneScene extends Scene {
     });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (!modalInput(this).accepts(event)) {
-        return;
-      }
-      event.stopPropagation();
-      const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
-      if (action === "next" || action === "previous") {
-        this.focused = true;
-        this.render();
-      } else if (action === "press") {
-        this.continue();
-      }
-    });
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
+    this.watchKeys();
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
       if (this.press || this.finished) {
@@ -128,6 +121,27 @@ export class CutsceneScene extends Scene {
     };
     onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
     onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+  }
+  private watchKeys(): void {
+    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      // P and Escape pass on to PauseScene, which opens its card over a departure as in play.
+      if (pauseKey(event.key) || !modalInput(this).accepts(event)) {
+        return;
+      }
+      event.stopPropagation();
+      const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
+      if (action === "next" || action === "previous") {
+        this.focused = true;
+        this.render();
+      } else if (action === "press") {
+        this.continue();
+      }
+    });
+    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
+  }
+  // Whether the pause card may open over this screen: Continue has not been activated.
+  pausable(): boolean {
+    return !this.finished;
   }
   private continueContains(at: Point): boolean {
     return (

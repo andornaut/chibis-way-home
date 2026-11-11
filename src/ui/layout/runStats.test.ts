@@ -1,3 +1,4 @@
+import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { laidGlyphs, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
@@ -9,6 +10,7 @@ import { deathLabels, deathSummary } from "../../presentation";
 import { formatRunStats } from "../../progress";
 import { statsStatement } from "../dialogue/statsStatement";
 import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./cutscene";
+import { PAUSE_BUTTON } from "./pauseCard";
 import {
   RUN_STAT_KEYS,
   runStatLabels,
@@ -119,6 +121,15 @@ describe("preview-first stage summaries", () => {
             8,
           );
         }
+      }
+    }
+  });
+  it("keeps every departure's Continue and clear statement press areas clear of Pause's", () => {
+    for (const destination of ZONE_MAP.destinations) {
+      for (const stage of destination.stages) {
+        const { statement } = stageSummaryLayout(fonts, STAGE_SUMMARY_BOUNDS, wordsFor(stage));
+        const areas = [CUTSCENE_CONTINUE.hit, statement!.rect];
+        expect(areas.filter((area) => rectsOverlap(area, PAUSE_BUTTON.hit))).toEqual([]);
       }
     }
   });
