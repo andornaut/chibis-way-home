@@ -110,7 +110,8 @@ const CHASE_RELIEF: ChaseRelief = {
 };
 
 // Pursuit ends past one screen width, after 6 s with no movement path, or by giving up; awareness
-// engages again 5 s after any ended chase, and until then the boss keeps clear of Chibi.
+// engages again 5 s after any ended chase, and until then the boss keeps clear of Chibi. Chosen
+// destinations keep the body a tile inside Chibi's screen.
 const PURSUIT_LIMITS = {
   distance: (6 * SCREEN.width) / TILE,
   escapeDistance: SCREEN.width / TILE,
@@ -118,17 +119,18 @@ const PURSUIT_LIMITS = {
   pace: BOSS_PACE,
   rearmSeconds: 5,
   relief: CHASE_RELIEF,
+  screen: { margin: 1, width: SCREEN.width / TILE },
   unreachableGraceSeconds: 6,
 };
-// Unengaged, a ground boss walks 2 to 4 tiles at half Chibi's walk every 2 to 4 s within 8 tiles
+// Unengaged, a ground boss walks 1 to 2 tiles at half Chibi's walk every 2 to 4 s within 4 tiles
 // of its encounter position, holding 1 to 2 s facing its walk; Pebble hops to a supported spot
-// within 8 tiles every 3 to 5 s and perches 1.5 to 3 s.
-const WANDER_RANGE = 8;
+// within 4 tiles every 3 to 5 s and perches 1.5 to 3 s.
+const WANDER_RANGE = 4;
 const GROUND_WANDER: BossWander = {
   everySeconds: { max: 4, min: 2 },
   holdSeconds: { max: 2, min: 1 },
   range: WANDER_RANGE,
-  walk: { distance: { max: 4, min: 2 }, speed: (0.5 * BIRD.walkSpeed) / TILE },
+  walk: { distance: { max: 2, min: 1 }, speed: (0.5 * BIRD.walkSpeed) / TILE },
 };
 const PIGEON_WANDER: BossWander = {
   everySeconds: { max: 5, min: 3 },
@@ -926,7 +928,7 @@ const PIGEON_RELOCATION_SECONDS = 2;
 // An engaged approach that opens no attack within this relocates, sooner out of sight.
 const PIGEON_APPROACH_SECONDS = 1.5;
 const PIGEON_HIDDEN_RELOCATION_SECONDS = 1;
-// A wander hop lands on a supported spot 2 to 8 tiles away, within 8 tiles of his perch.
+// A wander hop lands on a supported spot 2 to 4 tiles away, within 4 tiles of his perch.
 const PIGEON_WANDER_SELECTION = {
   clearance: 2,
   distance: WANDER_RANGE,
@@ -935,11 +937,12 @@ const PIGEON_WANDER_SELECTION = {
   maxAttempts: 4,
   minDistance: 2,
 } as const;
+// A relocation lands 15 to 60 tiles away, on Chibi's screen, trying up to 8 candidates.
 const PIGEON_RELOCATION_SELECTION = {
   clearance: PIGEON_OVERHEAD_CLEARANCE,
   distance: SCREEN.width / TILE,
   kind: "varied",
-  maxAttempts: 4,
+  maxAttempts: 8,
   minDistance: SCREEN.width / (4 * TILE),
 } as const;
 
