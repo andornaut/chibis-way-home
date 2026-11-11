@@ -920,6 +920,9 @@ const PIGEON_POOP: BehaviourAction = {
 };
 
 const PIGEON_DROP_AHEAD = 8;
+// A drop tell commits within this many tiles of its overhead goal, so the climb a jumping Chibi
+// forces on Pebble does not cancel it.
+export const PIGEON_DROP_COMMIT_TOLERANCE = 0.5;
 const PIGEON_OVERHEAD_CLEARANCE = 6;
 // The swoop's approach: the drop approach's lead plus the swoop setup move's 10 tiles.
 const PIGEON_SWOOP_AHEAD = 18;
@@ -1131,7 +1134,7 @@ export const PIGEON_BEHAVIOUR: BehaviourPlan = attackProfile(
             to: "align-drop",
             when: [
               { kind: "elapsed", seconds: ATTACK_ANTICIPATION_SECONDS },
-              { kind: "arrived", tolerance: 0.1 },
+              { kind: "arrived", tolerance: PIGEON_DROP_COMMIT_TOLERANCE },
               { kind: "line-of-sight" },
               { kind: "targeted-attack-allowed" },
             ],

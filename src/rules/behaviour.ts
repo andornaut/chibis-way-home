@@ -1081,11 +1081,10 @@ function matches(
         tracked,
         object,
       );
+      // Within the tolerance of the goal on either side of its lead and clearance, on a
+      // routable overhead path.
       return (
         overheadFlightRoute(world, object, at, target) !== undefined &&
-        at.y + object.height <= tracked.y - motion.overhead.clearance + EDGE &&
-        state.flightApproachDirection * (at.x + object.width / 2 - tracked.x - tracked.width / 2) >=
-          motion.overhead.ahead - EDGE &&
         Math.hypot(at.x - target.x, at.y - target.y) <= condition.tolerance
       );
     }
