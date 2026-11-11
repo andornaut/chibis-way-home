@@ -415,6 +415,11 @@ export interface BehaviourPlan {
     // Until the rearm cooldown ends, the boss never moves toward Chibi within its escape distance.
     readonly keepClear?: boolean;
     readonly relief?: ChaseRelief;
+    // Chibi's screen: width wide about his centre at decision time, inset by margin, in tiles in
+    // data and pixels in layouts. A chosen wander, hop, relocation or home-walk destination keeps
+    // the body inside it; a body already outside never moves farther out, except an unengaged
+    // wander, which keeps only its range.
+    readonly screen?: { readonly margin: number; readonly width: number };
   };
   readonly spotted?: DialogueLine;
   readonly wander?: BossWander;
