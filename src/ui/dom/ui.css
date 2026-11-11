@@ -26,6 +26,24 @@
   --ui-refusal-colour: var(--colour-red);
   font-family: "Liberation Sans", sans-serif;
   color: var(--colour-ink);
+
+  /* Art's ui-focus ring as box-shadows outside a focused face, in whole CSS px: from the inside
+     out a --focus-ink ink line, a yellow band to --focus-band and an ink line to --focus-outset.
+     Each band is the union of four shadows shifted by its corner cut, which leaves a square notch
+     that size at each corner: the inner line's notch shows the yellow and the yellow's shows the
+     outer line, whose own notch is clear. */
+  --focus-cut: calc(var(--focus-outset) - var(--focus-band));
+  --focus-ring:
+    var(--focus-ink) 0 0 0 var(--colour-ink), calc(-1 * var(--focus-ink)) 0 0 0 var(--colour-ink),
+    0 var(--focus-ink) 0 0 var(--colour-ink), 0 calc(-1 * var(--focus-ink)) 0 0 var(--colour-ink),
+    var(--focus-cut) 0 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
+    calc(-1 * var(--focus-cut)) 0 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
+    0 var(--focus-cut) 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
+    0 calc(-1 * var(--focus-cut)) 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
+    var(--focus-cut) 0 0 var(--focus-band) var(--colour-ink),
+    calc(-1 * var(--focus-cut)) 0 0 var(--focus-band) var(--colour-ink),
+    0 var(--focus-cut) 0 var(--focus-band) var(--colour-ink),
+    0 calc(-1 * var(--focus-cut)) 0 var(--focus-band) var(--colour-ink);
 }
 
 .ui-scene {
@@ -170,12 +188,15 @@
   translate: 0 var(--button-sink);
 }
 
-/* Art's ui-focus ring, outside the focused face: a yellow band between ink lines. */
+/* Art's ui-focus ring, outside the focused face. The face is opaque but for its cut corners, so
+   an ink background fills just those and the ring's inner ink line meets the face with no card
+   pixel between them; a pressed face, which sinks clear of its top rows, keeps its own shape. */
 .ui-text-button:focus-visible .ui-text-button-face {
-  box-shadow:
-    0 0 0 var(--focus-ink) var(--colour-ink),
-    0 0 0 var(--focus-band) var(--colour-yellow),
-    0 0 0 var(--focus-outset) var(--colour-ink);
+  box-shadow: var(--focus-ring);
+}
+
+.ui-text-button:focus-visible:not([data-pressed]) .ui-text-button-face {
+  background-color: var(--colour-ink);
 }
 
 /* Art's ui-button-primary face, with a white label. */
@@ -271,10 +292,8 @@
   background-image: var(--ui-close-pressed-image);
 }
 
-/* Art's ui-focus ring, outside the focused X, as on a text button. */
+/* Art's ui-focus ring, outside the focused X, as on a text button. The X's face is clear but for
+   its mark, so it takes no ink background. */
 .ui-close-button:focus-visible .ui-close-face {
-  box-shadow:
-    0 0 0 var(--focus-ink) var(--colour-ink),
-    0 0 0 var(--focus-band) var(--colour-yellow),
-    0 0 0 var(--focus-outset) var(--colour-ink);
+  box-shadow: var(--focus-ring);
 }

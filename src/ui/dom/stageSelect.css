@@ -207,10 +207,12 @@
   text-box: trim-both cap alphabetic;
 }
 
-/* Art's ui-focus ring outside the focused face, as on ui.css's text buttons. */
+/* Art's ui-focus ring outside the focused face, with an ink background in the frame's cut
+   corners, as on ui.css's text buttons. */
 .stage-select-stage:focus-visible .stage-select-face {
-  box-shadow:
-    0 0 0 var(--focus-ink) var(--colour-ink),
-    0 0 0 var(--focus-band) var(--colour-yellow),
-    0 0 0 var(--focus-outset) var(--colour-ink);
+  box-shadow: var(--focus-ring);
+}
+
+.stage-select-stage:focus-visible:not([data-pressed]) .stage-select-face {
+  background-color: var(--colour-ink);
 }
