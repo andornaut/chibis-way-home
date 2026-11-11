@@ -66,13 +66,13 @@ interface SettingRow {
   readonly toggle: GameObjects.Sprite;
 }
 
-// The glyph beside each kind of browser's install steps: the control they start from, Share or
-// the browser menu, or the install glyph where they start from the address bar or install nothing.
-const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string>> = {
+// The glyph beside each kind of browser's install steps: the control they start from, Share, the
+// browser menu or the address bar's install glyph. Firefox desktop installs nothing, so has none.
+const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string | undefined>> = {
   chromiumAndroid: "icon-browser-menu",
   chromiumDesktop: "icon-install",
   firefoxAndroid: "icon-browser-menu",
-  firefoxDesktop: "icon-install",
+  firefoxDesktop: undefined,
   ios: "icon-ios-share",
   other: "icon-browser-menu",
   safariMac: "icon-browser-menu",
@@ -235,13 +235,16 @@ export class SettingsScene extends Scene {
   private openSteps(kind: InstallStepsKind): void {
     modalInput(this).invalidate();
     const words = TEXT.settings.installSteps[kind];
-    this.stepsLayout = stepsCard(cardFonts(this), words.title, words.steps);
+    const glyph = STEPS_GLYPHS[kind];
+    this.stepsLayout = stepsCard(cardFonts(this), glyph !== undefined, words.title, words.steps);
     const { close, steps } = this.stepsLayout;
     this.steps = this.add.container(0, 0, [
       addSlice(this, "ui-settings-card", this.stepsLayout.card),
       addCardHeading(this, this.stepsLayout.title),
       this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0),
-      this.add.image(steps.glyph.x, steps.glyph.y, STEPS_GLYPHS[kind]).setOrigin(0),
+      ...(glyph !== undefined && steps.glyph !== undefined
+        ? [this.add.image(steps.glyph.x, steps.glyph.y, glyph).setOrigin(0)]
+        : []),
       addCardTextIn(this, BODY_FONT, steps.text, steps.lines, this.colour("ink")),
     ]);
     this.card.setVisible(false);

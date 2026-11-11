@@ -97,11 +97,14 @@ export function settingsCard(
 // Install steps wrap within this width beside their glyph, and the card grows to fit them.
 const STEPS_TEXT_WIDTH = 320;
 
-// The install steps card: the kind's title, and its steps beside their glyph.
-export function stepsCard(fonts: CardFonts, title: string, steps: string) {
-  const lines = wrappedCardText(fonts.body, STEPS_TEXT_WIDTH, steps);
+// The install steps card: the kind's title, and its steps beside their glyph or, for a kind
+// without one, across the glyph's width as well.
+export function stepsCard(fonts: CardFonts, hasGlyph: boolean, title: string, steps: string) {
+  const glyphWidth = ICON + CARD_CONTENT.gap;
+  const indent = hasGlyph ? glyphWidth : 0;
+  const lines = wrappedCardText(fonts.body, STEPS_TEXT_WIDTH + glyphWidth - indent, steps);
   const size = cardTextSize(fonts.body, lines);
-  const height = Math.max(ICON, size.height);
+  const height = hasGlyph ? Math.max(ICON, size.height) : size.height;
   const layout = contentCardLayout(
     { ...SCREEN, x: 0, y: 0 },
     [
@@ -109,7 +112,7 @@ export function stepsCard(fonts: CardFonts, title: string, steps: string) {
         height,
         inkTop: (height - size.height) / 2 + size.inkTop,
         key: "steps",
-        width: ICON + CARD_CONTENT.gap + size.width,
+        width: indent + size.width,
       },
     ],
     { close: true, font: fonts.title, title },
@@ -119,12 +122,14 @@ export function stepsCard(fonts: CardFonts, title: string, steps: string) {
     card: layout.card,
     close: layout.close!,
     steps: {
-      glyph: { x: rect.x, y: rect.y + (rect.height - ICON) / 2 } satisfies Point,
+      glyph: hasGlyph
+        ? ({ x: rect.x, y: rect.y + (rect.height - ICON) / 2 } satisfies Point)
+        : undefined,
       lines,
       text: {
         height: rect.height,
         width: size.width,
-        x: rect.x + ICON + CARD_CONTENT.gap,
+        x: rect.x + indent,
         y: rect.y,
       } satisfies Rect,
     },
