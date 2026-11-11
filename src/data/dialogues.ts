@@ -15,7 +15,7 @@ function maximumMovementSpeed(plan: BehaviourPlan): number {
 }
 
 // Background opacity of every dialogue, bark and notice panel; text and portraits stay opaque.
-export const DIALOGUE_PANEL_ALPHA = 0.65;
+export const DIALOGUE_PANEL_ALPHA = 0.6;
 
 // Default for transient barks; conversations advance only through player input.
 export const BARK_DURATION_SECONDS = 5;
