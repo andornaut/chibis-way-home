@@ -19,6 +19,7 @@ vi.mock("phaser", async () => {
         Object.assign(this, sceneStub(vi.fn));
       }
     },
+    Textures: { FilterMode: { LINEAR: 0, NEAREST: 1 } },
   };
 });
 vi.mock("../pwa", () => ({ launchReady: startup.ready }));
@@ -30,7 +31,9 @@ vi.mock("./atlasArt", () => ({
   queueAtlasPages: vi.fn(),
 }));
 
+import { type ArtManifest, atlasPageKey } from "../assets";
 import { BootScene } from "./BootScene";
+import { textureFilters } from "./textureFilters";
 
 it("loads standalone manifest images in development and atlas mode", () => {
   for (const atlas of [null, {}]) {
@@ -49,6 +52,44 @@ it("loads standalone manifest images in development and atlas mode", () => {
       "images/standalone.png",
     );
   }
+});
+
+// Every texture key preload queues, through each loader, in either mode, has a filter: a texture
+// list added to the manifest, or a loader added here, fails this until it is classified.
+it("classifies every texture it loads in development and atlas mode", () => {
+  const lists = {
+    backdrops: [{ key: "backdrop", png: "backdrops/backdrop.png" }],
+    sprites: [{ json: "sprites/sprite.json", key: "sprite", once: [], png: "sprites/sprite.png" }],
+    tilesets: [{ json: "tilesets/tileset.json", key: "tileset", png: "tilesets/tileset.png" }],
+  };
+  const original = { ...manifest };
+  Object.assign(manifest, lists);
+  for (const atlas of [
+    null,
+    { pages: [{ height: 1, url: "atlas-0.webp", width: 1 }], textures: [] },
+  ]) {
+    art.atlas = atlas;
+    const scene = new BootScene();
+    const loaders = {
+      aseprite: vi.fn(),
+      bitmapFont: scene.load.bitmapFont,
+      image: scene.load.image,
+      spritesheet: vi.fn(),
+    };
+    Object.assign(scene.load, loaders);
+    scene.preload();
+    const loaded = [
+      ...Object.values(loaders).flatMap((loader) =>
+        vi.mocked(loader).mock.calls.map(([key]) => key as string),
+      ),
+      ...(atlas?.pages.map((_, page) => atlasPageKey(page)) ?? []),
+    ];
+    const filters = textureFilters(manifest as unknown as ArtManifest, atlas);
+    expect(loaded.length).toBeGreaterThan(0);
+    expect(loaded.filter((key) => !filters.has(key))).toEqual([]);
+    vi.clearAllMocks();
+  }
+  Object.assign(manifest, original);
 });
 
 it("names the key and URL of an asset that fails to load", () => {

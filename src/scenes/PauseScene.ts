@@ -28,7 +28,6 @@ import {
   stepFocus,
   type TouchSetting,
   touchSettings,
-  viewShift,
 } from "../ui";
 import { FRAME_TURN } from "../ui/input/frameTurn";
 import {
@@ -49,7 +48,7 @@ import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onGatedPointer, type SceneInput } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
 import { createPauseChrome, PAUSE_CHROME_KEY } from "./pauseChrome";
-import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
+import { fitCanvasCamera, fitPlayCamera, playPoint, sceneViewShift } from "./playCamera";
 import { activeSkill, savedSkills, selectActiveSkill } from "./save";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
 import { drawSkillButton } from "./skillButton";
@@ -426,7 +425,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.hud.forEach((icon, skill) => {
       const at = row.get(skill);
       if (at) {
-        icon.place(shifted(viewShift(this.scale.gameSize), at));
+        icon.place(shifted(sceneViewShift(this), at));
       }
       icon.visible(this.skillHudShown() && at !== undefined);
       icon.ready(skill === selected && this.skillReady(skill));
@@ -604,7 +603,7 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   // Puts the pause button at its place shifted across with the view, so it stays inside it.
   private placePauseButton(): void {
-    const at = shifted(viewShift(this.scale.gameSize), PAUSE_BUTTON.at);
+    const at = shifted(sceneViewShift(this), PAUSE_BUTTON.at);
     this.pauseButton.setPosition(at.x, at.y);
   }
 
@@ -633,7 +632,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     const point =
       this.state === "open"
         ? playPoint(this, pointer, this.cardCamera)
-        : shifted(viewShift(this.scale.gameSize), { x: pointer.x, y: pointer.y }, -1);
+        : shifted(sceneViewShift(this), playPoint(this, pointer), -1);
     return pressedArea(areas, point);
   }
 
@@ -665,18 +664,17 @@ export class PauseScene extends Scene implements SettingsOpener {
         control,
         id: pointer.id,
         startedAt: this.time.now,
-        x: pointer.x,
-        y: pointer.y,
+        ...playPoint(this, pointer),
       };
       this.setPressed(control);
     });
     onPointer("pointermove", (pointer: Input.Pointer) => {
       if (this.pressStart?.id === pointer.id) {
         this.input.stopPropagation();
+        const at = playPoint(this, pointer);
         this.pressStart.cancelled ||=
           this.controlAt(pointer) !== this.pressStart.control ||
-          Math.hypot(pointer.x - this.pressStart.x, pointer.y - this.pressStart.y) >
-            TOUCH.tapMaxDistance;
+          Math.hypot(at.x - this.pressStart.x, at.y - this.pressStart.y) > TOUCH.tapMaxDistance;
         if (this.pressStart.cancelled) {
           this.setPressed(undefined);
         }
@@ -691,11 +689,12 @@ export class PauseScene extends Scene implements SettingsOpener {
       const control = this.pressed;
       this.pressStart = undefined;
       this.setPressed(undefined);
+      const at = playPoint(this, pointer);
       if (
         !outside &&
         !pointer.wasCanceled &&
         !start.cancelled &&
-        Math.hypot(pointer.x - start.x, pointer.y - start.y) <= TOUCH.tapMaxDistance &&
+        Math.hypot(at.x - start.x, at.y - start.y) <= TOUCH.tapMaxDistance &&
         control !== undefined &&
         control === this.controlAt(pointer)
       ) {

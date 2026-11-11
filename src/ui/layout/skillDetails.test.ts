@@ -1,5 +1,6 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
@@ -11,7 +12,7 @@ import type { SkillId } from "../../data/types";
 import { SKILL_IDS } from "../../progress";
 import { cardTextSize } from "./contentCard";
 import { PAUSE_BUTTON } from "./pauseCard";
-import { playView, shifted, viewShift } from "./playView";
+import { shifted, viewShift } from "./playView";
 import { ROOM_SCREEN } from "./roomScreen";
 import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails";
 import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud";
@@ -67,26 +68,26 @@ describe("native skill presentation", () => {
   ] satisfies { shown: SkillId[] }[])(
     "packs $shown into one gapless top row at the view's right, clear of Pause",
     ({ shown }) => {
-      [SCREEN, { height: SCREEN.height + 120, width: SCREEN.width + 300 }].forEach((canvas) => {
-        const view = playView(canvas);
-        const shift = viewShift(canvas);
+      [SCREEN, { height: SCREEN.height + 120, width: SCREEN.width + 300 }].forEach((css) => {
+        const shift = viewShift(renderFit(SCREEN, 1, css));
+        const view = { ...SCREEN, ...shift };
         const row = skillHud(shown);
         expect([...row.keys()]).toEqual(SKILL_IDS.filter((skill) => shown.includes(skill)));
         const hits = [...row.values()].map((at) => skillButton(shifted(shift, at)).hit);
         const pause = { ...PAUSE_BUTTON.hit, ...shifted(shift, PAUSE_BUTTON.hit) };
         hits.forEach((hit, index) => {
           expect(inside(view, hit)).toBe(true);
-          expect(hit.y).toBe(view.y + CONTROL_EDGE);
+          expect(hit.y).toBeCloseTo(view.y + CONTROL_EDGE, 9);
           expect(hit.width).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
           expect(hit.height).toBeGreaterThanOrEqual(HIT_RULE.minTarget);
           expect(rectsOverlap(hit, pause)).toBe(false);
           const next = hits[index + 1];
           if (next) {
-            expect(next.x - hit.x - hit.width).toBe(CONTROL_EDGE);
+            expect(next.x - hit.x - hit.width).toBeCloseTo(CONTROL_EDGE, 9);
           }
         });
         const last = hits.at(-1)!;
-        expect(last.x + last.width).toBe(view.x + view.width - CONTROL_EDGE);
+        expect(last.x + last.width).toBeCloseTo(view.x + view.width - CONTROL_EDGE, 9);
       });
     },
   );

@@ -30,7 +30,6 @@ function fixture() {
     scrollX: 80,
     scrollY: 100,
     setScroll: vi.fn(),
-    useBounds: true,
     width: SCREEN.width,
   };
   const events = new EventEmitter();
@@ -48,7 +47,6 @@ describe("death presentation camera", () => {
     const done = vi.fn();
     const bird = Object.freeze({ height: 42, width: 48, x: 416 + distance, y: 418 });
     const restore = frameDeathCamera(tuning, done, scene, bird);
-    expect(camera.useBounds).toBe(false);
     expect(camera.setScroll).not.toHaveBeenCalled();
     expect(done).not.toHaveBeenCalled();
     const [x, y, ms, easing, force, callback] = camera.pan.mock.calls[0]!;
@@ -92,7 +90,6 @@ describe("death presentation camera", () => {
         }),
       ).toThrow("Invalid death camera pan tuning");
       expect(camera.pan).not.toHaveBeenCalled();
-      expect(camera.useBounds).toBe(true);
     },
   );
 
@@ -105,7 +102,7 @@ describe("death presentation camera", () => {
     const Pan = require(
       join(phaser, "src/cameras/2d/effects/Pan.js"),
     ) as typeof Cameras.Scene2D.Effects.Pan;
-    const base = new BaseCamera(32, 16, 1000, 500).setScroll(80, 100).setZoom(2);
+    const base = new BaseCamera(32, 16, 1000, 500).setOrigin(0, 0).setScroll(80, 100).setZoom(2);
     const panEffect = new Pan(base as Cameras.Scene2D.Camera);
     const camera = Object.assign(base, {
       pan: (...args: Parameters<Cameras.Scene2D.Effects.Pan["start"]>) => panEffect.start(...args),
@@ -156,7 +153,6 @@ describe("death presentation camera", () => {
     expect(camera.panEffect.reset.mock.invocationCallOrder[0]).toBeLessThan(
       camera.setScroll.mock.invocationCallOrder[0]!,
     );
-    expect(camera.useBounds).toBe(true);
     expect(camera.setScroll).toHaveBeenCalledExactlyOnceWith(80, 100);
     callback(camera, 1);
     restore();

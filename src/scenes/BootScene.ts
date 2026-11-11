@@ -13,8 +13,9 @@ import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
-import { filterFontArt, queueFontArt } from "./fontArt";
+import { queueFontArt } from "./fontArt";
 import { loadProgress } from "./save";
+import { filterLoadedArt } from "./textureFilters";
 
 // The manifest ships inside the hashed bundle rather than loading from /art/, so a copy an earlier
 // version cached can never be paired with this code.
@@ -29,7 +30,7 @@ export class BootScene extends Scene {
   }
 
   // Font PNG/FNT pairs load independently in both modes. A production build loads the
-  // remaining game art from shared nearest-filtered atlas pages.
+  // remaining game art from shared atlas pages. create filters every texture (textureFilters.ts).
   preload(): void {
     this.load.on("progress", (fraction: number) => startupLoading.progress(fraction));
     this.load.once("complete", () => startupLoading.progress(undefined));
@@ -67,10 +68,10 @@ export class BootScene extends Scene {
   }
 
   create(): void {
-    filterFontArt(this, MANIFEST);
     if (ATLAS !== null) {
       addAtlasArt(this, ATLAS);
     }
+    filterLoadedArt(this, MANIFEST, ATLAS);
     for (const { key, once } of MANIFEST.sprites) {
       const sheet = this.cache.json.get(key) as AsepriteSheet;
       for (const [tag, frames] of sheetTags(sheet)) {

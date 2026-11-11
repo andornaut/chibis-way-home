@@ -131,6 +131,7 @@ it("consumes HUD gestures and rejects a drag that returns to the same icon", () 
   const input = Object.assign(new EventEmitter(), { stopPropagation: vi.fn() });
   const press = vi.fn();
   const scene = Object.assign(new PauseScene(), {
+    cameras: { main: { x: 0, y: 0, zoom: 1 } },
     controlAt: () => "dash",
     input,
     press,
@@ -155,6 +156,7 @@ function gestures(state: "closed" | "open") {
   const openSkill = vi.fn();
   const time = { now: 0 };
   const scene = Object.assign(new PauseScene(), {
+    cameras: { main: { x: 0, y: 0, zoom: 1 } },
     controlAt: () => "speedy",
     input,
     openSkill,
@@ -275,10 +277,11 @@ it("restores every owned HUD icon after returning home and continuing with one s
     ]),
   );
   const scene = Object.assign(new PauseScene(), {
+    cameras: { main: { x: 0, y: 0, zoom: 1 } },
     dims: new Map(),
     hud: icons,
     input: {},
-    scale: { gameSize: SCREEN },
+    scale: { gameSize: SCREEN, zoom: 1 },
     scene: {
       get: () => zone,
       isActive: () => playing,

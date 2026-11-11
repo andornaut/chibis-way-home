@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { TILE } from "../data/screen";
+import { SCREEN, TILE } from "../data/screen";
 import type { ZoneEntryIntroduction } from "../data/types";
 
 const calls = vi.hoisted(() => ({ departing: vi.fn(), heard: vi.fn() }));
@@ -21,7 +21,8 @@ vi.mock("phaser", () => ({
       }),
     };
     readonly anims = { exists: () => true };
-    readonly cameras = { main: { width: 900 } };
+    // The view's camera at a fractional zoom: its viewport is device pixels wide.
+    readonly cameras = { main: { width: 1560, zoom: 390 / 180 } };
     readonly events = new EventEmitter();
     readonly game = {};
     readonly scene = {
@@ -59,7 +60,7 @@ function introduction() {
 describe("stage entry introduction", () => {
   it("approaches the viewport centre before manual dialogue, then departs at the same maximum speed", () => {
     const { actor, scene } = introduction();
-    const width = scene.cameras.main.width;
+    const { width } = SCREEN;
     const initialX = actor.x;
     expect(initialX - actor.displayWidth / 2).toBeGreaterThanOrEqual(width);
     expect(scene.scene.launch).not.toHaveBeenCalled();

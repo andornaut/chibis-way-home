@@ -95,13 +95,6 @@ function segmentDistance(point: Point, from: Point, to: Point): number {
   return Math.hypot(point.x - from.x - t * dx, point.y - from.y - t * dy);
 }
 
-// The texels across a logical-pixel chrome frame that one texel per screen pixel needs at
-// density, the screen pixels per base pixel (the game's display scale times the device pixel
-// ratio).
-export function chromeTexels(density: number, logical: number): number {
-  return Math.max(1, Math.round(logical * density));
-}
-
 // Coverage changes only within one texel of each geometric boundary, at scale texels per base
 // pixel.
 function coverage(scale: number, distance: number): number {

@@ -7,8 +7,11 @@ import { TOUCH } from "../data/touch";
 import type { Point } from "../data/types";
 import { catchModalTaps } from "./modalTaps";
 
-// A 400x200 canvas, the card's view 40 in from its left: a card at 100,50 in the view, 100x60.
-const VIEW: Point = { x: 40, y: 0 };
+// A 400x200 canvas at one device pixel per base pixel, the card's view 40 in from its left: a
+// card at 100,50 in the view, 100x60.
+const VIEW = { x: 40, y: 0, zoom: 1 };
+// The same card on a canvas at a fractional zoom, the view 63 device pixels in from its left.
+const ZOOMED = { x: 63, y: 0, zoom: 390 / 180 };
 const CARD = { height: 60, width: 100, x: 100, y: 50 };
 const ON_CARD = { x: 150, y: 70 };
 const TOP_RIGHT = { x: 370, y: 10 };
@@ -16,7 +19,13 @@ const BESIDE = { x: 20, y: 150 };
 
 // Plays a press from down to up with the card open or not, and reports whether it closed and
 // whether the press was kept from the scenes under the card's.
-function tap(open: boolean, closes: boolean, down: Point, up: Point = down) {
+function tap(
+  open: boolean,
+  closes: boolean,
+  down: Point,
+  up: Point = down,
+  camera: typeof VIEW = VIEW,
+) {
   const listeners = new Map<string, (pointer: Input.Pointer) => void>();
   let stopped = false;
   const input = {
@@ -32,9 +41,8 @@ function tap(open: boolean, closes: boolean, down: Point, up: Point = down) {
     events: new EventEmitter(),
     game: {},
     input,
-    scale: { gameSize: { height: 200, width: 400 } },
   } as unknown as Scene;
-  catchModalTaps(scene, VIEW, {
+  catchModalTaps(scene, camera, {
     ...(closes && {
       close: () => {
         closed++;
@@ -114,5 +122,28 @@ describe("catchModalTaps", () => {
     },
   ])("$name", ({ closed, closes, down, open, stopped, up }) => {
     expect(tap(open, closes, down, up)).toEqual({ closed, stopped });
+  });
+});
+
+describe("catchModalTaps at a fractional zoom", () => {
+  // Device pixels on the canvas of a point in base pixels in the view.
+  const onZoomed = (view: Point): Point => ({
+    x: ZOOMED.x + view.x * ZOOMED.zoom,
+    y: ZOOMED.y + view.y * ZOOMED.zoom,
+  });
+  const beside = { x: CARD.x - 20, y: CARD.y };
+
+  it("keeps a tap on the card the card's own", () => {
+    expect(tap(true, true, onZoomed(ON_CARD), undefined, ZOOMED)).toEqual({
+      closed: false,
+      stopped: true,
+    });
+  });
+
+  it("measures the tap distance in base pixels, not device pixels", () => {
+    const within = { ...beside, y: beside.y + TOUCH.tapMaxDistance - 1 };
+    const past = { ...beside, y: beside.y + TOUCH.tapMaxDistance + 1 };
+    expect(tap(true, true, onZoomed(beside), onZoomed(within), ZOOMED).closed).toBe(true);
+    expect(tap(true, true, onZoomed(beside), onZoomed(past), ZOOMED).closed).toBe(false);
   });
 });

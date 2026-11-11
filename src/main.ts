@@ -5,6 +5,7 @@ import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
 import { capFrameRate } from "@andornaut/game-kit/clock/phaser/capFrameRate";
+import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
 import { Game, Scale, WEBGL } from "phaser";
@@ -44,12 +45,16 @@ import { FRAME_TURN } from "./ui/input/frameTurn";
 // The page's ink background (public/site.css), which the canvas's bars match.
 const INK = "#181425";
 
-// Scale.EXPAND: the canvas fills #game, stretched by the most the base resolution can take on
-// both axes, so where #game is wider or taller than 2:1 the canvas is too. Each scene shows the
-// game's base-resolution view at the canvas's top, centred across (src/scenes/playCamera.ts), and
-// every control stays in that view, clear of the bars beside or below it. pixelArt keeps the
-// stretch nearest-neighbour. The game is constructed at once and loads while a fresh load checks
-// for a newer version: BootScene holds only the zone for the check (launchReady).
+// The canvas fills #game with its backing in device pixels, up to MAX_RENDER_SCALE per CSS pixel
+// (followFrameTurn's deviceResolution, Scale.NONE), so where #game is wider or taller than 2:1
+// the canvas is too. Each scene's cameras zoom the game's base resolution to fit, possibly
+// fractionally, and show its view at the canvas's top, centred across (src/scenes/playCamera.ts),
+// and every control stays in that view, clear of the bars beside or below it. Every texture
+// samples nearest unless BootScene's filters (src/scenes/textureFilters.ts) or its own code make
+// it linear, and the canvas itself is never smoothed. The UI overlay (mountUiPresentation) draws
+// the UI scenes over the canvas at the full device pixel ratio. The game is constructed at once
+// and loads while a fresh load checks for a newer version: BootScene holds only the zone for the
+// check (launchReady).
 function startGame(): void {
   const game = new Game({
     // The bars beside the game's view, in the page's ink.
@@ -58,11 +63,16 @@ function startGame(): void {
     // Three touch pointers: a move touch, Jump and Use can all be held at once.
     input: { activePointers: 3 },
     parent: "game",
-    pixelArt: true,
     // Lower input-to-screen delay: a desynchronized context lets the browser show a frame without
     // waiting on the page compositor, and the high-performance GPU where there is a choice.
-    render: { antialias: false, desynchronized: true, powerPreference: "high-performance" },
-    scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.EXPAND },
+    render: {
+      antialias: false,
+      antialiasGL: false,
+      desynchronized: true,
+      powerPreference: "high-performance",
+      roundPixels: true,
+    },
+    scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.NONE },
     // Later scenes draw over earlier ones and take presses first: the pause button and card over
     // the zone and its conversations, the settings card over the pause card's dim, the restart
     // card over the start screen or the celebration, and unlock notices over play and under every
@@ -120,7 +130,9 @@ function startGame(): void {
   // changed (the kit's followFrameTurn).
   const parent = document.getElementById("game");
   if (parent !== null) {
-    followFrameTurn(FRAME_TURN, game.scale.gameSize, parent, game);
+    followFrameTurn(FRAME_TURN, game.scale.gameSize, parent, game, {
+      deviceResolution: { max: MAX_RENDER_SCALE },
+    });
   }
   // Menus draw at most about MENU_FPS frames a second; gameplay and the animated opening draw
   // every display frame.

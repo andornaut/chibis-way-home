@@ -14,8 +14,11 @@ vi.mock("./cardParts", () => ({
   palette: () => paletteData,
   paletteColour: () => 0x181425,
 }));
+// The whole canvas, 900x500 base pixels at two device pixels each.
+const CANVAS = { height: 500, width: 900, x: 0, y: 0 };
+const BACKING = { height: 1000, width: 1800, x: 0, y: 0 };
 vi.mock("./playCamera", () => ({
-  canvasRect: () => ({ height: 500, width: 900, x: 0, y: 0 }),
+  canvasRect: () => CANVAS,
   fitCanvasCamera: vi.fn(),
 }));
 
@@ -46,7 +49,9 @@ function fixture() {
     children: { list: [{}] },
     events: new EventEmitter(),
     game: {},
-    scale: new EventEmitter(),
+    scale: Object.assign(new EventEmitter(), {
+      gameSize: { height: BACKING.height, width: BACKING.width },
+    }),
   } as unknown as Scene;
   let resolve!: (value: boolean) => void;
   const destroy = vi.fn();
@@ -70,9 +75,11 @@ describe("Duck modal backdrop adapter", () => {
     );
     expect(modalInput(scene).accepts()).toBe(false);
     expect(scene.cameras.cameras[0]).toBe(background);
+    expect(capture.mount.mock.calls.at(-1)?.[1]).toEqual(BACKING);
     const image = { setDisplaySize: vi.fn() };
     scene.events.emit("addedtoscene", image);
     expect(card.ignore).toHaveBeenCalledWith(image);
+    expect(image.setDisplaySize).toHaveBeenCalledWith(CANVAS.width, CANVAS.height);
     resolve(false);
     await modal.ready;
     expect(card.visible).toBe(true);

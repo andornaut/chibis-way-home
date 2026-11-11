@@ -9,7 +9,6 @@ export { moveHintView } from "./chrome/moveHint";
 export { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./chrome/pauseChrome";
 export { skillChromeLayers } from "./chrome/skillChrome";
 export {
-  chromeTexels,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
   type TouchChromeKind,
@@ -100,7 +99,7 @@ export { labelledButton } from "./layout/labelledButton";
 export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/mapScreen";
 export { openingLayout } from "./layout/opening";
 export { PAUSE_BUTTON, pauseCard } from "./layout/pauseCard";
-export { playView, shifted, viewShift } from "./layout/playView";
+export { canvasSize, playView, shifted, viewShift } from "./layout/playView";
 export { CELEBRATION, type LabelledButton, restartCard } from "./layout/restartCard";
 export { ROOM_SCREEN } from "./layout/roomScreen";
 export {

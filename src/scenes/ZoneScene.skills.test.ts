@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 
 import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
+import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { afterEach, expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
@@ -14,10 +15,12 @@ import { SKILL_IDS } from "../progress";
 import { startBird } from "../rules/bird";
 import * as engine from "../rules/zone";
 import {
+  canvasSize,
   type HeldTouch,
   keyIntent,
   PAUSE_BUTTON,
   shifted,
+  SKILL_BUTTON,
   skillHud,
   TOUCH_CONTROLS,
   touchIntent,
@@ -97,6 +100,12 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
   },
 );
 
+// A skill target's centre from its top-left.
+const targetCentre = (at: { x: number; y: number }) => ({
+  x: at.x + SKILL_BUTTON.target / 2,
+  y: at.y + SKILL_BUTTON.target / 2,
+});
+
 function touchFixture() {
   routing.accepts = true;
   saved.owned = [...SKILL_IDS];
@@ -105,8 +114,12 @@ function touchFixture() {
     matchMedia: () => ({ matches: true }),
   });
   vi.stubGlobal("window", host);
-  const size = { height: SCREEN.height + 120, width: SCREEN.width + 120 };
-  const bounds = { height: size.height / 2, width: size.width / 2, x: 100, y: 50 };
+  // A 2.16:1 phone at a backing of two device pixels per CSS pixel: the zoom is fractional and
+  // the view sits a fractional number of base pixels in from the canvas's left.
+  const css = { height: 390, width: 844 };
+  const fit = renderFit(SCREEN, 2, css);
+  const size = canvasSize(fit);
+  const bounds = { ...css, x: 100, y: 50 };
   const canvas = Object.assign(new EventTarget(), { getBoundingClientRect: () => bounds });
   const sprite = () => ({
     anims: {},
@@ -136,7 +149,7 @@ function touchFixture() {
     game: { canvas },
     moveHint: { knob, ring },
     playCovered: () => state.covered,
-    scale: { gameSize: size },
+    scale: { gameSize: fit.backing, zoom: 1 / fit.r },
     scene: { isActive: () => state.active },
     skillState: () => ({ shown: state.hudShown }),
   }) as unknown as {
@@ -162,8 +175,8 @@ function touchFixture() {
   ) => {
     const event = new Event(type);
     Object.defineProperties(event, {
-      clientX: { value: bounds.x + point.x / 2 },
-      clientY: { value: bounds.y + point.y / 2 },
+      clientX: { value: bounds.x + (point.x * bounds.width) / size.width },
+      clientY: { value: bounds.y + (point.y * bounds.height) / size.height },
       pointerId: { value: pointerId },
       pointerType: { value: "touch" },
       target: { value: target },
@@ -185,13 +198,13 @@ function touchFixture() {
     Object.defineProperties(event, {
       button: { value: button },
       buttons: { value: buttons },
-      clientX: { value: bounds.x + point.x / 2 },
-      clientY: { value: bounds.y + point.y / 2 },
+      clientX: { value: bounds.x + (point.x * bounds.width) / size.width },
+      clientY: { value: bounds.y + (point.y * bounds.height) / size.height },
       target: { value: target },
     });
     host.dispatchEvent(event);
   };
-  return { canvas, draw, events, host, knob, mouse, ring, scene, send, size, state };
+  return { canvas, draw, events, fit, host, knob, mouse, ring, scene, send, state };
 }
 
 it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])(
@@ -203,12 +216,14 @@ it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])
     f.scene.watchMouse();
     const point =
       control === "use" || control === "jump"
-        ? shifted(viewShift(f.size), TOUCH_CONTROLS[control].centre)
+        ? shifted(viewShift(f.fit), TOUCH_CONTROLS[control].centre)
         : control === "pause"
-          ? shifted(viewShift(f.size), PAUSE_BUTTON.at)
+          ? shifted(viewShift(f.fit), PAUSE_BUTTON.at)
           : shifted(
-              viewShift(f.size),
-              skillHud(SKILL_IDS).get(control as SkillId) ?? { x: 100, y: 100 },
+              viewShift(f.fit),
+              skillHud(SKILL_IDS).has(control as SkillId)
+                ? targetCentre(skillHud(SKILL_IDS).get(control as SkillId)!)
+                : { x: 100, y: 100 },
             );
     const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
     f.mouse("mousedown", 0, 1, point, target);
@@ -265,12 +280,14 @@ it.each([
   const f = touchFixture();
   const point =
     control === "use" || control === "jump"
-      ? shifted(viewShift(f.size), TOUCH_CONTROLS[control].centre)
+      ? shifted(viewShift(f.fit), TOUCH_CONTROLS[control].centre)
       : control === "pause"
-        ? shifted(viewShift(f.size), PAUSE_BUTTON.at)
+        ? shifted(viewShift(f.fit), PAUSE_BUTTON.at)
         : shifted(
-            viewShift(f.size),
-            skillHud(SKILL_IDS).get(control as SkillId) ?? { x: 100, y: 100 },
+            viewShift(f.fit),
+            skillHud(SKILL_IDS).has(control as SkillId)
+              ? targetCentre(skillHud(SKILL_IDS).get(control as SkillId)!)
+              : { x: 100, y: 100 },
           );
   const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
   expect(f.draw()).toBe(true);
@@ -291,8 +308,8 @@ it.each([
 it("retains the movement finger's joystick while another finger holds or releases buttons", () => {
   const f = touchFixture();
   const start = { x: 200, y: 180 };
-  const hud = shifted(viewShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
-  const use = shifted(viewShift(f.size), TOUCH_CONTROLS.use.centre);
+  const hud = shifted(viewShift(f.fit), targetCentre(skillHud(SKILL_IDS).get("doubleJump")!));
+  const use = shifted(viewShift(f.fit), TOUCH_CONTROLS.use.centre);
   f.send("pointerdown", 1, start);
   f.send("pointermove", 1, { ...start, x: start.x + TOUCH.moveDeadZone + 1 });
   f.send("pointerdown", 2, use);
@@ -315,7 +332,7 @@ it("retains the movement finger's joystick while another finger holds or release
 });
 it("does not reserve hidden or unowned skill targets", () => {
   const f = touchFixture();
-  const point = shifted(viewShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
+  const point = shifted(viewShift(f.fit), targetCentre(skillHud(SKILL_IDS).get("doubleJump")!));
   f.state.hudShown = false;
   f.send("pointerdown", 1, point);
   expect(f.scene.heldTouches.get(1)?.role).toBe("move");
@@ -329,9 +346,11 @@ it("does not reserve hidden or unowned skill targets", () => {
 it("reserves an owned skill's packed slot at the top right and frees its full-row slot", () => {
   const f = touchFixture();
   saved.owned = ["dash"];
-  const packed = shifted(viewShift(f.size), skillHud(["dash"]).get("dash")!);
-  const fullRow = shifted(viewShift(f.size), skillHud(SKILL_IDS).get("dash")!);
-  expect(packed).toEqual(shifted(viewShift(f.size), skillHud(SKILL_IDS).get("speedy")!));
+  const packed = shifted(viewShift(f.fit), targetCentre(skillHud(["dash"]).get("dash")!));
+  const fullRow = shifted(viewShift(f.fit), targetCentre(skillHud(SKILL_IDS).get("dash")!));
+  expect(packed).toEqual(
+    shifted(viewShift(f.fit), targetCentre(skillHud(SKILL_IDS).get("speedy")!)),
+  );
   f.send("pointerdown", 1, packed);
   expect(f.scene.heldTouches.has(1)).toBe(false);
   expect(f.scene.buttonTouches.has(1)).toBe(true);
@@ -370,7 +389,7 @@ it("draws current-stage progress on the existing HUD graphics with bottom loadin
       start: { area: "main", entry: "start" },
     },
     progress: graphics,
-    scale: { gameSize: SCREEN },
+    scale: { gameSize: SCREEN, zoom: 1 },
     zone: { area: "main", bird: { x: SCREEN.width / 4 - BIRD.width / 2 }, cleared: false },
   }) as { drawProgress(): void };
   scene.drawProgress();

@@ -15,6 +15,7 @@ import knob from "../../public/art/sprites/ui-move-knob.json";
 import jump from "../../public/art/sprites/ui-touch-jump.json";
 import use from "../../public/art/sprites/ui-touch-use.json";
 import { chromeCanvasTexture } from "../testing/chromeTexture";
+import { deviceScale, fitScale } from "../testing/renderScale";
 import { createTouchChrome } from "./touchChrome";
 
 vi.mock("phaser", () => ({
@@ -47,7 +48,7 @@ it("caches four isolated nearest-sampled sheets and retains authored frame order
     setOrigin: vi.fn().mockReturnThis(),
   }));
   // Four screen pixels per base pixel.
-  const stub = sceneStub(vi.fn, { add: { sprite }, scale: { displaySize: { width: 4096 } } });
+  const stub = sceneStub(vi.fn, { add: { sprite }, scale: fitScale(4) });
   for (const [key, sheet] of Object.entries(data)) {
     stub.cache.json.add(key, sheet);
   }
@@ -108,8 +109,10 @@ it("paints one texel per screen pixel and repaints when the display scale or pix
     };
     return object;
   });
-  // The 1024px stub game shown 1110px wide: 844x390 landscape's 1.08 display scale.
-  const stub = sceneStub(vi.fn, { add: { sprite }, scale: { displaySize: { width: 1110 } } });
+  // An 844x390 landscape phone, its backing capped at two device pixels per CSS pixel: the view
+  // fits at 390 / 360 CSS pixels per base pixel.
+  const phone = { height: 390, width: 844 };
+  const stub = sceneStub(vi.fn, { add: { sprite }, scale: deviceScale(phone, 2) });
   stub.cache.json.add("manifest", manifest).add("ui-touch-jump", jump);
   Object.assign(stub.textures, { createCanvas });
   Object.assign(stub.game, { scene: { scenes: [stub] } });
@@ -119,18 +122,20 @@ it("paints one texel per screen pixel and repaints when the display scale or pix
   control.texture = texture;
   stub.children.list.push(control as never);
   const frames = [...texture!.frames.values()];
-  // 75 base pixels at 1110 / 1024 * 3 screen pixels each.
+  // 75 base pixels at 390 / 360 * 3 screen pixels each: the full device pixel ratio, not the
+  // backing's capped one.
   expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 244));
   stub.game.events.emit("poststep");
   expect(texture!.setSize).toHaveBeenCalledTimes(1);
 
   vi.stubGlobal("devicePixelRatio", 1);
+  Object.assign(stub.scale, deviceScale(phone));
   stub.game.events.emit("poststep");
   expect(texture!.setSize).toHaveBeenLastCalledWith(83 * frames.length, 83);
   expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 81));
   expect(control.scaleX).toBeCloseTo((0.075 * 244) / 81);
 
-  Object.assign(stub.scale.displaySize, { width: 2048 });
+  Object.assign(stub.scale, fitScale(2));
   stub.game.events.emit("poststep");
   expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 150));
   expect(control.scaleX * 150).toBeCloseTo(0.075 * 244);

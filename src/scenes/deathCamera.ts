@@ -24,7 +24,7 @@ export function frameDeathCamera(
     throw new Error("Invalid death camera pan tuning");
   }
   const camera = scene.cameras.main;
-  const before = { scrollX: camera.scrollX, scrollY: camera.scrollY, useBounds: camera.useBounds };
+  const before = { scrollX: camera.scrollX, scrollY: camera.scrollY };
   const x = bird.x - (SCREEN.width - bird.width) / 2;
   const y = bird.y - (SCREEN.height - bird.height) + tuning.bottomInset;
   const distance = Math.hypot(x - before.scrollX, y - before.scrollY);
@@ -49,11 +49,9 @@ export function frameDeathCamera(
       camera.panEffect.reset();
       panning = false;
     }
-    camera.useBounds = before.useBounds;
     camera.setScroll(before.scrollX, before.scrollY);
   };
   scene.events.once("shutdown", restore);
-  camera.useBounds = false;
   if (distance === 0) {
     finish();
   } else {

@@ -12,6 +12,7 @@ import manifest from "../../public/art/manifest.json";
 import palette from "../../public/art/palette.json";
 import pause from "../../public/art/sprites/ui-pause.json";
 import { chromeCanvasTexture } from "../testing/chromeTexture";
+import { fitScale } from "../testing/renderScale";
 import { createPauseChrome, PAUSE_CHROME_KEY } from "./pauseChrome";
 
 vi.mock("phaser", () => ({
@@ -36,7 +37,7 @@ it("caches one opaque35px Pause sprite and copies the authored rest, press and h
     setOrigin: vi.fn().mockReturnThis(),
   }));
   // Four screen pixels per base pixel.
-  const stub = sceneStub(vi.fn, { add: { sprite }, scale: { displaySize: { width: 4096 } } });
+  const stub = sceneStub(vi.fn, { add: { sprite }, scale: fitScale(4) });
   stub.cache.json.add("manifest", manifest).add("ui-pause", pause);
   Object.assign(stub.textures, { createCanvas });
   const scene = stub as unknown as Scene;

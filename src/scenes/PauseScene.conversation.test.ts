@@ -64,6 +64,7 @@ function conversation(data: DialogueData = { scene: "archie-intro" }) {
     resume: vi.fn(),
   };
   const pause = Object.assign(new PauseScene(), {
+    cameras: { main: { x: 0, y: 0, zoom: 1 } },
     card: { destroy: vi.fn() },
     dimZone: vi.fn(async () => {}),
     dims: new Map(),
@@ -73,7 +74,7 @@ function conversation(data: DialogueData = { scene: "archie-intro" }) {
     pauseButton: { setVisible: vi.fn(), visible: true },
     redrawCard: vi.fn(),
     renderDim: vi.fn(),
-    scale: { gameSize: { height: 360, width: 720 } },
+    scale: { gameSize: { height: 360, width: 720 }, zoom: 1 },
     scene: scenes,
     setPressed: vi.fn(),
     showCard: vi.fn(),

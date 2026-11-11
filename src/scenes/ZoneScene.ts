@@ -193,7 +193,6 @@ import {
   touchSettings,
   touchSettingShown,
   trackPress,
-  viewShift,
 } from "../ui";
 import { FRAME_TURN } from "../ui/input/frameTurn";
 import { achievementNoticeShowing } from "./achievementNotice";
@@ -209,7 +208,7 @@ import { frameDeathCamera } from "./deathCamera";
 import type { DeathData, DeathOpener } from "./DeathScene";
 import { type DialogueData, type DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
-import { canvasRect, fitCanvasCamera, fitPlayCamera } from "./playCamera";
+import { canvasRect, fitCanvasCamera, fitPlayCamera, sceneFit, sceneViewShift } from "./playCamera";
 import { createPulseSpanArt } from "./pulseSpanArt";
 import type { RoomData } from "./RoomScene";
 import {
@@ -786,7 +785,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
 
   // Puts the touch buttons at their places in the game's view, wherever it sits in the canvas.
   private placeControls(): void {
-    const shift = viewShift(this.scale.gameSize);
+    const shift = sceneViewShift(this);
     for (const [control, sprite] of this.controls) {
       const { centre } = TOUCH_CONTROLS[control];
       const at = shifted(
@@ -826,7 +825,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       touchSettingShown("moveControls") &&
       (touches.some(({ role }) => role === "move") ||
         (touches.length === 0 && this.buttonTouches.size === 0));
-    const rest = shifted(viewShift(this.scale.gameSize), MOVE_HINT.centre);
+    const rest = shifted(sceneViewShift(this), MOVE_HINT.centre);
     const view = moveHintView(TOUCH, MOVE_HINT.knobReach, rest, touches);
     show(ring, view.ringTag);
     show(knob, view.knobTag);
@@ -1045,7 +1044,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     drawProgressBar(
       this.progress,
       STAGE_PROGRESS_STYLE,
-      stageProgressRect(this.scale.gameSize),
+      stageProgressRect(sceneFit(this)),
       this.progressFraction(),
     );
   }
@@ -1512,7 +1511,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const area = areaOf(this.layout, this.zone.area);
     this.areaShown = this.zone.area;
     this.attemptShown = this.zone.attempt;
-    this.cameras.main.setBounds(0, 0, area.width, area.height);
     // A tileset art does not have yet draws flat, like an area without one.
     const tileset = loadedTileset(
       TILE,
@@ -2155,10 +2153,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         const point = pageToGame(
           FRAME_TURN.turn(),
           canvas.getBoundingClientRect(),
-          this.scale.gameSize,
+          canvasRect(this),
           { x: event.clientX, y: event.clientY },
         );
-        const top = shifted(viewShift(this.scale.gameSize), point, -1);
+        const top = shifted(sceneViewShift(this), point, -1);
         if (
           containsPoint(PAUSE_BUTTON.hit, top.x, top.y) ||
           (this.skillState()?.shown &&
@@ -2173,7 +2171,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         ) {
           return false;
         }
-        const role = touchRoleAt(shifted(viewShift(this.scale.gameSize), point, -1));
+        const role = touchRoleAt(shifted(sceneViewShift(this), point, -1));
         return role === "move" || !this.controls.get(role)?.visible;
       },
       window,
@@ -2241,13 +2239,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       pageToGame(
         FRAME_TURN.turn(),
         this.game.canvas.getBoundingClientRect(),
-        this.scale.gameSize,
+        canvasRect(this),
         clientPoint(event),
       );
     const onGame = (event: PagePointerEvent) => clampInto(canvasRect(this), unclamped(event));
     // The touch buttons sit shifted with the view (placeControls), as the pause button does.
-    const roleAt = (point: Point) =>
-      touchRoleAt(shifted(viewShift(this.scale.gameSize), point, -1));
+    const roleAt = (point: Point) => touchRoleAt(shifted(sceneViewShift(this), point, -1));
     const accepts = (event: PagePointerEvent) => {
       if (
         !modalInput(this).accepts() ||
@@ -2258,7 +2255,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       ) {
         return false;
       }
-      const point = shifted(viewShift(this.scale.gameSize), onGame(event), -1);
+      const point = shifted(sceneViewShift(this), onGame(event), -1);
       if (event.target !== this.game.canvas) {
         return true;
       }

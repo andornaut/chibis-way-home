@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CAMERA } from "../data/camera";
 import { CONTACT_CUE } from "../data/feedback";
+import { SCREEN } from "../data/screen";
+import { contactOverscan } from "../ui";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
 
 vi.mock("./cardParts", () => ({ paletteColour: () => 1 }));
@@ -12,19 +14,23 @@ const shake = CAMERA.contactShake!;
 class Snapshot {}
 afterEach(() => vi.unstubAllGlobals());
 
+// The view at a fractional zoom, 64 device pixels in from the canvas's left.
+const ZOOM = 390 / 180;
 function fixture() {
   vi.stubGlobal("HTMLImageElement", Snapshot);
   const events = new EventEmitter();
   const camera = {
+    height: Math.round(SCREEN.height * ZOOM),
     scrollX: 80,
     scrollY: 90,
     setScroll(x: number, y: number) {
       this.scrollX = x;
       this.scrollY = y;
     },
-    useBounds: true,
-    x: 0,
+    width: Math.round(SCREEN.width * ZOOM),
+    x: 64,
     y: 0,
+    zoom: ZOOM,
   };
   const hud = {
     setScroll: vi.fn(),
@@ -129,25 +135,48 @@ describe("world-only red contact feedback", () => {
     expect(f.texture.add).toHaveBeenCalledTimes(8);
     expect(f.camera.scrollX).toBe(80 - shake.distance);
     expect(f.camera.scrollY).toBe(90 - shake.distance);
-    expect(f.camera.useBounds).toBe(false);
     expect(f.hud.setScroll).not.toHaveBeenCalled();
     f.loop.time += shake.secondOnMs;
     f.events.emit("postupdate");
     expect(f.camera.scrollX).toBe(80 + shake.distance);
     f.loop.time = 1000 + Math.max(shake.durationMs, CONTACT_CUE.durationMs);
     f.events.emit("postupdate");
-    expect(f.camera).toMatchObject({ scrollX: 80, scrollY: 90, useBounds: true });
+    expect(f.camera).toMatchObject({ scrollX: 80, scrollY: 90 });
     expect(f.images.every((image) => image.destroy.mock.calls.length === 1)).toBe(true);
     expect(f.graphic.destroy).toHaveBeenCalledOnce();
     expect(f.textures.remove).toHaveBeenCalledOnce();
     expect(f.events.listenerCount("postupdate")).toBe(0);
   });
 
+  it("snapshots the view's device pixels and cuts each edge at the camera's zoom", () => {
+    const f = fixture();
+    playContactFeedback(f.scene, options);
+    f.capture();
+    const { height, width, x, y } = f.camera;
+    expect(f.scene.game.renderer.snapshotArea).toHaveBeenCalledWith(
+      x,
+      y,
+      width,
+      height,
+      expect.any(Function),
+    );
+    const device = (value: number) => Math.round(value * ZOOM);
+    expect(f.texture.add.mock.calls.map((call) => call.slice(2))).toEqual(
+      contactOverscan(shake.distance, { ...SCREEN, x: 0, y: 0 }).map(({ source }) => [
+        device(source.x),
+        device(source.y),
+        device(source.x + source.width) - device(source.x),
+        device(source.y + source.height) - device(source.y),
+      ]),
+    );
+    f.events.emit("shutdown");
+  });
+
   it("keeps a static cue with reduced motion, and ignores captures completed after cancellation", () => {
     const still = fixture();
     playContactFeedback(still.scene, { ...options, reducedMotion: true });
     expect(still.scene.game.renderer.snapshotArea).not.toHaveBeenCalled();
-    expect(still.camera).toMatchObject({ scrollX: 80, scrollY: 90, useBounds: true });
+    expect(still.camera).toMatchObject({ scrollX: 80, scrollY: 90 });
     still.loop.time += shake.firstOffMs;
     still.graphic.fillRect.mockClear();
     still.events.emit("postupdate");

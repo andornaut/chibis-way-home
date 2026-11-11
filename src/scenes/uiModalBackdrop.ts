@@ -12,11 +12,14 @@ export function mountUiModalBackdrop(
     readonly remap: (colour: number) => number;
     readonly scene: Scene;
   },
+  // area in the canvas's device pixels, which the capture reads.
+  captureArea: Rect,
+  // Where the captured image draws, in base pixels.
   area: Rect,
 ): { destroy(): void; ready: Promise<boolean> } | undefined {
   const { scene } = context;
   const presentation = gameUiPresentation(scene.game);
-  const capture = presentation?.capture(scene, area, context.remap);
+  const capture = presentation?.capture(scene, captureArea, context.remap);
   if (!capture) {
     return undefined;
   }
@@ -62,7 +65,7 @@ export function mountUiModalBackdrop(
       }
     }
     presentation!.fallback();
-    legacy = mountModalBackdrop(context, area);
+    legacy = mountModalBackdrop(context, captureArea);
     return legacy.ready;
   });
   return { destroy, ready };

@@ -2,6 +2,7 @@ import { type Scene, Textures } from "phaser";
 import { expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json";
+import { SCREEN } from "../data/screen";
 import { chromeCanvasTexture } from "../testing/chromeTexture";
 import { drawHelpChrome } from "./helpChrome";
 
@@ -31,7 +32,7 @@ it("keeps help textures separate and bounded while displaying their logical fram
   const scene = {
     add: { image },
     game: { events: { on: vi.fn() } },
-    scale: { displaySize: { width: 720 }, gameSize: { width: 720 } },
+    scale: { gameSize: SCREEN, zoom: 1 },
     textures: { createCanvas, exists: (key: string) => cached.has(key) },
   } as unknown as Scene;
   for (const action of ["move", "use", "jump"] as const) {

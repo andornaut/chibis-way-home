@@ -25,7 +25,7 @@ export function playContactFeedback(
   cancelContactFeedback(scene.events);
   const { cue, depth, reducedMotion, shake } = options;
   const camera = scene.cameras.main;
-  const base = { useBounds: camera.useBounds, x: camera.scrollX, y: camera.scrollY };
+  const base = { x: camera.scrollX, y: camera.scrollY };
   const key = `__contact-edge-${nextCapture++}`;
   const view = { ...SCREEN, x: 0, y: 0 };
   const hidden = reducedMotion
@@ -47,7 +47,6 @@ export function playContactFeedback(
       return;
     }
     active = false;
-    camera.useBounds = base.useBounds;
     camera.setScroll(base.x, base.y);
     restoreHud();
     scene.events.off("postupdate", place);
@@ -94,7 +93,11 @@ export function playContactFeedback(
     begin();
     return;
   }
-  scene.game.renderer.snapshotArea(camera.x, camera.y, SCREEN.width, SCREEN.height, (snapshot) => {
+  // The snapshot is the view's device pixels; its frames are cut at the same zoom and drawn back
+  // at their base-pixel size.
+  const { zoom } = camera;
+  const device = (value: number) => Math.round(value * zoom);
+  scene.game.renderer.snapshotArea(camera.x, camera.y, camera.width, camera.height, (snapshot) => {
     if (!active) {
       return;
     }
@@ -104,7 +107,16 @@ export function playContactFeedback(
       if (texture) {
         contactOverscan(shake.distance, view).forEach(({ source, target }, index) => {
           const frame = `edge-${index}`;
-          texture.add(frame, 0, source.x, source.y, source.width, source.height);
+          const x = device(source.x);
+          const y = device(source.y);
+          texture.add(
+            frame,
+            0,
+            x,
+            y,
+            device(source.x + source.width) - x,
+            device(source.y + source.height) - y,
+          );
           const image = scene.add
             .image(target.x, target.y, key, frame)
             .setOrigin(0)
@@ -114,7 +126,6 @@ export function playContactFeedback(
           edges.push({ image, x: target.x, y: target.y });
         });
         moving = true;
-        camera.useBounds = false;
       }
     }
     begin();

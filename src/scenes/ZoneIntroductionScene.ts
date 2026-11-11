@@ -2,7 +2,7 @@ import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type GameObjects, Scene } from "phaser";
 
 import { CHARACTERS } from "../data/characters";
-import { TILE } from "../data/screen";
+import { SCREEN, TILE } from "../data/screen";
 import type { Point, ZoneEntryIntroduction } from "../data/types";
 import type { DialogueData, DialogueOpener } from "./DialogueScene";
 import { modalInput } from "./modalInput";
@@ -53,7 +53,7 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
     }
     modalInput(this).open();
     this.actor = this.add
-      .sprite(this.cameras.main.width, feet.y, character.art)
+      .sprite(SCREEN.width, feet.y, character.art)
       .setOrigin(0.5, 1)
       .setFlipX(true)
       .play(animationKey(character.art, entry.runAnimation));
@@ -98,7 +98,7 @@ export class ZoneIntroductionScene extends Scene implements DialogueOpener {
       return;
     }
     const distance = (this.introduction.entry.escapeTilesPerSecond * TILE * delta) / 1000;
-    const width = this.cameras.main.width;
+    const { width } = SCREEN;
     if (this.phase === "approach") {
       this.actor.x = Math.max(width / 2, this.actor.x - distance);
       if (this.actor.x === width / 2) {

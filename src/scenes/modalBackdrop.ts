@@ -42,8 +42,13 @@ export function showModalBackdrop(
     remap: alreadyDimmed ? (colour: number) => colour : modalColour(palette(scene)),
     scene,
   };
+  // The capture reads the whole backing, in device pixels; the backdrop draws over the whole
+  // canvas, in base pixels (fit).
   const area = canvasRect(scene);
-  const backdrop = mountUiModalBackdrop(context, area) ?? mountModalBackdrop(context, area);
+  const { height, width } = scene.scale.gameSize;
+  const backing = { height, width, x: 0, y: 0 };
+  const backdrop =
+    mountUiModalBackdrop(context, backing, area) ?? mountModalBackdrop(context, backing);
   const toContent = (object: GameObjects.GameObject) => backdropCamera.ignore(object);
   const destroy = () => {
     if (disposed) {

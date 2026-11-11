@@ -1,4 +1,4 @@
-import type { Input, Scene } from "phaser";
+import type { Cameras, Input, Scene } from "phaser";
 
 import { TOUCH } from "../data/touch";
 import type { Point, Rect } from "../data/types";
@@ -10,8 +10,18 @@ interface Modal {
 }
 
 // All modal gestures stay in the top scene, including presses on the card and required cards.
-export function catchModalTaps(scene: Scene, camera: Point, modal: Modal): void {
+// Presses and their travel are read in base pixels in camera's view.
+export function catchModalTaps(
+  scene: Scene,
+  camera: Pick<Cameras.Scene2D.Camera, "x" | "y" | "zoom">,
+  modal: Modal,
+): void {
   let press: { at: Point; cancelled: boolean; id: number; outside: boolean } | undefined;
+  // A pointer's point in base pixels in camera's view, as playPoint reads it.
+  const inView = (pointer: Pick<Input.Pointer, "x" | "y">): Point => ({
+    x: (pointer.x - camera.x) / camera.zoom,
+    y: (pointer.y - camera.y) / camera.zoom,
+  });
   const input = modalInput(scene);
   const refresh = () => {
     if (modal.covered() !== undefined) {
@@ -30,7 +40,7 @@ export function catchModalTaps(scene: Scene, camera: Point, modal: Modal): void 
       return;
     }
     scene.input.stopPropagation();
-    const point = { x: pointer.x - camera.x, y: pointer.y - camera.y };
+    const point = inView(pointer);
     const inside = covered.some(
       (rect) =>
         point.x >= rect.x &&
@@ -46,9 +56,9 @@ export function catchModalTaps(scene: Scene, camera: Point, modal: Modal): void 
     }
     scene.input.stopPropagation();
     if (press?.id === pointer.id) {
+      const point = inView(pointer);
       press.cancelled ||=
-        Math.hypot(pointer.x - camera.x - press.at.x, pointer.y - camera.y - press.at.y) >
-        TOUCH.tapMaxDistance;
+        Math.hypot(point.x - press.at.x, point.y - press.at.y) > TOUCH.tapMaxDistance;
     }
   });
   const up = (pointer: Input.Pointer, outside: boolean) => {
@@ -58,14 +68,14 @@ export function catchModalTaps(scene: Scene, camera: Point, modal: Modal): void 
     scene.input.stopPropagation();
     const previous = press;
     press = undefined;
+    const point = inView(pointer);
     if (
       !outside &&
       !pointer.wasCanceled &&
       previous?.id === pointer.id &&
       previous.outside &&
       !previous.cancelled &&
-      Math.hypot(pointer.x - camera.x - previous.at.x, pointer.y - camera.y - previous.at.y) <=
-        TOUCH.tapMaxDistance
+      Math.hypot(point.x - previous.at.x, point.y - previous.at.y) <= TOUCH.tapMaxDistance
     ) {
       modal.close?.();
     }

@@ -11,6 +11,7 @@ import pauseSheet from "../../public/art/sprites/ui-pause.json";
 import type { SkillId } from "../data/types";
 import { SKILL_IDS } from "../progress";
 import { chromeCanvasTexture } from "../testing/chromeTexture";
+import { fitScale } from "../testing/renderScale";
 import { PAUSE_VISIBLE_DIAMETER, SKILL_ART, SKILL_BUTTON } from "../ui";
 
 vi.mock("phaser", () => ({
@@ -84,7 +85,7 @@ function fixture(density = 3) {
   };
   const stub = sceneStub(vi.fn, {
     add: { image: addLayer, sprite: addLayer },
-    scale: { displaySize: { width: 1024 * density } },
+    scale: fitScale(density),
   });
   Object.assign(stub.textures, { createCanvas });
   Object.assign(stub.game, { scene: { scenes: [stub] } });
@@ -179,7 +180,7 @@ it("paints one texel per screen pixel and repaints when the display scale or pix
   stub.game.events.emit("poststep");
   expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 72));
   expect(chrome.scaleX * 72).toBeCloseTo((SKILL_BUTTON.target / 1000) * 144);
-  Object.assign(stub.scale.displaySize, { width: 1024 * 2.67 });
+  Object.assign(stub.scale, fitScale(2.67));
   stub.game.events.emit("poststep");
   expect(frames.map((frame) => frame.cutWidth)).toEqual(frames.map(() => 128));
   expect(chrome.scaleX * 128).toBeCloseTo((SKILL_BUTTON.target / 1000) * 144);

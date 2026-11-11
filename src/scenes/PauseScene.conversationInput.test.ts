@@ -177,6 +177,7 @@ function conversation(mode: Mode = "line") {
   };
   const input = sceneInput();
   const pause = Object.assign(new PauseScene(), {
+    cameras: { main: { x: 0, y: 0, zoom: 1 } },
     card: { destroy: vi.fn() },
     dimZone: vi.fn(async () => {}),
     dims: new Map(),
@@ -189,7 +190,7 @@ function conversation(mode: Mode = "line") {
     pauseButton: { setVisible: vi.fn(), visible: true },
     redrawCard: vi.fn(),
     renderDim: vi.fn(),
-    scale: { gameSize: { height: 360, width: 720 } },
+    scale: { gameSize: { height: 360, width: 720 }, zoom: 1 },
     scene: scenes,
     setPressed(this: { pressed: string | undefined }, value: string | undefined) {
       this.pressed = value;

@@ -9,13 +9,13 @@ import {
   type UiSnapshotResult,
 } from "@andornaut/game-kit/view/phaser/uiCommands";
 import { createUiCompositor, readUiWorldFrame } from "@andornaut/game-kit/view/phaser/uiComposite";
-import { uiProjection } from "@andornaut/game-kit/view/phaser/uiProjection";
 import { createUiRecorder } from "@andornaut/game-kit/view/phaser/uiSubmitter";
 import { Core, type Game, type Scene, Scenes } from "phaser";
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
 import { FONT_ROLES, mountUiFonts } from "../ui";
+import { uiOverlayFit } from "./uiOverlayFit";
 import { bindGameUiPresentation } from "./uiPresentationPort";
 import { createUiRootManager } from "./uiRootManager";
 import { sceneUiRoots } from "./uiRoots";
@@ -165,23 +165,13 @@ export function mountUiPresentation(game: Game): () => void {
         fallback();
         return;
       }
-      const cssSize = {
-        height: parseFloat(world.style.height) || world.clientHeight,
-        width: parseFloat(world.style.width) || world.clientWidth,
-      };
-      canvas.style.left = `${world.offsetLeft}px`;
-      canvas.style.top = `${world.offsetTop}px`;
-      canvas.style.width = `${cssSize.width}px`;
-      canvas.style.height = `${cssSize.height}px`;
       try {
-        recorder.begin(
-          ++frameId,
-          uiProjection({
-            captureSize: { height: world.height, width: world.width },
-            cssSize,
-            devicePixelRatio: window.devicePixelRatio,
-          }),
-        );
+        const { cssSize, projection } = uiOverlayFit(window.devicePixelRatio, world);
+        canvas.style.left = `${world.offsetLeft}px`;
+        canvas.style.top = `${world.offsetTop}px`;
+        canvas.style.width = `${cssSize.width}px`;
+        canvas.style.height = `${cssSize.height}px`;
+        recorder.begin(++frameId, projection);
         frameOpen = true;
         active = true;
       } catch {

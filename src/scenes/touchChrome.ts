@@ -4,11 +4,11 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
+import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import { Core, type GameObjects, type Scene, Textures } from "phaser";
 
 import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
 import {
-  chromeTexels,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
   type TouchChromeKind,
@@ -18,6 +18,7 @@ import {
   type TouchChromePose,
 } from "../ui";
 import { paletteColour } from "./cardParts";
+import { sceneFit } from "./playCamera";
 
 const SOURCE: Readonly<Record<TouchChromeKind, string>> = {
   jump: "ui-touch-jump",
@@ -42,11 +43,11 @@ type ChromeObject = GameObjects.GameObject &
 
 const gameSheets = new WeakMap<object, Map<string, ChromeSheet>>();
 
-// Screen pixels per base pixel: the canvas's CSS pixels per game pixel times the device pixel
-// ratio.
+// Screen pixels per base pixel: the canvas's CSS pixels per base pixel (its fit) times the full
+// device pixel ratio, the UI overlay's density (src/scenes/uiPresentation.ts), above the WebGL
+// backing's capped one.
 export function chromeDensity(scene: Pick<Scene, "scale">): number {
-  const { displaySize, gameSize } = scene.scale;
-  return (displaySize.width / gameSize.width) * (globalThis.devicePixelRatio || 1);
+  return sceneFit(scene).fit * (globalThis.devicePixelRatio || 1);
 }
 
 function paintSheet(texture: Textures.CanvasTexture, sheet: ChromeSheet): void {
@@ -107,7 +108,7 @@ export function sharpenChrome(scene: ChromeScene): void {
   }
   const density = chromeDensity(scene);
   for (const [key, sheet] of sheets) {
-    const texels = chromeTexels(density, sheet.logical);
+    const texels = densityTexels(density, sheet.logical);
     if (texels === sheet.texels) {
       continue;
     }
@@ -134,7 +135,7 @@ export function createChromeTexture(
   if (scene.textures.exists(key)) {
     return key;
   }
-  const sheet = { frames, logical, texels: chromeTexels(chromeDensity(scene), logical) };
+  const sheet = { frames, logical, texels: densityTexels(chromeDensity(scene), logical) };
   const texture = scene.textures.createCanvas(
     key,
     (sheet.texels + 2) * frames.size,

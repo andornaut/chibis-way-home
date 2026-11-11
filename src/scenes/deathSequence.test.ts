@@ -53,7 +53,6 @@ function fixture(reason: "fall" | "hazard") {
       this.scrollX = x;
       this.scrollY = y;
     }),
-    useBounds: true,
     width: SCREEN.width,
   };
   const feet = reason === "fall" ? 1500 : 240;
@@ -173,7 +172,7 @@ describe("one death presentation per attempt", () => {
       expect(vi.mocked(cancelContactFeedback).mock.invocationCallOrder.at(-1)).toBeLessThan(
         camera.setScroll.mock.invocationCallOrder.at(-1)!,
       );
-      expect([camera.scrollX, camera.scrollY, camera.useBounds]).toEqual([80, 100, true]);
+      expect([camera.scrollX, camera.scrollY]).toEqual([80, 100]);
       camera.setScroll.mockClear();
       scene.events.emit("shutdown");
       expect(camera.setScroll).not.toHaveBeenCalled();
@@ -190,6 +189,6 @@ describe("one death presentation per attempt", () => {
     expect(camera.panEffect.reset).toHaveBeenCalledOnce();
     expect(start).not.toHaveBeenCalled();
     expect(scene.scene.launch).not.toHaveBeenCalled();
-    expect([camera.scrollX, camera.scrollY, camera.useBounds]).toEqual([80, 100, true]);
+    expect([camera.scrollX, camera.scrollY]).toEqual([80, 100]);
   });
 });
