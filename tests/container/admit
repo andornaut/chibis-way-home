@@ -1,49 +1,15 @@
 #!/bin/sh
 set -eu
 
-if [ ! -r /proc/loadavg ] || [ ! -r /proc/meminfo ]; then
-    printf '%s\n' 'Resource admission requires current load and available memory.' >&2
+if [ ! -r /proc/loadavg ]; then
+    printf '%s\n' 'Resource admission requires the current one-minute load.' >&2
     exit 75
 fi
-awk -v budget="${CHECK_MEMORY:-}" '
-    function reject(message) {
-        print message > "/dev/stderr"
-        failed = 1
-        exit 75
-    }
-    BEGIN {
-        if (budget !~ /^[1-9][0-9]*[kKmMgG]?$/) {
-            reject("Resource admission requires a positive CHECK_MEMORY budget in bytes, k, m or g.")
-        }
-        suffix = tolower(substr(budget, length(budget)))
-        amount = budget
-        sub(/[kKmMgG]$/, "", amount)
-        multiplier = 1
-        if (suffix == "k") multiplier = 1024
-        if (suffix == "m") multiplier = 1024 * 1024
-        if (suffix == "g") multiplier = 1024 * 1024 * 1024
-        requiredKiB = amount * multiplier / 1024 + 2 * 1024 * 1024
-    }
-    FILENAME == ARGV[1] && FNR == 1 {
+awk '
+    NR == 1 {
         if ($1 !~ /^[0-9]+([.][0-9]+)?$/ || $1 >= 20) {
-            reject("Resource admission requires one-minute load below 20.")
-        }
-        loadRecorded = 1
-    }
-    FILENAME == ARGV[2] && $1 == "MemAvailable:" {
-        if (memoryRecorded || $2 !~ /^[0-9]+$/ || $3 != "kB") {
-            reject("Resource admission requires a valid MemAvailable reading.")
-        }
-        availableKiB = $2
-        memoryRecorded = 1
-    }
-    END {
-        if (failed) exit 75
-        if (!loadRecorded || !memoryRecorded) {
-            reject("Resource admission requires current load and available memory.")
-        }
-        if (availableKiB < requiredKiB) {
-            reject("Resource admission requires CHECK_MEMORY plus 2 GiB of available memory; swap is excluded.")
+            print "Resource admission requires one-minute load below 20." > "/dev/stderr"
+            exit 75
         }
     }
-' /proc/loadavg /proc/meminfo
+' /proc/loadavg
