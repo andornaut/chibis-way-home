@@ -8,7 +8,11 @@ vi.mock("../ui/settings/touchControls", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../ui/settings/touchControls")>()),
   coarsePointer: () => true,
 }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate, onScenePointer: vi.fn() }));
+vi.mock("./modalInput", () => ({
+  modalInput: () => gate,
+  onGatedPointer: vi.fn(),
+  onScenePointer: vi.fn(),
+}));
 
 import { PAUSE_BUTTON } from "../ui";
 import { DialogueScene } from "./DialogueScene";

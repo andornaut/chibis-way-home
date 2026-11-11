@@ -18,6 +18,12 @@ vi.mock("./save", () => ({
 }));
 vi.mock("./modalInput", () => ({
   modalInput: () => gate,
+  onGatedPointer: (
+    scene: { input: EventEmitter },
+    _gate: unknown,
+    event: string,
+    listener: (pointer: unknown) => void,
+  ) => scene.input.on(event, listener),
   onScenePointer: (
     scene: { input: EventEmitter },
     event: string,
