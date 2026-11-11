@@ -9,8 +9,8 @@
       "layout": "8aca0cfd9ccce7ad",
       "route": "f434b5571cb4a5b1",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4e447182d4332d25:397",
-      "work": 397
+      "trace": "5c13394fcbe34d93:532",
+      "work": 532
     },
     {
       "encounters": 0,
@@ -207,8 +207,8 @@
       "layout": "3449d53cf37fe92a",
       "route": "c47d3abeebc21987",
       "slots": { "door": 0, "event": 0 },
-      "trace": "42116efeff1c2905:46490",
-      "work": 46490
+      "trace": "10c1c1e08b467bfe:3651",
+      "work": 3651
     },
     {
       "encounters": 1,
@@ -240,8 +240,8 @@
       "layout": "180085161a77f315",
       "route": "3963365bd514dd1d",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b95c3b0bbaecdcc9:161179",
-      "work": 161179
+      "trace": "200a8f6919a1a61f:158819",
+      "work": 158819
     },
     {
       "encounters": 0,
@@ -266,7 +266,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "b028b7d3bdd9077f", "proofs": "77a62a373889f4a8" },
+  "inputs": { "data": "b028b7d3bdd9077f", "proofs": "d77fdc9ce93af04b" },
   "version": 1,
   "zone": "woodland"
 }

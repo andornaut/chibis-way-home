@@ -26,8 +26,8 @@
       "layout": "64632da4b13b6ff1",
       "route": "f434b5571cb4a5b1",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4e447182d4332d25:397",
-      "work": 397
+      "trace": "5c13394fcbe34d93:532",
+      "work": 532
     },
     {
       "encounters": 0,
@@ -70,8 +70,8 @@
       "layout": "c63c4c80200e922b",
       "route": "4983ef1b0aac85a4",
       "slots": { "door": 0, "event": 0 },
-      "trace": "f96e62c32ca0b6d8:507",
-      "work": 507
+      "trace": "92abab10323b520f:419",
+      "work": 419
     },
     {
       "encounters": 0,
@@ -279,8 +279,8 @@
       "layout": "03cf8032a8965231",
       "route": "9f43b6eb9910892a",
       "slots": { "door": 0, "event": 0 },
-      "trace": "38cb4660298780db:13642",
-      "work": 13642
+      "trace": "c80edf2128445e9b:13336",
+      "work": 13336
     },
     {
       "encounters": 1,
@@ -345,8 +345,8 @@
       "layout": "0a1744019978d86b",
       "route": "c47d3abeebc21987",
       "slots": { "door": 0, "event": 0 },
-      "trace": "42116efeff1c2905:46490",
-      "work": 46490
+      "trace": "10c1c1e08b467bfe:3651",
+      "work": 3651
     },
     {
       "encounters": 0,
@@ -367,8 +367,8 @@
       "layout": "ac7f0ded98e4f900",
       "route": "3963365bd514dd1d",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b95c3b0bbaecdcc9:161179",
-      "work": 161179
+      "trace": "200a8f6919a1a61f:158819",
+      "work": 158819
     },
     {
       "encounters": 0,
@@ -393,7 +393,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "fb9f0e85f2506aaa", "proofs": "77a62a373889f4a8" },
+  "inputs": { "data": "fb9f0e85f2506aaa", "proofs": "d77fdc9ce93af04b" },
   "version": 1,
   "zone": "industrial"
 }

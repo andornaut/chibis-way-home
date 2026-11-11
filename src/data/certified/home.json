@@ -15,8 +15,8 @@
       "layout": "8aca0cfd9ccce7ad",
       "route": "f434b5571cb4a5b1",
       "slots": { "door": 0, "event": 0 },
-      "trace": "4e447182d4332d25:397",
-      "work": 397
+      "trace": "5c13394fcbe34d93:532",
+      "work": 532
     },
     {
       "encounters": 0,
@@ -37,8 +37,8 @@
       "layout": "2f6e16c42509dfc2",
       "route": "c9803dd28f01de54",
       "slots": { "door": 0, "event": 0 },
-      "trace": "1667b5699c063741:7484",
-      "work": 7484
+      "trace": "8d97fc5a4eabcaa1:7744",
+      "work": 7744
     },
     {
       "encounters": 0,
@@ -180,8 +180,8 @@
       "layout": "3449d53cf37fe92a",
       "route": "c47d3abeebc21987",
       "slots": { "door": 0, "event": 0 },
-      "trace": "42116efeff1c2905:46490",
-      "work": 46490
+      "trace": "10c1c1e08b467bfe:3651",
+      "work": 3651
     },
     {
       "encounters": 1,
@@ -191,8 +191,8 @@
       "layout": "7f4a5c0dd355ab39",
       "route": "8b4c2696d887f590",
       "slots": { "door": 0, "event": 0 },
-      "trace": "84dd7cde8ef5d85c:24654",
-      "work": 24654
+      "trace": "79beb7ead22c1058:16183",
+      "work": 16183
     },
     {
       "encounters": 1,
@@ -202,8 +202,8 @@
       "layout": "d687ab8e6e563cf9",
       "route": "15732073e277fb7b",
       "slots": { "door": 0, "event": 0 },
-      "trace": "bf83c00346d3ecba:9795",
-      "work": 9795
+      "trace": "e8cab963acdb2fc2:3414",
+      "work": 3414
     },
     {
       "encounters": 0,
@@ -213,8 +213,8 @@
       "layout": "180085161a77f315",
       "route": "3963365bd514dd1d",
       "slots": { "door": 0, "event": 0 },
-      "trace": "b95c3b0bbaecdcc9:161179",
-      "work": 161179
+      "trace": "200a8f6919a1a61f:158819",
+      "work": 158819
     },
     {
       "encounters": 0,
@@ -272,7 +272,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "c771bfe2af5bac62", "proofs": "77a62a373889f4a8" },
+  "inputs": { "data": "c771bfe2af5bac62", "proofs": "d77fdc9ce93af04b" },
   "version": 1,
   "zone": "home"
 }
