@@ -280,9 +280,36 @@ export const TEXT: GameText = {
     install: "Install",
     installButton: "Install",
     installSteps: {
-      firefoxAndroid: { first: "Tap the menu, then More.", second: "Tap Add app to Home screen." },
-      ios: { first: "Tap Share.", second: "Tap Add to Home Screen." },
-      title: "Install",
+      chromiumAndroid: {
+        steps: "Tap the menu, then Add to Home screen or Install app.",
+        title: "Install app",
+      },
+      chromiumDesktop: {
+        steps:
+          "Choose Install in the address bar, or open the browser menu and choose Install. " +
+          "If it offers Open in app, the game is already installed.",
+        title: "Install app",
+      },
+      firefoxAndroid: {
+        steps: "Tap the menu, then More, then Add app to Home screen.",
+        title: "Add app to Home screen",
+      },
+      firefoxDesktop: {
+        steps:
+          "Firefox can't install this game as an app. Open this page in Chrome or Edge to install it.",
+        title: "Not available in Firefox",
+      },
+      ios: { steps: "Tap Share, then Add to Home Screen.", title: "Add to Home Screen" },
+      other: {
+        steps:
+          "Open this page in your device's browser and use its menu to install it or add it to your home screen.",
+        title: "Install",
+      },
+      safariMac: { steps: "Choose File, then Add to Dock.", title: "Add to Dock" },
+      samsungInternet: {
+        steps: "Tap the menu, then Add page to, then Home screen.",
+        title: "Add to Home screen",
+      },
     },
     moveControls: "Move controls",
     title: "Settings",
