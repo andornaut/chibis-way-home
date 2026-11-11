@@ -96,9 +96,9 @@ export const TEXT: GameText = {
     unlocked: "Unlocked",
   },
   actionIcons: {
-    jump: "PLACEHOLDER Jump button",
-    move: "PLACEHOLDER Move control",
-    use: "PLACEHOLDER Use button",
+    jump: "Jump",
+    move: "Move",
+    use: "Use",
   },
   buttons: {
     jump: "Jump",
@@ -323,8 +323,8 @@ export const TEXT: GameText = {
     title: "Settings",
   },
   skillDetails: {
-    close: "PLACEHOLDER Close",
-    disc: "PLACEHOLDER {skill} skill",
+    close: "Close",
+    disc: "{skill} skill",
   },
   skills: {
     dash: {
