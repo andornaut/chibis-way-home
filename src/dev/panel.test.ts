@@ -66,7 +66,15 @@ class Element extends EventTarget {
   }
 }
 class FakeDocument extends EventTarget {
+  media = { addEventListener() {}, matches: false, removeEventListener() {} };
+  get installed() {
+    return this.media.matches;
+  }
+  set installed(value: boolean) {
+    this.media.matches = value;
+  }
   defaultView = {
+    addEventListener() {},
     document: { fullscreenElement: null },
     history: {
       replaceState: (_state: unknown, _title: string, url: URL) => {
@@ -75,8 +83,9 @@ class FakeDocument extends EventTarget {
       state: null,
     },
     location: new URL("https://example.test/play/"),
-    matchMedia: () => ({ addEventListener() {}, matches: false, removeEventListener() {} }),
+    matchMedia: () => this.media,
     navigator: {},
+    removeEventListener() {},
   };
   createElement(tag: string) {
     return new Element(this, tag);
@@ -121,6 +130,7 @@ describe("browser developer panel", () => {
     const dispose = mountDeveloperPanel(
       {
         blocked: () => blocked,
+        grant: vi.fn(),
         subscribe: (refresh) => {
           sync = refresh;
           return () => {};
@@ -130,9 +140,9 @@ describe("browser developer panel", () => {
     );
     const section = body.children[0]!.children[1]!;
     const fields = section.children[1]!;
-    const label = fields.children.find(
-      (item) => item.children[0]?.textContent === TEXT.skills[skill].title,
-    )!;
+    const label = fields.children
+      .at(-1)!
+      .children.find((item) => item.children[0]?.textContent === TEXT.skills[skill].title)!;
     const checkbox = label.children[1]!;
     section.dispatchEvent(new Event("pointerdown"));
     checkbox.checked = true;
@@ -171,6 +181,7 @@ describe("browser developer panel", () => {
     const dispose = mountDeveloperPanel(
       {
         blocked: () => blocked,
+        grant: vi.fn(),
         subscribe: (refresh) => {
           sync = refresh;
           return () => undefined;
@@ -189,7 +200,7 @@ describe("browser developer panel", () => {
     };
     click();
     expect(fields!.hidden).toBe(false);
-    const checkbox = fields!.children.at(-1)!.children[1]!;
+    const checkbox = fields!.children.at(-1)!.children.at(-1)!.children[1]!;
     checkbox.checked = true;
     click();
     click();
@@ -213,4 +224,131 @@ describe("browser developer panel", () => {
     dispose();
     expect(body.children).toEqual([game]);
   });
+});
+
+it("groups cheats and reports partial save outcomes while guarding async modal and disposal changes", async () => {
+  vi.stubGlobal(
+    "MutationObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  const document = new FakeDocument();
+  const body = document.createElement("body"),
+    game = document.createElement("game");
+  body.append(game);
+  let blocked = false,
+    sync = () => {};
+  let finish: ((value: import("../progress").SavedSkillGrantResult) => void) | undefined;
+  let available = () => false;
+  const grant = vi.fn((access: { available: () => boolean }) => {
+    available = access.available;
+    return new Promise<import("../progress").SavedSkillGrantResult>((resolve) => {
+      finish = resolve;
+    });
+  });
+  const dispose = mountDeveloperPanel(
+    {
+      blocked: () => blocked,
+      grant,
+      subscribe: (refresh) => {
+        sync = refresh;
+        return () => {};
+      },
+    },
+    game as unknown as HTMLElement,
+  );
+  const section = body.children[0]!.children[1]!;
+  const [toggle, fields] = section.children;
+  const saved = fields!.children[1]!,
+    run = fields!.children[2]!;
+  expect(saved.children[0]!.textContent).toBe(DEV_TEXT.groups.saveChanging);
+  expect(run.children[0]!.textContent).toBe(DEV_TEXT.groups.runOnly);
+  section.dispatchEvent(new Event("pointerdown"));
+  toggle!.dispatchEvent(new Event("click"));
+  const button = saved.children[2]!,
+    status = saved.children[3]!;
+  section.dispatchEvent(new Event("pointerdown"));
+  button.dispatchEvent(new Event("click"));
+  await Promise.resolve();
+  expect(grant).toHaveBeenCalledTimes(1);
+  expect(fields!.disabled).toBe(true);
+  expect(available()).toBe(true);
+  button.dispatchEvent(new Event("click"));
+  expect(grant).toHaveBeenCalledTimes(1);
+  blocked = true;
+  sync();
+  blocked = false;
+  sync();
+  expect(available()).toBe(false);
+  finish!({
+    cause: "blocked",
+    reason: "action_unavailable",
+    status: "partial",
+    writes: [{ available: true, record: "progress", status: "saved" }],
+    written: ["progress"],
+  });
+  await vi.waitFor(() => expect(status.textContent).toContain(DEV_TEXT.grantResults.partial));
+  expect(status.textContent).toContain(DEV_TEXT.grantRecords.progress);
+  expect(fields!.disabled).toBe(false);
+  section.dispatchEvent(new Event("pointerdown"));
+  button.dispatchEvent(new Event("click"));
+  await Promise.resolve();
+  dispose();
+  expect(available()).toBe(false);
+  finish!({ reason: "action_unavailable", status: "blocked", writes: [], written: [] });
+  await Promise.resolve();
+  expect(body.children).toEqual([game]);
+});
+
+it("hides all cheats and rejects stale run and save input after installation", () => {
+  vi.stubGlobal(
+    "MutationObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  const document = new FakeDocument();
+  const body = document.createElement("body"),
+    game = document.createElement("game");
+  body.append(game);
+  let sync = () => {};
+  const grant = vi.fn();
+  const dispose = mountDeveloperPanel(
+    {
+      blocked: () => false,
+      grant,
+      subscribe: (refresh) => {
+        sync = refresh;
+        return () => {};
+      },
+    },
+    game as unknown as HTMLElement,
+  );
+  const section = body.children[0]!.children[1]!,
+    fields = section.children[1]!;
+  const toggle = section.children[0]!,
+    saved = fields.children[1]!,
+    run = fields.children[2]!;
+  section.dispatchEvent(new Event("pointerdown"));
+  toggle.dispatchEvent(new Event("click"));
+  section.dispatchEvent(new Event("pointerdown"));
+  document.installed = true;
+  const checkbox = run.children.at(-1)!.children[1]!;
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new Event("change"));
+  saved.children[2]!.dispatchEvent(new Event("click"));
+  expect(checkbox.checked).toBe(false);
+  expect(grant).not.toHaveBeenCalled();
+  expect(document.defaultView.location.search).toBe("");
+  sync();
+  expect(section.hidden).toBe(true);
+  expect(fields.disabled).toBe(true);
+  document.installed = false;
+  sync();
+  saved.children[2]!.dispatchEvent(new Event("click"));
+  expect(grant).not.toHaveBeenCalled();
+  dispose();
 });

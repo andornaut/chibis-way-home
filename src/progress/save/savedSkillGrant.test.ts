@@ -186,3 +186,25 @@ it("does not overwrite a record changed while the action was queued", async () =
   ).toMatchObject({ reason: "record_changed", status: "blocked", written: [] });
   expect(values.get(PROGRESS_KEYS.save)).toBe("changed elsewhere");
 });
+
+it("preserves a later record changed during an earlier asynchronous write", async () => {
+  const { storage, values } = fixture(true);
+  const write = storage.write;
+  const changed = values.get(STATS_KEYS.save)!.replace('"activeSeconds":42', '"activeSeconds":73');
+  storage.write = async (key, value) => {
+    await write(key, value);
+    if (key === PROGRESS_KEYS.save) {
+      values.set(STATS_KEYS.save, changed);
+    }
+  };
+  const committed = vi.fn();
+  expect(await grantStoredSkills({ available: () => true, committed }, storage)).toMatchObject({
+    cause: "blocked",
+    reason: "record_changed",
+    record: "stats",
+    status: "partial",
+    written: ["progress"],
+  });
+  expect(values.get(STATS_KEYS.save)).toBe(changed);
+  expect(committed).not.toHaveBeenCalled();
+});

@@ -63,6 +63,7 @@ let progressWrites = 0;
 const savedGrants = new Set<symbol>();
 // Unlock notices not shown yet: the stored unannounced ones, then each award.
 const notices = new CelebrationQueue<AchievementId>();
+const deliveredNotices = new Set<AchievementId>();
 // The earned ids, including awards whose write is still queued, so a later call in the same
 // frame does not award or announce them again.
 let earnedIds: readonly AchievementId[] = [];
@@ -153,6 +154,9 @@ export function nextAchievementNotice(
   blocked: () => boolean,
 ): AchievementId | undefined {
   const id = notices.takeWhen(blocked);
+  if (id !== undefined) {
+    deliveredNotices.add(id);
+  }
   if (id !== undefined && !session.development()) {
     achievementWrites++;
     void achievements.announced(id).finally(() => {
@@ -350,7 +354,7 @@ export async function grantSavedSkills(context: {
           developmentSavedSelection = snapshot.progress.activeSkill;
           stats.acceptSavedSkillUse(snapshot.stats.wholeRun.skillUsed === true);
           earnedIds = snapshot.achievements.earned;
-          notices.push(snapshot.awarded);
+          notices.push(snapshot.achievements.unannounced.filter((id) => !deliveredNotices.has(id)));
           achievements = achievementsStore(localSaveStorage());
         },
       },

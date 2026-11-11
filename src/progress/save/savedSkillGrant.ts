@@ -182,6 +182,33 @@ export async function grantStoredSkills(
     if (JSON.stringify(entry.before) === JSON.stringify(entry.next)) {
       continue;
     }
+    let latest: string | null;
+    try {
+      // Storage has no compare-and-swap: recheck each record after any earlier asynchronous write.
+      // eslint-disable-next-line no-await-in-loop
+      latest = await storage.read(entry.key);
+    } catch {
+      return written.length === 0
+        ? { ...facts(), reason: "read_failed", record: entry.record, status: "unavailable" }
+        : {
+            ...facts(),
+            cause: "unavailable",
+            reason: "read_failed",
+            record: entry.record,
+            status: "partial",
+          };
+    }
+    if (latest !== raw[entry.record]) {
+      return written.length === 0
+        ? { ...facts(), reason: "record_changed", record: entry.record, status: "blocked" }
+        : {
+            ...facts(),
+            cause: "blocked",
+            reason: "record_changed",
+            record: entry.record,
+            status: "partial",
+          };
+    }
     const available = context.available();
     if (!available) {
       writes.push({ available, record: entry.record, status: "blocked" });

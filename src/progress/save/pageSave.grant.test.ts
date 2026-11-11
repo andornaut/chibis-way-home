@@ -5,6 +5,7 @@ import { CHUNKS } from "../../data/chunks";
 import { ZONE_MAP } from "../../data/map";
 import { RECIPES } from "../../data/zones";
 import { SKILL_IDS } from "../skills";
+import { ACHIEVEMENT_KEYS } from "./achievements";
 import { BEGINNING, PROGRESS_KEYS, progressFormat } from "./progress";
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -76,4 +77,35 @@ it("blocks explicit saved grants while a normal progress write is outstanding", 
     status: "blocked",
     written: [],
   });
+});
+
+it("recovers one saved pending notice after cache adoption was blocked", async () => {
+  const values = new Map<string, string>();
+  let available = true;
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+      if (key === ACHIEVEMENT_KEYS.save) {
+        available = false;
+      }
+    },
+  });
+  const page = await import("./pageSave");
+  const session = { development: () => true, skillOverrides: () => ({}) };
+  expect(await page.grantSavedSkills({ available: () => available })).toMatchObject({
+    cause: "blocked",
+    reason: "cache_commit_unavailable",
+    status: "partial",
+    written: ["progress", "achievements"],
+  });
+  available = true;
+  expect(await page.grantSavedSkills({ available: () => available })).toMatchObject({
+    status: "unchanged",
+  });
+  expect(page.nextAchievementNotice(session, () => false)).toBe("gift-rooms");
+  expect(page.nextAchievementNotice(session, () => false)).toBeUndefined();
+  await page.grantSavedSkills({ available: () => available });
+  expect(page.nextAchievementNotice(session, () => false)).toBeUndefined();
+  expect(JSON.parse(values.get(ACHIEVEMENT_KEYS.save)!).earned).toEqual(["gift-rooms"]);
 });

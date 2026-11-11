@@ -28,6 +28,7 @@ import { OpeningScene } from "./scenes/OpeningScene";
 import { PauseScene } from "./scenes/PauseScene";
 import { RestartScene } from "./scenes/RestartScene";
 import { RoomScene } from "./scenes/RoomScene";
+import { grantSavedSkills } from "./scenes/save";
 import { SettingsScene } from "./scenes/SettingsScene";
 import { SkillDetailScene } from "./scenes/SkillDetailScene";
 import { StageSelectScene } from "./scenes/StageSelectScene";
@@ -103,6 +104,7 @@ function startGame(): void {
           gameHost.hasAttribute("data-modal-open") ||
           game.scene.isActive("boot") ||
           (game.scene.isActive("zone") && (game.scene.getScene("zone") as ZoneScene).playCovered()),
+        grant: grantSavedSkills,
         subscribe: (sync) => {
           game.events.on("poststep", sync);
           return () => game.events.off("poststep", sync);

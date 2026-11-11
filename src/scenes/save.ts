@@ -4,6 +4,7 @@ import type {
   AchievementEntry,
   Progress,
   RunStatsSummary,
+  SavedSkillGrantResult,
   WholeRunStatsSummary,
   ZoneStatsSummary,
 } from "../progress";
@@ -114,6 +115,11 @@ export function selectActiveSkill(skill: SkillId): boolean {
 }
 export function grantSkill(skill: SkillId): boolean {
   return pageSave.grantSkill(SESSION, skill);
+}
+export function grantSavedSkills(context: {
+  readonly available: () => boolean;
+}): Promise<SavedSkillGrantResult> {
+  return pageSave.grantSavedSkills(context);
 }
 export function savedProgress(): Progress {
   return pageSave.savedProgress();
