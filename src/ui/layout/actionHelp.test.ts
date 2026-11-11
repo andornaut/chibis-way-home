@@ -2,14 +2,13 @@ import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import { ACTION_HELP_LAYOUT } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { SKILL_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import { actionHelpParts } from "../chrome/actionHelp";
 import { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./actionHelp";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { skillDetails } from "./skillDetails";
+import { SKILL_ROOM, skillDetails } from "./skillDetails";
 
 // Reference metrics read from the .fnt files: the declared baseline and line height.
 const lineHeight = CARD_FONTS.body.lineHeight * CARD_TEXT_SCALE;
@@ -46,8 +45,7 @@ const skillLayouts = SKILL_IDS.filter((skill) =>
   (skill) =>
     [
       skill,
-      skillDetails(CARD_FONTS, { ...SCREEN, x: 0, y: 0 }, true, TEXT.buttons, TEXT.skills[skill])
-        .description,
+      skillDetails(CARD_FONTS, SKILL_ROOM.bounds, TEXT.buttons, TEXT.skills[skill]).description,
     ] as const,
 );
 

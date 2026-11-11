@@ -133,7 +133,7 @@ export class RoomScene extends Scene {
   private drawRoom(): void {
     if (this.room.grant !== undefined) {
       const words = TEXT.skills[this.room.grant];
-      const layout = skillDetails(cardFonts(this), SKILL_ROOM.bounds, false, TEXT.buttons, words);
+      const layout = skillDetails(cardFonts(this), SKILL_ROOM.bounds, TEXT.buttons, words);
       addSlice(this, "ui-settings-card", layout.card);
       addCardHeading(this, layout.title!);
       drawActionHelp(this, this.colour("ink"), layout.groups.description!, layout.description);

@@ -1,0 +1,27 @@
+/* The skill details card (skillDetails.ts), after ui.css, skillDisc.css and actionHelp.css:
+   lengths are base px times --ui-unit, from the layer's layout properties and
+   SKILL_DETAILS_LAYOUT on the card's view. */
+
+/* The body has no press areas, so it starts the gap below the close X's press area, or below a
+   taller title. */
+.skill-details-card > .ui-card-header {
+  min-height: calc(var(--ui-unit) * (var(--close-clear) - var(--card-frame)) * 1px);
+}
+
+/* The disc beside the description, a gap apart, both centred on the body's height. */
+.skill-details-body {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  max-width: 100%;
+}
+
+/* Body text wrapping at the description width, its lines a body line height apart. */
+.skill-details-description {
+  max-width: calc(var(--ui-unit) * var(--skill-details-width) * 1px);
+  margin: 0;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 400;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  text-align: start;
+}

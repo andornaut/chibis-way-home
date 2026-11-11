@@ -95,6 +95,11 @@ export const TEXT: GameText = {
     progress: "{have}/{need}",
     unlocked: "Unlocked",
   },
+  actionIcons: {
+    jump: "PLACEHOLDER Jump button",
+    move: "PLACEHOLDER Move control",
+    use: "PLACEHOLDER Use button",
+  },
   buttons: {
     jump: "Jump",
     move: "Move",
@@ -316,6 +321,10 @@ export const TEXT: GameText = {
     moveControls: "Move controls",
     reducedMotion: "Reduced motion",
     title: "Settings",
+  },
+  skillDetails: {
+    close: "PLACEHOLDER Close",
+    disc: "PLACEHOLDER {skill} skill",
   },
   skills: {
     dash: {

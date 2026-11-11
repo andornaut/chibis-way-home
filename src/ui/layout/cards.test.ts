@@ -88,10 +88,9 @@ const skillInkTop = (layout: ReturnType<typeof skillDetails>) => {
     ),
   );
 };
-const skills = (["dash", "doubleJump", "speedy"] as const).flatMap((skill) => [
-  skillDetails(CARD_FONTS, { ...SCREEN, x: 0, y: 0 }, true, TEXT.buttons, TEXT.skills[skill]),
-  skillDetails(CARD_FONTS, SKILL_ROOM.bounds, false, TEXT.buttons, TEXT.skills[skill]),
-]);
+const skills = (["dash", "doubleJump", "speedy"] as const).map((skill) =>
+  skillDetails(CARD_FONTS, SKILL_ROOM.bounds, TEXT.buttons, TEXT.skills[skill]),
+);
 
 it.each([
   {

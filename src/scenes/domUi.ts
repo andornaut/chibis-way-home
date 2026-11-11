@@ -7,6 +7,7 @@ import type { ArtManifest } from "../assets";
 import {
   applySkin,
   createUiLayer,
+  filledFrame,
   loadUiFonts,
   type SkinFrame,
   UI_FRAMES,
@@ -120,26 +121,32 @@ export function mountSceneView(scene: Scene, view: HTMLElement): () => void {
 }
 
 // A blob: URL of art's frameName (its sheet's first where none) for an <img>, cut once per game
-// from the image the scene's loader has. A failed cut is tried again on the next call.
+// from the image the scene's loader has, filled with the palette colour fill where it is opaque
+// (as a fill tint draws it) where one is given. A failed cut is tried again on the next call.
 export function artFrameUrl(
   scene: Scene,
   art: string,
   frameName?: number | string,
+  fill?: string,
 ): Promise<string> {
   const urls = frameUrls.get(scene.game) ?? new Map<string, Promise<string>>();
   frameUrls.set(scene.game, urls);
-  const key = `${art}:${String(frameName ?? "")}`;
+  const key = `${art}:${String(frameName ?? "")}:${fill ?? ""}`;
   const cached = urls.get(key);
   if (cached !== undefined) {
     return cached;
   }
   const frame = scene.textures.getFrame(art, frameName);
-  const url = cutFrame(document, frame.source.image as CanvasImageSource, {
-    height: frame.cutHeight,
-    width: frame.cutWidth,
-    x: frame.cutX,
-    y: frame.cutY,
-  });
+  const rect = { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY };
+  const source = frame.source.image as CanvasImageSource;
+  const url = (async () =>
+    fill === undefined
+      ? cutFrame(document, source, rect)
+      : cutFrame(
+          document,
+          filledFrame(document, source, rect, paletteHex(palette(scene).colours, fill)),
+          { ...rect, x: 0, y: 0 },
+        ))();
   urls.set(key, url);
   url.catch(() => urls.delete(key));
   return url;

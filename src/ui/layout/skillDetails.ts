@@ -47,10 +47,11 @@ export function skillRoomContinue(fonts: CardFonts, text: string) {
   };
 }
 
+// The room gift's skill panel in bounds: its title over the skill's disc beside its description,
+// with the inline control icons. The skill details card is HTML (src/ui/dom/skillDetails.ts).
 export function skillDetails(
   fonts: CardFonts,
   bounds: Rect,
-  close: boolean,
   actions: Readonly<Record<ControlAction, string>>,
   words: SkillText,
 ) {
@@ -79,7 +80,7 @@ export function skillDetails(
         width: SKILL_BUTTON.target + CARD_CONTENT.gap + description.width,
       },
     ],
-    { close, font: fonts.title, title: words.title },
+    { close: false, font: fonts.title, title: words.title },
   );
   if (layout.card.height > bounds.height) {
     throw new Error("Skill details do not fit at the standard font size");

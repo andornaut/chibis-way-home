@@ -44,6 +44,8 @@ export { type CardView, createCard, showPresses } from "./dom/card";
 export { createDeathCard, type DeathCardView } from "./dom/death";
 export { createUiLayer, loadUiFonts, UI_LAYOUT, type UiLayer } from "./dom/layer";
 export { refuseControl } from "./dom/refusal";
+export { createSkillDetailsCard, type SkillDetailsView } from "./dom/skillDetails";
+export { filledFrame } from "./dom/skillDisc";
 export { applySkin, type SkinFrame, UI_FRAMES } from "./dom/skin";
 export { createStageSelect, type StageFace, type StageSelectView } from "./dom/stageSelect";
 export { focusKeyAction, stepFocus } from "./focus";

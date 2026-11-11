@@ -4,9 +4,12 @@ import { expect, it } from "vitest";
 
 import { achievementsCardProperties } from "../layout/achievementsCard";
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard";
+import { ACTION_HELP_PROPERTIES } from "./actionHelp";
 import { DEATH_LAYOUT } from "./death";
 import { UI_LAYOUT } from "./layer";
 import { runStatsProperties } from "./runStats";
+import { SKILL_DETAILS_LAYOUT } from "./skillDetails";
+import { SKILL_DISC_LAYOUT } from "./skillDisc";
 import { UI_COLOURS, UI_FRAMES } from "./skin";
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
@@ -24,6 +27,9 @@ const WRITTEN = new Set(
     DEATH_LAYOUT,
     achievementsCardProperties(1),
     runStatsProperties({ columnGap: 0, divider: 2 }),
+    ACTION_HELP_PROPERTIES,
+    SKILL_DETAILS_LAYOUT,
+    SKILL_DISC_LAYOUT,
   ].flatMap(Object.keys),
 );
 

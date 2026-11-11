@@ -96,8 +96,11 @@ const INDEXED = {
   ui: {
     "*": [
       "./dom/achievements.css",
+      "./dom/actionHelp.css",
       "./dom/death.css",
       "./dom/runStats.css",
+      "./dom/skillDetails.css",
+      "./dom/skillDisc.css",
       "./dom/stageSelect.css",
       "./dom/ui.css",
       "./input/frameTurn.ts",

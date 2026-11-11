@@ -5,6 +5,7 @@ import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState"
 import type { AchievementsText } from "./achievements";
 import type { SkillId } from "./bird";
 import type { Point } from "./geometry";
+import type { ControlAction } from "./ui";
 
 export interface DeathText {
   // The death card's accessible name, with the zone's name as {zone}.
@@ -39,6 +40,14 @@ export interface SkillText {
 // The words the player reads.
 export interface GameText {
   readonly achievements: AchievementsText;
+  // Each control's help illustration, by its accessible name.
+  readonly actionIcons: Readonly<Record<ControlAction, string>>;
+  // The skill details card's close X and its skill disc, by their accessible names; the disc's
+  // has the skill's title as {skill}.
+  readonly skillDetails: {
+    readonly close: string;
+    readonly disc: string;
+  };
   readonly skills: Readonly<Record<SkillId, SkillText>>;
   readonly stats: StatsText;
   readonly update: {

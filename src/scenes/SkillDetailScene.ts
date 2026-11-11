@@ -1,39 +1,37 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { containsPoint } from "@andornaut/game-kit/rect";
-import { type Input, Scene } from "phaser";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { fillNames } from "@andornaut/game-kit/lines";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { Scene } from "phaser";
 
-import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
-import type { Point, SkillId } from "../data/types";
+import type { SkillId } from "../data/types";
 import { PHONE_EVENTS } from "../pwa";
-import { skillDetails } from "../ui";
-import { drawActionHelp } from "./actionHelp";
-import {
-  addCardHeading,
-  addSlice,
-  captureTab,
-  cardFonts,
-  paletteColour,
-  ringFocus,
-} from "./cardParts";
+import { createSkillDetailsCard, showPresses, SKILL_ART } from "../ui";
+import { paletteColour } from "./cardParts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
 import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onScenePointer } from "./modalInput";
-import { catchModalTaps } from "./modalTaps";
-import { fitPlayCamera, playPoint } from "./playCamera";
-import { drawSkillButton } from "./skillButton";
+import { modalInput } from "./modalInput";
 
 export interface SkillDetailData {
   readonly onClose: () => void;
   readonly skill: SkillId;
 }
 
+// A skill's details over the paused zone, in Pause's place: its name, its ready disc and its
+// description with the inline control illustrations. The card is HTML in the UI layer
+// (src/ui/dom/skillDetails.ts), shown once the dim of the zone under it and the disc's glyph are
+// ready. The close X (a press that lands and lifts on it), back, Escape, a tap outside the card,
+// and Enter or Space with the focus on the card itself close it; P does not. Tab and the arrows
+// move the keyboard's focus, which starts on the card, to the close X, and Enter and Space press
+// it (the kit's modalLayer). Closing tells the opener once, after this scene's modal input
+// closes, so the opener's own input accepts at once.
 export class SkillDetailScene extends Scene {
   private detail!: SkillDetailData;
   private closed = false;
   private visit = 0;
   private ready = false;
-  private press: { readonly at: Point; readonly id: number; cancelled: boolean } | undefined;
+  private closeModal: (() => void) | undefined;
 
   constructor() {
     super("skillDetail");
@@ -44,49 +42,59 @@ export class SkillDetailScene extends Scene {
     this.visit++;
     this.closed = false;
     this.ready = false;
-    this.press = undefined;
+    this.closeModal = undefined;
   }
 
   create(): void {
     const visit = this.visit;
-    fitPlayCamera(this);
-    const words = TEXT.skills[this.detail.skill];
-    const layout = skillDetails(
-      cardFonts(this),
-      { ...SCREEN, x: 0, y: 0 },
-      true,
-      TEXT.buttons,
-      words,
+    const { skill } = this.detail;
+    const words = TEXT.skills[skill];
+    const colour = (name: string) => paletteColour(this, name);
+    const card = createSkillDetailsCard(
+      document,
+      {
+        cream: colour("cream"),
+        ink: colour("ink"),
+        navy: colour("navy"),
+        white: colour("white"),
+        yellow: colour("yellow"),
+      },
+      "skill-details-card",
+      {
+        actions: TEXT.buttons,
+        close: TEXT.skillDetails.close,
+        description: words.description,
+        disc: fillNames(TEXT.skillDetails.disc, { skill: words.title }),
+        icons: TEXT.actionIcons,
+        title: words.title,
+      },
     );
-    const close = layout.close!;
-    addSlice(this, "ui-settings-card", layout.card);
-    addCardHeading(this, layout.title!);
-    drawActionHelp(
-      this,
-      paletteColour(this, "ink"),
-      layout.groups.description!,
-      layout.description,
-    );
-    drawSkillButton(this, layout.groups.icon!, this.detail.skill).ready(true);
-    const closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);
-    let focus = false;
-    let ring: ReturnType<typeof ringFocus>;
-    const render = () => {
-      ring = ringFocus(this, ring, focus ? close.art : undefined);
-      return closeX.play(
-        animationKey("ui-close", this.press && !this.press.cancelled ? "pressed" : "normal"),
-      );
+    card.root.hidden = true;
+    card.close.addEventListener("click", () => this.requestClose());
+    // A fresh Enter or Space with the focus on the card itself closes it, and P stops here,
+    // before the modal layer and Phaser see it; the layer handles every other key.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "p" || event.key === "P") {
+        event.stopPropagation();
+      } else if (event.target === card.dialog && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) {
+          this.requestClose();
+        }
+      }
     };
-    render();
-    modalInput(this).subscribe(() => {
-      this.press = undefined;
-      render();
-    });
-    catchModalTaps(this, this.cameras.main, {
-      close: () => this.close(),
-      covered: () => [layout.card, close.hit],
-    });
-    captureTab(this, true);
+    card.dialog.addEventListener("keydown", onKeyDown);
+    const art = SKILL_ART[skill];
+    const ready = sheetTags(this.cache.json.get(art) as AsepriteSheet).get("ready")?.[0]?.frame;
+    const glyph = artFrameUrl(this, art, ready, "ink").then(
+      (url) => {
+        card.glyph.src = url;
+      },
+      (error: unknown) => console.warn("The skill glyph failed to load", error),
+    );
+    const input = modalInput(this);
+    const guard = { gate: input };
     const back = (event: Event) => {
       if (modalInput(this).accepts(event)) {
         event.stopImmediatePropagation();
@@ -94,69 +102,37 @@ export class SkillDetailScene extends Scene {
       }
     };
     window.addEventListener(PHONE_EVENTS.backPressed, back, true);
+    const stops = [
+      guardClicks(guard, card.root),
+      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.requestClose(), card.backdrop),
+      showPresses(() => input.accepts(), card.root),
+      () => card.dialog.removeEventListener("keydown", onKeyDown),
+      () => window.removeEventListener(PHONE_EVENTS.backPressed, back, true),
+    ];
     this.events.once("shutdown", () => {
       this.ready = false;
-      this.press = undefined;
-      captureTab(this, false);
-      window.removeEventListener(PHONE_EVENTS.backPressed, back, true);
+      this.closeModal?.();
+      this.closeModal = undefined;
+      stops.forEach((stop) => stop());
     });
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (!modalInput(this).accepts(event) || event.repeat) {
-        return;
-      }
-      event.stopPropagation();
-      if (["Escape", "Enter", " "].includes(event.key)) {
-        event.preventDefault();
-        this.close();
-      } else if (event.key === "Tab" || event.key.startsWith("Arrow")) {
-        event.preventDefault();
-        focus = true;
-        render();
-      }
-    });
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      const at = playPoint(this, pointer);
-      if (this.ready && !this.press && containsPoint(close.hit, at.x, at.y)) {
-        this.input.stopPropagation();
-        this.press = { at, cancelled: false, id: pointer.id };
-        render();
-      }
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      if (this.press?.id === pointer.id) {
-        const at = playPoint(this, pointer);
-        this.press.cancelled ||=
-          Math.hypot(at.x - this.press.at.x, at.y - this.press.at.y) > TOUCH.tapMaxDistance;
-        render();
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      const press = this.press;
-      this.press = undefined;
-      render();
-      const at = playPoint(this, pointer);
-      if (
-        !outside &&
-        !pointer.wasCanceled &&
-        !press.cancelled &&
-        Math.hypot(at.x - press.at.x, at.y - press.at.y) <= TOUCH.tapMaxDistance &&
-        containsPoint(close.hit, at.x, at.y)
-      ) {
-        this.close();
-      }
-    };
-    onScenePointer(this, "pointerup", (pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer) => up(pointer, true));
+    mountSceneView(this, card.root);
     const backdrop = showModalBackdrop(this);
-    void backdrop.ready.then(() => this.backdropReady(visit));
+    void Promise.all([backdrop.ready, glyph]).then(() => {
+      if (this.visit === visit && !this.closed && this.sys.isActive()) {
+        this.ready = true;
+        card.root.hidden = false;
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { close: () => this.requestClose() },
+          card.dialog,
+        );
+      }
+    });
   }
 
-  private backdropReady(visit: number): void {
-    if (this.visit === visit) {
-      this.ready = !this.closed && this.sys.isActive();
+  // A press, key or tap that closes the card, while the modal gate accepts.
+  private requestClose(): void {
+    if (modalInput(this).accepts()) {
+      this.close();
     }
   }
 
@@ -165,6 +141,8 @@ export class SkillDetailScene extends Scene {
       return;
     }
     this.closed = true;
+    this.closeModal?.();
+    this.closeModal = undefined;
     modalInput(this).close();
     this.scene.stop();
     this.detail.onClose();
