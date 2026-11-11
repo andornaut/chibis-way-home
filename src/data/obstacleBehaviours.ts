@@ -1,5 +1,10 @@
 import { shuttleStates } from "./behaviours";
-import { GUST_PULSE, OBSTACLE_MOVER_PAUSE, OBSTACLE_MOVER_SPEED } from "./obstacleTuning";
+import {
+  GUST_PULSE,
+  OBSTACLE_MOVER_PAUSE,
+  OBSTACLE_MOVER_SPEED,
+  RAVINE_GUST_PULSE,
+} from "./obstacleTuning";
 import type {
   BehaviourAction,
   BehaviourNode,
@@ -149,3 +154,6 @@ export function gustCycle(
 
 // Ravine gusts blow against the route, which runs left to right, so the emitter faces left.
 export const GUST_BEHAVIOUR: BehaviourPlan = gustCycle(GUST_SECONDS, GUST_PULSE, -1);
+
+// A ravine module's emitter: the gust cycle with the module's 21-tile band, blowing left.
+export const RAVINE_GUST_BEHAVIOUR: BehaviourPlan = gustCycle(GUST_SECONDS, RAVINE_GUST_PULSE, -1);

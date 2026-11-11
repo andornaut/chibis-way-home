@@ -59,3 +59,10 @@ export const GUST_PULSE = {
   velocity: { x: 14, y: 0 },
   visual: { animation: "pulse", art: "woodland-gust-stream", offset: { x: 0, y: 0 }, span: true },
 } as const satisfies Omit<Extract<BehaviourAction, { kind: "force-pulse" }>, "kind" | "seconds">;
+
+// A ravine module's gust: GUST_PULSE with the 21-tile band a module holds between the 4-col
+// clearances at its edges and the emitter's column.
+export const RAVINE_GUST_PULSE = {
+  ...GUST_PULSE,
+  range: 21,
+} as const satisfies Omit<Extract<BehaviourAction, { kind: "force-pulse" }>, "kind" | "seconds">;

@@ -6,6 +6,7 @@ import { BLUE_MODULES } from "./blue";
 import { COUNTRYSIDE_MODULES } from "./countryside";
 import { HOME_MODULES } from "./home";
 import { INDUSTRIAL_MODULES } from "./industrial";
+import { WOODLAND_MODULES } from "./woodland";
 
 // Modules are half a chunk wide and four screens tall; the joint keeps a 4-column landing (2 each
 // side, Chibi is 2 wide) under 6 clear rows.
@@ -22,6 +23,7 @@ export const MODULES: Readonly<Record<string, ChunkModule>> = {
   ...COUNTRYSIDE_MODULES,
   ...HOME_MODULES,
   ...INDUSTRIAL_MODULES,
+  ...WOODLAND_MODULES,
 };
 
 // Grades that replace the derived pair grade, by zone-independent pair id `${left}--${right}`.

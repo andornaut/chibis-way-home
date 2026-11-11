@@ -2,6 +2,7 @@ import {
   AWNING_BEHAVIOUR,
   CROSSWALK_BEHAVIOUR,
   GANTRY_BEHAVIOUR,
+  RAVINE_GUST_BEHAVIOUR,
   WARNED_VENT_BEHAVIOUR,
 } from "./obstacleBehaviours";
 import type { Character, HazardPhase, PhaseTiles } from "./types";
@@ -109,5 +110,13 @@ export const OBSTACLE_CHARACTERS: Readonly<Record<string, Character>> = {
     art: "windmill-sail-ledge",
     cols: 5,
     rows: 1,
+  },
+  // A ravine gust emitter: stationary scenery against the band's source edge, blowing left.
+  "woodland-gust-emitter": {
+    archetype: "scenery",
+    art: "woodland-gust-emitter",
+    behaviour: RAVINE_GUST_BEHAVIOUR,
+    cols: 1,
+    rows: 4,
   },
 };
