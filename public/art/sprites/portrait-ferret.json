@@ -1,26 +1,26 @@
 { "frames": {
    "portrait-ferret 0.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "frame": { "x": 0, "y": 0, "w": 48, "h": 48 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
     "duration": 1000
    },
    "portrait-ferret 1.aseprite": {
-    "frame": { "x": 64, "y": 0, "w": 64, "h": 64 },
+    "frame": { "x": 48, "y": 0, "w": 48, "h": 48 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
     "duration": 1000
    },
    "portrait-ferret 2.aseprite": {
-    "frame": { "x": 128, "y": 0, "w": 64, "h": 64 },
+    "frame": { "x": 96, "y": 0, "w": 48, "h": 48 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
     "duration": 1000
    }
  },
@@ -29,7 +29,7 @@
   "version": "1.2.30-x64",
   "image": "portrait-ferret.png",
   "format": "RGBA8888",
-  "size": { "w": 192, "h": 64 },
+  "size": { "w": 144, "h": 48 },
   "scale": "1",
   "frameTags": [
    { "name": "neutral", "from": 0, "to": 0, "direction": "forward" },
