@@ -11,7 +11,7 @@
     "install": "npm ci",
     "steps": [
       { "name": "check", "run": "./node_modules/.bin/tsc" },
-      { "name": "lint", "run": "tests/container/check lint" },
+      { "name": "lint", "run": "npm run lint" },
       {
         "name": "test",
         "run": "./node_modules/.bin/vitest run --maxWorkers=4"

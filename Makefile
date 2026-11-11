@@ -3,21 +3,15 @@
 CHECK_TASKS := lint test build
 BUILD_OUTPUTS := dist
 TEST_OUTPUTS :=
+
 CONTAINER_BUILD_ARGS := NODE_VERSION=$(patsubst v%,%,$(shell cat .nvmrc))
 CHECK_ADMISSION := tests/container/admit
 CHECK_MEMORY := 8g
 
-override COMMAND := $(value COMMAND)
-override TEST_ARGS := $(value TEST_ARGS)
+export CHECK_TASKS BUILD_OUTPUTS TEST_OUTPUTS CONTAINER_BUILD_ARGS CHECK_ADMISSION CHECK_MEMORY
+export CHECK_TIMEOUT_SECONDS CHECK_SCRATCH_SIZE CHECK_WORK_SIZE CHECK_TMP_SIZE CONTAINER_IMAGE
 
-export CHECK_TASKS BUILD_OUTPUTS TEST_OUTPUTS CONTAINER_BUILD_ARGS TEST_ARGS COMMAND
-export CHECK_TIMEOUT_SECONDS CHECK_MEMORY CHECK_SCRATCH_SIZE CHECK_WORK_SIZE CHECK_TMP_SIZE CHECK_NETWORK_LINT CONTAINER_IMAGE
-export CHECK_ADMISSION
+.PHONY: check lint test build
 
-.PHONY: check check-info lint test build exec
-
-check lint test build exec:
+check lint test build:
 	@./tests/container/run $@
-
-check-info:
-	@./tests/container/run info

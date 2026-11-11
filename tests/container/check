@@ -13,26 +13,27 @@ if [ -n "${CHECK_REVISION:-}" ]; then
 fi
 
 run_lint() {
-    ./node_modules/.bin/prettier --check .
-    ./node_modules/.bin/eslint --max-warnings 0 .
-    ./node_modules/.bin/markdownlint-cli2
+    npm run lint
 }
 
 run_test() {
-    ./node_modules/.bin/tsc
-    ./node_modules/.bin/vitest run "$@" --maxWorkers=4
-    ./node_modules/.bin/tsx src/tools/chunkPairs.ts verify --sample-ms 20000
+    npm run check
+    npm test -- "$@" --maxWorkers=4
+    npm run pairs -- verify --sample-ms 20000
 }
 
 run_build() {
-    ./node_modules/.bin/vite build
+    npm run build
     node art/tools/build.ts --check
 }
 
 case "${category}" in
     exec)
-        if [ "$#" -gt 0 ]; then exec "$@"; fi
-        exec sh -ec "${COMMAND:?COMMAND is required}"
+        if [ "$#" -eq 0 ]; then
+            printf '%s\n' 'An explicit native command is required.' >&2
+            exit 2
+        fi
+        exec "$@"
         ;;
     test)
         run_test "$@"
@@ -51,7 +52,7 @@ case "${category}" in
         fi
         ;;
     *)
-        printf 'Unknown check category: %s\n' "${category}" >&2
+        printf 'Unknown internal check category: %s\n' "${category}" >&2
         exit 2
         ;;
 esac

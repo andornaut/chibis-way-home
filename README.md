@@ -18,21 +18,24 @@ The [gameplay design](gameplay/design.md) holds the rules, and the [gameplay REA
 
 ## Developing
 
-Requires Docker and Make. The image uses Node 24.21.0 from `.nvmrc` and installs the exact npm lockfile. Host Node and npm are needed only for the native development tools below.
+Native development commands use Node 24.21.0 from `.nvmrc` and dependencies installed with `npm ci`. npm scripts run their native tools directly on the host. Make wraps isolated checks in the custom dependency image used by CI.
 
-| Command                                          | Does                                                                                                |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `make check`                                     | Run lint, test and build in isolated copies, without exporting generated files                      |
-| `make check-info`                                | Print the version 1 JSON check contract without starting Docker                                     |
-| `make lint`                                      | Check Prettier, ESLint and Markdownlint                                                             |
-| `make test`                                      | Type-check, run Vitest with four workers and verify certified chunk lists with the 20-second sample |
-| `make build`                                     | Build with Vite, check art reproduction and export `dist/`                                          |
-| `make test TEST_ARGS='src/rules/bird.test.ts'`   | Select Vitest cases while retaining type and certified-list checks                                  |
-| `make exec COMMAND='node art/tools/ui.ts build'` | Run an explicit command with the checkout writable                                                  |
+| Command                                     | Does                                                                                                                                                                 |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `make check`                                | Type-check, lint, run Vitest with four workers, build, verify certified lists with the 20-second sample and check art reproduction without exporting generated files |
+| `make lint`                                 | Run native lint checks in the custom image                                                                                                                           |
+| `make test`                                 | Type-check, run Vitest with four workers and verify certified lists with the 20-second sample in the custom image                                                    |
+| `make build`                                | Run Vite and art reproduction checks in the custom image                                                                                                             |
+| `npm run check`                             | Type-check with TypeScript                                                                                                                                           |
+| `npm run lint`                              | Check Prettier, ESLint and Markdownlint                                                                                                                              |
+| `npm test -- --maxWorkers=4`                | Run Vitest with four workers                                                                                                                                         |
+| `npm run build`                             | Build with Vite                                                                                                                                                      |
+| `npm run pairs -- verify --sample-ms 20000` | Verify certified chunk lists with the 20-second sample                                                                                                               |
+| `node art/tools/build.ts --check`           | Check art reproduction                                                                                                                                               |
 
-`npm run check`, `npm test`, `npm run lint` and `npm run build` are Make aliases. Use `TEST_ARGS` for focused tests. Each check category admits work only when the one-minute load is below 20, with four CPUs per container. The [shared launcher](https://github.com/andornaut/ai-maintainer/blob/5409c8e35a42e5658f2af46edc5ede237cb9bc7a/tests/container/run) owns source snapshots, isolation and artifact export; the project dispatcher invokes tools directly without nested Make or Docker calls.
+Each isolated invocation starts only while the one-minute load is below 20. Containers are capped at four CPUs and 8 GiB of memory. CI uses Make because this project builds a custom Docker image. Host npm scripts remain native and never delegate to Make.
 
-Native tools remain available after `npm ci`: `npm run dev`, `npm run format`, `npm run pairs -- --help`, `npm run preview`, `npm run reaches`, `npm run simulate -- --help` and `npm run test:game-kit`. Runtime documentation is in [src/README.md](src/README.md).
+Native tools also include `npm run dev`, `npm run format`, `npm run preview`, `npm run reaches`, `npm run simulate -- --help` and `npm run test:game-kit`. Runtime documentation is in [src/README.md](src/README.md).
 
 WORKAROUND: The `markdownlint-cli2@0.24.0` subtree pins [KaTeX](https://github.com/advisories/GHSA-238p-pmpm-9mq7) `0.19.1` and [markdownlint](https://github.com/advisories/GHSA-gg6h-894w-4m9c) `0.42.1`. Parent-scoped [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249) overrides remain at `11.0.3`. Remove each override when its upstream dependency range supports the fixed version. ESLint loads the cycle and restricted-paths rules and the resolver through exported plugin subpaths because the full plugin imports an unused rule requiring the removed minimatch `makeRe` API. Keep cycle detection enabled; restore the full plugin import when it supports minimatch 11.
 
