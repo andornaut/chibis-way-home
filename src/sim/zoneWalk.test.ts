@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { BIRD_FRAME } from "../assets";
 import { STEP_SECONDS } from "../core";
 import { BIRD } from "../data/bird";
+import { CROSSWALK_BEHAVIOUR } from "../data/obstacleBehaviours";
 import { REACH } from "../data/reach";
 import { TILE } from "../data/screen";
 import type { ZonePlan } from "../data/types";
@@ -14,7 +15,14 @@ import { startZone, stepZone } from "../rules/zone";
 import { CATALOGUE, WALK_MS, walkSuite } from "../testing/walkSuite";
 import { TEST_ZONES } from "../testing/zones";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
-import { crosses, type Surface, walkZone, zoneSurfaces } from "./zoneWalk";
+import {
+  crosses,
+  type Surface,
+  surfaceAt,
+  walkRequiredRoutes,
+  walkZone,
+  zoneSurfaces,
+} from "./zoneWalk";
 
 // Recipe stages are walked in chunkWalk.test.ts, alongside every individual chunk.
 const ZONES: [string, ZonePlan][] = TEST_ZONES.map((zone, index): [string, ZonePlan] => [
@@ -77,6 +85,53 @@ describe("walkZone", () => {
         return { cleared, reached: [...reached].sort() };
       };
       expect(walk(1)).toEqual({ ...walk(0), cleared: true });
+    },
+    WALK_MS,
+  );
+});
+
+describe("walkRequiredRoutes", () => {
+  // Ground at row 50 with a crosswalk strip on it from col 20, 20 wide: beyond any jump, lethal
+  // only in traffic.
+  const crosswalk: ZonePlan = {
+    areas: {
+      street: {
+        cols: 60,
+        entries: { start: { col: 4, row: 50 } },
+        objects: [
+          {
+            behaviour: CROSSWALK_BEHAVIOUR,
+            character: "test-hazard",
+            col: 20,
+            cols: 20,
+            row: 49,
+            rows: 1,
+          },
+        ],
+        rows: 60,
+        solids: [{ col: 0, cols: 60, row: 50, rows: 10 }],
+      },
+    },
+    start: { area: "street", entry: "start" },
+  };
+
+  it(
+    "waits for a timed strip to stop and walks across it to the kerb beyond",
+    () => {
+      const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), crosswalk);
+      const surfaces = zoneSurfaces(BIRD, layout);
+      const near = surfaceAt(TILE, surfaces, "street", { col: 10, row: 50 });
+      const far = surfaceAt(TILE, surfaces, "street", { col: 50, row: 50 });
+      const walk = walkRequiredRoutes(
+        BIRD,
+        { targets: [{ area: "street", at: { col: 50, row: 50 } }], tile: TILE },
+        layout,
+      );
+      expect({ complete: walk.complete, distinct: near !== undefined && near !== far }).toEqual({
+        complete: true,
+        distinct: true,
+      });
+      expect(walk.reached).toContain(far?.key);
     },
     WALK_MS,
   );

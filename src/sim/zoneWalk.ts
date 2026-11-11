@@ -141,6 +141,11 @@ const MAX_CYCLE = 16;
 const MARGIN = 24;
 
 const isStill = (object: ObjectLayout) => !hasDynamicMotion(object);
+// A still hazard on a clock of hazard phases, lethal only while active.
+const isTimedHazard = (object: ObjectLayout) =>
+  isStill(object) &&
+  object.collision === "hazard" &&
+  Object.values(object.behaviour?.states ?? {}).some((node) => node.hazardPhase !== undefined);
 const movementSpeed = (object: ObjectLayout): number =>
   object.behaviour
     ? Math.max(
@@ -209,7 +214,14 @@ function subtract(
   );
 }
 
-function areaSurfaces(tuning: BirdTuning, name: string, area: AreaLayout): Surface[] {
+// The still spans in an area: the tops of terrain and still solid and ledge objects, joined where
+// they meet at one height, less where a solid or still hazard leaves him no room to stand; with
+// passable, less only where a solid or a hazard other than a timed one does.
+function stillSpans(
+  tuning: BirdTuning,
+  area: AreaLayout,
+  passable: boolean,
+): { left: number; right: number; y: number }[] {
   const still = area.objects.filter(isStill);
   const solids = [
     ...area.solids,
@@ -220,14 +232,14 @@ function areaSurfaces(tuning: BirdTuning, name: string, area: AreaLayout): Surfa
     ...still.filter((o) => o.collision === "ledge").map((o) => objectRect(o, o.origin)),
   ];
   const hazards = still
-    .filter((o) => o.collision === "hazard")
+    .filter((o) => o.collision === "hazard" && !(passable && isTimedHazard(o)))
     .map((o) =>
       o.hitbox
         ? { ...o.hitbox, x: o.origin.x + o.hitbox.x, y: o.origin.y + o.hitbox.y }
         : objectRect(o, o.origin),
     );
   const heights = [...new Set(tops.map((top) => top.y))].sort((a, b) => a - b);
-  const surfaces = heights.flatMap((y) => {
+  return heights.flatMap((y) => {
     const spans = tops
       .filter((top) => top.y === y)
       .map((top): [number, number] => [top.x, top.x + top.width])
@@ -246,6 +258,10 @@ function areaSurfaces(tuning: BirdTuning, name: string, area: AreaLayout): Surfa
       .map((rect): [number, number] => [rect.x, rect.x + rect.width]);
     return subtract(spans, cuts).map(([left, right]) => ({ left, right, y }));
   });
+}
+
+function areaSurfaces(tuning: BirdTuning, name: string, area: AreaLayout): Surface[] {
+  const surfaces = stillSpans(tuning, area, false);
   const movers = area.objects.flatMap((object, index) =>
     !isStill(object) && (object.collision === "solid" || object.collision === "ledge")
       ? [
@@ -268,6 +284,40 @@ function areaSurfaces(tuning: BirdTuning, name: string, area: AreaLayout): Surfa
 // Every surface he can stand on in the zone.
 export function zoneSurfaces(tuning: BirdTuning, layout: ZoneLayout): Surface[] {
   return Object.entries(layout.areas).flatMap(([name, area]) => areaSurfaces(tuning, name, area));
+}
+
+// The still surfaces next to each still surface across timed hazards alone, by its key: he may
+// walk from one to the other while those hazards are not active.
+function timedCrossings(
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  surfaces: readonly Surface[],
+): Map<string, Surface[]> {
+  const crossings = new Map<string, Surface[]>();
+  const link = (from: Surface, to: Surface) =>
+    crossings.set(from.key, [...(crossings.get(from.key) ?? []), to]);
+  for (const [name, area] of Object.entries(layout.areas)) {
+    if (!area.objects.some(isTimedHazard)) {
+      continue;
+    }
+    for (const span of stillSpans(tuning, area, true)) {
+      const parts = surfaces
+        .filter(
+          (surface) =>
+            surface.area === name &&
+            surface.mover === undefined &&
+            surface.y === span.y &&
+            surface.left >= span.left &&
+            surface.right <= span.right,
+        )
+        .sort((a, b) => a.left - b.left);
+      parts.slice(1).forEach((next, index) => {
+        link(parts[index]!, next);
+        link(next, parts[index]!);
+      });
+    }
+  }
+  return crossings;
 }
 
 // The surface a spot names: one whose top is the spot's row and whose span, where its track
@@ -738,10 +788,12 @@ function cycleSteps(objects: readonly ObjectLayout[], object: ObjectLayout): num
   return Math.ceil(Math.min(objectCycleSeconds(objects, object), MAX_CYCLE) / STEP_SECONDS);
 }
 
-// Moving colliders retain their own cycle lengths; only supports contribute carry speed.
+// Moving colliders retain their own cycle lengths; only supports contribute carry speed. Timed
+// hazards keep their cycle for a walk across them.
 interface MovingThings {
   readonly carry: number;
   readonly moving: readonly PhaseMover[];
+  readonly timed: readonly PhaseMover[];
 }
 
 const MOVING_THINGS = new WeakMap<
@@ -780,6 +832,18 @@ function movingThings(tuning: BirdTuning, area: AreaLayout): MovingThings {
         },
       ];
     }),
+    timed: area.objects.flatMap((object, index) =>
+      isTimedHazard(object)
+        ? [
+            {
+              cycleSteps: cycleSteps(area.objects, object),
+              index,
+              left: object.origin.x,
+              right: object.origin.x + object.width,
+            },
+          ]
+        : [],
+    ),
   };
   MOVING_THINGS.set(area, { tuning, value: result });
   return result;
@@ -1225,6 +1289,7 @@ function walkSearch(
   const complete = () =>
     required !== undefined && (cleared || engineCleared()) && requiredComplete(required);
   const profiles = new Map<string, bigint[]>();
+  const crossings = timedCrossings(tuning, layout, surfaces);
   let activeProfile = 0n;
   const terminalAttempts = new WeakSet<ZoneState>();
   if (required) {
@@ -1302,7 +1367,7 @@ function walkSearch(
     try {
       const area = areaOf(layout, from.surface.area);
       const here = placed(from.surface, from.state, layout);
-      const { carry, moving } = movingThings(tuning, area);
+      const { carry, moving, timed } = movingThings(tuning, area);
       let bounds = areaBounds.get(area);
       if (!bounds) {
         bounds = moveBounds(tuning, carry);
@@ -1507,7 +1572,50 @@ function walkSearch(
           }
         }
       }
+      // A walk across a timed hazard to the surface beyond, from a stretch at its edge, at every
+      // wait through the hazard's cycle and those of things moving near.
+      const lo = here.left + (from.bucket - 1) * BUCKET;
       const hi = here.left + (from.bucket + 2) * BUCKET;
+      for (const beyond of crossings.get(from.surface.key) ?? []) {
+        const right = beyond.left >= here.right;
+        const edge = right ? here.right : here.left;
+        const crossed = () =>
+          complete() ||
+          (required
+            ? covered(beyond.key, profile | required.witnesses.surface(beyond.key))
+            : reached.has(beyond.key));
+        if (edge < lo || edge > hi || crossed()) {
+          continue;
+        }
+        const target = {
+          fixed: true,
+          key: beyond.key,
+          left: beyond.left,
+          right: beyond.right,
+          surface: beyond,
+        };
+        const corridor = right
+          ? { left: from.state.bird.x, right: beyond.left + tuning.width }
+          : { left: beyond.right - tuning.width, right: from.state.bird.x + tuning.width };
+        const count = phaseCount(WAIT_STEP, BUCKET, [], [...moving, ...timed], corridor);
+        for (const start of waited(count)) {
+          if (priority.length) {
+            yield;
+          }
+          if (crossed()) {
+            break;
+          }
+          const walked = walkInto(tuning, layout, surfaces, start, target);
+          steps += walked.steps;
+          if (walked.entered) {
+            arrive(walked.entered);
+          }
+          if (walked.landed?.surface.key === beyond.key) {
+            reach(walked.landed);
+            break;
+          }
+        }
+      }
       if (required === undefined && !cleared && here.right > area.exitX && hi > area.exitX) {
         const sourceSpan = sweptSpan(bounds, layout, from.surface);
         for (const start of startsFor({
