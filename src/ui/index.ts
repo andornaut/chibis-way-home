@@ -87,8 +87,10 @@ export {
   departureDialogueButtons,
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
+  dialogueBodyLines,
   dialogueButtons,
   dialogueNameTab,
+  dialoguePressAreas,
   dialogueSpeakerLayout,
   dialogueTextRows,
 } from "./layout/dialogueScreen";

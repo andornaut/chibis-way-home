@@ -7,14 +7,18 @@ import {
 import type { GameObjects, Scene } from "phaser";
 
 import { DIALOGUE_LAYOUT } from "../data/layout";
+import type { Rect } from "../data/types";
 import {
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
+  dialogueBodyLines,
   dialogueLines,
   dialogueNameTab,
   type DialogueParagraph,
+  dialoguePressAreas,
   dialogueSpeakerLayout,
   dialogueTextRows,
+  type PressArea,
 } from "../ui";
 import {
   addCardText,
@@ -32,6 +36,31 @@ export type PanelParagraph = Omit<DialogueParagraph, "colour" | "name"> & {
   readonly portraitFrame?: string | number;
 } & (Pick<DialogueParagraph, "colour" | "name"> | { readonly name: null });
 
+type PanelFont = ReturnType<typeof phaserBitmapFont>;
+
+function panelFont(scene: Scene, key: string): PanelFont {
+  return phaserBitmapFont(scene.cache.bitmapFont.get(key).data as PhaserFontData);
+}
+
+// The paragraph's name tab, or undefined when it shows none: a null name or a heading.
+export function dialogueParagraphTab(scene: Scene, paragraph: PanelParagraph): Rect | undefined {
+  if (paragraph.name === null || paragraph.heading !== undefined) {
+    return undefined;
+  }
+  return dialogueNameTab(
+    paragraph.side,
+    inkWidth(panelFont(scene, TITLE_FONT), DIALOGUE_SCREEN.text.scale, paragraph.name),
+  );
+}
+
+// The paragraph's press areas: the panel and its name tab together.
+export function dialogueParagraphPressAreas(
+  scene: Scene,
+  paragraph: PanelParagraph,
+): readonly PressArea<"continue">[] {
+  return dialoguePressAreas(dialogueParagraphTab(scene, paragraph));
+}
+
 // The speaker's portrait, name tab and text, drawn above the shared panel from drawDialoguePanel.
 export function drawDialogueParagraph(
   scene: Scene,
@@ -42,25 +71,23 @@ export function drawDialogueParagraph(
   }
   const layout = dialogueSpeakerLayout(paragraph.side);
   const text = DIALOGUE_SCREEN.text;
-  const fonts = {
-    body: phaserBitmapFont(scene.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData),
-    title: phaserBitmapFont(scene.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData),
-  };
+  const fonts = { body: panelFont(scene, BODY_FONT), title: panelFont(scene, TITLE_FONT) };
   const heading = paragraph.heading;
   if (heading !== undefined && inkWidth(fonts.title, text.scale, heading) > text.width) {
     throw new Error(`Dialogue heading does not fit: ${heading}`);
   }
-  const rows = dialogueTextRows(fonts, heading === undefined ? "name-tab" : "heading");
+  const header = heading === undefined ? "name-tab" : "heading";
   const body = dialogueLines(
     fonts.body,
-    { ...text, lines: rows.bodyLines },
+    { ...text, lines: dialogueBodyLines(header) },
     text.width,
     paragraph.text,
   );
+  const rows = dialogueTextRows(fonts, header, body.length);
+  const frame = layout.portraitFrame;
+  const tab = dialogueParagraphTab(scene, paragraph);
   return [
-    scene.add
-      .image(layout.portraitFrame.x, layout.portraitFrame.y, "ui-portrait-frame")
-      .setOrigin(0),
+    scene.add.image(frame.x, frame.y, "ui-portrait-frame").setOrigin(0),
     paragraph.portrait === null
       ? scene.add
           .rectangle(
@@ -75,9 +102,9 @@ export function drawDialogueParagraph(
           .image(layout.portrait.x, layout.portrait.y, paragraph.portrait, paragraph.portraitFrame)
           .setOrigin(0)
           .setDisplaySize(DIALOGUE_PORTRAIT_SIZE, DIALOGUE_PORTRAIT_SIZE),
-    ...(paragraph.name === null || rows.tabY === undefined
+    ...(tab === undefined || paragraph.name === null
       ? []
-      : drawNameTab(scene, fonts.title, rows.tabY, paragraph)),
+      : drawNameTab(scene, tab, paragraph as Pick<DialogueParagraph, "colour" | "name">)),
     ...(heading === undefined || rows.headingY === undefined
       ? []
       : [
@@ -103,33 +130,21 @@ export function drawDialogueParagraph(
 
 function drawNameTab(
   scene: Scene,
-  font: ReturnType<typeof phaserBitmapFont>,
-  tabY: number,
-  paragraph: Pick<DialogueParagraph, "colour" | "name" | "side">,
+  tab: Rect,
+  { colour, name }: Pick<DialogueParagraph, "colour" | "name">,
 ): GameObjects.GameObject[] {
-  const { name } = paragraph;
-  const layout = dialogueSpeakerLayout(paragraph.side);
-  const text = DIALOGUE_SCREEN.text;
-  const tab = dialogueNameTab(paragraph.side, tabY, inkWidth(font, text.scale, name));
-  if (tab.x + tab.width > layout.textX + text.width) {
-    throw new Error(`Dialogue speaker name does not fit: ${name}`);
-  }
-  const frame = sheetTags(scene.cache.json.get("ui-name-tab") as AsepriteSheet).get(
-    paragraph.colour,
-  )?.[0]?.frame;
+  const frame = sheetTags(scene.cache.json.get("ui-name-tab") as AsepriteSheet).get(colour)?.[0]
+    ?.frame;
   if (frame === undefined) {
-    throw new Error(`Missing dialogue name-tab colour ${paragraph.colour}`);
+    throw new Error(`Missing dialogue name-tab colour ${colour}`);
   }
+  const inset = DIALOGUE_LAYOUT.nameTab.inset;
   return [
     addSlice(scene, "ui-name-tab", tab, frame),
     addCardTextIn(
       scene,
       TITLE_FONT,
-      {
-        ...tab,
-        width: tab.width - 2 * DIALOGUE_LAYOUT.nameTabInset,
-        x: tab.x + DIALOGUE_LAYOUT.nameTabInset,
-      },
+      { ...tab, width: tab.width - 2 * inset, x: tab.x + inset },
       name,
       paletteColour(scene, "ink"),
     ),

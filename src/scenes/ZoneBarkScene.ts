@@ -1,4 +1,3 @@
-import { containsPoint } from "@andornaut/game-kit/rect";
 import { type GameObjects, type Input, Scene, Scenes } from "phaser";
 
 import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
@@ -7,14 +6,15 @@ import { TOUCH } from "../data/touch";
 import type { DialogueLine } from "../data/types";
 import type { ZoneBark } from "../rules/zone";
 import {
-  DIALOGUE_SCREEN,
   dialogueParagraphs,
   type DialoguePress,
   dialogueTapAction,
   moveDialoguePress,
+  type PressArea,
+  pressedArea,
 } from "../ui";
 import { drawDialoguePanel } from "./dialoguePanel";
-import { drawDialogueParagraph } from "./dialogueParagraph";
+import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 
@@ -35,6 +35,8 @@ export class ZoneBarkScene extends Scene {
   private art: GameObjects.GameObject[] = [];
   private remaining = 0;
   private press: DialoguePress | undefined;
+  // The showing panel's press areas: the panel and its name tab.
+  private areas: readonly PressArea<"continue">[] = [];
 
   constructor() {
     super("zoneBark");
@@ -91,14 +93,12 @@ export class ZoneBarkScene extends Scene {
     this.current = undefined;
     this.art.forEach((object) => object.destroy());
     this.art = [];
+    this.areas = [];
     this.remaining = 0;
     this.press = undefined;
   }
 
   private watchInput(): void {
-    const controls = [
-      { art: DIALOGUE_SCREEN.box, hit: DIALOGUE_SCREEN.box, key: "continue" as const },
-    ];
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       const at = playPoint(this, pointer);
       if (
@@ -107,7 +107,7 @@ export class ZoneBarkScene extends Scene {
         !this.current ||
         !this.presentable(this.current) ||
         !this.canPresent() ||
-        !containsPoint(DIALOGUE_SCREEN.box, at.x, at.y)
+        pressedArea(this.areas, at) === undefined
       ) {
         return;
       }
@@ -132,7 +132,7 @@ export class ZoneBarkScene extends Scene {
         this.canPresent() &&
         this.current !== undefined &&
         this.presentable(this.current) &&
-        dialogueTapAction(controls, TOUCH.tapMaxDistance, press, {
+        dialogueTapAction(this.areas, TOUCH.tapMaxDistance, press, {
           ...playPoint(this, pointer),
           id: pointer.id,
           wasCanceled: pointer.wasCanceled,
@@ -192,6 +192,7 @@ export class ZoneBarkScene extends Scene {
     this.current = bark;
     const paragraph = dialogueParagraphs(SPEAKERS, TEXT, { lines: [bark.line] })[0]!;
     this.art = [drawDialoguePanel(this), ...drawDialogueParagraph(this, paragraph)];
+    this.areas = dialogueParagraphPressAreas(this, paragraph);
     this.remaining = BARK_DURATION_SECONDS * 1000;
     bark.onStart?.();
   }

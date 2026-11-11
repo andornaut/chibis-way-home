@@ -40,7 +40,7 @@ import {
 } from "./cardParts";
 import type { DialogueChoiceData } from "./DialogueChoiceScene";
 import { drawDialoguePanel } from "./dialoguePanel";
-import { drawDialogueParagraph } from "./dialogueParagraph";
+import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
@@ -68,6 +68,8 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private opener = "zone";
   private paragraph = 0;
   private paragraphArt: GameObjects.GameObject[] = [];
+  // The showing paragraph's panel press areas: the panel and its name tab.
+  private panelAreas: readonly PressArea<DialogueControl>[] = [];
   private choice: DialogueChoice | undefined;
   private choosing = false;
   private finished = false;
@@ -98,6 +100,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     this.choice = plan.choice;
     this.paragraph = 0;
     this.paragraphArt = [];
+    this.panelAreas = [];
     this.choosing = false;
     this.finished = false;
     this.press = undefined;
@@ -179,6 +182,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       throw new Error("Missing dialogue paragraph");
     }
     this.paragraphArt = drawDialogueParagraph(this, paragraph);
+    this.panelAreas = dialogueParagraphPressAreas(this, paragraph);
   }
 
   private finish(selection?: string): void {
@@ -223,7 +227,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
         hit: this.layouts[key].hit,
         key,
       })),
-      { art: DIALOGUE_SCREEN.box, hit: DIALOGUE_SCREEN.box, key: "continue" },
+      ...this.panelAreas,
     ];
   }
 

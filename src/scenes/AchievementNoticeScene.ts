@@ -1,16 +1,25 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { fillNames } from "@andornaut/game-kit/lines";
-import { containsPoint } from "@andornaut/game-kit/rect";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { AchievementId } from "../data/types";
-import { DIALOGUE_SCREEN, type DialoguePress, dialogueTapAction, moveDialoguePress } from "../ui";
+import {
+  type DialoguePress,
+  dialogueTapAction,
+  moveDialoguePress,
+  type PressArea,
+  pressedArea,
+} from "../ui";
 import { ACHIEVEMENT_NOTICE, noticeBlocked } from "./achievementNotice";
 import { drawDialoguePanel } from "./dialoguePanel";
-import { drawDialogueParagraph, type PanelParagraph } from "./dialogueParagraph";
+import {
+  dialogueParagraphPressAreas,
+  drawDialogueParagraph,
+  type PanelParagraph,
+} from "./dialogueParagraph";
 import { onScenePointer } from "./modalInput";
 import { fitPlayCamera, playPoint } from "./playCamera";
 import { nextAchievementNotice } from "./save";
@@ -55,6 +64,8 @@ export class AchievementNoticeScene extends Scene {
   private art: GameObjects.GameObject[] = [];
   private remaining = 0;
   private press: DialoguePress | undefined;
+  // The showing notice's press areas: its panel.
+  private areas: readonly PressArea<"continue">[] = [];
 
   constructor() {
     super(ACHIEVEMENT_NOTICE);
@@ -96,31 +107,28 @@ export class AchievementNoticeScene extends Scene {
   }
 
   private show(id: AchievementId): void {
-    this.art = [
-      drawDialoguePanel(this),
-      ...drawDialogueParagraph(this, achievementNoticeParagraph(this, id)),
-    ];
+    const paragraph = achievementNoticeParagraph(this, id);
+    this.art = [drawDialoguePanel(this), ...drawDialogueParagraph(this, paragraph)];
+    this.areas = dialogueParagraphPressAreas(this, paragraph);
     this.remaining = ACHIEVEMENT_NOTICE_SECONDS * 1000;
   }
 
   private clear(): void {
     this.art.forEach((object) => object.destroy());
     this.art = [];
+    this.areas = [];
     this.remaining = 0;
     this.press = undefined;
   }
 
   private watchInput(): void {
-    const controls = [
-      { art: DIALOGUE_SCREEN.box, hit: DIALOGUE_SCREEN.box, key: "continue" as const },
-    ];
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       const at = playPoint(this, pointer);
       if (
         this.press ||
         !this.showing() ||
         noticeBlocked(this) ||
-        !containsPoint(DIALOGUE_SCREEN.box, at.x, at.y)
+        pressedArea(this.areas, at) === undefined
       ) {
         return;
       }
@@ -144,7 +152,7 @@ export class AchievementNoticeScene extends Scene {
         !outside &&
         this.showing() &&
         !noticeBlocked(this) &&
-        dialogueTapAction(controls, TOUCH.tapMaxDistance, press, {
+        dialogueTapAction(this.areas, TOUCH.tapMaxDistance, press, {
           ...playPoint(this, pointer),
           id: pointer.id,
           wasCanceled: pointer.wasCanceled,
