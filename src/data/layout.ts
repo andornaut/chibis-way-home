@@ -30,11 +30,11 @@ export const CONTROL_FRAME_INSET = 1;
 export const HUD_EDGE = 12;
 
 // Use, Jump and the move hint's drawn bottom edge above the view's bottom edge.
-export const CONTROL_BOTTOM = 20;
+export const CONTROL_BOTTOM = 30;
 
 // Jump's drawn right edge in from the view's right, and the move hint's drawn left edge in from
 // the view's left.
-export const CONTROL_SIDE = 24;
+export const CONTROL_SIDE = 40;
 
 export const TOUCH_LAYOUT = {
   // The move hint's knob moves at most this far left or right of its ring's centre.
