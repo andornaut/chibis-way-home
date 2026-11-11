@@ -24,9 +24,10 @@ export const TOUCH_CIRCLE_RADIUS = 63;
 // Art draws each control (pause, Use, Jump and the move hint) this far inside its frame.
 export const CONTROL_FRAME_INSET = 1;
 
-// The least distance from each control's drawn edge to the edge it is placed against: the view's
-// left, right, top and bottom.
-export const CONTROL_EDGE = 8;
+// The top-corner HUD's drawn edge in from the view: Pause's disc in from the view's top and left,
+// and the skill row's discs in from its top and the rightmost one in from its right, so the two
+// corners mirror.
+export const HUD_EDGE = 12;
 
 // Use, Jump and the move hint's drawn bottom edge above the view's bottom edge.
 export const CONTROL_BOTTOM = 20;
@@ -42,15 +43,13 @@ export const TOUCH_LAYOUT = {
   useFromJump: { x: -77, y: -100 } satisfies Point,
 } as const;
 
-// The skill HUD's buttons, packed along the view's top right.
+// The skill HUD's buttons, packed along the view's top right, HUD_EDGE in from its top and right.
 export const SKILL_HUD = {
   // The gap between adjacent buttons' targets.
-  gap: CONTROL_EDGE,
+  gap: 8,
   // art: the skill glyph's frame side.
   glyph: 16,
-  // The row's target edge in from the view's top and right.
-  inset: CONTROL_EDGE,
-  // A button's square press target side.
+  // A button's square press target side, centred on its disc.
   target: 48,
 } as const;
 
@@ -185,10 +184,10 @@ export const DIALOGUE_LAYOUT = {
   departureInset: 16,
   // Skip and Continue below the panel: their gap below the panel's bottom and their height.
   footer: { gap: 4, height: 36 },
-  // The speaker's name tab: its top's clearance below the skill HUD's targets, its drawn edge in
+  // The speaker's name tab: its top's clearance below the skill HUD's drawn discs, its drawn edge in
   // from the panel's end opposite the portrait, its height, the name's clearance from its left
   // and right edges, and how far it rises above the panel's top.
-  nameTab: { clearance: 10, endInset: 8, height: 20, inset: 6, overhang: 10 },
+  nameTab: { clearance: 21, endInset: 8, height: 20, inset: 6, overhang: 10 },
   // The panel's clearance round the portrait frame.
   padding: 4,
   // The panel's size; it is centred across the view.

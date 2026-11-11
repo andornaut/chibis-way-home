@@ -1,6 +1,6 @@
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
-import { DIALOGUE_LAYOUT, SKILL_HUD, TEXT_BUTTON } from "../../data/layout";
+import { DIALOGUE_LAYOUT, HUD_EDGE, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { DialogueSpeaker, Point, Rect } from "../../data/types";
 import type { DialogueControl } from "../dialogue/conversation";
@@ -8,6 +8,7 @@ import type { CardFonts } from "./contentCard";
 import { FONT_SCALE } from "./fontRoles";
 import type { PressArea } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./restartCard";
+import { SKILL_BUTTON } from "./skillHud";
 
 const {
   footer,
@@ -17,8 +18,8 @@ const {
   portraitInset: PORTRAIT_INSET,
 } = DIALOGUE_LAYOUT;
 // The name tab's top, the top of everything the panel draws: the clearance below the top button
-// row, whose skill HUD targets stay live above it.
-const TAB_TOP = SKILL_HUD.inset + SKILL_HUD.target + TAB.clearance;
+// row's discs, whose skill HUD targets stay live above it.
+const TAB_TOP = HUD_EDGE + SKILL_BUTTON.disc + TAB.clearance;
 // The panel, centred across the view below the name tab's overhang.
 const BOX: Rect = {
   ...panel,

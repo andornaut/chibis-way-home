@@ -5,11 +5,12 @@ import { describe, expect, it } from "vitest";
 import * as behaviours from "../../data/behaviours";
 import { CHARACTERS } from "../../data/characters";
 import { DIALOGUES, SPEAKERS } from "../../data/dialogues";
-import { SKILL_HUD, TEXT_BUTTON } from "../../data/layout";
+import { TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { STAGE_BARKS } from "../../data/stageBarks";
 import { TEXT } from "../../data/text";
 import type { DialogueLine, Rect } from "../../data/types";
+import { SKILL_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import {
   dialogueLines,
@@ -29,6 +30,7 @@ import {
 } from "./dialogueScreen";
 import { pressedArea } from "./hitAreas";
 import { PAUSE_BUTTON } from "./pauseCard";
+import { skillButton, skillHud } from "./skillHud";
 import { textInkBounds } from "./textInk";
 
 const font = CARD_FONTS.title;
@@ -43,11 +45,15 @@ const BODY_INK = textInkBounds(
 
 describe("dialogue layout", () => {
   it("draws the 480x60 panel, 408 text column and compact footer below the skill HUD", () => {
-    const hudBottom = SKILL_HUD.inset + SKILL_HUD.target;
+    const hudBottom = Math.max(
+      ...[...skillHud(SKILL_IDS).values()]
+        .map((at) => skillButton(at).hit)
+        .map((hit) => hit.y + hit.height),
+    );
     const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
-    expect(hudBottom).toBe(56);
-    expect(box).toEqual({ height: 60, width: 480, x: 120, y: hudBottom + 20 });
-    expect(box.y).toBe(76);
+    expect(box).toEqual({ height: 60, width: 480, x: 120, y: 76 });
+    expect(dialogueNameTab("left", 0).y).toBe(66);
+    expect(dialogueNameTab("left", 0).y).toBeGreaterThan(hudBottom);
     expect(DIALOGUE_SCREEN.text).toMatchObject({ lines: 2, pitch: 20, width: 408 });
     expect(buttons.skip.button).toEqual({ height: 36, width: 192, x: 208, y: 140 });
     expect(buttons.continue.button).toEqual({ height: 36, width: 192, x: 408, y: 140 });

@@ -4,6 +4,12 @@
    turns the whole frame onto its side and sets the --inset-* properties, the safe-area insets on
    the frame's own edges, which every rule here uses in place of env(safe-area-inset-*). */
 
+/* The left and right edges both take the larger side inset, so a one-sided notch leaves the game
+   centred. */
+:root {
+  --inset-side: max(var(--inset-left), var(--inset-right));
+}
+
 /* In the turned frame, under the kit's turnedFrameQuery("landscape"). Its top is the game's top
    at whichever edge the turn puts it. Phaser's centring measures the turned canvas, so here CSS
    puts the canvas at #game's top and centres it across instead (the kit's followFrameTurn). */
@@ -17,14 +23,15 @@
   html #game canvas {
     flex: none;
   }
+}
 
-  html .site-nav.slim {
-    width: calc(64px + var(--inset-left));
-  }
+/* The slim nav column takes the side inset on the left, turned or not. */
+html .site-nav.slim {
+  width: calc(64px + var(--inset-side));
+}
 
-  html .site-nav.slim ul {
-    padding-left: var(--inset-left);
-  }
+html .site-nav.slim ul {
+  padding-left: var(--inset-side);
 }
 
 html,
@@ -44,14 +51,14 @@ body {
 
 /* Margins rather than padding: Phaser sizes the canvas to the parent's border box, padding
    included. The canvas sits at its top, and Phaser centres it across. The nav column takes the
-   left inset when it shows. */
+   left side inset when it shows. */
 #game {
   position: relative;
   flex: 1;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  margin: 0 var(--inset-right) var(--inset-bottom) var(--inset-left);
+  margin: 0 var(--inset-side) var(--inset-bottom) var(--inset-side);
 }
 
 .site-nav + #game {

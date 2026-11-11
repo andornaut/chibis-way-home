@@ -1,4 +1,4 @@
-import { CARD_CONTENT, CONTROL_EDGE, CONTROL_FRAME_INSET, TEXT_BUTTON } from "../../data/layout";
+import { CARD_CONTENT, CONTROL_FRAME_INSET, HUD_EDGE, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { GameText, Point, Rect } from "../../data/types";
 import { PAUSE_CHROME_FRAME } from "../chrome/pauseChrome";
@@ -51,13 +51,13 @@ export function pauseCard(fonts: CardFonts, words: GameText["pause"]) {
 
 // Art's pause button in the game's top-left corner: where its frame is drawn, and the area a
 // press must land in, its frame grown by hitAreas.ts's rule. Art draws the disc
-// CONTROL_FRAME_INSET inside its frame, so the disc's edge sits CONTROL_EDGE in from the view's
-// top and left.
+// CONTROL_FRAME_INSET inside its frame, so the disc's edge sits HUD_EDGE in from the view's top
+// and left.
 const PAUSE_ART: Rect = {
   height: PAUSE_CHROME_FRAME,
   width: PAUSE_CHROME_FRAME,
-  x: CONTROL_EDGE - CONTROL_FRAME_INSET,
-  y: CONTROL_EDGE - CONTROL_FRAME_INSET,
+  x: HUD_EDGE - CONTROL_FRAME_INSET,
+  y: HUD_EDGE - CONTROL_FRAME_INSET,
 };
 
 export const PAUSE_BUTTON = {

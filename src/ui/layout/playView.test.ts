@@ -1,14 +1,14 @@
 import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
-import { CONTROL_BOTTOM, CONTROL_EDGE, CONTROL_SIDE, SKILL_HUD } from "../../data/layout";
+import { CONTROL_BOTTOM, CONTROL_SIDE, HUD_EDGE } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect, Size } from "../../data/types";
 import { SKILL_IDS } from "../../progress";
 import { touchRoleAt } from "../input/intent";
 import { PAUSE_BUTTON } from "./pauseCard";
 import { canvasSize, playView, shifted, viewShift } from "./playView";
-import { skillButton, skillHud } from "./skillHud";
+import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud";
 import { stageProgressRect } from "./stageProgress";
 import { MOVE_HINT, TOUCH_CONTROLS } from "./touchControls";
 
@@ -96,8 +96,8 @@ const drawn = (frame: Rect, shift: Point) => ({
 describe("the controls' edges", () => {
   // In each canvas, measured from the view's edges, never the canvas's: Jump's ring CONTROL_SIDE
   // in from the right and the move hint's from the left, both CONTROL_BOTTOM above the bottom;
-  // the pause disc CONTROL_EDGE in from the top and left, and the skill HUD's targets from the
-  // top and right.
+  // the pause disc HUD_EDGE in from the top and left, and the skill HUD's discs from the top and
+  // right.
   it.each(CASES)("in a %s area sit their set distances from the view's edges", (_, css, dpr) => {
     const shift = viewShift(fitAt(css, dpr));
     const view = logicalView(shift);
@@ -106,13 +106,13 @@ describe("the controls' edges", () => {
     const jump = drawn(TOUCH_CONTROLS.jump.art, shift);
     const hint = drawn(MOVE_HINT.art, shift);
     const pause = drawn(PAUSE_BUTTON.art, shift);
-    const hud = [...skillHud(SKILL_IDS).values()].map((at) => skillButton(shifted(shift, at)).hit);
+    const hud = [...skillHud(SKILL_IDS).values()].map((at) => skillButton(shifted(shift, at)).disc);
     const last = hud[hud.length - 1]!;
     expect({
       hintBottom: near(bottom - hint.bottom),
       hintLeft: near(hint.left - view.x),
-      hudRight: near(right - (last.x + last.width - 1)),
-      hudTop: near(Math.min(...hud.map((hit) => hit.y)) - view.y),
+      hudRight: near(right - (last.x + SKILL_BUTTON.disc - 1)),
+      hudTop: near(Math.min(...hud.map((disc) => disc.y)) - view.y),
       jumpBottom: near(bottom - jump.bottom),
       jumpRight: near(right - jump.right),
       pauseLeft: near(pause.left - view.x),
@@ -120,12 +120,12 @@ describe("the controls' edges", () => {
     }).toEqual({
       hintBottom: CONTROL_BOTTOM,
       hintLeft: CONTROL_SIDE,
-      hudRight: SKILL_HUD.inset,
-      hudTop: SKILL_HUD.inset,
+      hudRight: HUD_EDGE,
+      hudTop: HUD_EDGE,
       jumpBottom: CONTROL_BOTTOM,
       jumpRight: CONTROL_SIDE,
-      pauseLeft: CONTROL_EDGE,
-      pauseTop: CONTROL_EDGE,
+      pauseLeft: HUD_EDGE,
+      pauseTop: HUD_EDGE,
     });
   });
 
