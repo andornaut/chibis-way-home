@@ -11,8 +11,9 @@ import { CARD_CONTENT, FOCUS_RING, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point } from "../../data/types";
 import { UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts";
+import { cardTitleReserve } from "../layout/contentCard";
 import { FONT_METRICS } from "../layout/fontRoles";
-import { hitMargin } from "../layout/hitAreas";
+import { hitAround, hitMargin } from "../layout/hitAreas";
 import { playView } from "../layout/playView";
 
 // The HTML UI over the canvas (src/ui/dom/ui.css). The layer covers #game, so full-area
@@ -22,9 +23,18 @@ import { playView } from "../layout/playView";
 // the UI's CSS is base pixels times --ui-unit, which this layer keeps current.
 
 // The whole CSS px lengths the UI's CSS reads through slice(), besides art's frame edges: the
-// focus ring's bands and a pressed label's sink.
+// focus ring's bands, a pressed label's sink and the card frame's border.
 const RING_EDGES = [FOCUS_RING.inkLine, FOCUS_RING.outset - FOCUS_RING.inkLine, FOCUS_RING.outset];
-const WHOLE_LENGTHS = [...RING_EDGES, TEXT_BUTTON.pressedSink];
+const WHOLE_LENGTHS = [...RING_EDGES, TEXT_BUTTON.pressedSink, CARD_CONTENT.frameBorder];
+
+// A card's close X, drawn its inset in from the card's top and right edges, and its press area.
+const CLOSE_ART = {
+  height: CARD_CONTENT.closeSize,
+  width: CARD_CONTENT.closeSize,
+  x: CARD_CONTENT.closeInset,
+  y: CARD_CONTENT.closeInset,
+};
+const CLOSE_HIT = hitAround(CLOSE_ART);
 
 // The layout constants the UI's CSS reads, as unitless base px, or as whole-px lengths from the
 // view bridge.
@@ -36,10 +46,20 @@ export const UI_LAYOUT: LayoutValues = {
   "--button-inset": TEXT_BUTTON.inset,
   "--button-lip": TEXT_BUTTON.lipHeight,
   "--button-sink": slice(TEXT_BUTTON.pressedSink),
+  "--card-edge": slice(CARD_CONTENT.frameBorder),
   "--card-frame": CARD_CONTENT.frameBorder,
   "--card-gap": CARD_CONTENT.gap,
   "--card-min-width": SCREEN.width * MODAL_CONTENT.minWidthFraction,
   "--card-padding": CARD_CONTENT.padding,
+  // How far below the card's top a card with a close X starts its body's press areas, the gap
+  // past the X's press area.
+  "--close-clear": CLOSE_HIT.y + CLOSE_HIT.height + CARD_CONTENT.gap,
+  // How far the X's press area reaches past its drawn side.
+  "--close-hit": CLOSE_ART.x - CLOSE_HIT.x,
+  "--close-inset": CARD_CONTENT.closeInset,
+  // A centred title's clearance from each side of a card with a close X.
+  "--close-reserve": cardTitleReserve(true),
+  "--close-size": CARD_CONTENT.closeSize,
   "--focus-band": slice(FOCUS_RING.outset - FOCUS_RING.inkLine),
   "--focus-ink": slice(FOCUS_RING.inkLine),
   "--focus-outset": slice(FOCUS_RING.outset),

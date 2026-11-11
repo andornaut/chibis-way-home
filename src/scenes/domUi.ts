@@ -22,7 +22,7 @@ const MANIFEST = manifestJson as ArtManifest;
 const layers = new WeakMap<Game, UiLayer>();
 
 // Each UI frame's nine-slice edges, from art's manifest.
-function frameSlice(art: string): SkinFrame["slice"] {
+function frameSlice(art: string): NonNullable<SkinFrame["slice"]> {
   const slice = MANIFEST.sprites.find(({ key }) => key === art)?.slice;
   if (slice === undefined) {
     throw new Error(`No 9-slice edges for ${art}`);
@@ -32,7 +32,10 @@ function frameSlice(art: string): SkinFrame["slice"] {
 
 // Mounts game's UI layer in host, the canvas's parent, and returns its removal.
 export function mountDomUi(game: Game, host: HTMLElement): () => void {
-  const edges = UI_FRAMES.flatMap(({ art }) => {
+  const edges = UI_FRAMES.flatMap(({ art, whole }) => {
+    if (whole) {
+      return [];
+    }
     const { bottom, left, right, top } = frameSlice(art);
     return [bottom, left, right, top];
   });
@@ -69,7 +72,7 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
   }
   const document = layer.element.ownerDocument;
   const skin = async () => {
-    const frames = UI_FRAMES.map(({ art, name, tag }): SkinFrame => {
+    const frames = UI_FRAMES.map(({ art, name, tag, whole }): SkinFrame => {
       const frameName =
         tag === undefined
           ? undefined
@@ -81,7 +84,7 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
       return {
         name,
         rect: { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY },
-        slice: frameSlice(art),
+        ...(whole === undefined && { slice: frameSlice(art) }),
         source: frame.source.image as CanvasImageSource,
       };
     });

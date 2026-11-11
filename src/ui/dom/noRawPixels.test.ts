@@ -1,11 +1,15 @@
 import { expect, it } from "vitest";
 
-import css from "./ui.css?raw";
+import ui from "./ui.css?raw";
+import update from "./update.css?raw";
 
 // The HTML UI's lengths are base pixels times --ui-unit, so nothing in its stylesheet is sized in
 // CSS pixels or another absolute or font-relative unit: the one px in it is the 1px a calc()
 // multiplies a base-px count by.
-it("sizes the HTML UI only in base pixels times --ui-unit", () => {
+it.each([
+  { css: ui, name: "ui.css" },
+  { css: update, name: "update.css" },
+])("sizes $name only in base pixels times --ui-unit", ({ css }) => {
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const lengths = [
     ...rules.matchAll(

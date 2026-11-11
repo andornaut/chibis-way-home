@@ -15,13 +15,10 @@ import { achievementsCardLayout } from "./achievementsCard";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
   CARD_HEADING,
-  cardActions,
-  cardActionsSize,
   cardTextOrigin,
   cardTextSize,
   type CardTitleLayout,
   cardTitleOrigin,
-  contentCardLayout,
 } from "./contentCard";
 import { deathCard } from "./deathCard";
 import { FONT_METRICS } from "./fontRoles";
@@ -57,22 +54,12 @@ const stageSelect = stageSelectPages(
   TEXT.map.zones[destination.id]!,
   destination.stages.map((id) => TEXT.map.stages[id]!),
 );
-const updateActions = cardActionsSize(CARD_FONTS.title, "row", [TEXT.update.accept]);
-const update = contentCardLayout(
-  { ...SCREEN, x: 0, y: 0 },
-  [{ key: "actions", ...updateActions }],
-  { close: true, font: CARD_FONTS.title, title: TEXT.update.title },
-);
-const updateButton = cardActions(CARD_FONTS.title, "row", update.groups.actions!, [
-  TEXT.update.accept,
-])[0]!;
 
 it.each([
   { first: pause.resume.hit, layout: pause },
   ...variants.map((layout) => ({ first: layout.moveControls.hit, layout })),
   ...installs.map((layout) => ({ first: layout.steps.text, layout })),
   { first: stageSelect.buttons[0]!.hit, layout: stageSelect },
-  { first: updateButton.hit, layout: { ...update, close: update.close!, title: update.title! } },
 ])(
   "keeps close targets clear of centred titles and body controls within the viewport",
   ({ first, layout: { card, close, title } }) => {
@@ -168,7 +155,6 @@ it.each([
     name: "install",
   })),
   { content: stageSelect.buttons[0]!.button.y, layout: stageSelect, name: "stage selection" },
-  { content: updateButton.button.y, layout: { ...update, title: update.title! }, name: "update" },
   ...skills.map((layout) => ({
     content: skillInkTop(layout),
     layout: { ...layout, title: layout.title! },

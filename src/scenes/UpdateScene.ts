@@ -1,33 +1,13 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { type Cameras, type Game, type GameObjects, type Input, Scene } from "phaser";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { type Game, Scene } from "phaser";
 
-import { SCREEN } from "../data/screen";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa";
-import {
-  cardActions,
-  cardActionsSize,
-  contentCardLayout,
-  type PressArea,
-  pressedArea,
-  stepFocus,
-} from "../ui";
-import {
-  addCardHeading,
-  addSlice,
-  addTextButton,
-  captureTab,
-  cardFonts,
-  pressTextButton,
-  PRIMARY_BUTTON,
-  ringFocus,
-  type TextButton,
-} from "./cardParts";
+import { type CardView, createCard, showPresses } from "../ui";
+import { mountSceneView, sceneDomUi } from "./domUi";
 import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onScenePointer } from "./modalInput";
-import { catchModalTaps } from "./modalTaps";
-import { fitPlayCamera, playPoint } from "./playCamera";
+import { modalInput } from "./modalInput";
 
 // Pausing the world does not change PWA eligibility: closing this offer cannot reopen it.
 export function installUpdateModalBridge(game: Game): void {
@@ -61,21 +41,21 @@ export function installUpdateModalBridge(game: Game): void {
   game.events.once("destroy", unsubscribe);
 }
 
+// The card's buttons, in the order the keyboard's focus moves through them; the close X follows.
 type ButtonAction = "accept" | "cancel";
 type Action = ButtonAction | "close";
+const BUTTONS: readonly ButtonAction[] = ["cancel", "accept"];
 
+// The card that offers a waiting update, over every other scene: its title, Cancel, Update now in
+// art's primary button, and a close X. Update now accepts the offer; Cancel, the X, back, Escape
+// and a tap outside the card defer it. The card is HTML in the UI layer (src/ui/dom/card.ts),
+// shown once the dim of the scenes under it is ready, and its buttons act only from then: a
+// button acts when a press lands on it and lifts on it; Tab and the arrows move the keyboard's
+// focus through Cancel, Update now and the X, starting on the card itself, and Enter and Space
+// press the focused one (the kit's modalLayer). P does nothing here.
 export class UpdateScene extends Scene {
-  private cardCamera!: Cameras.Scene2D.Camera;
-  private layout!: ReturnType<typeof contentCardLayout>;
-  private actions!: Record<ButtonAction, ReturnType<typeof cardActions>[number]>;
-  private buttons!: Record<ButtonAction, TextButton>;
-  private closeX!: GameObjects.Sprite;
-  private focus: Action | undefined;
   private readyToInteract = false;
-  private ring: GameObjects.NineSlice | undefined;
-  private press:
-    | { at: { x: number; y: number }; cancelled: boolean; id: number; target: Action | undefined }
-    | undefined;
+  private closeModal: (() => void) | undefined;
 
   constructor() {
     super("update");
@@ -83,42 +63,29 @@ export class UpdateScene extends Scene {
 
   create(): void {
     this.readyToInteract = false;
-    this.focus = undefined;
-    this.ring = undefined;
-    this.press = undefined;
-    this.cardCamera = this.cameras.main;
-    fitPlayCamera(this, this.cardCamera);
-    const fonts = cardFonts(this);
-    const labels = [TEXT.update.cancel, TEXT.update.accept];
-    this.layout = contentCardLayout(
-      { ...SCREEN, x: 0, y: 0 },
-      [{ key: "actions", ...cardActionsSize(fonts.title, "row", labels) }],
-      { close: true, font: fonts.title, title: TEXT.update.title },
-    );
-    const group = this.layout.groups.actions;
-    const title = this.layout.title;
-    const close = this.layout.close;
-    if (!group || !title || !close) {
-      throw new Error("Missing upgrade card content");
-    }
-    const [cancel, accept] = cardActions(fonts.title, "row", group, labels);
-    if (!accept || !cancel) {
-      throw new Error("Missing upgrade action");
-    }
-    this.actions = { accept, cancel };
-    addSlice(this, "ui-settings-card", this.layout.card);
-    addCardHeading(this, title);
-    this.closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);
-    this.closeX.play(animationKey("ui-close", "normal"));
-    this.buttons = {
-      accept: addTextButton(this, accept, TEXT.update.accept, { style: PRIMARY_BUTTON }),
-      cancel: addTextButton(this, cancel, TEXT.update.cancel),
-    };
-    catchModalTaps(this, this.cardCamera, {
-      close: () => updateOffer.defer(),
-      covered: () => [this.layout.card, accept.hit, cancel.hit, close.hit],
+    this.closeModal = undefined;
+    const words = TEXT.update;
+    const card: CardView<ButtonAction> = createCard(document, "update-card", {
+      actions: BUTTONS.map((key) => ({ key, label: words[key], primary: key === "accept" })),
+      alert: true,
+      close: words.close,
+      title: words.title,
     });
-    captureTab(this, true);
+    card.root.hidden = true;
+    for (const action of BUTTONS) {
+      card.buttons[action].addEventListener("click", () => this.act(action));
+    }
+    card.close?.addEventListener("click", () => this.act("close"));
+    // P closes other cards in the modal layer, not this one: it stops here, before the layer and
+    // Phaser see it.
+    const keepP = (event: KeyboardEvent) => {
+      if (event.key === "p" || event.key === "P") {
+        event.stopPropagation();
+      }
+    };
+    card.dialog.addEventListener("keydown", keepP);
+    const input = modalInput(this);
+    const guard = { gate: input };
     const back = (event: Event) => {
       if (!modalInput(this).accepts(event)) {
         return;
@@ -127,97 +94,38 @@ export class UpdateScene extends Scene {
       updateOffer.defer();
     };
     window.addEventListener(PHONE_EVENTS.backPressed, back, true);
+    const stops = [
+      guardClicks(guard, card.root),
+      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => updateOffer.defer(), card.backdrop),
+      showPresses(() => input.accepts(), card.root),
+      () => window.removeEventListener(PHONE_EVENTS.backPressed, back, true),
+    ];
+    let shown = true;
     this.events.once("shutdown", () => {
-      captureTab(this, false);
-      window.removeEventListener(PHONE_EVENTS.backPressed, back, true);
+      shown = false;
+      this.readyToInteract = false;
+      this.closeModal?.();
+      this.closeModal = undefined;
+      stops.forEach((stop) => stop());
     });
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (!modalInput(this).accepts(event)) {
-        return;
-      }
-      event.stopPropagation();
-      if (event.key === "Escape") {
-        updateOffer.defer();
-      } else if (event.key === "Tab" || event.key.startsWith("Arrow")) {
-        event.preventDefault();
-        this.focus = stepFocus<Action>(
-          ["cancel", "accept", "close"],
-          this.focus,
-          event.key === "ArrowLeft" ||
-            event.key === "ArrowUp" ||
-            (event.key === "Tab" && event.shiftKey)
-            ? "previous"
-            : "next",
-        );
-        this.render();
-      } else if (
-        (event.key === "Enter" || event.key === " ") &&
-        !event.repeat &&
-        this.focus !== undefined
-      ) {
-        event.preventDefault();
-        this.act(this.focus);
-      }
-    });
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.readyToInteract && !this.press) {
-        const at = playPoint(this, pointer, this.cardCamera);
-        this.press = {
-          at,
-          cancelled: false,
-          id: pointer.id,
-          target: pressedArea(this.areas(), at),
-        };
-        this.render();
-      }
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.press?.id === pointer.id) {
-        const at = playPoint(this, pointer, this.cardCamera);
-        this.press.cancelled ||=
-          Math.hypot(at.x - this.press.at.x, at.y - this.press.at.y) > TOUCH.tapMaxDistance;
-        this.render();
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      this.input.stopPropagation();
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      const press = this.press;
-      this.press = undefined;
-      this.render();
-      const at = playPoint(this, pointer, this.cardCamera);
-      if (
-        !outside &&
-        !pointer.wasCanceled &&
-        !press.cancelled &&
-        press.target !== undefined &&
-        Math.hypot(at.x - press.at.x, at.y - press.at.y) <= TOUCH.tapMaxDistance &&
-        pressedArea(this.areas(), at) === press.target
-      ) {
-        this.act(press.target);
-      }
-    };
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    mountSceneView(this, card.root);
     const backdrop = showModalBackdrop(this);
     void backdrop.ready.then(() => {
-      this.readyToInteract = this.sys.isActive();
+      this.readyToInteract = shown && this.sys.isActive();
+      if (this.readyToInteract) {
+        card.root.hidden = false;
+        this.closeModal = sceneDomUi(this)?.modals.open({ close: () => this.defer() }, card.dialog);
+      }
     });
   }
 
-  private areas(): readonly PressArea<Action>[] {
-    const close = this.layout.close;
-    return [
-      { art: this.actions.accept.button, hit: this.actions.accept.hit, key: "accept" },
-      { art: this.actions.cancel.button, hit: this.actions.cancel.hit, key: "cancel" },
-      ...(close ? [{ art: close.art, hit: close.hit, key: "close" as const }] : []),
-    ];
+  // Escape defers, while the modal gate accepts.
+  private defer(): void {
+    if (modalInput(this).accepts()) {
+      updateOffer.defer();
+    }
   }
+
   private act(action: Action): void {
     if (!this.readyToInteract) {
       return;
@@ -227,25 +135,5 @@ export class UpdateScene extends Scene {
     } else {
       updateOffer.defer();
     }
-  }
-  private render(): void {
-    this.closeX.play(
-      animationKey(
-        "ui-close",
-        this.press?.target === "close" && !this.press.cancelled ? "pressed" : "normal",
-      ),
-    );
-    for (const key of ["accept", "cancel"] as const) {
-      pressTextButton(this.buttons[key], this.press?.target === key && !this.press.cancelled);
-    }
-    this.ring = ringFocus(
-      this,
-      this.ring,
-      this.focus === "accept" || this.focus === "cancel"
-        ? this.actions[this.focus].button
-        : this.focus === "close"
-          ? this.layout.close?.art
-          : undefined,
-    );
   }
 }

@@ -42,6 +42,8 @@ export interface GameText {
   readonly update: {
     readonly accept: string;
     readonly cancel: string;
+    // The close X's accessible name.
+    readonly close: string;
     readonly title: string;
   };
   readonly death: DeathText;
