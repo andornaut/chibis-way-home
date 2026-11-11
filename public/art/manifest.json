@@ -243,6 +243,12 @@
       "once": []
     },
     {
+      "key": "icon-reduced-motion",
+      "png": "sprites/icon-reduced-motion.png",
+      "json": "sprites/icon-reduced-motion.json",
+      "once": []
+    },
+    {
       "key": "icon-settings-nav",
       "png": "sprites/icon-settings-nav.png",
       "json": "sprites/icon-settings-nav.json",
