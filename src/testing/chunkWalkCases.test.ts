@@ -70,7 +70,7 @@ it.each(["empty", "filled"] as const)(
       solids.map(({ col, cols, row, rows }) => ({ col, cols, row, rows }));
     expect(geometry(plan.areas[plan.start.area]!.solids)).toEqual(geometry(subject[2].solids));
     expect(subject[2].entry.row).not.toBe(APARTMENT_SPAWN_ROW);
-    const middle = byName.get("apartment-tall-compound-patrol-lift")!;
+    const middle = byName.get("apartment-tall-compound-double-lift")!;
     const middlePlan = chunkWalkPlan({ door: [], event: [] }, middle);
     expect(middlePlan.areas[middlePlan.start.area]!.entries[middlePlan.start.entry]!.row).toBe(
       middle[2].entry.row,

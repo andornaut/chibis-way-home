@@ -21,11 +21,10 @@ import { CHUNK_LIBRARY } from "./zonePlans";
 const FIXTURE = new URL("./fixtures/behaviourEffectTraces.json", import.meta.url);
 const UPDATE = process.env.BEHAVIOUR_TRACE_UPDATE === "1";
 const CHUNKS = [
-  ["growl-clearing", "deep-woods"],
-  ["growl-cover-early", "deep-woods"],
-  ["flyer-shelter-early", "loading-yards"],
-  ["apartment-tall-city-boundary-climb-yard", "apartment-lobby"],
-  ["city-boundary-climb-yard", "farmland"],
+  ["arena-bear-ravine", "ravine"],
+  ["arena-ferret-residential-floors", "apartment-residential"],
+  ["arena-goose-river-crossing", "river-crossing"],
+  ["arena-pigeon-freight-terminal", "freight-terminal"],
 ] as const;
 const STILL = { jumpHeld: false, move: 0, useHeld: false } as const;
 

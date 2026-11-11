@@ -17,15 +17,19 @@ import {
 
 const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 
-// The crumbling crossing with an extra Archie on its far bank, then a patrol chunk whose own
-// Archie is the stage's next encounter.
+// The crumbling crossing with an extra Archie on its far bank, then the broad mesa with a second
+// Archie on its mesa top as the stage's next encounter.
 function fixture() {
   const layout: ZoneLayout = chunksLayout(
     "city-streets",
-    ["crumbling-support-crossing", "patrol-cover-middle"],
-    withInstances("crumbling-support-crossing", [
-      { character: "dog-antagonist", col: 44, role: "antagonist", row: 46 },
-    ]),
+    ["crumbling-support-crossing", "broad-mesa"],
+    withInstances(
+      "broad-mesa",
+      [{ character: "dog-antagonist", col: 28, role: "antagonist", row: 38 }],
+      withInstances("crumbling-support-crossing", [
+        { character: "dog-antagonist", col: 44, role: "antagonist", row: 46 },
+      ]),
+    ),
   );
   const area = layout.areas[layout.start.area]!;
   const dogs = area.objects.flatMap((object, index) =>

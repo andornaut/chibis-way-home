@@ -2,6 +2,7 @@ import { mapHash } from "@andornaut/game-kit/terrain/movementMap";
 import { describe, expect, it } from "vitest";
 
 import type { AreaLayout, ObjectLayout } from "../data/types";
+import { arenaLayout, sampleArenaCase } from "../testing/arenas";
 import { chunkLayout, ORDINARY } from "../testing/encounterLayouts";
 import {
   BOSS_JUMP_SCRIPTS,
@@ -27,7 +28,7 @@ const ALLOW = () => true;
 
 describe("boss movement profiles", () => {
   it("derives a walker from ground pursuit data", () => {
-    const archie = boss(areaOf("city-streets", "patrol-cover-late"), "dog-antagonist");
+    const archie = boss(areaOf("city-boundary", "arena-dog-city-boundary"), "dog-antagonist");
     const pursuit = archie.behaviour!.states.pursuit!.motion;
     if (pursuit.kind !== "pursue" || pursuit.mode !== "ground" || !pursuit.traversal) {
       throw new Error("Expected ground pursuit");
@@ -46,7 +47,10 @@ describe("boss movement profiles", () => {
   });
 
   it("gives a climber its vertical track as its climb", () => {
-    const kiwi = boss(areaOf("city-outskirts", "vertical-stack-early"), "raccoon-antagonist");
+    const kiwi = boss(
+      areaOf("familiar-neighbourhood", "arena-raccoon-familiar-neighbourhood"),
+      "raccoon-antagonist",
+    );
     const [entry] = bossMovementProfiles(kiwi);
     expect(entry?.kind === "ground" ? entry.profile.climb : "air").toEqual({
       height: Math.abs(kiwi.behaviour!.distance),
@@ -55,7 +59,10 @@ describe("boss movement profiles", () => {
   });
 
   it("flies a flyer with its frame as the body", () => {
-    const pebble = boss(areaOf("loading-yards", "bounded-flyer-post"), "pigeon-antagonist");
+    const pebble = boss(
+      areaOf("freight-terminal", "arena-pigeon-freight-terminal"),
+      "pigeon-antagonist",
+    );
     const entries = bossMovementProfiles(pebble);
     expect(entries.map(({ kind }) => kind)).toEqual(["air"]);
     expect(entries[0]!.profile.body).toEqual({
@@ -114,7 +121,7 @@ describe("map terrain", () => {
   });
 
   it("blocks static hazards", () => {
-    const area = areaOf("deep-woods", "growl-cover-late");
+    const area = areaOf("city-boundary", "arena-dog-city-boundary");
     const terrain = mapTerrain({}, area);
     expect(terrain.hazards.length).toBeGreaterThan(0);
     for (const { rect } of terrain.hazards) {
@@ -125,7 +132,7 @@ describe("map terrain", () => {
 
 describe("area movement maps", () => {
   it("builds each pursuer's map once per area and reads it from the cache", () => {
-    const area = areaOf("city-streets", "patrol-cover-late");
+    const area = areaOf("city-boundary", "arena-dog-city-boundary");
     const archie = boss(area, "dog-antagonist");
     expect(pursuitGroundMap(area, archie, false)).toBeUndefined();
     const first = pursuitGroundMap(area, archie);
@@ -135,7 +142,7 @@ describe("area movement maps", () => {
   });
 
   it("hashes identical builds identically", () => {
-    const area = areaOf("city-streets", "patrol-cover-late");
+    const area = areaOf("city-boundary", "arena-dog-city-boundary");
     const entry = bossMovementProfiles(boss(area, "dog-antagonist"))[0]!;
     if (entry.kind !== "ground") {
       throw new Error("Expected ground");
@@ -148,11 +155,13 @@ describe("area movement maps", () => {
       );
     };
     expect(build()).toBe(build());
-    expect(build()).toMatchInlineSnapshot(`"678a9ce62bb25914"`);
+    expect(build()).toMatchInlineSnapshot(`"f3adf8d3d6bc4c9e"`);
   });
 
   it("disables climb edges for pursuit only", () => {
-    const area = areaOf("city-outskirts", "vertical-stack-early");
+    // Kiwi's sample arena: the nook's step is within her climb.
+    const layout = arenaLayout(sampleArenaCase("raccoon-antagonist"));
+    const area = layout.areas[layout.start.area]!;
     const entry = bossMovementProfiles(boss(area, "raccoon-antagonist"))[0]!;
     if (entry.kind !== "ground") {
       throw new Error("Expected ground");

@@ -118,7 +118,7 @@ it("keeps computed unknown distinct from a fact the pursuit update did not evalu
 });
 
 it("counts actual map queries and explicit route reuse without changing the route", () => {
-  const area = chunksLayout("city-streets", ["patrol-cover-late"]).areas.main!;
+  const area = chunksLayout("city-boundary", ["arena-dog-city-boundary"]).areas.main!;
   const actor = area.objects.find(({ character }) => character === "dog-antagonist")!;
   const entry = pursuitGroundMap(area, actor)!;
   const world = { ...entry.terrain.world, groundMap: () => entry };
@@ -126,8 +126,8 @@ it("counts actual map queries and explicit route reuse without changing the rout
   const target: Rect = {
     height: BIRD.height,
     width: BIRD.width,
-    x: 49 * TILE,
-    y: 44 * TILE - BIRD.height,
+    x: 43 * TILE,
+    y: 74 * TILE - BIRD.height,
   };
   const expected = planMapLeg(world, actor, entry, pace, 1, undefined, actor.origin, target);
   vi.mocked(pathOrNearest).mockClear();
@@ -152,7 +152,7 @@ it("counts actual map queries and explicit route reuse without changing the rout
 });
 
 function rearmFixture() {
-  const area = chunksLayout("city-streets", ["patrol-cover-late"]).areas.main!;
+  const area = chunksLayout("city-boundary", ["arena-dog-city-boundary"]).areas.main!;
   const actor = area.objects.find(({ character }) => character === "dog-antagonist")!;
   const motion = actor.behaviour!.states.pursuit!.motion;
   if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
@@ -171,7 +171,7 @@ function rearmFixture() {
   const target = {
     height: BIRD.height,
     width: BIRD.width,
-    x: actor.origin.x + 3 * actor.width,
+    x: actor.origin.x - 3 * actor.width,
     y: floor.y - BIRD.height,
   };
   return { actor, area, motion, target, world };
@@ -254,7 +254,7 @@ it("leaves native work unevaluated when no target envelope admits a query", () =
 });
 
 it("keeps ordinary and observed short step traces identical, including receiver failures", () => {
-  const layout = chunksLayout("city-streets", ["patrol-cover-late"]);
+  const layout = chunksLayout("city-boundary", ["arena-dog-city-boundary"]);
   const initial = startZone(ORDINARY, layout, 0);
   const input = { jumpHeld: false, move: 0 as const, useHeld: false };
   const plainTrace = traceRecorder({ retain: false });
@@ -301,7 +301,7 @@ it("keeps ordinary and observed short step traces identical, including receiver 
 });
 
 it("does not observe a simulation tick when a terminal zone holds", () => {
-  const layout = chunksLayout("city-streets", ["patrol-cover-late"]);
+  const layout = chunksLayout("city-boundary", ["arena-dog-city-boundary"]);
   const zone = { ...startZone(ORDINARY, layout, 0), cleared: true };
   const observations = createBehaviourObservations();
   expect(

@@ -3,7 +3,7 @@ import { STEP_SECONDS } from "../core";
 import { DOG_BEHAVIOUR } from "../data/behaviours";
 import { CHARACTERS } from "../data/characters";
 import { TILE } from "../data/screen";
-import type { ObjectLayout, ZoneLayout } from "../data/types";
+import type { AntagonistKind, Instance, ObjectLayout, ZoneLayout } from "../data/types";
 import { startBird } from "../rules/bird";
 import type { ZoneInput } from "../rules/zone";
 import {
@@ -19,13 +19,13 @@ import {
 import {
   type BossController,
   type BossCoverage,
-  BOSSES,
   type BossScenario,
   type BossTick,
   botChibi,
   scriptedChibi,
 } from "../sim/bossSimulator";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "../sim/bot";
+import { sampleArenaCase } from "./arenas";
 import {
   chunkLayout,
   chunksLayout,
@@ -230,13 +230,26 @@ const TELL_CAP_ARCHIE: BossScenario = {
   ticks: 720,
 };
 
+// Each boss's admitted arena in its stage's theme, for the encounter scenarios.
+const ARENAS = {
+  Archie: { id: "arena-dog-city-boundary", theme: "city-boundary" },
+  Bini: { id: "arena-bear-ravine", theme: "ravine" },
+  Fert: { id: "arena-ferret-residential-floors", theme: "apartment-residential" },
+  Kiwi: { id: "arena-raccoon-familiar-neighbourhood", theme: "familiar-neighbourhood" },
+  Pebble: { id: "arena-pigeon-freight-terminal", theme: "freight-terminal" },
+  Trixi: { id: "arena-goose-river-crossing", theme: "river-crossing" },
+} as const;
+type Boss = keyof typeof ARENAS;
+const arenaEncounter = (boss: Boss, script: string) =>
+  encounter(ARENAS[boss].id, ARENAS[boss].theme, script);
+
 // Kiwi's second charge: Chibi steps behind Kiwi during her first rush and back to the entry
 // during the re-aimed tell, so she turns with her whole track ahead and rushes again. Placements
 // stand Chibi on Kiwi's floor. A synthetic placement.
-const KIWI_BEHIND = { back: 186, behind: 146, col: 22 } as const;
+const KIWI_BEHIND = { back: 186, behind: 130, col: 54 } as const;
 
 function kiwiBehind(): BossScenario {
-  const base = encounter("vertical-stack-early", "city-outskirts", "still");
+  const base = arenaEncounter("Kiwi", "still");
   const kiwi = base
     .layout()
     .areas.main!.objects.find(({ character }) => character === "raccoon-antagonist")!;
@@ -254,21 +267,59 @@ function kiwiBehind(): BossScenario {
   };
 }
 
-// Give-up, return and rearm: Chibi engages a boss beside cover it can jump, is placed at col 140
+// Each boss's sample arena: a floor, a deck six rows up and under it a nook every boss is too
+// tall to enter, its two-row step from col 28 to col 38. Two boss-free chunks of the arena's
+// height follow, so col 140 is on the far chunk's floor.
+const SAMPLE_BOSSES: Readonly<Record<Boss, AntagonistKind>> = {
+  Archie: "dog-antagonist",
+  Bini: "bear-antagonist",
+  Fert: "ferret-antagonist",
+  Kiwi: "raccoon-antagonist",
+  Pebble: "pigeon-antagonist",
+  Trixi: "goose-antagonist",
+};
+const SAMPLE_FILLERS: Readonly<Record<Boss, string>> = {
+  Archie: "blue-vertical",
+  Bini: "woodland-vertical",
+  Fert: "apartment-tall",
+  Kiwi: "home-vertical",
+  Pebble: "industrial-tunnel",
+  Trixi: "countryside-vertical",
+};
+const NOOK = { left: 28, right: 38 } as const;
+
+interface Sample {
+  readonly floor: number;
+  readonly layout: () => ZoneLayout;
+  readonly name: string;
+}
+
+function sample(boss: Boss, extra: readonly Instance[] = []): Sample {
+  const found = sampleArenaCase(SAMPLE_BOSSES[boss]);
+  const id = found.arena.id;
+  const library = extra.length > 0 ? withInstances(id, extra, found.library) : found.library;
+  const fillers = ["broad-mesa", "low-central-crossing"].map(
+    (base) => `${SAMPLE_FILLERS[boss]}-${base}`,
+  );
+  return {
+    floor: found.arena.entry.row * TILE,
+    layout: () => chunksLayout(found.recipe.theme, [id, ...fillers], library),
+    name: `${id} ${found.recipe.theme}`,
+  };
+}
+
+// Give-up, return and rearm: Chibi engages a boss on one side of the nook, is placed at col 140
 // (beyond the escape distance) so the boss gives up where it is, and is then placed past the
-// cover. Both cover blocks in the patrol and growl yards rise six rows, within every ground
-// boss's jump. Each yard leads into two boss-free chunks, so col 140 is on the far chunk's
-// floor.
-const REARM_CHUNKS = ["broad-mesa", "low-central-crossing"] as const;
-// Chibi's placement past the cover.
+// nook's step, within every ground boss's jump.
+// Chibi's placement past the step.
 const REARM_STAND_TICK = 900;
-// The bound after Chibi's placement past the cover: up to two seconds for the next rearm probe
+// The bound after Chibi's placement past the step: up to two seconds for the next rearm probe
 // (awareness returning, or a body width of patrol after an exhausted search), then the four
 // seconds the idle recovery rule allows an engaged boss without horizontal progress.
 const REARM_SECONDS = 6;
 
 interface RearmPlacement {
-  // Chibi's first column and feet row (the boss's floor by default), and the tick he leaves.
+  // Chibi's first column and feet row (the arena floor by default), and the tick he leaves.
   readonly first: { readonly col: number; readonly row?: number };
   readonly leave?: number;
   readonly stand: number;
@@ -277,18 +328,15 @@ interface RearmPlacement {
 // Places Chibi's feet at each column from its tick on, standing still otherwise. Each run ends
 // when the rearm bound does.
 function rearmPlaced(
-  theme: string,
-  id: string,
+  boss: Boss,
   seed: number,
   { first, leave = 2, stand }: RearmPlacement,
 ): BossScenario {
-  const layout = () => chunksLayout(theme, [id, ...REARM_CHUNKS]);
-  const boss = layout().areas.main!.objects.find(({ character }) => character in BOSSES)!;
-  const floor = boss.origin.y + boss.height;
+  const { floor, layout, name } = sample(boss);
   return {
     controller: () => () => STILL,
     layout,
-    name: `rearm ${id} ${theme} ${first.col}/140/${stand} leaving at ${leave} seed ${seed}`,
+    name: `rearm ${name} ${first.col}/140/${stand} leaving at ${leave} seed ${seed}`,
     place: (tick) =>
       tick < leave
         ? { x: first.col * TILE, y: first.row === undefined ? floor : first.row * TILE }
@@ -302,17 +350,16 @@ function rearmPlaced(
   };
 }
 
-// Wander: Chibi stands two chunks past the encounter from the start, beyond the boss's awareness,
-// for twice the wander bound.
+// Wander: Chibi stands two chunks past the sample arena from the start, beyond the boss's
+// awareness, for twice the wander bound.
 const WANDER_SECONDS = 10;
-function unengaged(theme: string, id: string): BossScenario {
-  const layout = () => chunksLayout(theme, [id, ...REARM_CHUNKS]);
-  const boss = layout().areas.main!.objects.find(({ character }) => character in BOSSES)!;
+function unengaged(boss: Boss): BossScenario {
+  const { floor, layout, name } = sample(boss);
   return {
     controller: () => () => STILL,
     layout,
-    name: `wander ${id} ${theme} seed 1`,
-    place: (tick) => (tick === 0 ? { x: 140 * TILE, y: boss.origin.y + boss.height } : undefined),
+    name: `wander ${name} seed 1`,
+    place: (tick) => (tick === 0 ? { x: 140 * TILE, y: floor } : undefined),
     seed: 1,
     ticks: Math.round(WANDER_SECONDS / STEP_SECONDS),
   };
@@ -334,54 +381,31 @@ const fertChecks = (): readonly Property<BossTick>[] => [
   ),
 ];
 
-// Fert throws: Chibi stands on a ledge eight rows above the late patrol yard's right ledge, out
-// of reach of any of Fert's jumps and inside his throw engagement range, so map pursuit paces
-// below him without contact and Fert tells and throws. A synthetic placement.
-const FERT_PERCH = { col: 43, cols: 4, row: 36 } as const;
-const FERT_THROW: BossScenario = {
-  controller: () => () => STILL,
-  layout: () =>
-    chunksLayout(
-      "apartment-lobby",
-      ["patrol-cover-late", ...REARM_CHUNKS],
-      withInstances("patrol-cover-late", [
-        {
-          character: "platform-ledge",
-          col: FERT_PERCH.col,
-          cols: FERT_PERCH.cols,
-          role: "ledge",
-          row: FERT_PERCH.row,
-        },
-      ]),
-    ),
-  name: "fert throw perch patrol-cover-late apartment-lobby seed 1",
-  place: (tick) =>
-    tick === 0 ? { x: (FERT_PERCH.col + 1) * TILE, y: FERT_PERCH.row * TILE } : undefined,
-  seed: 1,
-  ticks: ENCOUNTER_TICKS,
-};
+// A perch eight rows above the sample arena's right deck, out of reach of any boss's jump. A
+// synthetic placement.
+const PERCH = { col: 43, cols: 4, rise: 14 } as const;
+function perched(boss: Boss, label: string): BossScenario {
+  const row = sampleArenaCase(SAMPLE_BOSSES[boss]).arena.entry.row - PERCH.rise;
+  const { layout, name } = sample(boss, [
+    { character: "platform-ledge", col: PERCH.col, cols: PERCH.cols, role: "ledge", row },
+  ]);
+  return {
+    controller: () => () => STILL,
+    layout,
+    name: `${label} perch ${name} seed 1`,
+    place: (tick) => (tick === 0 ? { x: (PERCH.col + 1) * TILE, y: row * TILE } : undefined),
+    seed: 1,
+    ticks: ENCOUNTER_TICKS,
+  };
+}
 
-// Pacing out of reach: Chibi stands on Fert's perch above the late patrol yard, out of reach of
-// any of Archie's jumps or his pounce, so Archie walks to the reachable spot nearest him and
-// paces there. A synthetic placement.
-const PACE_PERCH: BossScenario = {
-  ...FERT_THROW,
-  layout: () =>
-    chunksLayout(
-      "city-streets",
-      ["patrol-cover-late", ...REARM_CHUNKS],
-      withInstances("patrol-cover-late", [
-        {
-          character: "platform-ledge",
-          col: FERT_PERCH.col,
-          cols: FERT_PERCH.cols,
-          role: "ledge",
-          row: FERT_PERCH.row,
-        },
-      ]),
-    ),
-  name: "pace perch patrol-cover-late city-streets seed 1",
-};
+// Fert throws: Chibi stands on the perch, inside Fert's throw engagement range, so map pursuit
+// paces below him without contact and Fert tells and throws.
+const FERT_THROW = perched("Fert", "fert throw");
+
+// Pacing out of reach: Chibi stands on the perch, out of reach of any of Archie's jumps or his
+// pounce, so Archie walks to the reachable spot nearest him and paces there.
+const PACE_PERCH = perched("Archie", "pace");
 // One decision (at most 0.9 s) plus the walk there, and the pace's 2 tiles each side beside
 // Archie's half width and the spot's offset from Chibi.
 const PACE_SECONDS = 3;
@@ -393,33 +417,34 @@ const kiwiChecks = (): readonly Property<BossTick>[] => [
   movesAtLeast("raccoon-antagonist", "rush-second", KIWI_SECOND_CHARGE_TILES * TILE),
 ];
 
-// Chibi stands still on the late patrol yard's right block, four tiles wide and narrower than
-// Archie's body, beside the ledge that meets its top: the movement map's node over ledge and
-// block top is his, so Archie climbs to it.
+// Chibi stands still on the pier of Archie's arena, three tiles wide and narrower than Archie's
+// body, beside the overpass deck that meets its top: the movement map's node over deck and pier
+// top is his, so Archie climbs to it.
+const PIER = { col: 43, row: 74 } as const;
 const BLOCK_TOP: BossScenario = {
   controller: () => () => STILL,
-  layout: () => chunksLayout("city-streets", ["patrol-cover-late", ...REARM_CHUNKS]),
-  name: "block top patrol-cover-late city-streets 49/44 seed 1",
-  place: (tick) => (tick === 0 ? { x: 49 * TILE, y: 44 * TILE } : undefined),
+  layout: () => chunkLayout(ARENAS.Archie.theme, ARENAS.Archie.id),
+  name: `block top ${ARENAS.Archie.id} ${ARENAS.Archie.theme} ${PIER.col}/${PIER.row} seed 1`,
+  place: (tick) => (tick === 0 ? { x: PIER.col * TILE, y: PIER.row * TILE } : undefined),
   seed: 1,
   ticks: Math.round(4 / STEP_SECONDS),
 };
 
-// Chibi stands at the early patrol yard's entry, beyond the low block Archie used to hold
-// against without a route for more than four seconds.
-const EARLY_YARD_STILL: BossScenario = {
+// Chibi stands at the sample arena's entry, beyond the nook's low step, which Archie must route
+// over instead of holding against it.
+const LOW_STEP_STILL: BossScenario = {
   controller: scripted("still"),
-  layout: () => chunksLayout("city-streets", ["patrol-cover-early", ...REARM_CHUNKS]),
-  name: "still patrol-cover-early city-streets seed 1",
+  layout: sample("Archie").layout,
+  name: `still ${sample("Archie").name} seed 1`,
   seed: 1,
   ticks: ENCOUNTER_TICKS,
 };
 
-// Chibi paces at the early patrol yard's entry and dies, so the boss chases again after a retry.
-const EARLY_YARD_RETRY: BossScenario = {
-  ...EARLY_YARD_STILL,
+// Chibi paces at the sample arena's entry and dies, so the boss chases again after a retry.
+const LOW_STEP_RETRY: BossScenario = {
+  ...LOW_STEP_STILL,
   controller: scripted("pace"),
-  name: "pace patrol-cover-early city-streets seed 1",
+  name: `pace ${sample("Archie").name} seed 1`,
 };
 
 interface BossScenarioGroup {
@@ -432,60 +457,45 @@ interface BossScenarioGroup {
   readonly subject: string;
 }
 
-const WANDER_ENCOUNTERS = [
-  { boss: "Archie", id: "city-boundary-climb-yard", theme: "city-streets" },
-  { boss: "Bini", id: "growl-cover-early", theme: "deep-woods" },
-  { boss: "Fert", id: "city-boundary-climb-yard", theme: "apartment-lobby" },
-  { boss: "Kiwi", id: "vertical-stack-early", theme: "city-outskirts" },
-  { boss: "Pebble", id: "flyer-shelter-early", theme: "loading-yards" },
-  { boss: "Trixi", id: "city-boundary-climb-yard", theme: "farmland" },
-] as const;
-
 export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
-  ...WANDER_ENCOUNTERS.map(({ boss, id, theme }): BossScenarioGroup => ({
+  ...(Object.keys(ARENAS) as Boss[]).map((boss): BossScenarioGroup => ({
     boss,
     checks: () => [leavesSpawn()],
     covers: [],
-    scenario: unengaged(theme, id),
+    scenario: unengaged(boss),
     subject: `wander: unengaged, ${boss} leaves the spawn and keeps moving`,
   })),
   {
     boss: "Trixi",
     covers: ["tell", "attack"],
-    scenario: encounter("city-boundary-climb-yard", "farmland", "still"),
-    subject: "goose wall: Trixi below a jumpable wall",
+    scenario: arenaEncounter("Trixi", "still"),
+    subject: "Trixi arena: standing at the entry",
   },
   {
     boss: "Trixi",
     covers: ["tell", "attack"],
-    scenario: encounter("blue-vertical-city-boundary-climb-yard", "farmland", "still"),
-    subject: "goose wall: blue vertical climb yard",
-  },
-  {
-    boss: "Trixi",
-    covers: ["tell", "attack"],
-    scenario: encounter("countryside-vertical-city-boundary-climb-yard", "farmland", "pace"),
-    subject: "goose wall: countryside vertical climb yard",
+    scenario: arenaEncounter("Trixi", "pace"),
+    subject: "Trixi arena: pacing at the entry",
   },
   {
     boss: "Trixi",
     checks: () => [movesWhileEngaged(2, TILE / 2)],
     covers: ["tell", "attack"],
-    scenario: botEncounter("farmland", ["city-boundary-climb-yard"], 5),
-    subject: "goose wall: the reactive bot climbing past Trixi, who routes up rather than hops",
+    scenario: botEncounter(ARENAS.Trixi.theme, [ARENAS.Trixi.id], 5),
+    subject: "Trixi arena: the reactive bot crossing past Trixi, who keeps moving while engaged",
   },
   {
     boss: "Fert",
     covers: ["tell", "attack"],
-    scenario: encounter("apartment-tall-city-boundary-climb-yard", "apartment-lobby", "still"),
-    subject: "Fert underpass",
+    scenario: arenaEncounter("Fert", "still"),
+    subject: "Fert arena: standing at the entry",
   },
   {
     boss: "Fert",
     checks: fertChecks,
     covers: ["tell", "attack"],
-    scenario: encounter("city-boundary-climb-yard", "apartment-lobby", "forward"),
-    subject: "Fert underpass: crossing forward",
+    scenario: arenaEncounter("Fert", "forward"),
+    subject: "Fert arena: crossing forward",
   },
   {
     boss: "Fert",
@@ -497,14 +507,20 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   {
     boss: "Pebble",
     covers: ["tell", "attack"],
-    scenario: encounter("flyer-shelter-early", "loading-yards", "still"),
+    scenario: arenaEncounter("Pebble", "still"),
     subject: "Pebble overhead crossing to a tell and an attack",
   },
   {
     boss: "Pebble",
     covers: [],
-    scenario: encounter("dry-underground-gallery-encounter", "loading-yards", "pace"),
-    subject: "Pebble overhead crossing in the gallery",
+    scenario: arenaEncounter("Pebble", "pace"),
+    subject: "Pebble overhead crossing while Chibi paces",
+  },
+  {
+    boss: "Pebble",
+    covers: [],
+    scenario: arenaEncounter("Pebble", "forward"),
+    subject: "Pebble overhead crossing while Chibi runs forward",
   },
   {
     boss: "Archie",
@@ -521,26 +537,14 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   {
     boss: "Archie",
     covers: ["tell", "attack"],
-    scenario: encounter("city-boundary-climb-yard", "city-streets", "pace"),
-    subject: "Archie climb yard",
-  },
-  {
-    boss: "Pebble",
-    covers: ["tell"],
-    scenario: encounter("flyer-shelter-middle", "loading-yards", "forward"),
-    subject: "Pebble middle shelter: attack cadence while Chibi runs forward",
-  },
-  {
-    boss: "Pebble",
-    covers: ["tell", "attack"],
-    scenario: encounter("bounded-flyer-post", "loading-yards", "still"),
-    subject: "Pebble bounded post",
+    scenario: arenaEncounter("Archie", "pace"),
+    subject: "Archie arena: pacing at the entry",
   },
   {
     boss: "Kiwi",
     covers: ["tell", "attack"],
-    scenario: encounter("vertical-stack-early", "city-outskirts", "still"),
-    subject: "Kiwi vertical yard",
+    scenario: arenaEncounter("Kiwi", "still"),
+    subject: "Kiwi arena: standing at the entry",
   },
   {
     boss: "Archie",
@@ -560,12 +564,12 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   {
     boss: "Bini",
     covers: ["tell", "attack"],
-    scenario: encounter("growl-cover-early", "deep-woods", "still"),
-    subject: "Bini growl yard",
+    scenario: arenaEncounter("Bini", "still"),
+    subject: "Bini arena: standing at the entry",
   },
   {
     boss: "Archie",
-    checks: () => [risesToRow(44 * TILE, 3)],
+    checks: () => [risesToRow(PIER.row * TILE, 3)],
     covers: [],
     scenario: BLOCK_TOP,
     subject: "goal selection: Archie climbs beside Chibi on a block top narrower than his body",
@@ -574,77 +578,37 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
     boss: "Archie",
     checks: () => [movesWhileEngaged(2, TILE / 2)],
     covers: [],
-    scenario: EARLY_YARD_STILL,
-    subject: "early yard: Archie routes over the low block instead of holding against it",
+    scenario: LOW_STEP_STILL,
+    subject: "low step: Archie routes over the nook's step instead of holding against it",
   },
   {
     boss: "Archie",
     checks: () => [movesWhileEngaged(2, TILE / 2)],
     covers: [],
-    scenario: EARLY_YARD_RETRY,
-    subject: "early yard after a retry: Archie routes or paces instead of holding",
+    scenario: LOW_STEP_RETRY,
+    subject: "low step after a retry: Archie routes or paces instead of holding",
   },
   {
     boss: "Archie",
-    checks: rearmChecks(48),
+    checks: rearmChecks(NOOK.right),
     covers: [],
-    scenario: rearmPlaced("city-streets", "patrol-cover-late", 1, {
-      first: { col: 30 },
-      stand: 54,
-    }),
-    subject: "rearm: Archie gives up on the late yard floor and rearms over the right block",
+    scenario: rearmPlaced("Archie", 1, { first: { col: 14 }, stand: 46 }),
+    subject: "rearm: Archie gives up left of the nook and rearms over its step to the right",
   },
   {
     boss: "Archie",
-    checks: rearmChecks(24),
+    checks: rearmChecks(NOOK.left),
     covers: [],
-    scenario: rearmPlaced("city-streets", "patrol-cover-late", 1, {
-      first: { col: 30 },
-      stand: 14,
-    }),
-    subject: "rearm: Archie gives up on the late yard floor and rearms over the left block",
-  },
-  {
-    boss: "Archie",
-    checks: rearmChecks(32),
-    covers: [],
-    scenario: rearmPlaced("city-streets", "patrol-cover-early", 1, {
-      first: { col: 24 },
-      stand: 38,
-    }),
-    subject: "rearm: Archie pinned against the early yard's low block rearms over the right block",
-  },
-  {
-    boss: "Archie",
-    checks: rearmChecks(40),
-    covers: [],
-    scenario: rearmPlaced("city-streets", "patrol-cover-middle", 1, {
-      first: { col: 30 },
-      stand: 46,
-    }),
-    subject: "rearm: Archie pinned against the middle yard's low block rearms over the right block",
-  },
-  {
-    boss: "Archie",
-    checks: rearmChecks(48),
-    covers: [],
-    scenario: rearmPlaced("city-streets", "city-boundary-dog-terrace", 1, {
-      first: { col: 42 },
-      stand: 54,
-    }),
-    subject: "rearm: Archie on the dog terrace rearms over the right block",
+    scenario: rearmPlaced("Archie", 1, { first: { col: 46 }, stand: 14 }),
+    subject: "rearm: Archie gives up right of the nook and rearms over its step to the left",
   },
   {
     boss: "Trixi",
-    checks: rearmChecks(48),
+    checks: rearmChecks(NOOK.right),
     covers: ["limited-move"],
-    scenario: rearmPlaced("country-lanes", "patrol-cover-late", 1, {
-      first: { col: 30 },
-      stand: 54,
-    }),
+    scenario: rearmPlaced("Trixi", 1, { first: { col: 14 }, leave: 120, stand: 46 }),
     subject:
-      "rearm: Trixi gives up on the late yard floor and rearms over the right block, sliding " +
-      "after a rush",
+      "rearm: Trixi gives up left of the nook and rearms over its step, sliding after a rush",
   },
   {
     boss: "Archie",
@@ -659,30 +623,23 @@ export const BOSS_SCENARIOS: readonly BossScenarioGroup[] = [
   },
   {
     boss: "Fert",
-    checks: rearmChecks(48),
+    checks: rearmChecks(NOOK.right),
     covers: [],
-    scenario: rearmPlaced("apartment-lobby", "patrol-cover-late", 1, {
-      first: { col: 30 },
-      stand: 54,
-    }),
-    subject: "rearm: Fert gives up on the late yard floor and rearms over the right block",
+    scenario: rearmPlaced("Fert", 1, { first: { col: 14 }, stand: 46 }),
+    subject: "rearm: Fert gives up left of the nook and rearms over its step to the right",
   },
   {
     boss: "Fert",
     covers: [],
-    scenario: rearmPlaced("apartment-lobby", "patrol-cover-late", 1, {
-      first: { col: 50, row: 44 },
-      leave: 230,
-      stand: 14,
-    }),
+    scenario: rearmPlaced("Fert", 1, { first: { col: 50, row: 44 }, leave: 230, stand: 14 }),
     subject:
-      "give-up in the air: Fert gives up mid-climb onto the right block and lands before patrolling",
+      "give-up in the air: Fert gives up mid-climb onto the right deck and lands before patrolling",
   },
   {
     boss: "Bini",
-    checks: rearmChecks(48),
+    checks: rearmChecks(NOOK.right),
     covers: [],
-    scenario: rearmPlaced("deep-woods", "growl-cover-late", 1, { first: { col: 30 }, stand: 54 }),
-    subject: "rearm: Bini gives up on the late growl yard floor and rearms over the right block",
+    scenario: rearmPlaced("Bini", 1, { first: { col: 14 }, stand: 46 }),
+    subject: "rearm: Bini gives up left of the nook and rearms over its step to the right",
   },
 ];

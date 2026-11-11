@@ -45,10 +45,10 @@ describe("chunk walk partitions", () => {
   it("puts measured expensive chunks first and assigns new chunks to the lightest file", () => {
     const cases = [
       ["new chunk"],
-      ["city-boundary-climb-yard"],
-      ["industrial-tunnel-flyer-shelter-late"],
-      ["blue-vertical-city-boundary-climb-yard"],
-      ["countryside-vertical-city-boundary-climb-yard"],
+      ["apartment-tall-compound-lift-shuttle"],
+      ["compound-lift-shuttle"],
+      ["industrial-tunnel-compound-lift-shuttle"],
+      ["park-pond"],
     ] as const;
     expect(chunkWalkPartitions(cases)).toEqual([
       [cases[2]],

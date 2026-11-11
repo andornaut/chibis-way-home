@@ -57,23 +57,17 @@ function runEncounter(
   }
 }
 
-// Boss regression chunks with one theme per distinct pursuer and terrain skin: the climb-yard
-// variants (goose wall and Fert underpass), Pebble's yards, and the crumbling support crossing.
+// Encounter regression chunks: every admitted arena in its stage's theme, one per boss and
+// terrain skin, and the crumbling support crossing.
 const ENCOUNTER_CHUNKS: Readonly<Record<string, readonly string[]>> = {
-  "apartment-tall-city-boundary-climb-yard": ["apartment-lobby"],
-  "blue-vertical-city-boundary-climb-yard": [
-    "apartment-entrance",
-    "apartment-lobby",
-    "city-streets",
-    "farmland",
-  ],
-  "bounded-flyer-post": ["loading-yards"],
-  "city-boundary-climb-yard": ["apartment-entrance", "apartment-lobby", "city-streets", "farmland"],
-  "countryside-vertical-city-boundary-climb-yard": ["farmland"],
+  "arena-bear-ravine": ["ravine"],
+  "arena-dog-city-boundary": ["city-boundary"],
+  "arena-ferret-penthouse": ["apartment-penthouse"],
+  "arena-ferret-residential-floors": ["apartment-residential"],
+  "arena-goose-river-crossing": ["river-crossing"],
+  "arena-pigeon-freight-terminal": ["freight-terminal"],
+  "arena-raccoon-familiar-neighbourhood": ["familiar-neighbourhood"],
   "crumbling-support-crossing": ["apartment-lobby", "city-streets"],
-  "dry-underground-gallery-encounter": ["loading-yards"],
-  "flyer-shelter-early": ["loading-yards"],
-  "flyer-shelter-middle": ["loading-yards"],
 };
 
 export function encounterTraceScenarios(): TraceScenario[] {

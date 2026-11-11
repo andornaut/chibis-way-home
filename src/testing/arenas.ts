@@ -7,6 +7,7 @@ import { ARENA_COUNTERS, ARENA_LOOP_TILES, ARENA_PENDING_STAGES } from "../data/
 import { TILE } from "../data/screen";
 import { SEAM_ROWS } from "../data/seams";
 import type {
+  AntagonistKind,
   ArenaRoute,
   ChunkArena,
   ChunkPlan,
@@ -25,6 +26,7 @@ import { groundMask, type MapSupport } from "../rules/movementMaps";
 import { zoneLayout } from "../rules/tiles";
 import { arenaChunks, CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans";
 import { ALLOW, chibiMap, type Encounter, pathOutEncounter, standingAt } from "../sim/pathOut";
+import { ARENA_SAMPLES } from "./arenaSamples";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art";
 import { chunkThemePlan } from "./chunkWalkCases";
 import { ORDINARY } from "./encounterLayouts";
@@ -254,3 +256,7 @@ export function arenaCoverage(
 
 export const GAME_ARENA_COVERAGE = { pending: ARENA_PENDING_STAGES, recipes: RECIPES };
 export const gameArenaCase = (arena: ChunkArena) => arenaCase(CHUNK_LIBRARY, arena);
+
+// A boss's sample arena in the game's library.
+export const sampleArenaCase = (boss: AntagonistKind) =>
+  gameArenaCase(ARENA_SAMPLES.find((arena) => arena.boss === boss)!);

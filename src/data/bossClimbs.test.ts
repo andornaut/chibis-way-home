@@ -1,9 +1,9 @@
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
-import { describe, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams";
 import { BIRD_FRAME } from "../assets";
-import { EDGE, STEP_SECONDS } from "../core";
+import { STEP_SECONDS } from "../core";
 import { SKILL_PROFILES } from "../progress";
 import { assembleZone, zonePlanOf } from "../rules/assemble";
 import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
@@ -11,10 +11,10 @@ import type { BehaviourWorld } from "../rules/behaviourReach";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
 import { startBird } from "../rules/bird";
 import { chunkProblems } from "../rules/chunk";
-import { supportedLanding } from "../rules/flyLanding";
 import { zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
 import { CHUNK_LIBRARY } from "../rules/zonePlans";
+import { withInstances } from "../testing/encounterLayouts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
 import { BIRD } from "./bird";
@@ -31,90 +31,33 @@ vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;
 const idle = { jumpHeld: false, move: 0, useHeld: false } as const;
-const cases = [
-  { col: 20, floor: 30, id: "city-boundary-dog-high", theme: "city-streets" },
-  { col: 20, floor: 40, id: "city-boundary-dog-terrace", theme: "city-streets" },
-  { col: 16, floor: 50, id: "patrol-cover-early", theme: "city-streets" },
-  { col: 24, floor: 50, id: "patrol-cover-middle", theme: "city-streets" },
-  { col: 16, floor: 50, id: "growl-cover-early", theme: "deep-woods" },
-  { col: 24, floor: 50, id: "growl-cover-middle", theme: "deep-woods" },
-  { col: 24, floor: 40, id: "growl-clearing", theme: "deep-woods" },
-  { col: 32, floor: 50, id: "flyer-shelter-early", theme: "loading-yards" },
-  { col: 42, floor: 50, id: "flyer-shelter-middle", theme: "loading-yards" },
-];
 function layoutOf(theme: string, id: string) {
   const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
   return zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
 }
 
-describe.each(cases)("ordinary climb $id", ({ col, floor, id, theme }) => {
-  it("requires a jump and crosses with one ordinary jump and a safe landing", () => {
-    const base = layoutOf(theme, id);
-    const areaId = base.start.area;
-    const area = base.areas[areaId]!;
-    const layout = {
-      ...base,
-      areas: {
-        ...base.areas,
-        [areaId]: {
-          ...area,
-          entries: {
-            ...area.entries,
-            [base.start.entry]: {
-              x: (col - 3) * TILE + ordinary.width / 2,
-              y: floor * TILE,
-            },
-          },
-          objects: area.objects.filter((object) => !object.behaviour?.pursuit),
-        },
-      },
-    };
-    const start = () =>
-      stepZone(
-        SKILL_PROFILES,
-        ordinary,
-        layout,
-        STEP_SECONDS,
-        idle,
-        startZone(ordinary, layout, 1),
-      );
-    let walking = start();
-    for (let tick = 0; tick < 120; tick++) {
-      walking = stepZone(
-        SKILL_PROFILES,
-        ordinary,
-        layout,
-        STEP_SECONDS,
-        { ...idle, move: 1 },
-        walking,
-      );
-    }
-    expect(walking.death).toBeUndefined();
-    expect(walking.bird.x + ordinary.width).toBeLessThanOrEqual(col * TILE + 1e-6);
-    let zone = start();
-    for (let tick = 0; tick < 360; tick++) {
-      zone = stepZone(
-        SKILL_PROFILES,
-        ordinary,
-        layout,
-        STEP_SECONDS,
-        { ...idle, jumpHeld: tick * STEP_SECONDS < ordinary.jumpRiseTime, move: 1 },
-        zone,
-      );
-      expect(zone.death).toBeUndefined();
-      if (zone.bird.grounded && zone.bird.x >= (col + 5) * TILE) {
-        expect(zone.bird.dash).toBeUndefined();
-        return;
-      }
-    }
-    expect.fail(JSON.stringify({ bird: zone.bird, id }));
-  });
-});
+// The low central crossing, a floor at row 50 with a four-row block from col 24 to col 36, with a
+// boss on the floor past the block, in a theme.
+const BLOCK_COL = 24;
+const CROSSING_FLOOR = 50;
+const BLOCK_ROW = 46;
+function crossingWith(theme: string, character: string, col = 44) {
+  const id = "low-central-crossing";
+  const library = withInstances(id, [{ character, col, role: "antagonist", row: 46 }]);
+  const plan = zonePlanOf(library, () => 0, { door: [], event: [] }, theme, 2, [id]);
+  return zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+}
 
-it.each(cases.filter(({ id }) => ["patrol-cover-early", "growl-clearing"].includes(id)))(
-  "production ground boss jumps and lands beyond $id obstruction",
-  ({ col, floor, id, theme }) => {
-    const layout = layoutOf(theme, id);
+it.each([
+  { boss: "bear-antagonist", theme: "deep-woods" },
+  { boss: "dog-antagonist", theme: "city-streets" },
+] as const)(
+  "production ground boss $boss jumps and lands beyond the crossing's block",
+  ({ boss, theme }) => {
+    const col = BLOCK_COL;
+    const floor = CROSSING_FLOOR;
+    const id = boss;
+    const layout = crossingWith(theme, boss);
     const area = layout.areas[layout.start.area]!;
     const object = area.objects.find((object) => object.behaviour?.pursuit)!;
     const motion = object.behaviour!.states.pursuit!.motion;
@@ -178,29 +121,15 @@ it.each(cases.filter(({ id }) => ["patrol-cover-early", "growl-clearing"].includ
   },
 );
 
-it.each([
-  {
-    actor: "dog-antagonist",
-    floor: 50,
-    id: "patrol-cover-middle",
-    name: "Archie",
-    targetCol: 21,
-    theme: "city-streets",
-    wallCol: 24,
-  },
-  {
-    actor: "ferret-antagonist",
-    floor: 40,
-    id: "apartment-tall-city-boundary-climb-yard",
-    name: "Fert",
-    targetCol: 30,
-    theme: "apartment-lobby",
-    wallCol: 34,
-  },
-])(
-  "keeps acquired $name pursuing across production low cover",
-  ({ actor, floor, id, targetCol, theme, wallCol }) => {
-    const layout = layoutOf(theme, id);
+// An acquired boss on the crossing's floor near the block, with Chibi on the block's top: Fert
+// throws from the floor, so he enters pursuit from an attack before he plans onto the block.
+it.each([{ actor: "ferret-antagonist", name: "Fert", theme: "apartment-lobby" }] as const)(
+  "keeps acquired $name pursuing across the crossing's block",
+  ({ actor, theme }) => {
+    const floor = BLOCK_ROW;
+    const targetCol = BLOCK_COL + 6;
+    const wallCol = BLOCK_COL;
+    const layout = crossingWith(theme, actor, BLOCK_COL + 16);
     const area = layout.areas[layout.start.area]!;
     const object = area.objects.find((object) => object.character === actor)!;
     const initial = startZone(ordinary, layout, 1);
@@ -279,7 +208,7 @@ it.each([
         box.y + box.height > target.y;
       if (hit || (state.traversal?.physical.grounded && at.x + object.width <= wallCol * TILE)) {
         expect(jumped).toBe(true);
-        expect(plannedAfterDefer).toBe(true);
+        expect(plannedAfterDefer, JSON.stringify({ deferredAt, nodes, tick })).toBe(true);
         expect(vi.mocked(findTraversal).mock.calls.length).toBeGreaterThan(0);
         expect(
           vi
@@ -414,228 +343,6 @@ it("assembles Penthouse quota and room with distinct capped encounter templates"
     const next = CHUNK_LIBRARY.chunks[placements[index]!.chunk]!;
     expect(previous.exit.row).toBe(next.entry.row);
   }
-});
-
-it.each(
-  [
-    "open-stepped-ridge-encounter",
-    "offset-two-level-terrace-encounter",
-    "dry-underground-gallery-encounter",
-  ].flatMap((chunkId) => ([-1, 1] as const).map((direction) => ({ chunkId, direction }))),
-)("ordinary route crosses $chunkId facing $direction", ({ chunkId, direction }) => {
-  const base = layoutOf(
-    chunkId === "dry-underground-gallery-encounter" ? "loading-yards" : "city-streets",
-    chunkId,
-  );
-  const id = base.start.area;
-  const area = base.areas[id]!;
-  const layout = {
-    ...base,
-    areas: {
-      ...base.areas,
-      [id]: {
-        ...area,
-        entries: {
-          ...area.entries,
-          [base.start.entry]: { x: direction === 1 ? 24 : 684, y: 50 * TILE },
-        },
-        objects: area.objects.filter((object) => !object.behaviour?.pursuit),
-      },
-    },
-  };
-  let zone = startZone(ordinary, layout, 1);
-  let held = 0;
-  for (let tick = 0; tick < 1200; tick++) {
-    const arrived = direction === 1 ? zone.bird.x >= 648 : zone.bird.x <= 60;
-    if (zone.bird.grounded && !arrived) {
-      held = 44;
-    }
-    zone = stepZone(
-      SKILL_PROFILES,
-      ordinary,
-      layout,
-      STEP_SECONDS,
-      { ...idle, jumpHeld: !arrived && held-- > 0, move: arrived ? 0 : direction },
-      zone,
-    );
-    expect(zone.death).toBeUndefined();
-    expect(zone.cleared).toBe(false);
-    expect(zone.turnedBack).toBe(false);
-    if (zone.bird.grounded && arrived) {
-      expect(zone.bird.y + ordinary.height).toBeCloseTo(50 * TILE);
-      return;
-    }
-  }
-  expect.fail(JSON.stringify({ bird: zone.bird, direction }));
-});
-
-it.each(
-  [
-    { name: "Archie", theme: "city-streets" },
-    { name: "Bini", theme: "deep-woods" },
-    { name: "Trixi", theme: "country-lanes" },
-  ].flatMap((profile) =>
-    ["open-stepped-ridge-encounter", "offset-two-level-terrace-encounter"].flatMap((chunkId) =>
-      ([-1, 1] as const).map((direction) => ({ ...profile, chunkId, direction })),
-    ),
-  ),
-)("actual full $name leaves $chunkId safely facing $direction", ({ chunkId, direction, theme }) => {
-  const layout = layoutOf(theme, chunkId);
-  const area = layout.areas[layout.start.area]!;
-  const object = area.objects.find((owner) => owner.behaviour?.pursuit)!;
-  const motion = object.behaviour!.states.pursuit!.motion;
-  if (motion.kind !== "pursue" || motion.mode !== "ground" || !motion.traversal) {
-    throw Error("Expected actual ground traversal");
-  }
-  const target = {
-    height: ordinary.height,
-    width: ordinary.width,
-    x: direction === 1 ? 684 : 12,
-    y: 50 * TILE - ordinary.height,
-  };
-  const platforms = area.objects
-    .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
-    .map((owner) => ({
-      after: { ...owner.origin, height: owner.height, width: owner.width },
-      before: { ...owner.origin, height: owner.height, width: owner.width },
-      collision: owner.collision as "solid" | "ledge",
-      owner,
-    }));
-  const hazards = area.objects
-    .filter((owner) => owner !== object && owner.collision === "hazard")
-    .map((owner) => ({ owner, rect: contactBox(owner, owner.origin, 1) }));
-  let at = object.origin;
-  let traversal: BehaviourTraversalState | undefined;
-  for (let tick = 0; tick < 1200; tick++) {
-    const world: BehaviourWorld = {
-      hazards,
-      platforms: platforms.map(({ after, collision, owner }) => ({
-        collision,
-        owner,
-        rect: after,
-      })),
-      solids: area.solids,
-      traversalFrame: {
-        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
-        dtSeconds: STEP_SECONDS,
-        platforms,
-        sample: () => platforms,
-        timeSeconds: tick * STEP_SECONDS,
-      },
-    };
-    const next = advanceTraversal(world, object, motion, STEP_SECONDS, traversal, at, target);
-    at = next.at;
-    traversal = next.traversal;
-    if (traversal?.physical.grounded && (direction === 1 ? at.x >= 636 : at.x <= 48)) {
-      expect(at.y + object.height).toBeCloseTo(50 * TILE);
-      return;
-    }
-  }
-  expect.fail(
-    JSON.stringify({ at, direction, status: traversal?.status, target: traversal?.target }),
-  );
-});
-
-it("shares the qualified Trixi ridge collider and traversal with Fert and Kiwi", () => {
-  const objectOf = (theme: string) => {
-    const layout = layoutOf(theme, "open-stepped-ridge-encounter");
-    return layout.areas[layout.start.area]!.objects.find((owner) => owner.behaviour?.pursuit)!;
-  };
-  const trixi = objectOf("country-lanes");
-  for (const theme of ["apartment-restaurant", "back-streets"]) {
-    const object = objectOf(theme);
-    expect({ height: object.height, hitbox: object.hitbox, width: object.width }).toEqual({
-      height: trixi.height,
-      hitbox: trixi.hitbox,
-      width: trixi.width,
-    });
-    expect(object.behaviour!.states.pursuit!.motion).toEqual(
-      trixi.behaviour!.states.pursuit!.motion,
-    );
-  }
-});
-
-it("actual Pebble flies beneath the dry gallery roof and returns to supported recovery", () => {
-  const layout = layoutOf("loading-yards", "dry-underground-gallery-encounter");
-  const area = layout.areas[layout.start.area]!;
-  const object = area.objects.find((owner) => owner.behaviour?.pursuit)!;
-  const initial = startZone(ordinary, layout, 1);
-  const target = { ...startBird(ordinary, { x: 42 * TILE, y: 44 * TILE }), grounded: true };
-  const platforms = area.objects
-    .filter((owner) => owner.collision === "solid" || owner.collision === "ledge")
-    .map((owner) => ({
-      after: { ...owner.origin, height: owner.height, width: owner.width },
-      before: { ...owner.origin, height: owner.height, width: owner.width },
-      collision: owner.collision as "solid" | "ledge",
-      owner,
-    }));
-  let at = object.origin;
-  let state = startBehaviour(ordinary, object, target);
-  let shots = 0;
-  let overheadTell = false;
-  for (let tick = 0; tick < 1200; tick++) {
-    const world: BehaviourWorld = {
-      decisions: namedStreams(
-        initial.seed + initial.attempt,
-        `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
-      ),
-      platforms: platforms.map(({ after, collision, owner }) => ({
-        collision,
-        owner,
-        rect: after,
-      })),
-      solids: area.solids,
-      targetedAttackWindow: "allowed",
-      traversalFrame: {
-        bounds: { height: area.height, width: area.width, x: 0, y: 0 },
-        dtSeconds: STEP_SECONDS,
-        platforms,
-        sample: () => platforms,
-        timeSeconds: tick * STEP_SECONDS,
-      },
-      view: { height: 360, width: 720, x: 0, y: 240 },
-    };
-    const before = { at, state };
-    const next = stepBehaviour(ordinary, object, world, STEP_SECONDS, target, at, state);
-    at = next.at;
-    state = next.state;
-    // Overlap beyond the shared collision tolerance, as the flight-clearance check measures it.
-    for (const solid of area.solids) {
-      expect(
-        at.x + EDGE < solid.x + solid.width &&
-          at.x + object.width - EDGE > solid.x &&
-          at.y + EDGE < solid.y + solid.height &&
-          at.y + object.height - EDGE > solid.y,
-      ).toBe(false);
-    }
-    if (state.stateKey.startsWith("prepare-drop")) {
-      overheadTell = true;
-      expect(at.y + object.height).toBeLessThanOrEqual(target.y - 6 * TILE + 1e-6);
-    }
-    shots += next.actions.filter(({ action }) => action.kind === "spawn").length;
-    if ((state.attackCooldownRemainingSeconds ?? 0) > 0) {
-      expect(overheadTell).toBe(true);
-      expect(shots).toBe(3);
-      expect(before.state.activeAttack?.phase).toBe("committed");
-      expect(object.behaviour!.states[before.state.stateKey]!.motion).toMatchObject({
-        kind: "wait",
-        support: "required",
-      });
-      const cooldownAt =
-        STEP_SECONDS -
-        (object.behaviour!.attackCooldownSeconds! - state.attackCooldownRemainingSeconds!);
-      const recovery = next.segments.find(
-        ({ end, start }) => start <= cooldownAt + EDGE && end >= cooldownAt - EDGE,
-      );
-      expect(recovery).toBeDefined();
-      expect(recovery!.end).toBeCloseTo(cooldownAt, 10);
-      expect(recovery!.from).toEqual(before.at);
-      expect(recovery!.to).toEqual(before.at);
-      expect(supportedLanding(object, world, recovery!.to)).toBe(true);
-      return;
-    }
-  }
-  expect.fail(JSON.stringify({ at, shots, state: state.stateKey }));
 });
 
 function transferGateFixture() {

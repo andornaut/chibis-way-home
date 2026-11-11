@@ -173,10 +173,6 @@ register(
   ["low-central-crossing"],
 );
 register(
-  (library, chunk) => [...recovery(library, chunk), point(33, chunk.solids[3]!.row)],
-  ["dry-underground-gallery-encounter"],
-);
-register(
   (library, chunk) => {
     const theme = library.themes[themesOf(chunk)[0]!]!;
     const gate = bindElement(
@@ -223,26 +219,6 @@ register(
   () => [{ at: { col: 27, row: 48 }, xRange: { max: 30 - bodyCols, min: 24 } }, point(58, 50)],
   ["crumbling-support-crossing"],
 );
-register(encounter, [
-  "offset-two-level-terrace-encounter",
-  "open-stepped-ridge-encounter",
-  ...["early", "middle", "late"].flatMap((position) => [
-    `patrol-cover-${position}`,
-    `growl-cover-${position}`,
-    `flyer-shelter-${position}`,
-    `vertical-stack-${position}`,
-  ]),
-  "bounded-flyer-post",
-  "city-boundary-climb-yard",
-  "city-boundary-dog-high",
-  "city-boundary-dog-terrace",
-  "climbing-enemy-lane",
-  "compound-patrol-lift",
-  "compound-perch-yard",
-  "compound-vertical-yard",
-  "growl-clearing",
-  "growl-lift-clearing",
-]);
 register(
   recovery,
   [

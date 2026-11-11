@@ -12,7 +12,6 @@ import { BIRD_FRAME } from "../assets";
 import { contactFrameAt, STEP_SECONDS } from "../core";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
 import { BIRD } from "../data/bird";
-import { blueVerticalId } from "../data/chunks";
 import { TILE } from "../data/screen";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types";
 import { behaviourPose } from "../presentation";
@@ -1692,23 +1691,21 @@ it("suggests a proved ascent only at a touching static wall", () => {
   ).toBeUndefined();
 });
 
-it("executes a prepared production early-yard escape toward the supported far bank", () => {
+// Archie's arena with Chibi under the overpass deck: Archie, beyond the red pit, prepares and
+// jumps over the pier toward him.
+it("executes a prepared production traversal over the pier in Archie's arena", () => {
   const ordinary = { ...BIRD, doubleJump: false };
   delete ordinary.dash;
-  const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, "city-streets", 40, [
-    blueVerticalId("patrol-cover-early"),
-    "outdoor-deep-descent",
+  const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, "city-boundary", 36, [
+    "arena-dog-city-boundary",
   ]);
   const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
   const area = layout.areas[layout.start.area]!;
   const index = area.objects.findIndex((object) => object.character === "dog-antagonist");
   const object = area.objects[index]!;
-  const wall = area.solids.find(
-    (rect) =>
-      rect.x > object.origin.x &&
-      rect.y < object.origin.y &&
-      rect.x - object.origin.x < object.width * 2,
-  )!;
+  const wall = area.solids
+    .filter((rect) => rect.x + rect.width <= object.origin.x && rect.y < object.origin.y)
+    .reduce((a, b) => (b.x > a.x ? b : a));
   let zone = activateBehaviour(index, startZone(ordinary, layout, 1));
   let crossed = false;
   let jumped = false;
@@ -1743,8 +1740,8 @@ it("executes a prepared production early-yard escape toward the supported far ba
         traversal: state.traversal,
       });
     }
-    const left = at.x + (object.hitbox?.x ?? 0);
-    crossed = left >= wall.x + wall.width - 1e-6;
+    const right = at.x + (object.hitbox?.x ?? 0) + (object.hitbox?.width ?? object.width);
+    crossed = right <= wall.x + 1e-6;
     if (crossed || zone.death || zone.cleared || zone.turnedBack) {
       break;
     }

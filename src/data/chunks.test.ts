@@ -8,12 +8,10 @@ import { STEP_SECONDS } from "../core";
 import { lookTiles } from "../presentation";
 import { SKILL_PROFILES } from "../progress";
 import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble";
-import { contactBox } from "../rules/behaviour";
 import { chunkProblems, escapeMissing, recipeProblems } from "../rules/chunk";
 import { bindElement } from "../rules/elementBinding";
 import { resolveNames, zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
 import type { Tileset } from "../stage";
 import { ALL_CHUNKS, ALL_RECIPES, ALL_THEMES, FIXTURE_LIBRARY } from "../testing/chunks";
 import { HITBOXES, TILESETS as WALK_TILESETS } from "../testing/walkSuite";
@@ -468,120 +466,3 @@ it("bounds the wide reachable fixture with an ordinary running jump", () => {
   expect(outcomes[1]!.cleared).toBe(false);
   expect(outcomes[1]!.death).toBe("fall");
 });
-
-it.each([
-  {
-    budget: 600,
-    id: "growl-clearing-woodland-depth",
-    route: [
-      [14, 34],
-      [30, 34],
-      [46, 34],
-      [53, 40],
-    ],
-    theme: "forest-paths",
-    underpass: undefined,
-  },
-])(
-  "crosses actual $id through its grounded refuges without movement abilities",
-  ({ budget, id, route, theme, underpass }) => {
-    const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
-    const layout = zoneLayout(
-      TILE,
-      BIRD_FRAME,
-      CATALOGUE,
-      HITBOXES,
-      WALK_TILESETS,
-      new Set(),
-      plan,
-    );
-    const startObjects = layout.areas[layout.start.area]!.objects;
-    const pursuer = startObjects.findIndex((object) => object.behaviour?.pursuit);
-    const ordinary = { ...BIRD, doubleJump: false };
-    delete ordinary.dash;
-    let zone = startZone(ordinary, layout, 1);
-    let targetIndex = 0;
-    let jumpStart = -1000;
-    let previousJump = false;
-    let pursuerX = Infinity;
-    let pursuerLeapedWest = false;
-    const trace: unknown[] = [];
-    for (let tick = 0; tick < budget && !zone.death && !zone.cleared; tick++) {
-      const target = route[targetIndex];
-      const feet = zone.bird.y + BIRD.height;
-      if (
-        target &&
-        zone.bird.grounded &&
-        Math.abs(feet - target[1]! * TILE) < 0.1 &&
-        Math.abs(zone.bird.x / TILE - target[0]!) < 1.5
-      ) {
-        trace.push({ feet, reached: targetIndex, tick, x: zone.bird.x });
-        targetIndex++;
-      }
-      const goal = route[targetIndex];
-      const dx = goal ? goal[0]! * TILE - zone.bird.x : 100;
-      const braking = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * BIRD.brakeAccel);
-      let move: -1 | 0 | 1 = Math.abs(dx - braking) < 2 ? 0 : dx - braking > 0 ? 1 : -1;
-      let needsJump =
-        goal &&
-        (feet > goal[1]! * TILE + 0.1 ||
-          (Math.abs(feet - goal[1]! * TILE) < 0.1 && Math.abs(dx) > 3 * TILE));
-      const pursuerAt = pursuer < 0 ? undefined : zone.objects[pursuer];
-      const pursuerState = pursuer < 0 ? undefined : zone.behaviours?.[pursuer];
-      if (pursuerAt) {
-        // The pursuer has committed to a westward leap once it is airborne and its x decreases.
-        pursuerLeapedWest ||=
-          pursuerState?.traversal?.physical.grounded === false && pursuerAt.x < pursuerX;
-        pursuerX = pursuerAt.x;
-      }
-      if (targetIndex === underpass && pursuerAt) {
-        // Wait on the ground side until the pursuer leaps west, run east under its arc while
-        // its contact box still reaches Chibi's column, then climb once it is behind Chibi.
-        const box = contactBox(startObjects[pursuer]!, pursuerAt, pursuerState?.facing ?? 1);
-        if (!pursuerLeapedWest) {
-          move = 0;
-          needsJump = false;
-        } else if (box.x + box.width >= zone.bird.x) {
-          move = 1;
-          needsJump = false;
-        }
-      }
-      if (needsJump && zone.bird.grounded && !previousJump) {
-        jumpStart = tick;
-      }
-      const jumpHeld = (tick - jumpStart) * STEP_SECONDS < BIRD.jumpRiseTime;
-      zone = stepZone(
-        SKILL_PROFILES,
-        ordinary,
-        layout,
-        STEP_SECONDS,
-        { jumpHeld, move, useHeld: false },
-        zone,
-      );
-      previousJump = jumpHeld;
-      if (tick % 60 === 0) {
-        trace.push({
-          grounded: zone.bird.grounded,
-          pursuer: pursuerAt && { leapedWest: pursuerLeapedWest, x: pursuerAt.x, y: pursuerAt.y },
-          targetIndex,
-          tick,
-          x: zone.bird.x,
-          y: zone.bird.y,
-        });
-      }
-    }
-    const witness = JSON.stringify({
-      bird: zone.bird,
-      cleared: zone.cleared,
-      death: zone.death,
-      id,
-      targetIndex,
-      trace,
-    });
-    expect(zone.death, witness).toBeUndefined();
-    expect(targetIndex, witness).toBe(route.length);
-    expect(zone.bird.airJumpUsed, witness).toBe(false);
-    expect(zone.bird.dash?.airUsed, witness).not.toBe(true);
-    expect(zone.cleared, witness).toBe(true);
-  },
-);

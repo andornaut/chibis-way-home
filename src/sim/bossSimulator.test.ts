@@ -100,7 +100,8 @@ it("replays a bot scenario to the same trace hash", () => {
 });
 
 describe("Kiwi under a low ceiling", () => {
-  const CHUNK = "vertical-stack-early";
+  const CHUNK = "arena-raccoon-familiar-neighbourhood";
+  const THEME = "familiar-neighbourhood";
   type Kind = BehaviourCondition["kind"];
   // Kiwi's plan without the named counter conditions, negated or not; a transition left with
   // no conditions is dropped.
@@ -122,7 +123,7 @@ describe("Kiwi under a low ceiling", () => {
         },
       ]),
     );
-  // Kiwi's yard with a one-tile slab two tiles above her head. Each attempt starts engaged with
+  // Kiwi's arena with a one-tile slab two tiles above her head. Each attempt starts engaged with
   // the climb as her only attack, so her first attack decision is whether to climb.
   function layout(states: BehaviourPlan["states"]): ZoneLayout {
     const kiwi = CHUNK_LIBRARY.chunks[CHUNK]!.objects.find(
@@ -135,7 +136,7 @@ describe("Kiwi under a low ceiling", () => {
       row: kiwi.row - 3,
       rows: 1,
     };
-    const base = chunkLayout("city-outskirts", CHUNK, withInstances(CHUNK, [ceiling]));
+    const base = chunkLayout(THEME, CHUNK, withInstances(CHUNK, [ceiling]));
     // Without her charge, the climb is her only attack.
     const pursuit = states.pursuit!;
     const behaviour = layoutBehaviour(TILE, {

@@ -20,7 +20,7 @@ import { observedEvadeRun } from "./observedEvade";
 const input = { jumpHeld: false, move: 0 as const, useHeld: false };
 
 it("keeps the actual advance state and trace identical for absent, observed and failed receivers", () => {
-  const layout = chunksLayout("city-streets", ["patrol-cover-late"]);
+  const layout = chunksLayout("city-boundary", ["arena-dog-city-boundary"]);
   const initial = startZone(ORDINARY, layout, 0);
   const observations = createBehaviourObservations();
   const failing = createBehaviourObserver(() => {
