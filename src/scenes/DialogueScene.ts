@@ -24,6 +24,7 @@ import {
   dialogueTapAction,
   type LabelledButton,
   moveDialoguePress,
+  pauseKey,
   type PressArea,
   pressedArea,
   stepFocus,
@@ -239,6 +240,10 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
 
   private watchInput(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      // P and Escape pass on to PauseScene, which opens its card over the conversation as in play.
+      if (pauseKey(event.key)) {
+        return;
+      }
       if (!modalInput(this).accepts(event)) {
         return;
       }

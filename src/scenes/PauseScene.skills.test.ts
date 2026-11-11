@@ -161,7 +161,7 @@ function gestures(state: "closed" | "open") {
     setPressed(this: { pressed: string | undefined }, value: string | undefined) {
       this.pressed = value;
     },
-    skillHudVisible: () => true,
+    skillHudLive: () => true,
     state,
     sys: { isActive: () => true },
     time,
@@ -201,20 +201,20 @@ it("opens paused HUD details without selecting and covers their targets against 
     state: "open",
   }) as unknown as {
     coveredCard(): readonly { x: number; y: number; width: number; height: number }[];
-    skillHudVisible(): boolean;
+    skillHudLive(): boolean;
     state: string;
   };
-  expect(scene.skillHudVisible()).toBe(true);
+  expect(scene.skillHudLive()).toBe(true);
   expect(scene.coveredCard()).toContainEqual({
     height: SKILL_BUTTON.target,
     width: SKILL_BUTTON.target,
     ...skillHud(SKILL_IDS).get("speedy"),
   });
   gate.accepts.mockReturnValue(false);
-  expect(scene.skillHudVisible()).toBe(false);
+  expect(scene.skillHudLive()).toBe(false);
   gate.accepts.mockReturnValue(true);
   scene.state = "settings";
-  expect(scene.skillHudVisible()).toBe(false);
+  expect(scene.skillHudLive()).toBe(false);
 });
 
 function readiness(bird: BirdState | undefined) {
@@ -282,6 +282,7 @@ it("restores every owned HUD icon after returning home and continuing with one s
     scene: {
       get: () => zone,
       isActive: () => playing,
+      isPaused: () => false,
       launch: vi.fn(),
       stop: () => {
         playing = false;

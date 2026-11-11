@@ -4,9 +4,14 @@ export type CardAction = "close" | "open";
 // The keys that open the card during play and close it when open.
 const CARD_KEYS = new Set(["Escape", "P", "p"]);
 
+// Whether a key is one of the card's keys, P and Escape, which never advance a conversation.
+export function pauseKey(key: string): boolean {
+  return CARD_KEYS.has(key);
+}
+
 // A key's action, or undefined for any other key or a held key's repeats.
 export function cardKeyAction(open: boolean, key: string, repeat: boolean): CardAction | undefined {
-  if (repeat || !CARD_KEYS.has(key)) {
+  if (repeat || !pauseKey(key)) {
     return undefined;
   }
   return open ? "close" : "open";

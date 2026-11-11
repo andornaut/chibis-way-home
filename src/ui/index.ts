@@ -140,6 +140,7 @@ export {
   cardBackAction,
   cardKeyAction,
   cardTurnAction,
+  pauseKey,
   startBackAction,
 } from "./pause/cardInput";
 export { type RoomEvent, roomEvent } from "./pause/roomInput";

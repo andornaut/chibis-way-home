@@ -1210,7 +1210,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.scene.start("start");
   }
 
-  // The pause scene and page input stay inert during the conversation, including its launch.
   // Whether only a conversation covers play, while the zone is loaded and Chibi alive: a
   // conversation or an introduction, not a departure. The pause card may open over it.
   conversationCovers(): boolean {

@@ -83,9 +83,12 @@ const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
 
 // The pause card over the dimmed zone, and the pause button that opens it, which shows on a
 // touch screen while a zone plays or a conversation covers it, never on the map. It runs beside
-// the zone from the start. Opening the card pauses the zone, or the conversation over the paused
-// zone, which keeps its line, and lets the screen sleep; Resume (the primary button, at the
-// top), the close X, back, Escape, P and a tap outside the card (closeOnOutsideTap) close it.
+// the zone from the start. The button, P, Escape, back and a frame turn open the card in play
+// and over a conversation showing a line; opening it pauses the zone, or the conversation over
+// the paused zone, which keeps its line, and lets the screen sleep. Resume (the primary button,
+// at the top), the close X, back, Escape, P and a tap outside the card (closeOnOutsideTap) close
+// it. The skill buttons show over such a conversation too, taking no presses, so a tap on one
+// reaches the conversation and advances it as any other tap does.
 // Settings opens SettingsScene's card over the same dim in the pause card's place, and passes it
 // the keys and back until it closes; Back to title ends the zone for the start screen.
 export class PauseScene extends Scene implements SettingsOpener {
@@ -161,26 +164,7 @@ export class PauseScene extends Scene implements SettingsOpener {
       covered: () => this.coveredCard(),
     });
     this.watchKeys();
-    const onBack = (event: Event) => {
-      if (this.covered()) {
-        return;
-      }
-      if (this.state === "settings") {
-        const card = this.settings();
-        if (modalInput(card).accepts(event)) {
-          card.back();
-        }
-      } else if (modalInput(this).accepts(event)) {
-        this.act(cardBackAction(this.state === "open"));
-      }
-    };
-    window.addEventListener(PHONE_EVENTS.backPressed, onBack);
-    // The page frame turning mid-play pauses it, as P does; open only while the zone plays.
-    const stopTurns = FRAME_TURN.onChange(() => this.act(cardTurnAction(this.state !== "closed")));
-    this.events.once("shutdown", () => {
-      window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
-      stopTurns();
-    });
+    this.watchBackAndTurns();
     this.events.once("shutdown", () => {
       this.pressStart = undefined;
       if (this.state === "skill") {
@@ -194,8 +178,32 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.game.events.once(Core.Events.POST_RENDER, () => zoneShown());
   }
 
+  // Back opens or closes the card, as the keys do, and the page frame turning opens it.
+  private watchBackAndTurns(): void {
+    const onBack = (event: Event) => {
+      if (this.blocked()) {
+        return;
+      }
+      if (this.state === "settings") {
+        const card = this.settings();
+        if (modalInput(card).accepts(event)) {
+          card.back();
+        }
+      } else if (this.cardInput().accepts(event)) {
+        this.act(cardBackAction(this.state === "open"));
+      }
+    };
+    window.addEventListener(PHONE_EVENTS.backPressed, onBack);
+    // The page frame turning mid-play or mid-conversation pauses it, as P does.
+    const stopTurns = FRAME_TURN.onChange(() => this.act(cardTurnAction(this.state !== "closed")));
+    this.events.once("shutdown", () => {
+      window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
+      stopTurns();
+    });
+  }
+
   private act(action: CardAction | undefined): void {
-    if (this.covered() || !modalInput(this).accepts()) {
+    if (this.blocked() || !this.cardInput().accepts()) {
       return;
     }
     if (action === "open") {
@@ -378,7 +386,14 @@ export class PauseScene extends Scene implements SettingsOpener {
       : true;
   }
 
-  private skillHudVisible(): boolean {
+  // The skill buttons show while they take presses, and over a conversation the card may open
+  // over, where they take none.
+  private skillHudShown(): boolean {
+    return this.skillHudLive() || this.conversationOpenable();
+  }
+
+  // Whether the skill buttons take presses: in play, and under the open pause card.
+  private skillHudLive(): boolean {
     if (!modalInput(this).accepts() || this.playCovered()) {
       return false;
     }
@@ -405,7 +420,7 @@ export class PauseScene extends Scene implements SettingsOpener {
       if (at) {
         icon.place(shifted(viewShift(this.scale.gameSize), at));
       }
-      icon.visible(this.skillHudVisible() && at !== undefined);
+      icon.visible(this.skillHudShown() && at !== undefined);
       icon.ready(skill === selected && this.skillReady(skill));
       icon.selected(skill === selected);
     });
@@ -419,7 +434,7 @@ export class PauseScene extends Scene implements SettingsOpener {
       press.cancelled ||
       !isSkillId(press.control) ||
       this.state !== "closed" ||
-      !this.skillHudVisible() ||
+      !this.skillHudLive() ||
       this.time.now - press.startedAt < SKILL_GESTURE.holdMilliseconds
     ) {
       return;
@@ -491,6 +506,16 @@ export class PauseScene extends Scene implements SettingsOpener {
   // Whether something other than this card's own conversation covers play.
   private covered(): boolean {
     return this.playCovered() && !this.overConversation;
+  }
+
+  // Whether the card is closed over a conversation it may open over.
+  private conversationOpenable(): boolean {
+    return this.state === "closed" && this.conversationPausable();
+  }
+
+  // Whether something the card may not open over covers play.
+  private blocked(): boolean {
+    return this.covered() && !this.conversationOpenable();
   }
 
   private zonePlaying(): boolean {
@@ -574,7 +599,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   private controlAt(pointer: Input.Pointer): Control | undefined {
-    if (this.covered() && !(this.state === "closed" && this.conversationPausable())) {
+    if (this.blocked()) {
       return undefined;
     }
     const { close } = this.layout;
@@ -592,7 +617,7 @@ export class PauseScene extends Scene implements SettingsOpener {
         : this.pauseButton.visible
           ? [{ art: PAUSE_BUTTON.art, hit: PAUSE_BUTTON.hit, key: "pauseButton" }]
           : [];
-    if (this.skillHudVisible()) {
+    if (this.skillHudLive()) {
       areas.push(...this.hudAreas());
     }
     const point =
@@ -602,12 +627,11 @@ export class PauseScene extends Scene implements SettingsOpener {
     return pressedArea(areas, point);
   }
 
-  // The modal input a press here answers to: the card's own, or, while the card is closed over a
-  // conversation that holds the input, the conversation's, so the pause button takes its press.
-  private pointerInput(): SceneInput {
-    return this.state === "closed" && this.conversationPausable()
-      ? modalInput(this.scene.get(DIALOGUE))
-      : modalInput(this);
+  // The modal input a press, key, back or frame turn here answers to: the card's own, or, while
+  // the card is closed over a conversation that holds the input, the conversation's, so they
+  // open the card over it.
+  private cardInput(): SceneInput {
+    return this.conversationOpenable() ? modalInput(this.scene.get(DIALOGUE)) : modalInput(this);
   }
 
   // A control acts when a press lands on it and lifts on it.
@@ -615,7 +639,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     const onPointer = (
       event: Parameters<typeof onGatedPointer>[2],
       listener: (pointer: Input.Pointer) => void,
-    ) => onGatedPointer(this, () => this.pointerInput(), event, listener);
+    ) => onGatedPointer(this, () => this.cardInput(), event, listener);
     onPointer("pointerdown", (pointer: Input.Pointer) => {
       if (this.pressStart) {
         return;
@@ -700,14 +724,14 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   private watchKeys(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (this.state === "opening" || this.state === "skill" || this.covered()) {
+      if (this.state === "opening" || this.state === "skill" || this.blocked()) {
         return;
       }
       if (this.state === "settings") {
         this.settings().key(event);
         return;
       }
-      if (!modalInput(this).accepts(event)) {
+      if (!this.cardInput().accepts(event)) {
         return;
       }
       const action =
