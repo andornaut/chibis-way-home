@@ -342,7 +342,7 @@ Approved target for paired runtime integration. The rulebook owns failure behavi
 
 ### Live barks
 
-Every dialogue, bark, gift-room helper and achievement notice panel uses `ui-dialogue-box` at 0.65 alpha; text, name tabs, portraits and icons remain opaque. Present a live antagonist bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner.
+Every dialogue, bark, gift-room helper and achievement notice panel uses `ui-dialogue-box` at 0.60 alpha; text, name tabs, portraits and icons remain opaque. Present a live antagonist bark only while its owning actor's rendered sprite bounds intersect the viewport, and hide the current bark if that actor leaves. Keep offscreen or unowned scheduled lines pending and unheard; mark a line heard only when it actually starts with an eligible visible owner.
 
 ### Touch controls
 
