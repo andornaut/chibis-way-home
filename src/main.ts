@@ -47,9 +47,9 @@ const INK = "#181425";
 // Scale.EXPAND: the canvas fills #game, stretched by the most the base resolution can take on
 // both axes, so where #game is wider or taller than 2:1 the canvas is too. Each scene shows the
 // game's base-resolution view at the canvas's top, centred across (src/scenes/playCamera.ts), and
-// the touch controls move into the bars beside or below it. pixelArt keeps the stretch
-// nearest-neighbour. The game is constructed at once and loads while a fresh load
-// checks for a newer version: BootScene holds only the zone for the check (launchReady).
+// every control stays in that view, clear of the bars beside or below it. pixelArt keeps the
+// stretch nearest-neighbour. The game is constructed at once and loads while a fresh load checks
+// for a newer version: BootScene holds only the zone for the check (launchReady).
 function startGame(): void {
   const game = new Game({
     // The bars beside the game's view, in the page's ink.

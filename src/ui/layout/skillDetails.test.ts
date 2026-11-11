@@ -11,7 +11,7 @@ import type { SkillId } from "../../data/types";
 import { SKILL_IDS } from "../../progress";
 import { cardTextSize } from "./contentCard";
 import { PAUSE_BUTTON } from "./pauseCard";
-import { playView, shifted, topShift } from "./playView";
+import { playView, shifted, viewShift } from "./playView";
 import { ROOM_SCREEN } from "./roomScreen";
 import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails";
 import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud";
@@ -69,7 +69,7 @@ describe("native skill presentation", () => {
     ({ shown }) => {
       [SCREEN, { height: SCREEN.height + 120, width: SCREEN.width + 300 }].forEach((canvas) => {
         const view = playView(canvas);
-        const shift = topShift(canvas);
+        const shift = viewShift(canvas);
         const row = skillHud(shown);
         expect([...row.keys()]).toEqual(SKILL_IDS.filter((skill) => shown.includes(skill)));
         const hits = [...row.values()].map((at) => skillButton(shifted(shift, at)).hit);

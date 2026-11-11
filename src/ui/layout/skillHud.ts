@@ -13,7 +13,7 @@ export const SKILL_BUTTON = {
 // Where each shown skill's button sits in the base view: one row along the view's top, packed
 // against its right edge in SKILL_IDS order, SKILL_HUD.inset in from the top and right and
 // SKILL_HUD.gap apart. Skills not shown take no slot. Like the pause button, the row moves with
-// the view (topShift).
+// the view (viewShift).
 export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point> {
   const row = SKILL_IDS.filter((skill) => shown.includes(skill));
   return new Map(

@@ -14,15 +14,14 @@ import { SKILL_IDS } from "../progress";
 import { startBird } from "../rules/bird";
 import * as engine from "../rules/zone";
 import {
-  bottomShift,
   type HeldTouch,
   keyIntent,
   PAUSE_BUTTON,
   shifted,
   skillHud,
-  topShift,
   TOUCH_CONTROLS,
   touchIntent,
+  viewShift,
 } from "../ui";
 
 const saved = vi.hoisted(() => ({ active: null as SkillId | null, owned: [] as SkillId[] }));
@@ -204,11 +203,11 @@ it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])
     f.scene.watchMouse();
     const point =
       control === "use" || control === "jump"
-        ? shifted(bottomShift(f.size), TOUCH_CONTROLS[control].centre)
+        ? shifted(viewShift(f.size), TOUCH_CONTROLS[control].centre)
         : control === "pause"
-          ? shifted(topShift(f.size), PAUSE_BUTTON.at)
+          ? shifted(viewShift(f.size), PAUSE_BUTTON.at)
           : shifted(
-              topShift(f.size),
+              viewShift(f.size),
               skillHud(SKILL_IDS).get(control as SkillId) ?? { x: 100, y: 100 },
             );
     const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
@@ -266,11 +265,11 @@ it.each([
   const f = touchFixture();
   const point =
     control === "use" || control === "jump"
-      ? shifted(bottomShift(f.size), TOUCH_CONTROLS[control].centre)
+      ? shifted(viewShift(f.size), TOUCH_CONTROLS[control].centre)
       : control === "pause"
-        ? shifted(topShift(f.size), PAUSE_BUTTON.at)
+        ? shifted(viewShift(f.size), PAUSE_BUTTON.at)
         : shifted(
-            topShift(f.size),
+            viewShift(f.size),
             skillHud(SKILL_IDS).get(control as SkillId) ?? { x: 100, y: 100 },
           );
   const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
@@ -292,8 +291,8 @@ it.each([
 it("retains the movement finger's joystick while another finger holds or releases buttons", () => {
   const f = touchFixture();
   const start = { x: 200, y: 180 };
-  const hud = shifted(topShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
-  const use = shifted(bottomShift(f.size), TOUCH_CONTROLS.use.centre);
+  const hud = shifted(viewShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
+  const use = shifted(viewShift(f.size), TOUCH_CONTROLS.use.centre);
   f.send("pointerdown", 1, start);
   f.send("pointermove", 1, { ...start, x: start.x + TOUCH.moveDeadZone + 1 });
   f.send("pointerdown", 2, use);
@@ -316,7 +315,7 @@ it("retains the movement finger's joystick while another finger holds or release
 });
 it("does not reserve hidden or unowned skill targets", () => {
   const f = touchFixture();
-  const point = shifted(topShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
+  const point = shifted(viewShift(f.size), skillHud(SKILL_IDS).get("doubleJump")!);
   f.state.hudShown = false;
   f.send("pointerdown", 1, point);
   expect(f.scene.heldTouches.get(1)?.role).toBe("move");
@@ -330,9 +329,9 @@ it("does not reserve hidden or unowned skill targets", () => {
 it("reserves an owned skill's packed slot at the top right and frees its full-row slot", () => {
   const f = touchFixture();
   saved.owned = ["dash"];
-  const packed = shifted(topShift(f.size), skillHud(["dash"]).get("dash")!);
-  const fullRow = shifted(topShift(f.size), skillHud(SKILL_IDS).get("dash")!);
-  expect(packed).toEqual(shifted(topShift(f.size), skillHud(SKILL_IDS).get("speedy")!));
+  const packed = shifted(viewShift(f.size), skillHud(["dash"]).get("dash")!);
+  const fullRow = shifted(viewShift(f.size), skillHud(SKILL_IDS).get("dash")!);
+  expect(packed).toEqual(shifted(viewShift(f.size), skillHud(SKILL_IDS).get("speedy")!));
   f.send("pointerdown", 1, packed);
   expect(f.scene.heldTouches.has(1)).toBe(false);
   expect(f.scene.buttonTouches.has(1)).toBe(true);

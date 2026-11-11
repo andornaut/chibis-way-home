@@ -25,10 +25,10 @@ export const TOUCH_CIRCLE_RADIUS = 63;
 export const CONTROL_FRAME_INSET = 1;
 
 // The least distance from each control's drawn edge to the edge it is placed against: the view's
-// left, right and top, and the canvas's bottom.
+// left, right, top and bottom.
 export const CONTROL_EDGE = 8;
 
-// Use, Jump and the move hint's drawn bottom edge above the canvas's bottom edge.
+// Use, Jump and the move hint's drawn bottom edge above the view's bottom edge.
 export const CONTROL_BOTTOM = 20;
 
 // Jump's drawn right edge in from the view's right, and the move hint's drawn left edge in from

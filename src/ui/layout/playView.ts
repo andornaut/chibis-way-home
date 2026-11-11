@@ -4,7 +4,8 @@ import type { Point, Rect, Size } from "../../data/types";
 // The canvas fills the page's play area (#game) at the game's scale, so where the play area is
 // wider or taller than 2:1, the canvas is too. The game's SCREEN-sized view sits at the canvas's
 // top, centred across, and the bars beside or below it are the canvas's own. Sizes are in base
-// pixels, whole.
+// pixels, whole. The page keeps #game clear of the device's safe-area insets (src/main.css), so
+// the whole canvas, the view included, is always inside the safe area.
 
 // The game's view in a canvas canvasSize big.
 export function playView(canvasSize: Size): Rect {
@@ -16,17 +17,12 @@ export function playView(canvasSize: Size): Rect {
   };
 }
 
-// How far a control along the canvas's bottom (Use, Jump and the move hint) moves from where it
-// sits in a canvas the game's own size: across with the view, so it stays inside it, and down
-// to the canvas's bottom, so below the game it moves into the bar.
-export function bottomShift(canvasSize: Size): Point {
-  return { x: playView(canvasSize).x, y: Math.floor(canvasSize.height) - SCREEN.height };
-}
-
-// How far a control along the view's top (the pause button) moves from where it sits in a
-// canvas the game's own size: across with the view, so it stays inside it.
-export function topShift(canvasSize: Size): Point {
-  return { x: playView(canvasSize).x, y: 0 };
+// How far every control (pause, the skill HUD, Use, Jump and the move hint), placed in the
+// view's own coordinates, moves to sit in a canvas canvasSize big: with the view, so each keeps
+// its distances from the view's edges and none moves into a bar.
+export function viewShift(canvasSize: Size): Point {
+  const { x, y } = playView(canvasSize);
+  return { x, y };
 }
 
 // A point moved by shift, or back by it with sign -1.

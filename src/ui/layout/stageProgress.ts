@@ -1,15 +1,15 @@
 import { SCREEN } from "../../data/screen";
 import { STAGE_PROGRESS } from "../../data/stageProgress";
 import type { Rect, Size } from "../../data/types";
-import { bottomShift } from "./playView";
+import { playView } from "./playView";
 
+// The stage progress strip: as wide as the view and under it across, along the canvas's bottom.
 export function stageProgressRect(canvasSize: Size): Rect {
   const height = 2 * STAGE_PROGRESS.border + STAGE_PROGRESS.colours.fill.length;
-  const shift = bottomShift(canvasSize);
   return {
     height,
     width: SCREEN.width,
-    x: shift.x,
-    y: SCREEN.height + shift.y - height,
+    x: playView(canvasSize).x,
+    y: Math.floor(canvasSize.height) - height,
   };
 }

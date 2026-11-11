@@ -26,9 +26,9 @@ import {
   SKILL_BUTTON,
   skillHud,
   stepFocus,
-  topShift,
   type TouchSetting,
   touchSettings,
+  viewShift,
 } from "../ui";
 import { FRAME_TURN } from "../ui/input/frameTurn";
 import {
@@ -385,7 +385,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.hud.forEach((icon, skill) => {
       const at = row.get(skill);
       if (at) {
-        icon.place(shifted(topShift(this.scale.gameSize), at));
+        icon.place(shifted(viewShift(this.scale.gameSize), at));
       }
       icon.visible(this.skillHudVisible() && at !== undefined);
       icon.ready(skill === selected && this.skillReady(skill));
@@ -530,7 +530,7 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   // Puts the pause button at its place shifted across with the view, so it stays inside it.
   private placePauseButton(): void {
-    const at = shifted(topShift(this.scale.gameSize), PAUSE_BUTTON.at);
+    const at = shifted(viewShift(this.scale.gameSize), PAUSE_BUTTON.at);
     this.pauseButton.setPosition(at.x, at.y);
   }
 
@@ -559,7 +559,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     const point =
       this.state === "open"
         ? playPoint(this, pointer, this.cardCamera)
-        : shifted(topShift(this.scale.gameSize), { x: pointer.x, y: pointer.y }, -1);
+        : shifted(viewShift(this.scale.gameSize), { x: pointer.x, y: pointer.y }, -1);
     return pressedArea(areas, point);
   }
 

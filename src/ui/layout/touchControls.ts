@@ -45,7 +45,7 @@ const HINT_RADIUS = (BUTTON_FRAME - 1) / 2;
 // Each button presses within TOUCH_CIRCLE_RADIUS plus the hint's radius of its centre, so a drag,
 // which starts only off the buttons, draws the hint clear of each button's TOUCH_CIRCLE_RADIUS;
 // the two circles are cut along the line midway between the centres, so they meet and never
-// overlap. Jump's reaches on into the screen's bottom-right corner, away from Use: the rect from
+// overlap. Jump's reaches on into the view's bottom-right corner, away from Use: the rect from
 // its centre to the corner, where a thumb reaching for it lands.
 const RADIUS = TOUCH_CIRCLE_RADIUS + HINT_RADIUS;
 const USE_HIT: PressShape = { awayFrom: JUMP_CENTRE, centre: USE_CENTRE, radius: RADIUS };

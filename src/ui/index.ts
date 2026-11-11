@@ -100,7 +100,7 @@ export { labelledButton } from "./layout/labelledButton";
 export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/mapScreen";
 export { openingLayout } from "./layout/opening";
 export { PAUSE_BUTTON, pauseCard } from "./layout/pauseCard";
-export { bottomShift, playView, shifted, topShift } from "./layout/playView";
+export { playView, shifted, viewShift } from "./layout/playView";
 export { CELEBRATION, type LabelledButton, restartCard } from "./layout/restartCard";
 export { ROOM_SCREEN } from "./layout/roomScreen";
 export {
