@@ -1,5 +1,11 @@
 {
-  "arenas": [],
+  "arenas": [
+    {
+      "hash": "743fce4711ff60c5",
+      "id": "arena-raccoon-familiar-neighbourhood",
+      "stage": "familiar-neighbourhood"
+    }
+  ],
   "entries": [
     {
       "encounters": 0,

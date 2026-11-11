@@ -19,13 +19,7 @@ export const ARENAS: readonly ChunkArena[] = [
 // Encounter stages still without an arena: the coverage check reports them without failing.
 // Remove each stage as its arena lands; the check fails once the list is empty and any encounter
 // stage lacks exactly one arena.
-export const ARENA_PENDING_STAGES: readonly StageKey[] = [
-  "city-boundary",
-  "familiar-neighbourhood",
-  "penthouse",
-  "residential-floors",
-  "river-crossing",
-];
+export const ARENA_PENDING_STAGES: readonly StageKey[] = [];
 
 // The refuge kinds that counter each boss: high ground against charges, cover against Fert's
 // parcels and Pebble's droppings, a low ceiling against Kiwi.
