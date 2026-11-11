@@ -222,6 +222,8 @@ export const TEXT: GameText = {
   },
   map: {
     continue: "Continue",
+    stageClose: "Close",
+    stageLocked: "Locked",
     stageNumber: "Stage {number}",
     stagePages: { next: "Next", page: "Page {page} of {pages}", previous: "Previous" },
     stages: {

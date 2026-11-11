@@ -145,6 +145,8 @@ export const SKILL_DETAILS = { descriptionWidth: 512 } as const;
 export const STAGE_SELECT = {
   // A stage's name wraps to at most this many lines.
   labelLines: 2,
+  // How far a pressed stage's number, screenshot and name sink.
+  pressedSink: 1,
 } as const;
 
 // art: a stage preview image's size.

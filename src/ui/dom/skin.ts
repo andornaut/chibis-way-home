@@ -11,18 +11,21 @@ import type { Palette } from "../chrome/dim";
 
 // Art's nine-slice frames the HTML UI draws, cut from the images the game already loaded: each
 // frame's art key, the animation tag whose first frame it is (the sheet's first frame where
-// none), and the name its custom properties take. A whole frame has no nine-slice edges in art's
-// manifest and is drawn whole, stretched to its box.
+// none), the name its custom properties take, and the palette colour it is multiplied by, as a
+// tinted sprite is, where it has one. A whole frame has no nine-slice edges in art's manifest and
+// is drawn whole, stretched to its box.
 export interface UiFrame {
   readonly art: string;
   readonly name: string;
   readonly tag?: string;
+  readonly tint?: string;
   readonly whole?: true;
 }
 
 export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-button", name: "ui-button", tag: "normal" },
   { art: "ui-button", name: "ui-button-disabled", tag: "disabled" },
+  { art: "ui-button", name: "ui-button-locked", tag: "normal", tint: "lgrey" },
   { art: "ui-button", name: "ui-button-pressed", tag: "pressed" },
   { art: "ui-button-primary", name: "ui-button-primary", tag: "normal" },
   { art: "ui-button-primary", name: "ui-button-primary-pressed", tag: "pressed" },
@@ -32,7 +35,7 @@ export const UI_FRAMES: readonly UiFrame[] = [
 ];
 
 // The palette colours the HTML UI's CSS reads, as --colour-<name>.
-export const UI_COLOURS = ["dslate", "grey", "ink", "white", "yellow"] as const;
+export const UI_COLOURS = ["dslate", "grey", "ink", "lgrey", "red", "white", "yellow"] as const;
 
 export interface SkinFrame {
   readonly name: string;
@@ -41,6 +44,43 @@ export interface SkinFrame {
   // Undefined for a whole frame.
   readonly slice?: SliceInsets;
   readonly source: CanvasImageSource;
+  // The CSS colour the frame is multiplied by.
+  readonly tint?: string;
+}
+
+// rect of source multiplied by tint, keeping its alpha, as a canvas the size of rect.
+function tinted(
+  document: Document,
+  source: CanvasImageSource,
+  rect: Rect,
+  tint: string,
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    throw new Error("No 2D canvas to tint a sheet frame with");
+  }
+  const draw = () =>
+    context.drawImage(
+      source,
+      rect.x,
+      rect.y,
+      rect.width,
+      rect.height,
+      0,
+      0,
+      rect.width,
+      rect.height,
+    );
+  draw();
+  context.globalCompositeOperation = "multiply";
+  context.fillStyle = tint;
+  context.fillRect(0, 0, rect.width, rect.height);
+  context.globalCompositeOperation = "destination-in";
+  draw();
+  return canvas;
 }
 
 // Sets each UI colour on layer as --colour-<name>, and each frame for .ui-frame: --<name>-image
@@ -66,7 +106,11 @@ export async function applySkin(
     layer,
   );
   const urls = await Promise.all(
-    frames.map(({ rect, source }) => cutFrame(document, source, rect)),
+    frames.map(({ rect, source, tint }) =>
+      tint === undefined
+        ? cutFrame(document, source, rect)
+        : cutFrame(document, tinted(document, source, rect, tint), { ...rect, x: 0, y: 0 }),
+    ),
   );
   frames.forEach(({ name, slice: insets }, index) => {
     const url = urls[index]!;

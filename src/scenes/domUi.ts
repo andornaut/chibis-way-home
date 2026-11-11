@@ -33,6 +33,14 @@ function frameSlice(art: string): NonNullable<SkinFrame["slice"]> {
   return slice;
 }
 
+function paletteHex(colours: Readonly<Record<string, string>>, name: string): string {
+  const colour = colours[name];
+  if (colour === undefined) {
+    throw new Error(`The palette has no ${name}`);
+  }
+  return colour;
+}
+
 // Mounts game's UI layer in host, the canvas's parent, and returns its removal.
 export function mountDomUi(game: Game, host: HTMLElement): () => void {
   const edges = UI_FRAMES.flatMap(({ art, whole }) => {
@@ -75,7 +83,8 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
   }
   const document = layer.element.ownerDocument;
   const skin = async () => {
-    const frames = UI_FRAMES.map(({ art, name, tag, whole }): SkinFrame => {
+    const { colours } = palette(scene);
+    const frames = UI_FRAMES.map(({ art, name, tag, tint, whole }): SkinFrame => {
       const frameName =
         tag === undefined
           ? undefined
@@ -89,6 +98,7 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
         rect: { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY },
         ...(whole === undefined && { slice: frameSlice(art) }),
         source: frame.source.image as CanvasImageSource,
+        ...(tint !== undefined && { tint: paletteHex(colours, tint) }),
       };
     });
     await applySkin(document, palette(scene), frames, layer.element);

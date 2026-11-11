@@ -4,7 +4,6 @@ import { expect, it } from "vitest";
 
 import manifest from "../../../public/art/manifest.json";
 import { CARD_CONTENT } from "../../data/layout";
-import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
@@ -23,7 +22,6 @@ import { pauseCard } from "./pauseCard";
 import { settingsCard, stepsCard } from "./settingsCard";
 import { SKILL_ROOM, skillDetails } from "./skillDetails";
 import { SKILL_BUTTON } from "./skillHud";
-import { stageSelectPages } from "./stageSelectCard";
 import { textInkBounds } from "./textInk";
 
 const BUILD_LABEL = buildLabel(__APP_VERSION__, __COMMIT__);
@@ -42,19 +40,10 @@ const inside = (outer: Rect, inner: Rect) =>
   inner.x + inner.width <= outer.x + outer.width &&
   inner.y + inner.height <= outer.y + outer.height;
 
-const destination = ZONE_MAP.destinations[0]!;
-const stageSelect = stageSelectPages(
-  CARD_FONTS,
-  undefined,
-  TEXT.map.zones[destination.id]!,
-  destination.stages.map((id) => TEXT.map.stages[id]!),
-);
-
 it.each([
   { first: pause.resume.hit, layout: pause },
   ...variants.map((layout) => ({ first: layout.moveControls.hit, layout })),
   ...installs.map((layout) => ({ first: layout.steps.text, layout })),
-  { first: stageSelect.buttons[0]!.hit, layout: stageSelect },
 ])(
   "keeps close targets clear of centred titles and body controls within the viewport",
   ({ first, layout: { card, close, title } }) => {
@@ -116,7 +105,6 @@ it.each([
     layout,
     name: "install",
   })),
-  { content: stageSelect.buttons[0]!.button.y, layout: stageSelect, name: "stage selection" },
   ...skills.map((layout) => ({
     content: skillInkTop(layout),
     layout: { ...layout, title: layout.title! },

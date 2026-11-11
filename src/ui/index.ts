@@ -43,7 +43,9 @@ export {
 export { type CardView, createCard, showPresses } from "./dom/card";
 export { createDeathCard, type DeathCardView } from "./dom/death";
 export { createUiLayer, loadUiFonts, UI_LAYOUT, type UiLayer } from "./dom/layer";
+export { refuseControl } from "./dom/refusal";
 export { applySkin, type SkinFrame, UI_FRAMES } from "./dom/skin";
+export { createStageSelect, type StageFace, type StageSelectView } from "./dom/stageSelect";
 export { focusKeyAction, stepFocus } from "./focus";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput";
 export {
@@ -122,12 +124,7 @@ export { focusRingAround, settingsCard, stepsCard } from "./layout/settingsCard"
 export { SKILL_ROOM, skillDetails, skillRoomContinue } from "./layout/skillDetails";
 export { SKILL_ART, SKILL_BUTTON, skillButton, skillHud } from "./layout/skillHud";
 export { stageProgressRect } from "./layout/stageProgress";
-export {
-  STAGE_NUMBER_SCALE,
-  stagePageOf,
-  STAGES_PER_PAGE,
-  stageSelectPages,
-} from "./layout/stageSelectCard";
+export { stagePageOf, STAGES_PER_PAGE } from "./layout/stageSelectCard";
 export {
   type IconButtonLayout,
   type StartScreenLayout,

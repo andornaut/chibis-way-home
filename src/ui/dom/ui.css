@@ -23,6 +23,7 @@
 /* Over the world canvas and the UI overlay canvas, even while a modal lifts the overlay. */
 #game > .ui-layer {
   z-index: 4;
+  --ui-refusal-colour: var(--colour-red);
   font-family: "Liberation Sans", sans-serif;
   color: var(--colour-ink);
 }
@@ -192,12 +193,13 @@
 }
 
 /* A disabled text button: art's flat disabled ui-button face, which has no lip, with a dark slate
-   label centred on the whole button. It takes no press, so it never shows pressed or focused. */
-.ui-text-button:disabled {
+   label centred on the whole button. It never shows pressed; a disabled one takes no press or
+   focus, and an aria-disabled one takes a press only to refuse it. */
+.ui-text-button:is(:disabled, [aria-disabled="true"]) {
   cursor: default;
 }
 
-.ui-text-button:disabled .ui-text-button-face {
+.ui-text-button:is(:disabled, [aria-disabled="true"]) .ui-text-button-face {
   --ui-frame-image: var(--ui-button-disabled-image);
   --ui-frame-slice: var(--ui-button-disabled-slice);
 

@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+
 import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
@@ -6,7 +8,9 @@ import { SCREEN } from "../../data/screen";
 import { playView } from "../layout/playView";
 import { createUiLayer, UI_LAYOUT } from "./layer";
 import { UI_COLOURS, UI_FRAMES } from "./skin";
-import css from "./ui.css?raw";
+
+// Vitest blanks CSS imports, so the stylesheet is read from disk, from the project root.
+const css = readFileSync("src/ui/dom/ui.css", "utf8");
 
 const property = (element: HTMLElement, name: string) => element.style.getPropertyValue(name);
 

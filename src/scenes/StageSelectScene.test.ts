@@ -1,195 +1,277 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+// @vitest-environment happy-dom
+import { EventEmitter } from "node:events";
 
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { CONTROL_REFUSAL } from "../data/feedback";
 import { ZONE_MAP } from "../data/map";
 
-const state = vi.hoisted(() => ({
-  accepts: true,
+const APARTMENT = ZONE_MAP.destinations.find(({ id }) => id === "apartment")!;
+// Every stage before the apartment's fourth is complete, so its first four are unlocked.
+const COMPLETED = ZONE_MAP.destinations
+  .flatMap(({ stages }) => stages)
+  .slice(0, ZONE_MAP.destinations.flatMap(({ stages }) => stages).indexOf(APARTMENT.stages[3]!));
+const gate = vi.hoisted(() => ({
+  accepts: vi.fn(() => true),
+  capture: vi.fn(),
   invalidate: vi.fn(),
-  refuse: vi.fn(() => vi.fn()),
+  subscribe: vi.fn(),
 }));
+const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./cardParts", () => ({
-  pressTextButton: vi.fn(),
-  ringFocus: vi.fn(),
-  setTextButtonEnabled: vi.fn(),
+vi.mock("./save", () => ({ savedMap: () => ({ completed: COMPLETED }) }));
+vi.mock("./modalInput", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
+vi.mock("./domUi", () => ({
+  artFrameUrl: () => Promise.resolve("blob:preview"),
+  mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
+    const unmount = (dom.layer as UiLayer).mount(0, view);
+    scene.events.once("shutdown", unmount);
+    return unmount;
+  },
+  sceneDomUi: () => dom.layer,
 }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: vi.fn() }));
-vi.mock("./modalInput", () => ({
-  modalInput: () => ({ accepts: () => state.accepts, invalidate: state.invalidate }),
-  onScenePointer: vi.fn(),
-}));
-vi.mock("./playCamera", () => ({
-  fitPlayCamera: vi.fn(),
-  playPoint: (_scene: unknown, point: { x: number; y: number }) => point,
-}));
-vi.mock("./refuseControl", () => ({ refuseControl: state.refuse }));
 
-import { pressTextButton, setTextButtonEnabled } from "./cardParts";
+import { TEXT } from "../data/text";
+import { createUiLayer, setReducedMotion, type UiLayer } from "../ui";
 import { StageSelectScene } from "./StageSelectScene";
 
-afterEach(() => {
+let layer: UiLayer;
+
+beforeEach(() => {
   vi.clearAllMocks();
-  vi.unstubAllGlobals();
-  state.accepts = true;
+  gate.accepts.mockReturnValue(true);
+  gate.capture.mockImplementation(() => () => gate.accepts());
+  layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  dom.layer = layer;
+  setReducedMotion(window, false);
 });
 
-function fixture(host: object = { matchMedia: () => ({ matches: false }) }) {
-  vi.stubGlobal("window", host);
-  const stages = ZONE_MAP.destinations[0]!.stages;
-  const available = stages[0]!;
-  const locked = stages[1]!;
-  const face = {};
-  const preview = {};
-  const name = {};
-  const number = {};
-  const pressed = {};
-  const target = {
-    content: [preview, name, number].map((object) => ({ object, y: 0 })),
-    labels: [name, number],
-    normal: face,
-    pressed,
-  };
-  const opener = { stageSelected: vi.fn() };
-  const stop = vi.fn();
-  const scene = Object.assign(new StageSelectScene(), {
-    available: [available],
-    buttons: new Map([[locked, target]]),
-    layout: {
-      buttons: [0, 100].map((x) => ({
-        button: { height: 48, width: 48, x, y: 0 },
-        hit: { height: 48, width: 48, x, y: 0 },
-      })),
-      close: {
-        art: { height: 24, width: 24, x: 300, y: 0 },
-        hit: { height: 48, width: 48, x: 288, y: 0 },
-      },
-    },
-    scene: { get: () => opener, stop },
-    stages: [available, locked],
-  }) as unknown as {
-    activate(target: { id: string; kind: "stage" }): void;
-    targetAt(point: { x: number; y: number }): { id: string; kind: "stage" };
-  };
-  return { available, face, locked, name, number, opener, pressed, preview, scene, stop };
+afterEach(() => {
+  layer.dispose();
+  vi.useRealTimers();
+});
+
+const [lobby, restaurant, pool, spa, residential] = APARTMENT.stages as [
+  string,
+  string,
+  string,
+  string,
+  string,
+];
+const stageName = (id: string) =>
+  `${TEXT.map.stageNumber.replace("{number}", String(APARTMENT.stages.indexOf(id) + 1))}${TEXT.map.stages[id]}`;
+
+// Lets ticks microtasks run: the dim and the screenshots resolve over a few.
+async function settle(ticks: number): Promise<void> {
+  if (ticks > 0) {
+    await Promise.resolve();
+    await settle(ticks - 1);
+  }
 }
 
-describe("disabled stage screenshot cards", () => {
-  it("refuses a locked target with every face, screenshot and label, without opening the stage", () => {
-    const f = fixture();
-    const target = f.scene.targetAt({ x: 120, y: 20 });
-    expect(target).toEqual({ id: f.locked, kind: "stage" });
-    f.scene.activate(target);
-    expect(state.refuse).toHaveBeenCalledOnce();
-    const args = state.refuse.mock.calls[0]! as unknown as [
-      unknown,
-      boolean,
-      unknown[],
-      unknown[],
-      () => void,
-    ];
-    expect(args[2]).toEqual([f.face, f.pressed, f.preview, f.name, f.number]);
-    expect(args[3]).toEqual([f.name, f.number]);
-    f.scene.activate(target);
-    expect(state.refuse).toHaveBeenCalledOnce();
-    expect(f.stop).not.toHaveBeenCalled();
-    expect(f.opener.stageSelected).not.toHaveBeenCalled();
-    args[4]();
-    f.scene.activate({ id: f.available, kind: "stage" });
-    expect(f.opener.stageSelected).toHaveBeenCalledExactlyOnceWith(f.available);
+// The apartment's stage picker over the map, once its dim is ready.
+async function openPicker() {
+  const events = new EventEmitter();
+  const stageSelected = vi.fn(),
+    stageSelectionClosed = vi.fn(),
+    stop = vi.fn();
+  const scene = Object.assign(new StageSelectScene(), {
+    events,
+    scene: { get: () => ({ stageSelected, stageSelectionClosed }), stop },
+    textures: { exists: () => true },
   });
+  scene.init({ destination: APARTMENT.id });
+  scene.create();
+  await settle(10);
+  const dialog = document.querySelector<HTMLElement>("[role=dialog]")!;
+  const stage = (id: string) => dialog.querySelector<HTMLButtonElement>(`[data-stage="${id}"]`)!;
+  const button = (name: string) =>
+    [...dialog.querySelectorAll("button")].find((element) => element.textContent === name)!;
+  const key = (value: string, options: KeyboardEventInit = {}) =>
+    (document.activeElement ?? document.body).dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: value, ...options }),
+    );
+  // The focused control's name and the stages its page shows.
+  const at = () => ({
+    focus:
+      document.activeElement === dialog
+        ? "card"
+        : (document.activeElement?.getAttribute("aria-label") ??
+          document.activeElement?.textContent),
+    page: [...dialog.querySelectorAll<HTMLElement>(".stage-select-page:not([hidden]) button")].map(
+      ({ dataset }) => dataset.stage,
+    ),
+  });
+  return { at, button, dialog, events, key, stage, stageSelected, stageSelectionClosed, stop };
+}
 
-  // The refusal's steady and animated forms are refuseControl's; the setting picks between them.
-  it.each([
-    { prefers: false, reduced: true, stored: "on" },
-    { prefers: true, reduced: false, stored: "off" },
-    { prefers: true, reduced: true, stored: null },
-  ])(
-    "refuses with reduced motion $reduced for a stored $stored over a device preference of $prefers",
-    ({ prefers, reduced, stored }) => {
-      const f = fixture({
-        localStorage: { getItem: () => stored, setItem: vi.fn() },
-        matchMedia: () => ({ matches: prefers }),
-      });
-      f.scene.activate({ id: f.locked, kind: "stage" });
-      expect((state.refuse.mock.calls[0] as unknown as [unknown, boolean])[1]).toBe(reduced);
-    },
-  );
-
-  it("keeps controls underneath a covering modal inert without refusal feedback", () => {
-    const f = fixture();
-    state.accepts = false;
-    f.scene.activate({ id: f.locked, kind: "stage" });
-    expect(state.refuse).not.toHaveBeenCalled();
-    expect(f.opener.stageSelected).not.toHaveBeenCalled();
+it("opens on the latest stage's page, named by the destination, with nothing focused", async () => {
+  const { at, button, dialog, stage } = await openPicker();
+  const named = (id: string | null) => document.getElementById(id ?? "")?.textContent;
+  expect({
+    ...at(),
+    close: dialog.querySelector(".ui-close-button")?.getAttribute("aria-label"),
+    count: dialog.querySelector("[aria-live=polite]")?.textContent,
+    modal: dialog.getAttribute("aria-modal"),
+    name: named(dialog.getAttribute("aria-labelledby")),
+    next: button(TEXT.map.stagePages.next).getAttribute("aria-disabled"),
+    previews: [...dialog.querySelectorAll("img")].map(({ src }) => src),
+    previous: button(TEXT.map.stagePages.previous).getAttribute("aria-disabled"),
+    stageNames: [spa, residential].map((id) => stage(id).textContent),
+    states: [spa, residential].map((id) => ({
+      description: named(stage(id).getAttribute("aria-describedby")),
+      disabled: stage(id).getAttribute("aria-disabled"),
+      tabIndex: stage(id).tabIndex,
+    })),
+  }).toEqual({
+    close: TEXT.map.stageClose,
+    count: TEXT.map.stagePages.page.replace("{page}", "2").replace("{pages}", "2"),
+    focus: "card",
+    modal: "true",
+    name: TEXT.map.zones[APARTMENT.id],
+    next: "true",
+    page: APARTMENT.stages.slice(3),
+    previews: APARTMENT.stages.map(() => "blob:preview"),
+    previous: null,
+    stageNames: [spa, residential].map(stageName),
+    states: [
+      { description: undefined, disabled: null, tabIndex: 0 },
+      { description: TEXT.map.stageLocked, disabled: "true", tabIndex: -1 },
+    ],
   });
 });
 
-it("rejects hidden stage activation and clears held capture when changing pages", () => {
-  const f = fixture();
-  const scene = f.scene as unknown as {
-    activate(target: { id: string; kind: "stage" }): void;
-    changePage(page: number): void;
-    page: number;
-    pressed: unknown;
-    render(): void;
+it("focuses the latest stage first, then the unlocked stages, turning pages, the page button and close", async () => {
+  const { at, key } = await openPicker();
+  const steps = (
+    ["Tab", "Tab", "Tab", "Tab", "ArrowLeft", "ArrowRight", "ArrowRight"] as const
+  ).map((value) => {
+    key(value);
+    return at();
+  });
+  const first = APARTMENT.stages.slice(0, 3);
+  const last = APARTMENT.stages.slice(3);
+  expect(steps).toEqual([
+    { focus: stageName(spa), page: last },
+    { focus: TEXT.map.stagePages.previous, page: last },
+    { focus: TEXT.map.stageClose, page: last },
+    { focus: stageName(lobby), page: first },
+    { focus: TEXT.map.stageClose, page: first },
+    { focus: stageName(lobby), page: first },
+    { focus: stageName(restaurant), page: first },
+  ]);
+  key("Tab", { shiftKey: true });
+  expect(at().focus).toBe(stageName(lobby));
+});
+
+it("never chooses on the key that opened it, and plays the focused stage once", async () => {
+  const { key, stageSelected, stop } = await openPicker();
+  key("Enter");
+  key(" ");
+  expect(stageSelected).not.toHaveBeenCalled();
+  key("ArrowUp");
+  key("Enter");
+  key("Enter");
+  expect(stop).toHaveBeenCalledExactlyOnceWith();
+  expect(stageSelected).toHaveBeenCalledExactlyOnceWith(spa);
+});
+
+it("turns the page from a focused page button and refocuses on the new page's first unlocked stage", async () => {
+  const { at, key } = await openPicker();
+  key("Tab");
+  key("Tab");
+  key("Enter");
+  expect(at()).toEqual({ focus: stageName(lobby), page: APARTMENT.stages.slice(0, 3) });
+  expect(gate.invalidate).toHaveBeenCalledOnce();
+});
+
+describe("refusals", () => {
+  it("shakes a pressed locked stage and flashes its labels red without playing it or restarting", async () => {
+    vi.useFakeTimers();
+    const { stage, stageSelected } = await openPicker();
+    const locked = stage(residential);
+    locked.click();
+    const shaking = locked.getAttribute("data-ui-refusal-shake");
+    vi.advanceTimersByTime(CONTROL_REFUSAL.flashMs);
+    locked.click();
+    const redAfterStep = locked.hasAttribute("data-ui-refusal-red");
+    vi.advanceTimersByTime(CONTROL_REFUSAL.flashMs * (CONTROL_REFUSAL.flashes - 1));
+    expect({
+      labels: locked.querySelectorAll("[data-ui-refusal-label]").length,
+      redAfterStep,
+      shaking,
+      stopped: locked.hasAttribute("data-ui-refusal-shake"),
+    }).toEqual({ labels: 2, redAfterStep: false, shaking: "out", stopped: false });
+    expect(stageSelected).not.toHaveBeenCalled();
+  });
+
+  it("holds steady red without a shake under the Reduced motion setting", async () => {
+    setReducedMotion(window, true);
+    const { stage } = await openPicker();
+    stage(residential).click();
+    expect({
+      red: stage(residential).hasAttribute("data-ui-refusal-red"),
+      shake: stage(residential).hasAttribute("data-ui-refusal-shake"),
+    }).toEqual({ red: true, shake: false });
+  });
+
+  it("refuses a press on the page button that has no page to turn to", async () => {
+    const { at, button } = await openPicker();
+    button(TEXT.map.stagePages.next).click();
+    expect(button(TEXT.map.stagePages.next).hasAttribute("data-ui-refusal-shake")).toBe(true);
+    expect(at().page).toEqual(APARTMENT.stages.slice(3));
+  });
+
+  it("ignores presses and keys while a modal covers it", async () => {
+    const { key, stage, stageSelected, stageSelectionClosed } = await openPicker();
+    gate.accepts.mockReturnValue(false);
+    stage(residential).click();
+    stage(spa).click();
+    key("Escape");
+    expect(stage(residential).hasAttribute("data-ui-refusal-shake")).toBe(false);
+    expect(stageSelected).not.toHaveBeenCalled();
+    expect(stageSelectionClosed).not.toHaveBeenCalled();
+  });
+});
+
+it("plays a pressed unlocked stage", async () => {
+  const { stage, stageSelected } = await openPicker();
+  stage(spa).click();
+  stage(pool).click();
+  expect(stageSelected).toHaveBeenCalledExactlyOnceWith(spa);
+});
+
+it.each(["Escape", "close"])("closes on %s but not on P", async (how) => {
+  const { dialog, key, stageSelectionClosed } = await openPicker();
+  key("p");
+  expect(stageSelectionClosed).not.toHaveBeenCalled();
+  if (how === "close") {
+    dialog.querySelector<HTMLButtonElement>(".ui-close-button")!.click();
+  } else {
+    key("Escape");
+    key("Escape", { repeat: true });
+  }
+  expect(stageSelectionClosed).toHaveBeenCalledOnce();
+});
+
+it("closes on a tap outside the card, never on one that lands on it", async () => {
+  const { dialog, stageSelectionClosed } = await openPicker();
+  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const tap = (target: HTMLElement) => {
+    for (const type of ["pointerdown", "pointerup"]) {
+      target.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1 }));
+    }
   };
-  const render = vi.fn();
-  Object.assign(scene, {
-    available: [f.available, "hidden"],
-    focus: f.available,
-    layout: { pages: 2 },
-    pressed: { id: f.available, kind: "stage" },
-    render,
-    stages: [f.available, f.locked, "middle", "hidden"],
-  });
-  scene.activate({ id: "hidden", kind: "stage" });
-  expect(f.opener.stageSelected).not.toHaveBeenCalled();
-  scene.changePage(1);
-  expect(scene.page).toBe(1);
-  expect(scene.pressed).toBeUndefined();
-  expect(state.invalidate).toHaveBeenCalledOnce();
-  expect(render).toHaveBeenCalledOnce();
-  scene.activate({ id: "hidden", kind: "stage" });
-  expect(f.opener.stageSelected).toHaveBeenCalledExactlyOnceWith("hidden");
+  tap(dialog);
+  expect(stageSelectionClosed).not.toHaveBeenCalled();
+  tap(backdrop);
+  expect(stageSelectionClosed).toHaveBeenCalledOnce();
 });
 
-it("hides every off-page face and content object while retaining full-size on-page cards", () => {
-  const part = () => ({ setVisible: vi.fn().mockReturnThis(), setY: vi.fn().mockReturnThis() });
-  const visible = { content: [{ object: part(), y: 100 }], normal: part(), pressed: part() };
-  const hidden = { content: [{ object: part(), y: 100 }], normal: part(), pressed: part() };
-  const scene = Object.assign(new StageSelectScene(), {
-    available: ["one", "four"],
-    buttons: new Map([
-      ["one", visible],
-      ["four", hidden],
-    ]),
-    closeX: { play: vi.fn() },
-    stages: ["one", "two", "three", "four"],
-  }) as unknown as { render(): void };
-  scene.render();
-  expect(visible.normal.setVisible).toHaveBeenCalledWith(true);
-  expect(hidden.normal.setVisible).toHaveBeenCalledWith(false);
-  expect(hidden.pressed.setVisible).toHaveBeenCalledWith(false);
-  expect(hidden.content[0]!.object.setVisible).toHaveBeenCalledWith(false);
-});
-
-it("renders pager availability through the shared disabled button state", () => {
-  const previous = {},
-    next = {};
-  const scene = Object.assign(new StageSelectScene(), {
-    closeX: { play: vi.fn() },
-    layout: { pages: 2 },
-    pager: new Map([
-      ["previousPage", previous],
-      ["nextPage", next],
-    ]),
-  }) as unknown as { page: number; render(): void };
-  scene.render();
-  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, false, previous);
-  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, true, next);
-  expect(pressTextButton).toHaveBeenCalledWith(previous, false);
-  scene.page = 1;
-  scene.render();
-  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, true, previous);
-  expect(setTextButtonEnabled).toHaveBeenCalledWith(scene, false, next);
+it("removes the card when the scene shuts down", async () => {
+  const { events } = await openPicker();
+  events.emit("shutdown");
+  expect(document.querySelector("[role=dialog]")).toBeNull();
 });

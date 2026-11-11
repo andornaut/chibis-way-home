@@ -6,6 +6,7 @@ import "./ui/dom/ui.css";
 import "./ui/dom/achievements.css";
 import "./ui/dom/runStats.css";
 import "./ui/dom/death.css";
+import "./ui/dom/stageSelect.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";

@@ -110,10 +110,11 @@ export function createCard<Key extends string>(
   return { backdrop, buttons, ...(close && { close }), dialog, root };
 }
 
-// Shows each enabled text button and close X under root pressed (data-pressed) from a pointer's
-// press on it, while accepts holds, until that pointer lifts or cancels anywhere. A touch press
-// is released from the implicit capture of the control it lands on, so a press that lifts off its
-// button never clicks it, as with a mouse. Returns its removal.
+// Shows each enabled text button, close X and other control marked .ui-press under root pressed
+// (data-pressed) from a pointer's press on it, while accepts holds, until that pointer lifts or
+// cancels anywhere; an aria-disabled one never shows pressed. A touch press is released from the
+// implicit capture of the control it lands on, so a press that lifts off its button never clicks
+// it, as with a mouse. Returns its removal.
 export function showPresses(accepts: () => boolean, root: HTMLElement): () => void {
   const document = root.ownerDocument;
   const pressed = new Map<number, HTMLElement>();
@@ -122,10 +123,13 @@ export function showPresses(accepts: () => boolean, root: HTMLElement): () => vo
     if (target instanceof Element && target.hasPointerCapture(pointerId)) {
       target.releasePointerCapture(pointerId);
     }
-    const button = (event.target as Element | null)?.closest?.(".ui-text-button, .ui-close-button");
+    const button = (event.target as Element | null)?.closest?.(
+      ".ui-text-button, .ui-close-button, .ui-press",
+    );
     if (
       button instanceof HTMLButtonElement &&
       !button.disabled &&
+      button.getAttribute("aria-disabled") !== "true" &&
       root.contains(button) &&
       accepts()
     ) {
