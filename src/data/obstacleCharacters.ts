@@ -1,4 +1,9 @@
-import { GANTRY_BEHAVIOUR, WARNED_VENT_BEHAVIOUR } from "./obstacleBehaviours";
+import {
+  AWNING_BEHAVIOUR,
+  CROSSWALK_BEHAVIOUR,
+  GANTRY_BEHAVIOUR,
+  WARNED_VENT_BEHAVIOUR,
+} from "./obstacleBehaviours";
 import type { Character, HazardPhase, PhaseTiles } from "./types";
 
 const crosswalkTiles = (phase: string): PhaseTiles => ({
@@ -38,6 +43,27 @@ export const OBSTACLE_CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 2,
     rows: 1,
   },
+  // A pedestrian signal on the near kerb, showing its strip's phase (the instance's phaseSource).
+  "crosswalk-signal": {
+    archetype: "scenery",
+    art: "crosswalk-signal",
+    cols: 1,
+    phaseAnimations: CROSSWALK_SIGNAL_ANIMATIONS,
+    rows: 7,
+  },
+  // A zebra crossing one row tall on the road top, lethal only in traffic. Placed 20 wide, wider
+  // than a running jump.
+  "crosswalk-strip": {
+    archetype: "hazard",
+    art: "crosswalk-walk-middle",
+    behaviour: CROSSWALK_BEHAVIOUR,
+    cols: 20,
+    contactCue: "red-hazard",
+    noJumpOver: true,
+    phaseTiles: CROSSWALK_PHASE_TILES,
+    rows: 1,
+    tileset: "tiles-street",
+  },
   // The gantry crane container: a one-way lid shuttling between its docks.
   "freight-crane-container": {
     archetype: "ledge",
@@ -52,6 +78,14 @@ export const OBSTACLE_CHARACTERS: Readonly<Record<string, Character>> = {
     art: "freight-gantry-rail",
     cols: 22,
     rows: 2,
+  },
+  // A shop awning hanging from a facade wall on its left, standable only while out or warning.
+  "homecity-awning-ledge": {
+    archetype: "ledge",
+    art: "homecity-awning-ledge",
+    behaviour: AWNING_BEHAVIOUR,
+    cols: 8,
+    rows: 3,
   },
   "warned-vent": {
     archetype: "hazard",

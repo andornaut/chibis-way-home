@@ -3,6 +3,7 @@ import { CHUNK_COLS } from "../chunkTemplates";
 import type { ChunkModule, Difficulty, ModuleRules } from "../types";
 import { APARTMENT_MODULES } from "./apartment";
 import { BLUE_MODULES } from "./blue";
+import { HOME_MODULES } from "./home";
 import { INDUSTRIAL_MODULES } from "./industrial";
 
 // Modules are half a chunk wide and four screens tall; the joint keeps a 4-column landing (2 each
@@ -17,8 +18,15 @@ export const MODULE_RULES: ModuleRules = {
 export const MODULES: Readonly<Record<string, ChunkModule>> = {
   ...APARTMENT_MODULES,
   ...BLUE_MODULES,
+  ...HOME_MODULES,
   ...INDUSTRIAL_MODULES,
 };
 
 // Grades that replace the derived pair grade, by zone-independent pair id `${left}--${right}`.
-export const PAIR_GRADES: Readonly<Record<string, Difficulty>> = {};
+// The crosswalk follows only the planter Chibi watches it from: after any other half it compounds
+// that half's challenge with the crossing, grade 5, outside Blue's band.
+export const PAIR_GRADES: Readonly<Record<string, Difficulty>> = Object.fromEntries(
+  Object.values(BLUE_MODULES)
+    .filter(({ id, sides }) => sides.includes("left") && id !== "city-planter")
+    .map(({ id }) => [`${id}--crosswalk`, 5]),
+);

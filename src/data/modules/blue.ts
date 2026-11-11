@@ -70,6 +70,7 @@ interface Half {
   readonly exit: number;
   readonly objects?: readonly Instance[];
   readonly route?: ChunkModule["route"];
+  readonly sides?: readonly ModuleSide[];
   readonly slots?: ChunkModule["slots"];
   readonly solids: readonly TerrainRect[];
 }
@@ -81,7 +82,7 @@ const half = (difficulty: Difficulty, id: string, spec: Half): ChunkModule => ({
   id,
   objects: spec.objects ?? [],
   route: spec.route ?? { profile: "recovery" },
-  sides: BOTH,
+  sides: spec.sides ?? BOTH,
   ...(spec.slots && { slots: spec.slots }),
   solids: spec.solids,
   zones: ["blue"],
@@ -115,6 +116,18 @@ const ferry = (row: number): Half => ({
   objects: [shuttle(6, row, 12), ...red(6, 18, row + 8)],
   solids: [floor(0, 6, row), floor(24, 6, row)],
 });
+// A crosswalk: its strip on the road between 5-col kerbs, too wide to jump, with the signal
+// beside it on the near kerb. It fills the right half, after the half Chibi watches it from.
+const crosswalk = (row: number): Half => ({
+  entry: row,
+  exit: row,
+  objects: [
+    { character: "crosswalk-strip", col: 5, id: "strip", row: row - 1 },
+    { character: "crosswalk-signal", col: 3, phaseSource: "strip", row: row - 7 },
+  ],
+  sides: ["right"],
+  solids: [floor(0, 30, row)],
+});
 // A warned vent on a raised deck with a refuge either side.
 const ventDeck = (row: number): Half => ({
   entry: row,
@@ -129,6 +142,14 @@ const ventDeck = (row: number): Half => ({
   ],
 });
 const MODULE_LIST: readonly ChunkModule[] = [
+  // Grade 2: a planter to stand on and watch the next half from.
+  half(2, "city-planter", {
+    entry: 80,
+    exit: 80,
+    route: { profile: "primary", targets: [{ at: { col: 14, row: 77 } }] },
+    sides: ["left"],
+    solids: [floor(0, 30, 80), { col: 12, cols: 4, look: "raised", row: 77, rows: 3 }],
+  }),
   // Grade 3: gaps near the reach, single moving platforms, single tap spots.
   half(3, "city-gap", gap(80, 6, 13)),
   half(3, "city-gap-high", gap(70, 7, 13)),
@@ -193,6 +214,7 @@ const MODULE_LIST: readonly ChunkModule[] = [
     solids: [floor(0, 16, 70), floor(25, 5, 80)],
   }),
   // Grade 4: timed supports, warned vents and moving hazards on the required path.
+  half(4, "crosswalk", crosswalk(80)),
   half(4, "city-vent-deck", ventDeck(80)),
   half(4, "city-vent-deck-high", ventDeck(70)),
   half(4, "city-crumbling-pit", {
