@@ -3,10 +3,9 @@ import { redCeiling } from "../chunkTemplates";
 import { CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning";
 import type { ChunkModule, Difficulty, Instance, ModuleSide, TerrainRect } from "../types";
 
-// Blue cityscape halves on the lower route (rows 70 and 80). Quiet halves fill either side, so
-// both edges keep a 4-column seam footing; encounter halves fill one side. Grade 3 halves pair
-// with any matching half; grade 4 halves pair only with grade 3 ones, since two grade 4 halves
-// make a grade 5 chunk outside Blue's band.
+// Blue cityscape halves on the lower route (rows 70 and 80). Halves fill either side, so both
+// edges keep a 4-column seam footing. Grade 3 halves pair with any matching half; grade 4 halves
+// pair only with grade 3 ones, since two grade 4 halves make a grade 5 chunk outside Blue's band.
 const ROWS = 120;
 const BOTH: readonly ModuleSide[] = ["left", "right"];
 
@@ -16,14 +15,6 @@ const floor = (col: number, cols: number, row: number): TerrainRect => ({
   look: "ground",
   row,
   rows: ROWS - row,
-});
-// A raised slab whose underside leaves a passage of Chibi's height (3 rows) above `floorRow`.
-const slab = (col: number, cols: number, floorRow: number, rows = 3): TerrainRect => ({
-  col,
-  cols,
-  look: "raised",
-  row: floorRow - 3 - rows,
-  rows,
 });
 const ledge = (col: number, cols: number, row: number): Instance => ({
   character: "platform-ledge",
@@ -73,41 +64,28 @@ const redFace = (col: number, row: number, rows: number): Instance => ({
   row,
   rows,
 });
-const archie = (col: number, floorRow: number): Instance => ({
-  character: "dog-antagonist",
-  col,
-  role: "antagonist",
-  row: floorRow - 4,
-});
 
 interface Half {
   readonly entry: number;
-  readonly escapes?: ChunkModule["escapes"];
   readonly exit: number;
   readonly objects?: readonly Instance[];
   readonly route?: ChunkModule["route"];
-  readonly sides?: readonly ModuleSide[];
   readonly slots?: ChunkModule["slots"];
   readonly solids: readonly TerrainRect[];
 }
-const half = (difficulty: Difficulty, id: string, spec: Half): ChunkModule => {
-  const objects = spec.objects ?? [];
-  const encounters = objects.some(({ role }) => role === "antagonist") ? 1 : 0;
-  return {
-    difficulty,
-    encounters,
-    entry: { row: spec.entry },
-    ...(spec.escapes && { escapes: spec.escapes }),
-    exit: { row: spec.exit },
-    id,
-    objects,
-    route: spec.route ?? { profile: encounters > 0 ? "encounter" : "recovery" },
-    sides: spec.sides ?? BOTH,
-    ...(spec.slots && { slots: spec.slots }),
-    solids: spec.solids,
-    zones: ["blue"],
-  };
-};
+const half = (difficulty: Difficulty, id: string, spec: Half): ChunkModule => ({
+  difficulty,
+  encounters: 0,
+  entry: { row: spec.entry },
+  exit: { row: spec.exit },
+  id,
+  objects: spec.objects ?? [],
+  route: spec.route ?? { profile: "recovery" },
+  sides: BOTH,
+  ...(spec.slots && { slots: spec.slots }),
+  solids: spec.solids,
+  zones: ["blue"],
+});
 // A door slot whose room building (15 cols, its door 5.5 cols in) stays inside the half on full floor:
 // `col` from 6 to 20, with floor under cols `col - 5.5` to `col + 9.5`.
 const door = (col: number, floorRow: number): NonNullable<ChunkModule["slots"]>[number] => ({
@@ -150,46 +128,6 @@ const ventDeck = (row: number): Half => ({
     floor(25, 5, row),
   ],
 });
-// An Archie lane with a low passage at its far end from him: he patrols toward it and cannot
-// follow Chibi through. `left`: the half it fills.
-const archieLane = (entry: number, exit: number, left: boolean): Half => {
-  const lane = Math.max(entry, exit);
-  const passage = left ? 5 : entry === lane ? 3 : 4;
-  const step = left
-    ? exit === lane
-      ? []
-      : [floor(28, 2, exit)]
-    : entry === lane
-      ? []
-      : [floor(0, 2, entry)];
-  const flat = left
-    ? floor(0, exit === lane ? 30 : 28, lane)
-    : floor(entry === lane ? 0 : 2, entry === lane ? 30 : 28, lane);
-  return {
-    entry,
-    escapes: [
-      {
-        area: { col: passage, cols: 6, row: lane - 3, rows: 3 },
-        from: { col: passage + 7, row: lane },
-        id: "low-passage",
-        kind: "low-passage",
-        to: { col: passage - 1, row: lane },
-      },
-    ],
-    exit,
-    objects: [
-      archie(left ? 22 : 20, lane),
-      ...(entry === exit
-        ? [ledge(left ? 15 : 16, 6, lane - 6)]
-        : left
-          ? [ledge(21, 6, lane - 5)]
-          : []),
-    ],
-    sides: [left ? "left" : "right"],
-    solids: [flat, ...step, slab(passage, 6, lane)],
-  };
-};
-
 const MODULE_LIST: readonly ChunkModule[] = [
   // Grade 3: gaps near the reach, single moving platforms, single tap spots.
   half(3, "city-gap", gap(80, 6, 13)),
@@ -299,22 +237,6 @@ const MODULE_LIST: readonly ChunkModule[] = [
     objects: [crumbling(13, 6, 76), ...red(6, 20, 90)],
     solids: [floor(0, 6, 70), floor(26, 4, 80)],
   }),
-  // Grade 4 Archie lanes: one encounter, a low passage he cannot follow through.
-  half(4, "archie-lane", archieLane(80, 80, true)),
-  half(4, "archie-lane-high", archieLane(70, 70, true)),
-  half(4, "archie-lane-climb", archieLane(80, 70, true)),
-  half(4, "archie-lane-descent", {
-    ...archieLane(70, 80, true),
-    objects: [archie(22, 80), ledge(16, 6, 75)],
-    solids: [floor(0, 4, 70), floor(4, 26, 80), slab(5, 6, 80)],
-  }),
-  half(4, "archie-lane-ledges", {
-    ...archieLane(80, 80, true),
-    objects: [archie(22, 80), ledge(14, 5, 75), ledge(21, 5, 72)],
-  }),
-  half(4, "archie-yard", archieLane(80, 80, false)),
-  half(4, "archie-yard-high", archieLane(70, 70, false)),
-  half(4, "archie-yard-descent", archieLane(70, 80, false)),
 ];
 
 export const BLUE_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(

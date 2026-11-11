@@ -15,7 +15,6 @@ import {
   INDUSTRIAL_ROWS,
   industrialCapId,
   industrialTunnelId,
-  PATROL_YARDS,
   WOODLAND_CHALLENGES,
   WOODLAND_CONNECTORS,
   woodlandVerticalId,
@@ -52,11 +51,9 @@ const STAGE_CHUNK_POOLS = {
 } satisfies Readonly<Record<string, ChunkPool>>;
 const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
   ...GROUND_CHALLENGES,
-  ...PATROL_YARDS,
   "compound-double-lift",
   "compound-lift-shuttle",
   "compound-low-ceiling-shuttle",
-  "compound-patrol-lift",
   "compound-return-high",
 ];
 const APARTMENT_LENGTH = { max: 12 * CHUNK_COLS, min: 11 * CHUNK_COLS };

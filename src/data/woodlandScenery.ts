@@ -114,9 +114,6 @@ export const WOODLAND_SCENERY: Readonly<Record<string, readonly Instance[]>> = {
   "compound-return-terrace": [
     { character: "background-reeds", col: 54, parallax: { x: 0.4, y: 1 }, row: 48 },
   ],
-  "growl-cover-middle": [
-    { character: "background-swallow", col: 33, parallax: { x: 1, y: 1 }, phase: 0, row: 34.5 },
-  ],
   "vertical-red-gate": [
     { character: "background-reeds", col: 44, parallax: { x: 0.4, y: 1 }, row: 48 },
     { character: "background-deer-large", col: 40, parallax: { x: 1, y: 1 }, row: 38 },
