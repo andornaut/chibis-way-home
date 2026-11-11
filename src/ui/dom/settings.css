@@ -1,0 +1,120 @@
+/* The settings card and the install steps card (settings.ts), on ui.css's .ui-card: lengths are
+   base px times --ui-unit, from the layout properties SETTINGS_LAYOUT writes on the card's view. */
+
+.settings-card[hidden],
+.settings-steps[hidden],
+.settings-icon[hidden] {
+  display: none;
+}
+
+/* The rows as wide as the widest, stacked a row gap apart. They are their own press areas, so
+   the first starts where the header's text buttons' press areas would. */
+.settings-rows {
+  display: grid;
+  row-gap: calc(var(--ui-unit) * var(--settings-row-gap) * 1px);
+  margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px);
+}
+
+/* A row: its icon, its label and, at the row's right end, its switch or Install button, a gap
+   apart and centred on the row's height. The label turns dark slate while the row is pressed. */
+.settings-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  height: calc(var(--ui-unit) * var(--settings-row-height) * 1px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--colour-ink);
+  text-align: start;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.settings-row:focus {
+  outline: none;
+}
+
+/* Art's ui-focus ring round the focused row, as on a text button's face. */
+.settings-row:focus-visible {
+  box-shadow:
+    0 0 0 var(--focus-ink) var(--colour-ink),
+    0 0 0 var(--focus-band) var(--colour-yellow),
+    0 0 0 var(--focus-outset) var(--colour-ink);
+}
+
+.settings-icon {
+  display: block;
+  flex: none;
+  width: calc(var(--ui-unit) * var(--settings-icon) * 1px);
+  height: calc(var(--ui-unit) * var(--settings-icon) * 1px);
+  image-rendering: pixelated;
+}
+
+.settings-label {
+  flex: 1;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 400;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  white-space: nowrap;
+}
+
+.settings-row[data-pressed] .settings-label {
+  color: var(--colour-dslate);
+}
+
+/* Art's ui-switch: knob right with a tick for on, left with a cross for off. */
+.settings-switch {
+  display: block;
+  flex: none;
+  width: calc(var(--ui-unit) * var(--settings-switch-width) * 1px);
+  height: calc(var(--ui-unit) * var(--settings-switch-height) * 1px);
+  background-image: var(--ui-switch-off-image);
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+
+.settings-row[aria-checked="true"] .settings-switch {
+  background-image: var(--ui-switch-on-image);
+}
+
+/* The Install button's face, the row's height, pressed with the row. */
+.settings-install .ui-text-button-face {
+  flex: none;
+}
+
+.settings-install[data-pressed] .ui-text-button-face {
+  --ui-frame-image: var(--ui-button-pressed-image);
+  --ui-frame-slice: var(--ui-button-pressed-slice);
+}
+
+.settings-install[data-pressed] .ui-text-button-label {
+  translate: 0 var(--button-sink);
+}
+
+.settings-build {
+  color: var(--colour-dslate);
+}
+
+/* The steps beside their glyph, wrapped within the steps width, or across the glyph's width as
+   well for a browser without one. */
+.settings-steps-body {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+}
+
+.settings-steps-text {
+  max-width: calc(
+    var(--ui-unit) * (var(--settings-steps-width) + var(--settings-icon) + var(--card-gap)) * 1px
+  );
+  text-align: start;
+}
+
+.settings-steps[data-glyph] .settings-steps-text {
+  max-width: calc(var(--ui-unit) * var(--settings-steps-width) * 1px);
+}

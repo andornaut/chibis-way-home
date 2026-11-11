@@ -148,6 +148,8 @@ export interface GameText {
   // install prompt.
   readonly settings: {
     readonly actionButtons: string;
+    // The close X's accessible name, on the settings card and the install steps card.
+    readonly close: string;
     readonly install: string;
     readonly installButton: string;
     readonly installSteps: Readonly<Record<InstallStepsKind, InstallSteps>>;

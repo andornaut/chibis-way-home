@@ -1,136 +1,21 @@
+import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+
 import { CARD_CONTENT, FOCUS_RING, HIT_RULE, SETTINGS_CARD } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { GameText, Point, Rect } from "../../data/types";
-import { cardActionsSize, type CardFonts, cardTextSize, contentCardLayout } from "./contentCard";
-import { labelledButton } from "./labelledButton";
-import { wrappedCardText } from "./runStats";
+import type { Rect } from "../../data/types";
 
-const ICON = SETTINGS_CARD.icon;
-const SWITCH = SETTINGS_CARD.switch;
-// Each row is its own press target, already the minimum target height, so it gains no margin and
-// the first row starts a gap below the header: the taller of the title line and the close
-// target's clearance.
-const ROW_HEIGHT = HIT_RULE.minTarget;
-
-export function settingsCard(
-  fonts: CardFonts,
-  words: GameText["settings"],
-  build: string,
-  hasInstall: boolean,
-) {
-  const actionWidth = cardActionsSize(fonts.title, "row", [words.installButton]).width;
-  const labelWidth = (label: string) => cardTextSize(fonts.body, label).width;
-  const widths = [words.moveControls, words.actionButtons, words.reducedMotion].map(
-    (text) => ICON + CARD_CONTENT.gap + labelWidth(text) + CARD_CONTENT.gap + SWITCH.width,
-  );
-  if (hasInstall) {
-    widths.push(
-      ICON + CARD_CONTENT.gap + labelWidth(words.install) + CARD_CONTENT.gap + actionWidth,
-    );
-  }
-  const rowWidth = Math.max(...widths);
-  const rows = hasInstall ? 4 : 3;
-  const layout = contentCardLayout(
-    { ...SCREEN, x: 0, y: 0 },
-    [
-      {
-        height: rows * ROW_HEIGHT + (rows - 1) * CARD_CONTENT.rowGap,
-        // The first row's label ink, centred in its line slot in the middle of the row.
-        inkTop:
-          (ROW_HEIGHT - CARD_CONTENT.lineHeight) / 2 +
-          cardTextSize(fonts.body, words.moveControls).inkTop,
-        key: "rows",
-        width: rowWidth,
-      },
-      { key: "build", ...cardTextSize(fonts.body, build) },
-    ],
-    { close: true, font: fonts.title, title: words.title },
-  );
-  const group = layout.groups.rows!;
-  const row = (index: number, text: string) => {
-    const rect = {
-      height: ROW_HEIGHT,
-      width: rowWidth,
-      x: group.x,
-      y: group.y + index * (ROW_HEIGHT + CARD_CONTENT.rowGap),
-    };
-    return {
-      hit: rect,
-      icon: { x: rect.x, y: rect.y + (ROW_HEIGHT - ICON) / 2 },
-      label: {
-        height: CARD_CONTENT.lineHeight,
-        width: labelWidth(text),
-        x: rect.x + ICON + CARD_CONTENT.gap,
-        y: rect.y + (ROW_HEIGHT - CARD_CONTENT.lineHeight) / 2,
-      },
-      row: rect,
-      toggle: { x: rect.x + rowWidth - SWITCH.width, y: rect.y + (ROW_HEIGHT - SWITCH.height) / 2 },
-    };
-  };
-  const install = row(3, words.install);
-  const button = labelledButton({
-    height: ROW_HEIGHT,
-    width: actionWidth,
-    x: install.row.x + rowWidth - actionWidth,
-    y: install.row.y,
-  });
-  return {
-    actionButtons: row(1, words.actionButtons),
-    buildLabel: { ...layout.groups.build!, centreX: layout.card.x + layout.card.width / 2 },
-    card: layout.card,
-    close: layout.close!,
-    install: {
-      ...install,
-      button: button.button,
-    },
-    moveControls: row(0, words.moveControls),
-    reducedMotion: row(2, words.reducedMotion),
-    title: layout.title!,
-  };
-}
-
-// Install steps wrap within this width beside their glyph, and the card grows to fit them.
-const STEPS_TEXT_WIDTH = SETTINGS_CARD.stepsTextWidth;
-
-// The install steps card: the kind's title, and its steps beside their glyph or, for a kind
-// without one, across the glyph's width as well.
-export function stepsCard(fonts: CardFonts, hasGlyph: boolean, title: string, steps: string) {
-  const glyphWidth = ICON + CARD_CONTENT.gap;
-  const indent = hasGlyph ? glyphWidth : 0;
-  const lines = wrappedCardText(fonts.body, STEPS_TEXT_WIDTH + glyphWidth - indent, steps);
-  const size = cardTextSize(fonts.body, lines);
-  const height = hasGlyph ? Math.max(ICON, size.height) : size.height;
-  const layout = contentCardLayout(
-    { ...SCREEN, x: 0, y: 0 },
-    [
-      {
-        height,
-        inkTop: (height - size.height) / 2 + size.inkTop,
-        key: "steps",
-        width: indent + size.width,
-      },
-    ],
-    { close: true, font: fonts.title, title },
-  );
-  const rect = layout.groups.steps!;
-  return {
-    card: layout.card,
-    close: layout.close!,
-    steps: {
-      glyph: hasGlyph
-        ? ({ x: rect.x, y: rect.y + (rect.height - ICON) / 2 } satisfies Point)
-        : undefined,
-      lines,
-      text: {
-        height: rect.height,
-        width: size.width,
-        x: rect.x + indent,
-        y: rect.y,
-      } satisfies Rect,
-    },
-    title: layout.title!,
-  };
-}
+// The settings card's and the install steps card's geometry in base px (src/ui/dom/settings.css
+// lays them out): each row is its own press target, already the minimum target height, so it
+// gains no margin; its icon, label and switch or Install button sit in it, the switches and the
+// button at the widest row's right end. Install steps wrap within the steps width beside their
+// glyph, or across the glyph's width as well for a browser without one.
+export const SETTINGS_LAYOUT: LayoutValues = {
+  "--settings-icon": SETTINGS_CARD.icon,
+  "--settings-row-gap": CARD_CONTENT.rowGap,
+  "--settings-row-height": HIT_RULE.minTarget,
+  "--settings-steps-width": SETTINGS_CARD.stepsTextWidth,
+  "--settings-switch-height": SETTINGS_CARD.switch.height,
+  "--settings-switch-width": SETTINGS_CARD.switch.width,
+};
 
 // Art's keyboard focus ring, a 9-slice drawn this far outside the focused row, button or close X
 // on every side.

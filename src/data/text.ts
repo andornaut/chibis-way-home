@@ -288,6 +288,7 @@ export const TEXT: GameText = {
   },
   settings: {
     actionButtons: "Action buttons",
+    close: "PLACEHOLDER Close",
     install: "Install",
     installButton: "Install",
     installSteps: {

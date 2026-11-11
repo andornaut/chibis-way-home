@@ -1,130 +1,263 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { afterEach, describe, expect, it, vi } from "vitest";
+// @vitest-environment happy-dom
+import { EventEmitter } from "node:events";
+
+import type { InstallState } from "@andornaut/game-kit/web/pwa/installState";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+
+const gate = vi.hoisted(() => ({
+  accepts: vi.fn(() => true),
+  capture: vi.fn(),
+  invalidate: vi.fn(),
+}));
+const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
+const offer = vi.hoisted(() => ({
+  install: vi.fn(() => Promise.resolve("steps")),
+  onChange: vi.fn(() => () => undefined),
+  state: vi.fn((): InstallState => "installed"),
+  stepsKind: "ios",
+}));
+const backdrop = vi.hoisted(() => vi.fn(() => ({ ready: Promise.resolve() })));
+vi.mock("phaser", () => ({ Scene: class {} }));
+vi.mock("../pwa/installOffer", () => ({ installOffer: () => offer }));
+vi.mock("./modalInput", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop", () => ({ showModalBackdrop: backdrop }));
+vi.mock("./domUi", () => ({
+  artFrameUrl: (_scene: unknown, art: string) => Promise.resolve(`blob:${art}`),
+  mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
+    const unmount = (dom.layer as UiLayer).mount(0, view);
+    scene.events.once("shutdown", unmount);
+    return unmount;
+  },
+  sceneDomUi: () => dom.layer,
+}));
 
 import { TEXT } from "../data/text";
-import type { Rect } from "../data/types";
-import { CARD_FONTS } from "../testing/cardFonts";
-
-const state = vi.hoisted(() => ({
-  pointer: new Map<string, (point: { x: number; y: number }) => void>(),
-  texts: [] as { at: Rect; object: { setTint: unknown }; text: string }[],
-}));
-vi.mock("phaser", () => ({
-  Scene: class {
-    readonly sys = { isActive: () => true };
-  },
-}));
-vi.mock("./cardParts", () => ({
-  BODY_FONT: "body",
-  addCardHeading: () => drawn(),
-  addCardTextIn: (_scene: unknown, _font: unknown, at: Rect, text: string) => {
-    const object = drawn();
-    state.texts.push({ at, object, text });
-    return object;
-  },
-  addSlice: () => drawn(),
-  cardFonts: () => CARD_FONTS,
-  paletteColour: () => 0,
-}));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: vi.fn() }));
-vi.mock("./modalInput", () => ({
-  modalInput: () => ({ accepts: () => true }),
-  onScenePointer: (_scene: unknown, event: string, listener: (point: unknown) => void) =>
-    state.pointer.set(event, listener),
-}));
-vi.mock("./playCamera", () => ({
-  fitPlayCamera: vi.fn(),
-  playPoint: (_scene: unknown, point: unknown) => point,
-}));
-
+import { createUiLayer, reducedMotion, touchSettingShown, type UiLayer } from "../ui";
 import { SettingsScene } from "./SettingsScene";
 
-function drawn() {
-  return {
-    destroy: vi.fn(),
-    play: vi.fn(),
-    setOrigin: vi.fn().mockReturnThis(),
-    setTint: vi.fn(),
-    setVisible: vi.fn(),
-  };
-}
+const WORDS = TEXT.settings;
+const SWITCHES = [WORDS.moveControls, WORDS.actionButtons, WORDS.reducedMotion];
+let layer: UiLayer;
 
-afterEach(() => {
-  state.pointer.clear();
-  state.texts.length = 0;
-  vi.unstubAllGlobals();
+beforeEach(() => {
+  vi.clearAllMocks();
+  gate.accepts.mockReturnValue(true);
+  gate.capture.mockImplementation(() => () => gate.accepts());
+  offer.state.mockReturnValue("installed");
+  layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  dom.layer = layer;
 });
 
-// The settings card drawn on the start screen, without the Install row, on a device that does not
-// prefer reduced motion.
-function fixture() {
-  const stored = new Map<string, string>();
-  vi.stubGlobal("window", {
-    localStorage: {
-      getItem: (key: string) => stored.get(key) ?? null,
-      setItem: (key: string, value: string) => void stored.set(key, value),
-    },
-    matchMedia: () => ({ matches: false }),
+afterEach(() => {
+  layer.dispose();
+});
+
+// Lets the card's dim, icons and install flow resolve.
+const settle = () =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 0);
   });
-  const opener = { setTouchSetting: vi.fn(), settingsClosed: vi.fn() };
-  const sprites: { object: ReturnType<typeof drawn>; x: number; y: number }[] = [];
-  const scene = new SettingsScene();
-  Object.assign(scene, {
-    add: {
-      container: () => drawn(),
-      image: () => drawn(),
-      sprite: (x: number, y: number) => {
-        const object = drawn();
-        sprites.push({ object, x, y });
-        return object;
-      },
-    },
-    opener: "start",
-    scene: { get: () => opener, stop: vi.fn() },
+
+// The settings card opened by opener, once its dim and icons are ready, with the Install row
+// where the game can be installed.
+async function openCard(opener = "start", install = false) {
+  offer.state.mockReturnValue(install ? "steps" : "installed");
+  const events = new EventEmitter();
+  const owner = { setTouchSetting: vi.fn(), settingsClosed: vi.fn() };
+  const stop = vi.fn();
+  const scene = Object.assign(new SettingsScene(), {
+    events,
+    scene: { get: () => owner, isActive: () => true, restart: vi.fn(), stop },
+    sys: { isActive: () => true },
     textures: { exists: () => true },
   });
-  const internals = scene as unknown as {
-    drawCard(installRow: boolean): unknown;
-    layout: { reducedMotion: { row: Rect; toggle: { x: number; y: number } } };
-    render(): void;
-    watchPresses(): void;
-  };
-  internals.drawCard(false);
-  internals.render();
-  internals.watchPresses();
-  const row = internals.layout.reducedMotion;
-  const toggle = sprites.find(({ x, y }) => x === row.toggle.x && y === row.toggle.y)!.object;
-  return { opener, row: row.row, scene, stored, toggle };
+  scene.init({ opener });
+  scene.create();
+  await settle();
+  const [dialog, steps] = document.querySelectorAll<HTMLElement>("[role=dialog]");
+  const name = (element: Element | null) =>
+    element?.getAttribute("aria-label") ??
+    document.getElementById(element?.getAttribute("aria-labelledby") ?? "")?.textContent ??
+    element?.textContent;
+  const control = (label: string) =>
+    [...document.querySelectorAll<HTMLButtonElement>("button")].find(
+      (button) => !button.closest("[hidden]") && name(button) === label,
+    )!;
+  const key = (value: string, options: KeyboardEventInit = {}) =>
+    (document.activeElement ?? document.body).dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: value, ...options }),
+    );
+  const focused = () => name(document.activeElement);
+  return { control, dialog: dialog!, events, focused, key, owner, scene, steps: steps!, stop };
 }
 
-const switchFrame = (on: boolean) => animationKey("ui-switch", on ? "on" : "off");
-
-describe("the settings card's Reduced motion row", () => {
-  it("draws its label and switch, off on a device that does not prefer reduced motion", () => {
-    const f = fixture();
-    const label = state.texts.find(({ text }) => text === TEXT.settings.reducedMotion);
-    expect(label?.at.y).toBeGreaterThanOrEqual(f.row.y);
-    expect(f.toggle.play).toHaveBeenLastCalledWith(switchFrame(false));
+it("shows a switch for each setting named from TEXT, then the build label, focused on the card", async () => {
+  const { dialog } = await openCard();
+  const switches = [...dialog.querySelectorAll("[role=switch]")];
+  expect({
+    build: dialog.querySelector(".settings-build")?.textContent,
+    checked: switches.map((element) => element.getAttribute("aria-checked")),
+    focused: document.activeElement === dialog,
+    icons: [...dialog.querySelectorAll("img")].map((icon) => icon.getAttribute("src")),
+    install: dialog.querySelector(".settings-install"),
+    name: document.getElementById(dialog.getAttribute("aria-labelledby") ?? "")?.textContent,
+    switches: switches.map(
+      (element) => document.getElementById(element.getAttribute("aria-labelledby")!)?.textContent,
+    ),
+  }).toEqual({
+    build: expect.stringContaining(__APP_VERSION__) as unknown,
+    checked: [
+      touchSettingShown("moveControls"),
+      touchSettingShown("actionButtons"),
+      reducedMotion(window),
+    ].map(String),
+    focused: true,
+    icons: ["blob:icon-move-controls", "blob:icon-touch-controls", "blob:icon-reduced-motion"],
+    install: null,
+    name: WORDS.title,
+    switches: SWITCHES,
   });
+});
 
-  it("toggles and saves on a tap that lands and lifts on the row", () => {
-    const f = fixture();
-    const centre = { x: f.row.x + f.row.width / 2, y: f.row.y + f.row.height / 2 };
-    state.pointer.get("pointerdown")!(centre);
-    state.pointer.get("pointerup")!(centre);
-    expect(f.toggle.play).toHaveBeenLastCalledWith(switchFrame(true));
-    expect([...f.stored.values()]).toEqual(["on"]);
-    expect(f.opener.setTouchSetting).not.toHaveBeenCalled();
-  });
+it("moves the keyboard's focus through the rows, Install, then the close X, wrapping", async () => {
+  const { focused, key } = await openCard("start", true);
+  const steps = (values: readonly string[]) =>
+    values.map((value) => {
+      key(value);
+      return focused();
+    });
+  expect(
+    steps(["ArrowDown", "Tab", "ArrowDown", "ArrowDown", "Tab", "ArrowDown", "ArrowUp"]),
+  ).toEqual([...SWITCHES, WORDS.install, WORDS.close, WORDS.moveControls, WORDS.close]);
+});
 
-  it("toggles and saves when the keyboard focuses the row and presses Enter", () => {
-    const f = fixture();
-    const press = (key: string) =>
-      f.scene.key({ key, repeat: false, shiftKey: false } as KeyboardEvent);
-    ["ArrowDown", "ArrowDown", "ArrowDown", "Enter"].forEach(press);
-    expect(f.toggle.play).toHaveBeenLastCalledWith(switchFrame(true));
-    press("Enter");
-    expect(f.toggle.play).toHaveBeenLastCalledWith(switchFrame(false));
-    expect([...f.stored.values()]).toEqual(["off"]);
+it("toggles and saves Reduced motion on a press, never through the opener", async () => {
+  const { control, owner } = await openCard();
+  const motion = reducedMotion(window);
+  control(WORDS.reducedMotion).click();
+  expect({
+    checked: control(WORDS.reducedMotion).getAttribute("aria-checked"),
+    motion: reducedMotion(window),
+    saved: localStorage.getItem("chibis-way-home.reduced-motion"),
+    touch: owner.setTouchSetting.mock.calls.length,
+  }).toEqual({ checked: String(!motion), motion: !motion, saved: motion ? "off" : "on", touch: 0 });
+});
+
+it("passes each touch setting's change to the opener, which saves it and updates its dim", async () => {
+  const { control, key, owner } = await openCard("pause");
+  control(WORDS.actionButtons).focus();
+  key("Enter");
+  key("Enter", { repeat: true });
+  expect(owner.setTouchSetting).toHaveBeenCalledExactlyOnceWith(
+    "actionButtons",
+    !touchSettingShown("actionButtons"),
+  );
+  expect(backdrop).not.toHaveBeenCalled();
+});
+
+it("keeps the gate's refusals: no toggle or close while the gate refuses", async () => {
+  const { control, key, owner } = await openCard();
+  const motion = reducedMotion(window);
+  gate.accepts.mockReturnValue(false);
+  control(WORDS.reducedMotion).click();
+  control(WORDS.close).click();
+  key("Escape");
+  expect({ closed: owner.settingsClosed.mock.calls.length, motion: reducedMotion(window) }).toEqual(
+    { closed: 0, motion },
+  );
+});
+
+it.each(["Escape", "P", "p"])("closes on %s, once", async (value) => {
+  const { key, owner, stop } = await openCard();
+  key(value);
+  key(value, { repeat: true });
+  expect(owner.settingsClosed).toHaveBeenCalledOnce();
+  expect(stop).toHaveBeenCalledExactlyOnceWith();
+});
+
+it("closes on the close X and on back, once", async () => {
+  const { control, key, owner, scene } = await openCard();
+  control(WORDS.close).focus();
+  key("Enter");
+  scene.back();
+  expect(owner.settingsClosed).toHaveBeenCalledOnce();
+});
+
+it("closes on a tap outside the card, never on one that lands on it or travels", async () => {
+  const { dialog, owner } = await openCard();
+  const outside = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const tap = (target: HTMLElement, travel: number) => {
+    target.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true, clientX: 5, clientY: 5, pointerId: 1 }),
+    );
+    target.dispatchEvent(
+      new PointerEvent("pointerup", {
+        bubbles: true,
+        clientX: 5 + travel,
+        clientY: 5,
+        pointerId: 1,
+      }),
+    );
+  };
+  tap(dialog, 0);
+  tap(outside, 40);
+  expect(owner.settingsClosed).not.toHaveBeenCalled();
+  tap(outside, 0);
+  expect(owner.settingsClosed).toHaveBeenCalledOnce();
+});
+
+it("shows the install steps in the card's place, which Escape, back and its X close in turn", async () => {
+  const { control, dialog, focused, key, owner, scene, steps } = await openCard("pause", true);
+  control(WORDS.install).focus();
+  key("Enter");
+  await settle();
+  const { steps: text, title } = WORDS.installSteps.ios;
+  const showing = () => ({ settings: !dialog.hidden, steps: !steps.hidden });
+  expect({
+    focused: focused(),
+    glyph: steps.querySelector("img")?.getAttribute("src"),
+    name: document.getElementById(steps.getAttribute("aria-labelledby") ?? "")?.textContent,
+    showing: showing(),
+    text: document.getElementById(steps.getAttribute("aria-describedby") ?? "")?.textContent,
+  }).toEqual({
+    focused: WORDS.close,
+    glyph: "blob:icon-ios-share",
+    name: title,
+    showing: { settings: false, steps: true },
+    text,
   });
+  key("Escape");
+  expect({ focused: focused(), showing: showing() }).toEqual({
+    focused: WORDS.install,
+    showing: { settings: true, steps: false },
+  });
+  key("Enter");
+  await settle();
+  scene.back();
+  key("Enter");
+  await settle();
+  key("Enter");
+  expect({ closed: owner.settingsClosed.mock.calls.length, showing: showing() }).toEqual({
+    closed: 0,
+    showing: { settings: true, steps: false },
+  });
+  expect(gate.invalidate).toHaveBeenCalledTimes(6);
+  scene.back();
+  expect(owner.settingsClosed).toHaveBeenCalledOnce();
+});
+
+it("removes the card and gives back the keys when the scene shuts down", async () => {
+  const { events } = await openCard();
+  events.emit("shutdown");
+  expect(document.querySelector("[role=dialog]")).toBeNull();
+  const event = new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" });
+  document.body.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(false);
+});
+
+// Openers can forward back before Phaser processes a queued scene launch.
+it("ignores back before its scene starts", () => {
+  const scene = Object.assign(new SettingsScene(), { sys: { isActive: () => false } });
+  expect(() => scene.back()).not.toThrow();
 });

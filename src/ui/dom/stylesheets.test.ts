@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import { achievementsCardProperties } from "../layout/achievementsCard";
+import { SETTINGS_LAYOUT } from "../layout/settingsCard";
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard";
 import { ACTION_HELP_PROPERTIES } from "./actionHelp";
 import { DEATH_LAYOUT } from "./death";
@@ -23,6 +24,7 @@ const SET = new Set(
 const WRITTEN = new Set(
   [
     UI_LAYOUT,
+    SETTINGS_LAYOUT,
     STAGE_SELECT_LAYOUT,
     DEATH_LAYOUT,
     achievementsCardProperties(1),

@@ -225,12 +225,8 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
   // Tab and the arrows move the keyboard's focus through Start, Restart and the nav's buttons; Enter and
   // Space press the focused one, or Start with nothing focused.
   private key(event: KeyboardEvent): void {
+    // The cards take their keys in the page (src/ui/dom).
     if (this.card !== undefined) {
-      // A card without key() takes its keys in the page (src/ui/dom).
-      const card = this.cardScene();
-      if ("key" in card) {
-        card.key(event);
-      }
       return;
     }
     if (!modalInput(this).accepts(event)) {
@@ -300,7 +296,7 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     }
   }
 
-  // The card that shows, which takes the keys and back.
+  // The card that shows, which takes back.
   private cardScene(): AchievementsScene | RestartScene | SettingsScene {
     const key = { achievements: ACHIEVEMENTS, restart: RESTART, settings: SETTINGS }[
       this.card ?? "settings"

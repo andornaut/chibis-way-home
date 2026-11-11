@@ -32,6 +32,8 @@ export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-close", name: "ui-close", tag: "normal", whole: true },
   { art: "ui-close", name: "ui-close-pressed", tag: "pressed", whole: true },
   { art: "ui-settings-card", name: "ui-settings-card" },
+  { art: "ui-switch", name: "ui-switch-off", tag: "off", whole: true },
+  { art: "ui-switch", name: "ui-switch-on", tag: "on", whole: true },
 ];
 
 // The palette colours the HTML UI's CSS reads, as --colour-<name>.

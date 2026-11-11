@@ -97,7 +97,7 @@ const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
 // conversation too, taking no presses, so a tap on one reaches the conversation as any other tap
 // does.
 // Settings opens SettingsScene's card over the same dim in the pause card's place, and passes it
-// the keys and back until it closes; Back to title ends the zone for the start screen.
+// back until it closes; Back to title ends the zone for the start screen.
 export class PauseScene extends Scene implements SettingsOpener {
   private skillVisit = 0;
   private hud = new Map<SkillId, ReturnType<typeof drawSkillButton>>();
@@ -737,8 +737,8 @@ export class PauseScene extends Scene implements SettingsOpener {
       if (this.state === "opening" || this.state === "skill" || this.blocked()) {
         return;
       }
+      // The settings card takes its keys in the page (src/ui/dom).
       if (this.state === "settings") {
-        this.settings().key(event);
         return;
       }
       if (!this.cardInput().accepts(event)) {

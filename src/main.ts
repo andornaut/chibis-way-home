@@ -10,6 +10,7 @@ import "./ui/dom/stageSelect.css";
 import "./ui/dom/skillDisc.css";
 import "./ui/dom/actionHelp.css";
 import "./ui/dom/skillDetails.css";
+import "./ui/dom/settings.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
