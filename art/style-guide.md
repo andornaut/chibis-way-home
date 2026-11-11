@@ -396,14 +396,14 @@ Every ordinary modal uses the [shared content-fitting rule](controls.md#modal-co
 | -------- | -------- | ------------------------------------------------------------------------------- |
 | Pause    | Paused   | Resume, Settings and Back to title buttons                                      |
 | Settings | Settings | Move controls and Action buttons rows; Install only when available; build label |
-| Steps    | Install  | Two browser-specific instruction steps                                          |
+| Steps    | Browser  | The browser's own steps paragraph beside its glyph                              |
 
 - Buttons: `ui-button-primary` has a dslate face on a navy lip with a white label; `ui-button` has a grey face on a slate lip with an ink label. Both keep their 16x28 nine-slice shape and margins 2,4,2,6. Labels sink 2px while pressed. Equal actions share a width measured from their content, with the standard padding and gaps.
 - Settings rows: `icon-move-controls` and `icon-touch-controls` remain 16x16; `ui-switch` remains 32x16. Its knob is right with a tick on green when on, left with a cross on slate when off. Rows align their icon, label and switch within the fitted content column. Hiding a control hides only its drawing.
 - Install row: its 16x16 icon and compact secondary action form one full-height interactive row. Removing Install also removes its row and gap before the build label; no blank slot remains.
 - Build label: dslate in `font-body`, centred within the fitted card and included in its measured content.
 - Keyboard focus: `ui-focus`, with nine-slice margins 4, stays 4px outside the focused element on every side. Its 2px yellow band between ink lines remains visible on the card, rows, buttons and dim. Focus follows each fitted row, button or close control.
-- Install steps: each uses a 16x16 glyph and up to two lines of text at the existing font size. The first shows Share or the browser-menu glyph; the second shows the install glyph. Fit the frame to the actual wrapped steps and close control instead of a shared modal canvas.
+- Install steps: each browser kind has its own title and one paragraph of steps at the existing font size, beside one 16x16 glyph: Share on iOS, install on Chromium desktop, and the browser-menu glyph on Chromium Android, Firefox Android, Samsung Internet, Safari on Mac and other browsers. Firefox desktop, which cannot install the game, shows no glyph. Fit the frame to the actual wrapped steps and close control instead of a shared modal canvas.
 
 ### Update notice
 
