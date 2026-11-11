@@ -2,7 +2,7 @@
  * Trixi and Kiwi dialogue portraits matching their existing antagonist identities.
  *
  * Usage: node art/tools/speakerPortraits.ts build | preview OUT.png, from the repository root.
- * portrait-goose and portrait-raccoon: 64x64, facing right, transparent ground, chest cropped at
+ * portrait-goose and portrait-raccoon: 48x48, facing right, transparent ground, chest cropped at
  * the bottom and one ink outer contour. Each has one neutral 1000ms looping frame, once []. Use the
  * standard unmirrored dialogue portrait slot with its top-left origin. Neither portrait declares a
  * hitbox, contact mask or slice. Trixi retains cream feathers, a long neck, grey wing, orange bill
@@ -19,47 +19,47 @@ const ONCE = { "portrait-goose": [], "portrait-raccoon": [] };
 const USAGE = "Usage: speakerPortraits.ts build | preview OUT.png";
 
 function goose(): pixel.Frame {
-  const g = new Grid(64, 64);
-  g.blob(21, 70, 26, 22, "cream", "lgrey", "white");
-  g.ell(14, 65, 16, 14, "grey", "dslate", "lgrey");
-  g.ell(28, 52, 10, 22, "cream", "lgrey", "white");
-  g.ell(34, 35, 8, 17, "cream", "lgrey", "white");
-  g.blob(37, 23, 15, 13, "cream", "lgrey", "white");
+  const g = new Grid(48, 48);
+  g.blob(16, 52, 19.5, 16.5, "cream", "lgrey", "white");
+  g.ell(10.5, 49, 12, 10.5, "grey", "dslate", "lgrey");
+  g.ell(21, 39, 7.5, 16.5, "cream", "lgrey", "white");
+  g.ell(25.5, 26, 6, 13, "cream", "lgrey", "white");
+  g.blob(28, 17, 11, 10, "cream", "lgrey", "white");
   // A tapered bill with a raised base, a nostril and an ochre lower edge.
-  g.tri([48, 20], [62, 28], [47, 32], "orange");
-  g.rect(48, 29, 12, 3, "ochre");
-  g.rect(53, 24, 2, 1, "ochre");
+  g.tri([36, 15], [46, 21], [35, 24], "orange");
+  g.rect(36, 22, 9, 2, "ochre");
+  g.rect(40, 18, 2, 1, "ochre");
   // One round lens inside the head over a visible eye; a short bridge and the temple to the crown.
-  g.rect(24, 19, 11, 2, "ink");
-  g.ell(40, 20, 6, 6, "ink");
-  g.ell(40, 20, 4, 4, "white");
-  g.rect(41, 18, 3, 4, "ink");
-  g.rect(37, 17, 2, 2, "lgrey");
-  g.rect(45, 18, 4, 2, "ink");
+  g.rect(18, 15, 8, 1, "ink");
+  g.ell(30, 15.5, 4.5, 4.5, "ink");
+  g.ell(30, 15.5, 3, 3, "white");
+  g.rect(31, 14, 2, 3, "ink");
+  g.p(28, 13, "lgrey");
+  g.rect(34, 14, 3, 1, "ink");
   return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
 function raccoon(): pixel.Frame {
-  const g = new Grid(64, 64);
-  g.blob(30, 71, 25, 26, "grey", "slate", "lgrey");
-  g.ell(35, 68, 15, 22, "cream", "lgrey");
-  for (const x of [17, 48]) {
-    g.ell(x, 12, 8, 8, "grey", "slate", "lgrey");
-    g.ell(x, 12, 4, 4, "ink");
+  const g = new Grid(48, 48);
+  g.blob(22.5, 53, 19, 19.5, "grey", "slate", "lgrey");
+  g.ell(26, 51, 11, 16.5, "cream", "lgrey");
+  for (const x of [13, 36]) {
+    g.ell(x, 9, 6, 6, "grey", "slate", "lgrey");
+    g.ell(x, 9, 3, 3, "ink");
   }
-  g.blob(33, 30, 23, 20, "grey", "slate", "lgrey");
-  g.ell(35, 37, 22, 11, "cream", "lgrey");
-  g.rect(30, 12, 5, 14, "slate");
+  g.blob(25, 22.5, 17, 15, "grey", "slate", "lgrey");
+  g.ell(26, 28, 16.5, 8, "cream", "lgrey");
+  g.rect(22, 9, 4, 10, "slate");
   for (const [x, y] of [
-    [23, 31],
-    [44, 29],
+    [17, 23],
+    [33, 22],
   ] as const) {
-    g.ell(x, y, 8, 6, "ink");
-    g.rect(x - 2, y - 3, 2, 2, "white");
+    g.ell(x, y, 6, 4.5, "ink");
+    g.rect(x - 2, y - 2, 2, 2, "white");
   }
-  g.ell(41, 43, 13, 8, "cream", "lgrey");
-  g.rect(43, 36, 5, 3, "ink");
-  g.rect(41, 45, 6, 1, "slate");
+  g.ell(31, 32, 10, 6, "cream", "lgrey");
+  g.rect(32, 27, 4, 2, "ink");
+  g.rect(31, 34, 4, 1, "slate");
   return g.outlined({ edge: () => pixel.hex("ink") });
 }
 

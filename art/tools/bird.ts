@@ -71,7 +71,7 @@
  * land (its squash reads as a flinch); death death; talk none, falls back to idle (the portrait
  * carries the speech); quirk none.
  *
- * portrait-bird, 64x64: his head and the top of his body, facing right towards the text, cut off
+ * portrait-bird, 48x48: his head and the top of his body, facing right towards the text, cut off
  * by the frame's bottom edge, on a transparent ground (the dialogue box's 68x68 frame supplies the
  * backing), with one ink outer line. Tags: neutral (dot eye), happy (eye closed in an upward arc),
  * worried (dot eye under a brow slanting down to the back, the bill a little lower). One frame
@@ -507,29 +507,29 @@ function birdTags(): pixel.Tags {
   ];
 }
 
-/** 64x64: his head and the top of his body facing right, cut off by the bottom edge. */
+/** 48x48: his head and the top of his body facing right, cut off by the bottom edge. */
 export function portrait(expr: string): pixel.Frame {
-  const g = new Grid(64, 64);
-  const hcx = 30.0;
-  const hcy = 28.0;
-  const hr = 19.0;
-  cel(g, inBlob(24, 64, 34, 22, 2.6), BASE, SHADE, LIGHT, 4, 1); // the top of his body, the head set into it
-  cel(g, inEll(14, 56, 13, 5.5, -0.25), WING, "brown", null, 2, 1);
-  cel(g, inEll(hcx, hcy, hr, hr), BASE, SHADE, LIGHT, 4, 1);
+  const g = new Grid(48, 48);
+  const hcx = 22.5;
+  const hcy = 21.0;
+  const hr = 14.5;
+  cel(g, inBlob(18, 48, 26, 17, 2.6), BASE, SHADE, LIGHT, 3, 1); // the top of his body, the head set into it
+  cel(g, inEll(10.5, 42, 10, 4.2, -0.25), WING, "brown", null, 2, 1);
+  cel(g, inEll(hcx, hcy, hr, hr), BASE, SHADE, LIGHT, 3, 1);
   const by = Math.trunc(hcy + 1) + (expr === "worried" ? 2 : 0);
-  g.rect(Math.trunc(hcx + hr - 4), by, 13, 9, "orange"); // bill
-  g.rect(Math.trunc(hcx + hr - 4), by + 7, 13, 2, "ochre");
+  g.rect(Math.trunc(hcx + hr - 3), by, 10, 7, "orange"); // bill
+  g.rect(Math.trunc(hcx + hr - 3), by + 5, 10, 2, "ochre");
   const ex = Math.trunc(hcx + 1);
   const ey = Math.trunc(hcy - hr * 0.5);
   if (expr === "happy") {
     // closed: an upward arc
-    [4, 2, 1, 0, 0, 1, 2, 4].forEach((dy, i) => g.rect(ex - 1 + i, ey + 1 + dy, 1, 2, "ink"));
+    [3, 1, 0, 0, 1, 3].forEach((dy, i) => g.rect(ex - 1 + i, ey + 1 + dy, 1, 2, "ink"));
   } else {
-    g.rect(ex, ey, 7, 7, "ink");
+    g.rect(ex, ey, 5, 5, "ink");
     if (expr === "worried") {
       // brow slanting down to the back
-      for (let i = 0; i < 8; i++) {
-        g.rect(ex - 2 + i, ey - 5 + Math.floor((7 - i) / 3), 1, 2, "ink");
+      for (let i = 0; i < 6; i++) {
+        g.rect(ex - 1 + i, ey - 4 + Math.floor((5 - i) / 3), 1, 2, "ink");
       }
     }
   }

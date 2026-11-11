@@ -25,7 +25,7 @@
  * All frame alpha is paired with exact contact silhouettes and requires physics review when
  * changed.
  *
- * portrait-dog is 64x64, right-facing towards text, transparent behind, chest cut off at the
+ * portrait-dog is 48x48, right-facing towards text, transparent behind, chest cut off at the
  * bottom, with one ink outer line. Tag neutral: 1x1000ms. It shares the brown and white coat, rose
  * ears, red bandana and sky/amber eyes.
  */
@@ -350,89 +350,89 @@ function pixels(im: RgbaImage): pixel.Frame {
 }
 
 function portraitImage(): RgbaImage {
-  const im = blankImage(64, 64);
+  const im = blankImage(48, 48);
   const d = drawer(im);
-  d.ellipse([12, 33, 54, 85], "ink");
-  d.ellipse([13, 34, 53, 84], "lgrey");
-  d.ellipse([13, 34, 50, 82], "white");
-  // High rose ears have a forward folded tip, rather than a long drop to the jaw.
+  d.ellipse([9, 25, 40, 64], "ink");
+  d.ellipse([10, 26, 39, 63], "lgrey");
+  d.ellipse([10, 26, 37, 61], "white");
+  // High rose ears with a darker folded tip inside each ear outline.
   d.polygon(
     [
-      [15, 22],
-      [19, 3],
-      [32, 13],
+      [10, 18],
+      [13, 2],
+      [25, 11],
     ],
     "ink",
   );
   d.polygon(
     [
-      [17, 20],
-      [20, 5],
-      [30, 13],
+      [12, 16],
+      [14, 4],
+      [23, 11],
     ],
     "brown",
   );
   d.polygon(
     [
-      [20, 5],
-      [12, 11],
-      [22, 12],
+      [14, 4],
+      [13, 10],
+      [19, 8],
     ],
     "dbrown",
   );
   d.polygon(
     [
-      [43, 19],
-      [48, 3],
-      [57, 16],
+      [31, 15],
+      [36, 2],
+      [44, 13],
     ],
     "ink",
   );
   d.polygon(
     [
-      [44, 18],
-      [48, 5],
-      [55, 15],
+      [33, 13],
+      [36, 4],
+      [42, 12],
     ],
     "brown",
   );
   d.polygon(
     [
-      [48, 5],
-      [58, 10],
-      [48, 12],
+      [36, 4],
+      [39, 9],
+      [35, 9],
     ],
     "dbrown",
   );
-  d.ellipse([15, 10, 57, 47], "ink");
-  d.ellipse([16, 11, 56, 46], "dbrown");
-  d.ellipse([16, 11, 53, 43], "brown");
-  d.arc([17, 12, 52, 42], 190, 275, "skin2", 2);
+  d.ellipse([11, 7, 43, 35], "ink");
+  d.ellipse([12, 8, 42, 34], "dbrown");
+  d.ellipse([12, 8, 40, 32], "brown");
+  d.arc([13, 9, 39, 31], 190, 275, "skin2", 1);
   // An asymmetric blaze widens into a white muzzle between the odd-coloured eyes.
   d.polygon(
     [
-      [42, 11],
-      [46, 12],
-      [47, 25],
-      [51, 32],
-      [39, 32],
-      [43, 23],
+      [31, 8],
+      [34, 9],
+      [35, 19],
+      [38, 24],
+      [29, 24],
+      [32, 17],
     ],
     "white",
   );
-  d.ellipse([36, 28, 62, 44], "ink");
-  d.ellipse([37, 29, 61, 43], "lgrey");
-  d.ellipse([37, 29, 60, 41], "white");
-  d.rectangle([56, 29, 61, 33], "plum");
-  d.rectangle([56, 29, 58, 30], "dbrown");
+  d.ellipse([27, 21, 46, 33], "ink");
+  d.ellipse([28, 22, 45, 32], "lgrey");
+  d.ellipse([28, 22, 44, 30], "white");
+  d.rectangle([42, 22, 45, 25], "plum");
+  d.rectangle([42, 22, 43, 23], "dbrown");
   for (const [x, y, iris, width] of [
-    [35, 22, "sky", 5],
-    [49, 21, "amber", 4],
+    [25, 16, "sky", 4],
+    [36, 15, "amber", 3],
   ] as const) {
-    d.rectangle([x, y, x + width, y + 5], "ink");
-    d.rectangle([x + 1, y + 1, x + width - 1, y + 4], iris);
-    d.rectangle([x + width - 2, y + 3, x + width - 1, y + 4], "ink");
-    d.rectangle([x + 1, y + 1, x + 2, y + 2], "white");
+    d.rectangle([x, y, x + width, y + 4], "ink");
+    d.rectangle([x + 1, y + 1, x + width - 1, y + 3], iris);
+    d.rectangle([x + width - 1, y + 2, x + width - 1, y + 3], "ink");
+    d.point([x + 1, y + 1], "white");
     d.line(
       [
         [x, y - 1],
@@ -443,29 +443,29 @@ function portraitImage(): RgbaImage {
   }
   d.polygon(
     [
-      [17, 44],
-      [52, 44],
-      [35, 62],
+      [13, 33],
+      [39, 33],
+      [26, 47],
     ],
     "ink",
   );
   d.polygon(
     [
-      [19, 45],
-      [50, 45],
-      [35, 60],
+      [14, 34],
+      [38, 34],
+      [26, 45],
     ],
     "red",
   );
   d.polygon(
     [
-      [35, 47],
-      [50, 45],
-      [35, 60],
+      [26, 35],
+      [38, 34],
+      [26, 45],
     ],
     "dred",
   );
-  d.point([14, 22], "ink");
+  d.point([10, 17], "ink");
   return im;
 }
 

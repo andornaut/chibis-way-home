@@ -177,9 +177,9 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 | Sprite          | Frame |
 | --------------- | ----- |
 | Bird            | 48x42 |
-| Bird portrait   | 64x64 |
+| Bird portrait   | 48x48 |
 | Ferret          | 64x80 |
-| Ferret portrait | 64x64 |
+| Ferret portrait | 48x48 |
 | Pigeon          | 22x22 |
 | Pug             | 44x32 |
 
@@ -222,7 +222,7 @@ Chibi is the male protagonist, a wide, round, cream-coloured bird drawn facing r
 - Frame 48x42, feet on rows 39 and 40 and the outline on row 41.
 - Collision body 24x36 (2x3 tiles), anchored bottom-centre: the frame's bottom edge sits on the body's bottom edge, and his body-centre x, 24 (the frame's centre line, between columns 23 and 24), sits on the body's centre, so mirroring him does not move it.
 - Overhang of the 24x36 body at rest: his back and tail 8px on the left, his head and bill 10px on the right, and 2px of the body's height above his head left empty. The raised wing reaches 5px above the body, and the jump crouch and land squash push his tail out to 12px on the left.
-- Portrait: 64x64, his head set into the top of his body, facing right, cut off by the bottom edge, with one ink outer line on a transparent ground. The dialogue box's 68x68 frame supplies the backing.
+- Portrait: 48x48, his head set into the top of his body, facing right, cut off by the bottom edge, with one ink outer line on a transparent ground. The dialogue box's 68x68 frame supplies the backing.
 
 ## Logo
 
@@ -260,7 +260,7 @@ Fert is the champagne ferret standing up on his hind legs in a stovepipe hat and
 - Hat: a tall, narrow plum stovepipe with a dark-brown rim light and a red band. Nothing touches it. Red (the band and bow tie) is the one accent; the hat and bow tie take an ink outline.
 - Frame 64x80, facing left (mirrored for right), feet on rows 76 to 78 and the outline on row 79.
 - Anchor: the frame's bottom edge sits on the collision box's bottom edge, and its body-centre x, 32 (between columns 31 and 32), sits on the box centre, so mirroring it does not move it.
-- Portrait: 64x64, its head and neck facing right towards the text, as the bird's does, cut off by the bottom edge, with one ink outer line on a transparent ground. Neutral, smug (the lid at half) and annoyed (a brow dipped towards the snout).
+- Portrait: 48x48, its head and neck facing right towards the text, as the bird's does, cut off by the bottom edge, with one ink outer line on a transparent ground. Neutral, smug (the lid at half) and annoyed (a brow dipped towards the snout).
 
 ## UI
 
@@ -306,7 +306,7 @@ Secret-room entry grants a permanent skill; repeated grants do not stack. The fi
 ### Dialogue box
 
 - The dialogue panel is at the top, 40,8,640,96. One paragraph of at most three lines shows at a time; advancing replaces that paragraph rather than adding a chat history. Play is frozen and touch controls hide while the conversation is open.
-- The bird's portrait is on the left. Other speakers' portraits are on the right; consecutive paragraphs from the same speaker keep that side. Reposition the 68x68 portrait frame and 64x64 portrait without mirroring either artwork.
+- The bird's portrait is on the left. Other speakers' portraits are on the right; consecutive paragraphs from the same speaker keep that side. Reposition the 68x68 portrait frame and 48x48 portrait without mirroring either artwork.
 - Name tabs sit inside the panel. Their fill is the speaker's colour: amber, green, pink or tan. Ink text holds at least 6.6:1 on each, and each holds at least 5:1 on the panel's navy.
 - Continue is the primary `ui-button-primary`, 488,112,192,48, with a white label. Skip is the secondary `ui-button`, 288,112,192,48, with an ink label. Both remain visible below the panel, separated by 8px; labels centre by visible ink within each state’s drawn face, using the shared [button measurements](controls.md#sizing-and-spacing). Primary actions omit the dark play mark.
 - Continue advances the current conversation. Skip skips its remaining paragraphs but opens any required terminal choice without selecting an answer. A required choice uses a modal card with ordinary form buttons; while it shows, Continue and Skip underneath cannot activate. No live conversation currently configures a choice.
@@ -571,7 +571,7 @@ The character catalogue drawn by `art/tools/cast.ts` has no current world placem
 
 The sprite and portrait integrate with the dog encounter and its frozen introduction. The runtime selects the movement-state animation without drawing a red contact outline. The pug remains a separate retained asset, with no current world placement.
 
-`dog-antagonist` represents Archie, modelled on the Australian Shepherd in Archie: brown and white patches, a white blaze, muzzle, ruff and paws, high folded rose ears, a compact white-tipped bobtail and a red bandana. The right-facing 60x40 sprite has the visible sky-blue eye; the 64x64 portrait also shows the amber iris. The pug remains a separate asset. Frustration compresses before takeoff, lifts the sprite 3px and then 5px within its unchanged canvas, and returns to a planted stomp; its runtime position and contact box do not move with the drawn hop.
+`dog-antagonist` represents Archie, modelled on the Australian Shepherd in Archie: brown and white patches, a white blaze, muzzle, ruff and paws, high folded rose ears, a compact white-tipped bobtail and a red bandana. The right-facing 60x40 sprite has the visible sky-blue eye; the 48x48 portrait also shows the amber iris. The pug remains a separate asset. Frustration compresses before takeoff, lifts the sprite 3px and then 5px within its unchanged canvas, and returns to a planted stomp; its runtime position and contact box do not move with the drawn hop.
 
 The contact box is fixed across all poses: x 2, y 2, width 56, height 38, in frame pixels. The contact box is collision data, not a visible red rectangle or silhouette outline. The sprite has no baked red danger line. All drawn body parts remain inside the contact envelope, which does not shrink when the dog crouches or rests. Contact is always lethal; a crouch or rest is a movement cue, never a safe state.
 
@@ -585,7 +585,7 @@ The contact box is fixed across all poses: x 2, y 2, width 56, height 38, in fra
 
 These animation tags are available as loops. The runtime selects a tag for each active gameplay state. Gameplay data owns the duration and transition of patrol, crouch, committed rush and rest; art cycle durations do not set encounter timing. The five-column by four-row placement (60x48) bottom-anchors the 60x40 frame, putting the contact box ten pixels below the placement's top and ending at its bottom.
 
-`portrait-dog` is Archie's 64x64 right-facing portrait, with the matching brown-and-white coat, folded ears, white blaze, red bandana and sky/amber eyes. It retains its ink outline and transparent ground, cut off at the bottom. Its `neutral` tag remains one frame at 1000ms, using the existing dialogue portrait frame.
+`portrait-dog` is Archie's 48x48 right-facing portrait, with the matching brown-and-white coat, folded ears, white blaze, red bandana and sky/amber eyes. It retains its ink outline and transparent ground, cut off at the bottom. Its `neutral` tag remains one frame at 1000ms, using the existing dialogue portrait frame.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 
@@ -783,7 +783,7 @@ The windmill sails use `countryside-windmill` and two sprites in the countryside
 
 ## Goose antagonist
 
-`art/tools/goose.ts` draws Trixi as the countryside's `goose-antagonist`. A long neck, small head, pale body and round ink-rimmed glasses distinguish her from Chibi. The glasses sit inside the head silhouette and stay clearly smaller than it: crown, cheek and jaw surround one round lens over a white eye with an ink pupil, the temple runs back to the crown and a tapered orange bill projects ahead; a warm beak and feet keep her silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. The looping `skid` tag (2 frames, 100ms each) follows the charge with feet braced forward, body leaning back, wing half-flared and an alternating 2px scuff at the leading toes, each frame reading as braking on its own. It has no red outline. `art/tools/speakerPortraits.ts` supplies `portrait-goose`: a transparent right-facing 64x64 portrait retaining the long cream neck, grey wing, orange bill and the same glasses sized within the head. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot.
+`art/tools/goose.ts` draws Trixi as the countryside's `goose-antagonist`. A long neck, small head, pale body and round ink-rimmed glasses distinguish her from Chibi. The glasses sit inside the head silhouette and stay clearly smaller than it: crown, cheek and jaw surround one round lens over a white eye with an ink pupil, the temple runs back to the crown and a tapered orange bill projects ahead; a warm beak and feet keep her silhouette readable against the muted scenery. Its warning raises its wing and neck before the short committed charge. The looping `skid` tag (2 frames, 100ms each) follows the charge with feet braced forward, body leaning back, wing half-flared and an alternating 2px scuff at the leading toes, each frame reading as braking on its own. It has no red outline. `art/tools/speakerPortraits.ts` supplies `portrait-goose`: a transparent right-facing 48x48 portrait retaining the long cream neck, grey wing, orange bill and the same glasses sized within the head. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot.
 
 The frame is 48x48 with bottom-centre anchor 24,48. Its constant contact box is x 2, y 2, width 44, height 46, containing every pose and its mirrored version. The skin uses the shared enemy state graph; gameplay owns warning, charge and recovery durations. Contact remains lethal in every state.
 
@@ -821,7 +821,7 @@ The frame remains 48x48, bottom-centre anchor 24,48, with fixed reach box x 2, y
 | rush           | Four frames, 80ms each   | Grounded four-foot charge       |
 | walk           | Four frames, 120ms each  | Alternating four-foot steps     |
 
-The earlier actor tags loop. `portrait-bear` is 64x64, authored facing right, with the matching dark coat and retained phone. Its `neutral` and `annoyed` tags have one 1000ms frame each. Dialogue text belongs to gameplay data.
+The earlier actor tags loop. `portrait-bear` is 48x48, authored facing right, with the matching dark coat and retained phone. Its `neutral` and `annoyed` tags have one 1000ms frame each. Dialogue text belongs to gameplay data.
 
 `bear-growl-wave` is a noncolliding 48x32 directional effect. Its `pulse` tag has four 100ms frames, plays once and requires runtime removal when finished. Place its left-centre anchor 0,16 at the bear's mouth, frame-local 36,22; the unmirrored image origin is therefore actor origin plus 36,6. Mirror this attachment for left-facing use. The effect does not define reach or force. Gameplay supplies the height-limited push volume and solid cover checks, with high ground as the primary avoidance route. Keep the drawn pulse within that configured band.
 
@@ -902,7 +902,7 @@ The shudder is visual only: rows 0 to 3 match `out` in every warning frame, so t
 | rest        | Two frames, 400ms each  | Perched recovery             |
 | swoop       | Four frames, 100ms each | Head-down contact dive       |
 
-The earlier motion tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; gameplay data owns the anticipation duration for each action. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. `art/tools/pigeonPortrait.ts` draws `portrait-pigeon`, a transparent right-facing 64x64 portrait with one 1000ms looping `neutral` frame.
+The earlier motion tags loop. `prepare-air` appends after `swoop`, preserving the preceding 20 frames. Its tucked feet, drawn-back wings and aimed head signal an airborne attack. The 320ms art cycle does not trigger the action; gameplay data owns the anticipation duration for each action. Gameplay owns the occasional swoop trajectory, flight, spotting and release timing. `pigeon-poop` is a 12x12 white block with a one-pixel ink border and full-frame contact box, tag `idle`, one 400ms looping frame. It is the approved white projectile exception to the shared red terrain-contact rule. The code supplies its straight downward motion, lethal contact and removal on landing; none is baked into the drawing. `art/tools/pigeonPortrait.ts` draws `portrait-pigeon`, a transparent right-facing 48x48 portrait with one 1000ms looping `neutral` frame.
 
 ## Industrial material pack
 
@@ -951,7 +951,7 @@ Neither sprite carries red, amber or a round pickup shape.
 
 The earlier motion tags loop; gameplay data owns state durations, motion and transitions through the shared behaviour graph. A skin supplies compatible artwork without changing the canonical footprint or contact box. The body sprite supplies no new conversation.
 
-Kiwi, the female raccoon, reuses the existing identity without added gender accessories. `art/tools/speakerPortraits.ts` supplies `portrait-raccoon`: a transparent right-facing 64x64 portrait with rounded ears, paired ink masks, grey fur and a cream muzzle. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
+Kiwi, the female raccoon, reuses the existing identity without added gender accessories. `art/tools/speakerPortraits.ts` supplies `portrait-raccoon`: a transparent right-facing 48x48 portrait with rounded ears, paired ink masks, grey fur and a cream muzzle. Its single `neutral` frame loops at 1000ms in the standard dialogue portrait slot. Ground walk and rush cycles append after frustration, retaining every earlier frame index. They provide the contact-attempt charge alongside the vertical drop; artwork has no baked world displacement. Contact remains lethal in every state.
 
 This sprite also uses the [shared enemy frustration cycle](#enemy-frustration).
 

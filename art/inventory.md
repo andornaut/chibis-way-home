@@ -90,11 +90,11 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | park-boat                 | park, moving platform: deck line on row 0, collision 72x12 | 72x18  | idle                                                                                         |
 | park-gate                 | park room door, a Use zone, no collision                   | 36x60  | idle, open (once)                                                                            |
 | pigeon                    | street cast                                                | 22x22  | idle, flee (once), fly                                                                       |
-| portrait-bird             | portrait                                                   | 64x64  | neutral, happy, worried                                                                      |
-| portrait-ferret           | portrait                                                   | 64x64  | neutral, smug, annoyed                                                                       |
-| portrait-goose            | Trixi dialogue portrait, transparent                       | 64x64  | neutral                                                                                      |
-| portrait-pigeon           | Pebble dialogue portrait, transparent                      | 64x64  | neutral                                                                                      |
-| portrait-raccoon          | Kiwi dialogue portrait, transparent                        | 64x64  | neutral                                                                                      |
+| portrait-bird             | portrait                                                   | 48x48  | neutral, happy, worried                                                                      |
+| portrait-ferret           | portrait                                                   | 48x48  | neutral, smug, annoyed                                                                       |
+| portrait-goose            | Trixi dialogue portrait, transparent                       | 48x48  | neutral                                                                                      |
+| portrait-pigeon           | Pebble dialogue portrait, transparent                      | 48x48  | neutral                                                                                      |
+| portrait-raccoon          | Kiwi dialogue portrait, transparent                        | 48x48  | neutral                                                                                      |
 | ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
 | ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
 | ui-close                  | sprite                                                     | 24x24  | normal, pressed                                                                              |
@@ -175,7 +175,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | Key            | Type                                  | Size  | Tags                                                                        |
 | -------------- | ------------------------------------- | ----- | --------------------------------------------------------------------------- |
 | dog-antagonist | Archie character; hit box 2,2,56,38   | 60x40 | idle, walk, crouch, rush, rest, frustration, pounce, anticipate-lift (once) |
-| portrait-dog   | Archie dialogue portrait, transparent | 64x64 | neutral                                                                     |
+| portrait-dog   | Archie dialogue portrait, transparent | 48x48 | neutral                                                                     |
 
 ## Apartment building blocks
 
@@ -240,7 +240,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | --------------- | -------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------- |
 | bear-antagonist | Bini dark-brown quadruped; hit box 2,2,44,46 | 48x48 | idle, prepare, growl, walk, rush, maul, rest, frustration, prepare-attack, anticipate-lift (once) |
 | bear-growl-wave | Noncolliding directional effect              | 48x32 | pulse (once)                                                                                      |
-| portrait-bear   | Right-facing dialogue portrait               | 64x64 | neutral, annoyed                                                                                  |
+| portrait-bear   | Right-facing dialogue portrait               | 48x48 | neutral, annoyed                                                                                  |
 
 ## Woodland materials
 

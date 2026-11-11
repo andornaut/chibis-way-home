@@ -49,7 +49,7 @@
  * falls back to scheme (the pleased steeple when its plan works); talk talk; quirk scheme (an idle
  * tic).
  *
- * portrait-ferret, 64x64: its head and neck facing right towards the text (as portrait-bird), cut
+ * portrait-ferret, 48x48: its head and neck facing right towards the text (as portrait-bird), cut
  * off by the frame's bottom edge, with one ink outer line on a transparent ground (the dialogue
  * box's 68x68 frame supplies the backing). The same face, eyes and hat, larger. Tags, one frame
  * each at 1000ms: neutral (round eye, small smile), smug (the lid at half, a wider smile), annoyed
@@ -320,21 +320,21 @@ function ferretTags(): pixel.Tags {
 
 type Expression = "neutral" | "smug" | "annoyed";
 
-/** 64x64: the head and neck facing right, cut off by the bottom edge, one ink outer line. */
+/** 48x48: the head and neck facing right, cut off by the bottom edge, one ink outer line. */
 function portrait(expr: Expression): pixel.Frame {
   const c = COAT;
-  const g = new Grid(64, 64);
+  const g = new Grid(48, 48);
   // the neck, a thick stroke from below the frame up to the head: shade, then the rim, then the coat
-  discLine(g, [23, 72], [29, 42], 11, c.shade);
-  discLine(g, [21, 71], [27, 41], 10, c.rim);
-  discLine(g, [22, 71], [28, 41], 9.5, c.coat);
+  discLine(g, [18, 54], [22, 32], 8, c.shade);
+  discLine(g, [16, 53], [20, 31], 7.2, c.rim);
+  discLine(g, [17, 53], [21, 31], 6.8, c.coat);
   const eyeState = ({ neutral: "open", smug: "half", annoyed: "third" } as const)[expr];
   const mouth = ({ neutral: "smile", smug: "grin", annoyed: "pout" } as const)[expr];
-  const ex = 26;
-  const ey = 33;
-  face({ big: true, brow: expr === "annoyed", eyeState, mouth }, g, ex, ey, 14, 11, 12);
-  bowTie(g, 31, 52, 1.4);
-  hat(g, 24, ey - 9, 1.4);
+  const ex = 20;
+  const ey = 26;
+  face({ big: true, brow: expr === "annoyed", eyeState, mouth }, g, ex, ey, 10.5, 8.5, 9);
+  bowTie(g, 23, 40, 1.0);
+  hat(g, 18, ey - 7, 1.0);
   return g.outlined({ edge: () => pixel.hexc("ink") });
 }
 

@@ -16,11 +16,11 @@
  * owns tell duration and physical movement; art adds no world displacement. The growl mouth anchor
  * remains (36, 22).
  *
- * Portrait-bear: 64x64, right-facing neutral/annoyed, one 1000ms frame each, loops. The portrait
- * retains the phone with its green road and cream/red dog motif; the quadruped world body has no
- * held phone. No new dialogue or accessory. Bear-growl-wave: unchanged 48x32, left-centre anchor
- * (0, 16), pulse 4x100ms once. Its rightward grey/cream sound arcs have no contact; runtime owns
- * the effect.
+ * Portrait-bear: 48x48, right-facing neutral/annoyed, one 1000ms frame each, loops. Annoyed lowers
+ * the plum brow over the eye in a step towards the snout. The portrait retains the phone with its
+ * green road and cream/red dog motif; the quadruped world body has no held phone. No new dialogue
+ * or accessory. Bear-growl-wave: unchanged 48x32, left-centre anchor (0, 16), pulse 4x100ms once.
+ * Its rightward grey/cream sound arcs have no contact; runtime owns the effect.
  */
 
 import { run } from "./cli.ts";
@@ -35,16 +35,6 @@ const HITBOX: Record<string, pixel.HitboxTuple> = { [KEY]: [2, 2, 44, 46] };
 const USAGE = "Usage: bear.ts build | preview OUT.png";
 
 type Point = readonly [number, number];
-
-function phone(g: Grid, x: number, y: number): void {
-  g.rect(x, y, 9, 13, "ink");
-  g.rect(x + 1, y + 1, 7, 10, "forest");
-  g.rect(x + 4, y + 1, 2, 10, "zone-green");
-  g.rect(x + 2, y + 4, 4, 3, "cream");
-  g.rect(x + 5, y + 3, 2, 3, "cream");
-  g.rect(x + 4, y + 6, 2, 2, "red");
-  g.rect(x + 3, y + 11, 3, 1, "grey");
-}
 
 /** Embed the upper limb under the moving coat and taper towards the paw. */
 function leg(g: Grid, far: boolean, root: Point, foot: Point): void {
@@ -138,20 +128,36 @@ function draw(state = "idle", phase = 0): pixel.Frame {
   return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
+/** The held phone on the bottom edge: a green road and a cream dog motif with a red mark. */
+function phone(g: Grid, x: number, y: number): void {
+  g.rect(x, y, 7, 10, "ink");
+  g.rect(x + 1, y + 1, 5, 8, "forest");
+  g.rect(x + 3, y + 1, 2, 8, "zone-green");
+  g.rect(x + 1, y + 3, 3, 2, "cream");
+  g.rect(x + 3, y + 2, 2, 2, "cream");
+  g.p(x + 3, y + 4, "red");
+}
+
 function portrait(annoyed = false): pixel.Frame {
-  const g = new Grid(64, 64);
-  g.blob(29, 60, 24, 22, "dbrown", "plum", "brown");
-  for (const x of [17, 42]) {
-    g.ell(x, 15, 7, 7, "dbrown", "plum", "tan");
-    g.ell(x, 15, 3, 3, "plum");
+  const g = new Grid(48, 48);
+  g.blob(22, 45, 18, 16.5, "dbrown", "plum", "brown");
+  for (const x of [13, 31.5]) {
+    g.ell(x, 11, 5.5, 5.5, "dbrown", "plum", "tan");
+    g.ell(x, 11, 2.5, 2.5, "plum");
   }
-  g.blob(33, 32, 22, 20, "dbrown", "plum", "brown");
-  g.ell(46, 40, 13, 9, "cream", "tan");
-  g.rect(53, 35, 5, 4, "ink");
-  g.rect(37, 25, 4, 5, "ink");
-  g.rect(37, annoyed ? 26 : 25, 2, 2, "white");
-  g.rect(37, annoyed ? 24 : 22, 6, 2, "plum");
-  phone(g, 45, 51);
+  g.blob(25, 24, 16.5, 15, "dbrown", "plum", "brown");
+  g.ell(34.5, 30, 10, 7, "cream", "tan");
+  g.rect(40, 26, 4, 3, "ink");
+  g.rect(28, 18, 3, 4, "ink");
+  g.rect(28, annoyed ? 19 : 18, 2, 2, "white");
+  if (annoyed) {
+    // lowered over the eye, stepping down towards the snout
+    g.rect(27, 16, 3, 2, "plum");
+    g.rect(30, 17, 3, 2, "plum");
+  } else {
+    g.rect(28, 15, 5, 2, "plum");
+  }
+  phone(g, 34, 38);
   return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
