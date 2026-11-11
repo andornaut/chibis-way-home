@@ -14,8 +14,10 @@ vi.mock("./modalInput", () => ({
   onScenePointer: vi.fn(),
 }));
 
+import { ZONE_DIALOGUES } from "../data/dialogues";
+import { ZONE_MAP } from "../data/map";
 import { PAUSE_BUTTON } from "../ui";
-import { DialogueScene } from "./DialogueScene";
+import { type DialogueData, DialogueScene } from "./DialogueScene";
 import { PauseScene } from "./PauseScene";
 
 interface DialogueState {
@@ -41,10 +43,10 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-// The zone paused under the archie-intro conversation, on its second line with Continue focused.
-function conversation() {
+// The zone paused under a conversation, on its second line with Continue focused.
+function conversation(data: DialogueData = { scene: "archie-intro" }) {
   const dialogue = new DialogueScene();
-  dialogue.init({ scene: "archie-intro" });
+  dialogue.init(data);
   const lines = dialogue as unknown as DialogueState;
   lines.paragraph = 1;
   lines.focus = "continue";
@@ -92,8 +94,16 @@ it("shows the pause button and takes its press while a conversation covers play"
   ).toBe("pauseButton");
 });
 
-it("opens over the conversation and resumes it on the same line, the zone still paused", async () => {
-  const { drawParagraph, lines, pause, scenes } = conversation();
+const { id: zone, stages } = ZONE_MAP.destinations[0]!;
+
+it.each<{ readonly data?: DialogueData; readonly name: string }>([
+  { name: "a conversation" },
+  {
+    data: { clearedStage: stages.at(-1)!, scene: ZONE_DIALOGUES[zone]!.outro },
+    name: "a zone's outgoing exchange",
+  },
+])("opens over $name and resumes it on the same line, the zone still paused", async ({ data }) => {
+  const { drawParagraph, lines, pause, scenes } = conversation(data);
   await pause.open();
   expect(pause.state).toBe("open");
   expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("dialogue");

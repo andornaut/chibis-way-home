@@ -7,6 +7,7 @@ import { type GameObjects, type Input, Scene } from "phaser";
 
 import { DIALOGUES, SPEAKERS } from "../data/dialogues";
 import { SCREEN } from "../data/screen";
+import { STAGE_PREVIEWS } from "../data/stagePreviews";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { DialogueChoice } from "../data/types";
@@ -48,6 +49,9 @@ import { fitPlayCamera, playPoint } from "./playCamera";
 
 export interface DialogueData {
   readonly scene: string;
+  // The cleared stage of a zone's outgoing exchange: its actual preview fills the screen behind
+  // the box, and Continue sits at the bottom right.
+  readonly clearedStage?: string;
   readonly linear?: boolean;
   readonly opener?: string;
 }
@@ -80,21 +84,20 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private layouts!: Readonly<Record<DialogueControl, LabelledButton>>;
   private buttons!: Readonly<Record<DialogueControl, TextButton>>;
   private footer!: GameObjects.Container;
+  private clearedStage: string | undefined;
 
-  constructor(
-    key = "dialogue",
-    private readonly departure = false,
-  ) {
-    super(key);
+  constructor() {
+    super("dialogue");
   }
 
-  init({ linear = false, opener = "zone", scene }: DialogueData): void {
+  init({ clearedStage, linear = false, opener = "zone", scene }: DialogueData): void {
+    this.clearedStage = clearedStage;
     this.opener = opener;
     const plan = DIALOGUES[scene];
     if (!plan) {
       throw new Error(`No dialogue ${scene}`);
     }
-    if ((this.departure || linear) && plan.choice) {
+    if ((clearedStage !== undefined || linear) && plan.choice) {
       throw new Error("Zone exchanges must remain skippable linear conversations");
     }
     this.paragraphs = dialogueParagraphs(SPEAKERS, TEXT, plan);
@@ -111,8 +114,12 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
 
   create(): void {
     fitPlayCamera(this);
-    if (this.departure) {
-      this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, 0x000000).setOrigin(0);
+    if (this.clearedStage !== undefined) {
+      const key = STAGE_PREVIEWS[this.clearedStage];
+      if (!key || !this.textures.exists(key)) {
+        throw new Error(`Missing actual stage preview ${this.clearedStage}`);
+      }
+      this.add.image(0, 0, key).setOrigin(0).setDisplaySize(SCREEN.width, SCREEN.height);
     }
     drawDialoguePanel(this);
     this.drawFooter();
@@ -124,7 +131,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
-    if (!this.departure) {
+    if (this.clearedStage === undefined) {
       showModalBackdrop(this);
     }
   }
@@ -153,7 +160,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     }
     const font = cardFonts(this).title;
     const width = (label: string) => inkWidth(font, DIALOGUE_SCREEN.text.scale, label);
-    this.layouts = (this.departure ? departureDialogueButtons : dialogueButtons)({
+    this.layouts = (this.clearedStage !== undefined ? departureDialogueButtons : dialogueButtons)({
       continue: width(words.continue),
       skip: width(words.skip),
     });

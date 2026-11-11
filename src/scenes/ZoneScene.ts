@@ -392,6 +392,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private story: ZoneStory | undefined;
   private continueVisit = false;
   private departure: ZoneDepartureTarget | undefined;
+  // The departure's statistics, shown once its outgoing exchange closes.
+  private departureSummary: ZoneDepartureData | undefined;
   private readonly localSeenIntros = new Set<string>();
   private introductionActive = false;
   private barks: ReturnType<typeof bindZoneBarks> | undefined;
@@ -468,6 +470,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.inRoom = false;
     this.dialogueObject = undefined;
     this.departure = undefined;
+    this.departureSummary = undefined;
     this.localSeenIntros.clear();
     this.introductionActive = false;
     this.barks = undefined;
@@ -1291,8 +1294,16 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     return true;
   }
 
-  // The dialogue stops before returning control; introduced actors activate afterward.
+  // The dialogue stops before returning control; introduced actors activate afterward. A
+  // departure's outgoing exchange gives way to its statistics, which continue to the map or the
+  // celebration.
   dialogueClosed(): void {
+    if (this.departureSummary) {
+      const summary = this.departureSummary;
+      this.departureSummary = undefined;
+      this.scene.launch("zoneDeparture", summary);
+      return;
+    }
     if (this.departure) {
       const target = this.departure;
       this.departure = undefined;
@@ -1428,10 +1439,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         } satisfies CutsceneData);
       } else {
         this.departure = flow.target;
-        this.input.enabled = false;
-        coverZone("dialogue", true);
-        this.showTouchControls(touchSettings());
-        this.scene.launch("zoneDeparture", {
+        this.departureSummary = {
           cleared: !turnedBack,
           clearedStage: this.mapNode,
           percent: turnedBack ? this.progressFraction() : 1,
@@ -1439,7 +1447,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           stage: this.mapNode,
           wholeRun,
           zoneStats,
-        } satisfies ZoneDepartureData);
+        };
+        this.input.enabled = false;
+        coverZone("dialogue", true);
+        this.showTouchControls(touchSettings());
+        this.scene.launch("dialogue", {
+          clearedStage: this.mapNode,
+          scene: flow.scene,
+        } satisfies DialogueData);
         this.scene.pause();
       }
       return;
