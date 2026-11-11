@@ -22,9 +22,7 @@ export const ARENAS: readonly ChunkArena[] = [
 export const ARENA_PENDING_STAGES: readonly StageKey[] = [
   "city-boundary",
   "familiar-neighbourhood",
-  "freight-terminal",
   "penthouse",
-  "ravine",
   "residential-floors",
   "river-crossing",
 ];
