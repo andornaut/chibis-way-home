@@ -8,7 +8,6 @@ import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
-import { deathLabels, deathSummary } from "../../presentation";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
@@ -18,11 +17,9 @@ import {
   type CardTitleLayout,
   cardTitleOrigin,
 } from "./contentCard";
-import { deathCard } from "./deathCard";
 import { FONT_METRICS } from "./fontRoles";
 import { pressedArea } from "./hitAreas";
 import { pauseCard } from "./pauseCard";
-import { RUN_STAT_KEYS, runStatLabels } from "./runStats";
 import { settingsCard, stepsCard } from "./settingsCard";
 import { SKILL_ROOM, skillDetails } from "./skillDetails";
 import { SKILL_BUTTON } from "./skillHud";
@@ -102,22 +99,6 @@ const skillInkTop = (layout: ReturnType<typeof skillDetails>) => {
     ),
   );
 };
-const deathWords = deathSummary(TEXT.death, {
-  activeSeconds: 65,
-  ...deathLabels(ZONE_MAP, TEXT.map, "1", ZONE_MAP.destinations[0]!.stages[0]!),
-  percent: 0.25,
-});
-const death = deathCard(
-  CARD_FONTS,
-  { ...SCREEN, x: 0, y: 0 },
-  {
-    ...deathWords,
-    home: TEXT.pause.home,
-    retry: TEXT.death.retry,
-    stats: RUN_STAT_KEYS.map((key) => ({ label: runStatLabels(TEXT.stats)[key], value: "1:05" })),
-    totals: RUN_STAT_KEYS.map((key) => ({ label: runStatLabels(TEXT.stats)[key], value: "1:05" })),
-  },
-);
 const skills = (["dash", "doubleJump", "speedy"] as const).flatMap((skill) => [
   skillDetails(CARD_FONTS, { ...SCREEN, x: 0, y: 0 }, true, TEXT.buttons, TEXT.skills[skill]),
   skillDetails(CARD_FONTS, SKILL_ROOM.bounds, false, TEXT.buttons, TEXT.skills[skill]),
@@ -141,11 +122,6 @@ it.each([
     layout: { ...layout, title: layout.title! },
     name: "skill",
   })),
-  {
-    content: centredInkTop(death.stage, death.stageText),
-    layout: death,
-    name: "death",
-  },
 ])(
   "balances the $name title: frame to title ink equals title ink to first content",
   ({ content, layout: { card, title } }) => {

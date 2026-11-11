@@ -1,0 +1,55 @@
+/* The death card (death.ts), after ui.css and runStats.css. Lengths are base pixels times
+   --ui-unit, from the layer's layout properties and DEATH_LAYOUT, written on the card's view. */
+
+/* The title keeps a closeable card's clearance on both sides, so it centres as theirs do. */
+.ui-death-card > .ui-card-title {
+  padding: 0 calc(var(--ui-unit) * (var(--close-reserve) - var(--card-padding)) * 1px);
+}
+
+/* The stage and progress lines, a row gap apart. */
+.ui-death-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--death-row-gap) * 1px);
+}
+
+/* Body text in a line box --death-line tall for one line, each further line the body line height
+   below: the body line box, its half-leading past that height taken back. */
+.ui-death-line {
+  margin: calc(var(--ui-unit) * (var(--death-line) - var(--text-line)) / 2 * 1px) 0;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 400;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+}
+
+/* The first line starts at its ink, as the title's balance measures it. */
+.ui-death-identity > :first-child {
+  margin-top: 0;
+  text-box: trim-start cap alphabetic;
+}
+
+/* The metrics a gap in from the content on every side, so a card gap and this one separate them
+   from the lines above and the actions below. */
+.ui-death-card > .ui-run-stats {
+  padding: calc(var(--ui-unit) * var(--card-gap) * 1px);
+}
+
+/* Back to title on the left and Try again on the right, though Try again leads the focus order:
+   each button's press area reaches the full margin on its outer side and half the gap on its
+   inner. */
+.ui-death-actions > .ui-text-button {
+  grid-row: 1;
+}
+
+.ui-death-actions > [data-action="home"] {
+  grid-column: 1;
+  padding-right: var(--half-gap);
+  padding-left: var(--hit);
+}
+
+.ui-death-actions > [data-action="retry"] {
+  grid-column: 2;
+  padding-right: var(--hit);
+  padding-left: var(--half-gap);
+}

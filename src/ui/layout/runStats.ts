@@ -13,6 +13,8 @@ import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
 import { textInkBounds } from "./textInk";
 
 export const RUN_STAT_KEYS = ["attempts", "lastAttempt", "best"] as const;
+// The current stage's metrics in the order a statistics column shows them.
+export const STAGE_METRICS = ["lastAttempt", "best", "attempts"] as const;
 export interface StatsMetricRow {
   readonly label: string;
   readonly value: string;
@@ -152,7 +154,7 @@ export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: Summar
   const groupWidth = 2 * SUMMARY_COLUMN_WIDTH + columnGap;
   const groupX = bounds.x + (bounds.width - groupWidth) / 2;
   const statsY = image.y + image.height + CARD_CONTENT.rowGap;
-  const primary = (["lastAttempt", "best", "attempts"] as const).map((key) => {
+  const primary = STAGE_METRICS.map((key) => {
     const row = words.stats[RUN_STAT_KEYS.indexOf(key)];
     if (!row) {
       throw new Error(`Missing current-stage statistic: ${key}`);

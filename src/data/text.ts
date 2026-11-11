@@ -112,6 +112,7 @@ export const TEXT: GameText = {
     title: "Something went wrong",
   },
   death: {
+    label: "Attempt over in {zone}",
     progress: "Progress: {percent}%",
     retry: "Try again",
     stage: "Stage {number}: {name}",

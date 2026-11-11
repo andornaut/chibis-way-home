@@ -41,6 +41,7 @@ export {
   showAchievementsPage,
 } from "./dom/achievements";
 export { type CardView, createCard, showPresses } from "./dom/card";
+export { createDeathCard, type DeathCardView } from "./dom/death";
 export { createUiLayer, loadUiFonts, UI_LAYOUT, type UiLayer } from "./dom/layer";
 export { applySkin, type SkinFrame, UI_FRAMES } from "./dom/skin";
 export { focusKeyAction, stepFocus } from "./focus";
@@ -87,7 +88,6 @@ export {
 } from "./layout/contentCard";
 export { PAUSE_VISIBLE_DIAMETER } from "./layout/controlChrome";
 export { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./layout/cutscene";
-export { deathCard } from "./layout/deathCard";
 export { dialogueChoiceLayout } from "./layout/dialogueChoice";
 export {
   departureDialogueButtons,
@@ -112,6 +112,7 @@ export { ROOM_SCREEN } from "./layout/roomScreen";
 export {
   RUN_STAT_KEYS,
   runStatLabels,
+  STAGE_METRICS,
   stageSummaryLayout,
   statsTotalRows,
   type StatsTotalsSnapshot,

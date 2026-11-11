@@ -7,6 +7,8 @@ import type { SkillId } from "./bird";
 import type { Point } from "./geometry";
 
 export interface DeathText {
+  // The death card's accessible name, with the zone's name as {zone}.
+  readonly label: string;
   readonly progress: string;
   readonly retry: string;
   readonly stage: string;

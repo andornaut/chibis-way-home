@@ -4,6 +4,8 @@ import "@andornaut/game-kit/web/ui/dom/ui.css";
 import "./main.css";
 import "./ui/dom/ui.css";
 import "./ui/dom/achievements.css";
+import "./ui/dom/runStats.css";
+import "./ui/dom/death.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";

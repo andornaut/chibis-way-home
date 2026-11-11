@@ -7,7 +7,7 @@ import {
 import { createModalLayer, type ModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 import { createViewUnits, slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 
-import { CARD_CONTENT, FOCUS_RING, TEXT_BUTTON } from "../../data/layout";
+import { CARD_CONTENT, DEATH_CARD, FOCUS_RING, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point } from "../../data/types";
 import { UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts";
@@ -23,9 +23,15 @@ import { playView } from "../layout/playView";
 // the UI's CSS is base pixels times --ui-unit, which this layer keeps current.
 
 // The whole CSS px lengths the UI's CSS reads through slice(), besides art's frame edges: the
-// focus ring's bands, a pressed label's sink and the card frame's border.
+// focus ring's bands, a pressed label's sink, the card frame's border and the death card's
+// statistics divider.
 const RING_EDGES = [FOCUS_RING.inkLine, FOCUS_RING.outset - FOCUS_RING.inkLine, FOCUS_RING.outset];
-const WHOLE_LENGTHS = [...RING_EDGES, TEXT_BUTTON.pressedSink, CARD_CONTENT.frameBorder];
+const WHOLE_LENGTHS = [
+  ...RING_EDGES,
+  TEXT_BUTTON.pressedSink,
+  CARD_CONTENT.frameBorder,
+  DEATH_CARD.dividerWidth,
+];
 
 // A card's close X, drawn its inset in from the card's top and right edges, and its press area.
 const CLOSE_ART = {
