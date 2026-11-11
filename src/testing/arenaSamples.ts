@@ -143,8 +143,8 @@ export const ARENA_SAMPLES: readonly ChunkArena[] = [
   sample({
     boss: "pigeon-antagonist",
     kind: "cover",
-    row: 80,
-    spawn: { col: 40, on: "floor" },
+    row: 50,
+    spawn: { col: 32, on: "deck" },
     stage: "loading-yards",
   }),
   sample({
