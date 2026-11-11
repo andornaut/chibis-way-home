@@ -3,6 +3,7 @@ import { CHUNK_COLS } from "../chunkTemplates";
 import type { ChunkModule, Difficulty, ModuleRules } from "../types";
 import { APARTMENT_MODULES } from "./apartment";
 import { BLUE_MODULES } from "./blue";
+import { COUNTRYSIDE_MODULES } from "./countryside";
 import { HOME_MODULES } from "./home";
 import { INDUSTRIAL_MODULES } from "./industrial";
 
@@ -18,6 +19,7 @@ export const MODULE_RULES: ModuleRules = {
 export const MODULES: Readonly<Record<string, ChunkModule>> = {
   ...APARTMENT_MODULES,
   ...BLUE_MODULES,
+  ...COUNTRYSIDE_MODULES,
   ...HOME_MODULES,
   ...INDUSTRIAL_MODULES,
 };

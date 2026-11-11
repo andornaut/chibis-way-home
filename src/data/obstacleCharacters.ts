@@ -43,6 +43,14 @@ export const OBSTACLE_CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 2,
     rows: 1,
   },
+  // The windmill's hub: a static orbit host whose footprint centres on the art's hub pixel (72, 72
+  // in its 144x240 backdrop, which stands on the footprint's bottom edge).
+  "countryside-windmill": {
+    archetype: "scenery",
+    art: "countryside-windmill",
+    cols: 12,
+    rows: 28,
+  },
   // A pedestrian signal on the near kerb, showing its strip's phase (the instance's phaseSource).
   "crosswalk-signal": {
     archetype: "scenery",
@@ -94,5 +102,12 @@ export const OBSTACLE_CHARACTERS: Readonly<Record<string, Character>> = {
     cols: 4,
     contactCue: "red-hazard",
     rows: 6,
+  },
+  // A windmill sail's tip platform: a one-way ledge that orbits the hub.
+  "windmill-sail-ledge": {
+    archetype: "ledge",
+    art: "windmill-sail-ledge",
+    cols: 5,
+    rows: 1,
   },
 };
