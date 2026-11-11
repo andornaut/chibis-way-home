@@ -28,6 +28,7 @@ import {
   dialogueTextRows,
 } from "./dialogueScreen";
 import { pressedArea } from "./hitAreas";
+import { PAUSE_BUTTON } from "./pauseCard";
 import { textInkBounds } from "./textInk";
 
 const font = CARD_FONTS.title;
@@ -126,6 +127,24 @@ describe("dialogue layout", () => {
       expect(at(tab.x + tab.width, tab.y)).toBeUndefined();
       expect(at(box.x, box.y + box.height)).toBeUndefined();
       expect(dialoguePressAreas(undefined).map(({ hit }) => hit)).toEqual([box]);
+    },
+  );
+
+  it.each(["left", "right"] as const)(
+    "keeps the %s speaker's panel, name tab and footer press areas clear of Pause's",
+    (side) => {
+      const widest = Math.max(...Object.values(TEXT.dialogue.speakers).map(width));
+      const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
+      const tab = dialogueNameTab(side, widest);
+      expect(dialoguePressAreas(tab).map(({ hit }) => hit)).toEqual([box, tab]);
+      const areas = [box, tab, buttons.continue.hit, buttons.skip.hit];
+      const pause = PAUSE_BUTTON.hit;
+      const overlaps = (area: Rect) =>
+        area.x < pause.x + pause.width &&
+        pause.x < area.x + area.width &&
+        area.y < pause.y + pause.height &&
+        pause.y < area.y + area.height;
+      expect(areas.filter(overlaps)).toEqual([]);
     },
   );
 
