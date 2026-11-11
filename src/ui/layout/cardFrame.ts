@@ -1,27 +1,14 @@
-import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
-
+import { CARD_CONTENT, CELEBRATION_LAYOUT } from "../../data/layout";
 import type { Point, Rect } from "../../data/types";
 import { FONT_SCALE } from "./fontRoles";
 import { hitAround } from "./hitAreas";
 
 export const CARD_TEXT_SCALE = FONT_SCALE;
 
-export const CARD_CONTENT = {
-  closeInset: 6,
-  closeSize: 24,
-  // ui-settings-card's 9-slice top edge: its ink line and highlight, inside which a title's top
-  // gap is measured.
-  frameBorder: 2,
-  gap: 8,
-  lineHeight: 16,
-  padding: MODAL_CONTENT.padding,
-  rowGap: 4,
-} as const;
-
 // Fixed frame geometry for the placeholder celebration. Ordinary modal cards measure their
 // contents through contentCardLayout.
-const CARD_AT: Point = { x: 176, y: 88 };
-const CARD_WIDTH = 368;
+const CARD_AT: Point = CELEBRATION_LAYOUT.at;
+const CARD_WIDTH = CELEBRATION_LAYOUT.width;
 
 const CLOSE_ART: Rect = {
   height: CARD_CONTENT.closeSize,
@@ -37,9 +24,9 @@ export const CARD_FRAME = {
     at: { x: CLOSE_ART.x, y: CLOSE_ART.y } satisfies Point,
     hit: hitAround(CLOSE_ART),
   },
-  firstRowY: CARD_AT.y + 48,
-  padding: MODAL_CONTENT.padding,
-  titleY: CARD_AT.y + 8,
+  firstRowY: CARD_AT.y + CELEBRATION_LAYOUT.firstRowTop,
+  padding: CARD_CONTENT.padding,
+  titleY: CARD_AT.y + CELEBRATION_LAYOUT.titleTop,
 } as const;
 
 // A card as tall as height, at CARD_AT.

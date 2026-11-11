@@ -1,17 +1,8 @@
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
+import { TEXT_BUTTON } from "../../data/layout";
 import type { Point, Rect } from "../../data/types";
 import { textInkBounds } from "./textInk";
-
-// Standard menu action geometry, shared by start-screen and card buttons.
-export const TEXT_BUTTON = {
-  gap: 8,
-  height: 48,
-  inset: 16,
-  lipHeight: 4,
-  pressedSink: 2,
-  verticalInset: 12,
-} as const;
 
 // A mark drawn just before a button's label, such as Resume's play triangle: its width, and the
 // gap from it to the label's ink.
@@ -20,9 +11,6 @@ interface LabelMark {
   readonly height: number;
   readonly width: number;
 }
-
-// The native play mark and its gap from the label ink.
-export const PLAY_MARK: LabelMark = { gap: 6, height: 10, width: 5 };
 
 // Where a button's label starts, with its mark before it when it has one, so that the two are
 // centred across the button as one group, retaining fractional native-font placement.

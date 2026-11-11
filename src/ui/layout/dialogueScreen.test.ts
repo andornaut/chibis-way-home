@@ -6,6 +6,7 @@ import portrait from "../../../public/art/sprites/portrait-bird.json";
 import * as behaviours from "../../data/behaviours";
 import { CHARACTERS } from "../../data/characters";
 import { DIALOGUES, SPEAKERS } from "../../data/dialogues";
+import { TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { STAGE_BARKS } from "../../data/stageBarks";
 import { TEXT } from "../../data/text";
@@ -16,7 +17,6 @@ import {
   type DialogueParagraph,
   dialogueParagraphs,
 } from "../dialogue/conversation";
-import { TEXT_BUTTON } from "./buttonLabel";
 import {
   departureDialogueButtons,
   DIALOGUE_SCREEN,

@@ -7,6 +7,7 @@ import {
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
+import { MAP_LAYOUT, MAP_PATH } from "../data/layout";
 import { MAP_TRAVEL, ZONE_MAP } from "../data/map";
 import { TILE } from "../data/screen";
 import { TEXT } from "../data/text";
@@ -31,9 +32,6 @@ import {
   destinationPathLook,
   destinationState,
   MAP_ACTIONS,
-  MAP_LABEL_PADDING,
-  MAP_LABEL_WIDTH,
-  MAP_PATH,
   MAP_PATH_LOOKS,
   MAP_SCREEN,
   type MapAction,
@@ -286,7 +284,7 @@ export class MapScene extends Scene implements StageSelectOpener {
         throw new Error(`No destination label ${destination.id}`);
       }
       const ink = textInkBounds(font, textScale, font.lineHeight * textScale, name);
-      if (inkWidth(font, textScale, name) > MAP_LABEL_WIDTH - 2 * MAP_LABEL_PADDING) {
+      if (inkWidth(font, textScale, name) > MAP_LAYOUT.label.width - 2 * MAP_LAYOUT.label.padding) {
         throw new Error(`Destination label does not fit: ${destination.id}`);
       }
       const { knockout, origin } = mapLabel(ink, this.centre(destination));

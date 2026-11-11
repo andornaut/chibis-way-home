@@ -1,14 +1,13 @@
+import { CARD_CONTENT, SKILL_DETAILS, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { ControlAction, Rect, SkillText } from "../../data/types";
 import { actionHelpInkTop, actionHelpLayout } from "./actionHelp";
-import { TEXT_BUTTON } from "./buttonLabel";
-import { CARD_CONTENT } from "./cardFrame";
 import { cardActions, cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard";
 import { DIALOGUE_SCREEN } from "./dialogueScreen";
 import { hitAround } from "./hitAreas";
 import { SKILL_BUTTON } from "./skillHud";
 
-const DESCRIPTION_WIDTH = 512;
+const DESCRIPTION_WIDTH = SKILL_DETAILS.descriptionWidth;
 const footer = {
   height: TEXT_BUTTON.height,
   width: SCREEN.width - 2 * CARD_CONTENT.padding,

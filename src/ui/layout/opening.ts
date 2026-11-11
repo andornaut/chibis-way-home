@@ -1,13 +1,7 @@
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { GameText } from "../../data/types";
-import { TEXT_BUTTON } from "./buttonLabel";
-import {
-  CARD_CONTENT,
-  cardActions,
-  cardActionsSize,
-  type CardFonts,
-  cardTextSize,
-} from "./contentCard";
+import { cardActions, cardActionsSize, type CardFonts, cardTextSize } from "./contentCard";
 
 export function openingLayout(
   fonts: CardFonts,

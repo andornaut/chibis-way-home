@@ -2,12 +2,12 @@ import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
 
 import palette from "../../public/art/palette.json";
 import themes from "../../public/art/zone-themes.json";
+import { DEATH_CARD } from "../data/layout";
 import { ZONE_MAP } from "../data/map";
 import { SCREEN } from "../data/screen";
 import { zoneTheme } from "../presentation/zoneTheme";
-import { DEATH_PROGRESS_HEIGHT } from "../ui/layout/deathCard";
 
-export const PROGRESS_RECT = { height: DEATH_PROGRESS_HEIGHT, width: SCREEN.width, x: 0, y: 0 };
+export const PROGRESS_RECT = { height: DEATH_CARD.progressHeight, width: SCREEN.width, x: 0, y: 0 };
 
 const styles = new Map<string, ProgressBarStyle>();
 

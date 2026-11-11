@@ -1,22 +1,17 @@
 import { wrapWords } from "@andornaut/game-kit/lines";
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 
+import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SELECT } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import {
-  CARD_CONTENT,
-  cardActionsSize,
-  type CardFonts,
-  cardTextSize,
-  contentCardLayout,
-} from "./contentCard";
+import { cardActionsSize, type CardFonts, cardTextSize, contentCardLayout } from "./contentCard";
 import { FONT_SCALE } from "./fontRoles";
 import { hitAround, hitMargin } from "./hitAreas";
 import { labelledButton } from "./labelledButton";
 
 export const STAGE_NUMBER_SCALE = FONT_SCALE;
-const PREVIEW_WIDTH = 168;
-const PREVIEW_HEIGHT = PREVIEW_WIDTH / 2;
+const PREVIEW_WIDTH = STAGE_PREVIEW.width;
+const PREVIEW_HEIGHT = STAGE_PREVIEW.height;
 const INSET = CARD_CONTENT.padding + CARD_CONTENT.rowGap;
 const NUMBER_HEIGHT = (CARD_CONTENT.lineHeight * STAGE_NUMBER_SCALE) / CARD_TEXT_SCALE;
 const PREVIEW_TOP = CARD_CONTENT.closeInset + NUMBER_HEIGHT + CARD_CONTENT.rowGap;
@@ -119,7 +114,7 @@ export function stageSelectPages(
         label,
       );
       if (
-        lines.length > 2 ||
+        lines.length > STAGE_SELECT.labelLines ||
         lines.some((line) => inkWidth(fonts.title, CARD_TEXT_SCALE, line) > PREVIEW_WIDTH)
       ) {
         throw new Error(`Stage label exceeds two lines: ${label}`);

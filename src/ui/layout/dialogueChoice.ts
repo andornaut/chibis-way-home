@@ -1,7 +1,7 @@
+import { CARD_CONTENT, DIALOGUE_CHOICE } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { dialogueLines } from "../dialogue/conversation";
 import {
-  CARD_CONTENT,
   cardActions,
   cardActionsSize,
   type CardFonts,
@@ -17,7 +17,7 @@ export function dialogueChoiceLayout(
 ) {
   const text = dialogueLines(
     fonts.body,
-    { lines: 3, scale: FONT_SCALE },
+    { lines: DIALOGUE_CHOICE.promptLines, scale: FONT_SCALE },
     SCREEN.width - 2 * CARD_CONTENT.padding,
     prompt,
   ).join("\n");

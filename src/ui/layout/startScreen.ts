@@ -1,28 +1,28 @@
+import { START_SCREEN, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect, Size } from "../../data/types";
-import { TEXT_BUTTON } from "./buttonLabel";
 import { hitAround } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./restartCard";
 
-// Art's start screen (art/README.md, Start screen), in base pixels: the nav bar across the top,
-// with 36x36 icon buttons at its right end, each with its 20x20 icon 8 in and 6 down (8 down
-// while pressed), and the logo with Start under it. With saved progress, Restart and Continue
+// Art's start screen (art/README.md, Start screen), in base pixels (START_SCREEN): the nav bar
+// across the top, with square icon buttons at its right end, each with its icon inset (sunk while
+// pressed), and the logo with Start under it. With saved progress, Restart and Continue
 // share Start's row instead, gap apart and centred under the logo. A button's label origin is 13
 // below its top, 2 lower while pressed. Each button's press area, hit, is its drawn button grown
 // by hitAreas.ts's rule.
 
-const ICON_BUTTON = { icon: { x: 8, y: 6 }, size: 36, y: 6 } as const;
+const ICON_BUTTON = START_SCREEN.iconButton;
 // A pressed button's icon or label sinks this far.
-const PRESSED_SINK = 2;
+const PRESSED_SINK = START_SCREEN.pressedSink;
 // The last icon button's x at the nav's right end; each one before it is a slot further left.
-const RIGHT_BUTTON_X = 676;
-const BUTTON_SLOT = 44;
-const START = { ...TEXT_BUTTON, width: 192, x: 264, y: 268 } as const;
+const RIGHT_BUTTON_X = START_SCREEN.rightIconX;
+const BUTTON_SLOT = START_SCREEN.iconSlot;
+const START = { ...TEXT_BUTTON, ...START_SCREEN.start } as const;
 // Continue and Restart's gap, side by side in Start's row.
 const ROW_GAP = TEXT_BUTTON.gap;
-const NAV_HEIGHT = 48;
-const LOGO_TOP_GAP = 12;
-const LOGO_ACTION_GAP = 15;
+const NAV_HEIGHT = START_SCREEN.navHeight;
+const LOGO_TOP_GAP = START_SCREEN.logoTopGap;
+const LOGO_ACTION_GAP = START_SCREEN.logoActionGap;
 
 export interface IconButtonLayout {
   readonly art: Rect;

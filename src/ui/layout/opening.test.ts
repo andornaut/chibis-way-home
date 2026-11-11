@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
 import { OPENING } from "../../data/opening";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { CARD_FONTS } from "../../testing/cardFonts";
-import { TEXT_BUTTON } from "./buttonLabel";
-import { CARD_CONTENT, cardTextSize } from "./contentCard";
+import { cardTextSize } from "./contentCard";
 import { openingLayout } from "./opening";
 
 it("fits every actual caption at full shared font beside full-size controls in the quiet footer", () => {

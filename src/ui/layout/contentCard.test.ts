@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
+import { CARD_CONTENT } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
-  CARD_CONTENT,
   CARD_HEADING,
   cardActions,
   cardActionsSize,

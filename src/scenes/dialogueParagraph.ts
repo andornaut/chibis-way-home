@@ -6,7 +6,9 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import type { GameObjects, Scene } from "phaser";
 
+import { DIALOGUE_LAYOUT } from "../data/layout";
 import {
+  DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
   dialogueLines,
   dialogueNameTab,
@@ -22,8 +24,6 @@ import {
   paletteColour,
   TITLE_FONT,
 } from "./cardParts";
-
-const PORTRAIT_SIZE = 64;
 
 // A panel paragraph: the portrait may name one frame of its texture, drawn scaled to fill the
 // portrait; a null name draws no name tab; a heading is a bold first text line above the body.
@@ -66,15 +66,15 @@ export function drawDialogueParagraph(
           .rectangle(
             layout.portrait.x,
             layout.portrait.y,
-            PORTRAIT_SIZE,
-            PORTRAIT_SIZE,
+            DIALOGUE_PORTRAIT_SIZE,
+            DIALOGUE_PORTRAIT_SIZE,
             paletteColour(scene, "dslate"),
           )
           .setOrigin(0)
       : scene.add
           .image(layout.portrait.x, layout.portrait.y, paragraph.portrait, paragraph.portraitFrame)
           .setOrigin(0)
-          .setDisplaySize(PORTRAIT_SIZE, PORTRAIT_SIZE),
+          .setDisplaySize(DIALOGUE_PORTRAIT_SIZE, DIALOGUE_PORTRAIT_SIZE),
     ...(paragraph.name === null || rows.tabY === undefined
       ? []
       : drawNameTab(scene, fonts.title, rows.tabY, paragraph)),
@@ -125,7 +125,11 @@ function drawNameTab(
     addCardTextIn(
       scene,
       TITLE_FONT,
-      { ...tab, width: tab.width - 12, x: tab.x + 6 },
+      {
+        ...tab,
+        width: tab.width - 2 * DIALOGUE_LAYOUT.nameTabInset,
+        x: tab.x + DIALOGUE_LAYOUT.nameTabInset,
+      },
       name,
       paletteColour(scene, "ink"),
     ),

@@ -1,5 +1,5 @@
+import { CARD_CONTENT } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
-import { CARD_CONTENT } from "./cardFrame";
 import { labelledButton } from "./labelledButton";
 import { MAP_SCREEN } from "./mapScreen";
 

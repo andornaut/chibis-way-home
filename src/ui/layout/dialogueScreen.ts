@@ -1,30 +1,31 @@
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
+import { CARD_CONTENT, DIALOGUE_LAYOUT, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { DialogueSpeaker, Point, Rect } from "../../data/types";
 import type { DialogueControl } from "../dialogue/conversation";
-import { TEXT_BUTTON } from "./buttonLabel";
-import { CARD_CONTENT } from "./cardFrame";
 import type { CardFonts } from "./contentCard";
 import { FONT_SCALE } from "./fontRoles";
 import { type LabelledButton, labelledButton } from "./restartCard";
 
-const BUTTON_WIDTH = 192;
-
-const BOX = { height: 96, width: 640, x: 40, y: 8 } satisfies Rect;
+const BOX = DIALOGUE_LAYOUT.box;
 // Clear space between the panel's edge, the portrait frame and the text column's measured ink.
 const PADDING = CARD_CONTENT.gap;
-const PORTRAIT_FRAME = 68;
-const PORTRAIT_INSET = 2;
-const TAB_HEIGHT = 20;
+const PORTRAIT_INSET = DIALOGUE_LAYOUT.portraitInset;
+// The portrait frame's side: the portrait and the frame's border around it.
+const PORTRAIT_FRAME = DIALOGUE_LAYOUT.portrait + 2 * PORTRAIT_INSET;
+const TAB_HEIGHT = DIALOGUE_LAYOUT.nameTabHeight;
+
+// A portrait's drawn side.
+export const DIALOGUE_PORTRAIT_SIZE = DIALOGUE_LAYOUT.portrait;
 
 // One top paragraph panel. Portraits are repositioned by speaker; neither asset is mirrored.
 export const DIALOGUE_SCREEN = {
   box: BOX,
   padding: PADDING,
   text: {
-    lines: 3,
-    pitch: 20,
+    lines: DIALOGUE_LAYOUT.text.lines,
+    pitch: DIALOGUE_LAYOUT.text.pitch,
     scale: FONT_SCALE,
     width: BOX.width - 3 * PADDING - PORTRAIT_FRAME,
   },
@@ -70,7 +71,7 @@ export function dialogueNameTab(
 ): Rect {
   return {
     height: TAB_HEIGHT,
-    width: nameWidth + 12,
+    width: nameWidth + 2 * DIALOGUE_LAYOUT.nameTabInset,
     x: dialogueSpeakerLayout(side).textX,
     y: tabY,
   };
@@ -92,13 +93,22 @@ function fontInk(
 export function dialogueButtons(
   labels: Readonly<Record<DialogueControl, number>>,
 ): Readonly<Record<DialogueControl, LabelledButton>> {
-  return placedDialogueButtons(DIALOGUE_SCREEN.box.x + DIALOGUE_SCREEN.box.width, 112, labels);
+  return placedDialogueButtons(
+    DIALOGUE_SCREEN.box.x + DIALOGUE_SCREEN.box.width,
+    DIALOGUE_LAYOUT.footerY,
+    labels,
+  );
 }
 
 export function departureDialogueButtons(
   labels: Readonly<Record<DialogueControl, number>>,
 ): Readonly<Record<DialogueControl, LabelledButton>> {
-  return placedDialogueButtons(SCREEN.width - 16, SCREEN.height - 16 - TEXT_BUTTON.height, labels);
+  const inset = DIALOGUE_LAYOUT.departureInset;
+  return placedDialogueButtons(
+    SCREEN.width - inset,
+    SCREEN.height - inset - TEXT_BUTTON.height,
+    labels,
+  );
 }
 
 function placedDialogueButtons(
@@ -107,7 +117,7 @@ function placedDialogueButtons(
   labels: Readonly<Record<DialogueControl, number>>,
 ): Readonly<Record<DialogueControl, LabelledButton>> {
   const width = Math.max(
-    BUTTON_WIDTH,
+    DIALOGUE_LAYOUT.buttonWidth,
     labels.continue + 2 * TEXT_BUTTON.inset,
     labels.skip + 2 * TEXT_BUTTON.inset,
   );

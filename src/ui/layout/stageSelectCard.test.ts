@@ -1,11 +1,11 @@
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
+import { CARD_CONTENT } from "../../data/layout";
 import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { CARD_FONTS } from "../../testing/cardFonts";
-import { CARD_CONTENT } from "./contentCard";
 import { FONT_METRICS } from "./fontRoles";
 import { type PressArea, pressedArea } from "./hitAreas";
 import { CARD_TEXT_SCALE } from "./pauseCard";

@@ -1,9 +1,9 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
+import { TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Rect } from "../../data/types";
-import { TEXT_BUTTON } from "./buttonLabel";
 import { type PressArea, pressedArea } from "./hitAreas";
 import type { LabelledButton } from "./restartCard";
 import { type IconButtonLayout, startScreenLayout } from "./startScreen";

@@ -2,23 +2,22 @@ import { fillNames } from "@andornaut/game-kit/lines";
 import { type BitmapFont, laidGlyphs } from "@andornaut/game-kit/text/bitmapFont";
 import { bitmapMeasure, fitsRoom, fittingText } from "@andornaut/game-kit/text/textFit";
 
+import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect } from "../../data/types";
 import { timeText } from "../../progress";
 import type { DialogueParagraph } from "../dialogue/conversation";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { CARD_CONTENT, type CardFonts } from "./contentCard";
+import type { CardFonts } from "./contentCard";
 import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
 import { textInkBounds } from "./textInk";
 
 export const RUN_STAT_KEYS = ["attempts", "lastAttempt", "best"] as const;
-export const STATS_DIVIDER_HEIGHT = 2;
 export interface StatsMetricRow {
   readonly label: string;
   readonly value: string;
 }
 type RunStatWords = Readonly<Record<(typeof RUN_STAT_KEYS)[number], string>>;
-const STAGE_PREVIEW_SIZE = { height: 84, width: 168 } as const;
 
 export interface StatsTotalsSnapshot {
   readonly stageSeconds: number;
@@ -97,8 +96,8 @@ export function summaryTextOrigin(
   };
 }
 
-const SUMMARY_PREVIEW_HEIGHT = 120;
-const SUMMARY_COLUMN_WIDTH = 152;
+const SUMMARY_PREVIEW_HEIGHT = STAGE_SUMMARY.previewHeight;
+const SUMMARY_COLUMN_WIDTH = STAGE_SUMMARY.columnWidth;
 
 export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: SummaryWords) {
   const ink = (
@@ -142,8 +141,7 @@ export function stageSummaryLayout(fonts: CardFonts, bounds: Rect, words: Summar
     stage.rect.y + stage.rect.height + CARD_CONTENT.rowGap,
     words.progress,
   );
-  const imageWidth =
-    (SUMMARY_PREVIEW_HEIGHT * STAGE_PREVIEW_SIZE.width) / STAGE_PREVIEW_SIZE.height;
+  const imageWidth = (SUMMARY_PREVIEW_HEIGHT * STAGE_PREVIEW.width) / STAGE_PREVIEW.height;
   const image: Rect = {
     height: SUMMARY_PREVIEW_HEIGHT,
     width: imageWidth,

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { CARD_FONTS } from "../../testing/cardFonts";
-import { TEXT_BUTTON } from "./buttonLabel";
 import { dialogueChoiceLayout } from "./dialogueChoice";
 
 describe("required dialogue choice layout", () => {

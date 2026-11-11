@@ -1,12 +1,11 @@
 import { wrapWords } from "@andornaut/game-kit/lines";
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 
+import { ACHIEVEMENTS_CARD, CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect } from "../../data/types";
-import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
-  CARD_CONTENT,
   cardActionsSize,
   type CardFonts,
   cardHeaderLayout,
@@ -18,17 +17,11 @@ import {
 import { labelledButton } from "./labelledButton";
 import { textInkBounds } from "./textInk";
 
-// art's icon-achievement frame, drawn at its own size.
-export const ACHIEVEMENT_ICON_SIZE = 16;
-// The list's columns, the width of each and the gap between them.
-const COLUMNS = 2;
-const COLUMN_WIDTH = 312;
+// The gap between columns.
 const COLUMN_GAP = CARD_CONTENT.padding;
 // The icon's gap to its text, and the gap between a title and its progress.
 const ICON_GAP = CARD_CONTENT.gap;
 const PROGRESS_GAP = CARD_CONTENT.gap;
-// Each entry's description takes at most this many lines.
-const DESCRIPTION_LINES = 2;
 
 // One entry's words: its title, description and, for a locked entry with progress, its count.
 export interface AchievementWords {
@@ -56,7 +49,7 @@ export interface AchievementEntryLayout {
 }
 
 const pitch = (fonts: CardFonts) => fonts.body.lineHeight * CARD_TEXT_SCALE;
-const entryHeight = (fonts: CardFonts) => pitch(fonts) * (1 + DESCRIPTION_LINES);
+const entryHeight = (fonts: CardFonts) => pitch(fonts) * (1 + ACHIEVEMENTS_CARD.descriptionLines);
 
 // Entry titles are drawn from the slot's top: the highest title ink across every entry, so every
 // page shares one list position.
@@ -88,7 +81,7 @@ export function achievementsPerPage(
   if (rows < 1) {
     throw new Error("No achievement row fits the view");
   }
-  return rows * COLUMNS;
+  return rows * ACHIEVEMENTS_CARD.columns;
 }
 
 // The Achievements card: its centred title and close X, the list in page slots filled down each
@@ -104,9 +97,9 @@ export function achievementsCardLayout(
   }
   const perPage = achievementsPerPage(fonts, words, entries);
   const pages = Math.ceil(entries.length / perPage);
-  const shownRows = Math.ceil(Math.min(perPage, entries.length) / COLUMNS);
+  const shownRows = Math.ceil(Math.min(perPage, entries.length) / ACHIEVEMENTS_CARD.columns);
   const rowHeight = entryHeight(fonts);
-  const textWidth = COLUMN_WIDTH - ACHIEVEMENT_ICON_SIZE - ICON_GAP;
+  const textWidth = ACHIEVEMENTS_CARD.columnWidth - ACHIEVEMENTS_CARD.icon - ICON_GAP;
   const pagerLabels = [words.previous, words.next];
   const pagerSize = cardActionsSize(fonts.title, "row", pagerLabels);
   const countText = words.page.replace("{page}", String(pages)).replace("{pages}", String(pages));
@@ -118,7 +111,9 @@ export function achievementsCardLayout(
         height: shownRows * rowHeight + (shownRows - 1) * CARD_CONTENT.gap,
         inkTop: listInkTop(fonts, entries),
         key: "list",
-        width: COLUMNS * COLUMN_WIDTH + (COLUMNS - 1) * COLUMN_GAP,
+        width:
+          ACHIEVEMENTS_CARD.columns * ACHIEVEMENTS_CARD.columnWidth +
+          (ACHIEVEMENTS_CARD.columns - 1) * COLUMN_GAP,
       },
       {
         height: pagerSize.height,
@@ -142,7 +137,7 @@ export function achievementsCardLayout(
     next: pagerButton(pager.x + pager.width - buttonWidth),
     previous: pagerButton(pager.x),
   };
-  const perColumn = perPage / COLUMNS;
+  const perColumn = perPage / ACHIEVEMENTS_CARD.columns;
   return {
     card: layout.card,
     close: layout.close!,
@@ -150,9 +145,9 @@ export function achievementsCardLayout(
       const slot = index % perPage;
       const column = Math.floor(slot / perColumn);
       const row = slot % perColumn;
-      const x = list.x + column * (COLUMN_WIDTH + COLUMN_GAP);
+      const x = list.x + column * (ACHIEVEMENTS_CARD.columnWidth + COLUMN_GAP);
       const y = list.y + row * (rowHeight + CARD_CONTENT.gap);
-      const textX = x + ACHIEVEMENT_ICON_SIZE + ICON_GAP;
+      const textX = x + ACHIEVEMENTS_CARD.icon + ICON_GAP;
       const lineHeight = pitch(fonts);
       const progressWidth =
         words.progress === undefined ? 0 : cardTextSize(fonts.body, words.progress).width;
@@ -166,11 +161,11 @@ export function achievementsCardLayout(
         words.description,
       );
       if (
-        lines.length > DESCRIPTION_LINES ||
+        lines.length > ACHIEVEMENTS_CARD.descriptionLines ||
         lines.some((line) => inkWidth(fonts.body, CARD_TEXT_SCALE, line) > textWidth)
       ) {
         throw new Error(
-          `Achievement description exceeds ${DESCRIPTION_LINES} lines: ${words.title}`,
+          `Achievement description exceeds ${ACHIEVEMENTS_CARD.descriptionLines} lines: ${words.title}`,
         );
       }
       return {
@@ -178,11 +173,11 @@ export function achievementsCardLayout(
           at: { x: textX, y: y + (line + 1) * lineHeight },
           text,
         })),
-        icon: { x, y: y + (lineHeight - ACHIEVEMENT_ICON_SIZE) / 2 },
+        icon: { x, y: y + (lineHeight - ACHIEVEMENTS_CARD.icon) / 2 },
         ...(words.progress !== undefined && {
           progress: { x: textX + textWidth - progressWidth, y },
         }),
-        slot: { height: rowHeight, width: COLUMN_WIDTH, x, y },
+        slot: { height: rowHeight, width: ACHIEVEMENTS_CARD.columnWidth, x, y },
         title: { x: textX, y },
       };
     }),

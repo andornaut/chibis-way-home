@@ -3,10 +3,10 @@ import { modalWidth } from "@andornaut/game-kit/modalLayout";
 import { insetRect } from "@andornaut/game-kit/rect";
 import { type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect, Size } from "../../data/types";
-import { TEXT_BUTTON } from "./buttonLabel";
-import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
+import { CARD_TEXT_SCALE } from "./cardFrame";
 import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
 import { hitAround, hitMargin } from "./hitAreas";
 import { type LabelledButton, labelledButton } from "./labelledButton";
@@ -17,7 +17,6 @@ export interface CardFonts {
   readonly title: BitmapFont;
 }
 
-export { CARD_CONTENT } from "./cardFrame";
 type CardAxis = "row" | "stack";
 
 interface CardGroup extends Size {

@@ -1,19 +1,15 @@
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
+import { ACHIEVEMENTS_CARD, CARD_CONTENT } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
 import { ACHIEVEMENT_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import { dialogueLines } from "../dialogue/conversation";
-import {
-  ACHIEVEMENT_ICON_SIZE,
-  achievementsCardLayout,
-  achievementsPerPage,
-} from "./achievementsCard";
+import { achievementsCardLayout, achievementsPerPage } from "./achievementsCard";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { CARD_CONTENT } from "./contentCard";
 import { DIALOGUE_SCREEN } from "./dialogueScreen";
 import { FONT_METRICS } from "./fontRoles";
 import { type PressArea, pressedArea } from "./hitAreas";
@@ -113,7 +109,7 @@ describe("the Achievements card", () => {
         ).toBeLessThanOrEqual(textRight);
         expect(line.at.y + CARD_FONTS.body.lineHeight).toBeLessThanOrEqual(bottom(slot));
       }
-      expect(entry.icon.x + ACHIEVEMENT_ICON_SIZE).toBeLessThan(title.x);
+      expect(entry.icon.x + ACHIEVEMENTS_CARD.icon).toBeLessThan(title.x);
     }
   });
 

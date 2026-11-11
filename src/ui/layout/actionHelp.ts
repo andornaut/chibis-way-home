@@ -1,16 +1,17 @@
 import { advanceWidth, type BitmapFont, fontMetrics } from "@andornaut/game-kit/text/bitmapFont";
 
+import { ACTION_HELP_LAYOUT, CARD_CONTENT } from "../../data/layout";
 import type { ControlAction, Point, Rect, Size } from "../../data/types";
 import { type ActionHelpPart, actionHelpParts } from "../chrome/actionHelp";
-import { CARD_CONTENT, CARD_TEXT_SCALE } from "./cardFrame";
+import { CARD_TEXT_SCALE } from "./cardFrame";
 import type { CardFonts } from "./contentCard";
 import { textInkBounds } from "./textInk";
 
 // The label-to-icon gap shared by every action help, and the home page's HTML icon and line box.
 export const ACTION_HELP = {
   gap: CARD_CONTENT.rowGap,
-  icon: 40,
-  lineHeight: 40 + 2 * CARD_CONTENT.rowGap,
+  icon: ACTION_HELP_LAYOUT.homeIcon,
+  lineHeight: ACTION_HELP_LAYOUT.homeIcon + 2 * CARD_CONTENT.rowGap,
 } as const;
 
 // A word or action label, drawn with its pen (BitmapText origin) at `at`.
@@ -38,9 +39,6 @@ export interface ActionHelpLayout extends Size {
   readonly linePitch: number;
   readonly placements: readonly ActionHelpPlacement[];
 }
-
-// Text with inline control icons wraps to at most this many lines, with every icon on the first.
-export const ACTION_HELP_MAX_LINES = 2;
 
 // The baseline's offset below a font's line top, at card scale: the capitals' bottom row.
 function baselineOffset(font: BitmapFont): number {
@@ -125,7 +123,7 @@ export function actionHelpLayout(
   const iconLines = lines.flatMap((row, index) =>
     row.items.some((item) => item.kind === "icon") ? [index] : [],
   );
-  if (iconLines.length && lines.length > ACTION_HELP_MAX_LINES) {
+  if (iconLines.length && lines.length > ACTION_HELP_LAYOUT.maxLines) {
     throw new Error("Action help with an icon wraps past two lines");
   }
   if (iconLines.some((index) => index > 0)) {

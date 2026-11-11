@@ -8,15 +8,10 @@ import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
 import palette from "../../../public/art/palette.json";
 import secondary from "../../../public/art/sprites/ui-button.json";
 import primary from "../../../public/art/sprites/ui-button-primary.json";
+import { PLAY_MARK, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
-import {
-  buttonFace,
-  buttonLabelPlacement,
-  centredLabel,
-  PLAY_MARK,
-  TEXT_BUTTON,
-} from "./buttonLabel";
+import { buttonFace, buttonLabelPlacement, centredLabel } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./pauseCard";
 import { startScreenLayout } from "./startScreen";
 import { textInkBounds } from "./textInk";

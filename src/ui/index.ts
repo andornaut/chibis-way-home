@@ -49,7 +49,6 @@ export { MAP_ACTIONS, type MapAction, mapKeyAction } from "./input/mapInput";
 export { isMouseMovementKey, listenMouseMovement } from "./input/mouseMovement";
 export { stagePickerKey } from "./input/stageSelectInput";
 export {
-  ACHIEVEMENT_ICON_SIZE,
   type AchievementEntryLayout,
   achievementsCardLayout,
   achievementsPerPage,
@@ -61,9 +60,8 @@ export {
   type ButtonFaceState,
   type ButtonLabelPlacement,
   buttonLabelPlacement,
-  PLAY_MARK,
 } from "./layout/buttonLabel";
-export { CARD_CONTENT, CARD_TEXT_SCALE, cardTitleAt } from "./layout/cardFrame";
+export { CARD_TEXT_SCALE, cardTitleAt } from "./layout/cardFrame";
 export {
   contactBorder,
   contactCueOn,
@@ -83,10 +81,11 @@ export {
 } from "./layout/contentCard";
 export { PAUSE_VISIBLE_DIAMETER } from "./layout/controlChrome";
 export { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./layout/cutscene";
-export { DEATH_PROGRESS_HEIGHT, deathCard } from "./layout/deathCard";
+export { deathCard } from "./layout/deathCard";
 export { dialogueChoiceLayout } from "./layout/dialogueChoice";
 export {
   departureDialogueButtons,
+  DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
   dialogueButtons,
   dialogueNameTab,
@@ -96,15 +95,7 @@ export {
 export { FONT_ROLES, FONT_SCALE } from "./layout/fontRoles";
 export { type PressArea, pressedArea } from "./layout/hitAreas";
 export { labelledButton } from "./layout/labelledButton";
-export {
-  MAP_LABEL_PADDING,
-  MAP_LABEL_WIDTH,
-  MAP_PATH,
-  MAP_PATH_LOOKS,
-  MAP_SCREEN,
-  mapLabel,
-  type PathLook,
-} from "./layout/mapScreen";
+export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/mapScreen";
 export { openingLayout } from "./layout/opening";
 export { PAUSE_BUTTON, pauseCard } from "./layout/pauseCard";
 export { bottomShift, playView, shifted, topShift } from "./layout/playView";

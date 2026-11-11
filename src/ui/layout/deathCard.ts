@@ -1,6 +1,6 @@
+import { CARD_CONTENT, DEATH_CARD } from "../../data/layout";
 import type { Rect } from "../../data/types";
 import {
-  CARD_CONTENT,
   cardActions,
   cardActionsSize,
   type CardFonts,
@@ -8,14 +8,9 @@ import {
   cardTitleReserve,
   contentCardLayout,
 } from "./contentCard";
-import {
-  RUN_STAT_KEYS,
-  STATS_DIVIDER_HEIGHT,
-  type StatsMetricRow,
-  wrappedCardText,
-} from "./runStats";
+import { RUN_STAT_KEYS, type StatsMetricRow, wrappedCardText } from "./runStats";
 
-export const DEATH_PROGRESS_HEIGHT = 2;
+const STATS_DIVIDER_HEIGHT = DEATH_CARD.dividerWidth;
 
 interface DeathCardWords {
   readonly home: string;

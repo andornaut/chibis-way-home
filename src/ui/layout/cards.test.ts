@@ -3,6 +3,7 @@ import { buildLabel } from "@andornaut/game-kit/web/build/buildLabel";
 import { expect, it } from "vitest";
 
 import manifest from "../../../public/art/manifest.json";
+import { CARD_CONTENT } from "../../data/layout";
 import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
@@ -13,7 +14,6 @@ import { CARD_FONTS } from "../../testing/cardFonts";
 import { achievementsCardLayout } from "./achievementsCard";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import {
-  CARD_CONTENT,
   CARD_HEADING,
   cardActions,
   cardActionsSize,

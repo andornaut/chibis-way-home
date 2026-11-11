@@ -1,17 +1,13 @@
 import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
+import { ACTION_HELP_LAYOUT } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { SKILL_IDS } from "../../progress";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import { actionHelpParts } from "../chrome/actionHelp";
-import {
-  ACTION_HELP,
-  ACTION_HELP_MAX_LINES,
-  type ActionHelpLayout,
-  actionHelpLayout,
-} from "./actionHelp";
+import { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./actionHelp";
 import { CARD_TEXT_SCALE } from "./cardFrame";
 import { skillDetails } from "./skillDetails";
 
@@ -76,7 +72,7 @@ it("draws card text with action icons only in skill descriptions", () => {
 
 describe.each(skillLayouts)("the %s card description", (_skill, layout) => {
   it("wraps to at most two lines with every icon on the first", () => {
-    expect(layout.baselines.length).toBeLessThanOrEqual(ACTION_HELP_MAX_LINES);
+    expect(layout.baselines.length).toBeLessThanOrEqual(ACTION_HELP_LAYOUT.maxLines);
     for (const placement of layout.placements) {
       if (placement.kind === "icon") {
         expect(placement.line).toBe(0);

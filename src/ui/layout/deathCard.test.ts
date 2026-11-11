@@ -3,15 +3,15 @@ import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
 import { ZONE_MAP } from "../../data/map";
 import { SCREEN } from "../../data/screen";
 import { STATS_SCOPE_TEXT, TEXT } from "../../data/text";
 import { deathLabels, deathSummary } from "../../presentation";
 import { formatRunStats } from "../../progress";
 import { statsStatement } from "../dialogue/statsStatement";
-import { TEXT_BUTTON } from "./buttonLabel";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { CARD_CONTENT, CARD_HEADING } from "./contentCard";
+import { CARD_HEADING } from "./contentCard";
 import { deathCard } from "./deathCard";
 import { FONT_METRICS } from "./fontRoles";
 import { RUN_STAT_KEYS, runStatLabels, statsTotalRows } from "./runStats";

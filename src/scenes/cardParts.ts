@@ -6,6 +6,7 @@ import {
 import type { GameObjects, Scene } from "phaser";
 
 import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
+import { PLAY_MARK } from "../data/layout";
 import type { Point, Rect } from "../data/types";
 import {
   buttonFace,
@@ -23,7 +24,6 @@ import {
   FONT_ROLES,
   type LabelledButton,
   type Palette,
-  PLAY_MARK,
   textInkBounds,
 } from "../ui";
 import { uiObject } from "./uiRoots";

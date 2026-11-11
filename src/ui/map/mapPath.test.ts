@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { MAP_PATH } from "../../data/layout";
 import type { Point, Rect } from "../../data/types";
-import { MAP_PATH, MAP_PATH_LOOKS } from "../layout/mapScreen";
+import { MAP_PATH_LOOKS } from "../layout/mapScreen";
 import { bentCurve, curveWalk, dashInks, pathRects, type PathStroke, stampAt } from "./mapPath";
 
 const STRAIGHT = 0;

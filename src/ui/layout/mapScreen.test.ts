@@ -2,14 +2,14 @@ import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
+import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout";
 import { ZONE_MAP } from "../../data/map";
 import { SCREEN, TILE } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { MAP_ACTIONS } from "../input/mapInput";
 import { destinationCentre } from "../map/mapDestinations";
-import { TEXT_BUTTON } from "./buttonLabel";
 import { type PressArea, pressedArea } from "./hitAreas";
-import { MAP_LABEL_PADDING, MAP_LABEL_WIDTH, MAP_SCREEN, mapLabel } from "./mapScreen";
+import { MAP_SCREEN, mapLabel } from "./mapScreen";
 import { textInkBounds } from "./textInk";
 
 describe("mapLabel", () => {
@@ -71,7 +71,7 @@ describe("map footer actions", () => {
       expect(label.knockout.y + label.knockout.height).toBeLessThan(MAP_SCREEN.home.button.y);
       const name = TEXT.map.zones[destination.id]!;
       expect(inkWidth(parseBitmapFont(fontTitle), MAP_SCREEN.textScale, name)).toBeLessThanOrEqual(
-        MAP_LABEL_WIDTH - 2 * MAP_LABEL_PADDING,
+        MAP_LAYOUT.label.width - 2 * MAP_LAYOUT.label.padding,
       );
     },
   );

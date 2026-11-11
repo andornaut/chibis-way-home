@@ -9,12 +9,14 @@ import { type Cameras, type GameObjects, type Input, Scene, Scenes } from "phase
 import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core";
 import { CHARACTERS } from "../data/characters";
 import { DIALOGUES, SPEAKERS } from "../data/dialogues";
+import { ROOM_LAYOUT } from "../data/layout";
 import { ROOMS } from "../data/rooms";
 import { TEXT } from "../data/text";
 import type { RoomPlan } from "../data/types";
 import { coverZone, PHONE_EVENTS } from "../pwa";
 import {
   CARD_TEXT_SCALE,
+  DIALOGUE_PORTRAIT_SIZE,
   dialogueParagraphs,
   dialogueSpeakerLayout,
   pressedArea,
@@ -50,8 +52,6 @@ import { grantSkill, recordRoomTime } from "./save";
 import { drawSkillButton } from "./skillButton";
 
 const ZONE = "zone";
-// The placeholder frame's line, in base pixels.
-const FRAME_LINE = 2;
 
 // What a room opens with: its key in ROOMS, and the stage whose door leads to it.
 export interface RoomData {
@@ -149,9 +149,12 @@ export class RoomScene extends Scene {
         drawDialogueParagraph(this, { ...paragraph, portrait: null });
         if (paragraph.portrait !== null) {
           const at = dialogueSpeakerLayout(paragraph.side).portrait;
-          const portraitRoom = 64;
           this.add
-            .sprite(at.x + portraitRoom / 2, at.y + portraitRoom / 2, paragraph.portrait)
+            .sprite(
+              at.x + DIALOGUE_PORTRAIT_SIZE / 2,
+              at.y + DIALOGUE_PORTRAIT_SIZE / 2,
+              paragraph.portrait,
+            )
             .play(animationKey(paragraph.portrait, "idle"));
         }
       }
@@ -163,7 +166,7 @@ export class RoomScene extends Scene {
       const { frame } = ROOM_SCREEN;
       this.add
         .graphics()
-        .lineStyle(FRAME_LINE, this.colour("slate"))
+        .lineStyle(ROOM_LAYOUT.frameLine, this.colour("slate"))
         .strokeRect(frame.x, frame.y, frame.width, frame.height);
     } else {
       this.add.image(0, 0, art).setOrigin(0);
