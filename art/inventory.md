@@ -98,7 +98,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
 | ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
 | ui-close                  | sprite                                                     | 24x24  | normal, pressed                                                                              |
-| ui-dialogue-box           | sprite                                                     | 640x96 | rest                                                                                         |
+| ui-dialogue-box           | sprite                                                     | 480x60 | rest                                                                                         |
 | ui-focus                  | nine-slice (4,4,4,4)                                       | 16x16  | rest                                                                                         |
 | ui-icon-button            | sprite                                                     | 36x36  | normal, pressed                                                                              |
 | ui-move-hint              | sprite                                                     | 75x75  | rest, held-left, held-right                                                                  |
@@ -107,7 +107,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | ui-nav-bar                | nine-slice (1,1,1,3)                                       | 12x48  | rest                                                                                         |
 | ui-pause                  | sprite                                                     | 35x35  | rest, press (once), held                                                                     |
 | ui-play-mark              | sprite                                                     | 5x10   | rest, light                                                                                  |
-| ui-portrait-frame         | sprite                                                     | 68x68  | rest                                                                                         |
+| ui-portrait-frame         | sprite                                                     | 52x52  | rest                                                                                         |
 | ui-quit                   | sprite                                                     | 20x20  | normal, pressed                                                                              |
 | ui-resume                 | sprite                                                     | 160x44 | normal, pressed                                                                              |
 | ui-settings-card          | nine-slice (2,2,2,2)                                       | 16x16  | rest                                                                                         |

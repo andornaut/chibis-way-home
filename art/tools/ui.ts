@@ -17,11 +17,11 @@
  * until the game shows the held tag; every other tag loops.
  *
  * Dialogue
- * - ui-dialogue-box, 640x96. Navy, ink border with cut corners, slate rim top-left, dslate
- *   bottom-right. Body text cream, lines every 20.
- * - ui-portrait-frame, 68x68. Recessed dslate well round the 64px portrait, 2px in.
+ * - ui-dialogue-box, 480x60. Navy, ink border with cut corners, slate rim top-left, dslate
+ *   bottom-right. Body text cream, at most two lines, 20 apart.
+ * - ui-portrait-frame, 52x52. Recessed dslate well round the 48px portrait slot, 2px in.
  * - ui-name-tab, nine-slice 12x20, margins 2,2,2,2; tags amber, green, pink, tan (the fill; one per
- *   speaker). Drawn A+12 wide inside the box. Name ink, origin x+6.
+ *   speaker). Drawn A+12 wide, overhanging the box's top edge by 10. Name ink, origin x+6.
  * Placement belongs to the runtime layout (DIALOGUE_LAYOUT in src/data/layout.ts) and the style guide's
  * dialogue box table.
  *
@@ -219,15 +219,15 @@ function hypot(dx: number, dy: number): number {
 // ---------------------------------------------------------------- dialogue
 
 function dialogueBox(): pixel.Frame {
-  const g = new Grid(640, 96);
-  panel({}, g, 0, 0, 640, 96, "navy");
+  const g = new Grid(480, 60);
+  panel({}, g, 0, 0, 480, 60, "navy");
   return g.px;
 }
 
 /** Recessed: the shade on the top and left, the light on the bottom and right. */
 function portraitFrame(): pixel.Frame {
-  const g = new Grid(68, 68);
-  panel({ rim: ["navy", "slate"] }, g, 0, 0, 68, 68, "dslate");
+  const g = new Grid(52, 52);
+  panel({ rim: ["navy", "slate"] }, g, 0, 0, 52, 52, "dslate");
   return g.px;
 }
 

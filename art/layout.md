@@ -69,7 +69,7 @@ All actual modals retain canonical dimming and exclusive input. Page headers, li
 
 Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint and pause control are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid.
 
-The top zone-dialogue panel keeps its 40px horizontal screen inset, portrait regions and footer reservation, as defined in `DIALOGUE_LAYOUT` ([UI layout values](../src/data/layout.ts)). Reserve its actual bounds before arranging content below it. Live barks remain distinct from paused dialogue and modal overlays.
+The top zone-dialogue panel is 480 wide and centred on the view at 120,76,480,60, with its name tab overhanging to y 66, its portrait regions and its compact 36px footer row at y 140 to 176, as defined in `DIALOGUE_LAYOUT` ([UI layout values](../src/data/layout.ts)). Reserve its actual bounds before arranging content below it. Live barks remain distinct from paused dialogue and modal overlays.
 
 ## Exceptions and verification
 
@@ -77,7 +77,7 @@ The top zone-dialogue panel keeps its 40px horizontal screen inset, portrait reg
 | ----------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------- |
 | Compact Install face          | Embedded in a full-height settings row                                           | Full font, labelled action and 48px row target                           | Existing control exception                                |
 | Compact summary heading       | Separate identity rows, complete preview and footer clearance share a fixed page | Uniform compact heading role; full body/action fonts and measured bounds | [Typography exception](style-guide.md#typography-scale)   |
-| Dialogue panel                | Fixed portrait and speaker regions                                               | Full fonts, measured text and reserved footer                            | `DIALOGUE_SCREEN`                                         |
+| Dialogue panel                | Fixed portrait and speaker regions and a compact 36px footer row                 | Full fonts, measured text and reserved footer                            | `DIALOGUE_SCREEN`                                         |
 | Navigation and touch controls | Icon navigation or continuous directional input                                  | Contrast, target handling and clear state                                | Existing bespoke geometry                                 |
 | Responsive homepage           | HTML content reflows outside the game canvas                                     | Safe insets, full fonts and ordinary action sizing                       | Approved homepage contract                                |
 | Stage summary                 | Full-page identity, preview and paired statistics                                | Shared page inset, measured columns, existing image and full fonts       | [Summary layout](style-guide.md#stage-and-zone-summaries) |

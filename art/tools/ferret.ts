@@ -51,7 +51,7 @@
  *
  * portrait-ferret, 48x48: its head and neck facing right towards the text (as portrait-bird), cut
  * off by the frame's bottom edge, with one ink outer line on a transparent ground (the dialogue
- * box's 68x68 frame supplies the backing). The same face, eyes and hat, larger. Tags, one frame
+ * box's 52x52 frame supplies the backing). The same face, eyes and hat, larger. Tags, one frame
  * each at 1000ms: neutral (round eye, small smile), smug (the lid at half, a wider smile), annoyed
  * (a short brow dipped towards the snout, the lid at a third, the mouth turned down).
  */

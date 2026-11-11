@@ -72,7 +72,7 @@
  * carries the speech); quirk none.
  *
  * portrait-bird, 48x48: his head and the top of his body, facing right towards the text, cut off
- * by the frame's bottom edge, on a transparent ground (the dialogue box's 68x68 frame supplies the
+ * by the frame's bottom edge, on a transparent ground (the dialogue box's 52x52 frame supplies the
  * backing), with one ink outer line. Tags: neutral (dot eye), happy (eye closed in an upward arc),
  * worried (dot eye under a brow slanting down to the back, the bill a little lower). One frame
  * each.
