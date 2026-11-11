@@ -338,6 +338,7 @@ Apartment continues in this floor order:
 - **Layout:** Farmland, Country lanes and River crossing each use fixed openings and endings around shared randomized middle layouts within the zone's difficulty band. The required route descends to lower traversal, climbs through eight ordinary five-tile terraces, crosses an upper bank ferry and returns to the surface. The ferry retains the shared bank-gap, platform travel and red-bed challenge. No skill is required; caps, doors, stage IDs, lengths and encounter cadence retain their recipe contracts
 - **Progression:** clearing Freight terminal opens Farmland; clearing Farmland opens Country lanes, then River crossing. Unlocked stages remain replayable
 - **Rooms:** doors lead to skill gift rooms; these stages add no new plot
+- **Windmill sails:** four one-way ledges ride a fixed wheel against the clock, rising on the route side at 4 tiles/s at the sail centres, stopping 1 s at each quarter turn; they stay level, are never lethal and carry Chibi. He boards the sail stopped at the bottom from the lower approach and steps off the sail stopped at hub height on the rising side onto the exit bank, which is beyond a jump from the approach. A miss drops him to the trough under the wheel, which climbs back to the approach. Sails are never perches, bosses never rely on later sail positions, traps and parcels pass through them, and a windmill module holds no encounter. The wheel's bounds and spokes stay at least 4 columns from every module edge
 
 ### Trixi encounter
 
