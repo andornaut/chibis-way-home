@@ -3,7 +3,6 @@
 import {
   type AirMap,
   type AirNodeId,
-  airPath,
   locateAir,
   reachableAir,
   sinksAir,
@@ -34,7 +33,6 @@ import type {
   AreaLayout,
   BehaviourMotion,
   BirdTuning,
-  ChunkEscape,
   ChunkPlan,
   ObjectLayout,
   Point,
@@ -400,11 +398,8 @@ export function pathOut(
   return { bosses: found.bosses.length, edges, problems };
 }
 
-// How many times Chibi's fastest time from an escape's start to its end every boss's fastest
-// time there must be, where the boss gets there at all.
-const ESCAPE_LEAD = 2;
-// How far from an escape's ends a standing position may lie, from its hitbox bottom centre.
-const ESCAPE_REACH = 2 * TILE;
+// How far from a spot a standing position may lie, from its hitbox bottom centre.
+const STANDING_REACH = 2 * TILE;
 
 // The standing position nearest a spot, by hitbox bottom-centre distance, if one is within reach.
 export function standingAt(map: MovementMap<MapSupport>, point: Point): NodeRef | undefined {
@@ -413,87 +408,9 @@ export function standingAt(map: MovementMap<MapSupport>, point: Point): NodeRef 
   for (const { id, left, right, y } of map.nodes) {
     const x = Math.min(right, Math.max(left, point.x - half));
     const distance = Math.hypot(x + half - point.x, y - point.y);
-    if (distance <= ESCAPE_REACH && (!best || distance < best.distance)) {
+    if (distance <= STANDING_REACH && (!best || distance < best.distance)) {
       best = { distance, ref: { node: id, x } };
     }
   }
   return best?.ref;
-}
-
-// The air cell nearest a spot, by distance from the body's bottom centre, if one is within reach.
-function airAt(map: AirMap<MapSupport>, point: Point): AirNodeId | undefined {
-  let best: { distance: number; id: AirNodeId } | undefined;
-  for (const { body, id } of map.nodes) {
-    const distance = Math.hypot(body.x + body.width / 2 - point.x, body.y + body.height - point.y);
-    if (distance <= ESCAPE_REACH && (!best || distance < best.distance)) {
-      best = { distance, id };
-    }
-  }
-  return best?.id;
-}
-
-// Why an encounter chunk's escape points fail their contract: Chibi reaches each start from the
-// entry and each end from its start without skills, and every boss takes at least ESCAPE_LEAD
-// times as long from the start to the end, or cannot get there.
-export function escapeProblems(
-  context: { readonly chibi: BirdTuning; readonly escapes: readonly ChunkEscape[] },
-  found: Encounter,
-): readonly string[] {
-  const chibi = chibiMap(context.chibi, found.terrain);
-  const mask = groundMask({ allowed: ALLOW, climb: false, key: "all" }, chibi);
-  const pixel = ({ col, row }: { col: number; row: number }): Point => ({
-    x: col * TILE,
-    y: row * TILE,
-  });
-  const entry = chibi.nodes.find(({ supportId }) => supportId === found.terrain.pads[0]);
-  const problems: string[] = [];
-  for (const escape of context.escapes) {
-    const name = `escape ${escape.id}`;
-    const from = pixel(escape.from);
-    const to = pixel(escape.to);
-    const start = standingAt(chibi, from);
-    if (!entry || !start || !pathTo(chibi, mask, { node: entry.id, x: entry.left }, start)) {
-      problems.push(`Chibi does not reach ${name} from the entry`);
-      continue;
-    }
-    const through = pathTo(chibi, mask, start, { point: to, radius: TILE });
-    if (!through) {
-      problems.push(`Chibi does not get through ${name}`);
-      continue;
-    }
-    // A start and end on one span arrive at once on the map, so his walk between them bounds it.
-    const chibiSeconds = Math.max(
-      through.seconds,
-      Math.abs(to.x - from.x) / chibi.profile.walkSpeed,
-    );
-    const lead = ESCAPE_LEAD * chibiSeconds;
-    for (const object of found.bosses) {
-      for (const profile of bossMovementProfiles(object)) {
-        let seconds: number | undefined;
-        if (profile.kind === "ground") {
-          const map = groundMap({ jumps: BOSS_JUMP_SCRIPTS }, found.terrain, profile.profile);
-          const all = groundMask({ allowed: ALLOW, climb: true, key: "all" }, map);
-          const at = standingAt(map, from);
-          seconds = at && pathTo(map, all, at, { point: to, radius: ESCAPE_REACH })?.seconds;
-        } else {
-          const map = flightMap({}, found.terrain, object, profile.profile);
-          const at = airAt(map, from);
-          // Air goals measure from the body's centre.
-          const goal = {
-            point: { x: to.x, y: to.y - profile.profile.body.height / 2 },
-            radius: ESCAPE_REACH,
-          };
-          const all = airMask({ allowed: ALLOW, key: "all" }, map);
-          seconds = at === undefined ? undefined : airPath(map, all, at, goal)?.seconds;
-        }
-        if (seconds !== undefined && seconds < lead) {
-          problems.push(
-            `${object.character} ${profile.key} takes ${seconds.toFixed(2)} s through ${name}, ` +
-              `under ${ESCAPE_LEAD} x Chibi's ${chibiSeconds.toFixed(2)} s`,
-          );
-        }
-      }
-    }
-  }
-  return problems;
 }

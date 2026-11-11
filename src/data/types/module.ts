@@ -2,15 +2,7 @@
 
 import type { CertifiedArena } from "./arena";
 import type { TilePoint } from "./geometry";
-import type {
-  ChunkEscape,
-  ChunkPlan,
-  ChunkSlot,
-  Difficulty,
-  Instance,
-  NoCross,
-  TerrainRect,
-} from "./stage";
+import type { ChunkPlan, ChunkSlot, Difficulty, Instance, NoCross, TerrainRect } from "./stage";
 
 export type ZoneKey = "apartment" | "blue" | "countryside" | "home" | "industrial" | "woodland";
 export type ModuleSide = "left" | "right";
@@ -43,8 +35,6 @@ export interface ChunkModule {
   // The count of its antagonist-role objects: 0 or 1.
   readonly encounters: 0 | 1;
   readonly entry: ModuleEdge;
-  // Designed escape points in module tiles; a module with an encounter has at least one.
-  readonly escapes?: readonly ChunkEscape[];
   readonly exit: ModuleEdge;
   readonly noCross?: readonly NoCross[];
   readonly objects: readonly Instance[];

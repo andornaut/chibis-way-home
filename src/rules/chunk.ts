@@ -137,34 +137,6 @@ export function thingOf(catalogue: Catalogue, instances: readonly Instance[], in
   return { collision: object.collision, moves, span: { bottom, left, right, top } };
 }
 
-// Why a chunk's escape points do not start and end on surfaces: each spot, given as an entry
-// is, needs a terrain top or a still solid or ledge top at its row spanning its grid line.
-function escapeSurfaceProblems(catalogue: Catalogue, chunk: ChunkPlan): string[] {
-  if (!chunk.escapes?.length) {
-    return [];
-  }
-  const instances = [...(chunk.backdrops ?? []), ...chunk.objects];
-  const surfaces = [
-    ...chunk.solids.map(spanOf),
-    ...chunk.objects.flatMap((instance) => {
-      const { collision, moves, span } = thingOf(catalogue, instances, instance);
-      return !moves && (collision === "solid" || collision === "ledge") ? [span] : [];
-    }),
-  ];
-  return chunk.escapes.flatMap((escape) =>
-    (["from", "to"] as const).flatMap((end) => {
-      const { col, row } = escape[end];
-      return surfaces.some(({ left, right, top }) => top === row && left <= col && col <= right)
-        ? []
-        : [`escape ${escape.id} ${end} at col ${col} row ${row} is not on a surface`];
-    }),
-  );
-}
-
-// Whether a chunk with encounters still lacks a designed escape point.
-export const escapeMissing = (chunk: ChunkPlan): boolean =>
-  chunk.encounters > 0 && !chunk.escapes?.length;
-
 // Why a chunk's seam at the edge `side` breaks the seam rule, if it does: the terrain's top at
 // its row must run the footing in from the edge without a gap, no hazard or moving thing he
 // touches may come within the footing, at or above the seam, and no terrain, still solid or
@@ -218,8 +190,8 @@ export function seamRuleProblems(
 
 // Why a chunk breaks the chunk rules, if it does: its width, its seams' rows and the seam rule
 // at each, its themes and its terrain's looks in each, every placed thing a real character
-// inside it, its slots inside it with unique ids, its escape points inside it with unique ids
-// and on surfaces, and a positive weight and maxPerZone.
+// inside it, its slots inside it with unique ids, and a positive weight and
+// maxPerZone.
 export function chunkProblems(
   library: ChunkLibrary,
   catalogue: Catalogue,
@@ -370,11 +342,6 @@ export function chunkProblems(
           ...seamRuleProblems(seamContext, variant, "entry", chunk.entry),
           ...seamRuleProblems(seamContext, variant, "exit", chunk.exit),
         );
-        for (const problem of escapeSurfaceProblems(catalogue, variant)) {
-          if (!problems.includes(problem)) {
-            problems.push(problem);
-          }
-        }
       } catch (error) {
         problems.push(error instanceof Error ? error.message : String(error));
       }
@@ -388,15 +355,6 @@ export function chunkProblems(
   }
   if (new Set(slots.map(({ id }) => id)).size !== slots.length) {
     problems.push("two slots share an id");
-  }
-  const escapes = chunk.escapes ?? [];
-  for (const escape of escapes) {
-    if (!inside(rows, chunk.cols, escape.area)) {
-      problems.push(`escape ${escape.id} is outside the chunk`);
-    }
-  }
-  if (new Set(escapes.map(({ id }) => id)).size !== escapes.length) {
-    problems.push("two escapes share an id");
   }
   if (chunk.weight !== undefined && !(chunk.weight > 0)) {
     problems.push(`weight ${chunk.weight} is not positive`);

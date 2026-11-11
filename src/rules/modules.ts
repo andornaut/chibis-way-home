@@ -127,19 +127,10 @@ export function moduleProblems(context: ModuleContext, module: ChunkModule): str
       problems.push(`slot ${slot.id} is outside the module`);
     }
   }
-  for (const escape of module.escapes ?? []) {
-    if (!within(escape.area)) {
-      problems.push(`escape ${escape.id} is outside the module`);
-    }
-  }
-  if (module.encounters > 0 && !module.escapes?.length) {
-    problems.push("an encounter module has no designed escape point");
-  }
   const spots: readonly TilePoint[] = [
     ...(module.outOfReach ?? []),
     ...(module.noCross ?? []).flatMap(({ from, to }) => [from, to]),
     ...(module.route.targets ?? []).map(({ at }) => at),
-    ...(module.escapes ?? []).flatMap(({ from, to }) => [from, to]),
   ];
   for (const spot of spots) {
     if (spot.col < 0 || spot.col > cols || spot.row < 0 || spot.row > rows) {
@@ -246,7 +237,7 @@ interface PairContext {
 // The chunk two compatible modules make in a zone: the left half as authored and the right half
 // shifted one module right; objects left, right, then each half's zone additions, so motion
 // stream indices are fixed; instance ids with the orbit hosts and phase sources that name them,
-// slots and escape points prefixed by half, so halves may reuse ids; the zone's themes and frame;
+// slots prefixed by half, so halves may reuse ids; the zone's themes and frame;
 // one maxPerZone.
 export function composePair(
   context: PairContext,
@@ -277,16 +268,6 @@ export function composePair(
     ...(left.noCross ?? []),
     ...(right.noCross ?? []).map(({ from, to }) => ({ from: point(from), to: point(to) })),
   ];
-  const escapes = [
-    ...(left.escapes ?? []).map((escape) => ({ ...escape, id: `left:${escape.id}` })),
-    ...(right.escapes ?? []).map((escape) => ({
-      ...escape,
-      area: point(escape.area),
-      from: point(escape.from),
-      id: `right:${escape.id}`,
-      to: point(escape.to),
-    })),
-  ];
   const outOfReach = [...(left.outOfReach ?? []), ...(right.outOfReach ?? []).map(point)];
   const backdrops = [
     ...scoped("left", left.backdrops),
@@ -299,7 +280,6 @@ export function composePair(
     difficulty: context.grades[key] ?? pairGrade(left.difficulty, right.difficulty),
     encounters: left.encounters + right.encounters,
     entry: left.entry as ChunkSeam,
-    ...(escapes.length > 0 && { escapes }),
     exit: right.exit as ChunkSeam,
     maxPerZone: 1,
     ...(noCross.length > 0 && { noCross }),

@@ -852,15 +852,6 @@ export function zonePlanOf(
     ...doors,
     ...scenery,
   ];
-  const escapes = chunks.flatMap((chunk, index) =>
-    (chunk.escapes ?? []).map((escape) => ({
-      ...escape,
-      area: { ...escape.area, col: escape.area.col + at(index) },
-      chunk: index,
-      from: shiftPoint(at(index), escape.from),
-      to: shiftPoint(at(index), escape.to),
-    })),
-  );
   return {
     areas: {
       [ASSEMBLED_AREA]: {
@@ -872,7 +863,6 @@ export function zonePlanOf(
             row: first.entry.row,
           },
         },
-        ...(escapes.length > 0 && { escapes }),
         noCross: chunks.flatMap((chunk, index) =>
           (chunk.noCross ?? []).map(({ from, to }) => ({
             from: shiftPoint(at(index), from),

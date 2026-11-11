@@ -15,15 +15,6 @@ export const FIXTURE_MODULES: Readonly<Record<string, ChunkModule>> = {
     difficulty: 4,
     encounters: 1,
     entry: { row: 80 },
-    escapes: [
-      {
-        area: { col: 4, cols: 4, row: 76, rows: 4 },
-        from: { col: 3, row: 80 },
-        id: "door",
-        kind: "door",
-        to: { col: 9, row: 80 },
-      },
-    ],
     exit: { row: 80 },
     id: "fixture-patrol",
     objects: [{ character: "dog-antagonist", col: 22, role: "antagonist", row: 76 }],

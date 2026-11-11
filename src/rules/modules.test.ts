@@ -114,11 +114,6 @@ describe("moduleProblems", () => {
       "encounters 1 for 0 antagonist objects",
     ],
     [
-      "an encounter without an escape point",
-      { ...patrol, escapes: [] },
-      "an encounter module has no designed escape point",
-    ],
-    [
       "no mandatory challenge",
       { ...step, route: { profile: "primary" } },
       "no mandatory challenge: no route target, hazard or mover",
@@ -194,24 +189,6 @@ describe("composePair", () => {
       frame.frame({ ...pair("blue", step, step).chunk, theme: frame.themes }),
     );
     expect(composed.chunk.solids.length).toBe(5);
-  });
-
-  it("shifts and prefixes escape points by half", () => {
-    const right = { ...patrol, sides: ["right"] as const };
-    const { chunk } = composePair(
-      { frame: ZONE_FRAMES.blue, grades: {}, rules: MODULE_RULES, zone: "blue" },
-      step,
-      right,
-    );
-    expect(chunk.escapes).toEqual([
-      {
-        area: { col: 34, cols: 4, row: 76, rows: 4 },
-        from: { col: 33, row: 80 },
-        id: "right:door",
-        kind: "door",
-        to: { col: 39, row: 80 },
-      },
-    ]);
   });
 
   it("scopes each half's instance ids and the references that name them", () => {

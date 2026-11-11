@@ -8,7 +8,7 @@ import { STEP_SECONDS } from "../core";
 import { lookTiles } from "../presentation";
 import { SKILL_PROFILES } from "../progress";
 import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble";
-import { chunkProblems, escapeMissing, recipeProblems } from "../rules/chunk";
+import { chunkProblems, recipeProblems } from "../rules/chunk";
 import { bindElement } from "../rules/elementBinding";
 import { resolveNames, zoneLayout } from "../rules/tiles";
 import { standsOn, startZone, stepZone } from "../rules/zone";
@@ -203,46 +203,6 @@ it("supports ordinary room doors without intersecting terrain or platforms", () 
     }
   }
   expect(checked).toBeGreaterThan(0);
-});
-
-it("gives every encounter chunk a designed escape point", () => {
-  const missing = [
-    ...new Set(
-      ALL_CHUNKS.filter(
-        ([, library, chunk]) => library !== FIXTURE_LIBRARY && escapeMissing(chunk),
-      ).map(([id]) => id),
-    ),
-  ].sort();
-  expect(missing).toEqual([]);
-});
-
-describe("escape points", () => {
-  const escape = {
-    area: { col: 20, cols: 4, row: 44, rows: 6 },
-    from: { col: 18, row: 50 },
-    id: "gap",
-    kind: "flutter-gap",
-    to: { col: 26, row: 50 },
-  } as const;
-
-  it("accepts one inside the chunk between two surfaces", () => {
-    expect(chunkProblems(FIXTURE_LIBRARY, CATALOGUE, seamCase({ escapes: [escape] }))).toEqual([]);
-  });
-  it.each<[string, Partial<ChunkPlan>, string]>([
-    [
-      "an area outside the chunk",
-      { escapes: [{ ...escape, area: { ...escape.area, col: 58 } }] },
-      "escape gap is outside the chunk",
-    ],
-    ["two with one id", { escapes: [escape, escape] }, "two escapes share an id"],
-    [
-      "a spot off any surface",
-      { escapes: [{ ...escape, to: { col: 26, row: 45 } }] },
-      "escape gap to at col 26 row 45 is not on a surface",
-    ],
-  ])("refuses %s", (_, extra, problem) => {
-    expect(chunkProblems(FIXTURE_LIBRARY, CATALOGUE, seamCase(extra))).toContain(problem);
-  });
 });
 
 describe("the seam rule", () => {

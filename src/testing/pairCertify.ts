@@ -32,7 +32,7 @@ import { composePair, ENCOUNTER_ROLES, moduleProblems, pairProblems } from "../r
 import { withRoomBuildings } from "../rules/roomBuildings";
 import { zoneLayout } from "../rules/tiles";
 import { CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans";
-import { escapeProblems, NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut";
+import { NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut";
 import { zoneTraceLine } from "../sim/zoneTrace";
 import { crosses, surfaceAt, walkRequiredRoutes, type WalkRouteTarget } from "../sim/zoneWalk";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art";
@@ -291,7 +291,7 @@ function layoutFor(plan: ReturnType<typeof chunkThemePlan>): ZoneLayout {
 // Steps 4 and 5: in every theme of the chunk, its filled doors' room buildings placed by the
 // assembly pass itself; then in each walked theme, every required route walked with slots empty
 // and filled, no no-cross pair crossed, the behaviour trace of every walk step hashed; then, for
-// an encounter, every boss's path out on the movement map and every escape point's lead.
+// an encounter, every boss's path out on the movement map.
 export function prove(candidate: Candidate, themes: readonly string[]): Proof {
   const library = libraryWith(candidate.id, candidate.chunk);
   const recorder = traceRecorder({ retain: false });
@@ -346,11 +346,6 @@ export function prove(candidate: Candidate, themes: readonly string[]): Proof {
         problems.push(`${theme}: no pursuing boss in an encounter`);
       }
       problems.push(...result.problems.map((problem) => `${theme} path out: ${problem}`));
-      problems.push(
-        ...escapeProblems({ chibi: ORDINARY, escapes: candidate.chunk.escapes ?? [] }, found).map(
-          (problem) => `${theme} escape: ${problem}`,
-        ),
-      );
     }
   }
   return { problems, trace: recorder.hash(), work };
