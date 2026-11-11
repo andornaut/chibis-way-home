@@ -10,6 +10,18 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "industrial-crane-lookout--crane-ride",
+      "kind": "pair",
+      "layout": "b4a593f6df66d16c",
+      "modules": ["crane-lookout", "crane-ride"],
+      "route": "dadc097c73c5e003",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "88c2bfdfb0b4fe9b:5157",
+      "work": 5157
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "industrial-tunnel-broad-mesa",
       "kind": "single",
       "layout": "64632da4b13b6ff1",
@@ -327,7 +339,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "c2b6353549bc5dae", "proofs": "f6f6bf7ffa02ff79" },
+  "inputs": { "data": "bdf1641f1b0f42d9", "proofs": "f6f6bf7ffa02ff79" },
   "version": 1,
   "zone": "industrial"
 }

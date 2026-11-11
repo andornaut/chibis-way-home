@@ -10,6 +10,18 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "home-homecity-stoop--awning-row",
+      "kind": "pair",
+      "layout": "dbd5936c019b75ef",
+      "modules": ["homecity-stoop", "awning-row"],
+      "route": "8b652833bb5c241f",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "ad37e7438d57935c:2968",
+      "work": 2968
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "home-vertical-broad-mesa",
       "kind": "single",
       "layout": "8aca0cfd9ccce7ad",
@@ -195,7 +207,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "bcc40527ff914162", "proofs": "f6f6bf7ffa02ff79" },
+  "inputs": { "data": "f8db281099ebff0a", "proofs": "f6f6bf7ffa02ff79" },
   "version": 1,
   "zone": "home"
 }

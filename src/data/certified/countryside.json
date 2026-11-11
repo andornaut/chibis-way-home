@@ -299,9 +299,21 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "0aabef2ca19c03bc:408",
       "work": 408
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-windmill-lookout--windmill",
+      "kind": "pair",
+      "layout": "42bdebb35382c0df",
+      "modules": ["windmill-lookout", "windmill"],
+      "route": "31f560fb15a931fb",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "6510f2c3d898472d:10121",
+      "work": 10121
     }
   ],
-  "inputs": { "data": "7d6d6fb651ab8106", "proofs": "f6f6bf7ffa02ff79" },
+  "inputs": { "data": "d3bf19990b479322", "proofs": "f6f6bf7ffa02ff79" },
   "version": 1,
   "zone": "countryside"
 }

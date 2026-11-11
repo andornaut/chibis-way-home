@@ -11,6 +11,18 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "apartment-chandelier-approach--chandelier-swing",
+      "kind": "pair",
+      "layout": "48abb6015a176afc",
+      "modules": ["chandelier-approach", "chandelier-swing"],
+      "route": "dadc097c73c5e003",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "95351479ee57971b:6708",
+      "work": 6708
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "apartment-tall-broad-mesa",
       "kind": "single",
       "layout": "c268f1c4522f375a",
@@ -174,7 +186,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "9db170cba61db485", "proofs": "f6f6bf7ffa02ff79" },
+  "inputs": { "data": "1172713e42e392ef", "proofs": "f6f6bf7ffa02ff79" },
   "version": 1,
   "zone": "apartment"
 }
