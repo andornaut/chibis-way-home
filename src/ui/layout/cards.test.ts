@@ -248,7 +248,7 @@ it.each([false, true])(
   "sizes settings with install=%s and keeps labels apart from controls",
   (hasInstall) => {
     const layout = settingsCard(CARD_FONTS, TEXT.settings, BUILD_LABEL, hasInstall);
-    for (const key of ["moveControls", "actionButtons"] as const) {
+    for (const key of ["moveControls", "actionButtons", "reducedMotion"] as const) {
       const row = layout[key];
       expect(row.label.x + row.label.width + CARD_CONTENT.gap).toBeLessThanOrEqual(row.toggle.x);
       expect(inside(layout.card, row.row)).toBe(true);
@@ -258,6 +258,7 @@ it.each([false, true])(
     const rows = [
       layout.moveControls,
       layout.actionButtons,
+      layout.reducedMotion,
       ...(hasInstall ? [layout.install] : []),
     ];
     const closeClearance = layout.close.hit.y + layout.close.hit.height + CARD_CONTENT.gap;

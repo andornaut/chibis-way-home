@@ -308,6 +308,7 @@ export const TEXT: GameText = {
       },
     },
     moveControls: "Move controls",
+    reducedMotion: "Reduced motion",
     title: "Settings",
   },
   skills: {

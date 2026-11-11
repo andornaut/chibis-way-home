@@ -125,15 +125,17 @@ export interface GameText {
     readonly settings: string;
     readonly start: string;
   };
-  // The settings card: its title, the Move controls and Action buttons rows, the Install row and
-  // its button, and the install steps for each kind of browser, shown on the settings card's
-  // steps card and in the home page's steps dialog where the browser holds no install prompt.
+  // The settings card: its title, the Move controls, Action buttons and Reduced motion rows, the
+  // Install row and its button, and the install steps for each kind of browser, shown on the
+  // settings card's steps card and in the home page's steps dialog where the browser holds no
+  // install prompt.
   readonly settings: {
     readonly actionButtons: string;
     readonly install: string;
     readonly installButton: string;
     readonly installSteps: Readonly<Record<InstallStepsKind, InstallSteps>>;
     readonly moveControls: string;
+    readonly reducedMotion: string;
     readonly title: string;
   };
 }

@@ -33,8 +33,8 @@ afterEach(() => {
   state.accepts = true;
 });
 
-function fixture() {
-  vi.stubGlobal("window", { matchMedia: () => ({ matches: false }) });
+function fixture(host: object = { matchMedia: () => ({ matches: false }) }) {
+  vi.stubGlobal("window", host);
   const stages = ZONE_MAP.destinations[0]!.stages;
   const available = stages[0]!;
   const locked = stages[1]!;
@@ -97,6 +97,23 @@ describe("disabled stage screenshot cards", () => {
     f.scene.activate({ id: f.available, kind: "stage" });
     expect(f.opener.stageSelected).toHaveBeenCalledExactlyOnceWith(f.available);
   });
+
+  // The refusal's steady and animated forms are refuseControl's; the setting picks between them.
+  it.each([
+    { prefers: false, reduced: true, stored: "on" },
+    { prefers: true, reduced: false, stored: "off" },
+    { prefers: true, reduced: true, stored: null },
+  ])(
+    "refuses with reduced motion $reduced for a stored $stored over a device preference of $prefers",
+    ({ prefers, reduced, stored }) => {
+      const f = fixture({
+        localStorage: { getItem: () => stored, setItem: vi.fn() },
+        matchMedia: () => ({ matches: prefers }),
+      });
+      f.scene.activate({ id: f.locked, kind: "stage" });
+      expect((state.refuse.mock.calls[0] as unknown as [unknown, boolean])[1]).toBe(reduced);
+    },
+  );
 
   it("keeps controls underneath a covering modal inert without refusal feedback", () => {
     const f = fixture();

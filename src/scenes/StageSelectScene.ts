@@ -14,6 +14,7 @@ import {
   cardTextOrigin,
   type PressArea,
   pressedArea,
+  reducedMotion,
   STAGE_NUMBER_SCALE,
   stagePageOf,
   stagePickerKey,
@@ -316,7 +317,7 @@ export class StageSelectScene extends Scene {
       if (button && !this.refusals.has(target.id)) {
         const stop = refuseControl(
           this,
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+          reducedMotion(window),
           [button.normal, button.pressed, ...button.content.map(({ object }) => object)],
           button.labels,
           () => this.refusals.delete(target.id),
@@ -355,7 +356,7 @@ export class StageSelectScene extends Scene {
           key,
           refuseControl(
             this,
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+            reducedMotion(window),
             [button.faces.normal, button.faces.pressed, button.label.label],
             [button.label.label],
             () => this.refusals.delete(key),

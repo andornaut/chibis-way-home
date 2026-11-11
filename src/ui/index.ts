@@ -143,6 +143,7 @@ export {
   startBackAction,
 } from "./pause/cardInput";
 export { type RoomEvent, roomEvent } from "./pause/roomInput";
+export { reducedMotion, setReducedMotion } from "./settings/reducedMotion";
 export {
   coarsePointer,
   setTouchSettingShown,

@@ -179,6 +179,7 @@ import {
   MOVE_HINT,
   moveHintView,
   PAUSE_BUTTON,
+  reducedMotion,
   shifted,
   SKILL_BUTTON,
   skillHud,
@@ -1106,7 +1107,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           playContactFeedback(this, {
             cue: CONTACT_CUE,
             depth: OVERLAY_DEPTH,
-            reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+            reducedMotion: reducedMotion(window),
             shake: CAMERA.contactShake,
           });
         }
@@ -1959,7 +1960,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const view = bossRemovalView(
       removalProgress(behaviour)!,
       this.textures.exists(BOSS_REMOVAL_ART.key),
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      reducedMotion(window),
     );
     let puff = this.removalArt.get(index);
     if (view.kind === "fade") {

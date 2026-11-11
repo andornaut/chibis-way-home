@@ -20,7 +20,7 @@ export function settingsCard(
 ) {
   const actionWidth = cardActionsSize(fonts.title, "row", [words.installButton]).width;
   const labelWidth = (label: string) => cardTextSize(fonts.body, label).width;
-  const widths = [words.moveControls, words.actionButtons].map(
+  const widths = [words.moveControls, words.actionButtons, words.reducedMotion].map(
     (text) => ICON + CARD_CONTENT.gap + labelWidth(text) + CARD_CONTENT.gap + SWITCH.width,
   );
   if (hasInstall) {
@@ -29,7 +29,7 @@ export function settingsCard(
     );
   }
   const rowWidth = Math.max(...widths);
-  const rows = hasInstall ? 3 : 2;
+  const rows = hasInstall ? 4 : 3;
   const layout = contentCardLayout(
     { ...SCREEN, x: 0, y: 0 },
     [
@@ -67,7 +67,7 @@ export function settingsCard(
       toggle: { x: rect.x + rowWidth - SWITCH.width, y: rect.y + (ROW_HEIGHT - SWITCH.height) / 2 },
     };
   };
-  const install = row(2, words.install);
+  const install = row(3, words.install);
   const button = labelledButton({
     height: ROW_HEIGHT,
     width: actionWidth,
@@ -84,6 +84,7 @@ export function settingsCard(
       button: button.button,
     },
     moveControls: row(0, words.moveControls),
+    reducedMotion: row(2, words.reducedMotion),
     title: layout.title!,
   };
 }

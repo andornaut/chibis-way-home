@@ -11,6 +11,8 @@ import {
   focusRingAround,
   type PressArea,
   pressedArea,
+  reducedMotion,
+  setReducedMotion,
   settingsCard,
   stepFocus,
   stepsCard,
@@ -48,19 +50,30 @@ export interface SettingsData {
   readonly opener: string;
 }
 
-// The settings card's controls: the close X, the Install row and each touch setting's row.
-type Target = "close" | "install" | TouchSetting;
+// The settings with a switch row, in the card's order: the touch settings, then Reduced motion.
+type SwitchSetting = "reducedMotion" | TouchSetting;
+const SWITCH_SETTINGS: readonly SwitchSetting[] = [...TOUCH_SETTINGS, "reducedMotion"];
+
+// The settings card's controls: the close X, the Install row and each switch row.
+type Target = "close" | "install" | SwitchSetting;
 
 // This build's version and commit, as the card's last line shows them.
 const BUILD_LABEL = formatBuildLabel(__APP_VERSION__, __COMMIT__);
 
-// The icon on each touch setting's row.
-const SETTING_ICONS: Readonly<Record<TouchSetting, string>> = {
+// The icon on each switch row, drawn once Art's texture is loaded.
+const SETTING_ICONS: Readonly<Record<SwitchSetting, string>> = {
   actionButtons: "icon-touch-controls",
   moveControls: "icon-move-controls",
+  reducedMotion: "icon-reduced-motion",
 };
 
-// A touch setting's row as drawn: its label and its switch.
+// Whether a switch row's setting is on: a touch setting while shown, Reduced motion while motion
+// is reduced.
+function settingOn(setting: SwitchSetting): boolean {
+  return setting === "reducedMotion" ? reducedMotion(window) : touchSettingShown(setting);
+}
+
+// A switch row as drawn: its label and its switch.
 interface SettingRow {
   readonly label: GameObjects.BitmapText;
   readonly toggle: GameObjects.Sprite;
@@ -80,8 +93,8 @@ const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string | undefined>> = {
 };
 
 // The settings card, which the pause card opens in its place over the same dim, or the start
-// screen over itself: the Move controls and Action buttons rows, the Install row until the game
-// is installed, and the build label. A row acts when a press lands on it and lifts on it; the
+// screen over itself: the Move controls, Action buttons and Reduced motion rows, the Install row
+// until the game is installed, and the build label. A row acts when a press lands on it and lifts on it; the
 // close X, back, Escape and P close the card, back to the scene that opened it. Install shows the
 // browser's install prompt where it holds one, otherwise the install steps card for the browser's
 // own install steps in the settings card's place, which the same controls close. Up and Down move the keyboard's
@@ -102,7 +115,7 @@ export class SettingsScene extends Scene {
   private opener = "";
   // The control a press landed on, which acts if the press lifts on it too.
   private pressed: Target | undefined;
-  private settingRows = new Map<TouchSetting, SettingRow>();
+  private settingRows = new Map<SwitchSetting, SettingRow>();
   // The install steps card while it shows.
   private steps: GameObjects.Container | undefined;
 
@@ -173,6 +186,7 @@ export class SettingsScene extends Scene {
       close: this.layout.close.hit,
       install: this.layout.install.hit,
       moveControls: this.layout.moveControls.hit,
+      reducedMotion: this.layout.reducedMotion.hit,
     };
     return [card, ...this.targets().map((target) => hits[target])];
   }
@@ -206,8 +220,8 @@ export class SettingsScene extends Scene {
       return ["close"];
     }
     return this.installButton === undefined
-      ? [...TOUCH_SETTINGS, "close"]
-      : [...TOUCH_SETTINGS, "install", "close"];
+      ? [...SWITCH_SETTINGS, "close"]
+      : [...SWITCH_SETTINGS, "install", "close"];
   }
 
   private act(target: Target): void {
@@ -215,6 +229,9 @@ export class SettingsScene extends Scene {
       this.close();
     } else if (target === "install") {
       this.install();
+    } else if (target === "reducedMotion") {
+      setReducedMotion(window, !reducedMotion(window));
+      this.render();
     } else {
       this.openerScene().setTouchSetting(target, !touchSettingShown(target));
       this.render();
@@ -273,18 +290,17 @@ export class SettingsScene extends Scene {
       addCardHeading(this, this.layout.title),
     ];
     this.settingRows = new Map();
-    for (const setting of TOUCH_SETTINGS) {
+    for (const setting of SWITCH_SETTINGS) {
       const { icon, label, toggle } = this.layout[setting];
       const drawn: SettingRow = {
         label: addCardTextIn(this, BODY_FONT, label, words[setting], ink),
         toggle: this.add.sprite(toggle.x, toggle.y, "ui-switch"),
       };
       this.settingRows.set(setting, drawn);
-      objects.push(
-        this.add.image(icon.x, icon.y, SETTING_ICONS[setting]),
-        drawn.label,
-        drawn.toggle,
-      );
+      if (this.textures.exists(SETTING_ICONS[setting])) {
+        objects.push(this.add.image(icon.x, icon.y, SETTING_ICONS[setting]));
+      }
+      objects.push(drawn.label, drawn.toggle);
     }
     this.closeX = this.add.sprite(close.at.x, close.at.y, "ui-close");
     objects.push(this.closeX);
@@ -328,7 +344,7 @@ export class SettingsScene extends Scene {
     // A pressed row's label turns dslate, from ink.
     const label = (target: Target) => this.colour(pressed === target ? "dslate" : "ink");
     for (const [setting, row] of this.settingRows) {
-      row.toggle.play(animationKey("ui-switch", touchSettingShown(setting) ? "on" : "off"));
+      row.toggle.play(animationKey("ui-switch", settingOn(setting) ? "on" : "off"));
       row.label.setTint(label(setting));
     }
     this.installLabel?.setTint(label("install"));
@@ -367,12 +383,13 @@ export class SettingsScene extends Scene {
       const { close } = this.stepsLayout;
       return pressedArea([{ art: close.art, hit: close.hit, key: "close" as const }], point);
     }
-    const { actionButtons, close, install, moveControls } = this.layout;
+    const { actionButtons, close, install, moveControls, reducedMotion: motion } = this.layout;
     const areas: Record<Target, PressArea<Target>> = {
       actionButtons: { art: actionButtons.row, hit: actionButtons.hit, key: "actionButtons" },
       close: { art: close.art, hit: close.hit, key: "close" },
       install: { art: install.row, hit: install.hit, key: "install" },
       moveControls: { art: moveControls.row, hit: moveControls.hit, key: "moveControls" },
+      reducedMotion: { art: motion.row, hit: motion.hit, key: "reducedMotion" },
     };
     return pressedArea(
       this.targets().map((target) => areas[target]),
