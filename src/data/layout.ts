@@ -179,24 +179,27 @@ export const CELEBRATION_LAYOUT = {
 // Dialogue
 
 export const DIALOGUE_LAYOUT = {
-  // The shared top panel.
-  box: { height: 96, width: 640, x: 40, y: 8 } satisfies Rect,
   // The least width of Skip and Continue.
   buttonWidth: 192,
   // The departure footer's buttons' drawn edge in from the view's right and bottom.
   departureInset: 16,
-  // The panel footer's buttons' top.
-  footerY: 112,
-  // The name tab's height.
-  nameTabHeight: 20,
-  // The name's clearance from the name tab's left and right edges.
-  nameTabInset: 6,
+  // Skip and Continue below the panel: their gap below the panel's bottom and their height.
+  footer: { gap: 4, height: 36 },
+  // The speaker's name tab: its top's clearance below the skill HUD's targets, its drawn edge in
+  // from the panel's end opposite the portrait, its height, the name's clearance from its left
+  // and right edges, and how far it rises above the panel's top.
+  nameTab: { clearance: 10, endInset: 8, height: 20, inset: 6, overhang: 10 },
+  // The panel's clearance round the portrait frame.
+  padding: 4,
+  // The panel's size; it is centred across the view.
+  panel: { height: 60, width: 480 } satisfies Size,
   // The portrait's drawn side, in the dialogue panel and gift rooms.
-  portrait: 64,
+  portrait: 48,
   // art: the ui-portrait-frame border width around the portrait.
   portraitInset: 2,
-  // The text column's line count and baseline-to-baseline pitch.
-  text: { lines: 3, pitch: 20 },
+  // The text column: its clearance from the portrait frame and from the panel's far edge, its
+  // line count and baseline-to-baseline pitch.
+  text: { gap: 8, lines: 2, pitch: 20 },
 } as const;
 
 // Full screens
