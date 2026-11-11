@@ -13,6 +13,8 @@ if [ -n "${CHECK_REVISION:-}" ]; then
 fi
 
 run_lint() {
+    shellcheck -- tests/container/admit tests/container/check tests/container/run
+    shellcheck --shell=sh -- .husky/pre-commit
     npm run lint
 }
 

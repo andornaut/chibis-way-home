@@ -1,6 +1,8 @@
 ARG NODE_VERSION=24.21.0
 FROM node:${NODE_VERSION}
 
+COPY --from=koalaman/shellcheck:v0.11.0 /bin/shellcheck /usr/local/bin/shellcheck
+
 ENV HUSKY=0
 WORKDIR /opt/check
 COPY package.json package-lock.json ./
