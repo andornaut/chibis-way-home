@@ -4,9 +4,17 @@ import { SCREEN } from "../../data/screen";
 import type { Point } from "../../data/types";
 import { touchRoleAt } from "../input/intent";
 import { PAUSE_BUTTON } from "./pauseCard";
-import { bottomShift, CONTROL_BOTTOM, CONTROL_EDGE, playView, shifted, topShift } from "./playView";
+import {
+  bottomShift,
+  CONTROL_BOTTOM,
+  CONTROL_EDGE,
+  CONTROL_SIDE,
+  playView,
+  shifted,
+  topShift,
+} from "./playView";
 import { stageProgressRect } from "./stageProgress";
-import { MOVE_HINT, MOVE_HINT_INSET, TOUCH_CONTROLS } from "./touchControls";
+import { MOVE_HINT, TOUCH_CONTROLS } from "./touchControls";
 
 // Canvases the play area makes at the game's scale: the game's own size, wider, and taller.
 const CASES: [string, { height: number; width: number }][] = [
@@ -37,9 +45,9 @@ const drawn = (frame: { height: number; width: number; x: number; y: number }, s
 });
 
 describe("the controls' edges", () => {
-  // In each canvas: Jump's ring CONTROL_EDGE in from the view's right and CONTROL_BOTTOM above
-  // the canvas's bottom, the hint's ring MOVE_HINT_INSET in from the view's left and above the
-  // canvas's bottom, and the pause disc CONTROL_EDGE in from the view's top and left.
+  // In each canvas: Jump's ring CONTROL_SIDE in from the view's right and the hint's from its
+  // left, both CONTROL_BOTTOM above the canvas's bottom, and the pause disc CONTROL_EDGE in from
+  // the view's top and left.
   it.each(CASES)("in %s sit their set distances from the view and the canvas", (_, canvas) => {
     const view = playView(canvas);
     const jump = drawn(TOUCH_CONTROLS.jump.art, bottomShift(canvas));
@@ -54,10 +62,10 @@ describe("the controls' edges", () => {
       pauseLeft: pause.left - view.x,
       pauseTop: pause.top - view.y,
     }).toEqual({
-      hintBottom: MOVE_HINT_INSET,
-      hintLeft: MOVE_HINT_INSET,
+      hintBottom: CONTROL_BOTTOM,
+      hintLeft: CONTROL_SIDE,
       jumpBottom: CONTROL_BOTTOM,
-      jumpRight: CONTROL_EDGE,
+      jumpRight: CONTROL_SIDE,
       pauseLeft: CONTROL_EDGE,
       pauseTop: CONTROL_EDGE,
     });

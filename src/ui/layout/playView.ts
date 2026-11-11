@@ -24,6 +24,10 @@ export const CONTROL_EDGE = 8;
 // drawn edge to edge.
 export const CONTROL_BOTTOM = 20;
 
+// How far Jump's ring sits in from the view's right and the move hint's from its left, drawn
+// edge to edge.
+export const CONTROL_SIDE = 24;
+
 // How far a control along the canvas's bottom (Use, Jump and the move hint) moves from where it
 // sits in a canvas the game's own size: across with the view, so it stays inside it, and down
 // to the canvas's bottom, so below the game it moves into the bar.

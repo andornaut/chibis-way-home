@@ -1,7 +1,7 @@
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect } from "../../data/types";
 import { type PressArea, type PressShape, TOUCH_CIRCLE_RADIUS } from "./hitAreas";
-import { CONTROL_BOTTOM, CONTROL_EDGE } from "./playView";
+import { CONTROL_BOTTOM, CONTROL_SIDE } from "./playView";
 
 export type TouchControl = "jump" | "use";
 
@@ -19,17 +19,16 @@ function buttonArt(centre: Point): Rect {
 // drawn edge on each side.
 const DRAWN_HALF = (BUTTON_FRAME - 1) / 2 - 1;
 
-// Jump at the view's right, CONTROL_EDGE in, and CONTROL_BOTTOM above the bottom; Use's ring
-// USE_RIGHT in from the view's right, its centre USE_ABOVE_JUMP above Jump's.
+// Jump CONTROL_SIDE in from the view's right and CONTROL_BOTTOM above the bottom; Use's centre
+// USE_FROM_JUMP from Jump's, so it moves with Jump.
 const JUMP_CENTRE = {
-  x: SCREEN.width - 1 - CONTROL_EDGE - DRAWN_HALF,
+  x: SCREEN.width - 1 - CONTROL_SIDE - DRAWN_HALF,
   y: SCREEN.height - 1 - CONTROL_BOTTOM - DRAWN_HALF,
 };
-const USE_RIGHT = 85;
-const USE_ABOVE_JUMP = 100;
+const USE_FROM_JUMP = { x: -77, y: -100 } as const;
 const USE_CENTRE = {
-  x: SCREEN.width - 1 - USE_RIGHT - DRAWN_HALF,
-  y: JUMP_CENTRE.y - USE_ABOVE_JUMP,
+  x: JUMP_CENTRE.x + USE_FROM_JUMP.x,
+  y: JUMP_CENTRE.y + USE_FROM_JUMP.y,
 };
 const USE_ART = buttonArt(USE_CENTRE);
 const JUMP_ART = buttonArt(JUMP_CENTRE);
@@ -71,13 +70,8 @@ export const TOUCH_PRESS_AREAS: readonly PressArea<TouchControl>[] = (
 // Art's move hint, a drawing with no press area of its own (movement is the floating drag
 // everywhere off the buttons): a ring in a frame the buttons' size, centred at rest on centre,
 // and a knob that moves from the ring's centre at most knobReach pixels left or right the way
-// the drag goes. At rest its ring sits MOVE_HINT_INSET in from the view's left and the same
-// distance above the canvas's bottom.
-export const MOVE_HINT_INSET = 12;
-const MOVE_HINT_CENTRE: Point = {
-  x: MOVE_HINT_INSET + DRAWN_HALF,
-  y: SCREEN.height - 1 - MOVE_HINT_INSET - DRAWN_HALF,
-};
+// the drag goes. At rest it mirrors Jump: CONTROL_SIDE in from the view's left, level with Jump.
+const MOVE_HINT_CENTRE: Point = { x: CONTROL_SIDE + DRAWN_HALF, y: JUMP_CENTRE.y };
 export const MOVE_HINT = {
   art: buttonArt(MOVE_HINT_CENTRE),
   centre: MOVE_HINT_CENTRE,
