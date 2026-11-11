@@ -7,7 +7,7 @@
   },
   "schedule": { "departures": ["20"], "timezone": "America/Toronto" },
   "gate": {
-    "image": "node:24.21.0",
+    "image": "chibi-check:node24.21.0-shellcheck0.11.0",
     "install": "npm ci",
     "steps": [
       { "name": "check", "run": "./node_modules/.bin/tsc" },
@@ -34,7 +34,7 @@
   "reports": {
     "project": "Chibi",
     "scheduledTicks": true,
-    "recipient": "game-dev",
-    "workerParents": ["game-dev"]
+    "recipient": "dev-manager",
+    "workerParents": ["dev-manager"]
   }
 }
