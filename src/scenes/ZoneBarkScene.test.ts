@@ -8,7 +8,7 @@ import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import type { DialogueLine } from "../data/types";
 import { barkOwnerOnscreen } from "../presentation";
-import { DIALOGUE_SCREEN, dialogueParagraphs } from "../ui";
+import { DIALOGUE_SCREEN, dialogueNameTab, dialogueParagraphs } from "../ui";
 
 vi.mock("phaser", () => ({
   Scene: class {
@@ -26,7 +26,14 @@ vi.mock("phaser", () => ({
   },
   Scenes: { Events: { PRE_RENDER: "prerender" } },
 }));
-vi.mock("./dialogueParagraph", () => ({ drawDialogueParagraph: vi.fn(() => []) }));
+// Every bark shows a left speaker's name tab, so the press area takes the panel and the tab.
+vi.mock("./dialogueParagraph", async () => {
+  const ui = await import("../ui");
+  return {
+    dialogueParagraphPressAreas: () => ui.dialoguePressAreas(ui.dialogueNameTab("left", 40)),
+    drawDialogueParagraph: vi.fn(() => []),
+  };
+});
 vi.mock("./playCamera", () => ({
   fitPlayCamera: vi.fn(),
   playPoint: (_scene: unknown, point: unknown) => point,
@@ -146,6 +153,18 @@ it("dismisses only the tapped bark and retains the next queued line", () => {
     lines: [{ line: "second", speaker: "speaker" }],
   });
   expect(images.mock.results[1]!.value.destroy).not.toHaveBeenCalled();
+});
+
+it.each([
+  ["name tab", true],
+  ["strip beside the tab", false],
+] as const)("a tap on the %s dismisses the bark: %s", (_where, dismissed) => {
+  const { images, scene } = showingBark();
+  const tab = dialogueNameTab("left", 40);
+  const pointer = { ...panelPointer, x: dismissed ? tab.x + 1 : tab.x - 1, y: tab.y + 1 };
+  scene.input.emit("pointerdown", pointer);
+  scene.input.emit("pointerup", pointer);
+  expect(images.mock.results[0]!.value.destroy).toHaveBeenCalledTimes(dismissed ? 1 : 0);
 });
 
 it.each(["drag", "cancel", "other pointer", "outside"])("does not dismiss on %s", (kind) => {

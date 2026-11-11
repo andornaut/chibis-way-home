@@ -10,7 +10,7 @@ import { CARD_FONTS } from "../../testing/cardFonts";
 import { dialogueLines } from "../dialogue/conversation";
 import { achievementsCardLayout, achievementsPerPage } from "./achievementsCard";
 import { CARD_TEXT_SCALE } from "./cardFrame";
-import { DIALOGUE_SCREEN } from "./dialogueScreen";
+import { DIALOGUE_SCREEN, dialogueBodyLines } from "./dialogueScreen";
 import { FONT_METRICS } from "./fontRoles";
 import { type PressArea, pressedArea } from "./hitAreas";
 
@@ -120,14 +120,23 @@ describe("the Achievements card", () => {
 
   it("fits every unlock notice's bold line and description in the dialogue panel's text", () => {
     const text = DIALOGUE_SCREEN.text;
-    for (const id of ACHIEVEMENT_IDS) {
+    const lines = dialogueBodyLines("heading");
+    const fits = (wrap: () => unknown) => {
+      try {
+        wrap();
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    const unfit = ACHIEVEMENT_IDS.filter((id) => {
       const { description, title } = TEXT.achievements.entries[id];
       const heading = TEXT.achievements.notice.replace("{title}", title);
-      expect(inkWidth(CARD_FONTS.title, text.scale, heading), id).toBeLessThanOrEqual(text.width);
-      expect(
-        dialogueLines(CARD_FONTS.body, { ...text, lines: text.lines - 1 }, text.width, description),
-        id,
-      ).not.toHaveLength(0);
-    }
+      return (
+        inkWidth(CARD_FONTS.title, text.scale, heading) > text.width ||
+        !fits(() => dialogueLines(CARD_FONTS.body, { ...text, lines }, text.width, description))
+      );
+    });
+    expect(unfit).toEqual([]);
   });
 });
