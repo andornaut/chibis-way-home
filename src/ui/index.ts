@@ -7,6 +7,7 @@ export { helpChromeLayers, helpChromeSvg } from "./chrome/helpChrome";
 export { modalColour } from "./chrome/modalDim";
 export { moveHintView } from "./chrome/moveHint";
 export { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./chrome/pauseChrome";
+export { skillChromeLayers } from "./chrome/skillChrome";
 export {
   chromeTexels,
   TOUCH_CHROME_FRAME,

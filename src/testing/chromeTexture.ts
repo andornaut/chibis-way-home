@@ -1,11 +1,11 @@
 import { vi } from "vitest";
 
 // A CanvasTexture stand-in for the chrome sheets: named frames that record their resizes, and a
-// canvas that records its size and paint calls.
+// canvas that records its size and paint calls. pixels reads a frame's last painted texel.
 export function chromeCanvasTexture(key: string, width: number, height: number) {
   const frames = new Map<
     string,
-    { cutHeight: number; cutWidth: number; setSize: ReturnType<typeof vi.fn> }
+    { cutHeight: number; cutWidth: number; cutX: number; setSize: ReturnType<typeof vi.fn> }
   >();
   const context = {
     clearRect: vi.fn(),
@@ -13,12 +13,13 @@ export function chromeCanvasTexture(key: string, width: number, height: number) 
     putImageData: vi.fn(),
   };
   const texture = {
-    add: vi.fn((name: string, _source: number, _x: number, _y: number, w: number, h: number) => {
+    add: vi.fn((name: string, _source: number, x: number, _y: number, w: number, h: number) => {
       const frame = {
         cutHeight: h,
         cutWidth: w,
-        setSize: vi.fn((cutWidth: number, cutHeight: number) =>
-          Object.assign(frame, { cutHeight, cutWidth }),
+        cutX: x,
+        setSize: vi.fn((cutWidth: number, cutHeight: number, cutX: number) =>
+          Object.assign(frame, { cutHeight, cutWidth, cutX }),
         ),
       };
       frames.set(name, frame);
@@ -35,5 +36,11 @@ export function chromeCanvasTexture(key: string, width: number, height: number) 
     setSize: vi.fn((w: number, h: number) => Object.assign(texture, { height: h, width: w })),
     width,
   };
-  return texture;
+  const pixels = (frame: string, x: number, y: number) => {
+    const { cutWidth, cutX } = frames.get(frame)!;
+    const calls = context.putImageData.mock.calls as [{ data: Uint8ClampedArray }, number][];
+    const [image] = calls.filter((args) => args[1] === cutX).at(-1)!;
+    return [...image.data.slice(4 * (y * cutWidth + x), 4 * (y * cutWidth + x) + 4)];
+  };
+  return Object.assign(texture, { pixels });
 }
