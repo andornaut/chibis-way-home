@@ -128,6 +128,12 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     }
   }
 
+  // Whether the pause card may open over this conversation: an in-zone conversation still showing
+  // a line, not a departure and not its required choice.
+  pausable(): boolean {
+    return !this.departure && !this.finished && !this.choosing;
+  }
+
   // The required choice calls once after its own scene stops; the world remains frozen until here.
   choiceSelected(selection: string): void {
     if (this.choosing) {

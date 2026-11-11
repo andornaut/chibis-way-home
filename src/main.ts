@@ -63,9 +63,10 @@ function startGame(): void {
     // waiting on the page compositor, and the high-performance GPU where there is a choice.
     render: { antialias: false, desynchronized: true, powerPreference: "high-performance" },
     scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.EXPAND },
-    // Later scenes draw over earlier ones: the pause card over the zone, the settings card over
-    // the pause card's dim, the restart card over the start screen or the celebration, and unlock
-    // notices over play and under every card.
+    // Later scenes draw over earlier ones and take presses first: the pause button and card over
+    // the zone and its conversations, the settings card over the pause card's dim, the restart
+    // card over the start screen or the celebration, and unlock notices over play and under every
+    // card.
     scene: [
       BootScene,
       StartScene,
@@ -76,15 +77,15 @@ function startGame(): void {
       AchievementNoticeScene,
       CelebrationScene,
       CutsceneScene,
+      DialogueScene,
+      ZoneIntroductionScene,
       PauseScene,
       RoomScene,
       SettingsScene,
       SkillDetailScene,
       RestartScene,
       AchievementsScene,
-      DialogueScene,
       ZoneDepartureScene,
-      ZoneIntroductionScene,
       DialogueChoiceScene,
       DeathScene,
       StageSelectScene,

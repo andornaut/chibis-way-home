@@ -45,6 +45,7 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts";
+import type { DialogueScene } from "./DialogueScene";
 import { showModalBackdrop } from "./modalBackdrop";
 import { modalInput, onScenePointer } from "./modalInput";
 import { catchModalTaps } from "./modalTaps";
@@ -56,6 +57,7 @@ import { drawSkillButton } from "./skillButton";
 import type { SkillDetailData } from "./SkillDetailScene";
 import type { ZoneScene } from "./ZoneScene";
 
+const DIALOGUE = "dialogue";
 const ZONE = "zone";
 const SETTINGS = "settings";
 const START = "start";
@@ -80,8 +82,9 @@ type CardButton = "home" | "resume" | "settings";
 const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
 
 // The pause card over the dimmed zone, and the pause button that opens it, which shows on a
-// touch screen while a zone plays, never on the map. It runs beside the zone from the start.
-// Opening the card pauses the zone and lets the screen sleep; Resume (the primary button, at the
+// touch screen while a zone plays or a conversation covers it, never on the map. It runs beside
+// the zone from the start. Opening the card pauses the zone, or the conversation over the paused
+// zone, which keeps its line, and lets the screen sleep; Resume (the primary button, at the
 // top), the close X, back, Escape, P and a tap outside the card (closeOnOutsideTap) close it.
 // Settings opens SettingsScene's card over the same dim in the pause card's place, and passes it
 // the keys and back until it closes; Back to title ends the zone for the start screen.
@@ -111,6 +114,8 @@ export class PauseScene extends Scene implements SettingsOpener {
     | undefined;
   private buttons!: Readonly<Record<CardButton, TextButton>>;
   private state: "closed" | "open" | "opening" | "settings" | "skill" = "closed";
+  // Whether the card opened over a conversation, which it paused in the zone's place.
+  private overConversation = false;
 
   constructor() {
     super("pause");
@@ -157,7 +162,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     });
     this.watchKeys();
     const onBack = (event: Event) => {
-      if (this.playCovered()) {
+      if (this.covered()) {
         return;
       }
       if (this.state === "settings") {
@@ -190,7 +195,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   private act(action: CardAction | undefined): void {
-    if (this.playCovered() || !modalInput(this).accepts()) {
+    if (this.covered() || !modalInput(this).accepts()) {
       return;
     }
     if (action === "open") {
@@ -202,17 +207,17 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   // Cache a shared-kit backdrop for each touch setting mix before showing the pause card.
   private async open(): Promise<void> {
-    if (this.state !== "closed" || !this.scene.isActive(ZONE) || this.playCovered()) {
+    const conversation = this.conversationPausable();
+    if (this.state !== "closed" || !(this.zonePlaying() || conversation)) {
       return;
     }
-    this.card.destroy(true);
-    this.layout = pauseCard(cardFonts(this), TEXT.pause);
-    this.card = this.drawCard();
+    this.redrawCard();
     this.state = "opening";
+    this.overConversation = conversation;
     this.hud.forEach((icon) => icon.visible(false));
     modalInput(this).open();
     this.setPressed(undefined);
-    this.scene.pause(ZONE);
+    this.scene.pause(this.held());
     stopWakeLock();
     coverZone("pauseCard", true);
 
@@ -242,14 +247,27 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.dims.clear();
     this.showCard(false);
     captureTab(this, false);
-    this.scene.resume(ZONE);
+    this.scene.resume(this.held());
+    this.overConversation = false;
     startWakeLock();
     coverZone("pauseCard", false);
+  }
+
+  // The scene the card holds: the conversation it opened over, or else the zone.
+  private held(): string {
+    return this.overConversation ? DIALOGUE : ZONE;
+  }
+
+  private redrawCard(): void {
+    this.card.destroy(true);
+    this.layout = pauseCard(cardFonts(this), TEXT.pause);
+    this.card = this.drawCard();
   }
 
   // Ends the zone and shows the start screen, this scene staying beside it for the next zone.
   private returnHome(): void {
     this.state = "closed";
+    this.overConversation = false;
     modalInput(this).close();
     this.dims.forEach((dim) => dim.destroy());
     this.dims.clear();
@@ -456,19 +474,40 @@ export class PauseScene extends Scene implements SettingsOpener {
     return this.layout[control].button;
   }
 
-  // The pause button shows on a touch screen while a zone plays and the card is closed. The map
-  // between zones has nothing to pause, so it shows none.
+  // The pause button shows on a touch screen while a zone plays or a conversation covers it, and
+  // the card is closed. The map between zones has nothing to pause, so it shows none.
   private showPauseButton(): void {
     this.pauseButton.setVisible(
       this.state === "closed" &&
-        !this.playCovered() &&
-        this.scene.isActive(ZONE) &&
+        (this.zonePlaying() || this.conversationPausable()) &&
         coarsePointer(window),
     );
   }
 
   private playCovered(): boolean {
     return (this.scene.get(ZONE) as ZoneScene).playCovered();
+  }
+
+  // Whether something other than this card's own conversation covers play.
+  private covered(): boolean {
+    return this.playCovered() && !this.overConversation;
+  }
+
+  private zonePlaying(): boolean {
+    return this.scene.isActive(ZONE) && !this.playCovered();
+  }
+
+  // A conversation over the paused zone that holds the modal input and shows a line.
+  private conversationPausable(): boolean {
+    if (
+      !this.scene.isPaused(ZONE) ||
+      !(this.scene.get(ZONE) as ZoneScene).conversationCovers() ||
+      !this.scene.isActive(DIALOGUE)
+    ) {
+      return false;
+    }
+    const dialogue = this.scene.get(DIALOGUE) as DialogueScene;
+    return dialogue.pausable() && modalInput(dialogue).accepts();
   }
 
   override update(): void {
@@ -535,7 +574,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   private controlAt(pointer: Input.Pointer): Control | undefined {
-    if (this.playCovered()) {
+    if (this.covered() && !(this.state === "closed" && this.conversationPausable())) {
       return undefined;
     }
     const { close } = this.layout;
@@ -649,7 +688,7 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   private watchKeys(): void {
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (this.state === "opening" || this.state === "skill" || this.playCovered()) {
+      if (this.state === "opening" || this.state === "skill" || this.covered()) {
         return;
       }
       if (this.state === "settings") {
