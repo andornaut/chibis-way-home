@@ -1,7 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 
 import { expect, it } from "vitest";
 
+import { TEXT_BUTTON } from "../../data/layout";
 import { achievementsCardProperties } from "../layout/achievementsCard";
 import { SETTINGS_LAYOUT } from "../layout/settingsCard";
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard";
@@ -19,8 +21,15 @@ const DIRECTORY = new URL(".", import.meta.url);
 const SHEETS = readdirSync(DIRECTORY)
   .filter((name) => name.endsWith(".css"))
   .map((name) => [name, readFileSync(new URL(name, DIRECTORY), "utf8")] as const);
+// The kit's ui.css, which loads first, sets the shared button gaps.
+const KIT_CSS = readFileSync(
+  createRequire(import.meta.url).resolve("@andornaut/game-kit/web/ui/dom/ui.css"),
+  "utf8",
+);
 const SET = new Set(
-  SHEETS.flatMap(([, css]) => [...css.matchAll(/(--[\w-]+)\s*:/g)].map(([, name]) => name!)),
+  [KIT_CSS, ...SHEETS.map(([, css]) => css)].flatMap((css) =>
+    [...css.matchAll(/(--[\w-]+)\s*:/g)].map(([, name]) => name!),
+  ),
 );
 const WRITTEN = new Set(
   [
@@ -59,3 +68,22 @@ it.each(SHEETS.filter(([name]) => name !== "ui.css"))(
     expect([...read].filter((name) => !provided(name))).toEqual([]);
   },
 );
+
+// Neighbouring button faces side by side sit the kit's button gap apart, card actions and stage
+// faces alike, each press area reaching half the gap toward the next; the settings rows stack the
+// stack gap apart. The pagers' page count is not a button, so its spacing stays the card gap.
+it("spaces neighbouring buttons by the button and stack gaps", () => {
+  const sheet = (name: string) => SHEETS.find(([sheetName]) => sheetName === name)![1];
+  const rule = (css: string, selector: string) =>
+    new RegExp(`(?:^|\\n)${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`, "u").exec(css)?.[1];
+  const halfGap = "--half-gap: calc(var(--ui-button-gap) / 2);";
+  expect(rule(sheet("ui.css"), ".ui-card-actions")).toContain(halfGap);
+  expect(rule(sheet("stageSelect.css"), ".stage-select-page")).toContain(halfGap);
+  expect(rule(sheet("settings.css"), ".settings-rows")).toContain(
+    "row-gap: calc(var(--ui-unit) * var(--settings-row-gap) * 1px);",
+  );
+  expect(SETTINGS_LAYOUT["--settings-row-gap"]).toBe(TEXT_BUTTON.stackGap);
+  expect(rule(sheet("achievements.css"), ".achievements-pager")).toContain(
+    "--half-gap: calc(var(--ui-unit) * var(--card-gap) / 2 * 1px);",
+  );
+});

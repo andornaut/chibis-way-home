@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 
+import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { wireInstallButton } from "@andornaut/game-kit/web/pwa/dom/installButton";
 import { watchInstall } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 import { describe, expect, it, vi } from "vitest";
@@ -37,6 +38,13 @@ it("renders one escaped description in the pitch and metadata", async () => {
   expect(rendered).toContain(`name="description" content="${description}"`);
   expect(rendered).toContain(`<p class="pitch">${description}</p>`);
   expect(rendered).not.toMatch(/%HOME_[A-Z_]+%/u);
+});
+
+it("spaces Install and Play the kit's button gap apart", async () => {
+  const gaps = [...(await pageText()).matchAll(/(?:^|[}>]) *\.actions *\{([^}]*)\}/gu)].flatMap(
+    ([, body]) => [...body!.matchAll(/gap: *([^;]+);/gu)].map(([, value]) => value),
+  );
+  expect(gaps).toEqual([`${BUTTON_GAP}px`]);
 });
 
 it("renders the home page's description into the web app manifest", async () => {

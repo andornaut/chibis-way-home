@@ -16,7 +16,7 @@ const ICON_BUTTON = START_SCREEN.iconButton;
 const PRESSED_SINK = START_SCREEN.pressedSink;
 // The last icon button's x at the nav's right end; each one before it is a slot further left.
 const RIGHT_BUTTON_X = START_SCREEN.rightIconX;
-const BUTTON_SLOT = START_SCREEN.iconSlot;
+const BUTTON_SLOT = ICON_BUTTON.size + START_SCREEN.iconGap;
 const START = { ...TEXT_BUTTON, ...START_SCREEN.start } as const;
 // Continue and Restart's gap, side by side in Start's row.
 const ROW_GAP = TEXT_BUTTON.gap;

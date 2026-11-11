@@ -1,4 +1,5 @@
 import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
@@ -48,7 +49,7 @@ describe("map footer actions", () => {
 
   it("puts Back to title left and Continue right in one centred row", () => {
     const { continue: go, home } = MAP_SCREEN;
-    expect(home.button.x + home.button.width + TEXT_BUTTON.gap).toBe(go.button.x);
+    expect(home.button.x + home.button.width + BUTTON_GAP).toBe(go.button.x);
     expect(home.button.width).toBe(go.button.width);
     expect((home.button.x + go.button.x + go.button.width) / 2).toBe(SCREEN.width / 2);
     expect(home.button.y).toBe(go.button.y);

@@ -49,7 +49,6 @@ const CLOSE_HIT = hitAround(CLOSE_ART);
 // The layout constants the UI's CSS reads, as unitless base px, or as whole-px lengths from the
 // view bridge.
 export const UI_LAYOUT: LayoutValues = {
-  "--button-gap": CARD_CONTENT.gap,
   "--button-height": TEXT_BUTTON.height,
   // A text button's shorter side is its height, so its press area reaches this far past it.
   "--button-hit": hitMargin({ height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 }),

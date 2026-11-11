@@ -164,10 +164,10 @@ export function cardActionsSize(
         height: TEXT_BUTTON.height,
         hitOutset,
         inkTop: 0,
-        width: labels.length * width + (labels.length - 1) * CARD_CONTENT.gap,
+        width: labels.length * width + (labels.length - 1) * TEXT_BUTTON.gap,
       }
     : {
-        height: labels.length * TEXT_BUTTON.height + (labels.length - 1) * CARD_CONTENT.rowGap,
+        height: labels.length * TEXT_BUTTON.height + (labels.length - 1) * TEXT_BUTTON.stackGap,
         hitOutset,
         inkTop: 0,
         width,
@@ -273,15 +273,14 @@ export function cardActions(
   const size = cardActionsSize(font, axis, labels);
   const width =
     axis === "row"
-      ? (size.width - Math.max(0, labels.length - 1) * CARD_CONTENT.gap) /
-        Math.max(1, labels.length)
+      ? (size.width - Math.max(0, labels.length - 1) * TEXT_BUTTON.gap) / Math.max(1, labels.length)
       : size.width;
   return labels.map((_, index) =>
     labelledButton({
       height: TEXT_BUTTON.height,
       width,
-      x: rect.x + (axis === "row" ? index * (width + CARD_CONTENT.gap) : 0),
-      y: rect.y + (axis === "stack" ? index * (TEXT_BUTTON.height + CARD_CONTENT.rowGap) : 0),
+      x: rect.x + (axis === "row" ? index * (width + TEXT_BUTTON.gap) : 0),
+      y: rect.y + (axis === "stack" ? index * (TEXT_BUTTON.height + TEXT_BUTTON.stackGap) : 0),
     }),
   );
 }

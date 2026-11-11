@@ -12,11 +12,12 @@
   text-box: normal;
 }
 
-/* A page's faces side by side. Each face's button is its press area, reaching --stage-face-hit
-   past the face and half the gap toward the next face, so neighbouring areas meet midway. */
+/* A page's faces side by side, the kit's button gap apart. Each face's button is its press area,
+   reaching --stage-face-hit past the face and half the gap toward the next face, so neighbouring
+   areas meet midway. */
 .stage-select-page {
   --hit: calc(var(--ui-unit) * var(--stage-face-hit) * 1px);
-  --half-gap: calc(var(--ui-unit) * var(--stage-gap) / 2 * 1px);
+  --half-gap: calc(var(--ui-button-gap) / 2);
 
   display: flex;
   margin: calc(

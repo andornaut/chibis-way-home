@@ -3,6 +3,7 @@
 // are fixed by the art drawn at that size; change them only with the art.
 
 import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
+import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 
 import type { MapNode, Point, Rect, Size } from "./types";
 
@@ -57,8 +58,8 @@ export const SKILL_HUD = {
 
 // Standard text buttons on the start screen, cards and footers.
 export const TEXT_BUTTON = {
-  // The gap between buttons side by side.
-  gap: 8,
+  // The gap between neighbouring buttons' faces side by side.
+  gap: BUTTON_GAP,
   // The drawn button's height, lip included.
   height: 48,
   // The label's least clearance from the button's left and right edges.
@@ -265,8 +266,8 @@ export const STAGE_SUMMARY = {
 export const START_SCREEN = {
   // art: an icon button's side, its icon's top-left within it, and its top.
   iconButton: { icon: { x: 8, y: 6 } satisfies Point, size: 36, y: 6 },
-  // The distance between adjacent icon buttons' left edges.
-  iconSlot: 44,
+  // The gap between adjacent icon buttons, whose faces are smaller than a text button's.
+  iconGap: SMALL_BUTTON_GAP,
   // The gap from the logo's bottom to the action row's top.
   logoActionGap: 15,
   // The gap from the nav bar's bottom to the logo's top.

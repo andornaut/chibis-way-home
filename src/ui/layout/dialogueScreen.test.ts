@@ -1,11 +1,11 @@
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { bitmapMeasure, fittingText } from "@andornaut/game-kit/text/textFit";
+import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import * as behaviours from "../../data/behaviours";
 import { CHARACTERS } from "../../data/characters";
 import { DIALOGUES, SPEAKERS } from "../../data/dialogues";
-import { TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { STAGE_BARKS } from "../../data/stageBarks";
 import { TEXT } from "../../data/text";
@@ -55,7 +55,13 @@ describe("dialogue layout", () => {
     expect(dialogueNameTab("left", 0).y).toBe(66);
     expect(dialogueNameTab("left", 0).y).toBeGreaterThan(hudBottom);
     expect(DIALOGUE_SCREEN.text).toMatchObject({ lines: 2, pitch: 20, width: 408 });
-    expect(buttons.skip.button).toEqual({ height: 36, width: 192, x: 208, y: 140 });
+    // Skip keeps its width and sits the kit's button gap left of Continue.
+    expect(buttons.skip.button).toEqual({
+      height: 36,
+      width: 192,
+      x: 408 - BUTTON_GAP - 192,
+      y: 140,
+    });
     expect(buttons.continue.button).toEqual({ height: 36, width: 192, x: 408, y: 140 });
   });
 
@@ -158,7 +164,7 @@ describe("dialogue layout", () => {
     const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
     expect(buttons.continue.button.height).toBe(36);
     expect(buttons.skip.button.width).toBe(buttons.continue.button.width);
-    expect(buttons.skip.button.x + buttons.skip.button.width + TEXT_BUTTON.gap).toBe(
+    expect(buttons.skip.button.x + buttons.skip.button.width + BUTTON_GAP).toBe(
       buttons.continue.button.x,
     );
     expect(buttons.continue.button.x + buttons.continue.button.width).toBe(box.x + box.width);
@@ -168,7 +174,7 @@ describe("dialogue layout", () => {
     const buttons = departureDialogueButtons({ continue: width("Continue"), skip: width("Skip") });
     expect(buttons.continue.button.x + buttons.continue.button.width).toBe(SCREEN.width - 16);
     expect(buttons.continue.button.y + buttons.continue.button.height).toBe(SCREEN.height - 16);
-    expect(buttons.skip.button.x + buttons.skip.button.width + TEXT_BUTTON.gap).toBe(
+    expect(buttons.skip.button.x + buttons.skip.button.width + BUTTON_GAP).toBe(
       buttons.continue.button.x,
     );
     expect(buttons.skip.button.height).toBe(36);

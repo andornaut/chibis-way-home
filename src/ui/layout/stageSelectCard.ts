@@ -44,7 +44,6 @@ export const STAGE_SELECT_LAYOUT: LayoutValues = {
   "--stage-face-height": FACE.height,
   "--stage-face-hit": FACE_HIT,
   "--stage-face-width": FACE.width,
-  "--stage-gap": CARD_CONTENT.padding,
   "--stage-inset": INSET,
   "--stage-name-height": NAME_HEIGHT,
   "--stage-name-top": NAME_TOP,

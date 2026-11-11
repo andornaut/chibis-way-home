@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 
+import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import type { Plugin } from "vite";
 
 import { TEXT } from "../data/text";
@@ -20,6 +21,11 @@ export function installStepsHtml(steps: GameText["settings"]["installSteps"]): s
     .join("\n");
 }
 
+// Install and Play sit the kit's button gap apart, in CSS px.
+export function homeActionsCss(): string {
+  return `.actions { gap:${BUTTON_GAP}px; }`;
+}
+
 // The same escaped description fills both the visible pitch and its metadata.
 export function homePageHtml(text: GameText, html: string): string {
   const copy: Readonly<Record<string, string>> = {
@@ -29,7 +35,7 @@ export function homePageHtml(text: GameText, html: string): string {
     SUBLINE: text.homePage.subline,
   };
   return html
-    .replace("<!-- HOME_ACTION_STYLE -->", `<style>${actionHelpCss()}</style>`)
+    .replace("<!-- HOME_ACTION_STYLE -->", `<style>${actionHelpCss()}${homeActionsCss()}</style>`)
     .replace(/%HOME_([A-Z_]+)%/gu, (_, key: string) => {
       if (key === "INSTRUCTIONS") {
         return text.homePage.instructions

@@ -121,12 +121,12 @@
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
 }
 
-/* Equal buttons side by side, as wide as the widest label needs. Each button's box is its press
-   area, which reaches --button-hit past its face, and half the gap toward the next button, so
-   adjacent press areas meet midway between the faces. */
+/* Equal buttons side by side, as wide as the widest label needs, the kit's button gap between
+   faces. Each button's box is its press area, which reaches --button-hit past its face, and half
+   the gap toward the next button, so adjacent press areas meet midway between the faces. */
 .ui-card-actions {
   --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
-  --half-gap: calc(var(--ui-unit) * var(--button-gap) / 2 * 1px);
+  --half-gap: calc(var(--ui-button-gap) / 2);
 
   display: grid;
   grid-auto-columns: 1fr;

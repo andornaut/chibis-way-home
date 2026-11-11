@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 
 import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
@@ -11,6 +12,11 @@ import { UI_COLOURS, UI_FRAMES } from "./skin";
 
 // Vitest blanks CSS imports, so the stylesheet is read from disk, from the project root.
 const css = readFileSync("src/ui/dom/ui.css", "utf8");
+// The kit's ui.css, which loads first, sets the shared button gaps.
+const kitCss = readFileSync(
+  createRequire(import.meta.url).resolve("@andornaut/game-kit/web/ui/dom/ui.css"),
+  "utf8",
+);
 
 const property = (element: HTMLElement, name: string) => element.style.getPropertyValue(name);
 
@@ -66,10 +72,10 @@ describe("the UI layer", () => {
 });
 
 // Every custom property ui.css reads is one the layer, its view bridge or the skin writes, or one
-// the stylesheet sets itself, so no rule reads a value nothing provides.
-it("reads only custom properties the layer, the bridge, the skin or the stylesheet set", () => {
+// the stylesheet or the kit's sets, so no rule reads a value nothing provides.
+it("reads only custom properties the layer, the bridge, the skin or a stylesheet set", () => {
   const read = new Set([...css.matchAll(/var\((--[\w-]+)/g)].map(([, name]) => name!));
-  const set = new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map(([, name]) => name!));
+  const set = new Set([...`${kitCss}${css}`.matchAll(/(--[\w-]+)\s*:/g)].map(([, name]) => name!));
   const layer = createUiLayer([2, 4, 6], document);
   const written = new Set(Object.keys(UI_LAYOUT));
   const provided = (name: string) =>

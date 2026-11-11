@@ -1,4 +1,5 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
+import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import { TEXT_BUTTON } from "../../data/layout";
@@ -65,6 +66,7 @@ describe.each([
 
   it("shows Achievements immediately left of Settings, one nav slot apart", () => {
     const slot = startScreenLayout(SCREEN, true, saved);
+    expect(layout.settings.art.x - right(layout.achievements.art)).toBe(SMALL_BUTTON_GAP);
     expect({
       gap: layout.settings.art.x - right(layout.achievements.art),
       sameRow: layout.achievements.art.y === layout.settings.art.y,
@@ -92,7 +94,7 @@ describe.each([
     const { restart, start } = layout;
     const row = restart && {
       centre: (restart.button.x + right(start.button)) / 2,
-      clear: right(restart.button) < start.button.x,
+      gap: start.button.x - right(restart.button),
       matchingSize:
         start.button.width === restart.button.width &&
         start.button.height === restart.button.height,
@@ -100,7 +102,7 @@ describe.each([
     };
     expect(row).toEqual(
       saved
-        ? { centre: alone.x + alone.width / 2, clear: true, matchingSize: true, y: alone.y }
+        ? { centre: alone.x + alone.width / 2, gap: BUTTON_GAP, matchingSize: true, y: alone.y }
         : undefined,
     );
   });
