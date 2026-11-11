@@ -1382,7 +1382,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   // Save a cleared stage before routing to its continuation. Turning back preserves progress;
-  // debug and trial runs keep their existing replay route.
+  // Standalone trial runs keep their existing replay route.
   private leave(): void {
     const { turnedBack } = this.zone;
     if (this.mapNode !== undefined) {
