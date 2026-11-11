@@ -193,14 +193,15 @@ for value in "${build_values[@]}"; do
     build_args+=(--build-arg "${value}")
 done
 build_help=$(docker build --help)
-if [[ ${build_help} != *--resource* || ${build_help} != *--ulimit* ]]; then
-    printf '%s\n' 'Docker build requires CPU, memory and nofile limit support; uncapped builds are disabled.' >&2
+if [[ ${build_help} != *--resource* ]]; then
+    printf '%s\n' 'Docker build requires CPU and memory limit support; uncapped builds are disabled.' >&2
     exit 2
 fi
 run_admission build-image
+# The image install keeps normal file limits; only the check run caps nofile at 256.
 timeout --signal=TERM --kill-after=10 "${limit}" \
     docker build --resource cpu-period=100000 --resource cpu-quota=400000 \
-    --resource "memory=${memory_limit}" --ulimit nofile=256:256 \
+    --resource "memory=${memory_limit}" \
     --tag "${image}" --iidfile "${scratch}/image.id" --file tests/container/Dockerfile "${build_args[@]}" - \
     < "${scratch}/context.tar" >&2
 image=$(cat "${scratch}/image.id")
