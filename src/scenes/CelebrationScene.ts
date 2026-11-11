@@ -33,7 +33,7 @@ const CONTROLS: readonly Control[] = ["restart", "continue"];
 // PLACEHOLDER: the celebration after he clears a last zone (one whose path leads on to the map's
 // finish), every time he clears it, until art draws one: the settings card's parts over ink,
 // with Continue, which opens the map with him on that zone, and Restart, which asks on the
-// restart card and passes it the keys and back while it shows. A button acts when a press lands
+// restart card and passes it back while it shows. A button acts when a press lands
 // on it and lifts on it; Tab and the arrows move the keyboard's focus, and Enter and Space press
 // the focused one, or Continue with nothing focused.
 export class CelebrationScene extends Scene implements RestartOpener {
@@ -127,8 +127,8 @@ export class CelebrationScene extends Scene implements RestartOpener {
   }
 
   private key(event: KeyboardEvent): void {
+    // The restart card takes its keys in the page (src/ui/dom).
     if (this.restartOpen) {
-      this.restartCard().key(event);
       return;
     }
     if (!modalInput(this).accepts(event)) {

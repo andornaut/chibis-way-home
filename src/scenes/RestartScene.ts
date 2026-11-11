@@ -1,27 +1,16 @@
-import { type GameObjects, type Input, Scene } from "phaser";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { Scene } from "phaser";
 
 import { TEXT } from "../data/text";
-import { focusKeyAction, type PressArea, pressedArea, restartCard, stepFocus } from "../ui";
-import {
-  addCardHeading,
-  addCardTextIn,
-  addSlice,
-  addTextButton,
-  BODY_FONT,
-  cardFonts,
-  paletteColour,
-  pressTextButton,
-  ringFocus,
-  type TextButton,
-} from "./cardParts";
+import { TOUCH } from "../data/touch";
+import { type CardView, createCard, showPresses } from "../ui";
+import { mountSceneView, sceneDomUi } from "./domUi";
 import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onScenePointer } from "./modalInput";
-import { catchModalTaps } from "./modalTaps";
-import { fitPlayCamera, playPoint } from "./playCamera";
+import { modalInput } from "./modalInput";
 import { clearProgress, resetWholeRunStats } from "./save";
 
 // The scene that opens the restart card, the start screen or the celebration: it passes the card
-// its keys and back while the card shows, and hears when Cancel closes it.
+// back while the card shows, and hears when Cancel closes it.
 export interface RestartOpener {
   restartClosed(): void;
 }
@@ -38,19 +27,14 @@ const TARGETS: readonly Target[] = ["cancel", "restart"];
 // The card that asks before Restart clears progress, over the scene that opened it: a question,
 // Cancel, and Restart, which confirms. Restart clears only the progress save and opens the map
 // with him on the first zone and nothing completed; Cancel, back, Escape, P and a tap outside
-// the card close it. A
-// button acts when a press lands on it and lifts on it; Tab and the arrows move the keyboard's
-// focus, and Enter and Space press the focused one. The opener passes this scene its keys and
-// back.
+// the card close it. The card is HTML in the UI layer (src/ui/dom/card.ts), shown once the dim
+// of the scenes under it is ready: a button acts when a press lands on it and lifts on it; Tab
+// and the arrows move the keyboard's focus, which starts on the card itself, and Enter and Space
+// press the focused button (the kit's modalLayer). The opener passes this scene back.
 export class RestartScene extends Scene {
-  private layout!: ReturnType<typeof restartCard>;
-  private buttons!: Readonly<Record<Target, TextButton>>;
-  private focus: Target | undefined;
-  private focusRing: GameObjects.NineSlice | undefined;
   private opener = "";
   private decided = false;
-  // The button a press landed on, which acts if the press lifts on it too.
-  private pressed: Target | undefined;
+  private closeModal: (() => void) | undefined;
 
   constructor() {
     super("restart");
@@ -59,59 +43,42 @@ export class RestartScene extends Scene {
   init(data: RestartData): void {
     this.opener = data.opener;
     this.decided = false;
-    this.focus = undefined;
-    this.focusRing = undefined;
-    this.pressed = undefined;
+    this.closeModal = undefined;
   }
 
   create(): void {
-    fitPlayCamera(this);
-    this.layout = restartCard(cardFonts(this), TEXT.restart);
-    const { card, question } = this.layout;
     const words = TEXT.restart;
-    addSlice(this, "ui-settings-card", card);
-    addCardHeading(this, this.layout.title);
-    addCardTextIn(this, BODY_FONT, question, words.question, paletteColour(this, "ink"));
-    this.buttons = {
-      cancel: addTextButton(this, this.layout.cancel, words.cancel),
-      restart: addTextButton(this, this.layout.restart, words.restart),
-    };
-    this.render();
-    catchModalTaps(this, this.cameras.main, {
-      close: () => this.back(),
-      covered: () => [this.layout.card, ...TARGETS.map((target) => this.layout[target].hit)],
+    const card: CardView<Target> = createCard(document, "restart-card", {
+      actions: TARGETS.map((key) => ({ key, label: words[key] })),
+      text: words.question,
+      title: words.title,
     });
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.pressed = this.targetAt(pointer);
-      this.render();
+    card.root.hidden = true;
+    for (const target of TARGETS) {
+      card.buttons[target].addEventListener("click", () => this.act(target));
+    }
+    const input = modalInput(this);
+    const backdrop = showModalBackdrop(this);
+    const guard = { gate: input };
+    const stops = [
+      guardClicks(guard, card.root),
+      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.back(), card.backdrop),
+      showPresses(() => input.accepts(), card.root),
+    ];
+    let shown = true;
+    this.events.once("shutdown", () => {
+      shown = false;
+      this.closeModal?.();
+      this.closeModal = undefined;
+      stops.forEach((stop) => stop());
     });
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
-      const target = this.pressed;
-      this.pressed = undefined;
-      this.render();
-      if (target !== undefined && target === this.targetAt(pointer)) {
-        this.act(target);
+    mountSceneView(this, card.root);
+    void backdrop.ready.then(() => {
+      if (shown && !this.decided) {
+        card.root.hidden = false;
+        this.closeModal = sceneDomUi(this)?.modals.open({ close: () => this.back() }, card.dialog);
       }
     });
-    showModalBackdrop(this);
-  }
-
-  // A key the opener passes on while the card shows.
-  key(event: KeyboardEvent): void {
-    if (this.decided || !this.sys.isActive() || !modalInput(this).accepts(event)) {
-      return;
-    }
-    const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
-    if (action === "close") {
-      this.back();
-    } else if (action === "press") {
-      if (this.focus !== undefined) {
-        this.act(this.focus);
-      }
-    } else if (action !== undefined) {
-      this.focus = stepFocus([...TARGETS], this.focus, action);
-      this.render();
-    }
   }
 
   // Back, Escape, P and a tap outside the card cancel.
@@ -120,6 +87,8 @@ export class RestartScene extends Scene {
       return;
     }
     this.decided = true;
+    this.closeModal?.();
+    this.closeModal = undefined;
     this.scene.stop();
     this.openerScene().restartClosed();
   }
@@ -141,26 +110,5 @@ export class RestartScene extends Scene {
       this.scene.stop(this.opener);
       this.scene.start("opening");
     }
-  }
-
-  private targetAt(pointer: Input.Pointer): Target | undefined {
-    const areas: PressArea<Target>[] = TARGETS.map((key) => ({
-      art: this.layout[key].button,
-      hit: this.layout[key].hit,
-      key,
-    }));
-    return pressedArea(areas, playPoint(this, pointer));
-  }
-
-  // Each button as the press leaves it, and art's focus ring round the focused one.
-  private render(): void {
-    for (const target of TARGETS) {
-      pressTextButton(this.buttons[target], this.pressed === target);
-    }
-    this.focusRing = ringFocus(
-      this,
-      this.focusRing,
-      this.focus === undefined ? undefined : this.layout[this.focus].button,
-    );
   }
 }

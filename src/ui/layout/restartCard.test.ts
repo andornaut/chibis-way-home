@@ -13,8 +13,7 @@ import { CARD_FONTS } from "../../testing/cardFonts";
 import { centredLabel } from "./buttonLabel";
 import { pressedArea } from "./hitAreas";
 import { CARD_TEXT_SCALE } from "./pauseCard";
-import { CELEBRATION, type LabelledButton, restartCard } from "./restartCard";
-const RESTART_CARD = restartCard(CARD_FONTS, TEXT.restart);
+import { CELEBRATION, type LabelledButton } from "./restartCard";
 
 const FONT = parseBitmapFont(fontBody);
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };
@@ -35,14 +34,6 @@ function inside(outer: Rect, inner: Rect): boolean {
 
 // Each card's buttons, with their labels and whether the play mark leads one.
 const CARDS: [string, Rect, [string, LabelledButton, string, boolean][]][] = [
-  [
-    "restart card",
-    RESTART_CARD.card,
-    [
-      ["cancel", RESTART_CARD.cancel, TEXT.restart.cancel, false],
-      ["restart", RESTART_CARD.restart, TEXT.restart.restart, false],
-    ],
-  ],
   [
     "celebration",
     CELEBRATION.card,
@@ -86,20 +77,15 @@ describe.each(CARDS)("the %s", (_, card, buttons) => {
   });
 });
 
-describe("restart and celebration words", () => {
-  it.each([
-    ["the question", RESTART_CARD.question.x, TEXT.restart.question, RESTART_CARD.room],
-    ["the message", CELEBRATION.message.x, TEXT.celebration.message, CELEBRATION.room],
-  ])("fits %s in its room", (_, __, text, room) => {
-    expect(ink(text)).toBeLessThanOrEqual(room);
+describe("celebration words", () => {
+  it("fits the message in its room", () => {
+    expect(ink(TEXT.celebration.message)).toBeLessThanOrEqual(CELEBRATION.room);
   });
 
   it("draws Continue at ui-resume's size, and the stretched buttons no smaller than ui-button", () => {
     const resume = frameOf(resumeSheet);
     const button = frameOf(buttonSheet);
-    const stretched = [RESTART_CARD.cancel, RESTART_CARD.restart, CELEBRATION.restart].map(
-      ({ button: rect }) => rect,
-    );
+    const stretched = [CELEBRATION.restart.button];
     expect({
       continue: {
         height: CELEBRATION.continue.button.height,

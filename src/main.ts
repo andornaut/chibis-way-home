@@ -1,6 +1,8 @@
 import "./crash/install";
 import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
+import "@andornaut/game-kit/web/ui/dom/ui.css";
 import "./main.css";
+import "./ui/dom/ui.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
@@ -24,6 +26,7 @@ import { CutsceneScene } from "./scenes/CutsceneScene";
 import { DeathScene } from "./scenes/DeathScene";
 import { DialogueChoiceScene } from "./scenes/DialogueChoiceScene";
 import { DialogueScene } from "./scenes/DialogueScene";
+import { mountDomUi } from "./scenes/domUi";
 import { MapScene } from "./scenes/MapScene";
 import { OpeningScene } from "./scenes/OpeningScene";
 import { PauseScene } from "./scenes/PauseScene";
@@ -52,7 +55,8 @@ const INK = "#181425";
 // and every control stays in that view, clear of the bars beside or below it. Every texture
 // samples nearest unless BootScene's filters (src/scenes/textureFilters.ts) or its own code make
 // it linear, and the canvas itself is never smoothed. The UI overlay (mountUiPresentation) draws
-// the UI scenes over the canvas at the full device pixel ratio. The game is constructed at once
+// the UI scenes over the canvas at the full device pixel ratio, and the HTML UI layer
+// (mountDomUi, src/ui/dom/) holds the screens moved to the page over both. The game is constructed at once
 // and loads while a fresh load checks for a newer version: BootScene holds only the zone for the
 // check (launchReady).
 function startGame(): void {
@@ -109,6 +113,7 @@ function startGame(): void {
   installUpdateModalBridge(game);
   const gameHost = document.getElementById("game");
   if (gameHost) {
+    game.events.once("destroy", mountDomUi(game, gameHost));
     const dispose = mountDeveloperPanel(
       {
         blocked: () =>

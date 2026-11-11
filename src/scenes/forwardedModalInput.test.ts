@@ -8,11 +8,10 @@ vi.mock("phaser", () => ({
 vi.mock("./save", () => ({ clearProgress: vi.fn() }));
 vi.mock("./modalBackdrop", () => ({ showModalBackdrop: vi.fn() }));
 
-import { RestartScene } from "./RestartScene";
 import { SettingsScene } from "./SettingsScene";
 
 // Openers can forward input before Phaser processes a queued scene launch.
-describe.each([RestartScene, SettingsScene])("inactive forwarded modal %s", (ModalScene) => {
+describe.each([SettingsScene])("inactive forwarded modal %s", (ModalScene) => {
   it("ignores navigation, activation and dismissal before its layout and opener exist", () => {
     const modal = new ModalScene();
     for (const key of ["ArrowDown", "Enter", "Escape"]) {

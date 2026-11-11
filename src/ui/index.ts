@@ -35,6 +35,9 @@ export {
   type ResolvedDialogueChoice,
 } from "./dialogue/conversation";
 export { statsStatement } from "./dialogue/statsStatement";
+export { type CardView, createCard, showPresses } from "./dom/card";
+export { createUiLayer, loadUiFonts, UI_LAYOUT, type UiLayer } from "./dom/layer";
+export { applySkin, type SkinFrame, UI_FRAMES } from "./dom/skin";
 export { focusKeyAction, stepFocus } from "./focus";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput";
 export {
@@ -100,7 +103,7 @@ export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/ma
 export { openingLayout } from "./layout/opening";
 export { PAUSE_BUTTON, pauseCard } from "./layout/pauseCard";
 export { canvasSize, playView, shifted, viewShift } from "./layout/playView";
-export { CELEBRATION, type LabelledButton, restartCard } from "./layout/restartCard";
+export { CELEBRATION, type LabelledButton } from "./layout/restartCard";
 export { ROOM_SCREEN } from "./layout/roomScreen";
 export {
   RUN_STAT_KEYS,

@@ -13,6 +13,7 @@ import { startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
+import { prepareDomUi } from "./domUi";
 import { queueFontArt } from "./fontArt";
 import { loadProgress } from "./save";
 import { filterLoadedArt } from "./textureFilters";
@@ -86,10 +87,13 @@ export class BootScene extends Scene {
       this.scene.start("zone");
       return;
     }
-    // Read progress and open the start screen after a pending version replacement can reload.
-    // Diagnostic ?zone entry keeps its direct zone route.
+    // Read progress and open the start screen after a pending version replacement can reload,
+    // and once the HTML UI has its fonts and art. Diagnostic ?zone entry keeps its direct zone
+    // route.
+    const domUi = prepareDomUi(this);
     void launchReady()
       .then(loadProgress)
+      .then(() => domUi)
       .then(() => {
         const rendered = () => {
           if (this.game.canvas.style.visibility === "hidden") {

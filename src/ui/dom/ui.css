@@ -1,0 +1,178 @@
+/* The HTML UI over the canvas (src/ui/dom/), on the kit's web/ui/dom/ui.css. Every length is base
+   pixels times --ui-unit: calc(var(--ui-unit) * <base px> * 1px), with the base px a layout
+   property the layer writes (UI_LAYOUT in layer.ts), or a whole-px length the view bridge keeps
+   (--ui-slice-<n>, through the frame and focus properties). Colours and art frames are custom
+   properties applySkin (skin.ts) sets from the loaded palette and sheets. */
+
+@font-face {
+  font-family: "Liberation Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/art/fonts/liberation/LiberationSans-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Liberation Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("/art/fonts/liberation/LiberationSans-Bold.ttf") format("truetype");
+}
+
+/* Over the world canvas and the UI overlay canvas, even while a modal lifts the overlay. */
+#game > .ui-layer {
+  z-index: 4;
+  font-family: "Liberation Sans", sans-serif;
+  color: var(--colour-ink);
+}
+
+.ui-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.ui-scene[hidden] {
+  display: none;
+}
+
+/* A full-area backdrop under a card: it takes the presses outside the card and shows nothing; the
+   canvas draws the dim. */
+.ui-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.ui-card-view {
+  display: grid;
+  place-items: center;
+}
+
+/* A card fitted to its content, at least the minimum width and no wider than the view, in art's
+   ui-settings-card frame. The padding inside the frame keeps the content its padding in from the
+   card's edge. */
+.ui-card {
+  --ui-frame-image: var(--ui-settings-card-image);
+  --ui-frame-slice: var(--ui-settings-card-slice);
+  --ui-frame-width: var(--ui-settings-card-border);
+  --card-inside: calc(var(--ui-unit) * (var(--card-padding) - var(--card-frame)) * 1px);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  min-width: calc(var(--ui-unit) * var(--card-min-width) * 1px);
+  max-width: 100%;
+  max-height: 100%;
+  padding: var(--card-inside);
+  pointer-events: auto;
+  touch-action: none;
+  text-align: center;
+}
+
+.ui-card:focus {
+  outline: none;
+}
+
+/* Text boxes trim to the ink's cap height and baseline where the browser supports it, so the
+   gaps between them are the gaps between their ink. */
+.ui-card-title,
+.ui-card-text,
+.ui-text-button-label {
+  margin: 0;
+  text-box: trim-both cap alphabetic;
+}
+
+/* The title's ink sits as far below the frame as the content's ink sits below the title's. */
+.ui-card-title {
+  margin-bottom: calc(var(--card-inside) - var(--ui-unit) * var(--card-gap) * 1px);
+  font-size: calc(var(--ui-unit) * var(--heading-size) * 1px);
+  font-weight: 700;
+  line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
+}
+
+.ui-card-text {
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 400;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+}
+
+/* Equal buttons side by side, as wide as the widest label needs. Each button's box is its press
+   area, which reaches --button-hit past its face, and half the gap toward the next button, so
+   adjacent press areas meet midway between the faces. */
+.ui-card-actions {
+  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
+  --half-gap: calc(var(--ui-unit) * var(--button-gap) / 2 * 1px);
+
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  margin: calc(-1 * var(--hit));
+}
+
+.ui-text-button {
+  display: block;
+  margin: 0;
+  padding: var(--hit);
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ui-text-button:not(:first-child) {
+  padding-left: var(--half-gap);
+}
+
+.ui-text-button:not(:last-child) {
+  padding-right: var(--half-gap);
+}
+
+.ui-text-button:focus {
+  outline: none;
+}
+
+/* Art's ui-button face, its label centred on the face above the lip and clear of its sides by
+   the button inset. */
+.ui-text-button-face {
+  --ui-frame-image: var(--ui-button-image);
+  --ui-frame-slice: var(--ui-button-slice);
+  --ui-frame-width: var(--ui-button-border);
+
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--ui-unit) * var(--button-height) * 1px);
+  padding: 0 calc(var(--ui-unit) * (var(--button-inset) - var(--ui-button-left)) * 1px)
+    calc(
+      var(--ui-unit) * (var(--button-lip) + var(--ui-button-top) - var(--ui-button-bottom)) * 1px
+    );
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 700;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  white-space: nowrap;
+}
+
+.ui-text-button[data-pressed] .ui-text-button-face {
+  --ui-frame-image: var(--ui-button-pressed-image);
+  --ui-frame-slice: var(--ui-button-pressed-slice);
+}
+
+.ui-text-button[data-pressed] .ui-text-button-label {
+  translate: 0 var(--button-sink);
+}
+
+/* Art's ui-focus ring, outside the focused face: a yellow band between ink lines. */
+.ui-text-button:focus-visible .ui-text-button-face {
+  box-shadow:
+    0 0 0 var(--focus-ink) var(--colour-ink),
+    0 0 0 var(--focus-band) var(--colour-yellow),
+    0 0 0 var(--focus-outset) var(--colour-ink);
+}

@@ -27,7 +27,6 @@ import { deathCard } from "./deathCard";
 import { FONT_METRICS } from "./fontRoles";
 import { pressedArea } from "./hitAreas";
 import { pauseCard } from "./pauseCard";
-import { restartCard } from "./restartCard";
 import { RUN_STAT_KEYS, runStatLabels } from "./runStats";
 import { settingsCard, stepsCard } from "./settingsCard";
 import { SKILL_ROOM, skillDetails } from "./skillDetails";
@@ -124,7 +123,6 @@ const achievements = achievementsCardLayout(
   { ...TEXT.achievements.pages, title: TEXT.achievements.cardTitle },
   achievementWords,
 );
-const restart = restartCard(CARD_FONTS, TEXT.restart);
 const deathWords = deathSummary(TEXT.death, {
   activeSeconds: 65,
   ...deathLabels(ZONE_MAP, TEXT.map, "1", ZONE_MAP.destinations[0]!.stages[0]!),
@@ -169,11 +167,6 @@ it.each([
     layout,
     name: "install",
   })),
-  {
-    content: centredInkTop(restart.question, TEXT.restart.question),
-    layout: restart,
-    name: "restart",
-  },
   { content: stageSelect.buttons[0]!.button.y, layout: stageSelect, name: "stage selection" },
   { content: updateButton.button.y, layout: { ...update, title: update.title! }, name: "update" },
   ...skills.map((layout) => ({

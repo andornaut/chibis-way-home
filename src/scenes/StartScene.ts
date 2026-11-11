@@ -226,7 +226,11 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
   // Space press the focused one, or Start with nothing focused.
   private key(event: KeyboardEvent): void {
     if (this.card !== undefined) {
-      this.cardScene().key(event);
+      // A card without key() takes its keys in the page (src/ui/dom).
+      const card = this.cardScene();
+      if ("key" in card) {
+        card.key(event);
+      }
       return;
     }
     if (!modalInput(this).accepts(event)) {
