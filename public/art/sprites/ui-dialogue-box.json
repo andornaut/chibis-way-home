@@ -1,10 +1,10 @@
 { "frames": {
    "ui-dialogue-box.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 640, "h": 96 },
+    "frame": { "x": 0, "y": 0, "w": 480, "h": 60 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 640, "h": 96 },
-    "sourceSize": { "w": 640, "h": 96 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 480, "h": 60 },
+    "sourceSize": { "w": 480, "h": 60 },
     "duration": 100
    }
  },
@@ -13,7 +13,7 @@
   "version": "1.2.30-x64",
   "image": "ui-dialogue-box.png",
   "format": "RGBA8888",
-  "size": { "w": 640, "h": 96 },
+  "size": { "w": 480, "h": 60 },
   "scale": "1",
   "frameTags": [
    { "name": "rest", "from": 0, "to": 0, "direction": "forward" }
