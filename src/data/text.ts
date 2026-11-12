@@ -329,6 +329,7 @@ export const TEXT: GameText = {
     disc: "{skill} skill",
   },
   skillHud: {
+    enableTip: "Tap or click {skill} to enable it",
     ready: "Ready",
     recharging: "Recharging",
   },
