@@ -1,3 +1,4 @@
+import { CRASH_TEXT } from "./crashText";
 import type { GameText, StatsScopeText } from "./types";
 
 export const TEXT: GameText = {
@@ -111,11 +112,7 @@ export const TEXT: GameText = {
     restart: "Restart",
     title: "Home at last",
   },
-  crash: {
-    body: "The game stopped. Reload to play again.",
-    reload: "Reload",
-    title: "Something went wrong",
-  },
+  crash: CRASH_TEXT,
   death: {
     label: "Attempt over in {zone}",
     progress: "Progress: {percent}%",
