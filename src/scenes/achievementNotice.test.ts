@@ -137,7 +137,9 @@ describe("the unlock notice", () => {
     scene.create();
     scene.update(0, 0);
     // The notice shows once its icon's cut is ready.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
     scene.update(0, 0);
     return { panel, running, scene };
   }
