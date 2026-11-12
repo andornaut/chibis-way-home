@@ -321,6 +321,7 @@ export const TEXT: GameText = {
     moveControls: "Move controls",
     reducedMotion: "Reduced motion",
     title: "Settings",
+    touchStillWorks: "Touch still works when hidden",
   },
   skillDetails: {
     close: "Close",
