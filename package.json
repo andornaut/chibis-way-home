@@ -25,7 +25,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.31.0/game-kit-0.31.0.tgz",
+    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.32.0/game-kit-0.32.0.tgz",
     "phaser": "^4.2.1"
   },
   "devDependencies": {
