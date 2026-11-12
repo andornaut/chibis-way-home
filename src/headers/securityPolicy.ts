@@ -15,13 +15,16 @@ export const HASHED_ASSET_PATH = "/assets/*";
 // platform default (max-age=0, must-revalidate), which the service worker relies on to see a new
 // /sw.js on the next launch.
 export const COMMON_RULE = {
-  comment: "Every response. The pages ask for fullscreen to lock landscape.",
+  comment:
+    "Every response. The pages ask for fullscreen to lock landscape, and the game holds a " +
+    "screen wake lock.",
   headers: [
     ["X-Content-Type-Options", "nosniff"],
     ["Referrer-Policy", "strict-origin-when-cross-origin"],
     [
       "Permissions-Policy",
-      "fullscreen=(self), camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+      "fullscreen=(self), screen-wake-lock=(self), camera=(), microphone=(), geolocation=(), " +
+        "payment=(), usb=()",
     ],
   ] satisfies HeaderList,
   path: "/*",
