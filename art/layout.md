@@ -67,7 +67,7 @@ All actual modals retain canonical dimming and exclusive input. Page headers, li
 
 ## HUD/overlays
 
-Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint and pause control are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid.
+Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint, pause control and skill HUD are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid. The pause control and the skill HUD are HTML buttons on the UI layer, placed in base pixels times `--ui-unit` from the same view anchors; the touch circles and movement hint stay on the canvas.
 
 The top zone-dialogue panel is 480 wide and centred on the view at 120,76,480,60, with its name tab overhanging to y 66, its portrait regions and its compact 36px footer row at y 140 to 176, as defined in `DIALOGUE_LAYOUT` ([UI layout values](../src/data/layout.ts)). Reserve its actual bounds before arranging content below it. Live barks remain distinct from paused dialogue and modal overlays.
 
