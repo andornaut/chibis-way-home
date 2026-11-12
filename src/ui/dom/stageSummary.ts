@@ -123,7 +123,12 @@ export function createStageSummary(
           line.dataset.continue = "";
           const name = text("span", "stage-summary-speaker", `${words.statement.name}:`);
           name.dataset.colour = words.statement.colour;
-          line.append(name, text("span", "stage-summary-said", words.statement.text));
+          // The space between them is read but not drawn: the gap is the said text's margin.
+          line.append(
+            name,
+            text("span", "stage-summary-space", " "),
+            text("span", "stage-summary-said", words.statement.text),
+          );
           return line;
         })();
   if (statement !== undefined) {

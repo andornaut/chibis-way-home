@@ -106,6 +106,8 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
         throw new Error(`Missing dialogue portrait ${portrait}`);
       }
     }
+    // Every portrait is cut up front, so a later paragraph's shows as it does.
+    this.cutPortraits();
     const view = createDialogueView(document, departure, "dialogue", words);
     this.view = view;
     this.showParagraph();
@@ -153,6 +155,15 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   choiceSelected(selection: string): void {
     if (this.choosing) {
       this.finish(selection);
+    }
+  }
+
+  // Cuts each paragraph's portrait, once per game, and keeps the cuts ready to show.
+  private cutPortraits(): void {
+    for (const key of new Set(this.paragraphs.flatMap(({ portrait }) => portrait ?? []))) {
+      void artFrameUrl(this, key)
+        .then((url) => this.portraits.set(key, url))
+        .catch((error: unknown) => console.warn("The dialogue portrait failed to load", error));
     }
   }
 

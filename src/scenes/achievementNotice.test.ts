@@ -136,12 +136,15 @@ describe("the unlock notice", () => {
     });
     scene.create();
     scene.update(0, 0);
-    await Promise.resolve();
+    // The notice shows once its icon's cut is ready.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    scene.update(0, 0);
     return { panel, running, scene };
   }
 
   it("shows the unlocked icon, the filled notice line and the description", async () => {
     const { panel, scene } = await notice();
+    expect(panel().hidden).toBe(false);
     const entry = TEXT.achievements.entries[ID];
     const portrait = panel().querySelector<HTMLImageElement>(".dialogue-portrait")!;
     expect({

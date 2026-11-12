@@ -54,6 +54,14 @@ export class ZoneBarkScene extends Scene {
 
   create(): void {
     this.scene.moveAbove("zone", this.scene.key);
+    // Every speaker's portrait is cut up front, once per game, so a bark's shows with its text.
+    for (const portrait of new Set(
+      Object.values(SPEAKERS).flatMap(({ portrait }) => portrait ?? []),
+    )) {
+      artFrameUrl(this, portrait).catch((error: unknown) =>
+        console.warn("The bark portrait failed to load", error),
+      );
+    }
     const view = createStatusPanel(document, "zone-bark");
     this.view = view;
     const stopTaps = this.watchInput(view);

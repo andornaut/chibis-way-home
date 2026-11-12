@@ -76,12 +76,19 @@
 }
 
 /* The statement's ink a gap below the last metric's baseline: the speaker's name in their colour,
-   a gap, then what they say in cream. */
+   a gap, then what they say in cream. The space between them, which a screen reader reads, takes
+   no width. */
 .stage-summary > .stage-summary-statement {
-  display: flex;
-  gap: calc(var(--ui-unit) * var(--summary-word-gap) * 1px);
   margin-top: calc(var(--ui-unit) * var(--summary-statement-gap) * 1px);
   color: var(--colour-cream);
+}
+
+.stage-summary-space {
+  font-size: 0;
+}
+
+.stage-summary-said {
+  margin-left: calc(var(--ui-unit) * var(--summary-word-gap) * 1px);
 }
 
 .stage-summary-speaker[data-colour="amber"] {

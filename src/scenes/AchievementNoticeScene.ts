@@ -52,12 +52,16 @@ export function achievementNoticeParagraph(id: AchievementId): PanelParagraph {
 // buttons and no modal input scope. Launched once at boot, it runs above play and below every
 // modal card. A notice starts only while nothing defers it (noticeBlocked); while one shows, barks
 // wait. Something that defers notices hides the one showing and holds its time until it ends. A
-// fresh tap on the panel dismisses only the notice. The panel is HTML in the UI layer
-// (src/ui/dom/dialogue.ts), a polite status region; it takes no presses itself, so the scene reads
-// the tap from the page (followTaps) and the screen under it still takes the press.
+// fresh tap on the panel dismisses only the notice. A notice shows, and its time starts, once its
+// icon's cut is ready (or has failed), so it never shows an empty portrait frame. The panel is
+// HTML in the UI layer (src/ui/dom/dialogue.ts), a polite status region; it takes no presses
+// itself, so the scene reads the tap from the page (followTaps) and the screen under it still
+// takes the press.
 export class AchievementNoticeScene extends Scene {
   private view: StatusPanelView | undefined;
   private notice: AchievementId | undefined;
+  // Whether the showing notice's icon is ready, so it may show.
+  private ready = false;
   private remaining = 0;
 
   constructor() {
@@ -85,10 +89,11 @@ export class AchievementNoticeScene extends Scene {
   override update(_time: number, delta: number): void {
     const blocked = noticeBlocked(this);
     if (this.showing()) {
-      if (this.view !== undefined && this.view.panel.element.hidden !== blocked) {
-        this.view.panel.element.hidden = blocked;
+      const hidden = blocked || !this.ready;
+      if (this.view !== undefined && this.view.panel.element.hidden !== hidden) {
+        this.view.panel.element.hidden = hidden;
       }
-      if (blocked) {
+      if (hidden) {
         return;
       }
       this.remaining -= delta;
@@ -105,6 +110,7 @@ export class AchievementNoticeScene extends Scene {
 
   private show(id: AchievementId): void {
     this.notice = id;
+    this.ready = false;
     this.remaining = ACHIEVEMENT_NOTICE_SECONDS * 1000;
     const view = this.view;
     if (view === undefined) {
@@ -113,19 +119,25 @@ export class AchievementNoticeScene extends Scene {
     const { panel } = view;
     showPanelParagraph(panel, achievementNoticeParagraph(id));
     panel.portrait.hidden = true;
-    panel.element.hidden = false;
+    const shows = () => this.notice === id && this.view === view;
     void artFrameUrl(this, ICON, achievementIconFrame(this, true, id))
       .then((url) => {
-        if (this.notice === id && this.view === view) {
+        if (shows()) {
           panel.portrait.src = url;
           panel.portrait.hidden = false;
         }
       })
-      .catch((error: unknown) => console.warn("The achievement icon failed to load", error));
+      .catch((error: unknown) => console.warn("The achievement icon failed to load", error))
+      .finally(() => {
+        if (shows()) {
+          this.ready = true;
+        }
+      });
   }
 
   private clear(): void {
     this.notice = undefined;
+    this.ready = false;
     this.remaining = 0;
     if (this.view !== undefined) {
       this.view.panel.element.hidden = true;
