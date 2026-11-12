@@ -364,6 +364,8 @@ export const TEXT: GameText = {
     accept: "Update now",
     cancel: "Cancel",
     close: "Close",
+    // Shown when a newer version wrote the save and none can be downloaded.
+    connect: "Connect to the internet to update",
     title: "Update available",
   },
 };
