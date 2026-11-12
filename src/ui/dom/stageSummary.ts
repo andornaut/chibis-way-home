@@ -54,6 +54,8 @@ export type InkMeasure = (
   text: string,
 ) => LineInk;
 
+const MEASURE_SCALE = 16;
+
 // Measures text's ink in the loaded UI font through a 2D canvas. Without one, a line's ink is
 // taken as its cap height above the baseline and the font's descent below it.
 export function canvasInk(document: Document): InkMeasure {
@@ -62,11 +64,12 @@ export function canvasInk(document: Document): InkMeasure {
     if (context === null) {
       return { fall: UI_FONT_FACE.descent * size, rise: 0 };
     }
-    context.font = `${weight} ${size}px "${UI_FONT_FAMILY}"`;
+    // Measured MEASURE_SCALE times larger, since a canvas reports whole pixels.
+    context.font = `${weight} ${size * MEASURE_SCALE}px "${UI_FONT_FAMILY}"`;
     const { actualBoundingBoxAscent, actualBoundingBoxDescent } = context.measureText(text);
     return {
-      fall: Math.max(0, actualBoundingBoxDescent),
-      rise: Math.max(0, actualBoundingBoxAscent - UI_FONT_FACE.capHeight * size),
+      fall: Math.max(0, actualBoundingBoxDescent / MEASURE_SCALE),
+      rise: Math.max(0, actualBoundingBoxAscent / MEASURE_SCALE - UI_FONT_FACE.capHeight * size),
     };
   };
 }
