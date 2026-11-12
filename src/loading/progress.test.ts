@@ -26,23 +26,19 @@ describe("loading lifecycle", () => {
     frames.shift()!(48);
     expect(work).toHaveBeenCalledOnce();
   });
-  it("maps the first visit's precache to pending without changing foreground loading, and nothing after it", () => {
+  it("maps only the first visit's precache to pending, without changing foreground loading", () => {
     const seen: unknown[] = [];
     const foreground: unknown[] = [];
     const off = precacheProgress.subscribe((state) => seen.push(state));
     const offForeground = loadingProgress.subscribe((state) => foreground.push(state));
     const current = loadingProgress.begin();
     current.progress(0.4);
-    const offlineActivity = trackOfflineActivity(true);
-    for (const activity of ["idle", "registering", "installing", "idle"] as const) {
+    const offlineActivity = trackOfflineActivity();
+    for (const activity of ["idle", "precaching", "idle", "updating", "idle"] as const) {
       offlineActivity(activity);
-      expect(seen.at(-1)).toEqual({ active: activity !== "idle", value: undefined });
+      expect(seen.at(-1)).toEqual({ active: activity === "precaching", value: undefined });
       expect(foreground.at(-1)).toEqual({ active: true, value: 0.4 });
     }
-    const count = seen.length;
-    offlineActivity("installing");
-    offlineActivity("idle");
-    expect(seen).toHaveLength(count);
     current.finish();
     off();
     offForeground();

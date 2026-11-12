@@ -1,3 +1,8 @@
+import type {
+  OfflinePage,
+  OfflinePlay,
+  OfflinePlayOptions,
+} from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const offline = vi.hoisted(() => {
@@ -12,18 +17,13 @@ const offline = vi.hoisted(() => {
     registrationReady: vi.fn(),
   };
   return {
-    page: { container: { controller: null as unknown } },
+    page: {} as unknown,
     play,
-    start: vi.fn(
-      (options: {
-        activationPolicy?: string;
-        onOfflineActivity: (activity: "idle" | "installing" | "registering") => void;
-        onUpdateShown: (shown: boolean) => void;
-      }) => {
-        void options;
-        return play;
-      },
-    ),
+    start: vi.fn((options: OfflinePlayOptions, page: OfflinePage): OfflinePlay => {
+      void options;
+      void page;
+      return play as unknown as OfflinePlay;
+    }),
   };
 });
 vi.mock("@andornaut/game-kit/web/pwa/dom/offlinePlay", () => ({
@@ -60,7 +60,7 @@ beforeEach(() => {
   );
   vi.stubGlobal("navigator", navigator);
   vi.stubGlobal("document", {});
-  offline.page.container.controller = null;
+  offline.page = {};
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -98,20 +98,89 @@ it("wires manual updates to prepared registration and explicit Start visits", as
   expect(offline.play.flow.accept).toHaveBeenCalledOnce();
 });
 
-it.each([
-  { controller: null, name: "a first visit's precache shows", shown: true },
-  { controller: {}, name: "an update's install on a controlled page never shows", shown: false },
-])("$name the loading bar", async ({ controller, shown }) => {
-  offline.page.container.controller = controller;
+// A page for the kit's own offline play: controller is the page's controller when it loaded, and
+// install starts a worker installing on its registration, which finish then installs.
+function kitPage(controller: unknown) {
+  const registration = Object.assign(new EventTarget(), {
+    installing: null as (EventTarget & { postMessage(): void; state: string }) | null,
+    update: () => Promise.resolve(),
+    waiting: null,
+  });
+  const container = Object.assign(new EventTarget(), {
+    controller,
+    register: vi.fn(() => Promise.resolve(registration)),
+  });
+  const install = () => {
+    registration.installing = Object.assign(new EventTarget(), {
+      postMessage: () => undefined,
+      state: "installing",
+    });
+  };
+  const finish = () => {
+    const worker = registration.installing!;
+    worker.state = "installed";
+    registration.installing = null;
+    worker.dispatchEvent(new Event("statechange"));
+  };
+  const page: OfflinePage = {
+    container,
+    eventTarget: new EventTarget(),
+    now: () => 0,
+    online: () => true,
+    reload: () => undefined,
+    setTimeout: () => 0,
+    visibilitySource: Object.assign(new EventTarget(), { visibilityState: "visible" as const }),
+  };
+  return { container, finish, install, page, registration };
+}
+
+// Resolves once pending promise callbacks, such as a registration's, have run.
+function settled(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+// The phone app set up on the kit's own offline play, with whether the loading bar showed the
+// precache at each change.
+async function precacheShown(controller: unknown) {
+  const kit = await vi.importActual<typeof import("@andornaut/game-kit/web/pwa/dom/offlinePlay")>(
+    "@andornaut/game-kit/web/pwa/dom/offlinePlay",
+  );
+  offline.start.mockImplementationOnce(kit.startOfflinePlay);
+  const fake = kitPage(controller);
+  offline.page = fake.page;
   const { precacheProgress } = await import("../loading/progress");
   const pwa = await import("./index");
+  const shown: boolean[] = [];
+  precacheProgress.subscribe(({ active }) => shown.push(active));
   pwa.setupPhoneApp();
-  const seen: boolean[] = [];
-  precacheProgress.subscribe(({ active }) => seen.push(active));
-  const { onOfflineActivity } = offline.start.mock.calls[0]![0];
-  onOfflineActivity("registering");
-  onOfflineActivity("installing");
-  expect(seen.at(-1)).toBe(shown);
+  await settled();
+  return { fake, pwa, shown };
+}
+
+it("shows a first visit's precache from registration until its install ends", async () => {
+  const { fake, pwa, shown } = await precacheShown(null);
+  fake.install();
+  expect(shown.at(-1)).toBe(false);
+  pwa.zoneShown();
+  expect(shown.at(-1)).toBe(true);
+  await settled();
+  expect(shown.at(-1)).toBe(true);
+  fake.finish();
+  expect(shown.at(-1)).toBe(false);
+  fake.install();
+  fake.registration.dispatchEvent(new Event("updatefound"));
+  expect(shown.at(-1)).toBe(false);
+});
+
+it("never shows registration or an update's install on a controlled page", async () => {
+  const { fake, shown } = await precacheShown({});
+  expect(fake.container.register).toHaveBeenCalledOnce();
+  fake.install();
+  fake.registration.dispatchEvent(new Event("updatefound"));
+  fake.finish();
+  expect(shown.every((active) => !active)).toBe(true);
 });
 
 it.each([

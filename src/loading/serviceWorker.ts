@@ -4,23 +4,17 @@ import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePla
 import { beginPrecache } from "./progress";
 
 // The loading bar's view of the shared offline-activity callback, which reports activity only,
-// with no download-percentage claim. firstVisit is whether no service worker controlled the page
-// when it loaded. The player waits for the first install on such a page, the precache, which the
-// bar shows as unknown work. Every other registration or install (an update check or an update's
-// install, on a page a version already controls or after the precache has ended) runs in the
-// background while the game is playable and never shows the bar.
-export function trackOfflineActivity(firstVisit: boolean): (activity: OfflineActivity) => void {
-  let waited = firstVisit;
+// with no download-percentage claim. The kit reports "precaching" for the first visit's precache,
+// which the player waits for and the bar shows as unknown work. "updating" (an update's install,
+// which runs in the background while the game is playable) and "idle" never show the bar.
+export function trackOfflineActivity(): (activity: OfflineActivity) => void {
   let operation: ProgressHandle | undefined;
   return (activity) => {
-    if (activity !== "idle") {
-      if (waited) {
-        operation ??= beginPrecache();
-      }
-    } else if (operation !== undefined) {
-      operation.finish();
+    if (activity === "precaching") {
+      operation ??= beginPrecache();
+    } else {
+      operation?.finish();
       operation = undefined;
-      waited = false;
     }
   };
 }

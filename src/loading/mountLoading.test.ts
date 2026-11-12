@@ -102,12 +102,12 @@ it("shows zone entry as the pending segment until the zone is ready", async () =
   unmount();
 });
 
-it("never shows an update's install or check while the game plays", async () => {
+it("never shows an update's install or idle offline activity while the game plays", async () => {
   const { bar, unmount } = await playing();
   const { trackOfflineActivity } = await import("./serviceWorker");
-  const offlineActivity = trackOfflineActivity(false);
+  const offlineActivity = trackOfflineActivity();
   const states: (string | undefined)[] = [];
-  for (const activity of ["registering", "installing", "idle", "installing"] as const) {
+  for (const activity of ["idle", "updating", "idle", "updating"] as const) {
     offlineActivity(activity);
     states.push(bar().hidden ? undefined : bar().dataset.state);
   }
@@ -115,16 +115,15 @@ it("never shows an update's install or check while the game plays", async () => 
   unmount();
 });
 
-it("shows the first visit's precache while the zone plays, but no install after it", async () => {
+it("shows the first visit's precache while the zone plays, but no update after it", async () => {
   const { bar, unmount } = await playing();
   const { trackOfflineActivity } = await import("./serviceWorker");
-  const offlineActivity = trackOfflineActivity(true);
-  offlineActivity("registering");
-  offlineActivity("installing");
+  const offlineActivity = trackOfflineActivity();
+  offlineActivity("precaching");
   expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
   offlineActivity("idle");
   expect(bar().hidden).toBe(true);
-  offlineActivity("installing");
+  offlineActivity("updating");
   expect(bar().hidden).toBe(true);
   unmount();
 });
