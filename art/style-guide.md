@@ -433,7 +433,7 @@ The update notice is an ordinary modal offered only on the game's own Start scre
 The loading bar is a 2px strip along the top of the 720px view, with no border: the loading zone's primary fill on a `dslate` track, recoloured for each stage's zone.
 
 - Scale: the page's pre-script bar draws at 1 CSS px per frame pixel; the mounted bar scales by the view's fractional fit (`--loading-scale`), as the world art and the HTML UI do, so its edges can fall between device pixels. Its size and edges are not snapped.
-- Measured load: the fill grows with the reported progress, holds full for 250ms and hides before the bar shows anything else.
+- Measured load: the fill grows with the reported progress, holds full for 250ms, then fades out over 150ms before the bar shows anything else. The track stays opaque. Reduced motion keeps the fade, which changes opacity only.
 - Unknown load (the startup checks, stage preparation and the background install): a travelling segment a quarter of the track wide crosses it every 1.5s, stepping one whole frame pixel at a time. Reduced motion keeps the same travelling segment.
 - Idle: nothing shows. While a modal is open, its dim and panels cover the bar.
 
