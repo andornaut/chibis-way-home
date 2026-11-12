@@ -14,6 +14,7 @@ import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
 import { SKILL_BUTTON } from "../layout/skillHud.ts";
 import { type CardView, createCard } from "./card.ts";
 import { createPaletteSvg } from "./chrome.ts";
+import { UI_COVERED } from "./layer.ts";
 import {
   createSkillDisc,
   paintSkillDisc,
@@ -24,7 +25,9 @@ import {
 // The pause scene's view in the HTML UI (pause.css, on ui.css and skillDisc.css): the pause card,
 // the pause button at the view's top-left corner and the skill HUD along its top-right, each
 // button's box its press area. The HUD sits over the card's backdrop, so a press on it is never a
-// tap outside the card.
+// tap outside the card. A card under this view (a conversation, its choice or a summary) covers
+// the HUD, which takes no presses there, so the HUD dims under it; the pause button, which it
+// keeps live, stays lit.
 
 // The layout properties pause.css reads, in base px.
 export const PAUSE_LAYOUT: LayoutValues = {
@@ -80,7 +83,8 @@ export interface PauseView {
   // The card in its own wrapper, hidden while the card is closed: the backdrop that takes taps
   // outside the card, and the dialog.
   readonly card: CardView<PauseCardButton> & { readonly close: HTMLButtonElement };
-  // The skill HUD's buttons' container, which stays live under the card.
+  // The skill HUD's buttons' container, which stays live under the card and dims under a card
+  // below this view.
   readonly hud: HTMLElement;
   readonly pauseButton: HTMLButtonElement;
   // The descriptions of the selected skill's readiness, by whether it is ready.
@@ -128,6 +132,7 @@ export function createPauseView(
   pauseButton.setAttribute("aria-label", words.button);
   showPauseDisc(colours, { expanded: false, tag: "rest" }, pauseButton);
   const hud = element("div", "skill-hud");
+  hud.toggleAttribute(UI_COVERED, true);
   const readiness = {
     ready: element("span", "skill-hud-readiness"),
     recharging: element("span", "skill-hud-readiness"),

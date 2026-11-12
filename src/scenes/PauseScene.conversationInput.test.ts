@@ -64,7 +64,7 @@ vi.mock("./domUi.ts", () => {
 
 import { ZONE_MAP } from "../data/map.ts";
 import { TEXT } from "../data/text.ts";
-import { createUiLayer, type UiLayer } from "../ui/index.ts";
+import { createUiLayer, UI_DIMMED, type UiLayer } from "../ui/index.ts";
 import { type DialogueChoiceData, DialogueChoiceScene } from "./DialogueChoiceScene.ts";
 import { type DialogueData, DialogueScene } from "./DialogueScene.ts";
 import { modalInput } from "./modalInput.ts";
@@ -312,15 +312,24 @@ it.each(["choice", "departure"] as const)(
 );
 
 it.each(MODES)(
-  "shows the pause button and the skill HUD over the %s, the HUD taking no presses",
+  "shows the pause button lit and the skill HUD dimmed over the %s, the HUD taking no presses",
   async (mode) => {
     const { acted, pause, scenes } = await conversation(mode);
     expect({
+      dimmed: [pause.pauseButton, pause.hud, pause.skill("dash")].map(
+        (element) => element.closest(`[${UI_DIMMED}]`) !== null,
+      ),
       hud: !pause.skill("dash").hidden,
       live: pause.hud.hasAttribute("data-live"),
       pauseButton: !pause.pauseButton.hidden,
       tabIndex: [pause.pauseButton.tabIndex, pause.skill("dash").tabIndex],
-    }).toEqual({ hud: true, live: false, pauseButton: true, tabIndex: [-1, -1] });
+    }).toEqual({
+      dimmed: [false, true, true],
+      hud: true,
+      live: false,
+      pauseButton: true,
+      tabIndex: [-1, -1],
+    });
     tap(pause.skill("dash"));
     expect(selection.select).not.toHaveBeenCalled();
     expect(scenes.launch).not.toHaveBeenCalled();

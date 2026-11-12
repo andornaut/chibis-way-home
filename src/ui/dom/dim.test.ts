@@ -5,7 +5,7 @@ import { MODAL_DIM } from "@andornaut/game-kit/view/modalDim";
 import { afterEach, describe, expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };
-import { createUiLayer, UI_DIMMED, type UiLayer } from "./layer.ts";
+import { createUiLayer, UI_COVERED, UI_DIMMED, type UiLayer } from "./layer.ts";
 import { remappedFrame, skinColours, UI_COLOURS } from "./skin.ts";
 
 // The modal dim of a #rrggbb palette colour, read straight from art's ramp tables: its one-step
@@ -159,6 +159,26 @@ describe("the dim under the top card", () => {
     expect([dimmed(parts.low), dimmed(parts.middle)]).toEqual([true, false]);
     closeMiddle();
     expect(dimmed(parts.low)).toBe(false);
+  });
+
+  it("dims a covered element in a view over the card, unless the card keeps it live", () => {
+    const parts = views();
+    const covered = document.createElement("div");
+    const lit = document.createElement("button");
+    covered.setAttribute(UI_COVERED, "");
+    parts.high.append(lit, covered);
+    const state = () => [covered, lit, parts.high].map(dimmed);
+    const close = layer.modals.open({ live: [lit] }, parts.dialog);
+    expect(state()).toEqual([true, false, false]);
+    expect(covered.style.getPropertyValue("--colour-ink")).toBe("#000001");
+    close();
+    const closeLive = layer.modals.open({ live: [lit, covered] }, parts.dialog);
+    expect(state()).toEqual([false, false, false]);
+    closeLive();
+    const card = document.createElement("section");
+    parts.high.append(card);
+    layer.modals.open({}, card);
+    expect(state()).toEqual([false, false, false]);
   });
 
   it("shows the dimmed source of an image given its lit one while it is dimmed", async () => {

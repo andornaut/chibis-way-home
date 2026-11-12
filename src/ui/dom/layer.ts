@@ -80,6 +80,9 @@ export const UI_LAYOUT: LayoutValues = {
 
 // The attribute on what the top modal dims.
 export const UI_DIMMED = "data-ui-dimmed";
+// The attribute on an element that a card in a view under its own still covers, since it takes
+// no presses there: it dims with the views under the card, unless the card keeps it live.
+export const UI_COVERED = "data-ui-covered";
 
 export interface UiLayer {
   readonly element: HTMLElement;
@@ -98,20 +101,17 @@ export interface UiLayer {
 
 // What the card dialog in one of root's views dims: the views under it, but not a live element
 // in one or the elements along the path to it, whose other children it dims instead. The kit's
-// modal layer makes the same elements inert, besides any view over the card's.
+// modal layer makes the same elements inert, besides any view over the card's. In a view over
+// the card's, it dims only the elements marked UI_COVERED that neither are nor hold a live one.
 function dimTargets(
   root: HTMLElement,
   dialog: HTMLElement,
   live: readonly HTMLElement[],
 ): Set<Element> {
   const views = [...root.children];
-  const below = views.slice(
-    0,
-    Math.max(
-      0,
-      views.findIndex((view) => view.contains(dialog)),
-    ),
-  );
+  const at = views.findIndex((view) => view.contains(dialog));
+  const below = views.slice(0, Math.max(0, at));
+  const over = at < 0 ? [] : views.slice(at + 1);
   const paths = new Set<Element>();
   for (const element of live) {
     for (let at: Element | null = element; at !== null && at !== root; at = at.parentElement) {
@@ -129,6 +129,13 @@ function dimTargets(
     }
   };
   visit(below);
+  for (const view of over) {
+    for (const element of view.querySelectorAll(`[${UI_COVERED}]`)) {
+      if (!paths.has(element)) {
+        targets.add(element);
+      }
+    }
+  }
   return targets;
 }
 
