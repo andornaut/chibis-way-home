@@ -7,7 +7,6 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const offline = vi.hoisted(() => {
   const play = {
-    bootable: Promise.resolve(),
     flow: {
       accept: vi.fn(),
       beginOfferVisit: vi.fn(),
@@ -67,11 +66,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("wires manual updates to prepared registration and explicit Start visits", async () => {
+it("wires updates to prepared registration and explicit Start visits", async () => {
   const pwa = await import("./index");
   pwa.setupPhoneApp();
   const options = offline.start.mock.calls[0]![0];
-  expect(options.activationPolicy).toBe("manual");
   pwa.coverZone("loading", true);
   pwa.zoneShown();
   expect(offline.play.registrationReady).not.toHaveBeenCalled();
@@ -99,12 +97,13 @@ it("wires manual updates to prepared registration and explicit Start visits", as
 });
 
 // A page for the kit's own offline play: controller is the page's controller when it loaded, and
-// install starts a worker installing on its registration, which finish then installs.
+// install starts a worker installing on its registration, which finish then installs, leaving it
+// waiting when waits is set.
 function kitPage(controller: unknown) {
   const registration = Object.assign(new EventTarget(), {
     installing: null as (EventTarget & { postMessage(): void; state: string }) | null,
     update: () => Promise.resolve(),
-    waiting: null,
+    waiting: null as (EventTarget & { postMessage(): void; state: string }) | null,
   });
   const container = Object.assign(new EventTarget(), {
     controller,
@@ -116,10 +115,13 @@ function kitPage(controller: unknown) {
       state: "installing",
     });
   };
-  const finish = () => {
+  const finish = (waits = false) => {
     const worker = registration.installing!;
     worker.state = "installed";
     registration.installing = null;
+    if (waits) {
+      registration.waiting = worker;
+    }
     worker.dispatchEvent(new Event("statechange"));
   };
   const page: OfflinePage = {
@@ -128,7 +130,6 @@ function kitPage(controller: unknown) {
     now: () => 0,
     online: () => true,
     reload: () => undefined,
-    setTimeout: () => 0,
     visibilitySource: Object.assign(new EventTarget(), { visibilityState: "visible" as const }),
   };
   return { container, finish, install, page, registration };
@@ -181,6 +182,33 @@ it("never shows registration or an update's install on a controlled page", async
   fake.registration.dispatchEvent(new Event("updatefound"));
   fake.finish();
   expect(shown.every((active) => !active)).toBe(true);
+});
+
+// Whether the Update card showed at each change, with the Start screen shown and uncovered.
+async function offerShownOnStart(controller: unknown) {
+  const { fake, pwa } = await precacheShown(controller);
+  const offered: boolean[] = [];
+  pwa.updateOffer.subscribe((visible) => offered.push(visible));
+  pwa.zoneShown();
+  pwa.beginStartUpdateVisit();
+  pwa.startScreenShown(true);
+  await settled();
+  fake.install();
+  fake.registration.dispatchEvent(new Event("updatefound"));
+  return { fake, offered };
+}
+
+it("offers a controlled page's update only once the new version is stored", async () => {
+  const { fake, offered } = await offerShownOnStart({});
+  expect(offered.at(-1)).toBe(false);
+  fake.finish(true);
+  expect(offered.at(-1)).toBe(true);
+});
+
+it("never offers an update on a page no version controls", async () => {
+  const { fake, offered } = await offerShownOnStart(null);
+  fake.finish(true);
+  expect(offered.every((visible) => !visible)).toBe(true);
 });
 
 it.each([

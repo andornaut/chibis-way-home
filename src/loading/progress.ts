@@ -19,8 +19,8 @@ export const startupLoading = loadingProgress.begin();
 let refreshStyle: (stage: string) => void = () => undefined;
 
 // The startup load's second phase. The file load is measured, so it finishes full; the startup
-// checks after it are unknown work, a pending phase of their own, which the bar shows once its
-// full hold and fade have ended.
+// checks after it (reading the save and preparing the HTML UI, never offline play) are unknown
+// work, a pending phase of their own, which the bar shows once its full hold and fade have ended.
 export function beginStartupChecks(): ProgressHandle {
   startupLoading.progress(1);
   startupLoading.finish();

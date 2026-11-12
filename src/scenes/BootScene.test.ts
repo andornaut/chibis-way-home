@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-const startup = vi.hoisted(() => ({ load: vi.fn(), ready: vi.fn() }));
+const startup = vi.hoisted(() => ({ load: vi.fn() }));
 const art = vi.hoisted(() => ({ atlas: null as null | object }));
 const manifest = vi.hoisted(() => ({
   backdrops: [],
@@ -22,7 +22,6 @@ vi.mock("phaser", async () => {
     Textures: { FilterMode: { LINEAR: 0, NEAREST: 1 } },
   };
 });
-vi.mock("../pwa", () => ({ launchReady: startup.ready }));
 vi.mock("./save", () => ({ loadProgress: startup.load }));
 vi.mock("./atlasArt", () => ({
   get ATLAS() {
@@ -112,16 +111,10 @@ afterEach(() => {
 it.each([
   ["", "start"],
   ["?zone=street", "zone"],
-])("waits for version readiness and progress before routing %s to %s", async (search, target) => {
+])("reads progress at once before routing %s to %s", async (search, target) => {
   art.atlas = null;
   vi.stubGlobal("window", { location: { search } });
-  let ready!: () => void;
   let loaded!: () => void;
-  startup.ready.mockReturnValue(
-    new Promise<void>((resolve) => {
-      ready = resolve;
-    }),
-  );
   startup.load.mockReturnValue(
     new Promise<void>((resolve) => {
       loaded = resolve;
@@ -129,11 +122,8 @@ it.each([
   );
   const scene = new BootScene();
   scene.create();
-  expect(startup.load).not.toHaveBeenCalled();
-  expect(scene.scene.start).not.toHaveBeenCalled();
-  ready();
+  expect(startup.load).toHaveBeenCalledExactlyOnceWith();
   await Promise.resolve();
-  expect(startup.load).toHaveBeenCalledExactlyOnceWith(undefined);
   expect(scene.scene.start).not.toHaveBeenCalled();
   loaded();
   await new Promise<void>((resolve) => {
@@ -152,6 +142,5 @@ it("keeps stage previews independent of startup and saved progress", () => {
   const scene = new BootScene();
   scene.create();
   expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone");
-  expect(startup.ready).not.toHaveBeenCalled();
   expect(startup.load).not.toHaveBeenCalled();
 });

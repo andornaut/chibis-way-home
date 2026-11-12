@@ -2,8 +2,10 @@
 // wake lock and persistent storage. setupPhoneApp runs once from main.ts; the scenes listen for
 // PHONE_EVENTS on window and call the functions below.
 //
-// Offline registration retains its prepared-zone timing. Waiting updates activate only through
-// the explicit Start-screen offer, never automatically before input or during gameplay.
+// The game always starts at once from the version on disk: a page a version controls loads every
+// precached file from that version's cache, and nothing waits at start. A newer version downloads
+// in the background and activates only through the explicit Start-screen offer, once every file
+// is stored and verified, never automatically.
 import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
 import { backCloseWatcher, isFirefoxAndroidApp } from "@andornaut/game-kit/web/pwa/backNavigation";
 import {
@@ -39,19 +41,14 @@ export const updateOffer = createUpdateOffer(
   () => offlinePlay?.flow.dismissOffer(),
 );
 
-// A startup check may hold the first screen and saves for this long; activation remains manual.
-const BOOT_WAIT_MS = 4000;
-
 // Capture close eligibility before the back guard can add a history entry.
 let exitHidden = false;
 let home: HomeScreen | undefined;
-// Resolves once the game may show its first screen and write a save (UpdateFlow.bootable).
-let ready: Promise<void> = Promise.resolve();
 let screenWakeLock: ScreenWakeLock | undefined;
 
 // The production build only: the dev server has no sw.js, and a worker would serve stale
 // modules over hot reloads. A page a version controls registers now, so its update check runs
-// while the game loads; a first visit registers once the zone shows, so the precache does not
+// in the background while the game loads; a first visit registers once the zone shows, so the precache does not
 // compete with the game's own downloads (registrationReady). The loading bar shows only the
 // kit's "precaching", that first visit's precache; an update installs in the background with no
 // bar (trackOfflineActivity).
@@ -62,8 +59,6 @@ function setupOfflinePlay(): void {
   }
   const play = startOfflinePlay(
     {
-      activationPolicy: "manual",
-      bootWaitMs: BOOT_WAIT_MS,
       onOfflineActivity: trackOfflineActivity(),
       onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
@@ -72,11 +67,10 @@ function setupOfflinePlay(): void {
   );
   offlinePlay = play;
   home = trackHomeScreen(play.flow.setOfferVisible, () => play.registrationReady());
-  ready = play.bootable;
 }
 
-// Sets up offline play and the phone app's behaviour. The game is constructed at once and waits
-// on launchReady only for its first screen and any save.
+// Sets up offline play and the phone app's behaviour. The game is constructed at once and never
+// waits on offline play.
 export function setupPhoneApp(): void {
   setupOfflinePlay();
   // Asked once per launch of the installed app, never in a browser tab. Not waited for: the game
@@ -112,13 +106,6 @@ export function setupPhoneApp(): void {
 // tab can always leave for the site's home page; app windows need a supported close path.
 export function exitShown(): boolean {
   return !exitHidden;
-}
-
-// Resolves once the game may show its first screen and write a save: at once, or after a fresh
-// load has checked for a newer version, for at most BOOT_WAIT_MS (it never resolves for a page
-// that reloads into one first).
-export function launchReady(): Promise<void> {
-  return ready;
 }
 
 // The existing prepared-zone signal controls first-install registration, not update offers.

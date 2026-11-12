@@ -11,7 +11,6 @@ import manifestJson from "../../public/art/manifest.json";
 import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
 import { TILE } from "../data/screen";
 import { beginStartupChecks, startupLoading } from "../loading/progress";
-import { launchReady } from "../pwa";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
 import { prepareDomUi } from "./domUi";
@@ -24,8 +23,8 @@ import { filterLoadedArt } from "./textureFilters";
 const MANIFEST = manifestJson as ArtManifest;
 
 // First scene to run. Loads everything art's manifest lists, makes an animation of every sprite
-// tag, looping unless the manifest lists it as played once, then, once launchReady resolves,
-// opens the start screen and launches the pause scene beside it.
+// tag, looping unless the manifest lists it as played once, then, once the save is read, opens the
+// start screen and launches the pause scene beside it.
 export class BootScene extends Scene {
   // The startup checks' pending phase, after the measured file load.
   private startupChecks?: ProgressHandle;
@@ -93,12 +92,10 @@ export class BootScene extends Scene {
       this.scene.start("zone");
       return;
     }
-    // Read progress and open the start screen after a pending version replacement can reload,
-    // and once the HTML UI has its fonts and art. Diagnostic ?zone entry keeps its direct zone
-    // route.
+    // Read progress and open the start screen at once, with no wait for offline play, once the
+    // HTML UI has its fonts and art. Diagnostic ?zone entry keeps its direct zone route.
     const domUi = prepareDomUi(this);
-    void launchReady()
-      .then(loadProgress)
+    void loadProgress()
       .then(() => domUi)
       .then(() => {
         const rendered = () => {

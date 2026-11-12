@@ -63,9 +63,9 @@ const INK = "#181425";
 // samples nearest unless BootScene's filters (src/scenes/textureFilters.ts) or its own code make
 // it linear, and the canvas itself is never smoothed. The UI overlay (mountUiPresentation) draws
 // the UI scenes over the canvas at the full device pixel ratio, and the HTML UI layer
-// (mountDomUi, src/ui/dom/) holds the screens moved to the page over both. The game is constructed at once
-// and loads while a fresh load checks for a newer version: BootScene holds only the zone for the
-// check (launchReady).
+// (mountDomUi, src/ui/dom/) holds the screens moved to the page over both. The game is
+// constructed at once and shows its first screen as soon as it has loaded; offline play never
+// holds it.
 function startGame(): void {
   const game = new Game({
     // The bars beside the game's view, in the page's ink.
