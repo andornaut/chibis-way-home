@@ -1,8 +1,10 @@
+import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import { TOUCH_CIRCLE_RADIUS } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import { TOUCH } from "../../data/touch.ts";
-import { MOVE_HINT, TOUCH_CONTROLS } from "../layout/touchControls.ts";
+import { touchLayout } from "../layout/touchControls.ts";
 import {
   combineIntents,
   type HeldTouch,
@@ -41,14 +43,16 @@ describe("keyIntent", () => {
 });
 
 describe("touchRoleAt", () => {
-  const { jump, use } = TOUCH_CONTROLS;
+  // The game's own 2:1 canvas, with no bars.
+  const { buttons, moveHint, pressAreas } = touchLayout(renderFit(SCREEN, 1, SCREEN));
+  const { jump, use } = buttons;
   // A point at distance from centre, toward the left.
   const left = (centre: { x: number; y: number }, distance: number) => ({
     x: centre.x - distance,
     y: centre.y,
   });
   // A button's press radius: its clear circle and the move hint's radius beyond it.
-  const reach = TOUCH_CIRCLE_RADIUS + (MOVE_HINT.art.width - 1) / 2;
+  const reach = TOUCH_CIRCLE_RADIUS + (moveHint.art.width - 1) / 2;
   it.each<[string, { x: number; y: number }, string]>([
     ["Use's centre", use.centre, "use"],
     ["inside Use's area", left(use.centre, reach - 0.1), "use"],
@@ -69,7 +73,7 @@ describe("touchRoleAt", () => {
     ["the screen's bottom-right corner", { x: 719, y: 359 }, "jump"],
     ["the open middle", { x: 320, y: 180 }, "move"],
   ])("takes %s as %s", (_, point, role) => {
-    expect(touchRoleAt(point)).toBe(role);
+    expect(touchRoleAt(pressAreas, point)).toBe(role);
   });
 });
 

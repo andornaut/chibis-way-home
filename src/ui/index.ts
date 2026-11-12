@@ -168,7 +168,7 @@ export {
   startScreenLayout,
 } from "./layout/startScreen.ts";
 export { textInkBounds } from "./layout/textInk.ts";
-export { MOVE_HINT, TOUCH_CONTROLS, type TouchControl } from "./layout/touchControls.ts";
+export { type TouchControl, type TouchLayout, touchLayout } from "./layout/touchControls.ts";
 export {
   destinationAtTap,
   destinationCentre,

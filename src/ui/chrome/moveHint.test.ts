@@ -1,13 +1,16 @@
+import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import hintSheet from "../../../public/art/sprites/ui-move-hint.json" with { type: "json" };
+import { SCREEN } from "../../data/screen.ts";
 import { TOUCH } from "../../data/touch.ts";
 import type { Point } from "../../data/types/index.ts";
 import type { HeldTouch } from "../input/intent.ts";
-import { MOVE_HINT } from "../layout/touchControls.ts";
+import { touchLayout } from "../layout/touchControls.ts";
 import { knobOffset, moveHintView } from "./moveHint.ts";
 import { centredAt } from "./touchControls.ts";
 
+const MOVE_HINT = touchLayout(renderFit(SCREEN, 1, SCREEN)).moveHint;
 const { knobReach } = MOVE_HINT;
 const REST = MOVE_HINT.centre;
 const DEAD = TOUCH.moveDeadZone;

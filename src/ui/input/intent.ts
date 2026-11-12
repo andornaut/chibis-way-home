@@ -1,6 +1,6 @@
 import type { Point, TouchTuning } from "../../data/types/index.ts";
-import { pressedArea } from "../layout/hitAreas.ts";
-import { TOUCH_PRESS_AREAS, type TouchControl } from "../layout/touchControls.ts";
+import { type PressArea, pressedArea } from "../layout/hitAreas.ts";
+import type { TouchControl } from "../layout/touchControls.ts";
 import { MOUSE_KEYS } from "./mouseMovement.ts";
 
 // What the player is asking for, from the keyboard and the touch controls together.
@@ -29,9 +29,10 @@ export function keyIntent(held: ReadonlySet<string>): Intent {
 // What a touch does: hold the button it starts on, or else move him.
 type TouchRole = TouchControl | "move";
 
-// The role a touch starting at point takes. It keeps that role until it lifts.
-export function touchRoleAt(point: Point): TouchRole {
-  return pressedArea(TOUCH_PRESS_AREAS, point) ?? "move";
+// The role a touch starting at point takes among the touch buttons' press areas (touchLayout's
+// pressAreas). It keeps that role until it lifts.
+export function touchRoleAt(areas: readonly PressArea<TouchControl>[], point: Point): TouchRole {
+  return pressedArea(areas, point) ?? "move";
 }
 
 // A move touch's direction from its x offset to where it started.

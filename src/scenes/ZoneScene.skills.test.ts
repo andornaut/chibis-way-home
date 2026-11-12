@@ -22,8 +22,8 @@ import {
   shifted,
   SKILL_BUTTON,
   skillHud,
-  TOUCH_CONTROLS,
   touchIntent,
+  touchLayout,
   viewShift,
 } from "../ui/index.ts";
 
@@ -219,7 +219,7 @@ it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])
     f.scene.watchMouse();
     const point =
       control === "use" || control === "jump"
-        ? shifted(viewShift(f.fit), TOUCH_CONTROLS[control].centre)
+        ? shifted(viewShift(f.fit), touchLayout(f.fit).buttons[control].centre)
         : control === "pause"
           ? shifted(viewShift(f.fit), PAUSE_BUTTON.at)
           : shifted(
@@ -284,7 +284,7 @@ it.each([
   const f = touchFixture();
   const point =
     control === "use" || control === "jump"
-      ? shifted(viewShift(f.fit), TOUCH_CONTROLS[control].centre)
+      ? shifted(viewShift(f.fit), touchLayout(f.fit).buttons[control].centre)
       : control === "pause"
         ? shifted(viewShift(f.fit), PAUSE_BUTTON.at)
         : shifted(
@@ -314,7 +314,7 @@ it("retains the movement finger's joystick while another finger holds or release
   const f = touchFixture();
   const start = { x: 200, y: 180 };
   const hud = shifted(viewShift(f.fit), targetCentre(skillHud(SKILL_IDS).get("doubleJump")!));
-  const use = shifted(viewShift(f.fit), TOUCH_CONTROLS.use.centre);
+  const use = shifted(viewShift(f.fit), touchLayout(f.fit).buttons.use.centre);
   f.send("pointerdown", 1, start);
   f.send("pointermove", 1, { ...start, x: start.x + TOUCH.moveDeadZone + 1 });
   f.send("pointerdown", 2, use);
@@ -324,7 +324,7 @@ it("retains the movement finger's joystick while another finger holds or release
     use: true,
   });
   expect(f.draw()).toBe(true);
-  const half = (TOUCH_CONTROLS.jump.art.width - 1) / 2;
+  const half = (touchLayout(f.fit).buttons.jump.art.width - 1) / 2;
   expect({ x: f.ring.x + half, y: f.ring.y + half }).toEqual(start);
   f.send("pointerup", 2, use);
   expect(f.scene.heldTouches.has(1)).toBe(true);

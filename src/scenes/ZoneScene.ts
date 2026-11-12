@@ -172,16 +172,16 @@ import {
   isMouseMovementKey,
   keyIntent,
   listenMouseMovement,
-  MOVE_HINT,
   moveHintView,
   reducedMotion,
   shifted,
   stageProgressRect,
   TOUCH_CHROME_FRAME,
-  TOUCH_CONTROLS,
   TOUCH_KNOB_FRAME,
   type TouchControl,
   touchIntent,
+  type TouchLayout,
+  touchLayout,
   touchRoleAt,
   type TouchSetting,
   touchSettings,
@@ -627,9 +627,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.loadPlan(zoneAt(seed, ZONE_MAP.start));
     }
 
+    const { buttons } = this.touchControls();
     for (const control of Object.keys(CONTROL_SPRITES) as TouchControl[]) {
       const sprite = createTouchChrome(this, control).setScrollFactor(0).setDepth(OVERLAY_DEPTH);
-      const at = centredAt(TOUCH_CONTROLS[control].centre, {
+      const at = centredAt(buttons[control].centre, {
         height: TOUCH_CHROME_FRAME,
         width: TOUCH_CHROME_FRAME,
       });
@@ -783,11 +784,23 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.events.once("create", () => this.sys.pause());
   }
 
+  // The touch controls in the canvas as it is now (touchLayout), in the view's coordinates.
+  private touchControls(): TouchLayout {
+    return touchLayout(sceneFit(this));
+  }
+
+  // The role a touch starting at point on the canvas takes: the touch buttons sit shifted with
+  // the view (placeControls), as the pause button does.
+  private touchRoleOnCanvas(point: Point): HeldTouch["role"] {
+    return touchRoleAt(this.touchControls().pressAreas, shifted(sceneViewShift(this), point, -1));
+  }
+
   // Puts the touch buttons at their places in the game's view, wherever it sits in the canvas.
   private placeControls(): void {
     const shift = sceneViewShift(this);
+    const { buttons } = this.touchControls();
     for (const [control, sprite] of this.controls) {
-      const { centre } = TOUCH_CONTROLS[control];
+      const { centre } = buttons[control];
       const at = shifted(
         shift,
         centredAt(centre, { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME }),
@@ -825,8 +838,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       touchSettingShown("moveControls") &&
       (touches.some(({ role }) => role === "move") ||
         (touches.length === 0 && this.buttonTouches.size === 0));
-    const rest = shifted(sceneViewShift(this), MOVE_HINT.centre);
-    const view = moveHintView(TOUCH, MOVE_HINT.knobReach, rest, touches);
+    const { moveHint } = this.touchControls();
+    const rest = shifted(sceneViewShift(this), moveHint.centre);
+    const view = moveHintView(TOUCH, moveHint.knobReach, rest, touches);
     show(ring, view.ringTag);
     show(knob, view.knobTag);
     const ringAt = centredAt(view.centre, {
@@ -2157,7 +2171,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           canvasRect(this),
           { x: event.clientX, y: event.clientY },
         );
-        const role = touchRoleAt(shifted(sceneViewShift(this), point, -1));
+        const role = this.touchRoleOnCanvas(point);
         return role === "move" || !this.controls.get(role)?.visible;
       },
       window,
@@ -2227,8 +2241,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         clientPoint(event),
       );
     const onGame = (event: PagePointerEvent) => clampInto(canvasRect(this), unclamped(event));
-    // The touch buttons sit shifted with the view (placeControls), as the pause button does.
-    const roleAt = (point: Point) => touchRoleAt(shifted(sceneViewShift(this), point, -1));
     const accepts = (event: PagePointerEvent) =>
       modalInput(this).accepts() &&
       event.pointerType === "touch" &&
@@ -2249,7 +2261,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
             return;
           }
           const { x, y } = unclamped(event);
-          const role = roleAt(onGame(event));
+          const role = this.touchRoleOnCanvas(onGame(event));
           this.heldTouches.set(pointerId, { role, startX: x, startY: y, x });
         },
         move: ({ pointerId }, event) => {

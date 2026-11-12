@@ -1,4 +1,5 @@
 import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
+import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import { SCREEN } from "../../data/screen.ts";
@@ -6,7 +7,7 @@ import type { Rect } from "../../data/types/index.ts";
 import { hitAround, hitMargin, type PressArea, pressedArea } from "./hitAreas.ts";
 import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { startScreenLayout } from "./startScreen.ts";
-import { TOUCH_CONTROLS } from "./touchControls.ts";
+import { touchLayout } from "./touchControls.ts";
 
 const square = (side: number) => ({ height: side, width: side, x: 100, y: 100 });
 
@@ -69,7 +70,8 @@ describe("pressedArea", () => {
   });
 
   it("keeps the screen's bottom-right corner in Jump's area", () => {
-    expect(pressedArea([{ ...TOUCH_CONTROLS.jump, key: "jump" }], { x: 719, y: 359 })).toBe("jump");
+    const { jump } = touchLayout(renderFit(SCREEN, 1, SCREEN)).buttons;
+    expect(pressedArea([{ ...jump, key: "jump" }], { x: 719, y: 359 })).toBe("jump");
   });
 });
 

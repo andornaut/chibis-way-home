@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SCREEN } from "../data/screen.ts";
 import type { Size } from "../data/types/index.ts";
 import { deviceScale } from "../testing/renderScale.ts";
-import { PAUSE_BUTTON, playView, shifted, TOUCH_CONTROLS, touchRoleAt } from "../ui/index.ts";
+import { PAUSE_BUTTON, playView, shifted, touchLayout, touchRoleAt } from "../ui/index.ts";
 
 vi.mock("phaser", () => ({ Scale: { Events: { RESIZE: "resize" } } }));
 
@@ -98,10 +98,11 @@ describe("pointer mapping at a fractional zoom", () => {
   const scene = sceneAt(PHONE, 3);
   fitPlayCamera(scene);
   const fit = sceneFit(scene);
+  const { buttons, pressAreas } = touchLayout(fit);
 
   it("round-trips a point in the view through the camera's device pixels", () => {
     const view = scene.cameras.main;
-    for (const point of [PAUSE_BUTTON.at, TOUCH_CONTROLS.jump.centre, { x: 719, y: 359 }]) {
+    for (const point of [PAUSE_BUTTON.at, buttons.jump.centre, { x: 719, y: 359 }]) {
       const pointer = { x: view.x + point.x * view.zoom, y: view.y + point.y * view.zoom };
       const back = playPoint(scene, pointer);
       expect(back.x).toBeCloseTo(point.x, 9);
@@ -115,9 +116,12 @@ describe("pointer mapping at a fractional zoom", () => {
     const shift = sceneViewShift(scene);
     const box = { ...PHONE, x: 30, y: 12 };
     const roles = (["jump", "use"] as const).map((control) => {
-      const at = shifted(shift, TOUCH_CONTROLS[control].centre);
+      const at = shifted(shift, buttons[control].centre);
       const client = { x: box.x + (at.x * fit.zoom) / fit.r, y: box.y + (at.y * fit.zoom) / fit.r };
-      return touchRoleAt(shifted(shift, pageToGame(0, box, canvasRect(scene), client), -1));
+      return touchRoleAt(
+        pressAreas,
+        shifted(shift, pageToGame(0, box, canvasRect(scene), client), -1),
+      );
     });
     expect(roles).toEqual(["jump", "use"]);
   });
