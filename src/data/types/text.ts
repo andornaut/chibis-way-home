@@ -48,9 +48,10 @@ export interface GameText {
     readonly close: string;
     readonly disc: string;
   };
-  // The skill HUD's description of the selected skill's readiness. Each skill button is named by
-  // its skill's title.
+  // The skill HUD's description of the selected skill's readiness, and the tip a new grant shows,
+  // with the skill's title as {skill}. Each skill button is named by its skill's title.
   readonly skillHud: {
+    readonly enableTip: string;
     readonly ready: string;
     readonly recharging: string;
   };
