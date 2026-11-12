@@ -62,7 +62,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function barks(context: Parameters<ZoneBarkScene["init"]>[0]) {
+function barks(
+  context: Omit<Parameters<ZoneBarkScene["init"]>[0], "doorCovers"> &
+    Partial<Pick<Parameters<ZoneBarkScene["init"]>[0], "doorCovers">>,
+) {
   const game = { events: new EventEmitter() };
   const scene = Object.assign(new ZoneBarkScene(), {
     events: new EventEmitter(),
@@ -70,7 +73,7 @@ function barks(context: Parameters<ZoneBarkScene["init"]>[0]) {
     scene: { key: "zoneBark", moveAbove: vi.fn() },
   });
   scenes.push(scene);
-  scene.init(context);
+  scene.init({ doorCovers: () => false, ...context });
   scene.create();
   return scene;
 }
@@ -160,6 +163,31 @@ function showingBark() {
   scene.update(0, 0);
   return scene;
 }
+
+it("hides the showing bark while a door opens and its room shows, holding its time", () => {
+  let door = false;
+  // The zone offers no bark through a door, as barksCanPresent says.
+  const scene = barks({
+    canPresent: () => !door,
+    doorCovers: () => door,
+    ownerVisible: () => true,
+  });
+  scene.enqueue({ line: "first", speaker: "speaker" }, OWNER);
+  scene.update(0, 0);
+  expect(shownText()).toBe("first");
+  door = true;
+  scene.update(0, BARK_DURATION_SECONDS * 2000);
+  expect(shownText()).toBeUndefined();
+  tap();
+  expect(scene.idle()).toBe(false);
+  door = false;
+  scene.events.emit("prerender");
+  expect(shownText()).toBe("first");
+  scene.update(0, BARK_DURATION_SECONDS * 1000 - 1);
+  expect(shownText()).toBe("first");
+  scene.update(0, 1);
+  expect(shownText()).toBeUndefined();
+});
 
 it("dismisses only the tapped bark and retains the next queued line", () => {
   const scene = showingBark();

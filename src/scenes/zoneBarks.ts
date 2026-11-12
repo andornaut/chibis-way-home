@@ -8,6 +8,8 @@ import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
 export function bindZoneBarks(
   context: {
     readonly canPresent: () => boolean;
+    // Whether a door, and the room behind it, covers the world.
+    readonly doorCovers: () => boolean;
     readonly ownerVisible: (owner: ZoneBark["owner"]) => boolean;
   },
   scene: Scene,

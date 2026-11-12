@@ -12,7 +12,7 @@ it("keeps notices with the paused world beneath modal layers and resets them for
     scene: { get: () => bark, launch: vi.fn(), pause: vi.fn(), resume: vi.fn(), stop: vi.fn() },
   } as unknown as Scene;
   const canPresent = () => true;
-  const context = { canPresent, ownerVisible: () => true };
+  const context = { canPresent, doorCovers: () => false, ownerVisible: () => true };
   const notices = bindZoneBarks(context, scene);
   expect(scene.scene.launch).toHaveBeenCalledExactlyOnceWith("zoneBark", context);
   const line = { line: "spotted", speaker: "speaker" };

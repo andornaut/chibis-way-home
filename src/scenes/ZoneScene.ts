@@ -655,6 +655,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.barks = bindZoneBarks(
       {
         canPresent: () => this.barksCanPresent(),
+        doorCovers: () => this.opening !== undefined || this.inRoom || this.zone.door !== undefined,
         ownerVisible: (owner) => this.barkOwnerOnscreen(owner),
       },
       this,

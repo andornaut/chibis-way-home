@@ -28,9 +28,12 @@ interface Bark {
 // The panel is HTML in the UI layer (src/ui/dom/dialogue.ts), a polite status region under every
 // modal's view, which dims it. It takes no presses itself, so a tap on it still reaches the
 // canvas and the zone's touches under it; the scene reads the tap from the page (followTaps).
+// While a door opens and its room shows over the world, the showing bark hides and holds its
+// time, as the room once covered it, and shows again for the rest of it once he leaves.
 export class ZoneBarkScene extends Scene {
   private queue: Bark[] = [];
   private canPresent = () => false;
+  private doorCovers = () => false;
   private ownerVisible: (owner: ZoneBark["owner"]) => boolean = () => false;
   private current: Bark | undefined;
   private view: StatusPanelView | undefined;
@@ -42,9 +45,11 @@ export class ZoneBarkScene extends Scene {
 
   init(data: {
     readonly canPresent: () => boolean;
+    readonly doorCovers: () => boolean;
     readonly ownerVisible: (owner: ZoneBark["owner"]) => boolean;
   }): void {
     this.canPresent = data.canPresent;
+    this.doorCovers = data.doorCovers;
     this.ownerVisible = data.ownerVisible;
     this.current = undefined;
     this.queue = [];
@@ -78,9 +83,18 @@ export class ZoneBarkScene extends Scene {
     mountSceneView(this, view.root);
   }
 
-  // Whether a bark shows.
+  // Whether a bark shows, though a door may hide it.
   private showing(): boolean {
-    return this.view?.panel.element.hidden === false;
+    return this.current !== undefined;
+  }
+
+  // Hides the showing bark while a door covers the world, and shows it again after.
+  private coverByDoor(): void {
+    const panel = this.view?.panel.element;
+    const hidden = this.current === undefined || this.doorCovers();
+    if (panel !== undefined && panel.hidden !== hidden) {
+      panel.hidden = hidden;
+    }
   }
 
   reset(): void {
@@ -96,6 +110,7 @@ export class ZoneBarkScene extends Scene {
     if (this.current && !this.presentable(this.current)) {
       this.clearCurrent();
     }
+    this.coverByDoor();
   }
 
   private clearCurrent(): void {
@@ -111,10 +126,7 @@ export class ZoneBarkScene extends Scene {
   private watchInput(view: StatusPanelView): () => void {
     let pressed: Bark | undefined;
     const presentable = () =>
-      this.showing() &&
-      this.current !== undefined &&
-      this.presentable(this.current) &&
-      this.canPresent();
+      this.current !== undefined && this.presentable(this.current) && this.canPresent();
     return followTaps(
       { preventDefault: false, target: document, view: view.root },
       modalInput(this),
@@ -181,6 +193,7 @@ export class ZoneBarkScene extends Scene {
     this.current = bark;
     const paragraph = dialogueParagraphs(SPEAKERS, TEXT, { lines: [bark.line] })[0]!;
     this.show(paragraph);
+    this.coverByDoor();
     this.remaining = BARK_DURATION_SECONDS * 1000;
     bark.onStart?.();
   }
@@ -194,7 +207,6 @@ export class ZoneBarkScene extends Scene {
     const { panel } = view;
     showPanelParagraph(panel, paragraph);
     panel.portrait.hidden = true;
-    panel.element.hidden = false;
     const { current } = this;
     if (paragraph.portrait !== null) {
       void artFrameUrl(this, paragraph.portrait)
