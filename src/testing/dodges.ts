@@ -1,9 +1,9 @@
-import { type AgentSample, type AgentTick, centre } from "../ai/agentTrace";
-import { STEP_SECONDS } from "../core";
-import { TILE } from "../data/screen";
-import type { DodgeName } from "../data/types";
-import type { ZoneInput } from "../rules/zone";
-import { ORDINARY } from "./encounterLayouts";
+import { type AgentSample, type AgentTick, centre } from "../ai/agentTrace.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { TILE } from "../data/screen.ts";
+import type { DodgeName } from "../data/types/index.ts";
+import type { ZoneInput } from "../rules/zone.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
 
 // Scripted dodges for the dodge-witness check (src/testing/bossDodges.ts). A script starts the
 // reaction delay after a tell starts and reads only what Chibi sees: the told boss's body and

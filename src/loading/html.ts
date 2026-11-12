@@ -9,7 +9,7 @@ import {
 } from "@andornaut/game-kit/web/progress/dom/progressBar";
 import type { Plugin } from "vite";
 
-import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
+import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
 
 const style = stageProgressStyle();
 // The bands span the track while pending; their segments travel by the kit's progressBar.css.

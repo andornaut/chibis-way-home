@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import manifestJson from "../../public/art/manifest.json";
-import { type ArtManifest, sheetFrameSize } from "../assets";
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import { TILE } from "../data/screen";
-import { artOffset } from "./objectArt";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import { type ArtManifest, sheetFrameSize } from "../assets/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { TILE } from "../data/screen.ts";
+import { artOffset } from "./objectArt.ts";
 
 const SHEETS = import.meta.glob<{
   readonly frames: Readonly<Record<string, { readonly sourceSize: { w: number; h: number } }>>;

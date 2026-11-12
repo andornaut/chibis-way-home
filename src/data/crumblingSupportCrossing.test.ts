@@ -2,21 +2,21 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { crumblingAppearance, crumblingSkinTiles } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { zonePlanOf } from "../rules/assemble";
-import { zoneLayout } from "../rules/tiles";
-import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import type { Tileset } from "../stage";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD } from "./bird";
-import { CHUNKS } from "./chunks";
-import { CRUMBLING_SUPPORT_TUNING } from "./obstacleTuning";
-import { TILE } from "./screen";
-import type { ObjectLayout } from "./types";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { crumblingAppearance, crumblingSkinTiles } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { zonePlanOf } from "../rules/assemble.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import type { Tileset } from "../stage/index.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { BIRD } from "./bird.ts";
+import { CHUNKS } from "./chunks.ts";
+import { CRUMBLING_SUPPORT_TUNING } from "./obstacleTuning.ts";
+import { TILE } from "./screen.ts";
+import type { ObjectLayout } from "./types/index.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

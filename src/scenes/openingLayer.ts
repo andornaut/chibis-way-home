@@ -1,7 +1,7 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import type { GameObjects } from "phaser";
 
-import type { OpeningKeyframe, OpeningLayer } from "../data/types";
+import type { OpeningKeyframe, OpeningLayer } from "../data/types/index.ts";
 
 export function renderOpeningLayer(
   layer: OpeningLayer,

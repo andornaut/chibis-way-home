@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { SKILL_PROFILES } from "../progress";
-import { effectiveCollision } from "../rules/effectiveCollision";
-import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/art";
-import { chunkThemePlan } from "../testing/chunkWalkCases";
-import { BIRD } from "./bird";
-import { CERTIFIED_LISTS } from "./certified";
-import { CHUNKS } from "./chunks";
-import { MODULES } from "./modules";
-import { AWNING_SECONDS } from "./obstacleBehaviours";
-import { TILE } from "./screen";
-import type { BehaviourPlan } from "./types";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { effectiveCollision } from "../rules/effectiveCollision.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/art.ts";
+import { chunkThemePlan } from "../testing/chunkWalkCases.ts";
+import { BIRD } from "./bird.ts";
+import { CERTIFIED_LISTS } from "./certified/index.ts";
+import { CHUNKS } from "./chunks.ts";
+import { MODULES } from "./modules/index.ts";
+import { AWNING_SECONDS } from "./obstacleBehaviours.ts";
+import { TILE } from "./screen.ts";
+import type { BehaviourPlan } from "./types/index.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

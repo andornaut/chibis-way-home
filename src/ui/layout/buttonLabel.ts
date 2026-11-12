@@ -1,8 +1,8 @@
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
-import { TEXT_BUTTON } from "../../data/layout";
-import type { Point, Rect } from "../../data/types";
-import { textInkBounds } from "./textInk";
+import { TEXT_BUTTON } from "../../data/layout.ts";
+import type { Point, Rect } from "../../data/types/index.ts";
+import { textInkBounds } from "./textInk.ts";
 
 // A mark drawn just before a button's label, such as Resume's play triangle: its width, and the
 // gap from it to the label's ink.

@@ -1,6 +1,6 @@
 // Trixi's arena: River crossing. Trixi rushes along the ground she stands on and sets her traps
 // there, so the arena raises its high ground above her lanes.
-import type { ChunkArena, TerrainRect } from "../types";
+import type { ChunkArena, TerrainRect } from "../types/index.ts";
 
 const ROWS = 120;
 const BANK = 80;

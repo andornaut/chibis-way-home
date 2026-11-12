@@ -1,16 +1,16 @@
 import { expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import platforming from "../../public/art/tilesets/tiles-platforming.json";
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import { CHUNKS, THEMES } from "../data/chunks";
-import { ROOM_BUILDING_DOOR, ROOM_BUILDINGS } from "../data/roomBuildings";
-import { ZONE_ROWS } from "../data/screen";
-import type { ZonePlan } from "../data/types";
-import { bindElement } from "./elementBinding";
-import { withRoomBuildings } from "./roomBuildings";
-import { zoneLayout } from "./tiles";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import platforming from "../../public/art/tilesets/tiles-platforming.json" with { type: "json" };
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { CHUNKS, THEMES } from "../data/chunks.ts";
+import { ROOM_BUILDING_DOOR, ROOM_BUILDINGS } from "../data/roomBuildings.ts";
+import { ZONE_ROWS } from "../data/screen.ts";
+import type { ZonePlan } from "../data/types/index.ts";
+import { bindElement } from "./elementBinding.ts";
+import { withRoomBuildings } from "./roomBuildings.ts";
+import { zoneLayout } from "./tiles.ts";
 
 const library = { characters: CHARACTERS };
 const plan: ZonePlan = {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { ART_PATH, type ArtManifest } from "../assets";
-import { UI_FONT_RESOURCES } from "../ui";
-import { ART_MANIFEST_URL, artUrls } from "./precacheArt";
+import { ART_PATH, type ArtManifest } from "../assets/index.ts";
+import { UI_FONT_RESOURCES } from "../ui/index.ts";
+import { ART_MANIFEST_URL, artUrls } from "./precacheArt.ts";
 
 const EMPTY: ArtManifest = {
   backdrops: [],

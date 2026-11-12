@@ -9,8 +9,13 @@ import { availableParallelism } from "node:os";
 import { parseArgs } from "node:util";
 import { isMainThread, parentPort, Worker } from "node:worker_threads";
 
-import { ARENAS } from "../data/arenas";
-import type { CertifiedArena, CertifiedChunks, CertifiedEntry, ZoneKey } from "../data/types";
+import { ARENAS } from "../data/arenas/index.ts";
+import type {
+  CertifiedArena,
+  CertifiedChunks,
+  CertifiedEntry,
+  ZoneKey,
+} from "../data/types/index.ts";
 import {
   ARENA_COST,
   certifiedArena,
@@ -18,7 +23,7 @@ import {
   proveArena,
   verifyArenas,
   zoneArenas,
-} from "../testing/arenaCertify";
+} from "../testing/arenaCertify.ts";
 import {
   type Candidate,
   dataHash,
@@ -36,7 +41,7 @@ import {
   verifyStructure,
   zoneCandidates,
   ZONES,
-} from "../testing/pairCertify";
+} from "../testing/pairCertify.ts";
 
 const USAGE = `Usage:
   npm run pairs -- certify [--zone ZONE]... [--all]

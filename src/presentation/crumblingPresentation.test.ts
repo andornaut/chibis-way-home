@@ -2,8 +2,12 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
-import type { Tileset } from "../stage";
-import { CRUMBLING_SKINS, crumblingAppearance, crumblingSkinTiles } from "./crumblingPresentation";
+import type { Tileset } from "../stage/index.ts";
+import {
+  CRUMBLING_SKINS,
+  crumblingAppearance,
+  crumblingSkinTiles,
+} from "./crumblingPresentation.ts";
 
 it("shows the intact skin, then the warning skin, and nothing while absent", () => {
   expect(crumblingAppearance({ kind: "intact" })).toBe("intact");

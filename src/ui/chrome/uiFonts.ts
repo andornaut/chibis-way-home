@@ -1,4 +1,4 @@
-import { FONT_ROLES } from "../layout/fontRoles";
+import { FONT_ROLES } from "../layout/fontRoles.ts";
 
 export const UI_FONT_FAMILY = "Liberation Sans";
 export const UI_FONT_RESOURCES = [

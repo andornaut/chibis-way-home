@@ -1,4 +1,4 @@
-import type { DialogueLine, StageBarkSchedule } from "../data/types";
+import type { DialogueLine, StageBarkSchedule } from "../data/types/index.ts";
 
 type OfferBark = (onStart: () => void, line: DialogueLine) => boolean;
 

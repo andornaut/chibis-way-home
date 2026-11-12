@@ -7,17 +7,17 @@ import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import { CARD_CONTENT, CONTROL_FRAME_INSET, HUD_EDGE, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { TEXT } from "../../data/text";
-import type { SkillId } from "../../data/types";
-import { SKILL_IDS } from "../../progress";
-import { cardTextSize } from "./contentCard";
-import { PAUSE_BUTTON } from "./pauseCard";
-import { shifted, viewShift } from "./playView";
-import { ROOM_SCREEN } from "./roomScreen";
-import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails";
-import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud";
+import { CARD_CONTENT, CONTROL_FRAME_INSET, HUD_EDGE, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import type { SkillId } from "../../data/types/index.ts";
+import { SKILL_IDS } from "../../progress/index.ts";
+import { cardTextSize } from "./contentCard.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
+import { shifted, viewShift } from "./playView.ts";
+import { ROOM_SCREEN } from "./roomScreen.ts";
+import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails.ts";
+import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud.ts";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
 const inside = (

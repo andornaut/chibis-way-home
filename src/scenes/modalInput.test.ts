@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 import type { Input, Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
-import { modalInput, onScenePointer } from "./modalInput";
+import { modalInput, onScenePointer } from "./modalInput.ts";
 
 const scene = (game: object) =>
   ({ events: new EventEmitter(), game, input: new EventEmitter() }) as unknown as Scene;

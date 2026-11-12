@@ -1,17 +1,17 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import type { ObjectLayout } from "../data/types";
-import { startBird } from "../rules/bird";
-import type { SceneryPlaybackState } from "../rules/sceneryPlayback";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { ObjectLayout } from "../data/types/index.ts";
+import { startBird } from "../rules/bird.ts";
+import type { SceneryPlaybackState } from "../rules/sceneryPlayback.ts";
 
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true) }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
 
-import { ZoneScene } from "./ZoneScene";
+import { ZoneScene } from "./ZoneScene.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();

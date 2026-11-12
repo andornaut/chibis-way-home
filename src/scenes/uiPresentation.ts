@@ -14,11 +14,11 @@ import { Core, type Game, type Scene, Scenes } from "phaser";
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
-import { FONT_ROLES, mountUiFonts } from "../ui";
-import { uiOverlayFit } from "./uiOverlayFit";
-import { bindGameUiPresentation } from "./uiPresentationPort";
-import { createUiRootManager } from "./uiRootManager";
-import { sceneUiRoots } from "./uiRoots";
+import { FONT_ROLES, mountUiFonts } from "../ui/index.ts";
+import { uiOverlayFit } from "./uiOverlayFit.ts";
+import { bindGameUiPresentation } from "./uiPresentationPort.ts";
+import { createUiRootManager } from "./uiRootManager.ts";
+import { sceneUiRoots } from "./uiRoots.ts";
 
 interface Capture {
   cancel(): void;

@@ -1,5 +1,5 @@
-import { CRASH_TEXT } from "./crashText";
-import type { GameText, StatsScopeText } from "./types";
+import { CRASH_TEXT } from "./crashText.ts";
+import type { GameText, StatsScopeText } from "./types/index.ts";
 
 export const TEXT: GameText = {
   achievements: {

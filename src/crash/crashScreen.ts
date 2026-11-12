@@ -6,9 +6,9 @@ import "./theme.css";
 
 import { installCrashScreen } from "@andornaut/game-kit/web/crash/dom/crashScreen";
 
-import { BUILD_LABEL } from "../buildLabel";
-import { CRASH_TEXT } from "../data/crashText";
-import { CRASH_COLOURS, installCrashTheme } from "./theme";
+import { BUILD_LABEL } from "../buildLabel.ts";
+import { CRASH_TEXT } from "../data/crashText.ts";
+import { CRASH_COLOURS, installCrashTheme } from "./theme.ts";
 
 installCrashTheme(document.documentElement.style);
 

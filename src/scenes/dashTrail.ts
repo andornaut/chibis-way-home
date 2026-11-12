@@ -1,8 +1,8 @@
 import type { Scene } from "phaser";
 
-import type { DashTrailTuning, Rect } from "../data/types";
-import { dashTrail } from "../presentation";
-import type { BirdDashState } from "../rules/bird";
+import type { DashTrailTuning, Rect } from "../data/types/index.ts";
+import { dashTrail } from "../presentation/index.ts";
+import type { BirdDashState } from "../rules/bird.ts";
 
 export function mountDashTrail(
   tuning: DashTrailTuning,

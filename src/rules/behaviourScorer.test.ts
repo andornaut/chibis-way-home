@@ -1,29 +1,34 @@
 import { candidateScore } from "@andornaut/game-kit/ai/utility";
 import { expect, it } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { DOG_BEHAVIOUR } from "../data/behaviours";
-import { BIRD } from "../data/bird";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { DOG_BEHAVIOUR } from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
 import {
   chargeScore,
   FERT_SCORER,
   GROUND_BOSS_SCORER,
   GROWL_SCORE,
   MAUL_SCORE,
-} from "../data/bossScorers";
-import { TILE } from "../data/screen";
-import type { BehaviourTransition, BossScoredAttack } from "../data/types";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
+} from "../data/bossScorers.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourTransition, BossScoredAttack } from "../data/types/index.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import {
+  type BehaviourState,
+  layoutBehaviour,
+  startBehaviour,
+  stepBehaviour,
+} from "./behaviour.ts";
 import {
   type BossScorerValues,
   decideScored,
   INITIAL_SCORER_STATE,
   moveIntent,
   scorerPressure,
-} from "./behaviourScorer";
-import { birdBox, startBird } from "./bird";
-import { objectLayout } from "./tiles";
+} from "./behaviourScorer.ts";
+import { birdBox, startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
 
 // A level Chibi 6 tiles out, standing still, just after an attack.
 const LEVEL: BossScorerValues = {

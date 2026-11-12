@@ -1,14 +1,20 @@
 import { expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import type { Archetype, BackgroundSection, ChunkPlan, ThemePlan, ZoneRecipe } from "../data/types";
-import { chunkBackdropSpan } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { assembleZone, type ChunkLibrary } from "./assemble";
-import { withBackgroundSections } from "./backgroundSections";
-import { objectLayout, zoneLayout } from "./tiles";
-import { enterArea, retryZone, startZone, stepZone } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type {
+  Archetype,
+  BackgroundSection,
+  ChunkPlan,
+  ThemePlan,
+  ZoneRecipe,
+} from "../data/types/index.ts";
+import { chunkBackdropSpan } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { assembleZone, type ChunkLibrary } from "./assemble.ts";
+import { withBackgroundSections } from "./backgroundSections.ts";
+import { objectLayout, zoneLayout } from "./tiles.ts";
+import { enterArea, retryZone, startZone, stepZone } from "./zone.ts";
 
 const section = (cols: number, key: string): BackgroundSection => ({
   backdrops: [

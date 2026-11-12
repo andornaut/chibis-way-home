@@ -2,15 +2,15 @@ import type { EarnedRecord } from "@andornaut/game-kit/achievements";
 import type { SaveStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 
-import { CHUNKS } from "../../data/chunks";
-import { ZONE_MAP } from "../../data/map";
-import type { AchievementId } from "../../data/types";
-import { RECIPES } from "../../data/zones";
-import { SKILL_IDS } from "../skills";
-import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT } from "./achievements";
-import { type Progress, PROGRESS_KEYS, progressFormat } from "./progress";
-import { skillGrantEffects, withGrantedSkill } from "./skillGrant";
-import { STATS_KEYS, statsFormat } from "./stats";
+import { CHUNKS } from "../../data/chunks.ts";
+import { ZONE_MAP } from "../../data/map.ts";
+import type { AchievementId } from "../../data/types/index.ts";
+import { RECIPES } from "../../data/zones.ts";
+import { SKILL_IDS } from "../skills.ts";
+import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT } from "./achievements.ts";
+import { type Progress, PROGRESS_KEYS, progressFormat } from "./progress.ts";
+import { skillGrantEffects, withGrantedSkill } from "./skillGrant.ts";
+import { STATS_KEYS, statsFormat } from "./stats.ts";
 type SavedStats = ReturnType<ReturnType<typeof statsFormat>["fresh"]>;
 export type SkillGrantRecord = "progress" | "stats" | "achievements";
 export interface SkillGrantWrite {

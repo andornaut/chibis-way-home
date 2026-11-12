@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { TILE } from "../data/screen";
-import { APARTMENT_SPAWN_ROW } from "../data/zone6";
-import { zoneLayout } from "../rules/tiles";
-import { ALL_CHUNKS } from "./chunks";
-import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases";
-import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";
-import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { TILE } from "../data/screen.ts";
+import { APARTMENT_SPAWN_ROW } from "../data/zone6.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { ALL_CHUNKS } from "./chunks.ts";
+import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases.ts";
+import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./walkSuite.ts";
 
 const byName = new Map(ALL_CHUNKS.map((entry) => [entry[0], entry]));
 

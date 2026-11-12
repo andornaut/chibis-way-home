@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { ARCHETYPES } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import type { Character, ChunkPlan, Instance, ZoneRecipe } from "../data/types";
-import { assembleZone, type ChunkLibrary } from "./assemble";
-import { chunkProblems } from "./chunk";
-import { zoneLayout } from "./tiles";
-import { enterArea } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import type { Character, ChunkPlan, Instance, ZoneRecipe } from "../data/types/index.ts";
+import { assembleZone, type ChunkLibrary } from "./assemble.ts";
+import { chunkProblems } from "./chunk.ts";
+import { zoneLayout } from "./tiles.ts";
+import { enterArea } from "./zone.ts";
 
 const characters: Readonly<Record<string, Character>> = {
   door: { archetype: "door", art: "door", cols: 2, rows: 3 },

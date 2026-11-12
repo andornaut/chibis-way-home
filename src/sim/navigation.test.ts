@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { STATIC_MOTION } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { BirdTuning, ObjectLayout, Rect, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { orbitPosition } from "../rules/orbit";
-import { enterArea, retryZone, startZone, stepZone } from "../rules/zone";
-import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors } from "./bot";
-import capturedDock from "./fixtures/sharedDock.json";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { STATIC_MOTION } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { BirdTuning, ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { orbitPosition } from "../rules/orbit.ts";
+import { enterArea, retryZone, startZone, stepZone } from "../rules/zone.ts";
+import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors } from "./bot.ts";
+import capturedDock from "./fixtures/sharedDock.json" with { type: "json" };
 import {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
@@ -19,7 +19,7 @@ import {
   rememberNavigationFailure,
   restoreNavigationMemory,
   validateNavigation,
-} from "./navigation";
+} from "./navigation.ts";
 function movingObject(
   collision: ObjectLayout["collision"],
   origin: {

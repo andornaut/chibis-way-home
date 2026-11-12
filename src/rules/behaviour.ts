@@ -1,7 +1,7 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
-import { abilityFor } from "../ai/ability";
-import { collisionCandidates, contactFrameAt, EDGE, spriteFrameOrigin } from "../core";
+import { abilityFor } from "../ai/ability.ts";
+import { collisionCandidates, contactFrameAt, EDGE, spriteFrameOrigin } from "../core/index.ts";
 import type {
   BehaviourAction,
   BehaviourCondition,
@@ -16,15 +16,15 @@ import type {
   Point,
   Rect,
   SecondsRange,
-} from "../data/types";
+} from "../data/types/index.ts";
 import {
   BEHAVIOUR_ABILITIES,
   type BehaviourAbilityParams,
   behaviourAbilityParams,
   groundFallParams,
   type TraversalAdvance,
-} from "./behaviourAbilities";
-import { animateSegments, syncAnimation } from "./behaviourAnimation";
+} from "./behaviourAbilities.ts";
+import { animateSegments, syncAnimation } from "./behaviourAnimation.ts";
 import {
   advanceAttackClock,
   attackProtected,
@@ -33,14 +33,18 @@ import {
   canEnterAttack,
   clearTellCancels,
   enterAttack,
-} from "./behaviourAttack";
-import { alignmentBlocked, flightDestination } from "./behaviourFlight";
-import type { FlightSelectionState } from "./behaviourFlightSelection";
-import { type BehaviourIdleState, observeIdle } from "./behaviourIdle";
-import { advancePursuitIntent, type PursuitIntentState, safeIntentHover } from "./behaviourIntent";
-import { type BehaviourMapPursuitState, mapCovers, mapReachable } from "./behaviourMapPursuit";
-import { recordBehaviourWork } from "./behaviourObserver";
-import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception";
+} from "./behaviourAttack.ts";
+import { alignmentBlocked, flightDestination } from "./behaviourFlight.ts";
+import type { FlightSelectionState } from "./behaviourFlightSelection.ts";
+import { type BehaviourIdleState, observeIdle } from "./behaviourIdle.ts";
+import {
+  advancePursuitIntent,
+  type PursuitIntentState,
+  safeIntentHover,
+} from "./behaviourIntent.ts";
+import { type BehaviourMapPursuitState, mapCovers, mapReachable } from "./behaviourMapPursuit.ts";
+import { recordBehaviourWork } from "./behaviourObserver.ts";
+import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception.ts";
 import {
   type BehaviourGeometry,
   type BehaviourWorld,
@@ -50,12 +54,12 @@ import {
   overheadFlightGoalForRect,
   overheadFlightRoute,
   targetReachable,
-} from "./behaviourReach";
+} from "./behaviourReach.ts";
 import {
   type BehaviourRecoveryContext,
   idleReady,
   recoveryStep,
-} from "./behaviourRecoveryAbilities";
+} from "./behaviourRecoveryAbilities.ts";
 import {
   advanceScorer,
   type BehaviourScorerState,
@@ -65,9 +69,9 @@ import {
   moveIntent,
   openingScorerState,
   scorerAttacked,
-} from "./behaviourScorer";
-import { insideScreen, screenBand, screenClamp } from "./behaviourScreen";
-import { prepareSupport } from "./behaviourSupport";
+} from "./behaviourScorer.ts";
+import { insideScreen, screenBand, screenClamp } from "./behaviourScreen.ts";
+import { prepareSupport } from "./behaviourSupport.ts";
 import {
   contactBox,
   groundBoss,
@@ -77,16 +81,16 @@ import {
   trackReach,
   travelHeading,
   travelLimit,
-} from "./behaviourTrack";
+} from "./behaviourTrack.ts";
 import {
   type BehaviourRearmState,
   type BehaviourTraversalState,
   probeRearm,
-} from "./behaviourTraversal";
-import { birdBox, type BirdState } from "./bird";
-import { type FlyLandingState, supportContact } from "./flyLanding";
-import { hopLift } from "./motion";
-import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
+} from "./behaviourTraversal.ts";
+import { birdBox, type BirdState } from "./bird.ts";
+import { type FlyLandingState, supportContact } from "./flyLanding.ts";
+import { hopLift } from "./motion.ts";
+import { targetInCurrentView, targetInSameChunk, targetVisible } from "./perception.ts";
 
 export interface BehaviourState extends BehaviourAttackState {
   // A dead boss's removal: the seconds since it died.
@@ -2829,4 +2833,4 @@ function advanceUnclear(
   return { actions, at: run.current, segments, state: run.next, ...(escaped && { escaped }) };
 }
 
-export { contactBox } from "./behaviourTrack";
+export { contactBox } from "./behaviourTrack.ts";

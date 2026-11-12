@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { AIR_JUMP_CUE } from "../data/airJumpCue";
-import { BIRD } from "../data/bird";
-import { startBird, stepBird } from "../rules/bird";
-import { airJumpCue, airJumpStarted, stepAirJumpCue } from "./airJumpCue";
+import { STEP_SECONDS } from "../core/index.ts";
+import { AIR_JUMP_CUE } from "../data/airJumpCue.ts";
+import { BIRD } from "../data/bird.ts";
+import { startBird, stepBird } from "../rules/bird.ts";
+import { airJumpCue, airJumpStarted, stepAirJumpCue } from "./airJumpCue.ts";
 
 const frame = { height: 42, width: 48, x: 100, y: 100 };
 const before = startBird(BIRD, { x: 124, y: 142 });

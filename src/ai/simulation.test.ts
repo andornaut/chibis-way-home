@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { simulate, type SimulationModel } from "./simulation";
+import { simulate, type SimulationModel } from "./simulation.ts";
 
 // A walker that moves by its input and finishes past a wall.
 const WALKER: SimulationModel<number, number, { readonly at: number; readonly tick: number }> = {

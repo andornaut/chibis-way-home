@@ -1,10 +1,10 @@
 // Prints the bird's measured reaches beside gameplay's targets: npm run reaches. Exits 1 when a
 // reach is off its target.
-import { BIRD } from "../data/bird";
-import { REACH } from "../data/reach";
-import { TILE } from "../data/screen";
-import { parseOptions, runMain } from "./command";
-import { measureReaches, type Reach } from "./reach";
+import { BIRD } from "../data/bird.ts";
+import { REACH } from "../data/reach.ts";
+import { TILE } from "../data/screen.ts";
+import { parseOptions, runMain } from "./command.ts";
+import { measureReaches, type Reach } from "./reach.ts";
 
 const HELP = `npm run reaches
 Prints the bird's measured reaches in tiles beside gameplay's targets.

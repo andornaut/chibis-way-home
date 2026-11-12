@@ -1,5 +1,10 @@
-import { BOUNDARY_START, encounterStart, PERCH_FINISH, withoutEncounters } from "./chunkTemplates";
-import type { ChunkPlan } from "./types";
+import {
+  BOUNDARY_START,
+  encounterStart,
+  PERCH_FINISH,
+  withoutEncounters,
+} from "./chunkTemplates.ts";
+import type { ChunkPlan } from "./types/index.ts";
 
 export const INDUSTRIAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "freight-terminal-finish": { ...withoutEncounters(PERCH_FINISH), theme: "freight-terminal" },

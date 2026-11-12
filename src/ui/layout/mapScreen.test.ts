@@ -3,15 +3,15 @@ import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout";
-import { ZONE_MAP } from "../../data/map";
-import { SCREEN, TILE } from "../../data/screen";
-import { TEXT } from "../../data/text";
-import { MAP_ACTIONS } from "../input/mapInput";
-import { destinationCentre } from "../map/mapDestinations";
-import { type PressArea, pressedArea } from "./hitAreas";
-import { MAP_SCREEN, mapLabel } from "./mapScreen";
-import { textInkBounds } from "./textInk";
+import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
+import { ZONE_MAP } from "../../data/map.ts";
+import { SCREEN, TILE } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import { MAP_ACTIONS } from "../input/mapInput.ts";
+import { destinationCentre } from "../map/mapDestinations.ts";
+import { type PressArea, pressedArea } from "./hitAreas.ts";
+import { MAP_SCREEN, mapLabel } from "./mapScreen.ts";
+import { textInkBounds } from "./textInk.ts";
 
 describe("mapLabel", () => {
   it.each(Object.values(TEXT.map.zones))("centres actual ink for %s under its marker", (name) => {

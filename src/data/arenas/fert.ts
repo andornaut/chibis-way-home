@@ -1,6 +1,6 @@
 // Fert's arenas, Apartment building: a hall under a high gallery reached by staggered landings.
 // The gallery is solid, so it shields the floor below it from parcels thrown from above.
-import type { ChunkArena, Instance, TerrainRect } from "../types";
+import type { ChunkArena, Instance, TerrainRect } from "../types/index.ts";
 
 const ROWS = 120;
 const FLOOR = 50;

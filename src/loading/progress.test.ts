@@ -2,10 +2,10 @@ import { progressBarLayout } from "@andornaut/game-kit/progress";
 import { progressBarPixelProperties } from "@andornaut/game-kit/web/progress/dom/progressBar";
 import { describe, expect, it, vi } from "vitest";
 
-import { LOADING_CSS, loadingHtml } from "./html";
-import { afterLoadingPaint, backgroundProgress, loadingProgress } from "./progress";
-import { trackOfflineActivity } from "./serviceWorker";
-import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
+import { LOADING_CSS, loadingHtml } from "./html.ts";
+import { afterLoadingPaint, backgroundProgress, loadingProgress } from "./progress.ts";
+import { trackOfflineActivity } from "./serviceWorker.ts";
+import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
 
 describe("loading lifecycle", () => {
   it("does not run synchronous preparation until the pending frame can paint, and cancels shutdown work", () => {

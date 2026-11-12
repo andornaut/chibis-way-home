@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type ForcePulse, forcePulseVelocity, forcePulseVolume } from "./force";
+import { type ForcePulse, forcePulseVelocity, forcePulseVolume } from "./force.ts";
 
 const pulse: ForcePulse = {
   facing: 1,

@@ -1,6 +1,6 @@
 import { clamp, lerp } from "@andornaut/game-kit/numbers";
 
-import type { CameraTuning, Point, Rect, Size } from "../data/types";
+import type { CameraTuning, Point, Rect, Size } from "../data/types/index.ts";
 
 // What the camera reads of an area: its size, its terrain, and in an assembled area its chunks,
 // left to right (none in a hand-built one).

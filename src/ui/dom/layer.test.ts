@@ -5,10 +5,10 @@ import { createRequire } from "node:module";
 import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
-import { SCREEN } from "../../data/screen";
-import { playView } from "../layout/playView";
-import { createUiLayer, UI_LAYOUT } from "./layer";
-import { UI_COLOURS, UI_FRAMES } from "./skin";
+import { SCREEN } from "../../data/screen.ts";
+import { playView } from "../layout/playView.ts";
+import { createUiLayer, UI_LAYOUT } from "./layer.ts";
+import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 
 // Vitest blanks CSS imports, so the stylesheet is read from disk, from the project root.
 const css = readFileSync("src/ui/dom/ui.css", "utf8");

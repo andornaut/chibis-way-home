@@ -1,8 +1,8 @@
 import { seededRandom } from "@andornaut/game-kit/random";
 import { describe, expect, it } from "vitest";
 
-import type { Motion } from "../data/types";
-import { axisOf, motionTrack } from "./motion";
+import type { Motion } from "../data/types/index.ts";
+import { axisOf, motionTrack } from "./motion.ts";
 
 // 100 px right at 50 px/s: 2 s each way, with 1 s pauses, a 6 s round trip.
 const LINEAR: Motion = {

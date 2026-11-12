@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { SKILLS } from "../data/skills";
-import { skillTuning } from "../progress";
-import { startBird, stepBird } from "./bird";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { SKILLS } from "../data/skills.ts";
+import { skillTuning } from "../progress/index.ts";
+import { startBird, stepBird } from "./bird.ts";
 
 const idle = { jumpHeld: false, move: 0 } as const;
 it("cancels a deselected dash before movement without refunding cooldown or its airborne use", () => {

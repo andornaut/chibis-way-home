@@ -1,4 +1,4 @@
-import type { CameraTuning } from "./types";
+import type { CameraTuning } from "./types/index.ts";
 
 export const CAMERA = {
   contactShake: {

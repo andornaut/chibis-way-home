@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import { TEXT } from "../data/text";
-import { createStageSelect, STAGES_PER_PAGE } from "../ui";
+import { ZONE_MAP } from "../data/map.ts";
+import { TEXT } from "../data/text.ts";
+import { createStageSelect, STAGES_PER_PAGE } from "../ui/index.ts";
 
 const destination = ZONE_MAP.destinations.find(({ stages }) => stages.length === 6)!;
 

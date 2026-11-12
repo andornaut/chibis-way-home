@@ -1,6 +1,6 @@
 import { type ChromeLayer, createChromeSvg } from "@andornaut/game-kit/web/ui/dom/vectorChrome";
 
-import { UI_COLOURS, type UiColour } from "./skin";
+import { UI_COLOURS, type UiColour } from "./skin.ts";
 
 // Vector chrome as inline SVG (the kit's createChromeSvg) whose shapes paint in the UI's palette
 // colours: each shape names its colour in data-ui-fill or data-ui-stroke, which ui.css paints in

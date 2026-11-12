@@ -1,4 +1,4 @@
-import type { BehaviourNode, BehaviourPlan } from "../data/types";
+import type { BehaviourNode, BehaviourPlan } from "../data/types/index.ts";
 
 // Seam placement covers autonomous paths before acquisition, including every unguarded alternative.
 export function unacquiredBehaviourNodes(plan: BehaviourPlan): readonly BehaviourNode[] {

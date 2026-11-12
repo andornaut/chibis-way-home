@@ -2,7 +2,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { mountModalBackdrop } from "@andornaut/game-kit/view/phaser/modalBackdrop";
 import { type GameObjects, type Scene, Textures } from "phaser";
 
-import { gameUiPresentation } from "./uiPresentationPort";
+import { gameUiPresentation } from "./uiPresentationPort.ts";
 
 let nextTexture = 0;
 export function mountUiModalBackdrop(

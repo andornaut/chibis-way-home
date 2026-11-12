@@ -1,5 +1,5 @@
-import type { HazardPhase, PhaseTiles, TerrainRect } from "../data/types";
-import { namedTiles, type Tileset } from "../stage";
+import type { HazardPhase, PhaseTiles, TerrainRect } from "../data/types/index.ts";
+import { namedTiles, type Tileset } from "../stage/index.ts";
 
 // The tileset key names, as lookup finds what loaded: undefined for an area without one, or one
 // art does not have yet, which then draws flat. Throws for one whose tiles are not tile px.

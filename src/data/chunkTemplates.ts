@@ -1,5 +1,5 @@
-import { SCREEN, TILE, ZONE_ROWS } from "./screen";
-import type { ChunkPlan, Instance } from "./types";
+import { SCREEN, TILE, ZONE_ROWS } from "./screen.ts";
+import type { ChunkPlan, Instance } from "./types/index.ts";
 
 export const CHUNK_COLS = SCREEN.width / TILE;
 

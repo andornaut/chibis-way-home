@@ -1,5 +1,5 @@
-import type { BehaviourPlan, Character, Instance } from "../data/types";
-import { ENCOUNTER_ROLES } from "./modules";
+import type { BehaviourPlan, Character, Instance } from "../data/types/index.ts";
+import { ENCOUNTER_ROLES } from "./modules.ts";
 
 // An instance's behaviour: its own, else its character's.
 const behaviourOf = (

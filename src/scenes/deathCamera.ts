@@ -1,8 +1,8 @@
 import { easeProgress } from "@andornaut/game-kit/motion";
 import type { Scene } from "phaser";
 
-import { SCREEN } from "../data/screen";
-import type { DeathCameraPanTuning, Rect } from "../data/types";
+import { SCREEN } from "../data/screen.ts";
+import type { DeathCameraPanTuning, Rect } from "../data/types/index.ts";
 
 // Pan to the final full sprite at bottom centre before animation, without moving the world.
 export function frameDeathCamera(

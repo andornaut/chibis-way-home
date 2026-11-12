@@ -3,8 +3,8 @@ import {
   encounterStart,
   VERTICAL_FINISH,
   withoutEncounters,
-} from "./chunkTemplates";
-import type { ChunkPlan } from "./types";
+} from "./chunkTemplates.ts";
+import type { ChunkPlan } from "./types/index.ts";
 
 export const HOME_CITY_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "back-streets-finish": { ...withoutEncounters(VERTICAL_FINISH), theme: "back-streets" },

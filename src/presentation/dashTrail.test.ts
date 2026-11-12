@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { DASH_TRAIL } from "../data/dashTrail";
-import { dashTrail } from "./dashTrail";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { DASH_TRAIL } from "../data/dashTrail.ts";
+import { dashTrail } from "./dashTrail.ts";
 
 const duration = 0.25;
 const frame = { ...BIRD_FRAME, x: 100, y: 80 };

@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { STEP_MS } from "../core";
-import { ZONE_MAP } from "../data/map";
+import { STEP_MS } from "../core/index.ts";
+import { ZONE_MAP } from "../data/map.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 
@@ -16,8 +16,8 @@ it("counts gift-room time once, equally in the attempt and in every total", asyn
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save");
-  const { RoomScene } = await import("./RoomScene");
+  const save = await import("./save.ts");
+  const { RoomScene } = await import("./RoomScene.ts");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   const zone = ZONE_MAP.destinations[0]!.id;

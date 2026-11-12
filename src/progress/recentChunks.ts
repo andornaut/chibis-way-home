@@ -1,6 +1,6 @@
-import { RECENT_STAGES } from "../data/stageProgress";
-import type { ZonePlan } from "../data/types";
-import type { Progress } from "./save/progress";
+import { RECENT_STAGES } from "../data/stageProgress.ts";
+import type { ZonePlan } from "../data/types/index.ts";
+import type { Progress } from "./save/progress.ts";
 
 // The middle chunk ids of the zone's latest stage entries, newest first, each once: none from the
 // beginning or before the zone's first recorded entry.

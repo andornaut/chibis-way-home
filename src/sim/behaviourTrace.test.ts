@@ -4,10 +4,10 @@ import {
   encounterTraceScenarios,
   registerTraceSuite,
   stageTraceScenarios,
-} from "../testing/behaviourTraceSuite";
+} from "../testing/behaviourTraceSuite.ts";
 
-vi.mock("../rules/zone", async (original) =>
-  (await import("../testing/behaviourTraceHook")).tracedZone(await original()),
+vi.mock("../rules/zone.ts", async (original) =>
+  (await import("../testing/behaviourTraceHook.ts")).tracedZone(await original()),
 );
 
 registerTraceSuite("encounters", encounterTraceScenarios());

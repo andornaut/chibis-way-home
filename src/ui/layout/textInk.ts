@@ -1,6 +1,6 @@
 import { type BitmapFont, laidGlyphs } from "@andornaut/game-kit/text/bitmapFont";
 
-import type { Rect } from "../../data/types";
+import type { Rect } from "../../data/types/index.ts";
 
 export function textInkBounds(
   font: BitmapFont,

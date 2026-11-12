@@ -1,9 +1,9 @@
 import type { Scene } from "phaser";
 
-import type { ControlAction, Rect } from "../data/types";
-import { helpChromeLayers, TOUCH_CHROME_FRAME } from "../ui";
-import { paletteColour } from "./cardParts";
-import { createChromeTexture } from "./touchChrome";
+import type { ControlAction, Rect } from "../data/types/index.ts";
+import { helpChromeLayers, TOUCH_CHROME_FRAME } from "../ui/index.ts";
+import { paletteColour } from "./cardParts.ts";
+import { createChromeTexture } from "./touchChrome.ts";
 
 // Three static game-lifetime help textures, separate from the transparent animated live controls.
 export function drawHelpChrome(scene: Scene, rect: Rect, action: ControlAction) {

@@ -68,7 +68,7 @@ afterEach(() => {
 });
 
 it("wires updates to prepared registration and explicit Start visits", async () => {
-  const pwa = await import("./index");
+  const pwa = await import("./index.ts");
   pwa.setupPhoneApp();
   const options = offline.start.mock.calls[0]![0];
   pwa.coverZone("loading", true);
@@ -98,7 +98,7 @@ it("wires updates to prepared registration and explicit Start visits", async () 
 });
 
 it("forwards a forced update to the kit and its reports to requiredUpdate", async () => {
-  const pwa = await import("./index");
+  const pwa = await import("./index.ts");
   pwa.setupPhoneApp();
   const options = offline.start.mock.calls[0]![0];
   const states: string[] = [];
@@ -112,7 +112,7 @@ it("forwards a forced update to the kit and its reports to requiredUpdate", asyn
 
 it("reports a forced update unavailable without offline play", async () => {
   vi.stubEnv("PROD", false);
-  const pwa = await import("./index");
+  const pwa = await import("./index.ts");
   pwa.setupPhoneApp();
   const states: string[] = [];
   pwa.requiredUpdate.subscribe((state) => states.push(state));
@@ -177,8 +177,8 @@ async function precacheShown(controller: unknown) {
   offline.start.mockImplementationOnce(kit.startOfflinePlay);
   const fake = kitPage(controller);
   offline.page = fake.page;
-  const { backgroundProgress } = await import("../loading/progress");
-  const pwa = await import("./index");
+  const { backgroundProgress } = await import("../loading/progress.ts");
+  const pwa = await import("./index.ts");
   const shown: boolean[] = [];
   backgroundProgress.subscribe(({ active }) => shown.push(active));
   pwa.setupPhoneApp();
@@ -273,7 +273,7 @@ it.each([
       navigator: appNavigator,
     });
     vi.stubGlobal("navigator", appNavigator);
-    const pwa = await import("./index");
+    const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     expect(pwa.exitShown()).toBe(shown);
   },

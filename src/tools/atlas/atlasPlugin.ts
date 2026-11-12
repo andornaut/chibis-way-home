@@ -1,9 +1,14 @@
 import { encodeLosslessWebp } from "@andornaut/art-kit/webp";
 import type { Plugin } from "vite";
 
-import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest, type AtlasManifest } from "../../assets";
-import { buildAtlas } from "./atlasBuild";
-import { atlasPageFileName } from "./hashedArt";
+import {
+  ART_MANIFEST_FILE,
+  ART_PATH,
+  type ArtManifest,
+  type AtlasManifest,
+} from "../../assets/index.ts";
+import { buildAtlas } from "./atlasBuild.ts";
+import { atlasPageFileName } from "./hashedArt.ts";
 
 // The module whose default export is the build's AtlasManifest, or null on the dev server.
 export const ATLAS_MODULE = "virtual:atlas-manifest";

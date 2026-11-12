@@ -2,13 +2,13 @@ import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { storageFixture } from "@andornaut/game-kit/testing/storageFixture";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../../assets";
-import { BIRD } from "../../data/bird";
-import { activeStepSeconds } from "../../rules/death";
-import { zoneLayout } from "../../rules/tiles";
-import { startZone, stepZone, type ZoneState } from "../../rules/zone";
-import { SKILL_PROFILES } from "../skills";
-import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats";
+import { BIRD_FRAME } from "../../assets/index.ts";
+import { BIRD } from "../../data/bird.ts";
+import { activeStepSeconds } from "../../rules/death.ts";
+import { zoneLayout } from "../../rules/tiles.ts";
+import { startZone, stepZone, type ZoneState } from "../../rules/zone.ts";
+import { SKILL_PROFILES } from "../skills.ts";
+import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats.ts";
 
 const STAGES = new Set(["park", "street"]);
 const FORMAT = statsFormat(STAGES);

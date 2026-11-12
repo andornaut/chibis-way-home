@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { OPENING } from "../data/opening";
-import type { OpeningBeat, OpeningLayer, OpeningShot } from "../data/types";
-import { createOpeningPlayback, openingDestination, openingPose } from "./opening";
+import { OPENING } from "../data/opening.ts";
+import type { OpeningBeat, OpeningLayer, OpeningShot } from "../data/types/index.ts";
+import { createOpeningPlayback, openingDestination, openingPose } from "./opening.ts";
 
 describe("manual opening playback", () => {
   it("chains shots within a beat, holds its final pose, and never advances dialogue on time", () => {

@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
-import { CAMERA } from "../data/camera";
-import { backgroundGroundOffset } from "./backgroundGround";
-import { chunkParallax } from "./chunkParallax";
+import { CAMERA } from "../data/camera.ts";
+import { backgroundGroundOffset } from "./backgroundGround.ts";
+import { chunkParallax } from "./chunkParallax.ts";
 
 const screen = { height: 360, width: 720 };
 const area = {

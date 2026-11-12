@@ -1,7 +1,7 @@
-import type { TraceRecorder } from "../ai/trace";
-import type { BirdTuning, ZoneLayout } from "../data/types";
-import type * as Zone from "../rules/zone";
-import { zoneTraceLine } from "../sim/zoneTrace";
+import type { TraceRecorder } from "../ai/trace.ts";
+import type { BirdTuning, ZoneLayout } from "../data/types/index.ts";
+import type * as Zone from "../rules/zone.ts";
+import { zoneTraceLine } from "../sim/zoneTrace.ts";
 
 type ZoneModule = typeof Zone;
 

@@ -1,6 +1,6 @@
-import { sweptContact } from "../core";
-import type { DeathContact, ObjectLayout, Point, Rect } from "../data/types";
-import type { BehaviourEvent } from "./behaviour";
+import { sweptContact } from "../core/index.ts";
+import type { DeathContact, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { BehaviourEvent } from "./behaviour.ts";
 
 export interface Transient {
   readonly id: number;

@@ -25,13 +25,13 @@ import {
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
 
-import { trackOfflineActivity } from "../loading/serviceWorker";
-import { dispatchPhoneEvent, PHONE_EVENTS } from "./events";
-import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen";
-import { createRequiredUpdate } from "./requiredUpdate";
-import { createUpdateOffer } from "./updateOffer";
+import { trackOfflineActivity } from "../loading/serviceWorker.ts";
+import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
+import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen.ts";
+import { createRequiredUpdate } from "./requiredUpdate.ts";
+import { createUpdateOffer } from "./updateOffer.ts";
 
-export { PHONE_EVENTS } from "./events";
+export { PHONE_EVENTS } from "./events.ts";
 
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "birdBackGuard";

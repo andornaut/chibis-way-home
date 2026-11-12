@@ -1,12 +1,12 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { TILE } from "../data/screen";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import type { BehaviourWorld } from "./behaviourReach";
-import { flyLandingRoute } from "./flyLanding";
-import { objectLayout } from "./tiles";
+import { STEP_SECONDS } from "../core/index.ts";
+import { TILE } from "../data/screen.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { flyLandingRoute } from "./flyLanding.ts";
+import { objectLayout } from "./tiles.ts";
 
 const place = (character: string, col: number, row: number) =>
   objectLayout(TILE, CATALOGUE, HITBOXES, TILESETS["tiles-street"], {}, { character, col, row });

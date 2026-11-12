@@ -1,6 +1,6 @@
 import { fillNames } from "@andornaut/game-kit/lines";
 
-import type { StatsText } from "../../data/types";
+import type { StatsText } from "../../data/types/index.ts";
 
 export interface WholeRunStatsSummary {
   readonly activeSeconds: number;

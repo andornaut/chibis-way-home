@@ -1,4 +1,4 @@
-import type { AreaLayout, ObjectLayout, Point, Rect } from "../data/types";
+import type { AreaLayout, ObjectLayout, Point, Rect } from "../data/types/index.ts";
 
 // Whole-area layers keep their original placement. A local layer explicitly fills one chunk.
 export function chunkBackdropSpan(

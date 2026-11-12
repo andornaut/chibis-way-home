@@ -1,5 +1,5 @@
-import type { AchievementId, SkillId, ZoneLayout } from "../data/types";
-import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode";
+import type { AchievementId, SkillId, ZoneLayout } from "../data/types/index.ts";
+import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode.ts";
 import type {
   AchievementEntry,
   Progress,
@@ -7,11 +7,11 @@ import type {
   SavedSkillGrantResult,
   WholeRunStatsSummary,
   ZoneStatsSummary,
-} from "../progress";
-import * as pageSave from "../progress/save/pageSave";
-import { activeStepSeconds } from "../rules/death";
-import { areaOf, type ZoneState } from "../rules/zone";
-import { zoneStepRecord } from "../rules/zoneRecords";
+} from "../progress/index.ts";
+import * as pageSave from "../progress/save/pageSave.ts";
+import { activeStepSeconds } from "../rules/death.ts";
+import { areaOf, type ZoneState } from "../rules/zone.ts";
+import { zoneStepRecord } from "../rules/zoneRecords.ts";
 
 export type { Progress };
 

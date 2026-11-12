@@ -45,12 +45,12 @@ import {
   pathTo,
 } from "@andornaut/game-kit/terrain/movementMap";
 
-import { type AgentSample, centre } from "../ai/agentTrace";
-import { traceRecorder } from "../ai/trace";
-import { EDGE, STEP_SECONDS } from "../core";
-import { ARENA_COUNTERS } from "../data/arenas";
-import { BOSS_FAIRNESS } from "../data/bossFairness";
-import { TILE } from "../data/screen";
+import { type AgentSample, centre } from "../ai/agentTrace.ts";
+import { traceRecorder } from "../ai/trace.ts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import { ARENA_COUNTERS } from "../data/arenas/index.ts";
+import { BOSS_FAIRNESS } from "../data/bossFairness.ts";
+import { TILE } from "../data/screen.ts";
 import type {
   AntagonistKind,
   ArenaRoute,
@@ -59,16 +59,16 @@ import type {
   Point,
   TilePoint,
   ZoneLayout,
-} from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import type { BehaviourObserver } from "../rules/behaviourObserver";
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import type { BehaviourObserver } from "../rules/behaviourObserver.ts";
 import {
   birdBox,
   type BirdState,
   ordinaryHorizontalVelocity,
   startBird,
   stepBird,
-} from "../rules/bird";
+} from "../rules/bird.ts";
 import {
   airMask,
   BOSS_JUMP_SCRIPTS,
@@ -78,27 +78,27 @@ import {
   groundMask,
   type MapSupport,
   type MapTerrain,
-} from "../rules/movementMaps";
-import { currentScreen } from "../rules/perception";
+} from "../rules/movementMaps.ts";
+import { currentScreen } from "../rules/perception.ts";
 import {
   startZone,
   stepZone,
   stepZoneObserved,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone";
-import { activateAll, bossSample, type BossTick, supportWorld } from "../sim/bossSimulator";
-import { ALLOW, hitboxAt, standingAt } from "../sim/pathOut";
-import { zoneTraceLine } from "../sim/zoneTrace";
-import { type ArenaCase, type ArenaMaps, isLoop, pixelOf } from "./arenas";
-import { DODGES, type DodgeView } from "./dodges";
-import { ORDINARY } from "./encounterLayouts";
-import { createProjectileAvoidance, type ProjectileFrame } from "./evadeProjectileAvoidance";
+} from "../rules/zone.ts";
+import { activateAll, bossSample, type BossTick, supportWorld } from "../sim/bossSimulator.ts";
+import { ALLOW, hitboxAt, standingAt } from "../sim/pathOut.ts";
+import { zoneTraceLine } from "../sim/zoneTrace.ts";
+import { type ArenaCase, type ArenaMaps, isLoop, pixelOf } from "./arenas.ts";
+import { DODGES, type DodgeView } from "./dodges.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
+import { createProjectileAvoidance, type ProjectileFrame } from "./evadeProjectileAvoidance.ts";
 import {
   observeProjectiles,
   type ProjectileGravityByEmitter,
   projectileGravityModels,
-} from "./evadeProjectiles";
+} from "./evadeProjectiles.ts";
 
 export const EVADE_SEEDS: readonly number[] = [0, 1, 2, 3];
 // entry: the boss acquires Chibi as he enters; mid: as he stands mid-arena on the loop, at its

@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS, sweptContact } from "../core";
-import { ARCHETYPES } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { createOrbitHazardChunks } from "../data/orbitHazardChunks";
-import { TILE, ZONE_ROWS } from "../data/screen";
-import type { ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { contactBox } from "../rules/behaviour";
-import { birdBox } from "../rules/bird";
-import { orbitPosition } from "../rules/orbit";
-import { areaLayout } from "../rules/tiles";
-import { standsOn, startZone, stepZone } from "../rules/zone";
-import { TILESETS } from "../testing/walkSuite";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS, sweptContact } from "../core/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { createOrbitHazardChunks } from "../data/orbitHazardChunks.ts";
+import { TILE, ZONE_ROWS } from "../data/screen.ts";
+import type { ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { contactBox } from "../rules/behaviour.ts";
+import { birdBox } from "../rules/bird.ts";
+import { orbitPosition } from "../rules/orbit.ts";
+import { areaLayout } from "../rules/tiles.ts";
+import { standsOn, startZone, stepZone } from "../rules/zone.ts";
+import { TILESETS } from "../testing/walkSuite.ts";
 
 const chunks = createOrbitHazardChunks("test");
 function layoutOf(id: string): ZoneLayout {

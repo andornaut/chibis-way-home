@@ -2,8 +2,8 @@
 
 import type { Consideration, Hysteresis } from "@andornaut/game-kit/ai/utility";
 
-import type { Direction, Point, Rect } from "./geometry";
-import type { DialogueLine } from "./text";
+import type { Direction, Point, Rect } from "./geometry.ts";
+import type { DialogueLine } from "./text.ts";
 
 export type Collision = "hazard" | "ledge" | "none" | "solid" | "use";
 type MotionAlgorithm = "ease" | "hop" | "linear" | "static" | "wander";

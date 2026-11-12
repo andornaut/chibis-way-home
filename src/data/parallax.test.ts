@@ -1,32 +1,32 @@
 import { describe, expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import deerSheet from "../../public/art/sprites/background-deer.json";
-import largeDeerSheet from "../../public/art/sprites/background-deer-large.json";
-import reedSheet from "../../public/art/sprites/background-reeds.json";
-import swallowSheet from "../../public/art/sprites/background-swallow.json";
-import { artOffset, backgroundGroundOffset } from "../presentation";
-import { assembleZone } from "../rules/assemble";
-import { objectLayout } from "../rules/tiles";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { stageLoader } from "../sim/catalogue";
-import { sceneryParallax, worldScenery } from "../stage";
-import { ARCHETYPES } from "./archetypes";
-import { BACKGROUND_SECTIONS } from "./backgrounds";
-import { CAMERA } from "./camera";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import deerSheet from "../../public/art/sprites/background-deer.json" with { type: "json" };
+import largeDeerSheet from "../../public/art/sprites/background-deer-large.json" with { type: "json" };
+import reedSheet from "../../public/art/sprites/background-reeds.json" with { type: "json" };
+import swallowSheet from "../../public/art/sprites/background-swallow.json" with { type: "json" };
+import { artOffset, backgroundGroundOffset } from "../presentation/index.ts";
+import { assembleZone } from "../rules/assemble.ts";
+import { objectLayout } from "../rules/tiles.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { stageLoader } from "../sim/catalogue.ts";
+import { sceneryParallax, worldScenery } from "../stage/index.ts";
+import { ARCHETYPES } from "./archetypes.ts";
+import { BACKGROUND_SECTIONS } from "./backgrounds.ts";
+import { CAMERA } from "./camera.ts";
 import {
   CHUNKS,
   EXTERIOR_DEPTH_ALIASES,
   THEMES,
   WOODLAND_DEPTH_ALIASES,
   WOODLAND_VERTICAL_ALIASES,
-} from "./chunks";
-import { ZONE_MAP } from "./map";
-import { SCREEN, TILE } from "./screen";
-import type { ChunkPlan, Instance, ObjectLayout } from "./types";
-import { WOODLAND_SCENERY, WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
-import { APARTMENT_WINDOW } from "./zone6";
-import { RECIPES } from "./zones";
+} from "./chunks.ts";
+import { ZONE_MAP } from "./map.ts";
+import { SCREEN, TILE } from "./screen.ts";
+import type { ChunkPlan, Instance, ObjectLayout } from "./types/index.ts";
+import { WOODLAND_SCENERY, WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery.ts";
+import { APARTMENT_WINDOW } from "./zone6.ts";
+import { RECIPES } from "./zones.ts";
 
 const depth = (object: Pick<ObjectLayout, "parallax">) =>
   object.parallax !== undefined && (object.parallax.x < 1 || object.parallax.y < 1);

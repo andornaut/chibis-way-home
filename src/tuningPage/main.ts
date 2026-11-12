@@ -1,7 +1,7 @@
 import "../gallery/page.css";
 
-import palette from "../../public/art/palette.json";
-import { TUNING_GROUPS, tuningRows } from "./catalogue";
+import palette from "../../public/art/palette.json" with { type: "json" };
+import { TUNING_GROUPS, tuningRows } from "./catalogue.ts";
 
 for (const [key, colour] of Object.entries(palette.colours)) {
   document.documentElement.style.setProperty(`--palette-${key}`, colour);

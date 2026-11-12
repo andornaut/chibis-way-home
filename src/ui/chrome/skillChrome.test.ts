@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
-import { svgLayers } from "../../testing/chromeSvg";
-import { createPaletteSvg } from "../dom/chrome";
-import { SKILL_BUTTON } from "../layout/skillHud";
-import { skillChromeLayers } from "./skillChrome";
+import { svgLayers } from "../../testing/chromeSvg.ts";
+import { createPaletteSvg } from "../dom/chrome.ts";
+import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { skillChromeLayers } from "./skillChrome.ts";
 
 const colours = { face: 0x223344, ink: 0x181425 };
 

@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
-import { BOSS_WARNING } from "../data/bossWarning";
-import type { PixelRun, SpriteContact } from "../data/types";
-import { bossWarning } from "./bossWarning";
+import { BOSS_WARNING } from "../data/bossWarning.ts";
+import type { PixelRun, SpriteContact } from "../data/types/index.ts";
+import { bossWarning } from "./bossWarning.ts";
 
 const tuning = BOSS_WARNING;
 const tell = { active: true, activeAttack: { id: "attack", phase: "tell" as const } };

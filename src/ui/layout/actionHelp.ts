@@ -1,11 +1,11 @@
 import { advanceWidth, type BitmapFont, fontMetrics } from "@andornaut/game-kit/text/bitmapFont";
 
-import { ACTION_HELP_LAYOUT, CARD_CONTENT } from "../../data/layout";
-import type { ControlAction, Point, Rect, Size } from "../../data/types";
-import { type ActionHelpPart, actionHelpParts } from "../chrome/actionHelp";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import type { CardFonts } from "./contentCard";
-import { textInkBounds } from "./textInk";
+import { ACTION_HELP_LAYOUT, CARD_CONTENT } from "../../data/layout.ts";
+import type { ControlAction, Point, Rect, Size } from "../../data/types/index.ts";
+import { type ActionHelpPart, actionHelpParts } from "../chrome/actionHelp.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import type { CardFonts } from "./contentCard.ts";
+import { textInkBounds } from "./textInk.ts";
 
 // The label-to-icon gap shared by every action help, and the home page's HTML icon and line box.
 export const ACTION_HELP = {

@@ -2,9 +2,9 @@ import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
-import { TOUCH } from "../../data/touch";
-import type { DialoguePlan, DialogueSpeaker, GameText } from "../../data/types";
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen";
+import { TOUCH } from "../../data/touch.ts";
+import type { DialoguePlan, DialogueSpeaker, GameText } from "../../data/types/index.ts";
+import { DIALOGUE_SCREEN } from "../layout/dialogueScreen.ts";
 import {
   dialogueChoice,
   dialogueChoiceKey,
@@ -15,7 +15,7 @@ import {
   dialogueProgress,
   dialogueTapAction,
   moveDialoguePress,
-} from "./conversation";
+} from "./conversation.ts";
 
 const speakers: Readonly<Record<string, DialogueSpeaker>> = {
   dog: { colour: "amber", portrait: "portrait-dog", side: "right" },

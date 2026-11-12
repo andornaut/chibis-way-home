@@ -7,31 +7,31 @@ import {
   type TraversalSafety,
 } from "@andornaut/game-kit/terrain/traversal";
 
-import { EDGE } from "../core";
-import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
+import { EDGE } from "../core/index.ts";
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";
 import type {
   BehaviourIdleWatchdog,
   BehaviourMotion,
   ObjectLayout,
   Point,
   Rect,
-} from "../data/types";
-import { supportedDestinations } from "./behaviourDestinations";
-import { mapRecoveryGoal } from "./behaviourMapPursuit";
-import type { BehaviourWorld } from "./behaviourReach";
+} from "../data/types/index.ts";
+import { supportedDestinations } from "./behaviourDestinations.ts";
+import { mapRecoveryGoal } from "./behaviourMapPursuit.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
 import {
   advanceTraversalTo,
   type BehaviourTraversalState,
   traversalContext,
   type TraversalSupport,
-} from "./behaviourTraversal";
+} from "./behaviourTraversal.ts";
 import {
   flyLandingPath,
   flyLandingRoute,
   liftedLandingPath,
   supportContact,
   supportedLanding,
-} from "./flyLanding";
+} from "./flyLanding.ts";
 
 type PursuitMotion = Extract<BehaviourMotion, { kind: "pursue" }>;
 type IdleStatus = TraversalResult<TraversalSupport>["status"] | "invalidated";

@@ -1,6 +1,6 @@
 import { insetRect, ringRects } from "@andornaut/game-kit/rect";
 
-import type { ContactCueTuning, Point, Rect, WorldShakeTuning } from "../../data/types";
+import type { ContactCueTuning, Point, Rect, WorldShakeTuning } from "../../data/types/index.ts";
 
 export function contactWorldOffset(tuning: WorldShakeTuning, elapsed: number): Point {
   let offset = 0;

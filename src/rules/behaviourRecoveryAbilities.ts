@@ -1,20 +1,20 @@
-import { type Ability, abilityFor, type AbilityTable } from "../ai/ability";
-import type { ObjectLayout, Point } from "../data/types";
-import type { BehaviourState, BehaviourStep } from "./behaviour";
-import { animateSegments } from "./behaviourAnimation";
-import { attackProtected } from "./behaviourAttack";
+import { type Ability, abilityFor, type AbilityTable } from "../ai/ability.ts";
+import type { ObjectLayout, Point } from "../data/types/index.ts";
+import type { BehaviourState, BehaviourStep } from "./behaviour.ts";
+import { animateSegments } from "./behaviourAnimation.ts";
+import { attackProtected } from "./behaviourAttack.ts";
 import {
   advanceIdleRecovery,
   type BehaviourIdleState,
   observeIdle,
   planIdleRecovery,
-} from "./behaviourIdle";
-import type { BehaviourPerception } from "./behaviourPerception";
-import type { BehaviourWorld } from "./behaviourReach";
-import { nodeOf } from "./behaviourTrack";
-import type { BehaviourTraversalState } from "./behaviourTraversal";
-import { birdBox } from "./bird";
-import { landingSupport, supportContact } from "./flyLanding";
+} from "./behaviourIdle.ts";
+import type { BehaviourPerception } from "./behaviourPerception.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { nodeOf } from "./behaviourTrack.ts";
+import type { BehaviourTraversalState } from "./behaviourTraversal.ts";
+import { birdBox } from "./bird.ts";
+import { landingSupport, supportContact } from "./flyLanding.ts";
 
 type BehaviourRecoveryParams = { readonly kind: "idle-recovery" };
 

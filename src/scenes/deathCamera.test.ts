@@ -6,9 +6,9 @@ import { easeProgress } from "@andornaut/game-kit/motion";
 import type { Cameras, Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
-import { DEATH } from "../data/death";
-import { SCREEN } from "../data/screen";
-import { frameDeathCamera } from "./deathCamera";
+import { DEATH } from "../data/death.ts";
+import { SCREEN } from "../data/screen.ts";
+import { frameDeathCamera } from "./deathCamera.ts";
 
 const tuning = { bottomInset: 0, maxSeconds: 3, minSeconds: 1, pixelsPerSecond: 100 };
 type PanCallback = (camera: unknown, progress: number) => void;

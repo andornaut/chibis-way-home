@@ -6,14 +6,14 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { type Cameras, type GameObjects, type Input, Scene, Scenes } from "phaser";
 
-import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core";
-import { CHARACTERS } from "../data/characters";
-import { DIALOGUES, SPEAKERS } from "../data/dialogues";
-import { ROOM_LAYOUT } from "../data/layout";
-import { ROOMS } from "../data/rooms";
-import { TEXT } from "../data/text";
-import type { RoomPlan } from "../data/types";
-import { coverZone, PHONE_EVENTS } from "../pwa";
+import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core/index.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { DIALOGUES, SPEAKERS } from "../data/dialogues.ts";
+import { ROOM_LAYOUT } from "../data/layout.ts";
+import { ROOMS } from "../data/rooms.ts";
+import { TEXT } from "../data/text.ts";
+import type { RoomPlan } from "../data/types/index.ts";
+import { coverZone, PHONE_EVENTS } from "../pwa/index.ts";
 import {
   CARD_TEXT_SCALE,
   DIALOGUE_PORTRAIT_SIZE,
@@ -27,8 +27,8 @@ import {
   skillDetails,
   skillRoomContinue,
   textInkBounds,
-} from "../ui";
-import { drawActionHelp } from "./actionHelp";
+} from "../ui/index.ts";
+import { drawActionHelp } from "./actionHelp.ts";
 import {
   addButtonLabel,
   addCardHeading,
@@ -43,13 +43,13 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   TITLE_FONT,
-} from "./cardParts";
-import { drawDialoguePanel } from "./dialoguePanel";
-import { drawDialogueParagraph } from "./dialogueParagraph";
-import { modalInput, onScenePointer } from "./modalInput";
-import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera";
-import { grantSkill, recordRoomTime } from "./save";
-import { drawSkillButton } from "./skillButton";
+} from "./cardParts.ts";
+import { drawDialoguePanel } from "./dialoguePanel.ts";
+import { drawDialogueParagraph } from "./dialogueParagraph.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera.ts";
+import { grantSkill, recordRoomTime } from "./save.ts";
+import { drawSkillButton } from "./skillButton.ts";
 
 const ZONE = "zone";
 

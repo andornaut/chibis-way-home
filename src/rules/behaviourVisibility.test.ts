@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourPlan } from "../data/types";
-import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import { startBird } from "./bird";
-import { objectLayout } from "./tiles";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { Archetype, BehaviourPlan } from "../data/types/index.ts";
+import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

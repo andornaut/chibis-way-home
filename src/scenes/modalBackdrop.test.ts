@@ -3,29 +3,29 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
-import paletteData from "../../public/art/palette.json";
+import paletteData from "../../public/art/palette.json" with { type: "json" };
 
 const capture = vi.hoisted(() => ({ mount: vi.fn() }));
 vi.mock("@andornaut/game-kit/view/phaser/modalBackdrop", () => ({
   mountModalBackdrop: capture.mount,
 }));
 vi.mock("phaser", () => ({ Scenes: { Events: { ADDED_TO_SCENE: "addedtoscene" } } }));
-vi.mock("./cardParts", () => ({
+vi.mock("./cardParts.ts", () => ({
   palette: () => paletteData,
   paletteColour: () => 0x181425,
 }));
 // The backing at two device pixels per CSS pixel: an 844x358 play area.
 const BACKING = { height: 716, width: 1688, x: 0, y: 0 };
-vi.mock("./playCamera", async (original) => ({
-  ...(await original<typeof import("./playCamera")>()),
+vi.mock("./playCamera.ts", async (original) => ({
+  ...(await original<typeof import("./playCamera.ts")>()),
   fitCanvasCamera: vi.fn(),
 }));
 
-import type { Size } from "../data/types";
-import { canvasSize, viewShift } from "../ui";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput } from "./modalInput";
-import { canvasRect, sceneFit } from "./playCamera";
+import type { Size } from "../data/types/index.ts";
+import { canvasSize, viewShift } from "../ui/index.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput } from "./modalInput.ts";
+import { canvasRect, sceneFit } from "./playCamera.ts";
 
 function fixture() {
   const camera = () => ({

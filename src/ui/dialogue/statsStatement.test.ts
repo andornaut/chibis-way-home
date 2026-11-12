@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
-import { SPEAKERS } from "../../data/dialogues";
-import { ZONE_MAP } from "../../data/map";
-import { STATS_BARKS } from "../../data/statsBarks";
-import { TEXT } from "../../data/text";
-import { dialogueParagraphs } from "./conversation";
-import { statsStatement } from "./statsStatement";
+import { SPEAKERS } from "../../data/dialogues.ts";
+import { ZONE_MAP } from "../../data/map.ts";
+import { STATS_BARKS } from "../../data/statsBarks.ts";
+import { TEXT } from "../../data/text.ts";
+import { dialogueParagraphs } from "./conversation.ts";
+import { statsStatement } from "./statsStatement.ts";
 
 it.each(["clear", "retry"] as const)(
   "maps each stage to its destination's %s statement",

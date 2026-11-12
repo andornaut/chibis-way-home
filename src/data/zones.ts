@@ -18,15 +18,15 @@ import {
   WOODLAND_CHALLENGES,
   WOODLAND_CONNECTORS,
   woodlandVerticalId,
-} from "./chunks";
-import { CHUNK_COLS } from "./chunkTemplates";
-import type { ChunkPool, StageRecipe } from "./types";
+} from "./chunks.ts";
+import { CHUNK_COLS } from "./chunkTemplates.ts";
+import type { ChunkPool, StageRecipe } from "./types/index.ts";
 import {
   APARTMENT_ROWS,
   APARTMENT_SPAWN_ROW,
   APARTMENT_STAGE_EXIT,
   apartmentChunkId,
-} from "./zone6";
+} from "./zone6.ts";
 
 // Zone profiles raise the minimum grade and favour compound challenges along the route.
 const ZONE_DIFFICULTY = { max: 4, min: 3 } as const;

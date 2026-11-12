@@ -4,11 +4,11 @@ import "./viewer.css";
 import { sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
-import manifestJson from "../../public/art/manifest.json";
-import palette from "../../public/art/palette.json";
-import { type ArtManifest } from "../assets";
-import { galleryCatalogue, type GalleryItem } from "./catalogue";
-import { type Crop, fontPreview, galleryFrame } from "./preview";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import palette from "../../public/art/palette.json" with { type: "json" };
+import { type ArtManifest } from "../assets/index.ts";
+import { galleryCatalogue, type GalleryItem } from "./catalogue.ts";
+import { type Crop, fontPreview, galleryFrame } from "./preview.ts";
 
 const element = <K extends keyof HTMLElementTagNameMap>(
   tag: K,

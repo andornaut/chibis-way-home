@@ -3,17 +3,17 @@ import { createRequire } from "node:module";
 
 import { expect, it } from "vitest";
 
-import { achievementsCardProperties } from "../layout/achievementsCard";
-import { SETTINGS_LAYOUT } from "../layout/settingsCard";
-import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard";
-import { ACTION_HELP_PROPERTIES } from "./actionHelp";
-import { DEATH_LAYOUT } from "./death";
-import { UI_LAYOUT } from "./layer";
-import { PAUSE_LAYOUT, skillPlace } from "./pause";
-import { runStatsProperties } from "./runStats";
-import { SKILL_DETAILS_LAYOUT } from "./skillDetails";
-import { SKILL_DISC_LAYOUT } from "./skillDisc";
-import { UI_COLOURS, UI_FRAMES } from "./skin";
+import { achievementsCardProperties } from "../layout/achievementsCard.ts";
+import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
+import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
+import { ACTION_HELP_PROPERTIES } from "./actionHelp.ts";
+import { DEATH_LAYOUT } from "./death.ts";
+import { UI_LAYOUT } from "./layer.ts";
+import { PAUSE_LAYOUT, skillPlace } from "./pause.ts";
+import { runStatsProperties } from "./runStats.ts";
+import { SKILL_DETAILS_LAYOUT } from "./skillDetails.ts";
+import { SKILL_DISC_LAYOUT } from "./skillDisc.ts";
+import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
 const DIRECTORY = new URL(".", import.meta.url);

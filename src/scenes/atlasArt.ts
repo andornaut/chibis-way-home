@@ -8,7 +8,7 @@ import {
   atlasPageKey,
   type AtlasTexture,
   BASE_FRAME,
-} from "../assets";
+} from "../assets/index.ts";
 
 // The build's atlas, or null on the dev server, where every art file loads on its own.
 export const ATLAS: AtlasManifest | null = atlas;

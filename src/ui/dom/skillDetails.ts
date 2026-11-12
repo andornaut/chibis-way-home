@@ -3,10 +3,10 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { SKILL_DETAILS } from "../../data/layout";
-import { type ActionHelpWords, createActionHelp } from "./actionHelp";
-import { closeButton } from "./card";
-import { createSkillDisc } from "./skillDisc";
+import { SKILL_DETAILS } from "../../data/layout.ts";
+import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
+import { closeButton } from "./card.ts";
+import { createSkillDisc } from "./skillDisc.ts";
 
 // The skill details card in the HTML UI (skillDetails.css, on ui.css's .ui-card): its title, the
 // skill's ready disc beside its description with inline control illustrations, and the close X.

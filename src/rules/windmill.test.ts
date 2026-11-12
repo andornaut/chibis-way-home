@@ -1,39 +1,39 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { MODULES } from "../data/modules";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { MODULES } from "../data/modules/index.ts";
 import {
   OBSTACLE_MOVER_PAUSE,
   OBSTACLE_MOVER_SPEED,
   WINDMILL_SAILS,
   windmillSailOrbit,
-} from "../data/obstacleTuning";
-import { REACH } from "../data/reach";
-import { TILE } from "../data/screen";
-import type { BehaviourPlan, Character, Instance, Point, Rect } from "../data/types";
-import { artOffset, spokeSegments, tetherLine } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
+} from "../data/obstacleTuning.ts";
+import { REACH } from "../data/reach.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourPlan, Character, Instance, Point, Rect } from "../data/types/index.ts";
+import { artOffset, spokeSegments, tetherLine } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
 import {
   WINDMILL_FIXTURE,
   WINDMILL_FIXTURE_CATALOGUE,
   WINDMILL_FIXTURE_LIBRARY,
-} from "../testing/chunks";
-import { HITBOXES, TILESETS } from "../testing/walkSuite";
-import { type ChunkLibrary, zonePlanOf } from "./assemble";
-import { startBird } from "./bird";
-import { effectiveCollision } from "./effectiveCollision";
-import { chibiJumpScripts, chibiMovementProfile, groundMap, mapTerrain } from "./movementMaps";
-import { orbitBounds } from "./orbit";
-import { standsOn } from "./platformBird";
-import { areaLayout, zoneLayout } from "./tiles";
-import { windmillPlacementProblems } from "./windmillPlacement";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone";
-import { CHUNK_LIBRARY } from "./zonePlans";
+} from "../testing/chunks.ts";
+import { HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { type ChunkLibrary, zonePlanOf } from "./assemble.ts";
+import { startBird } from "./bird.ts";
+import { effectiveCollision } from "./effectiveCollision.ts";
+import { chibiJumpScripts, chibiMovementProfile, groundMap, mapTerrain } from "./movementMaps.ts";
+import { orbitBounds } from "./orbit.ts";
+import { standsOn } from "./platformBird.ts";
+import { areaLayout, zoneLayout } from "./tiles.ts";
+import { windmillPlacementProblems } from "./windmillPlacement.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { CHUNK_LIBRARY } from "./zonePlans.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

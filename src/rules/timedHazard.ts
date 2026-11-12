@@ -1,11 +1,11 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
-import { sweptContact } from "../core";
-import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
-import { advanceBehaviour, type BehaviourState } from "./behaviour";
-import { perceiveBehaviour } from "./behaviourPerception";
-import { startBird } from "./bird";
-import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision";
+import { sweptContact } from "../core/index.ts";
+import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import { advanceBehaviour, type BehaviourState } from "./behaviour.ts";
+import { perceiveBehaviour } from "./behaviourPerception.ts";
+import { startBird } from "./bird.ts";
+import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision.ts";
 
 interface TimedHazardContact {
   readonly startSeconds: number;

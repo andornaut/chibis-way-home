@@ -2,25 +2,25 @@ import { isDeepStrictEqual } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
-import manifestJson from "../../public/art/manifest.json";
-import { type ArtManifest, BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { lookTiles } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble";
-import { chunkProblems, recipeProblems } from "../rules/chunk";
-import { bindElement } from "../rules/elementBinding";
-import { resolveNames, zoneLayout } from "../rules/tiles";
-import { standsOn, startZone, stepZone } from "../rules/zone";
-import type { Tileset } from "../stage";
-import { ALL_CHUNKS, ALL_RECIPES, ALL_THEMES, FIXTURE_LIBRARY } from "../testing/chunks";
-import { HITBOXES, TILESETS as WALK_TILESETS } from "../testing/walkSuite";
-import { ARCHETYPES } from "./archetypes";
-import { BIRD } from "./bird";
-import { CHARACTERS } from "./characters";
-import { ROOMS } from "./rooms";
-import { TILE } from "./screen";
-import type { ChunkPlan, ZonePlan } from "./types";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import { type ArtManifest, BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { lookTiles } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { ASSEMBLED_AREA, assembleZone, themesOf, zonePlanOf } from "../rules/assemble.ts";
+import { chunkProblems, recipeProblems } from "../rules/chunk.ts";
+import { bindElement } from "../rules/elementBinding.ts";
+import { resolveNames, zoneLayout } from "../rules/tiles.ts";
+import { standsOn, startZone, stepZone } from "../rules/zone.ts";
+import type { Tileset } from "../stage/index.ts";
+import { ALL_CHUNKS, ALL_RECIPES, ALL_THEMES, FIXTURE_LIBRARY } from "../testing/chunks.ts";
+import { HITBOXES, TILESETS as WALK_TILESETS } from "../testing/walkSuite.ts";
+import { ARCHETYPES } from "./archetypes.ts";
+import { BIRD } from "./bird.ts";
+import { CHARACTERS } from "./characters.ts";
+import { ROOMS } from "./rooms.ts";
+import { TILE } from "./screen.ts";
+import type { ChunkPlan, ZonePlan } from "./types/index.ts";
 
 const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
 const ENCOUNTER_ART = new Set(

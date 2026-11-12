@@ -1,33 +1,33 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { CROSSWALK_BEHAVIOUR, CROSSWALK_SECONDS } from "../data/obstacleBehaviours";
-import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
-import { REACH } from "../data/reach";
-import { TILE } from "../data/screen";
-import type { Character, Instance } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { CROSSWALK_BEHAVIOUR, CROSSWALK_SECONDS } from "../data/obstacleBehaviours.ts";
+import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters.ts";
+import { REACH } from "../data/reach.ts";
+import { TILE } from "../data/screen.ts";
+import type { Character, Instance } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
 import {
   CROSSWALK_FIXTURE_CATALOGUE,
   CROSSWALK_FIXTURE_LIBRARY,
   CROSSWALK_FIXTURE_STRIP,
-} from "../testing/chunks";
-import { HITBOXES, TILESETS } from "../testing/walkSuite";
-import { type ChunkLibrary, zonePlanOf } from "./assemble";
-import { effectiveHazardPhase } from "./effectiveCollision";
+} from "../testing/chunks.ts";
+import { HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { type ChunkLibrary, zonePlanOf } from "./assemble.ts";
+import { effectiveHazardPhase } from "./effectiveCollision.ts";
 import {
   chibiJumpScripts,
   chibiMovementProfile,
   groundMap,
   groundMask,
   mapTerrain,
-} from "./movementMaps";
-import { phaseFollowerTag } from "./phaseSource";
-import { areaLayout, zoneLayout } from "./tiles";
-import { timedHazardRect } from "./timedHazard";
-import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone";
+} from "./movementMaps.ts";
+import { phaseFollowerTag } from "./phaseSource.ts";
+import { areaLayout, zoneLayout } from "./tiles.ts";
+import { timedHazardRect } from "./timedHazard.ts";
+import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

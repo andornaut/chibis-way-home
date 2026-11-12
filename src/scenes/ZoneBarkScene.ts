@@ -1,10 +1,10 @@
 import { type GameObjects, type Input, Scene, Scenes } from "phaser";
 
-import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { DialogueLine } from "../data/types";
-import type { ZoneBark } from "../rules/zone";
+import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { DialogueLine } from "../data/types/index.ts";
+import type { ZoneBark } from "../rules/zone.ts";
 import {
   dialogueParagraphs,
   type DialoguePress,
@@ -12,11 +12,11 @@ import {
   moveDialoguePress,
   type PressArea,
   pressedArea,
-} from "../ui";
-import { drawDialoguePanel } from "./dialoguePanel";
-import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph";
-import { modalInput, onScenePointer } from "./modalInput";
-import { fitPlayCamera, playPoint } from "./playCamera";
+} from "../ui/index.ts";
+import { drawDialoguePanel } from "./dialoguePanel.ts";
+import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
 
 interface Bark {
   readonly line: DialogueLine;

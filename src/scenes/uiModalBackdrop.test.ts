@@ -8,8 +8,8 @@ const legacy = vi.hoisted(() => vi.fn());
 vi.mock("@andornaut/game-kit/view/phaser/modalBackdrop", () => ({ mountModalBackdrop: legacy }));
 vi.mock("phaser", () => ({ Textures: { FilterMode: { LINEAR: 0 } } }));
 
-import { mountUiModalBackdrop } from "./uiModalBackdrop";
-import { bindGameUiPresentation } from "./uiPresentationPort";
+import { mountUiModalBackdrop } from "./uiModalBackdrop.ts";
+import { bindGameUiPresentation } from "./uiPresentationPort.ts";
 
 // The canvas's backing, in device pixels, and the whole canvas, in base pixels, at a fractional
 // zoom of 7 / 3.

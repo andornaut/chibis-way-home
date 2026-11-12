@@ -1,8 +1,8 @@
 import type { AnimationFrame } from "@andornaut/game-kit/art/aseprite";
 import { describe, expect, it } from "vitest";
 
-import type { HeldTouch } from "../input/intent";
-import { buttonHeld, centredAt, controlTag, trackPress } from "./touchControls";
+import type { HeldTouch } from "../input/intent.ts";
+import { buttonHeld, centredAt, controlTag, trackPress } from "./touchControls.ts";
 
 const JUMP: HeldTouch = { role: "jump", startX: 600, startY: 200, x: 600 };
 const MOVE: HeldTouch = { role: "move", startX: 100, startY: 200, x: 140 };

@@ -2,13 +2,13 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ALL_CHUNKS } from "./chunks";
+import { ALL_CHUNKS } from "./chunks.ts";
 import {
   assertChunkWalkCoverage,
   CHUNK_WALK_PARTITIONS,
   chunkWalkPartitions,
-} from "./chunkWalkPartitions";
-import { FILLED_CHUNK_SLOTS } from "./requiredRoutes";
+} from "./chunkWalkPartitions.ts";
+import { FILLED_CHUNK_SLOTS } from "./requiredRoutes.ts";
 
 describe("chunk walk partitions", () => {
   it("registers every partition exactly once through the actual test entrypoints", () => {

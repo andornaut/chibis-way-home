@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { DEATH } from "../data/death";
-import { ZONE_MAP } from "../data/map";
-import { SCREEN } from "../data/screen";
-import { TEXT } from "../data/text";
-import type { Rect, ZoneDeath } from "../data/types";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { DEATH } from "../data/death.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { SCREEN } from "../data/screen.ts";
+import { TEXT } from "../data/text.ts";
+import type { Rect, ZoneDeath } from "../data/types/index.ts";
 import {
   deathLabels,
   deathPresentationTarget,
@@ -15,7 +15,7 @@ import {
   type DeathView,
   startDeathPresentation,
   stepDeathPresentation,
-} from "./death";
+} from "./death.ts";
 
 const ground: Rect = { height: 120, width: SCREEN.width, x: 0, y: (SCREEN.height * 2) / 3 };
 const view: DeathView = {

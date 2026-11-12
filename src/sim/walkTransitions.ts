@@ -1,4 +1,4 @@
-import type { ZoneInput, ZoneState } from "../rules/zone";
+import type { ZoneInput, ZoneState } from "../rules/zone.ts";
 
 export type WalkStep = (input: ZoneInput, zone: ZoneState) => ZoneState;
 

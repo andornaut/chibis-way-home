@@ -4,8 +4,8 @@ import {
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 import { slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 
-import { CARD_CONTENT } from "../../data/layout";
-import type { StatsMetricRow } from "../layout/runStats";
+import { CARD_CONTENT } from "../../data/layout.ts";
+import type { StatsMetricRow } from "../layout/runStats.ts";
 
 // Run statistics in the HTML UI (runStats.css): side-by-side columns of equal width, each a
 // description list of metric rows with the label at its left and the value at its right, and an

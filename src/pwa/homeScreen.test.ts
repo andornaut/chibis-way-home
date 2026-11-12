@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { trackHomeScreen } from "./homeScreen";
+import { trackHomeScreen } from "./homeScreen.ts";
 
 describe("Start-only update eligibility", () => {
   it("retains first-prepared-zone registration independently of the current screen", () => {

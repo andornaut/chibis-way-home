@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { reducedMotion, setReducedMotion } from "./reducedMotion";
+import { reducedMotion, setReducedMotion } from "./reducedMotion.ts";
 
 // A window whose device preference the test sets, over a storage it can share with another.
 function device(prefers: boolean, stored = new Map<string, string>()) {

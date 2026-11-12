@@ -1,9 +1,9 @@
 import type { Scene } from "phaser";
 
-import type { Point } from "../data/types";
-import type { ActionHelpLayout } from "../ui";
-import { ACTION_FONT, addCardText, BODY_FONT } from "./cardParts";
-import { drawHelpChrome } from "./helpChrome";
+import type { Point } from "../data/types/index.ts";
+import type { ActionHelpLayout } from "../ui/index.ts";
+import { ACTION_FONT, addCardText, BODY_FONT } from "./cardParts.ts";
+import { drawHelpChrome } from "./helpChrome.ts";
 
 const FONT_KEYS = { body: BODY_FONT, title: ACTION_FONT } as const;
 

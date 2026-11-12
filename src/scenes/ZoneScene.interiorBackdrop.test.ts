@@ -1,10 +1,10 @@
 import { expect, it, vi } from "vitest";
 
-import type { ObjectLayout } from "../data/types";
+import type { ObjectLayout } from "../data/types/index.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
-import { ZoneScene } from "./ZoneScene";
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+import { ZoneScene } from "./ZoneScene.ts";
 
 it("creates a native repeating two-axis clip behind props and keeps its world rectangle across camera changes", () => {
   const item = {

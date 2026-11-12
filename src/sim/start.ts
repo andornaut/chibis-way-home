@@ -1,10 +1,10 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { rectAt } from "../core";
-import type { BirdTuning, ZoneLayout } from "../data/types";
-import { contactBox } from "../rules/behaviour";
-import { birdBox } from "../rules/bird";
-import { areaOf, type ZoneState } from "../rules/zone";
+import { rectAt } from "../core/index.ts";
+import type { BirdTuning, ZoneLayout } from "../data/types/index.ts";
+import { contactBox } from "../rules/behaviour.ts";
+import { birdBox } from "../rules/bird.ts";
+import { areaOf, type ZoneState } from "../rules/zone.ts";
 
 export type SimulationStart =
   | { readonly area: string; readonly entry: string }

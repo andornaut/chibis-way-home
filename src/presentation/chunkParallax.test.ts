@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { chunkBackdropSpan, chunkParallax } from "./chunkParallax";
+import { chunkBackdropSpan, chunkParallax } from "./chunkParallax.ts";
 
 describe("chunk-local parallax", () => {
   const bounds = { height: 600, width: 720, x: 7200, y: 120 };

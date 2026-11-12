@@ -2,10 +2,10 @@
 
 import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
 
-import type { AchievementsText } from "./achievements";
-import type { SkillId } from "./bird";
-import type { Point } from "./geometry";
-import type { ControlAction } from "./ui";
+import type { AchievementsText } from "./achievements.ts";
+import type { SkillId } from "./bird.ts";
+import type { Point } from "./geometry.ts";
+import type { ControlAction } from "./ui.ts";
 
 export interface DeathText {
   // The death card's accessible name, with the zone's name as {zone}.

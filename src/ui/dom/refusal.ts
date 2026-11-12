@@ -1,6 +1,6 @@
 import { REFUSAL_ATTRIBUTES, refuse } from "@andornaut/game-kit/web/ui/dom/refusalCue";
 
-import { CONTROL_REFUSAL } from "../../data/feedback";
+import { CONTROL_REFUSAL } from "../../data/feedback.ts";
 
 // The refusal cue on a control that cannot act (the kit's refusalCue, drawn by its ui.css): the
 // control glides out and back CONTROL_REFUSAL.shake base px once per shakeMs while its labels

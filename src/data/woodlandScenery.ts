@@ -1,5 +1,5 @@
-import { TILE } from "./screen";
-import type { BehaviourPlan, Character, ElementBinding, Instance } from "./types";
+import { TILE } from "./screen.ts";
+import type { BehaviourPlan, Character, ElementBinding, Instance } from "./types/index.ts";
 
 const DEER_BEHAVIOUR: BehaviourPlan = {
   axis: "x",

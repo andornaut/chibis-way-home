@@ -9,17 +9,17 @@ import {
   CONTACT_SILHOUETTES,
   sheetFrameSize,
   spriteContacts,
-} from "../assets";
-import { ARCHETYPES } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { ZONE_MAP } from "../data/map";
-import { TILE } from "../data/screen";
-import type { SpriteSilhouettes } from "../data/types";
-import { zoneLayout } from "../rules/tiles";
-import { zonePlanFor } from "../rules/zonePlans";
-import type { Tileset } from "../stage";
-import { type PreparedStage, prepareStage } from "./simulate";
+} from "../assets/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { TILE } from "../data/screen.ts";
+import type { SpriteSilhouettes } from "../data/types/index.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { zonePlanFor } from "../rules/zonePlans.ts";
+import type { Tileset } from "../stage/index.ts";
+import { type PreparedStage, prepareStage } from "./simulate.ts";
 
 // Art's frames, hitboxes and tilesets, read from the built art without a bundler.
 export function nodeArt(artRoot = new URL("../../public/art/", import.meta.url)) {

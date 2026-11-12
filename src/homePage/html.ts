@@ -3,9 +3,9 @@ import { readFile } from "node:fs/promises";
 import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import type { Plugin } from "vite";
 
-import { TEXT } from "../data/text";
-import type { GameText } from "../data/types";
-import { actionHelpCss, actionHelpHtml, escaped } from "./actionHelp";
+import { TEXT } from "../data/text.ts";
+import type { GameText } from "../data/types/index.ts";
+import { actionHelpCss, actionHelpHtml, escaped } from "./actionHelp.ts";
 
 // The steps dialog's sections, one per kind of browser in kind order, each marked data-steps with
 // its kind and titled by its h2, hidden until the install button shows the browser's own.

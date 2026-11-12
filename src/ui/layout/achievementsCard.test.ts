@@ -1,12 +1,12 @@
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
-import { TEXT } from "../../data/text";
-import { ACHIEVEMENT_IDS } from "../../progress";
-import { CARD_FONTS } from "../../testing/cardFonts";
-import { dialogueLines } from "../dialogue/conversation";
-import { achievementsCardProperties, achievementsPerPage } from "./achievementsCard";
-import { DIALOGUE_SCREEN, dialogueBodyLines } from "./dialogueScreen";
+import { TEXT } from "../../data/text.ts";
+import { ACHIEVEMENT_IDS } from "../../progress/index.ts";
+import { CARD_FONTS } from "../../testing/cardFonts.ts";
+import { dialogueLines } from "../dialogue/conversation.ts";
+import { achievementsCardProperties, achievementsPerPage } from "./achievementsCard.ts";
+import { DIALOGUE_SCREEN, dialogueBodyLines } from "./dialogueScreen.ts";
 
 describe("the Achievements card", () => {
   it("pages all 26 entries, six to a page in three rows, in full pages before the last", () => {

@@ -1,7 +1,7 @@
 // Fairness bounds on each boss's attacks (`BossFairness` in `src/data/types/behaviour.ts`), by
 // character. Recorded answers: a 0.6 s minimum reaction from tell start to contact, a 0.25 s
 // dodge-witness reaction delay, at most 12 s between threats and a 0.4 s recovery bound.
-import type { BossFairness, DodgeName } from "./types";
+import type { BossFairness, DodgeName } from "./types/index.ts";
 
 const SHARED = {
   maxThreatGapSeconds: 12,

@@ -1,13 +1,13 @@
 // @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
-import { TEXT } from "../../data/text";
-import type { ControlAction } from "../../data/types";
-import { svgLayers } from "../../testing/chromeSvg";
-import { helpChromeLayers } from "../chrome/helpChrome";
-import { TOUCH_CHROME_FRAME } from "../chrome/touchChrome";
-import { createActionHelp } from "./actionHelp";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import { TEXT } from "../../data/text.ts";
+import type { ControlAction } from "../../data/types/index.ts";
+import { svgLayers } from "../../testing/chromeSvg.ts";
+import { helpChromeLayers } from "../chrome/helpChrome.ts";
+import { TOUCH_CHROME_FRAME } from "../chrome/touchChrome.ts";
+import { createActionHelp } from "./actionHelp.ts";
 
 const colour = (name: keyof typeof palette.colours) =>
   Number.parseInt(palette.colours[name].slice(1), 16);

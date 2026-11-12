@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import type { BirdTuning, Rect } from "../data/types";
-import { startBird, stepBird } from "./bird";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { BirdTuning, Rect } from "../data/types/index.ts";
+import { startBird, stepBird } from "./bird.ts";
 
 const tuning: BirdTuning = BIRD;
 const floor: Rect = { height: 40, width: 4000, x: -2000, y: 300 };

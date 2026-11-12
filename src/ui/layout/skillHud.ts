@@ -1,10 +1,10 @@
 import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 
-import { HUD_EDGE, SKILL_HUD } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Point, Rect, SkillId } from "../../data/types";
-import { SKILL_IDS } from "../../progress";
-import { PAUSE_VISIBLE_DIAMETER } from "./controlChrome";
+import { HUD_EDGE, SKILL_HUD } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Point, Rect, SkillId } from "../../data/types/index.ts";
+import { SKILL_IDS } from "../../progress/index.ts";
+import { PAUSE_VISIBLE_DIAMETER } from "./controlChrome.ts";
 
 // A skill button's drawn disc, glyph and square target sides.
 export const SKILL_BUTTON = {

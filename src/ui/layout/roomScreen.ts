@@ -1,6 +1,6 @@
-import { ROOM_LAYOUT } from "../../data/layout";
-import type { Rect } from "../../data/types";
-import { hitAround } from "./hitAreas";
+import { ROOM_LAYOUT } from "../../data/layout.ts";
+import type { Rect } from "../../data/types/index.ts";
+import { hitAround } from "./hitAreas.ts";
 
 // A room, in base pixels in the game's view: Leave at the top right, level with the start
 // screen's nav buttons and ending where they do, clear of the pause button's top-left corner;

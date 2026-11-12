@@ -1,4 +1,4 @@
-import { stepFocus } from "../focus";
+import { stepFocus } from "../focus/index.ts";
 
 export type MapAction = "continue" | "home";
 type MapKeyAction =

@@ -1,4 +1,4 @@
-import type { StageBarkSchedule } from "./types";
+import type { StageBarkSchedule } from "./types/index.ts";
 
 // Fert's journey bark line for each stage; the event ID repeats the line key.
 const STAGE_BARK_LINES: Readonly<Record<string, string>> = {

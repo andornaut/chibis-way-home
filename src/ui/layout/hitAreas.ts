@@ -2,7 +2,7 @@ import { clamp } from "@andornaut/game-kit/numbers";
 import { containsPoint } from "@andornaut/game-kit/rect";
 import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 
-import type { Point, Rect } from "../../data/types";
+import type { Point, Rect } from "../../data/types/index.ts";
 
 // Every button's press area reaches past its drawn button on every side by HIT_RULE's margin,
 // and is at least its minTarget on each side, grown evenly about the button's centre where it

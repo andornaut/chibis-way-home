@@ -1,8 +1,8 @@
-import type { StageCompletion, ZoneMap } from "../data/types";
-import { isLastZone, nodeOf, openMap, pathsFrom } from "./map";
-import { destinationForStage } from "./mapDestinations";
+import type { StageCompletion, ZoneMap } from "../data/types/index.ts";
+import { isLastZone, nodeOf, openMap, pathsFrom } from "./map.ts";
+import { destinationForStage } from "./mapDestinations.ts";
 
-export type { StageCompletion } from "../data/types";
+export type { StageCompletion } from "../data/types/index.ts";
 
 // Replays follow the same catalogue transition as a first clear. Future forks remain a choice
 // for a later route model, so automatic travel requires one direct built successor.

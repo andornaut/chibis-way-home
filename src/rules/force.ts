@@ -1,6 +1,6 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import type { Point, Rect } from "../data/types";
+import type { Point, Rect } from "../data/types/index.ts";
 
 export interface ForcePulse {
   readonly facing: -1 | 1;

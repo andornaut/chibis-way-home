@@ -1,8 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import sheet from "../../public/art/sprites/ui-pause.json";
-import type { PauseDiscPose } from "../ui";
-import { pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome";
+import sheet from "../../public/art/sprites/ui-pause.json" with { type: "json" };
+import type { PauseDiscPose } from "../ui/index.ts";
+import { pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome.ts";
 
 afterEach(() => vi.useRealTimers());
 

@@ -1,4 +1,4 @@
-import type { AirJumpCueTuning } from "./types";
+import type { AirJumpCueTuning } from "./types/index.ts";
 
 export const AIR_JUMP_CUE: AirJumpCueTuning = {
   borderColour: "ink",

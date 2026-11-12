@@ -4,13 +4,13 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-vi.mock("./catalogue", () => ({ stageLoader: vi.fn(() => () => ({})) }));
-vi.mock("./report", () => ({ simulateBatch: vi.fn() }));
+vi.mock("./catalogue.ts", () => ({ stageLoader: vi.fn(() => () => ({})) }));
+vi.mock("./report.ts", () => ({ simulateBatch: vi.fn() }));
 
-import { stageLoader } from "./catalogue";
-import { simulationCli } from "./cli";
-import { playabilityCli } from "./playabilityCli";
-import { type BatchResult, simulateBatch } from "./report";
+import { stageLoader } from "./catalogue.ts";
+import { simulationCli } from "./cli.ts";
+import { playabilityCli } from "./playabilityCli.ts";
+import { type BatchResult, simulateBatch } from "./report.ts";
 
 beforeEach(() => {
   vi.clearAllMocks();

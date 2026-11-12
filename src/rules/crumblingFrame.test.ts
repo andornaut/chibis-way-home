@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { Rect } from "../data/types";
-import { crumblingSupportPresent, initialCrumblingWorld } from "./crumbling";
+import type { Rect } from "../data/types/index.ts";
+import { crumblingSupportPresent, initialCrumblingWorld } from "./crumbling.ts";
 import {
   beginCrumblingFrame,
   type CrumblingFrameRequest,
   endCrumblingFrame,
-} from "./crumblingFrame";
+} from "./crumblingFrame.ts";
 
 const support: Rect = { height: 30, width: 60, x: 0, y: 100 };
 const unmarked: Rect = { height: 30, width: 60, x: 100, y: 100 };

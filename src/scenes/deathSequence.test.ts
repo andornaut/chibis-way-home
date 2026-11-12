@@ -3,32 +3,36 @@ import { EventEmitter } from "node:events";
 import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_MS } from "../core";
-import { BIRD } from "../data/bird";
-import { DEATH } from "../data/death";
-import { SCREEN } from "../data/screen";
-import type { ZoneDeath } from "../data/types";
-import * as deathPresentation from "../presentation";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_MS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { DEATH } from "../data/death.ts";
+import { SCREEN } from "../data/screen.ts";
+import type { ZoneDeath } from "../data/types/index.ts";
+import * as deathPresentation from "../presentation/index.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
-vi.mock("../pwa", () => ({ coverZone: vi.fn(), startWakeLock: vi.fn(), stopWakeLock: vi.fn() }));
-vi.mock("./save", () => ({
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../pwa/index.ts", () => ({
+  coverZone: vi.fn(),
+  startWakeLock: vi.fn(),
+  stopWakeLock: vi.fn(),
+}));
+vi.mock("./save.ts", () => ({
   activeStageTime: () => 0,
   flushStats: vi.fn(),
   stageRunStats: () => ({ runSeconds: 13 }),
   wholeRunStats: () => ({ activeSeconds: 47, deaths: 2 }),
   zoneVisitStats: () => ({ runSeconds: 29 }),
 }));
-vi.mock("../ui/settings/touchControls", () => ({ touchSettings: () => ({}) }));
-vi.mock("./contactFeedback", () => ({
+vi.mock("../ui/settings/touchControls.ts", () => ({ touchSettings: () => ({}) }));
+vi.mock("./contactFeedback.ts", () => ({
   cancelContactFeedback: vi.fn(),
   playContactFeedback: vi.fn(),
 }));
 
-import { cancelContactFeedback } from "./contactFeedback";
-import { ZoneScene } from "./ZoneScene";
+import { cancelContactFeedback } from "./contactFeedback.ts";
+import { ZoneScene } from "./ZoneScene.ts";
 
 type PanCallback = (camera: unknown, progress: number) => void;
 function fixture(reason: "fall" | "hazard") {

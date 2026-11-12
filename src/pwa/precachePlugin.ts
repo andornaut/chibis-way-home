@@ -1,10 +1,10 @@
 import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/web/pwa/vite/precachePlugin";
 import type { Plugin } from "vite";
 
-import type { ArtManifest } from "../assets";
-import { CACHE_POLICY } from "./cachePolicy";
-import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded";
-import { ART_MANIFEST_URL, artUrls } from "./precacheArt";
+import type { ArtManifest } from "../assets/index.ts";
+import { CACHE_POLICY } from "./cachePolicy.ts";
+import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
+import { ART_MANIFEST_URL, artUrls } from "./precacheArt.ts";
 
 // The kit's precache plugin with the game's cache policy, building /sw.js from
 // serviceWorkerSource (serviceWorker.ts) to precache the game page at pageHtmlFile and what it

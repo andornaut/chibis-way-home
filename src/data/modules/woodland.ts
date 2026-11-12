@@ -1,4 +1,4 @@
-import type { ChunkModule, TerrainRect } from "../types";
+import type { ChunkModule, TerrainRect } from "../types/index.ts";
 
 // Woodland halves on the lower route (row 80). The gust ravine fills the right half and its
 // lookout the left half in front of it. Neither holds an encounter.

@@ -1,10 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import type { ChunkPlan, Instance } from "../data/types";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
+import type { ChunkPlan, Instance } from "../data/types/index.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
 
 afterEach(() => {
-  vi.doUnmock("../data/archetypes");
+  vi.doUnmock("../data/archetypes.ts");
   vi.resetModules();
 });
 
@@ -23,8 +23,8 @@ const red: Instance = {
 async function encounterTargets(changes: Partial<Instance> | undefined, lethal = true) {
   vi.resetModules();
   if (!lethal) {
-    vi.doMock("../data/archetypes", async (original) => {
-      const actual = await original<typeof import("../data/archetypes")>();
+    vi.doMock("../data/archetypes.ts", async (original) => {
+      const actual = await original<typeof import("../data/archetypes.ts")>();
       return {
         ...actual,
         ARCHETYPES: {
@@ -34,7 +34,7 @@ async function encounterTargets(changes: Partial<Instance> | undefined, lethal =
       };
     });
   }
-  const { moduleRouteTargets } = await import("./requiredRoutes");
+  const { moduleRouteTargets } = await import("./requiredRoutes.ts");
   const mesa = CHUNK_LIBRARY.chunks["broad-mesa"]!;
   const chunk: ChunkPlan = {
     ...mesa,

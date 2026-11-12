@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { BACKGROUND_SECTIONS } from "./backgrounds";
-import { THEMES } from "./chunks";
-import { ZONE_MAP } from "./map";
-import { RECIPES } from "./zones";
+import { BACKGROUND_SECTIONS } from "./backgrounds.ts";
+import { THEMES } from "./chunks.ts";
+import { ZONE_MAP } from "./map.ts";
+import { RECIPES } from "./zones.ts";
 
 describe("background catalogue", () => {
   it("binds continuous outdoor sections without replacing indoor wall and window authoring", () => {

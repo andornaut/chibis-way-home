@@ -5,8 +5,8 @@ export {
   prepareSpriteContact,
   silhouetteContact,
   spriteFrameOrigin,
-} from "./bodyContact";
-export { collisionCandidates } from "./collisionIndex";
-export { EDGE, rectAt, sameRect } from "./geometry";
-export { PLAY_STEP_LIMITS, STEP_MS, STEP_SECONDS } from "./step";
-export { sweptContact } from "./sweptContact";
+} from "./bodyContact.ts";
+export { collisionCandidates } from "./collisionIndex.ts";
+export { EDGE, rectAt, sameRect } from "./geometry.ts";
+export { PLAY_STEP_LIMITS, STEP_MS, STEP_SECONDS } from "./step.ts";
+export { sweptContact } from "./sweptContact.ts";

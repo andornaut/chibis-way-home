@@ -1,18 +1,18 @@
 import { expect, it } from "vitest";
 
-import { BIRD } from "../data/bird";
-import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
-import type { Archetype, BehaviourNode, BehaviourPlan, ObjectLayout } from "../data/types";
-import { behaviourPose } from "../presentation";
-import { TEST_PURSUER, withAnticipationContact } from "../testing/behaviours";
-import { startBehaviour, stepBehaviour } from "./behaviour";
-import { startBird } from "./bird";
+import { BIRD } from "../data/bird.ts";
+import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours.ts";
+import type { Archetype, BehaviourNode, BehaviourPlan, ObjectLayout } from "../data/types/index.ts";
+import { behaviourPose } from "../presentation/index.ts";
+import { TEST_PURSUER, withAnticipationContact } from "../testing/behaviours.ts";
+import { startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { startBird } from "./bird.ts";
 import {
   effectiveCollision,
   effectiveHazardPhase,
   validateHazardPhases,
-} from "./effectiveCollision";
-import { objectLayout } from "./tiles";
+} from "./effectiveCollision.ts";
+import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

@@ -1,16 +1,16 @@
 import type { Scene } from "phaser";
 
-import { ZONE_MAP } from "../data/map";
-import { STAGE_PREVIEWS } from "../data/stagePreviews";
-import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
-import type { Rect } from "../data/types";
-import { deathLabels, deathSummary } from "../presentation";
+import { ZONE_MAP } from "../data/map.ts";
+import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
+import { STATS_SCOPE_TEXT, TEXT } from "../data/text.ts";
+import type { Rect } from "../data/types/index.ts";
+import { deathLabels, deathSummary } from "../presentation/index.ts";
 import {
   formatRunStats,
   type RunStatsSummary,
   type WholeRunDisplaySummary,
   type ZoneStatsSummary,
-} from "../progress";
+} from "../progress/index.ts";
 import {
   type DialogueParagraph,
   FONT_SCALE,
@@ -19,8 +19,8 @@ import {
   stageSummaryLayout,
   statsTotalRows,
   summaryTextOrigin,
-} from "../ui";
-import { addCardText, BODY_FONT, cardFonts, paletteColour, TITLE_FONT } from "./cardParts";
+} from "../ui/index.ts";
+import { addCardText, BODY_FONT, cardFonts, paletteColour, TITLE_FONT } from "./cardParts.ts";
 
 export function addStageSummary(
   scene: Scene,

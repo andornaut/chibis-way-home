@@ -1,6 +1,6 @@
 import { modalDimmer } from "@andornaut/game-kit/view/modalDim";
 
-import type { Palette } from "./dim";
+import type { Palette } from "./dim.ts";
 
 // Modals share one strength while the title screen keeps its separate ambient treatment.
 export function modalColour(palette: Palette): (colour: number) => number {

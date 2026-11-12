@@ -6,10 +6,10 @@ import {
   isLastZone,
   openMap,
   stageCompletion,
-} from "../progress";
-import { ZONE_MAP } from "./map";
-import { TEXT } from "./text";
-import { RECIPES } from "./zones";
+} from "../progress/index.ts";
+import { ZONE_MAP } from "./map.ts";
+import { TEXT } from "./text.ts";
+import { RECIPES } from "./zones.ts";
 
 const CATALOGUE = ZONE_MAP.destinations.flatMap(({ stages }) => stages);
 const PLANS = new Set(Object.keys(RECIPES));

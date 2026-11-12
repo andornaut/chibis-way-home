@@ -3,8 +3,8 @@ import {
   encounterStart,
   PATROL_FINISH_GEOMETRY,
   withoutEncounters,
-} from "./chunkTemplates";
-import type { ChunkPlan } from "./types";
+} from "./chunkTemplates.ts";
+import type { ChunkPlan } from "./types/index.ts";
 
 const COUNTRYSIDE_START: Omit<ChunkPlan, "theme"> = {
   backdrops: [

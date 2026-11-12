@@ -1,4 +1,4 @@
-import { EDGE, rectAt } from "../core";
+import { EDGE, rectAt } from "../core/index.ts";
 import type {
   CircleOrbit,
   Instance,
@@ -8,8 +8,8 @@ import type {
   Point,
   Rect,
   Size,
-} from "../data/types";
-import { axisOf, type Track } from "./motion";
+} from "../data/types/index.ts";
+import { axisOf, type Track } from "./motion.ts";
 
 // Whether an orbit's own fields are well formed for its kind: a circle's radius, speed, phase and
 // any stops; a pendulum's length, amplitude short of a quarter turn so the child stays below its

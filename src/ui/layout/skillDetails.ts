@@ -1,11 +1,11 @@
-import { CARD_CONTENT, SKILL_DETAILS, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { ControlAction, Rect, SkillText } from "../../data/types";
-import { actionHelpInkTop, actionHelpLayout } from "./actionHelp";
-import { cardActions, cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard";
-import { DIALOGUE_SCREEN } from "./dialogueScreen";
-import { hitAround } from "./hitAreas";
-import { SKILL_BUTTON } from "./skillHud";
+import { CARD_CONTENT, SKILL_DETAILS, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { ControlAction, Rect, SkillText } from "../../data/types/index.ts";
+import { actionHelpInkTop, actionHelpLayout } from "./actionHelp.ts";
+import { cardActions, cardActionsSize, type CardFonts, contentCardLayout } from "./contentCard.ts";
+import { DIALOGUE_SCREEN } from "./dialogueScreen.ts";
+import { hitAround } from "./hitAreas.ts";
+import { SKILL_BUTTON } from "./skillHud.ts";
 
 const DESCRIPTION_WIDTH = SKILL_DETAILS.descriptionWidth;
 const footer = {

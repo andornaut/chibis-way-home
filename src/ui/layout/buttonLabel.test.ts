@@ -5,16 +5,16 @@ import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import palette from "../../../public/art/palette.json";
-import secondary from "../../../public/art/sprites/ui-button.json";
-import primary from "../../../public/art/sprites/ui-button-primary.json";
-import { PLAY_MARK, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { TEXT } from "../../data/text";
-import { buttonFace, buttonLabelPlacement, centredLabel } from "./buttonLabel";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import { startScreenLayout } from "./startScreen";
-import { textInkBounds } from "./textInk";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import secondary from "../../../public/art/sprites/ui-button.json" with { type: "json" };
+import primary from "../../../public/art/sprites/ui-button-primary.json" with { type: "json" };
+import { PLAY_MARK, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import { buttonFace, buttonLabelPlacement, centredLabel } from "./buttonLabel.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import { startScreenLayout } from "./startScreen.ts";
+import { textInkBounds } from "./textInk.ts";
 
 const button = { height: 28, width: 72, x: 452, y: 198 };
 

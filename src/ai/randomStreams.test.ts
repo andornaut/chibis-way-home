@@ -1,7 +1,7 @@
 import { randomStream } from "@andornaut/game-kit/random";
 import { expect, it } from "vitest";
 
-import { namedStreams, scopedStreams } from "./randomStreams";
+import { namedStreams, scopedStreams } from "./randomStreams.ts";
 
 const draws = (random: () => number) => [random(), random(), random()];
 

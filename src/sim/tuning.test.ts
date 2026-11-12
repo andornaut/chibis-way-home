@@ -4,14 +4,14 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import type { PlayabilityReport } from "./playability";
+import type { PlayabilityReport } from "./playability.ts";
 import {
   assessTuning,
   formatTuningCsv,
   formatTuningMarkdown,
   type SavedTuningCase,
-} from "./tuning";
-import { tuningCli, writeTuningOutputs } from "./tuningCli";
+} from "./tuning.ts";
+import { tuningCli, writeTuningOutputs } from "./tuningCli.ts";
 
 function fixture(): { structural: PlayabilityReport; saved: SavedTuningCase } {
   const chunks = ["a", "b"].map((id, col) => ({

@@ -1,21 +1,21 @@
-import type { Ability } from "../ai/ability";
-import { EDGE, STEP_SECONDS } from "../core";
-import type { Point, Rect } from "../data/types";
-import type { BehaviourState } from "./behaviour";
+import type { Ability } from "../ai/ability.ts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import type { Point, Rect } from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
 import type {
   BehaviourAbilityContext,
   BehaviourAbilityParams,
   BehaviourActor,
   BehaviourMotionStep,
-} from "./behaviourAbilities";
-import { syncAnimation } from "./behaviourAnimation";
+} from "./behaviourAbilities.ts";
+import { syncAnimation } from "./behaviourAnimation.ts";
 import {
   advanceMapEdge,
   blockMapChase,
   failMapEdge,
   type MapPlan,
   planMapLeg,
-} from "./behaviourMapPursuit";
+} from "./behaviourMapPursuit.ts";
 import {
   type BehaviourWorld,
   flightAxis,
@@ -23,11 +23,11 @@ import {
   overheadFlightGoal,
   overheadFlightGoalForRect,
   overheadFlightRoute,
-} from "./behaviourReach";
-import { contactBox, pursuitTrack } from "./behaviourTrack";
-import { advanceTraversal, advanceTraversalLeg } from "./behaviourTraversal";
-import { birdBox } from "./bird";
-import { flyLandingRoute } from "./flyLanding";
+} from "./behaviourReach.ts";
+import { contactBox, pursuitTrack } from "./behaviourTrack.ts";
+import { advanceTraversal, advanceTraversalLeg } from "./behaviourTraversal.ts";
+import { birdBox } from "./bird.ts";
+import { flyLandingRoute } from "./flyLanding.ts";
 
 type PursuitAbility<Kind extends BehaviourAbilityParams["kind"]> = Ability<
   BehaviourAbilityContext,

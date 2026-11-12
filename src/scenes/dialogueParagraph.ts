@@ -6,8 +6,8 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import type { GameObjects, Scene } from "phaser";
 
-import { DIALOGUE_LAYOUT } from "../data/layout";
-import type { Rect } from "../data/types";
+import { DIALOGUE_LAYOUT } from "../data/layout.ts";
+import type { Rect } from "../data/types/index.ts";
 import {
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
@@ -19,7 +19,7 @@ import {
   dialogueSpeakerLayout,
   dialogueTextRows,
   type PressArea,
-} from "../ui";
+} from "../ui/index.ts";
 import {
   addCardText,
   addCardTextIn,
@@ -27,7 +27,7 @@ import {
   BODY_FONT,
   paletteColour,
   TITLE_FONT,
-} from "./cardParts";
+} from "./cardParts.ts";
 
 // A panel paragraph: the portrait may name one frame of its texture, drawn scaled to fill the
 // portrait; a null name draws no name tab; a heading is a bold first text line above the body.

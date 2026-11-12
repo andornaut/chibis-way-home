@@ -10,7 +10,7 @@ import {
   regularBrowser,
   skillOverridesFromSearch,
   stageDevelopmentUrl,
-} from "./mode";
+} from "./mode.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 describe("developer session routing", () => {

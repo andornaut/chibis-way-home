@@ -1,9 +1,9 @@
-import { type Ability, abilityFor, type AbilityTable } from "../ai/ability";
-import type { BehaviourAction, ObjectLayout } from "../data/types";
-import type { BehaviourEvent } from "./behaviour";
-import { contactBox } from "./behaviourTrack";
-import type { SpawnEvent } from "./transients";
-import type { ZonePulse } from "./zone";
+import { type Ability, abilityFor, type AbilityTable } from "../ai/ability.ts";
+import type { BehaviourAction, ObjectLayout } from "../data/types/index.ts";
+import type { BehaviourEvent } from "./behaviour.ts";
+import { contactBox } from "./behaviourTrack.ts";
+import type { SpawnEvent } from "./transients.ts";
+import type { ZonePulse } from "./zone.ts";
 
 // What one entry action emits into the zone: a force pulse to number, or a transient to spawn.
 type BehaviourEffect =

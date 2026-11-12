@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import type { Archetype, Character, Rect, ZonePlan } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import type { Tileset } from "../stage";
-import { type Catalogue, zoneLayout } from "./tiles";
-import { startZone, stepZone } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { Archetype, Character, Rect, ZonePlan } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import type { Tileset } from "../stage/index.ts";
+import { type Catalogue, zoneLayout } from "./tiles.ts";
+import { startZone, stepZone } from "./zone.ts";
 
 const TILE = 12;
 const HAZARD: Archetype = {

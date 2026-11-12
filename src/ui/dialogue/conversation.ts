@@ -7,9 +7,9 @@ import type {
   DialogueSpeaker,
   GameText,
   Point,
-} from "../../data/types";
-import { focusKeyAction, stepFocus } from "../focus";
-import { type PressArea, pressedArea } from "../layout/hitAreas";
+} from "../../data/types/index.ts";
+import { focusKeyAction, stepFocus } from "../focus/index.ts";
+import { type PressArea, pressedArea } from "../layout/hitAreas.ts";
 
 export interface DialogueParagraph {
   readonly colour: DialogueSpeaker["colour"];

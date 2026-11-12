@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { landingCorridor, phaseCount, phaseStarts } from "./walkPhases";
+import { landingCorridor, phaseCount, phaseStarts } from "./walkPhases.ts";
 
 const local = { cycleSteps: 120, index: 1, left: 100, right: 140 };
 const remote = { cycleSteps: 960, index: 2, left: 9000, right: 9100 };

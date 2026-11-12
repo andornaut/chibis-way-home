@@ -2,11 +2,11 @@ import { CelebrationQueue } from "@andornaut/game-kit/achievements";
 import { saveStore } from "@andornaut/game-kit/save/saveStore";
 import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
 
-import { BOSS_CHARACTERS } from "../../data/achievements";
-import { CHUNKS } from "../../data/chunks";
-import { ZONE_MAP } from "../../data/map";
-import type { AchievementId, BossId, SkillId } from "../../data/types";
-import { RECIPES } from "../../data/zones";
+import { BOSS_CHARACTERS } from "../../data/achievements.ts";
+import { CHUNKS } from "../../data/chunks.ts";
+import { ZONE_MAP } from "../../data/map.ts";
+import type { AchievementId, BossId, SkillId } from "../../data/types/index.ts";
+import { RECIPES } from "../../data/zones.ts";
 import {
   ACHIEVEMENT_IDS,
   achievementEntries,
@@ -15,10 +15,10 @@ import {
   type AchievementScope,
   earnedAt,
   zoneEndingAt,
-} from "../achievements";
-import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks";
-import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills";
-import { achievementsStore } from "./achievements";
+} from "../achievements.ts";
+import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
+import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills.ts";
+import { achievementsStore } from "./achievements.ts";
 import {
   BEGINNING,
   mapProgress,
@@ -26,17 +26,17 @@ import {
   PROGRESS_KEYS,
   progressFormat,
   type RecentChunks,
-} from "./progress";
-import { grantStoredSkills, type SavedSkillGrantResult } from "./savedSkillGrant";
-import { skillGrantEffects, withGrantedSkill } from "./skillGrant";
+} from "./progress.ts";
+import { grantStoredSkills, type SavedSkillGrantResult } from "./savedSkillGrant.ts";
+import { skillGrantEffects, withGrantedSkill } from "./skillGrant.ts";
 import {
   type RunStatsSummary,
   stageStatsStore,
   type WholeRunStatsSummary,
   type ZoneStatsSummary,
-} from "./stats";
+} from "./stats.ts";
 
-export { type Progress } from "./progress";
+export { type Progress } from "./progress.ts";
 
 // The page's session, which each call that asks it takes first: the developer skill overrides
 // enable skills beside the owned ones, and a developer session's active skill may be a selection

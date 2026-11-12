@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { Archetype } from "../data/types";
-import { areaLayout, objectLayout } from "./tiles";
+import type { Archetype } from "../data/types/index.ts";
+import { areaLayout, objectLayout } from "./tiles.ts";
 
 const profile = { absentSeconds: 2, warningSeconds: 0.8 };
 const archetype: Archetype = {

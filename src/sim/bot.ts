@@ -1,24 +1,24 @@
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { rectAt } from "../core";
-import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
-import { contactBox } from "../rules/behaviour";
-import { transientBox } from "../rules/transients";
-import type { ZoneInput, ZoneState } from "../rules/zone";
-import { hasDynamicMotion } from "./behaviourBounds";
+import { rectAt } from "../core/index.ts";
+import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
+import { contactBox } from "../rules/behaviour.ts";
+import { transientBox } from "../rules/transients.ts";
+import type { ZoneInput, ZoneState } from "../rules/zone.ts";
+import { hasDynamicMotion } from "./behaviourBounds.ts";
 import {
   type NavigationConfig,
   type NavigationMemory,
   type NavigationState,
   plannedInput,
-} from "./navigation";
+} from "./navigation.ts";
 export type {
   NavigationConfig,
   NavigationCounters,
   NavigationDiagnostic,
   NavigationMemory,
-} from "./navigation";
+} from "./navigation.ts";
 export {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
@@ -28,7 +28,7 @@ export {
   resetNavigation,
   restoreNavigationMemory,
   validateNavigation,
-} from "./navigation";
+} from "./navigation.ts";
 
 export interface BotSkill {
   readonly navigation?: Partial<NavigationConfig>;

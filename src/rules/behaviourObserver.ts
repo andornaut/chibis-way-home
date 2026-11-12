@@ -1,6 +1,6 @@
-import type { Point, Rect } from "../data/types";
-import type { BehaviourScorerState, BossScorerChoice } from "./behaviourScorer";
-import type { BehaviourTraversalState } from "./behaviourTraversal";
+import type { Point, Rect } from "../data/types/index.ts";
+import type { BehaviourScorerState, BossScorerChoice } from "./behaviourScorer.ts";
+import type { BehaviourTraversalState } from "./behaviourTraversal.ts";
 
 export type BehaviourFact<Value> =
   | { readonly status: "captured"; readonly value: Value }

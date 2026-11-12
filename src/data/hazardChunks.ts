@@ -1,7 +1,7 @@
-import { CITY_GROUND_HAZARD_BEHAVIOUR } from "./behaviours";
-import { CHUNK_COLS, redCeiling } from "./chunkTemplates";
-import { ZONE_ROWS } from "./screen";
-import type { ChunkPlan, TerrainRect } from "./types";
+import { CITY_GROUND_HAZARD_BEHAVIOUR } from "./behaviours.ts";
+import { CHUNK_COLS, redCeiling } from "./chunkTemplates.ts";
+import { ZONE_ROWS } from "./screen.ts";
+import type { ChunkPlan, TerrainRect } from "./types/index.ts";
 
 const floor = (col: number, cols: number, row: number): TerrainRect => ({
   col,

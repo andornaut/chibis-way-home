@@ -2,21 +2,21 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { CROSSWALK_BEHAVIOUR } from "../data/obstacleBehaviours";
-import { REACH } from "../data/reach";
-import { TILE } from "../data/screen";
-import type { ZonePlan } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { zonePlanOf } from "../rules/assemble";
-import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone } from "../rules/zone";
-import { WINDMILL_FIXTURE_CATALOGUE, WINDMILL_FIXTURE_LIBRARY } from "../testing/chunks";
-import { CATALOGUE, HITBOXES, TILESETS, WALK_MS, walkSuite } from "../testing/walkSuite";
-import { TEST_ZONES } from "../testing/zones";
-import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { CROSSWALK_BEHAVIOUR } from "../data/obstacleBehaviours.ts";
+import { REACH } from "../data/reach.ts";
+import { TILE } from "../data/screen.ts";
+import type { ZonePlan } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { zonePlanOf } from "../rules/assemble.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { startZone, stepZone } from "../rules/zone.ts";
+import { WINDMILL_FIXTURE_CATALOGUE, WINDMILL_FIXTURE_LIBRARY } from "../testing/chunks.ts";
+import { CATALOGUE, HITBOXES, TILESETS, WALK_MS, walkSuite } from "../testing/walkSuite.ts";
+import { TEST_ZONES } from "../testing/zones.ts";
+import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions.ts";
 import {
   crosses,
   type Surface,
@@ -24,7 +24,7 @@ import {
   walkRequiredRoutes,
   walkZone,
   zoneSurfaces,
-} from "./zoneWalk";
+} from "./zoneWalk.ts";
 
 // Recipe stages are walked in chunkWalk.test.ts, alongside every individual chunk.
 const ZONES: [string, ZonePlan][] = TEST_ZONES.map((zone, index): [string, ZonePlan] => [
@@ -282,12 +282,12 @@ describe("walk transition cache", () => {
   it("preserves mover-course search results and ordered states with fewer physics calls", async () => {
     async function run(cached: boolean) {
       vi.resetModules();
-      const engine = await import("../rules/zone");
+      const engine = await import("../rules/zone.ts");
       const calls = vi.spyOn(engine, "stepZone");
       const trace = createHash("sha256");
       let transitions = 0;
       let lethalSteps = 0;
-      vi.doMock("./walkTransitions", () => ({
+      vi.doMock("./walkTransitions.ts", () => ({
         walkTransitions: (step: WalkStep): WalkStep => {
           const advance = cached ? memoizeTransitions(step) : step;
           return (input, zone) => {
@@ -302,7 +302,7 @@ describe("walk transition cache", () => {
         },
       }));
       try {
-        const walker = await import("./zoneWalk");
+        const walker = await import("./zoneWalk.ts");
         const layout = frozen(
           zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), transitionCourse()),
         );
@@ -316,7 +316,7 @@ describe("walk transition cache", () => {
         };
       } finally {
         calls.mockRestore();
-        vi.doUnmock("./walkTransitions");
+        vi.doUnmock("./walkTransitions.ts");
       }
     }
     const original = await run(false);

@@ -9,9 +9,9 @@ import {
 } from "@andornaut/game-kit/web/ui/dom/sheetFrames";
 import { slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 
-import type { Rect } from "../../data/types";
-import type { Palette } from "../chrome/dim";
-import { modalColour } from "../chrome/modalDim";
+import type { Rect } from "../../data/types/index.ts";
+import type { Palette } from "../chrome/dim.ts";
+import { modalColour } from "../chrome/modalDim.ts";
 
 // Art's nine-slice frames the HTML UI draws, cut from the images the game already loaded: each
 // frame's art key, the animation tag whose first frame it is (the sheet's first frame where

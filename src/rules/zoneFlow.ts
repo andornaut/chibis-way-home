@@ -1,4 +1,4 @@
-import type { StageCompletion, ZoneDialoguePlan, ZoneMap } from "../data/types";
+import type { StageCompletion, ZoneDialoguePlan, ZoneMap } from "../data/types/index.ts";
 
 export interface ZoneStory extends ZoneDialoguePlan {
   readonly zone: string;

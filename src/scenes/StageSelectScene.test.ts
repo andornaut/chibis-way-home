@@ -3,8 +3,8 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CONTROL_REFUSAL } from "../data/feedback";
-import { ZONE_MAP } from "../data/map";
+import { CONTROL_REFUSAL } from "../data/feedback.ts";
+import { ZONE_MAP } from "../data/map.ts";
 
 const APARTMENT = ZONE_MAP.destinations.find(({ id }) => id === "apartment")!;
 // Every stage before the apartment's fourth is complete, so its first four are unlocked.
@@ -19,10 +19,10 @@ const gate = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./save", () => ({ savedMap: () => ({ completed: COMPLETED }) }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
-vi.mock("./domUi", () => ({
+vi.mock("./save.ts", () => ({ savedMap: () => ({ completed: COMPLETED }) }));
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
+vi.mock("./domUi.ts", () => ({
   artFrameUrl: () => Promise.resolve("blob:preview"),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
@@ -32,9 +32,9 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { TEXT } from "../data/text";
-import { createUiLayer, setReducedMotion, type UiLayer } from "../ui";
-import { StageSelectScene } from "./StageSelectScene";
+import { TEXT } from "../data/text.ts";
+import { createUiLayer, setReducedMotion, type UiLayer } from "../ui/index.ts";
+import { StageSelectScene } from "./StageSelectScene.ts";
 
 let layer: UiLayer;
 

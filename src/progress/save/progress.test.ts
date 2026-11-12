@@ -1,12 +1,12 @@
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { describe, expect, it } from "vitest";
 
-import { ZONE_MAP } from "../../data/map";
-import type { MapNode, ZoneMap } from "../../data/types";
-import { RECIPES } from "../../data/zones";
-import { openMap } from "../map";
-import { destinationForStage, destinationSelection } from "../mapDestinations";
-import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./progress";
+import { ZONE_MAP } from "../../data/map.ts";
+import type { MapNode, ZoneMap } from "../../data/types/index.ts";
+import { RECIPES } from "../../data/zones.ts";
+import { openMap } from "../map.ts";
+import { destinationForStage, destinationSelection } from "../mapDestinations.ts";
+import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./progress.ts";
 
 const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({
   at: { col: 0, row: 0 },

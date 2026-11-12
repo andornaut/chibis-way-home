@@ -1,31 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { AWNING_BEHAVIOUR, AWNING_SECONDS, awningCycle } from "../data/obstacleBehaviours";
-import { TILE } from "../data/screen";
-import type { BehaviourPlan, Instance, ObjectLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { AWNING_BEHAVIOUR, AWNING_SECONDS, awningCycle } from "../data/obstacleBehaviours.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourPlan, Instance, ObjectLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
 import {
   AWNING_FIXTURE_CATALOGUE,
   AWNING_FIXTURE_COLS,
   AWNING_FIXTURE_LIBRARY,
-} from "../testing/chunks";
-import { HITBOXES, TILESETS } from "../testing/walkSuite";
-import { zonePlanOf } from "./assemble";
-import { pursuitMapMask } from "./behaviourMapPursuit";
-import { effectiveCollision, effectiveSupportPhase } from "./effectiveCollision";
+} from "../testing/chunks.ts";
+import { HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { zonePlanOf } from "./assemble.ts";
+import { pursuitMapMask } from "./behaviourMapPursuit.ts";
+import { effectiveCollision, effectiveSupportPhase } from "./effectiveCollision.ts";
 import {
   chibiJumpScripts,
   chibiMovementProfile,
   groundMap,
   groundMask,
   mapTerrain,
-} from "./movementMaps";
-import { areaLayout, zoneLayout } from "./tiles";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone";
-import { clockedSupportPrediction } from "./zoneCrumbling";
+} from "./movementMaps.ts";
+import { areaLayout, zoneLayout } from "./tiles.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { clockedSupportPrediction } from "./zoneCrumbling.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

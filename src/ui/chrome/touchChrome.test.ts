@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
+import palette from "../../../public/art/palette.json" with { type: "json" };
 import {
   type TouchChromeKind,
   touchChromeLayers,
   touchChromePixel,
   type TouchChromePose,
-} from "./touchChrome";
+} from "./touchChrome.ts";
 
 const colours = {
   cream: parseInt(palette.colours.cream.slice(1), 16),

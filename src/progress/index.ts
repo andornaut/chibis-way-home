@@ -7,32 +7,32 @@ export {
   type AchievementEntry,
   type AchievementProgress,
   ORDERED_ACHIEVEMENTS,
-} from "./achievements";
-export { isLastZone, nodeOf, type OpenMap, openMap } from "./map";
+} from "./achievements.ts";
+export { isLastZone, nodeOf, type OpenMap, openMap } from "./map.ts";
 export {
   destinationForStage,
   destinationOf,
   destinationSelection,
   destinationStages,
   steppedDestination,
-} from "./mapDestinations";
-export { createOpeningPlayback, openingDestination } from "./opening";
-export { middleChunkIds, recentMiddleChunks, withRecentMiddleChunks } from "./recentChunks";
-export { ACHIEVEMENTS_VERSION } from "./save/achievements";
-export { type Progress, PROGRESS_VERSION, type RecentChunks } from "./save/progress";
+} from "./mapDestinations.ts";
+export { createOpeningPlayback, openingDestination } from "./opening.ts";
+export { middleChunkIds, recentMiddleChunks, withRecentMiddleChunks } from "./recentChunks.ts";
+export { ACHIEVEMENTS_VERSION } from "./save/achievements.ts";
+export { type Progress, PROGRESS_VERSION, type RecentChunks } from "./save/progress.ts";
 export {
   formatRunStats,
   timeText,
   type WholeRunDisplaySummary,
   wholeRunSummary,
-} from "./save/runSummary";
-export type { SavedSkillGrantResult } from "./save/savedSkillGrant";
+} from "./save/runSummary.ts";
+export type { SavedSkillGrantResult } from "./save/savedSkillGrant.ts";
 export {
   type RunStatsSummary,
   STATS_VERSION,
   type WholeRunStatsSummary,
   type ZoneStatsSummary,
-} from "./save/stats";
+} from "./save/stats.ts";
 export {
   eligibleSkills,
   isSkillId,
@@ -41,5 +41,5 @@ export {
   skillEnabled,
   type SkillOverrides,
   skillTuning,
-} from "./skills";
-export { type StageCompletion, stageCompletion, stageExit } from "./stageCompletion";
+} from "./skills.ts";
+export { type StageCompletion, stageCompletion, stageExit } from "./stageCompletion.ts";

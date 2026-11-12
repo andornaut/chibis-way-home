@@ -1,12 +1,12 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
-import { CARD_CONTENT, DIALOGUE_CHOICE, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { CARD_FONTS } from "../../testing/cardFonts";
-import { cardTextSize } from "./contentCard";
-import { dialogueChoiceLayout } from "./dialogueChoice";
-import { PAUSE_BUTTON } from "./pauseCard";
+import { CARD_CONTENT, DIALOGUE_CHOICE, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { CARD_FONTS } from "../../testing/cardFonts.ts";
+import { cardTextSize } from "./contentCard.ts";
+import { dialogueChoiceLayout } from "./dialogueChoice.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
 
 describe("required dialogue choice layout", () => {
   it.each([2, 3])("fits %i answers below a multiline prompt without a close control", (count) => {

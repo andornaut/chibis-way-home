@@ -5,8 +5,8 @@ import type {
   CrumblingWorld,
 } from "@andornaut/game-kit/terrain/crumbling";
 
-import { rectAt } from "../core";
-import type { AreaLayout, CrumblingSupportId, Rect } from "../data/types";
+import { rectAt } from "../core/index.ts";
+import type { AreaLayout, CrumblingSupportId, Rect } from "../data/types/index.ts";
 
 export function validateCrumblingProfile(profile: CrumblingProfile): void {
   if (![profile.warningSeconds, profile.absentSeconds].every((n) => Number.isFinite(n) && n > 0)) {

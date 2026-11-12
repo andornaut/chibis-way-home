@@ -1,4 +1,4 @@
-import type { BehaviourPlan, ObjectLayout, SpriteContact } from "../data/types";
+import type { BehaviourPlan, ObjectLayout, SpriteContact } from "../data/types/index.ts";
 
 export const TEST_PURSUER: BehaviourPlan = {
   axis: "x",

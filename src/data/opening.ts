@@ -1,4 +1,4 @@
-import type { OpeningBeat, OpeningLayer, Point } from "./types";
+import type { OpeningBeat, OpeningLayer, Point } from "./types/index.ts";
 
 function stillSprite(anchor: Point, flipX: boolean, position: Point, art: string): OpeningLayer {
   return {

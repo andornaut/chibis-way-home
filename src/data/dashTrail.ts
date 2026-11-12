@@ -1,4 +1,4 @@
-import type { DashTrailTuning } from "./types";
+import type { DashTrailTuning } from "./types/index.ts";
 
 export const DASH_TRAIL: DashTrailTuning = {
   borderColour: "ink",

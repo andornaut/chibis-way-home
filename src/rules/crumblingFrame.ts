@@ -6,8 +6,8 @@ import {
   endCrumblingStep,
 } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { CrumblingSupportId } from "../data/types";
-import type { CrumblingActor } from "./crumbling";
+import type { CrumblingSupportId } from "../data/types/index.ts";
+import type { CrumblingActor } from "./crumbling.ts";
 
 export interface CrumblingFrameRequest<ActorId> {
   // Physical actors and transients; excludes scenery, introductions, pulses and support colliders.

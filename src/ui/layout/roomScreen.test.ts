@@ -3,13 +3,13 @@ import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import buttonSheet from "../../../public/art/sprites/ui-button.json";
-import { SCREEN } from "../../data/screen";
-import { TEXT } from "../../data/text";
-import type { Rect } from "../../data/types";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import { PAUSE_BUTTON } from "./pauseCard";
-import { ROOM_SCREEN } from "./roomScreen";
+import buttonSheet from "../../../public/art/sprites/ui-button.json" with { type: "json" };
+import { SCREEN } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import type { Rect } from "../../data/types/index.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
+import { ROOM_SCREEN } from "./roomScreen.ts";
 
 const TITLE = parseBitmapFont(fontTitle);
 const inside = (outer: Rect, inner: Rect) =>

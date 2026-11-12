@@ -1,5 +1,5 @@
-import { SCREEN } from "../data/screen";
-import type { Size } from "../data/types";
+import { SCREEN } from "../data/screen.ts";
+import type { Size } from "../data/types/index.ts";
 
 // A scale manager's sizes as followFrameTurn's deviceResolution sets them for a canvas css big
 // at r device pixels per CSS pixel: the game size is the backing and the zoom is 1 / r.

@@ -1,6 +1,6 @@
-import { EDGE } from "../core";
-import type { BirdTuning, ObjectLayout } from "../data/types";
-import type { BirdState } from "./bird";
+import { EDGE } from "../core/index.ts";
+import type { BirdTuning, ObjectLayout } from "../data/types/index.ts";
+import type { BirdState } from "./bird.ts";
 
 // The body left x range that keeps an object inside Chibi's screen: its pursuit's screen width
 // about his current centre, inset by its margin.

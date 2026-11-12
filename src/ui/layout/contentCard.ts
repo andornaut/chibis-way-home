@@ -4,14 +4,14 @@ import { insetRect } from "@andornaut/game-kit/rect";
 import { type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { STACK_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 
-import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Point, Rect, Size } from "../../data/types";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
-import { hitAround, hitMargin } from "./hitAreas";
-import { type LabelledButton, labelledButton } from "./labelledButton";
-import { textInkBounds } from "./textInk";
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Point, Rect, Size } from "../../data/types/index.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles.ts";
+import { hitAround, hitMargin } from "./hitAreas.ts";
+import { type LabelledButton, labelledButton } from "./labelledButton.ts";
+import { textInkBounds } from "./textInk.ts";
 
 export interface CardFonts {
   readonly body: BitmapFont;

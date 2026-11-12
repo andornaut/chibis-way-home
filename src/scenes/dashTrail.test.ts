@@ -3,9 +3,9 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { DASH_TRAIL } from "../data/dashTrail";
-import { mountDashTrail } from "./dashTrail";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { DASH_TRAIL } from "../data/dashTrail.ts";
+import { mountDashTrail } from "./dashTrail.ts";
 
 it("clears on pause, draws only active dash time and ignores all calls after shutdown", () => {
   const graphics = {

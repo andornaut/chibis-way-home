@@ -4,9 +4,9 @@ import { readFileSync } from "node:fs";
 import { MODAL_DIM } from "@andornaut/game-kit/view/modalDim";
 import { afterEach, describe, expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
-import { createUiLayer, UI_DIMMED, type UiLayer } from "./layer";
-import { remappedFrame, skinColours, UI_COLOURS } from "./skin";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import { createUiLayer, UI_DIMMED, type UiLayer } from "./layer.ts";
+import { remappedFrame, skinColours, UI_COLOURS } from "./skin.ts";
 
 // The modal dim of a #rrggbb palette colour, read straight from art's ramp tables: its one-step
 // darker target, as many steps as the canvas's dim takes.

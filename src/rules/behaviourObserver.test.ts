@@ -2,29 +2,29 @@ import { pathOrNearest, pathTo } from "@andornaut/game-kit/terrain/movementMap";
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { traceRecorder } from "../ai/trace";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { BehaviourCondition, BehaviourPlan, ObjectLayout, Rect } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { zoneTraceLine } from "../sim/zoneTrace";
-import { createBehaviourObservations } from "../testing/behaviourObservations";
-import { chunksLayout, ORDINARY } from "../testing/encounterLayouts";
-import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour";
-import { mapReachable, mapRecoveryGoal, planMapLeg } from "./behaviourMapPursuit";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { traceRecorder } from "../ai/trace.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourCondition, BehaviourPlan, ObjectLayout, Rect } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { zoneTraceLine } from "../sim/zoneTrace.ts";
+import { createBehaviourObservations } from "../testing/behaviourObservations.ts";
+import { chunksLayout, ORDINARY } from "../testing/encounterLayouts.ts";
+import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { mapReachable, mapRecoveryGoal, planMapLeg } from "./behaviourMapPursuit.ts";
 import {
   type BehaviourObservation,
   type BehaviourPursuitObservation,
   createBehaviourObserver,
-} from "./behaviourObserver";
-import type { BehaviourWorld } from "./behaviourReach";
-import { probeRearm, traversalGoal } from "./behaviourTraversal";
-import { startBird } from "./bird";
-import { pursuitGroundMap } from "./movementMaps";
-import { objectLayout } from "./tiles";
-import { startZone, stepZone, stepZoneObserved } from "./zone";
+} from "./behaviourObserver.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { probeRearm, traversalGoal } from "./behaviourTraversal.ts";
+import { startBird } from "./bird.ts";
+import { pursuitGroundMap } from "./movementMaps.ts";
+import { objectLayout } from "./tiles.ts";
+import { startZone, stepZone, stepZoneObserved } from "./zone.ts";
 
 vi.mock("@andornaut/game-kit/terrain/movementMap", async (original) => {
   const actual = await original<typeof import("@andornaut/game-kit/terrain/movementMap")>();

@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { defeatBoss } from "./bossDefeat";
-import { objectLayout } from "./tiles";
-import { leaveRoom, startZone, stepZone, type ZoneState } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type {
+  Archetype,
+  BehaviourPlan,
+  ObjectLayout,
+  Rect,
+  ZoneLayout,
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { defeatBoss } from "./bossDefeat.ts";
+import { objectLayout } from "./tiles.ts";
+import { leaveRoom, startZone, stepZone, type ZoneState } from "./zone.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

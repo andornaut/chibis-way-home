@@ -1,12 +1,12 @@
 import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
-import { SCREEN } from "../../data/screen";
-import type { Rect } from "../../data/types";
-import { hitAround, hitMargin, type PressArea, pressedArea } from "./hitAreas";
-import { PAUSE_BUTTON } from "./pauseCard";
-import { startScreenLayout } from "./startScreen";
-import { TOUCH_CONTROLS } from "./touchControls";
+import { SCREEN } from "../../data/screen.ts";
+import type { Rect } from "../../data/types/index.ts";
+import { hitAround, hitMargin, type PressArea, pressedArea } from "./hitAreas.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
+import { startScreenLayout } from "./startScreen.ts";
+import { TOUCH_CONTROLS } from "./touchControls.ts";
 
 const square = (side: number) => ({ height: side, width: side, x: 100, y: 100 });
 

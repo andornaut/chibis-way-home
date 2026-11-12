@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
 
-import type { ForcedTransitLayout, ForcedTransitLayoutWindow } from "../data/types";
+import type { ForcedTransitLayout, ForcedTransitLayoutWindow } from "../data/types/index.ts";
 import {
   forcedTransitBankAdmissions,
   type ForcedTransitObservation,
   type ForcedTransitState,
   stepForcedTransit,
-} from "./forcedTransit";
+} from "./forcedTransit.ts";
 
 const window = (
   certification: ForcedTransitLayoutWindow["certification"],

@@ -1,4 +1,4 @@
-import type { BirdTuning } from "./types";
+import type { BirdTuning } from "./types/index.ts";
 
 // PLACEHOLDER: starting values for gameplay to tune.
 export const BIRD: BirdTuning = {

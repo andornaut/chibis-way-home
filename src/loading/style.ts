@@ -1,12 +1,12 @@
 import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
 import type { DomProgressTiming } from "@andornaut/game-kit/web/progress/dom/progressBar";
 
-import palette from "../../public/art/palette.json";
-import themes from "../../public/art/zone-themes.json";
-import { DEATH_CARD } from "../data/layout";
-import { ZONE_MAP } from "../data/map";
-import { SCREEN } from "../data/screen";
-import { zoneTheme } from "../presentation/zoneTheme";
+import palette from "../../public/art/palette.json" with { type: "json" };
+import themes from "../../public/art/zone-themes.json" with { type: "json" };
+import { DEATH_CARD } from "../data/layout.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { SCREEN } from "../data/screen.ts";
+import { zoneTheme } from "../presentation/zoneTheme.ts";
 
 export const PROGRESS_RECT = { height: DEATH_CARD.progressHeight, width: SCREEN.width, x: 0, y: 0 };
 

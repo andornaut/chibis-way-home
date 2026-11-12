@@ -1,4 +1,4 @@
-import { focusKeyAction } from "../focus";
+import { focusKeyAction } from "../focus/index.ts";
 
 // What the player does in a room: back, a key, or a press that went down on one control (or
 // none) and lifted on one (or none). Leave is the room's only control.

@@ -2,27 +2,27 @@ import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite"
 import { fillNames } from "@andornaut/game-kit/lines";
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { AchievementId } from "../data/types";
+import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { AchievementId } from "../data/types/index.ts";
 import {
   type DialoguePress,
   dialogueTapAction,
   moveDialoguePress,
   type PressArea,
   pressedArea,
-} from "../ui";
-import { ACHIEVEMENT_NOTICE, noticeBlocked } from "./achievementNotice";
-import { drawDialoguePanel } from "./dialoguePanel";
+} from "../ui/index.ts";
+import { ACHIEVEMENT_NOTICE, noticeBlocked } from "./achievementNotice.ts";
+import { drawDialoguePanel } from "./dialoguePanel.ts";
 import {
   dialogueParagraphPressAreas,
   drawDialogueParagraph,
   type PanelParagraph,
-} from "./dialogueParagraph";
-import { onScenePointer } from "./modalInput";
-import { fitPlayCamera, playPoint } from "./playCamera";
-import { nextAchievementNotice } from "./save";
+} from "./dialogueParagraph.ts";
+import { onScenePointer } from "./modalInput.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { nextAchievementNotice } from "./save.ts";
 
 const ICON = "icon-achievement";
 

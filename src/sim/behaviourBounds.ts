@@ -1,5 +1,11 @@
-import type { BehaviourMotion, BehaviourPlan, ObjectLayout, Point, Rect } from "../data/types";
-import { pendulumCycleSeconds } from "../rules/orbit";
+import type {
+  BehaviourMotion,
+  BehaviourPlan,
+  ObjectLayout,
+  Point,
+  Rect,
+} from "../data/types/index.ts";
+import { pendulumCycleSeconds } from "../rules/orbit.ts";
 
 export function hasDynamicBehaviour(pattern: BehaviourPlan): boolean {
   return Object.values(pattern.states).some(

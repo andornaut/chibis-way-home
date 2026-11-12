@@ -1,24 +1,24 @@
 import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 import { describe, expect, it } from "vitest";
 
-import maskJson from "../../public/art/contact-silhouettes.json";
-import manifestJson from "../../public/art/manifest.json";
-import bearSheet from "../../public/art/sprites/bear-antagonist.json";
-import { namedStreams } from "../ai/randomStreams";
-import { artHitboxes, type ArtManifest, sheetFrameSize, spriteContacts } from "../assets";
-import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core";
-import { ARCHETYPES } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { TILE } from "../data/screen";
-import type { SpriteSilhouettes, ZoneLayout } from "../data/types";
-import { behaviourPose } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "./behaviour";
-import { INITIAL_SCORER_STATE } from "./behaviourScorer";
-import { startBird } from "./bird";
-import { objectLayout } from "./tiles";
-import { startZone, stepZone } from "./zone";
+import maskJson from "../../public/art/contact-silhouettes.json" with { type: "json" };
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import bearSheet from "../../public/art/sprites/bear-antagonist.json" with { type: "json" };
+import { namedStreams } from "../ai/randomStreams.ts";
+import { artHitboxes, type ArtManifest, sheetFrameSize, spriteContacts } from "../assets/index.ts";
+import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { TILE } from "../data/screen.ts";
+import type { SpriteSilhouettes, ZoneLayout } from "../data/types/index.ts";
+import { behaviourPose } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { INITIAL_SCORER_STATE } from "./behaviourScorer.ts";
+import { startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
+import { startZone, stepZone } from "./zone.ts";
 
 const manifest: ArtManifest = {
   backdrops: [],

@@ -1,4 +1,4 @@
-import type { AreaLink, BirdTuning, ZoneLayout } from "../data/types";
+import type { AreaLink, BirdTuning, ZoneLayout } from "../data/types/index.ts";
 
 const VALIDATED = new WeakSet<ZoneLayout>();
 

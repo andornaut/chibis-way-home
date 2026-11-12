@@ -1,7 +1,7 @@
 import { expect, it, vi } from "vitest";
 
-import { keyIntent } from "./intent";
-import { listenMouseMovement, MOUSE_KEYS } from "./mouseMovement";
+import { keyIntent } from "./intent.ts";
+import { listenMouseMovement, MOUSE_KEYS } from "./mouseMovement.ts";
 
 function fixture() {
   const target = new EventTarget();

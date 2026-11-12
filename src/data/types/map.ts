@@ -1,6 +1,6 @@
 // The map between stages.
 
-import type { Point, TilePoint } from "./geometry";
+import type { Point, TilePoint } from "./geometry.ts";
 
 // A point on the map: a zone he plays, or a fork where paths split or join. at: where it is
 // drawn on the map screen, on its tile grid. zone: a zone node's key in RECIPES; a zone

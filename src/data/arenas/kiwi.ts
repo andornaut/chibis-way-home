@@ -1,7 +1,7 @@
 // Kiwi's arena, Home city: a street under a high footbridge, with fire-escape landings at both
 // ends. The bridge, its deep middle span and the landings are low ceilings she cannot climb past,
 // so Chibi beneath one blocks her climb and drop; none of them is a perch inside the loop.
-import type { ChunkArena, TerrainRect } from "../types";
+import type { ChunkArena, TerrainRect } from "../types/index.ts";
 
 const ROWS = 120;
 const FLOOR = 80;

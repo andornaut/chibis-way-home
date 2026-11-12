@@ -8,21 +8,21 @@ import { sceneStub } from "@andornaut/game-kit/testing/phaser/sceneStub";
 import { type Scene, Textures } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import palette from "../../public/art/palette.json";
-import move from "../../public/art/sprites/ui-move-hint.json";
-import knob from "../../public/art/sprites/ui-move-knob.json";
-import jump from "../../public/art/sprites/ui-touch-jump.json";
-import use from "../../public/art/sprites/ui-touch-use.json";
-import { chromeCanvasTexture } from "../testing/chromeTexture";
-import { deviceScale, fitScale } from "../testing/renderScale";
-import { createTouchChrome } from "./touchChrome";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import palette from "../../public/art/palette.json" with { type: "json" };
+import move from "../../public/art/sprites/ui-move-hint.json" with { type: "json" };
+import knob from "../../public/art/sprites/ui-move-knob.json" with { type: "json" };
+import jump from "../../public/art/sprites/ui-touch-jump.json" with { type: "json" };
+import use from "../../public/art/sprites/ui-touch-use.json" with { type: "json" };
+import { chromeCanvasTexture } from "../testing/chromeTexture.ts";
+import { deviceScale, fitScale } from "../testing/renderScale.ts";
+import { createTouchChrome } from "./touchChrome.ts";
 
 vi.mock("phaser", () => ({
   Core: { Events: { POST_STEP: "poststep" } },
   Textures: { FilterMode: { NEAREST: 0 } },
 }));
-vi.mock("./cardParts", () => ({
+vi.mock("./cardParts.ts", () => ({
   paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
     parseInt(palette.colours[name].slice(1), 16),
 }));

@@ -1,13 +1,13 @@
 import { locate, type MapMask, pathTo } from "@andornaut/game-kit/terrain/movementMap";
 import { expect, it } from "vitest";
 
-import { EDGE, STEP_SECONDS } from "../core";
-import { TILE } from "../data/screen";
-import type { Point, Rect, TerrainRect } from "../data/types";
-import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird";
-import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas";
-import { ARENA_SAMPLES } from "./arenaSamples";
-import { ORDINARY } from "./encounterLayouts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import { TILE } from "../data/screen.ts";
+import type { Point, Rect, TerrainRect } from "../data/types/index.ts";
+import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird.ts";
+import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas.ts";
+import { ARENA_SAMPLES } from "./arenaSamples.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
 import {
   boundaryInput,
   createRouteFollower,
@@ -16,8 +16,8 @@ import {
   launchStepSafe,
   prepareLaunch,
   type RouteFollowEvent,
-} from "./evade";
-import { PENTHOUSE_LAUNCH } from "./fixtures/penthouseLaunch";
+} from "./evade.ts";
+import { PENTHOUSE_LAUNCH } from "./fixtures/penthouseLaunch.ts";
 
 function penthouseLaunch() {
   const found = gameArenaCase({

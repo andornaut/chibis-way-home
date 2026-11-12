@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD } from "../data/bird";
-import { eligibleSkills, resolveActiveSkill, SKILL_IDS, skillEnabled, skillTuning } from "./skills";
+import { BIRD } from "../data/bird.ts";
+import {
+  eligibleSkills,
+  resolveActiveSkill,
+  SKILL_IDS,
+  skillEnabled,
+  skillTuning,
+} from "./skills.ts";
 
 describe("permanent skills and temporary enabling", () => {
   it.each(SKILL_IDS)("never lets an unchecked override revoke saved %s", (skill) => {

@@ -1,4 +1,4 @@
-import type { ZoneState } from "../rules/zone";
+import type { ZoneState } from "../rules/zone.ts";
 
 interface WitnessNode {
   local: bigint;

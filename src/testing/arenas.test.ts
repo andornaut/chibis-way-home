@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ARENAS } from "../data/arenas";
-import type { ChunkArena } from "../data/types";
-import { RECIPES } from "../data/zones";
-import { assembleZone } from "../rules/assemble";
-import { STAGE_RECIPES } from "../rules/zonePlans";
+import { ARENAS } from "../data/arenas/index.ts";
+import type { ChunkArena } from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
+import { assembleZone } from "../rules/assemble.ts";
+import { STAGE_RECIPES } from "../rules/zonePlans.ts";
 import {
   arenaCoverage,
   arenaLayout,
@@ -12,8 +12,8 @@ import {
   encounterStages,
   GAME_ARENA_COVERAGE,
   gameArenaCase,
-} from "./arenas";
-import { ARENA_SAMPLES } from "./arenaSamples";
+} from "./arenas.ts";
+import { ARENA_SAMPLES } from "./arenaSamples.ts";
 
 const SEEDS = 8;
 

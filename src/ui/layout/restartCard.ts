@@ -1,8 +1,8 @@
-import { CELEBRATION_LAYOUT } from "../../data/layout";
-import type { Point } from "../../data/types";
-import { CARD_FRAME, cardRect } from "./cardFrame";
-import { labelledButton } from "./labelledButton";
-export { type LabelledButton, labelledButton } from "./labelledButton";
+import { CELEBRATION_LAYOUT } from "../../data/layout.ts";
+import type { Point } from "../../data/types/index.ts";
+import { CARD_FRAME, cardRect } from "./cardFrame.ts";
+import { labelledButton } from "./labelledButton.ts";
+export { type LabelledButton, labelledButton } from "./labelledButton.ts";
 
 // PLACEHOLDER: the celebration screen after the last zone, until art draws one: the settings
 // card's parts over ink, its title, the message in body text at most room wide, then Restart (art's

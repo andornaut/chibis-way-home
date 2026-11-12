@@ -1,18 +1,18 @@
 import { expect, it } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { EDGE } from "../core";
-import { ARCHETYPES } from "../data/archetypes";
-import { DOG_BEHAVIOUR, PIGEON_BEHAVIOUR } from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { SCREEN, TILE } from "../data/screen";
-import type { Archetype, BehaviourPlan, Rect } from "../data/types";
-import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour";
-import type { BehaviourWorld } from "./behaviourReach";
-import { screenBand, screenClamp } from "./behaviourScreen";
-import { startBird } from "./bird";
-import { objectLayout } from "./tiles";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { EDGE } from "../core/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { DOG_BEHAVIOUR, PIGEON_BEHAVIOUR } from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { SCREEN, TILE } from "../data/screen.ts";
+import type { Archetype, BehaviourPlan, Rect } from "../data/types/index.ts";
+import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { screenBand, screenClamp } from "./behaviourScreen.ts";
+import { startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

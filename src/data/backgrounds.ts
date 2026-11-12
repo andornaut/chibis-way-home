@@ -1,4 +1,4 @@
-import type { BackgroundSection, ThemePlan } from "./types";
+import type { BackgroundSection, ThemePlan } from "./types/index.ts";
 
 const SECTION_WIDTHS = [40, 60, 80] as const;
 

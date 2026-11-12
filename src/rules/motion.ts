@@ -2,7 +2,7 @@ import { easeProgress, progressAt } from "@andornaut/game-kit/motion";
 import { clamp01, lerp } from "@andornaut/game-kit/numbers";
 import type { Random } from "@andornaut/game-kit/random";
 
-import type { Direction, Motion, Point } from "../data/types";
+import type { Direction, Motion, Point } from "../data/types/index.ts";
 
 // Where a moving object is relative to where it was placed, in the units of its motion (tiles in
 // a plan, pixels in a layout), at a time since its area was entered.

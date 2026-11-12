@@ -1,8 +1,8 @@
 import { seededRandom } from "@andornaut/game-kit/random";
 import { describe, expect, it } from "vitest";
 
-import type { ObjectLayout } from "../data/types";
-import { characterState, nextQuirkAt } from "./character";
+import type { ObjectLayout } from "../data/types/index.ts";
+import { characterState, nextQuirkAt } from "./character.ts";
 
 const avoider = { reaction: { kind: "avoid", range: 50, speed: 1 } } as ObjectLayout;
 const calm = { reaction: { kind: "none", range: 0, speed: 0 } } as ObjectLayout;

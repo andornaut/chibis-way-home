@@ -1,6 +1,6 @@
-import { GANTRY_RIDE_TRANSIT } from "../forcedTransit";
-import { GANTRY_BEHAVIOUR } from "../obstacleBehaviours";
-import type { ChunkModule, Instance, TerrainRect } from "../types";
+import { GANTRY_RIDE_TRANSIT } from "../forcedTransit.ts";
+import { GANTRY_BEHAVIOUR } from "../obstacleBehaviours.ts";
+import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
 // Industrial outskirts halves on the lower route (row 80), below the underground roof the zone
 // frame adds at row 35: the gantry crane ride and the observation half before it.

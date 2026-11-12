@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
-import { createDeathCard } from "./death";
 import deathCss from "./death.css?raw";
-import { createUiLayer, UI_LAYOUT } from "./layer";
+import { createDeathCard } from "./death.ts";
+import { createUiLayer, UI_LAYOUT } from "./layer.ts";
 import runStatsCss from "./runStats.css?raw";
-import { UI_COLOURS, UI_FRAMES } from "./skin";
+import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 
 // Every custom property the death card's and the run statistics' stylesheets read is one the
 // layer, its view bridge, the skin, the card's own elements or the stylesheets set, so no rule

@@ -1,4 +1,4 @@
-import { collisionCandidates } from "../core";
+import { collisionCandidates } from "../core/index.ts";
 import type {
   BehaviourMotion,
   BehaviourNode,
@@ -6,9 +6,9 @@ import type {
   ObjectLayout,
   Point,
   Rect,
-} from "../data/types";
-import type { BehaviourState } from "./behaviour";
-import { type BehaviourTrack, type BehaviourWorld, groundSupportEnd } from "./behaviourReach";
+} from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
+import { type BehaviourTrack, type BehaviourWorld, groundSupportEnd } from "./behaviourReach.ts";
 
 export function nodeOf(object: ObjectLayout, key: string): BehaviourNode {
   const node = object.behaviour?.states[key];

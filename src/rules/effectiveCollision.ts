@@ -5,8 +5,8 @@ import type {
   HazardPhase,
   ObjectLayout,
   SupportPhase,
-} from "../data/types";
-import type { BehaviourState } from "./behaviour";
+} from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
 
 // A stationary clock: no reaction, contact, orbit, scene or actor lifecycle, and every state a
 // wait with one elapsed transition, the states one ring from the initial state. label names the

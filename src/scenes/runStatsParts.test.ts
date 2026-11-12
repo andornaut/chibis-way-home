@@ -4,13 +4,13 @@ import { expect, it, vi } from "vitest";
 
 import fontBody from "../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
-import { ZONE_MAP } from "../data/map";
-import { STAGE_PREVIEWS } from "../data/stagePreviews";
-import { TEXT } from "../data/text";
-import type { Point } from "../data/types";
-import { STAGE_SUMMARY_BOUNDS, statsStatement, textInkBounds } from "../ui";
+import { ZONE_MAP } from "../data/map.ts";
+import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
+import { TEXT } from "../data/text.ts";
+import type { Point } from "../data/types/index.ts";
+import { STAGE_SUMMARY_BOUNDS, statsStatement, textInkBounds } from "../ui/index.ts";
 
-vi.mock("./cardParts", () => ({
+vi.mock("./cardParts.ts", () => ({
   BODY_FONT: "font-body",
   TITLE_FONT: "font-title",
   addCardText: (_scene: unknown, font: string, point: Point, text: string) => {
@@ -33,7 +33,7 @@ vi.mock("./cardParts", () => ({
   paletteColour: (_scene: unknown, colour: string) => colour,
 }));
 
-import { addStageSummary } from "./runStatsParts";
+import { addStageSummary } from "./runStatsParts.ts";
 
 const painted: { font: string; point: Point; text: string; scale: number; lineSpacing: number }[] =
   [];

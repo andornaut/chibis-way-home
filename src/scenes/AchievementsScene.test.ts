@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { ACHIEVEMENT_IDS, type AchievementEntry } from "../progress";
+import { ACHIEVEMENT_IDS, type AchievementEntry } from "../progress/index.ts";
 
 const saved = vi.hoisted(() => ({ entries: [] as AchievementEntry[] }));
 const gate = vi.hoisted(() => ({
@@ -13,15 +13,15 @@ const gate = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../pwa", () => ({ coverZone: vi.fn() }));
-vi.mock("./save", () => ({ achievementCard: () => saved.entries }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
-vi.mock("./AchievementNoticeScene", () => ({
+vi.mock("../pwa/index.ts", () => ({ coverZone: vi.fn() }));
+vi.mock("./save.ts", () => ({ achievementCard: () => saved.entries }));
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
+vi.mock("./AchievementNoticeScene.ts", () => ({
   achievementIconFrame: (_scene: unknown, earned: boolean, id: string) =>
     `${id}-${earned ? "unlocked" : "locked"}`,
 }));
-vi.mock("./domUi", () => ({
+vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string, frame: string) =>
     Promise.resolve(`blob:${art}/${frame}`),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
@@ -32,10 +32,10 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { TEXT } from "../data/text";
-import { achievementsPerPage, createUiLayer, type UiLayer } from "../ui";
-import { AchievementsScene } from "./AchievementsScene";
-import { StartScene } from "./StartScene";
+import { TEXT } from "../data/text.ts";
+import { achievementsPerPage, createUiLayer, type UiLayer } from "../ui/index.ts";
+import { AchievementsScene } from "./AchievementsScene.ts";
+import { StartScene } from "./StartScene.ts";
 
 const WORDS = TEXT.achievements;
 const PER_PAGE = achievementsPerPage();

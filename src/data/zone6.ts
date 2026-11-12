@@ -1,7 +1,7 @@
-import { CHARACTERS } from "./characters";
-import { CHUNK_COLS } from "./chunkTemplates";
-import { SCREEN, TILE, ZONE_ROWS } from "./screen";
-import type { ChunkPlan, Instance, TerrainRect } from "./types";
+import { CHARACTERS } from "./characters.ts";
+import { CHUNK_COLS } from "./chunkTemplates.ts";
+import { SCREEN, TILE, ZONE_ROWS } from "./screen.ts";
+import type { ChunkPlan, Instance, TerrainRect } from "./types/index.ts";
 
 export const APARTMENT_ROWS = (4 * SCREEN.height) / TILE;
 export const APARTMENT_SPAWN_ROW = APARTMENT_ROWS - 10;

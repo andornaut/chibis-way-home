@@ -1,12 +1,12 @@
 import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
 import { describe, expect, it } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import { RECENT_STAGES } from "../data/stageProgress";
-import type { ZonePlan } from "../data/types";
-import { RECIPES } from "../data/zones";
-import { middleChunkIds, recentMiddleChunks, withRecentMiddleChunks } from "./recentChunks";
-import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./save/progress";
+import { ZONE_MAP } from "../data/map.ts";
+import { RECENT_STAGES } from "../data/stageProgress.ts";
+import type { ZonePlan } from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
+import { middleChunkIds, recentMiddleChunks, withRecentMiddleChunks } from "./recentChunks.ts";
+import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./save/progress.ts";
 
 const ZONE = ZONE_MAP.destinations[0]!.id;
 const OTHER = ZONE_MAP.destinations[1]!.id;

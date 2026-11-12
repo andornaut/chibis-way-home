@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { STATIC_MOTION } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { stageProgress } from "../rules/stageProgress";
-import * as zoneRules from "../rules/zone";
-import { startZone, stepZone } from "../rules/zone";
-import * as botRules from "./bot";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_VALIDATION } from "./bot";
-import { traceEvent, VALIDATION_LIMITS } from "./diagnostics";
-import { simulateBatch } from "./report";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { STATIC_MOTION } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { stageProgress } from "../rules/stageProgress.ts";
+import * as zoneRules from "../rules/zone.ts";
+import { startZone, stepZone } from "../rules/zone.ts";
+import * as botRules from "./bot.ts";
+import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_VALIDATION } from "./bot.ts";
+import { traceEvent, VALIDATION_LIMITS } from "./diagnostics.ts";
+import { simulateBatch } from "./report.ts";
 import {
   prepareStage,
   replayCompletionWitness,
@@ -20,7 +20,7 @@ import {
   type SimulationConfig,
   simulationGoalReached,
   validateSimulation,
-} from "./simulate";
+} from "./simulate.ts";
 
 function fixture(solids: AreaLayout["solids"], exitX = 1000): ZoneLayout {
   return {

@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import { CARD_CONTENT } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { TEXT } from "../../data/text";
-import { CARD_TEXT_SCALE } from "./cardFrame";
+import { CARD_CONTENT } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
 import {
   CARD_HEADING,
   cardActions,
@@ -17,9 +17,9 @@ import {
   cardTitleOrigin,
   cardTitleText,
   contentCardLayout,
-} from "./contentCard";
-import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
-import { textInkBounds } from "./textInk";
+} from "./contentCard.ts";
+import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles.ts";
+import { textInkBounds } from "./textInk.ts";
 
 const BODY = parseBitmapFont(fontBody);
 const TITLE = parseBitmapFont(fontTitle);

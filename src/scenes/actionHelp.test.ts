@@ -1,19 +1,19 @@
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { TEXT } from "../data/text";
-import { CARD_FONTS } from "../testing/cardFonts";
-import { actionHelpLayout } from "../ui";
-import { drawActionHelp } from "./actionHelp";
-import { addCardText } from "./cardParts";
-import { drawHelpChrome } from "./helpChrome";
+import { TEXT } from "../data/text.ts";
+import { CARD_FONTS } from "../testing/cardFonts.ts";
+import { actionHelpLayout } from "../ui/index.ts";
+import { drawActionHelp } from "./actionHelp.ts";
+import { addCardText } from "./cardParts.ts";
+import { drawHelpChrome } from "./helpChrome.ts";
 
-vi.mock("./cardParts", () => ({
+vi.mock("./cardParts.ts", () => ({
   ACTION_FONT: "font-title",
   BODY_FONT: "font-body",
   addCardText: vi.fn(),
 }));
-vi.mock("./helpChrome", () => ({ drawHelpChrome: vi.fn() }));
+vi.mock("./helpChrome.ts", () => ({ drawHelpChrome: vi.fn() }));
 
 it("draws each word at its laid-out pen and each icon in its laid-out square, offset together", () => {
   const scene = {} as Scene;

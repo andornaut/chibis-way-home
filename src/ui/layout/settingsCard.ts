@@ -1,8 +1,8 @@
 import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { FOCUS_RING, SETTINGS_CARD } from "../../data/layout";
-import type { Rect } from "../../data/types";
+import { FOCUS_RING, SETTINGS_CARD } from "../../data/layout.ts";
+import type { Rect } from "../../data/types/index.ts";
 
 // The settings card's and the install steps card's geometry in base px (src/ui/dom/settings.css
 // lays them out): each row is its own press target, already the minimum target height, so it

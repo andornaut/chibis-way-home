@@ -5,8 +5,13 @@ import {
   GOOSE_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
-} from "./behaviours";
-import type { BehaviourPlan, DialoguePlan, DialogueSpeaker, ZoneDialoguePlan } from "./types";
+} from "./behaviours.ts";
+import type {
+  BehaviourPlan,
+  DialoguePlan,
+  DialogueSpeaker,
+  ZoneDialoguePlan,
+} from "./types/index.ts";
 
 function maximumMovementSpeed(plan: BehaviourPlan): number {
   return Math.max(

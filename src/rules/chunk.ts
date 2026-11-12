@@ -1,5 +1,11 @@
-import type { ChunkPlan, ChunkRules, Instance, StageRecipe, TileRect } from "../data/types";
-import { sceneryParallax, worldScenery } from "../stage";
+import type {
+  ChunkPlan,
+  ChunkRules,
+  Instance,
+  StageRecipe,
+  TileRect,
+} from "../data/types/index.ts";
+import { sceneryParallax, worldScenery } from "../stage/index.ts";
 import {
   type ChunkLibrary,
   chunkPoolProblems,
@@ -7,12 +13,12 @@ import {
   orderedRecipeProblems,
   recipeChunkPool,
   themesOf,
-} from "./assemble";
-import { unacquiredBehaviourNodes } from "./behaviourScope";
-import { bindElement } from "./elementBinding";
-import { orbitBounds, resolveOrbits } from "./orbit";
-import { chunkRows, validRows } from "./stageGeometry";
-import { type Catalogue, objectLayout } from "./tiles";
+} from "./assemble.ts";
+import { unacquiredBehaviourNodes } from "./behaviourScope.ts";
+import { bindElement } from "./elementBinding.ts";
+import { orbitBounds, resolveOrbits } from "./orbit.ts";
+import { chunkRows, validRows } from "./stageGeometry.ts";
+import { type Catalogue, objectLayout } from "./tiles.ts";
 
 // A rectangle in tiles, as columns [left, right) and rows [top, bottom).
 interface Span {

@@ -2,18 +2,18 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
-import { canonicalTrace, traceRecorder } from "../ai/trace";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import { SKILL_PROFILES } from "../progress";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { zonePlanOf } from "./assemble";
-import { startBird } from "./bird";
-import { zoneLayout } from "./tiles";
-import { activateBehaviour, startZone, stepZone } from "./zone";
-import { CHUNK_LIBRARY } from "./zonePlans";
+import { canonicalTrace, traceRecorder } from "../ai/trace.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { zonePlanOf } from "./assemble.ts";
+import { startBird } from "./bird.ts";
+import { zoneLayout } from "./tiles.ts";
+import { activateBehaviour, startZone, stepZone } from "./zone.ts";
+import { CHUNK_LIBRARY } from "./zonePlans.ts";
 
 // Chibi stands beside each boss on its own floor, so growls push him and throws, traps and
 // shots spawn. Each run's pulses, transients and Chibi hash to the value recorded before entry

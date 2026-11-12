@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { TILE } from "../../data/screen";
-import { openMap } from "../../progress";
+import { TILE } from "../../data/screen.ts";
+import { openMap } from "../../progress/index.ts";
 import {
   DESTINATION_FIXTURE as MAP,
   DESTINATION_PLANS as PLANS,
-} from "../../testing/mapDestinations";
-import { MAP_SCREEN } from "../layout/mapScreen";
+} from "../../testing/mapDestinations.ts";
+import { MAP_SCREEN } from "../layout/mapScreen.ts";
 import {
   destinationAtTap,
   destinationCentre,
   destinationPathLook,
   destinationState,
-} from "./mapDestinations";
+} from "./mapDestinations.ts";
 
 const FIRST = MAP.destinations[0]!;
 const SECOND = MAP.destinations[1]!;

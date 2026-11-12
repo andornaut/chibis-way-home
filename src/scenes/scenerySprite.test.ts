@@ -1,11 +1,11 @@
 import { expect, it, vi } from "vitest";
 
-import type { ObjectLayout } from "../data/types";
+import type { ObjectLayout } from "../data/types/index.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import { ZoneScene } from "./ZoneScene";
+import { ZoneScene } from "./ZoneScene.ts";
 
 it("places animated scenery behind actors, crops it before rendering and ignores camera movement for facing", () => {
   const sprite = {

@@ -1,12 +1,12 @@
-import type { BirdTuning } from "../data/types";
-import { VALIDATION_LIMITS } from "./diagnostics";
+import type { BirdTuning } from "../data/types/index.ts";
+import { VALIDATION_LIMITS } from "./diagnostics.ts";
 import {
   type PreparedStage,
   type RunResult,
   simulateStage,
   type SimulationConfig,
   simulationSeeds,
-} from "./simulate";
+} from "./simulate.ts";
 
 export interface BatchResult {
   readonly validation: {

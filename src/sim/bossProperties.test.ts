@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { checkProperties } from "../ai/agentProperties";
-import { BOSS_FAIRNESS } from "../data/bossFairness";
-import { CHARACTERS } from "../data/characters";
-import { BOSS_SCENARIOS } from "../testing/bossScenarios";
-import { DODGES } from "../testing/dodges";
-import { ORDINARY } from "../testing/encounterLayouts";
+import { checkProperties } from "../ai/agentProperties.ts";
+import { BOSS_FAIRNESS } from "../data/bossFairness.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { BOSS_SCENARIOS } from "../testing/bossScenarios.ts";
+import { DODGES } from "../testing/dodges.ts";
+import { ORDINARY } from "../testing/encounterLayouts.ts";
 import {
   bossProperties,
   CHARGE_ATTACKS,
@@ -15,8 +15,8 @@ import {
   reactionSeconds,
   targetedAttacks,
   tellAttacks,
-} from "./bossProperties";
-import { BOSSES, observedCoverage, simulateBosses } from "./bossSimulator";
+} from "./bossProperties.ts";
+import { BOSSES, observedCoverage, simulateBosses } from "./bossSimulator.ts";
 
 const PLANS = Object.fromEntries(
   Object.keys(BOSSES).map((character) => [character, CHARACTERS[character]!.behaviour!]),

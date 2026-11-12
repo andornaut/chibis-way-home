@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import type { ZoneState } from "../rules/zone";
+import { ZONE_MAP } from "../data/map.ts";
+import type { ZoneState } from "../rules/zone.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -13,7 +13,7 @@ it("counts active death edges and retains whole-run totals across stage entry an
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   save.beginStageRun(stage);
@@ -52,7 +52,7 @@ it("shows one attempt's active time in all six statistics for a single entry aft
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   const zone = ZONE_MAP.destinations[0]!.id;
@@ -87,7 +87,7 @@ it("counts leaving a stage uncleared and coming back as another attempt", async 
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   const zone = ZONE_MAP.destinations[0]!.id;

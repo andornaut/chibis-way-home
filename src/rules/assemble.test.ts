@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import type { AreaPlan, ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../data/types";
-import { FIXTURE_LIBRARY, FIXTURE_RECIPE } from "../testing/chunks";
-import { ASSEMBLED_AREA, assembleZone, assembleZoneAvoiding, type ChunkLibrary } from "./assemble";
-import { recipeProblems } from "./chunk";
+import type { AreaPlan, ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../data/types/index.ts";
+import { FIXTURE_LIBRARY, FIXTURE_RECIPE } from "../testing/chunks.ts";
+import {
+  ASSEMBLED_AREA,
+  assembleZone,
+  assembleZoneAvoiding,
+  type ChunkLibrary,
+} from "./assemble.ts";
+import { recipeProblems } from "./chunk.ts";
 
 const ROWS = 60;
 const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);

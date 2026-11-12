@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { ArtManifest } from "../assets";
-import type { ObjectLayout, Point } from "../data/types";
-import { sceneryParallax, type Tileset, worldScenery } from "../stage";
-import { type ArtKind, artKind, artScrollFactor } from "./objectArt";
+import type { ArtManifest } from "../assets/index.ts";
+import type { ObjectLayout, Point } from "../data/types/index.ts";
+import { sceneryParallax, type Tileset, worldScenery } from "../stage/index.ts";
+import { type ArtKind, artKind, artScrollFactor } from "./objectArt.ts";
 
 const MANIFEST = {
   backdrops: [

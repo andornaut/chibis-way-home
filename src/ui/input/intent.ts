@@ -1,7 +1,7 @@
-import type { Point, TouchTuning } from "../../data/types";
-import { pressedArea } from "../layout/hitAreas";
-import { TOUCH_PRESS_AREAS, type TouchControl } from "../layout/touchControls";
-import { MOUSE_KEYS } from "./mouseMovement";
+import type { Point, TouchTuning } from "../../data/types/index.ts";
+import { pressedArea } from "../layout/hitAreas.ts";
+import { TOUCH_PRESS_AREAS, type TouchControl } from "../layout/touchControls.ts";
+import { MOUSE_KEYS } from "./mouseMovement.ts";
 
 // What the player is asking for, from the keyboard and the touch controls together.
 export interface Intent {

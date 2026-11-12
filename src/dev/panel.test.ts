@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DEV_TEXT } from "../data/dev";
-import { ZONE_MAP } from "../data/map";
-import { TEXT } from "../data/text";
-import { SKILL_IDS } from "../progress";
-import { developerStages, mountDeveloperPanel, panelInputGate } from "./panel";
+import { DEV_TEXT } from "../data/dev.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { TEXT } from "../data/text.ts";
+import { SKILL_IDS } from "../progress/index.ts";
+import { developerStages, mountDeveloperPanel, panelInputGate } from "./panel.ts";
 
 class Element extends EventTarget {
   attributes = new Map<string, string>();
@@ -241,11 +241,11 @@ it("groups cheats and reports partial save outcomes while guarding async modal a
   body.append(game);
   let blocked = false,
     sync = () => {};
-  let finish: ((value: import("../progress").SavedSkillGrantResult) => void) | undefined;
+  let finish: ((value: import("../progress/index.ts").SavedSkillGrantResult) => void) | undefined;
   let available = () => false;
   const grant = vi.fn((access: { available: () => boolean }) => {
     available = access.available;
-    return new Promise<import("../progress").SavedSkillGrantResult>((resolve) => {
+    return new Promise<import("../progress/index.ts").SavedSkillGrantResult>((resolve) => {
       finish = resolve;
     });
   });

@@ -7,7 +7,7 @@ import {
 import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import { Core, type GameObjects, type Scene, Textures } from "phaser";
 
-import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
+import { ART_MANIFEST_KEY, type ArtManifest } from "../assets/index.ts";
 import {
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
@@ -16,9 +16,9 @@ import {
   touchChromeLayers,
   touchChromePixel,
   type TouchChromePose,
-} from "../ui";
-import { paletteColour } from "./cardParts";
-import { sceneFit } from "./playCamera";
+} from "../ui/index.ts";
+import { paletteColour } from "./cardParts.ts";
+import { sceneFit } from "./playCamera.ts";
 
 const SOURCE: Readonly<Record<TouchChromeKind, string>> = {
   jump: "ui-touch-jump",
@@ -27,7 +27,7 @@ const SOURCE: Readonly<Record<TouchChromeKind, string>> = {
   use: "ui-touch-use",
 };
 
-import { uiObject } from "./uiRoots";
+import { uiObject } from "./uiRoots.ts";
 
 interface ChromeSheet {
   readonly frames: ReadonlyMap<string, readonly TouchChromeLayer[]>;

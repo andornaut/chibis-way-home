@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CARD_FRAME, cardRect, cardTitleAt } from "./cardFrame";
+import { CARD_FRAME, cardRect, cardTitleAt } from "./cardFrame.ts";
 
 describe("cardTitleAt", () => {
   it.each([

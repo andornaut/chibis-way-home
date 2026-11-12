@@ -2,15 +2,15 @@ import { readFileSync } from "node:fs";
 
 import { expect, it, vi } from "vitest";
 
-import type { AreaLayout, ObjectLayout } from "../data/types";
-import { initialCrumblingWorld } from "../rules/crumbling";
-import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling";
-import type { Tileset } from "../stage";
+import type { AreaLayout, ObjectLayout } from "../data/types/index.ts";
+import { initialCrumblingWorld } from "../rules/crumbling.ts";
+import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling.ts";
+import type { Tileset } from "../stage/index.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import { ZoneScene } from "./ZoneScene";
+import { ZoneScene } from "./ZoneScene.ts";
 
 const tileset = JSON.parse(
   readFileSync(

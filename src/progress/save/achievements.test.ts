@@ -2,7 +2,7 @@ import { CelebrationQueue } from "@andornaut/game-kit/achievements";
 import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { describe, expect, it } from "vitest";
 
-import { ACHIEVEMENTS_VERSION, achievementsStore } from "./achievements";
+import { ACHIEVEMENTS_VERSION, achievementsStore } from "./achievements.ts";
 
 const KEY = "chibis-way-home.achievements";
 

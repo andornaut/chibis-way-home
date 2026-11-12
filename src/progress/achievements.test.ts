@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { ACHIEVEMENTS } from "../data/achievements";
-import { ZONE_MAP } from "../data/map";
-import type { AchievementId } from "../data/types";
+import { ACHIEVEMENTS } from "../data/achievements.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import type { AchievementId } from "../data/types/index.ts";
 import {
   ACHIEVEMENT_IDS,
   achievementEntries,
@@ -10,7 +10,7 @@ import {
   type AchievementScope,
   earnedAt,
   zoneEndingAt,
-} from "./achievements";
+} from "./achievements.ts";
 
 const PROFILE: AchievementFacts = { skillUsed: false, skills: [] };
 const FIRST = ZONE_MAP.destinations[0]!;

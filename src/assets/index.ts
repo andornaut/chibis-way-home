@@ -7,7 +7,7 @@ export {
   artHitboxes,
   type ArtManifest,
   sheetFrameSize,
-} from "./aseprite";
+} from "./aseprite.ts";
 export {
   asepriteSheetOf,
   type AtlasFrame,
@@ -15,6 +15,6 @@ export {
   atlasPageKey,
   type AtlasTexture,
   BASE_FRAME,
-} from "./atlasManifest";
-export { BIRD_FRAME } from "./birdFrame";
-export { CONTACT_SILHOUETTES, spriteContacts } from "./spriteContacts";
+} from "./atlasManifest.ts";
+export { BIRD_FRAME } from "./birdFrame.ts";
+export { CONTACT_SILHOUETTES, spriteContacts } from "./spriteContacts.ts";

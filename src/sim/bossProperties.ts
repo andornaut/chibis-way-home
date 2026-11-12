@@ -18,15 +18,15 @@ import {
   tellResolves,
   tellStarts,
   travelBounded,
-} from "../ai/agentProperties";
-import { type AgentSample, type AgentTick, centre } from "../ai/agentTrace";
-import { EDGE, STEP_SECONDS } from "../core";
-import { ATTACK_ENGAGEMENT_RANGE } from "../data/behaviours";
-import { BOSS_FAIRNESS } from "../data/bossFairness";
-import { TILE } from "../data/screen";
-import type { BehaviourPlan, Rect, ZoneLayout } from "../data/types";
-import { contactBox } from "../rules/behaviourTrack";
-import { BOSSES, type BossTick } from "./bossSimulator";
+} from "../ai/agentProperties.ts";
+import { type AgentSample, type AgentTick, centre } from "../ai/agentTrace.ts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import { ATTACK_ENGAGEMENT_RANGE } from "../data/behaviours.ts";
+import { BOSS_FAIRNESS } from "../data/bossFairness.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourPlan, Rect, ZoneLayout } from "../data/types/index.ts";
+import { contactBox } from "../rules/behaviourTrack.ts";
+import { BOSSES, type BossTick } from "./bossSimulator.ts";
 
 // Boss rules from gameplay/design.md as checks over a boss trace. Thresholds are read from the
 // zone's resolved behaviour data, or are the design's own bounds where data has none.

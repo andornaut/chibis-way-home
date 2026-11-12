@@ -1,10 +1,10 @@
-import { CHUNK_RULES } from "../data/chunks";
-import { MODULE_RULES } from "../data/modules";
-import type { CircleOrbit, Instance, Rect } from "../data/types";
-import { physicalObjects } from "./chunk";
-import { ENCOUNTER_ROLES } from "./modules";
-import { orbitBounds, pathLedge } from "./orbit";
-import type { Catalogue } from "./tiles";
+import { CHUNK_RULES } from "../data/chunks.ts";
+import { MODULE_RULES } from "../data/modules/index.ts";
+import type { CircleOrbit, Instance, Rect } from "../data/types/index.ts";
+import { physicalObjects } from "./chunk.ts";
+import { ENCOUNTER_ROLES } from "./modules.ts";
+import { orbitBounds, pathLedge } from "./orbit.ts";
+import type { Catalogue } from "./tiles.ts";
 
 // The tiles a path ledge's tether sweeps over a turn: from its pivot to the ledge's top centre,
 // which circles the pivot radius tiles away, half the ledge's height above its centre.

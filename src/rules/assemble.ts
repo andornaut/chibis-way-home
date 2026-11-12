@@ -17,13 +17,13 @@ import type {
   TilePoint,
   ZonePlan,
   ZoneRecipe,
-} from "../data/types";
-import { withBackgroundSections } from "./backgroundSections";
-import { bindElement } from "./elementBinding";
-import { namespaceForcedTransit } from "./forcedTransitLayout";
-import { namespaceOrbitInstances } from "./orbit";
-import { withRoomBuildings } from "./roomBuildings";
-import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry";
+} from "../data/types/index.ts";
+import { withBackgroundSections } from "./backgroundSections.ts";
+import { bindElement } from "./elementBinding.ts";
+import { namespaceForcedTransit } from "./forcedTransitLayout.ts";
+import { namespaceOrbitInstances } from "./orbit.ts";
+import { withRoomBuildings } from "./roomBuildings.ts";
+import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry.ts";
 
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
 // a zone's height in rows, and the characters by key, for the size of each theme's door.

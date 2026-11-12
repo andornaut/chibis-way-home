@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type PlayHold, stepAction } from "./playHold";
+import { type PlayHold, stepAction } from "./playHold.ts";
 
 describe("stepAction", () => {
   it.each<[PlayHold, boolean, ReturnType<typeof stepAction>]>([

@@ -2,7 +2,7 @@ import { sceneStub } from "@andornaut/game-kit/testing/phaser/sceneStub";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { queueFontArt } from "./fontArt";
+import { queueFontArt } from "./fontArt.ts";
 
 it("loads dedicated font pairs", () => {
   const stub = sceneStub(vi.fn);

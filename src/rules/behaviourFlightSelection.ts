@@ -1,9 +1,9 @@
-import { EDGE } from "../core";
-import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types";
-import { supportedDestinations } from "./behaviourDestinations";
-import { type BehaviourWorld, flightAxis } from "./behaviourReach";
-import type { ScreenBand } from "./behaviourScreen";
-import { supportedLanding } from "./flyLanding";
+import { EDGE } from "../core/index.ts";
+import type { BehaviourMotion, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import { supportedDestinations } from "./behaviourDestinations.ts";
+import { type BehaviourWorld, flightAxis } from "./behaviourReach.ts";
+import type { ScreenBand } from "./behaviourScreen.ts";
+import { supportedLanding } from "./flyLanding.ts";
 
 type Motion = Extract<BehaviourMotion, { to: "support" }>;
 interface Geometry {

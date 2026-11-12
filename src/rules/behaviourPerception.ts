@@ -1,6 +1,6 @@
-import type { BirdTuning } from "../data/types";
-import { type BehaviourGeometry, type BehaviourWorld, behaviourWorld } from "./behaviourReach";
-import type { BirdState } from "./bird";
+import type { BirdTuning } from "../data/types/index.ts";
+import { type BehaviourGeometry, type BehaviourWorld, behaviourWorld } from "./behaviourReach.ts";
+import type { BirdState } from "./bird.ts";
 
 // What one behaviour-driven object perceives for one tick, built once before it decides. The
 // graph, pursuit, intent, attack and motion steps read only this, the object's own layout and

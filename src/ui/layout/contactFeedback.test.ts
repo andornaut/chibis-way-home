@@ -1,15 +1,15 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
-import { CAMERA } from "../../data/camera";
-import { CONTACT_CUE } from "../../data/feedback";
-import { SCREEN } from "../../data/screen";
+import { CAMERA } from "../../data/camera.ts";
+import { CONTACT_CUE } from "../../data/feedback.ts";
+import { SCREEN } from "../../data/screen.ts";
 import {
   contactBorder,
   contactCueOn,
   contactOverscan,
   contactWorldOffset,
-} from "./contactFeedback";
+} from "./contactFeedback.ts";
 
 const tuning = CAMERA.contactShake!;
 const view = { ...SCREEN, x: 0, y: 0 };

@@ -1,8 +1,8 @@
 import type { Scene } from "phaser";
 
-import type { DialogueLine } from "../data/types";
-import type { ZoneBark } from "../rules/zone";
-import type { ZoneBarkScene } from "./ZoneBarkScene";
+import type { DialogueLine } from "../data/types/index.ts";
+import type { ZoneBark } from "../rules/zone.ts";
+import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
 
 // The passive notice shares the world's pause lifetime, never a modal's scene or input scope.
 export function bindZoneBarks(

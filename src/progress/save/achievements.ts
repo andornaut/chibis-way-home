@@ -7,8 +7,8 @@ import {
 import type { SaveStorage } from "@andornaut/game-kit/save/storage";
 import type { SaveFormat } from "@andornaut/game-kit/save/versionedSave";
 
-import type { AchievementId } from "../../data/types";
-import { ACHIEVEMENT_IDS } from "../achievements";
+import type { AchievementId } from "../../data/types/index.ts";
+import { ACHIEVEMENT_IDS } from "../achievements.ts";
 
 // The earned record's version, apart from progress and statistics, so Restart keeps it. Loading
 // drops unknown ids instead of resetting.

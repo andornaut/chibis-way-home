@@ -1,7 +1,7 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 
-import type { Point, Size } from "../data/types";
-import { askedSeed } from "./pageParams";
+import type { Point, Size } from "../data/types/index.ts";
+import { askedSeed } from "./pageParams.ts";
 
 export interface StagePreview {
   readonly area?: string;

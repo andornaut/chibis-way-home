@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
-import { modalColour } from "./modalDim";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import { modalColour } from "./modalDim.ts";
 
 const rgb = (hex: string) => Number.parseInt(hex.slice(1), 16);
 

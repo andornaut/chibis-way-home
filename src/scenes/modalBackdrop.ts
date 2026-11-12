@@ -2,12 +2,12 @@ import { mountModalBackdrop } from "@andornaut/game-kit/view/phaser/modalBackdro
 import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { type GameObjects, type Scene, Scenes } from "phaser";
 
-import { SCREEN } from "../data/screen";
-import { canvasSize, modalColour, viewShift } from "../ui";
-import { palette, paletteColour } from "./cardParts";
-import { modalInput } from "./modalInput";
-import { canvasRect, fitCanvasCamera, sceneFit } from "./playCamera";
-import { mountUiModalBackdrop } from "./uiModalBackdrop";
+import { SCREEN } from "../data/screen.ts";
+import { canvasSize, modalColour, viewShift } from "../ui/index.ts";
+import { palette, paletteColour } from "./cardParts.ts";
+import { modalInput } from "./modalInput.ts";
+import { canvasRect, fitCanvasCamera, sceneFit } from "./playCamera.ts";
+import { mountUiModalBackdrop } from "./uiModalBackdrop.ts";
 
 // Capture only the underlying scenes, and draw the owned backdrop before the card cameras.
 export function showModalBackdrop(

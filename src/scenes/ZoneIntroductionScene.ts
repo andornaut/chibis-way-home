@@ -1,12 +1,12 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type GameObjects, Scene } from "phaser";
 
-import { CHARACTERS } from "../data/characters";
-import { SCREEN, TILE } from "../data/screen";
-import type { Point, ZoneEntryIntroduction } from "../data/types";
-import type { DialogueData, DialogueOpener } from "./DialogueScene";
-import { modalInput } from "./modalInput";
-import { fitPlayCamera } from "./playCamera";
+import { CHARACTERS } from "../data/characters.ts";
+import { SCREEN, TILE } from "../data/screen.ts";
+import type { Point, ZoneEntryIntroduction } from "../data/types/index.ts";
+import type { DialogueData, DialogueOpener } from "./DialogueScene.ts";
+import { modalInput } from "./modalInput.ts";
+import { fitPlayCamera } from "./playCamera.ts";
 
 export interface ZoneIntroductionData {
   readonly entry: ZoneEntryIntroduction;

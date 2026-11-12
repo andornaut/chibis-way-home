@@ -1,4 +1,4 @@
-import type { Reaches } from "./types";
+import type { Reaches } from "./types/index.ts";
 
 // Gameplay's targets: the bird makes each reach exactly, and never one tile more.
 export const REACH: Reaches = {

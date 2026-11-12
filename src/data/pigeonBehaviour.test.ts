@@ -1,19 +1,19 @@
 import { expect, it } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
+import { namedStreams } from "../ai/randomStreams.ts";
 import {
   type BehaviourState,
   contactBox,
   layoutBehaviour,
   startBehaviour,
   stepBehaviour,
-} from "../rules/behaviour";
-import { INITIAL_SCORER_STATE } from "../rules/behaviourScorer";
-import { birdBox, startBird, stepBird } from "../rules/bird";
-import { supportedLanding } from "../rules/flyLanding";
-import { targetVisible } from "../rules/perception";
-import { objectLayout } from "../rules/tiles";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
+} from "../rules/behaviour.ts";
+import { INITIAL_SCORER_STATE } from "../rules/behaviourScorer.ts";
+import { birdBox, startBird, stepBird } from "../rules/bird.ts";
+import { supportedLanding } from "../rules/flyLanding.ts";
+import { targetVisible } from "../rules/perception.ts";
+import { objectLayout } from "../rules/tiles.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -22,10 +22,10 @@ import {
   PIGEON_BEHAVIOUR,
   PIGEON_DROP_COMMIT_TOLERANCE,
   RACCOON_BEHAVIOUR,
-} from "./behaviours";
-import { BIRD } from "./bird";
-import { PEBBLE_SCORER } from "./bossScorers";
-import { TILE } from "./screen";
+} from "./behaviours.ts";
+import { BIRD } from "./bird.ts";
+import { PEBBLE_SCORER } from "./bossScorers.ts";
+import { TILE } from "./screen.ts";
 const make = () =>
   objectLayout(
     TILE,

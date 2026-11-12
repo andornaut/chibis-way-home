@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { decodeTouchSetting, encodeTouchSetting } from "./touchControls";
+import { decodeTouchSetting, encodeTouchSetting } from "./touchControls.ts";
 
 describe("the touch settings", () => {
   it.each([true, false])("read back %s as stored", (shown) => {

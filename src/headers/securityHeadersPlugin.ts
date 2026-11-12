@@ -8,7 +8,7 @@ import {
   HASHED_ASSET_PATH,
   PAGE_RULES,
   pageProblem,
-} from "./securityPolicy";
+} from "./securityPolicy.ts";
 
 const HEADING =
   "Written by the build from src/headers/securityPolicy.ts and the hashes of each page's inline " +

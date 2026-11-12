@@ -1,15 +1,15 @@
-import { BIRD } from "../data/bird";
-import { CHUNKS, EXTERIOR_DEPTH_ALIASES, WOODLAND_DEPTH_ALIASES } from "../data/chunks";
-import { ROOMS } from "../data/rooms";
-import { TILE } from "../data/screen";
-import type { ChunkPlan, ModuleRouteProfile } from "../data/types";
-import { type ChunkLibrary, themesOf } from "../rules/assemble";
-import { bindElement } from "../rules/elementBinding";
-import { objectLayout } from "../rules/tiles";
-import { hasDynamicMotion } from "../sim/behaviourBounds";
-import type { WalkRouteTarget } from "../sim/zoneWalk";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
-import { ALL_CHUNKS, FIXTURE_RECIPE } from "./chunks";
+import { BIRD } from "../data/bird.ts";
+import { CHUNKS, EXTERIOR_DEPTH_ALIASES, WOODLAND_DEPTH_ALIASES } from "../data/chunks.ts";
+import { ROOMS } from "../data/rooms.ts";
+import { TILE } from "../data/screen.ts";
+import type { ChunkPlan, ModuleRouteProfile } from "../data/types/index.ts";
+import { type ChunkLibrary, themesOf } from "../rules/assemble.ts";
+import { bindElement } from "../rules/elementBinding.ts";
+import { objectLayout } from "../rules/tiles.ts";
+import { hasDynamicMotion } from "../sim/behaviourBounds.ts";
+import type { WalkRouteTarget } from "../sim/zoneWalk.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
+import { ALL_CHUNKS, FIXTURE_RECIPE } from "./chunks.ts";
 
 const ROOM_FILL = "test";
 if (!(ROOM_FILL in ROOMS)) {

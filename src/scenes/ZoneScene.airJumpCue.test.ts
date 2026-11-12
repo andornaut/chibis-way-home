@@ -1,25 +1,25 @@
 import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { STEP_MS, STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { startBird, stepBird } from "../rules/bird";
-import * as engine from "../rules/zone";
+import { STEP_MS, STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { startBird, stepBird } from "../rules/bird.ts";
+import * as engine from "../rules/zone.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
-vi.mock("../dev/mode", () => ({
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../dev/mode.ts", () => ({
   developmentSkillOverrides: () => ({}),
   invulnerabilityEnabled: () => false,
   isDevelopmentSession: () => false,
 }));
-vi.mock("./save", () => ({
+vi.mock("./save.ts", () => ({
   activeSkill: () => "doubleJump",
   recordActiveStageStep: vi.fn(),
   recordStepAchievements: vi.fn(),
 }));
 
-import { ZoneScene } from "./ZoneScene";
+import { ZoneScene } from "./ZoneScene.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();

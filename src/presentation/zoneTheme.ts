@@ -1,5 +1,5 @@
-import type { ZoneMap } from "../data/types";
-import { destinationForStage } from "../progress";
+import type { ZoneMap } from "../data/types/index.ts";
+import { destinationForStage } from "../progress/index.ts";
 
 export type ZoneThemes = Readonly<Record<string, { readonly primary: string }>>;
 

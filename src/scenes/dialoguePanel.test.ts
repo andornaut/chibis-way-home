@@ -1,8 +1,8 @@
 import { expect, it, vi } from "vitest";
 
-import { DIALOGUE_PANEL_ALPHA } from "../data/dialogues";
-import { DIALOGUE_SCREEN } from "../ui";
-import { DIALOGUE_PANEL_KEY, drawDialoguePanel } from "./dialoguePanel";
+import { DIALOGUE_PANEL_ALPHA } from "../data/dialogues.ts";
+import { DIALOGUE_SCREEN } from "../ui/index.ts";
+import { DIALOGUE_PANEL_KEY, drawDialoguePanel } from "./dialoguePanel.ts";
 
 const SOURCES = import.meta.glob<string>(["../**/*.ts", "!../**/*.test.ts"], {
   eager: true,

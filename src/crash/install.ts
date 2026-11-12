@@ -3,4 +3,4 @@
 // listens before the loading strip, Phaser or any game module runs, and an error thrown while
 // one loads shows it rather than a blank page. The screen imports only its words, the palette
 // and the bird's sheet description, not Phaser or the game, so it stays in the entry chunk.
-import "./crashScreen";
+import "./crashScreen.ts";

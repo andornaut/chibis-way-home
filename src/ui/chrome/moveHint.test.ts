@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import hintSheet from "../../../public/art/sprites/ui-move-hint.json";
-import { TOUCH } from "../../data/touch";
-import type { Point } from "../../data/types";
-import type { HeldTouch } from "../input/intent";
-import { MOVE_HINT } from "../layout/touchControls";
-import { knobOffset, moveHintView } from "./moveHint";
-import { centredAt } from "./touchControls";
+import hintSheet from "../../../public/art/sprites/ui-move-hint.json" with { type: "json" };
+import { TOUCH } from "../../data/touch.ts";
+import type { Point } from "../../data/types/index.ts";
+import type { HeldTouch } from "../input/intent.ts";
+import { MOVE_HINT } from "../layout/touchControls.ts";
+import { knobOffset, moveHintView } from "./moveHint.ts";
+import { centredAt } from "./touchControls.ts";
 
 const { knobReach } = MOVE_HINT;
 const REST = MOVE_HINT.centre;

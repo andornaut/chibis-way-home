@@ -1,7 +1,7 @@
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { describe, expect, it } from "vitest";
 
-import { canonicalTrace, fnv1a64, traceRecorder } from "./trace";
+import { canonicalTrace, fnv1a64, traceRecorder } from "./trace.ts";
 
 interface Walker {
   readonly decision: number;

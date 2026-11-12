@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { SKILLS } from "../data/skills";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { SKILLS } from "../data/skills.ts";
 import type {
   AreaLayout,
   ForcedTransitLayout,
@@ -11,13 +11,13 @@ import type {
   ObjectLayout,
   Point,
   ZoneLayout,
-} from "../data/types";
-import { SKILL_PROFILES, skillTuning } from "../progress";
-import { zoneSurfaces } from "../sim/zoneWalk";
-import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours";
-import { birdBox, birdFrameRect, ordinaryJumpApexFeetY, startBird } from "./bird";
-import { crumblingDefinitions } from "./crumbling";
-import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast";
+} from "../data/types/index.ts";
+import { SKILL_PROFILES, skillTuning } from "../progress/index.ts";
+import { zoneSurfaces } from "../sim/zoneWalk.ts";
+import { TEST_PURSUER, TEST_SHUTTLE } from "../testing/behaviours.ts";
+import { birdBox, birdFrameRect, ordinaryJumpApexFeetY, startBird } from "./bird.ts";
+import { crumblingDefinitions } from "./crumbling.ts";
+import { forcedTransitTakeoffBody, forcedTransitTakeoffOrigin } from "./forcedTransitForecast.ts";
 import {
   activateBehaviour,
   doorAt,
@@ -31,7 +31,7 @@ import {
   stepZone,
   type ZoneInput,
   type ZoneState,
-} from "./zone";
+} from "./zone.ts";
 
 const STEP = STEP_SECONDS;
 const SEED = 42;

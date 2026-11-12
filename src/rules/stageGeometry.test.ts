@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { ARCHETYPES } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import type { ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { assembleZone, type ChunkLibrary } from "./assemble";
-import { chunkProblems, recipeProblems } from "./chunk";
-import { zoneLayout } from "./tiles";
-import { startZone, stepZone } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import type { ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { assembleZone, type ChunkLibrary } from "./assemble.ts";
+import { chunkProblems, recipeProblems } from "./chunk.ts";
+import { zoneLayout } from "./tiles.ts";
+import { startZone, stepZone } from "./zone.ts";
 
 const cap: ChunkPlan = {
   cols: 60,

@@ -1,14 +1,14 @@
 import { locate } from "@andornaut/game-kit/terrain/movementMap";
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { TILE } from "../data/screen";
-import type { Instance, Rect, TerrainRect } from "../data/types";
-import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird";
-import { proveArena } from "./arenaCertify";
-import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas";
-import { ARENA_SAMPLES } from "./arenaSamples";
-import { ORDINARY } from "./encounterLayouts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { TILE } from "../data/screen.ts";
+import type { Instance, Rect, TerrainRect } from "../data/types/index.ts";
+import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird.ts";
+import { proveArena } from "./arenaCertify.ts";
+import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas.ts";
+import { ARENA_SAMPLES } from "./arenaSamples.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
 import {
   boundaryInput,
   createLaunchPreparation,
@@ -20,7 +20,7 @@ import {
   standingPoint,
   startsJump,
   touchesBoss,
-} from "./evade";
+} from "./evade.ts";
 
 // Each sample's arena proof: static checks, required route, path out and every evade run, with
 // its hash over the evade trace hashes.

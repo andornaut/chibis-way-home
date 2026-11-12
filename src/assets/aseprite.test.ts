@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { artHitboxes } from "./aseprite";
+import { artHitboxes } from "./aseprite.ts";
 
 describe("artHitboxes", () => {
   it("maps declared hit boxes and omits sprites without one", () => {

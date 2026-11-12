@@ -1,16 +1,16 @@
 import { expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit";
-import { TILE } from "../data/screen";
-import { SKILL_PROFILES } from "../progress";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { type ChunkLibrary, themesOf, zonePlanOf } from "./assemble";
-import { startBird } from "./bird";
-import { zoneLayout } from "./tiles";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone";
-import { CHUNK_LIBRARY } from "./zonePlans";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit.ts";
+import { TILE } from "../data/screen.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { type ChunkLibrary, themesOf, zonePlanOf } from "./assemble.ts";
+import { startBird } from "./bird.ts";
+import { zoneLayout } from "./tiles.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { CHUNK_LIBRARY } from "./zonePlans.ts";
 
 const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 

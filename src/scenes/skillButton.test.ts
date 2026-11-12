@@ -6,25 +6,25 @@ import { type Scene, Textures, TintModes } from "phaser";
 import { PNG } from "pngjs";
 import { expect, it, vi } from "vitest";
 
-import palette from "../../public/art/palette.json";
-import pauseSheet from "../../public/art/sprites/ui-pause.json";
-import type { SkillId } from "../data/types";
-import { SKILL_IDS } from "../progress";
-import { chromeCanvasTexture } from "../testing/chromeTexture";
-import { fitScale } from "../testing/renderScale";
-import { PAUSE_VISIBLE_DIAMETER, SKILL_ART, SKILL_BUTTON } from "../ui";
+import palette from "../../public/art/palette.json" with { type: "json" };
+import pauseSheet from "../../public/art/sprites/ui-pause.json" with { type: "json" };
+import type { SkillId } from "../data/types/index.ts";
+import { SKILL_IDS } from "../progress/index.ts";
+import { chromeCanvasTexture } from "../testing/chromeTexture.ts";
+import { fitScale } from "../testing/renderScale.ts";
+import { PAUSE_VISIBLE_DIAMETER, SKILL_ART, SKILL_BUTTON } from "../ui/index.ts";
 
 vi.mock("phaser", () => ({
   Core: { Events: { POST_STEP: "poststep" } },
   Textures: { FilterMode: { NEAREST: 0 } },
   TintModes: { FILL: 1 },
 }));
-vi.mock("./cardParts", () => ({
+vi.mock("./cardParts.ts", () => ({
   paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
     Number.parseInt(palette.colours[name].slice(1), 16),
 }));
 
-import { drawSkillButton } from "./skillButton";
+import { drawSkillButton } from "./skillButton.ts";
 
 const colour = (name: keyof typeof palette.colours) =>
   Number.parseInt(palette.colours[name].slice(1), 16);

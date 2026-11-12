@@ -8,8 +8,8 @@ import {
   resolveThreshold,
 } from "@andornaut/game-kit/achievements";
 
-import { ACHIEVEMENT_TIERS, ACHIEVEMENTS } from "../data/achievements";
-import { ZONE_MAP } from "../data/map";
+import { ACHIEVEMENT_TIERS, ACHIEVEMENTS } from "../data/achievements.ts";
+import { ZONE_MAP } from "../data/map.ts";
 import type {
   AchievementCondition,
   AchievementId,
@@ -17,8 +17,8 @@ import type {
   ChibiAchievement,
   SkillId,
   ZoneMap,
-} from "../data/types";
-import { SKILL_IDS } from "./skills";
+} from "../data/types/index.ts";
+import { SKILL_IDS } from "./skills.ts";
 
 export type { AchievementProgress };
 

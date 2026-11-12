@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { ARCHETYPES } from "../data/archetypes";
-import type { BehaviourPlan, ChunkPlan, ZonePlan } from "../data/types";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import type { BehaviourPlan, ChunkPlan, ZonePlan } from "../data/types/index.ts";
 import {
   assessPlayability,
   comparePlayability,
   formatPlayabilityMarkdown,
   type PlayabilityContext,
-} from "./playability";
+} from "./playability.ts";
 const graph: BehaviourPlan = {
   axis: "x",
   distance: -8,

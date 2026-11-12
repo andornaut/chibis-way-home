@@ -2,20 +2,20 @@ import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/d
 import { focusTargets } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 import { Scene } from "phaser";
 
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
 import {
   type AchievementsCardView,
   achievementsPerPage,
   createAchievementsCard,
   showAchievementsPage,
   showPresses,
-} from "../ui";
-import { achievementIconFrame } from "./AchievementNoticeScene";
-import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput } from "./modalInput";
-import { achievementCard } from "./save";
+} from "../ui/index.ts";
+import { achievementIconFrame } from "./AchievementNoticeScene.ts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput } from "./modalInput.ts";
+import { achievementCard } from "./save.ts";
 
 // The scene that opens the Achievements card: it passes the card back while the card shows, and
 // hears when the card closes.

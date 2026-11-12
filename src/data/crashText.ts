@@ -1,4 +1,4 @@
-import type { GameText } from "./types";
+import type { GameText } from "./types/index.ts";
 
 // The crash screen's words, kept apart from TEXT so the first-paint chunk that installs the
 // crash screen does not load every player string.

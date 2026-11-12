@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { forceVisualPosition, forceVisualSpan } from "./forceVisual";
+import { forceVisualPosition, forceVisualSpan } from "./forceVisual.ts";
 
 describe("force visual frame placement", () => {
   it.each([

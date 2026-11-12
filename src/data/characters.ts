@@ -10,10 +10,10 @@ import {
   GOOSE_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
-} from "./behaviours";
-import { OBSTACLE_CHARACTERS } from "./obstacleCharacters";
-import type { Character } from "./types";
-import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery";
+} from "./behaviours.ts";
+import { OBSTACLE_CHARACTERS } from "./obstacleCharacters.ts";
+import type { Character } from "./types/index.ts";
+import { WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery.ts";
 
 // Who or what each placed thing is, by name: its archetype, art, size and tuning. art is a piece
 // or tile name from art/README.md, a backdrop or sprite, or placeholder-<name> where art has none

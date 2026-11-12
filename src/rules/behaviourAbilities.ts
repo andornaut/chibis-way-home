@@ -1,21 +1,21 @@
 import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
 
-import type { Ability, AbilityResult, AbilityTable } from "../ai/ability";
-import { EDGE } from "../core";
-import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
-import type { BehaviourState } from "./behaviour";
-import { alignmentBlocked, flightDestination } from "./behaviourFlight";
-import type { BehaviourPerception } from "./behaviourPerception";
+import type { Ability, AbilityResult, AbilityTable } from "../ai/ability.ts";
+import { EDGE } from "../core/index.ts";
+import type { BehaviourMotion, ObjectLayout, Point } from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
+import { alignmentBlocked, flightDestination } from "./behaviourFlight.ts";
+import type { BehaviourPerception } from "./behaviourPerception.ts";
 import {
   AIR_CHASE,
   ESCAPE_SETTLE,
   GROUND_CHASE,
   OVERHEAD_SWOOP,
-} from "./behaviourPursuitAbilities";
-import { type BehaviourWorld, flightAxis } from "./behaviourReach";
-import { groundBoss, nodeOf, trackReach, travelHeading, travelLimit } from "./behaviourTrack";
-import { type advanceTraversal, supportFall } from "./behaviourTraversal";
-import { carryLandingSupport } from "./flyLanding";
+} from "./behaviourPursuitAbilities.ts";
+import { type BehaviourWorld, flightAxis } from "./behaviourReach.ts";
+import { groundBoss, nodeOf, trackReach, travelHeading, travelLimit } from "./behaviourTrack.ts";
+import { type advanceTraversal, supportFall } from "./behaviourTraversal.ts";
+import { carryLandingSupport } from "./flyLanding.ts";
 
 type Motion<Kind extends BehaviourMotion["kind"]> = Extract<
   BehaviourMotion,

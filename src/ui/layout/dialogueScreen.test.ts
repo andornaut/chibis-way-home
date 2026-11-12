@@ -3,20 +3,20 @@ import { bitmapMeasure, fittingText } from "@andornaut/game-kit/text/textFit";
 import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
-import * as behaviours from "../../data/behaviours";
-import { CHARACTERS } from "../../data/characters";
-import { DIALOGUES, SPEAKERS } from "../../data/dialogues";
-import { SCREEN } from "../../data/screen";
-import { STAGE_BARKS } from "../../data/stageBarks";
-import { TEXT } from "../../data/text";
-import type { DialogueLine, Rect } from "../../data/types";
-import { SKILL_IDS } from "../../progress";
-import { CARD_FONTS } from "../../testing/cardFonts";
+import * as behaviours from "../../data/behaviours.ts";
+import { CHARACTERS } from "../../data/characters.ts";
+import { DIALOGUES, SPEAKERS } from "../../data/dialogues.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { STAGE_BARKS } from "../../data/stageBarks.ts";
+import { TEXT } from "../../data/text.ts";
+import type { DialogueLine, Rect } from "../../data/types/index.ts";
+import { SKILL_IDS } from "../../progress/index.ts";
+import { CARD_FONTS } from "../../testing/cardFonts.ts";
 import {
   dialogueLines,
   type DialogueParagraph,
   dialogueParagraphs,
-} from "../dialogue/conversation";
+} from "../dialogue/conversation.ts";
 import {
   departureDialogueButtons,
   DIALOGUE_PORTRAIT_SIZE,
@@ -27,11 +27,11 @@ import {
   dialoguePressAreas,
   dialogueSpeakerLayout,
   dialogueTextRows,
-} from "./dialogueScreen";
-import { pressedArea } from "./hitAreas";
-import { PAUSE_BUTTON } from "./pauseCard";
-import { skillButton, skillHud } from "./skillHud";
-import { textInkBounds } from "./textInk";
+} from "./dialogueScreen.ts";
+import { pressedArea } from "./hitAreas.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
+import { skillButton, skillHud } from "./skillHud.ts";
+import { textInkBounds } from "./textInk.ts";
 
 const font = CARD_FONTS.title;
 const width = (name: string) => inkWidth(font, DIALOGUE_SCREEN.text.scale, name);

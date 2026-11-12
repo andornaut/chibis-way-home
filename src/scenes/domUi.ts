@@ -2,8 +2,8 @@ import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite"
 import { cutFrame } from "@andornaut/game-kit/web/ui/dom/sheetFrames";
 import { Core, type Game, Scale, type Scene } from "phaser";
 
-import manifestJson from "../../public/art/manifest.json";
-import type { ArtManifest } from "../assets";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import type { ArtManifest } from "../assets/index.ts";
 import {
   applySkin,
   createUiLayer,
@@ -14,9 +14,9 @@ import {
   type SkinFrame,
   UI_FRAMES,
   type UiLayer,
-} from "../ui";
-import { palette } from "./cardParts";
-import { sceneFit } from "./playCamera";
+} from "../ui/index.ts";
+import { palette } from "./cardParts.ts";
+import { sceneFit } from "./playCamera.ts";
 
 // The game's HTML UI layer (src/ui/dom/layer.ts) in #game, over the canvas: kept on the play
 // view through every refit, skinned from the loaded art once BootScene has it, and each scene's

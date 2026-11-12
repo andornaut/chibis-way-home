@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import iconSheet from "../../public/art/sprites/icon-achievement.json";
-import { ACHIEVEMENT_TIERS, ACHIEVEMENTS, BOSS_CHARACTERS, BOSS_ZONES } from "./achievements";
-import { CHARACTERS } from "./characters";
-import { ZONE_MAP } from "./map";
-import { TEXT } from "./text";
-import type { AchievementCondition, BossId } from "./types";
+import iconSheet from "../../public/art/sprites/icon-achievement.json" with { type: "json" };
+import { ACHIEVEMENT_TIERS, ACHIEVEMENTS, BOSS_CHARACTERS, BOSS_ZONES } from "./achievements.ts";
+import { CHARACTERS } from "./characters.ts";
+import { ZONE_MAP } from "./map.ts";
+import { TEXT } from "./text.ts";
+import type { AchievementCondition, BossId } from "./types/index.ts";
 
 const BOSS_IDS = Object.keys(BOSS_CHARACTERS) as BossId[];
 const withKind = <K extends AchievementCondition["kind"]>(kind: K) =>

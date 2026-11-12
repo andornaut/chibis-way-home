@@ -4,8 +4,8 @@ import {
   GANTRY_BEHAVIOUR,
   RAVINE_GUST_BEHAVIOUR,
   WARNED_VENT_BEHAVIOUR,
-} from "./obstacleBehaviours";
-import type { Character, HazardPhase, PhaseTiles } from "./types";
+} from "./obstacleBehaviours.ts";
+import type { Character, HazardPhase, PhaseTiles } from "./types/index.ts";
 
 const crosswalkTiles = (phase: string): PhaseTiles => ({
   left: `crosswalk-${phase}-left`,

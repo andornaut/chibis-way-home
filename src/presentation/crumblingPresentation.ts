@@ -1,7 +1,7 @@
 import type { CrumblingPhase } from "@andornaut/game-kit/terrain/crumbling";
 
-import { drawsFrom, type Tileset } from "../stage";
-import { objectTiles, type PlacedTile } from "./tiles";
+import { drawsFrom, type Tileset } from "../stage/index.ts";
+import { objectTiles, type PlacedTile } from "./tiles.ts";
 
 // Base object skin to the dedicated skin a crumbling object draws with.
 export const CRUMBLING_SKINS: Readonly<Record<string, string>> = {

@@ -1,5 +1,5 @@
-import { WINDMILL_SAILS, windmillSailOrbit } from "../obstacleTuning";
-import type { ChunkModule, Instance, TerrainRect } from "../types";
+import { WINDMILL_SAILS, windmillSailOrbit } from "../obstacleTuning.ts";
+import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
 // Countryside halves on the lower route (rows 70 and 80). The windmill fills the right half and
 // climbs from row 80 to row 70; its lookout fills the left half in front of it. Neither holds an

@@ -1,17 +1,17 @@
-import { tellStarts } from "../ai/agentProperties";
-import type { AgentSample } from "../ai/agentTrace";
-import { STEP_SECONDS } from "../core";
-import type { BirdTuning, BossFairness, DodgeName, ZoneLayout } from "../data/types";
-import type { ZoneInput, ZoneState } from "../rules/zone";
-import { maximumTellSeconds } from "../sim/bossProperties";
+import { tellStarts } from "../ai/agentProperties.ts";
+import type { AgentSample } from "../ai/agentTrace.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import type { BirdTuning, BossFairness, DodgeName, ZoneLayout } from "../data/types/index.ts";
+import type { ZoneInput, ZoneState } from "../rules/zone.ts";
+import { maximumTellSeconds } from "../sim/bossProperties.ts";
 import {
   areaExit,
   bossModel,
   bossSample,
   type BossScenario,
   bossStart,
-} from "../sim/bossSimulator";
-import { DODGES } from "./dodges";
+} from "../sim/bossSimulator.ts";
+import { DODGES } from "./dodges.ts";
 
 // Dodge witnesses (attack fairness): at each tell start in a boss scenario the zone is forked
 // and each of the attack's named dodges runs from the reaction delay; until then Chibi repeats

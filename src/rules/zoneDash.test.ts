@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import type { AreaLayout, BirdTuning, ObjectLayout, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { leaveRoom, retryZone, startZone, stepZone } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { AreaLayout, BirdTuning, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { leaveRoom, retryZone, startZone, stepZone } from "./zone.ts";
 
 const tuning: BirdTuning = BIRD;
 const floor = { height: 40, width: 1100, x: 0, y: 300 };

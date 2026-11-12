@@ -1,15 +1,15 @@
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS, sweptContact } from "../core";
-import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird";
-import { startZone, type ZoneInput } from "../rules/zone";
-import { bossSample } from "../sim/bossSimulator";
-import { arenaLayout, gameArenaCase } from "./arenas";
-import { ARENA_SAMPLES } from "./arenaSamples";
-import { ORDINARY } from "./encounterLayouts";
-import { boundaryInput, launchStepSafe, observeProjectileFrame } from "./evade";
-import { createProjectileAvoidance, type ProjectileFrame } from "./evadeProjectileAvoidance";
-import { type ObservedProjectile, projectileGravityModels } from "./evadeProjectiles";
+import { STEP_SECONDS, sweptContact } from "../core/index.ts";
+import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird.ts";
+import { startZone, type ZoneInput } from "../rules/zone.ts";
+import { bossSample } from "../sim/bossSimulator.ts";
+import { arenaLayout, gameArenaCase } from "./arenas.ts";
+import { ARENA_SAMPLES } from "./arenaSamples.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
+import { boundaryInput, launchStepSafe, observeProjectileFrame } from "./evade.ts";
+import { createProjectileAvoidance, type ProjectileFrame } from "./evadeProjectileAvoidance.ts";
+import { type ObservedProjectile, projectileGravityModels } from "./evadeProjectiles.ts";
 
 const floor = { height: 480, width: 720, x: 0, y: 960 };
 const geometry = { ledges: [], solids: [floor] };

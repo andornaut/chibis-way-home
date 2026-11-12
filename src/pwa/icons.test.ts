@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { webManifestIconUrls } from "@andornaut/game-kit/web/pwa/precacheList";
 import { describe, expect, it } from "vitest";
 
-import { ICONS } from "./icons";
+import { ICONS } from "./icons.ts";
 
 const REPO = join(import.meta.dirname, "../..");
 const read = (path: string) => readFileSync(join(REPO, path), "utf8");

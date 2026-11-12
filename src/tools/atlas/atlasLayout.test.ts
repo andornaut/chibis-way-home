@@ -1,7 +1,7 @@
 import { type AtlasItem, type AtlasPolicy, packAtlas } from "@andornaut/art-kit/atlasLayout";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { layoutAtlas, type PackItem } from "./atlasLayout";
+import { layoutAtlas, type PackItem } from "./atlasLayout.ts";
 
 vi.mock("@andornaut/art-kit/atlasLayout", () => ({ packAtlas: vi.fn() }));
 

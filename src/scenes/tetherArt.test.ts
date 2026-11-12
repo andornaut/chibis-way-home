@@ -2,7 +2,7 @@ import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { createTetherArt } from "./tetherArt";
+import { createTetherArt } from "./tetherArt.ts";
 
 function item() {
   const state = {

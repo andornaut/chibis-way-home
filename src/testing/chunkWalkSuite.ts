@@ -2,13 +2,13 @@ import { isDeepStrictEqual } from "node:util";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { TILE } from "../data/screen";
-import type { SlotKind } from "../data/types";
-import { ALL_CHUNKS } from "./chunks";
-import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases";
-import { chunkWalkPartitions } from "./chunkWalkPartitions";
-import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";
-import { requiredWalkSuite, walkSuite } from "./walkSuite";
+import { TILE } from "../data/screen.ts";
+import type { SlotKind } from "../data/types/index.ts";
+import { ALL_CHUNKS } from "./chunks.ts";
+import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases.ts";
+import { chunkWalkPartitions } from "./chunkWalkPartitions.ts";
+import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes.ts";
+import { requiredWalkSuite, walkSuite } from "./walkSuite.ts";
 
 type SlotFills = Readonly<Record<SlotKind, readonly string[]>>;
 const EMPTY_SLOTS: SlotFills = { door: [], event: [] };

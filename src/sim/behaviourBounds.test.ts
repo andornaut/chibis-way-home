@@ -1,28 +1,28 @@
 import { describe, expect, it } from "vitest";
 
-import platforming from "../../public/art/tilesets/tiles-platforming.json";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { ARCHETYPES } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { createOrbitHazardChunks } from "../data/orbitHazardChunks";
-import { TILE } from "../data/screen";
-import type { BehaviourMotion, BehaviourPlan } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { startBehaviour, stepBehaviour } from "../rules/behaviour";
-import { startBird } from "../rules/bird";
-import { orbitBounds } from "../rules/orbit";
-import { areaLayout, objectLayout } from "../rules/tiles";
-import { startZone, stepZone } from "../rules/zone";
-import type { Tileset } from "../stage";
+import platforming from "../../public/art/tilesets/tiles-platforming.json" with { type: "json" };
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { createOrbitHazardChunks } from "../data/orbitHazardChunks.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourMotion, BehaviourPlan } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { startBehaviour, stepBehaviour } from "../rules/behaviour.ts";
+import { startBird } from "../rules/bird.ts";
+import { orbitBounds } from "../rules/orbit.ts";
+import { areaLayout, objectLayout } from "../rules/tiles.ts";
+import { startZone, stepZone } from "../rules/zone.ts";
+import type { Tileset } from "../stage/index.ts";
 import {
   behaviourCycleSeconds,
   hasDynamicBehaviour,
   hasDynamicMotion,
   objectCycleSeconds,
   sweptBehaviourRect,
-} from "./behaviourBounds";
+} from "./behaviourBounds.ts";
 
 function pattern(motions: readonly BehaviourMotion[]): BehaviourPlan {
   return {

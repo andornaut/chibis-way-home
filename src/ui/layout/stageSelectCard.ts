@@ -1,10 +1,10 @@
 import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SELECT } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { cardHeaderLayout } from "./contentCard";
-import { FONT_METRICS } from "./fontRoles";
-import { hitMargin } from "./hitAreas";
+import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SELECT } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { cardHeaderLayout } from "./contentCard.ts";
+import { FONT_METRICS } from "./fontRoles.ts";
+import { hitMargin } from "./hitAreas.ts";
 
 // The stage picker's geometry (src/ui/dom/stageSelect.css), in base px. Each stage's face holds
 // its number at the top right, its screenshot below and its name centred under that, all inset

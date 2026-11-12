@@ -2,16 +2,16 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { canonicalTrace, traceRecorder } from "../ai/trace";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { ObjectLayout } from "../data/types";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour";
-import type { BehaviourWorld } from "./behaviourReach";
-import { startBird, stepBird } from "./bird";
-import { objectLayout } from "./tiles";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { canonicalTrace, traceRecorder } from "../ai/trace.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { ObjectLayout } from "../data/types/index.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { startBird, stepBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
 
 // Every boss graph state, entered engaged against a Chibi who walks onto the boss's sampled
 // approach target. Each run's per-step output must hash to the value recorded before its

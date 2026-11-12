@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import type { ZoneLayout } from "../data/types";
-import type { BehaviourState } from "../rules/behaviour";
-import type { ZoneState } from "../rules/zone";
+import { ZONE_MAP } from "../data/map.ts";
+import type { ZoneLayout } from "../data/types/index.ts";
+import type { BehaviourState } from "../rules/behaviour.ts";
+import type { ZoneState } from "../rules/zone.ts";
 
 const ACHIEVEMENTS_KEY = "chibis-way-home.achievements";
 const LAYOUT = {
@@ -62,7 +62,7 @@ const earned = (values: Map<string, string>) =>
 describe("tracking achievements through the page save", () => {
   it("credits a boss escape once, but not on a death step, and queues one notice for it", async () => {
     const values = storage();
-    const save = await import("./save");
+    const save = await import("./save.ts");
     await save.loadProgress();
     const stage = FIRST.stages[0]!;
     save.beginStageRun(stage);
@@ -103,7 +103,7 @@ describe("tracking achievements through the page save", () => {
 
   it("earns a zone's clear, first try and no-death run in one visit, and keeps them on Restart", async () => {
     const values = storage();
-    const save = await import("./save");
+    const save = await import("./save.ts");
     await save.loadProgress();
     save.beginZoneVisit(FIRST.id);
     for (const stage of FIRST.stages) {
@@ -128,7 +128,7 @@ describe("tracking achievements through the page save", () => {
 
   it("shows the current visit's first tries on a locked no-death zone, reset by a retry", async () => {
     storage();
-    const save = await import("./save");
+    const save = await import("./save.ts");
     await save.loadProgress();
     save.beginZoneVisit(FIRST.id);
     save.beginStageRun(FIRST.stages[0]!);
@@ -146,7 +146,7 @@ describe("tracking achievements through the page save", () => {
 
   it("earns all gift rooms with the third skill, and Speedy breaks the no-skill journey", async () => {
     const values = storage();
-    const save = await import("./save");
+    const save = await import("./save.ts");
     await save.loadProgress();
     const stage = FIRST.stages[0]!;
     save.beginStageRun(stage);
@@ -166,7 +166,7 @@ describe("tracking achievements through the page save", () => {
 
   it("earns the no-skill journey only without a dash or air jump since Restart", async () => {
     const values = storage();
-    const save = await import("./save");
+    const save = await import("./save.ts");
     await save.loadProgress();
     const finish = ZONE_MAP.finish;
     save.beginStageRun(finish);
@@ -197,7 +197,7 @@ describe("tracking achievements through the page save", () => {
       navigator: {},
     });
     vi.stubGlobal("window", window);
-    const save = await import("./save");
+    const save = await import("./save.ts");
     await save.loadProgress();
     save.beginZoneVisit(FIRST.id);
     for (const stage of FIRST.stages) {

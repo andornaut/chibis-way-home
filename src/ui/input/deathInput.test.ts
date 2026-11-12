@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deathKeyAction } from "./deathInput";
+import { deathKeyAction } from "./deathInput.ts";
 
 describe("required death card input", () => {
   it.each(["Enter", " "])("defaults a fresh %s to safe Retry", (key) => {

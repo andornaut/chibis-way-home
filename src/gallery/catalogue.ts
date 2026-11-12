@@ -1,4 +1,4 @@
-import { ART_PATH, type ArtManifest } from "../assets";
+import { ART_PATH, type ArtManifest } from "../assets/index.ts";
 
 export function galleryCatalogue(manifest: ArtManifest) {
   return [

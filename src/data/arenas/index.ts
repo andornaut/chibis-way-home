@@ -1,10 +1,10 @@
-import type { AntagonistKind, ChunkArena, RefugeKind, StageKey } from "../types";
-import { ARCHIE_ARENAS } from "./archie";
-import { BINI_ARENAS } from "./bini";
-import { FERT_ARENAS } from "./fert";
-import { KIWI_ARENAS } from "./kiwi";
-import { PEBBLE_ARENAS } from "./pebble";
-import { TRIXI_ARENAS } from "./trixi";
+import type { AntagonistKind, ChunkArena, RefugeKind, StageKey } from "../types/index.ts";
+import { ARCHIE_ARENAS } from "./archie.ts";
+import { BINI_ARENAS } from "./bini.ts";
+import { FERT_ARENAS } from "./fert.ts";
+import { KIWI_ARENAS } from "./kiwi.ts";
+import { PEBBLE_ARENAS } from "./pebble.ts";
+import { TRIXI_ARENAS } from "./trixi.ts";
 
 // Every admitted arena, one per encounter stage. Bosses add theirs here as they land.
 export const ARENAS: readonly ChunkArena[] = [

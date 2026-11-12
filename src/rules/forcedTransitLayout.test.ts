@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
-import type { ForcedTransit, Instance } from "../data/types";
-import { namespaceForcedTransit, resolveForcedTransit } from "./forcedTransitLayout";
+import type { ForcedTransit, Instance } from "../data/types/index.ts";
+import { namespaceForcedTransit, resolveForcedTransit } from "./forcedTransitLayout.ts";
 
 const transit: ForcedTransit = {
   banks: [

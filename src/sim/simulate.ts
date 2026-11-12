@@ -1,9 +1,9 @@
-import { STEP_SECONDS } from "../core";
-import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types";
-import { proximityDialogue } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { birdBox } from "../rules/bird";
-import { stageProgress } from "../rules/stageProgress";
+import { STEP_SECONDS } from "../core/index.ts";
+import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types/index.ts";
+import { proximityDialogue } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { birdBox } from "../rules/bird.ts";
+import { stageProgress } from "../rules/stageProgress.ts";
 import {
   activateBehaviour,
   areaOf,
@@ -12,7 +12,7 @@ import {
   stepZone,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone";
+} from "../rules/zone.ts";
 import {
   botInput,
   type BotPolicy,
@@ -27,7 +27,7 @@ import {
   restoreNavigationMemory,
   type SensorIndex,
   validateNavigation,
-} from "./bot";
+} from "./bot.ts";
 import {
   type CompletionWitness,
   type TraceEvent,
@@ -36,8 +36,8 @@ import {
   VALIDATION_LIMITS,
   witnessContextHash,
   type WitnessSegment,
-} from "./diagnostics";
-import { layoutAtStart, type SimulationStart, validateStart } from "./start";
+} from "./diagnostics.ts";
+import { layoutAtStart, type SimulationStart, validateStart } from "./start.ts";
 
 export interface SimulationSeeds {
   readonly bot: number;

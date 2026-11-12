@@ -26,9 +26,9 @@ import {
   type TraversalState,
 } from "@andornaut/game-kit/terrain/traversal";
 
-import { EDGE, STEP_SECONDS } from "../core";
-import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
-import { TILE } from "../data/screen";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";
+import { TILE } from "../data/screen.ts";
 import type {
   AreaLayout,
   BehaviourMotion,
@@ -38,8 +38,8 @@ import type {
   Point,
   Rect,
   ZoneLayout,
-} from "../data/types";
-import { traversalContext } from "../rules/behaviourTraversal";
+} from "../data/types/index.ts";
+import { traversalContext } from "../rules/behaviourTraversal.ts";
 import {
   airMask,
   BOSS_JUMP_SCRIPTS,
@@ -52,7 +52,7 @@ import {
   type MapSupport,
   type MapTerrain,
   mapTerrain,
-} from "../rules/movementMaps";
+} from "../rules/movementMaps.ts";
 
 type GroundMotion = Extract<BehaviourMotion, { mode: "ground" }>;
 

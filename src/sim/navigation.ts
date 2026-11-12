@@ -1,9 +1,9 @@
-import { STEP_SECONDS } from "../core";
-import { SCREEN, TILE } from "../data/screen";
-import type { BirdTuning, Rect, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { contactBox } from "../rules/behaviour";
-import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
+import { STEP_SECONDS } from "../core/index.ts";
+import { SCREEN, TILE } from "../data/screen.ts";
+import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { contactBox } from "../rules/behaviour.ts";
+import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
 export interface NavigationConfig {
   readonly profile: "quick" | "validation";
   readonly horizonTicks: number;

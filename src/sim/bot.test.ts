@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types";
-import { orbitPosition } from "../rules/orbit";
-import type { Transient } from "../rules/transients";
-import { startZone } from "../rules/zone";
-import { emissionBounds } from "./behaviourBounds";
-import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot";
-import { zoneSurfaces } from "./zoneWalk";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
+import { orbitPosition } from "../rules/orbit.ts";
+import type { Transient } from "../rules/transients.ts";
+import { startZone } from "../rules/zone.ts";
+import { emissionBounds } from "./behaviourBounds.ts";
+import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot.ts";
+import { zoneSurfaces } from "./zoneWalk.ts";
 
 const ground = { height: 20, width: 1100, x: 0, y: 120 };
 function fixture(solids: readonly Rect[], objects: readonly ObjectLayout[] = []): ZoneLayout {

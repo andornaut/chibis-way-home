@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cardBackAction, cardKeyAction, cardTurnAction, startBackAction } from "./cardInput";
+import { cardBackAction, cardKeyAction, cardTurnAction, startBackAction } from "./cardInput.ts";
 
 describe("cardKeyAction", () => {
   it.each([

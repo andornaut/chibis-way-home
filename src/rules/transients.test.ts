@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { ARCHETYPES } from "../data/archetypes";
-import { FERRET_BEHAVIOUR } from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { TILE } from "../data/screen";
-import type { Archetype, BehaviourAction, ObjectLayout, Rect } from "../data/types";
-import { layoutBehaviour } from "./behaviour";
-import { objectLayout } from "./tiles";
-import { type SpawnEvent, stepTransients, type Transient } from "./transients";
+import { STEP_SECONDS } from "../core/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { FERRET_BEHAVIOUR } from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { TILE } from "../data/screen.ts";
+import type { Archetype, BehaviourAction, ObjectLayout, Rect } from "../data/types/index.ts";
+import { layoutBehaviour } from "./behaviour.ts";
+import { objectLayout } from "./tiles.ts";
+import { type SpawnEvent, stepTransients, type Transient } from "./transients.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { CERTIFIED_LISTS } from "../data/certified";
-import { MODULE_RULES } from "../data/modules";
-import type { CertifiedChunks, Difficulty, ZoneKey, ZoneRecipe } from "../data/types";
-import { ZONE_FRAMES } from "../data/zoneFrames";
-import { recipeChunkPool } from "../rules/assemble";
-import { certifiedChunks } from "../rules/modules";
-import { CHUNK_LIBRARY, STAGE_RECIPES, zoneOfTheme } from "../rules/zonePlans";
-import { FIXTURE_MODULES } from "./modules";
+import { CERTIFIED_LISTS } from "../data/certified/index.ts";
+import { MODULE_RULES } from "../data/modules/index.ts";
+import type { CertifiedChunks, Difficulty, ZoneKey, ZoneRecipe } from "../data/types/index.ts";
+import { ZONE_FRAMES } from "../data/zoneFrames.ts";
+import { recipeChunkPool } from "../rules/assemble.ts";
+import { certifiedChunks } from "../rules/modules.ts";
+import { CHUNK_LIBRARY, STAGE_RECIPES, zoneOfTheme } from "../rules/zonePlans.ts";
+import { FIXTURE_MODULES } from "./modules.ts";
 import {
   distinctLayouts,
   GAME_CONTEXT,
@@ -16,7 +16,7 @@ import {
   verifyStructure,
   zoneRecipes,
   ZONES,
-} from "./pairCertify";
+} from "./pairCertify.ts";
 
 const listOf = (zone: ZoneKey): CertifiedChunks => {
   const list = CERTIFIED_LISTS.find((candidate) => candidate.zone === zone);

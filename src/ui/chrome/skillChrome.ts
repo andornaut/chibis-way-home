@@ -1,5 +1,5 @@
-import { SKILL_BUTTON } from "../layout/skillHud";
-import type { TouchChromeLayer } from "./touchChrome";
+import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import type { TouchChromeLayer } from "./touchChrome.ts";
 
 interface SkillChromeColours {
   readonly face: number;

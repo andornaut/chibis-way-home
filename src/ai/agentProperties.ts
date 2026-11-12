@@ -1,4 +1,4 @@
-import { type AgentSample, type AgentTick, centre, type TraceAttack } from "./agentTrace";
+import { type AgentSample, type AgentTick, centre, type TraceAttack } from "./agentTrace.ts";
 
 // Checks over a structured agent trace. Thresholds and selections arrive as parameters, so the
 // same checks serve any game's data.

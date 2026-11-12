@@ -1,7 +1,7 @@
 import { assertNever } from "@andornaut/game-kit/assertNever";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
 import type {
   AreaLayout,
   BirdTuning,
@@ -11,10 +11,10 @@ import type {
   TileRect,
   ZoneLayout,
   ZonePlan,
-} from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { tileRect, zoneLayout } from "../rules/tiles";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { tileRect, zoneLayout } from "../rules/tiles.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
 
 export type Reach = keyof Reaches;
 

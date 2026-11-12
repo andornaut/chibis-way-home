@@ -1,16 +1,16 @@
 import { expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import type { AreaLayout, BehaviourPlan, ObjectLayout, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { advanceBehaviour } from "./behaviour";
-import { startZone, stepZone } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import type { AreaLayout, BehaviourPlan, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { advanceBehaviour } from "./behaviour.ts";
+import { startZone, stepZone } from "./zone.ts";
 
-vi.mock("./behaviour", async (original) => {
-  const actual = await original<typeof import("./behaviour")>();
+vi.mock("./behaviour.ts", async (original) => {
+  const actual = await original<typeof import("./behaviour.ts")>();
   return { ...actual, advanceBehaviour: vi.fn(actual.advanceBehaviour) };
 });
 

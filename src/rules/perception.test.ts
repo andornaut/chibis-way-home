@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -9,14 +9,25 @@ import {
   GOOSE_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
-} from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourPlan, ObjectLayout, Rect, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { layoutBehaviour } from "./behaviour";
-import { currentScreen, targetInCurrentView, targetInSameChunk, targetVisible } from "./perception";
-import { objectLayout } from "./tiles";
-import { enterArea, retryZone, startZone, stepZone } from "./zone";
+} from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import type {
+  Archetype,
+  BehaviourPlan,
+  ObjectLayout,
+  Rect,
+  ZoneLayout,
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { layoutBehaviour } from "./behaviour.ts";
+import {
+  currentScreen,
+  targetInCurrentView,
+  targetInSameChunk,
+  targetVisible,
+} from "./perception.ts";
+import { objectLayout } from "./tiles.ts";
+import { enterArea, retryZone, startZone, stepZone } from "./zone.ts";
 
 const plan: BehaviourPlan = {
   axis: "x",

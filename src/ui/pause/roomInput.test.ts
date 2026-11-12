@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type RoomEvent, roomEvent, type RoomOutcome } from "./roomInput";
+import { type RoomEvent, roomEvent, type RoomOutcome } from "./roomInput.ts";
 
 const key = (name: string, repeat = false, shift = false): RoomEvent => ({
   key: name,

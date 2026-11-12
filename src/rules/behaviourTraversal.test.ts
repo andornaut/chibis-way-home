@@ -7,21 +7,26 @@ import {
 } from "@andornaut/game-kit/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { BIRD_FRAME } from "../assets";
-import { contactFrameAt, STEP_SECONDS } from "../core";
-import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { Archetype, BehaviourPlan, Rect } from "../data/types";
-import { behaviourPose } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { withAnticipationContact } from "../testing/behaviours";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { zonePlanOf } from "./assemble";
-import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
-import { moveIntent, openingScorerState } from "./behaviourScorer";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { contactFrameAt, STEP_SECONDS } from "../core/index.ts";
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { Archetype, BehaviourPlan, Rect } from "../data/types/index.ts";
+import { behaviourPose } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { withAnticipationContact } from "../testing/behaviours.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { zonePlanOf } from "./assemble.ts";
+import {
+  type BehaviourState,
+  layoutBehaviour,
+  startBehaviour,
+  stepBehaviour,
+} from "./behaviour.ts";
+import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach.ts";
+import { moveIntent, openingScorerState } from "./behaviourScorer.ts";
 import {
   advanceTraversal,
   type BehaviourTraversalState,
@@ -30,12 +35,12 @@ import {
   probeRearm,
   traversalContext,
   traversalGoal,
-} from "./behaviourTraversal";
-import { birdBox, startBird } from "./bird";
-import { supportContact } from "./flyLanding";
-import { objectLayout, zoneLayout } from "./tiles";
-import { activateBehaviour, startZone, stepZone } from "./zone";
-import { CHUNK_LIBRARY } from "./zonePlans";
+} from "./behaviourTraversal.ts";
+import { birdBox, startBird } from "./bird.ts";
+import { supportContact } from "./flyLanding.ts";
+import { objectLayout, zoneLayout } from "./tiles.ts";
+import { activateBehaviour, startZone, stepZone } from "./zone.ts";
+import { CHUNK_LIBRARY } from "./zonePlans.ts";
 
 vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
   const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
@@ -46,8 +51,8 @@ vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
   };
 });
 const checkBudget = vi.hoisted(() => ({ maxStates: undefined as number | undefined }));
-vi.mock("../data/behaviours", async (original) => {
-  const actual = await original<typeof import("../data/behaviours")>();
+vi.mock("../data/behaviours.ts", async (original) => {
+  const actual = await original<typeof import("../data/behaviours.ts")>();
   return {
     ...actual,
     BEHAVIOUR_TRAVERSAL_SEARCH: {

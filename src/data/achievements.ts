@@ -1,4 +1,4 @@
-import type { AchievementTier, BossId, ChibiAchievement, DialogueSpeaker } from "./types";
+import type { AchievementTier, BossId, ChibiAchievement, DialogueSpeaker } from "./types/index.ts";
 
 // The tiers in card order.
 export const ACHIEVEMENT_TIERS: readonly AchievementTier[] = ["easy", "medium", "hard"];

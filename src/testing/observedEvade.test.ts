@@ -1,21 +1,21 @@
 import { expect, it } from "vitest";
 
-import { traceRecorder } from "../ai/trace";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import type { AreaLayout, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { createBehaviourObserver } from "../rules/behaviourObserver";
-import { groundMask, mapTerrain } from "../rules/movementMaps";
-import { startZone, stepZone } from "../rules/zone";
-import { ALLOW, chibiMap } from "../sim/pathOut";
-import { zoneTraceLine } from "../sim/zoneTrace";
-import { gameArenaCase } from "./arenas";
-import { ARENA_SAMPLES } from "./arenaSamples";
-import { createBehaviourObservations } from "./behaviourObservations";
-import { chunksLayout, ORDINARY } from "./encounterLayouts";
-import { type EvadeContext, evadeRun, stepEvade } from "./evade";
-import { observedEvadeRun } from "./observedEvade";
+import { traceRecorder } from "../ai/trace.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import type { AreaLayout, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { createBehaviourObserver } from "../rules/behaviourObserver.ts";
+import { groundMask, mapTerrain } from "../rules/movementMaps.ts";
+import { startZone, stepZone } from "../rules/zone.ts";
+import { ALLOW, chibiMap } from "../sim/pathOut.ts";
+import { zoneTraceLine } from "../sim/zoneTrace.ts";
+import { gameArenaCase } from "./arenas.ts";
+import { ARENA_SAMPLES } from "./arenaSamples.ts";
+import { createBehaviourObservations } from "./behaviourObservations.ts";
+import { chunksLayout, ORDINARY } from "./encounterLayouts.ts";
+import { type EvadeContext, evadeRun, stepEvade } from "./evade.ts";
+import { observedEvadeRun } from "./observedEvade.ts";
 
 const input = { jumpHeld: false, move: 0 as const, useHeld: false };
 

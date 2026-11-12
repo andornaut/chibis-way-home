@@ -2,10 +2,10 @@ import { existsSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import { ZONE_MAP } from "./map";
-import { STAGE_PREVIEWS } from "./stagePreviews";
-import { RECIPES } from "./zones";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import { ZONE_MAP } from "./map.ts";
+import { STAGE_PREVIEWS } from "./stagePreviews.ts";
+import { RECIPES } from "./zones.ts";
 
 it("registers an existing PNG for every built catalogue stage preview", () => {
   const plans = new Set(Object.keys(RECIPES));

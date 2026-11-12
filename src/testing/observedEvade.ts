@@ -1,8 +1,8 @@
 import {
   type BehaviourObservationReport,
   createBehaviourObservations,
-} from "./behaviourObservations";
-import { type EvadeContext, type EvadeRun, evadeRun, type EvadeStart } from "./evade";
+} from "./behaviourObservations.ts";
+import { type EvadeContext, type EvadeRun, evadeRun, type EvadeStart } from "./evade.ts";
 
 export interface ObservedEvadeRun {
   readonly episodes: {

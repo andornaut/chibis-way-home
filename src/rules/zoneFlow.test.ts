@@ -3,12 +3,12 @@ import { readFileSync } from "node:fs";
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { describe, expect, it } from "vitest";
 
-import { CHARACTERS } from "../data/characters";
-import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues";
-import { ZONE_MAP } from "../data/map";
-import type { ZoneDialoguePlan } from "../data/types";
-import { DESTINATION_FIXTURE as map } from "../testing/mapDestinations";
-import { introductionForRun, zoneStoryForStage } from "./zoneFlow";
+import { CHARACTERS } from "../data/characters.ts";
+import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import type { ZoneDialoguePlan } from "../data/types/index.ts";
+import { DESTINATION_FIXTURE as map } from "../testing/mapDestinations.ts";
+import { introductionForRun, zoneStoryForStage } from "./zoneFlow.ts";
 
 const entry = {
   character: "test-actor",

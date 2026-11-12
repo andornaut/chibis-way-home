@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import type { ZoneState } from "../rules/zone";
+import { ZONE_MAP } from "../data/map.ts";
+import type { ZoneState } from "../rules/zone.ts";
 
 // Storage writes recorded from the previous save code: the scripted session below from empty
 // storage, then a reopen of its final records. The current code must write the same keys and
@@ -126,7 +126,7 @@ function storage(initial: readonly (readonly [string, string])[]): [string, stri
 
 it("writes the same records under the same keys as before the move", async () => {
   const writes = storage([]);
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   const destination = ZONE_MAP.destinations[0]!;
   const [first, second] = destination.stages;
@@ -165,7 +165,7 @@ it("writes the same records under the same keys as before the move", async () =>
 it("reopens records saved before the move and writes them back byte for byte", async () => {
   const finals = [...new Map(SESSION_WRITES.map(([key, value]) => [key, value]))];
   const writes = storage(finals);
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   expect(save.savedProgress()).toEqual({
     activeSkill: "speedy",

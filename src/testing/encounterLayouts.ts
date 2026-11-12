@@ -1,14 +1,14 @@
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit";
-import { TILE } from "../data/screen";
-import type { BirdTuning, Instance, ZoneLayout } from "../data/types";
-import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble";
-import { startBird } from "../rules/bird";
-import { zoneLayout } from "../rules/tiles";
-import type { ZoneInput, ZoneState } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit.ts";
+import { TILE } from "../data/screen.ts";
+import type { BirdTuning, Instance, ZoneLayout } from "../data/types/index.ts";
+import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble.ts";
+import { startBird } from "../rules/bird.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import type { ZoneInput, ZoneState } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 
 // Chibi without skills.
 export const ORDINARY: BirdTuning = (() => {

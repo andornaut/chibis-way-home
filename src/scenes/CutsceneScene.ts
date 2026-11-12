@@ -1,18 +1,22 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { SCREEN } from "../data/screen";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { Point, Rect } from "../data/types";
-import type { RunStatsSummary, WholeRunDisplaySummary, ZoneStatsSummary } from "../progress";
+import { SCREEN } from "../data/screen.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { Point, Rect } from "../data/types/index.ts";
+import type {
+  RunStatsSummary,
+  WholeRunDisplaySummary,
+  ZoneStatsSummary,
+} from "../progress/index.ts";
 import {
   CUTSCENE_CONTINUE,
   focusKeyAction,
   pauseKey,
   STAGE_SUMMARY_BOUNDS,
   statsStatement,
-} from "../ui";
+} from "../ui/index.ts";
 import {
   addTextButton,
   captureTab,
@@ -20,10 +24,10 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-} from "./cardParts";
-import { modalInput, onScenePointer } from "./modalInput";
-import { fitPlayCamera, playPoint } from "./playCamera";
-import { addStageSummary } from "./runStatsParts";
+} from "./cardParts.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { addStageSummary } from "./runStatsParts.ts";
 
 export interface CutsceneData {
   readonly percent: number;

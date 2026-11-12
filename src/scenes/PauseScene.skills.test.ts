@@ -10,31 +10,31 @@ const selection = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
 vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
-vi.mock("../pwa", () => ({
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
+vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
   coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   zoneShown: vi.fn(),
 }));
-vi.mock("../ui/settings/touchControls", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../ui/settings/touchControls")>()),
+vi.mock("../ui/settings/touchControls.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../ui/settings/touchControls.ts")>()),
   coarsePointer: () => true,
 }));
-vi.mock("../dev/mode", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../dev/mode")>()),
+vi.mock("../dev/mode.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../dev/mode.ts")>()),
   developmentSkillOverrides: () => ({}),
 }));
-vi.mock("./save", () => ({
+vi.mock("./save.ts", () => ({
   activeSkill: () => selection.active,
   savedSkills: () => selection.owned,
   selectActiveSkill: selection.select,
 }));
-vi.mock("./modalBackdrop", () => ({
+vi.mock("./modalBackdrop.ts", () => ({
   showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
 }));
-vi.mock("./domUi", () => ({
+vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string, frame: unknown, fill?: string) =>
     Promise.resolve(`blob:${art}-${String(frame)}-${fill ?? ""}`),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
@@ -45,16 +45,16 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { BIRD } from "../data/bird";
-import { SKILL_GESTURE } from "../data/skills";
-import { TEXT } from "../data/text";
-import type { SkillId } from "../data/types";
-import { SKILL_IDS } from "../progress";
-import { type BirdState, startBird } from "../rules/bird";
-import { createUiLayer, SKILL_ART, type UiLayer } from "../ui";
-import { modalInput } from "./modalInput";
-import { createPauseScene, press, pressKey, settle, tap } from "./pauseFixture";
-import type { SkillDetailData } from "./SkillDetailScene";
+import { BIRD } from "../data/bird.ts";
+import { SKILL_GESTURE } from "../data/skills.ts";
+import { TEXT } from "../data/text.ts";
+import type { SkillId } from "../data/types/index.ts";
+import { SKILL_IDS } from "../progress/index.ts";
+import { type BirdState, startBird } from "../rules/bird.ts";
+import { createUiLayer, SKILL_ART, type UiLayer } from "../ui/index.ts";
+import { modalInput } from "./modalInput.ts";
+import { createPauseScene, press, pressKey, settle, tap } from "./pauseFixture.ts";
+import type { SkillDetailData } from "./SkillDetailScene.ts";
 
 let layer: UiLayer;
 const shutdowns: (() => void)[] = [];

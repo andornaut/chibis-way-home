@@ -1,8 +1,8 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import type { GameObjects, Scene } from "phaser";
 
-import type { Rect } from "../data/types";
-import { forceVisualSpan } from "../presentation";
+import type { Rect } from "../data/types/index.ts";
+import { forceVisualSpan } from "../presentation/index.ts";
 
 // The placeholder's opacity over the push volume while the visual has no sprite.
 const PLACEHOLDER_ALPHA = 0.35;

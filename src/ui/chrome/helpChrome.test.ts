@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
-import type { ControlAction } from "../../data/types";
-import { ACTION_HELP } from "../layout/actionHelp";
-import { helpChromeLayers, helpChromeSvg } from "./helpChrome";
-import { touchChromeLayers, touchChromePixel } from "./touchChrome";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import type { ControlAction } from "../../data/types/index.ts";
+import { ACTION_HELP } from "../layout/actionHelp.ts";
+import { helpChromeLayers, helpChromeSvg } from "./helpChrome.ts";
+import { touchChromeLayers, touchChromePixel } from "./touchChrome.ts";
 
 const colours = {
   cream: parseInt(palette.colours.cream.slice(1), 16),

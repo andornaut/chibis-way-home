@@ -1,12 +1,18 @@
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { ChunkPlan, ObjectLayout, SlotKind, ZoneLayout, ZonePlan } from "../data/types";
-import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble";
-import { applyStageGeometry } from "../rules/stageGeometry";
-import { zoneLayout } from "../rules/tiles";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
-import { type ALL_CHUNKS, ALL_RECIPES } from "./chunks";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type {
+  ChunkPlan,
+  ObjectLayout,
+  SlotKind,
+  ZoneLayout,
+  ZonePlan,
+} from "../data/types/index.ts";
+import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble.ts";
+import { applyStageGeometry } from "../rules/stageGeometry.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
+import { type ALL_CHUNKS, ALL_RECIPES } from "./chunks.ts";
 
 type ChunkWalkCase = (typeof ALL_CHUNKS)[number];
 

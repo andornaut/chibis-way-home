@@ -1,4 +1,4 @@
-import type { Archetype, Interaction, Motion, Reaction } from "./types";
+import type { Archetype, Interaction, Motion, Reaction } from "./types/index.ts";
 
 export const STATIC_MOTION: Motion = {
   algorithm: "static",

@@ -1,7 +1,7 @@
 import type { Textures } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { backdropBottomFrame } from "./backdropBottomFrame";
+import { backdropBottomFrame } from "./backdropBottomFrame.ts";
 
 it("uses the exact last source row, preserves its atlas source and keeps the default frame", () => {
   const frames = new Set<string>();

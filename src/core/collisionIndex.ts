@@ -1,4 +1,4 @@
-import type { Rect } from "../data/types";
+import type { Rect } from "../data/types/index.ts";
 
 // Immutable terrain arrays retain one bounded horizontal broadphase index. Oversized rectangles
 // stay in every query without being duplicated across unbounded numbers of buckets.

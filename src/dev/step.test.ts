@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { ZoneState } from "../rules/zone";
-import { developmentStep } from "./step";
+import type { ZoneState } from "../rules/zone.ts";
+import { developmentStep } from "./step.ts";
 
 describe("developer contact protection", () => {
   it.each(["hazard", "crush", "fall"] as const)(

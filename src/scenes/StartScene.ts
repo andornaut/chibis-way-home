@@ -2,16 +2,16 @@ import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { browserExitPage, exitApp } from "@andornaut/game-kit/web/pwa/dom/exitApp";
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { TEXT } from "../data/text";
-import type { Rect } from "../data/types";
-import { openingDestination } from "../progress";
+import { TEXT } from "../data/text.ts";
+import type { Rect } from "../data/types/index.ts";
+import { openingDestination } from "../progress/index.ts";
 import {
   beginStartUpdateVisit,
   coverZone,
   exitShown,
   PHONE_EVENTS,
   startScreenShown,
-} from "../pwa";
+} from "../pwa/index.ts";
 import {
   focusKeyAction,
   type IconButtonLayout,
@@ -23,8 +23,12 @@ import {
   startScreenLayout,
   stepFocus,
   type TouchSetting,
-} from "../ui";
-import type { AchievementsData, AchievementsOpener, AchievementsScene } from "./AchievementsScene";
+} from "../ui/index.ts";
+import type {
+  AchievementsData,
+  AchievementsOpener,
+  AchievementsScene,
+} from "./AchievementsScene.ts";
 import {
   addSlice,
   addTextButton,
@@ -34,12 +38,12 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-} from "./cardParts";
-import { modalInput, onScenePointer } from "./modalInput";
-import { fitPlayCamera, playPoint } from "./playCamera";
-import type { RestartData, RestartOpener, RestartScene } from "./RestartScene";
-import { savedProgress } from "./save";
-import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
+} from "./cardParts.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
+import { savedProgress } from "./save.ts";
+import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
 
 const ACHIEVEMENTS = "achievements";
 const BACKGROUND = "start-background";

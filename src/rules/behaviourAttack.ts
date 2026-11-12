@@ -1,4 +1,4 @@
-import type { BehaviourNode, BehaviourPlan } from "../data/types";
+import type { BehaviourNode, BehaviourPlan } from "../data/types/index.ts";
 
 export interface BehaviourAttackState {
   readonly activeAttack?: {

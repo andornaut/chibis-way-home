@@ -8,17 +8,17 @@ import type {
 } from "@andornaut/game-kit/terrain/movementMap";
 import { expect, it } from "vitest";
 
-import { EDGE, STEP_SECONDS } from "../core";
-import type { Point, Rect } from "../data/types";
-import { birdBox, startBird, stepBird } from "../rules/bird";
-import { chibiMovementProfile, type MapSupport, type MapTerrain } from "../rules/movementMaps";
-import { ORDINARY } from "./encounterLayouts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import type { Point, Rect } from "../data/types/index.ts";
+import { birdBox, startBird, stepBird } from "../rules/bird.ts";
+import { chibiMovementProfile, type MapSupport, type MapTerrain } from "../rules/movementMaps.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
 import {
   completedGoalHold,
   createRouteFollower,
   createRouteProgress,
   dispatchRoute,
-} from "./evade";
+} from "./evade.ts";
 
 const nodeId = (id: number) => id as NodeId;
 const edgeId = (id: number) => id as EdgeId;

@@ -1,7 +1,7 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import type { RandomStreams } from "../ai/randomStreams";
-import { collisionCandidates, EDGE } from "../core";
+import type { RandomStreams } from "../ai/randomStreams.ts";
+import { collisionCandidates, EDGE } from "../core/index.ts";
 import type {
   AreaLayout,
   BirdTuning,
@@ -9,11 +9,11 @@ import type {
   Point,
   Rect,
   TargetedAttackWindow,
-} from "../data/types";
-import type { BehaviourObservationContext } from "./behaviourObserver";
-import { birdBox, type BirdState } from "./bird";
-import type { PursuitGroundMap } from "./movementMaps";
-import type { TimedHazardSampler } from "./timedHazard";
+} from "../data/types/index.ts";
+import type { BehaviourObservationContext } from "./behaviourObserver.ts";
+import { birdBox, type BirdState } from "./bird.ts";
+import type { PursuitGroundMap } from "./movementMaps.ts";
+import type { TimedHazardSampler } from "./timedHazard.ts";
 
 interface BehaviourPlatform {
   readonly collision: "ledge" | "solid";

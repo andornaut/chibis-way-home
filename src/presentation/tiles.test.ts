@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { CROSSWALK_PHASE_TILES } from "../data/obstacleCharacters";
-import type { TerrainRect } from "../data/types";
-import { drawsFrom, tileHitbox, type Tileset } from "../stage";
+import { CROSSWALK_PHASE_TILES } from "../data/obstacleCharacters.ts";
+import type { TerrainRect } from "../data/types/index.ts";
+import { drawsFrom, tileHitbox, type Tileset } from "../stage/index.ts";
 import {
   loadedTileset,
   lookTiles,
@@ -10,7 +10,7 @@ import {
   phaseSkinTiles,
   type PlacedTile,
   terrainTiles,
-} from "./tiles";
+} from "./tiles.ts";
 
 const NAMES = [
   ...lookTiles("sidewalk"),

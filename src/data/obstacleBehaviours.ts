@@ -1,10 +1,10 @@
-import { shuttleStates } from "./behaviours";
+import { shuttleStates } from "./behaviours.ts";
 import {
   GUST_PULSE,
   OBSTACLE_MOVER_PAUSE,
   OBSTACLE_MOVER_SPEED,
   RAVINE_GUST_PULSE,
-} from "./obstacleTuning";
+} from "./obstacleTuning.ts";
 import type {
   BehaviourAction,
   BehaviourNode,
@@ -15,7 +15,7 @@ import type {
   SupportCycleSeconds,
   SupportPhase,
   WarnedCycleSeconds,
-} from "./types";
+} from "./types/index.ts";
 
 export const WARNED_VENT_SECONDS = {
   active: 0.6,

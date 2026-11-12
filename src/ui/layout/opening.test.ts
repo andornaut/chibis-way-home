@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
 
-import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
-import { OPENING } from "../../data/opening";
-import { SCREEN } from "../../data/screen";
-import { TEXT } from "../../data/text";
-import { CARD_FONTS } from "../../testing/cardFonts";
-import { cardTextSize } from "./contentCard";
-import { openingLayout } from "./opening";
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
+import { OPENING } from "../../data/opening.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import { CARD_FONTS } from "../../testing/cardFonts.ts";
+import { cardTextSize } from "./contentCard.ts";
+import { openingLayout } from "./opening.ts";
 
 it("fits every actual caption at full shared font beside full-size controls in the quiet footer", () => {
   for (const beat of OPENING) {

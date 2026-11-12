@@ -1,6 +1,6 @@
-import type { ArtManifest } from "../assets";
-import type { Point, Size } from "../data/types";
-import { drawsFrom, type Tileset } from "../stage";
+import type { ArtManifest } from "../assets/index.ts";
+import type { Point, Size } from "../data/types/index.ts";
+import { drawsFrom, type Tileset } from "../stage/index.ts";
 
 // How an object's art is drawn: tiles from its area's tileset; a backdrop piece, placed once or
 // repeated across the object's width; an animated sprite; or a flat placeholder rectangle, for

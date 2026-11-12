@@ -1,5 +1,10 @@
-import { EDGE } from "../core";
-import type { ForcedTransitLayout, Point, Rect, TargetedAttackWindow } from "../data/types";
+import { EDGE } from "../core/index.ts";
+import type {
+  ForcedTransitLayout,
+  Point,
+  Rect,
+  TargetedAttackWindow,
+} from "../data/types/index.ts";
 
 interface ForcedTransitBankContact {
   readonly group: string;

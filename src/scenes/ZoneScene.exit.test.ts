@@ -2,10 +2,10 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues";
-import { ZONE_MAP } from "../data/map";
-import { stageExit } from "../progress";
-import { zoneStoryForStage } from "../rules/zoneFlow";
+import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { stageExit } from "../progress/index.ts";
+import { zoneStoryForStage } from "../rules/zoneFlow.ts";
 
 const save = vi.hoisted(() => ({
   completeStageRun: vi.fn(() => ({})),
@@ -17,13 +17,13 @@ const save = vi.hoisted(() => ({
   zoneVisitStats: vi.fn(() => ({})),
 }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
-vi.mock("../dev/mode", () => ({ isDevelopmentSession: () => true }));
-vi.mock("./save", () => save);
-vi.mock("../progress/save/runSummary", () => ({ wholeRunSummary: () => ({}) }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../dev/mode.ts", () => ({ isDevelopmentSession: () => true }));
+vi.mock("./save.ts", () => save);
+vi.mock("../progress/save/runSummary.ts", () => ({ wholeRunSummary: () => ({}) }));
 
-import { type DialogueData, DialogueScene } from "./DialogueScene";
-import { ZoneScene } from "./ZoneScene";
+import { type DialogueData, DialogueScene } from "./DialogueScene.ts";
+import { ZoneScene } from "./ZoneScene.ts";
 
 beforeEach(() => vi.stubGlobal("window", { location: { search: "" } }));
 afterEach(() => {

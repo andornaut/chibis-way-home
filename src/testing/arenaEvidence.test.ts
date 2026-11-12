@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 
-import { type ArenaProof, certifiedArena, summariseArenaEvidence } from "./arenaCertify";
-import { gameArenaCase } from "./arenas";
-import { ARENA_SAMPLES } from "./arenaSamples";
-import { EVADE_SLOWED, type EvadeRun } from "./evade";
+import { type ArenaProof, certifiedArena, summariseArenaEvidence } from "./arenaCertify.ts";
+import { gameArenaCase } from "./arenas.ts";
+import { ARENA_SAMPLES } from "./arenaSamples.ts";
+import { EVADE_SLOWED, type EvadeRun } from "./evade.ts";
 
 const run = (overrides: Partial<EvadeRun> = {}): EvadeRun => ({
   acquired: 0,

@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { backdropBottomRect } from "./backdropBottom";
+import { backdropBottomRect } from "./backdropBottom.ts";
 
 it.each([
   {

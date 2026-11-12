@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../../assets";
-import { STEP_SECONDS } from "../../core";
-import { SKILL_PROFILES } from "../../progress";
-import { zonePlanOf } from "../../rules/assemble";
-import { composePair } from "../../rules/modules";
-import { standsOn } from "../../rules/platformBird";
-import { zoneLayout } from "../../rules/tiles";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../../rules/zone";
-import { CHUNK_LIBRARY } from "../../rules/zonePlans";
-import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite";
-import { BIRD } from "../bird";
-import { WINDMILL_SAILS } from "../obstacleTuning";
-import { REACH } from "../reach";
-import { TILE } from "../screen";
-import { ZONE_FRAMES } from "../zoneFrames";
-import { MODULE_RULES, MODULES, PAIR_GRADES } from ".";
+import { BIRD_FRAME } from "../../assets/index.ts";
+import { STEP_SECONDS } from "../../core/index.ts";
+import { SKILL_PROFILES } from "../../progress/index.ts";
+import { zonePlanOf } from "../../rules/assemble.ts";
+import { composePair } from "../../rules/modules.ts";
+import { standsOn } from "../../rules/platformBird.ts";
+import { zoneLayout } from "../../rules/tiles.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../../rules/zonePlans.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
+import { BIRD } from "../bird.ts";
+import { WINDMILL_SAILS } from "../obstacleTuning.ts";
+import { REACH } from "../reach.ts";
+import { TILE } from "../screen.ts";
+import { ZONE_FRAMES } from "../zoneFrames.ts";
+import { MODULE_RULES, MODULES, PAIR_GRADES } from "./index.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

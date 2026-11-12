@@ -1,6 +1,6 @@
 // Bini's arena: Ravine. Bini growls, charges and mauls along the level he stands on, so the arena
 // raises its high ground above his lanes.
-import type { ChunkArena, Instance, TerrainRect } from "../types";
+import type { ChunkArena, Instance, TerrainRect } from "../types/index.ts";
 
 const ROWS = 120;
 const RIM = 80;

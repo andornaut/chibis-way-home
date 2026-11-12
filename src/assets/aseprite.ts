@@ -1,4 +1,4 @@
-import type { ArtHitbox, Rect, Size, SpriteContact } from "../data/types";
+import type { ArtHitbox, Rect, Size, SpriteContact } from "../data/types/index.ts";
 
 // Art's sprites, as public/art/manifest.json lists them and art-kit writes their json-hash sheets.
 

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { EDGE, STEP_MS, STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { type BirdState, startBird, stepBird } from "../rules/bird";
-import { birdFrameAt, type BirdPose, clearAirJumpPose, stepPose } from "./bird";
+import { EDGE, STEP_MS, STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { type BirdState, startBird, stepBird } from "../rules/bird.ts";
+import { birdFrameAt, type BirdPose, clearAirJumpPose, stepPose } from "./bird.ts";
 
 const LAND_MS = 180;
 

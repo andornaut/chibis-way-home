@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { ARCHETYPES } from "../data/archetypes";
-import { FERRET_BEHAVIOUR, GOOSE_BEHAVIOUR, PIGEON_BEHAVIOUR } from "../data/behaviours";
-import { TILE } from "../data/screen";
-import type { BehaviourAction, BehaviourPlan, ObjectLayout } from "../data/types";
-import { layoutBehaviour } from "../rules/behaviour";
-import { objectLayout } from "../rules/tiles";
-import type { Transient } from "../rules/transients";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { FERRET_BEHAVIOUR, GOOSE_BEHAVIOUR, PIGEON_BEHAVIOUR } from "../data/behaviours.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourAction, BehaviourPlan, ObjectLayout } from "../data/types/index.ts";
+import { layoutBehaviour } from "../rules/behaviour.ts";
+import { objectLayout } from "../rules/tiles.ts";
+import type { Transient } from "../rules/transients.ts";
 import {
   observeProjectiles,
   projectileGravityModels,
   type ProjectileObservationContext,
-} from "./evadeProjectiles";
+} from "./evadeProjectiles.ts";
 
 const PUBLIC_MODELS = [
   { behaviour: FERRET_BEHAVIOUR, character: "ferret-parcel" },

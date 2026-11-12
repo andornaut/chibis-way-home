@@ -1,6 +1,6 @@
 // Chibi: his movement, skills and death tuning.
 
-import type { Point, Rect } from "./geometry";
+import type { Point, Rect } from "./geometry.ts";
 
 type DeathReason = "crush" | "fall" | "hazard";
 

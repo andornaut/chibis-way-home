@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import manifestJson from "../../public/art/manifest.json";
-import type { ArtManifest } from "../assets";
-import { DIALOGUES, SPEAKERS } from "./dialogues";
-import { ZONE_MAP } from "./map";
-import { ROOMS } from "./rooms";
-import { TEXT } from "./text";
-import type { SkillId } from "./types";
-import { RECIPES } from "./zones";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import type { ArtManifest } from "../assets/index.ts";
+import { DIALOGUES, SPEAKERS } from "./dialogues.ts";
+import { ZONE_MAP } from "./map.ts";
+import { ROOMS } from "./rooms.ts";
+import { TEXT } from "./text.ts";
+import type { SkillId } from "./types/index.ts";
+import { RECIPES } from "./zones.ts";
 
 const MANIFEST = manifestJson as ArtManifest;
 describe.each(Object.entries(ROOMS))("room %s", (key) => {

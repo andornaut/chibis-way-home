@@ -1,7 +1,7 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard";
-import { closeButton, textButton } from "./card";
+import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
+import { closeButton, textButton } from "./card.ts";
 
 // The stage picker card in the HTML UI (stageSelect.css): the destination's name, the close X,
 // one row of stage faces per page, of which one shows, and on a paged card Previous, the page

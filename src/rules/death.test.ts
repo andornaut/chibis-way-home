@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import type { Archetype } from "../data/types";
-import { walkZone } from "../sim/zoneWalk";
-import { attemptProgress, deathSupport } from "./death";
-import { zoneLayout } from "./tiles";
-import { startZone } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { Archetype } from "../data/types/index.ts";
+import { walkZone } from "../sim/zoneWalk.ts";
+import { attemptProgress, deathSupport } from "./death.ts";
+import { zoneLayout } from "./tiles.ts";
+import { startZone } from "./zone.ts";
 
 const LEDGE: Archetype = {
   collision: "ledge",

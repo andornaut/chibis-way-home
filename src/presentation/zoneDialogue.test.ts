@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { ObjectLayout } from "../data/types";
-import { TEST_PURSUER } from "../testing/behaviours";
-import { barkOwnerOnscreen, proximityDialogue } from "./zoneDialogue";
+import type { ObjectLayout } from "../data/types/index.ts";
+import { TEST_PURSUER } from "../testing/behaviours.ts";
+import { barkOwnerOnscreen, proximityDialogue } from "./zoneDialogue.ts";
 
 const OBJECT = {
   behaviour: TEST_PURSUER,

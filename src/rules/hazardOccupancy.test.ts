@@ -1,14 +1,14 @@
 import { expect, it } from "vitest";
 
-import { EDGE, prepareSpriteContact, spriteFrameOrigin, STEP_SECONDS } from "../core";
-import { BEAR_BEHAVIOUR } from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import type { BehaviourPlan, ObjectLayout, Rect } from "../data/types";
-import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import { traversalContext } from "./behaviourTraversal";
-import { startBird } from "./bird";
-import { hazardBoundsAt } from "./hazardOccupancy";
-import { objectLayout } from "./tiles";
+import { EDGE, prepareSpriteContact, spriteFrameOrigin, STEP_SECONDS } from "../core/index.ts";
+import { BEAR_BEHAVIOUR } from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import type { BehaviourPlan, ObjectLayout, Rect } from "../data/types/index.ts";
+import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { traversalContext } from "./behaviourTraversal.ts";
+import { startBird } from "./bird.ts";
+import { hazardBoundsAt } from "./hazardOccupancy.ts";
+import { objectLayout } from "./tiles.ts";
 const target = startBird(BIRD, { x: 200, y: 300 });
 const wait = { animation: null, motion: { kind: "wait" }, transitions: [] } as const;
 const chase = {

@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
-import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourNode, BehaviourPlan } from "../data/types";
-import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
+import { BIRD } from "../data/bird.ts";
+import type { Archetype, BehaviourNode, BehaviourPlan } from "../data/types/index.ts";
+import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
 import {
   advanceAttackClock,
   attackReady,
@@ -10,9 +10,9 @@ import {
   canEnterAttack,
   clearTellCancels,
   enterAttack,
-} from "./behaviourAttack";
-import { startBird } from "./bird";
-import { objectLayout } from "./tiles";
+} from "./behaviourAttack.ts";
+import { startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

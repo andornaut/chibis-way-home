@@ -1,4 +1,4 @@
-import type { TileRect } from "./types";
+import type { TileRect } from "./types/index.ts";
 
 export const ROOM_BUILDING_OPENING: TileRect = { col: 5, cols: 5, row: 8, rows: 7 };
 

@@ -2,12 +2,12 @@ import { EventEmitter } from "node:events";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { SCREEN, TILE } from "../data/screen";
-import type { ZoneEntryIntroduction } from "../data/types";
+import { SCREEN, TILE } from "../data/screen.ts";
+import type { ZoneEntryIntroduction } from "../data/types/index.ts";
 
 const calls = vi.hoisted(() => ({ departing: vi.fn(), heard: vi.fn() }));
-vi.mock("../data/characters", () => ({ CHARACTERS: { actor: { art: "actor-art" } } }));
-vi.mock("./playCamera", () => ({ fitPlayCamera: vi.fn() }));
+vi.mock("../data/characters.ts", () => ({ CHARACTERS: { actor: { art: "actor-art" } } }));
+vi.mock("./playCamera.ts", () => ({ fitPlayCamera: vi.fn() }));
 vi.mock("phaser", () => ({
   Scene: class {
     readonly add = {
@@ -37,8 +37,8 @@ vi.mock("phaser", () => ({
   },
 }));
 
-import { modalInput } from "./modalInput";
-import { ZoneIntroductionScene } from "./ZoneIntroductionScene";
+import { modalInput } from "./modalInput.ts";
+import { ZoneIntroductionScene } from "./ZoneIntroductionScene.ts";
 
 const entry: ZoneEntryIntroduction = {
   character: "actor",

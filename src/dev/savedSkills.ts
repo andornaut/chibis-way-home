@@ -1,5 +1,5 @@
-import type { SavedSkillGrantResult } from "../progress";
-import { regularBrowser } from "./mode";
+import type { SavedSkillGrantResult } from "../progress/index.ts";
+import { regularBrowser } from "./mode.ts";
 
 // The captured UI action must remain current through every asynchronous save boundary.
 export function grantAllSavedSkills(context: {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { choiceOption, numberOption, parseOptions, UsageError } from "./command";
+import { choiceOption, numberOption, parseOptions, UsageError } from "./command.ts";
 
 const OPTIONS = { fast: { type: "boolean" }, move: { type: "string" } } as const;
 

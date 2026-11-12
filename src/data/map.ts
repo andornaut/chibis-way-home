@@ -1,6 +1,6 @@
-import { TILE } from "./screen";
-import type { MapDestination, ZoneMap } from "./types";
-import { RECIPES } from "./zones";
+import { TILE } from "./screen.ts";
+import type { MapDestination, ZoneMap } from "./types/index.ts";
+import { RECIPES } from "./zones.ts";
 
 // V1's ordered destinations are the source of stage order and marker positions. The map starts
 // at the first destination's first stage and finishes at the last destination's last stage.

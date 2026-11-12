@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import type { PluginOption } from "vite";
 import { expect, it } from "vitest";
 
-import configPromise from "../../vite.config";
+import configPromise from "../../vite.config.ts";
 
 // Flatten plugin groups exactly in their declared order, without running build hooks.
 async function pluginNames(plugins: PluginOption[]): Promise<string[]> {

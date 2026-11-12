@@ -9,24 +9,24 @@ import type { ProgressHandle } from "@andornaut/game-kit/progressState";
 import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 import { Scene } from "phaser";
 
-import manifestJson from "../../public/art/manifest.json";
-import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
-import { TILE } from "../data/screen";
-import { TEXT } from "../data/text";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets/index.ts";
+import { TILE } from "../data/screen.ts";
+import { TEXT } from "../data/text.ts";
 import {
   beginRequiredUpdate,
   beginStartupChecks,
   loadingProgress,
   startupLoading,
-} from "../loading/progress";
-import { requiredUpdate, requireNewer } from "../pwa";
-import { createMessageCard } from "../ui";
-import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
-import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
-import { mountSceneView, prepareDomUi } from "./domUi";
-import { queueFontArt } from "./fontArt";
-import { loadProgress } from "./save";
-import { filterLoadedArt } from "./textureFilters";
+} from "../loading/progress.ts";
+import { requiredUpdate, requireNewer } from "../pwa/index.ts";
+import { createMessageCard } from "../ui/index.ts";
+import { ACHIEVEMENT_NOTICE } from "./achievementNotice.ts";
+import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt.ts";
+import { mountSceneView, prepareDomUi } from "./domUi.ts";
+import { queueFontArt } from "./fontArt.ts";
+import { loadProgress } from "./save.ts";
+import { filterLoadedArt } from "./textureFilters.ts";
 
 // The manifest ships inside the hashed bundle rather than loading from /art/, so a copy an earlier
 // version cached can never be paired with this code.

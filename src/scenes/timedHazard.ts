@@ -1,9 +1,9 @@
 import type { GameObjects, Scene } from "phaser";
 
-import { HAZARD_PHASE_STYLE } from "../data/hazardPhaseStyle";
-import { TILE } from "../data/screen";
-import type { HazardPhase, Rect } from "../data/types";
-import type { PlacedTile } from "../presentation";
+import { HAZARD_PHASE_STYLE } from "../data/hazardPhaseStyle.ts";
+import { TILE } from "../data/screen.ts";
+import type { HazardPhase, Rect } from "../data/types/index.ts";
+import type { PlacedTile } from "../presentation/index.ts";
 
 export function createTimedHazardArt(
   depth: number,

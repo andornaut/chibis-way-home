@@ -1,6 +1,6 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 
-import type { PauseChromePose, PauseDiscPose } from "../ui";
+import type { PauseChromePose, PauseDiscPose } from "../ui/index.ts";
 
 // The pause button's art timeline, from art's ui-pause sheet: it rests until pressed, then plays
 // its press tag once, each frame for its authored duration, the first swollen, and holds until

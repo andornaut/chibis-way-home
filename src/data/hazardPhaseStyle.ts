@@ -1,4 +1,4 @@
-import { HAZARD_OUTLINE } from "./screen";
+import { HAZARD_OUTLINE } from "./screen.ts";
 
 export const HAZARD_PHASE_STYLE = {
   active: "red",

@@ -5,15 +5,15 @@ import {
   DESTINATION_FIXTURE as MAP,
   DESTINATION_PLAN_RECORD as PLANS,
   DESTINATION_PLANS as AVAILABLE,
-} from "../testing/mapDestinations";
-import { openMap } from "./map";
+} from "../testing/mapDestinations.ts";
+import { openMap } from "./map.ts";
 import {
   destinationForStage,
   destinationSelection,
   destinationStages,
   steppedDestination,
-} from "./mapDestinations";
-import { progressFormat } from "./save/progress";
+} from "./mapDestinations.ts";
+import { progressFormat } from "./save/progress.ts";
 
 describe("destination selection", () => {
   it.each([

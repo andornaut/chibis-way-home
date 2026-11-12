@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import type { AreaLayout, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { stageProgress } from "./stageProgress";
-import { enterArea, retryZone, startZone, stepZone } from "./zone";
-import { validateZoneLinks } from "./zoneLinks";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { AreaLayout, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { stageProgress } from "./stageProgress.ts";
+import { enterArea, retryZone, startZone, stepZone } from "./zone.ts";
+import { validateZoneLinks } from "./zoneLinks.ts";
 
 const STILL = { jumpHeld: false, move: 0 as const, useHeld: false };
 function area(width: number, walkLinks: AreaLayout["walkLinks"]): AreaLayout {

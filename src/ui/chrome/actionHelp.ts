@@ -1,4 +1,4 @@
-import type { ControlAction } from "../../data/types";
+import type { ControlAction } from "../../data/types/index.ts";
 
 export type ActionHelpPart =
   | { readonly kind: "text"; readonly text: string }

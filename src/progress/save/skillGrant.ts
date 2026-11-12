@@ -1,6 +1,6 @@
-import type { AchievementId, SkillId } from "../../data/types";
-import { earnedAt } from "../achievements";
-import type { Progress } from "./progress";
+import type { AchievementId, SkillId } from "../../data/types/index.ts";
+import { earnedAt } from "../achievements.ts";
+import type { Progress } from "./progress.ts";
 export function withGrantedSkill(progress: Progress, skill: SkillId): Progress {
   return progress.skills.includes(skill)
     ? progress

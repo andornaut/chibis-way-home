@@ -1,14 +1,14 @@
 import { expect, it, vi } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
-import { FONT_ROLES } from "../layout/fontRoles";
+import { FONT_ROLES } from "../layout/fontRoles.ts";
 import {
   mountUiFonts,
   UI_FONT_FAMILY,
   UI_FONT_RESOURCES,
   type UiFontFace,
   type UiFontResource,
-} from "./uiFonts";
+} from "./uiFonts.ts";
 
 function deferred() {
   let resolve!: () => void;

@@ -1,8 +1,8 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { collisionCandidates } from "../core";
-import type { ObjectLayout, Point, Rect } from "../data/types";
-import type { BehaviourWorld } from "./behaviourReach";
+import { collisionCandidates } from "../core/index.ts";
+import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
 
 export interface PursuitIntentState {
   readonly target: Rect;

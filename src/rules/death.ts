@@ -1,10 +1,10 @@
 import { clamp01 } from "@andornaut/game-kit/numbers";
 
-import { EDGE, rectAt } from "../core";
-import type { BirdTuning, Point, Rect, ZoneLayout } from "../data/types";
-import { clockPresent } from "./effectiveCollision";
-import type { ZoneState } from "./zone";
-import { supportPresent } from "./zoneCrumbling";
+import { EDGE, rectAt } from "../core/index.ts";
+import type { BirdTuning, Point, Rect, ZoneLayout } from "../data/types/index.ts";
+import { clockPresent } from "./effectiveCollision.ts";
+import type { ZoneState } from "./zone.ts";
+import { supportPresent } from "./zoneCrumbling.ts";
 
 // The nearest top below a body at position in the frozen world. A void has no support; a
 // presentation may use its visible fallback without adding collision terrain.

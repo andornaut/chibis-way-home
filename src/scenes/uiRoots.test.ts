@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 import type { GameObjects, Scene } from "phaser";
 import { expect, it } from "vitest";
 
-import { sceneUiRoots, uiObject } from "./uiRoots";
+import { sceneUiRoots, uiObject } from "./uiRoots.ts";
 
 it("keeps a complete Retry sibling group without reparenting its panel or labels", () => {
   const roots = [{ type: "NineSlice" }, { type: "BitmapText" }, { type: "Rectangle" }];

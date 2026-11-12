@@ -1,7 +1,7 @@
-import { CITY_GROUND_HAZARD_BEHAVIOUR, CITY_SHUTTLE_BEHAVIOUR } from "../behaviours";
-import { redCeiling } from "../chunkTemplates";
-import { CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning";
-import type { ChunkModule, Difficulty, Instance, ModuleSide, TerrainRect } from "../types";
+import { CITY_GROUND_HAZARD_BEHAVIOUR, CITY_SHUTTLE_BEHAVIOUR } from "../behaviours.ts";
+import { redCeiling } from "../chunkTemplates.ts";
+import { CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning.ts";
+import type { ChunkModule, Difficulty, Instance, ModuleSide, TerrainRect } from "../types/index.ts";
 
 // Blue cityscape halves on the lower route (rows 70 and 80). Halves fill either side, so both
 // edges keep a 4-column seam footing. Grade 3 halves pair with any matching half; grade 4 halves

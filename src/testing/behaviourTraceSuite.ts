@@ -2,24 +2,30 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 import { afterAll, describe, expect, it } from "vitest";
 
-import { traceRecorder } from "../ai/trace";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { zoneLayout } from "../rules/tiles";
-import { activateBehaviour, retryZone, startZone, stepZone, type ZoneState } from "../rules/zone";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bot";
-import { stageLoader } from "../sim/catalogue";
-import { simulateStage } from "../sim/simulate";
-import { walkRequiredRoutes, walkZone } from "../sim/zoneWalk";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
-import { TRACE } from "./behaviourTraceHook";
-import { ALL_CHUNKS } from "./chunks";
-import { chunkWalkPlan } from "./chunkWalkCases";
-import { chunkWalkPartitions } from "./chunkWalkPartitions";
+import { traceRecorder } from "../ai/trace.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import {
+  activateBehaviour,
+  retryZone,
+  startZone,
+  stepZone,
+  type ZoneState,
+} from "../rules/zone.ts";
+import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bot.ts";
+import { stageLoader } from "../sim/catalogue.ts";
+import { simulateStage } from "../sim/simulate.ts";
+import { walkRequiredRoutes, walkZone } from "../sim/zoneWalk.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
+import { TRACE } from "./behaviourTraceHook.ts";
+import { ALL_CHUNKS } from "./chunks.ts";
+import { chunkWalkPlan } from "./chunkWalkCases.ts";
+import { chunkWalkPartitions } from "./chunkWalkPartitions.ts";
 import {
   chunkLayout,
   ENCOUNTER_SCRIPTS,
@@ -28,8 +34,8 @@ import {
   liftLayout,
   liftLowerDockStart,
   ORDINARY,
-} from "./encounterLayouts";
-import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes";
+} from "./encounterLayouts.ts";
+import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes.ts";
 
 // Each scenario must be deterministic: fixed seeds, fixed inputs and no wall-clock budgets.
 interface TraceScenario {

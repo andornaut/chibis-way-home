@@ -2,10 +2,10 @@
 // layout and movement maps the proofs and the evade playtest read.
 import { type MapMask, type MovementMap, pathTo } from "@andornaut/game-kit/terrain/movementMap";
 
-import { BIRD_FRAME } from "../assets";
-import { ARENA_COUNTERS, ARENA_LOOP_TILES, ARENA_PENDING_STAGES } from "../data/arenas";
-import { TILE } from "../data/screen";
-import { SEAM_ROWS } from "../data/seams";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { ARENA_COUNTERS, ARENA_LOOP_TILES, ARENA_PENDING_STAGES } from "../data/arenas/index.ts";
+import { TILE } from "../data/screen.ts";
+import { SEAM_ROWS } from "../data/seams.ts";
 import type {
   AntagonistKind,
   ArenaRoute,
@@ -16,20 +16,20 @@ import type {
   ZoneKey,
   ZoneLayout,
   ZoneRecipe,
-} from "../data/types";
-import { RECIPES } from "../data/zones";
-import type { ChunkLibrary } from "../rules/assemble";
-import { chunkProblems } from "../rules/chunk";
-import { bindElement } from "../rules/elementBinding";
-import { ENCOUNTER_ROLES } from "../rules/modules";
-import { groundMask, type MapSupport } from "../rules/movementMaps";
-import { zoneLayout } from "../rules/tiles";
-import { arenaChunks, CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans";
-import { ALLOW, chibiMap, type Encounter, pathOutEncounter, standingAt } from "../sim/pathOut";
-import { ARENA_SAMPLES } from "./arenaSamples";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
-import { chunkThemePlan } from "./chunkWalkCases";
-import { ORDINARY } from "./encounterLayouts";
+} from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
+import type { ChunkLibrary } from "../rules/assemble.ts";
+import { chunkProblems } from "../rules/chunk.ts";
+import { bindElement } from "../rules/elementBinding.ts";
+import { ENCOUNTER_ROLES } from "../rules/modules.ts";
+import { groundMask, type MapSupport } from "../rules/movementMaps.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { arenaChunks, CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans.ts";
+import { ALLOW, chibiMap, type Encounter, pathOutEncounter, standingAt } from "../sim/pathOut.ts";
+import { ARENA_SAMPLES } from "./arenaSamples.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
+import { chunkThemePlan } from "./chunkWalkCases.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
 
 const ARENA_ID = /^arena-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EMPTY = { door: [], event: [] } as const;

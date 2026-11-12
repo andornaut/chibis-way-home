@@ -2,12 +2,12 @@ import { containsPoint } from "@andornaut/game-kit/rect";
 import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
-import { TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Rect } from "../../data/types";
-import { type PressArea, pressedArea } from "./hitAreas";
-import type { LabelledButton } from "./restartCard";
-import { type IconButtonLayout, startScreenLayout } from "./startScreen";
+import { TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Rect } from "../../data/types/index.ts";
+import { type PressArea, pressedArea } from "./hitAreas.ts";
+import type { LabelledButton } from "./restartCard.ts";
+import { type IconButtonLayout, startScreenLayout } from "./startScreen.ts";
 
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };
 

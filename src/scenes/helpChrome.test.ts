@@ -1,16 +1,16 @@
 import { type Scene, Textures } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import palette from "../../public/art/palette.json";
-import { SCREEN } from "../data/screen";
-import { chromeCanvasTexture } from "../testing/chromeTexture";
-import { drawHelpChrome } from "./helpChrome";
+import palette from "../../public/art/palette.json" with { type: "json" };
+import { SCREEN } from "../data/screen.ts";
+import { chromeCanvasTexture } from "../testing/chromeTexture.ts";
+import { drawHelpChrome } from "./helpChrome.ts";
 
 vi.mock("phaser", () => ({
   Core: { Events: { POST_STEP: "poststep" } },
   Textures: { FilterMode: { NEAREST: 0 } },
 }));
-vi.mock("./cardParts", () => ({
+vi.mock("./cardParts.ts", () => ({
   paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
     parseInt(palette.colours[name].slice(1), 16),
 }));

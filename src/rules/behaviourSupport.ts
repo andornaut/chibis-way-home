@@ -1,16 +1,16 @@
-import type { BehaviourMotion, ObjectLayout, Point } from "../data/types";
-import type { BehaviourState } from "./behaviour";
-import { selectSupportedFlight } from "./behaviourFlightSelection";
-import type { BehaviourPerception } from "./behaviourPerception";
-import type { BehaviourWorld } from "./behaviourReach";
-import { insideScreen, type ScreenBand, screenBand, screenReach } from "./behaviourScreen";
+import type { BehaviourMotion, ObjectLayout, Point } from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
+import { selectSupportedFlight } from "./behaviourFlightSelection.ts";
+import type { BehaviourPerception } from "./behaviourPerception.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { insideScreen, type ScreenBand, screenBand, screenReach } from "./behaviourScreen.ts";
 import {
   type FlyLandingState,
   landingSupport,
   landingWorldAt,
   proveFlyLanding,
   supportContact,
-} from "./flyLanding";
+} from "./flyLanding.ts";
 
 interface BehaviourSupport {
   readonly state: BehaviourState;

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import trapSheet from "../../public/art/sprites/goose-trap.json";
-import tileset from "../../public/art/tilesets/tiles-platforming.json";
-import { artHitboxes, type ArtManifest, sheetFrameSize } from "../assets";
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import { TILE } from "../data/screen";
-import { objectLayout } from "./tiles";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import trapSheet from "../../public/art/sprites/goose-trap.json" with { type: "json" };
+import tileset from "../../public/art/tilesets/tiles-platforming.json" with { type: "json" };
+import { artHitboxes, type ArtManifest, sheetFrameSize } from "../assets/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { TILE } from "../data/screen.ts";
+import { objectLayout } from "./tiles.ts";
 
 const catalogue = { archetypes: ARCHETYPES, characters: CHARACTERS };
 

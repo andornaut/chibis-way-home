@@ -1,7 +1,7 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { achievementsCardProperties } from "../layout/achievementsCard";
-import { closeButton, textButton } from "./card";
+import { achievementsCardProperties } from "../layout/achievementsCard.ts";
+import { closeButton, textButton } from "./card.ts";
 
 // The Achievements card in the HTML UI (achievements.css, on ui.css's .ui-card): its title, a
 // list of every entry, a page of them at a time, Previous, the page count and Next, and the close

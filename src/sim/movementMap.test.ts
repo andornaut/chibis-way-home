@@ -2,15 +2,15 @@
 import { locate, pathTo } from "@andornaut/game-kit/terrain/movementMap";
 import { describe, expect, it } from "vitest";
 
-import { TILE } from "../data/screen";
+import { TILE } from "../data/screen.ts";
 import {
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
   groundMap,
   groundMask,
-} from "../rules/movementMaps";
-import { arenaLayout, sampleArenaCase } from "../testing/arenas";
-import { ORDINARY } from "../testing/encounterLayouts";
+} from "../rules/movementMaps.ts";
+import { arenaLayout, sampleArenaCase } from "../testing/arenas.ts";
+import { ORDINARY } from "../testing/encounterLayouts.ts";
 import {
   ALLOW,
   edgeProblems,
@@ -19,7 +19,7 @@ import {
   pathOut,
   pathOutEncounter,
   type PathOutOptions,
-} from "./pathOut";
+} from "./pathOut.ts";
 
 // Archie's sample arena: a floor at row 80, under the deck at row 74 a nook whose two-row step
 // runs from col 28 to col 38.

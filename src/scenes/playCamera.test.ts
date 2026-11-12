@@ -5,10 +5,10 @@ import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/vi
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
-import { SCREEN } from "../data/screen";
-import type { Size } from "../data/types";
-import { deviceScale } from "../testing/renderScale";
-import { PAUSE_BUTTON, playView, shifted, TOUCH_CONTROLS, touchRoleAt } from "../ui";
+import { SCREEN } from "../data/screen.ts";
+import type { Size } from "../data/types/index.ts";
+import { deviceScale } from "../testing/renderScale.ts";
+import { PAUSE_BUTTON, playView, shifted, TOUCH_CONTROLS, touchRoleAt } from "../ui/index.ts";
 
 vi.mock("phaser", () => ({ Scale: { Events: { RESIZE: "resize" } } }));
 
@@ -19,7 +19,7 @@ import {
   playPoint,
   sceneFit,
   sceneViewShift,
-} from "./playCamera";
+} from "./playCamera.ts";
 
 // A camera that records its viewport, origin and zoom as Phaser's does.
 function camera() {

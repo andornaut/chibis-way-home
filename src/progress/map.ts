@@ -1,4 +1,4 @@
-import type { MapEdge, MapNode, ZoneMap } from "../data/types";
+import type { MapEdge, MapNode, ZoneMap } from "../data/types/index.ts";
 
 export function nodeOf(map: ZoneMap, id: string): MapNode {
   const node = map.nodes.find((each) => each.id === id);

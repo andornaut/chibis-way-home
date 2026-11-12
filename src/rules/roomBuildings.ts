@@ -1,6 +1,10 @@
-import { ROOM_BUILDING_DOOR, ROOM_BUILDING_OPENING, ROOM_BUILDINGS } from "../data/roomBuildings";
-import type { Instance, TerrainRect, ZonePlan } from "../data/types";
-import type { ChunkLibrary } from "./assemble";
+import {
+  ROOM_BUILDING_DOOR,
+  ROOM_BUILDING_OPENING,
+  ROOM_BUILDINGS,
+} from "../data/roomBuildings.ts";
+import type { Instance, TerrainRect, ZonePlan } from "../data/types/index.ts";
+import type { ChunkLibrary } from "./assemble.ts";
 
 function unsupportedBase(
   solids: readonly TerrainRect[],

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
+import palette from "../../../public/art/palette.json" with { type: "json" };
 
 const colours: Readonly<Record<string, string>> = palette.colours;
 

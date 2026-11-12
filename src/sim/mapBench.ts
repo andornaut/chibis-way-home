@@ -1,12 +1,12 @@
 // Movement map build cost per boss profile per stage area: kernel steps (deterministic) and
 // wall time. Run in the check container: node src/sim/mapBench.ts [--seeds 3] [--repeats 5]
 // [--window leash|<tiles>] [--decisions].
-import { EDGE } from "../core";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { ObjectLayout, Rect } from "../data/types";
-import { RECIPES } from "../data/zones";
-import { planMapLeg } from "../rules/behaviourMapPursuit";
+import { EDGE } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { ObjectLayout, Rect } from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
+import { planMapLeg } from "../rules/behaviourMapPursuit.ts";
 import {
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
@@ -15,9 +15,9 @@ import {
   type MapTerrain,
   mapTerrain,
   pursuitGroundMap,
-} from "../rules/movementMaps";
-import { stageLoader } from "./catalogue";
-import { parseOptions, runMain, UsageError } from "./command";
+} from "../rules/movementMaps.ts";
+import { stageLoader } from "./catalogue.ts";
+import { parseOptions, runMain, UsageError } from "./command.ts";
 
 const HELP = `Usage: node src/sim/mapBench.ts [--seeds <n>] [--repeats <n>] [--window <w>]
        node src/sim/mapBench.ts --decisions [--seeds <n>]

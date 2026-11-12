@@ -7,9 +7,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), capture: vi.fn() }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
-vi.mock("./domUi", () => ({
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
+vi.mock("./domUi.ts", () => ({
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
     scene.events.once("shutdown", unmount);
@@ -17,16 +17,16 @@ vi.mock("./domUi", () => ({
   },
   sceneDomUi: () => dom.layer,
 }));
-vi.mock("../ui/dialogue/statsStatement", async (original) => {
-  const { statsStatement } = await original<typeof import("../ui/dialogue/statsStatement")>();
+vi.mock("../ui/dialogue/statsStatement.ts", async (original) => {
+  const { statsStatement } = await original<typeof import("../ui/dialogue/statsStatement.ts")>();
   return { statsStatement: vi.fn(statsStatement) };
 });
 
-import { ZONE_MAP } from "../data/map";
-import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
-import { deathLabels } from "../presentation";
-import { createUiLayer, statsStatement, type UiLayer } from "../ui";
-import { DeathScene } from "./DeathScene";
+import { ZONE_MAP } from "../data/map.ts";
+import { STATS_SCOPE_TEXT, TEXT } from "../data/text.ts";
+import { deathLabels } from "../presentation/index.ts";
+import { createUiLayer, statsStatement, type UiLayer } from "../ui/index.ts";
+import { DeathScene } from "./DeathScene.ts";
 
 const STAGE = ZONE_MAP.destinations[0]!.stages[0]!;
 const LABELS = deathLabels(ZONE_MAP, TEXT.map, "1", STAGE);

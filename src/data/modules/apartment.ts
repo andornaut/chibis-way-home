@@ -1,5 +1,5 @@
-import { CHANDELIER_SWING, chandelierOrbit } from "../obstacleTuning";
-import type { ChunkModule, Instance, TerrainRect } from "../types";
+import { CHANDELIER_SWING, chandelierOrbit } from "../obstacleTuning.ts";
+import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
 // Apartment halves on the lower route (row 80): the swinging chandelier and the approach before
 // it.

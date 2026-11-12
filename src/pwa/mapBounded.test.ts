@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mapBounded } from "./mapBounded";
+import { mapBounded } from "./mapBounded.ts";
 
 describe("bounded concurrent map", () => {
   it("keeps at most the limit pending and resolves in the items' order", async () => {

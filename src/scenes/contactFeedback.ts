@@ -1,9 +1,9 @@
 import type { GameObjects, Scene } from "phaser";
 
-import { SCREEN } from "../data/screen";
-import type { ContactCueTuning, WorldShakeTuning } from "../data/types";
-import { contactBorder, contactCueOn, contactOverscan, contactWorldOffset } from "../ui";
-import { paletteColour } from "./cardParts";
+import { SCREEN } from "../data/screen.ts";
+import type { ContactCueTuning, WorldShakeTuning } from "../data/types/index.ts";
+import { contactBorder, contactCueOn, contactOverscan, contactWorldOffset } from "../ui/index.ts";
+import { paletteColour } from "./cardParts.ts";
 
 const running = new WeakMap<Scene["events"], () => void>();
 let nextCapture = 0;

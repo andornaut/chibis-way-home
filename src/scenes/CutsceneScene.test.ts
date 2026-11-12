@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { CUTSCENE_CONTINUE, DIALOGUE_SCREEN, statsStatement } from "../ui";
+import { CUTSCENE_CONTINUE, DIALOGUE_SCREEN, statsStatement } from "../ui/index.ts";
 
 vi.mock("phaser", () => ({
   Scene: class {
@@ -17,7 +17,7 @@ vi.mock("phaser", () => ({
   },
 }));
 const statementRect = vi.hoisted(() => ({ height: 14, width: 480, x: 120, y: 260 }));
-vi.mock("../ui/dialogue/statsStatement", () => ({
+vi.mock("../ui/dialogue/statsStatement.ts", () => ({
   statsStatement: vi.fn(() => ({
     colour: "tan",
     name: "Speaker",
@@ -26,26 +26,26 @@ vi.mock("../ui/dialogue/statsStatement", () => ({
     text: "One statement",
   })),
 }));
-vi.mock("./runStatsParts", () => ({
+vi.mock("./runStatsParts.ts", () => ({
   addStageSummary: vi.fn((_scene: unknown, _bounds: unknown, data: { statement?: unknown }) => ({
     statement: data.statement ? { rect: statementRect } : undefined,
   })),
 }));
-vi.mock("./cardParts", () => ({
+vi.mock("./cardParts.ts", () => ({
   PRIMARY_BUTTON: {},
   addTextButton: vi.fn(),
   captureTab: vi.fn(),
   pressTextButton: vi.fn(),
   ringFocus: vi.fn(),
 }));
-vi.mock("./playCamera", () => ({
+vi.mock("./playCamera.ts", () => ({
   fitPlayCamera: vi.fn(),
   playPoint: (_scene: unknown, pointer: { x: number; y: number }) => pointer,
 }));
 
-import { CutsceneScene } from "./CutsceneScene";
-import { addStageSummary } from "./runStatsParts";
-import { ZoneDepartureScene } from "./ZoneDepartureScene";
+import { CutsceneScene } from "./CutsceneScene.ts";
+import { addStageSummary } from "./runStatsParts.ts";
+import { ZoneDepartureScene } from "./ZoneDepartureScene.ts";
 
 function cutscene() {
   const scene = new CutsceneScene();

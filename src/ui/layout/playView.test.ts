@@ -1,16 +1,16 @@
 import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
-import { CONTROL_BOTTOM, CONTROL_SIDE, HUD_EDGE } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Point, Rect, Size } from "../../data/types";
-import { SKILL_IDS } from "../../progress";
-import { touchRoleAt } from "../input/intent";
-import { PAUSE_BUTTON } from "./pauseCard";
-import { canvasSize, playView, shifted, viewShift } from "./playView";
-import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud";
-import { stageProgressRect } from "./stageProgress";
-import { MOVE_HINT, TOUCH_CONTROLS } from "./touchControls";
+import { CONTROL_BOTTOM, CONTROL_SIDE, HUD_EDGE } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Point, Rect, Size } from "../../data/types/index.ts";
+import { SKILL_IDS } from "../../progress/index.ts";
+import { touchRoleAt } from "../input/intent.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
+import { canvasSize, playView, shifted, viewShift } from "./playView.ts";
+import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud.ts";
+import { stageProgressRect } from "./stageProgress.ts";
+import { MOVE_HINT, TOUCH_CONTROLS } from "./touchControls.ts";
 
 const fitAt = (css: Size, devicePixelRatio: number) =>
   renderFit(SCREEN, renderScale(MAX_RENDER_SCALE, devicePixelRatio), css);

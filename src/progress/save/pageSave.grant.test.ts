@@ -1,12 +1,12 @@
 import { encodeSave } from "@andornaut/game-kit/save/versionedSave";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { CHUNKS } from "../../data/chunks";
-import { ZONE_MAP } from "../../data/map";
-import { RECIPES } from "../../data/zones";
-import { SKILL_IDS } from "../skills";
-import { ACHIEVEMENT_KEYS } from "./achievements";
-import { BEGINNING, PROGRESS_KEYS, progressFormat } from "./progress";
+import { CHUNKS } from "../../data/chunks.ts";
+import { ZONE_MAP } from "../../data/map.ts";
+import { RECIPES } from "../../data/zones.ts";
+import { SKILL_IDS } from "../skills.ts";
+import { ACHIEVEMENT_KEYS } from "./achievements.ts";
+import { BEGINNING, PROGRESS_KEYS, progressFormat } from "./progress.ts";
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.resetModules();
@@ -38,8 +38,8 @@ it("grants stored ownership independently while run-only cheats preserve normal 
     matchMedia: () => ({ matches: false }),
     navigator: {},
   });
-  const save = await import("../../scenes/save");
-  const page = await import("./pageSave");
+  const save = await import("../../scenes/save.ts");
+  const page = await import("./pageSave.ts");
   await save.loadProgress();
   expect(save.savedProgress().at).toBe("map");
   expect(await page.grantSavedSkills({ available: () => true })).toMatchObject({ status: "saved" });
@@ -68,7 +68,7 @@ it("blocks explicit saved grants while a normal progress write is outstanding", 
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const page = await import("./pageSave");
+  const page = await import("./pageSave.ts");
   const session = { development: () => false, skillOverrides: () => ({}) };
   await page.loadProgress(session);
   expect(page.grantSkill(session, "doubleJump")).toBe(true);
@@ -91,7 +91,7 @@ it("recovers one saved pending notice after cache adoption was blocked", async (
       }
     },
   });
-  const page = await import("./pageSave");
+  const page = await import("./pageSave.ts");
   expect(await page.grantSavedSkills({ available: () => available })).toMatchObject({
     cause: "blocked",
     reason: "cache_commit_unavailable",

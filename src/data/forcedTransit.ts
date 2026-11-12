@@ -1,7 +1,7 @@
-import { BIRD } from "./bird";
-import { GANTRY_DISTANCE } from "./obstacleBehaviours";
-import { TILE } from "./screen";
-import type { ForcedTransit } from "./types";
+import { BIRD } from "./bird.ts";
+import { GANTRY_DISTANCE } from "./obstacleBehaviours.ts";
+import { TILE } from "./screen.ts";
+import type { ForcedTransit } from "./types/index.ts";
 
 const RIDER_ROWS = BIRD.height / TILE;
 

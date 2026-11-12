@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { ZoneMap } from "../data/types";
-import { zoneExitFlow, zoneStoryForStage } from "../rules/zoneFlow";
-import { DESTINATION_FIXTURE as MAP } from "../testing/mapDestinations";
-import { stageCompletion, stageExit } from "./stageCompletion";
+import type { ZoneMap } from "../data/types/index.ts";
+import { zoneExitFlow, zoneStoryForStage } from "../rules/zoneFlow.ts";
+import { DESTINATION_FIXTURE as MAP } from "../testing/mapDestinations.ts";
+import { stageCompletion, stageExit } from "./stageCompletion.ts";
 
 describe("stage completion routing", () => {
   it.each([

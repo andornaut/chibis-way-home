@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { askedStagePreview, stagePreviewScroll } from "./stagePreview";
+import { askedStagePreview, stagePreviewScroll } from "./stagePreview.ts";
 
 const keys = ["street", "climb-to-apartment"];
 const request = "?stagePreview=street&assembly=0&seed=42&previewX=800&previewY=240";

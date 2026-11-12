@@ -1,4 +1,4 @@
-import type { Point, Rect, Size } from "../data/types";
+import type { Point, Rect, Size } from "../data/types/index.ts";
 
 // Frame offsets remain independent of the force's collision volume.
 export function forceVisualPosition(

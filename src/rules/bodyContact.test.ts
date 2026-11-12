@@ -1,13 +1,13 @@
 import { expect, it } from "vitest";
 
-import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core";
-import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourPlan, SpriteContact, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { startBehaviour, stepBehaviour } from "./behaviour";
-import { startBird } from "./bird";
-import { objectLayout } from "./tiles";
-import { startZone, stepZone } from "./zone";
+import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { Archetype, BehaviourPlan, SpriteContact, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
+import { startZone, stepZone } from "./zone.ts";
 
 const contact: SpriteContact = {
   frame: { height: 4, width: 8 },

@@ -1,4 +1,4 @@
-import type { Point, Rect } from "../data/types";
+import type { Point, Rect } from "../data/types/index.ts";
 
 // Camera compensation never changes the sprite's world-facing or animation state. Cropping
 // retains only whole source pixels inside its authored chunk, without a WebGL geometry mask.

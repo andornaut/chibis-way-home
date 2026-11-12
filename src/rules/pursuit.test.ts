@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -10,9 +10,9 @@ import {
   GOOSE_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
-} from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
+} from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
 import type {
   Archetype,
   BehaviourPlan,
@@ -20,20 +20,20 @@ import type {
   Point,
   Rect,
   ZoneLayout,
-} from "../data/types";
-import { SKILL_PROFILES } from "../progress";
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
 import {
   type BehaviourState,
   contactBox,
   layoutBehaviour,
   startBehaviour,
   stepBehaviour,
-} from "./behaviour";
-import { type BehaviourWorld, flightContactApproach } from "./behaviourReach";
-import { startBird } from "./bird";
-import { flyLandingPath, flyLandingRoute, landingWorldAt, supportedLanding } from "./flyLanding";
-import { objectLayout } from "./tiles";
-import { retryZone, startZone, stepZone } from "./zone";
+} from "./behaviour.ts";
+import { type BehaviourWorld, flightContactApproach } from "./behaviourReach.ts";
+import { startBird } from "./bird.ts";
+import { flyLandingPath, flyLandingRoute, landingWorldAt, supportedLanding } from "./flyLanding.ts";
+import { objectLayout } from "./tiles.ts";
+import { retryZone, startZone, stepZone } from "./zone.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

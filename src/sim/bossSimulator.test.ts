@@ -2,23 +2,23 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { traceRecorder } from "../ai/trace";
-import { STEP_SECONDS } from "../core";
-import { RACCOON_BEHAVIOUR } from "../data/behaviours";
-import { TILE } from "../data/screen";
-import type { BehaviourCondition, BehaviourPlan, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { layoutBehaviour } from "../rules/behaviour";
-import { retryZone, stepZone } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { BOSS_SCENARIOS } from "../testing/bossScenarios";
+import { traceRecorder } from "../ai/trace.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { RACCOON_BEHAVIOUR } from "../data/behaviours.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourCondition, BehaviourPlan, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { layoutBehaviour } from "../rules/behaviour.ts";
+import { retryZone, stepZone } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { BOSS_SCENARIOS } from "../testing/bossScenarios.ts";
 import {
   chunkLayout,
   ENCOUNTER_SCRIPTS,
   ENCOUNTER_TICKS,
   ORDINARY,
   withInstances,
-} from "../testing/encounterLayouts";
+} from "../testing/encounterLayouts.ts";
 import {
   activateAll,
   areaExit,
@@ -30,8 +30,8 @@ import {
   placeChibi,
   scriptedChibi,
   simulateBosses,
-} from "./bossSimulator";
-import { zoneTraceLine } from "./zoneTrace";
+} from "./bossSimulator.ts";
+import { zoneTraceLine } from "./zoneTrace.ts";
 
 const RECORDED: Readonly<Record<string, string>> = JSON.parse(
   readFileSync(new URL("fixtures/behaviourTraces/encounters.json", import.meta.url), "utf8"),

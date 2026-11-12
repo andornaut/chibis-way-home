@@ -1,5 +1,5 @@
-import type { ObjectLayout, Point, Rect, Size, SpriteContact } from "../data/types";
-import { sweptContact } from "./sweptContact";
+import type { ObjectLayout, Point, Rect, Size, SpriteContact } from "../data/types/index.ts";
+import { sweptContact } from "./sweptContact.ts";
 
 const CLOCK_EDGE = 1e-9;
 const FRAME_RECTS = new WeakMap<SpriteContact, Readonly<Record<string, readonly Rect[]>>>();

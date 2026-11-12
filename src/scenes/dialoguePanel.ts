@@ -1,7 +1,7 @@
 import type { GameObjects, Scene } from "phaser";
 
-import { DIALOGUE_PANEL_ALPHA } from "../data/dialogues";
-import { DIALOGUE_SCREEN } from "../ui";
+import { DIALOGUE_PANEL_ALPHA } from "../data/dialogues.ts";
+import { DIALOGUE_SCREEN } from "../ui/index.ts";
 
 export const DIALOGUE_PANEL_KEY = "ui-dialogue-box";
 

@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
-import type { Motion, ObjectLayout } from "../data/types";
-import { motionTrack } from "./motion";
-import { stepSceneryPlayback } from "./sceneryPlayback";
+import type { Motion, ObjectLayout } from "../data/types/index.ts";
+import { motionTrack } from "./motion.ts";
+import { stepSceneryPlayback } from "./sceneryPlayback.ts";
 
 const object = { height: 24, origin: { x: 1000, y: 200 }, width: 32 } as ObjectLayout;
 const visible = { height: 360, width: 720, x: 900, y: 0 };

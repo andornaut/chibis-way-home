@@ -1,12 +1,12 @@
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { DIALOGUES, SPEAKERS } from "../data/dialogues";
-import { SCREEN } from "../data/screen";
-import { STAGE_PREVIEWS } from "../data/stagePreviews";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { DialogueChoice } from "../data/types";
+import { DIALOGUES, SPEAKERS } from "../data/dialogues.ts";
+import { SCREEN } from "../data/screen.ts";
+import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { DialogueChoice } from "../data/types/index.ts";
 import {
   departureDialogueButtons,
   DIALOGUE_SCREEN,
@@ -25,7 +25,7 @@ import {
   type PressArea,
   pressedArea,
   stepFocus,
-} from "../ui";
+} from "../ui/index.ts";
 import {
   addTextButton,
   captureTab,
@@ -34,13 +34,13 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-} from "./cardParts";
-import type { DialogueChoiceData } from "./DialogueChoiceScene";
-import { drawDialoguePanel } from "./dialoguePanel";
-import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onScenePointer } from "./modalInput";
-import { fitPlayCamera, playPoint } from "./playCamera";
+} from "./cardParts.ts";
+import type { DialogueChoiceData } from "./DialogueChoiceScene.ts";
+import { drawDialoguePanel } from "./dialoguePanel.ts";
+import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
 
 export interface DialogueData {
   readonly scene: string;

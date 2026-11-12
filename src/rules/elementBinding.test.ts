@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { Instance } from "../data/types";
-import { bindElement } from "./elementBinding";
+import type { Instance } from "../data/types/index.ts";
+import { bindElement } from "./elementBinding.ts";
 
 const template: Instance = {
   character: "canonical",

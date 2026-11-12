@@ -2,16 +2,16 @@ import { createHash } from "node:crypto";
 
 import { expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { Instance, TerrainRect, TilePoint, ZonePlan } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone, type ZoneInput } from "../rules/zone";
-import { CATALOGUE } from "../testing/walkSuite";
-import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions";
-import { surfaceAt, walkRequiredRoutes, walkZone } from "./zoneWalk";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { Instance, TerrainRect, TilePoint, ZonePlan } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { startZone, stepZone, type ZoneInput } from "../rules/zone.ts";
+import { CATALOGUE } from "../testing/walkSuite.ts";
+import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions.ts";
+import { surfaceAt, walkRequiredRoutes, walkZone } from "./zoneWalk.ts";
 
 const floor: TerrainRect = { col: 0, cols: 60, row: 50, rows: 10 };
 const ledge: TerrainRect = { col: 20, cols: 6, row: 45, rows: 1 };
@@ -192,11 +192,11 @@ it.each([
 it("preserves fresh grounded interval evidence and moving-state traces with cached transitions", async () => {
   async function run(cached: boolean) {
     vi.resetModules();
-    const engine = await import("../rules/zone");
+    const engine = await import("../rules/zone.ts");
     const calls = vi.spyOn(engine, "stepZone");
     const trace = createHash("sha256");
     let transitions = 0;
-    vi.doMock("./walkTransitions", () => ({
+    vi.doMock("./walkTransitions.ts", () => ({
       walkTransitions: (step: WalkStep): WalkStep => {
         const advance = cached ? memoizeTransitions(step) : step;
         return (input, zone) => {
@@ -208,7 +208,7 @@ it("preserves fresh grounded interval evidence and moving-state traces with cach
       },
     }));
     try {
-      const walker = await import("./zoneWalk");
+      const walker = await import("./zoneWalk.ts");
       const layout = layoutOf(
         [floor, ledge],
         [
@@ -237,7 +237,7 @@ it("preserves fresh grounded interval evidence and moving-state traces with cach
       return { calls: calls.mock.calls.length, results, trace: trace.digest("hex"), transitions };
     } finally {
       calls.mockRestore();
-      vi.doUnmock("./walkTransitions");
+      vi.doUnmock("./walkTransitions.ts");
     }
   }
   const original = await run(false);

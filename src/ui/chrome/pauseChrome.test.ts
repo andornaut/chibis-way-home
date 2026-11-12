@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
-import { svgLayers } from "../../testing/chromeSvg";
-import { showPauseDisc } from "../dom/pause";
-import { PAUSE_BUTTON } from "../layout/pauseCard";
-import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./pauseChrome";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import { svgLayers } from "../../testing/chromeSvg.ts";
+import { showPauseDisc } from "../dom/pause.ts";
+import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
+import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./pauseChrome.ts";
 
 const colour = (key: keyof typeof palette.colours) => parseInt(palette.colours[key].slice(1), 16);
 const colours = {

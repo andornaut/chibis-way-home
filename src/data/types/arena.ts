@@ -1,8 +1,8 @@
 // Boss arenas: one designed full chunk per encounter stage, holding the stage's one encounter.
 
-import type { TilePoint } from "./geometry";
-import type { ModuleRouteTarget } from "./module";
-import type { ChunkSlot, Difficulty, Instance, NoCross, SeamRow, TerrainRect } from "./stage";
+import type { TilePoint } from "./geometry.ts";
+import type { ModuleRouteTarget } from "./module.ts";
+import type { ChunkSlot, Difficulty, Instance, NoCross, SeamRow, TerrainRect } from "./stage.ts";
 
 // A boss by its character.
 export type AntagonistKind =

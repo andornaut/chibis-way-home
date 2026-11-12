@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
 import { existsSync, writeFileSync } from "node:fs";
 
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import { ZONE_MAP } from "../data/map";
-import { RECIPES } from "../data/zones";
-import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans";
-import { choiceOption, parseOptions, runMain, UsageError } from "./command";
-import { assessPlayability, formatPlayabilityMarkdown } from "./playability";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { RECIPES } from "../data/zones.ts";
+import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans.ts";
+import { choiceOption, parseOptions, runMain, UsageError } from "./command.ts";
+import { assessPlayability, formatPlayabilityMarkdown } from "./playability.ts";
 const HELP = `node src/sim/playabilityCli.ts --seeds 1,7 --source COMMIT [--format json|markdown] [--out FILE]
 Structural catalogue assessment only. No physics, bots, playthrough or reachability search.
 Seeds are explicit, distinct unsigned 32-bit integers; maximum 16. All map stages are included.

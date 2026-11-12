@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { bindZoneBarks } from "./zoneBarks";
+import { bindZoneBarks } from "./zoneBarks.ts";
 
 it("keeps notices with the paused world beneath modal layers and resets them for retry", () => {
   const bark = { enqueue: vi.fn(), offer: vi.fn(() => true), reset: vi.fn() };

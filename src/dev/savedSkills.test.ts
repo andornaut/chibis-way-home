@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 
-import { grantAllSavedSkills } from "./savedSkills";
+import { grantAllSavedSkills } from "./savedSkills.ts";
 it("guards installed display modes, iOS apps and stale captured actions at asynchronous commit time", async () => {
   let installed = false;
   let standalone = false;

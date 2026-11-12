@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { createBehaviourObservations } from "./behaviourObservations";
+import { createBehaviourObservations } from "./behaviourObservations.ts";
 
 it("reports only measured counters and retains stable reports", () => {
   const observations = createBehaviourObservations();

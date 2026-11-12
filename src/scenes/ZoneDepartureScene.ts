@@ -1,5 +1,5 @@
-import { type CutsceneData, CutsceneScene } from "./CutsceneScene";
-import type { DialogueOpener } from "./DialogueScene";
+import { type CutsceneData, CutsceneScene } from "./CutsceneScene.ts";
+import type { DialogueOpener } from "./DialogueScene.ts";
 
 export interface ZoneDepartureData extends CutsceneData {
   readonly cleared: boolean;

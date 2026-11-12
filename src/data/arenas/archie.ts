@@ -1,6 +1,6 @@
 // Archie's arena in the Blue cityscape: high ground against his charges, first a shop doorway
 // nook his body cannot enter, then an overpass gantry over a red-edged pit.
-import type { ChunkArena, Instance, TerrainRect } from "../types";
+import type { ChunkArena, Instance, TerrainRect } from "../types/index.ts";
 
 const ROWS = 120;
 const FLOOR = 80;

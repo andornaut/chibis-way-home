@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import sheet from "../../public/art/sprites/boss-removal.json";
-import { BOSS_REMOVAL_SECONDS } from "../data/behaviours";
-import { BOSS_REMOVAL_ART, bossRemovalView } from "./bossRemoval";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import sheet from "../../public/art/sprites/boss-removal.json" with { type: "json" };
+import { BOSS_REMOVAL_SECONDS } from "../data/behaviours.ts";
+import { BOSS_REMOVAL_ART, bossRemovalView } from "./bossRemoval.ts";
 
 it.each([
   ["fades the boss without the puff texture", 0.25, false, false, { alpha: 0.75, kind: "fade" }],

@@ -5,7 +5,7 @@
 import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
 import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 
-import type { MapNode, Point, Rect, Size } from "./types";
+import type { MapNode, Point, Rect, Size } from "./types/index.ts";
 
 // The clear circle about Use's and Jump's centres that the move hint never reaches into.
 export const TOUCH_CIRCLE_RADIUS = 63;

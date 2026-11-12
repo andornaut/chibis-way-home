@@ -2,9 +2,9 @@ import { fillNames } from "@andornaut/game-kit/lines";
 import { guardClicks } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
-import { STATS_SCOPE_TEXT, TEXT } from "../data/text";
-import { type DeathSummary, deathSummary } from "../presentation";
-import { formatRunStats, type RunStatsSummary } from "../progress";
+import { STATS_SCOPE_TEXT, TEXT } from "../data/text.ts";
+import { type DeathSummary, deathSummary } from "../presentation/index.ts";
+import { formatRunStats, type RunStatsSummary } from "../progress/index.ts";
 import {
   createDeathCard,
   DEATH_ACTIONS,
@@ -16,10 +16,10 @@ import {
   statsStatement,
   statsTotalRows,
   type StatsTotalsSnapshot,
-} from "../ui";
-import { mountSceneView, sceneDomUi } from "./domUi";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput } from "./modalInput";
+} from "../ui/index.ts";
+import { mountSceneView, sceneDomUi } from "./domUi.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput } from "./modalInput.ts";
 
 export interface DeathData extends DeathSummary {
   readonly totals: StatsTotalsSnapshot;

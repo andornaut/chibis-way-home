@@ -1,7 +1,7 @@
 import type { ProgressHandle } from "@andornaut/game-kit/progressState";
 import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
 
-import { beginPrecache } from "./progress";
+import { beginPrecache } from "./progress.ts";
 
 // The loading bar's view of the shared offline-activity callback, which reports activity only,
 // with no download-percentage claim. The kit reports "precaching" for the first visit's precache,

@@ -1,14 +1,14 @@
 import { advanceWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
-import { ACTION_HELP_LAYOUT } from "../../data/layout";
-import { TEXT } from "../../data/text";
-import { SKILL_IDS } from "../../progress";
-import { CARD_FONTS } from "../../testing/cardFonts";
-import { actionHelpParts } from "../chrome/actionHelp";
-import { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./actionHelp";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import { SKILL_ROOM, skillDetails } from "./skillDetails";
+import { ACTION_HELP_LAYOUT } from "../../data/layout.ts";
+import { TEXT } from "../../data/text.ts";
+import { SKILL_IDS } from "../../progress/index.ts";
+import { CARD_FONTS } from "../../testing/cardFonts.ts";
+import { actionHelpParts } from "../chrome/actionHelp.ts";
+import { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./actionHelp.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import { SKILL_ROOM, skillDetails } from "./skillDetails.ts";
 
 // Reference metrics read from the .fnt files: the declared baseline and line height.
 const lineHeight = CARD_FONTS.body.lineHeight * CARD_TEXT_SCALE;

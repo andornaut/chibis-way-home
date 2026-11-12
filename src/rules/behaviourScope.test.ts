@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
-import { PIGEON_BEHAVIOUR } from "../data/behaviours";
-import type { BehaviourNode, BehaviourPlan } from "../data/types";
-import { unacquiredBehaviourNodes } from "./behaviourScope";
+import { PIGEON_BEHAVIOUR } from "../data/behaviours.ts";
+import type { BehaviourNode, BehaviourPlan } from "../data/types/index.ts";
+import { unacquiredBehaviourNodes } from "./behaviourScope.ts";
 
 function graph(): BehaviourPlan {
   return {

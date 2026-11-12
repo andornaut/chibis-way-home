@@ -1,6 +1,6 @@
-import { BIRD } from "./bird";
-import { TILE } from "./screen";
-import type { DeathTuning } from "./types";
+import { BIRD } from "./bird.ts";
+import { TILE } from "./screen.ts";
+import type { DeathTuning } from "./types/index.ts";
 
 export const DEATH: DeathTuning = {
   bounceSpeed: 96,

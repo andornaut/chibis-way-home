@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
-import { createRunStats } from "./runStats";
+import { createRunStats } from "./runStats.ts";
 
 const columns = [
   [

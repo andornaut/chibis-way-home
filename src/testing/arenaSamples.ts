@@ -4,7 +4,13 @@
 // Chibi's height. A boss on either side of the nook crosses over it on the deck. The nook is high
 // ground against charges, cover against parcels and droppings, and a low ceiling against Kiwi.
 // Each boss spawns where it slows Chibi on his way to the exit without blocking him.
-import type { AntagonistKind, ChunkArena, RefugeKind, SeamRow, TerrainRect } from "../data/types";
+import type {
+  AntagonistKind,
+  ChunkArena,
+  RefugeKind,
+  SeamRow,
+  TerrainRect,
+} from "../data/types/index.ts";
 
 const ROWS = 120;
 // The deck: one-way either side of the nook's solid roof, a sample's `gap` columns clear of the

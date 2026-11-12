@@ -1,8 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
 
-import { BIRD } from "../data/bird";
-import { ZONE_MAP } from "../data/map";
+import { BIRD } from "../data/bird.ts";
+import { ZONE_MAP } from "../data/map.ts";
 import {
   DIAGNOSTIC_SKILL,
   FORWARD_POLICY,
@@ -10,12 +10,12 @@ import {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
   type NavigationConfig,
-} from "./bot";
-import { stageLoader } from "./catalogue";
-import { choiceOption, numberOption, parseOptions, runMain, UsageError } from "./command";
-import { VALIDATION_LIMITS } from "./diagnostics";
-import { simulateBatch } from "./report";
-import { type SimulationConfig, type SimulationSeeds, validateSimulation } from "./simulate";
+} from "./bot.ts";
+import { stageLoader } from "./catalogue.ts";
+import { choiceOption, numberOption, parseOptions, runMain, UsageError } from "./command.ts";
+import { VALIDATION_LIMITS } from "./diagnostics.ts";
+import { simulateBatch } from "./report.ts";
+import { type SimulationConfig, type SimulationSeeds, validateSimulation } from "./simulate.ts";
 
 const HELP = `npm run simulate -- [--stage ID] [--seed N] [--runs N] [--max-ticks N]
   [--max-retries N] [--reaction-ticks N] [--look-ahead PX] [--hold-ticks N]

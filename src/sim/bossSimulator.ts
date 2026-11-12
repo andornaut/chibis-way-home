@@ -1,9 +1,9 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import type { AgentSample, AgentTick } from "../ai/agentTrace";
-import { simulate, type SimulationController, type SimulationModel } from "../ai/simulation";
-import { EDGE, STEP_SECONDS } from "../core";
-import { BOSS_CHARACTERS } from "../data/achievements";
+import type { AgentSample, AgentTick } from "../ai/agentTrace.ts";
+import { simulate, type SimulationController, type SimulationModel } from "../ai/simulation.ts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import { BOSS_CHARACTERS } from "../data/achievements.ts";
 import type {
   BirdTuning,
   ObjectLayout,
@@ -11,12 +11,12 @@ import type {
   Rect,
   TargetedAttackWindow,
   ZoneLayout,
-} from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { contactBox, nodeOf } from "../rules/behaviourTrack";
-import { birdBox, startBird } from "../rules/bird";
-import { clockPresent } from "../rules/effectiveCollision";
-import { supportContact } from "../rules/flyLanding";
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { contactBox, nodeOf } from "../rules/behaviourTrack.ts";
+import { birdBox, startBird } from "../rules/bird.ts";
+import { clockPresent } from "../rules/effectiveCollision.ts";
+import { supportContact } from "../rules/flyLanding.ts";
 import {
   activateBehaviour,
   areaOf,
@@ -25,9 +25,9 @@ import {
   stepZoneBodies,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone";
-import { presentTerrain, supportPresent } from "../rules/zoneCrumbling";
-import { botInput, type BotPolicy, type BotSkill, newBot, prepareSensors } from "./bot";
+} from "../rules/zone.ts";
+import { presentTerrain, supportPresent } from "../rules/zoneCrumbling.ts";
+import { botInput, type BotPolicy, type BotSkill, newBot, prepareSensors } from "./bot.ts";
 
 // The six bosses by character, in character order, with the names gameplay uses for them.
 export const BOSSES: Readonly<Record<string, string>> = Object.fromEntries(

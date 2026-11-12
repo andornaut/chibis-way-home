@@ -4,26 +4,26 @@ import { afterEach, expect, it, vi } from "vitest";
 
 const lifecycle = vi.hoisted(() => ({ begin: vi.fn(), cover: vi.fn(), shown: vi.fn() }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../pwa", () => ({
+vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "back-pressed" },
   beginStartUpdateVisit: lifecycle.begin,
   coverZone: lifecycle.cover,
   exitShown: () => false,
   startScreenShown: lifecycle.shown,
 }));
-vi.mock("./save", () => ({ savedProgress: () => ({ at: "map" }) }));
-vi.mock("./cardParts", () => ({
+vi.mock("./save.ts", () => ({ savedProgress: () => ({ at: "map" }) }));
+vi.mock("./cardParts.ts", () => ({
   PRIMARY_BUTTON: { art: "ui-button-primary", label: "white" },
   addSlice: vi.fn(),
   addTextButton: vi.fn(),
   captureTab: vi.fn(),
   paletteColour: () => 0,
 }));
-vi.mock("./playCamera", () => ({ fitPlayCamera: vi.fn() }));
+vi.mock("./playCamera.ts", () => ({ fitPlayCamera: vi.fn() }));
 
-import { startScreenLayout } from "../ui";
-import { addSlice } from "./cardParts";
-import { StartScene } from "./StartScene";
+import { startScreenLayout } from "../ui/index.ts";
+import { addSlice } from "./cardParts.ts";
+import { StartScene } from "./StartScene.ts";
 
 afterEach(() => {
   vi.clearAllMocks();

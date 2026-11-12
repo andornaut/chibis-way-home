@@ -2,17 +2,17 @@ import { saveStore, type StoreLoadResult } from "@andornaut/game-kit/save/saveSt
 import type { SaveStorage } from "@andornaut/game-kit/save/storage";
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
-import type { MapDestination } from "../../data/types";
-import type { VisitFirstTries } from "../achievements";
+import type { MapDestination } from "../../data/types/index.ts";
+import type { VisitFirstTries } from "../achievements.ts";
 import {
   type RunCounters,
   type RunStatsSummary,
   runSummary,
   type WholeRunStatsSummary,
   type ZoneStatsSummary,
-} from "./runSummary";
+} from "./runSummary.ts";
 
-export type { RunStatsSummary, WholeRunStatsSummary, ZoneStatsSummary } from "./runSummary";
+export type { RunStatsSummary, WholeRunStatsSummary, ZoneStatsSummary } from "./runSummary.ts";
 
 interface StageRun extends RunCounters {
   readonly completed: boolean;

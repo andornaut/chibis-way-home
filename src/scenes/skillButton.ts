@@ -1,16 +1,16 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type GameObjects, type Scene, TintModes } from "phaser";
 
-import type { Point, SkillId } from "../data/types";
+import type { Point, SkillId } from "../data/types/index.ts";
 import {
   SKILL_ART,
   SKILL_BUTTON,
   skillButton,
   skillChromeLayers,
   type TouchChromeLayer,
-} from "../ui";
-import { paletteColour } from "./cardParts";
-import { createChromeTexture } from "./touchChrome";
+} from "../ui/index.ts";
+import { paletteColour } from "./cardParts.ts";
+import { createChromeTexture } from "./touchChrome.ts";
 
 const SKILL_CHROME_KEY = "skill-button-chrome";
 

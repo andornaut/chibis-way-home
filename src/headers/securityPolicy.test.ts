@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { pageProblem } from "./securityPolicy";
+import { pageProblem } from "./securityPolicy.ts";
 
 const NAV_SCRIPT = '<script src="/nav.js" defer></script>';
 const NAV_STYLESHEET = '<link rel="stylesheet" href="/nav.css" />';

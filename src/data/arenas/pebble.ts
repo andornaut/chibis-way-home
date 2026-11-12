@@ -1,6 +1,6 @@
 // Pebble's arena in the Industrial outskirts: a solid container roof as cover against his
 // droppings, tall enough overhead that he can follow under it.
-import type { ChunkArena, Instance, TerrainRect } from "../types";
+import type { ChunkArena, Instance, TerrainRect } from "../types/index.ts";
 
 const ROWS = 120;
 const FLOOR = 80;

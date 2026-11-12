@@ -1,6 +1,6 @@
-import { STEP_SECONDS } from "../core";
-import type { PlayabilityReport } from "./playability";
-import type { RunResult } from "./simulate";
+import { STEP_SECONDS } from "../core/index.ts";
+import type { PlayabilityReport } from "./playability.ts";
+import type { RunResult } from "./simulate.ts";
 
 export interface SavedTuningCase {
   readonly stage: string;

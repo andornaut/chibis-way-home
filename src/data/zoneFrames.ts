@@ -12,11 +12,11 @@ import {
   tunnelWalls,
   WOODLAND_CONNECTORS,
   WOODLAND_ROUTE_THEMES,
-} from "./chunks";
-import { CHUNK_COLS } from "./chunkTemplates";
-import type { ChunkPlan, ZoneFrame, ZoneKey } from "./types";
-import { woodlandDepth } from "./woodlandScenery";
-import { APARTMENT_THEMES, apartmentWallBands, interiorPlanes } from "./zone6";
+} from "./chunks.ts";
+import { CHUNK_COLS } from "./chunkTemplates.ts";
+import type { ChunkPlan, ZoneFrame, ZoneKey } from "./types/index.ts";
+import { woodlandDepth } from "./woodlandScenery.ts";
+import { APARTMENT_THEMES, apartmentWallBands, interiorPlanes } from "./zone6.ts";
 
 const plain = (chunk: ChunkPlan): ChunkPlan => chunk;
 

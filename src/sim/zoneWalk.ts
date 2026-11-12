@@ -1,6 +1,6 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 
-import { EDGE, STEP_SECONDS } from "../core";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import type {
   AreaLayout,
   BirdTuning,
@@ -9,10 +9,10 @@ import type {
   Rect,
   TilePoint,
   ZoneLayout,
-} from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { startBird, stepBird } from "../rules/bird";
-import { orbitBounds } from "../rules/orbit";
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { startBird, stepBird } from "../rules/bird.ts";
+import { orbitBounds } from "../rules/orbit.ts";
 import {
   activateBehaviour,
   areaOf,
@@ -22,17 +22,17 @@ import {
   stepZone as stepActualZone,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone";
+} from "../rules/zone.ts";
 import {
   type BehaviourBoundsContext,
   emissionBounds,
   hasDynamicMotion,
   objectCycleSeconds,
   sweptBehaviourRect,
-} from "./behaviourBounds";
-import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases";
-import { type WalkStep, walkTransitions } from "./walkTransitions";
-import { WalkWitnesses } from "./zoneWalkWitnesses";
+} from "./behaviourBounds.ts";
+import { landingCorridor, phaseCount, type PhaseMover, phaseStarts } from "./walkPhases.ts";
+import { type WalkStep, walkTransitions } from "./walkTransitions.ts";
+import { WalkWitnesses } from "./zoneWalkWitnesses.ts";
 
 const BEHAVIOUR_INDICES = new WeakMap<AreaLayout, readonly number[]>();
 const WALK_TERMINALS = new WeakMap<ZoneLayout, (zone: ZoneState, support: Surface) => void>();

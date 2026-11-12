@@ -1,14 +1,14 @@
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
-import { DIALOGUE_LAYOUT, HUD_EDGE, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { DialogueSpeaker, Point, Rect } from "../../data/types";
-import type { DialogueControl } from "../dialogue/conversation";
-import type { CardFonts } from "./contentCard";
-import { FONT_SCALE } from "./fontRoles";
-import type { PressArea } from "./hitAreas";
-import { type LabelledButton, labelledButton } from "./restartCard";
-import { SKILL_BUTTON } from "./skillHud";
+import { DIALOGUE_LAYOUT, HUD_EDGE, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { DialogueSpeaker, Point, Rect } from "../../data/types/index.ts";
+import type { DialogueControl } from "../dialogue/conversation.ts";
+import type { CardFonts } from "./contentCard.ts";
+import { FONT_SCALE } from "./fontRoles.ts";
+import type { PressArea } from "./hitAreas.ts";
+import { type LabelledButton, labelledButton } from "./restartCard.ts";
+import { SKILL_BUTTON } from "./skillHud.ts";
 
 const {
   footer,

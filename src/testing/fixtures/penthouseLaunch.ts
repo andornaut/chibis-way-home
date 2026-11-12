@@ -1,4 +1,4 @@
-import type { Instance, TerrainRect } from "../../data/types";
+import type { Instance, TerrainRect } from "../../data/types/index.ts";
 
 // Static geometry and observed launch state captured from the held Penthouse candidate.
 // This fixture does not admit that arena to the production pool.

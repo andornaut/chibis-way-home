@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createUpdateOffer } from "./updateOffer";
+import { createUpdateOffer } from "./updateOffer.ts";
 
 describe("native update offer bridge", () => {
   it.each(["accept", "defer"] as const)(

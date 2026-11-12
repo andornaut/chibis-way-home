@@ -21,7 +21,7 @@ function storage(initial: readonly (readonly [string, string])[]): [string, stri
 
 it("reports the saves current when no newer version wrote them", async () => {
   storage([]);
-  const save = await import("./save");
+  const save = await import("./save.ts");
   expect(await save.loadProgress()).toBe("current");
 });
 
@@ -29,7 +29,7 @@ it.each(["chibis-way-home.achievements", "chibis-way-home.save", "chibis-way-hom
   "reports a newer %s and writes nothing",
   async (key) => {
     const writes = storage([[key, '{"version":999999}']]);
-    const save = await import("./save");
+    const save = await import("./save.ts");
     expect(await save.loadProgress()).toBe("newer");
     await save.flushStats();
     await new Promise((resolve) => {

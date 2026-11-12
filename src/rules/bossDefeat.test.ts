@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { BOSS_REMOVAL_SECONDS } from "../data/behaviours";
-import type { ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { chunksLayout, ORDINARY, withInstances } from "../testing/encounterLayouts";
-import { startBird } from "./bird";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BOSS_REMOVAL_SECONDS } from "../data/behaviours.ts";
+import type { ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { chunksLayout, ORDINARY, withInstances } from "../testing/encounterLayouts.ts";
+import { startBird } from "./bird.ts";
 import {
   activateBehaviour,
   retryZone,
@@ -13,7 +13,7 @@ import {
   stepZone,
   type ZoneInput,
   type ZoneState,
-} from "./zone";
+} from "./zone.ts";
 
 const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 

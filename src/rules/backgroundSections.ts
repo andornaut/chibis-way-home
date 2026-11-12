@@ -1,8 +1,8 @@
 import { randomStream, shuffled } from "@andornaut/game-kit/random";
 
-import type { AreaPlan, Instance, ThemeBackdrop, ZonePlan } from "../data/types";
-import type { ChunkLibrary } from "./assemble";
-import { bindElement } from "./elementBinding";
+import type { AreaPlan, Instance, ThemeBackdrop, ZonePlan } from "../data/types/index.ts";
+import type { ChunkLibrary } from "./assemble.ts";
+import { bindElement } from "./elementBinding.ts";
 
 type Span = readonly [number, number];
 const planeOf = (layer: Pick<Instance, "parallax">): string =>

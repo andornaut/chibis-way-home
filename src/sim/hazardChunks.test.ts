@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { createHazardChunks } from "../data/hazardChunks";
-import { TILE } from "../data/screen";
-import type { TilePoint } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { zonePlanOf } from "../rules/assemble";
-import { chunkProblems } from "../rules/chunk";
-import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { createHazardChunks } from "../data/hazardChunks.ts";
+import { TILE } from "../data/screen.ts";
+import type { TilePoint } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { zonePlanOf } from "../rules/assemble.ts";
+import { chunkProblems } from "../rules/chunk.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const chunks = createHazardChunks("street");
 const library = { ...CHUNK_LIBRARY, chunks };

@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { AreaLayout, ObjectLayout, Rect } from "../data/types";
-import { chunksLayout } from "../testing/encounterLayouts";
-import { mapReachable, planMapLeg, pursuitMapMask } from "./behaviourMapPursuit";
-import { pursuitGroundMap } from "./movementMaps";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { AreaLayout, ObjectLayout, Rect } from "../data/types/index.ts";
+import { chunksLayout } from "../testing/encounterLayouts.ts";
+import { mapReachable, planMapLeg, pursuitMapMask } from "./behaviourMapPursuit.ts";
+import { pursuitGroundMap } from "./movementMaps.ts";
 
 // Archie's arena: Archie on the street at row 80, the overpass deck at cols 26 to 42 meeting the
 // top of the three-tile pier at cols 42 to 45, both at row 74, and the eight-tile gantry at cols

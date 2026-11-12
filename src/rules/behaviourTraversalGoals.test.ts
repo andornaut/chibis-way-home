@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { advanceTraversal, type BehaviourTraversalState } from "./behaviourTraversal";
-import { objectLayout } from "./tiles";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { advanceTraversal, type BehaviourTraversalState } from "./behaviourTraversal.ts";
+import { objectLayout } from "./tiles.ts";
 
 it.each([-1, 1] as const)(
   "descends the open ridge through proved local support facing %s",

@@ -2,7 +2,7 @@ import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { createPulseSpanArt } from "./pulseSpanArt";
+import { createPulseSpanArt } from "./pulseSpanArt.ts";
 
 function item() {
   const state = {

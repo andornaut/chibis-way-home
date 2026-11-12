@@ -1,14 +1,14 @@
 import { expect, it } from "vitest";
 
-import { BIRD } from "../data/bird";
-import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
-import type { Archetype, BehaviourMotion, BehaviourPlan, Rect } from "../data/types";
-import { startBehaviour, stepBehaviour } from "./behaviour";
-import { traversalContext } from "./behaviourTraversal";
-import { startBird } from "./bird";
-import { hazardOccupancy } from "./hazardOccupancy";
-import { objectLayout } from "./tiles";
-import { createTimedHazardSampler } from "./timedHazard";
+import { BIRD } from "../data/bird.ts";
+import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours.ts";
+import type { Archetype, BehaviourMotion, BehaviourPlan, Rect } from "../data/types/index.ts";
+import { startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { traversalContext } from "./behaviourTraversal.ts";
+import { startBird } from "./bird.ts";
+import { hazardOccupancy } from "./hazardOccupancy.ts";
+import { objectLayout } from "./tiles.ts";
+import { createTimedHazardSampler } from "./timedHazard.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

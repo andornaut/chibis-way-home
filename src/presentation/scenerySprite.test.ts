@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { scenerySpriteFrame } from "./scenerySprite";
+import { scenerySpriteFrame } from "./scenerySprite.ts";
 
 const coverage = { width: 720, x: 7200 };
 const parallax = { x: 0.4, y: 0.15 };

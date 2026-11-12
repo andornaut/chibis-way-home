@@ -1,5 +1,10 @@
-import { BOUNDARY_START, encounterStart, GROWL_FINISH, withoutEncounters } from "./chunkTemplates";
-import type { ChunkPlan } from "./types";
+import {
+  BOUNDARY_START,
+  encounterStart,
+  GROWL_FINISH,
+  withoutEncounters,
+} from "./chunkTemplates.ts";
+import type { ChunkPlan } from "./types/index.ts";
 
 export const WOODLAND_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "deep-woods-finish": { ...withoutEncounters(GROWL_FINISH), theme: "deep-woods" },

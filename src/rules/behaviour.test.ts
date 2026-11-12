@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { contactFrameAt, sweptContact } from "../core";
-import { BIRD } from "../data/bird";
+import { contactFrameAt, sweptContact } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
 import type {
   Archetype,
   BehaviourCondition,
@@ -9,12 +9,12 @@ import type {
   Character,
   ObjectLayout,
   Rect,
-} from "../data/types";
-import { behaviourPose } from "../presentation";
-import { TEST_PURSUER, TEST_SHUTTLE, withAnticipationContact } from "../testing/behaviours";
-import { contactBox, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import { birdBox, startBird } from "./bird";
-import { objectLayout } from "./tiles";
+} from "../data/types/index.ts";
+import { behaviourPose } from "../presentation/index.ts";
+import { TEST_PURSUER, TEST_SHUTTLE, withAnticipationContact } from "../testing/behaviours.ts";
+import { contactBox, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { birdBox, startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
 
 const ACTOR: Archetype = {
   collision: "hazard",

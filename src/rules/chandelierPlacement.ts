@@ -1,10 +1,10 @@
-import { MODULE_RULES } from "../data/modules";
-import type { Instance, PendulumOrbit, Point, Rect } from "../data/types";
-import { physicalObjects } from "./chunk";
-import { ENCOUNTER_ROLES } from "./modules";
-import { orbitBounds, pathLedge } from "./orbit";
-import type { Catalogue } from "./tiles";
-import { moduleEdgeProblems } from "./windmillPlacement";
+import { MODULE_RULES } from "../data/modules/index.ts";
+import type { Instance, PendulumOrbit, Point, Rect } from "../data/types/index.ts";
+import { physicalObjects } from "./chunk.ts";
+import { ENCOUNTER_ROLES } from "./modules.ts";
+import { orbitBounds, pathLedge } from "./orbit.ts";
+import type { Catalogue } from "./tiles.ts";
+import { moduleEdgeProblems } from "./windmillPlacement.ts";
 
 // The tiles a swinging ledge's tether sweeps: from its pivot to the ledge's top centre, which
 // swings length tiles below the pivot, half the ledge's height above its centre, highest at the

@@ -1,4 +1,4 @@
-import type { SkillGestureTuning, SkillTuning } from "./types";
+import type { SkillGestureTuning, SkillTuning } from "./types/index.ts";
 
 export const SKILLS: SkillTuning = {
   speedyWalkMultiplier: 1.2,

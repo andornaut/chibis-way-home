@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { CONTROL_REFUSAL } from "../../data/feedback";
-import { refuseControl, refusing } from "./refusal";
+import { CONTROL_REFUSAL } from "../../data/feedback.ts";
+import { refuseControl, refusing } from "./refusal.ts";
 
 const { flashMs, flashes, shake, shakeMs } = CONTROL_REFUSAL;
 let control: HTMLButtonElement;

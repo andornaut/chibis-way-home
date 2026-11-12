@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD } from "../data/bird";
-import { REACH } from "../data/reach";
-import { TILE } from "../data/screen";
-import { measureReaches } from "./reach";
+import { BIRD } from "../data/bird.ts";
+import { REACH } from "../data/reach.ts";
+import { TILE } from "../data/screen.ts";
+import { measureReaches } from "./reach.ts";
 
 const MEASURED = measureReaches(BIRD, TILE);
 

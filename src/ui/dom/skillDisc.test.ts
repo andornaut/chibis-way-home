@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
-import palette from "../../../public/art/palette.json";
-import { svgLayers } from "../../testing/chromeSvg";
-import { skillChromeLayers } from "../chrome/skillChrome";
-import { SKILL_BUTTON } from "../layout/skillHud";
-import { createSkillDisc, paintSkillDisc } from "./skillDisc";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import { svgLayers } from "../../testing/chromeSvg.ts";
+import { skillChromeLayers } from "../chrome/skillChrome.ts";
+import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { createSkillDisc, paintSkillDisc } from "./skillDisc.ts";
 
 const colour = (name: keyof typeof palette.colours) =>
   Number.parseInt(palette.colours[name].slice(1), 16);

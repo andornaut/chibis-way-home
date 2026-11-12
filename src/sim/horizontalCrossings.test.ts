@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { Rect } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { zonePlanOf } from "../rules/assemble";
-import { zoneLayout } from "../rules/tiles";
-import { standsOn, startZone, stepZone, type ZoneState } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { Rect } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { zonePlanOf } from "../rules/assemble.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { standsOn, startZone, stepZone, type ZoneState } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const ids = [
   "city-boundary-shuttle",

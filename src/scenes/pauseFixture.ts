@@ -1,13 +1,13 @@
 import { EventEmitter } from "node:events";
 
-import palette from "../../public/art/palette.json";
-import dash from "../../public/art/sprites/icon-skill-dash.json";
-import doubleJump from "../../public/art/sprites/icon-skill-double-jump.json";
-import speedy from "../../public/art/sprites/icon-skill-speedy.json";
-import pause from "../../public/art/sprites/ui-pause.json";
-import type { SkillId } from "../data/types";
-import { SKILL_ART } from "../ui";
-import { PauseScene } from "./PauseScene";
+import palette from "../../public/art/palette.json" with { type: "json" };
+import dash from "../../public/art/sprites/icon-skill-dash.json" with { type: "json" };
+import doubleJump from "../../public/art/sprites/icon-skill-double-jump.json" with { type: "json" };
+import speedy from "../../public/art/sprites/icon-skill-speedy.json" with { type: "json" };
+import pause from "../../public/art/sprites/ui-pause.json" with { type: "json" };
+import type { SkillId } from "../data/types/index.ts";
+import { SKILL_ART } from "../ui/index.ts";
+import { PauseScene } from "./PauseScene.ts";
 
 // Test fixtures: a PauseScene created against stand-ins for Phaser's scene parts, its HTML view in
 // the page. The test file mocks ./domUi (mounting views in a UI layer it owns), ./modalBackdrop and the page

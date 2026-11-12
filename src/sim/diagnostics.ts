@@ -2,8 +2,8 @@ import { createHash } from "node:crypto";
 
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { rectAt, STEP_SECONDS } from "../core";
-import { SCREEN } from "../data/screen";
+import { rectAt, STEP_SECONDS } from "../core/index.ts";
+import { SCREEN } from "../data/screen.ts";
 import type {
   BehaviourMotion,
   BirdTuning,
@@ -11,12 +11,12 @@ import type {
   Rect,
   ZoneDeath,
   ZoneLayout,
-} from "../data/types";
-import { contactBox } from "../rules/behaviour";
-import { birdBox } from "../rules/bird";
-import type { ZoneInput, ZoneState } from "../rules/zone";
-import type { NavigationDiagnostic } from "./bot";
-import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate";
+} from "../data/types/index.ts";
+import { contactBox } from "../rules/behaviour.ts";
+import { birdBox } from "../rules/bird.ts";
+import type { ZoneInput, ZoneState } from "../rules/zone.ts";
+import type { NavigationDiagnostic } from "./bot.ts";
+import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate.ts";
 
 export const VALIDATION_LIMITS = {
   batchWallTimeMs: 600000,

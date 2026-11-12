@@ -1,8 +1,8 @@
-import { SPEAKERS } from "../../data/dialogues";
-import { ZONE_MAP } from "../../data/map";
-import { STATS_BARKS } from "../../data/statsBarks";
-import { TEXT } from "../../data/text";
-import { dialogueParagraphs } from "./conversation";
+import { SPEAKERS } from "../../data/dialogues.ts";
+import { ZONE_MAP } from "../../data/map.ts";
+import { STATS_BARKS } from "../../data/statsBarks.ts";
+import { TEXT } from "../../data/text.ts";
+import { dialogueParagraphs } from "./conversation.ts";
 
 export function statsStatement(kind: "clear" | "retry", stage: string) {
   const destination = ZONE_MAP.destinations.find((zone) => zone.stages.includes(stage));

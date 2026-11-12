@@ -9,8 +9,8 @@ import {
   NOTICE_BLOCKING_SCENES,
   NOTICE_CHECKED_SCENES,
   noticeBlocked,
-} from "./achievementNotice";
-import { modalInput } from "./modalInput";
+} from "./achievementNotice.ts";
+import { modalInput } from "./modalInput.ts";
 
 const SCENES = new URL(".", import.meta.url);
 const MAIN = readFileSync(new URL("../main.ts", import.meta.url), "utf8");

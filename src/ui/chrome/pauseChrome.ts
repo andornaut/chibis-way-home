@@ -1,4 +1,4 @@
-import type { TouchChromeColours, TouchChromeLayer } from "./touchChrome";
+import type { TouchChromeColours, TouchChromeLayer } from "./touchChrome.ts";
 
 export const PAUSE_CHROME_FRAME = 35;
 export type PauseChromePose = "held" | "press" | "rest";

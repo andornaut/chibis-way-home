@@ -2,15 +2,15 @@ import { EventEmitter } from "node:events";
 
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { OPENING } from "../data/opening";
-import { SCREEN } from "../data/screen";
-import { TEXT } from "../data/text";
-import { CARD_FONTS } from "../testing/cardFonts";
-import { openingLayout } from "../ui";
+import { OPENING } from "../data/opening.ts";
+import { SCREEN } from "../data/screen.ts";
+import { TEXT } from "../data/text.ts";
+import { CARD_FONTS } from "../testing/cardFonts.ts";
+import { openingLayout } from "../ui/index.ts";
 
 const backgroundFixture = vi.hoisted(() => ({ value: undefined as string | null | undefined }));
-vi.mock("../data/opening", async (original) => {
-  const actual = await original<typeof import("../data/opening")>();
+vi.mock("../data/opening.ts", async (original) => {
+  const actual = await original<typeof import("../data/opening.ts")>();
   return {
     get OPENING() {
       return backgroundFixture.value === undefined
@@ -60,8 +60,8 @@ vi.mock("phaser", () => {
     },
   };
 });
-vi.mock("./save", () => ({ saveOpeningSeen: vi.fn() }));
-vi.mock("./cardParts", () => ({
+vi.mock("./save.ts", () => ({ saveOpeningSeen: vi.fn() }));
+vi.mock("./cardParts.ts", () => ({
   BODY_FONT: "font-body",
   PRIMARY_BUTTON: {},
   addCardText: () => ({ setPosition: vi.fn().mockReturnThis(), setText: vi.fn().mockReturnThis() }),
@@ -72,15 +72,15 @@ vi.mock("./cardParts", () => ({
   pressTextButton: vi.fn(),
   ringFocus: vi.fn(),
 }));
-vi.mock("./playCamera", () => ({
+vi.mock("./playCamera.ts", () => ({
   fitPlayCamera: vi.fn(),
   playPoint: (_scene: unknown, pointer: { x: number; y: number }) => pointer,
 }));
 
-import { pressTextButton } from "./cardParts";
-import { modalInput } from "./modalInput";
-import { OpeningScene } from "./OpeningScene";
-import { saveOpeningSeen } from "./save";
+import { pressTextButton } from "./cardParts.ts";
+import { modalInput } from "./modalInput.ts";
+import { OpeningScene } from "./OpeningScene.ts";
+import { saveOpeningSeen } from "./save.ts";
 
 beforeEach(() => {
   vi.clearAllMocks();

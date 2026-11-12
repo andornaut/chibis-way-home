@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { phaserBuildProblems, shippedModules } from "@andornaut/game-kit/web/build/vite/phaserUses";
 import { describe, expect, it } from "vitest";
 
-import { PHASER_BUILD } from "./phaserBuild";
+import { PHASER_BUILD } from "./phaserBuild.ts";
 
 const REPO = join(import.meta.dirname, "../..");
 

@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import type { BehaviourPlan, Instance } from "../data/types";
-import { FIXTURE_LIBRARY } from "../testing/chunks";
-import { chunkProblems } from "./chunk";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import type { BehaviourPlan, Instance } from "../data/types/index.ts";
+import { FIXTURE_LIBRARY } from "../testing/chunks.ts";
+import { chunkProblems } from "./chunk.ts";
 
 const catalogue = { archetypes: ARCHETYPES, characters: CHARACTERS };
 const base = FIXTURE_LIBRARY.chunks["test-finish"]!;

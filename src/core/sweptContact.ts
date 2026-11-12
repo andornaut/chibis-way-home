@@ -1,6 +1,6 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import type { Point, Rect } from "../data/types";
+import type { Point, Rect } from "../data/types/index.ts";
 
 // A positive interval of relative swept overlap catches contact between fixed frames without
 // treating an edge graze or a diagonal bounding-box overlap as a collision.

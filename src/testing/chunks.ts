@@ -1,9 +1,9 @@
 // Small chunks, a theme and a recipe for the chunk tests, which run on these as well as on
 // gameplay's chunks and recipes.
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
-import { GANTRY_RIDE_TRANSIT } from "../data/forcedTransit";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks.ts";
+import { GANTRY_RIDE_TRANSIT } from "../data/forcedTransit.ts";
 import {
   AWNING_BEHAVIOUR,
   AWNING_SECONDS,
@@ -13,18 +13,18 @@ import {
   GUST_BEHAVIOUR,
   GUST_SECONDS,
   gustCycle,
-} from "../data/obstacleBehaviours";
-import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters";
+} from "../data/obstacleBehaviours.ts";
+import { CROSSWALK_PHASE_TILES, CROSSWALK_SIGNAL_ANIMATIONS } from "../data/obstacleCharacters.ts";
 import {
   CHANDELIER_SWING,
   chandelierOrbit,
   GUST_PULSE,
   WINDMILL_SAILS,
   windmillSailOrbit,
-} from "../data/obstacleTuning";
-import { REACH } from "../data/reach";
-import { ZONE_ROWS } from "../data/screen";
-import { SEAM_ROWS } from "../data/seams";
+} from "../data/obstacleTuning.ts";
+import { REACH } from "../data/reach.ts";
+import { ZONE_ROWS } from "../data/screen.ts";
+import { SEAM_ROWS } from "../data/seams.ts";
 import type {
   Character,
   ChunkPlan,
@@ -33,10 +33,10 @@ import type {
   TerrainRect,
   ThemePlan,
   ZoneRecipe,
-} from "../data/types";
-import type { ChunkLibrary } from "../rules/assemble";
-import { pendulumAngle } from "../rules/orbit";
-import { CHUNK_LIBRARY, STAGE_RECIPES } from "../rules/zonePlans";
+} from "../data/types/index.ts";
+import type { ChunkLibrary } from "../rules/assemble.ts";
+import { pendulumAngle } from "../rules/orbit.ts";
+import { CHUNK_LIBRARY, STAGE_RECIPES } from "../rules/zonePlans.ts";
 
 // Ground from col, cols wide, its top at row, down to the bottom row.
 const ground = (col: number, cols: number, row: number): TerrainRect => ({

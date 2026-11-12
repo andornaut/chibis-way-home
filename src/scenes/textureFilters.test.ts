@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import manifestJson from "../../public/art/manifest.json";
-import { type ArtManifest, atlasPageKey } from "../assets";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import { type ArtManifest, atlasPageKey } from "../assets/index.ts";
 
 const manifest = manifestJson as unknown as ArtManifest;
 
 vi.mock("phaser", () => ({ Textures: { FilterMode: { LINEAR: 0, NEAREST: 1 } } }));
 
-import { filterLoadedArt, MANIFEST_FILTERS, textureFilters } from "./textureFilters";
+import { filterLoadedArt, MANIFEST_FILTERS, textureFilters } from "./textureFilters.ts";
 
 describe("texture filters", () => {
   // A texture list art adds to the manifest needs a filter before it loads.

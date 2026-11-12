@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { sweptContact } from "../core";
-import { BIRD } from "../data/bird";
-import type { Archetype, AreaPlan, Instance, ObjectLayout, Rect, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { motionTrack } from "./motion";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { sweptContact } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type {
+  Archetype,
+  AreaPlan,
+  Instance,
+  ObjectLayout,
+  Rect,
+  ZoneLayout,
+} from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { motionTrack } from "./motion.ts";
 import {
   namespaceOrbitInstances,
   orbitBounds,
@@ -13,9 +20,9 @@ import {
   orbitPosition,
   orbitSweptContact,
   validateOrbitReferences,
-} from "./orbit";
-import { areaLayout } from "./tiles";
-import { retryZone, startZone, stepZone } from "./zone";
+} from "./orbit.ts";
+import { areaLayout } from "./tiles.ts";
+import { retryZone, startZone, stepZone } from "./zone.ts";
 
 const base: Archetype = {
   collision: "ledge",

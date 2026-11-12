@@ -1,9 +1,9 @@
-import { EDGE } from "../core";
-import type { BehaviourNode, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
-import type { BehaviourState } from "./behaviour";
-import { axisOf } from "./motion";
-import { orbitBounds } from "./orbit";
-import { createTimedHazardSampler, timedHazardRect } from "./timedHazard";
+import { EDGE } from "../core/index.ts";
+import type { BehaviourNode, BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
+import { axisOf } from "./motion.ts";
+import { orbitBounds } from "./orbit.ts";
+import { createTimedHazardSampler, timedHazardRect } from "./timedHazard.ts";
 
 const MAX_GRAPH_STATES = 128;
 

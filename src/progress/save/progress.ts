@@ -1,9 +1,9 @@
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
-import { RECENT_STAGES } from "../../data/stageProgress";
-import type { SkillSelection, ZoneMap } from "../../data/types";
-import { openMap } from "../map";
-import { isSkillId } from "../skills";
+import { RECENT_STAGES } from "../../data/stageProgress.ts";
+import type { SkillSelection, ZoneMap } from "../../data/types/index.ts";
+import { openMap } from "../map.ts";
+import { isSkillId } from "../skills.ts";
 
 // Middle chunk ids of each map destination's latest stage entries, newest first: at most
 // RECENT_STAGES entries per destination. Absent means none.

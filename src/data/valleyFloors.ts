@@ -1,5 +1,5 @@
-import { ZONE_ROWS } from "./screen";
-import type { ChunkPlan, Instance, TerrainRect } from "./types";
+import { ZONE_ROWS } from "./screen.ts";
+import type { ChunkPlan, Instance, TerrainRect } from "./types/index.ts";
 
 const VALLEY_DEPTH = 8;
 

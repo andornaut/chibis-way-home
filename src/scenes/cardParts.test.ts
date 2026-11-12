@@ -4,13 +4,13 @@ import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
 import fontTitle from "../../public/art/fonts/font-title.fnt?raw";
-import manifest from "../../public/art/manifest.json";
-import palette from "../../public/art/palette.json";
-import button from "../../public/art/sprites/ui-button.json";
-import primary from "../../public/art/sprites/ui-button-primary.json";
-import playMarkJson from "../../public/art/sprites/ui-play-mark.json";
-import { ART_MANIFEST_KEY } from "../assets";
-import { CARD_TEXT_SCALE, labelledButton, textInkBounds } from "../ui";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import palette from "../../public/art/palette.json" with { type: "json" };
+import button from "../../public/art/sprites/ui-button.json" with { type: "json" };
+import primary from "../../public/art/sprites/ui-button-primary.json" with { type: "json" };
+import playMarkJson from "../../public/art/sprites/ui-play-mark.json" with { type: "json" };
+import { ART_MANIFEST_KEY } from "../assets/index.ts";
+import { CARD_TEXT_SCALE, labelledButton, textInkBounds } from "../ui/index.ts";
 import {
   addButtonLabel,
   addTextButton,
@@ -18,7 +18,7 @@ import {
   pressTextButton,
   PRIMARY_BUTTON,
   setTextButtonEnabled,
-} from "./cardParts";
+} from "./cardParts.ts";
 
 const playMark = playMarkJson as AsepriteSheet;
 

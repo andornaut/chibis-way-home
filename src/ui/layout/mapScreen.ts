@@ -1,10 +1,10 @@
-import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Point, Rect, Size } from "../../data/types";
-import type { PathStroke } from "../map/mapPath";
-import { FONT_SCALE } from "./fontRoles";
-import { hitAround } from "./hitAreas";
-import { labelledButton } from "./restartCard";
+import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Point, Rect, Size } from "../../data/types/index.ts";
+import type { PathStroke } from "../map/mapPath.ts";
+import { FONT_SCALE } from "./fontRoles.ts";
+import { hitAround } from "./hitAreas.ts";
+import { labelledButton } from "./restartCard.ts";
 
 // Art's paper map (art/README.md, Map), in base pixels (MAP_LAYOUT). Offsets are from a node's
 // centre. The paper fills the screen; each marker's centre pixel sits on its node's

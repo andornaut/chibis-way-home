@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import { CHUNK_RULES, THEMES } from "../data/chunks";
-import { MODULE_RULES } from "../data/modules";
-import { SEAM_ROWS } from "../data/seams";
-import type { ChunkModule, Difficulty, ZoneKey } from "../data/types";
-import { ZONE_FRAMES } from "../data/zoneFrames";
-import { CROSSWALK_FIXTURE_CATALOGUE } from "../testing/chunks";
-import { FIXTURE_MODULES } from "../testing/modules";
-import { composePair, moduleProblems, pairGrade, pairProblems } from "./modules";
-import { validateOrbitReferences } from "./orbit";
-import { areaLayout } from "./tiles";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { CHUNK_RULES, THEMES } from "../data/chunks.ts";
+import { MODULE_RULES } from "../data/modules/index.ts";
+import { SEAM_ROWS } from "../data/seams.ts";
+import type { ChunkModule, Difficulty, ZoneKey } from "../data/types/index.ts";
+import { ZONE_FRAMES } from "../data/zoneFrames.ts";
+import { CROSSWALK_FIXTURE_CATALOGUE } from "../testing/chunks.ts";
+import { FIXTURE_MODULES } from "../testing/modules.ts";
+import { composePair, moduleProblems, pairGrade, pairProblems } from "./modules.ts";
+import { validateOrbitReferences } from "./orbit.ts";
+import { areaLayout } from "./tiles.ts";
 
 const {
   "fixture-patrol": patrol,

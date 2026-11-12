@@ -1,5 +1,5 @@
-import { sameRect } from "../core";
-import { REACH } from "../data/reach";
+import { sameRect } from "../core/index.ts";
+import { REACH } from "../data/reach.ts";
 import type {
   Archetype,
   AreaLayout,
@@ -19,20 +19,20 @@ import type {
   TileRect,
   ZoneLayout,
   ZonePlan,
-} from "../data/types";
-import { drawsFrom, tileHitbox, type Tileset, worldScenery } from "../stage";
-import { layoutBehaviour } from "./behaviour";
-import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling";
+} from "../data/types/index.ts";
+import { drawsFrom, tileHitbox, type Tileset, worldScenery } from "../stage/index.ts";
+import { layoutBehaviour } from "./behaviour.ts";
+import { crumblingDefinitions, validateCrumblingProfile } from "./crumbling.ts";
 import {
   effectiveHazardPhase,
   validateGustPhases,
   validateHazardPhases,
   validateSupportPhases,
-} from "./effectiveCollision";
-import { resolveForcedTransit, validateForcedTransitGroups } from "./forcedTransitLayout";
-import { resolveOrbits, validateOrbitReferences } from "./orbit";
-import { resolvePhaseSources } from "./phaseSource";
-import { validateZoneLinks } from "./zoneLinks";
+} from "./effectiveCollision.ts";
+import { resolveForcedTransit, validateForcedTransitGroups } from "./forcedTransitLayout.ts";
+import { resolveOrbits, validateOrbitReferences } from "./orbit.ts";
+import { resolvePhaseSources } from "./phaseSource.ts";
+import { validateZoneLinks } from "./zoneLinks.ts";
 
 export function tileRect(tile: number, rect: TileRect): Rect {
   return {

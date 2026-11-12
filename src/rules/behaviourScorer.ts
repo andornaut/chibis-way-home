@@ -17,9 +17,9 @@ import type {
   ObjectLayout,
   Point,
   SecondsRange,
-} from "../data/types";
-import type { PursuitIntentState } from "./behaviourIntent";
-import { birdBox, type BirdState } from "./bird";
+} from "../data/types/index.ts";
+import type { PursuitIntentState } from "./behaviourIntent.ts";
+import { birdBox, type BirdState } from "./bird.ts";
 
 // The scorer's own clocks and held move. threatSeconds and specialDueSeconds count engaged
 // seconds outside attacks since the scorer last chose any attack and a special; pressureSeconds

@@ -19,10 +19,10 @@ const offer = vi.hoisted(() => ({
 }));
 const backdrop = vi.hoisted(() => vi.fn(() => ({ ready: Promise.resolve() })));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../pwa/installOffer", () => ({ installOffer: () => offer }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: backdrop }));
-vi.mock("./domUi", () => ({
+vi.mock("../pwa/installOffer.ts", () => ({ installOffer: () => offer }));
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: backdrop }));
+vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string) => Promise.resolve(`blob:${art}`),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
@@ -32,9 +32,9 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { TEXT } from "../data/text";
-import { createUiLayer, reducedMotion, touchSettingShown, type UiLayer } from "../ui";
-import { SettingsScene } from "./SettingsScene";
+import { TEXT } from "../data/text.ts";
+import { createUiLayer, reducedMotion, touchSettingShown, type UiLayer } from "../ui/index.ts";
+import { SettingsScene } from "./SettingsScene.ts";
 
 const WORDS = TEXT.settings;
 const SWITCHES = [WORDS.moveControls, WORDS.actionButtons, WORDS.reducedMotion];

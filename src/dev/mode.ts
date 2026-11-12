@@ -1,7 +1,7 @@
 import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/web/pwa/backNavigation";
 
-import type { SkillId } from "../data/types";
-import { SKILL_IDS, type SkillOverrides } from "../progress";
+import type { SkillId } from "../data/types/index.ts";
+import { SKILL_IDS, type SkillOverrides } from "../progress/index.ts";
 
 const SKILL_PARAMS: Readonly<Record<SkillId, string>> = {
   dash: "skillDash",

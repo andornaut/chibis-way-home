@@ -1,7 +1,7 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { SETTINGS_LAYOUT } from "../layout/settingsCard";
-import { closeButton } from "./card";
+import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
+import { closeButton } from "./card.ts";
 
 // The settings card in the HTML UI (settings.css, on ui.css's .ui-card): its title, a switch row
 // for each setting, the Install row while the game can be installed, the build label and the close

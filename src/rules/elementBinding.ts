@@ -1,4 +1,4 @@
-import type { ElementBinding, Instance, Tuning } from "../data/types";
+import type { ElementBinding, Instance, Tuning } from "../data/types/index.ts";
 
 function overlayTuning(base: Tuning | undefined, binding: Tuning): Tuning {
   return {

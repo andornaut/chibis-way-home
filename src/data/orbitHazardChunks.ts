@@ -1,7 +1,7 @@
-import { STATIC_MOTION } from "./archetypes";
-import { CHUNK_COLS } from "./chunkTemplates";
-import { ZONE_ROWS } from "./screen";
-import type { ChunkPlan, Instance, Motion, TerrainRect } from "./types";
+import { STATIC_MOTION } from "./archetypes.ts";
+import { CHUNK_COLS } from "./chunkTemplates.ts";
+import { ZONE_ROWS } from "./screen.ts";
+import type { ChunkPlan, Instance, Motion, TerrainRect } from "./types/index.ts";
 
 const HOST_COLS = 6;
 const HOST_ROWS = 1;

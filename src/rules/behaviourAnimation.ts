@@ -1,6 +1,6 @@
-import { contactFrameAt } from "../core";
-import type { ObjectLayout, Point } from "../data/types";
-import type { BehaviourSegment, BehaviourState } from "./behaviour";
+import { contactFrameAt } from "../core/index.ts";
+import type { ObjectLayout, Point } from "../data/types/index.ts";
+import type { BehaviourSegment, BehaviourState } from "./behaviour.ts";
 
 export function syncAnimation(
   object: ObjectLayout,

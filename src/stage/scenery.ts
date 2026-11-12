@@ -1,4 +1,4 @@
-import type { ObjectLayout, Point } from "../data/types";
+import type { ObjectLayout, Point } from "../data/types/index.ts";
 
 // Static noninteractive sprites may animate in the background without becoming physical actors.
 export function sceneryParallax(object: ObjectLayout): Point | undefined {

@@ -1,14 +1,14 @@
 import { expect, it } from "vitest";
 
-import manifest from "../../../public/art/manifest.json";
-import { CARD_CONTENT } from "../../data/layout";
-import { TEXT } from "../../data/text";
-import { CARD_FONTS } from "../../testing/cardFonts";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import { CARD_HEADING, type CardTitleLayout, cardTitleOrigin } from "./contentCard";
-import { SKILL_ROOM, skillDetails } from "./skillDetails";
-import { SKILL_BUTTON } from "./skillHud";
-import { textInkBounds } from "./textInk";
+import manifest from "../../../public/art/manifest.json" with { type: "json" };
+import { CARD_CONTENT } from "../../data/layout.ts";
+import { TEXT } from "../../data/text.ts";
+import { CARD_FONTS } from "../../testing/cardFonts.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import { CARD_HEADING, type CardTitleLayout, cardTitleOrigin } from "./contentCard.ts";
+import { SKILL_ROOM, skillDetails } from "./skillDetails.ts";
+import { SKILL_BUTTON } from "./skillHud.ts";
+import { textInkBounds } from "./textInk.ts";
 
 // Visible ink tops and bottoms, measured as the scenes draw them.
 const titleInk = (title: CardTitleLayout) => {

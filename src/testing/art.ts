@@ -1,6 +1,6 @@
-import { ARCHETYPES } from "../data/archetypes";
-import { CHARACTERS } from "../data/characters";
-import { nodeArt } from "../sim/catalogue";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { nodeArt } from "../sim/catalogue.ts";
 
 // Art's hitboxes and tilesets from public/art/, read the same under Vitest and plain Node.
 const ART = nodeArt();

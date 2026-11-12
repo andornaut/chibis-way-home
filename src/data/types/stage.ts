@@ -2,8 +2,8 @@
 
 import type { CrumblingDefinition, CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { SEAM_ROWS } from "../seams";
-import type { SpriteContact } from "./art";
+import type { SEAM_ROWS } from "../seams.ts";
+import type { SpriteContact } from "./art.ts";
 import type {
   BehaviourPlan,
   CharacterState,
@@ -15,9 +15,9 @@ import type {
   Quirk,
   Reaction,
   Tuning,
-} from "./behaviour";
-import type { SkillId } from "./bird";
-import type { Point, Rect, Size, TilePoint, TileRect } from "./geometry";
+} from "./behaviour.ts";
+import type { SkillId } from "./bird.ts";
+import type { Point, Rect, Size, TilePoint, TileRect } from "./geometry.ts";
 
 export interface AreaLink {
   readonly area: string;

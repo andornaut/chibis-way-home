@@ -3,9 +3,9 @@ import { EventEmitter } from "node:events";
 import type { Input, Scene } from "phaser";
 import { describe, expect, it } from "vitest";
 
-import { TOUCH } from "../data/touch";
-import type { Point } from "../data/types";
-import { catchModalTaps } from "./modalTaps";
+import { TOUCH } from "../data/touch.ts";
+import type { Point } from "../data/types/index.ts";
+import { catchModalTaps } from "./modalTaps.ts";
 
 // A 400x200 canvas at one device pixel per base pixel, the card's view 40 in from its left: a
 // card at 100,50 in the view, 100x60.

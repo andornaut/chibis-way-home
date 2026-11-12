@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import { SKILL_IDS } from "../progress";
+import { ZONE_MAP } from "../data/map.ts";
+import { SKILL_IDS } from "../progress/index.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -15,7 +15,7 @@ it("persists each room grant once through progress writes and reopen, then reset
     getItem: (key: string) => values.get(key) ?? null,
     setItem: write,
   });
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   SKILL_IDS.forEach((skill) => expect(save.grantSkill(skill)).toBe(true));
   await save.loadProgress();
@@ -44,7 +44,7 @@ it("persists each room grant once through progress writes and reopen, then reset
 it("keeps first and sole skills active and rejects unowned selection without writing", async () => {
   const write = vi.fn();
   vi.stubGlobal("localStorage", { getItem: () => null, setItem: write });
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   expect(save.selectActiveSkill("speedy")).toBe(false);
   expect(save.activeSkill()).toBeNull();
@@ -56,7 +56,7 @@ it("keeps first and sole skills active and rejects unowned selection without wri
 });
 
 it("keeps Dev-only selection temporary and falls back to saved ownership when an override is unchecked", async () => {
-  const { PROGRESS_VERSION } = await import("../progress");
+  const { PROGRESS_VERSION } = await import("../progress/index.ts");
   const raw = JSON.stringify({
     activeSkill: "dash",
     at: "beginning",
@@ -84,12 +84,12 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
     navigator: {},
   };
   vi.stubGlobal("window", host);
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   expect(save.activeSkill()).toBe("dash");
   expect(save.selectActiveSkill("speedy")).toBe(true);
   expect(save.activeSkill()).toBe("speedy");
-  const { changeSkillOverride } = await import("../dev/mode");
+  const { changeSkillOverride } = await import("../dev/mode.ts");
   changeSkillOverride(host as unknown as Window, false, "speedy");
   expect(save.activeSkill()).toBe("dash");
   expect(save.selectActiveSkill("dash")).toBe(false);
@@ -108,7 +108,7 @@ it("restores every permanent grant and the sole selection after a fresh page mod
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const beforeExit = await import("./save");
+  const beforeExit = await import("./save.ts");
   await beforeExit.loadProgress();
   for (const skill of SKILL_IDS) {
     beforeExit.grantSkill(skill);
@@ -118,7 +118,7 @@ it("restores every permanent grant and the sole selection after a fresh page mod
   beforeExit.saveStand(ZONE_MAP.start);
   await beforeExit.loadProgress();
   vi.resetModules();
-  const afterContinue = await import("./save");
+  const afterContinue = await import("./save.ts");
   await afterContinue.loadProgress();
   expect(afterContinue.savedSkills()).toEqual(SKILL_IDS);
   expect(afterContinue.activeSkill()).toBe("speedy");

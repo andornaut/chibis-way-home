@@ -1,7 +1,7 @@
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { expect, it } from "vitest";
 
-import { fontPreview, galleryFrame } from "./preview";
+import { fontPreview, galleryFrame } from "./preview.ts";
 
 it.each([
   { at: 99, once: false, result: "first" },

@@ -1,4 +1,4 @@
-import type { DialogueLine } from "./types";
+import type { DialogueLine } from "./types/index.ts";
 
 export const STATS_BARKS = {
   apartment: {

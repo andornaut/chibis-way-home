@@ -2,13 +2,13 @@ import { EventEmitter } from "node:events";
 
 import { expect, it, onTestFinished, vi } from "vitest";
 
-import { BARK_DURATION_SECONDS, DIALOGUE_PANEL_ALPHA, SPEAKERS } from "../data/dialogues";
-import { STAGE_BARKS } from "../data/stageBarks";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { DialogueLine } from "../data/types";
-import { barkOwnerOnscreen } from "../presentation";
-import { DIALOGUE_SCREEN, dialogueNameTab, dialogueParagraphs } from "../ui";
+import { BARK_DURATION_SECONDS, DIALOGUE_PANEL_ALPHA, SPEAKERS } from "../data/dialogues.ts";
+import { STAGE_BARKS } from "../data/stageBarks.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { DialogueLine } from "../data/types/index.ts";
+import { barkOwnerOnscreen } from "../presentation/index.ts";
+import { DIALOGUE_SCREEN, dialogueNameTab, dialogueParagraphs } from "../ui/index.ts";
 
 vi.mock("phaser", () => ({
   Scene: class {
@@ -27,26 +27,26 @@ vi.mock("phaser", () => ({
   Scenes: { Events: { PRE_RENDER: "prerender" } },
 }));
 // Every bark shows a left speaker's name tab, so the press area takes the panel and the tab.
-vi.mock("./dialogueParagraph", async () => {
-  const ui = await import("../ui");
+vi.mock("./dialogueParagraph.ts", async () => {
+  const ui = await import("../ui/index.ts");
   return {
     dialogueParagraphPressAreas: () => ui.dialoguePressAreas(ui.dialogueNameTab("left", 40)),
     drawDialogueParagraph: vi.fn(() => []),
   };
 });
-vi.mock("./playCamera", () => ({
+vi.mock("./playCamera.ts", () => ({
   fitPlayCamera: vi.fn(),
   playPoint: (_scene: unknown, point: unknown) => point,
 }));
-vi.mock("../ui/dialogue/conversation", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../ui")>()),
+vi.mock("../ui/dialogue/conversation.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../ui/index.ts")>()),
   dialogueParagraphs: vi.fn(() => [{}]),
 }));
 
-import { createStageBarks } from "../rules/stageBarks";
-import { drawDialogueParagraph } from "./dialogueParagraph";
-import { modalInput } from "./modalInput";
-import { ZoneBarkScene } from "./ZoneBarkScene";
+import { createStageBarks } from "../rules/stageBarks.ts";
+import { drawDialogueParagraph } from "./dialogueParagraph.ts";
+import { modalInput } from "./modalInput.ts";
+import { ZoneBarkScene } from "./ZoneBarkScene.ts";
 
 const OWNER = { area: "main", attempt: 0, objectIndex: 0 };
 
@@ -290,8 +290,8 @@ it("marks a deferred scheduled line heard only when its actual owner can be pres
 
 it("shows an ownerless journey bark as Fert's offscreen voice and marks it heard", async () => {
   const { dialogueParagraphs: paragraphs } = await vi.importActual<
-    typeof import("../ui/dialogue/conversation")
-  >("../ui/dialogue/conversation");
+    typeof import("../ui/dialogue/conversation.ts")
+  >("../ui/dialogue/conversation.ts");
   vi.mocked(dialogueParagraphs).mockImplementation(paragraphs);
   onTestFinished(() => {
     vi.mocked(dialogueParagraphs).mockReset();

@@ -1,8 +1,8 @@
 // Half-chunk modules, the zone frames that draw composed pairs, and the certified chunk lists.
 
-import type { CertifiedArena } from "./arena";
-import type { TilePoint } from "./geometry";
-import type { ChunkPlan, ChunkSlot, Difficulty, Instance, NoCross, TerrainRect } from "./stage";
+import type { CertifiedArena } from "./arena.ts";
+import type { TilePoint } from "./geometry.ts";
+import type { ChunkPlan, ChunkSlot, Difficulty, Instance, NoCross, TerrainRect } from "./stage.ts";
 
 export type ZoneKey = "apartment" | "blue" | "countryside" | "home" | "industrial" | "woodland";
 export type ModuleSide = "left" | "right";

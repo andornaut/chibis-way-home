@@ -41,32 +41,32 @@ vi.mock("phaser", async () => {
     Textures: { FilterMode: { LINEAR: 0, NEAREST: 1 } },
   };
 });
-vi.mock("./save", () => ({ loadProgress: startup.load }));
-vi.mock("../pwa", async () => {
-  const { createRequiredUpdate } = await import("../pwa/requiredUpdate");
+vi.mock("./save.ts", () => ({ loadProgress: startup.load }));
+vi.mock("../pwa/index.ts", async () => {
+  const { createRequiredUpdate } = await import("../pwa/requiredUpdate.ts");
   return { requireNewer: startup.requireNewer, requiredUpdate: createRequiredUpdate() };
 });
-vi.mock("./domUi", () => ({
+vi.mock("./domUi.ts", () => ({
   mountSceneView: startup.mount,
   prepareDomUi: () => Promise.resolve(),
 }));
-vi.mock("../ui", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../ui")>()),
+vi.mock("../ui/index.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../ui/index.ts")>()),
   createMessageCard: (_document: unknown, id: string, text: string) => ({ id, text }),
 }));
-vi.mock("./atlasArt", () => ({
+vi.mock("./atlasArt.ts", () => ({
   get ATLAS() {
     return art.atlas;
   },
   queueAtlasPages: vi.fn(),
 }));
 
-import { type ArtManifest, atlasPageKey } from "../assets";
-import { TEXT } from "../data/text";
-import { backgroundProgress, loadingProgress } from "../loading/progress";
-import { requiredUpdate } from "../pwa";
-import { BootScene } from "./BootScene";
-import { textureFilters } from "./textureFilters";
+import { type ArtManifest, atlasPageKey } from "../assets/index.ts";
+import { TEXT } from "../data/text.ts";
+import { backgroundProgress, loadingProgress } from "../loading/progress.ts";
+import { requiredUpdate } from "../pwa/index.ts";
+import { BootScene } from "./BootScene.ts";
+import { textureFilters } from "./textureFilters.ts";
 
 beforeEach(() => {
   vi.stubGlobal("window", { clearTimeout, location: { search: "" }, setTimeout });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { Rect } from "../data/types";
-import { collisionCandidates } from "./collisionIndex";
+import type { Rect } from "../data/types/index.ts";
+import { collisionCandidates } from "./collisionIndex.ts";
 
 const shared: Rect = { height: 20, width: 40, x: 120, y: 0 };
 const terrain: readonly Rect[] = [

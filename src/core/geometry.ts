@@ -1,4 +1,4 @@
-import type { Point, Rect, Size } from "../data/types";
+import type { Point, Rect, Size } from "../data/types/index.ts";
 
 // Pixels of rounding error allowed when a body stands exactly on an edge.
 export const EDGE = 1e-6;

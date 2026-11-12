@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import type { Archetype, Character, Instance, ZonePlan } from "../data/types";
-import { type Catalogue, isPlaced, objectLayout, tileRect, zoneLayout } from "./tiles";
+import { BIRD_FRAME } from "../assets/index.ts";
+import type { Archetype, Character, Instance, ZonePlan } from "../data/types/index.ts";
+import { type Catalogue, isPlaced, objectLayout, tileRect, zoneLayout } from "./tiles.ts";
 
 describe("tileRect", () => {
   it.each([

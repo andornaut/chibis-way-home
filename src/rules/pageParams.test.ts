@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { askedRecipe, askedSeed } from "./pageParams";
+import { askedRecipe, askedSeed } from "./pageParams.ts";
 
 describe("askedRecipe", () => {
   it.each([

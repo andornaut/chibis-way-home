@@ -2,15 +2,15 @@ import { fillNames } from "@andornaut/game-kit/lines";
 import { type BitmapFont, laidGlyphs } from "@andornaut/game-kit/text/bitmapFont";
 import { bitmapMeasure, fitsRoom, fittingText } from "@andornaut/game-kit/text/textFit";
 
-import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Point, Rect } from "../../data/types";
-import { timeText } from "../../progress";
-import type { DialogueParagraph } from "../dialogue/conversation";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import type { CardFonts } from "./contentCard";
-import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles";
-import { textInkBounds } from "./textInk";
+import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Point, Rect } from "../../data/types/index.ts";
+import { timeText } from "../../progress/index.ts";
+import type { DialogueParagraph } from "../dialogue/conversation.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import type { CardFonts } from "./contentCard.ts";
+import { FONT_METRICS, FONT_NATIVE_SIZE } from "./fontRoles.ts";
+import { textInkBounds } from "./textInk.ts";
 
 export const RUN_STAT_KEYS = ["attempts", "lastAttempt", "best"] as const;
 // The current stage's metrics in the order a statistics column shows them.

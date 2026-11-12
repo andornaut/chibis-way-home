@@ -1,6 +1,6 @@
 import type { Scene } from "phaser";
 
-import type { ArtManifest } from "../assets";
+import type { ArtManifest } from "../assets/index.ts";
 
 // Fonts have dedicated sources so their linear filtering (textureFilters.ts) never affects shared
 // sprite atlas pages.

@@ -5,9 +5,9 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import type { GameObjects, Scene } from "phaser";
 
-import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
-import { PLAY_MARK } from "../data/layout";
-import type { Point, Rect } from "../data/types";
+import { ART_MANIFEST_KEY, type ArtManifest } from "../assets/index.ts";
+import { PLAY_MARK } from "../data/layout.ts";
+import type { Point, Rect } from "../data/types/index.ts";
 import {
   buttonFace,
   type ButtonFaceState,
@@ -25,8 +25,8 @@ import {
   type LabelledButton,
   type Palette,
   textInkBounds,
-} from "../ui";
-import { uiObject } from "./uiRoots";
+} from "../ui/index.ts";
+import { uiObject } from "./uiRoots.ts";
 
 // What the pause, settings, install steps and restart cards draw with: art's 9-slices, card text,
 // buttons and the palette's colours.

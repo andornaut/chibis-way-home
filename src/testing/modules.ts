@@ -1,4 +1,4 @@
-import type { ChunkModule, TerrainRect } from "../data/types";
+import type { ChunkModule, TerrainRect } from "../data/types/index.ts";
 
 const floor = (col: number, cols: number, row: number): TerrainRect => ({
   col,

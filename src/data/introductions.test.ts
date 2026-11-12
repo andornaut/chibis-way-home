@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { ZONE_DIALOGUES } from "./dialogues";
-import { ZONE_MAP } from "./map";
-import { ROOMS } from "./rooms";
-import { RECIPES } from "./zones";
+import { ZONE_DIALOGUES } from "./dialogues.ts";
+import { ZONE_MAP } from "./map.ts";
+import { ROOMS } from "./rooms.ts";
+import { RECIPES } from "./zones.ts";
 
 describe.each(ZONE_MAP.destinations)("boss schedule $id", (destination) => {
   it("assigns the approved whole-stage encounter quotas", () => {

@@ -1,6 +1,6 @@
 import { clamp01 } from "@andornaut/game-kit/numbers";
 
-import type { Point, Rect } from "../../data/types";
+import type { Point, Rect } from "../../data/types/index.ts";
 
 export type TouchChromeKind = "jump" | "knob" | "move" | "use";
 export type TouchChromePose = "held" | "held-left" | "held-right" | "press" | "rest";

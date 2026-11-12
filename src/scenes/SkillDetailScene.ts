@@ -3,15 +3,15 @@ import { fillNames } from "@andornaut/game-kit/lines";
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { SkillId } from "../data/types";
-import { PHONE_EVENTS } from "../pwa";
-import { createSkillDetailsCard, showPresses, SKILL_ART } from "../ui";
-import { paletteColour } from "./cardParts";
-import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput } from "./modalInput";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { SkillId } from "../data/types/index.ts";
+import { PHONE_EVENTS } from "../pwa/index.ts";
+import { createSkillDetailsCard, showPresses, SKILL_ART } from "../ui/index.ts";
+import { paletteColour } from "./cardParts.ts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput } from "./modalInput.ts";
 
 export interface SkillDetailData {
   readonly onClose: () => void;

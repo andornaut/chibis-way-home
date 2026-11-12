@@ -8,15 +8,15 @@ const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), capture: vi.fn() })
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 const backdrop = vi.hoisted(() => ({ ready: Promise.resolve() }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../pwa", () => ({
+vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "test:back" },
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   updateOffer: offer,
 }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: () => backdrop }));
-vi.mock("./domUi", () => ({
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => backdrop }));
+vi.mock("./domUi.ts", () => ({
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
     scene.events.once("shutdown", unmount);
@@ -25,9 +25,9 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { TEXT } from "../data/text";
-import { createUiLayer, type UiLayer } from "../ui";
-import { UpdateScene } from "./UpdateScene";
+import { TEXT } from "../data/text.ts";
+import { createUiLayer, type UiLayer } from "../ui/index.ts";
+import { UpdateScene } from "./UpdateScene.ts";
 
 let layer: UiLayer;
 // Each test's scenes, shut down after it so none keeps a back listener.

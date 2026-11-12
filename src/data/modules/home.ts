@@ -1,5 +1,5 @@
-import { AWNING_SECONDS, awningCycle } from "../obstacleBehaviours";
-import type { ChunkModule, Instance, SupportCycleSeconds, TerrainRect } from "../types";
+import { AWNING_SECONDS, awningCycle } from "../obstacleBehaviours.ts";
+import type { ChunkModule, Instance, SupportCycleSeconds, TerrainRect } from "../types/index.ts";
 
 // Home city halves on the lower route (row 80). The awning row fills the right half, after the
 // half Chibi watches it from, so a chunk never holds two clocked obstacles.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { doorPhase } from "./doorOpen";
+import { doorPhase } from "./doorOpen.ts";
 
 // The park gate's open tag: 4 frames at 80 ms.
 const GATE_MS = 320;

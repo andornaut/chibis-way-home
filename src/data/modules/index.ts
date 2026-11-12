@@ -1,12 +1,12 @@
-import { FOUR_SCREEN_ROWS } from "../chunks";
-import { CHUNK_COLS } from "../chunkTemplates";
-import type { ChunkModule, Difficulty, ModuleRules } from "../types";
-import { APARTMENT_MODULES } from "./apartment";
-import { BLUE_MODULES } from "./blue";
-import { COUNTRYSIDE_MODULES } from "./countryside";
-import { HOME_MODULES } from "./home";
-import { INDUSTRIAL_MODULES } from "./industrial";
-import { WOODLAND_MODULES } from "./woodland";
+import { FOUR_SCREEN_ROWS } from "../chunks.ts";
+import { CHUNK_COLS } from "../chunkTemplates.ts";
+import type { ChunkModule, Difficulty, ModuleRules } from "../types/index.ts";
+import { APARTMENT_MODULES } from "./apartment.ts";
+import { BLUE_MODULES } from "./blue.ts";
+import { COUNTRYSIDE_MODULES } from "./countryside.ts";
+import { HOME_MODULES } from "./home.ts";
+import { INDUSTRIAL_MODULES } from "./industrial.ts";
+import { WOODLAND_MODULES } from "./woodland.ts";
 
 // Modules are half a chunk wide and four screens tall; the joint keeps a 4-column landing (2 each
 // side, Chibi is 2 wide) under 6 clear rows.

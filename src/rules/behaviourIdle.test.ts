@@ -1,9 +1,9 @@
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
 import {
   BEAR_BEHAVIOUR,
   DOG_BEHAVIOUR,
@@ -11,20 +11,25 @@ import {
   GOOSE_BEHAVIOUR,
   PIGEON_BEHAVIOUR,
   RACCOON_BEHAVIOUR,
-} from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { Archetype, BehaviourPlan, Rect, ZoneLayout } from "../data/types";
-import { behaviourPose } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { withAnticipationContact } from "../testing/behaviours";
-import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle";
-import type { BehaviourWorld } from "./behaviourReach";
-import { birdBox, startBird } from "./bird";
-import { supportedLanding } from "./flyLanding";
-import { objectLayout } from "./tiles";
-import { retryZone, startZone, stepZone } from "./zone";
+} from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { Archetype, BehaviourPlan, Rect, ZoneLayout } from "../data/types/index.ts";
+import { behaviourPose } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { withAnticipationContact } from "../testing/behaviours.ts";
+import {
+  type BehaviourState,
+  layoutBehaviour,
+  startBehaviour,
+  stepBehaviour,
+} from "./behaviour.ts";
+import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { birdBox, startBird } from "./bird.ts";
+import { supportedLanding } from "./flyLanding.ts";
+import { objectLayout } from "./tiles.ts";
+import { retryZone, startZone, stepZone } from "./zone.ts";
 
 const plan: BehaviourPlan = {
   axis: "x",
@@ -593,7 +598,7 @@ it("replays namespaced choices while varying eligible decisions independently of
   const geometry = { ...world(), decisions: namedStreams(37, "idle-roam:main:0") };
   const choose = (
     context: BehaviourWorld,
-    decision: import("./behaviourIdle").BehaviourIdleState = prior,
+    decision: import("./behaviourIdle.ts").BehaviourIdleState = prior,
   ) =>
     planIdleRecovery(
       context,

@@ -1,11 +1,11 @@
-import { EDGE, sameRect, STEP_SECONDS } from "../core";
-import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
-import type { BehaviourState } from "./behaviour";
-import type { BehaviourTraversalFrame } from "./behaviourReach";
-import { type BirdState, stepBird } from "./bird";
-import { ordinaryTransitControl } from "./forcedTransitProfile";
-import type { Track } from "./motion";
-import { finishPlatformBird, preparePlatformBird } from "./platformBird";
+import { EDGE, sameRect, STEP_SECONDS } from "../core/index.ts";
+import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
+import type { BehaviourTraversalFrame } from "./behaviourReach.ts";
+import { type BirdState, stepBird } from "./bird.ts";
+import { ordinaryTransitControl } from "./forcedTransitProfile.ts";
+import type { Track } from "./motion.ts";
+import { finishPlatformBird, preparePlatformBird } from "./platformBird.ts";
 
 interface ForcedTransitCarrier {
   readonly index: number;

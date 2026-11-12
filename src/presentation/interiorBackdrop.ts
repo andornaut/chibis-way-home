@@ -1,4 +1,4 @@
-import type { Point, Rect } from "../data/types";
+import type { Point, Rect } from "../data/types/index.ts";
 
 // The authored rectangle clips both axes at world speed. Only native texture phase moves.
 // Its vertical grid starts at the backdrop's declared art top, including partial rectangles.

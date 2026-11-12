@@ -1,7 +1,7 @@
-import { EDGE } from "../core";
-import { BIRD } from "../data/bird";
-import type { BirdTuning } from "../data/types";
-import type { BirdState } from "./bird";
+import { EDGE } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import type { BirdTuning } from "../data/types/index.ts";
+import type { BirdState } from "./bird.ts";
 
 // skillProfiles: the bird tuning under each skill selection, no skill included.
 export function ordinaryTransitControl(

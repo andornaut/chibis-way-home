@@ -1,11 +1,11 @@
-import type { Property } from "../ai/agentProperties";
-import { STEP_SECONDS } from "../core";
-import { DOG_BEHAVIOUR } from "../data/behaviours";
-import { CHARACTERS } from "../data/characters";
-import { TILE } from "../data/screen";
-import type { AntagonistKind, Instance, ObjectLayout, ZoneLayout } from "../data/types";
-import { startBird } from "../rules/bird";
-import type { ZoneInput } from "../rules/zone";
+import type { Property } from "../ai/agentProperties.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { DOG_BEHAVIOUR } from "../data/behaviours.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { TILE } from "../data/screen.ts";
+import type { AntagonistKind, Instance, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
+import { startBird } from "../rules/bird.ts";
+import type { ZoneInput } from "../rules/zone.ts";
 import {
   committedHold,
   crossesAfterSettle,
@@ -15,7 +15,7 @@ import {
   pacesNearest,
   risesToRow,
   tellPauseLasts,
-} from "../sim/bossProperties";
+} from "../sim/bossProperties.ts";
 import {
   type BossController,
   type BossCoverage,
@@ -23,9 +23,9 @@ import {
   type BossTick,
   botChibi,
   scriptedChibi,
-} from "../sim/bossSimulator";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "../sim/bot";
-import { sampleArenaCase } from "./arenas";
+} from "../sim/bossSimulator.ts";
+import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "../sim/bot.ts";
+import { sampleArenaCase } from "./arenas.ts";
 import {
   chunkLayout,
   chunksLayout,
@@ -35,7 +35,7 @@ import {
   liftLowerDockStart,
   ORDINARY,
   withInstances,
-} from "./encounterLayouts";
+} from "./encounterLayouts.ts";
 
 // Boss scenarios: regressions from past failures, then one scenario per boss. Scenarios named
 // encounter use the encounter traces' chunk layout, scripts, tick budget and seed.

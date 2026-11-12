@@ -1,5 +1,10 @@
-import { CHUNK_COLS, encounterStart, PATROL_ENCOUNTER, withoutEncounters } from "./chunkTemplates";
-import type { ChunkPlan } from "./types";
+import {
+  CHUNK_COLS,
+  encounterStart,
+  PATROL_ENCOUNTER,
+  withoutEncounters,
+} from "./chunkTemplates.ts";
+import type { ChunkPlan } from "./types/index.ts";
 
 // The street's fixed boundary sections surround a newly assembled middle on every entry.
 export const STREET_CHUNKS: Readonly<Record<string, ChunkPlan>> = {

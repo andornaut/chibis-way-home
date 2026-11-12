@@ -1,7 +1,7 @@
-import { CARD_CONTENT, CELEBRATION_LAYOUT } from "../../data/layout";
-import type { Point, Rect } from "../../data/types";
-import { FONT_SCALE } from "./fontRoles";
-import { hitAround } from "./hitAreas";
+import { CARD_CONTENT, CELEBRATION_LAYOUT } from "../../data/layout.ts";
+import type { Point, Rect } from "../../data/types/index.ts";
+import { FONT_SCALE } from "./fontRoles.ts";
+import { hitAround } from "./hitAreas.ts";
 
 export const CARD_TEXT_SCALE = FONT_SCALE;
 

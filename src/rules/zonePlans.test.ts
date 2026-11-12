@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { zonePlanFor } from "./zonePlans";
+import { zonePlanFor } from "./zonePlans.ts";
 
 // Seeds whose assembly backtracks through many states. A change to the search must keep these
 // runs; update them only with a deliberate change to the chunks or recipes.

@@ -19,9 +19,9 @@ import {
   type MovementProfile,
 } from "@andornaut/game-kit/terrain/movementMap";
 
-import { EDGE, spriteFrameOrigin, STEP_SECONDS } from "../core";
-import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
-import { TILE } from "../data/screen";
+import { EDGE, spriteFrameOrigin, STEP_SECONDS } from "../core/index.ts";
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";
+import { TILE } from "../data/screen.ts";
 import type {
   AreaLayout,
   BirdTuning,
@@ -30,13 +30,13 @@ import type {
   Point,
   Rect,
   ZoneLayout,
-} from "../data/types";
-import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach";
-import { contactBox } from "./behaviourTrack";
-import { clockedSupport } from "./effectiveCollision";
-import { supportedLanding } from "./flyLanding";
-import { hazardBoundsAt } from "./hazardOccupancy";
-import { timedHazardRect } from "./timedHazard";
+} from "../data/types/index.ts";
+import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach.ts";
+import { contactBox } from "./behaviourTrack.ts";
+import { clockedSupport } from "./effectiveCollision.ts";
+import { supportedLanding } from "./flyLanding.ts";
+import { hazardBoundsAt } from "./hazardOccupancy.ts";
+import { timedHazardRect } from "./timedHazard.ts";
 
 // A support or hazard: a terrain rectangle or the object that owns a platform or hazard.
 export type MapSupport = CrumblingSupportId;

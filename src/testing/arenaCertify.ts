@@ -3,17 +3,17 @@
 // evade playtest, in its stage's theme only.
 import { readFileSync } from "node:fs";
 
-import { traceRecorder } from "../ai/trace";
-import { BIRD_FRAME } from "../assets";
-import { ARENAS } from "../data/arenas";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { CertifiedArena, CertifiedChunks, ChunkArena, ZoneKey } from "../data/types";
-import { zoneLayout } from "../rules/tiles";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { NO_DISABLED_EDGES, pathOut } from "../sim/pathOut";
-import { zoneTraceLine } from "../sim/zoneTrace";
-import { crosses, surfaceAt, walkRequiredRoutes } from "../sim/zoneWalk";
+import { traceRecorder } from "../ai/trace.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { ARENAS } from "../data/arenas/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { CertifiedArena, CertifiedChunks, ChunkArena, ZoneKey } from "../data/types/index.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { NO_DISABLED_EDGES, pathOut } from "../sim/pathOut.ts";
+import { zoneTraceLine } from "../sim/zoneTrace.ts";
+import { crosses, surfaceAt, walkRequiredRoutes } from "../sim/zoneWalk.ts";
 import {
   type ArenaCase,
   arenaCase,
@@ -21,12 +21,12 @@ import {
   arenaMaps,
   arenaPlan,
   arenaProblems,
-} from "./arenas";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
-import { ORDINARY } from "./encounterLayouts";
-import { EVADE_SLOWED, type EvadeRun, evadeRuns } from "./evade";
-import { hashOf } from "./pairCertify";
-import { moduleRouteTargets, slotFills } from "./requiredRoutes";
+} from "./arenas.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
+import { EVADE_SLOWED, type EvadeRun, evadeRuns } from "./evade.ts";
+import { hashOf } from "./pairCertify.ts";
+import { moduleRouteTargets, slotFills } from "./requiredRoutes.ts";
 
 // Recorded walk ticks an arena proof takes, a cost hint for scheduling and sampling.
 export const ARENA_COST = 60_000;

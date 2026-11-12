@@ -1,5 +1,5 @@
-import { EDGE } from "../core";
-import type { ZoneState } from "./zone";
+import { EDGE } from "../core/index.ts";
+import type { ZoneState } from "./zone.ts";
 
 // What one live step did that the achievement records count: the indices of the area's objects
 // whose pursuit went from engaged to escaped, and whether he started a dash or used his air

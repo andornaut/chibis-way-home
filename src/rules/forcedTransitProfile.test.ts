@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { SKILLS } from "../data/skills";
-import { SKILL_PROFILES, skillTuning } from "../progress";
-import { startBird, stepBird } from "./bird";
-import { ordinaryTransitControl } from "./forcedTransitProfile";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { SKILLS } from "../data/skills.ts";
+import { SKILL_PROFILES, skillTuning } from "../progress/index.ts";
+import { startBird, stepBird } from "./bird.ts";
+import { ordinaryTransitControl } from "./forcedTransitProfile.ts";
 
 const ground = { height: 40, width: 2000, x: -1000, y: 300 };
 const idle = { jumpHeld: false, move: 0 as const };

@@ -1,13 +1,13 @@
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import { type CardView, createCard, showPresses } from "../ui";
-import { mountSceneView, sceneDomUi } from "./domUi";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput } from "./modalInput";
-import { clearProgress, resetWholeRunStats } from "./save";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import { type CardView, createCard, showPresses } from "../ui/index.ts";
+import { mountSceneView, sceneDomUi } from "./domUi.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput } from "./modalInput.ts";
+import { clearProgress, resetWholeRunStats } from "./save.ts";
 
 // The scene that opens the restart card, the start screen or the celebration: it passes the card
 // back while the card shows, and hears when Cancel closes it.

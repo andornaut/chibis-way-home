@@ -1,12 +1,12 @@
 import { expect, it, vi } from "vitest";
 
-import { SPEAKERS } from "../data/dialogues";
-import { ZONE_MAP } from "../data/map";
-import { STAGE_BARKS } from "../data/stageBarks";
-import { TEXT } from "../data/text";
-import type { StageBarkSchedule } from "../data/types";
-import { dialogueParagraphs } from "../ui";
-import { createStageBarks } from "./stageBarks";
+import { SPEAKERS } from "../data/dialogues.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { STAGE_BARKS } from "../data/stageBarks.ts";
+import { TEXT } from "../data/text.ts";
+import type { StageBarkSchedule } from "../data/types/index.ts";
+import { dialogueParagraphs } from "../ui/index.ts";
+import { createStageBarks } from "./stageBarks.ts";
 
 const first = { line: "first", speaker: "speaker" };
 const later = { line: "later", speaker: "speaker" };

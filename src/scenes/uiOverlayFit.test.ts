@@ -1,13 +1,13 @@
 import { MAX_RENDER_SCALE, renderScale } from "@andornaut/game-kit/view/renderScale";
 import { expect, it, vi } from "vitest";
 
-import { deviceScale } from "../testing/renderScale";
+import { deviceScale } from "../testing/renderScale.ts";
 
 vi.mock("phaser", () => ({ Scale: { Events: { RESIZE: "resize" } } }));
 
-import { sceneFit } from "./playCamera";
-import { chromeDensity } from "./touchChrome";
-import { uiOverlayFit } from "./uiOverlayFit";
+import { sceneFit } from "./playCamera.ts";
+import { chromeDensity } from "./touchChrome.ts";
+import { uiOverlayFit } from "./uiOverlayFit.ts";
 
 const PHONE = { height: 390, width: 844 };
 

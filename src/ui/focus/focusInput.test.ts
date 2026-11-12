@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { focusKeyAction, stepFocus } from "./focusInput";
+import { focusKeyAction, stepFocus } from "./focusInput.ts";
 
 describe("focusKeyAction", () => {
   it.each([

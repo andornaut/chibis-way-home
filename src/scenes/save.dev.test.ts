@@ -1,8 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { ZONE_MAP } from "../data/map";
-import { PROGRESS_VERSION } from "../progress";
-import type { ZoneState } from "../rules/zone";
+import { ZONE_MAP } from "../data/map.ts";
+import { PROGRESS_VERSION } from "../progress/index.ts";
+import type { ZoneState } from "../rules/zone.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -22,7 +22,7 @@ it("persists catalogue progress, time and deaths with run-only cheats active", a
   });
   vi.stubGlobal("window", window);
   vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "hidden" }));
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
@@ -86,7 +86,7 @@ it.each([
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   expect(save.savedSkills()).toEqual(expected);
   expect(save.savedProgress().at).toBe("beginning");

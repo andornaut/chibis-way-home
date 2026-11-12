@@ -4,17 +4,17 @@ import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
-import buttonSheet from "../../../public/art/sprites/ui-button.json";
-import resumeSheet from "../../../public/art/sprites/ui-resume.json";
-import { PLAY_MARK } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { TEXT } from "../../data/text";
-import type { Rect } from "../../data/types";
-import { CARD_FONTS } from "../../testing/cardFonts";
-import { centredLabel } from "./buttonLabel";
-import { CARD_TEXT_SCALE } from "./cardFrame";
-import { pressedArea } from "./hitAreas";
-import { CELEBRATION, type LabelledButton } from "./restartCard";
+import buttonSheet from "../../../public/art/sprites/ui-button.json" with { type: "json" };
+import resumeSheet from "../../../public/art/sprites/ui-resume.json" with { type: "json" };
+import { PLAY_MARK } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import type { Rect } from "../../data/types/index.ts";
+import { CARD_FONTS } from "../../testing/cardFonts.ts";
+import { centredLabel } from "./buttonLabel.ts";
+import { CARD_TEXT_SCALE } from "./cardFrame.ts";
+import { pressedArea } from "./hitAreas.ts";
+import { CELEBRATION, type LabelledButton } from "./restartCard.ts";
 
 const FONT = parseBitmapFont(fontBody);
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };

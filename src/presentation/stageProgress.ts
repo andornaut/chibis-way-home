@@ -1,7 +1,7 @@
 import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
 
-import palette from "../../public/art/palette.json";
-import { STAGE_PROGRESS } from "../data/stageProgress";
+import palette from "../../public/art/palette.json" with { type: "json" };
+import { STAGE_PROGRESS } from "../data/stageProgress.ts";
 
 const colour = (name: keyof typeof palette.colours) =>
   Number.parseInt(palette.colours[name].slice(1), 16);

@@ -1,10 +1,10 @@
 import { beforeAll, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { TilePoint, ZoneLayout, ZonePlan } from "../data/types";
-import { zoneLayout } from "../rules/tiles";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { TilePoint, ZoneLayout, ZonePlan } from "../data/types/index.ts";
+import { zoneLayout } from "../rules/tiles.ts";
 import {
   crosses,
   type RequiredRouteWalk,
@@ -14,8 +14,8 @@ import {
   type WalkRouteQuery,
   walkZone,
   type ZoneWalk,
-} from "../sim/zoneWalk";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
+} from "../sim/zoneWalk.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 
 export { CATALOGUE, HITBOXES, TILESETS };
 // The walk takes seconds on a large zone.

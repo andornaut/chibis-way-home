@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
-import { RECIPES } from "../data/zones";
-import { TUNING_GROUPS, tuningRows } from "./catalogue";
+import { RECIPES } from "../data/zones.ts";
+import { TUNING_GROUPS, tuningRows } from "./catalogue.ts";
 
 it("shows sorted actual nested values without changing their source", () => {
   const path = Object.freeze([2, 4]);

@@ -4,20 +4,20 @@ import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import { ZONE_MAP } from "../../data/map";
-import { STATS_SCOPE_TEXT, TEXT } from "../../data/text";
-import { deathLabels, deathSummary } from "../../presentation";
-import { formatRunStats } from "../../progress";
-import { statsStatement } from "../dialogue/statsStatement";
-import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./cutscene";
-import { PAUSE_BUTTON } from "./pauseCard";
+import { ZONE_MAP } from "../../data/map.ts";
+import { STATS_SCOPE_TEXT, TEXT } from "../../data/text.ts";
+import { deathLabels, deathSummary } from "../../presentation/index.ts";
+import { formatRunStats } from "../../progress/index.ts";
+import { statsStatement } from "../dialogue/statsStatement.ts";
+import { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./cutscene.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
 import {
   RUN_STAT_KEYS,
   runStatLabels,
   stageSummaryLayout,
   statsTotalRows,
   summaryTextOrigin,
-} from "./runStats";
+} from "./runStats.ts";
 
 const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
 const run = { attemptSeconds: 180, attempts: 12, bestSeconds: undefined, runSeconds: 1234 };

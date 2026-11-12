@@ -1,5 +1,5 @@
-import type { Instance, ObjectLayout } from "../data/types";
-import { effectiveHazardPhase } from "./effectiveCollision";
+import type { Instance, ObjectLayout } from "../data/types/index.ts";
+import { effectiveHazardPhase } from "./effectiveCollision.ts";
 
 // Points each phase follower at its source's index among the area's placed objects. A follower is
 // inert scenery with no clock of its own, its source a timed hazard, and its phaseAnimations name

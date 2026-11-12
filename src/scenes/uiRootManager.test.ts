@@ -2,7 +2,7 @@ import type { UiRootHandle } from "@andornaut/game-kit/view/phaser/uiCommands";
 import type { GameObjects, Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { createUiRootManager } from "./uiRootManager";
+import { createUiRootManager } from "./uiRootManager.ts";
 
 const object = () => ({ type: "Image" }) as unknown as GameObjects.GameObject;
 function handle(roots: readonly GameObjects.GameObject[]): UiRootHandle {

@@ -7,7 +7,7 @@ const turns = vi.hoisted(() => ({ change: () => {} }));
 const selection = vi.hoisted(() => ({ select: vi.fn() }));
 const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
 vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
-vi.mock("../ui/input/frameTurn", () => ({
+vi.mock("../ui/input/frameTurn.ts", () => ({
   FRAME_TURN: {
     onChange: (listener: () => void) => {
       turns.change = listener;
@@ -15,30 +15,30 @@ vi.mock("../ui/input/frameTurn", () => ({
     },
   },
 }));
-vi.mock("../pwa", () => ({
+vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
   coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   zoneShown: vi.fn(),
 }));
-vi.mock("../ui/settings/touchControls", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../ui/settings/touchControls")>()),
+vi.mock("../ui/settings/touchControls.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../ui/settings/touchControls.ts")>()),
   coarsePointer: () => true,
 }));
-vi.mock("../dev/mode", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../dev/mode")>()),
+vi.mock("../dev/mode.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../dev/mode.ts")>()),
   developmentSkillOverrides: () => ({}),
 }));
-vi.mock("./save", () => ({
+vi.mock("./save.ts", () => ({
   activeSkill: () => "dash",
   savedSkills: () => ["dash"],
   selectActiveSkill: selection.select,
 }));
-vi.mock("./modalBackdrop", () => ({
+vi.mock("./modalBackdrop.ts", () => ({
   showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
 }));
-vi.mock("./domUi", () => ({
+vi.mock("./domUi.ts", () => ({
   artFrameUrl: () => Promise.resolve("blob:glyph"),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(10, view);
@@ -48,13 +48,13 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { TEXT } from "../data/text";
-import { createUiLayer, type UiLayer } from "../ui";
-import { type DialogueChoiceData, DialogueChoiceScene } from "./DialogueChoiceScene";
-import { type DialogueData, DialogueScene } from "./DialogueScene";
-import { modalInput } from "./modalInput";
-import { createPauseScene, pressKey, settle, tap } from "./pauseFixture";
-import { ZoneDepartureScene } from "./ZoneDepartureScene";
+import { TEXT } from "../data/text.ts";
+import { createUiLayer, type UiLayer } from "../ui/index.ts";
+import { type DialogueChoiceData, DialogueChoiceScene } from "./DialogueChoiceScene.ts";
+import { type DialogueData, DialogueScene } from "./DialogueScene.ts";
+import { modalInput } from "./modalInput.ts";
+import { createPauseScene, pressKey, settle, tap } from "./pauseFixture.ts";
+import { ZoneDepartureScene } from "./ZoneDepartureScene.ts";
 
 let layer: UiLayer;
 const shutdowns: (() => void)[] = [];

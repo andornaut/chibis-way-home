@@ -1,9 +1,9 @@
 import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { ACHIEVEMENTS_CARD, CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { capTop, FONT_METRICS, UI_FONT_FACE } from "./fontRoles";
-import { hitAround } from "./hitAreas";
+import { ACHIEVEMENTS_CARD, CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { capTop, FONT_METRICS, UI_FONT_FACE } from "./fontRoles.ts";
+import { hitAround } from "./hitAreas.ts";
 
 // The Achievements card's geometry in base px (src/ui/dom/achievements.css lays it out): its
 // title over two columns of entries filled down each column then across, a page at a time, and

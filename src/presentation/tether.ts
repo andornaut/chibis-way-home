@@ -1,4 +1,4 @@
-import type { ObjectLayout, Point } from "../data/types";
+import type { ObjectLayout, Point } from "../data/types/index.ts";
 
 export interface TetherSegment {
   readonly tag: "cable" | "hook" | "idle";

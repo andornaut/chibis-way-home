@@ -1,6 +1,6 @@
-import { BIRD } from "../data/bird";
-import { SKILLS } from "../data/skills";
-import type { BirdTuning, SkillId, SkillTuning } from "../data/types";
+import { BIRD } from "../data/bird.ts";
+import { SKILLS } from "../data/skills.ts";
+import type { BirdTuning, SkillId, SkillTuning } from "../data/types/index.ts";
 
 export const SKILL_IDS: readonly SkillId[] = ["dash", "doubleJump", "speedy"];
 export type SkillOverrides = Readonly<Partial<Record<SkillId, boolean>>>;

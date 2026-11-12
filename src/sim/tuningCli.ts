@@ -7,14 +7,14 @@ import {
 } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-import { parseOptions, runMain, UsageError } from "./command";
-import type { PlayabilityReport } from "./playability";
+import { parseOptions, runMain, UsageError } from "./command.ts";
+import type { PlayabilityReport } from "./playability.ts";
 import {
   assessTuning,
   formatTuningCsv,
   formatTuningMarkdown,
   type SavedTuningCase,
-} from "./tuning";
+} from "./tuning.ts";
 
 export function writeTuningOutputs(prefix: string, report: ReturnType<typeof assessTuning>): void {
   const outputs = [

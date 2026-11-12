@@ -1,9 +1,9 @@
-import { cameraScroll } from "../camera";
-import { CAMERA } from "../data/camera";
-import { SCREEN } from "../data/screen";
-import type { AreaLayout, BirdTuning, ObjectLayout, Point, Rect } from "../data/types";
-import type { BehaviourWorld } from "./behaviourReach";
-import type { BirdState } from "./bird";
+import { cameraScroll } from "../camera/index.ts";
+import { CAMERA } from "../data/camera.ts";
+import { SCREEN } from "../data/screen.ts";
+import type { AreaLayout, BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import type { BirdState } from "./bird.ts";
 
 export function currentScreen(tuning: BirdTuning, area: AreaLayout, bird: BirdState): Rect {
   return {

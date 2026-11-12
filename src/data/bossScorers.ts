@@ -2,7 +2,7 @@
 // Spatial curve ranges and move distances are tiles; seconds are active engaged seconds. Moves
 // score 0.4 to 0.7 and attacks 0.9 to 1, so an attack whose gate and considerations hold wins;
 // its considerations keep it for moments it can connect and Chibi can still read its tell.
-import type { BossScoredAttack, BossScoredMove, BossScorer } from "./types";
+import type { BossScoredAttack, BossScoredMove, BossScorer } from "./types/index.ts";
 
 // Every boss scorer's shared cadence, pressure and hysteresis. A move holds for 0.6 to 0.9 s, so
 // Chibi can read a heading and turn it; attacks are scored as soon as their gate holds. Pressure

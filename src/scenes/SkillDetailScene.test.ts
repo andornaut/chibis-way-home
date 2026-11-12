@@ -10,16 +10,16 @@ const dom = vi.hoisted(() => ({
   layer: undefined as undefined | object,
 }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: () => ({ ready: dom.backdrop }) }));
-vi.mock("./cardParts", async () => {
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: dom.backdrop }) }));
+vi.mock("./cardParts.ts", async () => {
   const { default: palette } = await import("../../public/art/palette.json");
   return {
     paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
       Number.parseInt(palette.colours[name].slice(1), 16),
   };
 });
-vi.mock("./domUi", () => ({
+vi.mock("./domUi.ts", () => ({
   artFrameUrl: vi.fn(() => Promise.resolve("blob:glyph")),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
@@ -29,16 +29,16 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import dash from "../../public/art/sprites/icon-skill-dash.json";
-import doubleJump from "../../public/art/sprites/icon-skill-double-jump.json";
-import speedy from "../../public/art/sprites/icon-skill-speedy.json";
-import { TEXT } from "../data/text";
-import type { ControlAction, SkillId } from "../data/types";
-import { SKILL_IDS } from "../progress";
-import { PHONE_EVENTS } from "../pwa";
-import { createUiLayer, SKILL_ART, type UiLayer } from "../ui";
-import { artFrameUrl } from "./domUi";
-import { SkillDetailScene } from "./SkillDetailScene";
+import dash from "../../public/art/sprites/icon-skill-dash.json" with { type: "json" };
+import doubleJump from "../../public/art/sprites/icon-skill-double-jump.json" with { type: "json" };
+import speedy from "../../public/art/sprites/icon-skill-speedy.json" with { type: "json" };
+import { TEXT } from "../data/text.ts";
+import type { ControlAction, SkillId } from "../data/types/index.ts";
+import { SKILL_IDS } from "../progress/index.ts";
+import { PHONE_EVENTS } from "../pwa/index.ts";
+import { createUiLayer, SKILL_ART, type UiLayer } from "../ui/index.ts";
+import { artFrameUrl } from "./domUi.ts";
+import { SkillDetailScene } from "./SkillDetailScene.ts";
 
 const SHEETS: Readonly<Record<string, unknown>> = {
   [SKILL_ART.dash]: dash,

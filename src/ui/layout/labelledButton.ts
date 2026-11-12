@@ -1,5 +1,5 @@
-import type { Rect } from "../../data/types";
-import { hitAround } from "./hitAreas";
+import type { Rect } from "../../data/types/index.ts";
+import { hitAround } from "./hitAreas.ts";
 
 export interface LabelledButton {
   readonly button: Rect;

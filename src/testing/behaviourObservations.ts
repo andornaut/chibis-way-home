@@ -7,7 +7,7 @@ import {
   type BehaviourPursuitObservation,
   type BehaviourWorkMetric,
   createBehaviourObserver,
-} from "../rules/behaviourObserver";
+} from "../rules/behaviourObserver.ts";
 
 export interface BehaviourObservationReport {
   readonly diagnostics: {

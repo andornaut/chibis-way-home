@@ -2,17 +2,17 @@ import { EventEmitter } from "node:events";
 
 import { expect, it, vi } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import type { ObjectLayout } from "../data/types";
+import manifest from "../../public/art/manifest.json" with { type: "json" };
+import type { ObjectLayout } from "../data/types/index.ts";
 
 vi.mock("phaser", () => ({
   Scene: class {},
   Scenes: { Events: { PRE_RENDER: "prerender" } },
 }));
 
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import { ZoneScene } from "./ZoneScene";
+import { ZoneScene } from "./ZoneScene.ts";
 
 it("updates paused preview backdrops after camera changes and removes the render hook on shutdown", () => {
   const item = { setPosition: vi.fn().mockReturnThis(), setTilePosition: vi.fn().mockReturnThis() };

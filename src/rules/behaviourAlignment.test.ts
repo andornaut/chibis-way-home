@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
-import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourPlan, Rect } from "../data/types";
-import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import { startBird } from "./bird";
-import { objectLayout } from "./tiles";
+import { BIRD } from "../data/bird.ts";
+import type { Archetype, BehaviourPlan, Rect } from "../data/types/index.ts";
+import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { startBird } from "./bird.ts";
+import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

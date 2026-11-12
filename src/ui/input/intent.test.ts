@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { TOUCH_CIRCLE_RADIUS } from "../../data/layout";
-import { TOUCH } from "../../data/touch";
-import { MOVE_HINT, TOUCH_CONTROLS } from "../layout/touchControls";
+import { TOUCH_CIRCLE_RADIUS } from "../../data/layout.ts";
+import { TOUCH } from "../../data/touch.ts";
+import { MOVE_HINT, TOUCH_CONTROLS } from "../layout/touchControls.ts";
 import {
   combineIntents,
   type HeldTouch,
@@ -11,7 +11,7 @@ import {
   moveFromOffset,
   touchIntent,
   touchRoleAt,
-} from "./intent";
+} from "./intent.ts";
 
 const NONE: Intent = { jump: false, move: 0, use: false };
 

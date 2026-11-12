@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { BehaviourState } from "./behaviour";
-import { defeatBoss } from "./bossDefeat";
-import type { ZoneState } from "./zone";
-import { zoneStepRecord } from "./zoneRecords";
+import type { BehaviourState } from "./behaviour.ts";
+import { defeatBoss } from "./bossDefeat.ts";
+import type { ZoneState } from "./zone.ts";
+import { zoneStepRecord } from "./zoneRecords.ts";
 
 const pursuit = (phase: "engaged" | "escaped") =>
   ({ pursuit: { phase, settled: false, unreachableSeconds: 0 } }) as BehaviourState;

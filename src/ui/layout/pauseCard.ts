@@ -1,7 +1,7 @@
-import { CONTROL_FRAME_INSET, HUD_EDGE } from "../../data/layout";
-import type { Point, Rect } from "../../data/types";
-import { PAUSE_CHROME_FRAME } from "../chrome/pauseChrome";
-import { hitAround } from "./hitAreas";
+import { CONTROL_FRAME_INSET, HUD_EDGE } from "../../data/layout.ts";
+import type { Point, Rect } from "../../data/types/index.ts";
+import { PAUSE_CHROME_FRAME } from "../chrome/pauseChrome.ts";
+import { hitAround } from "./hitAreas.ts";
 
 // Art's pause button in the game's top-left corner: where its frame is drawn, and the area a
 // press must land in, its frame grown by hitAreas.ts's rule. Art draws the disc

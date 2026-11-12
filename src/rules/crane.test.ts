@@ -1,22 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { GANTRY_BEHAVIOUR, GANTRY_DISTANCE } from "../data/obstacleBehaviours";
-import { OBSTACLE_MOVER_PAUSE, OBSTACLE_MOVER_SPEED } from "../data/obstacleTuning";
-import { TILE } from "../data/screen";
-import { tetherSegments } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { CRANE_FIXTURE, CRANE_FIXTURE_CATALOGUE, CRANE_FIXTURE_LIBRARY } from "../testing/chunks";
-import { HITBOXES, TILESETS } from "../testing/walkSuite";
-import { type ChunkLibrary, zonePlanOf } from "./assemble";
-import { startBird } from "./bird";
-import { effectiveCollision } from "./effectiveCollision";
-import { mapTerrain } from "./movementMaps";
-import { standsOn } from "./platformBird";
-import { areaLayout, zoneLayout } from "./tiles";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { GANTRY_BEHAVIOUR, GANTRY_DISTANCE } from "../data/obstacleBehaviours.ts";
+import { OBSTACLE_MOVER_PAUSE, OBSTACLE_MOVER_SPEED } from "../data/obstacleTuning.ts";
+import { TILE } from "../data/screen.ts";
+import { tetherSegments } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import {
+  CRANE_FIXTURE,
+  CRANE_FIXTURE_CATALOGUE,
+  CRANE_FIXTURE_LIBRARY,
+} from "../testing/chunks.ts";
+import { HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { type ChunkLibrary, zonePlanOf } from "./assemble.ts";
+import { startBird } from "./bird.ts";
+import { effectiveCollision } from "./effectiveCollision.ts";
+import { mapTerrain } from "./movementMaps.ts";
+import { standsOn } from "./platformBird.ts";
+import { areaLayout, zoneLayout } from "./tiles.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

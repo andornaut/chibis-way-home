@@ -1,9 +1,9 @@
 import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/web/pwa/backNavigation";
 
-import { DEV_TEXT } from "../data/dev";
-import { ZONE_MAP } from "../data/map";
-import { TEXT } from "../data/text";
-import { type SavedSkillGrantResult, SKILL_IDS } from "../progress";
+import { DEV_TEXT } from "../data/dev.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { TEXT } from "../data/text.ts";
+import { type SavedSkillGrantResult, SKILL_IDS } from "../progress/index.ts";
 import {
   changeInvulnerability,
   changeSkillOverride,
@@ -11,8 +11,8 @@ import {
   regularBrowser,
   skillOverridesFromSearch,
   stageDevelopmentUrl,
-} from "./mode";
-import { grantAllSavedSkills } from "./savedSkills";
+} from "./mode.ts";
+import { grantAllSavedSkills } from "./savedSkills.ts";
 
 export function developerStages() {
   return ZONE_MAP.destinations

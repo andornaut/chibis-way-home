@@ -1,4 +1,4 @@
-import { canonicalTrace, traceRecorder } from "./trace";
+import { canonicalTrace, traceRecorder } from "./trace.ts";
 
 // A deterministic fixed-step world. Its randomness lives in its state, seeded by the caller, so a
 // run never reads ambient entropy or wall-clock time.

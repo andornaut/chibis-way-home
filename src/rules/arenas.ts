@@ -1,5 +1,5 @@
-import { CHUNK_COLS } from "../data/chunkTemplates";
-import type { ChunkArena, ChunkPlan, ZoneFrame } from "../data/types";
+import { CHUNK_COLS } from "../data/chunkTemplates.ts";
+import type { ChunkArena, ChunkPlan, ZoneFrame } from "../data/types/index.ts";
 
 // An arena as the chunk its stage draws: CHUNK_COLS wide and `rows` tall, its one encounter, at
 // most once per stage, in the stage's theme with its zone's frame.

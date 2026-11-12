@@ -1,42 +1,42 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
-import chandelierArt from "../../public/art/sprites/apartment-chandelier.json";
-import chainArt from "../../public/art/sprites/apartment-chandelier-chain.json";
-import mountArt from "../../public/art/sprites/apartment-chandelier-mount.json";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { MODULES } from "../data/modules";
+import chandelierArt from "../../public/art/sprites/apartment-chandelier.json" with { type: "json" };
+import chainArt from "../../public/art/sprites/apartment-chandelier-chain.json" with { type: "json" };
+import mountArt from "../../public/art/sprites/apartment-chandelier-mount.json" with { type: "json" };
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { MODULES } from "../data/modules/index.ts";
 import {
   CHANDELIER_SWING,
   chandelierOrbit,
   OBSTACLE_MOVER_PAUSE,
   OBSTACLE_MOVER_SPEED,
-} from "../data/obstacleTuning";
-import { REACH } from "../data/reach";
-import { TILE } from "../data/screen";
-import type { BehaviourPlan, Character, Instance, Point, Rect } from "../data/types";
-import { artOffset, spokeSegments, tetherLine } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
+} from "../data/obstacleTuning.ts";
+import { REACH } from "../data/reach.ts";
+import { TILE } from "../data/screen.ts";
+import type { BehaviourPlan, Character, Instance, Point, Rect } from "../data/types/index.ts";
+import { artOffset, spokeSegments, tetherLine } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
 import {
   CHANDELIER_FIXTURE,
   CHANDELIER_FIXTURE_CATALOGUE,
   CHANDELIER_FIXTURE_LIBRARY,
-} from "../testing/chunks";
-import { HITBOXES, TILESETS } from "../testing/walkSuite";
-import { type ChunkLibrary, zonePlanOf } from "./assemble";
-import { startBird } from "./bird";
-import { chandelierPlacementProblems } from "./chandelierPlacement";
-import { effectiveCollision } from "./effectiveCollision";
-import { chibiJumpScripts, chibiMovementProfile, groundMap, mapTerrain } from "./movementMaps";
-import { orbitBounds, pendulumCycleSeconds } from "./orbit";
-import { standsOn } from "./platformBird";
-import { areaLayout, zoneLayout } from "./tiles";
-import { windmillPlacementProblems } from "./windmillPlacement";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone";
-import { CHUNK_LIBRARY } from "./zonePlans";
+} from "../testing/chunks.ts";
+import { HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { type ChunkLibrary, zonePlanOf } from "./assemble.ts";
+import { startBird } from "./bird.ts";
+import { chandelierPlacementProblems } from "./chandelierPlacement.ts";
+import { effectiveCollision } from "./effectiveCollision.ts";
+import { chibiJumpScripts, chibiMovementProfile, groundMap, mapTerrain } from "./movementMaps.ts";
+import { orbitBounds, pendulumCycleSeconds } from "./orbit.ts";
+import { standsOn } from "./platformBird.ts";
+import { areaLayout, zoneLayout } from "./tiles.ts";
+import { windmillPlacementProblems } from "./windmillPlacement.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { CHUNK_LIBRARY } from "./zonePlans.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;

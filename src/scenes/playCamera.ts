@@ -1,9 +1,9 @@
 import { type RenderFit, renderFit } from "@andornaut/game-kit/view/renderScale";
 import { type Cameras, type Input, Scale, type Scene } from "phaser";
 
-import { SCREEN } from "../data/screen";
-import type { Point, Rect } from "../data/types";
-import { canvasSize, playView, viewShift } from "../ui";
+import { SCREEN } from "../data/screen.ts";
+import type { Point, Rect } from "../data/types/index.ts";
+import { canvasSize, playView, viewShift } from "../ui/index.ts";
 
 // The canvas's fit, from the scale manager: its backing is the game size, in device pixels, and
 // its zoom is 1 / r (followFrameTurn's deviceResolution), so the canvas's CSS size is the game

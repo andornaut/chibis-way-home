@@ -1,8 +1,8 @@
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { DialogueChoice } from "../data/types";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { DialogueChoice } from "../data/types/index.ts";
 import {
   dialogueChoice,
   dialogueChoiceKey,
@@ -11,7 +11,7 @@ import {
   type PressArea,
   pressedArea,
   type ResolvedDialogueChoice,
-} from "../ui";
+} from "../ui/index.ts";
 import {
   addCardTextIn,
   addSlice,
@@ -23,12 +23,12 @@ import {
   pressTextButton,
   ringFocus,
   type TextButton,
-} from "./cardParts";
-import type { DialogueChoiceOpener } from "./DialogueScene";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onScenePointer } from "./modalInput";
-import { catchModalTaps } from "./modalTaps";
-import { fitPlayCamera, playPoint } from "./playCamera";
+} from "./cardParts.ts";
+import type { DialogueChoiceOpener } from "./DialogueScene.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { catchModalTaps } from "./modalTaps.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
 
 export interface DialogueChoiceData {
   readonly choice: DialogueChoice;

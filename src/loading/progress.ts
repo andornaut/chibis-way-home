@@ -6,8 +6,8 @@ import {
 } from "@andornaut/game-kit/progressState";
 import { createDomProgressBar } from "@andornaut/game-kit/web/progress/dom/progressBar";
 
-import { SCREEN } from "../data/screen";
-import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
+import { SCREEN } from "../data/screen.ts";
+import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
 
 // The bar shows only loads the player waits for, each through its own entry point: boot (the
 // pre-script startupLoading, then BootScene's file load, which its loader watch measures as

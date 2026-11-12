@@ -1,12 +1,12 @@
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
-import { ZONE_MAP } from "../data/map";
-import { STAGE_PREVIEWS } from "../data/stagePreviews";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import { RECIPES } from "../data/zones";
-import { destinationOf, destinationSelection, openMap } from "../progress";
+import { ZONE_MAP } from "../data/map.ts";
+import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import { RECIPES } from "../data/zones.ts";
+import { destinationOf, destinationSelection, openMap } from "../progress/index.ts";
 import {
   createStageSelect,
   focusKeyAction,
@@ -18,11 +18,11 @@ import {
   stagePickerKey,
   STAGES_PER_PAGE,
   type StageSelectView,
-} from "../ui";
-import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput } from "./modalInput";
-import { savedMap } from "./save";
+} from "../ui/index.ts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput } from "./modalInput.ts";
+import { savedMap } from "./save.ts";
 
 export interface StageSelectData {
   readonly destination: string;

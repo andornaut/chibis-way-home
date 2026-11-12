@@ -11,8 +11,8 @@ import {
   tellPrecedesCommit,
   tellResolves,
   travelBounded,
-} from "./agentProperties";
-import type { AgentSample, AgentTick, TraceAttack } from "./agentTrace";
+} from "./agentProperties.ts";
+import type { AgentSample, AgentTick, TraceAttack } from "./agentTrace.ts";
 
 const STEP = 0.25;
 

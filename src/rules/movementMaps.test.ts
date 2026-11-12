@@ -1,9 +1,9 @@
 import { mapHash } from "@andornaut/game-kit/terrain/movementMap";
 import { describe, expect, it } from "vitest";
 
-import type { AreaLayout, ObjectLayout } from "../data/types";
-import { arenaLayout, sampleArenaCase } from "../testing/arenas";
-import { chunkLayout, ORDINARY } from "../testing/encounterLayouts";
+import type { AreaLayout, ObjectLayout } from "../data/types/index.ts";
+import { arenaLayout, sampleArenaCase } from "../testing/arenas.ts";
+import { chunkLayout, ORDINARY } from "../testing/encounterLayouts.ts";
 import {
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
@@ -13,7 +13,7 @@ import {
   groundMask,
   mapTerrain,
   pursuitGroundMap,
-} from "./movementMaps";
+} from "./movementMaps.ts";
 
 function areaOf(theme: string, id: string): AreaLayout {
   const layout = chunkLayout(theme, id);

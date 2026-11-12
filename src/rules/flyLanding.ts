@@ -1,8 +1,8 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { collisionCandidates, EDGE } from "../core";
-import type { ObjectLayout, Point, Rect } from "../data/types";
-import { type BehaviourPlatformFrame, type BehaviourWorld, flightAxis } from "./behaviourReach";
+import { collisionCandidates, EDGE } from "../core/index.ts";
+import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import { type BehaviourPlatformFrame, type BehaviourWorld, flightAxis } from "./behaviourReach.ts";
 
 function supports(object: ObjectLayout, world: BehaviourWorld): readonly Rect[] {
   return [

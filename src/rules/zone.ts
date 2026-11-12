@@ -1,7 +1,7 @@
 import { randomStream } from "@andornaut/game-kit/random";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { namedStreams } from "../ai/randomStreams";
+import { namedStreams } from "../ai/randomStreams.ts";
 import {
   collisionCandidates,
   contactFrameAt,
@@ -10,8 +10,8 @@ import {
   spriteFrameOrigin,
   STEP_SECONDS,
   sweptContact,
-} from "../core";
-import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours";
+} from "../core/index.ts";
+import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";
 import type {
   AreaLayout,
   AreaLink,
@@ -24,18 +24,22 @@ import type {
   Size,
   ZoneDeath,
   ZoneLayout,
-} from "../data/types";
+} from "../data/types/index.ts";
 import {
   advanceBehaviour,
   type BehaviourState,
   type BehaviourStep,
   contactBox,
   startBehaviour,
-} from "./behaviour";
-import { behaviourEffect } from "./behaviourEffects";
-import { type BehaviourObserver, recordBehaviourWork } from "./behaviourObserver";
-import { perceiveBehaviour } from "./behaviourPerception";
-import type { BehaviourPlatformFrame, BehaviourWorld, CrumblingPrediction } from "./behaviourReach";
+} from "./behaviour.ts";
+import { behaviourEffect } from "./behaviourEffects.ts";
+import { type BehaviourObserver, recordBehaviourWork } from "./behaviourObserver.ts";
+import { perceiveBehaviour } from "./behaviourPerception.ts";
+import type {
+  BehaviourPlatformFrame,
+  BehaviourWorld,
+  CrumblingPrediction,
+} from "./behaviourReach.ts";
 import {
   birdBox,
   birdFrameRect,
@@ -45,40 +49,46 @@ import {
   startBird,
   startsDash,
   stepBirdWithSupport,
-} from "./bird";
-import { bossDeath, defeatBoss, holdDefeated, removedBoss } from "./bossDefeat";
-import { initialCrumblingWorld } from "./crumbling";
-import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame";
-import { deathSupport } from "./death";
+} from "./bird.ts";
+import { bossDeath, defeatBoss, holdDefeated, removedBoss } from "./bossDefeat.ts";
+import { initialCrumblingWorld } from "./crumbling.ts";
+import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame.ts";
+import { deathSupport } from "./death.ts";
 import {
   clockedSupport,
   clockPresent,
   effectiveCollision,
   effectiveHazardPhase,
-} from "./effectiveCollision";
-import { type ForcePulse, forcePulseVelocity } from "./force";
+} from "./effectiveCollision.ts";
+import { type ForcePulse, forcePulseVelocity } from "./force.ts";
 import {
   forcedTransitBankAdmissions,
   type ForcedTransitState,
   stepForcedTransit,
-} from "./forcedTransit";
+} from "./forcedTransit.ts";
 import {
   type ForcedTransitForecast,
   forcedTransitTakeoffBody,
   forcedTransitTakeoffOrigin,
   forecastForcedTransit,
-} from "./forcedTransitForecast";
-import { ordinaryTransitControl } from "./forcedTransitProfile";
-import { hazardOccupancy } from "./hazardOccupancy";
-import { axisOf, motionTrack, type Track } from "./motion";
-import { preparePursuitMaps, pursuitGroundMap } from "./movementMaps";
-import { orbitHostLegs, type OrbitLeg, orbitPosition, orbitSweptContact, pathLedge } from "./orbit";
-import { currentScreen, targetVisible } from "./perception";
-import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird";
-export { standsOn } from "./platformBird";
-import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback";
-import { timedHazardRect } from "./timedHazard";
-import { type SpawnEvent, stepTransients, type Transient } from "./transients";
+} from "./forcedTransitForecast.ts";
+import { ordinaryTransitControl } from "./forcedTransitProfile.ts";
+import { hazardOccupancy } from "./hazardOccupancy.ts";
+import { axisOf, motionTrack, type Track } from "./motion.ts";
+import { preparePursuitMaps, pursuitGroundMap } from "./movementMaps.ts";
+import {
+  orbitHostLegs,
+  type OrbitLeg,
+  orbitPosition,
+  orbitSweptContact,
+  pathLedge,
+} from "./orbit.ts";
+import { currentScreen, targetVisible } from "./perception.ts";
+import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird.ts";
+export { standsOn } from "./platformBird.ts";
+import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback.ts";
+import { timedHazardRect } from "./timedHazard.ts";
+import { type SpawnEvent, stepTransients, type Transient } from "./transients.ts";
 import {
   clockedSupportPrediction,
   crumblingActorIndices,
@@ -88,8 +98,8 @@ import {
   presentTerrain,
   supportPresent,
   type ZoneCrumblingWorld,
-} from "./zoneCrumbling";
-import { validateWalkEntries } from "./zoneLinks";
+} from "./zoneCrumbling.ts";
+import { validateWalkEntries } from "./zoneLinks.ts";
 
 interface ObjectFrame {
   readonly orbitLegs?: readonly OrbitLeg[];

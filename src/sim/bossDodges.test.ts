@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { BOSS_FAIRNESS } from "../data/bossFairness";
-import { dodgeForks } from "../testing/bossDodges";
-import { BOSS_SCENARIOS } from "../testing/bossScenarios";
-import { ORDINARY } from "../testing/encounterLayouts";
+import { BOSS_FAIRNESS } from "../data/bossFairness.ts";
+import { dodgeForks } from "../testing/bossDodges.ts";
+import { BOSS_SCENARIOS } from "../testing/bossScenarios.ts";
+import { ORDINARY } from "../testing/encounterLayouts.ts";
 
 const fairness = (kind: string) => BOSS_FAIRNESS[kind]!;
 const FORKS = BOSS_SCENARIOS.map(({ scenario }) => ({

@@ -2,14 +2,14 @@ import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave } from "@andornaut/game-kit/save/versionedSave";
 import { expect, it, vi } from "vitest";
 
-import { CHUNKS } from "../../data/chunks";
-import { ZONE_MAP } from "../../data/map";
-import { RECIPES } from "../../data/zones";
-import { SKILL_IDS } from "../skills";
-import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT } from "./achievements";
-import { BEGINNING, type Progress, PROGRESS_KEYS, progressFormat } from "./progress";
-import { grantStoredSkills } from "./savedSkillGrant";
-import { STATS_KEYS, statsFormat } from "./stats";
+import { CHUNKS } from "../../data/chunks.ts";
+import { ZONE_MAP } from "../../data/map.ts";
+import { RECIPES } from "../../data/zones.ts";
+import { SKILL_IDS } from "../skills.ts";
+import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT } from "./achievements.ts";
+import { BEGINNING, type Progress, PROGRESS_KEYS, progressFormat } from "./progress.ts";
+import { grantStoredSkills } from "./savedSkillGrant.ts";
+import { STATS_KEYS, statsFormat } from "./stats.ts";
 const profileFormat = progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS)));
 const totalsFormat = statsFormat(
   new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages)),

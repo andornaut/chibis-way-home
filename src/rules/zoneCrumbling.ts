@@ -1,6 +1,6 @@
 import type { CrumblingWorld } from "@andornaut/game-kit/terrain/crumbling";
 
-import { EDGE, rectAt } from "../core";
+import { EDGE, rectAt } from "../core/index.ts";
 import type {
   AreaLayout,
   BirdTuning,
@@ -8,13 +8,13 @@ import type {
   ObjectLayout,
   Point,
   Rect,
-} from "../data/types";
-import type { BehaviourState } from "./behaviour";
-import type { CrumblingPrediction } from "./behaviourReach";
-import { birdBox, type BirdState } from "./bird";
-import { type CrumblingActor, crumblingSupportPresent } from "./crumbling";
-import { effectiveHazardPhase } from "./effectiveCollision";
-import { type Transient, transientBox } from "./transients";
+} from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
+import type { CrumblingPrediction } from "./behaviourReach.ts";
+import { birdBox, type BirdState } from "./bird.ts";
+import { type CrumblingActor, crumblingSupportPresent } from "./crumbling.ts";
+import { effectiveHazardPhase } from "./effectiveCollision.ts";
+import { type Transient, transientBox } from "./transients.ts";
 
 // Chibi, behaviour-driven actors by layout identity and transients by their stable id.
 type CrumblingActorId = "chibi" | ObjectLayout | `transient:${number}`;

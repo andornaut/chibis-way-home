@@ -1,4 +1,4 @@
-import { CHUNK_WALK_COSTS } from "./chunkWalkCosts";
+import { CHUNK_WALK_COSTS } from "./chunkWalkCosts.ts";
 
 export const CHUNK_WALK_PARTITIONS = 4;
 

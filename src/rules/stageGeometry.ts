@@ -1,4 +1,4 @@
-import type { ChunkPlan, ZonePlan, ZoneRecipe } from "../data/types";
+import type { ChunkPlan, ZonePlan, ZoneRecipe } from "../data/types/index.ts";
 
 export function chunkRows(context: { readonly rows: number }, chunk: ChunkPlan): number {
   return chunk.rows ?? context.rows;

@@ -1,6 +1,6 @@
 import type { CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { BehaviourAction, CircleOrbit, PendulumOrbit } from "./types";
+import type { BehaviourAction, CircleOrbit, PendulumOrbit } from "./types/index.ts";
 
 export const CRUMBLING_SUPPORT_TUNING = {
   absentSeconds: 2,

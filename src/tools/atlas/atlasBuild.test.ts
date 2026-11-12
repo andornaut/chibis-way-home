@@ -6,9 +6,9 @@ import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { itemAt } from "@andornaut/game-kit/arrays";
 import { describe, expect, it } from "vitest";
 
-import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest, BASE_FRAME } from "../../assets";
-import { TILE } from "../../data/screen";
-import { buildAtlas } from "./atlasBuild";
+import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest, BASE_FRAME } from "../../assets/index.ts";
+import { TILE } from "../../data/screen.ts";
+import { buildAtlas } from "./atlasBuild.ts";
 
 const ART_DIR = join(import.meta.dirname, "../../../public", ART_PATH);
 const readArt = async (path: string) => new Uint8Array(await readFile(join(ART_DIR, path)));

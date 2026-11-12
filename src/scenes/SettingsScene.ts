@@ -2,10 +2,10 @@ import { type InstallStepsKind, offersInstall } from "@andornaut/game-kit/web/pw
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
-import { BUILD_LABEL } from "../buildLabel";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import { installOffer } from "../pwa/installOffer";
+import { BUILD_LABEL } from "../buildLabel.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import { installOffer } from "../pwa/installOffer.ts";
 import {
   createSettingsCard,
   reducedMotion,
@@ -18,10 +18,10 @@ import {
   TOUCH_SETTINGS,
   type TouchSetting,
   touchSettingShown,
-} from "../ui";
-import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput } from "./modalInput";
+} from "../ui/index.ts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput } from "./modalInput.ts";
 
 // The scene that opens the settings card, the pause card's or the start screen's: it saves each
 // touch setting and shows it as it changes, and shows again when the card closes. It passes the

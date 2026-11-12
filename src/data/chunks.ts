@@ -1,21 +1,21 @@
-import { outdoorBackground } from "./backgrounds";
+import { outdoorBackground } from "./backgrounds.ts";
 import {
   CITY_GROUND_HAZARD_BEHAVIOUR,
   CITY_LIFT_BEHAVIOUR,
   CITY_SHUTTLE_BEHAVIOUR,
-} from "./behaviours";
+} from "./behaviours.ts";
 import {
   BOUNDARY_START,
   CHUNK_COLS,
   PATROL_ENCOUNTER,
   redCeiling,
   withoutEncounters,
-} from "./chunkTemplates";
-import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "./forcedTransit";
-import { createHazardChunks } from "./hazardChunks";
-import { CRUMBLING_SUPPORT_TUNING } from "./obstacleTuning";
-import { createOrbitHazardChunks } from "./orbitHazardChunks";
-import { SCREEN, TILE, ZONE_ROWS } from "./screen";
+} from "./chunkTemplates.ts";
+import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "./forcedTransit.ts";
+import { createHazardChunks } from "./hazardChunks.ts";
+import { CRUMBLING_SUPPORT_TUNING } from "./obstacleTuning.ts";
+import { createOrbitHazardChunks } from "./orbitHazardChunks.ts";
+import { SCREEN, TILE, ZONE_ROWS } from "./screen.ts";
 import type {
   ChunkPlan,
   ChunkPool,
@@ -24,15 +24,15 @@ import type {
   Instance,
   TerrainRect,
   ThemePlan,
-} from "./types";
-import { withValleyFloors } from "./valleyFloors";
-import { WOODLAND_SCENERY, woodlandDepth, woodlandSpecies } from "./woodlandScenery";
-import { STREET_CHUNKS } from "./zone1";
-import { INDUSTRIAL_CHUNKS } from "./zone2";
-import { COUNTRYSIDE_CHUNKS } from "./zone3";
-import { WOODLAND_CHUNKS } from "./zone4";
-import { HOME_CITY_CHUNKS } from "./zone5";
-import { APARTMENT_CHUNKS, createApartmentMiddleChunks } from "./zone6";
+} from "./types/index.ts";
+import { withValleyFloors } from "./valleyFloors.ts";
+import { WOODLAND_SCENERY, woodlandDepth, woodlandSpecies } from "./woodlandScenery.ts";
+import { STREET_CHUNKS } from "./zone1.ts";
+import { INDUSTRIAL_CHUNKS } from "./zone2.ts";
+import { COUNTRYSIDE_CHUNKS } from "./zone3.ts";
+import { WOODLAND_CHUNKS } from "./zone4.ts";
+import { HOME_CITY_CHUNKS } from "./zone5.ts";
+import { APARTMENT_CHUNKS, createApartmentMiddleChunks } from "./zone6.ts";
 
 export const CHUNK_RULES: ChunkRules = {
   cols: { max: CHUNK_COLS, min: CHUNK_COLS },

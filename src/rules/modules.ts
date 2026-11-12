@@ -12,11 +12,11 @@ import type {
   TilePoint,
   ZoneFrame,
   ZoneKey,
-} from "../data/types";
-import { seamRuleProblems, thingOf } from "./chunk";
-import { bindElement } from "./elementBinding";
-import { prefixInstanceIds } from "./orbit";
-import type { Catalogue } from "./tiles";
+} from "../data/types/index.ts";
+import { seamRuleProblems, thingOf } from "./chunk.ts";
+import { bindElement } from "./elementBinding.ts";
+import { prefixInstanceIds } from "./orbit.ts";
+import type { Catalogue } from "./tiles.ts";
 
 // The roles whose objects are encounters; a module's encounters count them.
 export const ENCOUNTER_ROLES: ReadonlySet<string> = new Set(["antagonist", "antagonist-intro"]);

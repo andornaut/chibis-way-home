@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { MAP_PATH } from "../../data/layout";
-import type { Point, Rect } from "../../data/types";
-import { MAP_PATH_LOOKS } from "../layout/mapScreen";
-import { bentCurve, curveWalk, dashInks, pathRects, type PathStroke, stampAt } from "./mapPath";
+import { MAP_PATH } from "../../data/layout.ts";
+import type { Point, Rect } from "../../data/types/index.ts";
+import { MAP_PATH_LOOKS } from "../layout/mapScreen.ts";
+import { bentCurve, curveWalk, dashInks, pathRects, type PathStroke, stampAt } from "./mapPath.ts";
 
 const STRAIGHT = 0;
 // A level path 200 px long, trimmed 15 px from its start and 11 from its end.

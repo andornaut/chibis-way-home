@@ -1,4 +1,4 @@
-import type { ZonePlan } from "../data/types";
+import type { ZonePlan } from "../data/types/index.ts";
 
 // Hand-built parkour zones for the zone and walk tests.
 //

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type MapAction, mapKeyAction } from "./mapInput";
+import { type MapAction, mapKeyAction } from "./mapInput.ts";
 
 describe("map footer keyboard input", () => {
   it.each(["Enter", "Space"])("defaults %s to Continue without focus", (code) => {

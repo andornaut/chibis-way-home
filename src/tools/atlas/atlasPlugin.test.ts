@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { encodeLosslessWebp } from "@andornaut/art-kit/webp";
 import { expect, it, vi } from "vitest";
 
-import art from "../../../public/art/manifest.json";
-import bird from "../../../public/art/sprites/bird.json";
-import type { AtlasManifest } from "../../assets";
-import { ATLAS_MODULE, atlasPlugin } from "./atlasPlugin";
-import { atlasPageFileName } from "./hashedArt";
+import art from "../../../public/art/manifest.json" with { type: "json" };
+import bird from "../../../public/art/sprites/bird.json" with { type: "json" };
+import type { AtlasManifest } from "../../assets/index.ts";
+import { ATLAS_MODULE, atlasPlugin } from "./atlasPlugin.ts";
+import { atlasPageFileName } from "./hashedArt.ts";
 
 vi.mock("@andornaut/art-kit/webp", () => ({
   encodeLosslessWebp: vi.fn(async () => new Uint8Array([1, 2, 3])),

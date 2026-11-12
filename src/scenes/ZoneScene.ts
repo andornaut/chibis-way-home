@@ -26,30 +26,30 @@ import {
   BIRD_FRAME,
   CONTACT_SILHOUETTES,
   spriteContacts,
-} from "../assets";
+} from "../assets/index.ts";
 import {
   contactFrameAt,
   PLAY_STEP_LIMITS,
   spriteFrameOrigin,
   STEP_MS,
   STEP_SECONDS,
-} from "../core";
-import { AIR_JUMP_CUE } from "../data/airJumpCue";
-import { ARCHETYPES } from "../data/archetypes";
-import { BIRD } from "../data/bird";
-import { BOSS_WARNING } from "../data/bossWarning";
-import { CAMERA } from "../data/camera";
-import { CHARACTERS } from "../data/characters";
-import { DASH_TRAIL } from "../data/dashTrail";
-import { DEATH } from "../data/death";
-import { ZONE_DIALOGUES } from "../data/dialogues";
-import { CONTACT_CUE } from "../data/feedback";
-import { ZONE_MAP } from "../data/map";
-import { SCREEN, TILE } from "../data/screen";
-import { SKILLS } from "../data/skills";
-import { STAGE_BARKS } from "../data/stageBarks";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
+} from "../core/index.ts";
+import { AIR_JUMP_CUE } from "../data/airJumpCue.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import { BOSS_WARNING } from "../data/bossWarning.ts";
+import { CAMERA } from "../data/camera.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { DASH_TRAIL } from "../data/dashTrail.ts";
+import { DEATH } from "../data/death.ts";
+import { ZONE_DIALOGUES } from "../data/dialogues.ts";
+import { CONTACT_CUE } from "../data/feedback.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { SCREEN, TILE } from "../data/screen.ts";
+import { SKILLS } from "../data/skills.ts";
+import { STAGE_BARKS } from "../data/stageBarks.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
 import type {
   AreaLayout,
   ArtHitbox,
@@ -64,11 +64,11 @@ import type {
   SupportPhase,
   ZoneLayout,
   ZonePlan,
-} from "../data/types";
-import { RECIPES } from "../data/zones";
-import { invulnerabilityEnabled, isDevelopmentSession } from "../dev/mode";
-import { developmentStep } from "../dev/step";
-import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
+} from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
+import { invulnerabilityEnabled, isDevelopmentSession } from "../dev/mode.ts";
+import { developmentStep } from "../dev/step.ts";
+import { afterLoadingPaint, beginStageLoading } from "../loading/progress.ts";
 import {
   type ArtKind,
   artKind,
@@ -113,7 +113,7 @@ import {
   stepPose,
   terrainTiles,
   tetherLine,
-} from "../presentation";
+} from "../presentation/index.ts";
 import {
   middleChunkIds,
   nodeOf,
@@ -121,25 +121,25 @@ import {
   skillTuning,
   stageExit,
   wholeRunSummary,
-} from "../progress";
-import { coverZone, startWakeLock, stopWakeLock } from "../pwa";
-import type { BehaviourState } from "../rules/behaviour";
-import { removalProgress } from "../rules/bossDefeat";
-import { deathSupport } from "../rules/death";
+} from "../progress/index.ts";
+import { coverZone, startWakeLock, stopWakeLock } from "../pwa/index.ts";
+import type { BehaviourState } from "../rules/behaviour.ts";
+import { removalProgress } from "../rules/bossDefeat.ts";
+import { deathSupport } from "../rules/death.ts";
 import {
   effectiveGustPhase,
   effectiveHazardPhase,
   effectiveSupportPhase,
-} from "../rules/effectiveCollision";
-import { forcePulseVolume } from "../rules/force";
-import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams";
-import { currentScreen } from "../rules/perception";
-import { phaseFollowerTag } from "../rules/phaseSource";
-import { createStageBarks } from "../rules/stageBarks";
-import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview";
-import { stageProgress } from "../rules/stageProgress";
-import { zoneLayout } from "../rules/tiles";
-import { timedHazardRect } from "../rules/timedHazard";
+} from "../rules/effectiveCollision.ts";
+import { forcePulseVolume } from "../rules/force.ts";
+import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams.ts";
+import { currentScreen } from "../rules/perception.ts";
+import { phaseFollowerTag } from "../rules/phaseSource.ts";
+import { createStageBarks } from "../rules/stageBarks.ts";
+import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview.ts";
+import { stageProgress } from "../rules/stageProgress.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { timedHazardRect } from "../rules/timedHazard.ts";
 import {
   activateBehaviour,
   areaOf,
@@ -151,16 +151,16 @@ import {
   stepZone,
   type ZoneBark,
   type ZoneState,
-} from "../rules/zone";
+} from "../rules/zone.ts";
 import {
   introductionForRun,
   type ZoneDepartureTarget,
   zoneExitFlow,
   type ZoneStory,
   zoneStoryForStage,
-} from "../rules/zoneFlow";
-import { zonePlanAvoiding, zonePlanFor } from "../rules/zonePlans";
-import { sceneryParallax, type Tileset, worldScenery } from "../stage";
+} from "../rules/zoneFlow.ts";
+import { zonePlanAvoiding, zonePlanFor } from "../rules/zonePlans.ts";
+import { sceneryParallax, type Tileset, worldScenery } from "../stage/index.ts";
 import {
   buttonHeld,
   centredAt,
@@ -186,24 +186,30 @@ import {
   touchSettings,
   touchSettingShown,
   trackPress,
-} from "../ui";
-import { FRAME_TURN } from "../ui/input/frameTurn";
-import { achievementNoticeShowing } from "./achievementNotice";
-import { mountAirJumpCue } from "./airJumpCue";
-import { backdropBottomFrame } from "./backdropBottomFrame";
-import { mountBossWarning } from "./bossWarning";
-import { paletteColour } from "./cardParts";
-import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
-import { createCrumblingArt } from "./crumblingArt";
-import type { CutsceneData } from "./CutsceneScene";
-import { mountDashTrail } from "./dashTrail";
-import { frameDeathCamera } from "./deathCamera";
-import type { DeathData, DeathOpener } from "./DeathScene";
-import { type DialogueData, type DialogueOpener } from "./DialogueScene";
-import { modalInput } from "./modalInput";
-import { canvasRect, fitCanvasCamera, fitPlayCamera, sceneFit, sceneViewShift } from "./playCamera";
-import { createPulseSpanArt } from "./pulseSpanArt";
-import type { RoomData } from "./RoomScene";
+} from "../ui/index.ts";
+import { FRAME_TURN } from "../ui/input/frameTurn.ts";
+import { achievementNoticeShowing } from "./achievementNotice.ts";
+import { mountAirJumpCue } from "./airJumpCue.ts";
+import { backdropBottomFrame } from "./backdropBottomFrame.ts";
+import { mountBossWarning } from "./bossWarning.ts";
+import { paletteColour } from "./cardParts.ts";
+import { cancelContactFeedback, playContactFeedback } from "./contactFeedback.ts";
+import { createCrumblingArt } from "./crumblingArt.ts";
+import type { CutsceneData } from "./CutsceneScene.ts";
+import { mountDashTrail } from "./dashTrail.ts";
+import { frameDeathCamera } from "./deathCamera.ts";
+import type { DeathData, DeathOpener } from "./DeathScene.ts";
+import { type DialogueData, type DialogueOpener } from "./DialogueScene.ts";
+import { modalInput } from "./modalInput.ts";
+import {
+  canvasRect,
+  fitCanvasCamera,
+  fitPlayCamera,
+  sceneFit,
+  sceneViewShift,
+} from "./playCamera.ts";
+import { createPulseSpanArt } from "./pulseSpanArt.ts";
+import type { RoomData } from "./RoomScene.ts";
 import {
   activeSkill,
   activeStageTime,
@@ -223,14 +229,14 @@ import {
   stageRunStats,
   wholeRunStats,
   zoneVisitStats,
-} from "./save";
-import { createTetherArt } from "./tetherArt";
-import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard";
-import { createTouchChrome } from "./touchChrome";
-import { bindZoneBarks } from "./zoneBarks";
-import type { ZoneBarkScene } from "./ZoneBarkScene";
-import type { ZoneDepartureData } from "./ZoneDepartureScene";
-import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene";
+} from "./save.ts";
+import { createTetherArt } from "./tetherArt.ts";
+import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
+import { createTouchChrome } from "./touchChrome.ts";
+import { bindZoneBarks } from "./zoneBarks.ts";
+import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
+import type { ZoneDepartureData } from "./ZoneDepartureScene.ts";
+import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene.ts";
 
 // A new seed for a zone's assembly or its objects' motion: a whole number in [0, SEED_LIMIT).
 // Rules stay seeded, so the scene draws the entropy.
@@ -322,7 +328,7 @@ function show(sprite: GameObjects.Sprite, tag: string): void {
 }
 
 // What a zone starts with: see ZoneScene.init.
-import { uiObject } from "./uiRoots";
+import { uiObject } from "./uiRoots.ts";
 
 export interface ZoneData {
   readonly backdrop?: boolean;

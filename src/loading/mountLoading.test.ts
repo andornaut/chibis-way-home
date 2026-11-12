@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { LOADING_TIMING } from "./style";
+import { LOADING_TIMING } from "./style.ts";
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["clearTimeout", "setTimeout"] });
@@ -15,7 +15,7 @@ afterEach(() => {
 
 // A fresh module, so its startup load is the current operation, mounted on a game element.
 async function mounted() {
-  const loading = await import("./progress");
+  const loading = await import("./progress.ts");
   const parent = document.createElement("div");
   document.body.append(parent);
   const unmount = loading.mountLoading(parent);
@@ -27,7 +27,7 @@ async function mounted() {
 const FADED_MS = LOADING_TIMING.fullMs + LOADING_TIMING.fadeMs;
 
 // The boot's waited file load, as BootScene's loader watch reports it: its share, then 1.
-function bootFiles(loading: typeof import("./progress"), shares: readonly number[]) {
+function bootFiles(loading: typeof import("./progress.ts"), shares: readonly number[]) {
   const boot = loading.loadingProgress.begin();
   shares.forEach((share) => boot.progress(share));
   return boot;
@@ -125,7 +125,7 @@ it("shows zone entry as the pending segment until the zone is ready", async () =
 
 it("never shows an update's install or idle offline activity while the game plays", async () => {
   const { bar, unmount } = await playing();
-  const { trackOfflineActivity } = await import("./serviceWorker");
+  const { trackOfflineActivity } = await import("./serviceWorker.ts");
   const offlineActivity = trackOfflineActivity();
   const states: (string | undefined)[] = [];
   for (const activity of ["idle", "updating", "idle", "updating"] as const) {
@@ -138,7 +138,7 @@ it("never shows an update's install or idle offline activity while the game play
 
 it("shows the first visit's precache while the zone plays, but no update after it", async () => {
   const { bar, unmount } = await playing();
-  const { trackOfflineActivity } = await import("./serviceWorker");
+  const { trackOfflineActivity } = await import("./serviceWorker.ts");
   const offlineActivity = trackOfflineActivity();
   offlineActivity("precaching");
   expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);

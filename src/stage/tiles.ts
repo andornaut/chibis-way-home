@@ -1,4 +1,4 @@
-import type { Rect } from "../data/types";
+import type { Rect } from "../data/types/index.ts";
 
 // An art tileset's description (public/art/tilesets/<key>.json): tiles by name, as indices into
 // the sheet counted row by row, and pieces (multi-tile units) as rows of indices, top row first.

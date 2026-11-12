@@ -1,4 +1,4 @@
-import type { ZoneMap } from "../data/types";
+import type { ZoneMap } from "../data/types/index.ts";
 
 const IDS = ["one", "two", "three", "four"];
 const PLANS = Object.fromEntries(IDS.map((id) => [id, {}]));

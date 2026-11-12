@@ -1,5 +1,5 @@
-import type { Point, TouchTuning } from "../../data/types";
-import { type HeldTouch, moveFromOffset } from "../input/intent";
+import type { Point, TouchTuning } from "../../data/types/index.ts";
+import { type HeldTouch, moveFromOffset } from "../input/intent.ts";
 
 // How the move hint shows: the ring's centre and tag, and the knob's centre and tag.
 interface MoveHintView {

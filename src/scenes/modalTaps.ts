@@ -1,8 +1,8 @@
 import type { Cameras, Input, Scene } from "phaser";
 
-import { TOUCH } from "../data/touch";
-import type { Point, Rect } from "../data/types";
-import { modalInput, onScenePointer } from "./modalInput";
+import { TOUCH } from "../data/touch.ts";
+import type { Point, Rect } from "../data/types/index.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
 
 interface Modal {
   readonly close?: () => void;

@@ -1,5 +1,5 @@
-import { CAMERA } from "./camera";
-import type { ContactCueTuning } from "./types";
+import { CAMERA } from "./camera.ts";
+import type { ContactCueTuning } from "./types/index.ts";
 
 export const CONTACT_CUE: ContactCueTuning = {
   borderWidth: 5,

@@ -4,11 +4,11 @@ import {
   CONTROL_SIDE,
   TOUCH_CIRCLE_RADIUS,
   TOUCH_LAYOUT,
-} from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Point, Rect } from "../../data/types";
-import { TOUCH_CHROME_FRAME } from "../chrome/touchChrome";
-import type { PressArea, PressShape } from "./hitAreas";
+} from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Point, Rect } from "../../data/types/index.ts";
+import { TOUCH_CHROME_FRAME } from "../chrome/touchChrome.ts";
+import type { PressArea, PressShape } from "./hitAreas.ts";
 
 export type TouchControl = "jump" | "use";
 

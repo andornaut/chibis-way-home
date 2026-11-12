@@ -1,20 +1,20 @@
 // Phaser-free picks of what the world draws: each sprite's tag, frame and whole-pixel position
 // from the game state, so the scenes only draw what is picked.
-export { type AirJumpCue, airJumpCue, stepAirJumpCue } from "./airJumpCue";
-export { backdropBottomRect } from "./backdropBottom";
-export { backgroundGroundOffset, backgroundGroundReference } from "./backgroundGround";
-export { behaviourPose } from "./behaviour";
-export { birdFrameAt, type BirdPose, clearAirJumpPose, startPose, stepPose } from "./bird";
-export { BOSS_REMOVAL_ART, bossRemovalView } from "./bossRemoval";
-export { bossWarning, type BossWarningTuning } from "./bossWarning";
-export { characterState, nextQuirkAt } from "./character";
-export { chunkBackdropSpan, chunkParallax } from "./chunkParallax";
+export { type AirJumpCue, airJumpCue, stepAirJumpCue } from "./airJumpCue.ts";
+export { backdropBottomRect } from "./backdropBottom.ts";
+export { backgroundGroundOffset, backgroundGroundReference } from "./backgroundGround.ts";
+export { behaviourPose } from "./behaviour.ts";
+export { birdFrameAt, type BirdPose, clearAirJumpPose, startPose, stepPose } from "./bird.ts";
+export { BOSS_REMOVAL_ART, bossRemovalView } from "./bossRemoval.ts";
+export { bossWarning, type BossWarningTuning } from "./bossWarning.ts";
+export { characterState, nextQuirkAt } from "./character.ts";
+export { chunkBackdropSpan, chunkParallax } from "./chunkParallax.ts";
 export {
   crumblingAppearance,
   type CrumblingSkin,
   crumblingSkinTiles,
-} from "./crumblingPresentation";
-export { dashTrail } from "./dashTrail";
+} from "./crumblingPresentation.ts";
+export { dashTrail } from "./dashTrail.ts";
 export {
   deathFrameIndex,
   deathLabels,
@@ -25,21 +25,21 @@ export {
   type DeathView,
   startDeathPresentation,
   stepDeathPresentation,
-} from "./death";
-export { doorPhase } from "./doorOpen";
-export { forceVisualPosition, forceVisualSpan } from "./forceVisual";
-export { interiorBackdrop } from "./interiorBackdrop";
-export { type ArtKind, artKind, artOffset, artScrollFactor } from "./objectArt";
-export { type PlayHold, stepAction } from "./playHold";
-export { scenerySpriteFrame } from "./scenerySprite";
-export { STAGE_PROGRESS_STYLE } from "./stageProgress";
+} from "./death.ts";
+export { doorPhase } from "./doorOpen.ts";
+export { forceVisualPosition, forceVisualSpan } from "./forceVisual.ts";
+export { interiorBackdrop } from "./interiorBackdrop.ts";
+export { type ArtKind, artKind, artOffset, artScrollFactor } from "./objectArt.ts";
+export { type PlayHold, stepAction } from "./playHold.ts";
+export { scenerySpriteFrame } from "./scenerySprite.ts";
+export { STAGE_PROGRESS_STYLE } from "./stageProgress.ts";
 export {
   spokeSegments,
   type TetherLine,
   tetherLine,
   type TetherSegment,
   tetherSegments,
-} from "./tether";
+} from "./tether.ts";
 export {
   loadedTileset,
   lookTiles,
@@ -47,6 +47,6 @@ export {
   phaseSkinTiles,
   type PlacedTile,
   terrainTiles,
-} from "./tiles";
-export { barkOwnerOnscreen, proximityDialogue } from "./zoneDialogue";
-export { zoneTheme } from "./zoneTheme";
+} from "./tiles.ts";
+export { barkOwnerOnscreen, proximityDialogue } from "./zoneDialogue.ts";
+export { zoneTheme } from "./zoneTheme.ts";

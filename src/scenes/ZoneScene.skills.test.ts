@@ -4,16 +4,16 @@ import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep"
 import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { afterEach, expect, it, vi } from "vitest";
 
-import palette from "../../public/art/palette.json";
-import { STEP_MS } from "../core";
-import { BIRD } from "../data/bird";
-import { SCREEN } from "../data/screen";
-import { SKILLS } from "../data/skills";
-import { TOUCH } from "../data/touch";
-import type { SkillId } from "../data/types";
-import { SKILL_IDS } from "../progress";
-import { startBird } from "../rules/bird";
-import * as engine from "../rules/zone";
+import palette from "../../public/art/palette.json" with { type: "json" };
+import { STEP_MS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { SCREEN } from "../data/screen.ts";
+import { SKILLS } from "../data/skills.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { SkillId } from "../data/types/index.ts";
+import { SKILL_IDS } from "../progress/index.ts";
+import { startBird } from "../rules/bird.ts";
+import * as engine from "../rules/zone.ts";
 import {
   canvasSize,
   type HeldTouch,
@@ -25,30 +25,30 @@ import {
   TOUCH_CONTROLS,
   touchIntent,
   viewShift,
-} from "../ui";
+} from "../ui/index.ts";
 
 const saved = vi.hoisted(() => ({ active: null as SkillId | null, owned: [] as SkillId[] }));
 const routing = vi.hoisted(() => ({ accepts: true }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: { turn: () => 0 } }));
-vi.mock("./modalInput", () => ({ modalInput: () => ({ accepts: () => routing.accepts }) }));
-vi.mock("../ui/settings/touchControls", () => ({
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { turn: () => 0 } }));
+vi.mock("./modalInput.ts", () => ({ modalInput: () => ({ accepts: () => routing.accepts }) }));
+vi.mock("../ui/settings/touchControls.ts", () => ({
   coarsePointer: (host: Window) => host.matchMedia("(pointer: coarse)").matches,
   touchSettingShown: () => true,
 }));
-vi.mock("../dev/mode", () => ({
+vi.mock("../dev/mode.ts", () => ({
   developmentSkillOverrides: () => ({}),
   invulnerabilityEnabled: () => false,
   isDevelopmentSession: () => false,
 }));
-vi.mock("./save", () => ({
+vi.mock("./save.ts", () => ({
   activeSkill: () => saved.active,
   recordActiveStageStep: vi.fn(),
   recordStepAchievements: vi.fn(),
   savedSkills: () => saved.owned,
 }));
 
-import { ZoneScene } from "./ZoneScene";
+import { ZoneScene } from "./ZoneScene.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();

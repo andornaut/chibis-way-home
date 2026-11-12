@@ -1,8 +1,8 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { rectAt } from "../core";
-import type { ObjectLayout, Point, Rect } from "../data/types";
-import type { Track } from "./motion";
+import { rectAt } from "../core/index.ts";
+import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { Track } from "./motion.ts";
 
 export interface SceneryPlaybackState {
   readonly elapsedSeconds: number;

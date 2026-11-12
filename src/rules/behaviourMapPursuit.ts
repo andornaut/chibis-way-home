@@ -13,14 +13,14 @@ import {
 } from "@andornaut/game-kit/terrain/movementMap";
 import type { TraversalCommand } from "@andornaut/game-kit/terrain/traversal";
 
-import { collisionCandidates, EDGE } from "../core";
-import { TILE } from "../data/screen";
-import type { ObjectLayout, Point, Rect } from "../data/types";
-import { type BehaviourObservationContext, recordBehaviourWork } from "./behaviourObserver";
-import type { BehaviourWorld } from "./behaviourReach";
-import { clockedSupport } from "./effectiveCollision";
-import type { MapSupport, PursuitGroundMap } from "./movementMaps";
-import { timedHazardSafe } from "./timedHazard";
+import { collisionCandidates, EDGE } from "../core/index.ts";
+import { TILE } from "../data/screen.ts";
+import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import { type BehaviourObservationContext, recordBehaviourWork } from "./behaviourObserver.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { clockedSupport } from "./effectiveCollision.ts";
+import type { MapSupport, PursuitGroundMap } from "./movementMaps.ts";
+import { timedHazardSafe } from "./timedHazard.ts";
 
 export interface BehaviourMapPursuitState {
   // An edge whose witness landed part-way (a wall top): its rest from this command continues

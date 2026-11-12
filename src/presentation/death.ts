@@ -10,8 +10,8 @@ import type {
   Size,
   ZoneDeath,
   ZoneMap,
-} from "../data/types";
-import { destinationForStage } from "../progress";
+} from "../data/types/index.ts";
+import { destinationForStage } from "../progress/index.ts";
 
 type DeathPhase = "bounce" | "fall" | "impact" | "recoil" | "seated";
 export interface DeathPresentation {

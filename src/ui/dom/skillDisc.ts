@@ -3,10 +3,10 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import type { Rect } from "../../data/types";
-import { skillChromeLayers } from "../chrome/skillChrome";
-import { SKILL_BUTTON } from "../layout/skillHud";
-import { createPaletteSvg } from "./chrome";
+import type { Rect } from "../../data/types/index.ts";
+import { skillChromeLayers } from "../chrome/skillChrome.ts";
+import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { createPaletteSvg } from "./chrome.ts";
 
 // A skill's disc in the HTML UI (skillDisc.css): its circle as inline SVG from the skill chrome's
 // layers in the button's square target, a yellow face while ready and a navy one otherwise, the

@@ -1,11 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { BIRD } from "../data/bird";
-import { ZONE_MAP } from "../data/map";
-import { SKILL_PROFILES, STATS_VERSION } from "../progress";
-import { zoneLayout } from "../rules/tiles";
-import { startZone, stepZone } from "../rules/zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { SKILL_PROFILES, STATS_VERSION } from "../progress/index.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { startZone, stepZone } from "../rules/zone.ts";
 
 const LAYOUT = zoneLayout(12, BIRD_FRAME, { archetypes: {}, characters: {} }, {}, {}, new Set(), {
   areas: {
@@ -42,7 +42,7 @@ it("preserves run statistics across progress restart and completion", async () =
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save");
+  const save = await import("./save.ts");
   await save.loadProgress();
   expect(values.has("chibis-way-home.stats-backup")).toBe(true);
   expect(save.activeStageTime("street")).toBe(0);

@@ -1,9 +1,15 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { TEXT } from "../data/text";
-import { PHONE_EVENTS } from "../pwa";
-import { CELEBRATION, focusKeyAction, type PressArea, pressedArea, stepFocus } from "../ui";
+import { TEXT } from "../data/text.ts";
+import { PHONE_EVENTS } from "../pwa/index.ts";
+import {
+  CELEBRATION,
+  focusKeyAction,
+  type PressArea,
+  pressedArea,
+  stepFocus,
+} from "../ui/index.ts";
 import {
   addButtonLabel,
   addCardText,
@@ -18,10 +24,10 @@ import {
   pressTextButton,
   ringFocus,
   type TextButton,
-} from "./cardParts";
-import { modalInput, onScenePointer } from "./modalInput";
-import { fitPlayCamera, playPoint } from "./playCamera";
-import type { RestartData, RestartOpener, RestartScene } from "./RestartScene";
+} from "./cardParts.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
 
 const MAP = "map";
 const RESTART = "restart";

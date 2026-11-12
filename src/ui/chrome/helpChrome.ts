@@ -1,11 +1,11 @@
-import type { ControlAction } from "../../data/types";
+import type { ControlAction } from "../../data/types/index.ts";
 import {
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
   type TouchChromeColours,
   type TouchChromeLayer,
   touchChromeLayers,
-} from "./touchChrome";
+} from "./touchChrome.ts";
 
 interface HelpChromeColours extends TouchChromeColours {
   readonly navy: number;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { stagePickerKey } from "./stageSelectInput";
+import { stagePickerKey } from "./stageSelectInput.ts";
 
 const STAGES = ["one", "two", "three"];
 const LATEST = STAGES.at(-1)!;

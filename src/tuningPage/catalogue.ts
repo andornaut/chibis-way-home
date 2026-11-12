@@ -1,15 +1,15 @@
-import * as behaviours from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import { CAMERA } from "../data/camera";
-import { CHARACTERS } from "../data/characters";
-import { DEATH } from "../data/death";
-import * as dialogues from "../data/dialogues";
-import { CONTACT_CUE, CONTROL_REFUSAL } from "../data/feedback";
-import { OPENING } from "../data/opening";
-import { REACH } from "../data/reach";
-import * as screen from "../data/screen";
-import { TOUCH } from "../data/touch";
-import { RECIPES } from "../data/zones";
+import * as behaviours from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import { CAMERA } from "../data/camera.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { DEATH } from "../data/death.ts";
+import * as dialogues from "../data/dialogues.ts";
+import { CONTACT_CUE, CONTROL_REFUSAL } from "../data/feedback.ts";
+import { OPENING } from "../data/opening.ts";
+import { REACH } from "../data/reach.ts";
+import * as screen from "../data/screen.ts";
+import { TOUCH } from "../data/touch.ts";
+import { RECIPES } from "../data/zones.ts";
 
 export const TUNING_GROUPS = {
   Behaviours: behaviours,

@@ -1,10 +1,10 @@
-import { EDGE } from "../core";
-import type { ObjectLayout, Point } from "../data/types";
-import type { BehaviourState } from "./behaviour";
-import type { BehaviourPerception } from "./behaviourPerception";
-import { flightAxis, overheadFlightGoal, overheadFlightRoute } from "./behaviourReach";
-import { contactBox, nodeOf } from "./behaviourTrack";
-import { birdBox } from "./bird";
+import { EDGE } from "../core/index.ts";
+import type { ObjectLayout, Point } from "../data/types/index.ts";
+import type { BehaviourState } from "./behaviour.ts";
+import type { BehaviourPerception } from "./behaviourPerception.ts";
+import { flightAxis, overheadFlightGoal, overheadFlightRoute } from "./behaviourReach.ts";
+import { contactBox, nodeOf } from "./behaviourTrack.ts";
+import { birdBox } from "./bird.ts";
 
 // Where a target flight is heading now: its captured target, live aligned drop point or
 // anchored point. Undefined for other motions or a missing capture.

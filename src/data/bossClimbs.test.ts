@@ -1,27 +1,32 @@
 import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { SKILL_PROFILES } from "../progress";
-import { assembleZone, zonePlanOf } from "../rules/assemble";
-import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "../rules/behaviour";
-import type { BehaviourWorld } from "../rules/behaviourReach";
-import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal";
-import { startBird } from "../rules/bird";
-import { chunkProblems } from "../rules/chunk";
-import { zoneLayout } from "../rules/tiles";
-import { standsOn, startZone, stepZone } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { withInstances } from "../testing/encounterLayouts";
-import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD } from "./bird";
-import { CHUNKS } from "./chunks";
-import { TILE } from "./screen";
-import { apartmentChunkId } from "./zone6";
-import { RECIPES } from "./zones";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { assembleZone, zonePlanOf } from "../rules/assemble.ts";
+import {
+  type BehaviourState,
+  contactBox,
+  startBehaviour,
+  stepBehaviour,
+} from "../rules/behaviour.ts";
+import type { BehaviourWorld } from "../rules/behaviourReach.ts";
+import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal.ts";
+import { startBird } from "../rules/bird.ts";
+import { chunkProblems } from "../rules/chunk.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { standsOn, startZone, stepZone } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { withInstances } from "../testing/encounterLayouts.ts";
+import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { BIRD } from "./bird.ts";
+import { CHUNKS } from "./chunks.ts";
+import { TILE } from "./screen.ts";
+import { apartmentChunkId } from "./zone6.ts";
+import { RECIPES } from "./zones.ts";
 
 vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
   const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();

@@ -1,8 +1,8 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { EDGE, STEP_SECONDS } from "../core";
-import type { BirdTuning, Point, Rect, Size } from "../data/types";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import type { BirdTuning, Point, Rect, Size } from "../data/types/index.ts";
 
 // What the player asks of the bird this step. jumpHeld is the button's state; a jump starts on
 // the step it goes down.

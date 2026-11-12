@@ -1,8 +1,8 @@
 import type { CrumblingPhase } from "@andornaut/game-kit/terrain/crumbling";
 
-import type { CrumblingSupportId } from "../data/types";
-import { crumblingAppearance, type CrumblingSkin } from "../presentation";
-import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling";
+import type { CrumblingSupportId } from "../data/types/index.ts";
+import { crumblingAppearance, type CrumblingSkin } from "../presentation/index.ts";
+import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling.ts";
 
 interface Visible {
   setVisible(visible: boolean): unknown;

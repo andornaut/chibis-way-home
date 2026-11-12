@@ -4,16 +4,16 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 
-import { traceRecorder } from "../ai/trace";
-import { BIRD_FRAME } from "../assets";
-import { ARCHETYPES } from "../data/archetypes";
-import { ARENAS } from "../data/arenas";
-import { BIRD } from "../data/bird";
-import { CHARACTERS } from "../data/characters";
-import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
-import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules";
-import { TILE } from "../data/screen";
-import { SEAM_ROWS } from "../data/seams";
+import { traceRecorder } from "../ai/trace.ts";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { ARENAS } from "../data/arenas/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks.ts";
+import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
+import { TILE } from "../data/screen.ts";
+import { SEAM_ROWS } from "../data/seams.ts";
 import type {
   CertifiedChunks,
   CertifiedEntry,
@@ -23,22 +23,22 @@ import type {
   ZoneKey,
   ZoneLayout,
   ZoneRecipe,
-} from "../data/types";
-import { ZONE_FRAMES } from "../data/zoneFrames";
-import { RECIPES } from "../data/zones";
-import { assembleZone, type ChunkLibrary, recipeChunkPool, themesOf } from "../rules/assemble";
-import { chunkProblems } from "../rules/chunk";
-import { composePair, ENCOUNTER_ROLES, moduleProblems, pairProblems } from "../rules/modules";
-import { withRoomBuildings } from "../rules/roomBuildings";
-import { zoneLayout } from "../rules/tiles";
-import { CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans";
-import { NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut";
-import { zoneTraceLine } from "../sim/zoneTrace";
-import { crosses, surfaceAt, walkRequiredRoutes, type WalkRouteTarget } from "../sim/zoneWalk";
-import { CATALOGUE, HITBOXES, TILESETS } from "./art";
-import { chunkThemePlan, planPhysics } from "./chunkWalkCases";
-import { ORDINARY } from "./encounterLayouts";
-import { moduleRouteTargets, REQUIRED_CHUNK_ROUTES, slotFills } from "./requiredRoutes";
+} from "../data/types/index.ts";
+import { ZONE_FRAMES } from "../data/zoneFrames.ts";
+import { RECIPES } from "../data/zones.ts";
+import { assembleZone, type ChunkLibrary, recipeChunkPool, themesOf } from "../rules/assemble.ts";
+import { chunkProblems } from "../rules/chunk.ts";
+import { composePair, ENCOUNTER_ROLES, moduleProblems, pairProblems } from "../rules/modules.ts";
+import { withRoomBuildings } from "../rules/roomBuildings.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans.ts";
+import { NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut.ts";
+import { zoneTraceLine } from "../sim/zoneTrace.ts";
+import { crosses, surfaceAt, walkRequiredRoutes, type WalkRouteTarget } from "../sim/zoneWalk.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
+import { chunkThemePlan, planPhysics } from "./chunkWalkCases.ts";
+import { ORDINARY } from "./encounterLayouts.ts";
+import { moduleRouteTargets, REQUIRED_CHUNK_ROUTES, slotFills } from "./requiredRoutes.ts";
 
 // Bump when a certification step changes what it proves, forcing a full recertification.
 const CERTIFY_VERSION = 1;

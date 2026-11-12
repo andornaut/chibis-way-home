@@ -1,4 +1,4 @@
-import type { Rect } from "../data/types";
+import type { Rect } from "../data/types/index.ts";
 
 export function backdropBottomRect(
   view: Pick<Rect, "height" | "y">,

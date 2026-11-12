@@ -1,5 +1,5 @@
-import type { AirJumpCueTuning, Point, Rect } from "../data/types";
-import type { BirdState } from "../rules/bird";
+import type { AirJumpCueTuning, Point, Rect } from "../data/types/index.ts";
+import type { BirdState } from "../rules/bird.ts";
 
 export interface AirJumpCue {
   readonly elapsedSeconds: number;

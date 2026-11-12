@@ -1,8 +1,8 @@
-import { START_SCREEN, TEXT_BUTTON } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import type { Point, Rect, Size } from "../../data/types";
-import { hitAround } from "./hitAreas";
-import { type LabelledButton, labelledButton } from "./restartCard";
+import { START_SCREEN, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Point, Rect, Size } from "../../data/types/index.ts";
+import { hitAround } from "./hitAreas.ts";
+import { type LabelledButton, labelledButton } from "./restartCard.ts";
 
 // Art's start screen (art/README.md, Start screen), in base pixels (START_SCREEN): the nav bar
 // across the top, with square icon buttons at its right end, each with its icon inset (sunk while

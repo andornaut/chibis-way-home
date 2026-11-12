@@ -1,9 +1,9 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { BOSS_REMOVAL_SECONDS } from "../data/behaviours";
-import type { AreaLayout, ObjectLayout, Point, Rect } from "../data/types";
-import type { BehaviourState, BehaviourStep } from "./behaviour";
-import { contactBox } from "./behaviourTrack";
+import { BOSS_REMOVAL_SECONDS } from "../data/behaviours.ts";
+import type { AreaLayout, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { BehaviourState, BehaviourStep } from "./behaviour.ts";
+import { contactBox } from "./behaviourTrack.ts";
 
 // A boss: a pursuing hazard. It dies as Chibi does, on a red hazard or below the level.
 function isBoss(object: ObjectLayout): boolean {

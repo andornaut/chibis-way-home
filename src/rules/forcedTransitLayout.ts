@@ -7,7 +7,7 @@ import type {
   Instance,
   ObjectLayout,
   Point,
-} from "../data/types";
+} from "../data/types/index.ts";
 
 function identifier(value: string): void {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9:_-]*$/.test(value)) {

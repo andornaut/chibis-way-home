@@ -3,14 +3,14 @@ import { listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { readUnit } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 import { Core, Scene } from "phaser";
 
-import { EDGE } from "../core";
-import { SKILL_GESTURE } from "../data/skills";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { SkillId } from "../data/types";
-import { developmentSkillOverrides } from "../dev/mode";
-import { SKILL_IDS, skillEnabled } from "../progress";
-import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
+import { EDGE } from "../core/index.ts";
+import { SKILL_GESTURE } from "../data/skills.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { SkillId } from "../data/types/index.ts";
+import { developmentSkillOverrides } from "../dev/mode.ts";
+import { SKILL_IDS, skillEnabled } from "../progress/index.ts";
+import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa/index.ts";
 import {
   type CardAction,
   cardBackAction,
@@ -29,17 +29,17 @@ import {
   skillHud,
   type TouchSetting,
   touchSettings,
-} from "../ui";
-import { FRAME_TURN } from "../ui/input/frameTurn";
-import { paletteColour } from "./cardParts";
-import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
-import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, type SceneInput } from "./modalInput";
-import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome";
-import { activeSkill, savedSkills, selectActiveSkill } from "./save";
-import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
-import type { SkillDetailData } from "./SkillDetailScene";
-import type { ZoneScene } from "./ZoneScene";
+} from "../ui/index.ts";
+import { FRAME_TURN } from "../ui/input/frameTurn.ts";
+import { paletteColour } from "./cardParts.ts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
+import { modalInput, type SceneInput } from "./modalInput.ts";
+import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome.ts";
+import { activeSkill, savedSkills, selectActiveSkill } from "./save.ts";
+import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
+import type { SkillDetailData } from "./SkillDetailScene.ts";
+import type { ZoneScene } from "./ZoneScene.ts";
 
 // The scenes that show a conversation over the paused zone, each holding its modal input in turn:
 // a line, the line's required choice, and the departure.

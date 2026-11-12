@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 
-import { EDGE, STEP_SECONDS } from "../core";
-import { SCREEN } from "../data/screen";
-import { chunkLayout, ENCOUNTER_SCRIPTS, ORDINARY } from "../testing/encounterLayouts";
-import { scriptedChibi, simulateBosses } from "./bossSimulator";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import { SCREEN } from "../data/screen.ts";
+import { chunkLayout, ENCOUNTER_SCRIPTS, ORDINARY } from "../testing/encounterLayouts.ts";
+import { scriptedChibi, simulateBosses } from "./bossSimulator.ts";
 
 // Pebble in his arena for a minute, with Chibi standing in the open at the entry, so every
 // death restarts the same exposed encounter.

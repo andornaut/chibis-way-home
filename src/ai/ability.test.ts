@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { abilityFor, type AbilityTable } from "./ability";
+import { abilityFor, type AbilityTable } from "./ability.ts";
 
 type Params =
   | { readonly kind: "step"; readonly distance: number }

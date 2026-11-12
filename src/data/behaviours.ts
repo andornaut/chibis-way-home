@@ -1,4 +1,4 @@
-import { BIRD } from "./bird";
+import { BIRD } from "./bird.ts";
 import {
   chargeScore,
   DROP_BURST_SCORE,
@@ -12,8 +12,8 @@ import {
   POUNCE_SCORE,
   SWOOP_SCORE,
   TRAP_SCORE,
-} from "./bossScorers";
-import { SCREEN, TILE } from "./screen";
+} from "./bossScorers.ts";
+import { SCREEN, TILE } from "./screen.ts";
 import type {
   BehaviourAction,
   BehaviourCondition,
@@ -24,7 +24,7 @@ import type {
   BossWander,
   ChaseRelief,
   DialogueLine,
-} from "./types";
+} from "./types/index.ts";
 
 const BEAR_PURSUIT_SPEED = (0.95 * BIRD.walkSpeed) / TILE;
 const BEAR_TRAVERSAL_SPEED = (1.4 * BIRD.walkSpeed) / TILE;

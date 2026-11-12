@@ -1,4 +1,4 @@
-import type { TouchChromeLayer } from "../ui";
+import type { TouchChromeLayer } from "../ui/index.ts";
 
 // Each SVG shape's geometry and paint, as the chrome layer it draws reads them.
 export function svgLayers(svg: SVGSVGElement): readonly TouchChromeLayer[] {

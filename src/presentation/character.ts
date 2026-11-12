@@ -1,6 +1,6 @@
 import type { Random } from "@andornaut/game-kit/random";
 
-import type { CharacterState, ObjectLayout, Point, Quirk } from "../data/types";
+import type { CharacterState, ObjectLayout, Point, Quirk } from "../data/types/index.ts";
 
 // The state a character's animation shows: react while he is within its reaction's range,
 // move while it moved this frame, else idle.

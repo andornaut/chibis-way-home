@@ -3,19 +3,23 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import type { Point, SkillId } from "../../data/types";
-import { SKILL_IDS } from "../../progress";
-import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "../chrome/pauseChrome";
-import { PAUSE_BUTTON } from "../layout/pauseCard";
-import { SKILL_BUTTON } from "../layout/skillHud";
-import { type CardView, createCard } from "./card";
-import { createPaletteSvg } from "./chrome";
+import type { Point, SkillId } from "../../data/types/index.ts";
+import { SKILL_IDS } from "../../progress/index.ts";
+import {
+  PAUSE_CHROME_FRAME,
+  pauseChromeLayers,
+  type PauseChromePose,
+} from "../chrome/pauseChrome.ts";
+import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
+import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { type CardView, createCard } from "./card.ts";
+import { createPaletteSvg } from "./chrome.ts";
 import {
   createSkillDisc,
   paintSkillDisc,
   type SkillDiscLook,
   type SkillDiscView,
-} from "./skillDisc";
+} from "./skillDisc.ts";
 
 // The pause scene's view in the HTML UI (pause.css, on ui.css and skillDisc.css): the pause card,
 // the pause button at the view's top-left corner and the skill HUD along its top-right, each

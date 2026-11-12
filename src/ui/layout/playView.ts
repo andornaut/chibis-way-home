@@ -1,6 +1,6 @@
 import type { RenderFit } from "@andornaut/game-kit/view/renderScale";
 
-import type { Point, Rect, Size } from "../../data/types";
+import type { Point, Rect, Size } from "../../data/types/index.ts";
 
 // The canvas fills the page's play area (#game), its backing in device pixels (fit.backing), and
 // the game's SCREEN-sized view draws fit.zoom device pixels per base pixel at the canvas's top,

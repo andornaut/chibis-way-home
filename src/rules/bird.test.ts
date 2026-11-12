@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { SKILLS } from "../data/skills";
-import type { Rect } from "../data/types";
-import { SKILL_IDS, skillTuning } from "../progress";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { SKILLS } from "../data/skills.ts";
+import type { Rect } from "../data/types/index.ts";
+import { SKILL_IDS, skillTuning } from "../progress/index.ts";
 import {
   type BirdInput,
   type BirdState,
@@ -14,7 +14,7 @@ import {
   startBird,
   stepBird,
   stepBirdWithSupport,
-} from "./bird";
+} from "./bird.ts";
 
 const STEP = STEP_SECONDS;
 const GROUND: Rect = { height: 40, width: 2000, x: -1000, y: 300 };

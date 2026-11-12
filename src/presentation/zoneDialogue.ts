@@ -1,7 +1,7 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import type { ObjectLayout, Point, Rect } from "../data/types";
-import type { ZoneBark } from "../rules/zone";
+import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type { ZoneBark } from "../rules/zone.ts";
 
 // The first object with a behaviour and introduction he is close enough to hear this attempt.
 export function proximityDialogue(

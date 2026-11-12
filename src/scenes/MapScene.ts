@@ -6,13 +6,13 @@ import {
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
-import { MAP_LAYOUT, MAP_PATH } from "../data/layout";
-import { MAP_TRAVEL, ZONE_MAP } from "../data/map";
-import { TILE } from "../data/screen";
-import { TEXT } from "../data/text";
-import type { MapDestination, Point, Rect } from "../data/types";
-import { RECIPES } from "../data/zones";
+import { ART_MANIFEST_KEY, type ArtManifest } from "../assets/index.ts";
+import { MAP_LAYOUT, MAP_PATH } from "../data/layout.ts";
+import { MAP_TRAVEL, ZONE_MAP } from "../data/map.ts";
+import { TILE } from "../data/screen.ts";
+import { TEXT } from "../data/text.ts";
+import type { MapDestination, Point, Rect } from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
 import {
   destinationForStage,
   destinationOf,
@@ -22,8 +22,8 @@ import {
   openMap,
   stageCompletion,
   steppedDestination,
-} from "../progress";
-import { PHONE_EVENTS } from "../pwa";
+} from "../progress/index.ts";
+import { PHONE_EVENTS } from "../pwa/index.ts";
 import {
   bentCurve,
   curveWalk,
@@ -42,7 +42,7 @@ import {
   type PressArea,
   pressedArea,
   textInkBounds,
-} from "../ui";
+} from "../ui/index.ts";
 import {
   addTextButton,
   captureTab,
@@ -50,13 +50,13 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-} from "./cardParts";
-import { modalInput, onScenePointer } from "./modalInput";
-import { fitPlayCamera, playPoint } from "./playCamera";
-import { savedMap, saveStand } from "./save";
-import type { StageSelectData, StageSelectOpener, StageSelectScene } from "./StageSelectScene";
-import { uiObject } from "./uiRoots";
-import type { ZoneData } from "./ZoneScene";
+} from "./cardParts.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { savedMap, saveStand } from "./save.ts";
+import type { StageSelectData, StageSelectOpener, StageSelectScene } from "./StageSelectScene.ts";
+import { uiObject } from "./uiRoots.ts";
+import type { ZoneData } from "./ZoneScene.ts";
 
 const PALETTE = "palette";
 const TITLE_FONT = "font-title";

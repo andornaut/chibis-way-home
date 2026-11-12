@@ -1,15 +1,15 @@
 import { expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { BIRD } from "../data/bird";
-import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours";
-import type { Archetype, ZoneLayout } from "../data/types";
-import { SKILL_PROFILES } from "../progress";
-import { stepBehaviour } from "./behaviour";
-import { effectiveHazardPhase } from "./effectiveCollision";
-import { objectLayout } from "./tiles";
-import { retryZone, startZone, stepZone } from "./zone";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { BIRD } from "../data/bird.ts";
+import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours.ts";
+import type { Archetype, ZoneLayout } from "../data/types/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { stepBehaviour } from "./behaviour.ts";
+import { effectiveHazardPhase } from "./effectiveCollision.ts";
+import { objectLayout } from "./tiles.ts";
+import { retryZone, startZone, stepZone } from "./zone.ts";
 
 const floor = { height: 40, width: 600, x: 0, y: 300 };
 const archetype: Archetype = {

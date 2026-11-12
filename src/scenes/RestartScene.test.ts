@@ -9,15 +9,15 @@ const saved = vi.hoisted(() => ({
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), capture: vi.fn() }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../pwa", () => ({ coverZone: vi.fn() }));
-vi.mock("./save", () => ({
+vi.mock("../pwa/index.ts", () => ({ coverZone: vi.fn() }));
+vi.mock("./save.ts", () => ({
   clearProgress: vi.fn(),
   resetWholeRunStats: vi.fn(),
   savedProgress: () => saved.progress,
 }));
-vi.mock("./modalInput", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
-vi.mock("./domUi", () => ({
+vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
+vi.mock("./domUi.ts", () => ({
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
     scene.events.once("shutdown", unmount);
@@ -26,12 +26,12 @@ vi.mock("./domUi", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { TEXT } from "../data/text";
-import { createUiLayer, startScreenLayout, type UiLayer } from "../ui";
-import { CelebrationScene } from "./CelebrationScene";
-import { RestartScene } from "./RestartScene";
-import { clearProgress, resetWholeRunStats } from "./save";
-import { StartScene } from "./StartScene";
+import { TEXT } from "../data/text.ts";
+import { createUiLayer, startScreenLayout, type UiLayer } from "../ui/index.ts";
+import { CelebrationScene } from "./CelebrationScene.ts";
+import { RestartScene } from "./RestartScene.ts";
+import { clearProgress, resetWholeRunStats } from "./save.ts";
+import { StartScene } from "./StartScene.ts";
 
 let layer: UiLayer;
 

@@ -1,25 +1,25 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { describe, expect, it } from "vitest";
 
-import manifestJson from "../../public/art/manifest.json";
-import { type ArtManifest, BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { artKind, lookTiles } from "../presentation";
-import { SKILL_PROFILES } from "../progress";
-import { resolveNames, zoneLayout } from "../rules/tiles";
-import { startZone, stepZone } from "../rules/zone";
-import { zonePlanFor } from "../rules/zonePlans";
-import { HITBOXES, TILESETS } from "../testing/walkSuite";
-import { TEST_ZONES } from "../testing/zones";
-import { ARCHETYPES } from "./archetypes";
-import { BIRD } from "./bird";
-import { CHARACTERS } from "./characters";
-import { ZONE_MAP } from "./map";
-import { ROOMS } from "./rooms";
-import { TILE, ZONE_ROWS } from "./screen";
-import { TEXT } from "./text";
-import type { AreaPlan, TileRect, ZonePlan } from "./types";
-import { RECIPES } from "./zones";
+import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import { type ArtManifest, BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { artKind, lookTiles } from "../presentation/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { resolveNames, zoneLayout } from "../rules/tiles.ts";
+import { startZone, stepZone } from "../rules/zone.ts";
+import { zonePlanFor } from "../rules/zonePlans.ts";
+import { HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { TEST_ZONES } from "../testing/zones.ts";
+import { ARCHETYPES } from "./archetypes.ts";
+import { BIRD } from "./bird.ts";
+import { CHARACTERS } from "./characters.ts";
+import { ZONE_MAP } from "./map.ts";
+import { ROOMS } from "./rooms.ts";
+import { TILE, ZONE_ROWS } from "./screen.ts";
+import { TEXT } from "./text.ts";
+import type { AreaPlan, TileRect, ZonePlan } from "./types/index.ts";
+import { RECIPES } from "./zones.ts";
 
 const MANIFEST = manifestJson as ArtManifest;
 const SHEETS = import.meta.glob<AsepriteSheet>("../../public/art/sprites/*.json", {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { CAMERA } from "../data/camera";
-import { cameraScroll, groundLine } from "./camera";
+import { CAMERA } from "../data/camera.ts";
+import { cameraScroll, groundLine } from "./camera.ts";
 
 const SCREEN = { height: 360, width: 720 };
 // Three screens tall and wide, its ground's top at 600 and 200 thick, room for the view to sit

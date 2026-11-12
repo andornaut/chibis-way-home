@@ -1,17 +1,17 @@
-import { ARENAS } from "../data/arenas";
-import { BACKGROUND_SECTIONS } from "../data/backgrounds";
-import { CERTIFIED_LISTS } from "../data/certified";
-import { CHARACTERS } from "../data/characters";
-import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks";
-import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules";
-import { ZONE_ROWS } from "../data/screen";
-import { SEAM_ROWS } from "../data/seams";
-import type { ChunkArena, ChunkPlan, StageRecipe, ZoneKey, ZonePlan } from "../data/types";
-import { ZONE_FRAMES } from "../data/zoneFrames";
-import { RECIPES } from "../data/zones";
-import { arenaChunk } from "./arenas";
-import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble";
-import { certifiedChunks } from "./modules";
+import { ARENAS } from "../data/arenas/index.ts";
+import { BACKGROUND_SECTIONS } from "../data/backgrounds.ts";
+import { CERTIFIED_LISTS } from "../data/certified/index.ts";
+import { CHARACTERS } from "../data/characters.ts";
+import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks.ts";
+import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
+import { ZONE_ROWS } from "../data/screen.ts";
+import { SEAM_ROWS } from "../data/seams.ts";
+import type { ChunkArena, ChunkPlan, StageRecipe, ZoneKey, ZonePlan } from "../data/types/index.ts";
+import { ZONE_FRAMES } from "../data/zoneFrames.ts";
+import { RECIPES } from "../data/zones.ts";
+import { arenaChunk } from "./arenas.ts";
+import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble.ts";
+import { certifiedChunks } from "./modules.ts";
 
 const CERTIFIED = certifiedChunks(
   { frames: ZONE_FRAMES, grades: PAIR_GRADES, modules: MODULES, rules: MODULE_RULES },

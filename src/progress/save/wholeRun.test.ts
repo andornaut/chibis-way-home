@@ -2,8 +2,8 @@ import { memoryStorage } from "@andornaut/game-kit/save/storage";
 import { encodeSave } from "@andornaut/game-kit/save/versionedSave";
 import { expect, it, vi } from "vitest";
 
-import { wholeRunSummary } from "./runSummary";
-import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats";
+import { wholeRunSummary } from "./runSummary.ts";
+import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats.ts";
 
 const stageIds = ["first", "second"] as const;
 const stages = new Set<string>(stageIds);

@@ -1,17 +1,17 @@
 import { expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets";
-import { STEP_SECONDS } from "../core";
-import { SKILL_PROFILES } from "../progress";
-import { assembleZone, zonePlanOf } from "../rules/assemble";
-import { chunkProblems } from "../rules/chunk";
-import { zoneLayout } from "../rules/tiles";
-import { standsOn, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone";
-import { CHUNK_LIBRARY } from "../rules/zonePlans";
-import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk";
-import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
-import { BIRD } from "./bird";
+import { BIRD_FRAME } from "../assets/index.ts";
+import { STEP_SECONDS } from "../core/index.ts";
+import { SKILL_PROFILES } from "../progress/index.ts";
+import { assembleZone, zonePlanOf } from "../rules/assemble.ts";
+import { chunkProblems } from "../rules/chunk.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { standsOn, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
+import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
+import { BIRD } from "./bird.ts";
 import {
   BLUE_CONNECTORS,
   blueVerticalId,
@@ -28,11 +28,11 @@ import {
   WOODLAND_DEPTH_ALIASES,
   WOODLAND_VERTICAL_ALIASES,
   woodlandVerticalId,
-} from "./chunks";
-import { REACH } from "./reach";
-import { TILE } from "./screen";
-import { APARTMENT_LOWER_SHELVES, APARTMENT_SPAWN_ROW, apartmentChunkId } from "./zone6";
-import { RECIPES } from "./zones";
+} from "./chunks.ts";
+import { REACH } from "./reach.ts";
+import { TILE } from "./screen.ts";
+import { APARTMENT_LOWER_SHELVES, APARTMENT_SPAWN_ROW, apartmentChunkId } from "./zone6.ts";
+import { RECIPES } from "./zones.ts";
 
 it("validates lower seams only inside the taller authored industrial chunks", () => {
   for (const [id, chunk] of Object.entries(CHUNKS)) {

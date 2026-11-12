@@ -3,13 +3,13 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CAMERA } from "../data/camera";
-import { CONTACT_CUE } from "../data/feedback";
-import { SCREEN } from "../data/screen";
-import { contactOverscan } from "../ui";
-import { cancelContactFeedback, playContactFeedback } from "./contactFeedback";
+import { CAMERA } from "../data/camera.ts";
+import { CONTACT_CUE } from "../data/feedback.ts";
+import { SCREEN } from "../data/screen.ts";
+import { contactOverscan } from "../ui/index.ts";
+import { cancelContactFeedback, playContactFeedback } from "./contactFeedback.ts";
 
-vi.mock("./cardParts", () => ({ paletteColour: () => 1 }));
+vi.mock("./cardParts.ts", () => ({ paletteColour: () => 1 }));
 const shake = CAMERA.contactShake!;
 class Snapshot {}
 afterEach(() => vi.unstubAllGlobals());

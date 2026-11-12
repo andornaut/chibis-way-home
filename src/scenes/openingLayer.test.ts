@@ -1,8 +1,8 @@
 import type { GameObjects } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import type { OpeningKeyframe, OpeningLayer } from "../data/types";
-import { renderOpeningLayer } from "./openingLayer";
+import type { OpeningKeyframe, OpeningLayer } from "../data/types/index.ts";
+import { renderOpeningLayer } from "./openingLayer.ts";
 
 it.each([
   { anchor: { x: 128, y: 232 }, flipX: undefined, height: 256, width: 256 },

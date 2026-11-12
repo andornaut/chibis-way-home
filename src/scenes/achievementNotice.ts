@@ -1,9 +1,9 @@
 import type { Scene } from "phaser";
 
-import type { AchievementNoticeScene } from "./AchievementNoticeScene";
-import { modalInput } from "./modalInput";
-import type { ZoneBarkScene } from "./ZoneBarkScene";
-import type { ZoneScene } from "./ZoneScene";
+import type { AchievementNoticeScene } from "./AchievementNoticeScene.ts";
+import { modalInput } from "./modalInput.ts";
+import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
+import type { ZoneScene } from "./ZoneScene.ts";
 
 export const ACHIEVEMENT_NOTICE = "achievementNotice";
 

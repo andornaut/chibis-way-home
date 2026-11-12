@@ -1,23 +1,23 @@
 import { expect, it } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { EDGE, STEP_SECONDS } from "../core";
-import { DOG_BEHAVIOUR } from "../data/behaviours";
-import { BIRD } from "../data/bird";
-import { TILE } from "../data/screen";
-import type { AreaLayout, BehaviourPlan, Point, Rect } from "../data/types";
-import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
+import { DOG_BEHAVIOUR } from "../data/behaviours.ts";
+import { BIRD } from "../data/bird.ts";
+import { TILE } from "../data/screen.ts";
+import type { AreaLayout, BehaviourPlan, Point, Rect } from "../data/types/index.ts";
+import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import {
   type BehaviourState,
   type BehaviourStep,
   startBehaviour,
   stepBehaviour,
-} from "./behaviour";
-import type { BehaviourWorld } from "./behaviourReach";
-import { openingScorerState } from "./behaviourScorer";
-import { birdBox, startBird } from "./bird";
-import { type PursuitGroundMap, pursuitGroundMap } from "./movementMaps";
-import { objectLayout } from "./tiles";
+} from "./behaviour.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { openingScorerState } from "./behaviourScorer.ts";
+import { birdBox, startBird } from "./bird.ts";
+import { type PursuitGroundMap, pursuitGroundMap } from "./movementMaps.ts";
+import { objectLayout } from "./tiles.ts";
 
 // Archie on a wide flat floor, with targets inside the escape distance for chase-relief checks.
 const archie = objectLayout(

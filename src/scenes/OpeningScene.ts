@@ -1,12 +1,12 @@
 import { type GameObjects, type Input, Scene } from "phaser";
 
-import { OPENING } from "../data/opening";
-import { SCREEN } from "../data/screen";
-import { TEXT } from "../data/text";
-import { TOUCH } from "../data/touch";
-import type { Point } from "../data/types";
-import { createOpeningPlayback } from "../progress";
-import { focusKeyAction, openingLayout, pressedArea, stepFocus } from "../ui";
+import { OPENING } from "../data/opening.ts";
+import { SCREEN } from "../data/screen.ts";
+import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import type { Point } from "../data/types/index.ts";
+import { createOpeningPlayback } from "../progress/index.ts";
+import { focusKeyAction, openingLayout, pressedArea, stepFocus } from "../ui/index.ts";
 import {
   addCardText,
   addTextButton,
@@ -18,11 +18,11 @@ import {
   PRIMARY_BUTTON,
   ringFocus,
   type TextButton,
-} from "./cardParts";
-import { modalInput, onScenePointer } from "./modalInput";
-import { renderOpeningLayer } from "./openingLayer";
-import { fitPlayCamera, playPoint } from "./playCamera";
-import { saveOpeningSeen } from "./save";
+} from "./cardParts.ts";
+import { modalInput, onScenePointer } from "./modalInput.ts";
+import { renderOpeningLayer } from "./openingLayer.ts";
+import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { saveOpeningSeen } from "./save.ts";
 
 type Action = "continue" | "skip";
 

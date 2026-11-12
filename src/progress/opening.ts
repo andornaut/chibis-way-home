@@ -1,7 +1,7 @@
 import { clamp01, lerp } from "@andornaut/game-kit/numbers";
 
-import type { OpeningBeat, OpeningKeyframe, OpeningLayer } from "../data/types";
-import type { Progress } from "./save/progress";
+import type { OpeningBeat, OpeningKeyframe, OpeningLayer } from "../data/types/index.ts";
+import type { Progress } from "./save/progress.ts";
 
 export function openingDestination(
   progress: Pick<Progress, "at" | "openingSeen">,

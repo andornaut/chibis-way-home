@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
-import type { ArtManifest } from "../assets";
-import { galleryCatalogue } from "./catalogue";
+import type { ArtManifest } from "../assets/index.ts";
+import { galleryCatalogue } from "./catalogue.ts";
 
 it("keeps every manifest category and sprite metadata while resolving public source links", () => {
   const manifest: ArtManifest = {

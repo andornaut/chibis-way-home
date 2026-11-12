@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams";
-import { BIRD } from "../data/bird";
-import type { Archetype, BehaviourPlan, Character, Rect } from "../data/types";
-import { sweptBehaviourRect } from "../sim/behaviourBounds";
-import { type BehaviourState, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour";
-import { selectSupportedFlight } from "./behaviourFlightSelection";
-import type { BehaviourWorld } from "./behaviourReach";
-import { startBird } from "./bird";
-import { supportedLanding } from "./flyLanding";
-import { objectLayout } from "./tiles";
+import { namedStreams } from "../ai/randomStreams.ts";
+import { BIRD } from "../data/bird.ts";
+import type { Archetype, BehaviourPlan, Character, Rect } from "../data/types/index.ts";
+import { sweptBehaviourRect } from "../sim/behaviourBounds.ts";
+import {
+  type BehaviourState,
+  layoutBehaviour,
+  startBehaviour,
+  stepBehaviour,
+} from "./behaviour.ts";
+import { selectSupportedFlight } from "./behaviourFlightSelection.ts";
+import type { BehaviourWorld } from "./behaviourReach.ts";
+import { startBird } from "./bird.ts";
+import { supportedLanding } from "./flyLanding.ts";
+import { objectLayout } from "./tiles.ts";
 
 const plan: BehaviourPlan = {
   attackCooldownSeconds: 0.5,

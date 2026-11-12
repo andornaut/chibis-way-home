@@ -1,14 +1,14 @@
-import { CARD_CONTENT, DIALOGUE_CHOICE } from "../../data/layout";
-import { SCREEN } from "../../data/screen";
-import { dialogueLines } from "../dialogue/conversation";
+import { CARD_CONTENT, DIALOGUE_CHOICE } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { dialogueLines } from "../dialogue/conversation.ts";
 import {
   cardActions,
   cardActionsSize,
   type CardFonts,
   cardTextSize,
   contentCardLayout,
-} from "./contentCard";
-import { FONT_SCALE } from "./fontRoles";
+} from "./contentCard.ts";
+import { FONT_SCALE } from "./fontRoles.ts";
 
 export function dialogueChoiceLayout(
   fonts: CardFonts,

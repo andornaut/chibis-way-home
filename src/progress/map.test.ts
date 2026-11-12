@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { ZoneMap } from "../data/types";
-import { isLastZone, openMap, pathsFrom } from "./map";
+import type { ZoneMap } from "../data/types/index.ts";
+import { isLastZone, openMap, pathsFrom } from "./map.ts";
 
 // a, then a fork f with built paths to b and c and an unbuilt one to d, all three joining at the
 // finish z, a fork.

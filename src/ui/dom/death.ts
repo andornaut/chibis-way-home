@@ -3,11 +3,11 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import { CARD_CONTENT, DEATH_CARD } from "../../data/layout";
-import type { DeathAction } from "../input/deathInput";
-import type { StatsMetricRow } from "../layout/runStats";
-import { textButton } from "./card";
-import { createRunStats } from "./runStats";
+import { CARD_CONTENT, DEATH_CARD } from "../../data/layout.ts";
+import type { DeathAction } from "../input/deathInput.ts";
+import type { StatsMetricRow } from "../layout/runStats.ts";
+import { textButton } from "./card.ts";
+import { createRunStats } from "./runStats.ts";
 
 // The required death card in the HTML UI (death.css): over a full-area backdrop that takes every
 // press outside it, the card on the play view in art's ui-settings-card frame, with the zone's

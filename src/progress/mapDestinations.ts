@@ -1,7 +1,7 @@
 import { clampIndex } from "@andornaut/game-kit/arrays";
 
-import type { MapDestination, ZoneMap } from "../data/types";
-import { nodeOf, type OpenMap } from "./map";
+import type { MapDestination, ZoneMap } from "../data/types/index.ts";
+import { nodeOf, type OpenMap } from "./map.ts";
 
 export function destinationOf(map: ZoneMap, id: string): MapDestination {
   const destination = map.destinations.find((item) => item.id === id);

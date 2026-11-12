@@ -1,6 +1,6 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 
-import type { Point, Rect } from "../../data/types";
+import type { Point, Rect } from "../../data/types/index.ts";
 
 // A path on the map: a quadratic Bezier from one node's centre to the next.
 interface Curve {

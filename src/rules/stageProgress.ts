@@ -1,6 +1,6 @@
-import type { BirdTuning, ZoneLayout } from "../data/types";
-import { attemptProgress } from "./death";
-import type { ZoneState } from "./zone";
+import type { BirdTuning, ZoneLayout } from "../data/types/index.ts";
+import { attemptProgress } from "./death.ts";
+import type { ZoneState } from "./zone.ts";
 
 interface SectionProgress {
   readonly offset: number;
