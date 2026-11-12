@@ -5,7 +5,7 @@
 - **Stack:** Phaser 4, TypeScript and Vite.
 - **Hosting:** Cloudflare Workers static assets, no Worker script (`wrangler.jsonc`).
 - **Targets:** landscape phone browsers with on-screen touch controls, and desktop browsers with keyboard and mouse controls.
-- **Tooling:** Node 24.21.0, Vitest, ESLint with the shared house rules, Prettier, markdownlint, Dependabot, and the Test and AI attributions workflows.
+- **Tooling:** Node 24.22.2, Vitest, ESLint with the shared house rules, Prettier, markdownlint, Dependabot, and the Test and AI attributions workflows.
 
 ## Site
 

@@ -13,11 +13,11 @@ if [ -n "${CHECK_REVISION:-}" ]; then
 fi
 
 run_lint() {
+    npm run check
     npm run lint
 }
 
 run_test() {
-    npm run check
     npm test -- "$@" --maxWorkers=4
     npm run pairs -- verify --sample-ms 20000
 }
