@@ -228,7 +228,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       this.finish();
     } else if (next.kind === "choice") {
       this.choosing = true;
+      // The choice card carries the prompt alone: the panel and the footer hide under it.
       if (this.view !== undefined) {
+        this.view.panel.element.hidden = true;
         this.view.footer.hidden = true;
       }
       this.scene.launch("dialogueChoice", { choice: next.choice } satisfies DialogueChoiceData);

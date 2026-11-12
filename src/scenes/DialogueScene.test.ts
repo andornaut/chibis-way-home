@@ -146,7 +146,7 @@ it("passes P and Escape on, and takes no key or tap the modal gate refuses", () 
   expect(line()).toBe(PARAGRAPHS[0]!.text);
 });
 
-it("opens a required choice with its footer hidden, and closes with the selected answer", async () => {
+it("hides the panel and footer under a required choice, closing with its answer", async () => {
   const { opener, root, route, scene } = conversation();
   // No authored conversation ends in a choice, so this one is given one at its last line.
   const [prompt, first, second] = Object.keys(TEXT.lines);
@@ -161,10 +161,17 @@ it("opens a required choice with its footer hidden, and closes with the selected
   pressKey([], "Enter");
   expect(route.launch).toHaveBeenCalledExactlyOnceWith("dialogueChoice", { choice });
   expect(route.pause).toHaveBeenCalledOnce();
-  expect(root.querySelector<HTMLElement>(".dialogue-footer")!.hidden).toBe(true);
+  const hidden = (selector: string) => root.querySelector<HTMLElement>(selector)!.hidden;
+  expect([hidden(".dialogue-panel"), hidden(".dialogue-footer"), root.hidden]).toEqual([
+    true,
+    true,
+    false,
+  ]);
   expect(scene.pausable()).toBe(false);
   scene.choiceSelected("b");
   expect(opener.dialogueClosed).toHaveBeenCalledExactlyOnceWith("b");
+  // The choice ends the conversation, so its whole view hides with it.
+  expect(root.hidden).toBe(true);
   await settle();
 });
 
