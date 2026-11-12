@@ -16,7 +16,7 @@ Chibi's Way Home artwork, drawing pipeline and remaining art work. The [style gu
 
 ## Pipeline
 
-Generators are TypeScript on [art-kit](https://github.com/andornaut/art-kit)'s public API and run with Node's native type stripping, from the repository root: `node art/tools/<tool>.ts <command>`, for example `node art/tools/palette.ts build` or `node art/tools/fonts.ts preview OUT.png`. Run them in the plain `node:24.21.0` isolated container described in [Developing](../README.md#developing). Asset and font licences remain unchanged.
+Generators are TypeScript on [art-kit](https://github.com/andornaut/art-kit)'s public API and run with Node's native type stripping, from the repository root: `node art/tools/<tool>.ts <command>`, for example `node art/tools/palette.ts build` or `node art/tools/fonts.ts preview OUT.png`. Run them in the plain `node:24.22.2` isolated container described in [Developing](../README.md#developing). Asset and font licences remain unchanged.
 
 To bring generator output back to the checkout, run that container from the repository root with every earlier step's stdout sent to stderr (`>&2`) and end its command with the archive below, then pipe it into `tar -xf -` on the host:
 

@@ -12,7 +12,7 @@
 // checkout without .git. Builds are deterministic, so on a clean checkout every difference is a
 // generator change.
 //
-// Run from the repository root in the node:24.21.0 check container. It spawns only node and reaches
+// Run from the repository root in the node:24.22.2 check container. It spawns only node and reaches
 // no network.
 import { buildCommand, buildOrder, type BuildSets, nodeBuild } from "@andornaut/art-kit/build";
 
