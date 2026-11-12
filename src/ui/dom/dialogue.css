@@ -221,3 +221,14 @@
   inset: 0;
   pointer-events: none;
 }
+
+/* A skill tip's glyph is drawn at twice its 16px art, centred in the portrait slot with 8px clear
+   on each side, so its full-width strokes never meet the frame. */
+.dialogue-panel[data-notice="skill-tip"] {
+  --dialogue-tip-glyph-inset: 8;
+}
+
+.dialogue-panel[data-notice="skill-tip"] .dialogue-portrait {
+  box-sizing: border-box;
+  padding: calc(var(--ui-unit) * var(--dialogue-tip-glyph-inset) * 1px);
+}
