@@ -3,11 +3,17 @@
   "name": "chibis-way-home",
   // Pinned so a deploy cannot land in another account wrangler is logged in to.
   "account_id": "90f23a78b62eb9571a3fd6c296d15f30",
-  "compatibility_date": "2026-10-01",
+  "compatibility_date": "2026-11-10",
   // Static assets only: there is no Worker script, so every request is served
   // from the Vite build output, which is free and unmetered.
   "assets": {
     "directory": "./dist",
   },
+  // Served only at the custom domain: no workers.dev address. This is wrangler's default for a
+  // Worker with routes, stated explicitly.
+  "workers_dev": false,
+  // No per-version preview addresses: delivery deploys only.
+  "preview_urls": false,
+  // Served at the custom domain; Cloudflare creates its DNS record and certificate.
   "routes": [{ "pattern": "chibi.adabekele.com", "custom_domain": true }],
 }
