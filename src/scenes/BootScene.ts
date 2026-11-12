@@ -4,12 +4,13 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
+import type { ProgressHandle } from "@andornaut/game-kit/progressState";
 import { type Loader, Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json";
 import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
 import { TILE } from "../data/screen";
-import { startupLoading } from "../loading/progress";
+import { beginStartupChecks, startupLoading } from "../loading/progress";
 import { launchReady } from "../pwa";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
@@ -26,6 +27,9 @@ const MANIFEST = manifestJson as ArtManifest;
 // tag, looping unless the manifest lists it as played once, then, once launchReady resolves,
 // opens the start screen and launches the pause scene beside it.
 export class BootScene extends Scene {
+  // The startup checks' pending phase, after the measured file load.
+  private startupChecks?: ProgressHandle;
+
   constructor() {
     super("boot");
   }
@@ -34,7 +38,9 @@ export class BootScene extends Scene {
   // remaining game art from shared atlas pages. create filters every texture (textureFilters.ts).
   preload(): void {
     this.load.on("progress", (fraction: number) => startupLoading.progress(fraction));
-    this.load.once("complete", () => startupLoading.progress(undefined));
+    this.load.once("complete", () => {
+      this.startupChecks = beginStartupChecks();
+    });
     this.load.on("loaderror", (file: Loader.File) => {
       console.warn(`Asset failed to load: ${file.key} (${file.url})`);
     });
@@ -99,7 +105,7 @@ export class BootScene extends Scene {
           if (this.game.canvas.style.visibility === "hidden") {
             this.game.events.once("postrender", rendered);
           } else {
-            startupLoading.finish();
+            (this.startupChecks ?? startupLoading).finish();
           }
         };
         this.game.events.once("postrender", rendered);
