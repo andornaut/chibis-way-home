@@ -1,7 +1,7 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 import { containsPoint } from "@andornaut/game-kit/rect";
+import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 
-import { HIT_RULE } from "../../data/layout";
 import type { Point, Rect } from "../../data/types";
 
 // Every button's press area reaches past its drawn button on every side by HIT_RULE's margin,

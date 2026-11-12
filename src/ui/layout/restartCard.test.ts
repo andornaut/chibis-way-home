@@ -1,11 +1,12 @@
 import { containsPoint, rectsOverlap } from "@andornaut/game-kit/rect";
 import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import buttonSheet from "../../../public/art/sprites/ui-button.json";
 import resumeSheet from "../../../public/art/sprites/ui-resume.json";
-import { HIT_RULE, PLAY_MARK } from "../../data/layout";
+import { PLAY_MARK } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";

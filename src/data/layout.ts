@@ -7,16 +7,6 @@ import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 
 import type { MapNode, Point, Rect, Size } from "./types";
 
-// Press areas: every drawn button's press area reaches past it on every side by marginShare of
-// its shorter side, clamped to leastMargin and mostMargin, then grows to at least minTarget on
-// each axis about its centre.
-export const HIT_RULE = {
-  leastMargin: 6,
-  marginShare: 0.25,
-  minTarget: 48,
-  mostMargin: 16,
-} as const;
-
 // The clear circle about Use's and Jump's centres that the move hint never reaches into.
 export const TOUCH_CIRCLE_RADIUS = 63;
 

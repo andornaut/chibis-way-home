@@ -1,6 +1,6 @@
+import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
-import { HIT_RULE } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Rect } from "../../data/types";
 import { hitAround, hitMargin, type PressArea, pressedArea } from "./hitAreas";

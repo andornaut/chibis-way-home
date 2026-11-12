@@ -1,18 +1,13 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import {
-  CARD_CONTENT,
-  CONTROL_FRAME_INSET,
-  HIT_RULE,
-  HUD_EDGE,
-  TEXT_BUTTON,
-} from "../../data/layout";
+import { CARD_CONTENT, CONTROL_FRAME_INSET, HUD_EDGE, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { SkillId } from "../../data/types";
