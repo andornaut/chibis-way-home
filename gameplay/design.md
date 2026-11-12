@@ -48,15 +48,15 @@ The named cast uses shared data-driven behaviours.
 
 ## Rules
 
-| Term               | Meaning                                                        |
-| ------------------ | -------------------------------------------------------------- |
-| Zone               | A themed map destination containing catalogued stages          |
-| Stage              | The playable level, represented by `ZonePlan` in code          |
-| Encounter section  | A distinct enemy encounter segment within a stage              |
-| Chunk              | A hand-designed unit used to assemble the randomized layout    |
-| Opening and ending | The fixed caps around a stage's randomized middle              |
-| Run                | One generated stage layout and its seed                        |
-| Attempt            | One try to complete the stage within a run                     |
+| Term               | Meaning                                                     |
+| ------------------ | ----------------------------------------------------------- |
+| Zone               | A themed map destination containing catalogued stages       |
+| Stage              | The playable level, represented by `ZonePlan` in code       |
+| Encounter section  | A distinct enemy encounter segment within a stage           |
+| Chunk              | A hand-designed unit used to assemble the randomized layout |
+| Opening and ending | The fixed caps around a stage's randomized middle           |
+| Run                | One generated stage layout and its seed                     |
+| Attempt            | One try to complete the stage within a run                  |
 
 ### Screen and controls
 
