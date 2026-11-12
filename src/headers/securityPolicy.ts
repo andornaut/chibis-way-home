@@ -49,10 +49,11 @@ export const FILE_RULES = [
 ] as const;
 
 // Every page's policy before its rule's sources and hashes are added. Phaser loads images
-// through blob: URLs and its default textures as data: URIs.
+// through blob: URLs and its default textures as data: URIs. Cloudflare Web Analytics injects
+// its beacon script into every page, which reports to its own origin.
 export const BASE_DIRECTIVES: Directives = {
   "base-uri": ["'self'"],
-  "connect-src": ["'self'"],
+  "connect-src": ["'self'", "https://cloudflareinsights.com"],
   "default-src": ["'self'"],
   "font-src": ["'self'"],
   "form-action": ["'self'"],
@@ -61,7 +62,7 @@ export const BASE_DIRECTIVES: Directives = {
   "manifest-src": ["'self'"],
   "media-src": ["'self'", "blob:"],
   "object-src": ["'none'"],
-  "script-src": ["'self'"],
+  "script-src": ["'self'", "https://static.cloudflareinsights.com"],
   "style-src": ["'self'"],
   "worker-src": ["'self'"],
 };
