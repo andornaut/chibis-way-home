@@ -32,9 +32,10 @@ import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts
 const MAP = "map";
 const RESTART = "restart";
 
-// The screen's buttons, in the order the keyboard's focus moves through them.
+// The screen's buttons, in the order the keyboard's focus moves through them: Continue then
+// Restart, though Restart is drawn on the left.
 type Control = "continue" | "restart";
-const CONTROLS: readonly Control[] = ["restart", "continue"];
+const CONTROLS: readonly Control[] = ["continue", "restart"];
 
 // PLACEHOLDER: the celebration after he clears a last zone (one whose path leads on to the map's
 // finish), every time he clears it, until art draws one: the settings card's parts over ink,

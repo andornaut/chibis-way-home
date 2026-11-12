@@ -25,6 +25,8 @@ import { fitPlayCamera, playPoint } from "./playCamera.ts";
 import { saveOpeningSeen } from "./save.ts";
 
 type Action = "continue" | "skip";
+// The keyboard's focus order: Continue then Skip, though Skip is drawn on the left.
+const ACTIONS: readonly Action[] = ["continue", "skip"];
 
 export class OpeningScene extends Scene {
   private playback!: ReturnType<typeof createOpeningPlayback>;
@@ -94,7 +96,7 @@ export class OpeningScene extends Scene {
       const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
       if (action === "next" || action === "previous") {
         event.preventDefault();
-        this.focus = stepFocus(["skip", "continue"] as const, this.focus, action);
+        this.focus = stepFocus(ACTIONS, this.focus, action);
         this.renderControls();
       } else if (action === "press") {
         event.preventDefault();
@@ -156,7 +158,7 @@ export class OpeningScene extends Scene {
 
   private actionAt(at: Point): Action | undefined {
     return pressedArea(
-      (["skip", "continue"] as const).map((key) => ({
+      ACTIONS.map((key) => ({
         art: this.layout[key].button,
         hit: this.layout[key].hit,
         key,
@@ -185,7 +187,7 @@ export class OpeningScene extends Scene {
     if (this.playback.frame().finished) {
       return;
     }
-    for (const action of ["skip", "continue"] as const) {
+    for (const action of ACTIONS) {
       pressTextButton(this.buttons[action], this.press?.action === action && !this.press.cancelled);
     }
     this.ring = ringFocus(this, this.ring, this.focus ? this.layout[this.focus].button : undefined);

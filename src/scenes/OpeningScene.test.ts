@@ -77,7 +77,7 @@ vi.mock("./playCamera.ts", () => ({
   playPoint: (_scene: unknown, pointer: { x: number; y: number }) => pointer,
 }));
 
-import { pressTextButton } from "./cardParts.ts";
+import { pressTextButton, ringFocus } from "./cardParts.ts";
 import { modalInput } from "./modalInput.ts";
 import { OpeningScene } from "./OpeningScene.ts";
 import { saveOpeningSeen } from "./save.ts";
@@ -173,4 +173,18 @@ it("retains nonnull texture backgrounds and disposes the previous shot image", (
   key(scene, "Enter");
   expect(image.destroy).toHaveBeenCalledOnce();
   expect(scene.add.image).toHaveBeenCalledTimes(2);
+});
+
+it("moves the keyboard's focus through Continue then Skip, wrapping, and presses the focused one", () => {
+  const scene = opening();
+  const layout = openingLayout(CARD_FONTS, TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!);
+  const ringed = () => vi.mocked(ringFocus).mock.lastCall?.[2];
+  const steps = ["Tab", "Tab", "Tab"].map((value) => {
+    key(scene, value);
+    return ringed();
+  });
+  expect(steps).toEqual([layout.continue.button, layout.skip.button, layout.continue.button]);
+  key(scene, "Tab");
+  key(scene, "Enter");
+  expect(saveOpeningSeen).toHaveBeenCalledOnce();
 });

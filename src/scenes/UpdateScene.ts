@@ -42,16 +42,17 @@ export function installUpdateModalBridge(game: Game): void {
 }
 
 // The card's buttons, in the order the keyboard's focus moves through them; the close X follows.
+// ui.css shows Cancel on the left.
 type ButtonAction = "accept" | "cancel";
 type Action = ButtonAction | "close";
-const BUTTONS: readonly ButtonAction[] = ["cancel", "accept"];
+const BUTTONS: readonly ButtonAction[] = ["accept", "cancel"];
 
 // The card that offers a waiting update, over every other scene: its title, Cancel, Update now in
 // art's primary button, and a close X. Update now accepts the offer; Cancel, the X, back, Escape
 // and a tap outside the card defer it. The card is HTML in the UI layer (src/ui/dom/card.ts),
 // shown once the dim of the scenes under it is ready, and its buttons act only from then: a
 // button acts when a press lands on it and lifts on it; Tab and the arrows move the keyboard's
-// focus through Cancel, Update now and the X, starting on the card itself, and Enter and Space
+// focus through Update now, Cancel and the X, starting on the card itself, and Enter and Space
 // press the focused one (the kit's modalLayer). P does nothing here.
 export class UpdateScene extends Scene {
   private readyToInteract = false;

@@ -101,14 +101,14 @@ it("shows the offer as an alert dialog named from TEXT, focused on the card", as
     modal: dialog.getAttribute("aria-modal"),
     name: named(dialog.getAttribute("aria-labelledby")),
   }).toEqual({
-    buttons: [TEXT.update.cancel, TEXT.update.accept, TEXT.update.close],
+    buttons: [TEXT.update.accept, TEXT.update.cancel, TEXT.update.close],
     focused: true,
     modal: "true",
     name: TEXT.update.title,
   });
 });
 
-it("moves the keyboard's focus through Cancel, Update now and the X, wrapping, both ways", async () => {
+it("moves the keyboard's focus through Update now, Cancel and the X, wrapping, both ways", async () => {
   const { key } = await openCard();
   const { accept, cancel, close } = TEXT.update;
   key("Tab", { shiftKey: true });
@@ -119,7 +119,7 @@ it("moves the keyboard's focus through Cancel, Update now and the X, wrapping, b
       return focusedName();
     },
   );
-  expect([back, ...steps]).toEqual([close, cancel, accept, close, cancel, close, accept]);
+  expect([back, ...steps]).toEqual([close, accept, cancel, close, accept, close, cancel]);
 });
 
 it("presses only the focused control: Update now accepts, Cancel and the X defer", async () => {

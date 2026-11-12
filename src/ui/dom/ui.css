@@ -159,6 +159,23 @@
   outline: none;
 }
 
+/* A row of a primary then a secondary button shows the secondary on the left and the primary on
+   the right, though the primary leads the focus order: each press area reaches the full margin on
+   its outer side and half the gap on its inner. */
+.ui-card-actions > .ui-text-button-primary:first-child:nth-last-child(2) {
+  grid-row: 1;
+  grid-column: 2;
+  padding-right: var(--hit);
+  padding-left: var(--half-gap);
+}
+
+.ui-card-actions > .ui-text-button-primary:first-child:nth-last-child(2) + .ui-text-button {
+  grid-row: 1;
+  grid-column: 1;
+  padding-right: var(--half-gap);
+  padding-left: var(--hit);
+}
+
 /* Art's ui-button face, its label centred on the face above the lip and clear of its sides by
    the button inset. */
 .ui-text-button-face {
