@@ -27,7 +27,7 @@ describe("native update offer bridge", () => {
     },
   );
 
-  it("disconnects a destroyed native modal bridge without replacing shared visit state", () => {
+  it("disconnects a destroyed native modal bridge without replacing shared dismissal state", () => {
     const offer = createUpdateOffer(vi.fn(), vi.fn());
     const shown = vi.fn();
     const unsubscribe = offer.subscribe(shown);

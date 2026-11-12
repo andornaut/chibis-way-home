@@ -2,11 +2,10 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, expect, it, vi } from "vitest";
 
-const lifecycle = vi.hoisted(() => ({ begin: vi.fn(), cover: vi.fn(), shown: vi.fn() }));
+const lifecycle = vi.hoisted(() => ({ cover: vi.fn(), shown: vi.fn() }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "back-pressed" },
-  beginStartUpdateVisit: lifecycle.begin,
   coverZone: lifecycle.cover,
   exitShown: () => false,
   startScreenShown: lifecycle.shown,
@@ -30,7 +29,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("begins one offer visit per Start create, retains it on resume, and covers it before opening cards", () => {
+it("shows Start on each create, not again on resume, and covers it before opening cards", () => {
   vi.stubGlobal("window", new EventTarget());
   const events = new EventEmitter();
   const launch = vi.fn();
@@ -53,7 +52,6 @@ it("begins one offer visit per Start create, retains it on resume, and covers it
   };
   scene.create();
   expect(launch).not.toHaveBeenCalled();
-  expect(lifecycle.begin).toHaveBeenCalledOnce();
   expect(lifecycle.shown).toHaveBeenCalledExactlyOnceWith(true);
   events.emit("resume");
   for (const card of ["settings", "restart"] as const) {
@@ -65,11 +63,10 @@ it("begins one offer visit per Start create, retains it on resume, and covers it
     scene[card === "settings" ? "settingsClosed" : "restartClosed"]();
     expect(lifecycle.cover).toHaveBeenLastCalledWith("startCard", false);
   }
-  expect(lifecycle.begin).toHaveBeenCalledOnce();
+  expect(lifecycle.shown).toHaveBeenCalledOnce();
   events.emit("shutdown");
   expect(lifecycle.shown).toHaveBeenLastCalledWith(false);
   scene.create();
-  expect(lifecycle.begin).toHaveBeenCalledTimes(2);
   expect(lifecycle.shown).toHaveBeenLastCalledWith(true);
   events.emit("shutdown");
   expect(lifecycle.shown).toHaveBeenLastCalledWith(false);

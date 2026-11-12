@@ -128,16 +128,11 @@ export function zoneShown(): void {
   home?.shown();
 }
 
-// A new Start scene begins a visit; resuming it or closing a covering card does not.
-export function beginStartUpdateVisit(): void {
-  offlinePlay?.flow.beginOfferVisit();
-}
-
 export function startScreenShown(shown: boolean): void {
   home?.startShown(shown);
 }
 
-// A game or Start-owned card suppresses offers without changing their visit dismissal.
+// A game or Start-owned card suppresses offers without changing their dismissal.
 export function coverZone(what: HomeCover, covering: boolean): void {
   home?.cover(what, covering);
 }

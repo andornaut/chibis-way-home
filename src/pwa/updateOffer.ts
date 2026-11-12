@@ -1,4 +1,5 @@
-// The shared flow owns waiting workers and visit dismissal; this bridge guards visible controls.
+// The shared flow owns waiting workers and the page session's dismissal; this bridge guards
+// visible controls.
 export function createUpdateOffer(accept: () => void, dismiss: () => void) {
   let visible = false;
   let listener: ((visible: boolean) => void) | undefined;

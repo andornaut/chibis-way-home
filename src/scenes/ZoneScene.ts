@@ -10,6 +10,7 @@ import { drawProgressBar } from "@andornaut/game-kit/progress/phaser/drawProgres
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { clampInto } from "@andornaut/game-kit/rect";
 import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
+import { cullToCameraView } from "@andornaut/game-kit/view/phaser/tilemapCull";
 import {
   clientPoint,
   listenPagePresses,
@@ -230,7 +231,6 @@ import {
   wholeRunStats,
   zoneVisitStats,
 } from "./save.ts";
-import { cullToView } from "./terrainCull.ts";
 import { createTetherArt } from "./tetherArt.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 import { createTouchChrome } from "./touchChrome.ts";
@@ -1589,7 +1589,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (!layer) {
       throw new Error(`No tilemap layer for ${key}`);
     }
-    cullToView(TILE, layer);
+    cullToCameraView(layer);
     layer.setDepth(DEPTHS.terrain);
     for (const { col, index, row } of terrainTiles(tileset, map.width, map.height, area.terrain)) {
       layer.putTileAt(index, col, row);

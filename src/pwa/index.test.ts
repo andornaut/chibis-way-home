@@ -9,7 +9,6 @@ const offline = vi.hoisted(() => {
   const play = {
     flow: {
       accept: vi.fn(),
-      beginOfferVisit: vi.fn(),
       dismissOffer: vi.fn(),
       requireNewer: vi.fn(),
       setOfferVisible: vi.fn(),
@@ -67,7 +66,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("wires updates to prepared registration and explicit Start visits", async () => {
+it("wires updates to prepared registration and the shown Start screen", async () => {
   const pwa = await import("./index.ts");
   pwa.setupPhoneApp();
   const options = offline.start.mock.calls[0]![0];
@@ -77,21 +76,16 @@ it("wires updates to prepared registration and explicit Start visits", async () 
   pwa.coverZone("loading", false);
   expect(offline.play.registrationReady).toHaveBeenCalledOnce();
   expect(offline.play.flow.setOfferVisible).not.toHaveBeenCalled();
-  pwa.beginStartUpdateVisit();
   pwa.startScreenShown(true);
-  expect(offline.play.flow.beginOfferVisit).toHaveBeenCalledOnce();
   expect(offline.play.flow.setOfferVisible).toHaveBeenLastCalledWith(true);
   pwa.coverZone("startCard", true);
   pwa.coverZone("startCard", false);
   pwa.startScreenShown(false);
   pwa.startScreenShown(true);
-  expect(offline.play.flow.beginOfferVisit).toHaveBeenCalledOnce();
   options.onUpdateShown(true);
   pwa.updateOffer.defer();
   expect(offline.play.flow.dismissOffer).toHaveBeenCalledOnce();
   expect(offline.play.flow.accept).not.toHaveBeenCalled();
-  pwa.beginStartUpdateVisit();
-  expect(offline.play.flow.beginOfferVisit).toHaveBeenCalledTimes(2);
   options.onUpdateShown(true);
   pwa.updateOffer.accept();
   expect(offline.play.flow.accept).toHaveBeenCalledOnce();
@@ -216,12 +210,11 @@ async function offerShownOnStart(controller: unknown) {
   const offered: boolean[] = [];
   pwa.updateOffer.subscribe((visible) => offered.push(visible));
   pwa.zoneShown();
-  pwa.beginStartUpdateVisit();
   pwa.startScreenShown(true);
   await settled();
   fake.install();
   fake.registration.dispatchEvent(new Event("updatefound"));
-  return { fake, offered };
+  return { fake, offered, pwa };
 }
 
 it("offers a controlled page's update only once the new version is stored", async () => {
@@ -229,6 +222,21 @@ it("offers a controlled page's update only once the new version is stored", asyn
   expect(offered.at(-1)).toBe(false);
   fake.finish(true);
   expect(offered.at(-1)).toBe(true);
+});
+
+it("keeps a dismissed offer hidden for the page session, across Start screens and versions", async () => {
+  const { fake, offered, pwa } = await offerShownOnStart({});
+  fake.finish(true);
+  expect(offered.at(-1)).toBe(true);
+  pwa.updateOffer.defer();
+  expect(offered.at(-1)).toBe(false);
+  pwa.startScreenShown(false);
+  pwa.startScreenShown(true);
+  await settled();
+  fake.install();
+  fake.registration.dispatchEvent(new Event("updatefound"));
+  fake.finish(true);
+  expect(offered.at(-1)).toBe(false);
 });
 
 it("never offers an update on a page no version controls", async () => {

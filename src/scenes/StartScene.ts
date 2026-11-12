@@ -5,13 +5,7 @@ import { type GameObjects, type Input, Scene } from "phaser";
 import { TEXT } from "../data/text.ts";
 import type { Rect } from "../data/types/index.ts";
 import { openingDestination } from "../progress/index.ts";
-import {
-  beginStartUpdateVisit,
-  coverZone,
-  exitShown,
-  PHONE_EVENTS,
-  startScreenShown,
-} from "../pwa/index.ts";
+import { coverZone, exitShown, PHONE_EVENTS, startScreenShown } from "../pwa/index.ts";
 import {
   focusKeyAction,
   type IconButtonLayout,
@@ -90,7 +84,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
 
   create(): void {
     this.starting = false;
-    beginStartUpdateVisit();
     fitPlayCamera(this);
     this.pressed = undefined;
     this.card = undefined;
