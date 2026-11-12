@@ -61,6 +61,8 @@ export interface GameText {
     readonly cancel: string;
     // The close X's accessible name.
     readonly close: string;
+    // The message shown when a newer version wrote the save and none can be downloaded.
+    readonly connect: string;
     readonly title: string;
   };
   readonly death: DeathText;
