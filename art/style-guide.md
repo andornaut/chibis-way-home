@@ -149,7 +149,7 @@ Each V1 destination has one muted primary, chosen for its materials and atmosphe
 | Apartment            | zone-red      | #d0a7aa | Dusty rose apartment interior            |
 
 - Application: the primary dominates each map region's silhouette and backs its icon. Essential outlines and symbols remain ink or dslate, so the pastel fill is not responsible for contrast. Locked and unbuilt markers retain the coloured illustration around them.
-- Progress: loading fill uses the same primary on a dslate track. The in-play stage strip uses its separate yellow/amber palette. Standard primary buttons remain dslate with white text. Hazard red remains the existing saturated `red`; muted `zone-red` is the apartment interior colour and never signals lethal contact.
+- Progress: the [loading bar](#loading-bar) fill uses the same primary on a dslate track. The in-play stage strip uses its separate yellow/amber palette. Standard primary buttons remain dslate with white text. Hazard red remains the existing saturated `red`; muted `zone-red` is the apartment interior colour and never signals lethal contact.
 - Ramps: every zone primary has one muted `-shade` colour, then joins a house ramp. The six bases and six shades extend the house palette without changing any existing colour. `palette.ts` exports their darker and two-step dim mappings with every other palette colour.
 - Planned stage use: backgrounds follow the destination's primary family, with far silhouettes low in contrast and nearer layers using its shade. Quiet secondary colours provide restrained highlights. Far scenery scrolls more slowly than the gameplay plane; attached ledges, doors and props stay with terrain. This is an art plan for later themes, not a claim that those stages exist.
 
@@ -427,6 +427,15 @@ The update notice is an ordinary modal offered only on the game's own Start scre
 - Fit: apply the [shared modal sizing rule](controls.md#modal-content-fitting), centred on both axes, with a minimum width of 50% of the full logical viewport capped at the safe available view, 16px ordinary body padding and the close face's separate 6px top-right inset. Height remains content-fitted. The header accounts for the entire positioned 48px close press target, not only its face. Keep at least an 8px gap between the close target's bottom and each action's own expanded press target, not merely its 48px drawn face. Centre the title across the card, reserving the full target and its clearance symmetrically.
 - HTML card: an alert dialog on the HTML UI layer over every scene, with secondary Cancel, primary Update now and the close X. The browser fits it to the shared rule; the remaining measurement terms below are what that fit holds.
 - Measurement: derive the header from the actual title ink plus the mirrored 50px close-target reservations. Fit equal-width actions to the widest visible label with standard content padding, 16px apart, and place their complete expanded press targets below the y50 clearance. Apply the shared minimum-width rule to the measured content width, excluding outer padding from its input. Derive the card height from the actual bounds and ordinary body padding, without a minimum height. Longer copy grows the frame rather than shrinking the font or forcing a shared modal size.
+
+### Loading bar
+
+The loading bar is a 2px strip along the top of the 720px view, with no border: the loading zone's primary fill on a `dslate` track, recoloured for each stage's zone.
+
+- Scale: the page's pre-script bar draws at 1 CSS px per frame pixel; the mounted bar scales by the view's fractional fit (`--loading-scale`), as the world art and the HTML UI do, so its edges can fall between device pixels. Its size and edges are not snapped.
+- Measured load: the fill grows with the reported progress, holds full for 250ms and hides before the bar shows anything else.
+- Unknown load (the startup checks, stage preparation and the background install): a travelling segment a quarter of the track wide crosses it every 1.5s, stepping one whole frame pixel at a time. Reduced motion keeps the same travelling segment.
+- Idle: nothing shows. While a modal is open, its dim and panels cover the bar.
 
 ## Map
 
