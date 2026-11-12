@@ -1,10 +1,10 @@
 import { inkWidth, laidGlyphs, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
-import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+import { BUTTON_GAP, STACK_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
+import { CARD_CONTENT } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { CARD_TEXT_SCALE } from "./cardFrame";
@@ -58,13 +58,13 @@ describe("measured content cards", () => {
     expect(rect.x + rect.width / 2).toBe(result.card.x + result.card.width / 2);
   });
 
-  it("stacks action faces the stack gap apart", () => {
+  it("stacks action faces the kit's stack gap apart", () => {
     const labels = [TEXT.pause.home, TEXT.death.retry];
     const size = cardActionsSize(TITLE, "stack", labels);
     const faces = cardActions(TITLE, "stack", { ...size, x: 0, y: 0 }, labels).map(
       ({ button }) => button,
     );
-    expect(faces[1]!.y - faces[0]!.y - faces[0]!.height).toBe(TEXT_BUTTON.stackGap);
+    expect(faces[1]!.y - faces[0]!.y - faces[0]!.height).toBe(STACK_BUTTON_GAP);
     expect(faces[1]!.y + faces[1]!.height).toBe(size.height);
   });
 

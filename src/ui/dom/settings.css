@@ -7,11 +7,11 @@
   display: none;
 }
 
-/* The rows as wide as the widest, stacked the stack button gap apart. They are their own press
+/* The rows as wide as the widest, stacked the kit's stack button gap apart. They are their own press
    areas, so the first starts where the header's text buttons' press areas would. */
 .settings-rows {
   display: grid;
-  row-gap: calc(var(--ui-unit) * var(--settings-row-gap) * 1px);
+  row-gap: var(--ui-stack-button-gap);
   margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px);
 }
 

@@ -3,7 +3,6 @@ import { createRequire } from "node:module";
 
 import { expect, it } from "vitest";
 
-import { TEXT_BUTTON } from "../../data/layout";
 import { achievementsCardProperties } from "../layout/achievementsCard";
 import { SETTINGS_LAYOUT } from "../layout/settingsCard";
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard";
@@ -71,7 +70,7 @@ it.each(SHEETS.filter(([name]) => name !== "ui.css"))(
 
 // Neighbouring button faces side by side sit the kit's button gap apart, card actions and stage
 // faces alike, each press area reaching half the gap toward the next; the settings rows stack the
-// stack gap apart. The pagers' page count is not a button, so its spacing stays the card gap.
+// kit's stack gap apart. The pagers' page count is not a button, so its spacing stays the card gap.
 it("spaces neighbouring buttons by the button and stack gaps", () => {
   const sheet = (name: string) => SHEETS.find(([sheetName]) => sheetName === name)![1];
   const rule = (css: string, selector: string) =>
@@ -80,9 +79,8 @@ it("spaces neighbouring buttons by the button and stack gaps", () => {
   expect(rule(sheet("ui.css"), ".ui-card-actions")).toContain(halfGap);
   expect(rule(sheet("stageSelect.css"), ".stage-select-page")).toContain(halfGap);
   expect(rule(sheet("settings.css"), ".settings-rows")).toContain(
-    "row-gap: calc(var(--ui-unit) * var(--settings-row-gap) * 1px);",
+    "row-gap: var(--ui-stack-button-gap);",
   );
-  expect(SETTINGS_LAYOUT["--settings-row-gap"]).toBe(TEXT_BUTTON.stackGap);
   expect(rule(sheet("achievements.css"), ".achievements-pager")).toContain(
     "--half-gap: calc(var(--ui-unit) * var(--card-gap) / 2 * 1px);",
   );

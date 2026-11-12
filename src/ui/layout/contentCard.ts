@@ -2,6 +2,7 @@ import { wrapWords } from "@andornaut/game-kit/lines";
 import { modalWidth } from "@andornaut/game-kit/modalLayout";
 import { insetRect } from "@andornaut/game-kit/rect";
 import { type BitmapFont, inkWidth } from "@andornaut/game-kit/text/bitmapFont";
+import { STACK_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 
 import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
@@ -167,7 +168,7 @@ export function cardActionsSize(
         width: labels.length * width + (labels.length - 1) * TEXT_BUTTON.gap,
       }
     : {
-        height: labels.length * TEXT_BUTTON.height + (labels.length - 1) * TEXT_BUTTON.stackGap,
+        height: labels.length * TEXT_BUTTON.height + (labels.length - 1) * STACK_BUTTON_GAP,
         hitOutset,
         inkTop: 0,
         width,
@@ -280,7 +281,7 @@ export function cardActions(
       height: TEXT_BUTTON.height,
       width,
       x: rect.x + (axis === "row" ? index * (width + TEXT_BUTTON.gap) : 0),
-      y: rect.y + (axis === "stack" ? index * (TEXT_BUTTON.height + TEXT_BUTTON.stackGap) : 0),
+      y: rect.y + (axis === "stack" ? index * (TEXT_BUTTON.height + STACK_BUTTON_GAP) : 0),
     }),
   );
 }
