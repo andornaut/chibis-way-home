@@ -177,10 +177,10 @@ async function precacheShown(controller: unknown) {
   offline.start.mockImplementationOnce(kit.startOfflinePlay);
   const fake = kitPage(controller);
   offline.page = fake.page;
-  const { precacheProgress } = await import("../loading/progress");
+  const { backgroundProgress } = await import("../loading/progress");
   const pwa = await import("./index");
   const shown: boolean[] = [];
-  precacheProgress.subscribe(({ active }) => shown.push(active));
+  backgroundProgress.subscribe(({ active }) => shown.push(active));
   pwa.setupPhoneApp();
   await settled();
   return { fake, pwa, shown };

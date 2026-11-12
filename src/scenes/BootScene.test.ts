@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const startup = vi.hoisted(() => ({ load: vi.fn(), mount: vi.fn(), requireNewer: vi.fn() }));
 const art = vi.hoisted(() => ({ atlas: null as null | object }));
@@ -14,11 +14,30 @@ vi.mock("../../public/art/manifest.json", () => ({ default: manifest }));
 vi.mock("phaser", async () => {
   const { sceneStub } = await import("@andornaut/game-kit/testing/phaser/sceneStub");
   return {
+    Loader: {
+      Events: {
+        ADD: "addfile",
+        COMPLETE: "complete",
+        FILE_LOAD: "load",
+        FILE_LOAD_ERROR: "loaderror",
+        START: "start",
+      },
+    },
     Scene: class {
       constructor() {
-        Object.assign(this, sceneStub(vi.fn));
+        const stub = sceneStub(vi.fn);
+        // The loader state the kit's loader watch reads.
+        Object.assign(stub.load, {
+          isLoading: () => false,
+          list: new Set(),
+          maxRetries: 2,
+          start: vi.fn(),
+          xhr: { timeout: 30000 },
+        });
+        Object.assign(this, stub);
       }
     },
+    Scenes: { Events: { DESTROY: "destroy", SHUTDOWN: "shutdown" } },
     Textures: { FilterMode: { LINEAR: 0, NEAREST: 1 } },
   };
 });
@@ -44,10 +63,14 @@ vi.mock("./atlasArt", () => ({
 
 import { type ArtManifest, atlasPageKey } from "../assets";
 import { TEXT } from "../data/text";
-import { loadingProgress } from "../loading/progress";
+import { backgroundProgress, loadingProgress } from "../loading/progress";
 import { requiredUpdate } from "../pwa";
 import { BootScene } from "./BootScene";
 import { textureFilters } from "./textureFilters";
+
+beforeEach(() => {
+  vi.stubGlobal("window", { clearTimeout, location: { search: "" }, setTimeout });
+});
 
 it("loads standalone manifest images in development and atlas mode", () => {
   for (const atlas of [null, {}]) {
@@ -106,16 +129,65 @@ it("classifies every texture it loads in development and atlas mode", () => {
   Object.assign(manifest, original);
 });
 
-it("names the key and URL of an asset that fails to load", () => {
+// A file as the loader hands it to its events.
+function loaderFile(key: string) {
+  return { key, retryAttempts: 0, type: "image", url: `${key}.png`, xhrSettings: {} };
+}
+
+it("measures the boot load as waited, its share never moving back as files are added", () => {
+  art.atlas = null;
+  const scene = new BootScene();
+  scene.preload();
+  const shares: number[] = [];
+  const off = loadingProgress.subscribe(({ active, value }) => {
+    if (active && value !== undefined) {
+      shares.push(value);
+    }
+  });
+  Object.assign(scene.load, { list: new Set([loaderFile("a"), loaderFile("b")]) });
+  scene.load.emit("start");
+  scene.load.emit("load", loaderFile("a"));
+  scene.load.emit("addfile", "c", "image", scene.load, loaderFile("c"));
+  scene.load.emit("load", loaderFile("b"));
+  scene.load.emit("load", loaderFile("c"));
+  scene.load.emit("complete");
+  off();
+  expect(shares.at(-1)).toBe(1);
+  expect(shares).toContain(0.5);
+  expect(shares.every((share, index) => index === 0 || share >= shares[index - 1]!)).toBe(true);
+});
+
+it("logs a failed boot file and queues it again in a later run that shows no bar", () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("window", { clearTimeout, location: { search: "" }, setTimeout });
   art.atlas = null;
   const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
   const scene = new BootScene();
   scene.preload();
-  scene.load.emit("loaderror", { key: "standalone-image", url: "art/images/standalone.png" });
+  Object.assign(scene.load, { list: new Set([loaderFile("a")]) });
+  scene.load.emit("start");
+  scene.load.emit("loaderror", loaderFile("a"));
+  scene.load.emit("complete");
   expect(warn).toHaveBeenCalledExactlyOnceWith(
-    "Asset failed to load: standalone-image (art/images/standalone.png)",
+    "Loading a.png failed after 3 attempts; retrying later",
   );
+  const measured: number[] = [];
+  const off = loadingProgress.subscribe(({ value }) => {
+    if (value !== undefined) {
+      measured.push(value);
+    }
+  });
+  vi.mocked(scene.load.image).mockClear();
+  vi.advanceTimersByTime(15000);
+  expect(scene.load.image).toHaveBeenCalledExactlyOnceWith("a", "a.png");
+  expect(scene.load.start).toHaveBeenCalledOnce();
+  scene.load.emit("start");
+  scene.load.emit("load", loaderFile("a"));
+  scene.load.emit("complete");
+  off();
+  expect(measured).toEqual([]);
   warn.mockRestore();
+  vi.useRealTimers();
 });
 
 afterEach(() => {
@@ -187,7 +259,7 @@ it("updates by itself for a newer save, idle, and never opens Start or the pause
 it("shows the travelling loading bar while the forced update downloads", async () => {
   await bootNewer();
   const states: (number | undefined)[] = [];
-  loadingProgress.subscribe(({ active, value }) => states.push(active ? value : -1));
+  backgroundProgress.subscribe(({ active, value }) => states.push(active ? value : -1));
   requiredUpdate.report("updating");
   expect(states.at(-1)).toBeUndefined();
   expect(startup.mount).not.toHaveBeenCalled();

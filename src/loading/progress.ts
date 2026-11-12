@@ -1,4 +1,5 @@
 import {
+  createLayeredProgress,
   createProgressState,
   type ProgressHandle,
   type ProgressSnapshot,
@@ -8,22 +9,24 @@ import { createDomProgressBar } from "@andornaut/game-kit/web/progress/dom/progr
 import { SCREEN } from "../data/screen";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 
-// The bar shows only loads the player waits for, each through its own entry point below: boot
-// (startupLoading, then beginStartupChecks), entering a zone (beginStageLoading), the first
-// visit's precache (beginPrecache) and a forced update (beginRequiredUpdate). Loads in the
-// background during play, such as an update's install, have no entry point and never show it.
+// The bar shows only loads the player waits for, each through its own entry point: boot (the
+// pre-script startupLoading, then BootScene's file load, which its loader watch measures as
+// waited, then beginStartupChecks) and entering a zone (beginStageLoading) in the foreground; the
+// first visit's precache (beginPrecache) and a forced update (beginRequiredUpdate) in the
+// background, which shows while no foreground load runs (the kit's createLayeredProgress).
+// Loads in the background during play, such as an update's install or a loader retry round,
+// have no entry point and never show it.
 export const loadingProgress = createProgressState();
-// The first visit's precache, which the bar shows while no foreground load runs.
-export const precacheProgress = createProgressState();
+export const backgroundProgress = createProgressState();
+// The page's own load before Phaser's loader runs: unknown work, which the boot's waited file
+// load replaces as it starts.
 export const startupLoading = loadingProgress.begin();
 let refreshStyle: (stage: string) => void = () => undefined;
 
-// The startup load's second phase. The file load is measured, so it finishes full; the startup
-// checks after it (reading the save and preparing the HTML UI, never offline play) are unknown
-// work, a pending phase of their own, which the bar shows once its full hold and fade have ended.
+// The startup load's second phase, after the measured file load: the startup checks (reading the
+// save and preparing the HTML UI, never offline play) are unknown work of their own, which cut
+// the file load's full hold short.
 export function beginStartupChecks(): ProgressHandle {
-  startupLoading.progress(1);
-  startupLoading.finish();
   return loadingProgress.begin();
 }
 
@@ -32,16 +35,15 @@ export function beginStageLoading(stage: string): ProgressHandle {
   return loadingProgress.begin();
 }
 
-// A forced update for a save a newer version wrote: unknown work, which replaces the boot's
-// startup checks.
+// A forced update for a save a newer version wrote: unknown work in the background, shown once
+// the boot's startup checks have ended.
 export function beginRequiredUpdate(): ProgressHandle {
-  return loadingProgress.begin();
+  return backgroundProgress.begin();
 }
 
-// The first visit's precache: unknown work, shown as the pending segment behind any foreground
-// load.
+// The first visit's precache: unknown work in the background.
 export function beginPrecache(): ProgressHandle {
-  return precacheProgress.begin();
+  return backgroundProgress.begin();
 }
 
 export function mountLoading(parent: HTMLElement): () => void {
@@ -53,47 +55,24 @@ export function mountLoading(parent: HTMLElement): () => void {
     parent.append(host);
   }
   let bar = createDomProgressBar(host, stageProgressStyle(), PROGRESS_RECT, LOADING_TIMING);
-  let foreground: ProgressSnapshot = { active: false, value: undefined };
-  let background = foreground;
-  let holding: (() => void) | undefined;
-  // A stage's restyle that arrived during a hold or fade, applied once the fade has ended.
-  let restyle: string | undefined;
-  const recreate = (stage: string) => {
-    bar.remove();
-    bar = createDomProgressBar(host, stageProgressStyle(stage), PROGRESS_RECT, LOADING_TIMING);
-  };
-  // The bar follows the foreground load, or the first visit's precache while none runs: a measured
-  // finish fills to full, holds, fades and then hides, and an unknown one hides at once. While a
-  // full bar holds or fades, nothing else shows; the state then current follows once it has faded.
+  // The foreground over the background, each finished measured load held full and faded before
+  // the other shows, unless a foreground load begins meanwhile.
+  const layered = createLayeredProgress(window, LOADING_TIMING, {
+    background: backgroundProgress,
+    foreground: loadingProgress,
+  });
+  let current: ProgressSnapshot = { active: false, value: undefined };
   const show = () => {
-    if (holding !== undefined) {
-      return;
-    }
-    const before = bar.element.dataset.state;
-    // A measured load that just finished fills to full even while the precache runs behind it.
-    const finished = !foreground.active && before === "determinate";
-    bar.report(foreground.active || finished ? foreground : background);
-    if (before !== "complete" && bar.element.dataset.state === "complete") {
-      holding = afterFade(() => {
-        holding = undefined;
-        if (restyle !== undefined) {
-          recreate(restyle);
-          restyle = undefined;
-        }
-        show();
-      });
-    }
+    bar.report(current);
     const name = parent.getAttribute("aria-label");
     if (name) {
       bar.element.setAttribute("aria-label", name);
     }
   };
+  // A stage's themed bar, reported the current snapshot at once.
   refreshStyle = (stage) => {
-    if (holding !== undefined) {
-      restyle = stage;
-      return;
-    }
-    recreate(stage);
+    bar.remove();
+    bar = createDomProgressBar(host, stageProgressStyle(stage), PROGRESS_RECT, LOADING_TIMING);
     show();
   };
   const resize = () =>
@@ -104,36 +83,17 @@ export function mountLoading(parent: HTMLElement): () => void {
   const observer = new ResizeObserver(resize);
   observer.observe(parent);
   resize();
-  const offForeground = loadingProgress.subscribe((state) => {
-    foreground = state;
-    show();
-  });
-  const offBackground = precacheProgress.subscribe((state) => {
-    background = state;
+  const off = layered.subscribe((snapshot) => {
+    current = snapshot;
     show();
   });
   return () => {
-    holding?.();
+    off();
+    layered.dispose();
     observer.disconnect();
-    offForeground();
-    offBackground();
     bar.remove();
     host.remove();
     refreshStyle = () => undefined;
-  };
-}
-
-// A complete bar's CSS hold and fade start with the first frame after it turned complete, which
-// can come well after the report while startup work holds the main thread; the hold ends with
-// them. Returns a cancel.
-function afterFade(done: () => void): () => void {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const frame = requestAnimationFrame(() => {
-    timer = setTimeout(done, LOADING_TIMING.fullMs + LOADING_TIMING.fadeMs);
-  });
-  return () => {
-    cancelAnimationFrame(frame);
-    clearTimeout(timer);
   };
 }
 

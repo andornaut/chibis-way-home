@@ -4,9 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { LOADING_TIMING } from "./style";
 
 beforeEach(() => {
-  vi.useFakeTimers({
-    toFake: ["cancelAnimationFrame", "clearTimeout", "requestAnimationFrame", "setTimeout"],
-  });
+  vi.useFakeTimers({ toFake: ["clearTimeout", "setTimeout"] });
   vi.resetModules();
 });
 
@@ -25,30 +23,33 @@ async function mounted() {
   return { bar, loading, unmount };
 }
 
-// A finished measured bar holds full and then fades, both counted from the first frame after it
-// turned complete; the next state shows once it has faded.
+// A finished measured bar holds full and then fades; the background shows once both have passed.
 const FADED_MS = LOADING_TIMING.fullMs + LOADING_TIMING.fadeMs;
-const fade = () => {
-  vi.advanceTimersToNextFrame();
-  vi.advanceTimersByTime(FADED_MS);
-};
 
-it("fills, holds and fades the measured file load before the startup checks' pending phase", async () => {
+// The boot's waited file load, as BootScene's loader watch reports it: its share, then 1.
+function bootFiles(loading: typeof import("./progress"), shares: readonly number[]) {
+  const boot = loading.loadingProgress.begin();
+  shares.forEach((share) => boot.progress(share));
+  return boot;
+}
+
+it("fills the waited file load, whose full hold the startup checks cut short", async () => {
   const { bar, loading, unmount } = await mounted();
-  loading.startupLoading.progress(0.5);
-  expect(bar().dataset.state).toBe("determinate");
+  expect(bar().dataset.state).toBe("pending");
+  const boot = bootFiles(loading, [0.5]);
+  expect([bar().dataset.state, bar().getAttribute("aria-valuenow")]).toEqual([
+    "determinate",
+    "0.5",
+  ]);
   expect(
     ["--progress-bar-full", "--progress-bar-fade"].map((name) =>
       bar().style.getPropertyValue(name),
     ),
   ).toEqual([`${LOADING_TIMING.fullMs}ms`, `${LOADING_TIMING.fadeMs}ms`]);
+  boot.progress(1);
+  boot.finish();
+  expect(bar().dataset.state).toBe("complete");
   const checks = loading.beginStartupChecks();
-  const held = bar();
-  expect([held.dataset.state, held.getAttribute("aria-valuenow")]).toEqual(["complete", "1"]);
-  vi.advanceTimersToNextFrame();
-  vi.advanceTimersByTime(FADED_MS - 1);
-  expect([bar(), bar().dataset.state, bar().hidden]).toEqual([held, "complete", false]);
-  vi.advanceTimersByTime(1);
   expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
   checks.finish();
   expect([bar().dataset.state, bar().hidden]).toEqual(["idle", true]);
@@ -58,25 +59,36 @@ it("fills, holds and fades the measured file load before the startup checks' pen
 it("holds a full bar through the first visit's precache, which shows once the hold ends", async () => {
   const { bar, loading, unmount } = await mounted();
   const install = loading.beginPrecache();
-  loading.startupLoading.progress(0.5);
-  loading.startupLoading.progress(1);
-  loading.startupLoading.finish();
+  bootFiles(loading, [0.5, 1]).finish();
   expect(bar().dataset.state).toBe("complete");
-  fade();
+  vi.advanceTimersByTime(FADED_MS - 1);
+  expect(bar().dataset.state).toBe("complete");
+  vi.advanceTimersByTime(1);
   expect(bar().dataset.state).toBe("pending");
   install.finish();
   expect(bar().hidden).toBe(true);
   unmount();
 });
 
-it("holds a full bar through a stage's restyle, which applies once the hold ends", async () => {
+it("shows a waited load's share over the first visit's precache", async () => {
   const { bar, loading, unmount } = await mounted();
-  loading.startupLoading.progress(0.5);
-  loading.beginStartupChecks();
+  loading.startupLoading.finish();
+  const install = loading.beginPrecache();
+  expect(bar().dataset.state).toBe("pending");
+  const files = bootFiles(loading, [0.25]);
+  expect([bar().dataset.state, bar().getAttribute("aria-valuenow")]).toEqual([
+    "determinate",
+    "0.25",
+  ]);
+  files.finish();
+  install.finish();
+  unmount();
+});
+
+it("restyles the bar for a stage and shows its entry at once", async () => {
+  const { bar, loading, unmount } = await mounted();
   const held = bar();
   loading.beginStageLoading("apartment");
-  expect([bar(), bar().dataset.state]).toEqual([held, "complete"]);
-  fade();
   expect(bar()).not.toBe(held);
   expect(bar().dataset.state).toBe("pending");
   unmount();
@@ -85,12 +97,21 @@ it("holds a full bar through a stage's restyle, which applies once the hold ends
 // The bar once boot and its startup checks have ended, while the zone plays.
 async function playing() {
   const mount = await mounted();
-  mount.loading.startupLoading.progress(0.5);
-  const checks = mount.loading.beginStartupChecks();
-  fade();
-  checks.finish();
+  bootFiles(mount.loading, [0.5, 1]).finish();
+  mount.loading.beginStartupChecks().finish();
+  vi.advanceTimersByTime(FADED_MS);
   return mount;
 }
+
+it("shows a forced update as the pending segment once boot's checks have ended", async () => {
+  const { bar, loading, unmount } = await playing();
+  expect(bar().hidden).toBe(true);
+  const update = loading.beginRequiredUpdate();
+  expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
+  update.finish();
+  expect(bar().hidden).toBe(true);
+  unmount();
+});
 
 it("shows zone entry as the pending segment until the zone is ready", async () => {
   const { bar, loading, unmount } = await playing();

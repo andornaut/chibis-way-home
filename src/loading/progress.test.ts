@@ -3,7 +3,7 @@ import { progressBarPixelProperties } from "@andornaut/game-kit/web/progress/dom
 import { describe, expect, it, vi } from "vitest";
 
 import { LOADING_CSS, loadingHtml } from "./html";
-import { afterLoadingPaint, loadingProgress, precacheProgress } from "./progress";
+import { afterLoadingPaint, backgroundProgress, loadingProgress } from "./progress";
 import { trackOfflineActivity } from "./serviceWorker";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 
@@ -29,7 +29,7 @@ describe("loading lifecycle", () => {
   it("maps only the first visit's precache to pending, without changing foreground loading", () => {
     const seen: unknown[] = [];
     const foreground: unknown[] = [];
-    const off = precacheProgress.subscribe((state) => seen.push(state));
+    const off = backgroundProgress.subscribe((state) => seen.push(state));
     const offForeground = loadingProgress.subscribe((state) => foreground.push(state));
     const current = loadingProgress.begin();
     current.progress(0.4);

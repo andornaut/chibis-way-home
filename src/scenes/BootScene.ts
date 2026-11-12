@@ -4,15 +4,21 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
+import { watchLoader } from "@andornaut/game-kit/load/phaser/watchLoader";
 import type { ProgressHandle } from "@andornaut/game-kit/progressState";
 import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
-import { type Loader, Scene } from "phaser";
+import { Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json";
 import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
 import { TILE } from "../data/screen";
 import { TEXT } from "../data/text";
-import { beginRequiredUpdate, beginStartupChecks, startupLoading } from "../loading/progress";
+import {
+  beginRequiredUpdate,
+  beginStartupChecks,
+  loadingProgress,
+  startupLoading,
+} from "../loading/progress";
 import { requiredUpdate, requireNewer } from "../pwa";
 import { createMessageCard } from "../ui";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
@@ -40,13 +46,12 @@ export class BootScene extends Scene {
 
   // Font PNG/FNT pairs load independently in both modes. A production build loads the
   // remaining game art from shared atlas pages. create filters every texture (textureFilters.ts).
+  // The kit's loader watch measures the file load as one the player waits for, which the bar
+  // shows by its settled files, and logs and retries failed files; it ends with the scene.
   preload(): void {
-    this.load.on("progress", (fraction: number) => startupLoading.progress(fraction));
+    watchLoader({ console, progress: loadingProgress, timer: window }, this).waitFor("boot");
     this.load.once("complete", () => {
       this.startupChecks = beginStartupChecks();
-    });
-    this.load.on("loaderror", (file: Loader.File) => {
-      console.warn(`Asset failed to load: ${file.key} (${file.url})`);
     });
     if (ATLAS !== null) {
       queueAtlasPages(this, ATLAS);
@@ -131,6 +136,7 @@ export class BootScene extends Scene {
   // once the HTML UI has its fonts and art; the kit retries on its own.
   private updateForNewerSave(domUi: Promise<void>): void {
     this.game.loop.sleep();
+    (this.startupChecks ?? startupLoading).finish();
     let state: RequiredUpdateState | undefined;
     let updating: ProgressHandle | undefined;
     let message: (() => void) | undefined;
@@ -142,7 +148,7 @@ export class BootScene extends Scene {
         updating ??= beginRequiredUpdate();
         return;
       }
-      (updating ?? this.startupChecks ?? startupLoading).finish();
+      updating?.finish();
       updating = undefined;
       void domUi.then(() => {
         if (state === "unavailable" && message === undefined) {

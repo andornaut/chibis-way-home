@@ -15,6 +15,7 @@ import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
 import { capFrameRate } from "@andornaut/game-kit/clock/phaser/capFrameRate";
+import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
@@ -73,6 +74,9 @@ function startGame(): void {
     height: SCREEN.height,
     // Three touch pointers: a move touch, Jump and Use can all be held at once.
     input: { activePointers: 3 },
+    // Each file request times out after 30 s and is tried twice more, so a load run always ends
+    // (the kit's LOADER_CONFIG; its loader watch applies the timeout and retries later rounds).
+    loader: LOADER_CONFIG,
     parent: "game",
     // Lower input-to-screen delay: a desynchronized context lets the browser show a frame without
     // waiting on the page compositor, and the high-performance GPU where there is a choice.
