@@ -24,7 +24,7 @@
       { "name": "art", "run": "node art/tools/build.ts --check" }
     ]
   },
-  "resources": { "cpus": 4, "loadLimit": 20 },
+  "resources": { "cpus": 4, "loadLimit": 30 },
   "ci": {
     "requiredNames": ["AI attributions", "Lint", "Test"],
     "pollSeconds": 60,
