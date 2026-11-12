@@ -65,12 +65,10 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | icon-browser-menu         | sprite                                                     | 16x16  | rest                                                                                         |
 | icon-install              | sprite                                                     | 16x16  | rest                                                                                         |
 | icon-ios-share            | sprite                                                     | 16x16  | rest                                                                                         |
-| icon-move-controls        | sprite                                                     | 16x16  | rest                                                                                         |
 | icon-settings-nav         | sprite                                                     | 20x20  | rest                                                                                         |
 | icon-skill-dash           | skill glyph, no contact                                    | 16x16  | ready, muted                                                                                 |
 | icon-skill-double-jump    | skill glyph, no contact                                    | 16x16  | ready, muted                                                                                 |
 | icon-skill-speedy         | skill glyph, no contact                                    | 16x16  | ready, muted                                                                                 |
-| icon-touch-controls       | sprite                                                     | 16x16  | rest                                                                                         |
 | map-bird                  | map marker, the bird at half size                          | 26x22  | idle                                                                                         |
 | map-icon-apartment        | map zone icon, apartment building                          | 14x14  | normal, visited                                                                              |
 | map-icon-blue-cityscape   | map zone icon, city towers                                 | 14x14  | normal, visited                                                                              |

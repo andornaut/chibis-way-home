@@ -237,12 +237,6 @@
       "once": []
     },
     {
-      "key": "icon-move-controls",
-      "png": "sprites/icon-move-controls.png",
-      "json": "sprites/icon-move-controls.json",
-      "once": []
-    },
-    {
       "key": "icon-reduced-motion",
       "png": "sprites/icon-reduced-motion.png",
       "json": "sprites/icon-reduced-motion.json",
@@ -270,12 +264,6 @@
       "key": "icon-skill-speedy",
       "png": "sprites/icon-skill-speedy.png",
       "json": "sprites/icon-skill-speedy.json",
-      "once": []
-    },
-    {
-      "key": "icon-touch-controls",
-      "png": "sprites/icon-touch-controls.png",
-      "json": "sprites/icon-touch-controls.json",
       "once": []
     },
     {

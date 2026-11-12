@@ -90,13 +90,14 @@
  * - ui-close, 24x24, at 510,94 (hit 500,88,44,44), the card's top right, on every card. Tags normal
  *   (ink X), pressed (white X on dslate).
  * - A settings row has no art, as on dog-walker-game's settings card: a 352x48 hit area at x 184
- *   holding its 16x16 icon at 198,y+16, its label (font-body, ink) at origin 228,y+15 and, for a
- *   toggle, ui-switch at 496,y+16.
+ *   holding its 16x16 icon at 198,y+16 (Reduced motion and Install; Move controls and Action
+ *   buttons show the game's inline control icons instead), its label (font-body, ink) at origin
+ *   228,y+15 and, for a toggle, ui-switch at 496,y+16.
  * - Pause card, 368x236, title "Paused": three buttons 352x48 at x 184, 4 apart: Resume
  *   (ui-button-primary) at y 136, Settings at y 188 and Back to title at y 240 (ui-button). Labels
  *   centred, origin y = button y + 13.
  * - Settings card, title "Settings": 368x236 with the Install row, 368x184 without it. Rows: "Move
- *   controls" at y 136 (icon-move-controls), "Action buttons" at y 188 (icon-touch-controls) and
+ *   controls" at y 136 (the move hint), "Action buttons" at y 188 (Use and Jump) and
  *   "Reduced motion" (icon-reduced-motion), each with ui-switch, the first two on by default;
  *   Install last, only while the app is installable
  *   (icon-install; ui-button drawn 72x28 at 452,250, centred on x 488, label ink, origin y 253;
@@ -124,11 +125,9 @@
  *   geometry, tags and press in dark steel: a dslate face, a slate highlight and a navy lip. Label
  *   white (9.55:1 on dslate). Its appended disabled tag matches ui-button's flat lgrey face; runtime
  *   disabled labels use dslate.
- * - 16x16 row icons, one tag, rest: icon-touch-controls (a round touch button with the Jump
- *   caret), icon-install (an arrow down into a tray), icon-ios-share (Safari's Share button),
- *   icon-browser-menu (three stacked dots), icon-move-controls (the move hint in small: a round
- *   ring with a chevron each side) and icon-reduced-motion (a ball with three speed lines). All are
- *   flat dslate; line icons use 2px strokes (5.83:1 on the
+ * - 16x16 row icons, one tag, rest: icon-install (an arrow down into a tray), icon-ios-share
+ *   (Safari's Share button), icon-browser-menu (three stacked dots) and icon-reduced-motion (a ball
+ *   with three speed lines). All are flat dslate; line icons use 2px strokes (5.83:1 on the
  *   card's lgrey).
  * - ui-resume, 160x44: a green button with the play mark, the map's Continue at 280,300 (the hit
  *   area; art/tools/map.ts places its label). Tags normal, pressed (the face sinks 2px into its
@@ -608,48 +607,6 @@ function moveKnob(held: boolean): pixel.Frame {
   return g.px;
 }
 
-/** A round 2px ring centred on a 16x16 frame. */
-function smallRing(g: Grid): void {
-  for (let y = 0; y < 16; y++) {
-    for (let x = 0; x < 16; x++) {
-      const d = hypot(x - 7.5, y - 7.5);
-      if (d >= 5.9 && d <= 7.9) {
-        g.p(x, y, ROW_ICON);
-      }
-    }
-  }
-}
-
-/** icon-move-controls, 16x16: the move hint in small, a round 2px ring with a chevron each side. */
-function moveControlsIcon(): pixel.Frame {
-  const g = new Grid(16, 16);
-  smallRing(g);
-  for (const [x, y] of [
-    [5, 5],
-    [4, 6],
-    [3, 7],
-    [3, 8],
-    [4, 9],
-    [5, 10],
-  ] as const) {
-    g.rect(x, y, 2, 1, ROW_ICON);
-    g.rect(14 - x, y, 2, 1, ROW_ICON);
-  }
-  return g.px;
-}
-
-/** A touch button: a round 2px ring with the Jump caret (2px strokes) inside, centred on the frame. */
-function touchControlsIcon(): pixel.Frame {
-  const g = new Grid(16, 16);
-  smallRing(g);
-  g.rect(7, 6, 2, 1, ROW_ICON);
-  for (let i = 0; i < 3; i++) {
-    g.rect(6 - i, 7 + i, 2, 1, ROW_ICON);
-    g.rect(8 + i, 7 + i, 2, 1, ROW_ICON);
-  }
-  return g.px;
-}
-
 /**
  * 16x16 nine-slice, margins 4: the keyboard focus ring. From the outside in: a 1px ink fringe, a
  * 2px yellow band and a 1px ink line, with cut corners, and a clear centre. Drawn 4px outside the
@@ -785,8 +742,6 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
     yield [key, one(icon(ICONS[key] as string[]))];
   }
   yield ["icon-settings-nav", one(cog20())];
-  yield ["icon-move-controls", one(moveControlsIcon())];
-  yield ["icon-touch-controls", one(touchControlsIcon())];
   yield ["ui-button", states(["normal", "pressed", "disabled"], button)];
   yield ["ui-button-primary", states(["normal", "pressed", "disabled"], buttonPrimary)];
   yield ["ui-switch", states(["on", "off"], (state) => toggle(state === "on"))];
