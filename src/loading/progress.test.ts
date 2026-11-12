@@ -1,10 +1,11 @@
 import { progressBarLayout } from "@andornaut/game-kit/progress";
+import { progressBarPixelProperties } from "@andornaut/game-kit/web/progress/dom/progressBar";
 import { describe, expect, it, vi } from "vitest";
 
 import { LOADING_CSS, loadingHtml } from "./html";
 import { afterLoadingPaint, installProgress, loadingProgress } from "./progress";
 import { offlineActivity } from "./serviceWorker";
-import { PROGRESS_RECT, stageProgressStyle } from "./style";
+import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 
 describe("loading lifecycle", () => {
   it("does not run synchronous preparation until the pending frame can paint, and cancels shutdown work", () => {
@@ -54,6 +55,15 @@ describe("loading lifecycle", () => {
       expect(LOADING_CSS).toContain(`> :nth-child(${index + 2}) {\n  ${box}`);
       expect(width).toBe(PROGRESS_RECT.width);
     });
+    const pixels = progressBarPixelProperties(stageProgressStyle(), LOADING_TIMING, PROGRESS_RECT);
+    const segmentWidth = pixels["--progress-bar-segment-width"];
+    const steps = pixels["--progress-bar-steps"];
+    expect([segmentWidth, steps]).toEqual([
+      expect.stringMatching(/^\d+px$/u),
+      expect.stringMatching(/^\d+$/u),
+    ]);
+    const pixelRule = `--progress-bar-segment-width: ${segmentWidth}; --progress-bar-steps: ${steps};`;
+    expect(LOADING_CSS).toContain(`#game-loading > .progress-bar {\n  ${pixelRule}\n}`);
     expect(LOADING_CSS).toContain("height: 2px");
     expect(LOADING_CSS).toContain("pointer-events: none; z-index: 1;");
     expect(LOADING_CSS).toContain(

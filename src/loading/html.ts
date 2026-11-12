@@ -4,14 +4,22 @@ import { progressBarLayout } from "@andornaut/game-kit/progress";
 import {
   PROGRESS_BAR_BAND_CLASS,
   PROGRESS_BAR_CLASS,
+  progressBarPixelProperties,
 } from "@andornaut/game-kit/web/progress/dom/progressBar";
 import type { Plugin } from "vite";
 
-import { PROGRESS_RECT, stageProgressStyle } from "./style";
+import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 
 const style = stageProgressStyle();
 // The bands span the track while pending; their segments travel by the kit's progressBar.css.
 const layout = progressBarLayout(style, PROGRESS_RECT, 1);
+// The segment's whole-pixel width and step count, set together so pre-script markup steps its
+// travel one pixel at a time as the script-mounted bar does.
+const pixelProperties = Object.entries(
+  progressBarPixelProperties(style, LOADING_TIMING, PROGRESS_RECT),
+)
+  .map(([name, value]) => `${name}: ${value};`)
+  .join(" ");
 const colour = (value: number) => `#${value.toString(16).padStart(6, "0")}`;
 const px = ({ height, width, x, y }: { height: number; width: number; x: number; y: number }) =>
   `left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;`;
@@ -30,6 +38,9 @@ export const LOADING_CSS = `
 #game[data-modal-open] canvas { position: relative; z-index: 2; }
 #game-loading > .${PROGRESS_BAR_CLASS} {
   position: absolute; ${px(layout.frame)} background: ${colour(style.frame)};
+}
+#game-loading > .${PROGRESS_BAR_CLASS} {
+  ${pixelProperties}
 }
 #game-loading > .${PROGRESS_BAR_CLASS} > div { position: absolute; }
 #game-loading > .${PROGRESS_BAR_CLASS} > :first-child {
