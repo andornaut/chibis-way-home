@@ -55,7 +55,6 @@ export const UI_LAYOUT: LayoutValues = {
   "--button-inset": TEXT_BUTTON.inset,
   "--button-lip": TEXT_BUTTON.lipHeight,
   "--button-sink": slice(TEXT_BUTTON.pressedSink),
-  "--button-stack-gap": TEXT_BUTTON.stackGap,
   "--card-edge": slice(CARD_CONTENT.frameBorder),
   "--card-frame": CARD_CONTENT.frameBorder,
   "--card-gap": CARD_CONTENT.gap,

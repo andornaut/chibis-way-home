@@ -46,8 +46,6 @@ export const TOUCH_LAYOUT = {
 
 // The skill HUD's buttons, packed along the view's top right, HUD_EDGE in from its top and right.
 export const SKILL_HUD = {
-  // The gap between adjacent buttons' targets.
-  gap: 8,
   // art: the skill glyph's frame side.
   glyph: 16,
   // A button's square press target side, centred on its disc.
@@ -68,8 +66,6 @@ export const TEXT_BUTTON = {
   lipHeight: 4,
   // How far a pressed face sinks.
   pressedSink: 2,
-  // The gap between stacked buttons' faces.
-  stackGap: 8,
   // The label's least clearance from the face's top and bottom edges.
   verticalInset: 12,
 } as const;

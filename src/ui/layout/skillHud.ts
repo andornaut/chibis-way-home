@@ -1,3 +1,5 @@
+import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+
 import { HUD_EDGE, SKILL_HUD } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import type { Point, Rect, SkillId } from "../../data/types";
@@ -12,8 +14,11 @@ export const SKILL_BUTTON = {
 } as const;
 // How far a button's target reaches past its centred disc on each side.
 const DISC_MARGIN = (SKILL_BUTTON.target - SKILL_BUTTON.disc) / 2;
+// The gap between neighbouring targets that puts their discs, small buttons, the kit's small
+// button gap apart.
+export const SKILL_TARGET_GAP = SMALL_BUTTON_GAP - 2 * DISC_MARGIN;
 // Where each shown skill's button target sits in the base view: one row along the view's top,
-// packed against its right edge in SKILL_IDS order with targets SKILL_HUD.gap apart, each disc
+// packed against its right edge in SKILL_IDS order with discs SMALL_BUTTON_GAP apart, each disc
 // HUD_EDGE in from the top and the rightmost disc HUD_EDGE in from the right. Skills not shown
 // take no slot. Like the pause button, the row moves with the view (viewShift).
 export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point> {
@@ -26,7 +31,7 @@ export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point>
         x:
           right -
           SKILL_BUTTON.target -
-          (row.length - 1 - index) * (SKILL_BUTTON.target + SKILL_HUD.gap),
+          (row.length - 1 - index) * (SKILL_BUTTON.target + SKILL_TARGET_GAP),
         y: HUD_EDGE - DISC_MARGIN,
       },
     ]),

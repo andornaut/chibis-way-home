@@ -1,5 +1,6 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
@@ -10,7 +11,6 @@ import {
   CONTROL_FRAME_INSET,
   HIT_RULE,
   HUD_EDGE,
-  SKILL_HUD,
   TEXT_BUTTON,
 } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
@@ -80,7 +80,7 @@ describe("native skill presentation", () => {
           expect(rectsOverlap(hit, pause)).toBe(false);
           const next = buttons[index + 1];
           if (next) {
-            expect(next.hit.x - hit.x - hit.width).toBeCloseTo(SKILL_HUD.gap, 9);
+            expect(next.disc.x - disc.x - SKILL_BUTTON.disc).toBeCloseTo(SMALL_BUTTON_GAP, 9);
           }
         });
         const last = buttons.at(-1)!.disc;
@@ -101,6 +101,13 @@ describe("native skill presentation", () => {
       expect({ x: SCREEN.width - pause.x - SKILL_BUTTON.disc, y: pause.y }).toEqual(last);
     },
   );
+  it("places all three targets at art's origins in the base view", () => {
+    expect([...skillHud(SKILL_IDS).values()]).toEqual([
+      { x: 553.5, y: 4.5 },
+      { x: 610.5, y: 4.5 },
+      { x: 667.5, y: 4.5 },
+    ]);
+  });
   it("gives hidden skills no slot", () => {
     expect(skillHud([]).size).toBe(0);
     expect(skillHud(["dash"]).has("speedy")).toBe(false);

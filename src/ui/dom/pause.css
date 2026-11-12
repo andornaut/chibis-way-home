@@ -2,10 +2,10 @@
    --ui-unit, from the layer's layout properties, PAUSE_LAYOUT on the view and each skill button's
    place. */
 
-/* The card's three buttons stacked the stacked-button gap apart, filling the card's width between
+/* The card's three buttons stacked the kit's stack button gap apart, filling the card's width between
    its padding; adjacent press areas meet midway between the faces. */
 .pause-card > .ui-card-actions {
-  --half-gap: calc(var(--ui-unit) * var(--button-stack-gap) / 2 * 1px);
+  --half-gap: calc(var(--ui-stack-button-gap) / 2);
 
   align-self: stretch;
   grid-auto-flow: row;
