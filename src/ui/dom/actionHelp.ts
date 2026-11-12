@@ -25,18 +25,23 @@ export interface ActionHelpWords {
   readonly icons: Readonly<Record<ControlAction, string>>;
 }
 
-// One action's illustration, in colours (0xrrggbb), named name.
+// One action's illustration, in colours (0xrrggbb), named name, or, for an undefined name,
+// decorative and hidden from assistive technology.
 export function createActionIcon(
   document: Document,
   colours: Parameters<typeof helpChromeLayers>[0],
-  name: string,
+  name: string | undefined,
   action: ControlAction,
 ): HTMLElement {
   const icon = document.createElement("span");
   icon.className = "ui-action-help-icon";
   icon.dataset.action = action;
-  icon.setAttribute("role", "img");
-  icon.setAttribute("aria-label", name);
+  if (name === undefined) {
+    icon.setAttribute("aria-hidden", "true");
+  } else {
+    icon.setAttribute("role", "img");
+    icon.setAttribute("aria-label", name);
+  }
   icon.append(
     createPaletteSvg(
       document,

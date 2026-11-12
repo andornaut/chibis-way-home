@@ -1,9 +1,17 @@
+import type { ControlAction } from "../../data/types/index.ts";
+
 // The touch settings: whether the move hint shows (Move controls) and whether Use and Jump show
 // (Action buttons), each Shown unless the player hides it. Hiding one hides only its drawing:
 // movement and the button presses still work. Each is kept in localStorage under its own key.
 export type TouchSetting = "actionButtons" | "moveControls";
 
 export const TOUCH_SETTINGS: readonly TouchSetting[] = ["moveControls", "actionButtons"];
+
+// The controls each touch setting shows or hides, in the order its settings row draws them.
+export const TOUCH_SETTING_ACTIONS: Readonly<Record<TouchSetting, readonly ControlAction[]>> = {
+  actionButtons: ["use", "jump"],
+  moveControls: ["move"],
+};
 
 const STORAGE_KEYS: Readonly<Record<TouchSetting, string>> = {
   actionButtons: "chibis-way-home.action-buttons",

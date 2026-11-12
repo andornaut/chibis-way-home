@@ -11,6 +11,7 @@ import {
   reducedMotion,
   setReducedMotion,
   type SettingsCardView,
+  type SettingsSpriteRow,
   type SettingsSwitch,
   showPresses,
   showSteps,
@@ -19,6 +20,7 @@ import {
   type TouchSetting,
   touchSettingShown,
 } from "../ui/index.ts";
+import { paletteColour } from "./cardParts.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -39,11 +41,10 @@ export interface SettingsData {
 // The settings with a switch row, in the card's order: the touch settings, then Reduced motion.
 const SWITCH_SETTINGS: readonly SettingsSwitch[] = [...TOUCH_SETTINGS, "reducedMotion"];
 
-// The icon on each row, shown once Art's texture is loaded.
-const ROW_ICONS: Readonly<Record<"install" | SettingsSwitch, string>> = {
-  actionButtons: "icon-touch-controls",
+// The sprite icon on each row but the touch settings', which draw their controls, shown once
+// Art's texture is loaded.
+const ROW_ICONS: Readonly<Record<SettingsSpriteRow, string>> = {
   install: "icon-install",
-  moveControls: "icon-move-controls",
   reducedMotion: "icon-reduced-motion",
 };
 
@@ -74,11 +75,11 @@ function settingOn(setting: SettingsSwitch): boolean {
 // install prompt where it holds one, otherwise the install steps card for the browser's own
 // install steps in the settings card's place, which the same controls close, back to the
 // settings card. The card is HTML in the UI layer (src/ui/dom/settings.ts), shown once the dim
-// under it and the rows' icons are ready: a row acts when a press lands on it and lifts on it;
-// Tab and the arrows move the keyboard's focus, which starts on the card itself, through the rows
-// and the close X, and Enter and Space press the focused one (the kit's modalLayer). The steps
-// card's focus starts on its close X, so Enter and Space close it. The opener passes this scene
-// back.
+// under it and the rows' sprite icons are ready: a row acts when a press lands on it and lifts on
+// it; Tab and the arrows move the keyboard's focus, which starts on the card itself, through the
+// rows and the close X, and Enter and Space press the focused one (the kit's modalLayer). The
+// steps card's focus starts on its close X, so Enter and Space close it. The opener passes this
+// scene back.
 export class SettingsScene extends Scene {
   private opener = "";
   private closed = false;
@@ -103,11 +104,18 @@ export class SettingsScene extends Scene {
 
   create(): void {
     const words = TEXT.settings;
-    const card = createSettingsCard(document, "settings-card", words, {
-      build: BUILD_LABEL,
-      install: offersInstall(installOffer().state()),
-      switches: SWITCH_SETTINGS,
-    });
+    const colour = (name: string) => paletteColour(this, name);
+    const card = createSettingsCard(
+      document,
+      { cream: colour("cream"), ink: colour("ink"), navy: colour("navy"), white: colour("white") },
+      "settings-card",
+      words,
+      {
+        build: BUILD_LABEL,
+        install: offersInstall(installOffer().state()),
+        switches: SWITCH_SETTINGS,
+      },
+    );
     this.card = card;
     card.root.hidden = true;
     for (const setting of SWITCH_SETTINGS) {
@@ -118,7 +126,7 @@ export class SettingsScene extends Scene {
     card.steps.close.addEventListener("click", () => this.act("close"));
     this.render();
     const icons = Promise.all(
-      (Object.entries(card.icons) as ["install" | SettingsSwitch, HTMLImageElement][]).map(
+      (Object.entries(card.icons) as [SettingsSpriteRow, HTMLImageElement][]).map(
         async ([row, icon]) => {
           if (this.textures.exists(ROW_ICONS[row])) {
             icon.src = await artFrameUrl(this, ROW_ICONS[row]);

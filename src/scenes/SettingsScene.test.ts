@@ -22,6 +22,13 @@ vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/installOffer.ts", () => ({ installOffer: () => offer }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: backdrop }));
+vi.mock("./cardParts.ts", async () => {
+  const { default: palette } = await import("../../public/art/palette.json");
+  return {
+    paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
+      Number.parseInt(palette.colours[name].slice(1), 16),
+  };
+});
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string) => Promise.resolve(`blob:${art}`),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
@@ -114,11 +121,45 @@ it("shows a switch for each setting named from TEXT, then the build label, focus
       reducedMotion(window),
     ].map(String),
     focused: true,
-    icons: ["blob:icon-move-controls", "blob:icon-touch-controls", "blob:icon-reduced-motion"],
+    icons: ["blob:icon-reduced-motion"],
     install: null,
     name: WORDS.title,
     switches: SWITCHES,
   });
+});
+
+// Each touch row draws the controls it shows or hides as decorative inline icons, and its note,
+// under its label, describes its switch.
+it("notes under each touch row's label that touch still works, describing its switch", async () => {
+  const { control } = await openCard();
+  const row = (label: string) => {
+    const button = control(label);
+    const note = document.getElementById(button.getAttribute("aria-describedby") ?? "");
+    const icons = [...button.querySelectorAll<HTMLElement>(".ui-action-help-icon")];
+    return {
+      decorative: icons.every(
+        (icon) => icon.closest("[aria-hidden=true]") !== null && !icon.hasAttribute("aria-label"),
+      ),
+      icons: icons.map((icon) => icon.dataset.action),
+      name: [...button.querySelector(".settings-name")!.children].map((line) => line.textContent),
+      note: note && button.contains(note) ? note.textContent : null,
+    };
+  };
+  expect([WORDS.moveControls, WORDS.actionButtons, WORDS.reducedMotion].map(row)).toEqual([
+    {
+      decorative: true,
+      icons: ["move"],
+      name: [WORDS.moveControls, WORDS.touchStillWorks],
+      note: WORDS.touchStillWorks,
+    },
+    {
+      decorative: true,
+      icons: ["use", "jump"],
+      name: [WORDS.actionButtons, WORDS.touchStillWorks],
+      note: WORDS.touchStillWorks,
+    },
+    { decorative: true, icons: [], name: [WORDS.reducedMotion], note: null },
+  ]);
 });
 
 it("moves the keyboard's focus through the rows, Install, then the close X, wrapping", async () => {

@@ -15,7 +15,7 @@
   margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px);
 }
 
-/* A row: its icon, its label and, at the row's right end, its switch or Install button, a gap
+/* A row: its icons, its name and, at the row's right end, its switch or Install button, a gap
    apart and centred on the row's height. The label turns dark slate while the row is pressed. */
 .settings-row {
   box-sizing: border-box;
@@ -39,10 +39,25 @@
   outline: none;
 }
 
-/* Art's ui-focus ring round the focused row. The row is clear but for its icon, label and
+/* Art's ui-focus ring round the focused row. The row is clear but for its icons, name and
    control, so, as the close X, it takes no ink background. */
 .settings-row:focus-visible {
   box-shadow: var(--focus-ring);
+}
+
+/* The row's icons, centred in the slot every row shares, so every name starts at the same x: a
+   touch row's inline control icons (actionHelp.css), the action help gap apart, or art's sprite. */
+.settings-icons {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--ui-unit) * var(--settings-icon-gap) * 1px);
+  width: calc(var(--ui-unit) * var(--settings-icon-slot) * 1px);
+}
+
+.settings-icons > .ui-action-help-icon {
+  margin-left: 0;
 }
 
 .settings-icon {
@@ -53,12 +68,23 @@
   image-rendering: pixelated;
 }
 
-.settings-label {
+/* The label, and on a touch row the note under it in dark slate, each one body line. */
+.settings-name {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+}
+
+.settings-label,
+.settings-note {
   font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
   font-weight: 400;
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   white-space: nowrap;
+}
+
+.settings-note {
+  color: var(--colour-dslate);
 }
 
 .settings-row[data-pressed] .settings-label {

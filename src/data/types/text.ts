@@ -153,8 +153,8 @@ export interface GameText {
     readonly settings: string;
     readonly start: string;
   };
-  // The settings card: its title, the Move controls, Action buttons and Reduced motion rows, the
-  // Install row and its button, and the install steps for each kind of browser, shown on the
+  // The settings card: its title, the Move controls, Action buttons and Reduced motion rows and
+  // the touch rows' note, the Install row and its button, and the install steps for each kind of browser, shown on the
   // settings card's steps card and in the home page's steps dialog where the browser holds no
   // install prompt.
   readonly settings: {
@@ -167,6 +167,9 @@ export interface GameText {
     readonly moveControls: string;
     readonly reducedMotion: string;
     readonly title: string;
+    // The note under the Move controls and Action buttons rows' names: hiding either hides only
+    // its drawing.
+    readonly touchStillWorks: string;
   };
 }
 

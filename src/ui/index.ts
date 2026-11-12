@@ -61,6 +61,7 @@ export { refuseControl } from "./dom/refusal.ts";
 export {
   createSettingsCard,
   type SettingsCardView,
+  type SettingsSpriteRow,
   type SettingsSwitch,
   showSteps,
   showSwitches,
