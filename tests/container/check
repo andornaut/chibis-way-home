@@ -4,8 +4,13 @@ set -eu
 category=${1:-check}
 if [ "$#" -gt 0 ]; then shift; fi
 
-# Existing gate installs take precedence; isolated copies use image-pinned dependencies.
+# The gate installs node_modules before its steps and its image has no /opt/check; the local
+# check image supplies the lockfile's dependencies to a work copy without them.
 if [ ! -e node_modules ] && [ ! -L node_modules ]; then
+    if [ ! -d /opt/check/node_modules ]; then
+        printf '%s\n' 'node_modules is missing: run npm ci, or use the local check image.' >&2
+        exit 2
+    fi
     cp -R /opt/check/node_modules node_modules
 fi
 if [ -n "${CHECK_REVISION:-}" ]; then

@@ -35,7 +35,7 @@ Native development commands use Node 24.22.2 from `.nvmrc`, dependencies install
 
 Each isolated invocation starts only while the one-minute load is below 20. Containers are capped at four CPUs and 8 GiB of memory and run as UID 19001. `TEST_ARGS` focuses `make test` (for example `make test TEST_ARGS=src/rules`), and `CHECK_NETWORK_LINT=bridge` gives `make lint` network access. CI uses Make because this project builds a custom Docker image. Host npm scripts remain native and never delegate to Make.
 
-The custom image (`tests/container/Dockerfile`) pins its `node` and ShellCheck base images by digest, takes `NODE_VERSION` from `.nvmrc` through the Makefile and fails to build when the base image holds a different Node version. Moving to another Node release changes `.nvmrc` and the digest together.
+The custom image (`tests/container/Dockerfile`) has two stages. The `toolchain` stage pins its `node` and ShellCheck base images by digest, takes `NODE_VERSION` from `.nvmrc` through the Makefile, fails to build when the base image holds a different Node version and holds no project file, so dependency changes leave its image ID unchanged. The `check` stage, which Make builds, adds the lockfile's dependencies in `/opt/check/node_modules` for `tests/container/check` to copy into a work copy without `node_modules`. Moving to another Node release changes `.nvmrc` and the digest together.
 
 Native tools also include `npm run dev`, `npm run format`, `npm run preview`, `npm run reaches`, `npm run simulate -- --help` and `npm run test:game-kit`. Runtime documentation is in [src/README.md](src/README.md).
 
@@ -47,7 +47,7 @@ The site's HTML pages are in `pages/`, each at its URL's path (`pages/index.html
 
 [delivery-kit](https://github.com/andornaut/delivery-kit) ships local `main` on the schedule in [`delivery-kit.json`](delivery-kit.json). Each departure installs dependencies with `npm ci` and runs `tests/container/check lint`, `test` and `build` (the same categories as `make check`) on the `main` HEAD in an isolated container, pushes that exact commit, waits for its CI and then deploys the gated build with Wrangler to the account pinned by `account_id` in [`wrangler.jsonc`](wrangler.jsonc). A departure starts only while the one-minute load is below 30; otherwise it re-checks the load every minute for up to 15 minutes after its slot, then skips that slot. Pushes and deployments are not made by hand.
 
-The gate image is the immutable local image ID in `delivery-kit.json`, built from the custom Dockerfile on the delivery host and tagged so that image pruning keeps it:
+The gate image is the immutable local image ID in `delivery-kit.json`, built from the custom Dockerfile's `toolchain` stage on the delivery host and tagged so that image pruning keeps it. The gate's own `npm ci` installs dependencies into its work copy:
 
 ```sh
 tar --create --file "${TMPDIR:-/tmp}/chibi-gate-context.tar" \
@@ -55,11 +55,11 @@ tar --create --file "${TMPDIR:-/tmp}/chibi-gate-context.tar" \
 tests/container/admit build-image
 docker build --resource cpu-period=100000 --resource cpu-quota=400000 \
   --resource memory=8g --build-arg NODE_VERSION="$(sed 's/^v//' .nvmrc)" \
-  --tag chibi-check:node24.22.2-shellcheck0.11.0 \
+  --target toolchain --tag chibi-check:node24.22.2-shellcheck0.11.0-toolchain \
   --file tests/container/Dockerfile - < "${TMPDIR:-/tmp}/chibi-gate-context.tar"
-docker image inspect --format '{{.Id}}' chibi-check:node24.22.2-shellcheck0.11.0
+docker image inspect --format '{{.Id}}' chibi-check:node24.22.2-shellcheck0.11.0-toolchain
 ```
 
-The printed ID must equal `gate.image`. Image IDs are content addressed and local: a rebuild after a change to a `tests/container/context` input produces a new ID, which replaces the pin in `delivery-kit.json` once that image is verified.
+The printed ID must equal `gate.image`. Image IDs are content addressed and local: a change to the `toolchain` stage, `.nvmrc` or a base digest produces a new ID, which replaces the pin in `delivery-kit.json` once that image is verified.
 
 The `routes` entry in `wrangler.jsonc` serves the custom domain.

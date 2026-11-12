@@ -7,7 +7,7 @@
   },
   "schedule": { "departures": ["20"], "timezone": "America/Toronto" },
   "gate": {
-    "image": "sha256:82aa843fffc09e98f772943c1fa30b785f0936e1b125efda1d9578e5a4e57ef9",
+    "image": "sha256:396a2c4ff6690f91a48b7a90e915ab71d28220d27f468254885e88a9f6e72e60",
     "install": "npm ci",
     "steps": [
       { "name": "lint", "run": "tests/container/check lint" },
