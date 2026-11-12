@@ -265,6 +265,8 @@ export const TEXT: GameText = {
     },
   },
   pause: {
+    button: "Pause",
+    close: "Close",
     home: "Back to title",
     resume: "Resume",
     settings: "Settings",
@@ -326,6 +328,10 @@ export const TEXT: GameText = {
   skillDetails: {
     close: "Close",
     disc: "{skill} skill",
+  },
+  skillHud: {
+    ready: "Ready",
+    recharging: "Recharging",
   },
   skills: {
     dash: {

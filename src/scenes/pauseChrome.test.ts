@@ -1,61 +1,40 @@
-import {
-  animationKey,
-  type AsepriteSheet,
-  sheetTags,
-  tagRepeat,
-} from "@andornaut/game-kit/art/aseprite";
-import { sceneStub } from "@andornaut/game-kit/testing/phaser/sceneStub";
-import { type Scene, Textures } from "phaser";
-import { expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
-import palette from "../../public/art/palette.json";
-import pause from "../../public/art/sprites/ui-pause.json";
-import { chromeCanvasTexture } from "../testing/chromeTexture";
-import { fitScale } from "../testing/renderScale";
-import { createPauseChrome, PAUSE_CHROME_KEY } from "./pauseChrome";
+import sheet from "../../public/art/sprites/ui-pause.json";
+import type { PauseDiscPose } from "../ui";
+import { pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome";
 
-vi.mock("phaser", () => ({
-  Core: { Events: { POST_STEP: "poststep" } },
-  Textures: { FilterMode: { NEAREST: 0 } },
-}));
-vi.mock("./cardParts", () => ({
-  paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>
-    parseInt(palette.colours[name].slice(1), 16),
-}));
-it("caches one opaque35px Pause sprite and copies the authored rest, press and held timeline", () => {
-  const textures: ReturnType<typeof chromeCanvasTexture>[] = [];
-  const createCanvas = vi.fn((key: string, width: number, height: number) => {
-    const texture = chromeCanvasTexture(key, width, height);
-    textures.push(texture);
-    Object.assign(stub.textures.list, { [key]: texture });
-    return texture;
+afterEach(() => vi.useRealTimers());
+
+// Each frame of a tag in the authored sheet, with its duration.
+const frames = (tag: string) => {
+  const { from, to } = sheet.meta.frameTags.find(({ name }) => name === tag)!;
+  return Object.values(sheet.frames).slice(from, to + 1);
+};
+
+it("copies the authored rest, press and held timeline, the press's first frame swollen", () => {
+  expect(pauseDiscTimeline(sheet as never)).toEqual({
+    held: { expanded: false, tag: "held" },
+    press: frames("press").map(({ duration }, index) => ({
+      durationMs: duration,
+      pose: { expanded: index === 0, tag: "press" },
+    })),
+    rest: { expanded: false, tag: "rest" },
   });
-  const sprite = vi.fn(() => ({
-    setAlpha: vi.fn().mockReturnThis(),
-    setDisplaySize: vi.fn().mockReturnThis(),
-    setOrigin: vi.fn().mockReturnThis(),
-  }));
-  // Four screen pixels per base pixel.
-  const stub = sceneStub(vi.fn, { add: { sprite }, scale: fitScale(4) });
-  stub.cache.json.add("manifest", manifest).add("ui-pause", pause);
-  Object.assign(stub.textures, { createCanvas });
-  const scene = stub as unknown as Scene;
-  createPauseChrome(scene);
-  createPauseChrome(scene);
-  expect(createCanvas).toHaveBeenCalledTimes(1);
-  expect(textures[0]!.setFilter).toHaveBeenCalledExactlyOnceWith(Textures.FilterMode.NEAREST);
-  expect(sprite.mock.results[0]!.value.setDisplaySize).toHaveBeenCalledExactlyOnceWith(35, 35);
-  expect(sprite.mock.results[0]!.value.setAlpha).toHaveBeenCalledExactlyOnceWith(1);
-  expect(textures[0]!.add.mock.calls.every((call) => call[4] === 140 && call[5] === 140)).toBe(
-    true,
-  );
-  const tags = sheetTags(pause as AsepriteSheet);
-  for (const [tag, frames] of tags) {
-    expect(stub.anims.create).toHaveBeenCalledWith({
-      frames: frames.map(({ duration, frame }) => ({ duration, frame, key: PAUSE_CHROME_KEY })),
-      key: animationKey(PAUSE_CHROME_KEY, tag),
-      repeat: tagRepeat(manifest.sprites.find((entry) => entry.key === "ui-pause")!.once, tag),
-    });
+});
+
+it("plays the press once for its frames' durations, then holds until stopped, then rests", () => {
+  vi.useFakeTimers();
+  const timeline = pauseDiscTimeline(sheet as never);
+  const shown: PauseDiscPose[] = [];
+  const stop = playPauseDiscPress(timeline, (pose) => shown.push(pose));
+  for (const { durationMs } of timeline.press) {
+    vi.advanceTimersByTime(durationMs);
   }
+  vi.advanceTimersByTime(1000);
+  expect(shown).toEqual([...timeline.press.map(({ pose }) => pose), timeline.held]);
+  stop();
+  expect(shown.at(-1)).toEqual(timeline.rest);
+  vi.advanceTimersByTime(1000);
+  expect(shown).toHaveLength(timeline.press.length + 2);
 });

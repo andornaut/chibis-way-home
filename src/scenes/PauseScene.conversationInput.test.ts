@@ -1,9 +1,12 @@
+// @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const turns = vi.hoisted(() => ({ change: () => {} }));
-vi.mock("phaser", () => ({ Scene: class {} }));
+const selection = vi.hoisted(() => ({ select: vi.fn() }));
+const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
+vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
 vi.mock("../ui/input/frameTurn", () => ({
   FRAME_TURN: {
     onChange: (listener: () => void) => {
@@ -17,46 +20,56 @@ vi.mock("../pwa", () => ({
   coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
+  zoneShown: vi.fn(),
 }));
 vi.mock("../ui/settings/touchControls", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../ui/settings/touchControls")>()),
   coarsePointer: () => true,
 }));
+vi.mock("../dev/mode", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../dev/mode")>()),
+  developmentSkillOverrides: () => ({}),
+}));
 vi.mock("./save", () => ({
   activeSkill: () => "dash",
   savedSkills: () => ["dash"],
-  selectActiveSkill: vi.fn(),
+  selectActiveSkill: selection.select,
+}));
+vi.mock("./modalBackdrop", () => ({
+  showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
+}));
+vi.mock("./domUi", () => ({
+  artFrameUrl: () => Promise.resolve("blob:glyph"),
+  mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
+    const unmount = (dom.layer as UiLayer).mount(10, view);
+    scene.events.once("shutdown", unmount);
+    return unmount;
+  },
+  sceneDomUi: () => dom.layer,
 }));
 
 import { TEXT } from "../data/text";
-import { PAUSE_BUTTON, SKILL_BUTTON, skillHud } from "../ui";
+import { createUiLayer, type UiLayer } from "../ui";
 import { type DialogueChoiceData, DialogueChoiceScene } from "./DialogueChoiceScene";
 import { type DialogueData, DialogueScene } from "./DialogueScene";
 import { modalInput } from "./modalInput";
-import { PauseScene } from "./PauseScene";
+import { createPauseScene, pressKey, settle, tap } from "./pauseFixture";
 import { ZoneDepartureScene } from "./ZoneDepartureScene";
 
-beforeEach(() => vi.stubGlobal("window", new EventTarget()));
-afterEach(() => vi.unstubAllGlobals());
+let layer: UiLayer;
+const shutdowns: (() => void)[] = [];
 
-interface PauseState {
-  hud: Map<string, { visible: ReturnType<typeof vi.fn> }>;
-  pauseButton: { setVisible: ReturnType<typeof vi.fn>; visible: boolean };
-  state: string;
-  controlAt(pointer: { readonly x: number; readonly y: number }): string | undefined;
-  press(control: string): void;
-  showPauseButton(): void;
-  showSkillHud(): void;
-  skillHudLive(): boolean;
-}
+beforeEach(() => {
+  vi.clearAllMocks();
+  layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  dom.layer = layer;
+});
 
-function keyEvent(key: string) {
-  return { key, repeat: false, shiftKey: false, stopPropagation: vi.fn() };
-}
-
-function icon() {
-  return { place: vi.fn(), ready: vi.fn(), selected: vi.fn(), visible: vi.fn() };
-}
+afterEach(() => {
+  shutdowns.splice(0).forEach((shutdown) => shutdown());
+  layer.dispose();
+});
 
 type Mode = "choice" | "departure" | "line";
 const MODES: readonly Mode[] = ["line", "choice", "departure"];
@@ -172,90 +185,29 @@ function conversation(mode: Mode = "line") {
     get: (key: string) => (key === "zone" ? zone : key === HELD[mode] ? top.scene : top.dialogue),
     isActive: (key: string) => key === HELD[mode],
     isPaused: (key: string) => key === "zone",
+    key: "pause",
+    launch: vi.fn(),
     pause: vi.fn(),
     resume: vi.fn(),
+    stop: vi.fn(),
   };
-  const input = sceneInput();
-  const pause = Object.assign(new PauseScene(), {
-    cameras: { main: { x: 0, y: 0, zoom: 1 } },
-    card: { destroy: vi.fn() },
-    dimZone: vi.fn(async () => {}),
-    dims: new Map(),
-    enabledSkills: () => ["dash"],
-    events: new EventEmitter(),
-    game,
-    hud: new Map([["dash", icon()]]),
-    input,
-    layout: { close: {} },
-    pauseButton: { setVisible: vi.fn(), visible: true },
-    redrawCard: vi.fn(),
-    renderDim: vi.fn(),
-    scale: { gameSize: { height: 360, width: 720 }, zoom: 1 },
-    scene: scenes,
-    setPressed(this: { pressed: string | undefined }, value: string | undefined) {
-      this.pressed = value;
-    },
-    showCard: vi.fn(),
-    sys: { isActive: () => true },
-    time: { now: 0 },
-  });
-  const watched = pause as unknown as {
-    watchBackAndTurns(): void;
-    watchKeys(): void;
-    watchPresses(): void;
-  };
-  watched.watchPresses();
-  watched.watchKeys();
-  watched.watchBackAndTurns();
-  const press = vi.spyOn(pause as unknown as PauseState, "press");
-  // A key reaches the conversation, then the pause scene, as Phaser hands it down the scenes.
-  const key = (name: string) => {
-    const event = keyEvent(name);
-    top.input.keyboard.emit("keydown", event);
-    input.keyboard.emit("keydown", event);
-    return event;
-  };
-  const tap = (at: { readonly x: number; readonly y: number }) => {
-    const pointer = { id: 1, wasCanceled: false, ...at };
-    input.emit("pointerdown", pointer);
-    input.emit("pointerup", pointer);
-  };
-  const tapPauseButton = () =>
-    tap({
-      x: PAUSE_BUTTON.art.x + PAUSE_BUTTON.art.width / 2,
-      y: PAUSE_BUTTON.art.y + PAUSE_BUTTON.art.height / 2,
-    });
+  const pause = createPauseScene(game, scenes);
+  shutdowns.push(() => pause.events.emit("shutdown"));
+  pause.update();
+  // A key reaches the page, then, unless something stopped it, the conversation and the pause
+  // scene, as Phaser hands it down the scenes.
+  const key = (name: string) => pressKey([top.input.keyboard, pause.keyboard], name);
   const routes: Record<string, () => void> = {
     Escape: () => key("Escape"),
     P: () => key("P"),
     back: () => window.dispatchEvent(new Event("phone-back")),
     "frame turn": () => turns.change(),
-    "pause button": tapPauseButton,
+    "pause button": () => tap(pause.pauseButton),
   };
-  return {
-    ...top,
-    input,
-    key,
-    pause: pause as unknown as PauseState,
-    press,
-    routes,
-    scenes,
-    tap,
-    tapPauseButton,
-  };
+  return { ...top, key, pause, routes, scenes };
 }
 
-const hudTarget = () => {
-  const at = skillHud(["dash"]).get("dash")!;
-  return { x: at.x + SKILL_BUTTON.target / 2, y: at.y + SKILL_BUTTON.target / 2 };
-};
-
-it.each(MODES)("takes a tap on the pause button through the %s's modal input", (mode) => {
-  const { input, press, tapPauseButton } = conversation(mode);
-  tapPauseButton();
-  expect(press).toHaveBeenCalledExactlyOnceWith("pauseButton");
-  expect(input.stopPropagation).toHaveBeenCalled();
-});
+const cardShown = (dialog: HTMLElement) => !dialog.closest<HTMLElement>(".ui-card-scene")!.hidden;
 
 it.each(
   MODES.flatMap((mode) =>
@@ -267,13 +219,15 @@ it.each(
     const { acted, pause, routes, scene, scenes, state } = conversation(mode);
     const before = state();
     routes[route]!();
-    await vi.waitFor(() => expect(pause.state).toBe("open"));
+    await settle();
+    expect(cardShown(pause.dialog)).toBe(true);
     expect(scenes.pause).toHaveBeenCalledExactlyOnceWith(HELD[mode]);
     expect(modalInput(scene as never).accepts()).toBe(false);
-    pause.showSkillHud();
-    expect(pause.hud.get("dash")!.visible).toHaveBeenLastCalledWith(false);
-    pause.press("resume");
-    expect(pause.state).toBe("closed");
+    pause.update();
+    // Only the pause card hides the skill HUD over a conversation.
+    expect([pause.skill("dash").hidden, pause.pauseButton.hidden]).toEqual([true, true]);
+    tap(pause.button(TEXT.pause.resume));
+    expect(cardShown(pause.dialog)).toBe(false);
     expect(scenes.resume).toHaveBeenCalledExactlyOnceWith(HELD[mode]);
     expect(state()).toEqual(before);
     expect(acted).not.toHaveBeenCalled();
@@ -286,8 +240,7 @@ it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name
   ({ mode, name }) => {
     const { acted, key, state } = conversation(mode);
     const before = state();
-    const event = key(name);
-    expect(event.stopPropagation).not.toHaveBeenCalled();
+    expect(key(name).stopped()).toBe(false);
     expect(acted).not.toHaveBeenCalled();
     expect(state()).toEqual(before);
   },
@@ -296,11 +249,10 @@ it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name
 it("advances the conversation on another key, which Pause leaves alone", () => {
   const { dialogue, key, pause, scenes } = conversation();
   dialogue.paragraph = 0;
-  const event = key("x");
-  expect(event.stopPropagation).toHaveBeenCalled();
+  expect(key("x").stopped()).toBe(true);
   expect(dialogue.paragraph).toBe(1);
   expect(dialogue.drawParagraph).toHaveBeenCalledOnce();
-  expect(pause.state).toBe("closed");
+  expect(cardShown(pause.dialog)).toBe(false);
   expect(scenes.pause).not.toHaveBeenCalled();
 });
 
@@ -308,26 +260,26 @@ it.each(["choice", "departure"] as const)(
   "acts on Enter in the %s, which Pause leaves alone",
   (mode) => {
     const { acted, key, pause, scenes } = conversation(mode);
-    const event = key("Enter");
-    expect(event.stopPropagation).toHaveBeenCalled();
+    expect(key("Enter").stopped()).toBe(true);
     expect(acted).toHaveBeenCalledOnce();
-    expect(pause.state).toBe("closed");
+    expect(cardShown(pause.dialog)).toBe(false);
     expect(scenes.pause).not.toHaveBeenCalled();
   },
 );
 
 it.each(MODES)(
-  "shows the pause button and the skill HUD over the %s, leaving taps on the HUD to it",
+  "shows the pause button and the skill HUD over the %s, the HUD taking no presses",
   (mode) => {
-    const { input, pause, press, tap } = conversation(mode);
-    pause.showPauseButton();
-    expect(pause.pauseButton.setVisible).toHaveBeenLastCalledWith(true);
-    pause.showSkillHud();
-    expect(pause.hud.get("dash")!.visible).toHaveBeenLastCalledWith(true);
-    expect(pause.skillHudLive()).toBe(false);
-    expect(pause.controlAt(hudTarget())).toBeUndefined();
-    tap(hudTarget());
-    expect(press).not.toHaveBeenCalled();
-    expect(input.stopPropagation).not.toHaveBeenCalled();
+    const { acted, pause, scenes } = conversation(mode);
+    expect({
+      hud: !pause.skill("dash").hidden,
+      live: pause.hud.hasAttribute("data-live"),
+      pauseButton: !pause.pauseButton.hidden,
+      tabIndex: [pause.pauseButton.tabIndex, pause.skill("dash").tabIndex],
+    }).toEqual({ hud: true, live: false, pauseButton: true, tabIndex: [-1, -1] });
+    tap(pause.skill("dash"));
+    expect(selection.select).not.toHaveBeenCalled();
+    expect(scenes.launch).not.toHaveBeenCalled();
+    expect(acted).not.toHaveBeenCalled();
   },
 );

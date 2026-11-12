@@ -1,58 +1,54 @@
-import {
-  animationKey,
-  type AsepriteSheet,
-  sheetTags,
-  tagRepeat,
-} from "@andornaut/game-kit/art/aseprite";
-import type { Scene } from "phaser";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 
-import { ART_MANIFEST_KEY, type ArtManifest } from "../assets";
-import {
-  PAUSE_CHROME_FRAME,
-  pauseChromeLayers,
-  type PauseChromePose,
-  type TouchChromeLayer,
-} from "../ui";
-import { paletteColour } from "./cardParts";
-import { createChromeTexture } from "./touchChrome";
+import type { PauseChromePose, PauseDiscPose } from "../ui";
 
-export const PAUSE_CHROME_KEY = "pause-chrome";
+// The pause button's art timeline, from art's ui-pause sheet: it rests until pressed, then plays
+// its press tag once, each frame for its authored duration, the first swollen, and holds until
+// the press lifts.
 
-export function createPauseChrome(scene: Scene) {
-  const tags = sheetTags(scene.cache.json.get("ui-pause") as AsepriteSheet);
-  if (!scene.textures.exists(PAUSE_CHROME_KEY)) {
-    const colours = {
-      cream: paletteColour(scene, "cream"),
-      dslate: paletteColour(scene, "dslate"),
-      ink: paletteColour(scene, "ink"),
-      navy: paletteColour(scene, "navy"),
-      white: paletteColour(scene, "white"),
-    };
-    const frames = new Map<string, readonly TouchChromeLayer[]>();
-    for (const [tag, sequence] of tags) {
-      sequence.forEach(({ frame }, index) =>
-        frames.set(
-          frame,
-          pauseChromeLayers(colours, tag as PauseChromePose, tag === "press" && index === 0),
-        ),
-      );
+export interface PauseDiscTimeline {
+  readonly held: PauseDiscPose;
+  readonly press: readonly { readonly durationMs: number; readonly pose: PauseDiscPose }[];
+  readonly rest: PauseDiscPose;
+}
+
+export function pauseDiscTimeline(sheet: AsepriteSheet): PauseDiscTimeline {
+  const tags = sheetTags(sheet);
+  const pose = (tag: PauseChromePose): PauseDiscPose => {
+    if (!tags.has(tag)) {
+      throw new Error(`ui-pause has no ${tag} tag`);
     }
-    createChromeTexture(scene, PAUSE_CHROME_KEY, PAUSE_CHROME_FRAME, frames);
-    const once =
-      (scene.cache.json.get(ART_MANIFEST_KEY) as ArtManifest).sprites.find(
-        (entry) => entry.key === "ui-pause",
-      )?.once ?? [];
-    for (const [tag, sequence] of tags) {
-      scene.anims.create({
-        frames: sequence.map(({ duration, frame }) => ({ duration, frame, key: PAUSE_CHROME_KEY })),
-        key: animationKey(PAUSE_CHROME_KEY, tag),
-        repeat: tagRepeat(once, tag),
-      });
+    return { expanded: false, tag };
+  };
+  return {
+    held: pose("held"),
+    press: (tags.get("press") ?? []).map(({ duration }, index) => ({
+      durationMs: duration,
+      pose: { expanded: index === 0, tag: "press" },
+    })),
+    rest: pose("rest"),
+  };
+}
+
+// Plays the press on show, then holds; returns a function that stops it at once and shows the
+// rest pose.
+export function playPauseDiscPress(
+  timeline: PauseDiscTimeline,
+  show: (pose: PauseDiscPose) => void,
+): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const step = (index: number) => {
+    const frame = timeline.press[index];
+    if (frame === undefined) {
+      show(timeline.held);
+      return;
     }
-  }
-  return scene.add
-    .sprite(0, 0, PAUSE_CHROME_KEY, tags.get("rest")?.[0]?.frame)
-    .setOrigin(0)
-    .setDisplaySize(PAUSE_CHROME_FRAME, PAUSE_CHROME_FRAME)
-    .setAlpha(1);
+    show(frame.pose);
+    timer = setTimeout(() => step(index + 1), frame.durationMs);
+  };
+  step(0);
+  return () => {
+    clearTimeout(timer);
+    show(timeline.rest);
+  };
 }

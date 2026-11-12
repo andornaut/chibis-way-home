@@ -4,7 +4,11 @@ import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
-import { createModalLayer, type ModalLayer } from "@andornaut/game-kit/web/ui/dom/modalLayer";
+import {
+  createModalLayer,
+  type ModalLayer,
+  type ModalOptions,
+} from "@andornaut/game-kit/web/ui/dom/modalLayer";
 import { createViewUnits, slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, DEATH_CARD, FOCUS_RING, TEXT_BUTTON } from "../../data/layout";
@@ -52,6 +56,7 @@ export const UI_LAYOUT: LayoutValues = {
   "--button-inset": TEXT_BUTTON.inset,
   "--button-lip": TEXT_BUTTON.lipHeight,
   "--button-sink": slice(TEXT_BUTTON.pressedSink),
+  "--button-stack-gap": TEXT_BUTTON.stackGap,
   "--card-edge": slice(CARD_CONTENT.frameBorder),
   "--card-frame": CARD_CONTENT.frameBorder,
   "--card-gap": CARD_CONTENT.gap,
@@ -75,15 +80,168 @@ export const UI_LAYOUT: LayoutValues = {
   "--text-size": FONT_METRICS.body.size,
 };
 
+// The attribute on what the top modal dims.
+export const UI_DIMMED = "data-ui-dimmed";
+
 export interface UiLayer {
   readonly element: HTMLElement;
-  // The one modal layer over the scenes' views.
+  // The one modal layer over the scenes' views. Opening a card also dims what it covers.
   readonly modals: ModalLayer;
+  // Registers the dimmed image for the lit image source lit, both blob: URLs.
+  dimImage(lit: string, dimmed: string): void;
   dispose(): void;
   // Places the view for the canvas's fit, the canvas's top-left offset in the layer in CSS px.
   fit(canvasAt: Point, fit: RenderFit): void;
   // Mounts view as order's layer, above lower orders, and returns its removal.
   mount(order: number, view: HTMLElement): () => void;
+  // Sets the dimmed skin: the custom properties (applySkin's) set on what a modal dims.
+  setDimmedSkin(properties: LayoutValues): void;
+}
+
+// What the card dialog in one of root's views dims: the views under it, but not a live element
+// in one or the elements along the path to it, whose other children it dims instead. The kit's
+// modal layer makes the same elements inert, besides any view over the card's.
+function dimTargets(
+  root: HTMLElement,
+  dialog: HTMLElement,
+  live: readonly HTMLElement[],
+): Set<Element> {
+  const views = [...root.children];
+  const below = views.slice(
+    0,
+    Math.max(
+      0,
+      views.findIndex((view) => view.contains(dialog)),
+    ),
+  );
+  const paths = new Set<Element>();
+  for (const element of live) {
+    for (let at: Element | null = element; at !== null && at !== root; at = at.parentElement) {
+      paths.add(at);
+    }
+  }
+  const targets = new Set<Element>();
+  const visit = (elements: readonly Element[]) => {
+    for (const element of elements) {
+      if (!paths.has(element)) {
+        targets.add(element);
+      } else if (!live.includes(element as HTMLElement)) {
+        visit([...element.children]);
+      }
+    }
+  };
+  visit(below);
+  return targets;
+}
+
+// The dim under the top modal (src/ui/dom/ui.css): what it covers takes the dimmed skin's
+// colours and frames and its images' dimmed sources, so the UI under a card dims as the canvas's
+// world does, through the same palette ramp. SVG chrome reads the colours (chrome.ts).
+function createDim(root: HTMLElement) {
+  let skin: LayoutValues = {};
+  const images = new Map<string, string>();
+  const dimmed = new Set<Element>();
+  // Shows an image's dimmed source while it is under the dim, and its lit one otherwise.
+  const showImage = (image: HTMLImageElement) => {
+    const lit = image.dataset.uiLitSrc ?? image.getAttribute("src") ?? "";
+    const dim = images.get(lit);
+    if (image.closest(`[${UI_DIMMED}]`) !== null && dim !== undefined) {
+      image.dataset.uiLitSrc = lit;
+      image.src = dim;
+    } else if (image.dataset.uiLitSrc !== undefined) {
+      delete image.dataset.uiLitSrc;
+      image.src = lit;
+    }
+  };
+  const showImages = (element: Element) => {
+    if (element instanceof HTMLImageElement) {
+      showImage(element);
+    }
+    element.querySelectorAll("img").forEach(showImage);
+  };
+  const set = (element: Element, on: boolean) => {
+    const { style } = element as HTMLElement;
+    element.toggleAttribute(UI_DIMMED, on);
+    for (const [name, value] of Object.entries(skin)) {
+      if (on) {
+        style.setProperty(name, String(value));
+      } else {
+        style.removeProperty(name);
+      }
+    }
+    showImages(element);
+  };
+  // An image given a lit source while it is under the dim shows the dimmed one.
+  const observer = new MutationObserver((records) => {
+    for (const { target } of records) {
+      if (target instanceof HTMLImageElement && target.closest(`[${UI_DIMMED}]`) !== null) {
+        const src = target.getAttribute("src") ?? "";
+        if (images.has(src)) {
+          delete target.dataset.uiLitSrc;
+          showImage(target);
+        }
+      }
+    }
+  });
+  observer.observe(root, { attributeFilter: ["src"], attributes: true, subtree: true });
+  return {
+    apply(targets: ReadonlySet<Element>) {
+      for (const element of [...dimmed]) {
+        if (!targets.has(element)) {
+          dimmed.delete(element);
+          set(element, false);
+        }
+      }
+      for (const element of targets) {
+        if (!dimmed.has(element)) {
+          dimmed.add(element);
+          set(element, true);
+        }
+      }
+    },
+    dispose() {
+      observer.disconnect();
+    },
+    image(lit: string, dim: string) {
+      images.set(lit, dim);
+    },
+    skin(properties: LayoutValues) {
+      skin = properties;
+      dimmed.forEach((element) => set(element, true));
+    },
+  };
+}
+
+// The kit's modal layer over root, which also dims what the top card covers.
+function createDimmingModals(root: HTMLElement, dim: ReturnType<typeof createDim>): ModalLayer {
+  const modals = createModalLayer(root);
+  const stack: { readonly dialog: HTMLElement; readonly options: ModalOptions }[] = [];
+  const update = () => {
+    const top = stack.at(-1);
+    dim.apply(top === undefined ? new Set() : dimTargets(root, top.dialog, top.options.live ?? []));
+  };
+  return {
+    back: () => modals.back(),
+    dispose() {
+      stack.length = 0;
+      update();
+      modals.dispose();
+    },
+    open(options, dialog) {
+      const close = modals.open(options, dialog);
+      const entry = { dialog, options };
+      stack.push(entry);
+      update();
+      return () => {
+        close();
+        const index = stack.indexOf(entry);
+        if (index >= 0) {
+          stack.splice(index, 1);
+          update();
+        }
+      };
+    },
+  };
 }
 
 // The UI layer for document, with frameEdges (art's nine-slice edges, in base px) kept as whole
@@ -94,10 +252,13 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
   writeLayoutProperties(UI_LAYOUT, element);
   const edges = [...new Set([...frameEdges, ...WHOLE_LENGTHS])].sort((a, b) => a - b);
   const update = createViewUnits(edges, element);
-  const modals = createModalLayer(element);
+  const dim = createDim(element);
+  const modals = createDimmingModals(element, dim);
   return {
+    dimImage: (lit, dimmed) => dim.image(lit, dimmed),
     dispose() {
       modals.dispose();
+      dim.dispose();
       element.remove();
     },
     element,
@@ -123,6 +284,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
       element.insertBefore(view, after ?? null);
       return () => view.remove();
     },
+    setDimmedSkin: (properties) => dim.skin(properties),
   };
 }
 

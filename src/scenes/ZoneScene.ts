@@ -8,7 +8,7 @@ import {
 import { frameSteps, startStepClock, type StepClock } from "@andornaut/game-kit/clock/fixedStep";
 import { drawProgressBar } from "@andornaut/game-kit/progress/phaser/drawProgressBar";
 import { type Random, randomStream } from "@andornaut/game-kit/random";
-import { clampInto, containsPoint } from "@andornaut/game-kit/rect";
+import { clampInto } from "@andornaut/game-kit/rect";
 import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
 import {
   clientPoint,
@@ -66,11 +66,7 @@ import type {
   ZonePlan,
 } from "../data/types";
 import { RECIPES } from "../data/zones";
-import {
-  developmentSkillOverrides,
-  invulnerabilityEnabled,
-  isDevelopmentSession,
-} from "../dev/mode";
+import { invulnerabilityEnabled, isDevelopmentSession } from "../dev/mode";
 import { developmentStep } from "../dev/step";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress";
 import {
@@ -119,7 +115,6 @@ import {
   tetherLine,
 } from "../presentation";
 import {
-  eligibleSkills,
   middleChunkIds,
   nodeOf,
   SKILL_PROFILES,
@@ -178,11 +173,8 @@ import {
   listenMouseMovement,
   MOVE_HINT,
   moveHintView,
-  PAUSE_BUTTON,
   reducedMotion,
   shifted,
-  SKILL_BUTTON,
-  skillHud,
   stageProgressRect,
   TOUCH_CHROME_FRAME,
   TOUCH_CONTROLS,
@@ -226,7 +218,6 @@ import {
   retryStageRun,
   saveCompleted,
   savedMap,
-  savedSkills,
   saveZoneIntro,
   seenZoneIntros,
   stageRunStats,
@@ -2157,21 +2148,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           canvasRect(this),
           { x: event.clientX, y: event.clientY },
         );
-        const top = shifted(sceneViewShift(this), point, -1);
-        if (
-          containsPoint(PAUSE_BUTTON.hit, top.x, top.y) ||
-          (this.skillState()?.shown &&
-            [...skillHud(eligibleSkills(developmentSkillOverrides(), savedSkills())).values()].some(
-              (at) =>
-                containsPoint(
-                  { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-                  top.x,
-                  top.y,
-                ),
-            ))
-        ) {
-          return false;
-        }
         const role = touchRoleAt(shifted(sceneViewShift(this), point, -1));
         return role === "move" || !this.controls.get(role)?.visible;
       },
@@ -2229,12 +2205,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // A touch takes the role it starts with and keeps it, wherever it moves, until it lifts. A new
   // touch goes last in heldTouches, so the latest move touch is the last. Touches anywhere on the
   // page count, the letterbox bars and safe-area margins beside the canvas included, except on
-  // the nav bar or a link or button, on visible Pause or skill targets, or while a modal covers play. A
-  // touch's role is read where it starts on the game's nearest edge pixel (clampInto), and a move
-  // touch's travel unclamped (pageToGame), so a drag within the bars still moves him. Both
-  // read through the page frame's turn (FRAME_TURN). Only a touch on the canvas can be on the
-  // pause button: one in the bar beside it lands on the game's edge, inside the button's hit
-  // area, and moves him.
+  // the nav bar or a link or button (the HTML pause button and skill buttons among them), or while
+  // a modal covers play. A touch's role is read where it starts on the game's nearest edge pixel
+  // (clampInto), and a move touch's travel unclamped (pageToGame), so a drag within the bars still
+  // moves him. Both read through the page frame's turn (FRAME_TURN).
   private watchTouches(): void {
     const unclamped = (event: PagePointerEvent) =>
       pageToGame(
@@ -2246,32 +2220,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const onGame = (event: PagePointerEvent) => clampInto(canvasRect(this), unclamped(event));
     // The touch buttons sit shifted with the view (placeControls), as the pause button does.
     const roleAt = (point: Point) => touchRoleAt(shifted(sceneViewShift(this), point, -1));
-    const accepts = (event: PagePointerEvent) => {
-      if (
-        !modalInput(this).accepts() ||
-        event.pointerType !== "touch" ||
-        onPageControl(event.target) ||
-        !this.scene.isActive() ||
-        this.playCovered()
-      ) {
-        return false;
-      }
-      const point = shifted(sceneViewShift(this), onGame(event), -1);
-      if (event.target !== this.game.canvas) {
-        return true;
-      }
-      const skill =
-        this.skillState()?.shown &&
-        [...skillHud(eligibleSkills(developmentSkillOverrides(), savedSkills())).values()].some(
-          (at) =>
-            containsPoint(
-              { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-              point.x,
-              point.y,
-            ),
-        );
-      return !containsPoint(PAUSE_BUTTON.hit, point.x, point.y) && !skill;
-    };
+    const accepts = (event: PagePointerEvent) =>
+      modalInput(this).accepts() &&
+      event.pointerType === "touch" &&
+      !onPageControl(event.target) &&
+      this.scene.isActive() &&
+      !this.playCovered();
     const release = ({ pointerId }: PagePress) => {
       this.heldTouches.delete(pointerId);
       this.buttonTouches.delete(pointerId);

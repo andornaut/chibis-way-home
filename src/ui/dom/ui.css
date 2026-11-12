@@ -2,7 +2,9 @@
    pixels times --ui-unit: calc(var(--ui-unit) * <base px> * 1px), with the base px a layout
    property the layer writes (UI_LAYOUT in layer.ts), or a whole-px length the view bridge keeps
    (--ui-slice-<n>, through the frame and focus properties). Colours and art frames are custom
-   properties applySkin (skin.ts) sets from the loaded palette and sheets. */
+   properties applySkin (skin.ts) sets from the loaded palette and sheets; under a modal the layer
+   sets the dimmed skin's on what the modal covers (layer.ts), so it dims through the same palette
+   ramp as the canvas's world. */
 
 @font-face {
   font-family: "Liberation Sans";
@@ -296,4 +298,79 @@
    its mark, so it takes no ink background. */
 .ui-close-button:focus-visible .ui-close-face {
   box-shadow: var(--focus-ring);
+}
+
+/* SVG chrome (chrome.ts) paints each shape in the palette colour it names, so under a modal it
+   takes the dimmed skin the layer sets on what the modal covers, as every other colour and frame
+   here does. */
+[data-ui-fill="cream"] {
+  fill: var(--colour-cream);
+}
+
+[data-ui-fill="dslate"] {
+  fill: var(--colour-dslate);
+}
+
+[data-ui-fill="grey"] {
+  fill: var(--colour-grey);
+}
+
+[data-ui-fill="ink"] {
+  fill: var(--colour-ink);
+}
+
+[data-ui-fill="lgrey"] {
+  fill: var(--colour-lgrey);
+}
+
+[data-ui-fill="navy"] {
+  fill: var(--colour-navy);
+}
+
+[data-ui-fill="red"] {
+  fill: var(--colour-red);
+}
+
+[data-ui-fill="white"] {
+  fill: var(--colour-white);
+}
+
+[data-ui-fill="yellow"] {
+  fill: var(--colour-yellow);
+}
+
+[data-ui-stroke="cream"] {
+  stroke: var(--colour-cream);
+}
+
+[data-ui-stroke="dslate"] {
+  stroke: var(--colour-dslate);
+}
+
+[data-ui-stroke="grey"] {
+  stroke: var(--colour-grey);
+}
+
+[data-ui-stroke="ink"] {
+  stroke: var(--colour-ink);
+}
+
+[data-ui-stroke="lgrey"] {
+  stroke: var(--colour-lgrey);
+}
+
+[data-ui-stroke="navy"] {
+  stroke: var(--colour-navy);
+}
+
+[data-ui-stroke="red"] {
+  stroke: var(--colour-red);
+}
+
+[data-ui-stroke="white"] {
+  stroke: var(--colour-white);
+}
+
+[data-ui-stroke="yellow"] {
+  stroke: var(--colour-yellow);
 }

@@ -9,6 +9,8 @@ import {
   createUiLayer,
   filledFrame,
   loadUiFonts,
+  modalColour,
+  remappedFrame,
   type SkinFrame,
   UI_FRAMES,
   type UiLayer,
@@ -100,7 +102,7 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
         source: frame.source.image as CanvasImageSource,
       };
     });
-    await applySkin(document, palette(scene), frames, layer.element);
+    layer.setDimmedSkin(await applySkin(document, palette(scene), frames, layer.element));
   };
   await Promise.all([
     loadUiFonts(document.fonts),
@@ -120,7 +122,9 @@ export function mountSceneView(scene: Scene, view: HTMLElement): () => void {
 
 // A blob: URL of art's frameName (its sheet's first where none) for an <img>, cut once per game
 // from the image the scene's loader has, filled with the palette colour fill where it is opaque
-// (as a fill tint draws it) where one is given. A failed cut is tried again on the next call.
+// (as a fill tint draws it) where one is given. Its dimmed cut, through the canvas dim's palette
+// ramp, is registered with the UI layer, which shows it while a modal covers the image. A failed
+// cut is tried again on the next call.
 export function artFrameUrl(
   scene: Scene,
   art: string,
@@ -137,14 +141,22 @@ export function artFrameUrl(
   const frame = scene.textures.getFrame(art, frameName);
   const rect = { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY };
   const source = frame.source.image as CanvasImageSource;
-  const url = (async () =>
-    fill === undefined
-      ? cutFrame(document, source, rect)
-      : cutFrame(
-          document,
-          filledFrame(document, source, rect, paletteHex(palette(scene).colours, fill)),
-          { ...rect, x: 0, y: 0 },
-        ))();
+  const url = (async () => {
+    const lit =
+      fill === undefined
+        ? { rect, source }
+        : {
+            rect: { ...rect, x: 0, y: 0 },
+            source: filledFrame(document, source, rect, paletteHex(palette(scene).colours, fill)),
+          };
+    const dim = remappedFrame(document, modalColour(palette(scene)), lit.source, lit.rect);
+    const [cut, dimmed] = await Promise.all([
+      cutFrame(document, lit.source, lit.rect),
+      cutFrame(document, dim, { height: dim.height, width: dim.width, x: 0, y: 0 }),
+    ]);
+    sceneDomUi(scene)?.dimImage(cut, dimmed);
+    return cut;
+  })();
   urls.set(key, url);
   url.catch(() => urls.delete(key));
   return url;

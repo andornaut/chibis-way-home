@@ -1,233 +1,175 @@
+// @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const selection = vi.hoisted(() => ({
-  active: "dash",
-  owned: ["dash", "speedy"],
+  active: "dash" as string,
+  owned: ["dash", "speedy"] as string[],
   select: vi.fn(),
 }));
-const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), close: vi.fn(), open: vi.fn() }));
-vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: {} }));
-vi.mock("../pwa", () => ({ coverZone: vi.fn(), startWakeLock: vi.fn(), stopWakeLock: vi.fn() }));
+const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
+vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
+vi.mock("../ui/input/frameTurn", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
+vi.mock("../pwa", () => ({
+  PHONE_EVENTS: { backPressed: "phone-back" },
+  coverZone: vi.fn(),
+  startWakeLock: vi.fn(),
+  stopWakeLock: vi.fn(),
+  zoneShown: vi.fn(),
+}));
+vi.mock("../ui/settings/touchControls", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../ui/settings/touchControls")>()),
+  coarsePointer: () => true,
+}));
+vi.mock("../dev/mode", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../dev/mode")>()),
+  developmentSkillOverrides: () => ({}),
+}));
 vi.mock("./save", () => ({
   activeSkill: () => selection.active,
   savedSkills: () => selection.owned,
   selectActiveSkill: selection.select,
 }));
-vi.mock("./modalInput", () => ({
-  modalInput: () => gate,
-  onGatedPointer: (
-    scene: { input: EventEmitter },
-    _gate: unknown,
-    event: string,
-    listener: (pointer: unknown) => void,
-  ) => scene.input.on(event, listener),
-  onScenePointer: (
-    scene: { input: EventEmitter },
-    event: string,
-    listener: (pointer: unknown) => void,
-  ) => scene.input.on(event, listener),
+vi.mock("./modalBackdrop", () => ({
+  showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
+}));
+vi.mock("./domUi", () => ({
+  artFrameUrl: (_scene: unknown, art: string, frame: unknown, fill?: string) =>
+    Promise.resolve(`blob:${art}-${String(frame)}-${fill ?? ""}`),
+  mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
+    const unmount = (dom.layer as UiLayer).mount(10, view);
+    scene.events.once("shutdown", unmount);
+    return unmount;
+  },
+  sceneDomUi: () => dom.layer,
 }));
 
 import { BIRD } from "../data/bird";
-import { SCREEN } from "../data/screen";
 import { SKILL_GESTURE } from "../data/skills";
+import { TEXT } from "../data/text";
 import type { SkillId } from "../data/types";
 import { SKILL_IDS } from "../progress";
 import { type BirdState, startBird } from "../rules/bird";
-import { SKILL_BUTTON, skillHud } from "../ui";
-import { PauseScene } from "./PauseScene";
+import { createUiLayer, SKILL_ART, type UiLayer } from "../ui";
+import { modalInput } from "./modalInput";
+import { createPauseScene, press, pressKey, settle, tap } from "./pauseFixture";
 import type { SkillDetailData } from "./SkillDetailScene";
+
+let layer: UiLayer;
+const shutdowns: (() => void)[] = [];
 
 beforeEach(() => {
   vi.clearAllMocks();
   selection.active = "dash";
   selection.owned = ["dash", "speedy"];
-  gate.accepts.mockReturnValue(true);
+  layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  dom.layer = layer;
 });
-afterEach(() => vi.restoreAllMocks());
 
-function fixture(state: "closed" | "open") {
-  const zone = { playCovered: vi.fn(() => false), resumeSkillPlay: vi.fn() };
-  const dim = { destroy: vi.fn() };
-  const scene = Object.assign(new PauseScene(), {
-    dims: new Map([["dim", dim]]),
-    enabledSkills: () => ["dash"],
-    input: {},
-    scene: {
-      get: () => zone,
-      isActive: () => true,
-      launch: vi.fn(),
-      pause: vi.fn(),
-      resume: vi.fn(),
-    },
-    showCard: vi.fn(),
-    state,
-  }) as unknown as {
-    openSkill(skill: SkillId): void;
-    state: string;
-    scene: {
-      launch: ReturnType<typeof vi.fn>;
-      pause: ReturnType<typeof vi.fn>;
-      resume: ReturnType<typeof vi.fn>;
-    };
+afterEach(() => {
+  shutdowns.splice(0).forEach((shutdown) => shutdown());
+  layer.dispose();
+});
+
+// The pause scene beside a playing zone whose bird is bird, or that has no state yet (null).
+function play(bird: BirdState | null = startBird(BIRD, { x: 0, y: 0 })) {
+  const game = { events: new EventEmitter() };
+  const status = { zone: "running" as "paused" | "running" | "stopped" };
+  const zone = {
+    conversationCovers: () => false,
+    playCovered: () => false,
+    resumeSkillPlay: vi.fn(),
+    showTouchControls: vi.fn(),
+    skillState: () => (bird === null ? undefined : { bird, shown: true, tuning: BIRD }),
   };
-  return { dim, scene, zone };
+  const scenes = {
+    get: (key: string) => (key === "zone" ? zone : {}),
+    isActive: (key: string) => key === "zone" && status.zone === "running",
+    isPaused: (key: string) => key === "zone" && status.zone === "paused",
+    key: "pause",
+    launch: vi.fn(),
+    pause: vi.fn((key: string) => {
+      if (key === "zone") {
+        status.zone = "paused";
+      }
+    }),
+    resume: vi.fn((key: string) => {
+      if (key === "zone") {
+        status.zone = "running";
+      }
+    }),
+    stop: vi.fn((key: string) => {
+      if (key === "zone") {
+        status.zone = "stopped";
+      }
+    }),
+  };
+  const pause = createPauseScene(game, scenes);
+  shutdowns.push(() => pause.events.emit("shutdown"));
+  pause.update();
+  // The skill details' close, from the last launch.
+  const details = () => {
+    const calls = scenes.launch.mock.calls.filter(([key]) => key === "skillDetail");
+    return calls.map(([, data]) => data as SkillDetailData);
+  };
+  const open = async () => {
+    pressKey([pause.keyboard], "p");
+    await settle();
+    pause.update();
+  };
+  return { ...pause, details, game, open, scenes, status, zone };
 }
 
-it.each(["closed", "open"] as const)(
-  "replaces %s Pause with one detail and resumes play once without reopening Pause",
-  (state) => {
-    const { dim, scene, zone } = fixture(state);
-    scene.openSkill("dash");
-    scene.openSkill("dash");
-    expect(scene.state).toBe("skill");
-    expect(dim.destroy).toHaveBeenCalledOnce();
-    expect(gate.open).toHaveBeenCalledOnce();
-    expect(gate.close).not.toHaveBeenCalled();
-    expect(scene.scene.launch).toHaveBeenCalledOnce();
-    expect(scene.scene.pause).toHaveBeenCalledExactlyOnceWith("zone");
-    expect(scene.scene.resume).not.toHaveBeenCalled();
-    const [key, data] = scene.scene.launch.mock.calls[0] as [string, SkillDetailData];
-    expect(key).toBe("skillDetail");
-    data.onClose();
-    data.onClose();
-    expect(scene.state).toBe("closed");
-    expect(zone.resumeSkillPlay).toHaveBeenCalledOnce();
-    expect(scene.scene.resume).toHaveBeenCalledExactlyOnceWith("zone");
-    expect(scene.scene.launch).toHaveBeenCalledOnce();
-  },
-);
+const describedBy = (button: HTMLElement) => {
+  const id = button.getAttribute("aria-describedby");
+  return id === null ? undefined : document.getElementById(id)?.textContent;
+};
 
-it("does not open locked skills or resume through another modal owner", () => {
-  const { scene, zone } = fixture("closed");
-  scene.openSkill("speedy");
-  expect(scene.scene.launch).not.toHaveBeenCalled();
-  scene.openSkill("dash");
-  const data = scene.scene.launch.mock.calls[0]![1] as SkillDetailData;
-  gate.accepts.mockReturnValue(false);
-  data.onClose();
-  expect(zone.resumeSkillPlay).toHaveBeenCalledOnce();
-  expect(scene.scene.resume).not.toHaveBeenCalled();
-});
-
-it("ignores a previous detail's close callback after a newer detail has opened", () => {
-  const { scene } = fixture("closed");
-  scene.openSkill("dash");
-  const old = scene.scene.launch.mock.calls[0]![1] as SkillDetailData;
-  old.onClose();
-  scene.openSkill("dash");
-  old.onClose();
-  expect(scene.state).toBe("skill");
-  expect(scene.scene.resume).toHaveBeenCalledOnce();
-  const current = scene.scene.launch.mock.calls[1]![1] as SkillDetailData;
-  current.onClose();
-  expect(scene.scene.resume).toHaveBeenCalledTimes(2);
-});
-
-it("consumes HUD gestures and rejects a drag that returns to the same icon", () => {
-  const input = Object.assign(new EventEmitter(), { stopPropagation: vi.fn() });
-  const press = vi.fn();
-  const scene = Object.assign(new PauseScene(), {
-    cameras: { main: { x: 0, y: 0, zoom: 1 } },
-    controlAt: () => "dash",
-    input,
-    press,
-    setPressed(this: { pressed: string | undefined }, value: string | undefined) {
-      this.pressed = value;
-    },
-    time: { now: 0 },
-  }) as unknown as { watchPresses(): void };
-  scene.watchPresses();
-  input.emit("pointerdown", { id: 1, x: 20, y: 20 });
-  input.emit("pointermove", { id: 1, x: 120, y: 20 });
-  input.emit("pointerup", { id: 1, x: 20, y: 20 });
-  expect(press).not.toHaveBeenCalled();
-  input.emit("pointerdown", { id: 1, x: 20, y: 20 });
-  input.emit("pointerup", { id: 1, x: 20, y: 20 });
-  expect(press).toHaveBeenCalledExactlyOnceWith("dash");
-  expect(input.stopPropagation).toHaveBeenCalledTimes(5);
-});
-
-function gestures(state: "closed" | "open") {
-  const input = Object.assign(new EventEmitter(), { stopPropagation: vi.fn() });
-  const openSkill = vi.fn();
-  const time = { now: 0 };
-  const scene = Object.assign(new PauseScene(), {
-    cameras: { main: { x: 0, y: 0, zoom: 1 } },
-    controlAt: () => "speedy",
-    input,
-    openSkill,
-    setPressed(this: { pressed: string | undefined }, value: string | undefined) {
-      this.pressed = value;
-    },
-    skillHudLive: () => true,
-    state,
-    sys: { isActive: () => true },
-    time,
-  }) as unknown as { watchPresses(): void; updateSkillHold(): void };
-  scene.watchPresses();
-  return { input, openSkill, scene, time };
-}
-
-it("selects a playing tap, but a hold opens details without selecting the held skill", () => {
-  const { input, openSkill, scene, time } = gestures("closed");
-  input.emit("pointerdown", { id: 1, x: 20, y: 20 });
-  time.now = SKILL_GESTURE.holdMilliseconds - 1;
-  input.emit("pointerup", { id: 1, x: 20, y: 20 });
-  expect(selection.select).toHaveBeenCalledExactlyOnceWith("speedy");
-  expect(openSkill).not.toHaveBeenCalled();
-  selection.select.mockClear();
-  input.emit("pointerdown", { id: 2, x: 20, y: 20 });
-  time.now += SKILL_GESTURE.holdMilliseconds;
-  scene.updateSkillHold();
-  input.emit("pointerup", { id: 2, x: 20, y: 20 });
-  expect(openSkill).toHaveBeenCalledExactlyOnceWith("speedy");
-  expect(selection.select).not.toHaveBeenCalled();
-});
-
-it("opens paused HUD details without selecting and covers their targets against outside dismissal", () => {
-  const { input, openSkill } = gestures("open");
-  input.emit("pointerdown", { id: 1, x: 20, y: 20 });
-  input.emit("pointerup", { id: 1, x: 20, y: 20 });
-  expect(openSkill).toHaveBeenCalledExactlyOnceWith("speedy");
-  expect(selection.select).not.toHaveBeenCalled();
-  const hit = { height: 48, width: 48, x: 0, y: 100 };
-  const zone = { playCovered: () => false };
-  const scene = Object.assign(new PauseScene(), {
-    enabledSkills: () => ["dash"],
-    layout: { card: hit, close: { hit }, home: { hit }, resume: { hit }, settings: { hit } },
-    scene: { get: () => zone, isPaused: () => true },
-    state: "open",
-  }) as unknown as {
-    coveredCard(): readonly { x: number; y: number; width: number; height: number }[];
-    skillHudLive(): boolean;
-    state: string;
-  };
-  expect(scene.skillHudLive()).toBe(true);
-  expect(scene.coveredCard()).toContainEqual({
-    height: SKILL_BUTTON.target,
-    width: SKILL_BUTTON.target,
-    ...skillHud(SKILL_IDS).get("speedy"),
+it("names the pause button and each owned skill from data, and leaves them out of Tab in play", () => {
+  const { hud, pauseButton, skill } = play();
+  expect({
+    hidden: SKILL_IDS.map((id) => skill(id).hidden),
+    live: hud.hasAttribute("data-live"),
+    names: [pauseButton, ...SKILL_IDS.map(skill)].map((button) =>
+      button.getAttribute("aria-label"),
+    ),
+    pauseShown: !pauseButton.hidden,
+    pressed: SKILL_IDS.map((id) => skill(id).getAttribute("aria-pressed")),
+    readiness: SKILL_IDS.map((id) => describedBy(skill(id))),
+    tabIndex: [pauseButton, ...SKILL_IDS.map(skill)].map((button) => button.tabIndex),
+  }).toEqual({
+    hidden: SKILL_IDS.map((id) => !selection.owned.includes(id)),
+    live: true,
+    names: [TEXT.pause.button, ...SKILL_IDS.map((id) => TEXT.skills[id].title)],
+    pauseShown: true,
+    pressed: SKILL_IDS.map((id) => String(id === selection.active)),
+    readiness: SKILL_IDS.map((id) => (id === selection.active ? TEXT.skillHud.ready : undefined)),
+    tabIndex: [-1, -1, -1, -1],
   });
-  gate.accepts.mockReturnValue(false);
-  expect(scene.skillHudLive()).toBe(false);
-  gate.accepts.mockReturnValue(true);
-  scene.state = "settings";
-  expect(scene.skillHudLive()).toBe(false);
 });
 
-function readiness(bird: BirdState | undefined) {
-  return Object.assign(new PauseScene(), {
-    scene: {
-      get: () => ({ skillState: () => (bird === undefined ? undefined : { bird, tuning: BIRD }) }),
-    },
-  }) as unknown as {
-    skillReady(skill: SkillId): boolean;
-  };
+it("shows the selected skill's ready glyph and every other skill's muted one", async () => {
+  const { skill, update } = play();
+  await settle();
+  update();
+  const glyph = (id: SkillId) => skill(id).querySelector("img")!.getAttribute("src");
+  // The sheets' first frame is the ready tag's, the second the muted tag's.
+  expect(glyph("dash")).toBe(`blob:${SKILL_ART.dash}-${SKILL_ART.dash} 0.aseprite-ink`);
+  expect(glyph("speedy")).toBe(`blob:${SKILL_ART.speedy}-${SKILL_ART.speedy} 1.aseprite-`);
+});
+
+// The selected skill's readiness, as its button is described.
+function readiness(skill: SkillId, bird: BirdState | null) {
+  selection.active = skill;
+  selection.owned = [...SKILL_IDS];
+  const { events, skill: button } = play(bird);
+  const described = describedBy(button(skill));
+  events.emit("shutdown");
+  return described === TEXT.skillHud.ready;
 }
+
 it.each([
   { grounded: true, jumpHeld: false, name: "grounded" },
   { grounded: false, jumpHeld: true, name: "holding Jump" },
@@ -239,78 +181,259 @@ it.each([
     grounded,
     jumpHeld,
   };
-  expect(readiness(bird).skillReady("doubleJump")).toBe(true);
-  expect(readiness({ ...bird, airJumpUsed: true }).skillReady("doubleJump")).toBe(false);
+  expect(readiness("doubleJump", bird)).toBe(true);
+  expect(readiness("doubleJump", { ...bird, airJumpUsed: true })).toBe(false);
 });
-it("has no HUD readiness before the zone state exists", () => {
-  expect(readiness(undefined).skillReady("dash")).toBe(false);
+
+it("describes no readiness before the zone state exists", () => {
+  expect(readiness("dash", null)).toBe(false);
 });
+
 it.each([
   { airUsed: false, cooldownRemainingSeconds: 0, name: "active burst", remainingSeconds: 0.1 },
   { airUsed: false, cooldownRemainingSeconds: 0.1, name: "cooldown", remainingSeconds: 0 },
   { airUsed: true, cooldownRemainingSeconds: 0, name: "spent air charge", remainingSeconds: 0 },
 ])(
-  "mutes equipped Dash during $name without changing passive Speedy",
+  "mutes selected Dash during $name without changing passive Speedy",
   ({ airUsed, cooldownRemainingSeconds, remainingSeconds }) => {
     const bird = { ...startBird(BIRD, { x: 0, y: 0 }), grounded: false, jumpHeld: true };
-    expect(readiness(bird).skillReady("dash")).toBe(true);
+    expect(readiness("dash", bird)).toBe(true);
     const spent = {
       ...bird,
       dash: { ...bird.dash!, airUsed, cooldownRemainingSeconds, remainingSeconds },
     };
-    expect(readiness(spent).skillReady("dash")).toBe(false);
-    expect(readiness(spent).skillReady("speedy")).toBe(true);
+    expect(readiness("dash", spent)).toBe(false);
+    expect(readiness("speedy", spent)).toBe(true);
   },
 );
-it("restores every owned HUD icon after returning home and continuing with one selected skill", () => {
-  selection.owned = [...SKILL_IDS];
-  let playing = true;
-  const bird = startBird(BIRD, { x: 0, y: 0 });
-  const zone = {
-    playCovered: () => false,
-    skillState: () => ({ bird, shown: true, tuning: BIRD }),
-  };
-  const icons = new Map(
-    selection.owned.map((skill) => [
-      skill,
-      { place: vi.fn(), ready: vi.fn(), selected: vi.fn(), visible: vi.fn() },
-    ]),
-  );
-  const scene = Object.assign(new PauseScene(), {
-    cameras: { main: { x: 0, y: 0, zoom: 1 } },
-    dims: new Map(),
-    hud: icons,
-    input: {},
-    scale: { gameSize: SCREEN, zoom: 1 },
-    scene: {
-      get: () => zone,
-      isActive: () => playing,
-      isPaused: () => false,
-      launch: vi.fn(),
-      stop: () => {
-        playing = false;
-      },
-    },
-    showCard: vi.fn(),
-    state: "closed",
-  }) as unknown as {
-    returnHome(): void;
-    showSkillHud(): void;
-  };
-  const check = () => {
-    scene.showSkillHud();
-    for (const [skill, icon] of icons) {
-      expect(icon.visible).toHaveBeenLastCalledWith(playing);
-      expect(icon.selected).toHaveBeenLastCalledWith(skill === selection.active);
-      expect(icon.ready).toHaveBeenLastCalledWith(skill === selection.active);
+
+it("selects a tapped skill in play, but a 400ms hold opens its details without selecting it", () => {
+  const { details, skill, time, update } = play();
+  const tapping = press(skill("speedy"));
+  time.now = SKILL_GESTURE.holdMilliseconds - 1;
+  update();
+  tapping.lift();
+  expect(selection.select).toHaveBeenCalledExactlyOnceWith("speedy");
+  expect(details()).toEqual([]);
+  selection.select.mockClear();
+  const holding = press(skill("speedy"), 2);
+  time.now += SKILL_GESTURE.holdMilliseconds;
+  update();
+  expect(details().map((data) => data.skill)).toEqual(["speedy"]);
+  holding.lift();
+  expect(selection.select).not.toHaveBeenCalled();
+  expect(details()).toHaveLength(1);
+});
+
+it("opens details for a hold that lifts before a frame sees it", () => {
+  const { details, skill, time } = play();
+  const holding = press(skill("speedy"));
+  time.now += SKILL_GESTURE.holdMilliseconds;
+  holding.lift();
+  expect(details().map((data) => data.skill)).toEqual(["speedy"]);
+  expect(selection.select).not.toHaveBeenCalled();
+});
+
+it("refuses a press that leaves its skill before it lifts, even back on the skill, and its hold", () => {
+  const { details, skill, time, update } = play();
+  const dragging = press(skill("dash"));
+  dragging.move(skill("speedy"), 60);
+  dragging.move(skill("dash"), 5);
+  time.now += SKILL_GESTURE.holdMilliseconds;
+  update();
+  dragging.lift();
+  expect(selection.select).not.toHaveBeenCalled();
+  expect(details()).toEqual([]);
+});
+
+it("takes a skill tap while a move finger and the Jump and Use fingers stay down", () => {
+  const { skill } = play();
+  const canvas = document.createElement("canvas");
+  document.body.append(canvas);
+  for (const pointerId of [1, 2, 3]) {
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId }));
+  }
+  // With other fingers down the browser sends no click for the tap.
+  press(skill("speedy"), 4).lift(skill("speedy"), 5, false);
+  expect(selection.select).toHaveBeenCalledExactlyOnceWith("speedy");
+  canvas.remove();
+});
+
+it("keeps presses on its controls from Phaser, which handles presses off the canvas", async () => {
+  const { dialog, open, pauseButton, skill } = play();
+  await open();
+  const backdrop = dialog.closest(".ui-card-scene")!.querySelector(".ui-backdrop")!;
+  for (const target of [pauseButton, skill("dash"), backdrop]) {
+    for (const type of ["pointerdown", "touchstart", "touchend"]) {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      target.dispatchEvent(event);
+      expect([type, event.defaultPrevented]).toEqual([type, true]);
     }
+  }
+});
+
+it("keeps the HUD live beside the open card, where a tap opens details and closes no card", async () => {
+  const { details, dialog, hud, open, scenes, skill } = play();
+  await open();
+  expect({
+    cardShown: !dialog.closest<HTMLElement>(".ui-card-scene")!.hidden,
+    live: hud.hasAttribute("data-live"),
+    shown: !skill("dash").hidden,
+    tabIndex: skill("dash").tabIndex,
+  }).toEqual({ cardShown: true, live: true, shown: true, tabIndex: 0 });
+  tap(skill("dash"));
+  expect(details().map((data) => data.skill)).toEqual(["dash"]);
+  expect(selection.select).not.toHaveBeenCalled();
+  expect(scenes.resume).not.toHaveBeenCalled();
+  // The card had paused the zone; details do not pause it again.
+  expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("zone");
+});
+
+it("steps the focus through Resume, Settings, Back to title, the skills and the close X, wrapping", async () => {
+  selection.owned = [...SKILL_IDS];
+  const { close, dialog, open, update } = play();
+  await open();
+  update();
+  expect(document.activeElement).toBe(dialog);
+  const name = () =>
+    (document.activeElement as HTMLElement).getAttribute("aria-label") ??
+    document.activeElement?.textContent;
+  const names = Array.from({ length: 8 }, () => {
+    pressKey([], "Tab");
+    return name();
+  });
+  expect(names).toEqual([
+    TEXT.pause.resume,
+    TEXT.pause.settings,
+    TEXT.pause.home,
+    ...SKILL_IDS.map((id) => TEXT.skills[id].title),
+    TEXT.pause.close,
+    TEXT.pause.resume,
+  ]);
+  dialog.focus();
+  pressKey([], "Tab", { shiftKey: true });
+  expect(document.activeElement).toBe(close);
+});
+
+it("opens a focused skill's details on Enter under the card", async () => {
+  const { details, open, scenes, skill } = play();
+  await open();
+  skill("speedy").focus();
+  pressKey([], "Enter");
+  expect(details().map((data) => data.skill)).toEqual(["speedy"]);
+  expect(scenes.resume).not.toHaveBeenCalled();
+});
+
+it.each(["closed", "open"] as const)(
+  "replaces %s Pause with one detail and resumes play once without reopening Pause",
+  async (state) => {
+    const { details, dialog, open, scenes, skill, time, update, zone } = play();
+    if (state === "open") {
+      await open();
+      tap(skill("dash"));
+    } else {
+      press(skill("dash"));
+      time.now += SKILL_GESTURE.holdMilliseconds;
+      update();
+    }
+    tap(skill("dash"));
+    expect(details()).toHaveLength(1);
+    expect(dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+    expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("zone");
+    expect(scenes.resume).not.toHaveBeenCalled();
+    details()[0]!.onClose();
+    details()[0]!.onClose();
+    expect(zone.resumeSkillPlay).toHaveBeenCalledOnce();
+    expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
+    expect(details()).toHaveLength(1);
+    update();
+    expect(dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  },
+);
+
+it("does not resume play through another modal owner when details close", () => {
+  const { details, game, scenes, skill, time, update } = play();
+  press(skill("dash"));
+  time.now += SKILL_GESTURE.holdMilliseconds;
+  update();
+  const other = { events: new EventEmitter(), game };
+  modalInput(other as never).open();
+  details()[0]!.onClose();
+  expect(scenes.resume).not.toHaveBeenCalled();
+  modalInput(other as never).close();
+});
+
+it("ignores a previous detail's close callback after a newer detail has opened", () => {
+  const { details, scenes, skill, time, update } = play();
+  const hold = () => {
+    press(skill("dash"));
+    time.now += SKILL_GESTURE.holdMilliseconds;
+    update();
   };
-  check();
-  scene.returnHome();
-  check();
-  playing = true;
-  check();
+  hold();
+  const first = details()[0]!;
+  first.onClose();
+  hold();
+  scenes.resume.mockClear();
+  first.onClose();
+  expect(scenes.resume).not.toHaveBeenCalled();
+  details()[1]!.onClose();
+  expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
+});
+
+it("restores every owned skill button after Back to title and the next zone", async () => {
+  selection.owned = [...SKILL_IDS];
+  const { button, open, scenes, skill, status, update } = play();
+  await open();
+  tap(button(TEXT.pause.home));
+  expect(scenes.stop).toHaveBeenCalledWith("zone");
+  expect(scenes.launch).toHaveBeenCalledWith("start");
+  update();
+  expect(SKILL_IDS.map((id) => skill(id).hidden)).toEqual([true, true, true]);
+  status.zone = "running";
   selection.active = "speedy";
-  check();
-  expect(selection.owned).toEqual(SKILL_IDS);
+  update();
+  expect(SKILL_IDS.map((id) => skill(id).hidden)).toEqual([false, false, false]);
+  expect(SKILL_IDS.map((id) => skill(id).getAttribute("aria-pressed"))).toEqual([
+    "false",
+    "false",
+    "true",
+  ]);
+});
+
+it.each([
+  ["the pause button", ({ pauseButton }: ReturnType<typeof play>) => tap(pauseButton)],
+  ["P", ({ keyboard }: ReturnType<typeof play>) => pressKey([keyboard], "P")],
+  ["Escape", ({ keyboard }: ReturnType<typeof play>) => pressKey([keyboard], "Escape")],
+  ["back", () => window.dispatchEvent(new Event("phone-back"))],
+])("opens in play by %s over the paused zone", async (_, route) => {
+  const fixture = play();
+  route(fixture);
+  await settle();
+  expect(fixture.scenes.pause).toHaveBeenCalledExactlyOnceWith("zone");
+  expect(fixture.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
+  expect(document.activeElement).toBe(fixture.dialog);
+  fixture.update();
+  expect(fixture.pauseButton.hidden).toBe(true);
+});
+
+it.each([
+  ["Resume", ({ button }: ReturnType<typeof play>) => tap(button(TEXT.pause.resume))],
+  ["the close X", ({ close }: ReturnType<typeof play>) => tap(close)],
+  ["P", () => pressKey([], "P")],
+  ["Escape", () => pressKey([], "Escape")],
+  ["back", () => window.dispatchEvent(new Event("phone-back"))],
+  [
+    "a tap outside the card",
+    ({ dialog }: ReturnType<typeof play>) =>
+      tap(dialog.closest(".ui-card-scene")!.querySelector(".ui-backdrop")!),
+  ],
+])("closes by %s and resumes the zone", async (_, route) => {
+  const fixture = play();
+  await fixture.open();
+  route(fixture);
+  expect(fixture.scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
+  expect(fixture.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  fixture.update();
+  expect(fixture.pauseButton.hidden).toBe(false);
 });

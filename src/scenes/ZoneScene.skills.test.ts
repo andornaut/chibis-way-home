@@ -100,6 +100,9 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
   },
 );
 
+// A press's target on an HTML button: the pause button, a skill button or a page button.
+const PAGE_BUTTON = { closest: () => ({}) };
+
 // A skill target's centre from its top-left.
 const targetCentre = (at: { x: number; y: number }) => ({
   x: at.x + SKILL_BUTTON.target / 2,
@@ -225,7 +228,8 @@ it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])
                 ? targetCentre(skillHud(SKILL_IDS).get(control as SkillId)!)
                 : { x: 100, y: 100 },
             );
-    const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
+    // Pause, the skills and page buttons are HTML buttons over the canvas.
+    const target = control === "use" || control === "jump" ? f.canvas : PAGE_BUTTON;
     f.mouse("mousedown", 0, 1, point, target);
     f.mouse("mousemove", 0, 1, { x: 250, y: 180 });
     expect(keyIntent(f.scene.heldKeys).move).toBe(0);
@@ -289,7 +293,8 @@ it.each([
               ? targetCentre(skillHud(SKILL_IDS).get(control as SkillId)!)
               : { x: 100, y: 100 },
           );
-  const target = control === "page button" ? { closest: () => ({}) } : f.canvas;
+  // Pause, the skills and page buttons are HTML buttons over the canvas.
+  const target = control === "use" || control === "jump" ? f.canvas : PAGE_BUTTON;
   expect(f.draw()).toBe(true);
   f.send("pointerdown", 1, point, target);
   expect(f.scene.heldTouches.get(1)?.role).toBe(role);
@@ -313,7 +318,7 @@ it("retains the movement finger's joystick while another finger holds or release
   f.send("pointerdown", 1, start);
   f.send("pointermove", 1, { ...start, x: start.x + TOUCH.moveDeadZone + 1 });
   f.send("pointerdown", 2, use);
-  f.send("pointerdown", 3, hud);
+  f.send("pointerdown", 3, hud, PAGE_BUTTON);
   expect(touchIntent(TOUCH, [...f.scene.heldTouches.values()])).toMatchObject({
     move: 1,
     use: true,
@@ -326,7 +331,7 @@ it("retains the movement finger's joystick while another finger holds or release
   expect(f.draw()).toBe(true);
   f.send("pointerup", 1, start);
   expect(f.draw()).toBe(false);
-  f.send("pointercancel", 3, hud);
+  f.send("pointercancel", 3, hud, PAGE_BUTTON);
   expect(f.draw()).toBe(true);
   f.events.emit("shutdown");
 });
@@ -343,19 +348,18 @@ it("does not reserve hidden or unowned skill targets", () => {
   expect(f.scene.heldTouches.get(2)?.role).toBe("move");
   f.events.emit("shutdown");
 });
-it("reserves an owned skill's packed slot at the top right and frees its full-row slot", () => {
+it("reserves a touch on a skill button where the HUD packs it, and moves one on the canvas", () => {
   const f = touchFixture();
   saved.owned = ["dash"];
   const packed = shifted(viewShift(f.fit), targetCentre(skillHud(["dash"]).get("dash")!));
-  const fullRow = shifted(viewShift(f.fit), targetCentre(skillHud(SKILL_IDS).get("dash")!));
   expect(packed).toEqual(
     shifted(viewShift(f.fit), targetCentre(skillHud(SKILL_IDS).get("speedy")!)),
   );
-  f.send("pointerdown", 1, packed);
+  f.send("pointerdown", 1, packed, PAGE_BUTTON);
   expect(f.scene.heldTouches.has(1)).toBe(false);
   expect(f.scene.buttonTouches.has(1)).toBe(true);
-  f.send("pointerup", 1, packed);
-  f.send("pointerdown", 2, fullRow);
+  f.send("pointerup", 1, packed, PAGE_BUTTON);
+  f.send("pointerdown", 2, packed);
   expect(f.scene.heldTouches.get(2)?.role).toBe("move");
   f.events.emit("shutdown");
 });

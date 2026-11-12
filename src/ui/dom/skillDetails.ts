@@ -73,12 +73,7 @@ export function createSkillDetailsCard(
   header.append(title);
   const body = element("div", "skill-details-body");
   // The ready, unselected disc: a yellow face and an ink glyph.
-  const disc = createSkillDisc(
-    document,
-    { face: colours.yellow, ink: colours.ink },
-    false,
-    words.disc,
-  );
+  const disc = createSkillDisc(document, colours, { ready: true, selected: false }, words.disc);
   const description = element("p", "skill-details-description");
   description.id = `${id}-description`;
   description.append(...createActionHelp(document, colours, words, words.description));

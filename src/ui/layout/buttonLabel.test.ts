@@ -12,7 +12,7 @@ import { PLAY_MARK, TEXT_BUTTON } from "../../data/layout";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import { buttonFace, buttonLabelPlacement, centredLabel } from "./buttonLabel";
-import { CARD_TEXT_SCALE } from "./pauseCard";
+import { CARD_TEXT_SCALE } from "./cardFrame";
 import { startScreenLayout } from "./startScreen";
 import { textInkBounds } from "./textInk";
 

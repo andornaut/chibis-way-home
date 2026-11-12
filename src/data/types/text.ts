@@ -48,6 +48,12 @@ export interface GameText {
     readonly close: string;
     readonly disc: string;
   };
+  // The skill HUD's description of the selected skill's readiness. Each skill button is named by
+  // its skill's title.
+  readonly skillHud: {
+    readonly ready: string;
+    readonly recharging: string;
+  };
   readonly skills: Readonly<Record<SkillId, SkillText>>;
   readonly stats: StatsText;
   readonly update: {
@@ -125,8 +131,11 @@ export interface GameText {
     readonly reload: string;
     readonly title: string;
   };
-  // The pause card: its title, the Settings and Back to title rows, and Resume.
+  // The pause card: its title, the Settings and Back to title rows, and Resume; and the
+  // accessible names of the pause button that opens it and its close X.
   readonly pause: {
+    readonly button: string;
+    readonly close: string;
     readonly home: string;
     readonly resume: string;
     readonly settings: string;

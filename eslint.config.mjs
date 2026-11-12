@@ -98,6 +98,7 @@ const INDEXED = {
       "./dom/achievements.css",
       "./dom/actionHelp.css",
       "./dom/death.css",
+      "./dom/pause.css",
       "./dom/runStats.css",
       "./dom/settings.css",
       "./dom/skillDetails.css",

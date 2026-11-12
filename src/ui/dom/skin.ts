@@ -1,4 +1,7 @@
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import {
+  type LayoutValues,
+  writeLayoutProperties,
+} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 import {
   cutFrame,
   setNineSlice,
@@ -8,6 +11,7 @@ import { slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 
 import type { Rect } from "../../data/types";
 import type { Palette } from "../chrome/dim";
+import { modalColour } from "../chrome/modalDim";
 
 // Art's nine-slice frames the HTML UI draws, cut from the images the game already loaded: each
 // frame's art key, the animation tag whose first frame it is (the sheet's first frame where
@@ -33,8 +37,19 @@ export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-switch", name: "ui-switch-on", tag: "on", whole: true },
 ];
 
-// The palette colours the HTML UI's CSS reads, as --colour-<name>.
-export const UI_COLOURS = ["dslate", "grey", "ink", "lgrey", "red", "white", "yellow"] as const;
+// The palette colours the HTML UI's CSS and its SVG chrome read, as --colour-<name>.
+export const UI_COLOURS = [
+  "cream",
+  "dslate",
+  "grey",
+  "ink",
+  "lgrey",
+  "navy",
+  "red",
+  "white",
+  "yellow",
+] as const;
+export type UiColour = (typeof UI_COLOURS)[number];
 
 export interface SkinFrame {
   readonly name: string;
@@ -45,33 +60,96 @@ export interface SkinFrame {
   readonly source: CanvasImageSource;
 }
 
+// rect of source with each pixel's colour (0xrrggbb) replaced by remap's, keeping its alpha, as
+// a canvas the size of rect. Each distinct colour is remapped once.
+export function remappedFrame(
+  document: Document,
+  remap: (colour: number) => number,
+  source: CanvasImageSource,
+  rect: Rect,
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    throw new Error("No 2D canvas to remap a sheet frame with");
+  }
+  context.drawImage(source, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
+  const image = context.getImageData(0, 0, rect.width, rect.height);
+  const { data } = image;
+  const remapped = new Map<number, number>();
+  for (let index = 0; index < data.length; index += 4) {
+    if (data[index + 3] === 0) {
+      continue;
+    }
+    const colour = (data[index]! << 16) | (data[index + 1]! << 8) | data[index + 2]!;
+    const to = remapped.get(colour) ?? remap(colour);
+    remapped.set(colour, to);
+    data[index] = (to >> 16) & 0xff;
+    data[index + 1] = (to >> 8) & 0xff;
+    data[index + 2] = to & 0xff;
+  }
+  context.putImageData(image, 0, 0);
+  return canvas;
+}
+
+// A #rrggbb colour through remap.
+function remappedHex(remap: (colour: number) => number, hex: string): string {
+  return `#${remap(Number.parseInt(hex.slice(1), 16))
+    .toString(16)
+    .padStart(6, "0")}`;
+}
+
+// Each UI colour as --colour-<name>, from the palette, and under the modal dim: the palette's
+// ramp remap the canvas's dim reads its capture through (modalColour).
+export function skinColours(palette: Palette): {
+  readonly dimmed: Readonly<Record<string, string>>;
+  readonly lit: Readonly<Record<string, string>>;
+} {
+  const dim = modalColour(palette);
+  const lit = UI_COLOURS.map((name) => {
+    const colour = palette.colours[name];
+    if (colour === undefined) {
+      throw new Error(`The palette has no ${name}`);
+    }
+    return [`--colour-${name}`, colour] as const;
+  });
+  return {
+    dimmed: Object.fromEntries(lit.map(([name, colour]) => [name, remappedHex(dim, colour)])),
+    lit: Object.fromEntries(lit),
+  };
+}
+
 // Sets each UI colour on layer as --colour-<name>, and each frame for .ui-frame: --<name>-image
 // and --<name>-slice (sheetFrames), its border widths as whole CSS px in --<name>-border, and
 // its edges as unitless base px in --<name>-top, -right, -bottom and -left. A whole frame sets
-// only --<name>-image.
+// only --<name>-image. Resolves with the dimmed skin: each colour and frame image under the
+// modal dim, the palette's ramp remap the canvas's dim reads its capture through (modalColour),
+// as the same custom properties, for the layer to set on what a modal dims.
 export async function applySkin(
   document: Document,
   palette: Palette,
   frames: readonly SkinFrame[],
   layer: HTMLElement,
-): Promise<void> {
-  writeLayoutProperties(
-    Object.fromEntries(
-      UI_COLOURS.map((name) => {
-        const colour = palette.colours[name];
-        if (colour === undefined) {
-          throw new Error(`The palette has no ${name}`);
-        }
-        return [`--colour-${name}`, colour];
-      }),
-    ),
-    layer,
-  );
+): Promise<LayoutValues> {
+  const dim = modalColour(palette);
+  const colours = skinColours(palette);
+  writeLayoutProperties(colours.lit, layer);
+  const cut = (canvas: HTMLCanvasElement) =>
+    cutFrame(document, canvas, { height: canvas.height, width: canvas.width, x: 0, y: 0 });
   const urls = await Promise.all(
-    frames.map(({ rect, source }) => cutFrame(document, source, rect)),
+    frames.map(({ rect, source }) =>
+      Promise.all([
+        cutFrame(document, source, rect),
+        cut(remappedFrame(document, dim, source, rect)),
+      ]),
+    ),
   );
+  const dimmed: Record<string, string> = { ...colours.dimmed };
   frames.forEach(({ name, slice: insets }, index) => {
-    const url = urls[index]!;
+    const [url, dimmedUrl] = urls[index]!;
+    dimmed[`--${name}-image`] = `url("${dimmedUrl}")`;
     if (insets === undefined) {
       writeLayoutProperties({ [`--${name}-image`]: `url("${url}")` }, layer);
       return;
@@ -89,4 +167,5 @@ export async function applySkin(
       layer,
     );
   });
+  return dimmed;
 }

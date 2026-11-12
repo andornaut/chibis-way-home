@@ -42,7 +42,17 @@ export {
 } from "./dom/achievements";
 export { type CardView, createCard, showPresses } from "./dom/card";
 export { createDeathCard, type DeathCardView } from "./dom/death";
-export { createUiLayer, loadUiFonts, UI_LAYOUT, type UiLayer } from "./dom/layer";
+export { createUiLayer, loadUiFonts, UI_DIMMED, UI_LAYOUT, type UiLayer } from "./dom/layer";
+export {
+  createPauseView,
+  PAUSE_LAYOUT,
+  type PauseColours,
+  type PauseDiscPose,
+  type PauseView,
+  showPauseDisc,
+  showSkillButton,
+  skillPlace,
+} from "./dom/pause";
 export { refuseControl } from "./dom/refusal";
 export {
   createSettingsCard,
@@ -53,7 +63,7 @@ export {
 } from "./dom/settings";
 export { createSkillDetailsCard, type SkillDetailsView } from "./dom/skillDetails";
 export { filledFrame } from "./dom/skillDisc";
-export { applySkin, type SkinFrame, UI_FRAMES } from "./dom/skin";
+export { applySkin, remappedFrame, type SkinFrame, UI_FRAMES } from "./dom/skin";
 export { createStageSelect, type StageFace, type StageSelectView } from "./dom/stageSelect";
 export { focusKeyAction, stepFocus } from "./focus";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput";
@@ -116,7 +126,7 @@ export { type PressArea, pressedArea } from "./layout/hitAreas";
 export { labelledButton } from "./layout/labelledButton";
 export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/mapScreen";
 export { openingLayout } from "./layout/opening";
-export { PAUSE_BUTTON, pauseCard } from "./layout/pauseCard";
+export { PAUSE_BUTTON } from "./layout/pauseCard";
 export { canvasSize, playView, shifted, viewShift } from "./layout/playView";
 export { CELEBRATION, type LabelledButton } from "./layout/restartCard";
 export { ROOM_SCREEN } from "./layout/roomScreen";

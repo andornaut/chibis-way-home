@@ -11,8 +11,8 @@ import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
 import { CARD_FONTS } from "../../testing/cardFonts";
 import { centredLabel } from "./buttonLabel";
+import { CARD_TEXT_SCALE } from "./cardFrame";
 import { pressedArea } from "./hitAreas";
-import { CARD_TEXT_SCALE } from "./pauseCard";
 import { CELEBRATION, type LabelledButton } from "./restartCard";
 
 const FONT = parseBitmapFont(fontBody);

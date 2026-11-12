@@ -2,13 +2,13 @@ import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
-import { createChromeSvg } from "@andornaut/game-kit/web/ui/dom/vectorChrome";
 
 import type { ControlAction } from "../../data/types";
 import { actionHelpParts } from "../chrome/actionHelp";
 import { helpChromeLayers } from "../chrome/helpChrome";
 import { TOUCH_CHROME_FRAME } from "../chrome/touchChrome";
 import { ACTION_HELP } from "../layout/actionHelp";
+import { createPaletteSvg } from "./chrome";
 
 // Text with inline control illustrations in the HTML UI (actionHelp.css): each {move}, {use} or
 // {jump} token becomes the action's label in the action weight, then its help illustration, the
@@ -38,8 +38,9 @@ export function createActionIcon(
   icon.setAttribute("role", "img");
   icon.setAttribute("aria-label", name);
   icon.append(
-    createChromeSvg(
+    createPaletteSvg(
       document,
+      colours,
       { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME },
       helpChromeLayers(colours, action),
     ),

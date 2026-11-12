@@ -8,6 +8,7 @@ import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard";
 import { ACTION_HELP_PROPERTIES } from "./actionHelp";
 import { DEATH_LAYOUT } from "./death";
 import { UI_LAYOUT } from "./layer";
+import { PAUSE_LAYOUT, skillPlace } from "./pause";
 import { runStatsProperties } from "./runStats";
 import { SKILL_DETAILS_LAYOUT } from "./skillDetails";
 import { SKILL_DISC_LAYOUT } from "./skillDisc";
@@ -32,6 +33,8 @@ const WRITTEN = new Set(
     ACTION_HELP_PROPERTIES,
     SKILL_DETAILS_LAYOUT,
     SKILL_DISC_LAYOUT,
+    PAUSE_LAYOUT,
+    skillPlace({ x: 0, y: 0 }),
   ].flatMap(Object.keys),
 );
 

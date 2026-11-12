@@ -1,13 +1,15 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { type Cameras, Core, type GameObjects, type Input, Scale, Scene, Scenes } from "phaser";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { readUnit } from "@andornaut/game-kit/web/ui/dom/viewUnits";
+import { Core, Scene } from "phaser";
 
 import { EDGE } from "../core";
 import { SKILL_GESTURE } from "../data/skills";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
-import type { Rect, SkillId } from "../data/types";
+import type { SkillId } from "../data/types";
 import { developmentSkillOverrides } from "../dev/mode";
-import { isSkillId, SKILL_IDS, skillEnabled } from "../progress";
+import { SKILL_IDS, skillEnabled } from "../progress";
 import { coverZone, PHONE_EVENTS, startWakeLock, stopWakeLock, zoneShown } from "../pwa";
 import {
   type CardAction,
@@ -15,43 +17,27 @@ import {
   cardKeyAction,
   cardTurnAction,
   coarsePointer,
+  createPauseView,
   focusKeyAction,
-  type Palette,
-  PAUSE_BUTTON,
-  pauseCard,
-  type PressArea,
-  pressedArea,
+  type PauseColours,
+  type PauseView,
   setTouchSettingShown,
-  shifted,
-  SKILL_BUTTON,
+  showPauseDisc,
+  showPresses,
+  showSkillButton,
+  SKILL_ART,
   skillHud,
-  stepFocus,
   type TouchSetting,
   touchSettings,
 } from "../ui";
 import { FRAME_TURN } from "../ui/input/frameTurn";
-import {
-  addCardHeading,
-  addCardText,
-  addSlice,
-  addTextButton,
-  captureTab,
-  cardFonts,
-  palette,
-  paletteColour,
-  pressTextButton,
-  PRIMARY_BUTTON,
-  ringFocus,
-  type TextButton,
-} from "./cardParts";
+import { paletteColour } from "./cardParts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi";
 import { showModalBackdrop } from "./modalBackdrop";
-import { modalInput, onGatedPointer, type SceneInput } from "./modalInput";
-import { catchModalTaps } from "./modalTaps";
-import { createPauseChrome, PAUSE_CHROME_KEY } from "./pauseChrome";
-import { fitCanvasCamera, fitPlayCamera, playPoint, sceneViewShift } from "./playCamera";
+import { modalInput, type SceneInput } from "./modalInput";
+import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome";
 import { activeSkill, savedSkills, selectActiveSkill } from "./save";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene";
-import { drawSkillButton } from "./skillButton";
 import type { SkillDetailData } from "./SkillDetailScene";
 import type { ZoneScene } from "./ZoneScene";
 
@@ -78,14 +64,17 @@ interface PausableConversation {
   pausable(): boolean;
 }
 
-type Control = "close" | "home" | "pauseButton" | "resume" | "settings" | SkillId;
-type CardControl = Exclude<Control, "pauseButton">;
-
-// The card's controls, in the order the keyboard's focus moves through them.
-
-// The card's buttons, top to bottom.
-type CardButton = "home" | "resume" | "settings";
-const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
+// The press a pointer holds on a control, from where and when it landed; a refused one travelled
+// too far or left the control, and acts on nothing.
+interface ControlPress {
+  readonly check: () => boolean;
+  readonly control: HTMLButtonElement;
+  readonly pointerId: number;
+  refused: boolean;
+  readonly startedAt: number;
+  readonly x: number;
+  readonly y: number;
+}
 
 // The pause card over the dimmed zone, and the pause button that opens it, which shows on a
 // touch screen while a zone plays or a conversation covers it, never on the map. It runs beside
@@ -93,96 +82,107 @@ const BUTTONS: readonly CardButton[] = ["resume", "settings", "home"];
 // and over a conversation's line, required choice or departure; opening it pauses the zone, or
 // the conversation scene over the paused zone, which keeps its line or choice and its focus, and
 // lets the screen sleep. Resume (the primary button, at the top), the close X, back, Escape, P
-// and a tap outside the card (closeOnOutsideTap) close it. The skill buttons show over such a
-// conversation too, taking no presses, so a tap on one reaches the conversation as any other tap
-// does.
+// and a tap outside the card close it. The skill buttons show over such a conversation too,
+// taking no presses, so a tap on one reaches the conversation as any other tap does.
 // Settings opens SettingsScene's card over the same dim in the pause card's place, and passes it
 // back until it closes; Back to title ends the zone for the start screen.
+// The card, the pause button and the skill HUD are HTML in the UI layer (src/ui/dom/pause.ts):
+// a control acts when a press lands on it and lifts on it without travelling past the tap
+// distance (watchPresses). Under the card the HUD stays live (the kit's modalLayer live elements): Tab and the
+// arrows step the keyboard's focus through Resume, Settings, Back to title, the shown skills and
+// the close X, and Enter and Space press the focused one. In play the pause button and the skill
+// buttons are left out of the focus order, so Space and Enter stay the game's.
 export class PauseScene extends Scene implements SettingsOpener {
   private skillVisit = 0;
-  private hud = new Map<SkillId, ReturnType<typeof drawSkillButton>>();
-  private layout!: ReturnType<typeof pauseCard>;
-  private card!: GameObjects.Container;
-  // The control the keyboard's focus is on, and art's ring round it.
-  private focus: CardControl | undefined;
-  private focusRing: GameObjects.NineSlice | undefined;
-  private closeX!: GameObjects.Sprite;
+  private view: PauseView | undefined;
+  private colours!: PauseColours;
+  private timeline!: PauseDiscTimeline;
   private dims = new Map<string, ReturnType<typeof showModalBackdrop>>();
-  private pauseButton!: GameObjects.Sprite;
-  // The control a press landed on, which acts if the press lifts on it too.
-  private cardCamera!: Cameras.Scene2D.Camera;
-  private pressed: Control | undefined;
-  private pressStart:
-    | {
-        readonly control: Control;
-        readonly id: number;
-        readonly startedAt: number;
-        readonly x: number;
-        readonly y: number;
-        cancelled: boolean;
-      }
-    | undefined;
-  private buttons!: Readonly<Record<CardButton, TextButton>>;
   private state: "closed" | "open" | "opening" | "settings" | "skill" = "closed";
   // The conversation scene the card opened over, which it paused in the zone's place.
   private overConversation: Conversation | undefined;
+  private closeModal: (() => void) | undefined;
+  // The card control the keyboard's focus was on when Settings opened.
+  private settingsFocus: HTMLElement | undefined;
+  private press: ControlPress | undefined;
+  private stopPausePress: (() => void) | undefined;
+  // Each skill glyph's ready and muted sources, once cut.
+  private glyphs = new Map<SkillId, { readonly muted: string; readonly ready: string }>();
+  // What each skill button last showed, so a frame writes only what changed.
+  private shownSkills = new Map<SkillId, string>();
 
   constructor() {
     super("pause");
   }
 
   create(): void {
-    // The main camera covers the whole canvas, for the pause button at the view's top-left corner
-    // and the dim over all of it; the card camera shows the cards in the game's view. Everything
-    // added after the pause button and the dim belongs to the cards.
-    const canvasCamera = this.cameras.main;
-    fitCanvasCamera(this, canvasCamera);
-    this.cardCamera = this.cameras.add();
-    fitPlayCamera(this, this.cardCamera);
-    this.pauseButton = createPauseChrome(this);
-    this.placePauseButton();
-    this.scale.on(Scale.Events.RESIZE, this.placePauseButton, this);
-    this.events.once("shutdown", () =>
-      this.scale.off(Scale.Events.RESIZE, this.placePauseButton, this),
-    );
+    this.state = "closed";
+    this.overConversation = undefined;
     this.dims = new Map();
-    this.cardCamera.ignore(this.pauseButton);
-    this.hud = new Map(
-      SKILL_IDS.map((skill) => {
-        const icon = drawSkillButton(this, { x: 0, y: 0 }, skill);
-        icon.visible(false);
-        this.cardCamera.ignore(icon.objects);
-        return [skill, icon];
-      }),
-    );
-    const toCards = (object: GameObjects.GameObject) => canvasCamera.ignore(object);
-    this.events.on(Scenes.Events.ADDED_TO_SCENE, toCards);
-    this.events.once("shutdown", () => this.events.off(Scenes.Events.ADDED_TO_SCENE, toCards));
-    this.layout = pauseCard(cardFonts(this), TEXT.pause);
-    this.card = this.drawCard();
-    this.showCard(false);
-    this.watchPresses();
+    this.shownSkills = new Map();
+    const colour = (name: string) => paletteColour(this, name);
+    this.colours = {
+      cream: colour("cream"),
+      dslate: colour("dslate"),
+      ink: colour("ink"),
+      navy: colour("navy"),
+      white: colour("white"),
+      yellow: colour("yellow"),
+    };
+    this.timeline = pauseDiscTimeline(this.cache.json.get("ui-pause") as AsepriteSheet);
+    const words = TEXT.pause;
+    const view = createPauseView(document, this.colours, "pause-card", {
+      button: words.button,
+      card: words,
+      ready: TEXT.skillHud.ready,
+      recharging: TEXT.skillHud.recharging,
+      skills: Object.fromEntries(
+        SKILL_IDS.map((skill) => [skill, TEXT.skills[skill].title]),
+      ) as Record<SkillId, string>,
+    });
+    this.view = view;
+    this.watchPresses(view);
     modalInput(this).subscribe(() => {
-      this.pressStart = undefined;
-      this.setPressed(undefined);
+      this.press = undefined;
+      this.releasePauseButton();
     });
-    catchModalTaps(this, this.cardCamera, {
-      close: () => this.close(),
-      covered: () => this.coveredCard(),
-    });
-    this.watchKeys();
+    this.watchKeys(view);
     this.watchBackAndTurns();
+    this.loadGlyphs();
     this.events.once("shutdown", () => {
-      this.pressStart = undefined;
+      this.press = undefined;
+      this.releasePauseButton();
+      this.closeModal?.();
+      this.closeModal = undefined;
       if (this.state === "skill") {
         this.state = "closed";
         this.scene.stop("skillDetail");
         coverZone("pauseCard", false);
       }
     });
+    mountSceneView(this, view.root);
     startWakeLock();
     // The zone's first frame: the game page is now the home screen.
     this.game.events.once(Core.Events.POST_RENDER, () => zoneShown());
+  }
+
+  // Cuts each skill's ready glyph, filled with ink as the canvas's fill tint draws it, and its
+  // muted one.
+  private loadGlyphs(): void {
+    for (const skill of SKILL_IDS) {
+      const art = SKILL_ART[skill];
+      const tags = sheetTags(this.cache.json.get(art) as AsepriteSheet);
+      const frame = (tag: string) => tags.get(tag)?.[0]?.frame;
+      Promise.all([
+        artFrameUrl(this, art, frame("ready"), "ink"),
+        artFrameUrl(this, art, frame("muted")),
+      ])
+        .then(([ready, muted]) => {
+          this.glyphs.set(skill, { muted, ready });
+          this.shownSkills.delete(skill);
+        })
+        .catch((error: unknown) => console.warn("The skill glyphs failed to load", error));
+    }
   }
 
   // Back opens or closes the card, as the keys do, and the page frame turning opens it.
@@ -226,15 +226,14 @@ export class PauseScene extends Scene implements SettingsOpener {
     if (this.state !== "closed" || !(this.zonePlaying() || conversation !== undefined)) {
       return;
     }
-    this.redrawCard();
     this.state = "opening";
     this.overConversation = conversation;
-    this.hud.forEach((icon) => icon.visible(false));
     modalInput(this).open();
-    this.setPressed(undefined);
+    this.releasePauseButton();
     this.scene.pause(this.held());
     stopWakeLock();
     coverZone("pauseCard", true);
+    this.showControls();
 
     const zone = this.scene.get(ZONE) as ZoneScene;
     for (const mix of DIM_MIXES) {
@@ -247,9 +246,8 @@ export class PauseScene extends Scene implements SettingsOpener {
     }
     zone.showTouchControls(touchSettings());
     this.renderDim();
-    this.showCard(true);
-    captureTab(this, true);
     this.state = "open";
+    this.showCard(true);
   }
 
   private close(): void {
@@ -258,10 +256,8 @@ export class PauseScene extends Scene implements SettingsOpener {
     }
     this.state = "closed";
     modalInput(this).close();
-    this.dims.forEach((dim) => dim.destroy());
-    this.dims.clear();
+    this.destroyDims();
     this.showCard(false);
-    captureTab(this, false);
     this.scene.resume(this.held());
     this.overConversation = undefined;
     startWakeLock();
@@ -273,21 +269,13 @@ export class PauseScene extends Scene implements SettingsOpener {
     return this.overConversation ?? ZONE;
   }
 
-  private redrawCard(): void {
-    this.card.destroy(true);
-    this.layout = pauseCard(cardFonts(this), TEXT.pause);
-    this.card = this.drawCard();
-  }
-
   // Ends the zone and shows the start screen, this scene staying beside it for the next zone.
   private returnHome(): void {
     this.state = "closed";
     this.overConversation = undefined;
     modalInput(this).close();
-    this.dims.forEach((dim) => dim.destroy());
-    this.dims.clear();
+    this.destroyDims();
     this.showCard(false);
-    captureTab(this, false);
     this.scene.stop(ZONE);
     this.scene.launch(START);
     startWakeLock();
@@ -303,21 +291,32 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   // Hides the pause card under the settings card, which SettingsScene draws over the dim.
   private openSettings(): void {
+    const view = this.view;
+    if (view === undefined) {
+      return;
+    }
     this.state = "settings";
-    this.card.setVisible(false);
-    this.focusRing = ringFocus(this, this.focusRing, undefined);
+    const focused = document.activeElement;
+    this.settingsFocus =
+      focused instanceof HTMLElement && view.card.dialog.contains(focused) ? focused : undefined;
+    view.card.root.hidden = true;
     this.scene.launch(SETTINGS, { opener: this.scene.key } satisfies SettingsData);
   }
 
-  private coveredCard(): readonly Rect[] | undefined {
-    return this.state === "open"
-      ? [
-          this.layout.card,
-          this.layout.close.hit,
-          ...BUTTONS.map((name) => this.layout[name].hit),
-          ...this.hudAreas().map(({ hit }) => hit),
-        ]
-      : undefined;
+  // The settings card has closed: the pause card shows again, the keyboard's focus where it was.
+  settingsClosed(): void {
+    const view = this.view;
+    if (this.state !== "settings" || view === undefined) {
+      return;
+    }
+    this.state = "open";
+    view.card.root.hidden = false;
+    (this.settingsFocus ?? view.card.dialog).focus();
+    this.settingsFocus = undefined;
+  }
+
+  private settings(): SettingsScene {
+    return this.scene.get(SETTINGS) as SettingsScene;
   }
 
   private enabledSkills(): readonly SkillId[] {
@@ -341,12 +340,12 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.state = "skill";
     const visit = ++this.skillVisit;
     modalInput(this).open();
-    this.dims.forEach((dim) => dim.destroy());
-    this.dims.clear();
+    this.destroyDims();
     this.showCard(false);
-    this.hud.forEach((icon) => icon.visible(false));
-    captureTab(this, false);
-    this.scene.pause(ZONE);
+    // Under the card the zone is already paused.
+    if (this.scene.isActive(ZONE)) {
+      this.scene.pause(ZONE);
+    }
     stopWakeLock();
     coverZone("pauseCard", true);
     this.scene.launch("skillDetail", {
@@ -411,57 +410,65 @@ export class PauseScene extends Scene implements SettingsOpener {
           (this.scene.get(ZONE) as ZoneScene).skillState()?.shown === true;
   }
 
-  private hudAreas(): { readonly art: Rect; readonly hit: Rect; readonly key: SkillId }[] {
-    return [...skillHud(this.enabledSkills())].map(([skill, at]) => ({
-      art: { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-      hit: { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-      key: skill,
-    }));
-  }
-
-  private showSkillHud(): void {
+  // The pause button and the skill HUD as the state leaves them.
+  private showControls(): void {
+    const view = this.view;
+    if (view === undefined) {
+      return;
+    }
+    const pauseShown =
+      this.state === "closed" &&
+      (this.zonePlaying() || this.pausableConversation() !== undefined) &&
+      coarsePointer(window);
+    if (view.pauseButton.hidden === pauseShown) {
+      view.pauseButton.hidden = !pauseShown;
+    }
+    const live = this.skillHudLive();
+    if (view.hud.hasAttribute("data-live") !== live) {
+      view.hud.toggleAttribute("data-live", live);
+    }
     const row = skillHud(this.enabledSkills());
+    const shown = this.skillHudShown();
     const selected = activeSkill();
-    this.hud.forEach((icon, skill) => {
-      const at = row.get(skill);
-      if (at) {
-        icon.place(shifted(sceneViewShift(this), at));
+    const tabbable = live && this.state === "open";
+    for (const skill of SKILL_IDS) {
+      const at = shown ? row.get(skill) : undefined;
+      const look = {
+        ready: skill === selected && this.skillReady(skill),
+        selected: skill === selected,
+      };
+      const glyph = this.glyphs.get(skill);
+      const key = [at?.x, at?.y, glyph?.ready, look.ready, look.selected, tabbable].join();
+      if (this.shownSkills.get(skill) === key) {
+        continue;
       }
-      icon.visible(this.skillHudShown() && at !== undefined);
-      icon.ready(skill === selected && this.skillReady(skill));
-      icon.selected(skill === selected);
-    });
+      this.shownSkills.set(skill, key);
+      const button = view.skills[skill];
+      showSkillButton(this.colours, view.readiness, { ...look, at, tabbable }, button);
+      if (glyph !== undefined) {
+        button.disc.glyph.src = look.ready ? glyph.ready : glyph.muted;
+      }
+    }
   }
 
+  // A press held on a skill in play opens its details once held long enough, and then acts on
+  // nothing more.
   private updateSkillHold(): void {
-    const press = this.pressStart;
+    const press = this.press;
+    const skill = press?.control.dataset.skill as SkillId | undefined;
     if (
       !this.sys.isActive() ||
-      !press ||
-      press.cancelled ||
-      !isSkillId(press.control) ||
+      press === undefined ||
+      press.refused ||
+      skill === undefined ||
       this.state !== "closed" ||
       !this.skillHudLive() ||
       this.time.now - press.startedAt < SKILL_GESTURE.holdMilliseconds
     ) {
       return;
     }
-    this.pressStart = undefined;
-    this.setPressed(undefined);
-    this.openSkill(press.control);
-  }
-
-  // The settings card has closed: the pause card shows again.
-  settingsClosed(): void {
-    if (this.state === "settings") {
-      this.state = "open";
-      this.card.setVisible(true);
-      this.drawFocus();
-    }
-  }
-
-  private settings(): SettingsScene {
-    return this.scene.get(SETTINGS) as SettingsScene;
+    this.press = undefined;
+    this.openSkill(skill);
   }
 
   // The dim behind the cards, with the touch buttons as the setting shows them.
@@ -470,40 +477,30 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.dims.forEach((dim, name) => dim.setVisible(name === key));
   }
 
+  private destroyDims(): void {
+    this.dims.forEach((dim) => dim.destroy());
+    this.dims.clear();
+  }
+
+  // Shows or hides the card in the UI layer's modal layer, the skill HUD live beside it.
   private showCard(open: boolean): void {
-    this.card.setVisible(open);
+    const view = this.view;
+    if (view === undefined) {
+      return;
+    }
     this.dims.forEach((dim, name) => dim.setVisible(open && name === dimTexture(touchSettings())));
-    this.focus = undefined;
-    this.drawFocus();
-    this.showPauseButton();
-  }
-
-  private drawFocus(): void {
-    const rect = this.focus === undefined ? undefined : this.focusedRect(this.focus);
-    this.focusRing = ringFocus(this, this.focusRing, rect);
-  }
-
-  // What the focus ring surrounds: a button, the close X itself, or a shown skill's target.
-  private focusedRect(control: CardControl): Rect | undefined {
-    if (control === "close") {
-      const { at } = this.layout.close;
-      return { height: this.closeX.height, width: this.closeX.width, ...at };
+    view.card.root.hidden = !open;
+    if (open) {
+      this.closeModal ??= sceneDomUi(this)?.modals.open(
+        { close: () => this.close(), live: [view.hud] },
+        view.card.dialog,
+      );
+    } else {
+      const close = this.closeModal;
+      this.closeModal = undefined;
+      close?.();
     }
-    if (isSkillId(control)) {
-      const at = skillHud(this.enabledSkills()).get(control);
-      return at && { ...at, height: SKILL_BUTTON.target, width: SKILL_BUTTON.target };
-    }
-    return this.layout[control].button;
-  }
-
-  // The pause button shows on a touch screen while a zone plays or a conversation covers it, and
-  // the card is closed. The map between zones has nothing to pause, so it shows none.
-  private showPauseButton(): void {
-    this.pauseButton.setVisible(
-      this.state === "closed" &&
-        (this.zonePlaying() || this.pausableConversation() !== undefined) &&
-        coarsePointer(window),
-    );
+    this.showControls();
   }
 
   private playCovered(): boolean {
@@ -546,8 +543,7 @@ export class PauseScene extends Scene implements SettingsOpener {
 
   override update(): void {
     this.updateSkillHold();
-    this.showPauseButton();
-    this.showSkillHud();
+    this.showControls();
   }
 
   // Capture the next rendered frame, with an opaque palette fallback when readback fails.
@@ -559,83 +555,6 @@ export class PauseScene extends Scene implements SettingsOpener {
     dim.setVisible(false);
   }
 
-  private drawCard(): GameObjects.Container {
-    const { card, close } = this.layout;
-    const words = TEXT.pause;
-    const objects: GameObjects.GameObject[] = [
-      this.slice("ui-settings-card", card),
-      addCardHeading(this, this.layout.title),
-    ];
-    this.closeX = this.add.sprite(close.at.x, close.at.y, "ui-close").setOrigin(0);
-    this.buttons = {
-      home: addTextButton(this, this.layout.home, words.home),
-      resume: addTextButton(this, this.layout.resume, words.resume, { style: PRIMARY_BUTTON }),
-      settings: addTextButton(this, this.layout.settings, words.settings),
-    };
-    this.setPressed(undefined);
-    return this.add.container(0, 0, [
-      ...objects,
-      this.closeX,
-      ...BUTTONS.flatMap((name) => {
-        const { faces, label } = this.buttons[name];
-        return [faces.normal, faces.pressed, label.label, ...(label.mark ? [label.mark] : [])];
-      }),
-    ]);
-  }
-
-  // A pressed control shows its pressed look until the press lifts: the pause button plays its
-  // press tag, then holds, as the touch buttons do; a card button's face and label sink.
-  private setPressed(control: Control | undefined): void {
-    this.pressed = control;
-    this.closeX.play(animationKey("ui-close", control === "close" ? "pressed" : "normal"));
-    for (const name of BUTTONS) {
-      pressTextButton(this.buttons[name], control === name);
-    }
-    this.pauseButton.chain();
-    if (control === "pauseButton") {
-      this.pauseButton
-        .play(animationKey(PAUSE_CHROME_KEY, "press"))
-        .chain(animationKey(PAUSE_CHROME_KEY, "held"));
-    } else {
-      this.pauseButton.play(animationKey(PAUSE_CHROME_KEY, "rest"));
-    }
-  }
-
-  // Puts the pause button at its place shifted across with the view, so it stays inside it.
-  private placePauseButton(): void {
-    const at = shifted(sceneViewShift(this), PAUSE_BUTTON.at);
-    this.pauseButton.setPosition(at.x, at.y);
-  }
-
-  private controlAt(pointer: Input.Pointer): Control | undefined {
-    if (this.blocked()) {
-      return undefined;
-    }
-    const { close } = this.layout;
-    const areas: PressArea<Control>[] =
-      this.state === "open"
-        ? [
-            { art: close.art, hit: close.hit, key: "close" },
-
-            ...BUTTONS.map((key) => ({
-              art: this.layout[key].button,
-              hit: this.layout[key].hit,
-              key,
-            })),
-          ]
-        : this.pauseButton.visible
-          ? [{ art: PAUSE_BUTTON.art, hit: PAUSE_BUTTON.hit, key: "pauseButton" }]
-          : [];
-    if (this.skillHudLive()) {
-      areas.push(...this.hudAreas());
-    }
-    const point =
-      this.state === "open"
-        ? playPoint(this, pointer, this.cardCamera)
-        : shifted(sceneViewShift(this), playPoint(this, pointer), -1);
-    return pressedArea(areas, point);
-  }
-
   // The modal input a press, key, back or frame turn here answers to: the card's own, or, while
   // the card is closed over a conversation scene that holds the input, that scene's, so they
   // open the card over it.
@@ -644,144 +563,178 @@ export class PauseScene extends Scene implements SettingsOpener {
     return modalInput(conversation === undefined ? this : this.scene.get(conversation));
   }
 
-  // A control acts when a press lands on it and lifts on it.
-  private watchPresses(): void {
-    const onPointer = (
-      event: Parameters<typeof onGatedPointer>[2],
-      listener: (pointer: Input.Pointer) => void,
-    ) => onGatedPointer(this, () => this.cardInput(), event, listener);
-    onPointer("pointerdown", (pointer: Input.Pointer) => {
-      if (this.pressStart) {
+  private releasePauseButton(): void {
+    const stop = this.stopPausePress;
+    this.stopPausePress = undefined;
+    stop?.();
+  }
+
+  // A control acts when a press lands on it and lifts on it without travelling past the tap
+  // distance or leaving it, under the modal input of the card or of the conversation it opens
+  // over, captured when the press lands, so a press never crosses a stack change. One press is
+  // followed at a time, by its own pointer: another finger held on the canvas leaves it alone, and
+  // the browser need not make the tap a click. A click with no pointer behind it (Enter or Space)
+  // acts while that input accepts. A tap on the backdrop closes the card.
+  private watchPresses(view: PauseView): void {
+    const document = view.root.ownerDocument;
+    const gate = {
+      accepts: () => !this.blocked() && this.cardInput().accepts(),
+      capture: () => {
+        const check = this.cardInput().capture();
+        return () => !this.blocked() && check();
+      },
+    };
+    const controlOf = (target: EventTarget | null) => {
+      const control = target instanceof Element ? target.closest("button") : null;
+      return control !== null && view.root.contains(control) ? control : undefined;
+    };
+    // The control under a pointer: its event's target, or what is at its point where a redraw
+    // took the target out of the page.
+    const controlAt = (event: PointerEvent) =>
+      controlOf(
+        event.target instanceof Node && !event.target.isConnected
+          ? document.elementFromPoint(event.clientX, event.clientY)
+          : event.target,
+      );
+    // A press on the view is the view's alone: Phaser handles a press off the canvas unless its
+    // default is prevented, which also keeps the keyboard's focus where it is and holds back the
+    // mouse events a press would send.
+    const keep = (event: Event) => event.preventDefault();
+    const onDown = (event: PointerEvent) => {
+      keep(event);
+      const { pointerId, target } = event;
+      const control = controlOf(target);
+      if (control === undefined || this.press !== undefined) {
         return;
       }
-      const control = this.controlAt(pointer);
-      if (control === undefined) {
+      if (target instanceof Element && target.hasPointerCapture(pointerId)) {
+        target.releasePointerCapture(pointerId);
+      }
+      if (!gate.accepts()) {
         return;
       }
-      this.input.stopPropagation();
-      this.pressStart = {
-        cancelled: false,
+      this.press = {
+        check: gate.capture(),
         control,
-        id: pointer.id,
+        pointerId,
+        refused: false,
         startedAt: this.time.now,
-        ...playPoint(this, pointer),
+        x: event.clientX,
+        y: event.clientY,
       };
-      this.setPressed(control);
-    });
-    onPointer("pointermove", (pointer: Input.Pointer) => {
-      if (this.pressStart?.id === pointer.id) {
-        this.input.stopPropagation();
-        const at = playPoint(this, pointer);
-        this.pressStart.cancelled ||=
-          this.controlAt(pointer) !== this.pressStart.control ||
-          Math.hypot(at.x - this.pressStart.x, at.y - this.pressStart.y) > TOUCH.tapMaxDistance;
-        if (this.pressStart.cancelled) {
-          this.setPressed(undefined);
-        }
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      if (this.pressStart?.id !== pointer.id) {
-        return;
-      }
-      this.input.stopPropagation();
-      const start = this.pressStart;
-      const control = this.pressed;
-      this.pressStart = undefined;
-      this.setPressed(undefined);
-      const at = playPoint(this, pointer);
-      if (
-        !outside &&
-        !pointer.wasCanceled &&
-        !start.cancelled &&
-        Math.hypot(at.x - start.x, at.y - start.y) <= TOUCH.tapMaxDistance &&
-        control !== undefined &&
-        control === this.controlAt(pointer)
-      ) {
-        if (
-          this.state === "closed" &&
-          isSkillId(control) &&
-          this.time.now - start.startedAt >= SKILL_GESTURE.holdMilliseconds
-        ) {
-          this.openSkill(control);
-        } else {
-          this.press(control);
-        }
-      }
-    };
-    onPointer("pointerup", (pointer) => up(pointer, false));
-    onPointer("pointerupoutside", (pointer) => up(pointer, true));
-  }
-
-  private press(control: Control): void {
-    if (control === "dash" || control === "doubleJump" || control === "speedy") {
-      if (this.state === "open") {
-        this.openSkill(control);
-      } else {
-        selectActiveSkill(control);
-      }
-      return;
-    }
-    const actions: Record<Exclude<Control, SkillId>, () => void> = {
-      close: () => this.close(),
-      home: () => this.returnHome(),
-      pauseButton: () => void this.open(),
-      resume: () => this.close(),
-      settings: () => this.openSettings(),
-    };
-    actions[control]();
-  }
-
-  private watchKeys(): void {
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (this.state === "opening" || this.state === "skill" || this.blocked()) {
-        return;
-      }
-      // The settings card takes its keys in the page (src/ui/dom).
-      if (this.state === "settings") {
-        return;
-      }
-      if (!this.cardInput().accepts(event)) {
-        return;
-      }
-      const action =
-        this.state === "open" ? focusKeyAction(event.key, event.shiftKey, event.repeat) : undefined;
-      if (action === "next" || action === "previous") {
-        this.focus = stepFocus<CardControl>(
-          [...BUTTONS, ...this.enabledSkills(), "close"],
-          this.focus,
-          action,
+      if (control === view.pauseButton) {
+        this.stopPausePress = playPauseDiscPress(this.timeline, (pose) =>
+          showPauseDisc(this.colours, pose, view.pauseButton),
         );
-        this.drawFocus();
-      } else if (action === "press") {
-        if (this.focus !== undefined) {
-          this.press(this.focus);
-        }
-      } else {
-        this.act(cardKeyAction(this.state === "open", event.key, event.repeat));
       }
+    };
+    const onMove = (event: PointerEvent) => {
+      const press = this.press;
+      if (press?.pointerId !== event.pointerId || press.refused) {
+        return;
+      }
+      const travel = Math.hypot(event.clientX - press.x, event.clientY - press.y);
+      if (
+        travel > TOUCH.tapMaxDistance * readUnit(view.root) ||
+        controlAt(event) !== press.control
+      ) {
+        press.refused = true;
+        this.releasePauseButton();
+      }
+    };
+    const onEnd = (event: PointerEvent) => {
+      const press = this.press;
+      if (press?.pointerId !== event.pointerId) {
+        return;
+      }
+      this.press = undefined;
+      this.releasePauseButton();
+      if (
+        event.type === "pointerup" &&
+        !press.refused &&
+        controlAt(event) === press.control &&
+        press.check()
+      ) {
+        this.activate(view, press.control, press.startedAt);
+      }
+    };
+    const onClick = (event: MouseEvent) => {
+      const control = controlOf(event.target);
+      if (control !== undefined && event.detail === 0 && gate.accepts()) {
+        this.activate(view, control, undefined);
+      }
+    };
+    view.root.addEventListener("pointerdown", onDown, true);
+    view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
+    view.root.addEventListener("touchend", keep, { capture: true, passive: false });
+    document.addEventListener("pointermove", onMove, true);
+    document.addEventListener("pointerup", onEnd, true);
+    document.addEventListener("pointercancel", onEnd, true);
+    view.root.addEventListener("click", onClick);
+    const stops = [
+      listenOutsideTaps({ gate }, TOUCH.tapMaxDistance, () => this.close(), view.card.backdrop),
+      showPresses(() => gate.accepts(), view.card.root),
+      () => view.root.removeEventListener("pointerdown", onDown, true),
+      () => view.root.removeEventListener("touchstart", keep, true),
+      () => view.root.removeEventListener("touchend", keep, true),
+      () => document.removeEventListener("pointermove", onMove, true),
+      () => document.removeEventListener("pointerup", onEnd, true),
+      () => document.removeEventListener("pointercancel", onEnd, true),
+      () => view.root.removeEventListener("click", onClick),
+    ];
+    this.events.once("shutdown", () => stops.forEach((stop) => stop()));
+  }
+
+  // A control's action: the pause button opens the card, and the card's controls act while it is
+  // open. A skill under the card opens its details; in play a tap selects it, and a press held
+  // long enough (since pressedAt, for a pointer's press) opens its details instead.
+  private activate(
+    view: PauseView,
+    control: HTMLButtonElement,
+    pressedAt: number | undefined,
+  ): void {
+    const { buttons, close } = view.card;
+    const skill = control.dataset.skill as SkillId | undefined;
+    if (control === view.pauseButton) {
+      void this.open();
+    } else if (control === close || control === buttons.resume) {
+      this.close();
+    } else if (control === buttons.settings && this.state === "open") {
+      this.openSettings();
+    } else if (control === buttons.home && this.state === "open") {
+      this.returnHome();
+    } else if (skill !== undefined && this.skillHudLive()) {
+      if (
+        this.state === "open" ||
+        (pressedAt !== undefined && this.time.now - pressedAt >= SKILL_GESTURE.holdMilliseconds)
+      ) {
+        this.openSkill(skill);
+      } else {
+        selectActiveSkill(skill);
+      }
+    }
+  }
+
+  // P and Escape open the card in play and over a conversation; once it shows, the modal layer
+  // takes the keyboard. On the card itself, before any control has the focus, the first step goes
+  // to Resume, or back to the close X.
+  private watchKeys(view: PauseView): void {
+    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (this.state !== "closed" || this.blocked() || !this.cardInput().accepts(event)) {
+        return;
+      }
+      this.act(cardKeyAction(false, event.key, event.repeat));
     });
-  }
-
-  private slice(key: string, rect: Rect): GameObjects.NineSlice {
-    return addSlice(this, key, rect);
-  }
-
-  private text(
-    font: string,
-    x: number,
-    y: number,
-    text: string,
-    colour: number,
-  ): GameObjects.BitmapText {
-    return addCardText(this, font, { x, y }, text, colour);
-  }
-
-  private palette(): Palette {
-    return palette(this);
-  }
-
-  private colour(name: string): number {
-    return paletteColour(this, name);
+    const { dialog } = view.card;
+    const onKeyDown = (event: KeyboardEvent) => {
+      const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
+      if (event.target === dialog && (action === "next" || action === "previous")) {
+        event.preventDefault();
+        event.stopPropagation();
+        (action === "next" ? view.card.buttons.resume : view.card.close).focus();
+      }
+    };
+    dialog.addEventListener("keydown", onKeyDown);
+    this.events.once("shutdown", () => dialog.removeEventListener("keydown", onKeyDown));
   }
 }

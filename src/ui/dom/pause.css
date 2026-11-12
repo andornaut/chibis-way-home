@@ -1,0 +1,94 @@
+/* The pause scene's view (pause.ts), after ui.css and skillDisc.css: lengths are base px times
+   --ui-unit, from the layer's layout properties, PAUSE_LAYOUT on the view and each skill button's
+   place. */
+
+/* The card's three buttons stacked the stacked-button gap apart, filling the card's width between
+   its padding; adjacent press areas meet midway between the faces. */
+.pause-card > .ui-card-actions {
+  --half-gap: calc(var(--ui-unit) * var(--button-stack-gap) / 2 * 1px);
+
+  align-self: stretch;
+  grid-auto-flow: row;
+}
+
+.pause-card .ui-text-button:not(:first-child) {
+  padding-top: var(--half-gap);
+  padding-left: var(--hit);
+}
+
+.pause-card .ui-text-button:not(:last-child) {
+  padding-right: var(--hit);
+  padding-bottom: var(--half-gap);
+}
+
+/* The pause button and the skill HUD over the card's backdrop. They take presses only while they
+   act: a press on the HUD while it takes none goes on to the canvas under it. */
+.pause-hud-view {
+  pointer-events: none;
+}
+
+/* The pause button's box is its press area, with its art the inset in from each side. */
+.pause-button {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--pause-button-y) * 1px);
+  left: calc(var(--ui-unit) * var(--pause-button-x) * 1px);
+  box-sizing: border-box;
+  width: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
+  height: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
+  margin: 0;
+  padding: calc(var(--ui-unit) * var(--pause-button-inset) * 1px);
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.pause-button:focus {
+  outline: none;
+}
+
+.pause-button[hidden],
+.skill-button[hidden] {
+  display: none;
+}
+
+/* The art of the pose the button shows (data-shown), one SVG per pose. */
+.pause-disc:not([data-shown]) {
+  display: none;
+}
+
+.pause-disc {
+  display: block;
+  width: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);
+  height: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);
+}
+
+/* A skill button's box is its square target, at its place in the HUD row. */
+.skill-button {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--skill-y) * 1px);
+  left: calc(var(--ui-unit) * var(--skill-x) * 1px);
+  width: calc(var(--ui-unit) * var(--skill-button-size) * 1px);
+  height: calc(var(--ui-unit) * var(--skill-button-size) * 1px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: none;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.skill-hud[data-live] .skill-button {
+  pointer-events: auto;
+}
+
+.skill-button:focus {
+  outline: none;
+}
+
+/* Art's ui-focus ring, outside the focused skill's target. */
+.skill-button:focus-visible .ui-skill-disc {
+  box-shadow: var(--focus-ring);
+}

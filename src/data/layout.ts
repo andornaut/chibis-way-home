@@ -67,6 +67,8 @@ export const TEXT_BUTTON = {
   lipHeight: 4,
   // How far a pressed face sinks.
   pressedSink: 2,
+  // The gap between stacked buttons' faces.
+  stackGap: 8,
   // The label's least clearance from the face's top and bottom edges.
   verticalInset: 12,
 } as const;

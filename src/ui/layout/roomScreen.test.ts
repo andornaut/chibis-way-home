@@ -7,7 +7,8 @@ import buttonSheet from "../../../public/art/sprites/ui-button.json";
 import { SCREEN } from "../../data/screen";
 import { TEXT } from "../../data/text";
 import type { Rect } from "../../data/types";
-import { CARD_TEXT_SCALE, PAUSE_BUTTON } from "./pauseCard";
+import { CARD_TEXT_SCALE } from "./cardFrame";
+import { PAUSE_BUTTON } from "./pauseCard";
 import { ROOM_SCREEN } from "./roomScreen";
 
 const TITLE = parseBitmapFont(fontTitle);
