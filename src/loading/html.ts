@@ -4,6 +4,7 @@ import { progressBarLayout } from "@andornaut/game-kit/progress";
 import {
   PROGRESS_BAR_BAND_CLASS,
   PROGRESS_BAR_CLASS,
+  PROGRESS_BAR_PROPERTIES,
   progressBarPixelProperties,
 } from "@andornaut/game-kit/web/progress/dom/progressBar";
 import type { Plugin } from "vite";
@@ -13,11 +14,16 @@ import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 const style = stageProgressStyle();
 // The bands span the track while pending; their segments travel by the kit's progressBar.css.
 const layout = progressBarLayout(style, PROGRESS_RECT, 1);
-// The segment's whole-pixel width and step count, set together so pre-script markup steps its
-// travel one pixel at a time as the script-mounted bar does.
-const pixelProperties = Object.entries(
-  progressBarPixelProperties(style, LOADING_TIMING, PROGRESS_RECT),
-)
+// The timing the script-mounted bar writes: the cycle, full hold, fade and segment, and the
+// segment's whole-pixel width and step count, set together so pre-script markup steps its travel
+// one pixel at a time as the script-mounted bar does.
+const timingProperties = Object.entries({
+  [PROGRESS_BAR_PROPERTIES.cycle]: `${LOADING_TIMING.cycleMs}ms`,
+  [PROGRESS_BAR_PROPERTIES.fade]: `${LOADING_TIMING.fadeMs}ms`,
+  [PROGRESS_BAR_PROPERTIES.full]: `${LOADING_TIMING.fullMs}ms`,
+  [PROGRESS_BAR_PROPERTIES.segment]: String(LOADING_TIMING.segment),
+  ...progressBarPixelProperties(style, LOADING_TIMING, PROGRESS_RECT),
+})
   .map(([name, value]) => `${name}: ${value};`)
   .join(" ");
 const colour = (value: number) => `#${value.toString(16).padStart(6, "0")}`;
@@ -40,7 +46,7 @@ export const LOADING_CSS = `
   position: absolute; ${px(layout.frame)} background: ${colour(style.frame)};
 }
 #game-loading > .${PROGRESS_BAR_CLASS} {
-  ${pixelProperties}
+  ${timingProperties}
 }
 #game-loading > .${PROGRESS_BAR_CLASS} > div { position: absolute; }
 #game-loading > .${PROGRESS_BAR_CLASS} > :first-child {

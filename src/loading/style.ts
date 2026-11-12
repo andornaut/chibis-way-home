@@ -11,9 +11,14 @@ import { zoneTheme } from "../presentation/zoneTheme";
 export const PROGRESS_RECT = { height: DEATH_CARD.progressHeight, width: SCREEN.width, x: 0, y: 0 };
 
 // The bar's motion: the pending segment, a quarter of the track, crosses it every 1.5 s, and a
-// measured load that finishes holds full for 250 ms before hiding (progressBar.css's defaults,
-// which the pre-script markup uses).
-export const LOADING_TIMING: DomProgressTiming = { cycleMs: 1500, fullMs: 250, segment: 0.25 };
+// measured load that finishes holds full for 250 ms, then fades out over 150 ms and hides. Reduced
+// motion keeps the fade.
+export const LOADING_TIMING = {
+  cycleMs: 1500,
+  fadeMs: 150,
+  fullMs: 250,
+  segment: 0.25,
+} satisfies DomProgressTiming;
 
 const styles = new Map<string, ProgressBarStyle>();
 

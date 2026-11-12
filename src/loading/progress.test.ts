@@ -42,7 +42,7 @@ describe("loading lifecycle", () => {
     off();
     offForeground();
   });
-  it("renders the kit's pending bar before any script, its bands spanning the track and clipped", () => {
+  it("renders the kit's pending bar before any script, clipped to the track, with the script's timing", () => {
     const html = loadingHtml('<head></head><div id="game">%GAME_LOADING%</div>');
     const { fills } = progressBarLayout(stageProgressStyle(), PROGRESS_RECT, 1);
     expect(html).toMatch(/<div class="progress-bar" data-state="pending" role="progressbar"/u);
@@ -62,8 +62,14 @@ describe("loading lifecycle", () => {
       expect.stringMatching(/^\d+px$/u),
       expect.stringMatching(/^\d+$/u),
     ]);
-    const pixelRule = `--progress-bar-segment-width: ${segmentWidth}; --progress-bar-steps: ${steps};`;
-    expect(LOADING_CSS).toContain(`#game-loading > .progress-bar {\n  ${pixelRule}\n}`);
+    const timingRule = [
+      `--progress-bar-cycle: ${LOADING_TIMING.cycleMs}ms;`,
+      `--progress-bar-fade: ${LOADING_TIMING.fadeMs}ms;`,
+      `--progress-bar-full: ${LOADING_TIMING.fullMs}ms;`,
+      `--progress-bar-segment: ${LOADING_TIMING.segment};`,
+      `--progress-bar-segment-width: ${segmentWidth}; --progress-bar-steps: ${steps};`,
+    ].join(" ");
+    expect(LOADING_CSS).toContain(`#game-loading > .progress-bar {\n  ${timingRule}\n}`);
     expect(LOADING_CSS).toContain("height: 2px");
     expect(LOADING_CSS).toContain("pointer-events: none; z-index: 1;");
     expect(LOADING_CSS).toContain(

@@ -15,7 +15,7 @@ let refreshStyle: (stage: string) => void = () => undefined;
 
 // The startup load's second phase. The file load is measured, so it finishes full; the startup
 // checks after it are unknown work, a pending phase of their own, which the bar shows once its
-// full hold has ended.
+// full hold and fade have ended.
 export function beginStartupChecks(): ProgressHandle {
   startupLoading.progress(1);
   startupLoading.finish();
@@ -38,16 +38,16 @@ export function mountLoading(parent: HTMLElement): () => void {
   let bar = createDomProgressBar(host, stageProgressStyle(), PROGRESS_RECT, LOADING_TIMING);
   let foreground: ProgressSnapshot = { active: false, value: undefined };
   let background = foreground;
-  let holding: ReturnType<typeof setTimeout> | undefined;
-  // A stage's restyle that arrived during a hold, applied once the hold has ended.
+  let holding: (() => void) | undefined;
+  // A stage's restyle that arrived during a hold or fade, applied once the fade has ended.
   let restyle: string | undefined;
   const recreate = (stage: string) => {
     bar.remove();
     bar = createDomProgressBar(host, stageProgressStyle(stage), PROGRESS_RECT, LOADING_TIMING);
   };
   // The bar follows the foreground load, or the background install while none runs: a measured
-  // finish fills to full and then hides, and an unknown one hides at once. While a full bar holds,
-  // nothing else shows; the state then current follows once the hold has ended.
+  // finish fills to full, holds, fades and then hides, and an unknown one hides at once. While a
+  // full bar holds or fades, nothing else shows; the state then current follows once it has faded.
   const show = () => {
     if (holding !== undefined) {
       return;
@@ -57,14 +57,14 @@ export function mountLoading(parent: HTMLElement): () => void {
     const finished = !foreground.active && before === "determinate";
     bar.report(foreground.active || finished ? foreground : background);
     if (before !== "complete" && bar.element.dataset.state === "complete") {
-      holding = setTimeout(() => {
+      holding = afterFade(() => {
         holding = undefined;
         if (restyle !== undefined) {
           recreate(restyle);
           restyle = undefined;
         }
         show();
-      }, LOADING_TIMING.fullMs);
+      });
     }
     const name = parent.getAttribute("aria-label");
     if (name) {
@@ -96,13 +96,27 @@ export function mountLoading(parent: HTMLElement): () => void {
     show();
   });
   return () => {
-    clearTimeout(holding);
+    holding?.();
     observer.disconnect();
     offForeground();
     offBackground();
     bar.remove();
     host.remove();
     refreshStyle = () => undefined;
+  };
+}
+
+// A complete bar's CSS hold and fade start with the first frame after it turned complete, which
+// can come well after the report while startup work holds the main thread; the hold ends with
+// them. Returns a cancel.
+function afterFade(done: () => void): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const frame = requestAnimationFrame(() => {
+    timer = setTimeout(done, LOADING_TIMING.fullMs + LOADING_TIMING.fadeMs);
+  });
+  return () => {
+    cancelAnimationFrame(frame);
+    clearTimeout(timer);
   };
 }
 

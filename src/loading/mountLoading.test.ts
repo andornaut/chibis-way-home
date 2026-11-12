@@ -4,7 +4,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { LOADING_TIMING } from "./style";
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({
+    toFake: ["cancelAnimationFrame", "clearTimeout", "requestAnimationFrame", "setTimeout"],
+  });
   vi.resetModules();
 });
 
@@ -23,14 +25,29 @@ async function mounted() {
   return { bar, loading, unmount };
 }
 
-it("fills the measured file load to full and hides it before the startup checks' pending phase", async () => {
+// A finished measured bar holds full and then fades, both counted from the first frame after it
+// turned complete; the next state shows once it has faded.
+const FADED_MS = LOADING_TIMING.fullMs + LOADING_TIMING.fadeMs;
+const fade = () => {
+  vi.advanceTimersToNextFrame();
+  vi.advanceTimersByTime(FADED_MS);
+};
+
+it("fills, holds and fades the measured file load before the startup checks' pending phase", async () => {
   const { bar, loading, unmount } = await mounted();
   loading.startupLoading.progress(0.5);
   expect(bar().dataset.state).toBe("determinate");
+  expect(
+    ["--progress-bar-full", "--progress-bar-fade"].map((name) =>
+      bar().style.getPropertyValue(name),
+    ),
+  ).toEqual([`${LOADING_TIMING.fullMs}ms`, `${LOADING_TIMING.fadeMs}ms`]);
   const checks = loading.beginStartupChecks();
-  expect([bar().dataset.state, bar().getAttribute("aria-valuenow")]).toEqual(["complete", "1"]);
-  vi.advanceTimersByTime(LOADING_TIMING.fullMs - 1);
-  expect(bar().dataset.state).toBe("complete");
+  const held = bar();
+  expect([held.dataset.state, held.getAttribute("aria-valuenow")]).toEqual(["complete", "1"]);
+  vi.advanceTimersToNextFrame();
+  vi.advanceTimersByTime(FADED_MS - 1);
+  expect([bar(), bar().dataset.state, bar().hidden]).toEqual([held, "complete", false]);
   vi.advanceTimersByTime(1);
   expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
   checks.finish();
@@ -45,7 +62,7 @@ it("holds a full bar through background installing, which shows once the hold en
   loading.startupLoading.progress(1);
   loading.startupLoading.finish();
   expect(bar().dataset.state).toBe("complete");
-  vi.advanceTimersByTime(LOADING_TIMING.fullMs);
+  fade();
   expect(bar().dataset.state).toBe("pending");
   install.finish();
   expect(bar().hidden).toBe(true);
@@ -59,7 +76,7 @@ it("holds a full bar through a stage's restyle, which applies once the hold ends
   const held = bar();
   loading.beginStageLoading("apartment");
   expect([bar(), bar().dataset.state]).toEqual([held, "complete"]);
-  vi.advanceTimersByTime(LOADING_TIMING.fullMs);
+  fade();
   expect(bar()).not.toBe(held);
   expect(bar().dataset.state).toBe("pending");
   unmount();
