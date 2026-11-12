@@ -13,6 +13,7 @@
     "build": "vite build",
     "preview": "npm run build && wrangler dev",
     "check": "tsc",
+    "typecheck": "tsc",
     "pairs": "tsx src/tools/chunkPairs.ts",
     "lint": "shellcheck -- tests/container/admit tests/container/check tests/container/run && shellcheck --shell=sh -- .husky/pre-commit && prettier --check . && eslint --max-warnings 0 . && markdownlint-cli2",
     "format": "prettier --write . && eslint --fix .",
