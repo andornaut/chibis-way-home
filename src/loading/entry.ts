@@ -1,3 +1,5 @@
+// Installs the crash screen before the loading strip, Phaser or any game module runs.
+import "../crash/install";
 import "@andornaut/game-kit/web/progress/dom/progressBar.css";
 import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
 import "../main.css";

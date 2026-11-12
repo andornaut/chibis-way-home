@@ -32,7 +32,7 @@ describe("native crash screen adapter", () => {
         },
       });
       vi.stubGlobal("window", { location: { search: dev ? "?dev=1" : "" } });
-      const { CRASH_SCREEN } = await import("./install");
+      const { CRASH_SCREEN } = await import("./crashScreen");
       expect(CRASH_SCREEN).toBe(screen);
       expect(install).toHaveBeenCalledOnce();
       const options = install.mock.calls[0]![1];

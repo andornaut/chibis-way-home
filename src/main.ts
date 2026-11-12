@@ -1,4 +1,3 @@
-import "./crash/install";
 import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
 import "@andornaut/game-kit/web/ui/dom/ui.css";
 import "./main.css";
@@ -21,8 +20,7 @@ import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrame
 import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
 import { Game, Scale, WEBGL } from "phaser";
 
-// eslint-disable-next-line no-duplicate-imports -- the side-effect import above runs it first.
-import { CRASH_SCREEN } from "./crash/install";
+import { CRASH_SCREEN } from "./crash/crashScreen";
 import { SCREEN } from "./data/screen";
 import { mountDeveloperPanel } from "./dev/panel";
 import { setupPhoneApp } from "./pwa";

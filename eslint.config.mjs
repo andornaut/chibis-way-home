@@ -39,8 +39,8 @@ const BOUNDARIES = [
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
 // Tests are exempt, so a test may build its fixtures from any context.
 // Each context imports only contexts below it, bottom first: data; core; ai and
-// assets; camera and stage; rules; progress; presentation and ui; loading; pwa; the side
-// pages (crash, headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
+// assets; camera and stage; rules; progress; presentation and ui; crash; loading; pwa; the
+// side pages (headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
 // tools). "folder/module" allows one module of a folder ("folder/index" its index):
 // each is an import that a later move removes, by moving the module into a context or the
 // importer out of one. The boundaries above govern src/testing/.
@@ -55,7 +55,7 @@ const CONTEXTS = {
   gallery: ["assets"],
   headers: [],
   homePage: ["data", "ui"],
-  loading: ["data", "presentation", "ui"],
+  loading: ["crash", "data", "presentation", "ui"],
   presentation: ["assets", "camera", "core", "data", "progress", "rules", "stage"],
   progress: ["data"],
   pwa: ["assets", "loading", "ui"],

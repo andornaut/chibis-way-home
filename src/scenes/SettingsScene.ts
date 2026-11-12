@@ -1,8 +1,8 @@
-import { buildLabel as formatBuildLabel } from "@andornaut/game-kit/web/build/buildLabel";
 import { type InstallStepsKind, offersInstall } from "@andornaut/game-kit/web/pwa/installState";
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
+import { BUILD_LABEL } from "../buildLabel";
 import { TEXT } from "../data/text";
 import { TOUCH } from "../data/touch";
 import { installOffer } from "../pwa/installOffer";
@@ -38,9 +38,6 @@ export interface SettingsData {
 
 // The settings with a switch row, in the card's order: the touch settings, then Reduced motion.
 const SWITCH_SETTINGS: readonly SettingsSwitch[] = [...TOUCH_SETTINGS, "reducedMotion"];
-
-// This build's version and commit, as the card's last line shows them.
-const BUILD_LABEL = formatBuildLabel(__APP_VERSION__, __COMMIT__);
 
 // The icon on each row, shown once Art's texture is loaded.
 const ROW_ICONS: Readonly<Record<"install" | SettingsSwitch, string>> = {
