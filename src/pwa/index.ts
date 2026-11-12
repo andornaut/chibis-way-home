@@ -28,6 +28,7 @@ import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePer
 import { trackOfflineActivity } from "../loading/serviceWorker";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events";
 import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen";
+import { createRequiredUpdate } from "./requiredUpdate";
 import { createUpdateOffer } from "./updateOffer";
 
 export { PHONE_EVENTS } from "./events";
@@ -40,6 +41,8 @@ export const updateOffer = createUpdateOffer(
   () => offlinePlay?.flow.accept(),
   () => offlinePlay?.flow.dismissOffer(),
 );
+// The forced update for a save a newer version wrote (requireNewer), as the kit reports it.
+export const requiredUpdate = createRequiredUpdate();
 
 // Capture close eligibility before the back guard can add a history entry.
 let exitHidden = false;
@@ -60,6 +63,7 @@ function setupOfflinePlay(): void {
   const play = startOfflinePlay(
     {
       onOfflineActivity: trackOfflineActivity(),
+      onRequireNewer: requiredUpdate.report,
       onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
     },
@@ -106,6 +110,17 @@ export function setupPhoneApp(): void {
 // tab can always leave for the site's home page; app windows need a supported close path.
 export function exitShown(): boolean {
   return !exitHidden;
+}
+
+// Updates to a version at least as new as the one that wrote the save, by itself and with no
+// offer, reporting through requiredUpdate. Without offline play (the dev server) none can come,
+// so it reports "unavailable" at once.
+export function requireNewer(): void {
+  if (offlinePlay === undefined) {
+    requiredUpdate.report("unavailable");
+  } else {
+    offlinePlay.flow.requireNewer();
+  }
 }
 
 // The existing prepared-zone signal controls first-install registration, not update offers.

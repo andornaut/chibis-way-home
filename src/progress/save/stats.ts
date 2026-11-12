@@ -1,4 +1,4 @@
-import { saveStore } from "@andornaut/game-kit/save/saveStore";
+import { saveStore, type StoreLoadResult } from "@andornaut/game-kit/save/saveStore";
 import type { SaveStorage } from "@andornaut/game-kit/save/storage";
 import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
 
@@ -163,7 +163,9 @@ interface StageStatsStore {
   addActiveTime(stage: string, seconds: number): void;
   clearStage(stage: string): void;
   flush(): Promise<void>;
-  load(): Promise<void>;
+  // Reads the stored statistics and returns the store's status. An older save gains its totals,
+  // written at once only where persist is set and the store is not newer.
+  load(persist: boolean): Promise<StoreLoadResult<unknown>["status"]>;
   seconds(stage: string): number;
   // Whether a skill was used since the last confirmed Restart.
   skillUsed(): boolean;
@@ -365,13 +367,17 @@ export function stageStatsStore(
       };
     },
     flush,
-    async load() {
-      stats = (await store.load()).save;
+    async load(persist) {
+      const loaded = await store.load();
+      stats = loaded.save;
       if (stats.totals === undefined) {
         stats = { ...stats, totals: emptyTotals() };
-        changed();
-        await flush();
+        if (persist && loaded.status !== "newer") {
+          changed();
+          await flush();
+        }
       }
+      return loaded.status;
     },
     pendingChanges: () => dirty || writing > 0,
     recordDeath(stage) {

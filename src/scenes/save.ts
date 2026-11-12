@@ -22,7 +22,7 @@ const SESSION: pageSave.SaveSession = {
   skillOverrides: developmentSkillOverrides,
 };
 
-export function loadProgress(): Promise<void> {
+export function loadProgress(): Promise<pageSave.SaveAge> {
   return pageSave.loadProgress(SESSION);
 }
 export function beginZoneVisit(zone: string): void {

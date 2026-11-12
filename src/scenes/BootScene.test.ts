@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-const startup = vi.hoisted(() => ({ load: vi.fn() }));
+const startup = vi.hoisted(() => ({ load: vi.fn(), mount: vi.fn(), requireNewer: vi.fn() }));
 const art = vi.hoisted(() => ({ atlas: null as null | object }));
 const manifest = vi.hoisted(() => ({
   backdrops: [],
@@ -23,6 +23,18 @@ vi.mock("phaser", async () => {
   };
 });
 vi.mock("./save", () => ({ loadProgress: startup.load }));
+vi.mock("../pwa", async () => {
+  const { createRequiredUpdate } = await import("../pwa/requiredUpdate");
+  return { requireNewer: startup.requireNewer, requiredUpdate: createRequiredUpdate() };
+});
+vi.mock("./domUi", () => ({
+  mountSceneView: startup.mount,
+  prepareDomUi: () => Promise.resolve(),
+}));
+vi.mock("../ui", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../ui")>()),
+  createMessageCard: (document: unknown, id: string, text: string) => ({ id, text }),
+}));
 vi.mock("./atlasArt", () => ({
   get ATLAS() {
     return art.atlas;
@@ -31,6 +43,9 @@ vi.mock("./atlasArt", () => ({
 }));
 
 import { type ArtManifest, atlasPageKey } from "../assets";
+import { TEXT } from "../data/text";
+import { loadingProgress } from "../loading/progress";
+import { requiredUpdate } from "../pwa";
 import { BootScene } from "./BootScene";
 import { textureFilters } from "./textureFilters";
 
@@ -114,9 +129,9 @@ it.each([
 ])("reads progress at once before routing %s to %s", async (search, target) => {
   art.atlas = null;
   vi.stubGlobal("window", { location: { search } });
-  let loaded!: () => void;
+  let loaded!: (age: "current") => void;
   startup.load.mockReturnValue(
-    new Promise<void>((resolve) => {
+    new Promise<"current">((resolve) => {
       loaded = resolve;
     }),
   );
@@ -125,7 +140,7 @@ it.each([
   expect(startup.load).toHaveBeenCalledExactlyOnceWith();
   await Promise.resolve();
   expect(scene.scene.start).not.toHaveBeenCalled();
-  loaded();
+  loaded("current");
   await new Promise<void>((resolve) => {
     setImmediate(resolve);
   });
@@ -143,4 +158,53 @@ it("keeps stage previews independent of startup and saved progress", () => {
   scene.create();
   expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("zone");
   expect(startup.load).not.toHaveBeenCalled();
+});
+
+// Boot with a save a newer version wrote, the game loop's sleep recorded.
+async function bootNewer() {
+  art.atlas = null;
+  vi.stubGlobal("window", { location: { search: "" } });
+  vi.stubGlobal("document", {});
+  startup.load.mockResolvedValue("newer");
+  const scene = new BootScene();
+  const sleep = vi.fn();
+  Object.assign(scene.game.loop, { sleep });
+  scene.create();
+  await new Promise<void>((resolve) => {
+    setImmediate(resolve);
+  });
+  return { scene, sleep };
+}
+
+it("updates by itself for a newer save, idle, and never opens Start or the pause scene", async () => {
+  const { scene, sleep } = await bootNewer();
+  expect(startup.requireNewer).toHaveBeenCalledOnce();
+  expect(sleep).toHaveBeenCalledOnce();
+  expect(scene.scene.start).not.toHaveBeenCalled();
+  expect(scene.scene.launch).not.toHaveBeenCalled();
+});
+
+it("shows the travelling loading bar while the forced update downloads", async () => {
+  await bootNewer();
+  const states: (number | undefined)[] = [];
+  loadingProgress.subscribe(({ active, value }) => states.push(active ? value : -1));
+  requiredUpdate.report("updating");
+  expect(states.at(-1)).toBeUndefined();
+  expect(startup.mount).not.toHaveBeenCalled();
+});
+
+it("shows the connect message when no newer version can be downloaded, until one can", async () => {
+  await bootNewer();
+  const unmount = vi.fn();
+  startup.mount.mockReturnValue(unmount);
+  requiredUpdate.report("unavailable");
+  await new Promise<void>((resolve) => {
+    setImmediate(resolve);
+  });
+  expect(startup.mount).toHaveBeenCalledExactlyOnceWith(expect.any(BootScene), {
+    id: "connect-card",
+    text: TEXT.update.connect,
+  });
+  requiredUpdate.report("updating");
+  expect(unmount).toHaveBeenCalledOnce();
 });

@@ -83,9 +83,18 @@ function installStatsLifecycle(): void {
   });
 }
 
-// Reads the stored progress into savedProgress.
-export async function loadProgress(session: SaveSession): Promise<void> {
-  const [loaded, , earned] = await Promise.all([store.load(), stats.load(), achievements.load()]);
+// Whether the saves on the device are this version's or older ("current"), or any was written by
+// a newer version ("newer").
+export type SaveAge = "current" | "newer";
+
+// Reads the stored progress into savedProgress. Where a newer version wrote any store, it writes
+// nothing, not even an older store's upgrade, and returns "newer" before the session begins.
+export async function loadProgress(session: SaveSession): Promise<SaveAge> {
+  const [loaded, earned] = await Promise.all([store.load(), achievements.load()]);
+  const statsStatus = await stats.load(loaded.status !== "newer" && earned.status !== "newer");
+  if ([loaded.status, statsStatus, earned.status].includes("newer")) {
+    return "newer";
+  }
   progress = loaded.save;
   if (activeSkill(session) === "speedy") {
     stats.useSkill();
@@ -93,6 +102,7 @@ export async function loadProgress(session: SaveSession): Promise<void> {
   earnedIds = earned.save.earned;
   notices.push(earned.save.unannounced);
   installStatsLifecycle();
+  return "current";
 }
 
 // Judges each scope with its facts beside the shared profile, and stores and queues what they

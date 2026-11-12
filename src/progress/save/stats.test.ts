@@ -19,7 +19,7 @@ describe("persistent active stage clocks", () => {
     const storage = storageFixture();
     const writes = vi.spyOn(storage, "write");
     const clock = stageStatsStore(storage, STAGES);
-    await clock.load();
+    await clock.load(true);
     for (let step = 0; step < 60; step++) {
       clock.addActiveTime("street", 1 / 60);
     }
@@ -34,26 +34,26 @@ describe("persistent active stage clocks", () => {
     expect(writes).toHaveBeenCalledTimes(2);
     expect(vi.getTimerCount()).toBe(0);
     const reopened = stageStatsStore(storage, STAGES);
-    await reopened.load();
+    await reopened.load(true);
     expect(reopened.seconds("street")).toBeCloseTo(6);
   });
   it("retains independent unfinished clocks across reopen and resets each clear", async () => {
     const storage = storageFixture();
     const first = stageStatsStore(storage, STAGES);
-    await first.load();
+    await first.load(true);
     first.addActiveTime("street", 1.5);
     first.addActiveTime("park", 2);
     first.addActiveTime("street", 0.5);
     await first.flush();
     const reopened = stageStatsStore(storage, STAGES);
-    await reopened.load();
+    await reopened.load(true);
     expect([reopened.seconds("street"), reopened.seconds("park")]).toEqual([2, 2]);
     reopened.clearStage("street");
     reopened.addActiveTime("street", 3);
     reopened.clearStage("street");
     await reopened.flush();
     const again = stageStatsStore(storage, STAGES);
-    await again.load();
+    await again.load(true);
     expect([again.seconds("street"), again.seconds("park")]).toEqual([0, 2]);
   });
 
@@ -92,7 +92,7 @@ describe("persistent active stage clocks", () => {
     const storage = storageFixture();
     const destinations = [{ id: "first", stages: ["street", "park"] as const }];
     const clock = stageStatsStore(storage, STAGES, destinations);
-    await clock.load();
+    await clock.load(true);
     clock.beginVisit("first");
     clock.beginRun("street");
     clock.addActiveTime("street", 3);
@@ -119,7 +119,7 @@ describe("persistent active stage clocks", () => {
     });
     await clock.flush();
     const reopened = stageStatsStore(storage, STAGES, destinations);
-    await reopened.load();
+    await reopened.load(true);
     expect(reopened.visitSummary("first")).toEqual(clock.visitSummary("first"));
     reopened.beginVisit("first");
     reopened.beginRun("street");
@@ -158,7 +158,7 @@ describe("persistent active stage clocks", () => {
 
   it("keeps memory clocks when storage is unavailable", async () => {
     const clock = stageStatsStore(storageFixture({ unavailable: true }), STAGES);
-    await clock.load();
+    await clock.load(true);
     clock.addActiveTime("street", 1);
     await clock.flush();
     expect(clock.seconds("street")).toBe(1);
@@ -236,12 +236,12 @@ describe("the Restart-scoped skill ledger and the visit's first tries", () => {
     };
     await storage.write("chibis-way-home.stats", JSON.stringify(raw));
     const store = stageStatsStore(storage, STAGES);
-    await store.load();
+    await store.load(true);
     const absent = store.skillUsed();
     store.useSkill();
     await store.flush();
     const reopened = stageStatsStore(storage, STAGES);
-    await reopened.load();
+    await reopened.load(true);
     const kept = reopened.skillUsed();
     reopened.resetWholeRun();
     expect({ absent, cleared: reopened.skillUsed(), kept, totals: reopened.wholeRun() }).toEqual({
@@ -262,7 +262,7 @@ describe("the Restart-scoped skill ledger and the visit's first tries", () => {
     };
     await storage.write("chibis-way-home.stats", JSON.stringify(old));
     const store = stageStatsStore(storage, STAGES);
-    await store.load();
+    await store.load(true);
     expect({
       best: store.summary("street").bestSeconds,
       skillUsed: store.skillUsed(),
@@ -278,7 +278,7 @@ describe("the Restart-scoped skill ledger and the visit's first tries", () => {
 
   it("counts first-try clears in the current visit, none once a stage took a retry", async () => {
     const store = stageStatsStore(storageFixture(), STAGES, DESTINATIONS);
-    await store.load();
+    await store.load(true);
     const before = store.currentVisit();
     store.beginVisit("town");
     store.beginRun("park");

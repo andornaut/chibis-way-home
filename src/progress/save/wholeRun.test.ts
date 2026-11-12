@@ -11,7 +11,7 @@ const destinations = [{ id: "zone", stages: stageIds }];
 it("retains per-ID and whole-run totals across retries, stage replacement, visit changes and reopen", async () => {
   const storage = memoryStorage(),
     clock = stageStatsStore(storage, stages, destinations);
-  await clock.load();
+  await clock.load(true);
   clock.beginVisit("zone");
   clock.beginRun("first");
   clock.addActiveTime("first", 1.25);
@@ -35,7 +35,7 @@ it("retains per-ID and whole-run totals across retries, stage replacement, visit
   expect(clock.visitSummary("zone").cumulativeSeconds).toBe(8);
   await clock.flush();
   const reopened = stageStatsStore(storage, stages, destinations);
-  await reopened.load();
+  await reopened.load(true);
   reopened.beginVisit("zone");
   reopened.beginRun("first");
   reopened.clearStage("first");
@@ -63,7 +63,7 @@ it("retains per-ID and whole-run totals across retries, stage replacement, visit
 });
 it("rejects a death without a live known stage run without altering whole-run totals", async () => {
   const clock = stageStatsStore(memoryStorage(), stages);
-  await clock.load();
+  await clock.load(true);
   expect(() => clock.recordDeath("missing")).toThrow("Unknown stats stage");
   expect(() => clock.recordDeath("first")).toThrow("active stage run");
   clock.beginRun("first");
@@ -113,7 +113,7 @@ it("initializes missing cumulative maps once while preserving every saved counte
   );
   const writes = vi.spyOn(storage, "write");
   const clock = stageStatsStore(storage, stages, destinations);
-  await clock.load();
+  await clock.load(true);
   expect(clock.summary("first")).toEqual({
     attemptSeconds: 3,
     attempts: 2,
@@ -133,7 +133,7 @@ it("initializes missing cumulative maps once while preserving every saved counte
   await clock.flush();
   const reopened = stageStatsStore(storage, stages, destinations);
   const writesBeforeReload = writes.mock.calls.length;
-  await reopened.load();
+  await reopened.load(true);
   expect(writes).toHaveBeenCalledTimes(writesBeforeReload);
   expect(reopened.summary("first")).toMatchObject({
     attemptSeconds: 6,

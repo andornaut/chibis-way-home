@@ -153,3 +153,26 @@ export function showPresses(accepts: () => boolean, root: HTMLElement): () => vo
     document.removeEventListener("pointercancel", onEnd, true);
   };
 }
+
+// A card holding one line of text, in the same frame and text style as createCard's, over a
+// backdrop that takes every tap: a status message with no title, buttons or close X. Returns the
+// scene's view, which the UI layer mounts.
+export function createMessageCard(document: Document, id: string, text: string): HTMLElement {
+  const root = document.createElement("div");
+  root.className = "ui-card-scene";
+  const backdrop = document.createElement("div");
+  backdrop.className = "ui-backdrop";
+  const view = document.createElement("div");
+  view.className = "ui-view ui-card-view";
+  const card = document.createElement("section");
+  card.className = "ui-card ui-frame";
+  card.id = id;
+  card.setAttribute("role", "status");
+  const message = document.createElement("p");
+  message.className = "ui-card-text";
+  message.textContent = text;
+  card.append(message);
+  view.append(card);
+  root.append(backdrop, view);
+  return root;
+}

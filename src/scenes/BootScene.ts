@@ -5,15 +5,19 @@ import {
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
 import type { ProgressHandle } from "@andornaut/game-kit/progressState";
+import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 import { type Loader, Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json";
 import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets";
 import { TILE } from "../data/screen";
-import { beginStartupChecks, startupLoading } from "../loading/progress";
+import { TEXT } from "../data/text";
+import { beginRequiredUpdate, beginStartupChecks, startupLoading } from "../loading/progress";
+import { requiredUpdate, requireNewer } from "../pwa";
+import { createMessageCard } from "../ui";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt";
-import { prepareDomUi } from "./domUi";
+import { mountSceneView, prepareDomUi } from "./domUi";
 import { queueFontArt } from "./fontArt";
 import { loadProgress } from "./save";
 import { filterLoadedArt } from "./textureFilters";
@@ -24,7 +28,8 @@ const MANIFEST = manifestJson as ArtManifest;
 
 // First scene to run. Loads everything art's manifest lists, makes an animation of every sprite
 // tag, looping unless the manifest lists it as played once, then, once the save is read, opens the
-// start screen and launches the pause scene beside it.
+// start screen and launches the pause scene beside it, or updates the game where a newer version
+// wrote the save.
 export class BootScene extends Scene {
   // The startup checks' pending phase, after the measured file load.
   private startupChecks?: ProgressHandle;
@@ -95,24 +100,59 @@ export class BootScene extends Scene {
     // Read progress and open the start screen at once, with no wait for offline play, once the
     // HTML UI has its fonts and art. Diagnostic ?zone entry keeps its direct zone route.
     const domUi = prepareDomUi(this);
-    void loadProgress()
-      .then(() => domUi)
-      .then(() => {
-        const rendered = () => {
-          if (this.game.canvas.style.visibility === "hidden") {
-            this.game.events.once("postrender", rendered);
-          } else {
-            (this.startupChecks ?? startupLoading).finish();
-          }
-        };
-        this.game.events.once("postrender", rendered);
-        this.scene.launch("pause");
-        this.scene.launch(ACHIEVEMENT_NOTICE);
-        if (new URLSearchParams(window.location.search).has("zone")) {
-          this.scene.start("zone");
+    void loadProgress().then(async (age) => {
+      if (age === "newer") {
+        this.updateForNewerSave(domUi);
+        return;
+      }
+      await domUi;
+      const rendered = () => {
+        if (this.game.canvas.style.visibility === "hidden") {
+          this.game.events.once("postrender", rendered);
         } else {
-          this.scene.start("start");
+          (this.startupChecks ?? startupLoading).finish();
+        }
+      };
+      this.game.events.once("postrender", rendered);
+      this.scene.launch("pause");
+      this.scene.launch(ACHIEVEMENT_NOTICE);
+      if (new URLSearchParams(window.location.search).has("zone")) {
+        this.scene.start("zone");
+      } else {
+        this.scene.start("start");
+      }
+    });
+  }
+
+  // A save a newer version wrote: the game updates by itself (requireNewer), never opens Start
+  // and writes nothing. The game loop sleeps, so the main thread stays idle and the browser
+  // starts the install at once; the DOM loading bar animates in CSS and the message needs no
+  // frames. "updating" shows the travelling loading bar, and "unavailable" the connect message
+  // once the HTML UI has its fonts and art; the kit retries on its own.
+  private updateForNewerSave(domUi: Promise<void>): void {
+    this.game.loop.sleep();
+    let state: RequiredUpdateState | undefined;
+    let updating: ProgressHandle | undefined;
+    let message: (() => void) | undefined;
+    requiredUpdate.subscribe((next) => {
+      state = next;
+      if (next === "updating") {
+        message?.();
+        message = undefined;
+        updating ??= beginRequiredUpdate();
+        return;
+      }
+      (updating ?? this.startupChecks ?? startupLoading).finish();
+      updating = undefined;
+      void domUi.then(() => {
+        if (state === "unavailable" && message === undefined) {
+          message = mountSceneView(
+            this,
+            createMessageCard(document, "connect-card", TEXT.update.connect),
+          );
         }
       });
+    });
+    requireNewer();
   }
 }

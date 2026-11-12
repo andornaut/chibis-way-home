@@ -40,7 +40,7 @@ export {
   createAchievementsCard,
   showAchievementsPage,
 } from "./dom/achievements";
-export { type CardView, createCard, showPresses } from "./dom/card";
+export { type CardView, createCard, createMessageCard, showPresses } from "./dom/card";
 export { createDeathCard, type DeathCardView } from "./dom/death";
 export { createUiLayer, loadUiFonts, UI_DIMMED, UI_LAYOUT, type UiLayer } from "./dom/layer";
 export {

@@ -11,6 +11,7 @@ const offline = vi.hoisted(() => {
       accept: vi.fn(),
       beginOfferVisit: vi.fn(),
       dismissOffer: vi.fn(),
+      requireNewer: vi.fn(),
       setOfferVisible: vi.fn(),
     },
     registrationReady: vi.fn(),
@@ -96,11 +97,35 @@ it("wires updates to prepared registration and explicit Start visits", async () 
   expect(offline.play.flow.accept).toHaveBeenCalledOnce();
 });
 
+it("forwards a forced update to the kit and its reports to requiredUpdate", async () => {
+  const pwa = await import("./index");
+  pwa.setupPhoneApp();
+  const options = offline.start.mock.calls[0]![0];
+  const states: string[] = [];
+  pwa.requiredUpdate.subscribe((state) => states.push(state));
+  pwa.requireNewer();
+  expect(offline.play.flow.requireNewer).toHaveBeenCalledOnce();
+  options.onRequireNewer("updating");
+  options.onRequireNewer("unavailable");
+  expect(states).toEqual(["updating", "unavailable"]);
+});
+
+it("reports a forced update unavailable without offline play", async () => {
+  vi.stubEnv("PROD", false);
+  const pwa = await import("./index");
+  pwa.setupPhoneApp();
+  const states: string[] = [];
+  pwa.requiredUpdate.subscribe((state) => states.push(state));
+  pwa.requireNewer();
+  expect(states).toEqual(["unavailable"]);
+});
+
 // A page for the kit's own offline play: controller is the page's controller when it loaded, and
 // install starts a worker installing on its registration, which finish then installs, leaving it
 // waiting when waits is set.
 function kitPage(controller: unknown) {
   const registration = Object.assign(new EventTarget(), {
+    active: null,
     installing: null as (EventTarget & { postMessage(): void; state: string }) | null,
     update: () => Promise.resolve(),
     waiting: null as (EventTarget & { postMessage(): void; state: string }) | null,
@@ -130,6 +155,7 @@ function kitPage(controller: unknown) {
     now: () => 0,
     online: () => true,
     reload: () => undefined,
+    session: undefined,
     visibilitySource: Object.assign(new EventTarget(), { visibilityState: "visible" as const }),
   };
   return { container, finish, install, page, registration };

@@ -9,9 +9,9 @@ import { SCREEN } from "../data/screen";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 
 // The bar shows only loads the player waits for, each through its own entry point below: boot
-// (startupLoading, then beginStartupChecks), entering a zone (beginStageLoading) and the first
-// visit's precache (beginPrecache). Loads in the background during play, such as an update's
-// install, have no entry point and never show it.
+// (startupLoading, then beginStartupChecks), entering a zone (beginStageLoading), the first
+// visit's precache (beginPrecache) and a forced update (beginRequiredUpdate). Loads in the
+// background during play, such as an update's install, have no entry point and never show it.
 export const loadingProgress = createProgressState();
 // The first visit's precache, which the bar shows while no foreground load runs.
 export const precacheProgress = createProgressState();
@@ -29,6 +29,12 @@ export function beginStartupChecks(): ProgressHandle {
 
 export function beginStageLoading(stage: string): ProgressHandle {
   refreshStyle(stage);
+  return loadingProgress.begin();
+}
+
+// A forced update for a save a newer version wrote: unknown work, which replaces the boot's
+// startup checks.
+export function beginRequiredUpdate(): ProgressHandle {
   return loadingProgress.begin();
 }
 
