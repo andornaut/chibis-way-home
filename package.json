@@ -47,7 +47,6 @@
     "pngjs": "7.0.0",
     "prettier": "^3.9.10",
     "skia-canvas": "4.0.0",
-    "tsx": "4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.5",
@@ -67,6 +66,7 @@
     "eslint-plugin-import-x": {
       "minimatch": "11.0.3"
     },
+    "markdown-it": "15.0.3",
     "markdownlint-cli2@0.24.0": {
       "markdownlint": "0.42.1",
       "katex": "0.19.1"
