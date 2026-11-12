@@ -428,13 +428,20 @@ The update notice is an ordinary modal offered only on the game's own Start scre
 - HTML card: an alert dialog on the HTML UI layer over every scene, with secondary Cancel, primary Update now and the close X. The browser fits it to the shared rule; the remaining measurement terms below are what that fit holds.
 - Measurement: derive the header from the actual title ink plus the mirrored 50px close-target reservations. Fit equal-width actions to the widest visible label with standard content padding, 16px apart, and place their complete expanded press targets below the y50 clearance. Apply the shared minimum-width rule to the measured content width, excluding outer padding from its input. Derive the card height from the actual bounds and ordinary body padding, without a minimum height. Longer copy grows the frame rather than shrinking the font or forcing a shared modal size.
 
+### Newer-save message
+
+When a save on the device comes from a newer version, the game updates by itself without opening Start, with the loading bar's travelling segment showing while the newer version downloads. When it cannot download one, it shows one status card with the game's connect message and retries by itself.
+
+- Assets: the existing `ui-settings-card` frame and the shared body [typography role](#typography-scale), with no new art or palette colours. The card holds the single centred line, with no title, actions or close X, over a backdrop that takes every tap. It keeps the ordinary card padding and minimum width.
+
 ### Loading bar
 
-The loading bar is a 2px strip along the top of the 720px view, with no border: the loading zone's primary fill on a `dslate` track, recoloured for each stage's zone. It shows only for loads the player waits for: boot, entering a zone and the first visit's precache. An update's install and other loads during play show nothing.
+The loading bar is a 2px strip along the top of the 720px view, with no border: the loading zone's primary fill on a `dslate` track, recoloured for each stage's zone. It shows only for loads the player waits for: boot, entering a zone, the first visit's precache and the [newer-save](#newer-save-message) update. A background update's install and other loads during play show nothing.
 
 - Scale: the page's pre-script bar draws at 1 CSS px per frame pixel; the mounted bar scales by the view's fractional fit (`--loading-scale`), as the world art and the HTML UI do, so its edges can fall between device pixels. Its size and edges are not snapped.
-- Measured load: the fill grows with the reported progress, holds full for 250ms, then fades out over 150ms before the bar shows anything else. The track stays opaque. Reduced motion keeps the fade, which changes opacity only.
-- Unknown load (the startup checks, stage preparation and the first visit's precache): a travelling segment a quarter of the track wide crosses it every 1.5s, stepping one whole frame pixel at a time. Reduced motion keeps the same travelling segment.
+- Measured load: the fill grows with the reported progress, holds full for 250ms, then fades out over 150ms before the bar shows anything else. When the startup checks begin, boot's file load skips its full hold and the travelling segment takes over. The track stays opaque. Reduced motion keeps the fade, which changes opacity only.
+- Unknown load (the page's pre-script load, the startup checks, stage preparation, the first visit's precache and the newer-save update): a travelling segment a quarter of the track wide crosses it every 1.5s, stepping one whole frame pixel at a time. Reduced motion keeps the same travelling segment.
+- Layers: boot and entering a zone show over the first visit's precache and the newer-save update, which show only while neither runs. A finished measured load holds and fades before the other layer shows, unless boot or a zone load begins meanwhile.
 - Idle: nothing shows. While a modal is open, its dim and panels cover the bar.
 
 ## Map
