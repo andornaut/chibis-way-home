@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 
+# Make launches the container; native npm aliases use these same direct recipes.
 category=${1:-check}
 if [ "$#" -gt 0 ]; then shift; fi
 
@@ -13,26 +14,52 @@ if [ ! -e node_modules ] && [ ! -L node_modules ]; then
     fi
     cp -R /opt/check/node_modules node_modules
 fi
-if [ -n "${CHECK_REVISION:-}" ]; then
-    export WORKERS_CI_COMMIT_SHA="${CHECK_REVISION}"
-fi
 
-run_lint() {
-    npm run typecheck
-    npm run lint
-}
-
-run_test() {
-    npm test -- "$@" --maxWorkers=4
-    npm run pairs -- verify --sample-ms 20000
-}
-
-run_build() {
-    npm run build
-    node art/tools/build.ts --check
+no_arguments() {
+    if [ "$#" -gt 0 ]; then
+        printf '%s does not accept additional arguments.\n' "${category}" >&2
+        exit 2
+    fi
 }
 
 case "${category}" in
+    check)
+        no_arguments "$@"
+        for category in ${CHECK_TASKS:-lint test build}; do "$0" "${category}"; done
+        ;;
+    lint)
+        no_arguments "$@"
+        "$0" typecheck
+        "$0" lint-only
+        ;;
+    typecheck)
+        exec node node_modules/typescript/bin/tsc "$@"
+        ;;
+    lint-only)
+        no_arguments "$@"
+        shellcheck -- tests/container/admit tests/container/check tests/container/run
+        shellcheck --shell=sh -- .husky/pre-commit
+        node node_modules/prettier/bin/prettier.cjs --check .
+        node node_modules/eslint/bin/eslint.js --max-warnings 0 .
+        node_modules/.bin/markdownlint-cli2
+        ;;
+    test)
+        node node_modules/vitest/vitest.mjs run --maxWorkers=4 "$@"
+        node src/tools/chunkPairs.ts verify --sample-ms 20000
+        ;;
+    build)
+        no_arguments "$@"
+        "$0" bundle
+        "$0" art-check
+        ;;
+    bundle)
+        WORKERS_CI_COMMIT_SHA=${WORKERS_CI_COMMIT_SHA:-${CHECK_REVISION:-}}
+        export WORKERS_CI_COMMIT_SHA
+        exec node node_modules/vite/bin/vite.js build "$@"
+        ;;
+    art-check)
+        exec node art/tools/build.ts --check "$@"
+        ;;
     exec)
         if [ "$#" -eq 0 ]; then
             printf '%s\n' 'An explicit native command is required.' >&2
@@ -40,24 +67,8 @@ case "${category}" in
         fi
         exec "$@"
         ;;
-    test)
-        run_test "$@"
-        ;;
-    check|lint|build)
-        if [ "$#" -gt 0 ]; then
-            printf '%s does not accept additional arguments.\n' "${category}" >&2
-            exit 2
-        fi
-        if [ "${category}" = check ]; then
-            run_lint
-            run_test
-            run_build
-        else
-            "run_${category}"
-        fi
-        ;;
     *)
-        printf 'Unknown internal check category: %s\n' "${category}" >&2
+        printf 'Unknown project check category: %s\n' "${category}" >&2
         exit 2
         ;;
 esac
