@@ -11,14 +11,11 @@ import type { Rect } from "../data/types/index.ts";
 import {
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
-  dialogueBodyLines,
   dialogueLines,
   dialogueNameTab,
   type DialogueParagraph,
-  dialoguePressAreas,
   dialogueSpeakerLayout,
   dialogueTextRows,
-  type PressArea,
 } from "../ui/index.ts";
 import {
   addCardText,
@@ -29,12 +26,9 @@ import {
   TITLE_FONT,
 } from "./cardParts.ts";
 
-// A panel paragraph: the portrait may name one frame of its texture, drawn scaled to fill the
-// portrait; a null name draws no name tab; a heading is a bold first text line above the body.
-export type PanelParagraph = Omit<DialogueParagraph, "colour" | "name"> & {
-  readonly heading?: string;
-  readonly portraitFrame?: string | number;
-} & (Pick<DialogueParagraph, "colour" | "name"> | { readonly name: null });
+// The room's gift panel on the canvas: the speaker's portrait, name tab and text, drawn above the
+// shared panel from drawDialoguePanel. Conversations, barks and notices show the same panel in the
+// HTML UI (src/ui/dom/dialogue.ts).
 
 type PanelFont = ReturnType<typeof phaserBitmapFont>;
 
@@ -42,29 +36,10 @@ function panelFont(scene: Scene, key: string): PanelFont {
   return phaserBitmapFont(scene.cache.bitmapFont.get(key).data as PhaserFontData);
 }
 
-// The paragraph's name tab, or undefined when it shows none: a null name or a heading.
-export function dialogueParagraphTab(scene: Scene, paragraph: PanelParagraph): Rect | undefined {
-  if (paragraph.name === null || paragraph.heading !== undefined) {
-    return undefined;
-  }
-  return dialogueNameTab(
-    paragraph.side,
-    inkWidth(panelFont(scene, TITLE_FONT), DIALOGUE_SCREEN.text.scale, paragraph.name),
-  );
-}
-
-// The paragraph's press areas: the panel and its name tab together.
-export function dialogueParagraphPressAreas(
-  scene: Scene,
-  paragraph: PanelParagraph,
-): readonly PressArea<"continue">[] {
-  return dialoguePressAreas(dialogueParagraphTab(scene, paragraph));
-}
-
-// The speaker's portrait, name tab and text, drawn above the shared panel from drawDialoguePanel.
+// The speaker's portrait (a dslate slot for a null one), name tab and text.
 export function drawDialogueParagraph(
   scene: Scene,
-  paragraph: PanelParagraph,
+  paragraph: DialogueParagraph,
 ): GameObjects.GameObject[] {
   if (paragraph.portrait !== null && !scene.textures.exists(paragraph.portrait)) {
     throw new Error(`Missing dialogue portrait ${paragraph.portrait}`);
@@ -72,20 +47,13 @@ export function drawDialogueParagraph(
   const layout = dialogueSpeakerLayout(paragraph.side);
   const text = DIALOGUE_SCREEN.text;
   const fonts = { body: panelFont(scene, BODY_FONT), title: panelFont(scene, TITLE_FONT) };
-  const heading = paragraph.heading;
-  if (heading !== undefined && inkWidth(fonts.title, text.scale, heading) > text.width) {
-    throw new Error(`Dialogue heading does not fit: ${heading}`);
-  }
-  const header = heading === undefined ? "name-tab" : "heading";
-  const body = dialogueLines(
-    fonts.body,
-    { ...text, lines: dialogueBodyLines(header) },
-    text.width,
-    paragraph.text,
-  );
-  const rows = dialogueTextRows(fonts, header, body.length);
+  const body = dialogueLines(fonts.body, text, text.width, paragraph.text);
+  const rows = dialogueTextRows(fonts, body.length);
   const frame = layout.portraitFrame;
-  const tab = dialogueParagraphTab(scene, paragraph);
+  const tab = dialogueNameTab(
+    paragraph.side,
+    inkWidth(fonts.title, DIALOGUE_SCREEN.text.scale, paragraph.name),
+  );
   return [
     scene.add.image(frame.x, frame.y, "ui-portrait-frame").setOrigin(0),
     paragraph.portrait === null
@@ -99,23 +67,10 @@ export function drawDialogueParagraph(
           )
           .setOrigin(0)
       : scene.add
-          .image(layout.portrait.x, layout.portrait.y, paragraph.portrait, paragraph.portraitFrame)
+          .image(layout.portrait.x, layout.portrait.y, paragraph.portrait)
           .setOrigin(0)
           .setDisplaySize(DIALOGUE_PORTRAIT_SIZE, DIALOGUE_PORTRAIT_SIZE),
-    ...(tab === undefined || paragraph.name === null
-      ? []
-      : drawNameTab(scene, tab, paragraph as Pick<DialogueParagraph, "colour" | "name">)),
-    ...(heading === undefined || rows.headingY === undefined
-      ? []
-      : [
-          addCardText(
-            scene,
-            TITLE_FONT,
-            { x: layout.textX, y: rows.headingY },
-            heading,
-            paletteColour(scene, "cream"),
-          ),
-        ]),
+    ...drawNameTab(scene, tab, paragraph),
     ...body.map((line, index) =>
       addCardText(
         scene,

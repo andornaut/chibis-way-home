@@ -32,6 +32,12 @@ export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-button-primary", name: "ui-button-primary-pressed", tag: "pressed" },
   { art: "ui-close", name: "ui-close", tag: "normal", whole: true },
   { art: "ui-close", name: "ui-close-pressed", tag: "pressed", whole: true },
+  { art: "ui-dialogue-box", name: "ui-dialogue-box", whole: true },
+  { art: "ui-name-tab", name: "ui-name-tab-amber", tag: "amber" },
+  { art: "ui-name-tab", name: "ui-name-tab-green", tag: "green" },
+  { art: "ui-name-tab", name: "ui-name-tab-pink", tag: "pink" },
+  { art: "ui-name-tab", name: "ui-name-tab-tan", tag: "tan" },
+  { art: "ui-portrait-frame", name: "ui-portrait-frame", whole: true },
   { art: "ui-settings-card", name: "ui-settings-card" },
   { art: "ui-switch", name: "ui-switch-off", tag: "off", whole: true },
   { art: "ui-switch", name: "ui-switch-on", tag: "on", whole: true },
@@ -39,13 +45,17 @@ export const UI_FRAMES: readonly UiFrame[] = [
 
 // The palette colours the HTML UI's CSS and its SVG chrome read, as --colour-<name>.
 export const UI_COLOURS = [
+  "amber",
   "cream",
   "dslate",
+  "green",
   "grey",
   "ink",
   "lgrey",
   "navy",
+  "pink",
   "red",
+  "tan",
   "white",
   "yellow",
 ] as const;

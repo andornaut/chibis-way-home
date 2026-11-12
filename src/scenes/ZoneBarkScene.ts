@@ -1,22 +1,20 @@
-import { type GameObjects, type Input, Scene, Scenes } from "phaser";
+import { Scene, Scenes } from "phaser";
 
 import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import type { DialogueLine } from "../data/types/index.ts";
 import type { ZoneBark } from "../rules/zone.ts";
 import {
+  createStatusPanel,
+  type DialogueParagraph,
   dialogueParagraphs,
-  type DialoguePress,
-  dialogueTapAction,
-  moveDialoguePress,
-  type PressArea,
-  pressedArea,
+  onPanel,
+  showPanelParagraph,
+  type StatusPanelView,
 } from "../ui/index.ts";
-import { drawDialoguePanel } from "./dialoguePanel.ts";
-import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph.ts";
-import { modalInput, onScenePointer } from "./modalInput.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView } from "./domUi.ts";
+import { modalInput } from "./modalInput.ts";
 
 interface Bark {
   readonly line: DialogueLine;
@@ -25,18 +23,18 @@ interface Bark {
   readonly scheduled: boolean;
 }
 
-// Notices stay below every modal; only the current panel consumes a fresh dismissal tap.
+// Notices stay below every modal; only the current panel takes a fresh dismissal tap.
 // A bark without an owner is an offscreen voice: no world actor gates or dismisses it.
+// The panel is HTML in the UI layer (src/ui/dom/dialogue.ts), a polite status region under every
+// modal's view, which dims it. It takes no presses itself, so a tap on it still reaches the
+// canvas and the zone's touches under it; the scene reads the tap from the page (followTaps).
 export class ZoneBarkScene extends Scene {
   private queue: Bark[] = [];
   private canPresent = () => false;
   private ownerVisible: (owner: ZoneBark["owner"]) => boolean = () => false;
   private current: Bark | undefined;
-  private art: GameObjects.GameObject[] = [];
+  private view: StatusPanelView | undefined;
   private remaining = 0;
-  private press: DialoguePress | undefined;
-  // The showing panel's press areas: the panel and its name tab.
-  private areas: readonly PressArea<"continue">[] = [];
 
   constructor() {
     super("zoneBark");
@@ -50,28 +48,31 @@ export class ZoneBarkScene extends Scene {
     this.ownerVisible = data.ownerVisible;
     this.current = undefined;
     this.queue = [];
-    this.art = [];
+    this.view = undefined;
     this.remaining = 0;
-    this.press = undefined;
   }
 
   create(): void {
-    fitPlayCamera(this);
     this.scene.moveAbove("zone", this.scene.key);
-    this.watchInput();
+    const view = createStatusPanel(document, "zone-bark");
+    this.view = view;
+    const stopTaps = this.watchInput(view);
     const validateOwner = () => this.validateOwner();
     this.events.on(Scenes.Events.PRE_RENDER, validateOwner);
-    modalInput(this).subscribe(() => {
-      this.press = undefined;
-    });
     this.events.once("shutdown", () => {
       this.events.off(Scenes.Events.PRE_RENDER, validateOwner);
+      stopTaps();
       this.current = undefined;
       this.queue = [];
-      this.art = [];
+      this.view = undefined;
       this.remaining = 0;
-      this.press = undefined;
     });
+    mountSceneView(this, view.root);
+  }
+
+  // Whether a bark shows.
+  private showing(): boolean {
+    return this.view?.panel.element.hidden === false;
   }
 
   reset(): void {
@@ -91,62 +92,42 @@ export class ZoneBarkScene extends Scene {
 
   private clearCurrent(): void {
     this.current = undefined;
-    this.art.forEach((object) => object.destroy());
-    this.art = [];
-    this.areas = [];
+    if (this.view !== undefined) {
+      this.view.panel.element.hidden = true;
+    }
     this.remaining = 0;
-    this.press = undefined;
   }
 
-  private watchInput(): void {
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      const at = playPoint(this, pointer);
-      if (
-        this.press ||
-        !this.art.length ||
-        !this.current ||
-        !this.presentable(this.current) ||
-        !this.canPresent() ||
-        pressedArea(this.areas, at) === undefined
-      ) {
-        return;
-      }
-      this.input.stopPropagation();
-      this.press = { at, cancelled: false, control: "continue", id: pointer.id };
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      if (this.press?.id === pointer.id) {
-        this.input.stopPropagation();
-        this.press = moveDialoguePress(TOUCH.tapMaxDistance, playPoint(this, pointer), this.press);
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      this.input.stopPropagation();
-      const press = this.press;
-      this.press = undefined;
-      if (
-        !outside &&
-        this.canPresent() &&
-        this.current !== undefined &&
-        this.presentable(this.current) &&
-        dialogueTapAction(this.areas, TOUCH.tapMaxDistance, press, {
-          ...playPoint(this, pointer),
-          id: pointer.id,
-          wasCanceled: pointer.wasCanceled,
-        }) === "advance"
-      ) {
-        this.clearCurrent();
-      }
-    };
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+  // A fresh tap on the showing bark's panel or name tab, while it may show, dismisses it, and
+  // never the bark that replaced it meanwhile.
+  private watchInput(view: StatusPanelView): () => void {
+    let pressed: Bark | undefined;
+    const presentable = () =>
+      this.showing() &&
+      this.current !== undefined &&
+      this.presentable(this.current) &&
+      this.canPresent();
+    return followTaps(
+      { preventDefault: false, target: document, view: view.root },
+      modalInput(this),
+      {
+        accepts: presentable,
+        controlAt: ({ clientX, clientY }) =>
+          onPanel(view.panel, clientX, clientY) ? "panel" : null,
+        land: () => {
+          pressed = this.current;
+        },
+        tap: () => {
+          if (this.current === pressed) {
+            this.clearCurrent();
+          }
+        },
+      },
+    );
   }
 
   idle(): boolean {
-    return this.queue.length === 0 && this.art.length === 0;
+    return this.queue.length === 0 && !this.showing();
   }
 
   enqueue(line: DialogueLine, owner: ZoneBark["owner"]): void {
@@ -161,7 +142,7 @@ export class ZoneBarkScene extends Scene {
   offer(onStart: () => void, line: DialogueLine, owner?: ZoneBark["owner"]): boolean {
     const bark = { line, onStart, owner, scheduled: true };
     if (
-      this.art.length > 0 ||
+      this.showing() ||
       this.queue.some((queued) => this.presentable(queued)) ||
       !this.canPresent() ||
       !this.presentable(bark)
@@ -177,7 +158,7 @@ export class ZoneBarkScene extends Scene {
     if (!this.canPresent()) {
       return;
     }
-    if (this.art.length > 0) {
+    if (this.showing()) {
       this.remaining -= delta;
       if (this.remaining > 0) {
         return;
@@ -191,9 +172,31 @@ export class ZoneBarkScene extends Scene {
     const bark = this.queue.splice(index, 1)[0]!;
     this.current = bark;
     const paragraph = dialogueParagraphs(SPEAKERS, TEXT, { lines: [bark.line] })[0]!;
-    this.art = [drawDialoguePanel(this), ...drawDialogueParagraph(this, paragraph)];
-    this.areas = dialogueParagraphPressAreas(this, paragraph);
+    this.show(paragraph);
     this.remaining = BARK_DURATION_SECONDS * 1000;
     bark.onStart?.();
+  }
+
+  // Shows paragraph in the panel, its portrait once its cut is ready.
+  private show(paragraph: DialogueParagraph): void {
+    const view = this.view;
+    if (view === undefined) {
+      return;
+    }
+    const { panel } = view;
+    showPanelParagraph(panel, paragraph);
+    panel.portrait.hidden = true;
+    panel.element.hidden = false;
+    const { current } = this;
+    if (paragraph.portrait !== null) {
+      void artFrameUrl(this, paragraph.portrait)
+        .then((url) => {
+          if (this.current === current && this.view === view) {
+            panel.portrait.src = url;
+            panel.portrait.hidden = false;
+          }
+        })
+        .catch((error: unknown) => console.warn("The bark portrait failed to load", error));
+    }
   }
 }

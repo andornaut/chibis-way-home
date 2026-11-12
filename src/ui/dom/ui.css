@@ -303,12 +303,20 @@
 /* SVG chrome (chrome.ts) paints each shape in the palette colour it names, so under a modal it
    takes the dimmed skin the layer sets on what the modal covers, as every other colour and frame
    here does. */
+[data-ui-fill="amber"] {
+  fill: var(--colour-amber);
+}
+
 [data-ui-fill="cream"] {
   fill: var(--colour-cream);
 }
 
 [data-ui-fill="dslate"] {
   fill: var(--colour-dslate);
+}
+
+[data-ui-fill="green"] {
+  fill: var(--colour-green);
 }
 
 [data-ui-fill="grey"] {
@@ -327,8 +335,16 @@
   fill: var(--colour-navy);
 }
 
+[data-ui-fill="pink"] {
+  fill: var(--colour-pink);
+}
+
 [data-ui-fill="red"] {
   fill: var(--colour-red);
+}
+
+[data-ui-fill="tan"] {
+  fill: var(--colour-tan);
 }
 
 [data-ui-fill="white"] {
@@ -339,12 +355,20 @@
   fill: var(--colour-yellow);
 }
 
+[data-ui-stroke="amber"] {
+  stroke: var(--colour-amber);
+}
+
 [data-ui-stroke="cream"] {
   stroke: var(--colour-cream);
 }
 
 [data-ui-stroke="dslate"] {
   stroke: var(--colour-dslate);
+}
+
+[data-ui-stroke="green"] {
+  stroke: var(--colour-green);
 }
 
 [data-ui-stroke="grey"] {
@@ -363,8 +387,16 @@
   stroke: var(--colour-navy);
 }
 
+[data-ui-stroke="pink"] {
+  stroke: var(--colour-pink);
+}
+
 [data-ui-stroke="red"] {
   stroke: var(--colour-red);
+}
+
+[data-ui-stroke="tan"] {
+  stroke: var(--colour-tan);
 }
 
 [data-ui-stroke="white"] {

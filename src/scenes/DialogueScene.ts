@@ -1,46 +1,27 @@
-import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { Scene } from "phaser";
 
 import { DIALOGUES, SPEAKERS } from "../data/dialogues.ts";
-import { SCREEN } from "../data/screen.ts";
 import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import type { DialogueChoice } from "../data/types/index.ts";
 import {
-  departureDialogueButtons,
-  DIALOGUE_SCREEN,
+  createDialogueView,
   type DialogueAction,
-  dialogueButtons,
   type DialogueControl,
   dialogueKeyAction,
   type DialogueParagraph,
   dialogueParagraphs,
-  type DialoguePress,
   dialogueProgress,
-  dialogueTapAction,
-  type LabelledButton,
-  moveDialoguePress,
+  type DialogueView,
   pauseKey,
-  type PressArea,
-  pressedArea,
+  showPanelParagraph,
   stepFocus,
 } from "../ui/index.ts";
-import {
-  addTextButton,
-  captureTab,
-  cardFonts,
-  pressTextButton,
-  PRIMARY_BUTTON,
-  ringFocus,
-  type TextButton,
-} from "./cardParts.ts";
 import type { DialogueChoiceData } from "./DialogueChoiceScene.ts";
-import { drawDialoguePanel } from "./dialoguePanel.ts";
-import { dialogueParagraphPressAreas, drawDialogueParagraph } from "./dialogueParagraph.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, conversationControls, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
-import { modalInput, onScenePointer } from "./modalInput.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { modalInput } from "./modalInput.ts";
 
 export interface DialogueData {
   readonly scene: string;
@@ -59,27 +40,32 @@ export interface DialogueChoiceOpener {
   choiceSelected(selection: string): void;
 }
 
+// The keyboard's focus order.
 const CONTROLS: readonly DialogueControl[] = ["continue", "skip"];
+
+// Where a press lands in the view: on Skip or Continue, or anywhere else ("panel"), which
+// advances as Continue does.
+type DialogueTarget = DialogueControl | "panel";
 
 // ZoneScene owns the frozen world and per-attempt trigger. This scene owns one paragraph at a
 // time, consuming input until the conversation and its optional required terminal choice finish.
+// The conversation is HTML in the UI layer (src/ui/dom/dialogue.ts), opened in its modal layer
+// with the pause button kept live: a fresh tap advances, anywhere but on Skip, which skips; Tab
+// and the arrows move the keyboard's focus through Continue then Skip, wrapping, starting on
+// neither; Enter and Space press the focused one, and every other key but P and Escape, which
+// pass on to PauseScene, advances.
 export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private paragraphs: readonly DialogueParagraph[] = [];
   private opener = "zone";
   private paragraph = 0;
-  private paragraphArt: GameObjects.GameObject[] = [];
-  // The showing paragraph's panel press areas: the panel and its name tab.
-  private panelAreas: readonly PressArea<DialogueControl>[] = [];
   private choice: DialogueChoice | undefined;
   private choosing = false;
   private finished = false;
-  private press: DialoguePress | undefined;
-  private focus: DialogueControl | undefined;
-  private focusRing: GameObjects.NineSlice | undefined;
-  private layouts!: Readonly<Record<DialogueControl, LabelledButton>>;
-  private buttons!: Readonly<Record<DialogueControl, TextButton>>;
-  private footer!: GameObjects.Container;
   private clearedStage: string | undefined;
+  private view: DialogueView | undefined;
+  private closeModal: (() => void) | undefined;
+  // Each portrait's cut, once it is ready.
+  private portraits = new Map<string, string>();
 
   constructor() {
     super("dialogue");
@@ -98,37 +84,63 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     this.paragraphs = dialogueParagraphs(SPEAKERS, TEXT, plan);
     this.choice = plan.choice;
     this.paragraph = 0;
-    this.paragraphArt = [];
-    this.panelAreas = [];
     this.choosing = false;
     this.finished = false;
-    this.press = undefined;
-    this.focus = undefined;
-    this.focusRing = undefined;
+    this.view = undefined;
+    this.closeModal = undefined;
+    this.portraits = new Map();
   }
 
   create(): void {
-    fitPlayCamera(this);
-    if (this.clearedStage !== undefined) {
-      const key = STAGE_PREVIEWS[this.clearedStage];
-      if (!key || !this.textures.exists(key)) {
-        throw new Error(`Missing actual stage preview ${this.clearedStage}`);
+    const words = TEXT.dialogue;
+    if (!words.continue.trim() || !words.skip.trim()) {
+      throw new Error("Dialogue actions need labels");
+    }
+    const departure = this.clearedStage !== undefined;
+    const preview = departure ? STAGE_PREVIEWS[this.clearedStage!] : undefined;
+    if (departure && (!preview || !this.textures.exists(preview))) {
+      throw new Error(`Missing actual stage preview ${this.clearedStage}`);
+    }
+    for (const { portrait } of this.paragraphs) {
+      if (portrait !== null && !this.textures.exists(portrait)) {
+        throw new Error(`Missing dialogue portrait ${portrait}`);
       }
-      this.add.image(0, 0, key).setOrigin(0).setDisplaySize(SCREEN.width, SCREEN.height);
     }
-    drawDialoguePanel(this);
-    this.drawFooter();
-    this.drawParagraph();
-    this.watchInput();
-    modalInput(this).subscribe(() => {
-      this.press = undefined;
-      this.renderFooter();
+    const view = createDialogueView(document, departure, "dialogue", words);
+    this.view = view;
+    this.showParagraph();
+    const stops = [this.watchPresses(view), this.watchKeys(view)];
+    let shown = true;
+    this.events.once("shutdown", () => {
+      shown = false;
+      this.closeModal?.();
+      this.closeModal = undefined;
+      stops.forEach((stop) => stop());
     });
-    captureTab(this, true);
-    this.events.once("shutdown", () => captureTab(this, false));
-    if (this.clearedStage === undefined) {
+    mountSceneView(this, view.root);
+    const open = () => {
+      if (shown && !this.finished) {
+        view.root.hidden = false;
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { live: conversationControls(this) },
+          view.dialog,
+        );
+      }
+    };
+    if (preview === undefined) {
+      open();
       showModalBackdrop(this);
+      return;
     }
+    // A departure shows once its preview can paint, so the paused zone never shows through.
+    view.root.hidden = true;
+    void artFrameUrl(this, preview)
+      .then(async (url) => {
+        view.preview.src = url;
+        await view.preview.decode();
+      })
+      .catch((error: unknown) => console.warn("The stage preview failed to load", error))
+      .finally(open);
   }
 
   // Whether the pause card may open over this conversation: it still shows a line. Its required
@@ -144,50 +156,35 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     }
   }
 
-  private drawFooter(): void {
-    const words = TEXT.dialogue;
-    if (!words.continue.trim() || !words.skip.trim()) {
-      throw new Error("Dialogue actions need labels");
-    }
-    const font = cardFonts(this).title;
-    const width = (label: string) => inkWidth(font, DIALOGUE_SCREEN.text.scale, label);
-    this.layouts = (this.clearedStage !== undefined ? departureDialogueButtons : dialogueButtons)({
-      continue: width(words.continue),
-      skip: width(words.skip),
-    });
-    this.buttons = {
-      continue: addTextButton(this, this.layouts.continue, words.continue, {
-        style: PRIMARY_BUTTON,
-      }),
-      skip: addTextButton(this, this.layouts.skip, words.skip),
-    };
-    this.footer = this.add.container();
-    for (const name of CONTROLS) {
-      const { faces, label } = this.buttons[name];
-      this.footer.add([faces.normal, faces.pressed, label.label]);
-    }
-    this.renderFooter();
-  }
-
-  private renderFooter(): void {
-    for (const name of CONTROLS) {
-      pressTextButton(this.buttons[name], this.press?.control === name && !this.press.cancelled);
-    }
-    this.focusRing = ringFocus(
-      this,
-      this.focusRing,
-      this.focus === undefined ? undefined : this.layouts[this.focus].button,
-    );
-  }
-
-  private drawParagraph(): void {
-    this.paragraphArt.forEach((object) => object.destroy());
+  // Shows the current paragraph, its portrait as soon as its cut is ready.
+  private showParagraph(): void {
+    const view = this.view;
     const paragraph = this.paragraphs[this.paragraph];
     if (!paragraph) {
       throw new Error("Missing dialogue paragraph");
     }
-    this.paragraphArt = drawDialogueParagraph(this, paragraph);
-    this.panelAreas = dialogueParagraphPressAreas(this, paragraph);
+    if (view === undefined) {
+      return;
+    }
+    showPanelParagraph(view.panel, paragraph);
+    const { portrait } = view.panel;
+    const key = paragraph.portrait;
+    const cut = key === null ? undefined : this.portraits.get(key);
+    portrait.hidden = cut === undefined;
+    if (cut !== undefined) {
+      portrait.src = cut;
+    } else if (key !== null) {
+      const shownAt = this.paragraph;
+      void artFrameUrl(this, key)
+        .then((url) => {
+          this.portraits.set(key, url);
+          if (this.paragraph === shownAt && this.view === view) {
+            portrait.src = url;
+            portrait.hidden = false;
+          }
+        })
+        .catch((error: unknown) => console.warn("The dialogue portrait failed to load", error));
+    }
   }
 
   private finish(selection?: string): void {
@@ -195,6 +192,11 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       return;
     }
     this.finished = true;
+    this.closeModal?.();
+    this.closeModal = undefined;
+    if (this.view !== undefined) {
+      this.view.root.hidden = true;
+    }
     this.scene.stop();
     (this.scene.get(this.opener) as unknown as DialogueOpener).dialogueClosed(selection);
   }
@@ -204,91 +206,108 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       return;
     }
     if (action === "nextFocus" || action === "previousFocus") {
-      this.focus = stepFocus(CONTROLS, this.focus, action === "nextFocus" ? "next" : "previous");
-      this.renderFooter();
-    } else {
-      const next = dialogueProgress(this.choice, this.paragraphs.length, this.paragraph, action);
-      if (next.kind === "complete") {
-        this.finish();
-      } else if (next.kind === "choice") {
-        this.choosing = true;
-        this.press = undefined;
-        this.focusRing?.destroy();
-        this.focusRing = undefined;
-        this.footer.setVisible(false);
-        this.scene.launch("dialogueChoice", { choice: next.choice } satisfies DialogueChoiceData);
-        this.scene.pause();
-      } else {
-        this.paragraph = next.index;
-        this.drawParagraph();
+      const next = stepFocus(CONTROLS, this.focus(), action === "nextFocus" ? "next" : "previous");
+      if (next !== undefined) {
+        this.view?.buttons[next].focus();
       }
+      return;
+    }
+    const next = dialogueProgress(this.choice, this.paragraphs.length, this.paragraph, action);
+    if (next.kind === "complete") {
+      this.finish();
+    } else if (next.kind === "choice") {
+      this.choosing = true;
+      if (this.view !== undefined) {
+        this.view.footer.hidden = true;
+      }
+      this.scene.launch("dialogueChoice", { choice: next.choice } satisfies DialogueChoiceData);
+      this.scene.pause();
+    } else {
+      this.paragraph = next.index;
+      this.showParagraph();
     }
   }
 
-  private pressAreas(): readonly PressArea<DialogueControl>[] {
-    return [
-      ...CONTROLS.map((key) => ({
-        art: this.layouts[key].button,
-        hit: this.layouts[key].hit,
-        key,
-      })),
-      ...this.panelAreas,
-    ];
+  // The button the keyboard's focus is on, if any.
+  private focus(): DialogueControl | undefined {
+    const active = this.view?.root.ownerDocument.activeElement;
+    return CONTROLS.find((control) => this.view?.buttons[control] === active);
   }
 
-  private watchInput(): void {
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      // P and Escape pass on to PauseScene, which opens its card over the conversation as in play.
+  // A press advances, or skips on Skip, as a fresh tap (followTaps), and focuses the button it
+  // lands on, or the conversation off them. A click with no pointer behind it (an assistive
+  // technology's) presses its button.
+  private watchPresses(view: DialogueView): () => void {
+    const input = modalInput(this);
+    const live = () => !this.finished && !this.choosing;
+    const stopTaps = followTaps<DialogueTarget>(
+      { preventDefault: true, target: view.root, view: view.root },
+      input,
+      {
+        accepts: live,
+        controlAt: ({ target }) =>
+          target instanceof Element && view.root.contains(target)
+            ? ((target.closest<HTMLElement>("[data-control]")?.dataset.control as
+                DialogueControl | undefined) ?? "panel")
+            : null,
+        land: (control) => (control === "panel" ? view.dialog : view.buttons[control]).focus(),
+        show: (control) =>
+          CONTROLS.forEach((name) =>
+            view.buttons[name].toggleAttribute("data-pressed", name === control),
+          ),
+        tap: (control) => this.act(control === "skip" ? "skip" : "advance"),
+      },
+    );
+    const onClick = (event: MouseEvent) => {
+      const control = (event.target as Element | null)?.closest<HTMLElement>("[data-control]")
+        ?.dataset.control;
+      if (control !== undefined && event.detail === 0 && live() && input.accepts()) {
+        this.act(control === "skip" ? "skip" : "advance");
+      }
+    };
+    // Phaser handles a touch off the canvas unless its default is prevented.
+    const keep = (event: Event) => event.preventDefault();
+    view.root.addEventListener("click", onClick);
+    view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
+    view.root.addEventListener("touchend", keep, { capture: true, passive: false });
+    return () => {
+      stopTaps();
+      view.root.removeEventListener("click", onClick);
+      view.root.removeEventListener("touchstart", keep, true);
+      view.root.removeEventListener("touchend", keep, true);
+    };
+  }
+
+  // The conversation's keys, seen on its view before the modal layer and Phaser: P and Escape
+  // pass on to PauseScene, which opens its card over the conversation as in play; every other key
+  // the modal input accepts stops here.
+  private watchKeys(view: DialogueView): () => void {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (pauseKey(event.key) || !modalInput(this).accepts(event)) {
+        return;
+      }
+      event.stopPropagation();
+      const action = dialogueKeyAction(this.focus(), event);
+      if (action !== undefined) {
+        event.preventDefault();
+        this.act(action);
+      }
+    };
+    // Space would press the focused button again as it lifts.
+    const onKeyUp = (event: KeyboardEvent) => {
       if (pauseKey(event.key)) {
         return;
       }
-      if (!modalInput(this).accepts(event)) {
-        return;
-      }
       event.stopPropagation();
-      this.act(dialogueKeyAction(this.focus, event));
-    });
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => {
-      event.stopPropagation();
-    });
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.press !== undefined || this.finished || this.choosing) {
-        return;
+      if (event.key === " ") {
+        event.preventDefault();
       }
-      const at = playPoint(this, pointer);
-      this.press = {
-        at,
-        cancelled: false,
-        control: pressedArea(this.pressAreas(), at),
-        id: pointer.id,
-      };
-      this.focus = this.press.control;
-      this.renderFooter();
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.press?.id === pointer.id) {
-        this.press = moveDialoguePress(TOUCH.tapMaxDistance, playPoint(this, pointer), this.press);
-        this.renderFooter();
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      this.input.stopPropagation();
-      const action = outside
-        ? undefined
-        : dialogueTapAction(this.pressAreas(), TOUCH.tapMaxDistance, this.press, {
-            ...playPoint(this, pointer),
-            id: pointer.id,
-            wasCanceled: pointer.wasCanceled,
-          });
-      if (this.press?.id === pointer.id) {
-        this.press = undefined;
-        this.renderFooter();
-      }
-      this.act(action);
     };
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    view.root.addEventListener("keydown", onKeyDown);
+    view.root.addEventListener("keyup", onKeyUp);
+    return () => {
+      view.root.removeEventListener("keydown", onKeyDown);
+      view.root.removeEventListener("keyup", onKeyUp);
+    };
   }
 }

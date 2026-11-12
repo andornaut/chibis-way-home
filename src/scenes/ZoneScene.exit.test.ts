@@ -89,10 +89,10 @@ function depart(stage: string) {
   dialogue.init(data);
   const lines = dialogue as unknown as {
     act(action: "advance" | "skip"): void;
-    drawParagraph(): void;
+    showParagraph(): void;
   };
-  const drawParagraph = vi.spyOn(lines, "drawParagraph").mockImplementation(() => {});
-  return { drawParagraph, lines, outro: story.outro, route, zone };
+  const showParagraph = vi.spyOn(lines, "showParagraph").mockImplementation(() => {});
+  return { lines, outro: story.outro, route, showParagraph, zone };
 }
 
 const ORDINARY = ZONE_MAP.destinations[0]!.stages.at(-1)!;
@@ -106,7 +106,7 @@ it.each([
   ({ continuation, stage }) => {
     const target = stageExit(ZONE_MAP, new Set(), stage, false);
     expect(target.kind).toBe(continuation);
-    const { drawParagraph, lines, outro, route, zone } = depart(stage);
+    const { lines, outro, route, showParagraph, zone } = depart(stage);
     expect(route.launch).toHaveBeenCalledExactlyOnceWith("dialogue", {
       clearedStage: stage,
       scene: outro,
@@ -121,7 +121,7 @@ it.each([
       expect(route.launch).toHaveBeenCalledOnce();
       lines.act("advance");
     }
-    expect(drawParagraph).toHaveBeenCalledTimes(DIALOGUES[outro]!.lines.length - 1);
+    expect(showParagraph).toHaveBeenCalledTimes(DIALOGUES[outro]!.lines.length - 1);
     expect(route.launch).toHaveBeenLastCalledWith(
       "zoneDeparture",
       expect.objectContaining({ cleared: true, clearedStage: stage, percent: 1, stage }),
@@ -140,9 +140,9 @@ it.each([
 );
 
 it("skips the rest of the outgoing exchange straight to the statistics", () => {
-  const { drawParagraph, lines, route } = depart(ORDINARY);
+  const { lines, route, showParagraph } = depart(ORDINARY);
   lines.act("skip");
-  expect(drawParagraph).not.toHaveBeenCalled();
+  expect(showParagraph).not.toHaveBeenCalled();
   expect(route.launch).toHaveBeenLastCalledWith(
     "zoneDeparture",
     expect.objectContaining({ clearedStage: ORDINARY }),

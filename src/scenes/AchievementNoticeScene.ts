@@ -1,27 +1,21 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { fillNames } from "@andornaut/game-kit/lines";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { Scene } from "phaser";
 
 import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements.ts";
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import type { AchievementId } from "../data/types/index.ts";
 import {
-  type DialoguePress,
-  dialogueTapAction,
-  moveDialoguePress,
-  type PressArea,
-  pressedArea,
+  createStatusPanel,
+  onPanel,
+  type PanelParagraph,
+  showPanelParagraph,
+  type StatusPanelView,
 } from "../ui/index.ts";
 import { ACHIEVEMENT_NOTICE, noticeBlocked } from "./achievementNotice.ts";
-import { drawDialoguePanel } from "./dialoguePanel.ts";
-import {
-  dialogueParagraphPressAreas,
-  drawDialogueParagraph,
-  type PanelParagraph,
-} from "./dialogueParagraph.ts";
-import { onScenePointer } from "./modalInput.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView } from "./domUi.ts";
+import { modalInput } from "./modalInput.ts";
 import { nextAchievementNotice } from "./save.ts";
 
 const ICON = "icon-achievement";
@@ -41,15 +35,14 @@ export function achievementIconFrame(
   return frame;
 }
 
-// The notice as a dialogue paragraph without a name tab: the unlocked icon in the portrait frame,
-// the filled notice line as a bold first line and the achievement's description below it.
-export function achievementNoticeParagraph(scene: Scene, id: AchievementId): PanelParagraph {
+// The notice as a dialogue paragraph without a name tab: the filled notice line as a bold first
+// line and the achievement's description below it, beside the portrait frame, which shows the
+// unlocked icon.
+export function achievementNoticeParagraph(id: AchievementId): PanelParagraph {
   const entry = TEXT.achievements.entries[id];
   return {
     heading: fillNames(TEXT.achievements.notice, { title: entry.title }),
     name: null,
-    portrait: ICON,
-    portraitFrame: achievementIconFrame(scene, true, id),
     side: ACHIEVEMENT_NOTICE_SIDE,
     text: entry.description,
   };
@@ -59,39 +52,43 @@ export function achievementNoticeParagraph(scene: Scene, id: AchievementId): Pan
 // buttons and no modal input scope. Launched once at boot, it runs above play and below every
 // modal card. A notice starts only while nothing defers it (noticeBlocked); while one shows, barks
 // wait. Something that defers notices hides the one showing and holds its time until it ends. A
-// fresh tap on the panel dismisses only the notice.
+// fresh tap on the panel dismisses only the notice. The panel is HTML in the UI layer
+// (src/ui/dom/dialogue.ts), a polite status region; it takes no presses itself, so the scene reads
+// the tap from the page (followTaps) and the screen under it still takes the press.
 export class AchievementNoticeScene extends Scene {
-  private art: GameObjects.GameObject[] = [];
+  private view: StatusPanelView | undefined;
+  private notice: AchievementId | undefined;
   private remaining = 0;
-  private press: DialoguePress | undefined;
-  // The showing notice's press areas: its panel.
-  private areas: readonly PressArea<"continue">[] = [];
 
   constructor() {
     super(ACHIEVEMENT_NOTICE);
   }
 
   create(): void {
-    fitPlayCamera(this);
-    this.art = [];
+    this.notice = undefined;
     this.remaining = 0;
-    this.press = undefined;
-    this.watchInput();
-    this.events.once("shutdown", () => this.clear());
+    const view = createStatusPanel(document, "achievement-notice");
+    this.view = view;
+    const stopTaps = this.watchInput(view);
+    this.events.once("shutdown", () => {
+      stopTaps();
+      this.clear();
+      this.view = undefined;
+    });
+    mountSceneView(this, view.root);
   }
 
   showing(): boolean {
-    return this.art.length > 0;
+    return this.notice !== undefined;
   }
 
   override update(_time: number, delta: number): void {
     const blocked = noticeBlocked(this);
     if (this.showing()) {
-      for (const object of this.art) {
-        (object as GameObjects.Components.Visible & GameObjects.GameObject).setVisible(!blocked);
+      if (this.view !== undefined && this.view.panel.element.hidden !== blocked) {
+        this.view.panel.element.hidden = blocked;
       }
       if (blocked) {
-        this.press = undefined;
         return;
       }
       this.remaining -= delta;
@@ -107,61 +104,54 @@ export class AchievementNoticeScene extends Scene {
   }
 
   private show(id: AchievementId): void {
-    const paragraph = achievementNoticeParagraph(this, id);
-    this.art = [drawDialoguePanel(this), ...drawDialogueParagraph(this, paragraph)];
-    this.areas = dialogueParagraphPressAreas(this, paragraph);
+    this.notice = id;
     this.remaining = ACHIEVEMENT_NOTICE_SECONDS * 1000;
+    const view = this.view;
+    if (view === undefined) {
+      return;
+    }
+    const { panel } = view;
+    showPanelParagraph(panel, achievementNoticeParagraph(id));
+    panel.portrait.hidden = true;
+    panel.element.hidden = false;
+    void artFrameUrl(this, ICON, achievementIconFrame(this, true, id))
+      .then((url) => {
+        if (this.notice === id && this.view === view) {
+          panel.portrait.src = url;
+          panel.portrait.hidden = false;
+        }
+      })
+      .catch((error: unknown) => console.warn("The achievement icon failed to load", error));
   }
 
   private clear(): void {
-    this.art.forEach((object) => object.destroy());
-    this.art = [];
-    this.areas = [];
+    this.notice = undefined;
     this.remaining = 0;
-    this.press = undefined;
+    if (this.view !== undefined) {
+      this.view.panel.element.hidden = true;
+    }
   }
 
-  private watchInput(): void {
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      const at = playPoint(this, pointer);
-      if (
-        this.press ||
-        !this.showing() ||
-        noticeBlocked(this) ||
-        pressedArea(this.areas, at) === undefined
-      ) {
-        return;
-      }
-      this.input.stopPropagation();
-      this.press = { at, cancelled: false, control: "continue", id: pointer.id };
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      if (this.press?.id === pointer.id) {
-        this.input.stopPropagation();
-        this.press = moveDialoguePress(TOUCH.tapMaxDistance, playPoint(this, pointer), this.press);
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      this.input.stopPropagation();
-      const press = this.press;
-      this.press = undefined;
-      if (
-        !outside &&
-        this.showing() &&
-        !noticeBlocked(this) &&
-        dialogueTapAction(this.areas, TOUCH.tapMaxDistance, press, {
-          ...playPoint(this, pointer),
-          id: pointer.id,
-          wasCanceled: pointer.wasCanceled,
-        }) === "advance"
-      ) {
-        this.clear();
-      }
-    };
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+  // A fresh tap on the showing notice's panel, while nothing defers it, dismisses it, and never
+  // the notice that replaced it meanwhile.
+  private watchInput(view: StatusPanelView): () => void {
+    let pressed: AchievementId | undefined;
+    return followTaps(
+      { preventDefault: false, target: document, view: view.root },
+      modalInput(this),
+      {
+        accepts: () => this.showing() && !noticeBlocked(this),
+        controlAt: ({ clientX, clientY }) =>
+          onPanel(view.panel, clientX, clientY) ? "panel" : null,
+        land: () => {
+          pressed = this.notice;
+        },
+        tap: () => {
+          if (this.notice === pressed) {
+            this.clear();
+          }
+        },
+      },
+    );
   }
 }

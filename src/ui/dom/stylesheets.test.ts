@@ -8,12 +8,14 @@ import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
 import { ACTION_HELP_PROPERTIES } from "./actionHelp.ts";
 import { DEATH_LAYOUT } from "./death.ts";
+import { DIALOGUE_FOOTER_LAYOUT, DIALOGUE_PANEL_LAYOUT } from "./dialogue.ts";
 import { UI_LAYOUT } from "./layer.ts";
 import { PAUSE_LAYOUT, skillPlace } from "./pause.ts";
 import { runStatsProperties } from "./runStats.ts";
 import { SKILL_DETAILS_LAYOUT } from "./skillDetails.ts";
 import { SKILL_DISC_LAYOUT } from "./skillDisc.ts";
 import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
+import { STAGE_SUMMARY_LAYOUT } from "./stageSummary.ts";
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
 const DIRECTORY = new URL(".", import.meta.url);
@@ -36,6 +38,9 @@ const WRITTEN = new Set(
     SETTINGS_LAYOUT,
     STAGE_SELECT_LAYOUT,
     DEATH_LAYOUT,
+    DIALOGUE_FOOTER_LAYOUT,
+    DIALOGUE_PANEL_LAYOUT,
+    STAGE_SUMMARY_LAYOUT,
     achievementsCardProperties(1),
     runStatsProperties({ columnGap: 0, divider: 2 }),
     ACTION_HELP_PROPERTIES,

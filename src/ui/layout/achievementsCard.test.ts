@@ -6,7 +6,7 @@ import { ACHIEVEMENT_IDS } from "../../progress/index.ts";
 import { CARD_FONTS } from "../../testing/cardFonts.ts";
 import { dialogueLines } from "../dialogue/conversation.ts";
 import { achievementsCardProperties, achievementsPerPage } from "./achievementsCard.ts";
-import { DIALOGUE_SCREEN, dialogueBodyLines } from "./dialogueScreen.ts";
+import { DIALOGUE_SCREEN } from "./dialogueScreen.ts";
 
 describe("the Achievements card", () => {
   it("pages all 26 entries, six to a page in three rows, in full pages before the last", () => {
@@ -21,7 +21,8 @@ describe("the Achievements card", () => {
 
   it("fits every unlock notice's bold line and description in the dialogue panel's text", () => {
     const text = DIALOGUE_SCREEN.text;
-    const lines = dialogueBodyLines("heading");
+    // The bold line takes the first of the panel's lines.
+    const lines = text.lines - 1;
     const fits = (wrap: () => unknown) => {
       try {
         wrap();

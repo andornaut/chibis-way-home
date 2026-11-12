@@ -1,55 +1,34 @@
-import { type GameObjects, type Input, Scene } from "phaser";
+import { guardClicks } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import type { DialogueChoice } from "../data/types/index.ts";
 import {
+  type ChoiceCardView,
+  createChoiceCard,
   dialogueChoice,
-  dialogueChoiceKey,
-  dialogueChoiceLayout,
-  pauseKey,
-  type PressArea,
-  pressedArea,
   type ResolvedDialogueChoice,
+  showPresses,
 } from "../ui/index.ts";
-import {
-  addCardTextIn,
-  addSlice,
-  addTextButton,
-  BODY_FONT,
-  captureTab,
-  cardFonts,
-  paletteColour,
-  pressTextButton,
-  ringFocus,
-  type TextButton,
-} from "./cardParts.ts";
 import type { DialogueChoiceOpener } from "./DialogueScene.ts";
+import { conversationControls, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
-import { modalInput, onScenePointer } from "./modalInput.ts";
-import { catchModalTaps } from "./modalTaps.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { modalInput } from "./modalInput.ts";
 
 export interface DialogueChoiceData {
   readonly choice: DialogueChoice;
 }
 
 // A required terminal choice. No default, Skip, close, back or outside-tap dismissal is provided.
+// The card is HTML in the UI layer (src/ui/dom/choice.ts), shown once the dim under it is ready,
+// in the modal layer with the pause button kept live: an answer acts when a press lands on it and
+// lifts on it; Tab and the arrows move the keyboard's focus through the answers, wrapping,
+// starting on none, and Enter and Space press the focused one. P and Escape pass on to
+// PauseScene, which opens its card over the choice.
 export class DialogueChoiceScene extends Scene {
   private choice!: ResolvedDialogueChoice;
-  private layouts!: ReturnType<typeof dialogueChoiceLayout>;
-  private buttons = new Map<string, TextButton>();
-  private focus: string | undefined;
-  private focusRing: GameObjects.NineSlice | undefined;
-  private press:
-    | {
-        readonly at: { readonly x: number; readonly y: number };
-        readonly id: number;
-        readonly target: string | undefined;
-        cancelled: boolean;
-      }
-    | undefined;
   private finished = false;
+  private closeModal: (() => void) | undefined;
 
   constructor() {
     super("dialogueChoice");
@@ -57,40 +36,39 @@ export class DialogueChoiceScene extends Scene {
 
   init({ choice }: DialogueChoiceData): void {
     this.choice = dialogueChoice(TEXT.lines, choice);
-    this.buttons = new Map();
-    this.focus = undefined;
-    this.focusRing = undefined;
-    this.press = undefined;
     this.finished = false;
+    this.closeModal = undefined;
   }
 
   create(): void {
-    fitPlayCamera(this);
-    this.layouts = dialogueChoiceLayout(cardFonts(this), this.choice.prompt, this.choice.options);
-    addSlice(this, "ui-settings-card", this.layouts.card);
-    addCardTextIn(
-      this,
-      BODY_FONT,
-      this.layouts.question,
-      this.layouts.text,
-      paletteColour(this, "ink"),
-    );
-    for (const { id, layout } of this.layouts.buttons) {
-      const label = this.choice.options.find((option) => option.id === id)!.label;
-      this.buttons.set(id, addTextButton(this, layout, label));
+    const card: ChoiceCardView = createChoiceCard(document, "dialogue-choice", this.choice);
+    card.root.hidden = true;
+    for (const [id, button] of card.buttons) {
+      button.addEventListener("click", () => this.select(id));
     }
-    this.render();
-    catchModalTaps(this, this.cameras.main, {
-      covered: () => [this.layouts.card, ...this.layouts.buttons.map(({ layout }) => layout.hit)],
+    const input = modalInput(this);
+    const backdrop = showModalBackdrop(this);
+    const stops = [
+      guardClicks({ gate: input }, card.root),
+      showPresses(() => input.accepts(), card.root),
+    ];
+    let shown = true;
+    this.events.once("shutdown", () => {
+      shown = false;
+      this.closeModal?.();
+      this.closeModal = undefined;
+      stops.forEach((stop) => stop());
     });
-    this.watchInput();
-    modalInput(this).subscribe(() => {
-      this.press = undefined;
-      this.render();
+    mountSceneView(this, card.root);
+    void backdrop.ready.then(() => {
+      if (shown && !this.finished) {
+        card.root.hidden = false;
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { live: conversationControls(this) },
+          card.dialog,
+        );
+      }
     });
-    captureTab(this, true);
-    this.events.once("shutdown", () => captureTab(this, false));
-    showModalBackdrop(this);
   }
 
   // Whether the pause card may open over this choice: no answer has been selected.
@@ -98,85 +76,14 @@ export class DialogueChoiceScene extends Scene {
     return !this.finished;
   }
 
-  private render(): void {
-    for (const [id, button] of this.buttons) {
-      pressTextButton(button, this.press?.target === id && !this.press.cancelled);
-    }
-    const focused = this.layouts.buttons.find(({ id }) => id === this.focus)?.layout.button;
-    this.focusRing = ringFocus(this, this.focusRing, focused);
-  }
-
-  private areas(): readonly PressArea<string>[] {
-    return this.layouts.buttons.map(({ id, layout }) => ({
-      art: layout.button,
-      hit: layout.hit,
-      key: id,
-    }));
-  }
-
   private select(id: string): void {
-    if (this.finished || !this.buttons.has(id)) {
+    if (this.finished || !this.sys.isActive() || !modalInput(this).accepts()) {
       return;
     }
     this.finished = true;
+    this.closeModal?.();
+    this.closeModal = undefined;
     this.scene.stop();
     (this.scene.get("dialogue") as unknown as DialogueChoiceOpener).choiceSelected(id);
-  }
-
-  private watchInput(): void {
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      // P and Escape pass on to PauseScene, which opens its card over the choice as in play.
-      if (pauseKey(event.key) || !modalInput(this).accepts(event)) {
-        return;
-      }
-      event.stopPropagation();
-      const result = dialogueChoiceKey([...this.buttons.keys()], this.focus, event);
-      this.focus = result.focus;
-      this.render();
-      if (result.selection !== undefined) {
-        this.select(result.selection);
-      }
-    });
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.press !== undefined || this.finished) {
-        return;
-      }
-      const at = playPoint(this, pointer);
-      this.press = { at, cancelled: false, id: pointer.id, target: pressedArea(this.areas(), at) };
-      this.render();
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.press?.id === pointer.id) {
-        const at = playPoint(this, pointer);
-        this.press.cancelled ||=
-          Math.hypot(at.x - this.press.at.x, at.y - this.press.at.y) > TOUCH.tapMaxDistance;
-        this.render();
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      this.input.stopPropagation();
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      const press = this.press;
-      this.press = undefined;
-      this.render();
-      const at = playPoint(this, pointer);
-      if (
-        !outside &&
-        !pointer.wasCanceled &&
-        !press.cancelled &&
-        press.target !== undefined &&
-        Math.hypot(at.x - press.at.x, at.y - press.at.y) <= TOUCH.tapMaxDistance &&
-        pressedArea(this.areas(), at) === press.target
-      ) {
-        this.select(press.target);
-      }
-    };
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
   }
 }

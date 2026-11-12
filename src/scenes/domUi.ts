@@ -110,6 +110,12 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
   ]);
 }
 
+// The controls that stay live while a conversation holds the modal layer: the pause button,
+// which opens the pause card over it.
+export function conversationControls(scene: Scene): HTMLElement[] {
+  return [...(sceneDomUi(scene)?.element.querySelectorAll<HTMLElement>(".pause-button") ?? [])];
+}
+
 // Mounts view in scene's UI layer at the scene's place in the game's scene list, until the
 // scene shuts down. Returns its removal.
 export function mountSceneView(scene: Scene, view: HTMLElement): () => void {

@@ -1,33 +1,29 @@
-import { containsPoint } from "@andornaut/game-kit/rect";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { Scene } from "phaser";
 
-import { SCREEN } from "../data/screen.ts";
-import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
-import type { Point, Rect } from "../data/types/index.ts";
-import type {
-  RunStatsSummary,
-  WholeRunDisplaySummary,
-  ZoneStatsSummary,
+import { ZONE_MAP } from "../data/map.ts";
+import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
+import { STATS_SCOPE_TEXT, TEXT } from "../data/text.ts";
+import { deathLabels, deathSummary } from "../presentation/index.ts";
+import {
+  formatRunStats,
+  type RunStatsSummary,
+  type WholeRunDisplaySummary,
+  type ZoneStatsSummary,
 } from "../progress/index.ts";
 import {
-  CUTSCENE_CONTINUE,
+  createStageSummary,
   focusKeyAction,
   pauseKey,
-  STAGE_SUMMARY_BOUNDS,
+  runStatLabels,
+  STAGE_METRICS,
+  type StageSummaryView,
+  type StageSummaryWords,
   statsStatement,
+  statsTotalRows,
 } from "../ui/index.ts";
-import {
-  addTextButton,
-  captureTab,
-  pressTextButton,
-  PRIMARY_BUTTON,
-  ringFocus,
-  type TextButton,
-} from "./cardParts.ts";
-import { modalInput, onScenePointer } from "./modalInput.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
-import { addStageSummary } from "./runStatsParts.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, conversationControls, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { modalInput } from "./modalInput.ts";
 
 export interface CutsceneData {
   readonly percent: number;
@@ -39,16 +35,52 @@ export interface CutsceneData {
   readonly wholeRun: WholeRunDisplaySummary;
 }
 
-// A required inter-stage screen. Only a fresh Continue activation starts the next stage.
+// The summary's words for data: the cleared stage's zone, number, name and progress, its metrics
+// and the stage, zone and run totals, and the antagonist's clear statement unless the stage was
+// turned back from.
+export function stageSummaryWords(data: CutsceneData): StageSummaryWords {
+  const identity = deathSummary(TEXT.death, {
+    ...deathLabels(ZONE_MAP, TEXT.map, data.clearedStage, data.clearedStage),
+    activeSeconds: data.runStats.attemptSeconds,
+    percent: data.percent,
+  });
+  const values = formatRunStats(
+    { ...TEXT.stats, attempts: "{count}", best: "{time}", lastAttempt: "{time}" },
+    data.runStats,
+  );
+  const labels = runStatLabels(TEXT.stats);
+  const statement = data.cleared === false ? undefined : statsStatement("clear", data.clearedStage);
+  return {
+    continue: TEXT.map.continue,
+    progress: identity.progress,
+    stage: identity.stage,
+    ...(statement && {
+      statement: { colour: statement.colour, name: statement.name, text: statement.text },
+    }),
+    stats: STAGE_METRICS.map((key) => ({ label: labels[key], value: values[key] })),
+    totals: statsTotalRows(
+      { ...STATS_SCOPE_TEXT, runTotal: TEXT.stats.runTotal },
+      {
+        runSeconds: data.wholeRun.activeSeconds,
+        stageSeconds: data.runStats.cumulativeSeconds ?? data.runStats.runSeconds,
+        zoneSeconds: data.zoneStats.cumulativeSeconds ?? data.zoneStats.runSeconds,
+      },
+    ),
+    zone: identity.title,
+  };
+}
+
+// A required inter-stage screen. Only a fresh Continue activation starts the next stage. The
+// summary is HTML in the UI layer (src/ui/dom/stageSummary.ts), in its modal layer with the pause
+// button kept live: a fresh tap on Continue or on the statement line continues (followTaps); Tab
+// and the arrows put the keyboard's focus on Continue, and a fresh Enter or Space continues
+// wherever the focus is. P and Escape pass on to PauseScene, which opens its card over a
+// departure; no other key, back or outside tap leaves it.
 export class CutsceneScene extends Scene {
   private stage!: string;
   private summary!: CutsceneData;
-  private button!: TextButton;
-  private focused = false;
   private finished = false;
-  private statementHit: Rect | undefined;
-  private ring: GameObjects.NineSlice | undefined;
-  private press: { readonly id: number; readonly at: Point; cancelled: boolean } | undefined;
+  private closeModal: (() => void) | undefined;
 
   constructor(key = "cutscene") {
     super(key);
@@ -56,78 +88,67 @@ export class CutsceneScene extends Scene {
   init(data: CutsceneData): void {
     this.stage = data.stage;
     this.summary = data;
-    this.focused = false;
     this.finished = false;
-    this.statementHit = undefined;
-    this.ring = undefined;
-    this.press = undefined;
+    this.closeModal = undefined;
   }
   create(): void {
-    fitPlayCamera(this);
-    this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, 0x000000).setOrigin(0);
-    const statement =
-      this.summary.cleared === false
-        ? undefined
-        : statsStatement("clear", this.summary.clearedStage);
-    const layout = addStageSummary(this, STAGE_SUMMARY_BOUNDS, {
-      percent: this.summary.percent,
-      runStats: this.summary.runStats,
-      stage: this.summary.clearedStage,
-      ...(statement && { statement }),
-      wholeRun: this.summary.wholeRun,
-      zoneStats: this.summary.zoneStats,
+    const preview = STAGE_PREVIEWS[this.summary.clearedStage];
+    if (!preview || !this.textures.exists(preview)) {
+      throw new Error(`Missing actual stage preview ${this.summary.clearedStage}`);
+    }
+    const view = createStageSummary(document, "stage-summary", stageSummaryWords(this.summary));
+    const stops = [this.watchPresses(view), this.watchKeys(view)];
+    let shown = true;
+    this.events.once("shutdown", () => {
+      shown = false;
+      this.closeModal?.();
+      this.closeModal = undefined;
+      stops.forEach((stop) => stop());
     });
-    this.statementHit = layout.statement?.rect;
-    this.button = addTextButton(this, CUTSCENE_CONTINUE, TEXT.map.continue, {
-      style: PRIMARY_BUTTON,
-    });
-    captureTab(this, true);
-    this.events.once("shutdown", () => captureTab(this, false));
-    this.watchKeys();
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.press || this.finished) {
-        return;
-      }
-      const at = playPoint(this, pointer);
-      if (this.continueContains(at)) {
-        this.press = { at, cancelled: false, id: pointer.id };
-        this.render();
-      }
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.press?.id === pointer.id) {
-        const at = playPoint(this, pointer);
-        this.press.cancelled ||=
-          Math.hypot(at.x - this.press.at.x, at.y - this.press.at.y) > TOUCH.tapMaxDistance;
-        this.render();
-      }
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      this.input.stopPropagation();
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      const press = this.press;
-      this.press = undefined;
-      this.render();
-      const at = playPoint(this, pointer);
-      if (
-        !outside &&
-        !pointer.wasCanceled &&
-        !press.cancelled &&
-        this.continueContains(at) &&
-        Math.hypot(at.x - press.at.x, at.y - press.at.y) <= TOUCH.tapMaxDistance
-      ) {
+    void artFrameUrl(this, preview)
+      .then((url) => {
+        if (shown) {
+          view.preview.src = url;
+        }
+      })
+      .catch((error: unknown) => console.warn("The stage preview failed to load", error));
+    mountSceneView(this, view.root);
+    this.closeModal = sceneDomUi(this)?.modals.open(
+      { live: conversationControls(this) },
+      view.dialog,
+    );
+  }
+  // Continue and the statement line continue on a fresh tap, Continue showing pressed meanwhile. A
+  // click on Continue with no pointer behind it (an assistive technology's) continues.
+  private watchPresses(view: StageSummaryView): () => void {
+    const onClick = (event: MouseEvent) => {
+      if (event.detail === 0 && modalInput(this).accepts()) {
         this.continue();
       }
     };
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
+    view.continue.addEventListener("click", onClick);
+    const stopTaps = followTaps(
+      { preventDefault: true, target: view.root, view: view.root },
+      modalInput(this),
+      {
+        accepts: () => !this.finished,
+        controlAt: ({ target }) =>
+          target instanceof Element && target.closest("[data-continue]") !== null
+            ? "continue"
+            : null,
+        land: () => view.continue.focus(),
+        show: (control) => view.continue.toggleAttribute("data-pressed", control !== undefined),
+        tap: () => this.continue(),
+      },
+    );
+    return () => {
+      stopTaps();
+      view.continue.removeEventListener("click", onClick);
+    };
   }
-  private watchKeys(): void {
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+  // The summary's keys, seen on its view before the modal layer and Phaser.
+  private watchKeys(view: StageSummaryView): () => void {
+    const onKeyDown = (event: KeyboardEvent) => {
       // P and Escape pass on to PauseScene, which opens its card over a departure as in play.
       if (pauseKey(event.key) || !modalInput(this).accepts(event)) {
         return;
@@ -135,34 +156,40 @@ export class CutsceneScene extends Scene {
       event.stopPropagation();
       const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
       if (action === "next" || action === "previous") {
-        this.focused = true;
-        this.render();
+        event.preventDefault();
+        view.continue.focus();
       } else if (action === "press") {
+        event.preventDefault();
         this.continue();
       }
-    });
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
+    };
+    // Space would press Continue again as it lifts.
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (!pauseKey(event.key)) {
+        event.stopPropagation();
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+      }
+    };
+    view.root.addEventListener("keydown", onKeyDown);
+    view.root.addEventListener("keyup", onKeyUp);
+    return () => {
+      view.root.removeEventListener("keydown", onKeyDown);
+      view.root.removeEventListener("keyup", onKeyUp);
+    };
   }
   // Whether the pause card may open over this screen: Continue has not been activated.
   pausable(): boolean {
     return !this.finished;
-  }
-  private continueContains(at: Point): boolean {
-    return (
-      containsPoint(CUTSCENE_CONTINUE.hit, at.x, at.y) ||
-      (this.statementHit !== undefined && containsPoint(this.statementHit, at.x, at.y))
-    );
-  }
-  private render(): void {
-    pressTextButton(this.button, this.press !== undefined && !this.press.cancelled);
-    this.ring = ringFocus(this, this.ring, this.focused ? CUTSCENE_CONTINUE.button : undefined);
   }
   private continue(): void {
     if (this.finished) {
       return;
     }
     this.finished = true;
-    this.press = undefined;
+    this.closeModal?.();
+    this.closeModal = undefined;
     this.finish();
   }
   protected finish(): void {

@@ -1,0 +1,114 @@
+/* The full-page stage summary (stageSummary.ts), after ui.css and runStats.css. Lengths are base
+   pixels times --ui-unit, from the layer's layout properties and STAGE_SUMMARY_LAYOUT on the
+   summary's view. */
+
+/* The view is black behind the page, as the stage between them is. */
+.stage-summary-view {
+  background: #000;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* The page's rows centred down from its padding: each text row trims to its cap height and
+   alphabetic baseline, so the gaps between rows are the gaps between their ink. */
+.stage-summary {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(var(--ui-unit) * var(--summary-padding) * 1px);
+  color: var(--colour-lgrey);
+  text-align: center;
+}
+
+.stage-summary:focus {
+  outline: none;
+}
+
+.stage-summary-zone,
+.stage-summary-stage,
+.stage-summary-progress,
+.stage-summary-statement {
+  margin: 0;
+  text-box: trim-both cap alphabetic;
+}
+
+/* The zone's name in the compact heading role. */
+.stage-summary-zone {
+  font-size: calc(var(--ui-unit) * var(--summary-heading-size) * 1px);
+  font-weight: 700;
+  line-height: calc(var(--ui-unit) * var(--summary-heading-line) * 1px);
+}
+
+.stage-summary-stage,
+.stage-summary-progress,
+.stage-summary-statement {
+  margin-top: calc(var(--ui-unit) * var(--summary-row-gap) * 1px);
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 400;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+}
+
+.stage-summary-stage {
+  color: var(--colour-cream);
+}
+
+/* The cleared stage's preview, whole and sampled nearest. */
+.stage-summary-preview {
+  display: block;
+  width: calc(var(--ui-unit) * var(--summary-preview-width) * 1px);
+  height: calc(var(--ui-unit) * var(--summary-preview-height) * 1px);
+  margin-top: calc(var(--ui-unit) * var(--summary-row-gap) * 1px);
+  image-rendering: pixelated;
+}
+
+/* The metrics beside the totals, unboxed and with no divider, their first ink a row gap below the
+   preview; labels light grey and values white. */
+.stage-summary > .ui-run-stats {
+  width: calc(var(--ui-unit) * var(--summary-stats-width) * 1px);
+  margin-top: calc(var(--ui-unit) * var(--summary-stats-gap) * 1px);
+}
+
+.stage-summary .ui-run-stats-value {
+  color: var(--colour-white);
+}
+
+/* The statement's ink a gap below the last metric's baseline: the speaker's name in their colour,
+   a gap, then what they say in cream. */
+.stage-summary > .stage-summary-statement {
+  display: flex;
+  gap: calc(var(--ui-unit) * var(--summary-word-gap) * 1px);
+  margin-top: calc(var(--ui-unit) * var(--summary-statement-gap) * 1px);
+  color: var(--colour-cream);
+}
+
+.stage-summary-speaker[data-colour="amber"] {
+  color: var(--colour-amber);
+}
+
+.stage-summary-speaker[data-colour="green"] {
+  color: var(--colour-green);
+}
+
+.stage-summary-speaker[data-colour="pink"] {
+  color: var(--colour-pink);
+}
+
+.stage-summary-speaker[data-colour="tan"] {
+  color: var(--colour-tan);
+}
+
+/* Continue at its place in the view's bottom-right, the button's box its press area. */
+.stage-summary-footer {
+  --hit: calc(var(--ui-unit) * var(--summary-continue-hit) * 1px);
+
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--summary-continue-y) * 1px);
+  left: calc(var(--ui-unit) * var(--summary-continue-x) * 1px);
+}
+
+.stage-summary-footer .ui-text-button-face {
+  width: calc(var(--ui-unit) * var(--summary-continue-width) * 1px);
+}

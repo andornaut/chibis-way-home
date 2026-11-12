@@ -38,23 +38,38 @@ vi.mock("./save.ts", () => ({
 vi.mock("./modalBackdrop.ts", () => ({
   showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
 }));
-vi.mock("./domUi.ts", () => ({
-  artFrameUrl: () => Promise.resolve("blob:glyph"),
-  mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
-    const unmount = (dom.layer as UiLayer).mount(10, view);
-    scene.events.once("shutdown", unmount);
-    return unmount;
-  },
-  sceneDomUi: () => dom.layer,
-}));
+// Each view mounts at its scene's place in the game's scene list.
+vi.mock("./domUi.ts", () => {
+  const orders: Readonly<Record<string, number>> = {
+    dialogue: 9,
+    dialogueChoice: 11,
+    pause: 13,
+    zoneDeparture: 12,
+  };
+  const layer = () => dom.layer as UiLayer;
+  return {
+    artFrameUrl: () => Promise.resolve("blob:glyph"),
+    conversationControls: () => [...layer().element.querySelectorAll<HTMLElement>(".pause-button")],
+    mountSceneView: (
+      scene: { events: EventEmitter; scene: { key: string } },
+      view: HTMLElement,
+    ) => {
+      const unmount = layer().mount(orders[scene.scene.key] ?? 0, view);
+      scene.events.once("shutdown", unmount);
+      return unmount;
+    },
+    sceneDomUi: () => dom.layer,
+  };
+});
 
+import { ZONE_MAP } from "../data/map.ts";
 import { TEXT } from "../data/text.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { type DialogueChoiceData, DialogueChoiceScene } from "./DialogueChoiceScene.ts";
 import { type DialogueData, DialogueScene } from "./DialogueScene.ts";
 import { modalInput } from "./modalInput.ts";
 import { createPauseScene, pressKey, settle, tap } from "./pauseFixture.ts";
-import { ZoneDepartureScene } from "./ZoneDepartureScene.ts";
+import { type ZoneDepartureData, ZoneDepartureScene } from "./ZoneDepartureScene.ts";
 
 let layer: UiLayer;
 const shutdowns: (() => void)[] = [];
@@ -87,94 +102,121 @@ const CHOICE = {
   ],
   prompt: PROMPT!,
 };
+const DEPARTURE: ZoneDepartureData = {
+  cleared: true,
+  clearedStage: ZONE_MAP.destinations[0]!.stages.at(-1)!,
+  percent: 1,
+  runStats: { attemptSeconds: 1, attempts: 1, bestSeconds: 1, runSeconds: 1 },
+  stage: ZONE_MAP.destinations[0]!.stages.at(-1)!,
+  wholeRun: { activeSeconds: 1, completed: 1, deaths: 0, total: 21 },
+  zoneStats: {
+    attemptSeconds: 1,
+    attempts: 1,
+    bestSeconds: 1,
+    completed: 1,
+    partial: false,
+    runSeconds: 1,
+    total: 3,
+  },
+};
 
-// A scene's Phaser input and keyboard, as the scene's watchers use them.
-function sceneInput() {
-  return Object.assign(new EventEmitter(), {
-    keyboard: Object.assign(new EventEmitter(), { addCapture: vi.fn(), removeCapture: vi.fn() }),
-    stopPropagation: vi.fn(),
-  });
+// The conversation's scene, over the paused zone, created against stand-ins for Phaser's parts.
+function sceneParts(game: object, key: string, get: () => unknown) {
+  return {
+    events: new EventEmitter(),
+    game,
+    scene: { get, key, launch: vi.fn(), pause: vi.fn(), start: vi.fn(), stop: vi.fn() },
+    sys: { isActive: () => true },
+    textures: { exists: () => true },
+  };
 }
+
+const control = (selector: string) => document.querySelector<HTMLButtonElement>(selector)!;
+const focusText = () => document.activeElement?.textContent;
 
 // The conversation over the paused zone, holding the real modal input gate: a line (the second,
 // with Continue focused), its required choice (the second answer focused, the line paused under
-// it), or the departure (Continue focused). Each watches its keys as in play; acted counts what
-// would advance the line, select the answer or continue past the departure.
-function shown(game: object, mode: Mode) {
-  const input = sceneInput();
-  const base = { events: new EventEmitter(), game, input };
-  const dialogue = Object.assign(new DialogueScene() as object, base, {
-    drawParagraph: vi.fn(),
-  }) as unknown as {
+// it), or the departure (Continue focused), each in the UI layer over the pause scene's view.
+// acted counts what would advance the line, select the answer or continue past the departure.
+async function shown(game: object, mode: Mode) {
+  const dialogue = new DialogueScene() as unknown as {
     choosing: boolean;
-    drawParagraph: ReturnType<typeof vi.fn>;
-    focus: string | undefined;
     paragraph: number;
+    create(): void;
+    events: EventEmitter;
     init(data: DialogueData): void;
-    watchInput(): void;
+    showParagraph(): void;
   };
+  Object.assign(
+    dialogue,
+    sceneParts(game, "dialogue", () => undefined),
+  );
   dialogue.init({ scene: "archie-intro" });
-  dialogue.paragraph = 1;
-  dialogue.focus = "continue";
-  modalInput(dialogue as never).open();
+  shutdowns.push(() => dialogue.events.emit("shutdown"));
   if (mode === "line") {
-    dialogue.watchInput();
+    dialogue.paragraph = 1;
+    dialogue.create();
+    modalInput(dialogue as never).open();
+    control(".dialogue-footer [data-control=continue]").focus();
     return {
-      acted: dialogue.drawParagraph,
+      acted: vi.spyOn(dialogue, "showParagraph").mockImplementation(() => {}),
       dialogue,
-      input,
       scene: dialogue as object,
-      state: () => ({ focus: dialogue.focus, paragraph: dialogue.paragraph }),
+      state: () => ({ focus: focusText(), paragraph: dialogue.paragraph }),
     };
   }
   if (mode === "choice") {
     dialogue.choosing = true;
-    const choice = Object.assign(new DialogueChoiceScene() as object, base, {
-      render: vi.fn(),
-    }) as unknown as {
-      buttons: Map<string, object>;
-      focus: string | undefined;
+    const choice = new DialogueChoiceScene() as unknown as {
+      create(): void;
+      events: EventEmitter;
       init(data: DialogueChoiceData): void;
       select(id: string): void;
-      watchInput(): void;
     };
+    Object.assign(
+      choice,
+      sceneParts(game, "dialogueChoice", () => dialogue),
+    );
     choice.init({ choice: CHOICE });
-    choice.buttons = new Map(CHOICE.options.map(({ id }) => [id, {}]));
-    choice.focus = "second";
+    shutdowns.push(() => choice.events.emit("shutdown"));
+    choice.create();
     modalInput(choice as never).open();
-    choice.watchInput();
+    await settle();
+    control(".dialogue-choice [data-answer=second]").focus();
     return {
       acted: vi.spyOn(choice, "select").mockImplementation(() => {}),
       dialogue,
-      input,
       scene: choice as object,
-      state: () => ({ choosing: dialogue.choosing, focus: choice.focus }),
+      state: () => ({ choosing: dialogue.choosing, focus: focusText() }),
     };
   }
-  const departure = Object.assign(new ZoneDepartureScene() as object, base, {
-    render: vi.fn(),
-  }) as unknown as {
+  const departure = new ZoneDepartureScene() as unknown as {
     continue(): void;
-    focused: boolean;
-    watchKeys(): void;
+    create(): void;
+    events: EventEmitter;
+    init(data: ZoneDepartureData): void;
   };
-  modalInput(dialogue as never).close();
-  departure.focused = true;
-  departure.watchKeys();
+  Object.assign(
+    departure,
+    sceneParts(game, "zoneDeparture", () => undefined),
+  );
+  departure.init(DEPARTURE);
+  shutdowns.push(() => departure.events.emit("shutdown"));
+  departure.create();
+  control(".stage-summary-footer .ui-text-button").focus();
   return {
     acted: vi.spyOn(departure, "continue").mockImplementation(() => {}),
     dialogue,
-    input,
     scene: departure as object,
-    state: () => ({ focused: departure.focused }),
+    state: () => ({ focus: focusText() }),
   };
 }
 
-// The conversation and the pause scene beside it with no scope of its own, its presses, keys,
-// back and frame turns watched as in play.
-function conversation(mode: Mode = "line") {
+// The pause scene with no scope of its own, its presses, keys, back and frame turns watched as in
+// play, and the conversation beside it.
+async function conversation(mode: Mode = "line") {
   const game = { events: new EventEmitter() };
-  const top = shown(game, mode);
+  const holder: { top?: Awaited<ReturnType<typeof shown>> } = {};
   const zone = {
     conversationCovers: () => true,
     playCovered: () => true,
@@ -182,7 +224,8 @@ function conversation(mode: Mode = "line") {
     skillState: () => undefined,
   };
   const scenes = {
-    get: (key: string) => (key === "zone" ? zone : key === HELD[mode] ? top.scene : top.dialogue),
+    get: (key: string) =>
+      key === "zone" ? zone : key === HELD[mode] ? holder.top!.scene : holder.top!.dialogue,
     isActive: (key: string) => key === HELD[mode],
     isPaused: (key: string) => key === "zone",
     key: "pause",
@@ -193,10 +236,11 @@ function conversation(mode: Mode = "line") {
   };
   const pause = createPauseScene(game, scenes);
   shutdowns.push(() => pause.events.emit("shutdown"));
+  const top = await shown(game, mode);
+  holder.top = top;
   pause.update();
-  // A key reaches the page, then, unless something stopped it, the conversation and the pause
-  // scene, as Phaser hands it down the scenes.
-  const key = (name: string) => pressKey([top.input.keyboard, pause.keyboard], name);
+  // A key reaches the page, then, unless something stopped it, the pause scene's Phaser keyboard.
+  const key = (name: string) => pressKey([pause.keyboard], name);
   const routes: Record<string, () => void> = {
     Escape: () => key("Escape"),
     P: () => key("P"),
@@ -216,7 +260,7 @@ it.each(
 )(
   "opens over the $mode by $route, keeping its state and focus, and resumes to it",
   async ({ mode, route }) => {
-    const { acted, pause, routes, scene, scenes, state } = conversation(mode);
+    const { acted, pause, routes, scene, scenes, state } = await conversation(mode);
     const before = state();
     routes[route]!();
     await settle();
@@ -237,8 +281,8 @@ it.each(
 
 it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name }))))(
   "passes $name on from the $mode to Pause without acting",
-  ({ mode, name }) => {
-    const { acted, key, state } = conversation(mode);
+  async ({ mode, name }) => {
+    const { acted, key, state } = await conversation(mode);
     const before = state();
     expect(key(name).stopped()).toBe(false);
     expect(acted).not.toHaveBeenCalled();
@@ -246,20 +290,20 @@ it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name
   },
 );
 
-it("advances the conversation on another key, which Pause leaves alone", () => {
-  const { dialogue, key, pause, scenes } = conversation();
+it("advances the conversation on another key, which Pause leaves alone", async () => {
+  const { acted, dialogue, key, pause, scenes } = await conversation();
   dialogue.paragraph = 0;
   expect(key("x").stopped()).toBe(true);
   expect(dialogue.paragraph).toBe(1);
-  expect(dialogue.drawParagraph).toHaveBeenCalledOnce();
+  expect(acted).toHaveBeenCalledOnce();
   expect(cardShown(pause.dialog)).toBe(false);
   expect(scenes.pause).not.toHaveBeenCalled();
 });
 
 it.each(["choice", "departure"] as const)(
   "acts on Enter in the %s, which Pause leaves alone",
-  (mode) => {
-    const { acted, key, pause, scenes } = conversation(mode);
+  async (mode) => {
+    const { acted, key, pause, scenes } = await conversation(mode);
     expect(key("Enter").stopped()).toBe(true);
     expect(acted).toHaveBeenCalledOnce();
     expect(cardShown(pause.dialog)).toBe(false);
@@ -269,8 +313,8 @@ it.each(["choice", "departure"] as const)(
 
 it.each(MODES)(
   "shows the pause button and the skill HUD over the %s, the HUD taking no presses",
-  (mode) => {
-    const { acted, pause, scenes } = conversation(mode);
+  async (mode) => {
+    const { acted, pause, scenes } = await conversation(mode);
     expect({
       hud: !pause.skill("dash").hidden,
       live: pause.hud.hasAttribute("data-live"),

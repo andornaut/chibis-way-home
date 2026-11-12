@@ -21,7 +21,7 @@ const speakers: Readonly<Record<string, DialogueSpeaker>> = {
   dog: { colour: "amber", portrait: "portrait-dog", side: "right" },
 };
 const text: Pick<GameText, "dialogue" | "lines"> = {
-  dialogue: { continue: "Continue", skip: "Skip", speakers: { dog: "Dog" } },
+  dialogue: { continue: "Continue", label: "Talk", skip: "Skip", speakers: { dog: "Dog" } },
   lines: { greeting: "Stop there." },
 };
 const plan: DialoguePlan = { lines: [{ line: "greeting", speaker: "dog" }] };

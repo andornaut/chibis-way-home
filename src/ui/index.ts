@@ -45,7 +45,21 @@ export {
   showAchievementsPage,
 } from "./dom/achievements.ts";
 export { type CardView, createCard, createMessageCard, showPresses } from "./dom/card.ts";
+export { type ChoiceCardView, createChoiceCard } from "./dom/choice.ts";
 export { createDeathCard, type DeathCardView } from "./dom/death.ts";
+export {
+  createDialoguePanel,
+  createDialogueView,
+  createStatusPanel,
+  DIALOGUE_FOOTER_LAYOUT,
+  DIALOGUE_PANEL_LAYOUT,
+  type DialoguePanelView,
+  type DialogueView,
+  onPanel,
+  type PanelParagraph,
+  showPanelParagraph,
+  type StatusPanelView,
+} from "./dom/dialogue.ts";
 export { createUiLayer, loadUiFonts, UI_DIMMED, UI_LAYOUT, type UiLayer } from "./dom/layer.ts";
 export {
   createPauseView,
@@ -70,6 +84,12 @@ export { createSkillDetailsCard, type SkillDetailsView } from "./dom/skillDetail
 export { filledFrame } from "./dom/skillDisc.ts";
 export { applySkin, remappedFrame, type SkinFrame, UI_FRAMES } from "./dom/skin.ts";
 export { createStageSelect, type StageFace, type StageSelectView } from "./dom/stageSelect.ts";
+export {
+  createStageSummary,
+  STAGE_SUMMARY_LAYOUT,
+  type StageSummaryView,
+  type StageSummaryWords,
+} from "./dom/stageSummary.ts";
 export { focusKeyAction, stepFocus } from "./focus/index.ts";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput.ts";
 export {
@@ -113,16 +133,11 @@ export {
   contentCardLayout,
 } from "./layout/contentCard.ts";
 export { PAUSE_VISIBLE_DIAMETER } from "./layout/controlChrome.ts";
-export { CUTSCENE_CONTINUE, STAGE_SUMMARY_BOUNDS } from "./layout/cutscene.ts";
-export { dialogueChoiceLayout } from "./layout/dialogueChoice.ts";
+export { CUTSCENE_CONTINUE } from "./layout/cutscene.ts";
 export {
-  departureDialogueButtons,
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
-  dialogueBodyLines,
-  dialogueButtons,
   dialogueNameTab,
-  dialoguePressAreas,
   dialogueSpeakerLayout,
   dialogueTextRows,
 } from "./layout/dialogueScreen.ts";
@@ -139,10 +154,8 @@ export {
   RUN_STAT_KEYS,
   runStatLabels,
   STAGE_METRICS,
-  stageSummaryLayout,
   statsTotalRows,
   type StatsTotalsSnapshot,
-  summaryTextOrigin,
 } from "./layout/runStats.ts";
 export { focusRingAround, SETTINGS_LAYOUT } from "./layout/settingsCard.ts";
 export { SKILL_ROOM, skillDetails, skillRoomContinue } from "./layout/skillDetails.ts";

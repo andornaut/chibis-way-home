@@ -1,0 +1,223 @@
+/* The dialogue panel and a conversation's buttons (dialogue.ts), after ui.css. Lengths are base
+   pixels times --ui-unit, from the layer's layout properties and DIALOGUE_PANEL_LAYOUT and
+   DIALOGUE_FOOTER_LAYOUT on the scene's view. */
+
+/* A conversation's region over its backdrop. Only its buttons take presses; a press anywhere else
+   lands on the backdrop. */
+.dialogue-region {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dialogue-region:focus {
+  outline: none;
+}
+
+/* The cleared stage's preview fills the view behind a departure's panel, sampled nearest. */
+.dialogue-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.dialogue-preview[hidden],
+.dialogue-panel[hidden],
+.dialogue-name-tab[hidden],
+.dialogue-heading[hidden],
+.dialogue-footer[hidden] {
+  display: none;
+}
+
+/* The panel across the top of the view. It takes no presses: a conversation's backdrop takes
+   them, and a bark or notice reads its own from the page. */
+.dialogue-panel {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--dialogue-y) * 1px);
+  left: calc(var(--ui-unit) * var(--dialogue-x) * 1px);
+  width: calc(var(--ui-unit) * var(--dialogue-width) * 1px);
+  height: calc(var(--ui-unit) * var(--dialogue-height) * 1px);
+  color: var(--colour-cream);
+  pointer-events: none;
+}
+
+/* Only art's box is translucent; the portrait, the name tab and the text above it are opaque. */
+.dialogue-box {
+  position: absolute;
+  inset: 0;
+  background-image: var(--ui-dialogue-box-image);
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  opacity: var(--dialogue-alpha);
+}
+
+/* Art's portrait frame, the panel's padding in from its top and the speaker's end, and the
+   portrait filling the slot inside its border. */
+.dialogue-portrait-frame {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--dialogue-padding) * 1px);
+  left: calc(var(--ui-unit) * var(--dialogue-padding) * 1px);
+  width: calc(var(--ui-unit) * var(--dialogue-frame) * 1px);
+  height: calc(var(--ui-unit) * var(--dialogue-frame) * 1px);
+  background-image: var(--ui-portrait-frame-image);
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+
+.dialogue-panel[data-side="right"] .dialogue-portrait-frame {
+  right: calc(var(--ui-unit) * var(--dialogue-padding) * 1px);
+  left: auto;
+}
+
+.dialogue-portrait {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--dialogue-frame-inset) * 1px);
+  left: calc(var(--ui-unit) * var(--dialogue-frame-inset) * 1px);
+  width: calc(var(--ui-unit) * var(--dialogue-portrait) * 1px);
+  height: calc(var(--ui-unit) * var(--dialogue-portrait) * 1px);
+  image-rendering: pixelated;
+}
+
+/* The name tab rises its overhang above the panel's top at the end opposite the portrait, as wide
+   as the name and its inset either side, in art's ui-name-tab of the speaker's colour, with the
+   name in ink centred on its height. */
+.dialogue-name-tab {
+  position: absolute;
+  top: calc(-1 * var(--ui-unit) * var(--dialogue-tab-overhang) * 1px);
+  right: calc(var(--ui-unit) * var(--dialogue-tab-end) * 1px);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: calc(var(--ui-unit) * var(--dialogue-tab-height) * 1px);
+  margin: 0;
+  padding: 0 calc(var(--ui-unit) * (var(--dialogue-tab-inset) - var(--tab-edge)) * 1px);
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 700;
+  line-height: calc(var(--ui-unit) * var(--dialogue-tab-height) * 1px);
+  white-space: nowrap;
+  color: var(--colour-ink);
+}
+
+.dialogue-panel[data-side="right"] .dialogue-name-tab {
+  right: auto;
+  left: calc(var(--ui-unit) * var(--dialogue-tab-end) * 1px);
+}
+
+.dialogue-name-tab[data-colour="amber"] {
+  --ui-frame-image: var(--ui-name-tab-amber-image);
+  --ui-frame-slice: var(--ui-name-tab-amber-slice);
+  --ui-frame-width: var(--ui-name-tab-amber-border);
+  --tab-edge: var(--ui-name-tab-amber-left);
+}
+
+.dialogue-name-tab[data-colour="green"] {
+  --ui-frame-image: var(--ui-name-tab-green-image);
+  --ui-frame-slice: var(--ui-name-tab-green-slice);
+  --ui-frame-width: var(--ui-name-tab-green-border);
+  --tab-edge: var(--ui-name-tab-green-left);
+}
+
+.dialogue-name-tab[data-colour="pink"] {
+  --ui-frame-image: var(--ui-name-tab-pink-image);
+  --ui-frame-slice: var(--ui-name-tab-pink-slice);
+  --ui-frame-width: var(--ui-name-tab-pink-border);
+  --tab-edge: var(--ui-name-tab-pink-left);
+}
+
+.dialogue-name-tab[data-colour="tan"] {
+  --ui-frame-image: var(--ui-name-tab-tan-image);
+  --ui-frame-slice: var(--ui-name-tab-tan-slice);
+  --ui-frame-width: var(--ui-name-tab-tan-border);
+  --tab-edge: var(--ui-name-tab-tan-left);
+}
+
+/* The text column, its gap clear of the portrait frame and of the panel's far edge, with its lines
+   centred down the panel. */
+.dialogue-text {
+  position: absolute;
+  top: 0;
+  left: calc(var(--ui-unit) * var(--dialogue-text-left) * 1px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: calc(var(--ui-unit) * var(--dialogue-text-width) * 1px);
+  height: 100%;
+}
+
+.dialogue-panel[data-side="right"] .dialogue-text {
+  left: calc(var(--ui-unit) * var(--dialogue-text-right) * 1px);
+}
+
+/* The lines, a body line apart, trimmed to the first line's cap height and the last line's
+   alphabetic baseline, so their ink centres on the panel. Where the browser cannot trim, their
+   line boxes centre instead. */
+.dialogue-words {
+  text-box: trim-both cap alphabetic;
+}
+
+.dialogue-heading,
+.dialogue-line {
+  margin: 0;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  line-height: calc(var(--ui-unit) * var(--dialogue-line) * 1px);
+  text-align: start;
+}
+
+.dialogue-heading {
+  font-weight: 700;
+}
+
+.dialogue-line {
+  font-weight: 400;
+}
+
+/* Skip and Continue, equal faces --dialogue-button-height tall and at least --dialogue-button-width
+   wide, the kit's button gap apart, their faces' row the footer's gap below the panel with its
+   right edge on the panel's; each button's box is its press area. */
+.ui-card-actions.dialogue-footer {
+  --button-height: var(--dialogue-button-height);
+  --hit: calc(var(--ui-unit) * var(--dialogue-footer-hit) * 1px);
+
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--dialogue-footer-top) * 1px - var(--hit));
+  right: calc(var(--ui-unit) * var(--dialogue-footer-right) * 1px - var(--hit));
+  margin: 0;
+}
+
+/* A departure's row sits its inset in from the view's bottom-right corner. */
+.ui-card-actions.dialogue-footer[data-departure] {
+  top: auto;
+  right: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px - var(--hit));
+  bottom: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px - var(--hit));
+}
+
+.dialogue-footer .ui-text-button-face {
+  min-width: calc(var(--ui-unit) * var(--dialogue-button-width) * 1px);
+}
+
+/* Skip on the left and Continue on the right, though Continue leads the focus order: each press
+   area reaches the full margin on its outer side and half the gap on its inner. */
+.dialogue-footer > .ui-text-button {
+  grid-row: 1;
+}
+
+.dialogue-footer > [data-control="skip"] {
+  grid-column: 1;
+  padding-right: var(--half-gap);
+  padding-left: var(--hit);
+}
+
+.dialogue-footer > [data-control="continue"] {
+  grid-column: 2;
+  padding-right: var(--hit);
+  padding-left: var(--half-gap);
+}
+
+/* A bark's or notice's status region, which takes no presses. */
+.dialogue-status {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

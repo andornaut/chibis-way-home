@@ -1,22 +1,13 @@
 import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 
-import { DIALOGUE_LAYOUT, HUD_EDGE, TEXT_BUTTON } from "../../data/layout.ts";
+import { DIALOGUE_LAYOUT, HUD_EDGE } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { DialogueSpeaker, Point, Rect } from "../../data/types/index.ts";
-import type { DialogueControl } from "../dialogue/conversation.ts";
 import type { CardFonts } from "./contentCard.ts";
 import { FONT_SCALE } from "./fontRoles.ts";
-import type { PressArea } from "./hitAreas.ts";
-import { type LabelledButton, labelledButton } from "./restartCard.ts";
 import { SKILL_BUTTON } from "./skillHud.ts";
 
-const {
-  footer,
-  nameTab: TAB,
-  padding: PADDING,
-  panel,
-  portraitInset: PORTRAIT_INSET,
-} = DIALOGUE_LAYOUT;
+const { nameTab: TAB, padding: PADDING, panel, portraitInset: PORTRAIT_INSET } = DIALOGUE_LAYOUT;
 // The name tab's top, the top of everything the panel draws: the clearance below the top button
 // row's discs, whose skill HUD targets stay live above it.
 const TAB_TOP = HUD_EDGE + SKILL_BUTTON.disc + TAB.clearance;
@@ -58,36 +49,20 @@ export function dialogueSpeakerLayout(side: DialogueSpeaker["side"]) {
   };
 }
 
-// How many body lines the column holds under each header: a bold heading takes the first line.
-export function dialogueBodyLines(header: "heading" | "name-tab"): number {
-  return DIALOGUE_SCREEN.text.lines - (header === "heading" ? 1 : 0);
-}
-
-// The text column's rows, centred down the panel by measured ink: the first row's ink top to the
-// last row's ink bottom, over bodyCount body lines and the heading when there is one. Origins
-// are BitmapText pens.
-export function dialogueTextRows(
-  fonts: CardFonts,
-  header: "heading" | "name-tab",
-  bodyCount: number,
-): { readonly bodyY: number; readonly headingY?: number } {
-  const { pitch, scale } = DIALOGUE_SCREEN.text;
-  if (bodyCount < 1 || bodyCount > dialogueBodyLines(header)) {
-    throw new Error(`The dialogue panel holds no ${bodyCount}-line ${header} paragraph`);
+// The text column's body rows, centred down the panel by measured ink: the first row's ink top
+// to the last row's ink bottom, over bodyCount lines. The origin is a BitmapText pen.
+export function dialogueTextRows(fonts: CardFonts, bodyCount: number): { readonly bodyY: number } {
+  const { lines, pitch, scale } = DIALOGUE_SCREEN.text;
+  if (bodyCount < 1 || bodyCount > lines) {
+    throw new Error(`The dialogue panel holds no ${bodyCount}-line paragraph`);
   }
   const body = fontInk(fonts.body, scale);
-  const heading = header === "heading";
-  const top = heading ? fontInk(fonts.title, scale).top : body.top;
-  const rows = bodyCount + (heading ? 1 : 0);
-  const height = (rows - 1) * pitch + body.bottom - top;
-  const firstY = BOX.y + Math.round((BOX.height - height) / 2 - top);
-  if (!heading) {
-    if (firstY + body.top < TAB_TOP + TAB.height) {
-      throw new Error("The dialogue name tab overlaps the first line");
-    }
-    return { bodyY: firstY };
+  const height = (bodyCount - 1) * pitch + body.bottom - body.top;
+  const bodyY = BOX.y + Math.round((BOX.height - height) / 2 - body.top);
+  if (bodyY + body.top < TAB_TOP + TAB.height) {
+    throw new Error("The dialogue name tab overlaps the first line");
   }
-  return { bodyY: firstY + pitch, headingY: firstY };
+  return { bodyY };
 }
 
 // The speaker's name tab: above the panel's top at the end opposite the portrait.
@@ -106,15 +81,6 @@ export function dialogueNameTab(side: DialogueSpeaker["side"], nameWidth: number
   return tab;
 }
 
-// The panel's one press area: the panel and, when one shows, the name tab.
-export function dialoguePressAreas(tab: Rect | undefined): readonly PressArea<"continue">[] {
-  return [BOX, ...(tab === undefined ? [] : [tab])].map((hit) => ({
-    art: BOX,
-    hit,
-    key: "continue" as const,
-  }));
-}
-
 // The highest ink top and lowest ink bottom of any drawn glyph, relative to the pen.
 function fontInk(
   font: BitmapFont,
@@ -124,41 +90,5 @@ function fontInk(
   return {
     bottom: Math.max(...drawn.map(({ height, yOffset }) => (yOffset + height) * scale)),
     top: Math.min(...drawn.map(({ yOffset }) => yOffset * scale)),
-  };
-}
-
-// The compact footer below the panel: secondary Skip left, primary Continue right, with equal
-// face sizes.
-export function dialogueButtons(
-  labels: Readonly<Record<DialogueControl, number>>,
-): Readonly<Record<DialogueControl, LabelledButton>> {
-  return placedDialogueButtons(BOX.x + BOX.width, BOX.y + BOX.height + footer.gap, labels);
-}
-
-export function departureDialogueButtons(
-  labels: Readonly<Record<DialogueControl, number>>,
-): Readonly<Record<DialogueControl, LabelledButton>> {
-  const inset = DIALOGUE_LAYOUT.departureInset;
-  return placedDialogueButtons(SCREEN.width - inset, SCREEN.height - inset - footer.height, labels);
-}
-
-function placedDialogueButtons(
-  right: number,
-  y: number,
-  labels: Readonly<Record<DialogueControl, number>>,
-): Readonly<Record<DialogueControl, LabelledButton>> {
-  const width = Math.max(
-    DIALOGUE_LAYOUT.buttonWidth,
-    labels.continue + 2 * TEXT_BUTTON.inset,
-    labels.skip + 2 * TEXT_BUTTON.inset,
-  );
-  const groupWidth = 2 * width + TEXT_BUTTON.gap;
-  if (groupWidth > DIALOGUE_SCREEN.box.width) {
-    throw new Error("Dialogue action labels do not fit the footer");
-  }
-  const button = (x: number) => labelledButton({ height: footer.height, width, x, y });
-  return {
-    continue: button(right - width),
-    skip: button(right - groupWidth),
   };
 }

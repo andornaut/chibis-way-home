@@ -1,212 +1,226 @@
+// @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
-import { expect, it, onTestFinished, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 
-import { BARK_DURATION_SECONDS, DIALOGUE_PANEL_ALPHA, SPEAKERS } from "../data/dialogues.ts";
+import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues.ts";
 import { STAGE_BARKS } from "../data/stageBarks.ts";
 import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
-import type { DialogueLine } from "../data/types/index.ts";
+import type { DialogueLine, DialoguePlan, Rect } from "../data/types/index.ts";
 import { barkOwnerOnscreen } from "../presentation/index.ts";
 import { DIALOGUE_SCREEN, dialogueNameTab, dialogueParagraphs } from "../ui/index.ts";
 
-vi.mock("phaser", () => ({
-  Scene: class {
-    readonly add = {
-      image: () => ({
-        destroy: vi.fn(),
-        setAlpha: vi.fn().mockReturnThis(),
-        setOrigin: vi.fn().mockReturnThis(),
-      }),
-    };
-    readonly events = new EventEmitter();
-    readonly game = { events: new EventEmitter() };
-    readonly input = Object.assign(new EventEmitter(), { stopPropagation: vi.fn() });
-    readonly scene = { key: "zoneBark", moveAbove: vi.fn() };
+const portraits = vi.hoisted(() => ({ cut: vi.fn((_scene: unknown, art: string) => art) }));
+vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
+vi.mock("./domUi.ts", () => ({
+  artFrameUrl: (scene: unknown, art: string) =>
+    Promise.resolve(`blob:${portraits.cut(scene, art)}`),
+  mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
+    document.body.append(view);
+    scene.events.once("shutdown", () => view.remove());
+    return () => view.remove();
   },
-  Scenes: { Events: { PRE_RENDER: "prerender" } },
 }));
-// Every bark shows a left speaker's name tab, so the press area takes the panel and the tab.
-vi.mock("./dialogueParagraph.ts", async () => {
-  const ui = await import("../ui/index.ts");
-  return {
-    dialogueParagraphPressAreas: () => ui.dialoguePressAreas(ui.dialogueNameTab("left", 40)),
-    drawDialogueParagraph: vi.fn(() => []),
-  };
-});
-vi.mock("./playCamera.ts", () => ({
-  fitPlayCamera: vi.fn(),
-  playPoint: (_scene: unknown, point: unknown) => point,
-}));
+// Each bark shows its line key as its text, from a left speaker with a name tab.
 vi.mock("../ui/dialogue/conversation.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../ui/index.ts")>()),
-  dialogueParagraphs: vi.fn(() => [{}]),
+  dialogueParagraphs: vi.fn((_speakers: unknown, _text: unknown, plan: DialoguePlan) => [
+    {
+      colour: "tan",
+      name: "Speaker",
+      portrait: "portrait",
+      side: "left",
+      text: plan.lines[0]!.line,
+    },
+  ]),
 }));
 
 import { createStageBarks } from "../rules/stageBarks.ts";
-import { drawDialogueParagraph } from "./dialogueParagraph.ts";
 import { modalInput } from "./modalInput.ts";
 import { ZoneBarkScene } from "./ZoneBarkScene.ts";
 
 const OWNER = { area: "main", attempt: 0, objectIndex: 0 };
+const { box } = DIALOGUE_SCREEN;
+const TAB = dialogueNameTab("left", 40);
+const scenes: ZoneBarkScene[] = [];
+
+// happy-dom lays nothing out, so the panel and its tab sit at their base-view places, one CSS px
+// per base px.
+beforeEach(() => {
+  const rect = ({ height, width, x, y }: Rect) => new DOMRect(x, y, width, height);
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    if (this.classList.contains("dialogue-panel")) {
+      return rect(box);
+    }
+    return this.classList.contains("dialogue-name-tab") ? rect(TAB) : new DOMRect();
+  });
+});
+
+afterEach(() => {
+  scenes.splice(0).forEach((scene) => scene.events.emit("shutdown"));
+  vi.restoreAllMocks();
+});
+
+function barks(context: Parameters<ZoneBarkScene["init"]>[0]) {
+  const game = { events: new EventEmitter() };
+  const scene = Object.assign(new ZoneBarkScene(), {
+    events: new EventEmitter(),
+    game,
+    scene: { key: "zoneBark", moveAbove: vi.fn() },
+  });
+  scenes.push(scene);
+  scene.init(context);
+  scene.create();
+  return scene;
+}
+
+// The bark the panel shows, or undefined while it shows none.
+function shownText(): string | null | undefined {
+  const panel = document.querySelector<HTMLElement>(".dialogue-panel")!;
+  return panel.hidden ? undefined : panel.querySelector(".dialogue-line")!.textContent;
+}
+
+function pointer(type: string, at: { readonly x: number; readonly y: number }, pointerId = 1) {
+  document.body.dispatchEvent(
+    new PointerEvent(type, { bubbles: true, clientX: at.x, clientY: at.y, pointerId }),
+  );
+}
+
+const onPanel = { x: box.x + 10, y: box.y + 10 };
+
+function tap(at = onPanel) {
+  pointer("pointerdown", at);
+  pointer("pointerup", at);
+}
 
 it("keeps notices below modals, expires them during live play and clears retry queues", () => {
-  const scene = new ZoneBarkScene();
-  const images = vi.spyOn(scene.add, "image");
-  scene.init({ canPresent: () => true, ownerVisible: () => true });
-  scene.create();
+  const scene = barks({ canPresent: () => true, ownerVisible: () => true });
   expect(scene.scene.moveAbove).toHaveBeenCalledExactlyOnceWith("zone", "zoneBark");
   scene.enqueue({ line: "spotted", speaker: "speaker" }, OWNER);
   scene.update(0, 0);
-  const image = images.mock.results[0]!.value;
-  scene.update(BARK_DURATION_SECONDS * 1000 - 1, BARK_DURATION_SECONDS * 1000 - 1);
-  expect(image.destroy).not.toHaveBeenCalled();
-  scene.update(BARK_DURATION_SECONDS * 1000, 1);
-  expect(image.destroy).toHaveBeenCalledOnce();
+  expect(shownText()).toBe("spotted");
+  scene.update(0, BARK_DURATION_SECONDS * 1000 - 1);
+  expect(shownText()).toBe("spotted");
+  scene.update(0, 1);
+  expect(shownText()).toBeUndefined();
   scene.enqueue({ line: "spotted", speaker: "speaker" }, OWNER);
   scene.update(0, 0);
-  const next = images.mock.results[1]!.value;
   scene.enqueue({ line: "queued", speaker: "speaker" }, OWNER);
   scene.reset();
-  expect(next.destroy).toHaveBeenCalledOnce();
+  expect(shownText()).toBeUndefined();
   scene.update(0, 0);
-  expect(images).toHaveBeenCalledTimes(2);
+  expect(shownText()).toBeUndefined();
 });
 
 it("defers an offered story across a modal race and does not mark an unshown retry entry heard", () => {
   let allowed = true;
-  const scene = new ZoneBarkScene();
-  scene.init({ canPresent: () => allowed, ownerVisible: () => true });
-  scene.create();
-  const images = vi.spyOn(scene.add, "image");
+  const scene = barks({ canPresent: () => allowed, ownerVisible: () => true });
   const line = { line: "story", speaker: "speaker" };
   const run = createStageBarks({ stage: [{ atProgress: 0.5, id: "story", line }] }, "stage");
   const offer = (onStart: () => void, entry: typeof line) => scene.offer(onStart, entry, OWNER);
   expect(run.offer(offer, 0.5)).toBe(true);
   allowed = false;
   scene.update(0, 10000);
-  expect(images).not.toHaveBeenCalled();
+  expect(shownText()).toBeUndefined();
   scene.reset();
   allowed = true;
   expect(run.offer(offer, 0)).toBe(false);
   expect(run.offer(offer, 0.5)).toBe(true);
   scene.update(0, 0);
-  expect(images).toHaveBeenCalledOnce();
+  expect(shownText()).toBe("story");
   expect(run.offer(offer, 0.5)).toBe(false);
 });
+
 it("keeps engine notice order ahead of an unshown story and freezes active duration under cover", () => {
   let allowed = true;
-  const scene = new ZoneBarkScene();
-  scene.init({ canPresent: () => allowed, ownerVisible: () => true });
-  scene.create();
+  const scene = barks({ canPresent: () => allowed, ownerVisible: () => true });
   const started = vi.fn();
-  const story = { line: "story", speaker: "speaker" };
-  const event = { line: "spotted", speaker: "speaker" };
   expect(scene.idle()).toBe(true);
-  expect(scene.offer(started, story, OWNER)).toBe(true);
-  const escaped = { line: "escaped", speaker: "speaker" };
-  scene.enqueue(event, OWNER);
-  scene.enqueue(escaped, OWNER);
+  expect(scene.offer(started, { line: "story", speaker: "speaker" }, OWNER)).toBe(true);
+  scene.enqueue({ line: "spotted", speaker: "speaker" }, OWNER);
+  scene.enqueue({ line: "escaped", speaker: "speaker" }, OWNER);
   scene.update(0, 0);
-  expect(vi.mocked(dialogueParagraphs).mock.lastCall?.[2]).toEqual({ lines: [event] });
-  expect(started).not.toHaveBeenCalled();
+  expect(shownText()).toBe("spotted");
   allowed = false;
   scene.update(0, BARK_DURATION_SECONDS * 2000);
-  expect(started).not.toHaveBeenCalled();
+  expect(shownText()).toBe("spotted");
   allowed = true;
   scene.update(0, BARK_DURATION_SECONDS * 1000);
-  expect(started).not.toHaveBeenCalled();
-  expect(vi.mocked(dialogueParagraphs).mock.lastCall?.[2]).toEqual({ lines: [escaped] });
+  expect([shownText(), started.mock.calls.length]).toEqual(["escaped", 0]);
   scene.update(0, BARK_DURATION_SECONDS * 1000);
-  expect(started).toHaveBeenCalledOnce();
-  expect(vi.mocked(dialogueParagraphs).mock.lastCall?.[2]).toEqual({ lines: [story] });
+  expect([shownText(), started.mock.calls.length]).toEqual(["story", 1]);
   expect(scene.idle()).toBe(false);
 });
 
-const panelPointer = {
-  id: 1,
-  wasCanceled: false,
-  x: DIALOGUE_SCREEN.box.x + 10,
-  y: DIALOGUE_SCREEN.box.y + 10,
-};
-
 function showingBark() {
-  const scene = new ZoneBarkScene();
-  scene.init({ canPresent: () => true, ownerVisible: () => true });
-  scene.create();
-  const images = vi.spyOn(scene.add, "image");
+  const scene = barks({ canPresent: () => true, ownerVisible: () => true });
   scene.enqueue({ line: "first", speaker: "speaker" }, OWNER);
   scene.enqueue({ line: "second", speaker: "speaker" }, OWNER);
   scene.update(0, 0);
-  return { images, scene };
+  return scene;
 }
 
 it("dismisses only the tapped bark and retains the next queued line", () => {
-  const { images, scene } = showingBark();
-  const first = images.mock.results[0]!.value;
-  scene.input.emit("pointerdown", panelPointer);
-  scene.input.emit("pointerup", panelPointer);
-  expect(first.destroy).toHaveBeenCalledOnce();
+  const scene = showingBark();
+  tap();
+  expect(shownText()).toBeUndefined();
   expect(scene.idle()).toBe(false);
   scene.update(0, 0);
-  expect(vi.mocked(dialogueParagraphs).mock.lastCall?.[2]).toEqual({
-    lines: [{ line: "second", speaker: "speaker" }],
-  });
-  expect(images.mock.results[1]!.value.destroy).not.toHaveBeenCalled();
+  expect(shownText()).toBe("second");
 });
 
 it.each([
   ["name tab", true],
   ["strip beside the tab", false],
 ] as const)("a tap on the %s dismisses the bark: %s", (_where, dismissed) => {
-  const { images, scene } = showingBark();
-  const tab = dialogueNameTab("left", 40);
-  const pointer = { ...panelPointer, x: dismissed ? tab.x + 1 : tab.x - 1, y: tab.y + 1 };
-  scene.input.emit("pointerdown", pointer);
-  scene.input.emit("pointerup", pointer);
-  expect(images.mock.results[0]!.value.destroy).toHaveBeenCalledTimes(dismissed ? 1 : 0);
+  showingBark();
+  tap({ x: dismissed ? TAB.x + 1 : TAB.x - 1, y: TAB.y + 1 });
+  expect(shownText()).toBe(dismissed ? undefined : "first");
 });
 
-it.each(["drag", "cancel", "other pointer", "outside"])("does not dismiss on %s", (kind) => {
-  const { images, scene } = showingBark();
-  scene.input.emit("pointerdown", panelPointer);
-  if (kind === "drag") {
-    scene.input.emit("pointermove", {
-      ...panelPointer,
-      x: panelPointer.x + TOUCH.tapMaxDistance + 1,
-    });
-  }
-  scene.input.emit(kind === "outside" ? "pointerupoutside" : "pointerup", {
-    ...panelPointer,
-    id: kind === "other pointer" ? 2 : panelPointer.id,
-    wasCanceled: kind === "cancel",
-  });
-  expect(images.mock.results[0]!.value.destroy).not.toHaveBeenCalled();
-});
+it.each(["drag", "cancel", "other pointer", "lift off the panel"])(
+  "does not dismiss on a %s",
+  (kind) => {
+    showingBark();
+    pointer("pointerdown", onPanel);
+    if (kind === "drag") {
+      pointer("pointermove", { ...onPanel, x: onPanel.x + TOUCH.tapMaxDistance + 1 });
+    }
+    const at = kind === "lift off the panel" ? { x: 10, y: 300 } : onPanel;
+    pointer(
+      kind === "cancel" ? "pointercancel" : "pointerup",
+      at,
+      kind === "other pointer" ? 2 : 1,
+    );
+    expect(shownText()).toBe("first");
+  },
+);
 
 it("rejects covered presses and releases captured before a modal changed", () => {
-  const { images, scene } = showingBark();
-  scene.input.emit("pointerdown", panelPointer);
-  const cover = new ZoneBarkScene();
-  cover.game = scene.game;
+  const scene = showingBark();
+  pointer("pointerdown", onPanel);
+  const cover = Object.assign(new ZoneBarkScene(), {
+    events: new EventEmitter(),
+    game: scene.game,
+  });
   modalInput(cover).open();
-  scene.input.emit("pointerup", panelPointer);
-  scene.input.emit("pointerdown", panelPointer);
+  pointer("pointerup", onPanel);
+  pointer("pointerdown", onPanel);
   modalInput(cover).close();
-  scene.input.emit("pointerup", panelPointer);
-  expect(images.mock.results[0]!.value.destroy).not.toHaveBeenCalled();
-  scene.input.emit("pointerdown", panelPointer);
-  scene.input.emit("pointerup", panelPointer);
-  expect(images.mock.results[0]!.value.destroy).toHaveBeenCalledOnce();
+  pointer("pointerup", onPanel);
+  expect(shownText()).toBe("first");
+  tap();
+  expect(shownText()).toBeUndefined();
 });
 
 it("does not let a press on an expired bark dismiss its replacement", () => {
-  const { images, scene } = showingBark();
-  scene.input.emit("pointerdown", panelPointer);
+  const scene = showingBark();
+  pointer("pointerdown", onPanel);
   scene.update(0, BARK_DURATION_SECONDS * 1000);
-  scene.input.emit("pointerup", panelPointer);
-  expect(images.mock.results[0]!.value.destroy).toHaveBeenCalledOnce();
-  expect(images.mock.results[1]!.value.destroy).not.toHaveBeenCalled();
+  expect(shownText()).toBe("second");
+  pointer("pointerup", onPanel);
+  expect(shownText()).toBe("second");
 });
 
 it("retains offscreen entries, presents eligible owners and removes departed owners", () => {
@@ -218,43 +232,35 @@ it("retains offscreen entries, presents eligible owners and removes departed own
     [0, hidden],
     [1, shown],
   ]);
-  const scene = new ZoneBarkScene();
-  scene.init({
+  const scene = barks({
     canPresent: () => allowed,
     ownerVisible: (owner) =>
       barkOwnerOnscreen({ area: "main", attempt: 0, view }, (index) => poses.get(index), owner),
   });
-  scene.create();
-  const images = vi.spyOn(scene.add, "image");
   scene.enqueue({ line: "hidden", speaker: "speaker" }, OWNER);
   scene.enqueue({ line: "shown", speaker: "speaker" }, { ...OWNER, objectIndex: 1 });
   scene.update(0, 0);
-  expect(vi.mocked(dialogueParagraphs).mock.lastCall?.[2]).toEqual({
-    lines: [{ line: "shown", speaker: "speaker" }],
-  });
+  expect(shownText()).toBe("shown");
   scene.update(0, BARK_DURATION_SECONDS * 1000);
-  expect(images).toHaveBeenCalledOnce();
+  expect(shownText()).toBeUndefined();
   expect(scene.idle()).toBe(false);
   hidden.bounds.x = 100;
   scene.update(0, 0);
-  expect(vi.mocked(dialogueParagraphs).mock.lastCall?.[2]).toEqual({
-    lines: [{ line: "hidden", speaker: "speaker" }],
-  });
+  expect(shownText()).toBe("hidden");
   allowed = false;
   hidden.bounds.x = 800;
   scene.events.emit("prerender");
-  expect(images.mock.results[1]!.value.destroy).toHaveBeenCalledOnce();
+  expect(shownText()).toBeUndefined();
   hidden.bounds.x = 100;
   allowed = true;
   scene.update(0, 0);
-  expect(images).toHaveBeenCalledTimes(2);
+  expect(shownText()).toBeUndefined();
   expect(scene.idle()).toBe(true);
 });
 
 it("marks a deferred scheduled line heard only when its actual owner can be presented", () => {
   const pose = { bounds: { height: 60, width: 48, x: 100, y: 20 }, rendered: true };
-  const scene = new ZoneBarkScene();
-  scene.init({
+  const scene = barks({
     canPresent: () => true,
     ownerVisible: (owner) =>
       barkOwnerOnscreen(
@@ -263,7 +269,6 @@ it("marks a deferred scheduled line heard only when its actual owner can be pres
         owner,
       ),
   });
-  scene.create();
   const line = { line: "story", speaker: "speaker" };
   const run = createStageBarks({ stage: [{ atProgress: 0.5, id: "story", line }] }, "stage");
   const started = vi.fn();
@@ -288,7 +293,7 @@ it("marks a deferred scheduled line heard only when its actual owner can be pres
   expect(offer).toHaveBeenCalledOnce();
 });
 
-it("shows an ownerless journey bark as Fert's offscreen voice and marks it heard", async () => {
+it("shows an ownerless journey bark as Fert's offscreen voice, with his portrait, and marks it heard", async () => {
   const { dialogueParagraphs: paragraphs } = await vi.importActual<
     typeof import("../ui/dialogue/conversation.ts")
   >("../ui/dialogue/conversation.ts");
@@ -296,9 +301,7 @@ it("shows an ownerless journey bark as Fert's offscreen voice and marks it heard
   onTestFinished(() => {
     vi.mocked(dialogueParagraphs).mockReset();
   });
-  const scene = new ZoneBarkScene();
-  scene.init({ canPresent: () => true, ownerVisible: () => false });
-  scene.create();
+  const scene = barks({ canPresent: () => true, ownerVisible: () => false });
   const [stage] = Object.keys(STAGE_BARKS);
   const run = createStageBarks(STAGE_BARKS, stage!);
   const started = vi.fn();
@@ -309,51 +312,21 @@ it("shows an ownerless journey bark as Fert's offscreen voice and marks it heard
     }, line);
   expect(run.offer(offer, 1)).toBe(true);
   scene.update(0, 0);
+  await Promise.resolve();
   expect(started).toHaveBeenCalledOnce();
-  expect(vi.mocked(drawDialogueParagraph).mock.lastCall?.[1]).toMatchObject({
+  const tab = document.querySelector(".dialogue-name-tab")!;
+  const portrait = document.querySelector<HTMLImageElement>(".dialogue-portrait")!;
+  expect({
+    name: tab.textContent,
+    portrait: [portrait.hidden, portrait.getAttribute("src")],
+    status: document.querySelector("[role=status]")?.contains(tab),
+  }).toEqual({
     name: TEXT.dialogue.speakers.ferret,
-    portrait: SPEAKERS.ferret!.portrait,
+    portrait: [false, `blob:${SPEAKERS.ferret!.portrait}`],
+    status: true,
   });
   scene.events.emit("prerender");
   expect(scene.idle()).toBe(false);
   scene.update(0, BARK_DURATION_SECONDS * 1000);
   expect(scene.idle()).toBe(true);
-});
-
-it("applies live background opacity without changing portrait or text opacity", () => {
-  const portrait = { destroy: vi.fn(), setAlpha: vi.fn() };
-  const text = { destroy: vi.fn(), setAlpha: vi.fn() };
-  vi.mocked(drawDialogueParagraph).mockReturnValueOnce([portrait, text] as unknown as ReturnType<
-    typeof drawDialogueParagraph
-  >);
-  const { images } = showingBark();
-  expect(images.mock.results[0]!.value.setAlpha).toHaveBeenCalledExactlyOnceWith(
-    DIALOGUE_PANEL_ALPHA,
-  );
-  expect(portrait.setAlpha).not.toHaveBeenCalled();
-  expect(text.setAlpha).not.toHaveBeenCalled();
-});
-
-it("draws every speaker's owned and offscreen bark over the shared translucent panel", () => {
-  const speakers = Object.keys(SPEAKERS);
-  expect(speakers).toContain("ferret");
-  for (const speaker of speakers) {
-    for (const owned of [true, false]) {
-      const scene = new ZoneBarkScene();
-      scene.init({ canPresent: () => true, ownerVisible: () => true });
-      scene.create();
-      const images = vi.spyOn(scene.add, "image");
-      const line = { line: "spotted", speaker };
-      if (owned) {
-        scene.enqueue(line, OWNER);
-      } else {
-        expect(scene.offer(vi.fn(), line)).toBe(true);
-      }
-      scene.update(0, 0);
-      expect(images.mock.calls[0]?.[2], speaker).toBe("ui-dialogue-box");
-      expect(images.mock.results[0]!.value.setAlpha, speaker).toHaveBeenCalledExactlyOnceWith(
-        DIALOGUE_PANEL_ALPHA,
-      );
-    }
-  }
 });

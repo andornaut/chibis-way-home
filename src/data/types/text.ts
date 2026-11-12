@@ -69,6 +69,8 @@ export interface GameText {
   // Dialogue controls and speaker names; paragraph text lives in lines.
   readonly dialogue: {
     readonly continue: string;
+    // The conversation's accessible name, which a screen reader announces as it opens.
+    readonly label: string;
     readonly skip: string;
     readonly speakers: Readonly<Record<string, string>>;
   };

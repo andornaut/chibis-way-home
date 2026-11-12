@@ -1,12 +1,10 @@
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import { bitmapMeasure, fittingText } from "@andornaut/game-kit/text/textFit";
-import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import * as behaviours from "../../data/behaviours.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { DIALOGUES, SPEAKERS } from "../../data/dialogues.ts";
-import { SCREEN } from "../../data/screen.ts";
 import { STAGE_BARKS } from "../../data/stageBarks.ts";
 import { TEXT } from "../../data/text.ts";
 import type { DialogueLine, Rect } from "../../data/types/index.ts";
@@ -18,17 +16,12 @@ import {
   dialogueParagraphs,
 } from "../dialogue/conversation.ts";
 import {
-  departureDialogueButtons,
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
-  dialogueBodyLines,
-  dialogueButtons,
   dialogueNameTab,
-  dialoguePressAreas,
   dialogueSpeakerLayout,
   dialogueTextRows,
 } from "./dialogueScreen.ts";
-import { pressedArea } from "./hitAreas.ts";
 import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { skillButton, skillHud } from "./skillHud.ts";
 import { textInkBounds } from "./textInk.ts";
@@ -44,25 +37,16 @@ const BODY_INK = textInkBounds(
 );
 
 describe("dialogue layout", () => {
-  it("draws the 480x60 panel, 408 text column and compact footer below the skill HUD", () => {
+  it("draws the 480x60 panel and 408 text column below the skill HUD", () => {
     const hudBottom = Math.max(
       ...[...skillHud(SKILL_IDS).values()]
         .map((at) => skillButton(at).hit)
         .map((hit) => hit.y + hit.height),
     );
-    const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
     expect(box).toEqual({ height: 60, width: 480, x: 120, y: 76 });
     expect(dialogueNameTab("left", 0).y).toBe(66);
     expect(dialogueNameTab("left", 0).y).toBeGreaterThan(hudBottom);
     expect(DIALOGUE_SCREEN.text).toMatchObject({ lines: 2, pitch: 20, width: 408 });
-    // Skip keeps its width and sits the kit's button gap left of Continue.
-    expect(buttons.skip.button).toEqual({
-      height: 36,
-      width: 192,
-      x: 408 - BUTTON_GAP - 192,
-      y: 140,
-    });
-    expect(buttons.continue.button).toEqual({ height: 36, width: 192, x: 408, y: 140 });
   });
 
   it.each([
@@ -99,7 +83,7 @@ describe("dialogue layout", () => {
     [1, [96]],
     [2, [86, 106]],
   ] as const)("centres %i body line by ink below the name tab", (count, pens) => {
-    const rows = dialogueTextRows(CARD_FONTS, "name-tab", count);
+    const rows = dialogueTextRows(CARD_FONTS, count);
     const pitch = DIALOGUE_SCREEN.text.pitch;
     expect(Array.from({ length: count }, (_, index) => rows.bodyY + index * pitch)).toEqual(pens);
     const above = rows.bodyY + BODY_INK.y - box.y;
@@ -109,76 +93,19 @@ describe("dialogue layout", () => {
     expect(rows.bodyY + BODY_INK.y).toBeGreaterThanOrEqual(dialogueNameTab("left", 0).y + 20);
   });
 
-  it("centres a bold heading and one body line by ink", () => {
-    const rows = dialogueTextRows(CARD_FONTS, "heading", 1);
-    const title = textInkBounds(
-      CARD_FONTS.title,
-      DIALOGUE_SCREEN.text.scale,
-      DIALOGUE_SCREEN.text.pitch,
-      [...CARD_FONTS.title.glyphs.keys()].join(""),
-    );
-    expect(rows.bodyY - rows.headingY!).toBe(DIALOGUE_SCREEN.text.pitch);
-    const above = rows.headingY! + title.y - box.y;
-    const below = box.y + box.height - (rows.bodyY + BODY_INK.y + BODY_INK.height);
-    expect(Math.abs(above - below)).toBeLessThanOrEqual(1);
-    expect(dialogueBodyLines("heading")).toBe(1);
-    expect(() => dialogueTextRows(CARD_FONTS, "heading", 2)).toThrow();
-  });
-
   it.each(["left", "right"] as const)(
-    "takes the %s speaker's panel and name tab as one press area",
-    (side) => {
-      const tab = dialogueNameTab(side, width("Chibi"));
-      const areas = dialoguePressAreas(tab);
-      const at = (x: number, y: number) => pressedArea(areas, { x, y });
-      expect(at(box.x, box.y)).toBe("continue");
-      expect(at(box.x + box.width - 1, box.y + box.height - 1)).toBe("continue");
-      expect(at(tab.x, tab.y)).toBe("continue");
-      expect(at(tab.x + tab.width - 1, tab.y)).toBe("continue");
-      expect(at(tab.x - 1, tab.y)).toBeUndefined();
-      expect(at(tab.x + tab.width, tab.y)).toBeUndefined();
-      expect(at(box.x, box.y + box.height)).toBeUndefined();
-      expect(dialoguePressAreas(undefined).map(({ hit }) => hit)).toEqual([box]);
-    },
-  );
-
-  it.each(["left", "right"] as const)(
-    "keeps the %s speaker's panel, name tab and footer press areas clear of Pause's",
+    "keeps the %s speaker's panel and widest name tab clear of Pause's press area",
     (side) => {
       const widest = Math.max(...Object.values(TEXT.dialogue.speakers).map(width));
-      const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
-      const tab = dialogueNameTab(side, widest);
-      expect(dialoguePressAreas(tab).map(({ hit }) => hit)).toEqual([box, tab]);
-      const areas = [box, tab, buttons.continue.hit, buttons.skip.hit];
       const pause = PAUSE_BUTTON.hit;
       const overlaps = (area: Rect) =>
         area.x < pause.x + pause.width &&
         pause.x < area.x + area.width &&
         area.y < pause.y + pause.height &&
         pause.y < area.y + area.height;
-      expect(areas.filter(overlaps)).toEqual([]);
+      expect([box, dialogueNameTab(side, widest)].filter(overlaps)).toEqual([]);
     },
   );
-
-  it("places compact equal Skip left and Continue right below the panel", () => {
-    const buttons = dialogueButtons({ continue: width("Continue"), skip: width("Skip") });
-    expect(buttons.continue.button.height).toBe(36);
-    expect(buttons.skip.button.width).toBe(buttons.continue.button.width);
-    expect(buttons.skip.button.x + buttons.skip.button.width + BUTTON_GAP).toBe(
-      buttons.continue.button.x,
-    );
-    expect(buttons.continue.button.x + buttons.continue.button.width).toBe(box.x + box.width);
-  });
-
-  it("places departure Continue at the bottom right with visible Skip beside it", () => {
-    const buttons = departureDialogueButtons({ continue: width("Continue"), skip: width("Skip") });
-    expect(buttons.continue.button.x + buttons.continue.button.width).toBe(SCREEN.width - 16);
-    expect(buttons.continue.button.y + buttons.continue.button.height).toBe(SCREEN.height - 16);
-    expect(buttons.skip.button.x + buttons.skip.button.width + BUTTON_GAP).toBe(
-      buttons.continue.button.x,
-    );
-    expect(buttons.skip.button.height).toBe(36);
-  });
 });
 
 // Every bark the zone shows in the dialogue box: boss spotted and escaped lines, and the stage's
@@ -212,7 +139,7 @@ function expectFits(id: string, paragraph: DialogueParagraph): void {
   );
   expect(fitted.lines.length, `${id}: ${paragraph.text}`).toBeLessThanOrEqual(style.lines);
   const lines = dialogueLines(CARD_FONTS.body, style, style.width, paragraph.text);
-  const rows = dialogueTextRows(CARD_FONTS, "name-tab", lines.length);
+  const rows = dialogueTextRows(CARD_FONTS, lines.length);
   for (const [index, line] of lines.entries()) {
     const ink = textInkBounds(CARD_FONTS.body, style.scale, style.pitch, line);
     expect(ink.width, `${id}: ${line}`).toBeLessThanOrEqual(style.width);

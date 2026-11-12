@@ -63,14 +63,12 @@ afterEach(() => {
 });
 
 interface DialogueState {
-  focus: string | undefined;
   paragraph: number;
-  drawParagraph(): void;
+  showParagraph(): void;
 }
 
-// The zone paused under a conversation, on its second line with Continue focused, and the pause
-// scene beside it. Without a conversation (null) the zone is on the map: neither running nor
-// paused.
+// The zone paused under a conversation, on its second line, and the pause scene beside it.
+// Without a conversation (null) the zone is on the map: neither running nor paused.
 function conversation(data: DialogueData | null = { scene: "archie-intro" }) {
   const game = { events: new EventEmitter() };
   const dialogue = Object.assign(new DialogueScene(), { events: new EventEmitter(), game });
@@ -78,9 +76,8 @@ function conversation(data: DialogueData | null = { scene: "archie-intro" }) {
   if (data !== null) {
     dialogue.init(data);
     lines.paragraph = 1;
-    lines.focus = "continue";
   }
-  const drawParagraph = vi.spyOn(lines, "drawParagraph").mockImplementation(() => {});
+  const showParagraph = vi.spyOn(lines, "showParagraph").mockImplementation(() => {});
   const zone = {
     conversationCovers: () => data !== null,
     playCovered: () => data !== null,
@@ -100,7 +97,7 @@ function conversation(data: DialogueData | null = { scene: "archie-intro" }) {
   const pause = createPauseScene(game, scenes);
   shutdowns.push(() => pause.events.emit("shutdown"));
   pause.update();
-  return { drawParagraph, lines, pause, scenes };
+  return { lines, pause, scenes, showParagraph };
 }
 
 it("shows the pause button while a conversation covers play, and never on the map", () => {
@@ -117,7 +114,7 @@ it.each<{ readonly data?: DialogueData; readonly name: string }>([
     name: "a zone's outgoing exchange",
   },
 ])("opens over $name and resumes it on the same line, the zone still paused", async ({ data }) => {
-  const { drawParagraph, lines, pause, scenes } = conversation(data ?? { scene: "archie-intro" });
+  const { lines, pause, scenes, showParagraph } = conversation(data ?? { scene: "archie-intro" });
   tap(pause.pauseButton);
   await settle();
   const card = pause.dialog.closest<HTMLElement>(".ui-card-scene")!;
@@ -126,11 +123,8 @@ it.each<{ readonly data?: DialogueData; readonly name: string }>([
   tap(pause.button(TEXT.pause.resume));
   expect(card.hidden).toBe(true);
   expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("dialogue");
-  expect({ focus: lines.focus, paragraph: lines.paragraph }).toEqual({
-    focus: "continue",
-    paragraph: 1,
-  });
-  expect(drawParagraph).not.toHaveBeenCalled();
+  expect(lines.paragraph).toBe(1);
+  expect(showParagraph).not.toHaveBeenCalled();
   pause.update();
   expect(pause.pauseButton.hidden).toBe(false);
 });

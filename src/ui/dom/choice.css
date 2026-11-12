@@ -1,0 +1,21 @@
+/* A conversation's required choice (choice.ts), after ui.css: lengths are base px times
+   --ui-unit, from the layer's layout properties. */
+
+/* The answers stacked the kit's stack button gap apart, filling the card's width between its
+   padding; adjacent press areas meet midway between the faces. */
+.dialogue-choice > .ui-card-actions {
+  --half-gap: calc(var(--ui-stack-button-gap) / 2);
+
+  align-self: stretch;
+  grid-auto-flow: row;
+}
+
+.dialogue-choice .ui-text-button:not(:first-child) {
+  padding-top: var(--half-gap);
+  padding-left: var(--hit);
+}
+
+.dialogue-choice .ui-text-button:not(:last-child) {
+  padding-right: var(--hit);
+  padding-bottom: var(--half-gap);
+}

@@ -116,9 +116,6 @@ export const DEATH_CARD = {
   progressHeight: 2,
 } as const;
 
-// The required dialogue choice card's prompt wraps to at most this many lines.
-export const DIALOGUE_CHOICE = { promptLines: 3 } as const;
-
 export const SETTINGS_CARD = {
   // art: each row's leading icon side, and the install steps glyph's.
   icon: 16,

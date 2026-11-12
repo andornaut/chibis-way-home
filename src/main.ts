@@ -11,6 +11,9 @@ import "./ui/dom/actionHelp.css";
 import "./ui/dom/pause.css";
 import "./ui/dom/skillDetails.css";
 import "./ui/dom/settings.css";
+import "./ui/dom/dialogue.css";
+import "./ui/dom/choice.css";
+import "./ui/dom/stageSummary.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
