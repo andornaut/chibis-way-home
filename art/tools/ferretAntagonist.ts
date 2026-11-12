@@ -16,7 +16,7 @@
  * new story details. Idle 2x400ms, walk 4x120ms, crouch 2x140ms, rush 4x80ms, rest 2x400ms. These
  * earlier tags loop. Throw 4x100ms loops: wind-up, raised paw, release, recovery; local release
  * offset 39,26. Art cycles do not set gameplay state duration or bake world movement into the
- * sprite anchor. All states are lethal. The original 64x80 story ferret and its portraits remain
+ * sprite anchor. All states are lethal. The original 64x80 story ferret and his portraits remain
  * separate and unchanged.
  */
 

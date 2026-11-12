@@ -253,16 +253,16 @@ Map travel reuses the existing `bird` sprite's looping `walk` tag, four 130ms fr
 
 ## Fert
 
-Fert is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards it sets. It is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.ts` draws it; its header comment gives every frame's pose and timing.
+Fert is the champagne ferret standing up on his hind legs in a stovepipe hat and bow tie, a talking animal that schemes against the bird's climb: in dialogue, in quips and through the hazards he sets. He is cute with a touch of slyness (round glinting eyes under a soft lid, a small smile, steepled paws), never scary or cross, and is never fought. `art/tools/ferret.ts` draws him; its header comment gives every frame's pose and timing.
 
 - Shape: modelled on a natural ferret rather than a chibi. A long, slinky body stood upright with a small forward arch (a Bezier spine from the low hip to the high neck, stamped as overlapping discs), a small wedge head held level, short dark legs, and a tapering tail touching the ground behind as a third contact point.
 - Fur: a champagne (skin1) coat with a skin2 shade crescent along the belly and a cream rim on the back; brown legs and tail with dark-brown far legs; a white face band, a skin2 mask round the eye and a pink nose.
 - Eyes: round, 5px across with the corners cut, ink with a 2x2 white glint and a 1px cream glint, under a soft brown lid line that dips at the outer corner. Scheming, the lid drops to half.
-- Kept apart from the bird: the coat is 1.24:1 against his cream and the shade 2.12:1, its outline is dark brown where his is dark slate, its legs, tail and mask sit well below anything on him, and it stands tall where he is round.
+- Kept apart from the bird: Fert's coat is 1.24:1 against Chibi's cream and the shade 2.12:1, Fert's outline is dark brown where Chibi's is dark slate, Fert's legs, tail and mask sit well below anything on Chibi, and Fert stands tall where Chibi is round.
 - Hat: a tall, narrow plum stovepipe with a dark-brown rim light and a red band. Nothing touches it. Red (the band and bow tie) is the one accent; the hat and bow tie take an ink outline.
 - Frame 64x80, facing left (mirrored for right), feet on rows 76 to 78 and the outline on row 79.
 - Anchor: the frame's bottom edge sits on the collision box's bottom edge, and its body-centre x, 32 (between columns 31 and 32), sits on the box centre, so mirroring it does not move it.
-- Portrait: 48x48, its head and neck facing right towards the text, as the bird's does, cut off by the bottom edge, with one ink outer line on a transparent ground. Neutral, smug (the lid at half) and annoyed (a brow dipped towards the snout).
+- Portrait: 48x48, his head and neck facing right towards the text, as the bird's does, cut off by the bottom edge, with one ink outer line on a transparent ground. Neutral, smug (the lid at half) and annoyed (a brow dipped towards the snout).
 
 ## UI
 

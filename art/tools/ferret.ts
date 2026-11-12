@@ -1,15 +1,15 @@
 /**
- * Fert the ferret: the villain's sprite and its dialogue portrait.
+ * Fert the ferret: the villain's sprite and his dialogue portrait.
  *
  * Usage, from the repository root:
  *   node art/tools/ferret.ts build            write public/art/sprites/<key>.png + .json
  *   node art/tools/ferret.ts preview OUT.png  contact sheet of every frame on slate, tan and cream
  *
- * Design: a champagne ferret standing up on its hind legs, modelled on a natural ferret rather than
+ * Design: a champagne ferret standing up on his hind legs, modelled on a natural ferret rather than
  * a chibi: a long, slinky body stood upright with a small forward arch, a small wedge head held
  * level, short dark legs and a tapering tail touching the ground behind as a third contact point.
  * A talking villain, cute with a touch of slyness, never scary, never fought. Facing left (the game
- * mirrors it).
+ * mirrors him).
  *
  * Drawn facing right, then mirrored. The body is a quadratic-Bezier spine from the hip (low) to the
  * neck (high), its control point behind the back, stamped as 13 overlapping discs: each first in
@@ -45,11 +45,11 @@
  *
  * Lift is how far the body sits above its rest row, in pixels. Every tag loops (ONCE is empty).
  *
- * States: idle idle; move none, falls back to idle (it stands where it is placed); react none,
- * falls back to scheme (the pleased steeple when its plan works); talk talk; quirk scheme (an idle
+ * States: idle idle; move none, falls back to idle (he stands where he is placed); react none,
+ * falls back to scheme (the pleased steeple when his plan works); talk talk; quirk scheme (an idle
  * tic).
  *
- * portrait-ferret, 48x48: its head and neck facing right towards the text (as portrait-bird), cut
+ * portrait-ferret, 48x48: his head and neck facing right towards the text (as portrait-bird), cut
  * off by the frame's bottom edge, with one ink outer line on a transparent ground (the dialogue
  * box's 52x52 frame supplies the backing). The same face, eyes and hat, larger. Tags, one frame
  * each at 1000ms: neutral (round eye, small smile), smug (the lid at half, a wider smile), annoyed
