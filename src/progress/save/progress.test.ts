@@ -69,6 +69,7 @@ describe("progressFormat", () => {
       "all permanent skills",
       { ...BEGINNING, activeSkill: "dash", skills: ["dash", "doubleJump", "speedy"] },
     ],
+    ["owned skills with none selected", { ...BEGINNING, skills: ["dash", "speedy"] }],
     ["acknowledged beginning", { ...BEGINNING, openingSeen: true, skills: [] }],
     [
       "a remembered zone introduction",
@@ -88,7 +89,6 @@ describe("progressFormat", () => {
   it.each([
     ["missing active selection", stored({ activeSkill: undefined, at: "beginning" })],
     ["unowned active selection", stored({ activeSkill: "dash", at: "beginning" })],
-    ["null with owned skills", stored({ activeSkill: null, at: "beginning", skills: ["dash"] })],
     ["unknown active selection", stored({ activeSkill: "fly", at: "beginning" })],
     ["missing skills", stored({ at: "beginning", skills: undefined })],
     ["unknown skill", stored({ activeSkill: "dash", at: "beginning", skills: ["dash", "fly"] })],

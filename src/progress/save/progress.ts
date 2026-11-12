@@ -119,9 +119,8 @@ export function progressFormat(
       return { ok: false, reason: "the save has an invalid skill list" };
     }
     if (
-      progress.activeSkill === null
-        ? progress.skills.length > 0
-        : !isSkillId(progress.activeSkill) || !progress.skills.includes(progress.activeSkill)
+      progress.activeSkill !== null &&
+      (!isSkillId(progress.activeSkill) || !progress.skills.includes(progress.activeSkill))
     ) {
       return { ok: false, reason: "the save has an invalid active skill" };
     }

@@ -6,10 +6,17 @@ import { fillNames } from "@andornaut/game-kit/lines";
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
-const queue = vi.hoisted(() => ({ ids: [] as string[] }));
+const queue = vi.hoisted(() => ({
+  ids: [] as string[],
+  selected: null as string | null,
+  tips: [] as string[],
+}));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("./save.ts", () => ({
+  activeSkill: () => queue.selected,
   nextAchievementNotice: (blocked: () => boolean) => (blocked() ? undefined : queue.ids.shift()),
+  nextSkillTip: (blocked: () => boolean) =>
+    queue.ids.length > 0 || blocked() ? undefined : queue.tips.shift(),
 }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string, frame: string) =>
@@ -22,6 +29,7 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import iconSheet from "../../public/art/sprites/icon-achievement.json" with { type: "json" };
+import dashSheet from "../../public/art/sprites/icon-skill-dash.json" with { type: "json" };
 import { ACHIEVEMENT_NOTICE_SECONDS } from "../data/achievements.ts";
 import { TEXT } from "../data/text.ts";
 import type { AchievementId } from "../data/types/index.ts";
@@ -32,6 +40,7 @@ import {
   NOTICE_BLOCKING_SCENES,
   NOTICE_CHECKED_SCENES,
   noticeBlocked,
+  SKILL_TIP,
 } from "./achievementNotice.ts";
 import { achievementIconFrame, AchievementNoticeScene } from "./AchievementNoticeScene.ts";
 import { modalInput } from "./modalInput.ts";
@@ -177,6 +186,89 @@ describe("the unlock notice", () => {
     const at = { bubbles: true, clientX: box.x + 1, clientY: box.y + 1, pointerId: 1 };
     document.body.dispatchEvent(new PointerEvent("pointerdown", at));
     document.body.dispatchEvent(new PointerEvent("pointerup", at));
+    expect([panel().hidden, scene.showing()]).toEqual([true, false]);
+    scene.events.emit("shutdown");
+    vi.restoreAllMocks();
+  });
+});
+
+describe("the skill tip", () => {
+  const { box } = DIALOGUE_SCREEN;
+
+  // The notice scene with a tip for Dash queued behind one unlock, and whether play shows.
+  async function tip() {
+    queue.ids = [ACHIEVEMENT_IDS[0]!];
+    queue.selected = null;
+    queue.tips = ["dash"];
+    const play = { shown: false };
+    const scene = Object.assign(new AchievementNoticeScene(), {
+      cache: {
+        json: { get: (key: string) => (key === "icon-achievement" ? iconSheet : dashSheet) },
+      },
+      events: new EventEmitter(),
+      game: { events: new EventEmitter() },
+      scene: {
+        get: () => ({
+          idle: () => true,
+          noticeBlocked: () => false,
+          skillState: () => ({ shown: play.shown }),
+        }),
+        isActive: (key: string) => key === "zone",
+        isPaused: () => false,
+      },
+    });
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(box.x, box.y, box.width, box.height),
+    );
+    scene.create();
+    const panel = () => document.querySelector<HTMLElement>(".dialogue-panel")!;
+    const step = async (delta: number) => {
+      scene.update(0, delta);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      scene.update(0, 0);
+    };
+    return { panel, play, scene, step };
+  }
+
+  it("waits behind the unlock and for play, then shows the filled tip with the skill's glyph", async () => {
+    const { panel, play, scene, step } = await tip();
+    await step(0);
+    expect(panel().dataset.notice).toBe("achievement");
+    await step(ACHIEVEMENT_NOTICE_SECONDS * 1000);
+    expect(scene.showing()).toBe(false);
+    play.shown = true;
+    await step(0);
+    const portrait = panel().querySelector<HTMLImageElement>(".dialogue-portrait")!;
+    expect({
+      heading: panel().querySelector<HTMLElement>(".dialogue-heading")?.hidden,
+      hidden: panel().hidden,
+      icon: portrait.getAttribute("src"),
+      line: panel().querySelector(".dialogue-line")?.textContent,
+      notice: panel().dataset.notice,
+    }).toEqual({
+      heading: true,
+      hidden: false,
+      icon: "blob:icon-skill-dash/icon-skill-dash 0.aseprite",
+      line: fillNames(TEXT.skillHud.enableTip, { skill: TEXT.skills.dash.title }),
+      notice: "skill-tip",
+    });
+    play.shown = false;
+    scene.update(0, SKILL_TIP.seconds * 2000);
+    expect([panel().hidden, scene.showing()]).toEqual([true, true]);
+    scene.events.emit("shutdown");
+    vi.restoreAllMocks();
+  });
+
+  it("ends early once its skill is selected", async () => {
+    const { panel, play, scene, step } = await tip();
+    queue.ids = [];
+    play.shown = true;
+    await step(0);
+    expect(scene.showing()).toBe(true);
+    queue.selected = "dash";
+    scene.update(0, 1);
     expect([panel().hidden, scene.showing()]).toEqual([true, false]);
     scene.events.emit("shutdown");
     vi.restoreAllMocks();

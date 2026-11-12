@@ -85,6 +85,9 @@ export function recentStageChunks(stage: string): readonly string[] {
 export function savedRecentMiddleChunks(zone: string): readonly string[] {
   return pageSave.savedRecentMiddleChunks(zone);
 }
+export function nextSkillTip(blocked: () => boolean): SkillId | undefined {
+  return pageSave.nextSkillTip(SESSION, blocked);
+}
 export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
   return pageSave.nextAchievementNotice(blocked);
 }

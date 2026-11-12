@@ -19,7 +19,7 @@ it("persists each room grant once through progress writes and reopen, then reset
   await save.loadProgress();
   SKILL_IDS.forEach((skill) => expect(save.grantSkill(skill)).toBe(true));
   await save.loadProgress();
-  expect(save.activeSkill()).toBe(SKILL_IDS[0]);
+  expect(save.activeSkill()).toBeNull();
   expect(save.selectActiveSkill("speedy")).toBe(true);
   expect(save.activeSkill()).toBe("speedy");
   const writes = write.mock.calls.length;
@@ -41,18 +41,42 @@ it("persists each room grant once through progress writes and reopen, then reset
   expect(save.activeSkill()).toBeNull();
 });
 
-it("keeps first and sole skills active and rejects unowned selection without writing", async () => {
+it("starts with nothing selected, never selects a grant and rejects unowned selection", async () => {
   const write = vi.fn();
   vi.stubGlobal("localStorage", { getItem: () => null, setItem: write });
   const save = await import("./save.ts");
   await save.loadProgress();
-  expect(save.selectActiveSkill("speedy")).toBe(false);
   expect(save.activeSkill()).toBeNull();
+  expect(save.selectActiveSkill("speedy")).toBe(false);
   save.grantSkill("doubleJump");
-  expect(save.activeSkill()).toBe("doubleJump");
+  expect(save.activeSkill()).toBeNull();
   expect(save.selectActiveSkill("dash")).toBe(false);
+  expect(save.selectActiveSkill("doubleJump")).toBe(true);
   save.grantSkill("dash");
   expect(save.activeSkill()).toBe("doubleJump");
+});
+
+it("queues one tip per new grant in grant order, behind unlock notices, dropping a selected skill's", async () => {
+  vi.stubGlobal("localStorage", { getItem: () => null, setItem: vi.fn() });
+  const save = await import("./save.ts");
+  await save.loadProgress();
+  const open = () => false;
+  expect(save.nextSkillTip(open)).toBeUndefined();
+  SKILL_IDS.forEach((skill) => expect(save.grantSkill(skill)).toBe(true));
+  expect(save.grantSkill("dash")).toBe(false);
+  // Owning every skill unlocks an achievement, whose notice comes first.
+  expect(save.nextSkillTip(open)).toBeUndefined();
+  expect(save.nextAchievementNotice(open)).toBe("gift-rooms");
+  expect(save.nextSkillTip(() => true)).toBeUndefined();
+  expect(save.nextSkillTip(open)).toBe("dash");
+  expect(save.selectActiveSkill("doubleJump")).toBe(true);
+  expect(save.nextSkillTip(open)).toBe("speedy");
+  expect(save.nextSkillTip(open)).toBeUndefined();
+  save.grantSkill("dash");
+  save.clearProgress();
+  save.grantSkill("speedy");
+  expect(save.nextSkillTip(open)).toBe("speedy");
+  expect(save.nextSkillTip(open)).toBeUndefined();
 });
 
 it("keeps Dev-only selection temporary and falls back to saved ownership when an override is unchecked", async () => {
@@ -100,6 +124,26 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
   await save.loadProgress();
   expect(save.savedProgress().activeSkill).toBe("doubleJump");
   expect(JSON.parse(values.get("chibis-way-home.save")!).activeSkill).toBe("doubleJump");
+});
+
+it("keeps an existing save's selection on load", async () => {
+  const { PROGRESS_VERSION } = await import("../progress/index.ts");
+  const raw = JSON.stringify({
+    activeSkill: "speedy",
+    at: "beginning",
+    openingSeen: true,
+    skills: ["dash", "speedy"],
+    version: PROGRESS_VERSION,
+  });
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => (key === "chibis-way-home.save" ? raw : null),
+    setItem: vi.fn(),
+  });
+  const save = await import("./save.ts");
+  await save.loadProgress();
+  expect(save.activeSkill()).toBe("speedy");
+  expect(save.grantSkill("doubleJump")).toBe(true);
+  expect(save.activeSkill()).toBe("speedy");
 });
 
 it("restores every permanent grant and the sole selection after a fresh page module loads", async () => {

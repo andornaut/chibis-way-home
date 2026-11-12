@@ -49,7 +49,16 @@ it("grants stored ownership independently while run-only cheats preserve normal 
   });
   expect(new Set(save.savedSkills())).toEqual(new Set(SKILL_IDS));
   expect(save.activeSkill()).toBe("doubleJump");
+  // A tip for each newly granted skill, in grant order, once the unlock notices have shown.
+  while (save.nextAchievementNotice(() => false) !== undefined) {
+    // Drain the grant's unlock notices.
+  }
+  expect([save.nextSkillTip(() => false), save.nextSkillTip(() => false)]).toEqual([
+    "dash",
+    "speedy",
+  ]);
   expect(save.grantSkill("dash")).toBe(false);
+  expect(save.nextSkillTip(() => false)).toBeUndefined();
   save.beginStageRun(ZONE_MAP.start);
   save.saveCompleted(ZONE_MAP.start);
   await save.flushStats();

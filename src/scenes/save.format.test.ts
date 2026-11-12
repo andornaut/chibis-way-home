@@ -5,7 +5,8 @@ import type { ZoneState } from "../rules/zone.ts";
 
 // Storage writes recorded from the previous save code: the scripted session below from empty
 // storage, then a reopen of its final records. The current code must write the same keys and
-// bytes, so saved games keep loading without a version change.
+// bytes, so saved games keep loading without a version change. Grants select no skill, so the
+// two grant writes keep a null selection until Speedy is selected.
 const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
@@ -23,15 +24,15 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"dash","at":"map","completed":[],"openingSeen":true,"seenZoneIntr',
-      'os":[],"skills":["dash"],"stand":"street","version":11}',
+      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
+      's":[],"skills":["dash"],"stand":"street","version":11}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"dash","at":"map","completed":[],"openingSeen":true,"seenZoneIntr',
-      'os":[],"skills":["dash","speedy"],"stand":"street","version":11}',
+      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
+      's":[],"skills":["dash","speedy"],"stand":"street","version":11}',
     ].join(""),
   ],
   [

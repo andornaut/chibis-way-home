@@ -25,12 +25,12 @@ describe("permanent skills and temporary enabling", () => {
     );
     expect(profile.jumpSpeed).toBe(BIRD.jumpSpeed);
   });
-  it("auto-selects the first eligible skill and retains a valid current selection", () => {
+  it("selects nothing on its own and retains a valid current selection", () => {
     const eligible = eligibleSkills({ dash: true, doubleJump: false }, ["speedy"]);
     expect(eligible).toEqual(["speedy", "dash"]);
-    expect(resolveActiveSkill(eligible, null)).toBe("speedy");
+    expect(resolveActiveSkill(eligible, null)).toBeNull();
     expect(resolveActiveSkill(eligible, "dash")).toBe("dash");
-    expect(resolveActiveSkill(eligible, "doubleJump")).toBe("speedy");
+    expect(resolveActiveSkill(eligible, "doubleJump")).toBeNull();
     expect(resolveActiveSkill([], "dash")).toBeNull();
     expect(skillTuning({ speedyWalkMultiplier: 1.25 }, null, BIRD)).toMatchObject({
       doubleJump: false,

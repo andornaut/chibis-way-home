@@ -70,13 +70,13 @@ it("grants ownership while preserving saved map, selection, statistics and achie
   });
   expect(committed).toHaveBeenCalledTimes(1);
 });
-it("selects only the first fresh skill and repeats without writes or duplicate achievements", async () => {
+it("selects no fresh skill and repeats without writes or duplicate achievements", async () => {
   const storage = memoryStorage();
   const write = vi.spyOn(storage, "write");
   const committed = vi.fn();
   await grantStoredSkills({ available: () => true, committed }, storage);
   expect(committed.mock.calls[0]![0].progress).toMatchObject({
-    activeSkill: SKILL_IDS[0],
+    activeSkill: null,
     skills: SKILL_IDS,
   });
   const count = write.mock.calls.length;

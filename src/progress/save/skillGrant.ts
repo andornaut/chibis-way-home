@@ -1,14 +1,11 @@
 import type { AchievementId, SkillId } from "../../data/types/index.ts";
 import { earnedAt } from "../achievements.ts";
 import type { Progress } from "./progress.ts";
+// progress owning skill. A grant never selects its skill and keeps the current selection.
 export function withGrantedSkill(progress: Progress, skill: SkillId): Progress {
   return progress.skills.includes(skill)
     ? progress
-    : {
-        ...progress,
-        activeSkill: progress.activeSkill ?? skill,
-        skills: [...progress.skills, skill],
-      };
+    : { ...progress, skills: [...progress.skills, skill] };
 }
 export function skillGrantEffects(
   earned: readonly AchievementId[],

@@ -50,7 +50,10 @@ const storage = localSaveStorage();
 const format = progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS)));
 const store = saveStore(storage, PROGRESS_KEYS, format);
 let progress: Progress = BEGINNING;
-let temporarySelection: SkillId | null | undefined;
+// A developer session's selection of an enabled skill it does not own, held for the page.
+let temporarySelection: SkillId | undefined;
+// Each new grant's enable tip not shown yet, in grant order. They are not saved.
+let skillTips: SkillId[] = [];
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
 const stats = stageStatsStore(localSaveStorage(), STAGES, ZONE_MAP.destinations);
 let statsLifecycleInstalled = false;
@@ -240,16 +243,16 @@ export function savedSkills(): readonly SkillId[] {
   return progress.skills;
 }
 
+// The selected skill while it is eligible, or none. A developer session's temporary selection
+// holds while its override stays enabled; then the saved selection applies again.
 export function activeSkill(session: SaveSession): SkillId | null {
   const eligible = eligibleSkills(session.skillOverrides(), savedSkills());
-  if (!session.development()) {
-    return resolveActiveSkill(eligible, progress.activeSkill);
+  const saved = resolveActiveSkill(eligible, progress.activeSkill);
+  if (!session.development() || temporarySelection === undefined) {
+    return saved;
   }
-  temporarySelection = resolveActiveSkill(
-    eligible,
-    temporarySelection === undefined ? progress.activeSkill : temporarySelection,
-  );
-  return temporarySelection;
+  temporarySelection = resolveActiveSkill(eligible, temporarySelection) ?? undefined;
+  return temporarySelection ?? saved;
 }
 
 export function selectActiveSkill(session: SaveSession, skill: SkillId): boolean {
@@ -276,6 +279,7 @@ export function grantSkill(session: SaveSession, skill: SkillId): boolean {
   }
   const effects = skillGrantEffects(earnedIds, stats.skillUsed(), next);
   write(session, next);
+  skillTips.push(skill);
   if (effects.awarded.length > 0) {
     earnedIds = [...earnedIds, ...effects.awarded];
     notices.push(effects.awarded);
@@ -314,6 +318,8 @@ export async function grantSavedSkills(context: {
       {
         available,
         committed: (snapshot) => {
+          const owned = progress.skills;
+          skillTips.push(...snapshot.progress.skills.filter((skill) => !owned.includes(skill)));
           progress = snapshot.progress;
           stats.acceptSavedSkillUse(snapshot.stats.wholeRun.skillUsed === true);
           earnedIds = snapshot.achievements.earned;
@@ -443,5 +449,16 @@ function write(session: SaveSession, next: Progress): void {
 // completed. Only progress is cleared.
 export function clearProgress(session: SaveSession): void {
   void flushStats();
+  skillTips = [];
   write(session, BEGINNING);
+}
+
+// The next new grant's enable tip to show unless blocked, once every queued unlock notice has
+// shown. A tip whose skill is selected by then is dropped.
+export function nextSkillTip(session: SaveSession, blocked: () => boolean): SkillId | undefined {
+  skillTips = skillTips.filter((skill) => skill !== activeSkill(session));
+  if (skillTips.length === 0 || notices.pending().length > 0 || blocked()) {
+    return undefined;
+  }
+  return skillTips.shift();
 }
