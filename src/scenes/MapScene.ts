@@ -72,9 +72,10 @@ interface MapData {
   readonly travelTo?: string;
 }
 
-// The V1 overview renders each themed destination once, with its two stage nodes retained in
-// the progression graph. One unlocked stage plays directly; multiple unlocked stages use the
-// closeable picker. The footer and saved stand keep Continue safe as the default action.
+// The overview renders each themed destination once, with its stage nodes retained in the
+// progression graph. Continue on an available destination always opens the closeable stage
+// picker, however many of its stages are unlocked. The footer and saved stand keep Continue safe
+// as the default action.
 export class MapScene extends Scene implements StageSelectOpener {
   private colours: Readonly<Record<string, string>> = {};
   private completed: ReadonlySet<string> = new Set();

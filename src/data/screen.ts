@@ -8,5 +8,5 @@ export const HAZARD_OUTLINE = { backing: "ink", colour: "red", redWidth: 4, widt
 // Zones are built on a grid of square tiles this many base pixels wide.
 export const TILE = 12;
 
-// Every zone is two screens tall, in tiles.
+// The rows, in tiles, of a zone area or chunk that authors none of its own: two screens tall.
 export const ZONE_ROWS = (2 * SCREEN.height) / TILE;
