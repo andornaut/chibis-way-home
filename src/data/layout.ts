@@ -29,7 +29,7 @@ export const CONTROL_BOTTOM = 40;
 
 // Jump's drawn right edge in from the canvas's right, and the move hint's drawn left edge in from
 // the canvas's left.
-export const CONTROL_SIDE = 40;
+export const CONTROL_SIDE = 60;
 
 // The least distance from Jump's and the move hint's drawn edges to the view's bottom and outer
 // side edges.

@@ -175,18 +175,19 @@ describe("the touch controls", () => {
       hint: moveHint.centre,
       jump: buttons.jump.centre,
       use: buttons.use.centre,
-    }).toEqual({ hint: { x: 76, y: 283 }, jump: { x: 643, y: 283 }, use: { x: 566, y: 183 } });
+    }).toEqual({ hint: { x: 96, y: 283 }, jump: { x: 623, y: 283 }, use: { x: 546, y: 183 } });
   });
 
   // Each side's drawn edge sits CONTROL_SIDE (or CONTROL_BOTTOM) from the canvas's edge, unless
   // that would leave it nearer the view's edge than CONTROL_VIEW_MARGIN, when it sits that far
-  // inside the view. Which sides clamp: the 2.16:1 phone's 29.5px side bars leave 10.5px inside
-  // the view, the 2.22:1 phone's 39.7px bars would leave 0.3px, and the taller areas' bands below
-  // the view are 90px and 180px.
+  // inside the view. Which sides clamp: the 2.16:1 phone's 29.5px side bars leave 30.5px inside
+  // the view, the 2.22:1 phone's 39.7px bars leave 20.3px, the 2.36:1 tab's 64.4px bars would
+  // leave none, and the taller areas' bands below the view are 90px and 180px.
   it.each<[string, Size, number, { bottom: boolean; sides: boolean }]>([
     ["2:1 at DPR 1", SCREEN, 1, { bottom: false, sides: false }],
     ["2.16:1 at DPR 3", { height: 390, width: 844 }, 3, { bottom: false, sides: false }],
-    ["2.22:1 at DPR 2.625", { height: 390, width: 866 }, 2.625, { bottom: false, sides: true }],
+    ["2.22:1 at DPR 2.625", { height: 390, width: 866 }, 2.625, { bottom: false, sides: false }],
+    ["2.36:1 at DPR 3", { height: 358, width: 844 }, 3, { bottom: false, sides: true }],
     ["16:10 at DPR 1.5", { height: 450, width: SCREEN.width }, 1.5, { bottom: true, sides: false }],
     ["4:3 at DPR 2", { height: 768, width: 1024 }, 2, { bottom: true, sides: false }],
   ])("in a %s area sit their distances from the canvas, clamped inside the view", (...test) => {
@@ -224,7 +225,7 @@ describe("the touch controls", () => {
     });
   });
 
-  // Where the bars clamp the controls, the press areas move with the drawn buttons: each
+  // Where side bars move the controls, the press areas move with the drawn buttons: each
   // button's circle about its own centre, cut at the line midway between them, and Jump's
   // reach into the view's bottom-right corner.
   it("in a 2.22:1 area press where the moved buttons are drawn", () => {
@@ -245,7 +246,7 @@ describe("the touch controls", () => {
       { ...midway, x: midway.x + 0.1 },
       { x: SCREEN.width - 1, y: SCREEN.height - 1 },
     ].map((point) => touchRoleAt(pressAreas, point));
-    expect(jump.centre.x).toBeGreaterThan(643);
+    expect(jump.centre.x).toBeGreaterThan(623);
     expect(roles).toEqual(["jump", "jump", "move", "use", "use", "move", "use", "jump", "jump"]);
   });
 });
