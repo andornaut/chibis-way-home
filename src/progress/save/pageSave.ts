@@ -38,9 +38,9 @@ import {
 
 export { type Progress } from "./progress";
 
-// The page's session, which each call that it changes takes first and asks when it needs to:
-// in a developer session progress and statistics are read but never written, and the
-// developer skill overrides enable skills beside the owned ones.
+// The page's session, which each call that asks it takes first: the developer skill overrides
+// enable skills beside the owned ones, and a developer session's active skill may be a selection
+// held for the page and never saved.
 export interface SaveSession {
   readonly development: () => boolean;
   readonly skillOverrides: () => SkillOverrides;
@@ -145,10 +145,7 @@ export function recordStageStepAchievements(
 }
 
 // The next unlock notice to show unless blocked, marked announced as it starts.
-export function nextAchievementNotice(
-  session: SaveSession,
-  blocked: () => boolean,
-): AchievementId | undefined {
+export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
   const id = notices.takeWhen(blocked);
   if (id !== undefined) {
     deliveredNotices.add(id);
@@ -172,7 +169,7 @@ export function achievementCard(): AchievementEntry[] {
   });
 }
 
-export function beginZoneVisit(session: SaveSession, zone: string): void {
+export function beginZoneVisit(zone: string): void {
   stats.beginVisit(zone);
 }
 export function beginStageRun(session: SaveSession, stage: string): void {
@@ -183,12 +180,12 @@ export function beginStageRun(session: SaveSession, stage: string): void {
     stats.beginRun(stage);
   }
 }
-export function retryStageRun(session: SaveSession, stage: string): void {
+export function retryStageRun(stage: string): void {
   if (STAGES.has(stage)) {
     stats.retryStage(stage);
   }
 }
-export function completeStageRun(session: SaveSession, stage: string): RunStatsSummary {
+export function completeStageRun(stage: string): RunStatsSummary {
   const summary = stats.completeStage(stage);
   const zone = zoneEndingAt(ZONE_MAP, stage);
   const visit = stats.currentVisit();
@@ -198,24 +195,19 @@ export function completeStageRun(session: SaveSession, stage: string): RunStatsS
   ]);
   return summary;
 }
-export function stageRunStats(session: SaveSession, stage: string): RunStatsSummary {
+export function stageRunStats(stage: string): RunStatsSummary {
   return stats.summary(stage);
 }
-export function zoneVisitStats(session: SaveSession, zone: string): ZoneStatsSummary {
+export function zoneVisitStats(zone: string): ZoneStatsSummary {
   return stats.visitSummary(zone);
 }
 
-export function activeStageTime(session: SaveSession, stage: string): number {
+export function activeStageTime(stage: string): number {
   return stats.seconds(stage);
 }
 
 // A step's active seconds, and whether he died on it. Only catalogued stages have records.
-export function recordActiveStageStep(
-  session: SaveSession,
-  stage: string,
-  active: () => number,
-  died: boolean,
-): void {
+export function recordActiveStageStep(stage: string, active: () => number, died: boolean): void {
   if (STAGES.has(stage)) {
     const seconds = active();
     stats.addActiveTime(stage, seconds);
@@ -225,7 +217,7 @@ export function recordActiveStageStep(
   }
 }
 
-export function clearStageTime(session: SaveSession, stage: string): void {
+export function clearStageTime(stage: string): void {
   if (STAGES.has(stage)) {
     stats.clearStage(stage);
   }
@@ -361,7 +353,7 @@ export function savedRecentMiddleChunks(zone: string): readonly string[] {
 }
 
 // The middle chunk ids a fresh entry of a catalogued stage avoids: its destination's recent ones.
-export function recentStageChunks(session: SaveSession, stage: string): readonly string[] {
+export function recentStageChunks(stage: string): readonly string[] {
   const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
   return zone === undefined ? [] : recentMiddleChunks(progress, zone);
 }

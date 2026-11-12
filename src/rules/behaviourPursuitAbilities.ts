@@ -217,7 +217,6 @@ function paceMotion(speed: number, motion: GroundChaseMotion): GroundChaseMotion
 // with its plan state; undefined when the on-demand planner chases instead.
 function mapLeg(
   { object, perception, seconds, time }: BehaviourAbilityContext,
-  motion: GroundChaseMotion,
   hers: Rect,
   world: BehaviourWorld,
   { at, state }: BehaviourActor,
@@ -283,7 +282,7 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
         },
       }),
     };
-    const planned = context.traversal ? undefined : mapLeg(context, motion, aim.hers, timed, actor);
+    const planned = context.traversal ? undefined : mapLeg(context, aim.hers, timed, actor);
     const leg = planned?.leg;
     // The pace starts, and every turn holds, for a seeded pause facing Chibi, except within the
     // chase pause's clearance after an attack, where it walks on.

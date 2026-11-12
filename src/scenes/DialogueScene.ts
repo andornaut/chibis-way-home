@@ -1,8 +1,4 @@
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
-import {
-  phaserBitmapFont,
-  type PhaserFontData,
-} from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { DIALOGUES, SPEAKERS } from "../data/dialogues";
@@ -32,7 +28,6 @@ import {
 } from "../ui";
 import {
   addTextButton,
-  BODY_FONT,
   captureTab,
   cardFonts,
   pressTextButton,
@@ -147,10 +142,6 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (this.choosing) {
       this.finish(selection);
     }
-  }
-
-  private bodyFont() {
-    return phaserBitmapFont(this.cache.bitmapFont.get(BODY_FONT).data as PhaserFontData);
   }
 
   private drawFooter(): void {

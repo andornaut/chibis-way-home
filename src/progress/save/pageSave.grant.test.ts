@@ -92,7 +92,6 @@ it("recovers one saved pending notice after cache adoption was blocked", async (
     },
   });
   const page = await import("./pageSave");
-  const session = { development: () => true, skillOverrides: () => ({}) };
   expect(await page.grantSavedSkills({ available: () => available })).toMatchObject({
     cause: "blocked",
     reason: "cache_commit_unavailable",
@@ -103,9 +102,9 @@ it("recovers one saved pending notice after cache adoption was blocked", async (
   expect(await page.grantSavedSkills({ available: () => available })).toMatchObject({
     status: "unchanged",
   });
-  expect(page.nextAchievementNotice(session, () => false)).toBe("gift-rooms");
-  expect(page.nextAchievementNotice(session, () => false)).toBeUndefined();
+  expect(page.nextAchievementNotice(() => false)).toBe("gift-rooms");
+  expect(page.nextAchievementNotice(() => false)).toBeUndefined();
   await page.grantSavedSkills({ available: () => available });
-  expect(page.nextAchievementNotice(session, () => false)).toBeUndefined();
+  expect(page.nextAchievementNotice(() => false)).toBeUndefined();
   expect(JSON.parse(values.get(ACHIEVEMENT_KEYS.save)!).earned).toEqual(["gift-rooms"]);
 });

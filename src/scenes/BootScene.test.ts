@@ -52,7 +52,7 @@ vi.mock("./domUi", () => ({
 }));
 vi.mock("../ui", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../ui")>()),
-  createMessageCard: (document: unknown, id: string, text: string) => ({ id, text }),
+  createMessageCard: (_document: unknown, id: string, text: string) => ({ id, text }),
 }));
 vi.mock("./atlasArt", () => ({
   get ATLAS() {

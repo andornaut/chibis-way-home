@@ -57,7 +57,6 @@ const onDeck = ({ deckY }: Fixture, zone: ZoneState, range: { max: number; min: 
 
 // Walks right and jumps at each rising floor edge until Chibi stands at the goal.
 function input(
-  f: Fixture,
   zone: ZoneState,
   goal: number,
   jumpUntil: { tick: number },
@@ -117,7 +116,7 @@ it("warned vent terrace approach observes from a refuge, crosses an inactive win
       ordinary,
       f.layout,
       STEP_SECONDS,
-      input(f, zone, goal, jump, tick),
+      input(zone, goal, jump, tick),
       zone,
     );
     expect(zone.death, stage).toBeUndefined();
@@ -149,7 +148,7 @@ it("warned vent kills a crossing that meets its active phase and retries from th
       ordinary,
       f.layout,
       STEP_SECONDS,
-      input(f, zone, goal, jump, tick),
+      input(zone, goal, jump, tick),
       zone,
     );
     if (zone.death === undefined) {
@@ -196,7 +195,7 @@ it("warned vent warning leaves time to retreat to the near refuge and cross the 
       ordinary,
       f.layout,
       STEP_SECONDS,
-      input(f, zone, goal, jump, tick),
+      input(zone, goal, jump, tick),
       zone,
     );
     expect(zone.death, stage).toBeUndefined();

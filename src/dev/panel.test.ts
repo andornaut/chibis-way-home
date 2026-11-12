@@ -14,15 +14,16 @@ class Element extends EventTarget {
   disabled = false;
   hidden = false;
   id = "";
+  readonly ownerDocument: FakeDocument;
   parentNode: Element | undefined;
+  readonly tag: string;
   textContent = "";
   type = "";
   private selected: string | undefined;
-  constructor(
-    readonly ownerDocument: FakeDocument,
-    readonly tag: string,
-  ) {
+  constructor(ownerDocument: FakeDocument, tag: string) {
     super();
+    this.ownerDocument = ownerDocument;
+    this.tag = tag;
   }
   focus() {}
   get options() {

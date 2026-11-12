@@ -26,25 +26,25 @@ export function loadProgress(): Promise<pageSave.SaveAge> {
   return pageSave.loadProgress(SESSION);
 }
 export function beginZoneVisit(zone: string): void {
-  pageSave.beginZoneVisit(SESSION, zone);
+  pageSave.beginZoneVisit(zone);
 }
 export function beginStageRun(stage: string): void {
   pageSave.beginStageRun(SESSION, stage);
 }
 export function retryStageRun(stage: string): void {
-  pageSave.retryStageRun(SESSION, stage);
+  pageSave.retryStageRun(stage);
 }
 export function completeStageRun(stage: string): RunStatsSummary {
-  return pageSave.completeStageRun(SESSION, stage);
+  return pageSave.completeStageRun(stage);
 }
 export function stageRunStats(stage: string): RunStatsSummary {
-  return pageSave.stageRunStats(SESSION, stage);
+  return pageSave.stageRunStats(stage);
 }
 export function zoneVisitStats(zone: string): ZoneStatsSummary {
-  return pageSave.zoneVisitStats(SESSION, zone);
+  return pageSave.zoneVisitStats(zone);
 }
 export function activeStageTime(stage: string): number {
-  return pageSave.activeStageTime(SESSION, stage);
+  return pageSave.activeStageTime(stage);
 }
 export function recordActiveStageStep(
   stage: string,
@@ -53,7 +53,6 @@ export function recordActiveStageStep(
   after: ZoneState,
 ): void {
   pageSave.recordActiveStageStep(
-    SESSION,
     stage,
     () => activeStepSeconds(seconds, before, after),
     before.death === undefined && after.death !== undefined,
@@ -61,7 +60,7 @@ export function recordActiveStageStep(
 }
 // Active seconds spent in a room behind one of stage's doors, on the same clock as live steps.
 export function recordRoomTime(stage: string, seconds: number): void {
-  pageSave.recordActiveStageStep(SESSION, stage, () => seconds, false);
+  pageSave.recordActiveStageStep(stage, () => seconds, false);
 }
 // The escapes and skill use of one live step in layout, for the achievements.
 export function recordStepAchievements(
@@ -81,19 +80,19 @@ export function recordStageChunks(stage: string, middle: readonly string[]): voi
   pageSave.recordStageChunks(SESSION, stage, middle);
 }
 export function recentStageChunks(stage: string): readonly string[] {
-  return pageSave.recentStageChunks(SESSION, stage);
+  return pageSave.recentStageChunks(stage);
 }
 export function savedRecentMiddleChunks(zone: string): readonly string[] {
   return pageSave.savedRecentMiddleChunks(zone);
 }
 export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
-  return pageSave.nextAchievementNotice(SESSION, blocked);
+  return pageSave.nextAchievementNotice(blocked);
 }
 export function achievementCard(): AchievementEntry[] {
   return pageSave.achievementCard();
 }
 export function clearStageTime(stage: string): void {
-  pageSave.clearStageTime(SESSION, stage);
+  pageSave.clearStageTime(stage);
 }
 export function flushStats(): Promise<void> {
   return pageSave.flushStats();
