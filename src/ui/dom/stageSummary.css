@@ -10,7 +10,8 @@
 }
 
 /* The page's rows centred down from its padding: each text row trims to its cap height and
-   alphabetic baseline, so the gaps between rows are the gaps between their ink. */
+   alphabetic baseline, and the margins above the rows (stageSummaryGaps) add each line's measured
+   ink past those, so the gaps between rows are the gaps between their ink. */
 .stage-summary {
   position: absolute;
   inset: 0;
@@ -45,14 +46,18 @@
 .stage-summary-stage,
 .stage-summary-progress,
 .stage-summary-statement {
-  margin-top: calc(var(--ui-unit) * var(--summary-row-gap) * 1px);
   font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
   font-weight: 400;
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
 }
 
 .stage-summary-stage {
+  margin-top: calc(var(--ui-unit) * var(--summary-stage-gap) * 1px);
   color: var(--colour-cream);
+}
+
+.stage-summary-progress {
+  margin-top: calc(var(--ui-unit) * var(--summary-progress-gap) * 1px);
 }
 
 /* The cleared stage's preview, whole and sampled nearest. */
@@ -60,7 +65,7 @@
   display: block;
   width: calc(var(--ui-unit) * var(--summary-preview-width) * 1px);
   height: calc(var(--ui-unit) * var(--summary-preview-height) * 1px);
-  margin-top: calc(var(--ui-unit) * var(--summary-row-gap) * 1px);
+  margin-top: calc(var(--ui-unit) * var(--summary-preview-gap) * 1px);
   image-rendering: pixelated;
 }
 

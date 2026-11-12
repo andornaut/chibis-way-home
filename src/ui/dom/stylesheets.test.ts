@@ -15,7 +15,7 @@ import { runStatsProperties } from "./runStats.ts";
 import { SKILL_DETAILS_LAYOUT } from "./skillDetails.ts";
 import { SKILL_DISC_LAYOUT } from "./skillDisc.ts";
 import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
-import { STAGE_SUMMARY_LAYOUT } from "./stageSummary.ts";
+import { STAGE_SUMMARY_LAYOUT, stageSummaryGaps } from "./stageSummary.ts";
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
 const DIRECTORY = new URL(".", import.meta.url);
@@ -41,6 +41,14 @@ const WRITTEN = new Set(
     DIALOGUE_FOOTER_LAYOUT,
     DIALOGUE_PANEL_LAYOUT,
     STAGE_SUMMARY_LAYOUT,
+    stageSummaryGaps(() => ({ fall: 0, rise: 0 }), {
+      continue: "",
+      progress: "",
+      stage: "",
+      stats: [],
+      totals: [],
+      zone: "",
+    }),
     achievementsCardProperties(1),
     runStatsProperties({ columnGap: 0, divider: 2 }),
     ACTION_HELP_PROPERTIES,
