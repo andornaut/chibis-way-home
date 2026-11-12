@@ -3,8 +3,8 @@ import { progressBarPixelProperties } from "@andornaut/game-kit/web/progress/dom
 import { describe, expect, it, vi } from "vitest";
 
 import { LOADING_CSS, loadingHtml } from "./html";
-import { afterLoadingPaint, installProgress, loadingProgress } from "./progress";
-import { offlineActivity } from "./serviceWorker";
+import { afterLoadingPaint, loadingProgress, precacheProgress } from "./progress";
+import { trackOfflineActivity } from "./serviceWorker";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 
 describe("loading lifecycle", () => {
@@ -26,18 +26,23 @@ describe("loading lifecycle", () => {
     frames.shift()!(48);
     expect(work).toHaveBeenCalledOnce();
   });
-  it("maps actual offline activity to pending without changing foreground loading", () => {
+  it("maps the first visit's precache to pending without changing foreground loading, and nothing after it", () => {
     const seen: unknown[] = [];
     const foreground: unknown[] = [];
-    const off = installProgress.subscribe((state) => seen.push(state));
+    const off = precacheProgress.subscribe((state) => seen.push(state));
     const offForeground = loadingProgress.subscribe((state) => foreground.push(state));
     const current = loadingProgress.begin();
     current.progress(0.4);
+    const offlineActivity = trackOfflineActivity(true);
     for (const activity of ["idle", "registering", "installing", "idle"] as const) {
       offlineActivity(activity);
       expect(seen.at(-1)).toEqual({ active: activity !== "idle", value: undefined });
       expect(foreground.at(-1)).toEqual({ active: true, value: 0.4 });
     }
+    const count = seen.length;
+    offlineActivity("installing");
+    offlineActivity("idle");
+    expect(seen).toHaveLength(count);
     current.finish();
     off();
     offForeground();

@@ -23,7 +23,7 @@ import {
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
 
-import { offlineActivity } from "../loading/serviceWorker";
+import { trackOfflineActivity } from "../loading/serviceWorker";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events";
 import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen";
 import { createUpdateOffer } from "./updateOffer";
@@ -52,7 +52,8 @@ let screenWakeLock: ScreenWakeLock | undefined;
 // The production build only: the dev server has no sw.js, and a worker would serve stale
 // modules over hot reloads. A page a version controls registers now, so its update check runs
 // while the game loads; a first visit registers once the zone shows, so the precache does not
-// compete with the game's own downloads (registrationReady).
+// compete with the game's own downloads (registrationReady). The loading bar shows only that first
+// visit's precache; an update installs in the background with no bar (trackOfflineActivity).
 function setupOfflinePlay(): void {
   const page = import.meta.env.PROD ? browserOfflinePage() : undefined;
   if (page === undefined) {
@@ -62,7 +63,7 @@ function setupOfflinePlay(): void {
     {
       activationPolicy: "manual",
       bootWaitMs: BOOT_WAIT_MS,
-      onOfflineActivity: offlineActivity,
+      onOfflineActivity: trackOfflineActivity(page.container.controller === null),
       onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
     },

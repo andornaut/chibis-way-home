@@ -12,9 +12,14 @@ const offline = vi.hoisted(() => {
     registrationReady: vi.fn(),
   };
   return {
+    page: { container: { controller: null as unknown } },
     play,
     start: vi.fn(
-      (options: { activationPolicy?: string; onUpdateShown: (shown: boolean) => void }) => {
+      (options: {
+        activationPolicy?: string;
+        onOfflineActivity: (activity: "idle" | "installing" | "registering") => void;
+        onUpdateShown: (shown: boolean) => void;
+      }) => {
         void options;
         return play;
       },
@@ -22,7 +27,7 @@ const offline = vi.hoisted(() => {
   };
 });
 vi.mock("@andornaut/game-kit/web/pwa/dom/offlinePlay", () => ({
-  browserOfflinePage: () => ({}),
+  browserOfflinePage: () => offline.page,
   startOfflinePlay: offline.start,
 }));
 vi.mock("@andornaut/game-kit/web/pwa/backNavigation", async (importOriginal) => ({
@@ -55,6 +60,7 @@ beforeEach(() => {
   );
   vi.stubGlobal("navigator", navigator);
   vi.stubGlobal("document", {});
+  offline.page.container.controller = null;
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -90,6 +96,22 @@ it("wires manual updates to prepared registration and explicit Start visits", as
   options.onUpdateShown(true);
   pwa.updateOffer.accept();
   expect(offline.play.flow.accept).toHaveBeenCalledOnce();
+});
+
+it.each([
+  { controller: null, name: "a first visit's precache shows", shown: true },
+  { controller: {}, name: "an update's install on a controlled page never shows", shown: false },
+])("$name the loading bar", async ({ controller, shown }) => {
+  offline.page.container.controller = controller;
+  const { precacheProgress } = await import("../loading/progress");
+  const pwa = await import("./index");
+  pwa.setupPhoneApp();
+  const seen: boolean[] = [];
+  precacheProgress.subscribe(({ active }) => seen.push(active));
+  const { onOfflineActivity } = offline.start.mock.calls[0]![0];
+  onOfflineActivity("registering");
+  onOfflineActivity("installing");
+  expect(seen.at(-1)).toBe(shown);
 });
 
 it.each([

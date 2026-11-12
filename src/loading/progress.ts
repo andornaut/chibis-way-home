@@ -8,8 +8,13 @@ import { createDomProgressBar } from "@andornaut/game-kit/web/progress/dom/progr
 import { SCREEN } from "../data/screen";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style";
 
+// The bar shows only loads the player waits for, each through its own entry point below: boot
+// (startupLoading, then beginStartupChecks), entering a zone (beginStageLoading) and the first
+// visit's precache (beginPrecache). Loads in the background during play, such as an update's
+// install, have no entry point and never show it.
 export const loadingProgress = createProgressState();
-export const installProgress = createProgressState();
+// The first visit's precache, which the bar shows while no foreground load runs.
+export const precacheProgress = createProgressState();
 export const startupLoading = loadingProgress.begin();
 let refreshStyle: (stage: string) => void = () => undefined;
 
@@ -25,6 +30,12 @@ export function beginStartupChecks(): ProgressHandle {
 export function beginStageLoading(stage: string): ProgressHandle {
   refreshStyle(stage);
   return loadingProgress.begin();
+}
+
+// The first visit's precache: unknown work, shown as the pending segment behind any foreground
+// load.
+export function beginPrecache(): ProgressHandle {
+  return precacheProgress.begin();
 }
 
 export function mountLoading(parent: HTMLElement): () => void {
@@ -45,7 +56,7 @@ export function mountLoading(parent: HTMLElement): () => void {
     bar.remove();
     bar = createDomProgressBar(host, stageProgressStyle(stage), PROGRESS_RECT, LOADING_TIMING);
   };
-  // The bar follows the foreground load, or the background install while none runs: a measured
+  // The bar follows the foreground load, or the first visit's precache while none runs: a measured
   // finish fills to full, holds, fades and then hides, and an unknown one hides at once. While a
   // full bar holds or fades, nothing else shows; the state then current follows once it has faded.
   const show = () => {
@@ -53,7 +64,7 @@ export function mountLoading(parent: HTMLElement): () => void {
       return;
     }
     const before = bar.element.dataset.state;
-    // A measured load that just finished fills to full even while the install runs behind it.
+    // A measured load that just finished fills to full even while the precache runs behind it.
     const finished = !foreground.active && before === "determinate";
     bar.report(foreground.active || finished ? foreground : background);
     if (before !== "complete" && bar.element.dataset.state === "complete") {
@@ -91,7 +102,7 @@ export function mountLoading(parent: HTMLElement): () => void {
     foreground = state;
     show();
   });
-  const offBackground = installProgress.subscribe((state) => {
+  const offBackground = precacheProgress.subscribe((state) => {
     background = state;
     show();
   });

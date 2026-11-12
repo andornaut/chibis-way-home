@@ -55,9 +55,9 @@ it("fills, holds and fades the measured file load before the startup checks' pen
   unmount();
 });
 
-it("holds a full bar through background installing, which shows once the hold ends", async () => {
+it("holds a full bar through the first visit's precache, which shows once the hold ends", async () => {
   const { bar, loading, unmount } = await mounted();
-  const install = loading.installProgress.begin();
+  const install = loading.beginPrecache();
   loading.startupLoading.progress(0.5);
   loading.startupLoading.progress(1);
   loading.startupLoading.finish();
@@ -79,5 +79,52 @@ it("holds a full bar through a stage's restyle, which applies once the hold ends
   fade();
   expect(bar()).not.toBe(held);
   expect(bar().dataset.state).toBe("pending");
+  unmount();
+});
+
+// The bar once boot and its startup checks have ended, while the zone plays.
+async function playing() {
+  const mount = await mounted();
+  mount.loading.startupLoading.progress(0.5);
+  const checks = mount.loading.beginStartupChecks();
+  fade();
+  checks.finish();
+  return mount;
+}
+
+it("shows zone entry as the pending segment until the zone is ready", async () => {
+  const { bar, loading, unmount } = await playing();
+  expect(bar().hidden).toBe(true);
+  const stage = loading.beginStageLoading("apartment");
+  expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
+  stage.finish();
+  expect(bar().hidden).toBe(true);
+  unmount();
+});
+
+it("never shows an update's install or check while the game plays", async () => {
+  const { bar, unmount } = await playing();
+  const { trackOfflineActivity } = await import("./serviceWorker");
+  const offlineActivity = trackOfflineActivity(false);
+  const states: (string | undefined)[] = [];
+  for (const activity of ["registering", "installing", "idle", "installing"] as const) {
+    offlineActivity(activity);
+    states.push(bar().hidden ? undefined : bar().dataset.state);
+  }
+  expect(states).toEqual([undefined, undefined, undefined, undefined]);
+  unmount();
+});
+
+it("shows the first visit's precache while the zone plays, but no install after it", async () => {
+  const { bar, unmount } = await playing();
+  const { trackOfflineActivity } = await import("./serviceWorker");
+  const offlineActivity = trackOfflineActivity(true);
+  offlineActivity("registering");
+  offlineActivity("installing");
+  expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
+  offlineActivity("idle");
+  expect(bar().hidden).toBe(true);
+  offlineActivity("installing");
+  expect(bar().hidden).toBe(true);
   unmount();
 });
