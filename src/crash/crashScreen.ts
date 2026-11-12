@@ -7,7 +7,7 @@ import "./theme.css";
 import { installCrashScreen } from "@andornaut/game-kit/web/crash/dom/crashScreen";
 
 import { BUILD_LABEL } from "../buildLabel";
-import { TEXT } from "../data/text";
+import { CRASH_TEXT } from "../data/crashText";
 import { CRASH_COLOURS, installCrashTheme } from "./theme";
 
 installCrashTheme(document.documentElement.style);
@@ -17,5 +17,5 @@ export const CRASH_SCREEN = installCrashScreen(window, {
   buildLabel: BUILD_LABEL,
   colours: CRASH_COLOURS,
   dev: new URLSearchParams(window.location.search).get("dev") === "1",
-  words: TEXT.crash,
+  words: CRASH_TEXT,
 });
