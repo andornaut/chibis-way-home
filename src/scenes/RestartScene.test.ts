@@ -65,7 +65,9 @@ async function openCard(opener = "start") {
   await Promise.resolve();
   const dialog = document.querySelector<HTMLElement>("[role=dialog]")!;
   const button = (name: string) =>
-    [...dialog.querySelectorAll("button")].find((element) => element.textContent === name)!;
+    [...dialog.querySelectorAll("button")].find(
+      (element) => (element.getAttribute("aria-label") ?? element.textContent) === name,
+    )!;
   const key = (value: string, options: KeyboardEventInit = {}) =>
     (document.activeElement ?? document.body).dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: value, ...options }),
@@ -77,13 +79,15 @@ it("shows the question as a dialog named from TEXT, focused on the card with not
   const { dialog } = await openCard();
   const named = (id: string | null) => document.getElementById(id ?? "")?.textContent;
   expect({
-    buttons: [...dialog.querySelectorAll("button")].map(({ textContent }) => textContent),
+    buttons: [...dialog.querySelectorAll("button")].map(
+      (button) => button.getAttribute("aria-label") ?? button.textContent,
+    ),
     description: named(dialog.getAttribute("aria-describedby")),
     focused: document.activeElement === dialog,
     modal: dialog.getAttribute("aria-modal"),
     name: named(dialog.getAttribute("aria-labelledby")),
   }).toEqual({
-    buttons: [TEXT.restart.cancel, TEXT.restart.restart],
+    buttons: [TEXT.restart.cancel, TEXT.restart.restart, TEXT.update.close],
     description: TEXT.restart.question,
     focused: true,
     modal: "true",
@@ -91,16 +95,30 @@ it("shows the question as a dialog named from TEXT, focused on the card with not
   });
 });
 
-it("moves the keyboard's focus through Cancel then Restart, wrapping, both ways", async () => {
+it("moves the keyboard's focus through Cancel, Restart and the X, wrapping, both ways", async () => {
   const { button, key } = await openCard();
-  const steps = (["Tab", "ArrowRight", "Tab", "ArrowLeft", "ArrowUp"] as const).map((value) => {
-    key(value);
-    return document.activeElement?.textContent;
-  });
+  const steps = (["Tab", "ArrowRight", "Tab", "ArrowDown", "ArrowLeft", "ArrowUp"] as const).map(
+    (value) => {
+      key(value);
+      const focused = document.activeElement;
+      return focused?.getAttribute("aria-label") ?? focused?.textContent;
+    },
+  );
   const { cancel, restart } = TEXT.restart;
-  expect(steps).toEqual([cancel, restart, cancel, restart, cancel]);
+  const close = TEXT.update.close;
+  expect(steps).toEqual([cancel, restart, close, cancel, close, restart]);
   key("Tab", { shiftKey: true });
-  expect(document.activeElement).toBe(button(restart));
+  expect(document.activeElement).toBe(button(cancel));
+});
+
+it("closes without clearing from the close X", async () => {
+  const { button, key, restartClosed, stop } = await openCard();
+  button(TEXT.update.close).focus();
+  key("Enter");
+  button(TEXT.update.close).click();
+  expect(restartClosed).toHaveBeenCalledOnce();
+  expect(stop).toHaveBeenCalledExactlyOnceWith();
+  expect(clearProgress).not.toHaveBeenCalled();
 });
 
 it("never defaults to clearing, and Cancel closes without clearing", async () => {

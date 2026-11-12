@@ -60,7 +60,7 @@ export interface GameText {
   readonly update: {
     readonly accept: string;
     readonly cancel: string;
-    // The close X's accessible name.
+    // The close X's accessible name, on the update card and the restart card.
     readonly close: string;
     // The message shown when a newer version wrote the save and none can be downloaded.
     readonly connect: string;

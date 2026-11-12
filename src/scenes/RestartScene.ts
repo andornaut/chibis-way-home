@@ -20,17 +20,18 @@ export interface RestartData {
   readonly opener: string;
 }
 
-// The card's buttons, in the order the keyboard's focus moves through them.
+// The card's buttons, in the order the keyboard's focus moves through them; the close X follows.
 type Target = "cancel" | "restart";
 const TARGETS: readonly Target[] = ["cancel", "restart"];
 
 // The card that asks before Restart clears progress, over the scene that opened it: a question,
-// Cancel, and Restart, which confirms. Restart clears only the progress save and opens the map
-// with him on the first zone and nothing completed; Cancel, back, Escape, P and a tap outside
-// the card close it. The card is HTML in the UI layer (src/ui/dom/card.ts), shown once the dim
-// of the scenes under it is ready: a button acts when a press lands on it and lifts on it; Tab
-// and the arrows move the keyboard's focus, which starts on the card itself, and Enter and Space
-// press the focused button (the kit's modalLayer). The opener passes this scene back.
+// Cancel, Restart, which confirms, and a close X. Restart clears only the progress save and opens
+// the map with him on the first zone and nothing completed; Cancel, the close X, back, Escape, P
+// and a tap outside the card close it. The card is HTML in the UI layer (src/ui/dom/card.ts),
+// shown once the dim of the scenes under it is ready: a button acts when a press lands on it and
+// lifts on it; Tab and the arrows move the keyboard's focus through Cancel, Restart and the close
+// X, starting on the card itself, and Enter and Space press the focused one (the kit's
+// modalLayer). The opener passes this scene back.
 export class RestartScene extends Scene {
   private opener = "";
   private decided = false;
@@ -50,6 +51,8 @@ export class RestartScene extends Scene {
     const words = TEXT.restart;
     const card: CardView<Target> = createCard(document, "restart-card", {
       actions: TARGETS.map((key) => ({ key, label: words[key] })),
+      // The update card's close name: TEXT has no Restart close of its own.
+      close: TEXT.update.close,
       text: words.question,
       title: words.title,
     });
@@ -57,6 +60,7 @@ export class RestartScene extends Scene {
     for (const target of TARGETS) {
       card.buttons[target].addEventListener("click", () => this.act(target));
     }
+    card.close?.addEventListener("click", () => this.back());
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const guard = { gate: input };
@@ -81,7 +85,7 @@ export class RestartScene extends Scene {
     });
   }
 
-  // Back, Escape, P and a tap outside the card cancel.
+  // The close X, back, Escape, P and a tap outside the card cancel.
   back(): void {
     if (this.decided || !this.sys.isActive() || !modalInput(this).accepts()) {
       return;
