@@ -1,5 +1,5 @@
 // Movement map build cost per boss profile per stage area: kernel steps (deterministic) and
-// wall time. Run in the check container: npx tsx src/sim/mapBench.ts [--seeds 3] [--repeats 5]
+// wall time. Run in the check container: node src/sim/mapBench.ts [--seeds 3] [--repeats 5]
 // [--window leash|<tiles>] [--decisions].
 import { EDGE } from "../core";
 import { BIRD } from "../data/bird";
@@ -19,8 +19,8 @@ import {
 import { stageLoader } from "./catalogue";
 import { parseOptions, runMain, UsageError } from "./command";
 
-const HELP = `Usage: npx tsx src/sim/mapBench.ts [--seeds <n>] [--repeats <n>] [--window <w>]
-       npx tsx src/sim/mapBench.ts --decisions [--seeds <n>]
+const HELP = `Usage: node src/sim/mapBench.ts [--seeds <n>] [--repeats <n>] [--window <w>]
+       node src/sim/mapBench.ts --decisions [--seeds <n>]
 
 Builds every boss's movement or air map for every stage area that places it, for layout seeds
 1 to n (default 3), each build repeated (default 5), and prints work and wall time per profile.

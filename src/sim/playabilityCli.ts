@@ -8,7 +8,7 @@ import { RECIPES } from "../data/zones";
 import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans";
 import { choiceOption, parseOptions, runMain, UsageError } from "./command";
 import { assessPlayability, formatPlayabilityMarkdown } from "./playability";
-const HELP = `npx tsx src/sim/playabilityCli.ts --seeds 1,7 --source COMMIT [--format json|markdown] [--out FILE]
+const HELP = `node src/sim/playabilityCli.ts --seeds 1,7 --source COMMIT [--format json|markdown] [--out FILE]
 Structural catalogue assessment only. No physics, bots, playthrough or reachability search.
 Seeds are explicit, distinct unsigned 32-bit integers; maximum 16. All map stages are included.
 Source identifies the checked checkout; data is SHA-256 of the loaded structural inputs.

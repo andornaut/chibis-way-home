@@ -3,6 +3,7 @@ import { readdirSync } from "node:fs";
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import { createNodeResolver } from "eslint-plugin-import-x/node-resolver";
+import extensions from "eslint-plugin-import-x/rules/extensions";
 import noCycle from "eslint-plugin-import-x/rules/no-cycle";
 import noRestrictedPaths from "eslint-plugin-import-x/rules/no-restricted-paths";
 import globals from "globals";
@@ -13,6 +14,7 @@ import { plugins, sourceRules, toolingRules } from "./eslint.config.base.mjs";
 const SOURCE_FILES = ["src/**/*.ts"];
 const PHASER_FILES = ["src/main.ts", "src/scenes/**"];
 const TEST_FILES = ["src/**/*.test.ts"];
+const CONFIG_FILES = ["*.ts", "*.js", "*.mjs", "art/tools/**/*.ts"];
 
 // The import boundaries, one row each: the files outside `except` may not import what `forbid`
 // names. Logic, layout and data stay free of Phaser and the scenes, so they run in unit tests
@@ -41,7 +43,7 @@ const BOUNDARIES = [
 // Each context imports only contexts below it, bottom first: data; core; ai and
 // assets; camera and stage; rules; progress; presentation and ui; crash; loading; pwa; the
 // side pages (headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
-// tools). "folder/module" allows one module of a folder ("folder/index" its index):
+// tools). "folder/module.ts" allows one module of a folder ("folder/index.ts" its index):
 // each is an import that a later move removes, by moving the module into a context or the
 // importer out of one. The boundaries above govern src/testing/.
 const CONTEXTS = {
@@ -64,8 +66,8 @@ const CONTEXTS = {
     "assets",
     "core",
     "data",
-    "dev/mode",
-    "dev/step",
+    "dev/mode.ts",
+    "dev/step.ts",
     "loading",
     "presentation",
     "progress",
@@ -125,7 +127,9 @@ const CYCLE_EXEMPT_FILES = [
   "src/rules/timedHazard.ts",
 ];
 
-const IMPORT_X = { rules: { "no-cycle": noCycle, "no-restricted-paths": noRestrictedPaths } };
+const IMPORT_X = {
+  rules: { extensions, "no-cycle": noCycle, "no-restricted-paths": noRestrictedPaths },
+};
 const IMPORT_X_SETTINGS = {
   "import-x/extensions": [".ts"],
   "import-x/resolver-next": [createNodeResolver({ extensions: [".ts", ".js"] })],
@@ -155,7 +159,7 @@ function contextBoundary(context) {
       .filter((entry) => entry.startsWith(`${folder}/`))
       .map((entry) => escapeRegex(entry.slice(folder.length + 1)));
     const rest = exceptions.length === 0 ? "" : `(?!(?:${exceptions.join("|")})$)`;
-    const index = exceptions.includes("index") ? "" : "|$";
+    const index = exceptions.includes("index.ts") ? "" : "|$";
     return `${escapeRegex(folder)}(?:/${rest}${index})`;
   });
   return {
@@ -275,6 +279,14 @@ export default defineConfig(
     },
     settings: IMPORT_X_SETTINGS,
   },
+  // Every relative import names its file, ./x.ts or ./dir/index.ts, so plain node runs the source
+  // with type stripping and no resolver. Package imports keep their exported subpaths.
+  {
+    files: [...SOURCE_FILES, ...CONFIG_FILES],
+    plugins: { "import-x": IMPORT_X },
+    rules: { "import-x/extensions": ["error", "ignorePackages", { checkTypeImports: true }] },
+    settings: IMPORT_X_SETTINGS,
+  },
   // Rules and the agent core replay from explicit seeds and step inputs, never ambient entropy
   // or wall-clock time.
   {
@@ -295,7 +307,7 @@ export default defineConfig(
   },
   // Config files: they produce what ships rather than being it.
   {
-    files: ["*.ts", "*.js", "*.mjs", "art/tools/**/*.ts"],
+    files: CONFIG_FILES,
     plugins,
     rules: toolingRules,
   },

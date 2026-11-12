@@ -37,7 +37,7 @@ export function writeTuningOutputs(prefix: string, report: ReturnType<typeof ass
   }
 }
 const openExclusive = (path: string) => openSync(path, "wx");
-const HELP = `npx tsx src/sim/tuningCli.ts --cases MANIFEST --structural JSON --out-prefix PATH
+const HELP = `node src/sim/tuningCli.ts --cases MANIFEST --structural JSON --out-prefix PATH
 Post-processes saved case artifacts and a saved structural playability report into
 PATH.json, PATH.csv and PATH.md. No physics, navigation or replay.
 The manifest is a JSON array of {stage, path} entries, each path relative to the manifest.
