@@ -81,11 +81,7 @@ it("loads standalone manifest images in development and atlas mode", () => {
     scene.preload();
     expect(scene.load.json).not.toHaveBeenCalledWith("manifest", expect.anything());
     expect(scene.cache.json.add).toHaveBeenCalledExactlyOnceWith("manifest", manifest);
-    expect(bitmapFont).toHaveBeenCalledExactlyOnceWith(
-      "font-body",
-      "fonts/body.png",
-      "fonts/body.fnt",
-    );
+    expect(bitmapFont).not.toHaveBeenCalled();
     expect(scene.load.image).toHaveBeenCalledExactlyOnceWith(
       "standalone-image",
       "images/standalone.png",
@@ -192,45 +188,6 @@ it("logs a failed boot file and queues it again in a later run that shows no bar
   vi.useRealTimers();
 });
 
-it("queues a failed boot font again whole in a later run", () => {
-  vi.useFakeTimers();
-  vi.stubGlobal("window", { clearTimeout, location: { search: "" }, setTimeout });
-  art.atlas = null;
-  const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-  const scene = new BootScene();
-  const { bitmapFont } = scene.load;
-  // Each call queues the font's image and data as Phaser's multi-file load does.
-  const font = { key: "font-body" };
-  const files = [
-    { ...loaderFile("font-body"), multiFile: font, url: "fonts/body.png" },
-    { ...loaderFile("font-body"), multiFile: font, type: "xml", url: "fonts/body.fnt" },
-  ];
-  vi.mocked(bitmapFont).mockImplementation(() => {
-    for (const file of files) {
-      scene.load.emit("addfile", file.key, file.type, scene.load, file);
-    }
-    return scene.load;
-  });
-  scene.preload();
-  Object.assign(scene.load, { list: new Set(files) });
-  scene.load.emit("start");
-  scene.load.emit("loaderror", files[0]);
-  scene.load.emit("load", files[1]);
-  scene.load.emit("complete");
-  expect(warn).toHaveBeenCalledExactlyOnceWith(
-    "Loading fonts/body.png failed after 3 attempts; retrying later",
-  );
-  vi.mocked(bitmapFont).mockClear();
-  vi.advanceTimersByTime(15000);
-  expect(bitmapFont).toHaveBeenCalledExactlyOnceWith(
-    "font-body",
-    "fonts/body.png",
-    "fonts/body.fnt",
-  );
-  expect(scene.load.start).toHaveBeenCalledOnce();
-  warn.mockRestore();
-  vi.useRealTimers();
-});
 
 afterEach(() => {
   vi.unstubAllGlobals();

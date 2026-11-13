@@ -56,7 +56,6 @@ import { SettingsScene } from "./scenes/SettingsScene.ts";
 import { SkillDetailScene } from "./scenes/SkillDetailScene.ts";
 import { StageSelectScene } from "./scenes/StageSelectScene.ts";
 import { StartScene } from "./scenes/StartScene.ts";
-import { mountUiPresentation } from "./scenes/uiPresentation.ts";
 import { installUpdateModalBridge, UpdateScene } from "./scenes/UpdateScene.ts";
 import { ZoneBarkScene } from "./scenes/ZoneBarkScene.ts";
 import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene.ts";
@@ -73,9 +72,8 @@ const INK = "#181425";
 // fractionally, and show its view at the canvas's top, centred across (src/scenes/playCamera.ts),
 // and every control stays in that view, clear of the bars beside or below it. Every texture
 // samples nearest unless BootScene's filters (src/scenes/textureFilters.ts) or its own code make
-// it linear, and the canvas itself is never smoothed. The UI overlay (mountUiPresentation) draws
-// the UI scenes over the canvas at the full device pixel ratio, and the HTML UI layer
-// (mountDomUi, src/ui/dom/) holds the screens moved to the page over both. The game is
+// it linear, and the canvas itself is never smoothed. The HTML UI layer
+// (mountDomUi, src/ui/dom/) draws the interface over the world canvas at device resolution. The game is
 // constructed after the document's one-time staged-update launch boundary and shows its first
 // screen as soon as it has loaded.
 function startGame(): void {
@@ -131,7 +129,6 @@ function startGame(): void {
     type: WEBGL,
     width: SCREEN.width,
   });
-  mountUiPresentation(game);
   installUpdateModalBridge(game);
   const gameHost = document.getElementById("game");
   if (gameHost) {

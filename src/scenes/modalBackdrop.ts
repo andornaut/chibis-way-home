@@ -4,10 +4,9 @@ import { type GameObjects, type Scene, Scenes } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
 import { canvasSize, modalColour, viewShift } from "../ui/index.ts";
-import { palette, paletteColour } from "./cardParts.ts";
+import { palette, paletteColour } from "./scenePalette.ts";
 import { modalInput } from "./modalInput.ts";
 import { canvasRect, fitCanvasCamera, sceneFit } from "./playCamera.ts";
-import { mountUiModalBackdrop } from "./uiModalBackdrop.ts";
 
 // Capture only the underlying scenes, and draw the owned backdrop before the card cameras.
 export function showModalBackdrop(
@@ -58,11 +57,9 @@ export function showModalBackdrop(
   };
   // The capture reads the whole backing, in device pixels; the backdrop draws over the whole
   // canvas, in base pixels (fit).
-  const area = canvasRect(scene);
   const { height, width } = scene.scale.gameSize;
   const backing = { height, width, x: 0, y: 0 };
-  const backdrop =
-    mountUiModalBackdrop(context, backing, area) ?? mountModalBackdrop(context, backing);
+  const backdrop = mountModalBackdrop(context, backing);
   const toContent = (object: GameObjects.GameObject) => backdropCamera.ignore(object);
   const destroy = () => {
     if (disposed) {

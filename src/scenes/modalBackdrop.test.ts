@@ -10,7 +10,7 @@ vi.mock("@andornaut/game-kit/view/phaser/modalBackdrop", () => ({
   mountModalBackdrop: capture.mount,
 }));
 vi.mock("phaser", () => ({ Scenes: { Events: { ADDED_TO_SCENE: "addedtoscene" } } }));
-vi.mock("./cardParts.ts", () => ({
+vi.mock("./scenePalette.ts", () => ({
   palette: () => paletteData,
   paletteColour: () => 0x181425,
 }));

@@ -12,6 +12,7 @@ import { DEATH_LAYOUT } from "./death.ts";
 import { DIALOGUE_FOOTER_LAYOUT, DIALOGUE_PANEL_LAYOUT } from "./dialogue.ts";
 import { UI_LAYOUT } from "./layer.ts";
 import { MAP_PROPERTIES } from "./map.ts";
+import { OPENING_PROPERTIES } from "./opening.ts";
 import { PAUSE_LAYOUT, skillPlace } from "./pause.ts";
 import { roomPortraitProperties, roomProperties } from "./room.ts";
 import { runStatsProperties } from "./runStats.ts";
@@ -45,10 +46,8 @@ const WRITTEN = new Set(
     TOUCH_CONTROLS_PROPERTIES,
     CELEBRATION_DOM_LAYOUT,
     MAP_PROPERTIES,
-    roomProperties({
-      art: { height: 0, width: 0, x: 0, y: 0 },
-      hit: { height: 0, width: 0, x: 0, y: 0 },
-    }),
+    roomProperties(),
+    OPENING_PROPERTIES,
     roomPortraitProperties({ height: 0, width: 0 }),
     startIconProperties(0, { height: 0, width: 0, x: 0, y: 0 }),
     SETTINGS_LAYOUT,

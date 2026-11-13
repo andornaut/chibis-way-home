@@ -12,7 +12,7 @@ const dom = vi.hoisted(() => ({
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: dom.backdrop }) }));
-vi.mock("./cardParts.ts", async () => {
+vi.mock("./scenePalette.ts", async () => {
   const { default: palette } = await import("../../public/art/palette.json");
   return {
     paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>

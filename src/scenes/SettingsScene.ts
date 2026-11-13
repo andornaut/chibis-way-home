@@ -20,7 +20,7 @@ import {
   type TouchSetting,
   touchSettingShown,
 } from "../ui/index.ts";
-import { paletteColour } from "./cardParts.ts";
+import { paletteColour } from "./scenePalette.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";

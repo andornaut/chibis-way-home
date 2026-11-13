@@ -9,7 +9,7 @@ import { SCREEN } from "../data/screen.ts";
 import { contactOverscan } from "../ui/index.ts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback.ts";
 
-vi.mock("./cardParts.ts", () => ({ paletteColour: () => 1 }));
+vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 1 }));
 const shake = CAMERA.contactShake!;
 class Snapshot {}
 afterEach(() => vi.unstubAllGlobals());

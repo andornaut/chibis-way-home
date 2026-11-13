@@ -22,7 +22,7 @@ vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/installOffer.ts", () => ({ installOffer: () => offer }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: backdrop }));
-vi.mock("./cardParts.ts", async () => {
+vi.mock("./scenePalette.ts", async () => {
   const { default: palette } = await import("../../public/art/palette.json");
   return {
     paletteColour: (_scene: unknown, name: keyof typeof palette.colours) =>

@@ -32,7 +32,7 @@ import {
   touchSettings,
 } from "../ui/index.ts";
 import { FRAME_TURN } from "../ui/input/frameTurn.ts";
-import { paletteColour } from "./cardParts.ts";
+import { paletteColour } from "./scenePalette.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput, type SceneInput } from "./modalInput.ts";

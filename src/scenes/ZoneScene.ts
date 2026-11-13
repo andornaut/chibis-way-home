@@ -194,7 +194,7 @@ import { achievementNoticeShowing } from "./achievementNotice.ts";
 import { mountAirJumpCue } from "./airJumpCue.ts";
 import { backdropBottomFrame } from "./backdropBottomFrame.ts";
 import { mountBossWarning } from "./bossWarning.ts";
-import { paletteColour } from "./cardParts.ts";
+import { paletteColour } from "./scenePalette.ts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback.ts";
 import { createCrumblingArt } from "./crumblingArt.ts";
 import type { CutsceneData } from "./CutsceneScene.ts";

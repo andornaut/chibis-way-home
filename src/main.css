@@ -69,18 +69,5 @@ body {
   display: block;
 }
 
-#game > canvas[data-game-ui] {
-  position: absolute;
-  pointer-events: none;
-  image-rendering: auto;
-  z-index: 0;
-}
 
-#game[data-modal-open] > canvas[data-game-ui] {
-  position: absolute;
-  z-index: 3;
-}
 
-#game > canvas[data-game-ui][hidden] {
-  display: none;
-}

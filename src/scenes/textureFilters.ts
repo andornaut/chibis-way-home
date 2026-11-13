@@ -7,15 +7,14 @@ export type TextureFilter = "linear" | "nearest";
 
 // Each texture list of art's manifest and its filter. Authored pixel art (sprites, tilesets,
 // backdrops and standalone images: stage previews, logos, the start background) samples nearest
-// at every scale, the fractional zoom included. The font rasters are antialiased Liberation Sans,
-// so they sample linear. A new list needs its filter here before it type-checks.
+// at every scale, the fractional zoom included. Bitmap font exports belong to art previews,
+// not runtime textures. A new runtime list needs its filter here before it type-checks.
 export const MANIFEST_FILTERS = {
   backdrops: "nearest",
-  fonts: "linear",
   images: "nearest",
   sprites: "nearest",
   tilesets: "nearest",
-} as const satisfies Record<Exclude<keyof ArtManifest, "data">, TextureFilter>;
+} as const satisfies Record<Exclude<keyof ArtManifest, "data" | "fonts">, TextureFilter>;
 
 // The filter of every texture BootScene loads: each manifest key by its list, and each atlas
 // page, which every sprite, tileset and backdrop on it shares, nearest.

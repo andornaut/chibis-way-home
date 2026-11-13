@@ -12,21 +12,19 @@ import { filterLoadedArt, MANIFEST_FILTERS, textureFilters } from "./textureFilt
 describe("texture filters", () => {
   // A texture list art adds to the manifest needs a filter before it loads.
   it("classify every texture list in art's manifest", () => {
-    const lists = Object.keys(manifest).filter((list) => list !== "data");
+    const lists = Object.keys(manifest).filter((list) => list !== "data" && list !== "fonts");
     expect(lists.sort()).toEqual(Object.keys(MANIFEST_FILTERS).sort());
   });
 
-  it("sample the fonts linear and every other manifest texture and atlas page nearest", () => {
+  it("sample runtime textures nearest and leave preview bitmap fonts outside the runtime graph", () => {
     const pages = [{ height: 1, url: "atlas-0.webp", width: 1 }];
     const filters = textureFilters(manifest, { pages });
     const keys = Object.keys(MANIFEST_FILTERS).flatMap((list) =>
       manifest[list as keyof typeof MANIFEST_FILTERS].map(({ key }) => key),
     );
-    const fonts = new Set(manifest.fonts.map(({ key }) => key));
     expect([...filters.keys()].sort()).toEqual([...keys, atlasPageKey(0)].sort());
-    expect(
-      [...filters].filter(([key, filter]) => (filter === "linear") !== fonts.has(key)),
-    ).toEqual([]);
+    expect([...filters.values()].every((filter) => filter === "nearest")).toBe(true);
+    expect(manifest.fonts.some(({ key }) => filters.has(key))).toBe(false);
   });
 
   it("set each loaded texture's source and skip one that failed to load", () => {
@@ -48,7 +46,7 @@ describe("texture filters", () => {
     filterLoadedArt({ textures } as never, art as unknown as ArtManifest, {
       pages: [{ height: 1, url: "", width: 1 }],
     });
-    expect(font.setFilter).toHaveBeenCalledExactlyOnceWith(0);
+    expect(font.setFilter).not.toHaveBeenCalled();
     expect(page.setFilter).toHaveBeenCalledExactlyOnceWith(1);
   });
 });

@@ -24,7 +24,6 @@ import { createMessageCard } from "../ui/index.ts";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice.ts";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt.ts";
 import { mountSceneView, prepareDomUi } from "./domUi.ts";
-import { queueFontArt } from "./fontArt.ts";
 import { loadProgress } from "./save.ts";
 import { filterLoadedArt } from "./textureFilters.ts";
 
@@ -44,8 +43,8 @@ export class BootScene extends Scene {
     super("boot");
   }
 
-  // Font PNG/FNT pairs load independently in both modes. A production build loads the
-  // remaining game art from shared atlas pages. create filters every texture (textureFilters.ts).
+  // A production build loads game art from shared atlas pages. The HTML UI loads its TTF
+  // faces through DOM readiness. create filters every world texture (textureFilters.ts).
   // The kit's loader watch measures the file load as one the player waits for, which the bar
   // shows by its settled files, and logs and retries failed files; it ends with the scene.
   preload(): void {
@@ -68,7 +67,6 @@ export class BootScene extends Scene {
     for (const { key, png } of MANIFEST.images) {
       this.load.image(key, png);
     }
-    queueFontArt(this, MANIFEST);
     if (ATLAS !== null) {
       return;
     }

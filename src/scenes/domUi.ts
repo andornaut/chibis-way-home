@@ -21,7 +21,7 @@ import {
   UI_FRAMES,
   type UiLayer,
 } from "../ui/index.ts";
-import { palette } from "./cardParts.ts";
+import { palette } from "./scenePalette.ts";
 import { sceneFit } from "./playCamera.ts";
 
 // The game's HTML UI layer (src/ui/dom/layer.ts) in #game, over the canvas: kept on the play

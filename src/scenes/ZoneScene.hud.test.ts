@@ -33,7 +33,7 @@ vi.mock("phaser", () => ({
   Scenes: {},
 }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { turn: () => 0 } }));
-vi.mock("./cardParts.ts", () => ({
+vi.mock("./scenePalette.ts", () => ({
   paletteColour: (_scene: unknown, name: "cream" | "ink" | "white") =>
     ({ cream: 1, ink: 0, white: 2 })[name],
 }));
