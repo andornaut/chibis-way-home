@@ -289,6 +289,11 @@ export const TEXT: GameText = {
   settings: {
     actionButtons: "Action buttons",
     close: "Close",
+    descriptions: {
+      actionButtons: "Hide or show Use and Jump. Touch actions still work.",
+      moveControls: "Hide or show the movement guide. Touch movement still works.",
+      reducedMotion: "Reduce screen shake and flashing effects.",
+    },
     install: "Install",
     installButton: "Install",
     installSteps: {
@@ -321,6 +326,7 @@ export const TEXT: GameText = {
     },
     moveControls: "Move controls",
     reducedMotion: "Reduced motion",
+    state: { hidden: "Hidden", off: "Off", on: "On", shown: "Shown" },
     title: "Settings",
     touchStillWorks: "Touch still works when hidden",
   },
