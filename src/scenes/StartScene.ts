@@ -1,5 +1,7 @@
 import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { browserExitPage, exitApp } from "@andornaut/game-kit/web/pwa/dom/exitApp";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
@@ -7,6 +9,7 @@ import type { Rect } from "../data/types/index.ts";
 import { openingDestination } from "../progress/index.ts";
 import { coverZone, exitShown, PHONE_EVENTS, startScreenShown } from "../pwa/index.ts";
 import {
+  createStart,
   focusKeyAction,
   type IconButtonLayout,
   type PressArea,
@@ -15,6 +18,7 @@ import {
   startBackAction,
   type StartScreenLayout,
   startScreenLayout,
+  type StartView,
   stepFocus,
   type TouchSetting,
 } from "../ui/index.ts";
@@ -33,6 +37,8 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput, onScenePointer } from "./modalInput.ts";
 import { fitPlayCamera, playPoint } from "./playCamera.ts";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
@@ -77,6 +83,9 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
   private starting = false;
   private startButton!: TextButton;
   private restartButton: TextButton | undefined;
+  private view: StartView | undefined;
+  private native = false;
+  private fallback: GameObjects.GameObject[] = [];
 
   constructor() {
     super("start");
@@ -84,6 +93,8 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
 
   create(): void {
     this.starting = false;
+    this.native = false;
+    this.view = undefined;
     fitPlayCamera(this);
     this.pressed = undefined;
     this.card = undefined;
@@ -96,6 +107,7 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
       savedProgress().at !== "beginning",
     );
     this.draw();
+    this.mountNative();
     this.showPressed(undefined);
     this.watchPresses();
     modalInput(this).subscribe(() => this.showPressed(undefined));
@@ -150,6 +162,7 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     const { achievements, exit, logo, nav, restart, settings, start } = this.layout;
     this.cameras.main.setBackgroundColor(this.colour("ink"));
     this.add.image(0, 0, BACKGROUND).setOrigin(0);
+    const firstUi = this.children.list.length;
     addSlice(this, "ui-nav-bar", nav);
     this.add.image(logo.x, logo.y, LOGO).setOrigin(0).setDisplaySize(logo.width, logo.height);
     this.buttons = new Map([
@@ -165,6 +178,117 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     );
     this.restartButton =
       restart === undefined ? undefined : addTextButton(this, restart, TEXT.start.restart);
+    this.fallback = this.children.list.slice(firstUi);
+  }
+
+  private mountNative(): void {
+    const layer = sceneDomUi(this);
+    if (layer === undefined) {
+      return;
+    }
+    const view = createStart(layer.element.ownerDocument, TEXT.start, this.layout);
+    this.view = view;
+    const input = modalInput(this);
+    const live = () => this.native && !this.starting && this.card === undefined;
+    const controlAt = (event: Event): Control | null => {
+      const target = event.target;
+      return target instanceof Element && view.root.contains(target)
+        ? ((target.closest<HTMLElement>("[data-control]")?.dataset.control as
+            Control | undefined) ?? null)
+        : null;
+    };
+    const stop = followTaps<Control>(
+      { preventDefault: true, target: view.root, view: view.root },
+      input,
+      {
+        accepts: live,
+        controlAt,
+        land: (control) => {
+          this.focus = control;
+          focusTarget(view.buttons.get(control)!);
+        },
+        show: (control) => this.showPressed(control),
+        tap: (control) => this.act(control),
+      },
+    );
+    const click = (event: MouseEvent) => {
+      const control = controlAt(event);
+      if (event.detail === 0 && control !== null && live() && input.accepts(event)) {
+        this.focus = control;
+        this.act(control);
+      }
+    };
+    const key = (event: KeyboardEvent) => {
+      if (
+        !live() ||
+        !input.accepts(event) ||
+        focusKeyAction(event.key, event.shiftKey, false) === undefined
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      this.key(event);
+    };
+    const focus = () => {
+      for (const [control, button] of view.buttons) {
+        if (button === view.root.ownerDocument.activeElement) {
+          this.focus = control;
+        }
+      }
+    };
+    const keep = (event: Event) => event.preventDefault();
+    view.root.addEventListener("click", click);
+    view.root.addEventListener("keydown", key);
+    view.root.addEventListener("focusin", focus);
+    view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
+    view.root.addEventListener("touchend", keep, { capture: true, passive: false });
+    const art = {
+      achievements: "icon-achievements",
+      exit: "ui-quit",
+      logo: LOGO,
+      settings: "icon-settings-nav",
+    };
+    const urls = Promise.all(
+      [...view.images].map(async ([name, image]) => {
+        const key = art[name as keyof typeof art];
+        const frame = this.textures.getFrame(key);
+        if (name !== "logo") {
+          writeLayoutProperties(
+            { "--start-height": frame.realHeight, "--start-width": frame.realWidth },
+            image,
+          );
+        }
+        const url = await artFrameUrl(this, key);
+        image.setAttribute("src", url);
+        return url;
+      }),
+    );
+    const reveal = revealSceneView(this, view.root, urls);
+    mountSceneView(this, view.root);
+    let active = true;
+    this.events.once("shutdown", () => {
+      active = false;
+      reveal.cancel();
+      stop();
+      view.root.removeEventListener("click", click);
+      view.root.removeEventListener("keydown", key);
+      view.root.removeEventListener("focusin", focus);
+      view.root.removeEventListener("touchstart", keep, true);
+      view.root.removeEventListener("touchend", keep, true);
+    });
+    void reveal.revealed.then((ready) => {
+      if (!ready || !active || this.view !== view) {
+        return;
+      }
+      this.showPressed(undefined);
+      this.native = true;
+      for (const object of this.fallback) {
+        (object as GameObjects.Image).setVisible(false);
+      }
+      this.focusRing?.setVisible(false);
+      this.drawFocus();
+    });
   }
 
   // A nav icon button: its face, and its icon (the icon's first frame) over it.
@@ -180,6 +304,12 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
   // and a nav button's face sinks with its icon.
   private showPressed(control: Control | undefined): void {
     this.pressed = control;
+    if (this.native) {
+      for (const [name, button] of this.view?.buttons ?? []) {
+        button.toggleAttribute("data-pressed", name === control);
+      }
+      return;
+    }
     pressTextButton(this.startButton, control === "start");
     if (this.restartButton) {
       pressTextButton(this.restartButton, control === "restart");
@@ -207,10 +337,16 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
 
   private watchPresses(): void {
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
+      if (this.native) {
+        return;
+      }
       // While a card shows, nothing on the start screen responds.
       this.showPressed(this.card === undefined ? this.controlAt(pointer) : undefined);
     });
     onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
+      if (this.native) {
+        return;
+      }
       const control = this.pressed;
       this.showPressed(undefined);
       if (control !== undefined && control === this.controlAt(pointer)) {
@@ -251,6 +387,15 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
 
   // Art's focus ring round Start's face or a nav button's face.
   private drawFocus(): void {
+    if (this.native) {
+      if (this.card === undefined && this.focus !== undefined) {
+        const button = this.view?.buttons.get(this.focus);
+        if (button) {
+          focusTarget(button);
+        }
+      }
+      return;
+    }
     const faceOf = (control: Control): Rect | undefined => {
       if (control === "start" || control === "restart") {
         return this.layout[control]?.button;

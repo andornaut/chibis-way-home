@@ -1,0 +1,56 @@
+/* Logical geometry is shared with the canvas fallback, scaled by the play view's --ui-unit. */
+.start-box {
+  position: absolute;
+  left: calc(var(--ui-unit) * var(--start-x) * 1px);
+  top: calc(var(--ui-unit) * var(--start-y) * 1px);
+  width: calc(var(--ui-unit) * var(--start-width) * 1px);
+  height: calc(var(--ui-unit) * var(--start-height) * 1px);
+}
+
+.start-view img {
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.start-nav {
+  --ui-frame-image: var(--ui-nav-bar-image);
+  --ui-frame-slice: var(--ui-nav-bar-slice);
+  --ui-frame-width: var(--ui-nav-bar-border);
+}
+
+.start-view button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.start-view button:focus {
+  outline: none;
+}
+
+.start-view .ui-text-button-face {
+  min-width: 0;
+}
+
+.start-icon-face {
+  display: block;
+  background-image: var(--ui-icon-button-image);
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+
+.start-icon-button[data-pressed] .start-icon-face {
+  background-image: var(--ui-icon-button-pressed-image);
+}
+
+.start-icon-button[data-pressed] img {
+  translate: 0 calc(var(--ui-unit) * var(--start-icon-sink) * 1px);
+}
+
+.start-icon-button:focus-visible .start-icon-face {
+  box-shadow: var(--focus-ring);
+}
