@@ -1,9 +1,10 @@
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
-import { rectAt } from "../core/index.ts";
+import { EDGE, rectAt, STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
 import { contactBox } from "../rules/behaviour.ts";
+import { ordinaryJumpReleaseTargetHeight } from "../rules/bird.ts";
 import { transientBox } from "../rules/transients.ts";
 import type { ZoneInput, ZoneState } from "../rules/zone.ts";
 import { hasDynamicMotion } from "./behaviourBounds.ts";
@@ -243,6 +244,32 @@ function obstacleAhead(
   };
 }
 
+export interface JumpHoldBounds {
+  readonly maximum: number;
+  readonly minimum: number;
+}
+
+// A release target is a controller estimate, not a terrain-clearance witness. Return unavailable
+// when no integer hold reaches the observed height within the existing bounds.
+export function adaptiveJumpHoldTicks(
+  tuning: BirdTuning,
+  bounds: JumpHoldBounds,
+  obstacleHeight: number,
+): number | undefined {
+  const minimum = Math.max(1, Math.ceil(bounds.minimum));
+  const maximum = Math.floor(bounds.maximum);
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) {
+    return undefined;
+  }
+  const required = obstacleHeight + EDGE;
+  for (let ticks = minimum; ticks <= maximum; ticks++) {
+    if (ordinaryJumpReleaseTargetHeight(tuning, ticks * STEP_SECONDS) >= required) {
+      return ticks;
+    }
+  }
+  return undefined;
+}
+
 export function botInput(
   tuning: BirdTuning,
   sensors: SensorIndex,
@@ -295,16 +322,12 @@ export function botInput(
   if (jump && bot.random() >= skill.errorRate) {
     let hold = skill.jumpHoldTicks;
     if (skill.adaptiveJump && plan && !plan.gap && !plan.danger) {
-      const minimum = skill.minJumpHoldTicks ?? 1;
-      const fullHeight = (tuning.jumpSpeed * tuning.jumpRiseTime) / 2;
-      const share = Math.max(
-        0,
-        Math.min(
-          1,
-          (plan.height - tuning.jumpHopHeight) / Math.max(1, fullHeight - tuning.jumpHopHeight),
-        ),
-      );
-      hold = minimum + Math.ceil((hold - minimum) * share);
+      hold =
+        adaptiveJumpHoldTicks(
+          tuning,
+          { maximum: hold, minimum: skill.minJumpHoldTicks ?? 1 },
+          plan.height,
+        ) ?? hold;
     }
     bot.holding = hold - 1;
     bot.targetY = plan && !plan.gap ? zone.bird.y + tuning.height - plan.height : undefined;

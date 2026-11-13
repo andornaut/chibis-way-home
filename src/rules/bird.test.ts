@@ -11,6 +11,7 @@ import {
   ordinaryFallVelocity,
   ordinaryHorizontalVelocity,
   ordinaryJumpApexFeetY,
+  ordinaryJumpReleaseTargetHeight,
   startBird,
   stepBird,
   stepBirdWithSupport,
@@ -454,4 +455,17 @@ describe("external push", () => {
       );
     },
   );
+});
+
+it("queries the same tap window, smooth release blend and saturated ordinary ascent target", () => {
+  const tap = BIRD.jumpTapWindow;
+  const blend = BIRD.jumpReleaseBlendTime;
+  const hop = BIRD.jumpHopHeight;
+  const full = ordinaryJumpReleaseTargetHeight(BIRD, tap + blend);
+  expect(ordinaryJumpReleaseTargetHeight(BIRD, STEP_SECONDS)).toBe(hop);
+  expect(ordinaryJumpReleaseTargetHeight(BIRD, tap)).toBe(hop);
+  expect(ordinaryJumpReleaseTargetHeight(BIRD, tap + blend / 2)).toBeCloseTo((hop + full) / 2);
+  expect(ordinaryJumpReleaseTargetHeight(BIRD, BIRD.jumpRiseTime)).toBe(full);
+  expect(full).toBeGreaterThan(hop);
+  expect(full).toBeLessThan(BIRD.jumpSpeed ** 2 / (2 * BIRD.gravity));
 });

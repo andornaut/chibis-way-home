@@ -183,6 +183,25 @@ function ascentCurve(tuning: BirdTuning): AscentCurve {
   return curve;
 }
 
+function releaseTargetHeight(
+  tuning: BirdTuning,
+  hopHeight: number,
+  curveHeight: number,
+  heldSeconds: number,
+): number {
+  const progress = Math.max(
+    0,
+    Math.min(1, (heldSeconds - tuning.jumpTapWindow) / tuning.jumpReleaseBlendTime),
+  );
+  const retained = progress * progress * (3 - 2 * progress);
+  return hopHeight + retained * (curveHeight - hopHeight);
+}
+
+// The existing ordinary release target, before fixed-step sampling or terrain contact.
+export function ordinaryJumpReleaseTargetHeight(tuning: BirdTuning, heldSeconds: number): number {
+  return releaseTargetHeight(tuning, tuning.jumpHopHeight, ascentCurve(tuning).height, heldSeconds);
+}
+
 const AIR_ASCENT_CURVES = new WeakMap<BirdTuning, AscentCurve>();
 
 function airAscentCurve(tuning: BirdTuning): AscentCurve {
@@ -502,12 +521,7 @@ function solveBird(
   const jumpHeldFor = input.jumpHeld ? heldBefore + seconds : 0;
   const released = bird.jumpHeld && !input.jumpHeld;
   if (released && vy < 0 && jumpRise === "held") {
-    const progress = Math.max(
-      0,
-      Math.min(1, (heldBefore - tuning.jumpTapWindow) / tuning.jumpReleaseBlendTime),
-    );
-    const retained = progress * progress * (3 - 2 * progress);
-    const target = hopHeight + retained * (curve.height - hopHeight);
+    const target = releaseTargetHeight(tuning, hopHeight, curve.height, heldBefore);
     const remaining = Math.max(0, target - (jumpFromY - bird.y));
     jumpRelease = releaseCurve(
       tuning.gravity,

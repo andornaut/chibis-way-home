@@ -1,13 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { BIRD_FRAME } from "../assets/index.ts";
+import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { BIRD } from "../data/bird.ts";
 import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
+import { ordinaryJumpReleaseTargetHeight, startBird, stepBird } from "../rules/bird.ts";
 import { orbitPosition } from "../rules/orbit.ts";
 import type { Transient } from "../rules/transients.ts";
 import { startZone } from "../rules/zone.ts";
 import { emissionBounds } from "./behaviourBounds.ts";
-import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "./bot.ts";
+import {
+  adaptiveJumpHoldTicks,
+  botInput,
+  DIAGNOSTIC_SKILL,
+  FORWARD_POLICY,
+  newBot,
+  prepareSensors,
+} from "./bot.ts";
 import { zoneSurfaces } from "./zoneWalk.ts";
 
 const ground = { height: 20, width: 1100, x: 0, y: 120 };
@@ -268,4 +277,157 @@ describe("local bot decisions", () => {
     expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(0);
     expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(1);
   });
+});
+
+describe("adaptive ordinary jump holds", () => {
+  const bounds = {
+    maximum: DIAGNOSTIC_SKILL.jumpHoldTicks,
+    minimum: DIAGNOSTIC_SKILL.minJumpHoldTicks!,
+  };
+
+  it("keeps low obstacles at the minimum but selects beyond the tap window for a hop-height wall", () => {
+    expect(adaptiveJumpHoldTicks(BIRD, bounds, 12)).toBe(bounds.minimum);
+    const lastTap = Math.floor(BIRD.jumpTapWindow / STEP_SECONDS);
+    expect(ordinaryJumpReleaseTargetHeight(BIRD, lastTap * STEP_SECONDS)).toBe(BIRD.jumpHopHeight);
+    expect(adaptiveJumpHoldTicks(BIRD, bounds, BIRD.jumpHopHeight)).toBe(lastTap + 1);
+  });
+
+  it.each([48, 60])(
+    "chooses the smallest allowed hold and clears a native %ipx wall top",
+    (height) => {
+      const selected = adaptiveJumpHoldTicks(BIRD, bounds, height);
+      expect(selected).toBeDefined();
+      const hold = selected!;
+      expect(Number.isInteger(hold)).toBe(true);
+      expect(hold).toBeGreaterThanOrEqual(bounds.minimum);
+      expect(hold).toBeLessThanOrEqual(bounds.maximum);
+      expect(hold * STEP_SECONDS).toBeGreaterThan(BIRD.jumpTapWindow);
+      expect(ordinaryJumpReleaseTargetHeight(BIRD, hold * STEP_SECONDS)).toBeGreaterThanOrEqual(
+        height + EDGE,
+      );
+      expect(ordinaryJumpReleaseTargetHeight(BIRD, (hold - 1) * STEP_SECONDS)).toBeLessThan(
+        height + EDGE,
+      );
+      const wall = { height, width: 12, x: 100, y: ground.y - height };
+      const layout = fixture([ground, wall]);
+      const sensors = prepareSensors(layout);
+      const initial = startZone(BIRD, layout, 1);
+      let bird = stepBird(
+        BIRD,
+        [ground, wall],
+        [],
+        STEP_SECONDS,
+        { jumpHeld: false, move: 0 },
+        startBird(BIRD, { x: 60, y: ground.y }),
+      );
+      const bot = newBot(1);
+      const input = botInput(
+        BIRD,
+        sensors,
+        layout,
+        DIAGNOSTIC_SKILL,
+        FORWARD_POLICY,
+        { ...initial, bird },
+        bot,
+      );
+      expect(input.jumpHeld).toBe(true);
+      expect(bot.holding).toBe(hold - 1);
+      let aboveWall = false;
+      for (let tick = 0; tick < 120 && bird.x < wall.x + wall.width; tick++) {
+        bird = stepBird(
+          BIRD,
+          [ground, wall],
+          [],
+          STEP_SECONDS,
+          { jumpHeld: tick < hold, move: 1 },
+          bird,
+        );
+        aboveWall ||=
+          bird.x + BIRD.width > wall.x &&
+          bird.x < wall.x + wall.width &&
+          bird.y + BIRD.height <= wall.y + EDGE;
+      }
+      expect(aboveWall).toBe(true);
+      expect(bird.x).toBeGreaterThanOrEqual(wall.x + wall.width);
+    },
+  );
+
+  it("reports unavailable when the cap stays within the tap window and preserves the caller's cap fallback", () => {
+    const maximum = Math.floor(BIRD.jumpTapWindow / STEP_SECONDS);
+    const height = 48;
+    expect(adaptiveJumpHoldTicks(BIRD, { ...bounds, maximum }, height)).toBeUndefined();
+    expect(
+      adaptiveJumpHoldTicks(BIRD, { maximum: bounds.minimum - 1, minimum: bounds.minimum }, 12),
+    ).toBeUndefined();
+    const layout = fixture([ground, { height, width: 12, x: 100, y: ground.y - height }]);
+    const initial = startZone(BIRD, layout, 1);
+    const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
+    const bot = newBot(1);
+    const input = botInput(
+      BIRD,
+      prepareSensors(layout),
+      layout,
+      { ...DIAGNOSTIC_SKILL, jumpHoldTicks: maximum },
+      FORWARD_POLICY,
+      zone,
+      bot,
+    );
+    expect(input.jumpHeld).toBe(true);
+    expect(bot.holding).toBe(maximum - 1);
+    expect(ordinaryJumpReleaseTargetHeight(BIRD, maximum * STEP_SECONDS)).toBeLessThan(
+      height + EDGE,
+    );
+  });
+
+  it("does not report an unavailable high wall as clearing at the configured maximum", () => {
+    const maximumRise = ordinaryJumpReleaseTargetHeight(BIRD, bounds.maximum * STEP_SECONDS);
+    expect(adaptiveJumpHoldTicks(BIRD, bounds, maximumRise)).toBeUndefined();
+    expect(adaptiveJumpHoldTicks(BIRD, bounds, maximumRise + 1)).toBeUndefined();
+  });
+});
+
+it("preserves full-cap holds for a gap or hazard instead of adapting to their observed height", () => {
+  for (const layout of [
+    fixture([{ ...ground, width: 96 }]),
+    fixture([ground], [{ ...platform, collision: "hazard", origin: { x: 100, y: 108 } }]),
+  ]) {
+    const initial = startZone(BIRD, layout, 1);
+    const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
+    const bot = newBot(1);
+    expect(
+      botInput(BIRD, prepareSensors(layout), layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot)
+        .jumpHeld,
+    ).toBe(true);
+    expect(bot.holding).toBe(DIAGNOSTIC_SKILL.jumpHoldTicks - 1);
+  }
+});
+
+it("keeps the observed-height early release and draws randomness only for the initial jump", () => {
+  const height = 60;
+  const wall = { height, width: 12, x: 100, y: ground.y - height };
+  const layout = fixture([ground, wall]);
+  const sensors = prepareSensors(layout);
+  const initial = startZone(BIRD, layout, 1);
+  const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
+  let draws = 0;
+  const bot = {
+    ...newBot(1),
+    random: () => {
+      draws++;
+      return 1;
+    },
+  };
+  expect(
+    botInput(BIRD, sensors, layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot).jumpHeld,
+  ).toBe(true);
+  expect(bot.targetY).toBe(wall.y);
+  expect(
+    botInput(BIRD, sensors, layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot).jumpHeld,
+  ).toBe(true);
+  const cleared = { ...zone, bird: { ...zone.bird, grounded: false, y: wall.y - BIRD.height } };
+  expect(
+    botInput(BIRD, sensors, layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, cleared, bot).jumpHeld,
+  ).toBe(false);
+  expect(bot.holding).toBe(0);
+  expect(draws).toBe(1);
 });
