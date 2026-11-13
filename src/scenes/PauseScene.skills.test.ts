@@ -32,7 +32,11 @@ vi.mock("./save.ts", () => ({
   selectActiveSkill: selection.select,
 }));
 vi.mock("./modalBackdrop.ts", () => ({
-  showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
+  showModalBackdrop: vi.fn(() => ({
+    destroy: vi.fn(),
+    ready: Promise.resolve(),
+    setVisible: vi.fn(),
+  })),
 }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string, frame: unknown, fill?: string) =>
@@ -51,7 +55,15 @@ import { TEXT } from "../data/text.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { SKILL_IDS } from "../progress/index.ts";
 import { type BirdState, startBird } from "../rules/bird.ts";
-import { createUiLayer, SKILL_ART, type UiLayer } from "../ui/index.ts";
+import {
+  createUiLayer,
+  setTouchSettingShown,
+  SKILL_ART,
+  touchSettings,
+  UI_DIMMED,
+  type UiLayer,
+} from "../ui/index.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 import { createPauseScene, press, pressKey, settle, tap } from "./pauseFixture.ts";
 import type { SkillDetailData } from "./SkillDetailScene.ts";
@@ -121,6 +133,45 @@ function play(bird: BirdState | null = startBird(BIRD, { x: 0, y: 0 })) {
   };
   return { ...pause, details, game, open, scenes, status, zone };
 }
+
+it("captures the world once while touch settings update inside the single DOM modal dim", async () => {
+  const original = touchSettings();
+  const chrome = document.createElement("div");
+  const move = document.createElement("div");
+  const actions = document.createElement("div");
+  const progress = document.createElement("div");
+  chrome.append(move, actions, progress);
+  layer.mount(1, chrome);
+  const pause = play();
+  pause.zone.showTouchControls.mockImplementation((settings) => {
+    move.hidden = !settings.moveControls;
+    actions.hidden = !settings.actionButtons;
+  });
+  try {
+    await pause.open();
+    expect(showModalBackdrop).toHaveBeenCalledTimes(1);
+    expect(pause.zone.showTouchControls).not.toHaveBeenCalled();
+    expect([chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([true, true]);
+    expect(
+      [move, actions, progress, pause.hud].map((part) => part.hasAttribute(UI_DIMMED)),
+    ).toEqual([false, false, false, false]);
+    pause.scene.setTouchSetting("moveControls", false);
+    pause.scene.setTouchSetting("actionButtons", true);
+    expect([move.hidden, actions.hidden, chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([
+      true,
+      false,
+      true,
+      true,
+    ]);
+    expect(showModalBackdrop).toHaveBeenCalledTimes(1);
+    tap(pause.button(TEXT.pause.resume));
+    expect([chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([false, false]);
+    expect(pause.status.zone).toBe("running");
+  } finally {
+    setTouchSettingShown("moveControls", original.moveControls);
+    setTouchSettingShown("actionButtons", original.actionButtons);
+  }
+});
 
 const describedBy = (button: HTMLElement) => {
   const id = button.getAttribute("aria-describedby");

@@ -49,17 +49,6 @@ type Conversation = (typeof CONVERSATIONS)[number];
 const ZONE = "zone";
 const SETTINGS = "settings";
 const START = "start";
-// The dimmed zone with each mix of the touch settings, so the settings card's Move controls and
-// Action buttons rows update the view behind the card as they change.
-const DIM_MIXES: readonly Readonly<Record<TouchSetting, boolean>>[] = [false, true].flatMap(
-  (moveControls) => [false, true].map((actionButtons) => ({ actionButtons, moveControls })),
-);
-
-// The texture key of the dimmed zone with settings.
-function dimTexture({ actionButtons, moveControls }: Readonly<Record<TouchSetting, boolean>>) {
-  return `pause-dim-move-${String(moveControls)}-action-${String(actionButtons)}`;
-}
-
 // A conversation scene says whether it still waits for the player, so the card may open over it.
 interface PausableConversation {
   pausable(): boolean;
@@ -98,7 +87,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   private view: PauseView | undefined;
   private colours!: PauseColours;
   private timeline!: PauseDiscTimeline;
-  private dims = new Map<string, ReturnType<typeof showModalBackdrop>>();
+  private dim: ReturnType<typeof showModalBackdrop> | undefined;
   private state: "closed" | "open" | "opening" | "settings" | "skill" = "closed";
   // The conversation scene the card opened over, which it paused in the zone's place.
   private overConversation: Conversation | undefined;
@@ -119,7 +108,7 @@ export class PauseScene extends Scene implements SettingsOpener {
   create(): void {
     this.state = "closed";
     this.overConversation = undefined;
-    this.dims = new Map();
+    this.dim = undefined;
     this.shownSkills = new Map();
     const colour = (name: string) => paletteColour(this, name);
     this.colours = {
@@ -221,7 +210,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     }
   }
 
-  // Cache a shared-kit backdrop for each touch setting mix before showing the pause card.
+  // Capture the world once; the DOM layer dims touch controls as the card covers them.
   private async open(): Promise<void> {
     const conversation = this.pausableConversation();
     if (this.state !== "closed" || !(this.zonePlaying() || conversation !== undefined)) {
@@ -236,17 +225,10 @@ export class PauseScene extends Scene implements SettingsOpener {
     coverZone("pauseCard", true);
     this.showControls();
 
-    const zone = this.scene.get(ZONE) as ZoneScene;
-    for (const mix of DIM_MIXES) {
-      zone.showTouchControls(mix);
-      // eslint-disable-next-line no-await-in-loop -- each mix needs its own rendered frame.
-      await this.dimZone(dimTexture(mix));
-      if (!this.sys.isActive()) {
-        return;
-      }
+    await this.dimZone();
+    if (!this.sys.isActive()) {
+      return;
     }
-    zone.showTouchControls(touchSettings());
-    this.renderDim();
     this.state = "open";
     this.showCard(true);
   }
@@ -257,7 +239,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     }
     this.state = "closed";
     modalInput(this).close();
-    this.destroyDims();
+    this.destroyDim();
     this.showCard(false);
     this.scene.resume(this.held());
     this.overConversation = undefined;
@@ -275,7 +257,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.state = "closed";
     this.overConversation = undefined;
     modalInput(this).close();
-    this.destroyDims();
+    this.destroyDim();
     this.showCard(false);
     this.scene.stop(ZONE);
     this.scene.launch(START);
@@ -283,11 +265,10 @@ export class PauseScene extends Scene implements SettingsOpener {
     coverZone("pauseCard", false);
   }
 
-  // Saves a touch setting and shows it in the zone and the dim behind the cards.
+  // Saves a touch setting and updates the DOM controls under the existing modal dim.
   setTouchSetting(setting: TouchSetting, shown: boolean): void {
     setTouchSettingShown(setting, shown);
     (this.scene.get(ZONE) as ZoneScene).showTouchControls(touchSettings());
-    this.renderDim();
   }
 
   // Hides the pause card under the settings card, which SettingsScene draws over the dim.
@@ -341,7 +322,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.state = "skill";
     const visit = ++this.skillVisit;
     modalInput(this).open();
-    this.destroyDims();
+    this.destroyDim();
     this.showCard(false);
     // Under the card the zone is already paused.
     if (this.scene.isActive(ZONE)) {
@@ -472,15 +453,9 @@ export class PauseScene extends Scene implements SettingsOpener {
     this.openSkill(skill);
   }
 
-  // The dim behind the cards, with the touch buttons as the setting shows them.
-  private renderDim(): void {
-    const key = dimTexture(touchSettings());
-    this.dims.forEach((dim, name) => dim.setVisible(name === key));
-  }
-
-  private destroyDims(): void {
-    this.dims.forEach((dim) => dim.destroy());
-    this.dims.clear();
+  private destroyDim(): void {
+    this.dim?.destroy();
+    this.dim = undefined;
   }
 
   // Shows or hides the card in the UI layer's modal layer, the skill HUD live beside it.
@@ -489,7 +464,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     if (view === undefined) {
       return;
     }
-    this.dims.forEach((dim, name) => dim.setVisible(open && name === dimTexture(touchSettings())));
+    this.dim?.setVisible(open);
     view.card.root.hidden = !open;
     if (open) {
       this.closeModal ??= sceneDomUi(this)?.modals.open(
@@ -548,12 +523,13 @@ export class PauseScene extends Scene implements SettingsOpener {
   }
 
   // Capture the next rendered frame, with an opaque palette fallback when readback fails.
-  private async dimZone(key: string): Promise<void> {
-    this.dims.forEach((dim) => dim.setVisible(false));
+  private async dimZone(): Promise<void> {
     const dim = showModalBackdrop(this);
-    this.dims.set(key, dim);
+    this.dim = dim;
     await dim.ready;
-    dim.setVisible(false);
+    if (this.dim === dim) {
+      dim.setVisible(false);
+    }
   }
 
   // The modal input a press, key, back or frame turn here answers to: the card's own, or, while
