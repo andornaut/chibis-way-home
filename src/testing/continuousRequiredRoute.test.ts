@@ -18,7 +18,7 @@ import {
 import { CATALOGUE } from "./art.ts";
 import { continuousRequiredRoute } from "./continuousRequiredRoute.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
-import { requiredRouteIntent } from "./requiredRouteIntent.ts";
+import { REQUIRED_ROUTE_CONTROLLER, requiredRouteIntent } from "./requiredRouteIntent.ts";
 
 const floor: TerrainRect = { col: 0, cols: 60, row: 50, rows: 10 };
 function fixture(
@@ -42,7 +42,7 @@ it("proves an actual continuous ordinary entry-to-clear trajectory with grounded
   expect(result.missing).toEqual([]);
   expect(result.witnesses).toHaveLength(1);
   expect(result.witnesses.every(({ tick }) => tick >= 1)).toBe(true);
-  expect(result.controller).toBe("required-route-intent-v1");
+  expect(result.controller).toBe(REQUIRED_ROUTE_CONTROLLER);
 });
 
 it("never counts the initialization snapshot as an actual-step witness", () => {
@@ -137,6 +137,37 @@ it("holds horizontal position above an exact refuge until an actual grounded lan
   expect(Math.abs(witness.x - 4 * TILE)).toBeLessThanOrEqual(EDGE);
   expect(witness.y).toBe(50 * TILE - ORDINARY.height);
   expect(witness.tick).toBeGreaterThan(1);
+  expect(result.ticks).toBeLessThanOrEqual(600);
+});
+
+it("records a lower static-bank landing separately while keeping the required goal locked", () => {
+  const layout = fixture([
+    { col: 0, cols: 8, row: 50, rows: 10 },
+    { col: 10, cols: 6, row: 54, rows: 6 },
+    { col: 18, cols: 42, row: 50, rows: 10 },
+  ]);
+  const targets = [
+    { area: "course", at: { col: 58, row: 50 } },
+    { area: "course", at: { col: 4, row: 50 } },
+  ];
+  const original = structuredClone(targets);
+  const result = continuousRequiredRoute(layout, targets);
+  expect(result, JSON.stringify(result)).toMatchObject({
+    missing: [],
+    reason: "cleared",
+    status: "proven",
+  });
+  expect(targets).toEqual(original);
+  expect(result.witnesses).toHaveLength(targets.length);
+  expect(result.assistWitnesses).toHaveLength(1);
+  const assist = result.assistWitnesses[0]!;
+  expect(assist).toMatchObject({
+    area: "course",
+    requiredIndex: 0,
+    y: 54 * TILE - ORDINARY.height,
+  });
+  expect(assist.tick).toBeGreaterThanOrEqual(1);
+  expect(assist.tick).toBeLessThan(result.witnesses.find(({ index }) => index === 0)!.tick);
   expect(result.ticks).toBeLessThanOrEqual(600);
 });
 
