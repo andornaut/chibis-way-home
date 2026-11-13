@@ -5,6 +5,58 @@
   "entries": [
     {
       "encounters": 0,
+      "grade": 5,
+      "id": "countryside-countryside-raised-red-channel--countryside-raised-red-channel",
+      "kind": "pair",
+      "layout": "abf6536bb7cfc734",
+      "modules": ["countryside-raised-red-channel", "countryside-raised-red-channel"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "7c203af78c276035",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "559038f60e002391:635",
+      "work": 635
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-recovery-trench--countryside-recovery-trench",
+      "kind": "pair",
+      "layout": "239838ec28010b8f",
+      "modules": ["countryside-recovery-trench", "countryside-recovery-trench"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "65d8a9c1de6bfa90",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "d72e3fc67e7b9c9c:1575",
+      "work": 1575
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-red-gully--countryside-red-gully",
+      "kind": "pair",
+      "layout": "a941d5faff9b448d",
+      "modules": ["countryside-red-gully", "countryside-red-gully"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "b4de490d4f96a589",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "7ad2261c63c38d52:453",
+      "work": 453
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-terrace-spine--countryside-terrace-spine",
+      "kind": "pair",
+      "layout": "1f6032772f9119e2",
+      "modules": ["countryside-terrace-spine", "countryside-terrace-spine"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "c85fa4615cf95025",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "a4d73f542df8b823:988",
+      "work": 988
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "countryside-vertical-broad-mesa",
       "kind": "single",
@@ -303,6 +355,45 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "countryside-windmill-lookout--countryside-raised-red-channel",
+      "kind": "pair",
+      "layout": "617a97fee8a30d63",
+      "modules": ["windmill-lookout", "countryside-raised-red-channel"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "19901b07ebed250f",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "6fbcdbd12c2a6e20:548",
+      "work": 548
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-windmill-lookout--countryside-recovery-trench",
+      "kind": "pair",
+      "layout": "7dfb625b4c533cca",
+      "modules": ["windmill-lookout", "countryside-recovery-trench"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "42989811cfd586c3",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "86dbec3f7eaf88d1:817",
+      "work": 817
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-windmill-lookout--countryside-terrace-spine",
+      "kind": "pair",
+      "layout": "56b127a04ce35f84",
+      "modules": ["windmill-lookout", "countryside-terrace-spine"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "e16bf7920b7f45a3",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "80b3ab6d57319f22:548",
+      "work": 548
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "countryside-windmill-lookout--windmill",
       "kind": "pair",
       "layout": "42bdebb35382c0df",
@@ -313,7 +404,7 @@
       "work": 10121
     }
   ],
-  "inputs": { "data": "41dce8aef93d7886", "proofs": "0ac7a90427b29cb4" },
+  "inputs": { "data": "b13781a40527a896", "proofs": "0ac7a90427b29cb4" },
   "version": 1,
   "zone": "countryside"
 }
