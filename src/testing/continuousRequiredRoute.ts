@@ -12,12 +12,25 @@ import {
   zoneSurfaces,
 } from "../sim/zoneWalk.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
+import {
+  prepareRequiredRouteIntent,
+  REQUIRED_ROUTE_CONTROLLER,
+  requiredRouteIntent,
+  type RouteIntentUnavailable,
+} from "./requiredRouteIntent.ts";
 
 const ROUTE_TICKS = 600;
 
-type RouteReason = "budget-exhausted" | "cleared" | "died" | "missing-targets" | "turned-back";
+type RouteReason =
+  | "budget-exhausted"
+  | "cleared"
+  | "died"
+  | "intent-unavailable"
+  | "missing-targets"
+  | "turned-back";
 
 export interface ContinuousRouteResult {
+  readonly controller: typeof REQUIRED_ROUTE_CONTROLLER;
   readonly missing: readonly { readonly index: number; readonly target: WalkRouteTarget }[];
   readonly reason: RouteReason;
   readonly status: "not-proven" | "proven";
@@ -29,6 +42,7 @@ export interface ContinuousRouteResult {
     readonly y: number;
   };
   readonly ticks: number;
+  readonly unavailable: RouteIntentUnavailable | undefined;
   readonly witnesses: readonly {
     readonly area: string;
     readonly index: number;
@@ -38,14 +52,15 @@ export interface ContinuousRouteResult {
   }[];
 }
 
-// One ordinary continuous entry-to-exit trajectory with the existing observable reactive bot.
+// One ordinary continuous trajectory with required-target intent over the native reactive bot.
 // Missing witnesses or a policy failure do not establish that the authored geometry is impossible.
 export function continuousRequiredRoute(
   layout: ZoneLayout,
   targets: readonly WalkRouteTarget[],
 ): ContinuousRouteResult {
   const surfaces = zoneSurfaces(ORDINARY, layout);
-  const resolved = targets.map((target) => ({
+  const resolved = targets.map((target, index) => ({
+    index,
     interval:
       target.xRange === undefined
         ? undefined
@@ -55,6 +70,8 @@ export function continuousRequiredRoute(
           },
     surface: surfaceAt(TILE, surfaces, target.area, target.at),
   }));
+  const prepared = prepareRequiredRouteIntent(ORDINARY, resolved);
+  let unavailable = "unavailable" in prepared ? prepared.unavailable : undefined;
   const sensors = prepareSensors(layout);
   const bot = newBot(1);
   const witnesses: ContinuousRouteResult["witnesses"][number][] = [];
@@ -62,7 +79,7 @@ export function continuousRequiredRoute(
   const observe = (tick: number, zone: ZoneState) => {
     const observation = requiredRouteObservation(ORDINARY, layout, surfaces, zone);
     if (observation === undefined) {
-      return;
+      return undefined;
     }
     resolved.forEach((target, index) => {
       if (
@@ -73,14 +90,47 @@ export function continuousRequiredRoute(
         witnesses.push({ area: zone.area, index, tick, x: zone.bird.x, y: zone.bird.y });
       }
     });
+    return observation;
   };
   let zone = startZone(ORDINARY, layout, 1);
+  let observation = requiredRouteObservation(ORDINARY, layout, surfaces, zone);
   let ticks = 0;
-  while (ticks < ROUTE_TICKS && !zone.cleared && zone.death === undefined && !zone.turnedBack) {
-    const input = botInput(ORDINARY, sensors, layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot);
+  while (
+    unavailable === undefined &&
+    ticks < ROUTE_TICKS &&
+    !zone.cleared &&
+    zone.death === undefined &&
+    !zone.turnedBack
+  ) {
+    const target =
+      "targets" in prepared ? prepared.targets.find(({ index }) => !seen.has(index)) : undefined;
+    const intent =
+      target === undefined
+        ? undefined
+        : requiredRouteIntent(
+            ORDINARY,
+            {
+              area: zone.area,
+              bird: zone.bird,
+              support: observation?.support,
+            },
+            target,
+          );
+    if (intent !== undefined && "unavailable" in intent) {
+      unavailable = intent.unavailable;
+      break;
+    }
+    const policy =
+      intent === undefined
+        ? FORWARD_POLICY
+        : {
+            jump: intent.inhibitNewJump ? ("never" as const) : ("reactive" as const),
+            move: intent.move,
+          };
+    const input = botInput(ORDINARY, sensors, layout, DIAGNOSTIC_SKILL, policy, zone, bot);
     zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
     ticks++;
-    observe(ticks, zone);
+    observation = observe(ticks, zone);
   }
   const missing = targets.flatMap((target, index) => (seen.has(index) ? [] : [{ index, target }]));
   const reason: RouteReason =
@@ -88,12 +138,15 @@ export function continuousRequiredRoute(
       ? "died"
       : zone.turnedBack
         ? "turned-back"
-        : !zone.cleared
-          ? "budget-exhausted"
-          : missing.length > 0
-            ? "missing-targets"
-            : "cleared";
+        : unavailable !== undefined
+          ? "intent-unavailable"
+          : !zone.cleared
+            ? "budget-exhausted"
+            : missing.length > 0
+              ? "missing-targets"
+              : "cleared";
   return {
+    controller: REQUIRED_ROUTE_CONTROLLER,
     missing,
     reason,
     status: reason === "cleared" ? "proven" : "not-proven",
@@ -105,6 +158,7 @@ export function continuousRequiredRoute(
       y: zone.bird.y,
     },
     ticks,
+    unavailable,
     witnesses,
   };
 }
