@@ -33,6 +33,7 @@ import { artFrameUrl, mountSceneView, revealSceneView } from "./domUi.ts";
 import { modalInput, onScenePointer } from "./modalInput.ts";
 import { fitPlayCamera, playPoint } from "./playCamera.ts";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
+import { uiObject } from "./uiRoots.ts";
 
 const MAP = "map";
 const RESTART = "restart";
@@ -116,6 +117,7 @@ export class CelebrationScene extends Scene implements RestartOpener {
       }),
     );
     const fallback = [...this.children.list];
+    fallback.forEach((object) => uiObject(this, object));
     const reveal = revealSceneView(this, view.root, urls);
     mountSceneView(this, view.root);
     void reveal.revealed.then((ready) => {
@@ -301,6 +303,9 @@ export class CelebrationScene extends Scene implements RestartOpener {
     const focused =
       this.focus === undefined || this.restartOpen ? undefined : CELEBRATION[this.focus].button;
     this.focusRing = ringFocus(this, this.focusRing, focused);
+    if (this.focusRing !== undefined) {
+      uiObject(this, this.focusRing);
+    }
   }
 
   private restartCard(): RestartScene {

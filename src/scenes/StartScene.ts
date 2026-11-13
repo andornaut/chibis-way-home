@@ -44,6 +44,7 @@ import { fitPlayCamera, playPoint } from "./playCamera.ts";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
 import { savedProgress } from "./save.ts";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
+import { uiObject } from "./uiRoots.ts";
 
 const ACHIEVEMENTS = "achievements";
 const BACKGROUND = "start-background";
@@ -179,6 +180,7 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     this.restartButton =
       restart === undefined ? undefined : addTextButton(this, restart, TEXT.start.restart);
     this.fallback = this.children.list.slice(firstUi);
+    this.fallback.forEach((object) => uiObject(this, object));
   }
 
   private mountNative(): void {
@@ -408,6 +410,9 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     const rect =
       this.focus === undefined || this.card !== undefined ? undefined : faceOf(this.focus);
     this.focusRing = ringFocus(this, this.focusRing, rect);
+    if (this.focusRing !== undefined) {
+      uiObject(this, this.focusRing);
+    }
   }
 
   private act(control: Control): void {

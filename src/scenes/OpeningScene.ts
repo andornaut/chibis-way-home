@@ -34,6 +34,7 @@ import { modalInput, onScenePointer } from "./modalInput.ts";
 import { renderOpeningLayer } from "./openingLayer.ts";
 import { fitPlayCamera, playPoint } from "./playCamera.ts";
 import { saveOpeningSeen } from "./save.ts";
+import { uiObject } from "./uiRoots.ts";
 
 type Action = "continue" | "skip";
 // The keyboard's focus order: Continue then Skip, though Skip is drawn on the left.
@@ -89,6 +90,7 @@ export class OpeningScene extends Scene {
       .rectangle(0, footerY, SCREEN.width, SCREEN.height - footerY, paletteColour(this, "ink"))
       .setOrigin(0);
     this.caption = addCardText(this, BODY_FONT, { x: 0, y: 0 }, "", paletteColour(this, "white"));
+    uiObject(this, this.caption);
     this.layout = openingLayout(cardFonts(this), TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!);
     this.buttons = {
       continue: addTextButton(this, this.layout.continue, TEXT.dialogue.continue, {
@@ -97,6 +99,14 @@ export class OpeningScene extends Scene {
       }),
       skip: addTextButton(this, this.layout.skip, TEXT.dialogue.skip),
     };
+    for (const button of Object.values(this.buttons)) {
+      uiObject(this, button.faces.normal);
+      uiObject(this, button.faces.pressed);
+      uiObject(this, button.label.label);
+      if (button.label.mark !== undefined) {
+        uiObject(this, button.label.mark);
+      }
+    }
     const input = modalInput(this);
     input.open();
     input.subscribe(() => {
@@ -318,6 +328,9 @@ export class OpeningScene extends Scene {
       pressTextButton(this.buttons[action], this.press?.action === action && !this.press.cancelled);
     }
     this.ring = ringFocus(this, this.ring, this.focus ? this.layout[this.focus].button : undefined);
+    if (this.ring !== undefined) {
+      uiObject(this, this.ring);
+    }
   }
 
   private drawFrame(): void {
